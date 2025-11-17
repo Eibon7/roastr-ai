@@ -42,15 +42,14 @@ class TriageService {
       
       // Plan-specific roast thresholds - business logic layer
       ROAST_THRESHOLDS: {
-        free: 0.30,      // More restrictive for free users
-        starter: 0.30,   // Same as free
-        pro: 0.25,       // Pro users get more sensitive detection
-        plus: 0.20,      // Plus users get most sensitive
-        creator_plus: 0.20
+        starter_trial: 0.30,      // More restrictive for trial users
+        starter: 0.30,            // Same as trial
+        pro: 0.25,                // Pro users get more sensitive detection
+        plus: 0.20                // Plus users get most sensitive
       },
       
       // Shield integration thresholds
-      SHIELD_ENABLED_PLANS: ['starter', 'pro', 'plus', 'creator_plus'],
+      SHIELD_ENABLED_PLANS: ['starter', 'pro', 'plus'],
       
       // Cache configuration - matches Shield patterns
       CACHE_TTL_MS: 300000, // 5 minutes
@@ -283,7 +282,7 @@ class TriageService {
 
       // Fallback to conservative analysis (below all thresholds to avoid false positives)
       // When toxicity analysis fails, we use fail-open approach: assume content is safe
-      // 0.15 is BELOW all plan thresholds (free: 0.30, pro: 0.25, plus: 0.20)
+      // 0.15 is BELOW all plan thresholds (starter_trial: 0.30, pro: 0.25, plus: 0.20)
       // This means the comment will be PUBLISHED (not roasted/blocked)
       // This prevents false positives (blocking innocent content when API is down)
       // CodeRabbit #3298546625: Confirmed this is correct behavior for fallback scenarios
@@ -308,7 +307,7 @@ class TriageService {
     
     // Get plan-specific threshold
     const roastThreshold = this.decisionMatrix.ROAST_THRESHOLDS[plan] || 
-                          this.decisionMatrix.ROAST_THRESHOLDS.free;
+                          this.decisionMatrix.ROAST_THRESHOLDS.starter_trial;
 
     let action = 'publish';
     let reasoning = 'content_safe_for_publication';

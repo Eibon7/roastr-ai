@@ -33,7 +33,7 @@ describe('Pricing Page', () => {
     // Mock successful user fetch
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ plan: 'free' })
+      json: () => Promise.resolve({ plan: 'starter_trial' })
     });
 
     renderPricing();
@@ -43,7 +43,7 @@ describe('Pricing Page', () => {
     });
 
     // Check that all 4 plans are rendered
-    expect(screen.getByText('Free')).toBeInTheDocument();
+    expect(screen.getByText('Starter Trial')).toBeInTheDocument();
     expect(screen.getByText('Starter')).toBeInTheDocument();
     expect(screen.getByText('Pro')).toBeInTheDocument();
     expect(screen.getByText('Plus')).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('Pricing Page', () => {
   it('displays plan features correctly', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ plan: 'free' })
+      json: () => Promise.resolve({ plan: 'starter_trial' })
     });
 
     renderPricing();
@@ -87,14 +87,14 @@ describe('Pricing Page', () => {
     // Check key features
     expect(screen.getByText('Shield protection')).toBeInTheDocument();
     expect(screen.getByText('RQC embedded mode')).toBeInTheDocument();
-    expect(screen.getByText('GPT-4 model')).toBeInTheDocument();
+    expect(screen.getByText('GPT-5.1 model')).toBeInTheDocument();
   });
 
   it('handles upgrade button clicks', async () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ plan: 'free' })
+        json: () => Promise.resolve({ plan: 'starter_trial' })
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -137,7 +137,7 @@ describe('Pricing Page', () => {
   it('displays feature comparison table', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ plan: 'free' })
+      json: () => Promise.resolve({ plan: 'starter_trial' })
     });
 
     renderPricing();
@@ -155,7 +155,7 @@ describe('Pricing Page', () => {
   it('shows RQC Embedded highlight section', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ plan: 'free' })
+      json: () => Promise.resolve({ plan: 'starter_trial' })
     });
 
     renderPricing();
@@ -171,7 +171,7 @@ describe('Pricing Page', () => {
   it('handles navigation to billing page', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ plan: 'free' })
+      json: () => Promise.resolve({ plan: 'starter_trial' })
     });
 
     renderPricing();
@@ -186,7 +186,7 @@ describe('Pricing Page', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/billing');
   });
 
-  it('handles downgrade for free plan', async () => {
+  it('handles downgrade for starter_trial plan', async () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
@@ -206,7 +206,7 @@ describe('Pricing Page', () => {
       expect(screen.getByText('Choose Your Plan')).toBeInTheDocument();
     });
 
-    // Click downgrade to free
+    // Click downgrade to starter_trial
     const downgradeBtn = screen.getByText('Downgrade');
     fireEvent.click(downgradeBtn);
 

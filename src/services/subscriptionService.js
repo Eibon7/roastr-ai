@@ -379,9 +379,10 @@ async function handleSubscriptionStatusChange(userId, status, plan) {
  */
 function getPlanTier(planId) {
   const tiers = {
-    free: 0,
-    pro: 1,
-    creator_plus: 2
+    starter_trial: 0,
+    starter: 1,
+    pro: 2,
+    plus: 3
   };
   return tiers[planId] || 0;
 }

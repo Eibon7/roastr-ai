@@ -2127,4 +2127,167 @@ router.put('/backoffice/thresholds', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/admin/plans
+ * Get all plans with user counts and current limits
+ * Issue #841: Admin panel for plan management
+ */
+router.get('/plans', async (req, res) => {
+    try {
+        const planLimitsService = require('../services/planLimitsService');
+        const { getAllPlans } = require('../services/planService');
+        const allPlans = getAllPlans();
+        
+        // Get user counts by plan from organizations table
+        const { data: orgPlans, error: orgError } = await supabaseServiceClient
+            .from('organizations')
+            .select('plan_id')
+            .not('plan_id', 'is', null);
+        
+        if (orgError) {
+            logger.error('Error fetching plan user counts:', orgError);
+        }
+        
+        // Count users per plan
+        const userCountsByPlan = {};
+        if (orgPlans) {
+            orgPlans.forEach(org => {
+                const planId = normalizePlanId(org.plan_id || 'starter_trial');
+                userCountsByPlan[planId] = (userCountsByPlan[planId] || 0) + 1;
+            });
+        }
+        
+        // Build plans array with user counts
+        // Use planLimitsService.getPlanLimits() to get database overrides merged with defaults
+        const plansData = await Promise.all(Object.entries(allPlans).map(async ([planId, plan]) => {
+            const limits = await planLimitsService.getPlanLimits(planId);
+            return {
+                id: planId,
+                name: plan.name,
+                price: plan.price / 100, // Convert cents to euros
+                currency: plan.currency,
+                userCount: userCountsByPlan[planId] || 0,
+                limits: {
+                    roastsPerMonth: limits.maxRoasts,
+                    platforms: limits.maxPlatforms,
+                    analysisPerMonth: limits.monthlyAnalysisLimit,
+                    tokensPerMonth: limits.monthlyTokensLimit || 0
+                },
+                features: {
+                    shield: plan.features.shield,
+                    customTones: plan.features.customTones,
+                    prioritySupport: plan.features.prioritySupport,
+                    advancedAnalytics: plan.features.advancedAnalytics,
+                    apiAccess: plan.features.apiAccess
+                },
+                duration: plan.duration,
+                editable: planId !== 'custom' // Custom plan not editable via UI
+            };
+        }));
+        
+        res.json({
+            success: true,
+            data: {
+                plans: plansData,
+                totalUsers: Object.values(userCountsByPlan).reduce((sum, count) => sum + count, 0)
+            }
+        });
+        
+    } catch (error) {
+        logger.error('Admin plans endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch plans data',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * PUT /api/admin/plans/:planId
+ * Update plan limits (Issue #841)
+ * Allows admin to edit plan limits without code changes
+ */
+router.put('/plans/:planId', async (req, res) => {
+    try {
+        const { planId } = req.params;
+        const updates = req.body;
+        
+        // Validate plan exists
+        const { getPlanFeatures } = require('../services/planService');
+        const plan = getPlanFeatures(planId);
+        
+        if (!plan) {
+            return res.status(404).json({
+                success: false,
+                error: 'Plan not found'
+            });
+        }
+        
+        // Get current effective limits (with DB overrides) for audit trail
+        const previousLimits = await planLimitsService.getPlanLimits(planId);
+        
+        // Don't allow editing custom plan via UI
+        if (planId === 'custom') {
+            return res.status(403).json({
+                success: false,
+                error: 'Custom plan cannot be edited via admin panel'
+            });
+        }
+        
+        // Validate updates - map to planLimitsService format
+        const planUpdates = {};
+        if (updates.maxRoasts !== undefined) planUpdates.maxRoasts = parseInt(updates.maxRoasts);
+        if (updates.maxPlatforms !== undefined) planUpdates.maxPlatforms = parseInt(updates.maxPlatforms);
+        if (updates.monthlyAnalysisLimit !== undefined) planUpdates.monthlyAnalysisLimit = parseInt(updates.monthlyAnalysisLimit);
+        if (updates.monthlyTokensLimit !== undefined) planUpdates.monthlyTokensLimit = parseInt(updates.monthlyTokensLimit);
+        if (updates.platformIntegrations !== undefined) planUpdates.integrationsLimit = parseInt(updates.platformIntegrations);
+        
+        if (Object.keys(planUpdates).length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'No valid fields to update'
+            });
+        }
+        
+        // Update plan limits in database (planLimitsService handles DB updates)
+        const updatedLimits = await planLimitsService.updatePlanLimits(
+            planId,
+            planUpdates,
+            req.user.id // Admin user ID for audit
+        );
+        
+        // Ensure admin views reflect latest plan data
+        invalidateAdminUsersCache();
+        planLimitsService.clearCache();
+        
+        // Log admin action using logEvent to match other admin audit calls
+        await auditLogger.logEvent('admin.plan_update', {
+            userId: req.user.id,
+            adminEmail: req.user.email,
+            targetType: 'plan',
+            targetId: planId,
+            changes: planUpdates,
+            previousValues: previousLimits
+        });
+        
+        res.json({
+            success: true,
+            message: 'Plan limits updated successfully',
+            data: {
+                planId,
+                updatedLimits
+            }
+        });
+        
+    } catch (error) {
+        logger.error('Admin plan update endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update plan limits',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;

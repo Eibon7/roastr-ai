@@ -90,7 +90,7 @@ describe('PlanStatusCard', () => {
   test('calls user API endpoint on mount', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ plan: 'free' }),
+      json: async () => ({ plan: 'starter_trial' }),
     });
 
     render(<PlanStatusCard />);

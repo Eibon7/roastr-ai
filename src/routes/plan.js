@@ -3,58 +3,40 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { flags } = require('../config/flags');
 
-// Mock plan data and user plan storage (in production, this would be in the database)
-const AVAILABLE_PLANS = {
-  starter_trial: {
-    id: 'starter_trial',
-    name: 'Starter Trial',
-    price: 0,
-    features: {
-      roastsPerMonth: 10,
-      platformConnections: 1,
-      styleProfile: false,
-      prioritySupport: false,
-      customPrompts: false
+// Issue #841: Use planService.js as single source of truth
+const { getPlanFeatures, getAllPlans } = require('../services/planService');
+
+// Get plans dynamically from planService.js
+// Issue #841: Filter out 'custom' plan - it's ad-hoc and not available for users to contract
+function getAvailablePlans() {
+  const allPlans = getAllPlans();
+  const plans = {};
+  
+  for (const [planId, plan] of Object.entries(allPlans)) {
+    // Skip 'custom' plan - it's ad-hoc, pay-per-use, and not available for standard subscription
+    if (planId === 'custom') {
+      continue;
     }
-  },
-  starter: {
-    id: 'starter',
-    name: 'Starter',
-    price: 5.00,
-    features: {
-      roastsPerMonth: 10,
-      platformConnections: 1,
-      styleProfile: false,
-      prioritySupport: false,
-      customPrompts: false
-    }
-  },
-  pro: {
-    id: 'pro',
-    name: 'Pro',
-    price: 9.99,
-    features: {
-      roastsPerMonth: 1000,
-      platformConnections: 5,
-      styleProfile: false,
-      prioritySupport: true,
-      customPrompts: true
-    }
-  },
-  creator_plus: {
-    id: 'creator_plus',
-    name: 'Creator+',
-    price: 19.99,
-    features: {
-      roastsPerMonth: 5000,
-      platformConnections: 10,
-      styleProfile: true,
-      prioritySupport: true,
-      customPrompts: true,
-      advancedAnalytics: true
-    }
+    
+    plans[planId] = {
+      id: planId,
+      name: plan.name,
+      price: plan.price / 100, // Convert from cents to currency units
+      features: {
+        roastsPerMonth: plan.limits.roastsPerMonth,
+        platformConnections: plan.limits.platformIntegrations,
+        styleProfile: plan.features.customTones || false,
+        prioritySupport: plan.features.prioritySupport || false,
+        customPrompts: plan.features.customPrompts || false,
+        advancedAnalytics: plan.features.advancedAnalytics || false
+      }
+    };
   }
-};
+  
+  return plans;
+}
+
+const AVAILABLE_PLANS = getAvailablePlans();
 
 // Mock user plans storage (in production, this would be in database)
 const userPlans = new Map();

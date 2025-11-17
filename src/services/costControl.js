@@ -37,12 +37,12 @@ class CostControlService {
       pro: {
         id: 'pro',
         name: 'Pro',
-        features: ['all_integrations', 'shield_mode', 'priority_support', 'analytics']
+        features: ['all_integrations', 'shield_mode']
       },
-      creator_plus: {
-        id: 'creator_plus',
-        name: 'Creator Plus',
-        features: ['unlimited_integrations', 'shield_mode', 'custom_tones', 'api_access', 'dedicated_support']
+      plus: {
+        id: 'plus',
+        name: 'Plus',
+        features: ['unlimited_integrations', 'shield_mode', 'custom_tones']
       },
       custom: {
         id: 'custom',
@@ -135,15 +135,19 @@ class CostControlService {
 
       const currentUsage = monthlyUsage?.total_responses || 0;
       const limit = org.monthly_responses_limit;
-      // Avoid division by zero (CodeRabbit #3353894295 M2)
-      const percentage = limit > 0 ? (currentUsage / limit) * 100 : 100;
+      // Handle unlimited (-1) and avoid division by zero (CodeRabbit #3353894295 M2)
+      const percentage = (limit === -1 || limit === null || limit === undefined) ? 0 : 
+                         (limit > 0 ? (currentUsage / limit) * 100 : 100);
 
+      // Handle unlimited (-1) - unlimited plans can always use
+      const isUnlimited = limit === -1 || limit === null || limit === undefined;
+      
       return {
-        canUse: currentUsage < limit,
+        canUse: isUnlimited || currentUsage < limit,
         currentUsage,
         limit,
         percentage: Math.round(percentage),
-        isNearLimit: percentage >= 80,
+        isNearLimit: !isUnlimited && percentage >= 80,
         organizationId,
         planId: org.plan_id
       };
@@ -348,9 +352,10 @@ class CostControlService {
    */
   getUpgradeUrl(currentPlanId) {
     const upgradeMap = {
-      free: '/upgrade?plan=pro',
-      pro: '/upgrade?plan=creator_plus',
-      creator_plus: '/upgrade?plan=custom',
+      starter_trial: '/upgrade?plan=starter',
+      starter: '/upgrade?plan=pro',
+      pro: '/upgrade?plan=plus',
+      plus: '/upgrade?plan=custom',
       custom: '/contact?type=enterprise'
     };
 
@@ -922,13 +927,13 @@ class CostControlService {
       // Define limits by plan and resource type
       const planLimits = {
         starter_trial: {
-          roasts: { monthly: 10, overage: false, hard: true },
+          roasts: { monthly: 5, overage: false, hard: true },
           integrations: { monthly: 1, overage: false, hard: true },
           api_calls: { monthly: 200, overage: false, hard: true },
           shield_actions: { monthly: 0, overage: false, hard: true }
         },
         starter: {
-          roasts: { monthly: 10, overage: false, hard: true },
+          roasts: { monthly: 5, overage: false, hard: true },
           integrations: { monthly: 1, overage: false, hard: true },
           api_calls: { monthly: 500, overage: false, hard: true },
           shield_actions: { monthly: 100, overage: false, hard: true }
@@ -939,9 +944,9 @@ class CostControlService {
           api_calls: { monthly: 2000, overage: true, hard: false },
           shield_actions: { monthly: 500, overage: true, hard: false }
         },
-        creator_plus: {
+        plus: {
           roasts: { monthly: 5000, overage: true, hard: false },
-          integrations: { monthly: 999, overage: true, hard: false },
+          integrations: { monthly: 2, overage: true, hard: false },
           api_calls: { monthly: 10000, overage: true, hard: false },
           shield_actions: { monthly: 2000, overage: true, hard: false }
         },

@@ -8,6 +8,7 @@ import AuthCallback from './pages/auth-callback';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDetail from './pages/admin/UserDetail';
 import AdminUsersPage from './pages/admin/users';
+import AdminPlans from './pages/admin/AdminPlans';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminMetrics from './pages/admin/AdminMetrics';
 import AdminLogs from './pages/admin/AdminLogs';
@@ -70,6 +71,7 @@ function App() {
               <Route index element={<Navigate to="/admin/users" replace />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="users/:userId" element={<UserDetail />} />
+              <Route path="plans" element={<AdminPlans />} />
               <Route path="metrics" element={<AdminMetrics />} />
               <Route path="logs" element={<AdminLogs />} />
               <Route path="settings" element={<AdminSettings />} />

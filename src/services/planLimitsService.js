@@ -1,14 +1,15 @@
 /**
  * Plan Limits Service
  * Issue #99: Database-based plan limit configuration
+ * Issue #841: Single source of truth - reads from planService.js first, then DB as override
  * Provides centralized access to plan limits with caching support
  */
 
 const { supabaseServiceClient } = require('../config/supabase');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
+const { getPlanLimits: getPlanLimitsFromService } = require('./planService');
 const { 
-    DEFAULT_TIER_LIMITS, 
     SECURITY_CONFIG, 
     VALIDATION_HELPERS,
     CACHE_CONFIG 
@@ -23,8 +24,9 @@ class PlanLimitsService {
     }
 
     /**
-     * Get plan limits from database with caching
-     * @param {string} planId - Plan ID (free, starter, pro, plus, custom)
+     * Get plan limits from single source of truth (planService.js) with DB override
+     * Issue #841: Single source of truth - reads from planService.js first, then DB as override
+     * @param {string} planId - Plan ID (starter_trial, starter, pro, plus, custom)
      * @returns {Object} Plan limits configuration
      */
     async getPlanLimits(planId) {
@@ -35,104 +37,73 @@ class PlanLimitsService {
                 return cached;
             }
 
-            // Fetch from database
+            // SINGLE SOURCE OF TRUTH: Read from planService.js first
+            const defaultLimits = getPlanLimitsFromService(planId);
+            if (!defaultLimits) {
+                logger.warn('Plan not found in planService.js, using starter_trial as fallback', { planId });
+                return this.getDefaultLimits('starter_trial');
+            }
+
+            // Try to fetch DB overrides (if any exist)
             const { data, error } = await supabaseServiceClient
                 .from('plan_limits')
                 .select('*')
                 .eq('plan_id', planId)
                 .single();
 
-            if (error) {
-                logger.error('Failed to fetch plan limits:', error);
-                
-                // Enhanced fail-closed security (CodeRabbit Round 7)
-                const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
-                                           process.env.PLAN_LIMITS_FAIL_CLOSED === 'true';
-                
-                if (isProductionOrSecure) {
-                    logger.error('Plan limits fetch failed - failing closed for security', {
-                        planId,
-                        error: error.message,
-                        timestamp: new Date().toISOString()
-                    });
-                    return this.getDefaultLimits('starter_trial'); // Always use starter_trial (most restrictive) for security
-                }
-                
-                // Only allow fail-open in development with explicit flag
-                const allowFailOpen = process.env.NODE_ENV !== 'production' && 
-                                     process.env.PLAN_LIMITS_FAIL_OPEN === 'true';
-                
-                if (allowFailOpen) {
-                    logger.warn('Plan limits fetch failed, using defaults (development only)', {
-                        planId,
-                        warning: 'This should never happen in production'
-                    });
-                    return this.getDefaultLimits(planId);
-                }
-                
-                // Default fail-closed behavior
-                logger.error('Plan limits fetch failed - failing closed for security (default)', {
+            // If DB has overrides, merge them with defaults (DB takes precedence)
+            if (!error && data) {
+                const dbLimits = {
+                    maxRoasts: data.max_roasts ?? defaultLimits.maxRoasts,
+                    monthlyResponsesLimit: data.monthly_responses_limit ?? defaultLimits.monthlyResponsesLimit,
+                    monthlyAnalysisLimit: data.monthly_analysis_limit ?? defaultLimits.monthlyAnalysisLimit,
+                    maxPlatforms: data.max_platforms ?? defaultLimits.maxPlatforms,
+                    integrationsLimit: data.integrations_limit ?? defaultLimits.integrationsLimit,
+                    shieldEnabled: data.shield_enabled ?? defaultLimits.shieldEnabled,
+                    customPrompts: data.custom_prompts ?? defaultLimits.customPrompts,
+                    prioritySupport: data.priority_support ?? defaultLimits.prioritySupport,
+                    apiAccess: data.api_access ?? defaultLimits.apiAccess,
+                    analyticsEnabled: data.analytics_enabled ?? defaultLimits.analyticsEnabled,
+                    customTones: data.custom_tones ?? defaultLimits.customTones,
+                    dedicatedSupport: data.dedicated_support ?? defaultLimits.dedicatedSupport,
+                    monthlyTokensLimit: data.monthly_tokens_limit ?? defaultLimits.monthlyTokensLimit,
+                    dailyApiCallsLimit: data.daily_api_calls_limit ?? defaultLimits.dailyApiCallsLimit,
+                    ...data.settings // Merge any additional settings from JSON
+                };
+
+                // Cache the merged result
+                this.setCachedLimits(planId, dbLimits);
+                return dbLimits;
+            }
+
+            // No DB overrides, use defaults from planService.js
+            if (error && error.code !== 'PGRST116') {
+                // PGRST116 = not found, which is OK (we use defaults)
+                logger.warn('Error fetching plan limits from DB, using defaults from planService.js', {
                     planId,
                     error: error.message
                 });
-                return this.getDefaultLimits('starter_trial');
             }
 
-            // Transform database fields to match existing interface
-            const limits = {
-                maxRoasts: data.max_roasts,
-                monthlyResponsesLimit: data.monthly_responses_limit,
-                monthlyAnalysisLimit: data.monthly_analysis_limit,
-                maxPlatforms: data.max_platforms,
-                integrationsLimit: data.integrations_limit,
-                shieldEnabled: data.shield_enabled,
-                customPrompts: data.custom_prompts,
-                prioritySupport: data.priority_support,
-                apiAccess: data.api_access,
-                analyticsEnabled: data.analytics_enabled,
-                customTones: data.custom_tones,
-                dedicatedSupport: data.dedicated_support,
-                monthlyTokensLimit: data.monthly_tokens_limit,
-                dailyApiCallsLimit: data.daily_api_calls_limit,
-                ...data.settings // Merge any additional settings from JSON
-            };
-
-            // Cache the result
-            this.setCachedLimits(planId, limits);
-
-            return limits;
+            // Cache and return defaults from planService.js
+            this.setCachedLimits(planId, defaultLimits);
+            return defaultLimits;
 
         } catch (error) {
             logger.error('Error in getPlanLimits:', error);
             
-            // Enhanced fail-closed security (CodeRabbit Round 7)
-            const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
-                                       process.env.PLAN_LIMITS_FAIL_CLOSED === 'true';
-            
-            if (isProductionOrSecure) {
-                logger.error('Plan limits service error - failing closed for security', {
+            // Fallback to planService.js defaults
+            const fallbackLimits = getPlanLimitsFromService(planId);
+            if (fallbackLimits) {
+                logger.warn('Using planService.js defaults due to error', {
                     planId,
-                    error: error.message,
-                    stack: error.stack,
-                    timestamp: new Date().toISOString()
+                    error: error.message
                 });
-                return this.getDefaultLimits('starter_trial');
+                return fallbackLimits;
             }
             
-            // Only allow fail-open in development with explicit flag
-            const allowFailOpen = process.env.NODE_ENV !== 'production' && 
-                                 process.env.PLAN_LIMITS_FAIL_OPEN === 'true';
-            
-            if (allowFailOpen) {
-                logger.warn('Plan limits service error, using defaults (development only)', {
-                    planId,
-                    warning: 'This should never happen in production'
-                });
-                return this.getDefaultLimits(planId);
-            }
-            
-            // Default fail-closed behavior
-            logger.error('Plan limits service error - failing closed for security (default)', {
+            // Last resort: starter_trial
+            logger.error('All fallbacks failed, using starter_trial', {
                 planId,
                 error: error.message
             });
@@ -142,104 +113,66 @@ class PlanLimitsService {
 
     /**
      * Get all plan limits at once (for comparison views)
+     * Issue #841: Uses single source of truth from planService.js, merges with DB overrides
      * @returns {Object} All plan limits keyed by plan ID
      */
     async getAllPlanLimits() {
         try {
+            // Start with defaults from planService.js (single source of truth)
+            const defaultAllLimits = this.getDefaultAllLimits();
+            
+            // Try to fetch DB overrides
             const { data, error } = await supabaseServiceClient
                 .from('plan_limits')
                 .select('*')
                 .order('plan_id');
 
-            if (error) {
-                logger.error('Failed to fetch all plan limits:', error);
+            // If DB has data, merge overrides with defaults
+            if (!error && data && data.length > 0) {
+                const mergedLimits = { ...defaultAllLimits };
                 
-                // Enhanced fail-closed security (CodeRabbit Round 7)
-                const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
-                                           process.env.PLAN_LIMITS_FAIL_CLOSED === 'true';
-                
-                if (isProductionOrSecure) {
-                    logger.error('All plan limits fetch failed - failing closed for security', {
-                        error: error.message,
-                        timestamp: new Date().toISOString()
-                    });
-                    return { free: this.getDefaultLimits('starter_trial') };
-                }
-                
-                // Only allow fail-open in development with explicit flag
-                const allowFailOpen = process.env.NODE_ENV !== 'production' && 
-                                     process.env.PLAN_LIMITS_FAIL_OPEN === 'true';
-                
-                if (allowFailOpen) {
-                    logger.warn('All plan limits fetch failed, using defaults (development only)', {
-                        warning: 'This should never happen in production'
-                    });
-                    return this.getDefaultAllLimits();
-                }
-                
-                // Default fail-closed behavior
-                logger.error('All plan limits fetch failed - failing closed for security (default)', {
-                    error: error.message
+                data.forEach(planLimit => {
+                    const planId = planLimit.plan_id;
+                    const defaults = defaultAllLimits[planId] || {};
+                    
+                    // Merge DB overrides with defaults (DB takes precedence)
+                    mergedLimits[planId] = {
+                        maxRoasts: planLimit.max_roasts ?? defaults.maxRoasts,
+                        monthlyResponsesLimit: planLimit.monthly_responses_limit ?? defaults.monthlyResponsesLimit,
+                        monthlyAnalysisLimit: planLimit.monthly_analysis_limit ?? defaults.monthlyAnalysisLimit,
+                        maxPlatforms: planLimit.max_platforms ?? defaults.maxPlatforms,
+                        integrationsLimit: planLimit.integrations_limit ?? defaults.integrationsLimit,
+                        shieldEnabled: planLimit.shield_enabled ?? defaults.shieldEnabled,
+                        customPrompts: planLimit.custom_prompts ?? defaults.customPrompts,
+                        prioritySupport: planLimit.priority_support ?? defaults.prioritySupport,
+                        apiAccess: planLimit.api_access ?? defaults.apiAccess,
+                        analyticsEnabled: planLimit.analytics_enabled ?? defaults.analyticsEnabled,
+                        customTones: planLimit.custom_tones ?? defaults.customTones,
+                        dedicatedSupport: planLimit.dedicated_support ?? defaults.dedicatedSupport,
+                        monthlyTokensLimit: planLimit.monthly_tokens_limit ?? defaults.monthlyTokensLimit,
+                        dailyApiCallsLimit: planLimit.daily_api_calls_limit ?? defaults.dailyApiCallsLimit,
+                        ...planLimit.settings,
+                        ...defaults // Ensure defaults fill any missing fields
+                    };
                 });
-                return { free: this.getDefaultLimits('starter_trial') };
+                
+                return mergedLimits;
             }
 
-            // Transform to object keyed by plan_id
-            const allLimits = {};
-            data.forEach(planLimit => {
-                allLimits[planLimit.plan_id] = {
-                    maxRoasts: planLimit.max_roasts,
-                    monthlyResponsesLimit: planLimit.monthly_responses_limit,
-                    monthlyAnalysisLimit: planLimit.monthly_analysis_limit,
-                    maxPlatforms: planLimit.max_platforms,
-                    integrationsLimit: planLimit.integrations_limit,
-                    shieldEnabled: planLimit.shield_enabled,
-                    customPrompts: planLimit.custom_prompts,
-                    prioritySupport: planLimit.priority_support,
-                    apiAccess: planLimit.api_access,
-                    analyticsEnabled: planLimit.analytics_enabled,
-                    customTones: planLimit.custom_tones,
-                    dedicatedSupport: planLimit.dedicated_support,
-                    monthlyTokensLimit: planLimit.monthly_tokens_limit,
-                    dailyApiCallsLimit: planLimit.daily_api_calls_limit,
-                    ...planLimit.settings
-                };
-            });
+            // No DB overrides or error fetching, return defaults from planService.js
+            if (error && error.code !== 'PGRST116') {
+                logger.warn('Error fetching all plan limits from DB, using defaults from planService.js', {
+                    error: error.message
+                });
+            }
 
-            return allLimits;
+            return defaultAllLimits;
 
         } catch (error) {
             logger.error('Error in getAllPlanLimits:', error);
             
-            // Enhanced fail-closed security (CodeRabbit Round 7)
-            const isProductionOrSecure = process.env.NODE_ENV === 'production' || 
-                                       process.env.PLAN_LIMITS_FAIL_CLOSED === 'true';
-            
-            if (isProductionOrSecure) {
-                logger.error('All plan limits service error - failing closed for security', {
-                    error: error.message,
-                    stack: error.stack,
-                    timestamp: new Date().toISOString()
-                });
-                return { free: this.getDefaultLimits('starter_trial') };
-            }
-            
-            // Only allow fail-open in development with explicit flag
-            const allowFailOpen = process.env.NODE_ENV !== 'production' && 
-                                 process.env.PLAN_LIMITS_FAIL_OPEN === 'true';
-            
-            if (allowFailOpen) {
-                logger.warn('All plan limits service error, using defaults (development only)', {
-                    warning: 'This should never happen in production'
-                });
-                return this.getDefaultAllLimits();
-            }
-            
-            // Default fail-closed behavior
-            logger.error('All plan limits service error - failing closed for security (default)', {
-                error: error.message
-            });
-            return { free: this.getDefaultLimits('starter_trial') };
+            // Fallback to planService.js defaults
+            return this.getDefaultAllLimits();
         }
     }
 
@@ -417,19 +350,49 @@ class PlanLimitsService {
     }
 
     /**
-     * Get default limits (fallback for errors) - uses centralized configuration
+     * Get default limits (fallback for errors) - uses single source of truth from planService.js
      * @private
      */
     getDefaultLimits(planId) {
-        return DEFAULT_TIER_LIMITS[planId] || DEFAULT_TIER_LIMITS.starter_trial;
+        const limits = getPlanLimitsFromService(planId);
+        if (limits) return limits;
+        
+        // Last resort fallback
+        const starterTrialLimits = getPlanLimitsFromService('starter_trial');
+        return starterTrialLimits || {
+            maxRoasts: 10,
+            monthlyResponsesLimit: 10,
+            monthlyAnalysisLimit: 1000,
+            maxPlatforms: 1,
+            integrationsLimit: 1,
+            shieldEnabled: true,
+            customPrompts: false,
+            prioritySupport: false,
+            apiAccess: false,
+            analyticsEnabled: false,
+            customTones: false,
+            dedicatedSupport: false,
+            embeddedJudge: false,
+            monthlyTokensLimit: 100000,
+            dailyApiCallsLimit: 500,
+            ai_model: 'gpt-5.1'
+        };
     }
 
     /**
-     * Get default limits for all plans - uses centralized configuration
+     * Get default limits for all plans - uses single source of truth from planService.js
      * @private
      */
     getDefaultAllLimits() {
-        return DEFAULT_TIER_LIMITS;
+        const { getAllPlans } = require('./planService');
+        const allPlans = getAllPlans();
+        const allLimits = {};
+        
+        for (const planId in allPlans) {
+            allLimits[planId] = getPlanLimitsFromService(planId);
+        }
+        
+        return allLimits;
     }
 
     /**
@@ -517,11 +480,6 @@ class PlanLimitsService {
     getAutoApprovalLimitsForPlan(plan, planLimits) {
         // ROUND 4 FIX: Plan-specific auto-approval caps
         const autoApprovalMappings = {
-            free: {
-                features: { autoApproval: false },
-                daily: 0,
-                hourly: 0
-            },
             starter_trial: {
                 features: { autoApproval: false },
                 daily: 0,
@@ -538,11 +496,6 @@ class PlanLimitsService {
                 hourly: Math.min(30, Math.floor((planLimits.dailyApiCallsLimit || 200) / 24))
             },
             plus: {
-                features: { autoApproval: true },
-                daily: Math.min(500, planLimits.dailyApiCallsLimit || 500),
-                hourly: Math.min(50, Math.floor((planLimits.dailyApiCallsLimit || 500) / 24))
-            },
-            creator_plus: {
                 features: { autoApproval: true },
                 daily: Math.min(1000, planLimits.dailyApiCallsLimit || 1000),
                 hourly: Math.min(100, Math.floor((planLimits.dailyApiCallsLimit || 1000) / 24))
@@ -692,7 +645,9 @@ class PlanLimitsService {
             'basic': 'starter',
             'premium': 'pro',
             'enterprise': 'plus',
-            'creator': 'creator_plus'
+            // Legacy aliases
+            'creator': 'plus',
+            'creator_plus': 'plus'
         };
 
         return planAliases[normalized] || normalized;

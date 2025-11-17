@@ -92,10 +92,10 @@ describe('AutoApprovalSettings', () => {
     });
   });
 
-  it('shows plan limitation for free plan', async () => {
+  it('shows plan limitation for starter_trial plan', async () => {
     const mockOrgData = {
       id: 'test-org-id',
-      plan: 'free',
+      plan: 'starter_trial',
       settings: {
         auto_approval: false
       }

@@ -201,8 +201,8 @@ class StripeWebhookService {
             
             if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
                 plan = 'pro';
-            } else if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
-                plan = 'creator_plus';
+            } else if (lookupKey === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'plus_monthly')) {
+                plan = 'plus';
             }
 
             // Execute atomic transaction for checkout completion
@@ -256,7 +256,7 @@ class StripeWebhookService {
             }
 
             // Trigger automatic stylecard generation for Pro/Plus users (Issue #293)
-            if (success && (plan === 'pro' || plan === 'creator_plus')) {
+            if (success && (plan === 'pro' || plan === 'plus')) {
                 try {
                     await this._triggerStylecardGeneration(userId, transactionResult?.organization_id);
                 } catch (stylecardError) {
@@ -431,16 +431,16 @@ class StripeWebhookService {
             const priceId = subscription.items?.data?.[0]?.price?.id;
             
             if (!priceId) {
-                // If no price, might be a free plan or canceled subscription
+                // If no price, might be a starter_trial plan or canceled subscription
                 logger.warn('No price ID in subscription update', {
                     subscriptionId,
                     customerId,
                     status: subscription.status
                 });
                 
-                // If subscription is canceled/incomplete, reset to free plan
+                // If subscription is canceled/incomplete, reset to starter_trial plan
                 if (['canceled', 'incomplete_expired'].includes(subscription.status)) {
-                    return await this._resetToFreePlan(userId, 'subscription_status_changed');
+                    return await this._resetToStarterTrialPlan(userId, 'subscription_status_changed');
                 }
                 
                 return {
@@ -457,8 +457,9 @@ class StripeWebhookService {
             let plan = 'starter_trial';
             if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly')) {
                 plan = 'pro';
-            } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly')) {
-                plan = 'creator_plus';
+            } else if (priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'creator_plus_monthly') || 
+                       priceData?.lookup_key === (process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly')) {
+                plan = 'plus';
             }
 
             // Execute atomic transaction for subscription update
@@ -767,7 +768,7 @@ class StripeWebhookService {
      * Reset user to starter_trial plan entitlements (expired/suspended state)
      * @private
      */
-    async _resetToFreePlan(userId, reason) {
+    async _resetToStarterTrialPlan(userId, reason) {
         const trialEntitlements = {
             analysis_limit_monthly: 100,
             roast_limit_monthly: 10,

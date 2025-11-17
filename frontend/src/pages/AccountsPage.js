@@ -171,13 +171,13 @@ const AccountsPage = () => {
                 </h3>
                 <div className="text-sm text-blue-800">
                   <p className="mb-2">
-                    <strong>Tu plan actual ({userData?.plan || 'free'}):</strong> {getConnectionLimits().maxConnections} conexión{getConnectionLimits().maxConnections !== 1 ? 'es' : ''} total
+                    <strong>Tu plan actual ({userData?.plan || 'starter_trial'}):</strong> {getConnectionLimits().maxConnectionsPerPlatform} cuenta{getConnectionLimits().maxConnectionsPerPlatform !== 1 ? 's' : ''} por plataforma
                   </p>
                   <div className="text-xs space-y-1">
-                    <p>• <strong>Plan Free:</strong> 1 conexión total</p>
-                    <p>• <strong>Plan Pro y superiores:</strong> 2 conexiones totales</p>
+                    <p>• <strong>Plan Starter Trial/Starter:</strong> 1 cuenta por plataforma</p>
+                    <p>• <strong>Plan Pro y Plus:</strong> 2 cuentas por plataforma</p>
                   </div>
-                  {getConnectionLimits().planTier === 'free' && (
+                  {(getConnectionLimits().planTier === 'starter_trial' || getConnectionLimits().planTier === 'starter') && (
                     <p className="text-xs mt-2 text-blue-700">
                       💡 Actualiza a Pro para conectar hasta 2 cuentas por red social
                     </p>

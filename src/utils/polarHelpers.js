@@ -10,12 +10,11 @@ const { logger } = require('./logger');
 // Price ID to plan mapping
 // NOTE: Must match Polar dashboard price IDs configured in .env
 // Frontend uses: starter/pro/plus
-// Database uses: free/pro/creator_plus (CodeRabbit Review #3493981712)
-// This mapping bridges the gap
+// Database uses: starter_trial/starter/pro/plus
 const PRICE_ID_TO_PLAN = {
   [process.env.POLAR_STARTER_PRICE_ID]: 'starter_trial', // Maps starter → trial (matches DB schema)
   [process.env.POLAR_PRO_PRICE_ID]: 'pro',            // Direct mapping
-  [process.env.POLAR_PLUS_PRICE_ID]: 'creator_plus',  // Maps plus → creator_plus
+  [process.env.POLAR_PLUS_PRICE_ID]: 'plus',          // Maps plus → plus
 };
 
 // Reverse mapping: plan to price ID
@@ -26,7 +25,7 @@ const PLAN_TO_PRICE_ID = Object.fromEntries(
 /**
  * Get plan name from Polar price ID
  * @param {string} priceId - Polar price ID
- * @returns {string} - Plan name (free/pro/creator_plus)
+ * @returns {string} - Plan name (starter_trial/starter/pro/plus)
  * @throws {Error} - If price ID unknown
  */
 function getPlanFromPriceId(priceId) {
@@ -40,7 +39,7 @@ function getPlanFromPriceId(priceId) {
 
 /**
  * Get Polar price ID from plan name
- * @param {string} plan - Plan name (free/pro/creator_plus)
+ * @param {string} plan - Plan name (starter_trial/starter/pro/plus)
  * @returns {string} - Polar price ID
  * @throws {Error} - If plan unknown
  */
@@ -59,7 +58,7 @@ function getPriceIdFromPlan(plan) {
  * @returns {boolean} - True if valid
  */
 function isValidPlan(plan) {
-  const validPlans = ['starter_trial', 'pro', 'creator_plus'];
+  const validPlans = ['starter_trial', 'starter', 'pro', 'plus'];
   return validPlans.includes(plan);
 }
 

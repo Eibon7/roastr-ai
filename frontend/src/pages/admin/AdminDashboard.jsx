@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import ThemeToggle from '../../components/ThemeToggle';
 import { authHelpers } from '../../lib/supabaseClient';
 import { apiClient } from '../../lib/api';
+import { getPlanBadgeColor } from '../../utils/planHelpers';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -210,14 +211,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const getPlanBadgeColor = (plan) => {
-    const colors = {
-      basic: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      pro: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-      creator_plus: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300'
-    };
-    return colors[plan] || colors.basic;
-  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -459,7 +452,7 @@ const AdminDashboard = () => {
                   <option value="">Todos los planes</option>
                   <option value="basic">Basic</option>
                   <option value="pro">Pro</option>
-                  <option value="creator_plus">Creator Plus</option>
+                  <option value="plus">Plus</option>
                 </select>
               </div>
 
@@ -671,7 +664,7 @@ const AdminDashboard = () => {
                           <option value="">Cambiar plan</option>
                           <option value="basic">Basic</option>
                           <option value="pro">Pro</option>
-                          <option value="creator_plus">Creator Plus</option>
+                          <option value="plus">Plus</option>
                         </select>
                       </div>
                     </td>

@@ -5,6 +5,7 @@ import { Skeleton } from '../ui/skeleton';
 import { Search, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { PLAN_DEFAULTS } from '../../config/planDefaults';
+import { normalizePlanId } from '../../utils/planHelpers';
 
 export default function AnalysisUsageCard({ user, className = '' }) {
   const [usage, setUsage] = useState(null);
@@ -39,15 +40,15 @@ export default function AnalysisUsageCard({ user, className = '' }) {
           }
         });
 
-        let limits = PLAN_DEFAULTS.free; // fallback
+        let limits = PLAN_DEFAULTS.starter_trial; // fallback
         if (planRes.ok) {
           const planData = await planRes.json();
-          const userPlan = planData.data?.plan || user?.plan || 'free';
-          limits = PLAN_DEFAULTS[userPlan] || PLAN_DEFAULTS.free;
+          const userPlan = normalizePlanId(planData.data?.plan || user?.plan || 'starter_trial');
+          limits = PLAN_DEFAULTS[userPlan] || PLAN_DEFAULTS.starter_trial;
         } else {
           // Use user plan from props as fallback
-          const userPlan = user?.plan || 'free';
-          limits = PLAN_DEFAULTS[userPlan] || PLAN_DEFAULTS.free;
+          const userPlan = normalizePlanId(user?.plan || 'starter_trial');
+          limits = PLAN_DEFAULTS[userPlan] || PLAN_DEFAULTS.starter_trial;
         }
 
         setUsage(usageData.data || { analysis_used: 0 });
@@ -58,7 +59,7 @@ export default function AnalysisUsageCard({ user, className = '' }) {
         setError(err.message);
         // Set fallback data
         setUsage({ analysis_used: 0 });
-        setPlanLimits(PLAN_DEFAULTS.free);
+        setPlanLimits(PLAN_DEFAULTS.starter_trial);
       } finally {
         setLoading(false);
       }

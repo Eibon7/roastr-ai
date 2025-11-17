@@ -5,7 +5,7 @@
 describe('Pricing Page Core Functionality', () => {
   it('should have correct plan pricing structure', () => {
     const plans = [
-      { id: 'free', price: 0, currency: '€' },
+      { id: 'starter_trial', price: 0, currency: '€' },
       { id: 'starter', price: 5, currency: '€' },
       { id: 'pro', price: 15, currency: '€' },
       { id: 'plus', price: 50, currency: '€' }
@@ -13,7 +13,7 @@ describe('Pricing Page Core Functionality', () => {
 
     // Test plan structure
     expect(plans).toHaveLength(4);
-    expect(plans.find(p => p.id === 'free').price).toBe(0);
+    expect(plans.find(p => p.id === 'starter_trial').price).toBe(0);
     expect(plans.find(p => p.id === 'starter').price).toBe(5);
     expect(plans.find(p => p.id === 'pro').price).toBe(15);
     expect(plans.find(p => p.id === 'plus').price).toBe(50);
@@ -32,40 +32,40 @@ describe('Pricing Page Core Functionality', () => {
 
   it('should validate plan features correctly', () => {
     const planFeatures = {
-      free: {
+      starter_trial: {
         analyses: 100,
-        roasts: 50,
-        model: 'gpt-3.5-turbo',
-        shield: false
+        roasts: 5,
+        model: 'gpt-5.1',
+        shield: true
       },
       starter: {
         analyses: 1000,
-        roasts: 10,
-        model: 'gpt-4',
+        roasts: 5,
+        model: 'gpt-5.1',
         shield: true
       },
       pro: {
         analyses: 10000,
         roasts: 1000,
-        model: 'gpt-4',
+        model: 'gpt-5.1',
         shield: true
       },
       plus: {
         analyses: 100000,
         roasts: 5000,
-        model: 'gpt-4',
+        model: 'gpt-5.1',
         shield: true,
         rqc: true
       }
     };
 
     // Validate feature progression
-    expect(planFeatures.free.analyses).toBeLessThan(planFeatures.starter.analyses);
+    expect(planFeatures.starter_trial.analyses).toBeLessThan(planFeatures.starter.analyses);
     expect(planFeatures.starter.analyses).toBeLessThan(planFeatures.pro.analyses);
     expect(planFeatures.pro.analyses).toBeLessThan(planFeatures.plus.analyses);
 
-    // Validate shield availability
-    expect(planFeatures.free.shield).toBe(false);
+    // Validate shield availability (all plans have shield now)
+    expect(planFeatures.starter_trial.shield).toBe(true);
     expect(planFeatures.starter.shield).toBe(true);
     expect(planFeatures.pro.shield).toBe(true);
     expect(planFeatures.plus.shield).toBe(true);
@@ -77,7 +77,7 @@ describe('Pricing Page Core Functionality', () => {
 
   it('should determine upgrade paths correctly', () => {
     const getUpgradePath = (currentPlan, targetPlan) => {
-      const planOrder = ['free', 'starter', 'pro', 'plus'];
+      const planOrder = ['starter_trial', 'starter', 'pro', 'plus'];
       const currentIndex = planOrder.indexOf(currentPlan);
       const targetIndex = planOrder.indexOf(targetPlan);
       
@@ -86,8 +86,8 @@ describe('Pricing Page Core Functionality', () => {
       return 'current';
     };
 
-    expect(getUpgradePath('free', 'pro')).toBe('upgrade');
-    expect(getUpgradePath('pro', 'free')).toBe('downgrade');
+    expect(getUpgradePath('starter_trial', 'pro')).toBe('upgrade');
+    expect(getUpgradePath('pro', 'starter_trial')).toBe('downgrade');
     expect(getUpgradePath('pro', 'pro')).toBe('current');
     expect(getUpgradePath('starter', 'plus')).toBe('upgrade');
   });

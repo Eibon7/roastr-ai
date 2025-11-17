@@ -1,43 +1,48 @@
 /**
  * Tier Limits utility for plan-based restrictions
- * Based on Issue #366 requirements: Free=1, Pro+=2 connections
+ * Issue #841: Updated plan structure - Starter Trial/Starter: 1 per platform, Pro/Plus: 2 per platform
  */
 
-// Tier-based connection limits
+import { normalizePlanId } from './planHelpers';
+
+// Tier-based connection limits (per platform)
 const TIER_LIMITS = {
-  free: {
-    social_connections: 1,
-    roasts_per_month: 100,
-    shield_enabled: false,
+  starter_trial: {
+    social_connections: 1, // Per platform
+    roasts_per_month: 5,
+    shield_enabled: true,
     priority_support: false,
     custom_styles: false
   },
   starter: {
-    social_connections: 2,
-    roasts_per_month: 500,
-    shield_enabled: false,
+    social_connections: 1, // Per platform
+    roasts_per_month: 5,
+    shield_enabled: true,
     priority_support: false,
     custom_styles: false
   },
   pro: {
-    social_connections: 2,
-    roasts_per_month: 2000,
+    social_connections: 2, // Per platform
+    roasts_per_month: 1000,
     shield_enabled: true,
-    priority_support: true,
+    priority_support: false,
     custom_styles: true
   },
   plus: {
-    social_connections: 2,
+    social_connections: 2, // Per platform
     roasts_per_month: 5000,
     shield_enabled: true,
-    priority_support: true,
+    priority_support: false,
     custom_styles: true
   },
-  creator_plus: {
-    social_connections: 999, // Effectively unlimited
-    roasts_per_month: 10000,
+  custom: {
+    // Custom plan: ad-hoc for brands/special accounts with pay-per-use billing
+    // Limits are effectively unlimited but billed per use
+    // Note: Actual limits should be sourced from backend/enterprise configuration
+    social_connections: 999, // Effectively unlimited (per platform)
+    roasts_per_month: 999999, // Effectively unlimited (billed per use)
     shield_enabled: true,
-    priority_support: true,
+    priority_support: true, // Custom plans may include premium support
     custom_styles: true
   }
 };
@@ -48,8 +53,8 @@ const TIER_LIMITS = {
  * @returns {object} - Tier limits object
  */
 export const getTierLimits = (planTier) => {
-  const normalizedPlan = planTier?.toLowerCase() || 'free';
-  return TIER_LIMITS[normalizedPlan] || TIER_LIMITS.free;
+  const normalizedPlan = normalizePlanId(planTier || 'starter_trial');
+  return TIER_LIMITS[normalizedPlan] || TIER_LIMITS.starter_trial;
 };
 
 /**
@@ -110,22 +115,22 @@ export const isFeatureAvailable = (feature, planTier) => {
  * @returns {object} - Upgrade suggestion with target plan and benefits
  */
 export const getUpgradeSuggestion = (currentPlan) => {
-  const current = currentPlan?.toLowerCase() || 'free';
+  const current = normalizePlanId(currentPlan || 'starter_trial');
   
   const suggestions = {
-    free: {
+    starter_trial: {
       targetPlan: 'starter',
-      benefits: ['2 conexiones de redes sociales', '500 roasts mensuales', 'Soporte por email'],
+      benefits: ['5 roasts mensuales', '1 cuenta por plataforma', 'Soporte estándar'],
       price: '€5/mes'
     },
     starter: {
       targetPlan: 'pro',
-      benefits: ['Shield automated moderation', 'Estilos personalizados', 'Soporte prioritario', '2000 roasts mensuales'],
+      benefits: ['1000 roasts mensuales', '2 cuentas por plataforma', 'Custom tones'],
       price: '€15/mes'
     },
     pro: {
       targetPlan: 'plus',
-      benefits: ['5000 roasts mensuales', 'Funciones premium adicionales', 'Configuración avanzada'],
+      benefits: ['5000 roasts mensuales', '2 cuentas por plataforma', 'Todas las features'],
       price: '€50/mes'
     }
   };

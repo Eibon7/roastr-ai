@@ -30,7 +30,7 @@ const AutoApprovalSettings = () => {
     require_security_validation: true
   });
   const [planInfo, setPlanInfo] = useState({
-    plan: 'free',
+    plan: 'starter_trial',
     autoApprovalAllowed: false
   });
 
