@@ -720,7 +720,7 @@ class AnalyticsDashboardService {
         if (previous === 0) {
             return latest > 0 ? 100 : 0;
         }
-        return ((latest - previous) / Math.max(previous, 1)) * 100;
+        return ((latest - previous) / previous) * 100;
     }
 }
 
