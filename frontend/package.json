@@ -4,10 +4,12 @@
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",
+    "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.546.0",
     "react": "^19.1.1",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.4",
     "react-scripts": "5.0.1",
@@ -15,11 +17,11 @@
     "tailwind-merge": "^3.4.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build:ci": "CI=false GENERATE_SOURCEMAP=false REACT_APP_SUPABASE_URL=http://localhost/mock REACT_APP_SUPABASE_ANON_KEY=mock ESLINT_NO_DEV_ERRORS=true react-scripts build",
-    "test": "react-scripts test",
-    "test:ci": "CI=true TSC_COMPILE_ON_ERROR=true DISABLE_ESLINT_PLUGIN=true react-scripts test --watchAll=false --testTimeout=30000 --verbose",
+    "start": "craco start",
+    "build": "craco build",
+    "build:ci": "FAST_REFRESH=false CI=false GENERATE_SOURCEMAP=false REACT_APP_SUPABASE_URL=http://localhost/mock REACT_APP_SUPABASE_ANON_KEY=mock ESLINT_NO_DEV_ERRORS=true craco build",
+    "test": "craco test",
+    "test:ci": "CI=true TSC_COMPILE_ON_ERROR=true DISABLE_ESLINT_PLUGIN=true craco test --watchAll=false --testTimeout=30000 --verbose",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
@@ -55,18 +57,21 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "autoprefixer": "^10.4.21",
     "jest-junit": "^16.0.0",
-    "postcss": "^8.5.6"
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18",
+    "tailwindcss-animate": "^1.0.7"
   },
   "proxy": "http://localhost:3000",
-  "description": "",
-  "main": "craco.config.js",
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "jest": {
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
+  }
 }
