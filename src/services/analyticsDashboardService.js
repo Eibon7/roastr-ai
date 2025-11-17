@@ -1,3 +1,21 @@
+/**
+ * Analytics Dashboard Service
+ *
+ * Service for aggregating and exporting analytics data for the dashboard UI.
+ * Provides dashboard metrics, billing analytics with Polar integration, and
+ * data export functionality (CSV/JSON).
+ *
+ * Features:
+ * - Dashboard data aggregation (roasts, analyses, Shield actions, credits)
+ * - Billing analytics with Polar SDK integration
+ * - Data export with plan-based permissions
+ * - Caching and performance optimization
+ * - Multi-tenant data isolation
+ *
+ * Related Issues: #715
+ * Related Nodes: analytics.md, cost-control.md, shield.md
+ */
+
 const { Polar } = require('@polar-sh/sdk');
 const Papa = require('papaparse');
 
@@ -29,6 +47,10 @@ class AnalyticsPermissionError extends Error {
 }
 
 class AnalyticsDashboardService {
+    /**
+     * Initialize Analytics Dashboard Service
+     * Sets up Polar client if POLAR_ACCESS_TOKEN is configured
+     */
     constructor() {
         this.polarClient = null;
         if (process.env.POLAR_ACCESS_TOKEN) {
@@ -43,6 +65,25 @@ class AnalyticsDashboardService {
         }
     }
 
+    /**
+     * Get comprehensive dashboard analytics data
+     *
+     * @param {Object} params - Dashboard parameters
+     * @param {Object} params.user - Authenticated user object (must have id and org_id)
+     * @param {number} [params.rangeDays=30] - Number of days to analyze (7-365)
+     * @param {string} [params.groupBy='day'] - Grouping: 'day', 'week', or 'month'
+     * @param {string} [params.platformFilter='all'] - Platform filter or 'all'
+     * @returns {Promise<Object>} Dashboard data with summary, charts, shield stats, credits, and costs
+     * @throws {Error} If user is not authenticated or organization not found
+     *
+     * @example
+     * const data = await analyticsDashboardService.getDashboardData({
+     *   user: { id: 'user-123', org_id: 'org-456', plan: 'pro' },
+     *   rangeDays: 30,
+     *   groupBy: 'day',
+     *   platformFilter: 'all'
+     * });
+     */
     async getDashboardData({ user, rangeDays = 30, groupBy = 'day', platformFilter = 'all' }) {
         const context = await this._resolveOrganizationContext(user);
         const planLimits = await planLimitsService.getPlanLimits(context.planId || DEFAULT_PLAN);
@@ -91,6 +132,21 @@ class AnalyticsDashboardService {
         };
     }
 
+    /**
+     * Get billing analytics with Polar integration
+     *
+     * @param {Object} params - Billing analytics parameters
+     * @param {Object} params.user - Authenticated user object (must have id and org_id)
+     * @param {number} [params.rangeDays=90] - Number of days to analyze (30-365)
+     * @returns {Promise<Object>} Billing data with local costs and Polar metrics
+     * @throws {Error} If user is not authenticated or organization not found
+     *
+     * @example
+     * const billing = await analyticsDashboardService.getBillingAnalytics({
+     *   user: { id: 'user-123', org_id: 'org-456' },
+     *   rangeDays: 90
+     * });
+     */
     async getBillingAnalytics({ user, rangeDays = 90 }) {
         const context = await this._resolveOrganizationContext(user);
         const sanitizedRange = this._clampRange(rangeDays);
@@ -137,6 +193,28 @@ class AnalyticsDashboardService {
         };
     }
 
+    /**
+     * Export analytics data as CSV or JSON
+     *
+     * @param {Object} params - Export parameters
+     * @param {Object} params.user - Authenticated user object (must have id and org_id)
+     * @param {string} [params.format='csv'] - Export format: 'csv' or 'json'
+     * @param {string} [params.dataset='snapshots'] - Dataset: 'snapshots', 'usage', or 'events'
+     * @param {number} [params.rangeDays=90] - Number of days to export (7-365)
+     * @param {string} [params.locale='es-ES'] - Locale for date formatting
+     * @param {string} [params.timezone='UTC'] - Timezone for timestamps
+     * @returns {Promise<Object>} Export result with filename, contentType, and body
+     * @throws {AnalyticsPermissionError} If format/dataset invalid, plan doesn't allow exports, or analytics disabled
+     * @throws {Error} If user is not authenticated or organization not found
+     *
+     * @example
+     * const export = await analyticsDashboardService.exportAnalytics({
+     *   user: { id: 'user-123', org_id: 'org-456', plan: 'pro' },
+     *   format: 'csv',
+     *   dataset: 'snapshots',
+     *   rangeDays: 90
+     * });
+     */
     async exportAnalytics({ user, format = 'csv', dataset = 'snapshots', rangeDays = 90, locale = 'es-ES', timezone = 'UTC' }) {
         const normalizedFormat = format.toLowerCase();
         if (!['csv', 'json'].includes(normalizedFormat)) {
