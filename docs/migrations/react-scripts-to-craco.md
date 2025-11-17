@@ -24,7 +24,7 @@ Migrated frontend build system from `react-scripts` to `@craco/craco` to support
 **Added:**
 ```json
 {
-  "@craco/craco": "^7.1.0"
+  "@craco/craco": "^7.1.0"  // devDependencies (build-time only)
 }
 ```
 
@@ -174,7 +174,7 @@ config.resolve.alias = {
 ## Related Documentation
 
 - [Craco Documentation](https://craco.js.org/)
-- [shadcn/ui Setup](https://ui.shadcn.com/docs/installation/vite)
+- [shadcn/ui Setup](https://ui.shadcn.com/docs/installation)
 - [Issue #860](https://github.com/Eibon7/roastr-ai/issues/860) - UI Framework Migration
 
 ## Verification

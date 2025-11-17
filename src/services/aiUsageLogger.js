@@ -14,7 +14,7 @@
  */
 
 const { logger } = require('../utils/logger');
-const { supabaseServiceClient } = require('../config/database');
+const { supabaseServiceClient } = require('../config/supabase');
 const { mockMode } = require('../config/mockMode');
 
 /**

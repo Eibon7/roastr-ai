@@ -3,13 +3,25 @@
  * Issue #858: Logging de tokens para prompt caching
  */
 
-const aiUsageLogger = require('../../../src/services/aiUsageLogger');
-const { supabaseServiceClient } = require('../../../src/config/database');
+// Setup test environment
+process.env.NODE_ENV = 'test';
+process.env.ENABLE_MOCK_MODE = 'true';
 
-// Mock dependencies
-jest.mock('../../../src/config/database', () => ({
-  supabaseServiceClient: {
-    from: jest.fn()
+// Mock Supabase client with proper chaining
+const mockSupabaseServiceClient = {
+  from: jest.fn()
+};
+
+jest.mock('../../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabaseServiceClient
+}));
+
+jest.mock('../../../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn()
   }
 }));
 
@@ -24,9 +36,31 @@ jest.mock('../../../src/utils/logger', () => ({
 
 jest.mock('../../../src/config/mockMode', () => ({
   mockMode: {
-    isMockMode: false
+    isMockMode: true,
+    generateMockSupabaseClient: jest.fn(() => ({
+      from: jest.fn(() => ({
+        select: jest.fn(() => ({ data: [], error: null })),
+        insert: jest.fn(() => ({ error: null })),
+        update: jest.fn(() => ({ error: null }))
+      }))
+    }))
   }
 }));
+
+// Mock queueService to prevent initialization errors
+jest.mock('../../../src/services/queueService', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(),
+    getNextJob: jest.fn().mockResolvedValue(null),
+    completeJob: jest.fn().mockResolvedValue(),
+    failJob: jest.fn().mockResolvedValue(),
+    shutdown: jest.fn().mockResolvedValue()
+  }))
+}));
+
+// Import after mocks are set up
+const aiUsageLogger = require('../../../src/services/aiUsageLogger');
 
 describe('AIUsageLogger', () => {
   let mockSupabaseQuery;
@@ -43,7 +77,7 @@ describe('AIUsageLogger', () => {
       lte: jest.fn().mockReturnThis()
     };
     
-    supabaseServiceClient.from.mockReturnValue(mockSupabaseQuery);
+      mockSupabaseServiceClient.from.mockReturnValue(mockSupabaseQuery);
   });
 
   describe('logUsage', () => {
@@ -60,7 +94,7 @@ describe('AIUsageLogger', () => {
         endpoint: 'roast'
       });
       
-      expect(supabaseServiceClient.from).toHaveBeenCalledWith('ai_usage_logs');
+      expect(mockSupabaseServiceClient.from).toHaveBeenCalledWith('ai_usage_logs');
       expect(mockSupabaseQuery.insert).toHaveBeenCalledWith([
         expect.objectContaining({
           user_id: 'user-123',
@@ -193,11 +227,19 @@ describe('AIUsageLogger', () => {
         }
       ];
       
-      mockSupabaseQuery.select.mockReturnThis();
-      mockSupabaseQuery.eq.mockReturnThis();
-      mockSupabaseQuery.gte.mockReturnThis();
-      mockSupabaseQuery.lte.mockReturnThis();
-      mockSupabaseQuery.select.mockResolvedValue({ data: mockData, error: null });
+      // Create a thenable object that returns itself for chaining
+      const thenableQuery = {
+        eq: jest.fn(function() { return this; }),
+        gte: jest.fn(function() { return this; }),
+        lte: jest.fn(function() { return this; }),
+        then: (resolve) => resolve({ data: mockData, error: null })
+      };
+      
+      const mockChain = {
+        select: jest.fn(() => thenableQuery)
+      };
+      
+      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
       
       const stats = await aiUsageLogger.getUsageStats({
         userId: 'user-123'
@@ -223,7 +265,18 @@ describe('AIUsageLogger', () => {
         }
       ];
       
-      mockSupabaseQuery.select.mockResolvedValue({ data: mockData, error: null });
+      const thenableQuery = {
+        eq: jest.fn(function() { return this; }),
+        gte: jest.fn(function() { return this; }),
+        lte: jest.fn(function() { return this; }),
+        then: (resolve) => resolve({ data: mockData, error: null })
+      };
+      
+      const mockChain = {
+        select: jest.fn(() => thenableQuery)
+      };
+      
+      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
       
       const stats = await aiUsageLogger.getUsageStats({
         userId: 'user-123'
@@ -240,7 +293,18 @@ describe('AIUsageLogger', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-31');
       
-      mockSupabaseQuery.select.mockResolvedValue({ data: [], error: null });
+      const thenableQuery = {
+        eq: jest.fn(function() { return this; }),
+        gte: jest.fn(function() { return this; }),
+        lte: jest.fn(function() { return this; }),
+        then: (resolve) => resolve({ data: [], error: null })
+      };
+      
+      const mockChain = {
+        select: jest.fn(() => thenableQuery)
+      };
+      
+      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
       
       await aiUsageLogger.getUsageStats({
         userId: 'user-123',
@@ -248,23 +312,46 @@ describe('AIUsageLogger', () => {
         endDate
       });
       
-      expect(mockSupabaseQuery.gte).toHaveBeenCalledWith('created_at', startDate.toISOString());
-      expect(mockSupabaseQuery.lte).toHaveBeenCalledWith('created_at', endDate.toISOString());
+      expect(thenableQuery.gte).toHaveBeenCalledWith('created_at', startDate.toISOString());
+      expect(thenableQuery.lte).toHaveBeenCalledWith('created_at', endDate.toISOString());
     });
 
     test('should filter by organization', async () => {
-      mockSupabaseQuery.select.mockResolvedValue({ data: [], error: null });
+      const thenableQuery = {
+        eq: jest.fn(function() { return this; }),
+        gte: jest.fn(function() { return this; }),
+        lte: jest.fn(function() { return this; }),
+        then: (resolve) => resolve({ data: [], error: null })
+      };
+      
+      const mockChain = {
+        select: jest.fn(() => thenableQuery)
+      };
+      
+      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
       
       await aiUsageLogger.getUsageStats({
         orgId: 'org-456'
       });
       
-      expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('org_id', 'org-456');
+      expect(thenableQuery.eq).toHaveBeenCalledWith('org_id', 'org-456');
     });
 
     test('should handle database errors', async () => {
       const dbError = new Error('Query failed');
-      mockSupabaseQuery.select.mockResolvedValue({ data: null, error: dbError });
+      
+      const thenableQuery = {
+        eq: jest.fn(function() { return this; }),
+        gte: jest.fn(function() { return this; }),
+        lte: jest.fn(function() { return this; }),
+        then: (resolve) => resolve({ data: null, error: dbError })
+      };
+      
+      const mockChain = {
+        select: jest.fn(() => thenableQuery)
+      };
+      
+      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
       
       const stats = await aiUsageLogger.getUsageStats({
         userId: 'user-123'
@@ -280,7 +367,18 @@ describe('AIUsageLogger', () => {
         { model: 'gpt-5.1', plan: 'pro', endpoint: 'shield', input_tokens: 75, output_tokens: 30 }
       ];
       
-      mockSupabaseQuery.select.mockResolvedValue({ data: mockData, error: null });
+      const thenableQuery = {
+        eq: jest.fn(function() { return this; }),
+        gte: jest.fn(function() { return this; }),
+        lte: jest.fn(function() { return this; }),
+        then: (resolve) => resolve({ data: mockData, error: null })
+      };
+      
+      const mockChain = {
+        select: jest.fn(() => thenableQuery)
+      };
+      
+      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
       
       const stats = await aiUsageLogger.getUsageStats({
         userId: 'user-123'
