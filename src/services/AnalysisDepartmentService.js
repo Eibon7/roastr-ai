@@ -62,8 +62,9 @@ class AnalysisDepartmentService {
     try {
       // PARALLEL EXECUTION: Run Gatekeeper + Perspective simultaneously
       // Using Promise.allSettled() to allow fallback if one fails
+      // Issue #858: Pass userContext to Gatekeeper for prompt caching
       const [gatekeeperResult, perspectiveResult] = await Promise.allSettled([
-        this.runGatekeeperAnalysis(commentText),
+        this.runGatekeeperAnalysis(commentText, userContext),
         this.runPerspectiveAnalysis(commentText)
       ]);
 
@@ -112,10 +113,20 @@ class AnalysisDepartmentService {
 
   /**
    * Run Gatekeeper analysis with retry logic
+   * Issue #858: Updated to pass organization context for prompt caching
    */
-  async runGatekeeperAnalysis(commentText) {
+  async runGatekeeperAnalysis(commentText, userContext = {}) {
     try {
-      const result = await this.gatekeeper.classifyComment(commentText);
+      // Extract options for prompt caching (Issue #858)
+      const options = {
+        userId: userContext.userId || null,
+        orgId: userContext.organizationId || null,
+        plan: userContext.plan || null,
+        redLines: userContext.redLines || null,
+        shieldSettings: userContext.shieldSettings || null
+      };
+
+      const result = await this.gatekeeper.classifyComment(commentText, options);
 
       logger.debug('Gatekeeper analysis complete', {
         classification: result.classification,
