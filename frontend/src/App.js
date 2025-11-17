@@ -29,6 +29,7 @@ import Approval from './pages/Approval';
 import AccountsPage from './pages/AccountsPage';
 import Pricing from './pages/Pricing';
 import Shop from './pages/Shop';
+import Analytics from './pages/Analytics';
 import ProtectedRoute, { AdminRoute, AuthRoute, PublicRoute } from './components/ProtectedRoute';
 import './App.css';
 
@@ -64,6 +65,7 @@ function App() {
               <Route path="accounts" element={<AccountsPage />} />
               <Route path="profile" element={<Settings />} /> {/* Profile redirects to Settings for now */}
               <Route path="shop" element={<Shop />} />
+              <Route path="dashboard/analytics" element={<Analytics />} />
             </Route>
             
             {/* Admin routes with AdminLayout - require admin permissions */}

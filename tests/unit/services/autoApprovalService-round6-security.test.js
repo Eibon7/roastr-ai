@@ -75,10 +75,15 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
       getDailyAutoApprovalLimits: jest.fn()
     };
 
-    require('../../../src/config/supabase').supabaseServiceClient = mockSupabase;
-    require('../../../src/utils/logger').logger = mockLogger;
-    require('../../../src/services/transparencyService') = mockTransparencyService;
-    require('../../../src/services/planLimitsService') = mockPlanLimitsService;
+    const supabaseModule = require('../../../src/config/supabase');
+    const loggerModule = require('../../../src/utils/logger');
+    const transparencyModule = require('../../../src/services/transparencyService');
+    const planLimitsModule = require('../../../src/services/planLimitsService');
+    
+    supabaseModule.supabaseServiceClient = mockSupabase;
+    loggerModule.logger = mockLogger;
+    Object.assign(transparencyModule, mockTransparencyService);
+    Object.assign(planLimitsModule, mockPlanLimitsService);
 
     autoApprovalService = new AutoApprovalService();
   });

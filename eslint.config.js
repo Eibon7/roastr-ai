@@ -31,7 +31,9 @@ module.exports = [
       'dist/',
       '**/*.min.js',
       '**/build/**',
-      '**/dist/**'
+      '**/dist/**',
+      'tests/unit/components/**',
+      'tests/unit/frontend/**'
     ]
   }
 ];
