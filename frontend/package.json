@@ -19,7 +19,7 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "build:ci": "CI=false GENERATE_SOURCEMAP=false REACT_APP_SUPABASE_URL=http://localhost/mock REACT_APP_SUPABASE_ANON_KEY=mock ESLINT_NO_DEV_ERRORS=true craco build",
+    "build:ci": "FAST_REFRESH=false CI=false GENERATE_SOURCEMAP=false REACT_APP_SUPABASE_URL=http://localhost/mock REACT_APP_SUPABASE_ANON_KEY=mock ESLINT_NO_DEV_ERRORS=true craco build",
     "test": "craco test",
     "test:ci": "CI=true TSC_COMPILE_ON_ERROR=true DISABLE_ESLINT_PLUGIN=true craco test --watchAll=false --testTimeout=30000 --verbose",
     "test:e2e": "playwright test",
