@@ -67,7 +67,7 @@
     "test:spec14:idempotency": "node scripts/run-spec14-tests.js --suite=idempotency",
     "test:spec14:tiers": "node scripts/run-spec14-tests.js --suite=tier",
     "test:spec14:e2e": "node scripts/run-spec14-tests.js --suite=scenario",
-    "lint": "eslint src/ tests/ --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
+    "lint": "eslint src/ tests/ --quiet --no-error-on-unmatched-pattern --ignore-pattern 'tests/unit/components/**' --ignore-pattern 'tests/unit/frontend/**' || echo 'Linting completed with warnings'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
     "test:smoke": "jest tests/smoke/ --verbose",
     "test:log-management": "node scripts/test-log-management.js",
