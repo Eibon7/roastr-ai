@@ -195,11 +195,12 @@ const analyticsRateLimit = require('express-rate-limit')({
         // Note: Rate limiter doesn't support async, so use static limits
         const rateLimits = {
             'starter_trial': 10,
+            'starter': 10,
             'pro': 60,
-            'creator_plus': 300,
+            'plus': 300,  // was creator_plus (Issue #842 plan restructuring)
             'custom': 300
         };
-        return rateLimits[userPlan] || rateLimits.free;
+        return rateLimits[userPlan] ?? rateLimits.starter_trial;
     },
     message: {
         success: false,
