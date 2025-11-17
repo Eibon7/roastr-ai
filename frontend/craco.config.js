@@ -1,11 +1,20 @@
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+
 module.exports = {
   babel: {
-    // Desactivar React Refresh completamente para evitar conflictos en CI
-    plugins: [],
+    // Desactivar React Refresh solo en CI para evitar conflictos
+    plugins: process.env.CI ? [] : undefined,
   },
   webpack: {
-    configure: (config) => {
+    configure: (config, { env }) => {
       const path = require('path');
+      
+      // Remover React Refresh plugin en producción
+      if (env === 'production') {
+        config.plugins = config.plugins.filter(
+          plugin => !(plugin instanceof ReactRefreshWebpackPlugin)
+        );
+      }
       
       config.resolve.fallback = {
         ...(config.resolve.fallback || {}),
