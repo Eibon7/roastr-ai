@@ -18,6 +18,7 @@ class GatekeeperService {
   constructor() {
     this.suspiciousPatterns = this.initializeSuspiciousPatterns();
     this.openaiClient = this.initializeOpenAI();
+    this.promptBuilder = new ShieldPromptBuilder(); // Issue #858: Prompt caching for Shield
   }
 
   /**
