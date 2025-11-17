@@ -75,7 +75,6 @@ export default function Connect() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Connected to', platform, ':', data.data.message);
         
         // Update integration status
         await fetchIntegrationStatus();
@@ -115,7 +114,6 @@ export default function Connect() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Import started for', platform, ':', data.data.message);
         
         // Simulate progress updates
         simulateImportProgress(platform, data.data.imported);

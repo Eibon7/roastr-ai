@@ -176,9 +176,6 @@ export default function Compose() {
         // Update credits after successful roast generation
         setRoastsRemaining(data.data?.credits?.remaining || roastsRemaining - 1);
         
-        // In real implementation, this would send to selected platforms
-        console.log('Roast generated and sent:', data.data.roast);
-        
         // Clear form
         setMessage('');
         setPreview(null);

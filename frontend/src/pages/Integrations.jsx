@@ -28,12 +28,10 @@ export default function Integrations() {
   }, []);
 
   const handleConnect = (integrationName) => {
-    console.log(`Connecting to ${integrationName}`);
     // In real implementation, this would redirect to OAuth flow
   };
 
   const handleDisconnect = (integrationName) => {
-    console.log(`Disconnecting from ${integrationName}`);
     // In real implementation, this would revoke the connection
   };
 

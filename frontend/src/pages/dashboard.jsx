@@ -519,7 +519,6 @@ export default function Dashboard() {
 
   const handleToggleAccount = async (accountId, status) => {
     // For now, just a placeholder - would need backend implementation
-    console.log('Toggle account status:', accountId, status);
   };
 
   const handleChangeShieldLevel = async (accountId, level) => {
