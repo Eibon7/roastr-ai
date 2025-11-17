@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
+import PageLayout from '../components/roastr/PageLayout';
 import AnalysisUsageCard from '../components/widgets/AnalysisUsageCard';
 import RoastUsageCard from '../components/widgets/RoastUsageCard';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
@@ -595,40 +596,44 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        {/* Loading skeleton */}
-        <div>
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-6 w-32" />
-        </div>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-40" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Skeleton className="h-8 w-8 rounded" />
-                  <div>
-                    <Skeleton className="h-4 w-24 mb-2" />
-                    <Skeleton className="h-3 w-20" />
+      <PageLayout 
+        title="Dashboard"
+        subtitle="Gestiona tus roasts, Shield y cuentas conectadas"
+      >
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Skeleton className="h-8 w-8 rounded" />
+                    <div>
+                      <Skeleton className="h-4 w-24 mb-2" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Skeleton className="h-4 w-16 mb-2" />
+                    <Skeleton className="h-3 w-12" />
                   </div>
                 </div>
-                <div className="text-right">
-                  <Skeleton className="h-4 w-16 mb-2" />
-                  <Skeleton className="h-3 w-12" />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+      title={adminMode && adminModeUser ? `Dashboard de ${adminModeUser.name || adminModeUser.email}` : 'Dashboard'}
+      subtitle="Gestiona tus roasts, Shield y cuentas conectadas"
+    >
       {/* Admin Mode Banner - Issue #240 */}
       {adminMode && (
         <div className="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-400 p-4 mb-6">
@@ -749,15 +754,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-
-      {/* Dashboard Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {adminMode && adminModeUser ? `Dashboard de ${adminModeUser.name || adminModeUser.email}` : 'Dashboard'}
-          </h1>
-        </div>
-      </div>
 
       {/* Usage Cards */}
       <div className={`flex gap-6 mb-8 ${isSidebarVisible ? 'flex-row' : 'flex-col'}`}>
@@ -1249,6 +1245,6 @@ export default function Dashboard() {
           onClose={handleCloseModal}
         />
       )}
-    </div>
+    </PageLayout>
   );
 }

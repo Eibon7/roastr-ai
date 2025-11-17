@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import PageLayout from '../components/roastr/PageLayout';
 import { Send, Sparkles, Eye, Save } from 'lucide-react';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { useToast } from '../hooks/use-toast';
@@ -250,29 +251,18 @@ export default function Compose() {
     }
   };
 
+  const metrics = [
+    ...(analysisRemaining !== null ? [{ label: 'Análisis restantes', value: analysisRemaining }] : []),
+    ...(roastsRemaining !== null ? [{ label: 'Roasts restantes', value: roastsRemaining }] : []),
+    ...(tokensUsed > 0 ? [{ label: 'Tokens usados', value: tokensUsed }] : []),
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Compose Roast</h1>
-        <p className="text-muted-foreground">
-          Generate and send AI-powered roasts to your social media platforms
-        </p>
-        {/* Credit Display */}
-        {(analysisRemaining !== null || roastsRemaining !== null) && (
-          <div className="flex space-x-4 mt-2 text-sm text-muted-foreground">
-            {analysisRemaining !== null && (
-              <span>Análisis restantes: <Badge variant="outline">{analysisRemaining}</Badge></span>
-            )}
-            {roastsRemaining !== null && (
-              <span>Roasts restantes: <Badge variant="outline">{roastsRemaining}</Badge></span>
-            )}
-            {tokensUsed > 0 && (
-              <span>Tokens usados: <Badge variant="secondary">{tokensUsed}</Badge></span>
-            )}
-          </div>
-        )}
-      </div>
+    <PageLayout
+      title="Compose Roast"
+      subtitle="Genera y envía roasts impulsados por IA a tus redes sociales"
+      metrics={metrics.length > 0 ? metrics : undefined}
+    >
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Compose Form */}
@@ -488,6 +478,6 @@ export default function Compose() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   );
 }
