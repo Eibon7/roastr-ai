@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import PageLayout from '../components/roastr/PageLayout';
 import { 
   CheckCircle, 
   ExternalLink, 
@@ -74,7 +75,6 @@ export default function Connect() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Connected to', platform, ':', data.data.message);
         
         // Update integration status
         await fetchIntegrationStatus();
@@ -114,7 +114,6 @@ export default function Connect() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Import started for', platform, ':', data.data.message);
         
         // Simulate progress updates
         simulateImportProgress(platform, data.data.imported);
@@ -192,24 +191,24 @@ export default function Connect() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="text-center">
+      <PageLayout
+        title="Connect Your Platforms"
+        subtitle="Conecta tus cuentas de redes sociales para análisis de estilo"
+      >
+        <div className="text-center py-12">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Loading platforms...</p>
+          <p className="text-muted-foreground">Cargando plataformas...</p>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Connect Your Platforms</h1>
-        <p className="text-muted-foreground text-lg">
-          Connect your social media accounts and import your content for style analysis
-        </p>
-      </div>
+    <PageLayout
+      title="Connect Your Platforms"
+      subtitle="Conecta tus redes sociales e importa contenido para análisis"
+      metrics={[{ label: 'Listas para análisis', value: getConnectedPlatformsWithData().length }]}
+    >
 
       {/* Progress Overview */}
       <Card className="bg-blue-50 border-blue-200">
@@ -420,6 +419,6 @@ export default function Connect() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   );
 }
