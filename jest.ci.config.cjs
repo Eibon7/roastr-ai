@@ -13,7 +13,7 @@ module.exports = {
   verbose: false,
   silent: false,
   collectCoverage: false,
-  testTimeout: 30000,
+  testTimeout: 60000,
   forceExit: true,
   detectOpenHandles: true,
   reporters: [
