@@ -1,11 +1,18 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import Analytics from '../Analytics';
+import { PageLayoutProvider } from '../../components/roastr/PageLayoutContext';
 
 jest.mock('react-chartjs-2', () => ({
   Line: () => <div data-testid="line-chart" />,
   Doughnut: () => <div data-testid="doughnut-chart" />,
   Bar: () => <div data-testid="bar-chart" />
+}));
+
+// Mock components that use @/lib/utils alias
+jest.mock('../../components/roastr/PageLayout', () => ({
+  __esModule: true,
+  default: ({ children }) => <div>{children}</div>
 }));
 
 describe('Analytics Page', () => {
@@ -57,7 +64,11 @@ describe('Analytics Page', () => {
         json: async () => ({ success: true, data: mockBilling })
       });
 
-    render(<Analytics />);
+    render(
+      <PageLayoutProvider>
+        <Analytics />
+      </PageLayoutProvider>
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/Roasts generados/i)).toBeInTheDocument();
@@ -79,7 +90,11 @@ describe('Analytics Page', () => {
         json: async () => ({ success: true, data: { polar: { available: false }, localCosts: { total_cost_cents: 0 } } })
       });
 
-    render(<Analytics />);
+    render(
+      <PageLayoutProvider>
+        <Analytics />
+      </PageLayoutProvider>
+    );
 
     await waitFor(
       () => {

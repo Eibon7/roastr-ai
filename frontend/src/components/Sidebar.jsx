@@ -6,7 +6,8 @@ import {
   ShoppingBag,
   Menu,
   X,
-  Flame
+  Flame,
+  BarChart3
 } from 'lucide-react';
 import useFeatureFlags from '../hooks/useFeatureFlags';
 import { useSidebar } from '../contexts/SidebarContext';
@@ -32,6 +33,12 @@ const conditionalNavItems = [
     path: '/shop',
     icon: ShoppingBag,
     requiresFlag: ['ENABLE_SHOP', 'shop_enabled'] // Support both flag names
+  },
+  {
+    name: 'Analytics',
+    path: '/analytics',
+    icon: BarChart3,
+    requiresFlag: 'ENABLE_ANALYTICS_UI'
   }
 ];
 
