@@ -283,6 +283,83 @@ class AnalysisDecisionEngine {
       );
     }
 
+    // RULE 0.5: Brand Safety - Sponsor Protection (Issue #859)
+    if (userContext.sponsorMatch?.matched) {
+      const sponsor = userContext.sponsorMatch.sponsor;
+      
+      logger.info('Brand Safety: Sponsor mention detected in toxic comment', {
+        sponsor: sponsor.name,
+        severity: sponsor.severity,
+        matchType: userContext.sponsorMatch.matchType,
+        final_toxicity
+      });
+
+      // Zero tolerance sponsors: immediate SHIELD
+      if (sponsor.severity === 'zero_tolerance') {
+        return this.createShieldDecision(
+          'Brand Safety: Zero Tolerance Sponsor Violation',
+          ['hide_comment', 'block_user', 'sponsor_protection', ...sponsor.actions],
+          'critical',
+          gatekeeperData,
+          perspectiveData,
+          platformViolations,
+          combinedScores,
+          thresholds,
+          userContext,
+          {
+            brand_safety: {
+              sponsor: sponsor.name,
+              severity: sponsor.severity,
+              tone: sponsor.tone,
+              matchType: userContext.sponsorMatch.matchType
+            }
+          }
+        );
+      }
+
+      // Other severities: Adjust toxicity threshold to make SHIELD more sensitive
+      const severityAdjustment = {
+        'high': -0.2,    // Lower threshold by 0.2 (more sensitive)
+        'medium': -0.1,  // Lower threshold by 0.1
+        'low': -0.05     // Minimal adjustment
+      };
+
+      const adjustment = severityAdjustment[sponsor.severity] || 0;
+      const adjustedThreshold = thresholds.tau_shield + adjustment;
+
+      // If adjusted threshold triggers SHIELD
+      if (final_toxicity >= adjustedThreshold) {
+        return this.createShieldDecision(
+          `Brand Safety: ${sponsor.severity} sponsor protection triggered`,
+          ['hide_comment', 'sponsor_protection', ...sponsor.actions],
+          'high',
+          gatekeeperData,
+          perspectiveData,
+          platformViolations,
+          combinedScores,
+          thresholds,
+          userContext,
+          {
+            brand_safety: {
+              sponsor: sponsor.name,
+              severity: sponsor.severity,
+              tone: sponsor.tone,
+              matchType: userContext.sponsorMatch.matchType,
+              threshold_adjustment: adjustment
+            }
+          }
+        );
+      }
+
+      // If not SHIELD-worthy but sponsor has def_roast or agg_roast actions
+      if (sponsor.actions.includes('def_roast') || sponsor.actions.includes('agg_roast')) {
+        // Mark for defensive roast generation
+        combinedScores.brand_safety_roast = true;
+        combinedScores.sponsor_tone = sponsor.tone;
+        combinedScores.sponsor_name = sponsor.name;
+      }
+    }
+
     // RULE 1: MALICIOUS classification (prompt injection)
     if (classification === 'MALICIOUS' || is_prompt_injection) {
       // Check if there are ALSO platform violations
@@ -443,7 +520,8 @@ class AnalysisDecisionEngine {
     platformViolations,
     combinedScores,
     thresholds,
-    userContext
+    userContext,
+    extraMetadata = {} // Issue #859: Brand Safety metadata
   ) {
     return {
       direction: 'SHIELD',
@@ -465,6 +543,7 @@ class AnalysisDecisionEngine {
           severe_toxicity_score: perspectiveData.severe_toxicity_score,
           flagged_categories: perspectiveData.flagged_categories
         },
+        ...extraMetadata, // Issue #859: Brand Safety - Merge extra metadata
         decision: {
           severity_level: severity,
           primary_reason: reason,
@@ -494,37 +573,49 @@ class AnalysisDecisionEngine {
     thresholds,
     userContext
   ) {
+    // Issue #859: Brand Safety - Include sponsor metadata if roasting with defensive tone
+    const metadata = {
+      security: {
+        classification: gatekeeperData.classification,
+        is_prompt_injection: gatekeeperData.is_prompt_injection,
+        injection_score: gatekeeperData.injection_score,
+        injection_patterns: [],
+        injection_categories: []
+      },
+      toxicity: {
+        toxicity_score: perspectiveData.toxicity_score,
+        threat_score: perspectiveData.threat_score,
+        identity_attack_score: perspectiveData.identity_attack_score,
+        insult_score: perspectiveData.insult_score,
+        profanity_score: perspectiveData.profanity_score,
+        severe_toxicity_score: perspectiveData.severe_toxicity_score,
+        flagged_categories: perspectiveData.flagged_categories
+      },
+      decision: {
+        severity_level: severity,
+        primary_reason: reason,
+        secondary_reasons: [],
+        thresholds_used: thresholds,
+        persona_adjusted: false, // TODO: Set to true when persona adjustment logic is implemented
+        reincidence_factor: userContext.reincidenceFactor || 0,
+        roast_style: roastStyle
+      },
+      platform_violations: platformViolations
+    };
+
+    // Issue #859: Add brand_safety metadata if sponsor protection roast is requested
+    if (combinedScores.brand_safety_roast) {
+      metadata.brand_safety = {
+        sponsor: combinedScores.sponsor_name,
+        tone: combinedScores.sponsor_tone,
+        defensive_roast: true
+      };
+    }
+
     return {
       direction: 'ROAST',
       action_tags: actionTags,
-      metadata: {
-        security: {
-          classification: gatekeeperData.classification,
-          is_prompt_injection: gatekeeperData.is_prompt_injection,
-          injection_score: gatekeeperData.injection_score,
-          injection_patterns: [],
-          injection_categories: []
-        },
-        toxicity: {
-          toxicity_score: perspectiveData.toxicity_score,
-          threat_score: perspectiveData.threat_score,
-          identity_attack_score: perspectiveData.identity_attack_score,
-          insult_score: perspectiveData.insult_score,
-          profanity_score: perspectiveData.profanity_score,
-          severe_toxicity_score: perspectiveData.severe_toxicity_score,
-          flagged_categories: perspectiveData.flagged_categories
-        },
-        decision: {
-          severity_level: severity,
-          primary_reason: reason,
-          secondary_reasons: [],
-          thresholds_used: thresholds,
-          persona_adjusted: false, // TODO: Set to true when persona adjustment logic is implemented
-          reincidence_factor: userContext.reincidenceFactor || 0,
-          roast_style: roastStyle
-        },
-        platform_violations: platformViolations
-      },
+      metadata,
       scores: combinedScores
     };
   }
