@@ -1,12 +1,12 @@
 module.exports = {
   babel: {
-    plugins: [
-      // Solo habilitar React Refresh en desarrollo
-      process.env.NODE_ENV === 'development' && 'react-refresh/babel',
-    ].filter(Boolean),
+    // Desactivar React Refresh completamente para evitar conflictos en CI
+    plugins: [],
   },
   webpack: {
     configure: (config) => {
+      const path = require('path');
+      
       config.resolve.fallback = {
         ...(config.resolve.fallback || {}),
         ws: false,
@@ -15,6 +15,7 @@ module.exports = {
       };
       config.resolve.alias = {
         ...(config.resolve.alias || {}),
+        '@': path.resolve(__dirname, 'src'),
         ws: false,
       };
       config.ignoreWarnings = [
