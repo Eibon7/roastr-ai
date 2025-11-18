@@ -488,7 +488,7 @@ describe('SponsorService', () => {
     it('should return no match when no sponsors mentioned', async () => {
       const comment = 'This is a normal comment';
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: ['sportswear'], severity: 'high', tone: 'professional', actions: [] }
+        { id: 'sponsor-1', name: 'Nike', tags: ['sportswear'], severity: 'high', tone: 'professional', actions: [], active: true }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);
@@ -508,7 +508,7 @@ describe('SponsorService', () => {
 
     it('should handle null/undefined comment', async () => {
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [] }
+        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [], active: true }
       ];
 
       const result = await sponsorService.detectSponsorMention(null, sponsors);
@@ -519,7 +519,7 @@ describe('SponsorService', () => {
     it('should handle sponsors with empty tags gracefully', async () => {
       const comment = 'Sportswear brands are overpriced';
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [] }
+        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [], active: true }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);
