@@ -673,7 +673,7 @@ function getDefaultPlatformConfig(platform) {
   const configs = {
     twitter: {
       tone: 'witty',
-      humorType: 'clever',
+      // Issue #868: Removed humorType,
       responseFrequency: 0.6,
       autoReply: true,
       shieldActions: {
@@ -695,7 +695,7 @@ function getDefaultPlatformConfig(platform) {
     },
     youtube: {
       tone: 'friendly',
-      humorType: 'playful',
+      // Issue #868: Removed humorType,
       responseFrequency: 0.4,
       autoReply: true,
       shieldActions: {
@@ -717,7 +717,7 @@ function getDefaultPlatformConfig(platform) {
     },
     instagram: {
       tone: 'stylish',
-      humorType: 'visual',
+      // Issue #868: Removed humorType,
       responseFrequency: 0.3,
       autoReply: false,
       shieldActions: {
@@ -739,7 +739,7 @@ function getDefaultPlatformConfig(platform) {
     },
     facebook: {
       tone: 'professional',
-      humorType: 'subtle',
+      // Issue #868: Removed humorType,
       responseFrequency: 0.2,
       autoReply: false,
       shieldActions: {
@@ -761,7 +761,7 @@ function getDefaultPlatformConfig(platform) {
     },
     bluesky: {
       tone: 'quirky',
-      humorType: 'nerdy',
+      // Issue #868: Removed humorType,
       responseFrequency: 0.7,
       autoReply: true,
       shieldActions: {
@@ -785,7 +785,7 @@ function getDefaultPlatformConfig(platform) {
 
   return configs[platform] || {
     tone: 'neutral',
-    humorType: 'general',
+    // Issue #868: Removed humorType,
     responseFrequency: 0.5,
     autoReply: false,
     shieldActions: {
