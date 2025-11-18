@@ -388,6 +388,9 @@ class GenerateReplyWorker extends BaseWorker {
     // Fetch user's Roastr Persona data for enhanced response generation (Issue #81)
     const personaData = await this.fetchPersonaData(organization_id);
     
+    // Extract brand_safety metadata if present (Issue #859)
+    const brand_safety = job.payload.brand_safety || null;
+    
     // Generate response
     const startTime = Date.now();
     const response = await this.generateResponse(
@@ -398,7 +401,8 @@ class GenerateReplyWorker extends BaseWorker {
         severity_level,
         categories,
         platform,
-        personaData // Include persona data in context
+        personaData, // Include persona data in context
+        brand_safety // Issue #859: Brand Safety for defensive roasts
       }
     );
     const generationTime = Date.now() - startTime;
@@ -881,7 +885,7 @@ class GenerateReplyWorker extends BaseWorker {
    */
   async generateOpenAIResponse(originalText, config, context) {
     const { tone, humor_type } = config;
-    const { platform, severity_level, toxicity_score, categories, personaData } = context;
+    const { platform, severity_level, toxicity_score, categories, personaData, brand_safety } = context;
 
     // Track which persona fields will be used (Issue #81)
     const personaFieldsUsed = {
@@ -920,7 +924,8 @@ class GenerateReplyWorker extends BaseWorker {
           categories: categories || []
         },
         userConfig,
-        includeReferences: true // Include references by default in worker
+        includeReferences: true, // Include references by default in worker
+        brand_safety // Issue #859: Brand Safety for defensive roasts
       });
     } catch (err) {
       // FIX: Critical fixes from CodeRabbit review (outside diff)

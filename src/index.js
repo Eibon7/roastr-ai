@@ -74,6 +74,7 @@ const personaRoutes = require('./routes/persona');
 const checkoutRoutes = require('./routes/checkout');
 const polarWebhookRoutes = require('./routes/polarWebhook');
 const creditsRoutes = require('./routes/credits'); // QW9: Add credits router
+const sponsorsRoutes = require('./routes/sponsors'); // Issue #859: Brand Safety for Sponsors (Plan Plus)
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -316,6 +317,9 @@ app.use('/api/triage', triageRoutes);
 
 // Persona routes (for Issue #595) - authenticated access
 app.use(personaRoutes);
+
+// Sponsors routes (for Issue #859) - authenticated access + Plus plan gating
+app.use('/api/sponsors', sponsorsRoutes);
 
 // Polar checkout routes - public access (handles its own auth)
 app.use('/api', checkoutRoutes);

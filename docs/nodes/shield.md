@@ -4,10 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-28
+**Last Updated:** 2025-11-17
 **Coverage:** 86%
 **Coverage Source:** auto
-**Related PRs:** #499, #587 (Issue #487 - Flow Validation Complete), #617 (Flow Validation Dashboard + Validation Script), #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback)
+**Related PRs:** #499, #587 (Issue #487 - Flow Validation Complete), #617 (Flow Validation Dashboard + Validation Script), #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback), #865 (Issue #859 - Brand Safety for Sponsors)
 
 ## Dependencies
 
@@ -1165,6 +1165,169 @@ const stats = await shieldService.getShieldStats('org_123', 30);
 - [x] Real-time dashboard for Shield operations (✅ Completed in #617: ShieldValidation dashboard)
 - [ ] Integration with external moderation services (ModAPI, Hive)
 
+---
+
+## Brand Safety for Sponsors (Plan Plus) - Issue #859
+
+### Overview
+
+Brand Safety allows Plus plan users to configure sponsors/brands to protect from offensive comments. When a comment mentions a sponsor and contains toxicity, automated actions are triggered based on configurable severity levels.
+
+### Sponsor Configuration
+
+Sponsors are configured per-user with the following properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | String | Sponsor name (required, unique per user) |
+| `url` | String | Sponsor website URL (optional, for tag extraction) |
+| `tags` | Array<String> | Keywords/tags to detect (e.g., ["sportswear", "sneakers"]) |
+| `severity` | Enum | Protection level: `low`, `medium`, `high`, `zero_tolerance` |
+| `tone` | Enum | Roast tone override: `normal`, `professional`, `light_humor`, `aggressive_irony` |
+| `priority` | Integer | Conflict resolution priority (1=highest, 5=lowest) |
+| `actions` | Array<String> | Actions to take: `hide_comment`, `block_user`, `def_roast`, `agg_roast`, `report`, `sponsor_protection` |
+| `active` | Boolean | Enable/disable sponsor protection |
+
+### Detection Flow
+
+1. **Comment Analysis** (AnalyzeToxicityWorker)
+   - Before toxicity analysis, fetch active sponsors for organization owner
+   - Detect sponsor mentions in comment text (exact match, tag match)
+   - Add `sponsors` and `sponsorMatch` to `userContext`
+
+2. **Decision Matrix** (AnalysisDecisionEngine - RULE 0.5)
+   - **Zero Tolerance**: Immediate SHIELD with `block_user` + `hide_comment` + `sponsor_protection`
+   - **High Severity**: Threshold adjustment -0.2 (more sensitive), apply sponsor actions if triggered
+   - **Medium Severity**: Threshold adjustment -0.1, apply sponsor actions if triggered
+   - **Low Severity**: Threshold adjustment -0.05, monitoring only
+
+3. **Action Execution** (ShieldService)
+   - Execute sponsor-defined actions via platform integrations
+   - Tag actions with `sponsor_protection` for analytics
+   - Log sponsor match details for reporting
+
+### Shield Actions
+
+When a sponsor match triggers SHIELD, the following actions are available:
+
+- **`hide_comment`**: Hide the offending comment from public view
+- **`block_user`**: Block the user from future interactions
+- **`def_roast`**: Generate defensive roast (requires Roast integration)
+- **`agg_roast`**: Generate aggressive roast (requires Roast integration)
+- **`report`**: Report to platform moderation
+- **`sponsor_protection`**: Tag for analytics and reporting
+
+### Roast Integration
+
+When sponsor actions include `def_roast` or `agg_roast`, the roast generation system:
+1. Receives `brand_safety` metadata in job payload
+2. Includes sponsor context in cacheable prompt blocks (A/B/C)
+3. Applies tone override:
+   - `professional` → Measured, diplomatic, factual
+   - `light_humor` → Lighthearted, playful, non-confrontational
+   - `aggressive_irony` → Sharp, cutting, marked irony
+
+See `roast.md` for detailed roast integration.
+
+### Cost Control
+
+Tag extraction from sponsor URLs uses OpenAI GPT-4o:
+- **Operation**: `extract_sponsor_tags`
+- **Cost**: 2 cents per extraction
+- **Rate Limit**: 5 requests/min per user
+- **Resource Type**: `ai_operations`
+
+### API Endpoints
+
+- `POST /api/sponsors` - Create sponsor
+- `GET /api/sponsors` - List sponsors (sorted by priority)
+- `GET /api/sponsors/:id` - Get single sponsor
+- `PUT /api/sponsors/:id` - Update sponsor
+- `DELETE /api/sponsors/:id` - Delete sponsor
+- `POST /api/sponsors/extract-tags` - Extract tags from URL (rate limited)
+
+**Access Control**: Authentication required + Plus plan gating
+
+### Example Flow
+
+```
+1. User creates sponsor:
+   POST /api/sponsors
+   {
+     "name": "Nike",
+     "url": "https://www.nike.com",
+     "severity": "high",
+     "tone": "professional",
+     "priority": 1,
+     "actions": ["hide_comment", "def_roast"]
+   }
+
+2. Toxic comment received: "Nike is a scam brand, terrible quality"
+
+3. AnalyzeToxicityWorker:
+   - Detect sponsor match: Nike (exact match)
+   - toxicity_score: 0.65
+   - Apply threshold adjustment: 0.8 - 0.2 = 0.6 (high severity)
+   - Decision: SHIELD (0.65 >= 0.6)
+
+4. AnalysisDecisionEngine:
+   - RULE 0.5: Sponsor Protection
+   - Create SHIELD decision with actions: ["hide_comment", "sponsor_protection"]
+   - Include brand_safety metadata:
+     {
+       sponsor: "Nike",
+       severity: "high",
+       tone: "professional",
+       matchType: "exact",
+       threshold_adjustment: -0.2
+     }
+
+5. ShieldService:
+   - Execute hide_comment via platform integration
+   - Tag action with sponsor_protection for analytics
+
+6. Generate defensive roast (if def_roast action):
+   - GenerateReplyWorker receives brand_safety metadata
+   - Apply tone override: professional
+   - Include sponsor context in prompt
+   - Generate measured, diplomatic roast defending Nike
+```
+
+### Metadata Structure
+
+**SHIELD Decision:**
+```json
+{
+  "direction": "SHIELD",
+  "action_tags": ["hide_comment", "block_user", "sponsor_protection"],
+  "metadata": {
+    "brand_safety": {
+      "sponsor": "Nike",
+      "severity": "zero_tolerance",
+      "tone": "professional",
+      "matchType": "exact",
+      "threshold_adjustment": null
+    }
+  }
+}
+```
+
+**ROAST Decision:**
+```json
+{
+  "direction": "ROAST",
+  "action_tags": ["generate_reply", "defensive_roast"],
+  "metadata": {
+    "brand_safety": {
+      "sponsor": "Nike",
+      "tone": "professional",
+      "defensive_roast": true
+    }
+  }
+}
+```
+
+---
 
 ## Agentes Relevantes
 
