@@ -565,8 +565,8 @@ const Settings = () => {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </SettingsSection>
         </TabsContent>
 
         {/* Adjustments Tab - Use existing AjustesSettings component */}
