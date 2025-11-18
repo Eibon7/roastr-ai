@@ -15,7 +15,6 @@
 ## Dependencies
 
 - `persona` - User personality and roast style configuration
-- `tone` - Tone mapping and humor type configuration
 - `platform-constraints` - Platform-specific character limits and style guides
 - `shield` - Automated content moderation with escalating actions
 - `cost-control` - Usage tracking, billing integration, and limit enforcement
@@ -190,26 +189,32 @@ Any Fail? → Regenerate with feedback
 Max Attempts Reached? → Fallback roast
 ```
 
-## Voice Styles (SPEC 7)
+## Voice Styles (SPEC 7, Issue #868)
 
-**Feature:** Predefined voice styles per language
-**Implementation:** `RoastEngine.voiceStyles`
+**Feature:** Predefined voice styles per language  
+**Implementation:** `RoastEngine.voiceStyles`  
+**IMPORTANTE:** Solo tone define la agresividad. **Eliminado:** Humor Type e Intensity Level (redundantes).
 
-### Spanish (ES)
+### Spanish (ES) - Tonos Oficiales
 
-| Style | Name | Description | Intensity |
-|-------|------|-------------|-----------|
-| `flanders` | Flanders | Tono amable pero con ironía sutil | 2/5 |
-| `balanceado` | Balanceado | Equilibrio entre ingenio y firmeza | 3/5 |
-| `canalla` | Canalla | Directo y sin filtros, más picante | 4/5 |
+| Style | Name | Description | Intensidad Equivalente |
+|-------|------|-------------|----------------------|
+| `flanders` | Flanders | Tono amable pero con ironía sutil | 2/5 (suave) |
+| `balanceado` | Balanceado | Equilibrio entre ingenio y firmeza | 3/5 (medio) |
+| `canalla` | Canalla | Directo y sin filtros, más picante | 4/5 (fuerte) |
 
-### English (EN)
+### English (EN) - Official Tones
 
-| Style | Name | Description | Intensity |
-|-------|------|-------------|-----------|
-| `light` | Light | Gentle wit with subtle irony | 2/5 |
-| `balanced` | Balanced | Perfect mix of humor and firmness | 3/5 |
-| `savage` | Savage | Direct and unfiltered, maximum impact | 4/5 |
+| Style | Name | Description | Equivalent Intensity |
+|-------|------|-------------|---------------------|
+| `light` | Light | Gentle wit with subtle irony | 2/5 (soft) |
+| `balanced` | Balanced | Perfect mix of humor and firmness | 3/5 (medium) |
+| `savage` | Savage | Direct and unfiltered, maximum impact | 4/5 (strong) |
+
+**Notas:**
+- ✅ Tone es el **único selector** de agresividad
+- ❌ Eliminado: Humor Type (witty, clever, playful) - redundante con Style Profile
+- ❌ Eliminado: Intensity Level (1-5) - redundante con Tone
 
 ## Version Control (1-2 Versions)
 
@@ -1063,7 +1068,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 ## Related Nodes
 
 - **persona** - User personality configuration and style preferences
-- **tone** - Tone mapping system for humor type and intensity
 - **platform-constraints** - Character limits and platform-specific rules
 - **shield** - Post-generation safety validation and actions
 - **cost-control** - Usage tracking and billing enforcement
@@ -1072,5 +1076,5 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 **Maintained by:** Backend Developer
 **Review Frequency:** Bi-weekly or on major feature changes
-**Last Reviewed:** 2025-10-03
-**Version:** 1.0.0
+**Last Reviewed:** 2025-11-18 (Issue #868: Eliminated Humor Type & Intensity Level)
+**Version:** 2.0.0

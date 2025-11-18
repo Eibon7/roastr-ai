@@ -877,7 +877,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 ## Related Nodes
 
 - **plan-features** - Subscription plan access control for persona features
-- **tone** - Tone mapping system uses persona for humor type
 - **roast** - Roast generation integrates persona for personalization
 - **shield** - Semantic blocking uses intolerance embeddings
 
@@ -885,5 +884,5 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 **Maintained by:** Back-end Dev Agent
 **Review Frequency:** Monthly or on persona feature changes
-**Last Reviewed:** 2025-11-06
-**Version:** 1.0.0
+**Last Reviewed:** 2025-11-18 (Issue #868: Eliminated Humor Type references)
+**Version:** 1.1.0

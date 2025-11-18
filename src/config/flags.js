@@ -67,8 +67,10 @@ class FeatureFlags {
       // Credits v2 Feature
       ENABLE_CREDITS_V2: this.parseFlag(process.env.ENABLE_CREDITS_V2),
 
-      // Custom Prompt Feature
-      ENABLE_CUSTOM_PROMPT: this.parseDevelopmentFlag(process.env.ENABLE_CUSTOM_PROMPT, isProduction), // Default disabled, requires explicit activation - under development
+      // Custom Style Prompt Feature (Issue #868: Feature Flag)
+      // Permite Custom Style Prompt SOLO con flag + Plus plan
+      // Default: FALSE - No aparece en UI ni onboarding
+      ENABLE_CUSTOM_PROMPT: this.parseDevelopmentFlag(process.env.ENABLE_CUSTOM_PROMPT, isProduction), // Default disabled, requires explicit activation
 
       // UI Platform Features (separate from API integration)
       ENABLE_FACEBOOK_UI: this.parseDevelopmentFlag(process.env.ENABLE_FACEBOOK_UI, isProduction), // Default disabled - under development

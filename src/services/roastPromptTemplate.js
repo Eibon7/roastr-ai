@@ -43,8 +43,7 @@ const { getPlatformLimit, validateRoastForPlatform } = require('../config/platfo
  *   originalComment: "Esta aplicación es horrible",
  *   toxicityData: { score: 0.8, categories: ['TOXICITY'] },
  *   userConfig: { 
- *     tone: 'sarcastic',
- *     intensity_level: 3,
+ *     tone: 'balanceado', // Issue #868: Solo tone, sin intensity
  *     platform: 'twitter'
  *   },
  *   includeReferences: true
@@ -316,20 +315,9 @@ class RoastPromptTemplate {
    * @returns {string} Descriptive tone
    */
   mapUserTone(config) {
-    let tone = constants.TONE_MAP[config.tone] || constants.TONE_MAP.sarcastic;
-    
-    if (config.humor_type && constants.HUMOR_MAP[config.humor_type]) {
-      tone += ` ${constants.HUMOR_MAP[config.humor_type]}`;
-    }
-
-    // Add intensity level description
-    if (config.intensity_level) {
-      if (config.intensity_level <= 2) {
-        tone += ', suave y amigable';
-      } else if (config.intensity_level >= 4) {
-        tone += ', directo y sin filtros';
-      }
-    }
+    // Issue #868: Eliminado humor_type e intensity_level
+    // Solo tone define la agresividad (Flanders, Balanceado, Canalla)
+    let tone = constants.TONE_MAP[config.tone] || constants.TONE_MAP.balanceado;
 
     // Add custom style if available
     if (config.custom_style_prompt) {

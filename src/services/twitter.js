@@ -20,8 +20,8 @@ class TwitterRoastBot extends BaseIntegration {
       // Fallback config if integrations config is not available
       twitterConfig = {
         enabled: true,
-        tone: 'sarcastic',
-        humorType: 'witty',
+        tone: 'balanceado', // Issue #868: Default to balanceado
+        // humorType removed (Issue #868)
         responseFrequency: 1.0,
         triggerWords: ['roast', 'burn', 'insult']
       };
