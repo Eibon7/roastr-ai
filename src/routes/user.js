@@ -750,7 +750,7 @@ router.post('/preferences', authenticateToken, async (req, res) => {
                                 enabled: false, // User needs to manually connect
                                 settings: {
                                     tone: humor_tone,
-                                    humor_type: humor_style,
+                                    // Issue #868: Removed humor_type (deprecated)
                                     response_frequency,
                                     auto_respond,
                                     shield_enabled,
@@ -3218,7 +3218,7 @@ router.get('/settings/style', authenticateToken, async (req, res) => {
                         style: data?.style || 'sarcastic',
                         settings: data?.settings || {
                             intensity: 3,
-                            humor_type: 'witty',
+                            // Issue #868: Removed humor_type (deprecated)
                             creativity: 3,
                             politeness: 2
                         },
@@ -3239,7 +3239,7 @@ router.get('/settings/style', authenticateToken, async (req, res) => {
                         style: 'sarcastic',
                         settings: {
                             intensity: 3,
-                            humor_type: 'witty',
+                            // Issue #868: Removed humor_type (deprecated)
                             creativity: 3,
                             politeness: 2
                         },
@@ -3306,7 +3306,7 @@ router.post('/settings/style', authenticateToken, async (req, res) => {
 
         // Validate settings if provided
         if (settings) {
-            const { intensity, humor_type, creativity, politeness } = settings;
+            const { intensity, creativity, politeness } = settings; // Issue #868: Removed humor_type
             
             if (intensity !== undefined && (intensity < 1 || intensity > 5)) {
                 return res.status(400).json({
@@ -3329,13 +3329,7 @@ router.post('/settings/style', authenticateToken, async (req, res) => {
                 });
             }
 
-            const validHumorTypes = ['witty', 'sarcastic', 'playful', 'dry', 'gentle', 'custom'];
-            if (humor_type && !validHumorTypes.includes(humor_type)) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Invalid humor type'
-                });
-            }
+            // Issue #868: Removed humor_type validation (deprecated)
         }
 
         if (flags.isEnabled('ENABLE_SUPABASE')) {
@@ -3347,7 +3341,7 @@ router.post('/settings/style', authenticateToken, async (req, res) => {
                         style: style,
                         settings: settings || {
                             intensity: 3,
-                            humor_type: 'witty',
+                            // Issue #868: Removed humor_type (deprecated)
                             creativity: 3,
                             politeness: 2
                         },
