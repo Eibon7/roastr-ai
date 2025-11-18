@@ -9,6 +9,7 @@
  * Related PR: #769
  */
 
+const crypto = require('crypto');
 const {
   createTestTenants,
   setTenantContext,
@@ -19,6 +20,14 @@ const {
 const { v4: uuidv4 } = require('uuid');
 
 jest.setTimeout(30000);
+
+function assertNoError(context, error) {
+  if (error) {
+    console.error(`❌ ${context} error:`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    const message = error.message || error.details || JSON.stringify(error);
+    throw new Error(`Failed to ${context}: ${message}`);
+  }
+}
 
 describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
   let tenantA, tenantB;
@@ -37,10 +46,10 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
       id: uuidv4(),
       organization_id: tenantA.id,
       platform: 'twitter',
-      external_comment_id: `tweet_${Date.now()}_A`,
-      external_author_id: 'twitter_user_A',
-      external_author_username: '@testuserA',
-      text: 'Test comment A',
+      platform_comment_id: `tweet_${Date.now()}_A`,
+      platform_user_id: 'twitter_user_A',
+      platform_username: '@testuserA',
+      original_text: 'Test comment A',
       toxicity_score: 0.95
     };
 
@@ -48,40 +57,50 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
       id: uuidv4(),
       organization_id: tenantB.id,
       platform: 'twitter',
-      external_comment_id: `tweet_${Date.now()}_B`,
-      external_author_id: 'twitter_user_B',
-      external_author_username: '@testuserB',
-      text: 'Test comment B',
+      platform_comment_id: `tweet_${Date.now()}_B`,
+      platform_user_id: 'twitter_user_B',
+      platform_username: '@testuserB',
+      original_text: 'Test comment B',
       toxicity_score: 0.92
     };
 
-    const { data: createdCommentA } = await serviceClient
+    const { data: createdCommentA, error: commentAError } = await serviceClient
       .from('comments')
       .insert(commentA)
       .select()
       .single();
 
-    const { data: createdCommentB } = await serviceClient
+    assertNoError('create comment A', commentAError);
+
+    const { data: createdCommentB, error: commentBError } = await serviceClient
       .from('comments')
       .insert(commentB)
       .select()
       .single();
 
+    assertNoError('create comment B', commentBError);
+
     commentA = createdCommentA;
     commentB = createdCommentB;
 
     // Create shield_actions records
+    // Note: shield_actions table structure: id, organization_id, action_type, content_hash, 
+    // content_snippet, platform, reason, created_at, reverted_at, updated_at, metadata
+    const contentHashA = crypto.createHash('sha256').update(commentA.original_text).digest('hex');
+    const contentHashB = crypto.createHash('sha256').update(commentB.original_text).digest('hex');
+
     shieldActionA = {
       id: uuidv4(),
       organization_id: tenantA.id,
       platform: 'twitter',
-      external_author_id: 'twitter_user_A',
-      external_author_username: '@testuserA',
       action_type: 'block',
-      action_status: 'completed',
-      comment_id: commentA.id,
-      reason: 'High toxicity detected',
+      content_hash: contentHashA,
+      content_snippet: commentA.original_text.substring(0, 100),
+      reason: 'toxic',
       metadata: {
+        comment_id: commentA.id,
+        platform_user_id: commentA.platform_user_id,
+        platform_username: commentA.platform_username,
         toxicity_score: 0.95,
         severity: 'high'
       }
@@ -91,29 +110,34 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
       id: uuidv4(),
       organization_id: tenantB.id,
       platform: 'twitter',
-      external_author_id: 'twitter_user_B',
-      external_author_username: '@testuserB',
       action_type: 'mute',
-      action_status: 'completed',
-      comment_id: commentB.id,
-      reason: 'Moderate toxicity detected',
+      content_hash: contentHashB,
+      content_snippet: commentB.original_text.substring(0, 100),
+      reason: 'toxic',
       metadata: {
+        comment_id: commentB.id,
+        platform_user_id: commentB.platform_user_id,
+        platform_username: commentB.platform_username,
         toxicity_score: 0.92,
         severity: 'medium'
       }
     };
 
-    const { data: actionA } = await serviceClient
+    const { data: actionA, error: actionAError } = await serviceClient
       .from('shield_actions')
       .insert(shieldActionA)
       .select()
       .single();
 
-    const { data: actionB } = await serviceClient
+    assertNoError('create shield_action A', actionAError);
+
+    const { data: actionB, error: actionBError } = await serviceClient
       .from('shield_actions')
       .insert(shieldActionB)
       .select()
       .single();
+
+    assertNoError('create shield_action B', actionBError);
 
     shieldActionA = actionA;
     shieldActionB = actionB;
@@ -193,15 +217,18 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
     });
 
     test('Tenant A cannot insert shield_actions for Tenant B', async () => {
+      const invalidHash = crypto.createHash('sha256').update('invalid content').digest('hex');
       const invalidAction = {
         organization_id: tenantB.id,
         platform: 'twitter',
-        external_author_id: 'twitter_user_X',
-        external_author_username: '@testuserX',
-        action_type: 'warn',
-        action_status: 'pending',
-        comment_id: commentB.id,
-        reason: 'Test cross-tenant insert'
+        action_type: 'block',
+        content_hash: invalidHash,
+        content_snippet: 'Invalid content',
+        reason: 'toxic',
+        metadata: {
+          platform_user_id: 'twitter_user_X',
+          platform_username: '@testuserX'
+        }
       };
 
       const { data, error } = await testClient
@@ -217,7 +244,7 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
     test('Tenant A cannot update Tenant B shield_actions', async () => {
       const { data, error } = await testClient
         .from('shield_actions')
-        .update({ action_status: 'failed' })
+        .update({ reason: 'spam' })
         .eq('id', shieldActionB.id)
         .select()
         .single();
@@ -256,15 +283,19 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
       expect(data.every(action => action.organization_id === tenantA.id)).toBe(true);
     });
 
-    test('Tenant A can filter shield_actions by external_author_id', async () => {
+    test('Tenant A can filter shield_actions by platform_user_id in metadata', async () => {
       const { data, error } = await testClient
         .from('shield_actions')
         .select('*')
-        .eq('external_author_id', 'twitter_user_A');
+        .eq('metadata->>platform_user_id', 'twitter_user_A');
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
-      expect(data.every(action => action.external_author_id === 'twitter_user_A')).toBe(true);
+      expect(data.length).toBeGreaterThan(0);
+      expect(data.every(action => {
+        const metadata = action.metadata || {};
+        return metadata.platform_user_id === 'twitter_user_A';
+      })).toBe(true);
       expect(data.every(action => action.organization_id === tenantA.id)).toBe(true);
     });
   });

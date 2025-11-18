@@ -47,23 +47,104 @@ const testUsers = [];
 const tenantUsers = new Map(); // Map<tenantId, userId> for JWT context
 let currentTenantContext = null;
 
+function ensureSuccess(action, error) {
+  if (error) {
+    const message = typeof error.message === 'string' ? error.message : JSON.stringify(error);
+    throw new Error(`Failed to ${action}: ${message}`);
+  }
+}
+
+async function ensureAuthUser(user, retries = 3) {
+  // First, try to get existing user to avoid duplicates
+  try {
+    const { data: existingUsers } = await serviceClient.auth.admin.listUsers();
+    const existing = existingUsers?.users?.find(u => u.email === user.email);
+    if (existing) {
+      logger.debug(`✅ Auth user ${user.email} already exists, reusing`);
+      return existing;
+    }
+  } catch (err) {
+    // If list fails, continue with creation
+    logger.debug(`⚠️  Could not check existing users: ${err.message}`);
+  }
+
+  const password = `TempPass-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const { data, error } = await serviceClient.auth.admin.createUser({
+      email: user.email,
+      password,
+      email_confirm: true,
+      user_metadata: { name: user.name }
+    });
+
+    if (!error) {
+      return data?.user;
+    }
+
+    // Check if it's a rate limit or duplicate error
+    const errorMsg = error.message?.toLowerCase() || '';
+    if (errorMsg.includes('already exists') || errorMsg.includes('duplicate')) {
+      // User already exists, try to get it
+      try {
+        const { data: existingUsers } = await serviceClient.auth.admin.listUsers();
+        const existing = existingUsers?.users?.find(u => u.email === user.email);
+        if (existing) {
+          logger.debug(`✅ Auth user ${user.email} exists (duplicate detected), reusing`);
+          return existing;
+        }
+      } catch (err) {
+        // If we can't find it, continue to next attempt
+      }
+    }
+
+    // If it's a rate limit error and we have retries left, wait and retry
+    if ((errorMsg.includes('rate limit') || errorMsg.includes('too many requests')) && attempt < retries) {
+      const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s
+      logger.debug(`⏳ Rate limit hit, waiting ${waitTime}ms before retry ${attempt + 1}/${retries}`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      continue;
+    }
+
+    // If it's the last attempt or not a rate limit, throw
+    if (attempt === retries) {
+      ensureSuccess(`create auth user ${user.email}`, error);
+    }
+  }
+
+  throw new Error(`Failed to create auth user ${user.email} after ${retries} attempts`);
+}
+
 /**
  * Creates 2 test organizations with users
  */
 async function createTestTenants() {
   logger.debug('🏗️  Creating test tenants...');
 
-  // Create users first (required for owner_id FK)
+  // Use UUID + timestamp for truly unique identifiers to avoid collisions
+  const uniqueId = `${uuidv4().slice(0, 8)}-${Date.now()}`;
+
+  // Create users first (required for owner_id FK and auth.uid())
+  const authUserA = await ensureAuthUser({
+    email: `test-user-a-${uniqueId}@example.com`,
+    name: 'Test User A'
+  });
+
+  const authUserB = await ensureAuthUser({
+    email: `test-user-b-${uniqueId}@example.com`,
+    name: 'Test User B'
+  });
+
   const userA = {
-    id: uuidv4(),
-    email: `test-user-a-${Date.now()}@example.com`,
+    id: authUserA.id,
+    email: authUserA.email,
     name: 'Test User A',
     plan: 'basic'
   };
 
   const userB = {
-    id: uuidv4(),
-    email: `test-user-b-${Date.now()}@example.com`,
+    id: authUserB.id,
+    email: authUserB.email,
     name: 'Test User B',
     plan: 'basic'
   };
@@ -136,6 +217,25 @@ async function createTestTenants() {
   if (errorB) throw new Error(`Failed to create Tenant B: ${JSON.stringify(errorB)}`);
 
   testTenants.push(tenantA.id, tenantB.id);
+
+  const memberRows = [
+    {
+      organization_id: tenantA.id,
+      user_id: createdUserA.id,
+      role: 'owner'
+    },
+    {
+      organization_id: tenantB.id,
+      user_id: createdUserB.id,
+      role: 'owner'
+    }
+  ];
+
+  const { error: membersError } = await serviceClient
+    .from('organization_members')
+    .insert(memberRows);
+
+  ensureSuccess('register organization owners in organization_members', membersError);
 
   // Map tenants to their owner user IDs for JWT context
   tenantUsers.set(tenantA.id, createdUserA.id);
@@ -415,10 +515,14 @@ async function setTenantContext(tenantId) {
     { algorithm: 'HS256' }
   );
 
-  await testClient.auth.setSession({
+  const { error: sessionError } = await testClient.auth.setSession({
     access_token: token,
     refresh_token: 'fake-refresh-token'
   });
+
+  if (sessionError) {
+    throw new Error(`Failed to set tenant session: ${sessionError.message}`);
+  }
 
   currentTenantContext = tenantId;
 
@@ -467,17 +571,68 @@ async function cleanupTestData() {
   if (testTenants.length === 0 && testUsers.length === 0) return;
 
   // Issue #583: Clean up new tables (reverse FK order)
+  // Issue #787: Add RLS tables cleanup
+  await serviceClient.from('shield_actions').delete().in('organization_id', testTenants);
+  await serviceClient.from('plan_limits_audit').delete().in('organization_id', testTenants);
+  await serviceClient.from('plan_limits').delete().in('organization_id', testTenants);
+  await serviceClient.from('audit_logs').delete().in('organization_id', testTenants);
+  await serviceClient.from('admin_audit_logs').delete().in('organization_id', testTenants);
+  await serviceClient.from('feature_flags').delete().in('organization_id', testTenants);
+  await serviceClient.from('usage_alerts').delete().in('organization_id', testTenants);
+  await serviceClient.from('usage_limits').delete().in('organization_id', testTenants);
+  await serviceClient.from('usage_tracking').delete().in('organization_id', testTenants);
   await serviceClient.from('responses').delete().in('organization_id', testTenants);
   await serviceClient.from('roasts').delete().in('organization_id', testTenants);
   await serviceClient.from('comments').delete().in('organization_id', testTenants);
   await serviceClient.from('posts').delete().in('organization_id', testTenants);
   await serviceClient.from('user_activities').delete().in('organization_id', testTenants);
   await serviceClient.from('user_behaviors').delete().in('organization_id', testTenants);
+  await serviceClient.from('organization_members').delete().in('organization_id', testTenants);
   await serviceClient.from('monthly_usage').delete().in('organization_id', testTenants);
   await serviceClient.from('usage_records').delete().in('organization_id', testTenants);
   await serviceClient.from('integration_configs').delete().in('organization_id', testTenants);
   await serviceClient.from('organizations').delete().in('id', testTenants);
   await serviceClient.from('users').delete().in('id', testUsers);
+
+  // Clean up auth users with retry logic
+  const userIdsToDelete = [...new Set(testUsers)]; // Remove duplicates
+  for (const userId of userIdsToDelete) {
+    let deleted = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const { error } = await serviceClient.auth.admin.deleteUser(userId);
+        if (!error) {
+          deleted = true;
+          logger.debug(`✅ Deleted auth user ${userId}`);
+          break;
+        }
+        
+        // If user doesn't exist, that's fine
+        if (error.message?.includes('not found') || error.message?.includes('does not exist')) {
+          deleted = true;
+          logger.debug(`ℹ️  Auth user ${userId} already deleted`);
+          break;
+        }
+        
+        // If rate limited, wait and retry
+        if (error.message?.toLowerCase().includes('rate limit') && attempt < 3) {
+          const waitTime = Math.pow(2, attempt) * 1000;
+          logger.debug(`⏳ Rate limit during cleanup, waiting ${waitTime}ms before retry ${attempt + 1}/3`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+        
+        // Other errors: log and continue
+        logger.warn(`⚠️  Failed to delete auth user ${userId} (attempt ${attempt}/3): ${error.message}`);
+      } catch (error) {
+        logger.warn(`⚠️  Exception deleting auth user ${userId} (attempt ${attempt}/3): ${error.message}`);
+      }
+    }
+    
+    if (!deleted) {
+      logger.error(`❌ Failed to delete auth user ${userId} after 3 attempts - may need manual cleanup`);
+    }
+  }
 
   testTenants.length = 0;
   testUsers.length = 0;
