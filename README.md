@@ -26,13 +26,15 @@ npm install
 
 # Frontend
 cd frontend && npm install
-npm start  # Abre http://localhost:3001
+npm start  # Abre http://localhost:3001 (usa craco, no react-scripts)
 
 # Backend (nueva terminal)
 npm run start:api  # API en http://localhost:3000
 ```
 
 **¡No necesitas APIs externas!** El sistema funciona en **Mock Mode** por defecto.
+
+**Note:** Frontend now uses `@craco/craco` instead of `react-scripts`. See [Migration Guide](docs/migrations/react-scripts-to-craco.md) for details.
 
 ## 📊 Dashboard Frontend
 

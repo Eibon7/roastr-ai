@@ -69,6 +69,11 @@ const setCachedData = (key, data) => {
     });
 };
 
+// Clear cache function for testing
+const clearCache = () => {
+    analyticsCache.clear();
+};
+
 const router = express.Router();
 
 // Issue #164: Unified plan validation logic
@@ -190,11 +195,12 @@ const analyticsRateLimit = require('express-rate-limit')({
         // Note: Rate limiter doesn't support async, so use static limits
         const rateLimits = {
             'starter_trial': 10,
+            'starter': 10,
             'pro': 60,
-            'creator_plus': 300,
+            'plus': 300,  // was creator_plus (Issue #842 plan restructuring)
             'custom': 300
         };
-        return rateLimits[userPlan] || rateLimits.free;
+        return rateLimits[userPlan] ?? rateLimits.starter_trial;
     },
     message: {
         success: false,
@@ -1075,6 +1081,134 @@ function generatePersonaRecommendations(personaStatus, analytics) {
     }
     
     return recommendations;
+}
+
+// Issue #715: Analytics Dashboard endpoints
+const analyticsDashboardService = require('../services/analyticsDashboardService');
+
+/**
+ * GET /api/analytics/dashboard
+ * Get comprehensive dashboard analytics data
+ */
+router.get('/dashboard', async (req, res) => {
+    try {
+        const { user } = req;
+        const { range = 30, group_by = 'day', platform = 'all' } = req.query;
+
+        const rangeDays = validateInteger(range, 30, 7, 365);
+        const groupBy = validateString(group_by, 'day', 20);
+        const platformFilter = validateString(platform, 'all', 50);
+
+        const cacheKey = getCacheKey('dashboard', user.id, { rangeDays, groupBy, platformFilter });
+        const cached = getCachedData(cacheKey);
+
+        if (cached) {
+            logger.debug('Returning cached dashboard data', { userId: user.id });
+            return res.status(200).json(cached);
+        }
+
+        const dashboardData = await analyticsDashboardService.getDashboardData({
+            user,
+            rangeDays,
+            groupBy,
+            platformFilter
+        });
+
+        const response = {
+            success: true,
+            data: dashboardData
+        };
+
+        setCachedData(cacheKey, response);
+        res.status(200).json(response);
+
+    } catch (error) {
+        logger.error('Dashboard analytics error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to retrieve dashboard analytics'
+        });
+    }
+});
+
+/**
+ * GET /api/analytics/billing
+ * Get billing analytics with Polar integration
+ */
+router.get('/billing', async (req, res) => {
+    try {
+        const { user } = req;
+        const { range = 90 } = req.query;
+
+        const rangeDays = validateInteger(range, 90, 30, 365);
+
+        const billingData = await analyticsDashboardService.getBillingAnalytics({
+            user,
+            rangeDays
+        });
+
+        res.status(200).json({
+            success: true,
+            data: billingData
+        });
+
+    } catch (error) {
+        logger.error('Billing analytics error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to retrieve billing analytics'
+        });
+    }
+});
+
+/**
+ * GET /api/analytics/export
+ * Export analytics data as CSV or JSON
+ */
+router.get('/export', async (req, res) => {
+    try {
+        const { user } = req;
+        const { format = 'csv', dataset = 'snapshots', range = 90, locale = 'es-ES', timezone = 'UTC' } = req.query;
+
+        const rangeDays = validateInteger(range, 90, 7, 365);
+        const normalizedFormat = validateString(format, 'csv', 10).toLowerCase();
+        const normalizedDataset = validateString(dataset, 'snapshots', 20).toLowerCase();
+        const normalizedLocale = validateString(locale, 'es-ES', 10);
+        const normalizedTimezone = validateString(timezone, 'UTC', 50);
+
+        const exportResult = await analyticsDashboardService.exportAnalytics({
+            user,
+            format: normalizedFormat,
+            dataset: normalizedDataset,
+            rangeDays,
+            locale: normalizedLocale,
+            timezone: normalizedTimezone
+        });
+
+        res.setHeader('Content-Type', exportResult.contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${exportResult.filename}"`);
+        res.status(200).send(exportResult.body);
+
+    } catch (error) {
+        logger.error('Analytics export error:', error);
+
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                success: false,
+                error: error.message || 'Export failed'
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to export analytics data'
+        });
+    }
+});
+
+// Expose cache clearing function for tests
+if (process.env.NODE_ENV === 'test') {
+    router.__clearAnalyticsCache = clearCache;
 }
 
 module.exports = router;

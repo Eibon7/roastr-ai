@@ -9,6 +9,7 @@ const EmbeddingsService = require('../services/embeddingsService');
 const toxicityPatternsService = require('../services/toxicityPatternsService');
 const advancedLogger = require('../utils/advancedLogger');
 const PerspectiveService = require('../services/perspective');
+const SponsorService = require('../services/sponsorService'); // Issue #859: Brand Safety
 
 /**
  * Analyze Toxicity Worker
@@ -35,6 +36,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
     this.gatekeeperService = new GatekeeperService();
     this.embeddingsService = new EmbeddingsService();
     this.analysisDepartment = new AnalysisDepartmentService();
+    this.sponsorService = new SponsorService(); // Issue #859: Brand Safety
 
     // Initialize toxicity detection services
     this.initializeToxicityServices();
@@ -351,6 +353,42 @@ class AnalyzeToxicityWorker extends BaseWorker {
       };
     }
     
+    // ✅ ISSUE #859: Brand Safety - Detect sponsor mentions (non-blocking)
+    let sponsors = [];
+    let sponsorMatch = null;
+    try {
+      // Get organization owner ID to fetch their sponsors
+      const { data: org, error: orgError } = await this.supabase
+        .from('organizations')
+        .select('user_id')
+        .eq('id', organization_id)
+        .single();
+      
+      if (!orgError && org) {
+        // Fetch active sponsors for this organization's owner
+        sponsors = await this.sponsorService.getSponsors(org.user_id, false);
+        
+        // Detect if comment mentions any sponsor
+        if (sponsors.length > 0) {
+          sponsorMatch = await this.sponsorService.detectSponsorMention(commentText, sponsors);
+          
+          if (sponsorMatch.matched) {
+            this.logger.info(`[Brand Safety] Sponsor match detected in comment ${comment_id}`, {
+              sponsor: sponsorMatch.sponsor.name,
+              matchType: sponsorMatch.matchType,
+              severity: sponsorMatch.sponsor.severity
+            });
+          }
+        }
+      }
+    } catch (sponsorError) {
+      // Non-blocking: Log error but continue analysis
+      this.logger.error('[Brand Safety] Failed to detect sponsors, continuing analysis', {
+        error: sponsorError.message,
+        commentId: comment_id
+      });
+    }
+    
     // ✅ UNIFIED ANALYSIS DEPARTMENT (Issue #632)
     // Runs Gatekeeper + Perspective in PARALLEL
     const userContext = {
@@ -361,7 +399,9 @@ class AnalyzeToxicityWorker extends BaseWorker {
       tau_roast_lower: this.thresholds.low,
       tau_shield: this.thresholds.high,
       tau_critical: this.thresholds.critical,
-      autoApprove: false // Default
+      autoApprove: false, // Default
+      sponsors, // Issue #859: Brand Safety
+      sponsorMatch // Issue #859: Brand Safety (if matched)
     };
 
     const analysisDecision = await this.analysisDepartment.analyzeComment(commentText, userContext);
@@ -1397,7 +1437,8 @@ class AnalyzeToxicityWorker extends BaseWorker {
         toxicity_score: analysis.toxicity_score,
         severity_level: analysis.severity_level,
         categories: analysis.categories,
-        correlationId // Propagate correlation ID (Issue #417)
+        correlationId, // Propagate correlation ID (Issue #417)
+        brand_safety: analysis.metadata?.brand_safety || null // Issue #859: Brand Safety
       },
       max_attempts: 3
     };

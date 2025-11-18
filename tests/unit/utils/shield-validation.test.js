@@ -444,7 +444,8 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
 
     beforeEach(() => {
       jest.spyOn(Date, 'now').mockImplementation(() => mockCurrentTime.getTime());
-      global.Date = jest.fn(() => mockCurrentTime) as any;
+      // eslint-disable-next-line no-global-assign
+      global.Date = jest.fn(() => mockCurrentTime);
       global.Date.now = Date.now;
     });
 
@@ -594,7 +595,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
 
   describe('Edge Cases and Error Conditions', () => {
     test('should handle circular references in objects', () => {
-      const circular: any = { id: '1', organization_id: 'org-1' };
+      const circular = { id: '1', organization_id: 'org-1' };
       circular.self = circular;
 
       // This should not throw an error

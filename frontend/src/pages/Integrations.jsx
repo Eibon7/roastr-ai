@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import PageLayout from '../components/roastr/PageLayout';
 import { Link2, ExternalLink, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function Integrations() {
@@ -27,12 +28,10 @@ export default function Integrations() {
   }, []);
 
   const handleConnect = (integrationName) => {
-    console.log(`Connecting to ${integrationName}`);
     // In real implementation, this would redirect to OAuth flow
   };
 
   const handleDisconnect = (integrationName) => {
-    console.log(`Disconnecting from ${integrationName}`);
     // In real implementation, this would revoke the connection
   };
 
@@ -41,29 +40,21 @@ export default function Integrations() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
+      <PageLayout 
+        title="Integrations"
+        subtitle="Conecta tus redes sociales para automatizar respuestas"
+      >
+        <p className="text-muted-foreground">Cargando integraciones...</p>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
-          <p className="text-muted-foreground">
-            Connect your social media platforms to automate roast responses
-          </p>
-        </div>
-        <Badge variant="outline">
-          {connected.length}/{integrations.length} connected
-        </Badge>
-      </div>
+    <PageLayout
+      title="Integrations"
+      subtitle="Conecta tus redes sociales para automatizar respuestas"
+      metrics={[{ label: 'Conectadas', value: `${connected.length}/${integrations.length}` }]}
+    >
 
       {/* Connected Integrations */}
       {connected.length > 0 && (
@@ -227,6 +218,6 @@ export default function Integrations() {
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   );
 }

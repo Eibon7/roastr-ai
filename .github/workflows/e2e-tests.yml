@@ -43,7 +43,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -69,17 +69,40 @@ jobs:
 
       - name: Start application server
         run: |
-          npm run start &
-          echo "Waiting for server to be ready..."
-          npx wait-on http://localhost:3000/health -t 30000 || (echo "Server failed to start" && exit 1)
+          # Start server and capture logs for debugging
+          npm run start > server.log 2>&1 &
+          SERVER_PID=$!
+          echo "Started server pid=$SERVER_PID"
+          
+          # Wait for health endpoint with retries (60s total)
+          echo "Waiting for server to be ready (up to 60s)..."
+          for i in {1..30}; do
+            if curl -sSf http://localhost:3000/health --max-time 2 >/dev/null 2>&1; then
+              echo "✅ Server ready"
+              break
+            fi
+            sleep 2
+          done
+          
+          # Verify server is actually ready
+          if ! curl -sSf http://localhost:3000/health --max-time 2 >/dev/null 2>&1; then
+            echo "❌ Server failed to start, printing server.log:"
+            cat server.log || true
+            echo "=== Process status ==="
+            ps aux | grep node || true
+            kill $SERVER_PID || true
+            exit 1
+          fi
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roastr_test
-          SUPABASE_URL: ""
-          SUPABASE_SERVICE_KEY: ""
-          SUPABASE_ANON_KEY: ""
-          OPENAI_API_KEY: ""
+          # Use safe test defaults instead of empty strings
+          SUPABASE_URL: "http://localhost:54321/mock"
+          SUPABASE_SERVICE_KEY: "test-service-key"
+          SUPABASE_ANON_KEY: "test-anon-key"
+          OPENAI_API_KEY: "test-openai-key"
           PORT: 3000
+          ENABLE_MOCK_MODE: "true"
 
       - name: Run E2E tests
         run: npm run test:e2e

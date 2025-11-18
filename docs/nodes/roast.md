@@ -4,10 +4,10 @@
 **Owner:** Backend Developer
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-10-28
+**Last Updated:** 2025-11-17
 **Coverage:** 60%
 **Coverage Source:** auto
-**Related PRs:** #499, #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback)
+**Related PRs:** #499, #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback), #865 (Issue #859 - Brand Safety for Sponsors)
 **Protected:** true
 **Last Verified:** 2025-10-23
 **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
@@ -869,6 +869,184 @@ All roast generation events logged with:
 - [ ] Advanced RQC with human-in-the-loop
 - [ ] Platform-specific style guides
 - [ ] Sentiment analysis integration
+
+---
+
+## Brand Safety Integration (Issue #859)
+
+### Overview
+
+Brand Safety allows Plus plan users to configure sponsors/brands to protect from offensive comments with **defensive roasts**. When a comment mentions a configured sponsor and contains toxicity, the roast generation system applies tone overrides and includes sponsor context in the prompt to generate appropriate responses.
+
+### Cacheable Prompt Structure
+
+The RoastPromptBuilder uses OpenAI's Prompt Caching with three blocks:
+
+**Block A (System):** Core identity, rules, and style guides (cacheable, rarely changes)
+
+**Block B (User):** User's persona + **sponsor list** (cacheable per user, changes when persona or sponsors update)
+- Includes all configured sponsors with their protection rules
+- General defensive instructions for sponsor mentions
+- Cached separately per user for efficiency
+
+**Block C (Dynamic):** Current comment + toxicity data + **sponsor match** (non-cacheable, changes per comment)
+- Specific details if a sponsor match is detected
+- Sponsor-specific tone instructions
+- Fresh context for each roast generation
+
+### Sponsor Context in Prompts
+
+When a user has configured sponsors, Block B includes:
+
+```
+PROTECTED BRANDS & SPONSORS:
+
+You are protecting the following brands/sponsors from offensive comments:
+
+1. Nike (priority: 1, severity: high)
+   - Tags: sportswear, athletics, sneakers, shoes
+   - Tone override: professional
+   - Actions: hide_comment, def_roast
+
+2. Adidas (priority: 2, severity: medium)
+   - Tags: sportswear, training, apparel
+   - Tone override: light_humor
+   - Actions: def_roast
+
+If a comment offensively mentions any of these brands:
+- Generate a DEFENSIVE roast that protects the brand's reputation
+- Use the specified tone override (not your default tone)
+- Be witty but measured, never agree with the toxicity
+- Redirect criticism to the commenter's ignorance or lack of taste
+```
+
+When a specific sponsor match is detected, Block C includes:
+
+```
+⚠️ SPONSOR MATCH DETECTED: Nike
+
+This comment offensively mentions Nike, one of your protected sponsors.
+
+- Match type: exact (brand name directly mentioned)
+- Severity: high
+- Tone override: professional (use measured, diplomatic tone)
+- Actions: def_roast (generate defensive roast)
+
+INSTRUCTIONS:
+1. DO NOT agree with the toxic comment about Nike
+2. Generate a professional, measured roast defending Nike's reputation
+3. Redirect the criticism to the commenter (their ignorance, poor taste, etc.)
+4. Keep it witty but diplomatic - no aggressive humor
+5. Focus on facts and Nike's actual quality/reputation
+```
+
+### Sponsor Tone Mapping
+
+The tone override system allows sponsors to specify how roasts should be generated when defending them:
+
+| Tone | Description | Roast Style | Example |
+|------|-------------|-------------|---------|
+| `normal` | User's default tone | As configured in persona | No override, use default |
+| `professional` | Measured, no aggressive humor | Diplomatic, factual, measured | "Interesting take on Nike. Perhaps you'd benefit from researching their innovation history before making such sweeping claims?" |
+| `light_humor` | Lighthearted, desenfadado | Playful, non-confrontational, friendly | "Ah yes, Nike is 'terrible' - that's why they're only worn by... *checks notes* ...millions of satisfied athletes worldwide 😊" |
+| `aggressive_irony` | Marked irony, direct sarcasm | Sharp, cutting, ironic | "Oh absolutely, Nike is a 'scam'. I'm sure your expert fashion analysis from the depths of your mom's basement is far more credible than decades of global success." |
+
+### Integration Flow
+
+1. **Job Payload** (from AnalyzeToxicityWorker)
+   ```json
+   {
+     "comment_id": "...",
+     "original_text": "Nike is a scam brand",
+     "toxicity_score": 0.65,
+     "brand_safety": {
+       "sponsor": "Nike",
+       "tone": "professional",
+       "defensive_roast": true
+     }
+   }
+   ```
+
+2. **GenerateReplyWorker** receives payload and extracts `brand_safety`
+
+3. **buildPrompt** called with `brand_safety` parameter:
+   ```javascript
+   systemPrompt = await this.promptTemplate.buildPrompt({
+     originalComment: originalText,
+     toxicityData: { score, severity, categories },
+     userConfig,
+     includeReferences: true,
+     brand_safety  // ← Passed to prompt builder
+   });
+   ```
+
+4. **RoastPromptBuilder** includes sponsor context in blocks:
+   - Block B: All sponsors (if any configured)
+   - Block C: Specific match details (if match detected)
+
+5. **OpenAI generates roast** with:
+   - Tone override applied (professional, light_humor, etc.)
+   - Defensive framing (protect sponsor, redirect to commenter)
+   - Sponsor context from cacheable blocks
+
+### Example Roast Generation
+
+**Input:**
+- Comment: "Nike is a scam brand, terrible quality"
+- Sponsor: Nike (severity: high, tone: professional, priority: 1)
+- Toxicity: 0.65
+
+**Prompt (Block C excerpt):**
+```
+⚠️ SPONSOR MATCH DETECTED: Nike
+Tone override: professional
+
+Generate a professional, measured roast defending Nike's reputation.
+Focus on facts, use diplomatic language, redirect criticism to commenter.
+```
+
+**Generated Roast:**
+```
+"Your assessment of Nike's quality is interesting, though it seems to overlook 
+their decades of innovation, partnerships with elite athletes, and industry-leading 
+R&D. Perhaps exploring their actual product lines and customer satisfaction ratings 
+might offer a more balanced perspective than sweeping generalizations?"
+```
+
+### Metadata Tracking
+
+Roast decisions with Brand Safety include metadata for analytics:
+
+```json
+{
+  "direction": "ROAST",
+  "action_tags": ["generate_reply", "defensive_roast"],
+  "metadata": {
+    "brand_safety": {
+      "sponsor": "Nike",
+      "tone": "professional",
+      "defensive_roast": true
+    }
+  }
+}
+```
+
+This allows tracking:
+- Which sponsors trigger roasts most frequently
+- Effectiveness of tone overrides
+- User engagement with defensive roasts
+
+### API Access
+
+Sponsors are managed via REST API (Plus plan required):
+- `POST /api/sponsors` - Create sponsor
+- `GET /api/sponsors` - List sponsors
+- `PUT /api/sponsors/:id` - Update sponsor (including tone overrides)
+- `DELETE /api/sponsors/:id` - Delete sponsor
+
+See `shield.md` for full Brand Safety documentation.
+
+---
 
 ## Agentes Relevantes
 
