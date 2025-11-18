@@ -223,6 +223,17 @@ app.use('/public', express.static(path.join(__dirname, '../public'), {
   }
 }));
 
+// Ruta directa para manual-approval.html (para tests E2E)
+app.get('/manual-approval.html', (req, res) => {
+  const filePath = path.join(__dirname, '../public/manual-approval.html');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error serving manual-approval.html:', err.message);
+      res.status(404).json({ error: 'File not found' });
+    }
+  });
+});
+
 // Servir archivos estáticos del frontend React con caching mejorado y prevención de indexing
 app.use(express.static(path.join(__dirname, '../frontend/build'), {
   maxAge: process.env.NODE_ENV === 'production' ? '1y' : '0',
