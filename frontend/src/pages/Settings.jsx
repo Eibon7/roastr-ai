@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
+import { SettingsSection } from '../components/roastr/SettingsSection';
 import { 
   User, 
   Settings as SettingsIcon, 
@@ -328,17 +329,11 @@ const Settings = () => {
 
         {/* Account Tab */}
         <TabsContent value="account" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Account Information
-              </CardTitle>
-              <CardDescription>
-                Manage your account details and security settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <SettingsSection
+            title="Account Information"
+            description="Manage your account details and security settings"
+            kicker="Security"
+          >
               {/* Email Display */}
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
@@ -471,80 +466,61 @@ const Settings = () => {
                   Change Password
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+          </SettingsSection>
 
           {/* GDPR Data Export */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Download className="w-5 h-5" />
-                Data Export
-              </CardTitle>
-              <CardDescription>
-                Download all your data in compliance with GDPR
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={handleDataExport} disabled={exportLoading} variant="outline">
-                {exportLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />}
-                Request Data Export
-              </Button>
-              <p className="text-sm text-gray-500 mt-2">
-                You'll receive an email with a download link when your data is ready
-              </p>
-            </CardContent>
-          </Card>
+          <SettingsSection
+            title="Data Export"
+            description="Download all your data in compliance with GDPR"
+            kicker="Privacy"
+          >
+            <Button onClick={handleDataExport} disabled={exportLoading} variant="outline">
+              {exportLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />}
+              Request Data Export
+            </Button>
+            <p className="text-sm text-gray-500 mt-2">
+              You'll receive an email with a download link when your data is ready
+            </p>
+          </SettingsSection>
 
           {/* GDPR Transparency (Issue #366) */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Transparencia GDPR
-              </CardTitle>
-              <CardDescription>
-                Información sobre el tratamiento automatizado de contenido
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
-                    <Shield className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-blue-900 dark:text-blue-100">
-                        Generación Automática de Contenido
-                      </h4>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        Los roasts autopublicados llevan firma de IA para cumplir con la normativa de transparencia digital.
-                      </p>
-                    </div>
+          <SettingsSection
+            title="Transparencia GDPR"
+            description="Información sobre el tratamiento automatizado de contenido"
+            kicker="Privacy"
+          >
+            <div className="space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <Shield className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                      Generación Automática de Contenido
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                      Los roasts autopublicados llevan firma de IA para cumplir con la normativa de transparencia digital.
+                    </p>
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  <p>
-                    De acuerdo con el RGPD y las normativas de transparencia digital, 
-                    todos los contenidos generados automáticamente por IA incluyen 
-                    marcadores identificativos apropiados.
-                  </p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="text-xs text-muted-foreground">
+                <p>
+                  De acuerdo con el RGPD y las normativas de transparencia digital, 
+                  todos los contenidos generados automáticamente por IA incluyen 
+                  marcadores identificativos apropiados.
+                </p>
+              </div>
+            </div>
+          </SettingsSection>
 
           {/* Account Deletion */}
-          <Card className="border-red-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
-                <Trash2 className="w-5 h-5" />
-                Delete Account
-              </CardTitle>
-              <CardDescription>
-                Permanently delete your account and all associated data
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <SettingsSection
+            title="Delete Account"
+            description="Permanently delete your account and all associated data"
+            kicker="Danger Zone"
+            className="border-red-200"
+          >
+            <div className="space-y-4">
               {!showDeleteConfirm ? (
                 <Button 
                   variant="destructive" 
@@ -589,8 +565,8 @@ const Settings = () => {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </SettingsSection>
         </TabsContent>
 
         {/* Adjustments Tab - Use existing AjustesSettings component */}

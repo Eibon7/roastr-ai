@@ -13,11 +13,13 @@ const { logger } = require('../utils/logger');
 const RQCService = require('./rqcService');
 const RoastGeneratorMock = require('./roastGeneratorMock');
 const RoastPromptTemplate = require('./roastPromptTemplate');
+const RoastPromptBuilder = require('../lib/prompts/roastPrompt'); // Issue #858: New prompt builder with caching
 const PersonaService = require('./PersonaService'); // Issue #615: Import PersonaService
 const transparencyService = require('./transparencyService');
 const levelConfigService = require('./levelConfigService'); // Issue #597: Import levelConfigService
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
+const { callOpenAIWithCaching } = require('../lib/openai/responsesHelper'); // Issue #858: Responses API helper
 require('dotenv').config();
 
 // Timeout configuration (Issue #419)
@@ -42,6 +44,7 @@ class RoastGeneratorEnhanced {
     });
     this.rqcService = new RQCService(this.openai);
     this.promptTemplate = new RoastPromptTemplate();
+    this.promptBuilder = new RoastPromptBuilder(); // Issue #858: New prompt builder with cacheable blocks
     this.personaService = PersonaService; // Issue #615: Use PersonaService singleton
     this.isMockMode = false;
   }
@@ -335,38 +338,41 @@ class RoastGeneratorEnhanced {
     const roastLevel = rqcConfig.roast_level || 3;
     const levelParams = this.getRoastLevelParameters(roastLevel);
 
-    // Build prompt using the master template
-    const systemPrompt = await this.promptTemplate.buildPrompt({
-      originalComment: text,
+    // Issue #858: Build prompt using new prompt builder with cacheable blocks (A/B/C)
+    const completePrompt = await this.promptBuilder.buildCompletePrompt({
+      comment: text,
+      platform: rqcConfig.platform || 'twitter',
       toxicityData: {
         score: toxicityScore,
         categories: [] // Could be enhanced with actual toxicity categories
       },
-      userConfig: {
-        tone: tone,
-        humor_type: rqcConfig.humor_type || 'witty',
-        intensity_level: rqcConfig.intensity_level || levelParams.intensityMultiplier,
-        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null,
-        roast_level: roastLevel, // Issue #597: Pass roast level to prompt
-        allow_profanity: levelParams.allowProfanity // Issue #597: Profanity control
-      },
-      includeReferences: rqcConfig.plan !== 'starter_trial', // Include references for Starter+ plans
-      persona: persona // Issue #615: Pass persona to buildPrompt
+      persona: persona,
+      styleProfile: rqcConfig.styleProfile || null,
+      tone: tone,
+      humorType: rqcConfig.humor_type || 'witty',
+      includeReferences: rqcConfig.plan !== 'starter_trial',
+      getReferenceRoasts: async (comment) => {
+        // Use existing prompt template's reference roast method for compatibility
+        return await this.promptTemplate.getReferenceRoasts(comment);
+      }
     });
 
-    const completion = await this.openai.chat.completions.create({
+    // Issue #858: Use Responses API with prompt caching
+    const result = await callOpenAIWithCaching(this.openai, {
       model: model,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        }
-      ],
-      max_tokens: levelParams.max_tokens, // Issue #597: Level-based max tokens
-      temperature: levelParams.temperature, // Issue #597: Level-based temperature
+      input: completePrompt,
+      max_tokens: levelParams.max_tokens,
+      temperature: levelParams.temperature,
+      prompt_cache_retention: '24h',
+      loggingContext: {
+        userId: rqcConfig.user_id,
+        orgId: rqcConfig.orgId || null,
+        plan: rqcConfig.plan,
+        endpoint: 'roast'
+      }
     });
 
-    const roast = completion.choices[0].message.content.trim();
+    const roast = result.content;
     
     logger.info('✅ Basic moderated roast generated', {
       plan: rqcConfig.plan,
@@ -480,35 +486,39 @@ class RoastGeneratorEnhanced {
     // Issue #615: Load user persona for personalized roast generation
     const persona = await this.personaService.getPersona(rqcConfig.user_id);
 
-    // Build prompt using the master template with advanced options
-    const systemPrompt = await this.promptTemplate.buildPrompt({
-      originalComment: text,
+    // Issue #858: Build prompt using new prompt builder with cacheable blocks (A/B/C)
+    const completePrompt = await this.promptBuilder.buildCompletePrompt({
+      comment: text,
+      platform: rqcConfig.platform || 'twitter',
       toxicityData: {
         categories: [] // Could be enhanced with actual toxicity categories
       },
-      userConfig: {
-        tone: tone,
-        humor_type: rqcConfig.humor_type || 'clever',
-        intensity_level: rqcConfig.intensity_level,
-        custom_style_prompt: flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? rqcConfig.custom_style_prompt : null
-      },
+      persona: persona,
+      styleProfile: rqcConfig.styleProfile || null,
+      tone: tone,
+      humorType: rqcConfig.humor_type || 'clever',
       includeReferences: true, // Always include references for Creator+ plans
-      persona: persona // Issue #615: Pass persona to buildPrompt
+      getReferenceRoasts: async (comment) => {
+        return await this.promptTemplate.getReferenceRoasts(comment);
+      }
     });
 
-    const completion = await this.openai.chat.completions.create({
+    // Issue #858: Use Responses API with prompt caching
+    const result = await callOpenAIWithCaching(this.openai, {
       model: model,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        }
-      ],
+      input: completePrompt,
       max_tokens: 150,
       temperature: 0.9, // Higher creativity for advanced users
+      prompt_cache_retention: '24h',
+      loggingContext: {
+        userId: rqcConfig.user_id,
+        orgId: rqcConfig.orgId || null,
+        plan: rqcConfig.plan,
+        endpoint: 'roast_initial'
+      }
     });
 
-    return completion.choices[0].message.content.trim();
+    return result.content;
   }
 
   /**
@@ -518,6 +528,7 @@ class RoastGeneratorEnhanced {
     try {
       const model = await this.getModelForPlan(plan);
 
+      // Issue #858: Use Responses API for fallback (simpler prompt, still cacheable)
       const fallbackPrompt = `Eres Roastr, un bot que responde con comentarios ingeniosos y seguros.
 
 Reglas estrictas:
@@ -527,25 +538,25 @@ Reglas estrictas:
 - Máximo 1-2 frases cortas
 - Enfócate en ser divertido sin ser agresivo
 
+Comentario: "${text}"
+
 Responde únicamente con el roast seguro, sin explicaciones.`;
 
-      const completion = await this.openai.chat.completions.create({
+      const result = await callOpenAIWithCaching(this.openai, {
         model: model,
-        messages: [
-          {
-            role: "system",
-            content: fallbackPrompt
-          },
-          {
-            role: "user",
-            content: text
-          }
-        ],
+        input: fallbackPrompt,
         max_tokens: 80,
         temperature: 0.5, // Lower temperature for safety
+        prompt_cache_retention: '24h', // Still use caching for fallback
+        loggingContext: {
+          userId: null, // Fallback doesn't have user context
+          orgId: null,
+          plan: plan,
+          endpoint: 'roast_fallback'
+        }
       });
 
-      return completion.choices[0].message.content.trim();
+      return result.content;
     } catch (err) {
       logger.error('OpenAI fallback failed, returning mock/static roast', { error: err.message });
       try {
@@ -716,27 +727,27 @@ Configuración de usuario:
     return this.generateRoast(text, toxicityScore, tone);
   }
 
-  async generateRoastWithPrompt(text, customPrompt, plan = 'pro') {
+  async generateRoastWithPrompt(text, customPrompt, plan = 'pro', userId = null) {
     try {
       const model = await this.getModelForPlan(plan);
       
-      const completion = await this.openai.chat.completions.create({
+      // Issue #858: Combine custom prompt with user input for Responses API
+      const completePrompt = `${customPrompt}\n\nComentario: "${text}"\n\nRoast:`;
+      
+      const result = await callOpenAIWithCaching(this.openai, {
         model: model,
-        messages: [
-          {
-            role: "system",
-            content: customPrompt
-          },
-          {
-            role: "user", 
-            content: text
-          }
-        ],
+        input: completePrompt,
         temperature: 0.8,
-        max_tokens: 150
+        max_tokens: 150,
+        prompt_cache_retention: '24h',
+        loggingContext: {
+          userId: userId,
+          plan: plan,
+          endpoint: 'roast_custom_prompt'
+        }
       });
 
-      return completion.choices[0].message.content;
+      return result.content;
     } catch (error) {
       logger.error("❌ Error generating roast with custom prompt:", error);
       try {

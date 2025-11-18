@@ -114,8 +114,7 @@ describe('SponsorService', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('sponsors');
       // Verify insert was called (service adds defaults like active, priority)
       expect(mockSupabase.insert).toHaveBeenCalled();
-      // Supabase insert receives an array of objects
-      const insertCall = mockSupabase.insert.mock.calls[0][0][0];
+      const insertCall = mockSupabase.insert.mock.calls[0][0];
       expect(insertCall.user_id).toBe(userId);
       expect(insertCall.name).toBe('Nike');
     });
@@ -325,7 +324,7 @@ describe('SponsorService', () => {
       global.fetch.mockResolvedValue({
         ok: true,
         status: 200,
-        text: jest.fn().mockResolvedValue(`
+        text: jest.fn().mockResolvedValue(\`
           <html>
             <head><title>Nike - Just Do It</title></head>
             <body>
@@ -333,7 +332,7 @@ describe('SponsorService', () => {
               <p>Leading sportswear brand for athletes worldwide</p>
             </body>
           </html>
-        `)
+        \`)
       });
 
       // Mock OpenAI completion
@@ -488,7 +487,7 @@ describe('SponsorService', () => {
     it('should return no match when no sponsors mentioned', async () => {
       const comment = 'This is a normal comment';
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: ['sportswear'], severity: 'high', tone: 'professional', actions: [], active: true }
+        { id: 'sponsor-1', name: 'Nike', tags: ['sportswear'], severity: 'high', tone: 'professional', actions: [] }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);
@@ -508,7 +507,7 @@ describe('SponsorService', () => {
 
     it('should handle null/undefined comment', async () => {
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [], active: true }
+        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [] }
       ];
 
       const result = await sponsorService.detectSponsorMention(null, sponsors);
@@ -519,7 +518,7 @@ describe('SponsorService', () => {
     it('should handle sponsors with empty tags gracefully', async () => {
       const comment = 'Sportswear brands are overpriced';
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [], active: true }
+        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [] }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);

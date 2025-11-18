@@ -6,6 +6,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Select } from '../components/ui/select';
 import { Separator } from '../components/ui/separator';
 import { useToast } from '../hooks/use-toast';
+import { RoastrComment } from '../components/roastr/RoastrComment';
 import { 
   CheckCircle, 
   XCircle, 
@@ -19,25 +20,6 @@ import {
   Eye,
   BarChart3
 } from 'lucide-react';
-
-const SEVERITY_COLORS = {
-  low: 'bg-green-100 text-green-800 border-green-200',
-  medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  high: 'bg-orange-100 text-orange-800 border-orange-200',
-  critical: 'bg-red-100 text-red-800 border-red-200'
-};
-
-const PLATFORM_COLORS = {
-  twitter: 'bg-blue-500',
-  youtube: 'bg-red-500',
-  bluesky: 'bg-sky-500',
-  instagram: 'bg-pink-500',
-  facebook: 'bg-blue-600',
-  discord: 'bg-indigo-500',
-  twitch: 'bg-purple-500',
-  reddit: 'bg-orange-500',
-  tiktok: 'bg-black'
-};
 
 // Platform character limits
 const PLATFORM_LIMITS = {
@@ -131,49 +113,35 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
     }
   };
 
-  const platformColor = PLATFORM_COLORS[response.comment.platform?.toLowerCase()] || 'bg-gray-500';
-  const severityColor = SEVERITY_COLORS[response.comment.severity_level] || SEVERITY_COLORS.low;
-
   return (
     <Card className="h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className={`w-2 h-2 rounded-full ${platformColor}`} />
-            <span className="font-medium capitalize">{response.comment.platform}</span>
-            <Badge variant="outline" className={severityColor}>
-              {response.comment.severity_level}
+      <CardContent className="space-y-4 pt-6">
+        {/* Attempt counter (approval-specific) */}
+        {response.total_attempts > 1 && (
+          <div className="flex justify-end">
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              Attempt {response.attempt_number}/{response.total_attempts}
             </Badge>
-            {response.comment.toxicity_score != null && (
-              <Badge variant="secondary">
-                {Math.round(response.comment.toxicity_score * 100)}% toxic
-              </Badge>
-            )}
-            {/* Attempt counter */}
-            {response.total_attempts > 1 && (
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                Attempt {response.attempt_number}/{response.total_attempts}
-              </Badge>
-            )}
           </div>
-          <div className="text-xs text-muted-foreground">
-            {new Date(response.created_at).toLocaleString()}
-          </div>
-        </div>
-      </CardHeader>
+        )}
 
-      <CardContent className="space-y-4">
         {/* Original Comment */}
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            <label className="text-sm font-medium">Original Comment</label>
-            <Badge variant="outline">@{response.comment.platform_username}</Badge>
-          </div>
-          <div className="p-3 bg-muted rounded-lg text-sm">
-            {response.comment.original_text}
-          </div>
-        </div>
+        <RoastrComment
+          author={response.comment.platform_username || 'Unknown'}
+          handle={response.comment.platform_username ? `@${response.comment.platform_username}` : undefined}
+          platform={response.comment.platform}
+          timestamp={new Date(response.comment.created_at || response.created_at).toLocaleString()}
+          content={response.comment.original_text}
+          sentiment={
+            response.comment.severity_level === 'critical' || response.comment.severity_level === 'high' 
+              ? 'negative' 
+              : response.comment.severity_level === 'low' 
+              ? 'positive' 
+              : 'neutral'
+          }
+          toxicityScore={response.comment.toxicity_score}
+          tags={response.comment.severity_level ? [response.comment.severity_level] : []}
+        />
 
         <Separator />
 

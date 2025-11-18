@@ -84,12 +84,7 @@ async function callOpenAIWithCaching(openaiClient, options = {}) {
           temperature: temperature
         });
 
-        // Extract content and usage from Responses API format
-        const content = response.choices?.[0]?.message?.content || 
-                       response.text || 
-                       response.content || 
-                       '';
-
+        // Extract usage from Responses API format
         usage = {
           input_tokens: response.usage?.input_tokens || 0,
           output_tokens: response.usage?.output_tokens || 0,
@@ -138,9 +133,7 @@ async function callOpenAIWithCaching(openaiClient, options = {}) {
         temperature: temperature
       });
 
-      // Extract content and usage from chat.completions format
-      const content = response.choices?.[0]?.message?.content || '';
-
+      // Extract usage from chat.completions format
       usage = {
         input_tokens: response.usage?.prompt_tokens || response.usage?.input_tokens || 0,
         output_tokens: response.usage?.completion_tokens || response.usage?.output_tokens || 0,
