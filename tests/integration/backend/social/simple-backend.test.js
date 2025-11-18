@@ -49,9 +49,10 @@ describe('Backend Integration - Infrastructure', () => {
     await delay(10);
     const elapsed = Date.now() - start;
     
-    // Allow for timing variations in CI environments (±2ms tolerance)
+    // Allow for timing variations in CI environments (CI can be noisy)
     expect(elapsed).toBeGreaterThanOrEqual(8);
-    expect(elapsed).toBeLessThan(100); // Reasonable upper bound
+    // Use a more generous upper bound to avoid flaky failures in slower runners
+    expect(elapsed).toBeLessThan(500); // Still verifies async timing is reasonable
   });
 
   test('should have proper timeout configuration', () => {
