@@ -62,7 +62,8 @@ jobs:
 
       - name: Setup test database
         run: |
-          npm run db:migrate:test || echo "No migration script, skipping"
+          # Apply consolidated schema (includes all migrations)
+          PGPASSWORD=postgres psql -h localhost -U postgres -d roastr_test -f database/schema.sql
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roastr_test
 
