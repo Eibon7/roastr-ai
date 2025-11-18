@@ -74,7 +74,7 @@ const personaRoutes = require('./routes/persona');
 const checkoutRoutes = require('./routes/checkout');
 const polarWebhookRoutes = require('./routes/polarWebhook');
 const creditsRoutes = require('./routes/credits'); // QW9: Add credits router
-const sponsorsRoutes = require('./routes/sponsors'); // Issue #859: Brand Safety for Sponsors (Plan Plus)
+const sponsorsRoutes = require('./routes/sponsors')(); // Issue #859: Brand Safety for Sponsors (Plan Plus) - Factory function
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();

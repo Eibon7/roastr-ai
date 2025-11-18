@@ -324,7 +324,7 @@ describe('SponsorService', () => {
       global.fetch.mockResolvedValue({
         ok: true,
         status: 200,
-        text: jest.fn().mockResolvedValue(\`
+        text: jest.fn().mockResolvedValue(`
           <html>
             <head><title>Nike - Just Do It</title></head>
             <body>
@@ -332,7 +332,7 @@ describe('SponsorService', () => {
               <p>Leading sportswear brand for athletes worldwide</p>
             </body>
           </html>
-        \`)
+        `)
       });
 
       // Mock OpenAI completion
