@@ -82,8 +82,31 @@ console.log('=' .repeat(50));
 
 TARGET_FILES.forEach(cleanFile);
 
+// Validate syntax of modified files (CodeRabbit suggestion)
+console.log('\n🔍 Validating syntax of modified files...');
+const { execSync } = require('child_process');
+let syntaxErrors = 0;
+
+TARGET_FILES.forEach(filePath => {
+  if (!fs.existsSync(filePath)) return;
+  try {
+    execSync(`node --check ${filePath}`, { stdio: 'ignore' });
+    console.log(`   ✓  ${filePath} syntax valid`);
+  } catch (error) {
+    console.log(`   ❌ ${filePath} syntax ERROR - manual fix required`);
+    syntaxErrors++;
+  }
+});
+
 console.log('\n' + '='.repeat(50));
-console.log('✅ Cleanup complete!');
+
+if (syntaxErrors > 0) {
+  console.log(`❌ Cleanup failed with ${syntaxErrors} syntax error(s)`);
+  console.log('Fix syntax errors before committing.');
+  process.exit(1);
+}
+
+console.log('✅ Cleanup complete! All files have valid syntax.');
 console.log('\nNext steps:');
 console.log('1. Review changes: git diff');
 console.log('2. Run tests: npm test');

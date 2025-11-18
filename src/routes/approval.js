@@ -560,9 +560,8 @@ router.post('/:id/regenerate', async (req, res) => {
 
         const userConfig = {
             plan: orgData.plan_id,
-            tone: originalResponse.tone || 'sarcastic',
-            humor_type: originalResponse.humor_type || 'witty',
-            // Issue #868: Removed intensity_level (deprecated)
+            tone: originalResponse.tone || 'sarcastic'
+            // Issue #868: Removed humor_type and intensity_level (deprecated)
         };
 
         const generationResult = await roastGenerator.generateRoast(
