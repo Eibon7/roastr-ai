@@ -105,7 +105,7 @@ class BillingController {
             .single();
 
           // Determine plan from subscription
-          let newPlan = PLAN_IDS.FREE;
+          let newPlan = PLAN_IDS.STARTER_TRIAL;
           if (webhookData.items?.data?.length > 0) {
             const price = webhookData.items.data[0].price;
             // TODO:Polar - Replace with billingInterface.getPrices()
@@ -114,7 +114,7 @@ class BillingController {
 
             if (priceData?.lookup_key) {
               const { getPlanFromStripeLookupKey } = require('../config/planMappings');
-              newPlan = getPlanFromStripeLookupKey(priceData.lookup_key) || PLAN_IDS.FREE;
+              newPlan = getPlanFromStripeLookupKey(priceData.lookup_key) || PLAN_IDS.STARTER_TRIAL;
             }
           }
 
@@ -217,12 +217,12 @@ class BillingController {
     const priceId = subscription.items?.data?.[0]?.price?.id;
 
     // Determine plan from price lookup key using shared mappings
-    let plan = PLAN_IDS.FREE;
+    let plan = PLAN_IDS.STARTER_TRIAL;
     const lookupKey = session.metadata?.lookup_key;
 
     if (lookupKey) {
       const { getPlanFromStripeLookupKey } = require('../config/planMappings');
-      plan = getPlanFromStripeLookupKey(lookupKey) || PLAN_IDS.FREE;
+      plan = getPlanFromStripeLookupKey(lookupKey) || PLAN_IDS.STARTER_TRIAL;
     }
 
     // Execute critical database operations in a transaction
@@ -264,7 +264,7 @@ class BillingController {
     });
 
     // Send upgrade success email notification (non-critical, outside transaction)
-    if (plan !== PLAN_IDS.FREE) {
+    if (plan !== PLAN_IDS.STARTER_TRIAL) {
       try {
         // Get user email from customer
         const userEmail = customer.email;
@@ -272,7 +272,7 @@ class BillingController {
 
         await this.emailService.sendUpgradeSuccessNotification(userEmail, {
           userName: customer.name || userEmail.split('@')[0],
-          oldPlanName: 'Free',
+          oldPlanName: 'Starter Trial',
           newPlanName: planConfig.name || plan,
           newFeatures: planConfig.features || [],
           activationDate: new Date().toLocaleDateString(),
@@ -288,7 +288,7 @@ class BillingController {
         const planConfig = this.PLAN_CONFIG[plan] || {};
 
         await this.notificationService.createUpgradeSuccessNotification(userId, {
-          oldPlanName: 'Free',
+          oldPlanName: 'Starter Trial',
           newPlanName: planConfig.name || plan,
           newFeatures: planConfig.features || [],
           activationDate: new Date().toLocaleDateString(),
@@ -326,7 +326,7 @@ class BillingController {
       const priceId = subscription.items?.data?.[0]?.price?.id;
 
       // Determine plan from subscription items using shared mappings
-      let newPlan = PLAN_IDS.FREE;
+      let newPlan = PLAN_IDS.STARTER_TRIAL;
       if (priceId) {
         // TODO:Polar - Replace with billingInterface.getPrices()
         const prices = await this.billingInterface.getPrices?.({ limit: 100 }) || { data: [] };
@@ -334,7 +334,7 @@ class BillingController {
 
         if (priceData?.lookup_key) {
           const { getPlanFromStripeLookupKey } = require('../config/planMappings');
-          newPlan = getPlanFromStripeLookupKey(priceData.lookup_key) || PLAN_IDS.FREE;
+          newPlan = getPlanFromStripeLookupKey(priceData.lookup_key) || PLAN_IDS.STARTER_TRIAL;
         }
       }
 
@@ -649,8 +649,8 @@ class BillingController {
         .update({
           plan: plan,
           // Reset monthly usage if upgrading to higher plan
-          monthly_messages_sent: plan !== PLAN_IDS.FREE ? 0 : undefined,
-          monthly_tokens_consumed: plan !== PLAN_IDS.FREE ? 0 : undefined,
+          monthly_messages_sent: plan !== PLAN_IDS.STARTER_TRIAL ? 0 : undefined,
+          monthly_tokens_consumed: plan !== PLAN_IDS.STARTER_TRIAL ? 0 : undefined,
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);

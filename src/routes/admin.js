@@ -248,7 +248,7 @@ router.get('/users', cacheResponse({ ttl: 30 * 1000 }), async (req, res) => {
                 // Get plan-specific analysis limit using normalized plan
                 const normalizedUserPlan = normalizePlanId(user.plan);
                 const planLimits = {
-                    [PLAN_IDS.FREE]: 100,
+                    [PLAN_IDS.STARTER_TRIAL]: 100,
                     [PLAN_IDS.PRO]: 1000, 
                     [PLAN_IDS.PLUS]: 5000
                 };
