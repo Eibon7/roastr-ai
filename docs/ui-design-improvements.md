@@ -1,8 +1,8 @@
 # UI Design Improvements - Post Migration #862
 
-**Status:** 🟡 Functional pero necesita trabajo visual  
+**Status:** 🔴 Funcional pero UI rota visualmente  
 **Created:** 2025-11-18  
-**Context:** Feedback post-migración a shadcn/ui  
+**Context:** Feedback post-migración a shadcn/ui - "La UI está rota"
 
 ---
 
@@ -15,13 +15,13 @@
 - Build exitoso
 - 0 componentes custom
 
-### ❌ Lo que NO funciona (visual)
-- **Diseño poco atractivo**: No parece una app moderna
-- **Espaciado inconsistente**: Falta breathing room
-- **Jerarquía visual pobre**: Todo tiene el mismo peso
-- **Colores básicos**: Falta personalidad de marca
-- **Tipografía genérica**: Sin jerarquía clara
-- **Falta de polish**: Transiciones, shadows, hover states débiles
+### 🔴 Lo que está ROTO (visual)
+- **UI visualmente rota**: No parece una app profesional
+- **Spacing totalmente inconsistente**: Sin breathing room
+- **Jerarquía visual inexistente**: Todo tiene el mismo peso
+- **Colores por defecto**: Sin identidad de marca
+- **Tipografía sin trabajar**: Zero hierarchy
+- **Polish ausente**: Transiciones rotas, shadows básicas, hover states pobres
 
 ---
 
@@ -215,14 +215,14 @@ border-radius: 0.5rem; /* 8px */
 - **Notion**: Cards con depth, hierarchy evidente
 
 ### shadcn/ui Examples Gallery
-- https://ui.shadcn.com/examples/dashboard
-- https://ui.shadcn.com/examples/cards
-- https://ui.shadcn.com/examples/authentication
+- <https://ui.shadcn.com/examples/dashboard>
+- <https://ui.shadcn.com/examples/cards>
+- <https://ui.shadcn.com/examples/authentication>
 
 ### Color Palette Tools
-- https://uicolors.app/create
-- https://coolors.co/
-- https://realtime colors.com/
+- <https://uicolors.app/create>
+- <https://coolors.co/>
+- <https://realtimecolors.com/>
 
 ---
 
@@ -247,13 +247,15 @@ border-radius: 0.5rem; /* 8px */
 
 ## 💡 Lecciones Aprendidas
 
-1. **Migración técnica ≠ Diseño visual**: shadcn/ui da componentes funcionales, no diseño automático
-2. **Design system necesita customización**: Los defaults de shadcn/ui son muy básicos
-3. **UX/UI Designer needed**: Para next phase, involucrar a @UIDesigner desde el inicio
-4. **Prototipar primero**: Figma mockups antes de implementar
+1. **Migración técnica ≠ Diseño visual**: shadcn/ui da componentes funcionales, NO diseño automático
+2. **Design system necesita customización**: Los defaults de shadcn/ui son básicos y la UI queda rota
+3. **UX/UI Designer OBLIGATORIO**: Para next phase, @UIDesigner debe liderar el diseño
+4. **Prototipar primero SIEMPRE**: Figma mockups ANTES de implementar
+5. **"Funciona" ≠ "Está bien"**: La UI actual está técnicamente funcional pero visualmente rota
 
 ---
 
-**Status:** Documentado para futuro trabajo de diseño  
-**Next step:** Involucrar @UIDesigner para propuesta visual completa
+**Status:** UI ROTA - Documentado para reconstrucción completa  
+**Next step:** @UIDesigner debe crear diseño completo desde cero  
+**Prioridad:** ALTA - La UI actual no es presentable para usuarios
 
