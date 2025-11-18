@@ -7,6 +7,7 @@ import { CreditCard, Download, ExternalLink, Check, Zap, AlertTriangle, Activity
 import { createMockFetch } from '../lib/mockMode';
 import { getDefaultEntitlements, getDefaultUsage } from '../config/planDefaults';
 import { formatCurrency } from '../utils/formatUtils';
+import { UsageMeter } from '../components/roastr/UsageMeter';
 
 export default function Billing() {
   const [user, setUser] = useState(null);
@@ -52,55 +53,6 @@ export default function Billing() {
     }
   };
 
-  // Helper function to create progress bar component
-  const ProgressBar = ({ current, limit, label, icon: Icon, warning = false }) => {
-    const percentage = limit > 0 ? Math.min((current / limit) * 100, 100) : 0;
-    const isWarning = percentage >= 80;
-    const isAtLimit = percentage >= 100;
-    
-    return (
-      <Card className={`${isWarning ? 'border-yellow-200 bg-yellow-50' : ''} ${isAtLimit ? 'border-red-200 bg-red-50' : ''}`}>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center space-x-2">
-            {Icon && <Icon className="h-4 w-4" />}
-            <span>{label}</span>
-            {isWarning && <AlertTriangle className="h-4 w-4 text-yellow-600" />}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-2xl font-bold">
-                {current?.toLocaleString() || '0'}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                of {limit?.toLocaleString() || 'unlimited'}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  isAtLimit ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-green-500'
-                }`}
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className={`${isAtLimit ? 'text-red-600' : isWarning ? 'text-yellow-600' : 'text-green-600'}`}>
-                {percentage.toFixed(1)}% used
-              </span>
-              {isAtLimit && (
-                <span className="text-red-600 font-medium">Limit reached!</span>
-              )}
-              {isWarning && !isAtLimit && (
-                <span className="text-yellow-600 font-medium">Approaching limit</span>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
 
   if (loading) {
     return (
@@ -186,17 +138,21 @@ export default function Billing() {
           Monthly Usage
         </h2>
         <div className="grid md:grid-cols-2 gap-6">
-          <ProgressBar
-            current={mockUsage.analysis_used}
-            limit={mockEntitlements.analysis_limit_monthly}
-            label="Analyses Used"
-            icon={TrendingUp}
+          <UsageMeter
+            title="Analyses Used"
+            used={mockUsage.analysis_used || 0}
+            limit={mockEntitlements.analysis_limit_monthly || -1}
+            tone="analysis"
+            unit="analyses"
+            description="Number of toxicity analyses performed this month"
           />
-          <ProgressBar
-            current={mockUsage.roast_used}
-            limit={mockEntitlements.roast_limit_monthly}
-            label="Roasts Generated"
-            icon={Zap}
+          <UsageMeter
+            title="Roasts Generated"
+            used={mockUsage.roast_used || 0}
+            limit={mockEntitlements.roast_limit_monthly || -1}
+            tone="roast"
+            unit="roasts"
+            description="Number of roasts generated and posted this month"
           />
         </div>
       </div>

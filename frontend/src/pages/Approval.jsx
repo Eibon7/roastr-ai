@@ -6,6 +6,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Select } from '../components/ui/select';
 import { Separator } from '../components/ui/separator';
 import { useToast } from '../hooks/use-toast';
+import { RoastrComment } from '../components/roastr/RoastrComment';
 import { 
   CheckCircle, 
   XCircle, 
@@ -164,16 +165,16 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
 
       <CardContent className="space-y-4">
         {/* Original Comment */}
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            <label className="text-sm font-medium">Original Comment</label>
-            <Badge variant="outline">@{response.comment.platform_username}</Badge>
-          </div>
-          <div className="p-3 bg-muted rounded-lg text-sm">
-            {response.comment.original_text}
-          </div>
-        </div>
+        <RoastrComment
+          author={response.comment.platform_username || 'Unknown'}
+          handle={response.comment.platform_username ? `@${response.comment.platform_username}` : undefined}
+          platform={response.comment.platform}
+          timestamp={new Date(response.comment.created_at || response.created_at).toLocaleString()}
+          content={response.comment.original_text}
+          sentiment={response.comment.severity_level === 'critical' || response.comment.severity_level === 'high' ? 'negative' : 'neutral'}
+          toxicityScore={response.comment.toxicity_score}
+          tags={response.comment.severity_level ? [response.comment.severity_level] : []}
+        />
 
         <Separator />
 
