@@ -62,8 +62,8 @@ jobs:
 
       - name: Setup test database
         run: |
-          # Supabase handles migrations automatically, skip explicit migration step
-          echo "Using Supabase migrations (handled by Supabase service)"
+          # Apply consolidated schema (includes all migrations)
+          PGPASSWORD=postgres psql -h localhost -U postgres -d roastr_test -f database/schema.sql
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roastr_test
 
