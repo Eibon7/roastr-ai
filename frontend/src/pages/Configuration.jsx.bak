@@ -123,6 +123,8 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
                 <label className="text-sm font-medium">Humor Style</label>
               </div>
               <Select
+                value={localConfig.humor_type}
+                onValueChange={(value) => handleToggle('humor_type', value)}
               >
                 {HUMOR_TYPES.map(humor => (
                   <option key={humor.value} value={humor.value}>

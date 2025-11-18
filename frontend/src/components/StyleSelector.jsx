@@ -21,7 +21,7 @@ const StyleSelector = () => {
   const [selectedStyle, setSelectedStyle] = useState('sarcastic');
   const [customSettings, setCustomSettings] = useState({
     intensity: 3,
-    humor_type: 'witty',
+    // Issue #868: Removed humor_type,
     creativity: 3,
     politeness: 2
   });
@@ -104,7 +104,7 @@ const StyleSelector = () => {
       example: '"Tu comentario tiene menos sentido que un peine para calvos"',
       settings: {
         intensity: 4,
-        humor_type: 'sarcastic',
+        // Issue #868: Removed humor_type,
         creativity: 3,
         politeness: 2
       },
@@ -121,7 +121,7 @@ const StyleSelector = () => {
       example: '"Interesante teoría. ¿Tienes alguna evidencia o solo vibes?"',
       settings: {
         intensity: 3,
-        humor_type: 'witty',
+        // Issue #868: Removed humor_type,
         creativity: 4,
         politeness: 3
       }
@@ -137,7 +137,7 @@ const StyleSelector = () => {
       example: '"Creo que tu teclado tiene autocorrector de lógica averiado"',
       settings: {
         intensity: 2,
-        humor_type: 'playful',
+        // Issue #868: Removed humor_type,
         creativity: 3,
         politeness: 4
       }
@@ -153,7 +153,7 @@ const StyleSelector = () => {
       example: '"Ese argumento no se sostiene. Aquí tienes los datos reales..."',
       settings: {
         intensity: 3,
-        humor_type: 'dry',
+        // Issue #868: Removed humor_type,
         creativity: 2,
         politeness: 3
       }
@@ -169,7 +169,7 @@ const StyleSelector = () => {
       example: '"Entiendo tu punto, pero tal vez podrías considerar esta perspectiva..."',
       settings: {
         intensity: 1,
-        humor_type: 'gentle',
+        // Issue #868: Removed humor_type,
         creativity: 2,
         politeness: 5
       }
@@ -185,7 +185,7 @@ const StyleSelector = () => {
       example: 'Personalizable según tus preferencias específicas',
       settings: {
         intensity: 3,
-        humor_type: 'custom',
+        // Issue #868: Removed humor_type,
         creativity: 3,
         politeness: 3
       }
