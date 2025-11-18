@@ -40,7 +40,7 @@ export default function Pricing() {
         setCurrentPlan(data.plan || 'starter_trial');
       }
     } catch (error) {
-      console.error('Failed to fetch current plan:', error);
+      // Error fetching plan
     } finally {
       setLoading(false);
     }
@@ -108,8 +108,6 @@ export default function Pricing() {
         }
       }
     } catch (error) {
-      console.error('Failed to initiate plan change:', error);
-      
       // Enhanced error handling
       if (error.name === 'AbortError') {
         setError('Request timed out. Please check your connection and try again.');

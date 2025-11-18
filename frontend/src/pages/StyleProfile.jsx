@@ -68,7 +68,7 @@ export default function StyleProfile() {
         }
       }
     } catch (error) {
-      console.error('Failed to check access:', error);
+      // Error checking access
     }
   }, [fetchApi, navigate]);
 
@@ -83,7 +83,7 @@ export default function StyleProfile() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch profile data:', error);
+      // Error fetching profile data
     } finally {
       setLoading(false);
     }
@@ -100,7 +100,7 @@ export default function StyleProfile() {
         setIntegrationStatus(connectedWithData);
       }
     } catch (error) {
-      console.error('Failed to fetch integration status:', error);
+      // Error fetching integration status
     }
   }, [fetchApi]);
 
@@ -137,10 +137,8 @@ export default function StyleProfile() {
         const data = await response.json();
         setProfileData(data.data);
         setSelectedLanguage(data.data.profiles[0]?.lang || null);
-        console.log('Profile generated successfully:', data.data.message);
       } else {
         const errorData = await response.json();
-        console.error('Profile generation failed:', errorData.error);
         
         if (errorData.upgrade) {
           setError('Style Profile generation requires Creator+ plan. Please upgrade your plan.');
@@ -150,7 +148,6 @@ export default function StyleProfile() {
         }
       }
     } catch (error) {
-      console.error('Error generating profile:', error);
       setError('Failed to generate style profile. Please check your connection and try again.');
     } finally {
       setGenerating(false);
@@ -173,7 +170,7 @@ export default function StyleProfile() {
       setCopiedPrompt(lang);
       setTimeout(() => setCopiedPrompt(null), 2000);
     } catch (error) {
-      console.error('Failed to copy prompt:', error);
+      // Error copying prompt
     }
   };
 
@@ -187,13 +184,12 @@ export default function StyleProfile() {
         setProfileData(null);
         setSelectedLanguage(null);
         setShowDeleteConfirm(false);
-        console.log('Profile deleted successfully');
       } else {
         const error = await response.json();
-        console.error('Delete failed:', error.error);
+        // Delete failed
       }
     } catch (error) {
-      console.error('Error deleting profile:', error);
+      // Error deleting profile
     }
   };
 

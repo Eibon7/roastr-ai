@@ -44,7 +44,6 @@ export default function PlanPicker() {
         setPlans([]);
       }
     } catch (error) {
-      console.error('Failed to fetch plans:', error);
       setPlans([]);
     }
   };
@@ -57,7 +56,7 @@ export default function PlanPicker() {
         setCurrentPlan(data.data.plan);
       }
     } catch (error) {
-      console.error('Failed to fetch current plan:', error);
+      // Error fetching plan
     } finally {
       setLoading(false);
     }
@@ -83,14 +82,12 @@ export default function PlanPicker() {
         setTimeout(() => {
           navigate('/integrations/connect');
         }, 1000);
-        
-        console.log('Plan selected:', data.data.message);
       } else {
         const error = await response.json();
-        console.error('Failed to select plan:', error.error);
+        // Error selecting plan
       }
     } catch (error) {
-      console.error('Error selecting plan:', error);
+      // Error selecting plan
     } finally {
       setSelecting(null);
     }
