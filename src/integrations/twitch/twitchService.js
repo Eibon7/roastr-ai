@@ -15,7 +15,7 @@ class TwitchService extends BaseIntegration {
       platform: 'twitch',
       enabled: process.env.TWITCH_ENABLED === 'true',
       tone: process.env.TWITCH_TONE || 'playful',
-      humorType: process.env.TWITCH_HUMOR_TYPE || 'witty',
+      // Issue #868: Removed humorType (deprecated - tone is now sole selector)
       responseFrequency: parseFloat(process.env.TWITCH_RESPONSE_FREQUENCY) || 0.4,
       maxResponsesPerHour: parseInt(process.env.TWITCH_MAX_RESPONSES_PER_HOUR) || 20,
       ...config

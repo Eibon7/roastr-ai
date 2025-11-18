@@ -152,7 +152,7 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
               <Shield className="h-4 w-4 text-muted-foreground" />
               <label className="text-sm font-medium">Generated Roast</label>
               <Badge variant="outline">{response.tone}</Badge>
-              <!-- Issue #868: Removed humor_type badge -->
+              {/* Issue #868: Removed humor_type badge */}
             </div>
             <Button
               variant="ghost"

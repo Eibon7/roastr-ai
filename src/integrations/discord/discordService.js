@@ -277,7 +277,7 @@ class DiscordService extends MultiTenantIntegration {
     
     // TODO: Implement settings management UI
     await interaction.reply({
-      content: `Current settings:\n- Tone: ${this.tone}\n- Humor: ${this.humorType}\n- Frequency: ${this.responseFrequency}\n\nSettings management coming soon!`,
+      content: `Current settings:\n- Tone: ${this.tone}\n- Frequency: ${this.responseFrequency}\n\nSettings management coming soon!`,
       ephemeral: true
     });
   }

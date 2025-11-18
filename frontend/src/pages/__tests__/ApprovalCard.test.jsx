@@ -79,7 +79,7 @@ describe('ApprovalCard', () => {
     id: 'response-123',
     response_text: 'This is a test roast response',
     tone: 'sarcastic',
-    humor_type: 'witty',
+    // Issue #868: Removed humor_type (deprecated)
     created_at: '2025-01-01T10:00:00Z',
     attempt_number: 1,
     total_attempts: 1,

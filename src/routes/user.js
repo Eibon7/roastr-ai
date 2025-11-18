@@ -3256,7 +3256,7 @@ router.get('/settings/style', authenticateToken, async (req, res) => {
                     style: 'sarcastic',
                     settings: {
                         intensity: 3,
-                        humor_type: 'witty',
+                        // Issue #868: Removed humor_type (deprecated)
                         creativity: 3,
                         politeness: 2
                     },
@@ -3387,7 +3387,7 @@ router.post('/settings/style', authenticateToken, async (req, res) => {
                     style: style,
                     settings: settings || {
                         intensity: 3,
-                        humor_type: 'witty',
+                        // Issue #868: Removed humor_type (deprecated)
                         creativity: 3,
                         politeness: 2
                     },

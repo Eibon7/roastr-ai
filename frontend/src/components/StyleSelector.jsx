@@ -322,9 +322,7 @@ const StyleSelector = () => {
                     <Badge variant="secondary" className="text-xs">
                       Intensidad: {style.settings.intensity}/5
                     </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      {humorTypes.find(h => h.id === style.settings.humor_type)?.name || style.settings.humor_type}
-                    </Badge>
+                    {/* Issue #868: Removed humor_type badge (deprecated) */}
                   </div>
                 </div>
               </div>
@@ -373,25 +371,7 @@ const StyleSelector = () => {
               </div>
 
               {/* Humor Type */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Tipo de humor
-                </label>
-                <select
-                  value={customSettings.humor_type}
-                  onChange={(e) => setCustomSettings({
-                    ...customSettings,
-                    humor_type: e.target.value
-                  })}
-                  className="w-full p-2 border border-gray-300 rounded text-sm"
-                >
-                  {humorTypes.map(type => (
-                    <option key={type.id} value={type.id}>
-                      {type.name} - {type.description}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Issue #868: Removed Humor Type Selector (deprecated - tone is now sole selector) */}
 
               {/* Creativity Slider */}
               <div>

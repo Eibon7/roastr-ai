@@ -204,14 +204,15 @@ class BaseIntegration {
 
   /**
    * Generate roast with tone support
+   * Issue #868: Removed humorType parameter (deprecated - tone is now sole selector)
    */
-  async generateRoastWithTone(text, tone, humorType) {
+  async generateRoastWithTone(text, tone) {
     try {
       const RoastGeneratorReal = require('../../services/roastGeneratorReal');
       const generator = new RoastGeneratorReal();
       
-      // Create custom prompt based on tone and humor type
-      const customPrompt = this.createTonePrompt(tone, humorType);
+      // Create custom prompt based on tone only
+      const customPrompt = this.createTonePrompt(tone);
       const roast = await generator.generateRoastWithPrompt(text, customPrompt);
       
       // Log roast generation
@@ -222,7 +223,7 @@ class BaseIntegration {
         text,
         roast,
         tone,
-        { humorType }
+        {} // Issue #868: Removed humorType from metadata
       );
       
       return roast;
@@ -235,8 +236,9 @@ class BaseIntegration {
 
   /**
    * Create tone-specific prompt
+   * Issue #868: Removed humorType parameter (deprecated - tone is now sole selector)
    */
-  createTonePrompt(tone, humorType) {
+  createTonePrompt(tone) {
     const basePrompt = "You are Roastr.ai, specialized in creating humorous roast responses.";
     
     let toneInstruction = "";
@@ -254,22 +256,9 @@ class BaseIntegration {
         toneInstruction = "Use witty and clever humor.";
     }
     
-    let humorInstruction = "";
-    switch (humorType) {
-      case 'witty':
-        humorInstruction = "Be sharp and quick-witted.";
-        break;
-      case 'clever':
-        humorInstruction = "Use intelligent and thoughtful humor.";
-        break;
-      case 'playful':
-        humorInstruction = "Be light-hearted and fun.";
-        break;
-      default:
-        humorInstruction = "Be entertaining and engaging.";
-    }
+    // Issue #868: Removed humorType logic - tone is now the sole determinant of style
     
-    return `${basePrompt} ${toneInstruction} ${humorInstruction} Keep responses short (1-2 sentences) and appropriate. Respond in the same language as the input.`;
+    return `${basePrompt} ${toneInstruction} Keep responses short (1-2 sentences) and appropriate. Respond in the same language as the input.`;
   }
 
   /**
