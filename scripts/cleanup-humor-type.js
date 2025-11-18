@@ -9,12 +9,45 @@
 const fs = require('fs');
 const path = require('path');
 
+// CodeRabbit feedback (3479986167): Expanded to cover ALL 35 files with references
 const TARGET_FILES = [
+  // Backend routes (8 files)
   'src/routes/approval.js',
   'src/routes/analytics.js',
   'src/routes/oauth.js',
   'src/routes/config.js',
-  'src/lib/prompts/roastPrompt.js'
+  'src/routes/roast.js',
+  'src/routes/user.js',
+  'src/index.js',
+  
+  // Services (7 files)
+  'src/services/roastEngine.js',
+  'src/services/roastGeneratorMock.js',
+  'src/services/roastGeneratorEnhanced.js',
+  'src/services/roastPromptTemplate.js',
+  'src/services/userIntegrationsService.js',
+  'src/services/twitter.js',
+  
+  // Workers (1 file)
+  'src/workers/GenerateReplyWorker.js',
+  
+  // Config (2 files)
+  'src/config/integrations.js',
+  'src/config/validationConstants.js',
+  
+  // Integrations (4 files)
+  'src/integrations/base/BaseIntegration.js',
+  'src/integrations/discord/discordService.js',
+  'src/integrations/twitch/twitchService.js',
+  
+  // Lib (1 file)
+  'src/lib/prompts/roastPrompt.js',
+  
+  // Frontend (4 files)
+  'frontend/src/pages/Approval.jsx',
+  'frontend/src/pages/Configuration.jsx',
+  'frontend/src/components/StyleSelector.jsx',
+  'frontend/src/pages/__tests__/ApprovalCard.test.jsx'
 ];
 
 const REPLACEMENTS = [
