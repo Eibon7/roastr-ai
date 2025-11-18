@@ -1,7 +1,7 @@
 const { logger } = require('../utils/logger');
 const { mockMode } = require('../config/mockMode');
 const ShieldPromptBuilder = require('../lib/prompts/shieldPrompt'); // Issue #858: Prompt caching for Shield
-const callOpenAIWithCaching = require('../lib/openai/responsesHelper'); // Issue #858: Responses API helper
+const { callOpenAIWithCaching } = require('../lib/openai/responsesHelper'); // Issue #858: Responses API helper
 const aiUsageLogger = require('./aiUsageLogger'); // Issue #858: Token logging
 
 /**
