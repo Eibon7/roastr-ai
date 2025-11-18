@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-11-18T15:52:21.239Z",
+  "timestamp": "2025-11-18T18:36:41.254Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -70,6 +70,14 @@
       "node": "plan-features",
       "severity": "warning",
       "declared": 65,
+      "actual": null,
+      "message": "Coverage data not available for validation"
+    },
+    {
+      "type": "missing_coverage_data",
+      "node": "platform-constraints",
+      "severity": "warning",
+      "declared": 50,
       "actual": null,
       "message": "Coverage data not available for validation"
     },

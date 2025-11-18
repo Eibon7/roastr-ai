@@ -1,18 +1,18 @@
 {
-  "timestamp": "2025-11-11T17:12:37.116Z",
+  "timestamp": "2025-11-18T18:36:41.183Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
   "fixes_applied": 1,
   "errors": 0,
-  "health_before": 89.5,
-  "health_after": 92.2,
+  "health_before": 90.8,
+  "health_after": 91.5,
   "details": {
     "fixes": [
       {
         "type": "auto",
         "node": "platform-constraints",
-        "action": "Added agents section to platform-constraints"
+        "action": "Added coverage to platform-constraints"
       }
     ],
     "humanReview": [],
