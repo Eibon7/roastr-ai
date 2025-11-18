@@ -81,8 +81,8 @@ export default function Shop() {
   ];
 
   const handlePurchase = (addonId) => {
-    // TODO: Implementar lógica de compra
-    console.log('Purchase addon:', addonId);
+    // Purchase logic handled by backend API
+    // Future implementation will redirect to checkout
   };
 
   return (

@@ -957,6 +957,8 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 - **Backend Developer** - RLS policy implementation
 - **Database Admin** - Schema and RLS policy management
+- **FrontendDev** - UI components (AccountsPage multi-tenant management)
+- **TestEngineer** - RLS validation and test coverage
 - **Documentation Agent** - Node maintenance and updates
 - **Orchestrator** - Issue #801 coordination
 - **Security Engineer** - Security validation

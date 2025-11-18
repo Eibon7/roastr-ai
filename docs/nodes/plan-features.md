@@ -4,10 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-11-17
+**Last Updated:** 2025-11-18
 **Coverage:** 65%
 **Coverage Source:** auto
-**Related PRs:** #499, #542, #865 (Issue #859 - Brand Safety for Sponsors)
+**Related PRs:** #499, #542, #865 (Issue #859 - Brand Safety for Sponsors), #862 (Issue #862 - UI Phase 4 Migration)
 
 ## Dependencies
 
@@ -410,6 +410,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 - **Backend Developer**
 - **Documentation Agent**
+- **FrontendDev** - UI components (PlanPicker, Pricing pages)
 - **Product Manager**
 - **Test Engineer**
 
