@@ -24,6 +24,14 @@ const { v4: uuidv4 } = require('uuid');
 
 jest.setTimeout(30000);
 
+function assertNoError(context, error) {
+  if (error) {
+    console.error(`❌ ${context} error:`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    const message = error.message || error.details || JSON.stringify(error);
+    throw new Error(`Failed to ${context}: ${message}`);
+  }
+}
+
 describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
   let tenantA, tenantB;
   let adminUser, regularUser;
@@ -57,17 +65,21 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
       active: true
     };
 
-    const { data: createdAdmin } = await serviceClient
+    const { data: createdAdmin, error: createdAdminError } = await serviceClient
       .from('users')
       .insert(adminUser)
       .select()
       .single();
 
-    const { data: createdRegular } = await serviceClient
+    assertNoError('create admin user record', createdAdminError);
+
+    const { data: createdRegular, error: createdRegularError } = await serviceClient
       .from('users')
       .insert(regularUser)
       .select()
       .single();
+
+    assertNoError('create regular user record', createdRegularError);
 
     adminUser = createdAdmin;
     regularUser = createdRegular;
@@ -93,17 +105,21 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
       category: 'test'
     };
 
-    const { data: flagA } = await serviceClient
+    const { data: flagA, error: flagAError } = await serviceClient
       .from('feature_flags')
       .insert(featureFlagA)
       .select()
       .single();
 
-    const { data: flagB } = await serviceClient
+    assertNoError('create feature flag A', flagAError);
+
+    const { data: flagB, error: flagBError } = await serviceClient
       .from('feature_flags')
       .insert(featureFlagB)
       .select()
       .single();
+
+    assertNoError('create feature flag B', flagBError);
 
     featureFlagA = flagA;
     featureFlagB = flagB;
@@ -129,17 +145,21 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
       new_value: { maxRoasts: 2000 }
     };
 
-    const { data: auditA } = await serviceClient
+    const { data: auditA, error: auditAError } = await serviceClient
       .from('admin_audit_logs')
       .insert(adminAuditLogA)
       .select()
       .single();
 
-    const { data: auditB } = await serviceClient
+    assertNoError('create admin_audit_logs A', auditAError);
+
+    const { data: auditB, error: auditBError } = await serviceClient
       .from('admin_audit_logs')
       .insert(adminAuditLogB)
       .select()
       .single();
+
+    assertNoError('create admin_audit_logs B', auditBError);
 
     adminAuditLogA = auditA;
     adminAuditLogB = auditB;
@@ -149,38 +169,43 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
       id: uuidv4(),
       organization_id: tenantA.id,
       user_id: regularUser.id,
-      action_type: 'roast_generated',
+      action: 'roast_generated',
       resource_type: 'roast',
       resource_id: uuidv4(),
-      metadata: { platform: 'twitter' }
+      details: { platform: 'twitter' }
     };
 
     auditLogB = {
       id: uuidv4(),
       organization_id: tenantB.id,
       user_id: regularUser.id,
-      action_type: 'roast_generated',
+      action: 'roast_generated',
       resource_type: 'roast',
       resource_id: uuidv4(),
-      metadata: { platform: 'youtube' }
+      details: { platform: 'youtube' }
     };
 
-    const { data: logA } = await serviceClient
+    const { data: logA, error: logAError } = await serviceClient
       .from('audit_logs')
       .insert(auditLogA)
       .select()
       .single();
 
-    const { data: logB } = await serviceClient
+    assertNoError('create audit_log A', logAError);
+
+    const { data: logB, error: logBError } = await serviceClient
       .from('audit_logs')
       .insert(auditLogB)
       .select()
       .single();
 
+    assertNoError('create audit_log B', logBError);
+
     auditLogA = logA;
     auditLogB = logB;
 
     // Create plan_limits (admin-only, but readable by all)
+    // Note: updated_by is nullable, so we can omit it for test data
     planLimitFree = {
       plan_id: 'free',
       max_roasts: 10,
@@ -197,14 +222,38 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
       shield_enabled: true
     };
 
-    // Insert plan limits if they don't exist
-    await serviceClient
+    // Check if plan_limits exist, insert only if they don't
+    const { data: existingFree } = await serviceClient
       .from('plan_limits')
-      .upsert(planLimitFree, { onConflict: 'plan_id' });
+      .select('plan_id')
+      .eq('plan_id', 'free')
+      .single();
 
-    await serviceClient
+    if (!existingFree) {
+      const { error: planFreeError } = await serviceClient
+        .from('plan_limits')
+        .insert(planLimitFree);
+
+      assertNoError('insert plan_limits free', planFreeError);
+    } else {
+      planLimitFree = existingFree;
+    }
+
+    const { data: existingPro } = await serviceClient
       .from('plan_limits')
-      .upsert(planLimitPro, { onConflict: 'plan_id' });
+      .select('plan_id')
+      .eq('plan_id', 'pro')
+      .single();
+
+    if (!existingPro) {
+      const { error: planProError } = await serviceClient
+        .from('plan_limits')
+        .insert(planLimitPro);
+
+      assertNoError('insert plan_limits pro', planProError);
+    } else {
+      planLimitPro = existingPro;
+    }
 
     console.log('\n✅ Admin test data created\n');
   });
