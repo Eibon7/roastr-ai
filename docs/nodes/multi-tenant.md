@@ -7,8 +7,8 @@
 **Last Updated:** 2025-11-11
 **Coverage:** 94.25%
 **Coverage Source:** auto
-**Note:** Coverage validated via RLS integration tests (24/22 tables tested, 100+ tests passing). Expanded RLS coverage to remaining 13 tables. Direct RLS validation approach without JWT context switching. G6 validation complete.
-**Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready), #504 (Coverage Recovery - 40.9% achieved ✅), #588 (G6 RLS Validation ✅), #774 (Test fixes), #800 (Coverage Expansion - Phase 1 - 50% achieved ✅), #801 (CRUD-level RLS Testing - Full CRUD coverage ✅)
+**Note:** Coverage validated via RLS integration tests (24 tables tested, 100+ tests passing). Expanded RLS coverage to remaining 13 tables. Direct RLS validation approach without JWT context switching. G6 validation complete.
+**Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready), #504 (Coverage Recovery - 40.9% achieved ✅), #588 (G6 RLS Validation ✅), #774 (Test fixes), #800 (Coverage Expansion - Phase 1 - 50% achieved ✅), #801 (CRUD-level RLS Testing - Full CRUD coverage ✅), #787 (RLS Integration Tests Phase 2 - Usage, Admin, Shield ✅)
 **Related PRs:** #499, #587, #790, #805 (Test fixes), #812 (RLS expansion), #814 (G6 validation)
 ## Dependencies
 
@@ -903,8 +903,8 @@ SUPABASE_JWT_SECRET=your-supabase-jwt-secret
 - AC3: Cross-Tenant Isolation (2 tests): Bidirectional isolation verification
 - Coverage Statistics (1 test)
 
-**Tables Tested:** 9 / 22 (40.9% coverage)
-**Critical Tables:** integration_configs (SECURITY), usage_records (BILLING), monthly_usage (BILLING)
+**Tables Tested:** 24 / 27 (88.9% coverage)
+**Critical Tables:** integration_configs (SECURITY), usage_records (BILLING), monthly_usage (BILLING), usage_tracking, usage_limits, usage_alerts, feature_flags, admin_audit_logs, audit_logs, plan_limits, plan_limits_audit, shield_actions
 
 **Status:** ✅ **17/17 tests passing (100%)** - Execution time: 5.2s
 - ✅ RLS enforcement confirmed
@@ -926,10 +926,10 @@ SUPABASE_JWT_SECRET=your-supabase-jwt-secret
 - AC7: Bidirectional Cross-Tenant Write Isolation (6 tests): INSERT/UPDATE/DELETE in both directions
 - Coverage Statistics (1 test)
 
-**Tables Tested:** 6 tables with full CRUD coverage (INSERT, UPDATE, DELETE)
+**Tables Tested:** 24 tables with full RLS coverage (15 from Issue #583 + 9 from Issue #787)
 **Priority Tables:**
-- HIGH: integration_configs (SECURITY CRITICAL), usage_records (BILLING CRITICAL), monthly_usage (BILLING CRITICAL)
-- MEDIUM: comments, responses
+- HIGH: integration_configs (SECURITY CRITICAL), usage_records (BILLING CRITICAL), monthly_usage (BILLING CRITICAL), usage_tracking, usage_limits, usage_alerts, feature_flags, admin_audit_logs, audit_logs, plan_limits, plan_limits_audit, shield_actions
+- MEDIUM: comments, responses, posts, roasts
 - LOW: user_activities
 
 **Status:** ⏳ **Pending CI/CD validation** - Expected: 55+ tests passing

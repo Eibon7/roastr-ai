@@ -260,6 +260,30 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
 
   afterAll(async () => {
     console.log('\n🧹 Tearing down admin RLS test environment...\n');
+    
+    // Clean up admin and regular users created for testing
+    if (adminUser?.id) {
+      try {
+        await serviceClient.from('users').delete().eq('id', adminUser.id);
+        await serviceClient.auth.admin.deleteUser(adminUser.id).catch(() => {
+          // User may not exist in auth.users, ignore
+        });
+      } catch (error) {
+        console.warn(`⚠️  Failed to cleanup admin user: ${error.message}`);
+      }
+    }
+    
+    if (regularUser?.id) {
+      try {
+        await serviceClient.from('users').delete().eq('id', regularUser.id);
+        await serviceClient.auth.admin.deleteUser(regularUser.id).catch(() => {
+          // User may not exist in auth.users, ignore
+        });
+      } catch (error) {
+        console.warn(`⚠️  Failed to cleanup regular user: ${error.message}`);
+      }
+    }
+    
     await cleanupTestData();
     console.log('\n✅ Teardown complete\n');
   });
