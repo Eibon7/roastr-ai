@@ -18,7 +18,14 @@ jest.mock('../../../src/config/supabase');
 jest.mock('../../../src/utils/polarHelpers');
 jest.mock('../../../src/utils/logger');
 jest.mock('@polar-sh/sdk');
-jest.mock('../../../src/services/stripeWrapper');
+jest.mock('../../../src/services/stripeWrapper', () => {
+    // Mock StripeWrapper to prevent initialization errors
+    return jest.fn().mockImplementation(() => ({
+        prices: {
+            retrieve: jest.fn()
+        }
+    }));
+});
 jest.mock('../../../src/config/flags', () => ({
     flags: {
         isEnabled: jest.fn().mockReturnValue(true)
@@ -145,6 +152,14 @@ describe('EntitlementsService - Polar Integration', () => {
         });
 
         it('should set entitlements for creator_plus plan', async () => {
+            // Mock getPlanFromPriceId to return 'plus' (the actual plan name used in code)
+            getPlanFromPriceId.mockImplementation((priceId) => {
+                if (priceId === testPriceIds.creator_plus) return 'plus';
+                if (priceId === testPriceIds.starter) return 'starter_trial';
+                if (priceId === testPriceIds.pro) return 'pro';
+                throw new Error(`Unknown price_id: ${priceId}`);
+            });
+
             const result = await service.setEntitlementsFromPolarPrice(
                 userId,
                 testPriceIds.creator_plus
@@ -153,7 +168,7 @@ describe('EntitlementsService - Polar Integration', () => {
             expect(result.success).toBe(true);
 
             const upsertCall = mockUpsert.mock.calls[0][0];
-            expect(upsertCall.plan_name).toBe('creator_plus');
+            expect(upsertCall.plan_name).toBe('plus');
             expect(upsertCall.analysis_limit_monthly).toBe(10000);
             expect(upsertCall.roast_limit_monthly).toBe(5000);
             expect(upsertCall.persona_fields_limit).toBe(50);
@@ -292,10 +307,10 @@ describe('EntitlementsService - Polar Integration', () => {
         });
 
         it('should return correct limits for creator_plus', () => {
-            const limits = service._getPlanLimitsFromName('creator_plus');
+            const limits = service._getPlanLimitsFromName('plus');
 
             expect(limits).toEqual({
-                plan_name: 'creator_plus',
+                plan_name: 'plus',
                 analysis_limit_monthly: 10000,
                 roast_limit_monthly: 5000,
                 persona_fields_limit: 50,

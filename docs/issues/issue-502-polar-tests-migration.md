@@ -2,8 +2,8 @@
 
 **Prioridad:** P1 (Alta - Requerido para completar migración a Polar)
 **Estimación:** 6-8 horas
-**Estado Actual:** 0% completado (tests con Stripe completados en Issue #502)
-**Relacionado:** Issue #502, `docs/issues/issue-payment-polar.md`
+**Estado Actual:** ✅ **COMPLETADO** - Tests de Stripe eliminados en PR #886 (Issue #885)
+**Relacionado:** Issue #502, Issue #885, PR #886
 
 ---
 
@@ -213,5 +213,7 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
 ---
 
 **Creado:** 2025-01-XX
-**Última actualización:** 2025-01-XX
+**Última actualización:** 2025-11-19
+**Completado en:** PR #886 (Issue #885) - 2025-11-19
+**Estado final:** ✅ Tests de Stripe eliminados (26 archivos) y adaptados (3 archivos) a Polar
 
