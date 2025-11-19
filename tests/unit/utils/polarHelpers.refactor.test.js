@@ -8,7 +8,7 @@
  * Related: Issue #808 - Migrar tests de billing de Stripe a Polar
  */
 
-// Mock logger to avoid noise in tests
+// Mock logger FIRST, before any imports
 jest.mock('../../../src/utils/logger', () => ({
   logger: {
     error: jest.fn(),
@@ -19,20 +19,22 @@ jest.mock('../../../src/utils/logger', () => ({
 }));
 
 describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
-  // Set up test environment variables BEFORE importing the module
-  const originalEnv = process.env;
+  // Set up test environment variables BEFORE importing module
+  const originalEnv = { ...process.env };
   let getPlanFromProductId, getProductIdFromPlan, getPlanFromPriceId;
   let getPriceIdFromPlan, getConfiguredProductIds, getConfiguredPriceIds, isValidPlan;
   let logger;
   
   beforeAll(() => {
-    // Set environment variables before module is loaded
+    // Set environment variables BEFORE loading the module
     process.env.POLAR_STARTER_PRODUCT_ID = 'prod_starter_test';
     process.env.POLAR_PRO_PRODUCT_ID = 'prod_pro_test';
     process.env.POLAR_PLUS_PRODUCT_ID = 'prod_plus_test';
     
-    // Clear module cache and reload with new env vars
+    // Reset module cache and reload with new env vars
     jest.resetModules();
+    
+    // Now import the module with env vars set
     const polarHelpers = require('../../../src/utils/polarHelpers');
     logger = require('../../../src/utils/logger');
     
@@ -47,12 +49,17 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
   });
 
   afterAll(() => {
+    // Restore original environment
     process.env = originalEnv;
     jest.resetModules();
     jest.clearAllMocks();
   });
 
   describe('New API: getPlanFromProductId()', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('should map product_id to plan correctly', () => {
       expect(getPlanFromProductId('prod_starter_test')).toBe('starter_trial');
       expect(getPlanFromProductId('prod_pro_test')).toBe('pro');
@@ -64,7 +71,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
         getPlanFromProductId('prod_unknown');
       }).toThrow('Unknown product_id: prod_unknown');
       
-      expect(logger.error).toHaveBeenCalledWith(
+      expect(logger.logger.error).toHaveBeenCalledWith(
         '[Polar Helpers] Unknown product_id',
         { productId: 'prod_unknown' }
       );
@@ -72,6 +79,10 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
   });
 
   describe('New API: getProductIdFromPlan()', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('should map plan to product_id correctly', () => {
       expect(getProductIdFromPlan('starter_trial')).toBe('prod_starter_test');
       expect(getProductIdFromPlan('pro')).toBe('prod_pro_test');
@@ -83,7 +94,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
         getProductIdFromPlan('unknown_plan');
       }).toThrow('Unknown plan: unknown_plan');
       
-      expect(logger.error).toHaveBeenCalledWith(
+      expect(logger.logger.error).toHaveBeenCalledWith(
         '[Polar Helpers] Unknown plan',
         { plan: 'unknown_plan' }
       );
@@ -91,11 +102,15 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
   });
 
   describe('Legacy API: getPlanFromPriceId() (deprecated)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('should support legacy price_id calls with warning', () => {
       const result = getPlanFromPriceId('prod_starter_test');
       
       expect(result).toBe('starter_trial');
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(logger.logger.warn).toHaveBeenCalledWith(
         '[Polar Helpers] getPlanFromPriceId is deprecated, use getPlanFromProductId',
         { priceId: 'prod_starter_test' }
       );
@@ -117,11 +132,15 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
   });
 
   describe('Legacy API: getPriceIdFromPlan() (deprecated)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('should support legacy calls with warning', () => {
       const result = getPriceIdFromPlan('pro');
       
       expect(result).toBe('prod_pro_test');
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(logger.logger.warn).toHaveBeenCalledWith(
         '[Polar Helpers] getPriceIdFromPlan is deprecated, use getProductIdFromPlan',
         { plan: 'pro' }
       );
@@ -137,12 +156,16 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
   });
 
   describe('Legacy API: getConfiguredPriceIds() (deprecated)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('should return same IDs as getConfiguredProductIds()', () => {
       const productIds = getConfiguredProductIds();
       const priceIds = getConfiguredPriceIds();
       
       expect(priceIds).toEqual(productIds);
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(logger.logger.warn).toHaveBeenCalledWith(
         '[Polar Helpers] getConfiguredPriceIds is deprecated, use getConfiguredProductIds'
       );
     });
