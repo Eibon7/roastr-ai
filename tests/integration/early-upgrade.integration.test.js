@@ -124,9 +124,7 @@ describe('Early Upgrade Integration Tests (M1)', () => {
         plan: 'starter_trial',
         status: 'active',
         trial_end: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), // 20 days remaining
-        created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        stripe_customer_id: null,
-        stripe_subscription_id: null
+        created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
       }
     };
 
@@ -151,14 +149,12 @@ describe('Early Upgrade Integration Tests (M1)', () => {
       expect(subscription.status).toBe('active');
       expect(new Date(subscription.trial_end).getTime()).toBeGreaterThan(Date.now());
 
-      // Act - Simulate Stripe webhook: checkout.session.completed for Pro plan
+      // Act - Simulate Polar webhook: order.created for Pro plan
       const webhookData = {
         user_id: testUserId,
         plan: 'pro',
         status: 'active',
         trial_end: null, // Trial canceled
-        stripe_customer_id: 'cus_test123',
-        stripe_subscription_id: 'sub_test456',
         current_period_start: new Date().toISOString(),
         current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };
@@ -181,25 +177,25 @@ describe('Early Upgrade Integration Tests (M1)', () => {
       expect(updatedSub.status).toBe('active');
     });
 
-    it('should upgrade from starter_trial to creator_plus', async () => {
+    it('should upgrade from starter_trial to plus', async () => {
       // Arrange
       expect(mockSupabaseData.users[testUserId].plan).toBe('starter_trial');
 
       // Act - Simulate Polar webhook: order.created for Plus plan
       const webhookData = {
         user_id: testUserId,
-        plan: 'creator_plus',
+        plan: 'plus',
         status: 'active',
         trial_end: null,
         current_period_start: new Date().toISOString()
       };
 
       await mockSupabase.from('user_subscriptions').upsert(webhookData);
-      await mockSupabase.from('users').update({ plan: 'creator_plus' }).eq('id', testUserId);
+      await mockSupabase.from('users').update({ plan: 'plus' }).eq('id', testUserId);
 
       // Assert
-      expect(mockSupabaseData.users[testUserId].plan).toBe('creator_plus');
-      expect(mockSupabaseData.user_subscriptions[testUserId].plan).toBe('creator_plus');
+      expect(mockSupabaseData.users[testUserId].plan).toBe('plus');
+      expect(mockSupabaseData.user_subscriptions[testUserId].plan).toBe('plus');
       expect(mockSupabaseData.user_subscriptions[testUserId].trial_end).toBeNull();
     });
   });
@@ -281,27 +277,27 @@ describe('Early Upgrade Integration Tests (M1)', () => {
       expect(subscription.plan).toBe('pro');
     });
 
-    it('should handle duplicate checkout.session.completed webhooks', async () => {
+    it('should handle duplicate order.created webhooks', async () => {
       // Arrange
-      const sessionId = 'cs_test_session_456';
+      const orderId = 'order_test_456';
 
-      // Act - Process same Stripe session twice
+      // Act - Process same Polar order twice
       const firstProcess = await mockSupabase.from('user_subscriptions').upsert({
         user_id: testUserId,
         plan: 'pro',
-        webhook_event_id: sessionId
+        webhook_event_id: orderId
       });
 
       const secondProcess = await mockSupabase.from('user_subscriptions').upsert({
         user_id: testUserId,
         plan: 'pro',
-        webhook_event_id: sessionId
+        webhook_event_id: orderId
       });
 
       // Assert - Both return success but only one processed
       expect(firstProcess.error).toBeNull();
       expect(secondProcess.error).toBeNull();
-      expect(mockSupabaseData.webhookProcessed[sessionId]).toBe(true);
+      expect(mockSupabaseData.webhookProcessed[orderId]).toBe(true);
     });
 
     it('should process different webhook events separately', async () => {
@@ -318,7 +314,7 @@ describe('Early Upgrade Integration Tests (M1)', () => {
 
       await mockSupabase.from('user_subscriptions').upsert({
         user_id: testUserId,
-        plan: 'creator_plus', // Different plan
+        plan: 'plus', // Different plan
         webhook_event_id: event2
       });
 
@@ -326,9 +322,9 @@ describe('Early Upgrade Integration Tests (M1)', () => {
       expect(mockSupabaseData.webhookProcessed[event1]).toBe(true);
       expect(mockSupabaseData.webhookProcessed[event2]).toBe(true);
 
-      // Last event wins (creator_plus)
+      // Last event wins (plus)
       const subscription = mockSupabaseData.user_subscriptions[testUserId];
-      expect(subscription.plan).toBe('creator_plus');
+      expect(subscription.plan).toBe('plus');
     });
   });
 
@@ -413,22 +409,22 @@ describe('Early Upgrade Integration Tests (M1)', () => {
       expect(mockSupabaseData.user_subscriptions[testUserId].trial_end).toBeNull();
     });
 
-    it('should preserve stripe_customer_id on upgrade', async () => {
+    it('should preserve polar_customer_id on upgrade', async () => {
       // Arrange
-      const customerId = 'cus_test_preserve';
+      const customerId = 'polar_cus_test_preserve';
 
-      // Act - Upgrade with Stripe customer
+      // Act - Upgrade with Polar customer
       await mockSupabase.from('user_subscriptions').upsert({
         user_id: testUserId,
         plan: 'pro',
-        stripe_customer_id: customerId,
-        stripe_subscription_id: 'sub_test'
+        polar_customer_id: customerId,
+        polar_subscription_id: 'sub_test'
       });
 
       // Assert - Customer ID preserved for future billing
       const subscription = mockSupabaseData.user_subscriptions[testUserId];
-      expect(subscription.stripe_customer_id).toBe(customerId);
-      expect(subscription.stripe_subscription_id).toBe('sub_test');
+      expect(subscription.polar_customer_id).toBe(customerId);
+      expect(subscription.polar_subscription_id).toBe('sub_test');
     });
   });
 });
