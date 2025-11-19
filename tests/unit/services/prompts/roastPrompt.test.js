@@ -21,8 +21,8 @@ describe('RoastPromptBuilder - Issue #872', () => {
   });
 
   describe('Block A - Sistema de 3 Tonos', () => {
-    test('should build static Block A with 3 tones', () => {
-      const blockA = builder.buildBlockA();
+    test('should build static Block A with 3 tones', async () => {
+      const blockA = await builder.buildBlockA('es');
 
       expect(blockA).toContain('Eres Roastr');
       expect(blockA).toContain('🎭 SISTEMA DE TONOS DE ROASTR');
@@ -44,17 +44,17 @@ describe('RoastPromptBuilder - Issue #872', () => {
       expect(blockA).toContain('Discord: 2,000 caracteres');
     });
 
-    test('Block A should be 100% static (no variables)', () => {
-      const blockA1 = builder.buildBlockA();
-      const blockA2 = builder.buildBlockA();
+    test('Block A should be 100% static (no variables)', async () => {
+      const blockA1 = await builder.buildBlockA('es');
+      const blockA2 = await builder.buildBlockA('es');
       
       expect(blockA1).toBe(blockA2);
       expect(blockA1).not.toContain('{{');
       expect(blockA1).not.toContain('${');
     });
 
-    test('Block A should NOT contain obsolete configs', () => {
-      const blockA = builder.buildBlockA();
+    test('Block A should NOT contain obsolete configs', async () => {
+      const blockA = await builder.buildBlockA('es');
       
       // Post-#686: No debe mencionar humor_type ni intensity_level
       expect(blockA).not.toContain('humor_type');

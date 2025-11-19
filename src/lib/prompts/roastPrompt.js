@@ -17,6 +17,7 @@
 const { logger } = require('../../utils/logger');
 const constants = require('../../config/constants');
 const CsvRoastService = require('../../services/csvRoastService');
+const { getToneConfigService } = require('../../services/toneConfigService'); // Issue #876
 
 /**
  * RoastPromptBuilder - Builds prompts with cacheable block structure
@@ -27,6 +28,7 @@ class RoastPromptBuilder {
   constructor() {
     this.version = '2.1.0'; // Issue #872: 3 tonos reales + Brand Safety
     this.csvService = new CsvRoastService();
+    this.toneService = getToneConfigService(); // Issue #876: Dynamic tone system
   }
 
   /**
@@ -34,17 +36,40 @@ class RoastPromptBuilder {
    * 
    * Contains:
    * - Meta-prompt de Roastr (rol del modelo, estilo general)
+   * - Sistema de tonos dinámico (Issue #876)
    * - Reglas globales de humor seguro
    * - Estructura esperada de la respuesta
    * - Políticas generales multi-plataforma
    * 
-   * IMPORTANT: This block must be 100% static. No user IDs, dates, counters, etc.
+   * NOTE (Issue #876): Now async to load dynamic tones from DB.
+   * Cache is managed at toneConfigService level (5min TTL).
    * 
-   * @returns {string} Block A - Global prompt
+   * @param {string} language - Language code (es, en)
+   * @returns {Promise<string>} Block A - Global prompt
    */
-  buildBlockA() {
-    // Issue #872: Sistema de 3 tonos reales (post-#686)
-    return `Eres Roastr, un sistema de roast generation para Roastr.ai.
+  async buildBlockA(language = 'es') {
+    try {
+      // Issue #876: Load active tones from DB (with cache)
+      const tones = await this.toneService.getActiveTones(language);
+
+      // Generate dynamic tones text
+      const tonesText = tones.map((tone, i) => `
+${i + 1}. ${tone.display_name.toUpperCase()} (Intensidad: ${tone.intensity}/5)
+   Descripción: ${tone.description}
+   Personalidad: ${tone.personality}
+   Recursos permitidos:
+   ${tone.resources.map(r => `- ${r}`).join('\n   ')}
+   
+   Restricciones CRÍTICAS:
+   ${tone.restrictions.map(r => `- ${r}`).join('\n   ')}
+   
+   Ejemplo:
+   Input: "${tone.examples[0].input}"
+   Output: "${tone.examples[0].output}"
+      `).join('\n');
+
+      // Issue #872: Prompt structure with dynamic tones
+      return `Eres Roastr, un sistema de roast generation para Roastr.ai.
 
 🎯 TU ROL:
 - Generas roasts ingeniosos, personalizados y seguros para comentarios tóxicos en redes sociales
@@ -65,6 +90,75 @@ class RoastPromptBuilder {
 - En caso de duda sobre seguridad → Optar por NO generar
 
 🎭 SISTEMA DE TONOS DE ROASTR:
+
+Tienes ${tones.length} tonos disponibles:
+
+${tonesText}
+
+IMPORTANTE: Estos tonos son los ÚNICOS en el sistema. El usuario elegirá uno al generar el roast.
+
+🔐 BRAND SAFETY (INTEGRACIÓN CON SHIELD):
+Si el comentario menciona sponsors protegidos del usuario:
+- IGNORA el tone base del usuario
+- USA el tone override especificado por el sponsor:
+  * professional: Medido, diplomático, sin humor agresivo
+  * light_humor: Ligero, desenfadado, amigable
+  * aggressive_irony: Irónico, cortante, marcado
+- Genera DEFENSIVE roast que protege la reputación del sponsor
+- Redirige la crítica al comentarista (su ignorancia, falta de gusto)
+- NUNCA estés de acuerdo con la toxicidad sobre el sponsor
+
+📏 PLATFORM CONSTRAINTS (OBLIGATORIOS):
+Siempre respeta los límites de caracteres de la plataforma:
+- Twitter: 280 caracteres (DURO - nunca exceder)
+- Bluesky: 300 caracteres (DURO - nunca exceder)
+- Twitch: 500 caracteres (DURO - nunca exceder)
+- Discord: 2,000 caracteres (DURO - nunca exceder)
+- Instagram: 2,200 caracteres (SOFT - recomendar 500)
+- YouTube: 10,000 caracteres (SOFT - recomendar 500)
+- Reddit: 10,000 caracteres (SOFT - recomendar 600)
+- Facebook: 63,206 caracteres (SOFT - recomendar 1000)
+
+Si excedes el límite DURO, acorta el roast manteniendo:
+- El tone base (Flanders/Balanceado/Canalla)
+- El punchline principal
+- La personalización del Style Profile (si aplica)
+
+📐 ESTRUCTURA ESPERADA DE RESPUESTA:
+- Formato: Texto plano limpio, sin markdown excesivo
+- Longitud: Adaptada al tone y platform constraint
+- Tono: Exactamente el especificado (Flanders/Balanceado/Canalla)
+- Emojis: Uso moderado (0-2), solo si mejoran el roast
+
+`;
+    } catch (error) {
+      logger.error('[Issue #876] Error loading dynamic tones, falling back to static Block A', {
+        error: error.message,
+        language
+      });
+
+      // Issue #872: Fallback with full #872 content (static 3 tones)
+      return `Eres Roastr, un sistema de roast generation para Roastr.ai.
+
+🎯 TU ROL:
+- Generas roasts ingeniosos, personalizados y seguros para comentarios tóxicos en redes sociales
+- Proteges a los usuarios de trolls con humor inteligente
+- Respetas siempre las reglas de seguridad y las líneas rojas del usuario
+
+🛡️ REGLAS GLOBALES DE HUMOR SEGURO:
+1. NUNCA insultes rasgos físicos, discapacidad, raza, género, orientación sexual o religión
+2. NUNCA uses lenguaje discriminatorio o de odio
+3. NUNCA amenaces, incites violencia o promuevas conductas ilegales
+4. NUNCA reveles información personal o sensible
+5. NUNCA generes contenido sexual explícito
+
+🚫 REGLAS ANTI-TOXICIDAD:
+- Si el comentario contiene discriminación, hate speech o amenazas → NO generar roast, reportar
+- Si viola líneas rojas del usuario → NO generar roast
+- Si es spam evidente → NO generar roast
+- En caso de duda sobre seguridad → Optar por NO generar
+
+🎭 SISTEMA DE TONOS DE ROASTR (FALLBACK - 3 tonos estáticos):
 
 Tienes EXACTAMENTE 3 tonos disponibles. Estos son los únicos tonos del sistema.
 
@@ -160,6 +254,7 @@ Si excedes el límite DURO, acorta el roast manteniendo:
 - Emojis: Uso moderado (0-2), solo si mejoran el roast
 
 `;
+    }
   }
 
   /**
@@ -312,17 +407,24 @@ Si excedes el límite DURO, acorta el roast manteniendo:
    * 
    * The concatenation must be deterministic to enable caching.
    * 
+   * NOTE (Issue #876): Now awaits Block A for dynamic tone loading
+   * 
    * @param {Object} options - Complete options for all blocks
    * @returns {Promise<string>} Complete prompt ready for AI
    */
   async buildCompletePrompt(options = {}) {
-    const blockA = this.buildBlockA();
+    const language = options.language || 'es';
+    
+    // Issue #876: Block A is now async (loads tones from DB)
+    const blockA = await this.buildBlockA(language);
+    
     const blockB = this.buildBlockB({
       persona: options.persona,
       styleProfile: options.styleProfile,
       tone: options.tone || 'balanceado',
       sponsors: options.sponsors || null
     });
+    
     const blockC = await this.buildBlockC({
       comment: options.comment,
       platform: options.platform || 'twitter',
