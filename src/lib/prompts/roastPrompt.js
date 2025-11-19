@@ -17,6 +17,7 @@
 const { logger } = require('../../utils/logger');
 const constants = require('../../config/constants');
 const CsvRoastService = require('../../services/csvRoastService');
+const { getToneConfigService } = require('../../services/toneConfigService'); // Issue #876
 
 /**
  * RoastPromptBuilder - Builds prompts with cacheable block structure
@@ -27,6 +28,7 @@ class RoastPromptBuilder {
   constructor() {
     this.version = '2.0.0'; // Issue #858: Prompt caching structure
     this.csvService = new CsvRoastService();
+    this.toneService = getToneConfigService(); // Issue #876: Dynamic tone system
   }
 
   /**
@@ -34,16 +36,47 @@ class RoastPromptBuilder {
    * 
    * Contains:
    * - Meta-prompt de Roastr (rol del modelo, estilo general)
+   * - Sistema de tonos dinámico (Issue #876)
    * - Reglas globales de humor seguro
    * - Estructura esperada de la respuesta
    * - Políticas generales multi-plataforma
    * 
-   * IMPORTANT: This block must be 100% static. No user IDs, dates, counters, etc.
+   * NOTE (Issue #876): Now async to load dynamic tones from DB.
+   * Cache is managed at toneConfigService level (5min TTL).
    * 
-   * @returns {string} Block A - Global prompt
+   * @param {string} language - Language code (es, en)
+   * @returns {Promise<string>} Block A - Global prompt
    */
-  buildBlockA() {
-    return `Tu tarea es generar una respuesta sarcástica e ingeniosa —un roast— dirigida a un comentario ofensivo o ridículo en redes sociales.
+  async buildBlockA(language = 'es') {
+    try {
+      // Load active tones from DB (with cache)
+      const tones = await this.toneService.getActiveTones(language);
+
+      // Generate dynamic tones text
+      const tonesText = tones.map((tone, i) => `
+${i + 1}. ${tone.display_name.toUpperCase()} (Intensidad: ${tone.intensity}/5)
+   Descripción: ${tone.description}
+   Personalidad: ${tone.personality}
+   Recursos permitidos:
+   ${tone.resources.map(r => `- ${r}`).join('\n   ')}
+   
+   Restricciones CRÍTICAS:
+   ${tone.restrictions.map(r => `- ${r}`).join('\n   ')}
+   
+   Ejemplo:
+   Input: "${tone.examples[0].input}"
+   Output: "${tone.examples[0].output}"
+      `).join('\n');
+
+      return `Tu tarea es generar una respuesta sarcástica e ingeniosa —un roast— dirigida a un comentario ofensivo o ridículo en redes sociales.
+
+🎭 SISTEMA DE TONOS DE ROASTR:
+
+Tienes ${tones.length} tonos disponibles:
+
+${tonesText}
+
+IMPORTANTE: Estos tonos son los ÚNICOS en el sistema. El usuario elegirá uno al generar el roast.
 
 🧾 CONTEXTO:
 
@@ -68,6 +101,39 @@ class RoastPromptBuilder {
 - NO uses groserías explícitas a menos que el estilo personal lo permita.
 
 `;
+    } catch (error) {
+      logger.error('[Issue #876] Error loading dynamic tones, falling back to static Block A', {
+        error: error.message,
+        language
+      });
+
+      // Fallback to static Block A if DB load fails
+      return `Tu tarea es generar una respuesta sarcástica e ingeniosa —un roast— dirigida a un comentario ofensivo o ridículo en redes sociales.
+
+🧾 CONTEXTO:
+
+- El siguiente comentario ha sido publicado por un usuario de internet y merece una respuesta que:
+  - No sea violenta ni insultante de forma gratuita.
+  - Sea provocadora, pero con estilo.
+  - Responda con inteligencia, ironía o un giro inesperado.
+  - En algunos casos, se permite el humor absurdo o meta-humor.
+  - Idealmente, el roast debería hacer que el autor original quede en evidencia ante los demás sin necesidad de agresividad directa.
+
+🔥 CARACTERÍSTICAS DE UN BUEN ROAST APLICADAS:
+- Inteligente, con doble sentido o ironía
+- Cortante sin ser cruel
+- Sorprendente (evita lo obvio)
+- Breve, pero con punch
+- Estilo claro, como si viniera de alguien ingenioso con confianza
+
+📎 INSTRUCCIONES FINALES:
+- El roast debe ser una única frase breve (máximo 25 palabras).
+- No repitas literalmente nada del comentario original.
+- Si el comentario es absurdo, se permite usar humor absurdo como respuesta.
+- NO uses groserías explícitas a menos que el estilo personal lo permita.
+
+`;
+    }
   }
 
   /**
@@ -209,17 +275,24 @@ class RoastPromptBuilder {
    * 
    * The concatenation must be deterministic to enable caching.
    * 
+   * NOTE (Issue #876): Now awaits Block A for dynamic tone loading
+   * 
    * @param {Object} options - Complete options for all blocks
    * @returns {Promise<string>} Complete prompt ready for AI
    */
   async buildCompletePrompt(options = {}) {
-    const blockA = this.buildBlockA();
+    const language = options.language || 'es';
+    
+    // Issue #876: Block A is now async (loads tones from DB)
+    const blockA = await this.buildBlockA(language);
+    
     const blockB = this.buildBlockB({
       persona: options.persona,
       styleProfile: options.styleProfile,
       tone: options.tone || 'sarcastic',
       humorType: options.humorType || 'witty'
     });
+    
     const blockC = await this.buildBlockC({
       comment: options.comment,
       platform: options.platform || 'twitter',
