@@ -17,6 +17,30 @@ const PLAN_LIMITS = {
 };
 
 /**
+ * Get moderation level based on effective plan (Issue #287)
+ * Derives moderation level from plan tier instead of hardcoding
+ */
+function getModerationLevel(effectivePlan) {
+  const planModerationMap = {
+    free: 'basic',
+    plus: 'standard',
+    pro: 'enhanced',
+    agency: 'enhanced',
+    enterprise: 'strict'
+  };
+  return planModerationMap[effectivePlan] || 'basic';
+}
+
+/**
+ * Get auto response setting based on effective plan (Issue #287)
+ * Derives auto response from plan tier instead of hardcoding
+ */
+function getAutoResponse(effectivePlan) {
+  // Auto response is disabled for free tier, enabled for all paid tiers
+  return effectivePlan !== 'free';
+}
+
+/**
  * Mock response para OpenAI API
  */
 const createMockOpenAIResponse = (text) => ({
@@ -241,8 +265,8 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
       suspendedReason: suspended ? (suspendedReason || 'Suspended by scenario') : null,
       settings: {
         enabledPlatforms: platforms,
-        moderationLevel: 'standard',
-        autoResponse: true
+        moderationLevel: getModerationLevel(effectivePlan),
+        autoResponse: getAutoResponse(effectivePlan)
       },
       entitlements: finalEntitlements
     },
@@ -275,7 +299,8 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           settings: {
             ...baseScenario.organization.settings,
             enabledPlatforms: ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'],
-            moderationLevel: 'strict',
+            moderationLevel: getModerationLevel('enterprise'),
+            autoResponse: getAutoResponse('enterprise'),
             customBranding: true,
             apiAccess: true,
             bulkOperations: true
@@ -302,7 +327,8 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           settings: {
             ...baseScenario.organization.settings,
             enabledPlatforms: platforms.length > 6 ? platforms.slice(0, 6) : platforms,
-            moderationLevel: 'enhanced',
+            moderationLevel: getModerationLevel('agency'),
+            autoResponse: getAutoResponse('agency'),
             teamSeats: 25
           }
         },
@@ -327,7 +353,8 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           settings: {
             ...baseScenario.organization.settings,
             enabledPlatforms: platforms.length > 2 ? platforms.slice(0, 2) : platforms,
-            moderationLevel: 'standard'
+            moderationLevel: getModerationLevel('plus'),
+            autoResponse: getAutoResponse('plus')
           }
         },
         usage: {
@@ -346,7 +373,8 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           settings: {
             ...baseScenario.organization.settings,
             enabledPlatforms: platforms.length > 3 ? platforms.slice(0, 3) : platforms,
-            moderationLevel: 'enhanced'
+            moderationLevel: getModerationLevel('pro'),
+            autoResponse: getAutoResponse('pro')
           }
         },
         usage: {
@@ -368,8 +396,8 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           settings: {
             ...baseScenario.organization.settings,
             enabledPlatforms: ['twitter'], // Free tier limited to 1 platform
-            moderationLevel: 'basic',
-            autoResponse: false // Limited features
+            moderationLevel: getModerationLevel('free'),
+            autoResponse: getAutoResponse('free') // Limited features
           }
         },
         usage: {
@@ -381,7 +409,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         }
       };
       
-    case 'multiUser':
+    case 'multiUser': {
       const additionalUsers = Array.from({ length: 3 }, (_, i) => ({
         id: generateTestId(),
         email: `user${i}@${orgId}.example.com`,
@@ -403,6 +431,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           }
         }
       };
+    }
       
     case 'suspended':
       return {
@@ -740,3 +769,4 @@ module.exports = {
   calculateQualityScore,
   validateToneEnforcement
 };
+

@@ -36,7 +36,8 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
     
     // Now import the module with env vars set
     const polarHelpers = require('../../../src/utils/polarHelpers');
-    logger = require('../../../src/utils/logger');
+    // CodeRabbit fix: Destructure logger from mocked module
+    ({ logger } = require('../../../src/utils/logger'));
     
     // Extract functions
     getPlanFromProductId = polarHelpers.getPlanFromProductId;
@@ -71,7 +72,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
         getPlanFromProductId('prod_unknown');
       }).toThrow('Unknown product_id: prod_unknown');
       
-      expect(logger.logger.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         '[Polar Helpers] Unknown product_id',
         { productId: 'prod_unknown' }
       );
@@ -94,7 +95,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
         getProductIdFromPlan('unknown_plan');
       }).toThrow('Unknown plan: unknown_plan');
       
-      expect(logger.logger.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         '[Polar Helpers] Unknown plan',
         { plan: 'unknown_plan' }
       );
@@ -110,7 +111,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
       const result = getPlanFromPriceId('prod_starter_test');
       
       expect(result).toBe('starter_trial');
-      expect(logger.logger.warn).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         '[Polar Helpers] getPlanFromPriceId is deprecated, use getPlanFromProductId',
         { priceId: 'prod_starter_test' }
       );
@@ -140,7 +141,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
       const result = getPriceIdFromPlan('pro');
       
       expect(result).toBe('prod_pro_test');
-      expect(logger.logger.warn).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         '[Polar Helpers] getPriceIdFromPlan is deprecated, use getProductIdFromPlan',
         { plan: 'pro' }
       );
@@ -165,7 +166,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
       const priceIds = getConfiguredPriceIds();
       
       expect(priceIds).toEqual(productIds);
-      expect(logger.logger.warn).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         '[Polar Helpers] getConfiguredPriceIds is deprecated, use getConfiguredProductIds'
       );
     });
