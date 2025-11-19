@@ -73,7 +73,7 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
       active: true,
       priority: 1,
       severity: 'medium',
-      tone_override: 'normal'
+      tone: 'normal'
     };
 
     sponsorA2 = {
@@ -84,7 +84,7 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
       active: true,
       priority: 2,
       severity: 'high',
-      tone_override: 'professional'
+      tone: 'professional'
     };
 
     sponsorB1 = {
@@ -95,7 +95,7 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
       active: true,
       priority: 1,
       severity: 'low',
-      tone_override: 'normal'
+      tone: 'normal'
     };
 
     const { data: createdA1, error: errorA1 } = await serviceClient
@@ -199,7 +199,7 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
           active: true,
           priority: 5,
           severity: 'low',
-          tone_override: 'normal'
+          tone: 'normal'
         };
 
         const { data: created, error: createError } = await serviceClient
@@ -271,15 +271,19 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
       });
 
       test('User A cannot DELETE User B sponsor', async () => {
-        const { error } = await testClient
+        // RLS should block deletion; verification happens via serviceClient
+        // regardless of whether the client surfaces an error or just 0 affected rows.
+        const { data, error } = await testClient
           .from('sponsors')
           .delete()
-          .eq('id', sponsorB1.id);
+          .eq('id', sponsorB1.id)
+          .select()
+          .single(); // Chain .select().single() to capture RLS denial if surfaced
 
-        // RLS should block deletion
-        expect(error).toBeTruthy();
+        // Note: We don't assert on error because RLS may silently affect 0 rows
+        // The real guarantee is that the sponsor still exists (verified below)
 
-        // Verify sponsor B1 still exists
+        // Verify sponsor B1 still exists (real guarantee)
         const { data: verify } = await serviceClient
           .from('sponsors')
           .select('*')
@@ -299,7 +303,7 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
           active: true,
           priority: 1,
           severity: 'high',
-          tone_override: 'normal'
+          tone: 'normal'
         };
 
         const { data, error } = await testClient
@@ -370,23 +374,23 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
       expect(data.some(s => s.user_id === userBId)).toBe(false);
     });
 
-    test('Policy enforces WITH CHECK clause (write access)', async () => {
-      await setTenantContext(tenantA.id);
+      test('Policy enforces WITH CHECK clause (write access)', async () => {
+        await setTenantContext(tenantA.id);
 
-      // Try to insert with wrong user_id
-      const { data, error } = await testClient
-        .from('sponsors')
-        .insert({
-          user_id: userBId, // Wrong user
-          name: 'Test',
-          url: 'https://test.com',
-          active: true,
-          priority: 1,
-          severity: 'low',
-          tone_override: 'normal'
-        })
-        .select()
-        .single();
+        // Try to insert with wrong user_id
+        const { data, error } = await testClient
+          .from('sponsors')
+          .insert({
+            user_id: userBId, // Wrong user
+            name: 'Test',
+            url: 'https://test.com',
+            active: true,
+            priority: 1,
+            severity: 'low',
+            tone: 'normal'
+          })
+          .select()
+          .single();
 
       // WITH CHECK should block this
       expect(data).toBeNull();
