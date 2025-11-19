@@ -96,7 +96,8 @@ describe('AccountModal API Endpoints - Issue #256', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeInstanceOf(Array);
-      expect(response.body.total).toBeDefined();
+      expect(response.body.pagination.total).toBeDefined();
+      expect(response.body.pagination.limit).toBeDefined();
     });
 
     test('should approve roast successfully', async () => {
