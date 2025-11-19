@@ -99,7 +99,7 @@ class SponsorService {
           ? Number(sponsorData.priority)
           : 3,
       actions: Array.isArray(sponsorData.actions) ? sponsorData.actions : [],
-      active: true
+      active: sponsorData.active !== undefined ? Boolean(sponsorData.active) : true
     };
 
     // Validate priority range (1-5)
