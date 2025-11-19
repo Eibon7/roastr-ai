@@ -139,36 +139,8 @@ export default function ShieldSettings() {
     loadSettings();
   }, [loadSettings]);
 
-  /**
-   * Loads Shield settings from backend API.
-   *
-   * In production, fetches from /api/shield/settings endpoint.
-   * In demo mode, loads from localStorage for persistence across sessions.
-   *
-   * @async
-   * @function loadSettings
-   * @returns {Promise<void>}
-   * @throws {Error} If API call fails (error is logged but not re-thrown)
-   */
-  const loadSettings = async () => {
-    setLoading(true);
-    try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/shield/settings');
-      // const data = await response.json();
-      // setSettings(data);
-
-      // Placeholder: Load from localStorage for demo
-      const savedSettings = localStorage.getItem('shieldSettings');
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
-      }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Note: loadSettings is already defined above with useCallback
+  // The duplicate implementation has been removed
 
   /**
    * Saves current Shield settings to backend API.
