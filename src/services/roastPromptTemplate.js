@@ -328,16 +328,8 @@ class RoastPromptTemplate {
     const normalizedTone = toneCompatibilityService.normalizeTone(config.tone || 'balanceado');
     let tone = constants.TONE_MAP[normalizedTone] || constants.TONE_MAP.sarcastic;
     
-    // Issue #872: humor_type deprecated, kept for backward compatibility only
-    if (config.humor_type && constants.HUMOR_MAP[config.humor_type]) {
-      logger.warn('[DEPRECATED] humor_type is deprecated and ignored.');
-    }
-
-    // Issue #872: intensity_level deprecated, now derived from tone
-    // Keep for backward compat but don't use
-    if (config.intensity_level) {
-      logger.warn('[DEPRECATED] intensity_level is deprecated. Intensity is now derived from tone.');
-    }
+    // Issue #872 AC8: humor_type and intensity_level completely removed
+    // (Deprecation warnings removed - these fields should no longer be passed)
 
     // Add custom style if available
     if (config.custom_style_prompt) {

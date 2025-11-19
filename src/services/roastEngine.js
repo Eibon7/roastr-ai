@@ -279,21 +279,14 @@ class RoastEngine {
         const styleConfig = this.getStyleConfiguration(style, language);
         
         // Enhanced generation configuration with tone compatibility
-        // Issue #872: Use toneCompatibilityService to normalize config
-        const baseTone = this.mapStyleToTone(style);
-        const normalizedConfig = toneCompatibilityService.normalizeConfig({
-            tone: baseTone,
-            style: style,
-            humor_type: styleConfig.characteristics.split(', ')[1] || 'witty',
-            intensity_level: styleConfig.intensity
-        });
+        // Issue #872 AC8: Only tone is used now, no legacy fields
+        const tone = this.mapStyleToTone(style);
 
         const generationConfig = {
             userId: options.userId,
             plan: userConfig.plan,
-            tone: normalizedConfig.tone,
-            humor_type: normalizedConfig.humor_type, // Legacy - kept for backward compatibility
-            intensity_level: normalizedConfig.intensity_level, // Legacy - kept for backward compatibility
+            tone: tone,
+            // Issue #872 AC8: humor_type & intensity_level completely removed
             language: language,
             preview_mode: false,
             style: style,

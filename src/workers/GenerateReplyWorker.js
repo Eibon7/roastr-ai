@@ -1252,8 +1252,7 @@ class GenerateReplyWorker extends BaseWorker {
         comment_id: commentId,
         response_text: finalResponseText,
         tone: config.tone,
-        // Issue #872: humor_type deprecated, kept NULL for backward compat
-        humor_type: null,
+        // Issue #872 AC8: humor_type completely removed (column may still exist in DB)
         generation_time_ms: generationTime,
         tokens_used: response.tokensUsed || this.estimateTokens(finalResponseText),
         cost_cents: 5, // Base cost per generation
