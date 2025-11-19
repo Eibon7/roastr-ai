@@ -8,17 +8,6 @@
  * Related: Issue #808 - Migrar tests de billing de Stripe a Polar
  */
 
-const {
-  getPlanFromProductId,
-  getProductIdFromPlan,
-  getPlanFromPriceId,
-  getPriceIdFromPlan,
-  getConfiguredProductIds,
-  getConfiguredPriceIds,
-  isValidPlan
-} = require('../../../src/utils/polarHelpers');
-const logger = require('../../../src/utils/logger');
-
 // Mock logger to avoid noise in tests
 jest.mock('../../../src/utils/logger', () => ({
   logger: {
@@ -30,17 +19,36 @@ jest.mock('../../../src/utils/logger', () => ({
 }));
 
 describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
-  // Set up test environment variables
+  // Set up test environment variables BEFORE importing the module
   const originalEnv = process.env;
+  let getPlanFromProductId, getProductIdFromPlan, getPlanFromPriceId;
+  let getPriceIdFromPlan, getConfiguredProductIds, getConfiguredPriceIds, isValidPlan;
+  let logger;
   
   beforeAll(() => {
+    // Set environment variables before module is loaded
     process.env.POLAR_STARTER_PRODUCT_ID = 'prod_starter_test';
     process.env.POLAR_PRO_PRODUCT_ID = 'prod_pro_test';
     process.env.POLAR_PLUS_PRODUCT_ID = 'prod_plus_test';
+    
+    // Clear module cache and reload with new env vars
+    jest.resetModules();
+    const polarHelpers = require('../../../src/utils/polarHelpers');
+    logger = require('../../../src/utils/logger');
+    
+    // Extract functions
+    getPlanFromProductId = polarHelpers.getPlanFromProductId;
+    getProductIdFromPlan = polarHelpers.getProductIdFromPlan;
+    getPlanFromPriceId = polarHelpers.getPlanFromPriceId;
+    getPriceIdFromPlan = polarHelpers.getPriceIdFromPlan;
+    getConfiguredProductIds = polarHelpers.getConfiguredProductIds;
+    getConfiguredPriceIds = polarHelpers.getConfiguredPriceIds;
+    isValidPlan = polarHelpers.isValidPlan;
   });
 
   afterAll(() => {
     process.env = originalEnv;
+    jest.resetModules();
     jest.clearAllMocks();
   });
 

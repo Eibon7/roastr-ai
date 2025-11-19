@@ -9,7 +9,7 @@
  */
 
 const request = require('supertest');
-const app = require('../../src/index');
+const { app } = require('../../src/index');
 const { logger } = require('../../src/utils/logger');
 
 // Mock Polar SDK
