@@ -27,7 +27,7 @@
 ## 🎯 Acceptance Criteria
 
 ### AC 1: Playwright E2E Tests
-- [ ] Crear `tests/e2e/admin-dashboard/workers-dashboard.test.ts`
+- [ ] Crear `admin-dashboard/tests/e2e/workers-dashboard.test.ts`
 - [ ] Test dashboard loads correctly
 - [ ] Test worker status cards display
 - [ ] Test queue status table renders
@@ -154,5 +154,5 @@ npm run test:e2e:ui  # Ejecutar con UI
 - Dashboard: `admin-dashboard/src/pages/Workers/index.tsx`
 - API Endpoints: `src/routes/workers.js`
 - Unit Tests: `tests/unit/routes/workers-metrics.test.js`
-- Playwright Docs: https://playwright.dev/docs/api-testing
+- [Playwright Docs](https://playwright.dev/docs/api-testing)
 

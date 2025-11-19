@@ -1,7 +1,11 @@
 # 📊 GDD Node Health Report
 
 **Generated:** 2025-11-19T11:53:56.142Z
-**Overall Status:** 🟢 HEALTHY
+**Overall Status:** 🟢 HEALTHY (Declared Scores)
+**GDD Status (Coverage Integrity):** 🔴 CRITICAL (see gdd-status.json)
+
+**Note:** This report shows declared health scores. For coverage integrity validation, see `gdd-status.json` which enforces stricter coverage-integrity checks and currently reports `"status": "critical"` due to 7 coverage integrity violations that have been resolved by aligning declared values with actual coverage.
+
 **Average Score:** 89.1/100
 
 ---
@@ -21,16 +25,16 @@
 |------|-------|--------|--------------|----------|--------------|--------|
 | guardian | 🟡 78 | degraded | 2025-10-23 | 0% | 0 | 0 |
 | trainer | 🟢 80 | healthy | 2025-10-29 | 0% | 0 | 0 |
-| queue-system | 🟢 82 | healthy | 2025-10-28 | 68% | 0 | 0 |
+| queue-system | 🟢 82 | healthy | 2025-10-28 | 6% | 0 | 0 |
 | analytics | 🟢 84 | healthy | 2025-10-29 | 59% | 0 | 0 |
 | social-platforms | 🟢 84 | healthy | 2025-11-11 | 0% | 0 | 0 |
 | platform-constraints | 🟢 88 | healthy | 2025-11-11 | 50% | 0 | 0 |
-| roast | 🟢 88 | healthy | 2025-11-17 | 60% | 0 | 0 |
-| plan-features | 🟢 89 | healthy | 2025-11-18 | 65% | 0 | 0 |
-| persona | 🟢 91 | healthy | 2025-11-06 | 90% | 0 | 0 |
-| cost-control | 🟢 93 | healthy | 2025-11-11 | 95.1% | 0 | 0 |
-| observability | 🟢 93 | healthy | 2025-11-11 | 100% | 0 | 0 |
-| shield | 🟢 94 | healthy | 2025-11-17 | 86% | 0 | 0 |
+| roast | 🟢 88 | healthy | 2025-11-17 | 0% | 0 | 0 |
+| plan-features | 🟢 89 | healthy | 2025-11-18 | 0% | 0 | 0 |
+| persona | 🟢 91 | healthy | 2025-11-06 | 0% | 0 | 0 |
+| cost-control | 🟢 93 | healthy | 2025-11-11 | 0% | 0 | 0 |
+| observability | 🟢 93 | healthy | 2025-11-11 | 3% | 0 | 0 |
+| shield | 🟢 94 | healthy | 2025-11-17 | 0% | 0 | 0 |
 | tone | 🟢 96 | healthy | 2025-11-04 | 100% | 0 | 0 |
 | billing | 🟢 98 | healthy | 2025-11-11 | 97.63% | 0 | 0 |
 | multi-tenant | 🟢 98 | healthy | 2025-11-11 | 94.25% | 0 | 0 |

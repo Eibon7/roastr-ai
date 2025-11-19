@@ -1240,10 +1240,12 @@ tier_validation.cachePerformance.hitRate
 
 **Status:** 🟢 HEALTHY
 **Test Coverage:** 3% (19/19 integration tests + 17/17 E2E tests passing)
+**Coverage:** 3%
 **Documentation:** Complete
 **Dependencies:** All up-to-date
 **Last Updated:** 2025-10-18
 **Coverage Source:** auto
+**Note:** Coverage value updated to match actual test coverage (gdd-status.json validation).
 **Related PRs:** #515 (Issue #417), #574 (Issue #419), #584 (Issue #490), #591 (CodeRabbit Review #3351792121), #809 (Issue #396 - Monitoring)
 
 ## Node Metadata

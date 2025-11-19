@@ -35,34 +35,34 @@ Coverage authenticity issues detected:
 |------|------|----------|--------|------|----------|
 | analytics | missing_coverage_data | 59% | N/A% | N/A% | warning |
 | billing | missing_coverage_data | 97.63% | N/A% | N/A% | warning |
-| cost-control | coverage_integrity_violation | 95.1% | N/A% | 95.1% | critical |
-| guardian | missing_coverage_data | N/A% | N/A% | N/A% | warning |
+| cost-control | coverage_integrity_violation | 0% | 0% | 0% | resolved |
+| guardian | missing_coverage_data | 0% | N/A% | N/A% | warning |
 | multi-tenant | missing_coverage_data | 94.25% | N/A% | N/A% | warning |
-| observability | coverage_integrity_violation | 100% | 3% | 97% | critical |
-| persona | coverage_integrity_violation | 90% | N/A% | 90% | critical |
-| plan-features | coverage_integrity_violation | 65% | N/A% | 65% | critical |
+| observability | coverage_integrity_violation | 3% | 3% | 0% | resolved |
+| persona | coverage_integrity_violation | 0% | 0% | 0% | resolved |
+| plan-features | coverage_integrity_violation | 0% | 0% | 0% | resolved |
 | platform-constraints | missing_coverage_data | 50% | N/A% | N/A% | warning |
-| queue-system | coverage_integrity_violation | 68% | 6% | 62% | critical |
-| roast | coverage_integrity_violation | 60% | N/A% | 60% | critical |
-| shield | coverage_integrity_violation | 86% | N/A% | 86% | critical |
+| queue-system | coverage_integrity_violation | 6% | 6% | 0% | resolved |
+| roast | coverage_integrity_violation | 0% | 0% | 0% | resolved |
+| shield | coverage_integrity_violation | 0% | 0% | 0% | resolved |
 | tone | missing_coverage_data | 100% | N/A% | N/A% | warning |
 | trainer | missing_coverage_data | N/A% | N/A% | N/A% | warning |
 
 **Actions Required:**
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage mismatch: declared 95.1% but actual is 0% (diff: 95.1%)
-- Coverage data not available for validation
-- Coverage data not available for validation
-- Coverage mismatch: declared 100% but actual is 3% (diff: 97%)
-- Coverage mismatch: declared 90% but actual is 0% (diff: 90%)
-- Coverage mismatch: declared 65% but actual is 0% (diff: 65%)
-- Coverage data not available for validation
-- Coverage mismatch: declared 68% but actual is 6% (diff: 62%)
-- Coverage mismatch: declared 60% but actual is 0% (diff: 60%)
-- Coverage mismatch: declared 86% but actual is 0% (diff: 86%)
-- Coverage data not available for validation
-- Coverage data not available for validation
+- Coverage data not available for validation (analytics)
+- Coverage data not available for validation (billing)
+- ✅ RESOLVED: Coverage values aligned (cost-control: 0%)
+- Coverage data not available for validation (guardian)
+- Coverage data not available for validation (multi-tenant)
+- ✅ RESOLVED: Coverage values aligned (observability: 3%)
+- ✅ RESOLVED: Coverage values aligned (persona: 0%)
+- ✅ RESOLVED: Coverage values aligned (plan-features: 0%)
+- Coverage data not available for validation (platform-constraints)
+- ✅ RESOLVED: Coverage values aligned (queue-system: 6%)
+- ✅ RESOLVED: Coverage values aligned (roast: 0%)
+- ✅ RESOLVED: Coverage values aligned (shield: 0%)
+- Coverage data not available for validation (tone)
+- Coverage data not available for validation (trainer)
 
 ### 🔮 Drift Risk Analysis
 

@@ -259,15 +259,16 @@ test.describe('Worker Monitoring Dashboard', () => {
     // Verify page loaded without errors
     const errors: string[] = [];
     page.on('pageerror', (error) => { errors.push(error.message); });
-    await page.waitForTimeout(1000);
+    // Wait for content to be visible instead of fixed timeout
+    await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
     expect(errors.length).toBe(0);
   });
 
   test('should display worker status cards', async ({ page }) => {
     // Test AC: Worker status cards display
     
-    // Wait for cards to render
-    await page.waitForTimeout(1000);
+    // Wait for content to be visible
+    await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
     
     // Check for worker cards - look for worker type names
     const fetchCommentsCard = page.locator('text=fetch comments').first();
@@ -297,8 +298,8 @@ test.describe('Worker Monitoring Dashboard', () => {
   test('should display queue status table', async ({ page }) => {
     // Test AC: Queue status table renders
     
-    // Wait for table to render
-    await page.waitForTimeout(1000);
+    // Wait for content to be visible
+    await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
     
     // Check for table headers
     const hasQueueHeader = await page.locator('text=/queue|Queue/i').count() > 0;
@@ -316,8 +317,8 @@ test.describe('Worker Monitoring Dashboard', () => {
   });
 
   test('should display summary cards with metrics', async ({ page }) => {
-    // Check for summary cards
-    await page.waitForTimeout(1000);
+    // Wait for content to be visible
+    await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
     
     // Look for summary metrics
     const hasWorkersSummary = await page.locator('text=/workers|Workers/i').count() > 0;
@@ -362,7 +363,8 @@ test.describe('Worker Monitoring Dashboard', () => {
     // Reload page to trigger error
     await page.reload();
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    // Wait for error message to appear
+    await expect(page.locator('text=/error|failed|not initialized/i').first()).toBeVisible({ timeout: 5000 });
     
     // Check for error message
     const hasError = await page.locator('text=/error|failed|not initialized/i').count() > 0;
@@ -372,15 +374,16 @@ test.describe('Worker Monitoring Dashboard', () => {
   test('should display metrics update indicators', async ({ page }) => {
     // Test AC: Metrics update in real-time
     
-    // Wait for initial load
-    await page.waitForTimeout(1000);
+    // Wait for content to be visible
+    await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
     
     // Check for timestamp or "last updated" text
     const hasTimestamp = await page.locator('text=/last.*updated|updated|timestamp/i').count() > 0;
     
     // The dashboard should show some indication of data freshness
     // This is a soft check since the exact implementation may vary
-    expect(true).toBeTruthy(); // Placeholder - actual implementation may show loading states
+    // At minimum, verify the page loaded successfully
+    await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
   });
 
   test.describe('Responsive Design', () => {
@@ -415,7 +418,8 @@ test.describe('Worker Monitoring Dashboard', () => {
 
       await page.goto('/admin/workers');
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
+      // Wait for content to be visible
+      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
 
       // Check main content is visible
       const title = page.getByRole('heading', { name: /Worker Monitoring Dashboard/i });
@@ -455,7 +459,8 @@ test.describe('Worker Monitoring Dashboard', () => {
 
       await page.goto('/admin/workers');
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
+      // Wait for content to be visible
+      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
 
       // Check main content is visible
       const title = page.getByRole('heading', { name: /Worker Monitoring Dashboard/i });
@@ -494,7 +499,8 @@ test.describe('Worker Monitoring Dashboard', () => {
 
       await page.goto('/admin/workers');
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
+      // Wait for content to be visible
+      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
 
       // Check main content is visible
       const title = page.getByRole('heading', { name: /Worker Monitoring Dashboard/i });
@@ -508,16 +514,11 @@ test.describe('Worker Monitoring Dashboard', () => {
     test('should capture screenshot of dashboard with healthy workers', async ({ page }) => {
       // Test AC: Screenshots for dashboard in different states
       
-      await page.waitForTimeout(2000); // Wait for all content to load
+      // Wait for all content to load
+      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
       
-      // Capture screenshot
-      await page.screenshot({
-        path: 'docs/test-evidence/workers-dashboard/healthy-workers.png',
-        fullPage: true
-      });
-      
-      // Verify screenshot was created (basic check)
-      expect(true).toBeTruthy();
+      // Use Playwright's built-in screenshot assertion for visual regression
+      await expect(page).toHaveScreenshot('healthy-workers.png', { fullPage: true });
     });
 
     test('should capture screenshot with unhealthy workers', async ({ page }) => {
@@ -534,16 +535,11 @@ test.describe('Worker Monitoring Dashboard', () => {
 
       await page.reload();
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(2000);
+      // Wait for content to be visible
+      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
       
-      // Capture screenshot
-      await page.screenshot({
-        path: 'docs/test-evidence/workers-dashboard/unhealthy-workers.png',
-        fullPage: true
-      });
-      
-      // Verify screenshot was created
-      expect(true).toBeTruthy();
+      // Use Playwright's built-in screenshot assertion for visual regression
+      await expect(page).toHaveScreenshot('unhealthy-workers.png', { fullPage: true });
     });
 
     test('should capture screenshot of error state', async ({ page }) => {
@@ -561,16 +557,11 @@ test.describe('Worker Monitoring Dashboard', () => {
 
       await page.reload();
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(2000);
+      // Wait for error message to appear
+      await expect(page.locator('text=/error|failed|not initialized/i').first()).toBeVisible({ timeout: 5000 });
       
-      // Capture screenshot
-      await page.screenshot({
-        path: 'docs/test-evidence/workers-dashboard/error-state.png',
-        fullPage: true
-      });
-      
-      // Verify screenshot was created
-      expect(true).toBeTruthy();
+      // Use Playwright's built-in screenshot assertion for visual regression
+      await expect(page).toHaveScreenshot('error-state.png', { fullPage: true });
     });
   });
 });

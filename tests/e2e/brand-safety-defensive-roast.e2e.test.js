@@ -589,7 +589,9 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
       expect(roastResponse.body.tone).toBe('professional');
       // Note: Latency assertion relaxed for CI stability (variable load/container warm-up)
       // In production, target is <500ms, but E2E tests may vary
-      expect(latency).toBeLessThan(2000); // Relaxed threshold for CI environments
+      // Increased threshold to 3000ms for broader CI compatibility
+      const latencyThreshold = process.env.CI ? 3000 : 500;
+      expect(latency).toBeLessThan(latencyThreshold);
     });
   });
 });
