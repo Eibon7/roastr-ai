@@ -477,9 +477,8 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       });
 
       it('should enforce RLS (User B cannot delete User A sponsor)', async () => {
-        // deleteSponsor returns true even when zero rows affected (idempotent delete)
         const result = await sponsorService.deleteSponsor(sponsorId, userBId);
-        expect(result).toBe(true); // Current contract: always returns true
+        expect(result).toBe(true); // Idempotent: returns true even when RLS blocks delete
 
         // Verify still exists for User A (RLS blocked the delete)
         const sponsor = await sponsorService.getSponsor(sponsorId, userAId);
@@ -494,6 +493,11 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
   // ============================================================================
 
   describe('Tag Extraction from URL', () => {
+    afterEach(() => {
+      // Cleanup global.fetch to prevent test interference
+      delete global.fetch;
+    });
+
     it('should extract tags successfully with mocked OpenAI', async () => {
       // Mock global.fetch to avoid real HTTP calls (hermetic test)
       global.fetch = jest.fn().mockResolvedValue({
@@ -508,9 +512,6 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       expect(tags).toBeDefined();
       expect(Array.isArray(tags)).toBe(true);
       expect(tags).toEqual(['sportswear', 'athletics', 'sneakers', 'apparel', 'shoes']);
-
-      // Cleanup
-      delete global.fetch;
     });
 
     it('should reject invalid URLs', async () => {

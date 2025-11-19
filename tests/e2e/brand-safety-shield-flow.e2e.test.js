@@ -42,20 +42,16 @@ jest.mock('openai', () => {
   return jest.fn().mockImplementation(() => ({
     chat: {
       completions: {
-        create: jest.fn().mockImplementation((params) => {
-          // Mock roast generation (defensive tone)
-          // Note: Tag extraction not used in this E2E suite (sponsors seeded with tags)
-          return Promise.resolve({
-            choices: [{
-              message: {
-                content: JSON.stringify({
-                  roast: "Let's keep the conversation constructive and respectful.",
-                  tone: 'professional',
-                  quality_score: 0.85
-                })
-              }
-            }]
-          });
+        create: jest.fn().mockResolvedValue({
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                roast: "Let's keep the conversation constructive and respectful.",
+                tone: 'professional',
+                quality_score: 0.85
+              })
+            }
+          }]
         })
       }
     },

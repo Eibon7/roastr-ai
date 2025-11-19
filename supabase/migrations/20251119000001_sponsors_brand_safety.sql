@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS sponsors (
   -- Actions to take when sponsor is mentioned in toxic comment
   -- hide_comment, block_user, def_roast, agg_roast, report, sponsor_protection
   actions TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
+  CONSTRAINT sponsors_actions_valid
+    CHECK (
+      actions <@ ARRAY['hide_comment','block_user','def_roast','agg_roast','report','sponsor_protection']::text[]
+    ),
   
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),

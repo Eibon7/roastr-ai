@@ -27,7 +27,7 @@ Successfully implemented comprehensive integration and E2E tests for the Brand S
 ### Integration Tests (Real Supabase)
 **File:** `tests/integration/sponsor-service-integration.test.js`
 
-```
+```text
 Test Suites: 1 passed, 1 total
 Tests:       38 passed, 38 total
 Snapshots:   0 total
@@ -93,7 +93,7 @@ npx supabase db push
 ```
 
 **Output:**
-```
+```text
 Connecting to remote database...
 Do you want to push these migrations to the remote database?
  • 20251119000001_sponsors_brand_safety.sql
@@ -226,7 +226,7 @@ CREATE POLICY user_sponsors_isolation ON sponsors
 
 ### Issue #1: Jest Open Handles Warning
 **Symptom:**
-```
+```text
 Jest did not exit one second after the test run has completed.
 'This usually means that there are asynchronous operations that weren't stopped in your tests.
 ```

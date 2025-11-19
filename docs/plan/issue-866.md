@@ -293,7 +293,7 @@ const { SponsorService } = require('../../src/services/sponsorService');
   - `docs/nodes/shield.md` - Brand Safety integration
   - `docs/nodes/roast.md` - Defensive Roast integration
 - **Unit Tests:** `tests/unit/services/sponsorService.test.js` (34 tests)
-- **Original integration tests (removed):** https://github.com/Eibon7/roastr-ai/commit/824dfddb
+- **Original integration tests (removed):** <https://github.com/Eibon7/roastr-ai/commit/824dfddb>
 - **Pattern reference:** PR #822 (analytics tests), PR #813 (billing tests)
 
 ---
