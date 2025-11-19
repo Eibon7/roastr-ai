@@ -113,7 +113,8 @@ const publicRateLimit = require('express-rate-limit')({
  * Validate roast request parameters (Enhanced for Issue #326)
  */
 function validateRoastRequest(req) {
-    const { text, tone, intensity, humorType, styleProfile, persona, platform } = req.body;
+    // Issue #872 AC8: intensity and humorType completely removed
+    const { text, tone, styleProfile, persona, platform } = req.body;
     const errors = [];
 
     // Validate text - Issue #698: Fix empty string validation order
@@ -130,13 +131,7 @@ function validateRoastRequest(req) {
         errors.push(`Tone must be one of: ${VALIDATION_CONSTANTS.VALID_TONES.join(', ')}`);
     }
 
-    if (humorType && !VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.includes(humorType)) {
-        errors.push(`Humor type must be one of: ${VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.join(', ')}`);
-    }
-
-    if (intensity && (typeof intensity !== 'number' || intensity < VALIDATION_CONSTANTS.MIN_INTENSITY || intensity > VALIDATION_CONSTANTS.MAX_INTENSITY)) {
-        errors.push(`Intensity must be a number between ${VALIDATION_CONSTANTS.MIN_INTENSITY} and ${VALIDATION_CONSTANTS.MAX_INTENSITY}`);
-    }
+    // Issue #872 AC8: humorType and intensity validation completely removed
 
     // Validate new parameters for Issue #326
     if (styleProfile && typeof styleProfile !== 'object') {
@@ -452,9 +447,8 @@ router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
             styleProfile = {}, 
             persona = null, 
             platform = 'twitter',
-            tone = 'sarcastic', 
-            intensity = 3, 
-            humorType = 'witty' 
+            tone = 'balanceado' // Issue #872: Default to new system
+            // Issue #872 AC8: intensity and humorType completely removed
         } = req.body;
         
         const userId = req.user.id;
@@ -487,9 +481,8 @@ router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
             platform,
             hasStyleProfile: !!styleProfile && Object.keys(styleProfile).length > 0,
             hasPersona: !!persona,
-            tone,
-            intensity,
-            humorType
+            tone
+            // Issue #872 AC8: intensity and humorType completely removed
         });
 
         // Analyze content with Perspective API
@@ -544,8 +537,7 @@ router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
             hasStyleProfile: !!styleProfile && Object.keys(styleProfile).length > 0,
             hasPersona: !!persona,
             tone,
-            intensity,
-            humorType,
+            // Issue #872 AC8: intensity and humorType completely removed
             tokensUsed,
             analysisRemaining,
             roastsRemaining: roastCheck.remaining,
@@ -569,8 +561,7 @@ router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
                 styleProfile: styleProfile,
                 persona: persona,
                 tone,
-                intensity,
-                humorType,
+                // Issue #872 AC8: intensity and humorType completely removed
                 toxicityScore: contentAnalysis.toxicityScore,
                 safe: contentAnalysis.safe,
                 plan: userPlan.plan,
@@ -650,7 +641,8 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
             });
         }
 
-        const { text, tone = 'sarcastic', intensity = 3, humorType = 'witty' } = req.body;
+        // Issue #872 AC8: intensity and humorType completely removed
+        const { text, tone = 'balanceado' } = req.body;
         const userId = req.user.id;
 
         // Get user plan info
@@ -676,8 +668,7 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
         // Prepare metadata for credit consumption
         const usageMetadata = {
             tone,
-            intensity,
-            humorType,
+            // Issue #872 AC8: intensity and humorType completely removed
             toxicityScore: contentAnalysis.toxicityScore
         };
 
@@ -726,8 +717,7 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
             userId,
             plan: userPlan.plan,
             tone,
-            intensity,
-            humorType,
+            // Issue #872 AC8: intensity and humorType completely removed
             toxicityScore: contentAnalysis.toxicityScore,
             processingTimeMs: processingTime,
             roastLength: generationResult.roast?.length || 0,
@@ -741,8 +731,7 @@ router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => 
                 roast: generationResult.roast,
                 metadata: {
                     tone,
-                    intensity,
-                    humorType,
+                    // Issue #872 AC8: intensity and humorType completely removed
                     toxicityScore: contentAnalysis.toxicityScore,
                     safe: contentAnalysis.safe,
                     preview: false,

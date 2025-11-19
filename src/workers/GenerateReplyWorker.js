@@ -469,8 +469,7 @@ class GenerateReplyWorker extends BaseWorker {
         generationTime,
         service: response.service,
         tone: integrationConfig.tone,
-        // Issue #872: humorType deprecated, keep for backward compat in logs
-        humorType: integrationConfig.humor_type || 'N/A',
+        // Issue #872: humorType completely removed (AC8)
         originalTextLength: original_text.length,
         responseLength: response.text.length
       },

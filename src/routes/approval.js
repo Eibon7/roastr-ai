@@ -51,7 +51,6 @@ router.get('/pending', async (req, res) => {
                 id,
                 response_text,
                 tone,
-                humor_type,
                 attempt_number,
                 created_at,
                 comments!inner (
@@ -92,7 +91,7 @@ router.get('/pending', async (req, res) => {
                 id: response.id,
                 response_text: response.response_text,
                 tone: response.tone,
-                humor_type: response.humor_type,
+                // Issue #872 AC8: humor_type completely removed
                 attempt_number: response.attempt_number || 1,
                 total_attempts: attemptCount || 1,
                 created_at: response.created_at,
@@ -276,7 +275,7 @@ router.post('/:id/approve', async (req, res) => {
                 id: updatedResponse.id,
                 response_text: updatedResponse.response_text,
                 tone: updatedResponse.tone,
-                humor_type: updatedResponse.humor_type,
+                // Issue #872 AC8: humor_type completely removed
                 post_status: updatedResponse.post_status,
                 posted_at: updatedResponse.posted_at
             }
@@ -581,7 +580,7 @@ router.post('/:id/regenerate', async (req, res) => {
                 comment_id: originalResponse.comment_id,
                 response_text: generationResult.roast,
                 tone: toneCompatibilityService.normalizeTone(originalResponse.tone) || 'balanceado',
-                humor_type: null, // Issue #872: Deprecated
+                // Issue #872 AC8: humor_type completely removed
                 post_status: 'pending',
                 attempt_number: nextAttemptNum,
                 parent_response_id: id,
@@ -686,7 +685,7 @@ router.post('/:id/regenerate', async (req, res) => {
                     id: newResponse.id,
                     response_text: newResponse.response_text,
                     tone: newResponse.tone,
-                    humor_type: newResponse.humor_type,
+                    // Issue #872 AC8: humor_type completely removed
                     attempt_number: newResponse.attempt_number,
                     created_at: newResponse.created_at
                 },

@@ -65,7 +65,7 @@ router.get('/:platform', async (req, res) => {
             platform,
             enabled: false,
             tone: 'balanceado', // Issue #872: Default to new system
-            humor_type: null, // Issue #872: Deprecated
+            // Issue #872 AC8: humor_type completely removed
             response_frequency: 1.0,
             trigger_words: ['roast', 'burn', 'insult'],
             shield_enabled: false,
@@ -86,7 +86,7 @@ router.get('/:platform', async (req, res) => {
                 platform: responseConfig.platform,
                 enabled: responseConfig.enabled,
                 tone: responseConfig.tone,
-                humor_type: responseConfig.humor_type,
+                // Issue #872 AC8: humor_type completely removed
                 response_frequency: responseConfig.response_frequency,
                 trigger_words: responseConfig.trigger_words,
                 shield_enabled: responseConfig.shield_enabled,
@@ -117,7 +117,7 @@ router.put('/:platform', async (req, res) => {
         const {
             enabled,
             tone,
-            humor_type,
+            // Issue #872 AC8: humor_type no longer accepted
             response_frequency,
             trigger_words,
             shield_enabled,
@@ -142,10 +142,7 @@ router.put('/:platform', async (req, res) => {
             });
         }
 
-        // Issue #872: humor_type deprecated, accept but ignore
-        if (humor_type) {
-            logger.warn('[DEPRECATED] humor_type is deprecated and will be ignored');
-        }
+        // Issue #872 AC8: humor_type completely removed - no validation needed
         
         // Validate tone normalization (backwards compatibility)
         if (tone && !VALID_TONES.includes(tone)) {
@@ -223,11 +220,7 @@ router.put('/:platform', async (req, res) => {
         const updateData = {};
         if (enabled !== undefined) updateData.enabled = enabled;
         if (tone) updateData.tone = toneCompatibilityService.normalizeTone(tone) || 'balanceado';
-        // Issue #872: humor_type deprecated, set to null
-        if (humor_type) {
-            logger.warn('[DEPRECATED] humor_type is deprecated. Setting to NULL.');
-            updateData.humor_type = null;
-        }
+        // Issue #872 AC8: humor_type completely removed - no processing
         if (response_frequency !== undefined) updateData.response_frequency = response_frequency;
         if (trigger_words) updateData.trigger_words = trigger_words;
         if (shield_enabled !== undefined) updateData.shield_enabled = shield_enabled;
@@ -259,7 +252,7 @@ router.put('/:platform', async (req, res) => {
                 platform: updatedConfig.platform,
                 enabled: updatedConfig.enabled,
                 tone: updatedConfig.tone,
-                humor_type: updatedConfig.humor_type,
+                // Issue #872 AC8: humor_type completely removed
                 response_frequency: updatedConfig.response_frequency,
                 trigger_words: updatedConfig.trigger_words,
                 shield_enabled: updatedConfig.shield_enabled,
@@ -320,7 +313,7 @@ router.get('/', async (req, res) => {
                 platform: config.platform,
                 enabled: config.enabled,
                 tone: config.tone,
-                humor_type: config.humor_type,
+                // Issue #872 AC8: humor_type completely removed
                 response_frequency: config.response_frequency,
                 trigger_words: config.trigger_words,
                 shield_enabled: config.shield_enabled,
@@ -336,7 +329,7 @@ router.get('/', async (req, res) => {
                     platform,
                     enabled: false,
                     tone: 'balanceado', // Issue #872: Default to new system
-                    humor_type: null, // Issue #872: Deprecated
+                    // Issue #872 AC8: humor_type completely removed
                     response_frequency: 1.0,
                     trigger_words: ['roast', 'burn', 'insult'],
                     shield_enabled: false,
