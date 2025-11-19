@@ -44,7 +44,7 @@ jest.mock('../../../src/config/supabase', () => ({
 
 describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
   let entitlementsService;
-  const originalEnv = process.env;
+  const ORIGINAL_ENV = { ...process.env }; // Snapshot by value, not reference
 
   beforeAll(() => {
     process.env.POLAR_STARTER_PRODUCT_ID = 'prod_starter_test';
@@ -95,7 +95,7 @@ describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
   });
 
   afterAll(() => {
-    process.env = originalEnv;
+    process.env = { ...ORIGINAL_ENV }; // Restore from snapshot to prevent cross-test contamination
     jest.clearAllMocks();
   });
 

@@ -39,7 +39,7 @@ jest.mock('../../src/utils/logger', () => ({
 }));
 
 describe('Checkout with product_id (Issue #887)', () => {
-  const originalEnv = process.env;
+  const ORIGINAL_ENV = { ...process.env }; // Snapshot by value, not reference
 
   beforeAll(() => {
     process.env.POLAR_ACCESS_TOKEN = 'test_token';
@@ -51,7 +51,7 @@ describe('Checkout with product_id (Issue #887)', () => {
   });
 
   afterAll(() => {
-    process.env = originalEnv;
+    process.env = { ...ORIGINAL_ENV }; // Restore from snapshot to prevent cross-test contamination
     jest.clearAllMocks();
   });
 

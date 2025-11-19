@@ -49,7 +49,7 @@ jest.mock('../../src/services/entitlementsService', () => ({
 }));
 
 describe('Polar Webhook with product_id (Issue #887)', () => {
-  const originalEnv = process.env;
+  const ORIGINAL_ENV = { ...process.env }; // Snapshot by value, not reference
   const webhookSecret = 'test_webhook_secret';
 
   beforeAll(() => {
@@ -60,7 +60,7 @@ describe('Polar Webhook with product_id (Issue #887)', () => {
   });
 
   afterAll(() => {
-    process.env = originalEnv;
+    process.env = { ...ORIGINAL_ENV }; // Restore from snapshot to prevent cross-test contamination
     jest.clearAllMocks();
   });
 
