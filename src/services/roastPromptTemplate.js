@@ -337,6 +337,7 @@ class RoastPromptTemplate {
     // Keep for backward compat but don't use
     if (config.intensity_level) {
       logger.warn('[DEPRECATED] intensity_level is deprecated. Intensity is now derived from tone.');
+    }
 
     // Add custom style if available
     if (config.custom_style_prompt) {

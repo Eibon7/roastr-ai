@@ -153,8 +153,9 @@ router.put('/:platform', async (req, res) => {
             if (!normalizedTone) {
                 return res.status(400).json({
                     success: false,
-                error: 'Invalid humor type. Must be one of: ' + VALID_HUMOR_TYPES.join(', ')
-            });
+                    error: 'Invalid tone. Must be one of: ' + VALID_TONES.join(', ')
+                });
+            }
         }
 
         if (response_frequency !== undefined && (response_frequency < 0.0 || response_frequency > 1.0)) {
