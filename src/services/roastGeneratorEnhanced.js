@@ -17,6 +17,7 @@ const RoastPromptBuilder = require('../lib/prompts/roastPrompt'); // Issue #858:
 const PersonaService = require('./PersonaService'); // Issue #615: Import PersonaService
 const transparencyService = require('./transparencyService');
 const levelConfigService = require('./levelConfigService'); // Issue #597: Import levelConfigService
+const toneCompatibilityService = require('./toneCompatibilityService'); // Issue #872: Tone compatibility
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 const { callOpenAIWithCaching } = require('../lib/openai/responsesHelper'); // Issue #858: Responses API helper
@@ -349,7 +350,7 @@ class RoastGeneratorEnhanced {
       persona: persona,
       styleProfile: rqcConfig.styleProfile || null,
       tone: tone,
-      // humorType removed (Issue #868)
+      // Issue #872: humorType deprecated, kept for compatibility but not used in new prompt builder
       includeReferences: rqcConfig.plan !== 'starter_trial',
       getReferenceRoasts: async (comment) => {
         // Use existing prompt template's reference roast method for compatibility
@@ -377,7 +378,7 @@ class RoastGeneratorEnhanced {
     logger.info('✅ Basic moderated roast generated', {
       plan: rqcConfig.plan,
       model: model,
-      // intensityLevel removed (Issue #868)
+      intensityLevel: toneCompatibilityService.getToneIntensity(rqcConfig.tone || tone),
       roastLength: roast.length,
       promptVersion: this.promptTemplate.getVersion()
     });
@@ -496,7 +497,7 @@ class RoastGeneratorEnhanced {
       persona: persona,
       styleProfile: rqcConfig.styleProfile || null,
       tone: tone,
-      // humorType removed (Issue #868)
+      // Issue #872: humorType deprecated, kept for compatibility but not used in new prompt builder
       includeReferences: true, // Always include references for Creator+ plans
       getReferenceRoasts: async (comment) => {
         return await this.promptTemplate.getReferenceRoasts(comment);
@@ -587,8 +588,8 @@ Reglas obligatorias:
 7. Responde únicamente con el texto del roast, sin explicaciones adicionales.
 
 Configuración de usuario:
-- Plan: ${rqcConfig.plan} (moderación básica integrada)
-- Nota: La intensidad se controla con el tone (Flanders/Balanceado/Canalla) - Issue #868`;
+- Tono: ${rqcConfig.tone || 'balanceado'} (intensidad ${toneCompatibilityService.getToneIntensity(rqcConfig.tone || 'balanceado')}/5)
+- Plan: ${rqcConfig.plan} (moderación básica integrada)`;
 
     // Add tone-specific instructions
     const toneInstructions = {
@@ -609,8 +610,8 @@ Configuración de usuario:
 Eres más creativo y sofisticado porque el contenido será revisado por un sistema de control de calidad.
 
 Configuración de usuario:
-- Plan: ${rqcConfig.plan} (con revisión RQC)
-- Nota: La intensidad se controla con el tone (Flanders/Balanceado/Canalla) - Issue #868`;
+- Tono: ${rqcConfig.tone || 'balanceado'} (intensidad ${toneCompatibilityService.getToneIntensity(rqcConfig.tone || 'balanceado')}/5)
+- Plan: ${rqcConfig.plan} (con revisión RQC)`;
 
     // Add custom style prompt if available (admin-configured) and feature flag is enabled
     if (flags.isEnabled('ENABLE_CUSTOM_PROMPT') && rqcConfig.custom_style_prompt) {
@@ -640,7 +641,8 @@ Configuración de usuario:
         return {
           plan: 'starter_trial',
           rqc_enabled: false,
-          intensity_level: 3,
+          tone: 'balanceado', // Issue #872: Use new tone system
+          intensity_level: 3, // Legacy - kept for backward compatibility
           custom_style_prompt: null,
           max_regenerations: 0,
           basic_moderation_enabled: true,
@@ -654,7 +656,8 @@ Configuración de usuario:
         return {
           plan: 'starter_trial',
           rqc_enabled: false,
-          intensity_level: 3,
+          tone: 'balanceado', // Issue #872: Use new tone system
+          intensity_level: 3, // Legacy - kept for backward compatibility
           custom_style_prompt: null,
           max_regenerations: 0,
           basic_moderation_enabled: true,
@@ -672,7 +675,7 @@ Configuración de usuario:
       return {
         plan: 'starter_trial',
         rqc_enabled: false,
-        intensity_level: 3,
+        tone: 'balanceado', // Issue #872: Use new tone system
         custom_style_prompt: null,
         max_regenerations: 0,
         basic_moderation_enabled: true,
@@ -704,7 +707,8 @@ Configuración de usuario:
           tokens_used: reviewResult.tokensUsed || 0,
           cost_cents: reviewResult.costCents || 0,
           config_json: JSON.stringify({
-            // intensityLevel removed (Issue #868)
+            tone: reviewResult.userConfig?.tone,
+            intensityLevel: toneCompatibilityService.getToneIntensity(reviewResult.userConfig?.tone || 'balanceado'),
             customPrompt: reviewResult.userConfig?.custom_style_prompt
           })
         });

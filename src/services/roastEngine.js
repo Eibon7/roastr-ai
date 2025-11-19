@@ -278,13 +278,22 @@ class RoastEngine {
         // Get style configuration
         const styleConfig = this.getStyleConfiguration(style, language);
         
-        // Enhanced generation configuration
+        // Enhanced generation configuration with tone compatibility
+        // Issue #872: Use toneCompatibilityService to normalize config
+        const baseTone = this.mapStyleToTone(style);
+        const normalizedConfig = toneCompatibilityService.normalizeConfig({
+            tone: baseTone,
+            style: style,
+            humor_type: styleConfig.characteristics.split(', ')[1] || 'witty',
+            intensity_level: styleConfig.intensity
+        });
+
         const generationConfig = {
             userId: options.userId,
             plan: userConfig.plan,
-            tone: this.mapStyleToTone(style),
-            // humor_type removed (Issue #868)
-            // intensity_level removed (Issue #868)
+            tone: normalizedConfig.tone,
+            humor_type: normalizedConfig.humor_type, // Legacy - kept for backward compatibility
+            intensity_level: normalizedConfig.intensity_level, // Legacy - kept for backward compatibility
             language: language,
             preview_mode: false,
             style: style,
@@ -367,18 +376,26 @@ class RoastEngine {
     }
 
     /**
-     * Map style to tone for compatibility with existing generator
+     * Map style to tone identifiers (Issue #872: Post-#686 3-tone system)
+     * Now returns the new tone IDs directly instead of legacy values
      */
     mapStyleToTone(style) {
+        // Issue #872: Map to new 3-tone identifiers (flanders/balanceado/canalla)
         const toneMap = {
-            'flanders': 'subtle',
-            'light': 'subtle',
-            'balanceado': 'sarcastic',
-            'balanced': 'sarcastic',
-            'canalla': 'direct',
-            'savage': 'direct'
+            // ES tones
+            'flanders': 'flanders',
+            'balanceado': 'balanceado',
+            'canalla': 'canalla',
+            // EN aliases
+            'light': 'flanders',
+            'balanced': 'balanceado',
+            'savage': 'canalla',
+            // Legacy compatibility (map old values to new)
+            'subtle': 'flanders',
+            'sarcastic': 'balanceado',
+            'direct': 'canalla'
         };
-        return toneMap[style] || 'sarcastic';
+        return toneMap[style] || 'balanceado';
     }
 
     /**

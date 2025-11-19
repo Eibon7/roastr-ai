@@ -4,6 +4,7 @@ const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 const levelConfigService = require('../services/levelConfigService');
+const toneCompatibilityService = require('../services/toneCompatibilityService'); // Issue #872: Tone compatibility
 
 const router = express.Router();
 
@@ -12,8 +13,10 @@ router.use(authenticateToken);
 
 // Valid platform values
 const VALID_PLATFORMS = ['twitter', 'youtube', 'bluesky', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok'];
-const VALID_TONES = ['sarcastic', 'ironic', 'absurd'];
-const VALID_HUMOR_TYPES = ['witty', 'clever', 'playful'];
+// Issue #872: Use new 3-tone system
+const VALID_TONES = ['flanders', 'balanceado', 'canalla', 'light', 'balanced', 'savage'];
+// Issue #872: humor_types deprecated, kept for backward compat only
+const VALID_HUMOR_TYPES = []; // Empty - deprecated
 
 /**
  * GET /api/config/:platform
@@ -61,8 +64,8 @@ router.get('/:platform', async (req, res) => {
         const defaultConfig = {
             platform,
             enabled: false,
-            tone: 'sarcastic',
-            // Issue #868: Removed humor_type,
+            tone: 'balanceado', // Issue #872: Default to new system
+            humor_type: null, // Issue #872: Deprecated
             response_frequency: 1.0,
             trigger_words: ['roast', 'burn', 'insult'],
             shield_enabled: false,
@@ -139,9 +142,17 @@ router.put('/:platform', async (req, res) => {
             });
         }
 
-        if (humor_type && !VALID_HUMOR_TYPES.includes(humor_type)) {
-            return res.status(400).json({
-                success: false,
+        // Issue #872: humor_type deprecated, accept but ignore
+        if (humor_type) {
+            logger.warn('[DEPRECATED] humor_type is deprecated and will be ignored');
+        }
+        
+        // Validate tone normalization (backwards compatibility)
+        if (tone && !VALID_TONES.includes(tone)) {
+            const normalizedTone = toneCompatibilityService.normalizeTone(tone);
+            if (!normalizedTone) {
+                return res.status(400).json({
+                    success: false,
                 error: 'Invalid humor type. Must be one of: ' + VALID_HUMOR_TYPES.join(', ')
             });
         }
@@ -210,8 +221,12 @@ router.put('/:platform', async (req, res) => {
         // Prepare update data
         const updateData = {};
         if (enabled !== undefined) updateData.enabled = enabled;
-        if (tone) updateData.tone = tone;
-        if (humor_type) updateData.humor_type = humor_type;
+        if (tone) updateData.tone = toneCompatibilityService.normalizeTone(tone) || 'balanceado';
+        // Issue #872: humor_type deprecated, set to null
+        if (humor_type) {
+            logger.warn('[DEPRECATED] humor_type is deprecated. Setting to NULL.');
+            updateData.humor_type = null;
+        }
         if (response_frequency !== undefined) updateData.response_frequency = response_frequency;
         if (trigger_words) updateData.trigger_words = trigger_words;
         if (shield_enabled !== undefined) updateData.shield_enabled = shield_enabled;
@@ -319,8 +334,8 @@ router.get('/', async (req, res) => {
                 platformConfigs[platform] = {
                     platform,
                     enabled: false,
-                    tone: 'sarcastic',
-                    // Issue #868: Removed humor_type,
+                    tone: 'balanceado', // Issue #872: Default to new system
+                    humor_type: null, // Issue #872: Deprecated
                     response_frequency: 1.0,
                     trigger_words: ['roast', 'burn', 'insult'],
                     shield_enabled: false,
@@ -339,7 +354,7 @@ router.get('/', async (req, res) => {
             data: {
                 platforms: platformConfigs,
                 available_tones: VALID_TONES,
-                available_humor_types: VALID_HUMOR_TYPES
+                available_humor_types: [] // Issue #872: Deprecated, return empty array
             }
         });
 

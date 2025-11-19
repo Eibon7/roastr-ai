@@ -469,7 +469,8 @@ class GenerateReplyWorker extends BaseWorker {
         generationTime,
         service: response.service,
         tone: integrationConfig.tone,
-        // Issue #868: Removed humorType (deprecated)
+        // Issue #872: humorType deprecated, keep for backward compat in logs
+        humorType: integrationConfig.humor_type || 'N/A',
         originalTextLength: original_text.length,
         responseLength: response.text.length
       },
@@ -884,7 +885,8 @@ class GenerateReplyWorker extends BaseWorker {
    * @returns {Promise<Object>} Generated OpenAI response with metadata
    */
   async generateOpenAIResponse(originalText, config, context) {
-    const { tone } = config; // Issue #868: Removed humor_type (deprecated)
+    const { tone } = config;
+    // Issue #872: humor_type deprecated, no longer extracted
     const { platform, severity_level, toxicity_score, categories, personaData, brand_safety } = context;
 
     // Track which persona fields will be used (Issue #81)
@@ -898,7 +900,8 @@ class GenerateReplyWorker extends BaseWorker {
     // Build enhanced user config with persona data if available
     const userConfig = {
       tone: tone,
-      // Issue #868: Removed humor_type and intensity_level (deprecated)
+      // Issue #872: humor_type and intensity_level deprecated
+      // intensity is now derived from tone via toneCompatibilityService
       custom_style_prompt: config.custom_style_prompt
     };
 
@@ -989,15 +992,14 @@ class GenerateReplyWorker extends BaseWorker {
   
   /**
    * Build system prompt for OpenAI (legacy method)
-   * @deprecated Issue #868: humorType parameter removed, tone is the sole selector
-   * @param {string} tone - Response tone (flanders, balanceado, canalla)
-   * @param {string} _humorType - DEPRECATED: No longer used (Issue #868)
+   * @param {string} tone - Response tone (sarcastic, ironic, absurd)
+   * @param {string} humorType - Humor style (witty, clever, playful)
    * @param {string} platform - Target platform for response
    * @returns {string} Formatted system prompt for OpenAI
    */
-  buildSystemPrompt(tone, _humorType, platform) {
+  buildSystemPrompt(tone, humorType, platform) {
     const toneGuide = this.tonePrompts[tone] || this.tonePrompts.sarcastic;
-    // Issue #868: humorGuide removed, tone is the sole selector
+    const humorGuide = this.humorStyles[humorType] || this.humorStyles.witty;
     
     let platformConstraints = '';
     switch (platform) {
@@ -1017,6 +1019,7 @@ class GenerateReplyWorker extends BaseWorker {
     return `You are Roastr.ai, a witty AI that generates clever comeback responses to comments.
     
     TONE: ${toneGuide}
+    HUMOR STYLE: ${humorGuide}
     PLATFORM: ${platformConstraints}
     
     IMPORTANT RULES:
@@ -1027,7 +1030,7 @@ class GenerateReplyWorker extends BaseWorker {
     - Be clever, not just insulting
     - Make it feel like friendly banter, not cyberbullying
     
-    Generate a single response that roasts the comment in a clever, ${tone} way.`;
+    Generate a single response that roasts the comment in a clever, ${tone} way with ${humorType} humor.`;
   }
   
   /**
@@ -1250,7 +1253,8 @@ class GenerateReplyWorker extends BaseWorker {
         comment_id: commentId,
         response_text: finalResponseText,
         tone: config.tone,
-        // Issue #868: Removed humor_type (deprecated)
+        // Issue #872: humor_type deprecated, kept NULL for backward compat
+        humor_type: null,
         generation_time_ms: generationTime,
         tokens_used: response.tokensUsed || this.estimateTokens(finalResponseText),
         cost_cents: 5, // Base cost per generation

@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
+const toneCompatibilityService = require('../services/toneCompatibilityService'); // Issue #872: Tone compatibility
 
 const router = express.Router();
 
@@ -50,7 +51,7 @@ router.get('/pending', async (req, res) => {
                 id,
                 response_text,
                 tone,
-                // Issue #868: Removed humor_type (deprecated)
+                humor_type,
                 attempt_number,
                 created_at,
                 comments!inner (
@@ -91,7 +92,7 @@ router.get('/pending', async (req, res) => {
                 id: response.id,
                 response_text: response.response_text,
                 tone: response.tone,
-                // Issue #868: Removed humor_type: response.humor_type,
+                humor_type: response.humor_type,
                 attempt_number: response.attempt_number || 1,
                 total_attempts: attemptCount || 1,
                 created_at: response.created_at,
@@ -275,7 +276,7 @@ router.post('/:id/approve', async (req, res) => {
                 id: updatedResponse.id,
                 response_text: updatedResponse.response_text,
                 tone: updatedResponse.tone,
-                // Issue #868: Removed humor_type: updatedResponse.humor_type,
+                humor_type: updatedResponse.humor_type,
                 post_status: updatedResponse.post_status,
                 posted_at: updatedResponse.posted_at
             }
@@ -560,8 +561,8 @@ router.post('/:id/regenerate', async (req, res) => {
 
         const userConfig = {
             plan: orgData.plan_id,
-            tone: originalResponse.tone || 'sarcastic'
-            // Issue #868: Removed humor_type and intensity_level (deprecated)
+            tone: toneCompatibilityService.normalizeTone(originalResponse.tone) || 'balanceado',
+            // Issue #872: humor_type and intensity_level deprecated
         };
 
         const generationResult = await roastGenerator.generateRoast(
@@ -579,8 +580,8 @@ router.post('/:id/regenerate', async (req, res) => {
                 organization_id: orgData.id,
                 comment_id: originalResponse.comment_id,
                 response_text: generationResult.roast,
-                tone: originalResponse.tone,
-                // Issue #868: Removed humor_type: originalResponse.humor_type,
+                tone: toneCompatibilityService.normalizeTone(originalResponse.tone) || 'balanceado',
+                humor_type: null, // Issue #872: Deprecated
                 post_status: 'pending',
                 attempt_number: nextAttemptNum,
                 parent_response_id: id,
@@ -685,7 +686,7 @@ router.post('/:id/regenerate', async (req, res) => {
                     id: newResponse.id,
                     response_text: newResponse.response_text,
                     tone: newResponse.tone,
-                    // Issue #868: Removed humor_type: newResponse.humor_type,
+                    humor_type: newResponse.humor_type,
                     attempt_number: newResponse.attempt_number,
                     created_at: newResponse.created_at
                 },

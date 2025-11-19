@@ -1,6 +1,11 @@
 /**
  * Roast Prompt Template Service
  * 
+ * ⚠️ DEPRECATED (Issue #872): This service is legacy. Use RoastPromptBuilder from lib/prompts/roastPrompt.js instead.
+ * The new builder uses the A/B/C block structure for caching optimization and the new 3-tone system.
+ * 
+ * This service is kept for backward compatibility but will be removed in a future version.
+ * 
  * Manages the master prompt template for roast generation with optimized
  * performance, centralized configuration, and advanced similarity matching.
  * 
@@ -19,6 +24,7 @@ const { logger } = require('../utils/logger');
 const CsvRoastService = require('./csvRoastService');
 const constants = require('../config/constants');
 const { getPlatformLimit, validateRoastForPlatform } = require('../config/platforms');
+const toneCompatibilityService = require('./toneCompatibilityService'); // Issue #872: Tone compatibility
 
 /**
  * RoastPromptTemplate - Optimized roast generation system
@@ -43,7 +49,7 @@ const { getPlatformLimit, validateRoastForPlatform } = require('../config/platfo
  *   originalComment: "Esta aplicación es horrible",
  *   toxicityData: { score: 0.8, categories: ['TOXICITY'] },
  *   userConfig: { 
- *     tone: 'balanceado', // Issue #868: Solo tone, sin intensity
+ *     tone: 'balanceado', // Issue #872: Use new 3-tone system
  *     platform: 'twitter'
  *   },
  *   includeReferences: true
@@ -315,9 +321,22 @@ class RoastPromptTemplate {
    * @returns {string} Descriptive tone
    */
   mapUserTone(config) {
-    // Issue #868: Eliminado humor_type e intensity_level
-    // Solo tone define la agresividad (Flanders, Balanceado, Canalla)
-    let tone = constants.TONE_MAP[config.tone] || constants.TONE_MAP.balanceado;
+    // Issue #872: Deprecation warning
+    logger.warn('[DEPRECATED] roastPromptTemplate.mapUserTone is deprecated. Use RoastPromptBuilder instead.');
+    
+    // Map to new 3-tone system using compatibility service
+    const normalizedTone = toneCompatibilityService.normalizeTone(config.tone || 'balanceado');
+    let tone = constants.TONE_MAP[normalizedTone] || constants.TONE_MAP.sarcastic;
+    
+    // Issue #872: humor_type deprecated, kept for backward compatibility only
+    if (config.humor_type && constants.HUMOR_MAP[config.humor_type]) {
+      logger.warn('[DEPRECATED] humor_type is deprecated and ignored.');
+    }
+
+    // Issue #872: intensity_level deprecated, now derived from tone
+    // Keep for backward compat but don't use
+    if (config.intensity_level) {
+      logger.warn('[DEPRECATED] intensity_level is deprecated. Intensity is now derived from tone.');
 
     // Add custom style if available
     if (config.custom_style_prompt) {

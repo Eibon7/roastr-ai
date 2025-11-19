@@ -31,17 +31,15 @@ const PLATFORMS = [
   { id: 'tiktok', name: 'TikTok', color: 'bg-black' }
 ];
 
+// Issue #872: New 3-tone system (post-#686)
 const TONES = [
-  { value: 'sarcastic', label: 'Sarcastic', description: 'Sharp wit with attitude' },
-  { value: 'ironic', label: 'Ironic', description: 'Subtle and clever' },
-  { value: 'absurd', label: 'Absurd', description: 'Wildly creative and unexpected' }
+  { value: 'flanders', label: 'Flanders (Light)', description: 'Amable con ironía sutil (2/5)' },
+  { value: 'balanceado', label: 'Balanceado (Balanced)', description: 'Equilibrio entre ingenio y firmeza (3/5)' },
+  { value: 'canalla', label: 'Canalla (Savage)', description: 'Directo y sin filtros (4/5)' }
 ];
 
-const HUMOR_TYPES = [
-  { value: 'witty', label: 'Witty', description: 'Quick and clever' },
-  { value: 'clever', label: 'Clever', description: 'Thoughtful and sharp' },
-  { value: 'playful', label: 'Playful', description: 'Light and fun' }
-];
+// Issue #872: HUMOR_TYPES deprecated (removed post-#686)
+// humor_type is no longer used in the system
 
 function ConfigurationCard({ platform, config, onSave, loading }) {
   const [localConfig, setLocalConfig] = useState(config);
@@ -98,11 +96,11 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
       <CardContent className="space-y-4">
         {localConfig.enabled && (
           <>
-            {/* Tone Configuration */}
+            {/* Tone Configuration - Issue #872: New 3-tone system */}
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Palette className="h-4 w-4 text-muted-foreground" />
-                <label className="text-sm font-medium">Tone</label>
+                <label className="text-sm font-medium">Tono de Roast</label>
               </div>
               <Select
                 value={localConfig.tone}
@@ -114,23 +112,12 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
                   </option>
                 ))}
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Sistema de 3 tonos: Flanders (suave), Balanceado (versátil), Canalla (intenso)
+              </p>
             </div>
 
-            {/* Humor Type */}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Volume2 className="h-4 w-4 text-muted-foreground" />
-                <label className="text-sm font-medium">Humor Style</label>
-              </div>
-              <Select
-              >
-                {HUMOR_TYPES.map(humor => (
-                  <option key={humor.value} value={humor.value}>
-                    {humor.label} - {humor.description}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            {/* Issue #872: Humor Type REMOVED (deprecated post-#686) */}
 
             {/* Response Frequency */}
             <div className="space-y-2">
