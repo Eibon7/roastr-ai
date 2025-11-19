@@ -5,8 +5,9 @@
 **Priority:** Critical
 **Status:** Production
 **Last Updated:** 2025-11-17
-**Coverage:** 60%
+**Coverage:** 59%
 **Coverage Source:** auto
+**Note:** Coverage value updated to match actual test coverage (gdd-status.json validation). Will be auto-updated when tests pass.
 **Related PRs:** #499, #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback), #865 (Issue #859 - Brand Safety for Sponsors)
 **Protected:** true
 **Last Verified:** 2025-10-23

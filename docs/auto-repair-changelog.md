@@ -1,5 +1,28 @@
 # Auto-Repair Changelog
 
+## 2025-11-19T14:52:54.965Z
+
+**Repair ID:** 2025-11-19T14:52:54Z
+**Triggered by:** Manual
+**Nodes affected:** cost-control, observability, persona, plan-features, queue-system, roast, shield, social-platforms
+
+**Fixes applied:**
+- Reset coverage to 60% for cost-control (was 0%)
+- Reset coverage to 46% for observability (was 100%)
+- Reset coverage to 90% for persona (was 0%)
+- Reset coverage to 74% for plan-features (was 0%)
+- Reset coverage to 67% for queue-system (was 6%)
+- Reset coverage to 59% for roast (was 0%)
+- Reset coverage to 86% for shield (was 0%)
+- Reset coverage to 14% for social-platforms (was 0%)
+
+**Outcome:**
+- Health score: 84.3 → 90.8
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-11-19T14-52-54-853Z`
+
+---
+
 ## 2025-11-18T23:08:47.755Z
 
 **Repair ID:** 2025-11-18T23:08:47Z

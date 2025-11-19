@@ -30,6 +30,7 @@ const PLATFORM_LIMITS = {
   tiktok: { maxLength: 2200 },
   youtube: { maxLength: 10000 },
   discord: { maxLength: 2000 },
+  twitch: { maxLength: 500 },
   reddit: { maxLength: 40000 },
   bluesky: { maxLength: 300 },
   default: { maxLength: 1000 }
