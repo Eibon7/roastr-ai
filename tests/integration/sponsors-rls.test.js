@@ -374,23 +374,23 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
       expect(data.some(s => s.user_id === userBId)).toBe(false);
     });
 
-      test('Policy enforces WITH CHECK clause (write access)', async () => {
-        await setTenantContext(tenantA.id);
+    test('Policy enforces WITH CHECK clause (write access)', async () => {
+      await setTenantContext(tenantA.id);
 
-        // Try to insert with wrong user_id
-        const { data, error } = await testClient
-          .from('sponsors')
-          .insert({
-            user_id: userBId, // Wrong user
-            name: 'Test',
-            url: 'https://test.com',
-            active: true,
-            priority: 1,
-            severity: 'low',
-            tone: 'normal'
-          })
-          .select()
-          .single();
+      // Try to insert with wrong user_id
+      const { data, error } = await testClient
+        .from('sponsors')
+        .insert({
+          user_id: userBId, // Wrong user
+          name: 'Test',
+          url: 'https://test.com',
+          active: true,
+          priority: 1,
+          severity: 'low',
+          tone: 'normal'
+        })
+        .select()
+        .single();
 
       // WITH CHECK should block this
       expect(data).toBeNull();
