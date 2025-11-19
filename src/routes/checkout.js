@@ -20,21 +20,22 @@ const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN,
 });
 
-// Allowed Price IDs - only these can be used for checkout
+// Allowed Product IDs - only these can be used for checkout
 // This prevents authorization bypass where users could purchase arbitrary products
-const ALLOWED_PRICE_IDS = new Set(
-  (process.env.POLAR_ALLOWED_PRICE_IDS || '')
+// Updated: Issue #808 - Changed from PRICE_ID (Stripe) to PRODUCT_ID (Polar)
+const ALLOWED_PRODUCT_IDS = new Set(
+  (process.env.POLAR_ALLOWED_PRODUCT_IDS || process.env.POLAR_ALLOWED_PRICE_IDS || '')
     .split(',')
     .map(id => id.trim())
     .filter(Boolean)
 );
 
 // Log configuration status on startup
-if (ALLOWED_PRICE_IDS.size === 0) {
-  logger.warn('[Polar] POLAR_ALLOWED_PRICE_IDS not configured - price validation disabled (INSECURE!)');
+if (ALLOWED_PRODUCT_IDS.size === 0) {
+  logger.warn('[Polar] POLAR_ALLOWED_PRODUCT_IDS not configured - product validation disabled (INSECURE!)');
 } else {
-  logger.info('[Polar] Price ID allowlist configured', {
-    allowedCount: ALLOWED_PRICE_IDS.size
+  logger.info('[Polar] Product ID allowlist configured', {
+    allowedCount: ALLOWED_PRODUCT_IDS.size
   });
 }
 
@@ -45,7 +46,7 @@ if (ALLOWED_PRICE_IDS.size === 0) {
  *
  * Request Body:
  * @param {string} customer_email - Customer's email address
- * @param {string} price_id - Polar price ID for the product
+ * @param {string} product_id - Polar product ID (updated from price_id in Issue #808)
  * @param {object} metadata - Optional metadata to attach to the checkout
  *
  * Response:
@@ -53,17 +54,19 @@ if (ALLOWED_PRICE_IDS.size === 0) {
  */
 router.post('/checkout', async (req, res) => {
   try {
-    const { customer_email, price_id, metadata } = req.body;
+    // Support both product_id (new) and price_id (legacy) for backward compatibility
+    const { customer_email, product_id, price_id, metadata } = req.body;
+    const productId = product_id || price_id; // Fallback to price_id for legacy support
 
     // Validation
-    if (!customer_email || !price_id) {
+    if (!customer_email || !productId) {
       logger.warn('[Polar] Missing required fields in checkout request', {
         hasEmail: !!customer_email,
-        hasPriceId: !!price_id,
+        hasProductId: !!productId,
       });
       return res.status(400).json({
         error: 'Missing required fields',
-        message: 'customer_email and price_id are required',
+        message: 'customer_email and product_id are required',
       });
     }
 
@@ -88,29 +91,29 @@ router.post('/checkout', async (req, res) => {
       });
     }
 
-    // Validate price_id against allowlist (Security: prevent authorization bypass)
-    if (ALLOWED_PRICE_IDS.size > 0 && !ALLOWED_PRICE_IDS.has(price_id)) {
-      logger.warn('[Polar] Rejected checkout with unauthorized price_id', sanitizePII({
-        price_id,
+    // Validate product_id against allowlist (Security: prevent authorization bypass)
+    if (ALLOWED_PRODUCT_IDS.size > 0 && !ALLOWED_PRODUCT_IDS.has(productId)) {
+      logger.warn('[Polar] Rejected checkout with unauthorized product_id', sanitizePII({
+        product_id: productId,
         customer_email,
-        allowedCount: ALLOWED_PRICE_IDS.size
+        allowedCount: ALLOWED_PRODUCT_IDS.size
       }));
       return res.status(400).json({
-        error: 'Invalid price_id',
+        error: 'Invalid product_id',
         message: 'The selected plan is not available for purchase.',
       });
     }
 
     logger.info('[Polar] Creating checkout session', sanitizePII({
       customer_email,
-      price_id,
+      product_id: productId,
       hasMetadata: !!metadata,
     }));
 
     // Create checkout session
-    // Polar SDK expects products as an array of price ID strings
+    // Polar SDK expects products as an array of product ID strings
     const checkout = await polar.checkouts.create({
-      products: [price_id],
+      products: [productId],
       customerEmail: customer_email,
       successUrl: process.env.POLAR_SUCCESS_URL || `${req.protocol}://${req.get('host')}/success?checkout_id={CHECKOUT_ID}`,
       metadata: metadata || {},
@@ -128,7 +131,7 @@ router.post('/checkout', async (req, res) => {
         id: checkout.id,
         url: checkout.url,
         customer_email: checkout.customerEmail,
-        price_id: checkout.productPriceId,
+        product_id: checkout.productPriceId || checkout.productId, // Polar may return either field
         status: checkout.status,
       },
     });
@@ -175,7 +178,7 @@ router.get('/checkout/:id', async (req, res) => {
         id: checkout.id,
         status: checkout.status,
         customer_email: checkout.customerEmail,
-        price_id: checkout.productPriceId,
+        product_id: checkout.productPriceId || checkout.productId, // Polar may return either field
         amount: checkout.amount,
         currency: checkout.currency,
       },
