@@ -378,7 +378,7 @@ class RoastGeneratorEnhanced {
     logger.info('✅ Basic moderated roast generated', {
       plan: rqcConfig.plan,
       model: model,
-      intensityLevel: toneCompatibilityService.getToneIntensity(rqcConfig.tone || tone),
+      intensityLevel: toneCompatibilityService.getToneIntensity(rqcConfig.tone || tone || 'balanceado'),
       roastLength: roast.length,
       promptVersion: this.promptTemplate.getVersion()
     });
