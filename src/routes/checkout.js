@@ -99,7 +99,7 @@ router.post('/checkout', async (req, res) => {
         allowedCount: ALLOWED_PRODUCT_IDS.size
       }));
       return res.status(400).json({
-        error: 'Invalid product_id',
+        error: 'Unauthorized product',
         message: 'The selected plan is not available for purchase.',
       });
     }
@@ -124,9 +124,10 @@ router.post('/checkout', async (req, res) => {
       checkout_url: checkout.url,
     });
 
-    // Return the checkout object (includes checkout_url)
+    // Return the checkout object (includes checkout_url for backward compatibility)
     res.json({
       success: true,
+      checkout_url: checkout.url, // Backward compatibility with tests expecting top-level checkout_url
       checkout: {
         id: checkout.id,
         url: checkout.url,

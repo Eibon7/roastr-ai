@@ -65,9 +65,14 @@ describe('Checkout with product_id (Issue #887)', () => {
         });
 
       expect(res.status).toBe(200);
+      // Support both checkout_url (backward compatibility) and checkout.url
       expect(res.body).toHaveProperty('checkout');
       expect(res.body.checkout).toHaveProperty('url');
       expect(res.body.checkout.url).toContain('polar.sh');
+      // Also check top-level checkout_url for backward compatibility
+      if (res.body.checkout_url) {
+        expect(res.body.checkout_url).toContain('polar.sh');
+      }
       
       // Verify logs show "Polar Product" terminology
       // Note: Logger is mocked, actual logging may vary
@@ -91,7 +96,7 @@ describe('Checkout with product_id (Issue #887)', () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Invalid product_id');
+      expect(res.body.error).toBe('Unauthorized product');
       
       // Restore
       process.env.POLAR_ALLOWED_PRODUCT_IDS = originalAllowed;
