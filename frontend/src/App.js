@@ -14,6 +14,7 @@ import AdminMetrics from './pages/admin/AdminMetrics';
 import AdminLogs from './pages/admin/AdminLogs';
 import AdminSettings from './pages/admin/AdminSettings';
 import SystemControlPanel from './pages/admin/SystemControlPanel';
+import RoastTones from './pages/admin/RoastTones'; // Issue #876
 import AppShell from './components/AppShell';
 import Dashboard from './pages/dashboard';
 import Compose from './pages/Compose';
@@ -74,6 +75,7 @@ function App() {
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="users/:userId" element={<UserDetail />} />
               <Route path="plans" element={<AdminPlans />} />
+              <Route path="roast-tones" element={<RoastTones />} /> {/* Issue #876 */}
               <Route path="metrics" element={<AdminMetrics />} />
               <Route path="logs" element={<AdminLogs />} />
               <Route path="settings" element={<AdminSettings />} />
