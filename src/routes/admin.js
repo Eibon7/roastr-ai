@@ -12,6 +12,7 @@ const { auditLogger } = require('../services/auditLogService');
 const revenueRoutes = require('./revenue');
 const featureFlagsRoutes = require('./admin/featureFlags');
 const backofficeSettingsRoutes = require('./admin/backofficeSettings');
+const tonesRoutes = require('./admin/tones'); // Issue #876: Dynamic Roast Tone Configuration
 const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
@@ -47,6 +48,9 @@ router.use('/', featureFlagsRoutes);
 
 // Backoffice settings routes (admin only) - Issue #371: SPEC 15
 router.use('/backoffice', backofficeSettingsRoutes);
+
+// Roast tones management routes (admin only) - Issue #876: Dynamic Tone Configuration
+router.use('/tones', tonesRoutes);
 
 /**
  * POST /api/admin/csrf-test

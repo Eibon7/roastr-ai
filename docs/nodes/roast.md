@@ -190,12 +190,25 @@ Any Fail? → Regenerate with feedback
 Max Attempts Reached? → Fallback roast
 ```
 
-## Voice Styles (SPEC 7)
+## Voice Styles (SPEC 7) - Dynamic Tone System (Issue #876)
 
-**Feature:** Predefined voice styles per language
-**Implementation:** `RoastEngine.voiceStyles`
+**Feature:** Dynamic roast tone configuration from database  
+**Implementation:** `ToneConfigService` + Admin Panel  
+**Migration:** Issue #876 - From hardcoded to DB-driven  
 
-### Spanish (ES)
+### System Overview
+
+Los tonos de roast ahora se gestionan dinámicamente desde base de datos, permitiendo:
+- ✅ Editar tonos sin modificar código
+- ✅ Añadir nuevos tonos fácilmente
+- ✅ Activar/desactivar tonos temporalmente
+- ✅ Reordenar tonos
+- ✅ Soporte multiidioma (ES/EN)
+- ✅ Cache inteligente (5min TTL)
+
+### Initial Tones (Migrated from Hardcoded)
+
+#### Spanish (ES)
 
 | Style | Name | Description | Intensity |
 |-------|------|-------------|-----------|
@@ -203,13 +216,22 @@ Max Attempts Reached? → Fallback roast
 | `balanceado` | Balanceado | Equilibrio entre ingenio y firmeza | 3/5 |
 | `canalla` | Canalla | Directo y sin filtros, más picante | 4/5 |
 
-### English (EN)
+#### English (EN)
 
 | Style | Name | Description | Intensity |
 |-------|------|-------------|-----------|
-| `light` | Light | Gentle wit with subtle irony | 2/5 |
-| `balanced` | Balanced | Perfect mix of humor and firmness | 3/5 |
-| `savage` | Savage | Direct and unfiltered, maximum impact | 4/5 |
+| `flanders` | Light | Gentle wit with subtle irony | 2/5 |
+| `balanceado` | Balanced | Perfect mix of humor and firmness | 3/5 |
+| `canalla` | Savage | Direct and unfiltered, maximum impact | 4/5 |
+
+### Dynamic Configuration
+
+**Database:** `roast_tones` table  
+**Service:** `src/services/toneConfigService.js`  
+**API:** `/api/admin/tones` (admin-only)  
+**Integration:** `src/lib/prompts/roastPrompt.js` (buildBlockA async)  
+
+**Documentation:** See `docs/admin/tone-management.md` for complete guide
 
 ## Version Control (1-2 Versions)
 
