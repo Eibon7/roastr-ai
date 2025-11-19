@@ -191,6 +191,26 @@ const PLATFORMS = {
     }
   },
 
+  twitch: {
+    name: 'Twitch',
+    maxLength: PLATFORM_LIMITS.twitch.maxLength,
+    supports: {
+      mentions: true,
+      emojis: true,
+      emotes: true
+    },
+    style: {
+      tone: 'fast-paced and energetic',
+      preferredLength: 200,
+      emojiUsage: 'heavy'
+    },
+    formatting: {
+      lineBreaks: false,
+      bulletPoints: false,
+      emphasis: 'emotes and mentions'
+    }
+  },
+
   bluesky: {
     name: 'Bluesky',
     maxLength: PLATFORM_LIMITS.bluesky.maxLength,
@@ -281,7 +301,7 @@ function getPlatformStyle(platformName) {
  * @returns {Object} Validation result with isValid and adjustedText
  */
 function validateRoastForPlatform(roast, platformName) {
-  if (!roast || typeof roast !== 'string') {
+  if (!roast || typeof roast !== 'string' || roast.length === 0) {
     return { isValid: false, error: 'Invalid roast text' };
   }
 
