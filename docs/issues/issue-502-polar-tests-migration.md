@@ -215,5 +215,5 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
 **Creado:** 2025-01-XX
 **Última actualización:** 2025-11-19
 **Completado en:** PR #886 (Issue #885) - 2025-11-19
-**Estado Final:** ✅ Tests de Stripe eliminados (26 archivos) y adaptados (2 archivos) a Polar
+**Estado final:** ✅ Tests de Stripe eliminados (26 archivos) y adaptados (3 archivos) a Polar
 

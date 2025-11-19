@@ -26,7 +26,7 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 
 ## Criterios de Aceptación
 
-- [x] Eliminar todos los archivos de test que referencian Stripe (lista abajo) ✅ **26 eliminados + 2 adaptados**
+- [x] Eliminar todos los archivos de test que referencian Stripe (lista abajo) ✅ **26 eliminados + 3 adaptados**
 - [x] Verificar que tests de Polar en Issue #808 cubren funcionalidad equivalente ✅ **59 tests de Polar funcionando**
 - [x] Actualizar documentación en `docs/issues/issue-502-polar-tests-migration.md` si necesario ✅ **Plan actualizado**
 - [x] Confirmar que CI pasa sin errores después de eliminación ✅ **Tests relacionados con Stripe arreglados**
@@ -116,7 +116,7 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 ## Archivos Eliminados/Adaptados (28 total)
 
 ✅ **26 archivos eliminados** (exclusivos de Stripe)
-✅ **2 archivos adaptados** (mixtos - eliminado código Stripe, mantenido Polar)
+✅ **3 archivos adaptados** (mixtos - eliminado código Stripe, mantenido Polar)
 
 ### 🧪 Tests de Servicios (7 archivos)
 - [x] `tests/unit/services/stripeWebhookService.test.js` ✅ ELIMINADO
