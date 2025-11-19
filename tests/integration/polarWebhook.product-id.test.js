@@ -23,19 +23,16 @@ jest.mock('../../src/utils/logger', () => ({
   }
 }));
 
-// Mock Supabase
+// Mock Supabase (chain-compatible: eq returns this, single resolves result)
 jest.mock('../../src/config/supabase', () => ({
   supabaseServiceClient: {
     from: jest.fn(() => ({
       select: jest.fn().mockReturnThis(),
       insert: jest.fn().mockReturnThis(),
       update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockResolvedValue({
-        data: [{ id: 'user_123', plan: 'free', email: 'test@example.com' }],
-        error: null
-      }),
+      eq: jest.fn().mockReturnThis(), // Chain-compatible: returns this
       single: jest.fn().mockResolvedValue({
-        data: { id: 'user_123', plan: 'free', email: 'test@example.com' },
+        data: { id: 'user_123', plan: 'starter_trial', email: 'test@example.com' },
         error: null
       })
     }))
