@@ -66,19 +66,24 @@ POLAR_SUCCESS_URL=http://localhost:3000/success?checkout_id={CHECKOUT_ID}
 # Webhook secret (opcional pero recomendado)
 POLAR_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
 
-# Lista de price IDs permitidos (seguridad) - usado en checkout.js
-POLAR_ALLOWED_PRICE_IDS=price_xxx,price_yyy,price_zzz
+# Lista de product IDs permitidos (seguridad) - usado en checkout.js
+# Issue #887: Cambiado de POLAR_ALLOWED_PRICE_IDS a POLAR_ALLOWED_PRODUCT_IDS
+POLAR_ALLOWED_PRODUCT_IDS=prod_xxx,prod_yyy,prod_zzz
+# Legacy (fallback): POLAR_ALLOWED_PRICE_IDS=price_xxx,price_yyy,price_zzz
 ```
 
-**Variables que están en tu `.env` actual:**
+**Variables que están en tu `.env` actual (Issue #887 - Actualizado):**
 ```bash
 POLAR_ACCESS_TOKEN=*** (ya configurado)
 POLAR_WEBHOOK_SECRET=*** (ya configurado)
 POLAR_SUCCESS_URL=*** (ya configurado)
-POLAR_STARTER_PRODUCT_ID=*** (⚠️ debería ser PRICE_ID)
-POLAR_PRO_PRODUCT_ID=*** (⚠️ debería ser PRICE_ID)
-POLAR_PLUS_PRODUCT_ID=*** (⚠️ debería ser PRICE_ID)
+POLAR_STARTER_PRODUCT_ID=*** (✅ Correcto - Issue #887)
+POLAR_PRO_PRODUCT_ID=*** (✅ Correcto - Issue #887)
+POLAR_PLUS_PRODUCT_ID=*** (✅ Correcto - Issue #887)
+POLAR_ALLOWED_PRODUCT_IDS=*** (✅ Nuevo - Issue #887, opcional)
 ```
+
+**Nota:** Issue #887 migró de `POLAR_*_PRICE_ID` a `POLAR_*_PRODUCT_ID`. Ver `docs/plan/issue-887-migration-guide.md` para detalles.
 
 #### Cómo Obtenerlas:
 
