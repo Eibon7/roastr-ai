@@ -5,7 +5,7 @@
 **Priority:** High
 **Status:** Production
 **Last Updated:** 2025-11-11
-**Coverage:** 0%
+**Coverage:** 14%
 **Coverage Source:** auto
 **Note:** Integration tests exist but not included in coverage report. Platform-specific implementations in subdirectories (twitter/, youtube/, etc.)
 **Related PRs:** #499

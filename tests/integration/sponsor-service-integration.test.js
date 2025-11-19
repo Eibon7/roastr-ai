@@ -493,9 +493,17 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
   // ============================================================================
 
   describe('Tag Extraction from URL', () => {
+    const originalFetch = global.fetch;
+
     afterEach(() => {
-      // Cleanup global.fetch to prevent test interference
-      delete global.fetch;
+      // Restore original fetch to prevent test interference
+      if (originalFetch) {
+        global.fetch = originalFetch;
+      } else {
+        // Clean up only if we defined it ourselves
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete global.fetch;
+      }
     });
 
     it('should extract tags successfully with mocked OpenAI', async () => {
