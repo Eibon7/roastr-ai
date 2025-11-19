@@ -2,34 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import {
-  Zap,
   Heart,
-  Smile,
-  Target,
-  Brain,
-  Crown,
   Flame,
-  Coffee,
-  Sparkles,
-  Settings as SettingsIcon,
+  Zap,
   Check,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react';
 import { apiClient } from '../lib/api';
 
+/**
+ * StyleSelector - Issue #872
+ * Updated to use the new 3-tone system (Flanders, Balanceado, Canalla)
+ * Removes obsolete humor_type and intensity_level configs (Issue #686)
+ */
 const StyleSelector = () => {
-  const [selectedStyle, setSelectedStyle] = useState('sarcastic');
-  const [customSettings, setCustomSettings] = useState({
-    intensity: 3,
-    // Issue #868: Removed humor_type,
-    creativity: 3,
-    politeness: 2
-  });
+  const [selectedTone, setSelectedTone] = useState('balanceado');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Clear messages after delay
   useEffect(() => {
@@ -42,180 +34,156 @@ const StyleSelector = () => {
     }
   }, [error, success]);
 
-  // Load current style settings
+  // Load current tone settings
   useEffect(() => {
-    loadStyleSettings();
+    loadToneSettings();
   }, []);
 
-  const loadStyleSettings = async () => {
+  const loadToneSettings = async () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/user/settings/style');
       
       if (response.data.success) {
-        const { style, settings } = response.data.data;
-        setSelectedStyle(style || 'sarcastic');
-        if (settings) {
-          setCustomSettings(settings);
-        }
+        // Issue #872 Fix: Backend uses 'style' field, not 'tone'
+        const { style: tone } = response.data.data;
+        // Normalize to new 3-tone system
+        const normalizedTone = normalizeTone(tone || 'balanceado');
+        setSelectedTone(normalizedTone);
       }
     } catch (err) {
-      console.error('Failed to load style settings:', err);
+      console.error('Failed to load tone settings:', err);
       // Don't show error for missing settings - use defaults
     } finally {
       setLoading(false);
     }
   };
 
-  const updateStyle = async (style, settings = null) => {
+  // Normalize legacy tones to new 3-tone system
+  const normalizeTone = (tone) => {
+    const toneMap = {
+      // New tones (ES)
+      'flanders': 'flanders',
+      'balanceado': 'balanceado',
+      'canalla': 'canalla',
+      // New tones (EN aliases)
+      'light': 'flanders',
+      'balanced': 'balanceado',
+      'savage': 'canalla',
+      // Legacy mapping (backward compat)
+      'subtle': 'flanders',
+      'sarcastic': 'balanceado',
+      'direct': 'canalla',
+      'witty': 'balanceado',
+      'playful': 'flanders',
+      'friendly': 'flanders'
+    };
+    return toneMap[tone] || 'balanceado';
+  };
+
+  const updateTone = async (tone) => {
     try {
       setSaving(true);
       setError(null);
       
+      // Issue #872 Fix: Backend expects 'style' field, not 'tone'
       const response = await apiClient.post('/user/settings/style', {
-        style: style,
-        settings: settings || customSettings
+        style: tone
       });
       
       if (response.data.success) {
-        setSelectedStyle(style);
-        if (settings) {
-          setCustomSettings(settings);
-        }
-        setSuccess('Estilo actualizado correctamente');
+        setSelectedTone(tone);
+        setSuccess('Tono actualizado correctamente');
       }
     } catch (err) {
-      console.error('Failed to update style:', err);
-      setError('Error al actualizar el estilo');
+      console.error('Failed to update tone:', err);
+      setError('Error al actualizar el tono');
     } finally {
       setSaving(false);
     }
   };
 
-  const styleOptions = [
+  // Issue #872: New 3-tone system
+  const toneOptions = [
     {
-      id: 'sarcastic',
-      name: 'Sarcástico',
-      icon: Flame,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      description: 'Respuestas con sarcasmo inteligente y mordaz',
-      example: '"Tu comentario tiene menos sentido que un peine para calvos"',
-      settings: {
-        intensity: 4,
-        // Issue #868: Removed humor_type,
-        creativity: 3,
-        politeness: 2
-      },
-      isDefault: true
-    },
-    {
-      id: 'witty',
-      name: 'Ingenioso',
-      icon: Brain,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
-      description: 'Comentarios inteligentes y perspicaces con humor sofisticado',
-      example: '"Interesante teoría. ¿Tienes alguna evidencia o solo vibes?"',
-      settings: {
-        intensity: 3,
-        // Issue #868: Removed humor_type,
-        creativity: 4,
-        politeness: 3
-      }
-    },
-    {
-      id: 'playful',
-      name: 'Juguetón',
-      icon: Smile,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50',
-      borderColor: 'border-yellow-200',
-      description: 'Tono divertido y ligero, perfecto para mantener buen ambiente',
-      example: '"Creo que tu teclado tiene autocorrector de lógica averiado"',
-      settings: {
-        intensity: 2,
-        // Issue #868: Removed humor_type,
-        creativity: 3,
-        politeness: 4
-      }
-    },
-    {
-      id: 'direct',
-      name: 'Directo',
-      icon: Target,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      description: 'Comentarios claros y al punto, sin rodeos',
-      example: '"Ese argumento no se sostiene. Aquí tienes los datos reales..."',
-      settings: {
-        intensity: 3,
-        // Issue #868: Removed humor_type,
-        creativity: 2,
-        politeness: 3
-      }
-    },
-    {
-      id: 'friendly',
-      name: 'Amigable',
+      id: 'flanders',
+      name: 'Flanders',
+      nameEN: 'Light',
       icon: Heart,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
-      description: 'Respuestas constructivas manteniendo un tono positivo',
-      example: '"Entiendo tu punto, pero tal vez podrías considerar esta perspectiva..."',
-      settings: {
-        intensity: 1,
-        // Issue #868: Removed humor_type,
-        creativity: 2,
-        politeness: 5
-      }
+      intensity: '2/5',
+      description: 'Tono amable pero con ironía sutil',
+      personality: 'Educado, irónico, elegante',
+      example: '"Fascinante crítica. Imagino que tu experiencia en desarrollo de software es... extensa."',
+      resources: [
+        'Ironía marcada pero sutil',
+        'Double entendre',
+        'Understatement'
+      ],
+      restrictions: [
+        'NO insultos directos',
+        'NO vulgaridad',
+        'Mantener sofisticación'
+      ]
     },
     {
-      id: 'custom',
-      name: 'Personalizado',
-      icon: SettingsIcon,
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-50',
-      borderColor: 'border-gray-200',
-      description: 'Configura tu propio estilo con ajustes avanzados',
-      example: 'Personalizable según tus preferencias específicas',
-      settings: {
-        intensity: 3,
-        // Issue #868: Removed humor_type,
-        creativity: 3,
-        politeness: 3
-      }
+      id: 'balanceado',
+      name: 'Balanceado',
+      nameEN: 'Balanced',
+      icon: Zap,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      intensity: '3/5',
+      description: 'Equilibrio entre ingenio y firmeza',
+      personality: 'Equilibrado, ingenioso, directo',
+      example: '"Vaya argumento interesante. Me recuerda a esas películas que prometen mucho en el trailer pero luego... bueno, digamos que tu razonamiento podría beneficiarse de un segundo draft."',
+      resources: [
+        'Sarcasmo marcado',
+        'Comparaciones inteligentes',
+        'Ironía directa'
+      ],
+      restrictions: [
+        'NO crueldad innecesaria',
+        'NO ataques personales prohibidos',
+        'Mantener ingenio'
+      ],
+      isDefault: true
+    },
+    {
+      id: 'canalla',
+      name: 'Canalla',
+      nameEN: 'Savage',
+      icon: Flame,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      intensity: '4/5',
+      description: 'Directo y sin filtros, más picante',
+      personality: 'Directo, sin filtros, contundente',
+      example: '"Tu conocimiento es como el WiFi del aeropuerto: teóricamente existe, pero nadie lo encuentra. Y cuando lo encuentras, es tan lento que deseas no haberlo intentado."',
+      resources: [
+        'Hipérbole extrema',
+        'Comparaciones brutales',
+        'Sarcasmo cortante'
+      ],
+      restrictions: [
+        'NO discriminación',
+        'NO ataques físicos',
+        'Mantener ingenio'
+      ]
     }
-  ];
-
-  const intensityLabels = {
-    1: { label: 'Muy suave', color: 'text-green-600' },
-    2: { label: 'Suave', color: 'text-green-500' },
-    3: { label: 'Moderado', color: 'text-yellow-500' },
-    4: { label: 'Intenso', color: 'text-orange-500' },
-    5: { label: 'Muy intenso', color: 'text-red-500' }
-  };
-
-  const humorTypes = [
-    { id: 'witty', name: 'Ingenioso', description: 'Humor inteligente y sofisticado' },
-    { id: 'sarcastic', name: 'Sarcástico', description: 'Comentarios mordaces e irónicos' },
-    { id: 'playful', name: 'Juguetón', description: 'Divertido y ligero' },
-    { id: 'dry', name: 'Seco', description: 'Humor sutil y directo' },
-    { id: 'gentle', name: 'Suave', description: 'Humor amable y constructivo' },
-    { id: 'custom', name: 'Personalizado', description: 'Tu propio estilo único' }
   ];
 
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
         <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-        <div className="grid grid-cols-2 gap-3">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded"></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-48 bg-gray-200 rounded"></div>
           ))}
         </div>
       </div>
@@ -241,7 +209,7 @@ const StyleSelector = () => {
       <div className="flex items-center space-x-2">
         <Sparkles className="h-5 w-5 text-purple-600" />
         <h3 className="text-lg font-medium text-gray-900">
-          Estilo de Respuestas
+          Tono de Roasts
         </h3>
       </div>
 
@@ -251,216 +219,155 @@ const StyleSelector = () => {
           <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-800">
             <p className="mb-2">
-              <strong>Personaliza tu voz digital:</strong> Elige el estilo que mejor represente 
-              tu personalidad al responder comentarios. Cada estilo ajusta automáticamente 
-              el tono, intensidad y tipo de humor de tus respuestas.
+              <strong>Sistema de 3 Tonos:</strong> Elige el tono que mejor represente 
+              tu personalidad al roastear comentarios tóxicos. Cada tono tiene su propia 
+              intensidad, personalidad y restricciones de seguridad.
             </p>
             <p className="text-xs">
-              💡 <strong>Tip:</strong> Puedes cambiar de estilo en cualquier momento según el contexto o tu estado de ánimo.
+              💡 <strong>Tip:</strong> El tono Balanceado es el más versátil y recomendado 
+              para la mayoría de situaciones. Puedes cambiar de tono en cualquier momento.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Style Options Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {styleOptions.map((style) => {
-          const IconComponent = style.icon;
-          const isSelected = selectedStyle === style.id;
+      {/* Tone Options Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {toneOptions.map((tone) => {
+          const IconComponent = tone.icon;
+          const isSelected = selectedTone === tone.id;
           
           return (
             <div
-              key={style.id}
+              key={tone.id}
               className={`border rounded-lg p-4 cursor-pointer transition-all ${
                 isSelected
-                  ? `${style.borderColor} ${style.bgColor} ring-2 ring-opacity-20`
+                  ? `${tone.borderColor} ${tone.bgColor} ring-2 ring-opacity-20`
                   : 'border-gray-200 hover:border-gray-300 bg-white'
               }`}
-              onClick={() => !saving && updateStyle(style.id, style.settings)}
+              onClick={() => !saving && updateTone(tone.id)}
             >
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className={`w-5 h-5 rounded-full border-2 mt-1 ${
+              <div className="space-y-3">
+                {/* Header with Radio */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-2">
+                    <IconComponent className={`h-6 w-6 ${isSelected ? tone.color : 'text-gray-400'}`} />
+                    <div>
+                      <h4 className="font-semibold text-gray-900">
+                        {tone.name}
+                      </h4>
+                      <span className="text-xs text-gray-500">
+                        {tone.nameEN}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                     isSelected
-                      ? `${style.borderColor.replace('border-', 'border-')} ${style.color.replace('text-', 'bg-')}`
+                      ? `${tone.borderColor.replace('border-', 'border-')} ${tone.color.replace('text-', 'bg-')}`
                       : 'border-gray-300'
                   }`}>
                     {isSelected && (
-                      <div className="w-full h-full rounded-full bg-white scale-50 flex items-center justify-center">
-                        <Check className="h-2 w-2 text-gray-600" />
-                      </div>
+                      <Check className="h-3 w-3 text-white" />
                     )}
                   </div>
                 </div>
-                
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <IconComponent className={`h-5 w-5 ${isSelected ? style.color : 'text-gray-400'}`} />
-                    <h4 className="font-medium text-gray-900">
-                      {style.name}
-                      {style.isDefault && (
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          Por defecto
-                        </Badge>
-                      )}
-                    </h4>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 mb-3">
-                    {style.description}
-                  </p>
-                  
-                  <div className="bg-gray-50 rounded p-2 mb-2">
-                    <div className="text-xs text-gray-500 mb-1">Ejemplo:</div>
-                    <div className="text-sm font-mono text-gray-800">
-                      {style.example}
-                    </div>
-                  </div>
 
-                  {/* Style characteristics */}
-                  <div className="flex flex-wrap gap-1">
-                    <Badge variant="secondary" className="text-xs">
-                      Intensidad: {style.settings.intensity}/5
+                {/* Intensity Badge */}
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary" className="text-xs">
+                    Intensidad: {tone.intensity}
+                  </Badge>
+                  {tone.isDefault && (
+                    <Badge variant="outline" className="text-xs">
+                      Por defecto
                     </Badge>
-                    {/* Issue #868: Removed humor_type badge (deprecated) */}
+                  )}
+                </div>
+                
+                {/* Description */}
+                <p className="text-sm text-gray-700 font-medium">
+                  {tone.description}
+                </p>
+                
+                <p className="text-xs text-gray-600">
+                  <strong>Personalidad:</strong> {tone.personality}
+                </p>
+
+                {/* Example */}
+                <div className="bg-gray-50 rounded p-3 border border-gray-200">
+                  <div className="text-xs text-gray-500 mb-1 font-medium">Ejemplo:</div>
+                  <div className="text-xs text-gray-800 italic">
+                    {tone.example}
                   </div>
                 </div>
+
+                {/* Resources & Restrictions (Collapsible) */}
+                <details className="text-xs">
+                  <summary className="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
+                    Ver recursos y restricciones
+                  </summary>
+                  <div className="mt-2 space-y-2 pl-2">
+                    <div>
+                      <div className="font-medium text-green-700">✅ Recursos permitidos:</div>
+                      <ul className="list-disc list-inside text-gray-600 space-y-1">
+                        {tone.resources.map((resource, idx) => (
+                          <li key={idx}>{resource}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-medium text-red-700">🚫 Restricciones:</div>
+                      <ul className="list-disc list-inside text-gray-600 space-y-1">
+                        {tone.restrictions.map((restriction, idx) => (
+                          <li key={idx}>{restriction}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </details>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Advanced Settings for Custom Style */}
-      {selectedStyle === 'custom' && (
-        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-medium text-gray-900">Configuración Avanzada</h4>
-            <Button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              variant="ghost"
-              size="sm"
-            >
-              {showAdvanced ? 'Ocultar' : 'Mostrar'} detalles
-            </Button>
-          </div>
-
-          {showAdvanced && (
-            <div className="space-y-4">
-              {/* Intensity Slider */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Intensidad: <span className={intensityLabels[customSettings.intensity].color}>
-                    {intensityLabels[customSettings.intensity].label}
-                  </span>
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="5"
-                  value={customSettings.intensity}
-                  onChange={(e) => setCustomSettings({
-                    ...customSettings,
-                    intensity: parseInt(e.target.value)
-                  })}
-                  className="w-full"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  Controla qué tan directas y contundentes serán las respuestas
-                </div>
-              </div>
-
-              {/* Humor Type */}
-              {/* Issue #868: Removed Humor Type Selector (deprecated - tone is now sole selector) */}
-
-              {/* Creativity Slider */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Creatividad: {customSettings.creativity}/5
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="5"
-                  value={customSettings.creativity}
-                  onChange={(e) => setCustomSettings({
-                    ...customSettings,
-                    creativity: parseInt(e.target.value)
-                  })}
-                  className="w-full"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  Nivel de originalidad y creatividad en las respuestas
-                </div>
-              </div>
-
-              {/* Politeness Slider */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Cortesía: {customSettings.politeness}/5
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="5"
-                  value={customSettings.politeness}
-                  onChange={(e) => setCustomSettings({
-                    ...customSettings,
-                    politeness: parseInt(e.target.value)
-                  })}
-                  className="w-full"
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  Qué tan educadas y respetuosas serán las respuestas
-                </div>
-              </div>
-
-              {/* Save Custom Settings */}
-              <div className="pt-3 border-t">
-                <Button
-                  onClick={() => updateStyle('custom', customSettings)}
-                  disabled={saving}
-                  className="w-full"
-                >
-                  {saving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Guardando...
-                    </>
-                  ) : (
-                    'Guardar configuración personalizada'
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Saving Indicator */}
       {saving && (
         <div className="text-center">
           <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <span>Guardando estilo...</span>
+            <span>Guardando tono...</span>
           </div>
         </div>
       )}
 
-      {/* Current Style Summary */}
+      {/* Current Tone Summary */}
       {!loading && !saving && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
           <div className="text-sm text-green-800">
             <div className="flex items-center space-x-2 mb-1">
               <Check className="h-4 w-4 text-green-600" />
-              <span className="font-medium">Estilo activo: {styleOptions.find(s => s.id === selectedStyle)?.name}</span>
+              <span className="font-medium">
+                Tono activo: {toneOptions.find(t => t.id === selectedTone)?.name} 
+                ({toneOptions.find(t => t.id === selectedTone)?.nameEN})
+              </span>
             </div>
             <p className="text-xs">
-              Todas las respuestas futuras utilizarán este estilo. Los cambios se aplican inmediatamente.
+              Todos los roasts futuros utilizarán este tono. Los cambios se aplican inmediatamente.
             </p>
           </div>
         </div>
       )}
+
+      {/* Migration Notice (Issue #872) */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <div className="text-xs text-yellow-800">
+          <strong>📢 Actualización del sistema:</strong> Hemos simplificado los estilos de roast 
+          a 3 tonos oficiales (Flanders, Balanceado, Canalla) eliminando configuraciones obsoletas 
+          (humor_type, intensity_level). Tus preferencias anteriores se han migrado automáticamente.
+        </div>
+      </div>
     </div>
   );
 };

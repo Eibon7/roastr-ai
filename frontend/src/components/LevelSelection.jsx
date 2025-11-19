@@ -205,7 +205,7 @@ const LevelSelection = () => {
             Roast Level
           </CardTitle>
           <CardDescription>
-            Control the intensity and style of generated roasts
+            Control the tone of generated roasts (Flanders, Balanceado, Canalla)
           </CardDescription>
         </CardHeader>
         <CardContent>
