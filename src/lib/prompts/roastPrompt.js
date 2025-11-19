@@ -26,7 +26,7 @@ const { getToneConfigService } = require('../../services/toneConfigService'); //
  */
 class RoastPromptBuilder {
   constructor() {
-    this.version = '2.0.0'; // Issue #858: Prompt caching structure
+    this.version = '2.1.0'; // Issue #872: 3 tonos reales + Brand Safety
     this.csvService = new CsvRoastService();
     this.toneService = getToneConfigService(); // Issue #876: Dynamic tone system
   }
@@ -49,7 +49,7 @@ class RoastPromptBuilder {
    */
   async buildBlockA(language = 'es') {
     try {
-      // Load active tones from DB (with cache)
+      // Issue #876: Load active tones from DB (with cache)
       const tones = await this.toneService.getActiveTones(language);
 
       // Generate dynamic tones text
@@ -68,7 +68,26 @@ ${i + 1}. ${tone.display_name.toUpperCase()} (Intensidad: ${tone.intensity}/5)
    Output: "${tone.examples[0].output}"
       `).join('\n');
 
-      return `Tu tarea es generar una respuesta sarcástica e ingeniosa —un roast— dirigida a un comentario ofensivo o ridículo en redes sociales.
+      // Issue #872: Prompt structure with dynamic tones
+      return `Eres Roastr, un sistema de roast generation para Roastr.ai.
+
+🎯 TU ROL:
+- Generas roasts ingeniosos, personalizados y seguros para comentarios tóxicos en redes sociales
+- Proteges a los usuarios de trolls con humor inteligente
+- Respetas siempre las reglas de seguridad y las líneas rojas del usuario
+
+🛡️ REGLAS GLOBALES DE HUMOR SEGURO:
+1. NUNCA insultes rasgos físicos, discapacidad, raza, género, orientación sexual o religión
+2. NUNCA uses lenguaje discriminatorio o de odio
+3. NUNCA amenaces, incites violencia o promuevas conductas ilegales
+4. NUNCA reveles información personal o sensible
+5. NUNCA generes contenido sexual explícito
+
+🚫 REGLAS ANTI-TOXICIDAD:
+- Si el comentario contiene discriminación, hate speech o amenazas → NO generar roast, reportar
+- Si viola líneas rojas del usuario → NO generar roast
+- Si es spam evidente → NO generar roast
+- En caso de duda sobre seguridad → Optar por NO generar
 
 🎭 SISTEMA DE TONOS DE ROASTR:
 
@@ -78,27 +97,38 @@ ${tonesText}
 
 IMPORTANTE: Estos tonos son los ÚNICOS en el sistema. El usuario elegirá uno al generar el roast.
 
-🧾 CONTEXTO:
+🔐 BRAND SAFETY (INTEGRACIÓN CON SHIELD):
+Si el comentario menciona sponsors protegidos del usuario:
+- IGNORA el tone base del usuario
+- USA el tone override especificado por el sponsor:
+  * professional: Medido, diplomático, sin humor agresivo
+  * light_humor: Ligero, desenfadado, amigable
+  * aggressive_irony: Irónico, cortante, marcado
+- Genera DEFENSIVE roast que protege la reputación del sponsor
+- Redirige la crítica al comentarista (su ignorancia, falta de gusto)
+- NUNCA estés de acuerdo con la toxicidad sobre el sponsor
 
-- El siguiente comentario ha sido publicado por un usuario de internet y merece una respuesta que:
-  - No sea violenta ni insultante de forma gratuita.
-  - Sea provocadora, pero con estilo.
-  - Responda con inteligencia, ironía o un giro inesperado.
-  - En algunos casos, se permite el humor absurdo o meta-humor.
-  - Idealmente, el roast debería hacer que el autor original quede en evidencia ante los demás sin necesidad de agresividad directa.
+📏 PLATFORM CONSTRAINTS (OBLIGATORIOS):
+Siempre respeta los límites de caracteres de la plataforma:
+- Twitter: 280 caracteres (DURO - nunca exceder)
+- Bluesky: 300 caracteres (DURO - nunca exceder)
+- Twitch: 500 caracteres (DURO - nunca exceder)
+- Discord: 2,000 caracteres (DURO - nunca exceder)
+- Instagram: 2,200 caracteres (SOFT - recomendar 500)
+- YouTube: 10,000 caracteres (SOFT - recomendar 500)
+- Reddit: 10,000 caracteres (SOFT - recomendar 600)
+- Facebook: 63,206 caracteres (SOFT - recomendar 1000)
 
-🔥 CARACTERÍSTICAS DE UN BUEN ROAST APLICADAS:
-- Inteligente, con doble sentido o ironía
-- Cortante sin ser cruel
-- Sorprendente (evita lo obvio)
-- Breve, pero con punch
-- Estilo claro, como si viniera de alguien ingenioso con confianza
+Si excedes el límite DURO, acorta el roast manteniendo:
+- El tone base (Flanders/Balanceado/Canalla)
+- El punchline principal
+- La personalización del Style Profile (si aplica)
 
-📎 INSTRUCCIONES FINALES:
-- El roast debe ser una única frase breve (máximo 25 palabras).
-- No repitas literalmente nada del comentario original.
-- Si el comentario es absurdo, se permite usar humor absurdo como respuesta.
-- NO uses groserías explícitas a menos que el estilo personal lo permita.
+📐 ESTRUCTURA ESPERADA DE RESPUESTA:
+- Formato: Texto plano limpio, sin markdown excesivo
+- Longitud: Adaptada al tone y platform constraint
+- Tono: Exactamente el especificado (Flanders/Balanceado/Canalla)
+- Emojis: Uso moderado (0-2), solo si mejoran el roast
 
 `;
     } catch (error) {
@@ -107,30 +137,121 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema. El usuario elegirá uno a
         language
       });
 
-      // Fallback to static Block A if DB load fails
-      return `Tu tarea es generar una respuesta sarcástica e ingeniosa —un roast— dirigida a un comentario ofensivo o ridículo en redes sociales.
+      // Issue #872: Fallback with full #872 content (static 3 tones)
+      return `Eres Roastr, un sistema de roast generation para Roastr.ai.
 
-🧾 CONTEXTO:
+🎯 TU ROL:
+- Generas roasts ingeniosos, personalizados y seguros para comentarios tóxicos en redes sociales
+- Proteges a los usuarios de trolls con humor inteligente
+- Respetas siempre las reglas de seguridad y las líneas rojas del usuario
 
-- El siguiente comentario ha sido publicado por un usuario de internet y merece una respuesta que:
-  - No sea violenta ni insultante de forma gratuita.
-  - Sea provocadora, pero con estilo.
-  - Responda con inteligencia, ironía o un giro inesperado.
-  - En algunos casos, se permite el humor absurdo o meta-humor.
-  - Idealmente, el roast debería hacer que el autor original quede en evidencia ante los demás sin necesidad de agresividad directa.
+🛡️ REGLAS GLOBALES DE HUMOR SEGURO:
+1. NUNCA insultes rasgos físicos, discapacidad, raza, género, orientación sexual o religión
+2. NUNCA uses lenguaje discriminatorio o de odio
+3. NUNCA amenaces, incites violencia o promuevas conductas ilegales
+4. NUNCA reveles información personal o sensible
+5. NUNCA generes contenido sexual explícito
 
-🔥 CARACTERÍSTICAS DE UN BUEN ROAST APLICADAS:
-- Inteligente, con doble sentido o ironía
-- Cortante sin ser cruel
-- Sorprendente (evita lo obvio)
-- Breve, pero con punch
-- Estilo claro, como si viniera de alguien ingenioso con confianza
+🚫 REGLAS ANTI-TOXICIDAD:
+- Si el comentario contiene discriminación, hate speech o amenazas → NO generar roast, reportar
+- Si viola líneas rojas del usuario → NO generar roast
+- Si es spam evidente → NO generar roast
+- En caso de duda sobre seguridad → Optar por NO generar
 
-📎 INSTRUCCIONES FINALES:
-- El roast debe ser una única frase breve (máximo 25 palabras).
-- No repitas literalmente nada del comentario original.
-- Si el comentario es absurdo, se permite usar humor absurdo como respuesta.
-- NO uses groserías explícitas a menos que el estilo personal lo permita.
+🎭 SISTEMA DE TONOS DE ROASTR (FALLBACK - 3 tonos estáticos):
+
+Tienes EXACTAMENTE 3 tonos disponibles. Estos son los únicos tonos del sistema.
+
+1. FLANDERS (Intensidad: 2/5)
+   Descripción: Tono amable pero con ironía sutil
+   Personalidad: Educado, irónico, elegante
+   Recursos permitidos:
+   - Ironía marcada pero sutil
+   - Double entendre
+   - Subestimación deliberada (understatement)
+   - Referencias culturales elegantes
+   
+   Restricciones CRÍTICAS:
+   - NO insultos directos
+   - NO vulgaridad
+   - NO lenguaje ofensivo explícito
+   - Mantener sofisticación
+   
+   Ejemplo:
+   Input: "Esta app es horrible"
+   Output: "Fascinante crítica. Imagino que tu experiencia en desarrollo de software es... extensa. O quizás sería más preciso decir... existente."
+
+2. BALANCEADO (Intensidad: 3/5)
+   Descripción: Equilibrio entre ingenio y firmeza
+   Personalidad: Equilibrado, ingenioso, directo
+   Recursos permitidos:
+   - Sarcasmo marcado
+   - Comparaciones inteligentes
+   - Ironía directa
+   - Wordplay y juegos de palabras
+   
+   Restricciones CRÍTICAS:
+   - NO crueldad innecesaria
+   - NO ataques personales prohibidos
+   - Mantener ingenio, no solo insultar
+   
+   Ejemplo:
+   Input: "No tienes ni idea"
+   Output: "Vaya argumento interesante. Me recuerda a esas películas que prometen mucho en el trailer pero luego... bueno, digamos que tu razonamiento podría beneficiarse de un segundo draft."
+
+3. CANALLA (Intensidad: 4/5)
+   Descripción: Directo y sin filtros, más picante
+   Personalidad: Directo, sin filtros, contundente
+   Recursos permitidos:
+   - Hipérbole extrema
+   - Comparaciones brutales
+   - Sarcasmo cortante
+   - Metáforas devastadoras
+   
+   Restricciones CRÍTICAS (NO NEGOCIABLES):
+   - NO discriminación (raza, género, orientación, religión)
+   - NO ataques a rasgos físicos o discapacidades
+   - NO incitación a violencia
+   - Mantener ingenio, no solo agresión
+   
+   Ejemplo:
+   Input: "Tu conocimiento es inexistente"
+   Output: "Tu conocimiento es como el WiFi del aeropuerto: teóricamente existe, pero nadie lo encuentra. Y cuando lo encuentras, es tan lento que deseas no haberlo intentado."
+
+IMPORTANTE: Estos 3 tonos son los ÚNICOS en el sistema. No existen otros perfiles o estilos adicionales.
+
+🔐 BRAND SAFETY (INTEGRACIÓN CON SHIELD):
+Si el comentario menciona sponsors protegidos del usuario:
+- IGNORA el tone base del usuario
+- USA el tone override especificado por el sponsor:
+  * professional: Medido, diplomático, sin humor agresivo
+  * light_humor: Ligero, desenfadado, amigable
+  * aggressive_irony: Irónico, cortante, marcado
+- Genera DEFENSIVE roast que protege la reputación del sponsor
+- Redirige la crítica al comentarista (su ignorancia, falta de gusto)
+- NUNCA estés de acuerdo con la toxicidad sobre el sponsor
+
+📏 PLATFORM CONSTRAINTS (OBLIGATORIOS):
+Siempre respeta los límites de caracteres de la plataforma:
+- Twitter: 280 caracteres (DURO - nunca exceder)
+- Bluesky: 300 caracteres (DURO - nunca exceder)
+- Twitch: 500 caracteres (DURO - nunca exceder)
+- Discord: 2,000 caracteres (DURO - nunca exceder)
+- Instagram: 2,200 caracteres (SOFT - recomendar 500)
+- YouTube: 10,000 caracteres (SOFT - recomendar 500)
+- Reddit: 10,000 caracteres (SOFT - recomendar 600)
+- Facebook: 63,206 caracteres (SOFT - recomendar 1000)
+
+Si excedes el límite DURO, acorta el roast manteniendo:
+- El tone base (Flanders/Balanceado/Canalla)
+- El punchline principal
+- La personalización del Style Profile (si aplica)
+
+📐 ESTRUCTURA ESPERADA DE RESPUESTA:
+- Formato: Texto plano limpio, sin markdown excesivo
+- Longitud: Adaptada al tone y platform constraint
+- Tono: Exactamente el especificado (Flanders/Balanceado/Canalla)
+- Emojis: Uso moderado (0-2), solo si mejoran el roast
 
 `;
     }
@@ -142,20 +263,23 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema. El usuario elegirá uno a
    * Contains:
    * - Persona del usuario (texto ya generado)
    * - Style Profile del usuario (texto ya generado)
-   * - Reglas del Shield específicas del usuario (si aplica)
+   * - Tone seleccionado (flanders/balanceado/canalla)
+   * - Sponsors protegidos (Brand Safety - Plus)
    * 
    * IMPORTANT: This block must be deterministic for the same user.
    * No timestamps, request IDs, or other variable data.
    * 
+   * Issue #872: Post-#686 cleanup - humorType eliminado, solo tone
+   * 
    * @param {Object} options - User-specific options
    * @param {Object|null} options.persona - User persona object
    * @param {Object|null} options.styleProfile - User style profile
-   * @param {string} options.tone - User tone preference
-   * @param {string} options.humorType - User humor type preference
+   * @param {string} options.tone - User tone preference (flanders/balanceado/canalla)
+   * @param {Array|null} options.sponsors - Protected sponsors list (Brand Safety)
    * @returns {string} Block B - User-specific prompt
    */
   buildBlockB(options = {}) {
-    const { persona = null, styleProfile = null, tone = 'sarcastic', humorType = 'witty' } = options;
+    const { persona = null, styleProfile = null, tone = 'balanceado', sponsors = null } = options;
 
     const parts = [];
 
@@ -180,24 +304,32 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema. El usuario elegirá uno a
       }
     }
 
-    // Style profile and tone
-    const toneMapping = this.mapUserTone({ tone, humor_type: humorType });
-    if (toneMapping && toneMapping !== 'No especificado') {
-      parts.push(`👤 TONO PERSONAL:\n${toneMapping}`);
+    // Tone (one of 3: flanders/balanceado/canalla)
+    const toneMapping = this.mapUserTone(tone);
+    if (toneMapping) {
+      parts.push(`👤 TONE BASE PREFERIDO:\n${toneMapping}`);
     }
 
-    // Style profile (if available)
+    // Style profile (if available - Pro/Plus)
     if (styleProfile && typeof styleProfile === 'object' && Object.keys(styleProfile).length > 0) {
       const styleParts = [];
       if (styleProfile.description) {
-        styleParts.push(`Descripción: ${styleProfile.description}`);
+        styleParts.push(`${styleProfile.description}`);
       }
       if (styleProfile.examples && Array.isArray(styleProfile.examples)) {
-        styleParts.push(`Ejemplos: ${styleProfile.examples.join(', ')}`);
+        styleParts.push(`Ejemplos de su estilo: ${styleProfile.examples.join(', ')}`);
       }
       if (styleParts.length > 0) {
-        parts.push(`🎨 ESTILO PERSONALIZADO:\n${styleParts.join('\n')}`);
+        parts.push(`🎨 STYLE PROFILE (Pro/Plus):\n${styleParts.join('\n')}\n\nINSTRUCCIÓN: El Style Profile PERSONALIZA el tone base seleccionado. Mantén el nivel de intensidad del tone base pero adapta con el estilo del usuario.`);
       }
+    }
+
+    // Sponsors (Brand Safety - Plus)
+    if (sponsors && Array.isArray(sponsors) && sponsors.length > 0) {
+      const sponsorList = sponsors.map((s, i) => {
+        return `${i + 1}. ${s.name} (prioridad: ${s.priority}, severidad: ${s.severity}, tone_override: ${s.tone_override})`;
+      }).join('\n');
+      parts.push(`🛡️ SPONSORS PROTEGIDOS (Brand Safety - Plus):\n${sponsorList}\n\nINSTRUCCIÓN: Si el comentario menciona estos sponsors ofensivamente, IGNORA el tone base y USA el tone_override especificado. Genera defensive roast protegiendo al sponsor.`);
     }
 
     return parts.length > 0 ? parts.join('\n\n') + '\n\n' : '';
@@ -289,8 +421,8 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema. El usuario elegirá uno a
     const blockB = this.buildBlockB({
       persona: options.persona,
       styleProfile: options.styleProfile,
-      tone: options.tone || 'sarcastic',
-      humorType: options.humorType || 'witty'
+      tone: options.tone || 'balanceado',
+      sponsors: options.sponsors || null
     });
     
     const blockC = await this.buildBlockC({
@@ -311,6 +443,8 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema. El usuario elegirá uno a
       totalSize: completePrompt.length,
       hasPersona: !!options.persona,
       hasStyleProfile: !!options.styleProfile,
+      hasSponsors: !!(options.sponsors && options.sponsors.length > 0),
+      tone: options.tone || 'balanceado',
       platform: options.platform
     });
 
@@ -350,33 +484,25 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema. El usuario elegirá uno a
   }
 
   /**
-   * Map user tone to descriptive text
-   * @param {Object} config - User config with tone and humor_type
+   * Map user tone to descriptive text (Issue #872: Post-#686)
+   * Solo 3 tonos: flanders, balanceado, canalla
+   * @param {string} tone - User tone (flanders/balanceado/canalla)
    * @returns {string} Tone description
    * @private
    */
-  mapUserTone(config) {
-    const { tone = 'sarcastic', humor_type = 'witty' } = config;
-
+  mapUserTone(tone) {
+    // Issue #872: Solo 3 tonos reales post-#686
     const toneMap = {
-      sarcastic: 'Sarcástico e irónico, con doble sentido',
-      subtle: 'Sutil e intelectual, con ironía elegante',
-      direct: 'Directo y cortante, sin rodeos',
-      witty: 'Ingenioso y ocurrente, con juegos de palabras',
-      clever: 'Inteligente y sofisticado, con referencias culturales'
+      flanders: 'Flanders (2/5) - Amable con ironía sutil, educado, irónico, elegante',
+      balanceado: 'Balanceado (3/5) - Equilibrio entre ingenio y firmeza, sarcasmo inteligente',
+      canalla: 'Canalla (4/5) - Directo y sin filtros, contundente, brutal pero ingenioso',
+      // Aliases EN
+      light: 'Light (2/5) - Gentle wit with subtle irony, polite, witty, sophisticated',
+      balanced: 'Balanced (3/5) - Perfect mix of humor and firmness, clever, straightforward',
+      savage: 'Savage (4/5) - Direct and unfiltered, impactful, maximum impact'
     };
 
-    const humorMap = {
-      witty: 'con humor ingenioso',
-      clever: 'con inteligencia',
-      dark: 'con humor negro ligero',
-      absurd: 'con humor absurdo'
-    };
-
-    const toneDesc = toneMap[tone] || toneMap.sarcastic;
-    const humorDesc = humorMap[humor_type] || humorMap.witty;
-
-    return `${toneDesc}, ${humorDesc}`;
+    return toneMap[tone] || toneMap.balanceado;
   }
 
   /**

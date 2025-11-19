@@ -203,13 +203,13 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
     if (sponsorsError) {
       throw new Error(`Failed to create sponsors: ${sponsorsError.message}`);
     }
-    if (!sponsors || !sponsors.data || sponsors.data.length !== 3) {
-      throw new Error(`Expected 3 sponsors, got ${sponsors?.data?.length || 0}`);
+    if (!Array.isArray(sponsors) || sponsors.length !== 3) {
+      throw new Error(`Expected 3 sponsors, got ${Array.isArray(sponsors) ? sponsors.length : 0}`);
     }
 
-    professionalSponsorId = sponsors.data[0].id;
-    lightHumorSponsorId = sponsors.data[1].id;
-    aggressiveIronySponsorId = sponsors.data[2].id;
+    professionalSponsorId = sponsors[0].id;
+    lightHumorSponsorId = sponsors[1].id;
+    aggressiveIronySponsorId = sponsors[2].id;
   });
 
   afterAll(async () => {
@@ -589,7 +589,9 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
       expect(roastResponse.body.tone).toBe('professional');
       // Note: Latency assertion relaxed for CI stability (variable load/container warm-up)
       // In production, target is <500ms, but E2E tests may vary
-      expect(latency).toBeLessThan(2000); // Relaxed threshold for CI environments
+      // Increased threshold to 3000ms for broader CI compatibility
+      const latencyThreshold = process.env.CI ? 3000 : 500;
+      expect(latency).toBeLessThan(latencyThreshold);
     });
   });
 });

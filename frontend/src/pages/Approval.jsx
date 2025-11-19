@@ -151,8 +151,8 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
             <div className="flex items-center space-x-2">
               <Shield className="h-4 w-4 text-muted-foreground" />
               <label className="text-sm font-medium">Generated Roast</label>
-              <Badge variant="outline">{response.tone}</Badge>
-              {/* Issue #868: Removed humor_type badge */}
+              <Badge variant="outline">Tono: {response.tone || 'balanceado'}</Badge>
+              {/* Issue #872: humor_type removed (deprecated post-#686) */}
             </div>
             <Button
               variant="ghost"
