@@ -278,13 +278,15 @@ class RoastEngine {
         // Get style configuration
         const styleConfig = this.getStyleConfiguration(style, language);
         
-        // Enhanced generation configuration
+        // Enhanced generation configuration with tone compatibility
+        // Issue #872 AC8: Only tone is used now, no legacy fields
+        const tone = this.mapStyleToTone(style);
+
         const generationConfig = {
             userId: options.userId,
             plan: userConfig.plan,
-            tone: this.mapStyleToTone(style),
-            // humor_type removed (Issue #868)
-            // intensity_level removed (Issue #868)
+            tone: tone,
+            // Issue #872 AC8: humor_type & intensity_level completely removed
             language: language,
             preview_mode: false,
             style: style,
@@ -367,18 +369,26 @@ class RoastEngine {
     }
 
     /**
-     * Map style to tone for compatibility with existing generator
+     * Map style to tone identifiers (Issue #872: Post-#686 3-tone system)
+     * Now returns the new tone IDs directly instead of legacy values
      */
     mapStyleToTone(style) {
+        // Issue #872: Map to new 3-tone identifiers (flanders/balanceado/canalla)
         const toneMap = {
-            'flanders': 'subtle',
-            'light': 'subtle',
-            'balanceado': 'sarcastic',
-            'balanced': 'sarcastic',
-            'canalla': 'direct',
-            'savage': 'direct'
+            // ES tones
+            'flanders': 'flanders',
+            'balanceado': 'balanceado',
+            'canalla': 'canalla',
+            // EN aliases
+            'light': 'flanders',
+            'balanced': 'balanceado',
+            'savage': 'canalla',
+            // Legacy compatibility (map old values to new)
+            'subtle': 'flanders',
+            'sarcastic': 'balanceado',
+            'direct': 'canalla'
         };
-        return toneMap[style] || 'sarcastic';
+        return toneMap[style] || 'balanceado';
     }
 
     /**

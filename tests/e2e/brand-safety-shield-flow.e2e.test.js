@@ -56,15 +56,13 @@ jest.mock('openai', () => {
       }
     },
     responses: {
-      create: jest.fn().mockImplementation((params) => {
+      create: jest.fn().mockResolvedValue({
         // Mock Responses API for roast generation (per PR #864)
-        return Promise.resolve({
-          output_text: JSON.stringify({
-            roast: "Let's keep the conversation constructive and respectful.",
-            tone: 'professional',
-            quality_score: 0.85
-          })
-        });
+        output_text: JSON.stringify({
+          roast: "Let's keep the conversation constructive and respectful.",
+          tone: 'professional',
+          quality_score: 0.85
+        })
       })
     }
   }));

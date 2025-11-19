@@ -78,8 +78,8 @@ describe('ApprovalCard', () => {
   const mockResponse = {
     id: 'response-123',
     response_text: 'This is a test roast response',
-    tone: 'sarcastic',
-    // Issue #868: Removed humor_type (deprecated)
+    tone: 'balanceado', // Issue #872: Updated to new 3-tone system
+    // humor_type removed (deprecated post-#686)
     created_at: '2025-01-01T10:00:00Z',
     attempt_number: 1,
     total_attempts: 1,
@@ -128,11 +128,12 @@ describe('ApprovalCard', () => {
       expect(screen.getByText('Attempt 2/3')).toBeInTheDocument();
     });
 
-    test('displays tone and humor type badges', () => {
+    test('displays tone badge', () => {
       render(<ApprovalCard {...mockProps} />);
 
-      expect(screen.getByText('sarcastic')).toBeInTheDocument();
-      expect(screen.getByText('witty')).toBeInTheDocument();
+      // Issue #872: Only tone is displayed, humor_type removed
+      expect(screen.getByText(/Tono:/)).toBeInTheDocument();
+      expect(screen.getByText(/balanceado/)).toBeInTheDocument();
     });
   });
 
