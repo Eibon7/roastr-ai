@@ -47,6 +47,14 @@ jest.mock('@polar-sh/sdk', () => {
 // Mock dependencies
 jest.mock('../../src/config/supabase');
 jest.mock('../../src/utils/logger');
+jest.mock('../../src/services/stripeWrapper', () => {
+    // Mock StripeWrapper to prevent initialization errors
+    return jest.fn().mockImplementation(() => ({
+        prices: {
+            retrieve: jest.fn()
+        }
+    }));
+});
 jest.mock('../../src/config/flags', () => ({
     flags: {
         isEnabled: jest.fn().mockReturnValue(true)
