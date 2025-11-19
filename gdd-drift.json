@@ -82,18 +82,18 @@
       "drift_risk": 5,
       "status": "healthy",
       "factors": [
-        "+15 pts: Coverage 50% (<80%)",
+        "+15 pts: Coverage 46% (<80%)",
         "-10 pts: Recent commit (today)"
       ],
       "recommendations": [
-        "Increase test coverage to 80%+ (declared: 50%, actual: N/A)"
+        "Increase test coverage to 80%+ (declared: 46%, actual: N/A)"
       ],
       "git_activity": {
         "commits_last_30d": 4,
         "last_commit_days_ago": 0
       },
       "health_score": 88,
-      "coverage": 50
+      "coverage": 46
     },
     "persona": {
       "drift_risk": 0,
