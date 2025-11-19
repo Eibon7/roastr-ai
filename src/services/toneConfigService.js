@@ -377,7 +377,12 @@ class ToneConfigService {
       ...tone,
       display_name: tone.display_name[language] || tone.display_name.es || tone.display_name.en,
       description: tone.description[language] || tone.description.es || tone.description.en,
-      examples: tone.examples.map(ex => ex[language] || ex.es || ex.en)
+      examples: Array.isArray(tone.examples)
+        ? tone.examples.map(ex => {
+            if (!ex || typeof ex !== 'object') return ex;
+            return ex[language] || ex.es || ex.en || ex;
+          })
+        : []
     };
   }
 
@@ -435,6 +440,28 @@ class ToneConfigService {
 
     if (toneData.examples && (!Array.isArray(toneData.examples) || toneData.examples.length === 0)) {
       errors.push('examples must be a non-empty array');
+    }
+
+    // Validate examples structure (each must have ES or EN with input/output)
+    if (Array.isArray(toneData.examples)) {
+      toneData.examples.forEach((ex, index) => {
+        if (!ex || typeof ex !== 'object') {
+          errors.push(`examples[${index}] must be an object with ES/EN translations`);
+        } else if (!ex.es && !ex.en) {
+          errors.push(`examples[${index}] must have at least ES or EN translation`);
+        } else {
+          // Validate structure for present languages
+          ['es', 'en'].forEach(lang => {
+            if (ex[lang]) {
+              if (typeof ex[lang] !== 'object') {
+                errors.push(`examples[${index}].${lang} must be an object with input/output`);
+              } else if (!ex[lang].input || !ex[lang].output) {
+                errors.push(`examples[${index}].${lang} must have both input and output fields`);
+              }
+            }
+          });
+        }
+      });
     }
 
     if (errors.length > 0) {

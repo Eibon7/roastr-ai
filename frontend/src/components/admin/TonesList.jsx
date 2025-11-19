@@ -121,7 +121,12 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
               {/* Name */}
               <td className="px-3 py-4 text-sm">
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {tone.display_name?.[language] || tone.display_name?.es || tone.name}
+                  {typeof tone.display_name === 'string'
+                    ? tone.display_name
+                    : tone.display_name?.[language] ||
+                      tone.display_name?.es ||
+                      tone.display_name?.en ||
+                      tone.name}
                 </div>
                 <div className="text-gray-500 dark:text-gray-400 text-xs mt-1">
                   ID: {tone.name}
@@ -136,7 +141,12 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
               {/* Description */}
               <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
                 <div className="truncate">
-                  {tone.description?.[language] || tone.description?.es || '-'}
+                  {typeof tone.description === 'string'
+                    ? tone.description
+                    : tone.description?.[language] ||
+                      tone.description?.es ||
+                      tone.description?.en ||
+                      '-'}
                 </div>
               </td>
 
