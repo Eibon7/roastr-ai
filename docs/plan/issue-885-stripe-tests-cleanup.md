@@ -127,13 +127,14 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 - [x] `tests/unit/services/entitlementsService-polar.test.js` ✅ ADAPTADO (eliminado mock stripeWrapper)
 - [x] `tests/unit/services/planChangeRollback.test.js` ✅ ELIMINADO
 
-### 🔗 Tests de Integración (8 archivos)
+### 🔗 Tests de Integración (9 archivos)
 - [x] `tests/integration/stripeWebhooksFlow.test.js` ✅ ELIMINADO
 - [x] `tests/integration/adminEndpoints.test.js` ✅ ELIMINADO
 - [x] `tests/integration/ajustes-settings.test.js` ✅ ELIMINADO
 - [x] `tests/integration/early-upgrade.integration.test.js` ✅ ADAPTADO (eliminado código Stripe, mantenido Polar)
 - [x] `tests/integration/entitlementsFlow.test.js` ✅ ELIMINADO
 - [x] `tests/integration/plan-change-flow.test.js` ✅ ELIMINADO
+- [x] `tests/integration/polar-flow-e2e.test.js` ✅ ADAPTADO (agregado mock de StripeWrapper)
 - [x] `tests/integration/shop.test.js` ✅ ELIMINADO
 - [x] `tests/integration/spec14-tier-validation.test.js` ✅ ELIMINADO
 
