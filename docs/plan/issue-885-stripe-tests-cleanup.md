@@ -124,7 +124,7 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 - [x] `tests/unit/services/costControl.test.js` ✅ ELIMINADO
 - [x] `tests/unit/services/creditsService.test.js` ✅ ELIMINADO
 - [x] `tests/unit/services/entitlementsService.test.js` ✅ ELIMINADO
-- [x] `tests/unit/services/entitlementsService-polar.test.js` ✅ ADAPTADO (eliminado mock stripeWrapper)
+- [x] `tests/unit/services/entitlementsService-polar.test.js` ✅ ADAPTADO (eliminado código Stripe; mock StripeWrapper retenido)
 - [x] `tests/unit/services/planChangeRollback.test.js` ✅ ELIMINADO
 
 ### 🔗 Tests de Integración (9 archivos)
@@ -219,10 +219,11 @@ npm test
 ### Completado
 
 - ✅ **26 archivos eliminados** - Todos los archivos exclusivos de Stripe fueron eliminados
-- ✅ **2 archivos adaptados** - Archivos mixtos fueron actualizados para eliminar código Stripe
+- ✅ **3 archivos adaptados** - Archivos mixtos fueron actualizados para eliminar código Stripe
 - ✅ **Tests arreglados** - Agregados mocks de StripeWrapper donde era necesario:
-  - `tests/unit/services/entitlementsService-polar.test.js`
-  - `tests/integration/polar-flow-e2e.test.js`
+- `tests/unit/services/entitlementsService-polar.test.js` (mock StripeWrapper retenido)
+- `tests/integration/early-upgrade.integration.test.js` (eliminado código Stripe, mantenido Polar)
+- `tests/integration/polar-flow-e2e.test.js` (mock StripeWrapper agregado)
 - ✅ **0 referencias a Stripe** - Verificado que no quedan archivos de test con referencias exclusivas a Stripe
 - ✅ **Plan actualizado** - Documentación completa del proceso
 

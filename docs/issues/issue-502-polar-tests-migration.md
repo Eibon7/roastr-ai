@@ -3,7 +3,7 @@
 **Prioridad:** P1 (Alta - Requerido para completar migración a Polar)
 **Estimación:** 6-8 horas
 **Estado Actual:** ✅ **COMPLETADO** - Tests de Stripe eliminados en PR #886 (Issue #885)
-**Relacionado:** Issue #502, Issue #885, PR #886, `docs/issues/issue-payment-polar.md`
+**Relacionado:** Issue #502, Issue #885, PR #886
 
 ---
 
