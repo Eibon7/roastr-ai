@@ -13,7 +13,7 @@ const StripeWrapper = require('./stripeWrapper');
 const { logger } = require('../utils/logger');
 const { flags } = require('../config/flags');
 const { PLAN_IDS, TRIAL_DURATION, DEFAULT_CONVERSION_PLAN } = require('../config/trialConfig');
-const { getPlanFromPriceId } = require('../utils/polarHelpers');
+const { getPlanFromProductId, getPlanFromPriceId } = require('../utils/polarHelpers');
 const { Polar } = require('@polar-sh/sdk');
 
 class EntitlementsService {
@@ -844,35 +844,36 @@ class EntitlementsService {
     }
 
     /**
-     * Set user entitlements based on Polar Price ID - Issue #594
+     * Set user entitlements based on Polar Product ID - Issue #594, Updated Issue #808
      * @param {string} userId - User ID
-     * @param {string} polarPriceId - Polar Price ID
+     * @param {string} polarProductId - Polar Product ID (updated from Price ID)
      * @param {Object} options - Additional options
      * @returns {Promise<Object>} Result with success/error info
      */
-    async setEntitlementsFromPolarPrice(userId, polarPriceId, options = {}) {
+    async setEntitlementsFromPolarPrice(userId, polarProductId, options = {}) {
         try {
             if (!this.polarClient) {
                 throw new Error('Polar integration not enabled');
             }
 
-            const planName = getPlanFromPriceId(polarPriceId);
+            // Try new API first, fallback to legacy for backward compatibility
+            const planName = getPlanFromProductId(polarProductId) || getPlanFromPriceId(polarProductId);
             const planLimits = this._getPlanLimitsFromName(planName);
             
             const result = await this._persistEntitlements(userId, {
                 ...planLimits,
-                polar_price_id: polarPriceId,
+                polar_price_id: polarProductId, // Keep column name for backward compatibility
                 metadata: {
-                    updated_from: 'polar_price',
+                    updated_from: 'polar_product',
                     plan_name: planName,
                     updated_at: new Date().toISOString(),
                     ...options.metadata
                 }
             });
 
-            logger.info('Entitlements updated from Polar Price', {
+            logger.info('Entitlements updated from Polar Product', {
                 userId,
-                polarPriceId,
+                polarProductId,
                 planName,
                 analysisLimit: planLimits.analysis_limit_monthly,
                 roastLimit: planLimits.roast_limit_monthly
@@ -881,13 +882,13 @@ class EntitlementsService {
             return {
                 success: true,
                 entitlements: result,
-                source: 'polar_price'
+                source: 'polar_product'
             };
 
         } catch (error) {
-            logger.error('Failed to set entitlements from Polar Price', {
+            logger.error('Failed to set entitlements from Polar Product', {
                 userId,
-                polarPriceId,
+                polarProductId,
                 error: error.message
             });
 

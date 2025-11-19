@@ -130,5 +130,5 @@
       "message": "Coverage data not available for validation"
     }
   ],
-  "status": "healthy"
+  "status": "critical"
 }

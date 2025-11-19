@@ -24,7 +24,7 @@ const crypto = require('crypto');
 const { logger } = require('../utils/logger'); // Issue #483: Use destructured import for test compatibility
 const { sanitizePII } = require('../utils/piiSanitizer');
 const { supabaseServiceClient } = require('../config/supabase');
-const { getPlanFromPriceId } = require('../utils/polarHelpers');
+const { getPlanFromProductId, getPlanFromPriceId } = require('../utils/polarHelpers');
 
 /**
  * Verify Polar webhook signature
@@ -90,18 +90,23 @@ async function handleCheckoutCreated(event) {
  * Updates user plan and creates/updates subscription record in database.
  */
 async function handleOrderCreated(event) {
+  // Polar may send product_price_id or product_id - handle both
   const {
     id: orderId,
     customer_email,
     product_price_id,
+    product_id,
     amount,
     currency
   } = event.data;
 
+  // Use product_id if available, fallback to product_price_id for backward compatibility
+  const productId = product_id || product_price_id;
+
   logger.info('[Polar Webhook] Processing order.created', sanitizePII({
     order_id: orderId,
     customer_email,
-    price_id: product_price_id,
+    product_id: productId,
     amount,
     currency,
   }));
@@ -122,11 +127,12 @@ async function handleOrderCreated(event) {
       return;
     }
 
-    // 2. Map price_id to plan (handles starter→free, plus→creator_plus) - CodeRabbit Review #3493981712
-    const plan = getPlanFromPriceId(product_price_id);
+    // 2. Map product_id to plan (handles starter→free, plus→creator_plus) - Updated Issue #808
+    // Try new API first, fallback to legacy for backward compatibility
+    const plan = productId ? (getPlanFromProductId(productId) || getPlanFromPriceId(productId)) : user.plan;
 
-    logger.info('[Polar Webhook] Mapped plan from price_id', {
-      price_id: product_price_id,
+    logger.info('[Polar Webhook] Mapped plan from product_id', {
+      product_id: productId,
       plan,
       user_id: user.id,
       previous_plan: user.plan
@@ -213,7 +219,9 @@ async function handleSubscriptionCreated(event) {
  * Handle subscription.updated event
  */
 async function handleSubscriptionUpdated(event) {
-  const { id: subscriptionId, customer_email, product_price_id, status } = event.data;
+  // Polar may send product_price_id or product_id - handle both
+  const { id: subscriptionId, customer_email, product_price_id, product_id, status } = event.data;
+  const productId = product_id || product_price_id; // Use product_id if available
 
   logger.info('[Polar Webhook] Processing subscription.updated', sanitizePII({
     subscription_id: subscriptionId,
@@ -234,8 +242,8 @@ async function handleSubscriptionUpdated(event) {
       return;
     }
 
-    // 2. Map new plan if price_id changed
-    const newPlan = product_price_id ? getPlanFromPriceId(product_price_id) : user.plan;
+    // 2. Map new plan if product_id changed - Updated Issue #808
+    const newPlan = productId ? (getPlanFromProductId(productId) || getPlanFromPriceId(productId)) : user.plan;
 
     // 3. Update user plan if changed
     if (newPlan !== user.plan) {

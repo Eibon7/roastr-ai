@@ -1,55 +1,56 @@
 /**
  * Polar Helper Utilities
- * Maps Polar price IDs to internal plan names and provides validation
+ * Maps Polar product IDs to internal plan names and provides validation
  *
  * Related: Issue #728 - Backend webhook business logic
+ * Updated: Issue #808 - Changed from PRICE_ID (Stripe) to PRODUCT_ID (Polar)
  */
 
 const { logger } = require('./logger');
 
-// Price ID to plan mapping
-// NOTE: Must match Polar dashboard price IDs configured in .env
+// Product ID to plan mapping
+// NOTE: Must match Polar dashboard product IDs configured in .env
 // Frontend uses: starter/pro/plus
 // Database uses: starter_trial/starter/pro/plus
-const PRICE_ID_TO_PLAN = {
-  [process.env.POLAR_STARTER_PRICE_ID]: 'starter_trial', // Maps starter → trial (matches DB schema)
-  [process.env.POLAR_PRO_PRICE_ID]: 'pro',            // Direct mapping
-  [process.env.POLAR_PLUS_PRICE_ID]: 'plus',          // Maps plus → plus
+const PRODUCT_ID_TO_PLAN = {
+  [process.env.POLAR_STARTER_PRODUCT_ID]: 'starter_trial', // Maps starter → trial (matches DB schema)
+  [process.env.POLAR_PRO_PRODUCT_ID]: 'pro',            // Direct mapping
+  [process.env.POLAR_PLUS_PRODUCT_ID]: 'plus',          // Maps plus → plus
 };
 
-// Reverse mapping: plan to price ID
-const PLAN_TO_PRICE_ID = Object.fromEntries(
-  Object.entries(PRICE_ID_TO_PLAN).map(([k, v]) => [v, k])
+// Reverse mapping: plan to product ID
+const PLAN_TO_PRODUCT_ID = Object.fromEntries(
+  Object.entries(PRODUCT_ID_TO_PLAN).map(([k, v]) => [v, k])
 );
 
 /**
- * Get plan name from Polar price ID
- * @param {string} priceId - Polar price ID
+ * Get plan name from Polar product ID
+ * @param {string} productId - Polar product ID
  * @returns {string} - Plan name (starter_trial/starter/pro/plus)
- * @throws {Error} - If price ID unknown
+ * @throws {Error} - If product ID unknown
  */
-function getPlanFromPriceId(priceId) {
-  const plan = PRICE_ID_TO_PLAN[priceId];
+function getPlanFromProductId(productId) {
+  const plan = PRODUCT_ID_TO_PLAN[productId];
   if (!plan) {
-    logger.error('[Polar Helpers] Unknown price_id', { priceId });
-    throw new Error(`Unknown price_id: ${priceId}. Please check POLAR_*_PRICE_ID environment variables.`);
+    logger.error('[Polar Helpers] Unknown product_id', { productId });
+    throw new Error(`Unknown product_id: ${productId}. Please check POLAR_*_PRODUCT_ID environment variables.`);
   }
   return plan;
 }
 
 /**
- * Get Polar price ID from plan name
+ * Get Polar product ID from plan name
  * @param {string} plan - Plan name (starter_trial/starter/pro/plus)
- * @returns {string} - Polar price ID
+ * @returns {string} - Polar product ID
  * @throws {Error} - If plan unknown
  */
-function getPriceIdFromPlan(plan) {
-  const priceId = PLAN_TO_PRICE_ID[plan];
-  if (!priceId) {
+function getProductIdFromPlan(plan) {
+  const productId = PLAN_TO_PRODUCT_ID[plan];
+  if (!productId) {
     logger.error('[Polar Helpers] Unknown plan', { plan });
     throw new Error(`Unknown plan: ${plan}`);
   }
-  return priceId;
+  return productId;
 }
 
 /**
@@ -63,17 +64,40 @@ function isValidPlan(plan) {
 }
 
 /**
- * Get all configured price IDs
+ * Get all configured product IDs
  * Useful for validation and debugging
- * @returns {string[]} - Array of configured price IDs
+ * @returns {string[]} - Array of configured product IDs
  */
+function getConfiguredProductIds() {
+  return Object.keys(PRODUCT_ID_TO_PLAN).filter(Boolean);
+}
+
+// Legacy aliases for backward compatibility during migration
+// TODO: Remove after Issue #808 migration is complete
+function getPlanFromPriceId(priceId) {
+  logger.warn('[Polar Helpers] getPlanFromPriceId is deprecated, use getPlanFromProductId', { priceId });
+  return getPlanFromProductId(priceId);
+}
+
+function getPriceIdFromPlan(plan) {
+  logger.warn('[Polar Helpers] getPriceIdFromPlan is deprecated, use getProductIdFromPlan', { plan });
+  return getProductIdFromPlan(plan);
+}
+
 function getConfiguredPriceIds() {
-  return Object.keys(PRICE_ID_TO_PLAN).filter(Boolean);
+  logger.warn('[Polar Helpers] getConfiguredPriceIds is deprecated, use getConfiguredProductIds');
+  return getConfiguredProductIds();
 }
 
 module.exports = {
+  // New API (Polar uses product_id)
+  getPlanFromProductId,
+  getProductIdFromPlan,
+  getConfiguredProductIds,
+  // Legacy API (for backward compatibility)
   getPlanFromPriceId,
   getPriceIdFromPlan,
-  isValidPlan,
   getConfiguredPriceIds,
+  // Common utilities
+  isValidPlan,
 };
