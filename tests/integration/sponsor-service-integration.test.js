@@ -66,12 +66,15 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
     logger.info('Setting up integration tests with real Supabase...');
 
     /**
-     * PRE-REQUISITE: Apply migration database/migrations/027_sponsors.sql
+     * PRE-REQUISITE: Apply migration supabase/migrations/20251119000001_sponsors_brand_safety.sql
      *
      * Options to apply migration:
-     * 1. Supabase Dashboard SQL Editor: Copy/paste 027_sponsors.sql
+     * 1. Supabase Dashboard SQL Editor: Copy/paste 20251119000001_sponsors_brand_safety.sql
      * 2. Supabase CLI: `npx supabase db push` (applies all pending migrations)
-     * 3. Manual: Run SQL from 027_sponsors.sql in your Supabase project
+     * 3. Manual: Run SQL from 20251119000001_sponsors_brand_safety.sql in your Supabase project
+     *
+     * Note: Originally implemented as database/migrations/027_sponsors.sql, now canonicalized
+     * as supabase/migrations/20251119000001_sponsors_brand_safety.sql
      *
      * If you see "DATABASE_ERROR: undefined", the table likely doesn't exist yet.
      */
@@ -474,9 +477,11 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       });
 
       it('should enforce RLS (User B cannot delete User A sponsor)', async () => {
-        await sponsorService.deleteSponsor(sponsorId, userBId);
+        // deleteSponsor returns true even when zero rows affected (idempotent delete)
+        const result = await sponsorService.deleteSponsor(sponsorId, userBId);
+        expect(result).toBe(true); // Current contract: always returns true
 
-        // Verify still exists for User A
+        // Verify still exists for User A (RLS blocked the delete)
         const sponsor = await sponsorService.getSponsor(sponsorId, userAId);
         expect(sponsor).toBeDefined();
         expect(sponsor.name).toBe('To Delete');
@@ -490,6 +495,12 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
 
   describe('Tag Extraction from URL', () => {
     it('should extract tags successfully with mocked OpenAI', async () => {
+      // Mock global.fetch to avoid real HTTP calls (hermetic test)
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        text: jest.fn().mockResolvedValue('<html><title>Nike - Sportswear, Athletics, Sneakers</title></html>')
+      });
+
       const url = 'https://www.nike.com';
 
       const tags = await sponsorService.extractTagsFromURL(url);
@@ -497,6 +508,9 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       expect(tags).toBeDefined();
       expect(Array.isArray(tags)).toBe(true);
       expect(tags).toEqual(['sportswear', 'athletics', 'sneakers', 'apparel', 'shoes']);
+
+      // Cleanup
+      delete global.fetch;
     });
 
     it('should reject invalid URLs', async () => {
@@ -520,16 +534,14 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
     });
 
     it('should handle fetch timeout (mocked)', async () => {
-      // Mock global fetch to simulate timeout
-      global.fetch = jest.fn().mockImplementation(() => {
-        return new Promise((resolve, reject) => {
-          setTimeout(() => reject(new Error('AbortError')), 100);
-        });
-      });
+      // Mock AbortError with correct name property to exercise FETCH_TIMEOUT path
+      const abortError = new Error('aborted');
+      abortError.name = 'AbortError';
+      global.fetch = jest.fn().mockRejectedValue(abortError);
 
       await expect(
         sponsorService.extractTagsFromURL('https://slow-site.com')
-      ).rejects.toThrow();
+      ).rejects.toThrow('FETCH_TIMEOUT');
 
       // Restore fetch
       delete global.fetch;

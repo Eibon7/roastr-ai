@@ -61,6 +61,8 @@ Time:        11.927 s
 
 **Status:** Ready to execute (require Shield + OpenAI configuration)
 
+**Note:** These E2E test suites are authored and syntactically correct, but are not currently wired into regular CI. Current CI status/metrics only reflect integration tests (38/38 passing). E2E tests will be validated post-merge in staging environment.
+
 ---
 
 ## Bug Fixes Applied
@@ -81,8 +83,8 @@ Time:        11.927 s
 
 ## Migration Applied
 
-**File:** `database/migrations/027_sponsors.sql`  
-**Copied To:** `supabase/migrations/20251119000001_sponsors_brand_safety.sql`  
+**File:** `supabase/migrations/20251119000001_sponsors_brand_safety.sql`  
+**Note:** Originally implemented as `database/migrations/027_sponsors.sql`, now canonicalized as `supabase/migrations/20251119000001_sponsors_brand_safety.sql`  
 **Status:** ✅ Applied successfully to remote database
 
 **Command Used:**

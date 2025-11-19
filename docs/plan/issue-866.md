@@ -56,7 +56,7 @@
 
 ### 1. Integration Tests for SponsorService (Priority: P0)
 
-**File:** `tests/integration/sponsor-integration.test.js`
+**File:** `tests/integration/sponsor-service-integration.test.js`
 
 **Test Cases:**
 
@@ -118,7 +118,7 @@
 
 ### 2. API Route Tests (Priority: P1)
 
-**File:** `tests/integration/sponsors-api.test.js`
+**File:** `tests/integration/routes/sponsors.test.js`
 
 **Test Cases:**
 
@@ -163,7 +163,9 @@
 
 ### 3. E2E Flow Tests (Priority: P1)
 
-**File:** `tests/e2e/brand-safety-e2e.test.js`
+**Files:** 
+- `tests/e2e/brand-safety-shield-flow.e2e.test.js` (Shield Flow)
+- `tests/e2e/brand-safety-defensive-roast.e2e.test.js` (Defensive Roast)
 
 **Test Cases:**
 
@@ -236,10 +238,11 @@ const { SponsorService } = require('../../src/services/sponsorService');
 
 ## 📂 Archivos Afectados
 
-### Nuevos Archivos (3 archivos)
-- `tests/integration/sponsor-integration.test.js` - SponsorService CRUD + tag extraction
-- `tests/integration/sponsors-api.test.js` - API routes + auth + plan gating
-- `tests/e2e/brand-safety-e2e.test.js` - Full-flow tests (shield + roast)
+### Nuevos Archivos (4 archivos)
+- `tests/integration/sponsor-service-integration.test.js` - SponsorService CRUD + tag extraction
+- `tests/integration/routes/sponsors.test.js` - API routes + auth + plan gating (existed, fixed)
+- `tests/e2e/brand-safety-shield-flow.e2e.test.js` - Shield Flow E2E tests
+- `tests/e2e/brand-safety-defensive-roast.e2e.test.js` - Defensive Roast E2E tests
 
 ### Archivos a Modificar (Referencias)
 - `src/services/sponsorService.js` - Review for integration test coverage

@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-11-18T23:08:48.203Z
+**Generated:** 2025-11-19T11:31:33.322Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 91.6/100
+**Average Score:** 89.1/100
 
 ---
 
@@ -21,19 +21,19 @@
 |------|-------|--------|--------------|----------|--------------|--------|
 | guardian | 🟡 78 | degraded | 2025-10-23 | 0% | 0 | 0 |
 | trainer | 🟢 80 | healthy | 2025-10-29 | 0% | 0 | 0 |
+| queue-system | 🟢 82 | healthy | 2025-10-28 | 68% | 0 | 0 |
 | analytics | 🟢 84 | healthy | 2025-10-29 | 59% | 0 | 0 |
 | social-platforms | 🟢 84 | healthy | 2025-11-11 | 0% | 0 | 0 |
 | platform-constraints | 🟢 88 | healthy | 2025-11-11 | 50% | 0 | 0 |
-| queue-system | 🟢 88 | healthy | 2025-10-28 | 68% | 0 | 0 |
-| plan-features | 🟢 94 | healthy | 2025-11-18 | 65% | 0 | 0 |
-| roast | 🟢 94 | healthy | 2025-11-17 | 60% | 0 | 0 |
-| persona | 🟢 96 | healthy | 2025-11-06 | 90% | 0 | 0 |
+| roast | 🟢 88 | healthy | 2025-11-17 | 60% | 0 | 0 |
+| plan-features | 🟢 89 | healthy | 2025-11-18 | 65% | 0 | 0 |
+| persona | 🟢 91 | healthy | 2025-11-06 | 90% | 0 | 0 |
+| cost-control | 🟢 93 | healthy | 2025-11-11 | 95.1% | 0 | 0 |
+| observability | 🟢 93 | healthy | 2025-11-11 | 100% | 0 | 0 |
+| shield | 🟢 94 | healthy | 2025-11-17 | 86% | 0 | 0 |
 | tone | 🟢 96 | healthy | 2025-11-04 | 100% | 0 | 0 |
 | billing | 🟢 98 | healthy | 2025-11-11 | 97.63% | 0 | 0 |
-| cost-control | 🟢 98 | healthy | 2025-11-11 | 95.1% | 0 | 0 |
 | multi-tenant | 🟢 98 | healthy | 2025-11-11 | 94.25% | 0 | 0 |
-| observability | 🟢 98 | healthy | 2025-11-11 | 100% | 0 | 0 |
-| shield | 🟢 100 | healthy | 2025-11-17 | 86% | 0 | 0 |
 
 ---
 
@@ -45,7 +45,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 48/100
+- Update Freshness: 46/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
@@ -58,11 +58,24 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 60/100
+- Update Freshness: 58/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
+
+
+### queue-system (Score: 82)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 56/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 70/100
+- Agent Relevance: 100/100
+- Integrity Score: 50/100
 
 
 ### analytics (Score: 84)
@@ -71,7 +84,7 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 60/100
+- Update Freshness: 58/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
 - Agent Relevance: 100/100
@@ -84,22 +97,9 @@
 
 **Score Breakdown:**
 - Sync Accuracy: 100/100
-- Update Freshness: 86/100
+- Update Freshness: 84/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
-- Agent Relevance: 100/100
-- Integrity Score: 100/100
-
-
-### platform-constraints (Score: 88)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 86/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 50/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 

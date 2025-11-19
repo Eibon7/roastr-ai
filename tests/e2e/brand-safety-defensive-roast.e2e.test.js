@@ -24,7 +24,7 @@ const app = require('../../src/index');
 const { createTestTenants, cleanupTestData, serviceClient } = require('../helpers/tenantTestUtils');
 const jwt = require('jsonwebtoken');
 
-// Mock OpenAI with tone-aware responses
+// Mock OpenAI with tone-aware responses (supports both chat.completions and responses API)
 jest.mock('openai', () => {
   return jest.fn().mockImplementation(() => ({
     chat: {
@@ -63,6 +63,36 @@ jest.mock('openai', () => {
           });
         })
       }
+    },
+    responses: {
+      create: jest.fn().mockImplementation((params) => {
+        // Mock Responses API for roast generation (per PR #864)
+        const prompt = params.input || '';
+        let roastContent;
+        let tone = 'normal';
+
+        if (prompt.includes('professional') || prompt.includes('measured')) {
+          roastContent = "Let's keep this discussion constructive and focused on quality.";
+          tone = 'professional';
+        } else if (prompt.includes('light_humor') || prompt.includes('lighthearted')) {
+          roastContent = "Hey, everyone's entitled to their opinion... even the wildly incorrect ones! 😄";
+          tone = 'light_humor';
+        } else if (prompt.includes('aggressive_irony') || prompt.includes('direct sarcasm')) {
+          roastContent = "Oh wow, what an incredibly original take! Never heard THAT one before. 🙄";
+          tone = 'aggressive_irony';
+        } else {
+          roastContent = "Interesting perspective, though I might respectfully disagree.";
+          tone = 'normal';
+        }
+
+        return Promise.resolve({
+          output_text: JSON.stringify({
+            roast: roastContent,
+            tone: tone,
+            quality_score: 0.85
+          })
+        });
+      })
     }
   }));
 });
@@ -93,7 +123,8 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
 
   beforeAll(async () => {
     /**
-     * PRE-REQUISITE: Apply migration database/migrations/027_sponsors.sql
+     * PRE-REQUISITE: Apply migration supabase/migrations/20251119000001_sponsors_brand_safety.sql
+     * (originally implemented as database/migrations/027_sponsors.sql, now canonicalized)
      */
 
     testTenants = await createTestTenants();
@@ -357,16 +388,16 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
   });
 
   describe('Edge Cases: Tone Override', () => {
-    it('should fallback to user default tone if sponsor tone is invalid', async () => {
-      // Create sponsor with invalid tone (simulate data corruption)
-      const { data: invalidToneSponsor } = await serviceClient
+    it('should use normal tone when sponsor tone is normal', async () => {
+      // Test that normal tone (no override) works correctly
+      const { data: normalToneSponsor } = await serviceClient
         .from('sponsors')
         .insert({
           user_id: plusUserId,
-          name: 'Invalid Tone Sponsor',
+          name: 'Normal Tone Sponsor',
           tags: ['test'],
           severity: 'medium',
-          tone: 'normal', // Valid, but we'll test fallback
+          tone: 'normal', // Valid tone value
           priority: 4,
           actions: ['def_roast'],
           active: true
@@ -376,10 +407,10 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
 
       const comment = {
         platform: 'twitter',
-        platform_comment_id: `tw_fallback_${Date.now()}`,
-        author_id: 'fallback_user',
-        author_username: 'FallbackUser',
-        content: 'Invalid Tone Sponsor is terrible.',
+        platform_comment_id: `tw_normal_tone_${Date.now()}`,
+        author_id: 'normal_tone_user',
+        author_username: 'NormalToneUser',
+        content: 'Normal Tone Sponsor is mentioned.',
         post_id: `post_${Date.now()}`,
         organization_id: testTenants.tenantA.id
       };
@@ -400,7 +431,7 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
         });
 
       expect(roastResponse.status).toBe(200);
-      expect(roastResponse.body.tone).toBe('normal'); // Fallback to normal
+      expect(roastResponse.body.tone).toBe('normal'); // Normal tone when sponsor tone is normal
     });
 
     it('should respect tone override even for low severity sponsors', async () => {
@@ -441,9 +472,11 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
       });
     });
 
-    it('should cache tone override for subsequent roasts of same sponsor', async () => {
+    it('should apply tone override consistently for same sponsor across multiple roasts', async () => {
       /**
        * Test that tone override is consistently applied across multiple comments
+       * Note: This validates consistency, not actual caching behavior (cache verification
+       * would require metrics/mocks on OpenAI client or cache layer)
        */
 
       const comment1 = {

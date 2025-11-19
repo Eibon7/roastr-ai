@@ -59,8 +59,8 @@ CREATE TRIGGER update_sponsors_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Grant permissions
-GRANT ALL ON sponsors TO authenticated;
+-- Grant permissions (least privilege: only CRUD operations)
+GRANT SELECT, INSERT, UPDATE, DELETE ON sponsors TO authenticated;
 
 COMMENT ON TABLE sponsors IS 'Brand Safety configuration for Plan Plus users (Issue #859)';
 COMMENT ON COLUMN sponsors.severity IS 'Protection level: low, medium, high, zero_tolerance';

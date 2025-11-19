@@ -43,13 +43,8 @@ jest.mock('openai', () => {
     chat: {
       completions: {
         create: jest.fn().mockImplementation((params) => {
-          // Mock different responses based on request
-          if (params.messages && params.messages[0].content.includes('Extract tags')) {
-            return Promise.resolve({
-              choices: [{ message: { content: 'sportswear, athletics, sneakers' } }]
-            });
-          }
           // Mock roast generation (defensive tone)
+          // Note: Tag extraction not used in this E2E suite (sponsors seeded with tags)
           return Promise.resolve({
             choices: [{
               message: {
@@ -63,6 +58,18 @@ jest.mock('openai', () => {
           });
         })
       }
+    },
+    responses: {
+      create: jest.fn().mockImplementation((params) => {
+        // Mock Responses API for roast generation (per PR #864)
+        return Promise.resolve({
+          output_text: JSON.stringify({
+            roast: "Let's keep the conversation constructive and respectful.",
+            tone: 'professional',
+            quality_score: 0.85
+          })
+        });
+      })
     }
   }));
 });
@@ -92,7 +99,7 @@ describe('E2E: Brand Safety - Full Shield Flow', () => {
 
   beforeAll(async () => {
     /**
-     * PRE-REQUISITE: Apply migration database/migrations/027_sponsors.sql
+     * PRE-REQUISITE: Apply migration supabase/migrations/20251119000001_sponsors_brand_safety.sql
      * (see tests/integration/sponsor-service-integration.test.js for instructions)
      */
 
@@ -139,12 +146,6 @@ describe('E2E: Brand Safety - Full Shield Flow', () => {
       .single();
 
     sponsorId = sponsor.id;
-
-    console.log('✅ E2E Test Setup Complete:', {
-      plusUserId,
-      sponsorId,
-      plan: 'plus'
-    });
   });
 
   afterAll(async () => {
@@ -250,12 +251,6 @@ describe('E2E: Brand Safety - Full Shield Flow', () => {
         sponsor_id: sponsorId,
         actions_taken: expect.arrayContaining(['hide_comment', 'def_roast']),
         tone_override: 'professional'
-      });
-
-      console.log('✅ E2E Flow Complete:', {
-        comment_hidden: hiddenComment.hidden,
-        roast_tone: response.tone,
-        actions_taken: shieldResponse.body.actions_taken
       });
     });
 

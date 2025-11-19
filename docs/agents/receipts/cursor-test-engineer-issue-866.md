@@ -172,14 +172,16 @@ Created comprehensive integration and E2E tests for the Brand Safety (Sponsors) 
 ## Pre-Requisites & Setup
 
 ### Database Migration Required
-**File:** `database/migrations/027_sponsors.sql`
+**File:** `supabase/migrations/20251119000001_sponsors_brand_safety.sql`
 
 **Status:** ⚠️ Migration must be applied before running integration/E2E tests
 
+**Note:** Originally implemented as `database/migrations/027_sponsors.sql`, now canonicalized as `supabase/migrations/20251119000001_sponsors_brand_safety.sql`
+
 **How to Apply:**
-1. Supabase Dashboard SQL Editor: Copy/paste `027_sponsors.sql`
-2. Supabase CLI: `npx supabase db push`
-3. Manual: Run SQL in Supabase project
+1. Supabase Dashboard SQL Editor: Copy/paste `20251119000001_sponsors_brand_safety.sql`
+2. Supabase CLI: `npx supabase db push` (applies all pending migrations)
+3. Manual: Run SQL from `20251119000001_sponsors_brand_safety.sql` in your Supabase project
 
 **Why:** Integration tests require the `sponsors` table to exist with RLS policies
 
@@ -201,7 +203,7 @@ Created comprehensive integration and E2E tests for the Brand Safety (Sponsors) 
 
 ### Integration Tests (New)
 **File:** `tests/integration/sponsor-service-integration.test.js`  
-**Status:** ⚠️ Requires migration `027_sponsors.sql`  
+**Status:** ⚠️ Requires migration `supabase/migrations/20251119000001_sponsors_brand_safety.sql`  
 **Expected Coverage:** 38 tests covering CRUD + RLS + tag extraction + detection
 
 ### E2E Tests (New)
@@ -209,7 +211,7 @@ Created comprehensive integration and E2E tests for the Brand Safety (Sponsors) 
 - `tests/e2e/brand-safety-shield-flow.e2e.test.js`
 - `tests/e2e/brand-safety-defensive-roast.e2e.test.js`
 
-**Status:** ⚠️ Requires migration `027_sponsors.sql`  
+**Status:** ⚠️ Requires migration `supabase/migrations/20251119000001_sponsors_brand_safety.sql`  
 **Expected Coverage:** 13 E2E tests covering Shield + tone override
 
 ---
@@ -295,7 +297,7 @@ Created comprehensive integration and E2E tests for the Brand Safety (Sponsors) 
 ## Next Steps & Recommendations
 
 ### Immediate (Blocking)
-1. **Apply Migration:** Run `database/migrations/027_sponsors.sql` in Supabase
+1. **Apply Migration:** Run `supabase/migrations/20251119000001_sponsors_brand_safety.sql` in Supabase
 2. **Execute Tests:** Run all sponsor tests and verify 100% pass rate
 3. **Verify Coverage:** Confirm >=80% coverage (target: 90%+)
 
@@ -367,12 +369,12 @@ Created comprehensive integration and E2E tests for the Brand Safety (Sponsors) 
 - ✅ Middleware import path fixed
 - ✅ Mock structure aligned with actual exports
 - ✅ RLS test patterns established
-- ✅ Migration `027_sponsors.sql` applied successfully
+- ✅ Migration `20251119000001_sponsors_brand_safety.sql` applied successfully
 - ✅ Bug fix: `active` field not respected in SponsorService
 - ✅ All 38 integration tests passing
 
 **Test Execution:**
-```
+```text
 Test Suites: 1 passed, 1 total
 Tests:       38 passed, 38 total
 Time:        11.927 s
