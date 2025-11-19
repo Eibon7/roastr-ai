@@ -91,17 +91,17 @@ Tu trabajo es evaluar si este roast cumple con las reglas de las plataformas y e
 REGLAS A VERIFICAR:
 1. ✅ Cumple políticas de plataformas (sin odio, discriminación, acoso directo, violencia)
 2. ✅ No contiene insultos excesivamente fuertes o vulgares  
-3. ✅ Nivel de intensidad apropiado para: ${userConfig.intensity_level}/5
+3. ✅ Tono apropiado según configuración del usuario (Issue #868: Solo tone, sin intensity)
 4. ✅ No contiene contenido sexual explícito
 5. ✅ No usa términos que activen filtros automáticos
 
 COMENTARIO ORIGINAL: "${originalComment}"
 ROAST A EVALUAR: "${roastText}"
 
-NIVEL DE INTENSIDAD DEL USUARIO: ${userConfig.intensity_level}/5
-- 1-2: Muy suave, humor ligero
-- 3: Moderado, sarcasmo típico  
-- 4-5: Más picante pero dentro de límites
+TONO DEL USUARIO: ${userConfig.tone || 'balanceado'} (Flanders/Balanceado/Canalla)
+- Flanders: Amable pero irónico
+- Balanceado: Equilibrio entre ingenio y firmeza
+- Canalla: Directo y sin filtros
 
 INSTRUCCIONES:
 - Responde ÚNICAMENTE con "PASS" o "FAIL"
@@ -165,7 +165,7 @@ ESTÁNDARES:
 - El roast debe provocar al menos una sonrisa
 - No debe ser aburrido o demasiado genérico
 - Debe tener algo de ingenio o creatividad
-- Para nivel ${userConfig.intensity_level}/5, ajusta expectativas
+- Ajusta expectativas según el tono: ${userConfig.tone || 'balanceado'} (Issue #868)
 
 INSTRUCCIONES:
 - Responde ÚNICAMENTE con "PASS" o "FAIL"
@@ -213,7 +213,7 @@ RESPUESTA:`;
   async runStyleReviewer(originalComment, roastText, userConfig) {
     let styleInstructions = `Evalúa si el roast sigue el estilo y tono esperado.
 
-NIVEL DE INTENSIDAD: ${userConfig.intensity_level}/5`;
+TONO: ${userConfig.tone || 'balanceado'} (Flanders/Balanceado/Canalla) - Issue #868`;
 
     // Add custom style prompt if configured by admin and feature flag is enabled
     if (flags.isEnabled('ENABLE_CUSTOM_PROMPT') && userConfig.custom_style_prompt) {
@@ -235,9 +235,8 @@ ROAST A EVALUAR: "${roastText}"
 
 CRITERIOS DE EVALUACIÓN:
 ✅ ¿Sigue el estilo configurado?
-✅ ¿El tono es el apropiado?
-✅ ¿La intensidad coincide con ${userConfig.intensity_level}/5?
-✅ ¿Es consistente con las preferencias del usuario?
+✅ ¿El tono es el apropiado según ${userConfig.tone || 'balanceado'}?
+✅ ¿Es consistente con las preferencias del usuario? (Issue #868)
 
 INSTRUCCIONES:
 - Responde ÚNICAMENTE con "PASS" o "FAIL"

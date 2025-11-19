@@ -1,5 +1,37 @@
 # Auto-Repair Changelog
 
+## 2025-11-18T23:08:47.755Z
+
+**Repair ID:** 2025-11-18T23:08:47Z
+**Triggered by:** CI/CD
+**Nodes affected:** platform-constraints
+
+**Fixes applied:**
+- Added coverage source to platform-constraints
+
+**Outcome:**
+- Health score: 88.5 → 91.6
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-11-18T23-08-47-560Z`
+
+---
+
+## 2025-11-18T18:36:41.183Z
+
+**Repair ID:** 2025-11-18T18:36:41Z
+**Triggered by:** CI/CD
+**Nodes affected:** platform-constraints
+
+**Fixes applied:**
+- Added coverage to platform-constraints
+
+**Outcome:**
+- Health score: 90.8 → 91.5
+- Issues created: 0 (human review)
+- Backup: `/tmp/gdd-auto-repair-backups/2025-11-18T18-36-40-960Z`
+
+---
+
 ## 2025-11-11T17:12:37.116Z
 
 **Repair ID:** 2025-11-11T17:12:37Z

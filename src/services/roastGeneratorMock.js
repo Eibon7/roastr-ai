@@ -53,10 +53,9 @@ class RoastGeneratorMock {
             5: { prefix: "Buckle up buttercup, ", suffix: " Mic drop." }
         };
 
+        // Issue #868: humorTypeModifiers removed (humor_type eliminated)
         this.humorTypeModifiers = {
-            witty: " *adjusts imaginary glasses*",
-            clever: " *chef's kiss to the irony*",
-            sarcastic: " *slow clap*",
+            // Deprecated - will be removed
             playful: " *giggles*",
             observational: " *takes notes for comedy special*"
         };
@@ -72,8 +71,7 @@ class RoastGeneratorMock {
         await this.simulateDelay();
 
         const selectedTone = this.validateTone(tone);
-        const intensity = config.intensity_level || 3;
-        const humorType = config.humor_type || 'witty';
+        // Issue #868: intensity_level removed (redundante con tone)
 
         // Get base roast template
         const templates = this.roastTemplates[selectedTone];
@@ -83,13 +81,9 @@ class RoastGeneratorMock {
         const sanitizedText = this.sanitizeText(text);
         let roast = template.replace('{text}', `"${sanitizedText}"`);
 
-        // Apply intensity modifiers
-        const modifier = this.intensityModifiers[intensity] || this.intensityModifiers[3];
-        roast = modifier.prefix + roast + modifier.suffix;
+        // Issue #868: intensity modifiers removed (redundante con tone)
 
-        // Add humor type modifier
-        const humorModifier = this.humorTypeModifiers[humorType] || '';
-        roast += humorModifier;
+        // Issue #868: humor type modifier removed
 
         // Add some randomness based on toxicity score
         if (toxicityScore > 0.5) {
@@ -98,8 +92,8 @@ class RoastGeneratorMock {
 
         logger.info('Mock roast generated', {
             tone: selectedTone,
-            intensity,
-            humorType,
+            // intensity removed (Issue #868)
+            // humorType removed (Issue #868)
             toxicityScore,
             textLength: text.length,
             roastLength: roast.length
@@ -109,8 +103,8 @@ class RoastGeneratorMock {
             roast,
             metadata: {
                 tone: selectedTone,
-                intensity,
-                humorType,
+                // intensity removed (Issue #868)
+                // humorType removed (Issue #868)
                 toxicityScore,
                 mock: true,
                 generatedAt: new Date().toISOString()

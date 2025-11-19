@@ -108,12 +108,12 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
         }
 
         // Free plan doesn't require Stripe
-        if (plan === PLAN_IDS.FREE) {
+        if (plan === PLAN_IDS.STARTER_TRIAL) {
             return res.json({
                 success: true,
                 data: {
                     message: 'Free plan activated',
-                    plan: PLAN_IDS.FREE
+                    plan: PLAN_IDS.STARTER_TRIAL
                 }
             });
         }
@@ -167,7 +167,7 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
                 .upsert({
                     user_id: userId,
                     stripe_customer_id: customer.id,
-                    plan: PLAN_IDS.FREE, // Keep as free until checkout completes
+                    plan: PLAN_IDS.STARTER_TRIAL, // Keep as free until checkout completes
                     status: 'active'
                 });
         }
@@ -357,14 +357,14 @@ router.get('/subscription', authenticateToken, async (req, res) => {
         }
 
         // Get plan configuration
-        const planConfig = PLAN_CONFIG[subscription?.plan || PLAN_IDS.FREE];
+        const planConfig = PLAN_CONFIG[subscription?.plan || PLAN_IDS.STARTER_TRIAL];
 
         res.json({
             success: true,
             data: {
                 subscription: subscription || {
                     user_id: userId,
-                    plan: PLAN_IDS.FREE,
+                    plan: PLAN_IDS.STARTER_TRIAL,
                     status: 'active',
                     stripe_customer_id: null,
                     stripe_subscription_id: null

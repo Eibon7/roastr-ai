@@ -52,22 +52,14 @@ const VALIDATION_CONSTANTS = Object.freeze({
         'bluesky'
     ]),
     
-    // Legacy roast validation (for backward compatibility)
-    VALID_TONES: Object.freeze(['sarcastic', 'witty', 'clever', 'playful', 'savage']),
-    VALID_HUMOR_TYPES: Object.freeze(['witty', 'clever', 'sarcastic', 'playful', 'observational']),
+    // Issue #868: Removed legacy VALID_TONES and VALID_HUMOR_TYPES
+    // Use VALID_STYLES (flanders, balanceado, canalla) as único selector
     
-    // Intensity range
-    MIN_INTENSITY: 1,
-    MAX_INTENSITY: 5,
-    
-    // Default values
+    // Default values (Issue #868: Removed INTENSITY and HUMOR_TYPE)
     DEFAULTS: Object.freeze({
         STYLE: 'balanceado',
         LANGUAGE: 'es',
-        PLATFORM: 'twitter',
-        TONE: 'sarcastic',
-        INTENSITY: 3,
-        HUMOR_TYPE: 'witty'
+        PLATFORM: 'twitter'
     })
 });
 

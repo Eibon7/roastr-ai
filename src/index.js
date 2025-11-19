@@ -74,7 +74,7 @@ const personaRoutes = require('./routes/persona');
 const checkoutRoutes = require('./routes/checkout');
 const polarWebhookRoutes = require('./routes/polarWebhook');
 const creditsRoutes = require('./routes/credits'); // QW9: Add credits router
-const sponsorsRoutes = require('./routes/sponsors'); // Issue #859: Brand Safety for Sponsors (Plan Plus)
+const sponsorsRoutes = require('./routes/sponsors')(); // Issue #859: Brand Safety for Sponsors (Plan Plus) - Factory function
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -683,7 +683,7 @@ app.get('/api/integrations/config', authenticateToken, async (req, res) => {
         publicConfig.platforms[platform] = {
           enabled: config[platform].enabled,
           tone: config[platform].tone,
-          humorType: config[platform].humorType,
+          // humorType removed (Issue #868)
           responseFrequency: config[platform].responseFrequency,
           triggerWords: config[platform].triggerWords,
           shieldActions: config[platform].shieldActions
@@ -702,14 +702,14 @@ app.get('/api/integrations/config', authenticateToken, async (req, res) => {
 app.post('/api/integrations/config/:platform', authenticateToken, async (req, res) => {
   try {
     const { platform } = req.params;
-    const { tone, humorType, responseFrequency, triggerWords, shieldActions } = req.body;
+    const { tone, responseFrequency, triggerWords, shieldActions } = req.body; // humorType removed (Issue #868)
 
     // Update configuration in memory for immediate effect
     // Database persistence would be implemented with proper configuration service
     logger.info('Platform configuration update requested', {
       platform,
       userId: req.user?.id,
-      configKeys: Object.keys({ tone, humorType, responseFrequency, triggerWords, shieldActions }).filter(key => req.body[key] !== undefined)
+      configKeys: Object.keys({ tone, responseFrequency, triggerWords, shieldActions }).filter(key => req.body[key] !== undefined)
     });
     
     res.json({ 
@@ -718,7 +718,7 @@ app.post('/api/integrations/config/:platform', authenticateToken, async (req, re
       platform,
       config: {
         tone,
-        humorType,
+        // humorType removed (Issue #868)
         responseFrequency,
         triggerWords,
         shieldActions

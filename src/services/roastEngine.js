@@ -283,8 +283,8 @@ class RoastEngine {
             userId: options.userId,
             plan: userConfig.plan,
             tone: this.mapStyleToTone(style),
-            humor_type: styleConfig.characteristics.split(', ')[1] || 'witty',
-            intensity_level: styleConfig.intensity,
+            // humor_type removed (Issue #868)
+            // intensity_level removed (Issue #868)
             language: language,
             preview_mode: false,
             style: style,

@@ -58,16 +58,18 @@ describe('RoastPromptTemplate', () => {
   });
 
   describe('mapUserTone', () => {
-    test('should map basic tones correctly', () => {
-      const config = { tone: 'sarcastic', humor_type: 'witty' };
+    test('should map basic tones correctly without humor_type (Issue #868)', () => {
+      // Issue #868: Eliminado humor_type, solo tone define personalidad
+      const config = { tone: 'sarcastic' };
       const tone = promptTemplate.mapUserTone(config);
-      expect(tone).toBe('sarcástico y cortante con humor ágil');
+      expect(tone).toBe('sarcástico y cortante');
     });
 
-    test('should include intensity levels', () => {
-      const config = { tone: 'ironic', intensity_level: 1 };
+    test('should use balanceado as default tone (Issue #868)', () => {
+      // Issue #868: Eliminado intensity_level, tone es único selector
+      const config = { tone: 'balanceado' };
       const tone = promptTemplate.mapUserTone(config);
-      expect(tone).toContain('suave y amigable');
+      expect(tone).toBe('equilibrio entre ingenio y firmeza');
     });
 
     test('should include custom style prompts', () => {

@@ -1316,7 +1316,7 @@ class AuthService {
             // Map old plan names to new plan IDs if needed
             const planMap = {
                 'basic': 'starter_trial',
-                'free': 'starter_trial', // Legacy free plan → trial
+                'free': 'starter_trial', // Issue #868: Legacy free plan → starter trial
                 'starter': 'starter',
                 'pro': 'pro',
                 'creator_plus': 'plus', // Legacy mapping

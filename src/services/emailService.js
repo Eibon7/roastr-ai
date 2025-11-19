@@ -238,7 +238,7 @@ class EmailService {
             templateName: 'upgrade_success',
             templateData: {
                 userName: subscriptionData.userName || 'User',
-                oldPlanName: subscriptionData.oldPlanName || 'Free',
+                oldPlanName: subscriptionData.oldPlanName || 'Starter Trial',
                 newPlanName: subscriptionData.newPlanName || 'Pro',
                 newFeatures: subscriptionData.newFeatures || [],
                 activationDate: subscriptionData.activationDate,
@@ -318,7 +318,7 @@ class EmailService {
      * @returns {Promise<Object>} Send result
      */
     async sendPlanChangeNotification(userEmail, changeData) {
-        const isUpgrade = changeData.newPlanName !== 'Free' && 
+        const isUpgrade = changeData.newPlanName !== 'Starter Trial' && 
                          ['Pro', 'Creator+'].includes(changeData.newPlanName);
         
         return await this.sendEmail({
@@ -327,8 +327,8 @@ class EmailService {
             templateName: 'plan_change',
             templateData: {
                 userName: changeData.userName || 'User',
-                oldPlanName: changeData.oldPlanName || 'Free',
-                newPlanName: changeData.newPlanName || 'Free',
+                oldPlanName: changeData.oldPlanName || 'Starter Trial',
+                newPlanName: changeData.newPlanName || 'Starter Trial',
                 newFeatures: changeData.newFeatures || [],
                 effectiveDate: changeData.effectiveDate || new Date().toLocaleDateString(),
                 isUpgrade: isUpgrade,

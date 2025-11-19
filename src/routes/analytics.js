@@ -264,7 +264,7 @@ router.get('/config-performance', async (req, res) => {
             .select(`
                 id,
                 tone,
-                humor_type,
+                // Issue #868: Removed humor_type,
                 created_at,
                 post_status,
                 platform_response_id,
@@ -304,7 +304,7 @@ router.get('/config-performance', async (req, res) => {
                     : 0
             },
             by_tone: {},
-            by_humor_type: {},
+            // Issue #868: Removed by_humor_type,
             by_platform: {},
             by_severity: {},
             timeline: []
@@ -335,27 +335,7 @@ router.get('/config-performance', async (req, res) => {
             };
         });
 
-        // Group by humor type
-        const humorGroups = responses.reduce((acc, r) => {
-            const humor = r.humor_type || 'unknown';
-            if (!acc[humor]) {
-                acc[humor] = [];
-            }
-            acc[humor].push(r);
-            return acc;
-        }, {});
-
-        Object.entries(humorGroups).forEach(([humor, humorResponses]) => {
-            analytics.by_humor_type[humor] = {
-                count: humorResponses.length,
-                success_rate: humorResponses.length > 0 
-                    ? ((humorResponses.filter(r => r.platform_response_id).length / humorResponses.length) * 100).toFixed(1)
-                    : 0,
-                avg_cost_cents: humorResponses.length > 0 
-                    ? (humorResponses.reduce((sum, r) => sum + (r.cost_cents || 0), 0) / humorResponses.length).toFixed(2)
-                    : 0
-            };
-        });
+        // Issue #868: Removed humor type grouping (deprecated)
 
         // Group by platform
         const platformGroups = responses.reduce((acc, r) => {
@@ -772,7 +752,7 @@ router.get('/roastr-persona-insights', async (req, res) => {
             .select(`
                 id,
                 tone,
-                humor_type,
+                // Issue #868: Removed humor_type,
                 created_at,
                 post_status,
                 platform_response_id,

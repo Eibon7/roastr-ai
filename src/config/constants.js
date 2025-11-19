@@ -75,19 +75,16 @@ const TOXICITY_CATEGORY_MAP = {
 };
 
 // Tone mapping configurations
+// Issue #868: Solo mantener tonos oficiales (Flanders, Balanceado, Canalla)
+// Eliminado: Humor Type (witty, clever, playful) - redundante con Style Profile
 const TONE_MAP = {
+  flanders: 'amable pero irónico, tono sutil',
+  balanceado: 'equilibrio entre ingenio y firmeza',
+  canalla: 'directo y sin filtros, más picante',
+  // Legacy tonos (mantener por compatibilidad temporal)
   sarcastic: 'sarcástico y cortante',
   ironic: 'irónico y sofisticado', 
-  absurd: 'absurdo y surrealista',
-  witty: 'ingenioso y rápido',
-  clever: 'inteligente y calculado',
-  playful: 'juguetón y amigable'
-};
-
-const HUMOR_MAP = {
-  witty: 'con humor ágil',
-  clever: 'con humor intelectual', 
-  playful: 'con humor ligero'
+  absurd: 'absurdo y surrealista'
 };
 
 // Tone guides for fallback prompts
@@ -142,9 +139,8 @@ module.exports = {
   CATEGORY_PATTERNS,
   TOXICITY_CATEGORY_MAP,
   
-  // Tone configuration
+  // Tone configuration (Issue #868: Humor Type eliminado)
   TONE_MAP,
-  HUMOR_MAP,
   TONE_GUIDES,
   
   // Security

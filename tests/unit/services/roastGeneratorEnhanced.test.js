@@ -444,8 +444,8 @@ describe('RoastGeneratorEnhanced', () => {
       // Check for new master template structure and tone mapping
       expect(systemPrompt).toContain('COMENTARIO ORIGINAL:');
       expect(systemPrompt).toContain('Test');
+      // Issue #868: Sin humor_type ni intensity_level, solo tone
       expect(systemPrompt).toContain('irónico y sofisticado'); // ironic tone mapping
-      expect(systemPrompt).toContain('suave y amigable'); // intensity level 2 maps to this
     });
   });
 });

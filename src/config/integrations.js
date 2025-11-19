@@ -36,7 +36,7 @@ module.exports = {
     
     // Configuración personalizada por integración
     tone: process.env.TWITTER_TONE || 'sarcastic', // sarcastic, ironic, absurd
-    humorType: process.env.TWITTER_HUMOR_TYPE || 'witty',
+    // Issue #868: Removed humorType (deprecated - tone is now sole selector)
     responseFrequency: parseFloat(process.env.TWITTER_RESPONSE_FREQUENCY) || 1.0, // 0.33 = 1 de cada 3
     triggerWords: process.env.TWITTER_TRIGGER_WORDS?.split(',') || ['roast', 'burn', 'insult'],
     
@@ -64,7 +64,7 @@ module.exports = {
     
     // Configuración personalizada por integración
     tone: process.env.YOUTUBE_TONE || 'ironic', // sarcastic, ironic, absurd
-    humorType: process.env.YOUTUBE_HUMOR_TYPE || 'clever',
+    // Issue #868: Removed humorType (deprecated - tone is now sole selector)
     responseFrequency: parseFloat(process.env.YOUTUBE_RESPONSE_FREQUENCY) || 0.5, // 50% chance
     
     // Shield mode específico

@@ -45,7 +45,7 @@ class UserIntegrationsService {
                 platform: integration.platform,
                 enabled: integration.enabled,
                 tone: integration.tone,
-                humor_type: integration.humor_type,
+                // humor_type removed (Issue #868)
                 response_frequency: integration.response_frequency,
                 trigger_words: integration.trigger_words,
                 shield_enabled: integration.shield_enabled,
@@ -130,8 +130,8 @@ class UserIntegrationsService {
                 organization_id: org.id,
                 platform,
                 enabled: config.enabled !== undefined ? config.enabled : true,
-                tone: config.tone || 'sarcastic',
-                humor_type: config.humor_type || 'witty',
+                tone: config.tone || 'balanceado', // Issue #868: Default to balanceado
+                // humor_type removed (Issue #868)
                 response_frequency: config.response_frequency || 1.0,
                 trigger_words: config.trigger_words || ['roast', 'burn', 'insult'],
                 shield_enabled: config.shield_enabled || false,
@@ -165,7 +165,7 @@ class UserIntegrationsService {
                 platform: data.platform,
                 enabled: data.enabled,
                 tone: data.tone,
-                humor_type: data.humor_type,
+                // humor_type removed (Issue #868)
                 response_frequency: data.response_frequency,
                 trigger_words: data.trigger_words,
                 shield_enabled: data.shield_enabled,

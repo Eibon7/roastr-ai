@@ -349,7 +349,7 @@ class RoastGeneratorEnhanced {
       persona: persona,
       styleProfile: rqcConfig.styleProfile || null,
       tone: tone,
-      humorType: rqcConfig.humor_type || 'witty',
+      // humorType removed (Issue #868)
       includeReferences: rqcConfig.plan !== 'starter_trial',
       getReferenceRoasts: async (comment) => {
         // Use existing prompt template's reference roast method for compatibility
@@ -377,7 +377,7 @@ class RoastGeneratorEnhanced {
     logger.info('✅ Basic moderated roast generated', {
       plan: rqcConfig.plan,
       model: model,
-      intensityLevel: rqcConfig.intensity_level,
+      // intensityLevel removed (Issue #868)
       roastLength: roast.length,
       promptVersion: this.promptTemplate.getVersion()
     });
@@ -496,7 +496,7 @@ class RoastGeneratorEnhanced {
       persona: persona,
       styleProfile: rqcConfig.styleProfile || null,
       tone: tone,
-      humorType: rqcConfig.humor_type || 'clever',
+      // humorType removed (Issue #868)
       includeReferences: true, // Always include references for Creator+ plans
       getReferenceRoasts: async (comment) => {
         return await this.promptTemplate.getReferenceRoasts(comment);
@@ -587,8 +587,8 @@ Reglas obligatorias:
 7. Responde únicamente con el texto del roast, sin explicaciones adicionales.
 
 Configuración de usuario:
-- Nivel de intensidad: ${rqcConfig.intensity_level}/5 (1=muy suave, 5=más picante pero siempre dentro de las reglas)
-- Plan: ${rqcConfig.plan} (moderación básica integrada)`;
+- Plan: ${rqcConfig.plan} (moderación básica integrada)
+- Nota: La intensidad se controla con el tone (Flanders/Balanceado/Canalla) - Issue #868`;
 
     // Add tone-specific instructions
     const toneInstructions = {
@@ -609,8 +609,8 @@ Configuración de usuario:
 Eres más creativo y sofisticado porque el contenido será revisado por un sistema de control de calidad.
 
 Configuración de usuario:
-- Nivel de intensidad: ${rqcConfig.intensity_level}/5
-- Plan: ${rqcConfig.plan} (con revisión RQC)`;
+- Plan: ${rqcConfig.plan} (con revisión RQC)
+- Nota: La intensidad se controla con el tone (Flanders/Balanceado/Canalla) - Issue #868`;
 
     // Add custom style prompt if available (admin-configured) and feature flag is enabled
     if (flags.isEnabled('ENABLE_CUSTOM_PROMPT') && rqcConfig.custom_style_prompt) {
@@ -704,7 +704,7 @@ Configuración de usuario:
           tokens_used: reviewResult.tokensUsed || 0,
           cost_cents: reviewResult.costCents || 0,
           config_json: JSON.stringify({
-            intensityLevel: reviewResult.userConfig?.intensity_level,
+            // intensityLevel removed (Issue #868)
             customPrompt: reviewResult.userConfig?.custom_style_prompt
           })
         });
