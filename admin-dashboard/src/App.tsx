@@ -5,6 +5,7 @@ import { SnakeEaterThemeProvider } from '@theme/SnakeEaterThemeProvider';
 import GDDDashboard from '@pages/GDDDashboard';
 import ShieldSettings from '@pages/ShieldSettings';
 import ShieldValidation from '@pages/ShieldValidation';
+import WorkersDashboard from '@pages/Workers';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -35,6 +36,7 @@ function App() {
             <Route path="/dashboard" element={<GDDDashboard />} />
             <Route path="/shield/settings" element={<ShieldSettings />} />
             <Route path="/shield/validation" element={<ShieldValidation />} />
+            <Route path="/admin/workers" element={<WorkersDashboard />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Router>

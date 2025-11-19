@@ -28,14 +28,20 @@ const { createTestTenants, cleanupTestData, serviceClient } = require('../helper
 const jwt = require('jsonwebtoken');
 
 // Mock external services to avoid costs
-jest.mock('../../src/integrations/perspectiveClient', () => ({
-  analyzeToxicity: jest.fn().mockResolvedValue({
+// Make mock reflect toxic vs non-toxic scenarios based on input text
+const analyzeToxicity = jest.fn((text) => {
+  const isToxic = /sucks|garbage|terrible|trash/i.test(text || '');
+  return Promise.resolve({
     scores: {
-      TOXICITY: 0.85, // High toxicity
-      SEVERE_TOXICITY: 0.75,
-      INSULT: 0.80
+      TOXICITY: isToxic ? 0.85 : 0.1,
+      SEVERE_TOXICITY: isToxic ? 0.75 : 0.05,
+      INSULT: isToxic ? 0.80 : 0.05
     }
-  })
+  });
+});
+
+jest.mock('../../src/integrations/perspectiveClient', () => ({
+  analyzeToxicity
 }));
 
 jest.mock('openai', () => {
