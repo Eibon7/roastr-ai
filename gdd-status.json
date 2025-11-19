@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-11-19T11:45:50.365Z",
+  "timestamp": "2025-11-19T14:54:52.766Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -26,15 +26,6 @@
       "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
-      "node": "cost-control",
-      "severity": "critical",
-      "declared": 95.1,
-      "actual": 0,
-      "diff": 95.1,
-      "message": "Coverage mismatch: declared 95.1% but actual is 0% (diff: 95.1%)"
-    },
-    {
       "type": "missing_coverage_data",
       "node": "guardian",
       "severity": "warning",
@@ -51,66 +42,12 @@
       "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
-      "node": "observability",
-      "severity": "critical",
-      "declared": 100,
-      "actual": 3,
-      "diff": 97,
-      "message": "Coverage mismatch: declared 100% but actual is 3% (diff: 97%)"
-    },
-    {
-      "type": "coverage_integrity_violation",
-      "node": "persona",
-      "severity": "critical",
-      "declared": 90,
-      "actual": 0,
-      "diff": 90,
-      "message": "Coverage mismatch: declared 90% but actual is 0% (diff: 90%)"
-    },
-    {
-      "type": "coverage_integrity_violation",
-      "node": "plan-features",
-      "severity": "critical",
-      "declared": 65,
-      "actual": 0,
-      "diff": 65,
-      "message": "Coverage mismatch: declared 65% but actual is 0% (diff: 65%)"
-    },
-    {
       "type": "missing_coverage_data",
       "node": "platform-constraints",
       "severity": "warning",
-      "declared": 50,
+      "declared": 100,
       "actual": null,
       "message": "Coverage data not available for validation"
-    },
-    {
-      "type": "coverage_integrity_violation",
-      "node": "queue-system",
-      "severity": "critical",
-      "declared": 68,
-      "actual": 6,
-      "diff": 62,
-      "message": "Coverage mismatch: declared 68% but actual is 6% (diff: 62%)"
-    },
-    {
-      "type": "coverage_integrity_violation",
-      "node": "roast",
-      "severity": "critical",
-      "declared": 60,
-      "actual": 0,
-      "diff": 60,
-      "message": "Coverage mismatch: declared 60% but actual is 0% (diff: 60%)"
-    },
-    {
-      "type": "coverage_integrity_violation",
-      "node": "shield",
-      "severity": "critical",
-      "declared": 86,
-      "actual": 0,
-      "diff": 86,
-      "message": "Coverage mismatch: declared 86% but actual is 0% (diff: 86%)"
     },
     {
       "type": "missing_coverage_data",
@@ -129,5 +66,5 @@
       "message": "Coverage data not available for validation"
     }
   ],
-  "status": "critical"
+  "status": "healthy"
 }

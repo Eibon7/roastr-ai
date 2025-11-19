@@ -1,12 +1,19 @@
 # Auto-Repair Report
 
-**Generated:** 2025-11-18T23:08:47.755Z
-**Triggered by:** CI/CD
-**Health Score:** 88.5 → 91.6 (+3.1)
+**Generated:** 2025-11-19T14:52:54.965Z
+**Triggered by:** Manual
+**Health Score:** 84.3 → 90.8 (+6.5)
 
-## ✅ Fixes Applied (1)
+## ✅ Fixes Applied (8)
 
-1. Added coverage source to platform-constraints
+1. Reset coverage to 60% for cost-control (was 0%)
+2. Reset coverage to 46% for observability (was 100%)
+3. Reset coverage to 90% for persona (was 0%)
+4. Reset coverage to 74% for plan-features (was 0%)
+5. Reset coverage to 67% for queue-system (was 6%)
+6. Reset coverage to 59% for roast (was 0%)
+7. Reset coverage to 86% for shield (was 0%)
+8. Reset coverage to 14% for social-platforms (was 0%)
 
 ## ⚠️ Pending Human Review (0)
 
@@ -18,10 +25,10 @@ None
 
 ## 📊 Results
 
-- 🟢 Health Score: 91.6/100
-- ⚙️ Auto-fixes: 1 applied
+- 🟢 Health Score: 90.8/100
+- ⚙️ Auto-fixes: 8 applied
 - 📋 Issues for review: 0
-- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-11-18T23-08-47-560Z`
+- 💾 Backup: `/tmp/gdd-auto-repair-backups/2025-11-19T14-52-54-853Z`
 
 ---
 

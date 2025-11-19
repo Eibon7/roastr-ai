@@ -5,7 +5,7 @@
 **Priority:** High
 **Status:** Production (✅ Issue #595 + #615 Complete - 100%)
 **Last Updated:** 2025-11-06
-**Coverage:** 0%
+**Coverage:** 90%
 **Coverage Source:** auto
 **Note:** Coverage value updated to match actual test coverage (gdd-status.json validation). Will be auto-updated when tests pass.
 **Related PRs:** #499, #600, #633 (Issue #615: Persona-Roast Integration)
