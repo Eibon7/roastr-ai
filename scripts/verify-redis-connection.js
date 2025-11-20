@@ -59,11 +59,11 @@ async function verifyRedisConnection() {
       
       // Test basic operations
       console.log('🧪 Testing operations...');
-      
-      // SET
-      await redis.set('roastr:test:connection', 'ok', 'EX', 10);
+
+      // SET (with short TTL to avoid stray keys)
+      await redis.set('roastr:test:connection', 'ok', { ex: 10 });
       console.log('  ✅ SET operation');
-      
+
       // GET
       const value = await redis.get('roastr:test:connection');
       if (value === 'ok') {
@@ -71,20 +71,26 @@ async function verifyRedisConnection() {
       } else {
         throw new Error('GET returned unexpected value');
       }
-      
+
       // DEL
       await redis.del('roastr:test:connection');
       console.log('  ✅ DEL operation');
-      
-      // Get Redis info
-      const info = await redis.info('server');
-      const versionMatch = info.match(/redis_version:([^\r\n]+)/);
-      const version = versionMatch ? versionMatch[1] : 'unknown';
-      
-      console.log('\n📊 Redis Info:');
-      console.log(`  Version: ${version}`);
-      console.log(`  Type: ${redisToken ? 'Upstash (Cloud)' : 'Standard Redis'}`);
-      
+
+      // Get Redis info (optional - may fail with read-only tokens)
+      try {
+        const info = await redis.info('server');
+        const versionMatch = info.match(/redis_version:([^\r\n]+)/);
+        const version = versionMatch ? versionMatch[1] : 'unknown';
+
+        console.log('\n📊 Redis Info:');
+        console.log(`  Version: ${version}`);
+      } catch (infoError) {
+        // INFO command may be restricted on read-only tokens - non-fatal
+        console.log('\n📊 Redis Info: (unavailable with current token permissions)');
+      }
+
+      console.log(`  Type: Upstash (REST SDK)`);
+
       console.log('\n✅ Redis is fully operational!');
       console.log('\n💡 Your workers will use Redis for queue management,');
       console.log('   reducing Disk IO by ~95% compared to database-only mode.\n');
@@ -95,7 +101,7 @@ async function verifyRedisConnection() {
       throw new Error('Unexpected PING response');
     }
   } catch (error) {
-    console.error('❌ Redis connection failed:', error.message);
+    console.error('❌ Redis connection failed:', error);
     console.error('\nTroubleshooting:');
     console.error('  1. Verify UPSTASH_REDIS_REST_URL is correct');
     console.error('  2. Verify UPSTASH_REDIS_REST_TOKEN is valid');
