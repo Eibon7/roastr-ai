@@ -14,8 +14,8 @@ jest.mock('../../../src/config/mockMode', () => ({
 
 const QueueService = require('../../../src/services/queueService');
 
-// Mock IORedis
-jest.mock('ioredis', () => {
+// Mock @upstash/redis (REST SDK - stateless, no event handlers)
+jest.mock('@upstash/redis', () => {
   const mockRedis = {
     lpush: jest.fn(),
     brpop: jest.fn(),
@@ -24,13 +24,17 @@ jest.mock('ioredis', () => {
     lrange: jest.fn(),
     del: jest.fn(),
     ping: jest.fn(),
-    disconnect: jest.fn(),
+    // Note: No disconnect/on methods needed (stateless REST SDK)
     setex: jest.fn(),
-    status: 'ready',
-    on: jest.fn()
+    incr: jest.fn(),
+    expire: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn()
   };
-  
-  return jest.fn(() => mockRedis);
+
+  return {
+    Redis: jest.fn(() => mockRedis)
+  };
 });
 
 // Mock Supabase

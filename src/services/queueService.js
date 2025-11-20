@@ -1,4 +1,4 @@
-const Redis = require('ioredis');
+const { Redis } = require('@upstash/redis');
 const { createClient } = require('@supabase/supabase-js');
 const { mockMode } = require('../config/mockMode');
 const { v4: uuidv4 } = require('uuid');
@@ -117,55 +117,36 @@ class QueueService {
   }
   
   /**
-   * Initialize Redis connection
+   * Initialize Redis connection (Upstash REST SDK)
+   * Upstash SDK is stateless (HTTP-based), no persistent connection needed
    */
   async initializeRedis() {
     try {
-      const config = {
-        maxRetriesPerRequest: 3,
-        retryDelayOnFailover: 100,
-        enableAutoPipelining: true,
-        lazyConnect: true
-      };
-      
+      // Initialize Upstash Redis client (REST-based, stateless)
       if (this.options.redisToken) {
-        // Upstash Redis configuration
-        const host = this.options.redisUrl.replace('https://', '').replace('http://', '');
-        config.host = host;
-        config.port = 6379;
-        config.password = this.options.redisToken;
-        config.tls = this.options.redisUrl.startsWith('https://') ? {} : undefined;
-        config.family = 6; // Force IPv6 for Upstash
+        // Upstash Redis with explicit URL and token
+        this.redis = new Redis({
+          url: this.options.redisUrl,
+          token: this.options.redisToken
+        });
+      } else if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        // Use fromEnv() when env vars are available
+        this.redis = Redis.fromEnv();
       } else {
-        // Standard Redis URL
-        config.connectionString = this.options.redisUrl;
+        throw new Error('Upstash Redis credentials not configured');
       }
-      
-      this.redis = new Redis(config);
-      
-      // Test connection
+
+      // Test connection with a simple ping
       await this.redis.ping();
       this.isRedisAvailable = true;
-      
-      // Set up Redis event handlers
-      this.redis.on('error', (error) => {
-        this.log('error', 'Redis connection error', { error: error.message });
-        this.isRedisAvailable = false;
+
+      this.log('info', 'Upstash Redis initialized successfully', {
+        url: this.options.redisUrl
       });
-      
-      this.redis.on('connect', () => {
-        this.log('info', 'Redis connected successfully');
-        this.isRedisAvailable = true;
-      });
-      
-      this.redis.on('close', () => {
-        this.log('warn', 'Redis connection closed');
-        this.isRedisAvailable = false;
-      });
-      
+
     } catch (error) {
-      this.log('warn', 'Redis initialization failed, using database fallback', { 
-        error: error.message 
+      this.log('warn', 'Redis initialization failed, using database fallback', {
+        error: error.message
       });
       this.isRedisAvailable = false;
     }
@@ -798,14 +779,12 @@ class QueueService {
   
   /**
    * Graceful shutdown
+   * Note: Upstash Redis (REST SDK) is stateless and doesn't require disconnection
    */
   async shutdown() {
     this.log('info', 'Shutting down Queue Service');
-    
-    if (this.redis) {
-      await this.redis.disconnect();
-    }
-    
+
+    // Upstash Redis (REST SDK) is stateless - no disconnect needed
     // Supabase client doesn't need explicit shutdown
   }
   
