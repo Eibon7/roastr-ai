@@ -1,9 +1,9 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-11-11T20:02:03.547Z
+**Generated:** 2025-11-19T15:25:31.320Z
 **Analysis Period:** Last 30 days
 **Overall Status:** 🟢 HEALTHY
-**Average Drift Risk:** 6/100
+**Average Drift Risk:** 5/100
 
 ---
 
@@ -20,37 +20,25 @@
 
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
-| analytics | 🟢 15 | healthy | 86 | 49% | 12d ago | 0 |
-| guardian | 🟢 15 | healthy | 80 | 0% | 12d ago | 0 |
-| platform-constraints | 🟢 15 | healthy | 68 | N/A | 0d ago | 0 |
-| roast | 🟢 15 | healthy | 90 | 60% | 14d ago | 0 |
-| trainer | 🟢 15 | healthy | 82 | 0% | 12d ago | 0 |
-| observability | 🟢 5 | healthy | 100 | 50% | 0d ago | 0 |
-| plan-features | 🟢 5 | healthy | 90 | 65% | 5d ago | 0 |
-| queue-system | 🟢 5 | healthy | 90 | 68% | 0d ago | 0 |
-| social-platforms | 🟢 5 | healthy | 86 | 0% | 0d ago | 0 |
-| billing | 🟢 0 | healthy | 100 | N/A | 0d ago | 0 |
-| cost-control | 🟢 0 | healthy | 100 | N/A | 0d ago | 0 |
-| multi-tenant | 🟢 0 | healthy | 100 | N/A | 0d ago | 0 |
-| persona | 🟢 0 | healthy | 99 | 90% | 4d ago | 0 |
-| shield | 🟢 0 | healthy | 96 | 86% | 1d ago | 0 |
-| tone | 🟢 0 | healthy | 98 | 100% | 7d ago | 0 |
+| guardian | 🟢 15 | healthy | 78 | 0% | 20d ago | 0 |
+| social-platforms | 🟢 15 | healthy | 84 | 14% | 7d ago | 0 |
+| trainer | 🟢 15 | healthy | 80 | 0% | 20d ago | 0 |
+| analytics | 🟢 5 | healthy | 84 | 59% | 5d ago | 0 |
+| cost-control | 🟢 5 | healthy | 92 | 60% | 0d ago | 0 |
+| observability | 🟢 5 | healthy | 88 | 50% | 0d ago | 0 |
+| plan-features | 🟢 5 | healthy | 94 | 74% | 0d ago | 0 |
+| queue-system | 🟢 5 | healthy | 87 | 67% | 0d ago | 0 |
+| roast | 🟢 5 | healthy | 89 | 59% | 0d ago | 0 |
+| billing | 🟢 0 | healthy | 98 | N/A | 7d ago | 0 |
+| multi-tenant | 🟢 0 | healthy | 98 | N/A | 0d ago | 0 |
+| persona | 🟢 0 | healthy | 96 | 90% | 0d ago | 0 |
+| platform-constraints | 🟢 0 | healthy | 99 | 100% | 0d ago | 0 |
+| shield | 🟢 0 | healthy | 99 | 86% | 0d ago | 0 |
+| tone | 🟢 0 | healthy | 96 | 100% | 14d ago | 0 |
 
 ---
 
 ## ⚠️ Top 5 Nodes at Risk
-
-### analytics (Risk: 15)
-
-**Status:** 🟢 HEALTHY
-
-**Risk Factors:**
-- +15 pts: Coverage 49% (<80%)
-
-**Recommendations:**
-- Increase test coverage to 80%+ (declared: 49%, actual: N/A)
-
-**Git Activity:** 2 commits in last 30 days
 
 ### guardian (Risk: 15)
 
@@ -62,32 +50,19 @@
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 0%, actual: N/A)
 
-**Git Activity:** 5 commits in last 30 days
+**Git Activity:** 3 commits in last 30 days
 
-### platform-constraints (Risk: 15)
-
-**Status:** 🟢 HEALTHY
-
-**Risk Factors:**
-- +25 pts: Health score 68 (<70)
-- -10 pts: Recent commit (today)
-
-**Recommendations:**
-- Improve health score to 70+ (declared: 68, actual: N/A)
-
-**Git Activity:** 4 commits in last 30 days
-
-### roast (Risk: 15)
+### social-platforms (Risk: 15)
 
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
-- +15 pts: Coverage 60% (<80%)
+- +15 pts: Coverage 14% (<80%)
 
 **Recommendations:**
-- Increase test coverage to 80%+ (declared: 60%, actual: N/A)
+- Increase test coverage to 80%+ (declared: 14%, actual: N/A)
 
-**Git Activity:** 20 commits in last 30 days
+**Git Activity:** 3 commits in last 30 days
 
 ### trainer (Risk: 15)
 
@@ -99,7 +74,33 @@
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 0%, actual: N/A)
 
-**Git Activity:** 3 commits in last 30 days
+**Git Activity:** 1 commits in last 30 days
+
+### analytics (Risk: 5)
+
+**Status:** 🟢 HEALTHY
+
+**Risk Factors:**
+- +15 pts: Coverage 59% (<80%)
+- -10 pts: Recent commit (5 days ago)
+
+**Recommendations:**
+- Increase test coverage to 80%+ (declared: 59%, actual: N/A)
+
+**Git Activity:** 2 commits in last 30 days
+
+### cost-control (Risk: 5)
+
+**Status:** 🟢 HEALTHY
+
+**Risk Factors:**
+- +15 pts: Coverage 60% (<80%)
+- -10 pts: Recent commit (today)
+
+**Recommendations:**
+- Increase test coverage to 80%+ (declared: 60%, actual: N/A)
+
+**Git Activity:** 4 commits in last 30 days
 
 ---
 

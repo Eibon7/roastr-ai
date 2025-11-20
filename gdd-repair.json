@@ -1,18 +1,53 @@
 {
-  "timestamp": "2025-11-18T23:08:47.756Z",
+  "timestamp": "2025-11-19T14:52:54.966Z",
   "mode": "apply",
   "success": true,
   "fixes_would_apply": 0,
-  "fixes_applied": 1,
+  "fixes_applied": 8,
   "errors": 0,
-  "health_before": 88.5,
-  "health_after": 91.6,
+  "health_before": 84.3,
+  "health_after": 90.8,
   "details": {
     "fixes": [
       {
         "type": "auto",
-        "node": "platform-constraints",
-        "action": "Added coverage source to platform-constraints"
+        "node": "cost-control",
+        "action": "Reset coverage to 60% for cost-control (was 0%)"
+      },
+      {
+        "type": "auto",
+        "node": "observability",
+        "action": "Reset coverage to 46% for observability (was 100%)"
+      },
+      {
+        "type": "auto",
+        "node": "persona",
+        "action": "Reset coverage to 90% for persona (was 0%)"
+      },
+      {
+        "type": "auto",
+        "node": "plan-features",
+        "action": "Reset coverage to 74% for plan-features (was 0%)"
+      },
+      {
+        "type": "auto",
+        "node": "queue-system",
+        "action": "Reset coverage to 67% for queue-system (was 6%)"
+      },
+      {
+        "type": "auto",
+        "node": "roast",
+        "action": "Reset coverage to 59% for roast (was 0%)"
+      },
+      {
+        "type": "auto",
+        "node": "shield",
+        "action": "Reset coverage to 86% for shield (was 0%)"
+      },
+      {
+        "type": "auto",
+        "node": "social-platforms",
+        "action": "Reset coverage to 14% for social-platforms (was 0%)"
       }
     ],
     "humanReview": [],

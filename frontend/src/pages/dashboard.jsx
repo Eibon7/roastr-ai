@@ -473,18 +473,21 @@ export default function Dashboard() {
     setSelectedAccount(null);
   };
 
-  const handleAccountAction = async (action, ...args) => {
+  const handleAccountAction = async (action, method = 'POST', body = null) => {
     if (!selectedAccount) return;
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/user/accounts/${selectedAccount.platform}/${action}`, {
-        method: 'POST',
+      const accountId = selectedAccount.id || selectedAccount.platform;
+      const url = `/api/user/accounts/${accountId}/${action}`;
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(args[0] || {})
+        body: body ? JSON.stringify(body) : undefined
       });
 
       if (response.ok) {
@@ -499,22 +502,27 @@ export default function Dashboard() {
           const accountsData = await accountsRes.json();
           setAccounts(accountsData.data || []);
         }
+        return await response.json();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Action failed');
       }
     } catch (error) {
       console.error(`Error performing ${action}:`, error);
+      throw error;
     }
   };
 
   const handleApproveRoast = async (accountId, roastId) => {
-    return handleAccountAction(`roasts/${roastId}/approve`);
+    return handleAccountAction(`roasts/${roastId}/approve`, 'POST');
   };
 
   const handleRejectRoast = async (accountId, roastId) => {
-    return handleAccountAction(`roasts/${roastId}/decline`);
+    return handleAccountAction(`roasts/${roastId}/decline`, 'POST');
   };
 
   const handleToggleAutoApprove = async (accountId, enabled) => {
-    return handleAccountAction('settings', { autoApprove: enabled });
+    return handleAccountAction('settings', 'PATCH', { autoApprove: enabled });
   };
 
   const handleToggleAccount = async (accountId, status) => {
@@ -522,15 +530,15 @@ export default function Dashboard() {
   };
 
   const handleChangeShieldLevel = async (accountId, level) => {
-    return handleAccountAction('settings', { shieldLevel: level });
+    return handleAccountAction('settings', 'PATCH', { shieldLevel: level });
   };
 
   const handleToggleShield = async (accountId, enabled) => {
-    return handleAccountAction('settings', { shieldEnabled: enabled });
+    return handleAccountAction('settings', 'PATCH', { shieldEnabled: enabled });
   };
 
   const handleChangeTone = async (accountId, tone) => {
-    return handleAccountAction('settings', { defaultTone: tone });
+    return handleAccountAction('settings', 'PATCH', { defaultTone: tone });
   };
 
   const handleDisconnectAccount = async (accountId) => {

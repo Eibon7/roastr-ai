@@ -1,7 +1,7 @@
 {
-  "generated_at": "2025-11-19T11:53:56.142Z",
+  "generated_at": "2025-11-19T16:07:51.654Z",
   "status": "HEALTHY",
-  "overall_score": 89.1,
+  "overall_score": 91.4,
   "total_nodes": 15,
   "healthy_count": 14,
   "degraded_count": 1,
@@ -34,7 +34,7 @@
       "issues": []
     },
     "cost-control": {
-      "score": 93,
+      "score": 98,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -73,7 +73,7 @@
       "issues": []
     },
     "observability": {
-      "score": 93,
+      "score": 98,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -138,7 +138,7 @@
       "issues": []
     },
     "roast": {
-      "score": 88,
+      "score": 93,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
