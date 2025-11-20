@@ -155,16 +155,47 @@ function checkRequiredEnvVars(scope) {
 }
 
 /**
- * Execute Jest with specified patterns and options
+ * Filter test files by platform name (Issue #277)
+ * @param {string[]} testFiles - Array of test file paths
+ * @param {string} platform - Platform name to filter by
+ * @returns {string[]} Filtered test files
+ */
+function filterTestsByPlatform(testFiles, platform) {
+  if (!platform || !testFiles || testFiles.length === 0) {
+    return testFiles;
+  }
+
+  const platformLower = platform.toLowerCase();
+  const filtered = testFiles.filter(file => {
+    const fileName = file.toLowerCase();
+    // Check if filename contains platform name
+    return fileName.includes(platformLower) || 
+           fileName.includes(`/${platformLower}/`) ||
+           fileName.includes(`\\${platformLower}\\`);
+  });
+
+  if (filtered.length === 0) {
+    console.warn(colors.yellow(`⚠️  No test files found for platform: ${platform}`));
+    console.warn(colors.gray(`   Searched in ${testFiles.length} test files`));
+  } else {
+    console.log(colors.magenta(`🎯 Filtered ${filtered.length} test file(s) for platform: ${platform}`));
+  }
+
+  return filtered;
+}
+
+/**
+ * Execute Jest with specified patterns and options (Issue #277 - Enhanced)
  */
 function runJest(patterns, options = {}) {
   return new Promise((resolve, reject) => {
     const jestArgs = [];
 
     // Add test patterns - pass glob patterns as positional args
+    let resolvedPatterns = [];
     if (patterns && patterns.length > 0) {
       // Resolve glob patterns to actual file paths for Jest
-      const resolvedPatterns = patterns.flatMap(pattern => {
+      resolvedPatterns = patterns.flatMap(pattern => {
         try {
           const files = glob.sync(pattern, { cwd: process.cwd() });
           return files.length > 0 ? files : [pattern]; // Fallback to pattern if no matches
@@ -174,18 +205,29 @@ function runJest(patterns, options = {}) {
         }
       });
       
+      // Apply platform filtering if specified (Issue #277)
+      if (options.platform && resolvedPatterns.length > 0) {
+        resolvedPatterns = filterTestsByPlatform(resolvedPatterns, options.platform);
+      }
+      
       if (resolvedPatterns.length > 0) {
         jestArgs.push(...resolvedPatterns);
       } else {
         console.warn(colors.yellow('⚠️  No test files found matching patterns'));
+        reject(new Error('No test files found matching the specified patterns and filters'));
+        return;
       }
     }
 
-    // Add mock mode environment variable
+    // Add mock mode environment variable (Issue #277 - Enhanced)
     const env = { ...process.env };
     if (options.mockMode) {
       env.ENABLE_MOCK_MODE = 'true';
       console.log(colors.blue('🔧 Mock mode enabled - external services will be mocked'));
+      console.log(colors.gray('   ENABLE_MOCK_MODE=true will be set in test environment'));
+    } else {
+      // Ensure mock mode is explicitly disabled if not requested
+      env.ENABLE_MOCK_MODE = 'false';
     }
 
     // Add CI mode options
@@ -203,10 +245,12 @@ function runJest(patterns, options = {}) {
       jestArgs.push('--verbose');
     }
 
-    // Add platform filtering
+    // Add platform name pattern filtering for test names (in addition to file filtering)
     if (options.platform) {
-      jestArgs.push('--testNamePattern', options.platform);
-      console.log(colors.magenta(`🎯 Filtering tests for platform: ${options.platform}`));
+      // Use regex pattern to match platform name in test descriptions
+      const platformPattern = `(${options.platform}|${options.platform.charAt(0).toUpperCase() + options.platform.slice(1)})`;
+      jestArgs.push('--testNamePattern', platformPattern);
+      console.log(colors.magenta(`🎯 Also filtering test names matching: ${platformPattern}`));
     }
 
     console.log(colors.green(`🚀 Running Jest with args: ${jestArgs.join(' ')}`));

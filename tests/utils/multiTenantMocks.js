@@ -40,9 +40,29 @@ function createMockUser(organizationId, overrides = {}) {
 }
 
 /**
- * Create a complete multi-tenant test scenario
+ * Create a complete multi-tenant test scenario (Issue #277 - Enhanced with parametrization)
+ * @param {string|Object} scenarioNameOrConfig - Scenario name ('simple', 'multi-org', etc.) or custom config object
+ * @param {Object} customConfig - Custom configuration for parametrized scenarios
+ * @param {string} customConfig.plan - Plan type ('free', 'starter', 'pro', 'enterprise', etc.)
+ * @param {string[]} customConfig.roles - Array of roles to create ('admin', 'member', 'viewer', etc.)
+ * @param {string[]} customConfig.platforms - Array of platforms to configure ('twitter', 'instagram', etc.)
+ * @param {number} customConfig.userCount - Number of users to create per organization
+ * @param {number} customConfig.orgCount - Number of organizations to create (for multi-org scenarios)
+ * @returns {Object} Test scenario with organizations, users, and metadata
  */
-function createMultiTenantTestScenario(scenarioName = 'simple') {
+function createMultiTenantTestScenario(scenarioNameOrConfig = 'simple', customConfig = {}) {
+  // Handle custom config object (Issue #277)
+  if (typeof scenarioNameOrConfig === 'object' && scenarioNameOrConfig !== null) {
+    return createCustomScenario(scenarioNameOrConfig);
+  }
+
+  const scenarioName = scenarioNameOrConfig;
+  
+  // If custom config provided with named scenario, merge it
+  if (Object.keys(customConfig).length > 0) {
+    return createCustomScenario({ ...customConfig, baseScenario: scenarioName });
+  }
+
   switch (scenarioName) {
     case 'simple':
       return createSimpleScenario();
@@ -186,14 +206,114 @@ function createMockUsageData(organizationId, overrides = {}) {
 }
 
 /**
- * Get available scenario types
+ * Validate scenario configuration (Issue #277)
+ * @param {Object} config - Configuration object to validate
+ * @throws {Error} If configuration is invalid
+ */
+function validateScenarioConfig(config) {
+  const validPlans = ['free', 'starter', 'starter_trial', 'pro', 'enterprise', 'custom'];
+  const validRoles = ['admin', 'member', 'viewer', 'manager', 'owner'];
+  const validPlatforms = ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+
+  if (config.plan && !validPlans.includes(config.plan)) {
+    throw new Error(`Invalid plan: ${config.plan}. Valid plans: ${validPlans.join(', ')}`);
+  }
+
+  if (config.roles && Array.isArray(config.roles)) {
+    const invalidRoles = config.roles.filter(role => !validRoles.includes(role));
+    if (invalidRoles.length > 0) {
+      throw new Error(`Invalid roles: ${invalidRoles.join(', ')}. Valid roles: ${validRoles.join(', ')}`);
+    }
+  }
+
+  if (config.platforms && Array.isArray(config.platforms)) {
+    const invalidPlatforms = config.platforms.filter(platform => !validPlatforms.includes(platform));
+    if (invalidPlatforms.length > 0) {
+      throw new Error(`Invalid platforms: ${invalidPlatforms.join(', ')}. Valid platforms: ${validPlatforms.join(', ')}`);
+    }
+  }
+
+  if (config.userCount !== undefined && (typeof config.userCount !== 'number' || config.userCount < 1)) {
+    throw new Error(`Invalid userCount: ${config.userCount}. Must be a positive number`);
+  }
+
+  if (config.orgCount !== undefined && (typeof config.orgCount !== 'number' || config.orgCount < 1)) {
+    throw new Error(`Invalid orgCount: ${config.orgCount}. Must be a positive number`);
+  }
+}
+
+/**
+ * Create custom parametrized scenario (Issue #277)
+ * @param {Object} config - Custom configuration
+ * @returns {Object} Test scenario
+ */
+function createCustomScenario(config) {
+  // Validate configuration
+  try {
+    validateScenarioConfig(config);
+  } catch (error) {
+    throw new Error(`Invalid scenario configuration: ${error.message}`);
+  }
+
+  const plan = config.plan || 'pro';
+  const roles = config.roles || ['admin', 'member'];
+  const platforms = config.platforms || [];
+  const userCount = config.userCount || roles.length;
+  const orgCount = config.orgCount || 1;
+
+  const organizations = [];
+  const users = [];
+
+  // Create organizations
+  for (let i = 0; i < orgCount; i++) {
+    const org = createMockOrganization({
+      plan,
+      name: config.orgName || `Test Organization ${i + 1}`
+    });
+    organizations.push(org);
+
+    // Create users for this organization
+    const usersForOrg = Math.min(userCount, roles.length);
+    for (let j = 0; j < usersForOrg; j++) {
+      const role = roles[j % roles.length];
+      const user = createMockUser(org.id, {
+        role,
+        email: `user${j + 1}@org${i + 1}.com`
+      });
+      users.push(user);
+
+      // Add platform tokens if platforms specified
+      if (platforms.length > 0) {
+        const tokens = createMockPlatformTokens(user.id, platforms);
+        user.platformTokens = tokens;
+      }
+    }
+  }
+
+  return {
+    organizations,
+    users,
+    scenario: 'custom',
+    config: {
+      plan,
+      roles,
+      platforms,
+      userCount,
+      orgCount
+    }
+  };
+}
+
+/**
+ * Get available scenario types (Issue #277 - Enhanced)
  */
 function getAvailableScenarios() {
   return [
     { name: 'simple', description: 'One organization with one admin user' },
     { name: 'multi-org', description: 'Multiple organizations with different users' },
     { name: 'enterprise', description: 'Large organization with multiple roles' },
-    { name: 'mixed-plans', description: 'Organizations with different plan types' }
+    { name: 'mixed-plans', description: 'Organizations with different plan types' },
+    { name: 'custom', description: 'Parametrized scenario with custom plan, roles, and platforms' }
   ];
 }
 
