@@ -256,9 +256,15 @@ function createCustomScenario(config) {
   }
 
   const plan = config.plan || 'pro';
-  const roles = config.roles || ['admin', 'member'];
+  // Ensure roles is a non-empty array (Issue #277 - CodeRabbit fix)
+  const roles = Array.isArray(config.roles) && config.roles.length > 0
+    ? config.roles
+    : ['admin', 'member'];
   const platforms = config.platforms || [];
-  const userCount = config.userCount || roles.length;
+  // Set userCount to roles.length only when omitted, not when 0 (Issue #277 - CodeRabbit fix)
+  const userCount = typeof config.userCount === 'number' && config.userCount > 0
+    ? config.userCount
+    : roles.length;
   const orgCount = config.orgCount || 1;
 
   const organizations = [];
@@ -272,10 +278,9 @@ function createCustomScenario(config) {
     });
     organizations.push(org);
 
-    // Create users for this organization
-    const usersForOrg = Math.min(userCount, roles.length);
-    for (let j = 0; j < usersForOrg; j++) {
-      const role = roles[j % roles.length];
+    // Create users for this organization (Issue #277 - CodeRabbit fix: removed Math.min cap)
+    for (let j = 0; j < userCount; j++) {
+      const role = roles[j % roles.length]; // Rotate roles for any userCount
       const user = createMockUser(org.id, {
         role,
         email: `user${j + 1}@org${i + 1}.com`
