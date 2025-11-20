@@ -3,12 +3,7 @@ name: Runner JSON Demo
 on:
   push:
     branches:
-      - feat/issues-276-281-277-287
       - feat/issue-281-mocks-runner-docs
-      - main
-  pull_request:
-    branches:
-      - main
 
 permissions:
   contents: read

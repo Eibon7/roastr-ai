@@ -163,22 +163,8 @@ function runJest(patterns, options = {}) {
 
     // Add test patterns - pass glob patterns as positional args
     if (patterns && patterns.length > 0) {
-      // Resolve glob patterns to actual file paths for Jest
-      const resolvedPatterns = patterns.flatMap(pattern => {
-        try {
-          const files = glob.sync(pattern, { cwd: process.cwd() });
-          return files.length > 0 ? files : [pattern]; // Fallback to pattern if no matches
-        } catch (error) {
-          console.warn(colors.yellow(`⚠️  Warning: Could not resolve pattern ${pattern}: ${error.message}`));
-          return [pattern]; // Fallback to original pattern
-        }
-      });
-      
-      if (resolvedPatterns.length > 0) {
-        jestArgs.push(...resolvedPatterns);
-      } else {
-        console.warn(colors.yellow('⚠️  No test files found matching patterns'));
-      }
+      // Pass glob patterns as positional args; Jest will resolve them
+      jestArgs.push(...patterns);
     }
 
     // Add mock mode environment variable
