@@ -443,10 +443,6 @@ describe('QueueService', () => {
 
     test('should handle shutdown gracefully', async () => {
       jest.spyOn(queueService, 'log').mockImplementation(() => {});
-      
-      if (queueService.redis) {
-        queueService.redis.disconnect = jest.fn().mockResolvedValue(true);
-      }
 
       await expect(queueService.shutdown()).resolves.not.toThrow();
     });

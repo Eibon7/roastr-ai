@@ -123,15 +123,11 @@ class QueueService {
   async initializeRedis() {
     try {
       // Initialize Upstash Redis client (REST-based, stateless)
-      if (this.options.redisToken) {
-        // Upstash Redis with explicit URL and token
+      if (this.options.redisUrl && this.options.redisToken) {
         this.redis = new Redis({
           url: this.options.redisUrl,
           token: this.options.redisToken
         });
-      } else if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-        // Use fromEnv() when env vars are available
-        this.redis = Redis.fromEnv();
       } else {
         throw new Error('Upstash Redis credentials not configured');
       }

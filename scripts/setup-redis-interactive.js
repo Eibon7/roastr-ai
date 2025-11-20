@@ -157,15 +157,14 @@ async function setupRedis() {
   const { Redis } = require('@upstash/redis');
   try {
     // Initialize Upstash Redis (REST SDK)
-    let redis;
-    if (redisToken) {
-      redis = new Redis({
-        url: redisUrl,
-        token: redisToken
-      });
-    } else {
-      redis = Redis.fromEnv();
+    if (!redisUrl || !redisToken) {
+      throw new Error('Redis URL and token are required');
     }
+
+    const redis = new Redis({
+      url: redisUrl,
+      token: redisToken
+    });
 
     await redis.ping();
     // Note: Upstash SDK is stateless, no need to disconnect
@@ -189,15 +188,14 @@ async function verifyConnection(redisUrl, redisToken) {
     const { Redis } = require('@upstash/redis');
 
     // Initialize Upstash Redis (REST SDK - much simpler!)
-    let redis;
-    if (redisToken) {
-      redis = new Redis({
-        url: redisUrl,
-        token: redisToken
-      });
-    } else {
-      redis = Redis.fromEnv();
+    if (!redisUrl || !redisToken) {
+      return false;
     }
+
+    const redis = new Redis({
+      url: redisUrl,
+      token: redisToken
+    });
 
     const pong = await redis.ping();
 

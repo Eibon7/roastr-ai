@@ -51,8 +51,6 @@ class WorkerStatusMonitor {
         url: redisUrl,
         token: redisToken
       });
-    } else if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-      this.redis = Redis.fromEnv();
     }
   }
   

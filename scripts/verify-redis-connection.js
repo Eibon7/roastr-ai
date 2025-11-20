@@ -42,15 +42,11 @@ async function verifyRedisConnection() {
   let redis;
   try {
     // Initialize Upstash Redis (REST SDK - much simpler!)
-    if (redisToken) {
-      // Upstash Redis with explicit credentials
+    if (redisUrl && redisToken) {
       redis = new Redis({
         url: redisUrl,
         token: redisToken
       });
-    } else if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-      // Use fromEnv() if env vars are set
-      redis = Redis.fromEnv();
     } else {
       throw new Error('Upstash credentials not properly configured');
     }
