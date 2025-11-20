@@ -211,9 +211,10 @@ function createMockUsageData(organizationId, overrides = {}) {
  * @throws {Error} If configuration is invalid
  */
 function validateScenarioConfig(config) {
-  // Align with canonical plans from src/config/planMappings.js (Issue #277 - CodeRabbit fix)
+  // Align with canonical plans from src/config/planMappings.js and DB CHECK constraint (Issue #277 - CodeRabbit fix)
+  // Note: 'free' plan was removed in PR #870 (migration 20251118193202_remove_free_plan.sql)
+  // DB constraint only allows: 'starter_trial', 'starter', 'pro', 'plus'
   const validPlans = [
-    'free',
     'starter_trial',
     'starter',
     'pro',
