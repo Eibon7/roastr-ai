@@ -6,27 +6,28 @@ const { randomUUID } = require('crypto');
 
 /**
  * Shared plan limits constants to ensure consistency across all test utilities
+ * Updated per PR #842: Plan restructure (starter_trial/starter/pro/plus)
+ * 
+ * Note: integrationsLimit is intentionally higher than platforms to allow multiple integrations per platform
  */
-// Note: integrationsLimit is intentionally higher than platforms to allow multiple integrations per platform
 const PLAN_LIMITS = {
-  free: { roasts: 10, monthlyResponsesLimit: 10, platforms: 1, integrationsLimit: 2, features: ['basic'], shieldEnabled: false },
-  plus: { roasts: 250, monthlyResponsesLimit: 250, platforms: 2, integrationsLimit: 4, features: ['basic', 'advanced'], shieldEnabled: true },
-  pro: { roasts: 1000, monthlyResponsesLimit: 1000, platforms: 3, integrationsLimit: 6, features: ['basic', 'advanced'], shieldEnabled: true },
-  agency: { roasts: 5000, monthlyResponsesLimit: 5000, platforms: 10, integrationsLimit: 20, features: ['basic', 'advanced', 'agency'], shieldEnabled: true },
-  enterprise: { roasts: 10000, monthlyResponsesLimit: 10000, platforms: 10, integrationsLimit: 20, features: ['basic', 'advanced', 'custom'], shieldEnabled: true }
+  starter_trial: { roasts: 50, monthlyResponsesLimit: 100, platforms: 1, integrationsLimit: 2, features: ['basic'], shieldEnabled: true },
+  starter: { roasts: 10, monthlyResponsesLimit: 1000, platforms: 1, integrationsLimit: 2, features: ['basic'], shieldEnabled: true },
+  pro: { roasts: 500, monthlyResponsesLimit: 1000, platforms: 2, integrationsLimit: 6, features: ['basic', 'advanced'], shieldEnabled: true },
+  plus: { roasts: 5000, monthlyResponsesLimit: 10000, platforms: 2, integrationsLimit: 6, features: ['basic', 'advanced', 'premium'], shieldEnabled: true }
 };
 
 /**
  * Get moderation level based on effective plan (Issue #287)
  * Derives moderation level from plan tier instead of hardcoding
+ * Updated per PR #842: Plan restructure (starter_trial/starter/pro/plus)
  */
 function getModerationLevel(effectivePlan) {
   const planModerationMap = {
-    free: 'basic',
-    plus: 'standard',
+    starter_trial: 'basic',
+    starter: 'basic',
     pro: 'enhanced',
-    agency: 'enhanced',
-    enterprise: 'strict'
+    plus: 'strict'
   };
   return planModerationMap[effectivePlan] || 'basic';
 }
@@ -34,10 +35,11 @@ function getModerationLevel(effectivePlan) {
 /**
  * Get auto response setting based on effective plan (Issue #287)
  * Derives auto response from plan tier instead of hardcoding
+ * Updated per PR #842: starter_trial replaces free plan
  */
 function getAutoResponse(effectivePlan) {
-  // Auto response is disabled for free tier, enabled for all paid tiers
-  return effectivePlan !== 'free';
+  // Auto response is disabled for starter_trial tier, enabled for all paid tiers
+  return effectivePlan !== 'starter_trial';
 }
 
 /**
@@ -217,15 +219,16 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
   } = options;
 
   // Derive effective plan from scenarioType if it indicates a specific plan
+  // Updated per PR #842: Plan restructure (starter_trial/starter/pro/plus)
   let effectivePlan = planType;
-  if (['enterprise', 'agency', 'plus', 'pro', 'freeTier'].includes(scenarioType)) {
-    effectivePlan = scenarioType === 'freeTier' ? 'free' : scenarioType;
+  if (['plus', 'pro', 'starter', 'starter_trial', 'starterTier'].includes(scenarioType)) {
+    effectivePlan = scenarioType === 'starterTier' ? 'starter_trial' : scenarioType;
   }
 
   // Validate effectivePlan against PLAN_LIMITS
   if (!Object.prototype.hasOwnProperty.call(PLAN_LIMITS, effectivePlan)) {
-    console.warn(`Invalid plan type '${effectivePlan}' detected, falling back to 'free' plan`);
-    effectivePlan = 'free';
+    console.warn(`Invalid plan type '${effectivePlan}' detected, falling back to 'starter_trial' plan`);
+    effectivePlan = 'starter_trial';
   }
 
   // Use shared plan limits for consistency
@@ -242,7 +245,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
 
   // Compute usage per quotaScenario
   const limit = finalEntitlements.monthlyResponsesLimit;
-  let roastsThisMonth = usageOverrides.roastsThisMonth ?? (effectivePlan === 'free' ? 8 : 45);
+  let roastsThisMonth = usageOverrides.roastsThisMonth ?? (effectivePlan === 'starter_trial' ? 8 : 45);
   if (quotaScenario === 'near') roastsThisMonth = Math.max(0, limit - 1);
   if (quotaScenario === 'over') roastsThisMonth = limit + 5;
 
@@ -289,6 +292,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
 
   // Extend based on scenario type
   switch (scenarioType) {
+<<<<<<< HEAD
     case 'enterprise':
       return {
         ...baseScenario,
@@ -388,27 +392,52 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         }
       };
       
-    case 'freeTier':
+    case 'starterTier':
+    case 'starter_trial':
       return {
         ...baseScenario,
+        user: { ...baseScenario.user, plan: 'starter_trial' },
         organization: {
           ...baseScenario.organization,
+          plan: 'starter_trial',
           settings: {
             ...baseScenario.organization.settings,
-            enabledPlatforms: ['twitter'], // Free tier limited to 1 platform
-            moderationLevel: getModerationLevel('free'),
-            autoResponse: getAutoResponse('free') // Limited features
+<<<<<<< HEAD
+            enabledPlatforms: ['twitter'], // Starter trial limited to 1 platform
+            moderationLevel: getModerationLevel('starter_trial'),
+            autoResponse: getAutoResponse('starter_trial') // Limited features
           }
         },
         usage: {
           roastsThisMonth: baseScenario.usage.roastsThisMonth,
-          limit: PLAN_LIMITS.free.monthlyResponsesLimit,
+          limit: PLAN_LIMITS.starter_trial.monthlyResponsesLimit,
           costControl: {
             enabled: false
           }
         }
       };
       
+    case 'starter':
+      return {
+        ...baseScenario,
+        user: { ...baseScenario.user, plan: 'starter' },
+        organization: {
+          ...baseScenario.organization,
+          plan: 'starter',
+          settings: {
+            ...baseScenario.organization.settings,
+            enabledPlatforms: platforms.length > 1 ? platforms.slice(0, 1) : platforms,
+            moderationLevel: getModerationLevel('starter'),
+            autoResponse: getAutoResponse('starter')
+          }
+        },
+        usage: {
+          roastsThisMonth: baseScenario.usage.roastsThisMonth,
+          limit: PLAN_LIMITS.starter.monthlyResponsesLimit
+        }
+      };
+      
+>>>>>>> origin/main
     case 'multiUser': {
       const additionalUsers = Array.from({ length: 3 }, (_, i) => ({
         id: generateTestId(),
@@ -426,7 +455,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           ...baseScenario.organization,
           settings: {
             ...baseScenario.organization.settings,
-            userLimit: effectivePlan === 'enterprise' ? 100 : effectivePlan === 'agency' ? 25 : effectivePlan === 'pro' ? 10 : 1,
+            userLimit: effectivePlan === 'plus' ? 10 : effectivePlan === 'pro' ? 5 : effectivePlan === 'starter' ? 2 : 1,
             roleBasedAccess: true
           }
         }
@@ -535,7 +564,7 @@ const createPlatformMockData = (platform, options = {}) => {
  */
 const createPlanBasedMockResponse = (planType, service, method) => {
   // Use shared plan limits for consistency
-  const limits = PLAN_LIMITS[planType] || PLAN_LIMITS.free;
+  const limits = PLAN_LIMITS[planType] || PLAN_LIMITS.starter_trial;
   
   return {
     success: true,
@@ -769,3 +798,4 @@ module.exports = {
   calculateQualityScore,
   validateToneEnforcement
 };
+

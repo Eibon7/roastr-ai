@@ -42,7 +42,7 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
@@ -81,12 +81,12 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
     "persona": {
-      "score": 96,
+      "score": 91,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -94,12 +94,12 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
     "plan-features": {
-      "score": 94,
+      "score": 89,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -107,7 +107,7 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
@@ -125,7 +125,7 @@
       "issues": []
     },
     "queue-system": {
-      "score": 87,
+      "score": 82,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -133,7 +133,7 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
@@ -146,12 +146,12 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },
     "shield": {
-      "score": 99,
+      "score": 94,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
@@ -159,7 +159,7 @@
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
-        "integrityScore": 100
+        "integrityScore": 50
       },
       "issues": []
     },

@@ -21,6 +21,7 @@
 |------|-------|--------|--------------|----------|--------------|--------|
 | guardian | 🟡 78 | degraded | 2025-10-23 | 0% | 0 | 0 |
 | trainer | 🟢 80 | healthy | 2025-10-29 | 0% | 0 | 0 |
+| queue-system | 🟢 82 | healthy | 2025-10-28 | 68% | 0 | 0 |
 | analytics | 🟢 84 | healthy | 2025-10-29 | 59% | 0 | 0 |
 | social-platforms | 🟢 84 | healthy | 2025-11-11 | 0% | 0 | 0 |
 | queue-system | 🟢 87 | healthy | 2025-10-28 | 68% | 0 | 0 |
@@ -65,6 +66,19 @@
 - Integrity Score: 100/100
 
 
+### queue-system (Score: 82)
+
+**Status:** 🟢 HEALTHY
+
+**Score Breakdown:**
+- Sync Accuracy: 100/100
+- Update Freshness: 56/100
+- Dependency Integrity: 100/100
+- Coverage Evidence: 70/100
+- Agent Relevance: 100/100
+- Integrity Score: 50/100
+
+
 ### analytics (Score: 84)
 
 **Status:** 🟢 HEALTHY
@@ -87,19 +101,6 @@
 - Update Freshness: 84/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
-- Agent Relevance: 100/100
-- Integrity Score: 100/100
-
-
-### queue-system (Score: 87)
-
-**Status:** 🟢 HEALTHY
-
-**Score Breakdown:**
-- Sync Accuracy: 100/100
-- Update Freshness: 56/100
-- Dependency Integrity: 100/100
-- Coverage Evidence: 70/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
