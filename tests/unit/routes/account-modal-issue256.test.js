@@ -48,6 +48,24 @@ jest.mock('../../../src/services/mockIntegrationsService', () => {
       success: true,
       data: { id: 'roast_1', status: 'approved', approvedAt: new Date().toISOString() }
     }),
+    declineRoast: jest.fn().mockResolvedValue({
+      success: true,
+      data: { id: 'roast_1', status: 'declined', declinedAt: new Date().toISOString() }
+    }),
+    regenerateRoast: jest.fn().mockResolvedValue({
+      success: true,
+      data: { 
+        id: 'roast_1', 
+        original: 'Esta aplicación es horrible',
+        roast: 'New regenerated roast response',
+        status: 'pending',
+        regeneratedAt: new Date().toISOString()
+      }
+    }),
+    disconnectAccount: jest.fn().mockResolvedValue({
+      success: true,
+      data: { id: 'twitter', platform: 'twitter', disconnectedAt: new Date().toISOString() }
+    }),
     updateAccountSettings: jest.fn().mockResolvedValue({
       success: true,
       data: { accountId: 'twitter', settings: { autoApprove: true } }
@@ -96,7 +114,8 @@ describe('AccountModal API Endpoints - Issue #256', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeInstanceOf(Array);
-      expect(response.body.total).toBeDefined();
+      expect(response.body.pagination.total).toBeDefined();
+      expect(response.body.pagination.limit).toBeDefined();
     });
 
     test('should approve roast successfully', async () => {
@@ -119,6 +138,53 @@ describe('AccountModal API Endpoints - Issue #256', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.accountId).toBe(testAccountId);
+    });
+
+    test('should decline roast successfully', async () => {
+      const roastId = 'roast_test_123';
+      const response = await request(app)
+        .post(`/api/user/accounts/${testAccountId}/roasts/${roastId}/decline`)
+        .set('Authorization', testToken)
+        .send({ reason: 'Not appropriate' })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.status).toBe('declined');
+    });
+
+    test('should regenerate roast successfully', async () => {
+      const roastId = 'roast_test_123';
+      const response = await request(app)
+        .post(`/api/user/accounts/${testAccountId}/roasts/${roastId}/regenerate`)
+        .set('Authorization', testToken)
+        .send({ tone: 'sarcastic' })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data.roast).toBeDefined();
+    });
+
+    test('should disconnect account successfully', async () => {
+      const response = await request(app)
+        .delete(`/api/user/accounts/${testAccountId}`)
+        .set('Authorization', testToken)
+        .send({ confirmation: 'DISCONNECT' })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('disconnected');
+    });
+
+    test('should reject disconnect without confirmation', async () => {
+      const response = await request(app)
+        .delete(`/api/user/accounts/${testAccountId}`)
+        .set('Authorization', testToken)
+        .send({ confirmation: 'wrong' })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('confirmation');
     });
   });
 });
