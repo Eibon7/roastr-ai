@@ -158,8 +158,7 @@ const AccountModal = ({
     handleAsyncAction(
       `regenerate-${roastId}`,
       async () => {
-        const accountId = account.platform || account.id;
-        const response = await fetch(`/api/user/accounts/${accountId}/roasts/${roastId}/regenerate`, {
+        const response = await fetch(`/api/user/roasts/${roastId}/regenerate`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -167,15 +166,10 @@ const AccountModal = ({
           }
         });
         if (!response.ok) throw new Error('Failed to regenerate roast');
-        const data = await response.json();
-        if (data.success && data.data) {
-          // Update local roasts state with regenerated roast
-          setRoasts(prev => prev.map(r => r.id === roastId ? data.data : r));
-        }
       },
       'Roast regenerado correctamente'
     );
-  }, [account, handleAsyncAction]);
+  }, [handleAsyncAction]);
 
   const handlePublishRoast = useCallback((roastId) => {
     handleAsyncAction(
