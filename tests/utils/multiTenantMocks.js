@@ -206,12 +206,21 @@ function createMockUsageData(organizationId, overrides = {}) {
 }
 
 /**
- * Validate scenario configuration (Issue #277)
+ * Validate scenario configuration (Issue #277 - CodeRabbit fix: align plans and harden typing)
  * @param {Object} config - Configuration object to validate
  * @throws {Error} If configuration is invalid
  */
 function validateScenarioConfig(config) {
-  const validPlans = ['free', 'starter', 'starter_trial', 'pro', 'enterprise', 'custom'];
+  // Align with canonical plans from src/config/planMappings.js (Issue #277 - CodeRabbit fix)
+  const validPlans = [
+    'free',
+    'starter_trial',
+    'starter',
+    'pro',
+    'plus',
+    'creator_plus', // Legacy alias for plus
+    'custom'
+  ];
   const validRoles = ['admin', 'member', 'viewer', 'manager', 'owner'];
   const validPlatforms = ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
 
@@ -219,14 +228,22 @@ function validateScenarioConfig(config) {
     throw new Error(`Invalid plan: ${config.plan}. Valid plans: ${validPlans.join(', ')}`);
   }
 
-  if (config.roles && Array.isArray(config.roles)) {
+  // Harden roles validation: must be array if provided (Issue #277 - CodeRabbit fix)
+  if (config.roles !== undefined && !Array.isArray(config.roles)) {
+    throw new Error('roles must be an array of strings');
+  }
+  if (Array.isArray(config.roles)) {
     const invalidRoles = config.roles.filter(role => !validRoles.includes(role));
     if (invalidRoles.length > 0) {
       throw new Error(`Invalid roles: ${invalidRoles.join(', ')}. Valid roles: ${validRoles.join(', ')}`);
     }
   }
 
-  if (config.platforms && Array.isArray(config.platforms)) {
+  // Harden platforms validation: must be array if provided (Issue #277 - CodeRabbit fix)
+  if (config.platforms !== undefined && !Array.isArray(config.platforms)) {
+    throw new Error('platforms must be an array of strings');
+  }
+  if (Array.isArray(config.platforms)) {
     const invalidPlatforms = config.platforms.filter(platform => !validPlatforms.includes(platform));
     if (invalidPlatforms.length > 0) {
       throw new Error(`Invalid platforms: ${invalidPlatforms.join(', ')}. Valid platforms: ${validPlatforms.join(', ')}`);
@@ -260,7 +277,8 @@ function createCustomScenario(config) {
   const roles = Array.isArray(config.roles) && config.roles.length > 0
     ? config.roles
     : ['admin', 'member'];
-  const platforms = config.platforms || [];
+  // Normalize platforms: must be array (Issue #277 - CodeRabbit fix)
+  const platforms = Array.isArray(config.platforms) ? config.platforms : [];
   // Set userCount to roles.length only when omitted, not when 0 (Issue #277 - CodeRabbit fix)
   const userCount = typeof config.userCount === 'number' && config.userCount > 0
     ? config.userCount
