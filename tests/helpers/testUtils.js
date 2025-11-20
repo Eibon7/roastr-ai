@@ -292,61 +292,6 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
 
   // Extend based on scenario type
   switch (scenarioType) {
-<<<<<<< HEAD
-    case 'enterprise':
-      return {
-        ...baseScenario,
-        user: { ...baseScenario.user, role: 'admin', plan: 'enterprise' },
-        organization: {
-          ...baseScenario.organization,
-          plan: 'enterprise',
-          settings: {
-            ...baseScenario.organization.settings,
-            enabledPlatforms: ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'],
-            moderationLevel: getModerationLevel('enterprise'),
-            autoResponse: getAutoResponse('enterprise'),
-            customBranding: true,
-            apiAccess: true,
-            bulkOperations: true
-          }
-        },
-        usage: {
-          roastsThisMonth: baseScenario.usage.roastsThisMonth,
-          limit: finalEntitlements.monthlyResponsesLimit,
-          costControl: {
-            enabled: true,
-            monthlyBudget: 500,
-            currentSpend: 75.50
-          }
-        }
-      };
-      
-    case 'agency':
-      return {
-        ...baseScenario,
-        user: { ...baseScenario.user, role: 'admin', plan: 'agency' },
-        organization: {
-          ...baseScenario.organization,
-          plan: 'agency',
-          settings: {
-            ...baseScenario.organization.settings,
-            enabledPlatforms: platforms.length > 6 ? platforms.slice(0, 6) : platforms,
-            moderationLevel: getModerationLevel('agency'),
-            autoResponse: getAutoResponse('agency'),
-            teamSeats: 25
-          }
-        },
-        usage: {
-          roastsThisMonth: baseScenario.usage.roastsThisMonth,
-          limit: PLAN_LIMITS.agency.monthlyResponsesLimit,
-          costControl: {
-            enabled: true,
-            monthlyBudget: 250,
-            currentSpend: 40
-          }
-        }
-      };
-
     case 'plus':
       return {
         ...baseScenario,
@@ -437,7 +382,6 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         }
       };
       
->>>>>>> origin/main
     case 'multiUser': {
       const additionalUsers = Array.from({ length: 3 }, (_, i) => ({
         id: generateTestId(),
