@@ -1,12 +1,17 @@
-const planLimitsService = require('../../../src/services/planLimitsService');
-const { supabaseServiceClient } = require('../../../src/config/supabase');
-const { logger } = require('../../../src/utils/logger');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    plan_limits: []
+});
 
 // Mock dependencies
 jest.mock('../../../src/config/supabase', () => ({
-    supabaseServiceClient: {
-        from: jest.fn()
-    }
+    supabaseServiceClient: mockSupabase
 }));
 
 jest.mock('../../../src/utils/logger', () => ({
@@ -24,12 +29,22 @@ jest.mock('../../../src/utils/logger', () => ({
     }
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const planLimitsService = require('../../../src/services/planLimitsService');
+const { logger } = require('../../../src/utils/logger');
+
 describe('PlanLimitsService', () => {
     let mockFrom, mockSelect, mockEq, mockSingle, mockUpdate, mockOrder;
 
     beforeEach(() => {
         // Reset mocks
         jest.clearAllMocks();
+        
+        // Reset Supabase mock to defaults
+        mockSupabase._reset();
         
         // Clear cache
         planLimitsService.clearCache();
@@ -50,7 +65,8 @@ describe('PlanLimitsService', () => {
             update: mockUpdate
         }));
         
-        supabaseServiceClient.from.mockImplementation(mockFrom);
+        // Configure mockSupabase.from to return our configured mockFrom
+        mockSupabase.from.mockImplementation(mockFrom);
     });
 
     describe('getPlanLimits', () => {
@@ -78,7 +94,7 @@ describe('PlanLimitsService', () => {
 
             const limits = await planLimitsService.getPlanLimits('pro');
 
-            expect(supabaseServiceClient.from).toHaveBeenCalledWith('plan_limits');
+            expect(mockSupabase.from).toHaveBeenCalledWith('plan_limits');
             expect(mockSelect).toHaveBeenCalledWith('*');
             expect(mockEq).toHaveBeenCalledWith('plan_id', 'pro');
             expect(limits).toEqual({
@@ -110,7 +126,7 @@ describe('PlanLimitsService', () => {
             const limits = await planLimitsService.getPlanLimits('pro');
 
             // Should only call database once
-            expect(supabaseServiceClient.from).toHaveBeenCalledTimes(1);
+            expect(mockSupabase.from).toHaveBeenCalledTimes(1);
             expect(limits.maxRoasts).toBe(1000);
         });
 
@@ -137,7 +153,7 @@ describe('PlanLimitsService', () => {
                 embeddedJudge: false,
                 monthlyTokensLimit: 500000,
                 dailyApiCallsLimit: 5000,
-                ai_model: 'gpt-4o'
+                ai_model: 'gpt-5.1'
             });
         });
 
@@ -229,7 +245,7 @@ describe('PlanLimitsService', () => {
         it('should fetch all plan limits from database', async () => {
             const allLimits = await planLimitsService.getAllPlanLimits();
 
-            expect(supabaseServiceClient.from).toHaveBeenCalledWith('plan_limits');
+            expect(mockSupabase.from).toHaveBeenCalledWith('plan_limits');
             expect(mockSelect).toHaveBeenCalledWith('*');
             expect(allLimits).toHaveProperty('starter_trial');
             expect(allLimits).toHaveProperty('starter');
@@ -292,7 +308,7 @@ describe('PlanLimitsService', () => {
             await planLimitsService.getPlanLimits('pro');
             
             // Should have called database 3 times (initial get, update, get after cache clear)
-            expect(supabaseServiceClient.from).toHaveBeenCalledTimes(3);
+            expect(mockSupabase.from).toHaveBeenCalledTimes(3);
         });
 
         it('should handle update errors', async () => {
@@ -389,7 +405,7 @@ describe('PlanLimitsService', () => {
             // Next call should hit database
             await planLimitsService.getPlanLimits('pro');
             
-            expect(supabaseServiceClient.from).toHaveBeenCalledTimes(2);
+            expect(mockSupabase.from).toHaveBeenCalledTimes(2);
             expect(logger.debug).toHaveBeenCalledWith('Plan limits cache cleared');
         });
     });
