@@ -80,15 +80,113 @@ node scripts/test/runner.js run services --platform instagram
 node scripts/test/runner.js validate
 ```
 
-### Command Options
+### Command Options (Issue #277 - Enhanced Documentation)
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `--mock-mode` | Enable mocked external services | `--mock-mode` |
-| `--platform <name>` | Filter by platform (twitter, instagram, etc.) | `--platform twitter` |
-| `--ci` | CI mode (silent, run in band) | `--ci` |
-| `--coverage` | Generate coverage report | `--coverage` |
-| `--verbose` | Enable verbose output | `--verbose` |
+| Option | Description | When to Use | Example |
+|--------|-------------|-------------|---------|
+| `--mock-mode` | Enable mocked external services. Sets `ENABLE_MOCK_MODE=true` in test environment. Mocks OpenAI, Supabase, Stripe, and other external APIs. | Use during development for faster feedback, in CI/CD pipelines, or when external services are unavailable. **Do NOT use** for integration tests that require real API responses. | `--mock-mode` |
+| `--platform <name>` | Filter tests by platform name. Filters both test files (by filename/path) and test names (by description). Available platforms: twitter, youtube, instagram, facebook, discord, twitch, reddit, tiktok, bluesky. | Use when testing platform-specific integrations or when debugging issues with a specific platform. | `--platform twitter` |
+| `--ci` | CI mode: runs tests silently (`--silent`), in sequence (`--runInBand`), and with CI-friendly output (`--ci`). | Use in CI/CD pipelines for cleaner output and to prevent parallel execution issues. | `--ci` |
+| `--coverage` | Generate code coverage report. Creates HTML report in `coverage/` directory and prints summary to console. | Use before commits, in CI/CD for coverage tracking, or when analyzing test coverage gaps. | `--coverage` |
+| `--verbose` | Enable verbose Jest output. Shows detailed information about each test, including test names, execution time, and skipped tests. | Use when debugging test failures, analyzing test performance, or when you need detailed test execution information. | `--verbose` |
+
+#### Understanding `--mock-mode` (Issue #277)
+
+**What it does:**
+- Sets `ENABLE_MOCK_MODE=true` environment variable for all tests
+- Enables mock implementations of external services (OpenAI, Supabase, Stripe, etc.)
+- Speeds up test execution by avoiding real API calls
+- Reduces costs by not consuming API quotas
+
+**What gets mocked:**
+- OpenAI API calls (roast generation, embeddings)
+- Supabase database operations (uses in-memory mocks)
+- Stripe payment processing
+- Social media platform APIs (Twitter, YouTube, etc.)
+- External HTTP requests
+
+**When to use:**
+- ✅ Development workflow (faster feedback)
+- ✅ CI/CD pipelines (faster builds, no API costs)
+- ✅ Unit tests (isolated testing)
+- ✅ When external services are unavailable
+
+**When NOT to use:**
+- ❌ Integration tests that require real API responses
+- ❌ E2E tests that need actual service behavior
+- ❌ Testing actual API integrations
+- ❌ Validating real service responses
+
+**Example:**
+```bash
+# Fast development workflow
+node scripts/test/runner.js run services --mock-mode
+
+# Verify mock mode is active (check test output for "Mock mode enabled")
+node scripts/test/runner.js run unit --mock-mode --verbose
+```
+
+#### Understanding `--platform` Filtering (Issue #277)
+
+**What it does:**
+- Filters test files by platform name in file path/filename
+- Filters test names by platform name in test descriptions
+- Only runs tests related to the specified platform
+
+**How it works:**
+1. **File filtering**: Matches platform name in file paths (e.g., `tests/integration/platforms/twitter-verification.test.js`)
+2. **Test name filtering**: Matches platform name in test descriptions (e.g., `describe('Twitter integration', ...)`)
+3. **Case-insensitive**: Works with any case variation (Twitter, twitter, TWITTER)
+
+**Available platforms:**
+- `twitter` - Twitter/X integration tests
+- `youtube` - YouTube integration tests
+- `instagram` - Instagram integration tests
+- `facebook` - Facebook integration tests
+- `discord` - Discord integration tests
+- `twitch` - Twitch integration tests
+- `reddit` - Reddit integration tests
+- `tiktok` - TikTok integration tests
+- `bluesky` - Bluesky integration tests
+
+**Example:**
+```bash
+# Run only Twitter-related tests
+node scripts/test/runner.js run services --platform twitter
+
+# Run integration tests for Instagram
+node scripts/test/runner.js run integration --platform instagram --mock-mode
+```
+
+#### Understanding Test Scopes (Issue #277)
+
+**What are scopes?**
+Scopes are logical groupings of tests by functional area. They help organize tests and allow running related tests together.
+
+**Available scopes:**
+- `unit` - All unit tests (fast, isolated)
+- `integration` - Integration tests (slower, require setup)
+- `smoke` - Smoke tests (quick validation)
+- `routes` - API route tests
+- `services` - Service layer tests
+- `workers` - Background worker tests
+- `middleware` - Middleware tests
+- `billing` - Billing and payment tests (requires Stripe env vars)
+- `security` - Security and auth tests
+- `auth` - Authentication tests (legacy scope)
+- `all` - All tests across all scopes
+
+**Example:**
+```bash
+# Run all unit tests
+node scripts/test/runner.js run unit
+
+# Run billing tests (requires STRIPE_SECRET_KEY)
+node scripts/test/runner.js run billing --mock-mode
+
+# List all available scopes
+node scripts/test/runner.js scopes
+```
 
 ### Test Scopes
 
@@ -136,7 +234,7 @@ npm run coverage:generate  # Generate coverage reports
 npm run coverage:check     # Validate coverage thresholds
 ```
 
-### Advanced Usage Examples
+### Advanced Usage Examples (Issue #277 - Real-World Scenarios)
 
 #### Development Workflow
 ```bash
@@ -146,6 +244,67 @@ node scripts/test/runner.js run auth --mock-mode --verbose
 
 # Pre-commit validation
 node scripts/test/runner.js all --mock-mode --coverage
+
+# Test specific feature area
+node scripts/test/runner.js run services --mock-mode --verbose
+
+# Debug failing test
+node scripts/test/runner.js run routes --mock-mode --verbose
+```
+
+#### CI/CD Pipeline
+```bash
+# Fast CI execution with mock mode
+npm run ci:test:auth
+npm run ci:test:workers
+npm run ci:test:billing
+
+# Or using the CLI directly
+node scripts/test/runner.js run auth --ci --mock-mode
+node scripts/test/runner.js run workers --ci --mock-mode
+node scripts/test/runner.js run billing --ci --mock-mode
+
+# Full test suite with coverage (for nightly builds)
+node scripts/test/runner.js all --ci --mock-mode --coverage
+```
+
+#### Platform-Specific Testing
+```bash
+# Test Twitter integration
+node scripts/test/runner.js run services --platform twitter --mock-mode
+
+# Test all platforms in sequence
+for platform in twitter instagram facebook discord twitch reddit tiktok bluesky; do
+  echo "Testing $platform..."
+  node scripts/test/runner.js run services --platform $platform --mock-mode
+done
+
+# Test specific platform with real API (no mock mode)
+node scripts/test/runner.js run integration --platform twitter
+```
+
+#### Coverage Analysis
+```bash
+# Generate coverage report for specific scope
+node scripts/test/runner.js run services --coverage
+
+# Full coverage report
+node scripts/test/runner.js all --coverage
+
+# Coverage with verbose output
+node scripts/test/runner.js run unit --coverage --verbose
+```
+
+#### Debugging Test Failures
+```bash
+# Run with verbose output to see detailed test information
+node scripts/test/runner.js run routes --mock-mode --verbose
+
+# Run specific scope to isolate issue
+node scripts/test/runner.js run middleware --mock-mode --verbose
+
+# Validate test setup before debugging
+node scripts/test/runner.js validate
 ```
 
 #### CI/CD Pipeline
@@ -172,11 +331,13 @@ for platform in twitter instagram facebook linkedin tiktok; do
 done
 ```
 
-## 🧪 Test Utilities
+## 🧪 Test Utilities (Issue #277 - Enhanced)
 
 ### Multi-Tenant Test Utilities (`tests/utils/multiTenantMocks.js`)
 
-Provides reusable mocks for organizations, users, and tenant-scoped data:
+Provides reusable mocks for organizations, users, and tenant-scoped data with enhanced parametrization support.
+
+#### Basic Usage
 
 ```javascript
 // Using Jest moduleNameMapper alias (recommended)
@@ -192,8 +353,109 @@ const org = createMockOrganization({ plan: 'enterprise', name: 'Test Corp' });
 // Create a user within that organization
 const user = createMockUser(org.id, { role: 'admin', email: 'admin@testcorp.com' });
 
-// Create a complete test scenario
+// Create a complete test scenario (predefined)
 const scenario = createMultiTenantTestScenario('simple');
+```
+
+#### Enhanced Parametrization (Issue #277)
+
+The `createMultiTenantTestScenario` function now supports custom parametrization:
+
+```javascript
+// Custom scenario with specific plan, roles, and platforms
+const customScenario = createMultiTenantTestScenario({
+  plan: 'pro',
+  roles: ['admin', 'member', 'viewer'],
+  platforms: ['twitter', 'instagram'],
+  userCount: 5,
+  orgCount: 2
+});
+
+// Result:
+// - 2 organizations with 'pro' plan
+// - 5 users per organization with roles: admin, member, viewer (rotating)
+// - Platform tokens for twitter and instagram for each user
+```
+
+#### Available Parameters
+
+| Parameter | Type | Description | Default | Valid Values |
+|-----------|------|-------------|---------|--------------|
+| `plan` | string | Subscription plan type | `'pro'` | `'free'`, `'starter'`, `'starter_trial'`, `'pro'`, `'enterprise'`, `'custom'` |
+| `roles` | string[] | Array of user roles to create | `['admin', 'member']` | `'admin'`, `'member'`, `'viewer'`, `'manager'`, `'owner'` |
+| `platforms` | string[] | Array of platforms to configure | `[]` | `'twitter'`, `'youtube'`, `'instagram'`, `'facebook'`, `'discord'`, `'twitch'`, `'reddit'`, `'tiktok'`, `'bluesky'` |
+| `userCount` | number | Number of users per organization | `roles.length` | Positive integer |
+| `orgCount` | number | Number of organizations to create | `1` | Positive integer |
+| `orgName` | string | Base name for organizations | `'Test Organization'` | Any string |
+
+#### Predefined Scenarios
+
+```javascript
+// Simple: One organization with one admin user
+const simple = createMultiTenantTestScenario('simple');
+
+// Multi-org: Multiple organizations with different users
+const multiOrg = createMultiTenantTestScenario('multi-org');
+
+// Enterprise: Large organization with multiple roles
+const enterprise = createMultiTenantTestScenario('enterprise');
+
+// Mixed plans: Organizations with different plan types
+const mixedPlans = createMultiTenantTestScenario('mixed-plans');
+```
+
+#### Validation and Error Handling (Issue #277)
+
+The utility now includes validation to prevent invalid configurations:
+
+```javascript
+// This will throw an error
+try {
+  createMultiTenantTestScenario({
+    plan: 'invalid_plan', // ❌ Invalid plan
+    roles: ['admin', 'invalid_role'], // ❌ Invalid role
+    platforms: ['invalid_platform'] // ❌ Invalid platform
+  });
+} catch (error) {
+  console.error(error.message);
+  // "Invalid scenario configuration: Invalid plan: invalid_plan. Valid plans: free, starter, ..."
+}
+
+// Valid configuration
+const validScenario = createMultiTenantTestScenario({
+  plan: 'pro',
+  roles: ['admin', 'member'],
+  platforms: ['twitter', 'instagram'],
+  userCount: 3
+});
+```
+
+#### Example: Testing Multi-Platform Integration
+
+```javascript
+const { createMultiTenantTestScenario } = require('@tests/utils/multiTenantMocks');
+
+describe('Multi-platform integration', () => {
+  let scenario;
+
+  beforeEach(() => {
+    // Create scenario with Twitter and Instagram platforms
+    scenario = createMultiTenantTestScenario({
+      plan: 'pro',
+      roles: ['admin'],
+      platforms: ['twitter', 'instagram'],
+      userCount: 1
+    });
+  });
+
+  it('should have platform tokens for each user', () => {
+    const user = scenario.users[0];
+    expect(user.platformTokens).toBeDefined();
+    expect(user.platformTokens).toHaveLength(2);
+    expect(user.platformTokens[0].platform).toBe('twitter');
+    expect(user.platformTokens[1].platform).toBe('instagram');
+  });
+});
 ```
 
 ### Shared Mock Utilities (`tests/utils/sharedMocks.js`)
@@ -259,13 +521,70 @@ The project uses tiered coverage thresholds based on component criticality:
    node scripts/test/runner.js all --coverage
    ```
 
-## 🔧 Troubleshooting
+## 🔧 Troubleshooting (Issue #277 - Enhanced)
 
 ### Common Issues
 
 1. **Jest not found**: Ensure Jest is installed (`npm install`)
+   ```bash
+   # Verify Jest installation
+   npx jest --version
+   ```
+
 2. **No test files found**: Check that test directories exist and contain `.test.js` files
+   ```bash
+   # Validate test setup
+   node scripts/test/runner.js validate
+   ```
+
 3. **Mock mode not working**: Verify `ENABLE_MOCK_MODE=true` is set in environment
+   ```bash
+   # Check if mock mode is active (look for "Mock mode enabled" message)
+   node scripts/test/runner.js run unit --mock-mode --verbose
+   ```
+
+4. **Platform filtering not working**: Ensure platform name matches file paths or test names
+   ```bash
+   # List available platforms
+   node scripts/test/runner.js list-platforms
+   
+   # Check if platform tests exist
+   node scripts/test/runner.js validate
+   ```
+
+5. **Tests failing with "ENABLE_MOCK_MODE not set"**: Use `--mock-mode` flag
+   ```bash
+   # Correct usage
+   node scripts/test/runner.js run services --mock-mode
+   ```
+
+6. **Coverage report not generated**: Ensure `--coverage` flag is used
+   ```bash
+   # Generate coverage
+   node scripts/test/runner.js run unit --coverage
+   
+   # Check coverage directory
+   ls -la coverage/
+   ```
+
+### Debug Mode
+
+Add `--verbose` to any command for detailed output:
+```bash
+node scripts/test/runner.js run auth --mock-mode --verbose
+```
+
+### Environment Variables
+
+Some scopes require specific environment variables:
+- `billing` scope requires `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
+- Integration tests may require `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`
+- Platform tests may require platform-specific API keys
+
+Check scope requirements:
+```bash
+node scripts/test/runner.js scopes
+```
 
 ### Debug Mode
 
