@@ -211,16 +211,15 @@ function createMockUsageData(organizationId, overrides = {}) {
  * @throws {Error} If configuration is invalid
  */
 function validateScenarioConfig(config) {
-  // Align with canonical plans from src/config/planMappings.js and DB CHECK constraint (Issue #277 - CodeRabbit fix)
+  // Align with DB CHECK constraint (Issue #277 - CodeRabbit fix)
   // Note: 'free' plan was removed in PR #870 (migration 20251118193202_remove_free_plan.sql)
-  // DB constraint only allows: 'starter_trial', 'starter', 'pro', 'plus'
+  // DB CHECK constraint only allows: 'starter_trial', 'starter', 'pro', 'plus'
+  // 'creator_plus' and 'custom' are application-level aliases that require normalization before DB insertion
   const validPlans = [
     'starter_trial',
     'starter',
     'pro',
-    'plus',
-    'creator_plus', // Legacy alias for plus
-    'custom'
+    'plus'
   ];
   const validRoles = ['admin', 'member', 'viewer', 'manager', 'owner'];
   const validPlatforms = ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
