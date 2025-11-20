@@ -347,7 +347,6 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           plan: 'starter_trial',
           settings: {
             ...baseScenario.organization.settings,
-<<<<<<< HEAD
             enabledPlatforms: ['twitter'], // Starter trial limited to 1 platform
             moderationLevel: getModerationLevel('starter_trial'),
             autoResponse: getAutoResponse('starter_trial') // Limited features
