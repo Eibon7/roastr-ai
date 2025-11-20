@@ -17,11 +17,33 @@
 
 const { createSyntheticFixtures } = require('../helpers/syntheticFixtures');
 
+const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults for idempotency tests
+const mockSupabase = createSupabaseMock({
+  comments: [],
+  posts: [],
+  integrations: []
+}, {
+  // RPC functions if needed
+});
+
 // Mock external services to prevent side effects
 jest.mock('../../src/services/openai');
 jest.mock('../../src/services/perspective');
 jest.mock('../../src/services/queueService');
-jest.mock('../../src/config/supabase');
+
+// ============================================================================
+// STEP 2: Reference pre-created mock in jest.mock() calls
+// ============================================================================
+
+jest.mock('../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
 
 describe('SPEC 14 - Idempotency Tests', () => {
   let fixtures;
@@ -52,21 +74,30 @@ describe('SPEC 14 - Idempotency Tests', () => {
     jest.clearAllMocks();
     
     if (shouldUseMocks) {
-      // Mock Supabase operations for idempotency tests
-      const { supabaseServiceClient } = require('../../src/config/supabase');
+      // Reset Supabase mock to defaults
+      mockSupabase._reset();
       
-      supabaseServiceClient.from = jest.fn().mockReturnThis();
-      supabaseServiceClient.select = jest.fn().mockReturnThis();
-      supabaseServiceClient.eq = jest.fn().mockReturnThis();
-      supabaseServiceClient.insert = jest.fn().mockReturnThis();
-      supabaseServiceClient.single = jest.fn().mockResolvedValue({ data: null, error: null });
-      supabaseServiceClient.upsert = jest.fn().mockReturnThis();
+      // Configure mockSupabase.from to return mocks that work with the service
+      // The service does: await supabaseServiceClient.from('table').insert(...)
+      // So insert() must return a promise that resolves to { data: [...], error: null }
+      const mockTableBuilder = {
+        insert: jest.fn(() => Promise.resolve({ 
+          data: [{ id: 'mock_id_123', status: 'ingested' }], 
+          error: null 
+        })),
+        select: jest.fn(() => ({
+          eq: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({ data: null, error: null }))
+          }))
+        })),
+        upsert: jest.fn(() => Promise.resolve({ 
+          data: [{ id: 'mock_id_123', status: 'ingested' }], 
+          error: null 
+        }))
+      };
       
-      // Mock successful operations
-      supabaseServiceClient.insert.mockResolvedValue({ 
-        data: { id: 'mock_id_123', status: 'ingested' }, 
-        error: null 
-      });
+      // Configure mockSupabase.from to return our configured mockTableBuilder
+      mockSupabase.from.mockReturnValue(mockTableBuilder);
     }
   });
 
