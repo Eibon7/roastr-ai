@@ -114,11 +114,19 @@ TEST_URL=http://localhost:4000 npx playwright test tests/visual/shieldUI.test.js
 
 **Skip logic implementado:**
 ```javascript
-// Skip E2E tests in CI environment
-if (process.env.SKIP_E2E === 'true') {
-  test.skip('Skipping E2E integration tests in CI environment', () => {});
-  return;
-}
+// Using helper from tests/helpers/e2ePrerequisites.js
+const { skipIfNoE2E } = require('../helpers/e2ePrerequisites');
+
+describe('Multi-Tenant Architecture Integration Tests', () => {
+  // Skip E2E tests if infrastructure not available
+  // Honors SKIP_E2E=true, checks Playwright availability, etc.
+  skipIfNoE2E(test, 'requires Queue service and mocked external services', {
+    requireServer: false,
+    requirePlaywright: false
+  });
+  
+  // Tests...
+});
 ```
 
 **Test categories:**

@@ -36,11 +36,14 @@ async function isServerAvailable(url = null, timeout = 2000) {
     const urlObj = new URL(healthUrl);
     const client = urlObj.protocol === 'https:' ? https : http;
     
-    const req = client.get(healthUrl, { timeout }, (res) => {
+    const req = client.get(healthUrl, (res) => {
       // Accept any 2xx or 3xx response as "available"
       const available = res.statusCode >= 200 && res.statusCode < 400;
       resolve(available);
     });
+    
+    // Use req.setTimeout() instead of deprecated { timeout } option
+    req.setTimeout(timeout);
     
     req.on('error', () => {
       resolve(false);
