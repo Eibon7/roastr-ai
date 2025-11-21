@@ -72,3 +72,5 @@ docs/backup/
 # Branch Guard - issue lock file
 .issue_lock
 .gdd-activation-instructions.json
+# Local branch protection - do not track
+.issue_lock

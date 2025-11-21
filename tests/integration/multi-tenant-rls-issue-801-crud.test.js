@@ -20,7 +20,7 @@ const {
 } = require('../helpers/tenantTestUtils');
 const { v4: uuidv4 } = require('uuid');
 
-jest.setTimeout(30000);
+jest.setTimeout(120000); // Issue #894: Increase timeout for Supabase auth operations
 
 describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
   let tenantA, tenantB, tenantAData, tenantBData;
