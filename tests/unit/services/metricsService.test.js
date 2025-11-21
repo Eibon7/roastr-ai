@@ -1,4 +1,17 @@
-const metricsService = require('../../../src/services/metricsService');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    users: [],
+    organizations: [],
+    comments: [],
+    responses: [],
+    usage_records: []
+});
 
 // Mock logger
 jest.mock('../../../src/utils/logger', () => ({
@@ -18,28 +31,20 @@ jest.mock('../../../src/utils/logger', () => ({
 
 // Mock supabase
 jest.mock('../../../src/config/supabase', () => ({
-    supabaseServiceClient: {
-        from: jest.fn(() => ({
-            select: jest.fn(() => ({
-                eq: jest.fn(() => ({
-                    single: jest.fn(),
-                    limit: jest.fn(() => ({
-                        order: jest.fn(() => Promise.resolve({ data: [], error: null }))
-                    }))
-                })),
-                gte: jest.fn(() => ({
-                    order: jest.fn(() => Promise.resolve({ data: [], error: null }))
-                })),
-                order: jest.fn(() => Promise.resolve({ data: [], error: null })),
-                limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-            }))
-        }))
-    }
+    supabaseServiceClient: mockSupabase
 }));
+
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const metricsService = require('../../../src/services/metricsService');
 
 describe('MetricsService', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        // Reset Supabase mock to defaults
+        mockSupabase._reset();
     });
 
     describe('getDashboardMetrics', () => {

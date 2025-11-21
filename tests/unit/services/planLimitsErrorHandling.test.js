@@ -3,13 +3,22 @@
  * Tests the applyPlanLimits function with new error handling options
  */
 
-const { applyPlanLimits } = require('../../../src/services/subscriptionService');
-const { supabaseServiceClient } = require('../../../src/config/supabase');
-const { getPlanFeatures } = require('../../../src/services/planService');
-const { logger } = require('../../../src/utils/logger');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    user_subscriptions: [],
+    plan_limits: []
+});
 
 // Mock dependencies
-jest.mock('../../../src/config/supabase');
+jest.mock('../../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
 jest.mock('../../../src/services/planService');
 jest.mock('../../../src/utils/logger', () => ({
     logger: {
@@ -26,12 +35,23 @@ jest.mock('../../../src/utils/logger', () => ({
     }
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const { applyPlanLimits } = require('../../../src/services/subscriptionService');
+const { supabaseServiceClient } = require('../../../src/config/supabase');
+const { getPlanFeatures } = require('../../../src/services/planService');
+const { logger } = require('../../../src/utils/logger');
+
 describe('Plan Limits Error Handling (Issue #125)', () => {
   const mockUserId = 'test-user-123';
   const mockOrgId = 'org-456';
   
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
     
     // Mock plan features
     getPlanFeatures.mockImplementation((planId) => ({
@@ -47,7 +67,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
     }[planId]));
 
     // Mock successful database operations by default
-    supabaseServiceClient.from = jest.fn(() => ({
+    mockSupabase.from.mockReturnValue({
       update: jest.fn(() => ({
         eq: jest.fn().mockResolvedValue({ data: {}, error: null })
       })),
@@ -85,7 +105,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
 
     test('should handle user without organization gracefully', async () => {
       // Mock no organization found
-      supabaseServiceClient.from = jest.fn(() => ({
+      mockSupabase.from.mockReturnValue({
         update: jest.fn(() => ({
           eq: jest.fn().mockResolvedValue({ data: {}, error: null })
         })),
@@ -140,7 +160,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
   describe('Error Handling Options', () => {
     test('should fail silently when configured', async () => {
       // Make user update fail
-      supabaseServiceClient.from = jest.fn(() => ({
+      mockSupabase.from.mockReturnValue({
         update: jest.fn(() => ({
           eq: jest.fn().mockResolvedValue({ data: null, error: { message: 'User update failed' } })
         })),
@@ -170,7 +190,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
 
     test('should allow partial failures when configured', async () => {
       // Make organization update fail but allow partial failure
-      supabaseServiceClient.from = jest.fn(() => ({
+      mockSupabase.from.mockReturnValue({
         update: jest.fn((table) => ({
           eq: jest.fn(() => {
             if (table === 'users') {
@@ -207,7 +227,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
 
     test('should detect inconsistent state when user succeeds but org fails', async () => {
       let callCount = 0;
-      supabaseServiceClient.from = jest.fn(() => ({
+      mockSupabase.from.mockReturnValue({
         update: jest.fn(() => ({
           eq: jest.fn(() => {
             callCount++;
@@ -251,7 +271,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
 
   describe('Error Context and Codes', () => {
     test('should provide detailed error context for user update failure', async () => {
-      supabaseServiceClient.from = jest.fn(() => ({
+      mockSupabase.from.mockReturnValue({
         update: jest.fn(() => ({
           eq: jest.fn().mockResolvedValue({ 
             data: null, 
@@ -281,7 +301,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
     });
 
     test('should provide detailed error context for organization fetch failure', async () => {
-      supabaseServiceClient.from = jest.fn(() => ({
+      mockSupabase.from.mockReturnValue({
         update: jest.fn(() => ({
           eq: jest.fn().mockResolvedValue({ data: {}, error: null })
         })),
@@ -303,7 +323,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
     });
 
     test('should provide organization ID in error for update failures', async () => {
-      supabaseServiceClient.from = jest.fn(() => ({
+      mockSupabase.from.mockReturnValue({
         update: jest.fn((table) => ({
           eq: jest.fn(() => {
             if (table === 'users') {

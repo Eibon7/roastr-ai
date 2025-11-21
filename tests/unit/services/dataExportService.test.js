@@ -1,11 +1,25 @@
-const DataExportService = require('../../../src/services/dataExportService');
-const { supabaseServiceClient } = require('../../../src/config/supabase');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    users: [],
+    organizations: [],
+    integrations: [],
+    comments: [],
+    responses: [],
+    usage_records: [],
+    user_activities: [],
+    api_keys: [],
+    audit_logs: []
+});
 
 // Mock dependencies
 jest.mock('../../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn()
-  }
+  supabaseServiceClient: mockSupabase
 }));
 
 jest.mock('../../../src/utils/logger', () => ({
@@ -32,12 +46,20 @@ jest.mock('fs', () => ({
   }
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const DataExportService = require('../../../src/services/dataExportService');
+
 describe('DataExportService', () => {
   let dataExportService;
 
   beforeEach(() => {
     dataExportService = new DataExportService();
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
   });
 
   describe('collectUserData', () => {
@@ -89,11 +111,15 @@ describe('DataExportService', () => {
       const mockUserId = 'test-user-id';
       const mockError = new Error('Database connection failed');
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockRejectedValue(mockError)
-      });
+      // Configure mockSupabase.from to return a mock that rejects
+      const mockTableBuilder = {
+        select: jest.fn(() => ({
+          eq: jest.fn(() => ({
+            single: jest.fn(() => Promise.reject(mockError))
+          }))
+        }))
+      };
+      mockSupabase.from.mockReturnValue(mockTableBuilder);
 
       await expect(dataExportService.collectUserData(mockUserId))
         .rejects

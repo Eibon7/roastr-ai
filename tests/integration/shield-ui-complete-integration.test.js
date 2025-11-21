@@ -11,6 +11,26 @@
  * - Real-time data updates
  */
 
+const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    shield_actions: []
+});
+
+// Mock Supabase
+jest.mock('../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
+
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
 const request = require('supertest');
 const express = require('express');
 const { supabaseServiceClient } = require('../../src/config/supabase');
@@ -83,9 +103,11 @@ describe('Shield UI Complete Integration Tests', () => {
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
     
     // Mock Supabase service client
-    jest.spyOn(supabaseServiceClient, 'from').mockImplementation((table) => {
+    mockSupabase.from.mockImplementation((table) => {
       if (table === 'shield_actions') {
         return {
           select: jest.fn().mockReturnThis(),
@@ -495,7 +517,7 @@ describe('Shield UI Complete Integration Tests', () => {
         gte: undefined
       };
       
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         ...queryWithoutGte,
         select: jest.fn().mockResolvedValue({
           data: mockShieldActions,

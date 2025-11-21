@@ -11,24 +11,37 @@
 
 const request = require('supertest');
 const express = require('express');
-const { supabaseServiceClient } = require('../../src/config/supabase');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
 
 // Mock the Supabase client
-jest.mock('../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn()
-  }
-}));
+jest.mock('../../src/config/supabase', () => {
+  const factory = require('../helpers/supabaseMockFactory');
+  return {
+    supabaseServiceClient: factory.createSupabaseMock({
+      global_shield_settings: [],
+      admin_audit_logs: [],
+      feature_flags: [],
+      admin_healthcheck: []
+    })
+  };
+});
+const { supabaseServiceClient } = require('../../src/config/supabase');
 
 // Mock authentication middleware
 jest.mock('../../src/middleware/auth', () => ({
-  requireAdmin: jest.fn((req, res, next) => {
+  authenticateToken: jest.fn((req, res, next) => {
     req.user = { 
       id: 'admin-123', 
       email: 'admin@roastr.ai', 
       is_admin: true,
       name: 'Test Admin'
     };
+    next();
+  }),
+  requireAdmin: jest.fn((req, res, next) => {
     next();
   })
 }));
@@ -70,6 +83,190 @@ jest.mock('../../src/utils/safeUtils', () => ({
 // Import routes after mocking
 const adminRoutes = require('../../src/routes/admin');
 
+function configureThresholdsForTable() {
+  supabaseServiceClient.from.mockImplementation((table) => {
+    if (table === 'global_shield_settings') {
+      return {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: {
+                tau_roast_lower: 0.25,
+                tau_shield: 0.70,
+                tau_critical: 0.90,
+                aggressiveness: 95
+              },
+              error: null
+            })
+          })
+        }),
+        upsert: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  id: 'global-1',
+                  scope: 'global',
+                  tau_roast_lower: 0.20,
+                  tau_shield: 0.65,
+                  tau_critical: 0.85,
+                  aggressiveness: 98,
+                  updated_at: '2025-01-24T10:30:00Z'
+                },
+                error: null
+              })
+            })
+          })
+        })
+      };
+    }
+    if (table === 'admin_audit_logs') {
+      return {
+        insert: jest.fn().mockResolvedValue({ error: null })
+      };
+    }
+  });
+}
+
+function configureFeatureFlagsForTable() {
+  supabaseServiceClient.from.mockImplementation((table) => {
+    if (table === 'feature_flags') {
+      return {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: {
+                flag_key: 'shop_enabled',
+                flag_name: 'Shop Feature',
+                is_enabled: false,
+                category: 'backoffice'
+              },
+              error: null
+            })
+          })
+        }),
+        update: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  flag_key: 'shop_enabled',
+                  flag_name: 'Shop Feature',
+                  is_enabled: true,
+                  category: 'backoffice'
+                },
+                error: null
+              })
+            })
+          })
+        })
+      };
+    }
+  });
+}
+
+function configureHealthcheckMock() {
+  supabaseServiceClient.from.mockImplementation((table) => {
+    if (table === 'healthcheck_results' || table === 'admin_audit_logs') {
+      return {
+        insert: jest.fn().mockResolvedValue({ error: null })
+      };
+    }
+  });
+}
+
+function configureAuditLogsExport(mockAuditLogs) {
+  supabaseServiceClient.from.mockImplementation((table) => {
+    if (table === 'admin_audit_logs') {
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        lte: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({
+          data: mockAuditLogs,
+          error: null
+        }),
+        insert: jest.fn().mockResolvedValue({ error: null })
+      };
+
+      mockQuery.select.mockReturnValue(mockQuery);
+      mockQuery.gte.mockReturnValue(mockQuery);
+      mockQuery.lte.mockReturnValue(mockQuery);
+
+      return mockQuery;
+    }
+  });
+}
+
+function configureDatabaseError() {
+  supabaseServiceClient.from.mockReturnValue({
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Connection timed out' }
+        })
+      })
+    })
+  });
+}
+
+function configureAuditTrailConsistency(auditLogCalls) {
+  supabaseServiceClient.from.mockImplementation((table) => {
+    if (table === 'global_shield_settings') {
+      return {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { aggressiveness: 95 },
+              error: null
+            })
+          })
+        }),
+        upsert: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { aggressiveness: 98, id: 'global-1' },
+                error: null
+              })
+            })
+          })
+        })
+      };
+    }
+    if (table === 'admin_audit_logs') {
+      auditLogCalls.count++;
+      return {
+        insert: jest.fn().mockResolvedValue({ error: null })
+      };
+    }
+  });
+}
+
+function configureGDPRAuditLog(mockAuditLogs) {
+  supabaseServiceClient.from.mockImplementation((table) => {
+    if (table === 'admin_audit_logs') {
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        lte: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({
+          data: mockAuditLogs,
+          error: null
+        }),
+        insert: jest.fn().mockResolvedValue({ error: null })
+      };
+
+      mockQuery.select.mockReturnValue(mockQuery);
+      mockQuery.gte.mockReturnValue(mockQuery);
+      mockQuery.lte.mockReturnValue(mockQuery);
+
+      return mockQuery;
+    }
+  });
+}
+
 // Set up Express app
 const app = express();
 app.use(express.json());
@@ -78,9 +275,10 @@ app.use('/api/admin', adminRoutes);
 describe('Backoffice Integration Workflow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock environment variables for API credentials
-    process.env.TWITTER_BEARER_TOKEN = 'mock-twitter-token';
-    process.env.YOUTUBE_API_KEY = 'mock-youtube-key';
+      // Mock environment variables for API credentials
+      process.env.TWITTER_BEARER_TOKEN = 'mock-twitter-token';
+      process.env.YOUTUBE_API_KEY = 'mock-youtube-key';
+      supabaseServiceClient._reset();
   });
 
   afterEach(() => {
@@ -117,50 +315,7 @@ describe('Backoffice Integration Workflow', () => {
 
     // Helper function to update global thresholds
     async function updateGlobalThresholds() {
-      // Mock database responses for thresholds update
-      supabaseServiceClient.from.mockImplementation((table) => {
-        if (table === 'global_shield_settings') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: {
-                    tau_roast_lower: 0.25,
-                    tau_shield: 0.70,
-                    tau_critical: 0.90,
-                    aggressiveness: 95
-                  },
-                  error: null
-                })
-              })
-            }),
-            upsert: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: {
-                      id: 'global-1',
-                      scope: 'global',
-                      tau_roast_lower: 0.20,
-                      tau_shield: 0.65,
-                      tau_critical: 0.85,
-                      aggressiveness: 98,
-                      updated_at: '2025-01-24T10:30:00Z'
-                    },
-                    error: null
-                  })
-                })
-              })
-            })
-          };
-        }
-        // Mock audit logs
-        if (table === 'admin_audit_logs') {
-          return {
-            insert: jest.fn().mockResolvedValue({ error: null })
-          };
-        }
-      });
+      configureThresholdsForTable();
 
       return request(app)
         .put('/api/admin/backoffice/thresholds')
@@ -174,46 +329,7 @@ describe('Backoffice Integration Workflow', () => {
 
     // Helper function to update feature flag
     async function updateFeatureFlag() {
-      // Mock database responses for feature flags
-      supabaseServiceClient.from.mockImplementation((table) => {
-        if (table === 'feature_flags') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: {
-                    flag_key: 'shop_enabled',
-                    flag_name: 'Shop Feature',
-                    is_enabled: false,
-                    category: 'backoffice'
-                  },
-                  error: null
-                })
-              })
-            }),
-            update: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: {
-                      flag_key: 'shop_enabled',
-                      flag_name: 'Shop Feature',
-                      is_enabled: true,
-                      updated_at: '2025-01-24T10:35:00Z'
-                    },
-                    error: null
-                  })
-                })
-              })
-            })
-          };
-        }
-        if (table === 'admin_audit_logs') {
-          return {
-            insert: jest.fn().mockResolvedValue({ error: null })
-          };
-        }
-      });
+      configureFeatureFlagsForTable();
 
       return request(app)
         .put('/api/admin/feature-flags/shop_enabled')
@@ -230,19 +346,7 @@ describe('Backoffice Integration Workflow', () => {
         .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' })
         .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' });
 
-      // Mock database responses for healthcheck
-      supabaseServiceClient.from.mockImplementation((table) => {
-        if (table === 'healthcheck_results') {
-          return {
-            insert: jest.fn().mockResolvedValue({ error: null })
-          };
-        }
-        if (table === 'admin_audit_logs') {
-          return {
-            insert: jest.fn().mockResolvedValue({ error: null })
-          };
-        }
-      });
+      configureHealthcheckMock();
 
       const response = await request(app)
         .post('/api/admin/backoffice/healthcheck')
@@ -280,28 +384,7 @@ describe('Backoffice Integration Workflow', () => {
         }
       ];
 
-      supabaseServiceClient.from.mockImplementation((table) => {
-        if (table === 'admin_audit_logs') {
-          const mockQuery = {
-            select: jest.fn().mockReturnThis(),
-            gte: jest.fn().mockReturnThis(),
-            lte: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: mockAuditLogs,
-              error: null
-            })
-          };
-          
-          mockQuery.select.mockReturnValue(mockQuery);
-          mockQuery.gte.mockReturnValue(mockQuery);
-          mockQuery.lte.mockReturnValue(mockQuery);
-          
-          // For the audit export action logging
-          mockQuery.insert = jest.fn().mockResolvedValue({ error: null });
-          
-          return mockQuery;
-        }
-      });
+      configureAuditLogsExport(mockAuditLogs);
 
       return request(app)
         .get('/api/admin/backoffice/audit/export?format=csv&days=1');
@@ -311,16 +394,7 @@ describe('Backoffice Integration Workflow', () => {
   describe('Error Handling and Edge Cases', () => {
     it('should handle database connection failures gracefully', async () => {
       // Mock database error
-      supabaseServiceClient.from.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Connection timed out' }
-            })
-          })
-        })
-      });
+      configureDatabaseError();
 
       const response = await request(app)
         .get('/api/admin/backoffice/thresholds')
@@ -346,39 +420,8 @@ describe('Backoffice Integration Workflow', () => {
     });
 
     it('should maintain audit trail consistency', async () => {
-      let auditLogCalls = 0;
-      
-      // Mock successful operations but track audit logging
-      supabaseServiceClient.from.mockImplementation((table) => {
-        if (table === 'global_shield_settings') {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: { aggressiveness: 95 },
-                  error: null
-                })
-              })
-            }),
-            upsert: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: { aggressiveness: 98, id: 'global-1' },
-                    error: null
-                  })
-                })
-              })
-            })
-          };
-        }
-        if (table === 'admin_audit_logs') {
-          auditLogCalls++;
-          return {
-            insert: jest.fn().mockResolvedValue({ error: null })
-          };
-        }
-      });
+      const auditLogCalls = { count: 0 };
+      configureAuditTrailConsistency(auditLogCalls);
 
       await request(app)
         .put('/api/admin/backoffice/thresholds')
@@ -391,7 +434,7 @@ describe('Backoffice Integration Workflow', () => {
         .expect(200);
 
       // Verify audit log was created
-      expect(auditLogCalls).toBe(1);
+      expect(auditLogCalls.count).toBe(1);
     });
   });
 
@@ -411,26 +454,7 @@ describe('Backoffice Integration Workflow', () => {
         }
       ];
 
-      supabaseServiceClient.from.mockImplementation((table) => {
-        if (table === 'admin_audit_logs') {
-          const mockQuery = {
-            select: jest.fn().mockReturnThis(),
-            gte: jest.fn().mockReturnThis(),
-            lte: jest.fn().mockReturnThis(),
-            order: jest.fn().mockResolvedValue({
-              data: mockAuditLogs,
-              error: null
-            }),
-            insert: jest.fn().mockResolvedValue({ error: null })
-          };
-          
-          mockQuery.select.mockReturnValue(mockQuery);
-          mockQuery.gte.mockReturnValue(mockQuery);
-          mockQuery.lte.mockReturnValue(mockQuery);
-          
-          return mockQuery;
-        }
-      });
+      configureGDPRAuditLog(mockAuditLogs);
 
       const response = await request(app)
         .get('/api/admin/backoffice/audit/export?format=json')

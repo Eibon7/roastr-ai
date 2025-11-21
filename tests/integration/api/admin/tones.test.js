@@ -7,15 +7,18 @@
  */
 
 const request = require('supertest');
-const { supabaseServiceClient } = require('../../../../src/config/supabase');
 const { getToneConfigService } = require('../../../../src/services/toneConfigService');
 
 // Mock dependencies
-jest.mock('../../../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn(),
-  },
-}));
+jest.mock('../../../../src/config/supabase', () => {
+  const factory = require('../../../helpers/supabaseMockFactory');
+  return {
+    supabaseServiceClient: factory.createSupabaseMock({
+      admin_tones: []
+    })
+  };
+});
+const { supabaseServiceClient } = require('../../../../src/config/supabase');
 jest.mock('../../../../src/utils/logger');
 
 describe('Admin Tones API Integration Tests', () => {
@@ -26,7 +29,7 @@ describe('Admin Tones API Integration Tests', () => {
 
   beforeAll(() => {
     // Import app after mocks are set up
-    app = require('../../../../src/index');
+    ({ app } = require('../../../../src/index'));
     
     // Mock tokens (in real tests, these would be generated from test auth)
     adminToken = 'mock-admin-jwt-token';
@@ -35,6 +38,7 @@ describe('Admin Tones API Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    supabaseServiceClient._reset();
 
     mockTones = [
       {
@@ -70,6 +74,45 @@ describe('Admin Tones API Integration Tests', () => {
         updated_at: '2025-01-01T00:00:00Z',
       },
     ];
+
+    // Setup default mock behavior for roast_tones table
+    supabaseServiceClient.from.mockImplementation((table) => {
+      if (table === 'roast_tones' || table === 'admin_tones') {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          order: jest.fn().mockResolvedValue({ data: mockTones, error: null }),
+          single: jest.fn().mockResolvedValue({ data: mockTones[0], error: null }),
+          insert: jest.fn().mockReturnThis(),
+          update: jest.fn().mockReturnThis(),
+          delete: jest.fn().mockResolvedValue({ data: null, error: null }),
+          upsert: jest.fn().mockResolvedValue({ data: mockTones, error: null })
+        };
+      }
+      // Default for other tables
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: null })
+      };
+    });
+
+    // Mock authenticateToken middleware to bypass auth
+    jest.spyOn(require('../../../../src/middleware/auth'), 'authenticateToken')
+      .mockImplementation((req, res, next) => {
+        req.user = { id: 'admin-user-id', is_admin: true };
+        next();
+      });
+
+    // Mock requireAdmin middleware
+    jest.spyOn(require('../../../../src/middleware/auth'), 'requireAdmin')
+      .mockImplementation((req, res, next) => {
+        if (req.user && req.user.is_admin) {
+          next();
+        } else {
+          res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+      });
   });
 
   describe('GET /api/admin/tones', () => {
