@@ -12,15 +12,19 @@
 
 ## Estado Actual
 
-### Tests Fallando
+### Nota de alcance
 
-**Suite principal:** `tests/unit/routes/billing-coverage-issue502.test.js`
+> Inicialmente se enfocó la investigación en `tests/unit/routes/billing-coverage-issue502.test.js` (4 fallos reportados), pero **la suite ya estaba pasando (60/60 tests)** cuando se dieron los primeros diagnósticos. La única suite con fallos activos resultó ser `tests/unit/services/authService.test.js` (4 assertions). Esta nota aclara el cambio de foco y deja claro que los criterios de salida siguen marcados como completos.
+
+### Tests Fallando (al momento del diagnóstico)
+
+**Suite principal:** `tests/unit/services/authService.test.js`
 
 **4 failures identificados:**
-1. `should create checkout session with lookupKey parameter` (línea 346-387)
-2. `should handle existing customer retrieval` (línea 425-447)
-3. `should handle invalid lookup key validation` (línea 1028-1040)
-4. `should handle subscription route catch block errors` (línea 1122-1156)
+1. `should update user plan successfully`
+2. `should map basic plan to free plan` (actualmente `starter_trial`)
+3. `should return fallback limits on database error`
+4. `should return fallback limits for unknown plans`
 
 ### Problemas Detectados
 
