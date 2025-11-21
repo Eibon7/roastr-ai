@@ -270,7 +270,7 @@ NODE_ENV=test npm test tests/integration/tierValidationSecurity.test.js
 
 **Tests afectados:**
 - `multiTenantWorkflow.test.js` (`SKIP_E2E=true`)
-- `tierValidationSecurity.test.js` (`MOCK_MODE=true`)
+- `tierValidationSecurity.test.js` (`ENABLE_MOCK_MODE=true`)
 
 **Solución:** Ya implementado, documentar en E2E-REQUIREMENTS.md
 
@@ -293,7 +293,7 @@ NODE_ENV=test npm test tests/integration/tierValidationSecurity.test.js
 - `api-health.test.js`
 - `simple-health.test.js`
 - `shieldUI.test.js`
-- `shield-stability.test.js` (cuando se desskipee)
+- `shield-stability.test.js` (cuando se desactive)
 
 **Solución:** Documentar cómo iniciar servidor + health check antes de ejecutar.
 
