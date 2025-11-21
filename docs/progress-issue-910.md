@@ -49,6 +49,10 @@
   - Error handling with retry mechanism
   - Loading states with Loader2 spinner
   - Error banners for failed operations
+- ✅ **Dashboard.jsx** - Uses `apiClient` + new services for usage, accounts, plan, analytics, roasts
+  - Replaced manual `fetch` with `getIntegrations()`, `getCurrentUsage()`, `getCurrentPlan()`, `apiClient`
+  - Handles roasts, Shield data, and account actions through centralized client (token refresh, retries)
+  - Daily connection status and message toasts remain consistent
 
 ---
 
