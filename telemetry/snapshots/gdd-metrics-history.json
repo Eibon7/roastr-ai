@@ -2842,9 +2842,68 @@
         "phase": 13,
         "collector": "collect-gdd-telemetry.js"
       }
+    },
+    {
+      "timestamp": "2025-11-21T00:53:40.346Z",
+      "date": "2025-11-21",
+      "metrics": {
+        "health": {
+          "overall_score": 90.1,
+          "average_score": 90.1,
+          "healthy_count": 13,
+          "degraded_count": 2,
+          "critical_count": 0,
+          "total_nodes": 15,
+          "status": "healthy"
+        },
+        "drift": {
+          "average_drift_risk": 4,
+          "high_risk_count": 0,
+          "at_risk_count": 0,
+          "healthy_count": 15,
+          "overall_status": "HEALTHY"
+        },
+        "validation": {
+          "nodes_validated": 15,
+          "orphans": 0,
+          "missing_refs": 0,
+          "cycles": 0,
+          "status": "healthy"
+        },
+        "repair": {
+          "total_fixes_attempted": 1,
+          "successful_fixes": 1,
+          "failed_fixes": 0,
+          "success_rate": 100
+        },
+        "coverage": {
+          "avg_coverage": 58,
+          "nodes_with_coverage": 13,
+          "total_nodes": 15
+        },
+        "derived": {
+          "stability_index": 95,
+          "health_variance": 2,
+          "auto_fix_efficiency": 100,
+          "system_status": "DEGRADED"
+        },
+        "momentum": {
+          "trend": "declining",
+          "delta": -0.1,
+          "current_health": 90.1,
+          "previous_health": 90.2,
+          "message": "Health declining by 0.1 points"
+        }
+      },
+      "alerts": [],
+      "metadata": {
+        "version": "1.0.0",
+        "phase": 13,
+        "collector": "collect-gdd-telemetry.js"
+      }
     }
   ],
-  "last_updated": "2025-11-20T00:53:13.064Z",
-  "total_snapshots": 45,
+  "last_updated": "2025-11-21T00:53:40.346Z",
+  "total_snapshots": 46,
   "retention_days": 90
 }
