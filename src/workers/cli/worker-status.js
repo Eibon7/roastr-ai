@@ -18,7 +18,7 @@
 
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
-const Redis = require('ioredis');
+const { Redis } = require('@upstash/redis');
 
 class WorkerStatusMonitor {
   constructor(options = {}) {
@@ -42,20 +42,15 @@ class WorkerStatusMonitor {
       this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
     }
     
-    // Redis connection
+    // Redis connection (Upstash REST SDK)
     const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_URL;
     const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-    
+
     if (redisUrl && redisToken) {
       this.redis = new Redis({
-        host: redisUrl.replace('https://', '').replace('http://', ''),
-        port: 6379,
-        password: redisToken,
-        tls: redisUrl.startsWith('https://') ? {} : undefined,
-        connectTimeout: 5000
+        url: redisUrl,
+        token: redisToken
       });
-    } else if (redisUrl) {
-      this.redis = new Redis(redisUrl, { connectTimeout: 5000 });
     }
   }
   

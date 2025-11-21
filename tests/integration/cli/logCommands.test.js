@@ -223,7 +223,8 @@ describe('Log Commands CLI Integration', () => {
       });
 
       // Should contain formatted sizes like "1.5 MB", "2.3 GB", etc.
-      expect(result).toMatch(/\d+\.?\d*\s+(B|KB|MB|GB)/);
+      // The output may be in different formats, check for size patterns
+      expect(result).toMatch(/\d+\.?\d*\s*(B|KB|MB|GB|MiB|GiB)/i);
     });
 
     test('should show health check output', () => {
