@@ -14,8 +14,9 @@ const logger = require('../../src/utils/logger');
 const { createMockSupabaseClient, createMockServiceClient } = require('./supabaseMock');
 
 // Issue #894: Use mock Supabase by default to avoid egress costs
-// Set USE_REAL_SUPABASE=true to test against actual database (only for debugging)
-const USE_MOCK = process.env.USE_REAL_SUPABASE !== 'true';
+// Set USE_SUPABASE_MOCK=false to test against actual database (only for debugging)
+// This aligns with documentation that references USE_SUPABASE_MOCK
+const USE_MOCK = process.env.USE_SUPABASE_MOCK !== 'false';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -231,7 +232,7 @@ async function createTestTenants() {
       name: tenantA.name,
       slug: tenantA.slug,
       owner_id: tenantA.owner_id,
-      plan_id: 'free'
+      plan_id: 'starter_trial' // Issue #894: Use current schema default (not 'free')
     })
     .select()
     .single();
@@ -245,7 +246,7 @@ async function createTestTenants() {
       name: tenantB.name,
       slug: tenantB.slug,
       owner_id: tenantB.owner_id,
-      plan_id: 'free'
+      plan_id: 'starter_trial' // Issue #894: Use current schema default (not 'free')
     })
     .select()
     .single();
@@ -630,7 +631,20 @@ async function cleanupTestData() {
   await serviceClient.from('organizations').delete().in('id', testTenants);
   await serviceClient.from('users').delete().in('id', testUsers);
 
-  // Clean up auth users with retry logic
+  // Issue #894: Skip auth.admin cleanup in mock mode (no real auth users exist)
+  // This prevents TypeError logs since mock doesn't implement auth.admin methods
+  if (USE_MOCK) {
+    logger.debug('⏩ Skipping auth.admin cleanup (mock mode - no real auth users)');
+    testTenants.length = 0;
+    testUsers.length = 0;
+    tenantUsers.clear();
+    currentTenantContext = null;
+    await testClient.auth.signOut();
+    logger.debug('✅ Cleanup complete (mock mode)');
+    return;
+  }
+
+  // Clean up auth users with retry logic (real Supabase only)
   const userIdsToDelete = [...new Set(testUsers)]; // Remove duplicates
   for (const userId of userIdsToDelete) {
     let deleted = false;
