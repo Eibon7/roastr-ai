@@ -362,7 +362,7 @@ async function handleSubscriptionCanceled(event) {
  *
  * Body: Raw JSON event data
  */
-router.post('/polar/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     // Get signature from header
     const signature = req.headers['polar-signature'];

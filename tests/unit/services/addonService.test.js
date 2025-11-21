@@ -3,54 +3,59 @@
  * Issue #260: Settings → Shop functionality
  */
 
-const addonService = require('../../../src/services/addonService');
-const { supabaseServiceClient } = require('../../../src/config/supabase');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    addon_purchase_history: []
+}, {
+    // RPC functions
+    get_user_addon_credits: { data: 0, error: null },
+    consume_addon_credits: { data: true, error: null },
+    user_has_feature_addon: { data: false, error: null }
+});
 
 // Mock Supabase client
 jest.mock('../../../src/config/supabase', () => ({
-    supabaseServiceClient: {
-        rpc: jest.fn(),
-        from: jest.fn(() => ({
-            select: jest.fn(() => ({
-                eq: jest.fn(() => ({
-                    order: jest.fn(() => ({
-                        limit: jest.fn(() => ({
-                            data: [],
-                            error: null
-                        }))
-                    }))
-                }))
-            }))
-        }))
-    }
+    supabaseServiceClient: mockSupabase
 }));
 
-// Mock logger
+// Mock logger (addonService uses require('logger') directly, not destructured)
 jest.mock('../../../src/utils/logger', () => ({
-    logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn(() => ({
         info: jest.fn(),
         error: jest.fn(),
         warn: jest.fn(),
-        debug: jest.fn(),
-        child: jest.fn(() => ({
-            info: jest.fn(),
-            error: jest.fn(),
-            warn: jest.fn(),
-            debug: jest.fn()
-        }))
-    }
+        debug: jest.fn()
+    }))
 }));
+
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const addonService = require('../../../src/services/addonService');
 
 describe('AddonService', () => {
     const mockUserId = 'user-123';
 
     beforeEach(() => {
         jest.clearAllMocks();
+        // Reset Supabase mock to defaults
+        mockSupabase._reset();
     });
 
     describe('getUserAddonCredits', () => {
         it('should return user addon credits for valid category', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: 150,
                 error: null
             });
@@ -58,14 +63,14 @@ describe('AddonService', () => {
             const credits = await addonService.getUserAddonCredits(mockUserId, 'roasts');
 
             expect(credits).toBe(150);
-            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith('get_user_addon_credits', {
+            expect(mockSupabase.rpc).toHaveBeenCalledWith('get_user_addon_credits', {
                 p_user_id: mockUserId,
                 p_addon_category: 'roasts'
             });
         });
 
         it('should return 0 when database error occurs', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: null,
                 error: { message: 'Database error' }
             });
@@ -76,7 +81,7 @@ describe('AddonService', () => {
         });
 
         it('should return 0 when no credits found', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: null,
                 error: null
             });
@@ -89,7 +94,7 @@ describe('AddonService', () => {
 
     describe('consumeAddonCredits', () => {
         it('should successfully consume addon credits', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: true,
                 error: null
             });
@@ -97,7 +102,7 @@ describe('AddonService', () => {
             const result = await addonService.consumeAddonCredits(mockUserId, 'roasts', 5);
 
             expect(result).toBe(true);
-            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith('consume_addon_credits', {
+            expect(mockSupabase.rpc).toHaveBeenCalledWith('consume_addon_credits', {
                 p_user_id: mockUserId,
                 p_addon_category: 'roasts',
                 p_amount: 5
@@ -105,7 +110,7 @@ describe('AddonService', () => {
         });
 
         it('should return false when insufficient credits', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: false,
                 error: null
             });
@@ -116,14 +121,14 @@ describe('AddonService', () => {
         });
 
         it('should default to consuming 1 credit when amount not specified', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: true,
                 error: null
             });
 
             await addonService.consumeAddonCredits(mockUserId, 'roasts');
 
-            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith('consume_addon_credits', {
+            expect(mockSupabase.rpc).toHaveBeenCalledWith('consume_addon_credits', {
                 p_user_id: mockUserId,
                 p_addon_category: 'roasts',
                 p_amount: 1
@@ -142,13 +147,13 @@ describe('AddonService', () => {
             expect(result4).toBe(false);
 
             // Should not call the RPC for invalid amounts
-            expect(supabaseServiceClient.rpc).not.toHaveBeenCalled();
+            expect(mockSupabase.rpc).not.toHaveBeenCalled();
         });
     });
 
     describe('userHasFeatureAddon', () => {
         it('should return true when user has active feature', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: true,
                 error: null
             });
@@ -156,14 +161,14 @@ describe('AddonService', () => {
             const hasFeature = await addonService.userHasFeatureAddon(mockUserId, 'rqc_enabled');
 
             expect(hasFeature).toBe(true);
-            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith('user_has_feature_addon', {
+            expect(mockSupabase.rpc).toHaveBeenCalledWith('user_has_feature_addon', {
                 p_user_id: mockUserId,
                 p_feature_key: 'rqc_enabled'
             });
         });
 
         it('should return false when user does not have feature', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: false,
                 error: null
             });
@@ -176,7 +181,7 @@ describe('AddonService', () => {
 
     describe('getUserAddonSummary', () => {
         it('should return complete addon summary', async () => {
-            supabaseServiceClient.rpc
+            mockSupabase.rpc
                 .mockResolvedValueOnce({ data: 100, error: null }) // roast credits
                 .mockResolvedValueOnce({ data: 5000, error: null }) // analysis credits
                 .mockResolvedValueOnce({ data: true, error: null }); // rqc enabled
@@ -195,7 +200,7 @@ describe('AddonService', () => {
         });
 
         it('should return default values when errors occur', async () => {
-            supabaseServiceClient.rpc.mockRejectedValue(new Error('Database error'));
+            mockSupabase.rpc.mockRejectedValue(new Error('Database error'));
 
             const summary = await addonService.getUserAddonSummary(mockUserId);
 
@@ -234,7 +239,7 @@ describe('AddonService', () => {
         });
 
         it('should allow action using addon credits when plan limit exceeded', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: 25,
                 error: null
             });
@@ -257,7 +262,7 @@ describe('AddonService', () => {
         });
 
         it('should deny action when both plan and addon limits exceeded', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: 0,
                 error: null
             });
@@ -294,7 +299,7 @@ describe('AddonService', () => {
     describe('recordActionUsage', () => {
         it('should record usage from addon credits when plan limit exceeded', async () => {
             // Mock the atomic behavior: consumeAddonCredits then getUserAddonCredits
-            supabaseServiceClient.rpc
+            mockSupabase.rpc
                 .mockResolvedValueOnce({ data: true, error: null }) // consumeAddonCredits
                 .mockResolvedValueOnce({ data: 9, error: null }); // getUserAddonCredits (after consumption)
 
@@ -332,7 +337,7 @@ describe('AddonService', () => {
 
     describe('isRQCEnabled', () => {
         it('should return RQC status for user', async () => {
-            supabaseServiceClient.rpc.mockResolvedValue({
+            mockSupabase.rpc.mockResolvedValue({
                 data: true,
                 error: null
             });
@@ -340,7 +345,7 @@ describe('AddonService', () => {
             const isEnabled = await addonService.isRQCEnabled(mockUserId);
 
             expect(isEnabled).toBe(true);
-            expect(supabaseServiceClient.rpc).toHaveBeenCalledWith('user_has_feature_addon', {
+            expect(mockSupabase.rpc).toHaveBeenCalledWith('user_has_feature_addon', {
                 p_user_id: mockUserId,
                 p_feature_key: 'rqc_enabled'
             });
@@ -360,38 +365,41 @@ describe('AddonService', () => {
                 }
             ];
 
-            supabaseServiceClient.from.mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        order: jest.fn().mockReturnValue({
-                            limit: jest.fn().mockResolvedValue({
+            // Configure mockSupabase.from to return a mock that works with the service
+            const mockTableBuilder = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        order: jest.fn(() => ({
+                            limit: jest.fn(() => Promise.resolve({
                                 data: mockPurchases,
                                 error: null
-                            })
-                        })
-                    })
-                })
-            });
+                            }))
+                        }))
+                    }))
+                }))
+            };
+            mockSupabase.from.mockReturnValue(mockTableBuilder);
 
             const history = await addonService.getAddonPurchaseHistory(mockUserId, 5);
 
             expect(history).toEqual(mockPurchases);
-            expect(supabaseServiceClient.from).toHaveBeenCalledWith('addon_purchase_history');
+            expect(mockSupabase.from).toHaveBeenCalledWith('addon_purchase_history');
         });
 
         it('should return empty array when no purchases found', async () => {
-            supabaseServiceClient.from.mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        order: jest.fn().mockReturnValue({
-                            limit: jest.fn().mockResolvedValue({
+            const mockTableBuilder = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        order: jest.fn(() => ({
+                            limit: jest.fn(() => Promise.resolve({
                                 data: null,
                                 error: null
-                            })
-                        })
-                    })
-                })
-            });
+                            }))
+                        }))
+                    }))
+                }))
+            };
+            mockSupabase.from.mockReturnValue(mockTableBuilder);
 
             const history = await addonService.getAddonPurchaseHistory(mockUserId);
 
@@ -400,16 +408,16 @@ describe('AddonService', () => {
 
         it('should use default limit of 10 when not specified', async () => {
             const limitMock = jest.fn().mockResolvedValue({ data: [], error: null });
-
-            supabaseServiceClient.from.mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        order: jest.fn().mockReturnValue({
+            const mockTableBuilder = {
+                select: jest.fn(() => ({
+                    eq: jest.fn(() => ({
+                        order: jest.fn(() => ({
                             limit: limitMock
-                        })
-                    })
-                })
-            });
+                        }))
+                    }))
+                }))
+            };
+            mockSupabase.from.mockReturnValue(mockTableBuilder);
 
             await addonService.getAddonPurchaseHistory(mockUserId);
 

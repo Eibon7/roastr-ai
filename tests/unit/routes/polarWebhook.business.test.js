@@ -11,16 +11,34 @@
  * Related: Issue #728, CodeRabbit Review #3493981712
  */
 
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    users: [],
+    user_subscriptions: []
+});
+
+// Mock dependencies
+jest.mock('../../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
+jest.mock('../../../src/utils/polarHelpers');
+jest.mock('../../../src/utils/logger');
+
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
 const request = require('supertest');
 const express = require('express');
 const polarWebhookRouter = require('../../../src/routes/polarWebhook');
 const { supabaseServiceClient } = require('../../../src/config/supabase');
 const { getPlanFromPriceId } = require('../../../src/utils/polarHelpers');
-
-// Mock dependencies
-jest.mock('../../../src/config/supabase');
-jest.mock('../../../src/utils/polarHelpers');
-jest.mock('../../../src/utils/logger');
 
 // Test app setup - webhook expects raw body
 const app = express();
@@ -35,6 +53,8 @@ describe('Polar Webhook - Business Logic', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
 
     // Setup Supabase mock chain
     mockSupabaseSingle = jest.fn();
@@ -43,11 +63,11 @@ describe('Polar Webhook - Business Logic', () => {
     mockSupabaseUpdate = jest.fn(() => ({ eq: mockSupabaseEq }));
     mockSupabaseUpsert = jest.fn(() => Promise.resolve({ error: null }));
 
-    supabaseServiceClient.from = jest.fn((table) => ({
+    mockSupabase.from.mockReturnValue({
       select: mockSupabaseSelect,
       update: mockSupabaseUpdate,
       upsert: mockSupabaseUpsert,
-    }));
+    });
 
     // Mock helper functions
     getPlanFromPriceId.mockImplementation((priceId) => {
