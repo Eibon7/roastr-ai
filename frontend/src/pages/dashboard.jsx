@@ -27,12 +27,17 @@ import AccountModal from '../components/AccountModal';
 import RoastInlineEditor from '../components/RoastInlineEditor';
 import { platformIcons, platformNames, allPlatforms, getPlatformIcon, getPlatformName } from '../config/platforms';
 import { normalizePlanId } from '../utils/planHelpers';
+import { apiClient } from '../lib/api';
+import { getCurrentUsage } from '../api/usage';
+import { getCurrentPlan } from '../api/plans';
+import { getIntegrations } from '../api/integrations';
 
 export default function Dashboard() {
   const [adminMode, setAdminMode] = useState(false);
   const [adminModeUser, setAdminModeUser] = useState(null);
   const [accounts, setAccounts] = useState(null);
   const [usage, setUsage] = useState(null);
+  const [currentPlan, setCurrentPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [connectingPlatform, setConnectingPlatform] = useState(null);
@@ -86,16 +91,8 @@ export default function Dashboard() {
   const fetchRecentRoasts = async () => {
     try {
       setRoastsLoading(true);
-      const response = await fetch('/api/user/roasts/recent?limit=10', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setRecentRoasts(data.data || []);
-      }
+      const data = await apiClient.get('/user/roasts/recent?limit=10');
+      setRecentRoasts(data.data || []);
     } catch (error) {
       console.error('Error fetching recent roasts:', error);
       setError('No se pudieron cargar los roasts recientes. Por favor, actualiza la página.');
@@ -108,16 +105,8 @@ export default function Dashboard() {
   const fetchShieldData = async () => {
     try {
       setShieldLoading(true);
-      const response = await fetch('/api/shield/intercepted?limit=5', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setShieldData(data.data || []);
-      }
+      const data = await apiClient.get('/shield/intercepted?limit=5');
+      setShieldData(data.data || []);
     } catch (error) {
       console.error('Error fetching Shield data:', error);
       // Don't fail the entire dashboard if Shield fails
@@ -132,29 +121,16 @@ export default function Dashboard() {
       try {
         setLoading(true);
 
-        // Fetch connected accounts
-        const accountsRes = await fetch('/api/user/integrations', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        const [integrationsResult, usageData, planData] = await Promise.all([
+          getIntegrations(),
+          getCurrentUsage(),
+          getCurrentPlan()
+        ]);
 
-        if (accountsRes.ok) {
-          const accountsData = await accountsRes.json();
-          setAccounts(accountsData.data || []);
-        }
-
-        // Fetch usage data
-        const usageRes = await fetch('/api/user/usage', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (usageRes.ok) {
-          const usageData = await usageRes.json();
-          setUsage(usageData.data || {});
-        }
+        const integrationsList = integrationsResult?.integrations ?? integrationsResult?.data ?? [];
+        setAccounts(integrationsList);
+        setUsage(usageData || {});
+        setCurrentPlan(planData || {});
 
         // Fetch recent roasts
         await fetchRecentRoasts();
@@ -162,16 +138,8 @@ export default function Dashboard() {
         // Fetch analytics summary (Issue #366)
         try {
           setAnalyticsLoading(true);
-          const analyticsRes = await fetch('/api/analytics/summary', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          });
-
-          if (analyticsRes.ok) {
-            const analyticsData = await analyticsRes.json();
-            setAnalytics(analyticsData.data || {});
-          }
+          const analyticsData = await apiClient.get('/analytics/summary');
+          setAnalytics(analyticsData.data || {});
         } catch (analyticsError) {
           console.error('Error fetching analytics:', analyticsError);
           // Don't fail the entire dashboard if analytics fails
@@ -204,60 +172,32 @@ export default function Dashboard() {
   const handleConnectPlatform = async (platform) => {
     try {
       setConnectingPlatform(platform);
-      
-      const response = await fetch('/api/user/integrations/connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ platform })
-      });
+      const response = await apiClient.post('/user/integrations/connect', { platform });
 
-      if (response.ok) {
-        // Show success message
+      if (response.success ?? response.status === 'connected') {
         setConnectionStatus({
           type: 'success',
           message: `${getPlatformName(platform)} conectado exitosamente`
         });
-        
-        // Auto-dismiss after 5 seconds
         setTimeout(() => setConnectionStatus(null), 5000);
-        
-        // Refresh accounts data
-        const accountsRes = await fetch('/api/user/integrations', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
-        if (accountsRes.ok) {
-          const accountsData = await accountsRes.json();
-          setAccounts(accountsData.data || []);
-        }
+        const integrationsResult = await getIntegrations();
+        const integrationsList = integrationsResult?.integrations ?? integrationsResult?.data ?? [];
+        setAccounts(integrationsList);
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || 'Error al conectar la plataforma';
-        
+        const errorMessage = response.error || 'Error al conectar la plataforma';
         setConnectionStatus({
           type: 'error',
           message: `Error al conectar ${getPlatformName(platform)}: ${errorMessage}`
         });
-        
-        // Auto-dismiss after 5 seconds
         setTimeout(() => setConnectionStatus(null), 5000);
-        
-        console.error('Failed to connect platform:', errorData);
+        console.error('Failed to connect platform:', response);
       }
     } catch (error) {
       console.error('Error connecting platform:', error);
-      
       setConnectionStatus({
         type: 'error',
         message: `Error de conexión con ${getPlatformName(platform)}. Por favor, intenta de nuevo.`
       });
-      
-      // Auto-dismiss after 5 seconds
       setTimeout(() => setConnectionStatus(null), 5000);
     } finally {
       setConnectingPlatform(null);
@@ -359,36 +299,18 @@ export default function Dashboard() {
       return;
     }
     try {
-      const response = await fetch(`/api/user/roasts/${roastId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          content: editedText,
-          validation: validation
-        })
+      await apiClient.patch(`/user/roasts/${roastId}`, {
+        content: editedText,
+        validation
       });
 
-      if (response.ok) {
-        await fetchRecentRoasts(); // Refresh roasts
-        setEditingRoastId(null);
-        
-        // Show success message
-        setConnectionStatus({
-          type: 'success',
-          message: 'Roast actualizado exitosamente'
-        });
-        setTimeout(() => setConnectionStatus(null), 3000);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setConnectionStatus({
-          type: 'error',
-          message: errorData.error || 'Error al guardar el roast'
-        });
-        setTimeout(() => setConnectionStatus(null), 5000);
-      }
+      await fetchRecentRoasts();
+      setEditingRoastId(null);
+      setConnectionStatus({
+        type: 'success',
+        message: 'Roast actualizado exitosamente'
+      });
+      setTimeout(() => setConnectionStatus(null), 3000);
     } catch (error) {
       console.error('Error saving edited roast:', error);
       setConnectionStatus({
@@ -416,17 +338,8 @@ export default function Dashboard() {
 
   const handleRegenerateRoast = async (roastId) => {
     try {
-      const response = await fetch(`/api/user/roasts/${roastId}/regenerate`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        await fetchRecentRoasts(); // Refresh roasts
-      }
+      await apiClient.post(`/user/roasts/${roastId}/regenerate`);
+      await fetchRecentRoasts();
     } catch (error) {
       console.error('Error regenerating roast:', error);
     }
@@ -434,16 +347,8 @@ export default function Dashboard() {
 
   const handleDiscardRoast = async (roastId) => {
     try {
-      const response = await fetch(`/api/user/roasts/${roastId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        await fetchRecentRoasts(); // Refresh roasts
-      }
+      await apiClient.delete(`/user/roasts/${roastId}`);
+      await fetchRecentRoasts();
     } catch (error) {
       console.error('Error discarding roast:', error);
     }
@@ -451,17 +356,8 @@ export default function Dashboard() {
 
   const handlePublishRoast = async (roastId) => {
     try {
-      const response = await fetch(`/api/user/roasts/${roastId}/publish`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        await fetchRecentRoasts(); // Refresh roasts
-      }
+      await apiClient.post(`/user/roasts/${roastId}/publish`);
+      await fetchRecentRoasts();
     } catch (error) {
       console.error('Error publishing roast:', error);
     }
@@ -477,36 +373,15 @@ export default function Dashboard() {
     if (!selectedAccount) return;
 
     try {
-      const token = localStorage.getItem('token');
       const accountId = selectedAccount.id || selectedAccount.platform;
       const url = `/api/user/accounts/${accountId}/${action}`;
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: body ? JSON.stringify(body) : undefined
-      });
+      const response = await apiClient.request(method, url, body);
 
-      if (response.ok) {
-        // Refresh accounts data after successful action
-        const accountsRes = await fetch('/api/user/integrations', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (accountsRes.ok) {
-          const accountsData = await accountsRes.json();
-          setAccounts(accountsData.data || []);
-        }
-        return await response.json();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Action failed');
-      }
+      const integrationsResult = await getIntegrations();
+      const integrationsList = integrationsResult?.integrations ?? integrationsResult?.data ?? [];
+      setAccounts(integrationsList);
+
+      return response;
     } catch (error) {
       console.error(`Error performing ${action}:`, error);
       throw error;
@@ -543,60 +418,26 @@ export default function Dashboard() {
 
   const handleDisconnectAccount = async (accountId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/user/accounts/${accountId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ confirmation: 'DISCONNECT' })
+      await apiClient.delete(`/api/user/accounts/${accountId}`, {
+        confirmation: 'DISCONNECT'
       });
 
-      if (response.ok) {
-        // Show success message
-        setConnectionStatus({
-          type: 'success',
-          message: 'Cuenta desconectada exitosamente'
-        });
-        
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => setConnectionStatus(null), 5000);
-        
-        // Refresh accounts data
-        const accountsRes = await fetch('/api/user/integrations', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (accountsRes.ok) {
-          const accountsData = await accountsRes.json();
-          setAccounts(accountsData.data || []);
-        }
-        
-        handleCloseModal();
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || 'Error al desconectar la cuenta';
-        
-        setConnectionStatus({
-          type: 'error',
-          message: `Error al desconectar: ${errorMessage}`
-        });
-        
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => setConnectionStatus(null), 5000);
-      }
+      const integrationsResult = await getIntegrations();
+      const integrationsList = integrationsResult?.integrations ?? integrationsResult?.data ?? [];
+      setAccounts(integrationsList);
+
+      setConnectionStatus({
+        type: 'success',
+        message: 'Cuenta desconectada exitosamente'
+      });
+      setTimeout(() => setConnectionStatus(null), 5000);
+      handleCloseModal();
     } catch (error) {
       console.error('Error disconnecting account:', error);
-      
       setConnectionStatus({
         type: 'error',
         message: 'Error de conexión al desconectar. Por favor, intenta de nuevo.'
       });
-      
-      // Auto-dismiss after 5 seconds
       setTimeout(() => setConnectionStatus(null), 5000);
     }
   };
