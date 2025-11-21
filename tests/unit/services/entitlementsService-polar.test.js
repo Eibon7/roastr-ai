@@ -8,13 +8,27 @@
  * - Fallback entitlements on error
  */
 
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    user_activities: [],
+    entitlements: []
+});
+
+// Mock dependencies
+jest.mock('../../../src/config/supabase', () => ({
+    supabaseServiceClient: mockSupabase
+}));
+
 const EntitlementsService = require('../../../src/services/entitlementsService');
-const { supabaseServiceClient } = require('../../../src/config/supabase');
 const { getPlanFromPriceId } = require('../../../src/utils/polarHelpers');
 const { logger } = require('../../../src/utils/logger');
 
-// Mock dependencies
-jest.mock('../../../src/config/supabase');
 jest.mock('../../../src/utils/polarHelpers');
 jest.mock('../../../src/utils/logger');
 jest.mock('@polar-sh/sdk');
@@ -49,6 +63,7 @@ describe('EntitlementsService - Polar Integration', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockSupabase._reset();
 
         // Set up Polar env var
         process.env.POLAR_ACCESS_TOKEN = 'test_access_token';
@@ -74,13 +89,11 @@ describe('EntitlementsService - Polar Integration', () => {
         });
         mockEq = jest.fn(() => ({ single: mockSingle }));
 
-        mockFrom = jest.fn((table) => ({
+        mockSupabase.from.mockImplementation((table) => ({
             select: mockSelect,
             upsert: mockUpsert,
             eq: mockEq
         }));
-
-        supabaseServiceClient.from = mockFrom;
 
         // Mock polarHelpers
         getPlanFromPriceId.mockImplementation((priceId) => {

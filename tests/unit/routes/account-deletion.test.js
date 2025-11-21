@@ -1,21 +1,27 @@
-const request = require('supertest');
-const express = require('express');
-const userRoutes = require('../../../src/routes/user');
-const { supabaseServiceClient } = require('../../../src/config/supabase');
-const DataExportService = require('../../../src/services/dataExportService');
-const emailService = require('../../../src/services/emailService');
-const auditService = require('../../../src/services/auditService');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    users: [],
+    account_deletion_requests: [],
+    data_exports: []
+});
+
+// Mock Supabase anon client for auth operations
+const mockSupabaseAnonClient = {
+    auth: {
+        signInWithPassword: jest.fn()
+    }
+};
 
 // Mock dependencies
 jest.mock('../../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn()
-  },
-  supabaseAnonClient: {
-    auth: {
-      signInWithPassword: jest.fn()
-    }
-  }
+  supabaseServiceClient: mockSupabase,
+  supabaseAnonClient: mockSupabaseAnonClient
 }));
 
 jest.mock('../../../src/services/dataExportService');
@@ -45,6 +51,18 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const request = require('supertest');
+const express = require('express');
+const userRoutes = require('../../../src/routes/user');
+const { supabaseServiceClient } = require('../../../src/config/supabase');
+const DataExportService = require('../../../src/services/dataExportService');
+const emailService = require('../../../src/services/emailService');
+const auditService = require('../../../src/services/auditService');
+
 describe('Account Deletion API Routes', () => {
   let app;
 
@@ -53,6 +71,8 @@ describe('Account Deletion API Routes', () => {
     app.use(express.json());
     app.use('/api/user', userRoutes);
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
   });
 
   describe('DELETE /api/user/account', () => {
@@ -91,7 +111,7 @@ describe('Account Deletion API Routes', () => {
       const mockInsert = jest.fn().mockReturnThis();
       const mockUpdate = jest.fn().mockReturnThis();
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         single: mockSingle,
@@ -212,7 +232,7 @@ describe('Account Deletion API Routes', () => {
       const mockEq = jest.fn().mockReturnThis();
       const mockSingle = jest.fn();
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         single: mockSingle
@@ -252,7 +272,7 @@ describe('Account Deletion API Routes', () => {
       const mockEq = jest.fn().mockReturnThis();
       const mockSingle = jest.fn();
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         single: mockSingle
@@ -326,7 +346,7 @@ describe('Account Deletion API Routes', () => {
       const mockInsert = jest.fn().mockReturnThis();
       const mockUpdate = jest.fn().mockReturnThis();
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         single: mockSingle,
@@ -402,7 +422,7 @@ describe('Account Deletion API Routes', () => {
       const mockEq = jest.fn().mockReturnThis();
       const mockSingle = jest.fn();
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         single: mockSingle
@@ -460,7 +480,7 @@ describe('Account Deletion API Routes', () => {
       const mockSingle = jest.fn();
       const mockUpdate = jest.fn().mockReturnThis();
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         single: mockSingle,
@@ -501,7 +521,7 @@ describe('Account Deletion API Routes', () => {
       const mockEq = jest.fn().mockReturnThis();
       const mockSingle = jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } });
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         single: mockSingle
@@ -532,7 +552,7 @@ describe('Account Deletion API Routes', () => {
       const mockEq = jest.fn().mockReturnThis();
       const mockSingle = jest.fn().mockResolvedValue({ data: mockDeletionRequest, error: null });
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         single: mockSingle
@@ -572,7 +592,7 @@ describe('Account Deletion API Routes', () => {
       const mockLimit = jest.fn().mockReturnThis();
       const mockSingle = jest.fn().mockResolvedValue({ data: mockDeletionRequest, error: null });
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         order: mockOrder,
@@ -603,7 +623,7 @@ describe('Account Deletion API Routes', () => {
       const mockLimit = jest.fn().mockReturnThis();
       const mockSingle = jest.fn().mockResolvedValue({ data: null, error: null });
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         order: mockOrder,
