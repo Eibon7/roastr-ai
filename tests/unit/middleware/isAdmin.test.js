@@ -1,16 +1,17 @@
-const { isAdminMiddleware, optionalAdminMiddleware } = require('../../../src/middleware/isAdmin');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    users: []
+});
 
 // Mock dependencies
 jest.mock('../../../src/config/supabase', () => ({
-    supabaseServiceClient: {
-        from: jest.fn(() => ({
-            select: jest.fn(() => ({
-                eq: jest.fn(() => ({
-                    single: jest.fn()
-                }))
-            }))
-        }))
-    },
+    supabaseServiceClient: mockSupabase,
     getUserFromToken: jest.fn()
 }));
 
@@ -29,6 +30,11 @@ jest.mock('../../../src/utils/logger', () => ({
     }
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const { isAdminMiddleware, optionalAdminMiddleware } = require('../../../src/middleware/isAdmin');
 const { supabaseServiceClient, getUserFromToken } = require('../../../src/config/supabase');
 const { logger } = require('../../../src/utils/logger');
 
@@ -105,7 +111,7 @@ describe('isAdmin Middleware', () => {
                     }))
                 }))
             };
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             await isAdminMiddleware(req, res, next);
 
@@ -136,7 +142,7 @@ describe('isAdmin Middleware', () => {
                     }))
                 }))
             };
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             await isAdminMiddleware(req, res, next);
 
@@ -171,7 +177,7 @@ describe('isAdmin Middleware', () => {
                     }))
                 }))
             };
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             await isAdminMiddleware(req, res, next);
 
@@ -203,7 +209,7 @@ describe('isAdmin Middleware', () => {
                     }))
                 }))
             };
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             await isAdminMiddleware(req, res, next);
 
@@ -266,7 +272,7 @@ describe('isAdmin Middleware', () => {
                     }))
                 }))
             };
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             await optionalAdminMiddleware(req, res, next);
 

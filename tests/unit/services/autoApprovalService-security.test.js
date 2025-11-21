@@ -10,20 +10,21 @@
  * - Comprehensive edge case coverage
  */
 
-const AutoApprovalService = require('../../../src/services/autoApprovalService');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    organizations: [],
+    auto_approval_usage: []
+});
 
 // Mock dependencies
 jest.mock('../../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    single: jest.fn(),
-    gte: jest.fn().mockReturnThis(),
-    count: jest.fn(),
-    insert: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis()
-  }
+  supabaseServiceClient: mockSupabase
 }));
 
 jest.mock('../../../src/utils/logger', () => ({
@@ -62,6 +63,11 @@ jest.mock('../../../src/services/planLimitsService', () => ({
   })
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const AutoApprovalService = require('../../../src/services/autoApprovalService');
 const { supabaseServiceClient } = require('../../../src/config/supabase');
 const { logger } = require('../../../src/utils/logger');
 const transparencyService = require('../../../src/services/transparencyService');
@@ -70,11 +76,15 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
   let service;
 
   beforeEach(() => {
+    jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
+    
     service = new AutoApprovalService();
     jest.clearAllMocks();
     
     // Reset mock chain
-    supabaseServiceClient.from.mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockReturnThis(),

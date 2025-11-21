@@ -1,5 +1,27 @@
-const authService = require('../../../src/services/authService');
-const { supabaseServiceClient, supabaseAnonClient } = require('../../../src/config/supabase');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    users: []
+}, {
+    // RPC functions if needed
+});
+
+// Mock Supabase anon client for auth operations
+const mockSupabaseAnonClient = {
+    auth: {
+        signUp: jest.fn(),
+        signInWithPassword: jest.fn(),
+        signInWithOtp: jest.fn(),
+        resetPasswordForEmail: jest.fn(),
+        verifyOtp: jest.fn(),
+        signInWithOAuth: jest.fn()
+    }
+};
 
 // Mock planLimitsService
 jest.mock('../../../src/services/planLimitsService', () => ({
@@ -26,10 +48,14 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
+// ============================================================================
+// STEP 2: Reference pre-created mocks in jest.mock() calls
+// ============================================================================
+
 // Mock Supabase clients
 jest.mock('../../../src/config/supabase', () => ({
   supabaseServiceClient: {
-    from: jest.fn(),
+    ...mockSupabase,
     auth: {
       admin: {
         createUser: jest.fn(),
@@ -37,22 +63,22 @@ jest.mock('../../../src/config/supabase', () => ({
       }
     }
   },
-  supabaseAnonClient: {
-    auth: {
-      signUp: jest.fn(),
-      signInWithPassword: jest.fn(),
-      signInWithOtp: jest.fn(),
-      resetPasswordForEmail: jest.fn(),
-      verifyOtp: jest.fn(),
-      signInWithOAuth: jest.fn()
-    }
-  },
+  supabaseAnonClient: mockSupabaseAnonClient,
   createUserClient: jest.fn()
 }));
+
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const authService = require('../../../src/services/authService');
+const { supabaseServiceClient, supabaseAnonClient } = require('../../../src/config/supabase');
 
 describe('AuthService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
   });
 
   describe('signUp', () => {
@@ -74,16 +100,18 @@ describe('AuthService', () => {
         error: null
       });
 
-      supabaseServiceClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      // Configure mockSupabase.from to return a mock that works with the service
+      const mockTableBuilder = {
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({
               data: mockUserData,
               error: null
-            })
-          })
-        })
-      });
+            }))
+          }))
+        }))
+      };
+      mockSupabase.from.mockReturnValue(mockTableBuilder);
 
       const result = await authService.signUp({
         email: 'test@example.com',
@@ -254,16 +282,18 @@ describe('AuthService', () => {
         error: null
       });
 
-      supabaseServiceClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      // Configure mockSupabase.from to return a mock that works with the service
+      const mockTableBuilder = {
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({
               data: mockUserData,
               error: null
-            })
-          })
-        })
-      });
+            }))
+          }))
+        }))
+      };
+      mockSupabase.from.mockReturnValue(mockTableBuilder);
 
       const result = await authService.createUserManually({
         email: 'test@example.com',
@@ -294,16 +324,18 @@ describe('AuthService', () => {
         error: null
       });
 
-      supabaseServiceClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      // Configure mockSupabase.from to return a mock that works with the service
+      const mockTableBuilder = {
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({
               data: mockUserData,
               error: null
-            })
-          })
-        })
-      });
+            }))
+          }))
+        }))
+      };
+      mockSupabase.from.mockReturnValue(mockTableBuilder);
 
       const result = await authService.createUserManually({
         email: 'test@example.com',

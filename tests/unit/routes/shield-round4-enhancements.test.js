@@ -15,18 +15,21 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    shield_actions: [],
+    comments: []
+});
+
 // Mock dependencies
 jest.mock('../../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
-    range: jest.fn().mockReturnThis(),
-    single: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-  },
+  supabaseServiceClient: mockSupabase
 }));
 
 jest.mock('../../../src/config/flags', () => ({

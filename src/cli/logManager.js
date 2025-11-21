@@ -97,21 +97,19 @@ backupCmd
   .option('--force', 'Upload even if files already exist in S3')
   .action(async (options) => {
     try {
-      const backupService = new LogBackupService();
+      // Check for dry-run flag - Commander.js sets boolean flags to true when present
+      // Use process.argv as fallback for robustness (works with both direct execution and execSync)
+      // The service will handle the S3 check and allow dry-run without S3 (see logBackupService.js line 270)
+      const isDryRun = options.dryRun === true || process.argv.some(arg => arg === '--dry-run');
       
-      if (!backupService.isBackupEnabled()) {
-        console.error('❌ S3 backup is not configured');
-        console.log('Set the following environment variables:');
-        console.log('  - LOG_BACKUP_S3_BUCKET');
-        console.log('  - AWS_ACCESS_KEY_ID');
-        console.log('  - AWS_SECRET_ACCESS_KEY');
-        process.exit(1);
-      }
+      // Create service - it will handle S3 configuration check and allow dry-run without S3
+      // See logBackupService.js line 270: if (!this.isBackupEnabled() && !dryRun) - service allows dry-run
+      const backupService = new LogBackupService();
 
-      console.log(`\n☁️  ${options.dryRun ? 'Simulating' : 'Performing'} backup of last ${options.days} days...`);
+      console.log(`\n☁️  ${isDryRun ? 'Simulating' : 'Performing'} backup of last ${options.days} days...`);
       
       const result = await backupService.backupRecentLogs(parseInt(options.days), {
-        dryRun: options.dryRun || false,
+        dryRun: isDryRun,
         skipExisting: !options.force
       });
 
@@ -124,6 +122,12 @@ backupCmd
       
       if (result.summary.errorDates.length > 0) {
         console.log(`⚠️  Errors on dates: ${result.summary.errorDates.join(', ')}`);
+      }
+      
+      // Exit with error code if there were errors (and not in dry-run)
+      // This allows tests to verify that S3 configuration is required for actual backups
+      if (!isDryRun && result.summary.totalErrors > 0) {
+        process.exit(1);
       }
       
     } catch (error) {

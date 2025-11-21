@@ -20,7 +20,6 @@ function setupSupabaseMocks(mockRpc) {
     // Mock Supabase RPC function
     supabaseServiceClient.rpc = mockRpc;
 
-    // Table-aware mock - track which table is being queried
     supabaseServiceClient._currentTable = '';
     supabaseServiceClient.from = jest.fn().mockImplementation((table) => {
         supabaseServiceClient._currentTable = table;

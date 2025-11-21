@@ -1,12 +1,30 @@
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    user_subscriptions: [],
+    usage_records: []
+});
+
+// Mock dependencies
+jest.mock('../../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
+jest.mock('../../../src/config/tierConfig');
+jest.mock('../../../src/services/planLimitsService');
+
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
 const { TierValidationService } = require('../../../src/services/tierValidationService'); // Issue #618 - Import class for testing
 const { supabaseServiceClient } = require('../../../src/config/supabase');
 const tierConfig = require('../../../src/config/tierConfig');
 const planLimitsService = require('../../../src/services/planLimitsService');
-
-// Mock dependencies
-jest.mock('../../../src/config/supabase');
-jest.mock('../../../src/config/tierConfig');
-jest.mock('../../../src/services/planLimitsService');
 
 describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
   let service;
@@ -14,6 +32,8 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
     
     // Setup mock cache
     mockCache = new Map();
@@ -116,7 +136,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
         error: null
       };
       
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         upsert: jest.fn().mockResolvedValue(mockUsageData)
       });
       
@@ -158,7 +178,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       const cacheKey = `usage_${userId}`;
       
       // Mock database error
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         upsert: jest.fn().mockRejectedValue(new Error('Database connection failed'))
       });
       
@@ -183,7 +203,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
         error: null
       };
       
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         upsert: jest.fn().mockResolvedValue(mockUsageData)
       });
       
@@ -211,7 +231,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
         error: { code: '23505', message: 'duplicate key value violates unique constraint' }
       };
       
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         upsert: jest.fn().mockResolvedValue(mockConflictData)
       });
       
@@ -227,7 +247,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       let callCount = 0;
       
       // Mock incremental usage updates
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         upsert: jest.fn().mockImplementation(() => {
           callCount++;
           return Promise.resolve({
@@ -256,7 +276,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       const userId = 'test-user-id';
       
       // Mock database connection failure in getUserTierWithUTC
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockRejectedValue(new Error('Connection timeout'))
@@ -281,7 +301,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       const userId = 'test-user-id';
       
       // Mock user data without tier
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -318,7 +338,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       const userId = 'test-user-id';
       
       // Mock unexpected error
-      supabaseServiceClient.from = jest.fn().mockImplementation(() => {
+      mockSupabase.from.mockImplementation(() => {
         throw new Error('Unexpected system error');
       });
       
@@ -336,7 +356,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       const userIds = ['user1', 'user2', 'user3', 'user4', 'user5'];
       
       // Mock successful validations
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -386,7 +406,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       });
       
       // Mock supabaseServiceClient.from to handle different tables
-      supabaseServiceClient.from = jest.fn().mockImplementation((tableName) => {
+      mockSupabase.from.mockImplementation((tableName) => {
         // Handle user_subscriptions table (called by getUserTierWithUTC)
         if (tableName === 'user_subscriptions') {
           return {
@@ -504,7 +524,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       const userIds = ['user1', 'user2', 'user3'];
       
       // Mock responses
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -537,7 +557,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       const userId = 'test-user-id';
       
       // Mock user and usage data
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -561,7 +581,7 @@ describe('TierValidationService - CodeRabbit Round 6 Improvements', () => {
       const userId = 'test-user-id';
       
       // Mock user data
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({

@@ -5,18 +5,20 @@
  * Validates middleware integration, caching, and fallback logic
  */
 
-const request = require('supertest');
-const express = require('express');
-const { killSwitchService, checkKillSwitch, checkPlatformAutopost, shouldBlockAutopost } = require('../../src/middleware/killSwitch');
-const { supabaseServiceClient } = require('../../src/config/supabase');
-const path = require('path');
-const fs = require('fs').promises;
+const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    feature_flags: []
+});
 
 // Mock Supabase for controlled testing
 jest.mock('../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn()
-  }
+  supabaseServiceClient: mockSupabase
 }));
 
 // Mock logger to suppress console noise
@@ -34,6 +36,17 @@ jest.mock('../../src/utils/logger', () => ({
     }))
   }
 }));
+
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const request = require('supertest');
+const express = require('express');
+const { killSwitchService, checkKillSwitch, checkPlatformAutopost, shouldBlockAutopost } = require('../../src/middleware/killSwitch');
+const { supabaseServiceClient } = require('../../src/config/supabase');
+const path = require('path');
+const fs = require('fs').promises;
 
 describe('Kill Switch Integration Tests - Issue #414', () => {
   let app;
@@ -68,6 +81,8 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
 
     // Reset kill switch service state
     killSwitchService.cache.clear();
@@ -82,7 +97,7 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
       in: mockIn
     });
 
-    supabaseServiceClient.from.mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       select: mockSelect
     });
   });

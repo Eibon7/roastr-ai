@@ -3,15 +3,21 @@
  * Issue #371: SPEC 15 — Backoffice (MVP): thresholds globales, flags y soporte básico
  */
 
-const request = require('supertest');
-const express = require('express');
-const backofficeSettingsRoutes = require('../../../../src/routes/admin/backofficeSettings');
+const { createSupabaseMock } = require('../../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    backoffice_settings: [],
+    backoffice_healthcheck: []
+});
 
 // Mock dependencies
 jest.mock('../../../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn()
-  }
+  supabaseServiceClient: mockSupabase
 }));
 
 jest.mock('../../../../src/middleware/auth', () => ({
@@ -40,6 +46,13 @@ jest.mock('../../../../src/utils/safeUtils', () => ({
   safeUserIdPrefix: jest.fn((id) => `***${id.slice(-3)}`)
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const request = require('supertest');
+const express = require('express');
+const backofficeSettingsRoutes = require('../../../../src/routes/admin/backofficeSettings');
 const { supabaseServiceClient } = require('../../../../src/config/supabase');
 
 // Set up Express app with routes
@@ -50,6 +63,8 @@ app.use('/api/admin/backoffice', backofficeSettingsRoutes);
 describe('Backoffice Settings API Routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
   });
 
   describe('GET /api/admin/backoffice/thresholds', () => {
@@ -65,7 +80,7 @@ describe('Backoffice Settings API Routes', () => {
         updated_at: '2025-01-24T10:00:00Z'
       };
 
-      supabaseServiceClient.from.mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -87,7 +102,7 @@ describe('Backoffice Settings API Routes', () => {
     });
 
     it('should return defaults when no global settings exist', async () => {
-      supabaseServiceClient.from.mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -110,7 +125,7 @@ describe('Backoffice Settings API Routes', () => {
     });
 
     it('should handle database errors', async () => {
-      supabaseServiceClient.from.mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
@@ -409,7 +424,7 @@ describe('Backoffice Settings API Routes', () => {
         created_at: '2025-01-24T10:15:00Z'
       };
 
-      supabaseServiceClient.from.mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           order: jest.fn().mockReturnValue({
             limit: jest.fn().mockReturnValue({
@@ -431,7 +446,7 @@ describe('Backoffice Settings API Routes', () => {
     });
 
     it('should handle no previous healthcheck results', async () => {
-      supabaseServiceClient.from.mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           order: jest.fn().mockReturnValue({
             limit: jest.fn().mockReturnValue({

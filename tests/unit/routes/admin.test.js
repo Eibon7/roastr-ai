@@ -1,17 +1,30 @@
-const request = require('supertest');
-const express = require('express');
-const adminRoutes = require('../../../src/routes/admin');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    users: [],
+    organizations: [],
+    audit_logs: [],
+    user_subscriptions: []
+});
+
+// Mock Supabase auth admin
+const mockSupabaseAuthAdmin = {
+    createUser: jest.fn(),
+    listUsers: jest.fn(),
+    deleteUser: jest.fn()
+};
 
 // Mock dependencies
 jest.mock('../../../src/config/supabase', () => ({
     supabaseServiceClient: {
-        from: jest.fn(),
+        ...mockSupabase,
         auth: {
-            admin: {
-                createUser: jest.fn(),
-                listUsers: jest.fn(),
-                deleteUser: jest.fn()
-            }
+            admin: mockSupabaseAuthAdmin
         }
     }
 }));
@@ -77,6 +90,15 @@ jest.mock('../../../src/services/authService', () => ({
     suspendUser: jest.fn(),
     unsuspendUser: jest.fn()
 }));
+
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const request = require('supertest');
+const express = require('express');
+const adminRoutes = require('../../../src/routes/admin');
+const { supabaseServiceClient } = require('../../../src/config/supabase');
 
 // Mock audit log service (Issue #261)
 jest.mock('../../../src/services/auditLogService', () => ({
@@ -343,7 +365,7 @@ describe('Admin Routes', () => {
                 }))
             };
 
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             const response = await request(app)
                 .post(`/api/admin/users/${userId}/toggle-admin`)
@@ -463,7 +485,7 @@ describe('Admin Routes', () => {
                 }))
             };
 
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             const response = await request(app)
                 .get('/api/admin/config')
@@ -498,7 +520,7 @@ describe('Admin Routes', () => {
                 }))
             };
 
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             const response = await request(app)
                 .get('/api/admin/logs?type=integration&limit=50')
@@ -521,7 +543,7 @@ describe('Admin Routes', () => {
                 }))
             };
 
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             const response = await request(app)
                 .get('/api/admin/logs')
@@ -555,7 +577,7 @@ describe('Admin Routes', () => {
                 }))
             };
 
-            supabaseServiceClient.from.mockReturnValue(mockQuery);
+            mockSupabase.from.mockReturnValue(mockQuery);
 
             const response = await request(app)
                 .get('/api/admin/logs/download')
@@ -745,7 +767,7 @@ describe('Admin Routes', () => {
                 }))
             };
 
-            supabaseServiceClient.from.mockReturnValueOnce(mockQuery);
+            mockSupabase.from.mockReturnValueOnce(mockQuery);
 
             const response = await request(app)
                 .patch(`/api/admin/users/${userId}/plan`)
@@ -884,7 +906,7 @@ describe('Admin Routes', () => {
                 }))
             };
 
-            supabaseServiceClient.from.mockReturnValueOnce(mockQuery);
+            mockSupabase.from.mockReturnValueOnce(mockQuery);
 
             const response = await request(app)
                 .get(`/api/admin/users/${userId}`)
