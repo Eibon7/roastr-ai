@@ -13,7 +13,19 @@ import {
   ArrowRight,
   Users
 } from 'lucide-react';
+<<<<<<< HEAD
 import { createMockFetch } from '../lib/mockMode';
+=======
+import { 
+  getAvailablePlatforms, 
+  getIntegrationStatus, 
+  connectPlatform,
+  importFollowers,
+  getImportProgress
+} from '../api/integrations';
+import { ErrorMessage } from '../components/states/ErrorMessage';
+import { EmptyState } from '../components/states/EmptyState';
+>>>>>>> 32121679 (feat(frontend): add reusable state components)
 
 export default function Connect() {
   const [platforms, setPlatforms] = useState([]);
@@ -55,6 +67,13 @@ export default function Connect() {
       setLoading(false);
     }
   }, [fetchApi]);
+
+  const reloadData = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    fetchPlatforms();
+    fetchIntegrationStatus();
+  }, [fetchPlatforms, fetchIntegrationStatus]);
 
   useEffect(() => {
     fetchPlatforms();
@@ -210,6 +229,27 @@ export default function Connect() {
       metrics={[{ label: 'Listas para análisis', value: getConnectedPlatformsWithData().length }]}
     >
 
+<<<<<<< HEAD
+=======
+      {!loading && error && platforms.length > 0 && (
+        <ErrorMessage
+          title="Problemas cargando datos"
+          message={error}
+          variant="warning"
+          onRetry={reloadData}
+        />
+      )}
+
+      {!loading && !platforms.length && !error && (
+        <EmptyState
+          title="Sin plataformas disponibles"
+          description="Aún no tenemos plataformas configuradas en el backend. Intenta recargar para verificar la conexión."
+          actionLabel="Reintentar"
+          onAction={reloadData}
+        />
+      )}
+
+>>>>>>> 32121679 (feat(frontend): add reusable state components)
       {/* Progress Overview */}
       <Card className="bg-blue-50 border-blue-200">
         <CardContent className="p-6">
