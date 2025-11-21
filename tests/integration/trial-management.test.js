@@ -6,6 +6,7 @@
 const { supabaseServiceClient } = require('../../src/config/supabase');
 const EntitlementsService = require('../../src/services/entitlementsService');
 
+// Requiere Supabase real; ver docs/testing/E2E-REQUIREMENTS.md para details de infraestructura.
 // Mock Supabase for integration tests
 // Issue #678: Added .maybeSingle() support for robust null handling
 jest.mock('../../src/config/supabase', () => ({

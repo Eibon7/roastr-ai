@@ -87,6 +87,8 @@ npm run test:e2e:debug
 
 **Expected output:** 17 tests in ~45 seconds (3 browsers locally, 1 in CI)
 
+**Detalle de requisitos:** `docs/testing/E2E-REQUIREMENTS.md` describe infraestructura, flags y pasos para ejecutar E2E.
+
 ### Specialized Test Suites
 
 ```bash

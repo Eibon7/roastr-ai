@@ -2,6 +2,8 @@
  * Multi-Tenant Architecture Integration Tests
  * 
  * End-to-end tests for the complete comment processing workflow
+ * 
+ * See docs/testing/E2E-REQUIREMENTS.md for infrastructure requirements.
  */
 
 require('dotenv').config();
@@ -12,6 +14,7 @@ const ShieldService = require('../../src/services/shieldService');
 const FetchCommentsWorker = require('../../src/workers/FetchCommentsWorker');
 const AnalyzeToxicityWorker = require('../../src/workers/AnalyzeToxicityWorker');
 const GenerateReplyWorker = require('../../src/workers/GenerateReplyWorker');
+const { skipIfNoE2E } = require('../helpers/e2ePrerequisites');
 
 // Mock external services for integration testing
 jest.mock('../../src/services/twitter');
@@ -19,11 +22,11 @@ jest.mock('../../src/services/perspective');
 jest.mock('../../src/services/openai');
 
 describe('Multi-Tenant Architecture Integration Tests', () => {
-  // Skip E2E tests in CI environment
-  if (process.env.SKIP_E2E === 'true') {
-    test.skip('Skipping E2E integration tests in CI environment', () => {});
-    return;
-  }
+  // Skip E2E tests if infrastructure not available
+  skipIfNoE2E(test, 'requires Queue service and mocked external services', {
+    requireServer: false,
+    requirePlaywright: false
+  });
   let queueService;
   let costControl;
   let shieldService;
