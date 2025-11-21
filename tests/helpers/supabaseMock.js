@@ -371,8 +371,9 @@ class MockSupabaseClient {
           
           if (accessibleRows.length === 0) {
             // RLS blocked the delete
+            // Issue #894: Return empty array (not null) to match UPDATE behavior
             return Promise.resolve({
-              data: null,
+              data: [],
               error: {
                 code: '42501',
                 message: 'permission denied for table ' + table
@@ -398,8 +399,9 @@ class MockSupabaseClient {
           
           if (accessibleRows.length === 0) {
             // RLS blocked the delete (no accessible rows to delete)
+            // Issue #894: Return empty array (not null) to match UPDATE behavior
             return Promise.resolve({
-              data: null,
+              data: [],
               error: {
                 code: '42501',
                 message: 'permission denied for table ' + table
