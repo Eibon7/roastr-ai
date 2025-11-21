@@ -12,6 +12,7 @@
  */
 
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
 
 class MockSupabaseClient {
   constructor(options = {}) {
@@ -71,14 +72,23 @@ class MockSupabaseClient {
    * Check if current user has access to organization
    */
   _hasOrgAccess(orgId) {
-    if (!this.currentUserId) return false; // Not authenticated
+    // Issue #894: Use currentContext set by setSession()
+    const userId = this.currentContext?.user_id || this.currentUserId;
+    const contextOrg = this.currentContext?.organization_id;
     
-    // Check if user is owner or member
-    const org = this.data.organizations.find(o => o.id === orgId);
-    if (org && org.owner_id === this.currentUserId) return true;
+    if (!userId) return false; // Not authenticated
     
-    const member = this.data.organization_members.find(m => 
-      m.organization_id === orgId && m.user_id === this.currentUserId
+    // CRITICAL: If JWT contains organization_id, trust it (simulates RLS policy)
+    if (contextOrg && contextOrg === orgId) {
+      return true; // User authenticated for this specific org
+    }
+    
+    // Fallback: Check if user is owner or member
+    const org = this.data.organizations?.find(o => o.id === orgId);
+    if (org && org.owner_id === userId) return true;
+    
+    const member = this.data.organization_members?.find(m => 
+      m.organization_id === orgId && m.user_id === userId
     );
     
     return !!member;
@@ -93,7 +103,10 @@ class MockSupabaseClient {
       return rows; // Service role sees everything
     }
     
-    if (!this.currentUserId) {
+    // Issue #894: Check currentContext (set by setSession)
+    const userId = this.currentContext?.user_id || this.currentUserId;
+    
+    if (!userId) {
       // No auth context = no access
       return [];
     }
@@ -200,14 +213,14 @@ class MockSupabaseClient {
           this.data[table] = [];
         }
         
+        let rlsError = null;
+        
         for (const row of rowsArray) {
           // Check RLS before insert
-          const rlsError = this._checkRLSViolation(table, row);
-          if (rlsError) {
-            return Promise.resolve({
-              data: null,
-              error: rlsError
-            });
+          const error = this._checkRLSViolation(table, row);
+          if (error) {
+            rlsError = error;
+            break; // Stop on first RLS violation
           }
           
           // Add generated fields
@@ -220,6 +233,26 @@ class MockSupabaseClient {
           
           this.data[table].push(newRow);
           insertedRows.push(newRow);
+        }
+        
+        // Return chainable object even on RLS error (for .select() support)
+        if (rlsError) {
+          return {
+            data: null,
+            error: rlsError,
+            select: () => ({
+              single: () => Promise.resolve({
+                data: null,
+                error: rlsError
+              }),
+              then: (resolve) => {
+                resolve({ data: null, error: rlsError });
+              }
+            }),
+            then: (resolve) => {
+              resolve({ data: null, error: rlsError });
+            }
+          };
         }
         
         return {
@@ -248,13 +281,58 @@ class MockSupabaseClient {
           
           if (accessibleRows.length === 0) {
             // RLS blocked the update
-            return Promise.resolve({
-              data: null,
+            // Issue #894: Return empty array (not null) when RLS blocks
+            return {
+              data: [],
               error: {
                 code: '42501',
                 message: 'new row violates row-level security policy for table "' + table + '"'
-              }
-            });
+              },
+              select: () => Promise.resolve({
+                data: [],
+                error: {
+                  code: '42501',
+                  message: 'new row violates row-level security policy for table "' + table + '"'
+                }
+              }),
+              then: (resolve) => resolve({
+                data: [],
+                error: {
+                  code: '42501',
+                  message: 'new row violates row-level security policy for table "' + table + '"'
+                }
+              })
+            };
+          }
+          
+          // Issue #894: CRITICAL - Prevent changing organization_id to another tenant
+          // This is a common RLS violation attempt
+          if (updates.organization_id && !this.bypassRLS) {
+            const currentOrgId = this.currentContext?.organization_id;
+            if (currentOrgId && updates.organization_id !== currentOrgId) {
+              // Attempting to transfer row to another organization - BLOCKED
+              return {
+                data: [],
+                error: {
+                  code: '42501',
+                  message: 'cannot change organization_id: violates row-level security policy'
+                },
+                select: () => Promise.resolve({
+                  data: [],
+                  error: {
+                    code: '42501',
+                    message: 'cannot change organization_id: violates row-level security policy'
+                  }
+                }),
+                then: (resolve) => resolve({
+                  data: [],
+                  error: {
+                    code: '42501',
+                    message: 'cannot change organization_id: violates row-level security policy'
+                  }
+                })
+              };
+            }
           }
           
           // Update rows
@@ -264,10 +342,22 @@ class MockSupabaseClient {
             });
           });
           
-          return Promise.resolve({
+          return {
             data: accessibleRows,
-            error: null
-          });
+            error: null,
+            
+            // Chainable select() after update
+            select: (columns = '*') => Promise.resolve({
+              data: accessibleRows,
+              error: null
+            }),
+            
+            // Direct promise resolution
+            then: (resolve) => resolve({
+              data: accessibleRows,
+              error: null
+            })
+          };
         }
       }),
       
@@ -281,6 +371,33 @@ class MockSupabaseClient {
           
           if (accessibleRows.length === 0) {
             // RLS blocked the delete
+            return Promise.resolve({
+              data: null,
+              error: {
+                code: '42501',
+                message: 'permission denied for table ' + table
+              }
+            });
+          }
+          
+          // Delete rows
+          this.data[table] = rows.filter(r => !accessibleRows.includes(r));
+          
+          return Promise.resolve({
+            data: accessibleRows,
+            error: null
+          });
+        },
+        
+        in: (column, values) => {
+          const rows = this.data[table] || [];
+          const matchingRows = rows.filter(r => values.includes(r[column]));
+          
+          // Apply RLS filter
+          const accessibleRows = this._applyRLSFilter(table, matchingRows);
+          
+          if (accessibleRows.length === 0) {
+            // RLS blocked the delete (no accessible rows to delete)
             return Promise.resolve({
               data: null,
               error: {
@@ -313,9 +430,46 @@ class MockSupabaseClient {
       },
       
       setSession: ({ access_token }) => {
-        // In real implementation, this would decode JWT
-        // For mock, we just track that session was set
-        return Promise.resolve({ data: { session: { access_token } }, error: null });
+        // Issue #894: Decode JWT to extract organization_id for RLS context
+        try {
+          // Decode without verification (mock environment)
+          const decoded = jwt.decode(access_token);
+          
+          if (decoded && decoded.organization_id) {
+            // Set RLS context based on JWT claims
+            this.currentContext = {
+              user_id: decoded.sub,
+              organization_id: decoded.organization_id,
+              role: decoded.role || 'authenticated'
+            };
+            
+            console.log(`🔐 Mock RLS context set: user=${decoded.sub}, org=${decoded.organization_id}`);
+          } else {
+            console.warn('⚠️  JWT missing organization_id claim');
+          }
+          
+          return Promise.resolve({
+            data: { session: { access_token, user: { id: decoded?.sub } } },
+            error: null
+          });
+        } catch (error) {
+          return Promise.resolve({
+            data: null,
+            error: { message: `Failed to decode JWT: ${error.message}` }
+          });
+        }
+      },
+      
+      getSession: () => {
+        // Return current session based on context
+        return Promise.resolve({
+          data: {
+            session: this.currentContext ? {
+              user: { id: this.currentContext.user_id }
+            } : null
+          },
+          error: null
+        });
       }
     };
   }

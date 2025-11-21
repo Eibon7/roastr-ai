@@ -44,16 +44,24 @@ if (!USE_MOCK) {
   }
 }
 
-// Service client (bypasses RLS)
-// Issue #894: Mock service client has bypassRLS=true (like real service_role)
-const serviceClient = USE_MOCK
-  ? createMockServiceClient()
-  : createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+// Issue #894: Create shared mock clients that use same data store
+// This is critical so serviceClient inserts are visible to testClient
+let serviceClient, testClient;
 
-// Test client (RLS-enabled)
-const testClient = USE_MOCK
-  ? createMockSupabaseClient()
-  : createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (USE_MOCK) {
+  // Create service client (bypasses RLS)
+  serviceClient = createMockServiceClient();
+  
+  // Create test client (RLS-enabled) sharing same data store
+  testClient = createMockSupabaseClient();
+  
+  // CRITICAL: Share the data store between both clients
+  testClient.data = serviceClient.data;
+} else {
+  // Real Supabase clients
+  serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  testClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
 
 if (USE_MOCK) {
   console.log('🎭 Using MOCK Supabase client (Issue #894 - bandwidth optimization)');
