@@ -18,7 +18,8 @@ import {
   RefreshCw,
   XCircle
 } from 'lucide-react';
-import { createMockFetch } from '../lib/mockMode';
+import { apiClient } from '../lib/api';
+import { getIntegrationStatus } from '../api/integrations';
 import ErrorBoundary from '../components/ErrorBoundary';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 
@@ -53,56 +54,51 @@ export default function StyleProfile() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const navigate = useNavigate();
-  const fetchApi = createMockFetch();
 
   const checkAccess = useCallback(async () => {
     try {
-      const response = await fetchApi('/api/style-profile/status');
-      if (response.ok) {
-        const data = await response.json();
-        setHasAccess(data.data.available);
-        
-        if (!data.data.available && !data.data.hasAccess) {
-          // Redirect to plan picker if no access
-          setTimeout(() => navigate('/plans'), 100);
-        }
+      const response = await apiClient.get('/style-profile/status');
+      const payload = response.data || response;
+      const available = payload.available ?? payload.data?.available ?? false;
+      const hasAccessFlag = payload.hasAccess ?? payload.data?.hasAccess ?? false;
+      setHasAccess(available);
+
+      if (!available && !hasAccessFlag) {
+        setTimeout(() => navigate('/plans'), 100);
       }
     } catch (error) {
       // Error checking access
     }
-  }, [fetchApi, navigate]);
+  }, [navigate]);
 
   const fetchProfileData = useCallback(async () => {
     try {
-      const response = await fetchApi('/api/style-profile');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data.available) {
-          setProfileData(data.data);
-          setSelectedLanguage(data.data.profiles[0]?.lang || null);
-        }
+      const response = await apiClient.get('/style-profile');
+      const data = response.data || response;
+      if (data.available ?? data.data?.available) {
+        const profile = data.data || data;
+        setProfileData(profile);
+        setSelectedLanguage(profile.profiles?.[0]?.lang || null);
       }
     } catch (error) {
       // Error fetching profile data
     } finally {
       setLoading(false);
     }
-  }, [fetchApi]);
+  }, []);
 
   const fetchIntegrationStatus = useCallback(async () => {
     try {
-      const response = await fetchApi('/api/integrations/status');
-      if (response.ok) {
-        const data = await response.json();
-        const connectedWithData = data.data.integrations.filter(
-          integration => integration.status === 'connected' && integration.importedCount >= 50
-        );
-        setIntegrationStatus(connectedWithData);
-      }
+      const data = await getIntegrationStatus();
+      const integrations = data.integrations || data.data?.integrations || [];
+      const connectedWithData = integrations.filter(
+        integration => integration.status === 'connected' && integration.importedCount >= 50
+      );
+      setIntegrationStatus(connectedWithData);
     } catch (error) {
       // Error fetching integration status
     }
-  }, [fetchApi]);
+  }, []);
 
   useEffect(() => {
     checkAccess();
@@ -121,31 +117,21 @@ export default function StyleProfile() {
 
     try {
       const platforms = integrationStatus.map(integration => integration.platform);
-      
-      const response = await fetchApi('/api/style-profile/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          platforms,
-          maxItemsPerPlatform: 300 
-        })
+      const response = await apiClient.post('/style-profile/generate', {
+        platforms,
+        maxItemsPerPlatform: 300
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setProfileData(data.data);
-        setSelectedLanguage(data.data.profiles[0]?.lang || null);
+      const data = response.data || response;
+
+      if (data.upgrade || data.requiresUpgrade) {
+        setError('Style Profile generation requires Creator+ plan. Please upgrade your plan.');
+        setTimeout(() => navigate('/plans'), 3000);
+      } else if (data.success ?? true) {
+        setProfileData(data);
+        setSelectedLanguage(data.profiles?.[0]?.lang || null);
       } else {
-        const errorData = await response.json();
-        
-        if (errorData.upgrade) {
-          setError('Style Profile generation requires Creator+ plan. Please upgrade your plan.');
-          setTimeout(() => navigate('/plans'), 3000);
-        } else {
-          setError(`Generation failed: ${errorData.error}`);
-        }
+        setError(`Generation failed: ${data.error || 'unknown error'}`);
       }
     } catch (error) {
       setError('Failed to generate style profile. Please check your connection and try again.');
@@ -176,18 +162,10 @@ export default function StyleProfile() {
 
   const handleDeleteProfile = async () => {
     try {
-      const response = await fetchApi('/api/style-profile', {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        setProfileData(null);
-        setSelectedLanguage(null);
-        setShowDeleteConfirm(false);
-      } else {
-        const error = await response.json();
-        // Delete failed
-      }
+      await apiClient.delete('/style-profile');
+      setProfileData(null);
+      setSelectedLanguage(null);
+      setShowDeleteConfirm(false);
     } catch (error) {
       // Error deleting profile
     }
