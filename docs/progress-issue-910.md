@@ -67,7 +67,7 @@
 - ✅ `SkeletonLoader.jsx`, `ErrorMessage.jsx`, `EmptyState.jsx` created
 
 ### FASE 6: Testing
-- 🔄 Writing unit tests for API services (`integrations`, `usage`, `plans`, `roast`)
+- ✅ Unit tests for API services (`integrations`, `usage`, `plans`, `roast`) via `npx craco test --runTestsByPath src/api/__tests__/integrations.test.js ...`
 - ⏳ Playwright flows for dashboard connection & visual validation (pending)
 
 ---
