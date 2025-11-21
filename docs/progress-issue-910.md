@@ -57,6 +57,7 @@
 -  - Calls `/style-profile/status`, `/style-profile`, `/style-profile/generate`, `/style-profile` delete through centralized client
 -  - Reuses actual `/api/integrations/status` data to gate generation
 -  - Maintains error/regeneration/delete flows without mock fetch
+- ✅ **Widgets** - `IntegrationsCard`, `UsageCostCard`, `PlanStatusCard`, `StyleProfileCard` now rely on the backend APIs with consistent loading/error UIs
 
 ---
 
@@ -74,13 +75,7 @@
 ## ⏳ Pending Tasks
 
 ### Remaining Components to Update
-- ⏳ **Dashboard.jsx** - Main dashboard with usage/plan widgets
-- ⏳ **StyleProfile.jsx** - Style profile configuration
-- ⏳ **Widgets:**
-  - `IntegrationsCard.jsx` - Show connected platforms
-  - `UsageCostCard.jsx` - Display current usage and limits
-  - `PlanStatusCard.jsx` - Show current plan and upgrade prompts
-  - `StyleProfileCard.jsx` - Style analysis status
+- ✅ Dashboard, StyleProfile and widget cards now consume live backend data.
 
 ### FASE 6: Testing
 - ⏳ Unit tests for API services (`integrations.test.js`, `usage.test.js`, `plans.test.js`, `roast.test.js`)

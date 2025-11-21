@@ -5,30 +5,45 @@ import { Skeleton } from '../ui/skeleton';
 import MockModeIndicator from '../ui/MockModeIndicator';
 import { Crown, Zap, Shield } from 'lucide-react';
 import { normalizePlanId, getPlanDisplayName } from '../../utils/planHelpers';
+import { getCurrentPlan } from '../../api/plans';
+import { getCurrentUsage } from '../../api/usage';
+import { SkeletonLoader } from '../states/SkeletonLoader';
+import { ErrorMessage } from '../states/ErrorMessage';
 
 export default function PlanStatusCard() {
-  const [user, setUser] = useState(null);
+  const [planData, setPlanData] = useState(null);
   const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    let active = true;
+
     async function fetchData() {
       try {
-        const [userRes, usageRes] = await Promise.all([
-          fetch('/api/user'),
-          fetch('/api/usage')
+        setError(null);
+        const [planResult, usageResult] = await Promise.all([
+          getCurrentPlan(),
+          getCurrentUsage()
         ]);
 
-        if (userRes.ok) setUser(await userRes.json());
-        if (usageRes.ok) setUsage(await usageRes.json());
-      } catch (error) {
-        console.error('Failed to fetch plan data:', error);
+        if (active) {
+          setPlanData(planResult);
+          setUsage(usageResult);
+        }
+      } catch (fetchError) {
+        console.error('Failed to fetch plan data:', fetchError);
+        if (active) setError('No pudimos obtener el estado del plan.');
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
 
     fetchData();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (loading) {
@@ -37,14 +52,16 @@ export default function PlanStatusCard() {
         <CardHeader>
           <CardTitle>Plan Status</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-8 w-24" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
+        <CardContent>
+          <SkeletonLoader rows={3} height={16} />
         </CardContent>
       </Card>
+    );
+  }
+
+  if (error && !planData) {
+    return (
+      <ErrorMessage title="Estado del plan" message={error} onRetry={() => window.location.reload()} />
     );
   }
 
@@ -75,9 +92,12 @@ export default function PlanStatusCard() {
     }
   };
 
-  const normalizedPlan = normalizePlanId(user?.plan || 'starter_trial');
+  const normalizedPlan = normalizePlanId(planData?.plan_id || planData?.plan || 'starter_trial');
   const currentPlan = planConfig[normalizedPlan] || planConfig.starter_trial;
   const IconComponent = currentPlan.icon;
+
+  const accountName = planData?.user?.name || planData?.userName || 'Roastr User';
+  const accountEmail = planData?.user?.email || planData?.userEmail;
 
   return (
     <Card>

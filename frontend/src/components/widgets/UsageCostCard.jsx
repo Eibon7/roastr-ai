@@ -4,26 +4,40 @@ import { Badge } from '../ui/badge';
 import { Skeleton } from '../ui/skeleton';
 import { DollarSign, Zap, Brain, Shield } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatUtils';
+import { getCurrentUsage } from '../../api/usage';
+import { SkeletonLoader } from '../states/SkeletonLoader';
+import { ErrorMessage } from '../states/ErrorMessage';
 
 export default function UsageCostCard() {
   const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    let active = true;
+
     async function fetchData() {
       try {
-        const res = await fetch('/api/usage');
-        if (res.ok) {
-          setUsage(await res.json());
+        setError(null);
+        const data = await getCurrentUsage();
+        if (active) {
+          setUsage(data);
         }
-      } catch (error) {
-        console.error('Failed to fetch usage data:', error);
+      } catch (fetchError) {
+        console.error('Failed to fetch usage data:', fetchError);
+        if (active) {
+          setError('No pudimos cargar el consumo. Intenta recargar.');
+        }
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
 
     fetchData();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (loading) {
@@ -32,17 +46,28 @@ export default function UsageCostCard() {
         <CardHeader>
           <CardTitle>Usage & Costs</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-8 w-16" />
-              </div>
-            ))}
-          </div>
+        <CardContent>
+          <SkeletonLoader rows={3} height={20} />
         </CardContent>
       </Card>
+    );
+  }
+
+  if (error && !usage) {
+    return (
+      <ErrorMessage
+        title="Error de consumo"
+        message={error}
+        onRetry={() => {
+          setLoading(true);
+          getCurrentUsage()
+            .then(data => setUsage(data))
+            .catch(err => {
+              console.error('Retry failed:', err);
+            })
+            .finally(() => setLoading(false));
+        }}
+      />
     );
   }
 
