@@ -37,33 +37,36 @@ args.forEach(arg => {
 });
 
 // Load configuration
+// Issue #894: Increased poll intervals to reduce Supabase bandwidth consumption
+// Previous: 2s polling = 216,000 queries/day = 32GB/month ❌
+// New: 60s polling = 7,200 queries/day = 1GB/month ✅
 let config = {
   enabledWorkers: ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'style_profile', 'post_response'],
   workerConfig: {
     fetch_comments: {
       maxConcurrency: 5,
-      pollInterval: 2000
+      pollInterval: 60000 // 60s (was 2s) - Issue #894
     },
     analyze_toxicity: {
       maxConcurrency: 3,
-      pollInterval: 1500
+      pollInterval: 45000 // 45s (was 1.5s) - Issue #894
     },
     generate_reply: {
       maxConcurrency: 2,
-      pollInterval: 2000
+      pollInterval: 60000 // 60s (was 2s) - Issue #894
     },
     style_profile: {
       maxConcurrency: 2,
-      pollInterval: 5000 // Less frequent polling as it's not time-critical
+      pollInterval: 300000 // 5min (was 5s) - Less time-critical
     },
     post_response: {
       maxConcurrency: 2,
-      pollInterval: 2000, // Poll every 2s for publication jobs
+      pollInterval: 60000, // 60s (was 2s) - Issue #894
       maxRetries: 3,
       retryDelay: 2000 // 2s base delay for exponential backoff
     }
   },
-  healthCheckInterval: 30000
+  healthCheckInterval: 300000 // 5min (was 30s) - Issue #894
 };
 
 // Override with command line options
@@ -83,28 +86,30 @@ if (options.configPath) {
 }
 
 // Environment-specific adjustments
+// Issue #894: Production intervals also increased to prevent bandwidth abuse
+// Only use aggressive polling when there's actual traffic
 if (options.environment === 'production') {
   config.workerConfig = {
     ...config.workerConfig,
     fetch_comments: {
       ...config.workerConfig.fetch_comments,
       maxConcurrency: 10,
-      pollInterval: 1000
+      pollInterval: 30000 // 30s (was 1s) - Issue #894
     },
     analyze_toxicity: {
       ...config.workerConfig.analyze_toxicity,
       maxConcurrency: 5,
-      pollInterval: 1000
+      pollInterval: 30000 // 30s (was 1s) - Issue #894
     },
     generate_reply: {
       ...config.workerConfig.generate_reply,
       maxConcurrency: 3,
-      pollInterval: 1500
+      pollInterval: 45000 // 45s (was 1.5s) - Issue #894
     },
     post_response: {
       ...config.workerConfig.post_response,
       maxConcurrency: 3,
-      pollInterval: 1500
+      pollInterval: 45000 // 45s (was 1.5s) - Issue #894
     }
   };
 }
