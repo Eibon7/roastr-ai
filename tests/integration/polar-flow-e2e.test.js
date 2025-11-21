@@ -67,13 +67,15 @@ jest.mock('../../src/config/flags', () => ({
     }
 }));
 
-// Set env vars BEFORE any modules are loaded
+// Issue #826 + #892: Set env vars BEFORE any modules are loaded
 process.env.POLAR_ACCESS_TOKEN = 'test_token_e2e';
 process.env.POLAR_SUCCESS_URL = 'https://app.roastr.ai/success';
 process.env.POLAR_ALLOWED_PRICE_IDS = 'price_pro_456';
-process.env.POLAR_ALLOWED_PRODUCT_IDS = 'price_pro_456';
+process.env.POLAR_ALLOWED_PRODUCT_IDS = 'prod_pro_test';
 process.env.POLAR_PRO_PRICE_ID = 'price_pro_456';
-process.env.POLAR_PRO_PRODUCT_ID = 'price_pro_456';
+process.env.POLAR_PRO_PRODUCT_ID = 'prod_pro_test';
+process.env.POLAR_STARTER_PRODUCT_ID = 'prod_starter_test';
+process.env.POLAR_PLUS_PRODUCT_ID = 'prod_plus_test';
 delete process.env.POLAR_WEBHOOK_SECRET;
 
 const { supabaseServiceClient } = require('../../src/config/supabase');
