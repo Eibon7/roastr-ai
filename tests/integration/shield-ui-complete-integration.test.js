@@ -100,30 +100,30 @@ const mockShieldActions = [
 ];
 
 describe('Shield UI Complete Integration Tests', () => {
+  let shieldActionsQuery;
+
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
     // Reset Supabase mock to defaults
     mockSupabase._reset();
     
-    // Mock Supabase service client
-    mockSupabase.from.mockImplementation((table) => {
-      if (table === 'shield_actions') {
-        return {
+    // Create shared query object (Issue #892 - CodeRabbit fix)
+    // This ensures both test stubs and route handler use the same instance
+    shieldActionsQuery = {
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
           gte: jest.fn().mockReturnThis(),
           order: jest.fn().mockReturnThis(),
-          range: jest.fn().mockReturnThis(),
-          single: jest.fn().mockReturnThis(),
-          update: jest.fn().mockReturnThis(),
-          mockResolve: (data, error = null, count = null) => {
-            return Promise.resolve({ data, error, count });
-          }
-        };
-      }
-      return {};
-    });
+      range: jest.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      update: jest.fn().mockResolvedValue({ data: null, error: null })
+    };
+    
+    // Mock Supabase service client to return shared instance
+    mockSupabase.from.mockImplementation((table) =>
+      table === 'shield_actions' ? shieldActionsQuery : {}
+    );
   });
 
   afterEach(() => {
@@ -160,8 +160,12 @@ describe('Shield UI Complete Integration Tests', () => {
 
   describe('Shield Events API Integration', () => {
     it('should fetch shield events with proper filtering and pagination', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      // Reset to defaults + configure final async result
+      shieldActionsQuery.select.mockReturnThis();
+      shieldActionsQuery.eq.mockReturnThis();
+      shieldActionsQuery.order.mockReturnThis();
+      shieldActionsQuery.range.mockResolvedValue({
         data: mockShieldActions,
         error: null,
         count: 3
@@ -185,18 +189,18 @@ describe('Shield UI Complete Integration Tests', () => {
       expect(response.body.data.filters.timeRange).toBe('30d');
 
       // Verify the database query was called correctly
-      expect(mockQuery.select).toHaveBeenCalled();
-      expect(mockQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-456');
-      expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
-      expect(mockQuery.range).toHaveBeenCalledWith(0, 19); // First page
+      expect(shieldActionsQuery.select).toHaveBeenCalled();
+      expect(shieldActionsQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-456');
+      expect(shieldActionsQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
+      expect(shieldActionsQuery.range).toHaveBeenCalledWith(0, 19); // First page
     });
 
     it('should filter events by category', async () => {
       const toxicEvents = mockShieldActions.filter(item => item.reason === 'toxic');
       
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.eq = jest.fn().mockReturnThis();
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.eq = jest.fn().mockReturnThis();
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: toxicEvents,
         error: null,
         count: 1
@@ -212,15 +216,15 @@ describe('Shield UI Complete Integration Tests', () => {
       expect(response.body.data.events[0].reason).toBe('toxic');
 
       // Verify category filter was applied
-      expect(mockQuery.eq).toHaveBeenCalledWith('reason', 'toxic');
+      expect(shieldActionsQuery.eq).toHaveBeenCalledWith('reason', 'toxic');
     });
 
     it('should filter events by platform', async () => {
       const twitterEvents = mockShieldActions.filter(item => item.platform === 'twitter');
       
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.eq = jest.fn().mockReturnThis();
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.eq = jest.fn().mockReturnThis();
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: twitterEvents,
         error: null,
         count: 1
@@ -236,7 +240,7 @@ describe('Shield UI Complete Integration Tests', () => {
       expect(response.body.data.events[0].platform).toBe('twitter');
 
       // Verify platform filter was applied
-      expect(mockQuery.eq).toHaveBeenCalledWith('platform', 'twitter');
+      expect(shieldActionsQuery.eq).toHaveBeenCalledWith('platform', 'twitter');
     });
 
     it('should filter events by time range (30 days)', async () => {
@@ -244,9 +248,9 @@ describe('Shield UI Complete Integration Tests', () => {
         new Date(item.created_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       );
       
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.gte = jest.fn().mockReturnThis();
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.gte = jest.fn().mockReturnThis();
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: recentEvents,
         error: null,
         count: recentEvents.length
@@ -262,12 +266,12 @@ describe('Shield UI Complete Integration Tests', () => {
       expect(response.body.data.filters.startDate).toBeDefined();
 
       // Verify time range filter was applied
-      expect(mockQuery.gte).toHaveBeenCalledWith('created_at', expect.any(String));
+      expect(shieldActionsQuery.gte).toHaveBeenCalledWith('created_at', expect.any(String));
     });
 
     it('should sanitize response data to remove sensitive information', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: mockShieldActions,
         error: null,
         count: 3
@@ -289,8 +293,8 @@ describe('Shield UI Complete Integration Tests', () => {
     });
 
     it('should handle pagination correctly', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: mockShieldActions.slice(0, 2), // Simulate page 1 with 2 items
         error: null,
         count: 50 // Total count indicates more pages
@@ -310,23 +314,23 @@ describe('Shield UI Complete Integration Tests', () => {
       expect(response.body.data.pagination.hasPrev).toBe(false);
 
       // Verify correct range was requested
-      expect(mockQuery.range).toHaveBeenCalledWith(0, 1); // Page 1 with limit 2
+      expect(shieldActionsQuery.range).toHaveBeenCalledWith(0, 1); // Page 1 with limit 2
     });
   });
 
   describe('Shield Action Revert Integration', () => {
     it('should successfully revert a shield action', async () => {
       const actionId = '1';
-      const mockQuery = supabaseServiceClient.from('shield_actions');
+      // Use shared shieldActionsQuery instance
       
       // Mock finding the action
-      mockQuery.single = jest.fn().mockResolvedValue({
+      shieldActionsQuery.single = jest.fn().mockResolvedValue({
         data: mockShieldActions[0],
         error: null
       });
 
       // Mock updating the action
-      mockQuery.update = jest.fn().mockResolvedValue({
+      shieldActionsQuery.update = jest.fn().mockResolvedValue({
         data: {
           ...mockShieldActions[0],
           reverted_at: '2024-01-15T11:00:00Z',
@@ -350,8 +354,8 @@ describe('Shield UI Complete Integration Tests', () => {
       expect(response.body.data.action.reverted_at).toBeDefined();
 
       // Verify database operations
-      expect(mockQuery.single).toHaveBeenCalled();
-      expect(mockQuery.update).toHaveBeenCalledWith({
+      expect(shieldActionsQuery.single).toHaveBeenCalled();
+      expect(shieldActionsQuery.update).toHaveBeenCalledWith({
         reverted_at: expect.any(String),
         metadata: expect.objectContaining({
           reverted: true,
@@ -363,9 +367,9 @@ describe('Shield UI Complete Integration Tests', () => {
 
     it('should prevent reverting already reverted actions', async () => {
       const actionId = '2'; // This action is already reverted
-      const mockQuery = supabaseServiceClient.from('shield_actions');
+      // Use shared shieldActionsQuery instance
       
-      mockQuery.single = jest.fn().mockResolvedValue({
+      shieldActionsQuery.single = jest.fn().mockResolvedValue({
         data: mockShieldActions[1], // Already has reverted_at
         error: null
       });
@@ -382,9 +386,9 @@ describe('Shield UI Complete Integration Tests', () => {
 
     it('should handle non-existent action IDs', async () => {
       const actionId = 'non-existent-id';
-      const mockQuery = supabaseServiceClient.from('shield_actions');
+      // Use shared shieldActionsQuery instance
       
-      mockQuery.single = jest.fn().mockResolvedValue({
+      shieldActionsQuery.single = jest.fn().mockResolvedValue({
         data: null,
         error: { code: 'PGRST116' } // Supabase "not found" error
       });
@@ -412,14 +416,14 @@ describe('Shield UI Complete Integration Tests', () => {
 
     it('should apply rate limiting to revert actions', async () => {
       const actionId = '1';
-      const mockQuery = supabaseServiceClient.from('shield_actions');
+      // Use shared shieldActionsQuery instance
       
-      mockQuery.single = jest.fn().mockResolvedValue({
+      shieldActionsQuery.single = jest.fn().mockResolvedValue({
         data: mockShieldActions[0],
         error: null
       });
       
-      mockQuery.update = jest.fn().mockResolvedValue({
+      shieldActionsQuery.update = jest.fn().mockResolvedValue({
         data: { ...mockShieldActions[0] },
         error: null
       });
@@ -441,9 +445,9 @@ describe('Shield UI Complete Integration Tests', () => {
 
   describe('Shield Statistics Integration', () => {
     it('should calculate and return shield statistics', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.eq = jest.fn().mockReturnThis();
-      mockQuery.gte = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.eq = jest.fn().mockReturnThis();
+      shieldActionsQuery.gte = jest.fn().mockResolvedValue({
         data: mockShieldActions,
         error: null
       });
@@ -484,11 +488,11 @@ describe('Shield UI Complete Integration Tests', () => {
     });
 
     it('should handle different time ranges in statistics', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.eq = jest.fn().mockReturnThis();
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.eq = jest.fn().mockReturnThis();
       
       // Test 7-day range
-      mockQuery.gte = jest.fn().mockResolvedValue({
+      shieldActionsQuery.gte = jest.fn().mockResolvedValue({
         data: [mockShieldActions[0]], // Only recent item
         error: null
       });
@@ -503,17 +507,17 @@ describe('Shield UI Complete Integration Tests', () => {
       expect(response.body.data.startDate).toBeDefined();
       
       // Verify 7-day filter was applied
-      expect(mockQuery.gte).toHaveBeenCalledWith('created_at', expect.any(String));
+      expect(shieldActionsQuery.gte).toHaveBeenCalledWith('created_at', expect.any(String));
     });
 
     it('should handle "all time" statistics', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.eq = jest.fn().mockReturnThis();
-      mockQuery.gte = jest.fn(); // Should not be called for "all" time range
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.eq = jest.fn().mockReturnThis();
+      shieldActionsQuery.gte = jest.fn(); // Should not be called for "all" time range
       
       // Mock query without time filter
       const queryWithoutGte = {
-        ...mockQuery,
+        ...shieldActionsQuery,
         gte: undefined
       };
       
@@ -538,8 +542,8 @@ describe('Shield UI Complete Integration Tests', () => {
 
   describe('Error Handling Integration', () => {
     it('should handle database connection errors gracefully', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: null,
         error: { message: 'Database connection failed' },
         count: 0
@@ -573,8 +577,8 @@ describe('Shield UI Complete Integration Tests', () => {
 
   describe('Security Integration', () => {
     it('should enforce organization isolation', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: mockShieldActions,
         error: null,
         count: 3
@@ -585,12 +589,12 @@ describe('Shield UI Complete Integration Tests', () => {
         .expect(200);
 
       // Verify that organization filter was applied
-      expect(mockQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-456');
+      expect(shieldActionsQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-456');
     });
 
     it('should sanitize sensitive data from responses', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: mockShieldActions.map(item => ({
           ...item,
           organization_id: 'test-org-456', // This should be removed
@@ -637,8 +641,8 @@ describe('Shield UI Complete Integration Tests', () => {
         created_at: new Date(Date.now() - index * 60000).toISOString()
       }));
 
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: largeDataset.slice(0, 20), // First page
         error: null,
         count: 1000
@@ -661,8 +665,8 @@ describe('Shield UI Complete Integration Tests', () => {
     });
 
     it('should optimize queries with proper indexing', async () => {
-      const mockQuery = supabaseServiceClient.from('shield_actions');
-      mockQuery.range = jest.fn().mockResolvedValue({
+      // Use shared shieldActionsQuery instance
+      shieldActionsQuery.range = jest.fn().mockResolvedValue({
         data: mockShieldActions,
         error: null,
         count: 3
@@ -678,11 +682,11 @@ describe('Shield UI Complete Integration Tests', () => {
         .expect(200);
 
       // Verify that proper filters were applied for index usage
-      expect(mockQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-456');
-      expect(mockQuery.eq).toHaveBeenCalledWith('reason', 'toxic');
-      expect(mockQuery.eq).toHaveBeenCalledWith('platform', 'twitter');
-      expect(mockQuery.gte).toHaveBeenCalledWith('created_at', expect.any(String));
-      expect(mockQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
+      expect(shieldActionsQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-456');
+      expect(shieldActionsQuery.eq).toHaveBeenCalledWith('reason', 'toxic');
+      expect(shieldActionsQuery.eq).toHaveBeenCalledWith('platform', 'twitter');
+      expect(shieldActionsQuery.gte).toHaveBeenCalledWith('created_at', expect.any(String));
+      expect(shieldActionsQuery.order).toHaveBeenCalledWith('created_at', { ascending: false });
     });
   });
 });

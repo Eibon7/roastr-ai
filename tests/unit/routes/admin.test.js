@@ -140,7 +140,7 @@ jest.mock('child_process', () => ({
     exec: jest.fn()
 }));
 
-const { supabaseServiceClient } = require('../../../src/config/supabase');
+// supabaseServiceClient already imported at line 101
 const { exec } = require('child_process');
 const metricsService = require('../../../src/services/metricsService');
 const authService = require('../../../src/services/authService');
