@@ -10,6 +10,7 @@ const {
   createMockTwitterComment,
   createMockFetchCommentsJob
 } = require('../../utils/mocks');
+const { createCostControlMock } = require('../../helpers/costControlMockFactory');
 
 // Mock BaseWorker
 jest.mock('../../../src/workers/BaseWorker', () => {
@@ -60,12 +61,7 @@ jest.mock('../../../src/workers/BaseWorker', () => {
   };
 });
 
-// Mock Cost Control service
-const mockCostControlService = {
-  canPerformOperation: jest.fn(),
-  recordUsage: jest.fn(),
-  initialize: jest.fn()
-};
+const mockCostControlService = createCostControlMock();
 
 jest.mock('../../../src/services/costControl', () => {
   return jest.fn().mockImplementation(() => mockCostControlService);
@@ -119,10 +115,15 @@ describe('FetchCommentsWorker', () => {
     worker = new FetchCommentsWorker();
     mockSupabase = worker.supabase;
     mockQueueService = worker.queueService;
+    worker.platformServices.set('twitter', mockTwitterService);
+    worker.platformServices.set('youtube', mockYouTubeService);
+    worker.setIntegrationConfigOverride({ enabled: true });
   });
 
   afterEach(() => {
+    mockCostControlService._reset();
     jest.clearAllMocks();
+    worker.setIntegrationConfigOverride(null);
   });
 
   afterAll(async () => {

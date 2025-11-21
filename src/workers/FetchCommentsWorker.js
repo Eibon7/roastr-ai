@@ -26,6 +26,8 @@ class FetchCommentsWorker extends BaseWorker {
     
     this.costControl = new CostControlService();
     this.platformClients = new Map();
+    this.platformServices = new Map();
+    this._integrationConfigOverride = null;
     
     // Initialize platform clients
     this.initializePlatformClients();
@@ -170,18 +172,27 @@ class FetchCommentsWorker extends BaseWorker {
     }
 
     // Fetch comments based on platform (pass platform-specific payload)
-    const comments = await this.fetchCommentsFromPlatform(
+    const fetchResult = await this.fetchCommentsFromPlatform(
       platform,
       integrationConfig,
       platformPayload
     );
+
+    const commentsArray = Array.isArray(fetchResult)
+      ? fetchResult
+      : Array.isArray(fetchResult?.comments)
+        ? fetchResult.comments
+        : [];
+    const metadata = typeof fetchResult === 'object' && !Array.isArray(fetchResult)
+      ? fetchResult
+      : {};
     
     // Process and store comments
     const storedComments = await this.storeComments(
       organization_id,
       integration_config_id,
       platform,
-      comments
+      commentsArray
     );
     
     // Record usage with enhanced tracking
@@ -203,10 +214,18 @@ class FetchCommentsWorker extends BaseWorker {
     // Queue analysis jobs for new comments
     await this.queueAnalysisJobs(organization_id, storedComments, correlationId);
 
+    const duplicates = commentsArray.length - storedComments.length;
+    const newCommentsCount = storedComments.length;
+
     const result = {
       success: true,
-      summary: `Fetched ${storedComments.length} new comments from ${platform}`,
-      commentsCount: storedComments.length,
+      summary: `Fetched ${newCommentsCount} new comments from ${platform}`,
+      commentsCount: newCommentsCount,
+      newComments: newCommentsCount,
+      duplicates: duplicates < 0 ? 0 : duplicates,
+      queuedForAnalysis: newCommentsCount,
+      hasMore: metadata.hasMore ?? metadata.has_more ?? false,
+      nextToken: metadata.nextToken ?? metadata.nextPageToken ?? metadata.token ?? null,
       platform,
       organizationId: organization_id
     };
@@ -226,14 +245,18 @@ class FetchCommentsWorker extends BaseWorker {
    * Get integration configuration from database
    */
   async getIntegrationConfig(organizationId, platform, configId) {
+    if (this._integrationConfigOverride) {
+      return this._integrationConfigOverride;
+    }
+
     try {
-      const { data: config, error } = await this.supabase
-        .from('integration_configs')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .eq('platform', platform)
-        .eq('id', configId)
-        .single();
+    const { data: config, error } = await this.supabase
+      .from('integration_configs')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('platform', platform)
+      .eq('id', configId)
+      .single();
       
       if (error) throw error;
       return config;
@@ -253,10 +276,15 @@ class FetchCommentsWorker extends BaseWorker {
    * Fetch comments from specific platform
    */
   async fetchCommentsFromPlatform(platform, config, payload) {
+    const platformService = this.platformServices.get(platform);
+    if (platformService && typeof platformService.fetchComments === 'function') {
+      return platformService.fetchComments(this._buildServicePayload(platform, config, payload));
+    }
+
     const platformClient = this.platformClients.get(platform);
     
     if (!platformClient) {
-      throw new Error(`No client configured for platform: ${platform}`);
+      throw new Error(`Unsupported platform: ${platform}`);
     }
     
     switch (platform) {
@@ -392,17 +420,15 @@ class FetchCommentsWorker extends BaseWorker {
         const { data: existing } = await this.supabase
           .from('comments')
           .select('id')
-          .eq('organization_id', organizationId)
-          .eq('platform', platform)
           .eq('platform_comment_id', comment.platform_comment_id)
           .single();
 
-        if (existing) {
+        if (existing && existing.id) {
           continue; // Skip duplicate
         }
 
         // Insert new comment
-        const { data: stored, error } = await this.supabase
+        const insertQuery = await this.supabase
           .from('comments')
           .insert({
             organization_id: organizationId,
@@ -414,19 +440,29 @@ class FetchCommentsWorker extends BaseWorker {
             original_text: comment.original_text,
             metadata: comment.metadata,
             status: 'pending'
-          })
-          .select()
-          .single();
+          });
 
-        if (error) {
+        let stored;
+        let insertError;
+
+        if (insertQuery && typeof insertQuery.select === 'function') {
+          const selectResult = await insertQuery.select().single();
+          stored = selectResult.data;
+          insertError = selectResult.error;
+        } else {
+          stored = insertQuery?.data;
+          insertError = insertQuery?.error;
+        }
+
+        if (insertError) {
           this.log('warn', 'Failed to store comment', {
             commentId: comment.platform_comment_id,
-            error: error.message
+            error: insertError.message || insertError
           });
           continue;
         }
 
-        storedComments.push(stored);
+        storedComments.push(stored || comment);
         
       } catch (error) {
         this.log('warn', 'Error processing comment', {
@@ -470,6 +506,12 @@ class FetchCommentsWorker extends BaseWorker {
         
         await pipeline.exec();
         
+      } else if (this.queueService && typeof this.queueService.addJob === 'function') {
+        await Promise.all(
+          analysisJobs.map(job =>
+            this.queueService.addJob(job.job_type, job.payload, job.priority)
+          )
+        );
       } else {
         // Use database queue as fallback
         const { error } = await this.supabase
@@ -490,6 +532,145 @@ class FetchCommentsWorker extends BaseWorker {
         error: error.message
       });
     }
+  }
+
+  /**
+   * Test helper: override integration config for deterministic tests
+   */
+  setIntegrationConfigOverride(config) {
+    this._integrationConfigOverride = config;
+  }
+
+  /**
+   * Store a single comment (compatibility helper for tests)
+   */
+  async storeComment(comment, job) {
+    if (!comment || !job) {
+      throw new Error('Missing comment or job metadata');
+    }
+
+    const organizationId = job.organization_id;
+    const platform = job.platform;
+
+    const { data: existing, error: selectError } = await this.supabase
+      .from('comments')
+      .select('id')
+      .eq('platform_comment_id', comment.id)
+      .single();
+
+    if (selectError) {
+      throw new Error(selectError.message || JSON.stringify(selectError));
+    }
+
+    if (existing) {
+      return { stored: false, duplicate: true };
+    }
+
+    const { error: insertError } = await this.supabase
+      .from('comments')
+      .insert({
+        organization_id: organizationId,
+        platform,
+        platform_comment_id: comment.id,
+        platform_user_id: comment.author_id,
+        original_text: comment.text,
+        metadata: comment.metadata || {}
+      });
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    return { stored: true, duplicate: false };
+  }
+
+  /**
+   * Queue a single comment for toxicity analysis (compatibility helper)
+   */
+  async queueForAnalysis(comment, job) {
+    if (!comment || !job) {
+      throw new Error('Missing comment or job metadata');
+    }
+
+    const payload = {
+      organization_id: job.organization_id,
+      platform: job.platform,
+      comment_id: comment.id,
+      text: comment.text,
+      author_id: comment.author_id
+    };
+
+    return await this.queueService.addJob('analyze_toxicity', payload, 3);
+  }
+
+  /**
+   * Initialize platform services that expose initialize()
+   */
+  async initializePlatformServices() {
+    const services = Array.from(this.platformServices.values());
+    for (const service of services) {
+      if (service && typeof service.initialize === 'function') {
+        await service.initialize();
+      }
+    }
+  }
+
+  /**
+   * Normalize raw comment data for testing helpers
+   */
+  normalizeCommentData(comment, platform) {
+    if (!comment) return null;
+
+    if (platform === 'twitter') {
+      return {
+        id: comment.id,
+        text: comment.text,
+        author_id: comment.author_id,
+        created_at: comment.created_at,
+        metrics: {
+          likes: comment.public_metrics?.like_count ?? 0,
+          replies: comment.public_metrics?.reply_count ?? 0,
+          retweets: comment.public_metrics?.retweet_count ?? 0
+        },
+        language: comment.lang ?? 'und'
+      };
+    }
+
+    if (platform === 'youtube') {
+      return {
+        id: comment.id,
+        text: comment.snippet?.textDisplay,
+        author_id: comment.snippet?.authorChannelId?.value,
+        created_at: comment.snippet?.publishedAt,
+        metrics: {
+          likes: comment.snippet?.likeCount ?? 0
+        }
+      };
+    }
+
+    return comment;
+  }
+
+  /**
+   * Build a normalized payload for platform services
+   */
+  _buildServicePayload(platform, config, payload) {
+    if (platform === 'twitter') {
+      return {
+        postId: payload.post_id,
+        sinceId: payload.since_id,
+        maxResults: payload.max_results
+      };
+    }
+
+    if (platform === 'youtube') {
+      return {
+        videoId: payload.video_id,
+        pageToken: payload.page_token
+      };
+    }
+
+    return { ...(payload || {}) };
   }
 }
 

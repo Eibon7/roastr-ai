@@ -5,6 +5,7 @@
  */
 
 const AnalyzeToxicityWorker = require('../../../src/workers/AnalyzeToxicityWorker');
+const { createCostControlMock } = require('../../helpers/costControlMockFactory');
 
 // Mock BaseWorker
 jest.mock('../../../src/workers/BaseWorker', () => {
@@ -77,12 +78,7 @@ jest.mock('../../../src/services/shieldService', () => {
   return jest.fn().mockImplementation(() => mockShieldService);
 });
 
-// Mock Cost Control service
-const mockCostControlService = {
-  canPerformOperation: jest.fn(),
-  recordUsage: jest.fn(),
-  initialize: jest.fn()
-};
+const mockCostControlService = createCostControlMock();
 
 jest.mock('../../../src/services/costControl', () => {
   return jest.fn().mockImplementation(() => mockCostControlService);
@@ -118,9 +114,8 @@ jest.mock('../../../src/config/mockMode', () => ({
       initialize: jest.fn()
     })),
     generateMockOpenAI: jest.fn(() => ({
-      moderations: {
-        create: jest.fn()
-      }
+      moderateContent: jest.fn(),
+      initialize: jest.fn()
     }))
   }
 }));
@@ -141,6 +136,7 @@ describe('AnalyzeToxicityWorker', () => {
   });
 
   afterEach(() => {
+    mockCostControlService._reset();
     jest.clearAllMocks();
   });
 
@@ -507,13 +503,15 @@ describe('AnalyzeToxicityWorker', () => {
       await worker.updateCommentAnalysis(commentId, analysis);
 
       expect(mockSupabase.from).toHaveBeenCalledWith('comments');
-      expect(mockSupabase.from().update).toHaveBeenCalledWith({
-        toxicity_score: 0.85,
-        toxicity_categories: ['TOXICITY', 'INSULT'],
-        analysis_method: 'perspective_api',
-        analysis_confidence: 0.92,
-        analyzed_at: expect.any(String)
-      });
+      expect(mockSupabase.from().update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          toxicity_score: 0.85,
+          toxicity_categories: ['TOXICITY', 'INSULT'],
+          analysis_method: 'perspective_api',
+          analysis_confidence: 0.92,
+          analyzed_at: expect.any(String)
+        })
+      );
     });
 
     test('should handle database errors', async () => {

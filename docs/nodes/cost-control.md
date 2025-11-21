@@ -4,11 +4,11 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-11-11
+**Last Updated:** 2025-11-21
 **Coverage:** 60%
 **Coverage Source:** auto
 **Note:** Coverage value updated to match actual test coverage (gdd-status.json validation). Will be auto-updated when tests pass.
-**Related Issue:** #396 (Monitoring), #500 (Coverage), #805 (Test fixes)
+**Related Issue:** #396 (Monitoring), #500 (Coverage), #805 (Test fixes), #895 (Assertion fixes)
 **Related PRs:** #499, #587, #809 (Monitoring), #821 (Coverage)
 
 ## Dependencies
