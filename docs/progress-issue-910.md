@@ -41,18 +41,22 @@
   - `previewRoast()`, `generateRoast()`, `getRoastHistory()`
   - `approveRoast()`, `rejectRoast()`, `generateVariant()`, `getRoastStatistics()`
 
-### FASE 4: Component Updates
+-### FASE 4: Component Updates
 - ✅ **Connect.jsx** - Connected to real backend
-  - Replaced `createMockFetch()` with API services
-  - Using `getAvailablePlatforms()`, `getIntegrationStatus()`, `connectPlatform()`
-  - Real-time import progress via `importFollowers()` + `getImportProgress()`
-  - Error handling with retry mechanism
-  - Loading states with Loader2 spinner
-  - Error banners for failed operations
+-  - Replaced `createMockFetch()` with API services
+-  - Using `getAvailablePlatforms()`, `getIntegrationStatus()`, `connectPlatform()`
+-  - Real-time import progress via `importFollowers()` + `getImportProgress()`
+-  - Error handling with retry mechanism
+-  - Loading states with Loader2 spinner
+-  - Error banners for failed operations
 - ✅ **Dashboard.jsx** - Uses `apiClient` + new services for usage, accounts, plan, analytics, roasts
-  - Replaced manual `fetch` with `getIntegrations()`, `getCurrentUsage()`, `getCurrentPlan()`, `apiClient`
-  - Handles roasts, Shield data, and account actions through centralized client (token refresh, retries)
-  - Daily connection status and message toasts remain consistent
+-  - Replaced manual `fetch` with `getIntegrations()`, `getCurrentUsage()`, `getCurrentPlan()`, `apiClient`
+-  - Handles roasts, Shield data, and account actions through centralized client (token refresh, retries)
+-  - Daily connection status and message toasts remain consistent
+- ✅ **StyleProfile.jsx** - Uses `apiClient` + integration service for real Style Profile flow
+-  - Calls `/style-profile/status`, `/style-profile`, `/style-profile/generate`, `/style-profile` delete through centralized client
+-  - Reuses actual `/api/integrations/status` data to gate generation
+-  - Maintains error/regeneration/delete flows without mock fetch
 
 ---
 
