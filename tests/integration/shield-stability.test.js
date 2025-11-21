@@ -17,9 +17,11 @@
  * 3. Migrate these tests to @playwright/test framework
  *
  * See Issue #482 for tracking.
+ * See docs/testing/E2E-REQUIREMENTS.md for infrastructure requirements.
  */
 
 const { chromium } = require('playwright');
+const { skipIfNoE2E } = require('../helpers/e2ePrerequisites');
 
 describe.skip('Shield Stability Integration Tests - CodeRabbit Round 2 (SKIPPED - Playwright matchers)', () => {
   let browser;
