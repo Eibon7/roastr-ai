@@ -421,7 +421,7 @@ class FetchCommentsWorker extends BaseWorker {
           .from('comments')
           .select('id')
           .eq('platform_comment_id', comment.platform_comment_id)
-          .single();
+          .maybeSingle();
 
         if (existing && existing.id) {
           continue; // Skip duplicate
@@ -556,7 +556,7 @@ class FetchCommentsWorker extends BaseWorker {
       .from('comments')
       .select('id')
       .eq('platform_comment_id', comment.id)
-      .single();
+      .maybeSingle();
 
     if (selectError) {
       throw new Error(selectError.message || JSON.stringify(selectError));

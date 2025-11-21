@@ -1560,18 +1560,27 @@ class AnalyzeToxicityWorker extends BaseWorker {
    */
   async updateCommentAnalysis(commentId, analysis) {
     try {
+      const updateData = {
+        toxicity_score: analysis.toxicity_score,
+        severity_level: analysis.severity_level ?? this.calculateSeverityLevel(analysis.toxicity_score),
+        categories: analysis.categories,
+        processed_at: new Date().toISOString(),
+        status: 'processed'
+      };
+
+      // Store analysis metadata in the metadata field
+      const metadata = {
+        analysis_method: analysis.method || analysis.service || 'unknown',
+        analysis_confidence: analysis.analysis_confidence ?? analysis.confidence ?? null
+      };
+
+      if (Object.keys(metadata).length > 0) {
+        updateData.metadata = metadata;
+      }
+
       const { error } = await this.supabase
         .from('comments')
-        .update({
-          toxicity_score: analysis.toxicity_score,
-          severity_level: analysis.severity_level ?? this.calculateSeverityLevel(analysis.toxicity_score),
-          categories: analysis.categories,
-          toxicity_categories: analysis.categories,
-          analysis_method: analysis.method || 'unknown',
-          analysis_confidence: analysis.analysis_confidence ?? analysis.confidence ?? null,
-          analyzed_at: new Date().toISOString(),
-          status: 'processed'
-        })
+        .update(updateData)
         .eq('id', commentId);
       
       if (error) {

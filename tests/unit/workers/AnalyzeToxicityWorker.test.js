@@ -506,10 +506,13 @@ describe('AnalyzeToxicityWorker', () => {
       expect(mockSupabase.from().update).toHaveBeenCalledWith(
         expect.objectContaining({
           toxicity_score: 0.85,
-          toxicity_categories: ['TOXICITY', 'INSULT'],
-          analysis_method: 'perspective_api',
-          analysis_confidence: 0.92,
-          analyzed_at: expect.any(String)
+          categories: ['TOXICITY', 'INSULT'],
+          processed_at: expect.any(String),
+          status: 'processed',
+          metadata: expect.objectContaining({
+            analysis_method: 'perspective_api',
+            analysis_confidence: 0.92
+          })
         })
       );
     });

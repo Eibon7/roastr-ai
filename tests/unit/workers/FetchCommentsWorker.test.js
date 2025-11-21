@@ -179,17 +179,33 @@ describe('FetchCommentsWorker', () => {
       });
 
       // Mock comment insertion
-      mockSupabase.from = jest.fn().mockReturnValue({
-        insert: jest.fn().mockResolvedValue({ error: null }),
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { exists: false },
-              error: null
+      mockSupabase.from = jest.fn()
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: null, // First comment doesn't exist
+                error: null
+              })
             })
           })
         })
-      });
+        .mockReturnValueOnce({
+          insert: jest.fn().mockResolvedValue({ error: null })
+        })
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: null, // Second comment doesn't exist
+                error: null
+              })
+            })
+          })
+        })
+        .mockReturnValueOnce({
+          insert: jest.fn().mockResolvedValue({ error: null })
+        });
 
       const result = await worker.processJob(job);
 
@@ -236,17 +252,20 @@ describe('FetchCommentsWorker', () => {
         hasMore: true
       });
 
-      mockSupabase.from = jest.fn().mockReturnValue({
-        insert: jest.fn().mockResolvedValue({ error: null }),
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: null
+      mockSupabase.from = jest.fn()
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: null,
+                error: null
+              })
             })
           })
         })
-      });
+        .mockReturnValueOnce({
+          insert: jest.fn().mockResolvedValue({ error: null })
+        });
 
       const result = await worker.processJob(job);
 
@@ -297,7 +316,7 @@ describe('FetchCommentsWorker', () => {
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
+              maybeSingle: jest.fn().mockResolvedValue({
                 data: { id: 'existing-comment' }, // Comment exists
                 error: null
               })
@@ -307,7 +326,7 @@ describe('FetchCommentsWorker', () => {
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
+              maybeSingle: jest.fn().mockResolvedValue({
                 data: null, // Comment doesn't exist
                 error: null
               })
@@ -377,7 +396,7 @@ describe('FetchCommentsWorker', () => {
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
+              maybeSingle: jest.fn().mockResolvedValue({
                 data: null,
                 error: null
               })
@@ -411,7 +430,7 @@ describe('FetchCommentsWorker', () => {
       mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+            maybeSingle: jest.fn().mockResolvedValue({
               data: { id: 'existing-comment' },
               error: null
             })
@@ -432,7 +451,7 @@ describe('FetchCommentsWorker', () => {
       mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+            maybeSingle: jest.fn().mockResolvedValue({
               data: null,
               error: { message: 'Database connection failed' }
             })
