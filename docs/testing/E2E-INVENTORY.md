@@ -231,17 +231,21 @@ npm test tests/smoke/api-health.test.js
 
 **Skip logic implementado:**
 ```javascript
-// Skip these tests in mock mode as they require real database integration
+// Skip these tests in mock mode or test environment
+const shouldSkipIntegrationTests = process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
 const describeFunction = shouldSkipIntegrationTests ? describe.skip : describe;
 ```
 
 **Execution:**
 ```bash
-# Run with real DB
+# Run with real DB (production mode)
 npm test tests/integration/tierValidationSecurity.test.js
 
-# Skip in mock mode
-MOCK_MODE=true npm test tests/integration/tierValidationSecurity.test.js
+# Skip with ENABLE_MOCK_MODE
+ENABLE_MOCK_MODE=true npm test tests/integration/tierValidationSecurity.test.js
+
+# Skip with NODE_ENV (automatically skipped in test env)
+NODE_ENV=test npm test tests/integration/tierValidationSecurity.test.js
 ```
 
 ---
