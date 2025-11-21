@@ -3,14 +3,20 @@
  * Issue #294: Kill Switch global y panel de control de feature flags para administradores
  */
 
-const { killSwitchService, checkKillSwitch, shouldBlockAutopost } = require('../../../src/middleware/killSwitch');
-const { supabaseServiceClient } = require('../../../src/config/supabase');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    feature_flags: []
+});
 
 // Mock Supabase
 jest.mock('../../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn()
-  }
+  supabaseServiceClient: mockSupabase
 }));
 
 // Mock logger
@@ -29,12 +35,21 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const { killSwitchService, checkKillSwitch, shouldBlockAutopost } = require('../../../src/middleware/killSwitch');
+const { supabaseServiceClient } = require('../../../src/config/supabase');
+
 describe('Kill Switch Middleware', () => {
   let mockSelect, mockEq, mockSingle, mockIn;
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
 
     // Reset kill switch service
     killSwitchService.cache.clear();
@@ -50,7 +65,7 @@ describe('Kill Switch Middleware', () => {
       in: mockIn
     });
 
-    supabaseServiceClient.from.mockReturnValue({
+    mockSupabase.from.mockReturnValue({
       select: mockSelect
     });
   });
@@ -357,7 +372,7 @@ describe('Kill Switch Middleware', () => {
       ];
 
       // Mock the cache refresh call
-      supabaseServiceClient.from.mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           in: jest.fn().mockResolvedValue({
             data: mockFlags,

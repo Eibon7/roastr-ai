@@ -1,11 +1,18 @@
-const request = require('supertest');
-const express = require('express');
-const { supabaseServiceClient } = require('../../../src/config/supabase');
-const PersonaInputSanitizer = require('../../../src/services/personaInputSanitizer');
-const encryptionService = require('../../../src/services/encryptionService');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    roastr_personas: []
+});
 
 // Mock dependencies
-jest.mock('../../../src/config/supabase');
+jest.mock('../../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
 jest.mock('../../../src/services/personaInputSanitizer');
 jest.mock('../../../src/services/encryptionService');
 jest.mock('../../../src/middleware/auth', () => ({
@@ -31,12 +38,38 @@ jest.mock('../../../src/utils/logger', () => ({
     }
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const request = require('supertest');
+const express = require('express');
+const PersonaInputSanitizer = require('../../../src/services/personaInputSanitizer');
+const encryptionService = require('../../../src/services/encryptionService');
+
+function configurePersonaQueryResult({ data = null, error = null, reject = false } = {}) {
+    mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockImplementation(() => {
+                    if (reject) {
+                        return Promise.reject(error);
+                    }
+                    return Promise.resolve({ data, error });
+                })
+            })
+        })
+    });
+}
+
 describe('POST /api/user/roastr-persona/validate', () => {
     let app;
     let mockSanitizePersonaInput;
 
     beforeEach(() => {
         jest.clearAllMocks();
+        // Reset Supabase mock to defaults
+        mockSupabase._reset();
         
         // Create Express app with routes
         app = express();
@@ -88,13 +121,7 @@ describe('POST /api/user/roastr-persona/validate', () => {
             
             for (const field of fields) {
                 mockSanitizePersonaInput.mockReturnValue('sanitized value');
-                supabaseServiceClient.from = jest.fn().mockReturnValue({
-                    select: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            single: jest.fn().mockResolvedValue({ data: null })
-                        })
-                    })
-                });
+                configurePersonaQueryResult();
 
                 const response = await request(app)
                     .post('/api/user/roastr-persona/validate')
@@ -135,13 +162,7 @@ describe('POST /api/user/roastr-persona/validate', () => {
             const maxText = 'a'.repeat(300);
             mockSanitizePersonaInput.mockReturnValue(maxText);
             
-            supabaseServiceClient.from = jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({ data: null })
-                    })
-                })
-            });
+            configurePersonaQueryResult();
 
             const response = await request(app)
                 .post('/api/user/roastr-persona/validate')
@@ -180,13 +201,7 @@ describe('POST /api/user/roastr-persona/validate', () => {
             const cleanText = 'Soy desarrollador y me gusta el café';
             mockSanitizePersonaInput.mockReturnValue(cleanText);
             
-            supabaseServiceClient.from = jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({ data: null })
-                    })
-                })
-            });
+            configurePersonaQueryResult();
 
             const response = await request(app)
                 .post('/api/user/roastr-persona/validate')
@@ -210,13 +225,7 @@ describe('POST /api/user/roastr-persona/validate', () => {
                 lo_que_me_da_igual_encrypted: null
             };
 
-            supabaseServiceClient.from = jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({ data: existingData })
-                    })
-                })
-            });
+            configurePersonaQueryResult(existingData);
 
             // Mock decryption to return specific lengths
             encryptionService.decrypt
@@ -246,13 +255,7 @@ describe('POST /api/user/roastr-persona/validate', () => {
                 lo_que_me_da_igual_encrypted: null
             };
 
-            supabaseServiceClient.from = jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({ data: existingData })
-                    })
-                })
-            });
+            configurePersonaQueryResult(existingData);
 
             // Mock decryption to return specific lengths
             encryptionService.decrypt
@@ -280,13 +283,7 @@ describe('POST /api/user/roastr-persona/validate', () => {
 
     describe('Error Handling', () => {
         it('should handle database errors gracefully', async () => {
-            supabaseServiceClient.from = jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockRejectedValue(new Error('Database error'))
-                    })
-                })
-            });
+            configurePersonaQueryResult({ error: new Error('Database error'), reject: true });
 
             mockSanitizePersonaInput.mockReturnValue('valid text');
 
@@ -310,13 +307,7 @@ describe('POST /api/user/roastr-persona/validate', () => {
                 lo_que_me_da_igual_encrypted: null
             };
 
-            supabaseServiceClient.from = jest.fn().mockReturnValue({
-                select: jest.fn().mockReturnValue({
-                    eq: jest.fn().mockReturnValue({
-                        single: jest.fn().mockResolvedValue({ data: existingData })
-                    })
-                })
-            });
+            configurePersonaQueryResult({ data: existingData });
 
             // Mock decryption to throw error
             encryptionService.decrypt

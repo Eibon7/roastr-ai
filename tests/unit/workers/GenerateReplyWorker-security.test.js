@@ -9,17 +9,24 @@
  * - Content mismatch detection
  */
 
-const GenerateReplyWorker = require('../../../src/workers/GenerateReplyWorker');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults for all tables that might be used
+const mockSupabase = createSupabaseMock({
+    comments: [],
+    responses: [],
+    plan_limits: [],
+    organizations: [],
+    roast_approvals: []
+});
 
 // Mock dependencies
 jest.mock('../../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn(),
-    select: jest.fn(),
-    eq: jest.fn(),
-    single: jest.fn(),
-    update: jest.fn()
-  }
+  supabaseServiceClient: mockSupabase
 }));
 
 jest.mock('../../../src/utils/logger', () => ({
@@ -31,12 +38,105 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
+// Mock BaseWorker
+jest.mock('../../../src/workers/BaseWorker', () => {
+  return class MockBaseWorker {
+    constructor(workerType, options = {}) {
+      this.workerType = workerType;
+      this.workerName = `${workerType}-worker-test`;
+      this.config = { maxRetries: 3, ...options };
+      this.supabase = mockSupabase;
+      this.queueService = {
+        addJob: jest.fn(),
+        initialize: jest.fn(),
+        shutdown: jest.fn()
+      };
+      this.redis = null;
+      this.log = jest.fn();
+      this.start = jest.fn();
+      this.stop = jest.fn();
+      this.initializeConnections = jest.fn();
+      this.setupGracefulShutdown = jest.fn();
+    }
+  };
+});
+
+// Mock Cost Control service
+const mockCostControlService = {
+  canPerformOperation: jest.fn().mockResolvedValue({ allowed: true }),
+  recordUsage: jest.fn(),
+  initialize: jest.fn()
+};
+
+jest.mock('../../../src/services/costControl', () => {
+  return jest.fn().mockImplementation(() => mockCostControlService);
+});
+
+// Mock RoastPromptTemplate
+jest.mock('../../../src/services/roastPromptTemplate', () => {
+  return jest.fn().mockImplementation(() => ({
+    generatePrompt: jest.fn(),
+    validatePrompt: jest.fn()
+  }));
+});
+
+// Mock transparencyService
+jest.mock('../../../src/services/transparencyService', () => ({
+  applyTransparency: jest.fn(),
+  validateTransparency: jest.fn()
+}));
+
+// Mock OpenAI client
+const mockOpenAIClient = {
+  chat: {
+    completions: {
+      create: jest.fn()
+    }
+  }
+};
+
+// Mock mockMode
+jest.mock('../../../src/config/mockMode', () => ({
+  mockMode: {
+    isMockMode: true,
+    generateMockSupabaseClient: jest.fn(() => mockSupabase),
+    generateMockOpenAI: jest.fn(() => mockOpenAIClient)
+  }
+}));
+
+// Mock killSwitch
+jest.mock('../../../src/middleware/killSwitch', () => ({
+  shouldBlockAutopost: jest.fn().mockReturnValue(false)
+}));
+
+// Mock constants
+jest.mock('../../../src/config/constants', () => ({
+  PLATFORM_LIMITS: {}
+}));
+
+// Mock advancedLogger
+jest.mock('../../../src/utils/advancedLogger', () => ({
+  logWorkerEvent: jest.fn(),
+  logError: jest.fn(),
+  queueLogger: {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  }
+}));
+
 jest.mock('../../../src/services/autoApprovalService', () => {
   return jest.fn().mockImplementation(() => ({
     shouldAutoApprove: jest.fn()
   }));
 });
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const GenerateReplyWorker = require('../../../src/workers/GenerateReplyWorker');
 const { supabaseServiceClient } = require('../../../src/config/supabase');
 const { logger } = require('../../../src/utils/logger');
 
@@ -46,16 +146,24 @@ describe('GenerateReplyWorker - Security Validations', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
+    
+    // Configure mockSupabase.from to return a chainable mock
+    const mockTableBuilder = {
+      select: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          single: jest.fn(() => ({
+            update: jest.fn(() => Promise.resolve({ data: null, error: null }))
+          }))
+        }))
+      })),
+      update: jest.fn(() => Promise.resolve({ data: null, error: null }))
+    };
+    mockSupabase.from.mockReturnValue(mockTableBuilder);
+    
     worker = new GenerateReplyWorker();
     mockAutoApprovalService = worker.autoApprovalService;
-    
-    // Reset Supabase mock chain
-    supabaseServiceClient.from.mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis()
-    });
   });
 
   describe('validateContentAtomically - Multi-Layer Security', () => {

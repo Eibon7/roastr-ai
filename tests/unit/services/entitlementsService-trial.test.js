@@ -3,11 +3,21 @@
  * Tests for trial functionality added to EntitlementsService
  */
 
-const EntitlementsService = require('../../../src/services/entitlementsService');
-const { supabaseServiceClient } = require('../../../src/config/supabase');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    user_subscriptions: []
+});
 
 // Mock dependencies
-jest.mock('../../../src/config/supabase');
+jest.mock('../../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
 jest.mock('../../../src/utils/logger', () => ({
   logger: {
     info: jest.fn(),
@@ -23,11 +33,27 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const EntitlementsService = require('../../../src/services/entitlementsService');
+
+function configureTrialUpdateResult(response = { error: null }) {
+  mockSupabase.from.mockReturnValue({
+    update: jest.fn(() => ({
+      eq: jest.fn().mockResolvedValue(response)
+    }))
+  });
+}
+
 describe('EntitlementsService - Trial Management', () => {
   let service;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
     service = new EntitlementsService();
   });
 
@@ -76,11 +102,7 @@ describe('EntitlementsService - Trial Management', () => {
     test('starts trial successfully for new user', async () => {
       service.isInTrial = jest.fn().mockResolvedValue(false);
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: null })
-        })
-      });
+      configureTrialUpdateResult();
 
       const result = await service.startTrial('user-123', 30);
 
@@ -98,11 +120,7 @@ describe('EntitlementsService - Trial Management', () => {
     test('handles database errors', async () => {
       service.isInTrial = jest.fn().mockResolvedValue(false);
 
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: { message: 'DB error' } })
-        })
-      });
+      configureTrialUpdateResult({ error: { message: 'DB error' } });
 
       await expect(service.startTrial('user-123')).rejects.toThrow('Failed to start trial: DB error');
     });
@@ -141,11 +159,7 @@ describe('EntitlementsService - Trial Management', () => {
 
   describe('cancelTrial', () => {
     test('cancels trial and converts to paid starter', async () => {
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: null })
-        })
-      });
+      configureTrialUpdateResult();
 
       const result = await service.cancelTrial('user-123');
 
@@ -154,11 +168,7 @@ describe('EntitlementsService - Trial Management', () => {
     });
 
     test('handles database errors', async () => {
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: { message: 'DB error' } })
-        })
-      });
+      configureTrialUpdateResult({ error: { message: 'DB error' } });
 
       await expect(service.cancelTrial('user-123')).rejects.toThrow('Failed to cancel trial: DB error');
     });
@@ -166,11 +176,7 @@ describe('EntitlementsService - Trial Management', () => {
 
   describe('convertTrialToPaid', () => {
     test('converts trial to paid starter', async () => {
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: null })
-        })
-      });
+      configureTrialUpdateResult();
 
       const result = await service.convertTrialToPaid('user-123');
 
@@ -180,11 +186,7 @@ describe('EntitlementsService - Trial Management', () => {
     });
 
     test('handles database errors', async () => {
-      supabaseServiceClient.from = jest.fn().mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: { message: 'DB error' } })
-        })
-      });
+      configureTrialUpdateResult({ error: { message: 'DB error' } });
 
       await expect(service.convertTrialToPaid('user-123')).rejects.toThrow('Failed to convert trial to paid: DB error');
     });

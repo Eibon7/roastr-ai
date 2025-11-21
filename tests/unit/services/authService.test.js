@@ -1,5 +1,27 @@
-const authService = require('../../../src/services/authService');
-const { supabaseServiceClient, supabaseAnonClient } = require('../../../src/config/supabase');
+const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    users: []
+}, {
+    // RPC functions if needed
+});
+
+// Mock Supabase anon client for auth operations
+const mockSupabaseAnonClient = {
+    auth: {
+        signUp: jest.fn(),
+        signInWithPassword: jest.fn(),
+        signInWithOtp: jest.fn(),
+        resetPasswordForEmail: jest.fn(),
+        verifyOtp: jest.fn(),
+        signInWithOAuth: jest.fn()
+    }
+};
 
 // Mock planLimitsService
 jest.mock('../../../src/services/planLimitsService', () => ({
@@ -8,6 +30,18 @@ jest.mock('../../../src/services/planLimitsService', () => ({
   updatePlanLimits: jest.fn(),
   checkLimit: jest.fn(),
   clearCache: jest.fn()
+}));
+
+// Mock subscriptionService (Issue #895)
+jest.mock('../../../src/services/subscriptionService', () => ({
+  applyPlanLimits: jest.fn().mockResolvedValue({ success: true }),
+  getUserUsage: jest.fn().mockResolvedValue({ roasts: 0, messages: 0 }),
+  isChangeAllowed: jest.fn().mockResolvedValue({ allowed: true, reason: null })
+}));
+
+// Mock auditService (Issue #895)
+jest.mock('../../../src/services/auditService', () => ({
+  logPlanChange: jest.fn().mockResolvedValue({ success: true })
 }));
 
 // Mock logger
@@ -26,10 +60,14 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
+// ============================================================================
+// STEP 2: Reference pre-created mocks in jest.mock() calls
+// ============================================================================
+
 // Mock Supabase clients
 jest.mock('../../../src/config/supabase', () => ({
   supabaseServiceClient: {
-    from: jest.fn(),
+    ...mockSupabase,
     auth: {
       admin: {
         createUser: jest.fn(),
@@ -37,22 +75,22 @@ jest.mock('../../../src/config/supabase', () => ({
       }
     }
   },
-  supabaseAnonClient: {
-    auth: {
-      signUp: jest.fn(),
-      signInWithPassword: jest.fn(),
-      signInWithOtp: jest.fn(),
-      resetPasswordForEmail: jest.fn(),
-      verifyOtp: jest.fn(),
-      signInWithOAuth: jest.fn()
-    }
-  },
+  supabaseAnonClient: mockSupabaseAnonClient,
   createUserClient: jest.fn()
 }));
+
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const authService = require('../../../src/services/authService');
+const { supabaseServiceClient, supabaseAnonClient } = require('../../../src/config/supabase');
 
 describe('AuthService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
   });
 
   describe('signUp', () => {
@@ -74,16 +112,18 @@ describe('AuthService', () => {
         error: null
       });
 
-      supabaseServiceClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      // Configure mockSupabase.from to return a mock that works with the service
+      const mockTableBuilder = {
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({
               data: mockUserData,
               error: null
-            })
-          })
-        })
-      });
+            }))
+          }))
+        }))
+      };
+      mockSupabase.from.mockReturnValue(mockTableBuilder);
 
       const result = await authService.signUp({
         email: 'test@example.com',
@@ -254,16 +294,18 @@ describe('AuthService', () => {
         error: null
       });
 
-      supabaseServiceClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      // Configure mockSupabase.from to return a mock that works with the service
+      const mockTableBuilder = {
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({
               data: mockUserData,
               error: null
-            })
-          })
-        })
-      });
+            }))
+          }))
+        }))
+      };
+      mockSupabase.from.mockReturnValue(mockTableBuilder);
 
       const result = await authService.createUserManually({
         email: 'test@example.com',
@@ -294,16 +336,18 @@ describe('AuthService', () => {
         error: null
       });
 
-      supabaseServiceClient.from.mockReturnValue({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      // Configure mockSupabase.from to return a mock that works with the service
+      const mockTableBuilder = {
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({
               data: mockUserData,
               error: null
-            })
-          })
-        })
-      });
+            }))
+          }))
+        }))
+      };
+      mockSupabase.from.mockReturnValue(mockTableBuilder);
 
       const result = await authService.createUserManually({
         email: 'test@example.com',
@@ -772,9 +816,21 @@ describe('AuthService', () => {
         plan: 'pro'
       };
 
+      // Issue #895: Mock applyPlanLimits to prevent rollback errors
+      authService.applyPlanLimits = jest.fn().mockResolvedValue({ success: true });
+
+      // Issue #895: Mock both .select() (get current user) and .update() (update plan)
       supabaseServiceClient.from.mockImplementation((table) => {
         if (table === 'users') {
           return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { id: 'test-id', email: 'test@example.com', plan: 'starter_trial', name: 'Test' },
+                  error: null
+                })
+              })
+            }),
             update: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
                 select: jest.fn().mockReturnValue({
@@ -790,6 +846,28 @@ describe('AuthService', () => {
           return {
             update: jest.fn().mockReturnValue({
               eq: jest.fn().mockResolvedValue({ error: null })
+            })
+          };
+        } else if (table === 'user_subscriptions') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: null
+                })
+              })
+            }),
+            upsert: jest.fn().mockReturnValue({
+              select: jest.fn().mockResolvedValue({
+                data: { user_id: 'test-id', plan: 'pro', status: 'active' },
+                error: null
+              })
+            }),
+            delete: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({
+                error: null
+              })
             })
           };
         }
@@ -989,34 +1067,37 @@ describe('AuthService', () => {
       expect(planLimitsService.getPlanLimits).toHaveBeenCalledWith('pro');
     });
 
-    it('should map basic plan to free plan', async () => {
+    it('should map basic plan to starter_trial plan', async () => {
+      // Issue #895: Plan migration basic → starter_trial, mock must return starter_trial limits
       planLimitsService.getPlanLimits.mockResolvedValue({
-        monthlyResponsesLimit: 100,
-        monthlyTokensLimit: 10000,
+        monthlyResponsesLimit: 5, // starter_trial limit
+        monthlyTokensLimit: 100000, // starter_trial limit
         integrationsLimit: 1
       });
 
       const basicLimits = await authService.getPlanLimits('basic');
-      expect(basicLimits.monthly_messages).toBe(100);
-      expect(basicLimits.monthly_tokens).toBe(10000);
-      expect(planLimitsService.getPlanLimits).toHaveBeenCalledWith('free');
+      expect(basicLimits.monthly_messages).toBe(5); // starter_trial default
+      expect(basicLimits.monthly_tokens).toBe(100000); // starter_trial default
+      expect(planLimitsService.getPlanLimits).toHaveBeenCalledWith('starter_trial');
     });
 
     it('should return fallback limits on database error', async () => {
       planLimitsService.getPlanLimits.mockRejectedValue(new Error('Database error'));
 
+      // Issue #895: Pro plan updated - tokens 500k, integrations 2 (not 5)
       const proLimits = await authService.getPlanLimits('pro');
       expect(proLimits.monthly_messages).toBe(1000);
-      expect(proLimits.monthly_tokens).toBe(100000);
-      expect(proLimits.integrations).toBe(5);
+      expect(proLimits.monthly_tokens).toBe(500000); // Updated per planService.js:161
+      expect(proLimits.integrations).toBe(2); // Pro plan has 2 integrations per social network
     });
 
     it('should return fallback limits for unknown plans', async () => {
       planLimitsService.getPlanLimits.mockRejectedValue(new Error('Plan not found'));
 
+      // Issue #895: Fallback limits changed to starter_trial defaults (authService.js:1355)
       const unknownLimits = await authService.getPlanLimits('unknown_plan');
-      expect(unknownLimits.monthly_messages).toBe(100);
-      expect(unknownLimits.monthly_tokens).toBe(10000);
+      expect(unknownLimits.monthly_messages).toBe(5); // Was 100
+      expect(unknownLimits.monthly_tokens).toBe(100000); // Was 10000
       expect(unknownLimits.integrations).toBe(1); // Basic plan has 1 integration limit
     });
   });

@@ -3,16 +3,20 @@
  * Issue #294: Kill Switch global y panel de control de feature flags para administradores
  */
 
-const request = require('supertest');
-const express = require('express');
-const featureFlagsRouter = require('../../../../src/routes/admin/featureFlags');
-const { supabaseServiceClient } = require('../../../../src/config/supabase');
+const { createSupabaseMock } = require('../../../helpers/supabaseMockFactory');
+
+// ============================================================================
+// STEP 1: Create mocks BEFORE jest.mock() calls (Issue #892 - Fix Supabase Mock Pattern)
+// ============================================================================
+
+// Create Supabase mock with defaults
+const mockSupabase = createSupabaseMock({
+    feature_flags: []
+});
 
 // Mock dependencies
 jest.mock('../../../../src/config/supabase', () => ({
-  supabaseServiceClient: {
-    from: jest.fn()
-  }
+  supabaseServiceClient: mockSupabase
 }));
 
 jest.mock('../../../../src/middleware/auth', () => ({
@@ -42,6 +46,15 @@ jest.mock('../../../../src/utils/safeUtils', () => ({
   maskEmail: jest.fn(email => email ? `${email.split('@')[0]}@***` : 'unknown-email')
 }));
 
+// ============================================================================
+// STEP 3: Require modules AFTER mocks are configured
+// ============================================================================
+
+const request = require('supertest');
+const express = require('express');
+const featureFlagsRouter = require('../../../../src/routes/admin/featureFlags');
+const { supabaseServiceClient } = require('../../../../src/config/supabase');
+
 describe('Feature Flags Admin API', () => {
   let app;
   let mockSelect, mockEq, mockUpdate, mockInsert, mockOrder, mockRange;
@@ -52,6 +65,8 @@ describe('Feature Flags Admin API', () => {
     app.use('/admin', featureFlagsRouter);
 
     jest.clearAllMocks();
+    // Reset Supabase mock to defaults
+    mockSupabase._reset();
 
     // Setup Supabase mocks with proper chaining
     mockRange = jest.fn();
@@ -62,7 +77,7 @@ describe('Feature Flags Admin API', () => {
     mockSelect = jest.fn();
 
     // Reset all mocks to return chainable objects by default
-    supabaseServiceClient.from.mockImplementation(() => ({
+    mockSupabase.from.mockImplementation(() => ({
       select: mockSelect,
       update: mockUpdate,
       insert: mockInsert,
@@ -261,7 +276,7 @@ describe('Feature Flags Admin API', () => {
         })
       };
 
-      supabaseServiceClient.from.mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue(selectChain)
       });
 
@@ -421,7 +436,7 @@ describe('Feature Flags Admin API', () => {
         })
       };
 
-      supabaseServiceClient.from.mockReturnValue({
+      mockSupabase.from.mockReturnValue({
         select: jest.fn().mockReturnValue(selectChain)
       });
 
