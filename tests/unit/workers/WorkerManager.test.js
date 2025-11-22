@@ -16,12 +16,18 @@ const FetchCommentsWorker = require('../../../src/workers/FetchCommentsWorker');
 const AnalyzeToxicityWorker = require('../../../src/workers/AnalyzeToxicityWorker');
 const GenerateReplyWorker = require('../../../src/workers/GenerateReplyWorker');
 const ShieldActionWorker = require('../../../src/workers/ShieldActionWorker');
+const BillingWorker = require('../../../src/workers/BillingWorker');
+const StyleProfileWorker = require('../../../src/workers/StyleProfileWorker');
+const PublisherWorker = require('../../../src/workers/PublisherWorker');
 
 // Mock all worker classes
 jest.mock('../../../src/workers/FetchCommentsWorker');
 jest.mock('../../../src/workers/AnalyzeToxicityWorker');
 jest.mock('../../../src/workers/GenerateReplyWorker');
 jest.mock('../../../src/workers/ShieldActionWorker');
+jest.mock('../../../src/workers/BillingWorker');
+jest.mock('../../../src/workers/StyleProfileWorker');
+jest.mock('../../../src/workers/PublisherWorker');
 
 describe('WorkerManager', () => {
   let manager;
@@ -29,6 +35,10 @@ describe('WorkerManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Increase max listeners to avoid warnings in tests
+    // Each WorkerManager instance adds 5 listeners (SIGTERM, SIGINT, SIGQUIT, uncaughtException, unhandledRejection)
+    process.setMaxListeners(30);
     
     // Create mock worker instances
     const createMockWorker = (type) => ({
@@ -92,7 +102,7 @@ describe('WorkerManager', () => {
       manager = new WorkerManager();
 
       expect(manager.options.enabledWorkers).toEqual([
-        'fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'
+        'fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action', 'billing'
       ]);
       expect(manager.options.workerConfig).toEqual({});
       expect(manager.options.healthCheckInterval).toBe(30000);
@@ -125,7 +135,10 @@ describe('WorkerManager', () => {
         'fetch_comments': FetchCommentsWorker,
         'analyze_toxicity': AnalyzeToxicityWorker,
         'generate_reply': GenerateReplyWorker,
-        'shield_action': ShieldActionWorker
+        'shield_action': ShieldActionWorker,
+        'billing': BillingWorker,
+        'style_profile': StyleProfileWorker,
+        'post_response': PublisherWorker
       });
     });
 

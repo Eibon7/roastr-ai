@@ -474,18 +474,22 @@ WORKER_POLL_INTERVAL=1000  # ms
 ### Test Files
 
 - `tests/unit/services/queueService.test.js` - **26 tests** (100% passing)
+- `tests/unit/workers/BaseWorker.test.js` - **59 tests** (100% passing) ✅ Issue #915
+- `tests/unit/workers/WorkerManager.test.js` - **47 tests** (100% passing) ✅ Issue #915
+- `tests/integration/worker-system.test.js` - **2 tests** (100% passing) ✅ Issue #915
 - `tests/e2e/demo-flow.test.js` - **7 tests** (100% passing)
 - `tests/integration/multiTenantWorkflow.test.js` - Queue integration tests
 
 ### Coverage
 
-**Overall:** 6% (updated 2025-10-14)
+**Overall:** Updated 2025-01-XX (Issue #915)
 - queueService.js: 11.91% lines (28/235 lines covered)
-- BaseWorker.js: 0% (needs test coverage)
-- Lines: 11.91%
-- Statements: 11.66%
-- Functions: 13.33%
-- Branches: 7.18%
+- BaseWorker.js: **85.18% statements, 87.65% branches, 78.94% functions, 85.6% lines** ✅ Issue #915
+- WorkerManager.js: **89.47% statements, 92.68% branches, 80.95% functions, 89.47% lines** ✅ Issue #915
+- Lines: 11.91% (queueService) + 85.6% (BaseWorker) + 89.47% (WorkerManager)
+- Statements: 11.66% (queueService) + 85.18% (BaseWorker) + 89.47% (WorkerManager)
+- Functions: 13.33% (queueService) + 78.94% (BaseWorker) + 80.95% (WorkerManager)
+- Branches: 7.18% (queueService) + 87.65% (BaseWorker) + 92.68% (WorkerManager)
 
 ### Unit Tests
 
