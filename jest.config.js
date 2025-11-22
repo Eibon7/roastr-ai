@@ -102,6 +102,12 @@ module.exports = {
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/tests/unit/auth/**/*.test.js', '<rootDir>/tests/unit/components/**/*.test.jsx'],
       setupFilesAfterEnv: ['<rootDir>/tests/setup.js']
+    },
+    {
+      displayName: 'rls-tests',
+      testMatch: ['<rootDir>/tests/rls/**/*.test.js'],
+      setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js'],
+      testTimeout: 30000
     }
   ]
 };
