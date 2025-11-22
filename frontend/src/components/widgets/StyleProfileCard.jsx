@@ -12,10 +12,12 @@ import {
   ArrowRight,
   AlertTriangle,
   Copy,
-  CheckCircle,
-  Loader2
+  CheckCircle
 } from 'lucide-react';
-import { createMockFetch } from '../../lib/mockMode';
+import { apiClient } from '../../lib/api';
+import { getIntegrationStatus } from '../../api/integrations';
+import { SkeletonLoader } from '../states/SkeletonLoader';
+import { ErrorMessage } from '../states/ErrorMessage';
 
 const LANGUAGE_FLAGS = {
   es: '🇪🇸',
@@ -40,42 +42,46 @@ export default function StyleProfileCard() {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copiedPrompt, setCopiedPrompt] = useState(null);
+  const [integrationStatus, setIntegrationStatus] = useState([]);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const fetchApi = createMockFetch();
-
   useEffect(() => {
-    fetchProfileStatus();
-    fetchProfileData();
-  }, []);
+    let active = true;
 
-  const fetchProfileStatus = async () => {
-    try {
-      const response = await fetchApi('/api/style-profile/status');
-      if (response.ok) {
-        const data = await response.json();
-        setProfileStatus(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch profile status:', error);
-    }
-  };
+    async function load() {
+      try {
+        setError(null);
+        const [statusRes, profileRes, integrationRes] = await Promise.all([
+          apiClient.get('/style-profile/status'),
+          apiClient.get('/style-profile'),
+          getIntegrationStatus()
+        ]);
 
-  const fetchProfileData = async () => {
-    try {
-      const response = await fetchApi('/api/style-profile');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data.available) {
-          setProfileData(data.data);
+        if (!active) return;
+
+        setProfileStatus(statusRes.data || statusRes);
+        const profilePayload = profileRes.data || profileRes;
+        if (profilePayload.available ?? profilePayload.data?.available) {
+          setProfileData(profilePayload.data || profilePayload);
         }
+        const integrations = integrationRes.integrations || integrationRes.data?.integrations || [];
+        const connectedWithData = integrations.filter(integration => integration.status === 'connected' && integration.importedCount >= 50);
+        setIntegrationStatus(connectedWithData);
+      } catch (fetchError) {
+        console.error('Failed to fetch style profile data:', fetchError);
+        setError('No pudimos cargar tu perfil de estilo. Intenta recargar.');
+      } finally {
+        if (active) setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch profile data:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleCopyPrompt = async (prompt, lang) => {
     try {
@@ -99,8 +105,18 @@ export default function StyleProfileCard() {
     if (loading) {
       return (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <SkeletonLoader rows={3} height={16} />
         </div>
+      );
+    }
+
+    if (error && !profileData) {
+      return (
+        <ErrorMessage
+          title="No pudimos cargar tu perfil"
+          message={error}
+          onRetry={() => window.location.reload()}
+        />
       );
     }
 

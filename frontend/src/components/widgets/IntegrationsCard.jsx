@@ -3,27 +3,48 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Skeleton } from '../ui/skeleton';
 import { Link2, ExternalLink } from 'lucide-react';
+import { SkeletonLoader } from '../states/SkeletonLoader';
+import { getIntegrations } from '../../api/integrations';
+import { ErrorMessage } from '../states/ErrorMessage';
+import { EmptyState } from '../states/EmptyState';
 
 export default function IntegrationsCard() {
-  const [integrations, setIntegrations] = useState(null);
+  const [integrations, setIntegrations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    let active = true;
+
     async function fetchData() {
       try {
-        const res = await fetch('/api/integrations');
-        if (res.ok) {
-          setIntegrations(await res.json());
+        setError(null);
+        const data = await getIntegrations();
+        const list = data.integrations || data.data?.integrations || [];
+        if (active) {
+          setIntegrations(list);
         }
-      } catch (error) {
-        console.error('Failed to fetch integrations:', error);
+      } catch (fetchError) {
+        console.error('Failed to fetch integrations:', fetchError);
+        if (active) {
+          setError('No pudimos obtener las integraciones. Revisa la conexión.');
+        }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     }
 
     fetchData();
+
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const connected = integrations.filter(i => i.status === 'connected');
+  const disconnected = integrations.filter(i => i.status === 'disconnected');
 
   if (loading) {
     return (
@@ -31,20 +52,40 @@ export default function IntegrationsCard() {
         <CardHeader>
           <CardTitle>Integrations</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex items-center justify-between">
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-5 w-20" />
-            </div>
-          ))}
+        <CardContent>
+          <div className="space-y-3">
+            <Skeleton className="h-5 w-24" />
+            <SkeletonLoader rows={3} height={14} />
+          </div>
         </CardContent>
       </Card>
     );
   }
 
-  const connected = integrations?.filter(i => i.status === 'connected') || [];
-  const disconnected = integrations?.filter(i => i.status === 'disconnected') || [];
+  if (error && integrations.length === 0) {
+    return (
+      <ErrorMessage
+        title="Error cargando integraciones"
+        message={error}
+        onRetry={() => {
+          setLoading(true);
+          setError(null);
+          getIntegrations().then(data => setIntegrations(data.integrations || data.data?.integrations || [])).finally(() => setLoading(false));
+        }}
+      />
+    );
+  }
+
+  if (!integrations.length) {
+    return (
+      <EmptyState
+        title="Sin integraciones"
+        description="Conecta una plataforma para empezar a generar estilo."
+        actionLabel="Ver Connect"
+        onAction={() => window.location.assign('/connect')}
+      />
+    );
+  }
 
   return (
     <Card>
@@ -55,13 +96,12 @@ export default function IntegrationsCard() {
             <span>Integrations</span>
           </div>
           <Badge variant="outline">
-            {connected.length}/{integrations?.length || 0}
+            {connected.length}/{integrations.length}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {/* Connected */}
           {connected.length > 0 && (
             <div>
               <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
@@ -83,7 +123,6 @@ export default function IntegrationsCard() {
             </div>
           )}
 
-          {/* Disconnected */}
           {disconnected.length > 0 && (
             <div>
               <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
@@ -110,7 +149,6 @@ export default function IntegrationsCard() {
             </div>
           )}
 
-          {/* Footer */}
           <div className="pt-3 border-t">
             <button className="flex items-center space-x-2 text-xs text-primary hover:underline">
               <ExternalLink className="h-3 w-3" />
@@ -119,6 +157,11 @@ export default function IntegrationsCard() {
           </div>
         </div>
       </CardContent>
+      {error && integrations.length > 0 && (
+        <div className="p-3">
+          <ErrorMessage title="Advertencia" message={error} variant="warning" />
+        </div>
+      )}
     </Card>
   );
 }

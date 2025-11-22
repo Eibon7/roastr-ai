@@ -112,6 +112,18 @@ CREATE TABLE integration_configs (
 );
 ```
 
+## Frontend Dashboard Integration
+
+El dashboard del frontend (`Connect`, `Dashboard`, `StyleProfile`) consume directamente estos endpoints:
+
+- `GET /api/integrations`, `GET /api/integrations/status`, `GET /api/integrations/platforms` → estados mostrados en `Connect` e `IntegrationsCard`.
+- `POST /api/integrations/connect`, `POST /api/integrations/import`, `GET /api/integrations/import/{jobId}/progress` → flujos de conexión e importación.
+- `GET /api/usage`, `GET /api/plan/current`, `POST /api/plan/upgrade` → métricas de uso y límites que alimentan `UsageCostCard` y `PlanStatusCard`.
+- `GET /api/style-profile`, `POST /api/style-profile/generate`, `DELETE /api/style-profile` → generan y resetean el Style Profile desde la interfaz.
+- `POST /api/roast/preview` → previews seguros para Shield dentro del editor.
+
+`frontend/src/lib/api.js` (`apiClient`) maneja tokens Supabase, CSRF y errores comunes; los widgets usan `SkeletonLoader`, `ErrorMessage` y `EmptyState` para mantener una UI uniforme.
+
 ## Twitter Legacy Adapter Pattern
 
 **Context:** CodeRabbit Review #3302108179 - Missing Twitter Service Path

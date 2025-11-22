@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-11-21T12:22:55.122Z",
+  "timestamp": "2025-11-22T13:46:59.675Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -26,13 +26,12 @@
       "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
+      "type": "missing_coverage_data",
       "node": "cost-control",
-      "severity": "critical",
+      "severity": "warning",
       "declared": 60,
-      "actual": 0,
-      "diff": 60,
-      "message": "Coverage mismatch: declared 60% but actual is 0% (diff: 60%)"
+      "actual": null,
+      "message": "Coverage data not available for validation"
     },
     {
       "type": "missing_coverage_data",
@@ -51,31 +50,28 @@
       "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
+      "type": "missing_coverage_data",
       "node": "observability",
-      "severity": "critical",
+      "severity": "warning",
       "declared": 46,
-      "actual": 3,
-      "diff": 43,
-      "message": "Coverage mismatch: declared 46% but actual is 3% (diff: 43%)"
+      "actual": null,
+      "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
+      "type": "missing_coverage_data",
       "node": "persona",
-      "severity": "critical",
+      "severity": "warning",
       "declared": 90,
-      "actual": 0,
-      "diff": 90,
-      "message": "Coverage mismatch: declared 90% but actual is 0% (diff: 90%)"
+      "actual": null,
+      "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
+      "type": "missing_coverage_data",
       "node": "plan-features",
-      "severity": "critical",
+      "severity": "warning",
       "declared": 74,
-      "actual": 0,
-      "diff": 74,
-      "message": "Coverage mismatch: declared 74% but actual is 0% (diff: 74%)"
+      "actual": null,
+      "message": "Coverage data not available for validation"
     },
     {
       "type": "missing_coverage_data",
@@ -86,40 +82,36 @@
       "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
+      "type": "missing_coverage_data",
       "node": "queue-system",
-      "severity": "critical",
+      "severity": "warning",
       "declared": 67,
-      "actual": 6,
-      "diff": 61,
-      "message": "Coverage mismatch: declared 67% but actual is 6% (diff: 61%)"
+      "actual": null,
+      "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
+      "type": "missing_coverage_data",
       "node": "roast",
-      "severity": "critical",
+      "severity": "warning",
       "declared": 59,
-      "actual": 0,
-      "diff": 59,
-      "message": "Coverage mismatch: declared 59% but actual is 0% (diff: 59%)"
+      "actual": null,
+      "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
+      "type": "missing_coverage_data",
       "node": "shield",
-      "severity": "critical",
+      "severity": "warning",
       "declared": 86,
-      "actual": 0,
-      "diff": 86,
-      "message": "Coverage mismatch: declared 86% but actual is 0% (diff: 86%)"
+      "actual": null,
+      "message": "Coverage data not available for validation"
     },
     {
-      "type": "coverage_integrity_violation",
+      "type": "missing_coverage_data",
       "node": "social-platforms",
-      "severity": "critical",
+      "severity": "warning",
       "declared": 14,
-      "actual": 0,
-      "diff": 14,
-      "message": "Coverage mismatch: declared 14% but actual is 0% (diff: 14%)"
+      "actual": null,
+      "message": "Coverage data not available for validation"
     },
     {
       "type": "missing_coverage_data",
@@ -138,5 +130,5 @@
       "message": "Coverage data not available for validation"
     }
   ],
-  "status": "critical"
+  "status": "healthy"
 }

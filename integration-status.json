@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-09T16:39:35.846Z",
+  "last_updated": "2025-11-21T23:30:00.000Z",
   "version": "1.0",
   "integrations": [
     {
@@ -112,5 +112,18 @@
     "inactive": 9,
     "not_connected": 0,
     "overall_health": 40
+  }
+  ,
+  "dashboard_integration": {
+    "status": "connected",
+    "last_verified": "2025-11-21T23:30:00.000Z",
+    "endpoints": [
+      "/api/integrations",
+      "/api/usage",
+      "/api/plan/current",
+      "/api/style-profile",
+      "/api/roast/preview"
+    ],
+    "notes": "Front-end dashboard calls these endpoints via apiClient with Supabase auth."
   }
 }

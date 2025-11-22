@@ -176,18 +176,49 @@ npm test -- --testPathPattern="AuthContext.mock"
 
 ## Integración con Backend
 
+El dashboard ya consume datos reales desde el backend (`/api/...`) usando `src/lib/api.js` (`apiClient`) que:
+
+1. Resuelve refresco automático de token Supabase y cabeceras `Authorization: Bearer <token>`.
+2. Agrega el header `X-CSRF-Token` cuando se modifica estado.
+3. Permite operar tanto en modo real como en mock sin duplicar lógica.
+
 ### Variables de Entorno Requeridas (Modo Real)
 
 ```bash
 REACT_APP_SUPABASE_URL=https://tu-proyecto.supabase.co
 REACT_APP_SUPABASE_ANON_KEY=tu_clave_anonima_supabase
+REACT_APP_API_URL=http://localhost:3000  # URL del backend local/staging
+ENABLE_SHOP=true        # Habilita la visualización de widgets de tienda
+ENABLE_SHIELD_UI=true   # Habilita tarjetas e indicadores de Shield en el dashboard
 ```
 
-### Variables Opcionales
+### Flags de Características
 
-```bash
-REACT_APP_ENABLE_MOCK_MODE=true  # Forzar mock mode
-```
+- `REACT_APP_ENABLE_MOCK_MODE` – fuerza el modo mock cuando debe mostrarse sin backend.
+- `ENABLE_SHOP`, `ENABLE_SHIELD_UI` – controlan widgets específicos que consultan endpoints reales.
+- `REACT_APP_USE_MAGIC_LINK` – habilita flujos mágicos en AuthContext.
+
+### Endpoints consumidos por el Dashboard
+
+| Ruta | Propósito |
+|------|-----------|
+| `GET /api/integrations` | Lista las plataformas conectadas |
+| `GET /api/integrations/status` | Estado detallado (importados, conectados) |
+| `GET /api/integrations/platforms` | Plataformas habilitadas en el UI de Connect |
+| `POST /api/integrations/connect` | Inicia conexión a Twitter, YouTube, etc. |
+| `POST /api/integrations/import` | Lanza importación de contenido y devuelve `jobId` |
+| `GET /api/integrations/import/{jobId}/progress` | Polling en Connect para mostrar progreso |
+| `GET /api/usage` | Muestra consumo, costos y breakdown |
+| `GET /api/plan/current` | Determina plan activo, límites y características |
+| `POST /api/plan/upgrade` | Convierte plan desde el dashboard |
+| `GET /api/user/roasts/recent` | Recupera roasts recientes para el activity feed |
+| `POST /api/style-profile/generate` | Genera perfil con datos conectados |
+| `GET /api/style-profile` | Descarga perfil existente para StyleProfileCard |
+| `DELETE /api/style-profile` | Borra el perfil |
+| `POST /api/roast/preview` | Genera preview seguro antes de publicar |
+
+Todos los endpoints requieren autenticación JWT y `apiClient` se encarga del refresh automático. Los componentes comparten los estados de `SkeletonLoader`, `ErrorMessage` y `EmptyState` para garantizar UI consistente en loading/error/empty.
+
 
 ## Troubleshooting
 
