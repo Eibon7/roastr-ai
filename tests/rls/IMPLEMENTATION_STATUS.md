@@ -76,10 +76,26 @@ npx jest tests/rls/tenants.test.js --verbose
 
 ## Próximos Pasos (Opcional)
 
-1. ⏳ Crear GitHub Action para CI/CD
-2. ⏳ Ejecutar tests con base de datos real
+1. ⏳ Ejecutar tests con base de datos real (requiere PostgreSQL/Supabase local)
+2. ⏳ Crear GitHub Action para CI/CD (AC8)
 3. ⏳ Añadir más casos de prueba según necesidades
 4. ⏳ Integrar en pre-commit hooks
+
+## Ejecución de Tests
+
+**Nota:** Los tests requieren PostgreSQL instalado y ejecutándose. Para ejecutar:
+
+```bash
+# 1. Verificar entorno
+npm run test:rls:setup
+
+# 2. Ejecutar tests
+npm run test:rls
+```
+
+**Estado de ejecución:** Pendiente de ejecución local (requiere PostgreSQL/Supabase local configurado)
+
+Los tests están implementados y listos, pero requieren configuración de PostgreSQL/Supabase local para ejecutarse. El script `test:rls:setup` verifica que el entorno esté correctamente configurado antes de ejecutar los tests.
 
 ## Notas
 
