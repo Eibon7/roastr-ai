@@ -70,6 +70,8 @@
     "lint": "eslint src/ tests/ --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
     "test:smoke": "jest tests/smoke/ --verbose",
+    "test:rls": "jest tests/rls/ --verbose",
+    "test:rls:setup": "./scripts/setup-rls-tests.sh",
     "test:log-management": "node scripts/test-log-management.js",
     "test:integration-backend": "INTEGRATION_TEST_MODE=backend jest --config=tests/integration/backend/jest.config.js --runInBand",
     "test:integration-backend:fixtures": "USE_FIXTURES=true USE_BACKEND_FIXTURES=true INTEGRATION_TEST_MODE=backend jest --config=tests/integration/backend/jest.config.js --runInBand",
@@ -220,6 +222,7 @@
     "nock": "^13.3.3",
     "pg": "^8.16.3",
     "playwright": "^1.56.0",
+    "supabase-test": "^0.2.4",
     "supertest": "^7.1.4"
   }
 }
