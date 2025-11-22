@@ -127,9 +127,10 @@ export default function StyleProfile() {
       if (data.upgrade || data.requiresUpgrade) {
         setError('Style Profile generation requires Creator+ plan. Please upgrade your plan.');
         setTimeout(() => navigate('/plans'), 3000);
-      } else if (data.success ?? true) {
-        setProfileData(data);
-        setSelectedLanguage(data.profiles?.[0]?.lang || null);
+      } else if (data.success === true || data.data?.success === true) {
+        const profile = data.data || data;
+        setProfileData(profile);
+        setSelectedLanguage(profile.profiles?.[0]?.lang || null);
       } else {
         setError(`Generation failed: ${data.error || 'unknown error'}`);
       }

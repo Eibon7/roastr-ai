@@ -13,9 +13,6 @@ import {
   ArrowRight,
   Users
 } from 'lucide-react';
-<<<<<<< HEAD
-import { createMockFetch } from '../lib/mockMode';
-=======
 import { 
   getAvailablePlatforms, 
   getIntegrationStatus, 
@@ -23,9 +20,6 @@ import {
   importFollowers,
   getImportProgress
 } from '../api/integrations';
-import { ErrorMessage } from '../components/states/ErrorMessage';
-import { EmptyState } from '../components/states/EmptyState';
->>>>>>> 32121679 (feat(frontend): add reusable state components)
 
 export default function Connect() {
   const [platforms, setPlatforms] = useState([]);
@@ -34,46 +28,36 @@ export default function Connect() {
   const [importing, setImporting] = useState(null);
   const [importProgress, setImportProgress] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-  const fetchApi = createMockFetch();
 
   const fetchPlatforms = useCallback(async () => {
     try {
-      const response = await fetchApi('/api/integrations/platforms');
-      if (response.ok) {
-        const data = await response.json();
-        setPlatforms(data.data.platforms);
-      }
+      setError(null);
+      const data = await getAvailablePlatforms();
+      setPlatforms(data.platforms || []);
     } catch (error) {
       console.error('Failed to fetch platforms:', error);
+      setError('No se pudieron cargar las plataformas disponibles');
     }
-  }, [fetchApi]);
+  }, []);
 
   const fetchIntegrationStatus = useCallback(async () => {
     try {
-      const response = await fetchApi('/api/integrations/status');
-      if (response.ok) {
-        const data = await response.json();
-        const statusMap = {};
-        data.data.integrations.forEach(integration => {
-          statusMap[integration.platform] = integration;
-        });
-        setIntegrationStatus(statusMap);
-      }
+      setError(null);
+      const data = await getIntegrationStatus();
+      const statusMap = {};
+      (data.integrations || []).forEach(integration => {
+        statusMap[integration.platform] = integration;
+      });
+      setIntegrationStatus(statusMap);
     } catch (error) {
       console.error('Failed to fetch integration status:', error);
+      setError('No se pudo cargar el estado de integraciones');
     } finally {
       setLoading(false);
     }
-  }, [fetchApi]);
-
-  const reloadData = useCallback(() => {
-    setError(null);
-    setLoading(true);
-    fetchPlatforms();
-    fetchIntegrationStatus();
-  }, [fetchPlatforms, fetchIntegrationStatus]);
+  }, []);
 
   useEffect(() => {
     fetchPlatforms();
@@ -82,19 +66,15 @@ export default function Connect() {
 
   const handleConnect = async (platform) => {
     setConnecting(platform);
+    setError(null);
 
     try {
-      const response = await fetchApi('/api/integrations/connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ platform })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      // TODO: Add credentials dialog for platform-specific auth
+      const credentials = {};
+      
+      const data = await connectPlatform(platform, credentials);
         
+      if (data.success) {
         // Update integration status
         await fetchIntegrationStatus();
         
@@ -102,12 +82,10 @@ export default function Connect() {
         setTimeout(() => {
           handleImport(platform);
         }, 1000);
-      } else {
-        const error = await response.json();
-        console.error('Connection failed:', error.error);
       }
     } catch (error) {
       console.error('Error connecting to platform:', error);
+      setError(`No se pudo conectar a ${platform}: ${error.message}`);
     } finally {
       setConnecting(null);
     }
@@ -115,6 +93,7 @@ export default function Connect() {
 
   const handleImport = async (platform) => {
     setImporting(platform);
+    setError(null);
     
     // Initialize progress tracking
     setImportProgress(prev => ({
@@ -123,68 +102,58 @@ export default function Connect() {
     }));
 
     try {
-      const response = await fetchApi('/api/integrations/import', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ platform, limit: 300 })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Simulate progress updates
-        simulateImportProgress(platform, data.data.imported);
-        
-      } else {
-        const error = await response.json();
-        console.error('Import failed:', error.error);
-        setImportProgress(prev => ({
-          ...prev,
-          [platform]: { status: 'error', error: error.error }
-        }));
+      const data = await importFollowers(platform);
+      
+      if (data.success && data.jobId) {
+        // Poll for progress updates
+        pollImportProgress(platform, data.jobId);
       }
     } catch (error) {
       console.error('Error importing from platform:', error);
+      setError(`No se pudo importar desde ${platform}: ${error.message}`);
       setImportProgress(prev => ({
         ...prev,
-        [platform]: { status: 'error', error: 'Import failed' }
+        [platform]: { status: 'error', error: error.message }
       }));
-    } finally {
       setImporting(null);
     }
   };
 
-  const simulateImportProgress = (platform, totalItems) => {
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += Math.random() * 50;
-      
-      if (currentProgress >= totalItems) {
+  const pollImportProgress = async (platform, jobId) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const data = await getImportProgress(jobId);
+        
         setImportProgress(prev => ({
           ...prev,
-          [platform]: { 
-            status: 'completed', 
-            imported: totalItems, 
-            total: totalItems 
+          [platform]: {
+            status: data.status,
+            imported: data.imported || 0,
+            total: 300,
+            progress: data.progress || 0
           }
         }));
-        clearInterval(interval);
-        
-        // Update integration status to reflect import completion
-        setTimeout(fetchIntegrationStatus, 1000);
-      } else {
+
+        // Stop polling when completed or error
+        if (data.status === 'completed' || data.status === 'error') {
+          clearInterval(pollInterval);
+          setImporting(null);
+          
+          // Update integration status
+          if (data.status === 'completed') {
+            setTimeout(fetchIntegrationStatus, 1000);
+          }
+        }
+      } catch (error) {
+        console.error('Error polling import progress:', error);
+        clearInterval(pollInterval);
+        setImporting(null);
         setImportProgress(prev => ({
           ...prev,
-          [platform]: { 
-            status: 'importing', 
-            imported: Math.floor(currentProgress), 
-            total: totalItems 
-          }
+          [platform]: { status: 'error', error: 'Progress check failed' }
         }));
       }
-    }, 500);
+    }, 2000); // Poll every 2 seconds
   };
 
   const getConnectionStatus = (platform) => {
@@ -222,6 +191,38 @@ export default function Connect() {
     );
   }
 
+  if (error && platforms.length === 0) {
+    return (
+      <PageLayout
+        title="Connect Your Platforms"
+        subtitle="Conecta tus cuentas de redes sociales para análisis de estilo"
+      >
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-start space-x-4">
+              <AlertCircle className="h-6 w-6 text-red-600 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-red-900">Error al cargar</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <Button 
+                  onClick={() => {
+                    setLoading(true);
+                    fetchPlatforms();
+                    fetchIntegrationStatus();
+                  }}
+                  className="mt-4"
+                  variant="outline"
+                >
+                  Reintentar
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout
       title="Connect Your Platforms"
@@ -229,27 +230,18 @@ export default function Connect() {
       metrics={[{ label: 'Listas para análisis', value: getConnectedPlatformsWithData().length }]}
     >
 
-<<<<<<< HEAD
-=======
-      {!loading && error && platforms.length > 0 && (
-        <ErrorMessage
-          title="Problemas cargando datos"
-          message={error}
-          variant="warning"
-          onRetry={reloadData}
-        />
+      {/* Error Banner */}
+      {error && platforms.length > 0 && (
+        <Card className="bg-yellow-50 border-yellow-200 mb-4">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <p className="text-sm text-yellow-800">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {!loading && !platforms.length && !error && (
-        <EmptyState
-          title="Sin plataformas disponibles"
-          description="Aún no tenemos plataformas configuradas en el backend. Intenta recargar para verificar la conexión."
-          actionLabel="Reintentar"
-          onAction={reloadData}
-        />
-      )}
-
->>>>>>> 32121679 (feat(frontend): add reusable state components)
       {/* Progress Overview */}
       <Card className="bg-blue-50 border-blue-200">
         <CardContent className="p-6">
