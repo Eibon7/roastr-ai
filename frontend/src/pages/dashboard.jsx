@@ -340,8 +340,18 @@ export default function Dashboard() {
     try {
       await apiClient.post(`/user/roasts/${roastId}/regenerate`);
       await fetchRecentRoasts();
+      setConnectionStatus({
+        type: 'success',
+        message: 'Roast regenerado exitosamente'
+      });
+      setTimeout(() => setConnectionStatus(null), 3000);
     } catch (error) {
       console.error('Error regenerating roast:', error);
+      setConnectionStatus({
+        type: 'error',
+        message: 'Error al regenerar el roast. Por favor, intenta de nuevo.'
+      });
+      setTimeout(() => setConnectionStatus(null), 5000);
     }
   };
 
@@ -349,8 +359,18 @@ export default function Dashboard() {
     try {
       await apiClient.delete(`/user/roasts/${roastId}`);
       await fetchRecentRoasts();
+      setConnectionStatus({
+        type: 'success',
+        message: 'Roast descartado exitosamente'
+      });
+      setTimeout(() => setConnectionStatus(null), 3000);
     } catch (error) {
       console.error('Error discarding roast:', error);
+      setConnectionStatus({
+        type: 'error',
+        message: 'Error al descartar el roast. Por favor, intenta de nuevo.'
+      });
+      setTimeout(() => setConnectionStatus(null), 5000);
     }
   };
 
@@ -358,8 +378,18 @@ export default function Dashboard() {
     try {
       await apiClient.post(`/user/roasts/${roastId}/publish`);
       await fetchRecentRoasts();
+      setConnectionStatus({
+        type: 'success',
+        message: 'Roast publicado exitosamente'
+      });
+      setTimeout(() => setConnectionStatus(null), 3000);
     } catch (error) {
       console.error('Error publishing roast:', error);
+      setConnectionStatus({
+        type: 'error',
+        message: 'Error al publicar el roast. Por favor, intenta de nuevo.'
+      });
+      setTimeout(() => setConnectionStatus(null), 5000);
     }
   };
 

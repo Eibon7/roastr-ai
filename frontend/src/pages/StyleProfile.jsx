@@ -61,7 +61,7 @@ export default function StyleProfile() {
       const payload = response.data || response;
       const available = payload.available ?? payload.data?.available ?? false;
       const hasAccessFlag = payload.hasAccess ?? payload.data?.hasAccess ?? false;
-      setHasAccess(available);
+      setHasAccess(hasAccessFlag);
 
       if (!available && !hasAccessFlag) {
         setTimeout(() => navigate('/plans'), 100);
