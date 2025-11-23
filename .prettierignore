@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+build/
+dist/
+coverage/
+.next/
+out/
+
+# Logs
+*.log
+logs/
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.min.js
+*.min.css
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend build artifacts
+frontend/build/
+frontend/dist/
+
+# Admin dashboard build
+admin-dashboard/dist/
+admin-dashboard/.vite/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# GDD artifacts
+gdd-*.json
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Documentation (may have specific formatting)
+.claude/
+.augment/
+docs/nodes/*.md
+spec.md
+
+# Config files that may have specific formatting
+*.config.cjs
+jest*.config.js
+babel.config.cjs
+

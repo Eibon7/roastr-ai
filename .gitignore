@@ -31,6 +31,8 @@ frontend/build/
 Thumbs.db
 .idea/
 .vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Coverage reports
 coverage/
