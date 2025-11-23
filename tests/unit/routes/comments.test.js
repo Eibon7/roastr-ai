@@ -31,10 +31,10 @@ describe('Comments Routes Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Save original environment
     originalEnv = { ...process.env };
-    
+
     // Setup express app
     app = express();
     app.use(express.json());
@@ -169,9 +169,7 @@ describe('Comments Routes Tests', () => {
 
       // Note: This may not trigger error in current implementation,
       // but we test the error handler exists
-      const response = await request(app)
-        .post('/api/comments/ingest')
-        .send(commentData);
+      const response = await request(app).post('/api/comments/ingest').send(commentData);
 
       // Response should be handled (either 201 or error)
       expect([201, 400, 500]).toContain(response.status);
@@ -377,14 +375,10 @@ describe('Comments Routes Tests', () => {
       ];
 
       for (const route of routes) {
-        const response = await request(app)
-          [route.method](route.path)
-          .send({})
-          .expect(401);
+        const response = await request(app)[route.method](route.path).send({}).expect(401);
 
         expect(response.body.error).toBe('Unauthorized');
       }
     });
   });
 });
-

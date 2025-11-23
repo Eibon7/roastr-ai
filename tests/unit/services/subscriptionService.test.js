@@ -1,9 +1,9 @@
 /**
  * SubscriptionService Tests - Issue #917
- * 
+ *
  * Comprehensive test suite for subscription management service.
  * Coverage target: ≥85%
- * 
+ *
  * Tests cover:
  * - Subscription creation, update, cancellation, reactivation
  * - Plan validation and changes (upgrade/downgrade)
@@ -15,36 +15,39 @@
 const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // Create mocks BEFORE jest.mock() calls (CRITICAL PATTERN - Issue #480)
-const mockSupabase = createSupabaseMock({
-  user_subscriptions: {
-    user_id: 'user_123',
-    plan: 'pro',
-    status: 'active',
-    stripe_subscription_id: 'sub_123',
-    stripe_customer_id: 'cus_123',
-    current_period_start: new Date('2025-01-01').toISOString(),
-    current_period_end: new Date('2025-02-01').toISOString(),
-    cancel_at_period_end: false,
-    trial_end: null
+const mockSupabase = createSupabaseMock(
+  {
+    user_subscriptions: {
+      user_id: 'user_123',
+      plan: 'pro',
+      status: 'active',
+      stripe_subscription_id: 'sub_123',
+      stripe_customer_id: 'cus_123',
+      current_period_start: new Date('2025-01-01').toISOString(),
+      current_period_end: new Date('2025-02-01').toISOString(),
+      cancel_at_period_end: false,
+      trial_end: null
+    },
+    users: {
+      id: 'user_123',
+      plan: 'pro',
+      updated_at: new Date().toISOString()
+    },
+    organizations: {
+      id: 'org_123',
+      owner_id: 'user_123',
+      plan_id: 'pro',
+      subscription_status: 'active',
+      monthly_responses_limit: 1000
+    },
+    roasts: [],
+    comments: [],
+    user_integrations: []
   },
-  users: {
-    id: 'user_123',
-    plan: 'pro',
-    updated_at: new Date().toISOString()
-  },
-  organizations: {
-    id: 'org_123',
-    owner_id: 'user_123',
-    plan_id: 'pro',
-    subscription_status: 'active',
-    monthly_responses_limit: 1000
-  },
-  roasts: [],
-  comments: [],
-  user_integrations: []
-}, {
-  get_subscription_tier: { data: 'PRO', error: null }
-});
+  {
+    get_subscription_tier: { data: 'PRO', error: null }
+  }
+);
 
 // Mock Supabase client
 jest.mock('../../../src/config/supabase', () => ({
@@ -93,8 +96,10 @@ const mockCreateSubscriptionStatusNotification = jest.fn();
 jest.mock('../../../src/services/notificationService', () => ({
   __esModule: false,
   createPlanChangeNotification: (...args) => mockCreatePlanChangeNotification(...args),
-  createPlanChangeBlockedNotification: (...args) => mockCreatePlanChangeBlockedNotification(...args),
-  createSubscriptionStatusNotification: (...args) => mockCreateSubscriptionStatusNotification(...args)
+  createPlanChangeBlockedNotification: (...args) =>
+    mockCreatePlanChangeBlockedNotification(...args),
+  createSubscriptionStatusNotification: (...args) =>
+    mockCreateSubscriptionStatusNotification(...args)
 }));
 
 // Mock workerNotificationService
@@ -140,10 +145,10 @@ describe('SubscriptionService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset Supabase mock
     mockSupabase._reset();
-    
+
     // Default plan features
     mockGetPlanFeatures.mockImplementation((planId) => {
       const plans = {
@@ -178,32 +183,32 @@ describe('SubscriptionService', () => {
       };
       return plans[planId] || null;
     });
-    
+
     mockGetPlanByLookupKey.mockImplementation((lookupKey) => {
       const map = {
-        'pro_monthly': 'pro',
-        'plus_monthly': 'plus',
-        'starter_monthly': 'starter'
+        pro_monthly: 'pro',
+        plus_monthly: 'plus',
+        starter_monthly: 'starter'
       };
       return map[lookupKey] || null;
     });
-    
+
     // Default validation: allow all changes
     mockIsChangeAllowed.mockResolvedValue({ allowed: true });
-    
+
     // Default proration
     mockCalculateProration.mockReturnValue({
       amount: 0,
       description: 'No proration'
     });
-    
+
     // Default Stripe customer
     mockStripeWrapper.customers.retrieve.mockResolvedValue({
       id: testCustomerId,
       email: 'test@example.com',
       name: 'Test User'
     });
-    
+
     // Default Stripe prices
     mockStripeWrapper.prices.list.mockResolvedValue({
       data: [
@@ -228,9 +233,9 @@ describe('SubscriptionService', () => {
         mockSupabase._setTableData('roasts', []);
         mockSupabase._setTableData('comments', []);
         mockSupabase._setTableData('user_integrations', []);
-        
+
         const usage = await subscriptionService.getUserUsage(testUserId);
-        
+
         expect(usage).toMatchObject({
           roastsThisMonth: expect.any(Number),
           commentsThisMonth: expect.any(Number),
@@ -253,20 +258,20 @@ describe('SubscriptionService', () => {
             })
           })
         });
-        
+
         // Override mock temporarily
         const originalFrom = mockSupabase.from;
         mockSupabase.from = errorTable.from;
-        
+
         const usage = await subscriptionService.getUserUsage(testUserId);
-        
+
         // Should return default values on error
         expect(usage).toEqual({
           roastsThisMonth: 0,
           commentsThisMonth: 0,
           activeIntegrations: 0
         });
-        
+
         // Restore
         mockSupabase.from = originalFrom;
       });
@@ -275,11 +280,11 @@ describe('SubscriptionService', () => {
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
-        
+
         mockSupabase._setTableData('roasts', []);
-        
+
         await subscriptionService.getUserUsage(testUserId);
-        
+
         // Verify query includes date filter
         expect(mockSupabase.from).toHaveBeenCalledWith('roasts');
       });
@@ -296,14 +301,14 @@ describe('SubscriptionService', () => {
           cancelAtPeriodEnd: false,
           trialEnd: null
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', {
           user_id: testUserId,
           plan: 'pro'
         });
-        
+
         const result = await subscriptionService.updateUserSubscription(testUserId, updateData);
-        
+
         expect(result.success).toBe(true);
         expect(mockSupabase.from).toHaveBeenCalledWith('user_subscriptions');
       });
@@ -314,7 +319,7 @@ describe('SubscriptionService', () => {
           status: 'active',
           subscriptionId: testSubscriptionId
         };
-        
+
         // Mock error
         const errorTable = createSupabaseMock({
           user_subscriptions: null
@@ -324,15 +329,15 @@ describe('SubscriptionService', () => {
             eq: jest.fn().mockRejectedValue(new Error('Update failed'))
           })
         });
-        
+
         const originalFrom = mockSupabase.from;
         mockSupabase.from = errorTable.from;
-        
+
         const result = await subscriptionService.updateUserSubscription(testUserId, updateData);
-        
+
         expect(result.success).toBe(false);
         expect(result.error).toBeDefined();
-        
+
         mockSupabase.from = originalFrom;
       });
 
@@ -344,11 +349,11 @@ describe('SubscriptionService', () => {
           currentPeriodStart: 1609459200, // 2021-01-01
           currentPeriodEnd: 1612137600 // 2021-02-01
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', {});
-        
+
         await subscriptionService.updateUserSubscription(testUserId, updateData);
-        
+
         // Verify update was called (date conversion happens internally)
         expect(mockSupabase.from).toHaveBeenCalledWith('user_subscriptions');
       });
@@ -365,28 +370,30 @@ describe('SubscriptionService', () => {
           cancel_at_period_end: false,
           trial_end: null,
           items: {
-            data: [{
-              price: {
-                id: 'price_pro',
-                lookup_key: 'pro_monthly'
+            data: [
+              {
+                price: {
+                  id: 'price_pro',
+                  lookup_key: 'pro_monthly'
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', {
           user_id: testUserId,
           plan: 'starter',
           stripe_subscription_id: testSubscriptionId
         });
-        
+
         // Setup usage data for validation
         mockSupabase._setTableData('roasts', []);
         mockSupabase._setTableData('comments', []);
         mockSupabase._setTableData('user_integrations', []);
-        
+
         const result = await subscriptionService.processSubscriptionUpdate(subscription);
-        
+
         expect(result.success).toBe(true);
         expect(result.userId).toBe(testUserId);
         // Verify subscription was updated (logSubscriptionChange is called internally)
@@ -400,12 +407,12 @@ describe('SubscriptionService', () => {
           status: 'active',
           items: { data: [] }
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', null);
-        
-        await expect(
-          subscriptionService.processSubscriptionUpdate(subscription)
-        ).rejects.toThrow('User not found for customer');
+
+        await expect(subscriptionService.processSubscriptionUpdate(subscription)).rejects.toThrow(
+          'User not found for customer'
+        );
       });
 
       it('should validate plan change before updating', async () => {
@@ -414,29 +421,31 @@ describe('SubscriptionService', () => {
           customer: testCustomerId,
           status: 'active',
           items: {
-            data: [{
-              price: {
-                id: 'price_plus',
-                lookup_key: 'plus_monthly'
+            data: [
+              {
+                price: {
+                  id: 'price_plus',
+                  lookup_key: 'plus_monthly'
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', {
           user_id: testUserId,
           plan: 'pro',
           stripe_subscription_id: testSubscriptionId
         });
-        
+
         // Mock validation to block change
         mockIsChangeAllowed.mockResolvedValue({
           allowed: false,
           reason: 'Usage exceeds new plan limits'
         });
-        
+
         const result = await subscriptionService.processSubscriptionUpdate(subscription);
-        
+
         expect(result.success).toBe(false);
         expect(result.reason).toBe('Usage exceeds new plan limits');
         expect(mockCreatePlanChangeBlockedNotification).toHaveBeenCalled();
@@ -451,23 +460,25 @@ describe('SubscriptionService', () => {
           current_period_start: Math.floor(Date.now() / 1000),
           current_period_end: Math.floor(Date.now() / 1000) + 2592000,
           items: {
-            data: [{
-              price: {
-                id: 'price_pro',
-                lookup_key: 'pro_monthly'
+            data: [
+              {
+                price: {
+                  id: 'price_pro',
+                  lookup_key: 'pro_monthly'
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', {
           user_id: testUserId,
           plan: 'pro',
           stripe_subscription_id: testSubscriptionId
         });
-        
+
         const result = await subscriptionService.processSubscriptionUpdate(subscription);
-        
+
         expect(result.success).toBe(true);
         expect(result.status).toBe('canceled');
         // handleSubscriptionStatusChange is called when status !== 'active'
@@ -486,17 +497,19 @@ describe('SubscriptionService', () => {
       it('should determine plan from lookup key', async () => {
         const subscription = {
           items: {
-            data: [{
-              price: {
-                id: 'price_pro',
-                lookup_key: 'pro_monthly'
+            data: [
+              {
+                price: {
+                  id: 'price_pro',
+                  lookup_key: 'pro_monthly'
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         const plan = await subscriptionService.determinePlanFromSubscription(subscription);
-        
+
         expect(plan).toBe('pro');
         expect(mockGetPlanByLookupKey).toHaveBeenCalledWith('pro_monthly');
       });
@@ -504,15 +517,17 @@ describe('SubscriptionService', () => {
       it('should fallback to Stripe API when lookup key missing', async () => {
         const subscription = {
           items: {
-            data: [{
-              price: {
-                id: 'price_pro',
-                lookup_key: null  // No lookup key initially
+            data: [
+              {
+                price: {
+                  id: 'price_pro',
+                  lookup_key: null // No lookup key initially
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         // When lookup_key is null, code skips first getPlanByLookupKey call
         // Then calls Stripe API, finds price with lookup_key 'pro_monthly'
         // Then calls getPlanByLookupKey('pro_monthly') which should return 'pro'
@@ -522,17 +537,19 @@ describe('SubscriptionService', () => {
           }
           return null;
         });
-        
+
         mockStripeWrapper.prices.list.mockResolvedValue({
-          data: [{
-            id: 'price_pro',
-            lookup_key: 'pro_monthly',
-            unit_amount: 1500
-          }]
+          data: [
+            {
+              id: 'price_pro',
+              lookup_key: 'pro_monthly',
+              unit_amount: 1500
+            }
+          ]
         });
-        
+
         const plan = await subscriptionService.determinePlanFromSubscription(subscription);
-        
+
         expect(plan).toBe('pro');
         expect(mockStripeWrapper.prices.list).toHaveBeenCalled();
         // Verify getPlanByLookupKey was called with 'pro_monthly' after Stripe lookup
@@ -545,32 +562,34 @@ describe('SubscriptionService', () => {
             data: []
           }
         };
-        
+
         mockGetPlanByLookupKey.mockReturnValue(null);
         mockStripeWrapper.prices.list.mockResolvedValue({ data: [] });
-        
+
         const plan = await subscriptionService.determinePlanFromSubscription(subscription);
-        
+
         expect(plan).toBe('starter_trial');
       });
 
       it('should handle Stripe API errors gracefully', async () => {
         const subscription = {
           items: {
-            data: [{
-              price: {
-                id: 'price_unknown',
-                lookup_key: null
+            data: [
+              {
+                price: {
+                  id: 'price_unknown',
+                  lookup_key: null
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         mockGetPlanByLookupKey.mockReturnValue(null);
         mockStripeWrapper.prices.list.mockRejectedValue(new Error('Stripe API error'));
-        
+
         const plan = await subscriptionService.determinePlanFromSubscription(subscription);
-        
+
         // Should fallback to starter_trial
         expect(plan).toBe('starter_trial');
       });
@@ -585,25 +604,27 @@ describe('SubscriptionService', () => {
           customer: testCustomerId,
           status: 'active',
           items: {
-            data: [{
-              price: {
-                id: 'price_pro',
-                lookup_key: 'pro_monthly'
+            data: [
+              {
+                price: {
+                  id: 'price_pro',
+                  lookup_key: 'pro_monthly'
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', {
           user_id: testUserId,
           plan: 'starter',
           stripe_subscription_id: testSubscriptionId
         });
-        
+
         mockIsChangeAllowed.mockResolvedValue({ allowed: true });
-        
+
         const result = await subscriptionService.processSubscriptionUpdate(subscription);
-        
+
         expect(result.success).toBe(true);
         expect(result.oldPlan).toBe('starter');
         expect(result.newPlan).toBe('pro');
@@ -617,23 +638,25 @@ describe('SubscriptionService', () => {
           customer: testCustomerId,
           status: 'active',
           items: {
-            data: [{
-              price: {
-                id: 'price_plus',
-                lookup_key: 'plus_monthly'
+            data: [
+              {
+                price: {
+                  id: 'price_plus',
+                  lookup_key: 'plus_monthly'
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', {
           user_id: testUserId,
           plan: 'pro',
           stripe_subscription_id: testSubscriptionId
         });
-        
+
         const result = await subscriptionService.processSubscriptionUpdate(subscription);
-        
+
         // Verify plan change was processed successfully
         expect(result.success).toBe(true);
         expect(result.oldPlan).toBe('pro');
@@ -649,30 +672,32 @@ describe('SubscriptionService', () => {
           customer: testCustomerId,
           status: 'active',
           items: {
-            data: [{
-              price: {
-                id: 'price_starter',
-                lookup_key: 'starter_monthly'
+            data: [
+              {
+                price: {
+                  id: 'price_starter',
+                  lookup_key: 'starter_monthly'
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', {
           user_id: testUserId,
           plan: 'pro',
           stripe_subscription_id: testSubscriptionId
         });
-        
+
         // Mock usage within new plan limits
         mockSupabase._setTableData('roasts', []);
         mockSupabase._setTableData('comments', []);
         mockSupabase._setTableData('user_integrations', []);
-        
+
         mockIsChangeAllowed.mockResolvedValue({ allowed: true });
-        
+
         const result = await subscriptionService.processSubscriptionUpdate(subscription);
-        
+
         expect(result.success).toBe(true);
         expect(result.oldPlan).toBe('pro');
         expect(result.newPlan).toBe('starter');
@@ -684,31 +709,33 @@ describe('SubscriptionService', () => {
           customer: testCustomerId,
           status: 'active',
           items: {
-            data: [{
-              price: {
-                id: 'price_starter',
-                lookup_key: 'starter_monthly'
+            data: [
+              {
+                price: {
+                  id: 'price_starter',
+                  lookup_key: 'starter_monthly'
+                }
               }
-            }]
+            ]
           }
         };
-        
+
         mockSupabase._setTableData('user_subscriptions', {
           user_id: testUserId,
           plan: 'pro',
           stripe_subscription_id: testSubscriptionId
         });
-        
+
         // Mock high usage
         mockSupabase._setTableData('roasts', Array(10).fill({}));
-        
+
         mockIsChangeAllowed.mockResolvedValue({
           allowed: false,
           reason: 'Current usage exceeds starter plan limits'
         });
-        
+
         const result = await subscriptionService.processSubscriptionUpdate(subscription);
-        
+
         expect(result.success).toBe(false);
         expect(result.reason).toContain('exceeds');
         expect(mockCreatePlanChangeBlockedNotification).toHaveBeenCalled();
@@ -725,28 +752,30 @@ describe('SubscriptionService', () => {
         current_period_start: Math.floor(Date.now() / 1000),
         current_period_end: Math.floor(Date.now() / 1000) + 2592000,
         items: {
-          data: [{
-            price: {
-              id: 'price_pro',
-              lookup_key: 'pro_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_pro',
+                lookup_key: 'pro_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'starter_trial',
         stripe_subscription_id: null
       });
-      
+
       // Setup usage data
       mockSupabase._setTableData('roasts', []);
       mockSupabase._setTableData('comments', []);
       mockSupabase._setTableData('user_integrations', []);
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       expect(result.success).toBe(true);
       // logSubscriptionChange is called internally when subscription is updated
       // Verify the subscription was processed successfully
@@ -758,23 +787,25 @@ describe('SubscriptionService', () => {
         customer: testCustomerId,
         status: 'active',
         items: {
-          data: [{
-            price: {
-              id: 'price_plus',
-              lookup_key: 'plus_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_plus',
+                lookup_key: 'plus_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'pro',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       expect(result.success).toBe(true);
       expect(result.oldPlan).toBe('pro');
       expect(result.newPlan).toBe('plus');
@@ -789,15 +820,15 @@ describe('SubscriptionService', () => {
           data: []
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'pro',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       expect(result.success).toBe(true);
       expect(result.status).toBe('canceled');
     });
@@ -808,25 +839,27 @@ describe('SubscriptionService', () => {
         customer: testCustomerId,
         status: 'active',
         items: {
-          data: [{
-            price: {
-              id: 'price_pro',
-              lookup_key: 'pro_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_pro',
+                lookup_key: 'pro_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'pro',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       // Process same event twice
       const result1 = await subscriptionService.processSubscriptionUpdate(subscription);
       const result2 = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       expect(result1.success).toBe(true);
       expect(result2.success).toBe(true);
       // Should not throw errors on duplicate processing
@@ -840,23 +873,25 @@ describe('SubscriptionService', () => {
         customer: testCustomerId,
         status: 'past_due',
         items: {
-          data: [{
-            price: {
-              id: 'price_pro',
-              lookup_key: 'pro_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_pro',
+                lookup_key: 'pro_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'pro',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       expect(result.success).toBe(true);
       expect(result.status).toBe('past_due');
       expect(mockCreateSubscriptionStatusNotification).toHaveBeenCalled();
@@ -869,23 +904,25 @@ describe('SubscriptionService', () => {
         status: 'trialing',
         trial_end: Math.floor(Date.now() / 1000) + 86400, // 1 day from now
         items: {
-          data: [{
-            price: {
-              id: 'price_pro',
-              lookup_key: 'pro_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_pro',
+                lookup_key: 'pro_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'pro',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       expect(result.success).toBe(true);
       expect(result.status).toBe('trialing');
     });
@@ -898,23 +935,25 @@ describe('SubscriptionService', () => {
         cancel_at_period_end: true,
         current_period_end: Math.floor(Date.now() / 1000) + 2592000, // 30 days
         items: {
-          data: [{
-            price: {
-              id: 'price_pro',
-              lookup_key: 'pro_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_pro',
+                lookup_key: 'pro_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'pro',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       expect(result.success).toBe(true);
       expect(result.status).toBe('active');
       // Should still be active until period end
@@ -926,23 +965,25 @@ describe('SubscriptionService', () => {
         customer: testCustomerId,
         status: 'incomplete',
         items: {
-          data: [{
-            price: {
-              id: 'price_pro',
-              lookup_key: 'pro_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_pro',
+                lookup_key: 'pro_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'starter_trial',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       expect(result.success).toBe(true);
       expect(result.status).toBe('incomplete');
       expect(mockCreateSubscriptionStatusNotification).toHaveBeenCalled();
@@ -954,21 +995,23 @@ describe('SubscriptionService', () => {
         customer: testCustomerId,
         status: 'active',
         items: {
-          data: [{
-            price: {
-              id: 'price_pro',
-              lookup_key: 'pro_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_pro',
+                lookup_key: 'pro_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'starter',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       // Mock database error
       const errorTable = createSupabaseMock({
         user_subscriptions: null
@@ -978,14 +1021,12 @@ describe('SubscriptionService', () => {
           eq: jest.fn().mockRejectedValue(new Error('Database connection failed'))
         })
       });
-      
+
       const originalFrom = mockSupabase.from;
       mockSupabase.from = errorTable.from;
-      
-      await expect(
-        subscriptionService.processSubscriptionUpdate(subscription)
-      ).rejects.toThrow();
-      
+
+      await expect(subscriptionService.processSubscriptionUpdate(subscription)).rejects.toThrow();
+
       mockSupabase.from = originalFrom;
     });
   });
@@ -997,34 +1038,36 @@ describe('SubscriptionService', () => {
         customer: testCustomerId,
         status: 'active',
         items: {
-          data: [{
-            price: {
-              id: 'price_pro',
-              lookup_key: 'pro_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_pro',
+                lookup_key: 'pro_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'starter',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       mockSupabase._setTableData('users', {
         id: testUserId,
         plan: 'starter'
       });
-      
+
       mockSupabase._setTableData('organizations', {
         id: 'org_123',
         owner_id: testUserId,
         plan_id: 'starter'
       });
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       expect(result.success).toBe(true);
       // Verify plan limits were applied (via applyPlanLimits)
       expect(mockSupabase.from).toHaveBeenCalledWith('users');
@@ -1039,30 +1082,32 @@ describe('SubscriptionService', () => {
         current_period_start: Math.floor(Date.now() / 1000),
         current_period_end: Math.floor(Date.now() / 1000) + 2592000,
         items: {
-          data: [{
-            price: {
-              id: 'price_plus',
-              lookup_key: 'plus_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_plus',
+                lookup_key: 'plus_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'pro',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       // Setup usage data for plan change validation
       mockSupabase._setTableData('roasts', []);
       mockSupabase._setTableData('comments', []);
       mockSupabase._setTableData('user_integrations', []);
-      
+
       await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       // Verify subscription was processed (logSubscriptionChange is called internally)
       expect(result.success).toBe(true);
       expect(result.oldPlan).toBe('pro');
@@ -1079,28 +1124,30 @@ describe('SubscriptionService', () => {
         current_period_start: Math.floor(Date.now() / 1000),
         current_period_end: Math.floor(Date.now() / 1000) + 2592000,
         items: {
-          data: [{
-            price: {
-              id: 'price_pro',
-              lookup_key: 'pro_monthly'
+          data: [
+            {
+              price: {
+                id: 'price_pro',
+                lookup_key: 'pro_monthly'
+              }
             }
-          }]
+          ]
         }
       };
-      
+
       mockSupabase._setTableData('user_subscriptions', {
         user_id: testUserId,
         plan: 'starter',
         stripe_subscription_id: testSubscriptionId
       });
-      
+
       // Setup usage data for plan change validation
       mockSupabase._setTableData('roasts', []);
       mockSupabase._setTableData('comments', []);
       mockSupabase._setTableData('user_integrations', []);
-      
+
       const result = await subscriptionService.processSubscriptionUpdate(subscription);
-      
+
       // Verify plan change was processed
       expect(result.success).toBe(true);
       expect(result.oldPlan).toBe('starter');
@@ -1124,9 +1171,9 @@ describe('SubscriptionService', () => {
 
     it('should be fast (<1s per test)', async () => {
       const start = Date.now();
-      
+
       await subscriptionService.getUserUsage(testUserId);
-      
+
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(1000);
     });
@@ -1134,20 +1181,19 @@ describe('SubscriptionService', () => {
     it('should be isolated and reproducible', async () => {
       // First run
       const result1 = await subscriptionService.getUserUsage(testUserId);
-      
+
       // Clear mocks
       jest.clearAllMocks();
-      
+
       // Second run with same setup
       mockSupabase._setTableData('roasts', []);
       mockSupabase._setTableData('comments', []);
       mockSupabase._setTableData('user_integrations', []);
-      
+
       const result2 = await subscriptionService.getUserUsage(testUserId);
-      
+
       // Should produce same results
       expect(result1).toEqual(result2);
     });
   });
 });
-

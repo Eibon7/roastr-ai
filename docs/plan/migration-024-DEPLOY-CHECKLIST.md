@@ -197,13 +197,13 @@
 
 ### Sign-Off
 
-**Product Owner:** **********\_\_\_**********
-**Date:** **********\_\_\_**********
+**Product Owner:** \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
+**Date:** \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 **Approval Decision:**
 
 - [ ] APPROVED - Proceed to production
-- [ ] CONDITIONAL - Address: **********\_\_\_**********
-- [ ] REJECTED - Reason: **********\_\_\_**********
+- [ ] CONDITIONAL - Address: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
+- [ ] REJECTED - Reason: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\***
 
 ---
 

@@ -29,7 +29,7 @@ describe('Integrations Routes Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup express app
     app = express();
     app.use(express.json());
@@ -61,14 +61,16 @@ describe('Integrations Routes Tests', () => {
       { platform: 'instagram', name: 'Instagram', enabled: false }
     ]);
 
-    userIntegrationsService.updateIntegration = jest.fn().mockImplementation((accessToken, platform, config) => {
-      return Promise.resolve({
-        id: 'int-1',
-        platform: platform, // Use the platform parameter
-        enabled: config.enabled !== undefined ? config.enabled : true,
-        config: config
+    userIntegrationsService.updateIntegration = jest
+      .fn()
+      .mockImplementation((accessToken, platform, config) => {
+        return Promise.resolve({
+          id: 'int-1',
+          platform: platform, // Use the platform parameter
+          enabled: config.enabled !== undefined ? config.enabled : true,
+          config: config
+        });
       });
-    });
 
     userIntegrationsService.deleteIntegration = jest.fn().mockResolvedValue({
       success: true,
@@ -91,9 +93,7 @@ describe('Integrations Routes Tests', () => {
 
   describe('GET /api/integrations', () => {
     it('should get user integrations successfully', async () => {
-      const response = await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      const response = await request(app).get('/api/integrations').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(2);
@@ -106,9 +106,7 @@ describe('Integrations Routes Tests', () => {
         new Error('Failed to fetch integrations')
       );
 
-      const response = await request(app)
-        .get('/api/integrations')
-        .expect(400);
+      const response = await request(app).get('/api/integrations').expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to fetch integrations');
@@ -117,15 +115,15 @@ describe('Integrations Routes Tests', () => {
 
   describe('GET /api/integrations/platforms', () => {
     it('should get available platforms successfully', async () => {
-      const response = await request(app)
-        .get('/api/integrations/platforms')
-        .expect(200);
+      const response = await request(app).get('/api/integrations/platforms').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(3);
       expect(response.body.data[0]).toHaveProperty('platform');
       expect(response.body.data[0]).toHaveProperty('name');
-      expect(userIntegrationsService.getAvailablePlatforms).toHaveBeenCalledWith('mock-access-token');
+      expect(userIntegrationsService.getAvailablePlatforms).toHaveBeenCalledWith(
+        'mock-access-token'
+      );
     });
 
     it('should return 400 if service throws error', async () => {
@@ -133,9 +131,7 @@ describe('Integrations Routes Tests', () => {
         new Error('Failed to fetch platforms')
       );
 
-      const response = await request(app)
-        .get('/api/integrations/platforms')
-        .expect(400);
+      const response = await request(app).get('/api/integrations/platforms').expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to fetch platforms');
@@ -226,9 +222,7 @@ describe('Integrations Routes Tests', () => {
     it('should delete integration successfully', async () => {
       const platform = 'twitter';
 
-      const response = await request(app)
-        .delete(`/api/integrations/${platform}`)
-        .expect(200);
+      const response = await request(app).delete(`/api/integrations/${platform}`).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('success', true);
@@ -245,9 +239,7 @@ describe('Integrations Routes Tests', () => {
 
       const platform = 'twitter';
 
-      const response = await request(app)
-        .delete(`/api/integrations/${platform}`)
-        .expect(400);
+      const response = await request(app).delete(`/api/integrations/${platform}`).expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to delete integration');
@@ -256,15 +248,15 @@ describe('Integrations Routes Tests', () => {
 
   describe('GET /api/integrations/metrics', () => {
     it('should get integration metrics successfully', async () => {
-      const response = await request(app)
-        .get('/api/integrations/metrics')
-        .expect(200);
+      const response = await request(app).get('/api/integrations/metrics').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('total');
       expect(response.body.data).toHaveProperty('enabled');
       expect(response.body.data).toHaveProperty('by_platform');
-      expect(userIntegrationsService.getIntegrationsMetrics).toHaveBeenCalledWith('mock-access-token');
+      expect(userIntegrationsService.getIntegrationsMetrics).toHaveBeenCalledWith(
+        'mock-access-token'
+      );
     });
 
     it('should return 400 if service throws error', async () => {
@@ -272,9 +264,7 @@ describe('Integrations Routes Tests', () => {
         new Error('Failed to fetch metrics')
       );
 
-      const response = await request(app)
-        .get('/api/integrations/metrics')
-        .expect(400);
+      const response = await request(app).get('/api/integrations/metrics').expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to fetch metrics');
@@ -285,9 +275,7 @@ describe('Integrations Routes Tests', () => {
     it('should enable integration successfully', async () => {
       const platform = 'instagram';
 
-      const response = await request(app)
-        .post(`/api/integrations/${platform}/enable`)
-        .expect(200);
+      const response = await request(app).post(`/api/integrations/${platform}/enable`).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('platform', platform);
@@ -305,9 +293,7 @@ describe('Integrations Routes Tests', () => {
 
       const platform = 'instagram';
 
-      const response = await request(app)
-        .post(`/api/integrations/${platform}/enable`)
-        .expect(400);
+      const response = await request(app).post(`/api/integrations/${platform}/enable`).expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to enable integration');
@@ -318,9 +304,7 @@ describe('Integrations Routes Tests', () => {
     it('should disable integration successfully', async () => {
       const platform = 'twitter';
 
-      const response = await request(app)
-        .post(`/api/integrations/${platform}/disable`)
-        .expect(200);
+      const response = await request(app).post(`/api/integrations/${platform}/disable`).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('platform', platform);
@@ -338,9 +322,7 @@ describe('Integrations Routes Tests', () => {
 
       const platform = 'twitter';
 
-      const response = await request(app)
-        .post(`/api/integrations/${platform}/disable`)
-        .expect(400);
+      const response = await request(app).post(`/api/integrations/${platform}/disable`).expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to disable integration');
@@ -353,16 +335,14 @@ describe('Integrations Routes Tests', () => {
       // is applied to all routes. We verify that the middleware is in place
       // by checking that routes work when authenticated (tested in other tests)
       // and that authenticateToken is called.
-      
+
       // Reset mock to track calls
       authenticateToken.mockClear();
-      
-      await request(app)
-        .get('/api/integrations');
+
+      await request(app).get('/api/integrations');
 
       // Verify authenticateToken was called
       expect(authenticateToken).toHaveBeenCalled();
     });
   });
 });
-

@@ -702,11 +702,11 @@ I, [Product Owner Name], have reviewed:
 ### Decision
 
 - [ ] **APPROVED** - Proceed with production deployment
-- [ ] **CONDITIONAL** - Approved with conditions: ******\_\_\_******
-- [ ] **REJECTED** - Do not proceed. Reason: ******\_\_\_******
+- [ ] **CONDITIONAL** - Approved with conditions: **\*\***\_\_\_**\*\***
+- [ ] **REJECTED** - Do not proceed. Reason: **\*\***\_\_\_**\*\***
 
-**Signature:** ******\_\_\_******
-**Date:** ******\_\_\_******
+**Signature:** **\*\***\_\_\_**\*\***
+**Date:** **\*\***\_\_\_**\*\***
 
 ---
 

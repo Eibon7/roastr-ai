@@ -1,6 +1,6 @@
 /**
  * Analyze Toxicity Worker Tests
- * 
+ *
  * Tests for toxicity analysis using Perspective API and OpenAI fallback
  */
 
@@ -92,7 +92,6 @@ jest.mock('../../../src/services/AnalysisDepartmentService', () => {
 // Mock Encryption Service - export mock instance directly (matches module.exports = new EncryptionService())
 // This mock is defined later in the file, so we skip the initial declaration here
 
-
 // Mock Embeddings Service
 const mockEmbeddingsService = {
   findSemanticMatches: jest.fn(),
@@ -167,7 +166,7 @@ jest.mock('../../../src/config/mockMode', () => ({
       }))
     })),
     generateMockPerspective: jest.fn(() => ({
-      analyzeToxicity: jest.fn(),  // Issue #618 - Match PerspectiveService interface
+      analyzeToxicity: jest.fn(), // Issue #618 - Match PerspectiveService interface
       initialize: jest.fn()
     })),
     generateMockOpenAI: jest.fn(() => ({
@@ -190,16 +189,16 @@ describe('AnalyzeToxicityWorker', () => {
     mockQueueService = worker.queueService;
     mockPerspectiveService = worker.perspectiveClient;
     mockOpenAIService = worker.openaiClient;
-    
+
     // Reset all mocks
     mockCostControlService._reset();
     jest.clearAllMocks();
-    
+
     // Default mocks
     mockCostControlService.canPerformOperation.mockResolvedValue({
       allowed: true
     });
-    
+
     // Mock getComment
     worker.getComment = jest.fn().mockResolvedValue({
       id: 'comment-456',
@@ -207,31 +206,31 @@ describe('AnalyzeToxicityWorker', () => {
       original_text: 'Test comment',
       integration_config_id: 'config-123'
     });
-    
+
     // Mock getUserRoastrPersona
     worker.getUserRoastrPersona = jest.fn().mockResolvedValue(null);
-    
+
     // Mock getUserIntolerancePreferences
     worker.getUserIntolerancePreferences = jest.fn().mockResolvedValue(null);
-    
+
     // Mock getUserTolerancePreferences
     worker.getUserTolerancePreferences = jest.fn().mockResolvedValue(null);
-    
+
     // Mock updateCommentAnalysis - but allow tests to override if needed
     // worker.updateCommentAnalysis = jest.fn().mockResolvedValue(true);
-    
+
     // Mock updateCommentWithAnalysisDecision
     worker.updateCommentWithAnalysisDecision = jest.fn().mockResolvedValue(true);
-    
+
     // Mock recordAnalysisUsage
     worker.recordAnalysisUsage = jest.fn().mockResolvedValue(true);
-    
+
     // Mock routeByDirection
     worker.routeByDirection = jest.fn().mockResolvedValue(true);
-    
+
     // Mock handleAutoBlockShieldAction
     worker.handleAutoBlockShieldAction = jest.fn().mockResolvedValue(true);
-    
+
     // Mock estimateTokens
     worker.estimateTokens = jest.fn().mockReturnValue(10);
   });
@@ -333,9 +332,7 @@ describe('AnalyzeToxicityWorker', () => {
       };
 
       // Perspective API fails
-      mockPerspectiveService.analyzeToxicity.mockRejectedValue(
-        new Error('API quota exceeded')
-      );
+      mockPerspectiveService.analyzeToxicity.mockRejectedValue(new Error('API quota exceeded'));
 
       // OpenAI succeeds
       const openaiResult = {
@@ -397,12 +394,8 @@ describe('AnalyzeToxicityWorker', () => {
       };
 
       // Both APIs fail
-      mockPerspectiveService.analyzeToxicity.mockRejectedValue(
-        new Error('Perspective API down')
-      );
-      mockOpenAIService.moderateContent.mockRejectedValue(
-        new Error('OpenAI API down')
-      );
+      mockPerspectiveService.analyzeToxicity.mockRejectedValue(new Error('Perspective API down'));
+      mockOpenAIService.moderateContent.mockRejectedValue(new Error('OpenAI API down'));
 
       mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
@@ -479,7 +472,7 @@ describe('AnalyzeToxicityWorker', () => {
   describe('analyzeWithPerspective', () => {
     test('should analyze text with Perspective API', async () => {
       const text = 'You are stupid';
-      
+
       const mockResponse = {
         success: true,
         scores: {
@@ -501,10 +494,8 @@ describe('AnalyzeToxicityWorker', () => {
 
     test('should handle Perspective API errors', async () => {
       const text = 'Test text';
-      
-      mockPerspectiveService.analyzeToxicity.mockRejectedValue(
-        new Error('API key invalid')
-      );
+
+      mockPerspectiveService.analyzeToxicity.mockRejectedValue(new Error('API key invalid'));
 
       await expect(worker.analyzeWithPerspective(text)).rejects.toThrow('API key invalid');
     });
@@ -513,7 +504,7 @@ describe('AnalyzeToxicityWorker', () => {
   describe('analyzeWithOpenAI', () => {
     test('should analyze text with OpenAI moderation', async () => {
       const text = 'This content is harassment';
-      
+
       const mockResponse = {
         success: true,
         flagged: true,
@@ -597,8 +588,8 @@ describe('AnalyzeToxicityWorker', () => {
       worker.supabase = mockSupabase;
 
       const mockUpdate = jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            error: null
+        eq: jest.fn().mockResolvedValue({
+          error: null
         })
       });
 
@@ -631,8 +622,8 @@ describe('AnalyzeToxicityWorker', () => {
       worker.supabase = mockSupabase;
 
       const mockUpdate = jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({
-            error: { message: 'Update failed' }
+        eq: jest.fn().mockResolvedValue({
+          error: { message: 'Update failed' }
         })
       });
 
@@ -641,9 +632,9 @@ describe('AnalyzeToxicityWorker', () => {
       });
 
       // updateCommentAnalysis should throw on error
-      await expect(
-        worker.updateCommentAnalysis(commentId, analysis)
-      ).rejects.toThrow('Update failed');
+      await expect(worker.updateCommentAnalysis(commentId, analysis)).rejects.toThrow(
+        'Update failed'
+      );
     });
   });
 
@@ -685,7 +676,7 @@ describe('AnalyzeToxicityWorker', () => {
 
       expect(result.processed).toBe(true);
       expect(result.actionsExecuted).toEqual(['warning', 'content_removal']);
-      
+
       expect(mockShieldService.analyzeContent).toHaveBeenCalledWith(
         {
           text: 'Toxic comment',
@@ -843,10 +834,12 @@ describe('AnalyzeToxicityWorker', () => {
       });
 
       mockEmbeddingsService.findSemanticMatches.mockResolvedValue({
-        matches: [{
-          term: 'intolerance term',
-          similarity: 0.87
-        }],
+        matches: [
+          {
+            term: 'intolerance term',
+            similarity: 0.87
+          }
+        ],
         maxSimilarity: 0.87,
         threshold: 0.85
       });
@@ -1187,15 +1180,15 @@ describe('AnalyzeToxicityWorker', () => {
 
     test('should use semantic matching when embeddings available', async () => {
       const intoleranceData = 'intolerance term';
-      const embeddings = [
-        { term: 'intolerance term', embedding: [0.1, 0.2, 0.3] }
-      ];
+      const embeddings = [{ term: 'intolerance term', embedding: [0.1, 0.2, 0.3] }];
 
       mockEmbeddingsService.findSemanticMatches.mockResolvedValue({
-        matches: [{
-          term: 'intolerance term',
-          similarity: 0.89
-        }],
+        matches: [
+          {
+            term: 'intolerance term',
+            similarity: 0.89
+          }
+        ],
         maxSimilarity: 0.89,
         threshold: 0.85
       });
@@ -1259,9 +1252,13 @@ describe('AnalyzeToxicityWorker', () => {
       // Verify methods exist before spying
       expect(typeof worker.handleShieldAction).toBe('function');
       expect(typeof worker.queueResponseGeneration).toBe('function');
-      
-      handleShieldActionSpy = jest.spyOn(worker, 'handleShieldAction').mockImplementation(async () => {});
-      queueResponseGenerationSpy = jest.spyOn(worker, 'queueResponseGeneration').mockImplementation(async () => {});
+
+      handleShieldActionSpy = jest
+        .spyOn(worker, 'handleShieldAction')
+        .mockImplementation(async () => {});
+      queueResponseGenerationSpy = jest
+        .spyOn(worker, 'queueResponseGeneration')
+        .mockImplementation(async () => {});
       worker.log = jest.fn();
     });
 
@@ -1305,7 +1302,7 @@ describe('AnalyzeToxicityWorker', () => {
 
       // Mock getResponsePriority
       worker.getResponsePriority = jest.fn().mockReturnValue(3);
-      
+
       await worker.routeByDirection('org-123', comment, decision, 'corr-123');
 
       expect(queueResponseGenerationSpy).toHaveBeenCalledWith(
@@ -1331,10 +1328,14 @@ describe('AnalyzeToxicityWorker', () => {
 
       await worker.routeByDirection('org-123', comment, decision, 'corr-123');
 
-      expect(worker.log).toHaveBeenCalledWith('info', 'Comment safe to publish', expect.objectContaining({
-        commentId: 'comment-789',
-        toxicityScore: 0.2
-      }));
+      expect(worker.log).toHaveBeenCalledWith(
+        'info',
+        'Comment safe to publish',
+        expect.objectContaining({
+          commentId: 'comment-789',
+          toxicityScore: 0.2
+        })
+      );
       expect(handleShieldActionSpy).not.toHaveBeenCalled();
       expect(queueResponseGenerationSpy).not.toHaveBeenCalled();
     });
@@ -1397,11 +1398,15 @@ describe('AnalyzeToxicityWorker', () => {
         ['hide', 'report'],
         decision.metadata
       );
-      expect(worker.log).toHaveBeenCalledWith('info', 'Shield actions executed', expect.objectContaining({
-        commentId: 'comment-123',
-        action_tags: ['hide', 'report'],
-        platform_violations: true
-      }));
+      expect(worker.log).toHaveBeenCalledWith(
+        'info',
+        'Shield actions executed',
+        expect.objectContaining({
+          commentId: 'comment-123',
+          action_tags: ['hide', 'report'],
+          platform_violations: true
+        })
+      );
     });
 
     test('should handle Shield action errors gracefully', async () => {
@@ -1467,12 +1472,22 @@ describe('AnalyzeToxicityWorker', () => {
     test('should decrypt and return intolerance preferences', async () => {
       // Create a fresh mock supabase - need to ensure chaining works correctly
       const testMockSupabase = {
-        from: jest.fn(function() { return this; }),
-        select: jest.fn(function() { return this; }),
-        eq: jest.fn(function() { return this; }),
+        from: jest.fn(function () {
+          return this;
+        }),
+        select: jest.fn(function () {
+          return this;
+        }),
+        eq: jest.fn(function () {
+          return this;
+        }),
         single: jest.fn(),
-        update: jest.fn(function() { return this; }),
-        insert: jest.fn(function() { return this; })
+        update: jest.fn(function () {
+          return this;
+        }),
+        insert: jest.fn(function () {
+          return this;
+        })
       };
 
       // Mock two sequential calls: organizations then users
@@ -1615,13 +1630,15 @@ describe('AnalyzeToxicityWorker', () => {
         id: 'job-limit',
         payload: {
           organization_id: 'org-limited',
-        platform: 'twitter',
+          platform: 'twitter',
           comment_id: 'comment-456',
           text: 'Test comment'
         }
       };
 
-      await expect(worker.processJob(job)).rejects.toThrow(/Organization org-limited has reached limits/);
+      await expect(worker.processJob(job)).rejects.toThrow(
+        /Organization org-limited has reached limits/
+      );
     });
 
     test('should handle comment not found', async () => {
@@ -1650,11 +1667,11 @@ describe('AnalyzeToxicityWorker', () => {
       const job = {
         id: 'job-shield-error',
         payload: {
-        organization_id: 'org-123',
-        platform: 'twitter',
-        comment_id: 'comment-123',
-        text: 'Toxic content',
-        author_id: 'user-456'
+          organization_id: 'org-123',
+          platform: 'twitter',
+          comment_id: 'comment-123',
+          text: 'Toxic content',
+          author_id: 'user-456'
         }
       };
 
@@ -1707,9 +1724,7 @@ describe('AnalyzeToxicityWorker', () => {
         };
       });
 
-      worker.routeByDirection.mockRejectedValue(
-        new Error('Shield service unavailable')
-      );
+      worker.routeByDirection.mockRejectedValue(new Error('Shield service unavailable'));
 
       // Should handle error gracefully
       await expect(worker.processJob(job)).rejects.toThrow('Shield service unavailable');
@@ -1761,7 +1776,7 @@ describe('AnalyzeToxicityWorker', () => {
 
     test('should return high for medium-high scores', () => {
       expect(worker.calculateSeverityLevel(0.85)).toBe('high');
-      expect(worker.calculateSeverityLevel(0.90)).toBe('high');
+      expect(worker.calculateSeverityLevel(0.9)).toBe('high');
     });
 
     test('should return medium for medium scores', () => {
@@ -1855,7 +1870,11 @@ describe('AnalyzeToxicityWorker', () => {
 
     test('should block comments with exact intolerance terms', async () => {
       const intoleranceData = 'hate speech, violence';
-      const result = await worker.checkAutoBlock('This comment contains hate speech', intoleranceData, null);
+      const result = await worker.checkAutoBlock(
+        'This comment contains hate speech',
+        intoleranceData,
+        null
+      );
       expect(result.shouldBlock).toBe(true);
       expect(result.matchedTerms.length).toBeGreaterThan(0);
     });
@@ -1867,7 +1886,7 @@ describe('AnalyzeToxicityWorker', () => {
         findSemanticMatches: jest.fn().mockResolvedValue({
           matches: [],
           maxSimilarity: 0.2,
-          threshold: 0.80
+          threshold: 0.8
         })
       };
     });
@@ -1882,7 +1901,11 @@ describe('AnalyzeToxicityWorker', () => {
       // checkTolerance splits by comma and checks if commentText.includes(term)
       // 'friendly jokes' contains 'jokes', so we need 'jokes' in the comment
       const toleranceData = 'friendly jokes, humor';
-      const result = await worker.checkTolerance('This is a friendly jokes between friends', toleranceData, null);
+      const result = await worker.checkTolerance(
+        'This is a friendly jokes between friends',
+        toleranceData,
+        null
+      );
       expect(result.shouldIgnore).toBe(true);
       expect(result.matchedTerms.length).toBeGreaterThan(0);
     });
@@ -1901,20 +1924,20 @@ describe('AnalyzeToxicityWorker', () => {
 
       worker.supabase = mockSupabase;
       worker.log = jest.fn();
-      
+
       const mockSingle = jest.fn().mockResolvedValue({
         data: mockComment,
         error: null
       });
-      
+
       const mockEq = jest.fn().mockReturnValue({
         single: mockSingle
       });
-      
+
       const mockSelect = jest.fn().mockReturnValue({
         eq: mockEq
       });
-      
+
       mockSupabase.from = jest.fn().mockReturnValue({
         select: mockSelect
       });
@@ -1936,20 +1959,20 @@ describe('AnalyzeToxicityWorker', () => {
 
       worker.supabase = mockSupabase;
       worker.log = jest.fn();
-      
+
       const mockSingle = jest.fn().mockResolvedValue({
         data: null,
         error: { message: 'Not found' }
       });
-      
+
       const mockEq = jest.fn().mockReturnValue({
         single: mockSingle
       });
-      
+
       const mockSelect = jest.fn().mockReturnValue({
         eq: mockEq
       });
-      
+
       mockSupabase.from = jest.fn().mockReturnValue({
         select: mockSelect
       });
@@ -1957,10 +1980,14 @@ describe('AnalyzeToxicityWorker', () => {
       const result = await worker.getComment(commentId);
 
       expect(result).toBeNull();
-      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to get comment', expect.objectContaining({
-        commentId: 'nonexistent-comment',
-        error: 'Not found'
-      }));
+      expect(worker.log).toHaveBeenCalledWith(
+        'error',
+        'Failed to get comment',
+        expect.objectContaining({
+          commentId: 'nonexistent-comment',
+          error: 'Not found'
+        })
+      );
     });
   });
 
@@ -1971,7 +1998,7 @@ describe('AnalyzeToxicityWorker', () => {
 
       worker.supabase = mockSupabase;
       worker.log = jest.fn();
-      
+
       const mockSelectOrg = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
@@ -1980,7 +2007,7 @@ describe('AnalyzeToxicityWorker', () => {
           })
         })
       });
-      
+
       const mockSelectUser = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
@@ -1989,8 +2016,9 @@ describe('AnalyzeToxicityWorker', () => {
           })
         })
       });
-      
-      mockSupabase.from = jest.fn()
+
+      mockSupabase.from = jest
+        .fn()
         .mockReturnValueOnce({
           select: mockSelectOrg
         })
@@ -2001,7 +2029,7 @@ describe('AnalyzeToxicityWorker', () => {
       // Mock encryptionService - the module is already mocked globally
       // We just need to ensure it returns the correct value
       mockEncryptionService.decrypt.mockReturnValueOnce('persona data');
-      
+
       const result = await worker.getUserRoastrPersona(organizationId);
 
       expect(result).toBe('persona data');
@@ -2016,7 +2044,7 @@ describe('AnalyzeToxicityWorker', () => {
 
       worker.supabase = mockSupabase;
       worker.log = jest.fn();
-      
+
       const mockSelectOrg = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
@@ -2025,7 +2053,7 @@ describe('AnalyzeToxicityWorker', () => {
           })
         })
       });
-      
+
       const mockSelectUser = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
@@ -2034,8 +2062,9 @@ describe('AnalyzeToxicityWorker', () => {
           })
         })
       });
-      
-      mockSupabase.from = jest.fn()
+
+      mockSupabase.from = jest
+        .fn()
         .mockReturnValueOnce({
           select: mockSelectOrg
         })
@@ -2053,7 +2082,7 @@ describe('AnalyzeToxicityWorker', () => {
 
       worker.supabase = mockSupabase;
       worker.log = jest.fn();
-      
+
       const mockSelect = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
@@ -2062,7 +2091,7 @@ describe('AnalyzeToxicityWorker', () => {
           })
         })
       });
-      
+
       mockSupabase.from = jest.fn().mockReturnValue({
         select: mockSelect
       });
@@ -2099,7 +2128,7 @@ describe('AnalyzeToxicityWorker', () => {
         auto_blocked: true,
         matched_intolerance_terms: ['hate speech']
       };
-      
+
       // Ensure shieldService is properly set up
       worker.shieldService = mockShieldService;
       mockShieldService.analyzeForShield.mockResolvedValueOnce({
@@ -2108,7 +2137,7 @@ describe('AnalyzeToxicityWorker', () => {
         actions: { primary: ['hide', 'block'] },
         autoExecuted: true
       });
-      
+
       const result = await worker.handleAutoBlockShieldAction(organizationId, comment, analysis);
 
       expect(result).toBeDefined();
@@ -2127,12 +2156,16 @@ describe('AnalyzeToxicityWorker', () => {
           matched_intolerance_terms: ['hate speech']
         })
       );
-      expect(worker.log).toHaveBeenCalledWith('info', 'Shield activated for auto-blocked content', expect.objectContaining({
-        commentId: 'comment-123',
-        priority: 0,
-        actions: ['hide', 'block'],
-        autoExecuted: true
-      }));
+      expect(worker.log).toHaveBeenCalledWith(
+        'info',
+        'Shield activated for auto-blocked content',
+        expect.objectContaining({
+          commentId: 'comment-123',
+          priority: 0,
+          actions: ['hide', 'block'],
+          autoExecuted: true
+        })
+      );
     });
 
     test('should handle Shield service errors gracefully', async () => {
@@ -2143,19 +2176,21 @@ describe('AnalyzeToxicityWorker', () => {
         auto_blocked: true
       };
 
-      mockShieldService.analyzeForShield.mockRejectedValue(
-        new Error('Shield service unavailable')
-      );
+      mockShieldService.analyzeForShield.mockRejectedValue(new Error('Shield service unavailable'));
 
       const result = await worker.handleAutoBlockShieldAction(organizationId, comment, analysis);
 
       expect(result).toBeDefined();
       expect(result.shieldActive).toBe(false);
       expect(result.error).toBe('Shield service unavailable');
-      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to handle auto-block Shield action', expect.objectContaining({
-        commentId: 'comment-456',
-        error: 'Shield service unavailable'
-      }));
+      expect(worker.log).toHaveBeenCalledWith(
+        'error',
+        'Failed to handle auto-block Shield action',
+        expect.objectContaining({
+          commentId: 'comment-456',
+          error: 'Shield service unavailable'
+        })
+      );
     });
   });
 
@@ -2389,11 +2424,13 @@ describe('AnalyzeToxicityWorker', () => {
       mockPerspectiveService.analyzeToxicity.mockRejectedValue(new Error('API error'));
       mockOpenAIService.moderations = {
         create: jest.fn().mockResolvedValue({
-          results: [{
-            flagged: true,
-            categories: { harassment: true },
-            category_scores: { harassment: 0.8 }
-          }]
+          results: [
+            {
+              flagged: true,
+              categories: { harassment: true },
+              category_scores: { harassment: 0.8 }
+            }
+          ]
         })
       };
 
@@ -2481,19 +2518,21 @@ describe('AnalyzeToxicityWorker', () => {
   describe('analyzeOpenAI', () => {
     test('should analyze text with OpenAI moderation', async () => {
       const mockResponse = {
-        results: [{
-          flagged: true,
-          categories: {
-            harassment: true,
-            hate: false,
-            violence: false
-          },
-          category_scores: {
-            harassment: 0.9,
-            hate: 0.2,
-            violence: 0.1
+        results: [
+          {
+            flagged: true,
+            categories: {
+              harassment: true,
+              hate: false,
+              violence: false
+            },
+            category_scores: {
+              harassment: 0.9,
+              hate: 0.2,
+              violence: 0.1
+            }
           }
-        }]
+        ]
       };
 
       worker.openaiClient = {
@@ -2544,8 +2583,11 @@ describe('AnalyzeToxicityWorker', () => {
       // But if it's public, test it directly
       if (typeof worker.calculateContextWindowSize === 'function') {
         const shortText = 'Short text';
-        const longText = 'This is a very long text that should have a larger context window for better analysis'.repeat(10);
-        
+        const longText =
+          'This is a very long text that should have a larger context window for better analysis'.repeat(
+            10
+          );
+
         const shortWindow = worker.calculateContextWindowSize(shortText, 'term');
         const longWindow = worker.calculateContextWindowSize(longText, 'term');
 
@@ -2556,7 +2598,7 @@ describe('AnalyzeToxicityWorker', () => {
         const text = 'I hate you stupid vegan';
         const persona = 'vegan, trans woman';
         const result = worker.analyzePersonalAttack(text, persona);
-        
+
         // If it uses calculateContextWindowSize internally, we should get results
         expect(typeof result).toBe('object');
         expect('isPersonalAttack' in result).toBe(true);

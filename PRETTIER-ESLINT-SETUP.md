@@ -99,4 +99,3 @@ npm run lint:fix
 - [ ] Obtener aprobación del equipo
 - [ ] Formatear codebase gradualmente (en PRs separados por directorio/feature)
 - [ ] Agregar check de formato en CI/CD
-

@@ -13,26 +13,32 @@ Las tres issues relacionadas con Prettier y ESLint han sido implementadas exitos
 ### Issue #949: Add Prettier formatting to unify codebase style
 
 **Archivos creados:**
+
 - `.prettierrc.json` - Configuración de Prettier
 - `.prettierignore` - Archivos excluidos del formateo
 
 **Dependencias agregadas:**
+
 - `prettier@^3.6.2` (devDependency)
 
 **Scripts agregados:**
+
 - `npm run format` - Formatear todos los archivos
 - `npm run format:check` - Verificar formato sin cambiar archivos
 
 ### Issue #950: Configure ESLint + Prettier unified setup
 
 **Archivos modificados:**
+
 - `eslint.config.js` - Integrado Prettier como plugin y regla
 
 **Dependencias agregadas:**
+
 - `eslint-config-prettier@^10.1.8` (devDependency)
 - `eslint-plugin-prettier@^5.5.4` (devDependency)
 
 **Configuración:**
+
 - Prettier integrado como plugin de ESLint
 - Reglas de ESLint que conflictúan con Prettier deshabilitadas
 - Compatible con ESLint 9 flat config
@@ -40,13 +46,16 @@ Las tres issues relacionadas con Prettier y ESLint han sido implementadas exitos
 ### Issue #951: Enable Fix on Save (Prettier + ESLint auto-fix)
 
 **Archivos creados:**
+
 - `.vscode/settings.json` - Configuración de VS Code para Fix on Save
 - `.vscode/extensions.json` - Recomendaciones de extensiones
 
 **Archivos modificados:**
+
 - `.gitignore` - Permite `.vscode/settings.json` y `.vscode/extensions.json`
 
 **Características:**
+
 - Format on Save habilitado para todos los tipos de archivo
 - ESLint auto-fix al guardar
 - Recomendaciones automáticas de extensiones Prettier y ESLint
@@ -72,12 +81,12 @@ M  package.json
 ✅ Prettier detecta archivos que necesitan formato  
 ✅ ESLint detecta errores de Prettier correctamente  
 ✅ Configuración compatible con ESLint 9 flat config  
-✅ Archivos de VS Code agregados correctamente  
+✅ Archivos de VS Code agregados correctamente
 
 ## Próximos Pasos
 
 1. **Crear PR** desde este worktree a la rama `main`
-2. **Revisar cambios** - especialmente**:
+2. **Revisar cambios** - especialmente\*\*:
    - Configuración de ESLint
    - Scripts npm
    - Archivos de VS Code
@@ -106,4 +115,3 @@ npm run lint:fix
 ```
 
 En VS Code, Format on Save está habilitado automáticamente al tener las extensiones recomendadas instaladas.
-

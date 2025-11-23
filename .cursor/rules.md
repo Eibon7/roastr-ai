@@ -68,12 +68,15 @@ Este archivo sincroniza las reglas del entorno Claude con el workspace de Cursor
 **⚠️ IMPORTANTE: El formateo debe ser automático al guardar en Cursor.**
 
 **Configuración activa:**
+
 - Prettier: `printWidth: 100`, `singleQuote: true`, `semi: true`, `trailingComma: none`
 - ESLint: Integrado con Prettier via `eslint-plugin-prettier`
 - Format on Save: Habilitado para todos los archivos
 
 **Reglas obligatorias:**
+
 1. ✅ **Antes de commit:**
+
    ```bash
    npm run format:check  # Verificar formateo
    npm run lint          # Verificar linting
@@ -85,6 +88,7 @@ Este archivo sincroniza las reglas del entorno Claude con el workspace de Cursor
    - Si no formatea: Recargar Cursor (`Cmd+Shift+P` → "Reload Window")
 
 3. ✅ **Manual cuando sea necesario:**
+
    ```bash
    npm run format        # Formatear todo el proyecto
    npm run lint:fix      # Arreglar issues de ESLint automáticamente
@@ -97,6 +101,7 @@ Este archivo sincroniza las reglas del entorno Claude con el workspace de Cursor
    - Usar `// eslint-disable` sin comentario explicativo
 
 **Troubleshooting:**
+
 - **Formateo no funciona al guardar:**
   1. Verificar extensiones instaladas: ESLint + Prettier
   2. Recargar Cursor: `Cmd+Shift+P` → "Reload Window"

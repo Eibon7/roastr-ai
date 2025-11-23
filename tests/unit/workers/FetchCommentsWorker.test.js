@@ -1,6 +1,6 @@
 /**
  * Fetch Comments Worker Tests
- * 
+ *
  * Tests for comment fetching from multiple social media platforms
  */
 
@@ -179,7 +179,8 @@ describe('FetchCommentsWorker', () => {
       });
 
       // Mock comment insertion
-      mockSupabase.from = jest.fn()
+      mockSupabase.from = jest
+        .fn()
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -252,7 +253,8 @@ describe('FetchCommentsWorker', () => {
         hasMore: true
       });
 
-      mockSupabase.from = jest.fn()
+      mockSupabase.from = jest
+        .fn()
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -355,9 +357,7 @@ describe('FetchCommentsWorker', () => {
         }
       };
 
-      mockTwitterService.fetchComments.mockRejectedValue(
-        new Error('API rate limit exceeded')
-      );
+      mockTwitterService.fetchComments.mockRejectedValue(new Error('API rate limit exceeded'));
 
       await expect(worker.processJob(job)).rejects.toThrow('API rate limit exceeded');
     });
@@ -459,9 +459,7 @@ describe('FetchCommentsWorker', () => {
         })
       });
 
-      await expect(worker.storeComment(comment, job)).rejects.toThrow(
-        'Database connection failed'
-      );
+      await expect(worker.storeComment(comment, job)).rejects.toThrow('Database connection failed');
     });
   });
 
@@ -487,7 +485,7 @@ describe('FetchCommentsWorker', () => {
 
       expect(result.success).toBe(true);
       expect(result.jobId).toBe('analysis-job-123');
-      
+
       expect(mockQueueService.addJob).toHaveBeenCalledWith(
         'analyze_toxicity',
         {
@@ -522,9 +520,7 @@ describe('FetchCommentsWorker', () => {
     });
 
     test('should handle initialization errors', async () => {
-      mockTwitterService.initialize.mockRejectedValue(
-        new Error('Twitter API credentials invalid')
-      );
+      mockTwitterService.initialize.mockRejectedValue(new Error('Twitter API credentials invalid'));
 
       await expect(worker.initializePlatformServices()).rejects.toThrow(
         'Twitter API credentials invalid'
@@ -778,7 +774,11 @@ describe('FetchCommentsWorker', () => {
       const result = await worker.storeComments('org-123', 'config-123', 'twitter', comments);
 
       expect(result).toHaveLength(0);
-      expect(worker.log).toHaveBeenCalledWith('warn', 'Failed to store comment', expect.any(Object));
+      expect(worker.log).toHaveBeenCalledWith(
+        'warn',
+        'Failed to store comment',
+        expect.any(Object)
+      );
     });
   });
 
@@ -786,7 +786,10 @@ describe('FetchCommentsWorker', () => {
     test('should queue jobs with Redis', async () => {
       const mockPipeline = {
         rpush: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue([[null, 1], [null, 1]])
+        exec: jest.fn().mockResolvedValue([
+          [null, 1],
+          [null, 1]
+        ])
       };
 
       worker.redis = {
@@ -812,9 +815,7 @@ describe('FetchCommentsWorker', () => {
         addJob: jest.fn().mockResolvedValue(true)
       };
 
-      const comments = [
-        { id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' }
-      ];
+      const comments = [{ id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' }];
 
       await worker.queueAnalysisJobs('org-123', comments, 'corr-123');
 
@@ -839,9 +840,7 @@ describe('FetchCommentsWorker', () => {
         insert: jest.fn().mockResolvedValue({ error: null })
       });
 
-      const comments = [
-        { id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' }
-      ];
+      const comments = [{ id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' }];
 
       await worker.queueAnalysisJobs('org-123', comments, 'corr-123');
 
@@ -860,9 +859,7 @@ describe('FetchCommentsWorker', () => {
         })
       });
 
-      const comments = [
-        { id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' }
-      ];
+      const comments = [{ id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' }];
 
       await worker.queueAnalysisJobs('org-123', comments, 'corr-123');
 
@@ -883,7 +880,6 @@ describe('FetchCommentsWorker', () => {
       expect(worker.queueService?.addJob).not.toHaveBeenCalled();
     });
   });
-
 
   describe('fetchCommentsFromPlatform', () => {
     test('should use platform service if available', async () => {
@@ -923,9 +919,9 @@ describe('FetchCommentsWorker', () => {
     });
 
     test('should throw error for unsupported platform', async () => {
-      await expect(
-        worker.fetchCommentsFromPlatform('unsupported', {}, {})
-      ).rejects.toThrow('Unsupported platform: unsupported');
+      await expect(worker.fetchCommentsFromPlatform('unsupported', {}, {})).rejects.toThrow(
+        'Unsupported platform: unsupported'
+      );
     });
 
     test('should handle platform service fetch errors', async () => {
@@ -940,9 +936,9 @@ describe('FetchCommentsWorker', () => {
       const config = { id: 'config-123', platform: 'twitter' };
       const payload = { post_id: 'tweet-123' };
 
-      await expect(
-        worker.fetchCommentsFromPlatform('twitter', config, payload)
-      ).rejects.toThrow('Platform service error');
+      await expect(worker.fetchCommentsFromPlatform('twitter', config, payload)).rejects.toThrow(
+        'Platform service error'
+      );
     });
   });
 
@@ -989,11 +985,15 @@ describe('FetchCommentsWorker', () => {
 
       worker.log = jest.fn();
 
-      await expect(
-        worker.fetchTwitterComments(mockClient, {}, {})
-      ).rejects.toThrow('Twitter API error: Twitter API error');
-      
-      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to fetch Twitter comments', expect.any(Object));
+      await expect(worker.fetchTwitterComments(mockClient, {}, {})).rejects.toThrow(
+        'Twitter API error: Twitter API error'
+      );
+
+      expect(worker.log).toHaveBeenCalledWith(
+        'error',
+        'Failed to fetch Twitter comments',
+        expect.any(Object)
+      );
     });
   });
 
@@ -1039,7 +1039,8 @@ describe('FetchCommentsWorker', () => {
     test('should handle YouTube API errors for individual videos', async () => {
       const mockClient = {
         commentThreads: {
-          list: jest.fn()
+          list: jest
+            .fn()
             .mockRejectedValueOnce(new Error('Video not found'))
             .mockResolvedValue({
               data: { items: [] }
@@ -1055,7 +1056,11 @@ describe('FetchCommentsWorker', () => {
       const result = await worker.fetchYouTubeComments(mockClient, config, payload);
 
       expect(result).toHaveLength(0);
-      expect(worker.log).toHaveBeenCalledWith('warn', 'Failed to fetch comments for video', expect.any(Object));
+      expect(worker.log).toHaveBeenCalledWith(
+        'warn',
+        'Failed to fetch comments for video',
+        expect.any(Object)
+      );
     });
 
     test('should handle YouTube API general errors', async () => {
@@ -1067,11 +1072,15 @@ describe('FetchCommentsWorker', () => {
 
       worker.log = jest.fn();
 
-      await expect(
-        worker.fetchYouTubeComments(mockClient, {}, {})
-      ).rejects.toThrow('YouTube API error: YouTube API error');
-      
-      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to fetch YouTube comments', expect.any(Object));
+      await expect(worker.fetchYouTubeComments(mockClient, {}, {})).rejects.toThrow(
+        'YouTube API error: YouTube API error'
+      );
+
+      expect(worker.log).toHaveBeenCalledWith(
+        'error',
+        'Failed to fetch YouTube comments',
+        expect.any(Object)
+      );
     });
   });
 
@@ -1153,9 +1162,7 @@ describe('FetchCommentsWorker', () => {
     test('should handle queue service errors gracefully', async () => {
       const organizationId = 'org-123';
       const correlationId = 'corr-123';
-      const storedComments = [
-        { id: 'comment-1', platform: 'twitter', original_text: 'Test 1' }
-      ];
+      const storedComments = [{ id: 'comment-1', platform: 'twitter', original_text: 'Test 1' }];
 
       worker.queueService = mockQueueService;
       worker.log = jest.fn();
@@ -1163,7 +1170,11 @@ describe('FetchCommentsWorker', () => {
 
       await worker.queueAnalysisJobs(organizationId, storedComments, correlationId);
 
-      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to queue analysis job', expect.any(Object));
+      expect(worker.log).toHaveBeenCalledWith(
+        'error',
+        'Failed to queue analysis job',
+        expect.any(Object)
+      );
     });
   });
 
@@ -1273,9 +1284,7 @@ describe('FetchCommentsWorker', () => {
       const organizationId = 'org-123';
       const integrationConfigId = 'config-123';
       const platform = 'twitter';
-      const comments = [
-        { original_text: 'Comment without ID', platform_user_id: 'user-1' }
-      ];
+      const comments = [{ original_text: 'Comment without ID', platform_user_id: 'user-1' }];
 
       worker.supabase = mockSupabase;
       worker.log = jest.fn();
@@ -1284,7 +1293,7 @@ describe('FetchCommentsWorker', () => {
         data: null,
         error: null
       });
-      
+
       const mockSelect = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           maybeSingle: mockMaybeSingle
@@ -1296,7 +1305,12 @@ describe('FetchCommentsWorker', () => {
         insert: jest.fn().mockResolvedValue({ error: null })
       });
 
-      const result = await worker.storeComments(organizationId, integrationConfigId, platform, comments);
+      const result = await worker.storeComments(
+        organizationId,
+        integrationConfigId,
+        platform,
+        comments
+      );
 
       expect(result).toHaveLength(0); // Comments without platform_comment_id should be skipped
     });
@@ -1323,7 +1337,8 @@ describe('FetchCommentsWorker', () => {
       worker.supabase = mockSupabase;
       worker.log = jest.fn();
 
-      const mockMaybeSingle = jest.fn()
+      const mockMaybeSingle = jest
+        .fn()
         .mockResolvedValueOnce({ data: null, error: null })
         .mockResolvedValueOnce({ data: null, error: null });
 
@@ -1333,22 +1348,34 @@ describe('FetchCommentsWorker', () => {
         })
       });
 
-      const mockInsert = jest.fn().mockResolvedValueOnce({
-        error: null,
-        data: [{ id: 'comment-1' }]
-      }).mockResolvedValueOnce({
-        error: { message: 'Insert failed' }
-      });
+      const mockInsert = jest
+        .fn()
+        .mockResolvedValueOnce({
+          error: null,
+          data: [{ id: 'comment-1' }]
+        })
+        .mockResolvedValueOnce({
+          error: { message: 'Insert failed' }
+        });
 
       mockSupabase.from = jest.fn().mockReturnValue({
         select: mockSelect,
         insert: mockInsert
       });
 
-      const result = await worker.storeComments(organizationId, integrationConfigId, platform, comments);
+      const result = await worker.storeComments(
+        organizationId,
+        integrationConfigId,
+        platform,
+        comments
+      );
 
       expect(result.length).toBeGreaterThan(0);
-      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to store comment', expect.any(Object));
+      expect(worker.log).toHaveBeenCalledWith(
+        'error',
+        'Failed to store comment',
+        expect.any(Object)
+      );
     });
   });
 
@@ -1370,7 +1397,11 @@ describe('FetchCommentsWorker', () => {
       worker.setIntegrationConfigOverride({ enabled: true });
 
       await expect(worker.processJob(job)).rejects.toThrow();
-      expect(worker.log).toHaveBeenCalledWith('error', expect.stringContaining('fetch'), expect.any(Object));
+      expect(worker.log).toHaveBeenCalledWith(
+        'error',
+        expect.stringContaining('fetch'),
+        expect.any(Object)
+      );
     });
   });
 

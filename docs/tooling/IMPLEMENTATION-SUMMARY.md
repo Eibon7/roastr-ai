@@ -5,6 +5,7 @@
 ### Issue #949: Prettier Formatting - ⚠️ 60% Complete (Mantener ABIERTA)
 
 **✅ Completado (Configuración):**
+
 - [x] Prettier instalado (`prettier@^3.4.2`)
 - [x] `.prettierrc.json` creado con configuración estándar
 - [x] `.prettierignore` creado con 68+ patrones de exclusión
@@ -12,6 +13,7 @@
 - [x] Documentación completa en `docs/tooling/prettier-eslint-setup.md`
 
 **❌ Pendiente (Ejecución):**
+
 - [ ] **Formateo del codebase completo NO ejecutado** (decisión intencional)
 - [ ] AC2: "CI/PR diffs show clean formatting" no puede validarse hasta que se aplique formateo
 
@@ -24,6 +26,7 @@
 ### Issue #950: ESLint + Prettier Integration - ✅ 95% Complete (CERRAR)
 
 **✅ Completado:**
+
 - [x] Dependencias instaladas:
   - `eslint-config-prettier@^9.1.0`
   - `eslint-plugin-prettier@^5.2.1`
@@ -34,6 +37,7 @@
 - [x] Documentación completa
 
 **✅ Acceptance Criteria:**
+
 - [x] AC1: `npm run lint` muestra solo errores lógicos (Prettier maneja estilo)
 - [x] AC2: No hay conflictos ESLint/Prettier (verificado en `eslint.config.js`)
 - [x] AC3: Scripts npm funcionando correctamente
@@ -45,12 +49,14 @@
 ### Issue #951: Fix on Save - ⚠️ 90% Complete (Mejorar docs o CERRAR)
 
 **✅ Completado (Configuración VS Code/Cursor):**
+
 - [x] `.vscode/settings.json` con `formatOnSave` y ESLint auto-fix
 - [x] `.vscode/extensions.json` con extensiones recomendadas
 - [x] `.gitignore` actualizado para permitir archivos de configuración VS Code
 - [x] Configuración optimizada para evitar formateo doble
 
 **✅ Completado (Documentación Multi-Editor):**
+
 - [x] VS Code / Cursor
 - [x] WebStorm / IntelliJ IDEA
 - [x] Vim / Neovim
@@ -59,6 +65,7 @@
 - [x] Línea de comandos (cualquier editor)
 
 **✅ Acceptance Criteria:**
+
 - [x] AC1: Format on Save funciona en VS Code/Cursor
 - [x] AC2: ESLint auto-fix on save habilitado
 - [x] AC3: **Documentación cubre múltiples editores** (mejorado según feedback CodeRabbit)
@@ -70,9 +77,11 @@
 ## Mejoras Implementadas (Post CodeRabbit Review)
 
 ### 1. **Blocker Crítico Resuelto** ✅
+
 - [x] Creado `.issue_lock` con `feature/prettier-eslint-949-950-951`
 
 ### 2. **Documentación Multi-Editor** ✅
+
 - [x] Agregada guía completa para:
   - VS Code / Cursor
   - WebStorm / IntelliJ IDEA
@@ -82,16 +91,19 @@
   - Línea de comandos
 
 ### 3. **Ubicación de Documentación** ✅
+
 - [x] Movida de root a `docs/tooling/prettier-eslint-setup.md`
 - [x] Resumen de implementación en `docs/tooling/IMPLEMENTATION-SUMMARY.md`
 
 ### 4. **Integración CI/CD** ✅
+
 - [x] Creado workflow `.github/workflows/format-check.yml`
 - [x] Verifica formateo Prettier en PRs
 - [x] Ejecuta ESLint en PRs
 - [x] Proporciona instrucciones de fix en caso de fallo
 
 ### 5. **Reglas de Cursor** ✅
+
 - [x] Actualizado `.cursor/rules.md` con:
   - Reglas de formateo obligatorias
   - Comandos de verificación pre-commit
@@ -103,6 +115,7 @@
 ## Próximos Pasos
 
 ### Fase 1: Infraestructura (✅ COMPLETO - Esta PR)
+
 - [x] Configurar Prettier
 - [x] Integrar ESLint + Prettier
 - [x] Configurar Format on Save
@@ -110,6 +123,7 @@
 - [x] CI/CD para verificación
 
 ### Fase 2: Ejecución (⏳ PENDIENTE - PR Futura)
+
 1. **Formateo Gradual del Codebase:**
    - Opción A: Por directorio (recomendado)
      ```bash
@@ -132,6 +146,7 @@
    - Actualizar documentación si es necesario
 
 ### Fase 3: Mantenimiento (⏳ FUTURO)
+
 - Pre-commit hook con `husky` + `lint-staged` (opcional)
 - Revisar y ajustar reglas si es necesario
 
@@ -140,18 +155,21 @@
 ## Comandos Útiles
 
 ### Verificación Pre-Commit
+
 ```bash
 npm run format:check  # Verificar formateo
 npm run lint          # Verificar linting
 ```
 
 ### Arreglar Issues
+
 ```bash
 npm run format        # Formatear todo
 npm run lint:fix      # Arreglar linting
 ```
 
 ### CI Local (simular GitHub Actions)
+
 ```bash
 npm ci
 npm run format:check
@@ -174,7 +192,7 @@ npm run lint
 **Última actualización:** 2025-11-23  
 **Implementado por:** @Eibon7  
 **Estado:**
+
 - Issue #949: ⚠️ Abierta (pendiente formateo codebase)
 - Issue #950: ✅ Completa (cerrar con esta PR)
 - Issue #951: ✅ Completa (cerrar con esta PR)
-

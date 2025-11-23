@@ -19,7 +19,6 @@ Configuración unificada de Prettier y ESLint para Roastr.ai, optimizada para ev
   - ✅ Usa ESLint para JS/TS (que ejecuta Prettier internamente)
   - ✅ Usa Prettier directamente para JSON, Markdown, CSS, YAML
   - ✅ Habilita soporte para ESLint 9 flat config
-  
 - **`.vscode/extensions.json`**: Extensiones recomendadas
   - `dbaeumer.vscode-eslint`
   - `esbenp.prettier-vscode`
@@ -27,6 +26,7 @@ Configuración unificada de Prettier y ESLint para Roastr.ai, optimizada para ev
 ### Package.json
 
 Nuevos scripts:
+
 ```bash
 npm run format          # Formatear todos los archivos
 npm run format:check    # Verificar formato sin cambiar archivos
@@ -34,6 +34,7 @@ npm run lint:fix        # Arreglar problemas de linting automáticamente
 ```
 
 Nuevas dependencias de desarrollo:
+
 - `prettier@^3.4.2`
 - `eslint-config-prettier@^9.1.0`
 - `eslint-plugin-prettier@^5.2.1`
@@ -41,6 +42,7 @@ Nuevas dependencias de desarrollo:
 ### .gitignore
 
 Actualizado para permitir archivos de configuración de Cursor/VS Code:
+
 ```gitignore
 # VS Code / Cursor - ignorar archivos personales pero permitir configuración compartida
 .vscode/*
@@ -55,12 +57,14 @@ Actualizado para permitir archivos de configuración de Cursor/VS Code:
 Ambos editores usan la misma configuración (Cursor está basado en VS Code):
 
 **Instalación:**
+
 1. Instalar extensiones recomendadas:
    - ESLint (`dbaeumer.vscode-eslint`)
    - Prettier (`esbenp.prettier-vscode`)
 2. La configuración se aplica automáticamente via `.vscode/settings.json`
 
 **Uso:**
+
 - Automático al guardar:
   - JS/TS: ESLint aplica fixes (incluye Prettier)
   - JSON/Markdown/CSS/YAML: Prettier formatea directamente
@@ -69,6 +73,7 @@ Ambos editores usan la misma configuración (Cursor está basado en VS Code):
 ### WebStorm / IntelliJ IDEA
 
 **Configuración:**
+
 1. Ve a `Settings → Languages & Frameworks → JavaScript → Prettier`
 2. Marca las opciones:
    - ✅ "On save"
@@ -78,12 +83,14 @@ Ambos editores usan la misma configuración (Cursor está basado en VS Code):
    - Marca "Run eslint --fix on save"
 
 **Uso:**
+
 - Automático al guardar (si configurado)
 - Manual: `Cmd+Opt+L` (Mac) / `Ctrl+Alt+L` (Windows)
 
 ### Vim / Neovim
 
 **Con ALE (Asynchronous Lint Engine):**
+
 ```vim
 " En tu .vimrc o init.vim
 let g:ale_fixers = {
@@ -94,6 +101,7 @@ let g:ale_fix_on_save = 1
 ```
 
 **Con coc-prettier:**
+
 ```vim
 " Instalar coc-prettier
 :CocInstall coc-prettier
@@ -106,12 +114,14 @@ let g:ale_fix_on_save = 1
 ```
 
 **Uso:**
+
 - Automático al guardar (si configurado)
 - Manual: `:ALEFix` o `:CocCommand prettier.formatFile`
 
 ### Emacs
 
 **Con prettier-js:**
+
 ```elisp
 ;; Instalar prettier-js desde MELPA
 (require 'prettier-js)
@@ -122,6 +132,7 @@ let g:ale_fix_on_save = 1
 ```
 
 **Con LSP Mode:**
+
 ```elisp
 (use-package lsp-mode
   :hook ((js-mode . lsp)
@@ -131,18 +142,21 @@ let g:ale_fix_on_save = 1
 ```
 
 **Uso:**
+
 - Automático al guardar (si configurado)
 - Manual: `M-x prettier-js`
 
 ### Sublime Text
 
 **Instalación:**
+
 1. Instalar Package Control
 2. Instalar paquetes:
    - `JsPrettier`
    - `SublimeLinter-eslint`
 
 **Configuración (Preferences → Package Settings → JsPrettier):**
+
 ```json
 {
   "auto_format_on_save": true,
@@ -151,6 +165,7 @@ let g:ale_fix_on_save = 1
 ```
 
 **Uso:**
+
 - Automático al guardar (si configurado)
 - Manual: `Cmd+Shift+P` → "JsPrettier: Format Code"
 
@@ -177,6 +192,7 @@ npm run lint:fix            # Arreglar linting automáticamente
 ### ✅ Sin Formateo Doble
 
 La configuración está optimizada para evitar que Prettier y ESLint formateen dos veces:
+
 - ESLint ejecuta Prettier via `eslint-plugin-prettier`
 - VS Code no ejecuta Prettier adicional para JS/TS
 - Prettier solo se ejecuta directamente para archivos no-JS/TS
@@ -184,6 +200,7 @@ La configuración está optimizada para evitar que Prettier y ESLint formateen d
 ### ✅ Compatible con Cursor
 
 Cursor está basado en VS Code y usa la misma estructura de configuración:
+
 - `.vscode/settings.json` funciona idéntico
 - `.vscode/extensions.json` funciona idéntico
 - Mismas extensiones disponibles
@@ -191,6 +208,7 @@ Cursor está basado en VS Code y usa la misma estructura de configuración:
 ### ✅ ESLint 9 Flat Config
 
 La configuración usa el nuevo formato flat config de ESLint 9:
+
 ```javascript
 const prettierConfig = require('eslint-plugin-prettier');
 const prettierRecommended = require('eslint-config-prettier');
@@ -252,6 +270,7 @@ module.exports = [
 ### "Formato doble"
 
 Si detectas que el formato se ejecuta dos veces:
+
 1. Verificar `.vscode/settings.json`
 2. Asegurar que `editor.formatOnSave: false` globalmente
 3. Solo debe estar `true` para lenguajes específicos (JSON, Markdown, etc.)
@@ -268,4 +287,3 @@ Si detectas que el formato se ejecuta dos veces:
 **Última actualización:** 2025-11-23  
 **Implementado por:** @Eibon7  
 **Issues relacionadas:** #949, #950, #951
-

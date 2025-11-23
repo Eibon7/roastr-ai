@@ -243,8 +243,8 @@ Validate that the PRICE_ID → PRODUCT_ID migration works correctly while mainta
 - [ ] Documentation reviewed
 - [ ] Ready for merge
 
-**Tester:** ********\_********  
-**Date:** ********\_********  
+**Tester:** **\*\*\*\***\_**\*\*\*\***  
+**Date:** **\*\*\*\***\_**\*\*\*\***  
 **Status:** ✅ APPROVED / ❌ NEEDS FIXES
 
 ---

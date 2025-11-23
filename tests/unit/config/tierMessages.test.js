@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Tier Messages Config
  * Issue #926 - Fase 1.3: Tests para Config Files
- * 
+ *
  * Tests tier messages structure, helper functions, and message formatting
  */
 
@@ -84,7 +84,7 @@ describe('Tier Messages Config', () => {
     });
 
     test('should have correct message types for each tier', () => {
-      ['free', 'starter', 'pro', 'plus'].forEach(tier => {
+      ['free', 'starter', 'pro', 'plus'].forEach((tier) => {
         expect(tierMessages.analysis[tier]).toHaveProperty('limit_exceeded');
         expect(tierMessages.analysis[tier]).toHaveProperty('near_limit');
         expect(tierMessages.analysis[tier]).toHaveProperty('upgrade_cta');
@@ -132,7 +132,7 @@ describe('Tier Messages Config', () => {
     });
 
     test('should work for all tiers', () => {
-      ['free', 'starter', 'pro', 'plus'].forEach(tier => {
+      ['free', 'starter', 'pro', 'plus'].forEach((tier) => {
         const message = getTierLimitMessage('analysis', tier, 'limit_exceeded');
         expect(typeof message).toBe('string');
         expect(message.length).toBeGreaterThan(0);
@@ -140,7 +140,7 @@ describe('Tier Messages Config', () => {
     });
 
     test('should work for all limit types', () => {
-      ['analysis', 'roast', 'platform'].forEach(limitType => {
+      ['analysis', 'roast', 'platform'].forEach((limitType) => {
         const message = getTierLimitMessage(limitType, 'free', 'limit_exceeded');
         expect(typeof message).toBe('string');
         expect(message.length).toBeGreaterThan(0);
@@ -178,7 +178,7 @@ describe('Tier Messages Config', () => {
     });
 
     test('should work for all features', () => {
-      ['shield', 'ENABLE_ORIGINAL_TONE', 'embedded_judge'].forEach(feature => {
+      ['shield', 'ENABLE_ORIGINAL_TONE', 'embedded_judge'].forEach((feature) => {
         const message = getFeatureMessage(feature, 'not_available');
         expect(typeof message).toBe('string');
         expect(message.length).toBeGreaterThan(0);
@@ -363,7 +363,7 @@ describe('Tier Messages Config', () => {
     });
 
     test('should work for all limit types', () => {
-      ['analysis', 'roast', 'platform'].forEach(limitType => {
+      ['analysis', 'roast', 'platform'].forEach((limitType) => {
         const warning = formatUsageWarning(limitType, 100, 100, 100);
         expect(warning).toBeDefined();
         expect(warning.message).toContain(limitType);
@@ -371,4 +371,3 @@ describe('Tier Messages Config', () => {
     });
   });
 });
-

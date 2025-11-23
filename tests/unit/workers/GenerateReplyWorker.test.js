@@ -1,6 +1,6 @@
 /**
  * Generate Reply Worker Tests
- * 
+ *
  * Tests for roast response generation using OpenAI
  */
 
@@ -120,8 +120,12 @@ const mockTransparencyService = {
 };
 
 jest.mock('../../../src/services/transparencyService', () => ({
-  applyTransparencyDisclaimer: jest.fn((...args) => mockTransparencyService.applyTransparencyDisclaimer(...args)),
-  updateDisclaimerStats: jest.fn((...args) => mockTransparencyService.updateDisclaimerStats(...args))
+  applyTransparencyDisclaimer: jest.fn((...args) =>
+    mockTransparencyService.applyTransparencyDisclaimer(...args)
+  ),
+  updateDisclaimerStats: jest.fn((...args) =>
+    mockTransparencyService.updateDisclaimerStats(...args)
+  )
 }));
 
 // Mock advanced logger
@@ -259,11 +263,13 @@ describe('GenerateReplyWorker', () => {
 
       // Mock OpenAI response
       mockOpenAIClient.chat.completions.create.mockResolvedValue({
-        choices: [{
-          message: {
-            content: 'Wow, what an absolutely groundbreaking observation!'
+        choices: [
+          {
+            message: {
+              content: 'Wow, what an absolutely groundbreaking observation!'
+            }
           }
-        }],
+        ],
         usage: {
           total_tokens: 25
         }
@@ -319,7 +325,12 @@ describe('GenerateReplyWorker', () => {
       expect(result.success).toBe(true);
       expect(result.responseText).toBe('Wow, what an absolutely groundbreaking observation!');
       expect(result.service).toBe('openai');
-      expect(mockCostControlService.canPerformOperation).toHaveBeenCalledWith('org-123', 'generate_reply', 1, 'twitter');
+      expect(mockCostControlService.canPerformOperation).toHaveBeenCalledWith(
+        'org-123',
+        'generate_reply',
+        1,
+        'twitter'
+      );
       expect(mockCostControlService.recordUsage).toHaveBeenCalled();
     });
 
@@ -348,8 +359,10 @@ describe('GenerateReplyWorker', () => {
 
       const initialFailures = worker.circuitBreaker.failures;
 
-      await expect(worker.processJob(job)).rejects.toThrow(/Organization org-limited has reached limits: monthly_limit_exceeded/);
-      
+      await expect(worker.processJob(job)).rejects.toThrow(
+        /Organization org-limited has reached limits: monthly_limit_exceeded/
+      );
+
       // Verify circuit breaker failure was recorded (error is thrown, caught in catch block)
       // The failure is recorded when error is thrown after cost control check
       expect(worker.circuitBreaker.failures).toBeGreaterThanOrEqual(initialFailures);
@@ -524,11 +537,13 @@ describe('GenerateReplyWorker', () => {
       };
 
       const mockCompletion = {
-        choices: [{
-          message: {
-            content: 'Wow, what an absolutely groundbreaking observation!'
+        choices: [
+          {
+            message: {
+              content: 'Wow, what an absolutely groundbreaking observation!'
+            }
           }
-        }],
+        ],
         usage: {
           total_tokens: 25
         }
@@ -549,9 +564,7 @@ describe('GenerateReplyWorker', () => {
       const config = { tone: 'sarcastic', humor_type: 'witty' };
       const context = { platform: 'twitter' };
 
-      mockOpenAIClient.chat.completions.create.mockRejectedValue(
-        new Error('OpenAI API error')
-      );
+      mockOpenAIClient.chat.completions.create.mockRejectedValue(new Error('OpenAI API error'));
 
       const result = await worker.generateResponse(originalText, config, context);
 
@@ -621,7 +634,13 @@ describe('GenerateReplyWorker', () => {
         success: true
       });
 
-      const result = await worker.storeResponse(commentId, organizationId, response, config, generationTime);
+      const result = await worker.storeResponse(
+        commentId,
+        organizationId,
+        response,
+        config,
+        generationTime
+      );
 
       expect(result.id).toBe('response-123');
       expect(mockSupabase.from).toHaveBeenCalledWith('responses');
@@ -635,7 +654,7 @@ describe('GenerateReplyWorker', () => {
       const generationTime = 1000;
 
       const mockError = new Error('Insert failed');
-      
+
       // Mock organizations query
       const mockOrganizationsQuery = {
         select: jest.fn().mockReturnThis(),
@@ -699,10 +718,10 @@ describe('GenerateReplyWorker', () => {
       const originalRandom = Math.random;
       Math.random = jest.fn(() => 0.3); // Less than 0.5
       expect(worker.shouldRespondBasedOnFrequency(0.5)).toBe(true);
-      
+
       Math.random = jest.fn(() => 0.7); // Greater than 0.5
       expect(worker.shouldRespondBasedOnFrequency(0.5)).toBe(false);
-      
+
       Math.random = originalRandom;
     });
   });
@@ -738,7 +757,7 @@ describe('GenerateReplyWorker', () => {
     test('should fetch integration config successfully', async () => {
       const organizationId = 'org-123';
       const configId = 'config-456';
-      
+
       const mockConfig = {
         id: 'config-456',
         organization_id: 'org-123',
@@ -800,8 +819,10 @@ describe('GenerateReplyWorker', () => {
         // Missing required fields
       };
 
-      await expect(worker.processJob(malformedJob)).rejects.toThrow(/Invalid job: missing or invalid payload object/);
-      
+      await expect(worker.processJob(malformedJob)).rejects.toThrow(
+        /Invalid job: missing or invalid payload object/
+      );
+
       // Verify circuit breaker failure was recorded
       expect(worker.circuitBreaker.failures).toBeGreaterThan(0);
     });
@@ -860,7 +881,9 @@ describe('GenerateReplyWorker', () => {
       // Mock getIntegrationConfig to return null (config not found)
       worker.getIntegrationConfig = jest.fn().mockResolvedValue(null);
 
-      await expect(worker.processJob(job)).rejects.toThrow(/Integration config not found for comment comment-456/);
+      await expect(worker.processJob(job)).rejects.toThrow(
+        /Integration config not found for comment comment-456/
+      );
     });
   });
 
@@ -868,7 +891,7 @@ describe('GenerateReplyWorker', () => {
     test('should allow processing when circuit breaker is closed', () => {
       worker.circuitBreaker.state = 'closed';
       worker.circuitBreaker.failures = 0;
-      
+
       expect(() => worker.checkCircuitBreaker()).not.toThrow();
     });
 
@@ -876,7 +899,7 @@ describe('GenerateReplyWorker', () => {
       worker.circuitBreaker.state = 'open';
       worker.circuitBreaker.lastFailureTime = Date.now() - 1000; // 1 second ago
       worker.circuitBreaker.timeout = 30000; // 30 seconds timeout
-      
+
       expect(() => worker.checkCircuitBreaker()).toThrow(/Circuit breaker is open/);
     });
 
@@ -885,9 +908,9 @@ describe('GenerateReplyWorker', () => {
       worker.circuitBreaker.lastFailureTime = Date.now() - 35000; // 35 seconds ago
       worker.circuitBreaker.timeout = 30000; // 30 seconds timeout
       worker.circuitBreaker.consecutiveSuccesses = 0;
-      
+
       worker.checkCircuitBreaker();
-      
+
       expect(worker.circuitBreaker.state).toBe('half-open');
     });
 
@@ -896,9 +919,9 @@ describe('GenerateReplyWorker', () => {
       worker.circuitBreaker.consecutiveSuccesses = 0;
       worker.circuitBreaker.halfOpenMaxAttempts = 1;
       worker.circuitBreaker.failures = 3;
-      
+
       worker.recordCircuitBreakerSuccess();
-      
+
       expect(worker.circuitBreaker.state).toBe('closed');
       expect(worker.circuitBreaker.failures).toBe(0);
     });
@@ -907,9 +930,9 @@ describe('GenerateReplyWorker', () => {
       worker.circuitBreaker.state = 'closed';
       worker.circuitBreaker.failures = 2;
       worker.circuitBreaker.threshold = 3;
-      
+
       worker.recordCircuitBreakerFailure(new Error('Test error'));
-      
+
       expect(worker.circuitBreaker.state).toBe('open');
       expect(worker.circuitBreaker.failures).toBe(3);
     });
@@ -917,9 +940,9 @@ describe('GenerateReplyWorker', () => {
     test('should decrement failures on success in closed state', () => {
       worker.circuitBreaker.state = 'closed';
       worker.circuitBreaker.failures = 2;
-      
+
       worker.recordCircuitBreakerSuccess();
-      
+
       expect(worker.circuitBreaker.failures).toBe(1);
     });
   });
@@ -935,18 +958,22 @@ describe('GenerateReplyWorker', () => {
 
     test('should throw error when job.payload is missing', async () => {
       const job = { id: 'job-123' };
-      await expect(worker.processJob(job)).rejects.toThrow('Invalid job: missing or invalid payload object');
+      await expect(worker.processJob(job)).rejects.toThrow(
+        'Invalid job: missing or invalid payload object'
+      );
     });
 
     test('should throw error when job.payload is not an object', async () => {
       const job = { id: 'job-123', payload: 'invalid' };
-      await expect(worker.processJob(job)).rejects.toThrow('Invalid job: missing or invalid payload object');
+      await expect(worker.processJob(job)).rejects.toThrow(
+        'Invalid job: missing or invalid payload object'
+      );
     });
 
     test('should accept job with org_id alternative to organization_id', async () => {
       const { shouldBlockAutopost } = require('../../../src/middleware/killSwitch');
       shouldBlockAutopost.mockResolvedValue({ blocked: false });
-      
+
       mockCostControlService.canPerformOperation.mockResolvedValue({
         allowed: true
       });
@@ -1087,7 +1114,11 @@ describe('GenerateReplyWorker', () => {
       };
 
       await expect(worker.processJob(job)).rejects.toThrow(/Reply generation blocked/);
-      expect(worker.log).toHaveBeenCalledWith('warn', expect.stringContaining('Reply generation blocked'), expect.any(Object));
+      expect(worker.log).toHaveBeenCalledWith(
+        'warn',
+        expect.stringContaining('Reply generation blocked'),
+        expect.any(Object)
+      );
     });
 
     test('should allow processing when kill switch is inactive', async () => {
@@ -1413,7 +1444,7 @@ describe('GenerateReplyWorker', () => {
     test('should calculate content checksum', () => {
       const content = 'Test content';
       const checksum = worker.calculateContentChecksum(content);
-      
+
       expect(checksum).toBeDefined();
       expect(typeof checksum).toBe('string');
       expect(checksum.length).toBeGreaterThan(0);
@@ -1488,9 +1519,7 @@ describe('GenerateReplyWorker', () => {
       const config = { tone: 'sarcastic' };
       const context = { platform: 'twitter' };
 
-      mockOpenAIClient.chat.completions.create.mockRejectedValue(
-        new Error('Request timeout')
-      );
+      mockOpenAIClient.chat.completions.create.mockRejectedValue(new Error('Request timeout'));
 
       const result = await worker.generateResponse(originalText, config, context);
 
@@ -1503,9 +1532,7 @@ describe('GenerateReplyWorker', () => {
       const config = { tone: 'ironic' };
       const context = { platform: 'twitter' };
 
-      mockOpenAIClient.chat.completions.create.mockRejectedValue(
-        new Error('OpenAI unavailable')
-      );
+      mockOpenAIClient.chat.completions.create.mockRejectedValue(new Error('OpenAI unavailable'));
 
       const result = await worker.generateResponse(originalText, config, context);
 
@@ -1520,11 +1547,13 @@ describe('GenerateReplyWorker', () => {
       const context = { platform: 'twitter' };
 
       mockOpenAIClient.chat.completions.create.mockResolvedValue({
-        choices: [{
-          message: {
-            content: '' // Empty response
+        choices: [
+          {
+            message: {
+              content: '' // Empty response
+            }
           }
-        }],
+        ],
         usage: {
           total_tokens: 10
         }
@@ -1559,11 +1588,13 @@ describe('GenerateReplyWorker', () => {
       };
 
       mockOpenAIClient.chat.completions.create.mockResolvedValue({
-        choices: [{
-          message: {
-            content: 'Generated roast response'
+        choices: [
+          {
+            message: {
+              content: 'Generated roast response'
+            }
           }
-        }],
+        ],
         usage: {
           total_tokens: 50
         }
@@ -1582,13 +1613,11 @@ describe('GenerateReplyWorker', () => {
       const config = { tone: 'sarcastic' };
       const context = { platform: 'twitter' };
 
-      mockRoastPromptTemplate.buildPrompt.mockRejectedValue(
-        new Error('Prompt generation failed')
-      );
+      mockRoastPromptTemplate.buildPrompt.mockRejectedValue(new Error('Prompt generation failed'));
 
-      await expect(
-        worker.generateOpenAIResponse(originalText, config, context)
-      ).rejects.toThrow(/Prompt generation failed/);
+      await expect(worker.generateOpenAIResponse(originalText, config, context)).rejects.toThrow(
+        /Prompt generation failed/
+      );
     });
 
     test('should validate response length for Twitter', async () => {
@@ -1598,11 +1627,13 @@ describe('GenerateReplyWorker', () => {
 
       const longResponse = 'X'.repeat(300);
       mockOpenAIClient.chat.completions.create.mockResolvedValue({
-        choices: [{
-          message: {
-            content: longResponse
+        choices: [
+          {
+            message: {
+              content: longResponse
+            }
           }
-        }],
+        ],
         usage: {
           total_tokens: 100
         }
@@ -1617,7 +1648,7 @@ describe('GenerateReplyWorker', () => {
   describe('fetchPersonaData', () => {
     test('should fetch persona data successfully', async () => {
       const organizationId = 'org-123';
-      
+
       mockSupabase.from.mockImplementation((table) => {
         if (table === 'organizations') {
           return {
@@ -1657,7 +1688,7 @@ describe('GenerateReplyWorker', () => {
 
     test('should return null when no persona data exists', async () => {
       const organizationId = 'org-123';
-      
+
       mockSupabase.from.mockImplementation((table) => {
         if (table === 'organizations') {
           return {
@@ -1697,7 +1728,7 @@ describe('GenerateReplyWorker', () => {
   describe('normalizeToxicityScore', () => {
     test('should normalize valid score from response', () => {
       const responseScore = 0.75;
-      const originalScore = 0.80;
+      const originalScore = 0.8;
 
       const result = worker.normalizeToxicityScore(responseScore, originalScore);
 
@@ -1727,7 +1758,7 @@ describe('GenerateReplyWorker', () => {
 
     test('should handle string scores', () => {
       const responseScore = '0.75';
-      const originalScore = 0.80;
+      const originalScore = 0.8;
 
       const result = worker.normalizeToxicityScore(responseScore, originalScore);
 
@@ -1737,7 +1768,7 @@ describe('GenerateReplyWorker', () => {
 
     test('should handle scores in 0-100 range', () => {
       const responseScore = 75; // 0-100 range
-      const originalScore = 0.80;
+      const originalScore = 0.8;
 
       const result = worker.normalizeToxicityScore(responseScore, originalScore);
 
@@ -1881,7 +1912,7 @@ describe('GenerateReplyWorker', () => {
     test('should calculate checksum for valid content', () => {
       const content = 'Test content for checksum';
       const checksum = worker.calculateContentChecksum(content);
-      
+
       expect(checksum).toBeDefined();
       expect(typeof checksum).toBe('string');
       expect(checksum.length).toBeGreaterThan(0);
@@ -1891,7 +1922,7 @@ describe('GenerateReplyWorker', () => {
       const content = 'Test content';
       const checksum1 = worker.calculateContentChecksum(content);
       const checksum2 = worker.calculateContentChecksum(content);
-      
+
       expect(checksum1).toBe(checksum2);
     });
 
@@ -1900,7 +1931,7 @@ describe('GenerateReplyWorker', () => {
       const content2 = 'Test content 2';
       const checksum1 = worker.calculateContentChecksum(content1);
       const checksum2 = worker.calculateContentChecksum(content2);
-      
+
       expect(checksum1).not.toBe(checksum2);
     });
 
@@ -1975,7 +2006,7 @@ describe('GenerateReplyWorker', () => {
     test('should apply Twitter length constraints', () => {
       const platform = 'twitter';
       const constraint = worker.getPlatformConstraint(platform);
-      
+
       expect(constraint).toContain('Twitter');
       expect(constraint).toContain('280');
     });
@@ -1983,14 +2014,14 @@ describe('GenerateReplyWorker', () => {
     test('should apply YouTube constraints', () => {
       const platform = 'youtube';
       const constraint = worker.getPlatformConstraint(platform);
-      
+
       expect(constraint).toContain('YouTube');
     });
 
     test('should return default constraint for unknown platform', () => {
       const platform = 'unknown-platform';
       const constraint = worker.getPlatformConstraint(platform);
-      
+
       expect(constraint).toBeDefined();
       expect(constraint.length).toBeGreaterThan(0);
     });
@@ -2000,7 +2031,7 @@ describe('GenerateReplyWorker', () => {
     test('should estimate tokens correctly', () => {
       const text = 'This is a test message';
       const tokens = worker.estimateTokens(text);
-      
+
       expect(tokens).toBeGreaterThan(0);
       expect(typeof tokens).toBe('number');
     });
@@ -2013,7 +2044,7 @@ describe('GenerateReplyWorker', () => {
     test('should estimate tokens for long text', () => {
       const longText = 'X'.repeat(1000);
       const tokens = worker.estimateTokens(longText);
-      
+
       expect(tokens).toBeGreaterThan(100);
     });
   });
@@ -2101,9 +2132,7 @@ describe('GenerateReplyWorker', () => {
         allowed: true
       });
 
-      worker.getComment = jest.fn().mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      worker.getComment = jest.fn().mockRejectedValue(new Error('Database connection failed'));
 
       const job = {
         id: 'job-123',

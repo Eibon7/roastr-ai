@@ -34,9 +34,9 @@ triggers:
 - "Architecture": "Actualizar diagramas y flujos"
   formato_changelog:
 - template: | ## Issue #{id}: {título}
-        **Fecha**: {fecha}
-        **Tipo**: {Feature|Bug|Test|Docs|Refactor}
-        **Prioridad**: {P0|P1|P2}
+  **Fecha**: {fecha}
+  **Tipo**: {Feature|Bug|Test|Docs|Refactor}
+  **Prioridad**: {P0|P1|P2}
 
         ### Cambios
         - {descripción del cambio}
@@ -52,7 +52,9 @@ triggers:
 
         ### Agentes Involucrados
         - {agentes que trabajaron}
+
   estructura_spec:
+
 - "Sección 1: Overview"
 - "Sección 2: Architecture"
 - "Sección 3: Features"
@@ -84,9 +86,7 @@ triggers:
   - Nuevo endpoint: GET /api/user/profile
   - Nuevo componente: UserProfile.jsx
 - contexto: "Issue #600: Fix de seguridad en auth"
-  cambios_spec: | ## Security - Validación mejorada de tokens JWT - Rate limiting añadido a endpoints de login
-        ## Tests
-        - Cobertura aumentada: 95% en auth flows
+  cambios_spec: | ## Security - Validación mejorada de tokens JWT - Rate limiting añadido a endpoints de login ## Tests - Cobertura aumentada: 95% en auth flows
   coherencia_gdd:
 - validar: "¿Los nodos en docs/nodes/ coinciden con spec.md?"
 - validar: "¿Coverage source es auto?"

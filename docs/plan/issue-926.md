@@ -9,6 +9,7 @@
 ## Objetivo
 
 Añadir tests para archivos de configuración que actualmente tienen 0% de cobertura:
+
 - `src/config/index.js` (0% - 2 statements)
 - `src/config/tierMessages.js` (0% - 23 statements)
 
@@ -39,6 +40,7 @@ Añadir tests para archivos de configuración que actualmente tienen 0% de cober
      - `formatUsageWarning()`: función helper
 
 ### Cobertura Actual
+
 - `index.js`: 0%
 - `tierMessages.js`: 0%
 
@@ -51,6 +53,7 @@ Añadir tests para archivos de configuración que actualmente tienen 0% de cober
 **Archivo:** `tests/unit/config/index.test.js`
 
 **Tests a implementar:**
+
 1. ✅ Módulo se carga sin errores
 2. ✅ Exporta objeto `config` con estructura correcta
 3. ✅ `config.openai` tiene `apiKey` y `model`
@@ -70,33 +73,39 @@ Añadir tests para archivos de configuración que actualmente tienen 0% de cober
 **Tests a implementar:**
 
 #### 2.1 Estructura de `tierMessages`
+
 1. ✅ Exporta objeto `tierMessages`
 2. ✅ Tiene secciones: `analysis`, `roast`, `platform`, `features`, `planChange`, `upgradeCtas`
 3. ✅ Cada sección tiene estructura correcta
 
 #### 2.2 `getTierLimitMessage()`
+
 1. ✅ Retorna mensaje correcto para tier válido
 2. ✅ Retorna mensaje por defecto para tier inválido
 3. ✅ Maneja diferentes `messageType` (limit_exceeded, near_limit, upgrade_cta)
 4. ✅ Retorna `limit_exceeded` por defecto si `messageType` no existe
 
 #### 2.3 `getFeatureMessage()`
+
 1. ✅ Retorna mensaje correcto para feature válido
 2. ✅ Retorna mensaje por defecto para feature inválido
 3. ✅ Maneja diferentes `messageType`
 
 #### 2.4 `getUpgradeCta()`
+
 1. ✅ Retorna CTA correcto para upgrade específico (currentTier → targetTier)
 2. ✅ Retorna CTA por defecto para tier sin upgrade específico
 3. ✅ Retorna CTA enterprise para tier más alto
 4. ✅ Retorna CTA por defecto para tier inválido
 
 #### 2.5 `getPlanChangeMessage()`
+
 1. ✅ Retorna mensaje correcto para upgrade success/processing/failed
 2. ✅ Retorna mensaje correcto para downgrade scheduled/usage_exceeds/cancelled
 3. ✅ Retorna mensaje por defecto para status inválido
 
 #### 2.6 `formatUsageWarning()`
+
 1. ✅ Retorna warning `error` cuando percentage >= 100
 2. ✅ Retorna warning `warning` cuando percentage >= 80
 3. ✅ Retorna warning `info` cuando percentage >= 60
@@ -124,10 +133,12 @@ Añadir tests para archivos de configuración que actualmente tienen 0% de cober
 ## Archivos Afectados
 
 **Nuevos:**
+
 - `tests/unit/config/index.test.js`
 - `tests/unit/config/tierMessages.test.js`
 
 **Modificados:**
+
 - Ninguno (solo tests nuevos)
 
 ---
@@ -135,6 +146,7 @@ Añadir tests para archivos de configuración que actualmente tienen 0% de cober
 ## Validación Requerida
 
 ### Pre-Flight Checklist
+
 - [ ] Tests pasando (0 failures)
 - [ ] Cobertura ≥90% para ambos archivos
 - [ ] Tests validan estructura y valores
@@ -171,4 +183,3 @@ node scripts/validate-gdd-runtime.js --full
 - Quick win para subir cobertura rápidamente
 - No requiere mocks complejos
 - Tests deben validar estructura y valores, no lógica compleja
-
