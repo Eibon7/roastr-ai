@@ -1,6 +1,6 @@
 /**
  * Shield Service Tests
- * 
+ *
  * Tests for automated content moderation and user behavior tracking
  */
 
@@ -79,7 +79,7 @@ describe('ShieldService', () => {
   describe('initialize', () => {
     test('should initialize service and queue connections', async () => {
       await shieldService.initialize();
-      
+
       expect(mockQueueService.initialize).toHaveBeenCalled();
     });
   });
@@ -211,22 +211,40 @@ describe('ShieldService', () => {
       // Mock user behavior update method
       jest.spyOn(shieldService, '_updateUserBehaviorFromTags').mockResolvedValue({ success: true });
 
-      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
+      const result = await shieldService.executeActionsFromTags(
+        organizationId,
+        comment,
+        action_tags,
+        metadata
+      );
 
       expect(result.success).toBe(true);
       expect(result.actions_executed).toHaveLength(2);
-      expect(result.actions_executed.some(a => a.tag === 'hide_comment')).toBe(true);
-      expect(result.actions_executed.some(a => a.tag === 'block_user')).toBe(true);
+      expect(result.actions_executed.some((a) => a.tag === 'hide_comment')).toBe(true);
+      expect(result.actions_executed.some((a) => a.tag === 'block_user')).toBe(true);
 
       // Verify handler methods were called
-      expect(shieldService._handleHideComment).toHaveBeenCalledWith(organizationId, comment, metadata);
-      expect(shieldService._handleBlockUser).toHaveBeenCalledWith(organizationId, comment, metadata);
+      expect(shieldService._handleHideComment).toHaveBeenCalledWith(
+        organizationId,
+        comment,
+        metadata
+      );
+      expect(shieldService._handleBlockUser).toHaveBeenCalledWith(
+        organizationId,
+        comment,
+        metadata
+      );
 
       // Verify batch recording was called
       expect(shieldService._batchRecordShieldActions).toHaveBeenCalled();
 
       // Verify user behavior update was called
-      expect(shieldService._updateUserBehaviorFromTags).toHaveBeenCalledWith(organizationId, comment, action_tags, metadata);
+      expect(shieldService._updateUserBehaviorFromTags).toHaveBeenCalledWith(
+        organizationId,
+        comment,
+        action_tags,
+        metadata
+      );
     });
 
     test('should skip execution when no actions in tags', async () => {
@@ -240,7 +258,12 @@ describe('ShieldService', () => {
       const action_tags = [];
       const metadata = { toxicity_score: 0.2 };
 
-      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
+      const result = await shieldService.executeActionsFromTags(
+        organizationId,
+        comment,
+        action_tags,
+        metadata
+      );
 
       expect(result.success).toBe(true);
       expect(result.actions_executed).toHaveLength(0);
@@ -444,31 +467,23 @@ describe('ShieldService', () => {
   describe('action level determination', () => {
     test('should determine correct action level based on toxicity and history', () => {
       // High toxicity, no history
-      expect(
-        shieldService.determineActionLevel(0.95, 'low', ['toxicity', 'threat'])
-      ).toBe('high');
+      expect(shieldService.determineActionLevel(0.95, 'low', ['toxicity', 'threat'])).toBe('high');
 
       // Medium toxicity, medium risk user
-      expect(
-        shieldService.determineActionLevel(0.7, 'medium', ['toxicity'])
-      ).toBe('medium');
+      expect(shieldService.determineActionLevel(0.7, 'medium', ['toxicity'])).toBe('medium');
 
       // Low toxicity, high risk user
-      expect(
-        shieldService.determineActionLevel(0.4, 'high', ['toxicity'])
-      ).toBe('medium');
+      expect(shieldService.determineActionLevel(0.4, 'high', ['toxicity'])).toBe('medium');
 
       // Low toxicity, low risk user
-      expect(
-        shieldService.determineActionLevel(0.3, 'low', [])
-      ).toBe('none');
+      expect(shieldService.determineActionLevel(0.3, 'low', [])).toBe('none');
     });
   });
 
   describe('recommended actions', () => {
     test('should recommend appropriate actions for high severity', () => {
       const actions = shieldService.getRecommendedActions('high', ['threat', 'toxicity']);
-      
+
       expect(actions).toContain('temporary_mute');
       expect(actions).toContain('content_removal');
       expect(actions).toContain('escalate_to_human');
@@ -476,7 +491,7 @@ describe('ShieldService', () => {
 
     test('should recommend appropriate actions for medium severity', () => {
       const actions = shieldService.getRecommendedActions('medium', ['toxicity']);
-      
+
       expect(actions).toContain('warning');
       expect(actions).toContain('content_removal');
       expect(actions).not.toContain('permanent_ban');
@@ -484,7 +499,7 @@ describe('ShieldService', () => {
 
     test('should recommend appropriate actions for low severity', () => {
       const actions = shieldService.getRecommendedActions('low', ['toxicity']);
-      
+
       expect(actions).toContain('warning');
       expect(actions).not.toContain('temporary_mute');
       expect(actions).not.toContain('permanent_ban');
@@ -492,7 +507,7 @@ describe('ShieldService', () => {
 
     test('should return empty actions for no severity', () => {
       const actions = shieldService.getRecommendedActions('none', []);
-      
+
       expect(actions).toHaveLength(0);
     });
   });
@@ -517,9 +532,7 @@ describe('ShieldService', () => {
         })
       });
 
-      await expect(
-        shieldService.analyzeContent(content, user)
-      ).rejects.toThrow('Database error');
+      await expect(shieldService.analyzeContent(content, user)).rejects.toThrow('Database error');
     });
 
     test('should handle queue service errors gracefully', async () => {
@@ -537,7 +550,12 @@ describe('ShieldService', () => {
       // Mock queue service to throw error when handler tries to add job
       mockQueueService.addJob.mockRejectedValue(new Error('Queue error'));
 
-      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
+      const result = await shieldService.executeActionsFromTags(
+        organizationId,
+        comment,
+        action_tags,
+        metadata
+      );
 
       // Expect the error to be in failed_actions array
       expect(result.success).toBe(false);
@@ -551,7 +569,7 @@ describe('ShieldService', () => {
   describe('shutdown', () => {
     test('should shutdown queue service gracefully', async () => {
       await shieldService.shutdown();
-      
+
       expect(mockQueueService.shutdown).toHaveBeenCalled();
     });
   });
@@ -610,7 +628,7 @@ describe('ShieldService', () => {
     test('should return medium priority for medium severity', () => {
       const analysisResult = {
         severity_level: 'medium',
-        toxicity_score: 0.70,
+        toxicity_score: 0.7,
         categories: []
       };
 
@@ -665,7 +683,11 @@ describe('ShieldService', () => {
         })
       });
 
-      const behavior = await shieldService.getUserBehavior(organizationId, platform, platformUserId);
+      const behavior = await shieldService.getUserBehavior(
+        organizationId,
+        platform,
+        platformUserId
+      );
 
       expect(behavior).toMatchObject(mockBehavior);
       expect(mockSupabase.from).toHaveBeenCalledWith('user_behaviors');
@@ -689,7 +711,11 @@ describe('ShieldService', () => {
         })
       });
 
-      const behavior = await shieldService.getUserBehavior(organizationId, platform, platformUserId);
+      const behavior = await shieldService.getUserBehavior(
+        organizationId,
+        platform,
+        platformUserId
+      );
 
       expect(behavior).toMatchObject({
         organization_id: organizationId,
@@ -800,7 +826,7 @@ describe('ShieldService', () => {
     test('should determine first offense action for low severity', async () => {
       const analysisResult = {
         severity_level: 'low',
-        toxicity_score: 0.50,
+        toxicity_score: 0.5,
         categories: []
       };
 
@@ -812,7 +838,11 @@ describe('ShieldService', () => {
 
       const comment = { platform: 'twitter' };
 
-      const actions = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const actions = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(actions.primary).toBe('warn'); // Fixed: implementation uses 'primary' not 'action'
       expect(actions.severity).toBe('low');
@@ -822,7 +852,7 @@ describe('ShieldService', () => {
     test('should escalate action for repeat offender', async () => {
       const analysisResult = {
         severity_level: 'medium',
-        toxicity_score: 0.70,
+        toxicity_score: 0.7,
         categories: []
       };
 
@@ -834,7 +864,11 @@ describe('ShieldService', () => {
 
       const comment = { platform: 'twitter' };
 
-      const actions = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const actions = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(actions.primary).toBe('mute_permanent'); // Fixed: medium + repeat = mute_permanent
       expect(actions.offenseLevel).toBe('repeat');
@@ -859,7 +893,11 @@ describe('ShieldService', () => {
 
       const comment = { platform: 'twitter' };
 
-      const actions = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const actions = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(actions.primary).toBe('block'); // Fixed: medium + persistent = block
       expect(actions.offenseLevel).toBe('persistent');
@@ -868,7 +906,7 @@ describe('ShieldService', () => {
     test('should handle dangerous offender (5+ violations)', async () => {
       const analysisResult = {
         severity_level: 'high',
-        toxicity_score: 0.90,
+        toxicity_score: 0.9,
         categories: ['threat']
       };
 
@@ -887,7 +925,11 @@ describe('ShieldService', () => {
 
       const comment = { platform: 'twitter' };
 
-      const actions = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const actions = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(actions.primary).toBe('escalate'); // Fixed: high + dangerous = escalate
       expect(actions.offenseLevel).toBe('dangerous');
@@ -908,7 +950,11 @@ describe('ShieldService', () => {
 
       const comment = { platform: 'twitter' };
 
-      const actions = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const actions = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should downgrade to low severity for safety
       expect(actions.severity).toBe('low');
@@ -918,7 +964,7 @@ describe('ShieldService', () => {
     test('should apply immediate threat escalation', async () => {
       const analysisResult = {
         severity_level: 'medium',
-        toxicity_score: 0.70,
+        toxicity_score: 0.7,
         categories: [],
         immediate_threat: true
       };
@@ -931,7 +977,11 @@ describe('ShieldService', () => {
 
       const comment = { platform: 'twitter' };
 
-      const actions = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const actions = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Immediate threat returns 'report' action with emergency flag
       expect(actions.primary).toBe('report'); // Fixed: emergency returns 'report'
@@ -955,7 +1005,11 @@ describe('ShieldService', () => {
 
       const comment = { platform: 'twitter' };
 
-      const actions = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const actions = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Legal compliance should escalate to report
       expect(actions.primary).toBe('report'); // Fixed: uses 'primary' not 'action'
@@ -1055,9 +1109,7 @@ describe('ShieldService', () => {
       const oneHourAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString(); // 30 min ago
 
       const userBehavior = {
-        actions_taken: [
-          { timestamp: oneHourAgo, action: 'warn' }
-        ]
+        actions_taken: [{ timestamp: oneHourAgo, action: 'warn' }]
       };
 
       const result = shieldService.calculateTimeWindowEscalation(userBehavior);
@@ -1069,9 +1121,7 @@ describe('ShieldService', () => {
       const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
       const userBehavior = {
-        actions_taken: [
-          { timestamp: threeDaysAgo, action: 'block' }
-        ]
+        actions_taken: [{ timestamp: threeDaysAgo, action: 'block' }]
       };
 
       const result = shieldService.calculateTimeWindowEscalation(userBehavior);
@@ -1083,9 +1133,7 @@ describe('ShieldService', () => {
       const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
 
       const userBehavior = {
-        actions_taken: [
-          { timestamp: tenDaysAgo, action: 'warn' }
-        ]
+        actions_taken: [{ timestamp: tenDaysAgo, action: 'warn' }]
       };
 
       const result = shieldService.calculateTimeWindowEscalation(userBehavior);
@@ -1095,9 +1143,7 @@ describe('ShieldService', () => {
 
     test('should handle invalid timestamps gracefully', () => {
       const userBehavior = {
-        actions_taken: [
-          { timestamp: 'invalid', action: 'warn' }
-        ]
+        actions_taken: [{ timestamp: 'invalid', action: 'warn' }]
       };
 
       const result = shieldService.calculateTimeWindowEscalation(userBehavior);
@@ -1150,9 +1196,7 @@ describe('ShieldService', () => {
           organization_id: organizationId,
           platform: comment.platform,
           platform_user_id: comment.platform_user_id,
-          actions_taken: expect.arrayContaining([
-            expect.objectContaining({ action: 'mute_temp' })
-          ])
+          actions_taken: expect.arrayContaining([expect.objectContaining({ action: 'mute_temp' })])
         }),
         expect.any(Object)
       );
@@ -1198,9 +1242,7 @@ describe('ShieldService', () => {
           organization_id: organizationId,
           platform: comment.platform,
           platform_user_id: comment.platform_user_id,
-          actions_taken: expect.arrayContaining([
-            expect.objectContaining({ action: 'warn' })
-          ])
+          actions_taken: expect.arrayContaining([expect.objectContaining({ action: 'warn' })])
         }),
         expect.any(Object)
       );
@@ -1246,7 +1288,7 @@ describe('ShieldService', () => {
     });
 
     test('should handle database errors gracefully', async () => {
-      const mockInsert = jest.fn().mockResolvedValue({ 
+      const mockInsert = jest.fn().mockResolvedValue({
         error: { message: 'Insert failed' }
       });
       mockSupabase.from = jest.fn().mockReturnValue({

@@ -12,32 +12,36 @@
 
 ### Cobertura de Services (Antes)
 
-| Service | Coverage Actual | Target | Gap | Prioridad |
-|---------|----------------|--------|-----|-----------|
-| shieldService.js | 38.6% | 75%+ | +36.4% | CRÍTICA |
-| queueService.js | 39.8% | 75%+ | +35.2% | CRÍTICA |
-| authService.js | 68.9% | 85%+ | +16.1% | ALTA |
-| costControl.js | 73.8% | 85%+ | +11.2% | MEDIA |
+| Service          | Coverage Actual | Target | Gap    | Prioridad |
+| ---------------- | --------------- | ------ | ------ | --------- |
+| shieldService.js | 38.6%           | 75%+   | +36.4% | CRÍTICA   |
+| queueService.js  | 39.8%           | 75%+   | +35.2% | CRÍTICA   |
+| authService.js   | 68.9%           | 85%+   | +16.1% | ALTA      |
+| costControl.js   | 73.8%           | 85%+   | +11.2% | MEDIA     |
 
 **Impacto esperado en cobertura global:** +5-8%
 
 ### Archivos de Test Existentes
 
 **shieldService:**
+
 - `tests/unit/services/shieldService.test.js` (existe, básico)
 - `tests/unit/services/shieldService-edge-cases.test.js` (existe)
 - Necesita: Expandir con métodos no cubiertos
 
 **queueService:**
+
 - `tests/unit/services/queueService.test.js` (26 tests, básico)
 - Cobertura: 11.91% lines (28/235 lines)
 - Necesita: Expandir dramáticamente
 
 **authService:**
+
 - Tests existentes NO encontrados en búsqueda
 - Necesita: Crear desde cero
 
 **costControl:**
+
 - `tests/unit/services/costControl.test.js` (45 tests)
 - Coverage: 73.8% (ya bien)
 - Necesita: Edge cases adicionales
@@ -49,11 +53,13 @@
 ### Fase 1: shieldService.js (38.6% → 75%+) 🔴 CRÍTICA
 
 **Archivos:**
+
 - Expandir: `tests/unit/services/shieldService.test.js`
 - Revisar: `tests/unit/services/shieldService-edge-cases.test.js`
 - Código: `src/services/shieldService.js`
 
 **Casos a agregar:**
+
 1. **Métodos principales:**
    - `analyzeComment()` - Análisis de toxicidad completo
    - `executeAction()` - Ejecución de acciones Shield
@@ -80,10 +86,12 @@
 ### Fase 2: queueService.js (39.8% → 75%+) 🔴 CRÍTICA
 
 **Archivos:**
+
 - Expandir: `tests/unit/services/queueService.test.js`
 - Código: `src/services/queueService.js`
 
 **Casos a agregar:**
+
 1. **Métodos principales:**
    - `addJob()` - Añadir trabajos (v1.2.0 normalized return)
    - `getNextJob()` - Obtener siguiente trabajo con prioridad
@@ -116,10 +124,12 @@
 ### Fase 3: authService.js (68.9% → 85%+) 🟡 ALTA
 
 **Archivos:**
+
 - Crear: `tests/unit/services/authService.test.js`
 - Código: `src/services/authService.js`
 
 **Casos a agregar:**
+
 1. **Métodos principales:**
    - `authenticate()` - Autenticación de usuario
    - `validateToken()` - Validación de JWT
@@ -148,10 +158,12 @@
 ### Fase 4: costControl.js (73.8% → 85%+) 🟢 MEDIA
 
 **Archivos:**
+
 - Expandir: `tests/unit/services/costControl.test.js`
 - Código: `src/services/costControl.js`
 
 **Casos a agregar:**
+
 1. **Edge cases adicionales:**
    - Plan limit exactly at boundary (10, 1000, 5000)
    - Monthly reset logic
@@ -173,8 +185,10 @@
 ## Agentes a Usar
 
 ### TestEngineer (Principal) 🧪
+
 **Trigger:** Cambios en `src/services/` sin tests correspondientes  
 **Workflow:**
+
 ```bash
 # En Cursor Composer (Cmd+I)
 @tests/unit/services/ @src/services/shieldService.js
@@ -184,14 +198,17 @@ Target: 75%+ coverage with 0 failures."
 ```
 
 ### Guardian 🛡️
+
 **Trigger:** Cambios en security-critical services (authService, shieldService)  
 **Workflow:**
+
 ```bash
 node scripts/guardian-gdd.js --full
 # Manual audit de tests de seguridad
 ```
 
 ### TaskAssessor 📋
+
 **Ya invocado:** Plan creado (este documento)
 
 ---
@@ -199,18 +216,21 @@ node scripts/guardian-gdd.js --full
 ## Archivos Afectados
 
 ### Tests (Nuevos/Modificados)
+
 - ✅ `tests/unit/services/shieldService.test.js` (expandir +30 tests)
 - ✅ `tests/unit/services/queueService.test.js` (expandir +40 tests)
 - 🆕 `tests/unit/services/authService.test.js` (crear +35 tests)
 - ✅ `tests/unit/services/costControl.test.js` (expandir +15 tests)
 
 ### Código (No modificar - solo leer)
+
 - `src/services/shieldService.js`
 - `src/services/queueService.js`
 - `src/services/authService.js`
 - `src/services/costControl.js`
 
 ### Documentación (Actualizar)
+
 - `docs/nodes/shield.md` (actualizar coverage)
 - `docs/nodes/queue-system.md` (actualizar coverage)
 - `docs/coverage-improvement-priorities.md` (marcar como completo)
@@ -221,6 +241,7 @@ node scripts/guardian-gdd.js --full
 ## Validación Requerida
 
 ### Pre-Flight Checklist
+
 - [ ] Leer `docs/patterns/coderabbit-lessons.md` ✅ (FASE 0)
 - [ ] Leer nodos GDD: shield.md, queue-system.md ✅ (FASE 0)
 - [ ] Plan creado en `docs/plan/issue-929.md` ✅
@@ -229,6 +250,7 @@ node scripts/guardian-gdd.js --full
 - [ ] Tests cubren: success + error + edge cases
 
 ### Durante Implementación
+
 - [ ] shieldService.js ≥75% coverage
 - [ ] queueService.js ≥75% coverage
 - [ ] authService.js ≥85% coverage
@@ -241,6 +263,7 @@ node scripts/guardian-gdd.js --full
 - [ ] Validación de seguridad (shieldService, authService)
 
 ### Pre-Merge Checklist
+
 - [ ] Tests 100% passing: `npm test`
 - [ ] Coverage ≥90%: `npm run test:coverage`
 - [ ] GDD validado: `node scripts/validate-gdd-runtime.js --full`
@@ -262,13 +285,13 @@ node scripts/guardian-gdd.js --full
 
 ## Estimación de Tiempo
 
-| Fase | Service | Tiempo | Tests | Complejidad |
-|------|---------|--------|-------|-------------|
-| 1 | shieldService.js | 2 días | +30 | Alta (seguridad + recidivism) |
-| 2 | queueService.js | 2 días | +40 | Alta (Redis + DB fallback + DLQ) |
-| 3 | authService.js | 2 días | +35 | Alta (seguridad + JWT) |
-| 4 | costControl.js | 1 día | +15 | Media (edge cases) |
-| **Total** | **4 services** | **7 días** | **+120 tests** | **CRÍTICA** |
+| Fase      | Service          | Tiempo     | Tests          | Complejidad                      |
+| --------- | ---------------- | ---------- | -------------- | -------------------------------- |
+| 1         | shieldService.js | 2 días     | +30            | Alta (seguridad + recidivism)    |
+| 2         | queueService.js  | 2 días     | +40            | Alta (Redis + DB fallback + DLQ) |
+| 3         | authService.js   | 2 días     | +35            | Alta (seguridad + JWT)           |
+| 4         | costControl.js   | 1 día      | +15            | Media (edge cases)               |
+| **Total** | **4 services**   | **7 días** | **+120 tests** | **CRÍTICA**                      |
 
 ---
 
@@ -287,18 +310,21 @@ node scripts/guardian-gdd.js --full
 ## PROGRESO REAL (Updated 2025-11-23)
 
 ### Fase 1: queueService.js ✅ CASI COMPLETA
+
 - **Cobertura:** 37.21% → 69.05% (+31.84%)
 - **Tests:** 26 → 67 (+41 tests)
 - **Status:** 56/67 tests passing (83.6%)
 - **Gap restante:** +5.95% para 75% target
 
 ### Fase 2: shieldService.js ✅ CASI COMPLETA
+
 - **Cobertura:** 32.83% → 61.86% (+29.03%)
 - **Tests:** 19 → 56 (+37 tests)
 - **Status:** 43/56 tests passing (76.8%)
 - **Gap restante:** +13.14% para 75% target
 
 ### Fase 3: authService.js 🟡 PARCIAL
+
 - **Cobertura:** 46.96% → 50.75% (+3.79%)
 - **Tests:** 48 → 63 (+15 tests)
 - **Status:** 63/63 tests passing (100%)
@@ -306,11 +332,13 @@ node scripts/guardian-gdd.js --full
 - **Nota:** Métodos complejos requieren integration tests
 
 ### Fase 4: costControl.js ⏸️ PENDIENTE
+
 - **Cobertura:** 28.86% (sin cambios)
 - **Target:** 85%+
 - **Gap:** +56.14%
 
 ### AC Progress: 2.5/10 (25%)
+
 - [ ] AC1: `shieldService` ≥75% → CASI (61.86%, falta 13.14%)
 - [x] AC2: `queueService` ≥75% → CASI (69.05%, falta 5.95%)
 - [ ] AC3: `authService` ≥85% → LEJOS (50.75%, falta 34.25%)
@@ -325,4 +353,3 @@ node scripts/guardian-gdd.js --full
 **Creado:** 2025-11-23  
 **Estado:** 🟢 FASE 3 COMPLETADA - EN PROGRESO  
 **Next Step:** Evaluar si continuar con costControl o consolidar progreso actual
-

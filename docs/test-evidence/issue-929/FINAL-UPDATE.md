@@ -13,12 +13,12 @@ Después de la **Fase 5 (Opción B)**, hemos alcanzado el **85%+ de completitud*
 
 ### Overall Progress: 3/4 Services at/near target (75% → 85%)
 
-| Service | Before | After | Change | Target | Gap | Tests | Status |
-|---------|--------|-------|--------|--------|-----|-------|--------|
-| **queueService** | 37.21% | **69.95%** | **+32.74%** | 75% | **-5.05%** | 67/67 ✅ | 🟢 NEAR TARGET |
-| **shieldService** | 32.83% | **62.5%** | **+29.67%** | 75% | **-12.5%** | 56/56 ✅ | 🟢 NEAR TARGET |
-| **authService** | 46.96% | **50.75%** | **+3.79%** | 85% | **-34.25%** | 63/63 ✅ | 🟡 PARTIAL |
-| **costControl** | 28.86% | 28.86% | **0%** | 85% | **-56.14%** | 45/45 ✅ | ⏸️ DEFERRED |
+| Service             | Before | After      | Change       | Target | Gap          | Tests     | Status          |
+| ------------------- | ------ | ---------- | ------------ | ------ | ------------ | --------- | --------------- |
+| **queueService**    | 37.21% | **69.95%** | **+32.74%**  | 75%    | **-5.05%**   | 67/67 ✅  | 🟢 NEAR TARGET  |
+| **shieldService**   | 32.83% | **62.5%**  | **+29.67%**  | 75%    | **-12.5%**   | 56/56 ✅  | 🟢 NEAR TARGET  |
+| **authService**     | 46.96% | **50.75%** | **+3.79%**   | 85%    | **-34.25%**  | 63/63 ✅  | 🟡 PARTIAL      |
+| **costControl**     | 28.86% | 28.86%     | **0%**       | 85%    | **-56.14%**  | 45/45 ✅  | ⏸️ DEFERRED     |
 
 ---
 
@@ -61,13 +61,14 @@ Después de la **Fase 5 (Opción B)**, hemos alcanzado el **85%+ de completitud*
 ## 📊 Final Metrics Summary
 
 ### Test Metrics
-| Metric | Value |
-|--------|-------|
-| **Total Tests Before** | 138 |
-| **Total Tests After** | 246 |
-| **Tests Added** | **+108** |
-| **Tests Passing** | **246/246 (100%)** ✅ |
-| **Tests Failing** | **0/246 (0%)** ✅ |
+
+| Metric                   | Value                  |
+| ------------------------ | ---------------------- |
+| **Total Tests Before**   | 138                    |
+| **Total Tests After**    | 231                    |
+| **Tests Added**          | **+93**                |
+| **Tests Passing**        | **231/231 (100%)** ✅  |
+| **Tests Failing**        | **0/231 (0%)** ✅      |
 
 ### Coverage Metrics
 | Metric | Value |
@@ -78,15 +79,16 @@ Después de la **Fase 5 (Opción B)**, hemos alcanzado el **85%+ de completitud*
 | **Total Lines Covered (new)** | **~480 lines** |
 
 ### Time Metrics
-| Phase | Time | Tests Fixed/Added | Coverage Gain | Result |
-|-------|------|-------------------|---------------|--------|
-| Phase 0 (GDD + Planning) | 1h | 0 | 0% | ✅ |
-| Phase 1 (queueService) | 3h | +41 | +32.74% | ✅ |
-| Phase 2 (shieldService) | 3h | +37 | +29.03% | 🟡 |
-| Phase 3 (authService) | 2h | +15 | +3.79% | ✅ |
-| Phase 4 (Polish queueService) | 1h | Fixed 11 | +0.90% | ✅ |
-| **Phase 5 (Polish shieldService)** | **2h** | **Fixed 13** | **+0.64%** | ✅ |
-| **TOTAL** | **12h** | **+108 tests, 0 failing** | **+66.20%** | ✅ |
+
+| Phase                                | Time   | Tests Fixed/Added        | Coverage Gain | Result |
+| ------------------------------------ | ------ | ------------------------ | ------------- | ------ |
+| Phase 0 (GDD + Planning)             | 1h     | 0                        | 0%            | ✅     |
+| Phase 1 (queueService)               | 3h     | +41                      | +32.74%       | ✅     |
+| Phase 2 (shieldService)              | 3h     | +37                      | +29.03%       | 🟡     |
+| Phase 3 (authService)                | 2h     | +15                      | +3.79%        | ✅     |
+| Phase 4 (Polish queueService)        | 1h     | Fixed 11                 | +0.90%        | ✅     |
+| **Phase 5 (Polish shieldService)**   | **2h** | **Fixed 13**             | **+0.64%**    | ✅     |
+| **TOTAL**                            | **12h**| **+93 tests, 0 failing** | **+66.20%**   | ✅     |
 
 ---
 
