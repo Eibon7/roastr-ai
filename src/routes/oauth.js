@@ -38,7 +38,7 @@ class MockConnectionStore {
     });
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.log(`Stored connection for ${userId}:${platform}`);
+      logger.info(`Stored connection for ${userId}:${platform}`);
     }
   }
 
@@ -229,7 +229,7 @@ router.post('/:platform/connect', authenticateToken, async (req, res) => {
     const authUrl = await provider.getAuthorizationUrl(state, redirectUri);
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.log(`OAuth connect initiated for ${userId}:${platform}`, {
+      logger.info(`OAuth connect initiated for ${userId}:${platform}`, {
         authUrl, state, redirectUri
       });
     }
@@ -248,7 +248,7 @@ router.post('/:platform/connect', authenticateToken, async (req, res) => {
 
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.error('OAuth connect error:', error);
+      logger.error('OAuth connect error:', error);
     }
 
     res.status(400).json({
@@ -272,7 +272,7 @@ router.get('/:platform/callback', async (req, res) => {
     if (error) {
       const errorMsg = error_description || error;
       if (flags.isEnabled('DEBUG_OAUTH')) {
-        console.error(`OAuth callback error for ${platform}:`, errorMsg);
+        logger.error(`OAuth callback error for ${platform}:`, errorMsg);
       }
 
       return res.redirect(`/connections?error=${encodeURIComponent(errorMsg)}&platform=${platform}`);
@@ -299,7 +299,7 @@ router.get('/:platform/callback', async (req, res) => {
     mockStore.storeConnection(stateData.userId, platform, tokenData);
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.log(`OAuth callback success for ${stateData.userId}:${platform}`);
+      logger.info(`OAuth callback success for ${stateData.userId}:${platform}`);
     }
 
     // Redirect to success page
@@ -308,7 +308,7 @@ router.get('/:platform/callback', async (req, res) => {
 
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.error('OAuth callback processing error:', error);
+      logger.error('OAuth callback processing error:', error);
     }
 
     const errorMsg = encodeURIComponent(error.message);
@@ -345,7 +345,7 @@ router.post('/:platform/refresh', authenticateToken, async (req, res) => {
     });
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.log(`OAuth tokens refreshed for ${userId}:${platform}`);
+      logger.info(`OAuth tokens refreshed for ${userId}:${platform}`);
     }
 
     res.json({
@@ -360,7 +360,7 @@ router.post('/:platform/refresh', authenticateToken, async (req, res) => {
 
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.error('OAuth refresh error:', error);
+      logger.error('OAuth refresh error:', error);
     }
 
     // Update connection status to error
@@ -402,7 +402,7 @@ router.post('/:platform/disconnect', authenticateToken, async (req, res) => {
     mockStore.removeConnection(userId, platform);
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.log(`OAuth connection disconnected for ${userId}:${platform}`);
+      logger.info(`OAuth connection disconnected for ${userId}:${platform}`);
     }
 
     res.json({
@@ -416,7 +416,7 @@ router.post('/:platform/disconnect', authenticateToken, async (req, res) => {
 
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.error('OAuth disconnect error:', error);
+      logger.error('OAuth disconnect error:', error);
     }
 
     res.status(400).json({
@@ -465,7 +465,7 @@ router.get('/connections', authenticateToken, async (req, res) => {
 
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.error('Get connections error:', error);
+      logger.error('Get connections error:', error);
     }
 
     res.status(500).json({
@@ -543,7 +543,7 @@ router.get('/:platform/config', authenticateToken, async (req, res) => {
 
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.error('Get platform config error:', error);
+      logger.error('Get platform config error:', error);
     }
 
     res.status(400).json({
@@ -579,7 +579,7 @@ router.put('/:platform/config', authenticateToken, async (req, res) => {
     // For now, store in memory (mockStore could be extended for this)
     
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.log(`Updated config for ${userId}:${platform}:`, validatedConfig);
+      logger.info(`Updated config for ${userId}:${platform}:`, validatedConfig);
     }
 
     res.json({
@@ -595,7 +595,7 @@ router.put('/:platform/config', authenticateToken, async (req, res) => {
 
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.error('Update platform config error:', error);
+      logger.error('Update platform config error:', error);
     }
 
     res.status(400).json({
@@ -652,7 +652,7 @@ router.post('/mock/reset', authenticateToken, async (req, res) => {
     }
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      console.log(`Mock connections reset for ${userId}`, { platform });
+      logger.info(`Mock connections reset for ${userId}`, { platform });
     }
 
   } catch (error) {

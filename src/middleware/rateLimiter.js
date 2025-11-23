@@ -4,6 +4,7 @@
  */
 
 const { flags } = require('../config/flags');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 
 /**
  * In-memory storage for rate limiting
@@ -178,7 +179,7 @@ class RateLimitStore {
     }
 
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Rate limiter cleanup:', {
+      logger.info('Rate limiter cleanup:', {
         activeAttempts: this.attempts.size,
         blockedKeys: this.blocked.size,
         uniqueIPs: this.metrics.uniqueIPs.size
@@ -267,7 +268,7 @@ function loginRateLimiter(req, res, next) {
     const remainingMinutes = Math.ceil(blockStatus.remainingMs / (60 * 1000));
     
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Blocked login attempt:', { ip, key, remainingMs: blockStatus.remainingMs });
+      logger.info('Blocked login attempt:', { ip, key, remainingMs: blockStatus.remainingMs });
     }
 
     return res.status(429).json({
@@ -296,7 +297,7 @@ function loginRateLimiter(req, res, next) {
         const result = store.recordAttempt(key, ip);
         
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Failed login attempt recorded:', { ip, key, result });
+          logger.info('Failed login attempt recorded:', { ip, key, result });
         }
         
         if (result.blocked) {
@@ -320,7 +321,7 @@ function loginRateLimiter(req, res, next) {
         store.recordSuccess(key);
         
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Successful login, reset attempts:', { ip, key });
+          logger.info('Successful login, reset attempts:', { ip, key });
         }
       }
     }
@@ -419,7 +420,7 @@ function passwordChangeRateLimiter(req, res, next) {
     const remainingMinutes = Math.ceil(blockStatus.remainingMs / (60 * 1000));
     
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Blocked password change attempt:', { ip, userId, key, remainingMs: blockStatus.remainingMs });
+      logger.info('Blocked password change attempt:', { ip, userId, key, remainingMs: blockStatus.remainingMs });
     }
 
     return res.status(429).json({
@@ -460,7 +461,7 @@ function passwordChangeRateLimiter(req, res, next) {
         store.attempts.set(key, attemptInfo);
 
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Failed password change attempt recorded:', { 
+          logger.info('Failed password change attempt recorded:', { 
             ip, userId, key, 
             count: attemptInfo.count, 
             maxAttempts 
@@ -500,7 +501,7 @@ function passwordChangeRateLimiter(req, res, next) {
         store.blocked.delete(key);
         
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Successful password change, reset attempts:', { ip, userId, key });
+          logger.info('Successful password change, reset attempts:', { ip, userId, key });
         }
       }
     }

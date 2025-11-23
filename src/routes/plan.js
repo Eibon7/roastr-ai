@@ -1,4 +1,5 @@
 const express = require('express');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { flags } = require('../config/flags');
@@ -54,7 +55,7 @@ router.get('/available', (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting available plans:', error.message);
+    logger.error('❌ Error getting available plans:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get available plans'
@@ -88,7 +89,7 @@ router.get('/current', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting current plan:', error.message);
+    logger.error('❌ Error getting current plan:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get current plan'
@@ -125,7 +126,7 @@ router.post('/select', authenticateToken, (req, res) => {
     const selectedPlan = AVAILABLE_PLANS[plan];
     userPlans.set(userId, plan);
 
-    console.log(`📋 User ${userId} selected plan: ${plan}`);
+    logger.info(`📋 User ${userId} selected plan: ${plan}`);
 
     res.json({
       success: true,
@@ -136,7 +137,7 @@ router.post('/select', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error selecting plan:', error.message);
+    logger.error('❌ Error selecting plan:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not select plan'
@@ -168,7 +169,7 @@ router.get('/features', (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting plan features:', error.message);
+    logger.error('❌ Error getting plan features:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get plan features'

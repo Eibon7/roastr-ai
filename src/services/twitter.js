@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const { TwitterApi, ETwitterStreamEvent } = require('twitter-api-v2');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
@@ -109,7 +110,7 @@ class TwitterRoastBot extends BaseIntegration {
         await fs.writeJson(this.processedTweetsFile, { processedTweetIds: [] }, { spaces: 2 });
       }
     } catch (error) {
-      console.error('❌ Error initializing processed tweets file:', error);
+      logger.error('❌ Error initializing processed tweets file:', error);
     }
   }
 
@@ -129,7 +130,7 @@ class TwitterRoastBot extends BaseIntegration {
         this.debugLog('✅ Initialized processed mentions file for batch mode');
       }
     } catch (error) {
-      console.error('❌ Error initializing processed mentions file:', error);
+      logger.error('❌ Error initializing processed mentions file:', error);
     }
   }
 
@@ -141,7 +142,7 @@ class TwitterRoastBot extends BaseIntegration {
       const data = await fs.readJson(this.processedTweetsFile);
       return data.processedTweetIds || [];
     } catch (error) {
-      console.error('❌ Error reading processed tweets:', error);
+      logger.error('❌ Error reading processed tweets:', error);
       return [];
     }
   }
@@ -163,7 +164,7 @@ class TwitterRoastBot extends BaseIntegration {
         await fs.writeJson(this.processedTweetsFile, data, { spaces: 2 });
       }
     } catch (error) {
-      console.error('❌ Error marking tweet as processed:', error);
+      logger.error('❌ Error marking tweet as processed:', error);
     }
   }
 
@@ -175,7 +176,7 @@ class TwitterRoastBot extends BaseIntegration {
       const data = await fs.readJson(this.processedMentionsFile);
       return data.processedMentionIds || [];
     } catch (error) {
-      console.error('❌ Error reading processed mentions:', error);
+      logger.error('❌ Error reading processed mentions:', error);
       return [];
     }
   }
@@ -202,7 +203,7 @@ class TwitterRoastBot extends BaseIntegration {
         this.debugLog(`📝 Marked mention ${mentionId} as processed (total: ${data.totalProcessed})`);
       }
     } catch (error) {
-      console.error('❌ Error marking mention as processed:', error);
+      logger.error('❌ Error marking mention as processed:', error);
     }
   }
 
@@ -215,7 +216,7 @@ class TwitterRoastBot extends BaseIntegration {
       data.lastCheck = new Date().toISOString();
       await fs.writeJson(this.processedMentionsFile, data, { spaces: 2 });
     } catch (error) {
-      console.error('❌ Error updating last check time:', error);
+      logger.error('❌ Error updating last check time:', error);
     }
   }
 
@@ -224,7 +225,7 @@ class TwitterRoastBot extends BaseIntegration {
    */
   debugLog(message, ...args) {
     if (this.debug) {
-      console.log(`[TWITTER-DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
+      logger.info(`[TWITTER-DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
     }
   }
 
@@ -235,10 +236,10 @@ class TwitterRoastBot extends BaseIntegration {
     const timestamp = new Date().toISOString();
     const prefix = level === 'error' ? '❌' : level === 'warn' ? '⚠️' : level === 'success' ? '✅' : 'ℹ️';
     
-    console.log(`${prefix} [${timestamp}] ${message}`);
+    logger.info(`${prefix} [${timestamp}] ${message}`);
     
     if (this.debug && Object.keys(data).length > 0) {
-      console.log(`[TWITTER-DEBUG] Event data:`, JSON.stringify(data, null, 2));
+      logger.info(`[TWITTER-DEBUG] Event data:`, JSON.stringify(data, null, 2));
     }
   }
 
@@ -325,7 +326,7 @@ class TwitterRoastBot extends BaseIntegration {
     // If too many consecutive errors, implement longer backoff
     if (this.errorStats.consecutiveErrors >= this.errorStats.maxConsecutiveErrors) {
       const backoffTime = this.errorStats.baseBackoffDelay * Math.pow(this.errorStats.backoffMultiplier, this.errorStats.consecutiveErrors - 1);
-      console.warn(`⚠️ Too many consecutive errors (${this.errorStats.consecutiveErrors}). Backing off for ${backoffTime}ms`);
+      logger.warn(`⚠️ Too many consecutive errors (${this.errorStats.consecutiveErrors}). Backing off for ${backoffTime}ms`);
       return backoffTime;
     }
     
@@ -367,7 +368,7 @@ class TwitterRoastBot extends BaseIntegration {
       
       return true; // STUB: Always allow for now
     } catch (error) {
-      console.error('❌ Error checking if content is allowed to roast:', error);
+      logger.error('❌ Error checking if content is allowed to roast:', error);
       return false; // Fail safe: don't roast if there's an error
     }
   }
@@ -399,10 +400,10 @@ class TwitterRoastBot extends BaseIntegration {
         const errorMsg = error.response?.data || error.message;
         
         if (isLastAttempt) {
-          console.error('❌ Error generating roast after all retries:', errorMsg);
+          logger.error('❌ Error generating roast after all retries:', errorMsg);
           throw error;
         } else {
-          console.warn(`⚠️ Roast generation failed (attempt ${attempt}), retrying in 2 seconds...`);
+          logger.warn(`⚠️ Roast generation failed (attempt ${attempt}), retrying in 2 seconds...`);
           this.debugLog('Error details:', errorMsg);
           await this.sleep(2000);
         }
@@ -420,13 +421,13 @@ class TwitterRoastBot extends BaseIntegration {
       this.botUserId = me.data.id;
       this.botUsername = me.data.username;
       
-      console.log(`👤 Bot authenticated as: @${this.botUsername} (ID: ${this.botUserId})`);
+      logger.info(`👤 Bot authenticated as: @${this.botUsername} (ID: ${this.botUserId})`);
       this.debugLog('Bot user info initialized successfully');
       
       return me.data;
     } catch (error) {
-      console.error('❌ Error initializing bot info:', error);
-      console.error('💡 Make sure your Twitter app has "Read and Write" permissions');
+      logger.error('❌ Error initializing bot info:', error);
+      logger.error('💡 Make sure your Twitter app has "Read and Write" permissions');
       throw error;
     }
   }
@@ -437,16 +438,16 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async authenticate() {
     try {
-      console.log('🔐 Authenticating with Twitter API...');
+      logger.info('🔐 Authenticating with Twitter API...');
       
       // Initialize bot user info (this also validates authentication)
       await this.initializeBotInfo();
       
-      console.log('✅ Twitter authentication successful');
+      logger.info('✅ Twitter authentication successful');
       return true;
       
     } catch (error) {
-      console.error('❌ Twitter authentication failed:', error.message);
+      logger.error('❌ Twitter authentication failed:', error.message);
       throw error;
     }
   }
@@ -457,16 +458,16 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async initialize() {
     try {
-      console.log('🚀 Initializing Twitter integration...');
+      logger.info('🚀 Initializing Twitter integration...');
       
       // Call parent initialize method
       await super.initialize();
       
-      console.log('✅ Twitter integration initialized successfully');
+      logger.info('✅ Twitter integration initialized successfully');
       return true;
       
     } catch (error) {
-      console.error('❌ Failed to initialize Twitter integration:', error.message);
+      logger.error('❌ Failed to initialize Twitter integration:', error.message);
       throw error;
     }
   }
@@ -477,16 +478,16 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async listenForMentions() {
     try {
-      console.log('👂 [TWITTER] Starting to listen for mentions in batch mode...');
+      logger.info('👂 [TWITTER] Starting to listen for mentions in batch mode...');
       
       // Process recent mentions using existing batch logic
       const result = await this.processMentions();
       
-      console.log(`✅ [TWITTER] Batch processing completed`);
+      logger.info(`✅ [TWITTER] Batch processing completed`);
       return result;
       
     } catch (error) {
-      console.error('❌ [TWITTER] Error in batch mention processing:', error.message);
+      logger.error('❌ [TWITTER] Error in batch mention processing:', error.message);
       throw error;
     }
   }
@@ -506,7 +507,7 @@ class TwitterRoastBot extends BaseIntegration {
       return result;
       
     } catch (error) {
-      console.error('❌ [TWITTER] Error posting response:', error.message);
+      logger.error('❌ [TWITTER] Error posting response:', error.message);
       this.metrics.errorsEncountered++;
       throw error;
     }
@@ -543,11 +544,11 @@ class TwitterRoastBot extends BaseIntegration {
       });
 
       this.debugLog('✅ Stream rules set:', streamRules.data);
-      console.log(`📡 Stream configured to listen for mentions to @${this.botUsername}`);
+      logger.info(`📡 Stream configured to listen for mentions to @${this.botUsername}`);
       
       return streamRules;
     } catch (error) {
-      console.error('❌ Error setting up stream:', error);
+      logger.error('❌ Error setting up stream:', error);
       throw error;
     }
   }
@@ -557,7 +558,7 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async startStream() {
     try {
-      console.log('🚀 Starting real-time Twitter stream...');
+      logger.info('🚀 Starting real-time Twitter stream...');
       
       // Get the filtered stream
       this.stream = await this.bearerClient.v2.searchStream({
@@ -566,7 +567,7 @@ class TwitterRoastBot extends BaseIntegration {
         expansions: ['author_id', 'referenced_tweets.id']
       });
 
-      console.log('✅ Stream started! Listening for mentions...');
+      logger.info('✅ Stream started! Listening for mentions...');
 
       // Handle stream events
       this.stream.on(ETwitterStreamEvent.Data, async (tweet) => {
@@ -574,22 +575,22 @@ class TwitterRoastBot extends BaseIntegration {
       });
 
       this.stream.on(ETwitterStreamEvent.DataError, (error) => {
-        console.error('❌ Stream data error:', error);
+        logger.error('❌ Stream data error:', error);
       });
 
       this.stream.on(ETwitterStreamEvent.ConnectionError, (error) => {
-        console.error('❌ Stream connection error:', error);
+        logger.error('❌ Stream connection error:', error);
         this.debugLog('Attempting to reconnect in 5 seconds...');
         this.reconnectTimeout = setTimeout(() => this.reconnectStream(), 5000);
       });
 
       this.stream.on(ETwitterStreamEvent.ConnectionClosed, () => {
-        console.log('🔌 Stream connection closed');
+        logger.info('🔌 Stream connection closed');
       });
 
       return this.stream;
     } catch (error) {
-      console.error('❌ Error starting stream:', error);
+      logger.error('❌ Error starting stream:', error);
       throw error;
     }
   }
@@ -619,15 +620,15 @@ class TwitterRoastBot extends BaseIntegration {
         return;
       }
 
-      console.log(`\n🔍 Processing new mention: ${tweet.id}`);
-      console.log(`👤 From: ${tweetData.includes?.users?.[0]?.username || 'unknown'}`);
-      console.log(`📝 Text: "${tweet.text}"`);
+      logger.info(`\n🔍 Processing new mention: ${tweet.id}`);
+      logger.info(`👤 From: ${tweetData.includes?.users?.[0]?.username || 'unknown'}`);
+      logger.info(`📝 Text: "${tweet.text}"`);
 
       // Process the tweet
       await this.processSingleTweet(tweet);
 
     } catch (error) {
-      console.error('❌ Error handling stream tweet:', error);
+      logger.error('❌ Error handling stream tweet:', error);
     }
   }
 
@@ -640,7 +641,7 @@ class TwitterRoastBot extends BaseIntegration {
       
       // Check rate limits before processing
       if (!this.canSendTweet()) {
-        console.log(`⏸️ Rate limit reached for tweet ${tweet.id}, skipping for now`);
+        logger.info(`⏸️ Rate limit reached for tweet ${tweet.id}, skipping for now`);
         return; // Don't mark as processed so we can retry later
       }
 
@@ -648,7 +649,7 @@ class TwitterRoastBot extends BaseIntegration {
       const isAllowed = await this.isAllowedToRoast(tweet.text);
       
       if (!isAllowed) {
-        console.log(`❌ Tweet ${tweet.id} not allowed to be roasted`);
+        logger.info(`❌ Tweet ${tweet.id} not allowed to be roasted`);
         await this.markTweetAsProcessed(tweet.id);
         await this.markMentionAsProcessed(tweet.id); // Also mark in new system
         this.resetErrorTracking(); // Reset errors for successful operation (even if no roast)
@@ -711,7 +712,7 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async reconnectStream() {
     try {
-      console.log('🔄 Attempting to reconnect stream...');
+      logger.info('🔄 Attempting to reconnect stream...');
       
       if (this.stream) {
         this.stream.close();
@@ -721,7 +722,7 @@ class TwitterRoastBot extends BaseIntegration {
       await this.startStream();
       
     } catch (error) {
-      console.error('❌ Error reconnecting stream:', error);
+      logger.error('❌ Error reconnecting stream:', error);
       this.reconnectTimeout = setTimeout(() => this.reconnectStream(), 10000); // Try again in 10 seconds
     }
   }
@@ -745,7 +746,7 @@ class TwitterRoastBot extends BaseIntegration {
       this.debugLog('Raw mentions response:', JSON.stringify(mentions, null, 2));
       return mentions;
     } catch (error) {
-      console.error('❌ Error fetching mentions:', error);
+      logger.error('❌ Error fetching mentions:', error);
       throw error;
     }
   }
@@ -774,7 +775,7 @@ class TwitterRoastBot extends BaseIntegration {
       
       return mentions;
     } catch (error) {
-      console.error('❌ [BATCH] Error fetching mentions:', error);
+      logger.error('❌ [BATCH] Error fetching mentions:', error);
       throw error;
     }
   }
@@ -784,14 +785,14 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async replyToTweet(tweetId, roastText) {
     try {
-      console.log(`💬 Replying to tweet ${tweetId} with roast`);
+      logger.info(`💬 Replying to tweet ${tweetId} with roast`);
       
       const reply = await this.client.v2.reply(roastText, tweetId);
-      console.log(`✅ Successfully replied with tweet ID: ${reply.data.id}`);
+      logger.info(`✅ Successfully replied with tweet ID: ${reply.data.id}`);
       
       return reply;
     } catch (error) {
-      console.error('❌ Error replying to tweet:', error);
+      logger.error('❌ Error replying to tweet:', error);
       throw error;
     }
   }
@@ -801,18 +802,18 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async processMentions() {
     try {
-      console.log('🚀 [BATCH] Starting to process mentions...');
+      logger.info('🚀 [BATCH] Starting to process mentions...');
       
       const mentions = await this.getBatchMentions();
       const processedMentionIds = await this.getProcessedMentionIds();
 
       if (!mentions.data || mentions.data.length === 0) {
-        console.log('📭 [BATCH] No mentions found');
+        logger.info('📭 [BATCH] No mentions found');
         await this.updateLastCheckTime();
         return { processed: 0, skipped: 0, errors: 0 };
       }
 
-      console.log(`🔍 [BATCH] Processing ${mentions.data?.length || 0} mentions...`);
+      logger.info(`🔍 [BATCH] Processing ${mentions.data?.length || 0} mentions...`);
       this.debugLog(`[BATCH] Processed mention IDs in memory: ${processedMentionIds.length}`);
 
       let processed = 0, skipped = 0, errors = 0;
@@ -870,7 +871,7 @@ class TwitterRoastBot extends BaseIntegration {
       return { processed, skipped, errors };
 
     } catch (error) {
-      console.error('❌ [BATCH] Error in processMentions:', error);
+      logger.error('❌ [BATCH] Error in processMentions:', error);
       return { processed: 0, skipped: 0, errors: 1 };
     }
   }
@@ -897,12 +898,12 @@ class TwitterRoastBot extends BaseIntegration {
     const missing = required.filter(key => !process.env[key]);
     
     if (missing.length > 0) {
-      console.error('❌ Missing required environment variables:', missing.join(', '));
-      console.error('💡 Please add them to your .env file');
+      logger.error('❌ Missing required environment variables:', missing.join(', '));
+      logger.error('💡 Please add them to your .env file');
       return false;
     }
 
-    console.log('✅ All required environment variables are set');
+    logger.info('✅ All required environment variables are set');
     return true;
   }
 
@@ -910,12 +911,12 @@ class TwitterRoastBot extends BaseIntegration {
    * Run the bot in streaming mode (DEPRECATED - requires higher Twitter API tier)
    */
   async runStream() {
-    console.error('⚠️ STREAMING MODE IS DISABLED');
-    console.error('📋 Streaming requires Twitter API v2 with elevated access (not available in Essential plan)');
-    console.error('💡 Use batch mode instead: npm run twitter:batch');
-    console.error('🔄 For continuous operation, set up a cron job or use the polling batch mode');
+    logger.error('⚠️ STREAMING MODE IS DISABLED');
+    logger.error('📋 Streaming requires Twitter API v2 with elevated access (not available in Essential plan)');
+    logger.error('💡 Use batch mode instead: npm run twitter:batch');
+    logger.error('🔄 For continuous operation, set up a cron job or use the polling batch mode');
     
-    console.log('\n🔄 Switching to batch polling mode...');
+    logger.info('\n🔄 Switching to batch polling mode...');
     await this.runBatchPolling();
   }
 
@@ -924,7 +925,7 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async runBatch() {
     try {
-      console.log('🤖 Starting Roastr.ai Twitter Bot in BATCH mode...');
+      logger.info('🤖 Starting Roastr.ai Twitter Bot in BATCH mode...');
       
       // Initialize bot info
       await this.initializeBotInfo();
@@ -935,7 +936,7 @@ class TwitterRoastBot extends BaseIntegration {
       this.logEvent('success', 'Batch execution completed', result);
       return result;
     } catch (error) {
-      console.error('❌ Fatal error in batch mode:', error);
+      logger.error('❌ Fatal error in batch mode:', error);
       process.exit(1);
     }
   }
@@ -945,7 +946,7 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async runSingleCycle() {
     try {
-      console.log('🤖 Roastr.ai batch started - Mode: single');
+      logger.info('🤖 Roastr.ai batch started - Mode: single');
       
       // Initialize bot info
       await this.initializeBotInfo();
@@ -963,11 +964,11 @@ class TwitterRoastBot extends BaseIntegration {
         mode: 'single'
       });
       
-      console.log('✅ Roastr.ai batch completed successfully');
+      logger.info('✅ Roastr.ai batch completed successfully');
       return result;
       
     } catch (error) {
-      console.error('❌ Fatal error in single batch mode:', error);
+      logger.error('❌ Fatal error in single batch mode:', error);
       process.exit(1);
     }
   }
@@ -977,8 +978,8 @@ class TwitterRoastBot extends BaseIntegration {
    */
   async runBatchPolling() {
     try {
-      console.log('🤖 Roastr.ai batch started - Mode: loop');
-      console.log(`⏰ Polling interval: ${this.batchConfig.intervalMinutes} minutes`);
+      logger.info('🤖 Roastr.ai batch started - Mode: loop');
+      logger.info(`⏰ Polling interval: ${this.batchConfig.intervalMinutes} minutes`);
       
       // Initialize bot info
       await this.initializeBotInfo();
@@ -987,12 +988,12 @@ class TwitterRoastBot extends BaseIntegration {
       
       // Keep the process alive
       process.on('SIGINT', () => {
-        console.log('\n🛑 Shutting down batch polling gracefully...');
+        logger.info('\n🛑 Shutting down batch polling gracefully...');
         this.batchConfig.pollingActive = false;
         process.exit(0);
       });
       
-      console.log('✅ Bot running in batch polling mode. Press Ctrl+C to stop.');
+      logger.info('✅ Bot running in batch polling mode. Press Ctrl+C to stop.');
       
       // Main polling loop
       while (this.batchConfig.pollingActive) {
@@ -1027,7 +1028,7 @@ class TwitterRoastBot extends BaseIntegration {
       }
       
     } catch (error) {
-      console.error('❌ Fatal error in batch polling mode:', error);
+      logger.error('❌ Fatal error in batch polling mode:', error);
       process.exit(1);
     }
   }
@@ -1052,7 +1053,7 @@ class TwitterRoastBot extends BaseIntegration {
       }
     } else {
       // Stream mode is disabled, fallback to polling with RUN_MODE support
-      console.warn('⚠️ Stream mode not available with Essential API plan, using batch polling instead');
+      logger.warn('⚠️ Stream mode not available with Essential API plan, using batch polling instead');
       if (this.batchConfig.runMode === 'single') {
         await this.runSingleCycle();
       } else {
@@ -1066,16 +1067,16 @@ class TwitterRoastBot extends BaseIntegration {
    * This is essential for preventing open handles in tests
    */
   async cleanup() {
-    console.log('🧹 Cleaning up Twitter service...');
+    logger.info('🧹 Cleaning up Twitter service...');
     
     try {
       // Stop batch polling
       if (this.batchConfig && this.batchConfig.pollingActive) {
         this.batchConfig.pollingActive = false;
-        console.log('🛑 Stopped batch polling');
+        logger.info('🛑 Stopped batch polling');
       }
     } catch (error) {
-      console.warn('⚠️ Error stopping batch polling:', error.message);
+      logger.warn('⚠️ Error stopping batch polling:', error.message);
     }
     
     // Close stream connection
@@ -1084,9 +1085,9 @@ class TwitterRoastBot extends BaseIntegration {
         this.stream.close();
         this.stream.removeAllListeners();
         this.stream = null;
-        console.log('🔌 Closed Twitter stream');
+        logger.info('🔌 Closed Twitter stream');
       } catch (error) {
-        console.warn('⚠️ Error closing stream:', error.message);
+        logger.warn('⚠️ Error closing stream:', error.message);
       }
     }
     
@@ -1095,19 +1096,19 @@ class TwitterRoastBot extends BaseIntegration {
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout);
         this.reconnectTimeout = null;
-        console.log('⏰ Cleared reconnect timeout');
+        logger.info('⏰ Cleared reconnect timeout');
       }
       
       if (this.pollingInterval) {
         clearInterval(this.pollingInterval);
         this.pollingInterval = null;
-        console.log('⏰ Cleared polling interval');
+        logger.info('⏰ Cleared polling interval');
       }
     } catch (error) {
-      console.warn('⚠️ Error clearing timeouts/intervals:', error.message);
+      logger.warn('⚠️ Error clearing timeouts/intervals:', error.message);
     }
     
-    console.log('✅ Twitter service cleanup completed');
+    logger.info('✅ Twitter service cleanup completed');
     
     // TODO: Implement cleanup timeout to prevent hanging cleanup operations
     // TODO: Add cleanup verification tests that check for resource leaks
@@ -1124,17 +1125,17 @@ if (require.main === module) {
   // Map legacy modes
   if (mode === 'stream') {
     mode = 'polling'; // Convert stream to polling for Essential API compatibility
-    console.log('🔄 Converting stream mode to batch polling for Essential API compatibility');
+    logger.info('🔄 Converting stream mode to batch polling for Essential API compatibility');
   }
   
   // Show current configuration
   const runMode = bot.batchConfig.runMode;
-  console.log(`🚀 Starting bot in ${mode.toUpperCase()} mode with RUN_MODE=${runMode}...`);
+  logger.info(`🚀 Starting bot in ${mode.toUpperCase()} mode with RUN_MODE=${runMode}...`);
   
   if (runMode === 'single') {
-    console.log('📋 Single cycle mode: will execute once and exit (ideal for cron jobs)');
+    logger.info('📋 Single cycle mode: will execute once and exit (ideal for cron jobs)');
   } else {
-    console.log(`📋 Loop mode: will run continuously with ${bot.batchConfig.intervalMinutes} minute intervals`);
+    logger.info(`📋 Loop mode: will run continuously with ${bot.batchConfig.intervalMinutes} minute intervals`);
   }
   
   bot.run(mode);

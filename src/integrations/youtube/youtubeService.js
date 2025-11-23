@@ -1,4 +1,5 @@
 const BaseIntegration = require('../base/BaseIntegration');
+const { logger } = require('./../../utils/logger'); // Issue #971: Added for console.log replacement
 const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
@@ -54,7 +55,7 @@ class YouTubeService extends BaseIntegration {
         }, { spaces: 2 });
       }
     } catch (error) {
-      console.error('❌ Error initializing processed comments file:', error);
+      logger.error('❌ Error initializing processed comments file:', error);
     }
   }
 
@@ -66,7 +67,7 @@ class YouTubeService extends BaseIntegration {
       const data = await fs.readJson(this.processedCommentsFile);
       return data.processedCommentIds || [];
     } catch (error) {
-      console.error('❌ Error reading processed comments:', error);
+      logger.error('❌ Error reading processed comments:', error);
       return [];
     }
   }
@@ -93,7 +94,7 @@ class YouTubeService extends BaseIntegration {
         this.debugLog(`📝 Marked comment ${commentId} as processed (total: ${data.totalProcessed})`);
       }
     } catch (error) {
-      console.error('❌ Error marking comment as processed:', error);
+      logger.error('❌ Error marking comment as processed:', error);
     }
   }
 
@@ -106,7 +107,7 @@ class YouTubeService extends BaseIntegration {
       data.lastCheck = new Date().toISOString();
       await fs.writeJson(this.processedCommentsFile, data, { spaces: 2 });
     } catch (error) {
-      console.error('❌ Error updating last check time:', error);
+      logger.error('❌ Error updating last check time:', error);
     }
   }
 
@@ -136,11 +137,11 @@ class YouTubeService extends BaseIntegration {
         q: 'test'
       });
       
-      console.log('✅ YouTube API authentication successful');
+      logger.info('✅ YouTube API authentication successful');
       return true;
       
     } catch (error) {
-      console.error('❌ YouTube authentication failed:', error.message);
+      logger.error('❌ YouTube authentication failed:', error.message);
       throw error;
     }
   }
@@ -150,20 +151,20 @@ class YouTubeService extends BaseIntegration {
    */
   async listenForMentions() {
     try {
-      console.log('👂 Starting YouTube comment monitoring in batch mode...');
+      logger.info('👂 Starting YouTube comment monitoring in batch mode...');
       
       if (this.monitoredVideos.length === 0) {
-        console.log('⚠️ No monitored videos configured');
+        logger.info('⚠️ No monitored videos configured');
         return;
       }
       
       // Process all monitored videos once
       await this.runBatch();
       
-      console.log(`✅ Batch processing completed for ${this.monitoredVideos.length} YouTube videos`);
+      logger.info(`✅ Batch processing completed for ${this.monitoredVideos.length} YouTube videos`);
       
     } catch (error) {
-      console.error('❌ Failed to start YouTube monitoring:', error.message);
+      logger.error('❌ Failed to start YouTube monitoring:', error.message);
       throw error;
     }
   }
@@ -199,7 +200,7 @@ class YouTubeService extends BaseIntegration {
               
               // Check hourly rate limit
               if (totalResponses >= this.rateLimits.responsesPerHour) {
-                console.log('⚠️ Hourly rate limit reached, stopping batch');
+                logger.info('⚠️ Hourly rate limit reached, stopping batch');
                 break;
               }
             }
@@ -212,17 +213,17 @@ class YouTubeService extends BaseIntegration {
           await this.sleep(2000);
           
         } catch (videoError) {
-          console.error(`❌ Error processing video ${videoId}:`, videoError.message);
+          logger.error(`❌ Error processing video ${videoId}:`, videoError.message);
           this.errorStats.consecutiveErrors++;
         }
       }
       
       await this.updateLastCheckTime();
       
-      console.log(`✅ Batch completed: ${totalNewComments} new comments, ${totalResponses} responses generated`);
+      logger.info(`✅ Batch completed: ${totalNewComments} new comments, ${totalResponses} responses generated`);
       
     } catch (error) {
-      console.error('❌ Error in batch processing:', error.message);
+      logger.error('❌ Error in batch processing:', error.message);
       throw error;
     }
   }
@@ -263,7 +264,7 @@ class YouTubeService extends BaseIntegration {
       return comments;
       
     } catch (error) {
-      console.error(`❌ Error getting comments for video ${videoId}:`, error.message);
+      logger.error(`❌ Error getting comments for video ${videoId}:`, error.message);
       
       // Handle quota exceeded or other API errors
       if (error.message.includes('quota')) {
@@ -291,12 +292,12 @@ class YouTubeService extends BaseIntegration {
         // Post response (currently dummy implementation)
         await this.postResponse(comment.id, roast);
         
-        console.log(`✅ [YOUTUBE] Generated response for comment from ${comment.author}`);
+        logger.info(`✅ [YOUTUBE] Generated response for comment from ${comment.author}`);
         this.metrics.responsesGenerated++;
       }
       
     } catch (error) {
-      console.error('❌ Error processing YouTube comment:', error.message);
+      logger.error('❌ Error processing YouTube comment:', error.message);
       this.metrics.errorsEncountered++;
       throw error;
     }
@@ -320,13 +321,13 @@ class YouTubeService extends BaseIntegration {
       //   }
       // });
       
-      console.log(`✅ [DUMMY] Posted YouTube reply to comment ${commentId}:`);
-      console.log(`   📝 Response: "${responseText}"`);
+      logger.info(`✅ [DUMMY] Posted YouTube reply to comment ${commentId}:`);
+      logger.info(`   📝 Response: "${responseText}"`);
       
       return true;
       
     } catch (error) {
-      console.error(`❌ Failed to post YouTube response:`, error.message);
+      logger.error(`❌ Failed to post YouTube response:`, error.message);
       throw error;
     }
   }
@@ -358,7 +359,7 @@ class YouTubeService extends BaseIntegration {
       return true;
       
     } catch (error) {
-      console.error('❌ Error checking if should process comment:', error.message);
+      logger.error('❌ Error checking if should process comment:', error.message);
       return false;
     }
   }
@@ -435,7 +436,7 @@ class YouTubeService extends BaseIntegration {
       throw new Error('No roast in API response');
       
     } catch (error) {
-      console.error('❌ Error generating roast:', error.message);
+      logger.error('❌ Error generating roast:', error.message);
       
       // Fallback roast
       return `¡Vaya comentario más original! Seguro que tardaste horas en pensarlo. 🔥`;
@@ -448,7 +449,7 @@ class YouTubeService extends BaseIntegration {
   addVideoToMonitor(videoId) {
     if (!this.monitoredVideos.includes(videoId)) {
       this.monitoredVideos.push(videoId);
-      console.log(`➕ Added video ${videoId} to monitoring list`);
+      logger.info(`➕ Added video ${videoId} to monitoring list`);
     }
   }
 
@@ -459,7 +460,7 @@ class YouTubeService extends BaseIntegration {
     const index = this.monitoredVideos.indexOf(videoId);
     if (index > -1) {
       this.monitoredVideos.splice(index, 1);
-      console.log(`➖ Removed video ${videoId} from monitoring list`);
+      logger.info(`➖ Removed video ${videoId} from monitoring list`);
     }
   }
 

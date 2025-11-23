@@ -665,7 +665,7 @@ class MonitoringService {
     if (logger && typeof logger[level] === 'function') {
       logger[level](message, metadata);
     } else {
-      console.log(`[${level.toUpperCase()}] MonitoringService: ${message}`, metadata);
+      logger.info(`[${level.toUpperCase()}] MonitoringService: ${message}`, metadata);
     }
   }
 }

@@ -237,14 +237,14 @@ function initializeMonthlyReset() {
 async function runManualReset() {
     if (require.main === module) {
         // This file is being run directly
-        console.log('🔄 Running manual monthly usage reset...');
+        logger.info('🔄 Running manual monthly usage reset...');
         
         try {
             await monthlyUsageResetJob.executeReset();
-            console.log('✅ Manual reset completed');
+            logger.info('✅ Manual reset completed');
             process.exit(0);
         } catch (error) {
-            console.error('❌ Manual reset failed:', error.message);
+            logger.error('❌ Manual reset failed:', error.message);
             process.exit(1);
         }
     }

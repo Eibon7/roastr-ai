@@ -31,7 +31,7 @@ class RoastGeneratorEnhanced {
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      console.warn('⚠️  OPENAI_API_KEY not found - using mock mode for enhanced generator');
+      logger.warn('⚠️  OPENAI_API_KEY not found - using mock mode for enhanced generator');
       this.mockGenerator = new RoastGeneratorMock();
       this.isMockMode = true;
       return;

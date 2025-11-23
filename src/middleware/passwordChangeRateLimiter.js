@@ -4,6 +4,7 @@
  */
 
 const { flags } = require('../config/flags');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const { getClientIP } = require('./rateLimiter');
 
 /**
@@ -147,7 +148,7 @@ class PasswordChangeRateLimitStore {
     }
 
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Password change rate limiter cleanup:', {
+      logger.info('Password change rate limiter cleanup:', {
         activeAttempts: this.attempts.size,
         blockedKeys: this.blocked.size
       });
@@ -199,7 +200,7 @@ function passwordChangeRateLimiter(req, res, next) {
     const remainingMinutes = Math.ceil(blockStatus.remainingMs / (60 * 1000));
     
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Blocked password change attempt:', { ip, userId, key, remainingMs: blockStatus.remainingMs });
+      logger.info('Blocked password change attempt:', { ip, userId, key, remainingMs: blockStatus.remainingMs });
     }
 
     return res.status(429).json({
@@ -215,7 +216,7 @@ function passwordChangeRateLimiter(req, res, next) {
   const result = passwordChangeStore.recordAttempt(key);
   
   if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-    console.log('Password change attempt recorded:', { ip, userId, key, result });
+    logger.info('Password change attempt recorded:', { ip, userId, key, result });
   }
 
   // Store original end function to intercept response
@@ -234,7 +235,7 @@ function passwordChangeRateLimiter(req, res, next) {
         passwordChangeStore.recordSuccess(key);
         
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Successful password change recorded:', { ip, userId, key });
+          logger.info('Successful password change recorded:', { ip, userId, key });
         }
       }
       

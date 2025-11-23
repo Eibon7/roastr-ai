@@ -1,4 +1,5 @@
 const MultiTenantIntegration = require('../base/MultiTenantIntegration');
+const { logger } = require('./../../utils/logger'); // Issue #971: Added for console.log replacement
 
 /**
  * Facebook Integration Service
@@ -399,7 +400,7 @@ class FacebookService extends MultiTenantIntegration {
    */
   static async processWebhook(payload) {
     // TODO: Implement webhook payload processing
-    console.log('[Facebook] Webhook payload received:', payload);
+    logger.info('[Facebook] Webhook payload received:', payload);
     
     // This would process real-time comment notifications from Facebook
     

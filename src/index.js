@@ -1,4 +1,5 @@
 const express = require('express');
+const { logger } = require('./utils/logger'); // Issue #971: Added for console.log replacement
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const path = require('path');
@@ -15,8 +16,8 @@ function validateEnvironment() {
   const missing = requiredVars.filter(varName => !process.env[varName] || process.env[varName].trim() === '');
 
   if (missing.length > 0) {
-    console.error('❌ Missing required environment variables:', missing.join(', '));
-    console.error('💡 Please set IDEMPOTENCY_SECRET to a strong randomly generated secret');
+    logger.error('❌ Missing required environment variables:', missing.join(', '));
+    logger.error('💡 Please set IDEMPOTENCY_SECRET to a strong randomly generated secret');
     process.exit(1);
   }
 }
@@ -130,7 +131,7 @@ app.get('/health', (req, res) => {
       environment: process.env.NODE_ENV === 'production' ? 'production' : 'development'
     });
   } catch (error) {
-    console.error('Health check error:', error);
+    logger.error('Health check error:', error);
     res.status(500).json({
       status: 'error',
       message: error.message
@@ -165,7 +166,7 @@ app.get('/api/health', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Comprehensive health check error:', error);
+    logger.error('Comprehensive health check error:', error);
     
     monitoringService.trackRequest(true);
     
@@ -368,7 +369,7 @@ app.get('/api/metrics', authenticateToken, async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Metrics endpoint error:', error);
+    logger.error('Metrics endpoint error:', error);
     
     monitoringService.trackRequest(true);
     
@@ -437,7 +438,7 @@ app.get('/api/analytics/summary', authenticateToken, async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Analytics summary error:', error);
+    logger.error('Analytics summary error:', error);
     
     res.status(500).json({
       success: false,
@@ -461,7 +462,7 @@ app.post('/api/monitoring/test', authenticateToken, async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Monitoring test error:', error);
+    logger.error('Monitoring test error:', error);
     
     res.status(500).json({
       success: false,
@@ -500,7 +501,7 @@ app.post('/api/monitoring/alert/test', authenticateToken, async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Test alert error:', error);
+    logger.error('Test alert error:', error);
     
     res.status(500).json({
       success: false,
@@ -524,7 +525,7 @@ app.get('/api/monitoring/alerts/stats', authenticateToken, async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Alert stats error:', error);
+    logger.error('Alert stats error:', error);
     
     res.status(500).json({
       success: false,
@@ -548,7 +549,7 @@ let roastGenerator;
 try {
   roastGenerator = new RoastGeneratorReal();
 } catch (error) {
-  console.error("❌ Error inicializando RoastGenerator:", error.message);
+  logger.error("❌ Error inicializando RoastGenerator:", error.message);
   process.exit(1);
 }
 
@@ -586,10 +587,10 @@ app.post('/roast', async (req, res) => {
     const roast = await roastGenerator.generateRoast(message, null, selectedTone);
     res.json({ roast, tone: selectedTone });
   } catch (error) {
-    console.error('❌ Error generando roast:', error.message);
+    logger.error('❌ Error generando roast:', error.message);
 
     if (error.response?.data) {
-      console.error('📡 Respuesta de la API:', error.response.data);
+      logger.error('📡 Respuesta de la API:', error.response.data);
     }
 
     res.status(500).json({ error: 'No se pudo generar el roast en este momento.' });
@@ -612,11 +613,11 @@ app.post('/csv-roast', async (req, res) => {
       originalMessage: message
     });
   } catch (error) {
-    console.error('❌ Error generando roast desde CSV:', error.message);
+    logger.error('❌ Error generando roast desde CSV:', error.message);
     
     // Log additional details if debug mode is enabled
     if (process.env.DEBUG === 'true') {
-      console.error('📡 CSV Error details:', error.stack);
+      logger.error('📡 CSV Error details:', error.stack);
     }
     
     res.status(500).json({ 
@@ -632,7 +633,7 @@ app.get('/csv-stats', async (req, res) => {
     const stats = await csvRoastService.getStats();
     res.json(stats);
   } catch (error) {
-    console.error('❌ Error obteniendo estadísticas CSV:', error.message);
+    logger.error('❌ Error obteniendo estadísticas CSV:', error.message);
     res.status(500).json({ error: 'No se pudieron obtener las estadísticas del CSV.' });
   }
 });
@@ -656,7 +657,7 @@ app.post('/csv-add', async (req, res) => {
       message: 'Roast añadido exitosamente al CSV'
     });
   } catch (error) {
-    console.error('❌ Error añadiendo roast al CSV:', error.message);
+    logger.error('❌ Error añadiendo roast al CSV:', error.message);
     res.status(500).json({ error: 'No se pudo añadir el roast al CSV.' });
   }
 });
@@ -693,7 +694,7 @@ app.get('/api/integrations/config', authenticateToken, async (req, res) => {
 
     res.json(publicConfig);
   } catch (error) {
-    console.error('❌ Error getting integration config:', error.message);
+    logger.error('❌ Error getting integration config:', error.message);
     res.status(500).json({ error: 'Could not get integration configuration.' });
   }
 });
@@ -725,7 +726,7 @@ app.post('/api/integrations/config/:platform', authenticateToken, async (req, re
       }
     });
   } catch (error) {
-    console.error('❌ Error updating integration config:', error.message);
+    logger.error('❌ Error updating integration config:', error.message);
     res.status(500).json({ error: 'Could not update integration configuration.' });
   }
 });
@@ -742,7 +743,7 @@ app.get('/api/integrations/metrics', authenticateToken, async (req, res) => {
     
     res.json(metrics);
   } catch (error) {
-    console.error('❌ Error getting integration metrics:', error.message);
+    logger.error('❌ Error getting integration metrics:', error.message);
     res.status(500).json({ error: 'Could not get integration metrics.' });
   }
 });
@@ -774,7 +775,7 @@ app.post('/api/integrations/test', authenticateToken, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('❌ Error testing integrations:', error.message);
+    logger.error('❌ Error testing integrations:', error.message);
     res.status(500).json({ error: 'Could not test integrations.' });
   }
 });
@@ -791,7 +792,7 @@ app.get('/api/shield/reincidence', async (req, res) => {
     
     res.json(summary);
   } catch (error) {
-    console.error('❌ Error getting reincidence stats:', error.message);
+    logger.error('❌ Error getting reincidence stats:', error.message);
     res.status(500).json({ error: 'Could not get reincidence statistics.' });
   }
 });
@@ -805,7 +806,7 @@ app.get('/api/shield/reincidence/:platform', async (req, res) => {
     
     res.json({ platform, summary });
   } catch (error) {
-    console.error('❌ Error getting platform reincidence stats:', error.message);
+    logger.error('❌ Error getting platform reincidence stats:', error.message);
     res.status(500).json({ error: 'Could not get platform reincidence statistics.' });
   }
 });
@@ -820,7 +821,7 @@ app.get('/api/logs', async (req, res) => {
     const logFiles = await advancedLogger.getLogFiles();
     res.json(logFiles);
   } catch (error) {
-    console.error('❌ Error getting log files:', error.message);
+    logger.error('❌ Error getting log files:', error.message);
     res.status(500).json({ error: 'Could not get log files.' });
   }
 });
@@ -847,7 +848,7 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
 
     res.json(response);
   } catch (error) {
-    console.error('❌ Error reading log file:', error.message);
+    logger.error('❌ Error reading log file:', error.message);
     res.status(500).json({ error: 'Could not read log file.' });
   }
 });
@@ -872,7 +873,7 @@ if (require.main === module) {
     // Enhanced error handling for file serving
     res.sendFile(path.join(__dirname, '../frontend/build/index.html'), (err) => {
       if (err) {
-        console.error('Error serving SPA:', { 
+        logger.error('Error serving SPA:', { 
           error: err.message, 
           path: req.path, 
           statusCode: err.status || 500,
@@ -908,21 +909,21 @@ if (require.main === module) {
     try {
       const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
       const worker = startModelAvailabilityWorker();
-      console.log('🔍 Model Availability Worker started (GPT-5 auto-detection)');
+      logger.info('🔍 Model Availability Worker started (GPT-5 auto-detection)');
     } catch (error) {
-      console.warn('⚠️ Failed to start Model Availability Worker:', error.message);
+      logger.warn('⚠️ Failed to start Model Availability Worker:', error.message);
     }
   }
 
   server = app.listen(port, () => {
-    console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
-    console.log(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
-    console.log(`🔄 GPT-5 Detection: Active (checks every 24h)`);
+    logger.info(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
+    logger.info(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
+    logger.info(`🔄 GPT-5 Detection: Active (checks every 24h)`);
     
     const serviceStatus = flags.getServiceStatus();
-    console.log(`💾 Database:`, serviceStatus.database);
-    console.log(`💳 Billing:`, serviceStatus.billing);
-    console.log(`🤖 OpenAI:`, serviceStatus.ai.openai);
+    logger.info(`💾 Database:`, serviceStatus.database);
+    logger.info(`💳 Billing:`, serviceStatus.billing);
+    logger.info(`🤖 OpenAI:`, serviceStatus.ai.openai);
   });
 }
 

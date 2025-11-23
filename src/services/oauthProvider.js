@@ -4,6 +4,7 @@
  */
 
 const crypto = require('crypto');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const { flags } = require('../config/flags');
 
 /**
@@ -445,7 +446,7 @@ class OAuthProviderFactory {
       }
     } catch (error) {
       // If specialized provider fails to load, fallback to base provider
-      console.warn(`Failed to load specialized OAuth provider for ${platform}, using base provider:`, error.message);
+      logger.warn(`Failed to load specialized OAuth provider for ${platform}, using base provider:`, error.message);
       return new OAuthProvider(platform, config);
     }
   }

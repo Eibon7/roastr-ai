@@ -4,6 +4,7 @@
  * Safe utilities for handling potentially undefined values
  * Issue #154: Optional chaining and safe string operations
  */
+
 const SafeUtils = {
   /**
    * Safely extract a user ID prefix for logging without exposing full IDs
@@ -97,20 +98,20 @@ const SafeUtils = {
 
 class Logger {
   static info(message, ...args) {
-    console.log(`[INFO] ${new Date().toISOString()}: ${message}`, ...args);
+    logger.info(`[INFO] ${new Date().toISOString()}: ${message}`, ...args);
   }
 
   static error(message, ...args) {
-    console.error(`[ERROR] ${new Date().toISOString()}: ${message}`, ...args);
+    logger.error(`[ERROR] ${new Date().toISOString()}: ${message}`, ...args);
   }
 
   static warn(message, ...args) {
-    console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
+    logger.warn(`[WARN] ${new Date().toISOString()}: ${message}`, ...args);
   }
 
   static debug(message, ...args) {
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
+      logger.info(`[DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
     }
   }
 }

@@ -1,4 +1,5 @@
 const winston = require('winston');
+const { logger } = require('./logger'); // Issue #971: Added for console.log replacement
 const DailyRotateFile = require('winston-daily-rotate-file');
 const fs = require('fs-extra');
 const path = require('path');
@@ -157,7 +158,7 @@ class AdvancedLogger {
       }
       
     } catch (error) {
-      console.error('Error creating logs directory:', error);
+      logger.error('Error creating logs directory:', error);
     }
   }
 
@@ -212,7 +213,7 @@ class AdvancedLogger {
       }
 
     } catch (error) {
-      console.error('Error writing to log file:', error);
+      logger.error('Error writing to log file:', error);
     }
   }
 
@@ -344,7 +345,7 @@ class AdvancedLogger {
       return logFiles;
 
     } catch (error) {
-      console.error('Error getting log files:', error);
+      logger.error('Error getting log files:', error);
       return { normal: [], integration: [], shield: [], security: [] };
     }
   }
@@ -390,7 +391,7 @@ class AdvancedLogger {
       });
 
     } catch (error) {
-      console.error('Error reading log file:', error);
+      logger.error('Error reading log file:', error);
       return [];
     }
   }
