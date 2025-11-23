@@ -97,8 +97,7 @@ describe('Webhook Security Middleware', () => {
           'stripe-signature': ''
         };
         return headers[header.toLowerCase()];
-      }),
-      headers: {}
+      })
     };
     res = {
       status: jest.fn().mockReturnThis(),
