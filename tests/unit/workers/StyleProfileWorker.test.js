@@ -1,7 +1,7 @@
 /**
  * StyleProfileWorker Tests
  * Issue #928 - Fase 2.2: Tests para Workers Secundarios
- * 
+ *
  * Coverage goal: ≥70% (lines, statements, functions, branches)
  */
 
@@ -114,14 +114,14 @@ describe('StyleProfileWorker', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Set default mock behaviors
     mockStyleProfileService.needsRefresh.mockResolvedValue(true);
     mockStyleProfileService.extractStyleProfile.mockResolvedValue({
       success: true,
       commentCount: 50
     });
-    
+
     worker = new StyleProfileWorker();
     worker.queueService = mockQueueService; // Inject mock
   });
@@ -388,7 +388,7 @@ describe('StyleProfileWorker', () => {
   // ========================================
   // JOB LIFECYCLE HOOKS
   // ========================================
-  
+
   // Note: onJobComplete and onJobFailed are part of BaseWorker
   // and are tested there. Worker-specific behavior is already
   // tested in processJob() tests above.
@@ -468,4 +468,3 @@ describe('StyleProfileWorker', () => {
     });
   });
 });
-

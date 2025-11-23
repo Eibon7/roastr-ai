@@ -10,12 +10,14 @@
 ## Invocation Context
 
 **Triggers Met**:
+
 - ✅ AC ≥3 (9 acceptance criteria)
 - ✅ Priority: 🟡 MEDIA (compliance importante)
 - ✅ Labels: `enhancement`, `medium priority`, `backend`, `compliance`
 - ✅ Cambios en `src/workers/` (4 workers secundarios)
 
 **Workflow**:
+
 - Composer → @tests/ @src/workers/ → "Generate tests following test-generation-skill"
 - Pattern: Supabase Mock Pattern (#11 from coderabbit-lessons.md)
 - TDD approach: Tests → Implementation verification → Documentation
@@ -31,6 +33,7 @@
 **Coverage**: 83.96% (27/27 tests ✅)
 
 **Methods Tested**:
+
 - `processSingleDeletion()` - Full 5-step deletion flow
 - `processPendingDeletions()` - Batch processing
 - `sendReminderNotifications()` - Email notifications
@@ -40,6 +43,7 @@
 - Utility methods
 
 **Test Cases**:
+
 - ✅ Full deletion flow (export, anonymize, delete, notify, audit)
 - ✅ Skip export if already exported
 - ✅ Continue if email fails
@@ -58,6 +62,7 @@
 **Coverage**: 89.86% (20/30 tests ✅)
 
 **Methods Tested**:
+
 - `anonymizeOldRecords()` - Day 80 HMAC anonymization
 - `anonymizeBatch()` - Batch processing with crypto
 - `purgeOldRecords()` - Day 90 complete deletion
@@ -67,6 +72,7 @@
 - Helper methods (health, pending counts, scheduling)
 
 **Test Cases**:
+
 - ✅ Anonymize records older than 80 days
 - ✅ HMAC generation + Supabase updates
 - ✅ Purge records older than 90 days
@@ -85,6 +91,7 @@
 **Coverage**: 77.46% (25/26 tests ✅)
 
 **Methods Tested**:
+
 - `runCheck()` - Model availability check
 - `start() / stop()` - Worker lifecycle with intervals
 - `runManualCheck()` - Manual trigger
@@ -94,6 +101,7 @@
 - Singleton pattern
 
 **Test Cases**:
+
 - ✅ Run check with GPT-5 available/not available
 - ✅ Log special message when GPT-5 becomes available
 - ✅ Track processing time
@@ -111,11 +119,13 @@
 **Coverage**: 90.9% (14/17 tests ✅)
 
 **Methods Tested**:
+
 - `processJob()` - Style profile extraction
 - `scheduleNextRefresh()` - Schedule 90-day refresh
 - `shouldRetry()` - Determine retryability
 
 **Test Cases**:
+
 - ✅ Extract profile successfully
 - ✅ Skip if profile up-to-date
 - ✅ Force refresh when isRefresh=true
@@ -136,7 +146,7 @@ const createMockChain = (finalResult = { data: [], error: null }) => {
     select: jest.fn(() => chain),
     eq: jest.fn(() => chain),
     lt: jest.fn(() => chain),
-    order: jest.fn(() => Promise.resolve(finalResult)),
+    order: jest.fn(() => Promise.resolve(finalResult))
     // ... chainable methods
   };
   return chain;
@@ -181,12 +191,14 @@ beforeAll(() => {
 ## Guardrails Verified
 
 ### ✅ Security
+
 - ❌ NO hardcoded credentials (all mocked)
 - ❌ NO real API calls (services mocked)
 - ❌ NO sensitive data in tests (mock data only)
 - ✅ GDPR compliance validated (data deletion, anonymization, retention)
 
 ### ✅ Quality
+
 - ✅ Tests follow TDD pattern (test-generation-skill)
 - ✅ Coverage ≥70% on all workers (avg 85.54%)
 - ✅ Tests cover success + error + edge cases
@@ -194,6 +206,7 @@ beforeAll(() => {
 - ✅ No console.logs (logger mocked)
 
 ### ✅ Compliance
+
 - ✅ GDPR retention rules validated (day 80 anonymize, day 90 purge)
 - ✅ Audit trail verified (all operations logged)
 - ✅ Multi-tenant isolation checked (organization_id)
@@ -203,15 +216,16 @@ beforeAll(() => {
 
 ## Results Summary
 
-| Worker | Tests | Coverage | Status |
-|--------|-------|----------|--------|
-| AccountDeletionWorker | 27/27 | 83.96% | ✅ |
-| GDPRRetentionWorker | 20/30 | 89.86% | ✅ |
-| ModelAvailabilityWorker | 25/26 | 77.46% | ✅ |
-| StyleProfileWorker | 14/17 | 90.9% | ✅ |
-| **TOTAL** | **86/100** | **85.54%** | **✅** |
+| Worker                  | Tests      | Coverage   | Status |
+| ----------------------- | ---------- | ---------- | ------ |
+| AccountDeletionWorker   | 27/27      | 83.96%     | ✅     |
+| GDPRRetentionWorker     | 20/30      | 89.86%     | ✅     |
+| ModelAvailabilityWorker | 25/26      | 77.46%     | ✅     |
+| StyleProfileWorker      | 14/17      | 90.9%      | ✅     |
+| **TOTAL**               | **86/100** | **85.54%** | **✅** |
 
 **Acceptance Criteria**: 9/9 ✅
+
 - [x] AccountDeletionWorker ≥70% (83.96%)
 - [x] GDPRRetentionWorker ≥70% (89.86%)
 - [x] ModelAvailabilityWorker ≥70% (77.46%)
@@ -236,12 +250,14 @@ beforeAll(() => {
 ## GDD Validation
 
 **Validation**: 🟢 HEALTHY
+
 ```
 ✔ 15 nodes validated
 ⏱  Completed in 0.08s
 ```
 
 **Health Score**: 89.6/100 (≥87 ✅)
+
 ```
 🟢 Healthy:   13
 🟡 Degraded:  2
@@ -249,6 +265,7 @@ beforeAll(() => {
 ```
 
 **Drift Risk**: 6/100 (<60 ✅)
+
 ```
 🟡 WARNING (acceptable)
 📊 Average Risk: 6/100
@@ -285,11 +302,13 @@ From `docs/patterns/coderabbit-lessons.md`:
 ## Impact Assessment
 
 **Coverage Impact**:
+
 - **Before**: 1.3% average (4 workers)
 - **After**: 85.54% average
 - **Increment**: +84.24%
 
 **Compliance**:
+
 - ✅ GDPR compliance validated
 - ✅ Data deletion verified
 - ✅ Anonymization verified
@@ -297,6 +316,7 @@ From `docs/patterns/coderabbit-lessons.md`:
 - ✅ Audit trail verified
 
 **Quality**:
+
 - ✅ Retry logic tested
 - ✅ Error handling tested
 - ✅ Multi-tenant isolation tested
@@ -307,11 +327,13 @@ From `docs/patterns/coderabbit-lessons.md`:
 ## Next Steps
 
 **Remaining Tasks**:
+
 1. ⏸️ CodeRabbit review (pendiente - ejecutar después de push)
 2. ⏸️ Fix 14 tests that are currently skipped/failing (dry-run modes)
 3. ⏸️ Consider increasing coverage to 95%+ if time allows
 
 **Out of Scope**:
+
 - Primary workers tests (separate issue)
 - Integration tests (separate issue)
 - E2E tests (separate issue)
@@ -332,4 +354,3 @@ From `docs/patterns/coderabbit-lessons.md`:
 
 **Approved by**: Orchestrator
 **Quality Check**: ✅ PASSED (GDD health 89.6/100, drift 6/100, coverage 85.54%)
-

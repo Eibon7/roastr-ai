@@ -1,7 +1,7 @@
 /**
  * AccountDeletionWorker Tests
  * Issue #928 - Fase 2.2: Tests para Workers Secundarios
- * 
+ *
  * Coverage goal: ≥70% (lines, statements, functions, branches)
  */
 
@@ -120,7 +120,7 @@ describe('AccountDeletionWorker', () => {
   beforeAll(() => {
     // Save original env (CodeRabbit fix: clone instead of reference)
     originalEnv = { ...process.env };
-    
+
     // Set required env vars for BaseWorker initialization
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
@@ -320,9 +320,7 @@ describe('AccountDeletionWorker', () => {
     });
 
     test('should handle data export failure gracefully', async () => {
-      mockDataExportService.exportUserData.mockRejectedValue(
-        new Error('Export service failed')
-      );
+      mockDataExportService.exportUserData.mockRejectedValue(new Error('Export service failed'));
 
       await expect(worker.processSingleDeletion(deletionRequest)).rejects.toThrow(
         'Export service failed'
@@ -339,9 +337,7 @@ describe('AccountDeletionWorker', () => {
     });
 
     test('should handle anonymization failure', async () => {
-      mockDataExportService.anonymizeUserData.mockRejectedValue(
-        new Error('Anonymization failed')
-      );
+      mockDataExportService.anonymizeUserData.mockRejectedValue(new Error('Anonymization failed'));
 
       await expect(worker.processSingleDeletion(deletionRequest)).rejects.toThrow(
         'Anonymization failed'
@@ -351,9 +347,7 @@ describe('AccountDeletionWorker', () => {
     });
 
     test('should handle deletion failure', async () => {
-      mockDataExportService.deleteUserData.mockRejectedValue(
-        new Error('Deletion failed')
-      );
+      mockDataExportService.deleteUserData.mockRejectedValue(new Error('Deletion failed'));
 
       await expect(worker.processSingleDeletion(deletionRequest)).rejects.toThrow(
         'Deletion failed'
@@ -366,10 +360,12 @@ describe('AccountDeletionWorker', () => {
       // Mock Supabase to return error on update
       mockSupabase.from.mockReturnValueOnce({
         update: jest.fn(() => ({
-          eq: jest.fn(() => Promise.resolve({
-            data: null,
-            error: new Error('Database error')
-          }))
+          eq: jest.fn(() =>
+            Promise.resolve({
+              data: null,
+              error: new Error('Database error')
+            })
+          )
         }))
       });
 
@@ -389,9 +385,7 @@ describe('AccountDeletionWorker', () => {
 
     test('should process no deletions if none pending', async () => {
       // Mock returns empty array
-      mockSupabase.from.mockReturnValueOnce(
-        createMockChain({ data: [], error: null })
-      );
+      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: [], error: null }));
 
       await worker.processPendingDeletions();
 
@@ -426,7 +420,9 @@ describe('AccountDeletionWorker', () => {
 
       // Mock: First call returns pending deletions, all subsequent calls return success
       mockSupabase.from.mockReturnValue(createMockChain({ data: [], error: null }));
-      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: pendingDeletions, error: null }));
+      mockSupabase.from.mockReturnValueOnce(
+        createMockChain({ data: pendingDeletions, error: null })
+      );
 
       await worker.processPendingDeletions();
 
@@ -462,7 +458,9 @@ describe('AccountDeletionWorker', () => {
 
       // Mock: First call returns pending deletions
       mockSupabase.from.mockReturnValue(createMockChain({ data: [], error: null }));
-      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: pendingDeletions, error: null }));
+      mockSupabase.from.mockReturnValueOnce(
+        createMockChain({ data: pendingDeletions, error: null })
+      );
 
       // First deletion fails at anonymization, second succeeds
       let callCount = 0;
@@ -517,7 +515,9 @@ describe('AccountDeletionWorker', () => {
 
       // Mock: First call returns upcoming deletions, all subsequent calls return success
       mockSupabase.from.mockReturnValue(createMockChain({ data: [], error: null }));
-      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: upcomingDeletions, error: null }));
+      mockSupabase.from.mockReturnValueOnce(
+        createMockChain({ data: upcomingDeletions, error: null })
+      );
 
       await worker.sendReminderNotifications();
 
@@ -541,9 +541,7 @@ describe('AccountDeletionWorker', () => {
     });
 
     test('should handle no upcoming deletions gracefully', async () => {
-      mockSupabase.from.mockReturnValueOnce(
-        createMockChain({ data: [], error: null })
-      );
+      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: [], error: null }));
 
       await worker.sendReminderNotifications();
 
@@ -565,7 +563,9 @@ describe('AccountDeletionWorker', () => {
 
       // Mock: First call returns upcoming deletions
       mockSupabase.from.mockReturnValue(createMockChain({ data: [], error: null }));
-      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: upcomingDeletions, error: null }));
+      mockSupabase.from.mockReturnValueOnce(
+        createMockChain({ data: upcomingDeletions, error: null })
+      );
 
       mockEmailService.sendAccountDeletionReminderEmail.mockRejectedValueOnce(
         new Error('Email failed')
@@ -632,9 +632,7 @@ describe('AccountDeletionWorker', () => {
         user_email: 'audit@example.com'
       };
 
-      mockAuditService.logGdprAction.mockRejectedValue(
-        new Error('Audit service failed')
-      );
+      mockAuditService.logGdprAction.mockRejectedValue(new Error('Audit service failed'));
 
       await worker.handleDeletionFailure(deletionRequest, new Error('Original error'));
 
@@ -726,9 +724,9 @@ describe('AccountDeletionWorker', () => {
         createMockChain({ data: null, error: new Error('Update failed') })
       );
 
-      await expect(
-        worker.updateDeletionStatus('req_fail', 'completed')
-      ).rejects.toThrow('Update failed');
+      await expect(worker.updateDeletionStatus('req_fail', 'completed')).rejects.toThrow(
+        'Update failed'
+      );
     });
   });
 
@@ -763,4 +761,3 @@ describe('AccountDeletionWorker', () => {
     });
   });
 });
-

@@ -18,23 +18,23 @@
 
 ## Drift Risk Scores
 
-| Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
-|------|------------|--------|--------|----------|-------------|----------|
-| guardian | 🟡 35 | at_risk | 77 | 0% | 24d ago | 0 |
-| analytics | 🟢 15 | healthy | 83 | 59% | 9d ago | 0 |
-| trainer | 🟢 15 | healthy | 79 | 0% | 24d ago | 0 |
-| cost-control | 🟢 5 | healthy | 93 | 60% | 2d ago | 0 |
-| observability | 🟢 5 | healthy | 86 | 50% | 4d ago | 0 |
-| plan-features | 🟢 5 | healthy | 93 | 74% | 4d ago | 0 |
-| queue-system | 🟢 5 | healthy | 86 | 67% | 0d ago | 0 |
-| roast | 🟢 5 | healthy | 88 | 59% | 4d ago | 0 |
-| social-platforms | 🟢 5 | healthy | 82 | 14% | 0d ago | 0 |
-| billing | 🟢 0 | healthy | 96 | N/A | 11d ago | 0 |
-| multi-tenant | 🟢 0 | healthy | 96 | N/A | 2d ago | 0 |
-| persona | 🟢 0 | healthy | 95 | 90% | 4d ago | 0 |
-| platform-constraints | 🟢 0 | healthy | 98 | 100% | 4d ago | 0 |
-| shield | 🟢 0 | healthy | 98 | 86% | 4d ago | 0 |
-| tone | 🟢 0 | healthy | 94 | 100% | 18d ago | 0 |
+| Node                 | Risk Score | Status  | Health | Coverage | Last Commit | Warnings |
+| -------------------- | ---------- | ------- | ------ | -------- | ----------- | -------- |
+| guardian             | 🟡 35      | at_risk | 77     | 0%       | 24d ago     | 0        |
+| analytics            | 🟢 15      | healthy | 83     | 59%      | 9d ago      | 0        |
+| trainer              | 🟢 15      | healthy | 79     | 0%       | 24d ago     | 0        |
+| cost-control         | 🟢 5       | healthy | 93     | 60%      | 2d ago      | 0        |
+| observability        | 🟢 5       | healthy | 86     | 50%      | 4d ago      | 0        |
+| plan-features        | 🟢 5       | healthy | 93     | 74%      | 4d ago      | 0        |
+| queue-system         | 🟢 5       | healthy | 86     | 67%      | 0d ago      | 0        |
+| roast                | 🟢 5       | healthy | 88     | 59%      | 4d ago      | 0        |
+| social-platforms     | 🟢 5       | healthy | 82     | 14%      | 0d ago      | 0        |
+| billing              | 🟢 0       | healthy | 96     | N/A      | 11d ago     | 0        |
+| multi-tenant         | 🟢 0       | healthy | 96     | N/A      | 2d ago      | 0        |
+| persona              | 🟢 0       | healthy | 95     | 90%      | 4d ago      | 0        |
+| platform-constraints | 🟢 0       | healthy | 98     | 100%     | 4d ago      | 0        |
+| shield               | 🟢 0       | healthy | 98     | 86%      | 4d ago      | 0        |
+| tone                 | 🟢 0       | healthy | 94     | 100%     | 18d ago     | 0        |
 
 ---
 
@@ -45,10 +45,12 @@
 **Status:** 🟡 AT_RISK
 
 **Risk Factors:**
+
 - +20 pts: Last updated 31 days ago (>30)
 - +15 pts: Coverage 0% (<80%)
 
 **Recommendations:**
+
 - Update node documentation (31 days old)
 - Increase test coverage to 80%+ (declared: 0%, actual: N/A)
 
@@ -59,9 +61,11 @@
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
+
 - +15 pts: Coverage 59% (<80%)
 
 **Recommendations:**
+
 - Increase test coverage to 80%+ (declared: 59%, actual: N/A)
 
 **Git Activity:** 2 commits in last 30 days
@@ -71,9 +75,11 @@
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
+
 - +15 pts: Coverage 0% (<80%)
 
 **Recommendations:**
+
 - Increase test coverage to 80%+ (declared: 0%, actual: N/A)
 
 **Git Activity:** 1 commits in last 30 days
@@ -83,10 +89,12 @@
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
+
 - +15 pts: Coverage 60% (<80%)
 - -10 pts: Recent commit (2 days ago)
 
 **Recommendations:**
+
 - Increase test coverage to 80%+ (declared: 60%, actual: N/A)
 
 **Git Activity:** 5 commits in last 30 days
@@ -96,10 +104,12 @@
 **Status:** 🟢 HEALTHY
 
 **Risk Factors:**
+
 - +15 pts: Coverage 50% (<80%)
 - -10 pts: Recent commit (4 days ago)
 
 **Recommendations:**
+
 - Increase test coverage to 80%+ (declared: 50%, actual: N/A)
 
 **Git Activity:** 4 commits in last 30 days

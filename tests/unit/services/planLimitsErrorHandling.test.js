@@ -11,8 +11,8 @@ const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    user_subscriptions: [],
-    plan_limits: []
+  user_subscriptions: [],
+  plan_limits: []
 });
 
 // Mock dependencies
@@ -21,18 +21,18 @@ jest.mock('../../../src/config/supabase', () => ({
 }));
 jest.mock('../../../src/services/planService');
 jest.mock('../../../src/utils/logger', () => ({
-    logger: {
-        info: jest.fn(),
-        error: jest.fn(),
-        warn: jest.fn(),
-        debug: jest.fn(),
-        child: jest.fn(() => ({
-            info: jest.fn(),
-            error: jest.fn(),
-            warn: jest.fn(),
-            debug: jest.fn()
-        }))
-    }
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    }))
+  }
 }));
 
 // ============================================================================
@@ -47,24 +47,27 @@ const { logger } = require('../../../src/utils/logger');
 describe('Plan Limits Error Handling (Issue #125)', () => {
   const mockUserId = 'test-user-123';
   const mockOrgId = 'org-456';
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset Supabase mock to defaults
     mockSupabase._reset();
-    
+
     // Mock plan features
-    getPlanFeatures.mockImplementation((planId) => ({
-      free: {
-        limits: { roastsPerMonth: 100, commentsPerMonth: 500, platformIntegrations: 1 }
-      },
-      pro: {
-        limits: { roastsPerMonth: 1000, commentsPerMonth: 5000, platformIntegrations: 5 }
-      },
-      creator_plus: {
-        limits: { roastsPerMonth: -1, commentsPerMonth: -1, platformIntegrations: 9 }
-      }
-    }[planId]));
+    getPlanFeatures.mockImplementation(
+      (planId) =>
+        ({
+          free: {
+            limits: { roastsPerMonth: 100, commentsPerMonth: 500, platformIntegrations: 1 }
+          },
+          pro: {
+            limits: { roastsPerMonth: 1000, commentsPerMonth: 5000, platformIntegrations: 5 }
+          },
+          creator_plus: {
+            limits: { roastsPerMonth: -1, commentsPerMonth: -1, platformIntegrations: 9 }
+          }
+        })[planId]
+    );
 
     // Mock successful database operations by default
     mockSupabase.from.mockReturnValue({
@@ -73,9 +76,9 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
       })),
       select: jest.fn(() => ({
         eq: jest.fn(() => ({
-          maybeSingle: jest.fn().mockResolvedValue({ 
-            data: { id: mockOrgId, name: 'Test Org' }, 
-            error: null 
+          maybeSingle: jest.fn().mockResolvedValue({
+            data: { id: mockOrgId, name: 'Test Org' },
+            error: null
           })
         }))
       }))
@@ -85,7 +88,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
   describe('Successful Operations', () => {
     test('should apply plan limits successfully with operation tracking', async () => {
       const result = await applyPlanLimits(mockUserId, 'pro', 'active');
-      
+
       expect(result).toMatchObject({
         userId: mockUserId,
         plan: 'pro',
@@ -96,7 +99,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
         },
         success: true
       });
-      
+
       expect(logger.info).toHaveBeenCalledWith(
         'Plan limits applied successfully',
         expect.objectContaining({ success: true })
@@ -117,12 +120,12 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
       });
 
       const result = await applyPlanLimits(mockUserId, 'pro', 'active');
-      
+
       expect(result.operationsCompleted).toEqual({
         userUpdate: true,
         organizationUpdate: false
       });
-      
+
       expect(logger.info).toHaveBeenCalledWith(
         'No organization found for user, skipping organization limit update:',
         { userId: mockUserId }
@@ -132,26 +135,28 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
 
   describe('Input Validation', () => {
     test('should throw error for missing userId', async () => {
-      await expect(applyPlanLimits(null, 'pro', 'active'))
-        .rejects.toThrow('Invalid parameters: userId, plan, and status are required');
+      await expect(applyPlanLimits(null, 'pro', 'active')).rejects.toThrow(
+        'Invalid parameters: userId, plan, and status are required'
+      );
     });
 
     test('should throw error for missing plan', async () => {
-      await expect(applyPlanLimits(mockUserId, null, 'active'))
-        .rejects.toThrow('Invalid parameters: userId, plan, and status are required');
+      await expect(applyPlanLimits(mockUserId, null, 'active')).rejects.toThrow(
+        'Invalid parameters: userId, plan, and status are required'
+      );
     });
 
     test('should throw error for missing status', async () => {
-      await expect(applyPlanLimits(mockUserId, 'pro', null))
-        .rejects.toThrow('Invalid parameters: userId, plan, and status are required');
+      await expect(applyPlanLimits(mockUserId, 'pro', null)).rejects.toThrow(
+        'Invalid parameters: userId, plan, and status are required'
+      );
     });
 
     test('should throw error for invalid plan', async () => {
       getPlanFeatures.mockReturnValue(null);
-      
-      const error = await applyPlanLimits(mockUserId, 'invalid-plan', 'active')
-        .catch(e => e);
-      
+
+      const error = await applyPlanLimits(mockUserId, 'invalid-plan', 'active').catch((e) => e);
+
       expect(error.message).toBe('Invalid plan: invalid-plan');
       expect(error.code).toBe('INVALID_PLAN');
     });
@@ -172,7 +177,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
       });
 
       const result = await applyPlanLimits(mockUserId, 'pro', 'active', { failSilently: true });
-      
+
       expect(result).toMatchObject({
         success: false,
         error: 'Failed to update user plan limits: User update failed',
@@ -181,7 +186,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
           organizationUpdate: false
         }
       });
-      
+
       expect(logger.warn).toHaveBeenCalledWith(
         'Plan limits application failed but configured to fail silently:',
         expect.any(Object)
@@ -202,23 +207,23 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
         })),
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            maybeSingle: jest.fn().mockResolvedValue({ 
-              data: { id: mockOrgId, name: 'Test Org' }, 
-              error: null 
+            maybeSingle: jest.fn().mockResolvedValue({
+              data: { id: mockOrgId, name: 'Test Org' },
+              error: null
             })
           }))
         }))
-      }));
-
-      const result = await applyPlanLimits(mockUserId, 'pro', 'active', { 
-        partialFailureAllowed: true 
       });
-      
+
+      const result = await applyPlanLimits(mockUserId, 'pro', 'active', {
+        partialFailureAllowed: true
+      });
+
       expect(result.operationsCompleted).toEqual({
         userUpdate: true,
         organizationUpdate: false
       });
-      
+
       expect(logger.error).toHaveBeenCalledWith(
         'Organization update failed but continuing due to partialFailureAllowed:',
         expect.stringContaining('Org update failed')
@@ -242,23 +247,22 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
         })),
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            maybeSingle: jest.fn().mockResolvedValue({ 
-              data: { id: mockOrgId, name: 'Test Org' }, 
-              error: null 
+            maybeSingle: jest.fn().mockResolvedValue({
+              data: { id: mockOrgId, name: 'Test Org' },
+              error: null
             })
           }))
         }))
-      }));
+      });
 
-      const error = await applyPlanLimits(mockUserId, 'pro', 'active')
-        .catch(e => e);
-      
+      const error = await applyPlanLimits(mockUserId, 'pro', 'active').catch((e) => e);
+
       expect(error.inconsistentState).toBe(true);
       expect(error.operationsCompleted).toEqual({
         userUpdate: true,
         organizationUpdate: false
       });
-      
+
       expect(logger.error).toHaveBeenCalledWith(
         'Inconsistent state detected: user updated but organization update failed',
         expect.objectContaining({
@@ -273,9 +277,9 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
     test('should provide detailed error context for user update failure', async () => {
       mockSupabase.from.mockReturnValue({
         update: jest.fn(() => ({
-          eq: jest.fn().mockResolvedValue({ 
-            data: null, 
-            error: { message: 'Database connection lost' } 
+          eq: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Database connection lost' }
           })
         })),
         select: jest.fn(() => ({
@@ -283,11 +287,10 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
             maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null })
           }))
         }))
-      }));
+      });
 
-      const error = await applyPlanLimits(mockUserId, 'pro', 'active')
-        .catch(e => e);
-      
+      const error = await applyPlanLimits(mockUserId, 'pro', 'active').catch((e) => e);
+
       expect(error.code).toBe('USER_UPDATE_FAILED');
       expect(error.context).toMatchObject({
         userId: mockUserId,
@@ -307,17 +310,16 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
         })),
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            maybeSingle: jest.fn().mockResolvedValue({ 
-              data: null, 
+            maybeSingle: jest.fn().mockResolvedValue({
+              data: null,
               error: { message: 'Organization query failed' }
             })
           }))
         }))
-      }));
+      });
 
-      const error = await applyPlanLimits(mockUserId, 'pro', 'active')
-        .catch(e => e);
-      
+      const error = await applyPlanLimits(mockUserId, 'pro', 'active').catch((e) => e);
+
       expect(error.code).toBe('ORGANIZATION_FETCH_FAILED');
       expect(error.originalError.message).toBe('Organization query failed');
     });
@@ -329,23 +331,25 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
             if (table === 'users') {
               return Promise.resolve({ data: {}, error: null });
             } else {
-              return Promise.resolve({ data: null, error: { message: 'Org constraint violation' } });
+              return Promise.resolve({
+                data: null,
+                error: { message: 'Org constraint violation' }
+              });
             }
           })
         })),
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            maybeSingle: jest.fn().mockResolvedValue({ 
-              data: { id: mockOrgId, name: 'Test Org' }, 
-              error: null 
+            maybeSingle: jest.fn().mockResolvedValue({
+              data: { id: mockOrgId, name: 'Test Org' },
+              error: null
             })
           }))
         }))
-      }));
+      });
 
-      const error = await applyPlanLimits(mockUserId, 'pro', 'active')
-        .catch(e => e);
-      
+      const error = await applyPlanLimits(mockUserId, 'pro', 'active').catch((e) => e);
+
       expect(error.code).toBe('ORGANIZATION_UPDATE_FAILED');
       expect(error.organizationId).toBe(mockOrgId);
     });
@@ -354,7 +358,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
   describe('Plan-specific Behavior', () => {
     test('should handle unlimited plan limits correctly', async () => {
       const result = await applyPlanLimits(mockUserId, 'creator_plus', 'active');
-      
+
       expect(result.limits).toMatchObject({
         roastsPerMonth: -1,
         commentsPerMonth: -1,
@@ -370,7 +374,7 @@ describe('Plan Limits Error Handling (Issue #125)', () => {
 
     test('should apply free plan limits for inactive subscriptions', async () => {
       const result = await applyPlanLimits(mockUserId, 'pro', 'inactive');
-      
+
       // Should use free plan limits despite pro plan being specified
       expect(result.limits).toMatchObject({
         roastsPerMonth: 100,

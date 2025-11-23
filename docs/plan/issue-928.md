@@ -1,23 +1,28 @@
 # Plan de Implementación - Issue #928
 
 ## Issue
+
 [Coverage] Fase 2.2: Tests para Workers Secundarios (0-5% → 70%+)
 
 ## Estado Actual
+
 - **AccountDeletionWorker.js**: 0% cobertura
 - **GDPRRetentionWorker.js**: 5.2% cobertura
 - **ModelAvailabilityWorker.js**: 0% cobertura
 - **StyleProfileWorker.js**: 0% cobertura
 
 ## Objetivo
+
 Llevar todos los workers a ≥70% cobertura con tests completos y production-quality.
 
 ## Análisis de Workers
 
 ### 1. AccountDeletionWorker
+
 **Complejidad:** Alta (GDPR compliance, multi-step processing)
 
 **Métodos principales:**
+
 - `processJob()` - NO TIENE, usa `processSingleDeletion()`
 - `processPendingDeletions()` - Busca y procesa deletions pendientes
 - `processSingleDeletion()` - PRINCIPAL: 5 pasos (export, anonymize, delete, notify, audit)
@@ -25,6 +30,7 @@ Llevar todos los workers a ≥70% cobertura con tests completos y production-qua
 - `handleDeletionFailure()` - Retry logic + audit trail
 
 **Dependencias a mockear:**
+
 - `dataExportService.exportUserData()`
 - `dataExportService.anonymizeUserData()`
 - `dataExportService.deleteUserData()`
@@ -36,6 +42,7 @@ Llevar todos los workers a ≥70% cobertura con tests completos y production-qua
 - Supabase: `account_deletion_requests` table
 
 **Casos de test:**
+
 - ✅ Deletion completa exitosa (5 pasos)
 - ✅ Data export falla → continua con anonymize
 - ✅ Email notification falla → log warning pero continua
@@ -47,9 +54,11 @@ Llevar todos los workers a ≥70% cobertura con tests completos y production-qua
 ---
 
 ### 2. GDPRRetentionWorker
+
 **Complejidad:** Alta (crypto operations, batch processing)
 
 **Métodos principales:**
+
 - `processJob()` - PRINCIPAL: Switch entre operations
 - `anonymizeOldRecords()` - Day 80: HMAC-SHA-256 anonymization
 - `anonymizeBatch()` - Batch processing con crypto
@@ -58,12 +67,14 @@ Llevar todos los workers a ≥70% cobertura con tests completos y production-qua
 - `runFullRetentionCycle()` - Full cycle: anonymize + purge + cleanup
 
 **Dependencias a mockear:**
+
 - `crypto.createHmac()` - HMAC generation
 - Supabase: `shield_events`, `offender_profiles`, `shield_retention_log`
 - Supabase RPC: `cleanup_old_offender_profiles()`
 - Environment: `GDPR_HMAC_PEPPER`, `SUPABASE_SERVICE_KEY`
 
 **Casos de test:**
+
 - ✅ Anonymize day-80 records exitosamente
 - ✅ Purge day-90 records exitosamente
 - ✅ Cleanup old profiles via RPC
@@ -77,9 +88,11 @@ Llevar todos los workers a ≥70% cobertura con tests completos y production-qua
 ---
 
 ### 3. ModelAvailabilityWorker
+
 **Complejidad:** Baja (polling worker, simple logic)
 
 **Métodos principales:**
+
 - `runCheck()` - PRINCIPAL: Check model availability
 - `start()` - Start periodic checks (24h interval)
 - `stop()` - Stop worker gracefully
@@ -88,12 +101,14 @@ Llevar todos los workers a ≥70% cobertura con tests completos y production-qua
 - `getStatus()` - Worker status + stats
 
 **Dependencias a mockear:**
+
 - `modelAvailabilityService.forceRefresh()`
 - `modelAvailabilityService.getModelStats()`
 - `setInterval` / `clearInterval`
 - Logger
 
 **Casos de test:**
+
 - ✅ runCheck exitoso con GPT-5 disponible
 - ✅ runCheck exitoso con GPT-5 NO disponible
 - ✅ start() inicia polling interval
@@ -106,9 +121,11 @@ Llevar todos los workers a ≥70% cobertura con tests completos y production-qua
 ---
 
 ### 4. StyleProfileWorker
+
 **Complejidad:** Media (extends BaseWorker, queue integration)
 
 **Métodos principales:**
+
 - `processJob()` - PRINCIPAL: Extract style profile
 - `scheduleNextRefresh()` - Schedule 90-day refresh
 - `shouldRetry()` - Determine retryability
@@ -116,12 +133,14 @@ Llevar todos los workers a ≥70% cobertura con tests completos y production-qua
 - `onJobFailed()` - Hook after failure
 
 **Dependencias a mockear:**
+
 - `styleProfileService.needsRefresh()`
 - `styleProfileService.extractStyleProfile()`
 - `queueService.addJob()` (para schedule next refresh)
 - Supabase (via BaseWorker)
 
 **Casos de test:**
+
 - ✅ Extract profile exitosamente
 - ✅ Profile up-to-date → skip extraction
 - ✅ Refresh forced (isRefresh=true)
@@ -145,10 +164,12 @@ const mockSupabase = {
   from: jest.fn((tableName) => ({
     select: jest.fn(() => ({
       eq: jest.fn(() => ({
-        single: jest.fn(() => Promise.resolve({
-          data: { id: '123', status: 'pending' },
-          error: null
-        }))
+        single: jest.fn(() =>
+          Promise.resolve({
+            data: { id: '123', status: 'pending' },
+            error: null
+          })
+        )
       }))
     })),
     insert: jest.fn(() => Promise.resolve({ data: [], error: null })),
@@ -171,11 +192,13 @@ jest.mock('../../src/config/supabase', () => ({
 ### Test Structure
 
 **Por cada worker:**
+
 - File: `tests/unit/workers/<WorkerName>.test.js`
 - Grupos: Success cases, Error cases, Edge cases
 - Coverage goal: ≥70% lines, statements, functions, branches
 
 **Template:**
+
 ```javascript
 describe('<WorkerName>', () => {
   describe('processJob() - Success', () => {
@@ -205,6 +228,7 @@ describe('<WorkerName>', () => {
 ### Mock Utilities
 
 **Logger mock (always):**
+
 ```javascript
 jest.mock('../../src/utils/logger', () => ({
   logger: {
@@ -220,6 +244,7 @@ jest.mock('../../src/utils/logger', () => ({
 ```
 
 **Service mocks:**
+
 ```javascript
 const mockDataExportService = {
   exportUserData: jest.fn(),
@@ -237,17 +262,20 @@ jest.mock('../../src/services/dataExportService', () => {
 ## Archivos a Crear/Modificar
 
 ### Tests a crear:
+
 1. `tests/unit/workers/AccountDeletionWorker.test.js` (nuevo)
 2. `tests/unit/workers/GDPRRetentionWorker.test.js` (nuevo)
 3. `tests/unit/workers/ModelAvailabilityWorker.test.js` (nuevo)
 4. `tests/unit/workers/StyleProfileWorker.test.js` (nuevo)
 
 ### Evidencias:
+
 - `docs/test-evidence/issue-928/summary.md`
 - `docs/test-evidence/issue-928/coverage-before.txt`
 - `docs/test-evidence/issue-928/coverage-after.txt`
 
 ### GDD Updates:
+
 - `docs/nodes/queue-system.md` - Actualizar coverage stats + "Agentes Relevantes"
 
 ---
@@ -255,6 +283,7 @@ jest.mock('../../src/services/dataExportService', () => {
 ## Pasos de Implementación
 
 ### Paso 1: AccountDeletionWorker Tests (Día 1)
+
 - [ ] Crear test file con Supabase mock pattern
 - [ ] Tests para processSingleDeletion (5 steps)
 - [ ] Tests para sendReminderNotifications
@@ -263,6 +292,7 @@ jest.mock('../../src/services/dataExportService', () => {
 - [ ] Verificar ≥70% coverage
 
 ### Paso 2: GDPRRetentionWorker Tests (Día 1-2)
+
 - [ ] Crear test file con crypto + Supabase mocks
 - [ ] Tests para anonymizeOldRecords + anonymizeBatch
 - [ ] Tests para purgeOldRecords
@@ -273,6 +303,7 @@ jest.mock('../../src/services/dataExportService', () => {
 - [ ] Verificar ≥70% coverage
 
 ### Paso 3: ModelAvailabilityWorker Tests (Día 2)
+
 - [ ] Crear test file con modelService mock
 - [ ] Tests para runCheck (GPT-5 available/not available)
 - [ ] Tests para start/stop lifecycle
@@ -282,6 +313,7 @@ jest.mock('../../src/services/dataExportService', () => {
 - [ ] Verificar ≥70% coverage
 
 ### Paso 4: StyleProfileWorker Tests (Día 2-3)
+
 - [ ] Crear test file con styleProfileService mock
 - [ ] Tests para processJob (extract + skip)
 - [ ] Tests para scheduleNextRefresh
@@ -291,6 +323,7 @@ jest.mock('../../src/services/dataExportService', () => {
 - [ ] Verificar ≥70% coverage
 
 ### Paso 5: Integración y Validación (Día 3)
+
 - [ ] Ejecutar ALL tests: `npm test`
 - [ ] Verificar 0 failures
 - [ ] Ejecutar coverage global: `npm run test:coverage`
@@ -299,12 +332,14 @@ jest.mock('../../src/services/dataExportService', () => {
 - [ ] Actualizar `docs/nodes/queue-system.md` (coverage + agentes)
 
 ### Paso 6: GDD Validation (Día 3)
+
 - [ ] `node scripts/validate-gdd-runtime.js --full` (debe pasar)
 - [ ] `node scripts/score-gdd-health.js --ci` (≥87)
 - [ ] `node scripts/predict-gdd-drift.js --full` (<60 risk)
 - [ ] Actualizar "Agentes Relevantes" en queue-system.md (añadir TestEngineer)
 
 ### Paso 7: Code Quality (Día 3)
+
 - [ ] Ejecutar `npm run coderabbit:review`
 - [ ] Resolver TODAS las issues CodeRabbit (objetivo: 0 comentarios)
 - [ ] Verificar no hay console.logs
@@ -316,11 +351,13 @@ jest.mock('../../src/services/dataExportService', () => {
 ## Agentes a Usar
 
 ### TestEngineer (PRINCIPAL)
+
 - **Trigger:** AC ≥3, cambios en workers
 - **Workflow:** Composer → @tests/ @src/workers/ → "Generate tests following test-generation-skill"
 - **Receipt:** `docs/agents/receipts/cursor-test-engineer-[timestamp].md`
 
 ### Guardian (SECUNDARIO)
+
 - **Trigger:** Cambios en GDD nodes, compliance (GDPR)
 - **Workflow:** `node scripts/guardian-gdd.js --full` + manual audit
 - **Receipt:** `docs/agents/receipts/cursor-guardian-[timestamp].md`
@@ -330,6 +367,7 @@ jest.mock('../../src/services/dataExportService', () => {
 ## Validación Pre-Merge
 
 **Tests:**
+
 ```bash
 npm test -- tests/unit/workers/AccountDeletionWorker.test.js
 npm test -- tests/unit/workers/GDPRRetentionWorker.test.js
@@ -340,6 +378,7 @@ npm run test:coverage  # ≥90%
 ```
 
 **GDD:**
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 node scripts/score-gdd-health.js --ci  # ≥87
@@ -347,6 +386,7 @@ node scripts/predict-gdd-drift.js --full  # <60
 ```
 
 **Quality:**
+
 ```bash
 npm run coderabbit:review  # 0 comentarios
 ```
@@ -356,6 +396,7 @@ npm run coderabbit:review  # 0 comentarios
 ## Impacto Esperado
 
 **Cobertura:**
+
 - AccountDeletionWorker: 0% → 70%+
 - GDPRRetentionWorker: 5.2% → 70%+
 - ModelAvailabilityWorker: 0% → 70%+
@@ -363,12 +404,14 @@ npm run coderabbit:review  # 0 comentarios
 - **Global:** +2-3% cobertura total
 
 **Calidad:**
+
 - Compliance validado (GDPR, data deletion)
 - Casos de éxito y error cubiertos
 - Retry logic testeado
 - Audit trail verificado
 
 **Riesgo:**
+
 - 🟡 MEDIO: Workers menos frecuentes pero críticos para compliance
 
 ---
@@ -376,4 +419,3 @@ npm run coderabbit:review  # 0 comentarios
 **Plan creado:** 2025-11-23
 **Estimación:** 2-3 días
 **Prioridad:** 🟡 MEDIA (compliance importante)
-

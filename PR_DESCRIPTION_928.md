@@ -1,6 +1,7 @@
 # PR: Tests para Workers Secundarios (Issue #928)
 
 ## 📋 Issue
+
 [Coverage] Fase 2.2: Tests para Workers Secundarios (0-5% → 70%+)
 
 **Objetivo**: Añadir tests para workers secundarios que actualmente tienen 0% o muy baja cobertura.
@@ -42,13 +43,13 @@
 
 ## 📊 Resultados de Cobertura
 
-| Worker | Antes | Después | Incremento | Tests (CI) |
-|--------|-------|---------|------------|-------|
-| AccountDeletionWorker | 0% | **83.96%** | +83.96% | 27 (27 ✅) |
-| GDPRRetentionWorker | 5.2% | **89.86%** | +84.66% | 30 (26 ✅, 4 local) |
-| ModelAvailabilityWorker | 0% | **77.46%** | +77.46% | 26 (25 ✅, 1 ⏭️) |
-| StyleProfileWorker | 0% | **90.9%** | +90.9% | 17 (14 ✅, 3 ⏭️) |
-| **PROMEDIO** | **1.3%** | **85.54%** | **+84.24%** | **100 (92✅ CI)** |
+| Worker                  | Antes    | Después    | Incremento  | Tests (CI)          |
+| ----------------------- | -------- | ---------- | ----------- | ------------------- |
+| AccountDeletionWorker   | 0%       | **83.96%** | +83.96%     | 27 (27 ✅)          |
+| GDPRRetentionWorker     | 5.2%     | **89.86%** | +84.66%     | 30 (26 ✅, 4 local) |
+| ModelAvailabilityWorker | 0%       | **77.46%** | +77.46%     | 26 (25 ✅, 1 ⏭️)    |
+| StyleProfileWorker      | 0%       | **90.9%**  | +90.9%      | 17 (14 ✅, 3 ⏭️)    |
+| **PROMEDIO**            | **1.3%** | **85.54%** | **+84.24%** | **100 (92✅ CI)**   |
 
 ---
 
@@ -78,7 +79,7 @@ const createMockChain = (finalResult = { data: [], error: null }) => {
     select: jest.fn(() => chain),
     eq: jest.fn(() => chain),
     lt: jest.fn(() => chain),
-    order: jest.fn(() => Promise.resolve(finalResult)),
+    order: jest.fn(() => Promise.resolve(finalResult))
     // ... chainable methods
   };
   return chain;
@@ -186,12 +187,14 @@ Overall Status: HEALTHY
 ## 📝 Archivos Modificados
 
 ### Tests Creados (4 archivos)
+
 - `tests/unit/workers/AccountDeletionWorker.test.js` (+542 lines)
 - `tests/unit/workers/GDPRRetentionWorker.test.js` (+487 lines)
 - `tests/unit/workers/ModelAvailabilityWorker.test.js` (+368 lines)
 - `tests/unit/workers/StyleProfileWorker.test.js` (+396 lines)
 
 ### Documentación (4 archivos)
+
 - `docs/test-evidence/issue-928/summary.md` (nuevo)
 - `docs/nodes/queue-system.md` (actualizado)
 - `docs/plan/issue-928.md` (nuevo)
@@ -243,9 +246,11 @@ From `docs/patterns/coderabbit-lessons.md`:
 ## 🔄 Next Steps
 
 **Immediate**:
+
 - ⏸️ CodeRabbit review (ejecutar después de push)
 
 **Future** (Separate issues):
+
 - ℹ️ Document or align 4 dry-run test behavior between local/CI (GDPRRetentionWorker)
 - 🔮 Consider adding 4 skipped tests back (or document BaseWorker coverage explicitly)
 - 🔮 Consider increasing coverage to 95%+ if time allows
@@ -279,4 +284,3 @@ From `docs/patterns/coderabbit-lessons.md`:
 **Generado**: 2025-11-23
 **Issue**: #928
 **Agent**: TestEngineer (Cursor)
-
