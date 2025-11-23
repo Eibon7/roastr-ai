@@ -118,7 +118,7 @@ jobs:
       REDDIT_CLIENT_ID: 'mock-reddit-client-id'
       REDDIT_CLIENT_SECRET: 'mock-reddit-client-secret'
       TIKTOK_ACCESS_TOKEN: 'mock-tiktok-access-token'
-      BLUESKY_USERNAME: 'mock@bluesky.social'
+      BLUESKY_HANDLE: 'mock@bluesky.social'
       BLUESKY_PASSWORD: 'mock-bluesky-password'
 
       # Frontend Mock Variables
