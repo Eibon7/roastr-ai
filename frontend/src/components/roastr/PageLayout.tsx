@@ -62,7 +62,9 @@ export function PageLayout({
                 <div key={metric.label} className="flex flex-col gap-1">
                   <dt className="text-xs uppercase tracking-wide">{metric.label}</dt>
                   <dd className="text-lg font-medium text-foreground">{metric.value}</dd>
-                  {metric.helper && <span className="text-xs text-muted-foreground">{metric.helper}</span>}
+                  {metric.helper && (
+                    <span className="text-xs text-muted-foreground">{metric.helper}</span>
+                  )}
                 </div>
               ))}
             </dl>
@@ -76,4 +78,3 @@ export function PageLayout({
 }
 
 export default PageLayout;
-

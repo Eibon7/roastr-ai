@@ -32,7 +32,9 @@ describe('RoastGeneratorEnhanced - ENABLE_CUSTOM_PROMPT Integration', () => {
       };
 
       // Test the logic that would be used in the generator
-      const result = flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? mockConfig.custom_style_prompt : null;
+      const result = flags.isEnabled('ENABLE_CUSTOM_PROMPT')
+        ? mockConfig.custom_style_prompt
+        : null;
 
       expect(result).toBeNull();
     });
@@ -49,7 +51,9 @@ describe('RoastGeneratorEnhanced - ENABLE_CUSTOM_PROMPT Integration', () => {
       };
 
       // Test the logic that would be used in the generator
-      const result = flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? mockConfig.custom_style_prompt : null;
+      const result = flags.isEnabled('ENABLE_CUSTOM_PROMPT')
+        ? mockConfig.custom_style_prompt
+        : null;
 
       expect(result).toBe('Use sophisticated academic humor with literary references');
     });
@@ -66,7 +70,9 @@ describe('RoastGeneratorEnhanced - ENABLE_CUSTOM_PROMPT Integration', () => {
       };
 
       // Test the logic that would be used in the generator
-      const result = flags.isEnabled('ENABLE_CUSTOM_PROMPT') ? mockConfig.custom_style_prompt : null;
+      const result = flags.isEnabled('ENABLE_CUSTOM_PROMPT')
+        ? mockConfig.custom_style_prompt
+        : null;
 
       expect(result).toBeNull();
     });
@@ -110,7 +116,9 @@ describe('RoastGeneratorEnhanced - ENABLE_CUSTOM_PROMPT Integration', () => {
         prompt += `\n- Estilo personalizado: ${mockConfig.custom_style_prompt}`;
       }
 
-      expect(prompt).toContain('Estilo personalizado: Use sophisticated academic humor with literary references');
+      expect(prompt).toContain(
+        'Estilo personalizado: Use sophisticated academic humor with literary references'
+      );
     });
 
     test('should not break when custom_style_prompt is null and flag is enabled', () => {

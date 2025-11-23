@@ -1,9 +1,9 @@
 /**
  * Tone Configuration Service
- * 
+ *
  * Manages dynamic roast tone configuration from database.
  * Provides caching and localization for tone definitions.
- * 
+ *
  * Issue #876: Dynamic Roast Tone Configuration System
  */
 
@@ -15,7 +15,7 @@ class ToneConfigService {
     this.cache = null;
     this.cacheExpiry = null;
     this.CACHE_TTL = 5 * 60 * 1000; // 5 minutos
-    
+
     logger.info('ToneConfigService initialized');
   }
 
@@ -145,7 +145,8 @@ class ToneConfigService {
         .single();
 
       if (error) {
-        if (error.code === '23505') { // Unique violation
+        if (error.code === '23505') {
+          // Unique violation
           logger.warn('Tone name already exists', { name: toneData.name });
           throw new Error(`Tone with name "${toneData.name}" already exists`);
         }
@@ -243,14 +244,13 @@ class ToneConfigService {
 
         if (activeTones.length <= 1) {
           logger.warn('Cannot delete last active tone', { id });
-          throw new Error('Cannot delete the last active tone. At least one tone must remain active.');
+          throw new Error(
+            'Cannot delete the last active tone. At least one tone must remain active.'
+          );
         }
       }
 
-      const { error } = await supabaseServiceClient
-        .from('roast_tones')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabaseServiceClient.from('roast_tones').delete().eq('id', id);
 
       if (error) {
         logger.error('Error deleting tone', { id, error: error.message });
@@ -299,7 +299,9 @@ class ToneConfigService {
 
       if (activeTones.length <= 1 && activeTones[0].id === id) {
         logger.warn('Cannot deactivate last active tone', { id });
-        throw new Error('Cannot deactivate the last active tone. At least one tone must remain active.');
+        throw new Error(
+          'Cannot deactivate the last active tone. At least one tone must remain active.'
+        );
       }
 
       return await this.updateTone(id, { active: false });
@@ -363,7 +365,7 @@ class ToneConfigService {
    * @returns {Array} Localized tone objects
    */
   localizeArray(tones, language) {
-    return tones.map(tone => this.localizeTone(tone, language));
+    return tones.map((tone) => this.localizeTone(tone, language));
   }
 
   /**
@@ -378,7 +380,7 @@ class ToneConfigService {
       display_name: tone.display_name[language] || tone.display_name.es || tone.display_name.en,
       description: tone.description[language] || tone.description.es || tone.description.en,
       examples: Array.isArray(tone.examples)
-        ? tone.examples.map(ex => {
+        ? tone.examples.map((ex) => {
             if (!ex || typeof ex !== 'object') return ex;
             return ex[language] || ex.es || ex.en || ex;
           })
@@ -413,7 +415,11 @@ class ToneConfigService {
     }
 
     if (toneData.intensity !== undefined) {
-      if (typeof toneData.intensity !== 'number' || toneData.intensity < 1 || toneData.intensity > 5) {
+      if (
+        typeof toneData.intensity !== 'number' ||
+        toneData.intensity < 1 ||
+        toneData.intensity > 5
+      ) {
         errors.push('intensity must be between 1 and 5');
       }
     }
@@ -430,15 +436,24 @@ class ToneConfigService {
       }
     }
 
-    if (toneData.resources && (!Array.isArray(toneData.resources) || toneData.resources.length === 0)) {
+    if (
+      toneData.resources &&
+      (!Array.isArray(toneData.resources) || toneData.resources.length === 0)
+    ) {
       errors.push('resources must be a non-empty array');
     }
 
-    if (toneData.restrictions && (!Array.isArray(toneData.restrictions) || toneData.restrictions.length === 0)) {
+    if (
+      toneData.restrictions &&
+      (!Array.isArray(toneData.restrictions) || toneData.restrictions.length === 0)
+    ) {
       errors.push('restrictions must be a non-empty array');
     }
 
-    if (toneData.examples && (!Array.isArray(toneData.examples) || toneData.examples.length === 0)) {
+    if (
+      toneData.examples &&
+      (!Array.isArray(toneData.examples) || toneData.examples.length === 0)
+    ) {
       errors.push('examples must be a non-empty array');
     }
 
@@ -451,7 +466,7 @@ class ToneConfigService {
           errors.push(`examples[${index}] must have at least ES or EN translation`);
         } else {
           // Validate structure for present languages
-          ['es', 'en'].forEach(lang => {
+          ['es', 'en'].forEach((lang) => {
             if (ex[lang]) {
               if (typeof ex[lang] !== 'object') {
                 errors.push(`examples[${index}].${lang} must be an object with input/output`);
@@ -488,4 +503,3 @@ module.exports = {
   ToneConfigService,
   getToneConfigService
 };
-

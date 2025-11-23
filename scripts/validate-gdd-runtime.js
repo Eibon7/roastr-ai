@@ -35,7 +35,7 @@ class GDDValidator {
       cycles: [],
       missing_refs: [],
       broken_links: [],
-      coverage_integrity: [],  // Phase 15.1: Coverage authenticity violations
+      coverage_integrity: [], // Phase 15.1: Coverage authenticity violations
       status: 'healthy'
     };
     this.rootDir = path.resolve(__dirname, '..');
@@ -63,7 +63,7 @@ class GDDValidator {
       await this.validateCodeIntegration(nodes, sourceFiles);
       await this.checkOutdatedNodes(nodes);
       await this.detectOrphans(systemMap, nodes);
-      await this.validateCoverageAuthenticity(nodes);  // Phase 15.1
+      await this.validateCoverageAuthenticity(nodes); // Phase 15.1
 
       // Determine overall status
       this.determineStatus();
@@ -124,7 +124,7 @@ class GDDValidator {
 
     try {
       const files = await fs.readdir(nodesDir);
-      const mdFiles = files.filter(f => f.endsWith('.md') && f !== 'README.md');
+      const mdFiles = files.filter((f) => f.endsWith('.md') && f !== 'README.md');
 
       for (const file of mdFiles) {
         const filePath = path.join(nodesDir, file);
@@ -187,7 +187,7 @@ class GDDValidator {
     // Extract dependencies section
     const depsMatch = content.match(/##\s*Dependencies[\s\S]*?-\s*([^\n]+)/gi);
     if (depsMatch) {
-      depsMatch.forEach(match => {
+      depsMatch.forEach((match) => {
         const dep = match.match(/-\s*([a-z-]+)\.md/i);
         if (dep) {
           metadata.dependencies.push(dep[1]);
@@ -256,7 +256,7 @@ class GDDValidator {
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name);
         if (entry.isDirectory()) {
-          files.push(...await this.walkDirectory(fullPath));
+          files.push(...(await this.walkDirectory(fullPath)));
         } else {
           files.push(fullPath);
         }
@@ -408,10 +408,10 @@ class GDDValidator {
       }
     }
 
-    if (this.results.missing_refs.filter(r => r.type.includes('spec')).length === 0) {
+    if (this.results.missing_refs.filter((r) => r.type.includes('spec')).length === 0) {
       this.log('   ✅ spec.md synchronized', 'success');
     } else {
-      const count = this.results.missing_refs.filter(r => r.type.includes('spec')).length;
+      const count = this.results.missing_refs.filter((r) => r.type.includes('spec')).length;
       this.log(`   ⚠️  ${count} sync issues found`, 'warning');
     }
   }
@@ -445,7 +445,9 @@ class GDDValidator {
       }
     }
 
-    const edgeIssues = this.results.missing_refs.filter(r => r.type === 'missing_bidirectional_edge').length;
+    const edgeIssues = this.results.missing_refs.filter(
+      (r) => r.type === 'missing_bidirectional_edge'
+    ).length;
     if (edgeIssues === 0) {
       this.log('   ✅ All edges bidirectional', 'success');
     } else {
@@ -538,7 +540,9 @@ class GDDValidator {
       const declaredCoverage = parseFloat(coverageMatch[1]);
 
       // Check coverage source
-      const sourceMatch = nodeData.content.match(/\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i);
+      const sourceMatch = nodeData.content.match(
+        /\*?\*?coverage\s+source:?\*?\*?\s*(auto|manual)/i
+      );
       const coverageSource = sourceMatch ? sourceMatch[1].toLowerCase() : null;
 
       if (coverageSource === 'manual') {
@@ -554,7 +558,7 @@ class GDDValidator {
       const validation = await coverageHelper.validateCoverageAuthenticity(
         nodeName,
         declaredCoverage,
-        3  // 3% tolerance
+        3 // 3% tolerance
       );
 
       validated++;
@@ -585,7 +589,9 @@ class GDDValidator {
     }
 
     // Summary reporting
-    const missingDataCount = this.results.coverage_integrity.filter(v => v.type === 'missing_coverage_data').length;
+    const missingDataCount = this.results.coverage_integrity.filter(
+      (v) => v.type === 'missing_coverage_data'
+    ).length;
 
     if (violations === 0 && missingDataCount === 0) {
       this.log(`   ✅ ${validated} nodes validated, all authentic`, 'success');
@@ -594,7 +600,10 @@ class GDDValidator {
     } else if (violations === 0 && missingDataCount > 0) {
       this.log(`   ⚠️  ${missingDataCount}/${validated} nodes missing coverage data`, 'warning');
     } else {
-      this.log(`   ⚠️  ${violations} mismatches, ${missingDataCount} missing data (${validated} total)`, 'warning');
+      this.log(
+        `   ⚠️  ${violations} mismatches, ${missingDataCount} missing data (${validated} total)`,
+        'warning'
+      );
     }
   }
 
@@ -603,12 +612,12 @@ class GDDValidator {
    */
   determineStatus() {
     const criticalCoverageViolations = this.results.coverage_integrity.filter(
-      v => v.severity === 'critical'
+      (v) => v.severity === 'critical'
     ).length;
 
     // Only coverage mismatches (not missing data warnings) should affect status
     const coverageMismatches = this.results.coverage_integrity.filter(
-      v => v.type === 'coverage_integrity_violation'
+      (v) => v.type === 'coverage_integrity_violation'
     ).length;
 
     if (
@@ -622,7 +631,7 @@ class GDDValidator {
       this.results.orphans.length > 0 ||
       Object.keys(this.results.drift).length > 0 ||
       this.results.outdated.length > 3 ||
-      coverageMismatches > 0  // Only actual mismatches, not missing data warnings
+      coverageMismatches > 0 // Only actual mismatches, not missing data warnings
     ) {
       this.results.status = 'warning';
     } else {
@@ -702,7 +711,7 @@ class GDDValidator {
     if (this.results.cycles.length > 0) {
       markdown += `### ❌ Dependency Cycles
 
-${this.results.cycles.map(cycle => `- ${cycle.join(' → ')}`).join('\n')}
+${this.results.cycles.map((cycle) => `- ${cycle.join(' → ')}`).join('\n')}
 
 `;
     }
@@ -713,9 +722,9 @@ ${this.results.cycles.map(cycle => `- ${cycle.join(' → ')}`).join('\n')}
 
 | Type | Node | Issue |
 |------|------|-------|
-${this.results.missing_refs.map(ref =>
-  `| ${ref.type} | ${ref.node} | ${ref.message} |`
-).join('\n')}
+${this.results.missing_refs
+  .map((ref) => `| ${ref.type} | ${ref.node} | ${ref.message} |`)
+  .join('\n')}
 
 `;
     }
@@ -726,7 +735,7 @@ ${this.results.missing_refs.map(ref =>
 
 Nodes not referenced in system-map.yaml:
 
-${this.results.orphans.map(node => `- \`${node}\``).join('\n')}
+${this.results.orphans.map((node) => `- \`${node}\``).join('\n')}
 
 `;
     }
@@ -739,9 +748,9 @@ Nodes not updated in >30 days:
 
 | Node | Last Updated | Days Ago |
 |------|--------------|----------|
-${this.results.outdated.map(node =>
-  `| ${node.node} | ${node.last_updated} | ${node.days_ago} |`
-).join('\n')}
+${this.results.outdated
+  .map((node) => `| ${node.node} | ${node.last_updated} | ${node.days_ago} |`)
+  .join('\n')}
 
 `;
     }
@@ -752,9 +761,9 @@ ${this.results.outdated.map(node =>
 
 Files with potential drift:
 
-${Object.entries(this.results.drift).map(([file, issues]) =>
-  `- **${file}**\n${issues.map(i => `  - ${i}`).join('\n')}`
-).join('\n')}
+${Object.entries(this.results.drift)
+  .map(([file, issues]) => `- **${file}**\n${issues.map((i) => `  - ${i}`).join('\n')}`)
+  .join('\n')}
 
 `;
     }
@@ -767,12 +776,15 @@ Coverage authenticity issues detected:
 
 | Node | Type | Declared | Actual | Diff | Severity |
 |------|------|----------|--------|------|----------|
-${this.results.coverage_integrity.map(v =>
-  `| ${v.node} | ${v.type} | ${v.declared || 'N/A'}% | ${v.actual || 'N/A'}% | ${v.diff || 'N/A'}% | ${v.severity} |`
-).join('\n')}
+${this.results.coverage_integrity
+  .map(
+    (v) =>
+      `| ${v.node} | ${v.type} | ${v.declared || 'N/A'}% | ${v.actual || 'N/A'}% | ${v.diff || 'N/A'}% | ${v.severity} |`
+  )
+  .join('\n')}
 
 **Actions Required:**
-${this.results.coverage_integrity.map(v => `- ${v.message}`).join('\n')}
+${this.results.coverage_integrity.map((v) => `- ${v.message}`).join('\n')}
 
 `;
     }
@@ -785,17 +797,18 @@ ${this.results.coverage_integrity.map(v => `- ${v.message}`).join('\n')}
 |------|------------|--------|--------------|-------------|-----------------|
 `;
 
-      const nodeEntries = Object.entries(driftData.nodes)
-        .sort((a, b) => b[1].drift_risk - a[1].drift_risk);
+      const nodeEntries = Object.entries(driftData.nodes).sort(
+        (a, b) => b[1].drift_risk - a[1].drift_risk
+      );
 
       for (const [nodeName, data] of nodeEntries) {
-        const emoji = data.status === 'likely_drift' ? '🔴' : data.status === 'at_risk' ? '🟡' : '🟢';
-        const lastCommit = data.git_activity.last_commit_days_ago !== null
-          ? `${data.git_activity.last_commit_days_ago}d ago`
-          : 'N/A';
-        const recommendations = data.recommendations.length > 0
-          ? data.recommendations[0]
-          : '-';
+        const emoji =
+          data.status === 'likely_drift' ? '🔴' : data.status === 'at_risk' ? '🟡' : '🟢';
+        const lastCommit =
+          data.git_activity.last_commit_days_ago !== null
+            ? `${data.git_activity.last_commit_days_ago}d ago`
+            : 'N/A';
+        const recommendations = data.recommendations.length > 0 ? data.recommendations[0] : '-';
 
         markdown += `| ${nodeName} | ${emoji} ${data.drift_risk} | ${data.status} | ${data.health_score || 'N/A'} | ${lastCommit} | ${recommendations} |\n`;
       }
@@ -863,8 +876,12 @@ ${this.results.coverage_integrity.map(v => `- ${v.message}`).join('\n')}
     }
 
     if (this.results.coverage_integrity.length > 0) {
-      const critical = this.results.coverage_integrity.filter(v => v.severity === 'critical').length;
-      console.log(`⚠ ${this.results.coverage_integrity.length} coverage integrity issue(s)${critical > 0 ? ` (${critical} critical)` : ''}`);
+      const critical = this.results.coverage_integrity.filter(
+        (v) => v.severity === 'critical'
+      ).length;
+      console.log(
+        `⚠ ${this.results.coverage_integrity.length} coverage integrity issue(s)${critical > 0 ? ` (${critical} critical)` : ''}`
+      );
     }
 
     // Add drift risk summary
@@ -874,7 +891,9 @@ ${this.results.coverage_integrity.map(v => `- ${v.message}`).join('\n')}
       console.log('         DRIFT RISK SUMMARY');
       console.log('═══════════════════════════════════════');
       console.log('');
-      console.log(`🟢 ${driftData.healthy_count} Healthy | 🟡 ${driftData.at_risk_count} At Risk | 🔴 ${driftData.high_risk_count} Likely Drift`);
+      console.log(
+        `🟢 ${driftData.healthy_count} Healthy | 🟡 ${driftData.at_risk_count} At Risk | 🔴 ${driftData.high_risk_count} Likely Drift`
+      );
       console.log(`📊 Average Drift Risk: ${driftData.average_drift_risk}/100`);
     }
 
@@ -887,7 +906,9 @@ ${this.results.coverage_integrity.map(v => `- ${v.message}`).join('\n')}
       warning: '🟡',
       critical: '🔴'
     };
-    console.log(`${statusSymbol[this.results.status]} Overall Status: ${this.results.status.toUpperCase()}`);
+    console.log(
+      `${statusSymbol[this.results.status]} Overall Status: ${this.results.status.toUpperCase()}`
+    );
     console.log('');
   }
 
@@ -898,11 +919,11 @@ ${this.results.coverage_integrity.map(v => `- ${v.message}`).join('\n')}
     if (this.isCIMode && type !== 'error') return;
 
     const colors = {
-      info: '\x1b[36m',    // Cyan
-      step: '\x1b[34m',    // Blue
+      info: '\x1b[36m', // Cyan
+      step: '\x1b[34m', // Blue
       success: '\x1b[32m', // Green
       warning: '\x1b[33m', // Yellow
-      error: '\x1b[31m',   // Red
+      error: '\x1b[31m', // Red
       reset: '\x1b[0m'
     };
 
@@ -1007,7 +1028,7 @@ async function main() {
     options.mode = 'diff';
   }
 
-  const nodeArg = args.find(arg => arg.startsWith('--node='));
+  const nodeArg = args.find((arg) => arg.startsWith('--node='));
   if (nodeArg) {
     options.mode = 'single';
     options.node = nodeArg.split('=')[1];
@@ -1031,14 +1052,16 @@ async function main() {
     console.log('╔════════════════════════════════════════╗');
     console.log('║     🧩 NODE HEALTH SUMMARY            ║');
     console.log('╚════════════════════════════════════════╝');
-    console.log(`🟢 Healthy: ${stats.healthy_count} | 🟡 Degraded: ${stats.degraded_count} | 🔴 Critical: ${stats.critical_count}`);
+    console.log(
+      `🟢 Healthy: ${stats.healthy_count} | 🟡 Degraded: ${stats.degraded_count} | 🔴 Critical: ${stats.critical_count}`
+    );
     console.log(`Average Score: ${stats.overall_score}/100`);
     console.log('');
   }
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

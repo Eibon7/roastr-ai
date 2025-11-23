@@ -20,12 +20,13 @@ Issue #632 successfully implemented the Unified Analysis Department architecture
 await this.shieldService.executeActionsFromTags(
   organizationId,
   comment,
-  decision.action_tags,  // New format from AnalysisDecisionEngine
+  decision.action_tags, // New format from AnalysisDecisionEngine
   decision.metadata
 );
 ```
 
 **Reality Check:**
+
 - ❌ `executeActionsFromTags()` method **DOES NOT EXIST** in ShieldService
 - ✅ `executeActions()` exists but uses OLD API signature: `executeActions(analysis, user, content)`
 - ✅ Old method expects `analysis.recommendedActions` array (legacy format)
@@ -75,15 +76,15 @@ await this.shieldService.executeActionsFromTags(
 ```javascript
 action_tags: [
   // Shield actions
-  'hide_comment',           // Hide from platform
-  'block_user',             // Block user (temp/permanent based on severity)
-  'report_to_platform',     // Report to platform (only if reportable=true)
-  'mute_temp',              // Temporary mute (24h default)
-  'mute_permanent',         // Permanent mute
-  'check_reincidence',      // Check strike history
-  'add_strike_1',           // Add strike level 1
-  'add_strike_2',           // Add strike level 2
-  'require_manual_review',  // Flag for manual review
+  'hide_comment', // Hide from platform
+  'block_user', // Block user (temp/permanent based on severity)
+  'report_to_platform', // Report to platform (only if reportable=true)
+  'mute_temp', // Temporary mute (24h default)
+  'mute_permanent', // Permanent mute
+  'check_reincidence', // Check strike history
+  'add_strike_1', // Add strike level 1
+  'add_strike_2', // Add strike level 2
+  'require_manual_review', // Flag for manual review
   'gatekeeper_unavailable', // Fallback mode indicator
 
   // Roast actions (NOT Shield responsibility)
@@ -97,7 +98,7 @@ action_tags: [
   // Publish actions (NOT Shield responsibility)
   'publish_normal',
   'publish_with_warning'
-]
+];
 ```
 
 **Shield Scope:** Only handle `hide_comment`, `block_user`, `report_to_platform`, `mute_*`, `check_reincidence`, `add_strike_*`, `require_manual_review`, `gatekeeper_unavailable`
@@ -204,18 +205,19 @@ metadata: {
 
 ### Breakdown:
 
-| Task | Complexity | Reasoning |
-|------|-----------|-----------|
-| Database migration (add action_tag field) | LOW | Single column addition with index |
-| Implement executeActionsFromTags() | MEDIUM | 10 action handlers, metadata validation |
-| Action handler mapping | MEDIUM | Each tag needs specific logic + error handling |
-| Platform violations safeguard | LOW | Simple if-check before queueing report job |
-| Update user_behaviors | LOW | Reuse existing method |
-| Queue platform jobs | LOW | Reuse existing queueService |
-| Tests (10 action tags + edge cases) | MEDIUM | 15-20 test cases needed |
-| Documentation | LOW | Single service doc update |
+| Task                                      | Complexity | Reasoning                                      |
+| ----------------------------------------- | ---------- | ---------------------------------------------- |
+| Database migration (add action_tag field) | LOW        | Single column addition with index              |
+| Implement executeActionsFromTags()        | MEDIUM     | 10 action handlers, metadata validation        |
+| Action handler mapping                    | MEDIUM     | Each tag needs specific logic + error handling |
+| Platform violations safeguard             | LOW        | Simple if-check before queueing report job     |
+| Update user_behaviors                     | LOW        | Reuse existing method                          |
+| Queue platform jobs                       | LOW        | Reuse existing queueService                    |
+| Tests (10 action tags + edge cases)       | MEDIUM     | 15-20 test cases needed                        |
+| Documentation                             | LOW        | Single service doc update                      |
 
 **Justification for MEDIUM:**
+
 - Not HIGH: Database schema stable, core infrastructure exists, no new tables
 - Not LOW: 10 distinct action handlers with validation, metadata parsing complexity, must preserve backward compat
 - MEDIUM fits: Requires careful mapping, comprehensive testing, but no architectural changes
@@ -227,6 +229,7 @@ metadata: {
 **Recommendation:** **ENHANCE**
 
 **Rationale:**
+
 - Status: PARTIAL IMPLEMENTATION (Worker calls method that doesn't exist)
 - Existing `executeActions()` is legacy test stub, not production code
 - Infrastructure 80% ready (database, queue, helpers)
@@ -264,6 +267,7 @@ CHECK (action_tag IN (
 ```
 
 **Validation:**
+
 ```bash
 npm run db:migrate
 # Verify column exists
@@ -283,16 +287,16 @@ class ShieldService {
 
     // Action tag handlers
     this.ACTION_HANDLERS = {
-      'hide_comment': this.handleHideComment.bind(this),
-      'block_user': this.handleBlockUser.bind(this),
-      'report_to_platform': this.handleReportToPlatform.bind(this),
-      'mute_temp': this.handleMuteTemp.bind(this),
-      'mute_permanent': this.handleMutePermanent.bind(this),
-      'check_reincidence': this.handleCheckReincidence.bind(this),
-      'add_strike_1': this.handleAddStrike.bind(this),
-      'add_strike_2': this.handleAddStrike.bind(this),
-      'require_manual_review': this.handleManualReview.bind(this),
-      'gatekeeper_unavailable': this.handleGatekeeperUnavailable.bind(this)
+      hide_comment: this.handleHideComment.bind(this),
+      block_user: this.handleBlockUser.bind(this),
+      report_to_platform: this.handleReportToPlatform.bind(this),
+      mute_temp: this.handleMuteTemp.bind(this),
+      mute_permanent: this.handleMutePermanent.bind(this),
+      check_reincidence: this.handleCheckReincidence.bind(this),
+      add_strike_1: this.handleAddStrike.bind(this),
+      add_strike_2: this.handleAddStrike.bind(this),
+      require_manual_review: this.handleManualReview.bind(this),
+      gatekeeper_unavailable: this.handleGatekeeperUnavailable.bind(this)
     };
   }
 }
@@ -382,6 +386,7 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata) {
 3. **Implement Individual Handlers (10 methods):**
 
 Each handler signature:
+
 ```javascript
 async handleActionName(organizationId, comment, metadata) {
   // Implementation
@@ -483,10 +488,18 @@ async executeActions(analysis, user, content) {
 ```javascript
 describe('ShieldService.executeActionsFromTags', () => {
   describe('Action Execution', () => {
-    test('should execute hide_comment action', async () => { /* ... */ });
-    test('should execute block_user action', async () => { /* ... */ });
-    test('should execute mute_temp action', async () => { /* ... */ });
-    test('should execute add_strike_1 action', async () => { /* ... */ });
+    test('should execute hide_comment action', async () => {
+      /* ... */
+    });
+    test('should execute block_user action', async () => {
+      /* ... */
+    });
+    test('should execute mute_temp action', async () => {
+      /* ... */
+    });
+    test('should execute add_strike_1 action', async () => {
+      /* ... */
+    });
     // ... 10 action handlers
   });
 
@@ -518,7 +531,7 @@ describe('ShieldService.executeActionsFromTags', () => {
         platform_violations: {
           has_violations: true,
           violation_types: ['prompt_injection'],
-          reportable: false  // Injection only, don't report
+          reportable: false // Injection only, don't report
         }
       };
 
@@ -554,19 +567,30 @@ describe('ShieldService.executeActionsFromTags', () => {
   });
 
   describe('Error Handling', () => {
-    test('should handle unknown action tags gracefully', async () => { /* ... */ });
-    test('should continue execution if one action fails', async () => { /* ... */ });
-    test('should skip non-Shield tags (roast_*, publish_*)', async () => { /* ... */ });
+    test('should handle unknown action tags gracefully', async () => {
+      /* ... */
+    });
+    test('should continue execution if one action fails', async () => {
+      /* ... */
+    });
+    test('should skip non-Shield tags (roast_*, publish_*)', async () => {
+      /* ... */
+    });
   });
 
   describe('User Behavior Updates', () => {
-    test('should update user_behaviors table with violations', async () => { /* ... */ });
-    test('should increment strike count for add_strike_* actions', async () => { /* ... */ });
+    test('should update user_behaviors table with violations', async () => {
+      /* ... */
+    });
+    test('should increment strike count for add_strike_* actions', async () => {
+      /* ... */
+    });
   });
 });
 ```
 
 **Minimum Test Coverage:** 15 tests covering:
+
 - 10 action handlers (1 test each)
 - Platform violations safeguard (2 tests: reportable=true/false)
 - Database recording (1 test)
@@ -577,6 +601,7 @@ describe('ShieldService.executeActionsFromTags', () => {
 **File: `docs/generated/services/shieldService.md`**
 
 Update sections:
+
 1. **Methods** - Add `executeActionsFromTags()` with full signature
 2. **Action Tags Reference** - Table mapping tags to actions
 3. **Deprecation Notice** - Mark `executeActions()` as deprecated
@@ -588,13 +613,13 @@ Update sections:
 
 ### Technical Risks
 
-| Risk | Severity | Probability | Mitigation |
-|------|----------|-------------|------------|
-| Database migration fails in production | HIGH | LOW | Test migration on staging first, use IF NOT EXISTS |
-| Action handler execution fails silently | MEDIUM | MEDIUM | Comprehensive error logging + tests |
-| Platform violations safeguard bypassed | HIGH | LOW | Unit tests + code review checkpoint |
-| Backward compatibility broken | MEDIUM | LOW | Keep old `executeActions()` method |
-| Performance impact (10 handlers per comment) | LOW | MEDIUM | Use Promise.allSettled for parallel execution |
+| Risk                                         | Severity | Probability | Mitigation                                         |
+| -------------------------------------------- | -------- | ----------- | -------------------------------------------------- |
+| Database migration fails in production       | HIGH     | LOW         | Test migration on staging first, use IF NOT EXISTS |
+| Action handler execution fails silently      | MEDIUM   | MEDIUM      | Comprehensive error logging + tests                |
+| Platform violations safeguard bypassed       | HIGH     | LOW         | Unit tests + code review checkpoint                |
+| Backward compatibility broken                | MEDIUM   | LOW         | Keep old `executeActions()` method                 |
+| Performance impact (10 handlers per comment) | LOW      | MEDIUM      | Use Promise.allSettled for parallel execution      |
 
 ### Mitigation Strategies
 
@@ -624,22 +649,23 @@ Update sections:
 
 ### Task Breakdown
 
-| Task | Estimated Time | Complexity |
-|------|---------------|------------|
-| Database migration | 0.5 hours | LOW |
-| Test migration locally | 0.5 hours | LOW |
-| Implement executeActionsFromTags() | 1.5 hours | MEDIUM |
-| Implement 10 action handlers | 2 hours | MEDIUM |
-| Database recording logic | 0.5 hours | LOW |
-| Deprecate old method | 0.5 hours | LOW |
-| Write unit tests (15 tests) | 2 hours | MEDIUM |
-| Update documentation | 1 hour | LOW |
-| Code review + Guardian validation | 1 hour | LOW |
-| **TOTAL** | **9.5 hours** | **MEDIUM** |
+| Task                               | Estimated Time | Complexity |
+| ---------------------------------- | -------------- | ---------- |
+| Database migration                 | 0.5 hours      | LOW        |
+| Test migration locally             | 0.5 hours      | LOW        |
+| Implement executeActionsFromTags() | 1.5 hours      | MEDIUM     |
+| Implement 10 action handlers       | 2 hours        | MEDIUM     |
+| Database recording logic           | 0.5 hours      | LOW        |
+| Deprecate old method               | 0.5 hours      | LOW        |
+| Write unit tests (15 tests)        | 2 hours        | MEDIUM     |
+| Update documentation               | 1 hour         | LOW        |
+| Code review + Guardian validation  | 1 hour         | LOW        |
+| **TOTAL**                          | **9.5 hours**  | **MEDIUM** |
 
 **Adjusted Estimate:** **10-12 hours** (with buffer for testing and edge cases)
 
 **Breakdown by Phase:**
+
 - Phase 1 (DB Schema): 1 hour
 - Phase 2 (Implementation): 5 hours
 - Phase 3 (Tests): 2 hours
@@ -715,17 +741,20 @@ Update sections:
 ### Development Sequence
 
 **Day 1 (4 hours):**
+
 1. Database migration (1h)
 2. Implement `executeActionsFromTags()` scaffold (1h)
 3. Implement 5 action handlers: hide, block, report, mute_temp, mute_permanent (2h)
 
 **Day 2 (4 hours):**
+
 1. Implement remaining 5 handlers: check_reincidence, add_strike_1, add_strike_2, require_manual_review, gatekeeper_unavailable (2h)
 2. Database recording logic (1h)
 3. Deprecate old method (0.5h)
 4. Start tests (0.5h)
 
 **Day 3 (3 hours):**
+
 1. Complete tests (2h)
 2. Documentation (1h)
 3. Guardian review + fixes (as needed)
@@ -752,12 +781,14 @@ Update sections:
 **Priority:** **P1** (High - blocks full #632 completion, Shield actions not executing)
 
 **Risk Level:** **LOW-MEDIUM**
+
 - Infrastructure 80% ready
 - Clear requirements from #632
 - Main risk: Platform violations safeguard logic
 - Mitigation: Guardian agent review + comprehensive tests
 
 **Can Start Immediately:** YES
+
 - No external blockers
 - All dependencies met
 - Issue well-defined

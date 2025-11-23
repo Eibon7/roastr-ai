@@ -9,12 +9,14 @@
 ## 📊 Estado Actual (Assessment)
 
 ### Existente
+
 - ✅ `scripts/collect-gdd-telemetry.js` (Phase 13) - Sistema de telemetría histórica
 - ✅ `scripts/watch-gdd.js` - Monitor de cambios del sistema GDD
 - ✅ 13 nodos GDD documentados en `docs/nodes/`
 - ✅ Sistema de validación runtime completo
 
 ### Faltante (Recomendación: CREATE)
+
 - ❌ Infraestructura de agentes (`scripts/agents/`)
 - ❌ Sistema de permisos para agentes (`config/agent-permissions.json`)
 - ❌ Protocolo de escritura segura (Secure Write Protocol)
@@ -28,9 +30,11 @@
 ## 🎯 Objetivos de Phase 14 + 14.1
 
 ### Phase 14: Agent-Aware Integration + Secure Write Protocol
+
 Integrar agentes del ecosistema GDD con sistema de lectura/escritura seguro, auditable y reversible.
 
 ### Phase 14.1: Real-Time Telemetry
+
 Añadir telemetría en tiempo real visible desde panel administrativo (estilo Snake Eater UI).
 
 **Resultado Final:** Sistema GDD self-healing + live-aware donde agentes actúan autónomamente sin comprometer coherencia.
@@ -40,9 +44,11 @@ Añadir telemetría en tiempo real visible desde panel administrativo (estilo Sn
 ## 📋 Componentes a Implementar
 
 ### 1. Agent Interface Layer (AIL)
+
 **Archivo:** `scripts/agents/agent-interface.js`
 
 **Funciones principales:**
+
 - `readNode(nodeName)` - Lectura de nodos GDD
 - `writeNodeField(nodeName, field, value, agent)` - Escritura segura de campos
 - `createIssue(agent, title, body)` - Creación de issues desde agentes
@@ -51,15 +57,18 @@ Añadir telemetría en tiempo real visible desde panel administrativo (estilo Sn
 - `logAgentAction(agent, action, target, result)` - Logging de acciones
 
 **Características:**
+
 - Validación de permisos según `agent-permissions.json`
 - Hash y firma digital antes/después de writes
 - Rollback automático si health_score disminuye
 - Notificación a Telemetry Bus en cada acción
 
 ### 2. Permission Matrix
+
 **Archivo:** `config/agent-permissions.json`
 
 **Agentes definidos:**
+
 ```json
 {
   "DocumentationAgent": ["update_metadata", "create_issue", "update_dependencies"],
@@ -70,22 +79,27 @@ Añadir telemetría en tiempo real visible desde panel administrativo (estilo Sn
 ```
 
 **Comportamiento:**
+
 - Acciones fuera de scope → error 403 (logged)
 - Eventos válidos → enviados a Telemetry Bus + guardados en `gdd-agent-log.json`
 
 ### 3. Secure Write Protocol (SWP)
+
 **Archivo:** `scripts/agents/secure-write.js`
 
 **Implementación:**
+
 - Hash de integridad (SHA-256) antes/después
 - Firma (agent, timestamp, acción, target)
 - Rollback si health_score baja
 - Broadcast del evento al Telemetry Socket
 
 ### 4. Telemetry Bus
+
 **Archivo:** `scripts/agents/telemetry-bus.js`
 
 **Características:**
+
 - Micro-servicio interno basado en WebSocket (Server-Sent Events fallback)
 - Escucha todos los logs de agent-interface
 - Emite eventos JSON en vivo
@@ -93,6 +107,7 @@ Añadir telemetría en tiempo real visible desde panel administrativo (estilo Sn
 - Suscripción desde UI y CLI
 
 **Ejemplo evento:**
+
 ```json
 {
   "agent": "DriftWatcher",
@@ -104,9 +119,11 @@ Añadir telemetría en tiempo real visible desde panel administrativo (estilo Sn
 ```
 
 ### 5. Watcher Integration
+
 **Modificar:** `scripts/watch-gdd.js`
 
 **Nuevo modo:**
+
 ```bash
 node scripts/watch-gdd.js --agents-active --telemetry
 ```
@@ -122,23 +139,28 @@ node scripts/watch-gdd.js --agents-active --telemetry
 Todos los eventos → Telemetry Bus + logs
 
 ### 6. Audit Trail & Logs
+
 **Archivos:**
+
 - `docs/gdd-agent-history.md` - Historia en Markdown
 - `gdd-agent-log.json` - Log estructurado JSON
 
 **Formato:** Cada acción añade evento live en Telemetry Bus
 
 ### 7. UI Integration - Agent Activity Monitor
+
 **Archivo:** `src/admin/components/AgentActivityMonitor.tsx`
 
 **Vistas:**
 
 **Vista 1 - Resumen de Agentes:**
+
 - Tabla de acciones recientes
 - Estado del sistema 🟢🟡🔴
 - Botón "Revert" (rollback)
 
 **Vista 2 - Live Telemetry Feed:**
+
 - WebSocket client → `telemetry-bus.js`
 - Eventos en tiempo real (1-2 seg delay máx.)
 - Color por tipo de evento (success / warn / fail)
@@ -150,6 +172,7 @@ Todos los eventos → Telemetry Bus + logs
   - Rollbacks
 
 **Diseño:**
+
 - Basado en Snake Eater UI (Card, Table, Tabs, DonutGraph, Alert, Progress)
 - Fondo oscuro (#0b0b0d), bordes finos, acento verde eléctrico
 - Sin dependencias adicionales fuera de snake-eater-ui
@@ -159,17 +182,21 @@ Todos los eventos → Telemetry Bus + logs
 ## 🧪 Testing Scenarios
 
 ### 1. Dry Run
+
 ```bash
 node scripts/agents/agent-interface.js --simulate
 ```
 
 ### 2. Live Telemetry Test
+
 ```bash
 node scripts/agents/telemetry-bus.js --listen
 ```
+
 Abrir dashboard → ver eventos en stream
 
 ### 3. Rollback Test
+
 - Forzar acción que degrade health
 - Verificar rollback automático
 - Verificar log y telemetría
@@ -178,16 +205,16 @@ Abrir dashboard → ver eventos en stream
 
 ## ✅ Acceptance Criteria
 
-| Checkpoint | Descripción | Estado |
-|-----------|-------------|--------|
-| AIL creado | API para agentes con lectura/escritura | ☐ |
-| Permisos definidos | agent-permissions.json implementado | ☐ |
-| SWP activo | Firmas + hashes funcionales | ☐ |
-| Telemetry Bus | Emite y recibe eventos en vivo | ☐ |
-| Watcher conectado | --agents-active --telemetry | ☐ |
-| Audit Trail | Logs JSON + MD actualizándose | ☐ |
-| UI Monitor + Telemetry Feed | Integrado en Snake Eater UI | ☐ |
-| Health ≥ 95 | Mantiene tras 100 acciones de agente | ☐ |
+| Checkpoint                  | Descripción                            | Estado |
+| --------------------------- | -------------------------------------- | ------ |
+| AIL creado                  | API para agentes con lectura/escritura | ☐      |
+| Permisos definidos          | agent-permissions.json implementado    | ☐      |
+| SWP activo                  | Firmas + hashes funcionales            | ☐      |
+| Telemetry Bus               | Emite y recibe eventos en vivo         | ☐      |
+| Watcher conectado           | --agents-active --telemetry            | ☐      |
+| Audit Trail                 | Logs JSON + MD actualizándose          | ☐      |
+| UI Monitor + Telemetry Feed | Integrado en Snake Eater UI            | ☐      |
+| Health ≥ 95                 | Mantiene tras 100 acciones de agente   | ☐      |
 
 ---
 
@@ -230,6 +257,7 @@ Abrir dashboard → ver eventos en stream
 ---
 
 **Commit esperado:**
+
 ```
 feat: GDD 2.0 Phase 14 + 14.1 – Agent-Aware Integration + Secure Write Protocol + Real-Time Telemetry
 

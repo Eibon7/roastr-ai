@@ -13,10 +13,10 @@ const path = require('path');
 function loadEnv() {
   const envPath = path.join(__dirname, '..', '.env');
   if (!fs.existsSync(envPath)) return {};
-  
+
   const env = {};
   const content = fs.readFileSync(envPath, 'utf-8');
-  content.split('\n').forEach(line => {
+  content.split('\n').forEach((line) => {
     line = line.trim();
     if (!line || line.startsWith('#')) return;
     const [key, ...valueParts] = line.split('=');
@@ -38,24 +38,13 @@ const REQUIRED_KEYS = {
     'POLAR_PRO_PRODUCT_ID',
     'POLAR_PLUS_PRODUCT_ID'
   ],
-  'Supabase (Database)': [
-    'SUPABASE_URL',
-    'SUPABASE_SERVICE_KEY',
-    'SUPABASE_ANON_KEY'
-  ],
-  'OpenAI (AI)': [
-    'OPENAI_API_KEY'
-  ],
-  'Email (Resend)': [
-    'RESEND_API_KEY',
-    'RESEND_FROM_EMAIL'
-  ]
+  'Supabase (Database)': ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SUPABASE_ANON_KEY'],
+  'OpenAI (AI)': ['OPENAI_API_KEY'],
+  'Email (Resend)': ['RESEND_API_KEY', 'RESEND_FROM_EMAIL']
 };
 
 const OPTIONAL_KEYS = {
-  'Polar (Optional)': [
-    'POLAR_WEBHOOK_SECRET'
-  ],
+  'Polar (Optional)': ['POLAR_WEBHOOK_SECRET'],
   'Social Media': [
     'TWITTER_BEARER_TOKEN',
     'YOUTUBE_API_KEY',
@@ -63,16 +52,13 @@ const OPTIONAL_KEYS = {
     'FACEBOOK_ACCESS_TOKEN',
     'DISCORD_BOT_TOKEN'
   ],
-  'Security': [
+  Security: [
     'IDEMPOTENCY_SECRET',
     'TRIAGE_CACHE_SECRET',
     'STYLE_PROFILE_ENCRYPTION_KEY',
     'PERSONA_ENCRYPTION_KEY'
   ],
-  'Monitoring': [
-    'SENTRY_DSN',
-    'ALERT_WEBHOOK_URL'
-  ]
+  Monitoring: ['SENTRY_DSN', 'ALERT_WEBHOOK_URL']
 };
 
 const DEPRECATED_KEYS = [
@@ -105,9 +91,14 @@ let hasAllRequired = true;
 
 Object.entries(REQUIRED_KEYS).forEach(([category, keys]) => {
   console.log(`\n🔹 ${category}:`);
-  keys.forEach(key => {
+  keys.forEach((key) => {
     const value = process.env[key];
-    if (value && value.trim() !== '' && !value.startsWith('your-') && !value.startsWith('sk-your-')) {
+    if (
+      value &&
+      value.trim() !== '' &&
+      !value.startsWith('your-') &&
+      !value.startsWith('sk-your-')
+    ) {
       console.log(`  ✅ ${key}: configurado`);
     } else {
       console.log(`  ❌ ${key}: FALTA`);
@@ -127,10 +118,15 @@ let optionalTotal = 0;
 
 Object.entries(OPTIONAL_KEYS).forEach(([category, keys]) => {
   console.log(`\n🔸 ${category}:`);
-  keys.forEach(key => {
+  keys.forEach((key) => {
     optionalTotal++;
     const value = process.env[key];
-    if (value && value.trim() !== '' && !value.startsWith('your-') && !value.startsWith('sk-your-')) {
+    if (
+      value &&
+      value.trim() !== '' &&
+      !value.startsWith('your-') &&
+      !value.startsWith('sk-your-')
+    ) {
       console.log(`  ✅ ${key}: configurado`);
       optionalConfigured++;
     } else {
@@ -145,7 +141,7 @@ console.log('⚠️  KEYS DEPRECADAS (DEBEN ELIMINARSE)');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
 let hasDeprecated = false;
-DEPRECATED_KEYS.forEach(key => {
+DEPRECATED_KEYS.forEach((key) => {
   const value = process.env[key];
   if (value && value.trim() !== '') {
     console.log(`  ❌ ${key}: PRESENTE (debe eliminarse del .env)`);
@@ -189,11 +185,11 @@ const { execSync } = require('child_process');
 
 // Check for Stripe references
 try {
-  const stripeRefs = execSync(
-    'grep -r "process\\.env\\.STRIPE" src/ --include="*.js" | wc -l',
-    { encoding: 'utf-8', cwd: path.join(__dirname, '..') }
-  ).trim();
-  
+  const stripeRefs = execSync('grep -r "process\\.env\\.STRIPE" src/ --include="*.js" | wc -l', {
+    encoding: 'utf-8',
+    cwd: path.join(__dirname, '..')
+  }).trim();
+
   if (parseInt(stripeRefs) > 0) {
     console.log(`⚠️  ${stripeRefs} referencias a STRIPE_* encontradas en src/`);
     console.log('   Nota: Stripe puede ser legacy code que aún no se ha eliminado');
@@ -208,7 +204,7 @@ try {
     'grep -r "process\\.env\\.SENDGRID" src/ --include="*.js" | wc -l',
     { encoding: 'utf-8', cwd: path.join(__dirname, '..') }
   ).trim();
-  
+
   if (parseInt(sendgridRefs) > 0) {
     console.log(`⚠️  ${sendgridRefs} referencias a SENDGRID_* encontradas en src/`);
     console.log('   Nota: Sendgrid está siendo reemplazado por Resend');
@@ -219,11 +215,11 @@ try {
 
 // Check for PRICE_ID instead of PRODUCT_ID
 try {
-  const priceIdRefs = execSync(
-    'grep -r "POLAR_.*PRICE_ID" src/ --include="*.js" | wc -l',
-    { encoding: 'utf-8', cwd: path.join(__dirname, '..') }
-  ).trim();
-  
+  const priceIdRefs = execSync('grep -r "POLAR_.*PRICE_ID" src/ --include="*.js" | wc -l', {
+    encoding: 'utf-8',
+    cwd: path.join(__dirname, '..')
+  }).trim();
+
   if (parseInt(priceIdRefs) > 0) {
     console.log(`⚠️  ${priceIdRefs} referencias a POLAR_*_PRICE_ID encontradas en src/`);
     console.log('   Nota: Polar usa PRODUCT_ID, no PRICE_ID');
@@ -255,4 +251,3 @@ if (!hasAllRequired) {
 } else {
   process.exit(0);
 }
-

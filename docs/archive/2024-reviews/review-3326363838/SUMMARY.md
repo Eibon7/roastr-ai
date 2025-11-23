@@ -70,6 +70,7 @@ npx markdownlint-cli2 "docs/plan/review-3326338954.md" "docs/plan/review-3392598
 ```
 
 **Violations Found:**
+
 - 2× MD036 in review-3326338954.md (lines 80, 96)
 - 4× MD036 in review-3392598742.md (lines 83, 104, 114, 121)
 - 1× MD040 in review-3326338954.md (line 267)
@@ -107,6 +108,7 @@ npx markdownlint-cli2 "docs/plan/review-3326363838.md" "docs/plan/review-3326338
 **After:** 0 violations ✅
 
 **Edits:**
+
 - Line 80: Bold label → Level-4 heading
 - Line 96: Bold label → Level-4 heading
 - Line 267: Plain fence → `text` fence
@@ -121,6 +123,7 @@ npx markdownlint-cli2 "docs/plan/review-3326363838.md" "docs/plan/review-3326338
 **After:** 0 violations ✅
 
 **Edits:**
+
 - Line 83: Bold label → Level-5 heading
 - Line 104: Bold label → Level-5 heading
 - Line 114: Bold label → Level-5 heading
@@ -192,16 +195,16 @@ npx markdownlint-cli2 "docs/plan/review-3326363838.md" "docs/plan/review-3326338
 
 ## Timeline
 
-| Phase | Duration | Status |
-|-------|----------|--------|
-| Planning document creation | 5 min | ✅ Complete |
-| Fix MD036 in review-3326338954.md | 2 min | ✅ Complete |
-| Fix MD040 in review-3326338954.md | 1 min | ✅ Complete |
-| Fix MD036 in review-3392598742.md | 3 min | ✅ Complete |
-| Fix MD040 in review-3392598742.md | 1 min | ✅ Complete |
-| Validation | 2 min | ✅ Complete |
-| Evidence documentation | 5 min | ✅ Complete |
-| **Total** | **~19 min** | **✅ Complete** |
+| Phase                             | Duration    | Status          |
+| --------------------------------- | ----------- | --------------- |
+| Planning document creation        | 5 min       | ✅ Complete     |
+| Fix MD036 in review-3326338954.md | 2 min       | ✅ Complete     |
+| Fix MD040 in review-3326338954.md | 1 min       | ✅ Complete     |
+| Fix MD036 in review-3392598742.md | 3 min       | ✅ Complete     |
+| Fix MD040 in review-3392598742.md | 1 min       | ✅ Complete     |
+| Validation                        | 2 min       | ✅ Complete     |
+| Evidence documentation            | 5 min       | ✅ Complete     |
+| **Total**                         | **~19 min** | **✅ Complete** |
 
 ---
 
@@ -210,6 +213,7 @@ npx markdownlint-cli2 "docs/plan/review-3326363838.md" "docs/plan/review-3326338
 **Ready for commit:** Yes ✅
 
 **Files to commit:**
+
 - `docs/plan/review-3326363838.md` (created)
 - `docs/plan/review-3326338954.md` (modified, 3 edits)
 - `docs/plan/review-3392598742.md` (modified, 5 edits)

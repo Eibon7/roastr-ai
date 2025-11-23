@@ -5,6 +5,7 @@ This directory contains scripts to set up admin and test users for backoffice de
 ## Overview
 
 As per Issue #237, this setup creates:
+
 - **1 Admin user**: `emiliopostigo@gmail.com` with admin privileges
 - **6 Test users** with different plans and usage patterns
 - **Realistic social media integrations** for paid users
@@ -23,6 +24,7 @@ npm run setup:test-users
 ## What Gets Created
 
 ### 👤 Admin User
+
 - **Email**: `emiliopostigo@gmail.com`
 - **Plan**: Creator Plus
 - **Role**: Admin (`is_admin = true`)
@@ -30,18 +32,19 @@ npm run setup:test-users
 
 ### 🧪 Test Users
 
-| Email | Plan | Usage Pattern | Integrations | Purpose |
-|-------|------|---------------|--------------|---------|
-| `test.free@roastr.ai` | Free | 0% (no usage) | None | Test free plan limits |
-| `test.starter@roastr.ai` | Pro | 3% usage (30/1000) | Twitter | Test low usage pro user |
-| `test.pro@roastr.ai` | Pro | 80% usage (800/1000) | Twitter + YouTube | Test high usage pro user |
-| `test.plus@roastr.ai` | Creator Plus | 50% usage (2500/5000) | Twitter + Instagram | Test moderate creator usage |
-| `test.heavy@roastr.ai` | Creator Plus | 100% usage (5000/5000) | Twitter + YouTube + Instagram + Discord | Test limit-reached user |
-| `test.empty@roastr.ai` | Free | 0% (inactive) | None | Test inactive user |
+| Email                    | Plan         | Usage Pattern          | Integrations                            | Purpose                     |
+| ------------------------ | ------------ | ---------------------- | --------------------------------------- | --------------------------- |
+| `test.free@roastr.ai`    | Free         | 0% (no usage)          | None                                    | Test free plan limits       |
+| `test.starter@roastr.ai` | Pro          | 3% usage (30/1000)     | Twitter                                 | Test low usage pro user     |
+| `test.pro@roastr.ai`     | Pro          | 80% usage (800/1000)   | Twitter + YouTube                       | Test high usage pro user    |
+| `test.plus@roastr.ai`    | Creator Plus | 50% usage (2500/5000)  | Twitter + Instagram                     | Test moderate creator usage |
+| `test.heavy@roastr.ai`   | Creator Plus | 100% usage (5000/5000) | Twitter + YouTube + Instagram + Discord | Test limit-reached user     |
+| `test.empty@roastr.ai`   | Free         | 0% (inactive)          | None                                    | Test inactive user          |
 
 ### 🔗 Social Media Integrations
 
 **Realistic handles created for testing**:
+
 - Twitter: `@test_starter`, `@test_pro_user`, `@test_plus_creator`, `@test_heavy_user`
 - YouTube: `UCTestProChannel`, `UCTestHeavyChannel`
 - Instagram: `test_plus_creator`, `test_heavy_creator`
@@ -60,7 +63,7 @@ npm run setup:test-users
 ```
 scripts/
 ├── setup-test-users.js          # Main setup script (Node.js)
-├── setup-test-users.sql         # SQL commands for data creation  
+├── setup-test-users.sql         # SQL commands for data creation
 └── README-test-users.md         # This documentation
 
 database/migrations/
@@ -71,41 +74,44 @@ database/migrations/
 
 The issue mentioned plans differ from the current system:
 
-| Issue Plan | Actual Plan | Monthly Limit | Features |
-|------------|-------------|---------------|----------|
-| Free | `free` | 100 | Basic integrations |
-| Starter | `pro` (low usage) | 1000 | Shield mode, analytics |
-| Pro | `pro` | 1000 | Shield mode, analytics |
-| Plus | `creator_plus` | 5000 | Custom tones, API access |
+| Issue Plan | Actual Plan       | Monthly Limit | Features                 |
+| ---------- | ----------------- | ------------- | ------------------------ |
+| Free       | `free`            | 100           | Basic integrations       |
+| Starter    | `pro` (low usage) | 1000          | Shield mode, analytics   |
+| Pro        | `pro`             | 1000          | Shield mode, analytics   |
+| Plus       | `creator_plus`    | 5000          | Custom tones, API access |
 
 ## Environment Requirements
 
 Ensure these environment variables are set:
+
 - `SUPABASE_URL` - Your Supabase project URL
 - `SUPABASE_SERVICE_KEY` - Service role key for admin operations
 
 ## Testing & Cleanup
 
 ### Verify Setup
+
 After running the script, verify in your database:
 
 ```sql
 -- Check admin user
-SELECT email, name, plan, is_admin, is_test FROM users 
+SELECT email, name, plan, is_admin, is_test FROM users
 WHERE email = 'emiliopostigo@gmail.com';
 
--- Check test users  
-SELECT email, plan, monthly_messages_sent, is_test FROM users 
+-- Check test users
+SELECT email, plan, monthly_messages_sent, is_test FROM users
 WHERE is_test = true ORDER BY email;
 
 -- Check organizations
-SELECT o.name, o.plan_id, o.monthly_responses_used, u.email 
+SELECT o.name, o.plan_id, o.monthly_responses_used, u.email
 FROM organizations o
-JOIN users u ON u.id = o.owner_id  
+JOIN users u ON u.id = o.owner_id
 WHERE u.is_test = true;
 ```
 
 ### Cleanup Test Data
+
 When you're done testing, clean up with:
 
 ```sql
@@ -117,8 +123,9 @@ DELETE FROM users WHERE is_test = true;
 ## Backoffice Integration
 
 These test users enable testing of:
+
 - **User filtering** by plan, usage, activity
-- **Plan change operations** 
+- **Plan change operations**
 - **Usage limit visualization**
 - **Integration management**
 - **Admin navigation and permissions**
@@ -126,6 +133,7 @@ These test users enable testing of:
 ## Support
 
 For issues with this setup:
+
 1. Check environment variables are set correctly
 2. Verify database connection and permissions
 3. Run with `--dry-run` first to preview changes
@@ -134,8 +142,9 @@ For issues with this setup:
 ---
 
 **Issue #237 Requirements ✅**
+
 - Admin user for backoffice access
-- Multiple test users with varied patterns  
+- Multiple test users with varied patterns
 - Platform integrations for paid users
 - Usage tracking and limits
 - Easy cleanup with test flag

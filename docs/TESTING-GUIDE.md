@@ -35,6 +35,7 @@ npm run test:mvp:watch
 ```
 
 **When to use:**
+
 - Local development (use `test:mock` to avoid API calls)
 - Quick feedback loop
 - TDD workflow
@@ -58,6 +59,7 @@ npm run test:integration-backend:ci
 ```
 
 **When to use:**
+
 - Testing database interactions
 - Testing queue system
 - Testing multi-component workflows
@@ -81,6 +83,7 @@ npm run test:e2e:debug
 ```
 
 **When to use:**
+
 - Testing full user workflows
 - UI regression testing
 - Before major releases
@@ -117,16 +120,19 @@ End-to-end validation scripts for critical MVP flows. These are **standalone val
 #### 1. Basic Roast Flow (`validate-flow-basic-roast.js`)
 
 **What it validates:**
+
 - Complete roast generation pipeline: Comment → Toxicity → OpenAI → Storage → Retrieval
 - Tests 3 toxicity levels: high (0.85), medium (0.62), low (0.15)
 - Validates cost tracking, token usage, and response quality
 
 **How to run:**
+
 ```bash
 node scripts/validate-flow-basic-roast.js
 ```
 
 **Environment requirements:**
+
 ```bash
 MOCK_MODE=false                    # Must use real APIs
 ENABLE_MOCK_MODE=false
@@ -136,12 +142,14 @@ SUPABASE_SERVICE_KEY=...
 ```
 
 **Expected results:**
+
 - ✅ 3/3 test scenarios passing
 - ⏱️ ~7-8 seconds total execution
 - 💰 Cost tracking verified (avg $0.002 per roast)
 - 📊 Performance: <3s per roast (target: <5s)
 
 **What's tested:**
+
 - ✅ Toxicity scoring (0.15-0.85 range)
 - ✅ OpenAI API integration (gpt-4o-mini)
 - ✅ Database storage (roasts table)
@@ -152,16 +160,19 @@ SUPABASE_SERVICE_KEY=...
 #### 2. Shield Moderation Flow (`validate-flow-shield.js`)
 
 **What it validates:**
+
 - Automated content moderation with toxicity-based actions
 - Tests 3 severity levels: critical (0.98 → block), high (0.85 → warn), medium (0.65 → report)
 - Validates Shield activation, priority assignment, action determination, logging
 
 **How to run:**
+
 ```bash
 node scripts/validate-flow-shield.js
 ```
 
 **Environment requirements:**
+
 ```bash
 MOCK_MODE=false
 ENABLE_MOCK_MODE=false
@@ -171,6 +182,7 @@ SUPABASE_SERVICE_KEY=...
 ```
 
 **Expected results:**
+
 - ✅ 3/3 severity scenarios passing
 - ⏱️ ~8-9 seconds total execution
 - 🛡️ Shield activation confirmed for all cases
@@ -178,6 +190,7 @@ SUPABASE_SERVICE_KEY=...
 - 📝 App logs created for audit trail
 
 **What's tested:**
+
 - ✅ Toxicity threshold triggers (>0.60)
 - ✅ Severity classification (critical/high/medium/low)
 - ✅ Action determination (block/warn/report)
@@ -191,16 +204,19 @@ SUPABASE_SERVICE_KEY=...
 #### 3. Multi-Tenant RLS Flow (`validate-flow-rls.js`)
 
 **What it validates:**
+
 - Row Level Security policies across multi-tenant tables
 - Tests data isolation between 2 test organizations
 - Validates CRUD operations respect organization boundaries
 
 **How to run:**
+
 ```bash
 npm test tests/integration/test-multi-tenant-rls.test.js
 ```
 
 **Environment requirements:**
+
 ```bash
 SUPABASE_URL=...
 SUPABASE_SERVICE_KEY=...
@@ -209,12 +225,14 @@ SUPABASE_JWT_SECRET=...           # For JWT generation
 ```
 
 **Expected results:**
+
 - ✅ 14/14 RLS tests passing
 - ⏱️ ~12-15 seconds execution
 - 🔐 Complete data isolation verified
 - 🏢 2 test organizations with JWT context switching
 
 **What's tested:**
+
 - ✅ Organizations table isolation
 - ✅ Posts table isolation
 - ✅ Comments table isolation
@@ -228,16 +246,19 @@ SUPABASE_JWT_SECRET=...           # For JWT generation
 #### 4. Billing Limits Flow (`validate-flow-billing.js`)
 
 **What it validates:**
+
 - Plan-based limit enforcement (Free: 10, Pro: 1000, Creator Plus: 5000)
 - Tests limit blocking when exceeded
 - Validates monthly_usage tracking and CostControl service
 
 **How to run:**
+
 ```bash
 node scripts/validate-flow-billing.js
 ```
 
 **Environment requirements:**
+
 ```bash
 SUPABASE_URL=...
 SUPABASE_SERVICE_KEY=...
@@ -246,12 +267,14 @@ ENABLE_MOCK_MODE=false
 ```
 
 **Expected results:**
+
 - ✅ 3/3 plan scenarios passing
 - ⏱️ ~5-6 seconds execution
 - 🚫 Limit enforcement confirmed for all plans
 - 💳 Monthly usage tracking verified
 
 **What's tested:**
+
 - ✅ Free plan limit (10 responses)
 - ✅ Pro plan limit (1000 responses)
 - ✅ Creator Plus limit (5000 responses)
@@ -271,14 +294,17 @@ ENABLE_MOCK_MODE=false
 These validation scripts required and drove the following infrastructure improvements:
 
 **Database Migrations:**
+
 - `20251017000003_add_plan_limits.sql` - Plan configuration table with RLS
 - `20251017000004_fix_user_org_trigger.sql` - Fixed 'basic' → 'free' plan mapping
 
 **Service Fixes:**
+
 - `src/services/costControl.js:12` - Use SERVICE_KEY instead of ANON_KEY
 - `tests/helpers/tenantTestUtils.js` - Use auth.admin API for user creation
 
 **Test Configuration:**
+
 - `jest.config.js` - Split test projects (unit/integration/security/dom)
 - `tests/setupIntegration.js` - Created integration test setup
 
@@ -286,13 +312,14 @@ These validation scripts required and drove the following infrastructure improve
 
 Based on cross-referencing with original issues #486-#489:
 
-| Status | Count | Description |
-|--------|-------|-------------|
-| ✅ Fully Validated | 21 | Core flows working end-to-end |
-| ⚠️ Partial Coverage | 14 | Implemented but not fully tested |
-| ❌ Missing | 11 | Not yet implemented or validated |
+| Status              | Count | Description                      |
+| ------------------- | ----- | -------------------------------- |
+| ✅ Fully Validated  | 21    | Core flows working end-to-end    |
+| ⚠️ Partial Coverage | 14    | Implemented but not fully tested |
+| ❌ Missing          | 11    | Not yet implemented or validated |
 
 **Critical Gaps:**
+
 - Quality validation (roast length >50 chars)
 - Shield idempotency and complete decision matrix
 - RLS validation for all 7 tables with error codes
@@ -307,6 +334,7 @@ Based on cross-referencing with original issues #486-#489:
 
 1. **Create new script:** `scripts/validate-flow-<name>.js`
 2. **Follow the pattern:**
+
    ```javascript
    // 1. Disable mock mode
    process.env.MOCK_MODE = 'false';
@@ -314,7 +342,7 @@ Based on cross-referencing with original issues #486-#489:
 
    // 2. Define test scenarios array
    const TEST_SCENARIOS = [
-     { input, expected, description },
+     { input, expected, description }
      // ...
    ];
 
@@ -332,6 +360,7 @@ Based on cross-referencing with original issues #486-#489:
    ```
 
 3. **Add to npm scripts:** `package.json`
+
    ```json
    "scripts": {
      "validate:flow:<name>": "node scripts/validate-flow-<name>.js"
@@ -351,6 +380,7 @@ Based on cross-referencing with original issues #486-#489:
 - ⚠️ **Use test environment:** Never run against production database
 
 **Related Issues:**
+
 - #486 - Basic Roast Flow
 - #487 - Shield Flow
 - #488 - Multi-Tenant RLS
@@ -429,6 +459,7 @@ DEBUG=false
 ```
 
 **Load test env:**
+
 ```bash
 export $(cat .env.test | xargs) && npm test
 ```
@@ -446,6 +477,7 @@ Realistic demo data for manual testing and demos (planned feature).
 **Planned Location:** `data/fixtures/`
 
 **Planned Commands:**
+
 ```bash
 # Validate fixtures against JSON schema
 npm run demo:validate
@@ -464,11 +496,13 @@ npm run demo:reset:dry
 ```
 
 **Planned Data:**
+
 - 2 demo organizations (Spanish, English)
 - 6 demo users (Free/Starter/Pro × 2 languages)
 - 35 realistic comment fixtures (18 Spanish, 17 English)
 
 **Planned Demo Credentials:** All users with password `demo123`
+
 - `demo-free-es@demo.roastr.ai`
 - `demo-starter-es@demo.roastr.ai`
 - `demo-pro-es@demo.roastr.ai`
@@ -477,6 +511,7 @@ npm run demo:reset:dry
 - `demo-pro-en@demo.roastr.ai`
 
 **Intended Use Cases:**
+
 - Manual testing with realistic data
 - Demos and presentations
 - Exploring Shield triage scenarios
@@ -490,6 +525,7 @@ Automated test data for integration tests.
 **Location:** `tests/integration/backend/fixtures/`
 
 **Commands:**
+
 ```bash
 # Validate backend fixtures
 npm run fixtures:validate
@@ -499,6 +535,7 @@ npm run fixtures:update:all
 ```
 
 **When to use:**
+
 - Automatically loaded in `test:integration-backend:fixtures`
 - No manual seeding required
 - Clean state for each test run
@@ -512,26 +549,29 @@ npm run fixtures:update:all
 #### Main CI (`.github/workflows/ci.yml`)
 
 **Triggers:**
+
 - Push to `main` branch
 - Pull requests to `main`
 - Manual workflow dispatch
 
 **Jobs:**
+
 ```yaml
 1. Run tests
-   - Node.js 18.x
-   - Install dependencies
-   - Run npm test
-   - Upload coverage artifacts
+- Node.js 18.x
+- Install dependencies
+- Run npm test
+- Upload coverage artifacts
 
 2. Lint code
-   - ESLint checks
-   - Formatting verification
+- ESLint checks
+- Formatting verification
 ```
 
 **Duration:** ~3-5 minutes
 
 **Environment:**
+
 - `ENABLE_MOCK_MODE=true`
 - `NODE_ENV=test`
 - All API keys mocked
@@ -539,10 +579,12 @@ npm run fixtures:update:all
 #### Integration Tests (`.github/workflows/integration-tests.yml`)
 
 **Triggers:**
+
 - Push to `main`
 - Pull requests
 
 **Jobs:**
+
 ```yaml
 1. Backend integration tests
    - Uses fixtures mode (no external DB required)
@@ -562,24 +604,26 @@ npm run fixtures:update:all
 **Configuration:** `playwright.config.js`
 
 **CI-specific settings:**
+
 ```javascript
 {
   // CI detection
   workers: process.env.CI ? 1 : undefined,
-  
+
   // Headless in CI
   use: {
     headless: !!process.env.CI,
   },
-  
+
   // Only Chromium in CI
-  projects: process.env.CI 
+  projects: process.env.CI
     ? [{ name: 'chromium' }]
     : [/* all browsers */]
 }
 ```
 
 **Artifacts collected:**
+
 - Screenshots on failure
 - Video recordings (if enabled)
 - Test reports (HTML)
@@ -600,6 +644,7 @@ HEADLESS=1 npm run test:e2e
 ```
 
 **Docker:**
+
 ```dockerfile
 # Use official Playwright image
 FROM mcr.microsoft.com/playwright:v1.56.0-jammy
@@ -620,20 +665,20 @@ CMD ["npm", "run", "test:e2e"]
 
 ### Local Development (MacBook Pro M1, 16GB RAM)
 
-| Test Type | Duration | Tests | Notes |
-|-----------|----------|-------|-------|
-| Unit tests | ~9s | 178 | Fast feedback loop |
-| Integration (fixtures) | ~12s | Variable | No external DB |
-| E2E (3 browsers) | ~45s | 17 | Chrome, Firefox, Safari |
-| **Total (serial)** | **~66s** | **195+** | All tests |
+| Test Type              | Duration | Tests    | Notes                   |
+| ---------------------- | -------- | -------- | ----------------------- |
+| Unit tests             | ~9s      | 178      | Fast feedback loop      |
+| Integration (fixtures) | ~12s     | Variable | No external DB          |
+| E2E (3 browsers)       | ~45s     | 17       | Chrome, Firefox, Safari |
+| **Total (serial)**     | **~66s** | **195+** | All tests               |
 
 ### CI (GitHub Actions)
 
-| Test Type | Duration | Tests | Notes |
-|-----------|----------|-------|-------|
-| Unit tests | ~15s | 178 | Includes setup |
-| Integration | ~20s | Variable | With fixtures |
-| E2E (Chromium only) | ~60s | 17 | Headless, 1 browser |
+| Test Type            | Duration | Tests    | Notes                |
+| -------------------- | -------- | -------- | -------------------- |
+| Unit tests           | ~15s     | 178      | Includes setup       |
+| Integration          | ~20s     | Variable | With fixtures        |
+| E2E (Chromium only)  | ~60s     | 17       | Headless, 1 browser  |
 | **Total (parallel)** | **~95s** | **195+** | Jobs run in parallel |
 
 ### Individual Test Suites (Examples)
@@ -646,6 +691,7 @@ Time:        9.021 s
 ```
 
 **Breakdown by file:**
+
 - `costControl.test.js`: ~1.2s (45 tests)
 - `queueService.test.js`: ~1.8s (38 tests)
 - `inputValidation.test.js`: ~0.8s (28 tests)
@@ -655,6 +701,7 @@ Time:        9.021 s
 ### Performance Tips
 
 **Speed up local tests:**
+
 ```bash
 # Use mock mode (avoid API calls)
 npm run test:mock
@@ -667,6 +714,7 @@ npm test -- --testPathIgnorePatterns=e2e
 ```
 
 **Speed up CI:**
+
 ```bash
 # Use fixtures instead of real DB
 npm run test:integration-backend:fixtures
@@ -686,6 +734,7 @@ npm run test:integration-backend:fixtures
 **Cause:** Missing dependencies
 
 **Fix:**
+
 ```bash
 npm install
 npx playwright install  # For E2E tests
@@ -696,6 +745,7 @@ npx playwright install  # For E2E tests
 **Cause:** Missing Supabase credentials
 
 **Fix:**
+
 ```bash
 # Use fixtures mode (recommended)
 npm run test:integration-backend:fixtures
@@ -711,6 +761,7 @@ export $(cat .env.test | xargs)
 **Cause:** Playwright browsers not installed
 
 **Fix:**
+
 ```bash
 npx playwright install chromium
 # Or all browsers:
@@ -722,10 +773,11 @@ npx playwright install
 **Cause:** Network issues or slow operations
 
 **Fix:**
+
 ```javascript
 // Increase timeout in jest.config.js
 module.exports = {
-  testTimeout: 30000, // 30 seconds
+  testTimeout: 30000 // 30 seconds
 };
 ```
 
@@ -734,6 +786,7 @@ module.exports = {
 **Cause:** Coverage not generated
 
 **Fix:**
+
 ```bash
 npm run test:coverage
 # Reports in: coverage/lcov-report/index.html
@@ -744,6 +797,7 @@ npm run test:coverage
 **Cause:** Race conditions or timing issues
 
 **Fix:**
+
 ```javascript
 // Use Playwright's built-in waiting
 await page.waitForSelector('.element');

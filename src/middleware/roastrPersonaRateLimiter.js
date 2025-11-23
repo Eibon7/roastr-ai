@@ -7,7 +7,7 @@ const { flags } = require('../config/flags');
 
 /**
  * Rate Limiter for Roastr Persona endpoints
- * 
+ *
  * Protects against abuse and brute force attacks on personal data endpoints
  * Issue #154: Security enhancement for Roastr Persona system
  */
@@ -22,12 +22,12 @@ if (process.env.REDIS_URL && process.env.NODE_ENV === 'production') {
       reconnectStrategy: (retries) => Math.min(retries * 50, 1000)
     }
   });
-  
+
   redisClient.on('error', (err) => {
     logger.error('Redis client error for rate limiting:', err);
   });
-  
-  redisClient.connect().catch(err => {
+
+  redisClient.connect().catch((err) => {
     logger.error('Failed to connect to Redis for rate limiting:', err);
     redisClient = null;
   });
@@ -61,7 +61,7 @@ const createRateLimiter = (windowMs, max, message, keyPrefix) => {
         endpoint: req.originalUrl,
         keyPrefix
       });
-      
+
       res.status(429).json({
         success: false,
         error: message,
@@ -69,7 +69,7 @@ const createRateLimiter = (windowMs, max, message, keyPrefix) => {
       });
     }
   };
-  
+
   // Use Redis store if available
   if (redisClient && redisClient.isReady) {
     options.store = new RedisStore({
@@ -77,7 +77,7 @@ const createRateLimiter = (windowMs, max, message, keyPrefix) => {
       prefix: `roastr-persona:${keyPrefix}:`
     });
   }
-  
+
   return rateLimit(options);
 };
 
@@ -129,32 +129,23 @@ const applyRateLimiters = (...limiters) => {
       if (index >= limiters.length) {
         return next();
       }
-      
+
       limiters[index](req, res, (err) => {
         if (err) return next(err);
         applyNext(index + 1);
       });
     };
-    
+
     applyNext(0);
   };
 };
 
 // Combined rate limiters for different operations
-const readRateLimiter = applyRateLimiters(
-  roastrPersonaGlobalLimiter,
-  roastrPersonaReadLimiter
-);
+const readRateLimiter = applyRateLimiters(roastrPersonaGlobalLimiter, roastrPersonaReadLimiter);
 
-const writeRateLimiter = applyRateLimiters(
-  roastrPersonaGlobalLimiter,
-  roastrPersonaWriteLimiter
-);
+const writeRateLimiter = applyRateLimiters(roastrPersonaGlobalLimiter, roastrPersonaWriteLimiter);
 
-const deleteRateLimiter = applyRateLimiters(
-  roastrPersonaGlobalLimiter,
-  roastrPersonaDeleteLimiter
-);
+const deleteRateLimiter = applyRateLimiters(roastrPersonaGlobalLimiter, roastrPersonaDeleteLimiter);
 
 const sensitiveRateLimiter = applyRateLimiters(
   roastrPersonaGlobalLimiter,

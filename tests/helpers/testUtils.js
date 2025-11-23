@@ -7,14 +7,42 @@ const { randomUUID } = require('crypto');
 /**
  * Shared plan limits constants to ensure consistency across all test utilities
  * Updated per PR #842: Plan restructure (starter_trial/starter/pro/plus)
- * 
+ *
  * Note: integrationsLimit is intentionally higher than platforms to allow multiple integrations per platform
  */
 const PLAN_LIMITS = {
-  starter_trial: { roasts: 50, monthlyResponsesLimit: 100, platforms: 1, integrationsLimit: 2, features: ['basic'], shieldEnabled: true },
-  starter: { roasts: 10, monthlyResponsesLimit: 1000, platforms: 1, integrationsLimit: 2, features: ['basic'], shieldEnabled: true },
-  pro: { roasts: 500, monthlyResponsesLimit: 1000, platforms: 2, integrationsLimit: 6, features: ['basic', 'advanced'], shieldEnabled: true },
-  plus: { roasts: 5000, monthlyResponsesLimit: 10000, platforms: 2, integrationsLimit: 6, features: ['basic', 'advanced', 'premium'], shieldEnabled: true }
+  starter_trial: {
+    roasts: 50,
+    monthlyResponsesLimit: 100,
+    platforms: 1,
+    integrationsLimit: 2,
+    features: ['basic'],
+    shieldEnabled: true
+  },
+  starter: {
+    roasts: 10,
+    monthlyResponsesLimit: 1000,
+    platforms: 1,
+    integrationsLimit: 2,
+    features: ['basic'],
+    shieldEnabled: true
+  },
+  pro: {
+    roasts: 500,
+    monthlyResponsesLimit: 1000,
+    platforms: 2,
+    integrationsLimit: 6,
+    features: ['basic', 'advanced'],
+    shieldEnabled: true
+  },
+  plus: {
+    roasts: 5000,
+    monthlyResponsesLimit: 10000,
+    platforms: 2,
+    integrationsLimit: 6,
+    features: ['basic', 'advanced', 'premium'],
+    shieldEnabled: true
+  }
 };
 
 /**
@@ -46,11 +74,13 @@ function getAutoResponse(effectivePlan) {
  * Mock response para OpenAI API
  */
 const createMockOpenAIResponse = (text) => ({
-  choices: [{
-    message: {
-      content: text
+  choices: [
+    {
+      message: {
+        content: text
+      }
     }
-  }]
+  ]
 });
 
 /**
@@ -62,7 +92,7 @@ const getMockRoastByTone = (tone, originalMessage) => {
     subtle: `Interesante perspectiva la tuya sobre "${originalMessage}", aunque quizás merezca una reflexión más profunda 🤔`,
     direct: `"${originalMessage}" - directo al grano: no tiene sentido 💀`
   };
-  
+
   return mockRoasts[tone] || mockRoasts.sarcastic;
 };
 
@@ -145,17 +175,17 @@ const getValidTestData = () => ({
 const createMockApp = () => {
   const express = require('express');
   const bodyParser = require('body-parser');
-  
+
   const app = express();
   app.use(bodyParser.json());
-  
+
   return app;
 };
 
 /**
  * Delay utility para tests asíncronos
  */
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Generar ID único para tests
@@ -167,13 +197,13 @@ const generateTestId = () => `test_${randomUUID()}`;
  */
 const validateApiResponse = (response, expectedFields = []) => {
   const errors = [];
-  
-  expectedFields.forEach(field => {
+
+  expectedFields.forEach((field) => {
     if (!(field in response)) {
       errors.push(`Missing field: ${field}`);
     }
   });
-  
+
   return {
     isValid: errors.length === 0,
     errors
@@ -227,7 +257,9 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
 
   // Validate effectivePlan against PLAN_LIMITS
   if (!Object.prototype.hasOwnProperty.call(PLAN_LIMITS, effectivePlan)) {
-    console.warn(`Invalid plan type '${effectivePlan}' detected, falling back to 'starter_trial' plan`);
+    console.warn(
+      `Invalid plan type '${effectivePlan}' detected, falling back to 'starter_trial' plan`
+    );
     effectivePlan = 'starter_trial';
   }
 
@@ -238,14 +270,16 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
   const finalEntitlements = {
     plan_name: entitlements.plan_name || effectivePlan,
     monthlyResponsesLimit: defaults.monthlyResponsesLimit,
-    integrationsLimit: entitlements.integrationsLimit ?? defaults.integrationsLimit ?? defaults.platforms,
+    integrationsLimit:
+      entitlements.integrationsLimit ?? defaults.integrationsLimit ?? defaults.platforms,
     shieldEnabled: defaults.shieldEnabled,
     ...entitlements
   };
 
   // Compute usage per quotaScenario
   const limit = finalEntitlements.monthlyResponsesLimit;
-  let roastsThisMonth = usageOverrides.roastsThisMonth ?? (effectivePlan === 'starter_trial' ? 8 : 45);
+  let roastsThisMonth =
+    usageOverrides.roastsThisMonth ?? (effectivePlan === 'starter_trial' ? 8 : 45);
   if (quotaScenario === 'near') roastsThisMonth = Math.max(0, limit - 1);
   if (quotaScenario === 'over') roastsThisMonth = limit + 5;
 
@@ -265,7 +299,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
       plan: effectivePlan,
       createdAt: new Date().toISOString(),
       status: suspended ? 'suspended' : 'active',
-      suspendedReason: suspended ? (suspendedReason || 'Suspended by scenario') : null,
+      suspendedReason: suspended ? suspendedReason || 'Suspended by scenario' : null,
       settings: {
         enabledPlatforms: platforms,
         moderationLevel: getModerationLevel(effectivePlan),
@@ -273,7 +307,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
       },
       entitlements: finalEntitlements
     },
-    platforms: platforms.map(platform => ({
+    platforms: platforms.map((platform) => ({
       platform,
       isConnected: true,
       credentials: `mock-${platform}-credentials`,
@@ -336,7 +370,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           }
         }
       };
-      
+
     case 'starterTier':
     case 'starter_trial':
       return {
@@ -360,7 +394,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           }
         }
       };
-      
+
     case 'starter':
       return {
         ...baseScenario,
@@ -380,7 +414,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           limit: PLAN_LIMITS.starter.monthlyResponsesLimit
         }
       };
-      
+
     case 'multiUser': {
       const additionalUsers = Array.from({ length: 3 }, (_, i) => ({
         id: generateTestId(),
@@ -390,7 +424,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
         createdAt: new Date().toISOString(),
         isActive: true
       }));
-      
+
       return {
         ...baseScenario,
         users: [baseScenario.user, ...additionalUsers],
@@ -398,13 +432,20 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           ...baseScenario.organization,
           settings: {
             ...baseScenario.organization.settings,
-            userLimit: effectivePlan === 'plus' ? 10 : effectivePlan === 'pro' ? 5 : effectivePlan === 'starter' ? 2 : 1,
+            userLimit:
+              effectivePlan === 'plus'
+                ? 10
+                : effectivePlan === 'pro'
+                  ? 5
+                  : effectivePlan === 'starter'
+                    ? 2
+                    : 1,
             roleBasedAccess: true
           }
         }
       };
     }
-      
+
     case 'suspended':
       return {
         ...baseScenario,
@@ -415,7 +456,7 @@ const createMultiTenantTestScenario = (scenarioType = 'simple', options = {}) =>
           suspendedReason: suspendedReason || 'Payment failed'
         }
       };
-      
+
     case 'simple':
     default:
       return baseScenario;
@@ -430,35 +471,40 @@ const createMultiTenantMocks = (scenario) => {
     // User queries
     getUserById: jest.fn().mockResolvedValue(scenario.user),
     getUsersByOrg: jest.fn().mockResolvedValue(scenario.users || [scenario.user]),
-    
-    // Organization queries  
+
+    // Organization queries
     getOrganizationById: jest.fn().mockResolvedValue(scenario.organization),
     getOrgSettings: jest.fn().mockResolvedValue(scenario.organization.settings),
-    
+
     // Platform queries
     getPlatformsByOrg: jest.fn().mockResolvedValue(scenario.platforms),
-    
+
     // Usage queries
     getUsageStats: jest.fn().mockResolvedValue({
       roastsThisMonth: scenario.usage?.roastsThisMonth ?? 0,
       limit: scenario.usage?.limit ?? 0,
       currentSpend: scenario.usage?.currentSpend ?? 0,
       tokensUsed: scenario.usage?.tokensUsed ?? 0,
-      isNearLimit: typeof scenario.usage?.limit === 'number' && typeof scenario.usage?.roastsThisMonth === 'number'
-        ? (scenario.usage.roastsThisMonth >= Math.max(0, scenario.usage.limit - 1) && scenario.usage.roastsThisMonth <= scenario.usage.limit)
-        : false,
-      isOverLimit: typeof scenario.usage?.limit === 'number' && typeof scenario.usage?.roastsThisMonth === 'number'
-        ? (scenario.usage.roastsThisMonth > scenario.usage.limit)
-        : false
+      isNearLimit:
+        typeof scenario.usage?.limit === 'number' &&
+        typeof scenario.usage?.roastsThisMonth === 'number'
+          ? scenario.usage.roastsThisMonth >= Math.max(0, scenario.usage.limit - 1) &&
+            scenario.usage.roastsThisMonth <= scenario.usage.limit
+          : false,
+      isOverLimit:
+        typeof scenario.usage?.limit === 'number' &&
+        typeof scenario.usage?.roastsThisMonth === 'number'
+          ? scenario.usage.roastsThisMonth > scenario.usage.limit
+          : false
     }),
-    
+
     // RLS (Row Level Security) helpers
     setCurrentUser: jest.fn().mockImplementation((userId) => {
       // Mock setting RLS context
       return Promise.resolve({ userId, orgId: scenario.organizationId });
     })
   };
-  
+
   return mockDatabase;
 };
 
@@ -467,38 +513,41 @@ const createMultiTenantMocks = (scenario) => {
  */
 const createPlatformMockData = (platform, options = {}) => {
   const { count = 5, toxicityLevel = 'moderate' } = options;
-  
+
   const platformGenerators = {
-    twitter: () => Array.from({ length: count }, (_, i) => ({
-      id: `tweet_${generateTestId()}`,
-      text: `Mock Twitter comment ${i + 1} - ${toxicityLevel} toxicity`,
-      author_id: `user_${generateTestId()}`,
-      created_at: new Date().toISOString(),
-      platform: 'twitter',
-      toxicity_score: toxicityLevel === 'high' ? 0.8 : toxicityLevel === 'low' ? 0.2 : 0.5
-    })),
-    
-    youtube: () => Array.from({ length: count }, (_, i) => ({
-      id: `comment_${generateTestId()}`,
-      snippet: {
-        textDisplay: `Mock YouTube comment ${i + 1} - ${toxicityLevel} toxicity`,
-        authorDisplayName: `TestUser${i + 1}`,
-        publishedAt: new Date().toISOString()
-      },
-      platform: 'youtube',
-      toxicity_score: toxicityLevel === 'high' ? 0.8 : toxicityLevel === 'low' ? 0.2 : 0.5
-    })),
-    
-    instagram: () => Array.from({ length: count }, (_, i) => ({
-      id: `ig_comment_${generateTestId()}`,
-      text: `Mock Instagram comment ${i + 1} - ${toxicityLevel} toxicity`,
-      username: `testuser${i + 1}`,
-      timestamp: new Date().toISOString(),
-      platform: 'instagram',
-      toxicity_score: toxicityLevel === 'high' ? 0.8 : toxicityLevel === 'low' ? 0.2 : 0.5
-    }))
+    twitter: () =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `tweet_${generateTestId()}`,
+        text: `Mock Twitter comment ${i + 1} - ${toxicityLevel} toxicity`,
+        author_id: `user_${generateTestId()}`,
+        created_at: new Date().toISOString(),
+        platform: 'twitter',
+        toxicity_score: toxicityLevel === 'high' ? 0.8 : toxicityLevel === 'low' ? 0.2 : 0.5
+      })),
+
+    youtube: () =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `comment_${generateTestId()}`,
+        snippet: {
+          textDisplay: `Mock YouTube comment ${i + 1} - ${toxicityLevel} toxicity`,
+          authorDisplayName: `TestUser${i + 1}`,
+          publishedAt: new Date().toISOString()
+        },
+        platform: 'youtube',
+        toxicity_score: toxicityLevel === 'high' ? 0.8 : toxicityLevel === 'low' ? 0.2 : 0.5
+      })),
+
+    instagram: () =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `ig_comment_${generateTestId()}`,
+        text: `Mock Instagram comment ${i + 1} - ${toxicityLevel} toxicity`,
+        username: `testuser${i + 1}`,
+        timestamp: new Date().toISOString(),
+        platform: 'instagram',
+        toxicity_score: toxicityLevel === 'high' ? 0.8 : toxicityLevel === 'low' ? 0.2 : 0.5
+      }))
   };
-  
+
   return platformGenerators[platform] ? platformGenerators[platform]() : [];
 };
 
@@ -508,7 +557,7 @@ const createPlatformMockData = (platform, options = {}) => {
 const createPlanBasedMockResponse = (planType, service, method) => {
   // Use shared plan limits for consistency
   const limits = PLAN_LIMITS[planType] || PLAN_LIMITS.starter_trial;
-  
+
   return {
     success: true,
     data: {
@@ -538,20 +587,29 @@ let envBackup = {};
 const backupEnvironmentVars = (keys = []) => {
   // If no keys provided, backup commonly modified environment variables
   const defaultKeys = [
-    'NODE_ENV', 'ENABLE_MOCK_MODE', 'ENABLE_RQC', 'ENABLE_SHIELD', 'ENABLE_BILLING',
-    'ENABLE_CUSTOM_PROMPT', 'ENABLE_SHOP', 'OPENAI_API_KEY', 'STRIPE_SECRET_KEY',
-    'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_KEY'
+    'NODE_ENV',
+    'ENABLE_MOCK_MODE',
+    'ENABLE_RQC',
+    'ENABLE_SHIELD',
+    'ENABLE_BILLING',
+    'ENABLE_CUSTOM_PROMPT',
+    'ENABLE_SHOP',
+    'OPENAI_API_KEY',
+    'STRIPE_SECRET_KEY',
+    'SUPABASE_URL',
+    'SUPABASE_ANON_KEY',
+    'SUPABASE_SERVICE_KEY'
   ];
-  
+
   const keysToBackup = keys.length > 0 ? keys : defaultKeys;
-  
-  keysToBackup.forEach(key => {
+
+  keysToBackup.forEach((key) => {
     envBackup[key] = process.env[key];
   });
 };
 
 const restoreEnvironmentVars = () => {
-  Object.keys(envBackup).forEach(key => {
+  Object.keys(envBackup).forEach((key) => {
     if (envBackup[key] === undefined) {
       delete process.env[key];
     } else {
@@ -565,12 +623,12 @@ const withMockEnvironment = (envVars, testFn) => {
   return () => {
     const originalKeys = Object.keys(envVars);
     backupEnvironmentVars(originalKeys);
-    
+
     // Set mock environment variables
-    Object.keys(envVars).forEach(key => {
+    Object.keys(envVars).forEach((key) => {
       process.env[key] = envVars[key];
     });
-    
+
     try {
       return testFn();
     } finally {
@@ -653,9 +711,11 @@ const calculateQualityScore = (variant, originalComment) => {
   }
 
   // Quality metric 2: Not empty or generic error
-  if (text.trim() !== '' &&
-      !text.toLowerCase().includes('error') &&
-      !text.toLowerCase().includes('failed')) {
+  if (
+    text.trim() !== '' &&
+    !text.toLowerCase().includes('error') &&
+    !text.toLowerCase().includes('failed')
+  ) {
     score += 0.2;
   }
 
@@ -668,8 +728,11 @@ const calculateQualityScore = (variant, originalComment) => {
 
   // Quality metric 4: Coherence with original (basic keyword matching)
   if (originalComment) {
-    const commentWords = originalComment.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-    const hasRelevantWords = commentWords.some(word =>
+    const commentWords = originalComment
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 3);
+    const hasRelevantWords = commentWords.some((word) =>
       text.toLowerCase().includes(word.substring(0, 4))
     );
     if (hasRelevantWords) {
@@ -741,4 +804,3 @@ module.exports = {
   calculateQualityScore,
   validateToneEnforcement
 };
-

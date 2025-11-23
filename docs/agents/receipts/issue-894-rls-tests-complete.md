@@ -11,17 +11,20 @@
 ## Executive Summary
 
 **Problema original:**
+
 - 0/35 tests pasando debido a egress excedido (287%, 14.365 / 5 GB)
 - Supabase bloqueado (Cloudflare Error 522)
 - Tests dependían de Supabase real
 
 **Solución implementada:**
+
 - Mock completo del cliente Supabase con simulación RLS
 - JWT decoding para contexto de tenant
 - Validaciones RLS a nivel de operación (INSERT/UPDATE/DELETE/SELECT)
 - 35/35 tests pasando (100%)
 
 **Impacto:**
+
 - ✅ Bandwidth savings: ~75 GB/mes (dentro de free tier)
 - ✅ Test speed: 0.471s (antes: >30s con timeouts)
 - ✅ Zero network calls en integration tests
@@ -36,6 +39,7 @@
 **Archivo:** `tests/helpers/supabaseMock.js`
 
 **Características:**
+
 - ✅ SELECT con RLS filtering (`.eq()`, `.in()`, `.single()`, `.maybeSingle()`)
 - ✅ INSERT con validación RLS (`.insert().select()`)
 - ✅ UPDATE con protección organization_id (`.update().eq().select()`)
@@ -62,7 +66,7 @@ setSession: ({ access_token }) => {
 // RLS filtering en SELECT
 _applyRLSFilter(table, rows) {
   if (this.bypassRLS) return rows; // Service role
-  
+
   const orgId = this.currentContext?.organization_id;
   return rows.filter(row => {
     if (!row.organization_id) return true;
@@ -87,6 +91,7 @@ if (updates.organization_id && !this.bypassRLS) {
 **Archivo:** `tests/helpers/tenantTestUtils.js`
 
 **Cambios:**
+
 - ✅ Shared data store entre `serviceClient` y `testClient`
 - ✅ Synthetic user IDs (evita `auth.admin.createUser()`)
 - ✅ Mock activado por default (`USE_SUPABASE_MOCK=true`)
@@ -96,7 +101,7 @@ if (updates.organization_id && !this.bypassRLS) {
 if (USE_MOCK) {
   serviceClient = createMockServiceClient();
   testClient = createMockSupabaseClient();
-  
+
   // CRITICAL: Share data store
   testClient.data = serviceClient.data;
 } else {
@@ -111,6 +116,7 @@ if (USE_MOCK) {
 **Archivo:** `docs/testing/SUPABASE-MOCK-SETUP.md`
 
 Guía completa con:
+
 - Setup y uso del mock
 - Ejemplos de tests
 - Troubleshooting común
@@ -123,19 +129,20 @@ Guía completa con:
 
 ### Progresión
 
-| Iteración | Tests Pasando | % | Fix Aplicado |
-|-----------|---------------|---|--------------|
-| 0 | 0/35 | 0% | (Supabase bloqueado) |
-| 1 | 7/35 | 20% | Mock básico + métodos faltantes |
-| 2 | 10/35 | 29% | `.insert().select()`, `.update().eq().select()` |
-| 3 | 17/35 | 49% | `.insert()` error handling |
-| 4 | 29/35 | 83% | JWT decoding en `setSession()` |
-| 5 | 34/35 | 97% | `data: []` en errores RLS (no `null`) |
-| **6** | **35/35** | **100%** | Validación `organization_id` en UPDATE |
+| Iteración | Tests Pasando | %        | Fix Aplicado                                    |
+| --------- | ------------- | -------- | ----------------------------------------------- |
+| 0         | 0/35          | 0%       | (Supabase bloqueado)                            |
+| 1         | 7/35          | 20%      | Mock básico + métodos faltantes                 |
+| 2         | 10/35         | 29%      | `.insert().select()`, `.update().eq().select()` |
+| 3         | 17/35         | 49%      | `.insert()` error handling                      |
+| 4         | 29/35         | 83%      | JWT decoding en `setSession()`                  |
+| 5         | 34/35         | 97%      | `data: []` en errores RLS (no `null`)           |
+| **6**     | **35/35**     | **100%** | Validación `organization_id` en UPDATE          |
 
 ### Cobertura Final
 
 **Tablas testeadas (6/6):**
+
 - ✅ `integration_configs` (HIGH - Security)
 - ✅ `usage_records` (HIGH - Billing)
 - ✅ `monthly_usage` (HIGH - Billing)
@@ -144,11 +151,13 @@ Guía completa con:
 - ✅ `user_activities` (LOW)
 
 **Operaciones (15/18):**
+
 - INSERT: 5/6 tables (83%)
 - UPDATE: 5/6 tables (83%)
 - DELETE: 3/6 tables (50%)
 
 **Cross-tenant isolation (100%):**
+
 - ✅ Tenant A cannot INSERT for Tenant B
 - ✅ Tenant B cannot INSERT for Tenant A
 - ✅ Tenant A cannot UPDATE Tenant B data
@@ -192,15 +201,16 @@ Status: ✅ WITHIN FREE TIER
 
 **Additional fix applied:** Reduced worker poll frequency to minimize DB queries.
 
-| Worker | Before | After (Dev) | After (Prod) | Reduction |
-|--------|--------|-------------|--------------|-----------|
-| fetch_comments | 2s | 60s | 30s | 30x |
-| analyze_toxicity | 1.5s | 60s | 30s | 40x |
-| generate_reply | 2s | 60s | 30s | 30x |
-| style_profile | 5s | 60s | N/A | 12x |
-| post_response | 2s | 60s | 30s | 30x |
+| Worker           | Before | After (Dev) | After (Prod) | Reduction |
+| ---------------- | ------ | ----------- | ------------ | --------- |
+| fetch_comments   | 2s     | 60s         | 30s          | 30x       |
+| analyze_toxicity | 1.5s   | 60s         | 30s          | 40x       |
+| generate_reply   | 2s     | 60s         | 30s          | 30x       |
+| style_profile    | 5s     | 60s         | N/A          | 12x       |
+| post_response    | 2s     | 60s         | 30s          | 30x       |
 
 **Impact on bandwidth:**
+
 - DB queries reduced by 30-40x
 - Polling overhead: 43,200 queries/day → 1,440 queries/day (97% reduction)
 
@@ -283,6 +293,7 @@ npm test -- tests/integration/multi-tenant-rls-issue-801-crud.test.js
 ## Next Steps
 
 ### Immediate (DONE)
+
 - [x] Implementar mock completo
 - [x] 35/35 tests pasando
 - [x] Documentar setup
@@ -290,6 +301,7 @@ npm test -- tests/integration/multi-tenant-rls-issue-801-crud.test.js
 - [x] Commit cambios
 
 ### Future Enhancements (Optional)
+
 - [ ] Añadir mock para más endpoints RPC
 - [ ] Mock para Storage API (si se necesita en tests)
 - [ ] Performance profiling del mock
@@ -354,7 +366,7 @@ if (updates.organization_id !== currentContext.organization_id) {
 **TestEngineer:** ✅ Approved  
 **Quality Gate:** ✅ 35/35 tests passing  
 **Bandwidth:** ✅ Within free tier  
-**CI:** ✅ Stable  
+**CI:** ✅ Stable
 
 **Ready for merge:** ✅ YES
 
@@ -375,4 +387,3 @@ if (updates.organization_id !== currentContext.organization_id) {
 
 **Signature:** TestEngineer Agent  
 **Generated:** 2025-11-21 (Automated via Cursor)
-

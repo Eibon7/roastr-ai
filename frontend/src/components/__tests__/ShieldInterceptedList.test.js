@@ -31,7 +31,7 @@ const mockShieldActions = [
     created_at: PAST_DATE,
     reverted_at: RECENT_DATE,
     content_hash: 'def456ghi789'
-  },
+  }
 ];
 
 describe('ShieldInterceptedList', () => {
@@ -48,22 +48,24 @@ describe('ShieldInterceptedList', () => {
   describe('Component Rendering', () => {
     test('should render empty state when no intercepted items', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={[]} 
+        <ShieldInterceptedList
+          interceptedItems={[]}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
         />
       );
 
-      expect(screen.getByText('No hay comentarios interceptados en este período')).toBeInTheDocument();
+      expect(
+        screen.getByText('No hay comentarios interceptados en este período')
+      ).toBeInTheDocument();
       expect(screen.getByText('🛡️')).toBeInTheDocument();
     });
 
     test('should render loading state with proper ARIA attributes', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={[]} 
+        <ShieldInterceptedList
+          interceptedItems={[]}
           onRevertAction={mockOnRevertAction}
           loading={true}
           onRefresh={mockOnRefresh}
@@ -71,7 +73,7 @@ describe('ShieldInterceptedList', () => {
       );
 
       expect(screen.getByText('Cargando eventos de Shield...')).toBeInTheDocument();
-      
+
       // Check accessibility attributes
       const loadingStatus = screen.getByRole('status');
       expect(loadingStatus).toBeInTheDocument();
@@ -81,8 +83,8 @@ describe('ShieldInterceptedList', () => {
 
     test('should render intercepted items when provided', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -99,8 +101,8 @@ describe('ShieldInterceptedList', () => {
 
     test('should show reverted status for reverted actions', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -114,8 +116,8 @@ describe('ShieldInterceptedList', () => {
   describe('Filtering Functionality', () => {
     test('should filter by category', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -155,8 +157,8 @@ describe('ShieldInterceptedList', () => {
       ];
 
       render(
-        <ShieldInterceptedList 
-          interceptedItems={testItems} 
+        <ShieldInterceptedList
+          interceptedItems={testItems}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -174,8 +176,8 @@ describe('ShieldInterceptedList', () => {
 
     test('should show filtered empty state message for specific category', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -186,15 +188,17 @@ describe('ShieldInterceptedList', () => {
       const spamButton = screen.getByText('Spam');
       fireEvent.click(spamButton);
 
-      expect(screen.getByText('No hay comentarios de tipo "Spam" en este período')).toBeInTheDocument();
+      expect(
+        screen.getByText('No hay comentarios de tipo "Spam" en este período')
+      ).toBeInTheDocument();
     });
   });
 
   describe('Revert Functionality', () => {
     test('should show revert button for non-reverted actions only', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -209,8 +213,8 @@ describe('ShieldInterceptedList', () => {
       mockOnRevertAction.mockResolvedValue();
 
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -227,13 +231,16 @@ describe('ShieldInterceptedList', () => {
 
     test('should show loading state during revert operation', async () => {
       let resolveRevert;
-      mockOnRevertAction.mockImplementation(() => new Promise(resolve => {
-        resolveRevert = resolve;
-      }));
+      mockOnRevertAction.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveRevert = resolve;
+          })
+      );
 
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -248,7 +255,7 @@ describe('ShieldInterceptedList', () => {
 
       // Resolve the promise
       resolveRevert();
-      
+
       await waitFor(() => {
         expect(screen.queryByText('⏳ Revirtiendo...')).not.toBeInTheDocument();
       });
@@ -258,8 +265,8 @@ describe('ShieldInterceptedList', () => {
   describe('Refresh Functionality', () => {
     test('should call onRefresh when refresh button is clicked', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -274,8 +281,8 @@ describe('ShieldInterceptedList', () => {
 
     test('should disable refresh button when loading', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={true}
           onRefresh={mockOnRefresh}
@@ -290,8 +297,8 @@ describe('ShieldInterceptedList', () => {
   describe('Expandable Details', () => {
     test('should expand and collapse item details', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -321,8 +328,8 @@ describe('ShieldInterceptedList', () => {
   describe('Accessibility', () => {
     test('should have proper form labels and controls', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -331,7 +338,7 @@ describe('ShieldInterceptedList', () => {
 
       expect(screen.getByText('Filtrar por categoría:')).toBeInTheDocument();
       expect(screen.getByText('Período de tiempo:')).toBeInTheDocument();
-      
+
       const timeSelect = screen.getByDisplayValue('Últimos 30 días');
       expect(timeSelect).toBeInTheDocument();
       expect(timeSelect.tagName).toBe('SELECT');
@@ -339,8 +346,8 @@ describe('ShieldInterceptedList', () => {
 
     test('should have accessible button text and labels', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}
@@ -355,8 +362,8 @@ describe('ShieldInterceptedList', () => {
   describe('Date Formatting', () => {
     test('should format dates consistently', () => {
       render(
-        <ShieldInterceptedList 
-          interceptedItems={mockShieldActions} 
+        <ShieldInterceptedList
+          interceptedItems={mockShieldActions}
           onRevertAction={mockOnRevertAction}
           loading={false}
           onRefresh={mockOnRefresh}

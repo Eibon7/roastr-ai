@@ -11,7 +11,7 @@ const { createSupabaseMock } = require('../../../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    feature_flags: []
+  feature_flags: []
 });
 
 // Mock dependencies
@@ -42,8 +42,8 @@ jest.mock('../../../../src/utils/logger', () => ({
 }));
 
 jest.mock('../../../../src/utils/safeUtils', () => ({
-  safeUserIdPrefix: jest.fn(id => `safe_${id}`),
-  maskEmail: jest.fn(email => email ? `${email.split('@')[0]}@***` : 'unknown-email')
+  safeUserIdPrefix: jest.fn((id) => `safe_${id}`),
+  maskEmail: jest.fn((email) => (email ? `${email.split('@')[0]}@***` : 'unknown-email'))
 }));
 
 // ============================================================================
@@ -125,9 +125,7 @@ describe('Feature Flags Admin API', () => {
         })
       });
 
-      const response = await request(app)
-        .get('/admin/feature-flags')
-        .expect(200);
+      const response = await request(app).get('/admin/feature-flags').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.flags).toHaveLength(2);
@@ -162,9 +160,7 @@ describe('Feature Flags Admin API', () => {
         })
       });
 
-      const response = await request(app)
-        .get('/admin/feature-flags?category=system')
-        .expect(200);
+      const response = await request(app).get('/admin/feature-flags?category=system').expect(200);
 
       expect(mockEq).toHaveBeenCalledWith('category', 'system');
       expect(response.body.data.flags).toHaveLength(1);
@@ -176,9 +172,7 @@ describe('Feature Flags Admin API', () => {
         error: { message: 'Database error' }
       });
 
-      const response = await request(app)
-        .get('/admin/feature-flags')
-        .expect(500);
+      const response = await request(app).get('/admin/feature-flags').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to retrieve feature flags');
@@ -484,9 +478,7 @@ describe('Feature Flags Admin API', () => {
         })
       });
 
-      const response = await request(app)
-        .get('/admin/audit-logs?limit=10&offset=0')
-        .expect(200);
+      const response = await request(app).get('/admin/audit-logs?limit=10&offset=0').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.logs).toHaveLength(1);
@@ -509,9 +501,7 @@ describe('Feature Flags Admin API', () => {
         })
       });
 
-      await request(app)
-        .get('/admin/audit-logs?action_type=kill_switch_toggle')
-        .expect(200);
+      await request(app).get('/admin/audit-logs?action_type=kill_switch_toggle').expect(200);
 
       expect(mockEq).toHaveBeenCalledWith('action_type', 'kill_switch_toggle');
     });
@@ -522,9 +512,7 @@ describe('Feature Flags Admin API', () => {
         error: { message: 'Database error' }
       });
 
-      const response = await request(app)
-        .get('/admin/audit-logs')
-        .expect(500);
+      const response = await request(app).get('/admin/audit-logs').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to retrieve audit logs');

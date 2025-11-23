@@ -7,10 +7,10 @@ const crypto = require('crypto');
 
 /**
  * Triage Service - Deterministic comment routing system
- * 
+ *
  * Routes comments to appropriate destinations: block/roast/publish
  * Based on toxicity analysis, plan configuration, and Shield decisions
- * 
+ *
  * Integration with existing services:
  * - Uses ShieldDecisionEngine for complex moderation decisions
  * - Leverages AnalyzeToxicityWorker for consistent analysis
@@ -25,37 +25,39 @@ class TriageService {
     this.toxicityWorker = new AnalyzeToxicityWorker();
 
     // Initialize cache secret from environment or generate random (CodeRabbit #3298455873)
-    this.CACHE_SECRET = process.env.TRIAGE_CACHE_SECRET ||
-                        crypto.randomBytes(32).toString('hex');
+    this.CACHE_SECRET = process.env.TRIAGE_CACHE_SECRET || crypto.randomBytes(32).toString('hex');
 
     if (!process.env.TRIAGE_CACHE_SECRET) {
-      logger.warn('TRIAGE_CACHE_SECRET not set in environment, using random secret (cache will not persist across restarts)', {
-        service: 'TriageService',
-        security_warning: true
-      });
+      logger.warn(
+        'TRIAGE_CACHE_SECRET not set in environment, using random secret (cache will not persist across restarts)',
+        {
+          service: 'TriageService',
+          security_warning: true
+        }
+      );
     }
 
     // Decision matrix - integrates with existing Shield thresholds
     this.decisionMatrix = {
       // Block threshold - aligns with Shield critical level
       BLOCK_THRESHOLD: 0.85,
-      
+
       // Plan-specific roast thresholds - business logic layer
       ROAST_THRESHOLDS: {
-        starter_trial: 0.30,      // More restrictive for trial users
-        starter: 0.30,            // Same as trial
-        pro: 0.25,                // Pro users get more sensitive detection
-        plus: 0.20                // Plus users get most sensitive
+        starter_trial: 0.3, // More restrictive for trial users
+        starter: 0.3, // Same as trial
+        pro: 0.25, // Pro users get more sensitive detection
+        plus: 0.2 // Plus users get most sensitive
       },
-      
+
       // Shield integration thresholds
       SHIELD_ENABLED_PLANS: ['starter', 'pro', 'plus'],
-      
+
       // Cache configuration - matches Shield patterns
       CACHE_TTL_MS: 300000, // 5 minutes
       MAX_CACHE_SIZE: 1000
     };
-    
+
     // Decision cache with same patterns as ShieldDecisionEngine
     this.decisionCache = new Map();
     this.cacheStats = { hits: 0, misses: 0, evictions: 0 };
@@ -63,7 +65,7 @@ class TriageService {
 
   /**
    * Main triage analysis and routing function
-   * 
+   *
    * @param {Object} comment - Comment data to analyze
    * @param {Object} organization - Organization context with plan info
    * @param {Object} user - User context (optional)
@@ -73,7 +75,7 @@ class TriageService {
   async analyzeAndRoute(comment, organization, user = null, options = {}) {
     const startTime = Date.now();
     const correlationId = options.correlation_id || this.generateCorrelationId();
-    
+
     logger.info('Starting triage analysis', {
       correlation_id: correlationId,
       organization_id: organization.id,
@@ -116,7 +118,7 @@ class TriageService {
 
       // Perform toxicity analysis using existing worker
       const toxicityAnalysis = await this.analyzeToxicity(comment, organization, correlationId);
-      
+
       // Make routing decision based on analysis
       const decision = await this.makeRoutingDecision(
         comment,
@@ -128,7 +130,6 @@ class TriageService {
 
       // Cache the decision and return
       return this.cacheAndReturn(cacheKey, decision, correlationId, startTime);
-
     } catch (error) {
       logger.error('Triage analysis failed', {
         correlation_id: correlationId,
@@ -159,7 +160,11 @@ class TriageService {
     }
 
     // Check for empty or whitespace-only content
-    if (comment.content && typeof comment.content === 'string' && comment.content.trim().length === 0) {
+    if (
+      comment.content &&
+      typeof comment.content === 'string' &&
+      comment.content.trim().length === 0
+    ) {
       errors.push('empty_content');
     }
 
@@ -225,7 +230,6 @@ class TriageService {
       }
 
       return canOperate;
-
     } catch (error) {
       logger.error('Failed to check plan permissions', {
         correlation_id: correlationId,
@@ -272,7 +276,6 @@ class TriageService {
         analysis_time_ms: Date.now() - startTime,
         correlation_id: correlationId
       };
-
     } catch (error) {
       logger.error('Toxicity analysis failed', {
         correlation_id: correlationId,
@@ -304,10 +307,11 @@ class TriageService {
     const decisionStartTime = Date.now();
     const plan = organization.plan;
     const toxicityScore = toxicityAnalysis.toxicity;
-    
+
     // Get plan-specific threshold
-    const roastThreshold = this.decisionMatrix.ROAST_THRESHOLDS[plan] || 
-                          this.decisionMatrix.ROAST_THRESHOLDS.starter_trial;
+    const roastThreshold =
+      this.decisionMatrix.ROAST_THRESHOLDS[plan] ||
+      this.decisionMatrix.ROAST_THRESHOLDS.starter_trial;
 
     let action = 'publish';
     let reasoning = 'content_safe_for_publication';
@@ -320,13 +324,17 @@ class TriageService {
 
       // Integrate with Shield system for paid plans
       if (this.decisionMatrix.SHIELD_ENABLED_PLANS.includes(plan)) {
-        shieldDecision = await this.getShieldDecision(comment, organization, toxicityAnalysis, correlationId);
+        shieldDecision = await this.getShieldDecision(
+          comment,
+          organization,
+          toxicityAnalysis,
+          correlationId
+        );
       }
-
     } else if (toxicityScore >= roastThreshold) {
       action = 'roast';
       reasoning = 'toxicity_suitable_for_roasting';
-      
+
       // Check roast generation limits
       const canRoast = await this.checkRoastCapacity(organization, correlationId);
       if (!canRoast.allowed) {
@@ -369,7 +377,8 @@ class TriageService {
         externalCommentId: comment.id,
         // Use unique identifiers for unknown authors to prevent conflation (CodeRabbit #3298546625)
         externalAuthorId: comment.author_id || `anonymous_${crypto.randomBytes(8).toString('hex')}`,
-        externalAuthorUsername: comment.author || `anonymous_user_${crypto.randomBytes(6).toString('hex')}`,
+        externalAuthorUsername:
+          comment.author || `anonymous_user_${crypto.randomBytes(6).toString('hex')}`,
         originalText: comment.content,
         toxicityAnalysis: toxicityAnalysis,
         metadata: {
@@ -379,7 +388,7 @@ class TriageService {
       };
 
       const shieldDecision = await this.shieldDecisionEngine.makeDecision(shieldInput);
-      
+
       logger.info('Shield decision obtained', {
         correlation_id: correlationId,
         shield_action: shieldDecision.action,
@@ -387,7 +396,6 @@ class TriageService {
       });
 
       return shieldDecision;
-
     } catch (error) {
       logger.error('Shield decision failed', {
         correlation_id: correlationId,
@@ -420,7 +428,6 @@ class TriageService {
       }
 
       return canRoast;
-
     } catch (error) {
       logger.error('Failed to check roast capacity', {
         correlation_id: correlationId,
@@ -450,9 +457,7 @@ class TriageService {
     };
 
     const keyString = JSON.stringify(keyData);
-    return crypto.createHmac('sha256', this.CACHE_SECRET)
-                 .update(keyString)
-                 .digest('hex');
+    return crypto.createHmac('sha256', this.CACHE_SECRET).update(keyString).digest('hex');
   }
 
   /**
@@ -504,9 +509,10 @@ class TriageService {
       cache_stats: {
         hits: this.cacheStats.hits,
         misses: this.cacheStats.misses,
-        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0
-          ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
-          : 0
+        hit_ratio:
+          this.cacheStats.hits + this.cacheStats.misses > 0
+            ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
+            : 0
       }
     };
   }
@@ -580,9 +586,10 @@ class TriageService {
       cache_performance: {
         hits: this.cacheStats.hits,
         misses: this.cacheStats.misses,
-        hit_ratio: (this.cacheStats.hits + this.cacheStats.misses) > 0
-          ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
-          : 0,
+        hit_ratio:
+          this.cacheStats.hits + this.cacheStats.misses > 0
+            ? this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses)
+            : 0,
         cache_size: this.decisionCache.size,
         evictions: this.cacheStats.evictions
       },

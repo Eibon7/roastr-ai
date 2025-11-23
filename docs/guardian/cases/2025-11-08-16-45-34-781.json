@@ -3,11 +3,7 @@
   "timestamp": "2025-11-08T16:45:34.781Z",
   "actor": "emiliopostigo",
   "domains": [],
-  "files_changed": [
-    "docs/system-validation.md",
-    "gdd-status.json",
-    "gdd-write-signatures.json"
-  ],
+  "files_changed": ["docs/system-validation.md", "gdd-status.json", "gdd-write-signatures.json"],
   "severity": "SAFE",
   "action": "APPROVED",
   "violations": {

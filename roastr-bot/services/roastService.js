@@ -9,11 +9,14 @@ const logger = require('../utils/logger');
 class RoastService {
   constructor(config = {}) {
     // API configuration
-    this.baseUrl = config.baseUrl || process.env.ROAST_API_URL || 'https://roastr-lhcp7seuh-eibon7s-projects.vercel.app';
+    this.baseUrl =
+      config.baseUrl ||
+      process.env.ROAST_API_URL ||
+      'https://roastr-lhcp7seuh-eibon7s-projects.vercel.app';
     this.apiKey = config.apiKey || process.env.ROASTR_API_KEY;
     this.timeout = config.timeout || 15000; // 15 seconds timeout
     this.maxRetries = config.maxRetries || 2;
-    
+
     // Validate configuration
     if (!this.apiKey) {
       logger.error('❌ ROASTR_API_KEY no está configurado');
@@ -39,7 +42,10 @@ class RoastService {
     }
 
     const cleanText = text.trim();
-    logger.debug('🔥 Iniciando generación de roast para:', cleanText.substring(0, 100) + (cleanText.length > 100 ? '...' : ''));
+    logger.debug(
+      '🔥 Iniciando generación de roast para:',
+      cleanText.substring(0, 100) + (cleanText.length > 100 ? '...' : '')
+    );
 
     let lastError = null;
 
@@ -51,7 +57,7 @@ class RoastService {
         return roast;
       } catch (error) {
         lastError = error;
-        
+
         if (attempt <= this.maxRetries) {
           const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5s
           logger.warn(`⚠️ Intento ${attempt} falló, reintentando en ${delay}ms...`, {
@@ -81,7 +87,7 @@ class RoastService {
   async _makeRoastRequest(text, attempt = 1) {
     const url = `${this.baseUrl}/roast`;
     const requestData = { message: text };
-    
+
     logger.logApiRequest('POST', url, requestData);
 
     try {
@@ -111,7 +117,6 @@ class RoastService {
       } else {
         throw new Error(`API error: ${response.status} ${response.statusText}`);
       }
-
     } catch (error) {
       // Handle different types of errors
       if (error.code === 'ECONNABORTED') {
@@ -144,13 +149,13 @@ class RoastService {
     // This would call the /csv-roast endpoint when it's fully implemented
     // Advantages: Faster response, no API costs, works offline
     // Disadvantages: Limited variety, requires manual curation
-    
+
     const url = `${this.baseUrl}/csv-roast`;
     const requestData = { message: text };
-    
+
     logger.logApiRequest('POST', url, requestData);
     logger.warn('⚠️ CSV roast generation not yet implemented, using mock response');
-    
+
     // For now, return a placeholder
     return `🎯 Roast desde CSV simulado para: "${text.substring(0, 50)}..."`;
   }
@@ -169,10 +174,13 @@ class RoastService {
     // - personality: 'sarcastic', 'witty', 'academic'
     // - language: 'es', 'en', 'auto-detect'
     // - topics: ['tech', 'sports', 'general']
-    
+
     // For multi-account support, different clients could have different default styles
-    logger.debug('🎨 Styled roast generation requested', { style, text: text.substring(0, 50) + '...' });
-    
+    logger.debug('🎨 Styled roast generation requested', {
+      style,
+      text: text.substring(0, 50) + '...'
+    });
+
     // For now, use the standard roast generation
     return this.generateRoast(text);
   }
@@ -213,7 +221,7 @@ class RoastService {
    * @private
    */
   _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 

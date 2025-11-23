@@ -31,7 +31,7 @@ jest.mock('openai', () => {
       completions: {
         create: jest.fn().mockImplementation((params) => {
           const prompt = params.messages[0].content;
-          
+
           // Detect tone from prompt and generate appropriate response
           let roastContent;
           let tone = 'normal';
@@ -40,26 +40,30 @@ jest.mock('openai', () => {
             roastContent = "Let's keep this discussion constructive and focused on quality.";
             tone = 'professional';
           } else if (prompt.includes('light_humor') || prompt.includes('lighthearted')) {
-            roastContent = "Hey, everyone's entitled to their opinion... even the wildly incorrect ones! 😄";
+            roastContent =
+              "Hey, everyone's entitled to their opinion... even the wildly incorrect ones! 😄";
             tone = 'light_humor';
           } else if (prompt.includes('aggressive_irony') || prompt.includes('direct sarcasm')) {
-            roastContent = "Oh wow, what an incredibly original take! Never heard THAT one before. 🙄";
+            roastContent =
+              'Oh wow, what an incredibly original take! Never heard THAT one before. 🙄';
             tone = 'aggressive_irony';
           } else {
-            roastContent = "Interesting perspective, though I might respectfully disagree.";
+            roastContent = 'Interesting perspective, though I might respectfully disagree.';
             tone = 'normal';
           }
 
           return Promise.resolve({
-            choices: [{
-              message: {
-                content: JSON.stringify({
-                  roast: roastContent,
-                  tone: tone,
-                  quality_score: 0.85
-                })
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    roast: roastContent,
+                    tone: tone,
+                    quality_score: 0.85
+                  })
+                }
               }
-            }]
+            ]
           });
         })
       }
@@ -75,13 +79,15 @@ jest.mock('openai', () => {
           roastContent = "Let's keep this discussion constructive and focused on quality.";
           tone = 'professional';
         } else if (prompt.includes('light_humor') || prompt.includes('lighthearted')) {
-          roastContent = "Hey, everyone's entitled to their opinion... even the wildly incorrect ones! 😄";
+          roastContent =
+            "Hey, everyone's entitled to their opinion... even the wildly incorrect ones! 😄";
           tone = 'light_humor';
         } else if (prompt.includes('aggressive_irony') || prompt.includes('direct sarcasm')) {
-          roastContent = "Oh wow, what an incredibly original take! Never heard THAT one before. 🙄";
+          roastContent =
+            'Oh wow, what an incredibly original take! Never heard THAT one before. 🙄';
           tone = 'aggressive_irony';
         } else {
-          roastContent = "Interesting perspective, though I might respectfully disagree.";
+          roastContent = 'Interesting perspective, though I might respectfully disagree.';
           tone = 'normal';
         }
 
@@ -107,8 +113,8 @@ jest.mock('../../src/utils/logger', () => {
   return Object.assign(mockLogger, {
     logger: mockLogger,
     SafeUtils: {
-      safeUserIdPrefix: jest.fn(id => 'mock-user...'),
-      truncateString: jest.fn(str => str)
+      safeUserIdPrefix: jest.fn((id) => 'mock-user...'),
+      truncateString: jest.fn((str) => str)
     }
   });
 });
@@ -177,7 +183,7 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
         },
         {
           user_id: plusUserId,
-          name: 'Ben & Jerry\'s',
+          name: "Ben & Jerry's",
           url: 'https://www.benandjerrys.com',
           tags: ['ice cream', 'food'],
           severity: 'medium',
@@ -231,7 +237,7 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
         platform_comment_id: `tw_professional_${Date.now()}`,
         author_id: 'critic_user_123',
         author_username: 'TechCritic',
-        content: 'IBM is outdated and irrelevant in today\'s tech world.',
+        content: "IBM is outdated and irrelevant in today's tech world.",
         post_id: `post_${Date.now()}`,
         organization_id: testTenants.tenantA.id
       };
@@ -280,13 +286,13 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
   });
 
   describe('Tone Override: Light Humor', () => {
-    it('should generate lighthearted defensive roast when Ben & Jerry\'s is mentioned', async () => {
+    it("should generate lighthearted defensive roast when Ben & Jerry's is mentioned", async () => {
       const comment = {
         platform: 'twitter',
         platform_comment_id: `tw_light_humor_${Date.now()}`,
         author_id: 'food_critic_456',
         author_username: 'FoodCritic',
-        content: 'Ben & Jerry\'s ice cream is overrated and too expensive.',
+        content: "Ben & Jerry's ice cream is overrated and too expensive.",
         post_id: `post_${Date.now()}`,
         organization_id: testTenants.tenantA.id
       };
@@ -310,7 +316,7 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
       expect(roastResponse.body).toMatchObject({
         tone: 'light_humor',
         sponsor_detected: true,
-        sponsor_name: 'Ben & Jerry\'s'
+        sponsor_name: "Ben & Jerry's"
       });
 
       // Verify tone characteristics: playful, emoji, gentle sarcasm
@@ -595,4 +601,3 @@ describe('E2E: Brand Safety - Defensive Roast with Tone Override', () => {
     });
   });
 });
-

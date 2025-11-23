@@ -1,6 +1,6 @@
 /**
  * Discord Platform Integration Verification Tests
- * 
+ *
  * Part of Issue #712: Social Platform Integration Verification
  */
 
@@ -77,5 +77,3 @@ describe('Discord Platform Verification', () => {
     });
   });
 });
-
-

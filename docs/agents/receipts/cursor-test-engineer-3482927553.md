@@ -44,4 +44,3 @@ Applied test improvements based on CodeRabbit review: improved mocks, reduced fi
 **Agent:** TestEngineer  
 **Completion:** 100%  
 **Test Improvements:** 4 files updated
-

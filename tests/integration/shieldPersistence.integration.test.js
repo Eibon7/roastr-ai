@@ -1,6 +1,6 @@
 /**
  * Integration Tests for Shield Persistence System
- * 
+ *
  * Tests the complete Shield persistence workflow including:
  * - Shield event recording and offender profile updates
  * - Recidivism tracking and analysis
@@ -48,12 +48,12 @@ describe('Shield Persistence Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     persistenceService = new ShieldPersistenceService({
       supabase: mockSupabase,
       logger: mockLogger
     });
-    
+
     retentionWorker = new GDPRRetentionWorker({
       supabase: mockSupabase,
       dryRun: false,
@@ -210,9 +210,9 @@ describe('Shield Persistence Integration Tests', () => {
         max_toxicity_score: 0.95,
         escalation_level: 2,
         actions_taken: {
-          'hide_comment': 2,
-          'timeout_user': 1,
-          'block_user': 1
+          hide_comment: 2,
+          timeout_user: 1,
+          block_user: 1
         }
       };
 
@@ -497,9 +497,9 @@ describe('Shield Persistence Integration Tests', () => {
           severity_level: 'critical',
           last_offense_at: '2024-01-15T10:00:00Z',
           actions_taken: {
-            'hide_comment': 4,
-            'timeout_user': 2,
-            'block_user': 2
+            hide_comment: 4,
+            timeout_user: 2,
+            block_user: 2
           }
         },
         {
@@ -509,8 +509,8 @@ describe('Shield Persistence Integration Tests', () => {
           severity_level: 'medium',
           last_offense_at: '2024-01-14T15:00:00Z',
           actions_taken: {
-            'hide_comment': 3,
-            'timeout_user': 1
+            hide_comment: 3,
+            timeout_user: 1
           }
         }
       ];
@@ -527,16 +527,12 @@ describe('Shield Persistence Integration Tests', () => {
         error: null
       });
 
-      const stats = await persistenceService.getPlatformOffenderStats(
-        testOrgId,
-        testPlatform,
-        30
-      );
+      const stats = await persistenceService.getPlatformOffenderStats(testOrgId, testPlatform, 30);
 
       expect(stats.platform).toBe(testPlatform);
       expect(stats.windowDays).toBe(30);
       expect(stats.totalEvents).toBe(4);
-      
+
       expect(stats.actionsSummary.total).toBe(4);
       expect(stats.actionsSummary.executed).toBe(3);
       expect(stats.actionsSummary.failed).toBe(1);

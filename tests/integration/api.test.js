@@ -6,13 +6,13 @@
 const request = require('supertest');
 const express = require('express');
 const bodyParser = require('body-parser');
-const { 
+const {
   createMockOpenAIResponse,
   getMockRoastByTone,
   getMockCsvData,
   getValidTestData,
   setMockEnvVars,
-  cleanupMocks 
+  cleanupMocks
 } = require('../helpers/testUtils');
 
 // Mock de dependencias antes de importar la app
@@ -33,7 +33,7 @@ describe('API Integration Tests', () => {
 
     // Crear instancia mock de la aplicación Express
     app = express();
-    
+
     // Middleware para validar Content-Type antes del parsing
     app.use((req, res, next) => {
       if (req.method === 'POST' && req.headers['content-type']) {
@@ -43,7 +43,7 @@ describe('API Integration Tests', () => {
       }
       next();
     });
-    
+
     app.use(bodyParser.json());
 
     // Mock del RoastGeneratorReal
@@ -112,13 +112,13 @@ describe('API Integration Tests', () => {
 
       try {
         const roast = await csvRoastService.findBestRoast(message);
-        res.json({ 
+        res.json({
           roast,
           source: 'csv',
           originalMessage: message
         });
       } catch (error) {
-        res.status(500).json({ 
+        res.status(500).json({
           error: 'No se pudo generar el roast desde CSV.',
           details: process.env.DEBUG === 'true' ? error.message : undefined
         });
@@ -149,7 +149,7 @@ describe('API Integration Tests', () => {
 
       try {
         await csvRoastService.addRoast(comment, roast);
-        res.json({ 
+        res.json({
           success: true,
           message: 'Roast añadido exitosamente al CSV'
         });
@@ -172,9 +172,7 @@ describe('API Integration Tests', () => {
 
   describe('GET /', () => {
     test('debe responder con mensaje de bienvenida', async () => {
-      const response = await request(app)
-        .get('/')
-        .expect(200);
+      const response = await request(app).get('/').expect(200);
 
       expect(response.body).toEqual({ message: 'Roastr.ai API' });
     });
@@ -287,10 +285,7 @@ describe('API Integration Tests', () => {
       mockRoastGenerator.generateRoast.mockRejectedValue(new Error('OpenAI error'));
 
       // Act
-      const response = await request(app)
-        .post('/roast')
-        .send(testData.valid)
-        .expect(500);
+      const response = await request(app).post('/roast').send(testData.valid).expect(500);
 
       // Assert
       expect(response.body).toEqual({
@@ -300,7 +295,7 @@ describe('API Integration Tests', () => {
 
     test('debe validar todos los tonos válidos', async () => {
       const validTones = ['sarcastic', 'subtle', 'direct'];
-      
+
       for (const tone of validTones) {
         const expectedRoast = getMockRoastByTone(tone, testData.valid.message);
         mockRoastGenerator.generateRoast.mockResolvedValue(expectedRoast);
@@ -329,10 +324,7 @@ describe('API Integration Tests', () => {
       mockCsvService.findBestRoast.mockResolvedValue(expectedRoast);
 
       // Act
-      const response = await request(app)
-        .post('/csv-roast')
-        .send(testData.valid)
-        .expect(200);
+      const response = await request(app).post('/csv-roast').send(testData.valid).expect(200);
 
       // Assert
       expect(response.body).toEqual({
@@ -381,10 +373,7 @@ describe('API Integration Tests', () => {
       mockCsvService.findBestRoast.mockRejectedValue(new Error('CSV error'));
 
       // Act
-      const response = await request(app)
-        .post('/csv-roast')
-        .send(testData.valid)
-        .expect(500);
+      const response = await request(app).post('/csv-roast').send(testData.valid).expect(500);
 
       // Assert
       expect(response.body.error).toBe('No se pudo generar el roast desde CSV.');
@@ -397,14 +386,11 @@ describe('API Integration Tests', () => {
       mockCsvService.findBestRoast.mockRejectedValue(new Error('Detailed CSV error'));
 
       // Act
-      const response = await request(app)
-        .post('/csv-roast')
-        .send(testData.valid)
-        .expect(500);
+      const response = await request(app).post('/csv-roast').send(testData.valid).expect(500);
 
       // Assert
       expect(response.body.details).toBe('Detailed CSV error');
-      
+
       // Limpiar
       process.env.DEBUG = 'false';
     });
@@ -422,9 +408,7 @@ describe('API Integration Tests', () => {
       mockCsvService.getStats.mockResolvedValue(mockStats);
 
       // Act
-      const response = await request(app)
-        .get('/csv-stats')
-        .expect(200);
+      const response = await request(app).get('/csv-stats').expect(200);
 
       // Assert
       expect(response.body).toEqual(mockStats);
@@ -436,9 +420,7 @@ describe('API Integration Tests', () => {
       mockCsvService.getStats.mockRejectedValue(new Error('Stats error'));
 
       // Act
-      const response = await request(app)
-        .get('/csv-stats')
-        .expect(500);
+      const response = await request(app).get('/csv-stats').expect(500);
 
       // Assert
       expect(response.body).toEqual({
@@ -457,10 +439,7 @@ describe('API Integration Tests', () => {
       mockCsvService.addRoast.mockResolvedValue(true);
 
       // Act
-      const response = await request(app)
-        .post('/csv-add')
-        .send(newData)
-        .expect(200);
+      const response = await request(app).post('/csv-add').send(newData).expect(200);
 
       // Assert
       expect(response.body).toEqual({

@@ -101,10 +101,7 @@ describe('RoastEngine - Version Control', () => {
       const longComment = 'a'.repeat(3000); // Exceeds 2000 char limit
 
       expect(() => {
-        roastEngine.validateInput(
-          { comment: longComment },
-          { userId: 'test-user' }
-        );
+        roastEngine.validateInput({ comment: longComment }, { userId: 'test-user' });
       }).toThrow(/exceeds maximum length/);
     });
 

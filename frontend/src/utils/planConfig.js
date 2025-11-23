@@ -59,4 +59,3 @@ export function getPlanConfig(planId) {
 export function getAllPlanConfigs() {
   return Object.values(PLAN_CONFIGS);
 }
-

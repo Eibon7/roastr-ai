@@ -1,9 +1,9 @@
 /**
  * ToneAnalysisDisplay Component
- * 
+ *
  * Displays detailed tone analysis and style examples
  * Issue #369 - SPEC 9 - Style Profile Extraction
- * 
+ *
  * Features:
  * - Tone breakdown visualization
  * - Style examples display
@@ -25,23 +25,46 @@ const ToneAnalysisDisplay = ({ metadata, examples = [], language = 'es' }) => {
     es: {
       casual: {
         title: 'Casual',
-        description: 'Relajado, informal y cercano. Usa expresiones coloquiales y un lenguaje natural.',
-        characteristics: ['Lenguaje informal', 'Expresiones coloquiales', 'Tono cercano', 'Comunicación natural']
+        description:
+          'Relajado, informal y cercano. Usa expresiones coloquiales y un lenguaje natural.',
+        characteristics: [
+          'Lenguaje informal',
+          'Expresiones coloquiales',
+          'Tono cercano',
+          'Comunicación natural'
+        ]
       },
       formal: {
         title: 'Formal',
-        description: 'Profesional, estructurado y cortés. Mantiene un registro elevado y respeta las normas.',
-        characteristics: ['Lenguaje profesional', 'Estructura clara', 'Registro elevado', 'Cortesía constante']
+        description:
+          'Profesional, estructurado y cortés. Mantiene un registro elevado y respeta las normas.',
+        characteristics: [
+          'Lenguaje profesional',
+          'Estructura clara',
+          'Registro elevado',
+          'Cortesía constante'
+        ]
       },
       humorous: {
         title: 'Divertido',
-        description: 'Bromista, jovial y entretenido. Usa humor para conectar y alegrar las conversaciones.',
-        characteristics: ['Uso de humor', 'Tono jovial', 'Bromas frecuentes', 'Conversación entretenida']
+        description:
+          'Bromista, jovial y entretenido. Usa humor para conectar y alegrar las conversaciones.',
+        characteristics: [
+          'Uso de humor',
+          'Tono jovial',
+          'Bromas frecuentes',
+          'Conversación entretenida'
+        ]
       },
       sarcastic: {
         title: 'Sarcástico',
         description: 'Irónico, mordaz y directo. Usa el sarcasmo como herramienta de comunicación.',
-        characteristics: ['Ironía constante', 'Comentarios mordaces', 'Tono directo', 'Sarcasmo inteligente']
+        characteristics: [
+          'Ironía constante',
+          'Comentarios mordaces',
+          'Tono directo',
+          'Sarcasmo inteligente'
+        ]
       },
       friendly: {
         title: 'Amigable',
@@ -52,18 +75,36 @@ const ToneAnalysisDisplay = ({ metadata, examples = [], language = 'es' }) => {
     en: {
       casual: {
         title: 'Casual',
-        description: 'Relaxed, informal and approachable. Uses colloquial expressions and natural language.',
-        characteristics: ['Informal language', 'Colloquial expressions', 'Approachable tone', 'Natural communication']
+        description:
+          'Relaxed, informal and approachable. Uses colloquial expressions and natural language.',
+        characteristics: [
+          'Informal language',
+          'Colloquial expressions',
+          'Approachable tone',
+          'Natural communication'
+        ]
       },
       formal: {
         title: 'Formal',
-        description: 'Professional, structured and polite. Maintains elevated register and respects norms.',
-        characteristics: ['Professional language', 'Clear structure', 'Elevated register', 'Consistent courtesy']
+        description:
+          'Professional, structured and polite. Maintains elevated register and respects norms.',
+        characteristics: [
+          'Professional language',
+          'Clear structure',
+          'Elevated register',
+          'Consistent courtesy'
+        ]
       },
       humorous: {
         title: 'Humorous',
-        description: 'Playful, jovial and entertaining. Uses humor to connect and brighten conversations.',
-        characteristics: ['Use of humor', 'Jovial tone', 'Frequent jokes', 'Entertaining conversation']
+        description:
+          'Playful, jovial and entertaining. Uses humor to connect and brighten conversations.',
+        characteristics: [
+          'Use of humor',
+          'Jovial tone',
+          'Frequent jokes',
+          'Entertaining conversation'
+        ]
       },
       sarcastic: {
         title: 'Sarcastic',
@@ -72,7 +113,8 @@ const ToneAnalysisDisplay = ({ metadata, examples = [], language = 'es' }) => {
       },
       friendly: {
         title: 'Friendly',
-        description: 'Warm, empathetic and supportive. Seeks to create positive connections with others.',
+        description:
+          'Warm, empathetic and supportive. Seeks to create positive connections with others.',
         characteristics: ['Warm tone', 'Empathy', 'Constant support', 'Positive connections']
       }
     }
@@ -98,11 +140,36 @@ const ToneAnalysisDisplay = ({ metadata, examples = [], language = 'es' }) => {
 
   // Tone colors for visual consistency
   const toneColors = {
-    casual: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-800', accent: 'bg-orange-500' },
-    formal: { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-800', accent: 'bg-gray-500' },
-    humorous: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800', accent: 'bg-yellow-500' },
-    sarcastic: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', accent: 'bg-red-500' },
-    friendly: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-800', accent: 'bg-green-500' }
+    casual: {
+      bg: 'bg-orange-50',
+      border: 'border-orange-200',
+      text: 'text-orange-800',
+      accent: 'bg-orange-500'
+    },
+    formal: {
+      bg: 'bg-gray-50',
+      border: 'border-gray-200',
+      text: 'text-gray-800',
+      accent: 'bg-gray-500'
+    },
+    humorous: {
+      bg: 'bg-yellow-50',
+      border: 'border-yellow-200',
+      text: 'text-yellow-800',
+      accent: 'bg-yellow-500'
+    },
+    sarcastic: {
+      bg: 'bg-red-50',
+      border: 'border-red-200',
+      text: 'text-red-800',
+      accent: 'bg-red-500'
+    },
+    friendly: {
+      bg: 'bg-green-50',
+      border: 'border-green-200',
+      text: 'text-green-800',
+      accent: 'bg-green-500'
+    }
   };
 
   const dominantToneInfo = currentDescriptions[dominantTone];
@@ -115,14 +182,16 @@ const ToneAnalysisDisplay = ({ metadata, examples = [], language = 'es' }) => {
       </h4>
 
       {/* Dominant Tone Detailed Card */}
-      <div className={`${dominantToneColors.bg} ${dominantToneColors.border} border rounded-lg p-6`}>
+      <div
+        className={`${dominantToneColors.bg} ${dominantToneColors.border} border rounded-lg p-6`}
+      >
         <div className="flex items-center space-x-3 mb-4">
           <div className={`w-3 h-3 ${dominantToneColors.accent} rounded-full`}></div>
           <h5 className={`text-xl font-semibold ${dominantToneColors.text}`}>
             {dominantToneInfo?.title} - {language === 'es' ? 'Tono Dominante' : 'Dominant Tone'}
           </h5>
         </div>
-        
+
         <p className={`${dominantToneColors.text} mb-4 leading-relaxed`}>
           {dominantToneInfo?.description}
         </p>
@@ -156,10 +225,11 @@ const ToneAnalysisDisplay = ({ metadata, examples = [], language = 'es' }) => {
           </h5>
           <div className="space-y-3">
             {examples.map((example, index) => (
-              <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border-l-4 border-blue-500">
-                <p className="text-gray-700 dark:text-gray-300 italic">
-                  "{example}"
-                </p>
+              <div
+                key={index}
+                className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border-l-4 border-blue-500"
+              >
+                <p className="text-gray-700 dark:text-gray-300 italic">"{example}"</p>
               </div>
             ))}
           </div>
@@ -171,21 +241,23 @@ const ToneAnalysisDisplay = ({ metadata, examples = [], language = 'es' }) => {
         <h5 className="font-medium text-gray-900 dark:text-white mb-4">
           🎯 {language === 'es' ? 'Explorar todos los tonos' : 'Explore All Tones'}
         </h5>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
           {Object.entries(currentDescriptions).map(([tone, info]) => {
             const colors = toneColors[tone] || toneColors.casual;
             const isSelected = selectedTone === tone;
             const isDominant = tone === dominantTone;
-            
+
             return (
               <button
                 key={tone}
                 onClick={() => setSelectedTone(isSelected ? null : tone)}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
-                  isDominant ? `${colors.bg} ${colors.border} ${colors.text}` :
-                  isSelected ? `${colors.bg} ${colors.border} ${colors.text}` :
-                  'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                  isDominant
+                    ? `${colors.bg} ${colors.border} ${colors.text}`
+                    : isSelected
+                      ? `${colors.bg} ${colors.border} ${colors.text}`
+                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 <div className="flex items-center space-x-2 mb-1">
@@ -194,15 +266,13 @@ const ToneAnalysisDisplay = ({ metadata, examples = [], language = 'es' }) => {
                   {isDominant && <span className="text-xs">★</span>}
                 </div>
                 {(isSelected || isDominant) && (
-                  <p className="text-xs leading-relaxed mt-2">
-                    {info.description}
-                  </p>
+                  <p className="text-xs leading-relaxed mt-2">{info.description}</p>
                 )}
               </button>
             );
           })}
         </div>
-        
+
         {selectedTone && selectedTone !== dominantTone && (
           <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <h6 className="font-medium text-gray-900 dark:text-white mb-2">

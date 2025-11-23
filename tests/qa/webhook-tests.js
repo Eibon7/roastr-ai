@@ -1,7 +1,7 @@
 /**
  * Webhook QA Tests for Social Media Integrations
  * Issue #90: Test webhooks in real environment with ngrok and HMAC signatures
- * 
+ *
  * These tests require:
  * - ngrok tunnel running on port 3000
  * - Real webhook secrets configured
@@ -30,7 +30,7 @@ const WEBHOOK_SECRETS = {
 
 describe('Webhook Integration QA Tests', () => {
   beforeAll(() => {
-    logger.info('Webhook QA Test Setup', { 
+    logger.info('Webhook QA Test Setup', {
       ngrokUrl: WEBHOOK_CONFIG.ngrokUrl,
       platforms: WEBHOOK_CONFIG.platforms,
       mockPayloads: WEBHOOK_CONFIG.mockPayloads
@@ -39,9 +39,7 @@ describe('Webhook Integration QA Tests', () => {
 
   describe('Webhook Status and Configuration', () => {
     test('should return webhook configuration status', async () => {
-      const response = await request(app)
-        .get('/api/webhooks/status')
-        .expect(200);
+      const response = await request(app).get('/api/webhooks/status').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('twitter');
@@ -67,15 +65,10 @@ describe('Webhook Integration QA Tests', () => {
 
       for (const endpoint of endpoints) {
         // OPTIONS request should be allowed for CORS
-        const optionsResponse = await request(app)
-          .options(endpoint)
-          .expect(200);
+        const optionsResponse = await request(app).options(endpoint).expect(200);
 
         // POST without proper payload should return 400, not 404
-        const postResponse = await request(app)
-          .post(endpoint)
-          .send('invalid-payload')
-          .expect(400);
+        const postResponse = await request(app).post(endpoint).send('invalid-payload').expect(400);
 
         expect(postResponse.body.success).toBe(false);
         logger.info(`Endpoint ${endpoint} is accessible and handles errors properly`);
@@ -104,8 +97,8 @@ describe('Webhook Integration QA Tests', () => {
 
       expect(response.body).toHaveProperty('response_token');
       expect(response.body.response_token).toBe(`sha256=${expectedResponse}`);
-      
-      logger.info('Twitter CRC challenge test passed', { 
+
+      logger.info('Twitter CRC challenge test passed', {
         crcToken: crcToken.substring(0, 10) + '...',
         responseValid: response.body.response_token === `sha256=${expectedResponse}`
       });
@@ -114,19 +107,21 @@ describe('Webhook Integration QA Tests', () => {
     test('should verify Twitter webhook signatures', async () => {
       const webhookPayload = {
         for_user_id: '123456789',
-        tweet_create_events: [{
-          id: '1234567890123456789',
-          text: 'Test tweet for webhook verification',
-          user: {
-            id: '123456789',
-            screen_name: 'testuser'
-          },
-          created_at: new Date().toISOString()
-        }]
+        tweet_create_events: [
+          {
+            id: '1234567890123456789',
+            text: 'Test tweet for webhook verification',
+            user: {
+              id: '123456789',
+              screen_name: 'testuser'
+            },
+            created_at: new Date().toISOString()
+          }
+        ]
       };
 
       const payloadString = JSON.stringify(webhookPayload);
-      
+
       // Generate valid signature
       const validSignature = crypto
         .createHmac('sha256', WEBHOOK_SECRETS.twitter)
@@ -163,22 +158,26 @@ describe('Webhook Integration QA Tests', () => {
     test('should process Twitter tweet creation events', async () => {
       const tweetEvent = {
         for_user_id: '123456789',
-        tweet_create_events: [{
-          id: '1234567890123456789',
-          text: 'This is a test tweet that mentions @our_bot_account',
-          user: {
-            id: '987654321',
-            screen_name: 'testuser',
-            name: 'Test User'
-          },
-          created_at: new Date().toISOString(),
-          entities: {
-            user_mentions: [{
-              id: '123456789',
-              screen_name: 'our_bot_account'
-            }]
+        tweet_create_events: [
+          {
+            id: '1234567890123456789',
+            text: 'This is a test tweet that mentions @our_bot_account',
+            user: {
+              id: '987654321',
+              screen_name: 'testuser',
+              name: 'Test User'
+            },
+            created_at: new Date().toISOString(),
+            entities: {
+              user_mentions: [
+                {
+                  id: '123456789',
+                  screen_name: 'our_bot_account'
+                }
+              ]
+            }
           }
-        }]
+        ]
       };
 
       const payloadString = JSON.stringify(tweetEvent);
@@ -197,7 +196,7 @@ describe('Webhook Integration QA Tests', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.eventsProcessed).toBe(1);
       expect(response.body.data.results[0].action).toBe('tweet_processed');
-      
+
       logger.info('Twitter tweet creation processing test passed', {
         tweetId: tweetEvent.tweet_create_events[0].id,
         action: response.body.data.results[0].action
@@ -207,16 +206,18 @@ describe('Webhook Integration QA Tests', () => {
     test('should handle Twitter mention events', async () => {
       const mentionEvent = {
         for_user_id: '123456789',
-        user_mention_events: [{
-          id: '1234567890123456789',
-          text: '@our_bot_account this tweet is toxic and needs a roast!',
-          user: {
-            id: '987654321',
-            screen_name: 'toxicuser'
-          },
-          created_at: new Date().toISOString(),
-          in_reply_to_status_id: '1234567890123456788'
-        }]
+        user_mention_events: [
+          {
+            id: '1234567890123456789',
+            text: '@our_bot_account this tweet is toxic and needs a roast!',
+            user: {
+              id: '987654321',
+              screen_name: 'toxicuser'
+            },
+            created_at: new Date().toISOString(),
+            in_reply_to_status_id: '1234567890123456788'
+          }
+        ]
       };
 
       const payloadString = JSON.stringify(mentionEvent);
@@ -235,7 +236,7 @@ describe('Webhook Integration QA Tests', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.eventsProcessed).toBe(1);
       expect(response.body.data.results[0].action).toBe('mention_processed');
-      
+
       logger.info('Twitter mention processing test passed');
     });
   });
@@ -243,7 +244,7 @@ describe('Webhook Integration QA Tests', () => {
   describe('YouTube Webhook Tests', () => {
     test('should handle YouTube subscription challenge', async () => {
       const challenge = 'youtube-challenge-' + Date.now();
-      
+
       const response = await request(app)
         .post('/api/webhooks/youtube')
         .query({ 'hub.challenge': challenge })
@@ -252,9 +253,9 @@ describe('Webhook Integration QA Tests', () => {
         .expect(200);
 
       expect(response.text).toBe(challenge);
-      
-      logger.info('YouTube challenge test passed', { 
-        challenge: challenge.substring(0, 20) + '...' 
+
+      logger.info('YouTube challenge test passed', {
+        challenge: challenge.substring(0, 20) + '...'
       });
     });
 
@@ -282,10 +283,9 @@ describe('Webhook Integration QA Tests', () => {
 </feed>`;
 
       // Generate valid signature
-      const validSignature = 'sha256=' + crypto
-        .createHmac('sha256', WEBHOOK_SECRETS.youtube)
-        .update(xmlPayload)
-        .digest('hex');
+      const validSignature =
+        'sha256=' +
+        crypto.createHmac('sha256', WEBHOOK_SECRETS.youtube).update(xmlPayload).digest('hex');
 
       const validResponse = await request(app)
         .post('/api/webhooks/youtube')
@@ -327,10 +327,9 @@ describe('Webhook Integration QA Tests', () => {
   </entry>
 </feed>`;
 
-      const signature = 'sha256=' + crypto
-        .createHmac('sha256', WEBHOOK_SECRETS.youtube)
-        .update(xmlPayload)
-        .digest('hex');
+      const signature =
+        'sha256=' +
+        crypto.createHmac('sha256', WEBHOOK_SECRETS.youtube).update(xmlPayload).digest('hex');
 
       const response = await request(app)
         .post('/api/webhooks/youtube')
@@ -342,7 +341,7 @@ describe('Webhook Integration QA Tests', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.videoId).toBe('test123456');
       expect(response.body.data.action).toBe('video_processed');
-      
+
       logger.info('YouTube XML parsing test passed', {
         videoId: response.body.data.videoId
       });
@@ -383,10 +382,12 @@ describe('Webhook Integration QA Tests', () => {
 
     test('should handle missing user ID in Twitter webhooks', async () => {
       const invalidPayload = {
-        tweet_create_events: [{
-          id: '123',
-          text: 'test tweet without user context'
-        }]
+        tweet_create_events: [
+          {
+            id: '123',
+            text: 'test tweet without user context'
+          }
+        ]
       };
 
       const payloadString = JSON.stringify(invalidPayload);
@@ -408,11 +409,10 @@ describe('Webhook Integration QA Tests', () => {
 
     test('should handle malformed XML in YouTube webhooks', async () => {
       const invalidXML = '<?xml version="1.0"?><invalid><unclosed-tag></invalid>';
-      
-      const signature = 'sha256=' + crypto
-        .createHmac('sha256', WEBHOOK_SECRETS.youtube)
-        .update(invalidXML)
-        .digest('hex');
+
+      const signature =
+        'sha256=' +
+        crypto.createHmac('sha256', WEBHOOK_SECRETS.youtube).update(invalidXML).digest('hex');
 
       const response = await request(app)
         .post('/api/webhooks/youtube')
@@ -461,10 +461,10 @@ describe('Webhook Integration QA Tests', () => {
         ];
 
         logger.info('🌐 External webhook endpoints', { endpoints });
-        
+
         // In a real test environment, you could make HTTP requests to these URLs
         // to verify they're accessible from the internet
-        endpoints.forEach(endpoint => {
+        endpoints.forEach((endpoint) => {
           expect(endpoint).toMatch(/^https:\/\/[a-z0-9]+\.ngrok\.io\/api\/webhooks\//);
         });
       } else {
@@ -492,11 +492,15 @@ describe('Webhook Integration QA Tests', () => {
 
       // Warn if using default test secrets
       if (secretsCheck.twitter.isDefault) {
-        logger.warn('⚠️  Using default Twitter webhook secret - set TWITTER_WEBHOOK_SECRET for production');
+        logger.warn(
+          '⚠️  Using default Twitter webhook secret - set TWITTER_WEBHOOK_SECRET for production'
+        );
       }
-      
+
       if (secretsCheck.youtube.isDefault) {
-        logger.warn('⚠️  Using default YouTube webhook secret - set YOUTUBE_WEBHOOK_SECRET for production');
+        logger.warn(
+          '⚠️  Using default YouTube webhook secret - set YOUTUBE_WEBHOOK_SECRET for production'
+        );
       }
 
       logger.info('🔐 Webhook secrets validation', secretsCheck);
@@ -506,23 +510,23 @@ describe('Webhook Integration QA Tests', () => {
 
 /**
  * Manual Testing Procedures
- * 
+ *
  * After running automated tests, perform these manual steps:
- * 
+ *
  * 1. Platform Configuration:
  *    - Twitter: Configure Account Activity API webhook in Twitter Developer Portal
  *    - YouTube: Set up PubSubHubbub subscription in Google Cloud Console
- * 
+ *
  * 2. Real Webhook Testing:
  *    - Send test tweets mentioning your bot account
  *    - Upload test YouTube videos to monitored channels
  *    - Verify webhook payloads are received and processed
- * 
+ *
  * 3. Error Scenario Testing:
  *    - Test network failures during webhook processing
  *    - Test high-volume webhook floods
  *    - Test webhook secret rotation
- * 
+ *
  * 4. Performance Testing:
  *    - Monitor webhook response times
  *    - Test concurrent webhook handling

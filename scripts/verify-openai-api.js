@@ -38,8 +38,8 @@ async function verifyOpenAI() {
     const models = await openai.models.list();
 
     const gptModels = models.data
-      .filter(m => m.id.includes('gpt'))
-      .map(m => m.id)
+      .filter((m) => m.id.includes('gpt'))
+      .map((m) => m.id)
       .sort();
 
     if (gptModels.length === 0) {
@@ -48,7 +48,7 @@ async function verifyOpenAI() {
     }
 
     logger.info(`✅ Found ${gptModels.length} GPT models:`);
-    gptModels.slice(0, 5).forEach(m => logger.info(`   - ${m}`));
+    gptModels.slice(0, 5).forEach((m) => logger.info(`   - ${m}`));
     if (gptModels.length > 5) {
       logger.info(`   ... and ${gptModels.length - 5} more`);
     }
@@ -57,7 +57,7 @@ async function verifyOpenAI() {
     // Test 2: Generate a test roast
     logger.info('🔥 Test 2: Generating test roast...');
 
-    const testComment = "Tu código es tan malo que ni ChatGPT lo arregla";
+    const testComment = 'Tu código es tan malo que ni ChatGPT lo arregla';
 
     // Use env var override or prefer gpt-4o-mini if available
     const testModel =
@@ -90,7 +90,9 @@ async function verifyOpenAI() {
     logger.info(`   Input: "${testComment}"`);
     logger.info(`   Output: "${roast}"`);
     logger.info(`   Duration: ${duration}ms`);
-    logger.info(`   Tokens used: ${tokensUsed} (prompt: ${completion.usage.prompt_tokens}, completion: ${completion.usage.completion_tokens})`);
+    logger.info(
+      `   Tokens used: ${tokensUsed} (prompt: ${completion.usage.prompt_tokens}, completion: ${completion.usage.completion_tokens})`
+    );
     logger.info(`   Model: ${completion.model}\n`);
 
     // Test 3: Check moderation API
@@ -137,7 +139,6 @@ async function verifyOpenAI() {
     logger.info();
 
     logger.info('🎉 OpenAI API verification complete!\n');
-
   } catch (error) {
     logger.error('\n❌ ERROR during verification:');
 
@@ -175,7 +176,7 @@ async function verifyOpenAI() {
 }
 
 // Run verification
-verifyOpenAI().catch(error => {
+verifyOpenAI().catch((error) => {
   logger.error('\n❌ Unexpected error:', error.message);
   process.exit(1);
 });

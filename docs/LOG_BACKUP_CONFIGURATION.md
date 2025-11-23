@@ -9,8 +9,9 @@ The log backup system supports flexible configuration through environment variab
 ## Configuration Structure
 
 The system is configured through environment variables that control three main areas:
+
 - **Cleanup Configuration**: Local log file retention and cleanup
-- **Backup Configuration**: S3 backup schedules and settings  
+- **Backup Configuration**: S3 backup schedules and settings
 - **Monitoring Configuration**: Health checks and alerting
 
 ## Environment-Specific Examples
@@ -194,7 +195,7 @@ ALERT_COOLDOWN_MINUTES=15
 # AWS Configuration - Production with IAM role (preferred)
 AWS_REGION=us-east-1
 # Use IAM role instead of access keys in production
-# AWS_ACCESS_KEY_ID="" 
+# AWS_ACCESS_KEY_ID=""
 # AWS_SECRET_ACCESS_KEY=""
 ```
 
@@ -276,11 +277,11 @@ kind: ConfigMap
 metadata:
   name: roastr-ai-log-config
 data:
-  LOG_CLEANUP_ENABLED: "true"
-  LOG_RETENTION_APPLICATION_DAYS: "30"
-  LOG_BACKUP_ENABLED: "true"
-  LOG_BACKUP_S3_BUCKET: "roastr-ai-logs-k8s"
-  LOG_MONITORING_ENABLED: "true"
+  LOG_CLEANUP_ENABLED: 'true'
+  LOG_RETENTION_APPLICATION_DAYS: '30'
+  LOG_BACKUP_ENABLED: 'true'
+  LOG_BACKUP_S3_BUCKET: 'roastr-ai-logs-k8s'
+  LOG_MONITORING_ENABLED: 'true'
 ---
 apiVersion: v1
 kind: Secret
@@ -300,41 +301,42 @@ spec:
   template:
     spec:
       containers:
-      - name: roastr-ai
-        image: roastr-ai:latest
-        envFrom:
-        - configMapRef:
-            name: roastr-ai-log-config
-        - secretRef:
-            name: roastr-ai-aws-credentials
-        volumeMounts:
-        - name: logs-storage
-          mountPath: /app/logs
+        - name: roastr-ai
+          image: roastr-ai:latest
+          envFrom:
+            - configMapRef:
+                name: roastr-ai-log-config
+            - secretRef:
+                name: roastr-ai-aws-credentials
+          volumeMounts:
+            - name: logs-storage
+              mountPath: /app/logs
       volumes:
-      - name: logs-storage
-        persistentVolumeClaim:
-          claimName: roastr-ai-logs-pvc
+        - name: logs-storage
+          persistentVolumeClaim:
+            claimName: roastr-ai-logs-pvc
 ```
 
 ## Schedule Configuration Guide
 
 ### Cron Expression Examples
 
-| Schedule | Cron Expression | Use Case |
-|----------|----------------|----------|
-| Every hour | `0 * * * *` | High-frequency monitoring |
-| Every 6 hours | `0 */6 * * *` | Regular monitoring |
-| Daily at 2 AM | `0 2 * * *` | Daily cleanup |
-| Weekly on Sunday at 3 AM | `0 3 * * 0` | Weekly backup cleanup |
-| Monthly on 1st at midnight | `0 0 1 * *` | Monthly maintenance |
-| Twice daily (6 AM, 6 PM) | `0 6,18 * * *` | High-volume cleanup |
+| Schedule                   | Cron Expression | Use Case                  |
+| -------------------------- | --------------- | ------------------------- |
+| Every hour                 | `0 * * * *`     | High-frequency monitoring |
+| Every 6 hours              | `0 */6 * * *`   | Regular monitoring        |
+| Daily at 2 AM              | `0 2 * * *`     | Daily cleanup             |
+| Weekly on Sunday at 3 AM   | `0 3 * * 0`     | Weekly backup cleanup     |
+| Monthly on 1st at midnight | `0 0 1 * *`     | Monthly maintenance       |
+| Twice daily (6 AM, 6 PM)   | `0 6,18 * * *`  | High-volume cleanup       |
 
 ### Best Practice Scheduling
 
 1. **Stagger Operations**: Avoid running all maintenance tasks simultaneously
+
    ```
    Cleanup: 01:00 UTC
-   Backup: 02:00 UTC  
+   Backup: 02:00 UTC
    Monitoring: 03:00 UTC
    ```
 
@@ -347,22 +349,26 @@ spec:
 ## Retention Policy Guidelines
 
 ### Application Logs
+
 - **Development**: 1-7 days (rapid iteration)
 - **Staging**: 14-30 days (debugging needs)
 - **Production**: 30-90 days (troubleshooting window)
 
 ### Security Logs
+
 - **Minimum**: 90 days (compliance requirements)
 - **Recommended**: 180+ days (investigation needs)
 - **Audit Logs**: 7 years (legal requirements)
 
 ### Integration Logs
+
 - **Development**: 1-7 days (quick feedback)
 - **Production**: 30-60 days (debugging integrations)
 
 ## Cost Optimization
 
 ### S3 Storage Classes
+
 Configure lifecycle policies to optimize costs:
 
 ```json
@@ -371,11 +377,11 @@ Configure lifecycle policies to optimize costs:
     {
       "ID": "LogLifecycle",
       "Status": "Enabled",
-      "Filter": {"Prefix": "logs/"},
+      "Filter": { "Prefix": "logs/" },
       "Transitions": [
-        {"Days": 30, "StorageClass": "STANDARD_IA"},
-        {"Days": 90, "StorageClass": "GLACIER"},
-        {"Days": 365, "StorageClass": "DEEP_ARCHIVE"}
+        { "Days": 30, "StorageClass": "STANDARD_IA" },
+        { "Days": 90, "StorageClass": "GLACIER" },
+        { "Days": 365, "StorageClass": "DEEP_ARCHIVE" }
       ]
     }
   ]
@@ -385,6 +391,7 @@ Configure lifecycle policies to optimize costs:
 ### Volume-Based Configuration
 
 Adjust retention based on log volume:
+
 - High volume (>1GB/day): Shorter retention, frequent cleanup
 - Medium volume (100MB-1GB/day): Standard retention
 - Low volume (<100MB/day): Extended retention for debugging
@@ -410,11 +417,11 @@ Adjust retention based on log volume:
 
 ### Alert Thresholds
 
-| Metric | Warning | Critical | Action |
-|--------|---------|----------|--------|
-| Disk Usage | 80% | 90% | Increase cleanup frequency |
-| Backup Failures | 10% | 25% | Check S3 connectivity |
-| Log Volume | 150% of baseline | 200% of baseline | Investigate log sources |
+| Metric          | Warning          | Critical         | Action                     |
+| --------------- | ---------------- | ---------------- | -------------------------- |
+| Disk Usage      | 80%              | 90%              | Increase cleanup frequency |
+| Backup Failures | 10%              | 25%              | Check S3 connectivity      |
+| Log Volume      | 150% of baseline | 200% of baseline | Investigate log sources    |
 
 ## Troubleshooting
 

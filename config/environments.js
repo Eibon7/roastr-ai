@@ -1,6 +1,6 @@
 /**
  * Environment Configuration for API Integration Testing - Issue #90
- * 
+ *
  * Provides staging/development environment setup for real API testing
  * without requiring production credentials.
  */
@@ -28,7 +28,7 @@ const environments = {
   },
 
   staging: {
-    name: 'Staging Environment', 
+    name: 'Staging Environment',
     description: 'Pre-production testing with development API apps',
     apiEndpoints: {
       twitter: 'https://api.twitter.com',
@@ -76,7 +76,7 @@ const environments = {
     description: 'Local development with optional real API integration',
     apiEndpoints: {
       twitter: 'https://api.twitter.com',
-      youtube: 'https://www.googleapis.com/youtube/v3', 
+      youtube: 'https://www.googleapis.com/youtube/v3',
       instagram: 'https://graph.instagram.com',
       facebook: 'https://graph.facebook.com'
     },
@@ -107,7 +107,7 @@ const environments = {
     apiEndpoints: {
       twitter: 'https://api.twitter.com',
       youtube: 'https://www.googleapis.com/youtube/v3',
-      instagram: 'https://graph.instagram.com', 
+      instagram: 'https://graph.instagram.com',
       facebook: 'https://graph.facebook.com'
     },
     features: {
@@ -121,7 +121,13 @@ const environments = {
       mockDefaults: false,
       validation: {
         twitter: {
-          required: ['TWITTER_BEARER_TOKEN', 'TWITTER_APP_KEY', 'TWITTER_APP_SECRET', 'TWITTER_ACCESS_TOKEN', 'TWITTER_ACCESS_SECRET'],
+          required: [
+            'TWITTER_BEARER_TOKEN',
+            'TWITTER_APP_KEY',
+            'TWITTER_APP_SECRET',
+            'TWITTER_ACCESS_TOKEN',
+            'TWITTER_ACCESS_SECRET'
+          ],
           optional: []
         },
         youtube: {
@@ -175,11 +181,11 @@ function validateCredentials(environment = getCurrentEnvironment()) {
     return validation;
   }
 
-  Object.keys(credentialValidation).forEach(platform => {
+  Object.keys(credentialValidation).forEach((platform) => {
     const platformRules = credentialValidation[platform];
-    
+
     // Check required credentials
-    platformRules.required.forEach(key => {
+    platformRules.required.forEach((key) => {
       if (!process.env[key]) {
         validation.missing.push(`${platform.toUpperCase()}: ${key}`);
         validation.valid = false;
@@ -187,7 +193,7 @@ function validateCredentials(environment = getCurrentEnvironment()) {
     });
 
     // Check optional credentials
-    platformRules.optional.forEach(key => {
+    platformRules.optional.forEach((key) => {
       if (!process.env[key]) {
         validation.warnings.push(`${platform.toUpperCase()}: ${key} (optional)`);
       }
@@ -275,7 +281,7 @@ function isRealApiEnabled(platform = null) {
  */
 function getWebhookConfig() {
   const env = getCurrentEnvironment();
-  
+
   return {
     enabled: env.features.webhookValidation,
     baseUrl: process.env.WEBHOOK_BASE_URL || 'https://your-staging-domain.com',

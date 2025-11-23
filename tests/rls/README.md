@@ -111,6 +111,7 @@ psql -h localhost -p 54322 -U postgres -d postgres
 ### Error: `db is undefined`
 
 `getConnections()` falló. Verifica:
+
 1. PostgreSQL está ejecutándose
 2. Las credenciales son correctas
 3. Las migraciones existen en `supabase/migrations/`
@@ -130,4 +131,3 @@ psql -h localhost -p 54322 -U postgres -d postgres
 - Rollback automático después de cada test
 - Cada test ejecuta en <1s (objetivo)
 - Compatible con CI/CD (GitHub Actions)
-

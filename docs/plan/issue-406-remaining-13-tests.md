@@ -23,6 +23,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 ### Order-Processing Tests (3 tests - 2-3 horas)
 
 #### Test 1: "should respect priority-based ordering"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Architecture - Mock Implementation
 - **File:** `tests/integration/ingestor-order-processing.test.js`
@@ -31,6 +32,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Behavior:** Jobs con priority 1 (critical) deben procesarse antes que priority 5 (low)
 
 #### Test 2: "should not block processing when one job permanently fails"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Architecture - Mock Implementation
 - **File:** `tests/integration/ingestor-order-processing.test.js`
@@ -39,6 +41,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Behavior:** Jobs independientes deben continuar procesándose aunque uno falle
 
 #### Test 3: "should preserve order across different priority levels with concurrency"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Architecture - Mock Implementation
 - **File:** `tests/integration/ingestor-order-processing.test.js`
@@ -51,6 +54,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 ### Error-Handling Tests (10 tests - 4-6 horas)
 
 #### Test 1: "should retry transient network errors"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -58,6 +62,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Fix:** Ensure comments stored after successful retry
 
 #### Test 2: "should not retry authentication errors"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -65,6 +70,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Fix:** Verify `isRetryableError` returns false for 401 errors
 
 #### Test 3: "should not retry forbidden/permission errors"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -72,6 +78,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Fix:** Verify `isRetryableError` returns false for 403 errors
 
 #### Test 4: "should not retry malformed request errors"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -79,6 +86,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Fix:** Verify `isRetryableError` returns false for 400 errors
 
 #### Test 5: "should not retry resource not found errors"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -86,6 +94,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Fix:** Verify `isRetryableError` returns false for 404 errors
 
 #### Test 6: "should correctly classify HTTP status codes"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -93,6 +102,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Fix:** Test matrix of status codes (4xx non-retryable, 5xx retryable, 429 retryable)
 
 #### Test 7: "should handle mixed error scenarios in batch processing"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -100,6 +110,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Fix:** Some jobs succeed, some fail, verify correct state
 
 #### Test 8: "should maintain consistent state after error recovery"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -107,6 +118,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Fix:** Verify job counts, statuses, and mock storage consistency
 
 #### Test 9: "should handle database errors during comment storage"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -114,6 +126,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 - **Expected Fix:** Mock Supabase insert errors, verify error handling
 
 #### Test 10: "should handle partial batch failures gracefully"
+
 - **Severity:** Major (Test Coverage)
 - **Category:** Bug - Mock Setup
 - **File:** `tests/integration/ingestor-error-handling.test.js`
@@ -127,12 +140,14 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 ### Affected Nodes
 
 #### `queue-system` (Production v1.2.0)
+
 - **Impact:** HIGH - Mock implementation changes affect queue testing
 - **Coverage:** 87% (maintained)
 - **Changes Required:** NO (tests only, not production code)
 - **Validation:** Ensure mock changes don't affect production queue
 
 #### `testing` (hypothetical node - not exists yet)
+
 - **Impact:** HIGH - Test infrastructure improvements
 - **Coverage:** N/A
 - **Changes Required:** Maybe create if test patterns emerge
@@ -141,6 +156,7 @@ CodeRabbit solicita completar los 13 tests restantes para alcanzar 100% de cober
 ### Nodes NOT Affected
 
 All production GDD nodes remain unchanged:
+
 - `analytics`, `billing`, `cost-control`, `guardian`, `multi-tenant`, `persona`, `plan-features`, `platform-constraints`, `roast`, `shield`, `social-platforms`, `tone`, `trainer`
 
 **Rationale:** All changes are in test infrastructure (mocks), not production code.
@@ -150,6 +166,7 @@ All production GDD nodes remain unchanged:
 ## 3. Subagents Assignment
 
 ### Primary Agent: **Test Engineer Agent**
+
 - **Responsibility:** Fix all 13 failing tests
 - **Scope:** Mock queue implementation + error scenario mocks
 - **Deliverables:** 44/44 tests passing, test evidence, documentation
@@ -220,11 +237,12 @@ All production GDD nodes remain unchanged:
 ### Phase 1: Order-Processing Fixes (2-3 hours)
 
 **Step 1.1: Implement Priority Ordering in Mock Queue**
+
 ```javascript
 // tests/helpers/ingestor-test-utils.js - getNextJob enhancement
 
 getNextJob: async () => {
-  const pendingJobs = this.mockStoredJobs.filter(job => job.status === 'pending');
+  const pendingJobs = this.mockStoredJobs.filter((job) => job.status === 'pending');
   if (pendingJobs.length === 0) return null;
 
   // Sort by priority (lower number = higher priority) then by creation time (FIFO)
@@ -236,17 +254,20 @@ getNextJob: async () => {
   });
 
   return pendingJobs[0];
-}
+};
 ```
 
 **Step 1.2: Add Concurrent Processing Simulation**
+
 - Mock queue should allow multiple jobs to be "in progress" simultaneously
 - Don't block on permanent failures (mark as failed, continue with next)
 
 **Step 1.3: Validate Order-Processing Tests**
+
 ```bash
 ENABLE_MOCK_MODE=true npm test -- tests/integration/ingestor-order-processing.test.js
 ```
+
 **Expected:** 8/8 tests passing (currently 5/8)
 
 ---
@@ -254,34 +275,41 @@ ENABLE_MOCK_MODE=true npm test -- tests/integration/ingestor-order-processing.te
 ### Phase 2: Error-Handling Fixes (4-6 hours)
 
 **Step 2.1: Fix Transient Error Retry (Test 1)**
+
 - Problem: Comments not stored after successful retry
 - Fix: Ensure `storeComments` called after retry success in mock
 - Validation: Check `mockStoredComments` contains data after retry
 
 **Step 2.2: Fix Error Classification Tests (Tests 2-6)**
+
 - Problem: `isRetryableError` not properly tested
 - Fix: Create proper error objects with status codes in mocks
 - Validation: Verify retryable vs non-retryable classification
 
 **Step 2.3: Fix Batch Processing (Tests 7, 10)**
+
 - Problem: Mixed success/failure not handled correctly
 - Fix: Process each comment independently in mock
 - Validation: Verify partial success stores successful comments
 
 **Step 2.4: Fix State Consistency (Test 8)**
+
 - Problem: State not preserved after retry
 - Fix: Ensure mock storage updated correctly
 - Validation: Check job counts and statuses
 
 **Step 2.5: Fix Database Errors (Test 9)**
+
 - Problem: Database errors not simulated
 - Fix: Mock Supabase errors in specific tests
 - Validation: Verify error handling code path
 
 **Step 2.6: Validate Error-Handling Tests**
+
 ```bash
 ENABLE_MOCK_MODE=true npm test -- tests/integration/ingestor-error-handling.test.js
 ```
+
 **Expected:** 13/13 tests passing (currently 3/13)
 
 ---
@@ -289,21 +317,27 @@ ENABLE_MOCK_MODE=true npm test -- tests/integration/ingestor-error-handling.test
 ### Phase 3: Full Validation (30 min)
 
 **Step 3.1: Run All Ingestor Tests**
+
 ```bash
 ENABLE_MOCK_MODE=true npm test -- tests/integration/ingestor-*.test.js
 ```
+
 **Expected:** 44/44 tests passing (100%)
 
 **Step 3.2: Run Full Test Suite**
+
 ```bash
 npm test
 ```
+
 **Expected:** All tests passing, no regressions
 
 **Step 3.3: Verify Coverage**
+
 ```bash
 npm run test:coverage
 ```
+
 **Expected:** Coverage maintained or improved
 
 ---
@@ -318,12 +352,13 @@ ENABLE_MOCK_MODE=true npm test -- tests/integration/ingestor-*.test.js > docs/te
 ```
 
 **Expected Baseline:**
+
 - ingestor-mock-test: 1/1 passing ✅
 - ingestor-deduplication: 6/6 passing ✅
 - ingestor-retry-backoff: 8/8 passing ✅
 - ingestor-acknowledgment: 8/8 passing ✅
-- **ingestor-order-processing: 5/8 passing** ⚠️  (3 failing)
-- **ingestor-error-handling: 3/13 passing** ⚠️  (10 failing)
+- **ingestor-order-processing: 5/8 passing** ⚠️ (3 failing)
+- **ingestor-error-handling: 3/13 passing** ⚠️ (10 failing)
 
 **Total:** 31/44 passing (70%)
 
@@ -341,6 +376,7 @@ ENABLE_MOCK_MODE=true npm test -- tests/integration/ingestor-*.test.js > docs/te
 ```
 
 **Expected Final:**
+
 - ingestor-mock-test: 1/1 passing ✅
 - ingestor-deduplication: 6/6 passing ✅
 - ingestor-retry-backoff: 8/8 passing ✅
@@ -359,7 +395,8 @@ ENABLE_MOCK_MODE=true npm test -- tests/integration/ingestor-*.test.js > docs/te
 **Rationale:** All changes are part of completing Issue #406, logically related
 
 **Commit Message:**
-```
+
+````
 test: Complete Issue #406 - Fix remaining 13 ingestor tests (100% passing)
 
 ### Issues Addressed
@@ -426,14 +463,15 @@ npm test
 
 npm run test:coverage
 # Result: Coverage maintained
-```
+````
 
 Related: Issue #406, PR #530, CodeRabbit #3393202994
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
-```
+
+````
 
 ---
 
@@ -647,7 +685,7 @@ P1 - Important but not blocking (core functionality already validated)
 - `follow-up`
 - `issue-406`
 - `ingestor`
-```
+````
 
 ---
 
@@ -673,4 +711,4 @@ P1 - Important but not blocking (core functionality already validated)
 **Generated:** 2025-10-11
 **Type:** Planning Document
 **Scope:** Issue #406 - Remaining 13 tests
-**Status:** ⏸️  AWAITING DECISION
+**Status:** ⏸️ AWAITING DECISION

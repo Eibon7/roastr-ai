@@ -50,7 +50,7 @@ export const CommandCenterLayout: React.FC = () => {
     { timestamp: lastUpdated, event: `System validation completed - ${nodes} nodes validated` },
     { timestamp: lastUpdated, event: `Health scores updated - Average ${health.toFixed(1)}/100` },
     { timestamp: lastUpdated, event: `Drift analysis completed - ${drift}% average risk` },
-    { timestamp: lastUpdated, event: `Coverage at ${coverage}% across all nodes` },
+    { timestamp: lastUpdated, event: `Coverage at ${coverage}% across all nodes` }
   ];
 
   const handleNodeClick = (nodeId: string) => {
@@ -78,7 +78,7 @@ export const CommandCenterLayout: React.FC = () => {
       usedBy: ['analytics', 'trainer'],
       recentActivity: [
         { timestamp: '18:20', event: 'Node validation passed' },
-        { timestamp: '18:15', event: 'Health score updated: 95/100' },
+        { timestamp: '18:15', event: 'Health score updated: 95/100' }
       ]
     };
   };
@@ -87,14 +87,16 @@ export const CommandCenterLayout: React.FC = () => {
     // Show loading state
     if (loading && nodes === 0) {
       return (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          color: '#bdbdbd',
-          fontFamily: 'JetBrains Mono, monospace'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: '#bdbdbd',
+            fontFamily: 'JetBrains Mono, monospace'
+          }}
+        >
           Loading GDD data...
         </div>
       );
@@ -103,16 +105,18 @@ export const CommandCenterLayout: React.FC = () => {
     // Show error state
     if (error) {
       return (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          color: '#ff5555',
-          fontFamily: 'JetBrains Mono, monospace',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: '#ff5555',
+            fontFamily: 'JetBrains Mono, monospace',
+            flexDirection: 'column',
+            gap: '16px'
+          }}
+        >
           <div>⚠️ Failed to load GDD data</div>
           <div style={{ fontSize: '14px', color: '#8a8a8a' }}>{error}</div>
           <button
@@ -148,17 +152,11 @@ export const CommandCenterLayout: React.FC = () => {
   return (
     <LayoutContainer data-testid="dashboard-layout">
       <SidebarWrapper>
-        <LeftSidebar
-          activeView={activeView}
-          onViewChange={setActiveView}
-          stats={stats}
-        />
+        <LeftSidebar activeView={activeView} onViewChange={setActiveView} stats={stats} />
       </SidebarWrapper>
 
       <main data-testid="main-content">
-        <MainContent>
-          {renderMainContent()}
-        </MainContent>
+        <MainContent>{renderMainContent()}</MainContent>
       </main>
 
       <NodeDetailsDrawer

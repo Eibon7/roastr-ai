@@ -21,7 +21,7 @@ export const HTTP_STATUS = {
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
-  INTERNAL_SERVER_ERROR: 500,
+  INTERNAL_SERVER_ERROR: 500
 };
 
 /**
@@ -43,9 +43,9 @@ class ApiClient {
   constructor(baseURL = API_BASE_URL) {
     this.baseURL = baseURL;
     this.defaultHeaders = {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     };
-    
+
     // Use mock fetch if in mock mode
     this.fetch = createMockFetch();
   }
@@ -79,7 +79,7 @@ class ApiClient {
   async handleResponse(response) {
     const contentType = response.headers.get('content-type');
     const isJson = contentType && contentType.includes('application/json');
-    
+
     let data = null;
     if (isJson) {
       try {
@@ -92,7 +92,8 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const message = data?.message || data?.error || `HTTP ${response.status}: ${response.statusText}`;
+      const message =
+        data?.message || data?.error || `HTTP ${response.status}: ${response.statusText}`;
       throw new ApiError(message, response.status, data);
     }
 
@@ -108,14 +109,14 @@ class ApiClient {
    */
   async request(method, endpoint, options = {}) {
     const { data, headers = {}, ...fetchOptions } = options;
-    
+
     const config = {
       method,
       headers: {
         ...this.defaultHeaders,
-        ...headers,
+        ...headers
       },
-      ...fetchOptions,
+      ...fetchOptions
     };
 
     if (data) {
@@ -135,13 +136,9 @@ class ApiClient {
       if (error instanceof ApiError) {
         throw error;
       }
-      
+
       // Network or other errors
-      throw new ApiError(
-        error.message || 'Network error occurred',
-        0,
-        { originalError: error }
-      );
+      throw new ApiError(error.message || 'Network error occurred', 0, { originalError: error });
     }
   }
 
@@ -222,11 +219,11 @@ export function getErrorMessage(error) {
   if (error instanceof ApiError) {
     return error.message;
   }
-  
+
   if (error.message) {
     return error.message;
   }
-  
+
   return 'An unexpected error occurred';
 }
 
@@ -240,11 +237,11 @@ export function isApiError(error, status = null) {
   if (!(error instanceof ApiError)) {
     return false;
   }
-  
+
   if (status === null) {
     return true;
   }
-  
+
   return error.status === status;
 }
 

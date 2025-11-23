@@ -11,8 +11,7 @@ describe('Plan Routes', () => {
 
   describe('GET /api/plan/available', () => {
     it('should return all available plans', async () => {
-      const response = await request(app)
-        .get('/api/plan/available');
+      const response = await request(app).get('/api/plan/available');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -21,24 +20,23 @@ describe('Plan Routes', () => {
 
       // Verify plan structure
       const plans = response.body.data.plans;
-      expect(plans.map(p => p.id)).toEqual(
+      expect(plans.map((p) => p.id)).toEqual(
         expect.arrayContaining(['free', 'starter', 'pro', 'creator_plus'])
       );
 
       // Check Creator+ plan has style profile feature
-      const plusPlan = plans.find(p => p.id === 'creator_plus');
+      const plusPlan = plans.find((p) => p.id === 'creator_plus');
       expect(plusPlan.features.styleProfile).toBe(true);
 
       // Check Free plan doesn't have style profile
-      const freePlan = plans.find(p => p.id === 'free');
+      const freePlan = plans.find((p) => p.id === 'free');
       expect(freePlan.features.styleProfile).toBe(false);
     });
   });
 
   describe('GET /api/plan/current', () => {
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get('/api/plan/current');
+      const response = await request(app).get('/api/plan/current');
 
       expect(response.status).toBe(401);
     });
@@ -57,9 +55,7 @@ describe('Plan Routes', () => {
 
   describe('POST /api/plan/select', () => {
     it('should require authentication', async () => {
-      const response = await request(app)
-        .post('/api/plan/select')
-        .send({ plan: 'plus' });
+      const response = await request(app).post('/api/plan/select').send({ plan: 'plus' });
 
       expect(response.status).toBe(401);
     });
@@ -101,8 +97,7 @@ describe('Plan Routes', () => {
 
   describe('GET /api/plan/features', () => {
     it('should return feature comparison', async () => {
-      const response = await request(app)
-        .get('/api/plan/features');
+      const response = await request(app).get('/api/plan/features');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -112,7 +107,7 @@ describe('Plan Routes', () => {
 
       // Verify feature comparison structure
       const features = response.body.data.comparison;
-      features.forEach(plan => {
+      features.forEach((plan) => {
         expect(plan).toHaveProperty('id');
         expect(plan).toHaveProperty('name');
         expect(plan).toHaveProperty('price');
@@ -132,8 +127,7 @@ describe('Plan Routes', () => {
         throw new Error('Mock error');
       });
 
-      const response = await request(app)
-        .get('/api/plan/available');
+      const response = await request(app).get('/api/plan/available');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -145,30 +139,32 @@ describe('Plan Routes', () => {
 
     it('should test helper functions directly', async () => {
       const { hasFeatureAccess, getUserPlan } = require('../../../src/routes/plan');
-      
+
       // Test the helper functions for coverage
       expect(hasFeatureAccess('nonexistent-user', 'styleProfile')).toBe(false);
-      expect(getUserPlan('nonexistent-user')).toEqual(expect.objectContaining({
-        id: 'free',
-        name: 'Free'
-      }));
+      expect(getUserPlan('nonexistent-user')).toEqual(
+        expect.objectContaining({
+          id: 'free',
+          name: 'Free'
+        })
+      );
     });
 
     it('should handle plan not found scenario by corrupting user plan data', async () => {
       // This test aims to hit the 'Plan not found' branch in the /current route (line 94)
       const planModule = require('../../../src/routes/plan');
-      
+
       // Mock console.error to avoid noise
       jest.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       // Temporarily corrupt the AVAILABLE_PLANS to simulate a scenario where user's plan doesn't exist
       const originalPlans = { ...planModule.AVAILABLE_PLANS };
-      
+
       // Clear all plans to force the 'plan not found' condition
-      Object.keys(planModule.AVAILABLE_PLANS).forEach(key => {
+      Object.keys(planModule.AVAILABLE_PLANS).forEach((key) => {
         delete planModule.AVAILABLE_PLANS[key];
       });
-      
+
       const response = await request(app)
         .get('/api/plan/current')
         .set('Authorization', `Bearer ${authToken}`);
@@ -177,7 +173,7 @@ describe('Plan Routes', () => {
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Plan not found');
-      
+
       // Restore the plans
       Object.assign(planModule.AVAILABLE_PLANS, originalPlans);
       console.error.mockRestore();
@@ -211,8 +207,7 @@ describe('Plan Routes', () => {
         throw new Error('Mock error');
       });
 
-      const response = await request(app)
-        .get('/api/plan/features');
+      const response = await request(app).get('/api/plan/features');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -224,19 +219,22 @@ describe('Plan Routes', () => {
     it('should handle error in current plan route by mocking user object', async () => {
       // This test specifically targets the error handling in /current route (lines 109-110)
       jest.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       // Mock the authenticateToken to pass through but cause an error later
       const originalMiddleware = require('../../../src/middleware/auth').authenticateToken;
       require('../../../src/middleware/auth').authenticateToken = (req, res, next) => {
         // Create a user object that will cause an error when accessed
-        req.user = new Proxy({ id: 'test-user' }, {
-          get(target, prop) {
-            if (prop === 'id' && Math.random() > 0.5) {
-              throw new Error('Simulated access error');
+        req.user = new Proxy(
+          { id: 'test-user' },
+          {
+            get(target, prop) {
+              if (prop === 'id' && Math.random() > 0.5) {
+                throw new Error('Simulated access error');
+              }
+              return target[prop];
             }
-            return target[prop];
           }
-        });
+        );
         next();
       };
 
@@ -266,7 +264,7 @@ describe('Plan Routes', () => {
       // Mock the userPlans Map to throw an error
       const planModule = require('../../../src/routes/plan');
       const originalMap = Map.prototype.set;
-      Map.prototype.set = function() {
+      Map.prototype.set = function () {
         throw new Error('Database error');
       };
 
@@ -292,7 +290,7 @@ describe('Plan Routes', () => {
   describe('Helper functions', () => {
     it('should test hasFeatureAccess function', () => {
       const { hasFeatureAccess } = require('../../../src/routes/plan');
-      
+
       // Test with unknown user (defaults to free plan)
       expect(hasFeatureAccess('unknown-user', 'styleProfile')).toBe(false);
       expect(hasFeatureAccess('unknown-user', 'prioritySupport')).toBe(false);
@@ -300,7 +298,7 @@ describe('Plan Routes', () => {
 
     it('should test getUserPlan function', () => {
       const { getUserPlan } = require('../../../src/routes/plan');
-      
+
       // Test with unknown user (defaults to free plan)
       const plan = getUserPlan('unknown-user');
       expect(plan.id).toBe('free');
@@ -310,7 +308,7 @@ describe('Plan Routes', () => {
 
     it('should export AVAILABLE_PLANS correctly', () => {
       const { AVAILABLE_PLANS } = require('../../../src/routes/plan');
-      
+
       expect(AVAILABLE_PLANS).toHaveProperty('free');
       expect(AVAILABLE_PLANS).toHaveProperty('pro');
       expect(AVAILABLE_PLANS).toHaveProperty('creator_plus');
@@ -319,15 +317,15 @@ describe('Plan Routes', () => {
 
     it('should test hasFeatureAccess with invalid plan scenario', () => {
       const planModule = require('../../../src/routes/plan');
-      
+
       // Test edge case where user plan exists but plan data is missing
       const originalPlans = { ...planModule.AVAILABLE_PLANS };
       delete planModule.AVAILABLE_PLANS.free;
-      
+
       const result = planModule.hasFeatureAccess('unknown-user', 'styleProfile');
       // When plan is missing, hasFeatureAccess should return undefined (falsy)
       expect(result).toBeFalsy();
-      
+
       // Restore plans
       Object.assign(planModule.AVAILABLE_PLANS, originalPlans);
     });

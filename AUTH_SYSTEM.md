@@ -7,30 +7,36 @@ This document describes the comprehensive multi-tenant authentication system imp
 ## Features
 
 ✅ **Email/Password Authentication**
+
 - User registration with email and password
 - Secure login and logout
 - JWT-based session management
 
-✅ **Magic Link Authentication** 
+✅ **Magic Link Authentication**
+
 - Passwordless login via email magic links
 - Magic link registration for new users
 - Automatic email delivery via Supabase
 
 ✅ **Password Recovery**
+
 - Secure password reset via email
 - Token-based password reset flow
 
 ✅ **Multi-Tenant Architecture**
+
 - Row Level Security (RLS) for complete data isolation
 - Automatic organization creation for new users
 - User-specific integration management
 
 ✅ **Role-Based Access Control**
+
 - Admin and regular user roles
 - Protected endpoints for admin operations
 - Fine-grained permissions
 
 ✅ **CLI Management Tools**
+
 - Create, list, search, and delete users
 - User statistics and health checks
 - Manual user creation for admins
@@ -39,37 +45,37 @@ This document describes the comprehensive multi-tenant authentication system imp
 
 ### Authentication Routes (`/api/auth`)
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/signup` | Register with email/password | No |
-| POST | `/signup/magic-link` | Register with magic link | No |
-| POST | `/login` | Login with email/password | No |
-| POST | `/login/magic-link` | Login with magic link | No |
-| POST | `/logout` | Logout current user | Yes |
-| GET | `/me` | Get current user profile | Yes |
-| PUT | `/profile` | Update user profile | Yes |
-| POST | `/reset-password` | Request password reset | No |
+| Method | Endpoint             | Description                  | Auth Required |
+| ------ | -------------------- | ---------------------------- | ------------- |
+| POST   | `/signup`            | Register with email/password | No            |
+| POST   | `/signup/magic-link` | Register with magic link     | No            |
+| POST   | `/login`             | Login with email/password    | No            |
+| POST   | `/login/magic-link`  | Login with magic link        | No            |
+| POST   | `/logout`            | Logout current user          | Yes           |
+| GET    | `/me`                | Get current user profile     | Yes           |
+| PUT    | `/profile`           | Update user profile          | Yes           |
+| POST   | `/reset-password`    | Request password reset       | No            |
 
 ### Admin Routes (`/api/auth/admin`)
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/admin/users` | List all users | Admin |
-| POST | `/admin/users` | Create user manually | Admin |
-| DELETE | `/admin/users/:id` | Delete user | Admin |
+| Method | Endpoint           | Description          | Auth Required |
+| ------ | ------------------ | -------------------- | ------------- |
+| GET    | `/admin/users`     | List all users       | Admin         |
+| POST   | `/admin/users`     | Create user manually | Admin         |
+| DELETE | `/admin/users/:id` | Delete user          | Admin         |
 
 ### Integration Routes (`/api/integrations`)
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | Get user integrations | Yes |
-| GET | `/platforms` | Get available platforms | Yes |
-| POST | `/:platform` | Create/update integration | Yes |
-| PUT | `/:platform` | Update integration | Yes |
-| DELETE | `/:platform` | Delete integration | Yes |
-| POST | `/:platform/enable` | Enable integration | Yes |
-| POST | `/:platform/disable` | Disable integration | Yes |
-| GET | `/metrics` | Get usage metrics | Yes |
+| Method | Endpoint             | Description               | Auth Required |
+| ------ | -------------------- | ------------------------- | ------------- |
+| GET    | `/`                  | Get user integrations     | Yes           |
+| GET    | `/platforms`         | Get available platforms   | Yes           |
+| POST   | `/:platform`         | Create/update integration | Yes           |
+| PUT    | `/:platform`         | Update integration        | Yes           |
+| DELETE | `/:platform`         | Delete integration        | Yes           |
+| POST   | `/:platform/enable`  | Enable integration        | Yes           |
+| POST   | `/:platform/disable` | Disable integration       | Yes           |
+| GET    | `/metrics`           | Get usage metrics         | Yes           |
 
 ## CLI Commands
 
@@ -92,6 +98,7 @@ npm run users:delete -- --user-id abc123 --confirm
 ## Database Schema
 
 ### Users Table
+
 - `id` (UUID, Primary Key)
 - `email` (Unique, Required)
 - `name` (Optional)
@@ -99,7 +106,8 @@ npm run users:delete -- --user-id abc123 --confirm
 - `is_admin` (Boolean)
 - `created_at`, `updated_at`
 
-### Organizations Table  
+### Organizations Table
+
 - `id` (UUID, Primary Key)
 - `owner_id` (Foreign Key to users)
 - `plan_id` (Matches user's plan)
@@ -107,6 +115,7 @@ npm run users:delete -- --user-id abc123 --confirm
 - `monthly_responses_used`
 
 ### Integration Configs Table
+
 - `organization_id` (Foreign Key)
 - `platform` (twitter, youtube, etc.)
 - `enabled` (Boolean)
@@ -123,19 +132,19 @@ CREATE POLICY user_isolation ON users FOR ALL USING (id = auth.uid());
 
 -- Users can only access their organization's data
 CREATE POLICY org_isolation ON organizations FOR ALL USING (
-    owner_id = auth.uid() OR 
+    owner_id = auth.uid() OR
     id IN (SELECT organization_id FROM organization_members WHERE user_id = auth.uid())
 );
 ```
 
 ## Plan Limits
 
-| Plan | Monthly Responses | Integrations | Shield Mode |
-|------|-------------------|--------------|-------------|
-| Free | 100 | 2 | No |
-| Pro | 1,000 | 5 | Yes |
-| Creator Plus | 5,000 | Unlimited | Yes |
-| Custom | Unlimited | Unlimited | Yes |
+| Plan         | Monthly Responses | Integrations | Shield Mode |
+| ------------ | ----------------- | ------------ | ----------- |
+| Free         | 100               | 2            | No          |
+| Pro          | 1,000             | 5            | Yes         |
+| Creator Plus | 5,000             | Unlimited    | Yes         |
+| Custom       | Unlimited         | Unlimited    | Yes         |
 
 ## Environment Variables
 
@@ -178,8 +187,8 @@ const loginResponse = await fetch('/api/auth/login', {
 
 // Get user profile
 const profileResponse = await fetch('/api/auth/me', {
-  headers: { 
-    'Authorization': `Bearer ${accessToken}`
+  headers: {
+    Authorization: `Bearer ${accessToken}`
   }
 });
 ```

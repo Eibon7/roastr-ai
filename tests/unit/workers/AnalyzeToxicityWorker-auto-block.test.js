@@ -106,7 +106,11 @@ describe('AnalyzeToxicityWorker - Auto-Block Functionality (Issue #149)', () => 
 
       expect(result).toBe('insultos raciales, comentarios sobre peso, odio hacia veganos');
       expect(mockEncryptionService.decrypt).toHaveBeenCalledWith('encrypted_test_preferences');
-      expect(worker.log).toHaveBeenCalledWith('debug', expect.stringContaining('Retrieved user intolerance preferences'), expect.any(Object));
+      expect(worker.log).toHaveBeenCalledWith(
+        'debug',
+        expect.stringContaining('Retrieved user intolerance preferences'),
+        expect.any(Object)
+      );
     });
 
     it('should return null when user has no intolerance preferences', async () => {
@@ -148,7 +152,11 @@ describe('AnalyzeToxicityWorker - Auto-Block Functionality (Issue #149)', () => 
       const result = await worker.getUserIntolerancePreferences(organizationId);
 
       expect(result).toBe(null);
-      expect(worker.log).toHaveBeenCalledWith('error', expect.stringContaining('Failed to decrypt'), expect.any(Object));
+      expect(worker.log).toHaveBeenCalledWith(
+        'error',
+        expect.stringContaining('Failed to decrypt'),
+        expect.any(Object)
+      );
     });
 
     it('should return null when organization is not found', async () => {
@@ -162,7 +170,11 @@ describe('AnalyzeToxicityWorker - Auto-Block Functionality (Issue #149)', () => 
       const result = await worker.getUserIntolerancePreferences(organizationId);
 
       expect(result).toBe(null);
-      expect(worker.log).toHaveBeenCalledWith('warn', expect.stringContaining('Could not get organization owner'), expect.any(Object));
+      expect(worker.log).toHaveBeenCalledWith(
+        'warn',
+        expect.stringContaining('Could not get organization owner'),
+        expect.any(Object)
+      );
     });
   });
 
@@ -187,8 +199,12 @@ describe('AnalyzeToxicityWorker - Auto-Block Functionality (Issue #149)', () => 
       const result = await worker.checkAutoBlock(text, intoleranceData);
 
       expect(result.shouldBlock).toBe(true);
-      expect(result.matchedTerms).toEqual(expect.arrayContaining(['insultos raciales', 'odio hacia veganos']));
-      expect(result.matchedCategories).toEqual(expect.arrayContaining(['racial_intolerance', 'general_intolerance']));
+      expect(result.matchedTerms).toEqual(
+        expect.arrayContaining(['insultos raciales', 'odio hacia veganos'])
+      );
+      expect(result.matchedCategories).toEqual(
+        expect.arrayContaining(['racial_intolerance', 'general_intolerance'])
+      );
     });
 
     it('should categorize different types of intolerance correctly', async () => {
@@ -342,7 +358,9 @@ describe('AnalyzeToxicityWorker - Auto-Block Functionality (Issue #149)', () => 
       expect(result.toxicityScore).toBe(1.0);
       expect(result.severityLevel).toBe('critical');
       expect(result.service).toBe('auto_block');
-      expect(result.matchedTerms).toEqual(expect.arrayContaining(['insultos raciales', 'odio hacia veganos']));
+      expect(result.matchedTerms).toEqual(
+        expect.arrayContaining(['insultos raciales', 'odio hacia veganos'])
+      );
 
       // Verify comment was updated with auto-block analysis
       expect(mockSupabase.update).toHaveBeenCalledWith(
@@ -521,8 +539,8 @@ describe('AnalyzeToxicityWorker - Auto-Block Functionality (Issue #149)', () => 
 
       // Check that sensitive terms are not logged
       const logCalls = worker.log.mock.calls;
-      const debugLogCall = logCalls.find(call => call[0] === 'debug');
-      
+      const debugLogCall = logCalls.find((call) => call[0] === 'debug');
+
       expect(debugLogCall).toBeTruthy();
       expect(debugLogCall[2]).not.toHaveProperty('intoleranceTerms');
       expect(debugLogCall[2]).not.toHaveProperty('decryptedContent');
@@ -540,7 +558,7 @@ describe('AnalyzeToxicityWorker - Auto-Block Functionality (Issue #149)', () => 
       const results = await Promise.all(promises);
 
       // All should return consistent results
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.shouldBlock).toBe(true);
         expect(result.matchedTerms).toContain('comentarios sobre peso');
       });

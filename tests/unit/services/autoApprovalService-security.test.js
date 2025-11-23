@@ -1,10 +1,10 @@
 /**
  * AutoApprovalService Security Tests
  * Issue #405 - CodeRabbit Round 5 Security Fixes
- * 
+ *
  * Comprehensive security test suite combining Round 2-5 fixes:
  * - Enhanced toxicity score validation with fail-closed
- * - Organization policy lookup with robust error handling  
+ * - Organization policy lookup with robust error handling
  * - Rate limiting with fail-closed during DB errors
  * - Transparency enforcement and validation
  * - Comprehensive edge case coverage
@@ -18,8 +18,8 @@ const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    organizations: [],
-    auto_approval_usage: []
+  organizations: [],
+  auto_approval_usage: []
 });
 
 // Mock dependencies
@@ -79,10 +79,10 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
     jest.clearAllMocks();
     // Reset Supabase mock to defaults
     mockSupabase._reset();
-    
+
     service = new AutoApprovalService();
     jest.clearAllMocks();
-    
+
     // Reset mock chain
     mockSupabase.from.mockReturnValue({
       select: jest.fn().mockReturnThis(),
@@ -100,11 +100,11 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
         // Low toxicity (≤0.2) - allows 0.4 increase
         const result = service.validateToxicityScore(0.5, 0.15);
         expect(result).toBe(true);
-        
+
         // Just at boundary
         const boundary = service.validateToxicityScore(0.55, 0.15);
         expect(boundary).toBe(true);
-        
+
         // Over boundary should fail
         const overBoundary = service.validateToxicityScore(0.6, 0.15);
         expect(overBoundary).toBe(false);
@@ -114,11 +114,11 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
         // Medium toxicity (0.2-0.5) - allows 0.3 increase
         const result = service.validateToxicityScore(0.6, 0.3);
         expect(result).toBe(true);
-        
+
         // Just at boundary
         const boundary = service.validateToxicityScore(0.6, 0.3);
         expect(boundary).toBe(true);
-        
+
         // Over boundary should fail
         const overBoundary = service.validateToxicityScore(0.65, 0.3);
         expect(overBoundary).toBe(false);
@@ -128,11 +128,11 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
         // High toxicity (>0.5) - allows 0.2 increase
         const result = service.validateToxicityScore(0.8, 0.6);
         expect(result).toBe(true);
-        
+
         // Just at boundary
         const boundary = service.validateToxicityScore(0.8, 0.6);
         expect(boundary).toBe(true);
-        
+
         // Over boundary should fail
         const overBoundary = service.validateToxicityScore(0.85, 0.6);
         expect(overBoundary).toBe(false);
@@ -153,13 +153,13 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
       test('should handle invalid score formats gracefully', () => {
         const result1 = service.validateToxicityScore('invalid', 0.3);
         expect(result1).toBe(false);
-        
+
         const result2 = service.validateToxicityScore(0.3, 'invalid');
         expect(result2).toBe(false);
-        
+
         const result3 = service.validateToxicityScore(-1, 0.3);
         expect(result3).toBe(false);
-        
+
         const result4 = service.validateToxicityScore(0.3, -1);
         expect(result4).toBe(false);
       });
@@ -170,8 +170,8 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
         // Scores > 1 should be normalized
         const result = service.validateToxicityScore(50, 30); // 0.5, 0.3
         expect(result).toBe(true);
-        
-        const result2 = service.validateToxicityScore(80, 30); // 0.8, 0.3  
+
+        const result2 = service.validateToxicityScore(80, 30); // 0.8, 0.3
         expect(result2).toBe(false); // 0.8 > 0.3 + 0.3 (0.6)
       });
     });
@@ -180,14 +180,12 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
   describe('Fail-Closed Error Handling', () => {
     test('should fail closed when organization query times out', async () => {
       // Mock timeout scenario
-      supabaseServiceClient.single.mockImplementation(() => 
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Query timeout')), 100)
-        )
+      supabaseServiceClient.single.mockImplementation(
+        () => new Promise((_, reject) => setTimeout(() => reject(new Error('Query timeout')), 100))
       );
 
       const result = await service.checkAutoApprovalEligibility('test-org');
-      
+
       expect(result.eligible).toBe(false);
       expect(result.reason).toBe('system_error');
       expect(logger.error).toHaveBeenCalledWith(
@@ -203,7 +201,7 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
       });
 
       const result = await service.checkAutoApprovalEligibility('test-org');
-      
+
       expect(result.eligible).toBe(false);
       expect(result.reason).toBe('organization_not_found');
       expect(logger.error).toHaveBeenCalledWith(
@@ -223,7 +221,7 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
       });
 
       const result = await service.checkRateLimits('test-org');
-      
+
       expect(result.allowed).toBe(false);
       expect(result.error).toBe('database_connectivity_failed');
       expect(result.reason).toContain('Cannot verify database connectivity');
@@ -239,17 +237,17 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
         .mockResolvedValueOnce({ data: [], count: 20, error: null }); // Daily check
 
       const result = await service.checkRateLimits('test-org');
-      
+
       expect(result.allowed).toBe(true);
       expect(supabaseServiceClient.select).toHaveBeenCalledTimes(3);
     });
 
     test('should validate organization ID format for rate limiting', async () => {
       const invalidOrgIds = [null, undefined, '', 123, {}, []];
-      
+
       for (const invalidId of invalidOrgIds) {
         const result = await service.checkRateLimits(invalidId);
-        
+
         expect(result.allowed).toBe(false);
         expect(result.error).toBe('invalid_input');
         expect(result.reason).toBe('Invalid organization ID provided');
@@ -274,7 +272,7 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
       const variant = { id: 'variant-1', text: 'test response', score: 0.3 };
 
       const result = await service.processAutoApproval(comment, variant, 'test-org');
-      
+
       expect(result.approved).toBe(false);
       expect(result.reason).toBe('transparency_system_error');
       expect(result.requiresManualReview).toBe(true);
@@ -313,7 +311,7 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
       const variant = { id: 'variant-1', text: 'test response', score: 0.3 };
 
       const result = await service.processAutoApproval(comment, variant, 'test-org');
-      
+
       expect(result.approved).toBe(true);
       expect(result.variant.text).toContain('🤖');
       expect(logger.info).toHaveBeenCalledWith(
@@ -327,11 +325,11 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
     test('should use conservative thresholds for auto-approval', () => {
       // Test the new conservative configuration
       expect(service.config.maxToxicityScore).toBe(0.6); // Reduced from 0.7
-      
+
       // Test conservative toxicity validation
       const result1 = service.validateToxicityScore(0.5, 0.3); // Should pass
       expect(result1).toBe(true);
-      
+
       const result2 = service.validateToxicityScore(0.7, 0.3); // Should fail (above 0.6)
       expect(result2).toBe(false);
     });
@@ -358,11 +356,11 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
   describe('Input Validation Security', () => {
     test('should validate organization ID in all methods', async () => {
       const invalidOrgIds = [null, undefined, '', 123, {}, []];
-      
+
       for (const invalidId of invalidOrgIds) {
         const eligibilityResult = await service.checkAutoApprovalEligibility(invalidId);
         expect(eligibilityResult.eligible).toBe(false);
-        
+
         const rateLimitResult = await service.checkRateLimits(invalidId);
         expect(rateLimitResult.allowed).toBe(false);
       }
@@ -377,7 +375,7 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
       });
 
       await service.checkAutoApprovalEligibility('test-org');
-      
+
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('Failed to get organization'),
         expect.objectContaining({
@@ -389,7 +387,7 @@ describe('AutoApprovalService - Security Tests Round 5', () => {
 
     test('should include validation IDs for audit trails', async () => {
       const result = await service.checkRateLimits('test-org');
-      
+
       expect(result).toHaveProperty('rateLimitId');
       expect(typeof result.rateLimitId).toBe('string');
       expect(result.rateLimitId).toMatch(/^rate_\d+_[a-z0-9]+$/);

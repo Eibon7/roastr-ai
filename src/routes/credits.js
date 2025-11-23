@@ -1,14 +1,14 @@
 /**
  * Credits API Routes - Dual Credit System
- * 
+ *
  * Provides endpoints for credit status, consumption history,
  * and credit management for the dual credit system.
- * 
+ *
  * Routes:
  * - GET /api/user/credits/status - Get current credit status
  * - GET /api/user/credits/history - Get consumption history
  * - POST /api/user/credits/check - Check credit availability
- * 
+ *
  * @author Roastr.ai Team
  * @version 2.0.0
  */
@@ -27,16 +27,15 @@ const { flags } = require('../config/flags');
 router.get('/status', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     logger.debug('Fetching credit status', { userId });
-    
+
     const creditStatus = await creditsService.getCreditStatus(userId);
-    
+
     res.json({
       success: true,
       data: creditStatus
     });
-
   } catch (error) {
     logger.error('Failed to get credit status', {
       userId: req.user?.id,
@@ -58,13 +57,7 @@ router.get('/status', authenticateToken, async (req, res) => {
 router.get('/history', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const {
-      creditType,
-      limit = 50,
-      offset = 0,
-      startDate,
-      endDate
-    } = req.query;
+    const { creditType, limit = 50, offset = 0, startDate, endDate } = req.query;
 
     // Validate parameters
     if (creditType && !['analysis', 'roast'].includes(creditType)) {
@@ -109,7 +102,6 @@ router.get('/history', authenticateToken, async (req, res) => {
         }
       }
     });
-
   } catch (error) {
     logger.error('Failed to get credit history', {
       userId: req.user?.id,
@@ -162,7 +154,6 @@ router.post('/check', authenticateToken, async (req, res) => {
       success: true,
       data: availability
     });
-
   } catch (error) {
     logger.error('Failed to check credit availability', {
       userId: req.user?.id,
@@ -190,19 +181,22 @@ router.get('/summary', authenticateToken, async (req, res) => {
 
     // Get current period status
     const currentStatus = await creditsService.getCreditStatus(userId);
-    
+
     // Calculate summary statistics
     const summary = {
       currentPeriod: currentStatus,
       statistics: {
-        analysisUsagePercentage: currentStatus.analysis ? 
-          Math.round((currentStatus.analysis.used / currentStatus.analysis.limit) * 100) : 0,
-        roastUsagePercentage: currentStatus.roast ? 
-          Math.round((currentStatus.roast.used / currentStatus.roast.limit) * 100) : 0,
+        analysisUsagePercentage: currentStatus.analysis
+          ? Math.round((currentStatus.analysis.used / currentStatus.analysis.limit) * 100)
+          : 0,
+        roastUsagePercentage: currentStatus.roast
+          ? Math.round((currentStatus.roast.used / currentStatus.roast.limit) * 100)
+          : 0,
         totalCreditsUsed: (currentStatus.analysis?.used || 0) + (currentStatus.roast?.used || 0),
         totalCreditsLimit: (currentStatus.analysis?.limit || 0) + (currentStatus.roast?.limit || 0),
-        daysRemaining: currentStatus.period_end ? 
-          Math.ceil((new Date(currentStatus.period_end) - new Date()) / (1000 * 60 * 60 * 24)) : 0
+        daysRemaining: currentStatus.period_end
+          ? Math.ceil((new Date(currentStatus.period_end) - new Date()) / (1000 * 60 * 60 * 24))
+          : 0
       },
       recommendations: []
     };
@@ -236,7 +230,6 @@ router.get('/summary', authenticateToken, async (req, res) => {
       success: true,
       data: summary
     });
-
   } catch (error) {
     logger.error('Failed to get credit summary', {
       userId: req.user?.id,
@@ -285,7 +278,6 @@ router.get('/config', async (req, res) => {
       success: true,
       data: config
     });
-
   } catch (error) {
     logger.error('Failed to get credit config', {
       error: error.message

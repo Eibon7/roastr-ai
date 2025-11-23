@@ -1,67 +1,62 @@
-import React, { useState, useRef, useId } from 'react'
+import React, { useState, useRef, useId } from 'react';
 
-const InfoTooltip = ({ 
-  content, 
-  children, 
-  position = 'top',
-  className = '' 
-}) => {
-  const [isVisible, setIsVisible] = useState(false)
-  const [isFocused, setIsFocused] = useState(false)
-  const tooltipId = useId()
-  const timeoutRef = useRef(null)
+const InfoTooltip = ({ content, children, position = 'top', className = '' }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const tooltipId = useId();
+  const timeoutRef = useRef(null);
 
   const showTooltip = () => {
     if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
+      clearTimeout(timeoutRef.current);
     }
-    setIsVisible(true)
-  }
+    setIsVisible(true);
+  };
 
   const hideTooltip = () => {
     timeoutRef.current = setTimeout(() => {
-      setIsVisible(false)
-    }, 100)
-  }
+      setIsVisible(false);
+    }, 100);
+  };
 
   const handleMouseEnter = () => {
-    showTooltip()
-  }
+    showTooltip();
+  };
 
   const handleMouseLeave = () => {
     if (!isFocused) {
-      hideTooltip()
+      hideTooltip();
     }
-  }
+  };
 
   const handleFocus = () => {
-    setIsFocused(true)
-    showTooltip()
-  }
+    setIsFocused(true);
+    showTooltip();
+  };
 
   const handleBlur = () => {
-    setIsFocused(false)
-    hideTooltip()
-  }
+    setIsFocused(false);
+    hideTooltip();
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      setIsVisible(!isVisible)
+      e.preventDefault();
+      setIsVisible(!isVisible);
     }
     if (e.key === 'Escape') {
-      setIsVisible(false)
+      setIsVisible(false);
     }
-  }
+  };
 
-  if (!content) return children
+  if (!content) return children;
 
   const positionClasses = {
     top: 'bottom-full left-1/2 transform -translate-x-1/2 mb-2',
     bottom: 'top-full left-1/2 transform -translate-x-1/2 mt-2',
     left: 'right-full top-1/2 transform -translate-y-1/2 mr-2',
     right: 'left-full top-1/2 transform -translate-y-1/2 ml-2'
-  }
+  };
 
   return (
     <div className={`relative inline-block ${className}`}>
@@ -78,7 +73,7 @@ const InfoTooltip = ({
       >
         {children}
       </div>
-      
+
       {isVisible && (
         <div
           id={tooltipId}
@@ -90,10 +85,10 @@ const InfoTooltip = ({
           `}
         >
           {content}
-        />
+        </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default InfoTooltip
+export default InfoTooltip;

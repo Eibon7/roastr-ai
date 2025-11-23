@@ -21,7 +21,7 @@ const files = [
 
 let fixed = 0;
 
-files.forEach(filePath => {
+files.forEach((filePath) => {
   const fullPath = path.join(__dirname, '..', filePath);
 
   if (!fs.existsSync(fullPath)) {
@@ -30,7 +30,10 @@ files.forEach(filePath => {
   }
 
   const content = fs.readFileSync(fullPath, 'utf8');
-  const newContent = content.replace(/\*\*Coverage Source:\*\* mocked/g, '**Coverage Source:** auto');
+  const newContent = content.replace(
+    /\*\*Coverage Source:\*\* mocked/g,
+    '**Coverage Source:** auto'
+  );
 
   if (content !== newContent) {
     fs.writeFileSync(fullPath, newContent, 'utf8');

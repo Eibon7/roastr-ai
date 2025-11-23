@@ -27,16 +27,19 @@ Transform the GDD Admin Dashboard into a **cyberpunk-inspired Command Center** f
 ### Existing Dashboard Components
 
 **File**: `src/pages/GDDDashboard/index.tsx`
+
 - ✅ Basic layout with 4 components
 - ✅ Snake Eater theme integration
 - ✅ Overview, NodeExplorer, DependencyGraph, ReportsViewer
 
 **Strengths**:
+
 - Components are functional and data-driven
 - Theme system already in place
 - DependencyGraph recently redesigned with workflow-style layout
 
 **Gaps**:
+
 - ❌ No left sidebar navigation
 - ❌ No system status cards in header
 - ❌ No interactive node details drawer
@@ -50,6 +53,7 @@ Transform the GDD Admin Dashboard into a **cyberpunk-inspired Command Center** f
 ### Reference Image Analysis
 
 **Grupo.png** shows:
+
 - Left sidebar with "Agent Activity" stats (Total: 72, Success: 45, Failed: 27)
 - Risk indicators (HIGH RISK: 30, MEDIUM RISK: 34, LOW RISK: 08)
 - List of agents with IDs and codenames
@@ -58,6 +62,7 @@ Transform the GDD Admin Dashboard into a **cyberpunk-inspired Command Center** f
 - Dark background (#0b0b0d) with card panels (#1f1d20)
 
 **Grupo 2.png** shows:
+
 - Same left sidebar structure
 - Main area with operation details table
 - Color-coded status indicators (yellow warning headers, green action buttons)
@@ -67,20 +72,22 @@ Transform the GDD Admin Dashboard into a **cyberpunk-inspired Command Center** f
 ### Color Palette (Snake Eater UI)
 
 ```css
---color-bg-base: #0b0b0d;      /* Main background */
---color-bg-card: #1f1d20;      /* Panel/card background */
+--color-bg-base: #0b0b0d; /* Main background */
+--color-bg-card: #1f1d20; /* Panel/card background */
 --color-text-primary: #bdbdbd; /* Primary text */
 --color-text-secondary: #8a8a8a; /* Secondary text */
---color-success: #50fa7b;      /* Neon green accent */
---color-warning: #f1fa8c;      /* Yellow warning */
---color-danger: #ff5555;       /* Red critical */
+--color-success: #50fa7b; /* Neon green accent */
+--color-warning: #f1fa8c; /* Yellow warning */
+--color-danger: #ff5555; /* Red critical */
 ```
 
 ### Typography
 
 ```css
 font-family: 'JetBrains Mono', monospace;
-font-weight: 400 (regular), 600 (semibold);
+font-weight:
+  400 (regular),
+  600 (semibold);
 text-transform: uppercase (for labels);
 letter-spacing: 0.05em;
 ```
@@ -88,9 +95,11 @@ letter-spacing: 0.05em;
 ### Component Patterns
 
 **Corner Separators**:
+
 ```css
 position: relative;
-&::before, &::after {
+&::before,
+&::after {
   content: '';
   position: absolute;
   width: 8px;
@@ -112,13 +121,14 @@ position: relative;
 ```
 
 **Status Cards**:
+
 ```typescript
 interface StatusCard {
-  label: string;      // e.g. "HEALTH SCORE"
-  value: number;      // e.g. 95.5
-  max?: number;       // e.g. 100
+  label: string; // e.g. "HEALTH SCORE"
+  value: number; // e.g. 95.5
+  max?: number; // e.g. 100
   status: 'healthy' | 'warning' | 'critical';
-  color: string;      // Dynamic based on status
+  color: string; // Dynamic based on status
 }
 ```
 
@@ -145,12 +155,14 @@ interface StatusCard {
 ### Component Breakdown
 
 #### 1. **CommandCenterLayout.tsx** (New)
+
 - Main layout wrapper
 - Grid: `grid-template-columns: 280px 1fr`
 - Manages drawer state (open/closed)
 - Provides context for active view
 
 #### 2. **SystemStatusBar.tsx** (New)
+
 - Top bar with 4 status cards:
   - Health Score (from `gdd-health.json`)
   - Drift Risk (from `gdd-drift.json`)
@@ -160,6 +172,7 @@ interface StatusCard {
 - Refresh button (re-fetches all data sources)
 
 #### 3. **LeftSidebar.tsx** (New)
+
 - **System Status Section** (top):
   - Compact stat blocks (Total Nodes, Health, Drift, Coverage)
   - Color-coded indicators
@@ -172,7 +185,9 @@ interface StatusCard {
 - Corner separators on each section
 
 #### 4. **HealthPanel.tsx** (Enhanced)
+
 Replaces or enhances existing Overview component
+
 - System metrics cards (same as top bar, but larger)
 - Recent Activity Log:
   - Parse `docs/system-validation.md` for recent entries
@@ -181,7 +196,9 @@ Replaces or enhances existing Overview component
 - Color-coded status indicators
 
 #### 5. **GraphView.tsx** (Enhanced)
+
 Enhance existing DependencyGraph component
+
 - **Hierarchical layout** (already implemented in DependencyGraph)
 - **Node interactions**:
   - Hover: Tooltip with metadata
@@ -192,6 +209,7 @@ Enhance existing DependencyGraph component
 - **Data source**: `gdd-graph.json` (already working)
 
 #### 6. **NodeDetailsDrawer.tsx** (New)
+
 - Slides in from right when node clicked
 - Width: 400px
 - Sections:
@@ -204,7 +222,9 @@ Enhance existing DependencyGraph component
 - Smooth slide animation (framer-motion)
 
 #### 7. **ReportsViewer.tsx** (Enhanced)
+
 Already exists, needs styling updates
+
 - **Dropdown selector** (styled with Snake Eater aesthetic):
   - System Validation Report (`docs/system-validation.md`)
   - Drift Report (`docs/drift-report.md`)
@@ -220,27 +240,28 @@ Already exists, needs styling updates
 
 ### Data Sources
 
-| Source | Format | Update Frequency | Consumer Components |
-|--------|--------|------------------|---------------------|
-| `gdd-health.json` | JSON | On validation | SystemStatusBar, HealthPanel, NodeDetailsDrawer |
-| `gdd-status.json` | JSON | On validation | HealthPanel, GraphView |
-| `gdd-drift.json` | JSON | On drift analysis | SystemStatusBar, NodeDetailsDrawer |
-| `system-map.yaml` | YAML | On node changes | GraphView, SystemStatusBar |
-| `docs/system-validation.md` | Markdown | On validation | ReportsViewer, HealthPanel (activity log) |
-| `docs/drift-report.md` | Markdown | On drift analysis | ReportsViewer |
-| `docs/system-health.md` | Markdown | On health scoring | ReportsViewer |
+| Source                      | Format   | Update Frequency  | Consumer Components                             |
+| --------------------------- | -------- | ----------------- | ----------------------------------------------- |
+| `gdd-health.json`           | JSON     | On validation     | SystemStatusBar, HealthPanel, NodeDetailsDrawer |
+| `gdd-status.json`           | JSON     | On validation     | HealthPanel, GraphView                          |
+| `gdd-drift.json`            | JSON     | On drift analysis | SystemStatusBar, NodeDetailsDrawer              |
+| `system-map.yaml`           | YAML     | On node changes   | GraphView, SystemStatusBar                      |
+| `docs/system-validation.md` | Markdown | On validation     | ReportsViewer, HealthPanel (activity log)       |
+| `docs/drift-report.md`      | Markdown | On drift analysis | ReportsViewer                                   |
+| `docs/system-health.md`     | Markdown | On health scoring | ReportsViewer                                   |
 
 ### Data Fetching Strategy
 
 **Initial Load**:
+
 ```typescript
 useEffect(() => {
   async function fetchAllData() {
     const [health, status, drift, graph] = await Promise.all([
-      fetch('/gdd-health.json').then(r => r.json()),
-      fetch('/gdd-status.json').then(r => r.json()),
-      fetch('/gdd-drift.json').then(r => r.json()),
-      fetch('/gdd-graph.json').then(r => r.json())
+      fetch('/gdd-health.json').then((r) => r.json()),
+      fetch('/gdd-status.json').then((r) => r.json()),
+      fetch('/gdd-drift.json').then((r) => r.json()),
+      fetch('/gdd-graph.json').then((r) => r.json())
     ]);
 
     setData({ health, status, drift, graph });
@@ -251,6 +272,7 @@ useEffect(() => {
 ```
 
 **Auto-Refresh** (polling every 30 seconds):
+
 ```typescript
 useEffect(() => {
   const interval = setInterval(() => {
@@ -262,6 +284,7 @@ useEffect(() => {
 ```
 
 **Manual Refresh** (button in SystemStatusBar):
+
 ```typescript
 const handleRefresh = async () => {
   setRefreshing(true);
@@ -277,6 +300,7 @@ const handleRefresh = async () => {
 ### Framer Motion Animations
 
 **Drawer Slide-In**:
+
 ```typescript
 <motion.div
   initial={{ x: '100%' }}
@@ -289,6 +313,7 @@ const handleRefresh = async () => {
 ```
 
 **Status Card Fade-In**:
+
 ```typescript
 <motion.div
   initial={{ opacity: 0, y: 20 }}
@@ -300,17 +325,15 @@ const handleRefresh = async () => {
 ```
 
 **Graph Node Highlight**:
+
 ```typescript
 // On click
-d3.select(node)
-  .transition()
-  .duration(300)
-  .attr('stroke', '#50fa7b')
-  .attr('stroke-width', 3);
+d3.select(node).transition().duration(300).attr('stroke', '#50fa7b').attr('stroke-width', 3);
 
 // Connected paths
-svg.selectAll('path')
-  .filter(d => d.source === nodeId || d.target === nodeId)
+svg
+  .selectAll('path')
+  .filter((d) => d.source === nodeId || d.target === nodeId)
   .transition()
   .duration(300)
   .attr('stroke', '#50fa7b')
@@ -320,16 +343,19 @@ svg.selectAll('path')
 ### Interaction States
 
 **Hover**:
+
 - Subtle brightness increase
 - Neon glow on borders
 - Cursor: pointer
 
 **Active/Selected**:
+
 - Full neon green border
 - Background slightly lighter
 - Persist until deselected
 
 **Disabled**:
+
 - Opacity: 0.5
 - Cursor: not-allowed
 - No hover effects
@@ -373,6 +399,7 @@ admin-dashboard/
 ## 🚀 Implementation Phases
 
 ### Phase 11.1: Layout & Navigation (2-3 hours)
+
 1. Create `CommandCenterLayout.tsx`
 2. Create `LeftSidebar.tsx` with navigation menu
 3. Create `SystemStatusBar.tsx` with status cards
@@ -381,6 +408,7 @@ admin-dashboard/
 6. Test responsive layout (desktop only for now)
 
 **Acceptance Criteria**:
+
 - [ ] Left sidebar visible with navigation menu
 - [ ] Top bar shows 4 status cards with real data
 - [ ] Corner separators on all panels
@@ -388,6 +416,7 @@ admin-dashboard/
 - [ ] Layout matches reference images (structure)
 
 ### Phase 11.2: Health Panel & Activity Log (1-2 hours)
+
 1. Create `HealthPanel.tsx`
 2. Parse `docs/system-validation.md` for activity log
 3. Create `ActivityLogItem.tsx` component
@@ -395,6 +424,7 @@ admin-dashboard/
 5. Add auto-refresh mechanism
 
 **Acceptance Criteria**:
+
 - [ ] Health metrics display correctly
 - [ ] Activity log shows recent 10 events
 - [ ] Data refreshes every 30 seconds
@@ -402,6 +432,7 @@ admin-dashboard/
 - [ ] Color-coded status indicators
 
 ### Phase 11.3: Interactive Graph & Node Drawer (2-3 hours)
+
 1. Create `GraphView.tsx` wrapper
 2. Enhance `DependencyGraph.tsx` with click handlers
 3. Create `NodeDetailsDrawer.tsx`
@@ -410,6 +441,7 @@ admin-dashboard/
 6. Create `NodeChip.tsx` for dependency chips
 
 **Acceptance Criteria**:
+
 - [ ] Clicking node opens drawer
 - [ ] Drawer shows correct metadata
 - [ ] Dependencies are clickable chips
@@ -418,6 +450,7 @@ admin-dashboard/
 - [ ] Clicking outside drawer closes it
 
 ### Phase 11.4: Reports Viewer Enhancement (1 hour)
+
 1. Update `ReportsViewer.tsx` styling
 2. Add Snake Eater themed dropdown
 3. Add download button (MD/PDF export)
@@ -425,6 +458,7 @@ admin-dashboard/
 5. Add loading states
 
 **Acceptance Criteria**:
+
 - [ ] Dropdown styled with dark theme
 - [ ] Download button functional
 - [ ] Reports refresh when files change
@@ -432,6 +466,7 @@ admin-dashboard/
 - [ ] Markdown renders correctly
 
 ### Phase 11.5: Polish & Accessibility (1 hour)
+
 1. Add loading states to all components
 2. Add error boundaries
 3. Test keyboard navigation
@@ -440,6 +475,7 @@ admin-dashboard/
 6. Verify color contrast (WCAG AA)
 
 **Acceptance Criteria**:
+
 - [ ] All interactive elements keyboard accessible
 - [ ] ARIA labels on all controls
 - [ ] Error states display gracefully
@@ -502,17 +538,20 @@ export const shadows = {
 ## 🧪 Testing Strategy
 
 ### Unit Tests
+
 - `useGDDData` hook (data fetching)
 - Status card calculations (health score, drift risk)
 - Activity log parser (Markdown extraction)
 
 ### Integration Tests
+
 - Left sidebar navigation
 - Graph node click → drawer open
 - Drawer dependency chip click → navigate to node
 - Reports dropdown → content switch
 
 ### E2E Tests (Playwright)
+
 - Full workflow: Open dashboard → Click node → View details → Close drawer
 - Reports viewer: Select report → Download → Verify file
 - Auto-refresh: Wait 30s → Verify data updates
@@ -532,6 +571,7 @@ export const shadows = {
 ## 📝 Commit Strategy
 
 **Commit 1**: Layout & Navigation
+
 ```
 feat(phase-11): Add Command Center layout with left sidebar
 
@@ -543,6 +583,7 @@ feat(phase-11): Add Command Center layout with left sidebar
 ```
 
 **Commit 2**: Health Panel & Activity Log
+
 ```
 feat(phase-11): Implement Health Panel with activity log
 
@@ -554,6 +595,7 @@ feat(phase-11): Implement Health Panel with activity log
 ```
 
 **Commit 3**: Interactive Graph & Node Drawer
+
 ```
 feat(phase-11): Add interactive graph with node details drawer
 
@@ -565,6 +607,7 @@ feat(phase-11): Add interactive graph with node details drawer
 ```
 
 **Commit 4**: Reports Viewer Enhancement
+
 ```
 feat(phase-11): Enhance Reports Viewer with Snake Eater styling
 
@@ -575,6 +618,7 @@ feat(phase-11): Enhance Reports Viewer with Snake Eater styling
 ```
 
 **Commit 5**: Polish & Accessibility
+
 ```
 feat(phase-11): Add polish and accessibility features
 

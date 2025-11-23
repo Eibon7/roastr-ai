@@ -218,10 +218,10 @@ npx markdownlint-cli2 SUMMARY.md
 ```json
 {
   "/Users/emiliopostigo/roastr-ai/src/adapters/FacebookAdapter.js": {
-    "lines": {"total": 79, "covered": 17, "pct": 21.51}
+    "lines": { "total": 79, "covered": 17, "pct": 21.51 }
   },
   "/Users/emiliopostigo/roastr-ai/src/adapters/InstagramAdapter.js": {
-    "lines": {"total": 49, "covered": 17, "pct": 34.69}
+    "lines": { "total": 49, "covered": 17, "pct": 34.69 }
   }
   // ... 6 more absolute paths
 }
@@ -232,10 +232,10 @@ npx markdownlint-cli2 SUMMARY.md
 ```json
 {
   "src/adapters/FacebookAdapter.js": {
-    "lines": {"total": 79, "covered": 17, "pct": 21.51}
+    "lines": { "total": 79, "covered": 17, "pct": 21.51 }
   },
   "src/adapters/InstagramAdapter.js": {
-    "lines": {"total": 49, "covered": 17, "pct": 34.69}
+    "lines": { "total": 49, "covered": 17, "pct": 34.69 }
   }
   // ... 6 more relative paths
 }

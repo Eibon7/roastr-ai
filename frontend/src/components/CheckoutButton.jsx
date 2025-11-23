@@ -21,7 +21,7 @@ function CheckoutButton({
   customerEmail,
   buttonText,
   className = '',
-  disabled = false,
+  disabled = false
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -34,7 +34,7 @@ function CheckoutButton({
     console.log('[Polar Checkout] Button clicked', {
       priceId,
       planName,
-      customerEmail,
+      customerEmail
     });
 
     // Validation
@@ -60,7 +60,7 @@ function CheckoutButton({
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
           // If you have auth tokens, add them here:
           // 'Authorization': `Bearer ${yourAuthToken}`
         },
@@ -69,9 +69,9 @@ function CheckoutButton({
           price_id: priceId,
           metadata: {
             plan: planName,
-            timestamp: new Date().toISOString(),
-          },
-        }),
+            timestamp: new Date().toISOString()
+          }
+        })
       });
 
       console.log('[Polar Checkout] Response status:', response.status);
@@ -92,7 +92,6 @@ function CheckoutButton({
 
       // Redirect user to Polar checkout page
       window.location.href = data.checkout.url;
-
     } catch (err) {
       console.error('[Polar Checkout] Error:', err);
       setError(err.message || 'Failed to create checkout session');

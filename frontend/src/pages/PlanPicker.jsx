@@ -16,7 +16,7 @@ const PLAN_ICONS = {
 const PLAN_COLORS = {
   starter_trial: 'text-purple-600',
   starter: 'text-blue-600',
-  pro: 'text-purple-600', 
+  pro: 'text-purple-600',
   plus: 'text-yellow-600'
 };
 
@@ -69,7 +69,7 @@ export default function PlanPicker() {
       const response = await fetchApi('/api/plan/select', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ plan: planId })
       });
@@ -77,7 +77,7 @@ export default function PlanPicker() {
       if (response.ok) {
         const data = await response.json();
         setCurrentPlan(planId);
-        
+
         // Navigate to integrations page after successful plan selection
         setTimeout(() => {
           navigate('/integrations/connect');
@@ -134,10 +134,10 @@ export default function PlanPicker() {
           plans.map((plan) => {
             const isCurrentPlan = plan.id === currentPlan;
             const isPlus = plan.id === 'plus';
-            
+
             return (
-              <Card 
-                key={plan.id} 
+              <Card
+                key={plan.id}
                 className={`relative ${isPlus ? 'border-yellow-200 shadow-lg' : ''} ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}
               >
                 {isPlus && (
@@ -145,15 +145,13 @@ export default function PlanPicker() {
                     <Badge className="bg-yellow-600 text-white">Most Popular</Badge>
                   </div>
                 )}
-                
+
                 <CardHeader className="text-center pb-4">
                   <div className={`mx-auto mb-2 ${PLAN_COLORS[plan.id]}`}>
                     {PLAN_ICONS[plan.id]}
                   </div>
                   <CardTitle className="text-xl">{plan.name}</CardTitle>
-                  <div className="text-3xl font-bold mt-2">
-                    {formatPrice(plan.price)}
-                  </div>
+                  <div className="text-3xl font-bold mt-2">{formatPrice(plan.price)}</div>
                   {getPlanBadge(plan.id)}
                 </CardHeader>
 
@@ -166,14 +164,14 @@ export default function PlanPicker() {
                         {plan.features.roastsPerMonth.toLocaleString()} roasts/month
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <Check className="h-4 w-4 text-green-500" />
                       <span className="text-sm">
                         {plan.features.platformConnections} platform connections
                       </span>
                     </div>
-                    
+
                     {plan.features.styleProfile && (
                       <div className="flex items-center space-x-2">
                         <Check className="h-4 w-4 text-green-500" />
@@ -182,21 +180,21 @@ export default function PlanPicker() {
                         </span>
                       </div>
                     )}
-                    
+
                     {plan.features.customPrompts && (
                       <div className="flex items-center space-x-2">
                         <Check className="h-4 w-4 text-green-500" />
                         <span className="text-sm">Custom roast prompts</span>
                       </div>
                     )}
-                    
+
                     {plan.features.prioritySupport && (
                       <div className="flex items-center space-x-2">
                         <Check className="h-4 w-4 text-green-500" />
                         <span className="text-sm">Priority support</span>
                       </div>
                     )}
-                    
+
                     {plan.features.advancedAnalytics && (
                       <div className="flex items-center space-x-2">
                         <Check className="h-4 w-4 text-green-500" />
@@ -213,13 +211,11 @@ export default function PlanPicker() {
                       className={`w-full ${isPlus ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
                       variant={isCurrentPlan ? 'outline' : 'default'}
                     >
-                      {selecting === plan.id ? (
-                        'Selecting...'
-                      ) : isCurrentPlan ? (
-                        'Current Plan'
-                      ) : (
-                        `Select ${plan.name}`
-                      )}
+                      {selecting === plan.id
+                        ? 'Selecting...'
+                        : isCurrentPlan
+                          ? 'Current Plan'
+                          : `Select ${plan.name}`}
                     </Button>
                   </div>
                 </CardContent>
@@ -243,7 +239,8 @@ export default function PlanPicker() {
             <div className="flex-1">
               <h3 className="font-semibold text-lg mb-2">AI Style Profile Generation</h3>
               <p className="text-muted-foreground mb-4">
-                Only available with Creator+ plan. Generate personalized roast styles based on your social media content across multiple platforms and languages.
+                Only available with Creator+ plan. Generate personalized roast styles based on your
+                social media content across multiple platforms and languages.
               </p>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center space-x-2">
@@ -272,7 +269,8 @@ export default function PlanPicker() {
       {currentPlan && plans && plans.length > 0 && (
         <div className="text-center mt-8">
           <p className="text-muted-foreground mb-4">
-            Great! You've selected the <strong>{plans.find(p => p.id === currentPlan)?.name || currentPlan}</strong> plan.
+            Great! You've selected the{' '}
+            <strong>{plans.find((p) => p.id === currentPlan)?.name || currentPlan}</strong> plan.
           </p>
           <Button onClick={() => navigate('/integrations/connect')} size="lg">
             Continue to Platform Connections

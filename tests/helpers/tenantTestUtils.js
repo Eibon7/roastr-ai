@@ -24,12 +24,14 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 // JWT secret with secure fallback pattern
 // Priority: SUPABASE_JWT_SECRET > JWT_SECRET > crypto-generated (test only) > fail-fast
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET ||
+const JWT_SECRET =
+  process.env.SUPABASE_JWT_SECRET ||
   process.env.JWT_SECRET ||
   (process.env.NODE_ENV === 'test'
     ? crypto.randomBytes(32).toString('hex')
-    : (() => { throw new Error('JWT_SECRET or SUPABASE_JWT_SECRET required for production'); })()
-  );
+    : (() => {
+        throw new Error('JWT_SECRET or SUPABASE_JWT_SECRET required for production');
+      })());
 
 // Better error reporting (CodeRabbit #3353894295 N5)
 // Issue #894: Only check env vars if using real Supabase
@@ -52,10 +54,10 @@ let serviceClient, testClient;
 if (USE_MOCK) {
   // Create service client (bypasses RLS)
   serviceClient = createMockServiceClient();
-  
+
   // Create test client (RLS-enabled) sharing same data store
   testClient = createMockSupabaseClient();
-  
+
   // CRITICAL: Share the data store between both clients
   testClient.data = serviceClient.data;
 } else {
@@ -85,14 +87,14 @@ function ensureSuccess(action, error) {
 
 async function ensureAuthUser(user, retries = 3) {
   console.log(`📧 Ensuring auth user: ${user.email}`);
-  
+
   // Issue #894: Supabase Auth API returns HTML instead of JSON (Auth disabled/misconfigured)
   // Skip auth.admin.createUser() entirely - use synthetic UUIDs for RLS testing
   // RLS tests only need user IDs for JWT tokens, not actual Supabase Auth users
-  
+
   console.log(`  ⚡ Skipping Supabase Auth API (Issue #894)`);
   console.log(`  ⚡ Generating synthetic user ID for RLS testing`);
-  
+
   // Generate deterministic UUID from email for consistency across test runs
   const crypto = require('crypto');
   const emailHash = crypto.createHash('sha256').update(user.email).digest('hex');
@@ -103,10 +105,10 @@ async function ensureAuthUser(user, retries = 3) {
     emailHash.slice(16, 20),
     emailHash.slice(20, 32)
   ].join('-');
-  
+
   console.log(`  ✅ Synthetic user ID: ${syntheticId}`);
   logger.debug(`✅ Created synthetic auth user ${user.email} with ID ${syntheticId}`);
-  
+
   return {
     id: syntheticId,
     email: user.email,
@@ -128,7 +130,7 @@ async function createTestTenants() {
   // Issue #894: Skip auth user creation when using mock
   // Mock doesn't need real Supabase Auth API (saves bandwidth)
   let authUserA, authUserB;
-  
+
   if (USE_MOCK) {
     console.log('👤 Creating synthetic user IDs (mock mode)');
     authUserA = {
@@ -176,7 +178,7 @@ async function createTestTenants() {
   // Issue #894: Skip users table insert when using mock
   // Mock doesn't have a users table (not needed for RLS testing)
   let createdUserA, createdUserB;
-  
+
   if (USE_MOCK) {
     console.log('⏩ Skipping users table (mock mode)');
     createdUserA = userA;
@@ -197,7 +199,7 @@ async function createTestTenants() {
       .single();
 
     if (errorUserB) throw new Error(`Failed to create User B: ${JSON.stringify(errorUserB)}`);
-    
+
     createdUserA = dataUserA;
     createdUserB = dataUserB;
   }
@@ -322,10 +324,7 @@ async function createTestData(tenantId, type = 'all') {
       }
     ];
 
-    const { data, error } = await serviceClient
-      .from('posts')
-      .insert(posts)
-      .select();
+    const { data, error } = await serviceClient.from('posts').insert(posts).select();
 
     if (error) throw new Error(`Failed to create posts: ${error.message}`);
     testData.posts = data;
@@ -339,15 +338,12 @@ async function createTestData(tenantId, type = 'all') {
       post_id: post.id,
       platform: 'twitter',
       platform_comment_id: `comment_${Date.now()}_${i}`,
-      original_text: `Test comment ${i + 1}`,  // Issue #504: Fix schema mismatch (content → original_text)
+      original_text: `Test comment ${i + 1}`, // Issue #504: Fix schema mismatch (content → original_text)
       platform_username: `commenter${i + 1}`,
-      toxicity_score: 0.5 + (i * 0.1)
+      toxicity_score: 0.5 + i * 0.1
     }));
 
-    const { data, error } = await serviceClient
-      .from('comments')
-      .insert(comments)
-      .select();
+    const { data, error } = await serviceClient.from('comments').insert(comments).select();
 
     if (error) throw new Error(`Failed to create comments: ${error.message}`);
     testData.comments = data;
@@ -366,10 +362,7 @@ async function createTestData(tenantId, type = 'all') {
       cost_usd: 0.002
     }));
 
-    const { data, error } = await serviceClient
-      .from('roasts')
-      .insert(roasts)
-      .select();
+    const { data, error } = await serviceClient.from('roasts').insert(roasts).select();
 
     if (error) throw new Error(`Failed to create roasts: ${error.message}`);
     testData.roasts = data;
@@ -414,10 +407,7 @@ async function createTestData(tenantId, type = 'all') {
       }
     ];
 
-    const { data, error } = await serviceClient
-      .from('usage_records')
-      .insert(usageRecords)
-      .select();
+    const { data, error } = await serviceClient.from('usage_records').insert(usageRecords).select();
 
     if (error) logger.warn(`  ⚠️  Failed to create usage_records: ${error.message}`);
     else {
@@ -440,10 +430,7 @@ async function createTestData(tenantId, type = 'all') {
       }
     ];
 
-    const { data, error } = await serviceClient
-      .from('monthly_usage')
-      .insert(monthlyUsage)
-      .select();
+    const { data, error } = await serviceClient.from('monthly_usage').insert(monthlyUsage).select();
 
     if (error) logger.warn(`  ⚠️  Failed to create monthly_usage: ${error.message}`);
     else {
@@ -463,10 +450,7 @@ async function createTestData(tenantId, type = 'all') {
       humor_type: 'witty'
     }));
 
-    const { data, error } = await serviceClient
-      .from('responses')
-      .insert(responses)
-      .select();
+    const { data, error } = await serviceClient.from('responses').insert(responses).select();
 
     if (error) logger.warn(`  ⚠️  Failed to create responses: ${error.message}`);
     else {
@@ -542,7 +526,7 @@ async function setTenantContext(tenantId) {
 
   const token = jwt.sign(
     {
-      sub: userId,  // Use actual tenant owner's user ID
+      sub: userId, // Use actual tenant owner's user ID
       organization_id: tenantId,
       role: 'authenticated',
       aud: 'authenticated',
@@ -582,7 +566,9 @@ async function setTenantContext(tenantId) {
   }
 
   if (!data) {
-    logger.warn(`⚠️  Organization ${tenantId} not found in database (may be expected if cleanup ran)`);
+    logger.warn(
+      `⚠️  Organization ${tenantId} not found in database (may be expected if cleanup ran)`
+    );
     // Don't throw - organization might have been cleaned up, but JWT context is still set
   } else {
     logger.debug(`✅ Context set to: ${tenantId}`);
@@ -656,31 +642,39 @@ async function cleanupTestData() {
           logger.debug(`✅ Deleted auth user ${userId}`);
           break;
         }
-        
+
         // If user doesn't exist, that's fine
         if (error.message?.includes('not found') || error.message?.includes('does not exist')) {
           deleted = true;
           logger.debug(`ℹ️  Auth user ${userId} already deleted`);
           break;
         }
-        
+
         // If rate limited, wait and retry
         if (error.message?.toLowerCase().includes('rate limit') && attempt < 3) {
           const waitTime = Math.pow(2, attempt) * 1000;
-          logger.debug(`⏳ Rate limit during cleanup, waiting ${waitTime}ms before retry ${attempt + 1}/3`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
+          logger.debug(
+            `⏳ Rate limit during cleanup, waiting ${waitTime}ms before retry ${attempt + 1}/3`
+          );
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
           continue;
         }
-        
+
         // Other errors: log and continue
-        logger.warn(`⚠️  Failed to delete auth user ${userId} (attempt ${attempt}/3): ${error.message}`);
+        logger.warn(
+          `⚠️  Failed to delete auth user ${userId} (attempt ${attempt}/3): ${error.message}`
+        );
       } catch (error) {
-        logger.warn(`⚠️  Exception deleting auth user ${userId} (attempt ${attempt}/3): ${error.message}`);
+        logger.warn(
+          `⚠️  Exception deleting auth user ${userId} (attempt ${attempt}/3): ${error.message}`
+        );
       }
     }
-    
+
     if (!deleted) {
-      logger.error(`❌ Failed to delete auth user ${userId} after 3 attempts - may need manual cleanup`);
+      logger.error(
+        `❌ Failed to delete auth user ${userId} after 3 attempts - may need manual cleanup`
+      );
     }
   }
 

@@ -44,10 +44,7 @@ const verbose = args.includes('--verbose');
 const force = args.includes('--force');
 
 // Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 // Paths
 const FIXTURES_DIR = path.join(__dirname, '..', 'data', 'fixtures', 'comments');
@@ -206,7 +203,9 @@ async function demoDataExists() {
     if (error) throw error;
     return data && data.length > 0;
   } catch (error) {
-    console.error(`${colors.red}Error checking existing demo data: ${error.message}${colors.reset}`);
+    console.error(
+      `${colors.red}Error checking existing demo data: ${error.message}${colors.reset}`
+    );
     return false;
   }
 }
@@ -237,7 +236,9 @@ async function seedOrganizations() {
 
       if (existing && !findError) {
         if (verbose) {
-          console.log(`${colors.yellow}  ⚠ Organization already exists: ${orgConfig.name}${colors.reset}`);
+          console.log(
+            `${colors.yellow}  ⚠ Organization already exists: ${orgConfig.name}${colors.reset}`
+          );
         }
         orgMap[orgConfig.slug] = existing.id;
         continue;
@@ -257,15 +258,18 @@ async function seedOrganizations() {
         .single();
 
       if (createError) {
-        console.error(`${colors.red}  ✗ Failed to create ${orgConfig.name}: ${createError.message}${colors.reset}`);
+        console.error(
+          `${colors.red}  ✗ Failed to create ${orgConfig.name}: ${createError.message}${colors.reset}`
+        );
         throw createError;
       }
 
       orgMap[orgConfig.slug] = newOrg.id;
       console.log(`${colors.green}  ✓ Created: ${orgConfig.name} (${newOrg.id})${colors.reset}`);
-
     } catch (error) {
-      console.error(`${colors.red}  ✗ Error seeding organization ${orgConfig.name}: ${error.message}${colors.reset}`);
+      console.error(
+        `${colors.red}  ✗ Error seeding organization ${orgConfig.name}: ${error.message}${colors.reset}`
+      );
       throw error;
     }
   }
@@ -288,12 +292,16 @@ async function seedUsers(orgMap) {
       const organizationId = orgMap[userConfig.organization_slug];
 
       if (!organizationId) {
-        console.error(`${colors.red}  ✗ Organization not found for ${userConfig.email}${colors.reset}`);
+        console.error(
+          `${colors.red}  ✗ Organization not found for ${userConfig.email}${colors.reset}`
+        );
         continue;
       }
 
       if (dryRun) {
-        console.log(`${colors.dim}  [DRY RUN] Would create: ${userConfig.email} (${userConfig.plan_tier})${colors.reset}`);
+        console.log(
+          `${colors.dim}  [DRY RUN] Would create: ${userConfig.email} (${userConfig.plan_tier})${colors.reset}`
+        );
         userMap[userConfig.email] = `mock-user-id-${userConfig.username}`;
         continue;
       }
@@ -307,7 +315,9 @@ async function seedUsers(orgMap) {
 
       if (existing && !findError) {
         if (verbose) {
-          console.log(`${colors.yellow}  ⚠ User already exists: ${userConfig.email}${colors.reset}`);
+          console.log(
+            `${colors.yellow}  ⚠ User already exists: ${userConfig.email}${colors.reset}`
+          );
         }
         userMap[userConfig.email] = existing.id;
         continue;
@@ -334,15 +344,20 @@ async function seedUsers(orgMap) {
         .single();
 
       if (createError) {
-        console.error(`${colors.red}  ✗ Failed to create ${userConfig.email}: ${createError.message}${colors.reset}`);
+        console.error(
+          `${colors.red}  ✗ Failed to create ${userConfig.email}: ${createError.message}${colors.reset}`
+        );
         throw createError;
       }
 
       userMap[userConfig.email] = newUser.id;
-      console.log(`${colors.green}  ✓ Created: ${userConfig.email} (${userConfig.plan_tier})${colors.reset}`);
-
+      console.log(
+        `${colors.green}  ✓ Created: ${userConfig.email} (${userConfig.plan_tier})${colors.reset}`
+      );
     } catch (error) {
-      console.error(`${colors.red}  ✗ Error seeding user ${userConfig.email}: ${error.message}${colors.reset}`);
+      console.error(
+        `${colors.red}  ✗ Error seeding user ${userConfig.email}: ${error.message}${colors.reset}`
+      );
       throw error;
     }
   }
@@ -370,7 +385,9 @@ async function seedComments(orgMap, userMap, fixtures) {
     try {
       if (dryRun) {
         if (verbose) {
-          console.log(`${colors.dim}  [DRY RUN] Would create ES comment: ${fixture.id} (${fixture.severity})${colors.reset}`);
+          console.log(
+            `${colors.dim}  [DRY RUN] Would create ES comment: ${fixture.id} (${fixture.severity})${colors.reset}`
+          );
         }
         commentsCreated++;
         continue;
@@ -392,34 +409,37 @@ async function seedComments(orgMap, userMap, fixtures) {
       }
 
       // Create comment
-      const { error: createError } = await supabase
-        .from('comments')
-        .insert({
-          external_id: fixture.id,
-          organization_id: esOrgId,
-          user_id: esUserId,
-          platform: fixture.platform,
-          comment_text: fixture.comment_text,
-          toxicity_score: fixture.toxicity_score,
-          language: fixture.language,
-          topic: fixture.topic,
-          severity: fixture.severity,
-          metadata: fixture.metadata,
-          created_at: new Date().toISOString()
-        });
+      const { error: createError } = await supabase.from('comments').insert({
+        external_id: fixture.id,
+        organization_id: esOrgId,
+        user_id: esUserId,
+        platform: fixture.platform,
+        comment_text: fixture.comment_text,
+        toxicity_score: fixture.toxicity_score,
+        language: fixture.language,
+        topic: fixture.topic,
+        severity: fixture.severity,
+        metadata: fixture.metadata,
+        created_at: new Date().toISOString()
+      });
 
       if (createError) {
-        console.error(`${colors.red}  ✗ Failed to create comment ${fixture.id}: ${createError.message}${colors.reset}`);
+        console.error(
+          `${colors.red}  ✗ Failed to create comment ${fixture.id}: ${createError.message}${colors.reset}`
+        );
         continue; // Continue with other comments
       }
 
       commentsCreated++;
       if (verbose) {
-        console.log(`${colors.green}  ✓ Created ES comment: ${fixture.id} (${fixture.severity})${colors.reset}`);
+        console.log(
+          `${colors.green}  ✓ Created ES comment: ${fixture.id} (${fixture.severity})${colors.reset}`
+        );
       }
-
     } catch (error) {
-      console.error(`${colors.red}  ✗ Error seeding comment ${fixture.id}: ${error.message}${colors.reset}`);
+      console.error(
+        `${colors.red}  ✗ Error seeding comment ${fixture.id}: ${error.message}${colors.reset}`
+      );
     }
   }
 
@@ -431,7 +451,9 @@ async function seedComments(orgMap, userMap, fixtures) {
     try {
       if (dryRun) {
         if (verbose) {
-          console.log(`${colors.dim}  [DRY RUN] Would create EN comment: ${fixture.id} (${fixture.severity})${colors.reset}`);
+          console.log(
+            `${colors.dim}  [DRY RUN] Would create EN comment: ${fixture.id} (${fixture.severity})${colors.reset}`
+          );
         }
         commentsCreated++;
         continue;
@@ -453,34 +475,37 @@ async function seedComments(orgMap, userMap, fixtures) {
       }
 
       // Create comment
-      const { error: createError } = await supabase
-        .from('comments')
-        .insert({
-          external_id: fixture.id,
-          organization_id: enOrgId,
-          user_id: enUserId,
-          platform: fixture.platform,
-          comment_text: fixture.comment_text,
-          toxicity_score: fixture.toxicity_score,
-          language: fixture.language,
-          topic: fixture.topic,
-          severity: fixture.severity,
-          metadata: fixture.metadata,
-          created_at: new Date().toISOString()
-        });
+      const { error: createError } = await supabase.from('comments').insert({
+        external_id: fixture.id,
+        organization_id: enOrgId,
+        user_id: enUserId,
+        platform: fixture.platform,
+        comment_text: fixture.comment_text,
+        toxicity_score: fixture.toxicity_score,
+        language: fixture.language,
+        topic: fixture.topic,
+        severity: fixture.severity,
+        metadata: fixture.metadata,
+        created_at: new Date().toISOString()
+      });
 
       if (createError) {
-        console.error(`${colors.red}  ✗ Failed to create comment ${fixture.id}: ${createError.message}${colors.reset}`);
+        console.error(
+          `${colors.red}  ✗ Failed to create comment ${fixture.id}: ${createError.message}${colors.reset}`
+        );
         continue; // Continue with other comments
       }
 
       commentsCreated++;
       if (verbose) {
-        console.log(`${colors.green}  ✓ Created EN comment: ${fixture.id} (${fixture.severity})${colors.reset}`);
+        console.log(
+          `${colors.green}  ✓ Created EN comment: ${fixture.id} (${fixture.severity})${colors.reset}`
+        );
       }
-
     } catch (error) {
-      console.error(`${colors.red}  ✗ Error seeding comment ${fixture.id}: ${error.message}${colors.reset}`);
+      console.error(
+        `${colors.red}  ✗ Error seeding comment ${fixture.id}: ${error.message}${colors.reset}`
+      );
     }
   }
 
@@ -503,13 +528,17 @@ async function main() {
     // Load fixtures
     console.log(`${colors.cyan}Loading fixtures...${colors.reset}`);
     const fixtures = await loadFixtures();
-    console.log(`${colors.green}  ✓ Loaded ${fixtures.es.length} Spanish + ${fixtures.en.length} English fixtures${colors.reset}`);
+    console.log(
+      `${colors.green}  ✓ Loaded ${fixtures.es.length} Spanish + ${fixtures.en.length} English fixtures${colors.reset}`
+    );
 
     // Check for existing demo data
     if (!force) {
       const exists = await demoDataExists();
       if (exists && !dryRun) {
-        console.log(`\n${colors.yellow}Demo data already exists. Use --force to delete and reseed.${colors.reset}\n`);
+        console.log(
+          `\n${colors.yellow}Demo data already exists. Use --force to delete and reseed.${colors.reset}\n`
+        );
         process.exit(0);
       }
     } else if (!dryRun) {
@@ -519,7 +548,9 @@ async function main() {
         await clearDemoOrganizations();
         await clearDemoUsers();
       } catch (error) {
-        console.error(`${colors.red}Failed to clear existing data: ${error.message}${colors.reset}`);
+        console.error(
+          `${colors.red}Failed to clear existing data: ${error.message}${colors.reset}`
+        );
         process.exit(1);
       }
     }
@@ -536,9 +567,13 @@ async function main() {
     console.log(`  Comments: ${commentsCreated}`);
 
     if (dryRun) {
-      console.log(`\n${colors.yellow}This was a dry run. Run without --dry-run to seed data.${colors.reset}\n`);
+      console.log(
+        `\n${colors.yellow}This was a dry run. Run without --dry-run to seed data.${colors.reset}\n`
+      );
     } else {
-      console.log(`\n${colors.green}${colors.bright}✓ Demo data seeded successfully!${colors.reset}`);
+      console.log(
+        `\n${colors.green}${colors.bright}✓ Demo data seeded successfully!${colors.reset}`
+      );
       console.log(`\n${colors.cyan}Demo Login Credentials:${colors.reset}`);
       console.log(`  Spanish Free:    demo-free-es@demo.roastr.ai / demo123`);
       console.log(`  Spanish Starter: demo-starter-es@demo.roastr.ai / demo123`);
@@ -549,7 +584,6 @@ async function main() {
     }
 
     process.exit(0);
-
   } catch (error) {
     console.error(`\n${colors.red}${colors.bright}✗ Fatal error: ${error.message}${colors.reset}`);
     if (verbose) {

@@ -47,6 +47,7 @@ npm test -- tests/integration/multi-tenant-rls-issue-412.test.js
 ```
 
 Deberías ver:
+
 - ✅ Session set correctamente
 - ✅ RLS policies funcionando
 - ✅ Todos los tests pasando

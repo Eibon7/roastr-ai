@@ -106,7 +106,7 @@ const TEST_SCENARIOS = [
   {
     id: 'DM-04',
     comment: 'Not impressed with this at all',
-    toxicity: 0.50,
+    toxicity: 0.5,
     expectedSeverity: 'low',
     expectedPriority: 5,
     platform: 'reddit',
@@ -132,7 +132,7 @@ const TEST_SCENARIOS = [
   {
     id: 'DM-06',
     comment: 'You are completely worthless and should be ashamed',
-    toxicity: 0.90,
+    toxicity: 0.9,
     expectedSeverity: 'high',
     expectedPriority: 2,
     platform: 'twitch',
@@ -145,7 +145,7 @@ const TEST_SCENARIOS = [
   {
     id: 'DM-07',
     comment: 'This is pretty bad and you should feel bad',
-    toxicity: 0.70,
+    toxicity: 0.7,
     expectedSeverity: 'medium',
     expectedPriority: 3,
     platform: 'instagram',
@@ -297,7 +297,7 @@ const TEST_SCENARIOS = [
  */
 async function validateShieldFlow() {
   console.log('🚀 Starting Shield Automated Moderation Flow Validation\n');
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
 
   const startTime = Date.now();
   const results = {
@@ -367,9 +367,13 @@ async function validateShieldFlow() {
       const commentStartTime = Date.now();
 
       console.log(`\n${'='.repeat(60)}`);
-      console.log(`\n📝 Test ${i + 1}/${TEST_SCENARIOS.length}: [${scenario.id}] ${scenario.description}`);
+      console.log(
+        `\n📝 Test ${i + 1}/${TEST_SCENARIOS.length}: [${scenario.id}] ${scenario.description}`
+      );
       console.log(`Comment: "${scenario.comment.substring(0, 60)}..."`);
-      console.log(`Toxicity: ${scenario.toxicity} | Severity: ${scenario.expectedSeverity} | Action: ${scenario.expectedAction}`);
+      console.log(
+        `Toxicity: ${scenario.toxicity} | Severity: ${scenario.expectedSeverity} | Action: ${scenario.expectedAction}`
+      );
       if (scenario.edgeCase) {
         console.log(`⚡ Edge Case: ${scenario.edgeCase}`);
       }
@@ -401,24 +405,24 @@ async function validateShieldFlow() {
         // Step 3: Simulate user behavior based on offense level
         if (scenario.offenseLevel === 'repeat') {
           console.log('\n👤 Step 3a: Creating user behavior history (repeat offender)...');
-          const { error: behaviorError } = await client
-            .from('user_behaviors')
-            .insert({
-              id: uuidv4(),
-              organization_id: testOrgId,
-              platform: scenario.platform,
-              platform_user_id: platformUserId,
-              platform_username: `test_user_${i}`,
-              total_comments: 5,
-              total_violations: 1,
-              severity_counts: { low: 0, medium: 1, high: 0, critical: 0 },
-              actions_taken: [{
+          const { error: behaviorError } = await client.from('user_behaviors').insert({
+            id: uuidv4(),
+            organization_id: testOrgId,
+            platform: scenario.platform,
+            platform_user_id: platformUserId,
+            platform_username: `test_user_${i}`,
+            total_comments: 5,
+            total_violations: 1,
+            severity_counts: { low: 0, medium: 1, high: 0, critical: 0 },
+            actions_taken: [
+              {
                 action: 'warn',
                 date: new Date(Date.now() - 86400000).toISOString(),
                 reason: 'Previous violation'
-              }],
-              is_blocked: false
-            });
+              }
+            ],
+            is_blocked: false
+          });
 
           if (behaviorError) {
             console.log(`⚠️  Failed to create behavior history: ${behaviorError.message}`);
@@ -427,41 +431,39 @@ async function validateShieldFlow() {
           }
         } else if (scenario.offenseLevel === 'high_risk') {
           console.log('\n👤 Step 3a: Creating user behavior history (high risk user)...');
-          const { error: behaviorError } = await client
-            .from('user_behaviors')
-            .insert({
-              id: uuidv4(),
-              organization_id: testOrgId,
-              platform: scenario.platform,
-              platform_user_id: platformUserId,
-              platform_username: `test_user_${i}`,
-              total_comments: 15,
-              total_violations: 4,
-              severity_counts: { low: 1, medium: 2, high: 1, critical: 0 },
-              actions_taken: [
-                {
-                  action: 'warn',
-                  date: new Date(Date.now() - 604800000).toISOString(),
-                  reason: 'First violation'
-                },
-                {
-                  action: 'mute_temp',
-                  date: new Date(Date.now() - 432000000).toISOString(),
-                  reason: 'Second violation'
-                },
-                {
-                  action: 'mute_temp',
-                  date: new Date(Date.now() - 259200000).toISOString(),
-                  reason: 'Third violation'
-                },
-                {
-                  action: 'mute_permanent',
-                  date: new Date(Date.now() - 86400000).toISOString(),
-                  reason: 'Fourth violation'
-                }
-              ],
-              is_blocked: false
-            });
+          const { error: behaviorError } = await client.from('user_behaviors').insert({
+            id: uuidv4(),
+            organization_id: testOrgId,
+            platform: scenario.platform,
+            platform_user_id: platformUserId,
+            platform_username: `test_user_${i}`,
+            total_comments: 15,
+            total_violations: 4,
+            severity_counts: { low: 1, medium: 2, high: 1, critical: 0 },
+            actions_taken: [
+              {
+                action: 'warn',
+                date: new Date(Date.now() - 604800000).toISOString(),
+                reason: 'First violation'
+              },
+              {
+                action: 'mute_temp',
+                date: new Date(Date.now() - 432000000).toISOString(),
+                reason: 'Second violation'
+              },
+              {
+                action: 'mute_temp',
+                date: new Date(Date.now() - 259200000).toISOString(),
+                reason: 'Third violation'
+              },
+              {
+                action: 'mute_permanent',
+                date: new Date(Date.now() - 86400000).toISOString(),
+                reason: 'Fourth violation'
+              }
+            ],
+            is_blocked: false
+          });
 
           if (behaviorError) {
             console.log(`⚠️  Failed to create behavior history: ${behaviorError.message}`);
@@ -470,31 +472,29 @@ async function validateShieldFlow() {
           }
         } else if (scenario.offenseLevel === 'at_threshold') {
           console.log('\n👤 Step 3a: Creating user behavior history (at reincidence threshold)...');
-          const { error: behaviorError } = await client
-            .from('user_behaviors')
-            .insert({
-              id: uuidv4(),
-              organization_id: testOrgId,
-              platform: scenario.platform,
-              platform_user_id: platformUserId,
-              platform_username: `test_user_${i}`,
-              total_comments: 8,
-              total_violations: 2,
-              severity_counts: { low: 1, medium: 1, high: 0, critical: 0 },
-              actions_taken: [
-                {
-                  action: 'warn',
-                  date: new Date(Date.now() - 172800000).toISOString(),
-                  reason: 'First violation'
-                },
-                {
-                  action: 'mute_temp',
-                  date: new Date(Date.now() - 86400000).toISOString(),
-                  reason: 'Second violation'
-                }
-              ],
-              is_blocked: false
-            });
+          const { error: behaviorError } = await client.from('user_behaviors').insert({
+            id: uuidv4(),
+            organization_id: testOrgId,
+            platform: scenario.platform,
+            platform_user_id: platformUserId,
+            platform_username: `test_user_${i}`,
+            total_comments: 8,
+            total_violations: 2,
+            severity_counts: { low: 1, medium: 1, high: 0, critical: 0 },
+            actions_taken: [
+              {
+                action: 'warn',
+                date: new Date(Date.now() - 172800000).toISOString(),
+                reason: 'First violation'
+              },
+              {
+                action: 'mute_temp',
+                date: new Date(Date.now() - 86400000).toISOString(),
+                reason: 'Second violation'
+              }
+            ],
+            is_blocked: false
+          });
 
           if (behaviorError) {
             console.log(`⚠️  Failed to create behavior history: ${behaviorError.message}`);
@@ -535,12 +535,16 @@ async function validateShieldFlow() {
 
         // Validate Shield priority
         if (shieldResult.priority !== scenario.expectedPriority) {
-          console.log(`⚠️  Priority mismatch: expected ${scenario.expectedPriority}, got ${shieldResult.priority}`);
+          console.log(
+            `⚠️  Priority mismatch: expected ${scenario.expectedPriority}, got ${shieldResult.priority}`
+          );
         }
 
         // Validate action type
         if (shieldResult.actions.primary !== scenario.expectedAction) {
-          console.log(`⚠️  Action mismatch: expected ${scenario.expectedAction}, got ${shieldResult.actions.primary}`);
+          console.log(
+            `⚠️  Action mismatch: expected ${scenario.expectedAction}, got ${shieldResult.actions.primary}`
+          );
         }
 
         // Step 4: Verify user behavior tracking
@@ -585,7 +589,9 @@ async function validateShieldFlow() {
           console.log(`   Action: ${job.payload.action}`);
 
           if (job.priority !== scenario.expectedPriority) {
-            console.log(`⚠️  Priority mismatch in queue: expected ${scenario.expectedPriority}, got ${job.priority}`);
+            console.log(
+              `⚠️  Priority mismatch in queue: expected ${scenario.expectedPriority}, got ${job.priority}`
+            );
           }
         } else {
           console.log('⚠️  No shield_action job found in queue');
@@ -633,7 +639,6 @@ async function validateShieldFlow() {
         });
 
         console.log(`\n✅ Test ${i + 1} PASSED`);
-
       } catch (error) {
         results.failed++;
         results.errors.push({
@@ -655,7 +660,6 @@ async function validateShieldFlow() {
     await client.from('organizations').delete().eq('id', testOrgId);
     await client.auth.admin.deleteUser(authUser.user.id);
     console.log('✅ Cleanup complete');
-
   } catch (setupError) {
     console.error(`\n❌ Setup failed: ${setupError.message}`);
     results.errors.push({ test: 'setup', error: setupError.message });
@@ -674,7 +678,7 @@ async function validateShieldFlow() {
 
   if (results.errors.length > 0) {
     console.log(`\n❌ Errors:`);
-    results.errors.forEach(err => {
+    results.errors.forEach((err) => {
       console.log(`   - Test ${err.test}: ${err.error}`);
     });
   }
@@ -691,8 +695,7 @@ async function validateShieldFlow() {
 }
 
 // Run validation
-validateShieldFlow()
-  .catch(err => {
-    console.error('\n💥 Validation crashed:', err);
-    process.exit(1);
-  });
+validateShieldFlow().catch((err) => {
+  console.error('\n💥 Validation crashed:', err);
+  process.exit(1);
+});

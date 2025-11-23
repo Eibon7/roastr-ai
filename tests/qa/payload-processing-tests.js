@@ -1,7 +1,7 @@
 /**
  * Webhook Payload Processing QA Tests
  * Issue #90: Test real webhook payload processing (comments, likes) from platforms
- * 
+ *
  * Tests the complete pipeline from webhook reception to response generation
  */
 
@@ -16,72 +16,85 @@ const REAL_PAYLOADS = {
   twitter: {
     mention: {
       for_user_id: '123456789',
-      user_mention_events: [{
-        id: '1234567890123456789',
-        text: '@roastr_ai this comment is so toxic! Can you roast the original author?',
-        user: {
-          id: '987654321',
-          screen_name: 'concerned_user',
-          name: 'Concerned User',
-          followers_count: 1250,
-          verified: false
-        },
-        created_at: '2024-01-15T10:30:00.000Z',
-        in_reply_to_status_id: '1234567890123456788',
-        entities: {
-          user_mentions: [{
-            id: '123456789',
-            screen_name: 'roastr_ai',
-            name: 'Roastr AI'
-          }],
-          hashtags: [{
-            text: 'toxiccomments'
-          }]
-        },
-        extended_tweet: {
-          full_text: '@roastr_ai this comment is so toxic! The original poster said some really hateful things about minorities. Can you roast them back with your AI?'
+      user_mention_events: [
+        {
+          id: '1234567890123456789',
+          text: '@roastr_ai this comment is so toxic! Can you roast the original author?',
+          user: {
+            id: '987654321',
+            screen_name: 'concerned_user',
+            name: 'Concerned User',
+            followers_count: 1250,
+            verified: false
+          },
+          created_at: '2024-01-15T10:30:00.000Z',
+          in_reply_to_status_id: '1234567890123456788',
+          entities: {
+            user_mentions: [
+              {
+                id: '123456789',
+                screen_name: 'roastr_ai',
+                name: 'Roastr AI'
+              }
+            ],
+            hashtags: [
+              {
+                text: 'toxiccomments'
+              }
+            ]
+          },
+          extended_tweet: {
+            full_text:
+              '@roastr_ai this comment is so toxic! The original poster said some really hateful things about minorities. Can you roast them back with your AI?'
+          }
         }
-      }]
+      ]
     },
     tweetCreate: {
       for_user_id: '123456789',
-      tweet_create_events: [{
-        id: '1234567890123456790',
-        text: 'Women are just not as smart as men in tech. It\'s biological fact. #controversial',
-        user: {
-          id: '555666777',
-          screen_name: 'controversial_user',
-          name: 'Hot Takes Guy',
-          followers_count: 890,
-          verified: false
-        },
-        created_at: '2024-01-15T10:25:00.000Z',
-        entities: {
-          hashtags: [{
-            text: 'controversial'
-          }]
-        },
-        public_metrics: {
-          retweet_count: 2,
-          reply_count: 45,
-          like_count: 12,
-          quote_count: 8
+      tweet_create_events: [
+        {
+          id: '1234567890123456790',
+          text: "Women are just not as smart as men in tech. It's biological fact. #controversial",
+          user: {
+            id: '555666777',
+            screen_name: 'controversial_user',
+            name: 'Hot Takes Guy',
+            followers_count: 890,
+            verified: false
+          },
+          created_at: '2024-01-15T10:25:00.000Z',
+          entities: {
+            hashtags: [
+              {
+                text: 'controversial'
+              }
+            ]
+          },
+          public_metrics: {
+            retweet_count: 2,
+            reply_count: 45,
+            like_count: 12,
+            quote_count: 8
+          }
         }
-      }]
+      ]
     },
     directMessage: {
       for_user_id: '123456789',
-      direct_message_events: [{
-        id: '1234567890123456791',
-        text: 'Hey can you help me roast someone who was being racist in my mentions?',
-        message_create: {
-          sender_id: '888999000',
-          target: {
-            recipient_id: '123456789'
-          }
-        },
-        created_timestamp: '1705317000000'
-      }]
+      direct_message_events: [
+        {
+          id: '1234567890123456791',
+          text: 'Hey can you help me roast someone who was being racist in my mentions?',
+          message_create: {
+            sender_id: '888999000',
+            target: {
+              recipient_id: '123456789'
+            }
+          },
+          created_timestamp: '1705317000000'
+        }
+      ]
     }
   },
   youtube: {
@@ -139,7 +152,7 @@ describe('Webhook Payload Processing QA Tests', () => {
     test('should process toxic mention and trigger roast generation', async () => {
       const payload = REAL_PAYLOADS.twitter.mention;
       const payloadString = JSON.stringify(payload);
-      
+
       const signature = crypto
         .createHmac('sha256', WEBHOOK_SECRETS.twitter)
         .update(payloadString)
@@ -154,7 +167,7 @@ describe('Webhook Payload Processing QA Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.eventsProcessed).toBe(1);
-      
+
       const result = response.body.data.results[0];
       expect(result.action).toBe('mention_processed');
       expect(result.tweetId).toBe('1234567890123456789');
@@ -169,7 +182,7 @@ describe('Webhook Payload Processing QA Tests', () => {
     test('should process controversial tweet creation', async () => {
       const payload = REAL_PAYLOADS.twitter.tweetCreate;
       const payloadString = JSON.stringify(payload);
-      
+
       const signature = crypto
         .createHmac('sha256', WEBHOOK_SECRETS.twitter)
         .update(payloadString)
@@ -184,7 +197,7 @@ describe('Webhook Payload Processing QA Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.eventsProcessed).toBe(1);
-      
+
       const result = response.body.data.results[0];
       expect(result.action).toBe('tweet_processed');
       expect(result.tweetId).toBe('1234567890123456790');
@@ -200,7 +213,7 @@ describe('Webhook Payload Processing QA Tests', () => {
     test('should process direct message requests', async () => {
       const payload = REAL_PAYLOADS.twitter.directMessage;
       const payloadString = JSON.stringify(payload);
-      
+
       const signature = crypto
         .createHmac('sha256', WEBHOOK_SECRETS.twitter)
         .update(payloadString)
@@ -215,7 +228,7 @@ describe('Webhook Payload Processing QA Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.eventsProcessed).toBe(1);
-      
+
       const result = response.body.data.results[0];
       expect(result.action).toBe('dm_processed');
       expect(result.dmId).toBe('1234567890123456791');
@@ -229,12 +242,8 @@ describe('Webhook Payload Processing QA Tests', () => {
     test('should handle multiple events in single webhook', async () => {
       const multiEventPayload = {
         for_user_id: '123456789',
-        tweet_create_events: [
-          REAL_PAYLOADS.twitter.tweetCreate.tweet_create_events[0]
-        ],
-        user_mention_events: [
-          REAL_PAYLOADS.twitter.mention.user_mention_events[0]
-        ]
+        tweet_create_events: [REAL_PAYLOADS.twitter.tweetCreate.tweet_create_events[0]],
+        user_mention_events: [REAL_PAYLOADS.twitter.mention.user_mention_events[0]]
       };
 
       const payloadString = JSON.stringify(multiEventPayload);
@@ -252,8 +261,8 @@ describe('Webhook Payload Processing QA Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.eventsProcessed).toBe(2);
-      
-      const actions = response.body.data.results.map(r => r.action);
+
+      const actions = response.body.data.results.map((r) => r.action);
       expect(actions).toContain('tweet_processed');
       expect(actions).toContain('mention_processed');
 
@@ -267,11 +276,10 @@ describe('Webhook Payload Processing QA Tests', () => {
   describe('YouTube Payload Processing', () => {
     test('should process video update notifications', async () => {
       const payload = REAL_PAYLOADS.youtube.videoUpdate;
-      
-      const signature = 'sha256=' + crypto
-        .createHmac('sha256', WEBHOOK_SECRETS.youtube)
-        .update(payload)
-        .digest('hex');
+
+      const signature =
+        'sha256=' +
+        crypto.createHmac('sha256', WEBHOOK_SECRETS.youtube).update(payload).digest('hex');
 
       const response = await request(app)
         .post('/api/webhooks/youtube')
@@ -292,11 +300,10 @@ describe('Webhook Payload Processing QA Tests', () => {
 
     test('should handle comment notification parsing', async () => {
       const payload = REAL_PAYLOADS.youtube.commentNotification;
-      
-      const signature = 'sha256=' + crypto
-        .createHmac('sha256', WEBHOOK_SECRETS.youtube)
-        .update(payload)
-        .digest('hex');
+
+      const signature =
+        'sha256=' +
+        crypto.createHmac('sha256', WEBHOOK_SECRETS.youtube).update(payload).digest('hex');
 
       const response = await request(app)
         .post('/api/webhooks/youtube')
@@ -307,7 +314,7 @@ describe('Webhook Payload Processing QA Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.videoId).toBe('dQw4w9WgXcQ');
-      
+
       // Should trigger comment processing pipeline
       logger.info('YouTube comment notification processing test passed', {
         videoId: response.body.data.videoId,
@@ -321,16 +328,18 @@ describe('Webhook Payload Processing QA Tests', () => {
       // Test with extremely toxic Twitter content
       const toxicPayload = {
         for_user_id: '123456789',
-        tweet_create_events: [{
-          id: '1234567890123456799',
-          text: 'All [REDACTED] people should be [REDACTED]. This is getting out of hand. #hate #toxic',
-          user: {
-            id: '666777888',
-            screen_name: 'hate_account',
-            name: 'Toxic User'
-          },
-          created_at: new Date().toISOString()
-        }]
+        tweet_create_events: [
+          {
+            id: '1234567890123456799',
+            text: 'All [REDACTED] people should be [REDACTED]. This is getting out of hand. #hate #toxic',
+            user: {
+              id: '666777888',
+              screen_name: 'hate_account',
+              name: 'Toxic User'
+            },
+            created_at: new Date().toISOString()
+          }
+        ]
       };
 
       const payloadString = JSON.stringify(toxicPayload);
@@ -347,11 +356,11 @@ describe('Webhook Payload Processing QA Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      
+
       // This should trigger high-priority processing
       const result = response.body.data.results[0];
       expect(result.action).toBe('tweet_processed');
-      
+
       logger.info('High-toxicity content detection test passed', {
         tweetId: result.tweetId,
         toxicityLevel: 'HIGH',
@@ -382,15 +391,17 @@ describe('Webhook Payload Processing QA Tests', () => {
       for (const testCase of edgeCases) {
         const payload = {
           for_user_id: '123456789',
-          tweet_create_events: [{
-            id: '123456789012345' + Math.floor(Math.random() * 10000),
-            text: testCase.text,
-            user: {
-              id: '999888777',
-              screen_name: 'edge_case_user'
-            },
-            created_at: new Date().toISOString()
-          }]
+          tweet_create_events: [
+            {
+              id: '123456789012345' + Math.floor(Math.random() * 10000),
+              text: testCase.text,
+              user: {
+                id: '999888777',
+                screen_name: 'edge_case_user'
+              },
+              created_at: new Date().toISOString()
+            }
+          ]
         };
 
         const payloadString = JSON.stringify(payload);
@@ -407,7 +418,7 @@ describe('Webhook Payload Processing QA Tests', () => {
           .expect(200);
 
         expect(response.body.success).toBe(true);
-        
+
         logger.info(`Edge case processing test passed: ${testCase.name}`, {
           textLength: testCase.text.length,
           processed: response.body.success
@@ -421,7 +432,7 @@ describe('Webhook Payload Processing QA Tests', () => {
       // This test verifies that webhook events are correctly queued for background processing
       const payload = REAL_PAYLOADS.twitter.mention;
       const payloadString = JSON.stringify(payload);
-      
+
       const signature = crypto
         .createHmac('sha256', WEBHOOK_SECRETS.twitter)
         .update(payloadString)
@@ -455,12 +466,14 @@ describe('Webhook Payload Processing QA Tests', () => {
     test('should handle corrupted webhook data gracefully', async () => {
       const corruptedPayload = {
         for_user_id: '123456789',
-        tweet_create_events: [{
-          // Missing required fields
-          user: null,
-          text: null,
-          created_at: 'invalid-date'
-        }]
+        tweet_create_events: [
+          {
+            // Missing required fields
+            user: null,
+            text: null,
+            created_at: 'invalid-date'
+          }
+        ]
       };
 
       const payloadString = JSON.stringify(corruptedPayload);
@@ -477,7 +490,7 @@ describe('Webhook Payload Processing QA Tests', () => {
         .expect(200); // Should handle gracefully, not crash
 
       expect(response.body.success).toBe(true);
-      
+
       logger.info('Corrupted payload handling test passed', {
         handledGracefully: response.body.success
       });
@@ -485,18 +498,20 @@ describe('Webhook Payload Processing QA Tests', () => {
 
     test('should handle extremely large payloads', async () => {
       const largeText = 'This is toxic content! '.repeat(1000); // ~23KB text
-      
+
       const largePayload = {
         for_user_id: '123456789',
-        tweet_create_events: [{
-          id: '1234567890123456800',
-          text: largeText,
-          user: {
-            id: '111222333',
-            screen_name: 'large_content_user'
-          },
-          created_at: new Date().toISOString()
-        }]
+        tweet_create_events: [
+          {
+            id: '1234567890123456800',
+            text: largeText,
+            user: {
+              id: '111222333',
+              screen_name: 'large_content_user'
+            },
+            created_at: new Date().toISOString()
+          }
+        ]
       };
 
       const payloadString = JSON.stringify(largePayload);
@@ -513,7 +528,7 @@ describe('Webhook Payload Processing QA Tests', () => {
 
       // Should either process successfully or return appropriate error
       expect([200, 400, 413]).toContain(response.status);
-      
+
       if (response.status === 200) {
         expect(response.body.success).toBe(true);
         logger.info('Large payload processing test passed', {
@@ -533,15 +548,17 @@ describe('Webhook Payload Processing QA Tests', () => {
     test('should handle concurrent webhook processing', async () => {
       const concurrentRequests = 5;
       const basePayload = REAL_PAYLOADS.twitter.tweetCreate;
-      
+
       const promises = Array.from({ length: concurrentRequests }, (_, index) => {
         const payload = {
           ...basePayload,
-          tweet_create_events: [{
-            ...basePayload.tweet_create_events[0],
-            id: '123456789012345' + (6800 + index),
-            text: `Concurrent test tweet #${index} with toxic content`
-          }]
+          tweet_create_events: [
+            {
+              ...basePayload.tweet_create_events[0],
+              id: '123456789012345' + (6800 + index),
+              text: `Concurrent test tweet #${index} with toxic content`
+            }
+          ]
         };
 
         const payloadString = JSON.stringify(payload);
@@ -558,7 +575,7 @@ describe('Webhook Payload Processing QA Tests', () => {
       });
 
       const responses = await Promise.all(promises);
-      
+
       // All requests should be processed successfully
       responses.forEach((response, index) => {
         expect(response.status).toBe(200);
@@ -567,21 +584,21 @@ describe('Webhook Payload Processing QA Tests', () => {
 
       logger.info('Concurrent processing test passed', {
         concurrentRequests,
-        allSuccessful: responses.every(r => r.body.success)
+        allSuccessful: responses.every((r) => r.body.success)
       });
     });
 
     test('should measure webhook processing latency', async () => {
       const payload = REAL_PAYLOADS.twitter.mention;
       const payloadString = JSON.stringify(payload);
-      
+
       const signature = crypto
         .createHmac('sha256', WEBHOOK_SECRETS.twitter)
         .update(payloadString)
         .digest('base64');
 
       const startTime = Date.now();
-      
+
       const response = await request(app)
         .post('/api/webhooks/twitter')
         .set('Content-Type', 'application/json')
@@ -590,10 +607,10 @@ describe('Webhook Payload Processing QA Tests', () => {
         .expect(200);
 
       const latency = Date.now() - startTime;
-      
+
       expect(response.body.success).toBe(true);
       expect(latency).toBeLessThan(5000); // Should process within 5 seconds
-      
+
       logger.info('Webhook processing latency test passed', {
         latencyMs: latency,
         withinThreshold: latency < 5000
@@ -604,16 +621,16 @@ describe('Webhook Payload Processing QA Tests', () => {
 
 /**
  * Real Environment Testing Checklist
- * 
+ *
  * For complete QA validation, perform these additional tests:
- * 
+ *
  * ✅ Webhook signature verification with real platform secrets
  * ✅ Processing of actual toxic content from social media
  * ✅ Queue integration for background processing
- * ✅ Error handling for malformed/corrupted payloads  
+ * ✅ Error handling for malformed/corrupted payloads
  * ✅ Concurrent webhook processing
  * ✅ Performance and latency measurement
- * 
+ *
  * Manual Testing Required:
  * - Real tweets mentioning your bot account
  * - Actual YouTube comment notifications

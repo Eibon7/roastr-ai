@@ -171,17 +171,14 @@ class NodeSynchronizer {
 
       // Update "Related PRs" field (append if exists, create if not)
       if (content.includes('**Related PRs:**')) {
-        content = content.replace(
-          /\*\*Related PRs:\*\* (#\d+(?:, #\d+)*)/,
-          (match, prs) => {
-            const prList = prs.split(', ').map(pr => pr.trim());
-            const newPR = `#${prNumber}`;
-            if (!prList.includes(newPR)) {
-              prList.push(newPR);
-            }
-            return `**Related PRs:** ${prList.join(', ')}`;
+        content = content.replace(/\*\*Related PRs:\*\* (#\d+(?:, #\d+)*)/, (match, prs) => {
+          const prList = prs.split(', ').map((pr) => pr.trim());
+          const newPR = `#${prNumber}`;
+          if (!prList.includes(newPR)) {
+            prList.push(newPR);
           }
-        );
+          return `**Related PRs:** ${prList.join(', ')}`;
+        });
       } else {
         // Add Related PRs after Last Updated
         content = content.replace(
@@ -192,10 +189,7 @@ class NodeSynchronizer {
 
       // Update coverage if available and source is auto
       if (coverage !== null && content.includes('**Coverage Source:** auto')) {
-        content = content.replace(
-          /\*\*Coverage:\*\* \d+%/,
-          `**Coverage:** ${coverage}%`
-        );
+        content = content.replace(/\*\*Coverage:\*\* \d+%/, `**Coverage:** ${coverage}%`);
         this.verbose(`Updated coverage to ${coverage}%`);
       }
 
@@ -211,7 +205,6 @@ class NodeSynchronizer {
         this.verbose(`No changes needed for ${nodeName}.md`);
         return false;
       }
-
     } catch (error) {
       this.log(`Error updating ${nodeName}.md: ${error.message}`, 'red');
       return false;
@@ -313,11 +306,12 @@ if (require.main === module) {
   const options = parseArgs();
   const synchronizer = new NodeSynchronizer(options);
 
-  synchronizer.sync()
-    .then(hasUpdates => {
+  synchronizer
+    .sync()
+    .then((hasUpdates) => {
       process.exit(hasUpdates ? 0 : 0); // Always exit 0 (success)
     })
-    .catch(error => {
+    .catch((error) => {
       console.error(`${colors.red}Fatal error: ${error.message}${colors.reset}`);
       process.exit(1);
     });

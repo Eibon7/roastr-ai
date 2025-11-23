@@ -19,8 +19,8 @@ const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    users: [],
-    user_subscriptions: []
+  users: [],
+  user_subscriptions: []
 });
 
 // Mock dependencies
@@ -66,15 +66,15 @@ describe('Polar Webhook - Business Logic', () => {
     mockSupabase.from.mockReturnValue({
       select: mockSupabaseSelect,
       update: mockSupabaseUpdate,
-      upsert: mockSupabaseUpsert,
+      upsert: mockSupabaseUpsert
     });
 
     // Mock helper functions
     getPlanFromPriceId.mockImplementation((priceId) => {
       const mapping = {
-        'price_starter_123': 'free',
-        'price_pro_456': 'pro',
-        'price_plus_789': 'creator_plus',
+        price_starter_123: 'free',
+        price_pro_456: 'pro',
+        price_plus_789: 'creator_plus'
       };
       return mapping[priceId] || 'free';
     });
@@ -93,7 +93,7 @@ describe('Polar Webhook - Business Logic', () => {
     const payload = JSON.stringify({
       type: eventType,
       id: `evt_${Date.now()}_${Math.random()}`,
-      data,
+      data
     });
     return payload;
   }
@@ -103,12 +103,12 @@ describe('Polar Webhook - Business Logic', () => {
       // Mock user lookup
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-123', plan: 'free' },
-        error: null,
+        error: null
       });
 
       // Mock user update
       mockSupabaseUpdate.mockReturnValueOnce({
-        eq: jest.fn(() => Promise.resolve({ error: null })),
+        eq: jest.fn(() => Promise.resolve({ error: null }))
       });
 
       // Mock subscription upsert
@@ -119,7 +119,7 @@ describe('Polar Webhook - Business Logic', () => {
         customer_email: 'user@example.com',
         product_price_id: 'price_pro_456',
         amount: 1200,
-        currency: 'EUR',
+        currency: 'EUR'
       });
 
       const response = await request(app)
@@ -148,7 +148,7 @@ describe('Polar Webhook - Business Logic', () => {
       // Mock user not found
       mockSupabaseSingle.mockResolvedValueOnce({
         data: null,
-        error: { message: 'User not found' },
+        error: { message: 'User not found' }
       });
 
       const payload = createWebhookPayload('order.created', {
@@ -156,7 +156,7 @@ describe('Polar Webhook - Business Logic', () => {
         customer_email: 'unknown@example.com',
         product_price_id: 'price_pro_456',
         amount: 1200,
-        currency: 'EUR',
+        currency: 'EUR'
       });
 
       const response = await request(app)
@@ -176,14 +176,16 @@ describe('Polar Webhook - Business Logic', () => {
       // Mock user lookup success
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-123', plan: 'free' },
-        error: null,
+        error: null
       });
 
       // Mock user update failure
       mockSupabaseUpdate.mockReturnValueOnce({
-        eq: jest.fn(() => Promise.resolve({
-          error: { message: 'Database connection lost' }
-        })),
+        eq: jest.fn(() =>
+          Promise.resolve({
+            error: { message: 'Database connection lost' }
+          })
+        )
       });
 
       const payload = createWebhookPayload('order.created', {
@@ -191,7 +193,7 @@ describe('Polar Webhook - Business Logic', () => {
         customer_email: 'user@example.com',
         product_price_id: 'price_pro_456',
         amount: 1200,
-        currency: 'EUR',
+        currency: 'EUR'
       });
 
       const response = await request(app)
@@ -207,11 +209,11 @@ describe('Polar Webhook - Business Logic', () => {
     it('should map starter price_id to "free" plan', async () => {
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-456', plan: 'free' },
-        error: null,
+        error: null
       });
 
       mockSupabaseUpdate.mockReturnValueOnce({
-        eq: jest.fn(() => Promise.resolve({ error: null })),
+        eq: jest.fn(() => Promise.resolve({ error: null }))
       });
 
       const payload = createWebhookPayload('order.created', {
@@ -219,7 +221,7 @@ describe('Polar Webhook - Business Logic', () => {
         customer_email: 'starter@example.com',
         product_price_id: 'price_starter_123',
         amount: 500,
-        currency: 'EUR',
+        currency: 'EUR'
       });
 
       await request(app)
@@ -234,11 +236,11 @@ describe('Polar Webhook - Business Logic', () => {
     it('should map plus price_id to "creator_plus" plan', async () => {
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-789', plan: 'free' },
-        error: null,
+        error: null
       });
 
       mockSupabaseUpdate.mockReturnValueOnce({
-        eq: jest.fn(() => Promise.resolve({ error: null })),
+        eq: jest.fn(() => Promise.resolve({ error: null }))
       });
 
       const payload = createWebhookPayload('order.created', {
@@ -246,7 +248,7 @@ describe('Polar Webhook - Business Logic', () => {
         customer_email: 'plus@example.com',
         product_price_id: 'price_plus_789',
         amount: 5000,
-        currency: 'EUR',
+        currency: 'EUR'
       });
 
       await request(app)
@@ -264,22 +266,22 @@ describe('Polar Webhook - Business Logic', () => {
       // Mock user lookup
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-123', plan: 'free' },
-        error: null,
+        error: null
       });
 
       mockSupabaseUpdate
         .mockReturnValueOnce({
-          eq: jest.fn(() => Promise.resolve({ error: null })),
+          eq: jest.fn(() => Promise.resolve({ error: null }))
         })
         .mockReturnValueOnce({
-          eq: jest.fn(() => Promise.resolve({ error: null })),
+          eq: jest.fn(() => Promise.resolve({ error: null }))
         });
 
       const payload = createWebhookPayload('subscription.updated', {
         id: 'sub-xyz',
         customer_email: 'user@example.com',
         product_price_id: 'price_pro_456',
-        status: 'active',
+        status: 'active'
       });
 
       const response = await request(app)
@@ -294,18 +296,18 @@ describe('Polar Webhook - Business Logic', () => {
     it('should update subscription status to past_due when inactive', async () => {
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-123', plan: 'pro' },
-        error: null,
+        error: null
       });
 
       mockSupabaseUpdate.mockReturnValue({
-        eq: jest.fn(() => Promise.resolve({ error: null })),
+        eq: jest.fn(() => Promise.resolve({ error: null }))
       });
 
       const payload = createWebhookPayload('subscription.updated', {
         id: 'sub-pastdue',
         customer_email: 'user@example.com',
         product_price_id: 'price_pro_456',
-        status: 'past_due',
+        status: 'past_due'
       });
 
       await request(app)
@@ -320,18 +322,18 @@ describe('Polar Webhook - Business Logic', () => {
     it('should keep existing plan if price_id not provided', async () => {
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-123', plan: 'pro' },
-        error: null,
+        error: null
       });
 
       mockSupabaseUpdate.mockReturnValue({
-        eq: jest.fn(() => Promise.resolve({ error: null })),
+        eq: jest.fn(() => Promise.resolve({ error: null }))
       });
 
       const payload = createWebhookPayload('subscription.updated', {
         id: 'sub-status-only',
         customer_email: 'user@example.com',
         product_price_id: null,
-        status: 'active',
+        status: 'active'
       });
 
       await request(app)
@@ -348,20 +350,20 @@ describe('Polar Webhook - Business Logic', () => {
     it('should downgrade user to free plan when subscription canceled', async () => {
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-123' },
-        error: null,
+        error: null
       });
 
       mockSupabaseUpdate
         .mockReturnValueOnce({
-          eq: jest.fn(() => Promise.resolve({ error: null })),
+          eq: jest.fn(() => Promise.resolve({ error: null }))
         })
         .mockReturnValueOnce({
-          eq: jest.fn(() => Promise.resolve({ error: null })),
+          eq: jest.fn(() => Promise.resolve({ error: null }))
         });
 
       const payload = createWebhookPayload('subscription.canceled', {
         id: 'sub-cancel',
-        customer_email: 'user@example.com',
+        customer_email: 'user@example.com'
       });
 
       const response = await request(app)
@@ -378,20 +380,20 @@ describe('Polar Webhook - Business Logic', () => {
     it('should mark subscription as canceled (not deleted)', async () => {
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-456' },
-        error: null,
+        error: null
       });
 
       mockSupabaseUpdate
         .mockReturnValueOnce({
-          eq: jest.fn(() => Promise.resolve({ error: null })),
+          eq: jest.fn(() => Promise.resolve({ error: null }))
         })
         .mockReturnValueOnce({
-          eq: jest.fn(() => Promise.resolve({ error: null })),
+          eq: jest.fn(() => Promise.resolve({ error: null }))
         });
 
       const payload = createWebhookPayload('subscription.canceled', {
         id: 'sub-archive',
-        customer_email: 'user@example.com',
+        customer_email: 'user@example.com'
       });
 
       await request(app)
@@ -411,17 +413,17 @@ describe('Polar Webhook - Business Logic', () => {
     it('should handle both "canceled" and "cancelled" spellings', async () => {
       mockSupabaseSingle.mockResolvedValue({
         data: { id: 'user-789' },
-        error: null,
+        error: null
       });
 
       mockSupabaseUpdate.mockReturnValue({
-        eq: jest.fn(() => Promise.resolve({ error: null })),
+        eq: jest.fn(() => Promise.resolve({ error: null }))
       });
 
       // Test US spelling
       const payload1 = createWebhookPayload('subscription.canceled', {
         id: 'sub-us',
-        customer_email: 'us@example.com',
+        customer_email: 'us@example.com'
       });
 
       const response1 = await request(app)
@@ -434,7 +436,7 @@ describe('Polar Webhook - Business Logic', () => {
       // Test UK spelling
       const payload2 = createWebhookPayload('subscription.cancelled', {
         id: 'sub-uk',
-        customer_email: 'uk@example.com',
+        customer_email: 'uk@example.com'
       });
 
       const response2 = await request(app)
@@ -453,18 +455,18 @@ describe('Polar Webhook - Business Logic', () => {
     it('should process subscription.created same as order.created', async () => {
       mockSupabaseSingle.mockResolvedValueOnce({
         data: { id: 'user-new', plan: 'free' },
-        error: null,
+        error: null
       });
 
       mockSupabaseUpdate.mockReturnValue({
-        eq: jest.fn(() => Promise.resolve({ error: null })),
+        eq: jest.fn(() => Promise.resolve({ error: null }))
       });
 
       const payload = createWebhookPayload('subscription.created', {
         id: 'sub-new-123',
         customer_email: 'newuser@example.com',
         product_price_id: 'price_pro_456',
-        status: 'active',
+        status: 'active'
       });
 
       const response = await request(app)
@@ -495,7 +497,7 @@ describe('Polar Webhook - Business Logic', () => {
     it('should handle unknown event types gracefully', async () => {
       const payload = createWebhookPayload('order.refunded', {
         id: 'order-refund',
-        customer_email: 'refund@example.com',
+        customer_email: 'refund@example.com'
       });
 
       const response = await request(app)
@@ -516,7 +518,7 @@ describe('Polar Webhook - Business Logic', () => {
         customer_email: 'user@example.com',
         product_price_id: 'price_pro_456',
         amount: 1200,
-        currency: 'EUR',
+        currency: 'EUR'
       });
 
       const response = await request(app)
@@ -541,7 +543,7 @@ describe('Polar Webhook - Business Logic', () => {
       const allPlans = [
         getPlanFromPriceId('price_starter_123'),
         getPlanFromPriceId('price_pro_456'),
-        getPlanFromPriceId('price_plus_789'),
+        getPlanFromPriceId('price_plus_789')
       ];
       expect(allPlans).not.toContain('basic');
     });

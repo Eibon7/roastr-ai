@@ -1,6 +1,6 @@
 /**
  * Alert Service Tests
- * 
+ *
  * Tests for alert functionality including:
  * - Alert configuration and initialization
  * - Webhook and email alert sending
@@ -28,7 +28,7 @@ describe('AlertService', () => {
   beforeEach(() => {
     // Save original environment
     originalEnv = { ...process.env };
-    
+
     // Set up test environment
     process.env.LOG_ALERT_WEBHOOK_URL = 'https://hooks.slack.com/test-webhook';
     process.env.EMAIL_ALERTS_ENABLED = 'true';
@@ -38,7 +38,7 @@ describe('AlertService', () => {
     process.env.ALERT_EMAIL_RECIPIENTS = 'admin@test.com,ops@test.com';
 
     alertService = new AlertService();
-    
+
     // Clear alert history
     alertService.alertHistory.clear();
   });
@@ -64,7 +64,7 @@ describe('AlertService', () => {
       delete process.env.ALERTING_ENABLED;
 
       const service = new AlertService();
-      
+
       expect(service.maxAlertsPerHour).toBe(10); // default
       expect(service.alertCooldownMinutes).toBe(15); // default
       expect(service.alertingEnabled).toBe(true); // default enabled
@@ -74,7 +74,7 @@ describe('AlertService', () => {
       process.env.ALERTING_ENABLED = 'false';
 
       const service = new AlertService();
-      
+
       expect(service.alertingEnabled).toBe(false);
     });
   });
@@ -139,8 +139,8 @@ describe('AlertService', () => {
       expect(result.sent).toBe(true);
       expect(result.results).toHaveLength(3);
       expect(result.results[0].success).toBe(false); // webhook failed
-      expect(result.results[1].success).toBe(true);  // email succeeded (mocked)
-      expect(result.results[2].success).toBe(true);  // internal succeeded
+      expect(result.results[1].success).toBe(true); // email succeeded (mocked)
+      expect(result.results[2].success).toBe(true); // internal succeeded
     });
   });
 
@@ -172,18 +172,26 @@ describe('AlertService', () => {
     });
 
     test('should use custom severity when provided', () => {
-      const alert = alertService.buildAlert('backup_failed', {}, {
-        severity: 'warning'
-      });
+      const alert = alertService.buildAlert(
+        'backup_failed',
+        {},
+        {
+          severity: 'warning'
+        }
+      );
 
       expect(alert.severity).toBe('warning');
     });
 
     test('should use custom service and environment', () => {
-      const alert = alertService.buildAlert('backup_failed', {}, {
-        service: 'custom-service',
-        environment: 'staging'
-      });
+      const alert = alertService.buildAlert(
+        'backup_failed',
+        {},
+        {
+          service: 'custom-service',
+          environment: 'staging'
+        }
+      );
 
       expect(alert.service).toBe('custom-service');
       expect(alert.environment).toBe('staging');
@@ -266,8 +274,8 @@ describe('AlertService', () => {
     });
 
     test('should ignore old alerts outside the time window', () => {
-      const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
-      
+      const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+
       // Add 11 old alerts (should be ignored)
       for (let i = 0; i < 11; i++) {
         alertService.alertHistory.set(`old_alert_${i}`, {
@@ -288,8 +296,8 @@ describe('AlertService', () => {
     });
 
     test('should check cooldown period for same alert type', () => {
-      const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
-      
+      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+
       alertService.alertHistory.set('recent_backup_failed', {
         timestamp: tenMinutesAgo,
         type: 'backup_failed'

@@ -74,9 +74,7 @@ function CheckoutSuccess() {
             <div className="mx-auto mb-4 animate-bounce">
               <CheckCircle className="h-20 w-20 text-green-500" />
             </div>
-            <CardTitle className="text-3xl md:text-4xl mb-2">
-              Payment Successful! 🎉
-            </CardTitle>
+            <CardTitle className="text-3xl md:text-4xl mb-2">Payment Successful! 🎉</CardTitle>
             <p className="text-lg text-muted-foreground">
               Thank you for your purchase. Your subscription has been activated.
             </p>
@@ -108,11 +106,10 @@ function CheckoutSuccess() {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <p className="font-medium mb-2">
-                    Could not load checkout details: {error}
-                  </p>
+                  <p className="font-medium mb-2">Could not load checkout details: {error}</p>
                   <p className="text-sm">
-                    Don't worry! Your payment was successful. You can view your subscription in the billing section.
+                    Don't worry! Your payment was successful. You can view your subscription in the
+                    billing section.
                   </p>
                 </AlertDescription>
               </Alert>
@@ -139,7 +136,8 @@ function CheckoutSuccess() {
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-muted-foreground">Amount:</span>
                       <span className="font-semibold">
-                        {(checkoutDetails.amount / 100).toFixed(2)} {checkoutDetails.currency?.toUpperCase()}
+                        {(checkoutDetails.amount / 100).toFixed(2)}{' '}
+                        {checkoutDetails.currency?.toUpperCase()}
                       </span>
                     </div>
                   )}

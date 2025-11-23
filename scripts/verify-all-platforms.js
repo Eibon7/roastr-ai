@@ -112,13 +112,13 @@ class PlatformVerifier {
   async verify() {
     console.log('🔍 Platform Integration Verification\n');
     console.log('='.repeat(60));
-    
+
     if (this.options.dryRun) {
       console.log('⚠️  DRY-RUN MODE: No actual API calls will be made\n');
     }
 
     const platformsToVerify = this.options.platform
-      ? this.platforms.filter(p => p.name === this.options.platform)
+      ? this.platforms.filter((p) => p.name === this.options.platform)
       : this.platforms;
 
     if (platformsToVerify.length === 0) {
@@ -176,7 +176,7 @@ class PlatformVerifier {
       // Check 1: Credentials
       const credentialsCheck = this.checkCredentials(platform.envVars);
       result.checks.credentials = credentialsCheck;
-      
+
       if (!credentialsCheck.present) {
         result.status = 'inactive';
         result.errors.push('Required credentials not configured');
@@ -192,7 +192,7 @@ class PlatformVerifier {
           const authStart = Date.now();
           const authResult = await this.testAuthentication(service, platform);
           const authTime = Date.now() - authStart;
-          
+
           result.checks.authentication = {
             success: authResult.success,
             time: authTime,
@@ -256,9 +256,11 @@ class PlatformVerifier {
       // Check 4: Rate Limiting
       const rateLimitCheck = await this.testRateLimiting(service, platform);
       result.checks.rateLimiting = rateLimitCheck;
-      
+
       if (rateLimitCheck.tested) {
-        console.log(`  ✅ Rate Limiting: ${rateLimitCheck.respected ? 'Respected' : 'Issues detected'}`);
+        console.log(
+          `  ✅ Rate Limiting: ${rateLimitCheck.respected ? 'Respected' : 'Issues detected'}`
+        );
       } else {
         console.log(`  ⚠️  Rate Limiting: Not tested (dry-run)`);
       }
@@ -266,15 +268,17 @@ class PlatformVerifier {
       // Check 5: Error Handling
       const errorHandlingCheck = await this.testErrorHandling(service, platform);
       result.checks.errorHandling = errorHandlingCheck;
-      
+
       if (errorHandlingCheck.tested) {
-        console.log(`  ✅ Error Handling: ${errorHandlingCheck.robust ? 'Robust' : 'Issues detected'}`);
+        console.log(
+          `  ✅ Error Handling: ${errorHandlingCheck.robust ? 'Robust' : 'Issues detected'}`
+        );
       } else {
         console.log(`  ⚠️  Error Handling: Not tested (dry-run)`);
       }
 
       // Determine overall status
-      const allChecksPassed = 
+      const allChecksPassed =
         result.checks.credentials?.present &&
         (this.options.dryRun || result.checks.authentication?.success) &&
         (operationsCheck.fetchComments.success || operationsCheck.fetchComments.notSupported);
@@ -285,9 +289,11 @@ class PlatformVerifier {
       if (operationsCheck.quirks && operationsCheck.quirks.length > 0) {
         result.quirks.push(...operationsCheck.quirks);
       }
-
     } catch (error) {
-      logger.error(`Error verifying ${platform.name}`, { error: error.message, stack: error.stack });
+      logger.error(`Error verifying ${platform.name}`, {
+        error: error.message,
+        stack: error.stack
+      });
       result.status = 'error';
       result.errors.push(error.message);
     }
@@ -302,10 +308,10 @@ class PlatformVerifier {
     try {
       const servicePath = path.resolve(__dirname, '..', platform.servicePath);
       const ServiceClass = require(servicePath);
-      
+
       // Handle different export patterns
       const Service = ServiceClass[platform.serviceClass] || ServiceClass.default || ServiceClass;
-      
+
       if (typeof Service !== 'function') {
         throw new Error(`Service class ${platform.serviceClass} not found`);
       }
@@ -317,7 +323,7 @@ class PlatformVerifier {
         responseFrequency: 1.0,
         platform: platform.name
       };
-      
+
       try {
         // Try without config first (for MultiTenantIntegration-based services)
         service = new Service();
@@ -330,10 +336,13 @@ class PlatformVerifier {
           service = new Service({});
         }
       }
-      
+
       return service;
     } catch (error) {
-      logger.error(`Failed to load ${platform.name} service`, { error: error.message, stack: error.stack });
+      logger.error(`Failed to load ${platform.name} service`, {
+        error: error.message,
+        stack: error.stack
+      });
       return null;
     }
   }
@@ -342,7 +351,7 @@ class PlatformVerifier {
    * Check if credentials are present
    */
   checkCredentials(envVars) {
-    const missing = envVars.filter(v => !process.env[v]);
+    const missing = envVars.filter((v) => !process.env[v]);
     return {
       present: missing.length === 0,
       missing,
@@ -362,7 +371,7 @@ class PlatformVerifier {
 
       const result = await Promise.race([
         service.authenticate(),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Authentication timeout (30s)')), 30000)
         )
       ]);
@@ -385,19 +394,22 @@ class PlatformVerifier {
     };
 
     // Test fetchComments
-    if (typeof service.fetchComments === 'function' || 
-        typeof service.fetchRecentComments === 'function' ||
-        typeof service.listenForMentions === 'function') {
+    if (
+      typeof service.fetchComments === 'function' ||
+      typeof service.fetchRecentComments === 'function' ||
+      typeof service.listenForMentions === 'function'
+    ) {
       try {
         if (!this.options.dryRun) {
-          const fetchMethod = service.fetchComments || service.fetchRecentComments || service.listenForMentions;
+          const fetchMethod =
+            service.fetchComments || service.fetchRecentComments || service.listenForMentions;
           const fetchResult = await Promise.race([
             fetchMethod.call(service, { limit: 1 }),
-            new Promise((_, reject) => 
+            new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Fetch timeout (15s)')), 15000)
             )
           ]);
-          
+
           results.fetchComments = {
             tested: true,
             success: true,
@@ -432,8 +444,10 @@ class PlatformVerifier {
     }
 
     // Test blockUser (if supported)
-    if (typeof service.blockUser === 'function' || 
-        typeof service.performModerationAction === 'function') {
+    if (
+      typeof service.blockUser === 'function' ||
+      typeof service.performModerationAction === 'function'
+    ) {
       if (this.options.dryRun) {
         results.blockUser = { tested: false, success: true, dryRun: true };
       } else {
@@ -457,7 +471,7 @@ class PlatformVerifier {
     }
 
     // Check if service has rate limiting properties
-    const hasRateLimit = 
+    const hasRateLimit =
       service.rateLimit !== undefined ||
       service.rateLimits !== undefined ||
       service.config?.rateLimit !== undefined;
@@ -478,7 +492,7 @@ class PlatformVerifier {
     }
 
     // Check if service has error handling
-    const hasErrorHandling = 
+    const hasErrorHandling =
       service.errorCount !== undefined ||
       service.errorStats !== undefined ||
       typeof service.log === 'function';
@@ -495,10 +509,10 @@ class PlatformVerifier {
    */
   printSummary() {
     const duration = Date.now() - this.startTime;
-    const operational = this.results.filter(r => r.status === 'operational').length;
-    const partial = this.results.filter(r => r.status === 'partial').length;
-    const failed = this.results.filter(r => r.status === 'failed' || r.status === 'error').length;
-    const inactive = this.results.filter(r => r.status === 'inactive').length;
+    const operational = this.results.filter((r) => r.status === 'operational').length;
+    const partial = this.results.filter((r) => r.status === 'partial').length;
+    const failed = this.results.filter((r) => r.status === 'failed' || r.status === 'error').length;
+    const inactive = this.results.filter((r) => r.status === 'inactive').length;
 
     console.log('\n' + '='.repeat(60));
     console.log('📊 VERIFICATION SUMMARY');
@@ -513,33 +527,39 @@ class PlatformVerifier {
     // Print platform details
     console.log('\n📋 Platform Details:');
     for (const result of this.results) {
-      const statusEmoji = 
-        result.status === 'operational' ? '✅' :
-        result.status === 'partial' ? '⚠️' :
-        result.status === 'failed' || result.status === 'error' ? '❌' : '⚪';
-      
+      const statusEmoji =
+        result.status === 'operational'
+          ? '✅'
+          : result.status === 'partial'
+            ? '⚠️'
+            : result.status === 'failed' || result.status === 'error'
+              ? '❌'
+              : '⚪';
+
       console.log(`  ${statusEmoji} ${result.platform.padEnd(12)} ${result.status}`);
-      
+
       if (result.errors && result.errors.length > 0) {
-        result.errors.forEach(error => {
+        result.errors.forEach((error) => {
           console.log(`     └─ Error: ${error}`);
         });
       }
-      
+
       if (result.quirks && result.quirks.length > 0) {
-        result.quirks.forEach(quirk => {
+        result.quirks.forEach((quirk) => {
           console.log(`     └─ Quirk: ${quirk}`);
         });
       }
     }
 
     // Critical platforms check
-    const criticalPlatforms = this.platforms.filter(p => p.critical);
-    const criticalOperational = this.results.filter(r => 
-      criticalPlatforms.some(p => p.name === r.platform) && r.status === 'operational'
+    const criticalPlatforms = this.platforms.filter((p) => p.critical);
+    const criticalOperational = this.results.filter(
+      (r) => criticalPlatforms.some((p) => p.name === r.platform) && r.status === 'operational'
     ).length;
 
-    console.log(`\n🎯 Critical Platforms: ${criticalOperational}/${criticalPlatforms.length} operational`);
+    console.log(
+      `\n🎯 Critical Platforms: ${criticalOperational}/${criticalPlatforms.length} operational`
+    );
 
     if (criticalOperational < criticalPlatforms.length) {
       console.log('⚠️  WARNING: Some critical platforms are not operational!');
@@ -555,10 +575,11 @@ async function main() {
   const results = await verifier.verify();
 
   // Exit with error code if critical platforms failed
-  const criticalPlatforms = verifier.platforms.filter(p => p.critical);
-  const criticalFailed = results.filter(r =>
-    criticalPlatforms.some(p => p.name === r.platform) &&
-    (r.status === 'failed' || r.status === 'error')
+  const criticalPlatforms = verifier.platforms.filter((p) => p.critical);
+  const criticalFailed = results.filter(
+    (r) =>
+      criticalPlatforms.some((p) => p.name === r.platform) &&
+      (r.status === 'failed' || r.status === 'error')
   ).length;
 
   if (criticalFailed > 0) {
@@ -567,11 +588,10 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });
 }
 
 module.exports = { PlatformVerifier };
-

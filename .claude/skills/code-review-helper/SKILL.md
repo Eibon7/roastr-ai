@@ -61,6 +61,7 @@ Cuando Claude necesite hacer una revisión de código, esta skill le proporciona
 **Input**: Revisar un nuevo endpoint de API
 
 **Output**:
+
 ```markdown
 ## Code Review - GET /api/new-feature
 
@@ -71,6 +72,7 @@ Cuando Claude necesite hacer una revisión de código, esta skill le proporciona
 ❌ **Performance**: Posible N+1 en query de usuarios
 
 ### Sugerencias
+
 - Añadir paginación para listas grandes
 - Documentar en spec.md la sección de APIs
 ```
@@ -80,6 +82,7 @@ Cuando Claude necesite hacer una revisión de código, esta skill le proporciona
 **Input**: Revisar componente React nuevo
 
 **Output**:
+
 ```markdown
 ## Code Review - UserProfile.jsx
 
@@ -90,6 +93,7 @@ Cuando Claude necesite hacer una revisión de código, esta skill le proporciona
 ❌ **Tests**: No hay tests E2E con Playwright
 
 ### Sugerencias
+
 - Añadir tests visuales con Playwright
 - Documentar manejo de estados loading/error
 ```
@@ -97,6 +101,7 @@ Cuando Claude necesite hacer una revisión de código, esta skill le proporciona
 ## Criterios de Aprobación
 
 Un PR está listo cuando:
+
 - ✅ Todos los puntos del checklist pasan
 - ✅ 0 comentarios de CodeRabbit esperados
 - ✅ Tests pasando al 100%
@@ -108,4 +113,3 @@ Un PR está listo cuando:
 - Esta skill complementa a CodeRabbit, no lo reemplaza
 - Siempre seguir los estándares definidos en `docs/QUALITY-STANDARDS.md`
 - Priorizar calidad sobre velocidad
-

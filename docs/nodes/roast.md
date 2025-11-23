@@ -71,6 +71,7 @@ RoastEngine.generateRoast() [Only if direction=ROAST]
 **Analysis Department Integration (Issue #632):**
 
 Before roast generation begins, the Analysis Department runs parallel Gatekeeper + Perspective analysis to determine if the comment should be:
+
 - **SHIELD** (≥0.95 toxicity OR platform violations) → Blocked, no roast generated
 - **PUBLISH** (<0.30 toxicity) → Published normally, no roast needed
 - **ROAST** (0.30-0.94 toxicity) → Proceed to roast generation
@@ -78,6 +79,7 @@ Before roast generation begins, the Analysis Department runs parallel Gatekeeper
 This ensures platform violations (threats, identity attacks) are caught and reported BEFORE roast generation, preventing ToS violations.
 
 **Key Change:** Roast generation is now **conditional** on Analysis Department returning `direction: 'ROAST'`. This is determined by:
+
 - Combined Gatekeeper + Perspective results
 - Platform violation detection (threat ≥0.8, identity_attack ≥0.8)
 - Toxicity thresholds (roast_lower: 0.30, roast_upper: 0.94)
@@ -101,13 +103,13 @@ See `docs/nodes/shield.md` for full Analysis Department decision matrix and fall
 
 ### Component Files
 
-| File | Path | Purpose |
-|------|------|---------|
-| **RoastEngine** | `src/services/roastEngine.js` | Main orchestrator with auto-approve logic |
-| **RoastGeneratorEnhanced** | `src/services/roastGeneratorEnhanced.js` | Enhanced generation with RQC integration |
-| **RoastPromptTemplate** | `src/services/roastPromptTemplate.js` | Master prompt template system |
-| **CsvRoastService** | `src/services/csvRoastService.js` | Reference roast database |
-| **RQCService** | `src/services/rqcService.js` | Roast Quality Control (3 parallel reviewers) |
+| File                       | Path                                     | Purpose                                      |
+| -------------------------- | ---------------------------------------- | -------------------------------------------- |
+| **RoastEngine**            | `src/services/roastEngine.js`            | Main orchestrator with auto-approve logic    |
+| **RoastGeneratorEnhanced** | `src/services/roastGeneratorEnhanced.js` | Enhanced generation with RQC integration     |
+| **RoastPromptTemplate**    | `src/services/roastPromptTemplate.js`    | Master prompt template system                |
+| **CsvRoastService**        | `src/services/csvRoastService.js`        | Reference roast database                     |
+| **RQCService**             | `src/services/rqcService.js`             | Roast Quality Control (3 parallel reviewers) |
 
 ## Master Prompt Template System (v1)
 
@@ -158,12 +160,14 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 ### Two-Tier System
 
 #### Basic Moderation (Free/Pro Plans)
+
 - Integrated moderation in prompt template
 - Single-pass generation with OpenAI
 - Cost-optimized for high volume
 - Uses `gpt-3.5-turbo` (Free) or `gpt-4o` (Pro)
 
 #### Advanced RQC (Creator+ Plans)
+
 - 3 parallel AI reviewers: Moderator, Comedian, Style Expert
 - Up to 3 regeneration attempts
 - Higher quality and brand safety
@@ -171,11 +175,11 @@ Tu tarea es generar una respuesta sarcástica e ingeniosa...
 
 ### RQC Reviewers
 
-| Reviewer | Role | Validation |
-|----------|------|-----------|
-| **Moderator** | Content safety and platform policies | No hate speech, violence, discrimination |
-| **Comedian** | Humor quality and creativity | Clever, original, not lazy or obvious |
-| **Style Expert** | Brand voice and user preferences | Matches user tone, intensity level, custom prompts |
+| Reviewer         | Role                                 | Validation                                         |
+| ---------------- | ------------------------------------ | -------------------------------------------------- |
+| **Moderator**    | Content safety and platform policies | No hate speech, violence, discrimination           |
+| **Comedian**     | Humor quality and creativity         | Clever, original, not lazy or obvious              |
+| **Style Expert** | Brand voice and user preferences     | Matches user tone, intensity level, custom prompts |
 
 ### RQC Decision Flow
 
@@ -195,11 +199,12 @@ Max Attempts Reached? → Fallback roast
 
 **Feature:** Dynamic roast tone configuration from database  
 **Implementation:** `ToneConfigService` + Admin Panel  
-**Migration:** Issue #876 - From hardcoded to DB-driven  
+**Migration:** Issue #876 - From hardcoded to DB-driven
 
 ### System Overview
 
 Los tonos de roast ahora se gestionan dinámicamente desde base de datos, permitiendo:
+
 - ✅ Editar tonos sin modificar código
 - ✅ Añadir nuevos tonos fácilmente
 - ✅ Activar/desactivar tonos temporalmente
@@ -211,26 +216,26 @@ Los tonos de roast ahora se gestionan dinámicamente desde base de datos, permit
 
 #### Spanish (ES)
 
-| Style | Name | Description | Intensity |
-|-------|------|-------------|-----------|
-| `flanders` | Flanders | Tono amable pero con ironía sutil | 2/5 |
-| `balanceado` | Balanceado | Equilibrio entre ingenio y firmeza | 3/5 |
-| `canalla` | Canalla | Directo y sin filtros, más picante | 4/5 |
+| Style        | Name       | Description                        | Intensity |
+| ------------ | ---------- | ---------------------------------- | --------- |
+| `flanders`   | Flanders   | Tono amable pero con ironía sutil  | 2/5       |
+| `balanceado` | Balanceado | Equilibrio entre ingenio y firmeza | 3/5       |
+| `canalla`    | Canalla    | Directo y sin filtros, más picante | 4/5       |
 
 #### English (EN)
 
-| Style | Name | Description | Intensity |
-|-------|------|-------------|-----------|
-| `flanders` | Light | Gentle wit with subtle irony | 2/5 |
-| `balanceado` | Balanced | Perfect mix of humor and firmness | 3/5 |
-| `canalla` | Savage | Direct and unfiltered, maximum impact | 4/5 |
+| Style        | Name     | Description                           | Intensity |
+| ------------ | -------- | ------------------------------------- | --------- |
+| `flanders`   | Light    | Gentle wit with subtle irony          | 2/5       |
+| `balanceado` | Balanced | Perfect mix of humor and firmness     | 3/5       |
+| `canalla`    | Savage   | Direct and unfiltered, maximum impact | 4/5       |
 
 ### Dynamic Configuration
 
 **Database:** `roast_tones` table  
 **Service:** `src/services/toneConfigService.js`  
 **API:** `/api/admin/tones` (admin-only)  
-**Integration:** `src/lib/prompts/roastPrompt.js` (buildBlockA async)  
+**Integration:** `src/lib/prompts/roastPrompt.js` (buildBlockA async)
 
 **Documentation:** See `docs/admin/tone-management.md` for complete guide
 
@@ -240,12 +245,14 @@ Los tonos de roast ahora se gestionan dinámicamente desde base de datos, permit
 **Default:** 1 version (cost optimization)
 
 ### Single Version Mode (Flag OFF)
+
 - 1 roast generated per request
 - Faster processing (~2-3 seconds)
 - Lower cost (~150-200 tokens)
 - Recommended for Free/Pro plans
 
 ### Multiple Version Mode (Flag ON)
+
 - 2 roasts generated in parallel
 - User selects preferred version
 - Higher quality options
@@ -259,17 +266,18 @@ Los tonos de roast ahora se gestionan dinámicamente desde base de datos, permit
 
 ### Transparency Modes
 
-| Mode | Description | Example |
-|------|-------------|---------|
-| `signature` | AI signature in bio | "Roasts generados por IA" in profile |
-| `inline` | Inline disclaimer | "✨ Cortesía de tu asistente anti-trolls" |
-| `hidden` | No transparency (Creator+ only) | - |
+| Mode        | Description                     | Example                                   |
+| ----------- | ------------------------------- | ----------------------------------------- |
+| `signature` | AI signature in bio             | "Roasts generados por IA" in profile      |
+| `inline`    | Inline disclaimer               | "✨ Cortesía de tu asistente anti-trolls" |
+| `hidden`    | No transparency (Creator+ only) | -                                         |
 
 ### Creative Disclaimer Pool
 
 **Auto-Approve Mode:** Random selection from predefined pool
 
 Spanish:
+
 - "Cortesía de tu asistente personal anti-trolls ✨"
 - "Mensaje automático: troll detectado y neutralizado 🎯"
 - "Tu IA personal se encarga de los molestos 🤖"
@@ -277,6 +285,7 @@ Spanish:
 - "Generado automáticamente por tu escudo digital 🔥"
 
 English:
+
 - "Courtesy of your personal anti-troll assistant ✨"
 - "Auto-response: troll detected and neutralized 🎯"
 - "Your AI personal assistant handles the annoying ones 🤖"
@@ -299,6 +308,7 @@ validateTransparency(disclaimerResult) {
 ```
 
 **Failure Handling:**
+
 - Block publication if transparency validation fails
 - Log error to Sentry (production)
 - Fallback to pending status (requires manual approval)
@@ -337,17 +347,18 @@ Invalid? → Log to Sentry → Status: pending ⚠️
 
 ### Retry Scenarios
 
-| Scenario | Action |
-|----------|--------|
-| OpenAI API timeout | Retry with delay |
-| Rate limit error | Retry with longer delay |
-| Network error | Retry up to max attempts |
-| Validation error | No retry, return error |
-| Max attempts reached | Return fallback roast |
+| Scenario             | Action                   |
+| -------------------- | ------------------------ |
+| OpenAI API timeout   | Retry with delay         |
+| Rate limit error     | Retry with longer delay  |
+| Network error        | Retry up to max attempts |
+| Validation error     | No retry, return error   |
+| Max attempts reached | Return fallback roast    |
 
 ### Fallback Roast
 
 When all retries fail:
+
 1. Attempt safe fallback prompt (low temperature, strict safety)
 2. If fallback fails, use mock generator
 3. If mock fails, return static roast: "😉 Tomo nota, pero hoy prefiero mantener la clase."
@@ -359,24 +370,25 @@ When all retries fail:
 
 ### Metadata Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique roast identifier |
-| `user_id` | uuid | User who generated roast |
-| `org_id` | uuid | Organization (multi-tenant) |
-| `platform` | string | Social platform (twitter, youtube, etc.) |
-| `comment_id` | string | Original comment identifier |
-| `style` | string | Voice style used |
-| `language` | string | Language (es, en) |
-| `versions_count` | int | Number of versions generated |
-| `auto_approve` | boolean | Was auto-approve enabled |
-| `transparency_applied` | boolean | Was transparency disclaimer applied |
-| `status` | string | pending, auto_approved, published |
-| `tokens_used` | int | Total tokens consumed |
-| `method` | string | basic_moderation, advanced_rqc, fallback |
-| `created_at` | timestamp | Generation timestamp |
+| Field                  | Type      | Description                              |
+| ---------------------- | --------- | ---------------------------------------- |
+| `id`                   | string    | Unique roast identifier                  |
+| `user_id`              | uuid      | User who generated roast                 |
+| `org_id`               | uuid      | Organization (multi-tenant)              |
+| `platform`             | string    | Social platform (twitter, youtube, etc.) |
+| `comment_id`           | string    | Original comment identifier              |
+| `style`                | string    | Voice style used                         |
+| `language`             | string    | Language (es, en)                        |
+| `versions_count`       | int       | Number of versions generated             |
+| `auto_approve`         | boolean   | Was auto-approve enabled                 |
+| `transparency_applied` | boolean   | Was transparency disclaimer applied      |
+| `status`               | string    | pending, auto_approved, published        |
+| `tokens_used`          | int       | Total tokens consumed                    |
+| `method`               | string    | basic_moderation, advanced_rqc, fallback |
+| `created_at`           | timestamp | Generation timestamp                     |
 
 **GDPR Compliance:**
+
 - No roast text stored in database
 - Only metadata for analytics and debugging
 - Full data deletion on account deletion
@@ -389,13 +401,13 @@ When all retries fail:
 
 ### Model Mapping by Plan
 
-| Plan | Default Model | GPT-5 Available | Notes |
-|------|---------------|-----------------|-------|
-| Free | `gpt-3.5-turbo` | No | Basic quality |
-| Starter | `gpt-4o` | Auto-detect | Good quality |
-| Pro | `gpt-4o` | Auto-detect | High quality |
-| Plus | `gpt-4o` | Auto-detect → `gpt-5` | Premium quality |
-| Custom | `gpt-4o` | Auto-detect → `gpt-5` | Enterprise |
+| Plan    | Default Model   | GPT-5 Available       | Notes           |
+| ------- | --------------- | --------------------- | --------------- |
+| Free    | `gpt-3.5-turbo` | No                    | Basic quality   |
+| Starter | `gpt-4o`        | Auto-detect           | Good quality    |
+| Pro     | `gpt-4o`        | Auto-detect           | High quality    |
+| Plus    | `gpt-4o`        | Auto-detect → `gpt-5` | Premium quality |
+| Custom  | `gpt-4o`        | Auto-detect → `gpt-5` | Enterprise      |
 
 ### Auto-Detection Logic
 
@@ -413,12 +425,12 @@ async getModelForPlan(plan) {
 
 ### Reference Roast Structure
 
-| Field | Description |
-|-------|-------------|
-| `comment` | Original toxic comment |
-| `roast` | High-quality roast response |
-| `category` | Comment category |
-| `language` | Language (es, en) |
+| Field      | Description                 |
+| ---------- | --------------------------- |
+| `comment`  | Original toxic comment      |
+| `roast`    | High-quality roast response |
+| `category` | Comment category            |
+| `language` | Language (es, en)           |
 
 ### Similarity Matching (O(n log n))
 
@@ -431,6 +443,7 @@ async getModelForPlan(plan) {
 5. Return top N matches (default: 3)
 
 **Performance:**
+
 - Index rebuilds every 5 minutes or on first load
 - Adaptive thresholds for small datasets (<100 roasts)
 - Minimal word length: 2 characters (small datasets) or 3 characters (large)
@@ -438,13 +451,13 @@ async getModelForPlan(plan) {
 
 ### Reference Integration by Plan
 
-| Plan | References Included | Count |
-|------|---------------------|-------|
-| Free | ❌ No | 0 |
-| Starter | ✅ Yes | 3 |
-| Pro | ✅ Yes | 3 |
-| Plus | ✅ Yes | 3-5 |
-| Creator+ | ✅ Yes | 5 |
+| Plan     | References Included | Count |
+| -------- | ------------------- | ----- |
+| Free     | ❌ No               | 0     |
+| Starter  | ✅ Yes              | 3     |
+| Pro      | ✅ Yes              | 3     |
+| Plus     | ✅ Yes              | 3-5   |
+| Creator+ | ✅ Yes              | 5     |
 
 ## API Usage Examples
 
@@ -455,16 +468,16 @@ const roastEngine = new RoastEngine();
 
 const result = await roastEngine.generateRoast(
   {
-    comment: "Esta aplicación es horrible",
+    comment: 'Esta aplicación es horrible',
     toxicityScore: 0.7,
-    commentId: "comment_123"
+    commentId: 'comment_123'
   },
   {
-    userId: "user_uuid",
-    orgId: "org_uuid",
-    platform: "twitter",
-    style: "balanceado",
-    language: "es",
+    userId: 'user_uuid',
+    orgId: 'org_uuid',
+    platform: 'twitter',
+    style: 'balanceado',
+    language: 'es',
     autoApprove: false
   }
 );
@@ -480,13 +493,13 @@ const result = await roastEngine.generateRoast(
   {
     comment: "You're so dumb",
     toxicityScore: 0.8,
-    commentId: "comment_456"
+    commentId: 'comment_456'
   },
   {
-    userId: "user_uuid",
+    userId: 'user_uuid',
     autoApprove: true, // Enable auto-approve
-    style: "savage",
-    language: "en"
+    style: 'savage',
+    language: 'en'
   }
 );
 
@@ -523,12 +536,12 @@ console.log(result.versions);
 
 ### Cost Limits by Plan
 
-| Plan | Monthly Roasts | Approximate Cost |
-|------|----------------|------------------|
-| Free | 100 | $0 (subsidized) |
-| Starter | 500 | $2-3 |
-| Pro | 1,000 | $5-7 |
-| Plus | Unlimited | Pay-as-you-go |
+| Plan    | Monthly Roasts | Approximate Cost |
+| ------- | -------------- | ---------------- |
+| Free    | 100            | $0 (subsidized)  |
+| Starter | 500            | $2-3             |
+| Pro     | 1,000          | $5-7             |
+| Plus    | Unlimited      | Pay-as-you-go    |
 
 ### Throttling
 
@@ -567,14 +580,14 @@ Router: BLOCK (≥0.85) | ROAST (0.30-0.84) | PUBLISH (<0.30)
 
 Perspective API analyzes 6 toxicity dimensions:
 
-| Attribute | Description | Roast Usage |
-|-----------|-------------|-------------|
-| **TOXICITY** | Overall toxicity score | Primary routing decision |
-| **SEVERE_TOXICITY** | Severe toxic content | Contributes to severity |
-| **IDENTITY_ATTACK** | Attacks on identity/protected groups | Shield escalation |
-| **INSULT** | Insulting language | Comment categorization |
-| **PROFANITY** | Profane language | Tone adjustment |
-| **THREAT** | Threatening language | Shield critical priority |
+| Attribute           | Description                          | Roast Usage              |
+| ------------------- | ------------------------------------ | ------------------------ |
+| **TOXICITY**        | Overall toxicity score               | Primary routing decision |
+| **SEVERE_TOXICITY** | Severe toxic content                 | Contributes to severity  |
+| **IDENTITY_ATTACK** | Attacks on identity/protected groups | Shield escalation        |
+| **INSULT**          | Insulting language                   | Comment categorization   |
+| **PROFANITY**       | Profane language                     | Tone adjustment          |
+| **THREAT**          | Threatening language                 | Shield critical priority |
 
 ### Severity Calculation
 
@@ -601,12 +614,12 @@ return 'clean';
 
 ### Roast Routing by Toxicity
 
-| Toxicity Score | Severity | Routing Decision |
-|----------------|----------|------------------|
-| ≥0.85 | critical/high | **BLOCK** + Shield analysis (no roast) |
-| 0.60-0.84 | medium | **ROAST** generation eligible |
-| 0.30-0.59 | low | **ROAST** generation eligible |
-| <0.30 | clean | **PUBLISH** normally (no roast needed) |
+| Toxicity Score | Severity      | Routing Decision                       |
+| -------------- | ------------- | -------------------------------------- |
+| ≥0.85          | critical/high | **BLOCK** + Shield analysis (no roast) |
+| 0.60-0.84      | medium        | **ROAST** generation eligible          |
+| 0.30-0.59      | low           | **ROAST** generation eligible          |
+| <0.30          | clean         | **PUBLISH** normally (no roast needed) |
 
 ### Fallback Strategy
 
@@ -617,6 +630,7 @@ If Perspective API is unavailable:
 3. **Safe Default** - Classify as medium toxicity (roastable)
 
 **Fallback Chain:**
+
 ```text
 Perspective API fails
     ↓
@@ -676,6 +690,7 @@ await roastEngine.generateRoast(comment, {
 ### Shield Actions
 
 After roast generation, Shield may:
+
 1. **Auto-mute** - Mute user if roast quality is low
 2. **Flag for review** - Queue roast for human review
 3. **Block publication** - Prevent roast from being published
@@ -712,13 +727,13 @@ ShieldActionWorker executes platform action
 
 ### Character Limits
 
-| Platform | Limit | Validation |
-|----------|-------|-----------|
-| Twitter | 280 | Hard limit |
-| YouTube | 10,000 | Soft limit (recommend 500) |
-| Instagram | 2,200 | Soft limit (recommend 500) |
-| Facebook | 63,206 | Soft limit (recommend 1000) |
-| Discord | 2,000 | Hard limit |
+| Platform  | Limit  | Validation                  |
+| --------- | ------ | --------------------------- |
+| Twitter   | 280    | Hard limit                  |
+| YouTube   | 10,000 | Soft limit (recommend 500)  |
+| Instagram | 2,200  | Soft limit (recommend 500)  |
+| Facebook  | 63,206 | Soft limit (recommend 1000) |
+| Discord   | 2,000  | Hard limit                  |
 
 ### Platform Validation
 
@@ -736,19 +751,19 @@ if (!isValid) {
 
 ### Unit Tests
 
-| Test File | Coverage | Focus |
-|-----------|----------|-------|
-| `roastPromptTemplate.test.js` | 85% | Template building, sanitization, categorization |
-| `roastGeneratorEnhanced.test.js` | 75% | Basic/advanced generation, RQC integration |
-| `roastEngine.test.js` | 70% | Auto-approve flow, retry logic, metadata |
-| `csvRoastService.test.js` | 90% | Similarity matching, reference loading |
+| Test File                        | Coverage | Focus                                           |
+| -------------------------------- | -------- | ----------------------------------------------- |
+| `roastPromptTemplate.test.js`    | 85%      | Template building, sanitization, categorization |
+| `roastGeneratorEnhanced.test.js` | 75%      | Basic/advanced generation, RQC integration      |
+| `roastEngine.test.js`            | 70%      | Auto-approve flow, retry logic, metadata        |
+| `csvRoastService.test.js`        | 90%      | Similarity matching, reference loading          |
 
 ### Integration Tests
 
-| Test File | Focus | Status |
-|-----------|-------|--------|
-| `multiTenantWorkflow.test.js` | End-to-end roast generation with cost control | ✅ Passing |
-| `rqc-integration.test.js` | RQC review process and decision flow | ✅ Passing |
+| Test File                      | Focus                                                                     | Status           |
+| ------------------------------ | ------------------------------------------------------------------------- | ---------------- |
+| `multiTenantWorkflow.test.js`  | End-to-end roast generation with cost control                             | ✅ Passing       |
+| `rqc-integration.test.js`      | RQC review process and decision flow                                      | ✅ Passing       |
 | `generation-issue-409.test.js` | **Issue #409** - Tone enforcement + 2 initial variants + 1 post-selection | ✅ 15/15 passing |
 
 ### Test Utilities
@@ -772,11 +787,12 @@ const mockConfig = createMockRoastConfig({
 
 **Backend Error Handling:** [`src/routes/approval.js`](../../src/routes/approval.js)
 
-| Test File | Focus | Tests | Status |
-|-----------|-------|-------|--------|
-| `manual-approval-resilience.spec.js` | UI resilience for manual approval flow | 17 | ✅ Implemented |
+| Test File                            | Focus                                  | Tests | Status         |
+| ------------------------------------ | -------------------------------------- | ----- | -------------- |
+| `manual-approval-resilience.spec.js` | UI resilience for manual approval flow | 17    | ✅ Implemented |
 
 **Test Coverage:**
+
 - AC #1: Timeout handling (3 tests) - 30s timeout, retry, no hanging
 - AC #2: Network error handling (4 tests) - approval, variant, rejection, transient recovery
 - AC #3: Variant exhaustion (3 tests) - 429 handling, approval/rejection still available
@@ -784,6 +800,7 @@ const mockConfig = createMockRoastConfig({
 - AC #5: Retry functionality (4 tests) - conditional retry, no duplication
 
 **Infrastructure:**
+
 - Playwright E2E framework with Chromium browser
 - Mock server pattern for API simulation
 - Screenshot/video capture on failure
@@ -793,24 +810,24 @@ const mockConfig = createMockRoastConfig({
 
 ## Feature Flags
 
-| Flag | Default | Purpose |
-|------|---------|---------|
-| `ROAST_VERSIONS_MULTIPLE` | OFF | Enable 2-version generation |
-| `ENABLE_RQC` | ON | Enable advanced RQC system |
-| `ENABLE_CUSTOM_PROMPT` | OFF | Allow custom style prompts (admin-configured) |
-| `ENABLE_GPT5_DETECTION` | ON | Auto-detect and use GPT-5 |
+| Flag                      | Default | Purpose                                       |
+| ------------------------- | ------- | --------------------------------------------- |
+| `ROAST_VERSIONS_MULTIPLE` | OFF     | Enable 2-version generation                   |
+| `ENABLE_RQC`              | ON      | Enable advanced RQC system                    |
+| `ENABLE_CUSTOM_PROMPT`    | OFF     | Allow custom style prompts (admin-configured) |
+| `ENABLE_GPT5_DETECTION`   | ON      | Auto-detect and use GPT-5                     |
 
 ## Error Handling
 
 ### Common Errors
 
-| Error | Cause | Resolution |
-|-------|-------|-----------|
-| `OPENAI_API_KEY not found` | Missing API key | Use mock mode fallback |
-| `Comment exceeds maximum length` | Comment > 2000 chars | Return validation error |
-| `RQC all attempts failed` | Quality too low | Return safe fallback roast |
+| Error                            | Cause                  | Resolution                       |
+| -------------------------------- | ---------------------- | -------------------------------- |
+| `OPENAI_API_KEY not found`       | Missing API key        | Use mock mode fallback           |
+| `Comment exceeds maximum length` | Comment > 2000 chars   | Return validation error          |
+| `RQC all attempts failed`        | Quality too low        | Return safe fallback roast       |
 | `Transparency validation failed` | Disclaimer not applied | Block publication, log to Sentry |
-| `User config not found` | Database error | Use default config |
+| `User config not found`          | Database error         | Use default config               |
 
 ### Error Codes (Issue #419)
 
@@ -829,6 +846,7 @@ const MAX_VARIANTS_PER_ROAST = 5;
 ```
 
 **Frontend Error Handling** (`public/js/manual-approval.js`):
+
 - Displays user-friendly error messages based on error code
 - Implements retry logic for transient errors (E_TIMEOUT, E_NETWORK)
 - Shows fallback UI when variants exhausted (E_VARIANT_LIMIT)
@@ -863,6 +881,7 @@ this.openai = new OpenAI({
 ### Logging
 
 All roast generation events logged with:
+
 - User ID and organization ID
 - Plan and RQC status
 - Processing time and token usage
@@ -908,11 +927,13 @@ The RoastPromptBuilder uses OpenAI's Prompt Caching with three blocks:
 **Block A (System):** Core identity, rules, and style guides (cacheable, rarely changes)
 
 **Block B (User):** User's persona + **sponsor list** (cacheable per user, changes when persona or sponsors update)
+
 - Includes all configured sponsors with their protection rules
 - General defensive instructions for sponsor mentions
 - Cached separately per user for efficiency
 
 **Block C (Dynamic):** Current comment + toxicity data + **sponsor match** (non-cacheable, changes per comment)
+
 - Specific details if a sponsor match is detected
 - Sponsor-specific tone instructions
 - Fresh context for each roast generation
@@ -967,16 +988,17 @@ INSTRUCTIONS:
 
 The tone override system allows sponsors to specify how roasts should be generated when defending them:
 
-| Tone | Description | Roast Style | Example |
-|------|-------------|-------------|---------|
-| `normal` | User's default tone | As configured in persona | No override, use default |
-| `professional` | Measured, no aggressive humor | Diplomatic, factual, measured | "Interesting take on Nike. Perhaps you'd benefit from researching their innovation history before making such sweeping claims?" |
-| `light_humor` | Lighthearted, desenfadado | Playful, non-confrontational, friendly | "Ah yes, Nike is 'terrible' - that's why they're only worn by... *checks notes* ...millions of satisfied athletes worldwide 😊" |
-| `aggressive_irony` | Marked irony, direct sarcasm | Sharp, cutting, ironic | "Oh absolutely, Nike is a 'scam'. I'm sure your expert fashion analysis from the depths of your mom's basement is far more credible than decades of global success." |
+| Tone               | Description                   | Roast Style                            | Example                                                                                                                                                              |
+| ------------------ | ----------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `normal`           | User's default tone           | As configured in persona               | No override, use default                                                                                                                                             |
+| `professional`     | Measured, no aggressive humor | Diplomatic, factual, measured          | "Interesting take on Nike. Perhaps you'd benefit from researching their innovation history before making such sweeping claims?"                                      |
+| `light_humor`      | Lighthearted, desenfadado     | Playful, non-confrontational, friendly | "Ah yes, Nike is 'terrible' - that's why they're only worn by... _checks notes_ ...millions of satisfied athletes worldwide 😊"                                      |
+| `aggressive_irony` | Marked irony, direct sarcasm  | Sharp, cutting, ironic                 | "Oh absolutely, Nike is a 'scam'. I'm sure your expert fashion analysis from the depths of your mom's basement is far more credible than decades of global success." |
 
 ### Integration Flow
 
 1. **Job Payload** (from AnalyzeToxicityWorker)
+
    ```json
    {
      "comment_id": "...",
@@ -993,13 +1015,14 @@ The tone override system allows sponsors to specify how roasts should be generat
 2. **GenerateReplyWorker** receives payload and extracts `brand_safety`
 
 3. **buildPrompt** called with `brand_safety` parameter:
+
    ```javascript
    systemPrompt = await this.promptTemplate.buildPrompt({
      originalComment: originalText,
      toxicityData: { score, severity, categories },
      userConfig,
      includeReferences: true,
-     brand_safety  // ← Passed to prompt builder
+     brand_safety // ← Passed to prompt builder
    });
    ```
 
@@ -1015,11 +1038,13 @@ The tone override system allows sponsors to specify how roasts should be generat
 ### Example Roast Generation
 
 **Input:**
+
 - Comment: "Nike is a scam brand, terrible quality"
 - Sponsor: Nike (severity: high, tone: professional, priority: 1)
 - Toxicity: 0.65
 
 **Prompt (Block C excerpt):**
+
 ```
 ⚠️ SPONSOR MATCH DETECTED: Nike
 Tone override: professional
@@ -1029,10 +1054,11 @@ Focus on facts, use diplomatic language, redirect criticism to commenter.
 ```
 
 **Generated Roast:**
+
 ```
-"Your assessment of Nike's quality is interesting, though it seems to overlook 
-their decades of innovation, partnerships with elite athletes, and industry-leading 
-R&D. Perhaps exploring their actual product lines and customer satisfaction ratings 
+"Your assessment of Nike's quality is interesting, though it seems to overlook
+their decades of innovation, partnerships with elite athletes, and industry-leading
+R&D. Perhaps exploring their actual product lines and customer satisfaction ratings
 might offer a more balanced perspective than sweeping generalizations?"
 ```
 
@@ -1055,6 +1081,7 @@ Roast decisions with Brand Safety include metadata for analytics:
 ```
 
 This allows tracking:
+
 - Which sponsors trigger roasts most frequently
 - Effectiveness of tone overrides
 - User engagement with defensive roasts
@@ -1062,6 +1089,7 @@ This allows tracking:
 ### API Access
 
 Sponsors are managed via REST API (Plus plan required):
+
 - `POST /api/sponsors` - Create sponsor
 - `GET /api/sponsors` - List sponsors
 - `PUT /api/sponsors/:id` - Update sponsor (including tone overrides)
@@ -1080,8 +1108,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Front-end Dev** (Issue #419 - Manual approval UI)
 - **Guardian** (PR #640 - Validated Fallback Mode documentation)
 - **Orchestrator**
-- **Test Engineer** (Issue #419 - E2E resilience tests)
-
+- **Test Engineer** (Issue #419 - E2E resilience tests, Issue #924 - middleware tests)
 
 ## Related Nodes
 

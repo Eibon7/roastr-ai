@@ -2,10 +2,10 @@
 
 /**
  * Redis/Upstash Connection Verification Script
- * 
+ *
  * Verifies that Redis/Upstash is properly configured and accessible.
  * Critical for Disk IO optimization - Redis reduces DB queries by 95%.
- * 
+ *
  * Usage:
  *   node scripts/verify-redis-connection.js
  */
@@ -53,10 +53,10 @@ async function verifyRedisConnection() {
 
     console.log('🔌 Connecting to Redis...');
     const pong = await redis.ping();
-    
+
     if (pong === 'PONG') {
       console.log('✅ Redis connection successful!\n');
-      
+
       // Test basic operations
       console.log('🧪 Testing operations...');
 
@@ -106,14 +106,13 @@ async function verifyRedisConnection() {
     console.error('  1. Verify UPSTASH_REDIS_REST_URL is correct');
     console.error('  2. Verify UPSTASH_REDIS_REST_TOKEN is valid');
     console.error('  3. Check network connectivity');
-    console.error('  4. For Upstash, ensure you\'re using the REST URL format');
+    console.error("  4. For Upstash, ensure you're using the REST URL format");
     console.error('\n⚠️  Workers will fallback to database (higher Disk IO)');
     process.exit(1);
   }
 }
 
-verifyRedisConnection().catch(error => {
+verifyRedisConnection().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
-

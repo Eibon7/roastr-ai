@@ -71,15 +71,14 @@ export default function PlanStatusCard() {
       <CardHeader>
         <CardTitle>Widget Title</CardTitle>
       </CardHeader>
-      <CardContent>
-        {/* Widget content */}
-      </CardContent>
+      <CardContent>{/* Widget content */}</CardContent>
     </Card>
   );
 }
 ```
 
 **Características de los Widgets:**
+
 - ✅ **Estados de carga** con skeleton loaders
 - ✅ **Estados vacíos** informativos
 - ✅ **Manejo de errores** graceful
@@ -88,16 +87,16 @@ export default function PlanStatusCard() {
 
 ### 📊 Widgets Disponibles
 
-| Widget | Descripción | Grid | Auto-refresh |
-|--------|-------------|------|--------------|
-| **PlanStatusCard** | Estado del plan y límites de uso | 1 col | ❌ |
-| **IntegrationsCard** | Plataformas conectadas/disponibles | 1 col | ❌ |
-| **StyleProfileCard** | Estado y gestión del perfil de estilo IA | 1 col | ❌ |
-| **HealthFlagsCard** | Salud del sistema y feature flags | 1 col | ✅ 30s |
-| **ActivityFeedCard** | Actividad reciente del sistema | 2 col | ❌ |
-| **JobsQueueCard** | Estado de trabajos en cola | 1 col | ✅ 10s |
-| **UsageCostCard** | Estadísticas de uso y costos | 2 col | ❌ |
-| **LogsTableCard** | Tabla de logs con filtros | 3 col | ✅ 15s |
+| Widget               | Descripción                              | Grid  | Auto-refresh |
+| -------------------- | ---------------------------------------- | ----- | ------------ |
+| **PlanStatusCard**   | Estado del plan y límites de uso         | 1 col | ❌           |
+| **IntegrationsCard** | Plataformas conectadas/disponibles       | 1 col | ❌           |
+| **StyleProfileCard** | Estado y gestión del perfil de estilo IA | 1 col | ❌           |
+| **HealthFlagsCard**  | Salud del sistema y feature flags        | 1 col | ✅ 30s       |
+| **ActivityFeedCard** | Actividad reciente del sistema           | 2 col | ❌           |
+| **JobsQueueCard**    | Estado de trabajos en cola               | 1 col | ✅ 10s       |
+| **UsageCostCard**    | Estadísticas de uso y costos             | 2 col | ❌           |
+| **LogsTableCard**    | Tabla de logs con filtros                | 3 col | ✅ 15s       |
 
 ## 🔗 Integración con API Backend
 
@@ -113,7 +112,7 @@ Response: {
 }
 
 // Información del usuario
-GET /api/user  
+GET /api/user
 Response: {
   id: "u_mock_user",
   email: "user@roastr.ai",
@@ -127,7 +126,7 @@ GET /api/integrations
 Response: [
   {
     name: "twitter",
-    displayName: "Twitter/X", 
+    displayName: "Twitter/X",
     status: "connected",
     icon: "𝕏",
     lastSync: "2025-01-09T14:30:00Z"
@@ -185,6 +184,7 @@ Response: {
 ### 🔄 Manejo de Estados
 
 **Patrón de Loading States:**
+
 ```javascript
 const [data, setData] = useState(null);
 const [loading, setLoading] = useState(true);
@@ -215,15 +215,13 @@ Cada widget tiene skeletons consistentes usando la clase `animate-pulse` de Tail
 --muted: hsl(210 40% 96%);
 
 /* Estados */
---success: text-green-600
---warning: text-yellow-600  
---error: text-red-600
---info: text-blue-600
+--success: text-green-600 --warning: text-yellow-600 --error: text-red-600 --info: text-blue-600;
 ```
 
 ### Componentes de UI
 
 **shadcn/ui Components utilizados:**
+
 - `Card` - Contenedores principales
 - `Badge` - Estados y etiquetas
 - `Button` - Acciones
@@ -277,7 +275,7 @@ test('renders data after API call', async () => {
   });
 
   render(<PlanStatusCard />);
-  
+
   await waitFor(() => {
     expect(screen.getByText('Pro Plan')).toBeInTheDocument();
   });
@@ -287,7 +285,7 @@ test('renders data after API call', async () => {
 ### Tests Coverage
 
 - ✅ Rendering de componentes
-- ✅ Estados de loading/error/success  
+- ✅ Estados de loading/error/success
 - ✅ Interacciones de usuario
 - ✅ API calls y mocking
 - ✅ Filtros y búsqueda
@@ -341,10 +339,11 @@ Esto permite llamadas a `/api/*` desde el frontend sin configurar CORS.
 ```
 
 **Dependencias de Testing:**
+
 ```json
 {
   "@testing-library/react": "^16.3.0",
-  "@testing-library/jest-dom": "^6.6.4", 
+  "@testing-library/jest-dom": "^6.6.4",
   "@testing-library/user-event": "^14.6.1"
 }
 ```
@@ -352,22 +351,26 @@ Esto permite llamadas a `/api/*` desde el frontend sin configurar CORS.
 ## 🎨 Style Profile Feature (NEW)
 
 ### Descripción General
+
 El **Style Profile** es una funcionalidad exclusiva de **Creator+** que genera perfiles de estilo de roast personalizados basados en el contenido de redes sociales del usuario.
 
 ### Flujo de Usuario
 
 #### 1. **Selección de Plan** (`/plans`)
+
 - Comparación visual de planes Free/Pro/Creator+
 - Style Profile destacado como feature exclusivo de Creator+
 - Navegación automática a `/integrations/connect` tras selección
 
-#### 2. **Conexión de Plataformas** (`/integrations/connect`)  
+#### 2. **Conexión de Plataformas** (`/integrations/connect`)
+
 - 7 plataformas soportadas: Twitter, Instagram, YouTube, TikTok, LinkedIn, Facebook, Bluesky
 - OAuth mock con simulación de éxito/fallo (5% fallos para testing UX)
 - Import automático de hasta 300 items por plataforma
 - Progreso en tiempo real con estimaciones de tiempo
 
 #### 3. **Análisis y Generación** (`/style-profile`)
+
 - Detección automática de idiomas (mínimo 50 items por idioma)
 - Análisis de tono, estilo, patrones de escritura
 - Generación de prompts personalizados (máx 1200 caracteres)
@@ -376,13 +379,14 @@ El **Style Profile** es una funcionalidad exclusiva de **Creator+** que genera p
 ### Arquitectura Técnica
 
 #### Backend APIs
+
 ```javascript
 // Plan Management
 GET  /api/plan/available          // Lista de planes
 POST /api/plan/select            // Selección de plan
 GET  /api/plan/current           // Plan actual del usuario
 
-// Platform Integrations  
+// Platform Integrations
 GET  /api/integrations/platforms  // Plataformas disponibles
 POST /api/integrations/connect    // Conectar plataforma (OAuth mock)
 POST /api/integrations/import     // Importar contenido
@@ -399,24 +403,28 @@ DELETE /api/style-profile        // Eliminar perfil
 #### Frontend Components
 
 **PlanPicker.jsx**
+
 - Grid responsive de planes con precios
 - Destacado visual del plan Creator+
 - Feature flags para mostrar/ocultar Style Profile
 - Navegación automática post-selección
 
 **Connect.jsx**
+
 - Grid de plataformas con estados de conexión
 - Progreso de import con barras animadas
 - Validación de contenido mínimo (50+ items)
 - CTA dinámico para generar perfil cuando esté listo
 
 **StyleProfile.jsx**
+
 - Interface de generación con validaciones
 - Tabs por idioma para perfiles multi-lenguaje
 - Copy-to-clipboard para prompts
 - Metadata detallada (fuentes, estadísticas, fechas)
 
 **StyleProfileCard.jsx** (Widget)
+
 - Estados: Sin acceso / Generar / Resumen de perfil
 - Stats rápidas: items analizados, idiomas, plataformas
 - Preview de prompts con copy directo
@@ -425,12 +433,13 @@ DELETE /api/style-profile        // Eliminar perfil
 ### Mock Mode Implementation
 
 **Contenido Mock Generado:**
+
 ```javascript
 // Ejemplo de contenido simulado
 {
   id: "twitter_123",
   text: "Excelente punto, completamente de acuerdo con tu análisis 👍",
-  lang: "es", 
+  lang: "es",
   platform: "twitter",
   createdAt: "2025-01-09T15:30:00Z",
   metrics: { likes: 23, replies: 5 }
@@ -438,11 +447,13 @@ DELETE /api/style-profile        // Eliminar perfil
 ```
 
 **Detección de Idiomas:**
+
 - Algoritmo de umbral: 25% mínimo + 50 items mínimo
 - Idiomas soportados: es, en, pt, fr, it, de
 - Generación de perfiles separados por idioma
 
 **Generación de Perfiles:**
+
 ```javascript
 // Estructura de perfil generado
 {
@@ -467,11 +478,13 @@ DELETE /api/style-profile        // Eliminar perfil
 ### Gating y Control de Acceso
 
 **Plan Gating:**
+
 - Free/Pro: Mostrar CTA de upgrade
 - Creator+: Funcionalidad completa
 - Validación en backend y frontend
 
 **Feature Flag:**
+
 ```bash
 ENABLE_STYLE_PROFILE=true   # Feature habilitado
 ENABLE_STYLE_PROFILE=false  # Feature deshabilitado (503 responses)
@@ -480,12 +493,14 @@ ENABLE_STYLE_PROFILE=false  # Feature deshabilitado (503 responses)
 ### Testing
 
 **Backend Tests:**
+
 - Gating por plan (Free/Pro vs Creator+)
 - Generación con contenido insuficiente/suficiente
 - Multi-idioma y detección de umbrales
 - Error handling y edge cases
 
 **Frontend Tests:**
+
 - Flujo completo: plan → connect → import → generate
 - Estados de loading/error/success
 - Copy functionality y navegación
@@ -494,6 +509,7 @@ ENABLE_STYLE_PROFILE=false  # Feature deshabilitado (503 responses)
 ### Métricas y Analytics
 
 **Tracking de Uso:**
+
 - Generaciones por usuario/plan
 - Idiomas más populares
 - Plataformas más utilizadas
@@ -502,9 +518,10 @@ ENABLE_STYLE_PROFILE=false  # Feature deshabilitado (503 responses)
 ## 🎯 Próximos Pasos
 
 ### Funcionalidades Futuras
+
 - [ ] Regeneración automática periódica de perfiles
 - [ ] Más plataformas (Reddit, Discord, etc.)
-- [ ] Análisis de sentimiento avanzado  
+- [ ] Análisis de sentimiento avanzado
 - [ ] Templates de prompt personalizables
 - [ ] Drag & drop para reordenar widgets
 - [ ] Temas personalizables (dark/light mode)
@@ -515,6 +532,7 @@ ENABLE_STYLE_PROFILE=false  # Feature deshabilitado (503 responses)
 - [ ] Métricas de performance
 
 ### Mejoras Técnicas
+
 - [ ] Lazy loading de widgets
 - [ ] Service Workers para cache
 - [ ] Bundle optimization

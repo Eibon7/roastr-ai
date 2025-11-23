@@ -20,6 +20,7 @@ Diseñar e implementar el **Roast Style Framework** (perfiles × tipos de contes
 ### Nodos GDD Relevantes (FASE 0)
 
 Resueltos exitosamente:
+
 - ✅ `roast.md` - Sistema de generación de roasts, master prompt template
 - ✅ `persona.md` - Personalidad del usuario, integración con prompts
 - ✅ `cost-control.md` - Usage tracking, billing integration
@@ -30,21 +31,25 @@ Resueltos exitosamente:
 ### Configuración Actual
 
 **Master Prompt Template** (`src/services/roastPromptTemplate.js`):
+
 - Prompt maestro v1 con placeholders dinámicos
 - Integración con CSV de referencias
 - Security protection (Issue #127)
 - Performance optimization (Issue #128)
 
 **Tone System** (existente):
+
 - Spanish: Flanders, Balanceado, Canalla
 - English: Light, Balanced, Savage
 - Intensidad: 2/5 a 4/5
 
 **Configuraciones a deprecar:**
+
 - `humor_type` - Reemplazar por perfiles del Style Framework
 - `intensity_level` - Reemplazar por tipos de contestación
 
 **Issue paralela (caching técnico):**
+
 - Introducirá `prompt_cache_retention: "24h"` en GPT-5.1
 - Separación estructural Bloque A/B/C
 - Modularización con roastPrompt.ts y shieldPrompt.ts
@@ -62,21 +67,22 @@ Resueltos exitosamente:
 
 **Perfiles propuestos (5-7):**
 
-| Perfil | Tono | Personalidad | Recursos Retóricos | Restricciones |
-|--------|------|--------------|-------------------|---------------|
-| **Sarcasmo Elegante** | Sofisticado, irónico | Culto, mordaz | Ironía, double entendre | No insultos directos |
-| **Despiadado** | Directo, agresivo | Sin filtros | Hipérbole, comparaciones | No discriminación |
-| **Juguetón** | Ligero, divertido | Amigable, travieso | Wordplay, puns | No ofensas graves |
-| **Absurdista** | Surrealista | Impredecible | Analogías raras | Mantener coherencia |
-| **Intelectual** | Académico | Pedagógico | Referencias culturales | No pedantería excesiva |
-| **Vintage** | Nostálgico | Retro | Referencias 90s/2000s | No alienar jóvenes |
-| **Tech Savvy** | Moderno | Geek | Jerga tecnológica | No jerga incomprensible |
+| Perfil                | Tono                 | Personalidad       | Recursos Retóricos       | Restricciones           |
+| --------------------- | -------------------- | ------------------ | ------------------------ | ----------------------- |
+| **Sarcasmo Elegante** | Sofisticado, irónico | Culto, mordaz      | Ironía, double entendre  | No insultos directos    |
+| **Despiadado**        | Directo, agresivo    | Sin filtros        | Hipérbole, comparaciones | No discriminación       |
+| **Juguetón**          | Ligero, divertido    | Amigable, travieso | Wordplay, puns           | No ofensas graves       |
+| **Absurdista**        | Surrealista          | Impredecible       | Analogías raras          | Mantener coherencia     |
+| **Intelectual**       | Académico            | Pedagógico         | Referencias culturales   | No pedantería excesiva  |
+| **Vintage**           | Nostálgico           | Retro              | Referencias 90s/2000s    | No alienar jóvenes      |
+| **Tech Savvy**        | Moderno              | Geek               | Jerga tecnológica        | No jerga incomprensible |
 
 **Documentación por perfil:**
+
 ```yaml
-perfil: "Sarcasmo Elegante"
-tono_natural: "Sofisticado, irónico, medido"
-personalidad: "Culto, mordaz pero sin vulgaridad"
+perfil: 'Sarcasmo Elegante'
+tono_natural: 'Sofisticado, irónico, medido'
+personalidad: 'Culto, mordaz pero sin vulgaridad'
 recursos_retoricos:
   - Ironía marcada
   - Double entendre
@@ -90,54 +96,56 @@ cosas_que_nunca_debe_hacer:
   - Usar lenguaje vulgar
   - Parecer grosero
 ejemplos:
-  - "Interesante perspectiva. Quizás una segunda lectura del tema te ayudaría."
-  - "Ah sí, porque tu análisis profundo de Twitter claramente supera décadas de investigación."
+  - 'Interesante perspectiva. Quizás una segunda lectura del tema te ayudaría.'
+  - 'Ah sí, porque tu análisis profundo de Twitter claramente supera décadas de investigación.'
 ```
 
 #### 1.2 Tipos de Contestación
 
 **5 tipos base:**
 
-| Tipo | Descripción | Longitud | Ritmo | Figuras Retóricas |
-|------|-------------|----------|-------|-------------------|
-| **punch_corto** | One-liner directo | 1 frase (20-40 palabras) | Rápido, contundente | Juego de palabras, sarcasmo |
-| **desarrollo_medio** | Roast estructurado | 2-3 frases (40-80 palabras) | Moderado, buildup | Ironía, comparación |
-| **elaborado** | Párrafo completo | 80-150 palabras | Lento, detallado | Analogías, metáforas |
-| **meta** | Comentario sobre situación | Variable | Reflexivo | Meta-humor, observación |
-| **comparacion_hiperbolica** | Analogía exagerada | 1-2 frases | Dinámico | Hipérbole, símil |
+| Tipo                        | Descripción                | Longitud                    | Ritmo               | Figuras Retóricas           |
+| --------------------------- | -------------------------- | --------------------------- | ------------------- | --------------------------- |
+| **punch_corto**             | One-liner directo          | 1 frase (20-40 palabras)    | Rápido, contundente | Juego de palabras, sarcasmo |
+| **desarrollo_medio**        | Roast estructurado         | 2-3 frases (40-80 palabras) | Moderado, buildup   | Ironía, comparación         |
+| **elaborado**               | Párrafo completo           | 80-150 palabras             | Lento, detallado    | Analogías, metáforas        |
+| **meta**                    | Comentario sobre situación | Variable                    | Reflexivo           | Meta-humor, observación     |
+| **comparacion_hiperbolica** | Analogía exagerada         | 1-2 frases                  | Dinámico            | Hipérbole, símil            |
 
 #### 1.3 Matriz Perfil × Tipo
 
 **Ejemplo: Sarcasmo Elegante × punch_corto:**
+
 ```yaml
-perfil: "Sarcasmo Elegante"
-tipo: "punch_corto"
-reglas_tono: "Irónico, medido, sin vulgaridad"
-ritmo: "Una sola frase, contundente pero sofisticada"
-figuras_retoricos: ["ironía", "understatement"]
-limites: "No insultos directos, mantener clase"
-prohibiciones: "Vulgaridad, insultos físicos"
+perfil: 'Sarcasmo Elegante'
+tipo: 'punch_corto'
+reglas_tono: 'Irónico, medido, sin vulgaridad'
+ritmo: 'Una sola frase, contundente pero sofisticada'
+figuras_retoricos: ['ironía', 'understatement']
+limites: 'No insultos directos, mantener clase'
+prohibiciones: 'Vulgaridad, insultos físicos'
 ejemplos:
-  - input: "Esta app es horrible"
-    output: "Fascinante crítica. Imagino que tu experiencia en desarrollo de software es... extensa."
-  - input: "Esto no sirve para nada"
-    output: "Qué perspectiva tan... original. ¿Has considerado una carrera en análisis de usabilidad?"
+  - input: 'Esta app es horrible'
+    output: 'Fascinante crítica. Imagino que tu experiencia en desarrollo de software es... extensa.'
+  - input: 'Esto no sirve para nada'
+    output: 'Qué perspectiva tan... original. ¿Has considerado una carrera en análisis de usabilidad?'
 ```
 
 **Ejemplo: Despiadado × comparacion_hiperbolica:**
+
 ```yaml
-perfil: "Despiadado"
-tipo: "comparacion_hiperbolica"
-reglas_tono: "Directo, agresivo, sin filtros"
-ritmo: "Comparación exagerada en 1-2 frases"
-figuras_retoricos: ["hipérbole", "símil extremo"]
-limites: "No discriminación, no ataques personales prohibidos"
-prohibiciones: "Racismo, sexismo, body shaming"
+perfil: 'Despiadado'
+tipo: 'comparacion_hiperbolica'
+reglas_tono: 'Directo, agresivo, sin filtros'
+ritmo: 'Comparación exagerada en 1-2 frases'
+figuras_retoricos: ['hipérbole', 'símil extremo']
+limites: 'No discriminación, no ataques personales prohibidos'
+prohibiciones: 'Racismo, sexismo, body shaming'
 ejemplos:
-  - input: "Eres un idiota"
-    output: "Tu inteligencia es como un agujero negro: tan densa que ni la luz de la razón puede escapar."
-  - input: "No sabes nada"
-    output: "Tu conocimiento es como el WiFi del aeropuerto: teóricamente existe, pero nadie lo encuentra."
+  - input: 'Eres un idiota'
+    output: 'Tu inteligencia es como un agujero negro: tan densa que ni la luz de la razón puede escapar.'
+  - input: 'No sabes nada'
+    output: 'Tu conocimiento es como el WiFi del aeropuerto: teóricamente existe, pero nadie lo encuentra.'
 ```
 
 **Total combinaciones:** 5-7 perfiles × 5 tipos = 25-35 combinaciones documentadas
@@ -237,6 +245,7 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 ```
 
 **Características BLOQUE A:**
+
 - 100% estático, cacheable por OpenAI
 - NO contiene variables dinámicas
 - Contiene TODA la lógica de perfiles y tipos
@@ -265,12 +274,14 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 ```
 
 **Variables dinámicas (pero cacheables por usuario):**
+
 - `persona_context` - De `persona.md`: lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual
 - `style_profile` - Configuración de estilo del usuario
 - `shield_config` - Líneas rojas, tolerancias
 - `sponsors_list` - Lista de sponsors con sus configuraciones (Issue #859)
 
 **Requisitos:**
+
 - Orden determinista (siempre el mismo order de campos)
 - Misma estructura siempre
 - Sin timestamps
@@ -304,6 +315,7 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 ```
 
 **Variables dinámicas (cambian cada request):**
+
 - `original_comment` - INPUT_COMMENT
 - `toxicity_score` - Score de Perspective API
 - `severity_level` - critical/high/medium/low/clean
@@ -324,6 +336,7 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 #### 3.1 `docs/prompts/style-framework.md`
 
 **Contenido:**
+
 - Inventario completo de 5-7 perfiles con documentación detallada
 - 5 tipos de contestación con especificaciones
 - Matriz completa Perfil × Tipo (25-35 combinaciones)
@@ -334,6 +347,7 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 #### 3.2 `docs/prompts/roast-master-prompt.md`
 
 **Contenido:**
+
 - Explicación de Bloque A/B/C
 - Contenido literal del Bloque A (copiable)
 - Plantilla para Bloque B con variables
@@ -349,6 +363,7 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 ### Paso 1: Diseñar Style Framework (2-3 horas)
 
 **Tareas:**
+
 1. Definir 5-7 perfiles de roaster con documentación completa
 2. Definir 5 tipos de contestación con especificaciones
 3. Crear matriz Perfil × Tipo con reglas y ejemplos
@@ -356,15 +371,18 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 5. Validar coherencia narrativa
 
 **Archivos:**
+
 - `docs/prompts/style-framework.md` (nuevo)
 
 **Agentes:**
+
 - Backend Developer (diseño)
 - Documentation Agent (estructura)
 
 ### Paso 2: Redactar Bloque A Estático (1-2 horas)
 
 **Tareas:**
+
 1. Redactar versión definitiva del Bloque A
 2. Incluir todo el Style Framework en formato prompt
 3. Integrar reglas de seguridad globales
@@ -372,28 +390,34 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 5. Verificar 100% estático (sin variables)
 
 **Archivos:**
+
 - `docs/prompts/roast-master-prompt.md` (nuevo, sección Bloque A)
 
 **Agentes:**
+
 - Backend Developer (redacción)
 
 ### Paso 3: Definir Bloques B y C (1 hora)
 
 **Tareas:**
+
 1. Crear plantilla Bloque B con variables cacheables
 2. Crear plantilla Bloque C con variables dinámicas
 3. Documentar reglas de determinismo para Bloque B
 4. Documentar variables dinámicas de Bloque C
 
 **Archivos:**
+
 - `docs/prompts/roast-master-prompt.md` (secciones B y C)
 
 **Agentes:**
+
 - Backend Developer
 
 ### Paso 4: Integrar en roastPrompt.ts (2-3 horas)
 
 **Tareas:**
+
 1. Crear `src/services/roastPrompt.ts` (TypeScript)
 2. Implementar carga de Bloque A (estático)
 3. Implementar construcción de Bloque B (cacheable por user_id)
@@ -402,30 +426,36 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 6. Mantener compatibilidad con `roastPromptTemplate.js` (LEGACY)
 
 **Archivos:**
+
 - `src/services/roastPrompt.ts` (nuevo)
 - `src/services/roastPromptTemplate.js` (mantener LEGACY)
 
 **Agentes:**
+
 - Backend Developer (implementación)
 
 ### Paso 5: Mapear Configuraciones Obsoletas (1 hora)
 
 **Tareas:**
+
 1. Crear mapping `humor_type` → `roaster_profile`
 2. Crear mapping `intensity_level` → `response_type`
 3. Deprecar pero mantener compatibilidad temporal
 4. Documentar migración
 
 **Archivos:**
+
 - `src/config/deprecations.js` (nuevo)
 - `docs/prompts/roast-master-prompt.md` (sección migración)
 
 **Agentes:**
+
 - Backend Developer
 
 ### Paso 6: Tests de Integración (2 horas)
 
 **Tareas:**
+
 1. Tests de construcción de Bloque A (estático)
 2. Tests de construcción de Bloque B (variables cacheables)
 3. Tests de construcción de Bloque C (variables dinámicas)
@@ -434,15 +464,18 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 6. Tests de compatibilidad con LEGACY
 
 **Archivos:**
+
 - `tests/unit/services/roastPrompt.test.ts` (nuevo)
 - `tests/integration/roast-prompt-caching.test.ts` (nuevo)
 
 **Agentes:**
+
 - Test Engineer
 
 ### Paso 7: Validación con Ejemplos (1 hora)
 
 **Tareas:**
+
 1. Generar roasts con cada perfil × tipo
 2. Verificar coherencia narrativa
 3. Verificar seguridad (no violaciones)
@@ -450,9 +483,11 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 5. Comparar antes/después con roasts actuales
 
 **Archivos:**
+
 - `docs/test-evidence/roast-prompt-framework-validation.md` (nuevo)
 
 **Agentes:**
+
 - Test Engineer
 - Backend Developer
 
@@ -499,6 +534,7 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 ## 🚀 Archivos Afectados
 
 ### Nuevos
+
 - `docs/prompts/style-framework.md`
 - `docs/prompts/roast-master-prompt.md`
 - `src/services/roastPrompt.ts`
@@ -508,6 +544,7 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 - `docs/test-evidence/roast-prompt-framework-validation.md`
 
 ### Modificados
+
 - `src/services/roastPromptTemplate.js` (mantener LEGACY, deprecar)
 - `src/services/roastGeneratorEnhanced.js` (integrar roastPrompt.ts)
 - `docs/nodes/roast.md` (actualizar con Style Framework)
@@ -517,6 +554,7 @@ Si excedes el límite, acorta manteniendo el impacto del roast.
 ## 🛡️ Validación GDD (FASE 4)
 
 **Scripts a ejecutar:**
+
 ```bash
 # Pre-commit
 node scripts/validate-gdd-runtime.js --full
@@ -529,11 +567,13 @@ node scripts/predict-gdd-drift.js --full  # Debe <60 risk
 ```
 
 **Actualizar nodos:**
+
 - `docs/nodes/roast.md` - Actualizar con Style Framework
 - `docs/nodes/persona.md` - Actualizar integración Bloque B
 - `docs/nodes/shield.md` - Actualizar Brand Safety integration
 
 **Agentes Relevantes:**
+
 - Backend Developer
 - Documentation Agent
 - Test Engineer
@@ -545,6 +585,7 @@ node scripts/predict-gdd-drift.js --full  # Debe <60 risk
 **Tiempo total:** 10-12 horas
 
 **Desglose:**
+
 - Paso 1 (Framework): 2-3 horas
 - Paso 2 (Bloque A): 1-2 horas
 - Paso 3 (Bloques B/C): 1 hora
@@ -569,4 +610,3 @@ node scripts/predict-gdd-drift.js --full  # Debe <60 risk
 
 **Status:** 🟡 In Progress (FASE 1 - Planning)
 **Next Step:** Implementar Paso 1 (Diseñar Style Framework)
-

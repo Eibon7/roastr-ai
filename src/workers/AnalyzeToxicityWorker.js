@@ -13,12 +13,12 @@ const SponsorService = require('../services/sponsorService'); // Issue #859: Bra
 
 /**
  * Analyze Toxicity Worker
- * 
+ *
  * Responsible for analyzing comment toxicity using:
  * - Primary: Google Perspective API
  * - Fallback: OpenAI Moderation API
  * - Emergency fallback: Pattern-based detection
- * 
+ *
  * This worker determines whether comments warrant roast responses
  * and calculates severity levels for Shield mode operations.
  */
@@ -30,7 +30,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       maxRetries: 3,
       ...options
     });
-    
+
     this.costControl = new CostControlService();
     this.shieldService = new ShieldService();
     this.gatekeeperService = new GatekeeperService();
@@ -40,28 +40,28 @@ class AnalyzeToxicityWorker extends BaseWorker {
 
     // Initialize toxicity detection services
     this.initializeToxicityServices();
-    
+
     // Toxicity thresholds
     this.thresholds = {
-      low: 0.3,      // Mild sarcasm, general negativity
-      medium: 0.6,   // Clear toxicity, insults
-      high: 0.8,     // Severe toxicity, threats
+      low: 0.3, // Mild sarcasm, general negativity
+      medium: 0.6, // Clear toxicity, insults
+      high: 0.8, // Severe toxicity, threats
       critical: 0.95 // Extreme content requiring immediate action
     };
-    
+
     // Pattern-based fallback rules (now loaded from external service)
     this.toxicPatterns = toxicityPatternsService.getToxicPatternsForWorker();
     this.slurPatterns = toxicityPatternsService.getSlurPatterns();
-    
+
     // Toxicity analysis configuration (Issue #154)
     this.contextWindowSize = {
-      min: 30,        // Minimum context window
-      default: 50,    // Default context window (expanded from 20)
-      max: 100,       // Maximum context window for complex analysis
-      dynamic: true   // Enable dynamic context window sizing
+      min: 30, // Minimum context window
+      default: 50, // Default context window (expanded from 20)
+      max: 100, // Maximum context window for complex analysis
+      dynamic: true // Enable dynamic context window sizing
     };
   }
-  
+
   /**
    * Calculate dynamic context window size based on text characteristics
    * Issue #154: Expand toxicity analysis context window
@@ -93,14 +93,14 @@ class AnalyzeToxicityWorker extends BaseWorker {
     if (termIndex !== -1) {
       const beforeText = text.substring(0, termIndex);
       const afterText = text.substring(termIndex + term.length);
-      
+
       // Look for sentence boundaries
       const sentenceEndBefore = Math.max(
         beforeText.lastIndexOf('.'),
         beforeText.lastIndexOf('!'),
         beforeText.lastIndexOf('?')
       );
-      
+
       const sentenceEndAfter = Math.min(
         afterText.indexOf('.') !== -1 ? afterText.indexOf('.') : Infinity,
         afterText.indexOf('!') !== -1 ? afterText.indexOf('!') : Infinity,
@@ -108,10 +108,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
       );
 
       // Expand window to include full sentences when reasonable
-      if (sentenceEndBefore !== -1 && (termIndex - sentenceEndBefore - 1) < windowSize * 1.5) {
+      if (sentenceEndBefore !== -1 && termIndex - sentenceEndBefore - 1 < windowSize * 1.5) {
         windowSize = Math.max(windowSize, termIndex - sentenceEndBefore - 1);
       }
-      
+
       if (sentenceEndAfter !== Infinity && sentenceEndAfter < windowSize * 1.5) {
         windowSize = Math.max(windowSize, sentenceEndAfter + 1);
       }
@@ -120,7 +120,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
     // Ensure window size is within bounds
     return Math.min(Math.max(windowSize, this.contextWindowSize.min), this.contextWindowSize.max);
   }
-  
+
   /**
    * Get worker-specific health details
    */
@@ -155,10 +155,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
         lastCheck: this.lastCostCheckTime || null
       }
     };
-    
+
     return details;
   }
-  
+
   /**
    * Initialize toxicity detection services
    */
@@ -191,7 +191,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       this.log('warn', 'No toxicity detection APIs configured, using pattern-based fallback only');
     }
   }
-  
+
   /**
    * Process toxicity analysis job
    */
@@ -209,22 +209,22 @@ class AnalyzeToxicityWorker extends BaseWorker {
       commentId: comment_id,
       platform
     });
-    
+
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
-      organization_id, 
+      organization_id,
       'analyze_toxicity',
       1, // quantity
       platform
     );
-    
+
     if (!canProcess.allowed) {
       throw new Error(`Organization ${organization_id} has reached limits: ${canProcess.reason}`);
     }
-    
+
     // Get comment from database
     const comment = await this.getComment(comment_id);
-    
+
     if (!comment) {
       throw new Error(`Comment ${comment_id} not found`);
     }
@@ -234,15 +234,15 @@ class AnalyzeToxicityWorker extends BaseWorker {
 
     // Get user's Roastr Persona for enhanced analysis (Issue #148) and auto-blocking (Issue #149)
     const roastrPersona = await this.getUserRoastrPersona(organization_id);
-    
+
     // FIRST: Check if comment should be auto-blocked based on user intolerance preferences (Issue #149)
     const intoleranceData = await this.getUserIntolerancePreferences(organization_id);
     const autoBlockResult = await this.checkAutoBlock(
-      text || comment.original_text, 
-      intoleranceData?.text, 
+      text || comment.original_text,
+      intoleranceData?.text,
       intoleranceData?.embeddings
     );
-    
+
     if (autoBlockResult.shouldBlock) {
       // Auto-block: Set maximum toxicity and skip normal analysis
       const blockedAnalysisResult = {
@@ -255,10 +255,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
         matched_intolerance_terms: autoBlockResult.matchedTerms,
         analysisTime: autoBlockResult.analysisTime
       };
-      
+
       // Update comment with auto-block analysis results
       await this.updateCommentAnalysis(comment_id, blockedAnalysisResult);
-      
+
       // Record usage for auto-blocking
       const textToAnalyze = text || comment.original_text;
       const tokensUsed = this.estimateTokens(textToAnalyze);
@@ -280,10 +280,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
         null,
         1
       );
-      
+
       // Immediately trigger Shield action for auto-blocked content (highest priority)
       await this.handleAutoBlockShieldAction(organization_id, comment, blockedAnalysisResult);
-      
+
       return {
         success: true,
         summary: `Comment auto-blocked due to user intolerance preferences: ${autoBlockResult.reason}`,
@@ -296,16 +296,16 @@ class AnalyzeToxicityWorker extends BaseWorker {
         matchedTerms: autoBlockResult.matchedTerms
       };
     }
-    
+
     // SECOND: Check if comment matches user tolerance preferences (Issue #150)
     // This reduces false positives by allowing content the user considers harmless
     const toleranceData = await this.getUserTolerancePreferences(organization_id);
     const toleranceResult = await this.checkTolerance(
-      text || comment.original_text, 
-      toleranceData?.text, 
+      text || comment.original_text,
+      toleranceData?.text,
       toleranceData?.embeddings
     );
-    
+
     if (toleranceResult.shouldIgnore) {
       // Tolerance match: Set low toxicity and mark as ignored
       const ignoredAnalysisResult = {
@@ -318,10 +318,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
         matched_tolerance_terms: toleranceResult.matchedTerms,
         analysisTime: toleranceResult.analysisTime
       };
-      
+
       // Update comment with tolerance analysis results
       await this.updateCommentAnalysis(comment_id, ignoredAnalysisResult);
-      
+
       // Record usage for tolerance filtering
       const textToAnalyze = text || comment.original_text;
       const tokensUsed = this.estimateTokens(textToAnalyze);
@@ -343,7 +343,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
         null,
         1
       );
-      
+
       return {
         success: true,
         summary: `Comment ignored due to user tolerance preferences: ${toleranceResult.reason}`,
@@ -356,7 +356,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
         matchedTerms: toleranceResult.matchedTerms
       };
     }
-    
+
     // ✅ ISSUE #859: Brand Safety - Detect sponsor mentions (non-blocking)
     let sponsors = [];
     let sponsorMatch = null;
@@ -367,17 +367,17 @@ class AnalyzeToxicityWorker extends BaseWorker {
         .select('user_id')
         .eq('id', organization_id)
         .single();
-      
+
       if (!orgError && org) {
         // Fetch active sponsors for this organization's owner
         sponsors = await this.sponsorService.getSponsors(org.user_id, false);
-        
+
         // Detect if comment mentions any sponsor
         if (sponsors.length > 0) {
           sponsorMatch = await this.sponsorService.detectSponsorMention(commentText, sponsors);
-          
+
           if (sponsorMatch.matched) {
-            this.logger.info(`[Brand Safety] Sponsor match detected in comment ${comment_id}`, {
+            this.log('info', `[Brand Safety] Sponsor match detected in comment ${comment_id}`, {
               sponsor: sponsorMatch.sponsor.name,
               matchType: sponsorMatch.matchType,
               severity: sponsorMatch.sponsor.severity
@@ -387,12 +387,12 @@ class AnalyzeToxicityWorker extends BaseWorker {
       }
     } catch (sponsorError) {
       // Non-blocking: Log error but continue analysis
-      this.logger.error('[Brand Safety] Failed to detect sponsors, continuing analysis', {
+      this.log('error', '[Brand Safety] Failed to detect sponsors, continuing analysis', {
         error: sponsorError.message,
         commentId: comment_id
       });
     }
-    
+
     // ✅ UNIFIED ANALYSIS DEPARTMENT (Issue #632)
     // Runs Gatekeeper + Perspective in PARALLEL
     const userContext = {
@@ -414,7 +414,13 @@ class AnalyzeToxicityWorker extends BaseWorker {
     await this.updateCommentWithAnalysisDecision(comment_id, analysisDecision);
 
     // Record usage with unified analysis metadata
-    await this.recordAnalysisUsage(organization_id, platform, comment_id, commentText, analysisDecision);
+    await this.recordAnalysisUsage(
+      organization_id,
+      platform,
+      comment_id,
+      commentText,
+      analysisDecision
+    );
 
     // Route based on direction (SHIELD, ROAST, PUBLISH)
     await this.routeByDirection(organization_id, comment, analysisDecision, correlationId);
@@ -431,14 +437,20 @@ class AnalyzeToxicityWorker extends BaseWorker {
     };
 
     // Log job completion with correlation context (Issue #417)
-    advancedLogger.logJobLifecycle(this.workerName, job.id, 'completed', {
-      correlationId,
-      tenantId: organization_id,
-      commentId: comment_id,
-      direction: analysisDecision.direction,
-      toxicityScore: analysisDecision.scores.final_toxicity,
-      severityLevel: analysisDecision.metadata.decision.severity_level
-    }, result);
+    advancedLogger.logJobLifecycle(
+      this.workerName,
+      job.id,
+      'completed',
+      {
+        correlationId,
+        tenantId: organization_id,
+        commentId: comment_id,
+        direction: analysisDecision.direction,
+        toxicityScore: analysisDecision.scores.final_toxicity,
+        severityLevel: analysisDecision.metadata.decision.severity_level
+      },
+      result
+    );
 
     return result;
   }
@@ -531,7 +543,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
 
     const response = await this.perspectiveClient.analyzeToxicity(text);
     const scores = response.scores || {};
-    const scoreValues = Object.values(scores).filter(value => typeof value === 'number');
+    const scoreValues = Object.values(scores).filter((value) => typeof value === 'number');
     const toxicityScore = typeof scores.TOXICITY === 'number' ? scores.TOXICITY : 0;
     const analysisConfidence = scoreValues.length ? Math.max(...scoreValues) : toxicityScore;
 
@@ -551,7 +563,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
     const response = await this.openaiClient.moderateContent(text);
     const categoryScores = response.category_scores || {};
     const highestScore = Object.values(categoryScores)
-      .filter(value => typeof value === 'number')
+      .filter((value) => typeof value === 'number')
       .reduce((max, current) => Math.max(max, current), 0);
     const categories = Object.entries(response.categories || {})
       .filter(([, value]) => value)
@@ -635,10 +647,9 @@ class AnalyzeToxicityWorker extends BaseWorker {
         .select('*')
         .eq('id', commentId)
         .single();
-      
+
       if (error) throw error;
       return comment;
-      
     } catch (error) {
       this.log('error', 'Failed to get comment', {
         commentId,
@@ -647,7 +658,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       return null;
     }
   }
-  
+
   /**
    * Get user's Roastr Persona for enhanced toxicity detection (Issue #148)
    */
@@ -659,7 +670,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
         .select('owner_id')
         .eq('id', organizationId)
         .single();
-      
+
       if (orgError || !orgData) {
         this.log('warn', 'Could not get organization owner', {
           organizationId,
@@ -667,31 +678,30 @@ class AnalyzeToxicityWorker extends BaseWorker {
         });
         return null;
       }
-      
+
       // Get user's encrypted Roastr Persona
       const { data: userData, error: userError } = await this.supabase
         .from('users')
         .select('lo_que_me_define_encrypted')
         .eq('id', orgData.owner_id)
         .single();
-      
+
       if (userError || !userData || !userData.lo_que_me_define_encrypted) {
         // User hasn't defined their Roastr Persona - this is normal
         return null;
       }
-      
+
       // Decrypt the persona data
       try {
         const decryptedPersona = encryptionService.decrypt(userData.lo_que_me_define_encrypted);
-        
+
         this.log('debug', 'Retrieved Roastr Persona for enhanced analysis', {
           organizationId,
           userId: orgData.owner_id.substr(0, 8) + '...',
           hasPersona: !!decryptedPersona
         });
-        
+
         return decryptedPersona;
-        
       } catch (decryptError) {
         this.log('error', 'Failed to decrypt Roastr Persona', {
           organizationId,
@@ -700,7 +710,6 @@ class AnalyzeToxicityWorker extends BaseWorker {
         });
         return null;
       }
-      
     } catch (error) {
       this.log('error', 'Failed to get Roastr Persona', {
         organizationId,
@@ -709,7 +718,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       return null;
     }
   }
-  
+
   /**
    * Get user's intolerance preferences for auto-blocking (Issue #149)
    * Enhanced to include embeddings for semantic matching (Issue #151)
@@ -722,7 +731,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
         .select('owner_id')
         .eq('id', organizationId)
         .single();
-      
+
       if (orgError || !orgData) {
         this.log('warn', 'Could not get organization owner for intolerance check', {
           organizationId,
@@ -730,23 +739,23 @@ class AnalyzeToxicityWorker extends BaseWorker {
         });
         return null;
       }
-      
+
       // Get user's encrypted intolerance preferences and embeddings
       const { data: userData, error: userError } = await this.supabase
         .from('users')
         .select('lo_que_no_tolero_encrypted, lo_que_no_tolero_embedding')
         .eq('id', orgData.owner_id)
         .single();
-      
+
       if (userError || !userData || !userData.lo_que_no_tolero_encrypted) {
         // User hasn't defined intolerance preferences - this is normal
         return null;
       }
-      
+
       // Decrypt the intolerance data
       try {
         const decryptedIntolerance = encryptionService.decrypt(userData.lo_que_no_tolero_encrypted);
-        
+
         // Parse embeddings if available
         let embeddingData = null;
         if (userData.lo_que_no_tolero_embedding) {
@@ -760,7 +769,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
             });
           }
         }
-        
+
         this.log('debug', 'Retrieved user intolerance preferences for auto-blocking', {
           organizationId,
           userId: orgData.owner_id.substr(0, 8) + '...',
@@ -768,12 +777,11 @@ class AnalyzeToxicityWorker extends BaseWorker {
           hasEmbeddings: !!embeddingData,
           embeddingTermsCount: embeddingData ? embeddingData.length : 0
         });
-        
+
         return {
           text: decryptedIntolerance,
           embeddings: embeddingData
         };
-        
       } catch (decryptError) {
         this.log('error', 'Failed to decrypt intolerance preferences', {
           organizationId,
@@ -782,7 +790,6 @@ class AnalyzeToxicityWorker extends BaseWorker {
         });
         return null;
       }
-      
     } catch (error) {
       this.log('error', 'Failed to get intolerance preferences', {
         organizationId,
@@ -791,7 +798,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       return null;
     }
   }
-  
+
   /**
    * Check if comment should be auto-blocked based on user intolerance preferences (Issue #149)
    * Enhanced with semantic similarity matching (Issue #151)
@@ -799,36 +806,36 @@ class AnalyzeToxicityWorker extends BaseWorker {
    */
   async checkAutoBlock(text, intoleranceData, intoleranceEmbeddings = null) {
     const startTime = Date.now();
-    
+
     if (!intoleranceData || typeof intoleranceData !== 'string') {
-      return { 
-        shouldBlock: false, 
+      return {
+        shouldBlock: false,
         reason: 'No intolerance preferences defined',
         matchedTerms: [],
         matchedCategories: [],
         analysisTime: Date.now() - startTime
       };
     }
-    
+
     // Clean and normalize the intolerance terms
     const intoleranceTerms = intoleranceData
       .toLowerCase()
       .split(/[,;\.]+/) // Split by common separators
-      .map(term => term.trim())
-      .filter(term => term.length > 2); // Filter out very short terms
-    
+      .map((term) => term.trim())
+      .filter((term) => term.length > 2); // Filter out very short terms
+
     // Clean and normalize the comment text
     const commentText = text.toLowerCase();
-    
+
     const matchedTerms = [];
     const matchedCategories = [];
     let blockReason = '';
-    
+
     // PHASE 1: Check for exact matches first (highest confidence)
     for (const term of intoleranceTerms) {
       if (commentText.includes(term)) {
         matchedTerms.push(term);
-        
+
         // Categorize the type of intolerance match
         if (this.isRacialTerm(term)) {
           matchedCategories.push('racial_intolerance');
@@ -843,23 +850,23 @@ class AnalyzeToxicityWorker extends BaseWorker {
         }
       }
     }
-    
+
     // PHASE 2: If no exact matches, check semantic similarity with embeddings (Issue #151)
     if (matchedTerms.length === 0 && intoleranceEmbeddings) {
       try {
         const semanticMatches = await this.embeddingsService.findSemanticMatches(
-          text, 
-          intoleranceEmbeddings, 
+          text,
+          intoleranceEmbeddings,
           'intolerance'
         );
-        
+
         if (semanticMatches.matches && semanticMatches.matches.length > 0) {
           // Use high threshold for auto-blocking (0.85 by default)
           for (const match of semanticMatches.matches) {
             matchedTerms.push(`${match.term} (semantic: ${match.similarity})`);
             matchedCategories.push('semantic_intolerance_match');
           }
-          
+
           this.log('info', 'Semantic intolerance matches found', {
             maxSimilarity: semanticMatches.maxSimilarity,
             matchCount: semanticMatches.matches.length,
@@ -872,7 +879,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
           error: error.message,
           textLength: text.length
         });
-        
+
         // PHASE 3: Fallback to basic semantic pattern matching
         const patternMatches = this.checkSemanticMatches(commentText, intoleranceTerms);
         matchedTerms.push(...patternMatches.terms);
@@ -884,12 +891,12 @@ class AnalyzeToxicityWorker extends BaseWorker {
       matchedTerms.push(...semanticMatches.terms);
       matchedCategories.push(...semanticMatches.categories);
     }
-    
+
     const shouldBlock = matchedTerms.length > 0;
-    
+
     if (shouldBlock) {
       blockReason = `Matched user intolerance terms: ${matchedTerms.slice(0, 3).join(', ')}${matchedTerms.length > 3 ? ` (and ${matchedTerms.length - 3} more)` : ''}`;
-      
+
       this.log('info', 'Comment auto-blocked due to user intolerance preferences', {
         matchedTerms: matchedTerms.slice(0, 5), // Log first 5 matches for debugging
         matchedCategories,
@@ -898,7 +905,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
         analysisTime: Date.now() - startTime
       });
     }
-    
+
     return {
       shouldBlock,
       reason: blockReason,
@@ -907,7 +914,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       analysisTime: Date.now() - startTime
     };
   }
-  
+
   /**
    * Get user's tolerance preferences (Issue #150)
    * Enhanced to include embeddings for semantic matching (Issue #151)
@@ -921,7 +928,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
         .select('owner_id')
         .eq('id', organizationId)
         .single();
-      
+
       if (orgError || !orgData) {
         this.log('warn', 'Could not get organization owner for tolerance check', {
           organizationId,
@@ -929,23 +936,23 @@ class AnalyzeToxicityWorker extends BaseWorker {
         });
         return null;
       }
-      
+
       // Get user's encrypted tolerance preferences and embeddings
       const { data: userData, error: userError } = await this.supabase
         .from('users')
         .select('lo_que_me_da_igual_encrypted, lo_que_me_da_igual_embedding')
         .eq('id', orgData.owner_id)
         .single();
-      
+
       if (userError || !userData || !userData.lo_que_me_da_igual_encrypted) {
         // User hasn't defined tolerance preferences - this is normal
         return null;
       }
-      
+
       // Decrypt the tolerance data
       try {
         const decryptedTolerance = encryptionService.decrypt(userData.lo_que_me_da_igual_encrypted);
-        
+
         // Parse embeddings if available
         let embeddingData = null;
         if (userData.lo_que_me_da_igual_embedding) {
@@ -959,7 +966,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
             });
           }
         }
-        
+
         this.log('debug', 'Retrieved user tolerance preferences for false positive reduction', {
           organizationId,
           userId: orgData.owner_id.substr(0, 8) + '...',
@@ -967,12 +974,11 @@ class AnalyzeToxicityWorker extends BaseWorker {
           hasEmbeddings: !!embeddingData,
           embeddingTermsCount: embeddingData ? embeddingData.length : 0
         });
-        
+
         return {
           text: decryptedTolerance,
           embeddings: embeddingData
         };
-        
       } catch (decryptError) {
         this.log('error', 'Failed to decrypt tolerance preferences', {
           organizationId,
@@ -981,7 +987,6 @@ class AnalyzeToxicityWorker extends BaseWorker {
         });
         return null;
       }
-      
     } catch (error) {
       this.log('error', 'Failed to get tolerance preferences', {
         organizationId,
@@ -990,7 +995,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       return null;
     }
   }
-  
+
   /**
    * Check if comment should be ignored based on user tolerance preferences (Issue #150)
    * Enhanced with semantic similarity matching (Issue #151)
@@ -999,36 +1004,36 @@ class AnalyzeToxicityWorker extends BaseWorker {
    */
   async checkTolerance(text, toleranceData, toleranceEmbeddings = null) {
     const startTime = Date.now();
-    
+
     if (!toleranceData || typeof toleranceData !== 'string') {
-      return { 
-        shouldIgnore: false, 
+      return {
+        shouldIgnore: false,
         reason: 'No tolerance preferences defined',
         matchedTerms: [],
         matchedCategories: [],
         analysisTime: Date.now() - startTime
       };
     }
-    
+
     // Normalize text for matching
     const commentText = text.toLowerCase().trim();
-    
+
     // Parse tolerance terms from user input
     const toleranceTerms = toleranceData
       .toLowerCase()
       .split(/[,;]+/)
-      .map(term => term.trim())
-      .filter(term => term.length > 2); // Ignore very short terms
-    
+      .map((term) => term.trim())
+      .filter((term) => term.length > 2); // Ignore very short terms
+
     let matchedTerms = [];
     let matchedCategories = [];
     let ignoreReason = '';
-    
+
     // PHASE 1: Check for exact matches (most reliable)
     for (const term of toleranceTerms) {
       if (commentText.includes(term)) {
         matchedTerms.push(term);
-        
+
         // Categorize the tolerance match
         if (this.isAppearanceRelated(term)) {
           matchedCategories.push('appearance_tolerance');
@@ -1039,23 +1044,23 @@ class AnalyzeToxicityWorker extends BaseWorker {
         }
       }
     }
-    
+
     // PHASE 2: If no exact matches, check semantic similarity with embeddings (Issue #151)
     if (matchedTerms.length === 0 && toleranceEmbeddings) {
       try {
         const semanticMatches = await this.embeddingsService.findSemanticMatches(
-          text, 
-          toleranceEmbeddings, 
+          text,
+          toleranceEmbeddings,
           'tolerance'
         );
-        
+
         if (semanticMatches.matches && semanticMatches.matches.length > 0) {
           // Use medium-high threshold for tolerance matching (0.80 by default)
           for (const match of semanticMatches.matches) {
             matchedTerms.push(`${match.term} (semantic: ${match.similarity})`);
             matchedCategories.push('semantic_tolerance_match');
           }
-          
+
           this.log('info', 'Semantic tolerance matches found', {
             maxSimilarity: semanticMatches.maxSimilarity,
             matchCount: semanticMatches.matches.length,
@@ -1068,7 +1073,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
           error: error.message,
           textLength: text.length
         });
-        
+
         // PHASE 3: Fallback to basic semantic pattern matching
         const patternMatches = this.checkSemanticToleranceMatches(commentText, toleranceTerms);
         matchedTerms.push(...patternMatches.terms);
@@ -1080,21 +1085,25 @@ class AnalyzeToxicityWorker extends BaseWorker {
       matchedTerms.push(...semanticMatches.terms);
       matchedCategories.push(...semanticMatches.categories);
     }
-    
+
     const shouldIgnore = matchedTerms.length > 0;
-    
+
     if (shouldIgnore) {
       ignoreReason = `Matched user tolerance terms: ${matchedTerms.slice(0, 3).join(', ')}${matchedTerms.length > 3 ? ` (and ${matchedTerms.length - 3} more)` : ''}`;
-      
-      this.log('info', 'Comment ignored due to user tolerance preferences (false positive reduction)', {
-        matchedTerms: matchedTerms.slice(0, 5), // Log first 5 matches for debugging
-        matchedCategories,
-        hasEmbeddings: !!toleranceEmbeddings,
-        textLength: text.length,
-        analysisTime: Date.now() - startTime
-      });
+
+      this.log(
+        'info',
+        'Comment ignored due to user tolerance preferences (false positive reduction)',
+        {
+          matchedTerms: matchedTerms.slice(0, 5), // Log first 5 matches for debugging
+          matchedCategories,
+          hasEmbeddings: !!toleranceEmbeddings,
+          textLength: text.length,
+          analysisTime: Date.now() - startTime
+        }
+      );
     }
-    
+
     return {
       shouldIgnore,
       reason: ignoreReason,
@@ -1103,115 +1112,179 @@ class AnalyzeToxicityWorker extends BaseWorker {
       analysisTime: Date.now() - startTime
     };
   }
-  
+
   /**
    * Check if a term is related to appearance topics (common tolerance category)
    */
   isAppearanceRelated(term) {
     const appearanceKeywords = [
-      'bald', 'calvo', 'hair', 'pelo', 'weight', 'peso', 'fat', 'gordo', 
-      'thin', 'flaco', 'height', 'alto', 'short', 'bajo', 'glasses', 'gafas'
+      'bald',
+      'calvo',
+      'hair',
+      'pelo',
+      'weight',
+      'peso',
+      'fat',
+      'gordo',
+      'thin',
+      'flaco',
+      'height',
+      'alto',
+      'short',
+      'bajo',
+      'glasses',
+      'gafas'
     ];
-    return appearanceKeywords.some(keyword => term.includes(keyword));
+    return appearanceKeywords.some((keyword) => term.includes(keyword));
   }
-  
+
   /**
    * Check if a term is a generic insult (common tolerance category)
    */
   isGenericInsult(term) {
     const genericInsults = [
-      'stupid', 'tonto', 'idiot', 'idiota', 'dumb', 'fool', 'bobo',
-      'silly', 'crazy', 'loco', 'weird', 'raro'
+      'stupid',
+      'tonto',
+      'idiot',
+      'idiota',
+      'dumb',
+      'fool',
+      'bobo',
+      'silly',
+      'crazy',
+      'loco',
+      'weird',
+      'raro'
     ];
-    return genericInsults.some(keyword => term.includes(keyword));
+    return genericInsults.some((keyword) => term.includes(keyword));
   }
-  
+
   /**
    * Check for semantic tolerance matches (less strict than intolerance matching)
    */
   checkSemanticToleranceMatches(text, toleranceTerms) {
     const matchedTerms = [];
     const matchedCategories = [];
-    
+
     // Implement basic semantic matching for tolerance
     // This is more lenient than intolerance matching since we want to catch more tolerance cases
     for (const term of toleranceTerms) {
       const words = term.split(' ');
-      const matchCount = words.filter(word => text.includes(word)).length;
-      
+      const matchCount = words.filter((word) => text.includes(word)).length;
+
       // If at least 60% of words match, consider it a semantic match
       if (matchCount >= Math.max(1, Math.ceil(words.length * 0.6))) {
         matchedTerms.push(term);
         matchedCategories.push('semantic_tolerance_match');
       }
     }
-    
+
     return { terms: matchedTerms, categories: matchedCategories };
   }
-  
+
   /**
    * Check if a term is related to racial topics
    */
   isRacialTerm(term) {
     const racialKeywords = [
-      'racial', 'race', 'black', 'white', 'asian', 'latino', 'hispanic', 
-      'arab', 'muslim', 'jewish', 'racist', 'racism'
+      'racial',
+      'race',
+      'black',
+      'white',
+      'asian',
+      'latino',
+      'hispanic',
+      'arab',
+      'muslim',
+      'jewish',
+      'racist',
+      'racism'
     ];
-    return racialKeywords.some(keyword => term.includes(keyword));
+    return racialKeywords.some((keyword) => term.includes(keyword));
   }
-  
+
   /**
    * Check if a term is related to body shaming
    */
   isBodyShamingTerm(term) {
     const bodyKeywords = [
-      'weight', 'fat', 'thin', 'ugly', 'appearance', 'body', 'looks',
-      'height', 'size', 'shape', 'beauty', 'attractive'
+      'weight',
+      'fat',
+      'thin',
+      'ugly',
+      'appearance',
+      'body',
+      'looks',
+      'height',
+      'size',
+      'shape',
+      'beauty',
+      'attractive'
     ];
-    return bodyKeywords.some(keyword => term.includes(keyword));
+    return bodyKeywords.some((keyword) => term.includes(keyword));
   }
-  
+
   /**
    * Check if a term is related to political topics
    */
   isPoliticalTerm(term) {
     const politicalKeywords = [
-      'liberal', 'conservative', 'left', 'right', 'democrat', 'republican',
-      'politics', 'political', 'trump', 'biden', 'socialist', 'capitalist'
+      'liberal',
+      'conservative',
+      'left',
+      'right',
+      'democrat',
+      'republican',
+      'politics',
+      'political',
+      'trump',
+      'biden',
+      'socialist',
+      'capitalist'
     ];
-    return politicalKeywords.some(keyword => term.includes(keyword));
+    return politicalKeywords.some((keyword) => term.includes(keyword));
   }
-  
+
   /**
    * Check if a term is related to identity (LGBTQ+, gender, etc.)
    */
   isIdentityTerm(term) {
     const identityKeywords = [
-      'gay', 'lesbian', 'trans', 'transgender', 'lgbtq', 'queer', 'bi',
-      'gender', 'sexuality', 'orientation', 'identity', 'pronoun'
+      'gay',
+      'lesbian',
+      'trans',
+      'transgender',
+      'lgbtq',
+      'queer',
+      'bi',
+      'gender',
+      'sexuality',
+      'orientation',
+      'identity',
+      'pronoun'
     ];
-    return identityKeywords.some(keyword => term.includes(keyword));
+    return identityKeywords.some((keyword) => term.includes(keyword));
   }
-  
+
   /**
    * Check for semantic matches using basic pattern matching
    */
   checkSemanticMatches(commentText, intoleranceTerms) {
     const matchedTerms = [];
     const matchedCategories = [];
-    
+
     // This is a simplified semantic check - in production, you might use
     // more sophisticated NLP libraries or embeddings for better matching
     for (const term of intoleranceTerms) {
       // Check for partial word matches and common variations
       const termWords = term.split(/\s+/);
-      
+
       if (termWords.length > 1) {
         // Multi-word terms: check if most words are present
-        const foundWords = termWords.filter(word => 
-          commentText.includes(word) || this.checkWordVariations(commentText, word)
+        const foundWords = termWords.filter(
+          (word) => commentText.includes(word) || this.checkWordVariations(commentText, word)
         );
-        
+
         if (foundWords.length >= Math.ceil(termWords.length * 0.7)) {
           matchedTerms.push(term);
           matchedCategories.push('semantic_match');
@@ -1224,10 +1297,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
         }
       }
     }
-    
+
     return { terms: matchedTerms, categories: matchedCategories };
   }
-  
+
   /**
    * Check for word variations (plurals, common misspellings, etc.)
    */
@@ -1236,7 +1309,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
     if (text.includes(word + 's') || text.includes(word + 'es')) {
       return true;
     }
-    
+
     // Check for common substitutions (l33t speak, etc.)
     const variations = word
       .replace(/a/g, '@')
@@ -1244,17 +1317,17 @@ class AnalyzeToxicityWorker extends BaseWorker {
       .replace(/i/g, '1')
       .replace(/o/g, '0')
       .replace(/s/g, '5');
-    
+
     if (text.includes(variations)) {
       return true;
     }
-    
+
     // Check for word with common prefixes/suffixes removed
     const stem = word.replace(/(ing|ed|er|est|ly|tion|sion)$/, '');
     if (stem.length > 3 && text.includes(stem)) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -1268,7 +1341,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
         commentId: comment.id,
         matchedTerms: analysis.matched_intolerance_terms?.slice(0, 3)
       });
-      
+
       // Create special Shield analysis for auto-blocked content
       const autoBlockShieldAnalysis = {
         ...analysis,
@@ -1276,14 +1349,14 @@ class AnalyzeToxicityWorker extends BaseWorker {
         auto_block_shield: true,
         immediate_action: true
       };
-      
+
       // Delegate to Shield service with maximum priority
       const shieldResult = await this.shieldService.analyzeForShield(
         organizationId,
         comment,
         autoBlockShieldAnalysis
       );
-      
+
       if (shieldResult.shieldActive) {
         this.log('info', 'Shield activated for auto-blocked content', {
           commentId: comment.id,
@@ -1292,56 +1365,55 @@ class AnalyzeToxicityWorker extends BaseWorker {
           autoExecuted: shieldResult.autoExecuted
         });
       }
-      
+
       return shieldResult;
-      
     } catch (error) {
       this.log('error', 'Failed to handle auto-block Shield action', {
         commentId: comment.id,
         error: error.message
       });
-      
+
       // Don't throw error to avoid breaking the auto-block flow
       return { shieldActive: false, error: error.message };
     }
   }
-  
+
   /**
    * Analyze toxicity using available services with Roastr Persona enhancement (Issue #148)
    */
   async analyzeToxicity(text, roastrPersona = null) {
     let result = null;
-    
+
     // Try Perspective API first
     if (this.perspectiveClient) {
       try {
         result = await this.analyzePerspective(text);
         result.service = 'perspective';
       } catch (error) {
-        this.log('warn', 'Perspective API failed, trying fallback', { 
-          error: error.message 
+        this.log('warn', 'Perspective API failed, trying fallback', {
+          error: error.message
         });
       }
     }
-    
+
     // Try OpenAI Moderation API as fallback
     if (!result && this.openaiClient) {
       try {
         result = await this.analyzeOpenAI(text);
         result.service = 'openai';
       } catch (error) {
-        this.log('warn', 'OpenAI Moderation API failed, using pattern fallback', { 
-          error: error.message 
+        this.log('warn', 'OpenAI Moderation API failed, using pattern fallback', {
+          error: error.message
         });
       }
     }
-    
+
     // Use pattern-based fallback
     if (!result) {
       result = this.analyzePatterns(text);
       result.service = 'patterns';
     }
-    
+
     // Enhanced analysis with Roastr Persona (Issue #148)
     if (roastrPersona) {
       const personalAnalysis = this.analyzePersonalAttack(text, roastrPersona);
@@ -1349,11 +1421,11 @@ class AnalyzeToxicityWorker extends BaseWorker {
         // Increase toxicity score for personal attacks
         const originalScore = result.toxicity_score;
         result.toxicity_score = Math.min(1.0, originalScore + personalAnalysis.boostAmount);
-        
+
         // Add personal attack category
         if (!result.categories) result.categories = [];
         result.categories.push('personal_attack');
-        
+
         // Log the enhancement
         this.log('info', 'Enhanced toxicity score due to personal attack', {
           originalScore,
@@ -1361,7 +1433,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
           boostAmount: personalAnalysis.boostAmount,
           matchedTerms: personalAnalysis.matchedTerms
         });
-        
+
         // Store persona analysis metadata
         result.persona_analysis = {
           isPersonalAttack: true,
@@ -1406,7 +1478,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       raw_scores: result.scores
     };
   }
-  
+
   /**
    * Analyze using OpenAI Moderation API
    */
@@ -1415,11 +1487,11 @@ class AnalyzeToxicityWorker extends BaseWorker {
       model: process.env.OPENAI_MODERATION_MODEL || 'omni-moderation-latest',
       input: text
     });
-    
+
     const result = response.results[0];
     const categories = [];
     let maxScore = 0;
-    
+
     // Extract flagged categories and find highest score
     for (const [category, flagged] of Object.entries(result.categories)) {
       if (flagged) {
@@ -1430,7 +1502,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
         maxScore = score;
       }
     }
-    
+
     return {
       toxicity_score: Math.round(maxScore * 1000) / 1000,
       categories,
@@ -1438,7 +1510,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       raw_scores: result.category_scores
     };
   }
-  
+
   /**
    * Analyze using pattern-based fallback
    */
@@ -1446,7 +1518,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
     let maxScore = 0;
     const categories = [];
     const matchedPatterns = [];
-    
+
     for (const rule of this.toxicPatterns) {
       if (rule.pattern.test(text)) {
         maxScore = Math.max(maxScore, rule.score);
@@ -1456,94 +1528,111 @@ class AnalyzeToxicityWorker extends BaseWorker {
         matchedPatterns.push(rule.pattern.source);
       }
     }
-    
+
     // Base toxicity score on text length and pattern matches
     const wordCount = text.split(/\s+/).length;
     const lengthFactor = Math.min(1, wordCount / 10); // Longer texts can be more nuanced
-    
+
     return {
-      toxicity_score: Math.round((maxScore * lengthFactor) * 1000) / 1000,
+      toxicity_score: Math.round(maxScore * lengthFactor * 1000) / 1000,
       categories,
       matched_patterns: matchedPatterns
     };
   }
-  
+
   /**
    * Analyze for personal attacks based on user's Roastr Persona (Issue #148)
-   * This enhances toxicity detection by checking if comments attack aspects 
+   * This enhances toxicity detection by checking if comments attack aspects
    * that the user has defined as part of their identity
    */
   analyzePersonalAttack(text, roastrPersona) {
     if (!roastrPersona || typeof roastrPersona !== 'string') {
       return { isPersonalAttack: false, matchedTerms: [], boostAmount: 0 };
     }
-    
+
     // Clean and normalize the persona text
     const personaTerms = roastrPersona
       .toLowerCase()
       .split(/[,;\.]+/) // Split by common separators
-      .map(term => term.trim())
-      .filter(term => term.length > 2); // Filter out very short terms
-    
+      .map((term) => term.trim())
+      .filter((term) => term.length > 2); // Filter out very short terms
+
     // Clean and normalize the comment text
     const commentText = text.toLowerCase();
-    
+
     const matchedTerms = [];
     let totalBoost = 0;
-    
+
     // Check for direct mentions of persona terms
     for (const term of personaTerms) {
       if (commentText.includes(term)) {
         matchedTerms.push(term);
-        
+
         // Calculate boost based on context and term significance
         let termBoost = 0.2; // Base boost for any match
-        
+
         // Higher boost for longer, more specific terms
         if (term.length > 8) termBoost += 0.1;
         if (term.includes(' ')) termBoost += 0.1; // Multi-word terms are more specific
-        
+
         // Check for negative context around the term (using dynamic window sizing)
         const termIndex = commentText.indexOf(term);
         const windowSize = this.calculateContextWindowSize(commentText, term);
         const contextStart = Math.max(0, termIndex - windowSize);
         const contextEnd = Math.min(commentText.length, termIndex + term.length + windowSize);
         const context = commentText.substring(contextStart, contextEnd);
-        
+
         // Negative words that amplify personal attacks
         const negativeWords = [
-          'hate', 'stupid', 'disgusting', 'wrong', 'sick', 'weird', 'gross',
-          'fake', 'pretend', 'wrong', 'bad', 'evil', 'crazy', 'mental',
-          'kill', 'die', 'destroy', 'eliminate', 'remove', 'ban'
+          'hate',
+          'stupid',
+          'disgusting',
+          'wrong',
+          'sick',
+          'weird',
+          'gross',
+          'fake',
+          'pretend',
+          'wrong',
+          'bad',
+          'evil',
+          'crazy',
+          'mental',
+          'kill',
+          'die',
+          'destroy',
+          'eliminate',
+          'remove',
+          'ban'
         ];
-        
-        const hasNegativeContext = negativeWords.some(word => context.includes(word));
+
+        const hasNegativeContext = negativeWords.some((word) => context.includes(word));
         if (hasNegativeContext) {
           termBoost += 0.3; // Significant boost for negative context
         }
-        
+
         // Check for slurs or derogatory language patterns (using external service)
-        const hasSlur = this.slurPatterns.some(pattern => context.match(pattern));
+        const hasSlur = this.slurPatterns.some((pattern) => context.match(pattern));
         if (hasSlur) {
           termBoost += 0.5; // Major boost for slurs
         }
-        
+
         totalBoost += termBoost;
       }
     }
-    
+
     // Cap the total boost to prevent over-amplification
     totalBoost = Math.min(totalBoost, 0.6);
-    
+
     const isPersonalAttack = matchedTerms.length > 0 && totalBoost > 0.1;
-    
+
     return {
       isPersonalAttack,
       matchedTerms,
       boostAmount: Math.round(totalBoost * 1000) / 1000 // Round to 3 decimals
     };
   }
-  
+
   /**
    * Calculate severity level based on toxicity score
    */
@@ -1554,7 +1643,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
     if (score >= this.thresholds.low) return 'low';
     return 'low';
   }
-  
+
   /**
    * Update comment with analysis results
    */
@@ -1562,7 +1651,8 @@ class AnalyzeToxicityWorker extends BaseWorker {
     try {
       const updateData = {
         toxicity_score: analysis.toxicity_score,
-        severity_level: analysis.severity_level ?? this.calculateSeverityLevel(analysis.toxicity_score),
+        severity_level:
+          analysis.severity_level ?? this.calculateSeverityLevel(analysis.toxicity_score),
         categories: analysis.categories,
         processed_at: new Date().toISOString(),
         status: 'processed'
@@ -1578,15 +1668,11 @@ class AnalyzeToxicityWorker extends BaseWorker {
         updateData.metadata = metadata;
       }
 
-      const { error } = await this.supabase
-        .from('comments')
-        .update(updateData)
-        .eq('id', commentId);
-      
+      const { error } = await this.supabase.from('comments').update(updateData).eq('id', commentId);
+
       if (error) {
         throw new Error(error.message || 'Failed to update comment analysis');
       }
-      
     } catch (error) {
       this.log('error', 'Failed to update comment analysis', {
         commentId,
@@ -1595,30 +1681,30 @@ class AnalyzeToxicityWorker extends BaseWorker {
       throw error;
     }
   }
-  
+
   /**
    * Determine if comment should generate a response
    */
   shouldGenerateResponse(analysis, comment) {
     const { toxicity_score, severity_level } = analysis;
-    
+
     // Don't respond to very low toxicity (likely normal conversation)
     if (severity_level === 'low' && toxicity_score < 0.4) {
       return false;
     }
-    
+
     // Always respond to medium+ toxicity
     if (['medium', 'high', 'critical'].includes(severity_level)) {
       return true;
     }
-    
+
     // For low severity, check if it contains roast triggers
     const triggerWords = ['roast', 'burn', 'insult', 'comeback'];
     const textLower = comment.original_text.toLowerCase();
-    
-    return triggerWords.some(word => textLower.includes(word));
+
+    return triggerWords.some((word) => textLower.includes(word));
   }
-  
+
   /**
    * Queue response generation job
    */
@@ -1642,24 +1728,21 @@ class AnalyzeToxicityWorker extends BaseWorker {
       },
       max_attempts: 3
     };
-    
+
     try {
       if (this.redis) {
         await this.redis.rpush('roastr:jobs:generate_reply', JSON.stringify(responseJob));
       } else {
-        const { error } = await this.supabase
-          .from('job_queue')
-          .insert([responseJob]);
-        
+        const { error } = await this.supabase.from('job_queue').insert([responseJob]);
+
         if (error) throw error;
       }
-      
+
       this.log('info', 'Queued response generation', {
         commentId: comment.id,
         severity: analysis.severity_level,
         priority
       });
-      
     } catch (error) {
       this.log('error', 'Failed to queue response generation', {
         commentId: comment.id,
@@ -1667,20 +1750,25 @@ class AnalyzeToxicityWorker extends BaseWorker {
       });
     }
   }
-  
+
   /**
    * Get response priority based on severity
    */
   getResponsePriority(severityLevel) {
     switch (severityLevel) {
-      case 'critical': return 1; // Highest priority
-      case 'high': return 2;
-      case 'medium': return 3;
-      case 'low': return 5;
-      default: return 5;
+      case 'critical':
+        return 1; // Highest priority
+      case 'high':
+        return 2;
+      case 'medium':
+        return 3;
+      case 'low':
+        return 5;
+      default:
+        return 5;
     }
   }
-  
+
   /**
    * Handle Shield analysis for toxic content
    */
@@ -1691,14 +1779,14 @@ class AnalyzeToxicityWorker extends BaseWorker {
         severity: analysis.severity_level,
         toxicityScore: analysis.toxicity_score
       });
-      
+
       // Delegate to Shield service for comprehensive analysis
       const shieldResult = await this.shieldService.analyzeForShield(
         organizationId,
         comment,
         analysis
       );
-      
+
       if (shieldResult.shieldActive) {
         this.log('info', 'Shield activated', {
           commentId: comment.id,
@@ -1712,20 +1800,19 @@ class AnalyzeToxicityWorker extends BaseWorker {
           reason: shieldResult.reason
         });
       }
-      
+
       return shieldResult;
-      
     } catch (error) {
       this.log('error', 'Failed to handle Shield analysis', {
         commentId: comment.id,
         error: error.message
       });
-      
+
       // Don't throw error to avoid breaking the main analysis flow
       return { shieldActive: false, error: error.message };
     }
   }
-  
+
   /**
    * Estimate tokens used for cost calculation
    */

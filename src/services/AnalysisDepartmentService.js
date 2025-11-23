@@ -98,7 +98,6 @@ class AnalysisDepartmentService {
       });
 
       return decision;
-
     } catch (error) {
       logger.error('Analysis Department: Unexpected error during analysis', {
         error: error.message,
@@ -135,7 +134,6 @@ class AnalysisDepartmentService {
       });
 
       return result;
-
     } catch (error) {
       logger.warn('Gatekeeper analysis failed', {
         error: error.message,
@@ -161,7 +159,6 @@ class AnalysisDepartmentService {
       });
 
       return result;
-
     } catch (error) {
       logger.warn('Perspective analysis failed', {
         error: error.message,
@@ -183,7 +180,8 @@ class AnalysisDepartmentService {
     logger.info('Analysis Department: Parallel execution complete', {
       gatekeeper: gatekeeperStatus,
       perspective: perspectiveStatus,
-      both_succeeded: gatekeeperResult.status === 'fulfilled' && perspectiveResult.status === 'fulfilled'
+      both_succeeded:
+        gatekeeperResult.status === 'fulfilled' && perspectiveResult.status === 'fulfilled'
     });
 
     if (gatekeeperResult.status === 'rejected') {
@@ -319,7 +317,10 @@ class AnalysisDepartmentService {
     // Overall department health
     if (health.services.gatekeeper === 'degraded' && health.services.perspective === 'degraded') {
       health.department = 'critical';
-    } else if (health.services.gatekeeper === 'degraded' || health.services.perspective === 'degraded') {
+    } else if (
+      health.services.gatekeeper === 'degraded' ||
+      health.services.perspective === 'degraded'
+    ) {
       health.department = 'degraded';
     }
 
@@ -333,12 +334,14 @@ class AnalysisDepartmentService {
   getMetrics() {
     return {
       ...this.metrics,
-      fallbackRate: this.metrics.totalAnalyses > 0
-        ? (this.metrics.fallbacksUsed / this.metrics.totalAnalyses * 100).toFixed(2) + '%'
-        : '0%',
-      successRate: this.metrics.totalAnalyses > 0
-        ? (this.metrics.parallelSuccesses / this.metrics.totalAnalyses * 100).toFixed(2) + '%'
-        : '0%'
+      fallbackRate:
+        this.metrics.totalAnalyses > 0
+          ? ((this.metrics.fallbacksUsed / this.metrics.totalAnalyses) * 100).toFixed(2) + '%'
+          : '0%',
+      successRate:
+        this.metrics.totalAnalyses > 0
+          ? ((this.metrics.parallelSuccesses / this.metrics.totalAnalyses) * 100).toFixed(2) + '%'
+          : '0%'
     };
   }
 }

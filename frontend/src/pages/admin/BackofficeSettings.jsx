@@ -1,7 +1,7 @@
 /**
  * Backoffice Settings Page
  * Issue #371: SPEC 15 — Backoffice (MVP): thresholds globales, flags y soporte básico
- * 
+ *
  * Provides admin interface for:
  * - Global Shield thresholds configuration
  * - Feature flags management (shop_enabled, roast_versions, review_queue)
@@ -25,8 +25,8 @@ const BackofficeSettings = () => {
   const [loading, setLoading] = useState(false);
   const [globalThresholds, setGlobalThresholds] = useState({
     tau_roast_lower: 0.25,
-    tau_shield: 0.70,
-    tau_critical: 0.90,
+    tau_shield: 0.7,
+    tau_critical: 0.9,
     aggressiveness: 95
   });
   const [featureFlags, setFeatureFlags] = useState({
@@ -53,9 +53,11 @@ const BackofficeSettings = () => {
       // Load feature flags
       const flagsResponse = await adminApi.get('/feature-flags');
       if (flagsResponse.data.success) {
-        const backofficeFlags = flagsResponse.data.data.flags.filter(f => f.category === 'backoffice');
+        const backofficeFlags = flagsResponse.data.data.flags.filter(
+          (f) => f.category === 'backoffice'
+        );
         const flagsObj = {};
-        backofficeFlags.forEach(flag => {
+        backofficeFlags.forEach((flag) => {
           flagsObj[flag.flag_key] = flag.is_enabled;
         });
         setFeatureFlags(flagsObj);
@@ -95,13 +97,15 @@ const BackofficeSettings = () => {
       const response = await adminApi.put(`/feature-flags/${flagKey}`, {
         is_enabled: newValue
       });
-      
+
       if (response.data.success) {
-        setFeatureFlags(prev => ({ ...prev, [flagKey]: newValue }));
-        setAlerts([{ 
-          type: 'success', 
-          message: `Feature flag ${flagKey} ${newValue ? 'enabled' : 'disabled'}` 
-        }]);
+        setFeatureFlags((prev) => ({ ...prev, [flagKey]: newValue }));
+        setAlerts([
+          {
+            type: 'success',
+            message: `Feature flag ${flagKey} ${newValue ? 'enabled' : 'disabled'}`
+          }
+        ]);
       }
     } catch (error) {
       console.error('Error updating feature flag:', error);
@@ -115,7 +119,7 @@ const BackofficeSettings = () => {
       const response = await adminApi.post('/backoffice/healthcheck', {
         platforms: ['twitter', 'youtube', 'discord', 'twitch']
       });
-      
+
       if (response.data.success) {
         setHealthStatus(response.data.data);
         setAlerts([{ type: 'success', message: 'Healthcheck completed successfully' }]);
@@ -133,7 +137,7 @@ const BackofficeSettings = () => {
       const response = await adminApi.get(`/backoffice/audit/export?format=${format}`, {
         responseType: format === 'csv' ? 'blob' : 'json'
       });
-      
+
       if (format === 'csv') {
         // Handle CSV download
         const blob = new Blob([response.data], { type: 'text/csv' });
@@ -147,7 +151,9 @@ const BackofficeSettings = () => {
         window.URL.revokeObjectURL(url);
       } else {
         // Handle JSON download
-        const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+          type: 'application/json'
+        });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -157,7 +163,7 @@ const BackofficeSettings = () => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }
-      
+
       setAlerts([{ type: 'success', message: `Audit logs exported as ${format.toUpperCase()}` }]);
     } catch (error) {
       console.error('Error exporting audit logs:', error);
@@ -167,20 +173,29 @@ const BackofficeSettings = () => {
 
   const getAggressivenessColor = (level) => {
     switch (level) {
-      case 90: return 'bg-green-100 text-green-800';
-      case 95: return 'bg-blue-100 text-blue-800';
-      case 98: return 'bg-orange-100 text-orange-800';
-      case 100: return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 90:
+        return 'bg-green-100 text-green-800';
+      case 95:
+        return 'bg-blue-100 text-blue-800';
+      case 98:
+        return 'bg-orange-100 text-orange-800';
+      case 100:
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getHealthStatusColor = (status) => {
     switch (status) {
-      case 'OK': return 'bg-green-100 text-green-800';
-      case 'FAIL': return 'bg-red-100 text-red-800';
-      case 'PARTIAL': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'OK':
+        return 'bg-green-100 text-green-800';
+      case 'FAIL':
+        return 'bg-red-100 text-red-800';
+      case 'PARTIAL':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -202,7 +217,12 @@ const BackofficeSettings = () => {
 
       {/* Alerts */}
       {alerts.map((alert, index) => (
-        <Alert key={index} className={alert.type === 'error' ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}>
+        <Alert
+          key={index}
+          className={
+            alert.type === 'error' ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'
+          }
+        >
           <AlertTitle>{alert.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
           <AlertDescription>{alert.message}</AlertDescription>
         </Alert>
@@ -245,10 +265,12 @@ const BackofficeSettings = () => {
                   <select
                     id="aggressiveness"
                     value={globalThresholds.aggressiveness}
-                    onChange={(e) => setGlobalThresholds(prev => ({
-                      ...prev,
-                      aggressiveness: parseInt(e.target.value)
-                    }))}
+                    onChange={(e) =>
+                      setGlobalThresholds((prev) => ({
+                        ...prev,
+                        aggressiveness: parseInt(e.target.value)
+                      }))
+                    }
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
                   >
                     <option value={90}>90% - Lenient (More tolerant approach)</option>
@@ -273,10 +295,12 @@ const BackofficeSettings = () => {
                     min="0"
                     max="1"
                     value={globalThresholds.tau_roast_lower}
-                    onChange={(e) => setGlobalThresholds(prev => ({
-                      ...prev,
-                      tau_roast_lower: parseFloat(e.target.value)
-                    }))}
+                    onChange={(e) =>
+                      setGlobalThresholds((prev) => ({
+                        ...prev,
+                        tau_roast_lower: parseFloat(e.target.value)
+                      }))
+                    }
                   />
                   <p className="text-xs text-gray-500">Lower threshold for roast generation</p>
                 </div>
@@ -290,10 +314,12 @@ const BackofficeSettings = () => {
                     min="0"
                     max="1"
                     value={globalThresholds.tau_shield}
-                    onChange={(e) => setGlobalThresholds(prev => ({
-                      ...prev,
-                      tau_shield: parseFloat(e.target.value)
-                    }))}
+                    onChange={(e) =>
+                      setGlobalThresholds((prev) => ({
+                        ...prev,
+                        tau_shield: parseFloat(e.target.value)
+                      }))
+                    }
                   />
                   <p className="text-xs text-gray-500">Shield activation threshold</p>
                 </div>
@@ -307,10 +333,12 @@ const BackofficeSettings = () => {
                     min="0"
                     max="1"
                     value={globalThresholds.tau_critical}
-                    onChange={(e) => setGlobalThresholds(prev => ({
-                      ...prev,
-                      tau_critical: parseFloat(e.target.value)
-                    }))}
+                    onChange={(e) =>
+                      setGlobalThresholds((prev) => ({
+                        ...prev,
+                        tau_critical: parseFloat(e.target.value)
+                      }))
+                    }
                   />
                   <p className="text-xs text-gray-500">Critical threshold for immediate action</p>
                 </div>
@@ -328,9 +356,7 @@ const BackofficeSettings = () => {
           <Card>
             <CardHeader>
               <CardTitle>Backoffice Feature Flags</CardTitle>
-              <CardDescription>
-                Control system-wide feature availability
-              </CardDescription>
+              <CardDescription>Control system-wide feature availability</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
@@ -348,7 +374,9 @@ const BackofficeSettings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Multiple Roast Versions</Label>
-                    <p className="text-sm text-gray-500">Enable generation of multiple roast versions</p>
+                    <p className="text-sm text-gray-500">
+                      Enable generation of multiple roast versions
+                    </p>
                   </div>
                   <Switch
                     checked={featureFlags.roast_versions}
@@ -359,7 +387,9 @@ const BackofficeSettings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Review Queue</Label>
-                    <p className="text-sm text-gray-500">Enable manual review queue for sensitive content</p>
+                    <p className="text-sm text-gray-500">
+                      Enable manual review queue for sensitive content
+                    </p>
                   </div>
                   <Switch
                     checked={featureFlags.review_queue}
@@ -376,9 +406,7 @@ const BackofficeSettings = () => {
           <Card>
             <CardHeader>
               <CardTitle>Platform API Healthcheck</CardTitle>
-              <CardDescription>
-                Monitor the status of integrated platform APIs
-              </CardDescription>
+              <CardDescription>Monitor the status of integrated platform APIs</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
@@ -386,7 +414,10 @@ const BackofficeSettings = () => {
                   <h3 className="text-lg font-medium">Overall Status</h3>
                   {healthStatus && (
                     <p className="text-sm text-gray-500">
-                      Last checked: {new Date(healthStatus.created_at || healthStatus.checked_at).toLocaleString()}
+                      Last checked:{' '}
+                      {new Date(
+                        healthStatus.created_at || healthStatus.checked_at
+                      ).toLocaleString()}
                     </p>
                   )}
                 </div>
@@ -413,9 +444,7 @@ const BackofficeSettings = () => {
                           {result.status}
                         </Badge>
                       </div>
-                      {result.error && (
-                        <p className="text-sm text-red-600 mb-1">{result.error}</p>
-                      )}
+                      {result.error && <p className="text-sm text-red-600 mb-1">{result.error}</p>}
                       <p className="text-xs text-gray-500">
                         Response time: {result.response_time_ms}ms
                       </p>
@@ -448,8 +477,8 @@ const BackofficeSettings = () => {
                 </Button>
               </div>
               <p className="text-sm text-gray-500">
-                Exports will include the last 30 days of admin actions including feature flag changes,
-                threshold updates, and system configuration modifications.
+                Exports will include the last 30 days of admin actions including feature flag
+                changes, threshold updates, and system configuration modifications.
               </p>
             </CardContent>
           </Card>

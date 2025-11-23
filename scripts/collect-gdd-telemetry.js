@@ -182,7 +182,7 @@ class TelemetryCollector {
         high_risk_count: driftData.high_risk_count || 0,
         at_risk_count: driftData.at_risk_count || 0,
         healthy_count: driftData.healthy_count || 0,
-        overall_status: driftData.status || driftData.overall_status || 'unknown'  // NEW key (status) with fallback to OLD (overall_status)
+        overall_status: driftData.status || driftData.overall_status || 'unknown' // NEW key (status) with fallback to OLD (overall_status)
       };
     } catch (error) {
       this.log('error', `Failed to collect drift metrics: ${error.message}`);
@@ -247,7 +247,7 @@ class TelemetryCollector {
         total_fixes_attempted: 0,
         successful_fixes: 0,
         failed_fixes: 0,
-        success_rate: null  // M2 Fix: null when error, not 100%
+        success_rate: null // M2 Fix: null when error, not 100%
       };
     }
   }
@@ -262,7 +262,7 @@ class TelemetryCollector {
         return null;
       }
 
-      const nodeFiles = fs.readdirSync(nodesDir).filter(f => f.endsWith('.md'));
+      const nodeFiles = fs.readdirSync(nodesDir).filter((f) => f.endsWith('.md'));
       let totalCoverage = 0;
       let nodeCount = 0;
 
@@ -295,16 +295,14 @@ class TelemetryCollector {
     // System stability index (0-100)
     const healthScore = metrics.health?.overall_score || 0;
     const driftScore = 100 - (metrics.drift?.average_drift_risk || 0);
-    const repairScore = metrics.repair?.success_rate ?? 100;  // P1: Use ?? to treat 0 as valid
+    const repairScore = metrics.repair?.success_rate ?? 100; // P1: Use ?? to treat 0 as valid
 
     derived.stability_index = Math.round((healthScore + driftScore + repairScore) / 3);
 
     // Node health variance
     if (metrics.health) {
       const { healthy_count, degraded_count, critical_count, total_nodes } = metrics.health;
-      const variance = total_nodes > 0
-        ? Math.abs((healthy_count / total_nodes) - 0.85) * 100
-        : 0;
+      const variance = total_nodes > 0 ? Math.abs(healthy_count / total_nodes - 0.85) * 100 : 0;
       derived.health_variance = Math.round(variance);
     }
 
@@ -356,8 +354,11 @@ class TelemetryCollector {
     }
 
     // Auto-fix alerts - M1: Only check if success_rate is numeric (prevent false alerts when null)
-    if (metrics.repair && typeof metrics.repair.success_rate === 'number' &&
-        metrics.repair.success_rate < thresholds.auto_fix_success_below) {
+    if (
+      metrics.repair &&
+      typeof metrics.repair.success_rate === 'number' &&
+      metrics.repair.success_rate < thresholds.auto_fix_success_below
+    ) {
       alerts.push({
         type: 'auto_fix',
         severity: 'warning',
@@ -426,9 +427,7 @@ class TelemetryCollector {
       if (this.config.retention_days > 0) {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - this.config.retention_days);
-        history.snapshots = history.snapshots.filter(s =>
-          new Date(s.timestamp) >= cutoffDate
-        );
+        history.snapshots = history.snapshots.filter((s) => new Date(s.timestamp) >= cutoffDate);
       }
 
       // Update metadata
@@ -503,12 +502,22 @@ class TelemetryCollector {
     md += `|--------|-------|--------|--------|\n`;
 
     if (metrics.health) {
-      const healthStatus = metrics.health.overall_score >= 95 ? '✅' : metrics.health.overall_score >= 80 ? '⚠️' : '❌';
+      const healthStatus =
+        metrics.health.overall_score >= 95
+          ? '✅'
+          : metrics.health.overall_score >= 80
+            ? '⚠️'
+            : '❌';
       md += `| Health Score | ${metrics.health.overall_score}/100 | ≥95 | ${healthStatus} |\n`;
     }
 
     if (metrics.drift) {
-      const driftStatus = metrics.drift.average_drift_risk < 25 ? '✅' : metrics.drift.average_drift_risk < 40 ? '⚠️' : '❌';
+      const driftStatus =
+        metrics.drift.average_drift_risk < 25
+          ? '✅'
+          : metrics.drift.average_drift_risk < 40
+            ? '⚠️'
+            : '❌';
       md += `| Drift Risk | ${metrics.drift.average_drift_risk}/100 | <25 | ${driftStatus} |\n`;
     }
 
@@ -516,13 +525,24 @@ class TelemetryCollector {
       // M2: Handle null/undefined success_rate gracefully in report
       const successRate = metrics.repair.success_rate;
       const displayValue = typeof successRate === 'number' ? `${successRate}%` : 'N/A';
-      const repairStatus = typeof successRate !== 'number' ? '➖' :
-        successRate >= 90 ? '✅' : successRate >= 70 ? '⚠️' : '❌';
+      const repairStatus =
+        typeof successRate !== 'number'
+          ? '➖'
+          : successRate >= 90
+            ? '✅'
+            : successRate >= 70
+              ? '⚠️'
+              : '❌';
       md += `| Auto-Fix Success | ${displayValue} | ≥90% | ${repairStatus} |\n`;
     }
 
     if (metrics.derived) {
-      const stabilityStatus = metrics.derived.stability_index >= 90 ? '✅' : metrics.derived.stability_index >= 70 ? '⚠️' : '❌';
+      const stabilityStatus =
+        metrics.derived.stability_index >= 90
+          ? '✅'
+          : metrics.derived.stability_index >= 70
+            ? '⚠️'
+            : '❌';
       md += `| Stability Index | ${metrics.derived.stability_index}/100 | ≥90 | ${stabilityStatus} |\n`;
     }
 
@@ -531,7 +551,12 @@ class TelemetryCollector {
     // Momentum
     if (metrics.momentum) {
       md += `## 📈 Momentum\n\n`;
-      const trendEmoji = metrics.momentum.trend === 'improving' ? '⬆️' : metrics.momentum.trend === 'declining' ? '⬇️' : '➡️';
+      const trendEmoji =
+        metrics.momentum.trend === 'improving'
+          ? '⬆️'
+          : metrics.momentum.trend === 'declining'
+            ? '⬇️'
+            : '➡️';
       md += `${trendEmoji} **${metrics.momentum.message}**\n\n`;
     }
 
@@ -632,7 +657,9 @@ class TelemetryCollector {
     try {
       // Print header
       if (!this.ciMode) {
-        console.log(`\n${colors.bright}${colors.cyan}═══════════════════════════════════════${colors.reset}`);
+        console.log(
+          `\n${colors.bright}${colors.cyan}═══════════════════════════════════════${colors.reset}`
+        );
         console.log(`${colors.bright}   GDD TELEMETRY COLLECTION${colors.reset}`);
         console.log(`${colors.cyan}═══════════════════════════════════════${colors.reset}\n`);
       }
@@ -660,7 +687,7 @@ class TelemetryCollector {
       }
 
       // Exit with appropriate code
-      if (snapshot.alerts.some(a => a.severity === 'critical')) {
+      if (snapshot.alerts.some((a) => a.severity === 'critical')) {
         process.exit(1);
       }
 

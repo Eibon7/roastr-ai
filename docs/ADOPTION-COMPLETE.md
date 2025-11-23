@@ -63,6 +63,7 @@ node scripts/cursor-agents/setup-migration.js
 **Para cada nueva tarea:**
 
 1. **Usar el prompt mejorado:**
+
    ```
    Trabaja en la issue #XXX
    [copiar desde docs/PROMPT-INICIAL-TAREA.md]
@@ -87,12 +88,12 @@ node scripts/cursor-agents/setup-migration.js
 
 ### Métricas Mejoradas
 
-| Métrica | Antes | Después | Mejora |
-|---------|-------|---------|--------|
-| Contexto cargado | 7,034 líneas | 500-2,000 líneas | **71-93% reducción** |
-| Tiempo por feature | 3.5-6 horas | 2-4 horas | **40-50% más rápido** |
-| Bugs prevenibles | 30-45% | 8-13% | **70-73% reducción** |
-| Test coverage | 60-70% | 85-95% | **+25-35 puntos** |
+| Métrica            | Antes        | Después          | Mejora                |
+| ------------------ | ------------ | ---------------- | --------------------- |
+| Contexto cargado   | 7,034 líneas | 500-2,000 líneas | **71-93% reducción**  |
+| Tiempo por feature | 3.5-6 horas  | 2-4 horas        | **40-50% más rápido** |
+| Bugs prevenibles   | 30-45%       | 8-13%            | **70-73% reducción**  |
+| Test coverage      | 60-70%       | 85-95%           | **+25-35 puntos**     |
 
 ### Funcionalidades Nuevas
 
@@ -191,4 +192,3 @@ npm run test:coverage
 
 **Última actualización:** 2025-01-XX  
 **Mantenido por:** Orchestrator / Cursor Team
-

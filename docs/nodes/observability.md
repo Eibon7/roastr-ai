@@ -7,6 +7,7 @@
 Comprehensive observability infrastructure for structured logging, correlation tracking, and end-to-end request tracing across the multi-tenant queue system and all 4 background workers. Enhanced with E2E UI resilience testing for manual approval flow. Includes API verification scripts and GDD Auto-Repair maintenance tooling.
 
 **Implementation:**
+
 - Issue #396 - Production monitoring for tier validation (PR #809) ✅
 - Issue #417 - Observabilidad mínima – structured logs y correlación
 - Issue #419 - E2E UI resilience tests for manual approval flow (PR #574)
@@ -52,12 +53,14 @@ Comprehensive observability infrastructure for structured logging, correlation t
 ### 3. Lifecycle Event Logging
 
 **Job Lifecycle Events:**
+
 - `enqueued` - Job added to queue (logged by QueueService)
 - `started` - Worker begins processing (logged by all workers)
 - `completed` - Job successfully processed (logged by all workers)
 - `failed` - Job processing failed (logged by all workers)
 
 **Worker Types:**
+
 - `FetchCommentsWorker` - Fetches comments from 9 social platforms
 - `AnalyzeToxicityWorker` - Analyzes toxicity using Perspective API + OpenAI
 - `GenerateReplyWorker` - Generates roast responses with RQC
@@ -79,6 +82,7 @@ Comprehensive observability infrastructure for structured logging, correlation t
 Comprehensive CLI tools for verifying external API integrations before deployment:
 
 **Scripts:**
+
 - `scripts/verify-openai-api.js` - OpenAI API verification
   - Tests: completion, moderation, embeddings endpoints
   - Validates: API key, model availability, rate limits
@@ -100,6 +104,7 @@ Comprehensive CLI tools for verifying external API integrations before deploymen
   - Validates: API key, channel access, permissions
 
 **Usage:**
+
 ```bash
 # Verify specific API
 node scripts/verify-openai-api.js
@@ -111,6 +116,7 @@ done
 ```
 
 **Benefits:**
+
 - Pre-deployment API validation
 - Early detection of configuration issues
 - Reduced runtime errors from misconfigured APIs
@@ -123,6 +129,7 @@ done
 Fixed false positive detection in `scripts/auto-repair-gdd.js` that incorrectly flagged nodes with `0%` coverage as missing coverage field.
 
 **Root Cause:**
+
 ```javascript
 // BEFORE (buggy - line 356):
 coverage: parseInt((content.match(...) || [])[1]) || null
@@ -130,22 +137,25 @@ coverage: parseInt((content.match(...) || [])[1]) || null
 ```
 
 **Problem Impact:**
+
 - 3 nodes falsely detected: cost-control, roast, social-platforms
 - Auto-repair added duplicate `**Coverage:** 50%` fields
 - Health score dropped: 88.5 → 88.4
 - Triggered rollback, workflow failed consistently
 
 **Solution:**
+
 ```javascript
 // AFTER (fixed - lines 354-357):
 const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*(\d+)%/i);
 return {
-  coverage: coverageMatch ? parseInt(coverageMatch[1], 10) : null,
+  coverage: coverageMatch ? parseInt(coverageMatch[1], 10) : null
   // Explicit match check handles 0 correctly
-}
+};
 ```
 
 **Validation:**
+
 - Local dry-run: 0 issues detected ✅
 - CI/CD run 18602894731: SUCCESS in 40s ✅
 - Health score: 88.5 → 88.5 (no drop) ✅
@@ -159,16 +169,18 @@ return {
 **Migration Completed:** 2025-10-18
 **Review:** CodeRabbit #3351792121
 
-Migrated all verification scripts from console.* to utils/logger.js for consistent logging across the entire observability stack.
+Migrated all verification scripts from console.\* to utils/logger.js for consistent logging across the entire observability stack.
 
 **Scripts Migrated:**
-- `scripts/verify-openai-api.js` (~30 console calls → logger.*)
-- `scripts/verify-perspective-api.js` (~25 console calls → logger.*)
-- `scripts/verify-twitter-api.js` (~35 console calls → logger.*)
-- `scripts/verify-youtube-api.js` (~30 console calls → logger.*)
-- `scripts/verify-supabase-tables.js` (~20 console calls → logger.*)
+
+- `scripts/verify-openai-api.js` (~30 console calls → logger.\*)
+- `scripts/verify-perspective-api.js` (~25 console calls → logger.\*)
+- `scripts/verify-twitter-api.js` (~35 console calls → logger.\*)
+- `scripts/verify-youtube-api.js` (~30 console calls → logger.\*)
+- `scripts/verify-supabase-tables.js` (~20 console calls → logger.\*)
 
 **Benefits:**
+
 - **Centralized log level control** - All scripts use same logger configuration
 - **Consistent timestamp formatting** - ISO 8601 timestamps across all logs
 - **Better CI/CD integration** - Structured logs readable by log aggregation tools
@@ -176,6 +188,7 @@ Migrated all verification scripts from console.* to utils/logger.js for consiste
 - **Production-ready** - All verification scripts follow best practices
 
 **Implementation Pattern:**
+
 ```javascript
 // Added to top of each verification script
 const logger = require('../src/utils/logger');
@@ -187,12 +200,14 @@ console.warn()  → logger.warn()
 ```
 
 **Validation:**
-- 0 console.* calls remain in verification scripts
+
+- 0 console.\* calls remain in verification scripts
 - All scripts run successfully with no output changes
 - Logger preserves emoji, newlines, and formatting
 - All 5 scripts tested individually
 
 **Related Changes:**
+
 - **C1:** Fixed RLS verification logic (dual-client architecture)
   - Admin client checks table existence (bypasses RLS)
   - Anon client verifies RLS enforcement (PGRST301, 403, permission denied)
@@ -227,12 +242,14 @@ console.warn()  → logger.warn()
 ### Key Methods
 
 **advancedLogger.js:**
+
 - `createCorrelationContext(params)` - Creates standardized correlation context
 - `logJobLifecycle(worker, jobId, lifecycle, context, result)` - Logs job lifecycle events
 - `logWorkerError(worker, action, error, context)` - Logs worker errors with correlation
 - `logWorkerAction(worker, action, context, metadata)` - Logs general worker actions
 
 **Integration Points:**
+
 - `BaseWorker.log()` - Uses `advancedLogger.workerLogger` for all worker logs
 - `QueueService.addJob()` - Generates/propagates correlation IDs
 - All 4 workers - Extract correlation ID from job payload and log lifecycle events
@@ -262,18 +279,24 @@ const correlationId = job.payload.correlationId;
 advancedLogger.logJobLifecycle(this.workerName, job.id, 'started', {
   correlationId,
   tenantId: organization_id,
-  platform,
+  platform
   // ... other context
 });
 
 // ... process job ...
 
 // Log job completion
-advancedLogger.logJobLifecycle(this.workerName, job.id, 'completed', {
-  correlationId,
-  tenantId: organization_id,
-  // ... other context
-}, result);
+advancedLogger.logJobLifecycle(
+  this.workerName,
+  job.id,
+  'completed',
+  {
+    correlationId,
+    tenantId: organization_id
+    // ... other context
+  },
+  result
+);
 ```
 
 ### Winston Logger Configuration
@@ -302,6 +325,7 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 **Coverage:** 19 tests across 8 suites (100% passing)
 
 **Test Suites:**
+
 1. **Structured Logs at Key Lifecycle Points** (2 tests)
    - Job enqueue logging
    - Worker lifecycle logging
@@ -337,6 +361,7 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 **Coverage:** 17 tests across 5 acceptance criteria (100% passing)
 
 **Test Suites:**
+
 1. **AC #1: Timeout Handling** (3 tests)
    - 30s timeout triggers error UI
    - Retry button available after timeout
@@ -361,6 +386,7 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
    - Multiple error scenarios
 
 **Infrastructure:**
+
 - **Framework:** Playwright with Chromium browser
 - **Mock Server:** API route mocking for deterministic error scenarios
 - **Artifacts:** Screenshot/video/trace capture on failure
@@ -371,26 +397,31 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 ## Acceptance Criteria
 
 ✅ **AC1: Logs estructurados por paso clave**
+
 - Winston logs at enqueue, start, completion, failure
 - Structured JSON format with consistent fields
 - Separate log files by category
 
 ✅ **AC2: Correlación con tenant_id, user_id, comment_id, roast_id**
+
 - All correlation fields implemented
 - Propagated through entire pipeline
 - Multi-tenant isolation maintained
 
 ✅ **AC3: Timestamps consistentes**
+
 - ISO 8601 format: `YYYY-MM-DDTHH:mm:ss.sssZ`
 - Consistent across all logs
 - Generated at log creation time
 
 ✅ **AC4: Trazabilidad end-to-end**
+
 - Correlation IDs flow from API → Queue → All 4 Workers
 - Same correlation ID maintained throughout request lifecycle
 - Enables request tracing in logs
 
 ✅ **AC5: Formato JSON estructurado**
+
 - All logs in JSON format
 - Nested metadata supported
 - Parseable by log aggregation tools
@@ -398,17 +429,20 @@ const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxF
 ## Files Modified
 
 **Core Infrastructure:**
+
 - `src/utils/advancedLogger.js` - Added correlation context helpers (4 methods, 130 lines)
 - `src/workers/BaseWorker.js` - Integrated Winston logger (modified log() method)
 - `src/services/queueService.js` - Added correlation ID generation/propagation (40 lines)
 
 **Workers Enhanced:**
+
 - `src/workers/FetchCommentsWorker.js` - Added correlation ID extraction and lifecycle logging
 - `src/workers/AnalyzeToxicityWorker.js` - Added correlation ID extraction and lifecycle logging
 - `src/workers/GenerateReplyWorker.js` - Added correlation ID extraction and lifecycle logging
 - `src/workers/ShieldActionWorker.js` - Added correlation ID extraction and lifecycle logging
 
 **Tests:**
+
 - `tests/integration/test-observability.test.js` - 19 integration tests (472 lines)
 - `tests/e2e/manual-approval-resilience.spec.js` - 17 E2E resilience tests (Issue #419, PR #574)
 - `tests/e2e/README.md` - E2E testing documentation
@@ -499,18 +533,21 @@ jq --arg since "$since" 'select(.timestamp > $since and .lifecycle == "failed")'
 **Symptoms:** User reports slow response times, timeouts
 
 **Investigation Steps:**
+
 1. Get correlation ID from API request logs
 2. Search worker logs: `grep "correlationId\":\"<id>" logs/workers/*.log`
 3. Check processing times for each lifecycle event
 4. Identify bottleneck worker
 
 **Example:**
+
 ```bash
 correlation_id="550e8400-e29b-41d4-a716-446655440000"
 grep "correlationId\":\"$correlation_id" logs/workers/*.log | jq '. | select(.lifecycle) | {timestamp, worker, lifecycle, processingTime: .result.processingTime}'
 ```
 
 **Common Causes:**
+
 - External API timeout (Perspective, OpenAI)
 - Database query slow (check `started_at` to `completed_at` delta)
 - High queue depth (check queue stats)
@@ -522,12 +559,14 @@ grep "correlationId\":\"$correlation_id" logs/workers/*.log | jq '. | select(.li
 **Symptoms:** Job never completes, no error visible
 
 **Investigation Steps:**
+
 1. Check worker error logs: `logs/workers/worker-errors-*.log`
 2. Look for correlation ID in error logs
 3. Verify correlation ID propagation (should be in all pipeline stages)
 4. Check dead letter queue
 
 **Example:**
+
 ```bash
 # Search all error logs for job
 job_id="job_123456"
@@ -542,6 +581,7 @@ grep "$job_id" logs/workers/workers-*.log | grep "AnalyzeToxicityWorker"
 ```
 
 **Common Causes:**
+
 - Invalid correlation ID rejected by validation
 - Missing required fields in job payload
 - Worker crashed before logging error
@@ -554,12 +594,14 @@ grep "$job_id" logs/workers/workers-*.log | grep "AnalyzeToxicityWorker"
 **Symptoms:** One organization has many failed jobs
 
 **Investigation Steps:**
+
 1. Filter logs by tenantId
 2. Group errors by error message
 3. Check for quota/rate limit issues
 4. Verify tenant configuration
 
 **Example:**
+
 ```bash
 tenant_id="org_123"
 echo "=== Error distribution for $tenant_id ==="
@@ -571,6 +613,7 @@ jq --arg tenant "$tenant_id" 'select(.tenantId == $tenant and .level == "error")
 ```
 
 **Common Causes:**
+
 - Invalid API credentials for platform
 - Rate limit exceeded
 - Insufficient plan quota
@@ -583,11 +626,13 @@ jq --arg tenant "$tenant_id" 'select(.tenantId == $tenant and .level == "error")
 **Symptoms:** Cannot trace request, correlation ID missing
 
 **Investigation Steps:**
+
 1. Check if request generated correlation ID
 2. Verify QueueService logged job enqueue event
 3. Check for validation errors
 
 **Example:**
+
 ```bash
 # Search for jobs added around same time
 timestamp="2025-10-13T10:30"
@@ -598,6 +643,7 @@ grep "Invalid correlation ID" logs/application/*.log
 ```
 
 **Resolution:**
+
 - Correlation IDs auto-generated if not provided
 - Check if external system providing invalid format
 - Verify UUID v4 format: `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`
@@ -608,12 +654,12 @@ grep "Invalid correlation ID" logs/application/*.log
 
 ### Logging Overhead
 
-| Operation | Average Time | Impact |
-|-----------|--------------|--------|
-| Winston log write | <1ms | Negligible |
-| Log file rotation | <10ms | Async, non-blocking |
-| Correlation context creation | <0.1ms | Negligible |
-| Job lifecycle log | <2ms | Minimal |
+| Operation                    | Average Time | Impact              |
+| ---------------------------- | ------------ | ------------------- |
+| Winston log write            | <1ms         | Negligible          |
+| Log file rotation            | <10ms        | Async, non-blocking |
+| Correlation context creation | <0.1ms       | Negligible          |
+| Job lifecycle log            | <2ms         | Minimal             |
 
 **Total worker throughput impact:** <0.5%
 
@@ -621,13 +667,13 @@ grep "Invalid correlation ID" logs/application/*.log
 
 ### Storage Requirements
 
-| Log Type | Volume (per 1000 requests) | Retention | Compressed Size |
-|----------|----------------------------|-----------|-----------------|
-| Worker logs | ~5MB | 30 days | ~1MB (80% reduction) |
-| Queue logs | ~2MB | 30 days | ~400KB |
-| Error logs | ~500KB | 60 days | ~100KB |
-| Security logs | ~1MB | 90 days | ~200KB |
-| Audit logs | ~800KB | 365 days | ~160KB |
+| Log Type      | Volume (per 1000 requests) | Retention | Compressed Size      |
+| ------------- | -------------------------- | --------- | -------------------- |
+| Worker logs   | ~5MB                       | 30 days   | ~1MB (80% reduction) |
+| Queue logs    | ~2MB                       | 30 days   | ~400KB               |
+| Error logs    | ~500KB                     | 60 days   | ~100KB               |
+| Security logs | ~1MB                       | 90 days   | ~200KB               |
+| Audit logs    | ~800KB                     | 365 days  | ~160KB               |
 
 **Total:** ~9.3MB per 1000 requests uncompressed, ~1.86MB compressed
 
@@ -637,11 +683,11 @@ grep "Invalid correlation ID" logs/application/*.log
 
 ### Retention Policies
 
-| Category | Retention | Rationale |
-|----------|-----------|-----------|
-| Application/Worker | 30 days | Operational debugging |
-| Security/Shield | 90 days | Security investigations |
-| Audit | 365 days | Compliance (GDPR, SOC 2) |
+| Category           | Retention | Rationale                |
+| ------------------ | --------- | ------------------------ |
+| Application/Worker | 30 days   | Operational debugging    |
+| Security/Shield    | 90 days   | Security investigations  |
+| Audit              | 365 days  | Compliance (GDPR, SOC 2) |
 
 ---
 
@@ -695,6 +741,7 @@ output {
 2. **Kibana Visualizations:**
 
 Create dashboards for:
+
 - Request latency by worker (histogram)
 - Error rates by tenant (line chart)
 - Queue depth trends (area chart)
@@ -717,21 +764,22 @@ correlationId:"550e8400-e29b-41d4-a716-446655440000" AND lifecycle:*
 ```yaml
 logs:
   - type: file
-    path: "/app/logs/workers/*.log"
-    service: "roastr-workers"
-    source: "nodejs"
-    sourcecategory: "worker-logs"
+    path: '/app/logs/workers/*.log'
+    service: 'roastr-workers'
+    source: 'nodejs'
+    sourcecategory: 'worker-logs'
 
   - type: file
-    path: "/app/logs/application/*.log"
-    service: "roastr-api"
-    source: "nodejs"
-    sourcecategory: "application-logs"
+    path: '/app/logs/application/*.log'
+    service: 'roastr-api'
+    source: 'nodejs'
+    sourcecategory: 'application-logs'
 ```
 
 2. **Custom Metrics:**
 
 Add to application code:
+
 ```javascript
 const { StatsD } = require('hot-shots');
 const dogstatsd = new StatsD();
@@ -752,6 +800,7 @@ dogstatsd.increment('roastr.job.errors', 1, {
 3. **Datadog Dashboards:**
 
 Create monitors for:
+
 - High error rate (>5% per tenant)
 - Slow processing time (>10s p95)
 - Queue depth spike (>1000 jobs)
@@ -809,6 +858,7 @@ fields tenantId
 
 **Context:**
 When a script is configured with `continue-on-error: true` to prevent blocking the workflow, crashes that occur before the script writes its output file (e.g., `gdd-repair.json`) result in:
+
 1. Missing output file
 2. Default values (e.g., `errors: 0`) used by workflow
 3. Workflow appears successful despite failure
@@ -859,21 +909,25 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 ```
 
 **Exit Code Contract:**
+
 - `0` - Success (no errors)
 - `1` - Error (requires manual intervention)
 - `2` - Rollback (health score decreased, changes reverted - not an error)
 
 **Key Points:**
+
 1. **Always capture exit code** even with `continue-on-error: true`
 2. **Check both output parsing AND exit code** in failure conditions
 3. **Exclude rollback exit code** (2) from error conditions
 4. **Use `failure()` for step-level failures** (syntax errors, missing files)
 
 **Files Using This Pattern:**
+
 - `.github/workflows/gdd-repair.yml` (lines 75-107, 262-263, 354-358)
 - `.github/workflows/gdd-validate.yml` (similar pattern)
 
 **References:**
+
 - CodeRabbit Review #3335075828 (C1, D1) - Identified missing exit code checks
 - CodeRabbit Review #3334552691 (M1) - Established exit code contract
 
@@ -889,17 +943,20 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 ## Dependencies
 
 **Runtime:**
+
 - `winston` ^3.8.0 - Core logging library
 - `winston-daily-rotate-file` ^4.7.1 - Log rotation
 - `uuid` ^9.0.0 - Correlation ID generation
 - `fs-extra` ^11.1.0 - File system operations
 
 **Development:**
+
 - `jest` - Integration testing
 
 ## Future Enhancements
 
 ### Phase 2 (Not in Scope for Issue #417)
+
 - [ ] Integration with log aggregation service (ELK, Datadog, CloudWatch)
 - [ ] Real-time alerting based on error patterns
 - [ ] Performance metrics and dashboards
@@ -908,6 +965,7 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 - [ ] Custom retention policies per organization
 
 ### Monitoring Integration
+
 - Export logs to external monitoring service
 - Create dashboards for:
   - Request latency by worker
@@ -916,6 +974,7 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
   - Worker health metrics
 
 ### Performance Metrics
+
 - Track processing time per job type
 - Identify slow operations
 - Detect performance regressions
@@ -931,6 +990,7 @@ Production monitoring and enhancements for the tier validation system (SPEC 10).
 #### Cache Performance Monitoring (AC1 - Medium Priority)
 
 **Metrics Tracked:**
+
 - Cache hits and misses
 - Hit rate percentage
 - Total cache requests
@@ -938,6 +998,7 @@ Production monitoring and enhancements for the tier validation system (SPEC 10).
 - Request-scoped cache size
 
 **Access Method:**
+
 ```javascript
 const service = require('./src/services/tierValidationService');
 const metrics = service.getMetrics();
@@ -962,12 +1023,14 @@ console.log(metrics.cachePerformance);
 #### Error Alerting Configuration (AC2 - High Priority) 🔴
 
 **Alert Thresholds:**
+
 1. Error rate >5% (errors / validationCalls)
 2. Absolute count >100 errors per hour
 
 **Alert Cooldown:** 5 minutes (prevents spam)
 
 **Alert Delivery:**
+
 - Structured logs (category: `tier_validation_alert`)
 - Optional webhook (Slack, PagerDuty, etc.)
 
@@ -994,12 +1057,14 @@ The alert system uses a fire-and-forget webhook delivery pattern to ensure tier 
 **Integration Examples:**
 
 **Slack Webhook:**
+
 ```bash
 # .env configuration
 ALERT_WEBHOOK_URL=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX
 ```
 
 Expected Slack message format (auto-formatted by Slack):
+
 ```text
 🚨 Tier Validation Alert
 Service: tier_validation_service
@@ -1024,12 +1089,14 @@ Timestamp: 2025-11-10T12:00:00Z
 ```
 
 **PagerDuty Webhook:**
+
 ```bash
 # .env configuration
 ALERT_WEBHOOK_URL=https://events.pagerduty.com/v2/enqueue
 ```
 
 PagerDuty requires Events API v2 integration. Send payload with:
+
 ```json
 {
   "routing_key": "YOUR_INTEGRATION_KEY",
@@ -1049,6 +1116,7 @@ PagerDuty requires Events API v2 integration. Send payload with:
 ```
 
 **Custom Webhook:**
+
 ```bash
 # .env configuration
 ALERT_WEBHOOK_URL=https://your-alerting-system.com/api/alerts
@@ -1057,12 +1125,14 @@ ALERT_WEBHOOK_URL=https://your-alerting-system.com/api/alerts
 Receives standard alert payload (see Alert Payload section below).
 
 **Environment Variables:**
+
 ```bash
 # Optional: External alert webhook
 ALERT_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 ```
 
 **Alert Payload:**
+
 ```json
 {
   "service": "tier_validation_service",
@@ -1097,6 +1167,7 @@ ALERT_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 ```
 
 **Monitoring Queries:**
+
 ```bash
 # Check recent alerts
 grep "TIER VALIDATION ALERT" logs/application/app-*.log | jq '.'
@@ -1108,11 +1179,13 @@ grep "tier_validation_alert" logs/application/app-*.log | jq -r '.timestamp' | t
 #### Sentry Integration (AC3 - Low Priority)
 
 **Features:**
+
 - Breadcrumbs at validation lifecycle points
 - Enhanced exception capture with full context
 - Performance monitoring (10% sample rate)
 
 **Environment Variables:**
+
 ```bash
 # Enable Sentry
 SENTRY_ENABLED=true
@@ -1122,11 +1195,13 @@ SENTRY_FORCE_ENABLE=false  # Force enable in non-production
 ```
 
 **Breadcrumb Points:**
+
 1. `validation_start` - Beginning of validation
 2. `validation_complete` - Successful validation
 3. `validation_error` - Error during validation
 
 **Exception Context:**
+
 - User ID and action type
 - Request ID for tracing
 - Full metrics snapshot
@@ -1134,6 +1209,7 @@ SENTRY_FORCE_ENABLE=false  # Force enable in non-production
 - Environment details
 
 **Example Sentry Event:**
+
 ```javascript
 {
   extra: {
@@ -1153,6 +1229,7 @@ SENTRY_FORCE_ENABLE=false  # Force enable in non-production
 ```
 
 **Graceful Degradation:**
+
 - Sentry failures logged but don't block validation
 - Service continues if Sentry unavailable
 - No performance impact when disabled
@@ -1160,6 +1237,7 @@ SENTRY_FORCE_ENABLE=false  # Force enable in non-production
 #### Dashboard Integration
 
 **Endpoints (Recommended):**
+
 ```http
 GET /api/tier-validation/metrics
   → Returns full metrics including cache performance
@@ -1169,6 +1247,7 @@ GET /api/tier-validation/cache-performance
 ```
 
 **Grafana Dashboard Panels:**
+
 1. Cache hit rate (gauge) - Target: >80%
 2. Error rate (line chart) - Alert: >5%
 3. Errors per hour (line chart) - Alert: >100
@@ -1176,6 +1255,7 @@ GET /api/tier-validation/cache-performance
 5. Alert frequency (counter)
 
 **Log Aggregation (ELK/Datadog):**
+
 ```text
 # Find all tier validation alerts
 category:"tier_validation_alert" AND severity:"high"
@@ -1190,30 +1270,36 @@ tier_validation.cachePerformance.hitRate
 #### Implementation Files
 
 **Core Service:**
+
 - `src/services/tierValidationService.js` - Monitoring implementation
 - `src/config/sentry.js` - Sentry configuration (NEW)
 
 **Tests:**
+
 - `tests/unit/services/tierValidationService-monitoring.test.js` - Unit tests (NEW)
 - `tests/integration/tierValidationMonitoring.test.js` - Integration tests
 
 **Configuration:**
+
 - `.env.example` - Monitoring environment variables
 
 #### Maintenance Notes
 
 **Cache TTL Adjustment:**
+
 - Current: 5 minutes
 - Monitor hit rate in production
 - Adjust based on data freshness requirements
 - Update `CACHE_CONFIG.timeouts.usage` if needed
 
 **Error Threshold Tuning:**
+
 - Start with 5% / 100/hour
 - Adjust based on production baseline
 - Document changes in changelog
 
 **Sentry Budget:**
+
 - 10% transaction sampling = ~1000 events/month per 10k validations
 - Adjust `SENTRY_TRACES_SAMPLE_RATE` if quota exceeded
 

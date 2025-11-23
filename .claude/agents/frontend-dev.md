@@ -63,4 +63,5 @@ criteria_of_success:
 ---
 
 output:
+
 - Mensaje: "He implementado la UI en `src/`, validado interacciones con Playwright y actualizado `spec.md`. Listo para revisión."

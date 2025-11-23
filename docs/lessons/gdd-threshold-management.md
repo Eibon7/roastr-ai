@@ -18,6 +18,7 @@ This document provides guidance on when and how to adjust GDD health score thres
 ### ❌ What NOT to Do
 
 **NEVER adjust thresholds as a shortcut to pass CI:**
+
 - ❌ Lowering thresholds because current score is below target
 - ❌ Adjusting numbers first, investigating later
 - ❌ Using thresholds to hide test failures or coverage drops
@@ -26,6 +27,7 @@ This document provides guidance on when and how to adjust GDD health score thres
 ### ✅ What TO Do
 
 **ALWAYS investigate and fix root causes FIRST:**
+
 - ✅ Run health score diagnostic: `node scripts/score-gdd-health.js --ci`
 - ✅ Identify which nodes/components are failing
 - ✅ Fix tests, update documentation, improve coverage
@@ -51,6 +53,7 @@ node scripts/predict-gdd-drift.js --full
 ### Step 2: Investigate Root Causes
 
 **Common failure patterns:**
+
 - **Low Coverage:** Write missing tests BEFORE adjusting threshold
 - **Documentation Gaps:** Update docs BEFORE adjusting threshold
 - **Test Failures:** Fix tests BEFORE adjusting threshold
@@ -59,6 +62,7 @@ node scripts/predict-gdd-drift.js --full
 ### Step 3: Attempt Remediation
 
 **Priority order:**
+
 1. **Fix tests** (highest priority)
 2. **Improve coverage** (run auto-repair: `node scripts/auto-repair-gdd.js --auto-fix`)
 3. **Update documentation** (ensure accuracy)
@@ -67,11 +71,13 @@ node scripts/predict-gdd-drift.js --full
 ### Step 4: Evaluate Threshold Adjustment (If Remediation Fails)
 
 **Valid reasons to adjust threshold:**
+
 - Architecture change requires temporary lower score during migration
 - New stringent validation added (temporary adjustment while codebase adapts)
 - Seasonal variance in certain metrics (documented pattern)
 
 **Invalid reasons:**
+
 - "CI is blocking my PR" (fix the underlying issue instead)
 - "I don't have time to fix tests" (technical debt accumulation)
 - "Coverage is hard to improve" (indicates need for better testing strategy)
@@ -82,7 +88,7 @@ node scripts/predict-gdd-drift.js --full
 
 ```json
 {
-  "healthThreshold": 85,  // Lowered from 87
+  "healthThreshold": 85, // Lowered from 87
   "notes": [
     "Temporary reduction due to Shield Phase 2 migration (2025-10-24)",
     "Expected return to 87+ by 2025-10-31 after migration complete"
@@ -92,6 +98,7 @@ node scripts/predict-gdd-drift.js --full
 ```
 
 **Required elements:**
+
 - `notes`: Explain WHY threshold was lowered
 - `temporary_until`: Set deadline for returning to normal
 - Issue/PR reference: Link to tracking issue
@@ -105,11 +112,12 @@ node scripts/predict-gdd-drift.js --full
 ```json
 // .gddrc.json
 {
-  "healthThreshold": 75  // <-- NO EXPLANATION!
+  "healthThreshold": 75 // <-- NO EXPLANATION!
 }
 ```
 
 **Git commit message:**
+
 ```
 fix(ci): Lower GDD threshold to pass CI
 ```
@@ -134,6 +142,7 @@ fix(ci): Lower GDD threshold to pass CI
 ```
 
 **Git commit message:**
+
 ```
 chore(gdd): Temporary threshold adjustment for Shield migration - Issue #653
 
@@ -161,6 +170,7 @@ Related: #653, #654
 **Script:** `scripts/ci/validate-gdd-health.js`
 
 **Checks:**
+
 - Health score ≥ configured threshold
 - If threshold < 87: Verify `temporary_until` date exists
 - If `temporary_until` date passed: **FAIL CI** (must restore or re-justify)
@@ -168,6 +178,7 @@ Related: #653, #654
 ### Weekly Review
 
 **Process:**
+
 1. Check thresholds in `.gddrc.json`
 2. Identify any `temporary_until` dates approaching
 3. Verify related issues are on track
@@ -176,6 +187,7 @@ Related: #653, #654
 ### Audit Trail
 
 **All threshold changes must:**
+
 - Be tracked in git history
 - Reference an issue or PR
 - Include `temporary_until` if not permanent
@@ -186,6 +198,7 @@ Related: #653, #654
 ## Red Flags
 
 **Immediate escalation required if:**
+
 - Threshold lowered >5 points (87→82 or lower)
 - No `temporary_until` date provided
 - Multiple consecutive threshold reductions
@@ -198,11 +211,11 @@ Related: #653, #654
 
 **Previous threshold adjustments:**
 
-| Date | Old | New | Reason | Restored |
-|------|-----|-----|--------|----------|
-| 2025-10-24 | 87 | 85 | Shield Phase 2 migration (#653) | 2025-10-31 (planned) |
+| Date       | Old | New | Reason                          | Restored             |
+| ---------- | --- | --- | ------------------------------- | -------------------- |
+| 2025-10-24 | 87  | 85  | Shield Phase 2 migration (#653) | 2025-10-31 (planned) |
 
-*(Add entries chronologically as threshold changes occur)*
+_(Add entries chronologically as threshold changes occur)_
 
 ---
 
@@ -218,6 +231,7 @@ Related: #653, #654
 ## Questions?
 
 **Before adjusting a threshold, ask yourself:**
+
 1. Have I run full diagnostics?
 2. Have I attempted to fix the underlying issues?
 3. Can I justify this change to the team?

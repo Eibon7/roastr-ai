@@ -1,6 +1,6 @@
 /**
  * Visual Test Stability Tests - CodeRabbit Round 5 Improvements
- * 
+ *
  * Tests the enhanced visual testing features added in CodeRabbit Round 5:
  * 1. Enhanced timezone and locale handling
  * 2. Improved motion reduction for stable animations
@@ -41,7 +41,9 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
   };
 
   describe('Enhanced Timezone and Locale Handling', () => {
-    test('should properly override Date constructor for consistent timestamps', async ({ page }) => {
+    test('should properly override Date constructor for consistent timestamps', async ({
+      page
+    }) => {
       await setupStableEnvironment(page);
       await page.goto('about:blank');
 
@@ -133,13 +135,13 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
         const testDiv = document.createElement('div');
         testDiv.className = 'animate-pulse';
         document.body.appendChild(testDiv);
-        
+
         const computedStyle = window.getComputedStyle(testDiv);
         const animationName = computedStyle.animationName;
         const animationDuration = computedStyle.animationDuration;
-        
+
         document.body.removeChild(testDiv);
-        
+
         return {
           animationName,
           animationDuration
@@ -225,10 +227,14 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
       `);
 
       // Test combined selectors
-      const eventWithBadge = page.locator('[data-testid="shield-event"]:has([data-testid="action-badge"])');
+      const eventWithBadge = page.locator(
+        '[data-testid="shield-event"]:has([data-testid="action-badge"])'
+      );
       await expect(eventWithBadge).toBeVisible();
 
-      const eventWithButton = page.locator('[data-testid="shield-event"]:has(button:has-text("Revertir"))');
+      const eventWithButton = page.locator(
+        '[data-testid="shield-event"]:has(button:has-text("Revertir"))'
+      );
       await expect(eventWithButton).toBeVisible();
 
       // Test fallback for complex selectors
@@ -240,14 +246,14 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
   describe('Network Resilience Improvements', () => {
     test('should handle network idle waits properly', async ({ page }) => {
       let networkIdleReached = false;
-      
+
       // Monitor network idle state
       page.on('response', () => {
         // Network activity detected
       });
 
       await page.goto('about:blank');
-      
+
       try {
         await page.waitForLoadState('networkidle', { timeout: 5000 });
         networkIdleReached = true;
@@ -265,15 +271,15 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
 
       // Test with extended timeout for stability
       const startTime = Date.now();
-      
+
       try {
-        await page.waitForSelector('non-existent-element', { 
+        await page.waitForSelector('non-existent-element', {
           timeout: 100, // Short timeout for test
-          state: 'visible' 
+          state: 'visible'
         });
       } catch (error) {
         const elapsed = Date.now() - startTime;
-        
+
         // Should respect timeout value
         expect(elapsed).toBeGreaterThanOrEqual(90); // Allow some variance
         expect(elapsed).toBeLessThan(200); // But not too much
@@ -310,7 +316,7 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
       // Should not find element but not crash
       const missingElement = page.locator('[data-testid="non-existent"]');
       const isVisible = await missingElement.isVisible();
-      
+
       expect(isVisible).toBe(false);
     });
 
@@ -320,7 +326,7 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
       // Try multiple selectors, all should fail gracefully
       const selectors = [
         '[data-testid="missing"]',
-        '[aria-label="missing"]', 
+        '[aria-label="missing"]',
         '.missing-class',
         'text=Missing Text'
       ];
@@ -336,7 +342,7 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
       await page.goto('about:blank');
 
       try {
-        await page.waitForSelector('[data-testid="missing"]', { 
+        await page.waitForSelector('[data-testid="missing"]', {
           timeout: 100,
           state: 'visible'
         });
@@ -356,12 +362,12 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
       `);
 
       const startTime = Date.now();
-      
+
       // Take screenshot (mocked for test)
       await page.locator('h1').screenshot();
-      
+
       const elapsed = Date.now() - startTime;
-      
+
       // Should complete quickly
       expect(elapsed).toBeLessThan(5000); // 5 seconds max
     });
@@ -375,11 +381,11 @@ describe('Shield UI Visual Stability - Round 5 Improvements', () => {
 
       for (const viewport of viewports) {
         const startTime = Date.now();
-        
+
         await page.setViewportSize(viewport);
-        
+
         const elapsed = Date.now() - startTime;
-        
+
         // Viewport changes should be fast
         expect(elapsed).toBeLessThan(1000); // 1 second max
       }

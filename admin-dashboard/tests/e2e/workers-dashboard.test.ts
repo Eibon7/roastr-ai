@@ -2,10 +2,10 @@ import { test, expect, devices } from '@playwright/test';
 
 /**
  * Worker Monitoring Dashboard E2E Tests
- * 
+ *
  * Part of Issue #828: E2E Tests for Worker Monitoring Dashboard
  * Related: Issue #713 - Worker Monitoring Dashboard
- * 
+ *
  * Tests the Worker Monitoring Dashboard using Playwright with mocked API responses.
  * All tests use mocks to avoid requiring a real backend.
  */
@@ -220,7 +220,7 @@ const mockUnhealthyWorkerMetrics = {
 test.describe('Worker Monitoring Dashboard', () => {
   test.beforeEach(async ({ page }) => {
     // Mock API responses before navigation
-    await page.route('**/api/workers/metrics', route => {
+    await page.route('**/api/workers/metrics', (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -228,7 +228,7 @@ test.describe('Worker Monitoring Dashboard', () => {
       });
     });
 
-    await page.route('**/api/workers/queues/status', route => {
+    await page.route('**/api/workers/queues/status', (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -249,16 +249,18 @@ test.describe('Worker Monitoring Dashboard', () => {
 
   test('should load dashboard correctly', async ({ page }) => {
     // Test AC: Dashboard loads correctly
-    
+
     // Check for main title
     await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
-    
+
     // Check for subtitle
     await expect(page.getByText(/Real-time monitoring of workers/i)).toBeVisible();
-    
+
     // Verify page loaded without errors
     const errors: string[] = [];
-    page.on('pageerror', (error) => { errors.push(error.message); });
+    page.on('pageerror', (error) => {
+      errors.push(error.message);
+    });
     // Wait for content to be visible instead of fixed timeout
     await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
     expect(errors.length).toBe(0);
@@ -266,16 +268,16 @@ test.describe('Worker Monitoring Dashboard', () => {
 
   test('should display worker status cards', async ({ page }) => {
     // Test AC: Worker status cards display
-    
+
     // Wait for content to be visible
     await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
-    
+
     // Check for worker cards - look for worker type names
     const fetchCommentsCard = page.locator('text=fetch comments').first();
     const analyzeToxicityCard = page.locator('text=analyze toxicity').first();
     const generateReplyCard = page.locator('text=generate reply').first();
     const shieldActionCard = page.locator('text=shield action').first();
-    
+
     // At least some worker cards should be visible
     const visibleCards = await Promise.all([
       fetchCommentsCard.isVisible().catch(() => false),
@@ -283,61 +285,63 @@ test.describe('Worker Monitoring Dashboard', () => {
       generateReplyCard.isVisible().catch(() => false),
       shieldActionCard.isVisible().catch(() => false)
     ]);
-    
+
     const visibleCount = visibleCards.filter(Boolean).length;
     expect(visibleCount).toBeGreaterThanOrEqual(2);
-    
+
     // Check for metrics in cards (processed, failed, uptime)
-    const hasProcessed = await page.locator('text=/processed|Processed/i').count() > 0;
-    const hasFailed = await page.locator('text=/failed|Failed/i').count() > 0;
-    const hasUptime = await page.locator('text=/uptime|Uptime/i').count() > 0;
-    
+    const hasProcessed = (await page.locator('text=/processed|Processed/i').count()) > 0;
+    const hasFailed = (await page.locator('text=/failed|Failed/i').count()) > 0;
+    const hasUptime = (await page.locator('text=/uptime|Uptime/i').count()) > 0;
+
     expect(hasProcessed || hasFailed || hasUptime).toBeTruthy();
   });
 
   test('should display queue status table', async ({ page }) => {
     // Test AC: Queue status table renders
-    
+
     // Wait for content to be visible
     await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
-    
+
     // Check for table headers
-    const hasQueueHeader = await page.locator('text=/queue|Queue/i').count() > 0;
-    const hasPendingHeader = await page.locator('text=/pending|Pending/i').count() > 0;
-    const hasProcessingHeader = await page.locator('text=/processing|Processing/i').count() > 0;
-    const hasStatusHeader = await page.locator('text=/status|Status/i').count() > 0;
-    
-    expect(hasQueueHeader || hasPendingHeader || hasProcessingHeader || hasStatusHeader).toBeTruthy();
-    
+    const hasQueueHeader = (await page.locator('text=/queue|Queue/i').count()) > 0;
+    const hasPendingHeader = (await page.locator('text=/pending|Pending/i').count()) > 0;
+    const hasProcessingHeader = (await page.locator('text=/processing|Processing/i').count()) > 0;
+    const hasStatusHeader = (await page.locator('text=/status|Status/i').count()) > 0;
+
+    expect(
+      hasQueueHeader || hasPendingHeader || hasProcessingHeader || hasStatusHeader
+    ).toBeTruthy();
+
     // Check for queue data - look for queue names
-    const hasFetchComments = await page.locator('text=/fetch.*comments/i').count() > 0;
-    const hasAnalyzeToxicity = await page.locator('text=/analyze.*toxicity/i').count() > 0;
-    
+    const hasFetchComments = (await page.locator('text=/fetch.*comments/i').count()) > 0;
+    const hasAnalyzeToxicity = (await page.locator('text=/analyze.*toxicity/i').count()) > 0;
+
     expect(hasFetchComments || hasAnalyzeToxicity).toBeTruthy();
   });
 
   test('should display summary cards with metrics', async ({ page }) => {
     // Wait for content to be visible
     await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
-    
+
     // Look for summary metrics
-    const hasWorkersSummary = await page.locator('text=/workers|Workers/i').count() > 0;
-    const hasQueueDepth = await page.locator('text=/queue.*depth|Queue Depth/i').count() > 0;
-    const hasSuccessRate = await page.locator('text=/success.*rate|Success Rate/i').count() > 0;
-    
+    const hasWorkersSummary = (await page.locator('text=/workers|Workers/i').count()) > 0;
+    const hasQueueDepth = (await page.locator('text=/queue.*depth|Queue Depth/i').count()) > 0;
+    const hasSuccessRate = (await page.locator('text=/success.*rate|Success Rate/i').count()) > 0;
+
     // At least one summary card should be visible
     expect(hasWorkersSummary || hasQueueDepth || hasSuccessRate).toBeTruthy();
-    
+
     // Check for numeric values
-    const hasNumbers = await page.locator('text=/\\d+/').count() > 0;
+    const hasNumbers = (await page.locator('text=/\\d+/').count()) > 0;
     expect(hasNumbers).toBeTruthy();
   });
 
   test('should handle error state when workers not initialized', async ({ page }) => {
     // Test AC: Error handling (workers not initialized)
-    
+
     // Override mock to return 503 error
-    await page.route('**/api/workers/metrics', route => {
+    await page.route('**/api/workers/metrics', (route) => {
       route.fulfill({
         status: 503,
         contentType: 'application/json',
@@ -349,7 +353,7 @@ test.describe('Worker Monitoring Dashboard', () => {
       });
     });
 
-    await page.route('**/api/workers/queues/status', route => {
+    await page.route('**/api/workers/queues/status', (route) => {
       route.fulfill({
         status: 503,
         contentType: 'application/json',
@@ -364,22 +368,25 @@ test.describe('Worker Monitoring Dashboard', () => {
     await page.reload();
     await page.waitForLoadState('networkidle');
     // Wait for error message to appear
-    await expect(page.locator('text=/error|failed|not initialized/i').first()).toBeVisible({ timeout: 5000 });
-    
+    await expect(page.locator('text=/error|failed|not initialized/i').first()).toBeVisible({
+      timeout: 5000
+    });
+
     // Check for error message
-    const hasError = await page.locator('text=/error|failed|not initialized/i').count() > 0;
+    const hasError = (await page.locator('text=/error|failed|not initialized/i').count()) > 0;
     expect(hasError).toBeTruthy();
   });
 
   test('should display metrics update indicators', async ({ page }) => {
     // Test AC: Metrics update in real-time
-    
+
     // Wait for content to be visible
     await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
-    
+
     // Check for timestamp or "last updated" text
-    const hasTimestamp = await page.locator('text=/last.*updated|updated|timestamp/i').count() > 0;
-    
+    const hasTimestamp =
+      (await page.locator('text=/last.*updated|updated|timestamp/i').count()) > 0;
+
     // The dashboard should show some indication of data freshness
     // This is a soft check since the exact implementation may vary
     // At minimum, verify the page loaded successfully
@@ -396,7 +403,7 @@ test.describe('Worker Monitoring Dashboard', () => {
       const page = await context.newPage();
 
       // Mock API responses
-      await page.route('**/api/workers/metrics', route => {
+      await page.route('**/api/workers/metrics', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -404,7 +411,7 @@ test.describe('Worker Monitoring Dashboard', () => {
         });
       });
 
-      await page.route('**/api/workers/queues/status', route => {
+      await page.route('**/api/workers/queues/status', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -419,7 +426,9 @@ test.describe('Worker Monitoring Dashboard', () => {
       await page.goto('/admin/workers');
       await page.waitForLoadState('networkidle');
       // Wait for content to be visible
-      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })
+      ).toBeVisible();
 
       // Check main content is visible
       const title = page.getByRole('heading', { name: /Worker Monitoring Dashboard/i });
@@ -437,7 +446,7 @@ test.describe('Worker Monitoring Dashboard', () => {
       const page = await context.newPage();
 
       // Mock API responses
-      await page.route('**/api/workers/metrics', route => {
+      await page.route('**/api/workers/metrics', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -445,7 +454,7 @@ test.describe('Worker Monitoring Dashboard', () => {
         });
       });
 
-      await page.route('**/api/workers/queues/status', route => {
+      await page.route('**/api/workers/queues/status', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -460,7 +469,9 @@ test.describe('Worker Monitoring Dashboard', () => {
       await page.goto('/admin/workers');
       await page.waitForLoadState('networkidle');
       // Wait for content to be visible
-      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })
+      ).toBeVisible();
 
       // Check main content is visible
       const title = page.getByRole('heading', { name: /Worker Monitoring Dashboard/i });
@@ -477,7 +488,7 @@ test.describe('Worker Monitoring Dashboard', () => {
       const page = await context.newPage();
 
       // Mock API responses
-      await page.route('**/api/workers/metrics', route => {
+      await page.route('**/api/workers/metrics', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -485,7 +496,7 @@ test.describe('Worker Monitoring Dashboard', () => {
         });
       });
 
-      await page.route('**/api/workers/queues/status', route => {
+      await page.route('**/api/workers/queues/status', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -500,7 +511,9 @@ test.describe('Worker Monitoring Dashboard', () => {
       await page.goto('/admin/workers');
       await page.waitForLoadState('networkidle');
       // Wait for content to be visible
-      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })
+      ).toBeVisible();
 
       // Check main content is visible
       const title = page.getByRole('heading', { name: /Worker Monitoring Dashboard/i });
@@ -513,19 +526,21 @@ test.describe('Worker Monitoring Dashboard', () => {
   test.describe('Visual Regression', () => {
     test('should capture screenshot of dashboard with healthy workers', async ({ page }) => {
       // Test AC: Screenshots for dashboard in different states
-      
+
       // Wait for all content to load
-      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
-      
+      await expect(
+        page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })
+      ).toBeVisible();
+
       // Use Playwright's built-in screenshot assertion for visual regression
       await expect(page).toHaveScreenshot('healthy-workers.png', { fullPage: true });
     });
 
     test('should capture screenshot with unhealthy workers', async ({ page }) => {
       // Test AC: Test with different worker states (healthy/unhealthy)
-      
+
       // Override mock to return unhealthy workers
-      await page.route('**/api/workers/metrics', route => {
+      await page.route('**/api/workers/metrics', (route) => {
         route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -536,15 +551,17 @@ test.describe('Worker Monitoring Dashboard', () => {
       await page.reload();
       await page.waitForLoadState('networkidle');
       // Wait for content to be visible
-      await expect(page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })).toBeVisible();
-      
+      await expect(
+        page.getByRole('heading', { name: /Worker Monitoring Dashboard/i })
+      ).toBeVisible();
+
       // Use Playwright's built-in screenshot assertion for visual regression
       await expect(page).toHaveScreenshot('unhealthy-workers.png', { fullPage: true });
     });
 
     test('should capture screenshot of error state', async ({ page }) => {
       // Override mock to return error
-      await page.route('**/api/workers/metrics', route => {
+      await page.route('**/api/workers/metrics', (route) => {
         route.fulfill({
           status: 503,
           contentType: 'application/json',
@@ -558,11 +575,12 @@ test.describe('Worker Monitoring Dashboard', () => {
       await page.reload();
       await page.waitForLoadState('networkidle');
       // Wait for error message to appear
-      await expect(page.locator('text=/error|failed|not initialized/i').first()).toBeVisible({ timeout: 5000 });
-      
+      await expect(page.locator('text=/error|failed|not initialized/i').first()).toBeVisible({
+        timeout: 5000
+      });
+
       // Use Playwright's built-in screenshot assertion for visual regression
       await expect(page).toHaveScreenshot('error-state.png', { fullPage: true });
     });
   });
 });
-

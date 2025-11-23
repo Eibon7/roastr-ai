@@ -12,24 +12,24 @@ const { RetrySystem } = require('../../utils/retrySystem');
 class TwitterOAuthProvider extends OAuthProvider {
   constructor(config = {}) {
     super('twitter', config);
-    
+
     // Twitter OAuth 2.0 endpoints
     this.authorizationUrl = 'https://twitter.com/i/oauth2/authorize';
     this.tokenUrl = 'https://api.twitter.com/2/oauth2/token';
     this.revokeUrl = 'https://api.twitter.com/2/oauth2/revoke';
     this.userInfoUrl = 'https://api.twitter.com/2/users/me';
-    
+
     // Twitter OAuth config
     this.clientId = config.clientId || process.env.TWITTER_CLIENT_ID;
     this.clientSecret = config.clientSecret || process.env.TWITTER_CLIENT_SECRET;
-    
+
     if (!this.clientId || !this.clientSecret) {
       logger.warn('Twitter OAuth credentials not found. Real OAuth will not work.');
     }
-    
+
     // PKCE storage for state management
     this.pkceStore = new Map();
-    
+
     // Retry systems for different operations
     this.oauthRetry = RetrySystem.forOAuth();
     this.apiRetry = RetrySystem.forAPICall();
@@ -41,11 +41,8 @@ class TwitterOAuthProvider extends OAuthProvider {
    */
   generatePKCEChallenge() {
     const codeVerifier = crypto.randomBytes(32).toString('base64url');
-    const codeChallenge = crypto
-      .createHash('sha256')
-      .update(codeVerifier)
-      .digest('base64url');
-    
+    const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+
     return {
       codeVerifier,
       codeChallenge,
@@ -67,13 +64,13 @@ class TwitterOAuthProvider extends OAuthProvider {
 
       // Generate PKCE challenge
       const pkceData = this.generatePKCEChallenge();
-      
+
       // Store PKCE data for later use
       this.pkceStore.set(state, {
         ...pkceData,
         redirectUri,
         createdAt: Date.now(),
-        expiresAt: Date.now() + (10 * 60 * 1000) // 10 minutes
+        expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
       });
 
       const params = new URLSearchParams({
@@ -87,8 +84,8 @@ class TwitterOAuthProvider extends OAuthProvider {
       });
 
       const authUrl = `${this.authorizationUrl}?${params}`;
-      
-      logger.info('Generated Twitter OAuth URL', { 
+
+      logger.info('Generated Twitter OAuth URL', {
         clientId: this.clientId,
         scopes: this.getDefaultScopes(),
         redirectUri,
@@ -96,7 +93,6 @@ class TwitterOAuthProvider extends OAuthProvider {
       });
 
       return authUrl;
-
     } catch (error) {
       logger.error('Error generating Twitter auth URL:', error);
       throw error;
@@ -140,16 +136,19 @@ class TwitterOAuthProvider extends OAuthProvider {
         client_id: this.clientId
       });
 
-      const response = await this.oauthRetry.execute(async () => {
-        return await fetch(this.tokenUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`
-          },
-          body: tokenParams
-        });
-      }, { operation: 'token_exchange', platform: 'twitter' });
+      const response = await this.oauthRetry.execute(
+        async () => {
+          return await fetch(this.tokenUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              Authorization: `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`
+            },
+            body: tokenParams
+          });
+        },
+        { operation: 'token_exchange', platform: 'twitter' }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -173,7 +172,7 @@ class TwitterOAuthProvider extends OAuthProvider {
         refresh_token: tokenData.refresh_token,
         token_type: tokenData.token_type,
         expires_in: tokenData.expires_in,
-        expires_at: Date.now() + (tokenData.expires_in * 1000),
+        expires_at: Date.now() + tokenData.expires_in * 1000,
         scope: tokenData.scope,
         platform: this.platform,
         mock: false,
@@ -187,7 +186,6 @@ class TwitterOAuthProvider extends OAuthProvider {
       });
 
       return result;
-
     } catch (error) {
       logger.error('Error in Twitter token exchange:', error);
       throw error;
@@ -211,16 +209,19 @@ class TwitterOAuthProvider extends OAuthProvider {
         client_id: this.clientId
       });
 
-      const response = await this.oauthRetry.execute(async () => {
-        return await fetch(this.tokenUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`
-          },
-          body: refreshParams
-        });
-      }, { operation: 'token_refresh', platform: 'twitter' });
+      const response = await this.oauthRetry.execute(
+        async () => {
+          return await fetch(this.tokenUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              Authorization: `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`
+            },
+            body: refreshParams
+          });
+        },
+        { operation: 'token_refresh', platform: 'twitter' }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -241,7 +242,7 @@ class TwitterOAuthProvider extends OAuthProvider {
         refresh_token: tokenData.refresh_token || refreshToken, // Twitter might not return new refresh token
         token_type: tokenData.token_type,
         expires_in: tokenData.expires_in,
-        expires_at: Date.now() + (tokenData.expires_in * 1000),
+        expires_at: Date.now() + tokenData.expires_in * 1000,
         scope: tokenData.scope,
         platform: this.platform,
         mock: false,
@@ -255,7 +256,6 @@ class TwitterOAuthProvider extends OAuthProvider {
       });
 
       return result;
-
     } catch (error) {
       logger.error('Error refreshing Twitter token:', error);
       throw error;
@@ -282,7 +282,7 @@ class TwitterOAuthProvider extends OAuthProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`
+          Authorization: `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`
         },
         body: revokeParams
       });
@@ -299,7 +299,6 @@ class TwitterOAuthProvider extends OAuthProvider {
 
       logger.info('Twitter tokens revoked successfully');
       return true;
-
     } catch (error) {
       logger.error('Error revoking Twitter tokens:', error);
       // Don't throw error for revocation failures
@@ -314,13 +313,19 @@ class TwitterOAuthProvider extends OAuthProvider {
    */
   async fetchUserInfo(accessToken) {
     try {
-      const response = await this.apiRetry.execute(async () => {
-        return await fetch(`${this.userInfoUrl}?user.fields=id,username,name,profile_image_url,verified,public_metrics`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        });
-      }, { operation: 'fetch_user_info', platform: 'twitter' });
+      const response = await this.apiRetry.execute(
+        async () => {
+          return await fetch(
+            `${this.userInfoUrl}?user.fields=id,username,name,profile_image_url,verified,public_metrics`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`
+              }
+            }
+          );
+        },
+        { operation: 'fetch_user_info', platform: 'twitter' }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -328,13 +333,13 @@ class TwitterOAuthProvider extends OAuthProvider {
       }
 
       const userData = await response.json();
-      
+
       if (!userData.data) {
         throw new Error('No user data returned from Twitter API');
       }
 
       const user = userData.data;
-      
+
       return {
         id: user.id,
         username: user.username,
@@ -343,7 +348,6 @@ class TwitterOAuthProvider extends OAuthProvider {
         verified: user.verified || false,
         public_metrics: user.public_metrics || {}
       };
-
     } catch (error) {
       logger.error('Error fetching Twitter user info:', error);
       throw error;
@@ -379,11 +383,11 @@ class TwitterOAuthProvider extends OAuthProvider {
    */
   async getAuthorizationUrl(state, redirectUri) {
     const { flags } = require('../../config/flags');
-    
+
     if (flags.shouldUseMockOAuth()) {
       return this.getMockAuthUrl(state, redirectUri);
     }
-    
+
     return await this.getRealAuthUrl(state, redirectUri);
   }
 
@@ -392,11 +396,11 @@ class TwitterOAuthProvider extends OAuthProvider {
    */
   async exchangeCodeForTokens(code, state, redirectUri) {
     const { flags } = require('../../config/flags');
-    
+
     if (flags.shouldUseMockOAuth()) {
       return this.getMockTokens(code, state, redirectUri);
     }
-    
+
     return await this.handleTokenExchange(code, state, redirectUri);
   }
 
@@ -404,12 +408,7 @@ class TwitterOAuthProvider extends OAuthProvider {
    * Get Twitter-specific scopes
    */
   getDefaultScopes() {
-    return [
-      'tweet.read',
-      'tweet.write', 
-      'users.read',
-      'offline.access'
-    ];
+    return ['tweet.read', 'tweet.write', 'users.read', 'offline.access'];
   }
 
   /**
@@ -418,7 +417,8 @@ class TwitterOAuthProvider extends OAuthProvider {
   getConnectionRequirements() {
     return {
       permissions: ['Read tweets', 'Write tweets', 'Access profile', 'Offline access'],
-      notes: 'Requires Twitter Developer account with OAuth 2.0 app configured. Ensure your app has read and write permissions.',
+      notes:
+        'Requires Twitter Developer account with OAuth 2.0 app configured. Ensure your app has read and write permissions.',
       estimatedTime: '2-3 minutes',
       documentation: 'https://developer.twitter.com/en/docs/authentication/oauth-2-0',
       clientIdRequired: true,

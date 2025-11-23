@@ -56,5 +56,5 @@ async function globalTeardown() {
 
 module.exports = {
   globalSetup,
-  globalTeardown,
+  globalTeardown
 };

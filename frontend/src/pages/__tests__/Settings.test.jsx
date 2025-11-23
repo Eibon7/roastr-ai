@@ -40,7 +40,7 @@ const RoastrPersonaTestComponent = () => {
   const addNotification = (message, type = 'info') => {
     const id = Date.now();
     const notification = { id, message, type };
-    setNotifications(prev => [...prev, notification]);
+    setNotifications((prev) => [...prev, notification]);
   };
 
   const handleSaveRoastrPersona = async (fieldType = 'identity') => {
@@ -68,13 +68,13 @@ const RoastrPersonaTestComponent = () => {
     }
 
     try {
-      setRoastrPersona(prev => ({ ...prev, isSaving: true }));
+      setRoastrPersona((prev) => ({ ...prev, isSaving: true }));
 
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Simulate success and update the textarea values with sanitized text
-      setRoastrPersona(prev => ({
+      setRoastrPersona((prev) => ({
         ...prev,
         loQueMeDefine: isIdentity ? text : prev.loQueMeDefine,
         loQueNoTolero: isIntolerance ? text : prev.loQueNoTolero,
@@ -89,7 +89,7 @@ const RoastrPersonaTestComponent = () => {
     } catch (error) {
       addNotification('Error al guardar', 'error');
     } finally {
-      setRoastrPersona(prev => ({ ...prev, isSaving: false }));
+      setRoastrPersona((prev) => ({ ...prev, isSaving: false }));
     }
   };
 
@@ -103,7 +103,9 @@ const RoastrPersonaTestComponent = () => {
             <textarea
               data-testid="identity-textarea"
               value={roastrPersona.loQueMeDefine}
-              onChange={(e) => setRoastrPersona(prev => ({ ...prev, loQueMeDefine: e.target.value }))}
+              onChange={(e) =>
+                setRoastrPersona((prev) => ({ ...prev, loQueMeDefine: e.target.value }))
+              }
               placeholder="Escribe temas o aspectos que forman parte de quién eres"
               maxLength={300}
             />
@@ -116,7 +118,7 @@ const RoastrPersonaTestComponent = () => {
             </button>
             <button
               data-testid="identity-cancel"
-              onClick={() => setRoastrPersona(prev => ({ ...prev, showForm: false }))}
+              onClick={() => setRoastrPersona((prev) => ({ ...prev, showForm: false }))}
               disabled={roastrPersona.isSaving}
             >
               Cancelar
@@ -125,7 +127,7 @@ const RoastrPersonaTestComponent = () => {
         ) : (
           <button
             data-testid="identity-configure"
-            onClick={() => setRoastrPersona(prev => ({ ...prev, showForm: true }))}
+            onClick={() => setRoastrPersona((prev) => ({ ...prev, showForm: true }))}
           >
             Configurar
           </button>
@@ -140,7 +142,9 @@ const RoastrPersonaTestComponent = () => {
             <textarea
               data-testid="intolerance-textarea"
               value={roastrPersona.loQueNoTolero}
-              onChange={(e) => setRoastrPersona(prev => ({ ...prev, loQueNoTolero: e.target.value }))}
+              onChange={(e) =>
+                setRoastrPersona((prev) => ({ ...prev, loQueNoTolero: e.target.value }))
+              }
               placeholder="Escribe palabras, temas o ataques que nunca quieres ver"
               maxLength={300}
             />
@@ -153,7 +157,7 @@ const RoastrPersonaTestComponent = () => {
             </button>
             <button
               data-testid="intolerance-cancel"
-              onClick={() => setRoastrPersona(prev => ({ ...prev, showIntoleranceForm: false }))}
+              onClick={() => setRoastrPersona((prev) => ({ ...prev, showIntoleranceForm: false }))}
               disabled={roastrPersona.isSaving}
             >
               Cancelar
@@ -162,7 +166,7 @@ const RoastrPersonaTestComponent = () => {
         ) : (
           <button
             data-testid="intolerance-configure"
-            onClick={() => setRoastrPersona(prev => ({ ...prev, showIntoleranceForm: true }))}
+            onClick={() => setRoastrPersona((prev) => ({ ...prev, showIntoleranceForm: true }))}
           >
             Configurar
           </button>
@@ -177,7 +181,9 @@ const RoastrPersonaTestComponent = () => {
             <textarea
               data-testid="tolerance-textarea"
               value={roastrPersona.loQueMeDaIgual}
-              onChange={(e) => setRoastrPersona(prev => ({ ...prev, loQueMeDaIgual: e.target.value }))}
+              onChange={(e) =>
+                setRoastrPersona((prev) => ({ ...prev, loQueMeDaIgual: e.target.value }))
+              }
               placeholder="Escribe temas que otros considerarían ofensivos"
               maxLength={300}
             />
@@ -190,7 +196,7 @@ const RoastrPersonaTestComponent = () => {
             </button>
             <button
               data-testid="tolerance-cancel"
-              onClick={() => setRoastrPersona(prev => ({ ...prev, showToleranceForm: false }))}
+              onClick={() => setRoastrPersona((prev) => ({ ...prev, showToleranceForm: false }))}
               disabled={roastrPersona.isSaving}
             >
               Cancelar
@@ -199,7 +205,7 @@ const RoastrPersonaTestComponent = () => {
         ) : (
           <button
             data-testid="tolerance-configure"
-            onClick={() => setRoastrPersona(prev => ({ ...prev, showToleranceForm: true }))}
+            onClick={() => setRoastrPersona((prev) => ({ ...prev, showToleranceForm: true }))}
           >
             Configurar
           </button>
@@ -208,7 +214,7 @@ const RoastrPersonaTestComponent = () => {
 
       {/* Notifications */}
       <div data-testid="notifications">
-        {notifications.map(notification => (
+        {notifications.map((notification) => (
           <div key={notification.id} data-testid={`notification-${notification.type}`}>
             {notification.message}
           </div>
@@ -237,7 +243,9 @@ describe('Roastr Persona Functionality', () => {
       fireEvent.click(configureButton);
 
       expect(screen.getByTestId('identity-textarea')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/Escribe temas o aspectos que forman parte de quién eres/)).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText(/Escribe temas o aspectos que forman parte de quién eres/)
+      ).toBeInTheDocument();
     });
 
     it('should save identity field successfully', async () => {
@@ -475,7 +483,9 @@ describe('Roastr Persona Functionality', () => {
       fireEvent.click(configureButton);
 
       const textarea = screen.getByTestId('identity-textarea');
-      fireEvent.change(textarea, { target: { value: 'test <script>alert("xss")</script> content' } });
+      fireEvent.change(textarea, {
+        target: { value: 'test <script>alert("xss")</script> content' }
+      });
 
       const saveButton = screen.getByTestId('identity-save');
       fireEvent.click(saveButton);

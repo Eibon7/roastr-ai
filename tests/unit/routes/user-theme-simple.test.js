@@ -14,7 +14,12 @@ app.get('/api/user/settings/theme', (req, res) => {
       options: [
         { value: 'light', label: 'Claro', description: 'Tema claro siempre activo' },
         { value: 'dark', label: 'Oscuro', description: 'Tema oscuro siempre activo' },
-        { value: 'system', label: 'Sistema', description: 'Sigue la configuración del sistema', isDefault: true }
+        {
+          value: 'system',
+          label: 'Sistema',
+          description: 'Sigue la configuración del sistema',
+          isDefault: true
+        }
       ]
     }
   });
@@ -22,14 +27,14 @@ app.get('/api/user/settings/theme', (req, res) => {
 
 app.patch('/api/user/settings/theme', (req, res) => {
   const { theme } = req.body;
-  
+
   if (!theme || !['light', 'dark', 'system'].includes(theme)) {
     return res.status(400).json({
       success: false,
       error: 'Invalid theme. Must be one of: light, dark, system'
     });
   }
-  
+
   res.json({
     success: true,
     message: 'Theme setting updated successfully',
@@ -39,8 +44,7 @@ app.patch('/api/user/settings/theme', (req, res) => {
 
 describe('Simple Theme Settings Test', () => {
   it('should return theme settings', async () => {
-    const response = await request(app)
-      .get('/api/user/settings/theme');
+    const response = await request(app).get('/api/user/settings/theme');
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
@@ -48,9 +52,7 @@ describe('Simple Theme Settings Test', () => {
   });
 
   it('should update theme settings', async () => {
-    const response = await request(app)
-      .patch('/api/user/settings/theme')
-      .send({ theme: 'dark' });
+    const response = await request(app).patch('/api/user/settings/theme').send({ theme: 'dark' });
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

@@ -1,6 +1,6 @@
 /**
  * Security Middleware
- * 
+ *
  * Implements security hardening measures including helmet, CORS, rate limiting
  */
 
@@ -17,12 +17,18 @@ const helmetConfig = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers (onclick, etc.) for manual-approval.html
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://api.stripe.com", "https://api.polar.sh", "https://polar.sh", "wss:"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: [
+        "'self'",
+        'https://api.stripe.com',
+        'https://api.polar.sh',
+        'https://polar.sh',
+        'wss:'
+      ],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
@@ -44,7 +50,7 @@ const corsConfig = cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    
+
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
@@ -154,7 +160,7 @@ const validateInput = (req, res, next) => {
   // Basic XSS protection for string inputs
   const sanitizeString = (str) => {
     if (typeof str !== 'string') return str;
-    
+
     // Remove potentially dangerous HTML tags and scripts
     return str
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
@@ -166,7 +172,7 @@ const validateInput = (req, res, next) => {
   // Recursively sanitize object properties
   const sanitizeObject = (obj) => {
     if (typeof obj !== 'object' || obj === null) return obj;
-    
+
     for (const key in obj) {
       if (obj.hasOwnProperty(key)) {
         if (typeof obj[key] === 'string') {
@@ -188,7 +194,7 @@ const validateInput = (req, res, next) => {
   if (req.query) {
     const sanitizedQuery = sanitizeObject({ ...req.query });
     // Copy sanitized values back to original query object
-    Object.keys(req.query).forEach(key => {
+    Object.keys(req.query).forEach((key) => {
       if (sanitizedQuery.hasOwnProperty(key)) {
         // Use Object.defineProperty to safely update the property
         try {
@@ -221,7 +227,7 @@ const requestLogger = (req, res, next) => {
   }
 
   const startTime = Date.now();
-  
+
   // Log request
   logger.info('HTTP Request', {
     method: req.method,
@@ -233,9 +239,9 @@ const requestLogger = (req, res, next) => {
 
   // Log response when finished
   const originalSend = res.send;
-  res.send = function(data) {
+  res.send = function (data) {
     const duration = Date.now() - startTime;
-    
+
     logger.info('HTTP Response', {
       method: req.method,
       path: req.path,
@@ -265,7 +271,7 @@ const errorHandler = (error, req, res, next) => {
 
   // Don't expose internal errors in production
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   if (error.name === 'ValidationError') {
     return res.status(400).json({
       success: false,

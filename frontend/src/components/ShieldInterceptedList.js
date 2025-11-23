@@ -1,13 +1,13 @@
 /**
  * ShieldInterceptedList Component
- * 
+ *
  * Displays list of intercepted comments with filters, expandable content, and revert functionality
  */
 
 import React, { useState } from 'react';
 
-const ShieldInterceptedList = ({ 
-  interceptedItems = [], 
+const ShieldInterceptedList = ({
+  interceptedItems = [],
   onRevertAction,
   loading = false,
   onRefresh
@@ -26,19 +26,19 @@ const ShieldInterceptedList = ({
   ];
 
   // Filter items by category and time range
-  const filteredItems = interceptedItems.filter(item => {
+  const filteredItems = interceptedItems.filter((item) => {
     // Category filter
     const categoryMatch = selectedCategory === 'all' || item.reason === selectedCategory;
-    
+
     // Time range filter
     if (selectedTimeRange === 'all') {
       return categoryMatch;
     }
-    
+
     const itemDate = new Date(item.created_at);
     const now = new Date();
     let cutoffDate;
-    
+
     switch (selectedTimeRange) {
       case '7d':
         cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -52,7 +52,7 @@ const ShieldInterceptedList = ({
       default:
         return categoryMatch;
     }
-    
+
     return categoryMatch && itemDate >= cutoffDate;
   });
 
@@ -68,9 +68,9 @@ const ShieldInterceptedList = ({
 
   const handleRevertAction = async (actionId, reason = '') => {
     if (!onRevertAction) return;
-    
-    setRevertingActions(prev => new Set(prev).add(actionId));
-    
+
+    setRevertingActions((prev) => new Set(prev).add(actionId));
+
     try {
       await onRevertAction(actionId, reason);
       // Refresh the list if refresh handler is provided
@@ -80,7 +80,7 @@ const ShieldInterceptedList = ({
     } catch (error) {
       console.error('Failed to revert action:', error);
     } finally {
-      setRevertingActions(prev => {
+      setRevertingActions((prev) => {
         const newSet = new Set(prev);
         newSet.delete(actionId);
         return newSet;
@@ -171,7 +171,7 @@ const ShieldInterceptedList = ({
             Filtrar por categoría:
           </label>
           <div className="flex flex-wrap gap-2">
-            {categories.map(category => (
+            {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
@@ -184,7 +184,7 @@ const ShieldInterceptedList = ({
                 {category === 'all' ? 'Todos' : getCategoryLabel(category)}
                 {category !== 'all' && (
                   <span className="ml-1 text-xs">
-                    ({interceptedItems.filter(item => item.reason === category).length})
+                    ({interceptedItems.filter((item) => item.reason === category).length})
                   </span>
                 )}
               </button>
@@ -202,13 +202,13 @@ const ShieldInterceptedList = ({
             onChange={(e) => setSelectedTimeRange(e.target.value)}
             className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
-            {timeRanges.map(range => (
+            {timeRanges.map((range) => (
               <option key={range.value} value={range.value}>
                 {range.label}
               </option>
             ))}
           </select>
-          
+
           {/* Refresh Button */}
           {onRefresh && (
             <button
@@ -224,34 +224,28 @@ const ShieldInterceptedList = ({
 
       {/* List */}
       {loading && (
-        <div 
-          className="text-center py-8"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
+        <div className="text-center py-8" role="status" aria-live="polite" aria-busy="true">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] mb-4">
             <span className="sr-only">Cargando...</span>
           </div>
           <p className="text-gray-600 dark:text-gray-400">Cargando eventos de Shield...</p>
         </div>
       )}
-      
+
       {!loading && filteredItems.length === 0 && (
         <div className="text-center py-8">
           <div className="text-gray-400 dark:text-gray-500 text-4xl mb-2">🛡️</div>
           <p className="text-gray-500 dark:text-gray-400 text-sm">
-            {selectedCategory === 'all' 
+            {selectedCategory === 'all'
               ? 'No hay comentarios interceptados en este período'
-              : `No hay comentarios de tipo "${getCategoryLabel(selectedCategory)}" en este período`
-            }
+              : `No hay comentarios de tipo "${getCategoryLabel(selectedCategory)}" en este período`}
           </p>
         </div>
       )}
-      
+
       {!loading && filteredItems.length > 0 && (
         <div className="space-y-3">
-          {filteredItems.map(item => {
+          {filteredItems.map((item) => {
             const isExpanded = expandedItems.has(item.id);
             const isReverting = revertingActions.has(item.id);
             const isReverted = !!item.reverted_at;
@@ -262,8 +256,8 @@ const ShieldInterceptedList = ({
               <div
                 key={item.id}
                 className={`bg-white dark:bg-gray-800 border rounded-lg p-4 ${
-                  isReverted 
-                    ? 'border-gray-300 dark:border-gray-600 opacity-70' 
+                  isReverted
+                    ? 'border-gray-300 dark:border-gray-600 opacity-70'
                     : 'border-gray-200 dark:border-gray-700'
                 }`}
               >
@@ -321,17 +315,29 @@ const ShieldInterceptedList = ({
                   <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">ID de acción:</p>
-                        <p className="text-gray-600 dark:text-gray-400 font-mono text-xs">{item.id}</p>
+                        <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          ID de acción:
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 font-mono text-xs">
+                          {item.id}
+                        </p>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Hash del contenido:</p>
-                        <p className="text-gray-600 dark:text-gray-400 font-mono text-xs">{item.content_hash?.substring(0, 16)}...</p>
+                        <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Hash del contenido:
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 font-mono text-xs">
+                          {item.content_hash?.substring(0, 16)}...
+                        </p>
                       </div>
                       {isReverted && (
                         <div className="md:col-span-2">
-                          <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Revertido el:</p>
-                          <p className="text-gray-600 dark:text-gray-400">{formatDate(item.reverted_at)}</p>
+                          <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Revertido el:
+                          </p>
+                          <p className="text-gray-600 dark:text-gray-400">
+                            {formatDate(item.reverted_at)}
+                          </p>
                         </div>
                       )}
                     </div>

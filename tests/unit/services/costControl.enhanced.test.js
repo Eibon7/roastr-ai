@@ -1,6 +1,6 @@
 /**
  * Enhanced Cost Control Service Tests
- * 
+ *
  * Comprehensive tests to improve coverage from 5.63% to 80%+
  */
 
@@ -50,7 +50,7 @@ describe('CostControlService', () => {
     jest.clearAllMocks();
     process.env.SUPABASE_URL = 'http://test.supabase.co';
     process.env.SUPABASE_ANON_KEY = 'test-key';
-    
+
     costControl = new CostControlService();
     mockSupabase = costControl.supabase;
   });
@@ -66,8 +66,8 @@ describe('CostControlService', () => {
 
     it('should have all required plan configurations', () => {
       const expectedPlans = ['free', 'pro', 'creator_plus', 'custom'];
-      
-      expectedPlans.forEach(planId => {
+
+      expectedPlans.forEach((planId) => {
         expect(costControl.plans[planId]).toBeDefined();
         expect(costControl.plans[planId]).toHaveProperty('id', planId);
         expect(costControl.plans[planId]).toHaveProperty('name');
@@ -142,7 +142,7 @@ describe('CostControlService', () => {
 
     it('should handle database errors', async () => {
       const dbError = { message: 'Database connection failed' };
-      
+
       mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
@@ -339,7 +339,7 @@ describe('CostControlService', () => {
 
     it('should handle database errors during tracking', async () => {
       const dbError = { message: 'Insert failed' };
-      
+
       mockSupabase.from = jest.fn().mockReturnValue({
         upsert: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
@@ -434,7 +434,9 @@ describe('CostControlService', () => {
         })
       });
 
-      await expect(costControl.getUserSubscriptionPlan('user123')).rejects.toThrow('Connection timeout');
+      await expect(costControl.getUserSubscriptionPlan('user123')).rejects.toThrow(
+        'Connection timeout'
+      );
     });
   });
 
@@ -449,7 +451,7 @@ describe('CostControlService', () => {
 
       testCases.forEach(({ plan, expectedResponses, expectedIntegrations }) => {
         const limits = costControl.getPlanLimits(plan);
-        
+
         expect(limits).toEqual({
           monthlyResponsesLimit: expectedResponses,
           integrationsLimit: expectedIntegrations,
@@ -461,7 +463,7 @@ describe('CostControlService', () => {
 
     it('should return free plan limits for unknown plan', () => {
       const limits = costControl.getPlanLimits('unknown_plan');
-      
+
       expect(limits).toEqual({
         monthlyResponsesLimit: 100,
         integrationsLimit: 2,
@@ -494,7 +496,7 @@ describe('CostControlService', () => {
 
     it('should handle errors during reset', async () => {
       const dbError = { message: 'Update failed' };
-      
+
       mockSupabase.from = jest.fn().mockReturnValue({
         update: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({

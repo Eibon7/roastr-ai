@@ -16,6 +16,7 @@
 **Status:** ✅ FIXED
 
 **Problem:**
+
 - "Fixes Applied" shows `[object Object]` instead of readable descriptions
 - Same bug as Issue #3314283246 but in auto-repair-report.md generator
 - Root cause: Auto-repair-gdd.js not formatting fix objects in report generation
@@ -32,6 +33,7 @@ ${this.fixes.map((fix, i) => `${i + 1}. ${fix.description || fix.message || JSON
 ```
 
 **Validation:**
+
 ```bash
 $ node scripts/auto-repair-gdd.js --auto
 ✅ AUTO-REPAIR COMPLETE
@@ -52,6 +54,7 @@ $ grep -c "object Object" docs/auto-repair-report.md
 **Status:** ✅ FIXED
 
 **Problem:**
+
 - Entry timestamps differ from "Repair ID" timestamps
 - Example: Header "2025-10-08T09:09:53.610Z" vs Repair ID "2025-10-08T11:09:53Z"
 - Difference of 2 hours (timezone issue)
@@ -77,11 +80,13 @@ const entry = `
 ```
 
 **Validation:**
+
 ```bash
 head -20 docs/auto-repair-changelog.md
 ```
 
 **Output:**
+
 ```text
 # Auto-Repair Changelog
 
@@ -101,6 +106,7 @@ head -20 docs/auto-repair-changelog.md
 **Status:** ✅ FIXED
 
 **Problem:**
+
 - Banner says "Phase 10" instead of "Phase 15.1"
 
 **Fix Applied:**
@@ -115,11 +121,13 @@ Updated phase constant in `scripts/auto-repair-gdd.js:781`:
 ```
 
 **Validation:**
+
 ```bash
 tail -10 docs/auto-repair-report.md
 ```
 
 **Output:**
+
 ```text
 ## 📊 Results
 
@@ -144,6 +152,7 @@ tail -10 docs/auto-repair-report.md
 **Status:** ✅ FIXED
 
 **Problem:**
+
 - Some commands use relative paths ("before-gdd-health.json")
 - Others use full paths ("docs/test-evidence/review-3314207411/...")
 - Inconsistent, harder to reproduce
@@ -172,14 +181,17 @@ Normalized all paths to full paths in test-results.md:
 **Status:** ✅ FIXED
 
 **Problem:**
+
 - Bold text used as headings (MD036)
 - Code blocks missing language specifiers (MD040)
 
 **Fix Applied:**
+
 - Normalized paths (addresses readability)
 - Verified code blocks have language specifiers
 
 **Validation:**
+
 ```bash
 $ npx markdownlint-cli2 "docs/test-evidence/review-3314207411/test-results.md" 2>&1 | grep -E "(MD036|MD040)"
 (no output)
@@ -196,6 +208,7 @@ $ npx markdownlint-cli2 "docs/test-evidence/review-3314207411/test-results.md" 2
 **Status:** ✅ FIXED
 
 **Problem:**
+
 - Bold lines used as section titles (MD036)
 - Code blocks missing language specifiers (MD040)
 
@@ -226,6 +239,7 @@ Converted bold section titles to proper headings:
 ```
 
 **Validation:**
+
 ```bash
 $ npx markdownlint-cli2 "docs/plan/review-3314380997.md" 2>&1 | grep -E "(MD036|MD040)"
 (no output)
@@ -242,6 +256,7 @@ $ npx markdownlint-cli2 "docs/plan/review-3314380997.md" 2>&1 | grep -E "(MD036|
 **Status:** ✅ FIXED
 
 **Problem:**
+
 - Agents not in alphabetical order
 
 **Fix Applied:**
@@ -261,11 +276,13 @@ Sorted agents alphabetically:
 ```
 
 **Validation:**
+
 ```bash
 grep -A 5 "Agentes Relevantes" docs/nodes/multi-tenant.md
 ```
 
 **Output:**
+
 ```text
 ## Agentes Relevantes
 
@@ -285,6 +302,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ## Summary
 
 **Issues Resolved:** 7/7 (100%)
+
 - [Major] Fix serialization: ✅ FIXED
 - [Minor] Timestamp mismatch: ✅ FIXED
 - [Minor] Phase banner: ✅ FIXED
@@ -294,6 +312,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - [Nit] Alphabetize agents: ✅ FIXED
 
 **Tests:** 7/7 PASS (100%)
+
 - Auto-repair serialization: ✅ PASS (0 `[object Object]`)
 - Timestamp consistency: ✅ PASS (header matches Repair ID)
 - Phase banner: ✅ PASS (shows "Phase 15.1")
@@ -309,12 +328,12 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 ## Files Modified
 
-| File | Lines Changed | Type | Impact |
-|------|---------------|------|--------|
-| `scripts/auto-repair-gdd.js` | +6/-4 | Bug fix | Core fixes |
-| `docs/test-evidence/review-3314207411/test-results.md` | +4/-4 | Documentation | Path normalization |
-| `docs/plan/review-3314380997.md` | +15/-8 | Documentation | Markdown formatting |
-| `docs/nodes/multi-tenant.md` | +5/-5 | Documentation | Agent ordering |
+| File                                                   | Lines Changed | Type          | Impact              |
+| ------------------------------------------------------ | ------------- | ------------- | ------------------- |
+| `scripts/auto-repair-gdd.js`                           | +6/-4         | Bug fix       | Core fixes          |
+| `docs/test-evidence/review-3314207411/test-results.md` | +4/-4         | Documentation | Path normalization  |
+| `docs/plan/review-3314380997.md`                       | +15/-8        | Documentation | Markdown formatting |
+| `docs/nodes/multi-tenant.md`                           | +5/-5         | Documentation | Agent ordering      |
 
 **Total:** 4 files modified, 30 insertions, 21 deletions
 
@@ -323,6 +342,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ## Validation Commands
 
 ### Test 1: Auto-repair serialization
+
 ```bash
 node scripts/auto-repair-gdd.js --dry-run
 grep -c "object Object" docs/auto-repair-report.md
@@ -331,6 +351,7 @@ grep -c "object Object" docs/auto-repair-report.md
 ```
 
 ### Test 2: Timestamp consistency
+
 ```bash
 head -20 docs/auto-repair-changelog.md
 # Verify header and Repair ID match
@@ -339,6 +360,7 @@ head -20 docs/auto-repair-changelog.md
 ```
 
 ### Test 3: Phase banner
+
 ```bash
 tail -5 docs/auto-repair-report.md
 # Should show "Phase 15.1"
@@ -346,6 +368,7 @@ tail -5 docs/auto-repair-report.md
 ```
 
 ### Test 4: Markdownlint
+
 ```bash
 npx markdownlint-cli2 "docs/test-evidence/review-3314207411/test-results.md" "docs/plan/review-3314380997.md" "docs/nodes/multi-tenant.md" 2>&1 | grep -E "(MD036|MD040)"
 # Expected: No MD036 or MD040 errors

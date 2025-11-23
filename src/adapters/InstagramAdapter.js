@@ -10,15 +10,11 @@ class InstagramAdapter {
   constructor(config = {}) {
     this.platform = 'instagram';
     this.config = config;
-    this.capabilities = [
-      'hideComment',
-      'reportUser', 
-      'reportContent'
-    ];
-    
-    logger.info('InstagramAdapter initialized', { 
+    this.capabilities = ['hideComment', 'reportUser', 'reportContent'];
+
+    logger.info('InstagramAdapter initialized', {
       platform: this.platform,
-      capabilities: this.capabilities 
+      capabilities: this.capabilities
     });
   }
 
@@ -40,12 +36,15 @@ class InstagramAdapter {
    */
   async hideComment({ commentId, mediaId, organizationId }) {
     try {
-      logger.info('Hiding Instagram comment', sanitizeForLogging({ 
-        commentId, 
-        mediaId, 
-        organizationId,
-        platform: this.platform 
-      }));
+      logger.info(
+        'Hiding Instagram comment',
+        sanitizeForLogging({
+          commentId,
+          mediaId,
+          organizationId,
+          platform: this.platform
+        })
+      );
 
       // Instagram Basic Display API doesn't support hiding comments
       // This would require Instagram Business API with proper permissions
@@ -60,9 +59,9 @@ class InstagramAdapter {
         throw new Error(result?.error || 'Instagram service returned invalid response');
       }
 
-      logger.info('Instagram comment hidden successfully', { 
-        commentId, 
-        result 
+      logger.info('Instagram comment hidden successfully', {
+        commentId,
+        result
       });
 
       return {
@@ -73,10 +72,9 @@ class InstagramAdapter {
         mediaId,
         result
       };
-
     } catch (error) {
-      logger.error('Failed to hide Instagram comment', { 
-        commentId, 
+      logger.error('Failed to hide Instagram comment', {
+        commentId,
         mediaId,
         error: error.message,
         stack: error.stack
@@ -103,12 +101,15 @@ class InstagramAdapter {
    */
   async reportUser({ userId, reason, organizationId }) {
     try {
-      logger.info('Reporting Instagram user', sanitizeForLogging({ 
-        userId, 
-        reason, 
-        organizationId,
-        platform: this.platform 
-      }));
+      logger.info(
+        'Reporting Instagram user',
+        sanitizeForLogging({
+          userId,
+          reason,
+          organizationId,
+          platform: this.platform
+        })
+      );
 
       // Instagram API doesn't provide programmatic user reporting
       // This would typically redirect to Instagram's reporting interface
@@ -123,10 +124,10 @@ class InstagramAdapter {
         throw new Error(result?.error || 'Instagram service returned invalid response');
       }
 
-      logger.info('Instagram user reported successfully', { 
-        userId, 
+      logger.info('Instagram user reported successfully', {
+        userId,
         reason,
-        result 
+        result
       });
 
       return {
@@ -137,10 +138,9 @@ class InstagramAdapter {
         reason,
         result
       };
-
     } catch (error) {
-      logger.error('Failed to report Instagram user', { 
-        userId, 
+      logger.error('Failed to report Instagram user', {
+        userId,
         reason,
         error: error.message,
         stack: error.stack
@@ -168,13 +168,16 @@ class InstagramAdapter {
    */
   async reportContent({ contentId, contentType, reason, organizationId }) {
     try {
-      logger.info('Reporting Instagram content', sanitizeForLogging({ 
-        contentId, 
-        contentType,
-        reason, 
-        organizationId,
-        platform: this.platform 
-      }));
+      logger.info(
+        'Reporting Instagram content',
+        sanitizeForLogging({
+          contentId,
+          contentType,
+          reason,
+          organizationId,
+          platform: this.platform
+        })
+      );
 
       // Instagram API doesn't provide programmatic content reporting
       // This would typically redirect to Instagram's reporting interface
@@ -190,11 +193,11 @@ class InstagramAdapter {
         throw new Error(result?.error || 'Instagram service returned invalid response');
       }
 
-      logger.info('Instagram content reported successfully', { 
-        contentId, 
+      logger.info('Instagram content reported successfully', {
+        contentId,
         contentType,
         reason,
-        result 
+        result
       });
 
       return {
@@ -206,10 +209,9 @@ class InstagramAdapter {
         reason,
         result
       };
-
     } catch (error) {
-      logger.error('Failed to report Instagram content', { 
-        contentId, 
+      logger.error('Failed to report Instagram content', {
+        contentId,
         contentType,
         reason,
         error: error.message,
@@ -236,11 +238,14 @@ class InstagramAdapter {
    */
   async executeAction(action, params) {
     try {
-      logger.info('Executing Instagram Shield action', sanitizeForLogging({ 
-        action, 
-        params,
-        platform: this.platform 
-      }));
+      logger.info(
+        'Executing Instagram Shield action',
+        sanitizeForLogging({
+          action,
+          params,
+          platform: this.platform
+        })
+      );
 
       if (!this.capabilities.includes(action)) {
         throw new Error(`Action '${action}' not supported by ${this.platform} adapter`);
@@ -256,14 +261,16 @@ class InstagramAdapter {
         default:
           throw new Error(`Unknown action: ${action}`);
       }
-
     } catch (error) {
-      logger.error('Failed to execute Instagram Shield action', sanitizeForLogging({ 
-        action, 
-        params,
-        error: error.message,
-        stack: error.stack
-      }));
+      logger.error(
+        'Failed to execute Instagram Shield action',
+        sanitizeForLogging({
+          action,
+          params,
+          error: error.message,
+          stack: error.stack
+        })
+      );
 
       return {
         success: false,

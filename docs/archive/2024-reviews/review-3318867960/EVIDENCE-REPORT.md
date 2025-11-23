@@ -27,6 +27,7 @@ All 7 issues from CodeRabbit Review #3318867960 have been successfully resolved 
 **Problem:** Multiple H1 headings in spec.md
 
 **Fix:** Demoted second H1 to H2
+
 ```diff
 -# 📑 Spec – Flujo de comentarios Roastr (actualizado)
 +## 📑 Spec – Flujo de comentarios Roastr (actualizado)
@@ -44,6 +45,7 @@ All 7 issues from CodeRabbit Review #3318867960 have been successfully resolved 
 **Problem:** ALL !valid results pushed to violations array, including warnings
 
 **Root Cause:**
+
 ```javascript
 // BEFORE (WRONG)
 if (!valid) {
@@ -52,6 +54,7 @@ if (!valid) {
 ```
 
 **Fix:** Added reason check to only record true mismatches
+
 ```javascript
 // AFTER (CORRECT)
 if (!valid && result.reason === 'coverage_mismatch') {
@@ -60,11 +63,13 @@ if (!valid && result.reason === 'coverage_mismatch') {
 ```
 
 **Impact:**
+
 - Before: violations.coverage contained 13 entries (warnings + mismatches)
 - After: violations.coverage contains only true coverage mismatches
 - Warnings still detected and returned, just not in violations array
 
 **Test Coverage:**
+
 - Created: `tests/unit/scripts/gdd-cross-validator-issue-2.test.js` (158 lines)
 - Test Cases: 7 total, all passing ✅
 - Coverage: 100% of violation classification logic
@@ -80,11 +85,13 @@ if (!valid && result.reason === 'coverage_mismatch') {
 ### Issue #3: validate-gdd-cross.js:211-229 (MAJOR) ✅
 
 **Problem:** Incomplete fix in previous commit (09e28c6f)
+
 - ✅ mismatched counter excludes warnings
 - ❌ violations array still includes ALL !valid results
 - ❌ No skipped counter for transparency
 
 **Fix:** Restructured validation logic
+
 ```javascript
 // BEFORE
 if (!isWarning) {
@@ -102,17 +109,20 @@ if (!isWarning) {
 ```
 
 **Changes:**
+
 1. Line 35: Added `skipped: 0` to initialization
 2. Lines 219-231: Moved violations.push() inside !isWarning block
 3. Lines 228-230: Added else block with skipped counter
 4. Line 326: Added "Skipped (Warnings)" to markdown report
 
 **Impact:**
+
 - Before: violations array contained warnings
 - After: violations array only contains actionable mismatches
 - Skipped counter provides transparency for warnings
 
 **Test Coverage:**
+
 - Created: `tests/unit/scripts/validate-gdd-cross-issue-3.test.js` (246 lines)
 - Test Cases: 7 total, all passing ✅
 - Coverage: 100% of validation structure logic
@@ -128,12 +138,14 @@ if (!isWarning) {
 ### Issue #7: cross-validation-report.md Clarifications (MINOR) ✅
 
 **Problem:** Generated report confusing in two areas:
+
 1. Shows "✅ PASS" but lists violations (warnings, not failures)
 2. Empty "Detected" arrays with no explanation
 
 **Fix:** Added clarifying documentation
 
 **1. Coverage Validation Status:**
+
 - Created `getCoverageValidationStatus()` helper method (lines 286-304)
 - Returns appropriate status:
   - ⚠️ FAIL: when mismatched > 0 (true failures)
@@ -145,12 +157,14 @@ if (!isWarning) {
   > infrastructure-only changes or nodes without source files."
 
 **2. Dependency Validation:**
+
 - Added note when empty detected arrays found (lines 415-423):
   > "Empty 'Detected' arrays indicate no source files were found.
   > This is expected for infrastructure-only PRs or documentation changes.
   > Dependency validation requires source files to analyze require()/import."
 
 **Impact:**
+
 - Before: Confusing "PASS with violations" status
 - After: Clear "📊 NO DATA" status with explanatory notes
 - Reports are now self-documenting
@@ -167,6 +181,7 @@ if (!isWarning) {
 **Problem:** 4 bold pseudo-headings instead of proper markdown headings
 
 **Fix:** Converted to proper #### headings
+
 ```diff
 -**Infrastructure (4 files):**
 +#### Infrastructure (4 files)
@@ -199,6 +214,7 @@ if (!isWarning) {
 **Failing:** 0
 
 **Test Cases:**
+
 1. ✅ should add violation for true coverage_mismatch
 2. ✅ should NOT add violation for coverage_data_unavailable
 3. ✅ should NOT add violation for no_source_files_found
@@ -222,19 +238,16 @@ if (!isWarning) {
 **Test Cases:**
 
 **Skipped counter for warnings:**
+
 1. ✅ should increment skipped counter for coverage_data_unavailable
 2. ✅ should increment skipped counter for no_source_files_found
 3. ✅ should increment skipped counter for coverage_calculation_failed
 
-**Violations array for true mismatches:**
-4. ✅ should add violation and increment mismatched for coverage_mismatch
+**Violations array for true mismatches:** 4. ✅ should add violation and increment mismatched for coverage_mismatch
 
-**Mixed scenarios:**
-5. ✅ should correctly separate warnings and violations
-6. ✅ should not affect matched counter when coverage is valid
+**Mixed scenarios:** 5. ✅ should correctly separate warnings and violations 6. ✅ should not affect matched counter when coverage is valid
 
-**Initialization:**
-7. ✅ should initialize with skipped counter at 0
+**Initialization:** 7. ✅ should initialize with skipped counter at 0
 
 **Output:** See `test-issue-3-output.txt`
 
@@ -243,6 +256,7 @@ if (!isWarning) {
 ## Validation Commands Run
 
 ### Pre-Commit Validation
+
 ```bash
 # Markdownlint validation
 npx markdownlint-cli2 spec.md
@@ -259,6 +273,7 @@ node scripts/validate-gdd-cross.js --full
 ```
 
 ### Post-Implementation Validation
+
 ```bash
 # Full cross-validation
 node scripts/validate-gdd-cross.js --full
@@ -276,15 +291,18 @@ node scripts/validate-gdd-runtime.js --full
 ## Files Modified
 
 ### Source Code Changes
+
 1. `spec.md` - 5 locations (1 H1 → H2, 4 bold → ####)
 2. `scripts/gdd-cross-validator.js` - Lines 104-111 (reason check)
 3. `scripts/validate-gdd-cross.js` - Lines 35, 219-231, 286-304, 341, 348-351, 415-423
 
 ### Test Files Created
+
 1. `tests/unit/scripts/gdd-cross-validator-issue-2.test.js` (158 lines)
 2. `tests/unit/scripts/validate-gdd-cross-issue-3.test.js` (246 lines)
 
 ### Documentation Generated
+
 1. `docs/plan/review-3318867960.md` (589 lines - planning document)
 2. `docs/cross-validation-report.md` (updated with clarifications)
 3. `docs/test-evidence/review-3318867960/` (this report + test outputs)
@@ -296,12 +314,14 @@ node scripts/validate-gdd-runtime.js --full
 ## Quality Metrics
 
 ### Test Coverage
+
 - **Issue #2:** 100% coverage of violation classification logic
 - **Issue #3:** 100% coverage of validation structure logic
 - **Total Tests:** 14 (all passing ✅)
 - **Test Code:** 404 lines
 
 ### Code Quality
+
 - ✅ No markdownlint violations
 - ✅ No new eslint warnings
 - ✅ All pre-commit checks passing
@@ -309,6 +329,7 @@ node scripts/validate-gdd-runtime.js --full
 - ✅ Cross-validation reports self-documenting
 
 ### Architecture
+
 - ✅ SOLID principles maintained
 - ✅ Single Responsibility: Each fix addresses one issue
 - ✅ Open/Closed: Helper methods extend functionality without modifying core
@@ -326,6 +347,7 @@ node scripts/validate-gdd-runtime.js --full
 ```
 
 **All commits:**
+
 - ✅ Atomic (single responsibility)
 - ✅ Independently testable
 - ✅ Have comprehensive commit messages
@@ -350,11 +372,13 @@ node scripts/validate-gdd-runtime.js --full
 ## Performance Impact
 
 ### Cross-Validation Script
+
 - Execution time: ~300ms (no change)
 - Memory usage: Minimal (skipped counter is integer)
 - Report generation: +30ms (explanatory notes)
 
 ### Test Execution
+
 - Issue #2 tests: 0.333s
 - Issue #3 tests: 0.406s
 - Total test time: ~0.74s

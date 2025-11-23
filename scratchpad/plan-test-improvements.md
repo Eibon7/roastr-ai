@@ -11,6 +11,7 @@ After reviewing all worker test files, I've identified several key areas where m
 **Problem**: Mock services are often referenced without explicit top-level declarations, making tests harder to understand and maintain.
 
 **Examples Found**:
+
 - `FetchCommentsWorker.test.js`: References `mockTwitterService.fetchComments` and `mockYouTubeService.fetchComments` without prior declaration (lines 152, 210, etc.)
 - `AnalyzeToxicityWorker.test.js`: Explicitly declares mock services (lines 52-89) ✅ - Good pattern
 - `GenerateReplyWorker.test.js`: Uses `mockOpenAIClient` properly declared (lines 66-72) ✅
@@ -21,6 +22,7 @@ After reviewing all worker test files, I've identified several key areas where m
 **Problem**: Similar mock data structures are repeated across test files without centralization.
 
 **Examples**:
+
 - Mock comments with similar structures in `FetchCommentsWorker.test.js` (lines 136-150, 200-208, 252-265)
 - Mock analysis results in `AnalyzeToxicityWorker.test.js` (lines 153-164, 220-235)
 - Mock job structures repeated across all worker tests
@@ -31,8 +33,9 @@ After reviewing all worker test files, I've identified several key areas where m
 **Problem**: Most worker tests focus on constructor validation but lack comprehensive `processJob()` method testing.
 
 **Coverage Gaps**:
+
 - `FetchCommentsWorker`: Good coverage of `processJob()` ✅
-- `AnalyzeToxicityWorker`: Good coverage of `processJob()` ✅  
+- `AnalyzeToxicityWorker`: Good coverage of `processJob()` ✅
 - `GenerateReplyWorker`: Good coverage of `processJob()` ✅
 - `ShieldActionWorker`: Good coverage of `processJob()` ✅
 - `BaseWorker`: Excellent comprehensive coverage ✅
@@ -44,6 +47,7 @@ After reviewing all worker test files, I've identified several key areas where m
 **Problem**: Not all tests have consistent mock cleanup patterns.
 
 **Found**:
+
 - Most worker tests use `jest.clearAllMocks()` in `afterEach()` ✅
 - `BaseWorker.test.js` has comprehensive cleanup with `jest.restoreAllMocks()` ✅
 
@@ -52,10 +56,12 @@ After reviewing all worker test files, I've identified several key areas where m
 ### Phase 1: Explicit Mock Service Declarations
 
 **Files to Update**:
+
 - `tests/unit/workers/FetchCommentsWorker.test.js`
 - `tests/unit/workers/ShieldActionWorker.test.js`
 
 **Changes**:
+
 ```javascript
 // Add explicit declarations at top of test files
 const mockTwitterService = {
@@ -86,6 +92,7 @@ jest.mock('../../../src/services/youtubeService', () => mockYouTubeService);
 **Create**: `tests/utils/mocks.js`
 
 **Content**:
+
 ```javascript
 // Comment data generators
 export const createMockComment = (overrides = {}) => ({
@@ -131,6 +138,7 @@ export const createMockOrgSettings = (overrides = {}) => ({
 ### Phase 3: Enhanced Functional Testing
 
 **Focus Areas**:
+
 - Error handling edge cases
 - Platform-specific behavior differences
 - Cost control integration
@@ -138,16 +146,17 @@ export const createMockOrgSettings = (overrides = {}) => ({
 - Queue interaction patterns
 
 **Example additions**:
+
 ```javascript
 describe('processJob edge cases', () => {
   test('should handle malformed platform responses', async () => {
     // Test implementation
   });
-  
+
   test('should respect organization cost limits', async () => {
-    // Test implementation  
+    // Test implementation
   });
-  
+
   test('should handle queue service failures gracefully', async () => {
     // Test implementation
   });
@@ -157,6 +166,7 @@ describe('processJob edge cases', () => {
 ### Phase 4: Mock Isolation and Cleanup
 
 **Standardize cleanup patterns**:
+
 ```javascript
 afterEach(() => {
   jest.clearAllMocks();
@@ -176,7 +186,7 @@ afterAll(async () => {
    - Immediate impact on test readability and maintainability
    - Affects: `FetchCommentsWorker.test.js`, `ShieldActionWorker.test.js`
 
-2. **Medium Priority**: Shared mock data generator (Phase 2)  
+2. **Medium Priority**: Shared mock data generator (Phase 2)
    - Reduces duplication, improves consistency
    - Creates foundation for future test improvements
 
@@ -191,11 +201,13 @@ afterAll(async () => {
 ## Files to Modify
 
 ### Primary Targets
+
 - `tests/unit/workers/FetchCommentsWorker.test.js` - Add explicit service mocks
-- `tests/unit/workers/ShieldActionWorker.test.js` - Add explicit service mocks  
+- `tests/unit/workers/ShieldActionWorker.test.js` - Add explicit service mocks
 - `tests/utils/mocks.js` - Create new shared mock utilities
 
 ### Secondary (if time permits)
+
 - `tests/unit/workers/AnalyzeToxicityWorker.test.js` - Use shared mock data
 - `tests/unit/workers/GenerateReplyWorker.test.js` - Use shared mock data
 - `tests/unit/workers/WorkerManager.test.js` - Use shared mock data
@@ -203,7 +215,7 @@ afterAll(async () => {
 ## Expected Outcomes
 
 1. **Improved Readability**: All service mocks explicitly declared at file top
-2. **Reduced Duplication**: Shared mock generators eliminate repeated patterns  
+2. **Reduced Duplication**: Shared mock generators eliminate repeated patterns
 3. **Better Maintainability**: Central mock utilities easier to update
 4. **Enhanced Coverage**: More comprehensive functional and edge case testing
 5. **Consistent Patterns**: Standardized approach across all worker tests
@@ -215,7 +227,7 @@ afterAll(async () => {
 ENABLE_MOCK_MODE=true npx jest tests/unit/workers/FetchCommentsWorker.test.js --verbose
 ENABLE_MOCK_MODE=true npx jest tests/unit/workers/ShieldActionWorker.test.js --verbose
 
-# Test all workers  
+# Test all workers
 ENABLE_MOCK_MODE=true npx jest tests/unit/workers/ --verbose
 
 # Full test suite
@@ -226,7 +238,7 @@ ENABLE_MOCK_MODE=true npm run test:ci
 
 - [ ] All worker tests pass without modifications to functionality
 - [ ] No implicit mock service references remain
-- [ ] Mock data generators are reused across at least 3 test files  
+- [ ] Mock data generators are reused across at least 3 test files
 - [ ] Test coverage remains at or above current levels
 - [ ] All tests complete within reasonable time (< 30 seconds for worker suite)
 - [ ] No memory leaks or open handles in test runs

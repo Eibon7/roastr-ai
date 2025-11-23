@@ -69,19 +69,19 @@ try {
     };
 
     // Count covered statements
-    Object.values(data.s).forEach(v => {
+    Object.values(data.s).forEach((v) => {
       if (v > 0) fileSummary.statements.covered++;
     });
 
     // Count covered functions
-    Object.values(data.f || {}).forEach(v => {
+    Object.values(data.f || {}).forEach((v) => {
       if (v > 0) fileSummary.functions.covered++;
     });
 
     // Count branches
-    Object.values(data.b || {}).forEach(arr => {
+    Object.values(data.b || {}).forEach((arr) => {
       fileSummary.branches.total += arr.length;
-      arr.forEach(v => {
+      arr.forEach((v) => {
         if (v > 0) fileSummary.branches.covered++;
       });
     });
@@ -90,36 +90,43 @@ try {
     fileSummary.lines.covered = fileSummary.statements.covered;
 
     // Add percentages
-    ['lines', 'statements', 'functions', 'branches'].forEach(key => {
-      fileSummary[key].pct = fileSummary[key].total > 0
-        ? (fileSummary[key].covered / fileSummary[key].total) * 100
-        : 100;
+    ['lines', 'statements', 'functions', 'branches'].forEach((key) => {
+      fileSummary[key].pct =
+        fileSummary[key].total > 0
+          ? (fileSummary[key].covered / fileSummary[key].total) * 100
+          : 100;
     });
 
     summary[filePath] = fileSummary;
 
     // Add to totals
-    ['lines', 'statements', 'functions', 'branches'].forEach(key => {
+    ['lines', 'statements', 'functions', 'branches'].forEach((key) => {
       totals[key].total += fileSummary[key].total;
       totals[key].covered += fileSummary[key].covered;
     });
   }
 
   // Calculate total percentages
-  ['lines', 'statements', 'functions', 'branches'].forEach(key => {
-    totals[key].pct = totals[key].total > 0
-      ? (totals[key].covered / totals[key].total) * 100
-      : 100;
+  ['lines', 'statements', 'functions', 'branches'].forEach((key) => {
+    totals[key].pct = totals[key].total > 0 ? (totals[key].covered / totals[key].total) * 100 : 100;
   });
   totals.branchesTrue.pct = 100;
 
   logger.info(`✓ Processed ${fileCount} source files`);
   logger.info('');
   logger.info('Total Coverage:');
-  logger.info(`  Lines: ${totals.lines.pct.toFixed(2)}% (${totals.lines.covered}/${totals.lines.total})`);
-  logger.info(`  Statements: ${totals.statements.pct.toFixed(2)}% (${totals.statements.covered}/${totals.statements.total})`);
-  logger.info(`  Functions: ${totals.functions.pct.toFixed(2)}% (${totals.functions.covered}/${totals.functions.total})`);
-  logger.info(`  Branches: ${totals.branches.pct.toFixed(2)}% (${totals.branches.covered}/${totals.branches.total})`);
+  logger.info(
+    `  Lines: ${totals.lines.pct.toFixed(2)}% (${totals.lines.covered}/${totals.lines.total})`
+  );
+  logger.info(
+    `  Statements: ${totals.statements.pct.toFixed(2)}% (${totals.statements.covered}/${totals.statements.total})`
+  );
+  logger.info(
+    `  Functions: ${totals.functions.pct.toFixed(2)}% (${totals.functions.covered}/${totals.functions.total})`
+  );
+  logger.info(
+    `  Branches: ${totals.branches.pct.toFixed(2)}% (${totals.branches.covered}/${totals.branches.total})`
+  );
   logger.info('');
 
   // Ensure coverage directory exists
@@ -142,7 +149,6 @@ try {
     logger.error('');
     process.exit(1);
   }
-
 } catch (error) {
   logger.error('❌ Error regenerating coverage summary:', error.message);
   logger.error('');

@@ -11,6 +11,7 @@
 **Objective:** Create an interactive GDD Dashboard for real-time system monitoring and apply Snake Eater UI theme across entire backoffice.
 
 **Scope:**
+
 - **Phase 11:** Build React dashboard with 4 main components + real-time updates
 - **Phase 11.5:** Implement Snake Eater UI design system
 
@@ -152,6 +153,7 @@ src/
 ```
 
 **New API Endpoints:**
+
 ```javascript
 GET  /api/admin/gdd/status        → gdd-status.json
 GET  /api/admin/gdd/health        → gdd-health.json
@@ -170,6 +172,7 @@ CONNECT /admin/gdd               → Real-time updates on file changes
 ### Snake Eater UI Theme
 
 **Design Philosophy:**
+
 - **Metal Gear Solid inspired** (codec screen aesthetic)
 - **Dark-cyber palette** (deep blacks, neon accents)
 - **Monospace typography** (terminal/hacker vibe)
@@ -177,90 +180,92 @@ CONNECT /admin/gdd               → Real-time updates on file changes
 - **Minimal animations** (glitch effects on hover)
 
 **Color Palette:**
+
 ```typescript
 export const darkCyberTheme = {
   colors: {
     // Primary
-    primary: '#00FF41',        // Matrix green (healthy status)
-    secondary: '#FF006E',      // Neon pink (critical alerts)
+    primary: '#00FF41', // Matrix green (healthy status)
+    secondary: '#FF006E', // Neon pink (critical alerts)
 
     // Backgrounds
-    background: '#0A0E14',     // Deep space blue-black
-    surface: '#151921',        // Elevated surface (cards)
-    surfaceHover: '#1F2430',   // Hover state
+    background: '#0A0E14', // Deep space blue-black
+    surface: '#151921', // Elevated surface (cards)
+    surfaceHover: '#1F2430', // Hover state
 
     // Text
-    textPrimary: '#E0E0E0',    // Light gray
-    textSecondary: '#A0A0A0',  // Medium gray
-    textDisabled: '#606060',   // Dark gray
+    textPrimary: '#E0E0E0', // Light gray
+    textSecondary: '#A0A0A0', // Medium gray
+    textDisabled: '#606060', // Dark gray
 
     // Status colors
-    statusHealthy: '#00FF41',  // Green
-    statusWarning: '#FFB627',  // Amber
+    statusHealthy: '#00FF41', // Green
+    statusWarning: '#FFB627', // Amber
     statusCritical: '#FF3864', // Red
 
     // Accents
-    accentOrange: '#FF6B00',   // Alert orange
-    accentCyan: '#00D9FF',     // Info cyan
-    accentPurple: '#B86AFF',   // Special purple
+    accentOrange: '#FF6B00', // Alert orange
+    accentCyan: '#00D9FF', // Info cyan
+    accentPurple: '#B86AFF', // Special purple
 
     // UI elements
-    border: '#2A2F3A',         // Subtle borders
-    divider: '#1F2430',        // Dividers
-    shadow: 'rgba(0, 255, 65, 0.1)', // Green glow
+    border: '#2A2F3A', // Subtle borders
+    divider: '#1F2430', // Dividers
+    shadow: 'rgba(0, 255, 65, 0.1)' // Green glow
   },
 
   typography: {
     fontFamily: {
       primary: '"JetBrains Mono", "Fira Code", "Courier New", monospace',
-      secondary: '"Inter", -apple-system, sans-serif', // For body text
+      secondary: '"Inter", -apple-system, sans-serif' // For body text
     },
     fontSize: {
-      xs: '0.75rem',   // 12px
-      sm: '0.875rem',  // 14px
-      md: '1rem',      // 16px
-      lg: '1.125rem',  // 18px
-      xl: '1.25rem',   // 20px
+      xs: '0.75rem', // 12px
+      sm: '0.875rem', // 14px
+      md: '1rem', // 16px
+      lg: '1.125rem', // 18px
+      xl: '1.25rem', // 20px
       '2xl': '1.5rem', // 24px
-      '3xl': '2rem',   // 32px
+      '3xl': '2rem' // 32px
     },
     fontWeight: {
       normal: 400,
       medium: 500,
-      bold: 700,
+      bold: 700
     },
     lineHeight: {
       tight: 1.2,
       normal: 1.5,
-      relaxed: 1.75,
-    },
+      relaxed: 1.75
+    }
   },
 
   spacing: (factor: number) => `${0.25 * factor}rem`, // 4px base
 
   borderRadius: {
-    none: '0px',      // Default: sharp corners
-    sm: '2px',        // Subtle
-    md: '4px',        // Medium
-    lg: '8px',        // Large (rare)
+    none: '0px', // Default: sharp corners
+    sm: '2px', // Subtle
+    md: '4px', // Medium
+    lg: '8px' // Large (rare)
   },
 
   shadows: {
     sm: '0 2px 4px rgba(0, 255, 65, 0.05)',
     md: '0 4px 8px rgba(0, 255, 65, 0.1)',
     lg: '0 8px 16px rgba(0, 255, 65, 0.15)',
-    glow: '0 0 20px rgba(0, 255, 65, 0.3)', // Green glow effect
+    glow: '0 0 20px rgba(0, 255, 65, 0.3)' // Green glow effect
   },
 
   animations: {
     glitch: 'glitch 0.3s ease-in-out',
     fadeIn: 'fadeIn 0.2s ease-in',
-    slideIn: 'slideIn 0.3s ease-out',
-  },
+    slideIn: 'slideIn 0.3s ease-out'
+  }
 };
 ```
 
 **Typography Scale:**
+
 ```
 Headings:
 - H1: 32px / 2rem (Dashboard title)
@@ -278,6 +283,7 @@ Code:
 ```
 
 **Spacing System (8px grid):**
+
 ```
 0.5 = 4px  (tight spacing)
 1   = 8px  (base unit)
@@ -293,6 +299,7 @@ Code:
 #### 1. Dashboard Overview Component
 
 **Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │ 🟢 SYSTEM STATUS: HEALTHY                          │
@@ -311,12 +318,14 @@ Code:
 ```
 
 **Features:**
+
 - Live status indicator (auto-updates via WebSocket)
 - 4 metric cards (animated counters)
 - Activity timeline (last 10 events)
 - Click on metric → jump to relevant section
 
 **Interactions:**
+
 - Hover on status → tooltip with details
 - Click metric card → filter relevant nodes
 - Activity item click → open detailed view
@@ -324,6 +333,7 @@ Code:
 #### 2. Node Explorer Component
 
 **Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │ Search: [_____________] Filter: [All ▼] Sort: [▼]  │
@@ -336,6 +346,7 @@ Code:
 ```
 
 **Columns:**
+
 - Status icon (🟢🟡🔴)
 - Node name (clickable)
 - Health score (sortable)
@@ -344,6 +355,7 @@ Code:
 - Last updated (date)
 
 **Features:**
+
 - Search by node name
 - Filter by status (healthy/warning/critical)
 - Filter by coverage range (<50%, 50-80%, >80%)
@@ -356,6 +368,7 @@ Code:
   - Link to node .md file
 
 **Interactions:**
+
 - Search debounced (300ms)
 - Filter changes trigger re-render
 - Expanded row shows collapsible details
@@ -364,6 +377,7 @@ Code:
 #### 3. Dependency Graph Component
 
 **Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │ Controls: [Zoom +/-] [Reset] [Center] [Layout ▼]   │
@@ -386,6 +400,7 @@ Code:
 ```
 
 **Features:**
+
 - Force-directed graph layout (D3.js via react-force-graph)
 - Node color by health score:
   - Green: 80-100
@@ -398,6 +413,7 @@ Code:
 - Layout presets (force/circular/hierarchical)
 
 **Interactions:**
+
 - Click node → highlight dependencies (bold edges)
 - Hover node → tooltip with name, health, drift
 - Double-click node → jump to Node Explorer (expanded)
@@ -406,20 +422,21 @@ Code:
 - Click edge → show dependency details
 
 **Graph Data Structure:**
+
 ```typescript
 interface GraphNode {
-  id: string;           // Node name (e.g., "roast")
-  label: string;        // Display name
-  color: string;        // Based on health status
-  size: number;         // Based on connection count
-  health: number;       // Health score
-  drift: number;        // Drift risk
+  id: string; // Node name (e.g., "roast")
+  label: string; // Display name
+  color: string; // Based on health status
+  size: number; // Based on connection count
+  health: number; // Health score
+  drift: number; // Drift risk
   status: 'healthy' | 'warning' | 'critical';
 }
 
 interface GraphEdge {
-  source: string;       // Source node id
-  target: string;       // Target node id
+  source: string; // Source node id
+  target: string; // Target node id
   type: 'depends_on' | 'used_by';
 }
 ```
@@ -427,6 +444,7 @@ interface GraphEdge {
 #### 4. Reports Viewer Component
 
 **Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │ [ Validation ] [ Health ] [ Drift ] [ Auto-Repair ] │
@@ -451,6 +469,7 @@ interface GraphEdge {
 ```
 
 **Features:**
+
 - Tab navigation (4 report types)
 - Markdown rendering with syntax highlighting
 - Code blocks use JetBrains Mono
@@ -460,15 +479,17 @@ interface GraphEdge {
 - Timestamp of last update
 
 **Interactions:**
+
 - Click tab → load report
 - Click "Refresh" → fetch latest data
-- Click "Export JSON" → download gdd-*.json
+- Click "Export JSON" → download gdd-\*.json
 - Click "Export Markdown" → download .md file
 - Links in markdown → navigate to relevant section
 
 ### Responsive Design
 
 **Breakpoints:**
+
 ```
 Mobile:  320px - 768px
 Tablet:  768px - 1024px
@@ -476,12 +497,14 @@ Desktop: 1024px+
 ```
 
 **Mobile Adaptations:**
+
 - Overview: Stack metric cards vertically
 - Node Explorer: Hide coverage column, make rows tappable
 - Dependency Graph: Simplified view (list instead of graph)
 - Reports Viewer: Full-width tabs, horizontal scroll
 
 **Desktop Optimizations:**
+
 - Overview: 4 cards in row
 - Node Explorer: All columns visible, hover effects
 - Dependency Graph: Full interactive graph
@@ -499,6 +522,7 @@ Desktop: 1024px+
 #### Tasks:
 
 1. **Install Frontend Dependencies**
+
    ```bash
    # Core React + TypeScript
    npm install react@18.2.0 react-dom@18.2.0
@@ -540,6 +564,7 @@ Desktop: 1024px+
 2. **Create Build Configuration**
 
    **vite.config.js:**
+
    ```javascript
    import { defineConfig } from 'vite';
    import react from '@vitejs/plugin-react';
@@ -551,21 +576,21 @@ Desktop: 1024px+
        alias: {
          '@': path.resolve(__dirname, './src'),
          '@admin': path.resolve(__dirname, './src/admin'),
-         '@components': path.resolve(__dirname, './src/components'),
-       },
+         '@components': path.resolve(__dirname, './src/components')
+       }
      },
      server: {
        port: 3000,
        proxy: {
          '/api': {
            target: 'http://localhost:3001',
-           changeOrigin: true,
+           changeOrigin: true
          },
          '/socket.io': {
            target: 'http://localhost:3001',
-           ws: true,
-         },
-       },
+           ws: true
+         }
+       }
      },
      build: {
        outDir: 'dist/admin',
@@ -574,15 +599,16 @@ Desktop: 1024px+
          output: {
            manualChunks: {
              'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-             'd3-vendor': ['d3', 'react-force-graph'],
-           },
-         },
-       },
-     },
+             'd3-vendor': ['d3', 'react-force-graph']
+           }
+         }
+       }
+     }
    });
    ```
 
    **tsconfig.json:**
+
    ```json
    {
      "compilerOptions": {
@@ -620,6 +646,7 @@ Desktop: 1024px+
    ```
 
 3. **Create Project Structure**
+
    ```bash
    mkdir -p src/admin/gdd-dashboard/{components/{Overview,NodeExplorer,DependencyGraph,ReportsViewer},hooks,services,types}
    mkdir -p src/admin/layouts
@@ -631,6 +658,7 @@ Desktop: 1024px+
 4. **Setup Backend API Routes**
 
    **src/api/admin/gdd.routes.js:**
+
    ```javascript
    const express = require('express');
    const router = express.Router();
@@ -691,6 +719,7 @@ Desktop: 1024px+
    ```
 
    **src/services/gddDataService.js:**
+
    ```javascript
    const fs = require('fs').promises;
    const path = require('path');
@@ -702,34 +731,22 @@ Desktop: 1024px+
      }
 
      async getStatus() {
-       const data = await fs.readFile(
-         path.join(this.rootPath, 'gdd-status.json'),
-         'utf-8'
-       );
+       const data = await fs.readFile(path.join(this.rootPath, 'gdd-status.json'), 'utf-8');
        return JSON.parse(data);
      }
 
      async getHealth() {
-       const data = await fs.readFile(
-         path.join(this.rootPath, 'gdd-health.json'),
-         'utf-8'
-       );
+       const data = await fs.readFile(path.join(this.rootPath, 'gdd-health.json'), 'utf-8');
        return JSON.parse(data);
      }
 
      async getDrift() {
-       const data = await fs.readFile(
-         path.join(this.rootPath, 'gdd-drift.json'),
-         'utf-8'
-       );
+       const data = await fs.readFile(path.join(this.rootPath, 'gdd-drift.json'), 'utf-8');
        return JSON.parse(data);
      }
 
      async getSystemMap() {
-       const data = await fs.readFile(
-         path.join(this.rootPath, 'docs/system-map.yaml'),
-         'utf-8'
-       );
+       const data = await fs.readFile(path.join(this.rootPath, 'docs/system-map.yaml'), 'utf-8');
        return yaml.parse(data);
      }
 
@@ -755,16 +772,13 @@ Desktop: 1024px+
            break;
        }
 
-       const content = await fs.readFile(
-         path.join(this.rootPath, 'docs', filename),
-         'utf-8'
-       );
+       const content = await fs.readFile(path.join(this.rootPath, 'docs', filename), 'utf-8');
 
        return {
          type,
          filename,
          content,
-         generated_at: new Date().toISOString(),
+         generated_at: new Date().toISOString()
        };
      }
    }
@@ -775,6 +789,7 @@ Desktop: 1024px+
 5. **Setup WebSocket for Real-time Updates**
 
    **src/api/admin/gdd.socket.js:**
+
    ```javascript
    const chokidar = require('chokidar');
    const gddDataService = require('../../services/gddDataService');
@@ -786,17 +801,20 @@ Desktop: 1024px+
        console.log('GDD Dashboard client connected:', socket.id);
 
        // Watch GDD files
-       const watcher = chokidar.watch([
-         'gdd-*.json',
-         'docs/system-*.md',
-         'docs/drift-*.md',
-         'docs/auto-repair-*.md',
-         'docs/nodes/*.md',
-         'docs/system-map.yaml',
-       ], {
-         persistent: true,
-         ignoreInitial: true,
-       });
+       const watcher = chokidar.watch(
+         [
+           'gdd-*.json',
+           'docs/system-*.md',
+           'docs/drift-*.md',
+           'docs/auto-repair-*.md',
+           'docs/nodes/*.md',
+           'docs/system-map.yaml'
+         ],
+         {
+           persistent: true,
+           ignoreInitial: true
+         }
+       );
 
        watcher.on('change', async (filepath) => {
          console.log(`GDD file changed: ${filepath}`);
@@ -829,7 +847,7 @@ Desktop: 1024px+
              type: updateType,
              filepath,
              data,
-             timestamp: new Date().toISOString(),
+             timestamp: new Date().toISOString()
            });
          } catch (error) {
            console.error('Error processing GDD update:', error);
@@ -849,6 +867,7 @@ Desktop: 1024px+
    ```
 
    **Update src/index.js (main server):**
+
    ```javascript
    // ... existing imports
    const http = require('http');
@@ -863,8 +882,8 @@ Desktop: 1024px+
    const io = new Server(server, {
      cors: {
        origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-       methods: ['GET', 'POST'],
-     },
+       methods: ['GET', 'POST']
+     }
    });
 
    // Setup GDD routes
@@ -894,6 +913,7 @@ Desktop: 1024px+
    ```
 
 **Deliverables:**
+
 - ✅ All dependencies installed
 - ✅ Build configuration created (vite.config.js, tsconfig.json)
 - ✅ Project structure created
@@ -902,6 +922,7 @@ Desktop: 1024px+
 - ✅ npm scripts updated
 
 **Success Criteria:**
+
 - `npm run dev:frontend` starts Vite dev server
 - `npm run dev:backend` starts Express server
 - `/api/admin/gdd/*` endpoints return data
@@ -917,6 +938,7 @@ Desktop: 1024px+
 #### Tasks:
 
 1. **Research Snake Eater UI Package**
+
    ```bash
    # Check if package exists
    npm search snake-eater-ui
@@ -928,6 +950,7 @@ Desktop: 1024px+
 2. **Create Theme System**
 
    **src/admin/theme/darkCyberTheme.ts:**
+
    ```typescript
    export interface Theme {
      colors: {
@@ -1012,12 +1035,12 @@ Desktop: 1024px+
        accentPurple: '#B86AFF',
        border: '#2A2F3A',
        divider: '#1F2430',
-       shadow: 'rgba(0, 255, 65, 0.1)',
+       shadow: 'rgba(0, 255, 65, 0.1)'
      },
      typography: {
        fontFamily: {
          primary: '"JetBrains Mono", "Fira Code", "Courier New", monospace',
-         secondary: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+         secondary: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif'
        },
        fontSize: {
          xs: '0.75rem',
@@ -1026,41 +1049,42 @@ Desktop: 1024px+
          lg: '1.125rem',
          xl: '1.25rem',
          '2xl': '1.5rem',
-         '3xl': '2rem',
+         '3xl': '2rem'
        },
        fontWeight: {
          normal: 400,
          medium: 500,
-         bold: 700,
+         bold: 700
        },
        lineHeight: {
          tight: 1.2,
          normal: 1.5,
-         relaxed: 1.75,
-       },
+         relaxed: 1.75
+       }
      },
      spacing: (factor: number) => `${0.25 * factor}rem`,
      borderRadius: {
        none: '0px',
        sm: '2px',
        md: '4px',
-       lg: '8px',
+       lg: '8px'
      },
      shadows: {
        sm: '0 2px 4px rgba(0, 255, 65, 0.05)',
        md: '0 4px 8px rgba(0, 255, 65, 0.1)',
        lg: '0 8px 16px rgba(0, 255, 65, 0.15)',
-       glow: '0 0 20px rgba(0, 255, 65, 0.3)',
+       glow: '0 0 20px rgba(0, 255, 65, 0.3)'
      },
      animations: {
        glitch: 'glitch 0.3s ease-in-out',
        fadeIn: 'fadeIn 0.2s ease-in',
-       slideIn: 'slideIn 0.3s ease-out',
-     },
+       slideIn: 'slideIn 0.3s ease-out'
+     }
    };
    ```
 
    **src/admin/theme/SnakeEaterThemeProvider.tsx:**
+
    ```typescript
    import React from 'react';
    import { ThemeProvider as StyledThemeProvider } from 'styled-components';
@@ -1082,19 +1106,20 @@ Desktop: 1024px+
    ```
 
    **src/admin/theme/globalStyles.ts:**
+
    ```typescript
    import { createGlobalStyle } from 'styled-components';
    import { Theme } from './darkCyberTheme';
 
    const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;700&display=swap');
-
+   
      * {
        margin: 0;
        padding: 0;
        box-sizing: border-box;
      }
-
+   
      html, body {
        width: 100%;
        height: 100%;
@@ -1106,41 +1131,41 @@ Desktop: 1024px+
        -webkit-font-smoothing: antialiased;
        -moz-osx-font-smoothing: grayscale;
      }
-
+   
      #root {
        width: 100%;
        height: 100%;
      }
-
+   
      code, pre {
        font-family: ${({ theme }) => theme.typography.fontFamily.primary};
      }
-
+   
      /* Scrollbar styling */
      ::-webkit-scrollbar {
        width: 8px;
        height: 8px;
      }
-
+   
      ::-webkit-scrollbar-track {
        background: ${({ theme }) => theme.colors.background};
      }
-
+   
      ::-webkit-scrollbar-thumb {
        background: ${({ theme }) => theme.colors.border};
        border-radius: ${({ theme }) => theme.borderRadius.sm};
      }
-
+   
      ::-webkit-scrollbar-thumb:hover {
        background: ${({ theme }) => theme.colors.primary};
      }
-
+   
      /* Selection */
      ::selection {
        background: ${({ theme }) => theme.colors.primary};
        color: ${({ theme }) => theme.colors.background};
      }
-
+   
      /* Animations */
      @keyframes glitch {
        0%, 100% { transform: translate(0); }
@@ -1148,12 +1173,12 @@ Desktop: 1024px+
        50% { transform: translate(2px, -2px); }
        75% { transform: translate(-2px, -2px); }
      }
-
+   
      @keyframes fadeIn {
        from { opacity: 0; }
        to { opacity: 1; }
      }
-
+   
      @keyframes slideIn {
        from {
          opacity: 0;
@@ -1164,7 +1189,7 @@ Desktop: 1024px+
          transform: translateY(0);
        }
      }
-
+   
      /* Focus styles */
      *:focus-visible {
        outline: 2px solid ${({ theme }) => theme.colors.primary};
@@ -1178,6 +1203,7 @@ Desktop: 1024px+
 3. **Create Base UI Components**
 
    **src/components/shared/Button.tsx:**
+
    ```typescript
    import styled from 'styled-components';
 
@@ -1191,24 +1217,30 @@ Desktop: 1024px+
      font-family: ${({ theme }) => theme.typography.fontFamily.primary};
      font-size: ${({ theme, size }) => {
        switch (size) {
-         case 'sm': return theme.typography.fontSize.sm;
-         case 'lg': return theme.typography.fontSize.lg;
-         default: return theme.typography.fontSize.md;
+         case 'sm':
+           return theme.typography.fontSize.sm;
+         case 'lg':
+           return theme.typography.fontSize.lg;
+         default:
+           return theme.typography.fontSize.md;
        }
      }};
      font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
      padding: ${({ theme, size }) => {
        switch (size) {
-         case 'sm': return `${theme.spacing(1.5)} ${theme.spacing(3)}`;
-         case 'lg': return `${theme.spacing(3)} ${theme.spacing(6)}`;
-         default: return `${theme.spacing(2)} ${theme.spacing(4)}`;
+         case 'sm':
+           return `${theme.spacing(1.5)} ${theme.spacing(3)}`;
+         case 'lg':
+           return `${theme.spacing(3)} ${theme.spacing(6)}`;
+         default:
+           return `${theme.spacing(2)} ${theme.spacing(4)}`;
        }
      }};
      border: none;
      border-radius: ${({ theme }) => theme.borderRadius.sm};
      cursor: pointer;
      transition: all 0.2s ease;
-     width: ${({ fullWidth }) => fullWidth ? '100%' : 'auto'};
+     width: ${({ fullWidth }) => (fullWidth ? '100%' : 'auto')};
 
      ${({ theme, variant }) => {
        switch (variant) {
@@ -1217,12 +1249,12 @@ Desktop: 1024px+
              background: ${theme.colors.primary};
              color: ${theme.colors.background};
              box-shadow: ${theme.shadows.sm};
-
+   
              &:hover {
                box-shadow: ${theme.shadows.glow};
                transform: translateY(-1px);
              }
-
+   
              &:active {
                transform: translateY(0);
              }
@@ -1232,7 +1264,7 @@ Desktop: 1024px+
              background: ${theme.colors.surface};
              color: ${theme.colors.textPrimary};
              border: 1px solid ${theme.colors.border};
-
+   
              &:hover {
                background: ${theme.colors.surfaceHover};
                border-color: ${theme.colors.primary};
@@ -1242,7 +1274,7 @@ Desktop: 1024px+
            return `
              background: transparent;
              color: ${theme.colors.textPrimary};
-
+   
              &:hover {
                background: ${theme.colors.surface};
              }
@@ -1251,7 +1283,7 @@ Desktop: 1024px+
            return `
              background: ${theme.colors.statusCritical};
              color: ${theme.colors.textPrimary};
-
+   
              &:hover {
                box-shadow: 0 0 20px rgba(255, 56, 100, 0.3);
              }
@@ -1277,6 +1309,7 @@ Desktop: 1024px+
    ```
 
    **src/components/shared/Card.tsx:**
+
    ```typescript
    import styled from 'styled-components';
 
@@ -1294,7 +1327,9 @@ Desktop: 1024px+
      box-shadow: ${({ theme, elevation = 'md' }) => theme.shadows[elevation]};
      transition: all 0.2s ease;
 
-     ${({ glowOnHover, theme }) => glowOnHover && `
+     ${({ glowOnHover, theme }) =>
+       glowOnHover &&
+       `
        &:hover {
          box-shadow: ${theme.shadows.glow};
          border-color: ${theme.colors.primary};
@@ -1325,6 +1360,7 @@ Desktop: 1024px+
    ```
 
    **src/components/shared/StatusBadge.tsx:**
+
    ```typescript
    import styled from 'styled-components';
 
@@ -1385,6 +1421,7 @@ Desktop: 1024px+
    (See separate file - ~300 lines of component usage, color palette, typography, spacing guidelines)
 
 **Deliverables:**
+
 - ✅ Theme system implemented (darkCyberTheme.ts)
 - ✅ ThemeProvider wrapper created
 - ✅ Global styles configured
@@ -1392,6 +1429,7 @@ Desktop: 1024px+
 - ✅ UI guidelines documented
 
 **Success Criteria:**
+
 - Theme applies globally
 - Components use theme tokens
 - Dark-cyber aesthetic visible
@@ -1465,12 +1503,14 @@ Following CLAUDE.md, this implementation requires coordination between multiple 
 ### Validation Checkpoints
 
 **After each agent completes:**
+
 - [ ] Output files created in correct locations
 - [ ] GDD health score maintained (≥95)
 - [ ] No breaking changes to existing nodes
 - [ ] Documentation updated
 
 **Before final commit:**
+
 - [ ] All tests passing (unit + integration + E2E)
 - [ ] Playwright visual evidence generated
 - [ ] UI guidelines complete

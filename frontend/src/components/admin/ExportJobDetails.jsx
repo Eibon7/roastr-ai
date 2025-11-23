@@ -49,11 +49,11 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
   const loadExportDetails = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`/api/admin/exports/${exportId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -77,13 +77,13 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
     }
 
     setDownloading(true);
-    
+
     try {
       const response = await fetch(
         `/api/admin/exports/${exportId}/download/${exportJob.download_token}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         }
       );
@@ -119,27 +119,27 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
 
   const formatFileSize = (sizeInBytes) => {
     if (!sizeInBytes) return 'N/A';
-    
+
     const units = ['B', 'KB', 'MB', 'GB'];
     let size = sizeInBytes;
     let unitIndex = 0;
-    
+
     while (size >= 1024 && unitIndex < units.length - 1) {
       size /= 1024;
       unitIndex++;
     }
-    
+
     return `${size.toFixed(1)} ${units[unitIndex]}`;
   };
 
   const formatDuration = (startTime, endTime) => {
     if (!startTime || !endTime) return 'N/A';
-    
+
     const duration = new Date(endTime) - new Date(startTime);
     const seconds = Math.floor(duration / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
     } else if (minutes > 0) {
@@ -150,10 +150,10 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: { minHeight: '60vh' }
@@ -181,7 +181,7 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
 
       <DialogContent>
         {loading && <LinearProgress sx={{ mb: 2 }} />}
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -197,48 +197,38 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
                   <InfoIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                   Status & Basic Info
                 </Typography>
-                
+
                 <List dense>
                   <ListItem>
-                    <ListItemText 
-                      primary="Status" 
+                    <ListItemText
+                      primary="Status"
                       secondary={<JobStatusBadge status={exportJob.status} />}
                     />
                   </ListItem>
-                  
+
                   <ListItem>
-                    <ListItemText 
-                      primary="Export Type" 
+                    <ListItemText
+                      primary="Export Type"
                       secondary={
-                        <Chip 
-                          label={exportJob.export_type} 
-                          size="small" 
-                          variant="outlined"
-                        />
+                        <Chip label={exportJob.export_type} size="small" variant="outlined" />
                       }
                     />
                   </ListItem>
-                  
+
                   <ListItem>
-                    <ListItemText 
-                      primary="Format" 
+                    <ListItemText
+                      primary="Format"
                       secondary={exportJob.export_format.toUpperCase()}
                     />
                   </ListItem>
-                  
+
                   <ListItem>
-                    <ListItemText 
-                      primary="Organization" 
-                      secondary={exportJob.organization_id}
-                    />
+                    <ListItemText primary="Organization" secondary={exportJob.organization_id} />
                   </ListItem>
-                  
+
                   {exportJob.requested_by && (
                     <ListItem>
-                      <ListItemText 
-                        primary="Requested By" 
-                        secondary={exportJob.requested_by}
-                      />
+                      <ListItemText primary="Requested By" secondary={exportJob.requested_by} />
                     </ListItem>
                   )}
                 </List>
@@ -252,44 +242,44 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
                   <ScheduleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                   Timing Information
                 </Typography>
-                
+
                 <List dense>
                   <ListItem>
-                    <ListItemText 
-                      primary="Created" 
+                    <ListItemText
+                      primary="Created"
                       secondary={new Date(exportJob.created_at).toLocaleString()}
                     />
                   </ListItem>
-                  
+
                   {exportJob.started_at && (
                     <ListItem>
-                      <ListItemText 
-                        primary="Started" 
+                      <ListItemText
+                        primary="Started"
                         secondary={new Date(exportJob.started_at).toLocaleString()}
                       />
                     </ListItem>
                   )}
-                  
+
                   {exportJob.completed_at && (
                     <ListItem>
-                      <ListItemText 
-                        primary="Completed" 
+                      <ListItemText
+                        primary="Completed"
                         secondary={new Date(exportJob.completed_at).toLocaleString()}
                       />
                     </ListItem>
                   )}
-                  
+
                   <ListItem>
-                    <ListItemText 
-                      primary="Processing Time" 
+                    <ListItemText
+                      primary="Processing Time"
                       secondary={formatDuration(exportJob.started_at, exportJob.completed_at)}
                     />
                   </ListItem>
-                  
+
                   {exportJob.expires_at && (
                     <ListItem>
-                      <ListItemText 
-                        primary="Download Expires" 
+                      <ListItemText
+                        primary="Download Expires"
                         secondary={new Date(exportJob.expires_at).toLocaleString()}
                       />
                     </ListItem>
@@ -305,31 +295,34 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
                   <StorageIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                   File Information
                 </Typography>
-                
+
                 <List dense>
                   <ListItem>
-                    <ListItemText 
-                      primary="File Size" 
+                    <ListItemText
+                      primary="File Size"
                       secondary={formatFileSize(exportJob.file_size)}
                     />
                   </ListItem>
-                  
+
                   <ListItem>
-                    <ListItemText 
-                      primary="Record Count" 
+                    <ListItemText
+                      primary="Record Count"
                       secondary={exportJob.record_count?.toLocaleString() || 'N/A'}
                     />
                   </ListItem>
-                  
+
                   {exportJob.s3_key && (
                     <ListItem>
-                      <ListItemText 
-                        primary="S3 Location" 
+                      <ListItemText
+                        primary="S3 Location"
                         secondary={
-                          <Typography variant="body2" sx={{ 
-                            fontFamily: 'monospace', 
-                            wordBreak: 'break-all' 
-                          }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: 'monospace',
+                              wordBreak: 'break-all'
+                            }}
+                          >
                             {exportJob.s3_key}
                           </Typography>
                         }
@@ -347,33 +340,30 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
                   <SecurityIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                   Security & Compliance
                 </Typography>
-                
+
                 <List dense>
                   <ListItem>
-                    <ListItemText 
-                      primary="Encryption" 
+                    <ListItemText
+                      primary="Encryption"
                       secondary={exportJob.encryption_used ? 'AES-256' : 'None'}
                     />
                   </ListItem>
-                  
+
                   <ListItem>
-                    <ListItemText 
-                      primary="Download Available" 
+                    <ListItemText
+                      primary="Download Available"
                       secondary={exportJob.download_token ? 'Yes' : 'No'}
                     />
                   </ListItem>
-                  
+
                   <ListItem>
-                    <ListItemText 
-                      primary="Access Count" 
-                      secondary={exportJob.access_count || 0}
-                    />
+                    <ListItemText primary="Access Count" secondary={exportJob.access_count || 0} />
                   </ListItem>
-                  
+
                   {exportJob.last_accessed_at && (
                     <ListItem>
-                      <ListItemText 
-                        primary="Last Accessed" 
+                      <ListItemText
+                        primary="Last Accessed"
                         secondary={new Date(exportJob.last_accessed_at).toLocaleString()}
                       />
                     </ListItem>
@@ -389,9 +379,7 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
                   <Typography variant="subtitle2" gutterBottom>
                     Export Failed
                   </Typography>
-                  <Typography variant="body2">
-                    {exportJob.error_message}
-                  </Typography>
+                  <Typography variant="body2">{exportJob.error_message}</Typography>
                 </Alert>
               </Grid>
             )}
@@ -404,9 +392,15 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
                     Export Date Range
                   </Typography>
                   <Typography variant="body2">
-                    From: {exportJob.date_from ? new Date(exportJob.date_from).toLocaleDateString() : 'All time'}
+                    From:{' '}
+                    {exportJob.date_from
+                      ? new Date(exportJob.date_from).toLocaleDateString()
+                      : 'All time'}
                     <br />
-                    To: {exportJob.date_to ? new Date(exportJob.date_to).toLocaleDateString() : 'All time'}
+                    To:{' '}
+                    {exportJob.date_to
+                      ? new Date(exportJob.date_to).toLocaleDateString()
+                      : 'All time'}
                   </Typography>
                 </Paper>
               </Grid>
@@ -416,10 +410,8 @@ const ExportJobDetails = ({ open, onClose, exportId, onRefresh }) => {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>
-          Close
-        </Button>
-        
+        <Button onClick={onClose}>Close</Button>
+
         {exportJob?.status === 'completed' && exportJob?.download_token && (
           <Button
             onClick={handleDownload}

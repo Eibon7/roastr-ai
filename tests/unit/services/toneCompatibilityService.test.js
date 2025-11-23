@@ -1,6 +1,6 @@
 /**
  * Tests for Tone Compatibility Service (Issue #872)
- * 
+ *
  * Ensures backward compatibility during migration from legacy
  * (humor_type + intensity_level) to new 3-tone system
  */
@@ -135,7 +135,7 @@ describe('ToneCompatibilityService - Issue #872', () => {
       const normalized = toneCompatibilityService.normalizeConfig({
         tone: 'flanders',
         humor_type: 'direct', // Conflicting
-        intensity_level: 5    // Conflicting
+        intensity_level: 5 // Conflicting
       });
 
       // Should use explicit tone, not legacy
@@ -233,4 +233,3 @@ describe('ToneCompatibilityService - Issue #872', () => {
     });
   });
 });
-

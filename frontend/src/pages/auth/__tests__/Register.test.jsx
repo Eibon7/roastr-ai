@@ -8,13 +8,13 @@ jest.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
     isAuthenticated: false,
     user: null,
-    loading: false,
-  }),
+    loading: false
+  })
 }));
 
 // Mock auth service
 jest.mock('../../../services/authService', () => ({
-  register: jest.fn(),
+  register: jest.fn()
 }));
 
 const Register = require('../Register').default;

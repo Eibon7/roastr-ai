@@ -112,7 +112,8 @@ class CrossValidationRunner {
 
       // Exit with appropriate code in CI mode
       if (this.options.ci) {
-        const exitCode = this.results.status === 'FAIL' ? 2 : (this.results.status === 'WARNING' ? 1 : 0);
+        const exitCode =
+          this.results.status === 'FAIL' ? 2 : this.results.status === 'WARNING' ? 1 : 0;
         process.exit(exitCode);
       }
 
@@ -135,7 +136,7 @@ class CrossValidationRunner {
 
     try {
       const files = await fs.readdir(nodesDir);
-      const mdFiles = files.filter(f => f.endsWith('.md') && f !== 'README.md');
+      const mdFiles = files.filter((f) => f.endsWith('.md') && f !== 'README.md');
 
       for (const file of mdFiles) {
         const filePath = path.join(nodesDir, file);
@@ -190,11 +191,13 @@ class CrossValidationRunner {
     if (depsSection) {
       // Match standard markdown list format: "- node-name" or "- `node-name`" (with optional description)
       const depMatches = depsSection[0].match(/^\s*-\s*`?([a-z0-9-]+)`?/gim) || [];
-      metadata.dependencies = depMatches.map(m => {
-        // Extract node name from: "- `node-name` - description" or "- node-name"
-        const match = m.match(/^\s*-\s*`?([a-z0-9-]+)`?/i);
-        return match ? match[1] : null;
-      }).filter(Boolean);
+      metadata.dependencies = depMatches
+        .map((m) => {
+          // Extract node name from: "- `node-name` - description" or "- node-name"
+          const match = m.match(/^\s*-\s*`?([a-z0-9-]+)`?/i);
+          return match ? match[1] : null;
+        })
+        .filter(Boolean);
     }
 
     return metadata;
@@ -221,7 +224,11 @@ class CrossValidationRunner {
         this.results.coverage_validation.matched++;
       } else {
         // Only count true mismatches, skip warnings (unavailable data, missing files)
-        const isWarning = ['coverage_data_unavailable', 'no_source_files_found', 'coverage_calculation_failed'].includes(coverageResult.reason);
+        const isWarning = [
+          'coverage_data_unavailable',
+          'no_source_files_found',
+          'coverage_calculation_failed'
+        ].includes(coverageResult.reason);
 
         if (!isWarning) {
           this.results.coverage_validation.mismatched++;
@@ -323,9 +330,9 @@ class CrossValidationRunner {
    */
   async generateMarkdownReport() {
     const statusEmoji = {
-      'HEALTHY': '🟢',
-      'WARNING': '🟡',
-      'FAIL': '🔴'
+      HEALTHY: '🟢',
+      WARNING: '🟡',
+      FAIL: '🔴'
     };
 
     let markdown = `# Cross-Validation Report
@@ -352,10 +359,14 @@ class CrossValidationRunner {
 - **Mismatched:** ${this.results.coverage_validation.mismatched}
 - **Skipped (Warnings):** ${this.results.coverage_validation.skipped}
 
-${this.results.coverage_validation.skipped > 0 ? `
+${
+  this.results.coverage_validation.skipped > 0
+    ? `
 > **Note:** Skipped items are non-actionable warnings (e.g., \`no_source_files_found\`, \`coverage_data_unavailable\`, \`coverage_calculation_failed\`).
 > These do not constitute validation failures and are expected for infrastructure-only changes or nodes without source files.
-` : ''}
+`
+    : ''
+}
 `;
 
     if (this.results.coverage_validation.violations.length > 0) {
@@ -420,7 +431,9 @@ ${this.results.coverage_validation.skipped > 0 ? `
       }
 
       // Add explanatory note if many nodes have empty detected arrays
-      const emptyDetectedCount = this.results.dependency_validation.violations.filter(v => v.detected.length === 0).length;
+      const emptyDetectedCount = this.results.dependency_validation.violations.filter(
+        (v) => v.detected.length === 0
+      ).length;
       if (emptyDetectedCount > 0) {
         markdown += `
 > **Note:** Empty "Detected" arrays indicate no source files were found to scan for imports.
@@ -463,9 +476,9 @@ ${this.results.coverage_validation.skipped > 0 ? `
    */
   printSummary(duration) {
     const statusColors = {
-      'HEALTHY': '\x1b[32m',
-      'WARNING': '\x1b[33m',
-      'FAIL': '\x1b[31m'
+      HEALTHY: '\x1b[32m',
+      WARNING: '\x1b[33m',
+      FAIL: '\x1b[31m'
     };
 
     const reset = '\x1b[0m';
@@ -482,16 +495,22 @@ ${this.results.coverage_validation.skipped > 0 ? `
     console.log(`Duration: ${duration}ms`);
     console.log('');
     console.log('COVERAGE VALIDATION:');
-    console.log(`  ✅ Matched: ${this.results.coverage_validation.matched}/${this.results.coverage_validation.total}`);
+    console.log(
+      `  ✅ Matched: ${this.results.coverage_validation.matched}/${this.results.coverage_validation.total}`
+    );
     console.log(`  ❌ Mismatched: ${this.results.coverage_validation.mismatched}`);
     console.log('');
     console.log('TIMESTAMP VALIDATION:');
-    console.log(`  ✅ Valid: ${this.results.timestamp_validation.valid}/${this.results.timestamp_validation.total}`);
+    console.log(
+      `  ✅ Valid: ${this.results.timestamp_validation.valid}/${this.results.timestamp_validation.total}`
+    );
     console.log(`  ⚠️  Stale: ${this.results.timestamp_validation.stale}`);
     console.log(`  ❌ Future: ${this.results.timestamp_validation.future}`);
     console.log('');
     console.log('DEPENDENCY VALIDATION:');
-    console.log(`  ✅ Valid: ${this.results.dependency_validation.valid}/${this.results.dependency_validation.total}`);
+    console.log(
+      `  ✅ Valid: ${this.results.dependency_validation.valid}/${this.results.dependency_validation.total}`
+    );
     console.log(`  ⚠️  Missing: ${this.results.dependency_validation.missing_deps}`);
     console.log(`  ❌ Phantom: ${this.results.dependency_validation.phantom_deps}`);
     console.log('');
@@ -510,7 +529,7 @@ async function main() {
 
   const options = {
     full: args.includes('--full') || args.length === 0,
-    node: args.find(arg => arg.startsWith('--node='))?.split('=')[1],
+    node: args.find((arg) => arg.startsWith('--node='))?.split('=')[1],
     summary: args.includes('--summary'),
     ci: args.includes('--ci'),
     json: args.includes('--json')
@@ -521,7 +540,7 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(2);
   });

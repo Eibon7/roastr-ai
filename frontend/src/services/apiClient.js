@@ -1,6 +1,6 @@
 /**
  * API Client Re-export
- * 
+ *
  * Provides a consistent import path for apiClient from services directory
  * Re-exports the main apiClient from lib/api.js
  */

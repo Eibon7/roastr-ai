@@ -85,11 +85,7 @@ const SummaryCard = ({ title, value, subtitle, trend }) => (
     </CardHeader>
     <CardContent>
       <p className="text-3xl font-semibold text-slate-900 dark:text-white">{value}</p>
-      {subtitle && (
-        <p className="text-xs text-muted-foreground mt-1">
-          {subtitle}
-        </p>
-      )}
+      {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
       {typeof trend === 'number' && (
         <Badge
           variant={trend >= 0 ? 'success' : 'destructive'}
@@ -164,12 +160,15 @@ export default function Analytics() {
       try {
         setBillingLoading(true);
         const token = localStorage.getItem('token');
-        const response = await fetch(`/api/analytics/billing?range=${Math.max(Number(range), 90)}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          signal: controller.signal
-        });
+        const response = await fetch(
+          `/api/analytics/billing?range=${Math.max(Number(range), 90)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+            signal: controller.signal
+          }
+        );
 
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
@@ -220,7 +219,9 @@ export default function Analytics() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || `analytics.${format}`;
+      link.download =
+        response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') ||
+        `analytics.${format}`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -237,50 +238,59 @@ export default function Analytics() {
     }
   };
 
-  const timelineOptions = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      mode: 'index',
-      intersect: false
-    },
-    plugins: {
-      legend: {
-        position: 'bottom'
-      }
-    },
-    scales: {
-      x: {
-        ticks: { maxRotation: 0 }
+  const timelineOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
       },
-      y: {
-        beginAtZero: true
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      },
+      scales: {
+        x: {
+          ticks: { maxRotation: 0 }
+        },
+        y: {
+          beginAtZero: true
+        }
       }
-    }
-  }), []);
+    }),
+    []
+  );
 
-  const doughnutOptions = useMemo(() => ({
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'bottom'
+  const doughnutOptions = useMemo(
+    () => ({
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
       }
-    }
-  }), []);
+    }),
+    []
+  );
 
-  const barOptions = useMemo(() => ({
-    responsive: true,
-    plugins: {
-      legend: {
-        display: false
+  const barOptions = useMemo(
+    () => ({
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
       }
-    },
-    scales: {
-      y: {
-        beginAtZero: true
-      }
-    }
-  }), []);
+    }),
+    []
+  );
 
   if (loading) {
     return (
@@ -343,7 +353,8 @@ export default function Analytics() {
           <Select value={groupBy} onValueChange={setGroupBy}>
             <SelectTrigger className="w-36">
               <SelectValue>
-                {GROUP_BY_OPTIONS.find((option) => option.value === groupBy)?.label || 'Agrupar por'}
+                {GROUP_BY_OPTIONS.find((option) => option.value === groupBy)?.label ||
+                  'Agrupar por'}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -413,12 +424,14 @@ export default function Analytics() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-base font-semibold">Timeline de actividad</CardTitle>
-            <Badge variant="outline">{groupBy === 'day' ? 'Diario' : groupBy === 'week' ? 'Semanal' : 'Mensual'}</Badge>
+            <Badge variant="outline">
+              {groupBy === 'day' ? 'Diario' : groupBy === 'week' ? 'Semanal' : 'Mensual'}
+            </Badge>
           </CardHeader>
           <CardContent className="h-[360px]">
             {charts?.timeline?.labels?.length ? (
-              <Line 
-                data={charts.timeline} 
+              <Line
+                data={charts.timeline}
                 options={timelineOptions}
                 aria-label="Gráfico de línea mostrando timeline de roasts, análisis y acciones Shield a lo largo del tiempo"
               />
@@ -435,13 +448,15 @@ export default function Analytics() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-base font-semibold">Distribución por plataforma</CardTitle>
-            <Badge variant="secondary">Filtro: {platform === 'all' ? 'Todas' : getPlatformName(platform)}</Badge>
+            <Badge variant="secondary">
+              Filtro: {platform === 'all' ? 'Todas' : getPlatformName(platform)}
+            </Badge>
           </CardHeader>
           <CardContent>
             {charts?.platform?.labels?.length ? (
               <div className="h-[250px]">
-                <Doughnut 
-                  data={charts.platform} 
+                <Doughnut
+                  data={charts.platform}
                   options={doughnutOptions}
                   aria-label="Gráfico de dona mostrando distribución de actividad por plataforma social"
                 />
@@ -472,8 +487,12 @@ export default function Analytics() {
                 <ul className="mt-2 space-y-1">
                   {Object.entries(shield?.actions_by_type || {}).map(([actionType, count]) => (
                     <li key={actionType} className="flex justify-between text-sm">
-                      <span className="capitalize text-slate-600 dark:text-slate-300">{actionType.replace('_', ' ')}</span>
-                      <span className="font-medium text-slate-900 dark:text-white">{formatNumber(count)}</span>
+                      <span className="capitalize text-slate-600 dark:text-slate-300">
+                        {actionType.replace('_', ' ')}
+                      </span>
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {formatNumber(count)}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -483,8 +502,12 @@ export default function Analytics() {
                 <ul className="mt-2 space-y-1">
                   {Object.entries(shield?.severity_distribution || {}).map(([severity, count]) => (
                     <li key={severity} className="flex justify-between text-sm">
-                      <span className="capitalize text-slate-600 dark:text-slate-300">{severity}</span>
-                      <span className="font-medium text-slate-900 dark:text-white">{formatNumber(count)}</span>
+                      <span className="capitalize text-slate-600 dark:text-slate-300">
+                        {severity}
+                      </span>
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {formatNumber(count)}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -495,9 +518,14 @@ export default function Analytics() {
               <p className="text-xs text-muted-foreground uppercase mb-2">Últimas acciones</p>
               <div className="space-y-2">
                 {(shield?.recent || []).map((action) => (
-                  <div key={action.id} className="rounded-lg border border-slate-100 dark:border-slate-800 p-2 flex items-center justify-between text-sm">
+                  <div
+                    key={action.id}
+                    className="rounded-lg border border-slate-100 dark:border-slate-800 p-2 flex items-center justify-between text-sm"
+                  >
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white capitalize">{action.action_type}</p>
+                      <p className="font-medium text-slate-900 dark:text-white capitalize">
+                        {action.action_type}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(action.created_at).toLocaleString('es-ES')}
                       </p>
@@ -561,8 +589,8 @@ export default function Analytics() {
           <CardContent>
             {charts?.credits?.labels?.length ? (
               <div className="h-[280px]">
-                <Bar 
-                  data={charts.credits} 
+                <Bar
+                  data={charts.credits}
                   options={barOptions}
                   aria-label="Gráfico de barras mostrando uso de créditos por período de tiempo"
                 />
@@ -589,7 +617,8 @@ export default function Analytics() {
             <Select value={exportDataset} onValueChange={setExportDataset}>
               <SelectTrigger className="w-full">
                 <SelectValue>
-                  {EXPORT_DATASETS.find((option) => option.value === exportDataset)?.label || 'Dataset a exportar'}
+                  {EXPORT_DATASETS.find((option) => option.value === exportDataset)?.label ||
+                    'Dataset a exportar'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -629,4 +658,3 @@ export default function Analytics() {
     </div>
   );
 }
-

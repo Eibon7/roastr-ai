@@ -22,6 +22,7 @@ Integrate agents from the GDD ecosystem with a secure, auditable, and reversible
 **File:** `scripts/agents/agent-interface.js`
 
 **Key Features:**
+
 - `readNode(nodeName)` - Read GDD nodes with metadata parsing
 - `writeNodeField(nodeName, field, value, agent)` - Secure field updates with health checks
 - `createIssue(agent, title, body)` - GitHub issue creation from agents
@@ -30,6 +31,7 @@ Integrate agents from the GDD ecosystem with a secure, auditable, and reversible
 - `logAgentAction(agent, action, target, result)` - Comprehensive audit logging
 
 **Security:**
+
 - Permission validation before every operation
 - SHA-256 hash integrity checks
 - Manual rollback via `rollback()` call (no automatic health-driven rollback implemented)
@@ -37,6 +39,7 @@ Integrate agents from the GDD ecosystem with a secure, auditable, and reversible
 - 403 errors logged for unauthorized actions
 
 **Example Usage:**
+
 ```javascript
 const AgentInterface = require('./scripts/agents/agent-interface');
 const ail = new AgentInterface({ verbose: true });
@@ -56,6 +59,7 @@ const health = await ail.getSystemHealth();
 **File:** `config/agent-permissions.json`
 
 **Defined Agents:**
+
 - **DocumentationAgent**: update_metadata, create_issue, update_dependencies
 - **Orchestrator**: sync_nodes, update_health, mark_stale, update_metadata, create_issue
 - **DriftWatcher**: trigger_auto_repair, update_timestamp, create_issue
@@ -64,6 +68,7 @@ const health = await ail.getSystemHealth();
 - **UIDesigner**: read_only, create_issue
 
 **Security Rules:**
+
 - Authentication required for all operations
 - All actions logged (success + failures)
 - Forbidden attempts logged with 403 error
@@ -76,6 +81,7 @@ const health = await ail.getSystemHealth();
 **File:** `scripts/agents/secure-write.js`
 
 **Protocol Steps:**
+
 1. Read current content → calculate `hash_before`
 2. Calculate `hash_after` for new content
 3. Create backup in `.gdd-backups/`
@@ -85,6 +91,7 @@ const health = await ail.getSystemHealth();
 7. Broadcast event to Telemetry Bus
 
 **Rollback Features:**
+
 - Manual rollback via signature ID or `rollback()` call
 - **Note:** Automatic health-driven rollback must be implemented in future phase if needed
 - Backup retention (last 10 per file)
@@ -92,6 +99,7 @@ const health = await ail.getSystemHealth();
 - Audit trail for all rollbacks
 
 **Example Usage:**
+
 ```javascript
 const SecureWrite = require('./scripts/agents/secure-write');
 const swp = new SecureWrite();
@@ -118,19 +126,21 @@ await swp.rollback({
 **Modified:** `scripts/watch-gdd.js`
 
 **New Flags:**
+
 - `--agents-active` - Enable autonomous agent actions
 - `--telemetry` - Enable telemetry bus
 
 **Automated Agent Actions:**
 
-| Condition | Agent | Action |
-|-----------|-------|--------|
-| Drift > 60 | DriftWatcher | Trigger auto-repair |
+| Condition             | Agent              | Action               |
+| --------------------- | ------------------ | -------------------- |
+| Drift > 60            | DriftWatcher       | Trigger auto-repair  |
 | Orphan nodes detected | DocumentationAgent | Create GitHub issues |
-| Outdated > 7 days | Orchestrator | Mark nodes as stale |
-| Validation complete | RuntimeValidator | Update health scores |
+| Outdated > 7 days     | Orchestrator       | Mark nodes as stale  |
+| Validation complete   | RuntimeValidator   | Update health scores |
 
 **Usage:**
+
 ```bash
 # Standard watch mode
 node scripts/watch-gdd.js
@@ -144,6 +154,7 @@ node scripts/watch-gdd.js --agents-active --telemetry
 ### Files Created Automatically
 
 **1. `gdd-agent-log.json`** - Structured event log
+
 ```json
 {
   "created_at": "2025-10-09T...",
@@ -163,6 +174,7 @@ node scripts/watch-gdd.js --agents-active --telemetry
 ```
 
 **2. `docs/gdd-agent-history.md`** - Human-readable history
+
 ```markdown
 ## 10/9/2025, 6:32:15 PM - DriftWatcher
 
@@ -174,6 +186,7 @@ node scripts/watch-gdd.js --agents-active --telemetry
 ```
 
 **3. `gdd-write-signatures.json`** - Digital signatures for all writes
+
 ```json
 {
   "created_at": "2025-10-09T...",
@@ -193,6 +206,7 @@ node scripts/watch-gdd.js --agents-active --telemetry
 ```
 
 **4. `.gdd-backups/`** - Backup directory for rollbacks
+
 - Stores last 10 backups per file
 - Automatic cleanup of old backups
 - Used for rollback operations
@@ -202,6 +216,7 @@ node scripts/watch-gdd.js --agents-active --telemetry
 ### Test Results
 
 **1. Agent Interface Layer:**
+
 ```bash
 $ node scripts/agents/agent-interface.js --simulate
 
@@ -211,6 +226,7 @@ $ node scripts/agents/agent-interface.js --simulate
 ```
 
 **2. Secure Write Protocol:**
+
 ```bash
 $ node scripts/agents/secure-write.js --test
 
@@ -221,6 +237,7 @@ $ node scripts/agents/secure-write.js --test
 ```
 
 **3. Watcher Integration:**
+
 ```bash
 $ node scripts/watch-gdd.js --agents-active --telemetry
 
@@ -250,14 +267,14 @@ $ node scripts/watch-gdd.js --agents-active --telemetry
 
 ### Security Enhancements
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| Permission validation | ✅ | All actions checked against matrix |
-| Hash integrity | ✅ | SHA-256 before/after every write |
-| Digital signatures | ✅ | All writes signed and verified |
-| Manual rollback | ✅ | Via signature ID or rollback() call |
-| Audit trail | ✅ | JSON + Markdown + signatures |
-| Rate limiting | ✅ | 100 actions/minute max |
+| Feature               | Status | Details                             |
+| --------------------- | ------ | ----------------------------------- |
+| Permission validation | ✅     | All actions checked against matrix  |
+| Hash integrity        | ✅     | SHA-256 before/after every write    |
+| Digital signatures    | ✅     | All writes signed and verified      |
+| Manual rollback       | ✅     | Via signature ID or rollback() call |
+| Audit trail           | ✅     | JSON + Markdown + signatures        |
+| Rate limiting         | ✅     | 100 actions/minute max              |
 
 ## 🔄 Agent Action Examples
 

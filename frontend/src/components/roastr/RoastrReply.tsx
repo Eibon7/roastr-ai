@@ -17,7 +17,10 @@ type RoastrReplyProps = {
   className?: string;
 };
 
-const statusVariant: Record<NonNullable<RoastrReplyProps['status']>, 'secondary' | 'default' | 'outline'> = {
+const statusVariant: Record<
+  NonNullable<RoastrReplyProps['status']>,
+  'secondary' | 'default' | 'outline'
+> = {
   draft: 'secondary',
   scheduled: 'default',
   published: 'outline'
@@ -35,7 +38,12 @@ export function RoastrReply({
   className
 }: RoastrReplyProps) {
   return (
-    <Card className={cn('border-border/70 bg-card/85 shadow-sm shadow-black/5 backdrop-blur', className)}>
+    <Card
+      className={cn(
+        'border-border/70 bg-card/85 shadow-sm shadow-black/5 backdrop-blur',
+        className
+      )}
+    >
       <CardHeader className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-col">
@@ -84,4 +92,3 @@ export function RoastrReply({
 }
 
 export default RoastrReply;
-

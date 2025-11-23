@@ -11,10 +11,12 @@ Integración completa de `supabase-test` para validación de Row Level Security 
 ## Completado
 
 ### ✅ Instalación
+
 - `supabase-test@0.2.4` instalado
 - Dependencies actualizadas en `package.json`
 
 ### ✅ Configuración
+
 - `tests/setup/supabase-test.config.js` - Configuración centralizada
 - `tests/rls/helpers/load-migrations.js` - Carga automática de migraciones
 - `scripts/setup-rls-tests.sh` - Script de verificación de entorno
@@ -22,16 +24,17 @@ Integración completa de `supabase-test` para validación de Row Level Security 
 
 ### ✅ Tests Implementados
 
-| Archivo | Tests | Estado |
-|---------|-------|--------|
-| `tenants.test.js` | 3 | ✅ Completo |
-| `persona.test.js` | 1 | ✅ Completo |
-| `shield.test.js` | 3 | ✅ Completo |
-| `roast.test.js` | 3 | ✅ Completo |
-| `subscriptions.test.js` | 3 | ✅ Completo |
-| **TOTAL** | **13** | ✅ **100%** |
+| Archivo                 | Tests  | Estado      |
+| ----------------------- | ------ | ----------- |
+| `tenants.test.js`       | 3      | ✅ Completo |
+| `persona.test.js`       | 1      | ✅ Completo |
+| `shield.test.js`        | 3      | ✅ Completo |
+| `roast.test.js`         | 3      | ✅ Completo |
+| `subscriptions.test.js` | 3      | ✅ Completo |
+| **TOTAL**               | **13** | ✅ **100%** |
 
 ### ✅ Documentación
+
 - `tests/rls/README.md` - Guía completa
 - `docs/plan/issue-912.md` - Plan de implementación
 - `tests/rls/IMPLEMENTATION_STATUS.md` - Este archivo
@@ -54,16 +57,19 @@ tests/rls/
 ## Cómo Usar
 
 ### 1. Verificar Entorno
+
 ```bash
 npm run test:rls:setup
 ```
 
 ### 2. Ejecutar Tests
+
 ```bash
 npm run test:rls
 ```
 
 ### 3. Test Específico
+
 ```bash
 npx jest tests/rls/tenants.test.js --verbose
 ```

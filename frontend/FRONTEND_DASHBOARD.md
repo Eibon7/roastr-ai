@@ -72,11 +72,13 @@ frontend/
 ## Rutas Disponibles
 
 ### Rutas Públicas
+
 - `/login` - Página de inicio de sesión
 - `/register` - Registro de nuevos usuarios
 - `/reset-password` - Recuperación de contraseña
 
 ### Rutas Protegidas
+
 - `/dashboard` - Dashboard principal con widgets
 - `/compose` - Interfaz de composición de contenido
 - `/integrations` - Configuración de integraciones
@@ -85,6 +87,7 @@ frontend/
 - `/logs` - Visualización de logs del sistema
 
 ### Rutas de Administración
+
 - `/admin` - Dashboard de administración
 - `/admin/users` - Gestión de usuarios
 - `/admin/user/:id` - Detalle de usuario específico
@@ -92,10 +95,12 @@ frontend/
 ## Desarrollo Local
 
 ### Prerrequisitos
+
 - Node.js 16+
 - npm o yarn
 
 ### Instalación
+
 ```bash
 cd frontend
 npm install
@@ -104,6 +109,7 @@ npm install
 ### Modos de Ejecución
 
 #### Mock Mode (Desarrollo sin APIs)
+
 ```bash
 # No configurar variables de Supabase, o:
 echo "REACT_APP_ENABLE_MOCK_MODE=true" > .env
@@ -112,6 +118,7 @@ npm start
 ```
 
 #### Modo Real (Con APIs)
+
 ```bash
 # Configurar en .env:
 echo "REACT_APP_SUPABASE_URL=tu_url_supabase" > .env
@@ -160,16 +167,19 @@ npm test -- --testPathPattern="AuthContext.mock"
 ## Casos de Uso
 
 ### 1. Demostración de Producto
+
 - Activar mock mode para mostrar funcionalidades sin setup
 - Datos realistas en todos los widgets
 - Navegación completa sin errores
 
 ### 2. Desarrollo Frontend
+
 - Desarrollo independiente del backend
 - Iteración rápida en UI/UX
 - Testing de componentes aislados
 
 ### 3. Onboarding de Desarrolladores
+
 - Setup inmediato sin configuración compleja
 - Experiencia completa del producto
 - Entendimiento de flujos de usuario
@@ -200,46 +210,49 @@ ENABLE_SHIELD_UI=true   # Habilita tarjetas e indicadores de Shield en el dashbo
 
 ### Endpoints consumidos por el Dashboard
 
-| Ruta | Propósito |
-|------|-----------|
-| `GET /api/integrations` | Lista las plataformas conectadas |
-| `GET /api/integrations/status` | Estado detallado (importados, conectados) |
-| `GET /api/integrations/platforms` | Plataformas habilitadas en el UI de Connect |
-| `POST /api/integrations/connect` | Inicia conexión a Twitter, YouTube, etc. |
-| `POST /api/integrations/import` | Lanza importación de contenido y devuelve `jobId` |
-| `GET /api/integrations/import/{jobId}/progress` | Polling en Connect para mostrar progreso |
-| `GET /api/usage` | Muestra consumo, costos y breakdown |
-| `GET /api/plan/current` | Determina plan activo, límites y características |
-| `POST /api/plan/upgrade` | Convierte plan desde el dashboard |
-| `GET /api/user/roasts/recent` | Recupera roasts recientes para el activity feed |
-| `POST /api/style-profile/generate` | Genera perfil con datos conectados |
-| `GET /api/style-profile` | Descarga perfil existente para StyleProfileCard |
-| `DELETE /api/style-profile` | Borra el perfil |
-| `POST /api/roast/preview` | Genera preview seguro antes de publicar |
+| Ruta                                            | Propósito                                         |
+| ----------------------------------------------- | ------------------------------------------------- |
+| `GET /api/integrations`                         | Lista las plataformas conectadas                  |
+| `GET /api/integrations/status`                  | Estado detallado (importados, conectados)         |
+| `GET /api/integrations/platforms`               | Plataformas habilitadas en el UI de Connect       |
+| `POST /api/integrations/connect`                | Inicia conexión a Twitter, YouTube, etc.          |
+| `POST /api/integrations/import`                 | Lanza importación de contenido y devuelve `jobId` |
+| `GET /api/integrations/import/{jobId}/progress` | Polling en Connect para mostrar progreso          |
+| `GET /api/usage`                                | Muestra consumo, costos y breakdown               |
+| `GET /api/plan/current`                         | Determina plan activo, límites y características  |
+| `POST /api/plan/upgrade`                        | Convierte plan desde el dashboard                 |
+| `GET /api/user/roasts/recent`                   | Recupera roasts recientes para el activity feed   |
+| `POST /api/style-profile/generate`              | Genera perfil con datos conectados                |
+| `GET /api/style-profile`                        | Descarga perfil existente para StyleProfileCard   |
+| `DELETE /api/style-profile`                     | Borra el perfil                                   |
+| `POST /api/roast/preview`                       | Genera preview seguro antes de publicar           |
 
 Todos los endpoints requieren autenticación JWT y `apiClient` se encarga del refresh automático. Los componentes comparten los estados de `SkeletonLoader`, `ErrorMessage` y `EmptyState` para garantizar UI consistente en loading/error/empty.
-
 
 ## Troubleshooting
 
 ### Problemas Comunes
 
 #### Frontend no carga
+
 - Verificar que Node.js esté instalado (version 16+)
 - Ejecutar `npm install` en el directorio frontend
 - Verificar que el puerto 3000 esté disponible
 
 #### Mock Mode no se activa
+
 - Verificar que las variables `REACT_APP_SUPABASE_*` no están configuradas
 - Revisar el archivo `.env` del frontend
 - Confirmar que `REACT_APP_ENABLE_MOCK_MODE=true` si se fuerza
 
 #### Datos no aparecen en widgets
+
 - En mock mode, los datos son simulados y estáticos
 - Verificar la consola del navegador para errores
 - Confirmar que los componentes muestran "Mock data" badges
 
 #### Tests fallan
+
 - Ejecutar `npm install` para dependencias actualizadas
 - Verificar que no hay variables de entorno interferiendo en tests
 - Revisar logs específicos del test que falla

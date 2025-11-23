@@ -11,6 +11,7 @@
 ### 1. Backend Core (100%)
 
 **Checkout Flow:**
+
 - `src/routes/checkout.js` (198 lines)
   - POST `/api/checkout` - Creates Polar checkout sessions
   - GET `/api/checkout/:id` - Retrieves checkout status
@@ -19,6 +20,7 @@
   - Error handling with structured logging
 
 **Webhook Handlers:**
+
 - `src/routes/polarWebhook.js` (425 lines)
   - POST `/api/polar/webhook` - Processes Polar events
   - HMAC SHA-256 signature verification
@@ -31,6 +33,7 @@
   - Structured logging + PII sanitization
 
 **Entitlements Service:**
+
 - `src/services/entitlementsService.js` (extended)
   - `setEntitlementsFromPolarPrice(userId, polarPriceId, options)`
     - Maps Polar price ID → plan name (via polarHelpers)
@@ -41,6 +44,7 @@
   - Polar client initialization (`@polar-sh/sdk`)
 
 **Utilities:**
+
 - `src/utils/polarHelpers.js` (81 lines)
   - `getPlanFromPriceId(priceId)` - Maps price → plan
   - `getPriceIdFromPlan(plan)` - Reverse mapping
@@ -48,6 +52,7 @@
   - `getConfiguredPriceIds()` - Returns all configured IDs
 
 **Configuration:**
+
 - `src/config/planMappings.js`
   - Centralized plan hierarchy
   - Shared between Stripe (legacy) and Polar
@@ -55,6 +60,7 @@
 ### 2. Database (100%)
 
 **Migrations:**
+
 - `database/migrations/027_polar_subscriptions.sql`
   - Table: `polar_subscriptions`
   - Fields: user_id, polar_subscription_id, plan, status, periods, trial_end, canceled_at
@@ -69,6 +75,7 @@
 ### 3. Tests (100% - 59 tests total)
 
 **Unit Tests:**
+
 - `tests/unit/routes/polarWebhook.business.test.js` (16 tests)
   - User lookup (by user_id, by email)
   - Plan mapping (price_id → plan name)
@@ -92,9 +99,10 @@
   - Metadata merging
   - Error handling (missing Polar client, unknown price_id)
   - Fallback entitlements
-  - _getPlanLimitsFromName for all plans + fallback
+  - \_getPlanLimitsFromName for all plans + fallback
 
 **E2E Tests:**
+
 - `tests/integration/polar-flow-e2e.test.js` (4 tests)
   - Full flow: Checkout → Webhook → Entitlements
   - Subscription updates (plan changes)
@@ -104,6 +112,7 @@
 ### 4. Documentation (100%)
 
 **Updated:**
+
 - `docs/flows/payment-polar.md`
   - Status: 95% complete (was 30%)
   - Added "Quick Start" section
@@ -116,6 +125,7 @@
   - Test count: 59 tests
 
 **Created:**
+
 - `docs/POLAR-ENV-VARIABLES.md` (environment variable reference)
 - `docs/POLAR-INTEGRATION-SUMMARY.md` (this file)
 
@@ -124,12 +134,14 @@
 ## 📈 Coverage Metrics
 
 **Files Covered:**
+
 - `src/routes/polarWebhook.js` - 100% (business logic + security)
 - `src/routes/checkout.js` - 100% (security + validation)
 - `src/services/entitlementsService.js` - Polar methods 100%
 - `src/utils/polarHelpers.js` - 100% (all mapping functions)
 
 **Test Breakdown:**
+
 - **Business Logic:** 16 tests
 - **Security:** 25 tests (9 webhook + 16 checkout)
 - **Entitlements:** 14 tests
@@ -143,6 +155,7 @@
 ### 1. Frontend Integration
 
 **Tasks:**
+
 - [ ] Integrate Polar Checkout SDK in React
 - [ ] Create checkout button component
 - [ ] Handle checkout success/cancel redirects
@@ -155,6 +168,7 @@
 ### 2. Production Environment
 
 **Tasks:**
+
 - [ ] Configure production env vars:
   - `POLAR_ACCESS_TOKEN` (production key)
   - `POLAR_WEBHOOK_SECRET` (production secret)
@@ -173,6 +187,7 @@
 ### 3. Monitoring & Observability
 
 **Tasks:**
+
 - [ ] Create Grafana dashboard for:
   - Webhook success/failure rate
   - Checkout conversion rate
@@ -188,6 +203,7 @@
 ### 4. User Documentation
 
 **Tasks:**
+
 - [ ] Create user guides:
   - How to subscribe to a plan
   - How to upgrade/downgrade
@@ -201,6 +217,7 @@
 ### 5. Testing in Production
 
 **Tasks:**
+
 - [ ] End-to-end test with real Polar checkout
 - [ ] Verify webhook delivery and processing
 - [ ] Test plan upgrades/downgrades
@@ -214,6 +231,7 @@
 ## 🎯 Total Completion Status
 
 **Issue #594 (Polar Payment Flow):** ✅ 95% Complete
+
 - Backend: 100% ✅
 - Tests: 100% ✅
 - Docs: 100% ✅
@@ -221,6 +239,7 @@
 - Production Env: 0% ⏳ (pending #741)
 
 **Issue #808 (Tests Migration):** ✅ 100% Complete
+
 - Stripe tests fixed: 100% ✅
 - Polar tests created: 100% ✅ (59 tests)
 - Coverage: >=90% ✅
@@ -239,18 +258,21 @@
 ## 📝 Notes
 
 **Why 95% and not 100%?**
+
 - Backend is 100% complete and production-ready
 - Tests are 100% complete with excellent coverage
 - Frontend integration is required for users to actually purchase plans
 - Production environment setup is required for real transactions
 
 **Can we deploy backend now?**
+
 - Yes, backend can be deployed immediately
 - Migrations can be run in production
 - Webhook endpoint can be registered in Polar Dashboard
 - However, users won't be able to subscribe until frontend is integrated
 
 **Timeline Estimate:**
+
 - **Current work (Backend):** ✅ Done (10-12 hours)
 - **Frontend integration (#741):** ⏳ 6-8 hours
 - **Production setup (#741):** ⏳ 2-3 hours
@@ -265,4 +287,3 @@
 **Author:** Claude (Cursor Agent)  
 **Related Issues:** #594, #808, #741 (pending)  
 **Related Docs:** `docs/flows/payment-polar.md`, `docs/POLAR-ENV-VARIABLES.md`
-

@@ -57,12 +57,10 @@ describe('Checkout with product_id (Issue #887)', () => {
 
   describe('POST /api/checkout with product_id (new API)', () => {
     it('should create checkout with product_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@example.com',
-          product_id: 'prod_pro_test'
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@example.com',
+        product_id: 'prod_pro_test'
+      });
 
       expect(res.status).toBe(200);
       // Support both checkout_url (backward compatibility) and checkout.url
@@ -73,7 +71,7 @@ describe('Checkout with product_id (Issue #887)', () => {
       if (res.body.checkout_url) {
         expect(res.body.checkout_url).toContain('polar.sh');
       }
-      
+
       // Verify logs show "Polar Product" terminology
       // Note: Logger is mocked, actual logging may vary
       expect(res.body.success).toBe(true);
@@ -83,32 +81,28 @@ describe('Checkout with product_id (Issue #887)', () => {
       // Set allowlist to only accept specific IDs
       const originalAllowed = process.env.POLAR_ALLOWED_PRODUCT_IDS;
       process.env.POLAR_ALLOWED_PRODUCT_IDS = 'prod_starter_test,prod_pro_test,prod_plus_test';
-      
+
       // Clear modules to reload with new env
       jest.resetModules();
       const { app: newApp } = require('../../src/index');
-      
-      const res = await request(newApp)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@example.com',
-          product_id: 'prod_unauthorized'
-        });
+
+      const res = await request(newApp).post('/api/checkout').send({
+        customer_email: 'test@example.com',
+        product_id: 'prod_unauthorized'
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Unauthorized product');
-      
+
       // Restore
       process.env.POLAR_ALLOWED_PRODUCT_IDS = originalAllowed;
       jest.resetModules();
     });
 
     it('should require product_id or price_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@example.com'
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@example.com'
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Missing required fields');
@@ -117,29 +111,25 @@ describe('Checkout with product_id (Issue #887)', () => {
 
   describe('POST /api/checkout with price_id (backward compatibility)', () => {
     it('should maintain backward compat with price_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@example.com',
-          price_id: 'prod_pro_test' // Legacy parameter name
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@example.com',
+        price_id: 'prod_pro_test' // Legacy parameter name
+      });
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('checkout');
       expect(res.body.checkout).toHaveProperty('url');
-      
+
       // Should log deprecation warning (if implemented)
       // Note: Current implementation silently accepts price_id
     });
 
     it('should prefer product_id over price_id if both provided', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@example.com',
-          product_id: 'prod_pro_test',
-          price_id: 'prod_starter_test' // Should be ignored
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@example.com',
+        product_id: 'prod_pro_test',
+        price_id: 'prod_starter_test' // Should be ignored
+      });
 
       expect(res.status).toBe(200);
       // Verify product_id was used (not price_id)
@@ -152,26 +142,22 @@ describe('Checkout with product_id (Issue #887)', () => {
       const originalToken = process.env.POLAR_ACCESS_TOKEN;
       delete process.env.POLAR_ACCESS_TOKEN;
 
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@example.com',
-          product_id: 'prod_pro_test'
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@example.com',
+        product_id: 'prod_pro_test'
+      });
 
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Configuration error');
-      
+
       process.env.POLAR_ACCESS_TOKEN = originalToken;
     });
 
     it('should validate email format', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'invalid-email',
-          product_id: 'prod_pro_test'
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'invalid-email',
+        product_id: 'prod_pro_test'
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid email');
@@ -181,24 +167,21 @@ describe('Checkout with product_id (Issue #887)', () => {
   describe('Logging Verification', () => {
     it('should log "Polar Product" terminology (not "Polar Price")', async () => {
       jest.clearAllMocks();
-      
-      await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@example.com',
-          product_id: 'prod_pro_test'
-        });
+
+      await request(app).post('/api/checkout').send({
+        customer_email: 'test@example.com',
+        product_id: 'prod_pro_test'
+      });
 
       // Check that logs use "product" terminology
       const logCalls = logger.info.mock.calls.concat(logger.warn.mock.calls);
-      const hasProductTerm = logCalls.some(call => 
+      const hasProductTerm = logCalls.some((call) =>
         JSON.stringify(call).toLowerCase().includes('product')
       );
-      
+
       // Note: This is a soft check - actual implementation may vary
       // The important thing is that "price" terminology is deprecated
       expect(hasProductTerm || logCalls.length > 0).toBe(true);
     });
   });
 });
-

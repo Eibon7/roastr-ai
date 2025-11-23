@@ -12,6 +12,7 @@
 **Objective:** Implement complete Persona Setup Flow with 3 encrypted fields, OpenAI embeddings, and plan-based access control.
 
 **Actual State (NOT 50%):**
+
 - ✅ GDD documentation exists (docs/nodes/persona.md - 70% coverage)
 - ❌ Database schema: 0% (NO persona fields exist)
 - ❌ Service layer: 0% (PersonaService.js doesn't exist)
@@ -30,6 +31,7 @@
 ### Based on Assessment (docs/assessment/issue-595.md)
 
 **What EXISTS:**
+
 1. ✅ GDD node documentation (persona.md) - Comprehensive architecture spec
 2. ✅ Authentication system (login/registration from Issue #593)
 3. ✅ OpenAI SDK installed ("openai": "^4.77.3")
@@ -37,6 +39,7 @@
 5. ✅ Supabase connection (database operational)
 
 **What's MISSING:**
+
 1. ❌ Database schema (users table lacks persona fields)
 2. ❌ Encryption utilities (no crypto implementation)
 3. ❌ PersonaService.js
@@ -47,6 +50,7 @@
 8. ❌ Test suite
 
 **Blockers Identified:**
+
 - ⚠️ Payment integration status unclear (needed for plan-based access)
 - ⚠️ pgvector extension verification needed (for embeddings)
 
@@ -57,6 +61,7 @@
 ### Decision: Extend `users` table (NOT separate `user_personas` table)
 
 **Rationale:**
+
 - GDD node persona.md specifies fields in `users` table (lines 300-338)
 - Reduces join complexity (1 table vs 2)
 - RLS policies already exist on users table
@@ -125,6 +130,7 @@ WHERE lo_que_me_da_igual_encrypted IS NOT NULL;
 **Objective:** Add persona fields to users table with proper constraints and indexes
 
 **Tasks:**
+
 1. **Create migration script** `database/migrations/001_add_persona_fields.sql`
    - [ ] Add persona encrypted fields (3x fields × 5 columns = 15 columns)
    - [ ] Add embeddings metadata (3 columns)
@@ -146,12 +152,14 @@ WHERE lo_que_me_da_igual_encrypted IS NOT NULL;
    - [ ] Commit updated schema
 
 **Deliverables:**
+
 - Migration script ready
 - pgvector verified
 - users table updated
 - schema.sql updated
 
 **Validation:**
+
 ```sql
 -- Verify persona fields exist
 SELECT column_name, data_type
@@ -168,6 +176,7 @@ AND column_name LIKE '%lo_que%';
 **Objective:** Implement AES-256-GCM encryption/decryption utilities
 
 **Tasks:**
+
 1. **Create encryption utility** `src/utils/encryption.js`
    - [ ] Import crypto module (Node.js built-in)
    - [ ] Implement `encryptField(plaintext)` → Base64 ciphertext
@@ -203,10 +212,7 @@ function encryptField(plaintext) {
   const iv = crypto.randomBytes(16); // Unique IV per encryption
   const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
 
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, 'utf8'),
-    cipher.final()
-  ]);
+  const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
 
   const tag = cipher.getAuthTag(); // 16 bytes for GCM
 
@@ -227,10 +233,7 @@ function decryptField(ciphertext) {
   const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
   decipher.setAuthTag(tag);
 
-  const decrypted = Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final()
-  ]);
+  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 
   return decrypted.toString('utf8');
 }
@@ -239,6 +242,7 @@ module.exports = { encryptField, decryptField };
 ```
 
 **Security Checklist:**
+
 - [ ] No hardcoded keys
 - [ ] IV unique per encryption (crypto.randomBytes)
 - [ ] Key length: 32 bytes (256 bits)
@@ -246,6 +250,7 @@ module.exports = { encryptField, decryptField };
 - [ ] Validate PERSONA_ENCRYPTION_KEY on startup
 
 **Deliverables:**
+
 - encryption.js with encrypt/decrypt functions
 - Tests passing (5 test cases minimum)
 - Key generation script
@@ -258,6 +263,7 @@ module.exports = { encryptField, decryptField };
 **Objective:** Create PersonaService with CRUD operations, encryption, embeddings, and plan-based access
 
 **Tasks:**
+
 1. **Create PersonaService.js** `src/services/PersonaService.js`
 
    **Methods to implement:**
@@ -270,6 +276,7 @@ module.exports = { encryptField, decryptField };
    - [ ] `_updateEmbeddings(userId, fields)` - Generate and store embeddings
 
 2. **Plan-based access control**
+
    ```javascript
    const PLAN_ACCESS = {
      free: [],  // No access
@@ -312,16 +319,15 @@ class PersonaService {
       throw new Error('SUPABASE_SERVICE_KEY required for PersonaService');
     }
 
-    this.supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
-    );
+    this.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
   }
 
   async getPersona(userId) {
     const { data: user, error } = await this.supabase
       .from('users')
-      .select('lo_que_me_define_encrypted, lo_que_no_tolero_encrypted, lo_que_me_da_igual_encrypted, plan')
+      .select(
+        'lo_que_me_define_encrypted, lo_que_no_tolero_encrypted, lo_que_me_da_igual_encrypted, plan'
+      )
       .eq('id', userId)
       .single();
 
@@ -350,10 +356,7 @@ class PersonaService {
     // ... repeat for other fields
 
     // Save to database
-    const { error } = await this.supabase
-      .from('users')
-      .update(updates)
-      .eq('id', userId);
+    const { error } = await this.supabase.from('users').update(updates).eq('id', userId);
 
     if (error) throw error;
 
@@ -380,10 +383,7 @@ class PersonaService {
       embeddings.embeddings_model = 'text-embedding-3-small';
       embeddings.embeddings_version = 1;
 
-      await this.supabase
-        .from('users')
-        .update(embeddings)
-        .eq('id', userId);
+      await this.supabase.from('users').update(embeddings).eq('id', userId);
     }
   }
 
@@ -397,7 +397,9 @@ class PersonaService {
 
     const allowed = PLAN_ACCESS[userPlan] || [];
     if (!allowed.includes(field)) {
-      throw new Error(`PLAN_RESTRICTION: ${field} requires ${this._requiredPlan(field)} plan or higher`);
+      throw new Error(
+        `PLAN_RESTRICTION: ${field} requires ${this._requiredPlan(field)} plan or higher`
+      );
     }
   }
 
@@ -411,6 +413,7 @@ module.exports = new PersonaService();
 ```
 
 **Deliverables:**
+
 - PersonaService.js with all methods
 - OpenAI embeddings integrated
 - Plan-based access enforced
@@ -423,6 +426,7 @@ module.exports = new PersonaService();
 **Objective:** Create REST API endpoints for persona management
 
 **Tasks:**
+
 1. **Add routes to** `src/index.js`
    - [ ] `GET /api/persona` - Retrieve current user's persona
    - [ ] `POST /api/persona` - Create/update persona
@@ -434,28 +438,14 @@ module.exports = new PersonaService();
    - [ ] Error handling middleware
 
 3. **Input validation**
+
    ```javascript
    const { body, validationResult } = require('express-validator');
 
    const validatePersonaInput = [
-     body('lo_que_me_define')
-       .optional()
-       .isString()
-       .isLength({ max: 300 })
-       .trim()
-       .escape(),
-     body('lo_que_no_tolero')
-       .optional()
-       .isString()
-       .isLength({ max: 300 })
-       .trim()
-       .escape(),
-     body('lo_que_me_da_igual')
-       .optional()
-       .isString()
-       .isLength({ max: 300 })
-       .trim()
-       .escape()
+     body('lo_que_me_define').optional().isString().isLength({ max: 300 }).trim().escape(),
+     body('lo_que_no_tolero').optional().isString().isLength({ max: 300 }).trim().escape(),
+     body('lo_que_me_da_igual').optional().isString().isLength({ max: 300 }).trim().escape()
    ];
    ```
 
@@ -478,47 +468,42 @@ app.get('/api/persona', authenticateToken, async (req, res) => {
 });
 
 // POST /api/persona - Create/update persona
-app.post(
-  '/api/persona',
-  authenticateToken,
-  validatePersonaInput,
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
-    }
-
-    try {
-      const { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual } = req.body;
-
-      // Get user plan (from users table or JWT)
-      const { data: user } = await supabase
-        .from('users')
-        .select('plan')
-        .eq('id', req.user.id)
-        .single();
-
-      const result = await PersonaService.updatePersona(
-        req.user.id,
-        { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual },
-        user.plan
-      );
-
-      res.json({ success: true, data: result });
-    } catch (error) {
-      if (error.message.includes('PLAN_RESTRICTION')) {
-        return res.status(403).json({
-          success: false,
-          error: error.message,
-          upgrade_url: '/pricing'
-        });
-      }
-
-      logger.error('Update persona failed', { userId: req.user.id, error });
-      res.status(500).json({ success: false, error: error.message });
-    }
+app.post('/api/persona', authenticateToken, validatePersonaInput, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ success: false, errors: errors.array() });
   }
-);
+
+  try {
+    const { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual } = req.body;
+
+    // Get user plan (from users table or JWT)
+    const { data: user } = await supabase
+      .from('users')
+      .select('plan')
+      .eq('id', req.user.id)
+      .single();
+
+    const result = await PersonaService.updatePersona(
+      req.user.id,
+      { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual },
+      user.plan
+    );
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    if (error.message.includes('PLAN_RESTRICTION')) {
+      return res.status(403).json({
+        success: false,
+        error: error.message,
+        upgrade_url: '/pricing'
+      });
+    }
+
+    logger.error('Update persona failed', { userId: req.user.id, error });
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // DELETE /api/persona - Delete persona
 app.delete('/api/persona', authenticateToken, async (req, res) => {
@@ -533,6 +518,7 @@ app.delete('/api/persona', authenticateToken, async (req, res) => {
 ```
 
 **Rate Limiting (optional, Phase 2):**
+
 ```javascript
 const rateLimit = require('express-rate-limit');
 
@@ -546,6 +532,7 @@ app.post('/api/persona', authenticateToken, personaLimiter, ...);
 ```
 
 **Deliverables:**
+
 - 3 API endpoints implemented
 - Input validation working
 - Error handling comprehensive
@@ -562,6 +549,7 @@ app.post('/api/persona', authenticateToken, personaLimiter, ...);
 **File:** `tests/unit/PersonaService.test.js`
 
 **Test cases:**
+
 ```javascript
 describe('PersonaService', () => {
   describe('Encryption', () => {
@@ -610,6 +598,7 @@ describe('PersonaService', () => {
 **File:** `tests/integration/persona-api.test.js`
 
 **Test cases:**
+
 ```javascript
 describe('POST /api/persona', () => {
   it('should create persona with valid data (Pro user)', async () => {
@@ -689,6 +678,7 @@ describe('DELETE /api/persona', () => {
 **File:** `tests/security/persona-security.test.js`
 
 **Test cases:**
+
 ```javascript
 describe('Persona Security', () => {
   it('should prevent SQL injection via persona fields', async () => {
@@ -732,6 +722,7 @@ describe('Persona Security', () => {
 ```
 
 **Deliverables:**
+
 - 30+ test cases covering all scenarios
 - 90%+ code coverage
 - All tests passing
@@ -744,6 +735,7 @@ describe('Persona Security', () => {
 **Objective:** Complete documentation and update GDD system
 
 **Tasks:**
+
 1. **Update CLAUDE.md**
    - [ ] Add PERSONA_ENCRYPTION_KEY to env vars section
    - [ ] Document `/api/persona` endpoints
@@ -770,6 +762,7 @@ describe('Persona Security', () => {
    - [ ] Future improvements
 
 **Deliverables:**
+
 - CLAUDE.md updated
 - persona.md GDD node updated
 - SUMMARY.md created
@@ -786,6 +779,7 @@ describe('Persona Security', () => {
 **File:** `public/persona-setup.html` (or React component)
 
 **Features:**
+
 - [ ] 3 textarea fields with character counters
 - [ ] Plan-based field disabling (Free/Starter can't use field 3)
 - [ ] Real-time validation (max 300 chars)
@@ -804,21 +798,21 @@ describe('Persona Security', () => {
 
 ### Critical Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| **pgvector not enabled** | Medium | High | Verify in Phase 1, enable if needed |
-| **Payment integration missing** | Medium | Critical | Create stub for testing, clarify with team |
-| **Encryption key leak** | Low | Critical | Never log keys, use env vars only, document rotation |
-| **OpenAI API rate limits** | Low | Medium | Implement retry logic, cache embeddings |
+| Risk                            | Likelihood | Impact   | Mitigation                                           |
+| ------------------------------- | ---------- | -------- | ---------------------------------------------------- |
+| **pgvector not enabled**        | Medium     | High     | Verify in Phase 1, enable if needed                  |
+| **Payment integration missing** | Medium     | Critical | Create stub for testing, clarify with team           |
+| **Encryption key leak**         | Low        | Critical | Never log keys, use env vars only, document rotation |
+| **OpenAI API rate limits**      | Low        | Medium   | Implement retry logic, cache embeddings              |
 
 ### Technical Risks
 
-| Risk | Mitigation |
-|------|------------|
-| **Database migration fails** | Test in local Supabase first, have rollback plan |
-| **Embedding generation slow** | Make async/non-blocking, add timeout (30s) |
-| **Plan verification unavailable** | Graceful degradation (default to Free plan) |
-| **GDPR compliance gaps** | Ensure hard delete, audit logs, document retention policy |
+| Risk                              | Mitigation                                                |
+| --------------------------------- | --------------------------------------------------------- |
+| **Database migration fails**      | Test in local Supabase first, have rollback plan          |
+| **Embedding generation slow**     | Make async/non-blocking, add timeout (30s)                |
+| **Plan verification unavailable** | Graceful degradation (default to Free plan)               |
+| **GDPR compliance gaps**          | Ensure hard delete, audit logs, document retention policy |
 
 ---
 
@@ -841,6 +835,7 @@ describe('Persona Security', () => {
 13. ✅ **0 CodeRabbit comments** (Quality Standard)
 
 **Quality Gates:**
+
 - [ ] No console.log statements in code
 - [ ] All errors logged with logger.js
 - [ ] No hardcoded credentials
@@ -897,6 +892,7 @@ roastr-ai/
 ```
 
 **Legend:**
+
 - ❌ CREATE - New file to create
 - ⚠️ UPDATE - Existing file to modify
 - ✅ EXISTS - Already created
@@ -920,6 +916,7 @@ roastr-ai/
 **Before Implementation:**
 
 1. **Verify pgvector extension** (BLOCKER)
+
    ```sql
    -- Run in Supabase SQL Editor
    SELECT * FROM pg_extension WHERE extname = 'vector';
@@ -932,6 +929,7 @@ roastr-ai/
    - If missing, create stub for testing
 
 3. **Generate encryption key**
+
    ```bash
    node -e "console.log('PERSONA_ENCRYPTION_KEY=' + require('crypto').randomBytes(32).toString('hex'))"
    # Add to .env (NOT committed)

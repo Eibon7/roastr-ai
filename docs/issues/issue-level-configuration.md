@@ -12,6 +12,7 @@
 **Level Configuration** es el sistema de ajuste fino de la intensidad de roasting. Permite al usuario configurar:
 
 **1. Roast Level (1-5):** Controla la intensidad del roast generado
+
 - **Nivel 1 (Suave):** Sarcasmo ligero, sin profanity, temperatura 0.6
 - **Nivel 2 (Neutral):** Balance, sin profanity, temperatura 0.7
 - **Nivel 3 (Moderado):** Intenso, profanity permitida, temperatura 0.8
@@ -19,27 +20,32 @@
 - **Nivel 5 (Caústico):** Máxima intensidad, sin límites, temperatura 1.0
 
 **2. Shield Level:** Controla el threshold de toxicidad para moderation
+
 - **Tolerante (τ=0.85):** Solo bloquea contenido muy tóxico
 - **Balanceado (τ=0.70):** Moderación estándar
 - **Estricto (τ=0.50):** Bloquea casi todo (máxima protección)
 
 **¿Por qué es importante?**
+
 - **Personalización:** Cada usuario tiene tolerancia diferente
 - **Compliance:** Shield permite cumplir políticas de plataformas
 - **Monetización:** Features bloqueadas por plan (upsell a Pro)
 - **Calidad:** Niveles mapean a parámetros OpenAI (temperature, max_tokens, system prompt)
 
 **Plan-based Restrictions:**
+
 - Free: Fijo en nivel 2 + Shield Balanceado (sin configuración)
 - Starter: Niveles 1-3 + Shield Tolerante/Balanceado
 - Pro/Plus: Todos los niveles (1-5) + todos los Shield modes
 
 **Tecnologías:**
+
 - Mapping nivel → parámetros OpenAI (temperature, system prompt)
 - Plan validation server-side (NO confiar en frontend)
 - Integration con `RoastGeneratorEnhanced` y `ShieldService`
 
 **Business Logic:**
+
 - Niveles altos = mayor temperatura = roasts más impredecibles/intensos
 - Shield strict = menor threshold = más comentarios bloqueados
 - Upsell prompt si usuario intenta usar nivel bloqueado
@@ -51,6 +57,7 @@
 Implementar sistema de configuración de niveles de intensidad para:
 
 **Roast Levels (1-5):**
+
 1. **Suave** - Sarcasmo ligero, sin profanity
 2. **Neutral** - Balance, sin profanity
 3. **Moderado** - Intenso, profanity permitida
@@ -58,16 +65,19 @@ Implementar sistema de configuración de niveles de intensidad para:
 5. **Caústico** - Máxima intensidad, sin límites
 
 **Shield Levels (Toxicity Thresholds):**
+
 - **Tolerante** - τ = 0.85 (solo bloquea muy tóxico)
 - **Balanceado** - τ = 0.70 (moderación estándar)
 - **Estricto** - τ = 0.50 (bloquea casi todo)
 
 **Plan-based Restrictions:**
+
 - Free: Fijo en nivel 2 (Neutral) + Shield Balanceado
 - Starter: Acceso a niveles 1-3 + Shield Tolerante/Balanceado
 - Pro/Plus: Acceso completo (1-5) + todos los Shield modes
 
 **Estado actual:**
+
 - ✅ Conceptualmente definido en assessment
 - ❌ Tabla `user_roast_config` no existe
 - ❌ `LevelConfigService.js` no existe
@@ -81,6 +91,7 @@ Implementar sistema de configuración de niveles de intensidad para:
 ### 1. Backend: Database Schema
 
 - [ ] **Crear tabla `user_roast_config`**
+
   ```sql
   CREATE TABLE user_roast_config (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -124,37 +135,43 @@ Implementar sistema de configuración de niveles de intensidad para:
   - [ ] `getShieldThreshold(level)` → mapea shield → τ value
 
   **Configuración de niveles:**
+
   ```javascript
   const ROAST_LEVEL_MAPPING = {
-    1: { // Suave
+    1: {
+      // Suave
       intensity: 'suave',
       profanity: false,
       temperature: 0.6,
       max_tokens: 150,
       systemPrompt: 'Genera un roast ligero y sarcástico, sin insultos fuertes.'
     },
-    2: { // Neutral
+    2: {
+      // Neutral
       intensity: 'neutral',
       profanity: false,
       temperature: 0.7,
       max_tokens: 180,
       systemPrompt: 'Genera un roast balanceado, ingenioso pero respetuoso.'
     },
-    3: { // Moderado
+    3: {
+      // Moderado
       intensity: 'moderado',
       profanity: true,
       temperature: 0.8,
       max_tokens: 200,
       systemPrompt: 'Genera un roast intenso, puedes usar lenguaje fuerte.'
     },
-    4: { // Agresivo
+    4: {
+      // Agresivo
       intensity: 'agresivo',
       profanity: true,
       temperature: 0.9,
       max_tokens: 220,
       systemPrompt: 'Genera un roast muy agresivo y sin filtros.'
     },
-    5: { // Caústico
+    5: {
+      // Caústico
       intensity: 'cáustico',
       profanity: true,
       temperature: 1.0,
@@ -164,32 +181,33 @@ Implementar sistema de configuración de niveles de intensidad para:
   };
 
   const SHIELD_LEVEL_MAPPING = {
-    'tolerante': 0.85,   // Solo bloquea muy tóxico
-    'balanceado': 0.70,  // Moderación estándar
-    'estricto': 0.50     // Bloquea casi todo
+    tolerante: 0.85, // Solo bloquea muy tóxico
+    balanceado: 0.7, // Moderación estándar
+    estricto: 0.5 // Bloquea casi todo
   };
 
   const PLAN_LIMITS = {
     free: {
-      roastLevels: [2],                    // Solo Neutral
-      shieldLevels: ['balanceado']         // Solo Balanceado
+      roastLevels: [2], // Solo Neutral
+      shieldLevels: ['balanceado'] // Solo Balanceado
     },
     starter: {
-      roastLevels: [1, 2, 3],              // Suave, Neutral, Moderado
+      roastLevels: [1, 2, 3], // Suave, Neutral, Moderado
       shieldLevels: ['tolerante', 'balanceado']
     },
     pro: {
-      roastLevels: [1, 2, 3, 4, 5],        // Todos
+      roastLevels: [1, 2, 3, 4, 5], // Todos
       shieldLevels: ['tolerante', 'balanceado', 'estricto']
     },
     plus: {
-      roastLevels: [1, 2, 3, 4, 5],        // Todos
+      roastLevels: [1, 2, 3, 4, 5], // Todos
       shieldLevels: ['tolerante', 'balanceado', 'estricto']
     }
   };
   ```
 
 - [ ] **Implementar validación de plan:**
+
   ```javascript
   class LevelConfigService {
     async updateRoastLevel(userId, level, userPlan) {
@@ -201,19 +219,24 @@ Implementar sistema de configuración de niveles de intensidad para:
       // Validar plan permite este nivel
       const allowedLevels = PLAN_LIMITS[userPlan].roastLevels;
       if (!allowedLevels.includes(level)) {
-        throw new Error(`Plan ${userPlan} no permite nivel ${level}. Upgrade a Pro para acceso completo.`);
+        throw new Error(
+          `Plan ${userPlan} no permite nivel ${level}. Upgrade a Pro para acceso completo.`
+        );
       }
 
       // Actualizar en DB
       const { data, error } = await supabase
         .from('user_roast_config')
-        .upsert({
-          user_id: userId,
-          roast_level: level,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        })
+        .upsert(
+          {
+            user_id: userId,
+            roast_level: level,
+            updated_at: new Date().toISOString()
+          },
+          {
+            onConflict: 'user_id'
+          }
+        )
         .select()
         .single();
 
@@ -228,7 +251,7 @@ Implementar sistema de configuración de niveles de intensidad para:
     }
 
     getShieldThreshold(level) {
-      return SHIELD_LEVEL_MAPPING[level] || 0.70; // Default Balanceado
+      return SHIELD_LEVEL_MAPPING[level] || 0.7; // Default Balanceado
     }
   }
 
@@ -300,7 +323,9 @@ Implementar sistema de configuración de niveles de intensidad para:
     const threshold = LevelConfigService.getShieldThreshold(config.shield_level);
 
     if (toxicityScore >= threshold) {
-      logger.info(`Blocked comment for user ${userId}: toxicity=${toxicityScore}, threshold=${threshold}`);
+      logger.info(
+        `Blocked comment for user ${userId}: toxicity=${toxicityScore}, threshold=${threshold}`
+      );
       return true;
     }
 
@@ -323,7 +348,7 @@ Implementar sistema de configuración de niveles de intensidad para:
 
     async function fetchConfig() {
       const response = await fetch('/api/config/levels', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       const data = await response.json();
       setConfig(data);
@@ -335,7 +360,7 @@ Implementar sistema de configuración de niveles de intensidad para:
         const response = await fetch('/api/config/roast-level', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ level: newLevel })
@@ -357,7 +382,7 @@ Implementar sistema de configuración de niveles de intensidad para:
       <div>
         <h3>Nivel de Roast</h3>
         <div className="level-selector">
-          {[1, 2, 3, 4, 5].map(level => (
+          {[1, 2, 3, 4, 5].map((level) => (
             <button
               key={level}
               onClick={() => updateRoastLevel(level)}
@@ -432,13 +457,16 @@ Implementar sistema de configuración de niveles de intensidad para:
 ## 🔗 Dependencias
 
 **Bloqueantes (debe resolverse antes):**
+
 - ✅ Issue Login & Registration
 - ✅ Issue Payment (Polar) - Para validación de planes
 
 **Opcionales:**
+
 - Issue Persona Setup - Mejora personalización pero no bloqueante
 
 **Desbloqueadas por esta issue:**
+
 - Issue Global State (incluye `roasting.roast_level` y `roasting.shield_level`)
 
 ---
@@ -462,28 +490,31 @@ Esta issue se considera **100% completa** cuando:
 
 ## 📊 Métricas de Éxito
 
-| Métrica | Valor Actual | Objetivo | Estado |
-|---------|--------------|----------|--------|
-| Tests pasando | N/A | 100% | ⏳ Pendiente |
-| Cobertura level config | N/A | ≥85% | ⏳ Pendiente |
-| Tiempo de implementación | 0h | ≤6h | ⏳ Pendiente |
-| Plan restrictions working | ❌ | ✅ | ⏳ Pendiente |
+| Métrica                   | Valor Actual | Objetivo | Estado       |
+| ------------------------- | ------------ | -------- | ------------ |
+| Tests pasando             | N/A          | 100%     | ⏳ Pendiente |
+| Cobertura level config    | N/A          | ≥85%     | ⏳ Pendiente |
+| Tiempo de implementación  | 0h           | ≤6h      | ⏳ Pendiente |
+| Plan restrictions working | ❌           | ✅       | ⏳ Pendiente |
 
 ---
 
 ## 📝 Notas de Implementación
 
 **UX:**
+
 - Mostrar descripciones claras de cada nivel ("Suave: Sarcasmo ligero...")
 - Indicador visual del nivel actual (slider, botones, etc.)
 - Ejemplos de roasts por nivel en tooltip
 - Lock icon 🔒 para niveles bloqueados
 
 **Performance:**
+
 - Cachear configuración en frontend (no fetch en cada request)
 - Invalidar cache al cambiar nivel
 
 **Business Logic:**
+
 - Plan restrictions deben ser servidor-side (NO confiar en frontend)
 - Logging de cambios de nivel (analytics)
 - Email notification si usuario intenta usar nivel bloqueado (sugiriendo upgrade)

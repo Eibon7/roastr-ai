@@ -58,11 +58,11 @@ POLAR_SUCCESS_URL=https://yourapp.com/success?checkout_id={CHECKOUT_ID}
 
 Polar Price IDs map to internal plan names:
 
-| Polar Price ID | Internal Plan | Database Value | Description |
-|----------------|---------------|----------------|-------------|
+| Polar Price ID           | Internal Plan   | Database Value  | Description                   |
+| ------------------------ | --------------- | --------------- | ----------------------------- |
 | `POLAR_STARTER_PRICE_ID` | `starter_trial` | `starter_trial` | Free tier with trial features |
-| `POLAR_PRO_PRICE_ID` | `pro` | `pro` | Professional plan (€15/mo) |
-| `POLAR_PLUS_PRICE_ID` | `creator_plus` | `creator_plus` | Premium plan (€50/mo) |
+| `POLAR_PRO_PRICE_ID`     | `pro`           | `pro`           | Professional plan (€15/mo)    |
+| `POLAR_PLUS_PRICE_ID`    | `creator_plus`  | `creator_plus`  | Premium plan (€50/mo)         |
 
 **Mapping Logic:** Handled by `src/utils/polarHelpers.js`
 
@@ -75,7 +75,7 @@ Polar Price IDs map to internal plan names:
 ```javascript
 // ❌ NEVER do this:
 const token = process.env.POLAR_ACCESS_TOKEN;
-fetch('https://api.polar.sh/...', { headers: { 'Authorization': `Bearer ${token}` } });
+fetch('https://api.polar.sh/...', { headers: { Authorization: `Bearer ${token}` } });
 
 // ✅ Always proxy through backend:
 fetch('/api/checkout', { method: 'POST', body: JSON.stringify({ price_id }) });
@@ -236,4 +236,3 @@ sed -i '/STRIPE/d' .env
 
 **Last Updated:** 2025-11-11  
 **Maintained By:** Backend Developer
-

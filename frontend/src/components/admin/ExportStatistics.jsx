@@ -63,11 +63,11 @@ const ExportStatistics = () => {
   const loadStatistics = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`/api/admin/exports/statistics?range=${timeRange}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -99,7 +99,7 @@ const ExportStatistics = () => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hrs > 0) return `${hrs}h ${mins}m`;
     if (mins > 0) return `${mins}m ${secs}s`;
     return `${secs}s`;
@@ -127,9 +127,7 @@ const ExportStatistics = () => {
         <Typography variant="h5" gutterBottom>
           Export Statistics
         </Typography>
-        <Alert severity="error">
-          {error}
-        </Alert>
+        <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
@@ -138,10 +136,8 @@ const ExportStatistics = () => {
     <Box sx={{ p: 3 }}>
       {/* Header with Controls */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5">
-          Export Statistics
-        </Typography>
-        
+        <Typography variant="h5">Export Statistics</Typography>
+
         <Box display="flex" alignItems="center" gap={2}>
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <InputLabel>Time Range</InputLabel>
@@ -156,13 +152,13 @@ const ExportStatistics = () => {
               <MenuItem value="365d">Last year</MenuItem>
             </Select>
           </FormControl>
-          
+
           {lastRefresh && (
             <Typography variant="body2" color="text.secondary">
               Updated: {lastRefresh.toLocaleTimeString()}
             </Typography>
           )}
-          
+
           <Tooltip title="Refresh statistics">
             <IconButton onClick={loadStatistics} disabled={loading}>
               <RefreshIcon />
@@ -187,10 +183,12 @@ const ExportStatistics = () => {
                   {statistics.overview?.total_exports || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Success rate: {getSuccessRate(
-                    statistics.overview?.completed_exports, 
+                  Success rate:{' '}
+                  {getSuccessRate(
+                    statistics.overview?.completed_exports,
                     statistics.overview?.total_exports
-                  )}%
+                  )}
+                  %
                 </Typography>
               </CardContent>
             </Card>
@@ -253,7 +251,7 @@ const ExportStatistics = () => {
               <Typography variant="h6" gutterBottom>
                 Export Types Distribution
               </Typography>
-              
+
               {statistics.export_types && (
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
@@ -284,16 +282,20 @@ const ExportStatistics = () => {
               <Typography variant="h6" gutterBottom>
                 Export Status Overview
               </Typography>
-              
+
               <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
                 {statistics.status_distribution?.map((status, index) => (
                   <Chip
                     key={status.status}
                     label={`${status.status}: ${status.count}`}
                     color={
-                      status.status === 'completed' ? 'success' :
-                      status.status === 'failed' ? 'error' :
-                      status.status === 'processing' ? 'warning' : 'default'
+                      status.status === 'completed'
+                        ? 'success'
+                        : status.status === 'failed'
+                          ? 'error'
+                          : status.status === 'processing'
+                            ? 'warning'
+                            : 'default'
                     }
                   />
                 ))}
@@ -319,33 +321,33 @@ const ExportStatistics = () => {
               <Typography variant="h6" gutterBottom>
                 Export Activity Timeline
               </Typography>
-              
+
               {statistics.timeline && (
                 <ResponsiveContainer width="100%" height={340}>
                   <AreaChart data={statistics.timeline}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="date" 
+                    <XAxis
+                      dataKey="date"
                       tickFormatter={(date) => new Date(date).toLocaleDateString()}
                     />
                     <YAxis />
-                    <RechartsTooltip 
+                    <RechartsTooltip
                       labelFormatter={(date) => new Date(date).toLocaleDateString()}
                     />
                     <Legend />
-                    <Area 
-                      type="monotone" 
-                      dataKey="exports" 
+                    <Area
+                      type="monotone"
+                      dataKey="exports"
                       stackId="1"
-                      stroke="#8884d8" 
+                      stroke="#8884d8"
                       fill="#8884d8"
                       name="Total Exports"
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="completed" 
+                    <Area
+                      type="monotone"
+                      dataKey="completed"
                       stackId="2"
-                      stroke="#82ca9d" 
+                      stroke="#82ca9d"
                       fill="#82ca9d"
                       name="Completed"
                     />
@@ -361,7 +363,7 @@ const ExportStatistics = () => {
               <Typography variant="h6" gutterBottom>
                 Performance Metrics
               </Typography>
-              
+
               {statistics.performance && (
                 <Box>
                   <Box display="flex" justifyContent="space-between" mb={1}>
@@ -370,33 +372,35 @@ const ExportStatistics = () => {
                       {formatBytes(statistics.performance.avg_file_size)}
                     </Typography>
                   </Box>
-                  
+
                   <Box display="flex" justifyContent="space-between" mb={1}>
                     <Typography variant="body2">Largest Export</Typography>
                     <Typography variant="body2" fontWeight="bold">
                       {formatBytes(statistics.performance.max_file_size)}
                     </Typography>
                   </Box>
-                  
+
                   <Box display="flex" justifyContent="space-between" mb={1}>
                     <Typography variant="body2">Fastest Export</Typography>
                     <Typography variant="body2" fontWeight="bold">
                       {formatDuration(statistics.performance.min_processing_time)}
                     </Typography>
                   </Box>
-                  
+
                   <Box display="flex" justifyContent="space-between" mb={1}>
                     <Typography variant="body2">Slowest Export</Typography>
                     <Typography variant="body2" fontWeight="bold">
                       {formatDuration(statistics.performance.max_processing_time)}
                     </Typography>
                   </Box>
-                  
+
                   <Box display="flex" justifyContent="space-between" mb={1}>
                     <Typography variant="body2">Retry Rate</Typography>
-                    <Typography variant="body2" fontWeight="bold" color={
-                      statistics.performance.retry_rate > 10 ? 'error' : 'success'
-                    }>
+                    <Typography
+                      variant="body2"
+                      fontWeight="bold"
+                      color={statistics.performance.retry_rate > 10 ? 'error' : 'success'}
+                    >
                       {statistics.performance.retry_rate}%
                     </Typography>
                   </Box>
@@ -412,7 +416,7 @@ const ExportStatistics = () => {
                 <SecurityIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                 Security & Compliance
               </Typography>
-              
+
               {statistics.security && (
                 <Box>
                   <Box display="flex" justifyContent="space-between" mb={1}>
@@ -421,33 +425,39 @@ const ExportStatistics = () => {
                       {statistics.security.encrypted_exports_percentage}%
                     </Typography>
                   </Box>
-                  
+
                   <Box display="flex" justifyContent="space-between" mb={1}>
                     <Typography variant="body2">Access Log Coverage</Typography>
                     <Typography variant="body2" fontWeight="bold" color="success.main">
                       {statistics.security.access_log_coverage}%
                     </Typography>
                   </Box>
-                  
+
                   <Box display="flex" justifyContent="space-between" mb={1}>
                     <Typography variant="body2">Expired Downloads</Typography>
                     <Typography variant="body2" fontWeight="bold">
                       {statistics.security.expired_downloads}
                     </Typography>
                   </Box>
-                  
+
                   <Box display="flex" justifyContent="space-between" mb={1}>
                     <Typography variant="body2">Average Download Delay</Typography>
                     <Typography variant="body2" fontWeight="bold">
                       {formatDuration(statistics.security.avg_download_delay)}
                     </Typography>
                   </Box>
-                  
+
                   <Box display="flex" justifyContent="space-between" mb={1}>
                     <Typography variant="body2">Failed Access Attempts</Typography>
-                    <Typography variant="body2" fontWeight="bold" color={
-                      statistics.security.failed_access_attempts > 0 ? 'warning.main' : 'success.main'
-                    }>
+                    <Typography
+                      variant="body2"
+                      fontWeight="bold"
+                      color={
+                        statistics.security.failed_access_attempts > 0
+                          ? 'warning.main'
+                          : 'success.main'
+                      }
+                    >
                       {statistics.security.failed_access_attempts}
                     </Typography>
                   </Box>

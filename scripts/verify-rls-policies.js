@@ -15,9 +15,8 @@ async function verifyPolicies() {
   console.log('🔍 Checking RLS policies...\n');
 
   // Query to get all policies on organizations table
-  const { data, error } = await client
-    .rpc('exec_sql', {
-      query: `
+  const { data, error } = await client.rpc('exec_sql', {
+    query: `
         SELECT
           schemaname,
           tablename,
@@ -31,7 +30,7 @@ async function verifyPolicies() {
         WHERE tablename IN ('organizations', 'posts', 'comments', 'roasts', 'organization_members')
         ORDER BY tablename, policyname;
       `
-    });
+  });
 
   if (error) {
     console.error('❌ Error querying policies:', error);
@@ -40,7 +39,7 @@ async function verifyPolicies() {
     console.log('(Cannot query directly, will apply fix)');
   } else if (data && data.length > 0) {
     console.log('📋 Current policies:');
-    data.forEach(policy => {
+    data.forEach((policy) => {
       console.log(`\nTable: ${policy.tablename}`);
       console.log(`  Policy: ${policy.policyname}`);
       console.log(`  Command: ${policy.cmd}`);
@@ -54,7 +53,7 @@ verifyPolicies()
     console.log('\n✅ Check complete');
     process.exit(0);
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('\n❌ Check failed:', err);
     process.exit(1);
   });

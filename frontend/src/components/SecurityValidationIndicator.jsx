@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
-const SecurityValidationIndicator = ({ 
+const SecurityValidationIndicator = ({
   validationSteps = [],
   currentStep = 0,
   onValidationComplete,
@@ -19,7 +19,7 @@ const SecurityValidationIndicator = ({
   const [error, setError] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
   const [validationResults, setValidationResults] = useState(new Map());
-  
+
   // ROUND 4 FIX: Use refs to track timers for proper cleanup
   const refreshTimerRef = useRef(null);
   const progressTimerRef = useRef(null);
@@ -65,7 +65,7 @@ const SecurityValidationIndicator = ({
         // Trigger refresh of validation status
         if (onValidationComplete) {
           // In real implementation, this would check validation status
-          setProgress(prev => Math.min(prev + 10, 100));
+          setProgress((prev) => Math.min(prev + 10, 100));
         }
       }, refreshInterval);
 
@@ -81,18 +81,18 @@ const SecurityValidationIndicator = ({
   // ROUND 4 FIX: Progress animation with cleanup
   useEffect(() => {
     const targetProgress = validationProgress.percentage;
-    
+
     if (targetProgress !== progress) {
       setIsValidating(true);
-      
+
       const animateProgress = () => {
-        setProgress(currentProgress => {
+        setProgress((currentProgress) => {
           const diff = targetProgress - currentProgress;
           if (Math.abs(diff) < 1) {
             setIsValidating(false);
             return targetProgress;
           }
-          
+
           const step = diff > 0 ? Math.max(1, diff * 0.1) : Math.min(-1, diff * 0.1);
           return currentProgress + step;
         });
@@ -146,20 +146,23 @@ const SecurityValidationIndicator = ({
   }, []);
 
   // ROUND 4 FIX: Handle step completion
-  const handleStepComplete = useCallback((stepIndex, result) => {
-    setValidationResults(prev => {
-      const newResults = new Map(prev);
-      newResults.set(stepIndex, result);
-      return newResults;
-    });
+  const handleStepComplete = useCallback(
+    (stepIndex, result) => {
+      setValidationResults((prev) => {
+        const newResults = new Map(prev);
+        newResults.set(stepIndex, result);
+        return newResults;
+      });
 
-    if (result.error) {
-      setError(result.error);
-      if (onValidationError) {
-        onValidationError(new Error(result.error));
+      if (result.error) {
+        setError(result.error);
+        if (onValidationError) {
+          onValidationError(new Error(result.error));
+        }
       }
-    }
-  }, [onValidationError]);
+    },
+    [onValidationError]
+  );
 
   // ROUND 4 FIX: Handle retry
   const handleRetry = useCallback(() => {
@@ -170,22 +173,28 @@ const SecurityValidationIndicator = ({
   }, []);
 
   // ROUND 4 FIX: Get step icon based on status
-  const getStepIcon = useCallback((step) => {
-    if (step.hasError) return '❌';
-    if (step.isCompleted) return '✅';
-    if (step.isCurrent && isValidating) return '⏳';
-    if (step.isCurrent) return '🔄';
-    return '⭕';
-  }, [isValidating]);
+  const getStepIcon = useCallback(
+    (step) => {
+      if (step.hasError) return '❌';
+      if (step.isCompleted) return '✅';
+      if (step.isCurrent && isValidating) return '⏳';
+      if (step.isCurrent) return '🔄';
+      return '⭕';
+    },
+    [isValidating]
+  );
 
   // ROUND 4 FIX: Get step status text
-  const getStepStatusText = useCallback((step) => {
-    if (step.hasError) return 'Failed';
-    if (step.isCompleted) return 'Completed';
-    if (step.isCurrent && isValidating) return 'In Progress';
-    if (step.isCurrent) return 'Current';
-    return 'Pending';
-  }, [isValidating]);
+  const getStepStatusText = useCallback(
+    (step) => {
+      if (step.hasError) return 'Failed';
+      if (step.isCompleted) return 'Completed';
+      if (step.isCurrent && isValidating) return 'In Progress';
+      if (step.isCurrent) return 'Current';
+      return 'Pending';
+    },
+    [isValidating]
+  );
 
   if (!validationSteps || validationSteps.length === 0) {
     return null;
@@ -199,9 +208,7 @@ const SecurityValidationIndicator = ({
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Security Validation
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900">Security Validation</h3>
         <div className="text-sm text-gray-500">
           {validationProgress.completed} of {validationProgress.total} steps
         </div>
@@ -211,9 +218,7 @@ const SecurityValidationIndicator = ({
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-gray-700">Overall Progress</span>
-          <span className="text-sm font-medium text-gray-900">
-            {Math.round(progress)}%
-          </span>
+          <span className="text-sm font-medium text-gray-900">{Math.round(progress)}%</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
@@ -250,45 +255,43 @@ const SecurityValidationIndicator = ({
           <div
             key={step.index}
             className={`flex items-center p-3 rounded-lg transition-colors duration-200 ${
-              step.isCurrent 
-                ? 'bg-blue-50 border border-blue-200' 
-                : step.isCompleted 
-                ? 'bg-green-50 border border-green-200'
-                : step.hasError
-                ? 'bg-red-50 border border-red-200'
-                : 'bg-gray-50 border border-gray-200'
+              step.isCurrent
+                ? 'bg-blue-50 border border-blue-200'
+                : step.isCompleted
+                  ? 'bg-green-50 border border-green-200'
+                  : step.hasError
+                    ? 'bg-red-50 border border-red-200'
+                    : 'bg-gray-50 border border-gray-200'
             }`}
             data-testid={`validation-step-${step.index}`}
           >
             <span className="text-lg mr-3" role="img" aria-label={getStepStatusText(step)}>
               {getStepIcon(step)}
             </span>
-            
+
             <div className="flex-1">
               <div className="text-sm font-medium text-gray-900">
                 {step.name || `Step ${step.index + 1}`}
               </div>
               {step.description && (
-                <div className="text-xs text-gray-600 mt-1">
-                  {step.description}
-                </div>
+                <div className="text-xs text-gray-600 mt-1">{step.description}</div>
               )}
               {step.result && step.result.details && (
-                <div className="text-xs text-gray-500 mt-1">
-                  {step.result.details}
-                </div>
+                <div className="text-xs text-gray-500 mt-1">{step.result.details}</div>
               )}
             </div>
-            
-            <div className={`text-xs px-2 py-1 rounded-full ${
-              step.hasError 
-                ? 'bg-red-100 text-red-700'
-                : step.isCompleted 
-                ? 'bg-green-100 text-green-700'
-                : step.isCurrent 
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-100 text-gray-600'
-            }`}>
+
+            <div
+              className={`text-xs px-2 py-1 rounded-full ${
+                step.hasError
+                  ? 'bg-red-100 text-red-700'
+                  : step.isCompleted
+                    ? 'bg-green-100 text-green-700'
+                    : step.isCurrent
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-gray-100 text-gray-600'
+              }`}
+            >
               {getStepStatusText(step)}
             </div>
           </div>

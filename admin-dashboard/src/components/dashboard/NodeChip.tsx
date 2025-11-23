@@ -11,8 +11,8 @@ const ChipContainer = styled.button<{ $active?: boolean }>`
   height: 28px;
   padding: 4px 12px;
   border-radius: 4px;
-  background: ${({ $active }) => $active ? 'rgba(80, 250, 123, 0.1)' : '#1f1d20'};
-  border: 1px solid ${({ $active }) => $active ? '#50fa7b' : 'rgba(255, 255, 255, 0.12)'};
+  background: ${({ $active }) => ($active ? 'rgba(80, 250, 123, 0.1)' : '#1f1d20')};
+  border: 1px solid ${({ $active }) => ($active ? '#50fa7b' : 'rgba(255, 255, 255, 0.12)')};
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   font-weight: 600;
@@ -38,11 +38,7 @@ const ChipContainer = styled.button<{ $active?: boolean }>`
 
 export const NodeChip: React.FC<NodeChipProps> = ({ label, onClick, active }) => {
   return (
-    <ChipContainer
-      onClick={onClick}
-      $active={active}
-      aria-label={`Navigate to ${label} node`}
-    >
+    <ChipContainer onClick={onClick} $active={active} aria-label={`Navigate to ${label} node`}>
       {label}
     </ChipContainer>
   );

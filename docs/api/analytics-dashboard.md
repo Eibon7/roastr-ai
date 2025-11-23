@@ -28,6 +28,7 @@ Tokens are obtained via the authentication system and stored in `localStorage` o
 ## Rate Limiting
 
 All analytics endpoints are rate-limited to prevent abuse:
+
 - **Default:** 100 requests per 15 minutes per user
 - **Plan-based:** Limits vary by subscription tier
 
@@ -47,11 +48,11 @@ GET /api/analytics/dashboard?range=30&group_by=day&platform=all
 
 #### Query Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `range` | integer | `30` | Number of days (7-365) |
-| `group_by` | string | `day` | Grouping: `day`, `week`, `month` |
-| `platform` | string | `all` | Platform filter or `all` |
+| Parameter  | Type    | Default | Description                      |
+| ---------- | ------- | ------- | -------------------------------- |
+| `range`    | integer | `30`    | Number of days (7-365)           |
+| `group_by` | string  | `day`   | Grouping: `day`, `week`, `month` |
+| `platform` | string  | `all`   | Platform filter or `all`         |
 
 #### Response
 
@@ -203,9 +204,9 @@ GET /api/analytics/billing?range=90
 
 #### Query Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `range` | integer | `90` | Number of days (30-365) |
+| Parameter | Type    | Default | Description             |
+| --------- | ------- | ------- | ----------------------- |
+| `range`   | integer | `90`    | Number of days (30-365) |
 
 #### Response
 
@@ -272,6 +273,7 @@ GET /api/analytics/billing?range=90
 #### Polar Fallback
 
 If Polar is not configured or fails:
+
 - `polar.available` = `false`
 - `polar.message` = "Polar no está configurado. Se muestran métricas locales."
 - Local costs are still returned
@@ -290,17 +292,18 @@ GET /api/analytics/export?format=csv&dataset=snapshots&range=90&locale=es-ES&tim
 
 #### Query Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `format` | string | `csv` | Export format: `csv` or `json` |
-| `dataset` | string | `snapshots` | Dataset: `snapshots`, `usage`, `events` |
-| `range` | integer | `90` | Number of days (7-365) |
-| `locale` | string | `es-ES` | Locale for date formatting |
-| `timezone` | string | `UTC` | Timezone for timestamps |
+| Parameter  | Type    | Default     | Description                             |
+| ---------- | ------- | ----------- | --------------------------------------- |
+| `format`   | string  | `csv`       | Export format: `csv` or `json`          |
+| `dataset`  | string  | `snapshots` | Dataset: `snapshots`, `usage`, `events` |
+| `range`    | integer | `90`        | Number of days (7-365)                  |
+| `locale`   | string  | `es-ES`     | Locale for date formatting              |
+| `timezone` | string  | `UTC`       | Timezone for timestamps                 |
 
 #### Response
 
 **CSV Format:**
+
 ```http
 Content-Type: text/csv; charset=utf-8
 Content-Disposition: attachment; filename="analytics-snapshots-2025-10-18-2025-11-17.csv"
@@ -309,6 +312,7 @@ id,created_at,organization_id,roasts_count,analyses_count,...
 ```
 
 **JSON Format:**
+
 ```http
 Content-Type: application/json
 Content-Disposition: attachment; filename="analytics-snapshots-2025-10-18-2025-11-17.json"
@@ -347,12 +351,14 @@ Content-Disposition: attachment; filename="analytics-snapshots-2025-10-18-2025-1
 #### Plan Restrictions
 
 **Export Allowed Plans:**
+
 - ✅ Pro
 - ✅ Plus
 - ✅ Creator Plus
 - ✅ Custom
 
 **Export Blocked Plans:**
+
 - ❌ Free
 - ❌ Starter Trial
 - ❌ Starter
@@ -367,7 +373,7 @@ Content-Disposition: attachment; filename="analytics-snapshots-2025-10-18-2025-1
 // Get dashboard data
 const response = await fetch('/api/analytics/dashboard?range=30&group_by=day&platform=all', {
   headers: {
-    'Authorization': `Bearer ${token}`
+    Authorization: `Bearer ${token}`
   }
 });
 const data = await response.json();
@@ -375,7 +381,7 @@ const data = await response.json();
 // Get billing analytics
 const billingResponse = await fetch('/api/analytics/billing?range=90', {
   headers: {
-    'Authorization': `Bearer ${token}`
+    Authorization: `Bearer ${token}`
   }
 });
 const billingData = await billingResponse.json();
@@ -383,7 +389,7 @@ const billingData = await billingResponse.json();
 // Export CSV
 const exportResponse = await fetch('/api/analytics/export?format=csv&dataset=snapshots&range=90', {
   headers: {
-    'Authorization': `Bearer ${token}`
+    Authorization: `Bearer ${token}`
   }
 });
 const blob = await exportResponse.blob();
@@ -495,6 +501,7 @@ interface ShieldStats {
 ### Common Errors
 
 **401 Unauthorized:**
+
 ```json
 {
   "success": false,
@@ -503,6 +510,7 @@ interface ShieldStats {
 ```
 
 **403 Forbidden (Export):**
+
 ```json
 {
   "success": false,
@@ -511,6 +519,7 @@ interface ShieldStats {
 ```
 
 **400 Bad Request:**
+
 ```json
 {
   "success": false,
@@ -519,6 +528,7 @@ interface ShieldStats {
 ```
 
 **500 Internal Server Error:**
+
 ```json
 {
   "success": false,
@@ -570,4 +580,3 @@ interface ShieldStats {
 - CSV/JSON export functionality
 - Caching and rate limiting
 - Plan-based access control
-

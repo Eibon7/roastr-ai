@@ -43,7 +43,12 @@ export function ShieldStatus({
   const percentage = Math.round(score * 100);
 
   return (
-    <Card className={cn('border-border/70 bg-card/80 shadow-sm shadow-black/5 backdrop-blur', className)}>
+    <Card
+      className={cn(
+        'border-border/70 bg-card/80 shadow-sm shadow-black/5 backdrop-blur',
+        className
+      )}
+    >
       <CardHeader className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -55,7 +60,9 @@ export function ShieldStatus({
               <p className="text-sm text-muted-foreground">{statusCopy[status]}</p>
             </div>
           </div>
-          <Badge className={cn('text-xs uppercase tracking-wide', severityInfo.color)}>{severityInfo.label}</Badge>
+          <Badge className={cn('text-xs uppercase tracking-wide', severityInfo.color)}>
+            {severityInfo.label}
+          </Badge>
         </div>
         <div className="space-y-2 rounded-2xl border border-border/60 p-4">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -97,4 +104,3 @@ export function ShieldStatus({
 }
 
 export default ShieldStatus;
-

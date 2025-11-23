@@ -1,6 +1,6 @@
 /**
  * Tests for RoastGeneratorEnhanced with RQC system
- * 
+ *
  * Note: RQC is disabled by default in tests (ENABLE_RQC=false)
  * Advanced RQC tests are skipped until feature is enabled
  */
@@ -51,11 +51,11 @@ describe('RoastGeneratorEnhanced', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Get the mock OpenAI instance
     const OpenAI = require('openai');
     mockOpenAI = new OpenAI();
-    
+
     generator = new RoastGeneratorEnhanced();
     mockRQCService = new RQCService(mockOpenAI);
     generator.rqcService = mockRQCService;
@@ -81,12 +81,10 @@ describe('RoastGeneratorEnhanced', () => {
         choices: [{ message: { content: 'Nice try, but my grandma tells better jokes! 😄' } }]
       });
 
-      const result = await generator.generateRoast(
-        'Your jokes are terrible',
-        0.3,
-        'sarcastic',
-        { userId: 'user-123', plan: 'free' }
-      );
+      const result = await generator.generateRoast('Your jokes are terrible', 0.3, 'sarcastic', {
+        userId: 'user-123',
+        plan: 'free'
+      });
 
       expect(result.plan).toBe('free');
       expect(result.rqcEnabled).toBe(false);
@@ -111,12 +109,10 @@ describe('RoastGeneratorEnhanced', () => {
         choices: [{ message: { content: 'Pro-level roast here! 🔥' } }]
       });
 
-      const result = await generator.generateRoast(
-        'Test comment',
-        0.5,
-        'direct',
-        { userId: 'user-456', plan: 'pro' }
-      );
+      const result = await generator.generateRoast('Test comment', 0.5, 'direct', {
+        userId: 'user-456',
+        plan: 'pro'
+      });
 
       expect(result.plan).toBe('pro');
       expect(result.rqcEnabled).toBe(false);
@@ -140,12 +136,10 @@ describe('RoastGeneratorEnhanced', () => {
         choices: [{ message: { content: 'Basic moderation roast content' } }]
       });
 
-      const result = await generator.generateRoast(
-        'Complex roast request',
-        0.7,
-        'sarcastic',
-        { userId: 'user-789', plan: 'creator_plus' }
-      );
+      const result = await generator.generateRoast('Complex roast request', 0.7, 'sarcastic', {
+        userId: 'user-789',
+        plan: 'creator_plus'
+      });
 
       expect(result.plan).toBe('creator_plus');
       expect(result.rqcEnabled).toBe(false); // False because RQC globally disabled
@@ -296,7 +290,8 @@ describe('RoastGeneratorEnhanced', () => {
       });
 
       await generator.generateRoast('Test', 0.3, 'sarcastic', {
-        userId: 'user-free', plan: 'free'
+        userId: 'user-free',
+        plan: 'free'
       });
 
       // Only 1 call for the roast generation (basic moderation in same prompt)
@@ -315,7 +310,8 @@ describe('RoastGeneratorEnhanced', () => {
       });
 
       await generator.generateRoast('Test', 0.4, 'subtle', {
-        userId: 'user-pro', plan: 'pro'
+        userId: 'user-pro',
+        plan: 'pro'
       });
 
       // Only 1 call for the roast generation (basic moderation in same prompt)
@@ -380,7 +376,9 @@ describe('RoastGeneratorEnhanced', () => {
 
     it('should handle database errors gracefully', async () => {
       // Mock database error
-      generator.getUserRQCConfig = jest.fn().mockRejectedValue(new Error('Database connection failed'));
+      generator.getUserRQCConfig = jest
+        .fn()
+        .mockRejectedValue(new Error('Database connection failed'));
 
       mockOpenAI.chat.completions.create.mockResolvedValue({
         choices: [{ message: { content: 'Default roast' } }]
@@ -415,7 +413,7 @@ describe('RoastGeneratorEnhanced', () => {
 
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       const systemPrompt = callArgs.messages[0].content;
-      
+
       // Check for new master template structure instead of old format
       expect(systemPrompt).toContain('COMENTARIO ORIGINAL:');
       expect(systemPrompt).toContain('Test comment');
@@ -440,7 +438,7 @@ describe('RoastGeneratorEnhanced', () => {
 
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       const systemPrompt = callArgs.messages[0].content;
-      
+
       // Check for new master template structure and tone mapping
       expect(systemPrompt).toContain('COMENTARIO ORIGINAL:');
       expect(systemPrompt).toContain('Test');

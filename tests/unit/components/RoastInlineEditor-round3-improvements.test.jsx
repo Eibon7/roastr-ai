@@ -12,7 +12,7 @@ const mockLocalStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
-  clear: jest.fn(),
+  clear: jest.fn()
 };
 Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage
@@ -31,49 +31,40 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue('mock-token');
-    
+
     fetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        data: {
-          validation: {
-            valid: true,
-            errors: [],
-            warnings: [],
-            metadata: {
-              textLength: 10,
-              codeUnitLength: 10,
-              byteLengthUtf8: 10
+      json: () =>
+        Promise.resolve({
+          data: {
+            validation: {
+              valid: true,
+              errors: [],
+              warnings: [],
+              metadata: {
+                textLength: 10,
+                codeUnitLength: 10,
+                byteLengthUtf8: 10
+              }
             }
           }
-        }
-      })
+        })
     });
   });
 
   describe('Platform Normalization', () => {
     it('should normalize "X" to "twitter"', () => {
-      render(
-        <RoastInlineEditor
-          {...defaultProps}
-          platform="X"
-        />
-      );
+      render(<RoastInlineEditor {...defaultProps} platform="X" />);
 
       // Component should render without errors for "X" platform
       expect(screen.getByText('Roast Generado')).toBeInTheDocument();
-      
+
       // Should display normalized platform
       expect(screen.getByText('twitter')).toBeInTheDocument();
     });
 
     it('should normalize "x.com" to "twitter"', () => {
-      render(
-        <RoastInlineEditor
-          {...defaultProps}
-          platform="x.com"
-        />
-      );
+      render(<RoastInlineEditor {...defaultProps} platform="x.com" />);
 
       expect(screen.getByText('Roast Generado')).toBeInTheDocument();
       expect(screen.getByText('twitter')).toBeInTheDocument();
@@ -81,14 +72,9 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
 
     it('should handle case-insensitive platform normalization', () => {
       const testCases = ['x', 'X', 'x.COM', 'X.com', 'x.Com'];
-      
-      testCases.forEach(platform => {
-        const { unmount } = render(
-          <RoastInlineEditor
-            {...defaultProps}
-            platform={platform}
-          />
-        );
+
+      testCases.forEach((platform) => {
+        const { unmount } = render(<RoastInlineEditor {...defaultProps} platform={platform} />);
 
         expect(screen.getByText('twitter')).toBeInTheDocument();
         unmount();
@@ -97,14 +83,9 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
 
     it('should preserve other platform names unchanged', () => {
       const platforms = ['facebook', 'instagram', 'youtube'];
-      
-      platforms.forEach(platform => {
-        const { unmount } = render(
-          <RoastInlineEditor
-            {...defaultProps}
-            platform={platform}
-          />
-        );
+
+      platforms.forEach((platform) => {
+        const { unmount } = render(<RoastInlineEditor {...defaultProps} platform={platform} />);
 
         expect(screen.getByText(platform)).toBeInTheDocument();
         unmount();
@@ -115,17 +96,12 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
   describe('Unicode Character Counting Consistency', () => {
     it('should count ASCII characters correctly', async () => {
       const user = userEvent.setup();
-      
-      render(
-        <RoastInlineEditor
-          {...defaultProps}
-          roast=""
-        />
-      );
+
+      render(<RoastInlineEditor {...defaultProps} roast="" />);
 
       // Enter edit mode
       fireEvent.click(screen.getByText('Editar'));
-      
+
       const textarea = screen.getByDisplayValue('');
       await user.type(textarea, 'Hello World');
 
@@ -135,19 +111,14 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
 
     it('should count Unicode characters correctly', async () => {
       const user = userEvent.setup();
-      
-      render(
-        <RoastInlineEditor
-          {...defaultProps}
-          roast=""
-        />
-      );
+
+      render(<RoastInlineEditor {...defaultProps} roast="" />);
 
       fireEvent.click(screen.getByText('Editar'));
-      
+
       const textarea = screen.getByDisplayValue('');
       const unicodeText = 'Hello 🌍'; // ASCII + Emoji
-      
+
       await user.type(textarea, unicodeText);
 
       // Should count grapheme clusters correctly
@@ -156,19 +127,14 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
 
     it('should handle complex emoji sequences', async () => {
       const user = userEvent.setup();
-      
-      render(
-        <RoastInlineEditor
-          {...defaultProps}
-          roast=""
-        />
-      );
+
+      render(<RoastInlineEditor {...defaultProps} roast="" />);
 
       fireEvent.click(screen.getByText('Editar'));
-      
+
       const textarea = screen.getByDisplayValue('');
       const complexEmoji = '👨‍👩‍👧‍👦'; // Family emoji (compound sequence)
-      
+
       await user.type(textarea, complexEmoji);
 
       // Should count as 1 grapheme cluster
@@ -178,12 +144,7 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
 
   describe('Accessibility Improvements', () => {
     it('should have proper ARIA labels in edit mode', () => {
-      render(
-        <RoastInlineEditor
-          {...defaultProps}
-          platform="twitter"
-        />
-      );
+      render(<RoastInlineEditor {...defaultProps} platform="twitter" />);
 
       fireEvent.click(screen.getByText('Editar'));
 
@@ -197,30 +158,26 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
       // Mock validation failure
       fetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          data: {
-            validation: {
-              valid: false,
-              errors: [{ message: 'Text is too long' }],
-              warnings: [],
-              metadata: { textLength: 300 }
+        json: () =>
+          Promise.resolve({
+            data: {
+              validation: {
+                valid: false,
+                errors: [{ message: 'Text is too long' }],
+                warnings: [],
+                metadata: { textLength: 300 }
+              }
             }
-          }
-        })
+          })
       });
 
-      render(
-        <RoastInlineEditor
-          {...defaultProps}
-          roast=""
-        />
-      );
+      render(<RoastInlineEditor {...defaultProps} roast="" />);
 
       fireEvent.click(screen.getByText('Editar'));
-      
+
       const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Very long text'.repeat(20) } });
-      
+
       // Trigger validation
       fireEvent.click(screen.getByText('Validar'));
 
@@ -251,12 +208,7 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
   describe('Error Handling for Null/Undefined Platform Values', () => {
     it('should handle null platform gracefully', () => {
       expect(() => {
-        render(
-          <RoastInlineEditor
-            {...defaultProps}
-            platform={null}
-          />
-        );
+        render(<RoastInlineEditor {...defaultProps} platform={null} />);
       }).not.toThrow();
 
       expect(screen.getByText('Roast Generado')).toBeInTheDocument();
@@ -264,12 +216,7 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
 
     it('should handle undefined platform gracefully', () => {
       expect(() => {
-        render(
-          <RoastInlineEditor
-            {...defaultProps}
-            platform={undefined}
-          />
-        );
+        render(<RoastInlineEditor {...defaultProps} platform={undefined} />);
       }).not.toThrow();
 
       expect(screen.getByText('Roast Generado')).toBeInTheDocument();
@@ -277,15 +224,10 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
 
     it('should provide fallback behavior for invalid platforms', () => {
       const invalidPlatforms = ['', 'invalid-platform'];
-      
-      invalidPlatforms.forEach(platform => {
+
+      invalidPlatforms.forEach((platform) => {
         expect(() => {
-          const { unmount } = render(
-            <RoastInlineEditor
-              {...defaultProps}
-              platform={platform}
-            />
-          );
+          const { unmount } = render(<RoastInlineEditor {...defaultProps} platform={platform} />);
           unmount();
         }).not.toThrow();
       });
@@ -295,16 +237,16 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
   describe('Save Button Gating', () => {
     it('should require validation before enabling save', async () => {
       const user = userEvent.setup();
-      
+
       render(<RoastInlineEditor {...defaultProps} roast="" />);
 
       fireEvent.click(screen.getByText('Editar'));
-      
+
       const textarea = screen.getByRole('textbox');
       await user.type(textarea, 'New content');
 
       const saveButton = screen.getByText('Guardar');
-      
+
       // Save should be disabled without validation
       expect(saveButton).toBeDisabled();
       expect(saveButton).toHaveAttribute('aria-label', 'Valida los cambios antes de guardar');
@@ -314,10 +256,10 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
       render(<RoastInlineEditor {...defaultProps} roast="" />);
 
       fireEvent.click(screen.getByText('Editar'));
-      
+
       const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Valid content' } });
-      
+
       // Trigger validation
       fireEvent.click(screen.getByText('Validar'));
 
@@ -330,30 +272,22 @@ describe('RoastInlineEditor - Round 3 Improvements', () => {
 
   describe('Performance Optimizations', () => {
     it('should not re-render unnecessarily', () => {
-      const { rerender } = render(
-        <RoastInlineEditor {...defaultProps} />
-      );
+      const { rerender } = render(<RoastInlineEditor {...defaultProps} />);
 
       // Rerender with same props
-      rerender(
-        <RoastInlineEditor {...defaultProps} />
-      );
+      rerender(<RoastInlineEditor {...defaultProps} />);
 
       // Component should handle rerenders efficiently
       expect(screen.getByText('Roast Generado')).toBeInTheDocument();
     });
 
     it('should handle rapid platform changes efficiently', () => {
-      const { rerender } = render(
-        <RoastInlineEditor {...defaultProps} platform="twitter" />
-      );
+      const { rerender } = render(<RoastInlineEditor {...defaultProps} platform="twitter" />);
 
       // Rapid platform changes
       const platforms = ['X', 'x.com', 'twitter', 'facebook'];
-      platforms.forEach(platform => {
-        rerender(
-          <RoastInlineEditor {...defaultProps} platform={platform} />
-        );
+      platforms.forEach((platform) => {
+        rerender(<RoastInlineEditor {...defaultProps} platform={platform} />);
       });
 
       expect(screen.getByText('Roast Generado')).toBeInTheDocument();

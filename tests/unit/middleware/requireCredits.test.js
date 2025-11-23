@@ -1,29 +1,29 @@
 /**
  * Credits Middleware Unit Tests
- * 
+ *
  * Tests for credit verification and consumption middleware
  * including error handling, feature flag integration, and
  * proper HTTP response codes.
  */
 
-const { 
-  requireAnalysisCredits, 
-  requireRoastCredits, 
-  requireBothCredits 
+const {
+  requireAnalysisCredits,
+  requireRoastCredits,
+  requireBothCredits
 } = require('../../../src/middleware/requireCredits');
 const creditsService = require('../../../src/services/creditsService');
 const { flags } = require('../../../src/config/flags');
 
 // Mock dependencies
 jest.mock('../../../src/services/creditsService', () => ({
-    canConsume: jest.fn(),
-    consume: jest.fn(),
-    getOrCreateActivePeriod: jest.fn()
+  canConsume: jest.fn(),
+  consume: jest.fn(),
+  getOrCreateActivePeriod: jest.fn()
 }));
 jest.mock('../../../src/config/flags', () => ({
-    flags: {
-        isEnabled: jest.fn()
-    }
+  flags: {
+    isEnabled: jest.fn()
+  }
 }));
 jest.mock('../../../src/utils/logger', () => ({
   logger: {
@@ -45,7 +45,7 @@ describe('Credits Middleware', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     req = {
       user: { id: 'test-user-123' },
       body: { platform: 'twitter' },
@@ -55,14 +55,14 @@ describe('Credits Middleware', () => {
       ip: '127.0.0.1',
       get: jest.fn().mockReturnValue('test-user-agent')
     };
-    
+
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn()
     };
-    
+
     next = jest.fn();
-    
+
     // Default: Credits v2 enabled
     flags.isEnabled.mockImplementation((flag) => {
       if (flag === 'ENABLE_CREDITS_V2') return true;
@@ -78,7 +78,7 @@ describe('Credits Middleware', () => {
         limit: 10000,
         used: 50
       });
-      
+
       creditsService.consume.mockResolvedValue(true);
 
       const middleware = requireAnalysisCredits({ amount: 5, actionType: 'gatekeeper_check' });
@@ -187,7 +187,7 @@ describe('Credits Middleware', () => {
         limit: 1000,
         used: 5
       });
-      
+
       creditsService.consume.mockResolvedValue(true);
 
       const middleware = requireRoastCredits({ amount: 1, actionType: 'roast_generation' });
@@ -239,7 +239,7 @@ describe('Credits Middleware', () => {
       creditsService.canConsume
         .mockResolvedValueOnce({ canConsume: true, remaining: 9950 }) // analysis
         .mockResolvedValueOnce({ canConsume: true, remaining: 995 }); // roast
-      
+
       creditsService.consume
         .mockResolvedValueOnce(true) // analysis
         .mockResolvedValueOnce(true); // roast
@@ -249,7 +249,7 @@ describe('Credits Middleware', () => {
         roastAmount: 1,
         actionType: 'full_roast_workflow'
       });
-      
+
       await middleware(req, res, next);
 
       expect(creditsService.canConsume).toHaveBeenCalledTimes(2);
@@ -263,8 +263,8 @@ describe('Credits Middleware', () => {
 
     it('should return 402 when analysis credits insufficient', async () => {
       creditsService.canConsume
-        .mockResolvedValueOnce({ 
-          canConsume: false, 
+        .mockResolvedValueOnce({
+          canConsume: false,
           remaining: 2,
           limit: 10000,
           periodEnd: '2024-02-01T00:00:00Z'
@@ -275,7 +275,7 @@ describe('Credits Middleware', () => {
         analysisAmount: 5,
         roastAmount: 1
       });
-      
+
       await middleware(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(402);
@@ -297,8 +297,8 @@ describe('Credits Middleware', () => {
     it('should return 402 when roast credits insufficient', async () => {
       creditsService.canConsume
         .mockResolvedValueOnce({ canConsume: true, remaining: 9950 }) // analysis
-        .mockResolvedValueOnce({ 
-          canConsume: false, 
+        .mockResolvedValueOnce({
+          canConsume: false,
           remaining: 0,
           limit: 1000,
           periodEnd: '2024-02-01T00:00:00Z'
@@ -308,7 +308,7 @@ describe('Credits Middleware', () => {
         analysisAmount: 5,
         roastAmount: 1
       });
-      
+
       await middleware(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(402);
@@ -330,7 +330,7 @@ describe('Credits Middleware', () => {
       creditsService.canConsume
         .mockResolvedValueOnce({ canConsume: true, remaining: 9950 })
         .mockResolvedValueOnce({ canConsume: true, remaining: 995 });
-      
+
       creditsService.consume
         .mockResolvedValueOnce(true) // analysis succeeds
         .mockResolvedValueOnce(false); // roast fails

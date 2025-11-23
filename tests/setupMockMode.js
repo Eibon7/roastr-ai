@@ -1,6 +1,6 @@
 /**
  * Test Setup for Mock Mode
- * 
+ *
  * This setup file is used when ENABLE_MOCK_MODE=true
  * It ensures all external dependencies are mocked and tests run with fake data
  */
@@ -55,10 +55,12 @@ const originalConsoleLog = console.log;
 console.warn = (...args) => {
   const message = args.join(' ');
   // Suppress specific mock-related warnings
-  if (message.includes('Mock Mode ENABLED') || 
-      message.includes('Using fake data') ||
-      message.includes('Feature flags initialized') ||
-      message.includes('injecting env')) {
+  if (
+    message.includes('Mock Mode ENABLED') ||
+    message.includes('Using fake data') ||
+    message.includes('Feature flags initialized') ||
+    message.includes('injecting env')
+  ) {
     return;
   }
   originalConsoleWarn(...args);
@@ -67,10 +69,12 @@ console.warn = (...args) => {
 console.log = (...args) => {
   const message = args.join(' ');
   // Suppress verbose mock logs but keep test results
-  if (message.includes('🎭 Mock') || 
-      message.includes('🧪 Complete CI Setup') ||
-      message.includes('[dotenv@') ||
-      message.includes('🏁 Feature flags')) {
+  if (
+    message.includes('🎭 Mock') ||
+    message.includes('🧪 Complete CI Setup') ||
+    message.includes('[dotenv@') ||
+    message.includes('🏁 Feature flags')
+  ) {
     return;
   }
   originalConsoleLog(...args);

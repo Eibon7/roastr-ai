@@ -7,6 +7,7 @@
 ## Trigger
 
 **Why this agent was invoked:**
+
 - [x] Condition: AC ≥3 (Issue has 5 acceptance criteria)
 - [x] Condition: Complex multi-step task requiring systematic planning
 - [x] Label match: `priority:P0` (CRITICAL - Core Flow)
@@ -14,17 +15,20 @@
 ## Decisions/Artifacts
 
 **Key decisions made by agent:**
+
 - Decision 1: Identified PRIMARY ROOT CAUSE - Path mismatch `/api/integrations` vs `/api/auth` affecting 15/20 failing tests
 - Decision 2: Prioritized fix order: Path fix (#1) → Mock toggle (#2) → redirectUri (#3) → Test paths (#4)
 - Decision 3: Recommended merge with PRIMARY fix (73% improvement), defer 5 edge cases to follow-up
 
 **Artifacts produced:**
+
 - `docs/plan/issue-638.md` - Complete implementation plan with root cause analysis, 4 fixes documented, test results prediction
 - `docs/test-evidence/issue-638/SUMMARY.md` - Test evidence showing 67% → 17% failure rate improvement
 
 ## Guardrails Verified
 
 **Checklist of guardrails from agents/manifest.yaml:**
+
 - [x] Assessment completed BEFORE implementation (FASE 0-1 in workflow)
 - [x] Root cause analysis performed (path mismatch identified as PRIMARY)
 - [x] Implementation plan created with specific AC mapping
@@ -39,10 +43,12 @@
 Performed comprehensive task assessment for Issue #638. Identified PRIMARY ROOT CAUSE (OAuth router path mismatch) affecting 75% of failures. Created detailed implementation plan with 4 fixes, test strategy, and acceptance criteria validation. Plan included Estado Actual, root cause analysis, fix order prioritization, and validation criteria. Result: 73 percentage point improvement in test pass rate (67% → 17% failure rate).
 
 **Follow-up Actions:**
+
 - [ ] Address remaining 5 edge cases in separate PR (tracked in follow-up issue)
 - [ ] Consider extracting path configuration to centralized config for future
 
 **Agent Output:**
+
 ```
 Assessment Results:
 - Baseline: 20/30 tests failing (67% failure rate)

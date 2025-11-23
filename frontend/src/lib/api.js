@@ -20,7 +20,7 @@ class ApiClient {
     try {
       // Use authHelpers for consistency with existing codebase
       const session = await authHelpers.getCurrentSession();
-      
+
       if (!session) {
         throw new Error('No active session');
       }
@@ -35,7 +35,7 @@ class ApiClient {
         if (!this.refreshPromise) {
           this.refreshPromise = this.refreshSession();
         }
-        
+
         try {
           const newSession = await this.refreshPromise;
           return newSession;
@@ -85,11 +85,11 @@ class ApiClient {
       const response = await fetch(`${this.baseURL}/auth/session/refresh`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           refresh_token: currentSession.data.session.refresh_token
-        }),
+        })
       });
 
       if (!response.ok) {
@@ -97,17 +97,19 @@ class ApiClient {
       }
 
       const data = await response.json();
-      
+
       // Update Supabase session with new tokens
       if (data.access_token && data.refresh_token) {
         await supabase.auth.setSession({
           access_token: data.access_token,
-          refresh_token: data.refresh_token,
+          refresh_token: data.refresh_token
         });
       }
 
       // Get the updated session
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
       return session;
     } catch (error) {
       // Issue #628 - CodeRabbit: Remove console.* from production
@@ -126,12 +128,12 @@ class ApiClient {
   async request(method, endpoint, data = null) {
     try {
       const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
-      
+
       const options = {
         method,
         headers: {
-          'Content-Type': 'application/json',
-        },
+          'Content-Type': 'application/json'
+        }
       };
 
       // Add authorization header if not a public endpoint
@@ -162,7 +164,9 @@ class ApiClient {
       // Handle 403 Forbidden - Access denied
       if (response.status === 403) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Access denied. You do not have permission to access this resource.');
+        throw new Error(
+          errorData.error || 'Access denied. You do not have permission to access this resource.'
+        );
       }
 
       // Handle 429 Too Many Requests - Rate limit exceeded
@@ -186,7 +190,9 @@ class ApiClient {
           }
         }
 
-        throw new Error(`Rate limit exceeded. Please wait ${Math.ceil(waitSeconds / 60)} minutes before trying again.`);
+        throw new Error(
+          `Rate limit exceeded. Please wait ${Math.ceil(waitSeconds / 60)} minutes before trying again.`
+        );
       }
 
       // Check if token expired during request - retry once with refresh
@@ -205,8 +211,8 @@ class ApiClient {
               ...options,
               headers: {
                 ...options.headers,
-                'Authorization': `Bearer ${newSession.access_token}`,
-              },
+                Authorization: `Bearer ${newSession.access_token}`
+              }
             });
 
             if (!retryResponse.ok) {
@@ -236,7 +242,7 @@ class ApiClient {
       // Handle different response types
       const contentType = response.headers.get('content-type');
       let responseData;
-      
+
       if (contentType && contentType.includes('application/json')) {
         responseData = await response.json();
       } else {
@@ -274,16 +280,17 @@ class ApiClient {
 
     // Mock responses for Account Management endpoints
     if (endpoint === '/auth/change-email') {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate delay
       return {
         success: true,
-        message: 'Email de confirmación enviado. Revisa tu nueva dirección para confirmar el cambio.',
+        message:
+          'Email de confirmación enviado. Revisa tu nueva dirección para confirmar el cambio.',
         data: { requiresConfirmation: true }
       };
     }
-    
+
     if (endpoint === '/auth/export-data') {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate delay
       return {
         success: true,
         message: 'Datos exportados correctamente',
@@ -313,12 +320,12 @@ class ApiClient {
         }
       };
     }
-    
+
     if (endpoint === '/auth/delete-account') {
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate delay
+      await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate delay
       const gracePeriodEnds = new Date();
       gracePeriodEnds.setDate(gracePeriodEnds.getDate() + 30);
-      
+
       return {
         success: true,
         message: `Eliminación de cuenta programada para ${gracePeriodEnds.toLocaleDateString('es-ES')}. Tienes 30 días para cancelar esta acción.`,
@@ -328,16 +335,16 @@ class ApiClient {
         }
       };
     }
-    
+
     if (endpoint === '/auth/cancel-account-deletion') {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate delay
       return {
         success: true,
         message: 'Eliminación de cuenta cancelada exitosamente. Tu cuenta seguirá activa.',
         data: {}
       };
     }
-    
+
     // For other endpoints, throw the original error
     throw originalError;
   }
@@ -375,5 +382,5 @@ export const api = {
   post: (url, data) => apiClient.post(url, data),
   put: (url, data) => apiClient.put(url, data),
   patch: (url, data) => apiClient.patch(url, data),
-  delete: (url) => apiClient.delete(url),
+  delete: (url) => apiClient.delete(url)
 };

@@ -3,6 +3,7 @@
 ## Problem Summary
 
 PR 432 (dependabot discord.js update from 14.16.3 to 14.16.4) has two failing jobs:
+
 1. `spec14-validation` - Fixed with rebase
 2. `verify-spec-scenarios` - Timeout issue requiring investigation
 
@@ -11,6 +12,7 @@ PR 432 (dependabot discord.js update from 14.16.3 to 14.16.4) has two failing jo
 ### 1. spec14-validation Job ✅ FIXED
 
 **Issue**: Same validation logic problem as PR 435
+
 - `CORE_RESULT="skipped"` (dependency-only changes)
 - `SCENARIOS_RESULT="failure"` (timeout in verify-spec-scenarios)
 - Old logic required both to be "success"
@@ -21,11 +23,13 @@ PR 432 (dependabot discord.js update from 14.16.3 to 14.16.4) has two failing jo
 
 **Issue**: npm install process timing out after 4+ hours
 **Symptoms**:
+
 - Excessive time during dependency installation
 - Multiple deprecation warnings
 - Process appears to hang or run extremely slowly
 
 **Log Evidence**:
+
 ```
 Run npm ci
 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory...
@@ -43,6 +47,7 @@ npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supporte
 ## Root Cause Analysis - Timeout Issue
 
 **Potential Causes**:
+
 1. **Dependency conflicts**: Discord.js update may have introduced conflicting dependencies
 2. **npm cache issues**: CI environment may have corrupted or slow cache
 3. **Network latency**: Slow package registry access

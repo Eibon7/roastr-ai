@@ -93,7 +93,6 @@ class TwitterService {
           error: result.error || 'Unknown error from legacy Twitter bot'
         };
       }
-
     } catch (error) {
       console.error('[TwitterService Adapter] postResponse failed:', error.message);
 

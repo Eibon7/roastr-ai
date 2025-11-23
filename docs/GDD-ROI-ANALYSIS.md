@@ -27,12 +27,14 @@ Graph Driven Development (GDD) implementation has delivered **exceptional ROI** 
 ### Before GDD (Monolithic spec.md)
 
 **Context Loading Pattern:**
+
 - Every agent task requires loading entire `spec.md`
 - Average spec.md size: **7,034 lines** (5,000 lines of actual content + examples)
 - Token estimate: **~20,000 tokens per load** (at 3 tokens/word average)
 - No selective loading possible
 
 **Monthly Usage (Conservative Estimate):**
+
 - 50 agent tasks/week × 4 weeks = **200 tasks/month**
 - 200 tasks × 20,000 tokens = **4,000,000 tokens/month**
 - Annual: **48,000,000 tokens/year**
@@ -40,41 +42,43 @@ Graph Driven Development (GDD) implementation has delivered **exceptional ROI** 
 ### After GDD (Modular Nodes)
 
 **Context Loading Pattern:**
+
 - Agents load only relevant node + dependencies
 - Average node size: **520 lines** (measured from 12 nodes = 6,215 lines / 12)
 - Average dependency chain: 3-4 nodes
 - Token estimate: **~2,100 tokens per load** (520 lines × 4 nodes ÷ 4 tokens/line)
 
 **Monthly Usage:**
+
 - 200 tasks × 2,100 tokens = **420,000 tokens/month**
 - Annual: **5,040,000 tokens/year**
 
 ### Token Savings
 
-| Metric | Before GDD | After GDD | Savings |
-|--------|-----------|-----------|---------|
-| **Tokens per task** | 20,000 | 2,100 | **89.5%** |
-| **Tokens/month** | 4,000,000 | 420,000 | **89.5%** |
-| **Tokens/year** | 48,000,000 | 5,040,000 | **89.5%** |
+| Metric              | Before GDD | After GDD | Savings   |
+| ------------------- | ---------- | --------- | --------- |
+| **Tokens per task** | 20,000     | 2,100     | **89.5%** |
+| **Tokens/month**    | 4,000,000  | 420,000   | **89.5%** |
+| **Tokens/year**     | 48,000,000 | 5,040,000 | **89.5%** |
 
 **Annual Token Savings: 42,960,000 tokens (~43M)**
 
 ### Per-Node Analysis (Measured)
 
-| Node | spec.md (lines) | node.md (lines) | Reduction | Token Savings |
-|------|-----------------|-----------------|-----------|---------------|
-| **roast** | 7,034 | 621 | **91.2%** | ~18,500 tokens |
-| **shield** | 7,034 | 680 | **90.3%** | ~18,100 tokens |
-| **persona** | 7,034 | 589 | **91.6%** | ~18,300 tokens |
-| **tone** | 7,034 | 215 | **96.9%** | ~19,400 tokens |
-| **platform-constraints** | 7,034 | 178 | **97.5%** | ~19,500 tokens |
-| **plan-features** | 7,034 | 194 | **97.2%** | ~19,450 tokens |
-| **queue-system** | 7,034 | 480 | **93.2%** | ~18,600 tokens |
-| **cost-control** | 7,034 | 470 | **93.3%** | ~18,650 tokens |
-| **multi-tenant** | 7,034 | 707 | **89.9%** | ~17,950 tokens |
-| **social-platforms** | 7,034 | 956 | **86.4%** | ~17,250 tokens |
-| **trainer** | 7,034 | 541 | **92.3%** | ~18,450 tokens |
-| **analytics** | 7,034 | 584 | **91.7%** | ~18,300 tokens |
+| Node                     | spec.md (lines) | node.md (lines) | Reduction | Token Savings  |
+| ------------------------ | --------------- | --------------- | --------- | -------------- |
+| **roast**                | 7,034           | 621             | **91.2%** | ~18,500 tokens |
+| **shield**               | 7,034           | 680             | **90.3%** | ~18,100 tokens |
+| **persona**              | 7,034           | 589             | **91.6%** | ~18,300 tokens |
+| **tone**                 | 7,034           | 215             | **96.9%** | ~19,400 tokens |
+| **platform-constraints** | 7,034           | 178             | **97.5%** | ~19,500 tokens |
+| **plan-features**        | 7,034           | 194             | **97.2%** | ~19,450 tokens |
+| **queue-system**         | 7,034           | 480             | **93.2%** | ~18,600 tokens |
+| **cost-control**         | 7,034           | 470             | **93.3%** | ~18,650 tokens |
+| **multi-tenant**         | 7,034           | 707             | **89.9%** | ~17,950 tokens |
+| **social-platforms**     | 7,034           | 956             | **86.4%** | ~17,250 tokens |
+| **trainer**              | 7,034           | 541             | **92.3%** | ~18,450 tokens |
+| **analytics**            | 7,034           | 584             | **91.7%** | ~18,300 tokens |
 
 **Average Reduction: 91.0%** (weighted by usage frequency)
 
@@ -85,6 +89,7 @@ Graph Driven Development (GDD) implementation has delivered **exceptional ROI** 
 ### AI API Pricing (Claude Sonnet 4.5)
 
 **Current Model Pricing:**
+
 - Input tokens: **$3.00 per 1M tokens**
 - Output tokens: **$15.00 per 1M tokens**
 - Context loading = input tokens
@@ -92,6 +97,7 @@ Graph Driven Development (GDD) implementation has delivered **exceptional ROI** 
 ### Monthly Cost Comparison
 
 #### Before GDD
+
 ```
 200 tasks/month × 20,000 tokens = 4,000,000 input tokens
 4,000,000 tokens × $3.00 / 1M = $12.00/month (input only)
@@ -103,6 +109,7 @@ Total: $13.50/month
 ```
 
 #### After GDD
+
 ```
 200 tasks/month × 2,100 tokens = 420,000 input tokens
 420,000 tokens × $3.00 / 1M = $1.26/month (input only)
@@ -116,14 +123,15 @@ Total: $2.76/month
 
 ### Scaling Projections
 
-| Monthly Tasks | Before GDD | After GDD | Monthly Savings |
-|---------------|-----------|-----------|----------------|
-| 200 (current) | $13.50 | $2.76 | **$10.74** |
-| 500 (growth) | $33.75 | $6.90 | **$26.85** |
-| 1,000 (scale) | $67.50 | $13.80 | **$53.70** |
-| 2,000 (enterprise) | $135.00 | $27.60 | **$107.40** |
+| Monthly Tasks      | Before GDD | After GDD | Monthly Savings |
+| ------------------ | ---------- | --------- | --------------- |
+| 200 (current)      | $13.50     | $2.76     | **$10.74**      |
+| 500 (growth)       | $33.75     | $6.90     | **$26.85**      |
+| 1,000 (scale)      | $67.50     | $13.80    | **$53.70**      |
+| 2,000 (enterprise) | $135.00    | $27.60    | **$107.40**     |
 
 **Annual Savings (at scale):**
+
 - Current (200/month): **$128.88/year (~€120)**
 - Growth (500/month): **$322.20/year (~€300)**
 - Scale (1,000/month): **$644.40/year (~€600)**
@@ -132,6 +140,7 @@ Total: $2.76/month
 ### Hidden Cost Savings
 
 **1. Developer Time Savings**
+
 - Before: ~30 seconds to load 7,034-line spec.md context
 - After: ~5 seconds to load 520-line node.md
 - **Time saved: 25 seconds per task**
@@ -139,12 +148,14 @@ Total: $2.76/month
 - At €50/hour developer rate: **€70/month = €840/year**
 
 **2. Reduced Context Window Overflow**
+
 - Before: Frequent hits to 200k token limits, requiring chunking/summarization
 - After: Rare, only on complex multi-node tasks
 - **Estimated savings: 10-20% fewer multi-turn conversations**
 - Cost reduction: ~$20-40/month for large projects
 
 **3. Fewer Errors = Less Rework**
+
 - Before: Agents loading entire spec sometimes miss critical details (information overload)
 - After: Focused node context = better attention to relevant details
 - **Estimated error reduction: 40-60% fewer context-related bugs**
@@ -152,13 +163,13 @@ Total: $2.76/month
 
 ### Total Cost Savings Summary
 
-| Cost Category | Monthly Savings | Annual Savings |
-|---------------|----------------|----------------|
-| **AI API Costs** | €10-53 | €120-636 |
-| **Developer Time** | €70 | €840 |
-| **Error Rework** | €250 | €3,000 |
-| **Context Overflow** | €20-40 | €240-480 |
-| **TOTAL** | **€350-413** | **€4,200-4,956** |
+| Cost Category        | Monthly Savings | Annual Savings   |
+| -------------------- | --------------- | ---------------- |
+| **AI API Costs**     | €10-53          | €120-636         |
+| **Developer Time**   | €70             | €840             |
+| **Error Rework**     | €250            | €3,000           |
+| **Context Overflow** | €20-40          | €240-480         |
+| **TOTAL**            | **€350-413**    | **€4,200-4,956** |
 
 **Conservative Estimate: €4,200/year (~$4,500/year)**
 **Aggressive Estimate (at scale): €10,000/year (~$10,800/year)**
@@ -170,6 +181,7 @@ Total: $2.76/month
 ### Context Loading Speed
 
 **Measured Performance:**
+
 ```bash
 # Before GDD (loading spec.md)
 $ time cat spec.md | wc -l
@@ -193,6 +205,7 @@ sys     0m0.009s
 ### Agent Processing Speed
 
 **Context Processing (Estimated):**
+
 - Claude Sonnet 4.5 input processing: ~10,000 tokens/second
 - Before GDD: 20,000 tokens ÷ 10,000 = **2 seconds**
 - After GDD: 2,100 tokens ÷ 10,000 = **0.21 seconds**
@@ -202,14 +215,15 @@ sys     0m0.009s
 
 **Time to First Response:**
 
-| Phase | Before GDD | After GDD | Improvement |
-|-------|-----------|-----------|-------------|
-| **Context Loading** | 2.0s | 0.21s | **9.5x faster** |
-| **Context Understanding** | 10-15s | 2-3s | **5x faster** |
-| **Code Generation** | 30s | 30s | Same |
-| **Total Time to First Output** | 42-47s | 32-33s | **30% faster** |
+| Phase                          | Before GDD | After GDD | Improvement     |
+| ------------------------------ | ---------- | --------- | --------------- |
+| **Context Loading**            | 2.0s       | 0.21s     | **9.5x faster** |
+| **Context Understanding**      | 10-15s     | 2-3s      | **5x faster**   |
+| **Code Generation**            | 30s        | 30s       | Same            |
+| **Total Time to First Output** | 42-47s     | 32-33s    | **30% faster**  |
 
 **Iteration Speed:**
+
 - Before: Each follow-up question reloads full spec.md context
 - After: Context already minimal, cached by model
 - **Follow-up iterations: 40-50% faster**
@@ -217,11 +231,13 @@ sys     0m0.009s
 ### Parallel Development Capacity
 
 **Before GDD:**
+
 - Multiple agents working on spec.md = merge conflicts
 - Serial development enforced
 - **Max parallel agents: 1-2**
 
 **After GDD:**
+
 - Each agent works on different node.md file
 - Zero merge conflicts on documentation
 - **Max parallel agents: 12 (one per node)**
@@ -230,13 +246,13 @@ sys     0m0.009s
 
 ### Total Development Speed Metrics
 
-| Metric | Before GDD | After GDD | Improvement |
-|--------|-----------|-----------|-------------|
-| **Context load time** | 2.0s | 0.21s | **9.5x** |
-| **Understanding time** | 10-15s | 2-3s | **5x** |
-| **First response time** | 42-47s | 32-33s | **30%** |
-| **Iteration time** | 42s | 25s | **40%** |
-| **Parallel agents** | 1-2 | 12 | **6x** |
+| Metric                  | Before GDD | After GDD | Improvement |
+| ----------------------- | ---------- | --------- | ----------- |
+| **Context load time**   | 2.0s       | 0.21s     | **9.5x**    |
+| **Understanding time**  | 10-15s     | 2-3s      | **5x**      |
+| **First response time** | 42-47s     | 32-33s    | **30%**     |
+| **Iteration time**      | 42s        | 25s       | **40%**     |
+| **Parallel agents**     | 1-2        | 12        | **6x**      |
 
 **Effective Development Speed: 3-5x faster** (accounting for parallelization)
 
@@ -249,12 +265,14 @@ sys     0m0.009s
 **Before GDD (Monolithic spec.md):**
 
 **Common Issues:**
+
 1. **Information Overload** - Agents miss critical details in 7,034-line document
 2. **Stale Context** - Spec.md gets outdated, agents use wrong information
 3. **Context Confusion** - Mixing unrelated features causes cross-contamination
 4. **Incomplete Understanding** - Agents skip sections due to length
 
 **Estimated Error Rate:**
+
 - Context-related bugs: **15-20% of all bugs**
 - Documentation sync errors: **10-15% of bugs**
 - Feature cross-contamination: **5-10% of bugs**
@@ -263,12 +281,14 @@ sys     0m0.009s
 **After GDD (Modular Nodes):**
 
 **Improvements:**
+
 1. ✅ **Focused Context** - Agents see only relevant 500-1,000 lines
 2. ✅ **Validated Graph** - `--validate` catches missing dependencies
 3. ✅ **Agent Ownership** - Clear responsibility per node
 4. ✅ **Always Up-to-date** - Smaller docs easier to maintain
 
 **Estimated Error Rate:**
+
 - Context-related bugs: **5-8% of all bugs** (down from 15-20%)
 - Documentation sync errors: **2-3% of bugs** (down from 10-15%)
 - Feature cross-contamination: **1-2% of bugs** (down from 5-10%)
@@ -276,12 +296,12 @@ sys     0m0.009s
 
 ### Error Reduction Impact
 
-| Error Type | Before GDD | After GDD | Reduction |
-|------------|-----------|-----------|-----------|
-| **Context-related** | 15-20% | 5-8% | **60-67%** |
-| **Documentation sync** | 10-15% | 2-3% | **80-85%** |
-| **Feature cross-contamination** | 5-10% | 1-2% | **80-90%** |
-| **TOTAL** | 30-45% | 8-13% | **70-73%** |
+| Error Type                      | Before GDD | After GDD | Reduction  |
+| ------------------------------- | ---------- | --------- | ---------- |
+| **Context-related**             | 15-20%     | 5-8%      | **60-67%** |
+| **Documentation sync**          | 10-15%     | 2-3%      | **80-85%** |
+| **Feature cross-contamination** | 5-10%      | 1-2%      | **80-90%** |
+| **TOTAL**                       | 30-45%     | 8-13%     | **70-73%** |
 
 **Overall Bug Reduction: ~70% fewer GDD-preventable errors**
 
@@ -312,11 +332,13 @@ sys     0m0.009s
 ### Quality Cost Savings
 
 **Bug Fix Cost:**
+
 - Average bug fix time: 2 hours
 - Developer rate: €50/hour
 - Cost per bug: **€100**
 
 **Monthly Bug Reduction:**
+
 - Before: ~20 bugs/month (assumption: 200 tasks × 10% bug rate)
 - GDD-preventable: 20 × 35% = 7 bugs/month
 - After GDD: 7 bugs × 30% reduction = **-2.1 bugs/month**
@@ -331,11 +353,13 @@ sys     0m0.009s
 ### Team Scalability
 
 **Before GDD:**
+
 - New developer onboarding: Read entire 7,034-line spec.md
 - Onboarding time: **2-3 days**
 - Parallelization: Limited (spec.md bottleneck)
 
 **After GDD:**
+
 - New developer onboarding: Learn system-map.yaml, read relevant nodes
 - Onboarding time: **4-6 hours** (start contributing same day)
 - Parallelization: 12 nodes = 12 parallel developers
@@ -345,12 +369,14 @@ sys     0m0.009s
 ### Documentation Maintainability
 
 **Before GDD:**
+
 - Update spec.md: Must understand entire document
 - Update time: **30-60 minutes** (find section, update, verify no conflicts)
 - Review complexity: High (7,034 lines)
 - Merge conflicts: Frequent
 
 **After GDD:**
+
 - Update node.md: Only understand that node + dependencies
 - Update time: **5-10 minutes** (focused, validated)
 - Review complexity: Low (500 lines average)
@@ -361,12 +387,14 @@ sys     0m0.009s
 ### Graph Validation Benefits
 
 **Before GDD:**
+
 - Manual validation of dependencies
 - Circular dependencies discovered at runtime
 - Missing docs discovered during development
 - **Validation time: 0 (no tooling)**
 
 **After GDD:**
+
 ```bash
 $ node scripts/resolve-graph.js --validate
 
@@ -385,11 +413,13 @@ Validation completed in 87ms
 ### CI/CD Integration
 
 **Before GDD:**
+
 - No automated documentation validation
 - Breaking changes discovered in production
 - Manual review of spec.md changes
 
 **After GDD:**
+
 ```yaml
 # .github/workflows/validate-docs.yml
 - name: Validate documentation graph
@@ -403,6 +433,7 @@ Validation completed in 87ms
 ```
 
 **Benefits:**
+
 - ✅ Automatic validation on every PR
 - ✅ Breaking changes caught before merge
 - ✅ Documentation drift prevented
@@ -414,46 +445,48 @@ Validation completed in 87ms
 
 ### Implementation Costs
 
-| Cost Item | Time | Labor Cost (€50/hr) |
-|-----------|------|---------------------|
-| **Phase 1 (MVP)** | 3 hours | €150 |
-| **Phase 2 (6 nodes)** | 4 hours | €200 |
-| **Phase 3 (6 nodes)** | 3 hours | €150 |
-| **Phase 4 (validation)** | 2 hours | €100 |
-| **TOTAL** | **12 hours** | **€600** |
+| Cost Item                | Time         | Labor Cost (€50/hr) |
+| ------------------------ | ------------ | ------------------- |
+| **Phase 1 (MVP)**        | 3 hours      | €150                |
+| **Phase 2 (6 nodes)**    | 4 hours      | €200                |
+| **Phase 3 (6 nodes)**    | 3 hours      | €150                |
+| **Phase 4 (validation)** | 2 hours      | €100                |
+| **TOTAL**                | **12 hours** | **€600**            |
 
 **One-time implementation cost: €600 (1.5 days of development)**
 
 ### Annual Benefits Summary
 
-| Benefit Category | Conservative | Aggressive | Notes |
-|------------------|-------------|------------|-------|
-| **AI API Cost Savings** | €120 | €636 | Based on current/scaled usage |
-| **Developer Time Savings** | €840 | €2,520 | Context loading time |
-| **Error Rework Savings** | €2,400 | €6,000 | Bug fix cost reduction |
-| **Context Overflow Savings** | €240 | €480 | Reduced multi-turn conversations |
-| **Onboarding Savings** | €500 | €2,000 | 4 devs/year × faster onboarding |
-| **Documentation Maintenance** | €1,200 | €3,600 | 6x faster updates |
-| **Parallel Development** | €2,000 | €8,000 | 6x parallelization capacity |
-| **TOTAL ANNUAL BENEFITS** | **€7,300** | **€23,236** | |
+| Benefit Category              | Conservative | Aggressive  | Notes                            |
+| ----------------------------- | ------------ | ----------- | -------------------------------- |
+| **AI API Cost Savings**       | €120         | €636        | Based on current/scaled usage    |
+| **Developer Time Savings**    | €840         | €2,520      | Context loading time             |
+| **Error Rework Savings**      | €2,400       | €6,000      | Bug fix cost reduction           |
+| **Context Overflow Savings**  | €240         | €480        | Reduced multi-turn conversations |
+| **Onboarding Savings**        | €500         | €2,000      | 4 devs/year × faster onboarding  |
+| **Documentation Maintenance** | €1,200       | €3,600      | 6x faster updates                |
+| **Parallel Development**      | €2,000       | €8,000      | 6x parallelization capacity      |
+| **TOTAL ANNUAL BENEFITS**     | **€7,300**   | **€23,236** |                                  |
 
 **Break-even Point:**
+
 - Conservative: €600 ÷ (€7,300/12) = **1.0 months**
 - Aggressive: €600 ÷ (€23,236/12) = **0.3 months**
 
 **ROI (Year 1):**
+
 - Conservative: (€7,300 - €600) ÷ €600 = **1,117% ROI**
 - Aggressive: (€23,236 - €600) ÷ €600 = **3,773% ROI**
 
 ### 5-Year Projection
 
-| Year | Benefits (Conservative) | Cumulative ROI |
-|------|------------------------|----------------|
-| **Year 1** | €7,300 | **1,117%** |
-| **Year 2** | €8,030 (+10% growth) | **2,238%** |
-| **Year 3** | €8,833 (+10% growth) | **3,610%** |
-| **Year 4** | €9,716 (+10% growth) | **5,258%** |
-| **Year 5** | €10,688 (+10% growth) | **7,214%** |
+| Year       | Benefits (Conservative) | Cumulative ROI |
+| ---------- | ----------------------- | -------------- |
+| **Year 1** | €7,300                  | **1,117%**     |
+| **Year 2** | €8,030 (+10% growth)    | **2,238%**     |
+| **Year 3** | €8,833 (+10% growth)    | **3,610%**     |
+| **Year 4** | €9,716 (+10% growth)    | **5,258%**     |
+| **Year 5** | €10,688 (+10% growth)   | **7,214%**     |
 
 **5-Year Total Benefits: €44,567**
 **5-Year ROI: 7,328%**
@@ -489,6 +522,7 @@ features:
 ```
 
 **Key Decisions:**
+
 - ✅ Identify 10-15 core features/modules
 - ✅ Map dependencies (who depends on whom?)
 - ✅ Assign owners (which agents maintain each node?)
@@ -536,6 +570,7 @@ class GraphResolver {
 ```
 
 **Key Features:**
+
 - ✅ Recursive dependency traversal
 - ✅ Cycle detection
 - ✅ Validation (missing deps, docs)
@@ -555,6 +590,7 @@ node scripts/resolve-graph.js --graph > docs/system-graph.mmd
 ```
 
 **Success Criteria:**
+
 - ✅ No circular dependencies
 - ✅ All dependencies exist
 - ✅ Graph visualizes correctly
@@ -568,11 +604,13 @@ node scripts/resolve-graph.js --graph > docs/system-graph.mmd
 #### Step 2.1: Choose High-Impact Nodes (30 minutes)
 
 **Selection Criteria:**
+
 1. **Critical priority** (roast, shield, queue-system, cost-control, multi-tenant)
 2. **High usage frequency** (touched in 50%+ of tasks)
 3. **Complex dependencies** (many other nodes depend on it)
 
 **Recommended First 6 Nodes:**
+
 1. **roast** - Core feature, most frequently modified
 2. **shield** - Security-critical, complex rules
 3. **persona** - User-facing, high dependency count
@@ -583,6 +621,7 @@ node scripts/resolve-graph.js --graph > docs/system-graph.mmd
 #### Step 2.2: Document Each Node (30-60 minutes each)
 
 **Template Structure:**
+
 ```markdown
 # [Feature Name]
 
@@ -605,17 +644,18 @@ High-level description: what this feature does, why it exists.
 
 ### Component Files
 
-| File | Path | Purpose |
-|------|------|---------|
-| Service | src/services/roastService.js | Core business logic |
-| Worker | src/workers/GenerateReplyWorker.js | Background processing |
-| API | src/routes/roast.js | REST endpoints |
+| File    | Path                               | Purpose               |
+| ------- | ---------------------------------- | --------------------- |
+| Service | src/services/roastService.js       | Core business logic   |
+| Worker  | src/workers/GenerateReplyWorker.js | Background processing |
+| API     | src/routes/roast.js                | REST endpoints        |
 
 ### Data Flow
+```
 
-```
 User Request → API → Queue → Worker → Service → OpenAI → Database
-```
+
+````
 
 ## API Usage Examples
 
@@ -625,7 +665,7 @@ const roast = await roastService.generateRoast({
   originalComment: "...",
   userConfig: { tone: 'sarcastic', intensity: 3 }
 });
-```
+````
 
 ## Integration Points
 
@@ -645,10 +685,10 @@ Coverage: 85% (target: 80%)
 
 ## Error Handling
 
-| Error | Cause | Resolution |
-|-------|-------|------------|
-| BUDGET_EXCEEDED | Monthly limit hit | Upgrade plan or wait for reset |
-| INVALID_TONE | Unknown tone value | Use: flanders, balanceado, canalla |
+| Error           | Cause              | Resolution                         |
+| --------------- | ------------------ | ---------------------------------- |
+| BUDGET_EXCEEDED | Monthly limit hit  | Upgrade plan or wait for reset     |
+| INVALID_TONE    | Unknown tone value | Use: flanders, balanceado, canalla |
 
 ## Monitoring
 
@@ -682,7 +722,8 @@ Coverage: 85% (target: 80%)
 **Review Frequency:** Monthly
 **Last Reviewed:** 2025-10-03
 **Version:** 1.0.0
-```
+
+````
 
 **Time per Node:**
 - Simple nodes (tone, platform-constraints): 30 minutes
@@ -708,27 +749,28 @@ node scripts/resolve-graph.js roast
 
 # Validate entire graph
 node scripts/resolve-graph.js --validate
-```
+````
 
 ### Node Status
 
-| Node | Status | Documentation |
-|------|--------|---------------|
-| roast | ✅ Production | [docs/nodes/roast.md](docs/nodes/roast.md) |
-| shield | ✅ Production | [docs/nodes/shield.md](docs/nodes/shield.md) |
-| persona | ✅ Production | [docs/nodes/persona.md](docs/nodes/persona.md) |
-| tone | ✅ Production | [docs/nodes/tone.md](docs/nodes/tone.md) |
+| Node                 | Status        | Documentation                                                            |
+| -------------------- | ------------- | ------------------------------------------------------------------------ |
+| roast                | ✅ Production | [docs/nodes/roast.md](docs/nodes/roast.md)                               |
+| shield               | ✅ Production | [docs/nodes/shield.md](docs/nodes/shield.md)                             |
+| persona              | ✅ Production | [docs/nodes/persona.md](docs/nodes/persona.md)                           |
+| tone                 | ✅ Production | [docs/nodes/tone.md](docs/nodes/tone.md)                                 |
 | platform-constraints | ✅ Production | [docs/nodes/platform-constraints.md](docs/nodes/platform-constraints.md) |
-| plan-features | ✅ Production | [docs/nodes/plan-features.md](docs/nodes/plan-features.md) |
-| queue-system | 🚧 Planned | Coming in Phase 3 |
-| ... | | |
+| plan-features        | ✅ Production | [docs/nodes/plan-features.md](docs/nodes/plan-features.md)               |
+| queue-system         | 🚧 Planned    | Coming in Phase 3                                                        |
+| ...                  |               |                                                                          |
 
 ### Context Reduction
 
 - **Before:** Load entire spec.md (~20,000 tokens)
 - **After:** Load only relevant nodes (~2,000 tokens)
 - **Savings:** ~90% token reduction
-```
+
+````
 
 ---
 
@@ -778,7 +820,7 @@ What defines success for this feature?
 ## Related Nodes
 
 Links to related features.
-```
+````
 
 ---
 
@@ -789,6 +831,7 @@ Links to related features.
 #### Step 4.1: Extend Graph Resolver (1 hour)
 
 **Add Agent Validation:**
+
 ```javascript
 // scripts/resolve-graph.js
 
@@ -866,6 +909,7 @@ generateValidationReport(issues) {
 ```
 
 **Add CLI Modes:**
+
 ```bash
 node scripts/resolve-graph.js --validate  # Exit 1 if errors
 node scripts/resolve-graph.js --report    # Generate docs/system-validation.md
@@ -874,6 +918,7 @@ node scripts/resolve-graph.js --report    # Generate docs/system-validation.md
 #### Step 4.2: Add Agent Sections to All Nodes (30 minutes)
 
 **Bash Script:**
+
 ```bash
 #!/bin/bash
 
@@ -909,15 +954,18 @@ add_agents "docs/nodes/roast.md" "- Back-end Dev
 #### Step 4.3: Update Orchestrator Rules (30 minutes)
 
 **Add to CLAUDE.md:**
+
 ```markdown
 ### Gestión de Agentes Relevantes (GDD Phase 4)
 
 **Synchronization Rules:**
+
 - If you invoke an agent during a task but it's not listed in "Agentes Relevantes" → add it
 - If an agent is listed but no longer applies → remove it
 - Keep agents alphabetically sorted
 
 **Mandatory Checklist (before closing PR):**
+
 - [ ] Read spec.md and affected node .md file
 - [ ] Verify "Agentes Relevantes" reflects agents actually used
 - [ ] Add missing agents, remove irrelevant agents
@@ -927,17 +975,18 @@ add_agents "docs/nodes/roast.md" "- Back-end Dev
 ```
 
 **Add to spec.md:**
+
 ```markdown
 ### Node-Agent Matrix
 
-| Node | Agentes Relevantes |
-|------|-------------------|
-| roast | Back-end Dev, Documentation Agent, Test Engineer, Performance Monitor Agent |
-| shield | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer |
-| ... | ... |
+| Node   | Agentes Relevantes                                                          |
+| ------ | --------------------------------------------------------------------------- |
+| roast  | Back-end Dev, Documentation Agent, Test Engineer, Performance Monitor Agent |
+| shield | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer      |
+| ...    | ...                                                                         |
 
 **Last updated:** 2025-10-03
-*(auto-generated with `node scripts/resolve-graph.js --report`)*
+_(auto-generated with `node scripts/resolve-graph.js --report`)_
 ```
 
 ---
@@ -945,6 +994,7 @@ add_agents "docs/nodes/roast.md" "- Back-end Dev
 ### Phase 5: CI/CD Integration (Optional, 1 hour)
 
 **Create `.github/workflows/validate-docs.yml`:**
+
 ```yaml
 name: Validate Documentation Graph
 
@@ -1068,18 +1118,21 @@ jobs:
 ### Track These Metrics
 
 **Weekly:**
+
 - [ ] Average context load size (tokens)
 - [ ] Agent task completion time
 - [ ] Documentation update frequency
 - [ ] Graph validation failures
 
 **Monthly:**
+
 - [ ] Total token usage (input + output)
 - [ ] AI API costs
 - [ ] Bug count (context-related vs total)
 - [ ] Developer time spent on documentation
 
 **Quarterly:**
+
 - [ ] Developer onboarding time
 - [ ] Team satisfaction score
 - [ ] Documentation coverage (nodes/total features)
@@ -1087,14 +1140,14 @@ jobs:
 
 ### Success Thresholds
 
-| KPI | Target | Status |
-|-----|--------|--------|
-| **Token reduction** | >85% | ✅ 89.6% |
-| **Context load time** | <3s | ✅ 0.21s |
-| **Documentation coverage** | 100% | ✅ 12/12 nodes |
-| **Validation failures** | <1/month | ✅ 0 |
-| **Developer satisfaction** | >8/10 | 🚧 TBD |
-| **ROI (Year 1)** | >500% | ✅ 1,117-3,773% |
+| KPI                        | Target   | Status          |
+| -------------------------- | -------- | --------------- |
+| **Token reduction**        | >85%     | ✅ 89.6%        |
+| **Context load time**      | <3s      | ✅ 0.21s        |
+| **Documentation coverage** | 100%     | ✅ 12/12 nodes  |
+| **Validation failures**    | <1/month | ✅ 0            |
+| **Developer satisfaction** | >8/10    | 🚧 TBD          |
+| **ROI (Year 1)**           | >500%    | ✅ 1,117-3,773% |
 
 ---
 
@@ -1113,6 +1166,7 @@ jobs:
 **5-Year ROI: 7,214%**
 
 **Recommendation:** Implement GDD immediately for any project with:
+
 - 5,000+ lines of documentation
 - Multiple agents/developers working in parallel
 - Frequent context loading (>50 tasks/month)

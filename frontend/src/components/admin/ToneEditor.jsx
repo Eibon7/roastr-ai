@@ -1,8 +1,8 @@
 /**
  * Admin Component: Tone Editor
- * 
+ *
  * Modal editor for creating/editing roast tones with multilanguage support.
- * 
+ *
  * Issue #876: Dynamic Roast Tone Configuration System
  */
 
@@ -34,7 +34,10 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
         personality: tone.personality || '',
         resources: tone.resources && tone.resources.length > 0 ? tone.resources : [''],
         restrictions: tone.restrictions && tone.restrictions.length > 0 ? tone.restrictions : [''],
-        examples: tone.examples && tone.examples.length > 0 ? tone.examples : [{ es: { input: '', output: '' }, en: { input: '', output: '' } }],
+        examples:
+          tone.examples && tone.examples.length > 0
+            ? tone.examples
+            : [{ es: { input: '', output: '' }, en: { input: '', output: '' } }],
         active: tone.active !== undefined ? tone.active : true,
         is_default: tone.is_default || false
       });
@@ -73,20 +76,20 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
     }
 
     // Resources validation
-    const validResources = formData.resources.filter(r => r.trim());
+    const validResources = formData.resources.filter((r) => r.trim());
     if (validResources.length === 0) {
       newErrors.resources = 'Al menos un recurso es requerido';
     }
 
     // Restrictions validation
-    const validRestrictions = formData.restrictions.filter(r => r.trim());
+    const validRestrictions = formData.restrictions.filter((r) => r.trim());
     if (validRestrictions.length === 0) {
       newErrors.restrictions = 'Al menos una restricción es requerida';
     }
 
     // Examples validation
-    const validExamples = formData.examples.filter(ex => 
-      ex.es.input.trim() && ex.es.output.trim() && ex.en.input.trim() && ex.en.output.trim()
+    const validExamples = formData.examples.filter(
+      (ex) => ex.es.input.trim() && ex.es.output.trim() && ex.en.input.trim() && ex.en.output.trim()
     );
     if (validExamples.length === 0) {
       newErrors.examples = 'Al menos un ejemplo completo (ES/EN) es requerido';
@@ -106,10 +109,11 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
     // Clean up data before sending
     const cleanedData = {
       ...formData,
-      resources: formData.resources.filter(r => r.trim()),
-      restrictions: formData.restrictions.filter(r => r.trim()),
-      examples: formData.examples.filter(ex => 
-        ex.es.input.trim() && ex.es.output.trim() && ex.en.input.trim() && ex.en.output.trim()
+      resources: formData.resources.filter((r) => r.trim()),
+      restrictions: formData.restrictions.filter((r) => r.trim()),
+      examples: formData.examples.filter(
+        (ex) =>
+          ex.es.input.trim() && ex.es.output.trim() && ex.en.input.trim() && ex.en.output.trim()
       )
     };
 
@@ -163,7 +167,10 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
   const addExample = () => {
     setFormData({
       ...formData,
-      examples: [...formData.examples, { es: { input: '', output: '' }, en: { input: '', output: '' } }]
+      examples: [
+        ...formData.examples,
+        { es: { input: '', output: '' }, en: { input: '', output: '' } }
+      ]
     });
   };
 
@@ -183,10 +190,19 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={onClose}></div>
+        <div
+          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          aria-hidden="true"
+          onClick={onClose}
+        ></div>
 
         {/* Modal panel */}
         <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
@@ -203,7 +219,12 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                   className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                 >
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -214,18 +235,23 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
               {/* Basic Info */}
               <div className="space-y-6 mb-8">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Identificador * <span className="text-xs text-gray-500">(ej: tono_custom)</span>
                   </label>
                   <input
                     type="text"
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value.toLowerCase() })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value.toLowerCase() })
+                    }
                     disabled={!!tone}
                     className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
-                      errors.name 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                      errors.name
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
                         : 'border-gray-300 dark:border-gray-600 focus:border-red-500 focus:ring-red-500'
                     } dark:bg-gray-700 dark:text-white ${tone ? 'bg-gray-100 dark:bg-gray-900' : ''}`}
                     placeholder="nombre_del_tono"
@@ -234,7 +260,10 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                 </div>
 
                 <div>
-                  <label htmlFor="intensity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label
+                    htmlFor="intensity"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Intensidad * (1 = ligero, 5 = salvaje)
                   </label>
                   <div className="mt-2 flex items-center space-x-4">
@@ -244,7 +273,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                       min="1"
                       max="5"
                       value={formData.intensity}
-                      onChange={(e) => setFormData({ ...formData, intensity: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, intensity: parseInt(e.target.value) })
+                      }
                       className="flex-1"
                     />
                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -252,7 +283,8 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                     </span>
                   </div>
                   <div className="mt-1 text-xs text-gray-500">
-                    {'⭐'.repeat(formData.intensity)} {formData.intensity === 1 && '(Muy suave)'} {formData.intensity === 5 && '(Muy intenso)'}
+                    {'⭐'.repeat(formData.intensity)} {formData.intensity === 1 && '(Muy suave)'}{' '}
+                    {formData.intensity === 5 && '(Muy intenso)'}
                   </div>
                 </div>
               </div>
@@ -295,7 +327,12 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                     <input
                       type="text"
                       value={formData.display_name.es}
-                      onChange={(e) => setFormData({ ...formData, display_name: { ...formData.display_name, es: e.target.value } })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          display_name: { ...formData.display_name, es: e.target.value }
+                        })
+                      }
                       className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
                         errors.display_name_es
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
@@ -303,7 +340,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                       } dark:bg-gray-700 dark:text-white`}
                       placeholder="Ej: Flanders, Balanceado, Canalla"
                     />
-                    {errors.display_name_es && <p className="mt-1 text-sm text-red-600">{errors.display_name_es}</p>}
+                    {errors.display_name_es && (
+                      <p className="mt-1 text-sm text-red-600">{errors.display_name_es}</p>
+                    )}
                   </div>
 
                   <div>
@@ -312,7 +351,12 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                     </label>
                     <textarea
                       value={formData.description.es}
-                      onChange={(e) => setFormData({ ...formData, description: { ...formData.description, es: e.target.value } })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: { ...formData.description, es: e.target.value }
+                        })
+                      }
                       rows={3}
                       className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
                         errors.description_es
@@ -321,7 +365,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                       } dark:bg-gray-700 dark:text-white`}
                       placeholder="Descripción del tono en español..."
                     />
-                    {errors.description_es && <p className="mt-1 text-sm text-red-600">{errors.description_es}</p>}
+                    {errors.description_es && (
+                      <p className="mt-1 text-sm text-red-600">{errors.description_es}</p>
+                    )}
                   </div>
 
                   <div>
@@ -329,17 +375,32 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                       Ejemplos (Español) *
                     </label>
                     {formData.examples.map((example, index) => (
-                      <div key={index} className="mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-md">
+                      <div
+                        key={index}
+                        className="mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-md"
+                      >
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ejemplo {index + 1}</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Ejemplo {index + 1}
+                          </span>
                           {formData.examples.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeExample(index)}
                               className="text-red-600 hover:text-red-900 dark:text-red-400"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              <svg
+                                className="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
                               </svg>
                             </button>
                           )}
@@ -367,7 +428,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                     >
                       + Añadir ejemplo
                     </button>
-                    {errors.examples && <p className="mt-1 text-sm text-red-600">{errors.examples}</p>}
+                    {errors.examples && (
+                      <p className="mt-1 text-sm text-red-600">{errors.examples}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -382,7 +445,12 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                     <input
                       type="text"
                       value={formData.display_name.en}
-                      onChange={(e) => setFormData({ ...formData, display_name: { ...formData.display_name, en: e.target.value } })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          display_name: { ...formData.display_name, en: e.target.value }
+                        })
+                      }
                       className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
                         errors.display_name_en
                           ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
@@ -390,7 +458,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                       } dark:bg-gray-700 dark:text-white`}
                       placeholder="Ex: Light, Balanced, Savage"
                     />
-                    {errors.display_name_en && <p className="mt-1 text-sm text-red-600">{errors.display_name_en}</p>}
+                    {errors.display_name_en && (
+                      <p className="mt-1 text-sm text-red-600">{errors.display_name_en}</p>
+                    )}
                   </div>
 
                   <div>
@@ -399,7 +469,12 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                     </label>
                     <textarea
                       value={formData.description.en}
-                      onChange={(e) => setFormData({ ...formData, description: { ...formData.description, en: e.target.value } })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: { ...formData.description, en: e.target.value }
+                        })
+                      }
                       rows={3}
                       className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
                         errors.description_en
@@ -408,7 +483,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                       } dark:bg-gray-700 dark:text-white`}
                       placeholder="Tone description in English..."
                     />
-                    {errors.description_en && <p className="mt-1 text-sm text-red-600">{errors.description_en}</p>}
+                    {errors.description_en && (
+                      <p className="mt-1 text-sm text-red-600">{errors.description_en}</p>
+                    )}
                   </div>
 
                   <div>
@@ -416,17 +493,32 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                       Examples (English) *
                     </label>
                     {formData.examples.map((example, index) => (
-                      <div key={index} className="mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-md">
+                      <div
+                        key={index}
+                        className="mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-md"
+                      >
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Example {index + 1}</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Example {index + 1}
+                          </span>
                           {formData.examples.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeExample(index)}
                               className="text-red-600 hover:text-red-900 dark:text-red-400"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              <svg
+                                className="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
                               </svg>
                             </button>
                           )}
@@ -454,7 +546,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                     >
                       + Add example
                     </button>
-                    {errors.examples && <p className="mt-1 text-sm text-red-600">{errors.examples}</p>}
+                    {errors.examples && (
+                      <p className="mt-1 text-sm text-red-600">{errors.examples}</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -476,7 +570,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                     } dark:bg-gray-700 dark:text-white`}
                     placeholder="Ej: Educado, irónico, elegante. Inspirado en..."
                   />
-                  {errors.personality && <p className="mt-1 text-sm text-red-600">{errors.personality}</p>}
+                  {errors.personality && (
+                    <p className="mt-1 text-sm text-red-600">{errors.personality}</p>
+                  )}
                 </div>
 
                 <div>
@@ -498,8 +594,18 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                           onClick={() => removeResource(index)}
                           className="ml-2 text-red-600 hover:text-red-900 dark:text-red-400"
                         >
-                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                       )}
@@ -512,7 +618,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                   >
                     + Añadir recurso
                   </button>
-                  {errors.resources && <p className="mt-1 text-sm text-red-600">{errors.resources}</p>}
+                  {errors.resources && (
+                    <p className="mt-1 text-sm text-red-600">{errors.resources}</p>
+                  )}
                 </div>
 
                 <div>
@@ -534,8 +642,18 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                           onClick={() => removeRestriction(index)}
                           className="ml-2 text-red-600 hover:text-red-900 dark:text-red-400"
                         >
-                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                       )}
@@ -548,7 +666,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                   >
                     + Añadir restricción
                   </button>
-                  {errors.restrictions && <p className="mt-1 text-sm text-red-600">{errors.restrictions}</p>}
+                  {errors.restrictions && (
+                    <p className="mt-1 text-sm text-red-600">{errors.restrictions}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-6">
@@ -569,7 +689,9 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
                       onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
                       className="rounded border-gray-300 text-red-600 focus:ring-red-500"
                     />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Predeterminado</span>
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                      Predeterminado
+                    </span>
                   </label>
                 </div>
               </div>
@@ -599,4 +721,3 @@ const ToneEditor = ({ tone, onSave, onClose }) => {
 };
 
 export default ToneEditor;
-

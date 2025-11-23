@@ -14,9 +14,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Full history for diff analysis
+          fetch-depth: 0 # Full history for diff analysis
 
       - name: Setup Node.js
         uses: actions/setup-node@v6

@@ -22,10 +22,7 @@ export default function PlanStatusCard() {
     async function fetchData() {
       try {
         setError(null);
-        const [planResult, usageResult] = await Promise.all([
-          getCurrentPlan(),
-          getCurrentUsage()
-        ]);
+        const [planResult, usageResult] = await Promise.all([getCurrentPlan(), getCurrentUsage()]);
 
         if (active) {
           setPlanData(planResult);
@@ -61,34 +58,38 @@ export default function PlanStatusCard() {
 
   if (error && !planData) {
     return (
-      <ErrorMessage title="Estado del plan" message={error} onRetry={() => window.location.reload()} />
+      <ErrorMessage
+        title="Estado del plan"
+        message={error}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
   const planConfig = {
-    starter_trial: { 
-      name: 'Starter Trial', 
-      icon: Zap, 
+    starter_trial: {
+      name: 'Starter Trial',
+      icon: Zap,
       color: 'outline',
-      features: ['5 roasts/mes', '1 cuenta por plataforma', 'Shield'] 
+      features: ['5 roasts/mes', '1 cuenta por plataforma', 'Shield']
     },
-    starter: { 
-      name: 'Starter', 
-      icon: Zap, 
+    starter: {
+      name: 'Starter',
+      icon: Zap,
       color: 'outline',
-      features: ['5 roasts/mes', '1 cuenta por plataforma', 'Shield'] 
+      features: ['5 roasts/mes', '1 cuenta por plataforma', 'Shield']
     },
-    pro: { 
-      name: 'Pro', 
-      icon: Shield, 
+    pro: {
+      name: 'Pro',
+      icon: Shield,
       color: 'secondary',
-      features: ['1000 roasts/mes', '2 cuentas por plataforma', 'Custom tones'] 
+      features: ['1000 roasts/mes', '2 cuentas por plataforma', 'Custom tones']
     },
-    plus: { 
-      name: 'Plus', 
-      icon: Crown, 
+    plus: {
+      name: 'Plus',
+      icon: Crown,
       color: 'default',
-      features: ['5000 roasts/mes', '2 cuentas por plataforma', 'Todas las features'] 
+      features: ['5000 roasts/mes', '2 cuentas por plataforma', 'Todas las features']
     }
   };
 
@@ -107,9 +108,7 @@ export default function PlanStatusCard() {
             Plan Status
             <MockModeIndicator size="xs" />
           </div>
-          <Badge variant={currentPlan.color}>
-            {currentPlan.name}
-          </Badge>
+          <Badge variant={currentPlan.color}>{currentPlan.name}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -130,12 +129,12 @@ export default function PlanStatusCard() {
               {usage?.aiCalls || 0} / {usage?.limits?.aiCallsLimit || 1000} calls
             </span>
           </div>
-          
+
           <div className="w-full bg-muted rounded-full h-2">
-            <div 
+            <div
               className="bg-primary h-2 rounded-full transition-all"
-              style={{ 
-                width: `${Math.min(100, ((usage?.aiCalls || 0) / (usage?.limits?.aiCallsLimit || 1000)) * 100)}%` 
+              style={{
+                width: `${Math.min(100, ((usage?.aiCalls || 0) / (usage?.limits?.aiCallsLimit || 1000)) * 100)}%`
               }}
             />
           </div>

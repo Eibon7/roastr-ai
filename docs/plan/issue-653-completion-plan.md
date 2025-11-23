@@ -24,6 +24,7 @@
 ### 1. "Migration tested in staging" - NO CUMPLIDO
 
 **Estado Actual:**
+
 - ✅ Migration 024 creada: `database/migrations/024_atomic_user_behavior_updates.sql`
 - ✅ Scripts de validación creados:
   - `scripts/test-concurrent-shield-actions.js` ✅
@@ -33,6 +34,7 @@
 - ❌ **Validación NO ejecutada**
 
 **Evidencia:**
+
 - `docs/plan/migration-024-DEPLOY-CHECKLIST.md` muestra: `Status: 🔴 PENDING STAGING DEPLOYMENT`
 - Todos los checkboxes de Phase 1 sin marcar
 
@@ -41,6 +43,7 @@
 #### Paso 1: Desplegar Migration 024 en Staging
 
 **Opción A: Supabase Dashboard (Recomendado)**
+
 ```bash
 # 1. Ir a Supabase Dashboard
 #    https://supabase.com/dashboard/project/[PROJECT]/sql
@@ -52,6 +55,7 @@ cat database/migrations/024_atomic_user_behavior_updates.sql
 ```
 
 **Opción B: Script de Verificación**
+
 ```bash
 # Verificar si ya está desplegada
 node scripts/deploy-migration-024.js --environment=staging --verify-only
@@ -92,11 +96,13 @@ npm test -- tests/integration/shield-system-e2e.test.js
 ### 2. "Performance benchmarks show improvement" - NO CUMPLIDO
 
 **Estado Actual:**
+
 - ✅ Script de benchmarking creado: `scripts/benchmark-shield-performance.js`
 - ❌ **Benchmarks NO ejecutados**
 - ❌ **Métricas reales NO recopiladas**
 
 **Evidencia:**
+
 - `docs/plan/migration-024-deployment.md` muestra todas las métricas como `_TBD_`:
   - Avg Latency: TBD
   - DB Calls per Action: TBD
@@ -108,6 +114,7 @@ npm test -- tests/integration/shield-system-e2e.test.js
 #### Paso 1: Ejecutar Baseline (ANTES de Migration 024)
 
 **⚠️ IMPORTANTE:** Si ya desplegaste Migration 024, necesitas:
+
 1. Revertir temporalmente (rollback)
 2. Ejecutar baseline
 3. Re-desplegar Migration 024
@@ -140,6 +147,7 @@ node scripts/compare-benchmarks.js \
 ```
 
 **Métricas Esperadas:**
+
 - **Latency:** ~40% reducción (75ms → 45ms)
 - **DB Calls:** ~66% reducción (3 → 1 por acción)
 - **Race Conditions:** 0 (eliminadas)
@@ -150,12 +158,12 @@ node scripts/compare-benchmarks.js \
 Actualizar `docs/plan/migration-024-deployment.md` con métricas reales:
 
 ```markdown
-| Metric | Baseline (Before M3) | Target (After M3) | Actual |
-|--------|---------------------|-------------------|--------|
-| Avg Latency | 25ms | <15ms (60% reduction) | **XXms** |
-| DB Calls per Action | 3 | 1 (66% reduction) | **X** |
-| Race Condition Events | 2-5 per day | 0 | **0** |
-| Error Rate | <1% | <0.5% | **X.XX%** |
+| Metric                | Baseline (Before M3) | Target (After M3)     | Actual    |
+| --------------------- | -------------------- | --------------------- | --------- |
+| Avg Latency           | 25ms                 | <15ms (60% reduction) | **XXms**  |
+| DB Calls per Action   | 3                    | 1 (66% reduction)     | **X**     |
+| Race Condition Events | 2-5 per day          | 0                     | **0**     |
+| Error Rate            | <1%                  | <0.5%                 | **X.XX%** |
 ```
 
 ---
@@ -223,12 +231,12 @@ Actualizar `docs/plan/migration-024-deployment.md` con métricas reales:
 
 ### Technical Metrics
 
-| Metric | Baseline | Target | Status |
-|--------|----------|--------|--------|
-| Avg Latency | 25ms | <15ms | ⏳ Pending |
-| DB Calls/Action | 3 | 1 | ⏳ Pending |
-| Race Conditions | 2-5/day | 0 | ⏳ Pending |
-| Error Rate | <1% | <0.5% | ⏳ Pending |
+| Metric          | Baseline | Target | Status     |
+| --------------- | -------- | ------ | ---------- |
+| Avg Latency     | 25ms     | <15ms  | ⏳ Pending |
+| DB Calls/Action | 3        | 1      | ⏳ Pending |
+| Race Conditions | 2-5/day  | 0      | ⏳ Pending |
+| Error Rate      | <1%      | <0.5%  | ⏳ Pending |
 
 ### Success Criteria
 
@@ -257,4 +265,3 @@ Actualizar `docs/plan/migration-024-deployment.md` con métricas reales:
 - **Deployment Plan:** `docs/plan/migration-024-deployment.md`
 - **Checklist:** `docs/plan/migration-024-DEPLOY-CHECKLIST.md`
 - **Test Results:** `docs/test-evidence/issue-653/PHASE2-TEST-RESULTS.md`
-

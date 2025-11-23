@@ -1,7 +1,7 @@
 /**
  * QA Integration Tests for Social Media OAuth Flows
  * Issue #90: Real-world testing of Twitter, YouTube, Instagram integrations
- * 
+ *
  * These tests require real OAuth credentials and external network access
  * Run in QA/staging environment only
  */
@@ -23,11 +23,11 @@ const QA_CONFIG = {
 describe('OAuth Integration QA Tests', () => {
   let testToken;
   let testUserId;
-  
+
   beforeAll(async () => {
     // Set up test environment
     process.env.NODE_ENV = 'qa';
-    
+
     // Create test user and get auth token
     const authResponse = await request(app)
       .post('/api/auth/register')
@@ -36,14 +36,14 @@ describe('OAuth Integration QA Tests', () => {
         password: 'QATestPass123!',
         name: 'QA Test User'
       });
-    
+
     testToken = authResponse.body.data.token;
     testUserId = authResponse.body.data.user.id;
-    
-    logger.info('QA Test Setup Complete', { 
-      testUserId, 
+
+    logger.info('QA Test Setup Complete', {
+      testUserId,
       platforms: QA_CONFIG.platforms,
-      ngrokUrl: QA_CONFIG.ngrokUrl 
+      ngrokUrl: QA_CONFIG.ngrokUrl
     });
   });
 
@@ -62,38 +62,42 @@ describe('OAuth Integration QA Tests', () => {
   });
 
   describe('OAuth Authorization Flow Tests', () => {
-    QA_CONFIG.platforms.forEach(platform => {
-      test(`should initiate ${platform} OAuth flow with real credentials`, async () => {
-        const response = await request(app)
-          .post(`/api/integrations/${platform}/connect`)
-          .set('Authorization', `Bearer ${testToken}`)
-          .expect(200);
+    QA_CONFIG.platforms.forEach((platform) => {
+      test(
+        `should initiate ${platform} OAuth flow with real credentials`,
+        async () => {
+          const response = await request(app)
+            .post(`/api/integrations/${platform}/connect`)
+            .set('Authorization', `Bearer ${testToken}`)
+            .expect(200);
 
-        expect(response.body.success).toBe(true);
-        expect(response.body.data.authUrl).toBeDefined();
-        expect(response.body.data.state).toBeDefined();
-        expect(response.body.data.platform).toBe(platform);
-        
-        // For real OAuth, authUrl should point to actual platform
-        if (!flags.shouldUseMockOAuth()) {
-          expect(response.body.data.authUrl).toMatch(new RegExp(platform));
-          expect(response.body.data.mock).toBe(false);
-        }
+          expect(response.body.success).toBe(true);
+          expect(response.body.data.authUrl).toBeDefined();
+          expect(response.body.data.state).toBeDefined();
+          expect(response.body.data.platform).toBe(platform);
 
-        // Log the auth URL for manual testing
-        console.log(`\n📋 Manual Test Required for ${platform}:`);
-        console.log(`   1. Visit: ${response.body.data.authUrl}`);
-        console.log(`   2. Complete OAuth flow`);
-        console.log(`   3. Verify callback handling\n`);
-        
-        // Store state for callback testing
-        global[`${platform}_oauth_state`] = response.body.data.state;
-      }, QA_CONFIG.timeout);
+          // For real OAuth, authUrl should point to actual platform
+          if (!flags.shouldUseMockOAuth()) {
+            expect(response.body.data.authUrl).toMatch(new RegExp(platform));
+            expect(response.body.data.mock).toBe(false);
+          }
+
+          // Log the auth URL for manual testing
+          console.log(`\n📋 Manual Test Required for ${platform}:`);
+          console.log(`   1. Visit: ${response.body.data.authUrl}`);
+          console.log(`   2. Complete OAuth flow`);
+          console.log(`   3. Verify callback handling\n`);
+
+          // Store state for callback testing
+          global[`${platform}_oauth_state`] = response.body.data.state;
+        },
+        QA_CONFIG.timeout
+      );
     });
   });
 
   describe('Platform Configuration Tests', () => {
-    QA_CONFIG.platforms.forEach(platform => {
+    QA_CONFIG.platforms.forEach((platform) => {
       test(`should get default configuration for ${platform}`, async () => {
         const response = await request(app)
           .get(`/api/integrations/${platform}/config`)
@@ -147,9 +151,9 @@ describe('OAuth Integration QA Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.connections).toBeInstanceOf(Array);
-      
+
       // Check that each platform has proper status tracking
-      response.body.data.connections.forEach(connection => {
+      response.body.data.connections.forEach((connection) => {
         expect(connection.platform).toBeDefined();
         expect(['connected', 'disconnected', 'expired', 'error']).toContain(connection.status);
         expect(connection.requirements).toBeDefined();
@@ -157,20 +161,18 @@ describe('OAuth Integration QA Tests', () => {
     });
 
     test('should provide platform requirements and metadata', async () => {
-      const response = await request(app)
-        .get('/api/integrations/platforms')
-        .expect(200);
+      const response = await request(app).get('/api/integrations/platforms').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.platforms).toBeInstanceOf(Array);
-      
-      const platformNames = response.body.data.platforms.map(p => p.platform);
-      QA_CONFIG.platforms.forEach(platform => {
+
+      const platformNames = response.body.data.platforms.map((p) => p.platform);
+      QA_CONFIG.platforms.forEach((platform) => {
         expect(platformNames).toContain(platform);
       });
 
       // Check that each platform has proper metadata
-      response.body.data.platforms.forEach(platform => {
+      response.body.data.platforms.forEach((platform) => {
         expect(platform.requirements).toBeDefined();
         expect(platform.requirements.permissions).toBeInstanceOf(Array);
         expect(platform.requirements.estimatedTime).toBeDefined();
@@ -191,13 +193,9 @@ describe('OAuth Integration QA Tests', () => {
     });
 
     test('should require authentication for protected endpoints', async () => {
-      await request(app)
-        .post('/api/integrations/twitter/connect')
-        .expect(401);
+      await request(app).post('/api/integrations/twitter/connect').expect(401);
 
-      await request(app)
-        .get('/api/integrations/connections')
-        .expect(401);
+      await request(app).get('/api/integrations/connections').expect(401);
     });
 
     test('should handle malformed configuration updates', async () => {
@@ -214,9 +212,9 @@ describe('OAuth Integration QA Tests', () => {
 
 /**
  * Manual Testing Instructions
- * 
+ *
  * These tests require manual intervention for OAuth callbacks:
- * 
+ *
  * 1. Set up ngrok tunnel: `ngrok http 3000`
  * 2. Set NGROK_URL environment variable
  * 3. Configure OAuth apps with ngrok callback URLs

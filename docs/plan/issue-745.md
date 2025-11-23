@@ -26,11 +26,13 @@
 **File:** `src/middleware/csrf.js`
 
 **Working:**
+
 - ✅ `setCsrfToken` - Generates and sets token in `csrf-token` cookie
 - ✅ `validateCsrfToken` - Validates token from header matches cookie
 - ✅ Token exposed in `X-CSRF-Token` response header for frontend access
 
 **Cookie Configuration (Double Submit Cookie Pattern):**
+
 ```javascript
 {
   httpOnly: false,         // MUST be false - JS needs to read token
@@ -41,10 +43,11 @@
 ```
 
 **Security Model (Double Submit Cookie Pattern - PR #743):**
+
 - ✅ `sameSite: 'strict'` prevents cross-site cookie sending (PRIMARY PROTECTION)
 - ✅ Double submission: attacker can't read cookie to forge header
 - ✅ Matching validation: both cookie AND header must match
-- ⚠️  **CRITICAL:** `httpOnly: false` is REQUIRED
+- ⚠️ **CRITICAL:** `httpOnly: false` is REQUIRED
   - JavaScript MUST be able to read token via `document.cookie`
   - `document.cookie` API CANNOT access cookies with httpOnly: true
   - Security comes from sameSite + double submission, NOT from hiding token
@@ -53,6 +56,7 @@
 **File:** `src/routes/admin.js`
 
 **Status:**
+
 - ✅ Line 32: `setCsrfToken` ENABLED (generating tokens)
 - ❌ Line 43: `validateCsrfToken` DISABLED (commented out)
 - **Reason:** Frontend doesn't send tokens → 403 CSRF_TOKEN_MISSING errors
@@ -62,6 +66,7 @@
 **File:** `frontend/src/lib/api.js` (ApiClient class)
 
 **Current behavior:**
+
 - ❌ Does NOT read CSRF token from cookies
 - ❌ Does NOT send X-CSRF-Token header
 - Result: Admin mutations would fail with 403 if middleware enabled
@@ -69,6 +74,7 @@
 **File:** `frontend/src/services/adminApi.js`
 
 **Current behavior:**
+
 - Uses `apiClient` for all requests
 - 20+ methods that need CSRF token (POST/PUT/DELETE)
 
@@ -108,9 +114,7 @@ export function getCsrfToken() {
   // Backend middleware: src/middleware/csrf.js setCsrfToken()
 
   const cookies = document.cookie.split(';');
-  const csrfCookie = cookies.find(cookie =>
-    cookie.trim().startsWith('csrf-token=')
-  );
+  const csrfCookie = cookies.find((cookie) => cookie.trim().startsWith('csrf-token='));
 
   if (!csrfCookie) {
     return null;
@@ -133,6 +137,7 @@ export function getCsrfTokenFromHeader(response) {
 ```
 
 **Why this approach:**
+
 1. Simple utility, no dependencies
 2. Reads from cookie set by backend (`csrf-token`)
 3. Fallback to read from response header if needed
@@ -147,6 +152,7 @@ export function getCsrfTokenFromHeader(response) {
 **Modification:** Update `request()` method (lines 125-254)
 
 **Current flow:**
+
 ```javascript
 async request(method, endpoint, data = null) {
   const options = {
@@ -169,6 +175,7 @@ async request(method, endpoint, data = null) {
 ```
 
 **New flow:**
+
 ```javascript
 import { getCsrfToken } from '../utils/csrf';
 
@@ -203,6 +210,7 @@ async request(method, endpoint, data = null) {
 **Exact changes:**
 
 1. **Add import** (top of file, after line 7):
+
    ```javascript
    import { getCsrfToken } from '../utils/csrf';
    ```
@@ -223,6 +231,7 @@ async request(method, endpoint, data = null) {
    ```
 
 **Why this approach:**
+
 1. Minimal change to existing code
 2. Only adds header for state-modifying requests (POST/PUT/PATCH/DELETE)
 3. GET requests don't need CSRF (backend skips validation for safe methods)
@@ -238,6 +247,7 @@ async request(method, endpoint, data = null) {
 **Change:** Uncomment line 43
 
 **Before (lines 34-43):**
+
 ```javascript
 // CSRF validation temporarily disabled for admin routes (CodeRabbit Review #3430606212)
 // REASON: Frontend does not implement CSRF token handling (X-CSRF-Token header missing)
@@ -252,6 +262,7 @@ async request(method, endpoint, data = null) {
 ```
 
 **After (lines 34-43):**
+
 ```javascript
 // CSRF validation enabled (Issue #745)
 // Frontend now sends CSRF token in X-CSRF-Token header for all mutations
@@ -264,6 +275,7 @@ router.use(validateCsrfToken);
 ```
 
 **Why:**
+
 - Frontend now sends tokens (Step 2 complete)
 - Backend can validate safely
 - No more 403 CSRF_TOKEN_MISSING errors
@@ -275,6 +287,7 @@ router.use(validateCsrfToken);
 **Test Coverage:**
 
 **AC #1: Frontend reads CSRF token from cookie**
+
 ```javascript
 // Manual test in browser console
 import { getCsrfToken } from './utils/csrf';
@@ -283,6 +296,7 @@ console.log('CSRF Token:', getCsrfToken());
 ```
 
 **AC #2: Token sent in X-CSRF-Token header**
+
 ```javascript
 // Check Network tab in DevTools
 // Make any admin mutation (e.g., update feature flag)
@@ -297,33 +311,40 @@ console.log('CSRF Token:', getCsrfToken());
 Test all admin operations from `frontend/src/services/adminApi.js`:
 
 **Feature Flags (POST/PUT/DELETE):**
+
 - [ ] `updateFeatureFlag()` - PUT /admin/feature-flags/:key
 - [ ] `createFeatureFlag()` - POST /admin/feature-flags
 - [ ] `deleteFeatureFlag()` - DELETE /admin/feature-flags/:key
 - [ ] `bulkUpdateFeatureFlags()` - POST /admin/feature-flags/bulk-update
 
 **Kill Switch (POST):**
+
 - [ ] `toggleKillSwitch()` - POST /admin/kill-switch
 
 **System Actions (POST/PUT):**
+
 - [ ] `acknowledgeAlert()` - POST /admin/system-alerts/:id/acknowledge
 - [ ] `refreshFeatureFlagCache()` - POST /admin/feature-flags/refresh-cache
 - [ ] `updateFeatureFlagRollout()` - PUT /admin/feature-flags/:key/rollout
 
 **Emergency Contacts (PUT/POST):**
+
 - [ ] `updateEmergencyContacts()` - PUT /admin/emergency-contacts
 - [ ] `sendTestAlert()` - POST /admin/emergency-contacts/test
 
 **Platform Autopost (PUT):**
+
 - [ ] `updatePlatformAutopostSettings()` - PUT /admin/platform-autopost/:platform
 
 **Backoffice Settings (PUT/POST):**
+
 - [ ] `updateGlobalThresholds()` - PUT /admin/backoffice/thresholds
 - [ ] `runHealthcheck()` - POST /admin/backoffice/healthcheck
 
 **Expected:** All mutations succeed with 200/201 status, no 403 errors
 
 **AC #4: Verify CSRF middleware re-enabled**
+
 ```bash
 # Check backend code
 grep -A 2 "router.use(validateCsrfToken)" src/routes/admin.js
@@ -333,6 +354,7 @@ grep -A 2 "router.use(validateCsrfToken)" src/routes/admin.js
 **AC #5: Manual E2E test all admin operations**
 
 **Test Scenario 1: Feature Flags**
+
 1. Login as admin
 2. Navigate to Admin Dashboard → Feature Flags
 3. Toggle a feature flag
@@ -340,12 +362,14 @@ grep -A 2 "router.use(validateCsrfToken)" src/routes/admin.js
 5. Check Network tab: X-CSRF-Token header present
 
 **Test Scenario 2: Kill Switch**
+
 1. Navigate to Kill Switch section
 2. Toggle kill switch ON → OFF
 3. Verify: Both operations succeed
 4. Check logs: CSRF validation passed
 
 **Test Scenario 3: Global Thresholds**
+
 1. Navigate to Backoffice Settings
 2. Update Shield thresholds
 3. Verify: Update succeeds
@@ -360,7 +384,8 @@ grep -A 2 "router.use(validateCsrfToken)" src/routes/admin.js
 **Files to generate:**
 
 **1. SUMMARY.md**
-```markdown
+
+````markdown
 # Test Evidence - Issue #745
 
 **Date:** 2025-11-07
@@ -370,22 +395,24 @@ grep -A 2 "router.use(validateCsrfToken)" src/routes/admin.js
 ## Implementation Summary
 
 **Files Created:**
+
 1. `frontend/src/utils/csrf.js` - CSRF token utility
 2. `docs/plan/issue-745.md` - Implementation plan
 
 **Files Modified:**
+
 1. `frontend/src/lib/api.js` - Added CSRF token to headers
 2. `src/routes/admin.js` - Re-enabled validateCsrfToken middleware
 
 ## Acceptance Criteria Validation
 
-| AC# | Criteria | Status | Evidence |
-|-----|----------|--------|----------|
+| AC#  | Criteria                              | Status       | Evidence                      |
+| ---- | ------------------------------------- | ------------ | ----------------------------- |
 | AC#1 | Frontend reads CSRF token from cookie | ✅ VALIDATED | `csrf.js` utility implemented |
-| AC#2 | Token sent in X-CSRF-Token header | ✅ VALIDATED | Network tab screenshot |
-| AC#3 | Admin mutations work without 403 | ✅ VALIDATED | All operations tested |
-| AC#4 | Re-enable CSRF middleware | ✅ VALIDATED | Line 43 uncommented |
-| AC#5 | Test all admin operations | ✅ VALIDATED | E2E tests passed |
+| AC#2 | Token sent in X-CSRF-Token header     | ✅ VALIDATED | Network tab screenshot        |
+| AC#3 | Admin mutations work without 403      | ✅ VALIDATED | All operations tested         |
+| AC#4 | Re-enable CSRF middleware             | ✅ VALIDATED | Line 43 uncommented           |
+| AC#5 | Test all admin operations             | ✅ VALIDATED | E2E tests passed              |
 
 ## Test Results
 
@@ -395,6 +422,7 @@ grep -A 2 "router.use(validateCsrfToken)" src/routes/admin.js
 **Emergency Contacts:** ✅ Update working
 
 **Network Inspection:**
+
 - CSRF token present in requests: YES
 - Token matches cookie value: YES
 - Backend validation passing: YES
@@ -410,13 +438,15 @@ npm test -- frontend/src/__tests__/admin-backoffice.test.jsx
 tail -f logs/security/security-*.log | grep "CSRF validation"
 # Expected: "CSRF validation passed" messages
 ```
+````
 
 ## Screenshots
 
 - `csrf-token-header.png` - Network tab showing X-CSRF-Token header
 - `admin-operations.png` - Successful admin mutations
 - `backend-logs.png` - CSRF validation logs
-```
+
+````
 
 **2. Network screenshots**
 - Capture Network tab showing X-CSRF-Token header
@@ -528,9 +558,10 @@ tail -f logs/security/security-*.log | grep "CSRF validation"
 if (process.env.NODE_ENV !== 'production') {
   console.warn(`CSRF token not found for ${method} ${endpoint}`);
 }
-```
+````
 
 **Production behavior:**
+
 - No warnings logged (removed via NODE_ENV check)
 - Request sent without token (will get 403 from backend)
 - Frontend error handling catches 403 (existing code)
@@ -542,12 +573,14 @@ if (process.env.NODE_ENV !== 'production') {
 **If issues arise after deployment:**
 
 1. **Immediate:** Disable CSRF validation
+
    ```javascript
    // src/routes/admin.js line 43
    // router.use(validateCsrfToken); // Temporarily disabled
    ```
 
 2. **Investigate:** Check logs for errors
+
    ```bash
    grep "CSRF validation failed" logs/security/*.log
    ```
@@ -565,14 +598,14 @@ if (process.env.NODE_ENV !== 'production') {
 
 ## Timeline
 
-| Step | Duration | Status |
-|------|----------|--------|
-| Step 1: Create CSRF utility | 15 min | ⏳ PENDING |
-| Step 2: Modify apiClient | 30-45 min | ⏳ PENDING |
-| Step 3: Re-enable middleware | 5 min | ⏳ PENDING |
-| Step 4: Test operations | 30 min | ⏳ PENDING |
-| Step 5: Generate evidence | 15 min | ⏳ PENDING |
-| **Total** | **1-2 hours** | ⏳ PENDING |
+| Step                         | Duration      | Status     |
+| ---------------------------- | ------------- | ---------- |
+| Step 1: Create CSRF utility  | 15 min        | ⏳ PENDING |
+| Step 2: Modify apiClient     | 30-45 min     | ⏳ PENDING |
+| Step 3: Re-enable middleware | 5 min         | ⏳ PENDING |
+| Step 4: Test operations      | 30 min        | ⏳ PENDING |
+| Step 5: Generate evidence    | 15 min        | ⏳ PENDING |
+| **Total**                    | **1-2 hours** | ⏳ PENDING |
 
 ---
 

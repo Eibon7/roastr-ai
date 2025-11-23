@@ -16,6 +16,7 @@
 **Status:** ✅ FIXED
 
 **Problem:**
+
 - Coverage integrity check built absolute file paths and used them directly as keys
 - Jest's coverage-summary.json can store entries with:
   - **Absolute paths** (current): `"/Users/emiliopostigo/roastr-ai/src/adapters/FacebookAdapter.js"`
@@ -28,6 +29,7 @@
 
 **Root Cause:**
 Jest can be configured to output coverage keys in different formats depending on:
+
 - CI/CD environment (absolute vs relative paths)
 - Jest configuration (`collectCoverageFrom` patterns)
 - Operating system (Windows vs Unix path separators)
@@ -41,6 +43,7 @@ Original code assumed keys would always be absolute paths matching `path.join(th
 ### File 1: `scripts/gdd-coverage-helper.js`
 
 #### Before (Lines 82-92):
+
 ```javascript
 // Calculate average coverage for all files associated with this node
 let totalCoverage = 0;
@@ -51,7 +54,7 @@ for (const filePath of nodeConfig.files) {
   const absolutePath = path.join(this.rootDir, filePath);
 
   // Find coverage entry for this file
-  const fileEntry = coverageData[absolutePath];  // ❌ Assumes absolute keys only
+  const fileEntry = coverageData[absolutePath]; // ❌ Assumes absolute keys only
   if (fileEntry && fileEntry.lines && fileEntry.lines.pct !== undefined) {
     totalCoverage += fileEntry.lines.pct;
     fileCount++;
@@ -60,6 +63,7 @@ for (const filePath of nodeConfig.files) {
 ```
 
 #### After (Lines 82-120):
+
 ```javascript
 // Calculate average coverage for all files associated with this node
 let totalCoverage = 0;
@@ -107,6 +111,7 @@ for (const filePath of nodeConfig.files) {
 ```
 
 #### Fix Strategy:
+
 1. **Strategy 1 (Absolute Path)**: Try exact match with absolute path first - maintains current behavior, fastest lookup
 2. **Strategy 2 (Relative Path)**: If not found, try with relative path as-is - handles alternative Jest configs
 3. **Strategy 3 (Normalized Comparison)**: If still not found, normalize both sides and compare - handles edge cases like Windows vs Unix paths
@@ -118,6 +123,7 @@ This progressive fallback ensures compatibility with all Jest configurations whi
 ### File 2: `tests/unit/scripts/gdd-coverage-helper.test.js` (NEW)
 
 Created comprehensive unit test suite with 30 test cases covering:
+
 - All 3 lookup strategies (absolute, relative, normalized)
 - Edge cases (missing files, no coverage data, empty nodes)
 - Multiple file scenarios (average calculation, rounding)
@@ -131,11 +137,13 @@ Created comprehensive unit test suite with 30 test cases covering:
 Added `'<rootDir>/tests/unit/scripts/**/*.test.js'` to testMatch in node-tests project to enable running tests for scripts.
 
 **Before:**
+
 ```javascript
 testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', ...]
 ```
 
 **After:**
+
 ```javascript
 testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', ..., '<rootDir>/tests/unit/scripts/**/*.test.js', ...]
 ```
@@ -147,11 +155,13 @@ testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/se
 ### Test 1: Unit Tests - All Lookup Strategies
 
 **Command:**
+
 ```bash
 npm test -- tests/unit/scripts/gdd-coverage-helper.test.js
 ```
 
 **Output:**
+
 ```text
 PASS node-tests tests/unit/scripts/gdd-coverage-helper.test.js
   CoverageHelper
@@ -203,6 +213,7 @@ Time:        0.723 s
 ```
 
 **Verification:**
+
 - ✅ All 30 tests pass
 - ✅ Strategy 1 (absolute paths) tested and working
 - ✅ Strategy 2 (relative paths) tested and working
@@ -217,16 +228,19 @@ Time:        0.723 s
 ### Test 2: Integration - validate-gdd-runtime.js
 
 **Command:**
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 ```
 
 **Output:**
+
 ```text
 (No errors - validation passed)
 ```
 
 **Verification:**
+
 - ✅ Coverage validation runs without errors
 - ✅ No false positives (validation correctly uses coverage data)
 - ✅ Integration with validation script works
@@ -238,11 +252,13 @@ node scripts/validate-gdd-runtime.js --full
 ### Test 3: Integration - auto-repair-gdd.js
 
 **Command:**
+
 ```bash
 node scripts/auto-repair-gdd.js --dry-run
 ```
 
 **Output:**
+
 ```text
 ═══════════════════════════════════════════
       🔧 GDD AUTO-REPAIR ASSISTANT
@@ -267,6 +283,7 @@ node scripts/auto-repair-gdd.js --dry-run
 ```
 
 **Verification:**
+
 - ✅ Auto-repair can now detect coverage issues
 - ✅ Correctly identifies nodes with missing coverage fields
 - ✅ Integration with auto-repair script works
@@ -278,16 +295,18 @@ node scripts/auto-repair-gdd.js --dry-run
 ### Test 4: Real-World Coverage Lookup
 
 **Current coverage-summary.json format:**
+
 ```json
 {
-  "total": {"lines": {"pct": 57.97}},
-  "/Users/emiliopostigo/roastr-ai/src/adapters/FacebookAdapter.js": {"lines": {"pct": 21.51}},
-  "/Users/emiliopostigo/roastr-ai/src/adapters/InstagramAdapter.js": {"lines": {"pct": 34.69}},
-  "/Users/emiliopostigo/roastr-ai/src/adapters/ShieldAdapter.js": {"lines": {"pct": 63.79}}
+  "total": { "lines": { "pct": 57.97 } },
+  "/Users/emiliopostigo/roastr-ai/src/adapters/FacebookAdapter.js": { "lines": { "pct": 21.51 } },
+  "/Users/emiliopostigo/roastr-ai/src/adapters/InstagramAdapter.js": { "lines": { "pct": 34.69 } },
+  "/Users/emiliopostigo/roastr-ai/src/adapters/ShieldAdapter.js": { "lines": { "pct": 63.79 } }
 }
 ```
 
 **Observation:**
+
 - Keys are **absolute paths** in current environment
 - **Strategy 1** (absolute path lookup) successfully finds entries
 - Fix maintains backward compatibility with existing behavior
@@ -302,6 +321,7 @@ node scripts/auto-repair-gdd.js --dry-run
 ### Before Fix
 
 **Coverage Validation:**
+
 - ❌ Lookup always failed when Jest used relative paths
 - ❌ `getCoverageFromReport` returned `null` for every node
 - ❌ Validation treated `null` as valid (false positive)
@@ -309,11 +329,13 @@ node scripts/auto-repair-gdd.js --dry-run
 - ❌ Phase 15.1 objective defeated
 
 **Affected Scripts:**
+
 - `validate-gdd-runtime.js` - Coverage validation not working
 - `auto-repair-gdd.js` - Could not detect coverage mismatches
 - `compute-gdd-health.js` - Coverage authenticity scoring broken
 
 **Risk:**
+
 - High - Manual coverage modifications would go undetected
 - High - False sense of security (validation passing when shouldn't)
 - High - Coverage integrity could not be enforced
@@ -321,6 +343,7 @@ node scripts/auto-repair-gdd.js --dry-run
 ### After Fix
 
 **Coverage Validation:**
+
 - ✅ Lookup works with absolute paths (current environment)
 - ✅ Lookup works with relative paths (other environments)
 - ✅ Lookup works with mixed keys (edge cases)
@@ -329,11 +352,13 @@ node scripts/auto-repair-gdd.js --dry-run
 - ✅ Coverage integrity enforcement working as intended
 
 **Affected Scripts:**
+
 - `validate-gdd-runtime.js` - ✅ Coverage validation working
 - `auto-repair-gdd.js` - ✅ Can detect and repair coverage mismatches
 - `compute-gdd-health.js` - ✅ Coverage authenticity scoring accurate
 
 **Risk Reduction:**
+
 - ✅ Manual coverage modifications now detected
 - ✅ Validation accuracy restored
 - ✅ Coverage integrity enforcement operational
@@ -346,13 +371,13 @@ node scripts/auto-repair-gdd.js --dry-run
 
 **Coverage:** 30 test cases across 5 test suites
 
-| Test Suite | Tests | Description |
-|------------|-------|-------------|
-| loadCoverageData | 3 | Loading, caching, error handling |
-| loadSystemMap | 3 | Loading, caching, error handling |
-| getCoverageFromReport | 10 | All 3 strategies + edge cases |
-| validateCoverageAuthenticity | 7 | Within/exceeds tolerance, warnings, diff calc |
-| getCoverageSource | 7 | Parsing auto/manual, case insensitive |
+| Test Suite                   | Tests | Description                                   |
+| ---------------------------- | ----- | --------------------------------------------- |
+| loadCoverageData             | 3     | Loading, caching, error handling              |
+| loadSystemMap                | 3     | Loading, caching, error handling              |
+| getCoverageFromReport        | 10    | All 3 strategies + edge cases                 |
+| validateCoverageAuthenticity | 7     | Within/exceeds tolerance, warnings, diff calc |
+| getCoverageSource            | 7     | Parsing auto/manual, case insensitive         |
 
 **Total:** 30/30 tests passing (100%)
 
@@ -368,11 +393,13 @@ node scripts/auto-repair-gdd.js --dry-run
 
 **Optimization:**
 Progressive fallback ensures:
+
 - Fast path (Strategy 1 + 2) for 99% of cases: 2 x O(1) = O(1)
 - Expensive normalization (Strategy 3) only when needed: rarely executed
 - No performance degradation for common use cases
 
 **Benchmark (typical node with 4 files):**
+
 - Before fix: 4 x O(1) = ~0.05ms
 - After fix: 4 x O(1) + (rarely) O(n) = ~0.05ms (same)
 
@@ -385,6 +412,7 @@ Progressive fallback ensures:
 ### Existing Functionality Preserved
 
 **Verified:**
+
 - ✅ Coverage helper API unchanged (no breaking changes)
 - ✅ Method signatures identical
 - ✅ Return types identical
@@ -392,6 +420,7 @@ Progressive fallback ensures:
 - ✅ Backward compatibility maintained (absolute paths still work)
 
 **Validation Scripts:**
+
 - ✅ `validate-gdd-runtime.js` - Still works, now more robust
 - ✅ `auto-repair-gdd.js` - Still works, now more robust
 - ✅ `compute-gdd-health.js` - Still works, now more robust
@@ -403,14 +432,17 @@ Progressive fallback ensures:
 ## Summary
 
 **Issues Resolved:** 1/1 (100%)
+
 - [P1] Normalize coverage-summary keys before lookup: ✅ FIXED
 
 **Tests:** 30/30 PASS (100%)
+
 - Unit tests: 30/30 ✅
 - Integration tests: 3/3 ✅
 - Real-world validation: ✅ PASS
 
 **Code Quality:** ✅ PRODUCTION READY
+
 - Progressive fallback strategy
 - Comprehensive test coverage
 - No breaking changes
@@ -418,6 +450,7 @@ Progressive fallback ensures:
 - Well-documented code
 
 **GDD Impact:** ✅ PHASE 15.1 RESTORED
+
 - Coverage integrity enforcement now working
 - All validation scripts operational
 - Coverage authenticity can be enforced
@@ -428,11 +461,11 @@ Progressive fallback ensures:
 
 ## Files Modified
 
-| File | Lines Changed | Type | Impact |
-|------|---------------|------|--------|
-| `scripts/gdd-coverage-helper.js` | +28/-3 | Bug fix | Coverage lookup now robust |
-| `tests/unit/scripts/gdd-coverage-helper.test.js` | +440 (new) | Test | Comprehensive coverage |
-| `jest.config.js` | +1/-1 | Config | Enable scripts tests |
+| File                                             | Lines Changed | Type    | Impact                     |
+| ------------------------------------------------ | ------------- | ------- | -------------------------- |
+| `scripts/gdd-coverage-helper.js`                 | +28/-3        | Bug fix | Coverage lookup now robust |
+| `tests/unit/scripts/gdd-coverage-helper.test.js` | +440 (new)    | Test    | Comprehensive coverage     |
+| `jest.config.js`                                 | +1/-1         | Config  | Enable scripts tests       |
 
 **Total:** 3 files modified, 469 insertions, 4 deletions (net: +465)
 
@@ -441,24 +474,28 @@ Progressive fallback ensures:
 ## Validation Commands
 
 ### Run Unit Tests
+
 ```bash
 npm test -- tests/unit/scripts/gdd-coverage-helper.test.js
 # Expected: 30/30 tests pass
 ```
 
 ### Run Full Validation
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 # Expected: No errors, coverage validation working
 ```
 
 ### Run Auto-Repair Dry Run
+
 ```bash
 node scripts/auto-repair-gdd.js --dry-run
 # Expected: Detects coverage issues correctly
 ```
 
 ### Run Health Scoring
+
 ```bash
 node scripts/compute-gdd-health.js
 # Expected: Coverage authenticity scores accurate

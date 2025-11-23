@@ -10,7 +10,7 @@ const crypto = require('crypto');
  */
 function createMockOrganization(overrides = {}) {
   const orgId = overrides.id || `org-${crypto.randomUUID()}`;
-  
+
   return {
     id: orgId,
     name: overrides.name || `Test Organization ${orgId.slice(-4)}`,
@@ -26,7 +26,7 @@ function createMockOrganization(overrides = {}) {
  */
 function createMockUser(organizationId, overrides = {}) {
   const userId = overrides.id || `user-${crypto.randomUUID()}`;
-  
+
   return {
     id: userId,
     organization_id: organizationId,
@@ -57,7 +57,7 @@ function createMultiTenantTestScenario(scenarioNameOrConfig = 'simple', customCo
   }
 
   const scenarioName = scenarioNameOrConfig;
-  
+
   // If custom config provided with named scenario, merge it
   if (Object.keys(customConfig).length > 0) {
     return createCustomScenario({ ...customConfig, baseScenario: scenarioName });
@@ -129,8 +129,16 @@ function createEnterpriseScenario() {
 
   const users = [
     createMockUser(org.id, { role: 'admin', email: 'admin@enterprise.com', name: 'Admin User' }),
-    createMockUser(org.id, { role: 'manager', email: 'manager1@enterprise.com', name: 'Manager One' }),
-    createMockUser(org.id, { role: 'manager', email: 'manager2@enterprise.com', name: 'Manager Two' }),
+    createMockUser(org.id, {
+      role: 'manager',
+      email: 'manager1@enterprise.com',
+      name: 'Manager One'
+    }),
+    createMockUser(org.id, {
+      role: 'manager',
+      email: 'manager2@enterprise.com',
+      name: 'Manager Two'
+    }),
     createMockUser(org.id, { role: 'member', email: 'user1@enterprise.com', name: 'User One' }),
     createMockUser(org.id, { role: 'member', email: 'user2@enterprise.com', name: 'User Two' }),
     createMockUser(org.id, { role: 'member', email: 'user3@enterprise.com', name: 'User Three' }),
@@ -176,7 +184,7 @@ function createMixedPlansScenario() {
  * Create mock platform tokens for testing social media integrations
  */
 function createMockPlatformTokens(userId, platforms = ['twitter', 'instagram']) {
-  return platforms.map(platform => ({
+  return platforms.map((platform) => ({
     id: `token-${crypto.randomUUID()}`,
     user_id: userId,
     platform,
@@ -199,7 +207,7 @@ function createMockUsageData(organizationId, overrides = {}) {
     api_calls: overrides.api_calls !== undefined ? overrides.api_calls : 150,
     storage_used: overrides.storage_used !== undefined ? overrides.storage_used : 512, // MB
     bandwidth_used: overrides.bandwidth_used !== undefined ? overrides.bandwidth_used : 2048, // MB
-    cost: overrides.cost !== undefined ? Number(overrides.cost) : 12.50,
+    cost: overrides.cost !== undefined ? Number(overrides.cost) : 12.5,
     created_at: new Date().toISOString(),
     ...overrides
   };
@@ -215,14 +223,19 @@ function validateScenarioConfig(config) {
   // Note: 'free' plan was removed in PR #870 (migration 20251118193202_remove_free_plan.sql)
   // DB CHECK constraint only allows: 'starter_trial', 'starter', 'pro', 'plus'
   // 'creator_plus' and 'custom' are application-level aliases that require normalization before DB insertion
-  const validPlans = [
-    'starter_trial',
-    'starter',
-    'pro',
-    'plus'
-  ];
+  const validPlans = ['starter_trial', 'starter', 'pro', 'plus'];
   const validRoles = ['admin', 'member', 'viewer', 'manager', 'owner'];
-  const validPlatforms = ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+  const validPlatforms = [
+    'twitter',
+    'youtube',
+    'instagram',
+    'facebook',
+    'discord',
+    'twitch',
+    'reddit',
+    'tiktok',
+    'bluesky'
+  ];
 
   if (config.plan && !validPlans.includes(config.plan)) {
     throw new Error(`Invalid plan: ${config.plan}. Valid plans: ${validPlans.join(', ')}`);
@@ -233,9 +246,11 @@ function validateScenarioConfig(config) {
     throw new Error('roles must be an array of strings');
   }
   if (Array.isArray(config.roles)) {
-    const invalidRoles = config.roles.filter(role => !validRoles.includes(role));
+    const invalidRoles = config.roles.filter((role) => !validRoles.includes(role));
     if (invalidRoles.length > 0) {
-      throw new Error(`Invalid roles: ${invalidRoles.join(', ')}. Valid roles: ${validRoles.join(', ')}`);
+      throw new Error(
+        `Invalid roles: ${invalidRoles.join(', ')}. Valid roles: ${validRoles.join(', ')}`
+      );
     }
   }
 
@@ -244,17 +259,27 @@ function validateScenarioConfig(config) {
     throw new Error('platforms must be an array of strings');
   }
   if (Array.isArray(config.platforms)) {
-    const invalidPlatforms = config.platforms.filter(platform => !validPlatforms.includes(platform));
+    const invalidPlatforms = config.platforms.filter(
+      (platform) => !validPlatforms.includes(platform)
+    );
     if (invalidPlatforms.length > 0) {
-      throw new Error(`Invalid platforms: ${invalidPlatforms.join(', ')}. Valid platforms: ${validPlatforms.join(', ')}`);
+      throw new Error(
+        `Invalid platforms: ${invalidPlatforms.join(', ')}. Valid platforms: ${validPlatforms.join(', ')}`
+      );
     }
   }
 
-  if (config.userCount !== undefined && (typeof config.userCount !== 'number' || config.userCount < 1)) {
+  if (
+    config.userCount !== undefined &&
+    (typeof config.userCount !== 'number' || config.userCount < 1)
+  ) {
     throw new Error(`Invalid userCount: ${config.userCount}. Must be a positive number`);
   }
 
-  if (config.orgCount !== undefined && (typeof config.orgCount !== 'number' || config.orgCount < 1)) {
+  if (
+    config.orgCount !== undefined &&
+    (typeof config.orgCount !== 'number' || config.orgCount < 1)
+  ) {
     throw new Error(`Invalid orgCount: ${config.orgCount}. Must be a positive number`);
   }
 }
@@ -274,15 +299,13 @@ function createCustomScenario(config) {
 
   const plan = config.plan || 'pro';
   // Ensure roles is a non-empty array (Issue #277 - CodeRabbit fix)
-  const roles = Array.isArray(config.roles) && config.roles.length > 0
-    ? config.roles
-    : ['admin', 'member'];
+  const roles =
+    Array.isArray(config.roles) && config.roles.length > 0 ? config.roles : ['admin', 'member'];
   // Normalize platforms: must be array (Issue #277 - CodeRabbit fix)
   const platforms = Array.isArray(config.platforms) ? config.platforms : [];
   // Set userCount to roles.length only when omitted, not when 0 (Issue #277 - CodeRabbit fix)
-  const userCount = typeof config.userCount === 'number' && config.userCount > 0
-    ? config.userCount
-    : roles.length;
+  const userCount =
+    typeof config.userCount === 'number' && config.userCount > 0 ? config.userCount : roles.length;
   const orgCount = config.orgCount || 1;
 
   const organizations = [];

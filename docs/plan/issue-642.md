@@ -24,6 +24,7 @@
 ### Análisis del Servicio
 
 El servicio `tierValidationService.js` implementa **fail-closed security** correctamente:
+
 - En lugar de lanzar errores, retorna objetos con `allowed: false` y `failedClosed: true`
 - Esto es más seguro porque permite manejo controlado de errores
 - Los errores se capturan en el bloque `catch` y se retorna resultado seguro
@@ -31,20 +32,24 @@ El servicio `tierValidationService.js` implementa **fail-closed security** corre
 ## Pasos de Implementación
 
 ### Paso 1: Arreglar Test "should fail closed on database connection errors"
+
 - **Archivo**: `tests/unit/services/tierValidationService-coderabbit-round6.test.js`
 - **Cambio**: Cambiar expectativa de `.rejects.toThrow()` a verificar resultado con `allowed: false` y `failedClosed: true`
 - **Líneas**: 191-206
 
 ### Paso 2: Arreglar Test "should handle mixed success/failure in concurrent operations"
+
 - **Archivo**: `tests/unit/services/tierValidationService-coderabbit-round6.test.js`
 - **Cambio**: Verificar que todas las promesas se resuelven pero con diferentes valores de `allowed`
 - **Líneas**: 292-324
 
 ### Paso 3: Verificar Mocks de Supabase
+
 - **Problema**: Los mocks pueden no estar configurados correctamente para el flujo completo
 - **Solución**: Revisar y ajustar mocks según patrón Supabase Mock (#11 en coderabbit-lessons.md)
 
 ### Paso 4: Ejecutar Tests y Validar
+
 - Ejecutar: `npm test -- tests/unit/services/tierValidationService-coderabbit-round6.test.js`
 - Verificar: 16/16 tests pasando
 - Validar: Comportamiento fail-closed correcto
@@ -74,7 +79,7 @@ El servicio `tierValidationService.js` implementa **fail-closed security** corre
 
 1. **Mock de planLimitsService añadido**: Se añadió mock para `planLimitsService` que faltaba en los tests
 2. **Configuración de tierConfig mejorada**: Se añadieron configuraciones faltantes (SECURITY_CONFIG completo, WARNING_THRESHOLDS, CACHE_CONFIG, SUPPORTED_PLATFORMS, VALIDATION_HELPERS)
-3. **Test "should fail closed on database connection errors" corregido**: 
+3. **Test "should fail closed on database connection errors" corregido**:
    - Cambiado de esperar `.rejects.toThrow()` a verificar resultado con `allowed: false` y `failedClosed: true`
    - Acepta ambos códigos de razón (`validation_error_fail_closed` o `validation_database_error`)
 4. **Test "should handle mixed success/failure in concurrent operations" corregido**:
@@ -93,4 +98,3 @@ El servicio `tierValidationService.js` implementa **fail-closed security** corre
 - **Coderabbit Lessons**: Patrón #11 (Supabase Mock Pattern)
 - **GDD Node**: `docs/nodes/cost-control.md`
 - **Issue**: #642
-

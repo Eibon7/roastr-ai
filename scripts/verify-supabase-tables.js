@@ -87,7 +87,7 @@ async function verifyTables() {
 
         if (adminErr) {
           // Check if table doesn't exist
-          if ((adminErr.code === '42P01') || /does not exist/i.test(adminErr.message)) {
+          if (adminErr.code === '42P01' || /does not exist/i.test(adminErr.message)) {
             results.push({ table, status: '❌', message: 'Not found' });
           } else {
             // Unexpected admin error
@@ -100,14 +100,26 @@ async function verifyTables() {
 
             if (anonErr) {
               // Check if RLS is enforced
-              if (anonErr.code === 'PGRST301' || anonErr.status === 403 || /permission denied/i.test(anonErr.message)) {
+              if (
+                anonErr.code === 'PGRST301' ||
+                anonErr.status === 403 ||
+                /permission denied/i.test(anonErr.message)
+              ) {
                 results.push({ table, status: '✅', message: 'Exists (RLS enforced)' });
               } else {
-                results.push({ table, status: '⚠️', message: `Anon error: ${anonErr.message.substring(0, 80)}` });
+                results.push({
+                  table,
+                  status: '⚠️',
+                  message: `Anon error: ${anonErr.message.substring(0, 80)}`
+                });
               }
             } else {
               // Anon can read - RLS may be disabled or policies allow public read
-              results.push({ table, status: '⚠️', message: 'Anon can read; RLS may be disabled or policies allow public read' });
+              results.push({
+                table,
+                status: '⚠️',
+                message: 'Anon can read; RLS may be disabled or policies allow public read'
+              });
             }
           } else {
             // No anon key available, skip RLS check
@@ -121,26 +133,24 @@ async function verifyTables() {
 
     // Display results
     logger.info('\n📊 Table Status:\n');
-    results.forEach(r => {
+    results.forEach((r) => {
       logger.info(`   ${r.status} ${r.table.padEnd(30)} ${r.message}`);
     });
 
-    const successCount = results.filter(r => r.status === '✅').length;
-    const failureCount = results.filter(r => r.status === '❌').length;
+    const successCount = results.filter((r) => r.status === '✅').length;
+    const failureCount = results.filter((r) => r.status === '❌').length;
 
     logger.info(`\n📈 Summary: ${successCount}/${expectedTables.length} tables verified\n`);
 
     // Check for default plans data
     logger.info('🔍 Verifying default plans...');
-    const { data: plans, error: plansError } = await admin
-      .from('plans')
-      .select('id, name');
+    const { data: plans, error: plansError } = await admin.from('plans').select('id, name');
 
     if (plansError) {
       logger.info('   ⚠️  Cannot verify plans (may need service role access)');
     } else if (plans && plans.length > 0) {
       logger.info(`   ✅ Found ${plans.length} plans:`);
-      plans.forEach(p => logger.info(`      - ${p.id}: ${p.name}`));
+      plans.forEach((p) => logger.info(`      - ${p.id}: ${p.name}`));
     } else {
       logger.info('   ❌ No plans found (INSERT may have failed)');
     }
@@ -158,7 +168,6 @@ async function verifyTables() {
       logger.info('   Review the SQL Editor for error messages\n');
       process.exit(1);
     }
-
   } catch (error) {
     logger.error('\n❌ ERROR during verification:', error.message);
     process.exit(1);

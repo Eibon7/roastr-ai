@@ -31,7 +31,12 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
 const { CoverageHelper } = require('./gdd-coverage-helper');
-const { isMaintenanceMode, hasMaintenanceFlag, showMaintenanceBanner, blockIfMaintenance } = require('./gdd-maintenance-mode');
+const {
+  isMaintenanceMode,
+  hasMaintenanceFlag,
+  showMaintenanceBanner,
+  blockIfMaintenance
+} = require('./gdd-maintenance-mode');
 
 class AutoRepairEngine {
   constructor(options = {}) {
@@ -88,9 +93,10 @@ class AutoRepairEngine {
       console.log('🔍 Detecting issues...');
       await this.detectIssues();
 
-      const totalIssues = this.issues.autoFixable.length +
-                         this.issues.humanReview.length +
-                         this.issues.critical.length;
+      const totalIssues =
+        this.issues.autoFixable.length +
+        this.issues.humanReview.length +
+        this.issues.critical.length;
 
       console.log(`   Found ${totalIssues} issues:`);
       console.log(`   - 🟢 Auto-fixable: ${this.issues.autoFixable.length}`);
@@ -101,7 +107,7 @@ class AutoRepairEngine {
       // 4. Handle critical issues
       if (this.issues.critical.length > 0) {
         console.log('🔴 CRITICAL ISSUES DETECTED:');
-        this.issues.critical.forEach(issue => {
+        this.issues.critical.forEach((issue) => {
           console.log(`   - ${issue.description}`);
         });
         console.log('');
@@ -173,17 +179,17 @@ class AutoRepairEngine {
         health_after: this.healthAfter || this.healthBefore,
         details: {
           fixes: this.options.dryRun
-            ? this.issues.autoFixable.map(issue => ({
+            ? this.issues.autoFixable.map((issue) => ({
                 type: 'auto',
                 node: issue.node || 'unknown',
                 action: issue.description
               }))
-            : this.fixes.map(fix => ({
+            : this.fixes.map((fix) => ({
                 type: 'auto',
                 node: fix.node || 'unknown',
                 action: fix.description || fix
               })),
-          humanReview: this.issues.humanReview.map(issue => ({
+          humanReview: this.issues.humanReview.map((issue) => ({
             node: issue.node,
             description: issue.description
           })),
@@ -200,7 +206,6 @@ class AutoRepairEngine {
         humanReview: this.issues.humanReview,
         health: { before: this.healthBefore, after: this.healthAfter }
       };
-
     } catch (error) {
       console.error(`❌ Auto-repair failed: ${error.message}`);
       if (this.options.verbose) {
@@ -239,7 +244,7 @@ class AutoRepairEngine {
       'docs/system-map.yaml',
       'gdd-status.json',
       'gdd-health.json',
-      ...await this.getNodeFiles()
+      ...(await this.getNodeFiles())
     ];
 
     for (const file of filesToBackup) {
@@ -280,8 +285,8 @@ class AutoRepairEngine {
     const nodesDir = path.join(this.rootDir, 'docs', 'nodes');
     const files = await fs.readdir(nodesDir);
     return files
-      .filter(f => f.endsWith('.md') && f !== 'README.md')
-      .map(f => `docs/nodes/${f}`);
+      .filter((f) => f.endsWith('.md') && f !== 'README.md')
+      .map((f) => `docs/nodes/${f}`);
   }
 
   /**
@@ -321,7 +326,7 @@ class AutoRepairEngine {
     await this.detectBrokenEdges(systemMap);
     await this.detectOrphanNodes(nodes, systemMap);
     await this.detectMissingSpecReferences(nodes, spec);
-    await this.detectCoverageIntegrity(nodes);  // Phase 15.1
+    await this.detectCoverageIntegrity(nodes); // Phase 15.1
   }
 
   /**
@@ -353,7 +358,8 @@ class AutoRepairEngine {
   parseNodeMetadata(content) {
     const coverageMatch = content.match(/\*?\*?coverage:?\*?\*?\s*([\d.]+)%/i);
     return {
-      lastUpdated: (content.match(/\*?\*?last[_\s]updated:?\*?\*?\s*(\d{4}-\d{2}-\d{2})/i) || [])[1],
+      lastUpdated: (content.match(/\*?\*?last[_\s]updated:?\*?\*?\s*(\d{4}-\d{2}-\d{2})/i) ||
+        [])[1],
       coverage: coverageMatch ? parseFloat(coverageMatch[1]) : null,
       hasAgents: /##\s*Agentes Relevantes/i.test(content),
       status: (content.match(/\*?\*?status:?\*?\*?\s*(\w+)/i) || [])[1],
@@ -598,7 +604,7 @@ class AutoRepairEngine {
       // Extract declared coverage
       const coverageMatch = node.content.match(/\*?\*?coverage:?\*?\*?\s*([\d.]+)%/i);
       if (!coverageMatch) {
-        continue;  // No coverage declared, skip
+        continue; // No coverage declared, skip
       }
 
       const declaredCoverage = parseFloat(coverageMatch[1]);
@@ -650,7 +656,7 @@ class AutoRepairEngine {
       const validation = await coverageHelper.validateCoverageAuthenticity(
         nodeName,
         declaredCoverage,
-        3  // 3% tolerance
+        3 // 3% tolerance
       );
 
       if (!validation.valid && validation.actual !== null) {
@@ -706,9 +712,10 @@ class AutoRepairEngine {
     }
 
     // Combine preserved comments + new YAML
-    const finalContent = headerComments.length > 0
-      ? headerComments.join('\n') + '\n' + yamlLines.join('\n')
-      : yamlLines.join('\n');
+    const finalContent =
+      headerComments.length > 0
+        ? headerComments.join('\n') + '\n' + yamlLines.join('\n')
+        : yamlLines.join('\n');
 
     const mapPath = path.join(this.rootDir, 'docs', 'system-map.yaml');
     await fs.writeFile(mapPath, finalContent);
@@ -816,10 +823,10 @@ ${this.issues.critical.map((issue, i) => `${i + 1}. **${issue.node}** - ${issue.
 
 **Repair ID:** ${repairId}
 **Triggered by:** ${this.options.ci ? 'CI/CD' : 'Manual'}
-**Nodes affected:** ${[...new Set(this.issues.autoFixable.map(i => i.node))].join(', ')}
+**Nodes affected:** ${[...new Set(this.issues.autoFixable.map((i) => i.node))].join(', ')}
 
 **Fixes applied:**
-${this.fixes.map(f => `- ${f.description}`).join('\n')}
+${this.fixes.map((f) => `- ${f.description}`).join('\n')}
 
 **Outcome:**
 - Health score: ${this.healthBefore} → ${this.healthAfter || this.healthBefore}
@@ -983,19 +990,19 @@ Examples:
   if (options.ci && !result.success) {
     // Check if failure was due to rollback
     if (result.reason === 'health_degraded') {
-      process.exit(EXIT_ROLLBACK);  // Exit code 2
+      process.exit(EXIT_ROLLBACK); // Exit code 2
     } else {
-      process.exit(EXIT_ERROR);     // Exit code 1
+      process.exit(EXIT_ERROR); // Exit code 1
     }
   }
 
-  process.exit(EXIT_SUCCESS);  // Exit code 0
+  process.exit(EXIT_SUCCESS); // Exit code 0
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
-    process.exit(EXIT_ERROR);  // Exit code 1 for fatal errors
+    process.exit(EXIT_ERROR); // Exit code 1 for fatal errors
   });
 }
 

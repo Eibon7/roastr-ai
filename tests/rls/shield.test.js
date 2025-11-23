@@ -1,6 +1,6 @@
 /**
  * Shield RLS Tests
- * 
+ *
  * Validates that Row Level Security policies correctly enforce
  * Shield moderation actions isolation.
  */
@@ -18,7 +18,7 @@ beforeAll(async () => {
   const result = await getConnections(config, [
     createMigrationsSeed() // Load all migrations automatically
   ]);
-  
+
   db = result.db;
   pg = result.pg;
   teardown = result.teardown;
@@ -63,48 +63,66 @@ describe('Shield RLS', () => {
     userBId = userBResult.rows[0].id;
 
     // Create organizations
-    const orgAResult = await pg.query(`
+    const orgAResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id)
       VALUES (gen_random_uuid(), 'Org A', 'org-a', $1, 'pro')
       RETURNING id;
-    `, [userAId]);
+    `,
+      [userAId]
+    );
     orgAId = orgAResult.rows[0].id;
 
-    const orgBResult = await pg.query(`
+    const orgBResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id)
       VALUES (gen_random_uuid(), 'Org B', 'org-b', $1, 'pro')
       RETURNING id;
-    `, [userBId]);
+    `,
+      [userBId]
+    );
     orgBId = orgBResult.rows[0].id;
 
     // Create comments
-    const commentAResult = await pg.query(`
+    const commentAResult = await pg.query(
+      `
       INSERT INTO comments (id, organization_id, platform, platform_comment_id, original_text)
       VALUES (gen_random_uuid(), $1, 'twitter', 'comment-a-123', 'Toxic comment A')
       RETURNING id;
-    `, [orgAId]);
+    `,
+      [orgAId]
+    );
     commentAId = commentAResult.rows[0].id;
 
-    const commentBResult = await pg.query(`
+    const commentBResult = await pg.query(
+      `
       INSERT INTO comments (id, organization_id, platform, platform_comment_id, original_text)
       VALUES (gen_random_uuid(), $1, 'twitter', 'comment-b-456', 'Toxic comment B')
       RETURNING id;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
     commentBId = commentBResult.rows[0].id;
 
     // Create shield actions
-    const shieldAResult = await pg.query(`
+    const shieldAResult = await pg.query(
+      `
       INSERT INTO shield_actions (id, organization_id, action_type, content_hash, platform, reason)
       VALUES (gen_random_uuid(), $1, 'block', 'hash-a', 'twitter', 'toxic')
       RETURNING id;
-    `, [orgAId]);
+    `,
+      [orgAId]
+    );
     shieldActionAId = shieldAResult.rows[0].id;
 
-    const shieldBResult = await pg.query(`
+    const shieldBResult = await pg.query(
+      `
       INSERT INTO shield_actions (id, organization_id, action_type, content_hash, platform, reason)
       VALUES (gen_random_uuid(), $1, 'block', 'hash-b', 'twitter', 'toxic')
       RETURNING id;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
     shieldActionBId = shieldBResult.rows[0].id;
   });
 
@@ -117,17 +135,23 @@ describe('Shield RLS', () => {
     });
 
     // User A should see their own shield actions
-    const actionsA = await db.query(`
+    const actionsA = await db.query(
+      `
       SELECT id FROM shield_actions WHERE organization_id = $1;
-    `, [orgAId]);
+    `,
+      [orgAId]
+    );
 
     expect(actionsA.rows.length).toBe(1);
     expect(actionsA.rows[0].id).toBe(shieldActionAId);
 
     // User A should NOT see User B's shield actions
-    const actionsB = await db.query(`
+    const actionsB = await db.query(
+      `
       SELECT id FROM shield_actions WHERE organization_id = $1;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
 
     expect(actionsB.rows.length).toBe(0);
   });
@@ -141,17 +165,23 @@ describe('Shield RLS', () => {
     });
 
     // User A should see their own comments
-    const commentsA = await db.query(`
+    const commentsA = await db.query(
+      `
       SELECT id FROM comments WHERE organization_id = $1;
-    `, [orgAId]);
+    `,
+      [orgAId]
+    );
 
     expect(commentsA.rows.length).toBe(1);
     expect(commentsA.rows[0].id).toBe(commentAId);
 
     // User A should NOT see User B's comments
-    const commentsB = await db.query(`
+    const commentsB = await db.query(
+      `
       SELECT id FROM comments WHERE organization_id = $1;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
 
     expect(commentsB.rows.length).toBe(0);
   });
@@ -165,21 +195,26 @@ describe('Shield RLS', () => {
     });
 
     // Mark comment as filtered
-    await db.query(`
+    await db.query(
+      `
       UPDATE comments
       SET status = 'processed', metadata = jsonb_build_object('shield_filtered', true)
       WHERE id = $1;
-    `, [commentAId]);
+    `,
+      [commentAId]
+    );
 
     // Verify comment is marked correctly
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT status, metadata->>'shield_filtered' as shield_filtered
       FROM comments
       WHERE id = $1;
-    `, [commentAId]);
+    `,
+      [commentAId]
+    );
 
     expect(result.rows[0].status).toBe('processed');
     expect(result.rows[0].shield_filtered).toBe('true');
   });
 });
-

@@ -15,6 +15,7 @@
 Los tests de integración de RLS (Row Level Security) están desactualizados y NO cubren todas las tablas que actualmente tienen RLS habilitado en el schema de la base de datos.
 
 **Cobertura actual:**
+
 - `multi-tenant-rls-issue-412.test.js`: Solo testea `posts`, `comments`, `roasts` (3 tablas)
 - `database/security.test.js`: Solo testea `roasts_metadata`, `roastr_style_preferences`, `analysis_usage` (3 tablas adicionales)
 
@@ -23,6 +24,7 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 ### Tablas con RLS NO Testeadas
 
 #### Categoría 1: Usage & Billing (CRÍTICO - afecta facturación)
+
 1. ✅ `usage_counters` - Credits v2
 2. ✅ `credit_consumption_log` - Audit de créditos
 3. ✅ `usage_resets` - Tier validation
@@ -35,6 +37,7 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 10. ✅ `account_entitlements` - Entitlements system
 
 #### Categoría 2: Core Tables (ALTO - funcionalidad crítica)
+
 11. ✅ `integration_configs` - Platform credentials (SECURITY)
 12. ✅ `responses` - Generated responses
 13. ✅ `user_behaviors` - Shield tracking
@@ -43,12 +46,14 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 16. ✅ `organization_members` - Membership
 
 #### Categoría 3: User Data (MEDIO - privacidad usuario)
+
 17. ✅ `user_style_profile` - User preferences
 18. ✅ `user_subscriptions` - Subscription data
 19. ✅ `user_activities` - Activity log
 20. ✅ `account_deletion_requests` - GDPR
 
 #### Categoría 4: Admin & Features (BAJO - funcionalidad avanzada)
+
 21. ✅ `feature_flags` - Feature management
 22. ✅ `admin_audit_logs` - Admin actions
 23. ✅ `audit_logs` - Security audit
@@ -66,6 +71,7 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 **Objetivo:** Extender tests actuales para incluir todas las tablas críticas de multi-tenant
 
 **Tablas a añadir:**
+
 - [ ] `organizations` - Verificar aislamiento por tenant
 - [ ] `organization_members` - Verificar membresía
 - [ ] `integration_configs` - SECURITY: Verificar aislamiento de credentials
@@ -76,6 +82,7 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 - [ ] `user_activities` - Verificar activity log
 
 **Tests a implementar por tabla:**
+
 - Listados restringidos por organization_id
 - Accesos directos por ID verifican organization_id
 - Accesos cruzados devuelven 404/forbidden (RLS blocks)
@@ -85,6 +92,7 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 **Objetivo:** Extender tests de seguridad para cubrir nuevas tablas de tiers y usage
 
 **Tablas a añadir:**
+
 - [ ] `usage_counters` - RLS by user_id
 - [ ] `credit_consumption_log` - RLS by user_id
 - [ ] `usage_resets` - RLS by user_id
@@ -94,6 +102,7 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 - [ ] `account_deletion_requests` - RLS by user_id
 
 **Tests a implementar:**
+
 - RLS WITH CHECK policies (prevent cross-tenant insert/update)
 - User isolation (users can only access their own data)
 - Service role bypass (verify supabaseServiceClient works)
@@ -105,11 +114,13 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 **Archivo:** `tests/integration/usage-rls.test.js` (nuevo)
 
 **Tablas:**
+
 - [ ] `usage_tracking` - org_isolation policy
 - [ ] `usage_limits` - org_isolation policy
 - [ ] `usage_alerts` - org_isolation policy
 
 **Tests a implementar:**
+
 - Organization members can access org data
 - Non-members cannot access org data
 - Owner can access all org data
@@ -123,6 +134,7 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 **Archivo:** `tests/integration/admin-rls.test.js` (nuevo)
 
 **Tablas:**
+
 - [ ] `feature_flags` - RLS policies
 - [ ] `admin_audit_logs` - RLS policies
 - [ ] `audit_logs` - RLS policies
@@ -136,6 +148,7 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 **Archivo:** `tests/integration/shield-rls.test.js` (nuevo)
 
 **Tablas:**
+
 - [ ] `shield_actions` - org_isolation policy
 - [ ] Verificar que solo org puede ver sus acciones Shield
 - [ ] Verificar que otras orgs no pueden ver acciones de otros
@@ -166,12 +179,10 @@ Los tests de integración de RLS (Row Level Security) están desactualizados y N
 // Template para cada tabla
 describe('AC1: Listados restringidos - <table_name>', () => {
   test('GET /<table> returns only Tenant A data', async () => {
-    const { data, error } = await testClient
-      .from('<table_name>')
-      .select('*');
+    const { data, error } = await testClient.from('<table_name>').select('*');
 
     expect(error).toBeNull();
-    expect(data.every(r => r.organization_id === tenantA.id)).toBe(true);
+    expect(data.every((r) => r.organization_id === tenantA.id)).toBe(true);
   });
 });
 
@@ -202,12 +213,10 @@ describe('AC3: Accesos cruzados - <table_name>', () => {
 describe('RLS WITH CHECK Policies - <table_name>', () => {
   test('should prevent cross-user data insertion', async () => {
     // Try to insert data for another user
-    const { error } = await supabaseServiceClient
-      .from('<table_name>')
-      .insert({
-        user_id: anotherUserId, // Different user
-        // ... other fields
-      });
+    const { error } = await supabaseServiceClient.from('<table_name>').insert({
+      user_id: anotherUserId // Different user
+      // ... other fields
+    });
 
     expect(error).toBeTruthy();
     expect(error.message).toContain('policy');
@@ -215,12 +224,10 @@ describe('RLS WITH CHECK Policies - <table_name>', () => {
 
   test('should allow valid same-user operations', async () => {
     // Insert should succeed for same user
-    const { error } = await supabaseServiceClient
-      .from('<table_name>')
-      .insert({
-        user_id: testUserId,
-        // ... other fields
-      });
+    const { error } = await supabaseServiceClient.from('<table_name>').insert({
+      user_id: testUserId
+      // ... other fields
+    });
 
     expect(error).toBeNull();
   });
@@ -317,14 +324,17 @@ docs/test-evidence/issue-583/
 ## Risks & Mitigations
 
 ### Risk 1: Test Data Cleanup
+
 **Riesgo:** Tests failing debido a data residual de tests anteriores
 **Mitigación:** Usar unique IDs por test, cleanup en afterAll hooks
 
 ### Risk 2: RLS Policies Incorrectas
+
 **Riesgo:** Descubrir que algunas tablas NO tienen RLS o tienen políticas incorrectas
 **Mitigación:** Documentar findings, crear issues separadas para fixes de schema
 
 ### Risk 3: Service Role vs User Role
+
 **Riesgo:** Confundir cuando usar supabaseServiceClient vs supabaseClient
 **Mitigación:** Documentar claramente en cada test qué client usar y por qué
 

@@ -23,15 +23,9 @@ function verifyTwitterSignature(payload, signature, secret) {
   }
 
   try {
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(payload)
-      .digest('base64');
-    
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
+    const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('base64');
+
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
   } catch (error) {
     logger.error('Error verifying Twitter webhook signature:', error);
     return false;
@@ -40,7 +34,7 @@ function verifyTwitterSignature(payload, signature, secret) {
 
 /**
  * Verify YouTube webhook signature
- * @param {string} payload - Request body as string  
+ * @param {string} payload - Request body as string
  * @param {string} signature - X-Hub-Signature-256 header
  * @param {string} secret - Webhook secret
  * @returns {boolean} Signature validity
@@ -53,15 +47,9 @@ function verifyYouTubeSignature(payload, signature, secret) {
   try {
     // YouTube uses sha256=<signature> format
     const signatureHash = signature.replace('sha256=', '');
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(payload)
-      .digest('hex');
-    
-    return crypto.timingSafeEqual(
-      Buffer.from(signatureHash),
-      Buffer.from(expectedSignature)
-    );
+    const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+    return crypto.timingSafeEqual(Buffer.from(signatureHash), Buffer.from(expectedSignature));
   } catch (error) {
     logger.error('Error verifying YouTube webhook signature:', error);
     return false;
@@ -96,7 +84,6 @@ async function processTwitterWebhook(event, userId) {
         logger.warn('Unknown Twitter webhook event type:', event.event_type);
         return { success: true, message: 'Event type ignored' };
     }
-
   } catch (error) {
     logger.error('Error processing Twitter webhook:', error);
     throw error;
@@ -224,7 +211,6 @@ async function processYouTubeWebhook(event) {
       logger.warn('Unknown YouTube webhook event format');
       return { success: true, message: 'Event format not recognized' };
     }
-
   } catch (error) {
     logger.error('Error processing YouTube webhook:', error);
     throw error;
@@ -318,16 +304,17 @@ router.post('/twitter', express.raw({ type: 'application/json' }), async (req, r
         .createHmac('sha256', secret)
         .update(webhookData.crc_token)
         .digest('base64');
-      
+
       return res.json({
         response_token: `sha256=${responseToken}`
       });
     }
 
     // Extract user ID from webhook (varies by event type)
-    const userId = webhookData.for_user_id || 
-                  webhookData.user_id || 
-                  webhookData.tweet_create_events?.[0]?.user?.id;
+    const userId =
+      webhookData.for_user_id ||
+      webhookData.user_id ||
+      webhookData.tweet_create_events?.[0]?.user?.id;
 
     if (!userId) {
       logger.warn('No user ID found in Twitter webhook');
@@ -340,15 +327,18 @@ router.post('/twitter', express.raw({ type: 'application/json' }), async (req, r
 
     // Process webhook events
     const results = [];
-    
+
     // Handle multiple event types that might be in the same webhook
     for (const [eventType, events] of Object.entries(webhookData)) {
       if (Array.isArray(events) && eventType.endsWith('_events')) {
         for (const event of events) {
-          const result = await processTwitterWebhook({
-            event_type: eventType.replace('_events', ''),
-            data: event
-          }, userId);
+          const result = await processTwitterWebhook(
+            {
+              event_type: eventType.replace('_events', ''),
+              data: event
+            },
+            userId
+          );
           results.push(result);
         }
       }
@@ -357,7 +347,7 @@ router.post('/twitter', express.raw({ type: 'application/json' }), async (req, r
     logger.info('Twitter webhook processed successfully', {
       userId,
       eventsProcessed: results.length,
-      results: results.map(r => r.action)
+      results: results.map((r) => r.action)
     });
 
     res.json({
@@ -367,7 +357,6 @@ router.post('/twitter', express.raw({ type: 'application/json' }), async (req, r
         results
       }
     });
-
   } catch (error) {
     logger.error('Error handling Twitter webhook:', error);
     res.status(500).json({
@@ -452,7 +441,6 @@ router.post('/youtube', express.raw({ type: 'application/xml' }), async (req, re
       success: true,
       data: result
     });
-
   } catch (error) {
     logger.error('Error handling YouTube webhook:', error);
     res.status(500).json({
@@ -487,7 +475,6 @@ router.get('/status', async (req, res) => {
       success: true,
       data: status
     });
-
   } catch (error) {
     logger.error('Error getting webhook status:', error);
     res.status(500).json({

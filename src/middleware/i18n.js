@@ -3,7 +3,7 @@ const { logger } = require('../utils/logger');
 
 /**
  * Middleware to detect and set user language from Accept-Language header
- * 
+ *
  * Supports:
  * - Accept-Language header parsing
  * - Quality value (q) parsing
@@ -20,7 +20,7 @@ function detectLanguage(req, res, next) {
 
     // Parse Accept-Language header
     const acceptLanguage = req.headers['accept-language'];
-    
+
     if (!acceptLanguage) {
       req.language = i18n.getDefaultLanguage();
       return next();
@@ -28,26 +28,26 @@ function detectLanguage(req, res, next) {
 
     // Parse the header value
     const languages = parseAcceptLanguage(acceptLanguage);
-    
+
     // Find the first supported language
     for (const lang of languages) {
       const langCode = lang.code.toLowerCase().split('-')[0]; // Handle en-US -> en
-      
+
       // Validate language code format (simple regex for safety)
       if (!isValidLanguageCode(langCode)) {
         logger.debug('Invalid language code format', { langCode });
         continue;
       }
-      
+
       if (i18n.isLanguageSupported(langCode)) {
         req.language = langCode;
-        
+
         logger.debug('Language detected from Accept-Language header', {
           acceptLanguage,
           detectedLanguage: langCode,
           userId: req.user?.id
         });
-        
+
         return next();
       }
     }
@@ -55,13 +55,12 @@ function detectLanguage(req, res, next) {
     // No supported language found, use default
     req.language = i18n.getDefaultLanguage();
     next();
-
   } catch (error) {
-    logger.error('Error detecting language', { 
+    logger.error('Error detecting language', {
       error: error.message,
       acceptLanguage: req.headers['accept-language']
     });
-    
+
     // On error, use default language
     req.language = i18n.getDefaultLanguage();
     next();
@@ -70,7 +69,7 @@ function detectLanguage(req, res, next) {
 
 /**
  * Parse Accept-Language header
- * 
+ *
  * @param {string} acceptLanguage - Accept-Language header value
  * @returns {Array} Array of language objects sorted by quality
  */
@@ -82,10 +81,10 @@ function parseAcceptLanguage(acceptLanguage) {
   // Split by comma and parse each language
   const languages = acceptLanguage
     .split(',')
-    .map(lang => {
+    .map((lang) => {
       const parts = lang.trim().split(';');
       const code = parts[0];
-      
+
       // Extract quality value (default to 1)
       let quality = 1;
       if (parts[1]) {
@@ -94,10 +93,10 @@ function parseAcceptLanguage(acceptLanguage) {
           quality = parseFloat(qMatch[1]) || 0;
         }
       }
-      
+
       return { code, quality };
     })
-    .filter(lang => lang.code && lang.quality > 0)
+    .filter((lang) => lang.code && lang.quality > 0)
     .sort((a, b) => b.quality - a.quality);
 
   return languages;
@@ -105,7 +104,7 @@ function parseAcceptLanguage(acceptLanguage) {
 
 /**
  * Validate language code format
- * 
+ *
  * @param {string} langCode - Language code to validate
  * @returns {boolean} True if valid language code format
  */
@@ -116,7 +115,7 @@ function isValidLanguageCode(langCode) {
 
 /**
  * Express helper to get translated text in views
- * 
+ *
  * Usage in templates:
  * <%= t('auth.login.title') %>
  * <%= t('plan.validation.roasts_exceed_limit', { current: 100, limit: 50 }) %>
@@ -144,7 +143,7 @@ function getTranslations(req, res) {
 
   try {
     let translations;
-    
+
     if (domain && i18n.hasDomain(domain, language)) {
       // Return specific domain translations
       translations = i18n.getDomainKeys(domain, language);
@@ -160,7 +159,6 @@ function getTranslations(req, res) {
       translations,
       availableDomains: i18n.getAvailableDomains(language)
     });
-
   } catch (error) {
     logger.error('Error getting translations', { error: error.message });
     res.status(500).json({
@@ -217,16 +215,16 @@ async function setLanguage(req, res) {
     if (req.user) {
       try {
         const { supabaseServiceClient } = require('../config/supabase');
-        
+
         // Update user's language preference
         const { error: updateError } = await supabaseServiceClient
           .from('users')
-          .update({ 
+          .update({
             language: language,
             updated_at: new Date().toISOString()
           })
           .eq('id', req.user.id);
-        
+
         if (updateError) {
           logger.warn('Failed to save user language preference', {
             userId: req.user.id,
@@ -253,7 +251,6 @@ async function setLanguage(req, res) {
       language,
       message: i18n.t('ui.common.success', language)
     });
-
   } catch (error) {
     logger.error('Error setting language', { error: error.message });
     res.status(500).json({

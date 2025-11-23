@@ -1,6 +1,6 @@
 /**
  * Environment Setup for CLI Integration Tests
- * 
+ *
  * Sets up environment variables and configuration for testing
  */
 

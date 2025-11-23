@@ -40,77 +40,78 @@ let SENTRY_ENABLED = false;
 
 // Try to load Sentry, but don't fail if it's not installed
 try {
-    // Only attempt to load if explicitly enabled
-    if (process.env.SENTRY_ENABLED === 'true' && process.env.SENTRY_DSN) {
-        try {
-            // Separate try-catch for require() - handles package not installed
-            Sentry = require('@sentry/node');
-        } catch (requireError) {
-            // Package not installed - expected when Sentry is optional
-            logger.warn('Sentry package not installed - continuing without Sentry', {
-                error: requireError.message,
-                hint: 'Install with: npm install @sentry/node',
-                context: 'This is expected if @sentry/node is not in your dependencies'
-            });
-            Sentry = null;
-            SENTRY_ENABLED = false;
-            // Early exit - no point continuing if package unavailable
-            throw requireError;
-        }
-
-        // Separate try-catch for Sentry.init() - handles initialization failures
-        try {
-            Sentry.init({
-                dsn: process.env.SENTRY_DSN,
-                environment: process.env.NODE_ENV || 'development',
-                // Performance monitoring
-                tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
-                // Only in production or explicitly enabled
-                enabled: process.env.NODE_ENV === 'production' || process.env.SENTRY_FORCE_ENABLE === 'true',
-                // Integration-specific options
-                integrations: [
-                    // Add custom integrations here if needed
-                ],
-                // Before send hook for filtering/modifying events
-                beforeSend(event, hint) {
-                    // Don't send events in test environment
-                    if (process.env.NODE_ENV === 'test') {
-                        return null;
-                    }
-                    return event;
-                }
-            });
-
-            SENTRY_ENABLED = true;
-            logger.info('Sentry initialized for tier validation monitoring', {
-                environment: process.env.NODE_ENV,
-                tracesSampleRate: Sentry.getCurrentHub().getClient()?.getOptions().tracesSampleRate
-            });
-        } catch (initError) {
-            // Initialization failed (invalid DSN, network issues, etc.)
-            logger.error('Sentry initialization failed - continuing without Sentry', {
-                error: initError.message,
-                dsn: process.env.SENTRY_DSN ? 'configured (hidden)' : 'not configured',
-                hint: 'Check SENTRY_DSN validity and network connectivity',
-                stack: initError.stack
-            });
-            Sentry = null;
-            SENTRY_ENABLED = false;
-        }
-    } else {
-        logger.debug('Sentry disabled or not configured', {
-            enabled: process.env.SENTRY_ENABLED,
-            hasDSN: !!process.env.SENTRY_DSN
-        });
+  // Only attempt to load if explicitly enabled
+  if (process.env.SENTRY_ENABLED === 'true' && process.env.SENTRY_DSN) {
+    try {
+      // Separate try-catch for require() - handles package not installed
+      Sentry = require('@sentry/node');
+    } catch (requireError) {
+      // Package not installed - expected when Sentry is optional
+      logger.warn('Sentry package not installed - continuing without Sentry', {
+        error: requireError.message,
+        hint: 'Install with: npm install @sentry/node',
+        context: 'This is expected if @sentry/node is not in your dependencies'
+      });
+      Sentry = null;
+      SENTRY_ENABLED = false;
+      // Early exit - no point continuing if package unavailable
+      throw requireError;
     }
+
+    // Separate try-catch for Sentry.init() - handles initialization failures
+    try {
+      Sentry.init({
+        dsn: process.env.SENTRY_DSN,
+        environment: process.env.NODE_ENV || 'development',
+        // Performance monitoring
+        tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+        // Only in production or explicitly enabled
+        enabled:
+          process.env.NODE_ENV === 'production' || process.env.SENTRY_FORCE_ENABLE === 'true',
+        // Integration-specific options
+        integrations: [
+          // Add custom integrations here if needed
+        ],
+        // Before send hook for filtering/modifying events
+        beforeSend(event, hint) {
+          // Don't send events in test environment
+          if (process.env.NODE_ENV === 'test') {
+            return null;
+          }
+          return event;
+        }
+      });
+
+      SENTRY_ENABLED = true;
+      logger.info('Sentry initialized for tier validation monitoring', {
+        environment: process.env.NODE_ENV,
+        tracesSampleRate: Sentry.getCurrentHub().getClient()?.getOptions().tracesSampleRate
+      });
+    } catch (initError) {
+      // Initialization failed (invalid DSN, network issues, etc.)
+      logger.error('Sentry initialization failed - continuing without Sentry', {
+        error: initError.message,
+        dsn: process.env.SENTRY_DSN ? 'configured (hidden)' : 'not configured',
+        hint: 'Check SENTRY_DSN validity and network connectivity',
+        stack: initError.stack
+      });
+      Sentry = null;
+      SENTRY_ENABLED = false;
+    }
+  } else {
+    logger.debug('Sentry disabled or not configured', {
+      enabled: process.env.SENTRY_ENABLED,
+      hasDSN: !!process.env.SENTRY_DSN
+    });
+  }
 } catch (error) {
-    // Outer catch for any unexpected errors
-    // Most errors already handled above, but kept for safety
-    if (!SENTRY_ENABLED) {
-        // Already logged in inner catches
-        Sentry = null;
-        SENTRY_ENABLED = false;
-    }
+  // Outer catch for any unexpected errors
+  // Most errors already handled above, but kept for safety
+  if (!SENTRY_ENABLED) {
+    // Already logged in inner catches
+    Sentry = null;
+    SENTRY_ENABLED = false;
+  }
 }
 
 /**
@@ -118,22 +119,22 @@ try {
  * @param {Object} breadcrumb - Breadcrumb data
  */
 function addBreadcrumb(breadcrumb) {
-    if (!SENTRY_ENABLED || !Sentry) return;
+  if (!SENTRY_ENABLED || !Sentry) return;
 
-    try {
-        Sentry.addBreadcrumb({
-            category: breadcrumb.category || 'default',
-            message: breadcrumb.message || '',
-            level: breadcrumb.level || 'info',
-            data: breadcrumb.data || {},
-            timestamp: Date.now() / 1000
-        });
-    } catch (error) {
-        logger.warn('Failed to add Sentry breadcrumb', {
-            error: error.message,
-            breadcrumb
-        });
-    }
+  try {
+    Sentry.addBreadcrumb({
+      category: breadcrumb.category || 'default',
+      message: breadcrumb.message || '',
+      level: breadcrumb.level || 'info',
+      data: breadcrumb.data || {},
+      timestamp: Date.now() / 1000
+    });
+  } catch (error) {
+    logger.warn('Failed to add Sentry breadcrumb', {
+      error: error.message,
+      breadcrumb
+    });
+  }
 }
 
 /**
@@ -142,21 +143,21 @@ function addBreadcrumb(breadcrumb) {
  * @param {Object} context - Additional context
  */
 function captureException(error, context = {}) {
-    if (!SENTRY_ENABLED || !Sentry) return;
+  if (!SENTRY_ENABLED || !Sentry) return;
 
-    try {
-        Sentry.captureException(error, {
-            extra: context.extra || {},
-            tags: context.tags || {},
-            user: context.user || {},
-            level: context.level || 'error'
-        });
-    } catch (sentryError) {
-        logger.warn('Failed to capture exception in Sentry', {
-            error: sentryError.message,
-            originalError: error.message
-        });
-    }
+  try {
+    Sentry.captureException(error, {
+      extra: context.extra || {},
+      tags: context.tags || {},
+      user: context.user || {},
+      level: context.level || 'error'
+    });
+  } catch (sentryError) {
+    logger.warn('Failed to capture exception in Sentry', {
+      error: sentryError.message,
+      originalError: error.message
+    });
+  }
 }
 
 /**
@@ -165,22 +166,22 @@ function captureException(error, context = {}) {
  * @returns {Promise<boolean>}
  */
 async function flush(timeout = 2000) {
-    if (!SENTRY_ENABLED || !Sentry) {
-        return Promise.resolve(true);
-    }
+  if (!SENTRY_ENABLED || !Sentry) {
+    return Promise.resolve(true);
+  }
 
-    try {
-        return await Sentry.flush(timeout);
-    } catch (error) {
-        logger.warn('Failed to flush Sentry events', { error: error.message });
-        return false;
-    }
+  try {
+    return await Sentry.flush(timeout);
+  } catch (error) {
+    logger.warn('Failed to flush Sentry events', { error: error.message });
+    return false;
+  }
 }
 
 module.exports = {
-    Sentry,
-    SENTRY_ENABLED,
-    addBreadcrumb,
-    captureException,
-    flush
+  Sentry,
+  SENTRY_ENABLED,
+  addBreadcrumb,
+  captureException,
+  flush
 };

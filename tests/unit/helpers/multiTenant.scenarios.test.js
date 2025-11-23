@@ -63,4 +63,3 @@ describe('Multi-tenant test utilities (Issue #281)', () => {
     expect(scenario.organization.entitlements.monthlyResponsesLimit).toBe(42);
   });
 });
-

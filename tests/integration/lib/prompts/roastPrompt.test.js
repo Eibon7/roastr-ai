@@ -1,9 +1,9 @@
 /**
  * Integration Tests: RoastPrompt Dynamic Tone Integration
- * 
+ *
  * Tests that roastPrompt.js correctly integrates with ToneConfigService
  * to dynamically load tones in Block A.
- * 
+ *
  * Issue #876: Dynamic Roast Tone Configuration System
  */
 
@@ -24,7 +24,7 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
     // Mock tone service
     mockToneService = {
       getActiveTones: jest.fn(),
-      invalidateCache: jest.fn(),
+      invalidateCache: jest.fn()
     };
     getToneConfigService.mockReturnValue(mockToneService);
 
@@ -42,7 +42,7 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
           personality: 'Educado, irónico, elegante',
           resources: ['Ironía sutil', 'Double entendre'],
           restrictions: ['NO insultos directos', 'NO vulgaridad'],
-          examples: [{ input: 'Eres tonto', output: 'Oh, qué observación tan... original.' }],
+          examples: [{ input: 'Eres tonto', output: 'Oh, qué observación tan... original.' }]
         },
         {
           name: 'balanceado',
@@ -52,8 +52,13 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
           personality: 'Ingenioso, equilibrado',
           resources: ['Juegos de palabras', 'Referencias pop'],
           restrictions: ['NO vulgaridad excesiva'],
-          examples: [{ input: 'Comentario absurdo', output: 'Y el premio al comentario más obvio es para...' }],
-        },
+          examples: [
+            {
+              input: 'Comentario absurdo',
+              output: 'Y el premio al comentario más obvio es para...'
+            }
+          ]
+        }
       ];
 
       mockToneService.getActiveTones.mockResolvedValue(mockTones);
@@ -83,8 +88,8 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
           personality: 'Polite, ironic',
           resources: ['Subtle irony'],
           restrictions: ['NO direct insults'],
-          examples: [{ input: 'You are dumb', output: 'What an... original observation.' }],
-        },
+          examples: [{ input: 'You are dumb', output: 'What an... original observation.' }]
+        }
       ];
 
       mockToneService.getActiveTones.mockResolvedValue(mockTonesEN);
@@ -127,8 +132,8 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
           personality: 'Picante, directo',
           resources: ['Sarcasmo crudo'],
           restrictions: ['NO tabúes absolutos'],
-          examples: [{ input: 'Comentario troll', output: 'Vaya, otro experto de internet...' }],
-        },
+          examples: [{ input: 'Comentario troll', output: 'Vaya, otro experto de internet...' }]
+        }
       ];
 
       mockToneService.getActiveTones.mockResolvedValue(mockTones);
@@ -137,7 +142,7 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
         comment: 'Test comment',
         platform: 'twitter',
         tone: 'canalla',
-        language: 'es',
+        language: 'es'
       });
 
       expect(mockToneService.getActiveTones).toHaveBeenCalledWith('es');
@@ -156,15 +161,15 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
           personality: 'Educado',
           resources: ['Ironía'],
           restrictions: ['NO insultos'],
-          examples: [{ input: 'input', output: 'output' }],
-        },
+          examples: [{ input: 'input', output: 'output' }]
+        }
       ];
 
       mockToneService.getActiveTones.mockResolvedValue(mockTones);
 
       await promptBuilder.buildCompletePrompt({
         comment: 'Test',
-        platform: 'twitter',
+        platform: 'twitter'
       });
 
       expect(mockToneService.getActiveTones).toHaveBeenCalledWith('es');
@@ -175,7 +180,7 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
 
       const completePrompt = await promptBuilder.buildCompletePrompt({
         comment: 'Test comment',
-        platform: 'twitter',
+        platform: 'twitter'
       });
 
       expect(completePrompt).toContain('Tu tarea es generar una respuesta sarcástica');
@@ -194,8 +199,8 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
           personality: 'Educado',
           resources: ['Ironía'],
           restrictions: ['NO insultos'],
-          examples: [{ input: 'input', output: 'output' }],
-        },
+          examples: [{ input: 'input', output: 'output' }]
+        }
       ];
 
       mockToneService.getActiveTones.mockResolvedValue(mockTones);
@@ -207,7 +212,7 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
       // Second call (should use cache if implemented in ToneConfigService)
       await promptBuilder.buildBlockA('es');
       expect(mockToneService.getActiveTones).toHaveBeenCalledTimes(2);
-      
+
       // Note: Cache behavior is tested in toneConfigService.test.js
       // Here we just verify the service is called correctly
     });
@@ -224,8 +229,8 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
           personality: 'Educado',
           resources: ['Ironía'],
           restrictions: ['NO insultos'],
-          examples: [{ input: 'input', output: 'output' }],
-        },
+          examples: [{ input: 'input', output: 'output' }]
+        }
       ];
 
       mockToneService.getActiveTones.mockResolvedValue(mockTones);
@@ -234,7 +239,7 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
         comment: 'Test comment',
         platform: 'twitter',
         tone: 'sarcastic',
-        language: 'es',
+        language: 'es'
       });
 
       // Should still contain all key sections
@@ -245,4 +250,3 @@ describe('RoastPrompt Dynamic Tone Integration Tests', () => {
     });
   });
 });
-

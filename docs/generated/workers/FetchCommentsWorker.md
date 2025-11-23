@@ -17,4 +17,3 @@ Responsible for fetching comments from various social media platforms including 
 ### normalizeCommentData
 
 ### error handling
-

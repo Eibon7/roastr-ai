@@ -1,3 +1,6 @@
+const prettierConfig = require('eslint-plugin-prettier');
+const prettierRecommended = require('eslint-config-prettier');
+
 module.exports = [
   {
     languageOptions: {
@@ -16,11 +19,20 @@ module.exports = [
         Buffer: true
       }
     },
+    plugins: {
+      prettier: prettierConfig
+    },
     rules: {
       // Disable strict rules that might break CI
       'no-unused-vars': 'warn',
       'no-console': 'off',
-      'no-undef': 'off'
+      'no-undef': 'off',
+      
+      // Prettier integration
+      'prettier/prettier': 'error',
+      
+      // Disable rules that conflict with Prettier
+      ...prettierRecommended.rules
     },
     ignores: [
       'frontend/',

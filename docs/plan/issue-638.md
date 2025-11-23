@@ -29,11 +29,13 @@ app.use('/api/auth', oauthRoutes);
 ```
 
 **Evidence:**
+
 - oauth.js generates: `/api/auth/${platform}/callback` (line 204, 272)
 - Tests expect: `/api/auth/:platform/callback` (line 172)
 - Routes mounted at: `/api/integrations` → 404 errors
 
 **Affected Tests (15):**
+
 - OAuth Callback Flow (5 tests): All get 404
 - Complete OAuth Flow (5 platforms): All fail at callback with 404
 - Token Management (4 tests): refresh/disconnect get 404
@@ -46,6 +48,7 @@ Mock reset endpoint allows operation even when mock mode disabled
 
 **File:** `src/routes/oauth.js:592`
 **Current:**
+
 ```javascript
 if (!flags.isEnabled('ENABLE_MOCK_MODE') && process.env.NODE_ENV !== 'test') {
   return res.status(403).json({ ... });
@@ -61,6 +64,7 @@ if (!flags.isEnabled('ENABLE_MOCK_MODE') && process.env.NODE_ENV !== 'test') {
 Wrong HTTP status codes for "connection not found" errors
 
 **Files:**
+
 - `src/routes/oauth.js:308` (refresh endpoint)
 - `src/routes/oauth.js:368` (disconnect endpoint)
 
@@ -87,49 +91,60 @@ Response structure mismatch when platform already connected
 ## Fix Strategy
 
 ### Fix 1: OAuth Router Path ✅ HIGH IMPACT
+
 ```javascript
 // src/index.js:239
-- app.use('/api/integrations', oauthRoutes);
-+ app.use('/api/auth', oauthRoutes);
+-app.use('/api/integrations', oauthRoutes);
++app.use('/api/auth', oauthRoutes);
 ```
+
 **Impact:** Fixes 15/20 failing tests
 
 ### Fix 2: Mock Mode Toggle
+
 ```javascript
 // src/routes/oauth.js:592
 - if (!flags.isEnabled('ENABLE_MOCK_MODE') && process.env.NODE_ENV !== 'test') {
 + if (!flags.shouldUseMockOAuth()) {
 ```
+
 **Impact:** Fixes 1/20 failing tests
 
 ### Fix 3: Error Status Codes
+
 No changes needed - tests have wrong expectations
 **Impact:** Update test expectations (not production code)
 
 ### Fix 4: User Info Population
+
 ```javascript
 // src/services/oauthProvider.js (Mock providers)
 // Add user_info to token data response
 ```
+
 **Impact:** Fixes 1/20 failing tests
 
 ### Fix 5: Already Connected Check
+
 No changes needed - response structure is correct
 **Impact:** Update test expectations
 
 ## Files Affected
 
 **Production Code:**
+
 - `src/index.js` - OAuth router path fix
 - `src/routes/oauth.js` - Mock mode toggle fix
 - `src/services/oauthProvider.js` - User info mock data
 
 **Tests:**
+
 - `tests/integration/oauth-mock.test.js` - Update expectations where needed
 
 ## Validation Approach
 
 1. **Run tests after each fix:**
+
    ```bash
    npm test -- tests/integration/oauth-mock.test.js
    ```
@@ -150,6 +165,7 @@ Failure Rate: 0% (0/30 failing) ✅
 ```
 
 **GDD Health Impact:**
+
 - Current: 87.7/100
 - Expected: ~88-89/100 (20 tests fixed + coverage increase)
 
@@ -161,11 +177,13 @@ Failure Rate: 0% (0/30 failing) ✅
 ## Implementation Notes
 
 **Production-Quality Tests:**
+
 - Tests validate actual production code paths
 - No simplified mocks - tests real OAuth flow logic
 - Integration tests cover end-to-end scenarios
 
 **Code Quality:**
+
 - Apply coderabbit-lessons patterns
 - Use logger instead of console.log
 - Add JSDoc where missing

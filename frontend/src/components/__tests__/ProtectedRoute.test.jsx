@@ -11,7 +11,11 @@ jest.mock('react-router-dom', () => {
   const actual = jest.requireActual('react-router-dom');
   return {
     ...actual,
-    Navigate: ({ to }) => <div data-testid="navigate" data-to={to}>Redirecting to {to}</div>,
+    Navigate: ({ to }) => (
+      <div data-testid="navigate" data-to={to}>
+        Redirecting to {to}
+      </div>
+    )
   };
 });
 
@@ -31,7 +35,7 @@ describe('ProtectedRoute', () => {
         isAuthenticated: false,
         isAdmin: false,
         loading: true,
-        userData: null,
+        userData: null
       });
 
       render(
@@ -53,7 +57,7 @@ describe('ProtectedRoute', () => {
         isAuthenticated: false,
         isAdmin: false,
         loading: false,
-        userData: null,
+        userData: null
       });
 
       render(
@@ -73,7 +77,7 @@ describe('ProtectedRoute', () => {
         isAuthenticated: true,
         isAdmin: false,
         loading: false,
-        userData: { id: '1', email: 'user@test.com' },
+        userData: { id: '1', email: 'user@test.com' }
       });
 
       render(
@@ -94,7 +98,7 @@ describe('ProtectedRoute', () => {
         isAuthenticated: true,
         isAdmin: false,
         loading: false,
-        userData: { id: '1', email: 'user@test.com', is_admin: false },
+        userData: { id: '1', email: 'user@test.com', is_admin: false }
       });
 
       render(
@@ -114,7 +118,7 @@ describe('ProtectedRoute', () => {
         isAuthenticated: true,
         isAdmin: true,
         loading: false,
-        userData: { id: '1', email: 'admin@test.com', is_admin: true },
+        userData: { id: '1', email: 'admin@test.com', is_admin: true }
       });
 
       render(
@@ -133,7 +137,7 @@ describe('ProtectedRoute', () => {
         isAuthenticated: false,
         isAdmin: false,
         loading: false,
-        userData: null,
+        userData: null
       });
 
       render(
@@ -154,7 +158,7 @@ describe('ProtectedRoute', () => {
         isAuthenticated: true,
         isAdmin: false,
         loading: false,
-        userData: { id: '1', email: 'user@test.com', is_admin: false },
+        userData: { id: '1', email: 'user@test.com', is_admin: false }
       });
 
       render(
@@ -176,7 +180,7 @@ describe('AdminRoute', () => {
       isAuthenticated: true,
       isAdmin: true,
       loading: false,
-      userData: { id: '1', email: 'admin@test.com', is_admin: true },
+      userData: { id: '1', email: 'admin@test.com', is_admin: true }
     });
 
     render(
@@ -197,7 +201,7 @@ describe('AuthRoute', () => {
       isAuthenticated: true,
       isAdmin: false,
       loading: false,
-      userData: { id: '1', email: 'user@test.com', is_admin: false },
+      userData: { id: '1', email: 'user@test.com', is_admin: false }
     });
 
     render(
@@ -218,7 +222,7 @@ describe('PublicRoute', () => {
       isAuthenticated: false,
       isAdmin: false,
       loading: false,
-      userData: null,
+      userData: null
     });
 
     render(
@@ -237,7 +241,7 @@ describe('PublicRoute', () => {
       isAuthenticated: true,
       isAdmin: false,
       loading: false,
-      userData: { id: '1', email: 'user@test.com', is_admin: false },
+      userData: { id: '1', email: 'user@test.com', is_admin: false }
     });
 
     render(
@@ -256,7 +260,7 @@ describe('PublicRoute', () => {
       isAuthenticated: true,
       isAdmin: true,
       loading: false,
-      userData: { id: '1', email: 'admin@test.com', is_admin: true },
+      userData: { id: '1', email: 'admin@test.com', is_admin: true }
     });
 
     render(

@@ -37,13 +37,17 @@ const ORG_ID = args['org-id'] || '00000000-0000-0000-0000-000000000001'; // Test
 // Validate required arguments
 if (!USER_ID) {
   console.error('❌ ERROR: Missing required argument --user-id');
-  console.error('Usage: node scripts/verify-user-behavior-count.js --user-id=USER --expected-count=N');
+  console.error(
+    'Usage: node scripts/verify-user-behavior-count.js --user-id=USER --expected-count=N'
+  );
   process.exit(1);
 }
 
 if (isNaN(EXPECTED_COUNT)) {
   console.error('❌ ERROR: Missing or invalid --expected-count argument');
-  console.error('Usage: node scripts/verify-user-behavior-count.js --user-id=USER --expected-count=N');
+  console.error(
+    'Usage: node scripts/verify-user-behavior-count.js --user-id=USER --expected-count=N'
+  );
   process.exit(1);
 }
 
@@ -116,7 +120,9 @@ async function verifyCount() {
     console.log(`  Platform Username: ${behavior.platform_username || 'N/A'}`);
     console.log(`  Total Violations: ${behavior.total_violations}`);
     console.log(`  Severity Counts: ${JSON.stringify(behavior.severity_counts || {})}`);
-    console.log(`  Actions Taken: ${behavior.actions_taken ? behavior.actions_taken.length : 0} entries`);
+    console.log(
+      `  Actions Taken: ${behavior.actions_taken ? behavior.actions_taken.length : 0} entries`
+    );
     console.log(`  Last Violation: ${behavior.last_violation_at}`);
     console.log(`  Last Seen: ${behavior.last_seen_at}`);
     console.log(`  Created: ${behavior.created_at}`);
@@ -137,10 +143,14 @@ async function verifyCount() {
       console.error(`   Difference: ${behavior.total_violations - EXPECTED_COUNT}`);
 
       if (behavior.total_violations < EXPECTED_COUNT) {
-        console.error(`\n   ⚠️  Lost updates detected! (${EXPECTED_COUNT - behavior.total_violations} updates missing)`);
+        console.error(
+          `\n   ⚠️  Lost updates detected! (${EXPECTED_COUNT - behavior.total_violations} updates missing)`
+        );
         console.error(`   This indicates a race condition in atomic_update_user_behavior()!\n`);
       } else {
-        console.error(`\n   ⚠️  Extra updates detected! (${behavior.total_violations - EXPECTED_COUNT} more than expected)`);
+        console.error(
+          `\n   ⚠️  Extra updates detected! (${behavior.total_violations - EXPECTED_COUNT} more than expected)`
+        );
         console.error(`   This may indicate duplicate processing or incorrect test setup.\n`);
       }
 

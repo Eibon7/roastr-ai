@@ -2,13 +2,13 @@
 
 /**
  * Account Deletion Worker Starter
- * 
+ *
  * Starts the GDPR-compliant account deletion worker for processing
  * scheduled user account deletions with proper audit trails.
- * 
+ *
  * Usage:
  * node src/workers/cli/start-account-deletion-worker.js
- * 
+ *
  * Environment Variables:
  * - NODE_ENV: Environment (development, production)
  * - SUPABASE_URL: Supabase project URL
@@ -25,15 +25,12 @@ const { logger } = require('../../utils/logger');
 async function main() {
   try {
     logger.info('🗑️ Starting Account Deletion Worker for GDPR Compliance');
-    
+
     // Validate required environment variables
-    const requiredEnvVars = [
-      'SUPABASE_URL',
-      'SUPABASE_SERVICE_KEY'
-    ];
-    
-    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
+    const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
+
+    const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
     if (missingVars.length > 0) {
       logger.error('❌ Missing required environment variables:', {
         missing: missingVars
@@ -43,8 +40,8 @@ async function main() {
 
     // Optional environment variables with warnings
     const optionalEnvVars = {
-      'SENDGRID_API_KEY': 'Email notifications will be disabled',
-      'APP_URL': 'Using default localhost URLs in emails'
+      SENDGRID_API_KEY: 'Email notifications will be disabled',
+      APP_URL: 'Using default localhost URLs in emails'
     };
 
     for (const [varName, warning] of Object.entries(optionalEnvVars)) {
@@ -72,24 +69,27 @@ async function main() {
 
     // Create and start worker
     const worker = new AccountDeletionWorker(workerConfig);
-    
+
     // Handle worker startup
     await worker.start();
-    
+
     logger.info('✅ Account Deletion Worker started successfully');
     logger.info('📊 Worker Status:', worker.getStatus());
-    
+
     // Keep the process alive and log periodic status
-    const statusInterval = setInterval(() => {
-      const status = worker.getStatus();
-      logger.info('💻 Worker Status Update:', {
-        processedJobs: status.processedJobs,
-        failedJobs: status.failedJobs,
-        successRate: status.successRate,
-        uptime: status.uptimeFormatted,
-        lastActivity: status.lastActivityFormatted
-      });
-    }, 15 * 60 * 1000); // Every 15 minutes
+    const statusInterval = setInterval(
+      () => {
+        const status = worker.getStatus();
+        logger.info('💻 Worker Status Update:', {
+          processedJobs: status.processedJobs,
+          failedJobs: status.failedJobs,
+          successRate: status.successRate,
+          uptime: status.uptimeFormatted,
+          lastActivity: status.lastActivityFormatted
+        });
+      },
+      15 * 60 * 1000
+    ); // Every 15 minutes
 
     // Cleanup on exit
     process.on('exit', () => {
@@ -106,7 +106,6 @@ async function main() {
       logger.error('🚨 Uncaught Exception in Account Deletion Worker:', error);
       process.exit(1);
     });
-
   } catch (error) {
     logger.error('❌ Failed to start Account Deletion Worker:', error);
     process.exit(1);
@@ -160,7 +159,7 @@ For monitoring and management:
 }
 
 // Start the worker
-main().catch(error => {
+main().catch((error) => {
   logger.error('💥 Fatal error in Account Deletion Worker:', error);
   process.exit(1);
 });

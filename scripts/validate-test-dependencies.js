@@ -1,6 +1,6 @@
 /**
  * Test Dependencies Validator
- * 
+ *
  * Addresses CodeRabbit PR #424 critical issues:
  * 1. Non-existent adapter imports
  * 2. Non-existent API routes
@@ -16,14 +16,11 @@ class TestValidator {
     this.issues = [];
     this.availableAdapters = [
       'TwitterShieldAdapter',
-      'YouTubeShieldAdapter', 
+      'YouTubeShieldAdapter',
       'DiscordShieldAdapter',
       'TwitchShieldAdapter'
     ];
-    this.nonExistentAdapters = [
-      'InstagramShieldAdapter',
-      'FacebookShieldAdapter'
-    ];
+    this.nonExistentAdapters = ['InstagramShieldAdapter', 'FacebookShieldAdapter'];
     this.availableRoutes = this.getAvailableRoutes();
   }
 
@@ -35,16 +32,19 @@ class TestValidator {
         console.warn('Could not find src/index.js to validate routes');
         return [];
       }
-      
+
       const content = fs.readFileSync(indexPath, 'utf8');
-      
+
       // Extract routes from Express app definitions
-      const routeMatches = content.match(/app\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/g) || [];
-      const routes = routeMatches.map(match => {
-        const routeMatch = match.match(/['"`]([^'"`]+)['"`]/);
-        return routeMatch ? routeMatch[1] : null;
-      }).filter(Boolean);
-      
+      const routeMatches =
+        content.match(/app\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/g) || [];
+      const routes = routeMatches
+        .map((match) => {
+          const routeMatch = match.match(/['"`]([^'"`]+)['"`]/);
+          return routeMatch ? routeMatch[1] : null;
+        })
+        .filter(Boolean);
+
       return routes;
     } catch (error) {
       console.warn(`Could not read API routes from src/index.js: ${error.message}`);
@@ -57,10 +57,10 @@ class TestValidator {
     const relativePath = path.relative(process.cwd(), filePath);
 
     // Check for non-existent shield adapter imports
-    this.nonExistentAdapters.forEach(adapter => {
+    this.nonExistentAdapters.forEach((adapter) => {
       const importRegex = new RegExp(`import.*${adapter}.*from`, 'g');
       const requireRegex = new RegExp(`require\\(['"\`][^'"\`]*${adapter}`, 'g');
-      
+
       if (importRegex.test(content) || requireRegex.test(content)) {
         this.issues.push({
           file: relativePath,
@@ -72,9 +72,9 @@ class TestValidator {
 
     // Check for non-existent API routes
     const apiCalls = content.match(/['"`]\/api\/[^'"`]+['"`]/g) || [];
-    apiCalls.forEach(call => {
+    apiCalls.forEach((call) => {
       const route = call.replace(/['"`]/g, '');
-      
+
       // Check for known problematic routes
       if (route.includes('/comments/ingest')) {
         this.issues.push({
@@ -91,9 +91,10 @@ class TestValidator {
       const packageJsonPath = path.join(__dirname, '..', 'package.json');
       if (fs.existsSync(packageJsonPath)) {
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-        const hasDevDep = packageJson.devDependencies && packageJson.devDependencies['jest-html-reporters'];
+        const hasDevDep =
+          packageJson.devDependencies && packageJson.devDependencies['jest-html-reporters'];
         const hasDep = packageJson.dependencies && packageJson.dependencies['jest-html-reporters'];
-        
+
         if (!hasDevDep && !hasDep) {
           this.issues.push({
             file: relativePath,
@@ -107,16 +108,20 @@ class TestValidator {
     // Check for development performance thresholds that may be too tight for CI
     // Only flag performance-related assertions, not business logic limits
     const performanceChecks = [
-      { pattern: /(time|Time|duration|Duration|ms|millisecond|performance).*\.toBeLessThan\((\d+)\)/g, unit: 'ms' },
+      {
+        pattern:
+          /(time|Time|duration|Duration|ms|millisecond|performance).*\.toBeLessThan\((\d+)\)/g,
+        unit: 'ms'
+      },
       { pattern: /expect.*\.toBeSpeedyGonzales/g, unit: 'perf' },
       { pattern: /responseTime.*<.*(\d+)/g, unit: 'ms' },
       { pattern: /\.toBeLessThan\((\d+)\).*\/\/.*[Tt]ime|ms|performance|speed|fast/g, unit: 'ms' }
     ];
 
-    performanceChecks.forEach(check => {
+    performanceChecks.forEach((check) => {
       const matches = Array.from(content.matchAll(check.pattern));
       if (matches.length > 0) {
-        matches.forEach(match => {
+        matches.forEach((match) => {
           const numberMatch = match[0].match(/(\d+)/);
           if (numberMatch) {
             const threshold = parseInt(numberMatch[1]);
@@ -135,20 +140,20 @@ class TestValidator {
 
   validateAllTestFiles() {
     const testDir = path.join(__dirname, '..', 'tests');
-    
+
     if (!fs.existsSync(testDir)) {
       console.log('No tests directory found - validation skipped');
       return true;
     }
 
     const testFiles = this.getAllTestFiles(testDir);
-    
+
     if (testFiles.length === 0) {
       console.log('No test files found - validation passed');
       return true;
     }
 
-    testFiles.forEach(file => {
+    testFiles.forEach((file) => {
       try {
         this.validateTestFile(file);
       } catch (error) {
@@ -165,17 +170,17 @@ class TestValidator {
 
   getAllTestFiles(dir) {
     let files = [];
-    
+
     if (!fs.existsSync(dir)) return files;
 
     const items = fs.readdirSync(dir);
-    
+
     for (const item of items) {
       const fullPath = path.join(dir, item);
-      
+
       try {
         const stat = fs.statSync(fullPath);
-        
+
         if (stat.isDirectory()) {
           files = files.concat(this.getAllTestFiles(fullPath));
         } else if (item.endsWith('.test.js')) {
@@ -192,13 +197,15 @@ class TestValidator {
   report() {
     if (this.issues.length === 0) {
       console.log('✅ All test files validated successfully');
-      console.log(`📊 Scanned ${this.getAllTestFiles(path.join(__dirname, '..', 'tests')).length} test files`);
+      console.log(
+        `📊 Scanned ${this.getAllTestFiles(path.join(__dirname, '..', 'tests')).length} test files`
+      );
       return true;
     }
 
     console.log('❌ Issues found in test files:');
-    console.log('=' .repeat(60));
-    
+    console.log('='.repeat(60));
+
     this.issues.forEach((issue, index) => {
       console.log(`${index + 1}. ${issue.type.toUpperCase().replace(/-/g, ' ')}`);
       console.log(`   File: ${issue.file}`);
@@ -208,7 +215,7 @@ class TestValidator {
 
     console.log('💡 Fix these issues before committing test files.');
     console.log('📚 See docs/test-validation-guidelines.md for detailed guidance');
-    
+
     return false;
   }
 }
@@ -217,10 +224,10 @@ class TestValidator {
 if (require.main === module) {
   console.log('🔍 Running test dependencies validation...');
   console.log('');
-  
+
   const validator = new TestValidator();
   const success = validator.validateAllTestFiles();
-  
+
   if (!validator.report()) {
     console.log('');
     console.log('⚠️  Validation failed - please fix issues above before proceeding');

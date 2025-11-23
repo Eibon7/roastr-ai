@@ -10,6 +10,7 @@
 Comprehensive fix plan for all CodeRabbit review comments on PR #660. This PR fixes the post-merge documentation sync workflow that was failing on PR #652.
 
 **Scope:**
+
 - 2 Critical issues (security/correctness)
 - 6 Major issues (architecture/reliability)
 - Multiple nitpick/documentation issues
@@ -23,6 +24,7 @@ Comprehensive fix plan for all CodeRabbit review comments on PR #660. This PR fi
 ### 🔴 CRITICAL (1 issue)
 
 #### CRITICAL #1: metadata undefined guard
+
 **File:** `src/services/shieldService.js`
 **Line:** 601
 **Severity:** CRITICAL
@@ -32,6 +34,7 @@ Comprehensive fix plan for all CodeRabbit review comments on PR #660. This PR fi
 Sequential path dereferences `metadata.toxicity` without optional chaining; `metadata` can be undefined.
 
 **Fix:**
+
 ```javascript
 async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}) {
 ```
@@ -43,6 +46,7 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}
 ### 🟡 MAJOR (3 issues)
 
 #### MAJOR #1: merge_commit_sha null handling
+
 **File:** `.github/workflows/post-merge-doc-sync.yml`
 **Line:** 52
 **Severity:** MAJOR
@@ -53,6 +57,7 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}
 
 **Fix:**
 Add guard and fallback to GitHub API:
+
 ```yaml
 set -euo pipefail
 # Get the merge commit SHA (may be empty for rebase-and-merge)
@@ -75,6 +80,7 @@ fi
 ---
 
 #### MAJOR #2: Pseudo-thenable breaks await
+
 **File:** `tests/helpers/mockSupabaseFactory.js`
 **Line:** 131
 **Severity:** MAJOR
@@ -85,17 +91,18 @@ Adding `then` to plain objects can make them thenable and cause subtle promise/a
 
 **Fix:**
 Use an explicit method (e.g., `.all()`) instead of `then`:
+
 ```javascript
 // Retrieve multiple results without .single()
 all: jest.fn(() => {
   const table = getCurrentTable();
   const data = mockData[table] || [];
   // Apply all accumulated filters
-  const matches = data.filter(row =>
-    Object.keys(newFilters).every(key => row[key] === newFilters[key])
+  const matches = data.filter((row) =>
+    Object.keys(newFilters).every((key) => row[key] === newFilters[key])
   );
   return Promise.resolve({ data: matches, error: null, count: matches.length });
-})
+});
 ```
 
 **Priority:** P1
@@ -103,6 +110,7 @@ all: jest.fn(() => {
 ---
 
 #### MAJOR #3: Table name mismatch
+
 **File:** `tests/helpers/mockSupabaseFactory.js`
 **Line:** 344
 **Severity:** MAJOR
@@ -112,6 +120,7 @@ all: jest.fn(() => {
 Service queries `user_behaviors`; the assertion expects `user_behavior` and will fail.
 
 **Fix:**
+
 ```javascript
 const wasQueried = fromMock.mock.calls.some(([tbl]) => /user_behaviors?/.test(tbl));
 expect(wasQueried).toBe(true);
@@ -124,10 +133,12 @@ expect(wasQueried).toBe(true);
 ## Execution Plan
 
 ### Phase 1: Critical Fixes (P0)
+
 **Time Estimate:** 15-30 minutes
 **Status:** ⏸️ PENDING
 
 **Tasks:**
+
 1. ✅ Read shieldService.js to understand context
 2. ⏸️ Fix CRITICAL #1: Add metadata.toxicity undefined guard
 3. ⏸️ Investigate CRITICAL #2: Check failed action consumers
@@ -136,6 +147,7 @@ expect(wasQueried).toBe(true);
 6. ⏸️ Verify no regressions
 
 **Success Criteria:**
+
 - ✅ All Critical issues resolved
 - ✅ Tests passing
 - ✅ No new errors introduced
@@ -143,10 +155,12 @@ expect(wasQueried).toBe(true);
 ---
 
 ### Phase 2: Major Fixes (P1)
+
 **Time Estimate:** 30-45 minutes
 **Status:** ⏸️ PENDING
 
 **Tasks:**
+
 1. ⏸️ Fix MAJOR #1: Remove pseudo-thenable from mockSupabaseFactory
 2. ⏸️ Fix MAJOR #2: Add merge_commit_sha null handling to workflow
 3. ⏸️ Fix MAJOR #3: Make currentTable instance-scoped
@@ -159,6 +173,7 @@ expect(wasQueried).toBe(true);
 10. ⏸️ Verify all fixes
 
 **Success Criteria:**
+
 - ✅ All Major issues resolved
 - ✅ Full test suite passing
 - ✅ No regressions
@@ -166,10 +181,12 @@ expect(wasQueried).toBe(true);
 ---
 
 ### Phase 3: Validation
+
 **Time Estimate:** 15 minutes
 **Status:** ⏸️ PENDING
 
 **Tasks:**
+
 1. ⏸️ Run full test suite: `npm test`
 2. ⏸️ Check test coverage: `npm test -- --coverage`
 3. ⏸️ Validate workflow syntax: `gh workflow view post-merge-doc-sync.yml`
@@ -177,6 +194,7 @@ expect(wasQueried).toBe(true);
 5. ⏸️ Update this plan with final status
 
 **Success Criteria:**
+
 - ✅ 100% tests passing
 - ✅ No coverage regressions
 - ✅ Workflow syntax valid
@@ -185,10 +203,12 @@ expect(wasQueried).toBe(true);
 ---
 
 ### Phase 4: Commit & Push
+
 **Time Estimate:** 5 minutes
 **Status:** ⏸️ PENDING
 
 **Tasks:**
+
 1. ⏸️ Stage all changes
 2. ⏸️ Create comprehensive commit message
 3. ⏸️ Push to PR #660 branch
@@ -196,6 +216,7 @@ expect(wasQueried).toBe(true);
 5. ⏸️ Comment on CodeRabbit review
 
 **Success Criteria:**
+
 - ✅ Changes pushed
 - ✅ CI passing
 - ✅ CodeRabbit review addressed
@@ -204,26 +225,29 @@ expect(wasQueried).toBe(true);
 
 ## Files to Modify
 
-| File | Issues | Priority |
-|------|--------|----------|
-| `src/services/shieldService.js` | CRITICAL #1, #2, MAJOR #5 | P0 |
-| `tests/helpers/mockSupabaseFactory.js` | MAJOR #1, #3, #4 | P1 |
-| `.github/workflows/post-merge-doc-sync.yml` | MAJOR #2 | P1 |
-| `tests/integration/shield-escalation-logic.test.js` | MAJOR #6 | P1 |
+| File                                                | Issues                    | Priority |
+| --------------------------------------------------- | ------------------------- | -------- |
+| `src/services/shieldService.js`                     | CRITICAL #1, #2, MAJOR #5 | P0       |
+| `tests/helpers/mockSupabaseFactory.js`              | MAJOR #1, #3, #4          | P1       |
+| `.github/workflows/post-merge-doc-sync.yml`         | MAJOR #2                  | P1       |
+| `tests/integration/shield-escalation-logic.test.js` | MAJOR #6                  | P1       |
 
 ---
 
 ## Risk Assessment
 
 ### High Risk
+
 - **CRITICAL #2 (Failed action structure):** May require coordination with consumers
 - **MAJOR #4 (Table name mismatch):** May require schema migration
 
 ### Medium Risk
+
 - **MAJOR #5 (Duplicate loss):** May affect production data
 - **MAJOR #6 (Test mismatches):** May reveal actual bugs in service
 
 ### Low Risk
+
 - **CRITICAL #1 (Undefined guard):** Straightforward defensive programming
 - **MAJOR #1 (Pseudo-thenable):** Test-only, no production impact
 - **MAJOR #2 (Null handling):** Workflow-only, no code impact
@@ -234,11 +258,13 @@ expect(wasQueried).toBe(true);
 ## Completion Checklist
 
 ### Phase 1: Critical Fixes
+
 - [ ] CRITICAL #1: metadata.toxicity undefined guard
 - [ ] CRITICAL #2: Failed action structure
 - [ ] Tests passing for shieldService
 
 ### Phase 2: Major Fixes
+
 - [ ] MAJOR #1: Pseudo-thenable removed
 - [ ] MAJOR #2: merge_commit_sha null handling
 - [ ] MAJOR #3: currentTable instance-scoped
@@ -248,12 +274,14 @@ expect(wasQueried).toBe(true);
 - [ ] Full test suite passing
 
 ### Phase 3: Validation
+
 - [ ] All tests passing (100%)
 - [ ] No coverage regressions
 - [ ] Workflow syntax valid
 - [ ] Code quality verified
 
 ### Phase 4: Delivery
+
 - [ ] Changes committed
 - [ ] Changes pushed to PR #660
 - [ ] CI passing
@@ -264,6 +292,7 @@ expect(wasQueried).toBe(true);
 ## Notes
 
 **User Protocol Compliance:**
+
 - ✅ Planning document created BEFORE implementation
 - ✅ All issues categorized by severity
 - ✅ Fixes ordered by priority (Critical → Major → Nitpick)
@@ -272,6 +301,7 @@ expect(wasQueried).toBe(true);
 - ⏸️ 0 regressions target
 
 **Quality Standards:**
+
 - Must achieve 100% test pass rate
 - Must not introduce regressions
 - Must maintain or improve code quality

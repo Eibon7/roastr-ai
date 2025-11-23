@@ -46,8 +46,11 @@ jest.mock('../../src/config/supabase', () => {
                 return {
                   single: () => {
                     if (table === 'users') {
-                      const user = Array.from(mockUsers.values()).find(u => u[field] === value);
-                      return Promise.resolve({ data: user || null, error: user ? null : { message: 'Not found' } });
+                      const user = Array.from(mockUsers.values()).find((u) => u[field] === value);
+                      return Promise.resolve({
+                        data: user || null,
+                        error: user ? null : { message: 'Not found' }
+                      });
                     }
                     return Promise.resolve({ data: null, error: { message: 'Not found' } });
                   }
@@ -88,7 +91,7 @@ jest.mock('../../src/config/supabase', () => {
             return {
               eq: (field, value) => {
                 if (table === 'users') {
-                  const user = Array.from(mockUsers.values()).find(u => u[field] === value);
+                  const user = Array.from(mockUsers.values()).find((u) => u[field] === value);
                   if (user) {
                     mockUsers.delete(user.id);
                   }
@@ -118,7 +121,9 @@ jest.mock('../../src/config/supabase', () => {
       auth: {
         signUp: (userData) => {
           // Check for duplicate email
-          const existingUser = Array.from(mockUsers.values()).find(u => u.email === userData.email);
+          const existingUser = Array.from(mockUsers.values()).find(
+            (u) => u.email === userData.email
+          );
           if (existingUser) {
             return Promise.resolve({
               data: { user: null, session: null },
@@ -129,7 +134,11 @@ jest.mock('../../src/config/supabase', () => {
           const userId = `auth-${userIdCounter++}`;
           const sessionToken = `session-${userId}`;
           const refreshToken = `refresh-${userId}`;
-          const user = { id: userId, email: userData.email, email_confirmed_at: new Date().toISOString() };
+          const user = {
+            id: userId,
+            email: userData.email,
+            email_confirmed_at: new Date().toISOString()
+          };
           const session = { access_token: sessionToken, refresh_token: refreshToken, user };
 
           mockSessions.set(sessionToken, user);
@@ -156,7 +165,7 @@ jest.mock('../../src/config/supabase', () => {
           }
 
           // Find user by email in mockUsers
-          const user = Array.from(mockUsers.values()).find(u => u.email === credentials.email);
+          const user = Array.from(mockUsers.values()).find((u) => u.email === credentials.email);
           if (!user) {
             return Promise.resolve({
               data: { user: null, session: null },
@@ -208,7 +217,7 @@ jest.mock('../../src/config/supabase', () => {
             access_token: newAccessToken,
             refresh_token: refresh_token,
             user: { id: user.id, email: user.email },
-            expires_at: Date.now() + (60 * 60 * 1000), // 1 hour
+            expires_at: Date.now() + 60 * 60 * 1000, // 1 hour
             expires_in: 3600
           };
 
@@ -227,7 +236,8 @@ jest.mock('../../src/config/supabase', () => {
       if (!user) {
         return {
           auth: {
-            getUser: () => Promise.resolve({ data: { user: null }, error: { message: 'Invalid token' } }),
+            getUser: () =>
+              Promise.resolve({ data: { user: null }, error: { message: 'Invalid token' } }),
             signOut: () => Promise.resolve({ error: { message: 'Invalid token' } })
           },
           from: () => ({
@@ -260,7 +270,11 @@ jest.mock('../../src/config/supabase', () => {
                         if (userData) {
                           const userWithOrg = {
                             ...userData,
-                            organizations: [Array.from(mockOrganizations.values()).find(o => o.owner_id === user.id)]
+                            organizations: [
+                              Array.from(mockOrganizations.values()).find(
+                                (o) => o.owner_id === user.id
+                              )
+                            ]
                           };
                           return Promise.resolve({ data: userWithOrg, error: null });
                         }
@@ -329,13 +343,11 @@ describe('Auth Complete Flow E2E', () => {
   describe('1. Full Registration Flow', () => {
     it('should complete full registration flow successfully', async () => {
       // Step 1: Register new user
-      const registerResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: testEmail,
-          password: testPassword,
-          name: 'Test User'
-        });
+      const registerResponse = await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        name: 'Test User'
+      });
 
       expect(registerResponse.status).toBe(201);
       expect(registerResponse.body.success).toBe(true);
@@ -363,22 +375,18 @@ describe('Auth Complete Flow E2E', () => {
 
     it('should reject duplicate email registration', async () => {
       // First registration
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: testEmail,
-          password: testPassword,
-          name: 'Test User'
-        });
+      await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        name: 'Test User'
+      });
 
       // Second registration with same email
-      const duplicateResponse = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: testEmail,
-          password: 'DifferentPassword123!',
-          name: 'Another User'
-        });
+      const duplicateResponse = await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        password: 'DifferentPassword123!',
+        name: 'Another User'
+      });
 
       expect(duplicateResponse.status).toBe(400);
       expect(duplicateResponse.body.success).toBe(false);
@@ -405,22 +413,18 @@ describe('Auth Complete Flow E2E', () => {
   describe('2. Full Login Flow', () => {
     beforeEach(async () => {
       // Register user first
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: testEmail,
-          password: testPassword,
-          name: 'Test User'
-        });
+      await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        name: 'Test User'
+      });
     });
 
     it('should login successfully with valid credentials', async () => {
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: testEmail,
-          password: testPassword
-        });
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: testEmail,
+        password: testPassword
+      });
 
       expect(loginResponse.status).toBe(200);
       expect(loginResponse.body.success).toBe(true);
@@ -433,24 +437,20 @@ describe('Auth Complete Flow E2E', () => {
     });
 
     it('should reject login with invalid password', async () => {
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: testEmail,
-          password: 'WrongPassword123!'
-        });
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: testEmail,
+        password: 'WrongPassword123!'
+      });
 
       expect(loginResponse.status).toBe(401);
       expect(loginResponse.body.success).toBe(false);
     });
 
     it('should reject login with non-existent email', async () => {
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'nonexistent@test.com',
-          password: testPassword
-        });
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: 'nonexistent@test.com',
+        password: testPassword
+      });
 
       expect(loginResponse.status).toBe(401);
       expect(loginResponse.body.success).toBe(false);
@@ -460,20 +460,16 @@ describe('Auth Complete Flow E2E', () => {
   describe('3. Session Management & Token Refresh', () => {
     beforeEach(async () => {
       // Register and login user
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: testEmail,
-          password: testPassword,
-          name: 'Test User'
-        });
+      await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        name: 'Test User'
+      });
 
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: testEmail,
-          password: testPassword
-        });
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: testEmail,
+        password: testPassword
+      });
 
       accessToken = loginResponse.body.data.access_token;
       refreshToken = loginResponse.body.data.refresh_token;
@@ -489,18 +485,15 @@ describe('Auth Complete Flow E2E', () => {
     });
 
     it('should reject protected route without token', async () => {
-      const response = await request(app)
-        .get('/api/auth/me');
+      const response = await request(app).get('/api/auth/me');
 
       expect(response.status).toBe(401);
     });
 
     it('should refresh access token successfully', async () => {
-      const refreshResponse = await request(app)
-        .post('/api/auth/session/refresh')
-        .send({
-          refresh_token: refreshToken
-        });
+      const refreshResponse = await request(app).post('/api/auth/session/refresh').send({
+        refresh_token: refreshToken
+      });
 
       expect(refreshResponse.status).toBe(200);
       expect(refreshResponse.body.success).toBe(true);
@@ -517,11 +510,9 @@ describe('Auth Complete Flow E2E', () => {
     });
 
     it('should reject refresh with invalid token', async () => {
-      const refreshResponse = await request(app)
-        .post('/api/auth/session/refresh')
-        .send({
-          refresh_token: 'invalid-refresh-token'
-        });
+      const refreshResponse = await request(app).post('/api/auth/session/refresh').send({
+        refresh_token: 'invalid-refresh-token'
+      });
 
       expect(refreshResponse.status).toBe(401);
       expect(refreshResponse.body.success).toBe(false);
@@ -546,21 +537,17 @@ describe('Auth Complete Flow E2E', () => {
   describe('4. Password Reset Flow', () => {
     beforeEach(async () => {
       // Register user
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: testEmail,
-          password: testPassword,
-          name: 'Test User'
-        });
+      await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        name: 'Test User'
+      });
     });
 
     it('should send password reset email', async () => {
-      const resetResponse = await request(app)
-        .post('/api/auth/reset-password')
-        .send({
-          email: testEmail
-        });
+      const resetResponse = await request(app).post('/api/auth/reset-password').send({
+        email: testEmail
+      });
 
       expect(resetResponse.status).toBe(200);
       expect(resetResponse.body.success).toBe(true);
@@ -576,11 +563,9 @@ describe('Auth Complete Flow E2E', () => {
 
     it('should handle password reset for non-existent email gracefully', async () => {
       // For security, should not reveal if email exists
-      const resetResponse = await request(app)
-        .post('/api/auth/reset-password')
-        .send({
-          email: 'nonexistent@test.com'
-        });
+      const resetResponse = await request(app).post('/api/auth/reset-password').send({
+        email: 'nonexistent@test.com'
+      });
 
       // Should return success to prevent email enumeration
       expect(resetResponse.status).toBe(200);
@@ -595,12 +580,10 @@ describe('Auth Complete Flow E2E', () => {
 
       // Note: This will fail without a valid reset token
       // In production tests, you'd need to extract the token from the email
-      const updateResponse = await request(app)
-        .post('/api/auth/update-password')
-        .send({
-          token: 'mock-reset-token',
-          password: newPassword
-        });
+      const updateResponse = await request(app).post('/api/auth/update-password').send({
+        token: 'mock-reset-token',
+        password: newPassword
+      });
 
       // Expect either 200 (if mock works) or 400 (if token validation fails)
       expect([200, 400, 401]).toContain(updateResponse.status);
@@ -618,19 +601,19 @@ describe('Auth Complete Flow E2E', () => {
       }
 
       // Attempt multiple logins rapidly
-      const attempts = Array(10).fill(null).map(() =>
-        request(app)
-          .post('/api/auth/login')
-          .send({
+      const attempts = Array(10)
+        .fill(null)
+        .map(() =>
+          request(app).post('/api/auth/login').send({
             email: 'test@test.com',
             password: 'wrong'
           })
-      );
+        );
 
       const responses = await Promise.all(attempts);
 
       // At least one should be rate limited (429)
-      const rateLimited = responses.some(r => r.status === 429);
+      const rateLimited = responses.some((r) => r.status === 429);
 
       // If rate limiting is enabled
       if (flags.isEnabled('ENABLE_RATE_LIMIT')) {
@@ -641,62 +624,47 @@ describe('Auth Complete Flow E2E', () => {
 
   describe('6. Edge Cases & Error Handling', () => {
     it('should handle missing email in registration', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          password: testPassword,
-          name: 'Test User'
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        password: testPassword,
+        name: 'Test User'
+      });
 
       expect(response.status).toBe(400);
     });
 
     it('should handle missing password in registration', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: testEmail,
-          name: 'Test User'
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        name: 'Test User'
+      });
 
       expect(response.status).toBe(400);
     });
 
     it('should handle malformed email', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'not-an-email',
-          password: testPassword,
-          name: 'Test User'
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        email: 'not-an-email',
+        password: testPassword,
+        name: 'Test User'
+      });
 
       expect(response.status).toBe(400);
     });
 
     it('should handle empty request body', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({});
+      const response = await request(app).post('/api/auth/register').send({});
 
       expect(response.status).toBe(400);
     });
 
     it('should handle SQL injection attempts', async () => {
-      const sqlInjectionAttempts = [
-        "admin' OR '1'='1",
-        "admin'--",
-        "admin' /*",
-        "' OR 1=1--"
-      ];
+      const sqlInjectionAttempts = ["admin' OR '1'='1", "admin'--", "admin' /*", "' OR 1=1--"];
 
       for (const maliciousEmail of sqlInjectionAttempts) {
-        const response = await request(app)
-          .post('/api/auth/login')
-          .send({
-            email: maliciousEmail,
-            password: testPassword
-          });
+        const response = await request(app).post('/api/auth/login').send({
+          email: maliciousEmail,
+          password: testPassword
+        });
 
         // Should reject without crashing
         expect([400, 401]).toContain(response.status);
@@ -709,13 +677,11 @@ describe('Auth Complete Flow E2E', () => {
       // Mock email service failure
       emailService.sendWelcomeEmail.mockRejectedValueOnce(new Error('SendGrid error'));
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: testEmail,
-          password: testPassword,
-          name: 'Test User'
-        });
+      const response = await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        name: 'Test User'
+      });
 
       // Registration should still succeed even if email fails
       expect(response.status).toBe(201);
@@ -724,22 +690,18 @@ describe('Auth Complete Flow E2E', () => {
 
     it('should gracefully handle email service failure on password reset', async () => {
       // Register user first
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: testEmail,
-          password: testPassword,
-          name: 'Test User'
-        });
+      await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        name: 'Test User'
+      });
 
       // Mock email service failure
       emailService.sendPasswordResetEmail.mockRejectedValueOnce(new Error('SendGrid error'));
 
-      const response = await request(app)
-        .post('/api/auth/reset-password')
-        .send({
-          email: testEmail
-        });
+      const response = await request(app).post('/api/auth/reset-password').send({
+        email: testEmail
+      });
 
       // Should return success (don't reveal email service issues to user)
       expect(response.status).toBe(200);

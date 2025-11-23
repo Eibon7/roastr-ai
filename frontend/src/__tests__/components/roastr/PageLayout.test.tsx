@@ -54,10 +54,7 @@ describe('PageLayout', () => {
 
   it('renders actions when provided', () => {
     render(
-      <PageLayout 
-        title="Test Title" 
-        actions={<button>Action Button</button>}
-      >
+      <PageLayout title="Test Title" actions={<button>Action Button</button>}>
         <div>Content</div>
       </PageLayout>
     );
@@ -87,4 +84,3 @@ describe('PageLayout', () => {
     expect(contentDiv).toBeInTheDocument();
   });
 });
-

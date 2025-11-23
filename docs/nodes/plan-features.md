@@ -22,18 +22,18 @@ Plan Features manages subscription-based feature gating and usage limits across 
 
 ## Plan Tiers
 
-| Feature | Starter Trial (30 days) | Starter (€5/mo) | Pro (€15/mo) | Plus (€50/mo) |
-|---------|-------------------------|-----------------|--------------|---------------|
-| **Monthly Roasts** | 10 | 10 | 1,000 | 5,000 |
-| **Monthly Analysis** | 1,000 | 1,000 | 10,000 | 100,000 |
-| **Max Platforms** | 2 | 2 | 5 | 10 |
-| **AI Model** | GPT-4o/GPT-5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 | GPT-4o/GPT-5 |
-| **RQC (Quality Control)** | ❌ | ❌ | ✅ | ✅ Advanced |
-| **Shield (Moderation)** | ✅ Basic | ✅ Basic | ✅ Full | ✅ Advanced |
-| **Brand Safety (Sponsors)** | ❌ | ❌ | ❌ | ✅ |
-| **Custom Styles** | ❌ | ❌ | ❌ | ✅ |
-| **Persona Fields** | 1 field | 1 field | 3 fields | 3 fields |
-| **Priority Support** | ❌ | ❌ | ✅ | ✅ 24/7 |
+| Feature                     | Starter Trial (30 days) | Starter (€5/mo) | Pro (€15/mo) | Plus (€50/mo) |
+| --------------------------- | ----------------------- | --------------- | ------------ | ------------- |
+| **Monthly Roasts**          | 10                      | 10              | 1,000        | 5,000         |
+| **Monthly Analysis**        | 1,000                   | 1,000           | 10,000       | 100,000       |
+| **Max Platforms**           | 2                       | 2               | 5            | 10            |
+| **AI Model**                | GPT-4o/GPT-5            | GPT-4o/GPT-5    | GPT-4o/GPT-5 | GPT-4o/GPT-5  |
+| **RQC (Quality Control)**   | ❌                      | ❌              | ✅           | ✅ Advanced   |
+| **Shield (Moderation)**     | ✅ Basic                | ✅ Basic        | ✅ Full      | ✅ Advanced   |
+| **Brand Safety (Sponsors)** | ❌                      | ❌              | ❌           | ✅            |
+| **Custom Styles**           | ❌                      | ❌              | ❌           | ✅            |
+| **Persona Fields**          | 1 field                 | 1 field         | 3 fields     | 3 fields      |
+| **Priority Support**        | ❌                      | ❌              | ✅           | ✅ 24/7       |
 
 ## Database Schema
 
@@ -192,7 +192,7 @@ await costControl.recordUsage(
   'roast',
   { tokens: 500, model: 'gpt-4o' },
   userId,
-  1  // quantity
+  1 // quantity
 );
 
 // Check if approaching limit
@@ -295,12 +295,12 @@ describe('Plan Features', () => {
 
 ### Common Errors
 
-| Error | Cause | Resolution |
-|-------|-------|-----------|
-| `plan_restriction` | Feature not available on current plan | Upgrade to required plan |
-| `monthly_limit_exceeded` | Usage limit reached | Wait for reset or upgrade plan |
-| `invalid_plan` | Plan ID not found | Use valid plan ID from plan_limits |
-| `downgrade_not_allowed` | Attempt to downgrade with active features | Disable features first |
+| Error                    | Cause                                     | Resolution                         |
+| ------------------------ | ----------------------------------------- | ---------------------------------- |
+| `plan_restriction`       | Feature not available on current plan     | Upgrade to required plan           |
+| `monthly_limit_exceeded` | Usage limit reached                       | Wait for reset or upgrade plan     |
+| `invalid_plan`           | Plan ID not found                         | Use valid plan ID from plan_limits |
+| `downgrade_not_allowed`  | Attempt to downgrade with active features | Disable features first             |
 
 ## Brand Safety (Plus Plan Only) - Issue #859
 
@@ -314,14 +314,14 @@ Brand Safety allows Plus plan users to configure sponsors/brands to protect from
 
 ### Feature Capabilities
 
-| Capability | Description |
-|------------|-------------|
-| **Sponsor Configuration** | CRUD operations for sponsors (name, URL, tags, severity, tone, priority, actions) |
-| **Tag Extraction** | OpenAI-powered tag extraction from sponsor URLs (2 cents/extraction, rate limited 5/min) |
-| **Sponsor Detection** | Real-time detection of sponsor mentions (exact match, tag match, priority-based) |
-| **Shield Integration** | Zero tolerance blocking, dynamic threshold adjustment based on severity |
-| **Defensive Roasts** | Tone overrides (professional, light_humor, aggressive_irony) for sponsor-defending roasts |
-| **API Access** | REST API for sponsor management (`/api/sponsors`) |
+| Capability                | Description                                                                               |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| **Sponsor Configuration** | CRUD operations for sponsors (name, URL, tags, severity, tone, priority, actions)         |
+| **Tag Extraction**        | OpenAI-powered tag extraction from sponsor URLs (2 cents/extraction, rate limited 5/min)  |
+| **Sponsor Detection**     | Real-time detection of sponsor mentions (exact match, tag match, priority-based)          |
+| **Shield Integration**    | Zero tolerance blocking, dynamic threshold adjustment based on severity                   |
+| **Defensive Roasts**      | Tone overrides (professional, light_humor, aggressive_irony) for sponsor-defending roasts |
+| **API Access**            | REST API for sponsor management (`/api/sponsors`)                                         |
 
 ### API Endpoints
 
@@ -345,6 +345,7 @@ app.use('/api/sponsors', requirePlan('plus', { feature: 'brand_safety' }));
 ```
 
 **Response when plan insufficient:**
+
 ```json
 {
   "error": "PLAN_UPGRADE_REQUIRED",
@@ -404,7 +405,6 @@ CREATE TABLE sponsors (
 - [ ] Team collaboration features
 - [ ] Annual billing discounts
 
-
 ## Agentes Relevantes
 
 Los siguientes agentes son responsables de mantener este nodo:
@@ -414,7 +414,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **FrontendDev** - UI components (PlanPicker, Pricing pages)
 - **Product Manager**
 - **Test Engineer**
-
 
 ## Related Nodes
 

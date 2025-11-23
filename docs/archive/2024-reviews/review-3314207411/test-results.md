@@ -27,16 +27,17 @@
 ```javascript
 // scripts/score-gdd-health.js lines 225-231
 const totalScore =
-  scores.syncAccuracy * 0.25 +           // 25%
-  scores.updateFreshness * 0.20 +        // 20%
-  scores.dependencyIntegrity * 0.20 +    // 20%
-  scores.coverageEvidence * 0.20 +       // 20%
-  scores.agentRelevance * 0.10 +         // 10%
-  scores.integrityScore * 0.10;          // 10%
+  scores.syncAccuracy * 0.25 + // 25%
+  scores.updateFreshness * 0.2 + // 20%
+  scores.dependencyIntegrity * 0.2 + // 20%
+  scores.coverageEvidence * 0.2 + // 20%
+  scores.agentRelevance * 0.1 + // 10%
+  scores.integrityScore * 0.1; // 10%
 // Sum: 0.25 + 0.20 + 0.20 + 0.20 + 0.10 + 0.10 = 1.05 (105%) ❌
 ```
 
 **Example Calculation (node "persona"):**
+
 ```text
 syncAccuracy:        100 * 0.25 = 25.0
 updateFreshness:      96 * 0.20 = 19.2
@@ -67,6 +68,7 @@ return {
 ```
 
 **Example Calculation (node "persona"):**
+
 ```text
 syncAccuracy:        100 * 0.25 = 25.0
 updateFreshness:      96 * 0.15 = 14.4  ← REDUCED
@@ -87,11 +89,13 @@ Clamped: Math.min(100, 99) = 99 ✅
 ### 1. Updated Documentation (Line 8)
 
 **Before:**
+
 ```javascript
  * 2. Update Freshness (20%) - Days since last_updated
 ```
 
 **After:**
+
 ```javascript
  * 2. Update Freshness (15%) - Days since last_updated
 ```
@@ -99,11 +103,13 @@ Clamped: Math.min(100, 99) = 99 ✅
 ### 2. Fixed Weighted Average Formula (Line 227)
 
 **Before:**
+
 ```javascript
 scores.updateFreshness * 0.20 +
 ```
 
 **After:**
+
 ```javascript
 scores.updateFreshness * 0.15 +        // 15% (reduced from 20% to balance weights)
 ```
@@ -111,12 +117,14 @@ scores.updateFreshness * 0.15 +        // 15% (reduced from 20% to balance weigh
 ### 3. Added Safety Clamping (Line 235)
 
 **Before:**
+
 ```javascript
 return {
   score: Math.round(totalScore),
 ```
 
 **After:**
+
 ```javascript
 return {
   score: Math.min(100, Math.max(0, Math.round(totalScore))),
@@ -125,6 +133,7 @@ return {
 ### 4. Added Weight Validation Comment (Line 232)
 
 **Added:**
+
 ```javascript
 // Total: 25 + 15 + 20 + 20 + 10 + 10 = 100%
 ```
@@ -153,6 +162,7 @@ tone
 **Total affected:** 7 nodes
 
 **Example node (persona):**
+
 ```json
 {
   "score": 104,
@@ -170,6 +180,7 @@ tone
 ```
 
 **System-wide stats:**
+
 ```json
 {
   "overall_status": "HEALTHY",
@@ -195,6 +206,7 @@ $ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq -r '.nodes
 **Total affected:** 0 nodes ✅
 
 **Example node (persona):**
+
 ```json
 {
   "score": 99,
@@ -212,6 +224,7 @@ $ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq -r '.nodes
 ```
 
 **System-wide stats:**
+
 ```json
 {
   "overall_status": "HEALTHY",
@@ -225,23 +238,24 @@ $ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq -r '.nodes
 
 ## Score Comparison (Before → After)
 
-| Node | Before | After | Δ | Status |
-|------|--------|-------|---|--------|
-| **persona** | 104 | 99 | -5 | ✅ Fixed |
-| **plan-features** | 104 | 99 | -5 | ✅ Fixed |
-| **platform-constraints** | 104 | 99 | -5 | ✅ Fixed |
-| **queue-system** | 104 | 99 | -5 | ✅ Fixed |
-| **roast** | 104 | 99 | -5 | ✅ Fixed |
-| **social-platforms** | 104 | 99 | -5 | ✅ Fixed |
-| **tone** | 104 | 99 | -5 | ✅ Fixed |
-| **analytics** | 94 | 89 | -5 | ✅ Still healthy |
-| **billing** | 94 | 89 | -5 | ✅ Still healthy |
-| **cost-control** | 90 | 85 | -5 | ✅ Still healthy |
-| **multi-tenant** | 90 | 85 | -5 | ✅ Still healthy |
-| **shield** | 98 | 93 | -5 | ✅ Still healthy |
-| **trainer** | 90 | 85 | -5 | ✅ Still healthy |
+| Node                     | Before | After | Δ   | Status           |
+| ------------------------ | ------ | ----- | --- | ---------------- |
+| **persona**              | 104    | 99    | -5  | ✅ Fixed         |
+| **plan-features**        | 104    | 99    | -5  | ✅ Fixed         |
+| **platform-constraints** | 104    | 99    | -5  | ✅ Fixed         |
+| **queue-system**         | 104    | 99    | -5  | ✅ Fixed         |
+| **roast**                | 104    | 99    | -5  | ✅ Fixed         |
+| **social-platforms**     | 104    | 99    | -5  | ✅ Fixed         |
+| **tone**                 | 104    | 99    | -5  | ✅ Fixed         |
+| **analytics**            | 94     | 89    | -5  | ✅ Still healthy |
+| **billing**              | 94     | 89    | -5  | ✅ Still healthy |
+| **cost-control**         | 90     | 85    | -5  | ✅ Still healthy |
+| **multi-tenant**         | 90     | 85    | -5  | ✅ Still healthy |
+| **shield**               | 98     | 93    | -5  | ✅ Still healthy |
+| **trainer**              | 90     | 85    | -5  | ✅ Still healthy |
 
 **Summary:**
+
 - ✅ All 7 nodes with overflow now have valid scores (99 ≤ 100)
 - ✅ All nodes remain "healthy" (score ≥ 80)
 - ✅ Consistent -5 point adjustment reflects the 5% weight reduction
@@ -278,6 +292,7 @@ $ cat docs/test-evidence/review-3314207411/after-gdd-health.json | jq '.nodes[].
 ```
 
 **Distribution:**
+
 - Min: 85
 - Max: 99
 - Average: 93.8
@@ -295,6 +310,7 @@ $ node -e "console.log(0.25 + 0.15 + 0.20 + 0.20 + 0.10 + 0.10)"
 ### 4. Perfect Node Calculation
 
 **For a hypothetical node with all metrics at 100:**
+
 ```text
 100 * 0.25 + 100 * 0.15 + 100 * 0.20 + 100 * 0.20 + 100 * 0.10 + 100 * 0.10
 = 25 + 15 + 20 + 20 + 10 + 10
@@ -304,6 +320,7 @@ $ node -e "console.log(0.25 + 0.15 + 0.20 + 0.20 + 0.10 + 0.10)"
 ### 5. Status Thresholds
 
 All nodes maintain correct status classification:
+
 - Healthy (≥80): 13 nodes ✅
 - Degraded (50-79): 0 nodes ✅
 - Critical (<50): 0 nodes ✅
@@ -315,6 +332,7 @@ All nodes maintain correct status classification:
 ### Configuration Check
 
 **File:** `.gddrc.json`
+
 ```json
 {
   "min_health_score": 95,
@@ -327,11 +345,13 @@ All nodes maintain correct status classification:
 **Impact:** ⚠️ Average score dropped below 95 threshold
 
 **Analysis:**
+
 - Before fix: 98.8 (inflated by bug)
 - After fix: 93.8 (accurate)
 - Threshold: 95 (may need adjustment)
 
 **Recommendation:** The threshold of 95 was likely calibrated against inflated scores. With corrected scoring:
+
 - Option A: Lower threshold to 90 (realistic for current system state)
 - Option B: Improve actual node health (increase coverage) to reach 95 legitimately
 
@@ -344,11 +364,13 @@ All nodes maintain correct status classification:
 ### Auditability
 
 **Before:**
+
 - ❌ Invalid scores (>100) mislead dashboards
 - ❌ Impossible to trust health metrics
 - ❌ Cannot rely on thresholds and alerts
 
 **After:**
+
 - ✅ All scores valid (0-100 range)
 - ✅ Health metrics accurately reflect system state
 - ✅ Dashboards and alerts can be trusted
@@ -364,6 +386,7 @@ All nodes maintain correct status classification:
 ### Mathematical Correctness
 
 **Weight distribution (now balanced):**
+
 - **Critical factors (65%):** Sync (25%) + Dependency (20%) + Coverage (20%)
 - **Integrity factor (10%):** Integrity Score (10%)
 - **Metadata factors (25%):** Freshness (15%) + Agents (10%)
@@ -414,11 +437,11 @@ $ diff <(cat docs/test-evidence/review-3314207411/before-gdd-health.json | jq -r
 
 ## Files Modified
 
-| File | Lines Changed | Type | Impact |
-|------|---------------|------|--------|
-| `scripts/score-gdd-health.js` | +4/-2 | 🐛 Bug fix | Corrected weight calculation |
-| `gdd-health.json` | Regenerated | 🔄 Artifact | Scores corrected (104 → 99 for affected nodes) |
-| `docs/system-health.md` | Regenerated | 🔄 Artifact | Report updated with correct scores |
+| File                          | Lines Changed | Type        | Impact                                         |
+| ----------------------------- | ------------- | ----------- | ---------------------------------------------- |
+| `scripts/score-gdd-health.js` | +4/-2         | 🐛 Bug fix  | Corrected weight calculation                   |
+| `gdd-health.json`             | Regenerated   | 🔄 Artifact | Scores corrected (104 → 99 for affected nodes) |
+| `docs/system-health.md`       | Regenerated   | 🔄 Artifact | Report updated with correct scores             |
 
 **Total code changes:** 6 lines (4 additions, 2 deletions)
 
@@ -479,6 +502,7 @@ diff gdd-health.json docs/test-evidence/review-3314207411/after-gdd-health.json 
 **CodeRabbit Review #3314207411:** 1/1 Major issue fixed with architectural solution
 
 **Quality Level:** MAXIMUM
+
 - ✅ Root cause identified and fixed (weight sum error)
 - ✅ Safety mechanism added (clamping)
 - ✅ Documentation updated
@@ -489,12 +513,14 @@ diff gdd-health.json docs/test-evidence/review-3314207411/after-gdd-health.json 
 - ✅ Production-ready
 
 **Impact:**
+
 - 7 nodes corrected from invalid scores (104 → 99)
 - Average score adjusted from 98.8 → 93.8 (more accurate)
 - All nodes remain "healthy" (≥80)
 - Health metrics now trustworthy for dashboards and alerts
 
 **Next Steps:**
+
 1. ✅ Commit changes
 2. ✅ Push to PR #499
 3. ⏳ Verify CI/CD passes

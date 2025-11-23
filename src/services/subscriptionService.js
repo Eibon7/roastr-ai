@@ -69,7 +69,7 @@ async function getUserUsage(userId) {
  */
 async function processSubscriptionUpdate(subscription) {
   const customerId = subscription.customer;
-  
+
   try {
     // 1. Find user by customer ID
     const { data: userSub, error: findError } = await supabaseServiceClient
@@ -87,15 +87,15 @@ async function processSubscriptionUpdate(subscription) {
 
     // 2. Determine new plan from subscription
     const newPlan = await determinePlanFromSubscription(subscription);
-    
+
     // 3. Check if this is a plan change
     const isPlanChange = oldPlan !== newPlan;
-    
+
     // 4. Validate plan change if needed
     if (isPlanChange && subscription.status === 'active') {
       const usage = await getUserUsage(userId);
       const validation = await isChangeAllowed(oldPlan, newPlan, usage);
-      
+
       if (!validation.allowed) {
         logger.warn('Plan change not allowed:', {
           userId,
@@ -103,7 +103,7 @@ async function processSubscriptionUpdate(subscription) {
           newPlan,
           reason: validation.reason
         });
-        
+
         // Create notification about blocked change
         await notificationService.createPlanChangeBlockedNotification(userId, {
           oldPlan,
@@ -111,7 +111,7 @@ async function processSubscriptionUpdate(subscription) {
           reason: validation.reason,
           warnings: validation.warnings
         });
-        
+
         return {
           success: false,
           reason: validation.reason,
@@ -163,7 +163,6 @@ async function processSubscriptionUpdate(subscription) {
       newPlan,
       status: subscription.status
     };
-
   } catch (error) {
     logger.error('Error processing subscription update:', error);
     throw error;
@@ -181,7 +180,7 @@ async function determinePlanFromSubscription(subscription) {
   }
 
   const price = subscription.items.data[0].price;
-  
+
   // Try to get plan from price lookup key
   if (price.lookup_key) {
     const plan = getPlanByLookupKey(price.lookup_key);
@@ -192,8 +191,8 @@ async function determinePlanFromSubscription(subscription) {
   try {
     const stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
     const prices = await stripeWrapper.prices.list({ limit: 100 });
-    const priceData = prices.data.find(p => p.id === price.id);
-    
+    const priceData = prices.data.find((p) => p.id === price.id);
+
     if (priceData?.lookup_key) {
       const plan = getPlanByLookupKey(priceData.lookup_key);
       if (plan) return plan;
@@ -219,13 +218,14 @@ async function updateUserSubscription(userId, data) {
         plan: data.plan,
         status: data.status,
         stripe_subscription_id: data.subscriptionId,
-        current_period_start: data.currentPeriodStart ? 
-          new Date(data.currentPeriodStart * 1000).toISOString() : null,
-        current_period_end: data.currentPeriodEnd ? 
-          new Date(data.currentPeriodEnd * 1000).toISOString() : null,
+        current_period_start: data.currentPeriodStart
+          ? new Date(data.currentPeriodStart * 1000).toISOString()
+          : null,
+        current_period_end: data.currentPeriodEnd
+          ? new Date(data.currentPeriodEnd * 1000).toISOString()
+          : null,
         cancel_at_period_end: data.cancelAtPeriodEnd,
-        trial_end: data.trialEnd ? 
-          new Date(data.trialEnd * 1000).toISOString() : null,
+        trial_end: data.trialEnd ? new Date(data.trialEnd * 1000).toISOString() : null,
         updated_at: new Date().toISOString()
       })
       .eq('user_id', userId);
@@ -267,7 +267,7 @@ async function logSubscriptionChange(userId, changeData) {
     // Log detailed plan change if plans are different
     if (changeData.oldPlan !== changeData.newPlan) {
       const usage = await getUserUsage(userId);
-      
+
       await auditService.logPlanChange({
         userId,
         fromPlan: changeData.oldPlan,
@@ -303,10 +303,10 @@ async function handlePlanChangeNotifications(userId, oldPlan, newPlan, customerI
     const stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
     const customer = await stripeWrapper.customers.retrieve(customerId);
     const userEmail = customer.email;
-    
+
     const oldPlanFeatures = getPlanFeatures(oldPlan);
     const newPlanFeatures = getPlanFeatures(newPlan);
-    
+
     // Send email notification
     await emailService.sendPlanChangeNotification(userEmail, {
       userName: customer.name || userEmail.split('@')[0],
@@ -355,7 +355,7 @@ async function handleSubscriptionStatusChange(userId, status, plan) {
     };
 
     const message = statusMessages[status] || `Your subscription status is: ${status}`;
-    
+
     await notificationService.createSubscriptionStatusNotification(userId, {
       status,
       message,
@@ -398,21 +398,18 @@ function getPlanTier(planId) {
  * @param {boolean} options.partialFailureAllowed - If true, allow partial updates (default: false)
  */
 async function applyPlanLimits(userId, plan, status, options = {}) {
-  const { 
-    failSilently = false, 
-    partialFailureAllowed = false 
-  } = options;
+  const { failSilently = false, partialFailureAllowed = false } = options;
 
   const planFeatures = getPlanFeatures(plan) || getPlanFeatures('starter_trial');
   const isActive = status === 'active';
   const limits = isActive ? planFeatures.limits : getPlanFeatures('starter_trial').limits;
-  
+
   // Track what operations succeeded for rollback purposes
   const operationsCompleted = {
     userUpdate: false,
     organizationUpdate: false
   };
-  
+
   try {
     // Validate inputs
     if (!userId || !plan || !status) {
@@ -448,13 +445,15 @@ async function applyPlanLimits(userId, plan, status, options = {}) {
 
       operationsCompleted.userUpdate = true;
       logger.debug('User plan updated successfully:', { userId, plan });
-
     } catch (userUpdateError) {
       if (!partialFailureAllowed) {
         throw userUpdateError;
       }
-      
-      logger.error('User update failed but continuing due to partialFailureAllowed:', userUpdateError.message);
+
+      logger.error(
+        'User update failed but continuing due to partialFailureAllowed:',
+        userUpdateError.message
+      );
     }
 
     // 2. Update organization limits if user is owner
@@ -484,28 +483,34 @@ async function applyPlanLimits(userId, plan, status, options = {}) {
           .eq('id', orgData.id);
 
         if (orgUpdateError) {
-          const error = new Error(`Failed to update organization limits: ${orgUpdateError.message}`);
+          const error = new Error(
+            `Failed to update organization limits: ${orgUpdateError.message}`
+          );
           error.code = 'ORGANIZATION_UPDATE_FAILED';
           error.originalError = orgUpdateError;
           error.organizationId = orgData.id;
-          
+
           if (!partialFailureAllowed) {
             throw error;
           }
-          
-          logger.error('Organization update failed but continuing due to partialFailureAllowed:', error.message);
+
+          logger.error(
+            'Organization update failed but continuing due to partialFailureAllowed:',
+            error.message
+          );
         } else {
           operationsCompleted.organizationUpdate = true;
-          logger.debug('Organization limits updated successfully:', { 
-            organizationId: orgData.id, 
-            plan, 
-            monthlyLimit: limits.roastsPerMonth 
+          logger.debug('Organization limits updated successfully:', {
+            organizationId: orgData.id,
+            plan,
+            monthlyLimit: limits.roastsPerMonth
           });
         }
       } else if (!orgData) {
-        logger.info('No organization found for user, skipping organization limit update:', { userId });
+        logger.info('No organization found for user, skipping organization limit update:', {
+          userId
+        });
       }
-
     } catch (orgError) {
       if (!partialFailureAllowed) {
         // If user update succeeded but org update failed, we have an inconsistent state
@@ -515,15 +520,18 @@ async function applyPlanLimits(userId, plan, status, options = {}) {
             plan,
             error: orgError.message
           });
-          
+
           // Add metadata to the error for better handling upstream
           orgError.inconsistentState = true;
           orgError.operationsCompleted = operationsCompleted;
         }
         throw orgError;
       }
-      
-      logger.error('Organization update failed but continuing due to partialFailureAllowed:', orgError.message);
+
+      logger.error(
+        'Organization update failed but continuing due to partialFailureAllowed:',
+        orgError.message
+      );
     }
 
     const successMessage = 'Plan limits applied successfully';
@@ -538,7 +546,6 @@ async function applyPlanLimits(userId, plan, status, options = {}) {
 
     logger.info(successMessage, result);
     return result;
-
   } catch (error) {
     const errorContext = {
       userId,
@@ -551,11 +558,11 @@ async function applyPlanLimits(userId, plan, status, options = {}) {
     };
 
     logger.error('Failed to apply plan limits:', errorContext);
-    
+
     // Enhanced error with context for better upstream handling
     error.context = errorContext;
     error.operationsCompleted = operationsCompleted;
-    
+
     if (failSilently) {
       logger.warn('Plan limits application failed but configured to fail silently:', errorContext);
       return {
@@ -564,7 +571,7 @@ async function applyPlanLimits(userId, plan, status, options = {}) {
         error: error.message
       };
     }
-    
+
     throw error;
   }
 }

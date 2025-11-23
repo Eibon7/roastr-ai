@@ -1,6 +1,6 @@
 /**
  * Simple Backend Integration Test
- * 
+ *
  * Basic test to validate integration test infrastructure works
  * Run with: INTEGRATION_TEST_MODE=backend npm run test:integration-backend
  */
@@ -43,12 +43,12 @@ describe('Backend Integration - Infrastructure', () => {
 
   test('should support async operations', async () => {
     // Test async/await support with tolerance for CI timing variations
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-    
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
     const start = Date.now();
     await delay(10);
     const elapsed = Date.now() - start;
-    
+
     // Allow for timing variations in CI environments (±2ms tolerance)
     expect(elapsed).toBeGreaterThanOrEqual(8);
     expect(elapsed).toBeLessThan(100); // Reasonable upper bound

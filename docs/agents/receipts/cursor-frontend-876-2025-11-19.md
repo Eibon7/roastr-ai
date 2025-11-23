@@ -21,6 +21,7 @@ Develop the admin UI for managing dynamic roast tones, enabling administrators t
 **File:** `frontend/src/pages/admin/RoastTones.jsx` (370+ lines)
 
 **Features:**
+
 - ✅ Admin authentication check (redirect non-admin)
 - ✅ Load tones from `/api/admin/tones`
 - ✅ Header with "Nuevo Tono" button
@@ -45,6 +46,7 @@ Develop the admin UI for managing dynamic roast tones, enabling administrators t
 **File:** `frontend/src/components/admin/TonesList.jsx` (210+ lines)
 
 **Features:**
+
 - ✅ Table display with columns:
   - Drag handle (reordering)
   - Name (display_name + ID)
@@ -70,6 +72,7 @@ Develop the admin UI for managing dynamic roast tones, enabling administrators t
 **File:** `frontend/src/components/admin/ToneEditor.jsx` (680+ lines)
 
 **Features:**
+
 - ✅ Full-screen modal with backdrop
 - ✅ Create mode (empty form)
 - ✅ Edit mode (pre-filled form)
@@ -100,6 +103,7 @@ Develop the admin UI for managing dynamic roast tones, enabling administrators t
 ### 4. Router Integration
 
 **Modified Files:**
+
 - ✅ `frontend/src/App.js`
   - Imported `RoastTones` component
   - Added route: `/admin/roast-tones`
@@ -115,14 +119,14 @@ Develop the admin UI for managing dynamic roast tones, enabling administrators t
 
 ## 📊 Code Statistics
 
-| Metric | Value |
-|--------|-------|
-| **Files Created** | 3 |
-| **Files Modified** | 2 |
-| **Total Lines** | 1,272 |
-| **Components** | 3 (1 page, 2 components) |
-| **Routes Added** | 1 |
-| **API Integrations** | 8 endpoints |
+| Metric               | Value                    |
+| -------------------- | ------------------------ |
+| **Files Created**    | 3                        |
+| **Files Modified**   | 2                        |
+| **Total Lines**      | 1,272                    |
+| **Components**       | 3 (1 page, 2 components) |
+| **Routes Added**     | 1                        |
+| **API Integrations** | 8 endpoints              |
 
 ---
 
@@ -218,10 +222,10 @@ Develop the admin UI for managing dynamic roast tones, enabling administrators t
 
 ## 📋 Acceptance Criteria
 
-| AC | Description | Status |
-|----|-------------|--------|
+| AC      | Description                                   | Status      |
+| ------- | --------------------------------------------- | ----------- |
 | **AC6** | Panel admin en `/admin/roast-tones` operativo | ✅ COMPLETE |
-| **AC7** | Editor multiidioma (ES/EN) funcional | ✅ COMPLETE |
+| **AC7** | Editor multiidioma (ES/EN) funcional          | ✅ COMPLETE |
 
 **Frontend AC:** 2/2 ✅ (100%)
 
@@ -285,6 +289,7 @@ npm run build
 ### Backend API
 
 **Endpoints Used:**
+
 - ✅ `GET /api/admin/tones` - Load all tones
 - ✅ `GET /api/admin/tones/:id` - Get tone by ID
 - ✅ `POST /api/admin/tones` - Create tone
@@ -295,12 +300,14 @@ npm run build
 - ✅ `PUT /api/admin/tones/reorder` - Reorder tones
 
 **Auth:**
+
 - ✅ Uses `apiClient` (automatically includes JWT)
 - ✅ Handles 401 errors (redirects to login)
 
 ### Existing Components
 
 **Reused:**
+
 - ✅ `AdminLayout` (sidebar + header)
 - ✅ `apiClient` (HTTP client)
 - ✅ `authHelpers` (session management)
@@ -311,16 +318,16 @@ npm run build
 
 ## ⏱️ Time Spent
 
-| Phase | Time |
-|-------|------|
-| **Planning** | 0.5h |
-| **RoastTones Page** | 1.5h |
-| **TonesList Component** | 1h |
-| **ToneEditor Modal** | 2.5h |
-| **Router Integration** | 0.5h |
-| **Testing** | 1h |
-| **Documentation** | 0.5h |
-| **TOTAL** | **7.5h** |
+| Phase                   | Time     |
+| ----------------------- | -------- |
+| **Planning**            | 0.5h     |
+| **RoastTones Page**     | 1.5h     |
+| **TonesList Component** | 1h       |
+| **ToneEditor Modal**    | 2.5h     |
+| **Router Integration**  | 0.5h     |
+| **Testing**             | 1h       |
+| **Documentation**       | 0.5h     |
+| **TOTAL**               | **7.5h** |
 
 ---
 
@@ -353,6 +360,7 @@ npm run build
 **Approval:** Ready for merge
 
 **Related Receipts:**
+
 - `cursor-backend-876-2025-11-18.md` (Backend)
 
 ---
@@ -360,4 +368,3 @@ npm run build
 **Updated:** 2025-11-19  
 **Issue:** #876  
 **PR:** Pending final commit
-

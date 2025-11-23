@@ -101,7 +101,9 @@ describe('Transparency Settings API (Issue #193)', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.transparency_mode).toBe('signature');
-      expect(mockSupabaseServiceClient.update).toHaveBeenCalledWith({ transparency_mode: 'signature' });
+      expect(mockSupabaseServiceClient.update).toHaveBeenCalledWith({
+        transparency_mode: 'signature'
+      });
     });
 
     it('should successfully update transparency mode to creative', async () => {
@@ -144,7 +146,9 @@ describe('Transparency Settings API (Issue #193)', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Invalid transparency mode. Must be one of: bio, signature, creative');
+      expect(response.body.error).toBe(
+        'Invalid transparency mode. Must be one of: bio, signature, creative'
+      );
     });
 
     it('should reject missing mode parameter', async () => {
@@ -155,7 +159,9 @@ describe('Transparency Settings API (Issue #193)', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Invalid transparency mode. Must be one of: bio, signature, creative');
+      expect(response.body.error).toBe(
+        'Invalid transparency mode. Must be one of: bio, signature, creative'
+      );
     });
 
     it('should handle database errors gracefully', async () => {
@@ -189,7 +195,9 @@ describe('Transparency Settings API (Issue #193)', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.transparency_mode).toBe('bio');
-      expect(response.body.data.bio_text).toBe('Algunos mensajes de hate son respondidos automáticamente por @Roastr');
+      expect(response.body.data.bio_text).toBe(
+        'Algunos mensajes de hate son respondidos automáticamente por @Roastr'
+      );
     });
 
     it('should return current transparency mode (signature)', async () => {
@@ -237,7 +245,9 @@ describe('Transparency Settings API (Issue #193)', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.transparency_mode).toBe('bio');
-      expect(response.body.data.bio_text).toBe('Algunos mensajes de hate son respondidos automáticamente por @Roastr');
+      expect(response.body.data.bio_text).toBe(
+        'Algunos mensajes de hate son respondidos automáticamente por @Roastr'
+      );
     });
 
     it('should handle database errors gracefully', async () => {
@@ -282,7 +292,9 @@ describe('Transparency Settings API (Issue #193)', () => {
         .set('Authorization', 'Bearer fake-token');
 
       // Bio text should be available for copy functionality
-      expect(response.body.data.bio_text).toBe('Algunos mensajes de hate son respondidos automáticamente por @Roastr');
+      expect(response.body.data.bio_text).toBe(
+        'Algunos mensajes de hate son respondidos automáticamente por @Roastr'
+      );
     });
 
     it('should validate that mode changes are reflected immediately', async () => {
@@ -315,7 +327,7 @@ describe('Transparency Settings API (Issue #193)', () => {
 
     it('should handle all three transparency modes as specified in Issue #193', async () => {
       const modes = ['bio', 'signature', 'creative'];
-      
+
       for (const mode of modes) {
         mockSupabaseServiceClient.single.mockResolvedValueOnce({
           data: { transparency_mode: mode },

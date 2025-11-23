@@ -17,4 +17,3 @@ export function SkeletonLoader({ rows = 3, height = 80, className = '' }) {
     </div>
   );
 }
-

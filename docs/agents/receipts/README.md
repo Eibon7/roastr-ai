@@ -5,6 +5,7 @@ This directory contains **proof of agent invocation** for every PR that requires
 ## Purpose
 
 Receipts serve as:
+
 1. **Audit trail** - Track which agents were invoked and why
 2. **Documentation** - Record decisions and artifacts produced
 3. **Enforcement** - CI validates that all required agents have receipts
@@ -18,6 +19,7 @@ Receipts serve as:
 **Template:** `_TEMPLATE.md`
 
 Used when agent was successfully invoked. Must include:
+
 - Trigger reason (label, diff, condition)
 - Decisions made
 - Artifacts produced
@@ -32,6 +34,7 @@ Used when agent was successfully invoked. Must include:
 **Template:** `_TEMPLATE-SKIPPED.md`
 
 Used when agent matched triggers but was intentionally NOT invoked. Must include:
+
 - Why agent could apply
 - Detailed skip reason
 - Responsible party
@@ -45,6 +48,7 @@ Used when agent matched triggers but was intentionally NOT invoked. Must include
 ### For Orchestrator
 
 1. **Identify required agents:**
+
    ```bash
    # Based on labels
    gh issue view <number> --json labels
@@ -71,6 +75,7 @@ Used when agent matched triggers but was intentionally NOT invoked. Must include
 ### For CI Validation
 
 The script `scripts/ci/require-agent-receipts.js`:
+
 1. Reads `agents/manifest.yaml`
 2. Discovers changed files in PR
 3. Matches against agent triggers
@@ -84,16 +89,19 @@ The script `scripts/ci/require-agent-receipts.js`:
 **PR #600:** New login UI
 
 **Changed files:**
+
 - `frontend/components/Login.jsx`
 - `frontend/styles/login.css`
 - `tests/e2e/login.spec.js`
 
 **Required agents:**
+
 - `FrontendDev` (diff: `*.jsx`, `*.css`)
 - `TestEngineer` (diff: `tests/`)
 - `UIDesigner` (label: `area:ui`)
 
 **Receipts:**
+
 - `600-FrontendDev.md` ✅
 - `600-TestEngineer.md` ✅
 - `600-UIDesigner-SKIPPED.md` (reason: "Design already approved in Issue #595")
@@ -103,14 +111,17 @@ The script `scripts/ci/require-agent-receipts.js`:
 **PR #601:** Fix cost control bug
 
 **Changed files:**
+
 - `src/services/costControl.js`
 - `tests/unit/services/costControl.test.js`
 
 **Required agents:**
+
 - `TestEngineer` (diff: `tests/`)
 - `Guardian` (diff: `costControl.js` - sensitive file)
 
 **Receipts:**
+
 - `601-TestEngineer.md` ✅
 - `601-Guardian.md` ✅ (exit code 0, no violations)
 
@@ -119,30 +130,39 @@ The script `scripts/ci/require-agent-receipts.js`:
 **PR #602:** Update integration guide
 
 **Changed files:**
+
 - `docs/INTEGRATIONS.md`
 
 **Required agents:**
+
 - None (docs-only change, no agent triggers match)
 
 **Receipts:**
+
 - None needed (CI passes with 0 required agents)
 
 ## Naming Convention
 
 ### Normal Receipt
+
 ```
 <pr-number>-<AgentName>.md
 ```
+
 Examples:
+
 - `584-Orchestrator.md`
 - `584-TestEngineer.md`
 - `584-Guardian.md`
 
 ### Skipped Receipt
+
 ```
 <pr-number>-<AgentName>-SKIPPED.md
 ```
+
 Examples:
+
 - `584-WhimsyInjector-SKIPPED.md`
 - `584-UIDesigner-SKIPPED.md`
 
@@ -162,10 +182,12 @@ GitHub Action job (`.github/workflows/agent-receipts.yml`):
 ```
 
 **Exit codes:**
+
 - `0` - All required agents have receipts ✅
 - `1` - Missing receipts ❌ (PR cannot merge)
 
 **Output:**
+
 ```
 ✓ Required agents: Orchestrator, TestEngineer, Guardian
 ✓ Found receipt: docs/agents/receipts/584-Orchestrator.md

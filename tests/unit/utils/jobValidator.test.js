@@ -1,6 +1,6 @@
 /**
  * Job Validator Tests
- * 
+ *
  * Tests for the centralized job validation system to ensure
  * robust validation across all worker types.
  */
@@ -28,20 +28,20 @@ describe('JobValidator', () => {
         comment_id: 'comment-123'
       };
 
-      expect(() => JobValidator.validateGenerateReplyJob(invalidJob))
-        .toThrow(ValidationError);
+      expect(() => JobValidator.validateGenerateReplyJob(invalidJob)).toThrow(ValidationError);
     });
 
     test('should reject job with missing required fields', () => {
       const invalidJob = {
         payload: {
-          comment_id: 'comment-123',
+          comment_id: 'comment-123'
           // Missing organization_id, platform, original_text
         }
       };
 
-      expect(() => JobValidator.validateGenerateReplyJob(invalidJob))
-        .toThrow('Missing required fields: organization_id, platform, original_text');
+      expect(() => JobValidator.validateGenerateReplyJob(invalidJob)).toThrow(
+        'Missing required fields: organization_id, platform, original_text'
+      );
     });
 
     test('should reject job with invalid platform', () => {
@@ -54,8 +54,7 @@ describe('JobValidator', () => {
         }
       };
 
-      expect(() => JobValidator.validateGenerateReplyJob(invalidJob))
-        .toThrow('Invalid platform');
+      expect(() => JobValidator.validateGenerateReplyJob(invalidJob)).toThrow('Invalid platform');
     });
 
     test('should reject job with invalid toxicity score', () => {
@@ -69,8 +68,9 @@ describe('JobValidator', () => {
         }
       };
 
-      expect(() => JobValidator.validateGenerateReplyJob(invalidJob))
-        .toThrow('toxicity_score must be a number between 0 and 1');
+      expect(() => JobValidator.validateGenerateReplyJob(invalidJob)).toThrow(
+        'toxicity_score must be a number between 0 and 1'
+      );
     });
 
     test('should reject job with empty text', () => {
@@ -83,8 +83,9 @@ describe('JobValidator', () => {
         }
       };
 
-      expect(() => JobValidator.validateGenerateReplyJob(invalidJob))
-        .toThrow('original_text cannot be empty');
+      expect(() => JobValidator.validateGenerateReplyJob(invalidJob)).toThrow(
+        'original_text cannot be empty'
+      );
     });
 
     test('should reject job with text too long', () => {
@@ -97,8 +98,9 @@ describe('JobValidator', () => {
         }
       };
 
-      expect(() => JobValidator.validateGenerateReplyJob(invalidJob))
-        .toThrow('original_text cannot exceed 10,000 characters');
+      expect(() => JobValidator.validateGenerateReplyJob(invalidJob)).toThrow(
+        'original_text cannot exceed 10,000 characters'
+      );
     });
   });
 
@@ -126,8 +128,9 @@ describe('JobValidator', () => {
         // Missing shield_mode: true
       };
 
-      expect(() => JobValidator.validateShieldActionJob(invalidJob))
-        .toThrow('Shield action job must be in Shield mode');
+      expect(() => JobValidator.validateShieldActionJob(invalidJob)).toThrow(
+        'Shield action job must be in Shield mode'
+      );
     });
 
     test('should reject job with invalid action', () => {
@@ -140,8 +143,7 @@ describe('JobValidator', () => {
         shield_mode: true
       };
 
-      expect(() => JobValidator.validateShieldActionJob(invalidJob))
-        .toThrow('Invalid action');
+      expect(() => JobValidator.validateShieldActionJob(invalidJob)).toThrow('Invalid action');
     });
   });
 
@@ -212,8 +214,9 @@ describe('JobValidator', () => {
     test('should reject unknown worker type', () => {
       const job = { payload: {} };
 
-      expect(() => JobValidator.validateJob('unknown_worker', job))
-        .toThrow('Unknown worker type: unknown_worker');
+      expect(() => JobValidator.validateJob('unknown_worker', job)).toThrow(
+        'Unknown worker type: unknown_worker'
+      );
     });
   });
 
@@ -249,18 +252,17 @@ describe('JobValidator', () => {
 
   describe('Edge Cases', () => {
     test('should handle null job', () => {
-      expect(() => JobValidator.validateGenerateReplyJob(null))
-        .toThrow('Job is required');
+      expect(() => JobValidator.validateGenerateReplyJob(null)).toThrow('Job is required');
     });
 
     test('should handle undefined job', () => {
-      expect(() => JobValidator.validateGenerateReplyJob(undefined))
-        .toThrow('Job is required');
+      expect(() => JobValidator.validateGenerateReplyJob(undefined)).toThrow('Job is required');
     });
 
     test('should handle job with null payload', () => {
-      expect(() => JobValidator.validateGenerateReplyJob({ payload: null }))
-        .toThrow('Job payload is required');
+      expect(() => JobValidator.validateGenerateReplyJob({ payload: null })).toThrow(
+        'Job payload is required'
+      );
     });
 
     test('should handle very long field values', () => {
@@ -291,9 +293,19 @@ describe('JobValidator', () => {
     });
 
     test('should handle all valid platforms', () => {
-      const platforms = ['twitter', 'instagram', 'facebook', 'youtube', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
-      
-      platforms.forEach(platform => {
+      const platforms = [
+        'twitter',
+        'instagram',
+        'facebook',
+        'youtube',
+        'discord',
+        'twitch',
+        'reddit',
+        'tiktok',
+        'bluesky'
+      ];
+
+      platforms.forEach((platform) => {
         const job = {
           payload: {
             comment_id: 'comment-123',

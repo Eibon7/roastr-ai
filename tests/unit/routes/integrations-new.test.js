@@ -10,8 +10,7 @@ describe('New Integration Routes', () => {
 
   describe('GET /api/integrations/platforms', () => {
     it('should return all supported platforms', async () => {
-      const response = await request(app)
-        .get('/api/integrations/platforms');
+      const response = await request(app).get('/api/integrations/platforms');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -19,14 +18,22 @@ describe('New Integration Routes', () => {
       expect(response.body.data.count).toBe(7);
 
       // Verify required platforms are included
-      const platformNames = response.body.data.platforms.map(p => p.name);
+      const platformNames = response.body.data.platforms.map((p) => p.name);
       expect(platformNames).toEqual(
-        expect.arrayContaining(['twitter', 'instagram', 'youtube', 'tiktok', 'linkedin', 'facebook', 'bluesky'])
+        expect.arrayContaining([
+          'twitter',
+          'instagram',
+          'youtube',
+          'tiktok',
+          'linkedin',
+          'facebook',
+          'bluesky'
+        ])
       );
 
       // Verify platform structure
       const platforms = response.body.data.platforms;
-      platforms.forEach(platform => {
+      platforms.forEach((platform) => {
         expect(platform).toHaveProperty('name');
         expect(platform).toHaveProperty('displayName');
         expect(platform).toHaveProperty('icon');
@@ -40,8 +47,7 @@ describe('New Integration Routes', () => {
 
   describe('GET /api/integrations/status', () => {
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get('/api/integrations/status');
+      const response = await request(app).get('/api/integrations/status');
 
       expect(response.status).toBe(401);
     });
@@ -58,7 +64,7 @@ describe('New Integration Routes', () => {
       expect(response.body.data.totalPlatforms).toBe(7);
 
       // All platforms should show disconnected status
-      response.body.data.integrations.forEach(integration => {
+      response.body.data.integrations.forEach((integration) => {
         expect(integration.status).toBe('disconnected');
         expect(integration.importedCount).toBe(0);
       });
@@ -111,7 +117,7 @@ describe('New Integration Routes', () => {
 
     it('should successfully connect to multiple platforms', async () => {
       const platforms = ['instagram', 'youtube', 'tiktok'];
-      
+
       for (const platform of platforms) {
         const response = await request(app)
           .post('/api/integrations/connect')
@@ -191,8 +197,7 @@ describe('New Integration Routes', () => {
 
   describe('GET /api/integrations/import/status/:platform', () => {
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get('/api/integrations/import/status/twitter');
+      const response = await request(app).get('/api/integrations/import/status/twitter');
 
       expect(response.status).toBe(401);
     });

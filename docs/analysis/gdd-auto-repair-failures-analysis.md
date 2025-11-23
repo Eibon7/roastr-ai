@@ -128,7 +128,7 @@ Maybe - First failure yes, retries no (with deduplication now in place).
 # In .github/workflows/gdd-repair.yml
 concurrency:
   group: gdd-repair-${{ github.head_ref }}
-  cancel-in-progress: false  # Wait instead of canceling
+  cancel-in-progress: false # Wait instead of canceling
 ```
 
 **Option B: Implement retry logic**

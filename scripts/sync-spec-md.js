@@ -95,7 +95,7 @@ class SpecSynchronizer {
       ``,
       `### 📦 Affected GDD Nodes`,
       ``,
-      ...nodes.map(node => `- [\`${node}\`](docs/nodes/${node}.md)`),
+      ...nodes.map((node) => `- [\`${node}\`](docs/nodes/${node}.md)`),
       ``,
       `### 📝 Changes`,
       ``,
@@ -111,7 +111,9 @@ class SpecSynchronizer {
       ``,
       `---`,
       ``
-    ].filter(line => line !== undefined).join('\n');
+    ]
+      .filter((line) => line !== undefined)
+      .join('\n');
 
     return entry;
   }
@@ -158,7 +160,6 @@ class SpecSynchronizer {
       }
 
       return true;
-
     } catch (error) {
       this.log(`Error updating spec.md: ${error.message}`, 'red');
       return false;
@@ -242,11 +243,12 @@ if (require.main === module) {
   const options = parseArgs();
   const synchronizer = new SpecSynchronizer(options);
 
-  synchronizer.sync()
-    .then(updated => {
+  synchronizer
+    .sync()
+    .then((updated) => {
       process.exit(updated ? 0 : 1);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error(`${colors.red}Fatal error: ${error.message}${colors.reset}`);
       process.exit(1);
     });

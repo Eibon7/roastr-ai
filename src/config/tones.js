@@ -21,19 +21,20 @@ const TONE_DEFINITIONS = Object.freeze({
     id: 'Canalla',
     name: 'Canalla',
     description: 'Directo y agresivo',
-    example: '"¿En serio? Ese comentario necesita una ambulancia porque acaba de sufrir un accidente cerebrovascular."'
+    example:
+      '"¿En serio? Ese comentario necesita una ambulancia porque acaba de sufrir un accidente cerebrovascular."'
   })
 });
 
 // Array of valid tone IDs (canonical form) - Frozen to prevent mutation
-const VALID_TONES = Object.freeze(Object.values(TONE_DEFINITIONS).map(tone => tone.id));
+const VALID_TONES = Object.freeze(Object.values(TONE_DEFINITIONS).map((tone) => tone.id));
 
 // Optimized tone normalization with minimal map and O(1) performance
 // Only include canonical forms to reduce memory footprint
 const TONE_MAP_CANONICAL = Object.freeze({
-  'flanders': 'Flanders',
-  'balanceado': 'Balanceado', 
-  'canalla': 'Canalla'
+  flanders: 'Flanders',
+  balanceado: 'Balanceado',
+  canalla: 'Canalla'
 });
 
 /**
@@ -46,14 +47,14 @@ function normalizeTone(tone) {
   if (!tone || typeof tone !== 'string') {
     return null;
   }
-  
+
   // Trim whitespace and convert to lowercase for single lookup
   const normalizedInput = tone.trim().toLowerCase();
-  
+
   if (!normalizedInput) {
     return null;
   }
-  
+
   // Single O(1) lookup in optimized map
   return TONE_MAP_CANONICAL[normalizedInput] || null;
 }

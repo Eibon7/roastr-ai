@@ -45,6 +45,7 @@ Increase test coverage for `src/routes/analytics.js` to meet minimum 65% thresho
    - Error handling
 
 **Current Test Status:**
+
 - ✅ 4/13 tests passing
 - ❌ 9/13 tests failing (Supabase mock issues)
 
@@ -55,16 +56,20 @@ Increase test coverage for `src/routes/analytics.js` to meet minimum 65% thresho
 ### Mock Complexity Challenges
 
 **Root Cause:** Analytics routes use extremely complex Supabase query patterns:
+
 - 5+ levels of method chaining
 - Nested RPC calls
 - Complex aggregations and transformations
 - Conditional query building
 
 **Example problematic pattern:**
+
 ```javascript
 // From analytics.js
 const { data } = await supabase
-  .rpc('get_config_performance_stats', { /* params */ })
+  .rpc('get_config_performance_stats', {
+    /* params */
+  })
   .select('*')
   .eq('organization_id', orgId)
   .gte('created_at', startDate)
@@ -72,6 +77,7 @@ const { data } = await supabase
 ```
 
 **Issues with current mocks:**
+
 1. RPC calls return different structures than SELECT queries
 2. Chained `.eq()` and `.gte()` calls difficult to mock accurately
 3. Aggregation functions return different shapes
@@ -80,6 +86,7 @@ const { data } = await supabase
 ### Failing Tests Breakdown
 
 **9 tests failing due to:**
+
 - Status code mismatches (expect 500, receive 404)
 - Mock return structures don't match actual Supabase responses
 - Query builder chains incomplete
@@ -131,36 +138,38 @@ File: src/routes/analytics.js
 **Options:**
 
 A. **Service Refactoring (RECOMMENDED)**
-   - Extract data fetching into separate service layer
-   - Separate business logic from route handlers
-   - Create testable interfaces
 
-   ```
-   Before:
-   router.get('/endpoint', async (req, res) => {
-     const { data } = await supabase.rpc(...)
-     // transform data
-     res.json(transformed)
-   })
+- Extract data fetching into separate service layer
+- Separate business logic from route handlers
+- Create testable interfaces
 
-   After:
-   // services/analyticsService.js
-   class AnalyticsService {
-     async getConfigPerformance(params) { /* data fetching */ }
-   }
+```
+Before:
+router.get('/endpoint', async (req, res) => {
+  const { data } = await supabase.rpc(...)
+  // transform data
+  res.json(transformed)
+})
 
-   // routes/analytics.js
-   router.get('/endpoint', async (req, res) => {
-     const data = await analyticsService.getConfigPerformance(params)
-     res.json(data)
-   })
-   ```
+After:
+// services/analyticsService.js
+class AnalyticsService {
+  async getConfigPerformance(params) { /* data fetching */ }
+}
+
+// routes/analytics.js
+router.get('/endpoint', async (req, res) => {
+  const data = await analyticsService.getConfigPerformance(params)
+  res.json(data)
+})
+```
 
 B. **Integration Testing Approach**
-   - Set up test database
-   - Use real Supabase queries
-   - Test actual data flows
-   - Higher confidence, but slower execution
+
+- Set up test database
+- Use real Supabase queries
+- Test actual data flows
+- Higher confidence, but slower execution
 
 ### Medium-term (P2)
 
@@ -279,18 +288,21 @@ B. **Integration Testing Approach**
 ## 📊 Final Metrics
 
 **Test Suite:**
+
 - Total tests: 13
 - Passing: 4/13 (31%)
 - Failing: 9/13 (69%)
 - Execution time: ~3.5s
 
 **Coverage:**
+
 - Target: 65%
 - Achieved: 59%
 - Gap: -6%
 - Status: ⚠️ **BELOW TARGET**
 
 **Root Cause:**
+
 - Architectural complexity
 - Insufficient separation of concerns
 - Supabase mocking limitations
@@ -326,4 +338,3 @@ B. **Integration Testing Approach**
 **Status:** ⚠️ **INCOMPLETE** - Requires refactoring
 
 **Recommendation:** Do NOT merge. Refactor analytics module first, then retry.
-

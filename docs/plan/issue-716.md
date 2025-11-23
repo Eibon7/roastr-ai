@@ -12,6 +12,7 @@
 ### Current State Analysis
 
 **✅ Existing Assets:**
+
 - Script: `scripts/guardian-gdd.js` (654 lines)
 - Documentation: `docs/nodes/guardian.md` (8,794 lines)
 - Existing tests:
@@ -25,6 +26,7 @@
 - Test fixtures: Limited (needs expansion)
 
 **❌ Gaps Identified:**
+
 1. Current unit test coverage: ~40% (target: ≥80%)
 2. Missing CLI flag tests (--full, --ci, --auto-fix, --report, --help)
 3. Missing edge case coverage:
@@ -41,6 +43,7 @@
 6. No GUARDIAN-USAGE.md documentation
 
 **📊 Test Coverage Gap:**
+
 ```
 Current: ~40% coverage (estimated)
 Target:  ≥80% coverage
@@ -59,18 +62,22 @@ Uncovered Functions:
 ### Dependencies Analysis
 
 **GDD Nodes:**
+
 - `docs/nodes/guardian.md` - Guardian rules and validation logic
 
 **Related Scripts:**
+
 - `scripts/notify-guardian.js` - Email notification (Phase 17)
 - `scripts/ci/require-agent-receipts.js` - CI integration pattern
 
 **Test Patterns to Follow:**
+
 - `tests/unit/scripts/validate-completion.test.js` - Script execution testing
 - `tests/unit/scripts/require-agent-receipts.test.js` - CLI flag testing
 - `tests/integration/guardian-api.test.js` - Integration testing pattern
 
 **CodeRabbit Lessons:**
+
 - Read `docs/patterns/coderabbit-lessons.md`
 - Apply TDD: Write tests BEFORE implementation
 - Cover happy path + error cases + edge cases
@@ -153,6 +160,7 @@ tests/
 #### 1. Unit Tests: Configuration (Target: 100% coverage)
 
 **Function: `loadConfig()`**
+
 - ✅ Test 1: Load valid configuration successfully
 - ✅ Test 2: Handle missing config file (ENOENT)
 - ✅ Test 3: Handle malformed YAML (parse error)
@@ -160,16 +168,18 @@ tests/
 - ✅ Test 5: Handle missing ignore patterns gracefully
 
 **Function: `shouldIgnoreFile(filePath)`**
-- ✅ Test 1: Ignore Windows system paths (C:\Windows\**)
-- ✅ Test 2: Ignore test fixtures (docs/guardian/cases/**)
-- ✅ Test 3: Ignore temporary files (**/*.tmp)
-- ✅ Test 4: Allow normal files (src/**/*.js)
+
+- ✅ Test 1: Ignore Windows system paths (C:\Windows\*\*)
+- ✅ Test 2: Ignore test fixtures (docs/guardian/cases/\*\*)
+- ✅ Test 3: Ignore temporary files (\*_/_.tmp)
+- ✅ Test 4: Allow normal files (src/\*_/_.js)
 - ✅ Test 5: Match glob patterns with matchBase option
 - ✅ Test 6: Match dotfiles (.**/.gdd-backups/**)
 
 #### 2. Unit Tests: Git Operations (Target: 100% coverage)
 
 **Function: `getGitDiff()`**
+
 - ✅ Test 1: Detect staged changes (M1 fix - existing)
 - ✅ Test 2: Detect unstaged changes (M1 fix - existing)
 - ✅ Test 3: Return empty array when no changes (existing)
@@ -179,6 +189,7 @@ tests/
 - ✅ Test 7: Update changesSummary.total_files correctly
 
 **Function: `getFileDiff(file)`**
+
 - ✅ Test 1: Count added lines excluding +++ (M2 fix - existing)
 - ✅ Test 2: Count removed lines excluding --- (M2 fix - existing)
 - ✅ Test 3: Handle empty diffs (existing)
@@ -189,8 +200,9 @@ tests/
 #### 3. Unit Tests: Classification Logic (Target: 100% coverage)
 
 **Function: `classifyChange(file, fileDiff)`**
+
 - ✅ Test 1: Match exact file path (src/services/costControl.js → pricing)
-- ✅ Test 2: Match glob pattern (src/routes/*.js → public_contracts)
+- ✅ Test 2: Match glob pattern (src/routes/\*.js → public_contracts)
 - ✅ Test 3: Match keyword in diff ("subscription" → pricing)
 - ✅ Test 4: Escalate to highest severity (CRITICAL > SENSITIVE)
 - ✅ Test 5: Match multiple domains (costControl.js → pricing + quotas)
@@ -199,6 +211,7 @@ tests/
 - ✅ Test 8: Update changesSummary.domains_affected
 
 **Edge Cases:**
+
 - ✅ Test 9: Glob with no glob chars (exact match fallback)
 - ✅ Test 10: Null diff (keywords skipped)
 - ✅ Test 11: Empty domains object (returns SAFE)
@@ -206,6 +219,7 @@ tests/
 #### 4. Unit Tests: Deduplication (Target: 100% coverage)
 
 **Function: `generateCaseKey(files, severity, action, domains)`**
+
 - ✅ Test 1: Generate deterministic hash for same inputs
 - ✅ Test 2: Different hash for different files
 - ✅ Test 3: Different hash for different severity
@@ -215,6 +229,7 @@ tests/
 - ✅ Test 7: Sort domains before hashing (order-independent)
 
 **Function: `caseExists(caseKey)`**
+
 - ✅ Test 1: Return true for existing case (with caseId, file)
 - ✅ Test 2: Return false for non-existent case
 - ✅ Test 3: Return false when cases directory missing
@@ -224,6 +239,7 @@ tests/
 #### 5. Unit Tests: Audit & Reporting (Target: 100% coverage)
 
 **Function: `generateAuditLog()`**
+
 - ✅ Test 1: Create audit log if missing (C4 fix - existing)
 - ✅ Test 2: Append to existing audit log
 - ✅ Test 3: Create case file in docs/guardian/cases/
@@ -234,6 +250,7 @@ tests/
 - ✅ Test 8: Handle no violations (early return)
 
 **Function: `generateReport()`**
+
 - ✅ Test 1: Create report directory if missing (C4 fix - existing)
 - ✅ Test 2: Generate markdown with correct structure
 - ✅ Test 3: Include critical violations section
@@ -242,6 +259,7 @@ tests/
 - ✅ Test 6: Correct recommendation based on severity
 
 **Function: `sendNotification(caseId)` (NEW)**
+
 - ✅ Test 1: Execute notify-guardian.js with case ID
 - ✅ Test 2: Handle notification failure gracefully (continue)
 - ✅ Test 3: Pass environment variables to child process
@@ -250,6 +268,7 @@ tests/
 #### 6. Unit Tests: Orchestration (Target: 100% coverage)
 
 **Function: `scan()`**
+
 - ✅ Test 1: Return 0 for no changes (existing - needs verification)
 - ✅ Test 2: Return 0 for all SAFE changes
 - ✅ Test 3: Return 1 for SENSITIVE changes
@@ -260,6 +279,7 @@ tests/
 - ✅ Test 8: Full workflow integration (existing - needs expansion)
 
 **Function: `main()` (CLI)**
+
 - ✅ Test 1: --help shows help text and exits 0
 - ✅ Test 2: --full runs full scan
 - ✅ Test 3: --report generates report file
@@ -269,6 +289,7 @@ tests/
 #### 7. Integration Tests: Workflows (NEW)
 
 **Test Suite: guardian-workflow.test.js**
+
 - ✅ Test 1: End-to-end CRITICAL workflow
   - Mock pricing change → Scan → Audit log → Case file → Notification
   - Verify exit code 2, audit entry, case file exists
@@ -289,6 +310,7 @@ tests/
 #### 8. CLI Flag Tests (NEW)
 
 **Test Suite: guardian-cli.test.js**
+
 - ✅ Test 1: --full flag executes full scan
 - ✅ Test 2: --check flag executes quick validation
 - ✅ Test 3: --report flag generates report file
@@ -301,6 +323,7 @@ tests/
 #### 9. Edge Case Tests
 
 **Edge Cases:**
+
 - ✅ Test 1: Empty git repository (no commits)
 - ✅ Test 2: Detached HEAD state
 - ✅ Test 3: Git not installed (command not found)
@@ -328,6 +351,7 @@ tests/
 6. Expand Orchestration tests (3 new tests)
 
 **Expected Coverage Increase:**
+
 - Before: ~40%
 - After: ~75%
 
@@ -341,6 +365,7 @@ tests/
 4. Test deduplication with multiple runs
 
 **Expected Coverage Increase:**
+
 - Before: ~75%
 - After: ~85%
 
@@ -354,6 +379,7 @@ tests/
 4. Verify exit codes in --ci mode
 
 **Expected Coverage Increase:**
+
 - Before: ~85%
 - After: ~90%
 
@@ -386,21 +412,25 @@ tests/
 **File: `docs/GUARDIAN-USAGE.md`**
 
 **Structure:**
+
 ```markdown
 # Guardian Agent - User Guide
 
 ## Overview
+
 - What is Guardian?
 - Why use Guardian?
 - When does Guardian run?
 
 ## Installation
+
 - Dependencies
 - Configuration files
 
 ## Usage
 
 ### CLI Commands
+
 - node scripts/guardian-gdd.js --full
 - node scripts/guardian-gdd.js --check
 - node scripts/guardian-gdd.js --report
@@ -408,6 +438,7 @@ tests/
 - node scripts/guardian-gdd.js --help
 
 ### Exit Codes
+
 - 0: SAFE (all checks passed)
 - 1: SENSITIVE (manual review required)
 - 2: CRITICAL (merge blocked)
@@ -415,11 +446,13 @@ tests/
 ### Configuration
 
 #### product-guard.yaml
+
 - Domain definitions
 - Protection levels
 - Keywords and file patterns
 
 #### guardian-ignore.yaml
+
 - Ignore patterns
 - Test fixtures
 - False positives
@@ -427,18 +460,21 @@ tests/
 ## Workflows
 
 ### Local Development
+
 1. Make changes
 2. Run Guardian: node scripts/guardian-gdd.js --full
 3. Review violations
 4. Fix or request approval
 
 ### CI/CD Integration
+
 1. Add to .github/workflows/guardian-check.yml
 2. Guardian runs on every PR
 3. Blocks merge if CRITICAL
 4. Requires manual review if SENSITIVE
 
 ### Approval Process
+
 - CRITICAL: Product Owner + 2 reviewers
 - SENSITIVE: Tech Lead + 1 reviewer
 - SAFE: Auto-approved
@@ -446,19 +482,23 @@ tests/
 ## Case Management
 
 ### Viewing Cases
+
 - GET /api/guardian/cases
 - GET /api/guardian/cases?severity=CRITICAL
 - GET /api/guardian/cases?action=REVIEW
 
 ### Approving Cases
+
 - POST /api/guardian/cases/:caseId/approve
 - Body: { approver: "Name" }
 
 ### Denying Cases
+
 - POST /api/guardian/cases/:caseId/deny
 - Body: { denier: "Name", reason: "Explanation" }
 
 ## Audit Log
+
 - Location: docs/guardian/audit-log.md
 - Format: Markdown table
 - Fields: Timestamp, Case ID, Actor, Domains, Files, Severity, Action, Notes
@@ -466,12 +506,14 @@ tests/
 ## Troubleshooting
 
 ### Common Issues
+
 1. Git not installed
 2. Configuration file missing
 3. Permissions errors
 4. False positives
 
 ### Debugging
+
 - Check git status
 - Verify configuration syntax
 - Review ignore patterns
@@ -480,18 +522,21 @@ tests/
 ## Examples
 
 ### Example 1: Pricing Change (CRITICAL)
+
 - File: src/services/costControl.js
 - Severity: CRITICAL
 - Action: BLOCKED
 - Approver: Product Owner
 
 ### Example 2: AI Model Change (SENSITIVE)
+
 - File: src/services/roastPromptTemplate.js
 - Severity: SENSITIVE
 - Action: REVIEW
 - Approver: Tech Lead
 
 ### Example 3: Documentation Update (SAFE)
+
 - File: docs/README.md
 - Severity: SAFE
 - Action: APPROVED
@@ -500,6 +545,7 @@ tests/
 ## API Reference
 
 ### GuardianEngine Class
+
 - Constructor
 - loadConfig()
 - shouldIgnoreFile()
@@ -512,6 +558,7 @@ tests/
 - sendNotification()
 
 ## Related Documentation
+
 - docs/nodes/guardian.md
 - config/product-guard.yaml
 - config/guardian-ignore.yaml
@@ -524,11 +571,13 @@ tests/
 ### Coverage Verification
 
 **Command:**
+
 ```bash
 npm test -- tests/unit/scripts/guardian-gdd.test.js --coverage
 ```
 
 **Expected Output:**
+
 ```
 File                    | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
 ------------------------|---------|----------|---------|---------|-------------------
@@ -537,6 +586,7 @@ guardian-gdd.js         |   85.50 |    80.00 |   90.00 |   85.50 | 532-535
 ```
 
 **Acceptance Criteria:**
+
 - ✅ Statement coverage ≥80%
 - ✅ Branch coverage ≥80%
 - ✅ Function coverage ≥80%
@@ -545,6 +595,7 @@ guardian-gdd.js         |   85.50 |    80.00 |   90.00 |   85.50 | 532-535
 ### Test Execution
 
 **All Tests:**
+
 ```bash
 npm test -- tests/unit/scripts/guardian-gdd.test.js
 npm test -- tests/integration/guardian-workflow.test.js
@@ -552,6 +603,7 @@ npm test -- tests/cli/guardian-cli.test.js
 ```
 
 **Expected:**
+
 - ✅ All tests passing (0 failures)
 - ✅ No console errors or warnings
 - ✅ Tests run in <30 seconds
@@ -559,11 +611,13 @@ npm test -- tests/cli/guardian-cli.test.js
 ### CI Integration
 
 **Command:**
+
 ```bash
 node scripts/guardian-gdd.js --ci
 ```
 
 **Expected:**
+
 - ✅ Exits with correct code (0, 1, or 2)
 - ✅ Generates audit log
 - ✅ Creates case files
@@ -572,6 +626,7 @@ node scripts/guardian-gdd.js --ci
 ### Documentation Review
 
 **Checklist:**
+
 - ✅ GUARDIAN-USAGE.md is complete
 - ✅ Examples are clear and accurate
 - ✅ API reference matches implementation
@@ -585,34 +640,33 @@ node scripts/guardian-gdd.js --ci
 ### Files Created
 
 **Tests:**
+
 1. `tests/unit/scripts/guardian-gdd.test.js` (EXPANDED - +300 lines)
 2. `tests/integration/guardian-workflow.test.js` (NEW - ~200 lines)
 3. `tests/cli/guardian-cli.test.js` (NEW - ~150 lines)
 
-**Fixtures:**
-4. `tests/fixtures/guardian/guardian-ignore-test.yaml` (NEW)
-5. `tests/fixtures/guardian/mock-diffs/*.diff` (NEW - 5 files)
-6. `tests/fixtures/guardian/mock-cases/*.json` (NEW - 3 files)
-7. `tests/fixtures/guardian/expected-outputs/*.md` (NEW - 3 files)
+**Fixtures:** 4. `tests/fixtures/guardian/guardian-ignore-test.yaml` (NEW) 5. `tests/fixtures/guardian/mock-diffs/*.diff` (NEW - 5 files) 6. `tests/fixtures/guardian/mock-cases/*.json` (NEW - 3 files) 7. `tests/fixtures/guardian/expected-outputs/*.md` (NEW - 3 files)
 
-**Documentation:**
-8. `docs/GUARDIAN-USAGE.md` (NEW - ~500 lines)
+**Documentation:** 8. `docs/GUARDIAN-USAGE.md` (NEW - ~500 lines)
 
 **Total:** 8 new/modified files
 
 ### Metrics
 
 **Test Coverage:**
+
 - Before: ~40%
 - After: ≥80%
 - Increase: +40%
 
 **Test Count:**
+
 - Before: ~15 tests
 - After: ~70 tests
 - Increase: +55 tests
 
 **Documentation:**
+
 - Before: 0 user guides
 - After: 1 comprehensive guide
 
@@ -642,17 +696,20 @@ Based on task requirements and CLAUDE.md guidelines:
 ## Risk Assessment
 
 **LOW RISK:**
+
 - ✅ No production code changes (tests only)
 - ✅ Well-defined acceptance criteria
 - ✅ Clear test patterns to follow
 - ✅ Existing tests provide foundation
 
 **MEDIUM RISK:**
+
 - ⚠️ Achieving 80% coverage may require additional fixtures
 - ⚠️ Integration tests may require mocking notify-guardian.js
 - ⚠️ CLI tests may have platform-specific behavior
 
 **Mitigations:**
+
 - Create comprehensive fixtures early (Day 1)
 - Mock external dependencies (notify-guardian.js)
 - Test on macOS (current platform) + CI (Linux)
@@ -662,6 +719,7 @@ Based on task requirements and CLAUDE.md guidelines:
 ## Success Criteria
 
 **All Acceptance Criteria Met:**
+
 - ✅ Unit tests for Guardian core (≥80% coverage)
 - ✅ Integration tests with fixtures
 - ✅ CLI flag testing (--full, --ci, --auto-fix, --report, --help)
@@ -670,6 +728,7 @@ Based on task requirements and CLAUDE.md guidelines:
 - ✅ CI integration verified
 
 **Additional Quality Gates:**
+
 - ✅ 0 CodeRabbit comments
 - ✅ All tests passing
 - ✅ No conflicts with main

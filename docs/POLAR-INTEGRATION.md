@@ -31,6 +31,7 @@ POLAR_ALLOWED_PRICE_IDS=price_id_1,price_id_2,price_id_3  # Server-side price va
 Creates a new checkout session with Polar.
 
 **Request Body:**
+
 ```json
 {
   "customer_email": "user@example.com",
@@ -43,6 +44,7 @@ Creates a new checkout session with Polar.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -57,6 +59,7 @@ Creates a new checkout session with Polar.
 ```
 
 **cURL Example:**
+
 ```bash
 curl -X POST http://localhost:3000/api/checkout \
   -H "Content-Type: application/json" \
@@ -73,6 +76,7 @@ curl -X POST http://localhost:3000/api/checkout \
 Retrieves a checkout session by ID.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -94,6 +98,7 @@ Retrieves a checkout session by ID.
 Receives webhook events from Polar for payment confirmations and subscription updates.
 
 **Supported Events:**
+
 - `checkout.created` - New checkout session created
 - `order.created` - Payment confirmed (most important)
 - `subscription.created` - New subscription created
@@ -127,7 +132,7 @@ function PolarCheckoutButton({ priceId, customerEmail, planName = 'Pro Plan' }) 
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
           // Add auth token if required
           // 'Authorization': `Bearer ${yourAuthToken}`
         },
@@ -135,10 +140,10 @@ function PolarCheckoutButton({ priceId, customerEmail, planName = 'Pro Plan' }) 
           customer_email: customerEmail,
           price_id: priceId,
           metadata: {
-            plan: planName,
+            plan: planName
             // Add any additional metadata you need
-          },
-        }),
+          }
+        })
       });
 
       const data = await response.json();
@@ -171,11 +176,7 @@ function PolarCheckoutButton({ priceId, customerEmail, planName = 'Pro Plan' }) 
         {loading ? 'Creating checkout...' : `Subscribe to ${planName}`}
       </button>
 
-      {error && (
-        <div className="mt-2 text-red-600 text-sm">
-          Error: {error}
-        </div>
-      )}
+      {error && <div className="mt-2 text-red-600 text-sm">Error: {error}</div>}
     </div>
   );
 }
@@ -324,60 +325,60 @@ If you're not using React, here's a vanilla JavaScript example:
 <!-- pricing.html -->
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Pricing - Roastr</title>
-</head>
-<body>
-  <div class="pricing-container">
-    <div class="plan">
-      <h2>Pro Plan - €15/month</h2>
-      <button
-        id="checkout-btn"
-        data-price-id="price_pro_monthly_id"
-        data-customer-email="user@example.com"
-      >
-        Subscribe Now
-      </button>
+  <head>
+    <title>Pricing - Roastr</title>
+  </head>
+  <body>
+    <div class="pricing-container">
+      <div class="plan">
+        <h2>Pro Plan - €15/month</h2>
+        <button
+          id="checkout-btn"
+          data-price-id="price_pro_monthly_id"
+          data-customer-email="user@example.com"
+        >
+          Subscribe Now
+        </button>
+      </div>
     </div>
-  </div>
 
-  <script>
-    document.getElementById('checkout-btn').addEventListener('click', async (e) => {
-      const button = e.target;
-      const priceId = button.dataset.priceId;
-      const customerEmail = button.dataset.customerEmail;
+    <script>
+      document.getElementById('checkout-btn').addEventListener('click', async (e) => {
+        const button = e.target;
+        const priceId = button.dataset.priceId;
+        const customerEmail = button.dataset.customerEmail;
 
-      button.disabled = true;
-      button.textContent = 'Creating checkout...';
+        button.disabled = true;
+        button.textContent = 'Creating checkout...';
 
-      try {
-        const response = await fetch('/api/checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            customer_email: customerEmail,
-            price_id: priceId,
-          }),
-        });
+        try {
+          const response = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              customer_email: customerEmail,
+              price_id: priceId
+            })
+          });
 
-        const data = await response.json();
+          const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to create checkout');
+          if (!response.ok) {
+            throw new Error(data.message || 'Failed to create checkout');
+          }
+
+          // Redirect to Polar checkout
+          window.location.href = data.checkout.url;
+        } catch (error) {
+          alert('Error: ' + error.message);
+          button.disabled = false;
+          button.textContent = 'Subscribe Now';
         }
-
-        // Redirect to Polar checkout
-        window.location.href = data.checkout.url;
-      } catch (error) {
-        alert('Error: ' + error.message);
-        button.disabled = false;
-        button.textContent = 'Subscribe Now';
-      }
-    });
-  </script>
-</body>
+      });
+    </script>
+  </body>
 </html>
 ```
 
@@ -386,6 +387,7 @@ If you're not using React, here's a vanilla JavaScript example:
 ## Testing Locally
 
 1. **Start your backend:**
+
    ```bash
    npm start
    # or
@@ -393,12 +395,14 @@ If you're not using React, here's a vanilla JavaScript example:
    ```
 
 2. **Start your frontend (in another terminal):**
+
    ```bash
    cd frontend
    npm start
    ```
 
 3. **Test the checkout endpoint with cURL:**
+
    ```bash
    curl -X POST http://localhost:3000/api/checkout \
      -H "Content-Type: application/json" \
@@ -409,6 +413,7 @@ If you're not using React, here's a vanilla JavaScript example:
    ```
 
 4. **Expected response:**
+
    ```json
    {
      "success": true,
@@ -442,6 +447,7 @@ node scripts/simulate-polar-webhook.js subscription.canceled
 ```
 
 **Available event types:**
+
 - `checkout.created`
 - `order.created` (payment confirmed)
 - `subscription.created`
@@ -507,6 +513,7 @@ ngrok http 3000
 ### Issue: CORS errors in frontend
 
 **Solution:** The backend is already configured with CORS. Ensure your frontend proxy is set correctly in `frontend/package.json`:
+
 ```json
 "proxy": "http://localhost:3000"
 ```
@@ -528,6 +535,7 @@ ngrok http 3000
 ## Support
 
 For issues with the Polar integration:
+
 - Check server logs for detailed error messages
 - Review Polar dashboard for webhook delivery status
 - Consult [Polar Documentation](https://docs.polar.sh/)

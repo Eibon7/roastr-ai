@@ -1,6 +1,6 @@
 /**
  * Shield Actions Integration Tests - Issue #408
- * 
+ *
  * Comprehensive integration tests for Shield system actions and execution:
  * - Verify hide/block/report/escalate actions are applied correctly
  * - Ensure actions are queued with proper priority
@@ -26,7 +26,7 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock Supabase client
     mockSupabase = {
       from: jest.fn(() => ({
@@ -87,14 +87,14 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
       expect(result.shieldActive).toBe(true);
       expect(result.actions.primary).toBe('warn');
       expect(result.shouldGenerateResponse).toBe(false); // Core requirement
-      
+
       // Verify action was queued
       expect(mockSupabase.from).toHaveBeenCalledWith('job_queue');
     });
 
     it('should handle platform-specific hide actions correctly', async () => {
       const platforms = ['twitter', 'discord', 'youtube'];
-      
+
       for (const platform of platforms) {
         const comment = {
           id: `comment_${platform}`,
@@ -134,13 +134,17 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
       };
 
       // Mock user with previous violation
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: {
-          total_violations: 1,
-          actions_taken: [{ action: 'warn', date: '2024-09-01' }]
-        },
-        error: null
-      });
+      mockSupabase
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
+          data: {
+            total_violations: 1,
+            actions_taken: [{ action: 'warn', date: '2024-09-01' }]
+          },
+          error: null
+        });
 
       const analysisResult = {
         severity_level: 'medium',
@@ -157,7 +161,7 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
       expect(result.shieldActive).toBe(true);
       expect(result.actions.primary).toBe('mute_temp');
       expect(result.shouldGenerateResponse).toBe(false);
-      
+
       // Verify user behavior was updated
       expect(mockSupabase.from).toHaveBeenCalledWith('user_behaviors');
     });
@@ -177,11 +181,7 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
         toxicity_score: 0.7
       };
 
-      await shieldService.analyzeForShield(
-        comment.organization_id,
-        comment,
-        analysisResult
-      );
+      await shieldService.analyzeForShield(comment.organization_id, comment, analysisResult);
 
       // Verify offender was recorded
       expect(mockSupabase.from().upsert).toHaveBeenCalledWith(
@@ -208,16 +208,20 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
       };
 
       // Mock user with multiple violations
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: {
-          total_violations: 2,
-          actions_taken: [
-            { action: 'warn', date: '2024-09-01' },
-            { action: 'mute_temp', date: '2024-09-15' }
-          ]
-        },
-        error: null
-      });
+      mockSupabase
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
+          data: {
+            total_violations: 2,
+            actions_taken: [
+              { action: 'warn', date: '2024-09-01' },
+              { action: 'mute_temp', date: '2024-09-15' }
+            ]
+          },
+          error: null
+        });
 
       const analysisResult = {
         severity_level: 'high',
@@ -421,7 +425,7 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
 
     it('should handle multiple platform actions in sequence', async () => {
       const platforms = ['twitter', 'discord', 'youtube'];
-      
+
       for (const platform of platforms) {
         const job = {
           id: `job_${platform}`,
@@ -501,7 +505,7 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
         id: '<script>alert("xss")</script>',
         organization_id: 'org_123',
         platform: 'twitter',
-        platform_user_id: '1\' OR \'1\'=\'1',
+        platform_user_id: "1' OR '1'='1",
         platform_username: 'hacker',
         original_text: '"; DROP TABLE users; --'
       };
@@ -541,13 +545,9 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
       };
 
       const startTime = Date.now();
-      
-      const promises = comments.map(comment =>
-        shieldService.analyzeForShield(
-          comment.organization_id,
-          comment,
-          analysisResult
-        )
+
+      const promises = comments.map((comment) =>
+        shieldService.analyzeForShield(comment.organization_id, comment, analysisResult)
       );
 
       const results = await Promise.all(promises);
@@ -555,9 +555,9 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
 
       expect(results).toHaveLength(20);
       expect(duration).toBeLessThan(5000); // Should complete within 5 seconds
-      
+
       // Verify all results have the core requirement
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.shouldGenerateResponse).toBe(false);
       });
     });
@@ -577,7 +577,7 @@ describe('Shield Actions Integration Tests - Issue #408', () => {
       };
 
       const startTime = Date.now();
-      
+
       const result = await shieldService.analyzeForShield(
         comment.organization_id,
         comment,

@@ -34,11 +34,7 @@ const mockSessionStorage = {
 };
 Object.defineProperty(window, 'sessionStorage', { value: mockSessionStorage });
 
-const DashboardWrapper = ({ children }) => (
-  <div>
-    {children}
-  </div>
-);
+const DashboardWrapper = ({ children }) => <div>{children}</div>;
 
 describe('Dashboard - Issue 255', () => {
   beforeEach(() => {
@@ -48,10 +44,10 @@ describe('Dashboard - Issue 255', () => {
     }
     mockLocalStorage.getItem.mockClear();
     mockSessionStorage.getItem.mockClear();
-    
+
     // Default localStorage token
     mockLocalStorage.getItem.mockReturnValue('mock-token');
-    
+
     // Default sessionStorage (no admin mode)
     mockSessionStorage.getItem.mockReturnValue(null);
   });
@@ -185,7 +181,7 @@ describe('Dashboard - Issue 255', () => {
       await waitFor(() => {
         // Global counter should sum all platform usage
         expect(screen.getByText('4,325 / 10,000')).toBeInTheDocument();
-        
+
         // Individual platform counters
         expect(screen.getByText('2500 / 5000 roasts')).toBeInTheDocument();
         expect(screen.getByText('1825 / 5000 roasts')).toBeInTheDocument();
@@ -211,7 +207,9 @@ describe('Dashboard - Issue 255', () => {
 
       await waitFor(() => {
         expect(screen.getByText('No hay cuentas conectadas')).toBeInTheDocument();
-        expect(screen.getByText('Conecta tus redes sociales para empezar a usar Roastr')).toBeInTheDocument();
+        expect(
+          screen.getByText('Conecta tus redes sociales para empezar a usar Roastr')
+        ).toBeInTheDocument();
       });
     });
   });
@@ -261,7 +259,7 @@ describe('Dashboard - Issue 255', () => {
       // Find and click Twitter connect button
       const twitterButton = screen.getByTitle('').closest('button');
       expect(twitterButton).toBeInTheDocument();
-      
+
       // Click the button (we can't easily test the exact button due to complex structure)
       // But we can verify the connect function would be called
       expect(global.fetch).toHaveBeenCalledTimes(2); // Initial calls
@@ -370,11 +368,12 @@ describe('Dashboard - Issue 255', () => {
     it('muestra banner de admin mode cuando está activo', async () => {
       mockSessionStorage.getItem.mockImplementation((key) => {
         if (key === 'adminMode') return 'true';
-        if (key === 'adminModeUser') return JSON.stringify({ 
-          name: 'Test User', 
-          email: 'test@example.com',
-          plan: 'pro'
-        });
+        if (key === 'adminModeUser')
+          return JSON.stringify({
+            name: 'Test User',
+            email: 'test@example.com',
+            plan: 'pro'
+          });
         return null;
       });
 
@@ -423,7 +422,7 @@ describe('Dashboard - Issue 255', () => {
   describe('Error Handling', () => {
     it('maneja errores de red graciosamente', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       global.fetch.mockRejectedValue(new Error('Network error'));
 
       render(
@@ -433,7 +432,10 @@ describe('Dashboard - Issue 255', () => {
       );
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('Error global.fetching dashboard data:', expect.any(Error));
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Error global.fetching dashboard data:',
+          expect.any(Error)
+        );
       });
 
       consoleSpy.mockRestore();

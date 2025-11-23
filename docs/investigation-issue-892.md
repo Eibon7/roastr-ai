@@ -20,6 +20,7 @@ Fix Supabase mocking pattern causing **~75 errors** in 8 test suites:
 8. tokenRefreshService.test.js (2 errors)
 
 **Expected Error Pattern:**
+
 ```
 TypeError: supabaseServiceClient.from is not a function
 ```
@@ -30,16 +31,16 @@ TypeError: supabaseServiceClient.from is not a function
 
 ### Files Status
 
-| File | Exists? | Test Status | Errors | Error Type |
-|------|---------|-------------|--------|------------|
-| ShieldActionWorker.test.js | ✅ | ✅ PASSING | 0/7 | None |
-| FetchCommentsWorker.test.js | ✅ | ❌ FAILING | 15 | `Cannot read 'allowed'` (costControl mock) |
-| AnalyzeToxicityWorker.test.js | ✅ | ❌ FAILING | 18 | `Cannot read 'allowed'` (costControl mock) |
-| shieldService.test.js | ✅ | ✅ PASSING | 0/23 | None |
-| referralService.test.js | ❌ | N/A | N/A | File doesn't exist |
-| usageService.test.js | ❌ | N/A | N/A | File doesn't exist |
-| commentService.test.js | ❌ | N/A | N/A | File doesn't exist |
-| tokenRefreshService.test.js | ❌ | N/A | N/A | File doesn't exist |
+| File                          | Exists? | Test Status | Errors | Error Type                                 |
+| ----------------------------- | ------- | ----------- | ------ | ------------------------------------------ |
+| ShieldActionWorker.test.js    | ✅      | ✅ PASSING  | 0/7    | None                                       |
+| FetchCommentsWorker.test.js   | ✅      | ❌ FAILING  | 15     | `Cannot read 'allowed'` (costControl mock) |
+| AnalyzeToxicityWorker.test.js | ✅      | ❌ FAILING  | 18     | `Cannot read 'allowed'` (costControl mock) |
+| shieldService.test.js         | ✅      | ✅ PASSING  | 0/23   | None                                       |
+| referralService.test.js       | ❌      | N/A         | N/A    | File doesn't exist                         |
+| usageService.test.js          | ❌      | N/A         | N/A    | File doesn't exist                         |
+| commentService.test.js        | ❌      | N/A         | N/A    | File doesn't exist                         |
+| tokenRefreshService.test.js   | ❌      | N/A         | N/A    | File doesn't exist                         |
 
 ### Key Findings
 
@@ -67,7 +68,7 @@ This is because `costControl.canPerformOperation()` returns `undefined` instead 
 During investigation, found **30 DIFFERENT test files** with the Supabase mock pattern issue:
 
 - auditLogService.test.js (4 failures fixed)
-- planLimitsService.test.js 
+- planLimitsService.test.js
 - addonService.test.js
 - polar-flow-e2e.test.js
 - spec14-idempotency.test.js
@@ -80,17 +81,21 @@ These were fixed in **PR #904** (not the 8 files from #892).
 ## Recommendations
 
 ### 1. Close Issue #892
+
 - Reason: Not reproducible as specified
 - 50% of files don't exist
 - 50% of existing files are already passing or have different issues
 
 ### 2. Keep PR #904
+
 - Fixes REAL Supabase mock issues in 30 files
 - 67+ tests now passing that were failing
 - Valuable cleanup work
 
 ### 3. Create NEW Issue for Worker Tests
+
 If needed, create separate issue for:
+
 - FetchCommentsWorker.test.js (15 failures - costControl mock)
 - AnalyzeToxicityWorker.test.js (18 failures - costControl mock)
 
@@ -100,12 +105,12 @@ Title: "Fix costControl mock in Worker tests (33 failures)"
 
 ## Timeline
 
-| Date | Action |
-|------|--------|
-| [Previous] | Issue #892 created based on EPIC #480 analysis |
-| 2025-11-21 | PR #904 created (wrong scope, but valuable work) |
+| Date       | Action                                              |
+| ---------- | --------------------------------------------------- |
+| [Previous] | Issue #892 created based on EPIC #480 analysis      |
+| 2025-11-21 | PR #904 created (wrong scope, but valuable work)    |
 | 2025-11-21 | Investigation reveals #892 is incorrectly diagnosed |
-| 2025-11-21 | This document created to document findings |
+| 2025-11-21 | This document created to document findings          |
 
 ---
 
@@ -114,4 +119,3 @@ Title: "Fix costControl mock in Worker tests (33 failures)"
 **Issue #892 should be closed as "Not Reproducible - Incorrectly Diagnosed"**
 
 The work in PR #904, while not matching #892's scope, is valid and should be merged as it fixes real test failures.
-

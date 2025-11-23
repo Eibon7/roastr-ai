@@ -45,18 +45,19 @@ const StatusIndicator = styled.div<{ status: 'HEALTHY' | 'DEGRADED' | 'CRITICAL'
           return theme.colors.statusHealthy;
       }
     }};
-    border: 2px solid ${({ theme, status }) => {
-      switch (status) {
-        case 'HEALTHY':
-          return theme.colors.statusHealthy;
-        case 'DEGRADED':
-          return theme.colors.statusWarning;
-        case 'CRITICAL':
-          return theme.colors.statusCritical;
-        default:
-          return theme.colors.statusHealthy;
-      }
-    }};
+    border: 2px solid
+      ${({ theme, status }) => {
+        switch (status) {
+          case 'HEALTHY':
+            return theme.colors.statusHealthy;
+          case 'DEGRADED':
+            return theme.colors.statusWarning;
+          case 'CRITICAL':
+            return theme.colors.statusCritical;
+          default:
+            return theme.colors.statusHealthy;
+        }
+      }};
     box-shadow: ${({ theme }) => theme.shadows.glow};
     animation: pulse 1.5s ease-in-out infinite;
   }
@@ -216,7 +217,8 @@ export function Overview() {
     return (
       <OverviewContainer>
         <ErrorMessage>
-          ⚠️ Failed to load GDD health data. Make sure the backend is running and JSON files are generated.
+          ⚠️ Failed to load GDD health data. Make sure the backend is running and JSON files are
+          generated.
         </ErrorMessage>
       </OverviewContainer>
     );
@@ -230,7 +232,9 @@ export function Overview() {
   const lastUpdated = formatDistanceToNow(new Date(healthData.generated_at), { addSuffix: true });
 
   // Calculate average coverage from node breakdown
-  const coverageValues = Object.values(healthData.nodes).map(node => node.breakdown.coverageEvidence);
+  const coverageValues = Object.values(healthData.nodes).map(
+    (node) => node.breakdown.coverageEvidence
+  );
   const avgCoverage = Math.round(coverageValues.reduce((a, b) => a + b, 0) / coverageValues.length);
 
   return (

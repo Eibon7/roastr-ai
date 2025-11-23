@@ -1,5 +1,10 @@
 const request = require('supertest');
-const { createMockModerationInput, simulateToxicComment, setupTestUserWithPersona, waitForCondition } = require('../../utils/testHelpers');
+const {
+  createMockModerationInput,
+  simulateToxicComment,
+  setupTestUserWithPersona,
+  waitForCondition
+} = require('../../utils/testHelpers');
 const { PLATFORM_LIMITS } = require('../../../src/config/constants');
 
 // Mock services
@@ -27,11 +32,13 @@ jest.mock('../../../src/services/queueService', () => {
         for (const [id, job] of jobs) {
           if (job.type === type && job.status === 'pending') {
             job.status = 'processing';
-            handler(job).then(() => {
-              job.status = 'completed';
-            }).catch(() => {
-              job.status = 'failed';
-            });
+            handler(job)
+              .then(() => {
+                job.status = 'completed';
+              })
+              .catch(() => {
+                job.status = 'failed';
+              });
           }
         }
       }, 100);
@@ -41,7 +48,10 @@ jest.mock('../../../src/services/queueService', () => {
 });
 
 const { analyzeToxicity } = require('../../../src/services/perspective');
-const { analyzeToxicityWithOpenAI, generateRoastWithOpenAI } = require('../../../src/services/openai');
+const {
+  analyzeToxicityWithOpenAI,
+  generateRoastWithOpenAI
+} = require('../../../src/services/openai');
 const QueueService = require('../../../src/services/queueService');
 
 describe('Full Moderation Flow Integration', () => {
@@ -50,7 +60,7 @@ describe('Full Moderation Flow Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     queueService = new QueueService();
-    
+
     // Default mock implementations
     analyzeToxicity.mockResolvedValue({
       score: 0.7,
@@ -150,7 +160,7 @@ describe('Full Moderation Flow Integration', () => {
       }
 
       expect(results).toHaveLength(2);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.toxicityScore).toBeGreaterThan(0);
         expect(result.roastGenerated).toBe(true);
       });
@@ -160,7 +170,7 @@ describe('Full Moderation Flow Integration', () => {
   describe('Shield Integration in Flow', () => {
     it('should trigger Shield actions for extreme toxicity', async () => {
       const { comment } = simulateToxicComment({ toxicityLevel: 'extreme' });
-      
+
       // Mock extreme toxicity detection
       analyzeToxicity.mockResolvedValueOnce({
         score: 0.95,
@@ -174,15 +184,19 @@ describe('Full Moderation Flow Integration', () => {
 
       // Analyze toxicity
       const toxicityResult = await analyzeToxicity(comment);
-      
+
       // Shield should trigger for extreme toxicity
       if (toxicityResult.score > 0.9) {
-        const shieldJob = await queueService.add('shield_action', {
-          ...commentData,
-          action: 'report',
-          reason: 'Extreme toxicity detected',
-          priority: 1 // High priority
-        }, { priority: 1 });
+        const shieldJob = await queueService.add(
+          'shield_action',
+          {
+            ...commentData,
+            action: 'report',
+            reason: 'Extreme toxicity detected',
+            priority: 1 // High priority
+          },
+          { priority: 1 }
+        );
 
         expect(shieldJob.options.priority).toBe(1);
         expect(shieldJob.data.action).toBe('report');
@@ -211,13 +225,14 @@ describe('Full Moderation Flow Integration', () => {
       const toxicityResult = await analyzeToxicity(comment);
 
       // Check if auto-block should trigger
-      const shouldAutoBlock = 
+      const shouldAutoBlock =
         persona.toleranceSettings.auto_block_enabled &&
         toxicityResult.score >= persona.toleranceSettings.severity_threshold &&
-        toxicityResult.categories.some(cat => {
+        toxicityResult.categories.some((cat) => {
           const catLower = cat.toLowerCase();
-          return persona.toleranceSettings.no_tolero.some(noTolero => 
-            catLower.includes(noTolero.toLowerCase()) || noTolero.toLowerCase().includes(catLower)
+          return persona.toleranceSettings.no_tolero.some(
+            (noTolero) =>
+              catLower.includes(noTolero.toLowerCase()) || noTolero.toLowerCase().includes(catLower)
           );
         });
 
@@ -281,14 +296,15 @@ describe('Full Moderation Flow Integration', () => {
     });
 
     it('should handle queue failures with retry logic', async () => {
-      const mockAdd = jest.fn()
+      const mockAdd = jest
+        .fn()
         .mockRejectedValueOnce(new Error('Queue temporarily unavailable'))
         .mockResolvedValueOnce({ id: 'retry-job-123' });
 
       queueService.add = mockAdd;
 
       const commentData = createMockModerationInput();
-      
+
       let job;
       let retries = 0;
       const maxRetries = 3;
@@ -300,7 +316,7 @@ describe('Full Moderation Flow Integration', () => {
         } catch (error) {
           retries++;
           if (retries === maxRetries) throw error;
-          await new Promise(resolve => setTimeout(resolve, 100 * retries));
+          await new Promise((resolve) => setTimeout(resolve, 100 * retries));
         }
       }
 
@@ -313,10 +329,12 @@ describe('Full Moderation Flow Integration', () => {
   describe('Performance and Scale', () => {
     it('should handle burst of toxic comments efficiently', async () => {
       const commentCount = 50;
-      const comments = Array(commentCount).fill(null).map((_, i) => ({
-        ...createMockModerationInput({ commentId: `burst-${i}` }),
-        comment: simulateToxicComment({ toxicityLevel: 'medium' }).comment
-      }));
+      const comments = Array(commentCount)
+        .fill(null)
+        .map((_, i) => ({
+          ...createMockModerationInput({ commentId: `burst-${i}` }),
+          comment: simulateToxicComment({ toxicityLevel: 'medium' }).comment
+        }));
 
       const startTime = Date.now();
       const jobs = [];
@@ -345,7 +363,8 @@ describe('Full Moderation Flow Integration', () => {
 
       // Queue regular jobs
       for (let i = 0; i < 5; i++) {
-        const job = await queueService.add('generate_reply', 
+        const job = await queueService.add(
+          'generate_reply',
           { commentId: `regular-${i}` },
           { priority: 5 }
         );
@@ -354,7 +373,8 @@ describe('Full Moderation Flow Integration', () => {
 
       // Queue high-priority Shield jobs
       for (let i = 0; i < 3; i++) {
-        const job = await queueService.add('shield_action',
+        const job = await queueService.add(
+          'shield_action',
           { commentId: `shield-${i}`, action: 'block' },
           { priority: 1 }
         );
@@ -362,11 +382,11 @@ describe('Full Moderation Flow Integration', () => {
       }
 
       // Verify Shield jobs have higher priority
-      shieldJobs.forEach(job => {
+      shieldJobs.forEach((job) => {
         expect(job.options.priority).toBe(1);
       });
 
-      regularJobs.forEach(job => {
+      regularJobs.forEach((job) => {
         expect(job.options.priority).toBe(5);
       });
     });
@@ -374,10 +394,10 @@ describe('Full Moderation Flow Integration', () => {
 
   describe('Content Approval and Filtering', () => {
     it('should filter out inappropriate roast responses', async () => {
-const inappropriateRoasts = [
+      const inappropriateRoasts = [
         'Tu madre es una...', // Family insults
         'Espero que te mueras', // Death wishes
-        'Eres un [slur]', // Slurs
+        'Eres un [slur]' // Slurs
       ];
 
       const appropriateRoasts = [
@@ -388,14 +408,14 @@ const inappropriateRoasts = [
 
       const filterRoast = (roast) => {
         const prohibited = ['madre', 'mueras', 'slur'];
-        return !prohibited.some(word => roast.toLowerCase().includes(word));
+        return !prohibited.some((word) => roast.toLowerCase().includes(word));
       };
 
-      inappropriateRoasts.forEach(roast => {
+      inappropriateRoasts.forEach((roast) => {
         expect(filterRoast(roast)).toBe(false);
       });
 
-      appropriateRoasts.forEach(roast => {
+      appropriateRoasts.forEach((roast) => {
         expect(filterRoast(roast)).toBe(true);
       });
     });

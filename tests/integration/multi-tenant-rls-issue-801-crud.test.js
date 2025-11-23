@@ -147,10 +147,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           cost_cents: 3
         };
 
-        const { data, error } = await testClient
-          .from('usage_records')
-          .insert(newRecord)
-          .select();
+        const { data, error } = await testClient.from('usage_records').insert(newRecord).select();
 
         expect(error).toBeNull();
         expect(data).toHaveLength(1);
@@ -247,10 +244,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           toxicity_score: 0.5
         };
 
-        const { data, error } = await testClient
-          .from('comments')
-          .insert(newComment)
-          .select();
+        const { data, error } = await testClient.from('comments').insert(newComment).select();
 
         expect(error).toBeNull();
         expect(data).toHaveLength(1);
@@ -296,10 +290,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           status: 'pending'
         };
 
-        const { data, error } = await testClient
-          .from('responses')
-          .insert(newResponse)
-          .select();
+        const { data, error } = await testClient.from('responses').insert(newResponse).select();
 
         expect(error).toBeNull();
         expect(data).toHaveLength(1);
@@ -358,7 +349,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test integration_config: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test integration_config: ${createError.message}`);
           tenantA.integrationConfigs.push(newConfig);
         }
 
@@ -395,7 +387,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test integration_config: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test integration_config: ${createError.message}`);
           tenantB.integrationConfigs.push(newConfig);
         }
 
@@ -425,7 +418,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test integration_config: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test integration_config: ${createError.message}`);
           tenantA.integrationConfigs.push(newConfig);
         }
 
@@ -457,7 +451,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test usage_record: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test usage_record: ${createError.message}`);
           tenantA.usageRecords.push(newRecord);
         }
 
@@ -472,10 +467,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
         expect(data).toHaveLength(1);
 
         // Restore
-        await serviceClient
-          .from('usage_records')
-          .update({ cost_cents: 3 })
-          .eq('id', recordId);
+        await serviceClient.from('usage_records').update({ cost_cents: 3 }).eq('id', recordId);
       });
 
       test('UPDATE other organization usage_record fails with 42501', async () => {
@@ -493,7 +485,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test usage_record: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test usage_record: ${createError.message}`);
           tenantB.usageRecords.push(newRecord);
         }
 
@@ -527,7 +520,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test monthly_usage: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test monthly_usage: ${createError.message}`);
           tenantA.monthlyUsage.push(newMonthly);
         }
 
@@ -564,7 +558,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test monthly_usage: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test monthly_usage: ${createError.message}`);
           tenantB.monthlyUsage.push(newMonthly);
         }
 
@@ -634,7 +629,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test response: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test response: ${createError.message}`);
           tenantA.responses.push(newResponse);
         }
 
@@ -673,7 +669,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test response: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test response: ${createError.message}`);
           tenantB.responses.push(newResponse);
         }
 
@@ -714,18 +711,12 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
           toxicity_score: 0.5
         };
 
-        const { data: created } = await serviceClient
-          .from('comments')
-          .insert(tempComment)
-          .select();
+        const { data: created } = await serviceClient.from('comments').insert(tempComment).select();
 
         expect(created).toHaveLength(1);
 
         // DELETE via testClient
-        const { error } = await testClient
-          .from('comments')
-          .delete()
-          .eq('id', created[0].id);
+        const { error } = await testClient.from('comments').delete().eq('id', created[0].id);
 
         expect(error).toBeNull();
 
@@ -779,10 +770,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
         expect(created).toHaveLength(1);
 
         // DELETE via testClient
-        const { error } = await testClient
-          .from('responses')
-          .delete()
-          .eq('id', created[0].id);
+        const { error } = await testClient.from('responses').delete().eq('id', created[0].id);
 
         expect(error).toBeNull();
 
@@ -813,7 +801,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test response: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test response: ${createError.message}`);
           tenantB.responses.push(newResponse);
         }
 
@@ -856,10 +845,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
         expect(created).toHaveLength(1);
 
         // DELETE via testClient
-        const { error } = await testClient
-          .from('user_activities')
-          .delete()
-          .eq('id', created[0].id);
+        const { error } = await testClient.from('user_activities').delete().eq('id', created[0].id);
 
         expect(error).toBeNull();
       });
@@ -879,7 +865,8 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
             })
             .select()
             .single();
-          if (createError) throw new Error(`Failed to create test user_activity: ${createError.message}`);
+          if (createError)
+            throw new Error(`Failed to create test user_activity: ${createError.message}`);
           tenantB.userActivities.push(newActivity);
         }
 
@@ -913,10 +900,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
         toxicity_score: 0.5
       };
 
-      const { error } = await testClient
-        .from('comments')
-        .insert(crossComment)
-        .select();
+      const { error } = await testClient.from('comments').insert(crossComment).select();
 
       expect(error).not.toBeNull();
       expect(error.code).toBe('42501');
@@ -936,10 +920,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
         toxicity_score: 0.5
       };
 
-      const { error } = await testClient
-        .from('comments')
-        .insert(crossComment)
-        .select();
+      const { error } = await testClient.from('comments').insert(crossComment).select();
 
       expect(error).not.toBeNull();
       expect(error.code).toBe('42501');
@@ -974,10 +955,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
     test('Tenant A cannot DELETE Tenant B data', async () => {
       await setTenantContext(tenantA.id);
 
-      const { error } = await testClient
-        .from('comments')
-        .delete()
-        .eq('id', tenantB.comments[0].id);
+      const { error } = await testClient.from('comments').delete().eq('id', tenantB.comments[0].id);
 
       expect(error).not.toBeNull();
       expect(error.code).toBe('42501');
@@ -986,10 +964,7 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
     test('Tenant B cannot DELETE Tenant A data', async () => {
       await setTenantContext(tenantB.id);
 
-      const { error } = await testClient
-        .from('comments')
-        .delete()
-        .eq('id', tenantA.comments[0].id);
+      const { error } = await testClient.from('comments').delete().eq('id', tenantA.comments[0].id);
 
       expect(error).not.toBeNull();
       expect(error.code).toBe('42501');
@@ -1003,12 +978,17 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
   describe('Coverage Statistics', () => {
     test('Summary of CRUD operations tested', () => {
       const tablesTested = {
-        'integration_configs': { insert: true, update: true, delete: false, priority: 'HIGH (SECURITY)' },
-        'usage_records': { insert: true, update: true, delete: false, priority: 'HIGH (BILLING)' },
-        'monthly_usage': { insert: true, update: true, delete: false, priority: 'HIGH (BILLING)' },
-        'comments': { insert: true, update: true, delete: true, priority: 'MEDIUM' },
-        'responses': { insert: true, update: true, delete: true, priority: 'MEDIUM' },
-        'user_activities': { insert: false, update: false, delete: true, priority: 'LOW' }
+        integration_configs: {
+          insert: true,
+          update: true,
+          delete: false,
+          priority: 'HIGH (SECURITY)'
+        },
+        usage_records: { insert: true, update: true, delete: false, priority: 'HIGH (BILLING)' },
+        monthly_usage: { insert: true, update: true, delete: false, priority: 'HIGH (BILLING)' },
+        comments: { insert: true, update: true, delete: true, priority: 'MEDIUM' },
+        responses: { insert: true, update: true, delete: true, priority: 'MEDIUM' },
+        user_activities: { insert: false, update: false, delete: true, priority: 'LOW' }
       };
 
       console.log('\n📊 CRUD RLS Test Coverage (Issue #801):');

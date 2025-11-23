@@ -11,10 +11,14 @@ jest.mock('../../hooks/useFeatureFlags');
 // Mock react-router-dom
 jest.mock('react-router-dom', () => ({
   NavLink: ({ children, to, className, ...props }) => (
-    <a href={to} className={typeof className === 'function' ? className({ isActive: false }) : className} {...props}>
+    <a
+      href={to}
+      className={typeof className === 'function' ? className({ isActive: false }) : className}
+      {...props}
+    >
       {children}
     </a>
-  ),
+  )
 }));
 
 const renderSidebar = () => {
@@ -31,13 +35,13 @@ describe('Sidebar', () => {
       useAuth.mockReturnValue({
         userData: {
           name: 'Test User',
-          email: 'test@example.com',
-        },
+          email: 'test@example.com'
+        }
       });
 
       useFeatureFlags.mockReturnValue({
         flags: {},
-        isEnabled: jest.fn().mockReturnValue(false),
+        isEnabled: jest.fn().mockReturnValue(false)
       });
     });
 
@@ -68,15 +72,15 @@ describe('Sidebar', () => {
       useAuth.mockReturnValue({
         userData: {
           name: 'Test User',
-          email: 'test@example.com',
-        },
+          email: 'test@example.com'
+        }
       });
     });
 
     it('should show Shop when ENABLE_SHOP flag is true', () => {
       useFeatureFlags.mockReturnValue({
         flags: { ENABLE_SHOP: true },
-        isEnabled: jest.fn().mockImplementation((flag) => flag === 'ENABLE_SHOP'),
+        isEnabled: jest.fn().mockImplementation((flag) => flag === 'ENABLE_SHOP')
       });
 
       renderSidebar();
@@ -88,7 +92,7 @@ describe('Sidebar', () => {
     it('should hide Shop when ENABLE_SHOP flag is false', () => {
       useFeatureFlags.mockReturnValue({
         flags: { ENABLE_SHOP: false },
-        isEnabled: jest.fn().mockReturnValue(false),
+        isEnabled: jest.fn().mockReturnValue(false)
       });
 
       renderSidebar();
@@ -99,7 +103,7 @@ describe('Sidebar', () => {
     it('should hide Shop when feature flags are loading', () => {
       useFeatureFlags.mockReturnValue({
         flags: {},
-        isEnabled: jest.fn().mockReturnValue(false),
+        isEnabled: jest.fn().mockReturnValue(false)
       });
 
       renderSidebar();
@@ -113,13 +117,13 @@ describe('Sidebar', () => {
       useAuth.mockReturnValue({
         userData: {
           name: 'Test User',
-          email: 'test@example.com',
-        },
+          email: 'test@example.com'
+        }
       });
 
       useFeatureFlags.mockReturnValue({
         flags: { ENABLE_SHOP: true },
-        isEnabled: jest.fn().mockReturnValue(true),
+        isEnabled: jest.fn().mockReturnValue(true)
       });
     });
 
@@ -157,20 +161,20 @@ describe('Sidebar', () => {
       useAuth.mockReturnValue({
         userData: {
           name: 'Test User',
-          email: 'test@example.com',
-        },
+          email: 'test@example.com'
+        }
       });
 
       useFeatureFlags.mockReturnValue({
         flags: {},
-        isEnabled: jest.fn().mockReturnValue(false),
+        isEnabled: jest.fn().mockReturnValue(false)
       });
 
       // Mock window.innerWidth for mobile
       Object.defineProperty(window, 'innerWidth', {
         writable: true,
         configurable: true,
-        value: 500,
+        value: 500
       });
     });
 
@@ -185,7 +189,7 @@ describe('Sidebar', () => {
       renderSidebar();
 
       const menuButton = screen.getByRole('button', { name: /toggle sidebar/i });
-      
+
       fireEvent.click(menuButton);
 
       // Sidebar should be open (implementation detail may vary)
@@ -198,12 +202,12 @@ describe('Sidebar', () => {
   describe('User Data Handling', () => {
     it('should handle missing user data gracefully', () => {
       useAuth.mockReturnValue({
-        userData: null,
+        userData: null
       });
 
       useFeatureFlags.mockReturnValue({
         flags: {},
-        isEnabled: jest.fn().mockReturnValue(false),
+        isEnabled: jest.fn().mockReturnValue(false)
       });
 
       renderSidebar();
@@ -214,14 +218,14 @@ describe('Sidebar', () => {
     it('should handle partial user data', () => {
       useAuth.mockReturnValue({
         userData: {
-          name: 'Test User',
+          name: 'Test User'
           // Missing email
-        },
+        }
       });
 
       useFeatureFlags.mockReturnValue({
         flags: {},
-        isEnabled: jest.fn().mockReturnValue(false),
+        isEnabled: jest.fn().mockReturnValue(false)
       });
 
       renderSidebar();
@@ -235,13 +239,13 @@ describe('Sidebar', () => {
       useAuth.mockReturnValue({
         userData: {
           name: 'Test User',
-          email: 'test@example.com',
-        },
+          email: 'test@example.com'
+        }
       });
 
       useFeatureFlags.mockReturnValue({
         flags: { ENABLE_SHOP: true },
-        isEnabled: jest.fn().mockReturnValue(true),
+        isEnabled: jest.fn().mockReturnValue(true)
       });
     });
 
@@ -258,7 +262,7 @@ describe('Sidebar', () => {
       const links = screen.getAllByRole('link');
       expect(links.length).toBeGreaterThan(0);
 
-      links.forEach(link => {
+      links.forEach((link) => {
         expect(link).toHaveAttribute('href');
       });
     });
@@ -267,7 +271,7 @@ describe('Sidebar', () => {
       renderSidebar();
 
       const buttons = screen.getAllByRole('button');
-      buttons.forEach(button => {
+      buttons.forEach((button) => {
         expect(button).toHaveAccessibleName();
       });
     });

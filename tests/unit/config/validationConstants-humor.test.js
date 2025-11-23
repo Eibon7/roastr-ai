@@ -28,7 +28,7 @@ describe('Humor Type Validation', () => {
     });
 
     test('should be lowercase for consistency', () => {
-      VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.forEach(type => {
+      VALIDATION_CONSTANTS.VALID_HUMOR_TYPES.forEach((type) => {
         expect(type).toBe(type.toLowerCase());
       });
     });

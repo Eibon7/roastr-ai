@@ -39,7 +39,7 @@ class SecurityAuditLogger {
     }
 
     const timestamp = new Date().toISOString();
-    
+
     // Sanitize PII from details to protect user privacy
     const sanitizedDetails = this.sanitizePII({
       ...details,
@@ -82,31 +82,31 @@ class SecurityAuditLogger {
   getSeverityLevel(eventType) {
     const severityMap = {
       // Critical events
-      'account_takeover_attempt': 'critical',
-      'admin_privilege_escalation': 'critical',
-      'sql_injection_attempt': 'critical',
-      'data_breach_attempt': 'critical',
-      
+      account_takeover_attempt: 'critical',
+      admin_privilege_escalation: 'critical',
+      sql_injection_attempt: 'critical',
+      data_breach_attempt: 'critical',
+
       // High events
-      'brute_force_attack': 'high',
-      'suspicious_login_pattern': 'high',
-      'csrf_attack_attempt': 'high',
-      'xss_attempt': 'high',
-      'unauthorized_admin_access': 'high',
-      'multiple_failed_logins': 'high',
-      
+      brute_force_attack: 'high',
+      suspicious_login_pattern: 'high',
+      csrf_attack_attempt: 'high',
+      xss_attempt: 'high',
+      unauthorized_admin_access: 'high',
+      multiple_failed_logins: 'high',
+
       // Medium events
-      'suspicious_api_usage': 'medium',
-      'rate_limit_exceeded': 'medium',
-      'invalid_csrf_token': 'medium',
-      'suspicious_user_agent': 'medium',
-      'geolocation_anomaly': 'medium',
-      
+      suspicious_api_usage: 'medium',
+      rate_limit_exceeded: 'medium',
+      invalid_csrf_token: 'medium',
+      suspicious_user_agent: 'medium',
+      geolocation_anomaly: 'medium',
+
       // Low events
-      'failed_authentication': 'low',
-      'invalid_session': 'low',
-      'expired_token': 'low',
-      'malformed_request': 'low'
+      failed_authentication: 'low',
+      invalid_session: 'low',
+      expired_token: 'low',
+      malformed_request: 'low'
     };
 
     return severityMap[eventType] || 'medium';
@@ -151,7 +151,7 @@ class SecurityAuditLogger {
 
   requeueEventsWithLimits(events) {
     const now = Date.now();
-    const validEvents = events.filter(event => {
+    const validEvents = events.filter((event) => {
       // Increment retry count
       event.retryCount = (event.retryCount || 0) + 1;
 
@@ -186,7 +186,11 @@ class SecurityAuditLogger {
 
     // Use the pre-validated salt stored during initialization
     // Hash IP address for privacy while maintaining uniqueness
-    return crypto.createHash('sha256').update(ip + this.securitySalt).digest('hex').substring(0, 16);
+    return crypto
+      .createHash('sha256')
+      .update(ip + this.securitySalt)
+      .digest('hex')
+      .substring(0, 16);
   }
 
   sanitizeUserAgent(userAgent) {
@@ -212,7 +216,7 @@ class SecurityAuditLogger {
       } else if (typeof obj === 'object' && obj !== null) {
         const result = {};
         for (const [key, value] of Object.entries(obj)) {
-          if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
+          if (sensitiveKeys.some((sensitive) => key.toLowerCase().includes(sensitive))) {
             result[key] = '[REDACTED]';
           } else {
             result[key] = sanitizeValue(value);
@@ -232,53 +236,81 @@ class SecurityAuditLogger {
   }
 
   async logSuspiciousActivity(req, activityType, details = {}) {
-    return this.logSecurityEvent('suspicious_api_usage', { 
-      activity_type: activityType, 
-      ...details 
-    }, req);
+    return this.logSecurityEvent(
+      'suspicious_api_usage',
+      {
+        activity_type: activityType,
+        ...details
+      },
+      req
+    );
   }
 
   async logBruteForceAttempt(req, targetResource, attemptCount) {
-    return this.logSecurityEvent('brute_force_attack', { 
-      target_resource: targetResource,
-      attempt_count: attemptCount 
-    }, req);
+    return this.logSecurityEvent(
+      'brute_force_attack',
+      {
+        target_resource: targetResource,
+        attempt_count: attemptCount
+      },
+      req
+    );
   }
 
   async logCSRFAttempt(req, tokenProvided = null) {
-    return this.logSecurityEvent('csrf_attack_attempt', { 
-      token_provided: !!tokenProvided,
-      endpoint: req.path 
-    }, req);
+    return this.logSecurityEvent(
+      'csrf_attack_attempt',
+      {
+        token_provided: !!tokenProvided,
+        endpoint: req.path
+      },
+      req
+    );
   }
 
   async logRateLimitExceeded(req, limitType, currentCount, maxAllowed) {
-    return this.logSecurityEvent('rate_limit_exceeded', { 
-      limit_type: limitType,
-      current_count: currentCount,
-      max_allowed: maxAllowed 
-    }, req);
+    return this.logSecurityEvent(
+      'rate_limit_exceeded',
+      {
+        limit_type: limitType,
+        current_count: currentCount,
+        max_allowed: maxAllowed
+      },
+      req
+    );
   }
 
   async logUnauthorizedAccess(req, resourceType, requiredPermission) {
-    return this.logSecurityEvent('unauthorized_admin_access', { 
-      resource_type: resourceType,
-      required_permission: requiredPermission 
-    }, req);
+    return this.logSecurityEvent(
+      'unauthorized_admin_access',
+      {
+        resource_type: resourceType,
+        required_permission: requiredPermission
+      },
+      req
+    );
   }
 
   async logSQLInjectionAttempt(req, suspiciousInput, field) {
-    return this.logSecurityEvent('sql_injection_attempt', { 
-      suspicious_input: suspiciousInput?.substring(0, 500), // Limit length
-      field 
-    }, req);
+    return this.logSecurityEvent(
+      'sql_injection_attempt',
+      {
+        suspicious_input: suspiciousInput?.substring(0, 500), // Limit length
+        field
+      },
+      req
+    );
   }
 
   async logXSSAttempt(req, suspiciousInput, field) {
-    return this.logSecurityEvent('xss_attempt', { 
-      suspicious_input: suspiciousInput?.substring(0, 500), // Limit length
-      field 
-    }, req);
+    return this.logSecurityEvent(
+      'xss_attempt',
+      {
+        suspicious_input: suspiciousInput?.substring(0, 500), // Limit length
+        field
+      },
+      req
+    );
   }
 
   // Analytics methods
@@ -313,13 +345,14 @@ class SecurityAuditLogger {
         timeline: {}
       };
 
-      data.forEach(event => {
+      data.forEach((event) => {
         // Count by severity
         metrics.by_severity[event.severity] = (metrics.by_severity[event.severity] || 0) + 1;
-        
+
         // Count by event type
-        metrics.by_event_type[event.event_type] = (metrics.by_event_type[event.event_type] || 0) + 1;
-        
+        metrics.by_event_type[event.event_type] =
+          (metrics.by_event_type[event.event_type] || 0) + 1;
+
         // Timeline (by hour)
         const hour = new Date(event.created_at).toISOString().substring(0, 13);
         metrics.timeline[hour] = (metrics.timeline[hour] || 0) + 1;

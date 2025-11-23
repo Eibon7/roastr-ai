@@ -5,6 +5,7 @@ This document describes the comprehensive test coverage for the log rotation and
 ## Overview
 
 The test suite covers three main components:
+
 - **Log Backup Service** - S3 backup functionality
 - **Log Maintenance Service** - Scheduled cleanup and monitoring
 - **Alert Service** - Notification system for log management events
@@ -16,6 +17,7 @@ The test suite covers three main components:
 #### 1. Log Backup Service (`tests/unit/services/logBackupService.test.js`)
 
 **Coverage Areas:**
+
 - ✅ Service initialization and configuration
 - ✅ S3 client setup and validation
 - ✅ File upload operations with retry logic
@@ -24,6 +26,7 @@ The test suite covers three main components:
 - ✅ Mock mode compatibility for testing
 
 **Key Test Scenarios:**
+
 - S3 configuration validation
 - File upload with metadata and compression
 - Retry logic for failed uploads
@@ -34,6 +37,7 @@ The test suite covers three main components:
 #### 2. Log Maintenance Service (`tests/unit/utils/logMaintenance.test.js`)
 
 **Coverage Areas:**
+
 - ✅ Service lifecycle (start/stop)
 - ✅ Cron job scheduling and management
 - ✅ Manual cleanup operations
@@ -42,6 +46,7 @@ The test suite covers three main components:
 - ✅ Integration with backup service
 
 **Key Test Scenarios:**
+
 - Service initialization with environment variables
 - Scheduled job creation and management
 - Manual cleanup with custom retention periods
@@ -52,6 +57,7 @@ The test suite covers three main components:
 #### 3. Alert Service (`tests/unit/services/alertService.test.js`)
 
 **Coverage Areas:**
+
 - ✅ Alert configuration and initialization
 - ✅ Webhook and email alert delivery
 - ✅ Rate limiting and cooldown mechanisms
@@ -60,6 +66,7 @@ The test suite covers three main components:
 - ✅ Error handling and fallback mechanisms
 
 **Key Test Scenarios:**
+
 - Alert building and formatting
 - Webhook delivery with timeout handling
 - Email template generation
@@ -72,6 +79,7 @@ The test suite covers three main components:
 #### CLI Commands (`tests/integration/cli/logCommands.test.js`)
 
 **Coverage Areas:**
+
 - ✅ `backup` command with various options
 - ✅ `maintain` command with subcommands
 - ✅ Command argument parsing and validation
@@ -80,6 +88,7 @@ The test suite covers three main components:
 - ✅ End-to-end workflow testing
 
 **Key Test Scenarios:**
+
 - Backup command with dry-run mode
 - Maintenance cleanup with custom retention
 - Service status and health checks
@@ -107,6 +116,7 @@ npx jest tests/integration/cli/logCommands.test.js
 ### Test Configuration
 
 The tests use specific Jest configurations:
+
 - **Unit Tests**: Standard Jest configuration with mocking
 - **Integration Tests**: Custom configuration with longer timeouts
 - **Coverage**: Comprehensive coverage reporting for all services
@@ -148,18 +158,21 @@ The test suite aims for comprehensive coverage:
 ## Test Reports
 
 After running tests, reports are generated in:
+
 - `coverage/log-management/` - Coverage reports
 - `test-reports/log-management/` - Test execution reports
 
 ## Mock Strategy
 
 ### Unit Tests
+
 - **AWS SDK**: Mocked S3 operations
 - **File System**: Mocked fs-extra operations
 - **Cron Jobs**: Mocked cron scheduling
 - **HTTP Requests**: Mocked axios for webhooks
 
 ### Integration Tests
+
 - **CLI Commands**: Real command execution with test environment
 - **File Operations**: Temporary test directories
 - **Service Integration**: Real service initialization with test config
@@ -167,6 +180,7 @@ After running tests, reports are generated in:
 ## Continuous Integration
 
 The tests are designed to run in CI environments:
+
 - No external dependencies required
 - Mock mode for all external services
 - Deterministic test execution
@@ -175,12 +189,14 @@ The tests are designed to run in CI environments:
 ## Test Maintenance
 
 ### Adding New Tests
+
 1. Follow existing test structure and naming conventions
 2. Include both success and error scenarios
 3. Mock external dependencies appropriately
 4. Update this documentation
 
 ### Updating Tests
+
 1. Maintain backward compatibility where possible
 2. Update mocks when service interfaces change
 3. Ensure coverage metrics remain high

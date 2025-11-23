@@ -26,33 +26,36 @@ console.log('🔍 Testing Migration 024 RPC Function');
 console.log('=====================================\n');
 
 // Test RPC function exists
-supabase.rpc('atomic_update_user_behavior', {
-  p_organization_id: '00000000-0000-0000-0000-000000000001',
-  p_platform: 'twitter',
-  p_platform_user_id: 'test_migration_024',
-  p_platform_username: 'testuser',
-  p_violation_data: {
-    severity: 'medium',
-    toxicity_score: 0.75,
-    comment_id: 'test_comment',
-    action_tags: ['warning']
-  }
-}).then(result => {
-  console.log('\n✅ SUCCESS: RPC function works!\n');
-  console.log('Response:', JSON.stringify(result.data, null, 2));
-  console.log('\n=====================================');
-  console.log('Migration 024 is deployed and operational ✅');
-  console.log('=====================================\n');
-  process.exit(0);
-}).catch(error => {
-  console.error('\n❌ FAILURE: RPC function error\n');
-  console.error('Error:', error.message);
+supabase
+  .rpc('atomic_update_user_behavior', {
+    p_organization_id: '00000000-0000-0000-0000-000000000001',
+    p_platform: 'twitter',
+    p_platform_user_id: 'test_migration_024',
+    p_platform_username: 'testuser',
+    p_violation_data: {
+      severity: 'medium',
+      toxicity_score: 0.75,
+      comment_id: 'test_comment',
+      action_tags: ['warning']
+    }
+  })
+  .then((result) => {
+    console.log('\n✅ SUCCESS: RPC function works!\n');
+    console.log('Response:', JSON.stringify(result.data, null, 2));
+    console.log('\n=====================================');
+    console.log('Migration 024 is deployed and operational ✅');
+    console.log('=====================================\n');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('\n❌ FAILURE: RPC function error\n');
+    console.error('Error:', error.message);
 
-  if (error.message.includes('function') && error.message.includes('does not exist')) {
-    console.error('\n⚠️  Migration 024 NOT deployed yet!');
-    console.error('   The atomic_update_user_behavior() RPC function does not exist.');
-    console.error('   You must deploy Migration 024 before merging PR #654.\n');
-  }
+    if (error.message.includes('function') && error.message.includes('does not exist')) {
+      console.error('\n⚠️  Migration 024 NOT deployed yet!');
+      console.error('   The atomic_update_user_behavior() RPC function does not exist.');
+      console.error('   You must deploy Migration 024 before merging PR #654.\n');
+    }
 
-  process.exit(1);
-});
+    process.exit(1);
+  });

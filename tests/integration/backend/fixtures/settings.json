@@ -25,7 +25,7 @@
         "categories": {
           "insultosGraves": {
             "enabled": true,
-            "threshold": 0.90,
+            "threshold": 0.9,
             "action": "block"
           },
           "amenazas": {
@@ -35,33 +35,27 @@
           },
           "spam": {
             "enabled": true,
-            "threshold": 0.80,
+            "threshold": 0.8,
             "action": "hide"
           },
           "toxicidadModerada": {
             "enabled": false,
-            "threshold": 0.70,
+            "threshold": 0.7,
             "action": "monitor"
           }
         },
-        "whitelist": [
-          "@trusted_friend_1",
-          "@business_partner"
-        ],
-        "customKeywords": [
-          "palabra_bloqueada_1",
-          "spam_keyword"
-        ]
+        "whitelist": ["@trusted_friend_1", "@business_partner"],
+        "customKeywords": ["palabra_bloqueada_1", "spam_keyword"]
       },
       "roasting": {
         "maxDailyRoasts": 50,
         "cooldownMinutes": 5,
         "allowSelfRoasts": false,
         "toneDistribution": {
-          "Comico": 0.40,
-          "Sarcástico": 0.30, 
-          "Seco": 0.20,
-          "Afilado": 0.10
+          "Comico": 0.4,
+          "Sarcástico": 0.3,
+          "Seco": 0.2,
+          "Afilado": 0.1
         },
         "contentFilters": {
           "profanityLevel": "medium",
@@ -93,7 +87,7 @@
           "examples": ["Mi código será malo, pero al menos compila 😄"]
         },
         {
-          "id": "Sarcástico", 
+          "id": "Sarcástico",
           "name": "Sarcástico",
           "description": "Respuestas con sarcasmo inteligente",
           "examples": ["Gracias por ese análisis tan... profundo"]
@@ -112,21 +106,21 @@
         }
       ],
       "languages": [
-        {"code": "auto", "name": "Detección automática"},
-        {"code": "es", "name": "Español"},
-        {"code": "en", "name": "English"}
+        { "code": "auto", "name": "Detección automática" },
+        { "code": "es", "name": "Español" },
+        { "code": "en", "name": "English" }
       ],
       "timezones": [
-        {"id": "UTC-8", "name": "Pacific Time"},
-        {"id": "UTC-5", "name": "Eastern Time"},
-        {"id": "UTC+0", "name": "GMT"},
-        {"id": "UTC+1", "name": "Central European Time"}
+        { "id": "UTC-8", "name": "Pacific Time" },
+        { "id": "UTC-5", "name": "Eastern Time" },
+        { "id": "UTC+0", "name": "GMT" },
+        { "id": "UTC+1", "name": "Central European Time" }
       ],
       "shieldLevels": [
-        {"level": 85, "name": "Relajado", "description": "Permite más contenido"},
-        {"level": 90, "name": "Balanceado", "description": "Configuración recomendada"},
-        {"level": 95, "name": "Estricto", "description": "Máxima protección"},
-        {"level": 98, "name": "Paranoia", "description": "Solo para casos extremos"}
+        { "level": 85, "name": "Relajado", "description": "Permite más contenido" },
+        { "level": 90, "name": "Balanceado", "description": "Configuración recomendada" },
+        { "level": 95, "name": "Estricto", "description": "Máxima protección" },
+        { "level": 98, "name": "Paranoia", "description": "Solo para casos extremos" }
       ]
     },
     "validation": {

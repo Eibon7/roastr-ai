@@ -183,18 +183,21 @@ console.log(status.features.customPrompt); // 'disabled' o 'enabled'
 ### Pasos para Activar
 
 1. **Verificar configuración**:
+
    ```bash
    # Verificar que los prompts personalizados están configurados correctamente
    SELECT custom_style_prompt FROM user_subscriptions WHERE custom_style_prompt IS NOT NULL;
    ```
 
 2. **Activar flag**:
+
    ```bash
    # En variables de entorno del servidor
    ENABLE_CUSTOM_PROMPT=true
    ```
 
 3. **Reiniciar servicio**:
+
    ```bash
    # Reiniciar para cargar nueva configuración
    pm2 restart roastr-api

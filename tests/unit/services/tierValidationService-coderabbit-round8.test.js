@@ -1,13 +1,13 @@
 /**
  * Test Suite: TierValidationService - CodeRabbit Round 8 Improvements
- * 
+ *
  * Tests the enhancements made in CodeRabbit Round 8:
  * 1. Fixed header documentation - Starter tier roast limit corrected from 100 to 50
  * 2. Enhanced input validation - Added validation for userId and actionType parameters
  * 3. Performance monitoring - Added timing tracking for slow validations (>1000ms)
  * 4. Improved error logging - Enhanced metadata and error codes in recordUsageActionAtomic
  * 5. Race condition prevention - Added request_id to prevent duplicate records
- * 
+ *
  * @author Test Engineer Agent
  * @created 2025-01-27
  */
@@ -20,24 +20,27 @@ const mockSupabase = {
     select: () => ({
       eq: () => ({
         eq: () => ({
-          single: () => Promise.resolve({
-            data: { plan: 'starter', created_at: new Date().toISOString() },
-            error: null
-          })
+          single: () =>
+            Promise.resolve({
+              data: { plan: 'starter', created_at: new Date().toISOString() },
+              error: null
+            })
         })
       })
     }),
     insert: () => ({
-      select: () => Promise.resolve({
-        data: [{ id: 'test-record-id' }],
-        error: null
-      })
+      select: () =>
+        Promise.resolve({
+          data: [{ id: 'test-record-id' }],
+          error: null
+        })
     }),
     upsert: () => ({
-      select: () => Promise.resolve({
-        data: [{ usage_count: 25 }],
-        error: null
-      })
+      select: () =>
+        Promise.resolve({
+          data: [{ usage_count: 25 }],
+          error: null
+        })
     })
   })
 };
@@ -54,7 +57,7 @@ class TierValidationServiceTest {
   constructor(supabase = mockSupabase, logger = mockLogger) {
     this.supabase = supabase;
     this.logger = logger;
-    
+
     // Tier limits - updated documentation fix
     this.TIER_LIMITS = {
       free: { roasts: 10, platforms: 1 },
@@ -69,29 +72,31 @@ class TierValidationServiceTest {
     if (!userId || typeof userId !== 'string' || userId.trim() === '') {
       throw new Error('VALIDATION_ERROR: userId must be a non-empty string');
     }
-    
+
     if (!actionType || typeof actionType !== 'string' || actionType.trim() === '') {
       throw new Error('VALIDATION_ERROR: actionType must be a non-empty string');
     }
-    
+
     const validActionTypes = ['roast_generation', 'platform_integration', 'api_call'];
     if (!validActionTypes.includes(actionType)) {
-      throw new Error(`VALIDATION_ERROR: actionType must be one of: ${validActionTypes.join(', ')}`);
+      throw new Error(
+        `VALIDATION_ERROR: actionType must be one of: ${validActionTypes.join(', ')}`
+      );
     }
   }
 
   // Performance monitoring wrapper
   async validateWithPerformanceMonitoring(userId, actionType) {
     const startTime = Date.now();
-    
+
     try {
       this.validateInputs(userId, actionType);
-      
+
       // Simulate validation logic
       const result = await this.performValidation(userId, actionType);
-      
+
       const duration = Date.now() - startTime;
-      
+
       // Performance monitoring - log slow validations
       if (duration > 1000) {
         this.logger.warn('PERFORMANCE_WARNING: Slow validation detected', {
@@ -102,7 +107,7 @@ class TierValidationServiceTest {
           timestamp: new Date().toISOString()
         });
       }
-      
+
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -126,10 +131,10 @@ class TierValidationServiceTest {
   async recordUsageActionAtomic(userId, actionType, metadata = {}) {
     // Generate request_id for race condition prevention
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     try {
       this.validateInputs(userId, actionType);
-      
+
       // Enhanced metadata for better error logging
       const enhancedMetadata = {
         ...metadata,
@@ -139,7 +144,7 @@ class TierValidationServiceTest {
         ip_address: metadata.ip_address || '127.0.0.1',
         action_context: metadata.action_context || 'api_request'
       };
-      
+
       // Simulate database operation with race condition prevention
       const result = await this.supabase
         .from('usage_tracking')
@@ -150,7 +155,7 @@ class TierValidationServiceTest {
           metadata: enhancedMetadata
         })
         .select();
-      
+
       if (result.error) {
         // Enhanced error logging with error codes
         this.logger.error('DATABASE_ERROR: Failed to record usage action', {
@@ -164,13 +169,12 @@ class TierValidationServiceTest {
         });
         throw new Error(`Failed to record usage: ${result.error.message}`);
       }
-      
+
       return {
         success: true,
         recordId: result.data[0]?.id,
         requestId
       };
-      
     } catch (error) {
       // Enhanced error logging
       let errorCode = 'OPERATION_FAILED';
@@ -179,7 +183,7 @@ class TierValidationServiceTest {
       } else if (error.message.includes('Failed to record usage')) {
         errorCode = 'DB_INSERT_FAILED';
       }
-      
+
       this.logger.error('USAGE_RECORDING_ERROR: Atomic operation failed', {
         error_code: errorCode,
         error_message: error.message,
@@ -212,7 +216,7 @@ class TestSuite {
 
   async runTests() {
     console.log('🧪 Running TierValidationService CodeRabbit Round 8 Tests...\n');
-    
+
     for (const test of this.tests) {
       try {
         await test.testFn();
@@ -224,7 +228,7 @@ class TestSuite {
       }
       this.results.total++;
     }
-    
+
     this.printSummary();
   }
 
@@ -234,7 +238,7 @@ class TestSuite {
     console.log(`Passed: ${this.results.passed}`);
     console.log(`Failed: ${this.results.failed}`);
     console.log(`Success Rate: ${((this.results.passed / this.results.total) * 100).toFixed(1)}%`);
-    
+
     if (this.results.failed > 0) {
       process.exit(1);
     }
@@ -247,25 +251,39 @@ const testSuite = new TestSuite();
 // 1. Documentation Consistency Tests
 testSuite.addTest('Documentation Fix: Starter tier limit should be 50 roasts', async () => {
   const service = new TierValidationServiceTest();
-  assert.strictEqual(service.TIER_LIMITS.starter.roasts, 50, 'Starter tier should have 50 roast limit');
-  assert.notStrictEqual(service.TIER_LIMITS.starter.roasts, 100, 'Starter tier should not have 100 roast limit (old documentation)');
+  assert.strictEqual(
+    service.TIER_LIMITS.starter.roasts,
+    50,
+    'Starter tier should have 50 roast limit'
+  );
+  assert.notStrictEqual(
+    service.TIER_LIMITS.starter.roasts,
+    100,
+    'Starter tier should not have 100 roast limit (old documentation)'
+  );
 });
 
 testSuite.addTest('Documentation Consistency: All tier limits are properly defined', async () => {
   const service = new TierValidationServiceTest();
   const expectedTiers = ['free', 'starter', 'pro', 'plus'];
-  
-  expectedTiers.forEach(tier => {
+
+  expectedTiers.forEach((tier) => {
     assert(service.TIER_LIMITS[tier], `Tier ${tier} should be defined`);
-    assert(typeof service.TIER_LIMITS[tier].roasts === 'number', `Tier ${tier} should have numeric roast limit`);
-    assert(typeof service.TIER_LIMITS[tier].platforms === 'number', `Tier ${tier} should have numeric platform limit`);
+    assert(
+      typeof service.TIER_LIMITS[tier].roasts === 'number',
+      `Tier ${tier} should have numeric roast limit`
+    );
+    assert(
+      typeof service.TIER_LIMITS[tier].platforms === 'number',
+      `Tier ${tier} should have numeric platform limit`
+    );
   });
 });
 
 // 2. Enhanced Input Validation Tests
 testSuite.addTest('Input Validation: userId must be non-empty string', async () => {
   const service = new TierValidationServiceTest();
-  
+
   // Test null userId
   try {
     service.validateInputs(null, 'roast_generation');
@@ -273,7 +291,7 @@ testSuite.addTest('Input Validation: userId must be non-empty string', async () 
   } catch (error) {
     assert(error.message.includes('userId must be a non-empty string'));
   }
-  
+
   // Test empty string userId
   try {
     service.validateInputs('', 'roast_generation');
@@ -281,7 +299,7 @@ testSuite.addTest('Input Validation: userId must be non-empty string', async () 
   } catch (error) {
     assert(error.message.includes('userId must be a non-empty string'));
   }
-  
+
   // Test whitespace-only userId
   try {
     service.validateInputs('   ', 'roast_generation');
@@ -293,7 +311,7 @@ testSuite.addTest('Input Validation: userId must be non-empty string', async () 
 
 testSuite.addTest('Input Validation: actionType must be valid enum value', async () => {
   const service = new TierValidationServiceTest();
-  
+
   // Test invalid actionType
   try {
     service.validateInputs('user123', 'invalid_action');
@@ -301,7 +319,7 @@ testSuite.addTest('Input Validation: actionType must be valid enum value', async
   } catch (error) {
     assert(error.message.includes('actionType must be one of:'));
   }
-  
+
   // Test null actionType
   try {
     service.validateInputs('user123', null);
@@ -309,10 +327,10 @@ testSuite.addTest('Input Validation: actionType must be valid enum value', async
   } catch (error) {
     assert(error.message.includes('actionType must be a non-empty string'));
   }
-  
+
   // Test valid actionTypes should not throw
   const validTypes = ['roast_generation', 'platform_integration', 'api_call'];
-  validTypes.forEach(type => {
+  validTypes.forEach((type) => {
     assert.doesNotThrow(() => {
       service.validateInputs('user123', type);
     });
@@ -321,7 +339,7 @@ testSuite.addTest('Input Validation: actionType must be valid enum value', async
 
 testSuite.addTest('Input Validation: type checking for parameters', async () => {
   const service = new TierValidationServiceTest();
-  
+
   // Test non-string userId
   try {
     service.validateInputs(123, 'roast_generation');
@@ -329,7 +347,7 @@ testSuite.addTest('Input Validation: type checking for parameters', async () => 
   } catch (error) {
     assert(error.message.includes('userId must be a non-empty string'));
   }
-  
+
   // Test non-string actionType
   try {
     service.validateInputs('user123', 123);
@@ -356,15 +374,15 @@ testSuite.addTest('Performance Monitoring: slow validation detection', async () 
     info: () => {},
     debug: () => {}
   };
-  
+
   const service = new TierValidationServiceTest(mockSupabase, mockLogger);
-  
+
   // Mock slow operation
   service.performValidation = async () => {
-    await new Promise(resolve => setTimeout(resolve, 1100)); // 1.1 seconds
+    await new Promise((resolve) => setTimeout(resolve, 1100)); // 1.1 seconds
     return { valid: true };
   };
-  
+
   await service.validateWithPerformanceMonitoring('user123', 'roast_generation');
   assert(warningLogged, 'Performance warning should be logged for slow validation');
 });
@@ -372,20 +390,22 @@ testSuite.addTest('Performance Monitoring: slow validation detection', async () 
 testSuite.addTest('Performance Monitoring: fast validation no warning', async () => {
   let warningLogged = false;
   const mockLogger = {
-    warn: () => { warningLogged = true; },
+    warn: () => {
+      warningLogged = true;
+    },
     error: () => {},
     info: () => {},
     debug: () => {}
   };
-  
+
   const service = new TierValidationServiceTest(mockSupabase, mockLogger);
-  
+
   // Mock fast operation
   service.performValidation = async () => {
-    await new Promise(resolve => setTimeout(resolve, 100)); // 0.1 seconds
+    await new Promise((resolve) => setTimeout(resolve, 100)); // 0.1 seconds
     return { valid: true };
   };
-  
+
   await service.validateWithPerformanceMonitoring('user123', 'roast_generation');
   assert(!warningLogged, 'No performance warning should be logged for fast validation');
 });
@@ -401,31 +421,32 @@ testSuite.addTest('Error Logging: enhanced metadata structure', async () => {
     info: () => {},
     debug: () => {}
   };
-  
+
   const service = new TierValidationServiceTest(mockSupabase, mockLogger);
-  
+
   const testMetadata = {
     user_agent: 'test-browser/1.0',
     ip_address: '192.168.1.1',
     action_context: 'web_interface'
   };
-  
+
   await service.recordUsageActionAtomic('user123', 'roast_generation', testMetadata);
-  
+
   // Test the error case
   const failingSupabase = {
     from: () => ({
       insert: () => ({
-        select: () => Promise.resolve({
-          data: null,
-          error: { message: 'Database connection failed' }
-        })
+        select: () =>
+          Promise.resolve({
+            data: null,
+            error: { message: 'Database connection failed' }
+          })
       })
     })
   };
-  
+
   const failingService = new TierValidationServiceTest(failingSupabase, mockLogger);
-  
+
   try {
     await failingService.recordUsageActionAtomic('user123', 'roast_generation', testMetadata);
   } catch (error) {
@@ -447,30 +468,31 @@ testSuite.addTest('Error Logging: error code classification', async () => {
     info: () => {},
     debug: () => {}
   };
-  
+
   const service = new TierValidationServiceTest(mockSupabase, mockLogger);
-  
+
   // Test validation error classification
   try {
     await service.recordUsageActionAtomic('', 'roast_generation');
   } catch (error) {
     assert.strictEqual(loggedErrorCode, 'INPUT_VALIDATION_FAILED');
   }
-  
+
   // Test database error classification
   const failingSupabase = {
     from: () => ({
       insert: () => ({
-        select: () => Promise.resolve({
-          data: null,
-          error: { message: 'Connection timeout' }
-        })
+        select: () =>
+          Promise.resolve({
+            data: null,
+            error: { message: 'Connection timeout' }
+          })
       })
     })
   };
-  
+
   const failingService = new TierValidationServiceTest(failingSupabase, mockLogger);
-  
+
   try {
     await failingService.recordUsageActionAtomic('user123', 'roast_generation');
   } catch (error) {
@@ -481,10 +503,10 @@ testSuite.addTest('Error Logging: error code classification', async () => {
 // 5. Race Condition Prevention Tests
 testSuite.addTest('Race Condition Prevention: unique request_id generation', async () => {
   const service = new TierValidationServiceTest();
-  
+
   const result1 = await service.recordUsageActionAtomic('user123', 'roast_generation');
   const result2 = await service.recordUsageActionAtomic('user123', 'roast_generation');
-  
+
   assert(result1.requestId, 'First request should have request ID');
   assert(result2.requestId, 'Second request should have request ID');
   assert.notStrictEqual(result1.requestId, result2.requestId, 'Request IDs should be unique');
@@ -492,12 +514,12 @@ testSuite.addTest('Race Condition Prevention: unique request_id generation', asy
 
 testSuite.addTest('Race Condition Prevention: request_id format validation', async () => {
   const service = new TierValidationServiceTest();
-  
+
   const result = await service.recordUsageActionAtomic('user123', 'roast_generation');
-  
+
   assert(result.requestId, 'Request ID should be present');
   assert(result.requestId.startsWith('req_'), 'Request ID should start with req_ prefix');
-  
+
   const parts = result.requestId.split('_');
   assert.strictEqual(parts.length, 3, 'Request ID should have 3 parts separated by underscores');
   assert(parts[1].match(/^\d+$/), 'Second part should be timestamp (numeric)');
@@ -506,19 +528,19 @@ testSuite.addTest('Race Condition Prevention: request_id format validation', asy
 
 testSuite.addTest('Race Condition Prevention: concurrent request handling', async () => {
   const service = new TierValidationServiceTest();
-  
+
   // Simulate concurrent requests
-  const promises = Array.from({ length: 5 }, (_, i) => 
+  const promises = Array.from({ length: 5 }, (_, i) =>
     service.recordUsageActionAtomic(`user${i}`, 'roast_generation')
   );
-  
+
   const results = await Promise.all(promises);
-  
+
   // Verify all requests completed successfully
   assert.strictEqual(results.length, 5, 'All concurrent requests should complete');
-  
+
   // Verify unique request IDs
-  const requestIds = results.map(r => r.requestId);
+  const requestIds = results.map((r) => r.requestId);
   const uniqueIds = new Set(requestIds);
   assert.strictEqual(uniqueIds.size, 5, 'All request IDs should be unique');
 });
@@ -527,28 +549,30 @@ testSuite.addTest('Race Condition Prevention: concurrent request handling', asyn
 testSuite.addTest('Integration: complete validation flow with all enhancements', async () => {
   let performanceWarning = false;
   let errorLogged = false;
-  
+
   const mockLogger = {
     warn: (message) => {
       if (message.includes('PERFORMANCE_WARNING')) {
         performanceWarning = true;
       }
     },
-    error: () => { errorLogged = true; },
+    error: () => {
+      errorLogged = true;
+    },
     info: () => {},
     debug: () => {}
   };
-  
+
   const service = new TierValidationServiceTest(mockSupabase, mockLogger);
-  
+
   // Mock slow validation
   service.performValidation = async () => {
-    await new Promise(resolve => setTimeout(resolve, 1100));
+    await new Promise((resolve) => setTimeout(resolve, 1100));
     return { valid: true, remainingUsage: 25 };
   };
-  
+
   const result = await service.validateWithPerformanceMonitoring('user123', 'roast_generation');
-  
+
   assert(result.valid, 'Validation should succeed');
   assert(performanceWarning, 'Performance warning should be triggered');
   assert(!errorLogged, 'No errors should be logged for successful validation');
@@ -556,7 +580,7 @@ testSuite.addTest('Integration: complete validation flow with all enhancements',
 
 testSuite.addTest('Integration: error handling across all enhancement layers', async () => {
   let errorDetails = null;
-  
+
   const mockLogger = {
     error: (message, metadata) => {
       errorDetails = { message, metadata };
@@ -565,9 +589,9 @@ testSuite.addTest('Integration: error handling across all enhancement layers', a
     info: () => {},
     debug: () => {}
   };
-  
+
   const service = new TierValidationServiceTest(mockSupabase, mockLogger);
-  
+
   // Test input validation error propagation
   try {
     await service.validateWithPerformanceMonitoring('', 'roast_generation');
@@ -575,7 +599,10 @@ testSuite.addTest('Integration: error handling across all enhancement layers', a
   } catch (error) {
     assert(error.message.includes('VALIDATION_ERROR'));
     assert(errorDetails, 'Error should be logged');
-    assert(errorDetails.metadata.duration !== undefined, 'Duration should be tracked even for errors');
+    assert(
+      errorDetails.metadata.duration !== undefined,
+      'Duration should be tracked even for errors'
+    );
   }
 });
 

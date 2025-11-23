@@ -33,37 +33,42 @@ describe('ShieldSettingsService', () => {
     mockLogger.error.mockClear();
 
     // Create fresh mock for each test
-    mockSupabase = createSupabaseMock({
-      organization_settings: {
-        organization_id: 'org-123',
-        aggressiveness: 95,
-        tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90,
-        shield_enabled: true,
-        auto_approve_shield_actions: false,
-        corrective_messages_enabled: true
-      },
-      platform_settings: []
-    }, {
-      get_effective_shield_settings: {
-        data: [{
+    mockSupabase = createSupabaseMock(
+      {
+        organization_settings: {
           organization_id: 'org-123',
-          platform: 'twitter',
           aggressiveness: 95,
           tau_roast_lower: 0.25,
-          tau_shield: 0.70,
-          tau_critical: 0.90,
+          tau_shield: 0.7,
+          tau_critical: 0.9,
           shield_enabled: true,
           auto_approve_shield_actions: false,
-          corrective_messages_enabled: true,
-          response_frequency: 1.0,
-          trigger_words: ['roast', 'burn', 'insult'],
-          max_responses_per_hour: 50
-        }],
-        error: null
+          corrective_messages_enabled: true
+        },
+        platform_settings: []
+      },
+      {
+        get_effective_shield_settings: {
+          data: [
+            {
+              organization_id: 'org-123',
+              platform: 'twitter',
+              aggressiveness: 95,
+              tau_roast_lower: 0.25,
+              tau_shield: 0.7,
+              tau_critical: 0.9,
+              shield_enabled: true,
+              auto_approve_shield_actions: false,
+              corrective_messages_enabled: true,
+              response_frequency: 1.0,
+              trigger_words: ['roast', 'burn', 'insult'],
+              max_responses_per_hour: 50
+            }
+          ],
+          error: null
+        }
       }
-    });
+    );
 
     service = new ShieldSettingsService({ supabase: mockSupabase, logger: mockLogger });
   });
@@ -107,8 +112,8 @@ describe('ShieldSettingsService', () => {
         name: 'Balanced',
         description: 'Default balanced approach',
         tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90
+        tau_shield: 0.7,
+        tau_critical: 0.9
       });
     });
   });
@@ -139,7 +144,7 @@ describe('ShieldSettingsService', () => {
         const testData = { aggressiveness: 95 };
         service.cache.set('org-123', {
           data: testData,
-          timestamp: Date.now() - (6 * 60 * 1000) // 6 minutes ago (expired)
+          timestamp: Date.now() - 6 * 60 * 1000 // 6 minutes ago (expired)
         });
 
         const cached = service._getCached('org-123');
@@ -199,10 +204,9 @@ describe('ShieldSettingsService', () => {
 
       expect(settings).toEqual(cachedSettings);
       expect(mockSupabase.from).not.toHaveBeenCalled();
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        'Returning cached organization settings',
-        { organizationId: 'org-123' }
-      );
+      expect(mockLogger.debug).toHaveBeenCalledWith('Returning cached organization settings', {
+        organizationId: 'org-123'
+      });
     });
 
     test('should fetch from database if not cached', async () => {
@@ -210,8 +214,8 @@ describe('ShieldSettingsService', () => {
         organization_id: 'org-123',
         aggressiveness: 95,
         tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90,
+        tau_shield: 0.7,
+        tau_critical: 0.9,
         shield_enabled: true,
         auto_approve_shield_actions: false,
         corrective_messages_enabled: true
@@ -230,10 +234,10 @@ describe('ShieldSettingsService', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('organization_settings');
       expect(settings).toMatchObject(dbData);
       expect(settings.aggressiveness_details).toEqual(service.aggressivenessLevels[95]);
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        'Retrieved organization settings',
-        { organizationId: 'org-123', aggressiveness: 95 }
-      );
+      expect(mockLogger.debug).toHaveBeenCalledWith('Retrieved organization settings', {
+        organizationId: 'org-123',
+        aggressiveness: 95
+      });
     });
 
     test('should return default settings if no data exists', async () => {
@@ -266,8 +270,9 @@ describe('ShieldSettingsService', () => {
         })
       });
 
-      await expect(service.getOrganizationSettings('org-123'))
-        .rejects.toThrow('Database connection failed');
+      await expect(service.getOrganizationSettings('org-123')).rejects.toThrow(
+        'Database connection failed'
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to get organization settings',
@@ -283,8 +288,8 @@ describe('ShieldSettingsService', () => {
         organization_id: 'org-123',
         aggressiveness: 95,
         tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90,
+        tau_shield: 0.7,
+        tau_critical: 0.9,
         shield_enabled: true
       };
 
@@ -308,7 +313,7 @@ describe('ShieldSettingsService', () => {
     test('should update organization settings successfully', async () => {
       const updateSettings = {
         aggressiveness: 98,
-        tau_roast_lower: 0.20,
+        tau_roast_lower: 0.2,
         tau_shield: 0.65,
         tau_critical: 0.85,
         shield_enabled: true,
@@ -333,7 +338,11 @@ describe('ShieldSettingsService', () => {
       service._setCached('org-123', { aggressiveness: 95 });
       expect(service.cache.has('org-123')).toBe(true);
 
-      const result = await service.updateOrganizationSettings('org-123', updateSettings, 'user-456');
+      const result = await service.updateOrganizationSettings(
+        'org-123',
+        updateSettings,
+        'user-456'
+      );
 
       expect(mockSupabase.from).toHaveBeenCalledWith('organization_settings');
       expect(result).toMatchObject(updatedData);
@@ -357,21 +366,22 @@ describe('ShieldSettingsService', () => {
       const invalidSettings = {
         aggressiveness: 99, // Invalid aggressiveness
         tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90,
+        tau_shield: 0.7,
+        tau_critical: 0.9,
         shield_enabled: true
       };
 
-      await expect(service.updateOrganizationSettings('org-123', invalidSettings, 'user-456'))
-        .rejects.toThrow('Validation failed');
+      await expect(
+        service.updateOrganizationSettings('org-123', invalidSettings, 'user-456')
+      ).rejects.toThrow('Validation failed');
     });
 
     test('should throw error on database failure', async () => {
       const validSettings = {
         aggressiveness: 95,
         tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90,
+        tau_shield: 0.7,
+        tau_critical: 0.9,
         shield_enabled: true,
         auto_approve_shield_actions: false,
         corrective_messages_enabled: true
@@ -386,8 +396,9 @@ describe('ShieldSettingsService', () => {
         })
       });
 
-      await expect(service.updateOrganizationSettings('org-123', validSettings, 'user-456'))
-        .rejects.toThrow('Database write failed');
+      await expect(
+        service.updateOrganizationSettings('org-123', validSettings, 'user-456')
+      ).rejects.toThrow('Database write failed');
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to update organization settings',
@@ -406,7 +417,7 @@ describe('ShieldSettingsService', () => {
         organization_id: 'org-123',
         platform: 'twitter',
         aggressiveness: 98,
-        tau_roast_lower: 0.20,
+        tau_roast_lower: 0.2,
         tau_shield: 0.65,
         tau_critical: 0.85,
         shield_enabled: true
@@ -426,10 +437,11 @@ describe('ShieldSettingsService', () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith('platform_settings');
       expect(settings).toEqual(platformData);
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        'Retrieved platform settings',
-        { organizationId: 'org-123', platform: 'twitter', hasSettings: true }
-      );
+      expect(mockLogger.debug).toHaveBeenCalledWith('Retrieved platform settings', {
+        organizationId: 'org-123',
+        platform: 'twitter',
+        hasSettings: true
+      });
     });
 
     test('should return null if no platform settings exist', async () => {
@@ -449,10 +461,11 @@ describe('ShieldSettingsService', () => {
       const settings = await service.getPlatformSettings('org-123', 'twitter');
 
       expect(settings).toBeNull();
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        'Retrieved platform settings',
-        { organizationId: 'org-123', platform: 'twitter', hasSettings: false }
-      );
+      expect(mockLogger.debug).toHaveBeenCalledWith('Retrieved platform settings', {
+        organizationId: 'org-123',
+        platform: 'twitter',
+        hasSettings: false
+      });
     });
 
     test('should throw error on database failure', async () => {
@@ -467,8 +480,9 @@ describe('ShieldSettingsService', () => {
         })
       });
 
-      await expect(service.getPlatformSettings('org-123', 'twitter'))
-        .rejects.toThrow('Database connection failed');
+      await expect(service.getPlatformSettings('org-123', 'twitter')).rejects.toThrow(
+        'Database connection failed'
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to get platform settings',
@@ -485,7 +499,7 @@ describe('ShieldSettingsService', () => {
     test('should update platform settings successfully', async () => {
       const updateSettings = {
         aggressiveness: 98,
-        tau_roast_lower: 0.20,
+        tau_roast_lower: 0.2,
         tau_shield: 0.65,
         tau_critical: 0.85,
         shield_enabled: true,
@@ -510,7 +524,12 @@ describe('ShieldSettingsService', () => {
         })
       });
 
-      const result = await service.updatePlatformSettings('org-123', 'twitter', updateSettings, 'user-456');
+      const result = await service.updatePlatformSettings(
+        'org-123',
+        'twitter',
+        updateSettings,
+        'user-456'
+      );
 
       expect(mockSupabase.from).toHaveBeenCalledWith('platform_settings');
       expect(result).toEqual(updatedData);
@@ -528,7 +547,7 @@ describe('ShieldSettingsService', () => {
     test('should allow null values for inheritance', async () => {
       const updateSettings = {
         aggressiveness: null, // Inherit from organization
-        tau_roast_lower: 0.20,
+        tau_roast_lower: 0.2,
         tau_shield: null,
         tau_critical: null,
         shield_enabled: true
@@ -548,7 +567,12 @@ describe('ShieldSettingsService', () => {
         })
       });
 
-      const result = await service.updatePlatformSettings('org-123', 'youtube', updateSettings, 'user-456');
+      const result = await service.updatePlatformSettings(
+        'org-123',
+        'youtube',
+        updateSettings,
+        'user-456'
+      );
 
       expect(result).toEqual(updatedData);
     });
@@ -556,20 +580,22 @@ describe('ShieldSettingsService', () => {
     test('should throw error on invalid platform', async () => {
       const updateSettings = { aggressiveness: 95 };
 
-      await expect(service.updatePlatformSettings('org-123', 'invalid-platform', updateSettings, 'user-456'))
-        .rejects.toThrow('Unsupported platform');
+      await expect(
+        service.updatePlatformSettings('org-123', 'invalid-platform', updateSettings, 'user-456')
+      ).rejects.toThrow('Unsupported platform');
     });
 
     test('should throw error on invalid settings', async () => {
       const invalidSettings = {
         aggressiveness: 99, // Invalid
         tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90
+        tau_shield: 0.7,
+        tau_critical: 0.9
       };
 
-      await expect(service.updatePlatformSettings('org-123', 'twitter', invalidSettings, 'user-456'))
-        .rejects.toThrow('Validation failed');
+      await expect(
+        service.updatePlatformSettings('org-123', 'twitter', invalidSettings, 'user-456')
+      ).rejects.toThrow('Validation failed');
     });
 
     test('should remove undefined values but keep nulls', async () => {
@@ -613,8 +639,8 @@ describe('ShieldSettingsService', () => {
         platform: 'twitter',
         aggressiveness: 95,
         tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90,
+        tau_shield: 0.7,
+        tau_critical: 0.9,
         shield_enabled: true,
         auto_approve_shield_actions: false,
         corrective_messages_enabled: true,
@@ -687,8 +713,9 @@ describe('ShieldSettingsService', () => {
         error: rpcError
       });
 
-      await expect(service.getEffectiveSettings('org-123', 'twitter'))
-        .rejects.toThrow('RPC function not found');
+      await expect(service.getEffectiveSettings('org-123', 'twitter')).rejects.toThrow(
+        'RPC function not found'
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to get effective settings',
@@ -722,10 +749,10 @@ describe('ShieldSettingsService', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('platform_settings');
       expect(settings).toEqual(platforms);
       expect(settings).toHaveLength(3);
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        'Retrieved all platform settings',
-        { organizationId: 'org-123', platformCount: 3 }
-      );
+      expect(mockLogger.debug).toHaveBeenCalledWith('Retrieved all platform settings', {
+        organizationId: 'org-123',
+        platformCount: 3
+      });
     });
 
     test('should return empty array if no platforms configured', async () => {
@@ -740,10 +767,10 @@ describe('ShieldSettingsService', () => {
       const settings = await service.getAllPlatformSettings('org-123');
 
       expect(settings).toEqual([]);
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        'Retrieved all platform settings',
-        { organizationId: 'org-123', platformCount: 0 }
-      );
+      expect(mockLogger.debug).toHaveBeenCalledWith('Retrieved all platform settings', {
+        organizationId: 'org-123',
+        platformCount: 0
+      });
     });
 
     test('should throw error on database failure', async () => {
@@ -756,8 +783,9 @@ describe('ShieldSettingsService', () => {
         })
       });
 
-      await expect(service.getAllPlatformSettings('org-123'))
-        .rejects.toThrow('Database query failed');
+      await expect(service.getAllPlatformSettings('org-123')).rejects.toThrow(
+        'Database query failed'
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to get all platform settings',
@@ -771,11 +799,13 @@ describe('ShieldSettingsService', () => {
 
   describe('deletePlatformSettings', () => {
     test('should delete platform settings successfully', async () => {
-      const deletedData = [{
-        organization_id: 'org-123',
-        platform: 'twitter',
-        aggressiveness: 98
-      }];
+      const deletedData = [
+        {
+          organization_id: 'org-123',
+          platform: 'twitter',
+          aggressiveness: 98
+        }
+      ];
 
       mockSupabase.from = jest.fn().mockReturnValue({
         delete: jest.fn().mockReturnValue({
@@ -834,8 +864,9 @@ describe('ShieldSettingsService', () => {
         })
       });
 
-      await expect(service.deletePlatformSettings('org-123', 'twitter', 'user-456'))
-        .rejects.toThrow('Database delete failed');
+      await expect(
+        service.deletePlatformSettings('org-123', 'twitter', 'user-456')
+      ).rejects.toThrow('Database delete failed');
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to delete platform settings',
@@ -886,8 +917,8 @@ describe('ShieldSettingsService', () => {
         expect(defaults).toEqual({
           aggressiveness: 95,
           tau_roast_lower: 0.25,
-          tau_shield: 0.70,
-          tau_critical: 0.90,
+          tau_shield: 0.7,
+          tau_critical: 0.9,
           shield_enabled: true,
           auto_approve_shield_actions: false,
           corrective_messages_enabled: true,
@@ -903,8 +934,8 @@ describe('ShieldSettingsService', () => {
         const validSettings = {
           aggressiveness: 95,
           tau_roast_lower: 0.25,
-          tau_shield: 0.70,
-          tau_critical: 0.90,
+          tau_shield: 0.7,
+          tau_critical: 0.9,
           shield_enabled: true
         };
 
@@ -916,75 +947,82 @@ describe('ShieldSettingsService', () => {
           aggressiveness: 99
         };
 
-        expect(() => service.validateOrganizationSettings(invalidSettings))
-          .toThrow('Validation failed: Aggressiveness must be one of: 90, 95, 98, 100');
+        expect(() => service.validateOrganizationSettings(invalidSettings)).toThrow(
+          'Validation failed: Aggressiveness must be one of: 90, 95, 98, 100'
+        );
       });
 
       test('should throw error for tau_roast_lower out of range', () => {
         const invalidSettings = {
           tau_roast_lower: 1.5,
-          tau_shield: 0.70,
-          tau_critical: 0.90
+          tau_shield: 0.7,
+          tau_critical: 0.9
         };
 
-        expect(() => service.validateOrganizationSettings(invalidSettings))
-          .toThrow('Validation failed: tau_roast_lower must be between 0 and 1');
+        expect(() => service.validateOrganizationSettings(invalidSettings)).toThrow(
+          'Validation failed: tau_roast_lower must be between 0 and 1'
+        );
       });
 
       test('should throw error for tau_shield out of range', () => {
         const invalidSettings = {
           tau_roast_lower: 0.25,
           tau_shield: -0.1,
-          tau_critical: 0.90
+          tau_critical: 0.9
         };
 
-        expect(() => service.validateOrganizationSettings(invalidSettings))
-          .toThrow('Validation failed: tau_shield must be between 0 and 1');
+        expect(() => service.validateOrganizationSettings(invalidSettings)).toThrow(
+          'Validation failed: tau_shield must be between 0 and 1'
+        );
       });
 
       test('should throw error for tau_critical out of range', () => {
         const invalidSettings = {
           tau_roast_lower: 0.25,
-          tau_shield: 0.70,
+          tau_shield: 0.7,
           tau_critical: 1.5
         };
 
-        expect(() => service.validateOrganizationSettings(invalidSettings))
-          .toThrow('Validation failed: tau_critical must be between 0 and 1');
+        expect(() => service.validateOrganizationSettings(invalidSettings)).toThrow(
+          'Validation failed: tau_critical must be between 0 and 1'
+        );
       });
 
       test('should throw error if tau_roast_lower >= tau_shield', () => {
         const invalidSettings = {
           tau_roast_lower: 0.75,
-          tau_shield: 0.70,
-          tau_critical: 0.90
+          tau_shield: 0.7,
+          tau_critical: 0.9
         };
 
-        expect(() => service.validateOrganizationSettings(invalidSettings))
-          .toThrow('Validation failed: tau_roast_lower must be less than tau_shield');
+        expect(() => service.validateOrganizationSettings(invalidSettings)).toThrow(
+          'Validation failed: tau_roast_lower must be less than tau_shield'
+        );
       });
 
       test('should throw error if tau_shield >= tau_critical', () => {
         const invalidSettings = {
           tau_roast_lower: 0.25,
           tau_shield: 0.95,
-          tau_critical: 0.90
+          tau_critical: 0.9
         };
 
-        expect(() => service.validateOrganizationSettings(invalidSettings))
-          .toThrow('Validation failed: tau_shield must be less than tau_critical');
+        expect(() => service.validateOrganizationSettings(invalidSettings)).toThrow(
+          'Validation failed: tau_shield must be less than tau_critical'
+        );
       });
 
       test('should throw multiple validation errors', () => {
         const invalidSettings = {
           aggressiveness: 99,
           tau_roast_lower: 1.5,
-          tau_shield: 0.70,
-          tau_critical: 0.90
+          tau_shield: 0.7,
+          tau_critical: 0.9
         };
 
-        expect(() => service.validateOrganizationSettings(invalidSettings))
-          .toThrow('Validation failed');
+        expect(() => service.validateOrganizationSettings(invalidSettings)).toThrow(
+          'Validation failed'
+        );
       });
     });
 
@@ -992,7 +1030,7 @@ describe('ShieldSettingsService', () => {
       test('should validate valid platform settings', () => {
         const validSettings = {
           aggressiveness: 98,
-          tau_roast_lower: 0.20,
+          tau_roast_lower: 0.2,
           tau_shield: 0.65,
           tau_critical: 0.85,
           response_frequency: 0.8,
@@ -1006,7 +1044,7 @@ describe('ShieldSettingsService', () => {
         const settingsWithNulls = {
           aggressiveness: null,
           tau_roast_lower: null,
-          tau_shield: 0.70,
+          tau_shield: 0.7,
           tau_critical: null,
           response_frequency: null,
           max_responses_per_hour: null
@@ -1020,8 +1058,9 @@ describe('ShieldSettingsService', () => {
           response_frequency: 1.5
         };
 
-        expect(() => service.validatePlatformSettings(invalidSettings))
-          .toThrow('Validation failed: response_frequency must be between 0 and 1');
+        expect(() => service.validatePlatformSettings(invalidSettings)).toThrow(
+          'Validation failed: response_frequency must be between 0 and 1'
+        );
       });
 
       test('should throw error for negative max_responses_per_hour', () => {
@@ -1029,8 +1068,9 @@ describe('ShieldSettingsService', () => {
           max_responses_per_hour: -10
         };
 
-        expect(() => service.validatePlatformSettings(invalidSettings))
-          .toThrow('Validation failed: max_responses_per_hour must be a positive integer');
+        expect(() => service.validatePlatformSettings(invalidSettings)).toThrow(
+          'Validation failed: max_responses_per_hour must be a positive integer'
+        );
       });
 
       test('should throw error for non-integer max_responses_per_hour', () => {
@@ -1038,19 +1078,21 @@ describe('ShieldSettingsService', () => {
           max_responses_per_hour: 10.5
         };
 
-        expect(() => service.validatePlatformSettings(invalidSettings))
-          .toThrow('Validation failed: max_responses_per_hour must be a positive integer');
+        expect(() => service.validatePlatformSettings(invalidSettings)).toThrow(
+          'Validation failed: max_responses_per_hour must be a positive integer'
+        );
       });
 
       test('should validate threshold relationships when all provided', () => {
         const invalidSettings = {
           tau_roast_lower: 0.75,
-          tau_shield: 0.70,
-          tau_critical: 0.90
+          tau_shield: 0.7,
+          tau_critical: 0.9
         };
 
-        expect(() => service.validatePlatformSettings(invalidSettings))
-          .toThrow('Validation failed: tau_roast_lower must be less than tau_shield');
+        expect(() => service.validatePlatformSettings(invalidSettings)).toThrow(
+          'Validation failed: tau_roast_lower must be less than tau_shield'
+        );
       });
     });
 
@@ -1062,8 +1104,9 @@ describe('ShieldSettingsService', () => {
       });
 
       test('should throw error for unsupported platform', () => {
-        expect(() => service.validatePlatform('invalid-platform'))
-          .toThrow('Unsupported platform: invalid-platform');
+        expect(() => service.validatePlatform('invalid-platform')).toThrow(
+          'Unsupported platform: invalid-platform'
+        );
       });
     });
   });
@@ -1074,7 +1117,7 @@ describe('ShieldSettingsService', () => {
         const thresholds = service.aggressivenessToThresholds(90);
 
         expect(thresholds).toEqual({
-          tau_roast_lower: 0.30,
+          tau_roast_lower: 0.3,
           tau_shield: 0.75,
           tau_critical: 0.95
         });
@@ -1085,8 +1128,8 @@ describe('ShieldSettingsService', () => {
 
         expect(thresholds).toEqual({
           tau_roast_lower: 0.25,
-          tau_shield: 0.70,
-          tau_critical: 0.90
+          tau_shield: 0.7,
+          tau_critical: 0.9
         });
       });
 
@@ -1094,7 +1137,7 @@ describe('ShieldSettingsService', () => {
         const thresholds = service.aggressivenessToThresholds(98);
 
         expect(thresholds).toEqual({
-          tau_roast_lower: 0.20,
+          tau_roast_lower: 0.2,
           tau_shield: 0.65,
           tau_critical: 0.85
         });
@@ -1105,14 +1148,15 @@ describe('ShieldSettingsService', () => {
 
         expect(thresholds).toEqual({
           tau_roast_lower: 0.15,
-          tau_shield: 0.60,
-          tau_critical: 0.80
+          tau_shield: 0.6,
+          tau_critical: 0.8
         });
       });
 
       test('should throw error for invalid aggressiveness', () => {
-        expect(() => service.aggressivenessToThresholds(99))
-          .toThrow('Invalid aggressiveness level: 99');
+        expect(() => service.aggressivenessToThresholds(99)).toThrow(
+          'Invalid aggressiveness level: 99'
+        );
       });
     });
 
@@ -1122,8 +1166,8 @@ describe('ShieldSettingsService', () => {
           organization_id: 'org-123',
           aggressiveness: 95,
           tau_roast_lower: 0.25,
-          tau_shield: 0.70,
-          tau_critical: 0.90,
+          tau_shield: 0.7,
+          tau_critical: 0.9,
           shield_enabled: true,
           auto_approve_shield_actions: false,
           corrective_messages_enabled: true,
@@ -1157,7 +1201,8 @@ describe('ShieldSettingsService', () => {
 
         // Create a fresh service instance with proper mocking for Promise.all
         const freshMock = createSupabaseMock();
-        freshMock.from = jest.fn()
+        freshMock.from = jest
+          .fn()
           .mockReturnValueOnce({
             select: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
@@ -1203,7 +1248,8 @@ describe('ShieldSettingsService', () => {
         };
 
         const freshMock = createSupabaseMock();
-        freshMock.from = jest.fn()
+        freshMock.from = jest
+          .fn()
           .mockReturnValueOnce({
             select: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
@@ -1243,7 +1289,8 @@ describe('ShieldSettingsService', () => {
 
         // Mock successful org settings, but fail on platform settings
         const freshMock = createSupabaseMock();
-        freshMock.from = jest.fn()
+        freshMock.from = jest
+          .fn()
           .mockReturnValueOnce({
             select: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
@@ -1261,8 +1308,7 @@ describe('ShieldSettingsService', () => {
 
         const freshService = new ShieldSettingsService({ supabase: freshMock, logger: mockLogger });
 
-        await expect(freshService.getSettingsSummary('org-123'))
-          .rejects.toThrow('Database error');
+        await expect(freshService.getSettingsSummary('org-123')).rejects.toThrow('Database error');
 
         expect(mockLogger.error).toHaveBeenCalledWith(
           'Failed to get all platform settings',

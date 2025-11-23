@@ -11,13 +11,13 @@ const { getPlanFeatures, getAllPlans } = require('../services/planService');
 function getAvailablePlans() {
   const allPlans = getAllPlans();
   const plans = {};
-  
+
   for (const [planId, plan] of Object.entries(allPlans)) {
     // Skip 'custom' plan - it's ad-hoc, pay-per-use, and not available for standard subscription
     if (planId === 'custom') {
       continue;
     }
-    
+
     plans[planId] = {
       id: planId,
       name: plan.name,
@@ -32,7 +32,7 @@ function getAvailablePlans() {
       }
     };
   }
-  
+
   return plans;
 }
 
@@ -159,7 +159,7 @@ router.get('/features', (req, res) => {
 
     // Dynamic check for style profile availability (for test compatibility)
     const styleProfileEnabled = process.env.ENABLE_STYLE_PROFILE !== 'false';
-    
+
     res.json({
       success: true,
       data: {

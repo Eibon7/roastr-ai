@@ -26,7 +26,7 @@ jest.mock('../../../frontend/src/mocks/social', () => ({
   NETWORK_COLORS: {
     twitter: 'bg-blue-500 text-white',
     instagram: 'bg-purple-500 text-white',
-    facebook: 'bg-blue-600 text-white', 
+    facebook: 'bg-blue-600 text-white',
     youtube: 'bg-red-500 text-white'
   }
 }));
@@ -41,8 +41,20 @@ describe('Issue #366 - Connection Limits Validation', () => {
       mockUseSocialAccounts.mockReturnValue({
         accounts: [],
         availableNetworks: [
-          { network: 'twitter', name: 'Twitter', connectedCount: 0, canConnect: true, limitReached: false },
-          { network: 'instagram', name: 'Instagram', connectedCount: 1, canConnect: false, limitReached: true }
+          {
+            network: 'twitter',
+            name: 'Twitter',
+            connectedCount: 0,
+            canConnect: true,
+            limitReached: false
+          },
+          {
+            network: 'instagram',
+            name: 'Instagram',
+            connectedCount: 1,
+            canConnect: false,
+            limitReached: true
+          }
         ],
         userData: { plan: 'free', isAdminMode: false },
         getConnectionLimits: jest.fn().mockReturnValue({
@@ -52,14 +64,16 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { result } = renderHook(() => mockUseSocialAccounts());
-      
+
       expect(result.current.getConnectionLimits()).toEqual({
         maxConnections: 1,
         planTier: 'free'
       });
-      
+
       // Check that Instagram is at limit
-      const instagramNetwork = result.current.availableNetworks.find(n => n.network === 'instagram');
+      const instagramNetwork = result.current.availableNetworks.find(
+        (n) => n.network === 'instagram'
+      );
       expect(instagramNetwork.canConnect).toBe(false);
       expect(instagramNetwork.limitReached).toBe(true);
     });
@@ -68,8 +82,20 @@ describe('Issue #366 - Connection Limits Validation', () => {
       mockUseSocialAccounts.mockReturnValue({
         accounts: [],
         availableNetworks: [
-          { network: 'twitter', name: 'Twitter', connectedCount: 1, canConnect: true, limitReached: false },
-          { network: 'instagram', name: 'Instagram', connectedCount: 2, canConnect: false, limitReached: true }
+          {
+            network: 'twitter',
+            name: 'Twitter',
+            connectedCount: 1,
+            canConnect: true,
+            limitReached: false
+          },
+          {
+            network: 'instagram',
+            name: 'Instagram',
+            connectedCount: 2,
+            canConnect: false,
+            limitReached: true
+          }
         ],
         userData: { plan: 'pro', isAdminMode: false },
         getConnectionLimits: jest.fn().mockReturnValue({
@@ -79,7 +105,7 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { result } = renderHook(() => mockUseSocialAccounts());
-      
+
       expect(result.current.getConnectionLimits()).toEqual({
         maxConnections: 2,
         planTier: 'pro'
@@ -90,8 +116,8 @@ describe('Issue #366 - Connection Limits Validation', () => {
       mockUseSocialAccounts.mockReturnValue({
         accounts: [],
         availableNetworks: [],
-        userData: { 
-          plan: 'free', 
+        userData: {
+          plan: 'free',
           isAdminMode: true,
           adminModeUser: { plan: 'plus' }
         },
@@ -102,7 +128,7 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { result } = renderHook(() => mockUseSocialAccounts());
-      
+
       // Should use adminModeUser plan instead of user plan
       expect(result.current.getConnectionLimits().planTier).toBe('plus');
       expect(result.current.getConnectionLimits().maxConnections).toBe(2);
@@ -114,7 +140,13 @@ describe('Issue #366 - Connection Limits Validation', () => {
       mockUseSocialAccounts.mockReturnValue({
         accounts: [],
         availableNetworks: [
-          { network: 'twitter', name: 'Twitter', connectedCount: 1, canConnect: false, limitReached: true }
+          {
+            network: 'twitter',
+            name: 'Twitter',
+            connectedCount: 1,
+            canConnect: false,
+            limitReached: true
+          }
         ],
         userData: { plan: 'free' },
         getConnectionLimits: jest.fn().mockReturnValue({
@@ -140,22 +172,36 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { default: AccountsPage } = require('../../../frontend/src/pages/AccountsPage');
-      
+
       render(<AccountsPage />);
 
       // Should show limits info section
       expect(screen.getByText(/límites de conexión por plan/i)).toBeInTheDocument();
       expect(screen.getByText(/tu plan actual \(free\)/i)).toBeInTheDocument();
       expect(screen.getByText(/1 conexión por red social/i)).toBeInTheDocument();
-      expect(screen.getByText(/actualiza a pro para conectar hasta 2 cuentas/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/actualiza a pro para conectar hasta 2 cuentas/i)
+      ).toBeInTheDocument();
     });
 
     it('should disable connection buttons when limit reached', () => {
       mockUseSocialAccounts.mockReturnValue({
         accounts: [],
         availableNetworks: [
-          { network: 'twitter', name: 'Twitter', connectedCount: 1, canConnect: false, limitReached: true },
-          { network: 'instagram', name: 'Instagram', connectedCount: 0, canConnect: true, limitReached: false }
+          {
+            network: 'twitter',
+            name: 'Twitter',
+            connectedCount: 1,
+            canConnect: false,
+            limitReached: true
+          },
+          {
+            network: 'instagram',
+            name: 'Instagram',
+            connectedCount: 0,
+            canConnect: true,
+            limitReached: false
+          }
         ],
         userData: { plan: 'free' },
         getConnectionLimits: jest.fn().mockReturnValue({
@@ -181,18 +227,18 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { default: AccountsPage } = require('../../../frontend/src/pages/AccountsPage');
-      
+
       render(<AccountsPage />);
 
       // Find network connection buttons
       const buttons = screen.getAllByRole('button');
-      const twitterButton = buttons.find(btn => btn.textContent.includes('Twitter'));
-      const instagramButton = buttons.find(btn => btn.textContent.includes('Instagram'));
+      const twitterButton = buttons.find((btn) => btn.textContent.includes('Twitter'));
+      const instagramButton = buttons.find((btn) => btn.textContent.includes('Instagram'));
 
       // Twitter should be disabled (at limit)
       expect(twitterButton).toBeDisabled();
       expect(twitterButton).toHaveAttribute('title', expect.stringContaining('Límite alcanzado'));
-      
+
       // Instagram should be enabled
       expect(instagramButton).not.toBeDisabled();
       expect(instagramButton).toHaveAttribute('title', 'Conectar Instagram');
@@ -202,8 +248,20 @@ describe('Issue #366 - Connection Limits Validation', () => {
       mockUseSocialAccounts.mockReturnValue({
         accounts: [],
         availableNetworks: [
-          { network: 'twitter', name: 'Twitter', connectedCount: 1, canConnect: true, limitReached: false },
-          { network: 'instagram', name: 'Instagram', connectedCount: 2, canConnect: false, limitReached: true }
+          {
+            network: 'twitter',
+            name: 'Twitter',
+            connectedCount: 1,
+            canConnect: true,
+            limitReached: false
+          },
+          {
+            network: 'instagram',
+            name: 'Instagram',
+            connectedCount: 2,
+            canConnect: false,
+            limitReached: true
+          }
         ],
         userData: { plan: 'pro' },
         getConnectionLimits: jest.fn().mockReturnValue({
@@ -229,7 +287,7 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { default: AccountsPage } = require('../../../frontend/src/pages/AccountsPage');
-      
+
       render(<AccountsPage />);
 
       // Should show connection ratios
@@ -265,10 +323,12 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { default: AccountsPage } = require('../../../frontend/src/pages/AccountsPage');
-      
+
       render(<AccountsPage />);
 
-      expect(screen.getByText(/actualiza a pro para conectar hasta 2 cuentas/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/actualiza a pro para conectar hasta 2 cuentas/i)
+      ).toBeInTheDocument();
     });
 
     it('should not show upgrade prompt for pro+ users', () => {
@@ -299,7 +359,7 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { default: AccountsPage } = require('../../../frontend/src/pages/AccountsPage');
-      
+
       render(<AccountsPage />);
 
       expect(screen.queryByText(/actualiza a pro/i)).not.toBeInTheDocument();
@@ -309,11 +369,17 @@ describe('Issue #366 - Connection Limits Validation', () => {
   describe('Network Connection Modal Integration', () => {
     it('should prevent modal opening when connection limit reached', () => {
       const mockOnConnectNetwork = jest.fn();
-      
+
       mockUseSocialAccounts.mockReturnValue({
         accounts: [],
         availableNetworks: [
-          { network: 'twitter', name: 'Twitter', connectedCount: 1, canConnect: false, limitReached: true }
+          {
+            network: 'twitter',
+            name: 'Twitter',
+            connectedCount: 1,
+            canConnect: false,
+            limitReached: true
+          }
         ],
         userData: { plan: 'free' },
         getConnectionLimits: jest.fn().mockReturnValue({
@@ -339,13 +405,13 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { default: AccountsPage } = require('../../../frontend/src/pages/AccountsPage');
-      
+
       render(<AccountsPage />);
 
       // Find and click the disabled Twitter button
       const buttons = screen.getAllByRole('button');
-      const twitterButton = buttons.find(btn => btn.textContent.includes('Twitter'));
-      
+      const twitterButton = buttons.find((btn) => btn.textContent.includes('Twitter'));
+
       fireEvent.click(twitterButton);
 
       // Modal should not open, onConnectNetwork should not be called
@@ -358,7 +424,13 @@ describe('Issue #366 - Connection Limits Validation', () => {
       mockUseSocialAccounts.mockReturnValue({
         accounts: [],
         availableNetworks: [
-          { network: 'twitter', name: 'Twitter', connectedCount: 1, canConnect: false, limitReached: true }
+          {
+            network: 'twitter',
+            name: 'Twitter',
+            connectedCount: 1,
+            canConnect: false,
+            limitReached: true
+          }
         ],
         userData: { plan: 'free' },
         getConnectionLimits: jest.fn().mockReturnValue({
@@ -384,20 +456,29 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { default: AccountsPage } = require('../../../frontend/src/pages/AccountsPage');
-      
+
       render(<AccountsPage />);
 
       const buttons = screen.getAllByRole('button');
-      const twitterButton = buttons.find(btn => btn.textContent.includes('Twitter'));
-      
-      expect(twitterButton).toHaveAttribute('title', 'Límite alcanzado: 1 conexión por red social (Plan free)');
+      const twitterButton = buttons.find((btn) => btn.textContent.includes('Twitter'));
+
+      expect(twitterButton).toHaveAttribute(
+        'title',
+        'Límite alcanzado: 1 conexión por red social (Plan free)'
+      );
     });
 
     it('should show visual indicators for limit reached', () => {
       mockUseSocialAccounts.mockReturnValue({
         accounts: [],
         availableNetworks: [
-          { network: 'twitter', name: 'Twitter', connectedCount: 1, canConnect: false, limitReached: true }
+          {
+            network: 'twitter',
+            name: 'Twitter',
+            connectedCount: 1,
+            canConnect: false,
+            limitReached: true
+          }
         ],
         userData: { plan: 'free' },
         getConnectionLimits: jest.fn().mockReturnValue({
@@ -423,7 +504,7 @@ describe('Issue #366 - Connection Limits Validation', () => {
       });
 
       const { default: AccountsPage } = require('../../../frontend/src/pages/AccountsPage');
-      
+
       render(<AccountsPage />);
 
       // Should show "Límite alcanzado" text

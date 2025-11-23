@@ -19,6 +19,7 @@ This PR implements critical security enhancements and GDPR compliance features a
 ## 🔒 Security Enhancements (Issue #261)
 
 ### CSRF Protection
+
 - Implemented Double Submit Cookie pattern (OWASP recommended)
 - Timing-safe token comparison to prevent timing attacks
 - Applied to all admin state-modifying endpoints
@@ -26,7 +27,9 @@ This PR implements critical security enhancements and GDPR compliance features a
 - Test environment bypass for integration tests
 
 ### Audit Logging
+
 Extended `auditLogService.js` with 8 new admin event types:
+
 - `admin.user_plan_changed` - Plan modifications with upgrade/downgrade tracking
 - `admin.user_suspended` - User suspension actions
 - `admin.user_reactivated` - User reactivation actions
@@ -37,6 +40,7 @@ Extended `auditLogService.js` with 8 new admin event types:
 - `admin.access_denied` - Failed access attempts
 
 Helper methods for audit trail:
+
 - `logAdminPlanChange(adminId, targetUserId, oldPlan, newPlan, adminEmail)`
 - `logAdminUserModification(adminId, targetUserId, modifications, adminEmail)`
 - `logAdminBulkAction(adminId, action, affectedCount, adminEmail, details)`
@@ -47,15 +51,20 @@ Helper methods for audit trail:
 ## ⚡ Performance Optimization (Issue #261)
 
 ### Database Indices
+
 Added optimized indices to `schema.sql`:
+
 ```sql
 CREATE INDEX idx_users_plan ON users(plan);
 CREATE INDEX idx_users_active_plan ON users(active, plan) WHERE active = TRUE;
 ```
+
 **Impact**: ~90% faster queries on admin users list and plan-based filtering.
 
 ### Response Caching
+
 Implemented in-memory TTL-based caching middleware:
+
 - LRU-like eviction when max size reached
 - Cache key generation with SHA-256 hashing
 - Pattern-based cache invalidation
@@ -68,12 +77,16 @@ Implemented in-memory TTL-based caching middleware:
 ## 📧 GDPR Email Notifications (Issue #278)
 
 ### Email Service Extensions
+
 Added two notification methods to `emailService.js`:
+
 - `sendExportFileDeletionNotification(userId, filename, reason)` - Security cleanup notifications
 - `sendExportFileCleanupNotification(userId, filename, reason)` - Expired file notifications
 
 ### Email Templates
+
 Created Handlebars templates with Roastr branding:
+
 - `export_file_deletion.hbs` - File deletion notice with GDPR information
 - `export_file_cleanup.hbs` - Cleanup completion with re-export instructions
 
@@ -83,37 +96,42 @@ Created Handlebars templates with Roastr branding:
 ## 🐛 Bug Fixes (Issue #280)
 
 ### User ID Extraction Fix
+
 **Problem**: `extractUserIdFromFilename()` returned null because filename format only contained prefix.
 
 **Solution**: Modified `dataExportService.js` to store `userId` directly in `downloadToken` structure:
+
 ```javascript
 const downloadToken = {
-    token,
-    filepath,
-    filename,
-    userId,  // Added for reliable email notifications
-    expiresAt,
-    createdAt: Date.now(),
-    downloadedAt: null
+  token,
+  filepath,
+  filename,
+  userId, // Added for reliable email notifications
+  expiresAt,
+  createdAt: Date.now(),
+  downloadedAt: null
 };
 ```
 
 Updated `ExportCleanupWorker.js`:
+
 - Modified `removeAllTokensForFile()` to return `{ removed, userId }`
 - Updated notification methods to use `downloadToken.userId` directly
 - Removed unreliable filename parsing logic
 
 ### Environment Variable Parsing Bug
+
 **Problem**: `EXPORT_MAX_AGE_HOURS=0` was treated as falsy and used default value (24).
 
 **Solution**: Created `parseEnvInt()` helper in `start-export-cleanup-worker.js`:
+
 ```javascript
 function parseEnvInt(envVar, defaultValue) {
-    if (envVar === undefined || envVar === null || envVar === '') {
-        return defaultValue;
-    }
-    const parsed = parseInt(envVar, 10);
-    return isNaN(parsed) ? defaultValue : parsed;
+  if (envVar === undefined || envVar === null || envVar === '') {
+    return defaultValue;
+  }
+  const parsed = parseInt(envVar, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
 }
 ```
 
@@ -122,6 +140,7 @@ function parseEnvInt(envVar, defaultValue) {
 ## 🧪 Testing
 
 ### Added Test Coverage
+
 - **emailService.test.js**: 8 new test cases for export notifications
   - Successful notification delivery
   - Template data validation
@@ -130,11 +149,13 @@ function parseEnvInt(envVar, defaultValue) {
   - Edge cases (missing userId, unknown reason)
 
 ### Test Execution
+
 All tests pass locally. CI will validate full test suite.
 
 ## 📁 Files Changed
 
 ### New Files (8)
+
 - `src/middleware/csrf.js` - CSRF protection middleware (161 lines)
 - `src/middleware/responseCache.js` - Response caching middleware (244 lines)
 - `src/templates/emails/export_file_deletion.hbs` - Deletion notification template (58 lines)
@@ -142,6 +163,7 @@ All tests pass locally. CI will validate full test suite.
 - `docs/plan/issues-261-276-278-280-281.md` - Planning document (471 lines)
 
 ### Modified Files (9)
+
 - `database/schema.sql` - Added database indices (+4 lines)
 - `src/routes/admin.js` - CSRF, caching, audit logging integration (+34 lines)
 - `src/services/auditLogService.js` - Admin event types and helpers (+66 lines)
@@ -165,13 +187,17 @@ All tests pass locally. CI will validate full test suite.
 ## 🚀 Deployment Notes
 
 ### Database Migration
+
 Run schema update to create new indices:
+
 ```bash
 psql $DATABASE_URL -f database/schema.sql
 ```
 
 ### Environment Variables (Optional)
+
 For custom retention policies:
+
 ```bash
 EXPORT_MAX_AGE_HOURS=24                     # Hours after creation
 EXPORT_MAX_AGE_AFTER_DOWNLOAD_HOURS=1      # Hours after first download
@@ -179,7 +205,9 @@ EXPORT_CLEANUP_INTERVAL_MS=900000           # 15 minutes
 ```
 
 ### Email Templates
+
 Ensure SendGrid API key is configured:
+
 ```bash
 SENDGRID_API_KEY=your_key_here
 SENDGRID_FROM_EMAIL=noreply@roastr.ai
@@ -187,7 +215,9 @@ SUPPORT_EMAIL=support@roastr.ai
 ```
 
 ### Monitoring
+
 Check audit logs for admin actions:
+
 ```bash
 node -e "require('./src/services/auditLogService').auditLogger.getRecentLogs({limit:100})"
 ```

@@ -1,6 +1,7 @@
 # Plan de Implementación — Issue #715: Analytics Dashboard completo
 
 ## Estado actual
+
 - El backend expone endpoints analíticos parciales en `src/routes/analytics.js` (config-performance, shield-effectiveness, usage-trends, roastr-persona-insights) con caché en memoria, pero no existe un dashboard dedicado que consuma estos datos.
 - El frontend sólo dispone del panel general (`frontend/src/pages/dashboard.jsx`) sin vistas específicas para analytics. No se utiliza Chart.js ni librerías de visualización; los datos analíticos se muestran como métricas sueltas.
 - No hay endpoints de exportación (CSV/JSON) para snapshots o eventos analíticos (`analytics_snapshots`, `analytics_events`).
@@ -8,6 +9,7 @@
 - Cobertura de tests en analytics ~59% (según nodo GDD); faltan pruebas específicas para nuevos flujos y cualquier UI futura carece de tests.
 
 ## Objetivos y alcance
+
 - Diseñar e implementar una vista `/dashboard/analytics` con gráficos interactivos (Chart.js) para roasts, acciones Shield, créditos consumidos y métricas de ingresos Polar.
 - Añadir endpoints backend orientados a dashboards (resúmenes diarios, breakdown por plataforma/tono, KPIs Polar) y a exportaciones CSV/JSON filtrables por rango de fechas y organización.
 - Garantizar tiempos de respuesta <2s mediante caching (aprovechando `analyticsCache`) y consultas optimizadas.
@@ -15,6 +17,7 @@
 - Documentar cambios en nodos GDD afectados y actualizar recibos de agentes.
 
 ## Pasos de implementación
+
 1. **Discovery & diseño técnico**
    - Mapear datos necesarios desde `analytics_snapshots`, `analytics_events`, `usage_records`, `responses`, `shield_actions` y Polar API.
    - Diseñar estructuras de respuesta para nuevos endpoints (`/api/analytics/dashboard`, `/api/analytics/billing`, `/api/analytics/export`).
@@ -44,8 +47,9 @@
 
 6. **Rendimiento y caching**
    - Extender `analyticsCache` para clavear por organización y parámetros (incluir TTL específico).
-  - Implementar precálculo opcional (worker o cron) si queries intensivas lo requieren (planificar hook a `AnalyticsSnapshotWorker` si existe o crear job).
-   - Añadir métricas de logging (latencia, hits/misses de caché) al logger.
+
+- Implementar precálculo opcional (worker o cron) si queries intensivas lo requieren (planificar hook a `AnalyticsSnapshotWorker` si existe o crear job).
+- Añadir métricas de logging (latencia, hits/misses de caché) al logger.
 
 7. **Tests y cobertura**
    - Backend: tests unitarios (servicios) + integración (routes) incluyendo escenarios de cache hit/miss, exportaciones grandes, errores Polar (mock SDK).
@@ -63,6 +67,7 @@
    - Ejecutar `npm run coderabbit:review` para garantizar 0 observaciones.
 
 ## Agentes y habilidades requeridas
+
 - **TaskAssessor** (AC ≥3) – plan ya generado, actualizar recibo correspondiente.
 - **FrontendDev** – implementación UI + Chart.js + validación visual (requiere Playwright MCP).
 - **TestEngineer** – generación de tests, cobertura, reporte en `docs/test-evidence/issue-715/`.
@@ -71,6 +76,7 @@
 - Habilidades automáticas esperadas: `test-generation-skill`, `visual-validation-skill`, `gdd-sync-skill`, `verification-before-completion-skill`, `security-audit-skill` (por tocar billing).
 
 ## Archivos / áreas afectados (estimado)
+
 - Backend: `src/routes/analytics.js`, `src/services/**` (nuevo `analyticsDashboardService.js`, `polarAnalyticsService.js`), `src/utils/logger.js` (hooks), posibles workers.
 - Frontend: `frontend/src/App.js`, `frontend/src/pages/Analytics.jsx` (nuevo), componentes en `frontend/src/components/analytics/`, hooks, estilos, `frontend/src/contexts/SidebarContext` si se ajusta menú.
 - Configuración: `package.json`, `package-lock.json` para dependencias Chart.js.
@@ -78,6 +84,7 @@
 - Documentación: nodos GDD mencionados, `docs/test-evidence/issue-715/`, `docs/changelog/issue-715.md` (si requerido), recibos en `docs/agents/receipts/`.
 
 ## Validación y evidencia
+
 - Pruebas unitarias/integración (`npm test`) con enfoque en analytics y exportaciones.
 - Cobertura (`npm run test:coverage`) ≥90% global, ≥80% en módulos nuevos.
 - GDD: `validate-gdd-runtime`, `score-gdd-health`, `predict-gdd-drift`.
@@ -85,11 +92,9 @@
 - Evidencia de exportaciones (CSV/JSON) funcionando (logs + fixtures en tests).
 
 ## Riesgos y preguntas abiertas
+
 - **Polar API rate limits**: confirmar límites permitidos para métricas agregadas y considerar caching persistente si necesario.
 - **Volumen de datos**: queries sobre `analytics_events` pueden ser pesadas; evaluar índices adicionales o materialized views.
 - **Compatibilidad Chart.js**: verificar SSR/build de frontend; Chart.js puede requerir dynamic import para evitar errores en tests.
 - **Planes y límites**: al exponer exportaciones, asegurar cumplimiento de `plan-features` (p. ej. Starter Trial sin acceso a determinados filtros).
 - **Seguridad**: exportaciones deben evitar PII innecesaria y cumplir GDPR (posible anonimización); validar con Guardian.
-
-
-

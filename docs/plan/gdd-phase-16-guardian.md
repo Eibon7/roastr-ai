@@ -27,6 +27,7 @@ Build the Guardian Agent foundation - an autonomous system that detects, classif
 **Purpose:** Core monitoring and classification engine
 
 **Features:**
+
 - Monitors commits and PR changes
 - Compares current vs approved states
 - Detects unauthorized edits in protected areas
@@ -35,12 +36,14 @@ Build the Guardian Agent foundation - an autonomous system that detects, classif
 - Generates structured reports
 
 **CLI Flags:**
+
 - `--full` - Full system scan
 - `--check` - Quick validation
 - `--report` - Generate markdown report
 - `--ci` - CI mode (strict exit codes)
 
 **Exit Codes:**
+
 - `0` - All checks passed (SAFE)
 - `1` - Warnings detected (SENSITIVE - requires review)
 - `2` - Critical violations (CRITICAL - blocked)
@@ -50,6 +53,7 @@ Build the Guardian Agent foundation - an autonomous system that detects, classif
 **Purpose:** Source of truth for protected domains
 
 **Protected Domains:**
+
 1. **Pricing** (CRITICAL) - Subscription tiers, billing logic, payment processing
 2. **Quotas** (CRITICAL) - Usage limits, rate limiting, resource allocation
 3. **Auth Policies** (CRITICAL) - Authentication, RLS policies, access control
@@ -61,6 +65,7 @@ Build the Guardian Agent foundation - an autonomous system that detects, classif
 **Purpose:** Generate structured diffs for Guardian analysis
 
 **Features:**
+
 - Compare current repo vs last approved commit
 - Generate JSON diff per file
 - Group by protected domain
@@ -70,6 +75,7 @@ Build the Guardian Agent foundation - an autonomous system that detects, classif
 ### 4. Audit System
 
 **Components:**
+
 - Audit log: `docs/guardian/audit-log.md`
 - Case files: `docs/guardian/cases/<timestamp>.json`
 - Comprehensive event tracking
@@ -77,6 +83,7 @@ Build the Guardian Agent foundation - an autonomous system that detects, classif
 ## Testing Results
 
 All tests passing:
+
 - ✅ Guardian full scan: ~800ms (target: <2s)
 - ✅ Diff collection: ~500ms (target: <2s)
 - ✅ Report generation: ~200ms (target: <1s)
@@ -127,11 +134,13 @@ node scripts/collect-diff.js --verbose
 ## Future Enhancements
 
 **Phase 17 - Governance UI:**
+
 - Web dashboard for audit review
 - Approval workflow interface
 - Real-time Guardian alerts
 
 **Phase 18 - Advanced Rules:**
+
 - Custom rule engine with scripting
 - Machine learning classification
 - Historical trend analysis
@@ -142,4 +151,4 @@ node scripts/collect-diff.js --verbose
 **Blocking Issues:** None
 **Dependencies:** Git, YAML parser
 
-*Implementation Date: October 9, 2025*
+_Implementation Date: October 9, 2025_

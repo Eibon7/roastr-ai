@@ -10,17 +10,19 @@ const { logger } = require('../../utils/logger');
 class YouTubeOAuthProvider extends OAuthProvider {
   constructor(config = {}) {
     super('youtube', config);
-    
+
     // Google OAuth 2.0 endpoints
     this.authorizationUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
     this.tokenUrl = 'https://oauth2.googleapis.com/token';
     this.revokeUrl = 'https://oauth2.googleapis.com/revoke';
     this.userInfoUrl = 'https://www.googleapis.com/youtube/v3/channels';
-    
+
     // Google OAuth config
-    this.clientId = config.clientId || process.env.GOOGLE_CLIENT_ID || process.env.YOUTUBE_CLIENT_ID;
-    this.clientSecret = config.clientSecret || process.env.GOOGLE_CLIENT_SECRET || process.env.YOUTUBE_CLIENT_SECRET;
-    
+    this.clientId =
+      config.clientId || process.env.GOOGLE_CLIENT_ID || process.env.YOUTUBE_CLIENT_ID;
+    this.clientSecret =
+      config.clientSecret || process.env.GOOGLE_CLIENT_SECRET || process.env.YOUTUBE_CLIENT_SECRET;
+
     if (!this.clientId || !this.clientSecret) {
       logger.warn('YouTube/Google OAuth credentials not found. Real OAuth will not work.');
     }
@@ -50,8 +52,8 @@ class YouTubeOAuthProvider extends OAuthProvider {
       });
 
       const authUrl = `${this.authorizationUrl}?${params}`;
-      
-      logger.info('Generated YouTube OAuth URL', { 
+
+      logger.info('Generated YouTube OAuth URL', {
         clientId: this.clientId,
         scopes: this.getDefaultScopes(),
         redirectUri,
@@ -59,7 +61,6 @@ class YouTubeOAuthProvider extends OAuthProvider {
       });
 
       return authUrl;
-
     } catch (error) {
       logger.error('Error generating YouTube auth URL:', error);
       throw error;
@@ -114,7 +115,7 @@ class YouTubeOAuthProvider extends OAuthProvider {
         refresh_token: tokenData.refresh_token,
         token_type: tokenData.token_type,
         expires_in: tokenData.expires_in,
-        expires_at: Date.now() + (tokenData.expires_in * 1000),
+        expires_at: Date.now() + tokenData.expires_in * 1000,
         scope: tokenData.scope,
         platform: this.platform,
         mock: false,
@@ -128,7 +129,6 @@ class YouTubeOAuthProvider extends OAuthProvider {
       });
 
       return result;
-
     } catch (error) {
       logger.error('Error in YouTube token exchange:', error);
       throw error;
@@ -180,7 +180,7 @@ class YouTubeOAuthProvider extends OAuthProvider {
         refresh_token: tokenData.refresh_token || refreshToken, // Google might not return new refresh token
         token_type: tokenData.token_type,
         expires_in: tokenData.expires_in,
-        expires_at: Date.now() + (tokenData.expires_in * 1000),
+        expires_at: Date.now() + tokenData.expires_in * 1000,
         scope: tokenData.scope,
         platform: this.platform,
         mock: false,
@@ -194,7 +194,6 @@ class YouTubeOAuthProvider extends OAuthProvider {
       });
 
       return result;
-
     } catch (error) {
       logger.error('Error refreshing YouTube token:', error);
       throw error;
@@ -226,7 +225,6 @@ class YouTubeOAuthProvider extends OAuthProvider {
 
       logger.info('YouTube tokens revoked successfully');
       return true;
-
     } catch (error) {
       logger.error('Error revoking YouTube tokens:', error);
       return false;
@@ -240,11 +238,14 @@ class YouTubeOAuthProvider extends OAuthProvider {
    */
   async fetchUserInfo(accessToken) {
     try {
-      const response = await fetch(`${this.userInfoUrl}?part=snippet,statistics,contentDetails&mine=true`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
+      const response = await fetch(
+        `${this.userInfoUrl}?part=snippet,statistics,contentDetails&mine=true`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
         }
-      });
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -252,13 +253,13 @@ class YouTubeOAuthProvider extends OAuthProvider {
       }
 
       const channelData = await response.json();
-      
+
       if (!channelData.items || channelData.items.length === 0) {
         throw new Error('No channel data returned from YouTube API');
       }
 
       const channel = channelData.items[0];
-      
+
       return {
         id: channel.id,
         snippet: {
@@ -273,7 +274,6 @@ class YouTubeOAuthProvider extends OAuthProvider {
         },
         contentDetails: channel.contentDetails
       };
-
     } catch (error) {
       logger.error('Error fetching YouTube channel info:', error);
       throw error;
@@ -309,11 +309,11 @@ class YouTubeOAuthProvider extends OAuthProvider {
    */
   async getAuthorizationUrl(state, redirectUri) {
     const { flags } = require('../../config/flags');
-    
+
     if (flags.shouldUseMockOAuth()) {
       return this.getMockAuthUrl(state, redirectUri);
     }
-    
+
     return await this.getRealAuthUrl(state, redirectUri);
   }
 
@@ -322,11 +322,11 @@ class YouTubeOAuthProvider extends OAuthProvider {
    */
   async exchangeCodeForTokens(code, state, redirectUri) {
     const { flags } = require('../../config/flags');
-    
+
     if (flags.shouldUseMockOAuth()) {
       return this.getMockTokens(code, state, redirectUri);
     }
-    
+
     return await this.handleTokenExchange(code, state, redirectUri);
   }
 
@@ -346,8 +346,14 @@ class YouTubeOAuthProvider extends OAuthProvider {
    */
   getConnectionRequirements() {
     return {
-      permissions: ['Read channel info', 'Access video comments', 'Upload videos', 'Manage channel'],
-      notes: 'Requires Google Cloud Console project with YouTube Data API enabled. OAuth consent screen must be configured.',
+      permissions: [
+        'Read channel info',
+        'Access video comments',
+        'Upload videos',
+        'Manage channel'
+      ],
+      notes:
+        'Requires Google Cloud Console project with YouTube Data API enabled. OAuth consent screen must be configured.',
       estimatedTime: '3-5 minutes',
       documentation: 'https://developers.google.com/youtube/v3/guides/auth',
       clientIdRequired: true,

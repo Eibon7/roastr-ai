@@ -13,21 +13,20 @@ router.use(authenticateToken);
  * Get user's integration configurations
  */
 router.get('/', async (req, res) => {
-    try {
-        const integrations = await userIntegrationsService.getUserIntegrations(req.accessToken);
-        
-        res.status(200).json({
-            success: true,
-            data: integrations
-        });
-        
-    } catch (error) {
-        logger.error('Get integrations endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const integrations = await userIntegrationsService.getUserIntegrations(req.accessToken);
+
+    res.status(200).json({
+      success: true,
+      data: integrations
+    });
+  } catch (error) {
+    logger.error('Get integrations endpoint error:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -35,21 +34,20 @@ router.get('/', async (req, res) => {
  * Get available platforms for user's plan
  */
 router.get('/platforms', async (req, res) => {
-    try {
-        const platforms = await userIntegrationsService.getAvailablePlatforms(req.accessToken);
-        
-        res.status(200).json({
-            success: true,
-            data: platforms
-        });
-        
-    } catch (error) {
-        logger.error('Get platforms endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const platforms = await userIntegrationsService.getAvailablePlatforms(req.accessToken);
+
+    res.status(200).json({
+      success: true,
+      data: platforms
+    });
+  } catch (error) {
+    logger.error('Get platforms endpoint error:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -57,28 +55,27 @@ router.get('/platforms', async (req, res) => {
  * Create or update integration configuration
  */
 router.post('/:platform', async (req, res) => {
-    try {
-        const { platform } = req.params;
-        const config = req.body;
-        
-        const integration = await userIntegrationsService.updateIntegration(
-            req.accessToken,
-            platform,
-            config
-        );
-        
-        res.status(200).json({
-            success: true,
-            data: integration
-        });
-        
-    } catch (error) {
-        logger.error('Update integration endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const { platform } = req.params;
+    const config = req.body;
+
+    const integration = await userIntegrationsService.updateIntegration(
+      req.accessToken,
+      platform,
+      config
+    );
+
+    res.status(200).json({
+      success: true,
+      data: integration
+    });
+  } catch (error) {
+    logger.error('Update integration endpoint error:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -86,28 +83,27 @@ router.post('/:platform', async (req, res) => {
  * Update integration configuration (alias for POST)
  */
 router.put('/:platform', async (req, res) => {
-    try {
-        const { platform } = req.params;
-        const config = req.body;
-        
-        const integration = await userIntegrationsService.updateIntegration(
-            req.accessToken,
-            platform,
-            config
-        );
-        
-        res.status(200).json({
-            success: true,
-            data: integration
-        });
-        
-    } catch (error) {
-        logger.error('Update integration endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const { platform } = req.params;
+    const config = req.body;
+
+    const integration = await userIntegrationsService.updateIntegration(
+      req.accessToken,
+      platform,
+      config
+    );
+
+    res.status(200).json({
+      success: true,
+      data: integration
+    });
+  } catch (error) {
+    logger.error('Update integration endpoint error:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -115,26 +111,22 @@ router.put('/:platform', async (req, res) => {
  * Delete integration configuration
  */
 router.delete('/:platform', async (req, res) => {
-    try {
-        const { platform } = req.params;
-        
-        const result = await userIntegrationsService.deleteIntegration(
-            req.accessToken,
-            platform
-        );
-        
-        res.status(200).json({
-            success: true,
-            data: result
-        });
-        
-    } catch (error) {
-        logger.error('Delete integration endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const { platform } = req.params;
+
+    const result = await userIntegrationsService.deleteIntegration(req.accessToken, platform);
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('Delete integration endpoint error:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -142,21 +134,20 @@ router.delete('/:platform', async (req, res) => {
  * Get integration usage metrics for user
  */
 router.get('/metrics', async (req, res) => {
-    try {
-        const metrics = await userIntegrationsService.getIntegrationsMetrics(req.accessToken);
-        
-        res.status(200).json({
-            success: true,
-            data: metrics
-        });
-        
-    } catch (error) {
-        logger.error('Get integration metrics endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const metrics = await userIntegrationsService.getIntegrationsMetrics(req.accessToken);
+
+    res.status(200).json({
+      success: true,
+      data: metrics
+    });
+  } catch (error) {
+    logger.error('Get integration metrics endpoint error:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -164,27 +155,24 @@ router.get('/metrics', async (req, res) => {
  * Enable a specific integration
  */
 router.post('/:platform/enable', async (req, res) => {
-    try {
-        const { platform } = req.params;
-        
-        const integration = await userIntegrationsService.updateIntegration(
-            req.accessToken,
-            platform,
-            { enabled: true }
-        );
-        
-        res.status(200).json({
-            success: true,
-            data: integration
-        });
-        
-    } catch (error) {
-        logger.error('Enable integration endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const { platform } = req.params;
+
+    const integration = await userIntegrationsService.updateIntegration(req.accessToken, platform, {
+      enabled: true
+    });
+
+    res.status(200).json({
+      success: true,
+      data: integration
+    });
+  } catch (error) {
+    logger.error('Enable integration endpoint error:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -192,27 +180,24 @@ router.post('/:platform/enable', async (req, res) => {
  * Disable a specific integration
  */
 router.post('/:platform/disable', async (req, res) => {
-    try {
-        const { platform } = req.params;
-        
-        const integration = await userIntegrationsService.updateIntegration(
-            req.accessToken,
-            platform,
-            { enabled: false }
-        );
-        
-        res.status(200).json({
-            success: true,
-            data: integration
-        });
-        
-    } catch (error) {
-        logger.error('Disable integration endpoint error:', error.message);
-        res.status(400).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const { platform } = req.params;
+
+    const integration = await userIntegrationsService.updateIntegration(req.accessToken, platform, {
+      enabled: false
+    });
+
+    res.status(200).json({
+      success: true,
+      data: integration
+    });
+  } catch (error) {
+    logger.error('Disable integration endpoint error:', error.message);
+    res.status(400).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 module.exports = router;

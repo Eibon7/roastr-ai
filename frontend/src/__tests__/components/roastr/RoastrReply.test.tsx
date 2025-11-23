@@ -26,4 +26,3 @@ describe('RoastrReply', () => {
     expect(onSend).toHaveBeenCalled();
   });
 });
-

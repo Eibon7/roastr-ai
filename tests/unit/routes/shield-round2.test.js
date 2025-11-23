@@ -1,6 +1,6 @@
 /**
  * Shield API Routes Tests - CodeRabbit Round 2 Enhanced
- * 
+ *
  * Tests for src/routes/shield.js with enhancements:
  * - Input validation with whitelisted parameters
  * - Organization_id removal from responses
@@ -78,13 +78,13 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     app = express();
     app.use(express.json());
     app.use('/api/shield', shieldRoutes);
-    
+
     // Reset all mocks
     jest.clearAllMocks();
-    
+
     // Set default mock returns
     mockFlags.isEnabled.mockReturnValue(true);
-    
+
     // Default successful database response
     mockSupabaseServiceClient.from.mockReturnValue(mockSupabaseServiceClient);
     mockSupabaseServiceClient.select.mockReturnValue(mockSupabaseServiceClient);
@@ -123,16 +123,14 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should validate and sanitize query parameters with whitelisted values', async () => {
-      const response = await request(app)
-        .get('/api/shield/events')
-        .query({
-          page: '1',
-          limit: '20',
-          category: 'toxic',
-          timeRange: '30d',
-          platform: 'twitter',
-          actionType: 'block'
-        });
+      const response = await request(app).get('/api/shield/events').query({
+        page: '1',
+        limit: '20',
+        category: 'toxic',
+        timeRange: '30d',
+        platform: 'twitter',
+        actionType: 'block'
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -152,11 +150,9 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         count: 0
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .query({
-          category: 'invalid_category'
-        });
+      const response = await request(app).get('/api/shield/events').query({
+        category: 'invalid_category'
+      });
 
       expect(response.status).toBe(200);
       // Should default to 'all' for invalid category
@@ -164,12 +160,10 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should handle non-numeric pagination parameters', async () => {
-      const response = await request(app)
-        .get('/api/shield/events')
-        .query({
-          page: 'abc',
-          limit: 'xyz'
-        });
+      const response = await request(app).get('/api/shield/events').query({
+        page: 'abc',
+        limit: 'xyz'
+      });
 
       expect(response.status).toBe(200);
       // Should default to valid numbers
@@ -178,19 +172,16 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should enforce maximum limit of 100 items per page', async () => {
-      const response = await request(app)
-        .get('/api/shield/events')
-        .query({
-          limit: '500' // Exceeds max
-        });
+      const response = await request(app).get('/api/shield/events').query({
+        limit: '500' // Exceeds max
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.data.pagination.limit).toBe(100); // Capped at max
     });
 
     test('should remove organization_id from response data (CodeRabbit feedback)', async () => {
-      const response = await request(app)
-        .get('/api/shield/events');
+      const response = await request(app).get('/api/shield/events');
 
       expect(response.status).toBe(200);
       expect(response.body.data.events).toHaveLength(1);
@@ -206,8 +197,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         count: 0
       });
 
-      const response = await request(app)
-        .get('/api/shield/events');
+      const response = await request(app).get('/api/shield/events');
 
       expect(response.status).toBe(200);
       expect(response.body.data.events).toEqual([]);
@@ -222,8 +212,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         count: null
       });
 
-      const response = await request(app)
-        .get('/api/shield/events');
+      const response = await request(app).get('/api/shield/events');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -232,32 +221,21 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should apply date range filters correctly', async () => {
-      await request(app)
-        .get('/api/shield/events')
-        .query({ timeRange: '7d' });
+      await request(app).get('/api/shield/events').query({ timeRange: '7d' });
 
-      expect(mockSupabaseServiceClient.gte).toHaveBeenCalledWith(
-        'created_at',
-        expect.any(String)
-      );
+      expect(mockSupabaseServiceClient.gte).toHaveBeenCalledWith('created_at', expect.any(String));
     });
 
     test('should not apply date filter for "all" time range', async () => {
-      await request(app)
-        .get('/api/shield/events')
-        .query({ timeRange: 'all' });
+      await request(app).get('/api/shield/events').query({ timeRange: 'all' });
 
       expect(mockSupabaseServiceClient.gte).not.toHaveBeenCalled();
     });
 
     test('should apply organization isolation filter', async () => {
-      await request(app)
-        .get('/api/shield/events');
+      await request(app).get('/api/shield/events');
 
-      expect(mockSupabaseServiceClient.eq).toHaveBeenCalledWith(
-        'organization_id',
-        'test-org-456'
-      );
+      expect(mockSupabaseServiceClient.eq).toHaveBeenCalledWith('organization_id', 'test-org-456');
     });
 
     test('should handle array responses in sanitization', async () => {
@@ -272,11 +250,10 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         count: 2
       });
 
-      const response = await request(app)
-        .get('/api/shield/events');
+      const response = await request(app).get('/api/shield/events');
 
       expect(response.status).toBe(200);
-      response.body.data.events.forEach(event => {
+      response.body.data.events.forEach((event) => {
         expect(event).not.toHaveProperty('organization_id');
       });
     });
@@ -435,9 +412,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should use default reason when none provided', async () => {
-      await request(app)
-        .post('/api/shield/revert/action-123')
-        .send({});
+      await request(app).post('/api/shield/revert/action-123').send({});
 
       // Issue #618 - Add defensive check for mock.calls array
       expect(mockSupabaseServiceClient.update.mock.calls.length).toBeGreaterThan(0);
@@ -472,8 +447,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should calculate statistics correctly', async () => {
-      const response = await request(app)
-        .get('/api/shield/stats');
+      const response = await request(app).get('/api/shield/stats');
 
       expect(response.status).toBe(200);
       expect(response.body.data).toEqual({
@@ -495,8 +469,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         error: null
       });
 
-      const response = await request(app)
-        .get('/api/shield/stats');
+      const response = await request(app).get('/api/shield/stats');
 
       expect(response.status).toBe(200);
       expect(response.body.data.total).toBe(0);
@@ -517,8 +490,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         error: null
       });
 
-      const response = await request(app)
-        .get('/api/shield/stats');
+      const response = await request(app).get('/api/shield/stats');
 
       expect(response.status).toBe(200);
       expect(response.body.data.total).toBe(4);
@@ -551,8 +523,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         error: null
       });
 
-      const response = await request(app)
-        .get('/api/shield/stats');
+      const response = await request(app).get('/api/shield/stats');
 
       expect(response.status).toBe(200);
       expect(response.body.data.byActionType).toEqual({ block: 1 });
@@ -575,8 +546,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
         error: null
       });
 
-      const response = await request(app)
-        .get('/api/shield/stats');
+      const response = await request(app).get('/api/shield/stats');
 
       expect(response.status).toBe(200);
       expect(response.body.data.byActionType).toEqual({});
@@ -587,8 +557,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
 
   describe('GET /api/shield/config - Enhanced Configuration', () => {
     test('should return shield configuration with validation constants', async () => {
-      const response = await request(app)
-        .get('/api/shield/config');
+      const response = await request(app).get('/api/shield/config');
 
       expect(response.status).toBe(200);
       expect(response.body.data).toMatchObject({
@@ -614,8 +583,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should exclude "all" from category/platform lists', async () => {
-      const response = await request(app)
-        .get('/api/shield/config');
+      const response = await request(app).get('/api/shield/config');
 
       expect(response.body.data.categories).not.toContain('all');
       expect(response.body.data.platforms).not.toContain('all');
@@ -625,8 +593,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     test('should respect feature flag for shield UI', async () => {
       mockFlags.isEnabled.mockReturnValue(false);
 
-      const response = await request(app)
-        .get('/api/shield/config');
+      const response = await request(app).get('/api/shield/config');
 
       expect(response.status).toBe(200);
       expect(response.body.data.enabled).toBe(false);
@@ -644,12 +611,10 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should handle very large pagination values', async () => {
-      const response = await request(app)
-        .get('/api/shield/events')
-        .query({
-          page: '999999999',
-          limit: '999999999'
-        });
+      const response = await request(app).get('/api/shield/events').query({
+        page: '999999999',
+        limit: '999999999'
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.data.pagination.limit).toBe(100); // Capped
@@ -657,12 +622,10 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should handle negative pagination values', async () => {
-      const response = await request(app)
-        .get('/api/shield/events')
-        .query({
-          page: '-1',
-          limit: '-10'
-        });
+      const response = await request(app).get('/api/shield/events').query({
+        page: '-1',
+        limit: '-10'
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.data.pagination.page).toBe(1); // Minimum 1
@@ -675,8 +638,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
 
       mockSupabaseServiceClient.from.mockRejectedValue(timeoutError);
 
-      const response = await request(app)
-        .get('/api/shield/events');
+      const response = await request(app).get('/api/shield/events');
 
       expect(response.status).toBe(500);
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -695,8 +657,7 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
       unauthApp.use(express.json());
       unauthApp.use('/api/shield', shieldRoutes);
 
-      const response = await request(unauthApp)
-        .get('/api/shield/events');
+      const response = await request(unauthApp).get('/api/shield/events');
 
       // This would fail without proper auth setup
       // The actual behavior depends on the auth middleware implementation
@@ -704,13 +665,9 @@ describe('Shield API Routes - CodeRabbit Round 2 Enhanced', () => {
     });
 
     test('should use organization ID from authenticated user', async () => {
-      await request(app)
-        .get('/api/shield/events');
+      await request(app).get('/api/shield/events');
 
-      expect(mockSupabaseServiceClient.eq).toHaveBeenCalledWith(
-        'organization_id',
-        'test-org-456'
-      );
+      expect(mockSupabaseServiceClient.eq).toHaveBeenCalledWith('organization_id', 'test-org-456');
     });
   });
 });

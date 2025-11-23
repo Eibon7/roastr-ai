@@ -113,6 +113,7 @@ src/
 Build an **admin panel** that visualizes GDD system state in real-time.
 
 **Components:**
+
 1. **GDD Overview** - Health, drift, sync status, auto-repair status
 2. **Node Explorer** - Interactive table with all 13 nodes
 3. **Dependency Graph** - Visual graph with D3/ForceGraph
@@ -120,12 +121,14 @@ Build an **admin panel** that visualizes GDD system state in real-time.
 5. **Real-time Watcher** - WebSocket/EventSource integration
 
 **Tech Stack:**
+
 - React 18 + TypeScript
 - Snake Eater UI (`npm install snake-eater-ui`)
 - D3.js or react-force-graph
 - Real-time updates via WebSocket/EventSource
 
 **Output:**
+
 - Route: `/admin/gdd-dashboard`
 - Components in: `src/admin/gdd-dashboard/`
 
@@ -134,6 +137,7 @@ Build an **admin panel** that visualizes GDD system state in real-time.
 Unify entire backoffice under **Snake Eater UI** design system.
 
 **Tasks:**
+
 1. Install Snake Eater UI package
 2. Create ThemeProvider with dark-cyber palette
 3. Refactor all admin layouts (sidebar, header, modals)
@@ -142,6 +146,7 @@ Unify entire backoffice under **Snake Eater UI** design system.
 6. Ensure Phase 11 dashboard uses only Snake Eater components
 
 **Design Goals:**
+
 - Dark theme by default
 - Sharp corners, minimal cyber aesthetic
 - Gray-neon typography
@@ -212,14 +217,16 @@ node scripts/auto-repair-gdd.js --dry-run
 ## 🎨 Snake Eater UI Reference
 
 **Installation:**
+
 ```bash
 npm install snake-eater-ui
 ```
 
 **Usage:**
+
 ```jsx
-import 'snake-eater-ui/styles'
-import { Card, Button, Grid, Heading, Text } from 'snake-eater-ui'
+import 'snake-eater-ui/styles';
+import { Card, Button, Grid, Heading, Text } from 'snake-eater-ui';
 
 function Dashboard() {
   return (
@@ -232,11 +239,12 @@ function Dashboard() {
       </Grid>
       <Button variant="primary">Trigger Repair</Button>
     </Card>
-  )
+  );
 }
 ```
 
 **Theme Variables:**
+
 - Primary: Neon green (#00ff41)
 - Background: Dark gray (#0a0e14)
 - Surface: Darker gray (#151921)
@@ -368,16 +376,16 @@ nodes:
 ```jsx
 // Hook to fetch GDD health data
 const useGDDHealth = () => {
-  const [health, setHealth] = useState(null)
+  const [health, setHealth] = useState(null);
 
   useEffect(() => {
     fetch('/gdd-health.json')
-      .then(res => res.json())
-      .then(setHealth)
-  }, [])
+      .then((res) => res.json())
+      .then(setHealth);
+  }, []);
 
-  return health
-}
+  return health;
+};
 ```
 
 **Real-time Updates:**
@@ -386,16 +394,16 @@ const useGDDHealth = () => {
 // WebSocket connection to watcher
 const useGDDWatcher = () => {
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:3001/gdd-watch')
+    const ws = new WebSocket('ws://localhost:3001/gdd-watch');
 
     ws.onmessage = (event) => {
-      const update = JSON.parse(event.data)
+      const update = JSON.parse(event.data);
       // Update dashboard state
-    }
+    };
 
-    return () => ws.close()
-  }, [])
-}
+    return () => ws.close();
+  }, []);
+};
 ```
 
 ---
@@ -439,6 +447,7 @@ docs/plan/phase-11-dashboard.md
 ```
 
 **Contenido del plan:**
+
 - Diseño de componentes (UI Designer input)
 - Arquitectura de componentes (Frontend Dev input)
 - Flujos de usuario (UX Researcher input)
@@ -450,12 +459,14 @@ docs/plan/phase-11-dashboard.md
 #### 2. Diseño de UI (UI Designer Agent)
 
 **Responsabilidades:**
+
 - Diseñar sistema de componentes basado en Snake Eater UI
 - Crear paleta de colores dark-cyber
 - Definir espaciado y tipografía
 - Wireframes de dashboard components
 
 **Output esperado:**
+
 ```
 docs/design/
 ├── phase-11-ui-design.md
@@ -470,12 +481,14 @@ docs/design/
 #### 3. Research UX (UX Researcher Agent)
 
 **Responsabilidades:**
+
 - Validar flujos de navegación
 - Definir interacciones (click, hover, tooltips)
 - Accessibility requirements (ARIA, keyboard navigation)
 - Responsive breakpoints
 
 **Output esperado:**
+
 ```
 docs/ux/
 ├── phase-11-user-flows.md
@@ -486,6 +499,7 @@ docs/ux/
 #### 4. Implementación (Frontend Developer Agent)
 
 **Responsabilidades:**
+
 - Setup Snake Eater UI
 - Crear ThemeProvider
 - Implementar componentes React
@@ -493,6 +507,7 @@ docs/ux/
 - Real-time updates con WebSocket
 
 **Output esperado:**
+
 ```
 src/admin/gdd-dashboard/
 ├── index.tsx
@@ -513,12 +528,14 @@ src/admin/gdd-dashboard/
 #### 5. Testing (Test Engineer Agent)
 
 **Responsabilidades:**
+
 - Tests unitarios para hooks
 - Tests de integración para componentes
 - **Evidencias visuales con Playwright** (OBLIGATORIO según CLAUDE.md)
 - Screenshot testing en múltiples viewports
 
 **Output esperado:**
+
 ```
 tests/
 └── admin/
@@ -539,12 +556,14 @@ docs/test-evidence/
 #### 6. Documentation (Documentation Agent)
 
 **Responsabilidades:**
+
 - Actualizar GDD-IMPLEMENTATION-SUMMARY.md
 - Crear UI guidelines (docs/ui-guidelines.md)
 - Documentar APIs de componentes
 - Mapa de cobertura de tests
 
 **Output esperado:**
+
 ```
 docs/
 ├── GDD-IMPLEMENTATION-SUMMARY.md (actualizado)
@@ -582,6 +601,7 @@ docs/
 ### Configuración MCP Playwright (OBLIGATORIO para UI)
 
 **Para cualquier cambio de frontend**, el orquestador debe:
+
 - Ejecutar Playwright MCP para validación visual automatizada
 - Capturar screenshots de las páginas afectadas en múltiples viewports
 - Revisar consola del navegador y logs de red para detectar errores
@@ -589,6 +609,7 @@ docs/
 - Verificar que la implementación coincide con las especificaciones de diseño
 
 **Comandos Playwright:**
+
 ```bash
 # Verificar MCP disponible
 /mcp list
@@ -631,8 +652,8 @@ npm run test:visual -- --project=phase-11
 ```javascript
 // Invocar UI Designer Agent
 await Task({
-  subagent_type: "UI Designer",
-  description: "Design GDD Dashboard UI",
+  subagent_type: 'UI Designer',
+  description: 'Design GDD Dashboard UI',
   prompt: `
     Design the complete UI system for GDD Dashboard Phase 11.
 
@@ -649,12 +670,12 @@ await Task({
 
     Use Snake Eater UI as base, extend with custom GDD components.
   `
-})
+});
 
 // Invocar Test Engineer Agent
 await Task({
-  subagent_type: "Test Engineer",
-  description: "Create visual tests for GDD Dashboard",
+  subagent_type: 'Test Engineer',
+  description: 'Create visual tests for GDD Dashboard',
   prompt: `
     Create comprehensive tests for GDD Dashboard implementation.
 
@@ -671,17 +692,19 @@ await Task({
 
     Ensure 100% coverage for critical dashboard functionality.
   `
-})
+});
 ```
 
 ### Checkpoints de Validación
 
 **Antes de cada fase:**
+
 - [ ] Plan aprobado y guardado en docs/plan/
 - [ ] Agentes especializados invocados correctamente
 - [ ] Output de cada agente validado
 
 **Después de implementación:**
+
 - [ ] Tests creados y pasando
 - [ ] Evidencias visuales generadas (Playwright)
 - [ ] Documentación actualizada

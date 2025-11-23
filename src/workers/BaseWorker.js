@@ -5,7 +5,7 @@ const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Base Worker Class for Roastr.ai Multi-Tenant Architecture
- * 
+ *
  * Provides common functionality for all worker types:
  * - Queue management with Redis/Upstash
  * - Database operations with Supabase
@@ -23,7 +23,7 @@ class BaseWorker {
     this.lastActivityTime = null;
     this.processingTimes = [];
     this.maxProcessingTimeSamples = 100; // Keep last 100 samples
-    
+
     // Configuration
     this.config = {
       maxRetries: options.maxRetries || 3,
@@ -33,14 +33,14 @@ class BaseWorker {
       gracefulShutdownTimeout: options.gracefulShutdownTimeout || 30000,
       ...options
     };
-    
+
     // Initialize connections
     this.initializeConnections();
-    
+
     // Graceful shutdown handling
     this.setupGracefulShutdown();
   }
-  
+
   /**
    * Initialize database and queue connections
    */
@@ -59,18 +59,18 @@ class BaseWorker {
       // Supabase connection
       this.supabaseUrl = process.env.SUPABASE_URL;
       this.supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-      
+
       if (!this.supabaseUrl || !this.supabaseKey) {
         throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY are required');
       }
-      
+
       this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
-      
+
       // Initialize unified queue service
       this.queueService = new QueueService();
     }
   }
-  
+
   /**
    * Start the worker
    */
@@ -78,7 +78,7 @@ class BaseWorker {
     if (this.isRunning) {
       throw new Error(`Worker ${this.workerName} is already running`);
     }
-    
+
     this.log('info', 'Starting worker', {
       workerType: this.workerType,
       config: {
@@ -88,25 +88,24 @@ class BaseWorker {
         redisUrl: this.redis ? 'configured' : 'missing'
       }
     });
-    
+
     this.isRunning = true;
-    
+
     try {
       // Test connections
       await this.testConnections();
-      
+
       // Start processing loop
       this.processingLoop();
-      
+
       this.log('info', 'Worker started successfully');
-      
     } catch (error) {
       this.log('error', 'Failed to start worker', { error: error.message });
       this.isRunning = false;
       throw error;
     }
   }
-  
+
   /**
    * Stop the worker gracefully
    */
@@ -114,14 +113,14 @@ class BaseWorker {
     if (!this.isRunning) {
       return;
     }
-    
+
     this.log('info', 'Stopping worker gracefully');
     this.isRunning = false;
-    
+
     // Wait for current jobs to complete with proper cleanup
     let checkInterval;
     let timeoutHandle;
-    
+
     const stopPromise = new Promise((resolve) => {
       checkInterval = setInterval(() => {
         // Safety check: ensure currentJobs is properly initialized
@@ -137,7 +136,7 @@ class BaseWorker {
         }
       }, 100);
     });
-    
+
     // Force stop after timeout
     const timeoutPromise = new Promise((resolve) => {
       timeoutHandle = setTimeout(() => {
@@ -145,21 +144,21 @@ class BaseWorker {
         resolve();
       }, this.config.gracefulShutdownTimeout);
     });
-    
+
     await Promise.race([stopPromise, timeoutPromise]);
-    
+
     // Close connections
     if (this.queueService) {
       await this.queueService.shutdown();
     }
-    
+
     this.log('info', 'Worker stopped', {
       processedJobs: this.processedJobs,
       failedJobs: this.failedJobs,
       uptime: Date.now() - this.startTime
     });
   }
-  
+
   /**
    * Test database and queue connections
    */
@@ -169,17 +168,14 @@ class BaseWorker {
       this.log('info', 'Skipping connection tests in mock mode');
       return;
     }
-    
+
     // Test Supabase connection
-    const { error: dbError } = await this.supabase
-      .from('organizations')
-      .select('id')
-      .limit(1);
-    
+    const { error: dbError } = await this.supabase.from('organizations').select('id').limit(1);
+
     if (dbError) {
       throw new Error(`Database connection failed: ${dbError.message}`);
     }
-    
+
     // Initialize and test queue service
     try {
       await this.queueService.initialize();
@@ -187,13 +183,13 @@ class BaseWorker {
       throw new Error(`Queue service initialization failed: ${error.message}`);
     }
   }
-  
+
   /**
    * Main processing loop
    */
   async processingLoop() {
     this.currentJobs = new Map();
-    
+
     while (this.isRunning) {
       try {
         // Check if we can process more jobs
@@ -201,25 +197,24 @@ class BaseWorker {
           await this.sleep(this.config.pollInterval);
           continue;
         }
-        
+
         // Get next job from queue
         const job = await this.getNextJob();
-        
+
         if (!job) {
           await this.sleep(this.config.pollInterval);
           continue;
         }
-        
+
         // Process job asynchronously
         this.processJobAsync(job);
-        
       } catch (error) {
         this.log('error', 'Error in processing loop', { error: error.message });
         await this.sleep(this.config.pollInterval * 2); // Longer delay on error
       }
     }
   }
-  
+
   /**
    * Get next job from queue (using QueueService)
    */
@@ -233,55 +228,54 @@ class BaseWorker {
       return null;
     }
   }
-  
+
   /**
    * Process job asynchronously
    */
   async processJobAsync(job) {
     const jobId = job.id || `temp-${Date.now()}`;
     this.currentJobs.set(jobId, job);
-    
+
     try {
-      this.log('info', 'Processing job', { 
-        jobId, 
+      this.log('info', 'Processing job', {
+        jobId,
         jobType: job.job_type || job.type,
         organizationId: job.organization_id
       });
-      
+
       const startTime = Date.now();
-      
+
       // Execute the job with retry logic
       const result = await this.executeJobWithRetry(job);
-      
+
       const processingTime = Date.now() - startTime;
-      
+
       // Track processing time for health metrics
       this.processingTimes.push(processingTime);
       if (this.processingTimes.length > this.maxProcessingTimeSamples) {
         this.processingTimes.shift(); // Remove oldest sample
       }
-      
+
       // Update activity time
       this.updateActivityTime();
-      
+
       // Mark job as completed
       await this.markJobCompleted(job, result, processingTime);
-      
+
       this.processedJobs++;
-      
+
       this.log('info', 'Job completed', {
         jobId,
         processingTime,
         result: result?.summary || 'success'
       });
-      
     } catch (error) {
       await this.handleJobError(job, error);
     } finally {
       this.currentJobs.delete(jobId);
     }
   }
-  
+
   /**
    * Execute job with retry logic and exponential backoff
    */
@@ -296,21 +290,20 @@ class BaseWorker {
           attempt,
           maxAttempts
         });
-        
+
         // Execute the job (implemented by subclasses)
         const result = await this._processJobInternal(job);
-        
+
         // Success - return result
         if (attempt > 1) {
-          this.log('info', 'Job succeeded after retry', { 
-            jobId: job.id, 
+          this.log('info', 'Job succeeded after retry', {
+            jobId: job.id,
             attempt,
             totalAttempts: attempt
           });
         }
-        
+
         return result;
-        
       } catch (error) {
         lastError = error;
 
@@ -350,11 +343,11 @@ class BaseWorker {
         await this.sleep(delay);
       }
     }
-    
+
     // This should not be reached, but just in case
     throw lastError;
   }
-  
+
   /**
    * Determine if an error is retryable
    */
@@ -380,7 +373,13 @@ class BaseWorker {
     }
 
     // Check for permanent error codes
-    const permanentCodes = ['UNAUTHORIZED', 'FORBIDDEN', 'BAD_REQUEST', 'NOT_FOUND', 'CERT_INVALID'];
+    const permanentCodes = [
+      'UNAUTHORIZED',
+      'FORBIDDEN',
+      'BAD_REQUEST',
+      'NOT_FOUND',
+      'CERT_INVALID'
+    ];
     if (errorCode && permanentCodes.includes(errorCode)) {
       return false;
     }
@@ -394,8 +393,8 @@ class BaseWorker {
       /api.*key.*invalid/i,
       /forbidden/i,
       /bad.*request/i,
-      /resource.*not.*found/i,  // Changed from /not.*found/i to be more specific
-      /video.*not.*found/i,     // Specific resource types
+      /resource.*not.*found/i, // Changed from /not.*found/i to be more specific
+      /video.*not.*found/i, // Specific resource types
       /user.*not.*found/i,
       /page.*not.*found/i,
       /endpoint.*not.*found/i,
@@ -440,21 +439,21 @@ class BaseWorker {
     // Default to retryable for unknown errors
     return true;
   }
-  
+
   /**
    * Calculate exponential backoff delay
    */
   calculateRetryDelay(attempt) {
     const baseDelay = this.config.retryDelay || 1000;
     const maxDelay = this.config.maxRetryDelay || 30000;
-    
+
     // Exponential backoff: baseDelay * (2 ^ (attempt - 1))
     const delay = baseDelay * Math.pow(2, attempt - 1);
-    
+
     // Cap at maximum delay
     return Math.min(delay, maxDelay);
   }
-  
+
   /**
    * Internal job processing method (to be implemented by subclasses)
    */
@@ -498,7 +497,6 @@ class BaseWorker {
       this.processedJobs++;
 
       return result;
-
     } catch (error) {
       // Handle job error (marks as failed)
       await this.handleJobError(job, error);
@@ -523,7 +521,7 @@ class BaseWorker {
       });
     }
   }
-  
+
   /**
    * Handle job processing error
    */
@@ -548,7 +546,7 @@ class BaseWorker {
       });
     }
   }
-  
+
   /**
    * Setup graceful shutdown handlers
    */
@@ -557,28 +555,28 @@ class BaseWorker {
     if (process.env.NODE_ENV === 'test' || process.env.IS_TEST === '1') {
       return;
     }
-    
+
     const signals = ['SIGTERM', 'SIGINT', 'SIGQUIT'];
-    
-    signals.forEach(signal => {
+
+    signals.forEach((signal) => {
       process.on(signal, async () => {
         this.log('info', `Received ${signal}, shutting down gracefully`);
         await this.stop();
         process.exit(0);
       });
     });
-    
+
     process.on('uncaughtException', (error) => {
       this.log('error', 'Uncaught exception', { error: error.message });
       process.exit(1);
     });
-    
+
     process.on('unhandledRejection', (reason) => {
       this.log('error', 'Unhandled promise rejection', { reason });
       process.exit(1);
     });
   }
-  
+
   /**
    * Logging utility - Uses Winston advancedLogger for structured logging
    * Supports correlation context for end-to-end traceability (Issue #417)
@@ -605,14 +603,14 @@ class BaseWorker {
         advancedLogger.workerLogger.info(message, logData);
     }
   }
-  
+
   /**
    * Sleep utility
    */
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
-  
+
   /**
    * Get worker statistics
    */
@@ -628,7 +626,7 @@ class BaseWorker {
       config: this.config
     };
   }
-  
+
   /**
    * Perform health check
    * Returns detailed health status of the worker
@@ -651,20 +649,21 @@ class BaseWorker {
         processedJobs: this.processedJobs,
         failedJobs: this.failedJobs,
         currentJobs: this.currentJobs ? this.currentJobs.size : 0,
-        successRate: this.processedJobs > 0 
-          ? ((this.processedJobs - this.failedJobs) / this.processedJobs * 100).toFixed(2) + '%' 
-          : 'N/A',
+        successRate:
+          this.processedJobs > 0
+            ? (((this.processedJobs - this.failedJobs) / this.processedJobs) * 100).toFixed(2) + '%'
+            : 'N/A',
         lastActivity: this.lastActivityTime || null,
         avgProcessingTime: this.getAverageProcessingTime()
       },
       details: {}
     };
-    
+
     try {
       // Check if worker is running
       health.checks.running.status = this.isRunning ? 'healthy' : 'unhealthy';
       health.checks.running.message = this.isRunning ? 'Worker is running' : 'Worker is stopped';
-      
+
       // Check database connection
       if (mockMode.isMockMode) {
         health.checks.database.status = 'healthy';
@@ -676,15 +675,17 @@ class BaseWorker {
             .select('id')
             .limit(1)
             .single();
-          
+
           health.checks.database.status = error ? 'unhealthy' : 'healthy';
-          health.checks.database.message = error ? `Database error: ${error.message}` : 'Database connection OK';
+          health.checks.database.message = error
+            ? `Database error: ${error.message}`
+            : 'Database connection OK';
         } catch (err) {
           health.checks.database.status = 'unhealthy';
           health.checks.database.message = `Database check failed: ${err.message}`;
         }
       }
-      
+
       // Check queue connection
       if (mockMode.isMockMode) {
         health.checks.queue.status = 'healthy';
@@ -704,28 +705,27 @@ class BaseWorker {
           health.checks.queue.message = `Queue check failed: ${err.message}`;
         }
       }
-      
+
       // Check processing health
-      const timeSinceLastActivity = this.lastActivityTime 
-        ? Date.now() - this.lastActivityTime 
+      const timeSinceLastActivity = this.lastActivityTime
+        ? Date.now() - this.lastActivityTime
         : null;
-      
+
       if (this.processedJobs === 0 && this.failedJobs === 0) {
         health.checks.processing.status = 'healthy';
         health.checks.processing.message = 'No jobs processed yet';
-      } else if (timeSinceLastActivity && timeSinceLastActivity > 300000) { // 5 minutes
+      } else if (timeSinceLastActivity && timeSinceLastActivity > 300000) {
+        // 5 minutes
         health.checks.processing.status = 'warning';
         health.checks.processing.message = `No activity for ${Math.round(timeSinceLastActivity / 1000 / 60)} minutes`;
       } else {
         health.checks.processing.status = 'healthy';
         health.checks.processing.message = 'Processing normally';
       }
-      
+
       // Check performance metrics
-      const failureRate = this.processedJobs > 0 
-        ? (this.failedJobs / this.processedJobs * 100) 
-        : 0;
-      
+      const failureRate = this.processedJobs > 0 ? (this.failedJobs / this.processedJobs) * 100 : 0;
+
       if (failureRate > 50) {
         health.checks.performance.status = 'unhealthy';
         health.checks.performance.message = `High failure rate: ${failureRate.toFixed(2)}%`;
@@ -736,14 +736,14 @@ class BaseWorker {
         health.checks.performance.status = 'healthy';
         health.checks.performance.message = 'Performance metrics within normal range';
       }
-      
+
       // Add worker-specific health details (to be overridden by subclasses)
       if (typeof this.getSpecificHealthDetails === 'function') {
         health.details = await this.getSpecificHealthDetails();
       }
-      
+
       // Determine overall health status
-      const statuses = Object.values(health.checks).map(check => check.status);
+      const statuses = Object.values(health.checks).map((check) => check.status);
       if (statuses.includes('unhealthy')) {
         health.status = 'unhealthy';
       } else if (statuses.includes('warning')) {
@@ -751,23 +751,22 @@ class BaseWorker {
       } else {
         health.status = 'healthy';
       }
-      
     } catch (error) {
       health.status = 'error';
       health.error = error.message;
       this.log('error', 'Health check failed', { error: error.message });
     }
-    
+
     return health;
   }
-  
+
   /**
    * Track activity time for health monitoring
    */
   updateActivityTime() {
     this.lastActivityTime = Date.now();
   }
-  
+
   /**
    * Get average processing time
    */
@@ -775,7 +774,7 @@ class BaseWorker {
     if (!this.processingTimes || this.processingTimes.length === 0) {
       return 'N/A';
     }
-    
+
     const avg = this.processingTimes.reduce((a, b) => a + b, 0) / this.processingTimes.length;
     return `${Math.round(avg)}ms`;
   }

@@ -1,9 +1,9 @@
 /**
  * Style Profile API Client
- * 
+ *
  * Handles all API calls related to Style Profile extraction and management
  * Issue #369 - SPEC 9 - Style Profile Extraction
- * 
+ *
  * Features:
  * - Profile extraction from multiple platforms
  * - Profile retrieval and management
@@ -43,24 +43,24 @@ const styleProfileAPI = {
       };
     } catch (error) {
       console.error('Style profile extraction failed:', error);
-      
+
       // Handle specific error cases
       if (error.response?.status === 403) {
         throw new Error('Esta función requiere un plan Premium. Actualiza tu plan para acceder.');
       }
-      
+
       if (error.response?.status === 400) {
         throw new Error(error.response.data?.message || 'Datos de solicitud inválidos');
       }
-      
+
       if (error.response?.status === 429) {
         throw new Error('Límite de solicitudes excedido. Intenta de nuevo más tarde.');
       }
-      
+
       if (error.response?.status === 404) {
         throw new Error('No se encontró suficiente contenido para generar el perfil');
       }
-      
+
       throw new Error('Error al extraer el perfil de estilo. Intenta de nuevo.');
     }
   },
@@ -74,25 +74,25 @@ const styleProfileAPI = {
   async getUserProfiles(organizationId, userId) {
     try {
       const response = await apiClient.get(`/api/style-profile/${organizationId}/${userId}`);
-      
+
       return {
         success: true,
         data: response.data.profiles || []
       };
     } catch (error) {
       console.error('Failed to fetch user profiles:', error);
-      
+
       if (error.response?.status === 404) {
         return {
           success: true,
           data: []
         };
       }
-      
+
       if (error.response?.status === 403) {
         throw new Error('No tienes permisos para acceder a estos perfiles');
       }
-      
+
       throw new Error('Error al cargar los perfiles existentes');
     }
   },
@@ -107,22 +107,22 @@ const styleProfileAPI = {
   async deleteProfile(organizationId, userId, language) {
     try {
       await apiClient.delete(`/api/style-profile/${organizationId}/${userId}/${language}`);
-      
+
       return {
         success: true,
         message: 'Perfil eliminado correctamente'
       };
     } catch (error) {
       console.error('Failed to delete profile:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('El perfil no existe o ya fue eliminado');
       }
-      
+
       if (error.response?.status === 403) {
         throw new Error('No tienes permisos para eliminar este perfil');
       }
-      
+
       throw new Error('Error al eliminar el perfil');
     }
   },
@@ -141,26 +141,26 @@ const styleProfileAPI = {
         `/api/style-profile/${organizationId}/${userId}/${language}`,
         updates
       );
-      
+
       return {
         success: true,
         data: response.data
       };
     } catch (error) {
       console.error('Failed to update profile:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('El perfil no existe');
       }
-      
+
       if (error.response?.status === 403) {
         throw new Error('No tienes permisos para actualizar este perfil');
       }
-      
+
       if (error.response?.status === 400) {
         throw new Error(error.response.data?.message || 'Datos de actualización inválidos');
       }
-      
+
       throw new Error('Error al actualizar el perfil');
     }
   },
@@ -173,19 +173,21 @@ const styleProfileAPI = {
    */
   async getAvailablePlatforms(organizationId, userId) {
     try {
-      const response = await apiClient.get(`/api/style-profile/${organizationId}/${userId}/platforms`);
-      
+      const response = await apiClient.get(
+        `/api/style-profile/${organizationId}/${userId}/platforms`
+      );
+
       return {
         success: true,
         data: response.data.platforms || []
       };
     } catch (error) {
       console.error('Failed to fetch available platforms:', error);
-      
+
       if (error.response?.status === 403) {
         throw new Error('No tienes permisos para acceder a esta información');
       }
-      
+
       throw new Error('Error al cargar las plataformas disponibles');
     }
   },
@@ -199,7 +201,7 @@ const styleProfileAPI = {
   async validatePremiumAccess(organizationId, userId) {
     try {
       const response = await apiClient.get(`/api/style-profile/${organizationId}/${userId}/access`);
-      
+
       return {
         success: true,
         data: {
@@ -210,7 +212,7 @@ const styleProfileAPI = {
       };
     } catch (error) {
       console.error('Failed to validate premium access:', error);
-      
+
       return {
         success: false,
         data: {
@@ -231,14 +233,14 @@ const styleProfileAPI = {
   async getProfileStats(organizationId, userId) {
     try {
       const response = await apiClient.get(`/api/style-profile/${organizationId}/${userId}/stats`);
-      
+
       return {
         success: true,
         data: response.data
       };
     } catch (error) {
       console.error('Failed to fetch profile stats:', error);
-      
+
       if (error.response?.status === 404) {
         return {
           success: true,
@@ -250,7 +252,7 @@ const styleProfileAPI = {
           }
         };
       }
-      
+
       throw new Error('Error al cargar las estadísticas del perfil');
     }
   }

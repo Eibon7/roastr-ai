@@ -20,21 +20,25 @@ test.describe('Dashboard Data Loading', () => {
   });
 
   test('should display node metadata', async ({ page }) => {
-    const hasStatus = await page.locator('text=/status|active|production/i').count() > 0;
-    const hasCoverage = await page.locator('text=/coverage|%/').count() > 0;
-    const hasTimestamp = await page.locator('text=/updated|last modified|\\d{4}-\\d{2}-\\d{2}/').count() > 0;
+    const hasStatus = (await page.locator('text=/status|active|production/i').count()) > 0;
+    const hasCoverage = (await page.locator('text=/coverage|%/').count()) > 0;
+    const hasTimestamp =
+      (await page.locator('text=/updated|last modified|\\d{4}-\\d{2}-\\d{2}/').count()) > 0;
     expect(hasStatus || hasCoverage || hasTimestamp).toBeTruthy();
   });
 
   test('should display dependency relationships', async ({ page }) => {
-    const hasDependencies = await page.locator('text=/depends on|dependencies|used by/i').count() > 0;
-    const hasGraphElements = await page.locator('svg, canvas, [class*="graph"]').count() > 0;
+    const hasDependencies =
+      (await page.locator('text=/depends on|dependencies|used by/i').count()) > 0;
+    const hasGraphElements = (await page.locator('svg, canvas, [class*="graph"]').count()) > 0;
     expect(hasDependencies || hasGraphElements).toBeTruthy();
   });
 
   test('should handle missing data gracefully', async ({ page }) => {
     const errors: string[] = [];
-    page.on('pageerror', (error) => { errors.push(error.message); });
+    page.on('pageerror', (error) => {
+      errors.push(error.message);
+    });
     await page.waitForTimeout(2000);
     expect(errors.length).toBe(0);
     await expect(page.locator('main, #root, [role="main"]').first()).toBeVisible();

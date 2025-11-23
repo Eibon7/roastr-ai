@@ -11,7 +11,7 @@ gh issue create \
 
 **Archivos completados (7):**
 - ✅ logMaintenance.test.js: 22/22
-- ✅ roastr-persona.test.js: 18/18  
+- ✅ roastr-persona.test.js: 18/18
 - ✅ roastr-persona-tolerance.test.js: 9/9
 - ✅ account-deletion.test.js: 13/13
 - ✅ inputValidation.test.js: 32/32
@@ -91,5 +91,3 @@ Los siguientes archivos fueron modificados para completar los tests:
 - Asegúrate de hacer commit de todos los cambios antes de crear la PR
 - Verifica que los tests pasen antes de crear la PR
 - La issue de seguimiento se puede crear después de la PR si es necesario
-
-

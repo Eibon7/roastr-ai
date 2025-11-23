@@ -128,7 +128,7 @@ function sanitizePlatform(platform) {
   }
 
   const sanitized = platform.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-  
+
   if (!OAuthProviderFactory.isSupported(sanitized)) {
     throw new Error(`Unsupported platform: ${sanitized}`);
   }
@@ -179,8 +179,10 @@ function parseState(state) {
     return { userId, platform, timestamp: parseInt(timestamp), random };
   } catch (error) {
     // Preserve original error message if it's already descriptive
-    if (error.message.startsWith('Invalid state format') ||
-        error.message.startsWith('State parameter expired')) {
+    if (
+      error.message.startsWith('Invalid state format') ||
+      error.message.startsWith('State parameter expired')
+    ) {
       throw error;
     }
     throw new Error('Invalid state parameter: ' + error.message);
@@ -230,7 +232,9 @@ router.post('/:platform/connect', authenticateToken, async (req, res) => {
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.log(`OAuth connect initiated for ${userId}:${platform}`, {
-        authUrl, state, redirectUri
+        authUrl,
+        state,
+        redirectUri
       });
     }
 
@@ -245,7 +249,6 @@ router.post('/:platform/connect', authenticateToken, async (req, res) => {
         mock: flags.shouldUseMockOAuth()
       }
     });
-
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.error('OAuth connect error:', error);
@@ -275,12 +278,16 @@ router.get('/:platform/callback', async (req, res) => {
         console.error(`OAuth callback error for ${platform}:`, errorMsg);
       }
 
-      return res.redirect(`/connections?error=${encodeURIComponent(errorMsg)}&platform=${platform}`);
+      return res.redirect(
+        `/connections?error=${encodeURIComponent(errorMsg)}&platform=${platform}`
+      );
     }
 
     // Validate required parameters
     if (!code || !state) {
-      return res.redirect(`/connections?error=Missing+authorization+code+or+state&platform=${platform}`);
+      return res.redirect(
+        `/connections?error=Missing+authorization+code+or+state&platform=${platform}`
+      );
     }
 
     // Parse and validate state
@@ -292,7 +299,7 @@ router.get('/:platform/callback', async (req, res) => {
     // Get OAuth provider and exchange code for tokens
     const provider = OAuthProviderFactory.getProvider(platform);
     const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/${platform}/callback`;
-    
+
     const tokenData = await provider.exchangeCodeForTokens(code, state, redirectUri);
 
     // Store connection
@@ -305,7 +312,6 @@ router.get('/:platform/callback', async (req, res) => {
     // Redirect to success page
     const successUrl = `/connections?success=true&platform=${platform}&connected=true`;
     res.redirect(successUrl);
-
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.error('OAuth callback processing error:', error);
@@ -357,7 +363,6 @@ router.post('/:platform/refresh', authenticateToken, async (req, res) => {
         refreshed: true
       }
     });
-
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.error('OAuth refresh error:', error);
@@ -413,7 +418,6 @@ router.post('/:platform/disconnect', authenticateToken, async (req, res) => {
         disconnected: true
       }
     });
-
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.error('OAuth disconnect error:', error);
@@ -437,10 +441,10 @@ router.get('/connections', authenticateToken, async (req, res) => {
     const connections = mockStore.getUserConnections(userId);
 
     // Add platform status information
-    const platformStatuses = OAuthProviderFactory.getSupportedPlatforms().map(platform => {
-      const connection = connections.find(conn => conn.platform === platform);
+    const platformStatuses = OAuthProviderFactory.getSupportedPlatforms().map((platform) => {
+      const connection = connections.find((conn) => conn.platform === platform);
       const isConnected = mockStore.isConnected(userId, platform);
-      
+
       return {
         platform,
         connected: isConnected,
@@ -457,12 +461,11 @@ router.get('/connections', authenticateToken, async (req, res) => {
       success: true,
       data: {
         connections: platformStatuses,
-        totalConnected: connections.filter(conn => conn.status === 'connected').length,
+        totalConnected: connections.filter((conn) => conn.status === 'connected').length,
         totalPlatforms: OAuthProviderFactory.getSupportedPlatforms().length,
         mockMode: flags.shouldUseMockOAuth()
       }
     });
-
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.error('Get connections error:', error);
@@ -482,10 +485,10 @@ router.get('/connections', authenticateToken, async (req, res) => {
  */
 router.get('/platforms', async (req, res) => {
   try {
-    const platforms = OAuthProviderFactory.getSupportedPlatforms().map(platform => {
+    const platforms = OAuthProviderFactory.getSupportedPlatforms().map((platform) => {
       const provider = OAuthProviderFactory.getProvider(platform);
       const flagKey = `ENABLE_${platform.toUpperCase()}_OAUTH`;
-      
+
       return {
         platform,
         name: platform.charAt(0).toUpperCase() + platform.slice(1),
@@ -502,10 +505,9 @@ router.get('/platforms', async (req, res) => {
         platforms,
         mockMode: flags.shouldUseMockOAuth(),
         totalPlatforms: platforms.length,
-        enabledPlatforms: platforms.filter(p => p.enabled).length
+        enabledPlatforms: platforms.filter((p) => p.enabled).length
       }
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -527,10 +529,10 @@ router.get('/:platform/config', authenticateToken, async (req, res) => {
     // TODO: In production, fetch from database
     // For now, return default configuration
     const defaultConfig = getDefaultPlatformConfig(platform);
-    
+
     // Check if user is connected to this platform
     const isConnected = mockStore.isConnected(userId, platform);
-    
+
     res.json({
       success: true,
       data: {
@@ -540,7 +542,6 @@ router.get('/:platform/config', authenticateToken, async (req, res) => {
         lastUpdated: null // TODO: Get from database
       }
     });
-
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.error('Get platform config error:', error);
@@ -577,7 +578,7 @@ router.put('/:platform/config', authenticateToken, async (req, res) => {
 
     // TODO: In production, save to database
     // For now, store in memory (mockStore could be extended for this)
-    
+
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.log(`Updated config for ${userId}:${platform}:`, validatedConfig);
     }
@@ -592,7 +593,6 @@ router.put('/:platform/config', authenticateToken, async (req, res) => {
         timestamp: new Date().toISOString()
       }
     });
-
   } catch (error) {
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.error('Update platform config error:', error);
@@ -627,7 +627,7 @@ router.post('/mock/reset', authenticateToken, async (req, res) => {
       // Reset specific platform
       const sanitizedPlatform = sanitizePlatform(platform);
       mockStore.removeConnection(userId, sanitizedPlatform);
-      
+
       res.json({
         success: true,
         data: {
@@ -638,7 +638,7 @@ router.post('/mock/reset', authenticateToken, async (req, res) => {
     } else {
       // Reset all connections for user
       const connections = mockStore.getUserConnections(userId);
-      connections.forEach(conn => {
+      connections.forEach((conn) => {
         mockStore.removeConnection(userId, conn.platform);
       });
 
@@ -654,7 +654,6 @@ router.post('/mock/reset', authenticateToken, async (req, res) => {
     if (flags.isEnabled('DEBUG_OAUTH')) {
       console.log(`Mock connections reset for ${userId}`, { platform });
     }
-
   } catch (error) {
     res.status(400).json({
       success: false,
@@ -783,24 +782,26 @@ function getDefaultPlatformConfig(platform) {
     }
   };
 
-  return configs[platform] || {
-    tone: 'neutral',
-    // Issue #868: Removed humorType,
-    responseFrequency: 0.5,
-    autoReply: false,
-    shieldActions: {
-      enabled: false,
-      muteEnabled: false,
-      blockEnabled: false,
-      reportEnabled: false
-    },
-    filtering: {},
-    timing: {
-      maxResponsesPerDay: 5,
-      cooldownMinutes: 60,
-      respectRateLimits: true
+  return (
+    configs[platform] || {
+      tone: 'neutral',
+      // Issue #868: Removed humorType,
+      responseFrequency: 0.5,
+      autoReply: false,
+      shieldActions: {
+        enabled: false,
+        muteEnabled: false,
+        blockEnabled: false,
+        reportEnabled: false
+      },
+      filtering: {},
+      timing: {
+        maxResponsesPerDay: 5,
+        cooldownMinutes: 60,
+        respectRateLimits: true
+      }
     }
-  };
+  );
 }
 
 /**
@@ -815,13 +816,32 @@ function validatePlatformConfig(platform, config) {
   const validatedConfig = { ...defaultConfig };
 
   // Validate tone
-  const validTones = ['witty', 'friendly', 'stylish', 'professional', 'quirky', 'neutral', 'sarcastic', 'clever', 'subtle'];
+  const validTones = [
+    'witty',
+    'friendly',
+    'stylish',
+    'professional',
+    'quirky',
+    'neutral',
+    'sarcastic',
+    'clever',
+    'subtle'
+  ];
   if (config.tone && validTones.includes(config.tone)) {
     validatedConfig.tone = config.tone;
   }
 
   // Validate humorType
-  const validHumorTypes = ['clever', 'playful', 'visual', 'subtle', 'nerdy', 'general', 'sarcastic', 'witty'];
+  const validHumorTypes = [
+    'clever',
+    'playful',
+    'visual',
+    'subtle',
+    'nerdy',
+    'general',
+    'sarcastic',
+    'witty'
+  ];
   if (config.humorType && validHumorTypes.includes(config.humorType)) {
     validatedConfig.humorType = config.humorType;
   }
@@ -841,7 +861,7 @@ function validatePlatformConfig(platform, config) {
 
   // Validate shieldActions
   if (config.shieldActions && typeof config.shieldActions === 'object') {
-    Object.keys(defaultConfig.shieldActions).forEach(key => {
+    Object.keys(defaultConfig.shieldActions).forEach((key) => {
       if (typeof config.shieldActions[key] === 'boolean') {
         validatedConfig.shieldActions[key] = config.shieldActions[key];
       }
@@ -850,7 +870,7 @@ function validatePlatformConfig(platform, config) {
 
   // Validate timing settings
   if (config.timing && typeof config.timing === 'object') {
-    Object.keys(defaultConfig.timing).forEach(key => {
+    Object.keys(defaultConfig.timing).forEach((key) => {
       if (key === 'respectRateLimits' && typeof config.timing[key] === 'boolean') {
         validatedConfig.timing[key] = config.timing[key];
       } else if (typeof config.timing[key] === 'number' && config.timing[key] >= 0) {
@@ -861,7 +881,7 @@ function validatePlatformConfig(platform, config) {
 
   // Validate filtering settings (platform-specific)
   if (config.filtering && typeof config.filtering === 'object') {
-    Object.keys(defaultConfig.filtering).forEach(key => {
+    Object.keys(defaultConfig.filtering).forEach((key) => {
       const value = config.filtering[key];
       if (typeof value === 'boolean' || (typeof value === 'number' && value >= 0)) {
         validatedConfig.filtering[key] = value;

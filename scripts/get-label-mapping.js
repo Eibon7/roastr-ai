@@ -44,34 +44,34 @@ const LABEL_TO_NODES = {
 
 // Keyword fallback mapping (when no area:* label exists)
 const KEYWORD_TO_NODES = {
-  'worker': ['queue-system', 'multi-tenant'],
-  'queue': ['queue-system'],
-  'auth': ['multi-tenant'],
-  'authentication': ['multi-tenant'],
-  'login': ['multi-tenant'],
-  'billing': ['billing', 'cost-control'],
-  'payment': ['billing', 'plan-features'],
-  'roast': ['roast', 'persona', 'tone'],
-  'shield': ['shield', 'guardian'],
-  'moderation': ['shield', 'guardian'],
-  'platform': ['social-platforms'],
-  'twitter': ['social-platforms'],
-  'youtube': ['social-platforms'],
-  'instagram': ['social-platforms'],
-  'facebook': ['social-platforms'],
-  'discord': ['social-platforms'],
-  'integration': ['social-platforms'],
-  'cost': ['cost-control', 'billing'],
-  'analytics': ['analytics', 'observability'],
-  'monitoring': ['observability'],
-  'telemetry': ['observability'],
-  'persona': ['persona', 'roast'],
-  'tone': ['tone', 'roast'],
-  'plan': ['plan-features', 'billing'],
-  'subscription': ['plan-features', 'billing'],
-  'trainer': ['trainer'],
-  'guardian': ['guardian', 'shield'],
-  'constraint': ['platform-constraints']
+  worker: ['queue-system', 'multi-tenant'],
+  queue: ['queue-system'],
+  auth: ['multi-tenant'],
+  authentication: ['multi-tenant'],
+  login: ['multi-tenant'],
+  billing: ['billing', 'cost-control'],
+  payment: ['billing', 'plan-features'],
+  roast: ['roast', 'persona', 'tone'],
+  shield: ['shield', 'guardian'],
+  moderation: ['shield', 'guardian'],
+  platform: ['social-platforms'],
+  twitter: ['social-platforms'],
+  youtube: ['social-platforms'],
+  instagram: ['social-platforms'],
+  facebook: ['social-platforms'],
+  discord: ['social-platforms'],
+  integration: ['social-platforms'],
+  cost: ['cost-control', 'billing'],
+  analytics: ['analytics', 'observability'],
+  monitoring: ['observability'],
+  telemetry: ['observability'],
+  persona: ['persona', 'roast'],
+  tone: ['tone', 'roast'],
+  plan: ['plan-features', 'billing'],
+  subscription: ['plan-features', 'billing'],
+  trainer: ['trainer'],
+  guardian: ['guardian', 'shield'],
+  constraint: ['platform-constraints']
 };
 
 /**
@@ -81,8 +81,8 @@ async function getAllNodes() {
   const nodesDir = path.join(__dirname, '..', 'docs', 'nodes');
   const files = await fs.readdir(nodesDir);
   return files
-    .filter(f => f.endsWith('.md'))
-    .map(f => f.replace('.md', ''))
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => f.replace('.md', ''))
     .sort();
 }
 
@@ -156,7 +156,7 @@ async function validateMapping() {
 
   // Check label mappings
   Object.entries(LABEL_TO_NODES).forEach(([label, nodes]) => {
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (!availableNodes.includes(node)) {
         errors.push(`Label "${label}" references non-existent node: ${node}`);
       }
@@ -165,7 +165,7 @@ async function validateMapping() {
 
   // Check keyword mappings
   Object.entries(KEYWORD_TO_NODES).forEach(([keyword, nodes]) => {
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (!availableNodes.includes(node)) {
         errors.push(`Keyword "${keyword}" references non-existent node: ${node}`);
       }
@@ -174,7 +174,7 @@ async function validateMapping() {
 
   if (errors.length > 0) {
     console.error('\n⚠️  Validation Errors:\n');
-    errors.forEach(err => console.error(`  - ${err}`));
+    errors.forEach((err) => console.error(`  - ${err}`));
     process.exit(1);
   }
 
@@ -186,7 +186,7 @@ async function validateMapping() {
  */
 async function main() {
   const args = process.argv.slice(2);
-  const format = args.find(a => a.startsWith('--format='))?.split('=')[1] || 'table';
+  const format = args.find((a) => a.startsWith('--format='))?.split('=')[1] || 'table';
   const validate = args.includes('--validate');
 
   if (validate) {
@@ -217,7 +217,7 @@ async function main() {
   node scripts/get-label-mapping.js --validate        # Validate mappings\n`);
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('Error:', err.message);
   process.exit(1);
 });

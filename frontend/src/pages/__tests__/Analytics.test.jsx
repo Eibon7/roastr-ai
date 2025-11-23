@@ -54,7 +54,8 @@ describe('Analytics Page', () => {
       localCosts: { total_cost_cents: 2000 }
     };
 
-    global.fetch = jest.fn()
+    global.fetch = jest
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ success: true, data: mockDashboard })
@@ -80,14 +81,18 @@ describe('Analytics Page', () => {
   });
 
   it('shows an error message when dashboard fails', async () => {
-    global.fetch = jest.fn()
+    global.fetch = jest
+      .fn()
       .mockResolvedValueOnce({
         ok: false,
         json: async () => ({ error: 'fail' })
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, data: { polar: { available: false }, localCosts: { total_cost_cents: 0 } } })
+        json: async () => ({
+          success: true,
+          data: { polar: { available: false }, localCosts: { total_cost_cents: 0 } }
+        })
       });
 
     render(
@@ -104,4 +109,3 @@ describe('Analytics Page', () => {
     );
   });
 });
-

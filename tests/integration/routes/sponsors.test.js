@@ -66,7 +66,9 @@ describe('Sponsors API Routes', () => {
       if (req.user.plan === 'plus') {
         next();
       } else {
-        res.status(403).json({ error: 'PLAN_UPGRADE_REQUIRED', message: 'Plus plan required for Brand Safety' });
+        res
+          .status(403)
+          .json({ error: 'PLAN_UPGRADE_REQUIRED', message: 'Plus plan required for Brand Safety' });
       }
     });
 
@@ -117,10 +119,7 @@ describe('Sponsors API Routes', () => {
 
       mockSponsorService.createSponsor.mockResolvedValue(createdSponsor);
 
-      const response = await request(app)
-        .post('/api/sponsors')
-        .send(newSponsor)
-        .expect(201);
+      const response = await request(app).post('/api/sponsors').send(newSponsor).expect(201);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.id).toBe('sponsor-123');
@@ -133,10 +132,7 @@ describe('Sponsors API Routes', () => {
         res.status(401).json({ error: 'UNAUTHORIZED' });
       });
 
-      await request(app)
-        .post('/api/sponsors')
-        .send({ name: 'Nike' })
-        .expect(401);
+      await request(app).post('/api/sponsors').send({ name: 'Nike' }).expect(401);
     });
 
     it('should reject request from non-Plus user', async () => {
@@ -145,10 +141,7 @@ describe('Sponsors API Routes', () => {
         next();
       });
 
-      await request(app)
-        .post('/api/sponsors')
-        .send({ name: 'Nike' })
-        .expect(403);
+      await request(app).post('/api/sponsors').send({ name: 'Nike' }).expect(403);
     });
 
     it('should validate required fields', async () => {
@@ -161,12 +154,11 @@ describe('Sponsors API Routes', () => {
     });
 
     it('should handle database errors', async () => {
-      mockSponsorService.createSponsor.mockRejectedValue(new Error('DATABASE_ERROR: Connection failed'));
+      mockSponsorService.createSponsor.mockRejectedValue(
+        new Error('DATABASE_ERROR: Connection failed')
+      );
 
-      await request(app)
-        .post('/api/sponsors')
-        .send({ name: 'Nike' })
-        .expect(500);
+      await request(app).post('/api/sponsors').send({ name: 'Nike' }).expect(500);
     });
   });
 
@@ -183,9 +175,7 @@ describe('Sponsors API Routes', () => {
 
       mockSponsorService.getSponsors.mockResolvedValue(sponsors);
 
-      const response = await request(app)
-        .get('/api/sponsors')
-        .expect(200);
+      const response = await request(app).get('/api/sponsors').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual(sponsors);
@@ -201,9 +191,7 @@ describe('Sponsors API Routes', () => {
 
       mockSponsorService.getSponsors.mockResolvedValue(sponsors);
 
-      const response = await request(app)
-        .get('/api/sponsors?includeInactive=true')
-        .expect(200);
+      const response = await request(app).get('/api/sponsors?includeInactive=true').expect(200);
 
       expect(response.body.data).toEqual(sponsors);
       expect(mockSponsorService.getSponsors).toHaveBeenCalledWith('user-123', true);
@@ -212,9 +200,7 @@ describe('Sponsors API Routes', () => {
     it('should return empty array when no sponsors', async () => {
       mockSponsorService.getSponsors.mockResolvedValue([]);
 
-      const response = await request(app)
-        .get('/api/sponsors')
-        .expect(200);
+      const response = await request(app).get('/api/sponsors').expect(200);
 
       expect(response.body.data).toEqual([]);
       expect(response.body.count).toBe(0);
@@ -236,9 +222,7 @@ describe('Sponsors API Routes', () => {
 
       mockSponsorService.getSponsor.mockResolvedValue(sponsor);
 
-      const response = await request(app)
-        .get('/api/sponsors/sponsor-123')
-        .expect(200);
+      const response = await request(app).get('/api/sponsors/sponsor-123').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.id).toBe('sponsor-123');
@@ -248,9 +232,7 @@ describe('Sponsors API Routes', () => {
     it('should return 404 when sponsor not found', async () => {
       mockSponsorService.getSponsor.mockResolvedValue(null);
 
-      await request(app)
-        .get('/api/sponsors/nonexistent')
-        .expect(404);
+      await request(app).get('/api/sponsors/nonexistent').expect(404);
     });
   });
 
@@ -282,16 +264,17 @@ describe('Sponsors API Routes', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.severity).toBe('zero_tolerance');
-      expect(mockSponsorService.updateSponsor).toHaveBeenCalledWith('sponsor-123', 'user-123', updates);
+      expect(mockSponsorService.updateSponsor).toHaveBeenCalledWith(
+        'sponsor-123',
+        'user-123',
+        updates
+      );
     });
 
     it('should return 404 when sponsor not found', async () => {
       mockSponsorService.updateSponsor.mockResolvedValue(null);
 
-      await request(app)
-        .put('/api/sponsors/nonexistent')
-        .send({ severity: 'high' })
-        .expect(404);
+      await request(app).put('/api/sponsors/nonexistent').send({ severity: 'high' }).expect(404);
     });
   });
 
@@ -303,9 +286,7 @@ describe('Sponsors API Routes', () => {
     it('should delete sponsor successfully', async () => {
       mockSponsorService.deleteSponsor.mockResolvedValue(true);
 
-      const response = await request(app)
-        .delete('/api/sponsors/sponsor-123')
-        .expect(200);
+      const response = await request(app).delete('/api/sponsors/sponsor-123').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Sponsor deleted successfully');
@@ -315,9 +296,7 @@ describe('Sponsors API Routes', () => {
     it('should return 404 when sponsor not found', async () => {
       mockSponsorService.deleteSponsor.mockRejectedValue(new Error('SPONSOR_NOT_FOUND'));
 
-      await request(app)
-        .delete('/api/sponsors/nonexistent')
-        .expect(404);
+      await request(app).delete('/api/sponsors/nonexistent').expect(404);
     });
   });
 
@@ -353,10 +332,7 @@ describe('Sponsors API Routes', () => {
     it('should handle invalid URLs', async () => {
       mockSponsorService.extractTagsFromURL.mockRejectedValue(new Error('INVALID_URL'));
 
-      await request(app)
-        .post('/api/sponsors/extract-tags')
-        .send({ url: 'not-a-url' })
-        .expect(400);
+      await request(app).post('/api/sponsors/extract-tags').send({ url: 'not-a-url' }).expect(400);
     });
 
     it('should handle OpenAI errors', async () => {

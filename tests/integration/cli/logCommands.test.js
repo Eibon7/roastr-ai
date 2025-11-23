@@ -1,6 +1,6 @@
 /**
  * Log Commands CLI Integration Tests
- * 
+ *
  * Tests for CLI commands related to log management:
  * - backup command with various options
  * - maintain command with cleanup and monitoring
@@ -24,7 +24,7 @@ describe('Log Commands CLI Integration', () => {
   beforeAll(() => {
     // Save original environment
     originalEnv = { ...process.env };
-    
+
     // Set up test environment
     process.env.NODE_ENV = 'test';
     process.env.LOG_BACKUP_S3_BUCKET = 'test-bucket';
@@ -41,9 +41,9 @@ describe('Log Commands CLI Integration', () => {
 
   describe('backup command', () => {
     test('should show help when no arguments provided', () => {
-      const result = execSync(`node ${CLI_PATH} backup --help`, { 
+      const result = execSync(`node ${CLI_PATH} backup --help`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Manage log backups');
@@ -52,9 +52,9 @@ describe('Log Commands CLI Integration', () => {
     });
 
     test('should perform dry run backup', () => {
-      const result = execSync(`node ${CLI_PATH} backup upload --days 1 --dry-run`, { 
+      const result = execSync(`node ${CLI_PATH} backup upload --days 1 --dry-run`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Simulating');
@@ -65,11 +65,11 @@ describe('Log Commands CLI Integration', () => {
     test('should accept valid days parameter', async () => {
       // Note: Commander.js doesn't validate days range, so we test that it accepts valid input
       // Invalid days would be handled by the service layer
-      const result = execSync(`node ${CLI_PATH} backup upload --days 1 --dry-run`, { 
+      const result = execSync(`node ${CLI_PATH} backup upload --days 1 --dry-run`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
-      
+
       expect(result).toBeTruthy();
     });
 
@@ -78,7 +78,7 @@ describe('Log Commands CLI Integration', () => {
       delete testEnv.LOG_BACKUP_S3_BUCKET;
 
       expect(() => {
-        execSync(`node ${CLI_PATH} backup upload --days 1`, { 
+        execSync(`node ${CLI_PATH} backup upload --days 1`, {
           encoding: 'utf8',
           timeout: TEST_TIMEOUT,
           env: testEnv
@@ -86,37 +86,41 @@ describe('Log Commands CLI Integration', () => {
       }).toThrow(); // CLI exits with code 1 when S3 not configured
     });
 
-    test('should show progress for multi-day backup', (done) => {
-      const child = spawn('node', [CLI_PATH, 'backup', 'upload', '--days', '3', '--dry-run'], {
-        stdio: 'pipe'
-      });
+    test(
+      'should show progress for multi-day backup',
+      (done) => {
+        const child = spawn('node', [CLI_PATH, 'backup', 'upload', '--days', '3', '--dry-run'], {
+          stdio: 'pipe'
+        });
 
-      let output = '';
-      child.stdout.on('data', (data) => {
-        output += data.toString();
-      });
+        let output = '';
+        child.stdout.on('data', (data) => {
+          output += data.toString();
+        });
 
-      child.stderr.on('data', (data) => {
-        output += data.toString();
-      });
+        child.stderr.on('data', (data) => {
+          output += data.toString();
+        });
 
-      child.on('close', (code) => {
-        expect(code).toBe(0);
-        expect(output).toContain('Days processed');
-        expect(output).toContain('backup');
-        done();
-      });
+        child.on('close', (code) => {
+          expect(code).toBe(0);
+          expect(output).toContain('Days processed');
+          expect(output).toContain('backup');
+          done();
+        });
 
-      setTimeout(() => {
-        child.kill();
-        done(new Error('Test timeout'));
-      }, TEST_TIMEOUT);
-    }, TEST_TIMEOUT);
+        setTimeout(() => {
+          child.kill();
+          done(new Error('Test timeout'));
+        }, TEST_TIMEOUT);
+      },
+      TEST_TIMEOUT
+    );
 
     test('should perform backup with dry run', () => {
-      const result = execSync(`node ${CLI_PATH} backup upload --days 1 --dry-run`, { 
+      const result = execSync(`node ${CLI_PATH} backup upload --days 1 --dry-run`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Simulating');
@@ -126,9 +130,9 @@ describe('Log Commands CLI Integration', () => {
 
   describe('maintenance command', () => {
     test('should show help when no subcommand provided', () => {
-      const result = execSync(`node ${CLI_PATH} maintenance --help`, { 
+      const result = execSync(`node ${CLI_PATH} maintenance --help`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Manage log maintenance service');
@@ -138,9 +142,9 @@ describe('Log Commands CLI Integration', () => {
     });
 
     test('should show service status', () => {
-      const result = execSync(`node ${CLI_PATH} maintenance status`, { 
+      const result = execSync(`node ${CLI_PATH} maintenance status`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Log Maintenance Service Status');
@@ -149,9 +153,9 @@ describe('Log Commands CLI Integration', () => {
     });
 
     test('should perform health check', () => {
-      const result = execSync(`node ${CLI_PATH} maintenance health`, { 
+      const result = execSync(`node ${CLI_PATH} maintenance health`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Health Status');
@@ -161,9 +165,9 @@ describe('Log Commands CLI Integration', () => {
 
   describe('cleanup command', () => {
     test('should perform cleanup dry run', () => {
-      const result = execSync(`node ${CLI_PATH} cleanup --dry-run`, { 
+      const result = execSync(`node ${CLI_PATH} cleanup --dry-run`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Simulating');
@@ -171,10 +175,13 @@ describe('Log Commands CLI Integration', () => {
     });
 
     test('should allow custom retention days for cleanup', () => {
-      const result = execSync(`node ${CLI_PATH} cleanup --application-days 60 --audit-days 730 --dry-run`, { 
-        encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
-      });
+      const result = execSync(
+        `node ${CLI_PATH} cleanup --application-days 60 --audit-days 730 --dry-run`,
+        {
+          encoding: 'utf8',
+          timeout: TEST_TIMEOUT
+        }
+      );
 
       expect(result).toContain('applicationDays: 60');
       expect(result).toContain('auditDays: 730');
@@ -184,18 +191,18 @@ describe('Log Commands CLI Integration', () => {
   describe('command error handling', () => {
     test('should handle invalid command gracefully', () => {
       expect(() => {
-        execSync(`node ${CLI_PATH} invalid-command`, { 
+        execSync(`node ${CLI_PATH} invalid-command`, {
           encoding: 'utf8',
-          timeout: TEST_TIMEOUT 
+          timeout: TEST_TIMEOUT
         });
       }).toThrow();
     });
 
     test('should show helpful error for missing required arguments', () => {
       expect(() => {
-        execSync(`node ${CLI_PATH} backup upload`, { 
+        execSync(`node ${CLI_PATH} backup upload`, {
           encoding: 'utf8',
-          timeout: TEST_TIMEOUT 
+          timeout: TEST_TIMEOUT
         });
       }).toThrow(); // Will fail without S3 config or throw error
     });
@@ -205,7 +212,7 @@ describe('Log Commands CLI Integration', () => {
       testEnv.LOG_CLEANUP_ENABLED = 'false';
       testEnv.LOG_MONITORING_ENABLED = 'false';
 
-      const result = execSync(`node ${CLI_PATH} maintenance status`, { 
+      const result = execSync(`node ${CLI_PATH} maintenance status`, {
         encoding: 'utf8',
         timeout: TEST_TIMEOUT,
         env: testEnv
@@ -217,9 +224,9 @@ describe('Log Commands CLI Integration', () => {
 
   describe('output formatting', () => {
     test('should format file sizes correctly', () => {
-      const result = execSync(`node ${CLI_PATH} maintenance health`, { 
+      const result = execSync(`node ${CLI_PATH} maintenance health`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       // Should contain formatted sizes like "1.5 MB", "2.3 GB", etc.
@@ -228,40 +235,44 @@ describe('Log Commands CLI Integration', () => {
     });
 
     test('should show health check output', () => {
-      const result = execSync(`node ${CLI_PATH} maintenance health`, { 
+      const result = execSync(`node ${CLI_PATH} maintenance health`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Health Status');
       expect(result).toContain('Statistics');
     });
 
-    test('should show progress indicators for long operations', (done) => {
-      const child = spawn('node', [CLI_PATH, 'backup', 'upload', '--days', '7', '--dry-run'], {
-        stdio: 'pipe'
-      });
+    test(
+      'should show progress indicators for long operations',
+      (done) => {
+        const child = spawn('node', [CLI_PATH, 'backup', 'upload', '--days', '7', '--dry-run'], {
+          stdio: 'pipe'
+        });
 
-      let output = '';
-      child.stdout.on('data', (data) => {
-        output += data.toString();
-      });
+        let output = '';
+        child.stdout.on('data', (data) => {
+          output += data.toString();
+        });
 
-      child.stderr.on('data', (data) => {
-        output += data.toString();
-      });
+        child.stderr.on('data', (data) => {
+          output += data.toString();
+        });
 
-      child.on('close', (code) => {
-        expect(code).toBe(0);
-        expect(output).toContain('Days processed');
-        done();
-      });
+        child.on('close', (code) => {
+          expect(code).toBe(0);
+          expect(output).toContain('Days processed');
+          done();
+        });
 
-      setTimeout(() => {
-        child.kill();
-        done(new Error('Test timeout'));
-      }, TEST_TIMEOUT);
-    }, TEST_TIMEOUT);
+        setTimeout(() => {
+          child.kill();
+          done(new Error('Test timeout'));
+        }, TEST_TIMEOUT);
+      },
+      TEST_TIMEOUT
+    );
   });
 
   describe('configuration validation', () => {
@@ -270,7 +281,7 @@ describe('Log Commands CLI Integration', () => {
       delete testEnv.LOG_BACKUP_S3_BUCKET;
 
       expect(() => {
-        execSync(`node ${CLI_PATH} backup upload --days 1`, { 
+        execSync(`node ${CLI_PATH} backup upload --days 1`, {
           encoding: 'utf8',
           timeout: TEST_TIMEOUT,
           env: testEnv
@@ -279,9 +290,9 @@ describe('Log Commands CLI Integration', () => {
     });
 
     test('should show configuration in status output', () => {
-      const result = execSync(`node ${CLI_PATH} maintenance status`, { 
+      const result = execSync(`node ${CLI_PATH} maintenance status`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Cleanup Enabled');
@@ -290,9 +301,9 @@ describe('Log Commands CLI Integration', () => {
     });
 
     test('should show status output', () => {
-      const result = execSync(`node ${CLI_PATH} maintenance status`, { 
+      const result = execSync(`node ${CLI_PATH} maintenance status`, {
         encoding: 'utf8',
-        timeout: TEST_TIMEOUT 
+        timeout: TEST_TIMEOUT
       });
 
       expect(result).toContain('Log Maintenance Service Status');
@@ -317,52 +328,52 @@ describe('Log Commands CLI Integration', () => {
       await fs.rm(tempLogDir, { recursive: true, force: true });
     });
 
-    test('should perform complete backup and cleanup cycle', async () => {
-      // Create test log files
-      const logFiles = [
-        'application.log',
-        'error.log',
-        'integration.log'
-      ];
+    test(
+      'should perform complete backup and cleanup cycle',
+      async () => {
+        // Create test log files
+        const logFiles = ['application.log', 'error.log', 'integration.log'];
 
-      for (const logFile of logFiles) {
-        const filePath = path.join(tempLogDir, logFile);
-        await fs.writeFile(filePath, `Test log content for ${logFile}\n`.repeat(100));
-      }
+        for (const logFile of logFiles) {
+          const filePath = path.join(tempLogDir, logFile);
+          await fs.writeFile(filePath, `Test log content for ${logFile}\n`.repeat(100));
+        }
 
-      // Run backup command (dry run)
-      const backupResult = execSync(`node ${CLI_PATH} backup upload --days 1 --dry-run`, {
-        encoding: 'utf8',
-        timeout: TEST_TIMEOUT
-      });
+        // Run backup command (dry run)
+        const backupResult = execSync(`node ${CLI_PATH} backup upload --days 1 --dry-run`, {
+          encoding: 'utf8',
+          timeout: TEST_TIMEOUT
+        });
 
-      expect(backupResult).toContain('Simulating');
-      expect(backupResult).toContain('Days processed');
-      // Verify backup output references the test files
-      expect(backupResult).toMatch(/backup|upload|days/i);
+        expect(backupResult).toContain('Simulating');
+        expect(backupResult).toContain('Days processed');
+        // Verify backup output references the test files
+        expect(backupResult).toMatch(/backup|upload|days/i);
 
-      // Run cleanup command (dry run)
-      const cleanupResult = execSync(`node ${CLI_PATH} cleanup --dry-run`, {
-        encoding: 'utf8',
-        timeout: TEST_TIMEOUT
-      });
+        // Run cleanup command (dry run)
+        const cleanupResult = execSync(`node ${CLI_PATH} cleanup --dry-run`, {
+          encoding: 'utf8',
+          timeout: TEST_TIMEOUT
+        });
 
-      expect(cleanupResult).toContain('Simulating');
-      expect(cleanupResult).toContain('Cleanup completed');
-      // Verify cleanup output references log files or operations
-      expect(cleanupResult).toMatch(/cleanup|log|file/i);
+        expect(cleanupResult).toContain('Simulating');
+        expect(cleanupResult).toContain('Cleanup completed');
+        // Verify cleanup output references log files or operations
+        expect(cleanupResult).toMatch(/cleanup|log|file/i);
 
-      // Run health check
-      const healthResult = execSync(`node ${CLI_PATH} maintenance health`, {
-        encoding: 'utf8',
-        timeout: TEST_TIMEOUT
-      });
+        // Run health check
+        const healthResult = execSync(`node ${CLI_PATH} maintenance health`, {
+          encoding: 'utf8',
+          timeout: TEST_TIMEOUT
+        });
 
-      expect(healthResult).toContain('Health Status');
-      expect(healthResult).toContain('Statistics');
-      // Verify health check includes meaningful statistics
-      expect(healthResult).toMatch(/\d+/); // Should contain at least one number
-    }, TEST_TIMEOUT * 2);
+        expect(healthResult).toContain('Health Status');
+        expect(healthResult).toContain('Statistics');
+        // Verify health check includes meaningful statistics
+        expect(healthResult).toMatch(/\d+/); // Should contain at least one number
+      },
+      TEST_TIMEOUT * 2
+    );
 
     test('should handle service lifecycle correctly', async () => {
       // Check initial status

@@ -10,7 +10,7 @@
         "expected_action": "warn"
       },
       {
-        "id": "comment_low_2", 
+        "id": "comment_low_2",
         "original_text": "I don't like this feature",
         "toxicity_score": 0.25,
         "severity_level": "low",
@@ -23,7 +23,7 @@
         "id": "comment_medium_1",
         "original_text": "You are such an idiot for using this",
         "toxicity_score": 0.65,
-        "severity_level": "medium", 
+        "severity_level": "medium",
         "categories": ["TOXICITY", "INSULT"],
         "expected_action": "mute_temp"
       },
@@ -67,7 +67,7 @@
     },
     "repeat_offender": {
       "platform_user_id": "user_repeat",
-      "platform_username": "repeatuser", 
+      "platform_username": "repeatuser",
       "total_violations": 2,
       "actions_taken": [
         { "action": "warn", "date": "2024-09-01", "severity": "low" },

@@ -9,17 +9,20 @@
 #### GET /api/plan/available
 
 Tests:
+
 - ✓ should return all available plans
 
 #### GET /api/plan/current
 
 Tests:
+
 - ✓ should require authentication
 - ✓ should return free plan for new user
 
 #### POST /api/plan/select
 
 Tests:
+
 - ✓ should require authentication
 - ✓ should require valid plan
 - ✓ should successfully select Creator+ plan
@@ -28,5 +31,5 @@ Tests:
 #### GET /api/plan/features
 
 Tests:
-- ✓ should return feature comparison
 
+- ✓ should return feature comparison

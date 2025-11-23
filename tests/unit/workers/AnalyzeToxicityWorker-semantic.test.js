@@ -28,11 +28,11 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
       generateEmbedding: jest.fn(),
       getStats: jest.fn().mockReturnValue({ embeddings_generated: 0 })
     };
-    
+
     EmbeddingsService.mockImplementation(() => mockEmbeddingsService);
-    
+
     worker = new AnalyzeToxicityWorker();
-    
+
     // Mock supabase methods
     worker.supabase = {
       from: jest.fn().mockReturnThis(),
@@ -73,9 +73,7 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
 
       // Mock semantic matches
       mockEmbeddingsService.findSemanticMatches.mockResolvedValue({
-        matches: [
-          { term: 'stupid', similarity: 0.87, type: 'semantic_match' }
-        ],
+        matches: [{ term: 'stupid', similarity: 0.87, type: 'semantic_match' }],
         maxSimilarity: 0.87,
         avgSimilarity: 0.87,
         threshold: 0.85
@@ -96,9 +94,7 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
     it('should not block when semantic similarity is below threshold', async () => {
       const text = 'This is a completely unrelated comment about weather';
       const intoleranceData = 'stupid, idiot, moron';
-      const intoleranceEmbeddings = [
-        { term: 'stupid', embedding: [0.1, 0.2, 0.3] }
-      ];
+      const intoleranceEmbeddings = [{ term: 'stupid', embedding: [0.1, 0.2, 0.3] }];
 
       mockEmbeddingsService.findSemanticMatches.mockResolvedValue({
         matches: [], // No matches above threshold
@@ -116,9 +112,7 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
     it('should handle semantic matching errors gracefully', async () => {
       const text = 'Test comment';
       const intoleranceData = 'stupid, idiot';
-      const intoleranceEmbeddings = [
-        { term: 'stupid', embedding: [0.1, 0.2, 0.3] }
-      ];
+      const intoleranceEmbeddings = [{ term: 'stupid', embedding: [0.1, 0.2, 0.3] }];
 
       mockEmbeddingsService.findSemanticMatches.mockRejectedValue(new Error('API error'));
 
@@ -132,9 +126,7 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
     it('should prioritize exact matches over semantic matches', async () => {
       const text = 'You are stupid and dumb';
       const intoleranceData = 'stupid, idiot';
-      const intoleranceEmbeddings = [
-        { term: 'idiot', embedding: [0.1, 0.2, 0.3] }
-      ];
+      const intoleranceEmbeddings = [{ term: 'idiot', embedding: [0.1, 0.2, 0.3] }];
 
       const result = await worker.checkAutoBlock(text, intoleranceData, intoleranceEmbeddings);
 
@@ -173,7 +165,7 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
         ],
         maxSimilarity: 0.83,
         avgSimilarity: 0.82,
-        threshold: 0.80
+        threshold: 0.8
       });
 
       const result = await worker.checkTolerance(text, toleranceData, toleranceEmbeddings);
@@ -192,15 +184,13 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
     it('should not ignore when tolerance similarity is below threshold', async () => {
       const text = 'This comment is about programming';
       const toleranceData = 'fat, ugly, appearance';
-      const toleranceEmbeddings = [
-        { term: 'fat', embedding: [0.1, 0.2, 0.3] }
-      ];
+      const toleranceEmbeddings = [{ term: 'fat', embedding: [0.1, 0.2, 0.3] }];
 
       mockEmbeddingsService.findSemanticMatches.mockResolvedValue({
         matches: [], // No matches above threshold
         maxSimilarity: 0.2,
         avgSimilarity: 0.2,
-        threshold: 0.80
+        threshold: 0.8
       });
 
       const result = await worker.checkTolerance(text, toleranceData, toleranceEmbeddings);
@@ -353,9 +343,7 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
       // Mock intolerance preferences with embeddings
       worker.getUserIntolerancePreferences = jest.fn().mockResolvedValue({
         text: 'stupid, idiot',
-        embeddings: [
-          { term: 'stupid', embedding: [0.1, 0.2, 0.3] }
-        ]
+        embeddings: [{ term: 'stupid', embedding: [0.1, 0.2, 0.3] }]
       });
 
       worker.getUserTolerancePreferences = jest.fn().mockResolvedValue(null);
@@ -383,20 +371,16 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
       worker.getUserIntolerancePreferences = jest.fn().mockResolvedValue(null);
       worker.getUserTolerancePreferences = jest.fn().mockResolvedValue({
         text: 'developer, programmer',
-        embeddings: [
-          { term: 'developer', embedding: [0.1, 0.2, 0.3] }
-        ]
+        embeddings: [{ term: 'developer', embedding: [0.1, 0.2, 0.3] }]
       });
       worker.getUserRoastrPersona = jest.fn().mockResolvedValue(null);
       worker.updateCommentAnalysis = jest.fn().mockResolvedValue(true);
 
       // Mock tolerance match
       mockEmbeddingsService.findSemanticMatches.mockResolvedValue({
-        matches: [
-          { term: 'developer', similarity: 0.95, type: 'semantic_match' }
-        ],
+        matches: [{ term: 'developer', similarity: 0.95, type: 'semantic_match' }],
         maxSimilarity: 0.95,
-        threshold: 0.80
+        threshold: 0.8
       });
 
       const jobPayload = {
@@ -429,9 +413,7 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
     it('should skip semantic matching when exact matches are found', async () => {
       const text = 'You are stupid';
       const intoleranceData = 'stupid, idiot';
-      const intoleranceEmbeddings = [
-        { term: 'idiot', embedding: [0.1, 0.2, 0.3] }
-      ];
+      const intoleranceEmbeddings = [{ term: 'idiot', embedding: [0.1, 0.2, 0.3] }];
 
       await worker.checkAutoBlock(text, intoleranceData, intoleranceEmbeddings);
 
@@ -441,9 +423,7 @@ describe('AnalyzeToxicityWorker - Semantic Matching (Issue #151)', () => {
     it('should track semantic matching performance', async () => {
       const text = 'Test comment with no exact matches';
       const intoleranceData = 'different, terms';
-      const intoleranceEmbeddings = [
-        { term: 'different', embedding: [0.1, 0.2, 0.3] }
-      ];
+      const intoleranceEmbeddings = [{ term: 'different', embedding: [0.1, 0.2, 0.3] }];
 
       mockEmbeddingsService.findSemanticMatches.mockResolvedValue({
         matches: [],

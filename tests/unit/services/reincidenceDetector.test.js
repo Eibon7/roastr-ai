@@ -1,6 +1,6 @@
 /**
  * Reincidence Detector Tests
- * 
+ *
  * Tests for security-critical user tracking functionality including:
  * - User interaction recording and severity tracking
  * - Automatic action triggering based on thresholds
@@ -39,13 +39,13 @@ describe('ReincidenceDetector', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock fs-extra methods
     fs.ensureDir.mockResolvedValue();
     fs.pathExists.mockResolvedValue(false);
     fs.readJson.mockResolvedValue({});
     fs.writeJson.mockResolvedValue();
-    
+
     detector = new ReincidenceDetector();
   });
 
@@ -56,7 +56,9 @@ describe('ReincidenceDetector', () => {
   describe('constructor and initialization', () => {
     test('should initialize with correct file paths', () => {
       expect(detector.dataDir).toBe(path.join(process.cwd(), 'data'));
-      expect(detector.reincidenceFile).toBe(path.join(process.cwd(), 'data', 'user_reincidence.json'));
+      expect(detector.reincidenceFile).toBe(
+        path.join(process.cwd(), 'data', 'user_reincidence.json')
+      );
       expect(detector.actionsFile).toBe(path.join(process.cwd(), 'data', 'auto_actions.json'));
       expect(detector.userHistory).toBeInstanceOf(Map);
       expect(detector.actionHistory).toBeInstanceOf(Map);
@@ -70,7 +72,7 @@ describe('ReincidenceDetector', () => {
   describe('loadData', () => {
     test('should load existing reincidence and action data', async () => {
       const mockReincidenceData = {
-        'twitter_user1': {
+        twitter_user1: {
           platform: 'twitter',
           userId: 'user1',
           username: 'testuser',
@@ -80,7 +82,7 @@ describe('ReincidenceDetector', () => {
       };
 
       const mockActionsData = {
-        'twitter_user1_12345': {
+        twitter_user1_12345: {
           platform: 'twitter',
           userId: 'user1',
           action: 'warn',
@@ -91,17 +93,19 @@ describe('ReincidenceDetector', () => {
       fs.pathExists
         .mockResolvedValueOnce(true) // reincidence file exists
         .mockResolvedValueOnce(true); // actions file exists
-      
-      fs.readJson
-        .mockResolvedValueOnce(mockReincidenceData)
-        .mockResolvedValueOnce(mockActionsData);
+
+      fs.readJson.mockResolvedValueOnce(mockReincidenceData).mockResolvedValueOnce(mockActionsData);
 
       await detector.loadData();
 
       expect(detector.userHistory.size).toBe(1);
-      expect(detector.userHistory.get('twitter_user1')).toEqual(mockReincidenceData['twitter_user1']);
+      expect(detector.userHistory.get('twitter_user1')).toEqual(
+        mockReincidenceData['twitter_user1']
+      );
       expect(detector.actionHistory.size).toBe(1);
-      expect(detector.actionHistory.get('twitter_user1_12345')).toEqual(mockActionsData['twitter_user1_12345']);
+      expect(detector.actionHistory.get('twitter_user1_12345')).toEqual(
+        mockActionsData['twitter_user1_12345']
+      );
     });
 
     test('should handle missing data files gracefully', async () => {
@@ -116,7 +120,7 @@ describe('ReincidenceDetector', () => {
 
     test('should handle file read errors gracefully', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       fs.pathExists.mockResolvedValue(true);
       fs.readJson.mockRejectedValue(new Error('File corrupted'));
 
@@ -145,19 +149,19 @@ describe('ReincidenceDetector', () => {
       expect(fs.writeJson).toHaveBeenCalledTimes(2);
       expect(fs.writeJson).toHaveBeenCalledWith(
         detector.reincidenceFile,
-        { 'twitter_user1': { platform: 'twitter', userId: 'user1', totalCount: 2 } },
+        { twitter_user1: { platform: 'twitter', userId: 'user1', totalCount: 2 } },
         { spaces: 2 }
       );
       expect(fs.writeJson).toHaveBeenCalledWith(
         detector.actionsFile,
-        { 'action1': { platform: 'twitter', action: 'warn' } },
+        { action1: { platform: 'twitter', action: 'warn' } },
         { spaces: 2 }
       );
     });
 
     test('should handle save errors gracefully', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       fs.writeJson.mockRejectedValue(new Error('Write permission denied'));
 
       await detector.saveData();
@@ -201,7 +205,7 @@ describe('ReincidenceDetector', () => {
 
     test('should update existing user record with new interaction', async () => {
       const userKey = 'twitter_user123';
-      
+
       // Pre-populate user history
       detector.userHistory.set(userKey, {
         platform: 'twitter',
@@ -239,7 +243,7 @@ describe('ReincidenceDetector', () => {
 
     test('should limit interactions to last 50 entries', async () => {
       const userKey = 'twitter_user123';
-      
+
       // Pre-populate with 50 interactions
       const interactions = Array.from({ length: 50 }, (_, i) => ({
         timestamp: `2024-01-01T${String(i).padStart(2, '0')}:00:00Z`,
@@ -258,13 +262,7 @@ describe('ReincidenceDetector', () => {
         lastInteraction: '2024-01-01T49:00:00Z'
       });
 
-      await detector.recordInteraction(
-        'twitter',
-        'user123',
-        'testuser',
-        'New message',
-        'medium'
-      );
+      await detector.recordInteraction('twitter', 'user123', 'testuser', 'New message', 'medium');
 
       const userRecord = detector.userHistory.get(userKey);
       expect(userRecord.interactions).toHaveLength(50); // Still 50, oldest removed
@@ -274,7 +272,7 @@ describe('ReincidenceDetector', () => {
 
     test('should trigger reincidence logging when threshold exceeded', async () => {
       const userKey = 'twitter_user123';
-      
+
       // Pre-populate user close to threshold
       detector.userHistory.set(userKey, {
         platform: 'twitter',
@@ -316,7 +314,7 @@ describe('ReincidenceDetector', () => {
 
     test('should handle interaction recording errors gracefully', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       fs.writeJson.mockRejectedValue(new Error('Save failed'));
 
       const result = await detector.recordInteraction(
@@ -394,16 +392,19 @@ describe('ReincidenceDetector', () => {
 
     test('should handle errors gracefully', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       // Break the config to trigger error
       jest.doMock('../../../src/config/integrations', () => {
         throw new Error('Config error');
       });
 
       const action = detector.shouldTakeAutoAction('twitter', 'user1', 'high');
-      
+
       expect(action).toBeNull();
-      expect(consoleSpy).toHaveBeenCalledWith('Error checking auto action criteria:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Error checking auto action criteria:',
+        expect.any(Error)
+      );
       consoleSpy.mockRestore();
     });
   });
@@ -446,14 +447,14 @@ describe('ReincidenceDetector', () => {
       );
 
       expect(fs.writeJson).toHaveBeenCalled();
-      
+
       Date.prototype.toISOString.mockRestore();
       Date.now.mockRestore();
     });
 
     test('should handle action recording errors gracefully', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       fs.writeJson.mockRejectedValue(new Error('Save failed'));
 
       const result = await detector.recordAutoAction(
@@ -574,7 +575,10 @@ describe('ReincidenceDetector', () => {
       expect(summary.totalUsers).toBe(0);
       expect(summary.totalInteractions).toBe(0);
       expect(summary.severityCounts).toEqual({
-        low: 0, medium: 0, high: 0, critical: 0
+        low: 0,
+        medium: 0,
+        high: 0,
+        critical: 0
       });
       expect(summary.actionsTaken).toBe(0);
       expect(summary.recentActions).toEqual([]);
@@ -609,7 +613,7 @@ describe('ReincidenceDetector', () => {
         userId: 'user1',
         totalCount: 2
       });
-      
+
       detector.actionHistory.set('action1', {
         platform: 'twitter',
         timestamp: '2024-01-01T12:00:00Z'
@@ -668,9 +672,7 @@ describe('ReincidenceDetector', () => {
       detector.userHistory.set('twitter_user2', {
         platform: 'twitter',
         userId: 'user2',
-        interactions: [
-          { timestamp: oldDate.toISOString(), severity: 'low' }
-        ],
+        interactions: [{ timestamp: oldDate.toISOString(), severity: 'low' }],
         totalCount: 1,
         severityCounts: { low: 1, medium: 0, high: 0, critical: 0 }
       });
@@ -710,7 +712,7 @@ describe('ReincidenceDetector', () => {
 
     test('should handle cleanup errors gracefully', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       // Mock error during data processing
       detector.userHistory.set('invalid_user', {
         interactions: null // This will cause error
@@ -718,7 +720,10 @@ describe('ReincidenceDetector', () => {
 
       await detector.cleanOldData(30);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Error cleaning old reincidence data:', expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Error cleaning old reincidence data:',
+        expect.any(Error)
+      );
       consoleSpy.mockRestore();
     });
   });
@@ -747,7 +752,7 @@ describe('ReincidenceDetector', () => {
     test('should handle missing config gracefully in shouldTakeAutoAction', () => {
       // Mock missing config
       jest.doMock('../../../src/config/integrations', () => ({}));
-      
+
       const action = detector.shouldTakeAutoAction('twitter', 'user1', 'high');
       expect(action).toBeNull();
     });

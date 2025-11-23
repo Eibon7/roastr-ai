@@ -31,9 +31,8 @@ class RollbackEngine {
     // Pre-flight safety checks
     await this.performPreFlightChecks();
 
-    const backupDir = timestamp === 'last'
-      ? await this.getLastBackup()
-      : path.join(this.backupsRoot, timestamp);
+    const backupDir =
+      timestamp === 'last' ? await this.getLastBackup() : path.join(this.backupsRoot, timestamp);
 
     // Verify backup exists
     const manifest = await this.loadManifest(backupDir);
@@ -293,9 +292,7 @@ Examples:
     const valid = await engine.verify(timestamp);
     process.exit(valid ? 0 : 1);
   } else if (args.includes('--last') || args.includes('--timestamp')) {
-    const timestamp = args.includes('--last')
-      ? 'last'
-      : args[args.indexOf('--timestamp') + 1];
+    const timestamp = args.includes('--last') ? 'last' : args[args.indexOf('--timestamp') + 1];
 
     if (!timestamp && !args.includes('--last')) {
       console.error('❌ Missing timestamp argument');
@@ -308,7 +305,7 @@ Examples:
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(2);
   });

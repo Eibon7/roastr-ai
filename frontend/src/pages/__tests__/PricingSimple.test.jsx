@@ -13,10 +13,10 @@ describe('Pricing Page Core Functionality', () => {
 
     // Test plan structure
     expect(plans).toHaveLength(4);
-    expect(plans.find(p => p.id === 'starter_trial').price).toBe(0);
-    expect(plans.find(p => p.id === 'starter').price).toBe(5);
-    expect(plans.find(p => p.id === 'pro').price).toBe(15);
-    expect(plans.find(p => p.id === 'plus').price).toBe(50);
+    expect(plans.find((p) => p.id === 'starter_trial').price).toBe(0);
+    expect(plans.find((p) => p.id === 'starter').price).toBe(5);
+    expect(plans.find((p) => p.id === 'pro').price).toBe(15);
+    expect(plans.find((p) => p.id === 'plus').price).toBe(50);
   });
 
   it('should format prices correctly', () => {
@@ -80,7 +80,7 @@ describe('Pricing Page Core Functionality', () => {
       const planOrder = ['starter_trial', 'starter', 'pro', 'plus'];
       const currentIndex = planOrder.indexOf(currentPlan);
       const targetIndex = planOrder.indexOf(targetPlan);
-      
+
       if (targetIndex > currentIndex) return 'upgrade';
       if (targetIndex < currentIndex) return 'downgrade';
       return 'current';

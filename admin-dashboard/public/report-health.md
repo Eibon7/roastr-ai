@@ -17,21 +17,21 @@
 
 ## Node Scores
 
-| Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
-|------|-------|--------|--------------|----------|--------------|--------|
-| trainer | 🟢 90 | healthy | 2025-10-06 | 45% | 0 | 0 |
-| analytics | 🟢 94 | healthy | 2025-10-06 | 60% | 0 | 0 |
-| billing | 🟢 94 | healthy | 2025-10-06 | 65% | 0 | 0 |
-| cost-control | 🟢 94 | healthy | 2025-10-06 | 68% | 0 | 0 |
-| multi-tenant | 🟢 94 | healthy | 2025-10-06 | 72% | 0 | 0 |
-| persona | 🟢 94 | healthy | 2025-10-06 | 75% | 0 | 0 |
-| plan-features | 🟢 94 | healthy | 2025-10-06 | 70% | 0 | 0 |
-| shield | 🟢 94 | healthy | 2025-10-06 | 78% | 0 | 0 |
-| tone | 🟢 94 | healthy | 2025-10-06 | 73% | 0 | 0 |
-| platform-constraints | 🟢 100 | healthy | 2025-10-06 | 80% | 0 | 0 |
-| queue-system | 🟢 100 | healthy | 2025-10-06 | 87% | 0 | 0 |
-| roast | 🟢 100 | healthy | 2025-10-06 | 85% | 0 | 0 |
-| social-platforms | 🟢 100 | healthy | 2025-10-06 | 82% | 0 | 0 |
+| Node                 | Score  | Status  | Last Updated | Coverage | Dependencies | Issues |
+| -------------------- | ------ | ------- | ------------ | -------- | ------------ | ------ |
+| trainer              | 🟢 90  | healthy | 2025-10-06   | 45%      | 0            | 0      |
+| analytics            | 🟢 94  | healthy | 2025-10-06   | 60%      | 0            | 0      |
+| billing              | 🟢 94  | healthy | 2025-10-06   | 65%      | 0            | 0      |
+| cost-control         | 🟢 94  | healthy | 2025-10-06   | 68%      | 0            | 0      |
+| multi-tenant         | 🟢 94  | healthy | 2025-10-06   | 72%      | 0            | 0      |
+| persona              | 🟢 94  | healthy | 2025-10-06   | 75%      | 0            | 0      |
+| plan-features        | 🟢 94  | healthy | 2025-10-06   | 70%      | 0            | 0      |
+| shield               | 🟢 94  | healthy | 2025-10-06   | 78%      | 0            | 0      |
+| tone                 | 🟢 94  | healthy | 2025-10-06   | 73%      | 0            | 0      |
+| platform-constraints | 🟢 100 | healthy | 2025-10-06   | 80%      | 0            | 0      |
+| queue-system         | 🟢 100 | healthy | 2025-10-06   | 87%      | 0            | 0      |
+| roast                | 🟢 100 | healthy | 2025-10-06   | 85%      | 0            | 0      |
+| social-platforms     | 🟢 100 | healthy | 2025-10-06   | 82%      | 0            | 0      |
 
 ---
 
@@ -42,60 +42,60 @@
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 100/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
 - Agent Relevance: 100/100
 
-
 ### analytics (Score: 94)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 100/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 70/100
 - Agent Relevance: 100/100
-
 
 ### billing (Score: 94)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 100/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 70/100
 - Agent Relevance: 100/100
-
 
 ### cost-control (Score: 94)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 100/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 70/100
 - Agent Relevance: 100/100
-
 
 ### multi-tenant (Score: 94)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 100/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 70/100
 - Agent Relevance: 100/100
-
 
 ---
 

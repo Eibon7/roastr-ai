@@ -11,14 +11,14 @@
  * @returns {Object} Mock validator instance with common methods
  */
 function createMockValidatorInstance() {
-    return {
-        validate: jest.fn(),
-        validateTone: jest.fn(),
-        validateComment: jest.fn(),
-        getToneCategory: jest.fn(),
-        getCharacterLimits: jest.fn().mockReturnValue({ twitter: 280, default: 2000 }),
-        normalizePlatform: jest.fn((p) => p || 'twitter')
-    };
+  return {
+    validate: jest.fn(),
+    validateTone: jest.fn(),
+    validateComment: jest.fn(),
+    getToneCategory: jest.fn(),
+    getCharacterLimits: jest.fn().mockReturnValue({ twitter: 280, default: 2000 }),
+    normalizePlatform: jest.fn((p) => p || 'twitter')
+  };
 }
 
 /**
@@ -26,30 +26,30 @@ function createMockValidatorInstance() {
  * @returns {Object} Mock validation constants configuration
  */
 function createValidationConstantsMock() {
-    return {
-        VALIDATION_CONSTANTS: {
-            MAX_COMMENT_LENGTH: 2000,
-            MIN_COMMENT_LENGTH: 1,
-            VALID_LANGUAGES: ['es', 'en'],
-            VALID_PLATFORMS: ['twitter', 'instagram', 'facebook'],
-            VALID_STYLES: {
-                es: ['flanders', 'balanceado', 'canalla'],
-                en: ['light', 'balanced', 'savage']
-            },
-            MIN_INTENSITY: 1,
-            MAX_INTENSITY: 5,
-            DEFAULTS: {
-                STYLE: 'balanceado'
-            }
-        },
-        isValidStyle: jest.fn(() => true),
-        isValidLanguage: jest.fn(() => true),
-        isValidPlatform: jest.fn(() => true),
-        normalizeLanguage: jest.fn((lang) => lang || 'es'),
-        normalizeStyle: jest.fn((style) => style || 'balanceado'),
-        normalizePlatform: jest.fn((platform) => platform || 'twitter'),
-        getValidStylesForLanguage: jest.fn(() => ['flanders', 'balanceado', 'canalla'])
-    };
+  return {
+    VALIDATION_CONSTANTS: {
+      MAX_COMMENT_LENGTH: 2000,
+      MIN_COMMENT_LENGTH: 1,
+      VALID_LANGUAGES: ['es', 'en'],
+      VALID_PLATFORMS: ['twitter', 'instagram', 'facebook'],
+      VALID_STYLES: {
+        es: ['flanders', 'balanceado', 'canalla'],
+        en: ['light', 'balanced', 'savage']
+      },
+      MIN_INTENSITY: 1,
+      MAX_INTENSITY: 5,
+      DEFAULTS: {
+        STYLE: 'balanceado'
+      }
+    },
+    isValidStyle: jest.fn(() => true),
+    isValidLanguage: jest.fn(() => true),
+    isValidPlatform: jest.fn(() => true),
+    normalizeLanguage: jest.fn((lang) => lang || 'es'),
+    normalizeStyle: jest.fn((style) => style || 'balanceado'),
+    normalizePlatform: jest.fn((platform) => platform || 'twitter'),
+    getValidStylesForLanguage: jest.fn(() => ['flanders', 'balanceado', 'canalla'])
+  };
 }
 
 /**
@@ -57,20 +57,20 @@ function createValidationConstantsMock() {
  * @returns {Object} Mock logger with standard methods
  */
 function createLoggerMock() {
-    return {
-        logger: {
-            info: jest.fn(),
-            error: jest.fn(),
-            warn: jest.fn(),
-            debug: jest.fn(),
-            child: jest.fn(() => ({
-                info: jest.fn(),
-                error: jest.fn(),
-                warn: jest.fn(),
-                debug: jest.fn()
-            }))
-        }
-    };
+  return {
+    logger: {
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+      child: jest.fn(() => ({
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn()
+      }))
+    }
+  };
 }
 
 /**
@@ -78,10 +78,10 @@ function createLoggerMock() {
  * @returns {Function} Mock authenticate token function
  */
 function createMockAuthenticateToken() {
-    return jest.fn((req, res, next) => {
-        req.user = { id: 'test-user-id', orgId: 'test-org-id' };
-        next();
-    });
+  return jest.fn((req, res, next) => {
+    req.user = { id: 'test-user-id', orgId: 'test-org-id' };
+    next();
+  });
 }
 
 /**
@@ -89,7 +89,7 @@ function createMockAuthenticateToken() {
  * @returns {Function} Mock rate limit function
  */
 function createMockRoastRateLimit() {
-    return jest.fn((req, res, next) => next());
+  return jest.fn((req, res, next) => next());
 }
 
 /**
@@ -98,34 +98,34 @@ function createMockRoastRateLimit() {
  * @returns {Object} Complete mock configuration
  */
 function createRoastValidationMocks(overrides = {}) {
-    const mockValidatorInstance = createMockValidatorInstance();
-    const mockAuthenticateToken = createMockAuthenticateToken();
-    const mockRoastRateLimit = createMockRoastRateLimit();
+  const mockValidatorInstance = createMockValidatorInstance();
+  const mockAuthenticateToken = createMockAuthenticateToken();
+  const mockRoastRateLimit = createMockRoastRateLimit();
 
-    return {
-        mockValidatorInstance,
-        mockAuthenticateToken,
-        mockRoastRateLimit,
-        validationConstantsMock: createValidationConstantsMock(),
-        loggerMock: createLoggerMock(),
+  return {
+    mockValidatorInstance,
+    mockAuthenticateToken,
+    mockRoastRateLimit,
+    validationConstantsMock: createValidationConstantsMock(),
+    loggerMock: createLoggerMock(),
 
-        // Export individual creators for flexibility
-        createMockValidatorInstance,
-        createValidationConstantsMock,
-        createLoggerMock,
-        createMockAuthenticateToken,
-        createMockRoastRateLimit,
-
-        // Allow overrides
-        ...overrides
-    };
-}
-
-module.exports = {
-    createRoastValidationMocks,
+    // Export individual creators for flexibility
     createMockValidatorInstance,
     createValidationConstantsMock,
     createLoggerMock,
     createMockAuthenticateToken,
-    createMockRoastRateLimit
+    createMockRoastRateLimit,
+
+    // Allow overrides
+    ...overrides
+  };
+}
+
+module.exports = {
+  createRoastValidationMocks,
+  createMockValidatorInstance,
+  createValidationConstantsMock,
+  createLoggerMock,
+  createMockAuthenticateToken,
+  createMockRoastRateLimit
 };

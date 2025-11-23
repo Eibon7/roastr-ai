@@ -84,7 +84,11 @@ describe('GDDCrossValidator - Violation Classification (Issue #2)', () => {
 
     test('should NOT add violation for coverage_calculation_failed', async () => {
       // Setup: Source files exist but coverage calculation returns null
-      validator.coverageData = { 'src/services/testService.js': { /* invalid structure */ } };
+      validator.coverageData = {
+        'src/services/testService.js': {
+          /* invalid structure */
+        }
+      };
       validator.getNodeSourceFiles = jest.fn().mockResolvedValue(['src/services/testService.js']);
 
       const result = await validator.validateCoverage('test-node', 70, 3);
@@ -118,14 +122,15 @@ describe('GDDCrossValidator - Violation Classification (Issue #2)', () => {
         'src/services/service2.js': { statements: { total: 100, covered: 80 } }
       };
 
-      validator.getNodeSourceFiles = jest.fn()
-        .mockResolvedValueOnce(['src/services/service1.js'])  // node-1: mismatch
-        .mockResolvedValueOnce([])                             // node-2: no files (warning)
+      validator.getNodeSourceFiles = jest
+        .fn()
+        .mockResolvedValueOnce(['src/services/service1.js']) // node-1: mismatch
+        .mockResolvedValueOnce([]) // node-2: no files (warning)
         .mockResolvedValueOnce(['src/services/service2.js']); // node-3: mismatch
 
-      await validator.validateCoverage('node-1', 70, 3);  // Mismatch: 70 declared, 50 actual
-      await validator.validateCoverage('node-2', 70, 3);  // Warning: no_source_files_found
-      await validator.validateCoverage('node-3', 90, 3);  // Mismatch: 90 declared, 80 actual
+      await validator.validateCoverage('node-1', 70, 3); // Mismatch: 70 declared, 50 actual
+      await validator.validateCoverage('node-2', 70, 3); // Warning: no_source_files_found
+      await validator.validateCoverage('node-3', 90, 3); // Mismatch: 90 declared, 80 actual
 
       // Should only record 2 violations (node-1 and node-3), not node-2
       expect(validator.violations.coverage).toHaveLength(2);

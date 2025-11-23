@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
-import { 
-  validatePassword, 
-  getPasswordStrength, 
+import {
+  validatePassword,
+  getPasswordStrength,
   getPasswordStrengthLabel,
   getPasswordStrengthColor,
-  PASSWORD_REQUIREMENTS 
+  PASSWORD_REQUIREMENTS
 } from '../utils/passwordValidator';
 
-const PasswordInput = ({ 
-  value, 
-  onChange, 
+const PasswordInput = ({
+  value,
+  onChange,
   onValidationChange,
   placeholder = 'Contraseña',
   showStrengthIndicator = true,
   showRequirements = true,
   className = '',
-  ...props 
+  ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [validation, setValidation] = useState({ isValid: false, errors: [] });
@@ -28,7 +28,7 @@ const PasswordInput = ({
       const result = validatePassword(value);
       setValidation(result);
       setStrength(getPasswordStrength(value));
-      
+
       // Notify parent component about validation status
       if (onValidationChange) {
         onValidationChange(result.isValid);
@@ -49,16 +49,16 @@ const PasswordInput = ({
   const requirements = [
     {
       label: `Al menos ${PASSWORD_REQUIREMENTS.minLength} caracteres`,
-      met: value.length >= PASSWORD_REQUIREMENTS.minLength,
+      met: value.length >= PASSWORD_REQUIREMENTS.minLength
     },
     {
       label: 'Al menos un número',
-      met: /\d/.test(value),
+      met: /\d/.test(value)
     },
     {
       label: 'Al menos una mayúscula o símbolo',
-      met: /[A-Z]/.test(value) || /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value),
-    },
+      met: /[A-Z]/.test(value) || /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)
+    }
   ];
 
   return (
@@ -85,11 +85,7 @@ const PasswordInput = ({
           onClick={togglePasswordVisibility}
           className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
-          {showPassword ? (
-            <EyeOff className="h-5 w-5" />
-          ) : (
-            <Eye className="h-5 w-5" />
-          )}
+          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
       </div>
 
@@ -102,16 +98,20 @@ const PasswordInput = ({
               {getPasswordStrengthLabel(strength)}
             </span>
           </div>
-          
+
           {/* Strength bar */}
           <div className="mt-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div 
+            <div
               className={`h-full transition-all duration-300 ${
-                strength === 0 ? 'bg-red-500' :
-                strength === 1 ? 'bg-orange-500' :
-                strength === 2 ? 'bg-yellow-500' :
-                strength === 3 ? 'bg-green-500' :
-                'bg-emerald-500'
+                strength === 0
+                  ? 'bg-red-500'
+                  : strength === 1
+                    ? 'bg-orange-500'
+                    : strength === 2
+                      ? 'bg-yellow-500'
+                      : strength === 3
+                        ? 'bg-green-500'
+                        : 'bg-emerald-500'
               }`}
               style={{ width: `${(strength / 4) * 100}%` }}
             />
@@ -132,7 +132,13 @@ const PasswordInput = ({
               ) : (
                 <X className="h-4 w-4 text-gray-400" />
               )}
-              <span className={req.met ? 'text-green-700 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}>
+              <span
+                className={
+                  req.met
+                    ? 'text-green-700 dark:text-green-400'
+                    : 'text-gray-600 dark:text-gray-400'
+                }
+              >
                 {req.label}
               </span>
             </div>

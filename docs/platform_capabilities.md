@@ -7,7 +7,7 @@ This document provides a comprehensive analysis of moderation capabilities acros
 ## Platforms Covered
 
 - **X (Twitter)** - Full analysis completed
-- **YouTube** - Full analysis completed  
+- **YouTube** - Full analysis completed
 - **Discord** - Full analysis completed
 - **Twitch** - Full analysis completed
 
@@ -15,12 +15,12 @@ This document provides a comprehensive analysis of moderation capabilities acros
 
 ## Platform Capabilities Matrix
 
-| Platform | Hide Comment | Report User | Block User | Endpoint/SDK | Scopes Required | Rate Limits | Notes/Fallback |
-|----------|-------------|-------------|------------|--------------|-----------------|-------------|----------------|
-| **X (Twitter)** | ✅ Yes | ⚠️ Limited | ✅ Yes | Helix API v2 | tweet.write, users.write | Basic: $100/month | See detailed section |
-| **YouTube** | ✅ Yes* | ❌ No | ❌ No | Data API v3 | youtube.force-ssl | 50 units/call | *Via moderation status |
-| **Discord** | ✅ Yes | ❌ No | ✅ Yes | REST API v10 | Manage Messages, Ban Members | 50 req/sec global | User-level only |
-| **Twitch** | ❌ No | ❌ No | ✅ Yes | Helix API | moderator:manage:banned_users | 2 req/sec | Chat-level moderation |
+| Platform        | Hide Comment | Report User | Block User | Endpoint/SDK | Scopes Required               | Rate Limits       | Notes/Fallback          |
+| --------------- | ------------ | ----------- | ---------- | ------------ | ----------------------------- | ----------------- | ----------------------- |
+| **X (Twitter)** | ✅ Yes       | ⚠️ Limited  | ✅ Yes     | Helix API v2 | tweet.write, users.write      | Basic: $100/month | See detailed section    |
+| **YouTube**     | ✅ Yes\*     | ❌ No       | ❌ No      | Data API v3  | youtube.force-ssl             | 50 units/call     | \*Via moderation status |
+| **Discord**     | ✅ Yes       | ❌ No       | ✅ Yes     | REST API v10 | Manage Messages, Ban Members  | 50 req/sec global | User-level only         |
+| **Twitch**      | ❌ No        | ❌ No       | ✅ Yes     | Helix API    | moderator:manage:banned_users | 2 req/sec         | Chat-level moderation   |
 
 ---
 
@@ -30,15 +30,16 @@ This document provides a comprehensive analysis of moderation capabilities acros
 
 #### Supported Actions
 
-| Action | Support | Endpoint | Method | Scopes | Rate Limit |
-|--------|---------|----------|--------|--------|------------|
-| **Hide Comment** | ✅ Full | `/tweets/:id/hidden` | PUT | OAuth 1.0a or OAuth 2.0 | Per endpoint |
-| **Report User** | ⚠️ Manual | N/A (UI only) | N/A | N/A | N/A |
-| **Block User** | ✅ Full | `/blocks/create` (v1.1) | POST | OAuth 1.0a | 15min window |
+| Action           | Support   | Endpoint                | Method | Scopes                  | Rate Limit   |
+| ---------------- | --------- | ----------------------- | ------ | ----------------------- | ------------ |
+| **Hide Comment** | ✅ Full   | `/tweets/:id/hidden`    | PUT    | OAuth 1.0a or OAuth 2.0 | Per endpoint |
+| **Report User**  | ⚠️ Manual | N/A (UI only)           | N/A    | N/A                     | N/A          |
+| **Block User**   | ✅ Full   | `/blocks/create` (v1.1) | POST   | OAuth 1.0a              | 15min window |
 
 #### Implementation Details
 
 **Hide Replies:**
+
 ```bash
 PUT https://api.x.com/2/tweets/{tweet_id}/hidden
 Content-Type: application/json
@@ -50,6 +51,7 @@ Authorization: Bearer {token}
 ```
 
 **Block User:**
+
 ```bash
 POST https://api.x.com/1.1/blocks/create.json
 Content-Type: application/x-www-form-urlencoded
@@ -71,15 +73,16 @@ user_id={user_id}
 
 #### Supported Actions
 
-| Action | Support | Endpoint | Method | Scopes | Quota Cost |
-|--------|---------|----------|--------|--------|------------|
-| **Hide Comment** | ✅ Moderation | `/comments/setModerationStatus` | POST | youtube.force-ssl | 50 units |
-| **Report User** | ❌ No API | N/A | N/A | N/A | N/A |
-| **Block User** | ❌ No API | N/A | N/A | N/A | N/A |
+| Action           | Support       | Endpoint                        | Method | Scopes            | Quota Cost |
+| ---------------- | ------------- | ------------------------------- | ------ | ----------------- | ---------- |
+| **Hide Comment** | ✅ Moderation | `/comments/setModerationStatus` | POST   | youtube.force-ssl | 50 units   |
+| **Report User**  | ❌ No API     | N/A                             | N/A    | N/A               | N/A        |
+| **Block User**   | ❌ No API     | N/A                             | N/A    | N/A               | N/A        |
 
 #### Implementation Details
 
 **Set Moderation Status (Hide Comment):**
+
 ```bash
 POST https://www.googleapis.com/youtube/v3/comments/setModerationStatus
 Authorization: Bearer {access_token}
@@ -93,8 +96,9 @@ Content-Type: application/json
 ```
 
 #### Valid Moderation Status Values
+
 - `heldForReview` - Comment awaiting review
-- `published` - Comment approved for display  
+- `published` - Comment approved for display
 - `rejected` - Comment hidden from display
 
 #### Key Limitations & Fallbacks
@@ -110,22 +114,24 @@ Content-Type: application/json
 
 #### Supported Actions
 
-| Action | Support | Endpoint | Method | Permissions | Rate Limit |
-|--------|---------|----------|--------|-------------|------------|
-| **Delete Message** | ✅ Full | `/channels/{channel_id}/messages/{message_id}` | DELETE | Manage Messages | Per endpoint |
-| **Report User** | ❌ No API | N/A | N/A | N/A | N/A |
-| **Ban User** | ✅ Full | `/guilds/{guild_id}/bans/{user_id}` | PUT | Ban Members | Global 50/sec |
-| **Timeout User** | ✅ Full | `/guilds/{guild_id}/members/{user_id}` | PATCH | Moderate Members | Global 50/sec |
+| Action             | Support   | Endpoint                                       | Method | Permissions      | Rate Limit    |
+| ------------------ | --------- | ---------------------------------------------- | ------ | ---------------- | ------------- |
+| **Delete Message** | ✅ Full   | `/channels/{channel_id}/messages/{message_id}` | DELETE | Manage Messages  | Per endpoint  |
+| **Report User**    | ❌ No API | N/A                                            | N/A    | N/A              | N/A           |
+| **Ban User**       | ✅ Full   | `/guilds/{guild_id}/bans/{user_id}`            | PUT    | Ban Members      | Global 50/sec |
+| **Timeout User**   | ✅ Full   | `/guilds/{guild_id}/members/{user_id}`         | PATCH  | Moderate Members | Global 50/sec |
 
 #### Implementation Details
 
 **Delete Message:**
+
 ```bash
 DELETE https://discord.com/api/v10/channels/{channel_id}/messages/{message_id}
 Authorization: Bot {bot_token}
 ```
 
 **Ban User:**
+
 ```bash
 PUT https://discord.com/api/v10/guilds/{guild_id}/bans/{user_id}
 Authorization: Bot {bot_token}
@@ -138,6 +144,7 @@ Content-Type: application/json
 ```
 
 **Timeout User:**
+
 ```bash
 PATCH https://discord.com/api/v10/guilds/{guild_id}/members/{user_id}
 Authorization: Bot {bot_token}
@@ -161,16 +168,17 @@ Content-Type: application/json
 
 #### Supported Actions
 
-| Action | Support | Endpoint | Method | Scopes | Rate Limit |
-|--------|---------|----------|--------|--------|------------|
-| **Delete Message** | ❌ No API | N/A | N/A | N/A | N/A |
-| **Report User** | ❌ No API | N/A | N/A | N/A | N/A |
-| **Ban User** | ✅ Full | `/moderation/bans` | POST | moderator:manage:banned_users | 2 req/sec |
-| **Timeout User** | ✅ Full | `/moderation/bans` | POST | moderator:manage:banned_users | 2 req/sec |
+| Action             | Support   | Endpoint           | Method | Scopes                        | Rate Limit |
+| ------------------ | --------- | ------------------ | ------ | ----------------------------- | ---------- |
+| **Delete Message** | ❌ No API | N/A                | N/A    | N/A                           | N/A        |
+| **Report User**    | ❌ No API | N/A                | N/A    | N/A                           | N/A        |
+| **Ban User**       | ✅ Full   | `/moderation/bans` | POST   | moderator:manage:banned_users | 2 req/sec  |
+| **Timeout User**   | ✅ Full   | `/moderation/bans` | POST   | moderator:manage:banned_users | 2 req/sec  |
 
 #### Implementation Details
 
 **Ban User (Permanent):**
+
 ```bash
 POST https://api.twitch.tv/helix/moderation/bans?broadcaster_id={broadcaster_id}&moderator_id={moderator_id}
 Authorization: Bearer {user_access_token}
@@ -186,6 +194,7 @@ Content-Type: application/json
 ```
 
 **Timeout User (Temporary):**
+
 ```bash
 POST https://api.twitch.tv/helix/moderation/bans?broadcaster_id={broadcaster_id}&moderator_id={moderator_id}
 Authorization: Bearer {user_access_token}
@@ -214,23 +223,24 @@ Content-Type: application/json
 
 ### Primary Action Mapping
 
-| Desired Action | X (Twitter) | YouTube | Discord | Twitch |
-|----------------|-------------|---------|---------|--------|
-| **Hide Content** | Hide Reply | Reject Comment | Delete Message | ❌ → Ban User |
-| **Report User** | ❌ → Block | ❌ → Reject | ❌ → Ban | ❌ → Ban |
-| **Block User** | Block User | ❌ → Reject | Ban User | Ban User |
+| Desired Action   | X (Twitter) | YouTube        | Discord        | Twitch        |
+| ---------------- | ----------- | -------------- | -------------- | ------------- |
+| **Hide Content** | Hide Reply  | Reject Comment | Delete Message | ❌ → Ban User |
+| **Report User**  | ❌ → Block  | ❌ → Reject    | ❌ → Ban       | ❌ → Ban      |
+| **Block User**   | Block User  | ❌ → Reject    | Ban User       | Ban User      |
 
 ### Escalation Matrix
 
 When primary action fails, follow this escalation:
 
 1. **Hide/Delete** → If fails, proceed to Block/Ban
-2. **Report** → If no API, proceed to Block/Ban  
+2. **Report** → If no API, proceed to Block/Ban
 3. **Block/Ban** → If fails, log for manual review
 
 ### Error Handling
 
 All platforms should implement:
+
 - **Retry Logic**: 3 attempts with exponential backoff
 - **Circuit Breaker**: Suspend calls after N consecutive failures
 - **Audit Logging**: Record all attempts and outcomes
@@ -241,12 +251,14 @@ All platforms should implement:
 ## Rate Limit Considerations
 
 ### Global Limits
+
 - **X (Twitter)**: $100/month minimum for API access
 - **YouTube**: Daily quota limits (varies by tier)
 - **Discord**: 50 requests/second global
 - **Twitch**: 2 requests/second for moderation endpoints
 
 ### Recommendations
+
 - Implement request queuing for high-volume scenarios
 - Use batch operations where available
 - Cache permission checks to reduce API calls
@@ -258,14 +270,15 @@ All platforms should implement:
 
 ### Required Permissions by Platform
 
-| Platform | Scope/Permission | Description |
-|----------|------------------|-------------|
-| **X** | OAuth 1.0a or 2.0 | tweet.write, users.write |
-| **YouTube** | `youtube.force-ssl` | Full channel management |
-| **Discord** | Bot permissions | Manage Messages, Ban Members, Moderate Members |
-| **Twitch** | `moderator:manage:banned_users` | User access token required |
+| Platform    | Scope/Permission                | Description                                    |
+| ----------- | ------------------------------- | ---------------------------------------------- |
+| **X**       | OAuth 1.0a or 2.0               | tweet.write, users.write                       |
+| **YouTube** | `youtube.force-ssl`             | Full channel management                        |
+| **Discord** | Bot permissions                 | Manage Messages, Ban Members, Moderate Members |
+| **Twitch**  | `moderator:manage:banned_users` | User access token required                     |
 
 ### Security Considerations
+
 - Store tokens securely with encryption
 - Implement token refresh mechanisms
 - Use least-privilege access patterns
@@ -276,14 +289,17 @@ All platforms should implement:
 ## Implementation Priorities
 
 ### Phase 1 (MVP)
+
 1. **X (Twitter)** - Hide replies + Block users
 2. **Discord** - Delete messages + Ban users
 
 ### Phase 2 (Extended)
+
 3. **YouTube** - Comment moderation status
 4. **Twitch** - User bans and timeouts
 
 ### Phase 3 (Future)
+
 - Additional platforms based on user demand
 - Enhanced reporting mechanisms
 - Cross-platform analytics
@@ -295,6 +311,7 @@ All platforms should implement:
 Each platform offers different moderation capabilities with varying levels of API support. The unified adapter interface must handle these differences gracefully while providing consistent behavior to the Shield system.
 
 Key takeaways:
+
 - **X (Twitter)** has the most complete API support but requires paid access
 - **YouTube** focuses on content moderation rather than user blocking
 - **Discord** offers comprehensive moderation but no reporting API

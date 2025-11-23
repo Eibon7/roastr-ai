@@ -1,6 +1,6 @@
 /**
  * Persona RLS Tests
- * 
+ *
  * Validates that Row Level Security policies correctly enforce
  * persona data isolation and encryption requirements.
  */
@@ -18,7 +18,7 @@ beforeAll(async () => {
   const result = await getConnections(config, [
     createMigrationsSeed() // Load all migrations automatically
   ]);
-  
+
   db = result.db;
   pg = result.pg;
   teardown = result.teardown;
@@ -55,17 +55,23 @@ describe('Persona RLS', () => {
     `);
     userBId = userBResult.rows[0].id;
 
-    await pg.query(`
+    await pg.query(
+      `
       UPDATE users
       SET lo_que_me_define_encrypted = 'encrypted-identity-a'
       WHERE id = $1;
-    `, [userAId]);
+    `,
+      [userAId]
+    );
 
-    await pg.query(`
+    await pg.query(
+      `
       UPDATE users
       SET lo_que_me_define_encrypted = 'encrypted-identity-b'
       WHERE id = $1;
-    `, [userBId]);
+    `,
+      [userBId]
+    );
   });
 
   test('Usuario A no puede leer la persona de Usuario B', async () => {
@@ -74,18 +80,24 @@ describe('Persona RLS', () => {
       'jwt.claims.user_id': userAId
     });
 
-    const personaA = await db.query(`
+    const personaA = await db.query(
+      `
       SELECT lo_que_me_define_encrypted
       FROM users WHERE id = $1;
-    `, [userAId]);
+    `,
+      [userAId]
+    );
 
     expect(personaA.rows.length).toBe(1);
     expect(personaA.rows[0].lo_que_me_define_encrypted).toBe('encrypted-identity-a');
 
-    const personaB = await db.query(`
+    const personaB = await db.query(
+      `
       SELECT lo_que_me_define_encrypted
       FROM users WHERE id = $1;
-    `, [userBId]);
+    `,
+      [userBId]
+    );
 
     expect(personaB.rows.length).toBe(0);
   });

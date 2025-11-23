@@ -26,12 +26,14 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const comment = fixtures.acknowledgmentComments[0]; // success comment
 
       // Create job in queue
-      const jobs = await testUtils.createTestJobs('fetch_comments', [{
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        comment_data: comment
-      }]);
+      const jobs = await testUtils.createTestJobs('fetch_comments', [
+        {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment
+        }
+      ]);
 
       expect(jobs).toHaveLength(1);
       const job = jobs[0];
@@ -58,8 +60,8 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
 
       // Check job was marked as completed in queue
       const completedJobs = await testUtils.getJobsByType('fetch_comments');
-      const completedJob = completedJobs.find(j => j.id === job.id);
-      
+      const completedJob = completedJobs.find((j) => j.id === job.id);
+
       expect(completedJob).toBeDefined();
       expect(completedJob.status).toBe('completed');
       expect(completedJob.completed_at).toBeTruthy();
@@ -77,7 +79,7 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const comments = fixtures.acknowledgmentComments;
 
       // Create multiple jobs
-      const jobPayloads = comments.map(comment => ({
+      const jobPayloads = comments.map((comment) => ({
         organization_id: organizationId,
         platform: 'twitter',
         integration_config_id: integrationConfigId,
@@ -98,7 +100,7 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const results = [];
       try {
         await worker.start();
-        
+
         // Process all jobs
         for (const job of jobs) {
           const result = await worker.processJob(job);
@@ -109,19 +111,19 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       }
 
       // Verify all jobs were processed successfully
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.success).toBe(true);
         expect(result.commentsCount).toBe(1);
       });
 
       // Check all jobs were acknowledged
       const completedJobs = await testUtils.getJobsByType('fetch_comments');
-      const acknowledgedJobs = completedJobs.filter(j => j.status === 'completed');
-      
+      const acknowledgedJobs = completedJobs.filter((j) => j.status === 'completed');
+
       expect(acknowledgedJobs).toHaveLength(jobs.length);
 
       // Verify all have completion timestamps and results
-      acknowledgedJobs.forEach(job => {
+      acknowledgedJobs.forEach((job) => {
         expect(job.completed_at).toBeTruthy();
         expect(job.result).toBeTruthy();
       });
@@ -137,12 +139,14 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const comment = fixtures.acknowledgmentComments[0];
 
       // Create job
-      const jobs = await testUtils.createTestJobs('fetch_comments', [{
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        comment_data: comment
-      }]);
+      const jobs = await testUtils.createTestJobs('fetch_comments', [
+        {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment
+        }
+      ]);
 
       const job = jobs[0];
 
@@ -159,7 +163,7 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
 
       // Verify acknowledgment persisted
       let completedJobs = await testUtils.getJobsByType('fetch_comments');
-      let completedJob = completedJobs.find(j => j.id === job.id);
+      let completedJob = completedJobs.find((j) => j.id === job.id);
       expect(completedJob.status).toBe('completed');
 
       // Second worker should not reprocess acknowledged job
@@ -182,7 +186,7 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
 
       // Verify job remains acknowledged
       completedJobs = await testUtils.getJobsByType('fetch_comments');
-      completedJob = completedJobs.find(j => j.id === job.id);
+      completedJob = completedJobs.find((j) => j.id === job.id);
       expect(completedJob.status).toBe('completed');
     });
   });
@@ -194,12 +198,18 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const comment = fixtures.retryComments[1]; // permanent failure comment
 
       // Create job
-      const jobs = await testUtils.createTestJobs('fetch_comments', [{
-        organization_id: organizationId,
-        platform: 'youtube',
-        integration_config_id: integrationConfigId,
-        comment_data: comment
-      }], { maxAttempts: 2 });
+      const jobs = await testUtils.createTestJobs(
+        'fetch_comments',
+        [
+          {
+            organization_id: organizationId,
+            platform: 'youtube',
+            integration_config_id: integrationConfigId,
+            comment_data: comment
+          }
+        ],
+        { maxAttempts: 2 }
+      );
 
       const job = jobs[0];
 
@@ -223,8 +233,8 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
 
       // Check job was marked as failed
       const failedJobs = await testUtils.getJobsByType('fetch_comments');
-      const failedJob = failedJobs.find(j => j.id === job.id);
-      
+      const failedJob = failedJobs.find((j) => j.id === job.id);
+
       expect(failedJob).toBeDefined();
       expect(failedJob.status).toBe('failed');
       expect(failedJob.completed_at).toBeTruthy();
@@ -240,12 +250,18 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const integrationConfigId = 'config-twitter-dedup';
       const comment = fixtures.acknowledgmentComments[1]; // retry_then_success
 
-      const jobs = await testUtils.createTestJobs('fetch_comments', [{
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        comment_data: comment
-      }], { maxAttempts: 3 });
+      const jobs = await testUtils.createTestJobs(
+        'fetch_comments',
+        [
+          {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comment_data: comment
+          }
+        ],
+        { maxAttempts: 3 }
+      );
 
       const job = jobs[0];
 
@@ -280,8 +296,8 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
 
       // Check job was acknowledged as completed (not failed)
       const completedJobs = await testUtils.getJobsByType('fetch_comments');
-      const completedJob = completedJobs.find(j => j.id === job.id);
-      
+      const completedJob = completedJobs.find((j) => j.id === job.id);
+
       expect(completedJob).toBeDefined();
       expect(completedJob.status).toBe('completed');
       expect(completedJob.completed_at).toBeTruthy();
@@ -299,12 +315,14 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const integrationConfigId = 'config-twitter-dedup';
       const comment = fixtures.acknowledgmentComments[0];
 
-      const jobs = await testUtils.createTestJobs('fetch_comments', [{
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        comment_data: comment
-      }]);
+      const jobs = await testUtils.createTestJobs('fetch_comments', [
+        {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment
+        }
+      ]);
 
       const job = jobs[0];
 
@@ -326,13 +344,13 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
 
       // Check job was acknowledged quickly (within processing time + small buffer)
       const completedJobs = await testUtils.getJobsByType('fetch_comments');
-      const completedJob = completedJobs.find(j => j.id === job.id);
-      
+      const completedJob = completedJobs.find((j) => j.id === job.id);
+
       expect(completedJob.status).toBe('completed');
-      
+
       const completedAt = new Date(completedJob.completed_at);
       const ackTime = completedAt.getTime() - startTime;
-      
+
       // Acknowledgment should happen within processing time + 100ms buffer
       expect(ackTime).toBeLessThanOrEqual(processingTime + 100);
     });
@@ -350,12 +368,14 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
           original_text: `Concurrent comment ${i}`
         };
 
-        const jobs = await testUtils.createTestJobs('fetch_comments', [{
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          comment_data: comment
-        }]);
+        const jobs = await testUtils.createTestJobs('fetch_comments', [
+          {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comment_data: comment
+          }
+        ]);
 
         concurrentJobs.push({ job: jobs[0], comment });
       }
@@ -382,20 +402,20 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       }
 
       // All should succeed
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.success).toBe(true);
         expect(result.commentsCount).toBe(1);
       });
 
       // All should be acknowledged
       const completedJobs = await testUtils.getJobsByType('fetch_comments');
-      const acknowledgedJobs = completedJobs.filter(j => j.status === 'completed');
-      
+      const acknowledgedJobs = completedJobs.filter((j) => j.status === 'completed');
+
       expect(acknowledgedJobs).toHaveLength(concurrentJobs.length);
 
       // Verify completion times exist (may have same timestamp if processed very fast)
-      const completionTimes = acknowledgedJobs.map(j => j.completed_at);
-      acknowledgedJobs.forEach(job => {
+      const completionTimes = acknowledgedJobs.map((j) => j.completed_at);
+      acknowledgedJobs.forEach((job) => {
         expect(job.completed_at).toBeTruthy();
       });
 
@@ -411,12 +431,14 @@ describe('Ingestor Message Acknowledgment Integration Tests', () => {
       const integrationConfigId = 'config-twitter-dedup';
       const comment = fixtures.acknowledgmentComments[0];
 
-      const jobs = await testUtils.createTestJobs('fetch_comments', [{
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        comment_data: comment
-      }]);
+      const jobs = await testUtils.createTestJobs('fetch_comments', [
+        {
+          organization_id: organizationId,
+          platform: 'twitter',
+          integration_config_id: integrationConfigId,
+          comment_data: comment
+        }
+      ]);
 
       const job = jobs[0];
 

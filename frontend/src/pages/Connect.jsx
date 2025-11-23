@@ -4,18 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import PageLayout from '../components/roastr/PageLayout';
-import { 
-  CheckCircle, 
-  ExternalLink, 
-  Download, 
-  Loader2, 
+import {
+  CheckCircle,
+  ExternalLink,
+  Download,
+  Loader2,
   AlertCircle,
   ArrowRight,
   Users
 } from 'lucide-react';
-import { 
-  getAvailablePlatforms, 
-  getIntegrationStatus, 
+import {
+  getAvailablePlatforms,
+  getIntegrationStatus,
   connectPlatform,
   importFollowers,
   getImportProgress
@@ -47,7 +47,7 @@ export default function Connect() {
       setError(null);
       const data = await getIntegrationStatus();
       const statusMap = {};
-      (data.integrations || []).forEach(integration => {
+      (data.integrations || []).forEach((integration) => {
         statusMap[integration.platform] = integration;
       });
       setIntegrationStatus(statusMap);
@@ -71,13 +71,13 @@ export default function Connect() {
     try {
       // TODO: Add credentials dialog for platform-specific auth
       const credentials = {};
-      
+
       const data = await connectPlatform(platform, credentials);
-        
+
       if (data.success) {
         // Update integration status
         await fetchIntegrationStatus();
-        
+
         // Auto-start import after connection
         setTimeout(() => {
           handleImport(platform);
@@ -94,16 +94,16 @@ export default function Connect() {
   const handleImport = async (platform) => {
     setImporting(platform);
     setError(null);
-    
+
     // Initialize progress tracking
-    setImportProgress(prev => ({
+    setImportProgress((prev) => ({
       ...prev,
       [platform]: { status: 'starting', imported: 0, total: 300 }
     }));
 
     try {
       const data = await importFollowers(platform);
-      
+
       if (data.success && data.jobId) {
         // Poll for progress updates
         pollImportProgress(platform, data.jobId);
@@ -111,7 +111,7 @@ export default function Connect() {
     } catch (error) {
       console.error('Error importing from platform:', error);
       setError(`No se pudo importar desde ${platform}: ${error.message}`);
-      setImportProgress(prev => ({
+      setImportProgress((prev) => ({
         ...prev,
         [platform]: { status: 'error', error: error.message }
       }));
@@ -123,8 +123,8 @@ export default function Connect() {
     const pollInterval = setInterval(async () => {
       try {
         const data = await getImportProgress(jobId);
-        
-        setImportProgress(prev => ({
+
+        setImportProgress((prev) => ({
           ...prev,
           [platform]: {
             status: data.status,
@@ -138,7 +138,7 @@ export default function Connect() {
         if (data.status === 'completed' || data.status === 'error') {
           clearInterval(pollInterval);
           setImporting(null);
-          
+
           // Update integration status
           if (data.status === 'completed') {
             setTimeout(fetchIntegrationStatus, 1000);
@@ -148,7 +148,7 @@ export default function Connect() {
         console.error('Error polling import progress:', error);
         clearInterval(pollInterval);
         setImporting(null);
-        setImportProgress(prev => ({
+        setImportProgress((prev) => ({
           ...prev,
           [platform]: { status: 'error', error: 'Progress check failed' }
         }));
@@ -167,14 +167,16 @@ export default function Connect() {
   };
 
   const canProceedToStyleProfile = () => {
-    const connectedPlatforms = Object.values(integrationStatus)
-      .filter(integration => integration.status === 'connected' && integration.importedCount >= 50);
+    const connectedPlatforms = Object.values(integrationStatus).filter(
+      (integration) => integration.status === 'connected' && integration.importedCount >= 50
+    );
     return connectedPlatforms.length > 0;
   };
 
   const getConnectedPlatformsWithData = () => {
-    return Object.values(integrationStatus)
-      .filter(integration => integration.status === 'connected' && integration.importedCount >= 50);
+    return Object.values(integrationStatus).filter(
+      (integration) => integration.status === 'connected' && integration.importedCount >= 50
+    );
   };
 
   if (loading) {
@@ -204,7 +206,7 @@ export default function Connect() {
               <div className="flex-1">
                 <h3 className="font-semibold text-red-900">Error al cargar</h3>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
-                <Button 
+                <Button
                   onClick={() => {
                     setLoading(true);
                     fetchPlatforms();
@@ -229,7 +231,6 @@ export default function Connect() {
       subtitle="Conecta tus redes sociales e importa contenido para análisis"
       metrics={[{ label: 'Listas para análisis', value: getConnectedPlatformsWithData().length }]}
     >
-
       {/* Error Banner */}
       {error && platforms.length > 0 && (
         <Card className="bg-yellow-50 border-yellow-200 mb-4">
@@ -276,10 +277,10 @@ export default function Connect() {
           const progress = importProgress[platform.name];
           const isConnecting = connecting === platform.name;
           const isImporting = importing === platform.name || progress?.status === 'importing';
-          
+
           return (
-            <Card 
-              key={platform.name} 
+            <Card
+              key={platform.name}
               className={`relative ${isConnected ? 'border-green-200 bg-green-50' : ''}`}
             >
               <CardHeader className="pb-3">
@@ -293,17 +294,13 @@ export default function Connect() {
                       </p>
                     </div>
                   </div>
-                  {isConnected && (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  )}
+                  {isConnected && <CheckCircle className="h-5 w-5 text-green-500" />}
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-3">
                 {/* Description */}
-                <p className="text-sm text-muted-foreground">
-                  {platform.description}
-                </p>
+                <p className="text-sm text-muted-foreground">{platform.description}</p>
 
                 {/* Connection Status */}
                 <div className="flex items-center justify-between">
@@ -318,15 +315,13 @@ export default function Connect() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Imported:</span>
-                      <span className="text-sm">
-                        {progress?.imported || importedCount} items
-                      </span>
+                      <span className="text-sm">{progress?.imported || importedCount} items</span>
                     </div>
-                    
+
                     {progress && progress.status === 'importing' && (
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${(progress.imported / progress.total) * 100}%` }}
                         />
                       </div>
@@ -407,11 +402,11 @@ export default function Connect() {
               <div>
                 <h3 className="font-semibold text-lg mb-2">Ready for Style Profile!</h3>
                 <p className="text-muted-foreground">
-                  You have {getConnectedPlatformsWithData().length} platform(s) with enough content. 
+                  You have {getConnectedPlatformsWithData().length} platform(s) with enough content.
                   Generate your personalized AI Style Profile now.
                 </p>
               </div>
-              <Button 
+              <Button
                 onClick={() => navigate('/style-profile/generate')}
                 size="lg"
                 className="bg-purple-600 hover:bg-purple-700"
@@ -434,7 +429,9 @@ export default function Connect() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="text-sm space-y-2">
-            <p><strong>Minimum Requirements:</strong></p>
+            <p>
+              <strong>Minimum Requirements:</strong>
+            </p>
             <ul className="space-y-1 ml-4">
               <li>• At least 50 imported items from any platform for Style Profile generation</li>
               <li>• Multiple platforms provide better analysis quality</li>
@@ -442,7 +439,9 @@ export default function Connect() {
             </ul>
           </div>
           <div className="text-sm space-y-2">
-            <p><strong>Supported Content Types:</strong></p>
+            <p>
+              <strong>Supported Content Types:</strong>
+            </p>
             <ul className="space-y-1 ml-4">
               <li>• Posts, comments, replies from the last 30 days</li>
               <li>• Multiple languages automatically detected</li>

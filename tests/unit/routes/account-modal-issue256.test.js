@@ -1,9 +1,9 @@
 /**
  * Tests for AccountModal API endpoints (Issue #256)
- * 
+ *
  * Tests the connected account modal functionality including:
  * - Account details retrieval
- * - Recent roasts fetching  
+ * - Recent roasts fetching
  * - Roast approval/rejection
  * - Settings management
  * - Account disconnection
@@ -54,8 +54,8 @@ jest.mock('../../../src/services/mockIntegrationsService', () => {
     }),
     regenerateRoast: jest.fn().mockResolvedValue({
       success: true,
-      data: { 
-        id: 'roast_1', 
+      data: {
+        id: 'roast_1',
         original: 'Esta aplicación es horrible',
         roast: 'New regenerated roast response',
         status: 'pending',

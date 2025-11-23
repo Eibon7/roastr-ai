@@ -24,7 +24,7 @@ describe('Tone Configuration', () => {
     });
 
     test('should have all required properties', () => {
-      ['FLANDERS', 'BALANCEADO', 'CANALLA'].forEach(key => {
+      ['FLANDERS', 'BALANCEADO', 'CANALLA'].forEach((key) => {
         expect(TONE_DEFINITIONS[key]).toBeDefined();
         expect(TONE_DEFINITIONS[key].id).toBeDefined();
         expect(TONE_DEFINITIONS[key].name).toBeDefined();

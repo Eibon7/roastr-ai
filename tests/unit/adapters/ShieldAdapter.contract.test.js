@@ -1,12 +1,17 @@
 /**
  * Contract Tests for Shield Adapters
- * 
+ *
  * These tests verify that all Shield adapters conform to the unified interface
  * defined by the ShieldAdapter base class. They test the contract without
  * requiring actual API connections.
  */
 
-const { ShieldAdapter, ModerationInput, ModerationResult, CapabilityMap } = require('../../../src/adapters/ShieldAdapter');
+const {
+  ShieldAdapter,
+  ModerationInput,
+  ModerationResult,
+  CapabilityMap
+} = require('../../../src/adapters/ShieldAdapter');
 const TwitterShieldAdapter = require('../../../src/adapters/mock/TwitterShieldAdapter');
 const YouTubeShieldAdapter = require('../../../src/adapters/mock/YouTubeShieldAdapter');
 const DiscordShieldAdapter = require('../../../src/adapters/mock/DiscordShieldAdapter');
@@ -29,7 +34,9 @@ describe('Shield Adapter Contract Tests', () => {
 
   describe('Base Class Contract', () => {
     test('ShieldAdapter cannot be instantiated directly', () => {
-      expect(() => new ShieldAdapter()).toThrow('ShieldAdapter is abstract and cannot be instantiated directly');
+      expect(() => new ShieldAdapter()).toThrow(
+        'ShieldAdapter is abstract and cannot be instantiated directly'
+      );
     });
 
     test('ModerationInput creates valid instances', () => {
@@ -130,7 +137,7 @@ describe('Shield Adapter Contract Tests', () => {
 
       test('hideComment returns valid ModerationResult', async () => {
         const result = await adapter.hideComment(mockInput);
-        
+
         expect(result).toBeInstanceOf(ModerationResult);
         expect(typeof result.success).toBe('boolean');
         expect(typeof result.action).toBe('string');
@@ -143,7 +150,7 @@ describe('Shield Adapter Contract Tests', () => {
 
       test('reportUser returns valid ModerationResult', async () => {
         const result = await adapter.reportUser(mockInput);
-        
+
         expect(result).toBeInstanceOf(ModerationResult);
         expect(typeof result.success).toBe('boolean');
         expect(result.action).toBe('report_user');
@@ -153,7 +160,7 @@ describe('Shield Adapter Contract Tests', () => {
 
       test('blockUser returns valid ModerationResult', async () => {
         const result = await adapter.blockUser(mockInput);
-        
+
         expect(result).toBeInstanceOf(ModerationResult);
         expect(typeof result.success).toBe('boolean');
         expect(result.action).toMatch(/block_user|ban_user/);
@@ -163,7 +170,7 @@ describe('Shield Adapter Contract Tests', () => {
 
       test('unblockUser returns valid ModerationResult', async () => {
         const result = await adapter.unblockUser(mockInput);
-        
+
         expect(result).toBeInstanceOf(ModerationResult);
         expect(typeof result.success).toBe('boolean');
         expect(result.action).toMatch(/unblock_user|unban_user/);
@@ -173,7 +180,7 @@ describe('Shield Adapter Contract Tests', () => {
 
       test('capabilities returns valid CapabilityMap', () => {
         const capabilities = adapter.capabilities();
-        
+
         expect(capabilities).toBeInstanceOf(CapabilityMap);
         expect(typeof capabilities.hideComment).toBe('boolean');
         expect(typeof capabilities.reportUser).toBe('boolean');
@@ -187,7 +194,7 @@ describe('Shield Adapter Contract Tests', () => {
 
       test('validates input correctly', async () => {
         const invalidInput = new ModerationInput({ platform: platform });
-        
+
         await expect(adapter.hideComment(invalidInput)).rejects.toThrow();
         await expect(adapter.reportUser(invalidInput)).rejects.toThrow();
         await expect(adapter.blockUser(invalidInput)).rejects.toThrow();
@@ -196,13 +203,15 @@ describe('Shield Adapter Contract Tests', () => {
 
       test('handles non-ModerationInput objects', async () => {
         const invalidInput = { platform: platform, commentId: 'test' };
-        
-        await expect(adapter.hideComment(invalidInput)).rejects.toThrow('Input must be an instance of ModerationInput');
+
+        await expect(adapter.hideComment(invalidInput)).rejects.toThrow(
+          'Input must be an instance of ModerationInput'
+        );
       });
 
       test('isRateLimitError method exists and works', () => {
         expect(typeof adapter.isRateLimitError).toBe('function');
-        
+
         const rateLimitError = new Error('rate limit exceeded');
         rateLimitError.status = 429;
         expect(adapter.isRateLimitError(rateLimitError)).toBe(true);
@@ -213,7 +222,7 @@ describe('Shield Adapter Contract Tests', () => {
 
       test('logging method exists and works', () => {
         expect(typeof adapter.log).toBe('function');
-        
+
         // Should not throw
         expect(() => adapter.log('info', 'test message', { test: 'data' })).not.toThrow();
       });
@@ -221,7 +230,7 @@ describe('Shield Adapter Contract Tests', () => {
       test('createErrorResult creates valid results', () => {
         const error = new Error('Test error');
         const result = adapter.createErrorResult('test_action', error, 100);
-        
+
         expect(result).toBeInstanceOf(ModerationResult);
         expect(result.success).toBe(false);
         expect(result.action).toBe('test_action');
@@ -232,7 +241,7 @@ describe('Shield Adapter Contract Tests', () => {
 
       test('createSuccessResult creates valid results', () => {
         const result = adapter.createSuccessResult('test_action', { data: 'test' }, 100, true);
-        
+
         expect(result).toBeInstanceOf(ModerationResult);
         expect(result.success).toBe(true);
         expect(result.action).toBe('test_action');
@@ -264,8 +273,8 @@ describe('Shield Adapter Contract Tests', () => {
         { name: 'unblockUser', minParams: 1 },
         { name: 'capabilities', minParams: 0 }
       ];
-      
-      adapters_instances.forEach(adapter => {
+
+      adapters_instances.forEach((adapter) => {
         requiredMethods.forEach(({ name, minParams }) => {
           expect(typeof adapter[name]).toBe('function');
           expect(adapter[name].length).toBeGreaterThanOrEqual(minParams);
@@ -284,11 +293,11 @@ describe('Shield Adapter Contract Tests', () => {
       });
 
       const actions = ['hideComment', 'reportUser', 'blockUser', 'unblockUser'];
-      
+
       for (const adapter of adapters_instances) {
         for (const action of actions) {
           const result = await adapter[action](mockInput);
-          
+
           // All results should have consistent structure
           expect(result).toHaveProperty('success');
           expect(result).toHaveProperty('action');
@@ -301,9 +310,9 @@ describe('Shield Adapter Contract Tests', () => {
     });
 
     test('all adapters have consistent capability structure', () => {
-      adapters_instances.forEach(adapter => {
+      adapters_instances.forEach((adapter) => {
         const capabilities = adapter.capabilities();
-        
+
         // All capability maps should have these core properties
         expect(capabilities).toHaveProperty('hideComment');
         expect(capabilities).toHaveProperty('reportUser');
@@ -324,11 +333,11 @@ describe('Shield Adapter Contract Tests', () => {
         twitch: { hideComment: false, reportUser: false, blockUser: true, unblockUser: true }
       };
 
-      adapters_instances.forEach(adapter => {
+      adapters_instances.forEach((adapter) => {
         const capabilities = adapter.capabilities();
         const platform = adapter.getPlatform();
         const expected = expectedCapabilities[platform];
-        
+
         if (expected) {
           expect(capabilities.hideComment).toBe(expected.hideComment);
           expect(capabilities.reportUser).toBe(expected.reportUser);
@@ -350,7 +359,7 @@ describe('Shield Adapter Contract Tests', () => {
 
     test('handles validation errors consistently', async () => {
       const invalidInput = new ModerationInput({ platform: 'twitter' });
-      
+
       try {
         await adapter.hideComment(invalidInput);
         fail('Should have thrown validation error');
@@ -361,7 +370,7 @@ describe('Shield Adapter Contract Tests', () => {
 
     test('handleRateLimit method exists and works', async () => {
       expect(typeof adapter.handleRateLimit).toBe('function');
-      
+
       let callCount = 0;
       const mockApiCall = () => {
         callCount++;
@@ -389,7 +398,7 @@ describe('Shield Adapter Contract Tests', () => {
   describe('Mock Behavior Consistency', () => {
     test('all adapters simulate latency', async () => {
       const adapters_with_timing = [];
-      
+
       for (const { class: AdapterClass } of adapters) {
         const adapter = new AdapterClass({
           ...mockConfig,
@@ -412,7 +421,7 @@ describe('Shield Adapter Contract Tests', () => {
         const start = Date.now();
         await adapter.hideComment(mockInput);
         const duration = Date.now() - start;
-        
+
         // Should take at least the minimum latency
         expect(duration).toBeGreaterThanOrEqual(40); // Some tolerance for test timing
       }

@@ -15,6 +15,7 @@
 ## Objetivo
 
 Implementar tests exhaustivos y producción-ready para el BillingWorker que validen:
+
 - Procesamiento de suscripciones
 - Cálculo de costos
 - Webhooks de Stripe/Polar
@@ -25,6 +26,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
 ## Acceptance Criteria
 
 ### AC1: Procesamiento de Suscripciones (Coverage ≥85%)
+
 - ✅ Tests de creación de suscripción
 - ✅ Tests de actualización de suscripción
 - ✅ Tests de cancelación de suscripción
@@ -34,6 +36,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
 - ✅ Tests de suscripciones expiradas
 
 ### AC2: Cálculo de Costos
+
 - ✅ Tests de cálculo de costos por plan
 - ✅ Tests de cálculo de overages
 - ✅ Tests de cálculo de descuentos
@@ -41,6 +44,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
 - ✅ Tests de cálculo de períodos de facturación
 
 ### AC3: Webhooks (Stripe/Polar)
+
 - ✅ Tests de webhook válido de Stripe
 - ✅ Tests de webhook válido de Polar
 - ✅ Tests de webhook inválido (firma incorrecta)
@@ -53,12 +57,14 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
   - invoice.payment_failed
 
 ### AC4: Límites de Plan
+
 - ✅ Tests de validación de límites
 - ✅ Tests de enforcement de límites
 - ✅ Tests de notificación cuando se alcanza límite
 - ✅ Tests de bloqueo cuando se excede límite
 
 ### AC5: Errores de Pago
+
 - ✅ Tests de tarjeta rechazada
 - ✅ Tests de fondos insuficientes
 - ✅ Tests de tarjeta expirada
@@ -67,11 +73,13 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
 - ✅ Tests de suspensión de servicio
 
 ### AC6: Idempotencia
+
 - ✅ Tests de procesamiento idempotente de webhooks
 - ✅ Tests de prevención de doble facturación
 - ✅ Tests de manejo de eventos duplicados
 
 ### AC7: Calidad de Tests
+
 - ✅ Tests validan comportamiento real (no solo mocks)
 - ✅ Tests cubren edge cases y errores
 - ✅ Tests son rápidos (<1s cada uno)
@@ -113,6 +121,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
 ## Plan de Implementación
 
 ### Fase 1: Setup y Mocks (Día 1)
+
 1. Crear estructura de tests siguiendo patrón Supabase Mock Factory
 2. Mockear todas las dependencias:
    - emailService
@@ -125,6 +134,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
 3. Crear helpers para datos de prueba (factories)
 
 ### Fase 2: Tests de Procesamiento de Suscripciones (Día 1-2)
+
 1. Tests de `processPaymentFailed`:
    - Pago fallido primera vez (notificación + retry)
    - Pago fallido múltiples veces (suspensión final)
@@ -145,6 +155,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
    - Audit log creado
 
 ### Fase 3: Tests de Webhooks (Día 2)
+
 1. Tests de webhooks Stripe:
    - checkout.session.completed
    - customer.subscription.updated
@@ -157,6 +168,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
    - Verificación de firmas
 
 ### Fase 4: Tests de Límites y Costos (Día 2-3)
+
 1. Tests de límites de plan:
    - Validación de límites por plan
    - Enforcement cuando se alcanza límite
@@ -169,6 +181,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
    - Períodos de facturación
 
 ### Fase 5: Tests de Errores y Edge Cases (Día 3)
+
 1. Tests de errores de pago:
    - Tarjeta rechazada
    - Fondos insuficientes
@@ -182,6 +195,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
    - Servicios externos no disponibles
 
 ### Fase 6: Validación y Coverage (Día 3)
+
 1. Ejecutar tests y verificar coverage ≥85%
 2. Optimizar tests lentos (<1s cada uno)
 3. Documentar tests complejos
@@ -196,6 +210,7 @@ Implementar tests exhaustivos y producción-ready para el BillingWorker que vali
 ## Patrones a Seguir
 
 ### Supabase Mock Pattern (CRÍTICO)
+
 ```javascript
 // Crear mock ANTES de jest.mock()
 const mockSupabase = createSupabaseMock({
@@ -209,6 +224,7 @@ jest.mock('../../src/config/supabase', () => ({
 ```
 
 ### Service Mocks
+
 ```javascript
 jest.mock('../../src/services/emailService', () => ({
   sendPaymentFailedNotification: jest.fn(),
@@ -218,6 +234,7 @@ jest.mock('../../src/services/emailService', () => ({
 ```
 
 ### Test Structure
+
 ```javascript
 describe('BillingWorker', () => {
   describe('processPaymentFailed', () => {
@@ -252,4 +269,3 @@ describe('BillingWorker', () => {
 - **Test Engineer** - Implementación de tests
 - **Backend Developer** - Revisión de lógica de billing
 - **Guardian** - Validación de seguridad y compliance
-

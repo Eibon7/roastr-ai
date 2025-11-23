@@ -11,6 +11,7 @@
 ## Estado Actual (del Assessment)
 
 ### ✅ Implementación Existente
+
 - **Database Schema:** 9 tablas con RLS policies activas
   - `organizations`, `posts`, `comments`, `roasts`, `toxic_comments`
   - `moderation_actions`, `usage_logs`, `subscriptions`, `queue_jobs`
@@ -19,6 +20,7 @@
 - **Supabase Client:** Configurado para RLS
 
 ### ❌ Gaps Críticos Identificados
+
 - **CERO tests de integración** para RLS
 - No validación de aislamiento tenant_id
 - No tests de prevención cross-tenant
@@ -29,13 +31,13 @@
 
 ## Criterios de Aceptación (5)
 
-| AC # | Criterio | Estado | Plan |
-|------|----------|--------|------|
-| **AC1** | Listados restringidos por tenant_id automáticamente | ❌ | Tests para GET /api/posts, /api/comments, /api/roasts |
-| **AC2** | Accesos directos por ID verifican tenant_id | ❌ | Tests para GET /api/{resource}/:id con tenant correcto/incorrecto |
-| **AC3** | Accesos cruzados devuelven 404/forbidden | ❌ | Tests cross-tenant GET/PUT/DELETE → 404/403 |
-| **AC4** | Políticas RLS funcionan en todas las tablas críticas | ❌ | Tests en 9 tablas: organizations, posts, comments, roasts, toxic_comments, moderation_actions, usage_logs, subscriptions, queue_jobs |
-| **AC5** | Auditoría de intentos de acceso cross-tenant | ❌ | Tests de audit_log para intentos no autorizados |
+| AC #    | Criterio                                             | Estado | Plan                                                                                                                                 |
+| ------- | ---------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **AC1** | Listados restringidos por tenant_id automáticamente  | ❌     | Tests para GET /api/posts, /api/comments, /api/roasts                                                                                |
+| **AC2** | Accesos directos por ID verifican tenant_id          | ❌     | Tests para GET /api/{resource}/:id con tenant correcto/incorrecto                                                                    |
+| **AC3** | Accesos cruzados devuelven 404/forbidden             | ❌     | Tests cross-tenant GET/PUT/DELETE → 404/403                                                                                          |
+| **AC4** | Políticas RLS funcionan en todas las tablas críticas | ❌     | Tests en 9 tablas: organizations, posts, comments, roasts, toxic_comments, moderation_actions, usage_logs, subscriptions, queue_jobs |
+| **AC5** | Auditoría de intentos de acceso cross-tenant         | ❌     | Tests de audit_log para intentos no autorizados                                                                                      |
 
 ---
 
@@ -85,6 +87,7 @@ tests/integration/multi-tenant-rls-issue-412.test.js
 ### Estrategia de Testing
 
 **1. Test Fixtures:**
+
 ```javascript
 // Tenant A
 const tenantA = {
@@ -106,6 +109,7 @@ const tenantB = {
 ```
 
 **2. Supabase Context Switching:**
+
 ```javascript
 async function setTenantContext(tenantId) {
   // Option 1: Via Supabase set_config
@@ -118,6 +122,7 @@ async function setTenantContext(tenantId) {
 ```
 
 **3. Test Pattern:**
+
 ```javascript
 describe('AC1: Listados restringidos por tenant_id', () => {
   it('GET /api/posts returns only Tenant A posts when context is Tenant A', async () => {
@@ -126,7 +131,7 @@ describe('AC1: Listados restringidos por tenant_id', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(tenantA.posts.length);
-    expect(response.body.every(p => p.organization_id === tenantA.id)).toBe(true);
+    expect(response.body.every((p) => p.organization_id === tenantA.id)).toBe(true);
   });
 
   it('GET /api/posts returns only Tenant B posts when context is Tenant B', async () => {
@@ -135,7 +140,7 @@ describe('AC1: Listados restringidos por tenant_id', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(tenantB.posts.length);
-    expect(response.body.every(p => p.organization_id === tenantB.id)).toBe(true);
+    expect(response.body.every((p) => p.organization_id === tenantB.id)).toBe(true);
   });
 });
 ```
@@ -147,10 +152,12 @@ describe('AC1: Listados restringidos por tenant_id', () => {
 ### FASE 1: Setup de Test Infrastructure (1 hora)
 
 **Archivos a crear:**
+
 - `tests/integration/multi-tenant-rls-issue-412.test.js`
 - `tests/helpers/tenantTestUtils.js` (helpers para context switching)
 
 **Tareas:**
+
 1. Configurar test suite base con Jest
 2. Implementar `createTestTenants()` - crea 2 orgs en Supabase
 3. Implementar `createTestData()` - seed posts, comments, roasts
@@ -161,6 +168,7 @@ describe('AC1: Listados restringidos por tenant_id', () => {
 **Agente:** Test Engineer Agent
 
 **Validación FASE 1:**
+
 ```bash
 npm test -- multi-tenant-rls-issue-412 --testNamePattern="Setup"
 ```
@@ -170,23 +178,27 @@ npm test -- multi-tenant-rls-issue-412 --testNamePattern="Setup"
 ### FASE 2: AC1-AC3 - Tests de Aislamiento Básico (2 horas)
 
 **Archivos a modificar:**
+
 - `tests/integration/multi-tenant-rls-issue-412.test.js`
 
 **Tareas:**
 
 **AC1 - Listados Restringidos (30 min):**
+
 1. Test: GET /api/posts - solo posts del tenant actual
 2. Test: GET /api/comments - solo comments del tenant actual
 3. Test: GET /api/roasts - solo roasts del tenant actual
 4. Verificar que cada endpoint filtra por `organization_id` correcto
 
 **AC2 - Accesos Directos por ID (45 min):**
+
 1. Test: GET /api/posts/:id - 200 si mismo tenant, 404 si otro tenant
 2. Test: GET /api/comments/:id - 200 si mismo tenant, 404 si otro tenant
 3. Test: GET /api/roasts/:id - 200 si mismo tenant, 404 si otro tenant
 4. Verificar respuestas correctas (200 vs 404)
 
 **AC3 - Prevención Cross-Tenant (45 min):**
+
 1. Test: Tenant A intenta GET post de Tenant B → 404
 2. Test: Tenant A intenta PUT comment de Tenant B → 403
 3. Test: Tenant A intenta DELETE roast de Tenant B → 403
@@ -195,6 +207,7 @@ npm test -- multi-tenant-rls-issue-412 --testNamePattern="Setup"
 **Agente:** Test Engineer Agent
 
 **Validación FASE 2:**
+
 ```bash
 npm test -- multi-tenant-rls-issue-412 --testNamePattern="AC1|AC2|AC3"
 ```
@@ -206,11 +219,13 @@ npm test -- multi-tenant-rls-issue-412 --testNamePattern="AC1|AC2|AC3"
 ### FASE 3: AC4 - RLS en 9 Tablas Críticas (2 horas)
 
 **Archivos a modificar:**
+
 - `tests/integration/multi-tenant-rls-issue-412.test.js`
 
 **Tareas:**
 
 **Tablas a validar (9):**
+
 1. `organizations` - Solo org actual visible
 2. `posts` - Filtrado por organization_id
 3. `comments` - Filtrado por organization_id
@@ -222,21 +237,19 @@ npm test -- multi-tenant-rls-issue-412 --testNamePattern="AC1|AC2|AC3"
 9. `queue_jobs` - Filtrado por organization_id
 
 **Pattern para cada tabla:**
+
 ```javascript
 describe('AC4: RLS Policy - {tabla}', () => {
   it('returns only {tabla} for current tenant', async () => {
     await setTenantContext(tenantA.id);
     const { data } = await supabase.from('{tabla}').select('*');
 
-    expect(data.every(row => row.organization_id === tenantA.id)).toBe(true);
+    expect(data.every((row) => row.organization_id === tenantA.id)).toBe(true);
   });
 
   it('blocks access to other tenant {tabla}', async () => {
     await setTenantContext(tenantA.id);
-    const { data } = await supabase
-      .from('{tabla}')
-      .select('*')
-      .eq('organization_id', tenantB.id);
+    const { data } = await supabase.from('{tabla}').select('*').eq('organization_id', tenantB.id);
 
     expect(data).toHaveLength(0); // RLS blocks
   });
@@ -246,6 +259,7 @@ describe('AC4: RLS Policy - {tabla}', () => {
 **Agente:** Test Engineer Agent
 
 **Validación FASE 3:**
+
 ```bash
 npm test -- multi-tenant-rls-issue-412 --testNamePattern="AC4"
 ```
@@ -257,12 +271,14 @@ npm test -- multi-tenant-rls-issue-412 --testNamePattern="AC4"
 ### FASE 4: AC5 - Auditoría de Accesos Cross-Tenant (1 hora)
 
 **Archivos a modificar:**
+
 - `tests/integration/multi-tenant-rls-issue-412.test.js`
 - `database/schema.sql` (si audit_log no existe)
 
 **Tareas:**
 
 **1. Verificar tabla audit_log (15 min):**
+
 ```sql
 CREATE TABLE IF NOT EXISTS audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -278,6 +294,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 ```
 
 **2. Tests de auditoría (45 min):**
+
 ```javascript
 describe('AC5: Auditoría de accesos cross-tenant', () => {
   it('logs unauthorized cross-tenant access attempts', async () => {
@@ -320,6 +337,7 @@ describe('AC5: Auditoría de accesos cross-tenant', () => {
 **Agente:** Test Engineer Agent
 
 **Validación FASE 4:**
+
 ```bash
 npm test -- multi-tenant-rls-issue-412 --testNamePattern="AC5"
 ```
@@ -331,6 +349,7 @@ npm test -- multi-tenant-rls-issue-412 --testNamePattern="AC5"
 ### FASE 5: Validación Suite Completa (30 min)
 
 **Tareas:**
+
 1. Ejecutar suite completa de tests:
    ```bash
    npm test -- multi-tenant-rls-issue-412
@@ -349,6 +368,7 @@ npm test -- multi-tenant-rls-issue-412 --testNamePattern="AC5"
 4. Validar que no hay regresiones en otras suites
 
 **Validación FASE 5:**
+
 ```bash
 npm test -- multi-tenant-rls # Full suite
 npm test -- billing # Verificar no regresiones
@@ -356,6 +376,7 @@ npm test -- shield # Verificar no regresiones
 ```
 
 **Criterio de éxito:**
+
 - ✅ 29/29 tests passing (100%)
 - ✅ No regresiones en otras suites
 - ✅ Coverage > 80% en helpers y test utils
@@ -365,6 +386,7 @@ npm test -- shield # Verificar no regresiones
 ### FASE 6: Evidencias y Documentación GDD (30 min)
 
 **Archivos a crear/modificar:**
+
 - `docs/test-evidence/issue-412/tests-passing.txt`
 - `docs/test-evidence/issue-412/SUMMARY.md`
 - `docs/nodes/multi-tenant.md`
@@ -372,6 +394,7 @@ npm test -- shield # Verificar no regresiones
 **Tareas:**
 
 **1. Generar evidencias (15 min):**
+
 ```bash
 # Crear directorio
 mkdir -p docs/test-evidence/issue-412
@@ -384,6 +407,7 @@ npm test -- multi-tenant-rls-issue-412 --coverage --coverageDirectory=docs/test-
 ```
 
 **2. Crear SUMMARY.md (10 min):**
+
 ```markdown
 # Issue #412 - Multi-tenant RLS Integration Tests - Evidencias
 
@@ -392,25 +416,31 @@ npm test -- multi-tenant-rls-issue-412 --coverage --coverageDirectory=docs/test-
 **Tests:** 29/29 passing (100%)
 
 ## Resumen
+
 [Tabla de ACs con resultados]
 
 ## Test Breakdown
+
 [Detalle de cada suite]
 
 ## RLS Policies Validated
+
 [9 tablas con políticas validadas]
 
 ## Security Validation
+
 [Auditoría y prevención cross-tenant]
 ```
 
 **3. Actualizar multi-tenant.md (5 min):**
+
 - Añadir sección "Tests de Integración RLS"
 - Referenciar evidencias en `docs/test-evidence/issue-412/`
 - Actualizar "Última actualización" con fecha
 - Verificar "Agentes Relevantes" incluye Test Engineer
 
 **Validación FASE 6:**
+
 ```bash
 # Validar GDD
 node scripts/resolve-graph.js --validate
@@ -426,6 +456,7 @@ cat docs/nodes/multi-tenant.md | grep -A 10 "Tests de Integración"
 **Tareas:**
 
 **1. Crear commit (15 min):**
+
 ```bash
 git add tests/integration/multi-tenant-rls-issue-412.test.js \
         tests/helpers/tenantTestUtils.js \
@@ -479,6 +510,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 **2. Push y crear PR (15 min):**
+
 ```bash
 git push -u origin fix/issue-412-rls-tests
 
@@ -486,6 +518,7 @@ gh pr create --title "Add Comprehensive RLS Integration Tests - Issue #412" --bo
 ```
 
 **3. Cerrar issue:**
+
 ```bash
 gh issue close 412 --comment "✅ Issue #412 COMPLETADO - RLS Integration Tests
 
@@ -498,22 +531,23 @@ gh issue close 412 --comment "✅ Issue #412 COMPLETADO - RLS Integration Tests
 
 ## Agentes a Usar
 
-| Fase | Agente Principal | Agentes Secundarios |
-|------|-----------------|---------------------|
-| FASE 0 | Task Assessor | - |
-| FASE 1 | Test Engineer | general-purpose (búsqueda) |
-| FASE 2 | Test Engineer | - |
-| FASE 3 | Test Engineer | - |
-| FASE 4 | Test Engineer | Back-end Dev (audit_log) |
-| FASE 5 | Orchestrator | - |
-| FASE 6 | Documentation Agent | Orchestrator |
-| FASE 7 | Orchestrator | - |
+| Fase   | Agente Principal    | Agentes Secundarios        |
+| ------ | ------------------- | -------------------------- |
+| FASE 0 | Task Assessor       | -                          |
+| FASE 1 | Test Engineer       | general-purpose (búsqueda) |
+| FASE 2 | Test Engineer       | -                          |
+| FASE 3 | Test Engineer       | -                          |
+| FASE 4 | Test Engineer       | Back-end Dev (audit_log)   |
+| FASE 5 | Orchestrator        | -                          |
+| FASE 6 | Documentation Agent | Orchestrator               |
+| FASE 7 | Orchestrator        | -                          |
 
 ---
 
 ## Archivos Afectados
 
 ### Nuevos
+
 - `tests/integration/multi-tenant-rls-issue-412.test.js` (500+ líneas)
 - `tests/helpers/tenantTestUtils.js` (100+ líneas)
 - `docs/test-evidence/issue-412/tests-passing.txt`
@@ -523,11 +557,13 @@ gh issue close 412 --comment "✅ Issue #412 COMPLETADO - RLS Integration Tests
 - `docs/assessment/issue-412.md` (assessment)
 
 ### Modificados
+
 - `docs/nodes/multi-tenant.md` (añadir sección Tests)
 - `database/schema.sql` (si audit_log falta)
 - `docs/system-validation.md` (auto-generado)
 
 ### Referencias
+
 - `database/schema.sql` (RLS policies existentes)
 - `docs/nodes/multi-tenant.md` (arquitectura)
 
@@ -536,6 +572,7 @@ gh issue close 412 --comment "✅ Issue #412 COMPLETADO - RLS Integration Tests
 ## Criterios de Validación Final
 
 ### Tests
+
 - [ ] 29/29 tests passing (100%)
 - [ ] AC1: 3 tests - listados restringidos ✅
 - [ ] AC2: 3 tests - accesos directos verifican tenant_id ✅
@@ -544,18 +581,21 @@ gh issue close 412 --comment "✅ Issue #412 COMPLETADO - RLS Integration Tests
 - [ ] AC5: 2 tests - auditoría cross-tenant ✅
 
 ### Seguridad
+
 - [ ] No data leaks entre tenants
 - [ ] RLS policies enforce isolation
 - [ ] Cross-tenant access blocked
 - [ ] Audit logs capture violations
 
 ### GDD
+
 - [ ] `node scripts/resolve-graph.js --validate` passing
 - [ ] multi-tenant.md actualizado con evidencias
 - [ ] Agentes Relevantes sincronizados
 - [ ] Evidencias en docs/test-evidence/issue-412/
 
 ### PR
+
 - [ ] Commit con mensaje completo
 - [ ] PR con descripción detallada
 - [ ] Tests passing en CI
@@ -565,26 +605,26 @@ gh issue close 412 --comment "✅ Issue #412 COMPLETADO - RLS Integration Tests
 
 ## Riesgos y Mitigaciones
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|--------------|---------|------------|
-| Supabase RLS no funciona en tests | Media | Alto | Usar cliente Supabase con service_role key para bypass RLS en setup, usar anon key para tests |
-| Context switching no cambia tenant | Media | Alto | Implementar helper `setTenantContext()` con verificación de `current_setting()` |
-| audit_log tabla no existe | Baja | Medio | Verificar schema.sql, crear tabla si falta |
-| Tests lentos (>2min) | Media | Bajo | Usar beforeAll para seed, cleanup solo al final |
+| Riesgo                             | Probabilidad | Impacto | Mitigación                                                                                    |
+| ---------------------------------- | ------------ | ------- | --------------------------------------------------------------------------------------------- |
+| Supabase RLS no funciona en tests  | Media        | Alto    | Usar cliente Supabase con service_role key para bypass RLS en setup, usar anon key para tests |
+| Context switching no cambia tenant | Media        | Alto    | Implementar helper `setTenantContext()` con verificación de `current_setting()`               |
+| audit_log tabla no existe          | Baja         | Medio   | Verificar schema.sql, crear tabla si falta                                                    |
+| Tests lentos (>2min)               | Media        | Bajo    | Usar beforeAll para seed, cleanup solo al final                                               |
 
 ---
 
 ## Tiempo Estimado Total
 
-| Fase | Tiempo Estimado | Acumulado |
-|------|----------------|-----------|
-| FASE 1: Setup | 1h | 1h |
-| FASE 2: AC1-AC3 | 2h | 3h |
-| FASE 3: AC4 | 2h | 5h |
-| FASE 4: AC5 | 1h | 6h |
-| FASE 5: Validación | 30min | 6.5h |
-| FASE 6: Evidencias | 30min | 7h |
-| FASE 7: Commit/PR | 30min | 7.5h |
+| Fase               | Tiempo Estimado | Acumulado |
+| ------------------ | --------------- | --------- |
+| FASE 1: Setup      | 1h              | 1h        |
+| FASE 2: AC1-AC3    | 2h              | 3h        |
+| FASE 3: AC4        | 2h              | 5h        |
+| FASE 4: AC5        | 1h              | 6h        |
+| FASE 5: Validación | 30min           | 6.5h      |
+| FASE 6: Evidencias | 30min           | 7h        |
+| FASE 7: Commit/PR  | 30min           | 7.5h      |
 
 **Total:** ~7.5 horas
 

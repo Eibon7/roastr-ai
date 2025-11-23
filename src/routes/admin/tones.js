@@ -1,9 +1,9 @@
 /**
  * Admin Routes: Roast Tones Management
- * 
+ *
  * CRUD endpoints for dynamic tone configuration.
  * Requires admin authentication.
- * 
+ *
  * Issue #876: Dynamic Roast Tone Configuration System
  */
 
@@ -22,7 +22,7 @@ router.use(requireAdmin);
 /**
  * GET /api/admin/tones
  * List all tones (active + inactive)
- * 
+ *
  * @returns {200} { success: true, data: Array<Tone> }
  * @returns {500} { success: false, error: string }
  */
@@ -58,7 +58,7 @@ router.get('/', async (req, res) => {
 /**
  * GET /api/admin/tones/:id
  * Get single tone by ID
- * 
+ *
  * @param {string} id - Tone UUID
  * @returns {200} { success: true, data: Tone }
  * @returns {404} { success: false, error: 'Tone not found' }
@@ -107,7 +107,7 @@ router.get('/:id', async (req, res) => {
 /**
  * POST /api/admin/tones
  * Create new tone
- * 
+ *
  * @body {Object} toneData - Tone configuration
  * @returns {201} { success: true, data: Tone }
  * @returns {400} { success: false, error: 'Validation failed' }
@@ -170,7 +170,7 @@ router.post('/', async (req, res) => {
 /**
  * PUT /api/admin/tones/:id
  * Update existing tone
- * 
+ *
  * @param {string} id - Tone UUID
  * @body {Object} updates - Fields to update
  * @returns {200} { success: true, data: Tone }
@@ -241,7 +241,7 @@ router.put('/:id', async (req, res) => {
 /**
  * DELETE /api/admin/tones/:id
  * Delete tone
- * 
+ *
  * @param {string} id - Tone UUID
  * @returns {200} { success: true, message: 'Tone deleted' }
  * @returns {400} { success: false, error: 'Cannot delete last active tone' }
@@ -297,7 +297,7 @@ router.delete('/:id', async (req, res) => {
 /**
  * POST /api/admin/tones/:id/activate
  * Activate tone
- * 
+ *
  * @param {string} id - Tone UUID
  * @returns {200} { success: true, data: Tone }
  * @returns {404} { success: false, error: 'Tone not found' }
@@ -346,7 +346,7 @@ router.post('/:id/activate', async (req, res) => {
 /**
  * POST /api/admin/tones/:id/deactivate
  * Deactivate tone
- * 
+ *
  * @param {string} id - Tone UUID
  * @returns {200} { success: true, data: Tone }
  * @returns {400} { success: false, error: 'Cannot deactivate last active tone' }
@@ -403,7 +403,7 @@ router.post('/:id/deactivate', async (req, res) => {
 /**
  * PUT /api/admin/tones/reorder
  * Reorder tones
- * 
+ *
  * @body {Array<{id: string, sort_order: number}>} orderArray - New sort order
  * @returns {200} { success: true, data: Array<Tone> }
  * @returns {400} { success: false, error: 'Invalid order array' }
@@ -451,4 +451,3 @@ router.put('/reorder', async (req, res) => {
 });
 
 module.exports = router;
-

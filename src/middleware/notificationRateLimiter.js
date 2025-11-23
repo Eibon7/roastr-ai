@@ -137,15 +137,15 @@ const getNotificationRateConfig = () => {
   return {
     general: {
       windowMs: parseInt(process.env.NOTIFICATION_RATE_WINDOW_MS) || 60 * 1000,
-      max: parseInt(process.env.NOTIFICATION_RATE_MAX) || 60,
+      max: parseInt(process.env.NOTIFICATION_RATE_MAX) || 60
     },
     marking: {
       windowMs: parseInt(process.env.NOTIFICATION_MARK_RATE_WINDOW_MS) || 60 * 1000,
-      max: parseInt(process.env.NOTIFICATION_MARK_RATE_MAX) || 30,
+      max: parseInt(process.env.NOTIFICATION_MARK_RATE_MAX) || 30
     },
     deletion: {
       windowMs: parseInt(process.env.NOTIFICATION_DELETE_RATE_WINDOW_MS) || 60 * 1000,
-      max: parseInt(process.env.NOTIFICATION_DELETE_RATE_MAX) || 20,
+      max: parseInt(process.env.NOTIFICATION_DELETE_RATE_MAX) || 20
     }
   };
 };
@@ -159,7 +159,7 @@ const getNotificationRateConfig = () => {
 const createNotificationRateLimiter = (type, customConfig = {}) => {
   const config = getNotificationRateConfig();
   const typeConfig = config[type] || config.general;
-  
+
   return rateLimit({
     windowMs: customConfig.windowMs || typeConfig.windowMs,
     max: customConfig.max || typeConfig.max,
@@ -170,29 +170,35 @@ const createNotificationRateLimiter = (type, customConfig = {}) => {
     },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: customConfig.keyGenerator || ((req) => {
-      const ip = ipKeyGenerator(req);
-      const userId = req.user?.id || 'anonymous';
-      return `notification_${type}:${ip}:${userId}`;
-    }),
-    handler: customConfig.handler || ((req, res) => {
-      logger.warn(`Notification ${type} rate limit exceeded`, {
-        ip: req.ip,
-        userId: req.user?.id?.substring(0, 8) + '...',
-        endpoint: req.path,
-        userAgent: req.get('User-Agent'),
-        method: req.method
-      });
-      res.status(429).json({
-        success: false,
-        error: customConfig.message || 'Too many requests. Please slow down.',
-        code: customConfig.code || 'NOTIFICATION_RATE_LIMITED',
-        retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
-      });
-    }),
-    skip: customConfig.skip || ((req) => {
-      return process.env.NODE_ENV === 'test' || flags.isEnabled('DISABLE_RATE_LIMIT');
-    })
+    keyGenerator:
+      customConfig.keyGenerator ||
+      ((req) => {
+        const ip = ipKeyGenerator(req);
+        const userId = req.user?.id || 'anonymous';
+        return `notification_${type}:${ip}:${userId}`;
+      }),
+    handler:
+      customConfig.handler ||
+      ((req, res) => {
+        logger.warn(`Notification ${type} rate limit exceeded`, {
+          ip: req.ip,
+          userId: req.user?.id?.substring(0, 8) + '...',
+          endpoint: req.path,
+          userAgent: req.get('User-Agent'),
+          method: req.method
+        });
+        res.status(429).json({
+          success: false,
+          error: customConfig.message || 'Too many requests. Please slow down.',
+          code: customConfig.code || 'NOTIFICATION_RATE_LIMITED',
+          retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+        });
+      }),
+    skip:
+      customConfig.skip ||
+      ((req) => {
+        return process.env.NODE_ENV === 'test' || flags.isEnabled('DISABLE_RATE_LIMIT');
+      })
   });
 };
 

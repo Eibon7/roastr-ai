@@ -147,14 +147,16 @@ router.post('/generate', authenticateToken, async (req, res) => {
     if (totalCollectedItems === 0) {
       return res.status(400).json({
         success: false,
-        error: 'No imported content found. Please connect and import from at least one platform first.',
+        error:
+          'No imported content found. Please connect and import from at least one platform first.',
         hint: 'Import at least 50 items from any platform to generate a style profile'
       });
     }
 
     // Check minimum content threshold
-    const platformsWithEnoughContent = Object.entries(contentByPlatform)
-      .filter(([platform, content]) => content.length >= 50);
+    const platformsWithEnoughContent = Object.entries(contentByPlatform).filter(
+      ([platform, content]) => content.length >= 50
+    );
 
     if (platformsWithEnoughContent.length === 0) {
       return res.status(400).json({
@@ -169,17 +171,15 @@ router.post('/generate', authenticateToken, async (req, res) => {
 
     // Generate style profile
     try {
-      const profileData = await profileGenerator.generateStyleProfile(
-        userId, 
-        contentByPlatform, 
-        { maxItemsPerPlatform }
-      );
+      const profileData = await profileGenerator.generateStyleProfile(userId, contentByPlatform, {
+        maxItemsPerPlatform
+      });
 
       // Store the generated profile
       userStyleProfiles.set(userId, profileData);
 
       console.log(`✅ Style profile generated for user ${userId}`);
-      console.log(`🌍 Languages: ${profileData.profiles.map(p => p.lang).join(', ')}`);
+      console.log(`🌍 Languages: ${profileData.profiles.map((p) => p.lang).join(', ')}`);
       console.log(`📊 Total items analyzed: ${profileData.totalItems}`);
 
       res.json({
@@ -193,7 +193,6 @@ router.post('/generate', authenticateToken, async (req, res) => {
           stats: profileGenerator.getProfileStats(profileData.profiles)
         }
       });
-
     } catch (generationError) {
       console.error('❌ Error generating style profile:', generationError.message);
       res.status(400).json({
@@ -202,7 +201,6 @@ router.post('/generate', authenticateToken, async (req, res) => {
         type: 'generation_error'
       });
     }
-
   } catch (error) {
     console.error('❌ Error in style profile generation endpoint:', error.message);
     res.status(500).json({
@@ -237,12 +235,12 @@ router.get('/preview/:lang', authenticateToken, (req, res) => {
       });
     }
 
-    const languageProfile = profile.profiles.find(p => p.lang === lang);
+    const languageProfile = profile.profiles.find((p) => p.lang === lang);
     if (!languageProfile) {
       return res.status(404).json({
         success: false,
         error: 'Language profile not found',
-        availableLanguages: profile.profiles.map(p => p.lang)
+        availableLanguages: profile.profiles.map((p) => p.lang)
       });
     }
 
@@ -338,7 +336,7 @@ router.get('/stats', authenticateToken, (req, res) => {
     }
 
     const stats = profileGenerator.getProfileStats(profile.profiles);
-    
+
     res.json({
       success: true,
       data: {

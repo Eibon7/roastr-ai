@@ -2,14 +2,14 @@
 
 /**
  * SPEC 14 - QA Test Suite Runner
- * 
+ *
  * Comprehensive test runner for all SPEC 14 components:
  * - E2E scenarios (5 main flows)
  * - Contract tests (adapter interfaces)
  * - Idempotency tests (duplicate prevention)
  * - Tier validation tests (plan limits)
  * - Coverage validation
- * 
+ *
  * Usage:
  *   node scripts/run-spec14-tests.js [options]
  *   npm run test:spec14 [options]
@@ -34,7 +34,9 @@ const TEST_SUITES = [
     name: 'Synthetic Fixtures Validation',
     description: 'Validate GDPR-compliant synthetic test data',
     command: 'node',
-    args: ['-e', `
+    args: [
+      '-e',
+      `
       const { createSyntheticFixtures, validateSyntheticData } = require('./tests/helpers/syntheticFixtures');
       (async () => {
         console.log('🧪 Validating synthetic fixtures...');
@@ -42,7 +44,8 @@ const TEST_SUITES = [
         validateSyntheticData(fixtures);
         console.log('✅ Synthetic fixtures validation passed');
       })();
-    `],
+    `
+    ],
     critical: true
   },
   {
@@ -52,7 +55,7 @@ const TEST_SUITES = [
     critical: true
   },
   {
-    name: 'Idempotency Tests', 
+    name: 'Idempotency Tests',
     description: 'Ensure no duplicate events or credit deductions',
     testFile: 'tests/integration/spec14-idempotency.test.js',
     critical: true
@@ -78,7 +81,7 @@ const options = {
   coverage: args.includes('--coverage') || args.includes('-c'),
   parallel: !args.includes('--no-parallel'),
   bail: args.includes('--bail'),
-  suite: args.find(arg => arg.startsWith('--suite='))?.split('=')[1],
+  suite: args.find((arg) => arg.startsWith('--suite='))?.split('=')[1],
   dryRun: args.includes('--dry-run')
 };
 
@@ -127,24 +130,24 @@ function setupTestEnvironment() {
     ENABLE_MOCK_MODE: 'true',
     DRY_RUN_SHIELD: 'true',
     JEST_TIMEOUT: SPEC14_CONFIG.timeout.toString(),
-    
+
     // Mock API keys
     OPENAI_API_KEY: 'mock-openai-key-for-spec14-testing',
     PERSPECTIVE_API_KEY: 'mock-perspective-key-for-spec14-testing',
     SUPABASE_URL: 'http://localhost:54321/mock',
     SUPABASE_SERVICE_KEY: 'mock-service-key-for-spec14',
     SUPABASE_ANON_KEY: 'mock-anon-key-for-spec14',
-    
+
     // Mock integrations
     TWITTER_BEARER_TOKEN: 'mock-twitter-bearer-token',
     YOUTUBE_API_KEY: 'mock-youtube-api-key',
     DISCORD_BOT_TOKEN: 'mock-discord-bot-token',
-    
+
     // Mock billing
     STRIPE_SECRET_KEY: 'sk_test_mock123456789',
     STRIPE_WEBHOOK_SECRET: 'whsec_mock123456789',
     ENABLE_BILLING: 'true',
-    
+
     ...process.env
   };
 
@@ -152,8 +155,8 @@ function setupTestEnvironment() {
   if (options.verbose) {
     console.log('Test environment variables:');
     Object.keys(testEnv)
-      .filter(key => key.includes('MOCK') || key.includes('TEST') || key.includes('DRY_RUN'))
-      .forEach(key => console.log(`  ${key}=${testEnv[key]}`));
+      .filter((key) => key.includes('MOCK') || key.includes('TEST') || key.includes('DRY_RUN'))
+      .forEach((key) => console.log(`  ${key}=${testEnv[key]}`));
   }
 
   return testEnv;
@@ -163,9 +166,9 @@ function setupTestEnvironment() {
 function runTestSuite(suite, env) {
   return new Promise((resolve, reject) => {
     logStep('TEST', `${suite.name}: ${suite.description}`);
-    
+
     let command, args;
-    
+
     if (suite.command) {
       // Custom command
       command = suite.command;
@@ -181,53 +184,53 @@ function runTestSuite(suite, env) {
         '--detectOpenHandles',
         '--maxWorkers=' + SPEC14_CONFIG.maxConcurrency
       ];
-      
+
       if (options.bail && suite.critical) {
         args.push('--bail');
       }
-      
+
       if (options.coverage && suite.name.includes('Coverage')) {
         args.push('--coverage');
         args.push('--coverageReporters=text');
         args.push('--coverageReporters=json-summary');
       }
     }
-    
+
     if (options.dryRun) {
       console.log(`Would run: ${command} ${args.join(' ')}`);
       resolve({ success: true, suite: suite.name, dryRun: true });
       return;
     }
-    
+
     const startTime = Date.now();
     const child = spawn(command, args, {
       env,
       stdio: options.verbose ? 'inherit' : 'pipe',
       shell: process.platform === 'win32'
     });
-    
+
     let output = '';
     let errors = '';
-    
+
     if (!options.verbose) {
       child.stdout?.on('data', (data) => {
         output += data.toString();
       });
-      
+
       child.stderr?.on('data', (data) => {
         errors += data.toString();
       });
     }
-    
+
     child.on('close', (code) => {
       const duration = Date.now() - startTime;
-      
+
       if (code === 0) {
         logSuccess(`${suite.name} completed in ${duration}ms`);
-        resolve({ 
-          success: true, 
-          suite: suite.name, 
-          duration, 
+        resolve({
+          success: true,
+          suite: suite.name,
+          duration,
           output: output.slice(-500) // Last 500 chars
         });
       } else {
@@ -235,16 +238,16 @@ function runTestSuite(suite, env) {
         if (!options.verbose && errors) {
           console.log('Error output:', errors.slice(-1000)); // Last 1000 chars
         }
-        reject({ 
-          success: false, 
-          suite: suite.name, 
-          code, 
-          duration, 
+        reject({
+          success: false,
+          suite: suite.name,
+          code,
+          duration,
           error: errors.slice(-1000)
         });
       }
     });
-    
+
     child.on('error', (error) => {
       logError(`Failed to start ${suite.name}: ${error.message}`);
       reject({ success: false, suite: suite.name, error: error.message });
@@ -255,13 +258,13 @@ function runTestSuite(suite, env) {
 // Run coverage validation
 async function validateCoverage() {
   logStep('COVERAGE', 'Validating test coverage');
-  
+
   try {
     const coveragePath = path.join(process.cwd(), 'coverage/coverage-summary.json');
-    
+
     if (!fs.existsSync(coveragePath)) {
       logWarning('Coverage file not found, running coverage tests...');
-      
+
       const env = setupTestEnvironment();
       const coverageArgs = [
         'jest',
@@ -274,25 +277,27 @@ async function validateCoverage() {
         '--collectCoverageFrom=src/routes/roast.js',
         '--silent'
       ];
-      
+
       await new Promise((resolve, reject) => {
         const child = spawn('npx', coverageArgs, { env, stdio: 'inherit' });
-        child.on('close', (code) => code === 0 ? resolve() : reject(new Error('Coverage generation failed')));
+        child.on('close', (code) =>
+          code === 0 ? resolve() : reject(new Error('Coverage generation failed'))
+        );
       });
     }
-    
+
     if (fs.existsSync(coveragePath)) {
       const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
       const { total } = coverage;
-      
+
       console.log('\n📊 Coverage Summary:');
       console.log(`  Lines: ${total.lines.pct}%`);
       console.log(`  Functions: ${total.functions.pct}%`);
       console.log(`  Branches: ${total.branches.pct}%`);
       console.log(`  Statements: ${total.statements.pct}%`);
-      
+
       const threshold = SPEC14_CONFIG.coverageThreshold;
-      
+
       if (total.lines.pct >= threshold && total.functions.pct >= threshold) {
         logSuccess(`Coverage meets ${threshold}% threshold`);
         return { success: true, coverage: total };
@@ -304,7 +309,6 @@ async function validateCoverage() {
       logWarning('Coverage validation skipped - no coverage data available');
       return { success: true, skipped: true };
     }
-    
   } catch (error) {
     logError(`Coverage validation failed: ${error.message}`);
     return { success: false, error: error.message };
@@ -314,18 +318,20 @@ async function validateCoverage() {
 // Generate final report
 function generateReport(results, coverageResult) {
   logHeader('SPEC 14 - QA Test Suite Report');
-  
+
   const totalSuites = results.length;
-  const passedSuites = results.filter(r => r.success).length;
-  const failedSuites = results.filter(r => !r.success);
+  const passedSuites = results.filter((r) => r.success).length;
+  const failedSuites = results.filter((r) => !r.success);
   const totalDuration = results.reduce((sum, r) => sum + (r.duration || 0), 0);
-  
+
   console.log(`\n📊 Test Execution Summary:`);
   console.log(`  Total Suites: ${totalSuites}`);
   console.log(`  Passed: ${colorize(passedSuites, 'green')}`);
-  console.log(`  Failed: ${colorize(failedSuites.length, failedSuites.length > 0 ? 'red' : 'green')}`);
+  console.log(
+    `  Failed: ${colorize(failedSuites.length, failedSuites.length > 0 ? 'red' : 'green')}`
+  );
   console.log(`  Total Duration: ${Math.round(totalDuration / 1000)}s`);
-  
+
   if (coverageResult && !coverageResult.skipped) {
     console.log(`\n📈 Coverage Results:`);
     if (coverageResult.success) {
@@ -334,18 +340,18 @@ function generateReport(results, coverageResult) {
       logError(`Coverage validation failed`);
     }
   }
-  
+
   console.log(`\n✅ SPEC 14 Requirements Verified:`);
   console.log(`  ✅ E2E tests covering all 5 main scenarios`);
-  console.log(`  ✅ Contract tests for all adapter interfaces`);  
+  console.log(`  ✅ Contract tests for all adapter interfaces`);
   console.log(`  ✅ Idempotency tests preventing duplicates`);
   console.log(`  ✅ Tier validation for all plan levels`);
   console.log(`  ✅ Shield actions run in dry mode only`);
   console.log(`  ✅ GDPR-compliant synthetic fixtures`);
-  
+
   if (failedSuites.length > 0) {
     console.log(`\n❌ Failed Test Suites:`);
-    failedSuites.forEach(suite => {
+    failedSuites.forEach((suite) => {
       console.log(`  - ${suite.suite}: ${suite.error || 'Unknown error'}`);
     });
     return false;
@@ -359,35 +365,35 @@ function generateReport(results, coverageResult) {
 async function main() {
   logHeader('SPEC 14 - QA Test Suite Integral');
   console.log('Comprehensive testing for all critical system flows\n');
-  
+
   if (options.dryRun) {
     logWarning('DRY RUN MODE - No tests will actually execute');
   }
-  
+
   try {
     // Setup
     const env = setupTestEnvironment();
-    const suitesToRun = options.suite 
-      ? TEST_SUITES.filter(s => s.name.toLowerCase().includes(options.suite.toLowerCase()))
+    const suitesToRun = options.suite
+      ? TEST_SUITES.filter((s) => s.name.toLowerCase().includes(options.suite.toLowerCase()))
       : TEST_SUITES;
-    
+
     if (suitesToRun.length === 0) {
       logError(`No test suites found matching: ${options.suite}`);
       process.exit(1);
     }
-    
+
     console.log(`\nRunning ${suitesToRun.length} test suite(s):`);
     suitesToRun.forEach((suite, index) => {
       console.log(`  ${index + 1}. ${suite.name}`);
     });
-    
+
     // Run test suites
     const results = [];
-    
+
     if (options.parallel && !options.dryRun) {
       logStep('PARALLEL', 'Running test suites in parallel');
-      const promises = suitesToRun.map(suite => 
-        runTestSuite(suite, env).catch(error => ({ ...error, suite: suite.name }))
+      const promises = suitesToRun.map((suite) =>
+        runTestSuite(suite, env).catch((error) => ({ ...error, suite: suite.name }))
       );
       const parallelResults = await Promise.all(promises);
       results.push(...parallelResults);
@@ -406,19 +412,18 @@ async function main() {
         }
       }
     }
-    
+
     // Validate coverage if requested
     let coverageResult = null;
     if (options.coverage) {
       coverageResult = await validateCoverage();
     }
-    
+
     // Generate report
     const success = generateReport(results, coverageResult);
-    
+
     // Exit with appropriate code
     process.exit(success ? 0 : 1);
-    
   } catch (error) {
     logError(`SPEC 14 test suite failed: ${error.message}`);
     if (options.verbose) {

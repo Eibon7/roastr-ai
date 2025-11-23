@@ -1,6 +1,6 @@
 /**
  * YouTube Platform Integration Verification Tests
- * 
+ *
  * Part of Issue #712: Social Platform Integration Verification
  */
 
@@ -63,10 +63,10 @@ describe('YouTube Platform Verification', () => {
 
     it('should handle fetchComments operation', async () => {
       // YouTube service may have different method names
-      const hasFetchMethod = 
+      const hasFetchMethod =
         typeof service.fetchComments === 'function' ||
         typeof service.listenForMentions === 'function';
-      
+
       expect(typeof hasFetchMethod).toBe('boolean');
     });
   });
@@ -87,5 +87,3 @@ describe('YouTube Platform Verification', () => {
     });
   });
 });
-
-
