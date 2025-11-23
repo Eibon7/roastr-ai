@@ -267,22 +267,20 @@ describe('Persona API Integration Tests', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should sanitize HTML/script tags', async () => {
+    it('should reject HTML/script tags (XSS detection)', async () => {
       const userId = 'user-123';
       const token = generateToken(userId, 'pro');
-
-      PersonaService.updatePersona.mockResolvedValue({ success: true, fieldsUpdated: [] });
 
       const response = await request(app)
         .post('/api/persona')
         .set('Authorization', `Bearer ${token}`)
         .send({ lo_que_me_define: '<script>alert("XSS")</script>' });
 
-      expect(response.status).toBe(200);
-
-      // Verify that express-validator escaped the script tag
-      const updateCall = PersonaService.updatePersona.mock.calls[0][1];
-      expect(updateCall.lo_que_me_define).not.toContain('<script>');
+      // Issue #942: Zod rejects XSS patterns with 400
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.code).toBe('VALIDATION_ERROR');
+      expect(response.body.errors[0].message).toMatch(/unsafe content/i);
     });
 
     it('should handle partial updates', async () => {
@@ -303,21 +301,20 @@ describe('Persona API Integration Tests', () => {
       expect(response.body.data.fieldsUpdated).toEqual(['lo_que_no_tolero']);
     });
 
-    it('should handle empty request body', async () => {
+    it('should reject empty request body', async () => {
       const userId = 'user-123';
       const token = generateToken(userId, 'pro');
-
-      PersonaService.updatePersona.mockResolvedValue({
-        success: true,
-        fieldsUpdated: []
-      });
 
       const response = await request(app)
         .post('/api/persona')
         .set('Authorization', `Bearer ${token}`)
         .send({});
 
-      expect(response.status).toBe(200);
+      // Issue #942: Zod requires at least one field
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.code).toBe('VALIDATION_ERROR');
+      expect(response.body.errors[0].message).toMatch(/at least one/i);
     });
   });
 
@@ -530,7 +527,7 @@ describe('Persona API Integration Tests', () => {
       expect(PersonaService.getPersona).not.toHaveBeenCalledWith('user-B');
     });
 
-    it('should sanitize SQL injection attempts', async () => {
+    it('should accept SQL injection patterns (DB layer handles protection)', async () => {
       const userId = 'user-123';
       const token = generateToken(userId, 'pro');
 
@@ -541,16 +538,17 @@ describe('Persona API Integration Tests', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({ lo_que_me_define: "'; DROP TABLE users; --" });
 
+      // Issue #942: Zod does NOT sanitize SQL injection patterns
+      // SQL injection protection is handled by DB layer with prepared statements
+      // Zod only rejects XSS patterns (<script>, javascript:, onerror=)
       expect(response.status).toBe(200);
 
-      // Verify sanitization happened (HTML escaping)
-      // express-validator's .escape() converts dangerous HTML chars
+      // Verify the string passes validation as-is (no HTML escaping)
       const updateCall = PersonaService.updatePersona.mock.calls[0][1];
-      expect(updateCall.lo_que_me_define).toContain('&#x27;'); // Escaped single quote
-      expect(updateCall.lo_que_me_define).not.toContain("'"); // Original quote removed
+      expect(updateCall.lo_que_me_define).toBe("'; DROP TABLE users; --");
 
-      // Note: SQL keywords like "DROP TABLE" remain because we use parameterized queries
-      // which prevent SQL injection regardless of content. HTML escaping prevents XSS.
+      // Note: SQL keywords like "DROP TABLE" pass through because DB uses prepared statements
+      // which prevent SQL injection regardless of content. Zod focuses on XSS prevention.
     });
   });
 });
