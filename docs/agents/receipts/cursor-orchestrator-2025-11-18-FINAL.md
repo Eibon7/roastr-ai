@@ -13,6 +13,7 @@
 ### ❌ Error Inicial
 
 En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en el producto:
+
 - Sarcasmo Elegante
 - Despiadado
 - Juguetón
@@ -28,6 +29,7 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 **Eliminé completamente los perfiles inventados** y documenté **SOLO lo que existe** tras la limpieza del Issue #686:
 
 **Los 3 Tonos Reales:**
+
 1. **Flanders** (2/5) - Amable con ironía sutil
 2. **Balanceado** (3/5) - Equilibrio entre ingenio y firmeza
 3. **Canalla** (4/5) - Directo y sin filtros
@@ -41,16 +43,15 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 **Contenido REAL:**
 
 #### Los 3 Tonos Oficiales
+
 - **Flanders (2/5):** Educado, irónico, elegante
   - Recursos: Ironía sutil, double entendre, understatement
   - Restricciones: Sin insultos directos, sin vulgaridad
   - 3 ejemplos concretos
-  
 - **Balanceado (3/5):** Equilibrado, ingenioso, directo
   - Recursos: Sarcasmo marcado, comparaciones inteligentes
   - Restricciones: Sin crueldad innecesaria
   - 3 ejemplos concretos
-  
 - **Canalla (4/5):** Directo, sin filtros, contundente
   - Recursos: Hipérbole extrema, comparaciones brutales
   - Restricciones CRÍTICAS: Sin discriminación, sin ataques físicos
@@ -59,22 +60,26 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 #### Integraciones Reales
 
 **Style Profile (Pro/Plus):**
+
 - NO reemplaza el tone, lo PERSONALIZA
 - Ejemplo: Balanceado (3/5) + Style Profile "humor tech" = Roast 3/5 con analogías de programación
 - Documentado cómo se integra en el prompt
 
 **Brand Safety (Plus):**
+
 - Tone override cuando hay sponsor match
 - professional / light_humor / aggressive_irony
 - IGNORA el tone base del usuario
 - Ejemplos de defensive roasts
 
 **Platform Constraints:**
+
 - Límites por plataforma (Twitter 280, Discord 2000, etc.)
 - Cómo ajustar roasts cuando exceden límites
 - Mantener tone y Style Profile al acortar
 
 **Post-Limpieza #686:**
+
 - ❌ Plan Free eliminado
 - ❌ Humor Type eliminado
 - ❌ Intensity Level eliminado
@@ -89,6 +94,7 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 #### BLOQUE A - SYSTEM (Estático, Cacheable)
 
 **Contenido literal sin variables:**
+
 ```
 - Rol de Roastr
 - Reglas de seguridad universales
@@ -101,6 +107,7 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 ```
 
 **Características:**
+
 - 100% estático, sin placeholders
 - Solo los 3 tonos reales
 - ~1800 tokens
@@ -109,6 +116,7 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 #### BLOQUE B - USER (Cacheable por user_id)
 
 **Variables cacheables:**
+
 - `preferred_tone`: flanders/balanceado/canalla
 - `style_profile`: Style Profile del usuario (Pro/Plus)
 - `red_lines`: Lo que NO tolera
@@ -116,6 +124,7 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 - `sponsors_list`: Sponsors protegidos con tone overrides (Plus)
 
 **Características:**
+
 - Orden determinista
 - Solo features que EXISTEN (Style Profile, Brand Safety)
 - ~400 tokens
@@ -124,6 +133,7 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 #### BLOQUE C - DYNAMIC (NO Cacheable)
 
 **Variables dinámicas:**
+
 - `original_comment`: Comentario tóxico
 - `toxicity_score`: De Perspective API
 - `selected_tone`: UNO de los 3 (flanders/balanceado/canalla)
@@ -134,6 +144,7 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 - `brand_safety_instruction`: Override instruction si match
 
 **Características:**
+
 - Cambia cada request
 - NO cacheable
 - Solo los 3 tonos reales
@@ -144,17 +155,20 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 ## 💰 Optimización de Costes con Caching
 
 **Tokens:**
+
 - Bloque A: 1800 tokens (cacheable global)
 - Bloque B: 400 tokens (cacheable por user)
 - Bloque C: 500 tokens (dinámico)
 - **Total:** 2700 tokens
 
 **Ahorro:**
+
 - Primera request: $0.0027
 - Subsecuentes (mismo user, <24h): $0.0016
 - **Ahorro por request:** 41%
 
 **Volumen (1000 users × 10 requests):**
+
 - Sin cache: $27.00
 - Con cache: $17.10
 - **Ahorro total:** $9.90 (37%)
@@ -163,15 +177,15 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 
 ## 📊 Acceptance Criteria Status
 
-| AC | Descripción | Status |
-|----|-------------|--------|
-| AC1 | Sistema de Tonos documentado | ✅ COMPLETE (3 tonos reales) |
-| AC2 | Prompt Maestro 100% definido | ✅ COMPLETE (Bloques A/B/C) |
-| AC3 | Bloque A estático y cacheable | ✅ COMPLETE (sin variables) |
-| AC4 | Bloque B determinista por usuario | ✅ COMPLETE (Style Profile + sponsors) |
-| AC5 | Bloque C con parámetros dinámicos | ✅ COMPLETE (tone + comment + platform) |
-| AC6 | Roasts consistentes en todos tonos | 🟡 Design complete, testing pending |
-| AC7 | Compatible con configs existentes | ✅ COMPLETE (post-#686) |
+| AC  | Descripción                         | Status                                  |
+| --- | ----------------------------------- | --------------------------------------- |
+| AC1 | Sistema de Tonos documentado        | ✅ COMPLETE (3 tonos reales)            |
+| AC2 | Prompt Maestro 100% definido        | ✅ COMPLETE (Bloques A/B/C)             |
+| AC3 | Bloque A estático y cacheable       | ✅ COMPLETE (sin variables)             |
+| AC4 | Bloque B determinista por usuario   | ✅ COMPLETE (Style Profile + sponsors)  |
+| AC5 | Bloque C con parámetros dinámicos   | ✅ COMPLETE (tone + comment + platform) |
+| AC6 | Roasts consistentes en todos tonos  | 🟡 Design complete, testing pending     |
+| AC7 | Compatible con configs existentes   | ✅ COMPLETE (post-#686)                 |
 | AC8 | Sin referencias a configs obsoletas | ✅ COMPLETE (sin Humor Type, Intensity) |
 
 **Overall:** 6/8 completados (75%), 2 pending implementación técnica
@@ -220,6 +234,7 @@ En la primera iteración, **inventé 7 perfiles de roaster** que NO existen en e
 ### Blocker: Requiere Issue Paralela de Caching
 
 La **implementación en código** requiere una issue paralela que introduzca:
+
 - Soporte técnico de GPT prompt caching
 - Modularización con `roastPrompt.ts`
 - Configuración de `cache_control: { type: 'ephemeral', retention: '24h' }`
@@ -240,6 +255,7 @@ La **implementación en código** requiere una issue paralela que introduzca:
 ### 1. Solo 3 Tonos (Lo que EXISTE)
 
 **Rationale:**
+
 - Son los ÚNICOS tonos que existen en el código
 - Validados en `validationConstants.js`: flanders, balanceado, canalla
 - Implementados en `roastEngine.js` con intensidades fijas (2/3/4)
@@ -248,6 +264,7 @@ La **implementación en código** requiere una issue paralela que introduzca:
 ### 2. Style Profile Personaliza, No Reemplaza
 
 **Rationale:**
+
 - Feature existente (Pro/Plus)
 - NO crea nuevos tonos
 - Personaliza los 3 tonos base con estilo del usuario
@@ -256,6 +273,7 @@ La **implementación en código** requiere una issue paralela que introduzca:
 ### 3. Brand Safety Override Completo
 
 **Rationale:**
+
 - Feature existente (Plus, Issue #859)
 - SOBREESCRIBE el tone base cuando hay sponsor match
 - Tone overrides: professional, light_humor, aggressive_irony
@@ -264,6 +282,7 @@ La **implementación en código** requiere una issue paralela que introduzca:
 ### 4. Post-#686 Clean Architecture
 
 **Rationale:**
+
 - Humor Type eliminado → Redundante
 - Intensity Level eliminado → Redundante con tonos
 - Plan Free eliminado → Starter Trial es el nuevo mínimo
@@ -304,11 +323,13 @@ La **implementación en código** requiere una issue paralela que introduzca:
 ### 1. NUNCA Inventar Features Sin Consultar
 
 **Error:**
+
 - Asumí que "definir Style Framework" = crear perfiles nuevos
 - No busqué primero qué existe en el código
 - Inventé 7 perfiles sin validación
 
 **Corrección:**
+
 - Buscar SIEMPRE en código antes de diseñar
 - Documentar solo lo que EXISTE
 - Consultar antes de cambios estructurales
@@ -317,6 +338,7 @@ La **implementación en código** requiere una issue paralela que introduzca:
 ### 2. Usar grep y codebase_search PRIMERO
 
 **Workflow correcto:**
+
 1. Leer issue
 2. `grep` o `codebase_search` para encontrar qué existe
 3. Leer código relevante
@@ -326,6 +348,7 @@ La **implementación en código** requiere una issue paralela que introduzca:
 ### 3. Post-#686 Context es Crítico
 
 **Contexto:**
+
 - Issue #686 eliminó configuraciones obsoletas
 - Issue #872 documenta lo que QUEDA tras limpieza
 - Timing importa: documentar DESPUÉS de limpieza, no antes
@@ -377,4 +400,3 @@ La **implementación en código** requiere una issue paralela que introduzca:
 **Status:** ✅ **DOCUMENTATION COMPLETE (CORRECTED)**  
 **Ready for:** Product Owner review + Issue paralela (caching técnico)  
 **Confidence:** 95% - Documentación fiel al código real, sin inventar features
-

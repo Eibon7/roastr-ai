@@ -93,18 +93,21 @@ AgentActivityMonitor
 ### 1. Status Badges
 
 **Success Badge:**
+
 - Background: `#50fa7b20` (green with 20% opacity)
 - Border: `#50fa7b40` (green with 40% opacity)
 - Text: `#50fa7b` (green)
 - Text: "SUCCESS"
 
 **Error Badge:**
+
 - Background: `#ff555520` (red with 20% opacity)
 - Border: `#ff555540` (red with 40% opacity)
 - Text: `#ff5555` (red)
 - Text: "ERROR"
 
 **Rollback Badge:**
+
 - Background: `#f1fa8c20` (yellow with 20% opacity)
 - Border: `#f1fa8c40` (yellow with 40% opacity)
 - Text: `#f1fa8c` (yellow)
@@ -120,16 +123,19 @@ AgentActivityMonitor
 ### 3. Health Delta Indicator
 
 **Positive Delta:**
+
 - Color: `#50fa7b` (green)
 - Format: "+X.XX"
 
 **Negative Delta:**
+
 - Color: `#ff5555` (red)
 - Format: "-X.XX"
 
 ### 4. Connection Status
 
 **Connected:**
+
 - Background: `#50fa7b20`
 - Border: `#50fa7b40`
 - Text: `#50fa7b`
@@ -137,6 +143,7 @@ AgentActivityMonitor
 - Text: "Connected"
 
 **Disconnected:**
+
 - Background: `#8a8a8a20`
 - Border: `#8a8a8a40`
 - Text: `#8a8a8a`
@@ -368,6 +375,7 @@ Due to the component requiring a running server and authentication, screenshots 
 ## Next Steps for Visual Testing
 
 1. **Start development server:**
+
    ```bash
    cd admin-dashboard
    npm run dev
@@ -378,6 +386,7 @@ Due to the component requiring a running server and authentication, screenshots 
    - Authenticate as admin user
 
 3. **Generate screenshots:**
+
    ```bash
    node scripts/test-visual-evidence.js --component=AgentActivityMonitor
    ```

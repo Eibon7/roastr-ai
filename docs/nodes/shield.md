@@ -89,13 +89,13 @@ Shield receives toxicity analysis from Perspective API via AnalyzeToxicityWorker
 
 **Severity Mapping (Perspective → Shield):**
 
-| Perspective Severity | Shield Priority | Shield Action | Auto Execute | Manual Review |
-|---------------------|-----------------|---------------|--------------|---------------|
-| `critical` (≥0.95)  | 1 (critical)    | block + report | YES          | NO            |
-| `high` (≥0.85)      | 2 (high)        | mute_permanent | YES          | YES           |
-| `medium` (≥0.60)    | 3 (medium)      | mute_temp      | NO           | NO            |
-| `low` (≥0.40)       | 5 (low)         | warn           | NO           | NO            |
-| `clean` (<0.40)     | 5 (low)         | warn           | NO           | NO            |
+| Perspective Severity | Shield Priority | Shield Action  | Auto Execute | Manual Review |
+| -------------------- | --------------- | -------------- | ------------ | ------------- |
+| `critical` (≥0.95)   | 1 (critical)    | block + report | YES          | NO            |
+| `high` (≥0.85)       | 2 (high)        | mute_permanent | YES          | YES           |
+| `medium` (≥0.60)     | 3 (medium)      | mute_temp      | NO           | NO            |
+| `low` (≥0.40)        | 5 (low)         | warn           | NO           | NO            |
+| `clean` (<0.40)      | 5 (low)         | warn           | NO           | NO            |
 
 **Important:** Shield uses Perspective's `severity_level` directly (not toxicity_score) for priority calculation. This ensures Perspective's multi-factor analysis (considering severeToxicity, threat, multiple thresholds) drives Shield decisions.
 
@@ -114,9 +114,9 @@ When Gatekeeper service is unavailable (timeout, API error, service outage):
 ```javascript
 // SECURITY FIX (CodeRabbit Review #634)
 return {
-  classification: 'MALICIOUS',     // Conservative default
-  is_prompt_injection: true,       // Treat as potential threat
-  injection_score: 0.5,            // Moderate risk indicator
+  classification: 'MALICIOUS', // Conservative default
+  is_prompt_injection: true, // Treat as potential threat
+  injection_score: 0.5, // Moderate risk indicator
   injection_categories: ['fallback_mode'],
   fallback: true,
   fallback_reason: 'Gatekeeper unavailable - conservative classification applied'
@@ -138,17 +138,20 @@ Severity: critical
 ```
 
 **Rationale:**
+
 - **Fail-safe principle**: When security service unavailable, block rather than allow
 - **Security over convenience**: False positives (blocked clean comments) < False negatives (published injections)
 - **Manual review required**: All fallback-mode comments flagged for human oversight
 - **Monitoring**: Track `gatekeeper_unavailable` action tag to detect service issues
 
 **Fallback Action Tags:**
+
 - `hide_comment` - Hide potentially malicious comment from public view
 - `require_manual_review` - Queue for human moderator review
 - `gatekeeper_unavailable` - Service availability flag for monitoring
 
 **Monitoring Recommendations:**
+
 - Alert if `gatekeeper_unavailable` appears in >5% of comments (indicates service issue)
 - Track Gatekeeper service SLA and uptime
 - Dashboard for fallback frequency by time period
@@ -159,14 +162,14 @@ Severity: critical
 
 ### Component Files
 
-| File | Path | Purpose |
-|------|------|---------|
-| **ShieldService** | `src/services/shieldService.js` | Legacy service, main orchestrator |
-| **ShieldDecisionEngine** | `src/services/shieldDecisionEngine.js` | Core decision-making component |
-| **ShieldActionExecutor** | `src/services/shieldActionExecutor.js` | Unified action execution with circuit breaker |
-| **ShieldPersistenceService** | `src/services/shieldPersistenceService.js` | Database persistence and history tracking |
-| **ShieldSettingsService** | `src/services/shieldSettingsService.js` | Settings management with inheritance |
-| **ShieldActionWorker** | `src/workers/ShieldActionWorker.js` | Background worker for action execution |
+| File                         | Path                                       | Purpose                                       |
+| ---------------------------- | ------------------------------------------ | --------------------------------------------- |
+| **ShieldService**            | `src/services/shieldService.js`            | Legacy service, main orchestrator             |
+| **ShieldDecisionEngine**     | `src/services/shieldDecisionEngine.js`     | Core decision-making component                |
+| **ShieldActionExecutor**     | `src/services/shieldActionExecutor.js`     | Unified action execution with circuit breaker |
+| **ShieldPersistenceService** | `src/services/shieldPersistenceService.js` | Database persistence and history tracking     |
+| **ShieldSettingsService**    | `src/services/shieldSettingsService.js`    | Settings management with inheritance          |
+| **ShieldActionWorker**       | `src/workers/ShieldActionWorker.js`        | Background worker for action execution        |
 
 ## Shield Decision Engine
 
@@ -177,13 +180,13 @@ Severity: critical
 
 #### Default Thresholds (Toxicity Score Range: 0-1)
 
-| Threshold | Score | Action |
-|-----------|-------|--------|
-| **Critical** | ≥0.98 | Immediate severe action (block, report, escalate) |
-| **High** | ≥0.95 | Moderate Shield action (timeout, hide comment, warn) |
-| **Moderate** | ≥0.90 | Roastable comment (generate roast, monitor user) |
-| **Corrective** | ≥0.85 | First strike with corrective guidance message |
-| **Normal** | <0.85 | Publish normally (no action) |
+| Threshold      | Score | Action                                               |
+| -------------- | ----- | ---------------------------------------------------- |
+| **Critical**   | ≥0.98 | Immediate severe action (block, report, escalate)    |
+| **High**       | ≥0.95 | Moderate Shield action (timeout, hide comment, warn) |
+| **Moderate**   | ≥0.90 | Roastable comment (generate roast, monitor user)     |
+| **Corrective** | ≥0.85 | First strike with corrective guidance message        |
+| **Normal**     | <0.85 | Publish normally (no action)                         |
 
 #### Database-Driven Thresholds
 
@@ -200,11 +203,12 @@ tau_critical: 0.90       -- Critical action threshold
 ```
 
 **Threshold Calculation:**
+
 ```javascript
-moderate = tau_roast_lower + ((tau_shield - tau_roast_lower) * 0.6)
-high = tau_shield
-critical = tau_critical
-corrective = tau_roast_lower
+moderate = tau_roast_lower + (tau_shield - tau_roast_lower) * 0.6;
+high = tau_shield;
+critical = tau_critical;
+corrective = tau_roast_lower;
 ```
 
 ### Recidivism Adjustment
@@ -213,34 +217,35 @@ Shield adjusts toxicity scores upward for repeat offenders:
 
 ```javascript
 // Base adjustment: 0.02 per offense (max 0.08)
-adjustment = min(0.08, totalOffenses * 0.02)
+adjustment = min(0.08, totalOffenses * 0.02);
 
 // Additional for escalation level
-adjustment += escalationLevel * 0.01
+adjustment += escalationLevel * 0.01;
 
 // Bonus for high average toxicity (≥0.8)
-if (avgToxicity >= 0.8) adjustment += 0.03
+if (avgToxicity >= 0.8) adjustment += 0.03;
 
 // Total cap: 0.12 maximum adjustment
-finalScore = min(1.0, toxicityScore + adjustment)
+finalScore = min(1.0, toxicityScore + adjustment);
 ```
 
 **Example:**
+
 - User has 5 prior offenses, escalation level 3, average toxicity 0.82
 - New comment toxicity: 0.88
-- Adjustment: (5 * 0.02) + (3 * 0.01) + 0.03 = 0.23 (capped at 0.12)
+- Adjustment: (5 _ 0.02) + (3 _ 0.01) + 0.03 = 0.23 (capped at 0.12)
 - Final score: 0.88 + 0.12 = 1.0 → Critical action
 
 ### Escalation Levels
 
-| Level | Offenses | Description |
-|-------|----------|-------------|
-| 0 | 0-1 | First time or isolated offense |
-| 1 | 2 | Early repeat offender |
-| 2 | 3-4 | Multiple violations |
-| 3 | 5-6 | Persistent offender |
-| 4 | 7-9 | Habitual violator |
-| 5 | 10+ | Critical repeat offender |
+| Level | Offenses | Description                    |
+| ----- | -------- | ------------------------------ |
+| 0     | 0-1      | First time or isolated offense |
+| 1     | 2        | Early repeat offender          |
+| 2     | 3-4      | Multiple violations            |
+| 3     | 5-6      | Persistent offender            |
+| 4     | 7-9      | Habitual violator              |
+| 5     | 10+      | Critical repeat offender       |
 
 ### Red Lines System
 
@@ -249,14 +254,14 @@ User-defined zero-tolerance rules that override all thresholds:
 #### Category Red Lines
 
 ```javascript
-userRedLines.categories = ['threat', 'harassment', 'hate']
+userRedLines.categories = ['threat', 'harassment', 'hate'];
 // Any comment with these labels → immediate critical action
 ```
 
 #### Keyword Red Lines
 
 ```javascript
-userRedLines.keywords = ['palabra prohibida', 'otro término']
+userRedLines.keywords = ['palabra prohibida', 'otro término'];
 // Exact word boundary matching with special char support
 // Case-insensitive, supports regex escaping
 ```
@@ -264,12 +269,13 @@ userRedLines.keywords = ['palabra prohibida', 'otro término']
 #### Threshold Red Lines
 
 ```javascript
-userRedLines.toxicityThreshold = 0.60
+userRedLines.toxicityThreshold = 0.6;
 // Any comment ≥0.60 → immediate critical action
 // Overrides default thresholds
 ```
 
 **Red Line Violation Result:**
+
 ```javascript
 {
   action: 'shield_action_critical',
@@ -289,31 +295,32 @@ For toxicity scores ≥0.85 and <0.90 (first-time offenders):
 
 ```javascript
 general: [
-  "Parece que necesitas un momento para reflexionar...",
-  "Tu comentario podría beneficiarse de un enfoque más respetuoso...",
-  "Detectamos que tu mensaje puede resultar ofensivo..."
-]
+  'Parece que necesitas un momento para reflexionar...',
+  'Tu comentario podría beneficiarse de un enfoque más respetuoso...',
+  'Detectamos que tu mensaje puede resultar ofensivo...'
+];
 
 insult: [
-  "Los insultos no fortalecen tu argumento...",
-  "Entendemos que puedes estar frustrado, pero...",
-  "Tu opinión es válida, pero sería más efectiva sin..."
-]
+  'Los insultos no fortalecen tu argumento...',
+  'Entendemos que puedes estar frustrado, pero...',
+  'Tu opinión es válida, pero sería más efectiva sin...'
+];
 
 harassment: [
-  "Este tipo de comentarios puede hacer sentir incómodos...",
-  "Valoramos la diversidad de opiniones, pero el respeto...",
-  "Tu participación es importante, pero necesitamos..."
-]
+  'Este tipo de comentarios puede hacer sentir incómodos...',
+  'Valoramos la diversidad de opiniones, pero el respeto...',
+  'Tu participación es importante, pero necesitamos...'
+];
 
 threat: [
-  "Los comentarios amenazantes no están permitidos...",
-  "Detectamos lenguaje que puede interpretarse como...",
-  "Nuestra comunidad se basa en el respeto mutuo..."
-]
+  'Los comentarios amenazantes no están permitidos...',
+  'Detectamos lenguaje que puede interpretarse como...',
+  'Nuestra comunidad se basa en el respeto mutuo...'
+];
 ```
 
 **Selection Logic:**
+
 - Primary category determines message pool
 - Repeat offenders (≥2 offenses) get harassment pool (firmer tone)
 - Random selection from pool for variety
@@ -359,17 +366,18 @@ Shield maps generic actions to platform-specific implementations:
 
 ### Action Mapping Matrix
 
-| Generic Action | Twitter | Discord | Twitch | YouTube |
-|---------------|---------|---------|--------|---------|
-| **warn** | Reply warning | Send warning DM | 60s timeout | Reply warning |
-| **mute_temp** | Mute 24h | Timeout 1h | Timeout 10m | ❌ Not available |
-| **mute_permanent** | Mute permanent | Remove voice perms | Ban user | ❌ Limited access |
-| **block** | Block user | Kick user | Ban user | ❌ Not available |
-| **report** | Report user | Report to mods | Report to Twitch | Report comment |
+| Generic Action     | Twitter        | Discord            | Twitch           | YouTube           |
+| ------------------ | -------------- | ------------------ | ---------------- | ----------------- |
+| **warn**           | Reply warning  | Send warning DM    | 60s timeout      | Reply warning     |
+| **mute_temp**      | Mute 24h       | Timeout 1h         | Timeout 10m      | ❌ Not available  |
+| **mute_permanent** | Mute permanent | Remove voice perms | Ban user         | ❌ Limited access |
+| **block**          | Block user     | Kick user          | Ban user         | ❌ Not available  |
+| **report**         | Report user    | Report to mods     | Report to Twitch | Report comment    |
 
 ### Platform Capabilities
 
 #### Twitter/X
+
 ```javascript
 {
   warn: { action: 'reply_warning', available: true },
@@ -381,6 +389,7 @@ Shield maps generic actions to platform-specific implementations:
 ```
 
 #### Discord
+
 ```javascript
 {
   warn: { action: 'send_warning_dm', available: true },
@@ -392,6 +401,7 @@ Shield maps generic actions to platform-specific implementations:
 ```
 
 #### Twitch
+
 ```javascript
 {
   warn: { action: 'timeout_user', duration: '60s', available: true },
@@ -403,6 +413,7 @@ Shield maps generic actions to platform-specific implementations:
 ```
 
 #### YouTube
+
 ```javascript
 {
   warn: { action: 'reply_warning', available: true },
@@ -550,11 +561,11 @@ Failure? → Try fallback action or manual review queue ⚠️
 
 ### Circuit Breaker States
 
-| State | Description | Behavior |
-|-------|-------------|----------|
-| **CLOSED** | Normal operation | Requests pass through normally |
-| **OPEN** | Too many failures | Requests fail fast, no API calls |
-| **HALF_OPEN** | Testing recovery | Limited requests to test platform health |
+| State         | Description       | Behavior                                 |
+| ------------- | ----------------- | ---------------------------------------- |
+| **CLOSED**    | Normal operation  | Requests pass through normally           |
+| **OPEN**      | Too many failures | Requests fail fast, no API calls         |
+| **HALF_OPEN** | Testing recovery  | Limited requests to test platform health |
 
 ### Configuration
 
@@ -572,7 +583,7 @@ Failure? → Try fallback action or manual review queue ⚠️
 
 ```javascript
 // Exponential backoff with jitter
-delay = min(maxDelay, baseDelay * 2^attempt + random(0, 1000))
+delay = min(maxDelay, (baseDelay * 2) ^ (attempt + random(0, 1000)));
 
 // Example retry delays:
 // Attempt 1: 500ms + jitter
@@ -590,6 +601,7 @@ When primary action fails or circuit is open:
    - `reportUser` fails → Queue for manual review
 
 2. **Manual Review Queue:**
+
    ```javascript
    {
      requiresManualReview: true,
@@ -621,6 +633,7 @@ Platform-Specific Overrides (org + platform)
 ```
 
 **Example:**
+
 ```sql
 -- Organization default
 INSERT INTO organization_shield_settings (
@@ -654,6 +667,7 @@ INSERT INTO organization_shield_settings (
 ```
 
 **Effective Settings for Twitter:**
+
 ```javascript
 {
   shield_enabled: true,          // From org default
@@ -674,14 +688,14 @@ For backward compatibility, user aggressiveness (0.90 - 1.00) adjusts thresholds
 // aggressiveness = 0.95 → baseline (no adjustment)
 // aggressiveness = 1.00 → stricter (lower thresholds)
 
-adjustment = (0.95 - aggressiveness) * 0.2  // Range: -0.1 to +0.01
+adjustment = (0.95 - aggressiveness) * 0.2; // Range: -0.1 to +0.01
 
 adjusted_thresholds = {
   critical: base.critical + adjustment,
   high: base.high + adjustment,
   moderate: base.moderate + adjustment,
   corrective: base.corrective + adjustment
-}
+};
 ```
 
 ## Worker Architecture
@@ -767,6 +781,7 @@ ShieldDecisionEngine.makeDecision()
 ```
 
 **Key Points:**
+
 - Shield runs **in parallel** with triage blocking
 - Triage is fail-closed: Shield failure → comment still blocked
 - Shield adds user-level actions beyond comment-level blocking
@@ -792,19 +807,19 @@ await costControl.recordUsage(
     platform: 'twitter',
     timestamp: '2025-10-03T12:00:00Z'
   },
-  null,  // userId - not applicable for shield
-  1      // quantity
+  null, // userId - not applicable for shield
+  1 // quantity
 );
 ```
 
 ### Plan Restrictions
 
-| Plan | Shield Access | Features |
-|------|---------------|----------|
-| **Free** | ❌ Disabled | No Shield protection |
-| **Starter** | ✅ Enabled | Basic Shield with standard thresholds |
-| **Pro** | ✅ Enabled | Full Shield with custom thresholds |
-| **Plus** | ✅ Enabled | Advanced Shield + red lines + priority actions |
+| Plan        | Shield Access | Features                                       |
+| ----------- | ------------- | ---------------------------------------------- |
+| **Free**    | ❌ Disabled   | No Shield protection                           |
+| **Starter** | ✅ Enabled    | Basic Shield with standard thresholds          |
+| **Pro**     | ✅ Enabled    | Full Shield with custom thresholds             |
+| **Plus**    | ✅ Enabled    | Advanced Shield + red lines + priority actions |
 
 ## API Usage Examples
 
@@ -834,7 +849,7 @@ const decision = await decisionEngine.makeDecision({
     redLines: {
       categories: ['threat', 'harassment'],
       keywords: ['kill', 'die'],
-      toxicityThreshold: 0.80
+      toxicityThreshold: 0.8
     },
     aggressiveness: 0.97,
     autoApprove: false
@@ -906,11 +921,7 @@ const ShieldPersistenceService = require('./services/shieldPersistenceService');
 
 const persistence = new ShieldPersistenceService();
 
-const history = await persistence.getOffenderHistory(
-  'org_123',
-  'twitter',
-  'twitter_user_123'
-);
+const history = await persistence.getOffenderHistory('org_123', 'twitter', 'twitter_user_123');
 
 console.log(history);
 // {
@@ -936,13 +947,13 @@ console.log(history);
 
 ### Unit Tests
 
-| Test File | Coverage | Focus |
-|-----------|----------|-------|
-| `shieldService.test.js` | 80% | Service initialization, analysis, action execution |
-| `shieldDecisionEngine.test.js` | 90% | Decision logic, thresholds, recidivism, red lines |
-| `shieldActionExecutor.test.js` | 85% | Circuit breaker, retry logic, fallback strategies |
-| `shieldPersistenceService.test.js` | 88% | History tracking, event logging, database operations |
-| `ShieldActionWorker.test.js` | 85% | Worker job processing, metrics, error handling |
+| Test File                          | Coverage | Focus                                                |
+| ---------------------------------- | -------- | ---------------------------------------------------- |
+| `shieldService.test.js`            | 80%      | Service initialization, analysis, action execution   |
+| `shieldDecisionEngine.test.js`     | 90%      | Decision logic, thresholds, recidivism, red lines    |
+| `shieldActionExecutor.test.js`     | 85%      | Circuit breaker, retry logic, fallback strategies    |
+| `shieldPersistenceService.test.js` | 88%      | History tracking, event logging, database operations |
+| `ShieldActionWorker.test.js`       | 85%      | Worker job processing, metrics, error handling       |
 
 ### Integration Tests
 
@@ -950,20 +961,20 @@ console.log(history);
 
 **Issue #408 Validation:** Complete integration test coverage for Shield actions and offender registration.
 
-| Test File | Lines | Focus | Issue |
-|-----------|-------|-------|-------|
-| `shield-actions-integration.test.js` | 660 | Hide/block/report/escalate actions, NO roast generation | #408 AC1, AC3 |
-| `shield-offender-registration.test.js` | 945 | Author tracking, severity, reason logging | #408 AC2 |
-| `shield-escalation-logic.test.js` | 845 | Escalation matrix, time decay, cross-platform | #408 AC4 |
-| `shieldDecisionEngine.integration.test.js` | 400 | Decision logic, thresholds, recidivism | #408 AC1, AC4 |
-| `shieldPersistence.integration.test.js` | 350 | Database persistence, history tracking | #408 AC5 |
-| `shieldActionExecutor.integration.test.js` | 300 | Circuit breaker, retries, fallback | #408 AC1 |
-| `shield-system-e2e.test.js` | 500 | End-to-end Shield workflow | #408 ALL |
-| `shield-triage-integration.test.js` | - | Shield + Triage parallel execution | - |
-| `shield-platform-adapters.test.js` | - | Platform-specific action execution | - |
-| `shield-ui-complete-integration.test.js` | - | UI integration with Shield | - |
-| `shield-stability.test.js` | - | Stability and resilience testing | - |
-| `shield-database-round4.test.js` | - | Database operations validation | - |
+| Test File                                  | Lines | Focus                                                   | Issue         |
+| ------------------------------------------ | ----- | ------------------------------------------------------- | ------------- |
+| `shield-actions-integration.test.js`       | 660   | Hide/block/report/escalate actions, NO roast generation | #408 AC1, AC3 |
+| `shield-offender-registration.test.js`     | 945   | Author tracking, severity, reason logging               | #408 AC2      |
+| `shield-escalation-logic.test.js`          | 845   | Escalation matrix, time decay, cross-platform           | #408 AC4      |
+| `shieldDecisionEngine.integration.test.js` | 400   | Decision logic, thresholds, recidivism                  | #408 AC1, AC4 |
+| `shieldPersistence.integration.test.js`    | 350   | Database persistence, history tracking                  | #408 AC5      |
+| `shieldActionExecutor.integration.test.js` | 300   | Circuit breaker, retries, fallback                      | #408 AC1      |
+| `shield-system-e2e.test.js`                | 500   | End-to-end Shield workflow                              | #408 ALL      |
+| `shield-triage-integration.test.js`        | -     | Shield + Triage parallel execution                      | -             |
+| `shield-platform-adapters.test.js`         | -     | Platform-specific action execution                      | -             |
+| `shield-ui-complete-integration.test.js`   | -     | UI integration with Shield                              | -             |
+| `shield-stability.test.js`                 | -     | Stability and resilience testing                        | -             |
+| `shield-database-round4.test.js`           | -     | Database operations validation                          | -             |
 
 **Total Test Coverage:** ~4,000+ lines of integration tests
 
@@ -978,11 +989,13 @@ console.log(history);
 Complete end-to-end flow validation from toxic comment detection to automated action execution.
 
 **Phase 2 - COMPLETE (100%):**
+
 - ✅ **15/15 test cases passed** (100% success rate)
 - ✅ **9/9 Decision Matrix** (100% coverage)
 - ✅ **6/6 Edge Cases** (100% coverage)
 
 **Validation Results:**
+
 - **Test Cases:** 15/15 passed (100%) ✅
 - **Performance:** 0.42s - 0.66s per test, avg 0.69s (target: <3s) ✅
 - **Total Execution Time:** 10.35s (budget: 45s, 77% faster) ✅
@@ -995,6 +1008,7 @@ Complete end-to-end flow validation from toxic comment detection to automated ac
   - Shield Validation Dashboard: `/shield/validation`
 
 **Validated Components:**
+
 - ✅ Shield activation (≥0.65 toxicity)
 - ✅ Action determination (decision matrix complete)
 - ✅ Offense level detection (first-time, repeat, high-risk)
@@ -1010,12 +1024,14 @@ Complete end-to-end flow validation from toxic comment detection to automated ac
 - ✅ Multi-platform independence (EDGE-06)
 
 **Coverage Status:**
+
 - **Decision Matrix:** 9/9 scenarios (100%) ✅
 - **Edge Cases:** 6/6 scenarios (100%) ✅
 - **Worker Execution:** Deferred
 - **Platform API Integration:** Deferred
 
 **Approval Status:** ✅ **FULLY APPROVED FOR PRODUCTION**
+
 - Complete test suite passing (15/15)
 - All core functionality validated
 - Edge case testing complete
@@ -1052,25 +1068,25 @@ const mockConfig = createMockShieldConfig({
 
 ## Feature Flags
 
-| Flag | Default | Purpose |
-|------|---------|---------|
-| `ROASTR_SHIELD_ENABLED` | `true` | Enable Shield system globally |
-| `SHIELD_AUTO_ACTIONS` | `true` | Enable automatic action execution |
-| `SHIELD_SEVERITY_ESCALATION` | `true` | Enable escalation based on user history |
-| `SHIELD_REINCIDENCE_THRESHOLD` | `3` | Number of offenses to mark as recidivist |
+| Flag                           | Default | Purpose                                  |
+| ------------------------------ | ------- | ---------------------------------------- |
+| `ROASTR_SHIELD_ENABLED`        | `true`  | Enable Shield system globally            |
+| `SHIELD_AUTO_ACTIONS`          | `true`  | Enable automatic action execution        |
+| `SHIELD_SEVERITY_ESCALATION`   | `true`  | Enable escalation based on user history  |
+| `SHIELD_REINCIDENCE_THRESHOLD` | `3`     | Number of offenses to mark as recidivist |
 
 ## Error Handling
 
 ### Common Errors
 
-| Error | Cause | Resolution |
-|-------|-------|-----------|
-| `Missing required decision input fields` | Invalid input to decision engine | Validate all required fields before calling |
-| `Invalid toxicity analysis data` | Missing or malformed toxicity data | Ensure toxicity_score is a number 0-1 |
-| `Platform not supported` | Platform has no adapter | Check supported platforms list |
-| `Circuit breaker OPEN` | Too many platform failures | Wait for recovery timeout, check platform status |
-| `Database connection failed` | Persistence service error | Check Supabase connection, retry with backoff |
-| `Red line violation` | User-defined rule triggered | User must approve action or adjust red lines |
+| Error                                    | Cause                              | Resolution                                       |
+| ---------------------------------------- | ---------------------------------- | ------------------------------------------------ |
+| `Missing required decision input fields` | Invalid input to decision engine   | Validate all required fields before calling      |
+| `Invalid toxicity analysis data`         | Missing or malformed toxicity data | Ensure toxicity_score is a number 0-1            |
+| `Platform not supported`                 | Platform has no adapter            | Check supported platforms list                   |
+| `Circuit breaker OPEN`                   | Too many platform failures         | Wait for recovery timeout, check platform status |
+| `Database connection failed`             | Persistence service error          | Check Supabase connection, retry with backoff    |
+| `Red line violation`                     | User-defined rule triggered        | User must approve action or adjust red lines     |
 
 ### Error Response Format
 
@@ -1103,6 +1119,7 @@ const mockConfig = createMockShieldConfig({
 ### Logging
 
 All Shield events logged with:
+
 - Organization ID and user ID
 - Platform and action type
 - Toxicity score and primary category
@@ -1178,16 +1195,16 @@ Brand Safety allows Plus plan users to configure sponsors/brands to protect from
 
 Sponsors are configured per-user with the following properties:
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | String | Sponsor name (required, unique per user) |
-| `url` | String | Sponsor website URL (optional, for tag extraction) |
-| `tags` | Array<String> | Keywords/tags to detect (e.g., ["sportswear", "sneakers"]) |
-| `severity` | Enum | Protection level: `low`, `medium`, `high`, `zero_tolerance` |
-| `tone` | Enum | Roast tone override: `normal`, `professional`, `light_humor`, `aggressive_irony` |
-| `priority` | Integer | Conflict resolution priority (1=highest, 5=lowest) |
-| `actions` | Array<String> | Actions to take: `hide_comment`, `block_user`, `def_roast`, `agg_roast`, `report`, `sponsor_protection` |
-| `active` | Boolean | Enable/disable sponsor protection |
+| Property   | Type          | Description                                                                                             |
+| ---------- | ------------- | ------------------------------------------------------------------------------------------------------- |
+| `name`     | String        | Sponsor name (required, unique per user)                                                                |
+| `url`      | String        | Sponsor website URL (optional, for tag extraction)                                                      |
+| `tags`     | Array<String> | Keywords/tags to detect (e.g., ["sportswear", "sneakers"])                                              |
+| `severity` | Enum          | Protection level: `low`, `medium`, `high`, `zero_tolerance`                                             |
+| `tone`     | Enum          | Roast tone override: `normal`, `professional`, `light_humor`, `aggressive_irony`                        |
+| `priority` | Integer       | Conflict resolution priority (1=highest, 5=lowest)                                                      |
+| `actions`  | Array<String> | Actions to take: `hide_comment`, `block_user`, `def_roast`, `agg_roast`, `report`, `sponsor_protection` |
+| `active`   | Boolean       | Enable/disable sponsor protection                                                                       |
 
 ### Detection Flow
 
@@ -1221,6 +1238,7 @@ When a sponsor match triggers SHIELD, the following actions are available:
 ### Roast Integration
 
 When sponsor actions include `def_roast` or `agg_roast`, the roast generation system:
+
 1. Receives `brand_safety` metadata in job payload
 2. Includes sponsor context in cacheable prompt blocks (A/B/C)
 3. Applies tone override:
@@ -1233,6 +1251,7 @@ See `roast.md` for detailed roast integration.
 ### Cost Control
 
 Tag extraction from sponsor URLs uses OpenAI GPT-4o:
+
 - **Operation**: `extract_sponsor_tags`
 - **Cost**: 2 cents per extraction
 - **Rate Limit**: 5 requests/min per user
@@ -1297,6 +1316,7 @@ Tag extraction from sponsor URLs uses OpenAI GPT-4o:
 ### Metadata Structure
 
 **SHIELD Decision:**
+
 ```json
 {
   "direction": "SHIELD",
@@ -1314,6 +1334,7 @@ Tag extraction from sponsor URLs uses OpenAI GPT-4o:
 ```
 
 **ROAST Decision:**
+
 ```json
 {
   "direction": "ROAST",
@@ -1341,7 +1362,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Security Engineer**
 - **Test Engineer**
 
-
 ## Related Nodes
 
 - **cost-control** - Usage tracking and billing for Shield actions
@@ -1357,6 +1377,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Ubicación de Tests
 
 **Unit Tests** (14 archivos):
+
 - `tests/unit/services/shieldService.test.js` - Core service functionality
 - `tests/unit/services/shieldService-edge-cases.test.js` - Edge cases and error handling
 - `tests/unit/services/shieldDecisionEngine.test.js` - Decision logic and thresholds
@@ -1376,6 +1397,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - `tests/unit/utils/shield-validation.test.js` - Input validation utilities
 
 **Integration Tests** (10+ archivos):
+
 - `tests/integration/shieldDecisionEngine.integration.test.js` - Full decision flow
 - `tests/integration/shieldActionExecutor.integration.test.js` - Action execution with platforms
 - `tests/integration/shieldPersistenceIntegration.test.js` - Database integration
@@ -1385,9 +1407,11 @@ Los siguientes agentes son responsables de mantener este nodo:
 - Additional platform-specific integration tests
 
 **Visual Tests** (1 archivo):
+
 - `tests/unit/visual/shield-round5-stability.test.js` - Visual regression testing
 
 **E2E Flow Validation** (Issue #487):
+
 - `scripts/validate-flow-shield.js` - End-to-end Shield flow validation (15 test cases)
   - 9 decision matrix tests (toxicity + user risk → action)
   - 6 edge case tests (timeouts, idempotency, priority, failures)
@@ -1406,6 +1430,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Casos de Prueba Cubiertos
 
 **Decision Engine:**
+
 - ✅ Threshold-based decision making (Critical, High, Moderate, Corrective, Normal)
 - ✅ Offender history tracking and recidivism detection
 - ✅ Risk level calculation (Critical, High, Moderate, Low)
@@ -1415,6 +1440,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Circuit breaker pattern with fallback strategies
 
 **Action Execution:**
+
 - ✅ Platform-specific actions (mute, block, report, hide, timeout)
 - ✅ Action escalation based on recidivism
 - ✅ Multi-platform support (Twitter, Discord, Twitch, YouTube, etc.)
@@ -1423,6 +1449,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Action logging and audit trail
 
 **Persistence:**
+
 - ✅ Shield events database storage
 - ✅ Offender history queries and aggregation
 - ✅ Settings CRUD operations
@@ -1431,6 +1458,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Platform-level settings inheritance
 
 **API Endpoints:**
+
 - ✅ GET /api/shield/events - List shield events
 - ✅ GET /api/shield/offenders - Get offender stats
 - ✅ GET /api/shield/settings - Retrieve settings
@@ -1441,6 +1469,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Rate limiting
 
 **Edge Cases:**
+
 - ✅ Missing or invalid input data
 - ✅ Database connection failures
 - ✅ Platform API errors

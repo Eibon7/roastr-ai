@@ -8,13 +8,13 @@
 
 ### Por issue:
 
-| Archivo:Línea | Tipo | Impacto | Root Cause |
-|---------------|------|---------|------------|
-| `tests/integration/cli/logCommands.test.js:170` | Syntax Error | ❌ Tests no ejecutan | Falta cierre `});` del `describe('maintenance command')` |
-| `tests/unit/routes/admin-plan-limits.test.js:89` | Code Quality | ⚠️ Header no usado | Authorization header sin middleware que lo procese |
-| `tests/unit/routes/admin-plan-limits.test.js:102` | Code Quality | ⚠️ Header no usado | Authorization header sin middleware que lo procese |
-| `tests/unit/routes/admin-plan-limits.test.js:275-300` | Code Quality | ⚠️ Test no verifica middleware real | Test usa mock middleware en lugar del real |
-| `scripts/check-all-rls-tables.js:21-56` | Code Quality | ⚠️ Duplicación | Constantes `ALL_TABLES` y `TESTED_TABLES` duplicadas en `identify-untested-tables.js` |
+| Archivo:Línea                                         | Tipo         | Impacto                             | Root Cause                                                                            |
+| ----------------------------------------------------- | ------------ | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| `tests/integration/cli/logCommands.test.js:170`       | Syntax Error | ❌ Tests no ejecutan                | Falta cierre `});` del `describe('maintenance command')`                              |
+| `tests/unit/routes/admin-plan-limits.test.js:89`      | Code Quality | ⚠️ Header no usado                  | Authorization header sin middleware que lo procese                                    |
+| `tests/unit/routes/admin-plan-limits.test.js:102`     | Code Quality | ⚠️ Header no usado                  | Authorization header sin middleware que lo procese                                    |
+| `tests/unit/routes/admin-plan-limits.test.js:275-300` | Code Quality | ⚠️ Test no verifica middleware real | Test usa mock middleware en lugar del real                                            |
+| `scripts/check-all-rls-tables.js:21-56`               | Code Quality | ⚠️ Duplicación                      | Constantes `ALL_TABLES` y `TESTED_TABLES` duplicadas en `identify-untested-tables.js` |
 
 ## GDD
 
@@ -55,5 +55,3 @@
 - [ ] GDD health ≥87 (verificado)
 - [ ] CodeRabbit: 0 comentarios (verificado con `npm run coderabbit:review`)
 - [ ] Completion validation: exit 0 (verificado con `npm run validate:completion -- --pr=807`)
-
-

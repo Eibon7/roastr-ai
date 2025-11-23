@@ -16,12 +16,14 @@
 **ENHANCE** - Implementación parcial con cobertura E2E sólida, requiere mejoras estratégicas.
 
 **Estado Actual:**
+
 - ✅ **E2E tests PASSING** (5/5) en `tests/e2e/manual-flow.test.js`
 - ✅ **Implementación funcional** en `roastEngine.js`, `roastGeneratorEnhanced.js`
 - ✅ **Sistema de tonos centralizado** en `src/config/tones.js`
 - ✅ **API endpoint operativo** en `POST /api/roast/engine`
 
 **Gaps Críticos:**
+
 1. ❌ No hay archivo de integration test dedicado para Issue #409
 2. ❌ AC5 (Calidad y coherencia) débilmente testeada
 3. ❌ Falta validación a nivel de base de datos
@@ -37,22 +39,27 @@
 ## 📋 Criterios de Aceptación
 
 ### AC1: Respeta tono del perfil de usuario
+
 - **Estado:** ✅ Implementado, ⚠️ Tests parciales (solo E2E)
 - **Gap:** Falta validación a nivel API e integration tests
 
 ### AC2: Genera exactamente 2 variantes iniciales en modo manual
+
 - **Estado:** ✅ Implementado, ⚠️ Tests parciales (solo E2E)
 - **Gap:** Falta validación de persistencia en DB
 
 ### AC3: Tras selección, genera exactamente 1 variante adicional
+
 - **Estado:** ✅ Implementado, ⚠️ Tests parciales (solo E2E)
 - **Gap:** Falta validación de DB (3 variantes total)
 
 ### AC4: Validaciones previas ejecutadas antes de publicar
+
 - **Estado:** ✅ Implementado, ✅ Tests buenos (E2E + Unit)
 - **Gap:** Ninguno crítico
 
 ### AC5: Calidad y coherencia de variantes generadas
+
 - **Estado:** ⚠️ Implementación implícita en RQC, ❌ Tests débiles
 - **Gap:** Falta validación explícita de métricas de calidad
 
@@ -62,12 +69,12 @@
 
 ### Overview de Fases
 
-| Fase | Prioridad | Esfuerzo | Descripción |
-|------|-----------|----------|-------------|
-| **Phase 1** | P0 | 12-17h | Integration Tests dedicados |
-| **Phase 2** | P1 | 4-6h | Mejoras E2E + multi-user |
-| **Phase 3** | P2 | 3-4h | Unit tests complementarios |
-| **Phase 4** | P2 | 2-4h | Documentación + evidencias |
+| Fase        | Prioridad | Esfuerzo | Descripción                 |
+| ----------- | --------- | -------- | --------------------------- |
+| **Phase 1** | P0        | 12-17h   | Integration Tests dedicados |
+| **Phase 2** | P1        | 4-6h     | Mejoras E2E + multi-user    |
+| **Phase 3** | P2        | 3-4h     | Unit tests complementarios  |
+| **Phase 4** | P2        | 2-4h     | Documentación + evidencias  |
 
 **Total Estimado:** 21-31 horas (3-4 días)
 
@@ -82,6 +89,7 @@
 **Archivo:** `tests/integration/generation-issue-409.test.js`
 
 **Estructura:**
+
 ```javascript
 /**
  * Integration Tests for Issue #409
@@ -102,6 +110,7 @@
 ### 1.2 AC1: Tone Enforcement (3 tests)
 
 **Tests:**
+
 1. `should respect user tone preference in all variants`
    - Request a `/api/roast/engine` con `tone: 'balanceado'`
    - Validar que las 2 variantes respetan el tono
@@ -116,11 +125,13 @@
    - Validar error 400 con mensaje claro
 
 **Archivos a leer:**
+
 - `src/config/tones.js` (101 líneas)
 - `src/routes/roast.js` (líneas 824-1020)
 - `tests/helpers/testUtils.js` (helpers)
 
 **Assertions Clave:**
+
 ```javascript
 expect(response.body.variants).toHaveLength(2);
 expect(response.body.variants[0].style).toBe(testUser.tone_preference);
@@ -130,6 +141,7 @@ expect(response.body.variants[1].style).toBe(testUser.tone_preference);
 ### 1.3 AC2: Initial 2 Variants Generation (4 tests)
 
 **Tests:**
+
 1. `should generate exactly 2 variants in manual mode`
    - Request con `mode: 'manual'`, `phase: 'initial'`
    - Validar `variants.length === 2`
@@ -149,10 +161,12 @@ expect(response.body.variants[1].style).toBe(testUser.tone_preference);
    - Validar longitud mínima (>10 caracteres)
 
 **Archivos a leer:**
+
 - `src/services/roastEngine.js` (líneas 1-400+)
 - `database/schema.sql` (esquema `roasts_metadata`)
 
 **Assertions Clave:**
+
 ```javascript
 const { data: variants } = await supabaseServiceClient
   .from('roasts_metadata')
@@ -168,6 +182,7 @@ expect(variants[0].text).not.toBe(variants[1].text);
 ### 1.4 AC3: Post-Selection 1 Additional Variant (3 tests)
 
 **Tests:**
+
 1. `should generate exactly 1 additional variant after selection`
    - Request con `phase: 'post_selection'`, `baseVariant: selectedVariant.id`
    - Validar `variants.length === 1`
@@ -181,10 +196,12 @@ expect(variants[0].text).not.toBe(variants[1].text);
    - Validar count === 3 (2 initial + 1 post-selection)
 
 **Archivos a leer:**
+
 - `src/services/roastEngine.js` (lógica post-selection)
 - `tests/e2e/manual-flow.test.js` (líneas 303-339 - referencia)
 
 **Assertions Clave:**
+
 ```javascript
 const { data: totalVariants } = await supabaseServiceClient
   .from('roasts_metadata')
@@ -193,13 +210,14 @@ const { data: totalVariants } = await supabaseServiceClient
 
 expect(totalVariants).toHaveLength(3);
 
-const postSelectionVariant = totalVariants.find(v => v.phase === 'post_selection');
+const postSelectionVariant = totalVariants.find((v) => v.phase === 'post_selection');
 expect(postSelectionVariant.base_variant_id).toBe(selectedVariant.id);
 ```
 
 ### 1.5 AC4: Pre-Publication Validations (3 tests)
 
 **Tests:**
+
 1. `should execute transparency disclaimer validation`
    - Request con `autoApprove: true`
    - Validar que se aplica transparency disclaimer
@@ -216,11 +234,13 @@ expect(postSelectionVariant.base_variant_id).toBe(selectedVariant.id);
    - Verificar `variant.text.length <= 280`
 
 **Archivos a leer:**
+
 - `src/services/transparencyService.js` (validación)
 - `src/services/costControl.js` (créditos)
 - `src/config/platforms.js` (constraints)
 
 **Assertions Clave:**
+
 ```javascript
 expect(costControlSpy).toHaveBeenCalledBefore(roastEngineSpy);
 expect(response.body.transparency_applied).toBe(true);
@@ -230,6 +250,7 @@ expect(response.body.variants[0].text.length).toBeLessThanOrEqual(280);
 ### 1.6 AC5: Quality & Coherence (2 tests)
 
 **Tests:**
+
 1. `should validate quality score above threshold`
    - **IMPORTANTE:** Definir métrica de calidad explícita
    - Opciones:
@@ -244,14 +265,17 @@ expect(response.body.variants[0].text.length).toBeLessThanOrEqual(280);
    - Validar `coherence_score >= 0.6`
 
 **⚠️ ACCIÓN REQUERIDA:**
+
 - **Definir métricas de calidad explícitas** (consultar stakeholders si necesario)
 - **Documentar thresholds** en `docs/nodes/roast.md`
 
 **Archivos a leer:**
+
 - `src/services/rqcService.js` (RQC system)
 - `src/services/roastGeneratorEnhanced.js` (quality logic)
 
 **Assertions Clave (propuestas):**
+
 ```javascript
 // Option 1: RQC-based
 expect(response.body.variants[0].rqc_score).toBeGreaterThanOrEqual(0.7);
@@ -336,6 +360,7 @@ module.exports = {
 
 1. **Add explicit quality assertions (AC5)**
    - Línea ~239: Añadir validación de quality score
+
    ```javascript
    // Current:
    expect(variant.text.length).toBeGreaterThan(10);
@@ -347,6 +372,7 @@ module.exports = {
 
 2. **Add database persistence validation (AC2, AC3)**
    - Tras generación de variantes, query DB para confirmar
+
    ```javascript
    const variantsInDB = await getVariantsFromDB(testComment.id);
    expect(variantsInDB).toHaveLength(2); // Initial
@@ -443,9 +469,11 @@ module.exports = {
 ### 4.2 Generate Test Evidence (Playwright)
 
 **Según CLAUDE.md reglas:**
+
 > "Invocar siempre al Test Engineer Agent tras cambios en src/ o en documentos de diseño para generar tests + evidencias visuales con Playwright."
 
 **Acción:**
+
 - Invocar Test Engineer Agent para generar evidencias visuales
 - Capturar screenshots de:
   - UI de selección de variantes
@@ -486,18 +514,22 @@ module.exports = {
 ## 🎯 Subagentes a Usar
 
 ### Phase 1: Integration Tests
+
 - **Back-end Dev** - Implementación de tests
 - **Test Engineer** - Revisión de test structure
 
 ### Phase 2: E2E Enhancements
+
 - **Back-end Dev** - Mejoras a manual-flow.test.js
 - **Test Engineer** - Validación de multi-user tests
 
 ### Phase 3: Unit Tests
+
 - **Back-end Dev** - Unit tests complementarios
 - **Test Engineer** - Cobertura report
 
 ### Phase 4: Documentation
+
 - **Documentation Agent** - Actualización de nodos GDD
 - **Test Engineer** - Evidencias visuales Playwright
 - **UI Designer** - Validación de UI screenshots (si necesario)
@@ -535,28 +567,30 @@ module.exports = {
 
 ### Success Metrics
 
-| Métrica | Target | Actual |
-|---------|--------|--------|
-| **Test Count (Integration)** | 15 | TBD |
-| **Test Count (Unit)** | 11 | TBD |
-| **Test Count (E2E enhancements)** | 4 | TBD |
-| **Total New Tests** | 30 | TBD |
-| **Coverage roastEngine.js** | >85% | TBD |
-| **Coverage tones.js** | >90% | TBD |
-| **Coverage GenerateReplyWorker.js** | >70% | TBD |
-| **All Tests Passing** | 100% | TBD |
-| **Integration Test Time** | <30s | TBD |
-| **GDD Validation** | ✅ PASS | TBD |
+| Métrica                             | Target  | Actual |
+| ----------------------------------- | ------- | ------ |
+| **Test Count (Integration)**        | 15      | TBD    |
+| **Test Count (Unit)**               | 11      | TBD    |
+| **Test Count (E2E enhancements)**   | 4       | TBD    |
+| **Total New Tests**                 | 30      | TBD    |
+| **Coverage roastEngine.js**         | >85%    | TBD    |
+| **Coverage tones.js**               | >90%    | TBD    |
+| **Coverage GenerateReplyWorker.js** | >70%    | TBD    |
+| **All Tests Passing**               | 100%    | TBD    |
+| **Integration Test Time**           | <30s    | TBD    |
+| **GDD Validation**                  | ✅ PASS | TBD    |
 
 ---
 
 ## 🚨 Riesgos y Mitigaciones
 
 ### Riesgo 1: AC5 Quality Metrics Undefined
+
 **Probabilidad:** ALTA
 **Impacto:** MEDIO
 
 **Mitigación:**
+
 - Definir métricas explícitas al inicio de Phase 1
 - Opciones:
   1. RQC score (si disponible) - threshold: 0.7
@@ -565,28 +599,34 @@ module.exports = {
 - Documentar decisión en `docs/nodes/roast.md`
 
 ### Riesgo 2: Database Schema Incomplete
+
 **Probabilidad:** MEDIA
 **Impacto:** ALTO
 
 **Mitigación:**
+
 - Revisar `database/schema.sql` ANTES de escribir tests DB
 - Verificar campos: `phase`, `base_variant_id`, `quality_score`
 - Si faltan, añadir migración antes de Phase 1.3
 
 ### Riesgo 3: Integration Tests Reveal Implementation Gaps
+
 **Probabilidad:** MEDIA
 **Impacto:** ALTO
 
 **Mitigación:**
+
 - Ejecutar smoke tests early (AC1, AC2 first)
 - Si falla → documentar gap → añadir a plan
 - No bloquear: usar feature flags para deshabilitar temporalmente
 
 ### Riesgo 4: Timeline Overrun (21-31h estimate)
+
 **Probabilidad:** MEDIA
 **Impacto:** MEDIO
 
 **Mitigación:**
+
 - Priorizar Phase 1 (P0) - crítico
 - Phase 2 y 3 pueden demorarse si necesario
 - Phase 4 puede hacerse en paralelo con otras issues
@@ -596,20 +636,24 @@ module.exports = {
 ## 📅 Timeline Estimado
 
 ### Day 1 (8 horas)
+
 - ✅ **FASE 0 completada** - Task Assessment (2h)
 - ✅ **Planning completado** - Este plan (2h)
 - ⏳ **Phase 1.1-1.3** - Crear archivo base + AC1 + AC2 (4h)
 
 ### Day 2 (8 horas)
+
 - ⏳ **Phase 1.4-1.6** - AC3 + AC4 + AC5 (6h)
 - ⏳ **Phase 1.7** - Helpers y setup (2h)
 - ⏳ **Run integration tests** - Validar PASSING
 
 ### Day 3 (6-8 horas)
+
 - ⏳ **Phase 2** - E2E enhancements (4-6h)
 - ⏳ **Phase 3** - Unit tests (2h)
 
 ### Day 4 (4-6 horas)
+
 - ⏳ **Phase 4** - Documentation + evidencias (2-4h)
 - ⏳ **Validación final** - Run all tests, coverage report (1h)
 - ⏳ **GDD validation** - `node scripts/resolve-graph.js --validate` (0.5h)
@@ -622,11 +666,13 @@ module.exports = {
 ## 🔗 Referencias
 
 ### Assessment
+
 - **Reporte Completo:** `docs/assessment/issue-409.md` (697 líneas)
 - **Recomendación:** ENHANCE
 - **Cobertura Actual:** 65% (3.5/5 AC)
 
 ### Contexto GDD (10 nodos cargados)
+
 1. **roast.md** (629 líneas) - Sistema de generación
 2. **tone.md** (302 líneas) - Mapeo de tonos
 3. **persona.md** (717 líneas) - Configuración de personalidad
@@ -639,11 +685,13 @@ module.exports = {
 10. **shield.md** - Moderación automatizada
 
 ### Epic & Issue
+
 - **Epic #403:** Testing MVP
 - **Issue #409:** Generación con tono + variantes (P0)
 - **Issue Original:** https://github.com/Eibon7/roastr-ai/issues/409
 
 ### Código Relevante
+
 - **Implementation:**
   - `src/services/roastEngine.js` (líneas 1-400+)
   - `src/services/roastGeneratorEnhanced.js`
@@ -662,11 +710,13 @@ module.exports = {
 ### Convenciones de Tests
 
 **Naming:**
+
 - Integration tests: `tests/integration/generation-issue-409.test.js`
 - Test suites: `describe('[Integration] Roast Generation - Issue #409', ...)`
 - Test cases: `test('should [action] [expected result]', ...)`
 
 **Structure:**
+
 ```javascript
 describe('[Integration] Feature - Issue #XXX', () => {
   describe('AC1: Acceptance Criteria Title', () => {
@@ -680,6 +730,7 @@ describe('[Integration] Feature - Issue #XXX', () => {
 ```
 
 **Mocking Strategy:**
+
 - Mock OpenAI API cuando sea necesario (para tests rápidos)
 - Usar `ENABLE_REAL_OPENAI=false` en test environment
 - Mock `costControl` para evitar side effects
@@ -689,9 +740,9 @@ describe('[Integration] Feature - Issue #XXX', () => {
 
 ```javascript
 // In test environment
-process.env.ROAST_VERSIONS_MULTIPLE = 'true';  // Enable 2-version mode
-process.env.ENABLE_REAL_OPENAI = 'false';      // Use mock generator
-process.env.NODE_ENV = 'test';                 // Test environment
+process.env.ROAST_VERSIONS_MULTIPLE = 'true'; // Enable 2-version mode
+process.env.ENABLE_REAL_OPENAI = 'false'; // Use mock generator
+process.env.NODE_ENV = 'test'; // Test environment
 ```
 
 ### Database Cleanup
@@ -699,10 +750,7 @@ process.env.NODE_ENV = 'test';                 // Test environment
 ```javascript
 afterEach(async () => {
   // Clean up test data
-  await supabaseServiceClient
-    .from('roasts_metadata')
-    .delete()
-    .eq('user_id', testUser.id);
+  await supabaseServiceClient.from('roasts_metadata').delete().eq('user_id', testUser.id);
 });
 ```
 
@@ -733,6 +781,7 @@ afterEach(async () => {
 ## ✅ Checklist Pre-Commit (Antes de Cerrar)
 
 **GDD Validation:**
+
 - [ ] Leí `spec.md` y archivos `.md` de nodos afectados
 - [ ] Revisé sección "Agentes Relevantes" en nodos modificados
 - [ ] Añadí agentes efectivamente usados (no estaban listados)
@@ -742,18 +791,21 @@ afterEach(async () => {
 - [ ] Generé reporte: `node scripts/resolve-graph.js --report`
 
 **Tests:**
+
 - [ ] Todos los tests PASSING (unit + integration + E2E)
 - [ ] Cobertura >80% para servicios afectados
 - [ ] Integration tests run en <30 segundos
 - [ ] No test interdependencies (cada test independiente)
 
 **Documentation:**
+
 - [ ] Nodos GDD actualizados (roast.md, tone.md, persona.md)
 - [ ] Evidencias visuales generadas con Playwright
 - [ ] Changelog detallado en PR
 - [ ] Assessment + Plan incluidos en PR description
 
 **Code Quality:**
+
 - [ ] No hay código comentado (cleanup)
 - [ ] No hay console.logs (usar logger)
 - [ ] No hay TODOs sin issue asociado

@@ -1,6 +1,6 @@
 /**
  * Shield Validation Utility Tests - CodeRabbit Round 2
- * 
+ *
  * Tests for validation utilities and helper functions:
  * - Query parameter validation and sanitization
  * - Response data sanitization
@@ -38,7 +38,18 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
   // Extract validation constants and functions from shield routes
   const VALID_CATEGORIES = ['all', 'toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'];
   const VALID_TIME_RANGES = ['7d', '30d', '90d', 'all'];
-  const VALID_PLATFORMS = ['all', 'twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+  const VALID_PLATFORMS = [
+    'all',
+    'twitter',
+    'youtube',
+    'instagram',
+    'facebook',
+    'discord',
+    'twitch',
+    'reddit',
+    'tiktok',
+    'bluesky'
+  ];
   const VALID_ACTION_TYPES = ['all', 'block', 'mute', 'flag', 'report'];
 
   // Helper functions extracted from shield routes
@@ -75,7 +86,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
     if (!data) return data;
 
     if (Array.isArray(data)) {
-      return data.map(item => sanitizeResponseData(item));
+      return data.map((item) => sanitizeResponseData(item));
     }
 
     if (typeof data === 'object') {
@@ -88,7 +99,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
 
   function calculateDateRange(timeRange) {
     const now = new Date();
-    
+
     switch (timeRange) {
       case '7d':
         return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -167,7 +178,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         { page: null, limit: undefined }
       ];
 
-      invalidQueries.forEach(query => {
+      invalidQueries.forEach((query) => {
         const result = validateQueryParameters(query);
         expect(result.pageNum).toBeGreaterThanOrEqual(1);
         expect(result.limitNum).toBeGreaterThanOrEqual(1);
@@ -179,14 +190,14 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
     test('should cap limit at maximum value', () => {
       const query = { limit: '999' };
       const result = validateQueryParameters(query);
-      
+
       expect(result.limitNum).toBe(100);
     });
 
     test('should enforce minimum values', () => {
       const query = { page: '-10', limit: '-5' };
       const result = validateQueryParameters(query);
-      
+
       expect(result.pageNum).toBe(1);
       expect(result.limitNum).toBe(1);
     });
@@ -195,12 +206,12 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
       const validCategories = ['toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'];
       const invalidCategories = ['malicious', 'sql_injection', '"><script>', 'unknown'];
 
-      validCategories.forEach(category => {
+      validCategories.forEach((category) => {
         const result = validateQueryParameters({ category });
         expect(result.category).toBe(category);
       });
 
-      invalidCategories.forEach(category => {
+      invalidCategories.forEach((category) => {
         const result = validateQueryParameters({ category });
         expect(result.category).toBe('all'); // Should default
       });
@@ -210,27 +221,37 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
       const validRanges = ['7d', '30d', '90d', 'all'];
       const invalidRanges = ['1h', '365d', 'forever', 'invalid'];
 
-      validRanges.forEach(timeRange => {
+      validRanges.forEach((timeRange) => {
         const result = validateQueryParameters({ timeRange });
         expect(result.timeRange).toBe(timeRange);
       });
 
-      invalidRanges.forEach(timeRange => {
+      invalidRanges.forEach((timeRange) => {
         const result = validateQueryParameters({ timeRange });
         expect(result.timeRange).toBe('30d'); // Should default
       });
     });
 
     test('should validate platform against whitelist', () => {
-      const validPlatforms = ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+      const validPlatforms = [
+        'twitter',
+        'youtube',
+        'instagram',
+        'facebook',
+        'discord',
+        'twitch',
+        'reddit',
+        'tiktok',
+        'bluesky'
+      ];
       const invalidPlatforms = ['unknown_platform', 'hack_attempt', 'DROP TABLE'];
 
-      validPlatforms.forEach(platform => {
+      validPlatforms.forEach((platform) => {
         const result = validateQueryParameters({ platform });
         expect(result.platform).toBe(platform);
       });
 
-      invalidPlatforms.forEach(platform => {
+      invalidPlatforms.forEach((platform) => {
         const result = validateQueryParameters({ platform });
         expect(result.platform).toBe('all'); // Should default
       });
@@ -240,12 +261,12 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
       const validActions = ['block', 'mute', 'flag', 'report'];
       const invalidActions = ['delete', 'hack', 'exploit', 'unknown'];
 
-      validActions.forEach(actionType => {
+      validActions.forEach((actionType) => {
         const result = validateQueryParameters({ actionType });
         expect(result.actionType).toBe(actionType);
       });
 
-      invalidActions.forEach(actionType => {
+      invalidActions.forEach((actionType) => {
         const result = validateQueryParameters({ actionType });
         expect(result.actionType).toBe('all'); // Should default
       });
@@ -260,7 +281,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         { limit: '1e10' }
       ];
 
-      extremeQueries.forEach(query => {
+      extremeQueries.forEach((query) => {
         const result = validateQueryParameters(query);
         expect(result.pageNum).toBeGreaterThanOrEqual(1);
         expect(result.limitNum).toBeGreaterThanOrEqual(1);
@@ -277,7 +298,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         { page: '1 OR 1=1' }
       ];
 
-      maliciousQueries.forEach(query => {
+      maliciousQueries.forEach((query) => {
         const result = validateQueryParameters(query);
         // All malicious values should be sanitized to defaults
         expect(result.category).toBe('all');
@@ -325,7 +346,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
       const sanitized = sanitizeResponseData(data);
 
       expect(sanitized).toHaveLength(2);
-      sanitized.forEach(item => {
+      sanitized.forEach((item) => {
         expect(item).not.toHaveProperty('organization_id');
         expect(item).toHaveProperty('id');
         expect(item).toHaveProperty('content');
@@ -357,7 +378,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
       expect(sanitized.events[0]).not.toHaveProperty('organization_id');
       expect(sanitized.events[0].metadata).not.toHaveProperty('organization_id');
       expect(sanitized.pagination).not.toHaveProperty('organization_id');
-      
+
       // Other properties should remain
       expect(sanitized.events[0].metadata.other_data).toBe('test');
       expect(sanitized.pagination.total).toBe(10);
@@ -456,21 +477,21 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
     test('should calculate 7-day range correctly', () => {
       const result = calculateDateRange('7d');
       const expected = new Date(mockCurrentTime.getTime() - 7 * 24 * 60 * 60 * 1000);
-      
+
       expect(result).toEqual(expected);
     });
 
     test('should calculate 30-day range correctly', () => {
       const result = calculateDateRange('30d');
       const expected = new Date(mockCurrentTime.getTime() - 30 * 24 * 60 * 60 * 1000);
-      
+
       expect(result).toEqual(expected);
     });
 
     test('should calculate 90-day range correctly', () => {
       const result = calculateDateRange('90d');
       const expected = new Date(mockCurrentTime.getTime() - 90 * 24 * 60 * 60 * 1000);
-      
+
       expect(result).toEqual(expected);
     });
 
@@ -481,8 +502,8 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
 
     test('should return null for invalid ranges', () => {
       const invalidRanges = ['invalid', '1h', '365d', '', null, undefined];
-      
-      invalidRanges.forEach(range => {
+
+      invalidRanges.forEach((range) => {
         const result = calculateDateRange(range);
         expect(result).toBeNull();
       });
@@ -503,10 +524,10 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         "1' OR '1'='1",
         "admin'--",
         "' UNION SELECT * FROM users --",
-        "1; DELETE FROM shield_actions; --"
+        '1; DELETE FROM shield_actions; --'
       ];
 
-      sqlInjectionInputs.forEach(input => {
+      sqlInjectionInputs.forEach((input) => {
         const result = validateQueryParameters({ category: input });
         expect(result.category).toBe('all'); // Should default, not execute
       });
@@ -521,7 +542,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         'onload=alert("xss")'
       ];
 
-      xssInputs.forEach(input => {
+      xssInputs.forEach((input) => {
         const result = validateQueryParameters({ platform: input });
         expect(result.platform).toBe('all'); // Should default, not execute
       });
@@ -536,7 +557,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         '..%252f..%252f..%252f'
       ];
 
-      pathTraversalInputs.forEach(input => {
+      pathTraversalInputs.forEach((input) => {
         const result = validateQueryParameters({ actionType: input });
         expect(result.actionType).toBe('all'); // Should default
       });
@@ -551,7 +572,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         '$(ls -la)'
       ];
 
-      commandInjectionInputs.forEach(input => {
+      commandInjectionInputs.forEach((input) => {
         const result = validateQueryParameters({ timeRange: input });
         expect(result.timeRange).toBe('30d'); // Should default
       });
@@ -566,7 +587,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         '\u0009\u000A\u000B\u000C\u000D\u0020'
       ];
 
-      unicodeInputs.forEach(input => {
+      unicodeInputs.forEach((input) => {
         const result = validateQueryParameters({ category: input });
         expect(result.category).toBe('all'); // Should default
       });
@@ -586,7 +607,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         Buffer.from([0, 1, 2, 3]).toString()
       ];
 
-      binaryInputs.forEach(input => {
+      binaryInputs.forEach((input) => {
         const result = validateQueryParameters({ platform: input });
         expect(result.platform).toBe('all'); // Should default
       });
@@ -613,7 +634,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
         '-Infinity'
       ];
 
-      largeNumbers.forEach(num => {
+      largeNumbers.forEach((num) => {
         const result = validateQueryParameters({ page: num, limit: num });
         expect(result.pageNum).toBeGreaterThanOrEqual(1);
         expect(result.limitNum).toBeGreaterThanOrEqual(1);
@@ -624,7 +645,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
     test('should handle floating point numbers', () => {
       const floats = ['1.5', '3.14159', '2.999', '0.001'];
 
-      floats.forEach(float => {
+      floats.forEach((float) => {
         const result = validateQueryParameters({ page: float, limit: float });
         expect(Number.isInteger(result.pageNum)).toBe(true);
         expect(Number.isInteger(result.limitNum)).toBe(true);
@@ -634,7 +655,7 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
     test('should handle scientific notation', () => {
       const scientificNumbers = ['1e2', '2e3', '5e-1', '1.5e+2'];
 
-      scientificNumbers.forEach(num => {
+      scientificNumbers.forEach((num) => {
         const result = validateQueryParameters({ page: num, limit: num });
         expect(result.pageNum).toBeGreaterThanOrEqual(1);
         expect(result.limitNum).toBeGreaterThanOrEqual(1);
@@ -644,14 +665,14 @@ describe('Shield Validation Utilities - CodeRabbit Round 2', () => {
     test('should handle empty and whitespace strings', () => {
       const emptyInputs = ['', ' ', '\t', '\n', '\r\n', '   \t\n  '];
 
-      emptyInputs.forEach(input => {
+      emptyInputs.forEach((input) => {
         const result = validateQueryParameters({
           page: input,
           limit: input,
           category: input,
           platform: input
         });
-        
+
         expect(result.pageNum).toBe(1);
         expect(result.limitNum).toBe(20);
         expect(result.category).toBe('all');

@@ -1,13 +1,13 @@
 /**
  * Parameter Sanitization Utility
- * 
+ *
  * Provides functions to sanitize sensitive parameters before logging
  * to prevent exposure of tokens, organization IDs, and other sensitive data.
  */
 
 const SENSITIVE_FIELD_PATTERNS = [
   /token/i,
-  /accesstoken/i, 
+  /accesstoken/i,
   /organizationid/i,
   /secret/i,
   /key/i,
@@ -30,8 +30,8 @@ const DEFAULT_OPTIONS = {
  */
 function isSensitiveField(fieldName) {
   if (typeof fieldName !== 'string') return false;
-  
-  return SENSITIVE_FIELD_PATTERNS.some(pattern => pattern.test(fieldName));
+
+  return SENSITIVE_FIELD_PATTERNS.some((pattern) => pattern.test(fieldName));
 }
 
 /**
@@ -42,60 +42,60 @@ function isSensitiveField(fieldName) {
  */
 function maskSensitiveValue(value, options = {}) {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  
+
   if (value === null || value === undefined) {
     return value;
   }
-  
+
   if (typeof value !== 'string') {
     return opts.maskChar.repeat(opts.maskLength);
   }
-  
+
   if (value.length <= opts.prefixLength) {
     return value;
   }
-  
+
   const prefix = value.substring(0, opts.prefixLength);
   const mask = opts.maskChar.repeat(opts.maskLength);
-  
+
   return prefix + mask;
 }
 
 /**
  * Recursively sanitize an object by masking sensitive fields
  * @param {*} obj - The object to sanitize
- * @param {Object} options - Sanitization options  
+ * @param {Object} options - Sanitization options
  * @param {Set} visited - Set to track circular references
  * @returns {*} The sanitized object
  */
 function sanitizeParameters(obj, options = {}, visited = new Set()) {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  
+
   // Handle null, undefined, and primitives
   if (obj === null || obj === undefined || typeof obj !== 'object') {
     return obj;
   }
-  
+
   // Handle circular references
   if (visited.has(obj)) {
     return '[Circular]';
   }
   visited.add(obj);
-  
+
   try {
     // Handle arrays
     if (Array.isArray(obj)) {
-      return obj.map(item => sanitizeParameters(item, opts, visited));
+      return obj.map((item) => sanitizeParameters(item, opts, visited));
     }
-    
+
     // Handle functions
     if (typeof obj === 'function') {
       return obj;
     }
-    
+
     // Handle regular objects
     const sanitized = {};
-    
+
     for (const [key, value] of Object.entries(obj)) {
       if (isSensitiveField(key)) {
         sanitized[key] = maskSensitiveValue(value, opts);
@@ -105,7 +105,7 @@ function sanitizeParameters(obj, options = {}, visited = new Set()) {
         sanitized[key] = value;
       }
     }
-    
+
     return sanitized;
   } finally {
     visited.delete(obj);
@@ -123,7 +123,7 @@ function sanitizeForLogging(obj, options = {}) {
   if (obj === null || obj === undefined) {
     return obj;
   }
-  
+
   return sanitizeParameters(obj, options);
 }
 

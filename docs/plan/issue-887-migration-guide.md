@@ -38,6 +38,7 @@ This migration refactors the codebase to use Polar's `product_id` instead of Str
 ### Environment Variables
 
 **New Variables:**
+
 - `POLAR_STARTER_PRODUCT_ID` (replaces `POLAR_STARTER_PRICE_ID`)
 - `POLAR_PRO_PRODUCT_ID` (replaces `POLAR_PRO_PRICE_ID`)
 - `POLAR_PLUS_PRODUCT_ID` (replaces `POLAR_PLUS_PRICE_ID`)
@@ -142,6 +143,7 @@ npm test -- tests/integration/checkout.product-id.test.js
 ### Manual Testing Checklist
 
 - [ ] **Checkout with `product_id`**
+
   ```bash
   curl -X POST http://localhost:3000/api/checkout \
     -H "Content-Type: application/json" \
@@ -149,6 +151,7 @@ npm test -- tests/integration/checkout.product-id.test.js
   ```
 
 - [ ] **Checkout with `price_id` (backward compatibility)**
+
   ```bash
   curl -X POST http://localhost:3000/api/checkout \
     -H "Content-Type: application/json" \
@@ -170,18 +173,21 @@ npm test -- tests/integration/checkout.product-id.test.js
 ## ⏰ Timeline
 
 ### Phase 1: Migration (Current - Issue #887) ✅
+
 - **Status:** Completed
 - **Duration:** 2025-11-19
 - **Changes:** Code refactored, backward compatibility maintained
 - **Action Required:** Update environment variables and API calls
 
 ### Phase 2: Testing (Issue #808) 🔄
+
 - **Status:** In Progress
 - **Duration:** TBD
 - **Changes:** Comprehensive test migration from Stripe to Polar
 - **Action Required:** Run full test suite, validate all flows
 
 ### Phase 3: Legacy Removal (Future)
+
 - **Status:** Planned
 - **Timeline:** After Issue #808 completion + 30 days grace period
 - **Changes:** Remove deprecated functions (`getPlanFromPriceId()`, etc.)
@@ -196,6 +202,7 @@ npm test -- tests/integration/checkout.product-id.test.js
 If issues arise post-merge, you can rollback by:
 
 ### Option 1: Revert PR #888
+
 ```bash
 git revert <merge-commit-hash>
 git push origin main
@@ -252,4 +259,3 @@ A: Yes, but `product_id` takes precedence if both are provided.
 
 **Last Updated:** 2025-11-19  
 **Maintained By:** Development Team
-

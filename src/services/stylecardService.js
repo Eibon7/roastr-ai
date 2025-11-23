@@ -11,7 +11,7 @@ const logger = require('../utils/logger');
 class StylecardService {
   constructor() {
     this.supabase = supabaseServiceClient;
-    
+
     // Configuration
     this.config = {
       maxContentPerPlatform: parseInt(process.env.STYLECARD_MAX_CONTENT_PER_PLATFORM) || 50,
@@ -42,15 +42,23 @@ class StylecardService {
       // Check if user already has an active stylecard
       const existingStylecard = await this.getActiveStylecard(userId, options.language || 'es');
       if (existingStylecard && !options.forceRegenerate) {
-        logger.info('User already has active stylecard', { userId, stylecardId: existingStylecard.id });
+        logger.info('User already has active stylecard', {
+          userId,
+          stylecardId: existingStylecard.id
+        });
         return { success: true, stylecard: existingStylecard, regenerated: false };
       }
 
       // Create generation job
-      const job = await this.createGenerationJob(userId, organizationId, connectedPlatforms, options);
-      
+      const job = await this.createGenerationJob(
+        userId,
+        organizationId,
+        connectedPlatforms,
+        options
+      );
+
       // Start processing asynchronously
-      this.processGenerationJob(job.id).catch(error => {
+      this.processGenerationJob(job.id).catch((error) => {
         logger.error('Stylecard generation job failed', {
           jobId: job.id,
           userId,
@@ -59,13 +67,12 @@ class StylecardService {
         });
       });
 
-      return { 
-        success: true, 
-        jobId: job.id, 
+      return {
+        success: true,
+        jobId: job.id,
         message: 'Stylecard generation started',
         estimatedCompletionMinutes: Math.ceil(connectedPlatforms.length * 2) // Rough estimate
       };
-
     } catch (error) {
       logger.error('Failed to trigger stylecard generation', {
         userId,
@@ -114,8 +121,11 @@ class StylecardService {
       logger.info('Processing stylecard generation job', { jobId, userId: job.user_id });
 
       // Get user's connected integrations
-      const integrations = await this.getUserIntegrations(job.organization_id, job.target_platforms);
-      
+      const integrations = await this.getUserIntegrations(
+        job.organization_id,
+        job.target_platforms
+      );
+
       if (integrations.length === 0) {
         throw new Error('No connected integrations found for specified platforms');
       }
@@ -128,18 +138,18 @@ class StylecardService {
       for (let i = 0; i < integrations.length; i++) {
         const integration = integrations[i];
         const progress = Math.floor((i / integrations.length) * 80); // Reserve 20% for final processing
-        
+
         await this.updateJobProgress(jobId, progress);
 
         try {
-          logger.info('Processing platform content', { 
-            jobId, 
+          logger.info('Processing platform content', {
+            jobId,
             platform: integration.platform,
             progress: `${progress}%`
           });
 
           const contentSamples = await this.collectPlatformContent(
-            integration, 
+            integration,
             job.max_content_per_platform,
             job.language_filter
           );
@@ -158,14 +168,13 @@ class StylecardService {
               message: 'No suitable content found'
             };
           }
-
         } catch (platformError) {
           logger.warn('Failed to process platform content', {
             jobId,
             platform: integration.platform,
             error: platformError.message
           });
-          
+
           platformResults[integration.platform] = {
             contentCount: 0,
             status: 'error',
@@ -181,11 +190,11 @@ class StylecardService {
       if (allContentSamples.length < 3) {
         // Fallback to neutral stylecard
         const neutralStylecard = await this.generateNeutralStylecard(
-          job.user_id, 
-          job.organization_id, 
+          job.user_id,
+          job.organization_id,
           job.language_filter
         );
-        
+
         await this.completeJob(jobId, neutralStylecard.id, totalContentAnalyzed, platformResults);
         return neutralStylecard;
       }
@@ -212,7 +221,6 @@ class StylecardService {
       });
 
       return stylecard;
-
     } catch (error) {
       logger.error('Stylecard generation job failed', {
         jobId,
@@ -331,11 +339,12 @@ class StylecardService {
       );
 
       // Filter and validate content
-      const validContent = content.filter(item =>
-        item.text &&
-        item.text.trim().length > 10 &&
-        item.text.length <= this.config.maxTokensPerContent &&
-        !this.isSensitiveContent(item)
+      const validContent = content.filter(
+        (item) =>
+          item.text &&
+          item.text.trim().length > 10 &&
+          item.text.length <= this.config.maxTokensPerContent &&
+          !this.isSensitiveContent(item)
       );
 
       logger.info('Collected platform content', {
@@ -345,7 +354,6 @@ class StylecardService {
       });
 
       return validContent;
-
     } catch (error) {
       logger.error('Failed to collect platform content', {
         platform: integration.platform,
@@ -385,14 +393,20 @@ class StylecardService {
       /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/ // Phone patterns
     ];
 
-    return sensitivePatterns.some(pattern => pattern.test(content.text));
+    return sensitivePatterns.some((pattern) => pattern.test(content.text));
   }
 
   /**
    * Generate stylecard from collected content
    * @private
    */
-  async generateStylecardFromContent(userId, organizationId, contentSamples, language, platformResults) {
+  async generateStylecardFromContent(
+    userId,
+    organizationId,
+    contentSamples,
+    language,
+    platformResults
+  ) {
     try {
       // Generate embeddings for all content
       const contentWithEmbeddings = await this.generateContentEmbeddings(contentSamples);
@@ -417,7 +431,6 @@ class StylecardService {
       await this.storeContentSamples(stylecard.id, contentWithEmbeddings);
 
       return stylecard;
-
     } catch (error) {
       logger.error('Failed to generate stylecard from content', {
         userId,
@@ -447,7 +460,6 @@ class StylecardService {
           ...content,
           embedding: embedding.data[0].embedding
         });
-
       } catch (error) {
         logger.warn('Failed to generate embedding for content', {
           contentId: content.id,
@@ -468,7 +480,7 @@ class StylecardService {
   async analyzeContentStyle(contentWithEmbeddings, language) {
     // Use existing style profile generator
     const analysis = await styleProfileGenerator.analyzeContentStyle(
-      contentWithEmbeddings.map(c => c.text),
+      contentWithEmbeddings.map((c) => c.text),
       language
     );
 
@@ -523,7 +535,14 @@ class StylecardService {
    * Create stylecard record in database
    * @private
    */
-  async createStylecard(userId, organizationId, styleAnalysis, stylePrompt, platformResults, language) {
+  async createStylecard(
+    userId,
+    organizationId,
+    styleAnalysis,
+    stylePrompt,
+    platformResults,
+    language
+  ) {
     // Generate style embedding from the prompt
     const styleEmbedding = await embeddingsService.generateEmbedding(
       stylePrompt,
@@ -568,7 +587,7 @@ class StylecardService {
       return;
     }
 
-    const samples = contentWithEmbeddings.map(content => {
+    const samples = contentWithEmbeddings.map((content) => {
       // Encrypt the content text
       const cipher = crypto.createCipher('aes-256-cbc', encryptionKey);
       let encrypted = cipher.update(content.text, 'utf8', 'hex');
@@ -588,14 +607,12 @@ class StylecardService {
         content_embedding: content.embedding,
         language_detected: content.language || 'unknown',
         user_consented: true, // User consented when upgrading to Pro/Plus
-        retention_until: new Date(Date.now() + (this.config.retentionDays * 24 * 60 * 60 * 1000)),
+        retention_until: new Date(Date.now() + this.config.retentionDays * 24 * 60 * 60 * 1000),
         content_date: content.created_at || new Date()
       };
     });
 
-    const { error } = await this.supabase
-      .from('stylecard_content_samples')
-      .insert(samples);
+    const { error } = await this.supabase.from('stylecard_content_samples').insert(samples);
 
     if (error) {
       logger.error('Failed to store content samples', { error: error.message });
@@ -611,7 +628,7 @@ class StylecardService {
     // Simplified tone analysis - in production, use more sophisticated NLP
     const tones = { ligero: 0, equilibrado: 0, contundente: 0, humorous: 0, sarcastic: 0 };
 
-    contentSamples.forEach(content => {
+    contentSamples.forEach((content) => {
       const text = content.text.toLowerCase();
 
       // Simple keyword-based tone detection
@@ -646,7 +663,7 @@ class StylecardService {
   calculateFormalityLevel(contentSamples) {
     let formalityScore = 0;
 
-    contentSamples.forEach(content => {
+    contentSamples.forEach((content) => {
       const text = content.text;
 
       // Formal indicators
@@ -672,7 +689,7 @@ class StylecardService {
   calculateSarcasmLevel(contentSamples) {
     let sarcasmScore = 0;
 
-    contentSamples.forEach(content => {
+    contentSamples.forEach((content) => {
       const text = content.text.toLowerCase();
 
       // Sarcasm indicators
@@ -694,10 +711,10 @@ class StylecardService {
   selectRepresentativeExamples(contentSamples, count = 5) {
     // Sort by engagement or length, then take diverse samples
     const sorted = contentSamples
-      .filter(c => c.text.length > 20 && c.text.length < 200)
+      .filter((c) => c.text.length > 20 && c.text.length < 200)
       .sort((a, b) => (b.engagement || 0) - (a.engagement || 0));
 
-    return sorted.slice(0, count).map(c => ({
+    return sorted.slice(0, count).map((c) => ({
       text: c.text,
       platform: c.platform,
       engagement: c.engagement || 0,

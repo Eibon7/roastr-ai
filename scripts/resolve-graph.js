@@ -91,9 +91,7 @@ class GraphResolver {
     const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
 
     // Handle glob semantics: '**' spans segments, '*' stays within a segment
-    const regexPattern = escaped
-      .replace(/\*\*/g, '.*')
-      .replace(/\*/g, '[^/]*');
+    const regexPattern = escaped.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*');
 
     try {
       return new RegExp('^' + regexPattern + '$');
@@ -122,8 +120,8 @@ class GraphResolver {
       const filesContent = fs.readFileSync(filesPath, 'utf8');
       const changedFiles = filesContent
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
 
       if (changedFiles.length === 0) {
         return [];
@@ -158,13 +156,17 @@ class GraphResolver {
                   break;
                 }
               } catch (error) {
-                console.warn(`${colors.yellow}Warning: Invalid glob pattern "${nodeFile}": ${error.message}${colors.reset}`);
+                console.warn(
+                  `${colors.yellow}Warning: Invalid glob pattern "${nodeFile}": ${error.message}${colors.reset}`
+                );
               }
             } else {
               const fileName = path.basename(file);
-              if (file === nodeFile || 
-                  file.endsWith(path.sep + nodeFile) ||
-                  fileName === nodeFile) {
+              if (
+                file === nodeFile ||
+                file.endsWith(path.sep + nodeFile) ||
+                fileName === nodeFile
+              ) {
                 affectedNodes.add(nodeName);
                 break;
               }
@@ -181,7 +183,7 @@ class GraphResolver {
 
           // Use regex with word boundaries to detect camelCase correctly
           const nodeKeywords = Array.from(keywordSet).filter(Boolean);
-          
+
           const pathSegments = file.toLowerCase().split(path.sep);
 
           for (const rawKeyword of nodeKeywords) {
@@ -189,13 +191,16 @@ class GraphResolver {
             const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const keywordRegex = new RegExp(`(^|[^a-z0-9])${escapedKeyword}([^a-z0-9]|$)`);
 
-            if (pathSegments.some(segment =>
-              keywordRegex.test(segment) ||
-              segment === keyword ||
-              segment.startsWith(`${keyword}.`) ||
-              segment.startsWith(`${keyword}-`) ||
-              segment.startsWith(`${keyword}_`)
-            )) {
+            if (
+              pathSegments.some(
+                (segment) =>
+                  keywordRegex.test(segment) ||
+                  segment === keyword ||
+                  segment.startsWith(`${keyword}.`) ||
+                  segment.startsWith(`${keyword}-`) ||
+                  segment.startsWith(`${keyword}_`)
+              )
+            ) {
               affectedNodes.add(nodeName);
               break;
             }
@@ -261,7 +266,9 @@ class GraphResolver {
   traverse(nodeName, depth) {
     // Detect cycles
     if (this.visited.has(nodeName)) {
-      throw new Error(`Circular dependency detected: ${nodeName} appears in its own dependency chain`);
+      throw new Error(
+        `Circular dependency detected: ${nodeName} appears in its own dependency chain`
+      );
     }
 
     const features = this.getFeatures();
@@ -349,7 +356,7 @@ class GraphResolver {
 
       // Check for orphaned nodes (no incoming dependencies)
       const hasIncoming = Object.values(features).some(
-        otherNode => otherNode.depends_on && otherNode.depends_on.includes(nodeName)
+        (otherNode) => otherNode.depends_on && otherNode.depends_on.includes(nodeName)
       );
       if (!hasIncoming && node.depends_on && node.depends_on.length > 0) {
         // This is a leaf node with dependencies - OK
@@ -429,11 +436,12 @@ class GraphResolver {
     const sectionMatch = content.match(/## Agentes Relevantes\s*([\s\S]*?)(?=\n##|\n---|\Z)/);
     if (sectionMatch) {
       const sectionContent = sectionMatch[1];
-      const lines = sectionContent.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('-'));
+      const lines = sectionContent
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('-'));
 
-      const agents = lines.map(line => line.replace(/^-\s*/, '').trim());
+      const agents = lines.map((line) => line.replace(/^-\s*/, '').trim());
 
       // Check for duplicates
       const seen = new Set();
@@ -514,7 +522,9 @@ class GraphResolver {
    * @param {boolean} verbose - Whether to print verbose output
    */
   printResolution(nodeName, result, verbose = false) {
-    console.log(`\n${colors.bright}${colors.cyan}📊 Dependency Resolution for: ${nodeName}${colors.reset}\n`);
+    console.log(
+      `\n${colors.bright}${colors.cyan}📊 Dependency Resolution for: ${nodeName}${colors.reset}\n`
+    );
 
     // Print dependency chain
     console.log(`${colors.bright}Dependency Chain:${colors.reset}`);
@@ -525,7 +535,9 @@ class GraphResolver {
     }
 
     // Print resolved docs
-    console.log(`\n${colors.bright}Resolved Documentation Files (${result.docs.length}):${colors.reset}`);
+    console.log(
+      `\n${colors.bright}Resolved Documentation Files (${result.docs.length}):${colors.reset}`
+    );
     for (const doc of result.docs) {
       const exists = fs.existsSync(path.join(process.cwd(), doc));
       const status = exists ? `${colors.green}✓${colors.reset}` : `${colors.red}✗${colors.reset}`;
@@ -580,8 +592,11 @@ class GraphResolver {
 
     report += `## Summary\n\n`;
 
-    const totalCritical = issues.circularDeps.length + issues.missingDeps.length +
-                          issues.missingDocs.length + issues.missingAgentsSection.length;
+    const totalCritical =
+      issues.circularDeps.length +
+      issues.missingDeps.length +
+      issues.missingDocs.length +
+      issues.missingAgentsSection.length;
     const totalWarnings = issues.duplicateAgents.length + issues.invalidAgents.length;
 
     if (totalCritical === 0 && totalWarnings === 0) {
@@ -655,7 +670,11 @@ class GraphResolver {
       report += `\n`;
     }
 
-    if (issues.duplicateAgents.length === 0 && issues.invalidAgents.length === 0 && issues.missingAgentsSection.length === 0) {
+    if (
+      issues.duplicateAgents.length === 0 &&
+      issues.invalidAgents.length === 0 &&
+      issues.missingAgentsSection.length === 0
+    ) {
       report += `✅ All agent sections are valid\n\n`;
     }
 
@@ -699,11 +718,12 @@ class GraphResolver {
 
     if (sectionMatch) {
       const sectionContent = sectionMatch[1];
-      const lines = sectionContent.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('-'));
+      const lines = sectionContent
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('-'));
 
-      return lines.map(line => line.replace(/^-\s*/, '').trim());
+      return lines.map((line) => line.replace(/^-\s*/, '').trim());
     }
 
     return [];
@@ -722,7 +742,9 @@ class GraphResolver {
     // Circular dependencies
     if (issues.circularDeps.length > 0) {
       hasIssues = true;
-      console.log(`${colors.red}❌ Circular Dependencies (${issues.circularDeps.length}):${colors.reset}`);
+      console.log(
+        `${colors.red}❌ Circular Dependencies (${issues.circularDeps.length}):${colors.reset}`
+      );
       for (const issue of issues.circularDeps) {
         console.log(`  - ${issue.node}: ${issue.error}`);
       }
@@ -732,7 +754,9 @@ class GraphResolver {
     // Missing dependencies
     if (issues.missingDeps.length > 0) {
       hasIssues = true;
-      console.log(`${colors.yellow}⚠️  Missing Dependencies (${issues.missingDeps.length}):${colors.reset}`);
+      console.log(
+        `${colors.yellow}⚠️  Missing Dependencies (${issues.missingDeps.length}):${colors.reset}`
+      );
       for (const issue of issues.missingDeps) {
         console.log(`  - ${issue.node} depends on non-existent node: ${issue.missingDep}`);
       }
@@ -742,7 +766,9 @@ class GraphResolver {
     // Missing documentation files
     if (issues.missingDocs.length > 0) {
       hasIssues = true;
-      console.log(`${colors.yellow}⚠️  Missing Documentation Files (${issues.missingDocs.length}):${colors.reset}`);
+      console.log(
+        `${colors.yellow}⚠️  Missing Documentation Files (${issues.missingDocs.length}):${colors.reset}`
+      );
       for (const issue of issues.missingDocs) {
         console.log(`  - ${issue.node}: ${issue.missingDoc}`);
       }
@@ -752,7 +778,9 @@ class GraphResolver {
     // NEW: Missing agents section
     if (issues.missingAgentsSection.length > 0) {
       hasIssues = true;
-      console.log(`${colors.red}❌ Missing "Agentes Relevantes" Section (${issues.missingAgentsSection.length}):${colors.reset}`);
+      console.log(
+        `${colors.red}❌ Missing "Agentes Relevantes" Section (${issues.missingAgentsSection.length}):${colors.reset}`
+      );
       for (const issue of issues.missingAgentsSection) {
         console.log(`  - ${issue.node}: ${issue.file}`);
       }
@@ -762,7 +790,9 @@ class GraphResolver {
     // NEW: Duplicate agents
     if (issues.duplicateAgents.length > 0) {
       hasWarnings = true;
-      console.log(`${colors.yellow}⚠️  Duplicate Agents (${issues.duplicateAgents.length}):${colors.reset}`);
+      console.log(
+        `${colors.yellow}⚠️  Duplicate Agents (${issues.duplicateAgents.length}):${colors.reset}`
+      );
       for (const issue of issues.duplicateAgents) {
         console.log(`  - ${issue.node}: ${issue.duplicates.join(', ')}`);
       }
@@ -772,7 +802,9 @@ class GraphResolver {
     // NEW: Invalid agents
     if (issues.invalidAgents.length > 0) {
       hasWarnings = true;
-      console.log(`${colors.yellow}⚠️  Invalid Agents (${issues.invalidAgents.length}):${colors.reset}`);
+      console.log(
+        `${colors.yellow}⚠️  Invalid Agents (${issues.invalidAgents.length}):${colors.reset}`
+      );
       for (const issue of issues.invalidAgents) {
         console.log(`  - ${issue.node}: ${issue.invalid.join(', ')}`);
       }
@@ -783,13 +815,20 @@ class GraphResolver {
     if (!hasIssues && !hasWarnings) {
       console.log(`${colors.green}✅ Graph validation passed! No issues found.${colors.reset}\n`);
     } else if (hasIssues) {
-      const totalIssues = issues.circularDeps.length + issues.missingDeps.length +
-                          issues.missingDocs.length + issues.missingAgentsSection.length;
-      console.log(`${colors.red}❌ Graph validation failed with ${totalIssues} critical issues.${colors.reset}\n`);
+      const totalIssues =
+        issues.circularDeps.length +
+        issues.missingDeps.length +
+        issues.missingDocs.length +
+        issues.missingAgentsSection.length;
+      console.log(
+        `${colors.red}❌ Graph validation failed with ${totalIssues} critical issues.${colors.reset}\n`
+      );
       process.exit(1);
     } else {
       const totalWarnings = issues.duplicateAgents.length + issues.invalidAgents.length;
-      console.log(`${colors.yellow}⚠️  Graph validation passed with ${totalWarnings} warnings.${colors.reset}\n`);
+      console.log(
+        `${colors.yellow}⚠️  Graph validation passed with ${totalWarnings} warnings.${colors.reset}\n`
+      );
     }
   }
 }
@@ -811,7 +850,7 @@ function main() {
       skipNext = false;
       continue; // Skip the consumed argument
     }
-    
+
     if (arg === '--validate') {
       mode = 'validate';
     } else if (arg === '--graph') {
@@ -846,7 +885,7 @@ function main() {
     if (fromFiles) {
       // Map changed files to affected nodes
       const affectedNodes = resolver.mapFilesToNodes(fromFiles);
-      
+
       if (format === 'json') {
         console.log(JSON.stringify({ nodes: affectedNodes }, null, 2));
       } else {
@@ -877,7 +916,9 @@ function main() {
       // Resolve dependencies for specific node
       if (!nodeName) {
         console.error(`${colors.red}Error: Node name required${colors.reset}`);
-        console.log('Usage: node scripts/resolve-graph.js <node-name> [--verbose] [--format=json|text]');
+        console.log(
+          'Usage: node scripts/resolve-graph.js <node-name> [--verbose] [--format=json|text]'
+        );
         process.exit(1);
       }
 

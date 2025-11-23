@@ -1,22 +1,24 @@
 # Issue #403 - Testing MVP – Camino de baldosas amarillas (v2)
 
 ## Objetivo
+
 Establecer una suite completa de testing para el MVP de Roastr AI que valide todos los flujos críticos del sistema multi-tenant de moderación automática y generación de roasts.
 
 ## Plan de Implementación
 
 ### Fase 1: Preparación de Infraestructura de Testing
+
 1. **Configuración de entorno de testing**
    - Variables de entorno dummy/mock
    - Base de datos de testing aislada
    - Configuración CI/CD headless
-   
 2. **Fixtures y seeds base**
    - Comentarios de prueba por categoría
    - Usuarios de prueba multi-tenant
    - Configuraciones de planes y límites
 
 ### Fase 2: Tests E2E Críticos (Issues P0)
+
 1. **Flujos de usuario principales**
    - Flujo manual (auto-approval OFF) - #404
    - Flujo automático (auto-approval ON) - #405
@@ -30,36 +32,39 @@ Establecer una suite completa de testing para el MVP de Roastr AI que valide tod
    - Publisher e idempotencia - #410
 
 ### Fase 3: Tests de Arquitectura Multi-Tenant
+
 1. **Workers y cola de tareas**
    - Idempotencia y reintentos - #411
    - Procesamiento distribuido
-   
 2. **Aislamiento multi-tenant**
    - Row Level Security - #412
    - Billing y entitlements - #413
-   
 3. **Sistemas de control**
    - Kill-switch del publisher - #414
 
 ### Fase 4: Observabilidad y Resiliencia (Issues P1)
+
 1. **Logging estructurado** - #417
 2. **Manejo de errores UI** - #419
 3. **Fixtures completos** - #420
 4. **Documentación de testing** - #421
 
 ### Fase 5: Pulido Técnico (Issues P2)
+
 1. **Tests unitarios de utilidades** - #422
 2. **Compatibilidad sandbox** - #423
 
 ## Criterios de Éxito
 
 ### Definición de "Hecho"
+
 - ✅ Todas las issues P0 cerradas
 - ✅ Suite E2E ejecutándose en CI headless sin fallos
 - ✅ Cobertura de integración para todos los componentes críticos
 - ✅ Documentación de testing actualizada y ejecutable
 
 ### Métricas de Calidad
+
 - **Cobertura de código**: >80% para servicios críticos
 - **Tiempo de ejecución**: Suite completa <15 minutos
 - **Estabilidad**: 0% flaky tests en CI
@@ -105,12 +110,14 @@ tests/
 ## Dependencias y Consideraciones
 
 ### Herramientas de Testing
+
 - **Jest**: Test runner principal
 - **Supertest**: Tests de API
 - **Playwright**: Tests E2E de UI
 - **Mock Services**: Para APIs externas
 
 ### Variables de Entorno de Testing
+
 ```bash
 NODE_ENV=test
 ENABLE_MOCK_MODE=true
@@ -122,6 +129,7 @@ PERSPECTIVE_API_KEY="mock-key"
 ```
 
 ### Configuración CI
+
 - Ejecución paralela de tests
 - Cacheo de dependencias
 - Reports de cobertura

@@ -1,6 +1,6 @@
 /**
  * Job Validator - Centralized validation for worker jobs
- * 
+ *
  * Provides consistent validation across all worker types to prevent
  * malformed jobs from causing system failures.
  */
@@ -27,14 +27,9 @@ class JobValidator {
     }
 
     const { payload } = job;
-    const required = [
-      'comment_id',
-      'organization_id', 
-      'platform',
-      'original_text'
-    ];
+    const required = ['comment_id', 'organization_id', 'platform', 'original_text'];
 
-    const missing = required.filter(field => !payload[field]);
+    const missing = required.filter((field) => !payload[field]);
     if (missing.length > 0) {
       throw new ValidationError(`Missing required fields: ${missing.join(', ')}`);
     }
@@ -57,17 +52,35 @@ class JobValidator {
     }
 
     // Validate optional fields
-    if (payload.toxicity_score !== undefined && 
-        (typeof payload.toxicity_score !== 'number' || 
-         payload.toxicity_score < 0 || 
-         payload.toxicity_score > 1)) {
-      throw new ValidationError('toxicity_score must be a number between 0 and 1', 'toxicity_score');
+    if (
+      payload.toxicity_score !== undefined &&
+      (typeof payload.toxicity_score !== 'number' ||
+        payload.toxicity_score < 0 ||
+        payload.toxicity_score > 1)
+    ) {
+      throw new ValidationError(
+        'toxicity_score must be a number between 0 and 1',
+        'toxicity_score'
+      );
     }
 
     // Validate platform
-    const validPlatforms = ['twitter', 'instagram', 'facebook', 'youtube', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+    const validPlatforms = [
+      'twitter',
+      'instagram',
+      'facebook',
+      'youtube',
+      'discord',
+      'twitch',
+      'reddit',
+      'tiktok',
+      'bluesky'
+    ];
     if (!validPlatforms.includes(payload.platform)) {
-      throw new ValidationError(`Invalid platform. Must be one of: ${validPlatforms.join(', ')}`, 'platform');
+      throw new ValidationError(
+        `Invalid platform. Must be one of: ${validPlatforms.join(', ')}`,
+        'platform'
+      );
     }
 
     // Validate text length
@@ -93,7 +106,7 @@ class JobValidator {
     const { payload } = job;
     const required = ['comment_id', 'organization_id', 'platform', 'text'];
 
-    const missing = required.filter(field => !payload[field]);
+    const missing = required.filter((field) => !payload[field]);
     if (missing.length > 0) {
       throw new ValidationError(`Missing required fields: ${missing.join(', ')}`);
     }
@@ -117,7 +130,7 @@ class JobValidator {
     const { payload } = job;
     const required = ['organization_id', 'platform', 'integration_config_id'];
 
-    const missing = required.filter(field => !payload[field]);
+    const missing = required.filter((field) => !payload[field]);
     if (missing.length > 0) {
       throw new ValidationError(`Missing required fields: ${missing.join(', ')}`);
     }
@@ -142,7 +155,7 @@ class JobValidator {
       'shield_mode'
     ];
 
-    const missing = required.filter(field => job[field] === undefined);
+    const missing = required.filter((field) => job[field] === undefined);
     if (missing.length > 0) {
       throw new ValidationError(`Missing required fields: ${missing.join(', ')}`);
     }
@@ -155,7 +168,7 @@ class JobValidator {
     // Validate action type
     const validActions = [
       'reply_warning',
-      'mute_user', 
+      'mute_user',
       'block_user',
       'remove_content',
       'ban_user',
@@ -163,7 +176,10 @@ class JobValidator {
     ];
 
     if (!validActions.includes(job.action)) {
-      throw new ValidationError(`Invalid action. Must be one of: ${validActions.join(', ')}`, 'action');
+      throw new ValidationError(
+        `Invalid action. Must be one of: ${validActions.join(', ')}`,
+        'action'
+      );
     }
 
     return true;
@@ -174,20 +190,26 @@ class JobValidator {
    */
   static normalizeJob(job) {
     if (!job) return job;
-    
+
     // If job already has a payload, return as-is
     if (job.payload) {
       return job;
     }
-    
+
     // If job looks like it IS the payload, wrap it
     const possiblePayloadKeys = [
-      'comment_id', 'organization_id', 'platform', 'original_text',
-      'text', 'integration_config_id', 'toxicity_score', 'severity_level'
+      'comment_id',
+      'organization_id',
+      'platform',
+      'original_text',
+      'text',
+      'integration_config_id',
+      'toxicity_score',
+      'severity_level'
     ];
-    
-    const hasPayloadKeys = possiblePayloadKeys.some(key => job[key] !== undefined);
-    
+
+    const hasPayloadKeys = possiblePayloadKeys.some((key) => job[key] !== undefined);
+
     if (hasPayloadKeys) {
       return {
         payload: job,
@@ -195,7 +217,7 @@ class JobValidator {
         type: job.type || null
       };
     }
-    
+
     return job;
   }
 

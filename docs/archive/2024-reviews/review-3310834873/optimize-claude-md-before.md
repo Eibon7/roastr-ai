@@ -50,11 +50,13 @@
 ## Estrategia de Optimización
 
 ### 1. Eliminar Duplicados (Prioridad Alta)
+
 - [x] Identificar sección "Multi-Tenant Architecture" duplicada
 - [ ] Consolidar en una sola sección (mantener la detallada)
 - **Target**: -800 caracteres
 
 ### 2. Resumir Secciones GDD (Prioridad Alta)
+
 - [ ] **Runtime Validation**: Reducir de ~5.5k a ~1.5k
   - Mantener solo comandos principales
   - Referenciar `docs/GDD-ACTIVATION-GUIDE.md` para detalles
@@ -71,16 +73,19 @@
 - **Target**: -15k caracteres
 
 ### 3. Optimizar Comandos (Prioridad Media)
+
 - [ ] Agrupar comandos GDD relacionados
 - [ ] Usar tabla compacta en lugar de lista
 - **Target**: -500 caracteres
 
 ### 4. Abreviar Ejemplos (Prioridad Media)
+
 - [ ] Acortar ejemplos JSON (máximo 10 líneas)
 - [ ] Eliminar ejemplos redundantes
 - **Target**: -2k caracteres
 
 ### 5. Referencias Externas (Prioridad Media)
+
 - [ ] Añadir sección "📚 Documentación Completa" al inicio
 - [ ] Referenciar docs externos en lugar de duplicar contenido
   - `docs/GDD-ACTIVATION-GUIDE.md` - Detalles completos de GDD
@@ -90,13 +95,13 @@
 
 ## Métricas de Éxito
 
-| Métrica | Actual | Target | Prioridad |
-|---------|--------|--------|-----------|
-| Tamaño total | 43.6k | <40k | P0 |
-| Reducción mínima | - | 3.6k (8%) | P0 |
-| Reducción objetivo | - | 5-6k (12-14%) | P1 |
-| Tamaño final ideal | - | 37-38k | P1 |
-| Líneas | 1241 | ~1100 | P2 |
+| Métrica            | Actual | Target        | Prioridad |
+| ------------------ | ------ | ------------- | --------- |
+| Tamaño total       | 43.6k  | <40k          | P0        |
+| Reducción mínima   | -      | 3.6k (8%)     | P0        |
+| Reducción objetivo | -      | 5-6k (12-14%) | P1        |
+| Tamaño final ideal | -      | 37-38k        | P1        |
+| Líneas             | 1241   | ~1100         | P2        |
 
 ## Checklist Pre-Implementación
 
@@ -119,6 +124,7 @@
 ## Notas Importantes
 
 **NO ELIMINAR:**
+
 - Comandos de desarrollo esenciales
 - Estructura del proyecto
 - Variables de entorno
@@ -129,6 +135,7 @@
 - Tareas al Cerrar (crítico)
 
 **MANTENER ESENCIA:**
+
 - GDD es parte fundamental del workflow
 - Debe ser suficientemente claro para Claude Code
 - Balance entre brevedad y claridad

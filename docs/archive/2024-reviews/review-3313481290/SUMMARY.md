@@ -30,24 +30,28 @@
 **Lines:** 45-88
 
 #### Problem
+
 Collector failures not properly propagated when:
+
 - No snapshot file generated
 - Status extracted as "UNKNOWN"
 - Running in scheduled/manual mode (not PRs)
 
 #### Fix Applied
+
 ```yaml
 # P1-1: Propagate failures when collector never writes snapshot or status is UNKNOWN
 # Only fail in scheduled/manual runs (not PRs - handled by continue-on-error)
 if [ "${{ github.event_name }}" != "pull_request" ]; then
-  if [ ! -f telemetry/snapshots/gdd-metrics-history.json ] || [ "${STATUS}" = "UNKNOWN" ]; then
-    echo "::error::Collector failed to generate valid snapshot or status"
-    exit 1
-  fi
+if [ ! -f telemetry/snapshots/gdd-metrics-history.json ] || [ "${STATUS}" = "UNKNOWN" ]; then
+echo "::error::Collector failed to generate valid snapshot or status"
+exit 1
+fi
 fi
 ```
 
 #### Validation
+
 - ✅ Workflow fails with exit 1 when collector doesn't generate snapshot (scheduled/manual)
 - ✅ Workflow continues on PR events (continue-on-error)
 - ✅ UNKNOWN status triggers error in production runs
@@ -60,7 +64,9 @@ fi
 **Lines:** 296-320
 
 #### Problem
+
 Line 297 used `||` operator which treats `0` as falsy:
+
 ```javascript
 const repairScore = metrics.repair?.success_rate || 100;
 ```
@@ -68,39 +74,42 @@ const repairScore = metrics.repair?.success_rate || 100;
 **Impact:** 0% auto-fix success incorrectly treated as 100%, inflating stability_index by 33 points
 
 #### Fix Applied
+
 ```javascript
-const repairScore = metrics.repair?.success_rate ?? 100;  // P1: Use ?? to treat 0 as valid
+const repairScore = metrics.repair?.success_rate ?? 100; // P1: Use ?? to treat 0 as valid
 ```
 
 #### Before/After Comparison
 
 **Scenario:** 0% auto-fix success rate
 
-| Metric | Before (||) | After (??) |
-|--------|-------------|------------|
-| repairScore | 100 (WRONG) | 0 (CORRECT) |
-| stability_index | 95 | 62 |
-| system_status | STABLE | DEGRADED |
+| Metric          | Before (    |             | )   | After (??) |
+| --------------- | ----------- | ----------- | --- | ---------- |
+| repairScore     | 100 (WRONG) | 0 (CORRECT) |
+| stability_index | 95          | 62          |
+| system_status   | STABLE      | DEGRADED    |
 
 **Test Evidence:**
+
 ```javascript
 test('should treat success_rate=0 as valid value (not fallback to 100)', () => {
   const metrics = {
     health: { overall_score: 95 },
     drift: { average_drift_risk: 10 },
-    repair: { success_rate: 0 }  // ❌ 0% success - should NOT fallback to 100
+    repair: { success_rate: 0 } // ❌ 0% success - should NOT fallback to 100
   };
 
   const derived = collector.calculateDerivedMetrics(metrics);
 
   // With fix (??): repairScore = 0
   // stability_index = (95 + 90 + 0) / 3 = 61.67 → 62
-  expect(derived.stability_index).toBe(62);  // ✅ PASS
-  expect(derived.system_status).toBe('DEGRADED');  // ✅ PASS
+  expect(derived.stability_index).toBe(62); // ✅ PASS
+  expect(derived.system_status).toBe('DEGRADED'); // ✅ PASS
 });
 ```
 
 #### Impact Prevented
+
 - ✅ No more false STABLE status when auto-fix completely fails
 - ✅ Correct 33-point penalty applied for 0% success
 - ✅ Proper escalation to DEGRADED/CRITICAL when needed
@@ -113,7 +122,9 @@ test('should treat success_rate=0 as valid value (not fallback to 100)', () => {
 **Lines:** 356-366
 
 #### Problem
+
 Line 357 compared `success_rate < threshold` without type checking:
+
 ```javascript
 if (metrics.repair && metrics.repair.success_rate < thresholds.auto_fix_success_below) {
   // Alert triggered even when success_rate is null
@@ -123,10 +134,14 @@ if (metrics.repair && metrics.repair.success_rate < thresholds.auto_fix_success_
 **Impact:** False alerts with message showing "null% below threshold"
 
 #### Fix Applied
+
 ```javascript
 // Auto-fix alerts - M1: Only check if success_rate is numeric (prevent false alerts when null)
-if (metrics.repair && typeof metrics.repair.success_rate === 'number' &&
-    metrics.repair.success_rate < thresholds.auto_fix_success_below) {
+if (
+  metrics.repair &&
+  typeof metrics.repair.success_rate === 'number' &&
+  metrics.repair.success_rate < thresholds.auto_fix_success_below
+) {
   // Alert only triggered for valid numeric values
 }
 ```
@@ -134,39 +149,42 @@ if (metrics.repair && typeof metrics.repair.success_rate === 'number' &&
 #### Test Evidence
 
 **Test 1: No alert when success_rate is null**
+
 ```javascript
 test('should NOT generate alert when success_rate is null', () => {
   const metrics = {
     health: { overall_score: 95 },
     drift: { average_drift_risk: 10 },
-    repair: { success_rate: null }  // null - should NOT trigger alert
+    repair: { success_rate: null } // null - should NOT trigger alert
   };
 
   const alerts = collector.checkAlerts(metrics);
 
-  const autoFixAlerts = alerts.filter(a => a.type === 'auto_fix');
-  expect(autoFixAlerts).toHaveLength(0);  // ✅ PASS
+  const autoFixAlerts = alerts.filter((a) => a.type === 'auto_fix');
+  expect(autoFixAlerts).toHaveLength(0); // ✅ PASS
 });
 ```
 
 **Test 2: Alert when success_rate=0 (valid number)**
+
 ```javascript
 test('should generate alert when success_rate=0 (below threshold)', () => {
   const metrics = {
     health: { overall_score: 95 },
     drift: { average_drift_risk: 10 },
-    repair: { success_rate: 0 }  // 0% - SHOULD trigger alert
+    repair: { success_rate: 0 } // 0% - SHOULD trigger alert
   };
 
   const alerts = collector.checkAlerts(metrics);
 
-  const autoFixAlerts = alerts.filter(a => a.type === 'auto_fix');
-  expect(autoFixAlerts).toHaveLength(1);  // ✅ PASS
-  expect(autoFixAlerts[0].message).toContain('0%');  // ✅ PASS
+  const autoFixAlerts = alerts.filter((a) => a.type === 'auto_fix');
+  expect(autoFixAlerts).toHaveLength(1); // ✅ PASS
+  expect(autoFixAlerts[0].message).toContain('0%'); // ✅ PASS
 });
 ```
 
 #### Impact Prevented
+
 - ✅ No false alerts when repair metrics unavailable
 - ✅ Proper alerts for valid 0% success rate
 - ✅ Clean alert messages without "null%" or "undefined%"
@@ -179,7 +197,9 @@ test('should generate alert when success_rate=0 (below threshold)', () => {
 **Lines:** 513-520, 576-585
 
 #### Problem
+
 Lines 513-514 and 581 assumed success_rate is numeric:
+
 ```javascript
 // Key Metrics Table
 const repairStatus = metrics.repair.success_rate >= 90 ? '✅' : ...;
@@ -194,18 +214,26 @@ md += `- Success Rate: ${metrics.repair.success_rate}%\n\n`;
 #### Fix Applied
 
 **Key Metrics Table (lines 513-520):**
+
 ```javascript
 if (metrics.repair) {
   // M2: Handle null/undefined success_rate gracefully in report
   const successRate = metrics.repair.success_rate;
   const displayValue = typeof successRate === 'number' ? `${successRate}%` : 'N/A';
-  const repairStatus = typeof successRate !== 'number' ? '➖' :
-    successRate >= 90 ? '✅' : successRate >= 70 ? '⚠️' : '❌';
+  const repairStatus =
+    typeof successRate !== 'number'
+      ? '➖'
+      : successRate >= 90
+        ? '✅'
+        : successRate >= 70
+          ? '⚠️'
+          : '❌';
   md += `| Auto-Fix Success | ${displayValue} | ≥90% | ${repairStatus} |\n`;
 }
 ```
 
 **Detailed Metrics Section (lines 576-585):**
+
 ```javascript
 if (metrics.repair) {
   md += `### Auto-Repair\n\n`;
@@ -222,6 +250,7 @@ if (metrics.repair) {
 #### Test Evidence
 
 **Test 1: Display N/A for null success_rate**
+
 ```javascript
 test('should display "N/A" with neutral marker when success_rate is null', () => {
   const snapshot = {
@@ -236,13 +265,14 @@ test('should display "N/A" with neutral marker when success_rate is null', () =>
 
   const report = collector.buildMarkdownReport(snapshot);
 
-  expect(report).toContain('| Auto-Fix Success | N/A |');  // ✅ PASS
-  expect(report).toContain('➖');  // ✅ PASS (neutral marker)
-  expect(report).not.toContain('null%');  // ✅ PASS
+  expect(report).toContain('| Auto-Fix Success | N/A |'); // ✅ PASS
+  expect(report).toContain('➖'); // ✅ PASS (neutral marker)
+  expect(report).not.toContain('null%'); // ✅ PASS
 });
 ```
 
 **Test 2: Display 0% for valid zero**
+
 ```javascript
 test('should display "0%" with ❌ when success_rate=0', () => {
   const snapshot = {
@@ -257,24 +287,28 @@ test('should display "0%" with ❌ when success_rate=0', () => {
 
   const report = collector.buildMarkdownReport(snapshot);
 
-  expect(report).toContain('| Auto-Fix Success | 0% |');  // ✅ PASS
-  expect(report).toContain('❌');  // ✅ PASS (0 < 70, critical)
+  expect(report).toContain('| Auto-Fix Success | 0% |'); // ✅ PASS
+  expect(report).toContain('❌'); // ✅ PASS (0 < 70, critical)
 });
 ```
 
 #### Before/After Output
 
 **Before (null success_rate):**
+
 ```markdown
 | Auto-Fix Success | null% | ≥90% | ❌ |
 ...
+
 - Success Rate: null%
 ```
 
 **After (null success_rate):**
+
 ```markdown
 | Auto-Fix Success | N/A | ≥90% | ➖ |
 ...
+
 - Success Rate: N/A
 ```
 
@@ -283,6 +317,7 @@ test('should display "0%" with ❌ when success_rate=0', () => {
 ## Test Summary
 
 ### New Test File
+
 **File:** `tests/unit/utils/telemetry-null-handling.test.js`
 **Tests:** 17 total (all passing)
 **Coverage:** 100%
@@ -290,6 +325,7 @@ test('should display "0%" with ❌ when success_rate=0', () => {
 #### Test Breakdown
 
 **P1-2 Tests (5):**
+
 - ✅ success_rate=0 treated as valid (not fallback)
 - ✅ success_rate=null uses fallback
 - ✅ success_rate=undefined uses fallback
@@ -297,6 +333,7 @@ test('should display "0%" with ❌ when success_rate=0', () => {
 - ✅ success_rate=100 perfect auto-fix
 
 **M1 Tests (5):**
+
 - ✅ No alert when success_rate=null
 - ✅ No alert when success_rate=undefined
 - ✅ Alert when success_rate=0 (below threshold)
@@ -304,6 +341,7 @@ test('should display "0%" with ❌ when success_rate=0', () => {
 - ✅ No alert when success_rate=90 (above threshold)
 
 **M2 Tests (5):**
+
 - ✅ Display "N/A" with ➖ when success_rate=null
 - ✅ Display "N/A" when success_rate=undefined
 - ✅ Display "0%" with ❌ when success_rate=0
@@ -311,6 +349,7 @@ test('should display "0%" with ❌ when success_rate=0', () => {
 - ✅ Display "95%" with ✅ when success_rate=95
 
 **Edge Cases (2):**
+
 - ✅ Handle complete absence of repair metrics
 - ✅ Handle repair object without success_rate property
 
@@ -354,20 +393,24 @@ Time:        0.44 s
 ## Files Modified
 
 ### 1. `.github/workflows/gdd-telemetry.yml`
+
 **Lines changed:** +8
 **Issue:** P1-1 (Error propagation)
 
 ### 2. `scripts/collect-gdd-telemetry.js`
+
 **Lines changed:** +17/-4
 **Issues:** P1-2, M1, M2
 
 **Changes:**
+
 - Line 297: `||` → `??` (P1-2)
 - Lines 356-366: Added type guard (M1)
 - Lines 513-520: Null handling in Key Metrics table (M2)
 - Lines 576-585: Null handling in Detailed Metrics section (M2)
 
 ### 3. `tests/unit/utils/telemetry-null-handling.test.js` (NEW)
+
 **Lines:** +341
 **Purpose:** Comprehensive null handling tests
 
@@ -403,6 +446,7 @@ Time:        0.44 s
 ### Before Fixes
 
 **Problem 1:** 0% auto-fix success reported as STABLE
+
 ```
 metrics.repair.success_rate = 0
 repairScore = 0 || 100 = 100  ❌ WRONG
@@ -411,18 +455,22 @@ system_status = "STABLE"  ❌ WRONG
 ```
 
 **Problem 2:** False alerts for null values
+
 ```
 metrics.repair.success_rate = null
 Alert: "Auto-fix success rate null% below threshold 80%"  ❌ WRONG
 ```
 
 **Problem 3:** Confusing report output
+
 ```markdown
 | Auto-Fix Success | null% | ≥90% | ❌ |
+
 - Success Rate: undefined%
 ```
 
 **Problem 4:** Collector failures not detected
+
 ```
 Collector fails → Workflow succeeds ✅  ❌ WRONG
 No snapshot generated → No error  ❌ WRONG
@@ -431,6 +479,7 @@ No snapshot generated → No error  ❌ WRONG
 ### After Fixes
 
 **Fix 1:** Correct stability calculation
+
 ```
 metrics.repair.success_rate = 0
 repairScore = 0 ?? 100 = 0  ✅ CORRECT
@@ -439,6 +488,7 @@ system_status = "DEGRADED"  ✅ CORRECT
 ```
 
 **Fix 2:** No false alerts
+
 ```
 metrics.repair.success_rate = null
 No alert generated  ✅ CORRECT
@@ -448,12 +498,15 @@ Alert: "Auto-fix success rate 0% below threshold 80%"  ✅ CORRECT
 ```
 
 **Fix 3:** Clean report output
+
 ```markdown
 | Auto-Fix Success | N/A | ≥90% | ➖ |
+
 - Success Rate: N/A
 ```
 
 **Fix 4:** Proper error propagation
+
 ```
 Collector fails in production → Workflow fails ❌  ✅ CORRECT
 Collector fails in PR → Workflow continues ✅  ✅ CORRECT (continue-on-error)
@@ -463,14 +516,14 @@ Collector fails in PR → Workflow continues ✅  ✅ CORRECT (continue-on-error
 
 ## Quality Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Issues Resolved | 4/4 | ✅ 100% |
-| Test Coverage | 17/17 | ✅ 100% |
-| Regressions | 0 | ✅ None |
-| Breaking Changes | 0 | ✅ None |
-| False Positives Prevented | 100% | ✅ Complete |
-| Error Detection Improved | Yes | ✅ Production-ready |
+| Metric                    | Value | Status              |
+| ------------------------- | ----- | ------------------- |
+| Issues Resolved           | 4/4   | ✅ 100%             |
+| Test Coverage             | 17/17 | ✅ 100%             |
+| Regressions               | 0     | ✅ None             |
+| Breaking Changes          | 0     | ✅ None             |
+| False Positives Prevented | 100%  | ✅ Complete         |
+| Error Detection Improved  | Yes   | ✅ Production-ready |
 
 ---
 
@@ -491,6 +544,6 @@ Collector fails in PR → Workflow continues ✅  ✅ CORRECT (continue-on-error
 
 ---
 
-*Generated: 2025-10-08*
-*Review: #3313481290*
-*PR: #492*
+_Generated: 2025-10-08_
+_Review: #3313481290_
+_PR: #492_

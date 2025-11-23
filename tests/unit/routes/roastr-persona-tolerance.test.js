@@ -55,15 +55,15 @@ describe('Roastr Persona - Lo que me da igual (Issue #150)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup Express app
     app = express();
     app.use(express.json());
-    
+
     // Setup user routes
     const userRoutes = require('../../../src/routes/user');
     app.use('/api/user', userRoutes);
-    
+
     // Get the mocked user client
     const { createUserClient } = require('../../../src/config/supabase');
     mockUserClient = createUserClient();
@@ -91,9 +91,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150)', () => {
         error: null
       });
 
-      const response = await request(app)
-        .get('/api/user/roastr-persona')
-        .expect(200);
+      const response = await request(app).get('/api/user/roastr-persona').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toMatchObject({
@@ -130,9 +128,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150)', () => {
         error: null
       });
 
-      const response = await request(app)
-        .get('/api/user/roastr-persona')
-        .expect(200);
+      const response = await request(app).get('/api/user/roastr-persona').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toMatchObject({
@@ -164,31 +160,33 @@ describe('Roastr Persona - Lo que me da igual (Issue #150)', () => {
     it('should save tolerance field successfully', async () => {
       // Mock successful update
       mockUserClient.update.mockReturnThis();
-      mockUserClient.single.mockResolvedValueOnce({
-        data: {
-          lo_que_me_define_encrypted: null,
-          lo_que_no_tolero_encrypted: null,
-          lo_que_me_da_igual_encrypted: null
-        },
-        error: null
-      }).mockResolvedValueOnce({
-        data: {
-          id: 'test-user-id',
-          lo_que_me_define_encrypted: null,
-          lo_que_me_define_visible: false,
-          lo_que_me_define_created_at: null,
-          lo_que_me_define_updated_at: null,
-          lo_que_no_tolero_encrypted: null,
-          lo_que_no_tolero_visible: false,
-          lo_que_no_tolero_created_at: null,
-          lo_que_no_tolero_updated_at: null,
-          lo_que_me_da_igual_encrypted: 'encrypted_bromas sobre calvos, insultos genéricos',
-          lo_que_me_da_igual_visible: false,
-          lo_que_me_da_igual_created_at: '2024-01-01T00:00:00Z',
-          lo_que_me_da_igual_updated_at: '2024-01-01T00:00:00Z'
-        },
-        error: null
-      });
+      mockUserClient.single
+        .mockResolvedValueOnce({
+          data: {
+            lo_que_me_define_encrypted: null,
+            lo_que_no_tolero_encrypted: null,
+            lo_que_me_da_igual_encrypted: null
+          },
+          error: null
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: 'test-user-id',
+            lo_que_me_define_encrypted: null,
+            lo_que_me_define_visible: false,
+            lo_que_me_define_created_at: null,
+            lo_que_me_define_updated_at: null,
+            lo_que_no_tolero_encrypted: null,
+            lo_que_no_tolero_visible: false,
+            lo_que_no_tolero_created_at: null,
+            lo_que_no_tolero_updated_at: null,
+            lo_que_me_da_igual_encrypted: 'encrypted_bromas sobre calvos, insultos genéricos',
+            lo_que_me_da_igual_visible: false,
+            lo_que_me_da_igual_created_at: '2024-01-01T00:00:00Z',
+            lo_que_me_da_igual_updated_at: '2024-01-01T00:00:00Z'
+          },
+          error: null
+        });
 
       const response = await request(app)
         .post('/api/user/roastr-persona')
@@ -226,31 +224,33 @@ describe('Roastr Persona - Lo que me da igual (Issue #150)', () => {
     it('should clear tolerance field when null provided', async () => {
       // Mock successful update with null value
       mockUserClient.update.mockReturnThis();
-      mockUserClient.single.mockResolvedValueOnce({
-        data: {
-          lo_que_me_define_encrypted: null,
-          lo_que_no_tolero_encrypted: null,
-          lo_que_me_da_igual_encrypted: 'encrypted_existing_data'
-        },
-        error: null
-      }).mockResolvedValueOnce({
-        data: {
-          id: 'test-user-id',
-          lo_que_me_define_encrypted: null,
-          lo_que_me_define_visible: false,
-          lo_que_me_define_created_at: null,
-          lo_que_me_define_updated_at: null,
-          lo_que_no_tolero_encrypted: null,
-          lo_que_no_tolero_visible: false,
-          lo_que_no_tolero_created_at: null,
-          lo_que_no_tolero_updated_at: null,
-          lo_que_me_da_igual_encrypted: null,
-          lo_que_me_da_igual_visible: false,
-          lo_que_me_da_igual_created_at: null,
-          lo_que_me_da_igual_updated_at: '2024-01-01T00:00:00Z'
-        },
-        error: null
-      });
+      mockUserClient.single
+        .mockResolvedValueOnce({
+          data: {
+            lo_que_me_define_encrypted: null,
+            lo_que_no_tolero_encrypted: null,
+            lo_que_me_da_igual_encrypted: 'encrypted_existing_data'
+          },
+          error: null
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: 'test-user-id',
+            lo_que_me_define_encrypted: null,
+            lo_que_me_define_visible: false,
+            lo_que_me_define_created_at: null,
+            lo_que_me_define_updated_at: null,
+            lo_que_no_tolero_encrypted: null,
+            lo_que_no_tolero_visible: false,
+            lo_que_no_tolero_created_at: null,
+            lo_que_no_tolero_updated_at: null,
+            lo_que_me_da_igual_encrypted: null,
+            lo_que_me_da_igual_visible: false,
+            lo_que_me_da_igual_created_at: null,
+            lo_que_me_da_igual_updated_at: '2024-01-01T00:00:00Z'
+          },
+          error: null
+        });
 
       const response = await request(app)
         .post('/api/user/roastr-persona')
@@ -309,9 +309,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150)', () => {
         error: null
       });
 
-      const response = await request(app)
-        .delete('/api/user/roastr-persona?field=all')
-        .expect(200);
+      const response = await request(app).delete('/api/user/roastr-persona?field=all').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('completely');
@@ -329,7 +327,9 @@ describe('Roastr Persona - Lo que me da igual (Issue #150)', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Must be "identity", "intolerance", "tolerance", or "all"');
+      expect(response.body.error).toContain(
+        'Must be "identity", "intolerance", "tolerance", or "all"'
+      );
     });
   });
 
@@ -355,9 +355,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150)', () => {
         error: null
       });
 
-      const response = await request(app)
-        .get('/api/user/roastr-persona')
-        .expect(200);
+      const response = await request(app).get('/api/user/roastr-persona').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toMatchObject({
@@ -365,7 +363,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150)', () => {
         loQueMeDefine: 'identity',
         hasContent: true,
         // Intolerance field
-        loQueNoTolero: 'intolerance', 
+        loQueNoTolero: 'intolerance',
         hasIntoleranceContent: true,
         // Tolerance field
         loQueMeDaIgual: 'tolerance',

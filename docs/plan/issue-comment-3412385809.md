@@ -10,6 +10,7 @@
 ## Executive Summary
 
 CodeRabbit provided a comprehensive analysis of PR #584 with recommendations for final improvements before merge. Analysis identified:
+
 - 1 Critical: Missing `model` parameter in OpenAI moderation call
 - 1 N/A: Deploy script issue (file doesn't exist in current codebase)
 - Multiple nice-to-have improvements (not blocking)
@@ -26,20 +27,20 @@ CodeRabbit provided a comprehensive analysis of PR #584 with recommendations for
 
 ### 📊 By Severity
 
-| Severity | Count | Status |
-|----------|-------|--------|
-| Critical | 1 | 🔄 Applicable |
-| N/A | 1 | ❌ File doesn't exist |
-| Nice-to-have | 3 | 📌 Deferred |
-| **Total** | **5** | **1/5 Applicable (20%)** |
+| Severity     | Count | Status                   |
+| ------------ | ----- | ------------------------ |
+| Critical     | 1     | 🔄 Applicable            |
+| N/A          | 1     | ❌ File doesn't exist    |
+| Nice-to-have | 3     | 📌 Deferred              |
+| **Total**    | **5** | **1/5 Applicable (20%)** |
 
 ### 📋 By Type
 
-| Type | Count | Issues |
-|------|-------|--------|
-| API Compatibility | 1 | Cr1 |
-| Infrastructure | 1 | N/A (file missing) |
-| Enhancements | 3 | Nice-to-have |
+| Type              | Count | Issues             |
+| ----------------- | ----- | ------------------ |
+| API Compatibility | 1     | Cr1                |
+| Infrastructure    | 1     | N/A (file missing) |
+| Enhancements      | 3     | Nice-to-have       |
 
 ---
 
@@ -55,6 +56,7 @@ CodeRabbit provided a comprehensive analysis of PR #584 with recommendations for
 OpenAI moderation call lacks required `model` parameter. OpenAI API v5+ requires explicit model specification.
 
 **Current Code:**
+
 ```javascript
 async analyzeOpenAI(text) {
   const response = await this.openaiClient.moderations.create({
@@ -67,11 +69,13 @@ async analyzeOpenAI(text) {
 ```
 
 **Problem:**
+
 - OpenAI API v5+ requires `model` parameter
 - Relying on deprecated implicit default behavior
 - May cause API warnings or failures in future
 
 **Fix Required:**
+
 ```javascript
 async analyzeOpenAI(text) {
   const response = await this.openaiClient.moderations.create({
@@ -85,6 +89,7 @@ async analyzeOpenAI(text) {
 ```
 
 **Rationale:**
+
 - Explicit model specification ensures API compatibility
 - Uses environment variable for flexibility
 - Falls back to recommended default: `omni-moderation-latest`
@@ -104,6 +109,7 @@ async analyzeOpenAI(text) {
 CodeRabbit suggested adding `sslmode=require` to Supabase Postgres connection string in deploy script.
 
 **Investigation:**
+
 ```bash
 $ ls scripts/deploy-supabase-schema.js
 ls: scripts/deploy-supabase-schema.js: No such file or directory
@@ -117,6 +123,7 @@ $ grep -r "deploy.*supabase.*schema" scripts/
 
 **Conclusion:**
 File doesn't exist in current codebase. Either:
+
 1. File was removed in previous commits
 2. Never existed (CodeRabbit analyzing outdated PR state)
 3. Moved to different location (search found no alternative)
@@ -137,6 +144,7 @@ File doesn't exist in current codebase. Either:
 Add RLS enforcement testing using anon key to verify Row Level Security policies.
 
 **Defer Reason:**
+
 - Not blocking for PR merge
 - Requires dedicated testing infrastructure setup
 - Better addressed in comprehensive testing PR
@@ -152,6 +160,7 @@ Add RLS enforcement testing using anon key to verify Row Level Security policies
 Add GitHub Actions workflow to run verification scripts with repository secrets.
 
 **Defer Reason:**
+
 - CI infrastructure change, not code fix
 - Requires org-level secrets configuration
 - Better addressed in dedicated CI/CD improvement PR
@@ -167,6 +176,7 @@ Add GitHub Actions workflow to run verification scripts with repository secrets.
 Fix markdown lint warnings (bare URLs, missing code fence languages).
 
 **Defer Reason:**
+
 - Documentation style issue
 - Non-blocking for functionality
 - Can be batch-fixed in dedicated docs cleanup PR
@@ -190,6 +200,7 @@ Fix markdown lint warnings (bare URLs, missing code fence languages).
 ### Phase 2: Testing & Validation (5 minutes)
 
 **Validation Tests:**
+
 ```bash
 # Test 1: Verify OpenAI moderation calls have model parameter
 grep -rn "moderations.create" src/ --include="*.js" -A 3
@@ -204,11 +215,13 @@ npm test -- --grep "toxicity.*analysis"
 ### Phase 3: Evidence Collection (5 minutes)
 
 **Create Evidence Directory:**
+
 ```bash
 mkdir -p docs/test-evidence/issue-comment-3412385809
 ```
 
 **Collect Evidence:**
+
 - before-code.txt - Original method without model parameter
 - after-code.txt - Updated method with model parameter
 - grep-verification.txt - Verification that all moderation calls include model
@@ -244,6 +257,7 @@ mkdir -p docs/test-evidence/issue-comment-3412385809
 **Primary:** `docs/nodes/shield.md` (AnalyzeToxicityWorker is part of Shield system)
 
 **Dependency Check:**
+
 - AnalyzeToxicityWorker → OpenAI Moderation API
 - No architectural changes, only parameter addition
 
@@ -311,12 +325,14 @@ grep -rn "moderations.create" src/ scripts/ -A 5 | tee docs/test-evidence/issue-
 **Context:** When updating to new API versions, explicit parameter specification prevents relying on deprecated defaults.
 
 **Best Practice:**
+
 1. Always specify required parameters explicitly
 2. Use environment variables for configuration flexibility
 3. Provide sensible fallback defaults
 4. Document environment variables in `.env.example`
 
 **Prevention:**
+
 - Review API changelog when upgrading dependencies
 - Use static analysis tools to detect deprecated patterns
 - Add environment variable validation in initialization code

@@ -12,6 +12,7 @@
 ### CRITICAL Issues (2)
 
 #### C1: DEFAULT_TIER_LIMITS Fallback Uses Non-Existent 'free' Plan
+
 - **File:** `src/services/planLimitsService.js`
 - **Lines:** 423-425
 - **Type:** Bug - Wrong default value
@@ -21,6 +22,7 @@
 - **Fix:** Change to `DEFAULT_TIER_LIMITS.starter_trial`
 
 #### C2: autoApprovalMappings Missing 'starter_trial' Entry
+
 - **File:** `src/services/planLimitsService.js`
 - **Lines:** 519-549
 - **Type:** Bug - Missing configuration
@@ -31,12 +33,14 @@
 ### Nitpick Issues (2)
 
 #### N1: docs/plan/issue-484.md Enhancement
+
 - **Severity:** Nit
 - **Type:** Documentation
 - **Suggestion:** Add "Lessons Learned" section post-implementation
 - **Action:** Will add after fixes applied
 
 #### N2: Receipt Could Reference Inconsistency
+
 - **Severity:** Nit
 - **Type:** Documentation
 - **File:** `docs/agents/receipts/claude-work-on-issues-011CUu8p8q5FGKti8WseVqbw-TestEngineer.md`
@@ -48,6 +52,7 @@
 ## 2. GDD Nodes Affected
 
 **Primary Nodes:**
+
 - `docs/nodes/billing.md` - Plan limits logic
 - `docs/nodes/roast.md` - Auto-approval feature
 
@@ -57,17 +62,18 @@
 
 ## 3. Subagent Assignment
 
-| Issue | Severity | Subagent | Reason |
-|-------|----------|----------|--------|
-| C1, C2 | CRITICAL | Test Engineer | Verify fixes don't break tests, maintain coverage |
-| Pattern Search | CRITICAL | Explore Agent | Find all 'free' references in codebase |
-| N1, N2 | Nit | Documentation (inline) | Simple doc updates |
+| Issue          | Severity | Subagent               | Reason                                            |
+| -------------- | -------- | ---------------------- | ------------------------------------------------- |
+| C1, C2         | CRITICAL | Test Engineer          | Verify fixes don't break tests, maintain coverage |
+| Pattern Search | CRITICAL | Explore Agent          | Find all 'free' references in codebase            |
+| N1, N2         | Nit      | Documentation (inline) | Simple doc updates                                |
 
 ---
 
 ## 4. Files to Modify
 
 ### Critical Changes
+
 1. **src/services/planLimitsService.js**
    - Line 424: Change 'free' → 'starter_trial'
    - Lines 519-549: Add 'starter_trial' entry to autoApprovalMappings
@@ -75,6 +81,7 @@
    - **Tests:** tests/integration/plan-limits-integration.test.js
 
 ### Documentation Updates
+
 2. **docs/plan/issue-484.md**
    - Add "Lessons Learned" section at end
 
@@ -86,21 +93,25 @@
 ## 5. Strategy
 
 ### Phase 1: Verification (DONE)
+
 - [x] Read coderabbit-lessons.md
 - [x] Verify branch: claude/work-on-issues-011CUu8p8q5FGKti8WseVqbw
 - [x] Create review plan
 
 ### Phase 2: Pattern Search (NEXT)
+
 - [ ] Search entire codebase for 'free' plan references
 - [ ] Identify all locations that need 'starter_trial' migration
 - [ ] Document findings in this plan
 
 ### Phase 3: Critical Fixes
+
 - [ ] Fix C1: Line 424 'free' → 'starter_trial'
 - [ ] Fix C2: Add 'starter_trial' to autoApprovalMappings
 - [ ] Apply consistency fixes from pattern search
 
 ### Phase 4: Testing
+
 - [ ] Run full test suite: `npm test`
 - [ ] Verify plan-limits-integration.test.js: 12/12 passing
 - [ ] Verify credits-api.test.js: 15/15 passing
@@ -108,17 +119,20 @@
 - [ ] **Target:** 44/44 tests passing (maintain current state)
 
 ### Phase 5: GDD Validation
+
 - [ ] Run: `node scripts/validate-gdd-runtime.js --full`
 - [ ] Run: `node scripts/score-gdd-health.js --ci` (≥87 required)
 - [ ] Run: `node scripts/predict-gdd-drift.js --full` (<60 risk)
 - [ ] Update GDD nodes if needed
 
 ### Phase 6: Documentation
+
 - [ ] Add "Lessons Learned" to docs/plan/issue-484.md
 - [ ] Update TestEngineer receipt with findings
 - [ ] Generate test evidence in docs/test-evidence/review-756/
 
 ### Phase 7: Commit & Push
+
 - [ ] Create commit with proper format
 - [ ] Push to origin/claude/work-on-issues-011CUu8p8q5FGKti8WseVqbw
 - [ ] Report completion status
@@ -128,6 +142,7 @@
 ## 6. Success Criteria
 
 ✅ **Completion means:**
+
 - 100% of CRITICAL issues resolved (C1, C2)
 - 100% of Nitpick issues addressed (N1, N2)
 - All tests passing: 44/44 (no regressions)
@@ -144,6 +159,7 @@
 ## 7. Testing Plan
 
 ### Pre-Fix Baseline
+
 ```bash
 npm test -- tests/integration/plan-limits-integration.test.js
 npm test -- tests/unit/routes/credits-api.test.js
@@ -153,6 +169,7 @@ npm test -- tests/integration/stripeWebhooksFlow.test.js
 **Expected:** All passing (baseline)
 
 ### Post-Fix Verification
+
 ```bash
 # Full test suite
 npm test
@@ -166,6 +183,7 @@ npm test -- tests/integration/stripeWebhooksFlow.test.js
 **Expected:** All passing (no regressions)
 
 ### Pattern Verification
+
 ```bash
 # Find all 'free' plan references
 grep -rn "DEFAULT_TIER_LIMITS\.free" src/
@@ -180,6 +198,7 @@ grep -rn "'free'" src/ | grep -i "plan\|tier\|limit"
 ## 8. Commit Strategy
 
 **Single commit with all fixes:**
+
 ```
 fix(review-756): Apply CodeRabbit review - planLimitsService fail-closed fixes
 
@@ -215,24 +234,26 @@ fix(review-756): Apply CodeRabbit review - planLimitsService fail-closed fixes
 From `docs/patterns/coderabbit-lessons.md`:
 
 **Relevant:**
+
 - **Pattern #7**: PR Merge Policy - NEVER merge without approval
 - **Pattern #2**: Testing Patterns - Cover happy + error + edge cases
 - **Pattern #5**: Error Handling - Fail-closed security pattern
 
 **New Pattern to Add:**
 If this reveals ≥2 instances, add:
+
 - **Pattern #12**: Plan Configuration - Always use 'starter_trial' for fail-closed, never reference non-existent 'free' plan
 
 ---
 
 ## 10. Risks & Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| Fix breaks existing tests | Run full test suite, verify 44/44 passing |
-| Other 'free' references exist | Pattern search entire codebase |
-| autoApprovalMappings has other gaps | Review all plan tier references |
-| GDD health degrades | Run all GDD validation scripts |
+| Risk                                | Mitigation                                |
+| ----------------------------------- | ----------------------------------------- |
+| Fix breaks existing tests           | Run full test suite, verify 44/44 passing |
+| Other 'free' references exist       | Pattern search entire codebase            |
+| autoApprovalMappings has other gaps | Review all plan tier references           |
+| GDD health degrades                 | Run all GDD validation scripts            |
 
 ---
 

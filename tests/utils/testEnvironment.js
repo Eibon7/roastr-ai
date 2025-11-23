@@ -1,6 +1,6 @@
 /**
  * Test Environment Utilities
- * 
+ *
  * Comprehensive test environment management for multi-tenant, mockMode, and worker testing.
  * Combines simple helpers with advanced configuration for consistent testing across the system.
  */
@@ -22,7 +22,7 @@ const ENV_PRESETS = {
     SUPABASE_SERVICE_KEY: 'mock-service-key-for-testing',
     SUPABASE_ANON_KEY: 'mock-anon-key-for-testing'
   },
-  
+
   PRODUCTION_LIKE: {
     NODE_ENV: 'test',
     ENABLE_MOCK_MODE: 'false',
@@ -36,7 +36,7 @@ const ENV_PRESETS = {
     STRIPE_SECRET_KEY: process.env.TEST_STRIPE_SECRET_KEY || 'sk_test_stripe',
     PERSPECTIVE_API_KEY: 'test-perspective-key'
   },
-  
+
   DEVELOPMENT: {
     NODE_ENV: 'development',
     ENABLE_MOCK_MODE: 'false',
@@ -45,7 +45,7 @@ const ENV_PRESETS = {
     ENABLE_BILLING: 'false',
     DEBUG: 'true'
   },
-  
+
   TEST_FULL: {
     NODE_ENV: 'test',
     ENABLE_MOCK_MODE: 'true',
@@ -80,7 +80,7 @@ const MOCK_CONFIGURATIONS = {
     single: jest.fn(),
     limit: jest.fn()
   },
-  
+
   stripe: {
     customers: { create: jest.fn(), retrieve: jest.fn() },
     prices: { list: jest.fn() },
@@ -89,16 +89,16 @@ const MOCK_CONFIGURATIONS = {
     subscriptions: { retrieve: jest.fn() },
     webhooks: { constructEvent: jest.fn() }
   },
-  
+
   openai: {
     chat: { completions: { create: jest.fn() } },
     moderations: { create: jest.fn() }
   },
-  
+
   perspective: {
     analyzeComment: jest.fn()
   },
-  
+
   redis: {
     get: jest.fn(),
     set: jest.fn(),
@@ -121,7 +121,7 @@ const mockDbConfigs = {
     SUPABASE_SERVICE_KEY: 'mock-service-key-for-testing',
     SUPABASE_ANON_KEY: 'mock-anon-key-for-testing'
   },
-  
+
   redis: {
     UPSTASH_REDIS_REST_URL: 'http://localhost:6379/mock',
     UPSTASH_REDIS_REST_TOKEN: 'mock-redis-token',
@@ -136,11 +136,11 @@ const mockApiConfigs = {
   openai: {
     OPENAI_API_KEY: 'sk-mock-openai-key-for-testing'
   },
-  
+
   perspective: {
     PERSPECTIVE_API_KEY: 'mock-perspective-api-key'
   },
-  
+
   stripe: {
     STRIPE_SECRET_KEY: process.env.TEST_STRIPE_SECRET_KEY || 'sk_test_mock123456789',
     STRIPE_WEBHOOK_SECRET: process.env.TEST_STRIPE_WEBHOOK_SECRET || 'whsec_mock123456789',
@@ -168,22 +168,22 @@ class TestEnvironment {
   setup(customEnv = {}) {
     // Store original environment
     this.originalEnv = { ...process.env };
-    
+
     // Reset Jest modules for clean state
     jest.resetModules();
-    
+
     // Apply preset environment variables
     const envConfig = { ...ENV_PRESETS[this.preset], ...customEnv };
     Object.entries(envConfig).forEach(([key, value]) => {
       process.env[key] = value;
     });
-    
+
     // Setup console mocks to reduce test output noise
     this.setupConsoleMocks();
-    
+
     // Setup common Jest mocks
     this.setupJestMocks();
-    
+
     return this;
   }
 
@@ -193,12 +193,12 @@ class TestEnvironment {
   teardown() {
     // Restore original environment
     process.env = this.originalEnv;
-    
+
     // Clear all mocks
     jest.clearAllMocks();
-    
+
     // Run cleanup tasks
-    this.cleanupTasks.forEach(task => {
+    this.cleanupTasks.forEach((task) => {
       try {
         task();
       } catch (error) {
@@ -206,10 +206,10 @@ class TestEnvironment {
       }
     });
     this.cleanupTasks = [];
-    
+
     // Restore console
     this.restoreConsole();
-    
+
     return this;
   }
 
@@ -228,7 +228,7 @@ class TestEnvironment {
    * @param {string[]} keys - Array of environment variable keys to delete
    */
   clearEnvVars(keys) {
-    keys.forEach(key => {
+    keys.forEach((key) => {
       delete process.env[key];
     });
   }
@@ -273,7 +273,7 @@ class TestEnvironment {
       error: console.error,
       info: console.info
     };
-    
+
     // Mock console methods but allow errors to show for debugging
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -301,20 +301,20 @@ class TestEnvironment {
     jest.doMock('@supabase/supabase-js', () => ({
       createClient: jest.fn(() => mockSupabaseClient)
     }));
-    
+
     // Mock Stripe
     jest.doMock('stripe', () => jest.fn(() => MOCK_CONFIGURATIONS.stripe));
-    
+
     // Mock OpenAI
     jest.doMock('openai', () => ({
       OpenAI: jest.fn(() => MOCK_CONFIGURATIONS.openai)
     }));
-    
+
     // Mock Redis
     jest.doMock('redis', () => ({
       createClient: jest.fn(() => MOCK_CONFIGURATIONS.redis)
     }));
-    
+
     // Mock platform APIs
     this.setupPlatformMocks();
   }
@@ -376,7 +376,7 @@ class TestEnvironment {
         }
       }))
     }));
-    
+
     // Mock YouTube API
     jest.doMock('googleapis', () => ({
       google: {
@@ -387,7 +387,7 @@ class TestEnvironment {
         }))
       }
     }));
-    
+
     // Mock Instagram API
     jest.doMock('instagram-basic-display', () => ({
       InstagramApi: jest.fn(() => ({
@@ -436,7 +436,7 @@ class TestEnvironment {
    * Wait for async operations to complete
    */
   async waitForAsyncOps(timeout = 1000) {
-    return new Promise(resolve => setTimeout(resolve, timeout));
+    return new Promise((resolve) => setTimeout(resolve, timeout));
   }
 
   /**
@@ -454,12 +454,12 @@ class TestEnvironment {
    */
   validateEnvironment() {
     const requiredVars = ['NODE_ENV', 'ENABLE_MOCK_MODE'];
-    const missing = requiredVars.filter(varName => !process.env[varName]);
-    
+    const missing = requiredVars.filter((varName) => !process.env[varName]);
+
     if (missing.length > 0) {
       throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
     }
-    
+
     return true;
   }
 
@@ -506,15 +506,15 @@ const setupHelpers = {
    */
   withCleanEnv: () => {
     const testEnv = new TestEnvironment();
-    
+
     beforeEach(() => {
       testEnv.setup();
     });
-    
+
     afterEach(() => {
       testEnv.teardown();
     });
-    
+
     return testEnv;
   },
 
@@ -523,11 +523,11 @@ const setupHelpers = {
    */
   withMockMode: () => {
     const testEnv = setupHelpers.withCleanEnv();
-    
+
     beforeEach(() => {
       testEnv.setEnvVars(ENV_PRESETS.MOCK);
     });
-    
+
     return testEnv;
   },
 
@@ -536,11 +536,11 @@ const setupHelpers = {
    */
   withProdLike: () => {
     const testEnv = setupHelpers.withCleanEnv();
-    
+
     beforeEach(() => {
       testEnv.setEnvVars(ENV_PRESETS.PRODUCTION_LIKE);
     });
-    
+
     return testEnv;
   }
 };
@@ -558,17 +558,17 @@ const setupTestEnv = (preset = 'MOCK', customEnv = {}) => {
  */
 const setupJestTestEnv = (preset = 'MOCK') => {
   let testEnv;
-  
+
   beforeEach(() => {
     testEnv = setupTestEnv(preset);
   });
-  
+
   afterEach(() => {
     if (testEnv) {
       testEnv.teardown();
     }
   });
-  
+
   return () => testEnv;
 };
 

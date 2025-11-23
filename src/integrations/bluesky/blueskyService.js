@@ -2,7 +2,7 @@ const MultiTenantIntegration = require('../base/MultiTenantIntegration');
 
 /**
  * Bluesky Integration Service
- * 
+ *
  * Handles Bluesky integration using AT Protocol for:
  * - Mention monitoring
  * - Post replies
@@ -17,11 +17,11 @@ class BlueskyService extends MultiTenantIntegration {
       supportModeration: true,
       ...options
     });
-    
+
     this.identifier = process.env.BLUESKY_IDENTIFIER;
     this.password = process.env.BLUESKY_PASSWORD;
     this.serviceUrl = process.env.BLUESKY_SERVICE_URL || 'https://bsky.social';
-    
+
     this.session = null;
     this.agent = null;
   }
@@ -32,21 +32,20 @@ class BlueskyService extends MultiTenantIntegration {
   async authenticate() {
     try {
       this.debugLog('Authenticating with Bluesky AT Protocol...');
-      
+
       // TODO: Initialize AT Protocol client and authenticate
       // const { BskyAgent } = require('@atproto/api');
       // this.atClient = new BskyAgent({ service: this.serviceUrl });
-      // 
+      //
       // const response = await this.atClient.login({
       //   identifier: this.config.handle,
       //   password: this.config.password,
       // });
-      // 
+      //
       // this.session = response.data;
-      
+
       console.log(`✅ Bluesky authentication successful for handle: ${this.config.handle}`);
       return true;
-      
     } catch (error) {
       console.error('❌ Bluesky authentication failed:', error.message);
       throw error;
@@ -59,25 +58,24 @@ class BlueskyService extends MultiTenantIntegration {
   async listenForMentions() {
     try {
       console.log('👂 Connecting to Bluesky firehose...');
-      
+
       // TODO: Implement WebSocket connection to firehose
       // this.firehoseWs = new WebSocket(this.firehoseUrl);
-      // 
+      //
       // this.firehoseWs.on('open', () => {
       //   console.log('🔥 Connected to Bluesky firehose');
       // });
-      // 
+      //
       // this.firehoseWs.on('message', (data) => {
       //   this.handleFirehoseMessage(data);
       // });
-      // 
+      //
       // this.firehoseWs.on('error', (error) => {
       //   console.error('❌ Firehose connection error:', error);
       //   this.reconnectFirehose();
       // });
-      
+
       console.log('🦋 Bluesky firehose monitoring started');
-      
     } catch (error) {
       console.error('❌ Failed to start Bluesky monitoring:', error.message);
       throw error;
@@ -91,11 +89,10 @@ class BlueskyService extends MultiTenantIntegration {
     try {
       // TODO: Parse firehose data and filter for mentions
       // const decoded = /* decode CBOR data */;
-      // 
+      //
       // if (this.isMentionPost(decoded)) {
       //   await this.processBlueskMention(decoded);
       // }
-      
     } catch (error) {
       console.error('❌ Error handling firehose message:', error.message);
     }
@@ -110,9 +107,8 @@ class BlueskyService extends MultiTenantIntegration {
       // Check if post text contains our handle
       // const postText = post.record?.text || '';
       // return postText.includes(`@${this.config.handle}`);
-      
+
       return false; // Placeholder
-      
     } catch (error) {
       this.debugLog('Error checking mention:', error.message);
       return false;
@@ -131,11 +127,10 @@ class BlueskyService extends MultiTenantIntegration {
         author: post.author,
         createdAt: post.record?.createdAt
       });
-      
+
       // TODO: Generate and post response
       // const roast = await this.generateRoast(post.record.text);
       // await this.postResponse(post.uri, roast);
-      
     } catch (error) {
       console.error('❌ Error processing Bluesky mention:', error.message);
     }
@@ -147,7 +142,7 @@ class BlueskyService extends MultiTenantIntegration {
   async postResponse(parentUri, responseText) {
     try {
       this.debugLog(`Posting Bluesky response: ${responseText.substring(0, 50)}...`);
-      
+
       // TODO: Implement AT Protocol reply
       // const response = await this.atClient.post({
       //   text: responseText,
@@ -156,12 +151,11 @@ class BlueskyService extends MultiTenantIntegration {
       //     parent: parentUri,
       //   },
       // });
-      
+
       console.log(`✅ Posted Bluesky reply to ${parentUri}`);
       this.metrics.responsesGenerated++;
-      
+
       return true;
-      
     } catch (error) {
       console.error(`❌ Failed to post Bluesky response:`, error.message);
       throw error;
@@ -174,19 +168,18 @@ class BlueskyService extends MultiTenantIntegration {
   async reconnectFirehose() {
     try {
       console.log('🔄 Attempting to reconnect to Bluesky firehose...');
-      
+
       if (this.firehoseWs) {
         this.firehoseWs.close();
       }
-      
+
       // Wait before reconnecting
       await this.sleep(5000);
-      
+
       await this.listenForMentions();
-      
     } catch (error) {
       console.error('❌ Error reconnecting to firehose:', error.message);
-      
+
       // Retry after longer delay
       setTimeout(() => this.reconnectFirehose(), 30000);
     }
@@ -201,11 +194,10 @@ class BlueskyService extends MultiTenantIntegration {
       // const profile = await this.atClient.getProfile({
       //   actor: this.config.handle,
       // });
-      // 
+      //
       // return profile.data;
-      
+
       return { handle: this.config.handle }; // Placeholder
-      
     } catch (error) {
       console.error('❌ Error fetching profile info:', error.message);
       throw error;
@@ -222,11 +214,10 @@ class BlueskyService extends MultiTenantIntegration {
       //   q: `@${this.config.handle}`,
       //   limit: limit,
       // });
-      // 
+      //
       // return response.data.posts;
-      
+
       return []; // Placeholder
-      
     } catch (error) {
       console.error('❌ Error searching mentions:', error.message);
       return [];
@@ -237,7 +228,7 @@ class BlueskyService extends MultiTenantIntegration {
    * Sleep utility
    */
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -247,7 +238,7 @@ class BlueskyService extends MultiTenantIntegration {
     if (this.firehoseWs) {
       this.firehoseWs.close();
     }
-    
+
     await super.shutdown();
   }
 }

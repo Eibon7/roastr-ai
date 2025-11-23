@@ -89,13 +89,15 @@ describe('Guardian Security - Path Traversal Protection', () => {
 
   describe('getCaseById - Path Traversal Prevention', () => {
     test('should reject path traversal attempt in getCaseById', async () => {
-      await expect(getCaseById('../../../.env'))
-        .rejects.toThrow('Invalid case ID: path traversal characters detected');
+      await expect(getCaseById('../../../.env')).rejects.toThrow(
+        'Invalid case ID: path traversal characters detected'
+      );
     });
 
     test('should reject absolute path attempt in getCaseById', async () => {
-      await expect(getCaseById('/etc/passwd'))
-        .rejects.toThrow('Invalid case ID: path traversal characters detected');
+      await expect(getCaseById('/etc/passwd')).rejects.toThrow(
+        'Invalid case ID: path traversal characters detected'
+      );
     });
 
     test('should return null for non-existent valid case ID', async () => {

@@ -10,15 +10,7 @@ import { Badge } from './ui/badge';
 import { Alert } from './ui/alert';
 import AutoApprovalStatus from './AutoApprovalStatus';
 import SecurityValidationIndicator from './SecurityValidationIndicator';
-import { 
-  Play, 
-  Pause, 
-  RefreshCw, 
-  Zap, 
-  AlertTriangle,
-  MessageSquare,
-  Clock
-} from 'lucide-react';
+import { Play, Pause, RefreshCw, Zap, AlertTriangle, MessageSquare, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
 import { supabase } from '../lib/supabaseClient';
@@ -44,7 +36,7 @@ const AutoApprovalFlow = ({ comment }) => {
 
   useEffect(() => {
     loadRateLimitStats();
-    
+
     // Cleanup function
     return () => {
       setIsMounted(false);
@@ -68,9 +60,9 @@ const AutoApprovalFlow = ({ comment }) => {
         callback();
       }
       // Remove from refs array
-      timeoutRefs.current = timeoutRefs.current.filter(id => id !== timeoutId);
+      timeoutRefs.current = timeoutRefs.current.filter((id) => id !== timeoutId);
     }, delay);
-    
+
     timeoutRefs.current.push(timeoutId);
     return timeoutId;
   };
@@ -82,7 +74,7 @@ const AutoApprovalFlow = ({ comment }) => {
       // ROUND 8 FIX: Enhanced rate limit fetching with plan-specific limits
       const response = await fetch(`/api/organizations/${user.organization_id}/rate-limits`, {
         headers: {
-          'Authorization': `Bearer ${user.token}`
+          Authorization: `Bearer ${user.token}`
         }
       });
 
@@ -130,7 +122,7 @@ const AutoApprovalFlow = ({ comment }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
+          Authorization: `Bearer ${user.token}`
         },
         body: JSON.stringify({
           mode: 'auto',
@@ -141,11 +133,13 @@ const AutoApprovalFlow = ({ comment }) => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}: Failed to start auto-approval process`);
+        throw new Error(
+          errorData.message || `HTTP ${response.status}: Failed to start auto-approval process`
+        );
       }
 
       const data = await response.json();
-      
+
       safeSetState(() => {
         setProcessedRoast(data.roast);
         setFlowStatus('completed');
@@ -153,22 +147,21 @@ const AutoApprovalFlow = ({ comment }) => {
 
       // Update rate limit stats
       safeSetState(() => {
-        setStats(prev => ({
+        setStats((prev) => ({
           ...prev,
           hourlyUsed: prev.hourlyUsed + 1,
           dailyUsed: prev.dailyUsed + 1
         }));
       });
-
     } catch (error) {
       console.error('Error starting auto-approval:', error);
-      
+
       safeSetState(() => {
         setError(error.message);
         setFlowStatus('error');
         setIsProcessing(false);
       });
-      
+
       toast({
         title: 'Auto-Approval Failed',
         description: error.message || 'Failed to start auto-approval process',
@@ -234,7 +227,7 @@ const AutoApprovalFlow = ({ comment }) => {
               </span>
             </Alert>
           )}
-          
+
           {/* Comment Preview */}
           {comment && (
             <div className="p-4 rounded-lg bg-gray-50 mb-4">
@@ -259,7 +252,7 @@ const AutoApprovalFlow = ({ comment }) => {
           {/* Action Buttons */}
           <div className="flex gap-2">
             {!isProcessing && !flowStatus && (
-              <Button 
+              <Button
                 onClick={startAutoApproval}
                 disabled={!canProcess || !comment}
                 className="flex items-center gap-2"
@@ -268,24 +261,16 @@ const AutoApprovalFlow = ({ comment }) => {
                 Start Auto-Approval
               </Button>
             )}
-            
+
             {isProcessing && (
-              <Button 
-                onClick={pauseFlow}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
+              <Button onClick={pauseFlow} variant="outline" className="flex items-center gap-2">
                 {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
                 {isPaused ? 'Resume' : 'Pause'}
               </Button>
             )}
-            
+
             {flowStatus && ['failed_security', 'failed_publication'].includes(flowStatus) && (
-              <Button 
-                onClick={retryFlow}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
+              <Button onClick={retryFlow} variant="outline" className="flex items-center gap-2">
                 <RefreshCw className="w-4 h-4" />
                 Retry
               </Button>
@@ -296,19 +281,19 @@ const AutoApprovalFlow = ({ comment }) => {
 
       {/* Status Display */}
       {(isProcessing || flowStatus) && comment && (
-        <AutoApprovalStatus 
-          commentId={comment.id}
-          onStatusChange={handleStatusChange}
-        />
+        <AutoApprovalStatus commentId={comment.id} onStatusChange={handleStatusChange} />
       )}
 
       {/* Security Validation Details */}
-      {flowStatus && ['security_validation', 'auto_approving', 'published_successfully', 'failed_security'].includes(flowStatus) && (
-        <SecurityValidationIndicator 
-          commentId={comment?.id}
-          status={flowStatus}
-        />
-      )}
+      {flowStatus &&
+        [
+          'security_validation',
+          'auto_approving',
+          'published_successfully',
+          'failed_security'
+        ].includes(flowStatus) && (
+          <SecurityValidationIndicator commentId={comment?.id} status={flowStatus} />
+        )}
 
       {/* Generated Roast Display */}
       {processedRoast && (

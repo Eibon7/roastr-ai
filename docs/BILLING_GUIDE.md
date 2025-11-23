@@ -5,6 +5,7 @@ Complete guide for Stripe billing integration, webhook handling, and subscriptio
 ## Overview
 
 The billing system provides:
+
 - **Subscription Plans**: Free, Pro ($20/mo), Creator+ ($50/mo)
 - **Stripe Integration**: Checkout sessions and customer portal
 - **Webhook Processing**: Automatic subscription updates
@@ -24,7 +25,7 @@ Product: Pro Plan
 - Amount: $20.00 USD
 - Recurring: Monthly
 
-Product: Creator+ Plan  
+Product: Creator+ Plan
 - Price ID: price_yyy (save to STRIPE_PRICE_CREATOR env var)
 - Lookup Key: plan_creator_plus
 - Amount: $50.00 USD
@@ -34,8 +35,9 @@ Product: Creator+ Plan
 ### 2. Customer Portal Settings
 
 Enable these portal features:
+
 - ✅ Subscription cancellation
-- ✅ Subscription updates  
+- ✅ Subscription updates
 - ✅ Payment method updates
 - ✅ Invoice history
 - ✅ Billing information updates
@@ -43,6 +45,7 @@ Enable these portal features:
 ### 3. Webhook Configuration
 
 Create webhook endpoint:
+
 ```
 URL: https://your-domain.com/webhooks/stripe
 Events to send:
@@ -78,6 +81,7 @@ STRIPE_PRICE_LOOKUP_CREATOR=plan_creator_plus
 ## Local Development
 
 ### 1. Install Stripe CLI
+
 ```bash
 # macOS
 brew install stripe/stripe-cli/stripe
@@ -87,6 +91,7 @@ stripe login
 ```
 
 ### 2. Forward webhooks
+
 ```bash
 # Forward webhooks to local server
 stripe listen --forward-to localhost:3000/webhooks/stripe
@@ -95,13 +100,16 @@ stripe listen --forward-to localhost:3000/webhooks/stripe
 ```
 
 ### 3. Test with cards
+
 Success: 4242424242424242
 Decline: 4000000000000002
 
 ## API Endpoints
 
 ### POST /api/billing/create-checkout-session
+
 **Request:**
+
 ```json
 {
   "plan": "pro"
@@ -109,6 +117,7 @@ Decline: 4000000000000002
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -120,7 +129,9 @@ Decline: 4000000000000002
 ```
 
 ### POST /api/billing/create-portal-session
+
 **Response:**
+
 ```json
 {
   "success": true,

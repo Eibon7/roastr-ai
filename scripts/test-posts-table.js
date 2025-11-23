@@ -18,10 +18,7 @@ async function testPostsTable() {
 
   // Test 1: SELECT
   console.log('1️⃣ Testing SELECT...');
-  const selectResponse = await client
-    .from('posts')
-    .select('*')
-    .limit(1);
+  const selectResponse = await client.from('posts').select('*').limit(1);
 
   console.log('Response:', JSON.stringify(selectResponse, null, 2));
 
@@ -57,35 +54,44 @@ async function testPostsTable() {
     const userId = uuidv4();
     const orgId = uuidv4();
 
-    const userResp = await client.from('users').insert({
-      id: userId,
-      email: `test-${Date.now()}@example.com`,
-      name: 'Test User',
-      plan: 'pro'
-    }).select();
+    const userResp = await client
+      .from('users')
+      .insert({
+        id: userId,
+        email: `test-${Date.now()}@example.com`,
+        name: 'Test User',
+        plan: 'pro'
+      })
+      .select();
 
     console.log('User creation:', userResp.status, userResp.statusText);
 
     if (userResp.status === 201) {
-      const orgResp = await client.from('organizations').insert({
-        id: orgId,
-        name: 'Test Org',
-        slug: `test-${Date.now()}`,
-        owner_id: userId,
-        plan_id: 'free'
-      }).select();
+      const orgResp = await client
+        .from('organizations')
+        .insert({
+          id: orgId,
+          name: 'Test Org',
+          slug: `test-${Date.now()}`,
+          owner_id: userId,
+          plan_id: 'free'
+        })
+        .select();
 
       console.log('Org creation:', orgResp.status, orgResp.statusText);
 
       if (orgResp.status === 201) {
-        const postResp = await client.from('posts').insert({
-          id: uuidv4(),
-          organization_id: orgId,
-          platform: 'twitter',
-          platform_post_id: `test_${Date.now()}`,
-          content: 'Test post',
-          author_username: 'testuser'
-        }).select();
+        const postResp = await client
+          .from('posts')
+          .insert({
+            id: uuidv4(),
+            organization_id: orgId,
+            platform: 'twitter',
+            platform_post_id: `test_${Date.now()}`,
+            content: 'Test post',
+            author_username: 'testuser'
+          })
+          .select();
 
         console.log('Post creation:', JSON.stringify(postResp, null, 2));
 
@@ -104,7 +110,7 @@ testPostsTable()
     console.log('\n✅ Test complete');
     process.exit(0);
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('\n❌ Test failed:', err);
     process.exit(1);
   });

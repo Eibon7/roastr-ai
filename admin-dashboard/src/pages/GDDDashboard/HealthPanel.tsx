@@ -113,11 +113,7 @@ const getCoverageStatus = (coverage: number): 'healthy' | 'warning' => {
   return coverage >= 70 ? 'healthy' : 'warning';
 };
 
-export const HealthPanel: React.FC<HealthPanelProps> = ({
-  stats,
-  activities
-}) => {
-
+export const HealthPanel: React.FC<HealthPanelProps> = ({ stats, activities }) => {
   return (
     <PanelContainer data-testid="health-panel">
       <Section data-testid="overview-section">
@@ -137,11 +133,7 @@ export const HealthPanel: React.FC<HealthPanelProps> = ({
             unit="%"
             status={getDriftStatus(stats.drift)}
           />
-          <StatusCard
-            label="Total Nodes"
-            value={stats.nodes}
-            status="healthy"
-          />
+          <StatusCard label="Total Nodes" value={stats.nodes} status="healthy" />
           <StatusCard
             label="Coverage"
             value={stats.coverage}

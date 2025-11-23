@@ -16,7 +16,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
   describe('Plan Duration Retrieval', () => {
     test('should return duration configuration for free plan', () => {
       const duration = getPlanDuration('free');
-      
+
       expect(duration).toMatchObject({
         days: 30,
         type: 'rolling',
@@ -26,7 +26,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
 
     test('should return duration configuration for pro plan with trial', () => {
       const duration = getPlanDuration('pro');
-      
+
       expect(duration).toMatchObject({
         days: 30,
         type: 'rolling',
@@ -37,7 +37,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
 
     test('should return duration configuration for plus plan with trial and grace period', () => {
       const duration = getPlanDuration('plus');
-      
+
       expect(duration).toMatchObject({
         days: 30,
         type: 'rolling',
@@ -49,7 +49,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
 
     test('should return duration configuration for custom plan', () => {
       const duration = getPlanDuration('custom');
-      
+
       expect(duration).toMatchObject({
         days: 90,
         type: 'fixed',
@@ -60,7 +60,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
 
     test('should return null for non-existent plan', () => {
       const duration = getPlanDuration('non-existent');
-      
+
       expect(duration).toBeNull();
     });
   });
@@ -71,14 +71,14 @@ describe('Plan Duration Configuration (Issue #125)', () => {
     test('should calculate end date for free plan (30 days)', () => {
       const endDate = calculatePlanEndDate('free', fixedStartDate);
       const expectedEndDate = new Date('2024-01-31T00:00:00.000Z');
-      
+
       expect(endDate).toEqual(expectedEndDate);
     });
 
     test('should calculate end date for pro plan (30 days)', () => {
       const endDate = calculatePlanEndDate('pro', fixedStartDate);
       const expectedEndDate = new Date('2024-01-31T00:00:00.000Z');
-      
+
       expect(endDate).toEqual(expectedEndDate);
     });
 
@@ -86,21 +86,21 @@ describe('Plan Duration Configuration (Issue #125)', () => {
       const endDate = calculatePlanEndDate('plus', fixedStartDate);
       // 30 days + 7 days grace period = 37 days
       const expectedEndDate = new Date('2024-02-07T00:00:00.000Z');
-      
+
       expect(endDate).toEqual(expectedEndDate);
     });
 
     test('should calculate end date for custom plan (90 days)', () => {
       const endDate = calculatePlanEndDate('custom', fixedStartDate);
       const expectedEndDate = new Date('2024-03-31T00:00:00.000Z');
-      
+
       expect(endDate).toEqual(expectedEndDate);
     });
 
     test('should use current date as default start date', () => {
       const now = new Date();
       const endDate = calculatePlanEndDate('free');
-      
+
       // Should be approximately 30 days from now
       const daysDiff = Math.round((endDate - now) / (1000 * 60 * 60 * 24));
       expect(daysDiff).toBe(30);
@@ -109,7 +109,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
     test('should handle invalid plan by defaulting to 30 days', () => {
       const endDate = calculatePlanEndDate('invalid-plan', fixedStartDate);
       const expectedEndDate = new Date('2024-01-31T00:00:00.000Z');
-      
+
       expect(endDate).toEqual(expectedEndDate);
     });
 
@@ -117,7 +117,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
       const leapYearStart = new Date('2024-02-01T00:00:00.000Z'); // 2024 is a leap year
       const endDate = calculatePlanEndDate('free', leapYearStart);
       const expectedEndDate = new Date('2024-03-02T00:00:00.000Z'); // February has 29 days in 2024
-      
+
       expect(endDate).toEqual(expectedEndDate);
     });
   });
@@ -125,7 +125,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
   describe('Custom Duration Support', () => {
     test('should return true for custom plan', () => {
       const hasCustomDuration = supportsCustomDuration('custom');
-      
+
       expect(hasCustomDuration).toBe(true);
     });
 
@@ -137,7 +137,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
 
     test('should return false for non-existent plan', () => {
       const hasCustomDuration = supportsCustomDuration('non-existent');
-      
+
       expect(hasCustomDuration).toBe(false);
     });
   });
@@ -145,31 +145,31 @@ describe('Plan Duration Configuration (Issue #125)', () => {
   describe('Trial Duration Retrieval', () => {
     test('should return null for free plan (no trial)', () => {
       const trialDays = getPlanTrialDays('free');
-      
+
       expect(trialDays).toBeNull();
     });
 
     test('should return 7 days for pro plan', () => {
       const trialDays = getPlanTrialDays('pro');
-      
+
       expect(trialDays).toBe(7);
     });
 
     test('should return 14 days for plus plan', () => {
       const trialDays = getPlanTrialDays('plus');
-      
+
       expect(trialDays).toBe(14);
     });
 
     test('should return null for custom plan (no standard trial)', () => {
       const trialDays = getPlanTrialDays('custom');
-      
+
       expect(trialDays).toBeNull();
     });
 
     test('should return null for non-existent plan', () => {
       const trialDays = getPlanTrialDays('non-existent');
-      
+
       expect(trialDays).toBeNull();
     });
   });
@@ -177,15 +177,15 @@ describe('Plan Duration Configuration (Issue #125)', () => {
   describe('Plan Features Integration', () => {
     test('should maintain backward compatibility with existing features', () => {
       const freePlan = getPlanFeatures('free');
-      
+
       expect(freePlan).toMatchObject({
         id: 'free',
         name: 'Free',
         price: 0,
         currency: 'eur',
         limits: {
-          roastsPerMonth: 10,  // Updated to match current Free plan limits
-          commentsPerMonth: 100,  // Updated to match current Free plan limits
+          roastsPerMonth: 10, // Updated to match current Free plan limits
+          commentsPerMonth: 100, // Updated to match current Free plan limits
           platformIntegrations: 1
         },
         features: {
@@ -204,8 +204,8 @@ describe('Plan Duration Configuration (Issue #125)', () => {
 
     test('should include duration in all plan definitions', () => {
       const allPlans = ['free', 'pro', 'plus', 'custom'];
-      
-      allPlans.forEach(planId => {
+
+      allPlans.forEach((planId) => {
         const plan = getPlanFeatures(planId);
         expect(plan.duration).toBeDefined();
         expect(plan.duration.days).toBeGreaterThan(0);
@@ -216,9 +216,9 @@ describe('Plan Duration Configuration (Issue #125)', () => {
 
     test('should have consistent plan structure', () => {
       const requiredFields = ['id', 'name', 'price', 'currency', 'duration', 'limits', 'features'];
-      
-      Object.values(PLAN_FEATURES).forEach(plan => {
-        requiredFields.forEach(field => {
+
+      Object.values(PLAN_FEATURES).forEach((plan) => {
+        requiredFields.forEach((field) => {
           expect(plan[field]).toBeDefined();
         });
       });
@@ -229,7 +229,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
     test('should handle date edge cases around month boundaries', () => {
       const monthEndDate = new Date('2024-01-31T00:00:00.000Z');
       const endDate = calculatePlanEndDate('free', monthEndDate);
-      
+
       // Should correctly add 30 days to January 31st
       const expectedEndDate = new Date('2024-03-01T00:00:00.000Z'); // March 1st (Feb has 29 days in 2024)
       expect(endDate).toEqual(expectedEndDate);
@@ -247,7 +247,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
       const endDate = calculatePlanEndDate('custom', startDate);
       // 365 days from January 1, 2024 = December 31, 2024 (2024 is a leap year)
       const expectedEndDate = new Date('2024-12-31T00:00:00.000Z');
-      
+
       expect(endDate).toEqual(expectedEndDate);
 
       // Restore original plan
@@ -263,7 +263,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
 
       const startDate = new Date('2024-01-01T00:00:00.000Z');
       const endDate = calculatePlanEndDate('custom', startDate);
-      
+
       // Should be same as start date for zero duration
       expect(endDate).toEqual(startDate);
 
@@ -280,7 +280,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
 
       const startDate = new Date('2024-01-01T00:00:00.000Z');
       const endDate = calculatePlanEndDate('plus', startDate);
-      
+
       // Should subtract 5 days instead of adding
       const expectedEndDate = new Date('2024-01-26T00:00:00.000Z'); // 30 - 5 = 25 days
       expect(endDate).toEqual(expectedEndDate);
@@ -293,7 +293,7 @@ describe('Plan Duration Configuration (Issue #125)', () => {
   describe('Real-world Scenarios', () => {
     test('should calculate correct billing cycles', () => {
       const subscriptionStart = new Date('2024-01-15T10:30:00.000Z');
-      
+
       // Pro plan with 30-day cycle
       const proCycleEnd = calculatePlanEndDate('pro', subscriptionStart);
       const proExpectedEnd = new Date('2024-02-14T10:30:00.000Z');
@@ -308,14 +308,14 @@ describe('Plan Duration Configuration (Issue #125)', () => {
     test('should handle timezone-independent calculations', () => {
       const utcDate = new Date('2024-01-01T00:00:00.000Z');
       const localDate = new Date('2024-01-01T00:00:00'); // Local time
-      
+
       const utcEndDate = calculatePlanEndDate('free', utcDate);
       const localEndDate = calculatePlanEndDate('free', localDate);
-      
+
       // Both should result in dates 30 days later
       const utcDaysDiff = (utcEndDate - utcDate) / (1000 * 60 * 60 * 24);
       const localDaysDiff = (localEndDate - localDate) / (1000 * 60 * 60 * 24);
-      
+
       expect(utcDaysDiff).toBe(30);
       expect(localDaysDiff).toBe(30);
     });

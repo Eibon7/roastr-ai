@@ -13,6 +13,7 @@ Previously, plan limits were hardcoded in multiple services (`workerNotification
 ### 1. Database Schema (`/database/migrations/013_plan_limits_configuration.sql`)
 
 Created a new `plan_limits` table with the following structure:
+
 - `plan_id`: References the plans table (free, pro, creator_plus, custom)
 - Response limits: `max_roasts`, `monthly_responses_limit`
 - Platform limits: `max_platforms`, `integrations_limit`
@@ -21,6 +22,7 @@ Created a new `plan_limits` table with the following structure:
 - Audit fields: `created_at`, `updated_at`, `updated_by`
 
 Also includes:
+
 - Audit log table (`plan_limits_audit`) for tracking changes
 - Database functions for retrieving and checking limits
 - Row Level Security policies (admins only can modify)
@@ -28,6 +30,7 @@ Also includes:
 ### 2. Plan Limits Service (`/src/services/planLimitsService.js`)
 
 Central service for managing plan limits:
+
 - **Caching**: 5-minute in-memory cache to reduce database queries
 - **Methods**:
   - `getPlanLimits(planId)`: Get limits for a specific plan
@@ -41,21 +44,25 @@ Central service for managing plan limits:
 Updated the following services to use `planLimitsService`:
 
 #### `workerNotificationService.js`
+
 - Changed `getPlanLimits()` to async method
 - Added fallback mechanism for database failures
 - Maintains backward compatibility
 
 #### `costControl.js`
+
 - Updated `upgradePlan()` to fetch limits from database
 - Updated `canUseShield()` to use database limits
 - Removed hardcoded plan configuration
 
 #### `authService.js`
+
 - Changed `getPlanLimits()` to async method
 - Added plan ID mapping for backward compatibility (basic → free)
 - Maintains original response format
 
 #### `analytics.js`
+
 - Updated `getPlanLimits()` to async method
 - Added static rate limits for express-rate-limit compatibility
 - Maps database limits to analytics-specific format
@@ -85,6 +92,7 @@ New endpoints for managing plan limits:
 ## Usage Examples
 
 ### Viewing Current Limits
+
 ```bash
 # Get all plan limits
 curl -H "Authorization: Bearer $ADMIN_TOKEN" \
@@ -96,6 +104,7 @@ curl -H "Authorization: Bearer $ADMIN_TOKEN" \
 ```
 
 ### Updating Plan Limits
+
 ```bash
 # Update Pro plan limits
 curl -X PUT \
@@ -110,6 +119,7 @@ curl -X PUT \
 ```
 
 ### Refreshing Cache
+
 ```bash
 curl -X POST \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
@@ -134,6 +144,7 @@ curl -X POST \
 ## Testing
 
 The following should be tested:
+
 1. Service functionality with database limits
 2. Fallback behavior when database is unavailable
 3. Cache expiration and refresh

@@ -7,6 +7,7 @@
 ## Why This Agent Could Apply
 
 **Trigger conditions present:**
+
 - [x] Label match: N/A (would match `critical`, `security`)
 - [x] Diff match: `CLAUDE.md` (critical documentation)
 - [x] Diff match: `docs/agents/*.md` (documentation)
@@ -30,7 +31,7 @@ Guardian was skipped because this PR **creates the agent system itself** rather 
 
 3. **Documentation Changes Are Additive**
    - CLAUDE.md: Added new section "Lead Orchestrator Rules" (no removals)
-   - docs/agents/*: New files, no modifications to existing sensitive docs
+   - docs/agents/\*: New files, no modifications to existing sensitive docs
    - No changes to existing GDD nodes beyond unrelated sync
 
 4. **Guardian Can't Scan Itself**
@@ -55,6 +56,7 @@ When implementing the governance system itself, normal governance rules don't ap
 ## Risk Assessment
 
 **Risks of skipping:**
+
 1. **New CI script could block legitimate PRs** (Severity: Medium)
    - Mitigation: Manual testing, can disable GitHub Action if needed
    - Fallback: Script can be updated without PR if critical bug
@@ -74,6 +76,7 @@ When implementing the governance system itself, normal governance rules don't ap
 **Overall Risk Level:** 🟢 Low
 
 **Why Low Risk:**
+
 - Infrastructure change, not product change
 - Can be reverted easily (all in code, no DB migrations)
 - Designed with escape hatches (SKIPPED receipts, can disable CI)
@@ -84,12 +87,14 @@ When implementing the governance system itself, normal governance rules don't ap
 **Will agent be needed later?** Yes
 
 **If yes:**
+
 - [x] Guardian will run on ALL future PRs via CI
 - [x] Guardian will validate this system is being used correctly
 - [x] Guardian will check if manifest changes are malicious
 - [ ] Guardian will scan agent receipts for exposed secrets (future enhancement)
 
 **When Guardian Will Apply to Agent System:**
+
 1. **Future PR modifying `agents/manifest.yaml`**
    - Guardian will check if triggers were weakened
    - Guardian will validate no guardrails were removed
@@ -103,6 +108,7 @@ When implementing the governance system itself, normal governance rules don't ap
    - Guardian will require Product Owner approval
 
 **Expected Guardian Behavior:**
+
 ```bash
 # When manifest is modified (future PR):
 node scripts/guardian-gdd.js --full
@@ -118,6 +124,7 @@ This is a one-time skip for implementing the governance system. All future chang
 
 **Self-Consistency:**
 By generating this SKIPPED receipt, we demonstrate the system works even during its own implementation. This receipt proves:
+
 1. Orchestrator identified Guardian as potentially required
 2. Orchestrator made reasoned decision to skip
 3. Orchestrator documented skip with risk assessment

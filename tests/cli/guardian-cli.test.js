@@ -25,7 +25,7 @@ describe('Guardian CLI - Command Line Interface Tests', () => {
     // Clean test artifacts
     if (fs.existsSync(testCasesDir)) {
       const files = fs.readdirSync(testCasesDir);
-      files.forEach(file => {
+      files.forEach((file) => {
         fs.unlinkSync(path.join(testCasesDir, file));
       });
     }
@@ -38,7 +38,7 @@ describe('Guardian CLI - Command Line Interface Tests', () => {
     // Cleanup
     if (fs.existsSync(testCasesDir)) {
       const files = fs.readdirSync(testCasesDir);
-      files.forEach(file => {
+      files.forEach((file) => {
         fs.unlinkSync(path.join(testCasesDir, file));
       });
     }
@@ -141,10 +141,10 @@ domains:
       fs.writeFileSync(configPath, testConfig);
 
       try {
-        const output = execSync(
-          `node ${guardianScript} --full --config=${configPath}`,
-          { encoding: 'utf-8', stdio: 'pipe' }
-        );
+        const output = execSync(`node ${guardianScript} --full --config=${configPath}`, {
+          encoding: 'utf-8',
+          stdio: 'pipe'
+        });
 
         // Should show scan progress
         expect(output).toMatch(/Scanning|Analyzing|Complete/);
@@ -288,13 +288,10 @@ domains:
       fs.writeFileSync(configPath, testConfig);
 
       try {
-        const output = execSync(
-          `node ${guardianScript} --ci --config=${configPath}`,
-          {
-            encoding: 'utf-8',
-            stdio: 'pipe'
-          }
-        );
+        const output = execSync(`node ${guardianScript} --ci --config=${configPath}`, {
+          encoding: 'utf-8',
+          stdio: 'pipe'
+        });
 
         // Should indicate CI mode
         expect(output).toContain('CI mode');
@@ -508,13 +505,10 @@ domains:
       fs.writeFileSync(configPath, testConfig);
 
       try {
-        const output = execSync(
-          `node ${guardianScript} --check --json --config=${configPath}`,
-          {
-            encoding: 'utf-8',
-            stdio: 'pipe'
-          }
-        );
+        const output = execSync(`node ${guardianScript} --check --json --config=${configPath}`, {
+          encoding: 'utf-8',
+          stdio: 'pipe'
+        });
 
         // Should be valid JSON
         const parsed = JSON.parse(output);

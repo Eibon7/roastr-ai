@@ -68,23 +68,40 @@ describe('IPv6 Rate Limiter Compatibility', () => {
     // Create test app with rate limiters
     app = express();
     app.use(express.json());
-    
+
     // Test GDPR endpoints with rate limiting
-    app.delete('/api/user/account', mockAuth, gdprGlobalLimiter, accountDeletionLimiter, (req, res) => {
-      res.json({ success: true });
-    });
+    app.delete(
+      '/api/user/account',
+      mockAuth,
+      gdprGlobalLimiter,
+      accountDeletionLimiter,
+      (req, res) => {
+        res.json({ success: true });
+      }
+    );
 
     app.get('/api/user/data-export', mockAuth, gdprGlobalLimiter, dataExportLimiter, (req, res) => {
       res.json({ success: true });
     });
 
-    app.get('/api/user/data-export/download/:token', gdprGlobalLimiter, dataDownloadLimiter, (req, res) => {
-      res.json({ success: true, downloadUrl: 'test-url' });
-    });
+    app.get(
+      '/api/user/data-export/download/:token',
+      gdprGlobalLimiter,
+      dataDownloadLimiter,
+      (req, res) => {
+        res.json({ success: true, downloadUrl: 'test-url' });
+      }
+    );
 
-    app.post('/api/user/account/deletion/cancel', mockAuth, gdprGlobalLimiter, deletionCancellationLimiter, (req, res) => {
-      res.json({ success: true });
-    });
+    app.post(
+      '/api/user/account/deletion/cancel',
+      mockAuth,
+      gdprGlobalLimiter,
+      deletionCancellationLimiter,
+      (req, res) => {
+        res.json({ success: true });
+      }
+    );
 
     app.get('/api/notifications', mockAuth, notificationLimiter, (req, res) => {
       res.json({ success: true, notifications: [] });
@@ -127,20 +144,20 @@ describe('IPv6 Rate Limiter Compatibility', () => {
     test('should create subnet-based keys for IPv6 by default', () => {
       const ip1 = '2001:0db8:85a3:0001:0000:8a2e:0370:7334';
       const ip2 = '2001:0db8:85a3:0001:0000:8a2e:0370:7335';
-      
+
       const key1 = ipKeyGenerator(ip1);
       const key2 = ipKeyGenerator(ip2);
-      
+
       // Should be the same subnet (first 56 bits)
       expect(key1).toBe(key2);
     });
 
     test('should allow custom IPv6 subnet size', () => {
       const ip = '2001:0db8:85a3:0001:0000:8a2e:0370:7334';
-      
+
       const key64 = ipKeyGenerator(ip, 64);
       const key56 = ipKeyGenerator(ip, 56);
-      
+
       // Different subnet sizes should produce different results
       expect(key64).not.toBe(key56);
     });
@@ -377,20 +394,20 @@ describe('IPv6 Rate Limiter Compatibility', () => {
   describe('Rate limit key generation consistency', () => {
     test('should generate consistent keys for the same IPv4', () => {
       const ip = '192.168.1.100';
-      
+
       const key1 = ipKeyGenerator(ip);
       const key2 = ipKeyGenerator(ip);
-      
+
       expect(key1).toBe(key2);
     });
 
     test('should generate different keys for different IPv4s', () => {
       const ip1 = '192.168.1.100';
       const ip2 = '192.168.1.101';
-      
+
       const key1 = ipKeyGenerator(ip1);
       const key2 = ipKeyGenerator(ip2);
-      
+
       expect(key1).not.toBe(key2);
     });
 

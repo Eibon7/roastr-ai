@@ -22,19 +22,21 @@ Transform the GDD framework from a documentation coherence engine into a compreh
 **File:** `scripts/validate-gdd-cross.js` (600 lines)
 
 **Key Features:**
+
 - **Coverage Authenticity Check** - Compare declared coverage in `docs/nodes/*.md` vs `coverage/coverage-summary.json`
 - **Timestamp Accuracy Validation** - Verify `last_updated` against git commit history
 - **Dependency Integrity** - Detect mismatches between declared dependencies and actual imports in `src/`
 
 **Validation Dimensions:**
 
-| Dimension | Source | Target | Tolerance |
-|-----------|--------|--------|-----------|
-| Coverage | `coverage-summary.json` | Node metadata | ±3% |
-| Timestamp | `git log` | Node `last_updated` | 30 days |
-| Dependencies | Source code imports | Node `depends_on` | Exact match |
+| Dimension    | Source                  | Target              | Tolerance   |
+| ------------ | ----------------------- | ------------------- | ----------- |
+| Coverage     | `coverage-summary.json` | Node metadata       | ±3%         |
+| Timestamp    | `git log`               | Node `last_updated` | 30 days     |
+| Dependencies | Source code imports     | Node `depends_on`   | Exact match |
 
 **CLI Usage:**
+
 ```bash
 # Full cross-validation
 node scripts/validate-gdd-cross.js --full
@@ -50,6 +52,7 @@ node scripts/validate-gdd-cross.js --summary
 ```
 
 **Output Structure:**
+
 ```javascript
 {
   status: 'HEALTHY' | 'WARNING' | 'CRITICAL',
@@ -84,6 +87,7 @@ node scripts/validate-gdd-cross.js --summary
 **File:** `scripts/gdd-cross-validator.js` (450 lines)
 
 Provides reusable validation methods:
+
 - `validateCoverage(node, declaredCoverage)` - Coverage authenticity check
 - `validateTimestamp(node, lastUpdated)` - Timestamp accuracy check
 - `validateDependencies(node, declaredDeps)` - Dependency integrity check
@@ -97,21 +101,22 @@ Provides reusable validation methods:
 
 Tracks 9 external platform integrations:
 
-| Platform | Status | Related Nodes | Health Score |
-|----------|--------|---------------|--------------|
-| Twitter/X | 🟢 active | social-platforms, roast | 95 |
-| Discord | 🟢 active | social-platforms, shield | 88 |
-| YouTube | 🟢 active | social-platforms | 92 |
-| Twitch | 🟢 active | social-platforms | 85 |
-| Instagram | 🟡 inactive | social-platforms | 45 |
-| Facebook | 🟡 inactive | social-platforms | 50 |
-| Reddit | 🟢 active | social-platforms | 90 |
-| TikTok | 🟡 not_connected | social-platforms | 30 |
-| Bluesky | 🟢 active | social-platforms | 88 |
+| Platform  | Status           | Related Nodes            | Health Score |
+| --------- | ---------------- | ------------------------ | ------------ |
+| Twitter/X | 🟢 active        | social-platforms, roast  | 95           |
+| Discord   | 🟢 active        | social-platforms, shield | 88           |
+| YouTube   | 🟢 active        | social-platforms         | 92           |
+| Twitch    | 🟢 active        | social-platforms         | 85           |
+| Instagram | 🟡 inactive      | social-platforms         | 45           |
+| Facebook  | 🟡 inactive      | social-platforms         | 50           |
+| Reddit    | 🟢 active        | social-platforms         | 90           |
+| TikTok    | 🟡 not_connected | social-platforms         | 30           |
+| Bluesky   | 🟢 active        | social-platforms         | 88           |
 
 **Helper Script:** `scripts/update-integration-status.js` (250 lines)
 
 **Checks Performed:**
+
 1. Platform adapter exists (`src/integrations/<platform>/`)
 2. Service file present (`<platform>Service.js`)
 3. Environment credentials configured
@@ -119,6 +124,7 @@ Tracks 9 external platform integrations:
 5. Health score calculation based on above
 
 **CLI Usage:**
+
 ```bash
 # Update integration status
 node scripts/update-integration-status.js
@@ -131,6 +137,7 @@ node scripts/update-integration-status.js --platform=twitter
 ```
 
 **Status Schema:**
+
 ```json
 {
   "last_updated": "2025-10-09T12:00:00Z",
@@ -160,6 +167,7 @@ node scripts/update-integration-status.js --platform=twitter
 **New Scoring Factors:**
 
 Original 6 factors (Phase 15.1):
+
 1. Sync Accuracy (25%)
 2. Update Freshness (15%)
 3. Dependency Integrity (20%)
@@ -167,11 +175,10 @@ Original 6 factors (Phase 15.1):
 5. Agent Relevance (10%)
 6. **Integrity Score (10%)** ← NEW in Phase 15.1
 
-Phase 15 additions:
-7. **Cross-Validation Score** (integrated into Integrity Score)
-8. **Connectivity Score** (affects overall system health)
+Phase 15 additions: 7. **Cross-Validation Score** (integrated into Integrity Score) 8. **Connectivity Score** (affects overall system health)
 
 **Extended Health Schema:**
+
 ```javascript
 {
   generated_at: "2025-10-09T12:00:00Z",
@@ -207,6 +214,7 @@ Phase 15 additions:
 ```
 
 **Composite Score Formula:**
+
 ```
 Composite Health = (Documentation Health × 0.40) +
                    (Cross-Validation Score × 0.30) +
@@ -218,11 +226,13 @@ Composite Health = (Documentation Health × 0.40) +
 **Modified:** `scripts/watch-gdd.js` (+150 lines)
 
 **New Flags:**
+
 - `--cross` - Include cross-validation in watch loop
 - `--connectivity` - Include connectivity checks
 - `--all` - Run all checks (validation + health + drift + cross + connectivity)
 
 **Enhanced Dashboard Output:**
+
 ```text
 ╔════════════════════════════════════════╗
 ║  GDD STATUS: HEALTHY                  ║
@@ -251,6 +261,7 @@ Composite Health = (Documentation Health × 0.40) +
 ```
 
 **Watch Mode Integration:**
+
 ```bash
 # Standard watch (runtime validation only)
 node scripts/watch-gdd.js
@@ -270,6 +281,7 @@ node scripts/watch-gdd.js --all
 **Generated Reports:**
 
 **1. Human-Readable:** `docs/cross-validation-report.md`
+
 ```markdown
 # GDD Cross-Validation Report
 
@@ -278,24 +290,29 @@ node scripts/watch-gdd.js --all
 **Overall Score:** 92.3/100
 
 ## Coverage Validation
+
 - ✅ Matched: 11/13 nodes
 - ⚠️ Mismatched: 2/13 nodes
 
 ### Violations
+
 - **shield.md**: Declared 85%, Actual 90% (diff: +5%)
 - **roast.md**: Declared 88%, Actual 85% (diff: -3%)
 
 ## Timestamp Validation
+
 - ✅ Valid: 10/13 nodes
 - ⚠️ Stale: 2/13 nodes (>30 days old)
 - ❌ Future: 1/13 nodes
 
 ### Violations
+
 - **billing.md**: Last updated 45 days ago (stale)
 - **analytics.md**: Last updated in future (future)
 ```
 
 **2. Machine-Readable:** `gdd-cross.json`
+
 ```json
 {
   "generated_at": "2025-10-09T12:00:00.000Z",
@@ -316,6 +333,7 @@ node scripts/watch-gdd.js --all
 **Coverage:** 100% (all validation logic)
 
 **Test Categories:**
+
 1. **Coverage Validation Tests**
    - Exact match detection
    - Within-tolerance mismatches (±3%)
@@ -367,13 +385,13 @@ Time:        1.234s
 
 ### Performance Metrics
 
-| Operation | Target | Actual | Status |
-|-----------|--------|--------|--------|
-| Cross-validate 13 nodes | <1s | ~800ms | ✅ PASS |
-| Integration status check | <2s | ~1.2s | ✅ PASS |
-| Health scoring (all metrics) | <3s | ~2.5s | ✅ PASS |
-| Watch loop (full validation) | <5s | ~4.2s | ✅ PASS |
-| Report generation | <500ms | ~350ms | ✅ PASS |
+| Operation                    | Target | Actual | Status  |
+| ---------------------------- | ------ | ------ | ------- |
+| Cross-validate 13 nodes      | <1s    | ~800ms | ✅ PASS |
+| Integration status check     | <2s    | ~1.2s  | ✅ PASS |
+| Health scoring (all metrics) | <3s    | ~2.5s  | ✅ PASS |
+| Watch loop (full validation) | <5s    | ~4.2s  | ✅ PASS |
+| Report generation            | <500ms | ~350ms | ✅ PASS |
 
 ## 📈 Results & Impact
 
@@ -397,13 +415,13 @@ Time:        1.234s
 
 ### Before vs After
 
-| Metric | Before Phase 15 | After Phase 15 | Improvement |
-|--------|----------------|----------------|-------------|
-| Health Dimensions | 1 (docs only) | 3 (docs + runtime + connectivity) | +200% |
-| Validation Depth | Syntax only | Syntax + semantic + runtime | +300% |
-| Coverage Accuracy | Manual updates | Automated verification | ∞ |
-| Integration Visibility | None | 9 platforms tracked | +∞ |
-| False Positives | Unknown | 0 detected | N/A |
+| Metric                 | Before Phase 15 | After Phase 15                    | Improvement |
+| ---------------------- | --------------- | --------------------------------- | ----------- |
+| Health Dimensions      | 1 (docs only)   | 3 (docs + runtime + connectivity) | +200%       |
+| Validation Depth       | Syntax only     | Syntax + semantic + runtime       | +300%       |
+| Coverage Accuracy      | Manual updates  | Automated verification            | ∞           |
+| Integration Visibility | None            | 9 platforms tracked               | +∞          |
+| False Positives        | Unknown         | 0 detected                        | N/A         |
 
 ## 🔍 Key Features
 
@@ -416,6 +434,7 @@ Time:        1.234s
 **Impact:** 100% coverage authenticity guarantee (±3% tolerance for minor differences)
 
 **Example:**
+
 ```bash
 $ node scripts/validate-gdd-cross.js --node=shield
 
@@ -437,6 +456,7 @@ $ node scripts/validate-gdd-cross.js --node=shield
 **Impact:** Detect stale docs (>30 days) and future timestamps (time travel bugs).
 
 **Example:**
+
 ```bash
 $ node scripts/validate-gdd-cross.js --full
 
@@ -457,6 +477,7 @@ $ node scripts/validate-gdd-cross.js --full
 **Impact:** Identify phantom dependencies (declared but not used) and missing dependencies (used but not declared).
 
 **Example:**
+
 ```bash
 $ node scripts/validate-gdd-cross.js --node=roast
 
@@ -478,6 +499,7 @@ $ node scripts/validate-gdd-cross.js --node=roast
 **Impact:** Proactive detection of integration failures before user reports.
 
 **Example:**
+
 ```bash
 $ node scripts/update-integration-status.js
 
@@ -498,6 +520,7 @@ Overall Connectivity: 82.5/100
 **Modified:** `.github/workflows/gdd-validate.yml`
 
 Added cross-validation step:
+
 ```yaml
 - name: Run cross-validation
   run: |
@@ -514,6 +537,7 @@ Added cross-validation step:
 ### Pre-Commit Hook
 
 **Recommended:** Add to `.git/hooks/pre-commit`
+
 ```bash
 #!/bin/bash
 node scripts/validate-gdd-cross.js --summary --ci
@@ -524,6 +548,7 @@ node scripts/validate-gdd-cross.js --summary --ci
 ### Watch Mode Automation
 
 **Usage:**
+
 ```bash
 # Terminal 1: Development
 npm run dev

@@ -13,6 +13,7 @@
 After fixing the off-by-one bug in offense level calculation and resolving the Test 1 vs Test 3 conflict, we have **9/15 tests passing (60%)**. The remaining **6 tests require implementing complex features** in Shield service that were previously not implemented.
 
 **Key Achievement So Far:**
+
 - ✅ Off-by-one bug fixed (offense level now calculates using total violations including current)
 - ✅ Action matrix reverted to proper gradual escalation
 - ✅ Test 1 vs Test 3 conflict resolved
@@ -20,6 +21,7 @@ After fixing the off-by-one bug in offense level calculation and resolving the T
 - ✅ Mock factory pattern working correctly
 
 **What Remains:**
+
 - 6 tests requiring complex feature implementations in `src/services/shieldService.js`
 - All features must be production-ready (not just test-passing hacks)
 
@@ -80,11 +82,9 @@ expect(['block', 'report']).toContain(result.actions.primary);
 ```javascript
 const existingBehavior = createUserBehaviorData({
   userId: 'muted-user',
-  isMuted: true,  // User currently muted
+  isMuted: true, // User currently muted
   violationCount: 1,
-  actionsTaken: [
-    { action: 'mute_temp', severity: 'medium', date: recentDate, duration: '24h' }
-  ]
+  actionsTaken: [{ action: 'mute_temp', severity: 'medium', date: recentDate, duration: '24h' }]
 });
 
 // Add mute expiration timestamp
@@ -191,18 +191,16 @@ if (window.expectedEscalation === 'aggressive') {
 
 ```javascript
 const timeWindows = [
-  { name: '1 hour', hours: 1, expectedEscalation: 'aggressive' },   // Block/report
-  { name: '6 hours', hours: 6, expectedEscalation: 'moderate' },    // Mute permanent
-  { name: '24 hours', hours: 24, expectedEscalation: 'minimal' }    // Warn/mute temp
+  { name: '1 hour', hours: 1, expectedEscalation: 'aggressive' }, // Block/report
+  { name: '6 hours', hours: 6, expectedEscalation: 'moderate' }, // Mute permanent
+  { name: '24 hours', hours: 24, expectedEscalation: 'minimal' } // Warn/mute temp
 ];
 
 const recentViolation = new Date(Date.now() - window.hours * 60 * 60 * 1000);
 const userBehavior = createUserBehaviorData({
   violationCount: 2,
   lastViolation: recentViolation.toISOString(),
-  actionsTaken: [
-    { action: 'warn', date: recentViolation.toISOString() }
-  ]
+  actionsTaken: [{ action: 'warn', date: recentViolation.toISOString() }]
 });
 ```
 
@@ -633,7 +631,11 @@ if (platform.escalationPolicy === 'aggressive') {
 const platforms = [
   { name: 'twitter', escalationPolicy: 'aggressive', expectedActions: ['mute_permanent', 'block'] },
   { name: 'instagram', escalationPolicy: 'lenient', expectedActions: ['warn', 'mute_temp'] },
-  { name: 'youtube', escalationPolicy: 'moderate', expectedActions: ['mute_temp', 'mute_permanent'] }
+  {
+    name: 'youtube',
+    escalationPolicy: 'moderate',
+    expectedActions: ['mute_temp', 'mute_permanent']
+  }
 ];
 
 const comment = createTestComment({
@@ -830,6 +832,7 @@ expect(result.actions.manual_review_required).toBe(true);
 **Rationale:** False positives for high-value users are costly. Better to review manually than auto-block verified creators.
 
 **User Types:**
+
 - `verified_creator` - Lenient escalation, manual review required
 - `partner` - Lenient escalation, manual review required
 - `standard` - Normal escalation (default)
@@ -846,9 +849,7 @@ const userBehavior = createUserBehaviorData({
   username: 'verifiedcreator',
   violationCount: 1,
   userType: 'verified_creator', // ✅ Field preserved correctly
-  actionsTaken: [
-    { action: 'warn', date: '2024-09-01' }
-  ]
+  actionsTaken: [{ action: 'warn', date: '2024-09-01' }]
 });
 mockSupabase._mockData.userBehavior.push(userBehavior);
 ```
@@ -1205,17 +1206,21 @@ async updateUserBehaviorAtomic(organizationId, userId, platform, actions) {
 ## Implementation Order (Recommended)
 
 ### Phase 1: Foundation Features (6-8 hours)
+
 1. **Test 10** - Special user types (2-3 hours) - MEDIUM complexity, no dependencies
 2. **Test 5** - Cooling-off period (2-3 hours) - MEDIUM complexity, no dependencies
 
 ### Phase 2: Time-Based Features (3-4 hours)
+
 3. **Test 6** - Time window escalation (3-4 hours) - MEDIUM complexity, depends on Test 5 cooling-off logic
 
 ### Phase 3: Advanced Features (8-10 hours)
+
 4. **Test 7** - Cross-platform aggregation (4-5 hours) - HIGH complexity, major refactor
 5. **Test 8** - Platform-specific policies (4-5 hours) - HIGH complexity, config management
 
 ### Phase 4: Concurrency (5-6 hours)
+
 6. **Test 13** - Concurrent violations (5-6 hours) - HIGH complexity, requires database transaction support
 
 **Total Estimated Effort:** 22-28 hours
@@ -1305,6 +1310,7 @@ constructor(supabase, options = {}) {
 - [ ] Performance benchmarks met (<100ms per Shield analysis)
 
 **Quality Standards:**
+
 - Clean, readable code
 - Proper error handling
 - Comprehensive logging
@@ -1316,16 +1322,20 @@ constructor(supabase, options = {}) {
 ## Files to Modify
 
 ### Production Code
+
 - `src/services/shieldService.js` - All features (estimated +500-700 lines)
 
 ### Test Infrastructure
+
 - `tests/helpers/mockSupabaseFactory.js` - Add concurrent update simulation (Test 13)
 
 ### Tests
+
 - `tests/integration/shield-escalation-logic.test.js` - No changes needed (tests already written correctly)
 - `tests/unit/services/shieldService.test.js` - Add unit tests for new methods
 
 ### Documentation
+
 - `docs/nodes/shield.md` - Update escalation logic, add new features
 - `docs/test-evidence/issue-482-final-results.md` - Document 15/15 passing
 - `README.md` - Update Shield service capabilities
@@ -1335,18 +1345,21 @@ constructor(supabase, options = {}) {
 ## Next Session Checklist
 
 **Before starting implementation:**
+
 - [ ] Read this plan document completely
 - [ ] Re-run tests to confirm current state (9/15 passing)
 - [ ] Set up development environment (Shield service running)
 - [ ] Create feature branch: `feat/shield-advanced-escalation-482`
 
 **During implementation:**
+
 - [ ] Follow implementation order (Tests 10, 5, 6, 7, 8, 13)
 - [ ] Commit after each test fix (atomic commits)
 - [ ] Run full test suite after each commit
 - [ ] Update this plan with actual time spent vs. estimates
 
 **After completion:**
+
 - [ ] Verify 15/15 tests passing
 - [ ] Run full test suite multiple times (ensure stability)
 - [ ] Create PR with comprehensive summary
@@ -1358,15 +1371,19 @@ constructor(supabase, options = {}) {
 ## Risks and Mitigation
 
 ### Risk 1: Cross-platform aggregation breaks existing behavior
+
 **Mitigation:** Add feature flag, gradual rollout per organization
 
 ### Risk 2: Concurrent violation handling causes deadlocks
+
 **Mitigation:** Use exponential backoff, max 3 retries, fallback to single update
 
 ### Risk 3: Platform policies conflict with organization configs
+
 **Mitigation:** Organization config takes precedence, document override rules
 
 ### Risk 4: Time estimates too optimistic
+
 **Mitigation:** Focus on Tests 10, 5, 6 first (11/15 = 73%), defer complex features if needed
 
 ---

@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { 
-  Wand2, 
-  Crown, 
-  Globe, 
+import {
+  Wand2,
+  Crown,
+  Globe,
   Calendar,
   TrendingUp,
   ArrowRight,
@@ -66,7 +66,9 @@ export default function StyleProfileCard() {
           setProfileData(profilePayload.data || profilePayload);
         }
         const integrations = integrationRes.integrations || integrationRes.data?.integrations || [];
-        const connectedWithData = integrations.filter(integration => integration.status === 'connected' && integration.importedCount >= 50);
+        const connectedWithData = integrations.filter(
+          (integration) => integration.status === 'connected' && integration.importedCount >= 50
+        );
         setIntegrationStatus(connectedWithData);
       } catch (fetchError) {
         console.error('Failed to fetch style profile data:', fetchError);
@@ -129,9 +131,9 @@ export default function StyleProfileCard() {
           <p className="text-sm text-muted-foreground mb-4">
             Upgrade to Creator+ to generate your personalized AI style profile
           </p>
-          <Button 
+          <Button
             onClick={() => navigate('/plans')}
-            size="sm" 
+            size="sm"
             className="bg-purple-600 hover:bg-purple-700"
           >
             <Crown className="h-3 w-3 mr-1" />
@@ -150,7 +152,7 @@ export default function StyleProfileCard() {
           <p className="text-sm text-muted-foreground mb-4">
             Create your personalized AI roast style based on your social media content
           </p>
-          <Button 
+          <Button
             onClick={() => navigate('/style-profile/generate')}
             size="sm"
             className="bg-blue-600 hover:bg-blue-700"
@@ -187,7 +189,9 @@ export default function StyleProfileCard() {
             <div className="text-xs text-muted-foreground">Languages</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-green-600">{Object.keys(profileData.sources).length}</div>
+            <div className="text-lg font-bold text-green-600">
+              {Object.keys(profileData.sources).length}
+            </div>
             <div className="text-xs text-muted-foreground">Platforms</div>
           </div>
         </div>
@@ -225,11 +229,12 @@ export default function StyleProfileCard() {
               </div>
             </div>
           ))}
-          
+
           {profileData.profiles.length > 2 && (
             <div className="text-center py-2">
               <span className="text-xs text-muted-foreground">
-                +{profileData.profiles.length - 2} more language{profileData.profiles.length - 2 !== 1 ? 's' : ''}
+                +{profileData.profiles.length - 2} more language
+                {profileData.profiles.length - 2 !== 1 ? 's' : ''}
               </span>
             </div>
           )}
@@ -244,26 +249,26 @@ export default function StyleProfileCard() {
             </div>
             <div className="flex items-center space-x-1 text-muted-foreground">
               <TrendingUp className="h-3 w-3" />
-              <span>{Object.entries(profileData.sources).map(([platform, count]) => `${platform}: ${count}`).join(', ')}</span>
+              <span>
+                {Object.entries(profileData.sources)
+                  .map(([platform, count]) => `${platform}: ${count}`)
+                  .join(', ')}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex space-x-2 pt-2">
-          <Button 
+          <Button
             onClick={() => navigate('/style-profile')}
-            size="sm" 
+            size="sm"
             variant="outline"
             className="flex-1"
           >
             View Full Profile
           </Button>
-          <Button 
-            onClick={() => navigate('/style-profile/generate')}
-            size="sm"
-            className="flex-1"
-          >
+          <Button onClick={() => navigate('/style-profile/generate')} size="sm" className="flex-1">
             <ArrowRight className="h-3 w-3 mr-1" />
             Update
           </Button>
@@ -280,9 +285,7 @@ export default function StyleProfileCard() {
           <span>Style Profile</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {getCardContent()}
-      </CardContent>
+      <CardContent>{getCardContent()}</CardContent>
     </Card>
   );
 }

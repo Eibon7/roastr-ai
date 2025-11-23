@@ -1,8 +1,8 @@
 /**
  * Worker Monitoring Dashboard
- * 
+ *
  * Part of Issue #713: Worker Monitoring Dashboard
- * 
+ *
  * Provides real-time monitoring of:
  * - Worker status and health
  * - Queue depth and processing
@@ -121,7 +121,7 @@ function WorkerStatusCard({ worker }: { worker: any }) {
       <CardContent>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Typography variant="h6" component="div">
-            {worker.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {worker.type.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
           </Typography>
           {getStatusIcon(worker.status)}
         </Box>
@@ -131,9 +131,7 @@ function WorkerStatusCard({ worker }: { worker: any }) {
             <Typography variant="body2" color="text.secondary">
               Processed
             </Typography>
-            <Typography variant="h6">
-              {worker.processed.toLocaleString()}
-            </Typography>
+            <Typography variant="h6">{worker.processed.toLocaleString()}</Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography variant="body2" color="text.secondary">
@@ -147,9 +145,7 @@ function WorkerStatusCard({ worker }: { worker: any }) {
             <Typography variant="body2" color="text.secondary">
               Uptime
             </Typography>
-            <Typography variant="body2">
-              {formatUptime(worker.uptime)}
-            </Typography>
+            <Typography variant="body2">{formatUptime(worker.uptime)}</Typography>
           </Grid>
         </Grid>
       </CardContent>
@@ -271,9 +267,7 @@ export default function WorkersDashboard() {
                 <Storage color="primary" sx={{ mr: 1 }} />
                 <Typography variant="h6">Queue Depth</Typography>
               </Box>
-              <Typography variant="h4">
-                {metrics?.queues.totalDepth || 0}
-              </Typography>
+              <Typography variant="h4">{metrics?.queues.totalDepth || 0}</Typography>
               <Typography variant="body2" color="text.secondary">
                 Jobs pending
               </Typography>
@@ -288,9 +282,7 @@ export default function WorkersDashboard() {
                 <TimelineIcon color="info" sx={{ mr: 1 }} />
                 <Typography variant="h6">Success Rate</Typography>
               </Box>
-              <Typography variant="h4">
-                {metrics?.jobs.successRate || '0%'}
-              </Typography>
+              <Typography variant="h4">{metrics?.jobs.successRate || '0%'}</Typography>
               <Typography variant="body2" color="text.secondary">
                 {metrics?.jobs.totalProcessed || 0} processed
               </Typography>
@@ -337,9 +329,7 @@ export default function WorkersDashboard() {
         <Typography variant="h5" component="h2" gutterBottom mb={2}>
           Queue Status
         </Typography>
-        {queueStatus?.queues && (
-          <QueueStatusTable queues={queueStatus.queues} />
-        )}
+        {queueStatus?.queues && <QueueStatusTable queues={queueStatus.queues} />}
       </Box>
 
       {/* System Info */}
@@ -371,5 +361,3 @@ export default function WorkersDashboard() {
     </Box>
   );
 }
-
-

@@ -69,7 +69,7 @@ const RetentionJobList = () => {
   const loadJobs = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         page: page + 1,
@@ -81,7 +81,7 @@ const RetentionJobList = () => {
 
       const response = await fetch(`/api/admin/retention/jobs?${params}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -104,7 +104,7 @@ const RetentionJobList = () => {
       const response = await fetch(`/api/admin/retention/jobs/${jobId}/${action}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -114,11 +114,10 @@ const RetentionJobList = () => {
 
       // Refresh the job list
       loadJobs();
-      
+
       // Close dialogs
       setActionMenuAnchor(null);
       setConfirmDialog({ open: false, job: null, action: null });
-      
     } catch (err) {
       console.error(`Error ${action} job:`, err);
       setError(`Failed to ${action} job: ${err.message}`);
@@ -127,13 +126,13 @@ const RetentionJobList = () => {
 
   const formatDuration = (startTime, endTime) => {
     if (!startTime) return 'N/A';
-    
+
     const end = endTime ? new Date(endTime) : new Date();
     const duration = end - new Date(startTime);
     const seconds = Math.floor(duration / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes % 60}m`;
     } else if (minutes > 0) {
@@ -192,10 +191,8 @@ const RetentionJobList = () => {
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box display="flex" justifyContent="between" alignItems="center" mb={3}>
-        <Typography variant="h5">
-          Data Retention Jobs
-        </Typography>
-        
+        <Typography variant="h5">Data Retention Jobs</Typography>
+
         <Box display="flex" gap={2} alignItems="center">
           <Button
             variant="contained"
@@ -205,14 +202,14 @@ const RetentionJobList = () => {
               fetch('/api/admin/retention/trigger', {
                 method: 'POST',
                 headers: {
-                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  Authorization: `Bearer ${localStorage.getItem('token')}`
                 }
               }).then(() => loadJobs());
             }}
           >
             Run Retention Jobs
           </Button>
-          
+
           <Tooltip title="Refresh job list">
             <IconButton onClick={loadJobs} disabled={loading}>
               <RefreshIcon />
@@ -237,7 +234,7 @@ const RetentionJobList = () => {
           }}
           sx={{ minWidth: 200 }}
         />
-        
+
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Status</InputLabel>
           <Select
@@ -246,23 +243,19 @@ const RetentionJobList = () => {
             label="Status"
           >
             <MenuItem value="">All</MenuItem>
-            {jobStatuses.map(status => (
+            {jobStatuses.map((status) => (
               <MenuItem key={status} value={status}>
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
-        
+
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Type</InputLabel>
-          <Select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            label="Type"
-          >
+          <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} label="Type">
             <MenuItem value="">All</MenuItem>
-            {jobTypes.map(type => (
+            {jobTypes.map((type) => (
               <MenuItem key={type} value={type}>
                 {type.charAt(0).toUpperCase() + type.slice(1)}
               </MenuItem>
@@ -272,7 +265,7 @@ const RetentionJobList = () => {
       </Box>
 
       {loading && <LinearProgress sx={{ mb: 2 }} />}
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -307,9 +300,7 @@ const RetentionJobList = () => {
                 <TableRow key={job.id} hover>
                   <TableCell>
                     <Box display="flex" alignItems="center" gap={1}>
-                      <Typography variant="body2">
-                        {getJobTypeIcon(job.job_type)}
-                      </Typography>
+                      <Typography variant="body2">{getJobTypeIcon(job.job_type)}</Typography>
                       <Box>
                         <Typography variant="subtitle2">
                           {job.job_type.replace('_', ' ').toUpperCase()}
@@ -318,9 +309,9 @@ const RetentionJobList = () => {
                           {job.id.substring(0, 8)}...
                         </Typography>
                         {job.priority && (
-                          <Chip 
-                            label={job.priority} 
-                            size="small" 
+                          <Chip
+                            label={job.priority}
+                            size="small"
                             color={getJobPriorityColor(job.priority)}
                             sx={{ ml: 1 }}
                           />
@@ -328,18 +319,16 @@ const RetentionJobList = () => {
                       </Box>
                     </Box>
                   </TableCell>
-                  
+
                   <TableCell>
-                    <Typography variant="body2">
-                      {job.organization_id}
-                    </Typography>
+                    <Typography variant="body2">{job.organization_id}</Typography>
                     {job.target_date && (
                       <Typography variant="caption" color="text.secondary">
                         Target: {new Date(job.target_date).toLocaleDateString()}
                       </Typography>
                     )}
                   </TableCell>
-                  
+
                   <TableCell>
                     <JobStatusBadge status={job.status} />
                     {job.error_message && (
@@ -348,12 +337,13 @@ const RetentionJobList = () => {
                       </Tooltip>
                     )}
                   </TableCell>
-                  
+
                   <TableCell>
                     {job.records_processed !== undefined && job.total_records !== undefined ? (
                       <Box>
                         <Typography variant="body2">
-                          {job.records_processed.toLocaleString()} / {job.total_records.toLocaleString()}
+                          {job.records_processed.toLocaleString()} /{' '}
+                          {job.total_records.toLocaleString()}
                         </Typography>
                         <LinearProgress
                           variant="determinate"
@@ -367,7 +357,7 @@ const RetentionJobList = () => {
                       </Typography>
                     )}
                   </TableCell>
-                  
+
                   <TableCell>
                     <Typography variant="body2">
                       Created: {new Date(job.created_at).toLocaleDateString()}
@@ -378,7 +368,7 @@ const RetentionJobList = () => {
                       </Typography>
                     )}
                   </TableCell>
-                  
+
                   <TableCell>
                     {job.status === 'completed' && (
                       <Box>
@@ -400,7 +390,7 @@ const RetentionJobList = () => {
                       </Box>
                     )}
                   </TableCell>
-                  
+
                   <TableCell align="center">
                     <IconButton
                       size="small"
@@ -415,7 +405,7 @@ const RetentionJobList = () => {
             )}
           </TableBody>
         </Table>
-        
+
         <TablePagination
           component="div"
           count={-1} // Unknown total, use -1 for "more" pagination
@@ -431,37 +421,35 @@ const RetentionJobList = () => {
       </TableContainer>
 
       {/* Action Menu */}
-      <Menu
-        anchorEl={actionMenuAnchor}
-        open={Boolean(actionMenuAnchor)}
-        onClose={closeActionMenu}
-      >
+      <Menu anchorEl={actionMenuAnchor} open={Boolean(actionMenuAnchor)} onClose={closeActionMenu}>
         {selectedJob?.status === 'pending' && (
           <MenuItem onClick={() => handleJobAction(selectedJob.id, 'start')}>
             <PlayArrowIcon sx={{ mr: 1 }} />
             Start Job
           </MenuItem>
         )}
-        
+
         {selectedJob?.status === 'processing' && (
           <MenuItem onClick={() => openConfirmDialog(selectedJob, 'pause')}>
             <PauseIcon sx={{ mr: 1 }} />
             Pause Job
           </MenuItem>
         )}
-        
+
         {['pending', 'processing'].includes(selectedJob?.status) && (
           <MenuItem onClick={() => openConfirmDialog(selectedJob, 'cancel')}>
             <DeleteIcon sx={{ mr: 1 }} />
             Cancel Job
           </MenuItem>
         )}
-        
-        <MenuItem onClick={() => {
-          // View job details
-          closeActionMenu();
-          console.log('View job details:', selectedJob);
-        }}>
+
+        <MenuItem
+          onClick={() => {
+            // View job details
+            closeActionMenu();
+            console.log('View job details:', selectedJob);
+          }}
+        >
           <VisibilityIcon sx={{ mr: 1 }} />
           View Details
         </MenuItem>
@@ -473,7 +461,8 @@ const RetentionJobList = () => {
         onClose={() => setConfirmDialog({ open: false, job: null, action: null })}
       >
         <DialogTitle>
-          Confirm {confirmDialog.action?.charAt(0).toUpperCase() + confirmDialog.action?.slice(1)} Job
+          Confirm {confirmDialog.action?.charAt(0).toUpperCase() + confirmDialog.action?.slice(1)}{' '}
+          Job
         </DialogTitle>
         <DialogContent>
           <Typography>
@@ -492,9 +481,7 @@ const RetentionJobList = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button 
-            onClick={() => setConfirmDialog({ open: false, job: null, action: null })}
-          >
+          <Button onClick={() => setConfirmDialog({ open: false, job: null, action: null })}>
             Cancel
           </Button>
           <Button

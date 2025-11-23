@@ -12,6 +12,7 @@
 ### 1. Source Code (src/) - 9 files
 
 **Modified:**
+
 - `src/services/costControl.js`
 - `src/services/embeddingsService.js`
 - `src/services/gatekeeperService.js`
@@ -25,6 +26,7 @@
 - `src/adapters/mock/YouTubeShieldAdapter.js`
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/cost-control.md` (costControl.js)
 - `docs/nodes/roast.md` (embeddingsService, roastGeneratorReal)
 - `docs/nodes/guardian.md` (gatekeeperService, Shield adapters)
@@ -34,11 +36,13 @@
 ### 2. Tests (tests/) - 3 files
 
 **Modified:**
+
 - `tests/e2e/auth-complete-flow.test.js` (NEW)
 - `tests/unit/services/costControl.test.js`
 - `tests/helpers/tenantTestUtils.js`
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/multi-tenant.md` (tenantTestUtils)
 - `docs/nodes/cost-control.md` (costControl.test.js)
 - Testing coverage: auth flow E2E tests
@@ -46,15 +50,18 @@
 ### 3. Frontend (frontend/) - 2 files
 
 **Modified:**
+
 - `frontend/src/pages/auth/Login.jsx`
 - `frontend/src/pages/auth/Register.jsx`
 
 **GDD Nodes Affected:**
+
 - Authentication/Auth flows (no specific GDD node yet - needs creation?)
 
 ### 4. Scripts (scripts/) - 14 files
 
 **Modified:**
+
 - `scripts/auto-repair-gdd.js`
 - `scripts/deploy-supabase-schema.js`
 - `scripts/predict-gdd-drift.js`
@@ -69,6 +76,7 @@
 - `scripts/verify-youtube-api.js`
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/observability.md` (verification scripts)
 - `docs/nodes/multi-tenant.md` (RLS verification)
 - `docs/nodes/social-platforms.md` (Twitter, YouTube verification)
@@ -77,6 +85,7 @@
 ### 5. Database/Supabase (database/, supabase/) - 9 files
 
 **Modified:**
+
 - `database/add-missing-tables.sql`
 - `supabase/.gitignore`
 - `supabase/config.toml`
@@ -87,12 +96,14 @@
 - `supabase/migrations/20251017070646_remote_schema.sql`
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/multi-tenant.md` (RLS policies, schema)
 - Database schema documentation
 
 ### 6. Documentation (docs/) - ~120 files
 
 **Categories:**
+
 - `docs/plan/*.md` - 15+ files (review plans, issue plans)
 - `docs/test-evidence/*.md` - 20+ files (test results, summaries)
 - `docs/nodes/*.md` - 11 files (GDD nodes updated)
@@ -107,11 +118,13 @@
 - `docs/auto-repair-report.md`
 
 **GDD Nodes Documentation:**
+
 - All 11 GDD nodes updated with latest info
 
 ### 7. CI/CD & Config (.github/, root) - 15+ files
 
 **Modified:**
+
 - `.github/workflows/agent-receipts.yml`
 - `.github/workflows/ci.yml`
 - `.github/workflows/e2e-tests.yml`
@@ -125,15 +138,18 @@
 - `CLAUDE.md`
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/observability.md` (CI/CD monitoring)
 - Project configuration
 
 ### 8. Manual Testing (root) - 1 file
 
 **Modified:**
+
 - `manual-test-auth.sh` (NEW)
 
 **GDD Nodes Affected:**
+
 - Testing infrastructure
 
 ---
@@ -142,32 +158,32 @@
 
 ### Primary Nodes (Direct Changes)
 
-| Node | Files Changed | Change Type |
-|------|---------------|-------------|
-| `cost-control.md` | costControl.js, costControl.test.js | Modified |
-| `guardian.md` | gatekeeperService.js, Shield adapters | Modified |
-| `roast.md` | embeddingsService.js, roastGeneratorReal.js | Modified |
-| `queue-system.md` | Workers (Analyze, Generate) | Modified |
-| `observability.md` | modelAvailabilityService.js, verify scripts, CI/CD | Modified |
-| `multi-tenant.md` | tenantTestUtils.js, RLS policies, migrations | Modified |
-| `social-platforms.md` | Twitter/YouTube verification scripts | Modified |
+| Node                  | Files Changed                                      | Change Type |
+| --------------------- | -------------------------------------------------- | ----------- |
+| `cost-control.md`     | costControl.js, costControl.test.js                | Modified    |
+| `guardian.md`         | gatekeeperService.js, Shield adapters              | Modified    |
+| `roast.md`            | embeddingsService.js, roastGeneratorReal.js        | Modified    |
+| `queue-system.md`     | Workers (Analyze, Generate)                        | Modified    |
+| `observability.md`    | modelAvailabilityService.js, verify scripts, CI/CD | Modified    |
+| `multi-tenant.md`     | tenantTestUtils.js, RLS policies, migrations       | Modified    |
+| `social-platforms.md` | Twitter/YouTube verification scripts               | Modified    |
 
 ### Secondary Nodes (Transitive Dependencies)
 
-| Node | Reason for Update |
-|------|-------------------|
+| Node                      | Reason for Update                        |
+| ------------------------- | ---------------------------------------- |
 | `platform-constraints.md` | Auth flow changes may affect constraints |
-| `persona.md` | User registration affects persona setup |
-| `tone.md` | May be affected by auth flow |
-| `trainer.md` | May be affected by new test patterns |
+| `persona.md`              | User registration affects persona setup  |
+| `tone.md`                 | May be affected by auth flow             |
+| `trainer.md`              | May be affected by new test patterns     |
 
 ### Missing Nodes
 
-| Area | Suggested Node | Status |
-|------|----------------|--------|
-| Authentication | `docs/nodes/authentication.md` | ❌ Does not exist |
-| Frontend | `docs/nodes/frontend.md` | ❌ Does not exist |
-| Database Migrations | `docs/nodes/database.md` | ❌ Does not exist |
+| Area                | Suggested Node                 | Status            |
+| ------------------- | ------------------------------ | ----------------- |
+| Authentication      | `docs/nodes/authentication.md` | ❌ Does not exist |
+| Frontend            | `docs/nodes/frontend.md`       | ❌ Does not exist |
+| Database Migrations | `docs/nodes/database.md`       | ❌ Does not exist |
 
 ---
 

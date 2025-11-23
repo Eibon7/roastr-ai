@@ -216,12 +216,14 @@ async handleShieldAction(organizationId, comment, decision) {
 ## Backward Compatibility
 
 **Campos mantenidos en analysisResult para compatibilidad:**
+
 - `toxicity_score`
 - `severity_level`
 - `categories` (merged: security + toxicity)
 - `service` (multi-service: "gatekeeper+perspective")
 
 **Nuevos campos añadidos:**
+
 - `direction` (SHIELD, ROAST, PUBLISH)
 - `action_tags` (array de acciones explícitas)
 - `platform_violations` (detectadas por Perspective)
@@ -230,11 +232,13 @@ async handleShieldAction(organizationId, comment, decision) {
 ## Testing Strategy
 
 **Unit Tests:**
+
 - ✅ `routeByDirection()` - Test all 3 directions
 - ✅ `handleShieldAction()` - Verify action_tags passed correctly
 - ✅ `updateCommentWithAnalysisDecision()` - Verify data mapping
 
 **Integration Tests:**
+
 - ✅ Full flow con MALICIOUS + threat → SHIELD + report
 - ✅ Full flow con MALICIOUS solo → SHIELD sin report
 - ✅ Full flow con threat solo → SHIELD + report

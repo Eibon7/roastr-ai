@@ -50,7 +50,7 @@ describe('Shield Service - Level Integration', () => {
     it('should map shield level 3 (Balanced) to threshold 0.70', () => {
       const config = levelConfigService.getShieldLevelConfig(3);
 
-      expect(config.threshold).toBe(0.70);
+      expect(config.threshold).toBe(0.7);
       expect(config.name).toBe('Balanced');
       expect(config.autoActions).toBe(true);
     });
@@ -58,7 +58,7 @@ describe('Shield Service - Level Integration', () => {
     it('should map shield level 4 (Balanced-Strict) to threshold 0.60', () => {
       const config = levelConfigService.getShieldLevelConfig(4);
 
-      expect(config.threshold).toBe(0.60);
+      expect(config.threshold).toBe(0.6);
       expect(config.name).toBe('Balanced-Strict');
       expect(config.autoActions).toBe(true);
     });
@@ -66,7 +66,7 @@ describe('Shield Service - Level Integration', () => {
     it('should map shield level 5 (Strict) to threshold 0.50', () => {
       const config = levelConfigService.getShieldLevelConfig(5);
 
-      expect(config.threshold).toBe(0.50);
+      expect(config.threshold).toBe(0.5);
       expect(config.name).toBe('Strict');
       expect(config.autoActions).toBe(true);
     });
@@ -143,10 +143,10 @@ describe('Shield Service - Level Integration', () => {
       const level5Config = levelConfigService.getShieldLevelConfig(5);
 
       // Free plan can access level 3
-      expect(level3Config.threshold).toBe(0.70);
+      expect(level3Config.threshold).toBe(0.7);
 
       // Plus plan can access level 5
-      expect(level5Config.threshold).toBe(0.50);
+      expect(level5Config.threshold).toBe(0.5);
     });
   });
 });

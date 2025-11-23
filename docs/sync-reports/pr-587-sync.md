@@ -18,6 +18,7 @@ PR #587 was successfully merged with **200 files changed** (+30,262 insertions, 
 ## Files Changed in PR #587
 
 ### Code Changes (Core)
+
 - `src/services/costControl.js` - SERVICE_KEY enforcement
 - `src/services/perspective.js` - Perspective API integration
 - `src/workers/AnalyzeToxicityWorker.js` - Toxicity analysis with Perspective
@@ -26,12 +27,14 @@ PR #587 was successfully merged with **200 files changed** (+30,262 insertions, 
 - `supabase/migrations/*.sql` (2 files) - Plan limits + user org trigger
 
 ### Documentation Changes
+
 - `docs/nodes/*.md` (8 nodes updated)
 - `docs/plan/*.md` (27 new review plans)
 - `docs/test-evidence/**/*.md` (45+ evidence files)
 - `docs/TESTING-GUIDE.md` - Comprehensive test documentation
 
 ### Scripts & Tooling
+
 - `scripts/validate-flow-*.js` (3 new validation scripts)
 - `scripts/verify-*-api.js` (5 new API verification scripts)
 - `.github/workflows/*.yml` - GDD automation improvements
@@ -105,12 +108,14 @@ Last Updated: 2025-10-14 (needs update to 2025-10-19)
 ```
 
 **Validation Results**:
+
 - ✅ Graph consistent (0 cycles detected)
 - ✅ All edges bidirectional
 - ✅ No orphan nodes
 - ✅ Coverage thresholds met (70% target)
 
 **Nodes in system-map.yaml**:
+
 1. roast (critical)
 2. shield (critical)
 3. queue-system (critical)
@@ -136,6 +141,7 @@ Last Updated: 2025-10-14 (needs update to 2025-10-19)
 **Status**: ⚠️ **8/15 nodes missing coverage data**
 
 **Nodes with coverage data** (7/15):
+
 - roast: 85% (system-map), 0% (node)
 - shield: 78% (system-map), 2% (node)
 - multi-tenant: 72% (system-map), 70% (node)
@@ -144,7 +150,7 @@ Last Updated: 2025-10-14 (needs update to 2025-10-19)
 - observability: 13% (system-map)
 - queue-system: 12% (system-map)
 
-**Discrepancy**: system-map.yaml has different values than docs/nodes/*.md
+**Discrepancy**: system-map.yaml has different values than docs/nodes/\*.md
 
 **Recommendation**: Run `node scripts/auto-repair-gdd.js --auto-fix` to sync coverage from actual reports.
 
@@ -226,6 +232,7 @@ Time: 184ms
 **None** - All TODOs are minor and can be addressed in future PRs if needed.
 
 **Rationale**: The 3 TODOs found are:
+
 1. Low priority (test coverage improvements)
 2. Already tracked in broader issues (multi-tenant testing)
 3. Section headers, not actionable items
@@ -247,6 +254,7 @@ All 15 nodes are properly connected in the dependency graph.
 🟢 **SAFE TO MERGE**
 
 **Rationale**:
+
 - GDD validation: HEALTHY
 - Drift risk: 4/100 (HEALTHY)
 - spec.md: Synchronized
@@ -277,7 +285,7 @@ None required. System is healthy and ready for production.
 
 ### Future Improvements
 
-1. **Coverage sync**: Run `node scripts/auto-repair-gdd.js --auto-fix` to sync coverage values between system-map.yaml and docs/nodes/*.md
+1. **Coverage sync**: Run `node scripts/auto-repair-gdd.js --auto-fix` to sync coverage values between system-map.yaml and docs/nodes/\*.md
 2. **TODO cleanup**: Create GitHub issues for the 3 TODOs found (optional, low priority)
 3. **Metadata update**: Update `system-map.yaml` Last Updated to 2025-10-19 (reflects PR #587 merge date)
 

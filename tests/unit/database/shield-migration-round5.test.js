@@ -1,6 +1,6 @@
 /**
  * Database Migration Tests - CodeRabbit Round 5 Shield UI Improvements
- * 
+ *
  * Tests the enhanced database features added in CodeRabbit Round 5:
  * 1. NOT NULL constraints for timestamp columns
  * 2. Enhanced temporal integrity constraints with clock skew tolerance
@@ -50,9 +50,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         created_at: null // This should violate NOT NULL
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(invalidAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(invalidAction);
 
       expect(result.error).toBeTruthy();
       expect(result.error.code).toBe('23502');
@@ -79,9 +77,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         updated_at: null // This should violate NOT NULL
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(invalidAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(invalidAction);
 
       expect(result.error).toBeTruthy();
       expect(result.error.code).toBe('23502');
@@ -90,13 +86,15 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
 
     it('should accept valid timestamps with defaults', async () => {
       mockSupabaseClient.insert.mockResolvedValue({
-        data: [{
-          id: 'test-id',
-          organization_id: 'test-org-id',
-          action_type: 'block',
-          created_at: '2024-01-15T12:00:00Z',
-          updated_at: '2024-01-15T12:00:00Z'
-        }],
+        data: [
+          {
+            id: 'test-id',
+            organization_id: 'test-org-id',
+            action_type: 'block',
+            created_at: '2024-01-15T12:00:00Z',
+            updated_at: '2024-01-15T12:00:00Z'
+          }
+        ],
         error: null
       });
 
@@ -109,9 +107,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         // created_at and updated_at will use defaults
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(validAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(validAction);
 
       expect(result.error).toBeNull();
       expect(result.data[0].created_at).toBeTruthy();
@@ -126,7 +122,8 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         data: null,
         error: {
           code: '23514', // Check constraint violation
-          message: 'new row for relation "shield_actions" violates check constraint "shield_actions_temporal_integrity"',
+          message:
+            'new row for relation "shield_actions" violates check constraint "shield_actions_temporal_integrity"',
           details: 'Failing row contains future timestamp beyond acceptable clock skew.'
         }
       });
@@ -143,9 +140,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         created_at: futureTime.toISOString()
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(invalidAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(invalidAction);
 
       expect(result.error).toBeTruthy();
       expect(result.error.code).toBe('23514');
@@ -154,14 +149,16 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
 
     it('should accept records with reverted_at after created_at', async () => {
       mockSupabaseClient.insert.mockResolvedValue({
-        data: [{
-          id: 'test-id',
-          organization_id: 'test-org-id',
-          action_type: 'block',
-          created_at: '2024-01-15T12:00:00Z',
-          reverted_at: '2024-01-15T13:00:00Z', // 1 hour later
-          updated_at: '2024-01-15T13:00:00Z'
-        }],
+        data: [
+          {
+            id: 'test-id',
+            organization_id: 'test-org-id',
+            action_type: 'block',
+            created_at: '2024-01-15T12:00:00Z',
+            reverted_at: '2024-01-15T13:00:00Z', // 1 hour later
+            updated_at: '2024-01-15T13:00:00Z'
+          }
+        ],
         error: null
       });
 
@@ -175,9 +172,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         reverted_at: '2024-01-15T13:00:00Z'
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(validAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(validAction);
 
       expect(result.error).toBeNull();
       expect(result.data[0].reverted_at).toBe('2024-01-15T13:00:00Z');
@@ -189,7 +184,8 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         data: null,
         error: {
           code: '23514', // Check constraint violation
-          message: 'new row for relation "shield_actions" violates check constraint "shield_actions_temporal_integrity"',
+          message:
+            'new row for relation "shield_actions" violates check constraint "shield_actions_temporal_integrity"',
           details: 'Failing row contains reverted_at before created_at.'
         }
       });
@@ -204,9 +200,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         reverted_at: '2024-01-15T11:00:00Z' // 1 hour before created_at
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(invalidAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(invalidAction);
 
       expect(result.error).toBeTruthy();
       expect(result.error.code).toBe('23514');
@@ -215,13 +209,15 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
 
     it('should accept records with 5-minute clock skew tolerance', async () => {
       mockSupabaseClient.insert.mockResolvedValue({
-        data: [{
-          id: 'test-id',
-          organization_id: 'test-org-id',
-          action_type: 'block',
-          created_at: '2024-01-15T12:04:00Z', // 4 minutes in future (within tolerance)
-          updated_at: '2024-01-15T12:04:00Z'
-        }],
+        data: [
+          {
+            id: 'test-id',
+            organization_id: 'test-org-id',
+            action_type: 'block',
+            created_at: '2024-01-15T12:04:00Z', // 4 minutes in future (within tolerance)
+            updated_at: '2024-01-15T12:04:00Z'
+          }
+        ],
         error: null
       });
 
@@ -234,9 +230,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         created_at: '2024-01-15T12:04:00Z' // Within 5-minute tolerance
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(validAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(validAction);
 
       expect(result.error).toBeNull();
       expect(result.data[0].created_at).toBe('2024-01-15T12:04:00Z');
@@ -247,13 +241,15 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
     it('should use partial index for active actions query', async () => {
       // Mock query plan showing index usage
       mockSupabaseClient.rpc.mockResolvedValue({
-        data: [{
-          'QUERY PLAN': [
-            'Index Scan using idx_shield_actions_recent_active on shield_actions',
-            'Index Cond: ((organization_id = $1) AND (reverted_at IS NULL))',
-            'Filter: (created_at > (now() - \'30 days\'::interval))'
-          ]
-        }],
+        data: [
+          {
+            'QUERY PLAN': [
+              'Index Scan using idx_shield_actions_recent_active on shield_actions',
+              'Index Cond: ((organization_id = $1) AND (reverted_at IS NULL))',
+              "Filter: (created_at > (now() - '30 days'::interval))"
+            ]
+          }
+        ],
         error: null
       });
 
@@ -276,13 +272,15 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
     it('should use partial index for reverted actions query', async () => {
       // Mock query plan showing index usage for reverted actions
       mockSupabaseClient.rpc.mockResolvedValue({
-        data: [{
-          'QUERY PLAN': [
-            'Index Scan using idx_shield_actions_reverted on shield_actions',
-            'Index Cond: (reverted_at IS NOT NULL)',
-            'Filter: (organization_id = $1)'
-          ]
-        }],
+        data: [
+          {
+            'QUERY PLAN': [
+              'Index Scan using idx_shield_actions_reverted on shield_actions',
+              'Index Cond: (reverted_at IS NOT NULL)',
+              'Filter: (organization_id = $1)'
+            ]
+          }
+        ],
         error: null
       });
 
@@ -307,7 +305,8 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         data: null,
         error: {
           code: '23514', // Check constraint violation
-          message: 'new row for relation "shield_actions" violates check constraint "shield_actions_action_type_check"',
+          message:
+            'new row for relation "shield_actions" violates check constraint "shield_actions_action_type_check"',
           details: 'Failing row contains invalid action_type value.'
         }
       });
@@ -320,9 +319,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         reason: 'toxic'
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(invalidAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(invalidAction);
 
       expect(result.error).toBeTruthy();
       expect(result.error.code).toBe('23514');
@@ -334,7 +331,8 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         data: null,
         error: {
           code: '23514', // Check constraint violation
-          message: 'new row for relation "shield_actions" violates check constraint "shield_actions_platform_check"',
+          message:
+            'new row for relation "shield_actions" violates check constraint "shield_actions_platform_check"',
           details: 'Failing row contains invalid platform value.'
         }
       });
@@ -347,9 +345,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         reason: 'toxic'
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(invalidAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(invalidAction);
 
       expect(result.error).toBeTruthy();
       expect(result.error.code).toBe('23514');
@@ -361,7 +357,8 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         data: null,
         error: {
           code: '23514', // Check constraint violation
-          message: 'new row for relation "shield_actions" violates check constraint "shield_actions_content_hash_check"',
+          message:
+            'new row for relation "shield_actions" violates check constraint "shield_actions_content_hash_check"',
           details: 'Failing row contains content_hash shorter than 32 characters.'
         }
       });
@@ -374,9 +371,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         reason: 'toxic'
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(invalidAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(invalidAction);
 
       expect(result.error).toBeTruthy();
       expect(result.error.code).toBe('23514');
@@ -385,16 +380,18 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
 
     it('should accept valid constraint values', async () => {
       mockSupabaseClient.insert.mockResolvedValue({
-        data: [{
-          id: 'test-id',
-          organization_id: 'test-org-id',
-          action_type: 'block',
-          content_hash: '1234567890abcdef1234567890abcdef12345678', // 40 chars, valid
-          platform: 'twitter',
-          reason: 'toxic',
-          created_at: '2024-01-15T12:00:00Z',
-          updated_at: '2024-01-15T12:00:00Z'
-        }],
+        data: [
+          {
+            id: 'test-id',
+            organization_id: 'test-org-id',
+            action_type: 'block',
+            content_hash: '1234567890abcdef1234567890abcdef12345678', // 40 chars, valid
+            platform: 'twitter',
+            reason: 'toxic',
+            created_at: '2024-01-15T12:00:00Z',
+            updated_at: '2024-01-15T12:00:00Z'
+          }
+        ],
         error: null
       });
 
@@ -406,9 +403,7 @@ describe('Shield Actions Table Migration - Round 5 Improvements', () => {
         reason: 'toxic'
       };
 
-      const result = await mockSupabaseClient
-        .from('shield_actions')
-        .insert(validAction);
+      const result = await mockSupabaseClient.from('shield_actions').insert(validAction);
 
       expect(result.error).toBeNull();
       expect(result.data[0].action_type).toBe('block');

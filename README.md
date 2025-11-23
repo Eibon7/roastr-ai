@@ -12,6 +12,7 @@ Sistema multi-tenant de detección de toxicidad y generación de roasts automát
 ## 🚀 Development Setup
 
 ### ⚠️ Important: Development Ports
+
 - **Frontend**: http://localhost:3001 (PRIMARY - always use this)
 - **Backend**: http://localhost:3000
 - **Branch**: `feat/disable-development-features` (current active development)
@@ -39,7 +40,8 @@ npm run start:api  # API en http://localhost:3000
 ## 📊 Dashboard Frontend
 
 **Nuevo sistema de dashboard con:**
-- ✅ 7 widgets interactivos reordenables  
+
+- ✅ 7 widgets interactivos reordenables
 - ✅ Mock-first design (funciona sin APIs externas)
 - ✅ 6 páginas completas (Dashboard, Compose, Integrations, Billing, Settings, Logs)
 - ✅ Diseño responsivo con shadcn/ui + Tailwind CSS
@@ -49,15 +51,17 @@ npm run start:api  # API en http://localhost:3000
 ## 🎯 Características Principales
 
 ### Core Features
+
 - **Generación de roasts** usando OpenAI GPT-4o mini
 - **Sistema RQC** (Roast Quality Control) multi-plan con moderación inteligente
-- **Detección automática** de idioma (español/inglés) 
+- **Detección automática** de idioma (español/inglés)
 - **Arquitectura multi-tenant** con planes de suscripción (Free, Pro, Creator+)
 - **9 integraciones** de plataformas sociales (Twitter, YouTube, Instagram, etc.)
 - **Shield Protection** - Moderación automática con acciones escalonadas
 - **Worker system** dedicado para procesamiento en background
 
 ### Nuevo Dashboard Features
+
 - **Mock Mode** automático cuando faltan API keys
 - **Widget system** modular y extensible
 - **Real-time updates** en widgets seleccionados
@@ -68,12 +72,12 @@ npm run start:api  # API en http://localhost:3000
 Arquitectura
 
 El proyecto usa una arquitectura simple basada en Node.js + Express:
-	•	Backend: src/index.js - Servidor Express con endpoints de API
-	•	Frontend: public/index.html - Interfaz web básica con HTML/CSS/JS vanilla
-	•	Despliegue: Vercel serverless functions usando vercel.json
-	•	CLI: src/cli.js - Herramienta de línea de comandos para testing local
-	•	Integraciones: src/integrations/ - Módulos para redes sociales
-	•	Sistema multi-tenant: Autenticación y espacio de usuario con Supabase
+• Backend: src/index.js - Servidor Express con endpoints de API
+• Frontend: public/index.html - Interfaz web básica con HTML/CSS/JS vanilla
+• Despliegue: Vercel serverless functions usando vercel.json
+• CLI: src/cli.js - Herramienta de línea de comandos para testing local
+• Integraciones: src/integrations/ - Módulos para redes sociales
+• Sistema multi-tenant: Autenticación y espacio de usuario con Supabase
 
 La aplicación se ejecuta como una función serverless en Vercel, lo que permite escalabilidad automática y despliegues rápidos.
 
@@ -88,13 +92,13 @@ POST /roast
 Genera un roast usando la API de OpenAI.
 
 {
-  "message": "Tu comentario aquí"
+"message": "Tu comentario aquí"
 }
 
 Respuesta:
 
 {
-  "roast": "Roast generado por CSV"
+"roast": "Roast generado por CSV"
 }
 
 ## 🔬 Sistema RQC (Roast Quality Control)
@@ -104,6 +108,7 @@ Roastr.ai incluye un sistema avanzado de control de calidad que funciona según 
 ### Moderación Básica (Free y Pro)
 
 Los planes Free y Pro utilizan **moderación básica integrada** directamente en el prompt de generación:
+
 - ✅ Sin llamadas extra a GPT (optimizado para costes)
 - ✅ Cumplimiento automático de normas de plataformas
 - ✅ Intensidad controlada según configuración del usuario
@@ -115,16 +120,19 @@ Los planes Free y Pro utilizan **moderación básica integrada** directamente en
 Los usuarios Creator+ obtienen acceso al **sistema RQC avanzado** con 3 revisores paralelos:
 
 #### 🛡️ Moderador
+
 - Verifica cumplimiento de políticas de plataformas
 - Controla nivel de intensidad configurado (1-5)
 - **Decisión final**: Si falla, siempre se regenera
 
-#### 😄 Comediante  
+#### 😄 Comediante
+
 - Evalúa calidad del humor y creatividad
 - Comprueba que el roast sea suficientemente "punchy"
 - Detecta contenido genérico o aburrido
 
 #### 🎨 Revisor de Estilo
+
 - Verifica adherencia al tono configurado
 - Aplica prompts personalizados configurados por admin
 - Mantiene consistencia con preferencias del usuario
@@ -141,7 +149,7 @@ Max intentos → 🛡️ Fallback seguro
 
 ### Configuración de Usuario
 
-- **Nivel de intensidad**: 1 (suave) a 5 (intenso) 
+- **Nivel de intensidad**: 1 (suave) a 5 (intenso)
 - **RQC habilitado**: Solo Creator+ (configurable)
 - **Prompt personalizado**: Solo editable por administradores
 - **Límite de regeneraciones**: Configurable por plan (Free/Pro: 0, Creator+: 3)
@@ -149,7 +157,7 @@ Max intentos → 🛡️ Fallback seguro
 ### Benefits
 
 - 💰 **Optimización de costes**: Free/Pro usan 1 llamada API
-- 🎯 **Control de calidad**: Creator+ obtiene revisión profesional  
+- 🎯 **Control de calidad**: Creator+ obtiene revisión profesional
 - 🛡️ **Seguridad de plataforma**: Todo contenido cumple guidelines
 - ⚡ **Alta velocidad**: Revisores ejecutan en paralelo
 - 🔄 **Garantía de respuesta**: Sistema de fallback siempre funciona
@@ -184,7 +192,7 @@ npm run test:coverage
 
 - **RQC desactivado**: `ENABLE_RQC=false` por defecto en tests
 - **Servicios externos**: Auto-fallback a mocks cuando faltan claves
-- **OpenAI**: Usa mock generator si `OPENAI_API_KEY` no está presente  
+- **OpenAI**: Usa mock generator si `OPENAI_API_KEY` no está presente
 - **Supabase**: Mock database para todos los tests
 - **Stripe**: Mock billing sin claves reales
 - **Redes sociales**: Mock integrations para Twitter, YouTube, etc.
@@ -204,7 +212,7 @@ ENABLE_RQC=true                       # Para habilitar RQC avanzado
 Cuando faltan claves, los servicios automáticamente usan mocks:
 
 - **OpenAI faltante** → Mock roast generator
-- **Supabase faltante** → Mock database responses  
+- **Supabase faltante** → Mock database responses
 - **Stripe faltante** → Mock billing endpoints
 - **API keys sociales** → Mock platform integrations
 
@@ -220,13 +228,13 @@ POST /csv-roast
 Genera un roast simulado usando un sistema de plantillas (actualmente mock, futura integración real).
 
 {
-  "message": "Tu comentario aquí"
+"message": "Tu comentario aquí"
 }
 
 Respuesta:
 
 {
-  "roast": "Roast generado por CSV"
+"roast": "Roast generado por CSV"
 }
 
 ## 🔬 Sistema RQC (Roast Quality Control)
@@ -236,6 +244,7 @@ Roastr.ai incluye un sistema avanzado de control de calidad que funciona según 
 ### Moderación Básica (Free y Pro)
 
 Los planes Free y Pro utilizan **moderación básica integrada** directamente en el prompt de generación:
+
 - ✅ Sin llamadas extra a GPT (optimizado para costes)
 - ✅ Cumplimiento automático de normas de plataformas
 - ✅ Intensidad controlada según configuración del usuario
@@ -247,16 +256,19 @@ Los planes Free y Pro utilizan **moderación básica integrada** directamente en
 Los usuarios Creator+ obtienen acceso al **sistema RQC avanzado** con 3 revisores paralelos:
 
 #### 🛡️ Moderador
+
 - Verifica cumplimiento de políticas de plataformas
 - Controla nivel de intensidad configurado (1-5)
 - **Decisión final**: Si falla, siempre se regenera
 
-#### 😄 Comediante  
+#### 😄 Comediante
+
 - Evalúa calidad del humor y creatividad
 - Comprueba que el roast sea suficientemente "punchy"
 - Detecta contenido genérico o aburrido
 
 #### 🎨 Revisor de Estilo
+
 - Verifica adherencia al tono configurado
 - Aplica prompts personalizados configurados por admin
 - Mantiene consistencia con preferencias del usuario
@@ -273,7 +285,7 @@ Max intentos → 🛡️ Fallback seguro
 
 ### Configuración de Usuario
 
-- **Nivel de intensidad**: 1 (suave) a 5 (intenso) 
+- **Nivel de intensidad**: 1 (suave) a 5 (intenso)
 - **RQC habilitado**: Solo Creator+ (configurable)
 - **Prompt personalizado**: Solo editable por administradores
 - **Límite de regeneraciones**: Configurable por plan (Free/Pro: 0, Creator+: 3)
@@ -281,7 +293,7 @@ Max intentos → 🛡️ Fallback seguro
 ### Benefits
 
 - 💰 **Optimización de costes**: Free/Pro usan 1 llamada API
-- 🎯 **Control de calidad**: Creator+ obtiene revisión profesional  
+- 🎯 **Control de calidad**: Creator+ obtiene revisión profesional
 - 🛡️ **Seguridad de plataforma**: Todo contenido cumple guidelines
 - ⚡ **Alta velocidad**: Revisores ejecutan en paralelo
 - 🔄 **Garantía de respuesta**: Sistema de fallback siempre funciona
@@ -293,4 +305,5 @@ Ver comandos disponibles con detalles completos en [CLAUDE.md](./CLAUDE.md).
 ## Contribución
 
 Para desarrolladores, ver la documentación técnica completa y changelog en [CHANGELOG.md](./CHANGELOG.md).
+
 # Documentation updated viernes, 26 de septiembre de 2025, 18:44:18 CEST

@@ -13,7 +13,7 @@ class StyleProfileGenerator {
    */
   async initialize() {
     if (this.isInitialized) return;
-    
+
     console.log('🎨 Initializing Style Profile Generator');
     this.isInitialized = true;
   }
@@ -24,8 +24,8 @@ class StyleProfileGenerator {
   detectLanguages(content) {
     const langCount = {};
     const totalCount = content.length;
-    
-    content.forEach(item => {
+
+    content.forEach((item) => {
       if (langCount[item.lang]) {
         langCount[item.lang]++;
       } else {
@@ -35,10 +35,10 @@ class StyleProfileGenerator {
 
     // Filter languages that meet criteria
     const qualifiedLanguages = [];
-    
+
     Object.entries(langCount).forEach(([lang, count]) => {
       const percentage = count / totalCount;
-      
+
       // Include if >= 25% and >= 50 items, OR if it's dominant (>75%)
       if ((percentage >= 0.25 && count >= 50) || percentage >= 0.75) {
         qualifiedLanguages.push({
@@ -51,9 +51,8 @@ class StyleProfileGenerator {
 
     // If no languages qualify, default to the most common one
     if (qualifiedLanguages.length === 0 && Object.keys(langCount).length > 0) {
-      const mostCommon = Object.entries(langCount)
-        .sort(([,a], [,b]) => b - a)[0];
-      
+      const mostCommon = Object.entries(langCount).sort(([, a], [, b]) => b - a)[0];
+
       qualifiedLanguages.push({
         lang: mostCommon[0],
         count: mostCommon[1],
@@ -68,8 +67,8 @@ class StyleProfileGenerator {
    * Analyze content patterns for a specific language
    */
   analyzeLanguageContent(content, targetLang) {
-    const langContent = content.filter(item => item.lang === targetLang);
-    
+    const langContent = content.filter((item) => item.lang === targetLang);
+
     if (langContent.length === 0) {
       return null;
     }
@@ -95,7 +94,7 @@ class StyleProfileGenerator {
     let totalLength = 0;
     const wordCounts = {};
 
-    langContent.forEach(item => {
+    langContent.forEach((item) => {
       // Platform distribution
       if (analysis.platforms[item.platform]) {
         analysis.platforms[item.platform]++;
@@ -111,7 +110,8 @@ class StyleProfileGenerator {
       totalLength += text.length;
 
       // Count emojis
-      const emojiRegex = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu;
+      const emojiRegex =
+        /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu;
       const emojis = text.match(emojiRegex);
       if (emojis) {
         analysis.emojiUsage += emojis.length;
@@ -122,8 +122,8 @@ class StyleProfileGenerator {
       if (text.includes('!')) analysis.exclamationFrequency++;
 
       // Word frequency (simple analysis)
-      const words = text.split(/\s+/).filter(word => word.length > 3);
-      words.forEach(word => {
+      const words = text.split(/\s+/).filter((word) => word.length > 3);
+      words.forEach((word) => {
         wordCounts[word] = (wordCounts[word] || 0) + 1;
       });
 
@@ -140,10 +140,10 @@ class StyleProfileGenerator {
     });
 
     analysis.avgLength = Math.round(totalLength / langContent.length);
-    
+
     // Get most common words
     analysis.commonWords = Object.entries(wordCounts)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
       .map(([word, count]) => ({ word, count }));
 
@@ -187,7 +187,7 @@ class StyleProfileGenerator {
           long: 'Tends to explain points in detail'
         },
         examples: [
-          'I don\'t think that\'s quite right, you might want to reconsider that.',
+          "I don't think that's quite right, you might want to reconsider that.",
           'Excellent point! I think your observation is very insightful.'
         ]
       },
@@ -212,10 +212,11 @@ class StyleProfileGenerator {
     };
 
     const template = templates[lang] || templates.en;
-    
+
     // Determine dominant tone
-    const dominantTone = Object.entries(analysis.toneIndicators)
-      .sort(([,a], [,b]) => b - a)[0][0];
+    const dominantTone = Object.entries(analysis.toneIndicators).sort(
+      ([, a], [, b]) => b - a
+    )[0][0];
 
     // Determine style based on average length
     let styleType = 'medium';
@@ -225,12 +226,16 @@ class StyleProfileGenerator {
     // Build profile prompt
     const toneDescriptors = template.tones[dominantTone] || template.tones.casual;
     const styleDescription = template.styles[styleType];
-    
-    const prompt = `Eres un usuario ${toneDescriptors.join(', ')} que ${styleDescription.toLowerCase()}. ` +
+
+    const prompt =
+      `Eres un usuario ${toneDescriptors.join(', ')} que ${styleDescription.toLowerCase()}. ` +
       `Usas emojis ${analysis.emojiUsage > analysis.totalItems * 0.3 ? 'frecuentemente' : 'ocasionalmente'}. ` +
       `Haces preguntas ${analysis.questionFrequency > analysis.totalItems * 0.2 ? 'a menudo' : 'raramente'} ` +
       `y tiendes a ${analysis.exclamationFrequency > analysis.totalItems * 0.3 ? 'expresar entusiasmo' : 'mantener un tono neutro'}. ` +
-      `Tus palabras frecuentes incluyen: ${analysis.commonWords.slice(0, 5).map(w => w.word).join(', ')}. ` +
+      `Tus palabras frecuentes incluyen: ${analysis.commonWords
+        .slice(0, 5)
+        .map((w) => w.word)
+        .join(', ')}. ` +
       `DO: Mantén el tono ${dominantTone}, usa ejemplos concretos. ` +
       `DON'T: Cambies el registro, seas demasiado formal si eres casual o viceversa.`;
 
@@ -276,28 +281,35 @@ class StyleProfileGenerator {
       throw new Error('No content available for style profile generation');
     }
 
-    console.log(`📊 Analyzing ${allContent.length} items across ${Object.keys(sources).length} platforms`);
+    console.log(
+      `📊 Analyzing ${allContent.length} items across ${Object.keys(sources).length} platforms`
+    );
 
     // Detect languages
     const detectedLanguages = this.detectLanguages(allContent);
-    console.log(`🌍 Detected languages:`, detectedLanguages.map(l => `${l.lang} (${l.count} items)`));
+    console.log(
+      `🌍 Detected languages:`,
+      detectedLanguages.map((l) => `${l.lang} (${l.count} items)`)
+    );
 
     // Generate profile for each qualified language
     const profiles = [];
 
     for (const langInfo of detectedLanguages) {
       const analysis = this.analyzeLanguageContent(allContent, langInfo.lang);
-      
+
       if (analysis && analysis.totalItems >= 50) {
         const profile = this.generateLanguageProfile(analysis, langInfo.lang);
         profiles.push(profile);
-        
+
         console.log(`✨ Generated ${langInfo.lang} profile from ${analysis.totalItems} items`);
       }
     }
 
     if (profiles.length === 0) {
-      throw new Error('Insufficient content to generate style profile (minimum 50 items per language)');
+      throw new Error(
+        'Insufficient content to generate style profile (minimum 50 items per language)'
+      );
     }
 
     return {
@@ -314,7 +326,7 @@ class StyleProfileGenerator {
   getProfileStats(profiles) {
     const stats = {
       languageCount: profiles.length,
-      languages: profiles.map(p => p.lang),
+      languages: profiles.map((p) => p.lang),
       totalSources: 0,
       avgItemsPerLanguage: 0,
       createdAt: profiles[0]?.createdAt
@@ -323,9 +335,9 @@ class StyleProfileGenerator {
     let totalItems = 0;
     const allSources = new Set();
 
-    profiles.forEach(profile => {
+    profiles.forEach((profile) => {
       totalItems += profile.metadata.totalItems;
-      Object.keys(profile.sources).forEach(source => allSources.add(source));
+      Object.keys(profile.sources).forEach((source) => allSources.add(source));
     });
 
     stats.totalSources = allSources.size;

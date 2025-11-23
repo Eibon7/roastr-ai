@@ -1,10 +1,10 @@
 /**
  * Analytics Routes - Comprehensive Coverage Tests
  * Issue #501: Increase coverage from 49% to 65%+
- * 
+ *
  * Tests for main analytics endpoints:
  * - GET /config-performance
- * - GET /shield-effectiveness  
+ * - GET /shield-effectiveness
  * - GET /usage-trends
  * - GET /roastr-persona-insights
  */
@@ -13,7 +13,12 @@ const request = require('supertest');
 const express = require('express');
 
 // Mock data storage
-let mockOrganizationData = { id: 'org-123', owner_id: 'user-123', plan_id: 'pro', monthly_responses_limit: 1000 };
+let mockOrganizationData = {
+  id: 'org-123',
+  owner_id: 'user-123',
+  plan_id: 'pro',
+  monthly_responses_limit: 1000
+};
 let mockResponsesData = [];
 let mockShieldData = [];
 let mockMonthlyUsageData = [];
@@ -49,11 +54,11 @@ function createMockQueryChain(table, finalData) {
       }
       return Promise.resolve({ data: null, error: null });
     }),
-    then: function(resolve, reject) {
+    then: function (resolve, reject) {
       return Promise.resolve({ data: finalData || [], error: null }).then(resolve, reject);
     }
   };
-  
+
   Object.defineProperty(chain, Symbol.toStringTag, { value: 'Promise' });
   return chain;
 }
@@ -61,7 +66,7 @@ function createMockQueryChain(table, finalData) {
 const mockSupabaseServiceClient = {
   from: jest.fn((table) => {
     let finalData = [];
-    
+
     if (table === 'organizations') {
       return {
         select: jest.fn(() => createMockQueryChain(table, null))
@@ -77,7 +82,7 @@ const mockSupabaseServiceClient = {
         select: jest.fn(() => createMockQueryChain(table, null))
       };
     }
-    
+
     return {
       select: jest.fn((columns) => {
         if (columns && columns.includes('comments!inner')) {
@@ -122,24 +127,29 @@ describe('Analytics Routes - Comprehensive', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Clear analytics cache before each test
     const analyticsModule = require('../../../src/routes/analytics');
     if (analyticsModule && analyticsModule.__cache) {
       analyticsModule.__cache.clear();
     }
-    
+
     app = express();
     app.use(express.json());
     app.use('/api/analytics', analyticsRouter);
-    
-    mockOrganizationData = { id: 'org-123', owner_id: 'user-123', plan_id: 'pro', monthly_responses_limit: 1000 };
+
+    mockOrganizationData = {
+      id: 'org-123',
+      owner_id: 'user-123',
+      plan_id: 'pro',
+      monthly_responses_limit: 1000
+    };
     mockResponsesData = [];
     mockShieldData = [];
     mockMonthlyUsageData = [];
     mockUserBehaviorsData = [];
     mockPersonaData = null;
-    
+
     mockGetPlanLimits.mockResolvedValue({
       monthlyResponsesLimit: 1000,
       maxTimeRange: 90,
@@ -177,7 +187,7 @@ describe('Analytics Routes - Comprehensive', () => {
           created_at: new Date().toISOString(),
           comments: {
             platform: 'youtube',
-            toxicity_score: 0.60,
+            toxicity_score: 0.6,
             severity_level: 'low'
           }
         }
@@ -196,8 +206,7 @@ describe('Analytics Routes - Comprehensive', () => {
     it('should handle organization not found', async () => {
       mockOrganizationData = null;
 
-      const response = await request(app)
-        .get('/api/analytics/config-performance');
+      const response = await request(app).get('/api/analytics/config-performance');
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -241,8 +250,11 @@ describe('Analytics Routes - Comprehensive', () => {
               range: jest.fn(() => {
                 return {
                   eq: jest.fn(() => Promise.resolve({ data: mockResponsesData, error: null })),
-                  then: function(resolve, reject) {
-                    return Promise.resolve({ data: mockResponsesData, error: null }).then(resolve, reject);
+                  then: function (resolve, reject) {
+                    return Promise.resolve({ data: mockResponsesData, error: null }).then(
+                      resolve,
+                      reject
+                    );
                   }
                 };
               })
@@ -268,7 +280,7 @@ describe('Analytics Routes - Comprehensive', () => {
       const now = new Date();
       const lastWeek = new Date(now);
       lastWeek.setDate(now.getDate() - 7);
-      
+
       mockResponsesData = [
         {
           id: 'resp-1',
@@ -296,7 +308,7 @@ describe('Analytics Routes - Comprehensive', () => {
           created_at: lastWeek.toISOString(),
           comments: {
             platform: 'youtube',
-            toxicity_score: 0.60,
+            toxicity_score: 0.6,
             severity_level: 'low'
           }
         }
@@ -316,7 +328,7 @@ describe('Analytics Routes - Comprehensive', () => {
       const now = new Date();
       const lastMonth = new Date(now);
       lastMonth.setMonth(now.getMonth() - 1);
-      
+
       mockResponsesData = [
         {
           id: 'resp-1',
@@ -344,7 +356,7 @@ describe('Analytics Routes - Comprehensive', () => {
           created_at: lastMonth.toISOString(),
           comments: {
             platform: 'youtube',
-            toxicity_score: 0.60,
+            toxicity_score: 0.6,
             severity_level: 'low'
           }
         }
@@ -422,7 +434,9 @@ describe('Analytics Routes - Comprehensive', () => {
               eq: jest.fn(() => ({
                 gte: jest.fn(() => ({
                   order: jest.fn(() => ({
-                    limit: jest.fn(() => Promise.resolve({ data: mockUserBehaviorsData, error: null }))
+                    limit: jest.fn(() =>
+                      Promise.resolve({ data: mockUserBehaviorsData, error: null })
+                    )
                   }))
                 }))
               }))
@@ -444,7 +458,7 @@ describe('Analytics Routes - Comprehensive', () => {
 
     it('should handle organization not found', async () => {
       mockOrganizationData = null;
-      
+
       mockSupabaseServiceClient.from.mockImplementation((table) => {
         if (table === 'organizations') {
           return {
@@ -458,8 +472,7 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
-        .get('/api/analytics/shield-effectiveness');
+      const response = await request(app).get('/api/analytics/shield-effectiveness');
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Organization not found');
@@ -504,7 +517,9 @@ describe('Analytics Routes - Comprehensive', () => {
               eq: jest.fn(() => ({
                 order: jest.fn(() => ({
                   order: jest.fn(() => ({
-                    limit: jest.fn(() => Promise.resolve({ data: mockMonthlyUsageData, error: null }))
+                    limit: jest.fn(() =>
+                      Promise.resolve({ data: mockMonthlyUsageData, error: null })
+                    )
                   }))
                 }))
               }))
@@ -514,9 +529,7 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
-        .get('/api/analytics/usage-trends')
-        .query({ months: 6 });
+      const response = await request(app).get('/api/analytics/usage-trends').query({ months: 6 });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -561,7 +574,9 @@ describe('Analytics Routes - Comprehensive', () => {
               eq: jest.fn(() => ({
                 order: jest.fn(() => ({
                   order: jest.fn(() => ({
-                    limit: jest.fn(() => Promise.resolve({ data: mockMonthlyUsageData, error: null }))
+                    limit: jest.fn(() =>
+                      Promise.resolve({ data: mockMonthlyUsageData, error: null })
+                    )
                   }))
                 }))
               }))
@@ -571,8 +586,7 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
-        .get('/api/analytics/usage-trends');
+      const response = await request(app).get('/api/analytics/usage-trends');
 
       expect(response.status).toBe(200);
       expect(response.body.data.trends.growth_rate).toBe('20.0');
@@ -635,7 +649,9 @@ describe('Analytics Routes - Comprehensive', () => {
                 gte: jest.fn(() => ({
                   not: jest.fn(() => ({
                     order: jest.fn(() => ({
-                      range: jest.fn(() => Promise.resolve({ data: mockResponsesData, error: null }))
+                      range: jest.fn(() =>
+                        Promise.resolve({ data: mockResponsesData, error: null })
+                      )
                     }))
                   }))
                 }))
@@ -748,9 +764,7 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      await request(app)
-        .get('/api/analytics/roastr-persona-insights')
-        .query({ days: 30 });
+      await request(app).get('/api/analytics/roastr-persona-insights').query({ days: 30 });
 
       jest.clearAllMocks();
 
@@ -769,10 +783,12 @@ describe('Analytics Routes - Comprehensive', () => {
           return {
             select: jest.fn(() => ({
               eq: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({ 
-                  data: mockOrganizationData,
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: mockOrganizationData,
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -782,10 +798,12 @@ describe('Analytics Routes - Comprehensive', () => {
               eq: jest.fn(() => ({
                 gte: jest.fn(() => ({
                   order: jest.fn(() => ({
-                    range: jest.fn(() => Promise.resolve({ 
-                      data: null,
-                      error: new Error('Database connection failed')
-                    }))
+                    range: jest.fn(() =>
+                      Promise.resolve({
+                        data: null,
+                        error: new Error('Database connection failed')
+                      })
+                    )
                   }))
                 }))
               }))
@@ -795,8 +813,7 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
-        .get('/api/analytics/config-performance');
+      const response = await request(app).get('/api/analytics/config-performance');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -855,11 +872,11 @@ describe('Analytics Routes - Comprehensive', () => {
     });
 
     it('should handle invalid planId in getPlanLimits', async () => {
-      mockOrganizationData = { 
-        id: 'org-123', 
-        owner_id: 'user-123', 
+      mockOrganizationData = {
+        id: 'org-123',
+        owner_id: 'user-123',
         plan_id: null,
-        monthly_responses_limit: 1000 
+        monthly_responses_limit: 1000
       };
 
       mockPersonaData = {
@@ -1073,11 +1090,11 @@ describe('Analytics Routes - Comprehensive', () => {
 
     it('should handle validatePlanId with empty string', async () => {
       // Test validatePlanId edge case (line 97)
-      mockOrganizationData = { 
-        id: 'org-123', 
-        owner_id: 'user-123', 
+      mockOrganizationData = {
+        id: 'org-123',
+        owner_id: 'user-123',
         plan_id: '',
-        monthly_responses_limit: 1000 
+        monthly_responses_limit: 1000
       };
 
       mockPersonaData = {
@@ -1146,10 +1163,12 @@ describe('Analytics Routes - Comprehensive', () => {
               eq: jest.fn(() => ({
                 order: jest.fn(() => ({
                   order: jest.fn(() => ({
-                    limit: jest.fn(() => Promise.resolve({ 
-                      data: null,
-                      error: new Error('Database error')
-                    }))
+                    limit: jest.fn(() =>
+                      Promise.resolve({
+                        data: null,
+                        error: new Error('Database error')
+                      })
+                    )
                   }))
                 }))
               }))
@@ -1159,8 +1178,7 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
-        .get('/api/analytics/usage-trends');
+      const response = await request(app).get('/api/analytics/usage-trends');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -1181,8 +1199,7 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
-        .get('/api/analytics/usage-trends');
+      const response = await request(app).get('/api/analytics/usage-trends');
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Organization not found');
@@ -1206,10 +1223,12 @@ describe('Analytics Routes - Comprehensive', () => {
                 eq: jest.fn(() => ({
                   gte: jest.fn(() => ({
                     order: jest.fn(() => ({
-                      limit: jest.fn(() => Promise.resolve({ 
-                        data: null,
-                        error: new Error('Database error')
-                      }))
+                      limit: jest.fn(() =>
+                        Promise.resolve({
+                          data: null,
+                          error: new Error('Database error')
+                        })
+                      )
                     }))
                   }))
                 }))
@@ -1220,8 +1239,7 @@ describe('Analytics Routes - Comprehensive', () => {
         return { select: jest.fn(() => createMockQueryChain(table, [])) };
       });
 
-      const response = await request(app)
-        .get('/api/analytics/shield-effectiveness');
+      const response = await request(app).get('/api/analytics/shield-effectiveness');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -1235,7 +1253,7 @@ describe('Analytics Routes - Comprehensive', () => {
       const app2 = express();
       app2.use(express.json());
       app2.use('/api/analytics', analyticsRouter2);
-      
+
       mockSupabaseServiceClient.from.mockImplementation((table) => {
         if (table === 'organizations') {
           return {
@@ -1275,16 +1293,18 @@ describe('Analytics Routes - Comprehensive', () => {
       const app2 = express();
       app2.use(express.json());
       app2.use('/api/analytics', analyticsRouter2);
-      
+
       mockSupabaseServiceClient.from.mockImplementation((table) => {
         if (table === 'organizations') {
           return {
             select: jest.fn(() => ({
               eq: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({ 
-                  data: null, 
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: null,
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -1308,7 +1328,7 @@ describe('Analytics Routes - Comprehensive', () => {
       const app2 = express();
       app2.use(express.json());
       app2.use('/api/analytics', analyticsRouter2);
-      
+
       mockPersonaData = {
         id: 'user-123',
         lo_que_me_define_encrypted: 'encrypted_data'
@@ -1338,10 +1358,12 @@ describe('Analytics Routes - Comprehensive', () => {
                 gte: jest.fn(() => ({
                   not: jest.fn(() => ({
                     order: jest.fn(() => ({
-                      range: jest.fn(() => Promise.resolve({ 
-                        data: null,
-                        error: new Error('Database error')
-                      }))
+                      range: jest.fn(() =>
+                        Promise.resolve({
+                          data: null,
+                          error: new Error('Database error')
+                        })
+                      )
                     }))
                   }))
                 }))
@@ -1408,7 +1430,9 @@ describe('Analytics Routes - Comprehensive', () => {
                 gte: jest.fn(() => ({
                   not: jest.fn(() => ({
                     order: jest.fn(() => ({
-                      range: jest.fn(() => Promise.resolve({ data: mockResponsesData, error: null }))
+                      range: jest.fn(() =>
+                        Promise.resolve({ data: mockResponsesData, error: null })
+                      )
                     }))
                   }))
                 }))
@@ -1429,4 +1453,3 @@ describe('Analytics Routes - Comprehensive', () => {
     });
   });
 });
-

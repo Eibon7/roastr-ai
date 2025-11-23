@@ -68,10 +68,10 @@ jobs:
           fi
 
       - name: Commit telemetry data
-        if: github.event_name != 'pull_request'  # M1 Fix: Skip on PR events
+        if: github.event_name != 'pull_request' # M1 Fix: Skip on PR events
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: "chore(telemetry): Daily GDD metrics snapshot [skip ci]"
+          commit_message: 'chore(telemetry): Daily GDD metrics snapshot [skip ci]'
           file_pattern: |
             telemetry/snapshots/gdd-metrics-history.json
             telemetry/reports/*.md
@@ -81,9 +81,9 @@ jobs:
             docs/drift-report.md
             docs/system-health.md
             docs/system-validation.md
-          commit_user_name: "gdd-telemetry-bot"
-          commit_user_email: "bot@gdd-telemetry.local"
-          commit_author: "GDD Telemetry Bot <bot@gdd-telemetry.local>"
+          commit_user_name: 'gdd-telemetry-bot'
+          commit_user_email: 'bot@gdd-telemetry.local'
+          commit_author: 'GDD Telemetry Bot <bot@gdd-telemetry.local>'
           skip_dirty_check: false
           skip_fetch: false
           skip_checkout: false

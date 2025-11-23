@@ -17,12 +17,14 @@ These tests are for Issue #149 (tolerance field feature) which is **NOT related 
 ## Progress Made
 
 ### ✅ Fixed (10 tests):
+
 - GET: 2/3 tests (both fields, missing data)
 - POST: 4/6 tests (validation tests)
 - DELETE: 1/4 tests (validation test)
 - Security: 3/3 tests ✅
 
 ### ❌ Remaining (9 tests):
+
 - GET: 1 test (decryption errors)
 - POST: 2 tests (save/clear operations - need RPC mock)
 - POST: 1 test (simultaneous save - need RPC mock)
@@ -32,6 +34,7 @@ These tests are for Issue #149 (tolerance field feature) which is **NOT related 
 ## To Complete
 
 1. **Mock `.rpc()` calls**:
+
    ```javascript
    mockSupabaseServiceClient.rpc = jest.fn().mockResolvedValue({
      data: { success: true, updated_fields: {...} },
@@ -40,6 +43,7 @@ These tests are for Issue #149 (tolerance field feature) which is **NOT related 
    ```
 
 2. **Mock `generateEmbeddingsForPersona`**:
+
    ```javascript
    jest.mock('../../../src/services/embeddingsService');
    ```

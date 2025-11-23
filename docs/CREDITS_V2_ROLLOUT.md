@@ -19,6 +19,7 @@ ENABLE_CREDITS_V2=false # Use legacy system (default)
 ### Rollout Phases
 
 #### Phase 1: Development & Testing (Week 1)
+
 - **Target**: Development and staging environments only
 - **Flag Status**: `ENABLE_CREDITS_V2=true` in dev/staging
 - **Validation**:
@@ -28,6 +29,7 @@ ENABLE_CREDITS_V2=false # Use legacy system (default)
   - Test frontend components in dashboard
 
 #### Phase 2: Internal Beta (Week 2)
+
 - **Target**: Internal team accounts (5-10 users)
 - **Flag Status**: `ENABLE_CREDITS_V2=true` for beta users only
 - **Implementation**: User-specific feature flag override
@@ -38,6 +40,7 @@ ENABLE_CREDITS_V2=false # Use legacy system (default)
   - Validate Stripe webhook integration
 
 #### Phase 3: Limited Production (Week 3)
+
 - **Target**: 10% of production users (new signups first)
 - **Flag Status**: Gradual rollout with monitoring
 - **Implementation**: Percentage-based rollout
@@ -47,6 +50,7 @@ ENABLE_CREDITS_V2=false # Use legacy system (default)
   - Check billing integration stability
 
 #### Phase 4: Full Rollout (Week 4)
+
 - **Target**: All production users
 - **Flag Status**: `ENABLE_CREDITS_V2=true` globally
 - **Implementation**: Complete migration
@@ -58,24 +62,28 @@ ENABLE_CREDITS_V2=false # Use legacy system (default)
 ## Pre-Rollout Checklist
 
 ### Database Preparation
+
 - [ ] Apply migration: `database/migrations/004_credits_v2_dual_system.sql`
 - [ ] Run backfill script: `node scripts/backfill_credits_v2.js`
 - [ ] Verify database functions: `get_or_create_active_period`, `consume_credits`
 - [ ] Test database performance with expected load
 
 ### Code Deployment
+
 - [ ] Deploy backend services with Credits v2 code
 - [ ] Deploy frontend with CreditsCard component
 - [ ] Verify API routes: `/api/user/credits/*`
 - [ ] Test middleware integration: `requireAnalysisCredits`, `requireRoastCredits`
 
 ### Monitoring Setup
+
 - [ ] Configure credit consumption alerts
 - [ ] Set up billing cycle monitoring
 - [ ] Monitor Stripe webhook processing
 - [ ] Track API error rates and response times
 
 ### Testing Validation
+
 - [ ] All unit tests passing: `npm test`
 - [ ] Integration tests verified: `npm run test:integration`
 - [ ] End-to-end scenarios tested
@@ -84,6 +92,7 @@ ENABLE_CREDITS_V2=false # Use legacy system (default)
 ## Rollout Commands
 
 ### Enable Credits v2 (Production)
+
 ```bash
 # Set environment variable
 export ENABLE_CREDITS_V2=true
@@ -97,6 +106,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 ```
 
 ### Rollback to Legacy System
+
 ```bash
 # Disable Credits v2
 export ENABLE_CREDITS_V2=false
@@ -143,17 +153,17 @@ alerts:
     threshold: 1%
     window: 5m
     severity: warning
-    
+
   api_error_rate:
     threshold: 0.5%
     window: 1m
     severity: critical
-    
+
   billing_webhook_failure:
     threshold: 1%
     window: 10m
     severity: critical
-    
+
   database_query_slow:
     threshold: 500ms
     window: 1m
@@ -165,6 +175,7 @@ alerts:
 ### Common Issues
 
 #### Credits Not Resetting on Billing Cycle
+
 ```bash
 # Check Stripe webhook logs
 grep "Credits reset for" /var/log/roastr/api.log
@@ -176,6 +187,7 @@ curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
 ```
 
 #### Credit Consumption Failures
+
 ```bash
 # Check database function status
 psql -c "SELECT consume_credits('user_id', 'analysis', 1, 'test', null, '{}');"
@@ -185,6 +197,7 @@ psql -c "SELECT * FROM usage_counters WHERE user_id = 'user_id' AND period_end >
 ```
 
 #### Frontend Not Showing Credits
+
 ```bash
 # Verify API endpoint
 curl -H "Authorization: Bearer $TOKEN" \
@@ -197,12 +210,14 @@ curl https://api.roastr.ai/api/credits/config
 ### Emergency Procedures
 
 #### Immediate Rollback
+
 1. Set `ENABLE_CREDITS_V2=false`
 2. Restart all services
 3. Verify legacy system functioning
 4. Investigate issues in staging
 
 #### Data Corruption Recovery
+
 1. Stop credit consumption
 2. Restore from backup if needed
 3. Re-run backfill script
@@ -233,18 +248,21 @@ curl https://api.roastr.ai/api/credits/config
 ## Post-Rollout
 
 ### Week 1 After Full Rollout
+
 - [ ] Monitor all metrics daily
 - [ ] Review support tickets for credit-related issues
 - [ ] Validate billing accuracy for first full cycle
 - [ ] Performance optimization if needed
 
 ### Month 1 After Full Rollout
+
 - [ ] Analyze credit consumption patterns
 - [ ] Optimize database queries if needed
 - [ ] Review and update plan limits if necessary
 - [ ] Plan legacy system deprecation
 
 ### Legacy System Deprecation (Month 3)
+
 - [ ] Remove legacy credit code
 - [ ] Clean up old database tables
 - [ ] Update documentation
@@ -253,12 +271,14 @@ curl https://api.roastr.ai/api/credits/config
 ## Support Documentation
 
 ### User-Facing Changes
+
 - New credit types: Analysis and Roast credits
 - Separate limits for different operations
 - Real-time credit tracking in dashboard
 - Improved upgrade prompts
 
 ### Admin Tools
+
 - Credit status monitoring
 - Manual credit adjustments
 - Billing cycle management
@@ -267,7 +287,7 @@ curl https://api.roastr.ai/api/credits/config
 ## Contact Information
 
 - **Technical Lead**: Development Team
-- **Product Owner**: Product Team  
+- **Product Owner**: Product Team
 - **DevOps**: Infrastructure Team
 - **Support**: Customer Success Team
 

@@ -28,9 +28,11 @@ description: Breve descripción que determina cuándo se activará
 # Nombre de la Skill
 
 ## Instrucciones
+
 [Guía clara paso a paso para Claude]
 
 ## Ejemplos
+
 [Ejemplos concretos de uso]
 ```
 
@@ -45,6 +47,7 @@ description: Breve descripción que determina cuándo se activará
 **Cuándo se activa**: Al iniciar desarrollo de cualquier issue que requiera contexto arquitectónico.
 
 **Uso**:
+
 ```bash
 /gdd 680  # Carga contexto para issue #680
 ```
@@ -64,6 +67,7 @@ description: Breve descripción que determina cuándo se activará
 **Cuándo se activa**: Post-merge automático o manual tras implementación.
 
 **Uso**:
+
 ```bash
 # Automático: workflow post-merge-doc-sync.yml
 # Manual: "Sync nodes to spec.md"
@@ -84,6 +88,7 @@ description: Breve descripción que determina cuándo se activará
 **Cuándo se activa**: Cuando necesites revisar código para asegurar calidad, seguridad y documentación.
 
 **Uso**:
+
 ```bash
 # Revisar el código de esta feature para validar calidad
 ```
@@ -95,8 +100,8 @@ Las skills se cargan automáticamente gracias a la configuración en `.claude/se
 ```json
 {
   "setting_sources": [
-    "project",  // Carga skills desde .claude/skills/
-    "user"     // Carga skills desde ~/.claude/skills/
+    "project", // Carga skills desde .claude/skills/
+    "user" // Carga skills desde ~/.claude/skills/
   ]
 }
 ```
@@ -133,4 +138,3 @@ EOF
 - [Documentación oficial de Claude Skills](https://docs.claude.com/es/docs/claude-code/skills)
 - `docs/QUALITY-STANDARDS.md` - Estándares de calidad del proyecto
 - `CLAUDE.md` - Configuración general de Claude
-

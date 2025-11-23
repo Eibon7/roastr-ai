@@ -26,11 +26,7 @@ const { isAdminMiddleware } = require('../middleware/isAdmin');
  *
  * Response: { cases: GuardianCase[], total: number, filters: object }
  */
-router.get(
-  '/cases',
-  isAdminMiddleware,
-  guardianController.listCasesController
-);
+router.get('/cases', isAdminMiddleware, guardianController.listCasesController);
 
 /**
  * POST /api/guardian/cases/:caseId/approve
@@ -46,11 +42,7 @@ router.get(
  *
  * Response: { case_id, action, approved_by, approved_at, message }
  */
-router.post(
-  '/cases/:caseId/approve',
-  isAdminMiddleware,
-  guardianController.approveCaseController
-);
+router.post('/cases/:caseId/approve', isAdminMiddleware, guardianController.approveCaseController);
 
 /**
  * POST /api/guardian/cases/:caseId/deny
@@ -67,10 +59,6 @@ router.post(
  *
  * Response: { case_id, action, denied_by, denied_at, denial_reason, message }
  */
-router.post(
-  '/cases/:caseId/deny',
-  isAdminMiddleware,
-  guardianController.denyCaseController
-);
+router.post('/cases/:caseId/deny', isAdminMiddleware, guardianController.denyCaseController);
 
 module.exports = router;

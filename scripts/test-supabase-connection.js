@@ -45,10 +45,7 @@ async function testConnection() {
   // Test 2: Check users table structure
   console.log('\n🔍 Checking users table structure...');
   try {
-    const { data, error } = await client
-      .from('users')
-      .select('*')
-      .limit(1);
+    const { data, error } = await client.from('users').select('*').limit(1);
 
     if (error) {
       console.log(`❌ Cannot query users table: ${error.message}`);
@@ -97,10 +94,7 @@ async function testConnection() {
   // Test 3: Check organizations table
   console.log('\n🔍 Checking organizations table structure...');
   try {
-    const { data, error } = await client
-      .from('organizations')
-      .select('*')
-      .limit(1);
+    const { data, error } = await client.from('organizations').select('*').limit(1);
 
     if (error) {
       console.log(`❌ Cannot query organizations: ${error.message}`);
@@ -121,7 +115,7 @@ testConnection()
     console.log('\n✅ Connection test complete');
     process.exit(0);
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('\n❌ Connection test failed:', err);
     process.exit(1);
   });

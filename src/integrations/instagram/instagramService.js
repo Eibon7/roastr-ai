@@ -2,7 +2,7 @@ const MultiTenantIntegration = require('../base/MultiTenantIntegration');
 
 /**
  * Instagram Integration Service
- * 
+ *
  * Handles comment fetching and response generation for Instagram posts.
  * Uses Instagram Basic Display API and Instagram Graph API for business accounts.
  */
@@ -14,7 +14,7 @@ class InstagramService extends MultiTenantIntegration {
       supportModeration: true, // Limited moderation capabilities (hide/delete)
       ...options
     });
-    
+
     // Instagram API configuration
     this.accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
     this.clientId = process.env.INSTAGRAM_CLIENT_ID;
@@ -22,21 +22,21 @@ class InstagramService extends MultiTenantIntegration {
     this.graphApiVersion = 'v18.0';
     this.baseUrl = `https://graph.instagram.com/${this.graphApiVersion}`;
   }
-  
+
   /**
    * Platform-specific setup
    */
   async setupPlatformSpecific() {
     this.log('info', 'Setting up Instagram integration');
-    
+
     if (!this.accessToken) {
       throw new Error('Instagram access token not configured');
     }
-    
+
     // Test API connection
     await this.testConnection();
   }
-  
+
   /**
    * Test Instagram API connection
    */
@@ -45,18 +45,18 @@ class InstagramService extends MultiTenantIntegration {
       const response = await this.makeApiRequest(`/me`, {
         fields: 'id,username'
       });
-      
+
       this.log('info', 'Instagram API connection successful', {
         userId: response.id,
         username: response.username
       });
-      
+
       return response;
     } catch (error) {
       throw new Error(`Instagram API connection failed: ${error.message}`);
     }
   }
-  
+
   /**
    * Validate Instagram configuration
    */
@@ -64,32 +64,26 @@ class InstagramService extends MultiTenantIntegration {
     if (!this.enabled) {
       return false;
     }
-    
+
     if (!this.accessToken) {
       this.log('error', 'Instagram access token not configured');
       return false;
     }
-    
+
     return true;
   }
-  
+
   /**
    * Fetch comments from Instagram media
    */
   async fetchComments(params = {}) {
     await this.checkRateLimit();
-    
-    const {
-      mediaId,
-      userId = 'me',
-      maxResults = 25,
-      since = null,
-      before = null
-    } = params;
-    
+
+    const { mediaId, userId = 'me', maxResults = 25, since = null, before = null } = params;
+
     try {
       let mediaList = [];
-      
+
       if (mediaId) {
         // Fetch comments for specific media
         mediaList = [{ id: mediaId }];
@@ -97,9 +91,9 @@ class InstagramService extends MultiTenantIntegration {
         // Fetch recent media first
         mediaList = await this.getRecentMedia(userId, maxResults);
       }
-      
+
       const allComments = [];
-      
+
       for (const media of mediaList) {
         try {
           const comments = await this.getMediaComments(media.id, {
@@ -107,9 +101,8 @@ class InstagramService extends MultiTenantIntegration {
             since,
             before
           });
-          
+
           allComments.push(...comments);
-          
         } catch (error) {
           this.log('warn', 'Failed to fetch comments for media', {
             mediaId: media.id,
@@ -117,13 +110,12 @@ class InstagramService extends MultiTenantIntegration {
           });
         }
       }
-      
+
       return {
         comments: allComments,
         hasMore: allComments.length >= maxResults,
         nextToken: allComments.length > 0 ? allComments[allComments.length - 1].id : null
       };
-      
     } catch (error) {
       this.log('error', 'Failed to fetch Instagram comments', {
         error: error.message,
@@ -132,7 +124,7 @@ class InstagramService extends MultiTenantIntegration {
       throw error;
     }
   }
-  
+
   /**
    * Get recent media posts
    */
@@ -141,36 +133,38 @@ class InstagramService extends MultiTenantIntegration {
       fields: 'id,media_type,media_url,permalink,timestamp,caption',
       limit
     });
-    
+
     return response.data || [];
   }
-  
+
   /**
    * Get comments for specific media
    */
   async getMediaComments(mediaId, options = {}) {
     const { maxResults = 25, since, before } = options;
-    
+
     const params = {
       fields: 'id,text,timestamp,username,like_count,replies,parent_id',
       limit: maxResults
     };
-    
+
     if (since) {
       params.since = since;
     }
-    
+
     if (before) {
       params.until = before;
     }
-    
+
     const response = await this.makeApiRequest(`/${mediaId}/comments`, params);
-    
-    const comments = (response.data || []).map(comment => this.normalizeInstagramComment(comment, mediaId));
-    
+
+    const comments = (response.data || []).map((comment) =>
+      this.normalizeInstagramComment(comment, mediaId)
+    );
+
     return comments;
   }
-  
+
   /**
    * Normalize Instagram comment to standard format
    */
@@ -195,14 +189,16 @@ class InstagramService extends MultiTenantIntegration {
       language: 'unknown' // Instagram API doesn't provide language detection
     };
   }
-  
+
   /**
    * Instagram doesn't support automated comment posting via API
    */
   async postResponse(commentId, responseText, options = {}) {
-    throw new Error('Instagram does not support automated comment posting via API. Response will be stored for manual review.');
+    throw new Error(
+      'Instagram does not support automated comment posting via API. Response will be stored for manual review.'
+    );
   }
-  
+
   /**
    * Instagram has limited moderation capabilities via API
    */
@@ -210,35 +206,38 @@ class InstagramService extends MultiTenantIntegration {
     switch (action) {
       case 'hide_comment':
         return await this.hideComment(targetId);
-      
+
       case 'delete_comment':
         return await this.deleteComment(targetId);
-        
+
       default:
         throw new Error(`Instagram moderation action '${action}' not supported`);
     }
   }
-  
+
   /**
    * Hide a comment (Instagram Business accounts only)
    */
   async hideComment(commentId) {
     try {
       await this.checkRateLimit();
-      
-      const response = await this.makeApiRequest(`/${commentId}`, {
-        hide: true
-      }, 'POST');
-      
+
+      const response = await this.makeApiRequest(
+        `/${commentId}`,
+        {
+          hide: true
+        },
+        'POST'
+      );
+
       this.log('info', 'Comment hidden successfully', { commentId });
-      
+
       return {
         success: true,
         action: 'hide_comment',
         commentId,
         result: response
       };
-      
     } catch (error) {
       this.log('error', 'Failed to hide comment', {
         commentId,
@@ -247,24 +246,23 @@ class InstagramService extends MultiTenantIntegration {
       throw error;
     }
   }
-  
+
   /**
    * Delete a comment (only if posted by authenticated user)
    */
   async deleteComment(commentId) {
     try {
       await this.checkRateLimit();
-      
+
       await this.makeApiRequest(`/${commentId}`, {}, 'DELETE');
-      
+
       this.log('info', 'Comment deleted successfully', { commentId });
-      
+
       return {
         success: true,
         action: 'delete_comment',
         commentId
       };
-      
     } catch (error) {
       this.log('error', 'Failed to delete comment', {
         commentId,
@@ -273,25 +271,25 @@ class InstagramService extends MultiTenantIntegration {
       throw error;
     }
   }
-  
+
   /**
    * Make Instagram API request
    */
   async makeApiRequest(endpoint, params = {}, method = 'GET') {
     const url = new URL(`${this.baseUrl}${endpoint}`);
-    
+
     // Add access token to all requests
     params.access_token = this.accessToken;
-    
+
     // Add parameters to URL for GET requests
     if (method === 'GET') {
-      Object.keys(params).forEach(key => {
+      Object.keys(params).forEach((key) => {
         if (params[key] !== undefined && params[key] !== null) {
           url.searchParams.append(key, params[key]);
         }
       });
     }
-    
+
     const options = {
       method,
       headers: {
@@ -299,25 +297,25 @@ class InstagramService extends MultiTenantIntegration {
         'Content-Type': 'application/json'
       }
     };
-    
+
     // Add body for POST/PUT requests
     if (method !== 'GET' && method !== 'DELETE') {
       options.body = JSON.stringify(params);
     }
-    
+
     this.log('debug', 'Making Instagram API request', {
       method,
       endpoint,
       url: url.toString().replace(this.accessToken || '', 'HIDDEN')
     });
-    
+
     const response = await fetch(url.toString(), options);
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(`Instagram API error: ${data.error?.message || response.statusText}`);
     }
-    
+
     return data;
   }
 }

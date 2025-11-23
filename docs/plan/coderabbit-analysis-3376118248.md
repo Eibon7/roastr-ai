@@ -14,6 +14,7 @@
 ### Analysis Summary
 
 **Total Work Items**: 8 (2 P0, 3 P1, 3 P2)
+
 - **Critical (P0)**: 2 - Color contrast WCAG, Lighthouse audit
 - **High (P1)**: 3 - E2E tests 65% passing, semantic HTML, visual evidence
 - **Medium (P2)**: 3 - Backend API, WebSocket, docs outdated
@@ -29,35 +30,40 @@
 ### 🔴 Priority P0 - Critical Blockers (20 minutes)
 
 #### P0.1: Color Contrast Violations (WCAG 2.1 AA)
+
 **Category**: Accessibility / WCAG Compliance
 **Severity**: Critical (blocks AA compliance)
 **Impact**: Failing accessibility tests
 
 **Current Issue**:
+
 - Color contrast ratio: **2.55:1** (actual)
 - Required for WCAG 2.1 AA: **4.5:1** (minimum)
 - Affected elements: "Feature Flags", "User Search" nav items
 - Current color: `#5e5d5f` on `#1f1d20` background
 
 **Root Cause**:
+
 ```typescript
 // admin-dashboard/src/pages/GDDDashboard/LeftSidebar.tsx
 const DisabledNavItem = styled.div`
-  color: #5e5d5f;  // ❌ Only 2.55:1 contrast ratio
+  color: #5e5d5f; // ❌ Only 2.55:1 contrast ratio
   opacity: 0.6;
 `;
 ```
 
 **Required Fix**:
+
 ```typescript
 // admin-dashboard/src/pages/GDDDashboard/LeftSidebar.tsx
 const DisabledNavItem = styled.div`
-  color: #9e9ea0;  // ✅ Achieves 4.5:1 contrast ratio
+  color: #9e9ea0; // ✅ Achieves 4.5:1 contrast ratio
   opacity: 0.6;
 `;
 ```
 
 **Validation**:
+
 ```bash
 # Run accessibility test
 npx playwright test dashboard-accessibility.spec.ts
@@ -72,16 +78,19 @@ npx playwright test dashboard-accessibility.spec.ts
 ---
 
 #### P0.2: Lighthouse Accessibility Audit
+
 **Category**: Quality Assurance / Accessibility
 **Severity**: Critical (acceptance criteria)
 **Impact**: Unknown accessibility score
 
 **Current Issue**:
+
 - Lighthouse audit never run
 - Target: >90 accessibility score
 - Required for Phase 11 acceptance
 
 **Required Action**:
+
 ```bash
 # Install Lighthouse CLI
 npm install -g lighthouse
@@ -98,6 +107,7 @@ npx lighthouse http://localhost:3001/dashboard \
 ```
 
 **Success Criteria**:
+
 - Accessibility score >= 90
 - No critical violations
 - Report saved to docs/test-evidence/
@@ -110,11 +120,13 @@ npx lighthouse http://localhost:3001/dashboard \
 ### 🟡 Priority P1 - High Priority (25 minutes)
 
 #### P1.1: Semantic HTML - Missing <main> Element
+
 **Category**: Accessibility / Semantic HTML
 **Severity**: High (reduces a11y score)
 **Impact**: Screen readers can't identify main content
 
 **Current Issue**:
+
 ```typescript
 // admin-dashboard/src/pages/GDDDashboard/CommandCenterLayout.tsx
 return (
@@ -127,6 +139,7 @@ return (
 ```
 
 **Required Fix**:
+
 ```typescript
 // admin-dashboard/src/pages/GDDDashboard/CommandCenterLayout.tsx
 return (
@@ -141,6 +154,7 @@ return (
 ```
 
 **Validation**:
+
 ```bash
 # Run accessibility test
 npx playwright test dashboard-accessibility.spec.ts -g "semantic HTML"
@@ -154,6 +168,7 @@ npx playwright test dashboard-accessibility.spec.ts -g "semantic HTML"
 ---
 
 #### P1.2: E2E Test Selector Refactoring (6 failing tests)
+
 **Category**: Testing / Test Quality
 **Severity**: High (35% failure rate)
 **Impact**: Tests don't match actual implementation
@@ -185,6 +200,7 @@ npx playwright test dashboard-accessibility.spec.ts -g "semantic HTML"
    - Fix: Update to `[class*=\"Panel\"]` (capitalized)
 
 **Strategy**:
+
 1. Add `data-testid` attributes to all tested components
 2. Update test selectors to use `data-testid` (most reliable)
 3. Add fallback selectors for graceful degradation
@@ -195,11 +211,13 @@ npx playwright test dashboard-accessibility.spec.ts -g "semantic HTML"
 ---
 
 #### P1.3: Visual Evidence Capture
+
 **Category**: Documentation / Quality Assurance
 **Severity**: High (acceptance criteria)
 **Impact**: No proof of visual implementation
 
 **Required Actions**:
+
 ```bash
 # Capture screenshots using Playwright
 npx playwright test --headed --project=chromium
@@ -227,16 +245,19 @@ npx playwright test --headed --project=chromium
 ### 🔵 Priority P2 - Medium Priority (Deferred)
 
 #### P2.1: Backend API Implementation
+
 **Category**: Architecture / Backend
 **Severity**: Medium (feature incomplete)
 **Impact**: Dashboard uses static JSON files
 
 **Missing Files**:
+
 - `src/api/admin/gdd.routes.js` - Express routes
 - `src/services/gddDataService.js` - Service layer
 - `src/api/admin/gdd.socket.js` - WebSocket namespace
 
 **Decision**: **DEFER to Phase 12**
+
 - Current implementation works with static files
 - No blocking impact on Phase 11 acceptance
 - Requires architectural planning
@@ -246,6 +267,7 @@ npx playwright test --headed --project=chromium
 ---
 
 #### P2.2: WebSocket Real-Time Updates
+
 **Category**: Architecture / Real-Time
 **Severity**: Medium (feature incomplete)
 **Impact**: Using polling instead of WebSocket
@@ -254,6 +276,7 @@ npx playwright test --headed --project=chromium
 **Desired**: WebSocket `/admin/gdd` namespace
 
 **Decision**: **DEFER to Phase 12**
+
 - Polling works for current MVP
 - WebSocket requires backend API first
 
@@ -262,11 +285,13 @@ npx playwright test --headed --project=chromium
 ---
 
 #### P2.3: Update Progress Documentation
+
 **Category**: Documentation
 **Severity**: Medium (docs outdated)
 **Impact**: Progress doc shows 35% but actually 90%+
 
 **Required Updates**:
+
 - Mark components as 100% complete
 - Update E2E test status from 65% → 100%
 - Mark accessibility as complete (after fixes)
@@ -285,12 +310,14 @@ npx playwright test --headed --project=chromium
 **Primary Nodes**: None (tactical fixes, no architectural changes)
 
 **Related Documentation**:
+
 - `docs/phase-11-progress.md` - Progress tracking
 - `docs/test-evidence/phase-11/` - Test evidence storage
 
 ### spec.md Impact
 
 **No updates required** - All changes are tactical:
+
 - UI color adjustments (accessibility)
 - Test selector refinements
 - Documentation updates
@@ -302,24 +329,32 @@ npx playwright test --headed --project=chromium
 ## Subagentes a Usar
 
 ### Front-end Dev Agent (Inline)
+
 **Tasks**:
+
 - Fix color contrast (P0.1)
 - Add semantic `<main>` element (P1.1)
 
 ### Test Engineer Agent
+
 **Tasks**:
+
 - Run Lighthouse audit (P0.2)
 - Refactor test selectors (P1.2)
 - Capture visual evidence (P1.3)
 - Validate 100% test passing
 
 ### Documentation Agent (Inline)
+
 **Tasks**:
+
 - Update phase-11-progress.md (P2.3)
 - Create test evidence summary
 
 ### Orchestrator (Inline)
+
 **Tasks**:
+
 - Coordinate all fixes
 - Validate end-to-end
 - Commit and push
@@ -381,15 +416,17 @@ npx playwright test --headed --project=chromium
 **Changes**:
 
 1. **Color Contrast** (15 min):
+
 ```typescript
 // admin-dashboard/src/pages/GDDDashboard/LeftSidebar.tsx
 const DisabledNavItem = styled.div`
-  color: #9e9ea0;  // Changed from #5e5d5f
+  color: #9e9ea0; // Changed from #5e5d5f
   opacity: 0.6;
 `;
 ```
 
 2. **Lighthouse Audit** (5 min):
+
 ```bash
 npx lighthouse http://localhost:3001/dashboard \
   --only-categories=accessibility \
@@ -398,6 +435,7 @@ npx lighthouse http://localhost:3001/dashboard \
 ```
 
 **Validation**:
+
 ```bash
 npx playwright test dashboard-accessibility.spec.ts
 # Expected: 3/3 passing
@@ -406,6 +444,7 @@ npx playwright test dashboard-accessibility.spec.ts
 **Agent**: Front-end Dev Agent + Test Engineer Agent (inline)
 
 **Commit Message**:
+
 ```text
 fix(a11y): Fix color contrast and add Lighthouse audit - Phase 11 P0
 
@@ -431,6 +470,7 @@ Addresses CodeRabbit Analysis #3376118248 (P0.1, P0.2)
 **Scope**: Semantic HTML + Test Selector Refactoring + Visual Evidence
 
 **Part A: Semantic HTML** (5 min):
+
 ```typescript
 // admin-dashboard/src/pages/GDDDashboard/CommandCenterLayout.tsx
 <main>
@@ -441,6 +481,7 @@ Addresses CodeRabbit Analysis #3376118248 (P0.1, P0.2)
 **Part B: Test Selectors** (45 min):
 
 1. **Add data-testid attributes** to components (20 min):
+
 ```typescript
 // Example: HealthPanel.tsx
 <HealthCard data-testid="overview-panel">
@@ -450,6 +491,7 @@ Addresses CodeRabbit Analysis #3376118248 (P0.1, P0.2)
 ```
 
 2. **Update test selectors** (25 min):
+
 ```typescript
 // dashboard-navigation.spec.ts
 const overviewSection = page.locator('[data-testid="overview-panel"]');
@@ -457,6 +499,7 @@ const metricCards = page.locator('[data-testid*="-card"]');
 ```
 
 **Part C: Visual Evidence** (20 min):
+
 ```bash
 # Capture screenshots
 npx playwright test --headed --project=chromium
@@ -464,6 +507,7 @@ npx playwright test --headed --project=chromium
 ```
 
 **Validation**:
+
 ```bash
 npx playwright test
 # Expected: 17/17 passing (100%)
@@ -472,6 +516,7 @@ npx playwright test
 **Agent**: Test Engineer Agent
 
 **Commit Message**:
+
 ```text
 fix(tests): Refactor E2E selectors and add visual evidence - Phase 11 P1
 
@@ -499,18 +544,21 @@ Addresses CodeRabbit Analysis #3376118248 (P1.1, P1.2, P1.3)
 **Scope**: Update progress documentation
 
 **Changes**:
+
 ```markdown
 # docs/phase-11-progress.md
 
 **Progress:** 95% → 100% ✅
 
 ### Updated Status:
+
 - ✅ E2E Tests: 17/17 passing (100%)
 - ✅ Lighthouse Score: [SCORE]/100
 - ✅ Accessibility: WCAG 2.1 AA compliant
 - ✅ Visual Evidence: 10+ screenshots captured
 
 ### Deferred to Phase 12:
+
 - [ ] Backend API implementation
 - [ ] WebSocket real-time updates
 ```
@@ -518,6 +566,7 @@ Addresses CodeRabbit Analysis #3376118248 (P1.1, P1.2, P1.3)
 **Agent**: Documentation Agent (inline)
 
 **Commit Message**:
+
 ```text
 docs: Update Phase 11 progress to 100% complete
 
@@ -542,6 +591,7 @@ Addresses CodeRabbit Analysis #3376118248 (P2.3)
 ## Decisiones Estratégicas
 
 ### ✅ Apply Immediately (8 items)
+
 - **P0.1**: Fix color contrast (15 min)
 - **P0.2**: Run Lighthouse audit (5 min)
 - **P1.1**: Add semantic `<main>` (5 min)
@@ -552,6 +602,7 @@ Addresses CodeRabbit Analysis #3376118248 (P2.3)
 **Total Time**: ~105 minutes (~1.75 hours)
 
 ### ⏸️ Defer to Phase 12 (2 items)
+
 - **P2.1**: Backend API implementation
   - **Justification**: Not blocking for Phase 11 MVP, requires architectural planning
   - **Action**: Create Issue #XXX for Phase 12
@@ -626,12 +677,14 @@ Addresses CodeRabbit Analysis #3376118248 (P2.3)
 ## Risk Assessment
 
 ### Riesgos Bajos
+
 - Color change: Simple CSS update
 - Semantic HTML: Non-breaking wrapper addition
 - Test selectors: Improves reliability
 - Screenshots: No code impact
 
 ### Mitigaciones
+
 - Run tests after each phase
 - Verify Lighthouse score meets target
 - Ensure no visual regressions

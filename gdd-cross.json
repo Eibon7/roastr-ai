@@ -113,12 +113,7 @@
     "violations": [
       {
         "node": "analytics",
-        "declared": [
-          "multi-tenant",
-          "cost-control",
-          "roast",
-          "shield"
-        ],
+        "declared": ["multi-tenant", "cost-control", "roast", "shield"],
         "detected": [],
         "missing": [],
         "phantom": [],
@@ -126,23 +121,15 @@
       },
       {
         "node": "cost-control",
-        "declared": [
-          "multi-tenant",
-          "plan-features"
-        ],
+        "declared": ["multi-tenant", "plan-features"],
         "detected": [],
-        "missing": [
-          "multi-tenant",
-          "plan-features"
-        ],
+        "missing": ["multi-tenant", "plan-features"],
         "phantom": [],
         "reason": "dependency_mismatch"
       },
       {
         "node": "persona",
-        "declared": [
-          "plan-features"
-        ],
+        "declared": ["plan-features"],
         "detected": [],
         "missing": [],
         "phantom": [],
@@ -150,9 +137,7 @@
       },
       {
         "node": "plan-features",
-        "declared": [
-          "multi-tenant"
-        ],
+        "declared": ["multi-tenant"],
         "detected": [],
         "missing": [],
         "phantom": [],
@@ -160,9 +145,7 @@
       },
       {
         "node": "platform-constraints",
-        "declared": [
-          "social-platforms"
-        ],
+        "declared": ["social-platforms"],
         "detected": [],
         "missing": [],
         "phantom": [],
@@ -170,47 +153,23 @@
       },
       {
         "node": "queue-system",
-        "declared": [
-          "multi-tenant"
-        ],
+        "declared": ["multi-tenant"],
         "detected": [],
-        "missing": [
-          "multi-tenant"
-        ],
-        "phantom": [
-          "queue-system"
-        ],
+        "missing": ["multi-tenant"],
+        "phantom": ["queue-system"],
         "reason": "dependency_mismatch"
       },
       {
         "node": "roast",
-        "declared": [
-          "persona",
-          "tone",
-          "platform-constraints",
-          "shield",
-          "cost-control"
-        ],
+        "declared": ["persona", "tone", "platform-constraints", "shield", "cost-control"],
         "detected": [],
-        "missing": [
-          "persona",
-          "tone",
-          "platform-constraints",
-          "shield",
-          "cost-control"
-        ],
-        "phantom": [
-          "roast"
-        ],
+        "missing": ["persona", "tone", "platform-constraints", "shield", "cost-control"],
+        "phantom": ["roast"],
         "reason": "dependency_mismatch"
       },
       {
         "node": "social-platforms",
-        "declared": [
-          "multi-tenant",
-          "platform-constraints",
-          "queue-system"
-        ],
+        "declared": ["multi-tenant", "platform-constraints", "queue-system"],
         "detected": [],
         "missing": [],
         "phantom": [],
@@ -218,10 +177,7 @@
       },
       {
         "node": "tone",
-        "declared": [
-          "persona",
-          "plan-features"
-        ],
+        "declared": ["persona", "plan-features"],
         "detected": [],
         "missing": [],
         "phantom": [],
@@ -229,11 +185,7 @@
       },
       {
         "node": "trainer",
-        "declared": [
-          "roast",
-          "persona",
-          "plan-features"
-        ],
+        "declared": ["roast", "persona", "plan-features"],
         "detected": [],
         "missing": [],
         "phantom": [],

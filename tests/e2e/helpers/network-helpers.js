@@ -8,7 +8,7 @@
 /**
  * Simulate network error by intercepting route
  * @param {import('@playwright/test').Page} page - Playwright page
- * @param {string} urlPattern - URL pattern to intercept (e.g., '**/api/approval/*/regenerate')
+ * @param {string} urlPattern - URL pattern to intercept (e.g., '**/ api / approval; /*/regenerate')
  * @returns {Promise<void>}
  */
 async function simulateNetworkError(page, urlPattern) {
@@ -33,8 +33,8 @@ async function simulateNetworkTimeout(page, urlPattern, delayMs = 31000) {
       body: JSON.stringify({
         error: 'TIMEOUT',
         message: 'Request timeout',
-        code: 'E_TIMEOUT',
-      }),
+        code: 'E_TIMEOUT'
+      })
     });
   });
 }
@@ -70,9 +70,9 @@ async function mockApiResponse(page, urlPattern, { status, body, headers = {} })
       contentType: 'application/json',
       headers: {
         'Access-Control-Allow-Origin': '*',
-        ...headers,
+        ...headers
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(body)
     });
   });
 }
@@ -80,7 +80,7 @@ async function mockApiResponse(page, urlPattern, { status, body, headers = {} })
 /**
  * Mock variant exhaustion error (429)
  * @param {import('@playwright/test').Page} page - Playwright page
- * @param {string} [urlPattern='**/api/approval/*/regenerate'] - URL pattern
+ * @param {string} [urlPattern='**/ api / approval; /*/regenerate'] - URL pattern
  * @returns {Promise<void>}
  */
 async function mockVariantExhaustion(page, urlPattern = '**/api/approval/*/regenerate') {
@@ -89,8 +89,8 @@ async function mockVariantExhaustion(page, urlPattern = '**/api/approval/*/regen
     body: {
       error: 'VARIANTS_EXHAUSTED',
       message: 'No more variants available for this roast',
-      code: 'E_VARIANT_LIMIT',
-    },
+      code: 'E_VARIANT_LIMIT'
+    }
   });
 }
 
@@ -107,28 +107,32 @@ async function mockServerError(page, urlPattern, errorMessage = 'Internal server
     body: {
       error: 'SERVER_ERROR',
       message: errorMessage,
-      code: 'E_SERVER',
-    },
+      code: 'E_SERVER'
+    }
   });
 }
 
 /**
  * Mock successful variant generation
  * @param {import('@playwright/test').Page} page - Playwright page
- * @param {string} [urlPattern='**/api/approval/*/regenerate'] - URL pattern
+ * @param {string} [urlPattern='**/ api / approval; /*/regenerate'] - URL pattern
  * @param {string} [variantText='Este es un nuevo roast generado'] - Variant text
  * @returns {Promise<void>}
  */
-async function mockSuccessfulVariant(page, urlPattern = '**/api/approval/*/regenerate', variantText = 'Este es un nuevo roast generado') {
+async function mockSuccessfulVariant(
+  page,
+  urlPattern = '**/api/approval/*/regenerate',
+  variantText = 'Este es un nuevo roast generado'
+) {
   await mockApiResponse(page, urlPattern, {
     status: 200,
     body: {
       variant: {
         id: 'variant_' + Date.now(),
         text: variantText,
-        created_at: new Date().toISOString(),
-      },
-    },
+        created_at: new Date().toISOString()
+      }
+    }
   });
 }
 
@@ -160,14 +164,14 @@ async function mockFailThenSuccess(page, urlPattern, errorOptions, successOption
       route.fulfill({
         status: errorOptions.status || 500,
         contentType: 'application/json',
-        body: JSON.stringify(errorOptions.body || { error: 'Temporary error' }),
+        body: JSON.stringify(errorOptions.body || { error: 'Temporary error' })
       });
     } else {
       // Subsequent calls: return success
       route.fulfill({
         status: successOptions.status || 200,
         contentType: 'application/json',
-        body: JSON.stringify(successOptions.body || { success: true }),
+        body: JSON.stringify(successOptions.body || { success: true })
       });
     }
   });
@@ -182,5 +186,5 @@ module.exports = {
   mockServerError,
   mockSuccessfulVariant,
   clearAllMocks,
-  mockFailThenSuccess,
+  mockFailThenSuccess
 };

@@ -1,6 +1,6 @@
 /**
  * Comprehensive Multi-Tenant Workflow Integration Tests
- * 
+ *
  * Tests the complete end-to-end workflow for the multi-tenant system including:
  * - Organization-scoped data isolation
  * - Worker job processing pipeline
@@ -45,22 +45,22 @@ describe('Multi-Tenant Workflow Integration', () => {
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'test-key';
     process.env.OPENAI_API_KEY = 'test-openai-key';
-    
+
     testServer = app.listen(0); // Let OS assign port
   });
 
   afterAll(async () => {
     // Clean up workers
-    await Promise.all(workers.map(worker => worker.stop()));
-    
+    await Promise.all(workers.map((worker) => worker.stop()));
+
     if (testServer) {
-      await new Promise(resolve => testServer.close(resolve));
+      await new Promise((resolve) => testServer.close(resolve));
     }
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup comprehensive mock Supabase client
     mockSupabaseClient = createComprehensiveMockClient();
     createClient.mockReturnValue(mockSupabaseClient);
@@ -78,19 +78,19 @@ describe('Multi-Tenant Workflow Integration', () => {
       // Org A should only see their data
       const orgAUsage = await costControlA.getUsageStats(orgAId);
       expect(mockSupabaseClient.from).toHaveBeenCalledWith('usage_records');
-      
-      // Org B should only see their data  
+
+      // Org B should only see their data
       const orgBUsage = await costControlB.getUsageStats(orgBId);
-      
+
       // Verify RLS is enforced through separate calls
       const fromCalls = mockSupabaseClient.from.mock.calls;
       expect(fromCalls.length).toBeGreaterThanOrEqual(2);
-      expect(fromCalls.some(call => call[0] === 'organizations')).toBe(true);
+      expect(fromCalls.some((call) => call[0] === 'organizations')).toBe(true);
     });
 
     test('should prevent cross-organization data access', async () => {
       const costControl = new CostControlService(orgAId);
-      
+
       // Attempt to access org B data from org A context should be filtered by RLS
       mockSupabaseClient.from().select().eq().single.mockResolvedValue({
         data: null, // RLS prevents access
@@ -129,11 +129,7 @@ describe('Multi-Tenant Workflow Integration', () => {
       setupMockShieldService();
 
       // Start workers
-      await Promise.all([
-        toxicityWorker.start(),
-        replyWorker.start(),
-        shieldWorker.start()
-      ]);
+      await Promise.all([toxicityWorker.start(), replyWorker.start(), shieldWorker.start()]);
 
       // Simulate incoming toxic comment
       const toxicComment = {
@@ -164,7 +160,7 @@ describe('Multi-Tenant Workflow Integration', () => {
 
       // Verify cost control was checked
       const costControlCalls = mockSupabaseClient.from.mock.calls.filter(
-        call => call[0] === 'organizations'
+        (call) => call[0] === 'organizations'
       );
       expect(costControlCalls.length).toBeGreaterThan(0);
     });
@@ -172,21 +168,25 @@ describe('Multi-Tenant Workflow Integration', () => {
     test('should handle Shield automated moderation with priority', async () => {
       const shieldWorker = new ShieldActionWorker();
       workers.push(shieldWorker);
-      
+
       await shieldWorker.start();
 
       // Setup high-severity user requiring immediate action
       setupMockUserWithViolations('toxic-user-456', 3, 'high');
 
       // Add shield action job with priority
-      await queueService.addJob('shield_action', {
-        organization_id: orgAId,
-        platform: 'twitter',
-        user_id: 'toxic-user-456',
-        action: 'mute',
-        reason: 'Repeated high-toxicity violations',
-        severity: 'high'
-      }, 1); // Priority 1 for shield actions
+      await queueService.addJob(
+        'shield_action',
+        {
+          organization_id: orgAId,
+          platform: 'twitter',
+          user_id: 'toxic-user-456',
+          action: 'mute',
+          reason: 'Repeated high-toxicity violations',
+          severity: 'high'
+        },
+        1
+      ); // Priority 1 for shield actions
 
       await waitForJobsToProcess(2000);
 
@@ -206,8 +206,8 @@ describe('Multi-Tenant Workflow Integration', () => {
     test('should enforce plan limits across organizations', async () => {
       // Setup org A with free plan (100 responses limit)
       setupOrganizationWithUsage(orgAId, 'free', 95, 100);
-      
-      // Setup org B with pro plan (1000 responses limit)  
+
+      // Setup org B with pro plan (1000 responses limit)
       setupOrganizationWithUsage(orgBId, 'pro', 500, 1000);
 
       const costControlA = new CostControlService(orgAId);
@@ -277,13 +277,13 @@ describe('Multi-Tenant Workflow Integration', () => {
       await queueService.initialize();
 
       // Add jobs for different organizations
-      await queueService.addJob('analyze_toxicity', { 
-        organization_id: orgAId, 
-        comment: 'Org A comment' 
+      await queueService.addJob('analyze_toxicity', {
+        organization_id: orgAId,
+        comment: 'Org A comment'
       });
-      await queueService.addJob('analyze_toxicity', { 
-        organization_id: orgBId, 
-        comment: 'Org B comment' 
+      await queueService.addJob('analyze_toxicity', {
+        organization_id: orgBId,
+        comment: 'Org B comment'
       });
 
       // Each organization should only process their own jobs
@@ -305,12 +305,12 @@ describe('Multi-Tenant Workflow Integration', () => {
       });
 
       const costControl = new CostControlService(orgAId);
-      
+
       // Should not crash the application
-      const result = await costControl.canPerformOperation(orgAId).catch(err => ({
+      const result = await costControl.canPerformOperation(orgAId).catch((err) => ({
         error: err.message
       }));
-      
+
       expect(result.error).toContain('Database connection lost');
     });
 
@@ -363,7 +363,7 @@ describe('Multi-Tenant Workflow Integration', () => {
         // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
         await worker.stop();
       }
-      
+
       expect(worker.processJob).toHaveBeenCalledTimes(3);
       expect(worker.processedJobs).toBe(1);
     });
@@ -387,7 +387,7 @@ describe('Multi-Tenant Workflow Integration', () => {
 
       const toxicityWorker = new AnalyzeToxicityWorker();
       workers.push(toxicityWorker);
-      
+
       // Mock successful processing
       toxicityWorker.processJob = jest.fn().mockResolvedValue({
         success: true,
@@ -400,12 +400,12 @@ describe('Multi-Tenant Workflow Integration', () => {
 
       // Should have processed jobs from all platforms
       expect(toxicityWorker.processJob).toHaveBeenCalledTimes(platforms.length);
-      
+
       // Verify platform-specific processing
       const processedPlatforms = toxicityWorker.processJob.mock.calls.map(
-        call => call[0].platform
+        (call) => call[0].platform
       );
-      platforms.forEach(platform => {
+      platforms.forEach((platform) => {
         expect(processedPlatforms).toContain(platform);
       });
 
@@ -416,7 +416,7 @@ describe('Multi-Tenant Workflow Integration', () => {
   describe('Audit and Compliance', () => {
     test('should maintain comprehensive audit trail', async () => {
       const auditEvents = [];
-      
+
       // Mock audit logging to capture events
       auditLogger.logEvent = jest.fn().mockImplementation((eventType, details) => {
         auditEvents.push({ eventType, details });
@@ -425,7 +425,7 @@ describe('Multi-Tenant Workflow Integration', () => {
 
       // Simulate various system events
       await auditLogger.logUserLogin('user-123', '192.168.1.1', 'Chrome');
-      await auditLogger.logBillingEvent('subscription_updated', { 
+      await auditLogger.logBillingEvent('subscription_updated', {
         organizationId: orgAId,
         newPlan: 'pro'
       });
@@ -438,17 +438,17 @@ describe('Multi-Tenant Workflow Integration', () => {
       });
 
       expect(auditEvents).toHaveLength(4);
-      expect(auditEvents.some(e => e.eventType === 'auth.login')).toBe(true);
-      expect(auditEvents.some(e => e.eventType === 'billing.subscription_updated')).toBe(true);
-      expect(auditEvents.some(e => e.eventType === 'integrations.connect')).toBe(true);
-      expect(auditEvents.some(e => e.eventType === 'system.api_error')).toBe(true);
+      expect(auditEvents.some((e) => e.eventType === 'auth.login')).toBe(true);
+      expect(auditEvents.some((e) => e.eventType === 'billing.subscription_updated')).toBe(true);
+      expect(auditEvents.some((e) => e.eventType === 'integrations.connect')).toBe(true);
+      expect(auditEvents.some((e) => e.eventType === 'system.api_error')).toBe(true);
     });
   });
 
   // Helper functions
   function createComprehensiveMockClient() {
     const mockData = new Map();
-    
+
     return {
       from: jest.fn((table) => ({
         select: jest.fn(() => ({
@@ -608,7 +608,7 @@ describe('Multi-Tenant Workflow Integration', () => {
   }
 
   async function waitForJobsToProcess(timeoutMs) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       setTimeout(resolve, timeoutMs);
     });
   }

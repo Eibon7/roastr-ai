@@ -23,6 +23,7 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 ## 🎯 Objetivos Cumplidos
 
 ### ✅ Creado
+
 - [x] Carpeta `.claude/skills/`
 - [x] 6 archivos de skills con contenido completo
 - [x] Configuración en `settings.local.json`
@@ -30,6 +31,7 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 - [x] Reporte de estado en `docs/skills-status.md`
 
 ### ✅ Verificado
+
 - [x] Todos los archivos presentes
 - [x] Formato YAML válido
 - [x] Configuración `setting_sources` activa
@@ -37,6 +39,7 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 - [x] Listo para invocación automática
 
 ### ✅ Integrado
+
 - [x] Skills añadidas a `CLAUDE.md`
 - [x] Estructura de triggers definida
 - [x] Agentes asignados a cada skill
@@ -47,6 +50,7 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 ## 📊 Detalles por Skill
 
 ### 1️⃣ test-generation-skill
+
 - **Archivo**: 44 líneas
 - **Tamaño**: 2.1 KB
 - **Triggers**: "sin tests", "test fail", "coverage"
@@ -54,6 +58,7 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 - **Output**: Tests + `docs/test-evidence/issue-{id}/summary.md`
 
 ### 2️⃣ security-audit-skill
+
 - **Archivo**: 58 líneas
 - **Tamaño**: 2.4 KB
 - **Triggers**: "auth", "secret", "security", "vulnerability"
@@ -61,6 +66,7 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 - **Output**: `docs/audit/security-report-{id}.md`
 
 ### 3️⃣ code-review-skill
+
 - **Archivo**: 63 líneas
 - **Tamaño**: 2.5 KB
 - **Triggers**: "review", "PR", "CodeRabbit", "quality"
@@ -68,6 +74,7 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 - **Output**: `docs/review/issue-{id}.md`
 
 ### 4️⃣ visual-validation-skill
+
 - **Archivo**: 75 líneas
 - **Tamaño**: 2.7 KB
 - **Triggers**: "UI change", "frontend", "visual", "component"
@@ -75,6 +82,7 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 - **Output**: Screenshots + `ui-report.md`
 
 ### 5️⃣ gdd-sync-skill
+
 - **Archivo**: 90 líneas
 - **Tamaño**: 3.5 KB
 - **Triggers**: "GDD", "spec update", "nodo", "graph"
@@ -82,6 +90,7 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 - **Output**: `docs/gdd/validation-report-{id}.md`
 
 ### 6️⃣ spec-update-skill
+
 - **Archivo**: 105 líneas
 - **Tamaño**: 3.4 KB
 - **Triggers**: "spec", "merge", "feature", "close issue"
@@ -93,22 +102,25 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 ## 🔧 Configuración Técnica
 
 ### settings.local.json
+
 ```json
 {
   "setting_sources": [
-    "project",  // ✅ Carga .claude/skills/
-    "user"      // ✅ Carga ~/.claude/skills/
+    "project", // ✅ Carga .claude/skills/
+    "user" // ✅ Carga ~/.claude/skills/
   ]
 }
 ```
 
 ### CLAUDE.md
+
 - ✅ Sección "🧩 Claude Skills Integradas" añadida
 - ✅ 6 skills documentadas
 - ✅ Reglas de uso añadidas
 - ✅ Ubicación y configuración especificadas
 
 ### docs/skills-status.md
+
 - ✅ Reporte de estado completo
 - ✅ Triggers por skill
 - ✅ Agentes que usan cada skill
@@ -119,12 +131,15 @@ Se han creado e integrado 6 Claude Skills en el proyecto Roastr AI:
 ## 🚀 Activación y Uso
 
 ### Inmediata
+
 Las skills se activarán automáticamente según contexto:
+
 - Triggers en conversación
 - Cambios en código que coincidan con patrones
 - Solicitudes de agentes relacionados
 
 ### Sin Configuración Adicional
+
 - No requiere `plugin reload`
 - No requiere comandos especiales
 - Claude detecta automáticamente
@@ -132,18 +147,21 @@ Las skills se activarán automáticamente según contexto:
 ### Ejemplos de Activación
 
 **Ejemplo 1:**
+
 ```
 Usuario: "Necesito añadir tests para esta feature"
 Claude: [Invoca automáticamente test-generation-skill]
 ```
 
 **Ejemplo 2:**
+
 ```
 Usuario: "Revisar seguridad de este endpoint"
 Claude: [Invoca automáticamente security-audit-skill]
 ```
 
 **Ejemplo 3:**
+
 ```
 Usuario: "Hacer code review de este PR"
 Claude: [Invoca automáticamente code-review-skill]
@@ -177,6 +195,7 @@ Claude: [Invoca automáticamente code-review-skill]
 ## 🎉 Estado Final
 
 **Skills integradas correctamente:**
+
 - ✅ test-generation-skill
 - ✅ security-audit-skill
 - ✅ code-review-skill
@@ -191,4 +210,3 @@ Claude: [Invoca automáticamente code-review-skill]
 ---
 
 **Confirmado**: Todas las skills están registradas y listas para invocación automática por Claude según contexto.
-

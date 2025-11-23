@@ -1,6 +1,6 @@
 /**
  * Audit Log Service Tests
- * 
+ *
  * Tests for security audit logging functionality including:
  * - Event logging with proper categorization
  * - Database and file-based storage
@@ -76,13 +76,13 @@ describe('AuditLogService', () => {
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
-    
+
     // Reset Supabase mock to defaults
     mockSupabase._reset();
-    
+
     // Create fresh instance for each test
     auditLogService = new AuditLogService();
-    
+
     // Configure mockSupabase.from to return a mock that works with the service
     // The service does: await supabaseServiceClient.from('audit_logs').insert(auditEntry)
     // So insert() must return a promise that resolves to { data: [...], error: null }
@@ -115,10 +115,10 @@ describe('AuditLogService', () => {
         lt: jest.fn(() => Promise.resolve({ error: null }))
       }))
     };
-    
+
     // Configure mockSupabase.from to return our configured mockFrom
     mockSupabase.from.mockReturnValue(mockFrom);
-    
+
     // Configure default flag states
     flags.isEnabled.mockImplementation((flag) => {
       switch (flag) {
@@ -138,7 +138,7 @@ describe('AuditLogService', () => {
         description: 'User login'
       });
       expect(auditLogService.eventTypes['billing.payment_failed']).toEqual({
-        severity: 'warning', 
+        severity: 'warning',
         description: 'Payment failed'
       });
       expect(auditLogService.eventTypes['system.api_error']).toEqual({
@@ -196,7 +196,7 @@ describe('AuditLogService', () => {
 
       expect(result).toBe(true);
       expect(logger.warn).toHaveBeenCalledWith(
-        'Failed to save audit log to database, falling back to file:', 
+        'Failed to save audit log to database, falling back to file:',
         'Database audit log error: Database connection failed'
       );
       expect(fs.appendFile).toHaveBeenCalledWith(
@@ -246,7 +246,7 @@ describe('AuditLogService', () => {
 
       const insertCall = mockFrom.insert.mock.calls[0][0];
       const details = JSON.parse(insertCall.details);
-      
+
       expect(details.environment).toBe('test');
       expect(details.timestamp).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
       expect(details.flag).toBe('TEST_FLAG');
@@ -276,8 +276,9 @@ describe('AuditLogService', () => {
 
       mockFrom.insert.mockReturnValue({ error: dbError });
 
-      await expect(auditLogService.saveToDatabaseAuditLog(auditEntry))
-        .rejects.toThrow('Database audit log error: Primary key violation');
+      await expect(auditLogService.saveToDatabaseAuditLog(auditEntry)).rejects.toThrow(
+        'Database audit log error: Primary key violation'
+      );
     });
   });
 
@@ -294,10 +295,9 @@ describe('AuditLogService', () => {
 
       await auditLogService.saveToFileAuditLog(auditEntry);
 
-      expect(fs.mkdir).toHaveBeenCalledWith(
-        path.dirname(auditLogService.logFile),
-        { recursive: true }
-      );
+      expect(fs.mkdir).toHaveBeenCalledWith(path.dirname(auditLogService.logFile), {
+        recursive: true
+      });
       expect(fs.appendFile).toHaveBeenCalledWith(
         auditLogService.logFile,
         JSON.stringify(auditEntry) + '\n'
@@ -307,8 +307,7 @@ describe('AuditLogService', () => {
     test('should propagate file system errors', async () => {
       fs.mkdir.mockRejectedValue(new Error('Permission denied'));
 
-      await expect(auditLogService.saveToFileAuditLog({}))
-        .rejects.toThrow('Permission denied');
+      await expect(auditLogService.saveToFileAuditLog({})).rejects.toThrow('Permission denied');
     });
   });
 
@@ -353,19 +352,19 @@ describe('AuditLogService', () => {
       // Then it does: await query, so the query must be thenable
       const mockQueryResult = { data: [], error: null };
       const mockQuery = {
-        eq: jest.fn(function(...args) {
+        eq: jest.fn(function (...args) {
           return this;
         }),
-        gte: jest.fn(function(...args) {
+        gte: jest.fn(function (...args) {
           return this;
         }),
-        lte: jest.fn(function(...args) {
+        lte: jest.fn(function (...args) {
           return this;
         }),
-        order: jest.fn(function(...args) {
+        order: jest.fn(function (...args) {
           return this;
         }),
-        limit: jest.fn(function(...args) {
+        limit: jest.fn(function (...args) {
           return this;
         }),
         // Make it thenable so await works
@@ -392,9 +391,12 @@ describe('AuditLogService', () => {
 
     test('should retrieve logs from file when Supabase is disabled', async () => {
       flags.isEnabled.mockReturnValue(false);
-      const fileContent = JSON.stringify({ event_type: 'test1' }) + '\n' + 
-                         JSON.stringify({ event_type: 'test2' }) + '\n';
-      
+      const fileContent =
+        JSON.stringify({ event_type: 'test1' }) +
+        '\n' +
+        JSON.stringify({ event_type: 'test2' }) +
+        '\n';
+
       fs.readFile.mockResolvedValue(fileContent);
 
       const result = await auditLogService.getRecentLogs();
@@ -410,7 +412,7 @@ describe('AuditLogService', () => {
       flags.isEnabled.mockReturnValue(false);
       const error = new Error('File not found');
       error.code = 'ENOENT';
-      
+
       fs.readFile.mockRejectedValue(error);
 
       const result = await auditLogService.getRecentLogs();
@@ -422,10 +424,13 @@ describe('AuditLogService', () => {
 
     test('should handle malformed JSON in log file', async () => {
       flags.isEnabled.mockReturnValue(false);
-      const fileContent = JSON.stringify({ event_type: 'valid' }) + '\n' + 
-                         'invalid json line\n' + 
-                         JSON.stringify({ event_type: 'valid2' }) + '\n';
-      
+      const fileContent =
+        JSON.stringify({ event_type: 'valid' }) +
+        '\n' +
+        'invalid json line\n' +
+        JSON.stringify({ event_type: 'valid2' }) +
+        '\n';
+
       fs.readFile.mockResolvedValue(fileContent);
 
       const result = await auditLogService.getRecentLogs();
@@ -449,7 +454,10 @@ describe('AuditLogService', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Failed to retrieve audit logs');
-      expect(logger.error).toHaveBeenCalledWith('Failed to retrieve audit logs:', expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith(
+        'Failed to retrieve audit logs:',
+        expect.any(Error)
+      );
     });
   });
 
@@ -481,8 +489,8 @@ describe('AuditLogService', () => {
     test('logIntegrationEvent should log integration events correctly', async () => {
       mockFrom.insert.mockReturnValue({ error: null });
 
-      await auditLogService.logIntegrationEvent('connect', 'user-456', 'twitter', { 
-        accountId: '@testuser' 
+      await auditLogService.logIntegrationEvent('connect', 'user-456', 'twitter', {
+        accountId: '@testuser'
       });
 
       const insertCall = mockFrom.insert.mock.calls[0][0];
@@ -496,9 +504,9 @@ describe('AuditLogService', () => {
     test('logSystemEvent should log system events correctly', async () => {
       mockFrom.insert.mockReturnValue({ error: null });
 
-      await auditLogService.logSystemEvent('api_error', { 
+      await auditLogService.logSystemEvent('api_error', {
         endpoint: '/api/roasts',
-        statusCode: 500 
+        statusCode: 500
       });
 
       const insertCall = mockFrom.insert.mock.calls[0][0];
@@ -566,7 +574,7 @@ describe('AuditLogService', () => {
       const now = new Date('2024-01-01T12:00:00Z');
       const originalNow = Date.now;
       const originalDate = global.Date;
-      
+
       // Mock Date constructor and Date.now
       global.Date = jest.fn((...args) => {
         if (args.length === 0) {
@@ -577,21 +585,26 @@ describe('AuditLogService', () => {
       global.Date.now = jest.fn(() => now.getTime());
       global.Date.prototype = originalDate.prototype;
 
-      expect(auditLogService.getStartDateForRange('1h'))
-        .toBe(new Date('2024-01-01T11:00:00Z').toISOString());
-      
-      expect(auditLogService.getStartDateForRange('24h'))
-        .toBe(new Date('2023-12-31T12:00:00Z').toISOString());
-      
-      expect(auditLogService.getStartDateForRange('7d'))
-        .toBe(new Date('2023-12-25T12:00:00Z').toISOString());
-      
-      expect(auditLogService.getStartDateForRange('30d'))
-        .toBe(new Date('2023-12-02T12:00:00Z').toISOString());
+      expect(auditLogService.getStartDateForRange('1h')).toBe(
+        new Date('2024-01-01T11:00:00Z').toISOString()
+      );
+
+      expect(auditLogService.getStartDateForRange('24h')).toBe(
+        new Date('2023-12-31T12:00:00Z').toISOString()
+      );
+
+      expect(auditLogService.getStartDateForRange('7d')).toBe(
+        new Date('2023-12-25T12:00:00Z').toISOString()
+      );
+
+      expect(auditLogService.getStartDateForRange('30d')).toBe(
+        new Date('2023-12-02T12:00:00Z').toISOString()
+      );
 
       // Should default to 24h for unknown ranges
-      expect(auditLogService.getStartDateForRange('unknown'))
-        .toBe(new Date('2023-12-31T12:00:00Z').toISOString());
+      expect(auditLogService.getStartDateForRange('unknown')).toBe(
+        new Date('2023-12-31T12:00:00Z').toISOString()
+      );
 
       global.Date = originalDate;
       Date.now = originalNow;
@@ -603,7 +616,7 @@ describe('AuditLogService', () => {
       const mockDelete = {
         lt: jest.fn(() => ({ error: null }))
       };
-      
+
       mockFrom.delete.mockReturnValue(mockDelete);
 
       const result = await auditLogService.cleanOldLogs(30);
@@ -627,7 +640,7 @@ describe('AuditLogService', () => {
       const mockDelete = {
         lt: jest.fn(() => Promise.resolve({ error: { message: 'Delete failed' } }))
       };
-      
+
       mockFrom.delete.mockReturnValue(mockDelete);
 
       const result = await auditLogService.cleanOldLogs(90);
@@ -635,8 +648,8 @@ describe('AuditLogService', () => {
       expect(result).toBe(false);
       // The service wraps the error object in an Error, so check for either
       expect(logger.error).toHaveBeenCalled();
-      const errorCall = logger.error.mock.calls.find(call => 
-        call[0] === 'Failed to clean old audit logs:'
+      const errorCall = logger.error.mock.calls.find(
+        (call) => call[0] === 'Failed to clean old audit logs:'
       );
       expect(errorCall).toBeDefined();
     });

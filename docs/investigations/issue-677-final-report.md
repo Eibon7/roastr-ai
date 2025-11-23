@@ -16,22 +16,24 @@ Resolver las **7 Coverage Integrity Violations** que causaron que el health scor
 
 ### Métricas Antes vs Después
 
-| Métrica | Inicial (2025-10-28) | Final (2025-10-29) | Cambio |
-|---------|----------------------|-------------------|--------|
-| **Health Score** | 86.4/100 | **91.3/100** | +4.9 ✅ |
-| **Violations** | 7 (4 critical + 3 warnings) | **3 (0 critical + 3 warnings)** | -4 ✅ |
-| **Status** | 🔴 CRITICAL | **🟢 HEALTHY** | ✅ |
-| **Issue #677** | OPEN | **CLOSED** | ✅ |
+| Métrica          | Inicial (2025-10-28)        | Final (2025-10-29)              | Cambio  |
+| ---------------- | --------------------------- | ------------------------------- | ------- |
+| **Health Score** | 86.4/100                    | **91.3/100**                    | +4.9 ✅ |
+| **Violations**   | 7 (4 critical + 3 warnings) | **3 (0 critical + 3 warnings)** | -4 ✅   |
+| **Status**       | 🔴 CRITICAL                 | **🟢 HEALTHY**                  | ✅      |
+| **Issue #677**   | OPEN                        | **CLOSED**                      | ✅      |
 
 ### Violations Resueltas (7 → 3)
 
 **✅ Resueltas (4):**
+
 1. **analytics** - Actualizado: 70% → 49% (archivo real: `src/routes/analytics.js`)
 2. **billing** - Actualizado: 70% → 72% (archivos reales: `billingInterface.js`, `stripeWebhookService.js`, `stripeWrapper.js`, `billing.js`)
 3. **tone** - Actualizado: 70% → 100% (archivos reales: `tones.js`, `constants.js`)
 4. **platform-constraints** - Actualizado: 100% → 67% (archivos reales: `platforms.js`, `integrations.js`)
 
 **⚠️ Warnings Persistentes (3 - NO BLOCKERS):**
+
 1. **guardian** (0%) - Scripts/config files - NO tienen JS coverage (esperado)
 2. **multi-tenant** (0%) - SQL files - NO tienen JS coverage (esperado)
 3. **trainer** (0%) - Roadmap - feature no implementada (esperado)
@@ -64,23 +66,25 @@ Verificamos la existencia física de todos los archivos definidos:
 
 Buscamos los archivos REALES que implementan las funcionalidades:
 
-| Nodo | Archivos Definidos (Incorrectos) | Archivos Reales (Encontrados) |
-|------|----------------------------------|-------------------------------|
-| analytics | `src/services/analyticsService.js` | `src/routes/analytics.js` |
-| billing | `billingService.js`, `stripeService.js` | `billingInterface.js`, `stripeWebhookService.js`, `stripeWrapper.js`, `billing.js` |
-| tone | `toneService.js` | `tones.js`, `constants.js` |
-| platform-constraints | `platformConstraints.js` | `platforms.js`, `integrations.js` |
-| trainer | `trainerService.js` | _(ninguno - feature no implementada)_ |
+| Nodo                 | Archivos Definidos (Incorrectos)        | Archivos Reales (Encontrados)                                                      |
+| -------------------- | --------------------------------------- | ---------------------------------------------------------------------------------- |
+| analytics            | `src/services/analyticsService.js`      | `src/routes/analytics.js`                                                          |
+| billing              | `billingService.js`, `stripeService.js` | `billingInterface.js`, `stripeWebhookService.js`, `stripeWrapper.js`, `billing.js` |
+| tone                 | `toneService.js`                        | `tones.js`, `constants.js`                                                         |
+| platform-constraints | `platformConstraints.js`                | `platforms.js`, `integrations.js`                                                  |
+| trainer              | `trainerService.js`                     | _(ninguno - feature no implementada)_                                              |
 
 ### 3. Actualización de Archivos
 
 Actualizamos 9 archivos con la información correcta:
 
 **A) `docs/system-map.yaml`:**
+
 - Metadata: version 2.0.1, last_updated 2025-10-29
 - 7 nodos actualizados (analytics, billing, tone, platform-constraints, guardian, multi-tenant, trainer)
 
 **B) `docs/nodes/*.md` (7 archivos):**
+
 - `analytics.md` - Coverage: 70% → 49%
 - `billing.md` - Coverage: 70% → 72%
 - `tone.md` - Coverage: 70% → 100%
@@ -180,12 +184,14 @@ ls src/config/tones.js src/config/platforms.js src/services/billingInterface.js
 ### Para Eliminar Completamente las 3 Warnings Restantes:
 
 **Opción A:** Crear implementaciones stub para guardian tests
+
 ```bash
 # Ejecutar guardian tests que NO sean de script
 # Añadir coverage para guardian methods utilizados en producción
 ```
 
 **Opción B:** Crear tests de integración para multi-tenant
+
 ```bash
 # Tests de RLS policy enforcement
 # Tests de organization isolation
@@ -193,6 +199,7 @@ ls src/config/tones.js src/config/platforms.js src/services/billingInterface.js
 ```
 
 **Opción C:** Implementar trainer service
+
 ```bash
 # Crear src/services/trainerService.js
 # Añadir tests
@@ -218,4 +225,3 @@ Las 3 warnings persistentes son **esperadas** y **NO blockers**. El sistema func
 **Fecha:** 2025-10-29  
 **Tiempo:** ~2 horas  
 **Resultado:** ✅ SUCCESS
-

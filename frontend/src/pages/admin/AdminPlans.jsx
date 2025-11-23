@@ -86,20 +86,20 @@ const AdminPlans = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Gestión de Planes
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gestión de Planes</h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Administra los límites de cada plan sin necesidad de modificar código
         </p>
       </div>
 
       {alert && (
-        <div className={`mb-6 p-4 rounded-lg ${
-          alert.type === 'success'
-            ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
-            : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
-        }`}>
+        <div
+          className={`mb-6 p-4 rounded-lg ${
+            alert.type === 'success'
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
+          }`}
+        >
           <div className="flex justify-between items-center">
             <span>{alert.message}</span>
             <button
@@ -155,9 +155,7 @@ const AdminPlans = () => {
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {plan.name}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {plan.id}
-                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{plan.id}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                   {plan.price === 0 ? 'Gratis' : `€${plan.price.toFixed(2)}`}
@@ -170,10 +168,12 @@ const AdminPlans = () => {
                     <input
                       type="number"
                       value={editValues.maxRoasts === -1 ? '' : editValues.maxRoasts}
-                      onChange={(e) => setEditValues({
-                        ...editValues,
-                        maxRoasts: e.target.value === '' ? -1 : parseInt(e.target.value)
-                      })}
+                      onChange={(e) =>
+                        setEditValues({
+                          ...editValues,
+                          maxRoasts: e.target.value === '' ? -1 : parseInt(e.target.value)
+                        })
+                      }
                       placeholder="Unlimited = -1"
                       className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
                     />
@@ -186,10 +186,12 @@ const AdminPlans = () => {
                     <input
                       type="number"
                       value={editValues.maxPlatforms === -1 ? '' : editValues.maxPlatforms}
-                      onChange={(e) => setEditValues({
-                        ...editValues,
-                        maxPlatforms: e.target.value === '' ? -1 : parseInt(e.target.value)
-                      })}
+                      onChange={(e) =>
+                        setEditValues({
+                          ...editValues,
+                          maxPlatforms: e.target.value === '' ? -1 : parseInt(e.target.value)
+                        })
+                      }
                       placeholder="Unlimited = -1"
                       className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
                     />
@@ -201,11 +203,18 @@ const AdminPlans = () => {
                   {editingPlan === plan.id ? (
                     <input
                       type="number"
-                      value={editValues.monthlyAnalysisLimit === -1 ? '' : editValues.monthlyAnalysisLimit}
-                      onChange={(e) => setEditValues({
-                        ...editValues,
-                        monthlyAnalysisLimit: e.target.value === '' ? -1 : parseInt(e.target.value)
-                      })}
+                      value={
+                        editValues.monthlyAnalysisLimit === -1
+                          ? ''
+                          : editValues.monthlyAnalysisLimit
+                      }
+                      onChange={(e) =>
+                        setEditValues({
+                          ...editValues,
+                          monthlyAnalysisLimit:
+                            e.target.value === '' ? -1 : parseInt(e.target.value)
+                        })
+                      }
                       placeholder="Unlimited = -1"
                       className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
                     />
@@ -217,11 +226,15 @@ const AdminPlans = () => {
                   {editingPlan === plan.id ? (
                     <input
                       type="number"
-                      value={editValues.monthlyTokensLimit === -1 ? '' : editValues.monthlyTokensLimit}
-                      onChange={(e) => setEditValues({
-                        ...editValues,
-                        monthlyTokensLimit: e.target.value === '' ? -1 : parseInt(e.target.value)
-                      })}
+                      value={
+                        editValues.monthlyTokensLimit === -1 ? '' : editValues.monthlyTokensLimit
+                      }
+                      onChange={(e) =>
+                        setEditValues({
+                          ...editValues,
+                          monthlyTokensLimit: e.target.value === '' ? -1 : parseInt(e.target.value)
+                        })
+                      }
                       placeholder="Unlimited = -1"
                       className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
                     />
@@ -267,8 +280,8 @@ const AdminPlans = () => {
 
       <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
         <p className="text-sm text-yellow-800 dark:text-yellow-200">
-          <strong>Nota:</strong> Los cambios se guardan en la base de datos y sobrescriben los valores por defecto de planService.js.
-          Usa -1 para límites ilimitados.
+          <strong>Nota:</strong> Los cambios se guardan en la base de datos y sobrescriben los
+          valores por defecto de planService.js. Usa -1 para límites ilimitados.
         </p>
       </div>
     </div>
@@ -276,4 +289,3 @@ const AdminPlans = () => {
 };
 
 export default AdminPlans;
-

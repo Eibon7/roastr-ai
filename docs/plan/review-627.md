@@ -12,6 +12,7 @@
 ### ⚠️ Warning (1)
 
 **Description Check Warning:**
+
 - **Issue:** PR description doesn't follow repository template structure
 - **Impact:** Documentation consistency, repository standards compliance
 - **Type:** Process/Documentation
@@ -20,6 +21,7 @@
 ### 🔍 Minor (7 LanguageTool suggestions)
 
 **Spanish Grammar Suggestions in QUALITY-STANDARDS.md:**
+
 - **Lines:** 149, 151, 152, 153, 157, 165 (×2)
 - **Issue:** LanguageTool detects potential grammar/punctuation improvements
 - **Impact:** Documentation readability
@@ -33,10 +35,12 @@
 ### Affected Nodes
 
 **Primary:**
+
 - `orchestration.md` - PR review workflow is part of orchestration process
 - `quality-assurance.md` - Quality standards and review cycles
 
 **Dependencies:**
+
 - None (documentation-only PR)
 
 ### Validation Required
@@ -50,6 +54,7 @@
 ## 3. Subagentes Required
 
 **None required** - Documentation-only PR, no code changes:
+
 - ✅ No Security Audit needed (no sensitive code)
 - ✅ No Test Engineer needed (no tests to write)
 - ✅ No Frontend Dev needed (no UI changes)
@@ -89,6 +94,7 @@
 ### Agrupación de Commits
 
 **Single commit:**
+
 ```bash
 fix: Apply CodeRabbit Review #3427134811 - PR description + grammar
 
@@ -116,6 +122,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### Testing Plan
 
 **N/A** - Documentation-only changes:
+
 - No unit tests needed
 - No integration tests needed
 - No coverage impact
@@ -154,33 +161,46 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### PR Description Fix
 
 **Current structure (WRONG):**
+
 ```markdown
 ## Summary
+
 ...
+
 ## Changes
+
 ...
+
 ## Workflow Documented
+
 ...
+
 ## Test Plan
+
 ...
 ```
 
 **Template structure (REQUIRED):**
+
 ```markdown
 Resolves Issue: #<issue-number>
 
 ## Descripción
+
 ...
 
 ## Cambios Principales
+
 ...
 
 ## Checklist
+
 - [ ] Tests...
 - [ ] Docs...
-...
+      ...
 
 ## Notas para Reviewer
+
 ...
 ```
 
@@ -192,7 +212,7 @@ Resolves Issue: #<issue-number>
 
 **Locations:** Lines 149, 151, 152, 153, 157, 165 (×2)
 
-**Type:** Punctuation/spacing improvements (LanguageTool AI_ES_GGEC_REPLACEMENT_* rules)
+**Type:** Punctuation/spacing improvements (LanguageTool AI*ES_GGEC_REPLACEMENT*\* rules)
 
 **Action:** Review each suggestion, apply if improves readability without changing meaning
 

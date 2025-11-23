@@ -10,7 +10,7 @@ interface ActivityLogItemProps {
 const ItemContainer = styled.div<{ $isLast?: boolean }>`
   min-height: 40px;
   padding: 8px 0;
-  border-bottom: ${({ $isLast }) => $isLast ? 'none' : '1px solid rgba(255, 255, 255, 0.08)'};
+  border-bottom: ${({ $isLast }) => ($isLast ? 'none' : '1px solid rgba(255, 255, 255, 0.08)')};
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -35,11 +35,7 @@ const EventText = styled.div`
   line-height: 1.5;
 `;
 
-export const ActivityLogItem: React.FC<ActivityLogItemProps> = ({
-  timestamp,
-  event,
-  isLast
-}) => {
+export const ActivityLogItem: React.FC<ActivityLogItemProps> = ({ timestamp, event, isLast }) => {
   return (
     <ItemContainer $isLast={isLast}>
       <Timestamp>{timestamp}</Timestamp>

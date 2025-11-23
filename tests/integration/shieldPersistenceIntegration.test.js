@@ -1,6 +1,6 @@
 /**
  * Integration Tests for Shield Persistence Service
- * 
+ *
  * Tests the complete Shield persistence workflow including
  * event recording, history tracking, and GDPR retention.
  */
@@ -32,13 +32,13 @@ const createMockSupabase = () => {
         limit: jest.fn().mockReturnThis(),
         range: jest.fn().mockReturnThis(),
         single: jest.fn(),
-        
+
         async mockExecution() {
           // Simulate database operations
           return { data: null, error: null };
         }
       };
-      
+
       return mockQuery;
     })
   };
@@ -62,7 +62,7 @@ describe('Shield Persistence Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     process.env.SUPABASE_URL = 'http://localhost:54321';
     process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
     process.env.SHIELD_ANONYMIZATION_SECRET = 'test-secret-integration';
@@ -105,7 +105,7 @@ describe('Shield Persistence Integration', () => {
 
       // Mock successful event recording
       mockSupabase.from().single.mockResolvedValueOnce({
-        data: { 
+        data: {
           id: 'event-integration-123',
           ...eventData,
           created_at: new Date().toISOString()
@@ -117,7 +117,8 @@ describe('Shield Persistence Integration', () => {
 
       expect(recordedEvent.id).toBe('event-integration-123');
       expect(mockSupabase.from).toHaveBeenCalledWith('shield_events');
-      expect(mockLogger.info).toHaveBeenCalledWith('Shield event recorded', 
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Shield event recorded',
         expect.objectContaining({
           eventId: 'event-integration-123',
           platform: 'twitter',
@@ -198,7 +199,7 @@ describe('Shield Persistence Integration', () => {
           created_at: oldDate.toISOString()
         },
         {
-          id: 'old-event-2', 
+          id: 'old-event-2',
           original_text: 'Another comment with personal information',
           created_at: oldDate.toISOString()
         }
@@ -243,12 +244,14 @@ describe('Shield Persistence Integration', () => {
 
       expect(result.purged).toBe(7);
       expect(mockSupabase.from).toHaveBeenCalledWith('shield_events');
-      expect(mockLogger.info).toHaveBeenCalledWith('Shield events purge completed', { purgedCount: 7 });
+      expect(mockLogger.info).toHaveBeenCalledWith('Shield events purge completed', {
+        purgedCount: 7
+      });
     });
 
     test('should maintain audit trail through retention operations', async () => {
       const operations = ['anonymize', 'purge', 'cleanup'];
-      
+
       for (const operation of operations) {
         mockSupabase.from().insert.mockResolvedValue({ error: null });
 
@@ -276,26 +279,26 @@ describe('Shield Persistence Integration', () => {
 
       // Mock progression: first offense -> repeat offender -> high risk
       const offenseProgression = [
-        { // First offense
+        {
+          // First offense
           profile: null,
           events: [],
           isRecidivist: false,
           totalOffenses: 0,
           escalationLevel: 0
         },
-        { // Second offense
+        {
+          // Second offense
           profile: { offense_count: 1, severity_level: 'low' },
           events: [{ action_taken: 'warn_user' }],
           isRecidivist: true,
           totalOffenses: 2,
           escalationLevel: 1
         },
-        { // Third offense
+        {
+          // Third offense
           profile: { offense_count: 2, severity_level: 'medium' },
-          events: [
-            { action_taken: 'warn_user' },
-            { action_taken: 'hide_comment' }
-          ],
+          events: [{ action_taken: 'warn_user' }, { action_taken: 'hide_comment' }],
           isRecidivist: true,
           totalOffenses: 3,
           escalationLevel: 2
@@ -371,8 +374,9 @@ describe('Shield Persistence Integration', () => {
       mockSupabase.from().single.mockRejectedValue(new Error('Connection timeout'));
 
       // Should handle the error without crashing
-      await expect(persistenceService.getOffenderHistory('org', 'platform', 'user'))
-        .rejects.toThrow('Connection timeout');
+      await expect(
+        persistenceService.getOffenderHistory('org', 'platform', 'user')
+      ).rejects.toThrow('Connection timeout');
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to get offender history',
@@ -395,8 +399,9 @@ describe('Shield Persistence Integration', () => {
       });
 
       // Simulate partial failures in batch processing
-      mockSupabase.from().update
-        .mockImplementationOnce(() => ({
+      mockSupabase
+        .from()
+        .update.mockImplementationOnce(() => ({
           eq: jest.fn().mockResolvedValue({ error: null })
         }))
         .mockImplementationOnce(() => ({

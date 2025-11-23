@@ -16,22 +16,22 @@ describe('TransparencyService', () => {
   describe('getTransparencyOptions', () => {
     it('should return transparency options in Spanish by default', () => {
       const options = transparencyService.getTransparencyOptions();
-      
+
       expect(options).toHaveLength(3);
       expect(options[0].value).toBe('bio');
       expect(options[0].label).toBe('Aviso en Bio');
       expect(options[0].is_default).toBe(true);
-      
+
       expect(options[1].value).toBe('signature');
       expect(options[1].label).toBe('Firma clásica');
-      
+
       expect(options[2].value).toBe('creative');
       expect(options[2].label).toBe('Disclaimers creativos');
     });
 
     it('should return transparency options in English', () => {
       const options = transparencyService.getTransparencyOptions('en');
-      
+
       expect(options).toHaveLength(3);
       expect(options[0].label).toBe('Bio Notice');
       expect(options[1].label).toBe('Classic Signature');
@@ -61,7 +61,7 @@ describe('TransparencyService', () => {
   });
 
   describe('applyTransparencyDisclaimer', () => {
-    const testRoast = "Your comment is so basic, it makes vanilla look exotic.";
+    const testRoast = 'Your comment is so basic, it makes vanilla look exotic.';
     const testUserId = 'test-user-123';
 
     it('should apply bio mode correctly', async () => {
@@ -69,12 +69,20 @@ describe('TransparencyService', () => {
       const originalMethod = transparencyService.getUserTransparencyMode;
       transparencyService.getUserTransparencyMode = jest.fn().mockResolvedValue('bio');
 
-      const result = await transparencyService.applyTransparencyDisclaimer(testRoast, testUserId, 'es');
-      
+      const result = await transparencyService.applyTransparencyDisclaimer(
+        testRoast,
+        testUserId,
+        'es'
+      );
+
       expect(result.finalText).toBe(testRoast); // No modification to roast
       expect(result.transparencyMode).toBe('bio');
-      expect(result.bioText).toBe('Respuestas a comentarios inapropiados proporcionados por @Roastr.AI');
-      expect(result.disclaimer).toBe('Respuestas a comentarios inapropiados proporcionados por @Roastr.AI');
+      expect(result.bioText).toBe(
+        'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI'
+      );
+      expect(result.disclaimer).toBe(
+        'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI'
+      );
 
       // Restore original method
       transparencyService.getUserTransparencyMode = originalMethod;
@@ -85,8 +93,12 @@ describe('TransparencyService', () => {
       const originalMethod = transparencyService.getUserTransparencyMode;
       transparencyService.getUserTransparencyMode = jest.fn().mockResolvedValue('signature');
 
-      const result = await transparencyService.applyTransparencyDisclaimer(testRoast, testUserId, 'es');
-      
+      const result = await transparencyService.applyTransparencyDisclaimer(
+        testRoast,
+        testUserId,
+        'es'
+      );
+
       expect(result.finalText).toBe(testRoast + '\n\n— Generado por Roastr.AI');
       expect(result.transparencyMode).toBe('signature');
       expect(result.bioText).toBe(null);
@@ -100,12 +112,18 @@ describe('TransparencyService', () => {
       // Mock getUserTransparencyMode to return 'creative'
       const originalGetMode = transparencyService.getUserTransparencyMode;
       const originalGetDisclaimer = transparencyService.getRandomDisclaimer;
-      
-      transparencyService.getUserTransparencyMode = jest.fn().mockResolvedValue('creative');
-      transparencyService.getRandomDisclaimer = jest.fn().mockResolvedValue('Ningún humano perdió tiempo en ti');
 
-      const result = await transparencyService.applyTransparencyDisclaimer(testRoast, testUserId, 'es');
-      
+      transparencyService.getUserTransparencyMode = jest.fn().mockResolvedValue('creative');
+      transparencyService.getRandomDisclaimer = jest
+        .fn()
+        .mockResolvedValue('Ningún humano perdió tiempo en ti');
+
+      const result = await transparencyService.applyTransparencyDisclaimer(
+        testRoast,
+        testUserId,
+        'es'
+      );
+
       expect(result.finalText).toBe(testRoast + '\n\nNingún humano perdió tiempo en ti');
       expect(result.transparencyMode).toBe('creative');
       expect(result.bioText).toBe(null);
@@ -119,10 +137,16 @@ describe('TransparencyService', () => {
     it('should handle errors gracefully with fallback', async () => {
       // Mock getUserTransparencyMode to throw an error
       const originalMethod = transparencyService.getUserTransparencyMode;
-      transparencyService.getUserTransparencyMode = jest.fn().mockRejectedValue(new Error('Database error'));
+      transparencyService.getUserTransparencyMode = jest
+        .fn()
+        .mockRejectedValue(new Error('Database error'));
 
-      const result = await transparencyService.applyTransparencyDisclaimer(testRoast, testUserId, 'es');
-      
+      const result = await transparencyService.applyTransparencyDisclaimer(
+        testRoast,
+        testUserId,
+        'es'
+      );
+
       // Should fallback to signature mode
       expect(result.finalText).toBe(testRoast + '\n\n— Generado por Roastr.AI');
       expect(result.transparencyMode).toBe('signature');
@@ -137,8 +161,12 @@ describe('TransparencyService', () => {
       const originalMethod = transparencyService.getUserTransparencyMode;
       transparencyService.getUserTransparencyMode = jest.fn().mockResolvedValue('signature');
 
-      const result = await transparencyService.applyTransparencyDisclaimer(testRoast, testUserId, 'en');
-      
+      const result = await transparencyService.applyTransparencyDisclaimer(
+        testRoast,
+        testUserId,
+        'en'
+      );
+
       expect(result.finalText).toBe(testRoast + '\n\n— Generated by Roastr.AI');
       expect(result.transparencyMode).toBe('signature');
       expect(result.disclaimer).toBe('— Generated by Roastr.AI');

@@ -16,6 +16,7 @@ psql $STAGING_DATABASE_URL -f database/migrations/013_plan_limits_configuration.
 ```
 
 La migración creará:
+
 - ✅ Tabla `plan_limits` con configuración de límites
 - ✅ Tabla `plan_limits_audit` para auditoría
 - ✅ Funciones para obtener y validar límites
@@ -46,33 +47,39 @@ node scripts/test-staging-plan-limits.js
 El script verificará:
 
 ### ✅ Migración de Base de Datos
+
 - Tabla `plan_limits` existe
 - Datos iniciales cargados
 - Funciones creadas correctamente
 
 ### ✅ Servicio de Límites de Planes
+
 - Obtener límites de diferentes planes
 - Funcionamiento del caché
 - Manejo de errores
 
 ### ✅ Endpoints de Administración
+
 - `GET /api/admin/plan-limits` - Obtener todos los límites
 - `GET /api/admin/plan-limits/:planId` - Obtener límites específicos
 - `PUT /api/admin/plan-limits/:planId` - Actualizar límites
 - `POST /api/admin/plan-limits/refresh-cache` - Limpiar caché
 
 ### ✅ Validación de Límites
+
 - Verificar límites dentro del rango
 - Verificar límites excedidos
 - Manejar planes ilimitados (-1)
 
 ### ✅ Manejo de Errores
+
 - Fallback para planes inexistentes
 - Recuperación ante fallos de DB
 
 ## 🔍 4. Pruebas Manuales Adicionales
 
 ### Probar Admin Panel
+
 ```bash
 # Acceder al panel de administración
 curl -H "Authorization: Bearer $STAGING_ADMIN_TOKEN" \
@@ -80,6 +87,7 @@ curl -H "Authorization: Bearer $STAGING_ADMIN_TOKEN" \
 ```
 
 ### Probar Actualización de Límites
+
 ```bash
 # Actualizar límites del plan pro
 curl -X PUT \
@@ -90,6 +98,7 @@ curl -X PUT \
 ```
 
 ### Verificar Caché
+
 ```bash
 # Limpiar caché
 curl -X POST \
@@ -101,13 +110,13 @@ curl -X POST \
 
 ```sql
 -- Verificar datos en plan_limits
-SELECT plan_id, max_roasts, monthly_responses_limit, shield_enabled 
+SELECT plan_id, max_roasts, monthly_responses_limit, shield_enabled
 FROM plan_limits;
 
 -- Verificar audit log
-SELECT plan_id, action, changed_at, changed_by 
-FROM plan_limits_audit 
-ORDER BY changed_at DESC 
+SELECT plan_id, action, changed_at, changed_by
+FROM plan_limits_audit
+ORDER BY changed_at DESC
 LIMIT 10;
 
 -- Probar función de límites
@@ -121,11 +130,13 @@ SELECT check_plan_limit('pro', 'roasts', 500);  -- false (dentro)
 ## 🚨 6. Verificaciones de Seguridad
 
 ### Row Level Security (RLS)
+
 - ✅ Solo administradores pueden modificar límites
 - ✅ Todos pueden leer límites (necesario para la aplicación)
 - ✅ Solo administradores pueden ver audit logs
 
 ### Audit Trail
+
 - ✅ Todos los cambios se registran automáticamente
 - ✅ Se almacena quién hizo el cambio y cuándo
 - ✅ Se guardan valores antes y después

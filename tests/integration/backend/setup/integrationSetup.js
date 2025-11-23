@@ -1,6 +1,6 @@
 /**
  * Integration Tests Setup
- * 
+ *
  * Setup configuration for backend integration tests
  */
 
@@ -48,7 +48,7 @@ const localStorageMock = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
-  clear: jest.fn(),
+  clear: jest.fn()
 };
 
 Object.defineProperty(window, 'localStorage', {
@@ -84,12 +84,12 @@ afterEach(() => {
   localStorageMock.setItem.mockClear();
   localStorageMock.removeItem.mockClear();
   localStorageMock.clear.mockClear();
-  
+
   // Clear fetch mocks if any
   if (global.fetch && global.fetch.mockClear) {
     global.fetch.mockClear();
   }
-  
+
   // Clear window.open mocks
   if (window.open && window.open.mockClear) {
     window.open.mockClear();

@@ -1,10 +1,10 @@
 /**
  * Integration Tests for Shield Action Executor (Issue 361)
- * 
+ *
  * Tests the complete Shield action execution workflow including:
  * - Unified adapter interface
  * - Circuit breaker behavior
- * - Retry with exponential backoff  
+ * - Retry with exponential backoff
  * - Fallback strategies
  * - Audit logging
  * - GDPR compliance
@@ -37,10 +37,10 @@ const mockCostControl = {
 describe('Shield Action Executor Integration (Issue 361)', () => {
   let executor;
   let worker;
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Initialize services with fast retry settings for testing
     executor = new ShieldActionExecutorService({
       logger: mockLogger,
@@ -56,18 +56,18 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         twitch: { skipValidation: true, failureRate: 0 }
       }
     });
-    
+
     // Override persistence service to use mock
     executor.persistenceService = {
       recordShieldEvent: jest.fn().mockResolvedValue({ id: 'event-integration-123' })
     };
   });
-  
+
   describe('Complete Action Execution Workflow', () => {
     test('should execute hideComment action end-to-end', async () => {
       const actionInput = {
         organizationId: 'org-integration-test',
-        userId: 'user-456', 
+        userId: 'user-456',
         platform: 'twitter',
         accountRef: '@testorg',
         externalCommentId: 'tweet-toxic-123',
@@ -82,14 +82,14 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
           categories: ['TOXICITY', 'INSULT']
         }
       };
-      
+
       const result = await executor.executeAction(actionInput);
-      
+
       // Verify successful execution
       expect(result.success).toBe(true);
       expect(result.action).toBe('hideComment');
       expect(result.details.platform).toBe('twitter');
-      
+
       // Verify audit logging
       expect(executor.persistenceService.recordShieldEvent).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -102,7 +102,7 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
           processedBy: 'shield_action_executor'
         })
       );
-      
+
       // Verify metrics updated
       const metrics = executor.getMetrics();
       expect(metrics.totalActions).toBe(1);
@@ -110,7 +110,7 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
       expect(metrics.byPlatform.twitter.successful).toBe(1);
       expect(metrics.byAction.hideComment.successful).toBe(1);
     });
-    
+
     test('should handle unsupported action with fallback strategy', async () => {
       const actionInput = {
         organizationId: 'org-integration-test',
@@ -121,20 +121,20 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         action: 'reportUser',
         reason: 'User posting spam content'
       };
-      
+
       const result = await executor.executeAction(actionInput);
-      
+
       // Twitter doesn't support reportUser, should fallback to blockUser
       expect(result.success).toBe(true);
       expect(result.fallback).toBe('blockUser');
       expect(result.originalAction).toBe('reportUser');
-      
+
       // Verify fallback metrics
       const metrics = executor.getMetrics();
       expect(metrics.fallbackActions).toBe(1);
       expect(metrics.byAction.reportUser.fallbacks).toBe(1);
     });
-    
+
     test('should require manual review for unsupported platforms', async () => {
       const actionInput = {
         organizationId: 'org-integration-test',
@@ -145,9 +145,9 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         action: 'reportUser',
         reason: 'Inappropriate content'
       };
-      
+
       const result = await executor.executeAction(actionInput);
-      
+
       // YouTube doesn't support reportUser and has no fallback
       expect(result.success).toBe(true);
       expect(result.requiresManualReview).toBe(true);
@@ -155,13 +155,13 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
       expect(result.details.manualInstructions).toContain('YouTube Studio');
     });
   });
-  
+
   describe('Circuit Breaker Integration', () => {
     test('should open circuit breaker after consecutive failures', async () => {
       // Configure adapter to fail
       const twitterAdapter = executor.adapters.get('twitter');
       twitterAdapter.failureRate = 1.0; // 100% failure rate
-      
+
       const actionInput = {
         organizationId: 'org-circuit-test',
         platform: 'twitter',
@@ -170,7 +170,7 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         action: 'hideComment',
         reason: 'Circuit breaker test'
       };
-      
+
       // Execute enough failed actions to open circuit breaker
       for (let i = 0; i < 3; i++) {
         try {
@@ -179,26 +179,27 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
           // Expected to fail
         }
       }
-      
+
       // Check circuit breaker status
       const circuitBreakerStatus = executor.getCircuitBreakerStatus();
       expect(circuitBreakerStatus.twitter.state).toBe('open');
-      
+
       // Next action should be rejected immediately
-      await expect(executor.executeAction(actionInput))
-        .rejects.toThrow('Circuit breaker is open for platform: twitter');
+      await expect(executor.executeAction(actionInput)).rejects.toThrow(
+        'Circuit breaker is open for platform: twitter'
+      );
     });
-    
+
     test('should recover from circuit breaker after timeout', async () => {
       // Force circuit breaker to open state
       const circuitBreaker = executor.circuitBreakers.get('twitter');
       circuitBreaker.state = 'open';
       circuitBreaker.nextAttemptTime = Date.now() - 1000; // Already expired
-      
+
       // Reset adapter to work normally
       const twitterAdapter = executor.adapters.get('twitter');
       twitterAdapter.failureRate = 0;
-      
+
       const actionInput = {
         organizationId: 'org-recovery-test',
         platform: 'twitter',
@@ -207,19 +208,19 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         action: 'hideComment',
         reason: 'Circuit breaker recovery test'
       };
-      
+
       const result = await executor.executeAction(actionInput);
-      
+
       expect(result.success).toBe(true);
       expect(circuitBreaker.state).toBe('closed');
       expect(circuitBreaker.failureCount).toBe(0);
     });
   });
-  
+
   describe('Retry Logic Integration', () => {
     test('should retry failed actions with exponential backoff', async () => {
       const twitterAdapter = executor.adapters.get('twitter');
-      
+
       // Mock adapter to fail twice then succeed
       let attemptCount = 0;
       const originalHideComment = twitterAdapter.hideComment;
@@ -230,7 +231,7 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         }
         return originalHideComment.call(twitterAdapter, input);
       });
-      
+
       const actionInput = {
         organizationId: 'org-retry-test',
         platform: 'twitter',
@@ -239,26 +240,26 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         action: 'hideComment',
         reason: 'Retry logic test'
       };
-      
+
       const startTime = Date.now();
       const result = await executor.executeAction(actionInput);
       const executionTime = Date.now() - startTime;
-      
+
       expect(result.success).toBe(true);
       expect(twitterAdapter.hideComment).toHaveBeenCalledTimes(3);
       expect(executionTime).toBeGreaterThan(20); // Should include retry delays
     });
   });
-  
+
   describe('Worker Integration', () => {
     test('should process Shield action jobs through worker', async () => {
       // Mock worker dependencies
       const mockWorker = new ShieldActionWorker();
-      
+
       // Override action executor with our test instance
       mockWorker.actionExecutor = executor;
       mockWorker.costControl = mockCostControl;
-      
+
       const jobPayload = {
         organizationId: 'org-worker-test',
         userId: 'user-worker-123',
@@ -275,16 +276,16 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
           serverId: 'server-123'
         }
       };
-      
+
       const result = await mockWorker.processJob({
         id: 'job-worker-integration-test',
         payload: jobPayload
       });
-      
+
       expect(result.success).toBe(true);
       expect(result.platform).toBe('discord');
       expect(result.action).toBe('hideComment');
-      
+
       // Verify cost control was called
       expect(mockCostControl.recordUsage).toHaveBeenCalledWith(
         'org-worker-test',
@@ -298,13 +299,13 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         null,
         1
       );
-      
+
       // Verify worker metrics updated
       expect(mockWorker.workerMetrics.totalProcessed).toBe(1);
       expect(mockWorker.workerMetrics.successfulActions).toBe(1);
     });
   });
-  
+
   describe('GDPR Compliance Integration', () => {
     test('should store original text for content-based actions per GDPR requirements', async () => {
       const actionInput = {
@@ -316,9 +317,9 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         reason: 'GDPR compliance test',
         originalText: 'Personal information that needs GDPR protection'
       };
-      
+
       await executor.executeAction(actionInput);
-      
+
       // Verify original text is stored for content-based actions with proper GDPR metadata
       expect(executor.persistenceService.recordShieldEvent).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -337,7 +338,7 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         })
       );
     });
-    
+
     test('should not store original text for non-content actions', async () => {
       const actionInput = {
         organizationId: 'org-gdpr-test',
@@ -348,13 +349,13 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         reason: 'GDPR compliance test for blocking',
         originalText: 'This text should not be stored for blocking action'
       };
-      
+
       await executor.executeAction(actionInput);
-      
+
       // For blockUser action (non-content based), original text should be null for GDPR compliance
       expect(executor.persistenceService.recordShieldEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          originalText: null,  // Should be null for non-content actions
+          originalText: null, // Should be null for non-content actions
           actionTaken: 'blockUser',
           actionDetails: expect.objectContaining({
             contentBased: false,
@@ -364,13 +365,13 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
       );
     });
   });
-  
+
   describe('Error Handling Integration', () => {
     test('should handle persistence service failures gracefully', async () => {
       executor.persistenceService.recordShieldEvent.mockRejectedValue(
         new Error('Database connection failed')
       );
-      
+
       const actionInput = {
         organizationId: 'org-error-test',
         platform: 'twitter',
@@ -379,11 +380,11 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         action: 'hideComment',
         reason: 'Error handling test'
       };
-      
+
       // Should complete successfully despite persistence error
       const result = await executor.executeAction(actionInput);
       expect(result.success).toBe(true);
-      
+
       // Should log the persistence error
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to record Shield action',
@@ -393,11 +394,11 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         })
       );
     });
-    
+
     test('should maintain metrics accuracy during failures', async () => {
       const twitterAdapter = executor.adapters.get('twitter');
       twitterAdapter.failureRate = 1.0; // Force all actions to fail
-      
+
       const actionInput = {
         organizationId: 'org-metrics-test',
         platform: 'twitter',
@@ -406,42 +407,42 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         action: 'hideComment',
         reason: 'Metrics accuracy test'
       };
-      
+
       try {
         await executor.executeAction(actionInput);
       } catch (error) {
         // Expected to fail
       }
-      
+
       const metrics = executor.getMetrics();
       expect(metrics.totalActions).toBe(1);
       expect(metrics.failedActions).toBe(1);
       expect(metrics.byPlatform.twitter.failed).toBe(1);
     });
   });
-  
+
   describe('Performance and Monitoring', () => {
     test('should provide comprehensive monitoring data', () => {
       const metrics = executor.getMetrics();
       const circuitBreakerStatus = executor.getCircuitBreakerStatus();
       const capabilities = executor.getAdapterCapabilities();
-      
+
       expect(metrics).toHaveProperty('totalActions');
       expect(metrics).toHaveProperty('byPlatform');
       expect(metrics).toHaveProperty('byAction');
       expect(metrics).toHaveProperty('timestamp');
-      
+
       expect(circuitBreakerStatus).toHaveProperty('twitter');
       expect(circuitBreakerStatus).toHaveProperty('youtube');
       expect(circuitBreakerStatus).toHaveProperty('discord');
       expect(circuitBreakerStatus).toHaveProperty('twitch');
-      
+
       expect(capabilities.twitter).toHaveProperty('hideComment');
       expect(capabilities.twitter).toHaveProperty('reportUser');
       expect(capabilities.twitter).toHaveProperty('blockUser');
       expect(capabilities.twitter).toHaveProperty('unblockUser');
     });
-    
+
     test('should track execution times accurately', async () => {
       const actionInput = {
         organizationId: 'org-timing-test',
@@ -451,11 +452,11 @@ describe('Shield Action Executor Integration (Issue 361)', () => {
         action: 'hideComment',
         reason: 'Execution time test'
       };
-      
+
       const startTime = Date.now();
       const result = await executor.executeAction(actionInput);
       const actualExecutionTime = Date.now() - startTime;
-      
+
       expect(result.executionTime).toBeGreaterThan(0);
       expect(result.executionTime).toBeLessThan(actualExecutionTime + 50); // Allow some variance
     });

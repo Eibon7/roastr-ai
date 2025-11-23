@@ -3,7 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { CreditCard, Download, ExternalLink, Check, Zap, AlertTriangle, Activity, BarChart3, TrendingUp } from 'lucide-react';
+import {
+  CreditCard,
+  Download,
+  ExternalLink,
+  Check,
+  Zap,
+  AlertTriangle,
+  Activity,
+  BarChart3,
+  TrendingUp
+} from 'lucide-react';
 import { createMockFetch } from '../lib/mockMode';
 import { getDefaultEntitlements, getDefaultUsage } from '../config/planDefaults';
 import { formatCurrency } from '../utils/formatUtils';
@@ -25,7 +35,7 @@ export default function Billing() {
           fetchApi('/api/user/usage'),
           fetchApi('/api/user/entitlements')
         ]);
-        
+
         if (userRes.ok) setUser(await userRes.json());
         if (usageRes.ok) setUsage(await usageRes.json());
         if (entitlementsRes.ok) setEntitlements(await entitlementsRes.json());
@@ -52,7 +62,6 @@ export default function Billing() {
       console.error('Failed to open billing portal:', error);
     }
   };
-
 
   if (loading) {
     return (
@@ -108,9 +117,13 @@ export default function Billing() {
             <div>
               <div className="text-3xl font-bold capitalize">{mockEntitlements.plan_name}</div>
               <div className="text-muted-foreground mt-1">
-                {mockEntitlements.plan_name === 'starter_trial' ? 'Free Trial' : 
-                 mockEntitlements.plan_name === 'starter' ? `${formatCurrency(500, 'USD')}/month` :
-                 mockEntitlements.plan_name === 'pro' ? `${formatCurrency(1500, 'USD')}/month` : `${formatCurrency(5000, 'USD')}/month`}
+                {mockEntitlements.plan_name === 'starter_trial'
+                  ? 'Free Trial'
+                  : mockEntitlements.plan_name === 'starter'
+                    ? `${formatCurrency(500, 'USD')}/month`
+                    : mockEntitlements.plan_name === 'pro'
+                      ? `${formatCurrency(1500, 'USD')}/month`
+                      : `${formatCurrency(5000, 'USD')}/month`}
               </div>
             </div>
             <div>
@@ -123,9 +136,7 @@ export default function Billing() {
             <div>
               <div className="text-sm text-muted-foreground">RQC Mode</div>
               <div className="font-semibold capitalize">{mockEntitlements.rqc_mode}</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Response Quality Control
-              </div>
+              <div className="text-sm text-muted-foreground mt-1">Response Quality Control</div>
             </div>
           </div>
         </CardContent>
@@ -175,7 +186,8 @@ export default function Billing() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - new Date().getDate()}
+              {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() -
+                new Date().getDate()}
             </div>
             <div className="text-xs text-muted-foreground">Until next billing cycle</div>
           </CardContent>
@@ -187,7 +199,10 @@ export default function Billing() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockUsage.analysis_used > 0 ? Math.round((mockUsage.roast_used / mockUsage.analysis_used) * 100) : 0}%
+              {mockUsage.analysis_used > 0
+                ? Math.round((mockUsage.roast_used / mockUsage.analysis_used) * 100)
+                : 0}
+              %
             </div>
             <div className="text-xs text-muted-foreground">Analyses to roasts ratio</div>
           </CardContent>
@@ -234,11 +249,50 @@ export default function Billing() {
             {mockEntitlements.plan_name !== 'starter_trial' ? (
               <>
                 {[
-                  { date: 'Dec 15, 2024', amount: formatCurrency(mockEntitlements.plan_name === 'starter' ? 500 : mockEntitlements.plan_name === 'pro' ? 1500 : 5000, 'USD'), status: 'Paid', invoice: 'INV-001' },
-                  { date: 'Nov 15, 2024', amount: formatCurrency(mockEntitlements.plan_name === 'starter' ? 500 : mockEntitlements.plan_name === 'pro' ? 1500 : 5000, 'USD'), status: 'Paid', invoice: 'INV-002' },
-                  { date: 'Oct 15, 2024', amount: formatCurrency(mockEntitlements.plan_name === 'starter' ? 500 : mockEntitlements.plan_name === 'pro' ? 1500 : 5000, 'USD'), status: 'Paid', invoice: 'INV-003' },
+                  {
+                    date: 'Dec 15, 2024',
+                    amount: formatCurrency(
+                      mockEntitlements.plan_name === 'starter'
+                        ? 500
+                        : mockEntitlements.plan_name === 'pro'
+                          ? 1500
+                          : 5000,
+                      'USD'
+                    ),
+                    status: 'Paid',
+                    invoice: 'INV-001'
+                  },
+                  {
+                    date: 'Nov 15, 2024',
+                    amount: formatCurrency(
+                      mockEntitlements.plan_name === 'starter'
+                        ? 500
+                        : mockEntitlements.plan_name === 'pro'
+                          ? 1500
+                          : 5000,
+                      'USD'
+                    ),
+                    status: 'Paid',
+                    invoice: 'INV-002'
+                  },
+                  {
+                    date: 'Oct 15, 2024',
+                    amount: formatCurrency(
+                      mockEntitlements.plan_name === 'starter'
+                        ? 500
+                        : mockEntitlements.plan_name === 'pro'
+                          ? 1500
+                          : 5000,
+                      'USD'
+                    ),
+                    status: 'Paid',
+                    invoice: 'INV-003'
+                  }
                 ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between py-3 border-b last:border-0">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between py-3 border-b last:border-0"
+                  >
                     <div>
                       <div className="font-medium">{item.invoice}</div>
                       <div className="text-sm text-muted-foreground">{item.date}</div>

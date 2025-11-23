@@ -81,7 +81,7 @@ describe('Guardian API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.cases).toBeInstanceOf(Array);
-      response.body.cases.forEach(c => {
+      response.body.cases.forEach((c) => {
         expect(c.severity).toBe('CRITICAL');
       });
     });
@@ -93,7 +93,7 @@ describe('Guardian API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.cases).toBeInstanceOf(Array);
-      response.body.cases.forEach(c => {
+      response.body.cases.forEach((c) => {
         expect(c.action).toBe('REVIEW');
       });
     });

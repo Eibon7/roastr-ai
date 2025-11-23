@@ -10,6 +10,7 @@
 ## 🎯 Objective
 
 Fix 2 failing CI/CD jobs on PR #492:
+
 1. **auto-repair job**: ENOENT error - `gdd-repair.json` file not found
 2. **validate-gdd job**: Health score 93.8/100 below threshold (should be 93, not 95)
 
@@ -20,11 +21,13 @@ Fix 2 failing CI/CD jobs on PR #492:
 ### Issue 1: auto-repair Job Failure
 
 **Error**:
+
 ```text
 ENOENT: no such file or directory, open 'gdd-repair.json'
 ```
 
 **Root Cause**:
+
 - Workflow `.github/workflows/gdd-repair.yml` expects `gdd-repair.json` to always exist
 - Script `scripts/auto-repair-gdd.js` may not generate file when no repairs are needed
 - Multiple steps attempt to read file without checking existence:
@@ -39,12 +42,14 @@ ENOENT: no such file or directory, open 'gdd-repair.json'
 ### Issue 2: validate-gdd Job Failure
 
 **Error**:
+
 ```text
 ❌ GDD validation failed: Health score below threshold
 Health Score: 93.8/100 (required: 95)
 ```
 
 **Root Cause**:
+
 - `.gddrc.json` has `min_health_score: 95`
 - According to Phase 15.2 documentation (GDD-IMPLEMENTATION-SUMMARY.md):
   - Temporary threshold: 93 (until Oct 31, 2025)
@@ -67,6 +72,7 @@ Health Score: 93.8/100 (required: 95)
 **Changes to `.github/workflows/gdd-repair.yml`**:
 
 1. **Dry-run step (lines 55-68)**:
+
    ```yaml
    # Before
    FIXES=$(jq -r '.fixes_would_apply' gdd-repair.json)
@@ -80,6 +86,7 @@ Health Score: 93.8/100 (required: 95)
    ```
 
 2. **Apply fixes step (lines 70-87)**:
+
    ```yaml
    # Before
    FIXES=$(jq -r '.fixes_applied' gdd-repair.json)
@@ -96,6 +103,7 @@ Health Score: 93.8/100 (required: 95)
    ```
 
 3. **Summary generation (lines 145-169)**:
+
    ```yaml
    # Before
    jq -r '.details.fixes[] | "- \(.type): \(.node) - \(.action)"' gdd-repair.json >> repair-summary.md || true
@@ -109,6 +117,7 @@ Health Score: 93.8/100 (required: 95)
    ```
 
 4. **PR comment step (lines 171-235)**:
+
    ```javascript
    // Before
    const repair = JSON.parse(fs.readFileSync('gdd-repair.json', 'utf8'));
@@ -121,6 +130,7 @@ Health Score: 93.8/100 (required: 95)
    ```
 
 5. **Issue creation step (lines 237-271)**:
+
    ```javascript
    // Before
    const repair = JSON.parse(fs.readFileSync('gdd-repair.json', 'utf8'));
@@ -156,6 +166,7 @@ Health Score: 93.8/100 (required: 95)
 ```
 
 **Key changes**:
+
 - `min_health_score`: 95 → 93
 - Added `temporary_until`: "2025-10-31" (self-documenting)
 - Added `permanent_threshold`: 95 (for reference)
@@ -170,6 +181,7 @@ Health Score: 93.8/100 (required: 95)
 ### Pre-commit Checks
 
 1. ✅ Syntax validation:
+
    ```bash
    # Validate YAML
    yq eval '.github/workflows/gdd-repair.yml' > /dev/null
@@ -208,11 +220,11 @@ Health Score: 93.8/100 (required: 95)
 
 ## 📁 Files Modified
 
-| File | Lines Changed | Type | Description |
-|------|---------------|------|-------------|
-| `.gddrc.json` | +3/-2 | Config | Temporary threshold 93 + metadata |
-| `.github/workflows/gdd-repair.yml` | +30/-5 | Workflow | File existence checks |
-| `docs/plan/ci-fix-pr-492.md` | +280 new | Docs | This plan document |
+| File                               | Lines Changed | Type     | Description                       |
+| ---------------------------------- | ------------- | -------- | --------------------------------- |
+| `.gddrc.json`                      | +3/-2         | Config   | Temporary threshold 93 + metadata |
+| `.github/workflows/gdd-repair.yml` | +30/-5        | Workflow | File existence checks             |
+| `docs/plan/ci-fix-pr-492.md`       | +280 new      | Docs     | This plan document                |
 
 ---
 
@@ -224,33 +236,41 @@ Add entry documenting temporary threshold and workflow fixes:
 
 ```markdown
 ## 🔧 CI/CD Job Fixes - PR #492 Unblock
+
 ### 🛠️ Implementation Date: 2025-10-09
+
 **PR**: [#492 - Phase 13 - Telemetry & Analytics Layer](...)
 **Status**: ✅ COMPLETE - Both jobs fixed
 
 ### 🎯 Overview
+
 Fixed 2 failing CI/CD jobs blocking PR #492 merge:
+
 1. auto-repair job handling missing gdd-repair.json
 2. validate-gdd job using correct temporary threshold (93)
 
 ### 📊 Changes Summary
 
 **Fix 1: auto-repair Job (ENOENT Error)**
+
 - Added file existence checks before all gdd-repair.json reads
 - Graceful fallbacks: 0 fixes, 0 errors when file missing
 - Behavior: Job succeeds when no repairs needed (healthy state)
 
 **Fix 2: validate-gdd Job (Threshold)**
+
 - Updated min_health_score: 95 → 93 (temporary until Oct 31)
 - Aligns with Phase 15.2 coverage recovery plan
 - Added metadata: temporary_until, permanent_threshold
 
 ### 🧪 Testing
+
 - ✅ auto-repair: Succeeds with "No repairs needed"
 - ✅ validate-gdd: Health 93.8 passes (above 93 threshold)
 - ✅ PR #492: Now mergeable
 
 ### 📚 Related
+
 - Phase 15.2: Temporary Threshold & Coverage Recovery
 - Issue #500-505: Coverage recovery tasks
 ```
@@ -274,6 +294,7 @@ Fixed 2 failing CI/CD jobs blocking PR #492 merge:
 **Problem**: Workflows that assume files always exist are fragile
 **Solution**: Always check file existence before reading
 **Pattern**:
+
 ```bash
 # Shell
 if [ -f file.json ]; then
@@ -295,6 +316,7 @@ if (fs.existsSync('file.json')) {
 **Problem**: Config values in multiple places can drift
 **Solution**: Self-documenting config with metadata
 **Pattern**:
+
 ```json
 {
   "current_value": 93,

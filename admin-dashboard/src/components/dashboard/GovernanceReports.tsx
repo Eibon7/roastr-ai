@@ -65,7 +65,7 @@ export const GovernanceReports: React.FC = () => {
 
   const tabs: GuardianTab[] = ['ALL', 'CRITICAL', 'SENSITIVE', 'SAFE', 'APPROVED', 'DENIED'];
 
-  const selectedCase = data?.cases.find(c => c.case_id === selectedCaseId) || null;
+  const selectedCase = data?.cases.find((c) => c.case_id === selectedCaseId) || null;
 
   return (
     <div style={containerStyles}>
@@ -81,7 +81,7 @@ export const GovernanceReports: React.FC = () => {
       <CornerSeparator />
 
       <div style={tabsStyles}>
-        {tabs.map(tab => (
+        {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -126,7 +126,7 @@ export const GovernanceReports: React.FC = () => {
           <p style={{ marginBottom: '20px', opacity: 0.7 }}>
             Showing {data.cases.length} of {data.total} cases
           </p>
-          {data.cases.map(caseData => (
+          {data.cases.map((caseData) => (
             <CaseCard
               key={caseData.case_id}
               caseData={caseData}

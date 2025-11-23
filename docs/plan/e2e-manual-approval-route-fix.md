@@ -12,6 +12,7 @@
 ### Job Failing: E2E Tests - Manual Approval UI
 
 **Síntomas**:
+
 ```
 TimeoutError: locator.click: Timeout 10000ms exceeded.
 waiting for locator('[data-testid="generate-variant-btn"]').first()
@@ -25,6 +26,7 @@ at line 636, 685, 738
 ❌ **NEW PROBLEM**: Tests access `/manual-approval.html` but page not served at that route
 
 **Evidence**:
+
 - Page exists: `/Users/emiliopostigo/roastr-ai/public/manual-approval.html` ✅
 - Contains all required data-testids ✅
 - Server config: `/public` path serves static files under `/public/*` route
@@ -38,6 +40,7 @@ at line 636, 685, 738
 ## Análisis por Severidad
 
 ### Critical (C1): Page Route Missing
+
 - **Type**: Architecture - Missing route configuration
 - **File**: `src/index.js`
 - **Impact**: All E2E tests fail (15+ test cases, 0% passing)
@@ -45,6 +48,7 @@ at line 636, 685, 738
 - **Legacy Pattern**: `index.html` has direct route (line 532: `/home`)
 
 ### Major (M1): Test Assumptions vs Server Reality
+
 - **Type**: Architecture - Tests assume direct route access
 - **Files**:
   - `tests/e2e/manual-approval-resilience.spec.js` (all tests)
@@ -57,15 +61,18 @@ at line 636, 685, 738
 ## GDD Nodes Affected
 
 **Primary Nodes**:
+
 1. `testing` - E2E test execution failing
 2. `ui-components` - Manual Approval UI not accessible
 3. `routing` - Missing route configuration
 
 **Dependencies**:
+
 - `observability` → Edge validation required if adding new route
 - `spec.md` → NO changes (existing API contracts unchanged)
 
 **Validation Required**:
+
 ```bash
 node scripts/resolve-graph.js testing ui-components routing
 node scripts/validate-gdd-runtime.js --node=testing
@@ -80,6 +87,7 @@ node scripts/validate-gdd-runtime.js --node=testing
 **Approach**: Add explicit route similar to existing `/home` route pattern
 
 **Implementation**:
+
 ```javascript
 // src/index.js - After line 533
 app.get('/manual-approval.html', (req, res) => {
@@ -88,20 +96,24 @@ app.get('/manual-approval.html', (req, res) => {
 ```
 
 **Rationale**:
+
 - ✅ Maintains test compatibility (no test changes needed)
 - ✅ Follows existing pattern (`/home` route for `public/index.html`)
 - ✅ Simple, explicit, no side effects
 - ✅ Production-ready (proper error handling via sendFile)
 
 **Alternative Rejected**: Changing tests to use `/public/manual-approval.html`
+
 - ❌ Requires updating all test files
 - ❌ Exposes implementation detail (/public path)
 - ❌ Less user-friendly URL
 
 **Files Modified**:
+
 - `src/index.js` (1 new route, ~5 lines)
 
 **Testing Plan**:
+
 1. Local verification: `curl http://localhost:3000/manual-approval.html`
 2. E2E tests: All 15+ test cases should now find page
 3. Regression: Verify `/public/*` routes still work
@@ -111,6 +123,7 @@ app.get('/manual-approval.html', (req, res) => {
 ### FASE 2: Validate E2E Tests Pass
 
 **Success Criteria**:
+
 - ✅ Server starts (already working)
 - ✅ Page loads at `/manual-approval.html`
 - ✅ All data-testids found:
@@ -122,6 +135,7 @@ app.get('/manual-approval.html', (req, res) => {
 - ✅ 15+ E2E tests pass within 10-14m timeout
 
 **Monitoring**:
+
 ```bash
 gh run view --job=<job_id> --log | grep "passing\|failing"
 ```
@@ -131,11 +145,13 @@ gh run view --job=<job_id> --log | grep "passing\|failing"
 ### FASE 3: Documentation & Evidence
 
 **Files to Update**:
+
 - ✅ GDD nodes: Update `routing` node with new route
 - ✅ spec.md: NO changes (internal route, not public API)
 - ❌ No architecture changes (follows existing pattern)
 
 **Evidence Collection**:
+
 ```bash
 mkdir -p docs/test-evidence/pr-574-e2e-fix
 # Screenshots from Playwright reports
@@ -148,17 +164,20 @@ mkdir -p docs/test-evidence/pr-574-e2e-fix
 ## Archivos Completos Afectados
 
 ### Core Implementation
+
 1. **src/index.js** (L535-540) - Add manual approval route
    - Pattern: Explicit route like existing `/home`
    - Error handling: Built-in via `res.sendFile()`
    - Dependencies: None (uses existing public/manual-approval.html)
 
 ### Tests (No Changes Required)
+
 2. **tests/e2e/manual-approval-resilience.spec.js** - Already correct
 3. **tests/e2e/validation-ui.spec.js** - Likely uses same pattern
 4. **public/manual-approval.html** - Already exists with all data-testids
 
 ### Dependencies
+
 5. **src/routes/approval.js** - Already has API endpoints for:
    - `GET /api/approval/pending`
    - `POST /api/approval/:id/approve`
@@ -193,6 +212,7 @@ mkdir -p docs/test-evidence/pr-574-e2e-fix
 ## Testing Plan
 
 ### Pre-Commit Local Testing
+
 ```bash
 # Start server
 npm start
@@ -207,6 +227,7 @@ curl http://localhost:3000/public/manual-approval.html
 ```
 
 ### CI Validation
+
 ```bash
 # After push, monitor E2E tests
 gh run view --job=<job_id> --log
@@ -220,6 +241,7 @@ gh run view --job=<job_id> --log
 ```
 
 ### Regression Testing
+
 - ✅ `/public/*` routes still work
 - ✅ `/home` route still works
 - ✅ React app routing unaffected
@@ -230,18 +252,21 @@ gh run view --job=<job_id> --log
 ## Success Criteria
 
 **100% Resolution**:
+
 - ✅ C1: Route added for `/manual-approval.html`
 - ✅ All E2E tests passing (15+ test cases)
 - ✅ No test file changes required
 - ✅ No breaking changes to existing routes
 
 **Quality Gates**:
+
 - ✅ Tests pass: 15+ E2E tests green
 - ✅ Coverage: Maintained (no new code, only routing)
 - ✅ 0 regressions: All other routes still work
 - ✅ GDD health ≥87: Routing node updated
 
 **Performance**:
+
 - ✅ E2E tests complete within 10-14m (not timeout)
 - ✅ Page load time <500ms
 - ✅ No memory leaks
@@ -251,6 +276,7 @@ gh run view --job=<job_id> --log
 ## Risk Assessment
 
 ### Low Risk ✅
+
 - **Single line route addition** - Minimal code change
 - **Follows existing pattern** - `/home` route precedent
 - **No dependencies** - Uses existing HTML file
@@ -258,6 +284,7 @@ gh run view --job=<job_id> --log
 - **Easily revertible** - Remove 5 lines if issues
 
 ### Zero Risk Areas
+
 - ❌ API contracts unchanged
 - ❌ Database schema unchanged
 - ❌ Authentication unchanged
@@ -268,6 +295,7 @@ gh run view --job=<job_id> --log
 ## Rollback Plan
 
 **IF** route causes issues:
+
 1. Revert commit: `git revert <commit_hash>`
 2. Alternative: Change tests to use `/public/manual-approval.html`
 3. Document why direct route approach failed
@@ -278,7 +306,7 @@ gh run view --job=<job_id> --log
 
 ## Commit Message Template
 
-```
+````
 fix(e2e): Add direct route for manual-approval.html to enable E2E tests
 
 ## Problem
@@ -292,12 +320,14 @@ Server serves: http://localhost:3000/public/manual-approval.html
 Static file server mounts /public directory at /public/* route:
 ```javascript
 app.use('/public', express.static(path.join(__dirname, '../public')));
-```
+````
 
 Tests written for direct route access (no /public prefix).
 
 ## Solution
+
 Added explicit route for manual-approval.html following existing /home pattern:
+
 ```javascript
 app.get('/manual-approval.html', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/manual-approval.html'));
@@ -305,23 +335,27 @@ app.get('/manual-approval.html', (req, res) => {
 ```
 
 ## Impact
+
 - ✅ E2E tests can now access page
 - ✅ All 15+ test cases should pass
 - ✅ No breaking changes to existing routes
 - ✅ Follows established pattern (line 532: /home route)
 
 ## Files Modified
+
 - src/index.js (1 new route)
 
 ## Testing
+
 - E2E tests: All resilience tests now executable
-- Regression: /public/* routes still work
+- Regression: /public/\* routes still work
 - Manual: curl http://localhost:3000/manual-approval.html ✅
 
 Related: Issue #419, PR #574
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
+
 ```
 
 ---
@@ -345,3 +379,4 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - CI run: 10-15 min
 - Validation: 5 min
 - GDD update: 5 min
+```

@@ -16,7 +16,8 @@ const { logger } = require('../utils/logger'); // Issue #483: Use destructured i
  * POST /api/stylecards/generate
  * Trigger stylecard generation for a user
  */
-router.post('/generate',
+router.post(
+  '/generate',
   authenticateToken,
   requirePlan(['pro', 'creator_plus']), // Only Pro/Plus users can generate stylecards
   [
@@ -25,20 +26,14 @@ router.post('/generate',
       .withMessage('Platforms must be an array')
       .custom((platforms) => {
         const validPlatforms = ['twitter', 'instagram', 'tiktok', 'youtube', 'twitch'];
-        const invalidPlatforms = platforms.filter(p => !validPlatforms.includes(p));
+        const invalidPlatforms = platforms.filter((p) => !validPlatforms.includes(p));
         if (invalidPlatforms.length > 0) {
           throw new Error(`Invalid platforms: ${invalidPlatforms.join(', ')}`);
         }
         return true;
       }),
-    body('language')
-      .optional()
-      .isIn(['es', 'en'])
-      .withMessage('Language must be es or en'),
-    body('forceRegenerate')
-      .optional()
-      .isBoolean()
-      .withMessage('forceRegenerate must be a boolean'),
+    body('language').optional().isIn(['es', 'en']).withMessage('Language must be es or en'),
+    body('forceRegenerate').optional().isBoolean().withMessage('forceRegenerate must be a boolean'),
     body('maxContentPerPlatform')
       .optional()
       .isInt({ min: 10, max: 100 })
@@ -47,7 +42,12 @@ router.post('/generate',
   validateRequest,
   async (req, res) => {
     try {
-      const { platforms, language = 'es', forceRegenerate = false, maxContentPerPlatform } = req.body;
+      const {
+        platforms,
+        language = 'es',
+        forceRegenerate = false,
+        maxContentPerPlatform
+      } = req.body;
       const userId = req.user.id;
       const organizationId = req.user.organization_id;
 
@@ -67,8 +67,8 @@ router.post('/generate',
         .eq('enabled', true)
         .in('platform', platforms);
 
-      const connectedPlatforms = integrations?.map(i => i.platform) || [];
-      
+      const connectedPlatforms = integrations?.map((i) => i.platform) || [];
+
       if (connectedPlatforms.length === 0) {
         return res.status(400).json({
           success: false,
@@ -95,7 +95,6 @@ router.post('/generate',
         data: result,
         message: 'Stylecard generation started successfully'
       });
-
     } catch (error) {
       logger.error('Failed to trigger stylecard generation', {
         userId: req.user?.id,
@@ -116,11 +115,10 @@ router.post('/generate',
  * GET /api/stylecards/status/:jobId
  * Get stylecard generation job status
  */
-router.get('/status/:jobId',
+router.get(
+  '/status/:jobId',
   authenticateToken,
-  [
-    param('jobId').isUUID().withMessage('Invalid job ID')
-  ],
+  [param('jobId').isUUID().withMessage('Invalid job ID')],
   validateRequest,
   async (req, res) => {
     try {
@@ -157,7 +155,6 @@ router.get('/status/:jobId',
           stylecardId: job.stylecard_id
         }
       });
-
     } catch (error) {
       logger.error('Failed to get job status', {
         jobId: req.params.jobId,
@@ -177,14 +174,10 @@ router.get('/status/:jobId',
  * GET /api/stylecards/current
  * Get user's current active stylecard
  */
-router.get('/current',
+router.get(
+  '/current',
   authenticateToken,
-  [
-    query('language')
-      .optional()
-      .isIn(['es', 'en'])
-      .withMessage('Language must be es or en')
-  ],
+  [query('language').optional().isIn(['es', 'en']).withMessage('Language must be es or en')],
   validateRequest,
   async (req, res) => {
     try {
@@ -223,7 +216,6 @@ router.get('/current',
         success: true,
         data: publicStylecard
       });
-
     } catch (error) {
       logger.error('Failed to get current stylecard', {
         userId: req.user?.id,
@@ -242,14 +234,10 @@ router.get('/current',
  * DELETE /api/stylecards/current
  * Delete user's current stylecard (opt-out)
  */
-router.delete('/current',
+router.delete(
+  '/current',
   authenticateToken,
-  [
-    query('language')
-      .optional()
-      .isIn(['es', 'en'])
-      .withMessage('Language must be es or en')
-  ],
+  [query('language').optional().isIn(['es', 'en']).withMessage('Language must be es or en')],
   validateRequest,
   async (req, res) => {
     try {
@@ -258,7 +246,7 @@ router.delete('/current',
 
       // Get current stylecard
       const stylecard = await stylecardService.getActiveStylecard(userId, language);
-      
+
       if (!stylecard) {
         return res.json({
           success: true,
@@ -286,7 +274,6 @@ router.delete('/current',
         success: true,
         message: 'Stylecard deleted successfully'
       });
-
     } catch (error) {
       logger.error('Failed to delete stylecard', {
         userId: req.user?.id,
@@ -305,7 +292,8 @@ router.delete('/current',
  * GET /api/stylecards/jobs
  * Get user's stylecard generation job history
  */
-router.get('/jobs',
+router.get(
+  '/jobs',
   authenticateToken,
   [
     query('limit')
@@ -326,7 +314,9 @@ router.get('/jobs',
 
       const { data: jobs, error } = await req.supabase
         .from('stylecard_generation_jobs')
-        .select('id, status, progress_percentage, content_analyzed, created_at, started_at, completed_at, error_message')
+        .select(
+          'id, status, progress_percentage, content_analyzed, created_at, started_at, completed_at, error_message'
+        )
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -342,7 +332,6 @@ router.get('/jobs',
           total: jobs?.length || 0
         }
       });
-
     } catch (error) {
       logger.error('Failed to get job history', {
         userId: req.user?.id,

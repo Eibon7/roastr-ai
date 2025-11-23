@@ -22,6 +22,7 @@
 **Type:** Refactor without functional changes
 
 **Justification:**
+
 1. **No functional changes:** This is a pure refactor (PRICE_ID → PRODUCT_ID) with no behavior changes
 2. **Backward compatibility maintained:** Legacy functions preserved with warnings
 3. **No new features:** Only variable/function name updates
@@ -29,6 +30,7 @@
 5. **Low risk:** Changes are internal to Polar integration, no external API changes
 
 **Risk Assessment:**
+
 - **Risk Level:** LOW
 - **Impact:** Internal refactor only
 - **User Impact:** None (backward compatible)
@@ -63,4 +65,3 @@
 ## Notes
 
 This refactor prepares the codebase for Issue #808 (test migration). Tests will be added in that issue, not in this PR.
-

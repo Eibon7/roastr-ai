@@ -7,6 +7,7 @@ Después de un análisis exhaustivo del flujo completo desde la recepción de co
 ## ✅ Aspectos Funcionando Correctamente
 
 ### 1. Configuración de Usuario
+
 - **Tonos de respuesta**: sarcastic, playful, witty, balanced
 - **Tipos de humor**: clever, witty, savage, gentle
 - **Frecuencia de respuesta**: Control probabilístico (0.0 - 1.0)
@@ -14,6 +15,7 @@ Después de un análisis exhaustivo del flujo completo desde la recepción de co
 - **Persistencia**: Configuraciones se guardan correctamente en Supabase
 
 ### 2. Validación de Límites de Caracteres
+
 ```javascript
 PLATFORM_LIMITS = {
   twitter: { maxLength: 280 },
@@ -21,16 +23,18 @@ PLATFORM_LIMITS = {
   discord: { maxLength: 2000 },
   youtube: { maxLength: 10000 },
   bluesky: { maxLength: 300 }
-}
+};
 ```
 
 ### 3. API Endpoints Funcionales
+
 - `/api/roast/preview` - Genera previsualizaciones ✅
 - `/api/config/:platform` - Gestiona configuraciones ✅
 - `/api/user/preferences` - Maneja preferencias ✅
 - `/api/user/roastr-persona` - Gestiona personalidad ✅
 
 ### 4. Sistema de Transparencia
+
 - Disclaimers automáticos cuando está habilitado
 - Rotación de mensajes de transparencia
 - Configuración por organización
@@ -49,8 +53,8 @@ if (!comment) {
 }
 
 const integrationConfig = await this.getIntegrationConfig(
-  comment.organization_id, 
-  comment.platform, 
+  comment.organization_id,
+  comment.platform,
   comment.integration_config_id
 );
 if (!integrationConfig) {
@@ -69,12 +73,12 @@ if (!integrationConfig) {
 job = {
   payload: {
     comment_id: 'string',
-    organization_id: 'string', 
+    organization_id: 'string',
     platform: 'string',
     original_text: 'string',
     toxicity_score: number
   }
-}
+};
 ```
 
 **Impacto**: Jobs malformados causan errores inmediatos.
@@ -97,6 +101,7 @@ catch (error) {
 ### 4. Estados de UI No Sincronizados
 
 **Problema**: La interfaz no refleja correctamente estados intermedios:
+
 - Loading states no siempre se muestran
 - Errores no se comunican claramente al usuario
 - Estados de "colgado" cuando APIs fallan
@@ -110,12 +115,12 @@ catch (error) {
 class JobValidator {
   static validateGenerateReplyJob(job) {
     const required = ['comment_id', 'organization_id', 'platform', 'original_text'];
-    const missing = required.filter(field => !job.payload?.[field]);
-    
+    const missing = required.filter((field) => !job.payload?.[field]);
+
     if (missing.length > 0) {
       throw new ValidationError(`Missing required fields: ${missing.join(', ')}`);
     }
-    
+
     return true;
   }
 }
@@ -148,12 +153,12 @@ class CircuitBreaker {
     this.timeout = timeout;
     this.state = 'CLOSED'; // CLOSED, OPEN, HALF_OPEN
   }
-  
+
   async execute(operation) {
     if (this.state === 'OPEN') {
       throw new Error('Circuit breaker is OPEN');
     }
-    
+
     try {
       const result = await operation();
       this.onSuccess();
@@ -177,11 +182,11 @@ const useRoastState = () => {
     progress: 0,
     stage: 'idle' // idle, analyzing, generating, posting
   });
-  
+
   const updateStage = (stage, progress = 0) => {
-    setState(prev => ({ ...prev, stage, progress, loading: stage !== 'idle' }));
+    setState((prev) => ({ ...prev, stage, progress, loading: stage !== 'idle' }));
   };
-  
+
   return { state, updateStage };
 };
 ```
@@ -189,17 +194,20 @@ const useRoastState = () => {
 ## 📊 Cobertura de Tests Actual
 
 ### Tests Funcionando ✅
+
 - Validación de límites de caracteres
 - API endpoints básicos
 - Configuración de usuario
 
 ### Tests Fallando ❌
+
 - Flujo completo de workers (11/13 tests)
 - Manejo de errores de base de datos
 - Procesamiento concurrente
 - Validación de jobs malformados
 
 ### Gaps de Cobertura 🔍
+
 - Tests de integración end-to-end reales
 - Tests de rendimiento bajo carga
 - Tests de recuperación ante fallos
@@ -208,17 +216,20 @@ const useRoastState = () => {
 ## 🎯 Plan de Acción Prioritario
 
 ### Fase 1: Estabilización (Semana 1-2) ✅ COMPLETADA
+
 1. ✅ **JobValidator**: Implementado con validación robusta para todos los tipos de workers
 2. ✅ **ErrorHandler**: Sistema completo de manejo de errores con retry, timeout y fallback
 3. ✅ **CircuitBreaker**: Implementado para proteger APIs externas con fallbacks automáticos
 4. ✅ **GenerateReplyWorker**: Integrado con todas las mejoras de robustez
 
 ### Fase 2: Robustez (Semana 3-4) ✅ COMPLETADA
+
 1. ✅ **Circuit breakers implementados**: Para OpenAI API con fallback a templates
 2. ✅ **Retry logic con backoff exponencial**: Implementado en ErrorHandler
 3. ✅ **Logging y monitoreo mejorado**: Logs estructurados con contexto detallado
 
 ### Fase 3: UX (Semana 5-6) 🔄 EN PROGRESO
+
 1. 🔄 Implementar estados de UI más granulares
 2. 🔄 Añadir indicadores de progreso
 3. 🔄 Mejorar mensajes de error para usuarios
@@ -226,12 +237,14 @@ const useRoastState = () => {
 ## 🔍 Métricas de Éxito
 
 ### Técnicas
+
 - **Tasa de éxito de jobs**: >95%
 - **Tiempo de respuesta promedio**: <3 segundos
 - **Cobertura de tests**: >90%
 - **Tiempo de recuperación ante fallos**: <30 segundos
 
 ### UX
+
 - **Tiempo hasta primera respuesta**: <2 segundos
 - **Tasa de abandono en estados de carga**: <5%
 - **Satisfacción de usuario con transparencia**: >4.5/5

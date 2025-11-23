@@ -7,10 +7,10 @@ import { Select } from '../components/ui/select';
 import { Separator } from '../components/ui/separator';
 import { useToast } from '../hooks/use-toast';
 import { RoastrComment } from '../components/roastr/RoastrComment';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
   MessageSquare,
   Shield,
   AlertTriangle,
@@ -53,9 +53,9 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
     // Validate character limit before approving
     if (isEditing && isOverLimit) {
       toast({
-        title: "Cannot approve response",
+        title: 'Cannot approve response',
         description: `Response exceeds ${platformLimit} character limit for ${response.comment.platform}. Please shorten the text.`,
-        variant: "destructive",
+        variant: 'destructive'
       });
       return;
     }
@@ -63,15 +63,15 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
     try {
       await onApprove(response.id, isEditing ? editedText : null);
       toast({
-        title: "Response approved",
-        description: "The roast has been approved and queued for posting",
+        title: 'Response approved',
+        description: 'The roast has been approved and queued for posting'
       });
       setIsEditing(false); // Exit edit mode after successful approval
     } catch (error) {
       toast({
-        title: "Error approving response",
+        title: 'Error approving response',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive'
       });
     }
   };
@@ -82,14 +82,14 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
       setShowRejectForm(false);
       setRejectionReason('');
       toast({
-        title: "Response rejected",
-        description: "The roast has been rejected and will not be posted",
+        title: 'Response rejected',
+        description: 'The roast has been rejected and will not be posted'
       });
     } catch (error) {
       toast({
-        title: "Error rejecting response",
+        title: 'Error rejecting response',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive'
       });
     }
   };
@@ -99,14 +99,14 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
     try {
       await onRegenerate(response.id);
       toast({
-        title: "Response regenerated",
-        description: "A new roast has been generated for review",
+        title: 'Response regenerated',
+        description: 'A new roast has been generated for review'
       });
     } catch (error) {
       toast({
-        title: "Error regenerating response", 
+        title: 'Error regenerating response',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive'
       });
     } finally {
       setRegenerating(false);
@@ -128,16 +128,21 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
         {/* Original Comment */}
         <RoastrComment
           author={response.comment.platform_username || 'Unknown'}
-          handle={response.comment.platform_username ? `@${response.comment.platform_username}` : undefined}
+          handle={
+            response.comment.platform_username
+              ? `@${response.comment.platform_username}`
+              : undefined
+          }
           platform={response.comment.platform}
           timestamp={new Date(response.comment.created_at || response.created_at).toLocaleString()}
           content={response.comment.original_text}
           sentiment={
-            response.comment.severity_level === 'critical' || response.comment.severity_level === 'high' 
-              ? 'negative' 
-              : response.comment.severity_level === 'low' 
-              ? 'positive' 
-              : 'neutral'
+            response.comment.severity_level === 'critical' ||
+            response.comment.severity_level === 'high'
+              ? 'negative'
+              : response.comment.severity_level === 'low'
+                ? 'positive'
+                : 'neutral'
           }
           toxicityScore={response.comment.toxicity_score}
           tags={response.comment.severity_level ? [response.comment.severity_level] : []}
@@ -154,15 +159,11 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
               <Badge variant="outline">Tono: {response.tone || 'balanceado'}</Badge>
               {/* Issue #872: humor_type removed (deprecated post-#686) */}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(!isEditing)}>
               <Edit3 className="h-3 w-3" />
             </Button>
           </div>
-          
+
           {isEditing ? (
             <div className="space-y-2">
               <Textarea
@@ -172,7 +173,9 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
                 placeholder="Edit the response text..."
               />
               <div className="flex justify-between items-center text-xs">
-                <span className={`${isOverLimit ? 'text-red-500' : remainingChars < 20 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
+                <span
+                  className={`${isOverLimit ? 'text-red-500' : remainingChars < 20 ? 'text-yellow-500' : 'text-muted-foreground'}`}
+                >
                   {currentLength}/{platformLimit} characters
                 </span>
                 {isOverLimit && (
@@ -188,7 +191,8 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
               </div>
               {isOverLimit && (
                 <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
-                  ⚠️ This response is too long for {response.comment.platform}. Please shorten it before approving.
+                  ⚠️ This response is too long for {response.comment.platform}. Please shorten it
+                  before approving.
                 </div>
               )}
             </div>
@@ -212,13 +216,15 @@ export function ApprovalCard({ response, onApprove, onReject, onRegenerate, load
                   disabled={loading || regenerating || (isEditing && isOverLimit)}
                   className={`flex-1 ${isEditing && isOverLimit ? 'opacity-50 cursor-not-allowed' : ''}`}
                   size="sm"
-                  title={isEditing && isOverLimit ? `Cannot approve: ${Math.abs(remainingChars)} characters over limit` : ''}
+                  title={
+                    isEditing && isOverLimit
+                      ? `Cannot approve: ${Math.abs(remainingChars)} characters over limit`
+                      : ''
+                  }
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Approve {isEditing ? '& Edit' : ''}
-                  {isEditing && isOverLimit && (
-                    <span className="ml-1 text-xs">⚠️</span>
-                  )}
+                  {isEditing && isOverLimit && <span className="ml-1 text-xs">⚠️</span>}
                 </Button>
                 <Button
                   onClick={() => setShowRejectForm(true)}
@@ -292,9 +298,7 @@ function StatsCard({ stats }) {
     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
       <Card>
         <CardContent className="p-4">
-          <div className="text-2xl font-bold text-orange-600">
-            {stats.pending_approval || 0}
-          </div>
+          <div className="text-2xl font-bold text-orange-600">{stats.pending_approval || 0}</div>
           <p className="text-sm text-muted-foreground flex items-center">
             <Clock className="h-3 w-3 mr-1" />
             Pending
@@ -303,9 +307,7 @@ function StatsCard({ stats }) {
       </Card>
       <Card>
         <CardContent className="p-4">
-          <div className="text-2xl font-bold text-green-600">
-            {stats.approved || 0}
-          </div>
+          <div className="text-2xl font-bold text-green-600">{stats.approved || 0}</div>
           <p className="text-sm text-muted-foreground flex items-center">
             <CheckCircle className="h-3 w-3 mr-1" />
             Approved
@@ -314,9 +316,7 @@ function StatsCard({ stats }) {
       </Card>
       <Card>
         <CardContent className="p-4">
-          <div className="text-2xl font-bold text-red-600">
-            {stats.rejected || 0}
-          </div>
+          <div className="text-2xl font-bold text-red-600">{stats.rejected || 0}</div>
           <p className="text-sm text-muted-foreground flex items-center">
             <XCircle className="h-3 w-3 mr-1" />
             Rejected
@@ -325,9 +325,7 @@ function StatsCard({ stats }) {
       </Card>
       <Card>
         <CardContent className="p-4">
-          <div className="text-2xl font-bold text-blue-600">
-            {stats.posted || 0}
-          </div>
+          <div className="text-2xl font-bold text-blue-600">{stats.posted || 0}</div>
           <p className="text-sm text-muted-foreground flex items-center">
             <MessageSquare className="h-3 w-3 mr-1" />
             Posted
@@ -336,9 +334,7 @@ function StatsCard({ stats }) {
       </Card>
       <Card>
         <CardContent className="p-4">
-          <div className="text-2xl font-bold">
-            {stats.approval_rate}%
-          </div>
+          <div className="text-2xl font-bold">{stats.approval_rate}%</div>
           <p className="text-sm text-muted-foreground flex items-center">
             <BarChart3 className="h-3 w-3 mr-1" />
             Approval Rate
@@ -373,27 +369,27 @@ export default function Approval() {
         limit: filters.limit,
         offset: filters.offset
       });
-      
+
       if (filters.platform) {
         params.append('platform', filters.platform);
       }
 
       const response = await fetch(`/api/approval/pending?${params}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      
+
       if (!response.ok) throw new Error('Failed to load pending responses');
-      
+
       const data = await response.json();
       setPendingResponses(data.data.pending_responses);
       setPagination(data.data.pagination);
     } catch (error) {
       toast({
-        title: "Error loading pending responses",
+        title: 'Error loading pending responses',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
@@ -404,12 +400,12 @@ export default function Approval() {
     try {
       const response = await fetch('/api/approval/stats', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      
+
       if (!response.ok) throw new Error('Failed to load stats');
-      
+
       const data = await response.json();
       setStats(data.data);
     } catch (error) {
@@ -418,8 +414,8 @@ export default function Approval() {
   };
 
   const approveResponse = async (responseId, editedText) => {
-    setProcessingIds(prev => new Set(prev).add(responseId));
-    
+    setProcessingIds((prev) => new Set(prev).add(responseId));
+
     try {
       const payload = {};
       if (editedText) {
@@ -430,7 +426,7 @@ export default function Approval() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(payload)
       });
@@ -441,12 +437,12 @@ export default function Approval() {
       }
 
       // Remove from pending list
-      setPendingResponses(prev => prev.filter(r => r.id !== responseId));
-      
+      setPendingResponses((prev) => prev.filter((r) => r.id !== responseId));
+
       // Refresh stats
       await loadStats();
     } finally {
-      setProcessingIds(prev => {
+      setProcessingIds((prev) => {
         const next = new Set(prev);
         next.delete(responseId);
         return next;
@@ -455,14 +451,14 @@ export default function Approval() {
   };
 
   const rejectResponse = async (responseId, reason) => {
-    setProcessingIds(prev => new Set(prev).add(responseId));
-    
+    setProcessingIds((prev) => new Set(prev).add(responseId));
+
     try {
       const response = await fetch(`/api/approval/${responseId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({ reason })
       });
@@ -473,12 +469,12 @@ export default function Approval() {
       }
 
       // Remove from pending list
-      setPendingResponses(prev => prev.filter(r => r.id !== responseId));
-      
+      setPendingResponses((prev) => prev.filter((r) => r.id !== responseId));
+
       // Refresh stats
       await loadStats();
     } finally {
-      setProcessingIds(prev => {
+      setProcessingIds((prev) => {
         const next = new Set(prev);
         next.delete(responseId);
         return next;
@@ -492,7 +488,7 @@ export default function Approval() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -502,23 +498,23 @@ export default function Approval() {
       }
 
       const result = await response.json();
-      
+
       // Remove old response from pending list
-      setPendingResponses(prev => prev.filter(r => r.id !== responseId));
-      
+      setPendingResponses((prev) => prev.filter((r) => r.id !== responseId));
+
       // Reload pending responses to get the new one
       await loadPendingResponses();
-      
+
       // Refresh stats
       await loadStats();
-      
+
       return result;
     } catch (error) {
       throw error;
     }
   };
 
-  const platforms = [...new Set(pendingResponses.map(r => r.comment.platform))];
+  const platforms = [...new Set(pendingResponses.map((r) => r.comment.platform))];
 
   return (
     <div className="space-y-6">
@@ -552,10 +548,12 @@ export default function Approval() {
             </div>
             <Select
               value={filters.platform}
-              onValueChange={(value) => setFilters(prev => ({ ...prev, platform: value, offset: 0 }))}
+              onValueChange={(value) =>
+                setFilters((prev) => ({ ...prev, platform: value, offset: 0 }))
+              }
             >
               <option value="">All Platforms</option>
-              {platforms.map(platform => (
+              {platforms.map((platform) => (
                 <option key={platform} value={platform}>
                   {platform.charAt(0).toUpperCase() + platform.slice(1)}
                 </option>
@@ -588,7 +586,7 @@ export default function Approval() {
         ) : pendingResponses.length > 0 ? (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {pendingResponses.map(response => (
+              {pendingResponses.map((response) => (
                 <ApprovalCard
                   key={response.id}
                   response={response}
@@ -604,10 +602,12 @@ export default function Approval() {
             {pagination.has_more && (
               <div className="flex justify-center">
                 <Button
-                  onClick={() => setFilters(prev => ({
-                    ...prev,
-                    offset: prev.offset + prev.limit
-                  }))}
+                  onClick={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      offset: prev.offset + prev.limit
+                    }))
+                  }
                   variant="outline"
                 >
                   Load More
@@ -620,7 +620,8 @@ export default function Approval() {
             <CheckCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No pending responses</h3>
             <p className="text-muted-foreground">
-              All roast responses have been reviewed. New responses will appear here when they're generated.
+              All roast responses have been reviewed. New responses will appear here when they're
+              generated.
             </p>
           </div>
         )}

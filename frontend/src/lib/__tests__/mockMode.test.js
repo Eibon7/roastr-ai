@@ -12,7 +12,7 @@ describe('Mock Mode Detection', () => {
   beforeEach(() => {
     // Reset process.env for each test
     process.env = { ...originalEnv };
-    
+
     // Clear any existing environment variables
     delete process.env.REACT_APP_SUPABASE_URL;
     delete process.env.REACT_APP_SUPABASE_ANON_KEY;
@@ -77,7 +77,7 @@ describe('Mock Mode Detection', () => {
   describe('getMockModeStatus', () => {
     test('returns correct status when Supabase is not configured', () => {
       const status = getMockModeStatus();
-      
+
       expect(status.enabled).toBe(true);
       expect(status.supabaseConfigured).toBe(false);
       expect(status.mockModeForced).toBe(true);
@@ -90,9 +90,9 @@ describe('Mock Mode Detection', () => {
       process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
       process.env.REACT_APP_SUPABASE_ANON_KEY = 'test-key';
       process.env.REACT_APP_ENABLE_MOCK_MODE = 'true';
-      
+
       const status = getMockModeStatus();
-      
+
       expect(status.enabled).toBe(true);
       expect(status.supabaseConfigured).toBe(true);
       expect(status.mockModeForced).toBe(true); // True in test environment
@@ -104,9 +104,9 @@ describe('Mock Mode Detection', () => {
     test('returns correct status in test environment', () => {
       process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
       process.env.REACT_APP_SUPABASE_ANON_KEY = 'test-key';
-      
+
       const status = getMockModeStatus();
-      
+
       // In test environment, mock mode is always enabled
       expect(status.enabled).toBe(true);
       expect(status.supabaseConfigured).toBe(true);
@@ -123,16 +123,16 @@ describe('Mock Mode Detection', () => {
       // Force mock mode for these tests
       delete process.env.REACT_APP_SUPABASE_URL;
       delete process.env.REACT_APP_SUPABASE_ANON_KEY;
-      
+
       // Mock localStorage
       const localStorageMock = {
         getItem: jest.fn(),
         setItem: jest.fn(),
         removeItem: jest.fn(),
-        clear: jest.fn(),
+        clear: jest.fn()
       };
       global.localStorage = localStorageMock;
-      
+
       mockClient = createSupabaseClient();
     });
 
@@ -168,14 +168,14 @@ describe('Mock Mode Detection', () => {
 
       test('signOut clears session', async () => {
         const result = await mockClient.auth.signOut();
-        
+
         expect(result.error).toBeNull();
       });
 
       test('getSession with no stored session returns null', async () => {
         // localStorage.getItem returns null by default in our mock
         const result = await mockClient.auth.getSession();
-        
+
         expect(result.data.session).toBeNull();
         expect(result.error).toBeNull();
       });
@@ -183,7 +183,7 @@ describe('Mock Mode Detection', () => {
       test('getUser with no stored user returns null', async () => {
         // localStorage.getItem returns null by default in our mock
         const result = await mockClient.auth.getUser();
-        
+
         expect(result.data.user).toBeNull();
         expect(result.error).toBeNull();
       });
@@ -192,9 +192,11 @@ describe('Mock Mode Detection', () => {
     describe('Auth State Changes', () => {
       test('onAuthStateChange sets up listener', () => {
         const callback = jest.fn();
-        
-        const { data: { subscription } } = mockClient.auth.onAuthStateChange(callback);
-        
+
+        const {
+          data: { subscription }
+        } = mockClient.auth.onAuthStateChange(callback);
+
         expect(subscription).toBeDefined();
         expect(typeof subscription.unsubscribe).toBe('function');
       });

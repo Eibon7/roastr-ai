@@ -46,7 +46,7 @@ describe('IntegrationsCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockIntegrations,
+      json: async () => mockIntegrations
     });
 
     render(<IntegrationsCard />);
@@ -73,7 +73,7 @@ describe('IntegrationsCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockIntegrations,
+      json: async () => mockIntegrations
     });
 
     render(<IntegrationsCard />);
@@ -95,7 +95,7 @@ describe('IntegrationsCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockIntegrations,
+      json: async () => mockIntegrations
     });
 
     render(<IntegrationsCard />);
@@ -115,7 +115,7 @@ describe('IntegrationsCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockIntegrations,
+      json: async () => mockIntegrations
     });
 
     render(<IntegrationsCard />);
@@ -138,7 +138,7 @@ describe('IntegrationsCard', () => {
   test('calls integrations API endpoint on mount', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => [],
+      json: async () => []
     });
 
     render(<IntegrationsCard />);

@@ -16,11 +16,11 @@ Guía completa para configurar y usar el sistema de facturación con Stripe Chec
 
 ## 🎯 Planes Disponibles
 
-| Plan | Precio | Roasts/Mes | Plataformas | Features Adicionales |
-|------|--------|------------|-------------|---------------------|
-| **Free** | €0 | 100 | 1 | Soporte básico |
-| **Pro** | €20/mes | 1,000 | 5 | Analíticas avanzadas, soporte prioritario |
-| **Creator+** | €50/mes | ∞ ilimitado | ∞ todas | API access, tonos custom, soporte 24/7 |
+| Plan         | Precio  | Roasts/Mes  | Plataformas | Features Adicionales                      |
+| ------------ | ------- | ----------- | ----------- | ----------------------------------------- |
+| **Free**     | €0      | 100         | 1           | Soporte básico                            |
+| **Pro**      | €20/mes | 1,000       | 5           | Analíticas avanzadas, soporte prioritario |
+| **Creator+** | €50/mes | ∞ ilimitado | ∞ todas     | API access, tonos custom, soporte 24/7    |
 
 ## ⚙️ Configuración Stripe
 
@@ -35,6 +35,7 @@ Guía completa para configurar y usar el sistema de facturación con Stripe Chec
 #### Crear Productos:
 
 **Pro Plan:**
+
 ```bash
 # Crear producto Pro
 curl https://api.stripe.com/v1/products \
@@ -44,6 +45,7 @@ curl https://api.stripe.com/v1/products \
 ```
 
 **Creator+ Plan:**
+
 ```bash
 # Crear producto Creator+
 curl https://api.stripe.com/v1/products \
@@ -55,6 +57,7 @@ curl https://api.stripe.com/v1/products \
 #### Crear Prices con Lookup Keys:
 
 **Pro Monthly Price:**
+
 ```bash
 curl https://api.stripe.com/v1/prices \
   -u sk_test_YOUR_SECRET_KEY: \
@@ -66,6 +69,7 @@ curl https://api.stripe.com/v1/prices \
 ```
 
 **Creator+ Monthly Price:**
+
 ```bash
 curl https://api.stripe.com/v1/prices \
   -u sk_test_YOUR_SECRET_KEY: \
@@ -85,7 +89,7 @@ curl https://api.stripe.com/v1/prices \
 4. Selecciona estos eventos:
    - `checkout.session.completed`
    - `customer.subscription.created`
-   - `customer.subscription.updated` 
+   - `customer.subscription.updated`
    - `customer.subscription.deleted`
    - `invoice.payment_succeeded`
    - `invoice.payment_failed`
@@ -186,6 +190,7 @@ npm run test:coverage
 ### Test de Flujo Completo
 
 1. **Ir a billing page:**
+
    ```
    http://localhost:3000/billing.html
    ```
@@ -193,6 +198,7 @@ npm run test:coverage
 2. **Seleccionar plan Pro o Creator+**
 
 3. **Usar tarjetas de prueba:**
+
    ```
    Éxito: 4242 4242 4242 4242
    Error:  4000 0000 0000 0002
@@ -200,6 +206,7 @@ npm run test:coverage
    ```
 
 4. **Verificar webhook processing:**
+
    ```bash
    # Revisar logs del servidor
    DEBUG=true npm start
@@ -207,7 +214,7 @@ npm run test:coverage
 
 5. **Probar Customer Portal:**
    - Completar checkout
-   - Clic en "Gestionar Suscripción" 
+   - Clic en "Gestionar Suscripción"
    - Cambiar plan, cancelar, etc.
 
 ## 📡 API Endpoints
@@ -215,6 +222,7 @@ npm run test:coverage
 ### Billing Management
 
 #### `GET /api/billing/plans`
+
 Obtiene lista de planes disponibles.
 
 ```javascript
@@ -232,6 +240,7 @@ Obtiene lista de planes disponibles.
 ```
 
 #### `POST /api/billing/create-checkout-session`
+
 Crea sesión de Stripe Checkout.
 
 ```javascript
@@ -251,6 +260,7 @@ Crea sesión de Stripe Checkout.
 ```
 
 #### `POST /api/billing/create-portal-session`
+
 Abre Stripe Customer Portal.
 
 ```javascript
@@ -264,6 +274,7 @@ Abre Stripe Customer Portal.
 ```
 
 #### `GET /api/billing/subscription`
+
 Obtiene suscripción actual del usuario.
 
 ```javascript
@@ -290,9 +301,11 @@ Obtiene suscripción actual del usuario.
 ### Webhook Endpoint
 
 #### `POST /webhooks/stripe`
+
 Procesa eventos de Stripe.
 
 **Eventos soportados:**
+
 - `checkout.session.completed`
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
@@ -325,10 +338,10 @@ const { checkRoastLimit } = require('./src/middleware/requirePlan');
 const usage = await checkRoastLimit(userId, 1);
 
 if (!usage.allowed) {
-    return res.status(403).json({
-        error: `Límite excedido: ${usage.current}/${usage.limit}`,
-        upgradeUrl: '/billing.html'
-    });
+  return res.status(403).json({
+    error: `Límite excedido: ${usage.current}/${usage.limit}`,
+    upgradeUrl: '/billing.html'
+  });
 }
 ```
 
@@ -336,21 +349,21 @@ if (!usage.allowed) {
 
 ```javascript
 const PLAN_LIMITS = {
-    free: {
-        maxPlatforms: 1,
-        maxRoastsPerMonth: 100,
-        features: ['basic_roasts']
-    },
-    pro: {
-        maxPlatforms: 5, 
-        maxRoastsPerMonth: 1000,
-        features: ['basic_roasts', 'advanced_tones', 'analytics']
-    },
-    creator_plus: {
-        maxPlatforms: -1, // unlimited
-        maxRoastsPerMonth: -1, // unlimited
-        features: ['basic_roasts', 'advanced_tones', 'analytics', 'api_access']
-    }
+  free: {
+    maxPlatforms: 1,
+    maxRoastsPerMonth: 100,
+    features: ['basic_roasts']
+  },
+  pro: {
+    maxPlatforms: 5,
+    maxRoastsPerMonth: 1000,
+    features: ['basic_roasts', 'advanced_tones', 'analytics']
+  },
+  creator_plus: {
+    maxPlatforms: -1, // unlimited
+    maxRoastsPerMonth: -1, // unlimited
+    features: ['basic_roasts', 'advanced_tones', 'analytics', 'api_access']
+  }
 };
 ```
 
@@ -358,13 +371,13 @@ const PLAN_LIMITS = {
 
 ### Eventos y Acciones
 
-| Evento Stripe | Acción en DB | Descripción |
-|---------------|--------------|-------------|
-| `checkout.session.completed` | Crear/actualizar suscripción | Usuario completa pago inicial |
-| `customer.subscription.updated` | Actualizar plan/status | Cambio de plan, renovación |
-| `customer.subscription.deleted` | Reset a plan Free | Cancelación definitiva |
-| `invoice.payment_succeeded` | Status → active | Pago exitoso |
-| `invoice.payment_failed` | Status → past_due | Fallo en renovación |
+| Evento Stripe                   | Acción en DB                 | Descripción                   |
+| ------------------------------- | ---------------------------- | ----------------------------- |
+| `checkout.session.completed`    | Crear/actualizar suscripción | Usuario completa pago inicial |
+| `customer.subscription.updated` | Actualizar plan/status       | Cambio de plan, renovación    |
+| `customer.subscription.deleted` | Reset a plan Free            | Cancelación definitiva        |
+| `invoice.payment_succeeded`     | Status → active              | Pago exitoso                  |
+| `invoice.payment_failed`        | Status → past_due            | Fallo en renovación           |
 
 ### Debugging Webhooks
 
@@ -389,12 +402,14 @@ stripe trigger checkout.session.completed
 ### Problemas Comunes
 
 #### 1. "Invalid lookup key"
+
 ```bash
 # Verificar que el lookup key existe en Stripe
 stripe prices list --lookup-keys pro_monthly
 ```
 
 #### 2. "Webhook signature verification failed"
+
 ```bash
 # Verificar STRIPE_WEBHOOK_SECRET
 echo $STRIPE_WEBHOOK_SECRET
@@ -402,12 +417,14 @@ echo $STRIPE_WEBHOOK_SECRET
 ```
 
 #### 3. "No active subscription found"
+
 ```bash
 # Verificar en base de datos
 SELECT * FROM user_subscriptions WHERE user_id = 'user-uuid';
 ```
 
 #### 4. "Customer not found in Stripe"
+
 ```bash
 # Revisar logs para customer ID
 # Recrear customer si es necesario
@@ -416,15 +433,17 @@ SELECT * FROM user_subscriptions WHERE user_id = 'user-uuid';
 ### Database Issues
 
 #### Reset suscripción a Free
+
 ```sql
-UPDATE user_subscriptions 
-SET plan = 'free', 
+UPDATE user_subscriptions
+SET plan = 'free',
     status = 'active',
-    stripe_subscription_id = NULL 
+    stripe_subscription_id = NULL
 WHERE user_id = 'user-uuid';
 ```
 
 #### Ver todas las suscripciones
+
 ```sql
 SELECT u.email, s.plan, s.status, s.current_period_end
 FROM user_subscriptions s

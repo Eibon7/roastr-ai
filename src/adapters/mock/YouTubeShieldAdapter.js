@@ -1,8 +1,13 @@
-const { ShieldAdapter, ModerationInput, ModerationResult, CapabilityMap } = require('../ShieldAdapter');
+const {
+  ShieldAdapter,
+  ModerationInput,
+  ModerationResult,
+  CapabilityMap
+} = require('../ShieldAdapter');
 
 /**
  * Mock YouTube Shield Adapter
- * 
+ *
  * Simulates YouTube Data API v3 moderation capabilities based on research.
  * Focuses on comment moderation status rather than user-level blocking.
  */
@@ -19,10 +24,10 @@ class YouTubeShieldAdapter extends ShieldAdapter {
 
   async initialize() {
     await this.simulateLatency();
-    
+
     // Check for required config
     const requiredScopes = ['https://www.googleapis.com/auth/youtube.force-ssl'];
-    
+
     if (!this.config.skipValidation && !process.env.YOUTUBE_API_KEY) {
       throw new Error('Missing YouTube API key configuration');
     }
@@ -34,24 +39,24 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       quotaUsed: 0,
       quotaLimit: 10000 // Daily quota limit
     };
-    
+
     this.isInitialized = true;
     this.log('info', 'YouTube Shield Adapter initialized (MOCK)');
   }
 
   async hideComment(input) {
     this.validateInput(input, ['commentId']);
-    
+
     const startTime = Date.now();
-    
+
     try {
       await this.simulateLatency();
-      
+
       // Check quota limits
       if (this.client.quotaUsed + this.quotaCost.setModerationStatus > this.client.quotaLimit) {
         throw new Error('YouTube API quota exceeded');
       }
-      
+
       if (this.shouldSimulateFailure()) {
         throw new Error('YouTube API insufficient permissions');
       }
@@ -59,14 +64,18 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       // Mock setting moderation status to 'rejected' (hides comment)
       this.client.quotaUsed += this.quotaCost.setModerationStatus;
 
-      const result = this.createSuccessResult('hideComment', {
-        commentId: input.commentId,
-        moderationStatus: 'rejected',
-        endpoint: 'POST /comments/setModerationStatus',
-        quotaCost: this.quotaCost.setModerationStatus,
-        quotaRemaining: this.client.quotaLimit - this.client.quotaUsed,
-        note: 'Comment hidden via moderation status change'
-      }, Date.now() - startTime);
+      const result = this.createSuccessResult(
+        'hideComment',
+        {
+          commentId: input.commentId,
+          moderationStatus: 'rejected',
+          endpoint: 'POST /comments/setModerationStatus',
+          quotaCost: this.quotaCost.setModerationStatus,
+          quotaRemaining: this.client.quotaLimit - this.client.quotaUsed,
+          note: 'Comment hidden via moderation status change'
+        },
+        Date.now() - startTime
+      );
 
       this.log('info', 'Comment moderation status set to rejected (MOCK)', {
         commentId: input.commentId,
@@ -74,7 +83,6 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       });
 
       return result;
-
     } catch (error) {
       this.log('error', 'Failed to set comment moderation status (MOCK)', {
         commentId: input.commentId,
@@ -87,20 +95,25 @@ class YouTubeShieldAdapter extends ShieldAdapter {
 
   async reportUser(input) {
     this.validateInput(input, ['userId']);
-    
+
     const startTime = Date.now();
-    
+
     try {
       await this.simulateLatency();
-      
+
       // YouTube doesn't have API for user reporting
-      const result = this.createSuccessResult('reportUser', {
-        userId: input.userId,
-        platform: 'youtube',
-        method: 'manual_review_required',
-        reportUrl: 'https://support.google.com/youtube/answer/2802027',
-        note: 'YouTube user reporting must be done through Creator Studio or web interface'
-      }, Date.now() - startTime, true); // requiresManualReview = true
+      const result = this.createSuccessResult(
+        'reportUser',
+        {
+          userId: input.userId,
+          platform: 'youtube',
+          method: 'manual_review_required',
+          reportUrl: 'https://support.google.com/youtube/answer/2802027',
+          note: 'YouTube user reporting must be done through Creator Studio or web interface'
+        },
+        Date.now() - startTime,
+        true
+      ); // requiresManualReview = true
 
       this.log('info', 'User report queued for manual review (MOCK)', {
         userId: input.userId,
@@ -108,7 +121,6 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       });
 
       return result;
-
     } catch (error) {
       return this.createErrorResult('reportUser', error, Date.now() - startTime);
     }
@@ -116,21 +128,26 @@ class YouTubeShieldAdapter extends ShieldAdapter {
 
   async blockUser(input) {
     this.validateInput(input, ['userId']);
-    
+
     const startTime = Date.now();
-    
+
     try {
       await this.simulateLatency();
-      
+
       // YouTube doesn't have API for user blocking
-      const result = this.createSuccessResult('blockUser', {
-        userId: input.userId,
-        platform: 'youtube',
-        method: 'manual_review_required',
-        alternative: 'comment_moderation',
-        note: 'YouTube user blocking must be done through Creator Studio. Alternative: reject all comments from this user.',
-        studioUrl: 'https://studio.youtube.com/channel/comments'
-      }, Date.now() - startTime, true);
+      const result = this.createSuccessResult(
+        'blockUser',
+        {
+          userId: input.userId,
+          platform: 'youtube',
+          method: 'manual_review_required',
+          alternative: 'comment_moderation',
+          note: 'YouTube user blocking must be done through Creator Studio. Alternative: reject all comments from this user.',
+          studioUrl: 'https://studio.youtube.com/channel/comments'
+        },
+        Date.now() - startTime,
+        true
+      );
 
       this.log('info', 'User block queued for manual review (MOCK)', {
         userId: input.userId,
@@ -138,7 +155,6 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       });
 
       return result;
-
     } catch (error) {
       return this.createErrorResult('blockUser', error, Date.now() - startTime);
     }
@@ -146,27 +162,31 @@ class YouTubeShieldAdapter extends ShieldAdapter {
 
   async unblockUser(input) {
     this.validateInput(input, ['userId']);
-    
+
     const startTime = Date.now();
-    
+
     try {
       await this.simulateLatency();
-      
+
       // YouTube doesn't have API for user unblocking
-      const result = this.createSuccessResult('unblockUser', {
-        userId: input.userId,
-        platform: 'youtube',
-        method: 'manual_review_required',
-        note: 'YouTube user unblocking must be done through Creator Studio',
-        studioUrl: 'https://studio.youtube.com/channel/comments'
-      }, Date.now() - startTime, true);
+      const result = this.createSuccessResult(
+        'unblockUser',
+        {
+          userId: input.userId,
+          platform: 'youtube',
+          method: 'manual_review_required',
+          note: 'YouTube user unblocking must be done through Creator Studio',
+          studioUrl: 'https://studio.youtube.com/channel/comments'
+        },
+        Date.now() - startTime,
+        true
+      );
 
       this.log('info', 'User unblock queued for manual review (MOCK)', {
         userId: input.userId
       });
 
       return result;
-
     } catch (error) {
       return this.createErrorResult('unblockUser', error, Date.now() - startTime);
     }
@@ -174,23 +194,21 @@ class YouTubeShieldAdapter extends ShieldAdapter {
 
   capabilities() {
     return new CapabilityMap({
-      hideComment: true,   // ✅ Via setModerationStatus to 'rejected'
-      reportUser: false,   // ❌ No API, manual only
-      blockUser: false,    // ❌ No API, manual only
-      unblockUser: false,  // ❌ No API, manual only
+      hideComment: true, // ✅ Via setModerationStatus to 'rejected'
+      reportUser: false, // ❌ No API, manual only
+      blockUser: false, // ❌ No API, manual only
+      unblockUser: false, // ❌ No API, manual only
       platform: 'youtube',
       rateLimits: {
         setModerationStatus: '50 quota units per call',
         dailyQuota: '10,000 units (varies by tier)',
         note: 'Quota limits vary by project tier'
       },
-      scopes: [
-        'https://www.googleapis.com/auth/youtube.force-ssl'
-      ],
+      scopes: ['https://www.googleapis.com/auth/youtube.force-ssl'],
       fallbacks: {
-        reportUser: null,            // No fallback - requires manual review through YouTube Studio
-        blockUser: 'hideComment',    // If can't block user, hide their comments
-        unblockUser: 'manual_review'  // Must be done manually
+        reportUser: null, // No fallback - requires manual review through YouTube Studio
+        blockUser: 'hideComment', // If can't block user, hide their comments
+        unblockUser: 'manual_review' // Must be done manually
       },
       apiSpecifics: {
         moderationStatuses: ['heldForReview', 'published', 'rejected'],
@@ -201,23 +219,24 @@ class YouTubeShieldAdapter extends ShieldAdapter {
   }
 
   isRateLimitError(error) {
-    return error.message.includes('quota') || 
-           error.message.includes('Quota exceeded') ||
-           error.message.includes('quotaExceeded') ||
-           error.message.includes('rate limit') ||
-           error.status === 403 ||
-           error.status === 429;
+    return (
+      error.message.includes('quota') ||
+      error.message.includes('Quota exceeded') ||
+      error.message.includes('quotaExceeded') ||
+      error.message.includes('rate limit') ||
+      error.status === 403 ||
+      error.status === 429
+    );
   }
 
   /**
    * Simulate API latency
    */
   async simulateLatency() {
-    const delay = Math.random() * 
-      (this.mockLatency.max - this.mockLatency.min) + 
-      this.mockLatency.min;
-    
-    await new Promise(resolve => setTimeout(resolve, delay));
+    const delay =
+      Math.random() * (this.mockLatency.max - this.mockLatency.min) + this.mockLatency.min;
+
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   /**
@@ -232,29 +251,33 @@ class YouTubeShieldAdapter extends ShieldAdapter {
    */
   async setModerationStatus(input, status = 'rejected') {
     this.validateInput(input, ['commentId']);
-    
+
     const validStatuses = ['heldForReview', 'published', 'rejected'];
     if (!validStatuses.includes(status)) {
       throw new Error(`Invalid moderation status: ${status}. Valid: ${validStatuses.join(', ')}`);
     }
 
     const startTime = Date.now();
-    
+
     try {
       await this.simulateLatency();
-      
+
       if (this.client.quotaUsed + this.quotaCost.setModerationStatus > this.client.quotaLimit) {
         throw new Error('YouTube API quota exceeded');
       }
-      
+
       this.client.quotaUsed += this.quotaCost.setModerationStatus;
 
-      const result = this.createSuccessResult('setModerationStatus', {
-        commentId: input.commentId,
-        moderationStatus: status,
-        quotaCost: this.quotaCost.setModerationStatus,
-        quotaRemaining: this.client.quotaLimit - this.client.quotaUsed
-      }, Date.now() - startTime);
+      const result = this.createSuccessResult(
+        'setModerationStatus',
+        {
+          commentId: input.commentId,
+          moderationStatus: status,
+          quotaCost: this.quotaCost.setModerationStatus,
+          quotaRemaining: this.client.quotaLimit - this.client.quotaUsed
+        },
+        Date.now() - startTime
+      );
 
       this.log('info', `Comment moderation status set to ${status} (MOCK)`, {
         commentId: input.commentId,
@@ -262,7 +285,6 @@ class YouTubeShieldAdapter extends ShieldAdapter {
       });
 
       return result;
-
     } catch (error) {
       return this.createErrorResult('setModerationStatus', error, Date.now() - startTime);
     }

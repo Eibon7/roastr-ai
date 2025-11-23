@@ -34,11 +34,11 @@ const mockFsExtra = {
   }),
 
   mkdir: jest.fn().mockResolvedValue(undefined),
-  
+
   ensureFile: jest.fn().mockResolvedValue(undefined),
-  
+
   ensureDir: jest.fn().mockResolvedValue(undefined),
-  
+
   pathExists: jest.fn().mockImplementation(async (path) => {
     return mockFileSystem.has(path);
   }),
@@ -63,15 +63,15 @@ const mockFsExtra = {
 
   // Métodos de utilidad para tests
   __mockFileSystem: mockFileSystem,
-  
+
   __setMockFile: (path, content) => {
     mockFileSystem.set(path, content);
   },
-  
+
   __clearMockFileSystem: () => {
     mockFileSystem.clear();
   },
-  
+
   __getMockFile: (path) => {
     return mockFileSystem.get(path);
   }

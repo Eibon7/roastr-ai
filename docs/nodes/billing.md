@@ -6,7 +6,7 @@
 **Última actualización:** 2025-11-11
 **Version:** 2.1 (Polar Integration)
 **Related PR:** #459, #594 (Polar), #804 (Stripe webhook fix), #808 (Tests)
-**Issue:** #413, #594, #774 (Stripe webhook), #808  
+**Issue:** #413, #594, #774 (Stripe webhook), #808
 
 ---
 
@@ -21,6 +21,7 @@ El nodo **Billing** gestiona integración con **Polar** (Merchant of Record) par
 **⚠️ Migration Status:** Polar (primary) + Stripe (legacy support)
 
 **Responsabilidades principales:**
+
 - Procesar webhooks de Stripe (checkout, subscriptions, payments)
 - Gestionar sesiones de checkout y portal de cliente
 - Sincronizar planes entre Stripe y la base de datos
@@ -86,6 +87,7 @@ Ninguno actualmente. Billing es un nodo terminal que consume servicios pero no e
 ### Dependency Injection Flow
 
 **Producción:**
+
 ```javascript
 // billing.js
 let billingController = null;
@@ -104,11 +106,12 @@ router.post('/webhooks/stripe', async (req, res) => {
 ```
 
 **Testing:**
+
 ```javascript
 // test.js
 const mockController = BillingFactory.createController({
   webhookService: mockWebhookService, // ← Mock inyectado
-  stripeWrapper: mockStripeWrapper,
+  stripeWrapper: mockStripeWrapper
   // ... otros mocks
 });
 
@@ -120,17 +123,19 @@ billingRoutes.setController(mockController);
 ```javascript
 class BillingController {
   constructor({
-    stripeWrapper,        // Stripe API wrapper
-    queueService,         // Job queue
-    entitlementsService,  // Plan limits
-    webhookService,       // Webhook logging
-    supabaseClient,       // Database
-    logger,               // Logging
-    emailService,         // Email notifications
-    notificationService,  // In-app notifications
+    stripeWrapper, // Stripe API wrapper
+    queueService, // Job queue
+    entitlementsService, // Plan limits
+    webhookService, // Webhook logging
+    supabaseClient, // Database
+    logger, // Logging
+    emailService, // Email notifications
+    notificationService, // In-app notifications
     workerNotificationService, // Worker coordination
-    PLAN_CONFIG          // Plan configuration
-  }) { /* ... */ }
+    PLAN_CONFIG // Plan configuration
+  }) {
+    /* ... */
+  }
 }
 ```
 
@@ -148,6 +153,7 @@ class BillingController {
 ### Inputs
 
 **Webhook Events (POST /api/billing/webhooks/stripe):**
+
 ```json
 {
   "id": "evt_xxx",
@@ -160,7 +166,7 @@ class BillingController {
         "user_id": "uuid",
         "lookup_key": "plan_starter | plan_pro | plan_plus"
       },
-      "status": "active | canceled | past_due",
+      "status": "active | canceled | past_due"
       // ... otros campos según tipo de evento
     }
   },
@@ -169,6 +175,7 @@ class BillingController {
 ```
 
 **Create Checkout Session (POST /api/billing/create-checkout-session):**
+
 ```json
 {
   "plan": "starter | pro | plus",
@@ -177,12 +184,14 @@ class BillingController {
 ```
 
 **Headers requeridos:**
+
 - `Authorization: Bearer <jwt_token>` (autenticado con JWT)
 - `stripe-signature: <signature>` (webhooks only)
 
 ### Outputs
 
 **Webhook Response:**
+
 ```json
 {
   "received": true,
@@ -194,6 +203,7 @@ class BillingController {
 ```
 
 **Checkout Session Response:**
+
 ```json
 {
   "success": true,
@@ -205,6 +215,7 @@ class BillingController {
 ```
 
 **Subscription Response:**
+
 ```json
 {
   "success": true,
@@ -269,6 +280,7 @@ if (flags.isEnabled('ENABLE_BILLING')) {
 ```
 
 **Impacto:**
+
 - ❌ No es posible inyectar mocks en tests
 - ❌ Viola principio de Inversión de Dependencias (SOLID)
 - ❌ 4/16 tests fallan porque mock no se ejecuta
@@ -310,6 +322,7 @@ if (flags.isEnabled('ENABLE_BILLING')) {
 ```
 
 **Archivos creados:**
+
 - `src/routes/billingController.js` (lógica de negocio)
 - `src/routes/billingFactory.js` (factory pattern)
 - `src/routes/billing.js` (refactorizado con DI)
@@ -320,21 +333,21 @@ if (flags.isEnabled('ENABLE_BILLING')) {
 
 ### Públicos (No auth)
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/api/billing/webhooks/stripe` | Procesar webhooks de Stripe | Stripe signature |
-| GET | `/api/billing/plans` | Obtener planes disponibles | No |
+| Método | Ruta                           | Descripción                 | Auth             |
+| ------ | ------------------------------ | --------------------------- | ---------------- |
+| POST   | `/api/billing/webhooks/stripe` | Procesar webhooks de Stripe | Stripe signature |
+| GET    | `/api/billing/plans`           | Obtener planes disponibles  | No               |
 
 ### Protegidos (Auth requerido)
 
-| Método | Ruta | Descripción | Auth | Permisos |
-|--------|------|-------------|------|----------|
-| POST | `/api/billing/create-checkout-session` | Crear sesión Stripe Checkout | JWT | User |
-| POST | `/api/billing/portal` | Crear sesión Customer Portal | JWT | User |
-| POST | `/api/billing/create-portal-session` | Alias de /portal | JWT | User |
-| GET | `/api/billing/subscription` | Obtener suscripción del user | JWT | User |
-| GET | `/api/billing/webhook-stats` | Estadísticas de webhooks | JWT | Admin |
-| POST | `/api/billing/webhook-cleanup` | Limpiar eventos antiguos | JWT | Admin |
+| Método | Ruta                                   | Descripción                  | Auth | Permisos |
+| ------ | -------------------------------------- | ---------------------------- | ---- | -------- |
+| POST   | `/api/billing/create-checkout-session` | Crear sesión Stripe Checkout | JWT  | User     |
+| POST   | `/api/billing/portal`                  | Crear sesión Customer Portal | JWT  | User     |
+| POST   | `/api/billing/create-portal-session`   | Alias de /portal             | JWT  | User     |
+| GET    | `/api/billing/subscription`            | Obtener suscripción del user | JWT  | User     |
+| GET    | `/api/billing/webhook-stats`           | Estadísticas de webhooks     | JWT  | Admin    |
+| POST   | `/api/billing/webhook-cleanup`         | Limpiar eventos antiguos     | JWT  | Admin    |
 
 ---
 
@@ -409,6 +422,7 @@ Usuario recibe email con intento de retry
 **Coverage actual:** 17/17 tests pasando (100%) ✅
 
 **Tests (all passing):**
+
 - ✅ Webhook Signature Verification (4 tests)
 - ✅ Checkout Session Completed Flow (3 tests)
 - ✅ Subscription Events Flow (2 tests)
@@ -489,6 +503,7 @@ if (!user?.is_admin) {
 ### Estrategias
 
 1. **Webhooks siempre retornan 200:**
+
    ```javascript
    // IMPORTANTE: Evitar retries infinitos de Stripe
    try {
@@ -501,6 +516,7 @@ if (!user?.is_admin) {
    ```
 
 2. **Fallback síncrono si queue falla:**
+
    ```javascript
    if (!queueService) {
      // Procesar inmediatamente en el mismo request
@@ -509,10 +525,13 @@ if (!user?.is_admin) {
    ```
 
 3. **Transacciones atómicas para operaciones críticas:**
+
    ```javascript
    const transactionResult = await supabaseServiceClient.rpc(
      'execute_checkout_completed_transaction',
-     { /* params */ }
+     {
+       /* params */
+     }
    );
 
    if (transactionResult.error) {
@@ -549,6 +568,7 @@ logger.info('Webhook processed successfully:', {
 **Endpoint:** `GET /api/billing/webhook-stats?days=7`
 
 **Métricas disponibles:**
+
 - Total de eventos procesados
 - Eventos por tipo
 - Tasa de idempotencia
@@ -592,10 +612,10 @@ const PLAN_IDS = {
 
 function getPlanFromStripeLookupKey(lookupKey) {
   const mapping = {
-    'plan_starter_trial': PLAN_IDS.STARTER_TRIAL,
-    'plan_starter': PLAN_IDS.STARTER,
-    'plan_pro': PLAN_IDS.PRO,
-    'plan_plus': PLAN_IDS.PLUS
+    plan_starter_trial: PLAN_IDS.STARTER_TRIAL,
+    plan_starter: PLAN_IDS.STARTER,
+    plan_pro: PLAN_IDS.PRO,
+    plan_plus: PLAN_IDS.PLUS
   };
   return mapping[lookupKey] || PLAN_IDS.STARTER_TRIAL;
 }
@@ -651,7 +671,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 **Last contribution:** 2025-11-11 (Issues #594, #808 - Polar Integration)
 
-
 ---
 
 ## Referencias
@@ -685,6 +704,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 **Próximo paso:** PR merge and final validation
 
 **Timeline:**
+
 - ✅ Fase 1: Planning (30-45 min) - COMPLETED
 - ✅ Fase 2: Refactor (1-2 horas) - COMPLETED
 - ✅ Fase 3: Testing (1-2 horas) - COMPLETED (17/17 passing, 100%)
@@ -692,6 +712,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ⏳ Fase 5: Evidencias (15 min) - PENDIENTE
 
 **Criterio de éxito:**
+
 - ✅ 17/17 tests pasando (100%) - ACHIEVED
 - Cobertura >90%
 - ✅ Arquitectura DI implementada
@@ -704,6 +725,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Ubicación de Tests
 
 **Unit Tests** (6 archivos):
+
 - `tests/unit/routes/billing.test.js` - API endpoints for billing
 - `tests/unit/routes/billing-webhooks.test.js` - Stripe webhook handlers
 - `tests/unit/routes/billing-edge-cases.test.js` - Edge cases and error handling
@@ -712,6 +734,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - `tests/unit/frontend/billing.test.js` - Frontend billing components
 
 **Integration Tests** (1 archivo):
+
 - `tests/integration/stripeWebhooksFlow.test.js` - Full webhook processing flow
 
 ### Cobertura de Tests
@@ -724,6 +747,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Casos de Prueba Cubiertos
 
 **API Endpoints:**
+
 - ✅ GET /api/billing/subscription - Get subscription details
 - ✅ POST /api/billing/create-checkout - Create Stripe checkout session
 - ✅ POST /api/billing/manage-subscription - Customer portal access
@@ -732,6 +756,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Rate limiting
 
 **Stripe Webhooks:**
+
 - ✅ checkout.session.completed - Subscription activation
 - ✅ customer.subscription.updated - Plan changes
 - ✅ customer.subscription.deleted - Cancellations
@@ -741,6 +766,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Idempotency (duplicate webhook prevention)
 
 **Subscription Management:**
+
 - ✅ Plan creation and updates
 - ✅ Subscription status sync
 - ✅ Billing cycle handling
@@ -749,6 +775,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Cancellation flow
 
 **Transaction History:**
+
 - ✅ Transaction listing with pagination
 - ✅ Filtering by date range
 - ✅ Organization-scoped transactions
@@ -756,6 +783,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Invoice links
 
 **Edge Cases:**
+
 - ✅ Invalid Stripe signatures (security)
 - ✅ Missing metadata in webhooks
 - ✅ Concurrent webhook processing
@@ -764,6 +792,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Stripe API errors
 
 **Dependency Injection:**
+
 - ✅ DI architecture implemented
 - ✅ Testable service boundaries
 - ✅ Mock-friendly design
@@ -781,6 +810,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 **⚠️ IMPORTANT**: All billing validation tests that create test users and organizations MUST use `finally` blocks for cleanup to prevent test data pollution.
 
 **Pattern to Follow** (`scripts/validate-flow-billing.js`):
+
 ```javascript
 // Declare variables outside try block for finally access
 let authUser = null;
@@ -790,7 +820,7 @@ const testEmail = `test-billing-${Date.now()}@example.com`;
 try {
   // Create test user
   const { data: authUserData, error: authError } = await client.auth.admin.createUser({
-    email: testEmail,
+    email: testEmail
     // ...
   });
   authUser = authUserData; // Assign to outer scope
@@ -799,7 +829,6 @@ try {
   testOrgId = autoOrgs[0].id; // Assign to outer scope
 
   // ... test logic ...
-
 } catch (error) {
   // Error handling
   results.failed++;
@@ -828,6 +857,7 @@ try {
 ```
 
 **Why This Matters**:
+
 - ❌ **Without finally**: If test fails midway, test users/orgs are left in database
 - ✅ **With finally**: Cleanup runs even if test throws error
 - ✅ **Prevents test pollution**: Database stays clean for next test run
@@ -857,6 +887,7 @@ npm test -- billing --coverage
 ### Referencia
 
 **Issue #95**: Transaction History Implementation
+
 - **Status**: ✅ Completed
 - **Tests**: Included in billing-transactions-issue95.test.js
 

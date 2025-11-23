@@ -6,15 +6,15 @@ const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    users: [],
-    organizations: [],
-    integrations: [],
-    comments: [],
-    responses: [],
-    usage_records: [],
-    user_activities: [],
-    api_keys: [],
-    audit_logs: []
+  users: [],
+  organizations: [],
+  integrations: [],
+  comments: [],
+  responses: [],
+  usage_records: [],
+  user_activities: [],
+  api_keys: [],
+  audit_logs: []
 });
 
 // Mock dependencies
@@ -65,7 +65,7 @@ describe('DataExportService', () => {
   describe('collectUserData', () => {
     it('should call supabase and structure export data correctly', async () => {
       const mockUserId = 'test-user-id';
-      
+
       // Mock the entire collectUserData method to test the structure
       const mockData = {
         export_metadata: {
@@ -121,9 +121,9 @@ describe('DataExportService', () => {
       };
       mockSupabase.from.mockReturnValue(mockTableBuilder);
 
-      await expect(dataExportService.collectUserData(mockUserId))
-        .rejects
-        .toThrow('Database connection failed');
+      await expect(dataExportService.collectUserData(mockUserId)).rejects.toThrow(
+        'Database connection failed'
+      );
     });
   });
 
@@ -252,7 +252,7 @@ describe('DataExportService', () => {
     it('should handle tokens of different lengths safely', () => {
       const shortToken = 'short';
       const longToken = 'this-is-a-very-long-token-that-should-not-match';
-      
+
       const tokenData = {
         token: longToken,
         filepath: '/path/to/file.zip',

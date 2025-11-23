@@ -87,7 +87,10 @@ function getChangedFiles() {
       stdio: 'pipe'
     });
 
-    const files = output.trim().split('\n').filter(f => f.length > 0);
+    const files = output
+      .trim()
+      .split('\n')
+      .filter((f) => f.length > 0);
     log(`📂 Found ${files.length} changed files`, 'cyan');
 
     return files;
@@ -101,7 +104,10 @@ function getChangedFiles() {
         encoding: 'utf8',
         stdio: 'pipe'
       });
-      return output.trim().split('\n').filter(f => f.length > 0);
+      return output
+        .trim()
+        .split('\n')
+        .filter((f) => f.length > 0);
     } catch (fallbackError) {
       log('   No changed files detected', 'yellow');
       return [];
@@ -119,7 +125,7 @@ function getPRLabels() {
 
   try {
     const event = JSON.parse(fs.readFileSync(eventPath, 'utf8'));
-    const labels = event.pull_request?.labels?.map(l => l.name) || [];
+    const labels = event.pull_request?.labels?.map((l) => l.name) || [];
     log(`🏷️  Found ${labels.length} PR labels: ${labels.join(', ')}`, 'cyan');
     return labels;
   } catch (error) {
@@ -151,13 +157,13 @@ function identifyRequiredAgents(agents, changedFiles, labels) {
   const required = new Set();
   const reasons = {};
 
-  agents.forEach(agent => {
+  agents.forEach((agent) => {
     const triggers = agent.triggers || {};
     const agentLabels = triggers.labels || [];
     const diffIncludes = triggers.diffIncludes || [];
 
     // Check label triggers
-    agentLabels.forEach(labelPattern => {
+    agentLabels.forEach((labelPattern) => {
       if (labelPattern === '*') {
         // Wildcard - matches any label
         if (labels.length > 0) {
@@ -168,7 +174,7 @@ function identifyRequiredAgents(agents, changedFiles, labels) {
       } else if (labelPattern.includes('*')) {
         // Pattern like "area:*"
         const prefix = labelPattern.replace('*', '');
-        const matched = labels.filter(l => l.startsWith(prefix));
+        const matched = labels.filter((l) => l.startsWith(prefix));
         if (matched.length > 0) {
           required.add(agent.name);
           reasons[agent.name] = reasons[agent.name] || [];
@@ -185,8 +191,8 @@ function identifyRequiredAgents(agents, changedFiles, labels) {
     });
 
     // Check diff triggers
-    diffIncludes.forEach(pattern => {
-      const matched = changedFiles.filter(f => matchesPattern(f, pattern));
+    diffIncludes.forEach((pattern) => {
+      const matched = changedFiles.filter((f) => matchesPattern(f, pattern));
       if (matched.length > 0) {
         required.add(agent.name);
         reasons[agent.name] = reasons[agent.name] || [];
@@ -223,12 +229,12 @@ function findReceipt(agentName, prNumber) {
   const normalPattern = new RegExp(`\\d+-${agentName}\\.md$`);
   const skippedPattern = new RegExp(`\\d+-${agentName}-SKIPPED\\.md$`);
 
-  const normal = files.find(f => normalPattern.test(f));
+  const normal = files.find((f) => normalPattern.test(f));
   if (normal) {
     return { type: 'normal', path: path.join(receiptsDir, normal) };
   }
 
-  const skipped = files.find(f => skippedPattern.test(f));
+  const skipped = files.find((f) => skippedPattern.test(f));
   if (skipped) {
     return { type: 'skipped', path: path.join(receiptsDir, skipped) };
   }
@@ -245,10 +251,10 @@ function validateReceipts(requiredAgents, reasons, prNumber) {
   }
 
   log(`\n🔍 Required agents (${requiredAgents.length}):`, 'blue');
-  requiredAgents.forEach(agent => {
+  requiredAgents.forEach((agent) => {
     log(`   • ${agent}`, 'blue');
     if (reasons[agent]) {
-      reasons[agent].forEach(reason => {
+      reasons[agent].forEach((reason) => {
         log(`     └─ ${reason}`, 'cyan');
       });
     }
@@ -259,7 +265,7 @@ function validateReceipts(requiredAgents, reasons, prNumber) {
   const missing = [];
   const found = [];
 
-  requiredAgents.forEach(agent => {
+  requiredAgents.forEach((agent) => {
     const receipt = findReceipt(agent, prNumber);
 
     if (receipt) {
@@ -279,7 +285,7 @@ function validateReceipts(requiredAgents, reasons, prNumber) {
   if (missing.length > 0) {
     log('\n❌ VALIDATION FAILED', 'red');
     log(`\n${missing.length} agent(s) missing receipts:`, 'red');
-    missing.forEach(agent => {
+    missing.forEach((agent) => {
       log(`   • ${agent}`, 'red');
     });
 
@@ -289,7 +295,10 @@ function validateReceipts(requiredAgents, reasons, prNumber) {
     log(`         - Create: docs/agents/receipts/${prNumber || 'XXX'}-<AgentName>.md`, 'yellow');
     log('         - Use template: docs/agents/receipts/_TEMPLATE.md', 'yellow');
     log('      b) If agent should be skipped:', 'yellow');
-    log(`         - Create: docs/agents/receipts/${prNumber || 'XXX'}-<AgentName>-SKIPPED.md`, 'yellow');
+    log(
+      `         - Create: docs/agents/receipts/${prNumber || 'XXX'}-<AgentName>-SKIPPED.md`,
+      'yellow'
+    );
     log('         - Use template: docs/agents/receipts/_TEMPLATE-SKIPPED.md', 'yellow');
     log('   2. Commit and push receipts', 'yellow');
     log('   3. Re-run CI', 'yellow');
@@ -305,7 +314,7 @@ function validateReceipts(requiredAgents, reasons, prNumber) {
 
 function main() {
   log('🤖 Agent Receipt Validator', 'cyan');
-  log('=' .repeat(50), 'cyan');
+  log('='.repeat(50), 'cyan');
 
   // Get PR number from environment or git branch
   let prNumber = process.env.PR_NUMBER;

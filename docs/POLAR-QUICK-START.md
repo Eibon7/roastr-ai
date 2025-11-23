@@ -97,7 +97,7 @@ Add route in `App.js`:
 import TestPolar from './pages/TestPolar';
 
 // Inside <Routes>:
-<Route path="/test-polar" element={<TestPolar />} />
+<Route path="/test-polar" element={<TestPolar />} />;
 ```
 
 Visit: http://localhost:3001/test-polar
@@ -126,6 +126,7 @@ node scripts/simulate-polar-webhook.js order.created
 ```
 
 Check backend logs for:
+
 ```
 [Polar Webhook] Received event { type: 'order.created', ... }
 [Polar Webhook] Order created - Payment confirmed
@@ -154,7 +155,7 @@ const { user } = useContext(AuthContext);
   planName={plan.name}
   customerEmail={user?.email}
   buttonText={`Get ${plan.name}`}
-/>
+/>;
 ```
 
 ### Option 2: Use Complete Example
@@ -165,7 +166,7 @@ Replace your pricing page with the example:
 // In App.js
 import PolarPricingExample from './components/PolarPricingExample';
 
-<Route path="/pricing" element={<PolarPricingExample />} />
+<Route path="/pricing" element={<PolarPricingExample />} />;
 ```
 
 ---
@@ -201,6 +202,7 @@ node scripts/simulate-polar-webhook.js order.created
 ### "Configuration error" when creating checkout
 
 **Fix:**
+
 ```bash
 # Check .env has POLAR_ACCESS_TOKEN
 cat .env | grep POLAR_ACCESS_TOKEN
@@ -212,6 +214,7 @@ npm start
 ### Button does nothing
 
 **Fix:**
+
 ```bash
 # Check browser console for errors
 # Ensure backend is running
@@ -224,6 +227,7 @@ console.log(user?.email); // In your component
 ### CORS error
 
 **Fix:**
+
 ```json
 // Ensure frontend/package.json has:
 {

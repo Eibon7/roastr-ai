@@ -26,6 +26,7 @@ frontend/src/HOOKS/
 ## 📄 Convenciones de Archivos
 
 ### Componentes React
+
 ```
 ✅ BIEN - PascalCase
 UserCard.jsx
@@ -39,6 +40,7 @@ style_profile.jsx
 ```
 
 ### Páginas
+
 ```
 ✅ BIEN - PascalCase (excepción para legacy)
 dashboard.jsx (legacy - mantener)
@@ -52,6 +54,7 @@ BILLING.jsx
 ```
 
 ### Utilidades y Servicios
+
 ```
 ✅ BIEN - camelCase
 authService.js
@@ -67,29 +70,32 @@ test-utils.js
 ## 📝 Convenciones de Imports
 
 ### ✅ REGLA DORADA: Import Exacto
+
 **El import DEBE coincidir EXACTAMENTE con el nombre del archivo en disco.**
 
 ```javascript
 // ✅ BIEN - coincide exactamente
-import Dashboard from './pages/dashboard';     // para dashboard.jsx
-import Connect from './pages/Connect';         // para Connect.jsx
+import Dashboard from './pages/dashboard'; // para dashboard.jsx
+import Connect from './pages/Connect'; // para Connect.jsx
 import { authService } from './utils/authService'; // para authService.js
 
 // ❌ MAL - casing diferente
-import Dashboard from './pages/Dashboard';     // archivo es dashboard.jsx
-import connect from './pages/connect';         // archivo es Connect.jsx
+import Dashboard from './pages/Dashboard'; // archivo es dashboard.jsx
+import connect from './pages/connect'; // archivo es Connect.jsx
 import { AuthService } from './utils/authService'; // exporta authService
 ```
 
 ## 🛠️ Herramientas de Validación
 
 ### 1. Pre-commit Hook
+
 ```bash
 # .husky/pre-commit
 npm run build:ci    # Build verificación
 ```
 
-### 2. CI Validation 
+### 2. CI Validation
+
 ```yaml
 # GitHub Actions
 - name: Check file listing (Linux perspective)
@@ -102,6 +108,7 @@ npm run build:ci    # Build verificación
 ## 🚨 Casos Problemáticos Comunes
 
 ### Dashboard vs dashboard
+
 ```javascript
 // ❌ PROBLEMA COMÚN
 import Dashboard from './pages/Dashboard'; // Mac: ✅ Linux: ❌
@@ -113,6 +120,7 @@ import Dashboard from './pages/dashboard'; // archivo: dashboard.jsx
 ## 🔧 Debugging Case Issues
 
 ### 1. Verificar nombres reales en disco
+
 ```bash
 # Ver nombres exactos (case-sensitive)
 ls -la frontend/src/pages/
@@ -120,6 +128,7 @@ git ls-files frontend/src/pages/
 ```
 
 ### 2. Test en Linux-like environment
+
 ```bash
 # Build check
 npm run build:ci
@@ -127,7 +136,7 @@ npm run build:ci
 
 ## 🎯 Checklist Pre-Merge
 
-- [ ] ✅ `npm run build:ci` compila sin errores  
+- [ ] ✅ `npm run build:ci` compila sin errores
 - [ ] ✅ Nombres de archivo coinciden con imports exactamente
 - [ ] ✅ Directorios en minúsculas
 - [ ] ✅ Componentes en PascalCase

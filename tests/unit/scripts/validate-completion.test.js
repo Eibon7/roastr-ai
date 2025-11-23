@@ -231,7 +231,10 @@ describe('Completion Validator Script', () => {
     });
 
     it('should be a sibling of require-agent-receipts.js', () => {
-      const agentReceiptsScript = path.join(__dirname, '../../../scripts/ci/require-agent-receipts.js');
+      const agentReceiptsScript = path.join(
+        __dirname,
+        '../../../scripts/ci/require-agent-receipts.js'
+      );
       expect(fs.existsSync(agentReceiptsScript)).toBe(true);
     });
   });
@@ -243,10 +246,7 @@ describe('Completion Validator Script', () => {
     });
 
     it('should be referenced in CLAUDE.md', () => {
-      const claudeMd = fs.readFileSync(
-        path.join(__dirname, '../../../CLAUDE.md'),
-        'utf8'
-      );
+      const claudeMd = fs.readFileSync(path.join(__dirname, '../../../CLAUDE.md'), 'utf8');
 
       expect(claudeMd).toContain('Completion Validation');
       expect(claudeMd).toContain('validate:completion');

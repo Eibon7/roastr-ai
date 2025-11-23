@@ -177,21 +177,21 @@ export async function fetchGuardianCases(
     let filteredCases = [...MOCK_CASES];
 
     if (params?.severity && params.severity !== 'ALL') {
-      filteredCases = filteredCases.filter(c => c.severity === params.severity);
+      filteredCases = filteredCases.filter((c) => c.severity === params.severity);
     }
 
     if (params?.status && params.status !== 'ALL') {
       if (params.status === 'PENDING') {
-        filteredCases = filteredCases.filter(c => !c.approved_by && !c.denied_by);
+        filteredCases = filteredCases.filter((c) => !c.approved_by && !c.denied_by);
       } else if (params.status === 'APPROVED') {
-        filteredCases = filteredCases.filter(c => !!c.approved_by);
+        filteredCases = filteredCases.filter((c) => !!c.approved_by);
       } else if (params.status === 'DENIED') {
-        filteredCases = filteredCases.filter(c => !!c.denied_by);
+        filteredCases = filteredCases.filter((c) => !!c.denied_by);
       }
     }
 
     if (params?.domain) {
-      filteredCases = filteredCases.filter(c => c.domains.includes(params.domain!));
+      filteredCases = filteredCases.filter((c) => c.domains.includes(params.domain!));
     }
 
     // Apply pagination
@@ -260,7 +260,7 @@ export async function approveCase(
     console.log('[Guardian API] MOCK MODE - Approving case:', caseId);
 
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     return {
       success: true,
@@ -322,7 +322,7 @@ export async function denyCase(
     console.log('[Guardian API] MOCK MODE - Denying case:', caseId);
 
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     return {
       success: true,

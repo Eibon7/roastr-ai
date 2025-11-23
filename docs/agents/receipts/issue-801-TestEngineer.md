@@ -17,9 +17,11 @@ Implemented comprehensive RLS integration tests covering INSERT, UPDATE, and DEL
 ## Work Completed
 
 ### 1. Test File Created
+
 **File:** `tests/integration/multi-tenant-rls-issue-801-crud.test.js` (950+ lines)
 
 **Test Suites:**
+
 - Setup Verification (1 test)
 - AC4: INSERT Operations RLS Enforcement (10 tests)
 - AC5: UPDATE Operations RLS Enforcement (11 tests)
@@ -31,24 +33,26 @@ Implemented comprehensive RLS integration tests covering INSERT, UPDATE, and DEL
 
 ### 2. Tables Tested with Full CRUD Coverage
 
-| Table | Priority | INSERT | UPDATE | DELETE | Rationale |
-|-------|----------|--------|--------|--------|-----------|
-| `integration_configs` | HIGH (SECURITY) | ✅ | ✅ | ⚠️ Skip | Platform credentials isolation |
-| `usage_records` | HIGH (BILLING) | ✅ | ✅ | ⚠️ Skip | Billing data protection |
-| `monthly_usage` | HIGH (BILLING) | ✅ | ✅ | ⚠️ Skip | Billing summary integrity |
-| `comments` | MEDIUM | ✅ | ✅ | ✅ | Platform comment data |
-| `responses` | MEDIUM | ✅ | ✅ | ✅ | Generated roast responses |
-| `user_activities` | LOW | ⚠️ Skip | ⚠️ Skip | ✅ | Audit log cleanup |
+| Table                 | Priority        | INSERT  | UPDATE  | DELETE  | Rationale                      |
+| --------------------- | --------------- | ------- | ------- | ------- | ------------------------------ |
+| `integration_configs` | HIGH (SECURITY) | ✅      | ✅      | ⚠️ Skip | Platform credentials isolation |
+| `usage_records`       | HIGH (BILLING)  | ✅      | ✅      | ⚠️ Skip | Billing data protection        |
+| `monthly_usage`       | HIGH (BILLING)  | ✅      | ✅      | ⚠️ Skip | Billing summary integrity      |
+| `comments`            | MEDIUM          | ✅      | ✅      | ✅      | Platform comment data          |
+| `responses`           | MEDIUM          | ✅      | ✅      | ✅      | Generated roast responses      |
+| `user_activities`     | LOW             | ⚠️ Skip | ⚠️ Skip | ✅      | Audit log cleanup              |
 
 ### 3. RLS Security Validation
 
 **Error Code '42501' Verified:**
+
 - ✅ Cross-tenant INSERT blocked
 - ✅ Cross-tenant UPDATE blocked
 - ✅ Cross-tenant DELETE blocked
 - ✅ organization_id hijacking prevented (UPDATE attempt)
 
 **Bidirectional Isolation:**
+
 - ✅ Tenant A cannot write to Tenant B data
 - ✅ Tenant B cannot write to Tenant A data
 - ✅ Both directions tested for INSERT/UPDATE/DELETE
@@ -56,12 +60,14 @@ Implemented comprehensive RLS integration tests covering INSERT, UPDATE, and DEL
 ### 4. Test Infrastructure
 
 **Reused Helpers:**
+
 - `createTestTenants()` - 2 test organizations with owners
 - `createTestData()` - Seed data across 9 tables
 - `setTenantContext()` - JWT-based RLS context switching
 - `cleanupTestData()` - FK-safe cleanup
 
 **Client Architecture:**
+
 - `serviceClient` - Service role (bypasses RLS) for setup/cleanup
 - `testClient` - Anon client (RLS enforced) for actual testing
 
@@ -70,6 +76,7 @@ Implemented comprehensive RLS integration tests covering INSERT, UPDATE, and DEL
 ## Test Pattern Implementation
 
 ### INSERT Operation Pattern
+
 ```javascript
 test('INSERT own organization succeeds', async () => {
   const { data, error } = await testClient
@@ -97,6 +104,7 @@ test('INSERT other organization fails with 42501', async () => {
 ```
 
 ### UPDATE Operation Pattern
+
 ```javascript
 test('UPDATE own organization succeeds', async () => {
   const { data, error } = await testClient
@@ -126,6 +134,7 @@ test('UPDATE other organization fails with 42501', async () => {
 ```
 
 ### DELETE Operation Pattern
+
 ```javascript
 test('DELETE own organization succeeds', async () => {
   // Create temporary record
@@ -159,9 +168,11 @@ test('DELETE other organization fails with 42501', async () => {
 ## Documentation Created
 
 ### 1. Test Evidence
+
 **File:** `docs/test-evidence/issue-801/rls-crud-validation.md`
 
 **Content:**
+
 - Acceptance criteria status
 - Tables tested with priorities
 - Error codes verified
@@ -170,9 +181,11 @@ test('DELETE other organization fails with 42501', async () => {
 - Coverage improvements (before/after)
 
 ### 2. Implementation Plan
+
 **File:** `docs/plan/issue-801.md`
 
 **Content:**
+
 - Current state analysis
 - Step-by-step implementation approach
 - File modifications list
@@ -184,6 +197,7 @@ test('DELETE other organization fails with 42501', async () => {
 ## Quality Assurance
 
 ### Pre-Flight Checklist
+
 - [x] Read `docs/patterns/coderabbit-lessons.md`
 - [x] Tests follow existing patterns from Issue #504
 - [x] JWT context switching implemented correctly
@@ -194,9 +208,11 @@ test('DELETE other organization fails with 42501', async () => {
 - [x] Documentation complete
 
 ### Test Execution
+
 **Status:** ⏳ Pending CI/CD (Supabase credentials required)
 
 **Local Test:** ❌ Expected failure (no credentials)
+
 ```
 ❌ Missing Supabase credentials in .env file
 Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
@@ -209,12 +225,14 @@ Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
 ## Coverage Impact
 
 ### Before (Issue #504)
+
 - **SELECT operations:** 9 tables, 17 tests ✅
 - **INSERT operations:** 0 tables, 0 tests ❌
 - **UPDATE operations:** 0 tables, 0 tests ❌
 - **DELETE operations:** 0 tables, 0 tests ❌
 
 ### After (Issue #801)
+
 - **SELECT operations:** 9 tables, 17 tests ✅ (existing)
 - **INSERT operations:** 5 tables, 10 tests ✅ (NEW)
 - **UPDATE operations:** 5 tables, 11 tests ✅ (NEW)
@@ -231,29 +249,32 @@ Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
 
 ### Threat Model Coverage
 
-| Threat | Before | After | Mitigation |
-|--------|--------|-------|------------|
+| Threat                                   | Before         | After        | Mitigation                       |
+| ---------------------------------------- | -------------- | ------------ | -------------------------------- |
 | Credential leakage (integration_configs) | ⚠️ SELECT only | ✅ Full CRUD | INSERT/UPDATE blocked with 42501 |
-| Billing manipulation (usage_records) | ⚠️ SELECT only | ✅ Full CRUD | INSERT/UPDATE blocked with 42501 |
-| Financial fraud (monthly_usage) | ⚠️ SELECT only | ✅ Full CRUD | INSERT/UPDATE blocked with 42501 |
-| Data injection attacks | ❌ Not tested | ✅ Verified | Cross-tenant INSERT blocked |
-| Data modification attacks | ❌ Not tested | ✅ Verified | Cross-tenant UPDATE blocked |
-| Data deletion attacks | ❌ Not tested | ✅ Verified | Cross-tenant DELETE blocked |
-| Ownership hijacking | ❌ Not tested | ✅ Verified | organization_id UPDATE blocked |
+| Billing manipulation (usage_records)     | ⚠️ SELECT only | ✅ Full CRUD | INSERT/UPDATE blocked with 42501 |
+| Financial fraud (monthly_usage)          | ⚠️ SELECT only | ✅ Full CRUD | INSERT/UPDATE blocked with 42501 |
+| Data injection attacks                   | ❌ Not tested  | ✅ Verified  | Cross-tenant INSERT blocked      |
+| Data modification attacks                | ❌ Not tested  | ✅ Verified  | Cross-tenant UPDATE blocked      |
+| Data deletion attacks                    | ❌ Not tested  | ✅ Verified  | Cross-tenant DELETE blocked      |
+| Ownership hijacking                      | ❌ Not tested  | ✅ Verified  | organization_id UPDATE blocked   |
 
 ---
 
 ## Lessons Learned
 
 ### 1. JWT Context Switching Required for CRUD
+
 **Discovery:** Issue #504 tests used direct approach (service role vs anon client) without JWT.
 **Solution:** CRUD operations REQUIRE JWT context via `setTenantContext()` because RLS `WITH CHECK` clause evaluates `auth.uid()`.
 
 ### 2. Immediate Cleanup Prevents Test Pollution
+
 **Pattern:** Always cleanup created records immediately after test.
 **Rationale:** Prevents unique constraint violations, maintains clean test state, avoids foreign key issues.
 
 ### 3. Conditional Skips for Missing Data
+
 **Pattern:** Check if test data exists before running test, skip gracefully if not.
 **Example:** Some tables (integration_configs) may have no data if not manually seeded.
 
@@ -262,14 +283,17 @@ Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
 ## Files Modified
 
 ### Core Implementation
+
 1. `tests/integration/multi-tenant-rls-issue-801-crud.test.js` - NEW (950+ lines)
 
 ### Documentation
+
 1. `docs/test-evidence/issue-801/rls-crud-validation.md` - NEW
 2. `docs/plan/issue-801.md` - NEW
 3. `docs/nodes/multi-tenant.md` - UPDATED (added CRUD test suite section)
 
 ### Agent Receipts
+
 1. `docs/agents/receipts/issue-801-TestEngineer.md` - This document
 
 ---
@@ -277,10 +301,12 @@ Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
 ## Dependencies
 
 ### GDD Nodes Referenced
+
 - `multi-tenant.md` - RLS policies and testing infrastructure
 - `observability.md` - Test coverage tracking
 
 ### Related Issues
+
 - Issue #504 - Base SELECT-only RLS tests (PR #790)
 - Issue #583 - RLS policy updates
 - Issue #412 - Legacy RLS test infrastructure
@@ -290,12 +316,14 @@ Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
 ## Next Steps
 
 ### Immediate (CI/CD)
+
 1. Push branch to trigger CI/CD
 2. Verify all 55+ tests pass
 3. Review CodeRabbit feedback
 4. Address any test failures
 
 ### Future Enhancements
+
 1. Add CRUD tests for remaining 13 tables
 2. Add constraint violation tests (23505, 23503, 23502)
 3. Test organization_members CRUD operations

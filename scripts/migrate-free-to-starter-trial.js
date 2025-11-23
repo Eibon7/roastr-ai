@@ -84,7 +84,6 @@ async function migrateFreeToStarterTrial() {
     }
 
     return { migrated, skipped };
-
   } catch (error) {
     logger.error('Migration failed:', error);
     throw error;

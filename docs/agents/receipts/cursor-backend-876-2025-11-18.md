@@ -21,6 +21,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 **Created:** `database/migrations/030_roast_tones_table.sql`
 
 **Features:**
+
 - ✅ Table `roast_tones` with multiidioma support (JSONB)
 - ✅ Fields: id, name, display_name, description, intensity, personality, resources, restrictions, examples, active, is_default, sort_order
 - ✅ Constraints: intensity 1-5, JSONB validation, valid_name pattern
@@ -36,6 +37,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 **Created:** `src/services/toneConfigService.js`
 
 **Methods Implemented:**
+
 - ✅ `getActiveTones(language)` - Get active tones with localization + cache (5min TTL)
 - ✅ `getAllTones()` - Admin: all tones (active + inactive)
 - ✅ `getToneById(id)` - Single tone by UUID
@@ -50,6 +52,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 - ✅ `validateToneData()` - Comprehensive validation
 
 **Cache System:**
+
 - TTL: 5 minutes (300000ms)
 - Storage: In-memory singleton
 - Invalidation: Auto on POST/PUT/DELETE
@@ -62,6 +65,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 **Created:** `tests/unit/services/toneConfigService.test.js`
 
 **Test Coverage:**
+
 - ✅ 30+ test cases
 - ✅ getActiveTones: localization ES/EN, cache behavior, error handling
 - ✅ getAllTones: admin access
@@ -82,6 +86,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 **Created:** `src/routes/admin/tones.js`
 
 **Endpoints:**
+
 - ✅ `GET /api/admin/tones` - List all tones
 - ✅ `GET /api/admin/tones/:id` - Get single tone
 - ✅ `POST /api/admin/tones` - Create tone
@@ -92,6 +97,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 - ✅ `PUT /api/admin/tones/reorder` - Reorder tones
 
 **Security:**
+
 - ✅ `authenticateToken` middleware - JWT validation
 - ✅ `requireAdmin` middleware - Admin-only access
 - ✅ Input validation
@@ -105,6 +111,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 **Modified:** `src/routes/admin.js`
 
 **Changes:**
+
 - ✅ Import `tonesRoutes` from `./admin/tones`
 - ✅ Mount router: `router.use('/tones', tonesRoutes)`
 - ✅ Documented with Issue #876 comment
@@ -114,6 +121,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 **Modified:** `src/lib/prompts/roastPrompt.js`
 
 **Changes:**
+
 - ✅ Import `getToneConfigService` from toneConfigService
 - ✅ Constructor: Initialize `this.toneService`
 - ✅ `buildBlockA()` → `async buildBlockA(language = 'es')`
@@ -125,6 +133,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 - ✅ Language parameter propagated through all blocks
 
 **Backward Compatibility:**
+
 - ✅ Tone names maintained (flanders, balanceado, canalla)
 - ✅ Existing users experience no changes
 - ✅ Fallback mechanism for DB failures
@@ -135,15 +144,15 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 
 ### Code Added
 
-| File | Lines | Type |
-|------|-------|------|
-| 030_roast_tones_table.sql | 464 | Migration |
-| toneConfigService.js | 485 | Service |
-| toneConfigService.test.js | 384 | Tests |
-| admin/tones.js | 456 | API |
-| admin.js (modified) | +3 | Integration |
-| roastPrompt.js (modified) | +88 | Integration |
-| **TOTAL** | **1,880** | **Lines** |
+| File                      | Lines     | Type        |
+| ------------------------- | --------- | ----------- |
+| 030_roast_tones_table.sql | 464       | Migration   |
+| toneConfigService.js      | 485       | Service     |
+| toneConfigService.test.js | 384       | Tests       |
+| admin/tones.js            | 456       | API         |
+| admin.js (modified)       | +3        | Integration |
+| roastPrompt.js (modified) | +88       | Integration |
+| **TOTAL**                 | **1,880** | **Lines**   |
 
 ### Files Modified
 
@@ -164,6 +173,7 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 **Expected:** 100% passing
 
 **Coverage:**
+
 - getActiveTones: 8 tests
 - getAllTones: 1 test
 - getToneById: 2 tests
@@ -191,20 +201,20 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 
 ## 📋 Acceptance Criteria Status
 
-| AC | Description | Status |
-|----|-------------|--------|
-| **AC1** | Tabla `roast_tones` creada con schema completo | ✅ COMPLETE |
-| **AC2** | API admin funcional (CRUD + activate/deactivate) | ✅ COMPLETE |
-| **AC3** | Integración con `roastPrompt.js` (carga desde DB) | ✅ COMPLETE |
-| **AC4** | Cache funcional (5min TTL, invalidación al cambiar) | ✅ COMPLETE |
-| **AC5** | Migración inicial con 3 tonos actuales ejecutada | ✅ COMPLETE (seed in migration) |
-| **AC6** | Panel admin en `/admin/roast-tones` operativo | ⏳ PENDING (frontend) |
-| **AC7** | Editor multiidioma (ES/EN) funcional | ⏳ PENDING (frontend) |
-| **AC8** | Solo accesible para admin | ✅ COMPLETE (middleware) |
-| **AC9** | NO permitir desactivar todos los tonos | ✅ COMPLETE (trigger + validation) |
-| **AC10** | Soporte completo ES/EN en todos los campos | ✅ COMPLETE (JSONB) |
-| **AC11** | Al menos 15 tests pasando (unit + integration) | ⏳ PARTIAL (30 unit, 0 integration) |
-| **AC12** | Documentación actualizada | ✅ COMPLETE |
+| AC       | Description                                         | Status                              |
+| -------- | --------------------------------------------------- | ----------------------------------- |
+| **AC1**  | Tabla `roast_tones` creada con schema completo      | ✅ COMPLETE                         |
+| **AC2**  | API admin funcional (CRUD + activate/deactivate)    | ✅ COMPLETE                         |
+| **AC3**  | Integración con `roastPrompt.js` (carga desde DB)   | ✅ COMPLETE                         |
+| **AC4**  | Cache funcional (5min TTL, invalidación al cambiar) | ✅ COMPLETE                         |
+| **AC5**  | Migración inicial con 3 tonos actuales ejecutada    | ✅ COMPLETE (seed in migration)     |
+| **AC6**  | Panel admin en `/admin/roast-tones` operativo       | ⏳ PENDING (frontend)               |
+| **AC7**  | Editor multiidioma (ES/EN) funcional                | ⏳ PENDING (frontend)               |
+| **AC8**  | Solo accesible para admin                           | ✅ COMPLETE (middleware)            |
+| **AC9**  | NO permitir desactivar todos los tonos              | ✅ COMPLETE (trigger + validation)  |
+| **AC10** | Soporte completo ES/EN en todos los campos          | ✅ COMPLETE (JSONB)                 |
+| **AC11** | Al menos 15 tests pasando (unit + integration)      | ⏳ PARTIAL (30 unit, 0 integration) |
+| **AC12** | Documentación actualizada                           | ✅ COMPLETE                         |
 
 **Backend AC:** 10/12 ✅ (83%)  
 **Remaining:** Frontend (AC6, AC7) + Integration tests (AC11)
@@ -355,4 +365,3 @@ Convert hardcoded roast tones (Flanders, Balanceado, Canalla) to dynamic databas
 **Agent:** Backend Developer  
 **Timestamp:** 2025-11-18  
 **Signature:** cursor-backend-876-2025-11-18
-

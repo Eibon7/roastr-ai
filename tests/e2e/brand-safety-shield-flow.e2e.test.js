@@ -35,7 +35,7 @@ const analyzeToxicity = jest.fn((text) => {
     scores: {
       TOXICITY: isToxic ? 0.85 : 0.1,
       SEVERE_TOXICITY: isToxic ? 0.75 : 0.05,
-      INSULT: isToxic ? 0.80 : 0.05
+      INSULT: isToxic ? 0.8 : 0.05
     }
   });
 });
@@ -49,15 +49,17 @@ jest.mock('openai', () => {
     chat: {
       completions: {
         create: jest.fn().mockResolvedValue({
-          choices: [{
-            message: {
-              content: JSON.stringify({
-                roast: "Let's keep the conversation constructive and respectful.",
-                tone: 'professional',
-                quality_score: 0.85
-              })
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  roast: "Let's keep the conversation constructive and respectful.",
+                  tone: 'professional',
+                  quality_score: 0.85
+                })
+              }
             }
-          }]
+          ]
         })
       }
     },
@@ -84,8 +86,8 @@ jest.mock('../../src/utils/logger', () => {
   return Object.assign(mockLogger, {
     logger: mockLogger,
     SafeUtils: {
-      safeUserIdPrefix: jest.fn(id => 'mock-user...'),
-      truncateString: jest.fn(str => str)
+      safeUserIdPrefix: jest.fn((id) => 'mock-user...'),
+      truncateString: jest.fn((str) => str)
     }
   });
 });
@@ -333,19 +335,17 @@ describe('E2E: Brand Safety - Full Shield Flow', () => {
        */
 
       // Create second sponsor with lower priority
-      await serviceClient
-        .from('sponsors')
-        .insert({
-          user_id: plusUserId,
-          name: 'Adidas',
-          url: 'https://www.adidas.com',
-          tags: ['sportswear', 'athletics'],
-          severity: 'medium',
-          tone: 'light_humor',
-          priority: 2, // Lower priority than Nike (priority 1)
-          actions: ['def_roast'],
-          active: true
-        });
+      await serviceClient.from('sponsors').insert({
+        user_id: plusUserId,
+        name: 'Adidas',
+        url: 'https://www.adidas.com',
+        tags: ['sportswear', 'athletics'],
+        severity: 'medium',
+        tone: 'light_humor',
+        priority: 2, // Lower priority than Nike (priority 1)
+        actions: ['def_roast'],
+        active: true
+      });
 
       const multiSponsorComment = {
         platform: 'twitter',
@@ -386,10 +386,7 @@ describe('E2E: Brand Safety - Full Shield Flow', () => {
        */
 
       // Deactivate Nike sponsor
-      await serviceClient
-        .from('sponsors')
-        .update({ active: false })
-        .eq('id', sponsorId);
+      await serviceClient.from('sponsors').update({ active: false }).eq('id', sponsorId);
 
       const inactiveTestComment = {
         platform: 'twitter',
@@ -422,11 +419,7 @@ describe('E2E: Brand Safety - Full Shield Flow', () => {
       });
 
       // Reactivate Nike for subsequent tests
-      await serviceClient
-        .from('sponsors')
-        .update({ active: true })
-        .eq('id', sponsorId);
+      await serviceClient.from('sponsors').update({ active: true }).eq('id', sponsorId);
     });
   });
 });
-

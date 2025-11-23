@@ -37,8 +37,8 @@ function createMockQueueService() {
 
     processJobs: jest.fn(async (queueName, processor) => {
       // Realistic job processing: pending → processing → completed/failed
-      const queueJobs = Array.from(jobs.values()).filter(job =>
-        job.queue === queueName && job.status === 'pending'
+      const queueJobs = Array.from(jobs.values()).filter(
+        (job) => job.queue === queueName && job.status === 'pending'
       );
 
       for (const job of queueJobs) {
@@ -70,7 +70,8 @@ function createMockQueueService() {
 
     // Test helpers
     _getAllJobs: () => Array.from(jobs.values()),
-    _getJobsByQueue: (queueName) => Array.from(jobs.values()).filter(job => job.queue === queueName),
+    _getJobsByQueue: (queueName) =>
+      Array.from(jobs.values()).filter((job) => job.queue === queueName),
     _clearJobs: () => jobs.clear()
   };
 }
@@ -126,7 +127,7 @@ function createMockBillingService() {
         userId,
         roasts: 45,
         apiCalls: 120,
-        cost: 2.50,
+        cost: 2.5,
         costCents: 250 // Avoid floats for money calculations
       };
     })

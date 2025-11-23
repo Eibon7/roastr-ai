@@ -6,7 +6,11 @@
  * Test Count: 40+ tests
  */
 
-const { validatePassword, getPasswordStrength, PASSWORD_REQUIREMENTS } = require('../../../src/utils/passwordValidator');
+const {
+  validatePassword,
+  getPasswordStrength,
+  PASSWORD_REQUIREMENTS
+} = require('../../../src/utils/passwordValidator');
 
 describe('passwordValidator - validatePassword', () => {
   describe('Happy Path - Valid Passwords', () => {
@@ -203,7 +207,9 @@ describe('passwordValidator - validatePassword', () => {
       const result = validatePassword('password123');
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('La contraseña debe contener al menos una letra mayúscula o un símbolo');
+      expect(result.errors).toContain(
+        'La contraseña debe contener al menos una letra mayúscula o un símbolo'
+      );
     });
 
     it('should accept password with uppercase letter', () => {
@@ -264,7 +270,9 @@ describe('passwordValidator - validatePassword', () => {
       expect(result.errors.length).toBeGreaterThan(1);
       expect(result.errors).toContain('La contraseña debe tener al menos 8 caracteres');
       expect(result.errors).toContain('La contraseña debe contener al menos un número');
-      expect(result.errors).toContain('La contraseña debe contener al menos una letra mayúscula o un símbolo');
+      expect(result.errors).toContain(
+        'La contraseña debe contener al menos una letra mayúscula o un símbolo'
+      );
     });
 
     it('should return multiple errors for password missing number and uppercase/symbol', () => {
@@ -272,7 +280,9 @@ describe('passwordValidator - validatePassword', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('La contraseña debe contener al menos un número');
-      expect(result.errors).toContain('La contraseña debe contener al menos una letra mayúscula o un símbolo');
+      expect(result.errors).toContain(
+        'La contraseña debe contener al menos una letra mayúscula o un símbolo'
+      );
     });
 
     it('should return error for short password with space', () => {

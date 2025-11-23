@@ -11,18 +11,21 @@
 ### Analytics Dashboard Files (Issue #715 - Expected)
 
 **Backend:**
+
 - `src/services/analyticsDashboardService.js` (new)
 - `src/routes/analytics.js` (endpoints: `/dashboard`, `/billing`, `/export`)
 - `tests/unit/routes/analytics-dashboard-endpoints.test.js` (new)
 - `tests/unit/services/analyticsDashboardService.test.js` (new)
 
 **Frontend:**
+
 - `frontend/src/pages/Analytics.jsx` (new dashboard page)
 - `frontend/src/pages/__tests__/Analytics.test.jsx` (new)
 - `frontend/src/App.js` (route: `/dashboard/analytics`)
 - `frontend/src/components/Sidebar.jsx` (navigation link)
 
 **Dependencies:**
+
 - `chart.js` (Chart.js library)
 - `react-chartjs-2` (React wrapper for Chart.js)
 
@@ -33,6 +36,7 @@
 ### UI Framework Files (Scope Creep - Not in Issue #715)
 
 **Components:**
+
 - `frontend/src/components/roastr/PageLayout.tsx`
 - `frontend/src/components/roastr/PageLayoutContext.tsx`
 - `frontend/src/components/roastr/RoastrComment.tsx`
@@ -42,17 +46,20 @@
 - `frontend/src/components/roastr/SettingsSection.tsx`
 
 **Configuration:**
+
 - `frontend/tailwind.config.js`
 - `frontend/craco.config.js`
 - `frontend/postcss.config.js`
 - `frontend/src/types/shadcn-ui.d.ts`
 
 **Documentation:**
+
 - `docs/ai-ui-rules.md`
 - `docs/ui-components.md`
 - `docs/plan/issue-ui-shadcn-refactor.md`
 
 **Build System:**
+
 - Migration from `react-scripts` to `craco` (affects all frontend scripts)
 
 **Total UI Framework Files:** ~20+ files
@@ -85,24 +92,28 @@
 ### Option 1: Split PR (Recommended by CodeRabbit)
 
 **PR #847a (Analytics Only):**
+
 - Backend: `analyticsDashboardService.js`, analytics endpoints
 - Frontend: `Analytics.jsx` with minimal UI (no PageLayout dependency)
 - Tests: Analytics-specific tests only
 - **Files:** ~8-10 files
 
 **PR #847b (UI Framework):**
+
 - All shadcn/ui components
 - Tailwind/Craco configuration
 - UI documentation
 - **Files:** ~20+ files
 
 **Pros:**
+
 - Clear separation of concerns
 - Easier review and validation
 - Isolated rollback capability
 - Separate testing strategies
 
 **Cons:**
+
 - Analytics dashboard would need temporary UI or wait for UI framework
 - More PRs to manage
 
@@ -158,6 +169,7 @@
 **Question:** Should we split the PR or document the scope bundling?
 
 **Recommendation:** Given that:
+
 1. UI framework is already merged/used by analytics
 2. Splitting would require significant refactoring
 3. All CI checks are passing
@@ -171,4 +183,3 @@
 - **[PR #847](https://github.com/Eibon7/roastr-ai/pull/847)**
 - **[Issue #715](https://github.com/Eibon7/roastr-ai/issues/715)**
 - **CodeRabbit Review:** Scope bundling concerns
-

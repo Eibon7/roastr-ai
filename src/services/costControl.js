@@ -11,7 +11,9 @@ class CostControlService {
       // CostControlService performs admin operations (usage tracking, billing)
       // and requires SERVICE_KEY to bypass RLS for multi-tenant data management
       if (!process.env.SUPABASE_SERVICE_KEY) {
-        throw new Error('SUPABASE_SERVICE_KEY is required for admin operations in CostControlService');
+        throw new Error(
+          'SUPABASE_SERVICE_KEY is required for admin operations in CostControlService'
+        );
       }
       if (!process.env.SUPABASE_URL) {
         throw new Error('SUPABASE_URL is required for CostControlService');
@@ -21,7 +23,7 @@ class CostControlService {
       this.supabaseKey = process.env.SUPABASE_SERVICE_KEY;
       this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
     }
-    
+
     // Keep basic plan metadata (not limits)
     this.plans = {
       starter_trial: {
@@ -50,7 +52,7 @@ class CostControlService {
         features: ['everything', 'custom_integrations', 'sla', 'dedicated_manager']
       }
     };
-    
+
     // Cost per operation (in cents)
     this.operationCosts = {
       fetch_comment: 0, // Free operation
@@ -63,29 +65,33 @@ class CostControlService {
   /**
    * Check if organization can perform an operation
    */
-  async canPerformOperation(organizationId, operationType = 'generate_reply', quantity = 1, platform = null) {
+  async canPerformOperation(
+    organizationId,
+    operationType = 'generate_reply',
+    quantity = 1,
+    platform = null
+  ) {
     try {
       // Map operation types to resource types
       const resourceTypeMap = {
-        'generate_reply': 'roasts',
-        'fetch_comment': 'api_calls',
-        'analyze_toxicity': 'comment_analysis',
-        'triage_analysis': 'comment_analysis', // CodeRabbit #3298511777 - Triage uses same resource as toxicity analysis
-        'post_response': 'api_calls',
-        'shield_action': 'shield_actions',
-        'webhook_call': 'webhook_calls'
+        generate_reply: 'roasts',
+        fetch_comment: 'api_calls',
+        analyze_toxicity: 'comment_analysis',
+        triage_analysis: 'comment_analysis', // CodeRabbit #3298511777 - Triage uses same resource as toxicity analysis
+        post_response: 'api_calls',
+        shield_action: 'shield_actions',
+        webhook_call: 'webhook_calls'
       };
-      
+
       const resourceType = resourceTypeMap[operationType] || 'api_calls';
-      
+
       // Use the enhanced database function
-      const { data: result, error } = await this.supabase
-        .rpc('can_perform_operation', {
-          org_id: organizationId,
-          resource_type_param: resourceType,
-          quantity_param: quantity
-        });
-      
+      const { data: result, error } = await this.supabase.rpc('can_perform_operation', {
+        org_id: organizationId,
+        resource_type_param: resourceType,
+        quantity_param: quantity
+      });
+
       if (error) throw error;
 
       // Guard against null/invalid RPC result (CodeRabbit #3353894295 M1)
@@ -100,7 +106,6 @@ class CostControlService {
       }
 
       return result;
-      
     } catch (error) {
       logger.error('Error checking operation permission:', error);
       throw error;
@@ -136,12 +141,16 @@ class CostControlService {
       const currentUsage = monthlyUsage?.total_responses || 0;
       const limit = org.monthly_responses_limit;
       // Handle unlimited (-1) and avoid division by zero (CodeRabbit #3353894295 M2)
-      const percentage = (limit === -1 || limit === null || limit === undefined) ? 0 : 
-                         (limit > 0 ? (currentUsage / limit) * 100 : 100);
+      const percentage =
+        limit === -1 || limit === null || limit === undefined
+          ? 0
+          : limit > 0
+            ? (currentUsage / limit) * 100
+            : 100;
 
       // Handle unlimited (-1) - unlimited plans can always use
       const isUnlimited = limit === -1 || limit === null || limit === undefined;
-      
+
       return {
         canUse: isUnlimited || currentUsage < limit,
         currentUsage,
@@ -151,7 +160,6 @@ class CostControlService {
         organizationId,
         planId: org.plan_id
       };
-
     } catch (error) {
       logger.error('Error checking usage limit:', error);
       throw error;
@@ -161,22 +169,29 @@ class CostControlService {
   /**
    * Record usage and cost with enhanced tracking
    */
-  async recordUsage(organizationId, platform, operationType, metadata = {}, userId = null, quantity = 1) {
+  async recordUsage(
+    organizationId,
+    platform,
+    operationType,
+    metadata = {},
+    userId = null,
+    quantity = 1
+  ) {
     try {
       const cost = this.operationCosts[operationType] || 0;
       const tokensUsed = metadata.tokensUsed || 0;
-      
+
       // Map operation types to resource types
       const resourceTypeMap = {
-        'generate_reply': 'roasts',
-        'fetch_comment': 'api_calls',
-        'analyze_toxicity': 'comment_analysis',
-        'triage_analysis': 'comment_analysis', // CodeRabbit #3298511777 - Triage uses same resource as toxicity analysis
-        'post_response': 'api_calls',
-        'shield_action': 'shield_actions',
-        'webhook_call': 'webhook_calls'
+        generate_reply: 'roasts',
+        fetch_comment: 'api_calls',
+        analyze_toxicity: 'comment_analysis',
+        triage_analysis: 'comment_analysis', // CodeRabbit #3298511777 - Triage uses same resource as toxicity analysis
+        post_response: 'api_calls',
+        shield_action: 'shield_actions',
+        webhook_call: 'webhook_calls'
       };
-      
+
       const resourceType = resourceTypeMap[operationType] || 'api_calls';
 
       // Record in usage_records (legacy table for detailed logs)
@@ -196,8 +211,9 @@ class CostControlService {
       if (usageError) throw usageError;
 
       // Use enhanced usage recording function
-      const { data: trackingResult, error: trackingError } = await this.supabase
-        .rpc('record_usage', {
+      const { data: trackingResult, error: trackingError } = await this.supabase.rpc(
+        'record_usage',
+        {
           org_id: organizationId,
           resource_type_param: resourceType,
           platform_param: platform,
@@ -206,12 +222,16 @@ class CostControlService {
           cost_param: cost * quantity,
           tokens_param: tokensUsed * quantity,
           metadata_param: metadata
-        });
+        }
+      );
 
       if (trackingError) throw trackingError;
-      
+
       // Check for usage alerts if approaching limits (80% threshold as per Issue 72)
-      if (trackingResult && (trackingResult.limit_exceeded || trackingResult.percentage_used >= 80)) {
+      if (
+        trackingResult &&
+        (trackingResult.limit_exceeded || trackingResult.percentage_used >= 80)
+      ) {
         await this.checkAndSendUsageAlerts(organizationId, resourceType, trackingResult);
       }
 
@@ -221,7 +241,6 @@ class CostControlService {
         usageRecordId: usageRecord.id,
         tracking: trackingResult
       };
-
     } catch (error) {
       logger.error('Error recording usage:', error);
       throw error;
@@ -234,24 +253,22 @@ class CostControlService {
   async incrementUsageCounters(organizationId, platform, cost = 0) {
     try {
       // Call the database function to increment usage
-      const { error } = await this.supabase
-        .rpc('increment_usage', {
-          org_id: organizationId,
-          platform_name: platform,
-          cost
-        });
+      const { error } = await this.supabase.rpc('increment_usage', {
+        org_id: organizationId,
+        platform_name: platform,
+        cost
+      });
 
       if (error) throw error;
 
       // Check if we need to send usage alerts
       const usageCheck = await this.checkUsageLimit(organizationId);
-      
+
       if (usageCheck.isNearLimit && !usageCheck.alertSent) {
         await this.sendUsageAlert(organizationId, usageCheck);
       }
 
       return usageCheck;
-
     } catch (error) {
       logger.error('Error incrementing usage:', error);
       throw error;
@@ -266,14 +283,16 @@ class CostControlService {
       // Get organization and owner details
       const { data: org, error: orgError } = await this.supabase
         .from('organizations')
-        .select(`
+        .select(
+          `
           name,
           plan_id,
           users!organizations_owner_id_fkey (
             email,
             name
           )
-        `)
+        `
+        )
         .eq('id', organizationId)
         .single();
 
@@ -281,7 +300,7 @@ class CostControlService {
 
       const resourceType = usageData.resourceType || 'roasts';
       const thresholdPercentage = usageData.thresholdPercentage || 80;
-      
+
       // Enhanced logging as per Issue 72 requirements
       const alertMessage = `🚨 Usage Alert: ${Math.round(usageData.percentage || 0)}% of monthly ${resourceType} limit reached (threshold: ${thresholdPercentage}%)`;
 
@@ -299,23 +318,21 @@ class CostControlService {
       });
 
       // Log to database (Issue 72 requirement)
-      await this.supabase
-        .from('app_logs')
-        .insert({
-          organization_id: organizationId,
-          level: 'warn',
-          category: 'usage_alert',
-          message: alertMessage,
-          metadata: {
-            resourceType,
-            currentUsage: usageData.currentUsage || usageData.current_usage,
-            limit: usageData.limit || usageData.monthly_limit,
-            percentage: Math.round(usageData.percentage || 0),
-            thresholdPercentage,
-            planId: usageData.planId || org.plan_id,
-            alertType: usageData.alertType || 'soft_warning'
-          }
-        });
+      await this.supabase.from('app_logs').insert({
+        organization_id: organizationId,
+        level: 'warn',
+        category: 'usage_alert',
+        message: alertMessage,
+        metadata: {
+          resourceType,
+          currentUsage: usageData.currentUsage || usageData.current_usage,
+          limit: usageData.limit || usageData.monthly_limit,
+          percentage: Math.round(usageData.percentage || 0),
+          thresholdPercentage,
+          planId: usageData.planId || org.plan_id,
+          alertType: usageData.alertType || 'soft_warning'
+        }
+      });
 
       // Here you would integrate with your email service
       // For now, we'll just log and return a webhook payload
@@ -340,7 +357,6 @@ class CostControlService {
       // await this.sendWebhookAlert(alertPayload);
 
       return alertPayload;
-
     } catch (error) {
       logger.error('Error sending usage alert:', error);
       throw error;
@@ -407,7 +423,7 @@ class CostControlService {
       const platformBreakdown = {};
       let totalCostThisMonth = 0;
 
-      platformStats.forEach(record => {
+      platformStats.forEach((record) => {
         if (!platformBreakdown[record.platform]) {
           platformBreakdown[record.platform] = {
             responses: 0,
@@ -441,7 +457,6 @@ class CostControlService {
         totalCostThisMonth,
         currency: 'USD'
       };
-
     } catch (error) {
       logger.error('Error getting usage stats:', error);
       throw error;
@@ -453,12 +468,12 @@ class CostControlService {
    */
   getResourceDisplayName(resourceType) {
     const displayNames = {
-      'roasts': 'roast responses',
-      'api_calls': 'API calls',
-      'comment_analysis': 'comment analyses',
-      'shield_actions': 'shield actions',
-      'webhook_calls': 'webhook calls',
-      'integrations': 'active integrations'
+      roasts: 'roast responses',
+      api_calls: 'API calls',
+      comment_analysis: 'comment analyses',
+      shield_actions: 'shield actions',
+      webhook_calls: 'webhook calls',
+      integrations: 'active integrations'
     };
     return displayNames[resourceType] || resourceType;
   }
@@ -468,7 +483,7 @@ class CostControlService {
    */
   buildLimitMessage(result, resourceName) {
     const { reason, current_usage, monthly_limit, remaining } = result;
-    
+
     switch (reason) {
       case 'monthly_limit_exceeded':
         return `Monthly limit of ${monthly_limit} ${resourceName} exceeded. Current usage: ${current_usage}.`;
@@ -519,11 +534,12 @@ class CostControlService {
 
         if (insertError) throw insertError;
 
-        logger.info(`Created ${defaultAlerts.length} default usage alerts for org ${organizationId}`);
+        logger.info(
+          `Created ${defaultAlerts.length} default usage alerts for org ${organizationId}`
+        );
       }
 
       return defaultAlerts;
-
     } catch (error) {
       logger.error('Error creating default usage alerts:', error);
       // Don't throw - this is not critical for operation
@@ -536,9 +552,9 @@ class CostControlService {
    */
   async checkAndSendUsageAlerts(organizationId, resourceType, usageData) {
     try {
-      const percentage = usageData.percentage_used || 
-        (usageData.current_usage / usageData.monthly_limit) * 100;
-      
+      const percentage =
+        usageData.percentage_used || (usageData.current_usage / usageData.monthly_limit) * 100;
+
       // Get alert configurations for this org and resource
       const { data: _alerts, error } = await this.supabase
         .from('usage_alerts')
@@ -565,7 +581,7 @@ class CostControlService {
 
         if (newAlerts && newAlerts.length > 0) alerts = newAlerts;
       }
-      
+
       for (const alert of alerts || []) {
         // Check if we should send alert (cooldown, frequency limits)
         const shouldSend = await this.shouldSendAlert(alert, percentage);
@@ -576,7 +592,7 @@ class CostControlService {
             alertType: alert.alert_type,
             thresholdPercentage: alert.threshold_percentage
           });
-          
+
           // Update alert sent timestamp
           await this.supabase
             .from('usage_alerts')
@@ -587,7 +603,6 @@ class CostControlService {
             .eq('id', alert.id);
         }
       }
-      
     } catch (error) {
       logger.error('Error checking usage alerts:', error);
       // Don't throw - alerts are not critical for operation
@@ -604,24 +619,21 @@ class CostControlService {
       const lastSent = new Date(alert.last_sent_at);
       const today = new Date();
       if (lastSent.toDateString() !== today.toDateString()) {
-        await this.supabase
-          .from('usage_alerts')
-          .update({ sent_count: 0 })
-          .eq('id', alert.id);
+        await this.supabase.from('usage_alerts').update({ sent_count: 0 }).eq('id', alert.id);
         return true;
       }
       return false;
     }
-    
+
     // Check cooldown period
     if (alert.last_sent_at) {
       const lastSent = new Date(alert.last_sent_at);
-      const cooldownEnd = new Date(lastSent.getTime() + (alert.cooldown_hours * 60 * 60 * 1000));
+      const cooldownEnd = new Date(lastSent.getTime() + alert.cooldown_hours * 60 * 60 * 1000);
       if (new Date() < cooldownEnd) {
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -633,7 +645,7 @@ class CostControlService {
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
       const currentMonth = currentDate.getMonth() + 1;
-      
+
       // Get current month detailed usage by resource type
       const { data: currentUsage, error: currentError } = await this.supabase
         .from('usage_tracking')
@@ -641,25 +653,25 @@ class CostControlService {
         .eq('organization_id', organizationId)
         .eq('year', currentYear)
         .eq('month', currentMonth);
-      
+
       if (currentError) throw currentError;
-      
+
       // Get usage limits
       const { data: limits, error: limitsError } = await this.supabase
         .from('usage_limits')
         .select('*')
         .eq('organization_id', organizationId)
         .eq('is_active', true);
-      
+
       if (limitsError) throw limitsError;
-      
+
       // Process current usage by resource type
       const usageByResource = {};
       const usageByPlatform = {};
       let totalCostThisMonth = 0;
       let totalTokensUsed = 0;
-      
-      currentUsage.forEach(record => {
+
+      currentUsage.forEach((record) => {
         // By resource type
         if (!usageByResource[record.resource_type]) {
           usageByResource[record.resource_type] = {
@@ -669,39 +681,39 @@ class CostControlService {
             platforms: {}
           };
         }
-        
+
         usageByResource[record.resource_type].quantity += record.quantity;
         usageByResource[record.resource_type].cost_cents += record.cost_cents;
         usageByResource[record.resource_type].tokens_used += record.tokens_used;
-        
+
         // By platform within resource
         if (record.platform) {
           if (!usageByResource[record.resource_type].platforms[record.platform]) {
             usageByResource[record.resource_type].platforms[record.platform] = 0;
           }
           usageByResource[record.resource_type].platforms[record.platform] += record.quantity;
-          
+
           // Overall by platform
           if (!usageByPlatform[record.platform]) {
             usageByPlatform[record.platform] = 0;
           }
           usageByPlatform[record.platform] += record.quantity;
         }
-        
+
         totalCostThisMonth += record.cost_cents;
         totalTokensUsed += record.tokens_used;
       });
-      
+
       // Add limit information to each resource
       const limitsMap = {};
-      limits.forEach(limit => {
+      limits.forEach((limit) => {
         limitsMap[limit.resource_type] = limit;
       });
-      
-      Object.keys(usageByResource).forEach(resourceType => {
+
+      Object.keys(usageByResource).forEach((resourceType) => {
         const limit = limitsMap[resourceType];
         const usage = usageByResource[resourceType];
-        
+
         if (limit) {
           usage.monthly_limit = limit.monthly_limit;
           usage.percentage_used = (usage.quantity / limit.monthly_limit) * 100;
@@ -710,16 +722,16 @@ class CostControlService {
           usage.overage_allowed = limit.allow_overage;
         }
       });
-      
+
       // Get organization details
       const { data: org, error: orgError } = await this.supabase
         .from('organizations')
         .select('plan_id, monthly_responses_limit')
         .eq('id', organizationId)
         .single();
-      
+
       if (orgError) throw orgError;
-      
+
       return {
         organizationId,
         planId: org.plan_id,
@@ -735,7 +747,6 @@ class CostControlService {
         },
         generatedAt: new Date().toISOString()
       };
-      
     } catch (error) {
       logger.error('Error getting enhanced usage stats:', error);
       throw error;
@@ -753,29 +764,31 @@ class CostControlService {
         overageRateCents = 0,
         hardLimit = true
       } = options;
-      
+
       const { data, error } = await this.supabase
         .from('usage_limits')
-        .upsert({
-          organization_id: organizationId,
-          resource_type: resourceType,
-          monthly_limit: monthlyLimit,
-          daily_limit: dailyLimit,
-          allow_overage: allowOverage,
-          overage_rate_cents: overageRateCents,
-          hard_limit: hardLimit,
-          is_active: true,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'organization_id,resource_type'
-        })
+        .upsert(
+          {
+            organization_id: organizationId,
+            resource_type: resourceType,
+            monthly_limit: monthlyLimit,
+            daily_limit: dailyLimit,
+            allow_overage: allowOverage,
+            overage_rate_cents: overageRateCents,
+            hard_limit: hardLimit,
+            is_active: true,
+            updated_at: new Date().toISOString()
+          },
+          {
+            onConflict: 'organization_id,resource_type'
+          }
+        )
         .select()
         .single();
-      
+
       if (error) throw error;
-      
+
       return data;
-      
     } catch (error) {
       logger.error('Error setting usage limit:', error);
       throw error;
@@ -812,21 +825,19 @@ class CostControlService {
 
       // Update usage limits for new plan
       await this.updatePlanUsageLimits(organizationId, newPlanId);
-      
+
       // Log the upgrade
-      await this.supabase
-        .from('app_logs')
-        .insert({
-          organization_id: organizationId,
-          level: 'info',
-          category: 'billing',
-          message: `Plan upgraded to ${newPlan.name}`,
-          metadata: {
-            previousPlan: org.plan_id,
-            newPlan: newPlanId,
-            stripeSubscriptionId
-          }
-        });
+      await this.supabase.from('app_logs').insert({
+        organization_id: organizationId,
+        level: 'info',
+        category: 'billing',
+        message: `Plan upgraded to ${newPlan.name}`,
+        metadata: {
+          previousPlan: org.plan_id,
+          newPlan: newPlanId,
+          stripeSubscriptionId
+        }
+      });
 
       return {
         success: true,
@@ -836,7 +847,6 @@ class CostControlService {
           ...planLimits
         }
       };
-
     } catch (error) {
       logger.error('Error upgrading plan:', error);
       throw error;
@@ -868,7 +878,6 @@ class CostControlService {
         planId: org.plan_id,
         planName: plan.name
       };
-
     } catch (error) {
       logger.error('Error checking Shield access:', error);
       throw error;
@@ -909,7 +918,6 @@ class CostControlService {
         detailedRecords: records || [],
         generatedAt: new Date().toISOString()
       };
-
     } catch (error) {
       logger.error('Error getting billing summary:', error);
       throw error;
@@ -923,7 +931,7 @@ class CostControlService {
     try {
       const plan = this.plans[planId];
       if (!plan) throw new Error(`Invalid plan: ${planId}`);
-      
+
       // Define limits by plan and resource type
       const planLimits = {
         starter_trial: {
@@ -957,10 +965,10 @@ class CostControlService {
           shield_actions: { monthly: 999999, overage: true, hard: false }
         }
       };
-      
+
       const limits = planLimits[planId];
       if (!limits) return;
-      
+
       // Update or insert limits for each resource type
       for (const [resourceType, config] of Object.entries(limits)) {
         await this.setUsageLimit(organizationId, resourceType, config.monthly, {
@@ -968,7 +976,6 @@ class CostControlService {
           hardLimit: config.hard
         });
       }
-      
     } catch (error) {
       logger.error('Error updating plan usage limits:', error);
       throw error;
@@ -980,9 +987,8 @@ class CostControlService {
    */
   async resetAllMonthlyUsage() {
     try {
-      const { data: resetCount, error } = await this.supabase
-        .rpc('reset_monthly_usage');
-      
+      const { data: resetCount, error } = await this.supabase.rpc('reset_monthly_usage');
+
       if (error) throw error;
 
       logger.info(`Monthly usage reset completed for ${resetCount} organizations`);
@@ -992,7 +998,6 @@ class CostControlService {
         organizationsReset: resetCount,
         resetAt: new Date().toISOString()
       };
-      
     } catch (error) {
       logger.error('Error resetting monthly usage:', error);
       throw error;
@@ -1059,7 +1064,7 @@ class CostControlService {
           limit,
           offset,
           total: totalCount || 0,
-          hasMore: (offset + limit) < (totalCount || 0)
+          hasMore: offset + limit < (totalCount || 0)
         },
         filters: {
           resourceType,
@@ -1068,7 +1073,6 @@ class CostControlService {
           dateTo
         }
       };
-
     } catch (error) {
       logger.error('Error getting alert history:', error);
       throw error;
@@ -1104,14 +1108,14 @@ class CostControlService {
       const last24Hours = new Date();
       last24Hours.setHours(last24Hours.getHours() - 24);
 
-      alerts.forEach(alert => {
+      alerts.forEach((alert) => {
         const metadata = alert.metadata || {};
         const resourceType = metadata.resourceType || 'unknown';
         const threshold = metadata.thresholdPercentage || 80;
-        
+
         // Count by resource type
         stats.byResourceType[resourceType] = (stats.byResourceType[resourceType] || 0) + 1;
-        
+
         // Count by threshold
         stats.byThreshold[threshold] = (stats.byThreshold[threshold] || 0) + 1;
       });
@@ -1122,7 +1126,6 @@ class CostControlService {
         stats,
         generatedAt: new Date().toISOString()
       };
-
     } catch (error) {
       logger.error('Error getting alert stats:', error);
       throw error;

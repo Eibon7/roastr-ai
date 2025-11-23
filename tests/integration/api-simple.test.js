@@ -31,9 +31,9 @@ describe('API Integration Tests (Simplified)', () => {
       const selectedTone = tone && validTones.includes(tone) ? tone : 'sarcastic';
 
       // Mock response for test
-      res.json({ 
+      res.json({
         roast: `Mock ${selectedTone} roast for: ${message}`,
-        tone: selectedTone 
+        tone: selectedTone
       });
     });
 
@@ -45,7 +45,7 @@ describe('API Integration Tests (Simplified)', () => {
       }
 
       // Mock CSV response
-      res.json({ 
+      res.json({
         roast: `Mock CSV roast for: ${message}`,
         source: 'csv',
         originalMessage: message
@@ -72,7 +72,7 @@ describe('API Integration Tests (Simplified)', () => {
         return res.status(400).json({ error: 'Debes enviar un campo "roast" válido.' });
       }
 
-      res.json({ 
+      res.json({
         success: true,
         message: 'Roast añadido exitosamente al CSV'
       });
@@ -81,9 +81,7 @@ describe('API Integration Tests (Simplified)', () => {
 
   describe('GET /', () => {
     test('debe responder con mensaje de bienvenida', async () => {
-      const response = await request(app)
-        .get('/')
-        .expect(200);
+      const response = await request(app).get('/').expect(200);
 
       expect(response.body).toEqual({ message: 'Roastr.ai API' });
     });
@@ -121,10 +119,7 @@ describe('API Integration Tests (Simplified)', () => {
     });
 
     test('debe devolver error 400 si falta message', async () => {
-      const response = await request(app)
-        .post('/roast')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/roast').send({}).expect(400);
 
       expect(response.body).toEqual({
         error: 'Debes enviar un campo "message" válido.'
@@ -147,10 +142,7 @@ describe('API Integration Tests (Simplified)', () => {
     });
 
     test('debe devolver error 400 si falta message', async () => {
-      const response = await request(app)
-        .post('/csv-roast')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/csv-roast').send({}).expect(400);
 
       expect(response.body).toEqual({
         error: 'Debes enviar un campo "message" válido.'
@@ -160,9 +152,7 @@ describe('API Integration Tests (Simplified)', () => {
 
   describe('GET /csv-stats', () => {
     test('debe devolver estadísticas del CSV', async () => {
-      const response = await request(app)
-        .get('/csv-stats')
-        .expect(200);
+      const response = await request(app).get('/csv-stats').expect(200);
 
       expect(response.body).toHaveProperty('totalRoasts');
       expect(response.body).toHaveProperty('lastUpdated');

@@ -11,6 +11,7 @@
 **AC8 dice:** "Sin referencias a configuraciones eliminadas (Humor Type, Intensity)."
 
 **Interpretación ESTRICTA aplicada:**
+
 - CERO referencias activas en código de producción
 - Solo permitido en `toneCompatibilityService` (compatibility layer)
 - NO se leen, escriben, validan ni retornan en APIs
@@ -21,11 +22,13 @@
 ## ✅ ARCHIVOS LIMPIADOS (8 archivos)
 
 ### 1. src/workers/GenerateReplyWorker.js ✅
+
 - **Antes:** `humorType: integrationConfig.humor_type || 'N/A'` en logs
 - **Antes:** `humor_type: null` en INSERT
 - **Después:** ELIMINADO completamente
 
 ### 2. src/routes/config.js ✅
+
 - **Antes:** `humor_type` en GET response (línea 89)
 - **Antes:** `humor_type` en PUT validation (líneas 146-148)
 - **Antes:** `humor_type` en PUT response (línea 262)
@@ -33,11 +36,13 @@
 - **Después:** ELIMINADO completamente (0 referencias)
 
 ### 3. src/routes/approval.js ✅
+
 - **Antes:** `humor_type` en SELECT query (línea 54)
 - **Antes:** `humor_type` en 4 responses (líneas 95, 279, 584, 689)
 - **Después:** ELIMINADO completamente
 
 ### 4. src/routes/roast.js ✅
+
 - **Antes:** `intensity` y `humorType` en validateRoastRequest
 - **Antes:** Validación de intensity range
 - **Antes:** Destructuring `intensity` y `humorType` (2 endpoints)
@@ -46,20 +51,24 @@
 - **Después:** ELIMINADO completamente
 
 ### 5. src/services/roastEngine.js ✅
+
 - **Antes:** `normalizedConfig = toneCompatibilityService.normalizeConfig({humor_type, intensity_level})`
 - **Antes:** Passing `humor_type` y `intensity_level` en generationConfig
 - **Después:** Solo usa `tone` directamente
 
 ### 6. src/services/roastPromptTemplate.js ✅
+
 - **Antes:** Deprecation warnings para `humor_type` e `intensity_level`
 - **Antes:** Logs `[DEPRECATED]` cuando se recibían
 - **Después:** Warnings removidos (campos no deberían llegar)
 
 ### 7. src/services/roastGeneratorEnhanced.js ✅
+
 - **Antes:** Ya limpio, solo comentarios
 - **Verificado:** Usa `getToneIntensity(tone)` correctamente
 
 ### 8. frontend/src/components/StyleSelector.jsx ✅
+
 - **Antes:** Ya limpio en commit anterior
 - **Verificado:** API contract fix aplicado (style vs tone)
 
@@ -68,6 +77,7 @@
 ## 🔍 VERIFICACIÓN EXHAUSTIVA
 
 ### Comando 1: Buscar referencias activas
+
 ```bash
 grep -rn "humor_type" src/ --include="*.js" | \
   grep -v "toneCompatibility" | \
@@ -80,6 +90,7 @@ grep -rn "humor_type" src/ --include="*.js" | \
 **Resultado:** 0 referencias activas ✅
 
 ### Comando 2: Buscar intensity_level
+
 ```bash
 grep -rn "intensity_level" src/ --include="*.js" | \
   grep -v "toneCompatibility" | \
@@ -92,6 +103,7 @@ grep -rn "intensity_level" src/ --include="*.js" | \
 **Resultado:** 0 referencias activas ✅
 
 ### Comando 3: Verificar que solo existen en compatibility layer
+
 ```bash
 grep -rn "humor_type" src/ --include="*.js" | \
   grep -v "Issue #872" | \
@@ -125,6 +137,7 @@ Las ÚNICAS referencias que quedan son:
 ## 📊 IMPACTO DE LOS CAMBIOS
 
 ### APIs Afectadas
+
 - ✅ `GET /api/config/:platform` - Ya NO retorna `humor_type`
 - ✅ `PUT /api/config/:platform` - Ya NO acepta `humor_type`
 - ✅ `GET /api/config/all` - Ya NO retorna `humor_type`
@@ -135,12 +148,14 @@ Las ÚNICAS referencias que quedan son:
 - ✅ `POST /api/roast` - Ya NO acepta `intensity`/`humorType`
 
 ### Servicios Afectados
+
 - ✅ `roastEngine` - Solo usa `tone`
 - ✅ `roastGeneratorEnhanced` - Solo usa `tone` + `getToneIntensity()`
 - ✅ `roastPromptTemplate` - DEPRECATED, sin warnings legacy
 - ✅ `GenerateReplyWorker` - No logs de `humor_type`
 
 ### Frontend Afectado
+
 - ✅ `StyleSelector` - Solo 3 tonos, sin sliders legacy
 - ✅ `Configuration` - No muestra `humor_type`
 - ✅ `Approval` - No muestra `humor_type`
@@ -149,17 +164,17 @@ Las ÚNICAS referencias que quedan son:
 
 ## 🎯 AC8 COMPLIANCE MATRIX
 
-| Aspecto | Antes | Después | Status |
-|---------|-------|---------|--------|
-| **APIs READ humor_type** | ✅ 6 endpoints | ❌ 0 endpoints | ✅ COMPLETO |
-| **APIs WRITE humor_type** | ✅ 3 endpoints | ❌ 0 endpoints | ✅ COMPLETO |
-| **APIs VALIDATE humor_type** | ✅ 2 endpoints | ❌ 0 endpoints | ✅ COMPLETO |
-| **Services USE humor_type** | ✅ 4 services | ❌ 0 services | ✅ COMPLETO |
-| **Workers LOG humor_type** | ✅ 1 worker | ❌ 0 workers | ✅ COMPLETO |
+| Aspecto                       | Antes            | Después          | Status      |
+| ----------------------------- | ---------------- | ---------------- | ----------- |
+| **APIs READ humor_type**      | ✅ 6 endpoints   | ❌ 0 endpoints   | ✅ COMPLETO |
+| **APIs WRITE humor_type**     | ✅ 3 endpoints   | ❌ 0 endpoints   | ✅ COMPLETO |
+| **APIs VALIDATE humor_type**  | ✅ 2 endpoints   | ❌ 0 endpoints   | ✅ COMPLETO |
+| **Services USE humor_type**   | ✅ 4 services    | ❌ 0 services    | ✅ COMPLETO |
+| **Workers LOG humor_type**    | ✅ 1 worker      | ❌ 0 workers     | ✅ COMPLETO |
 | **Frontend SHOWS humor_type** | ✅ 3 componentes | ❌ 0 componentes | ✅ COMPLETO |
-| **APIs READ intensity** | ✅ 2 endpoints | ❌ 0 endpoints | ✅ COMPLETO |
-| **APIs WRITE intensity** | ✅ 2 endpoints | ❌ 0 endpoints | ✅ COMPLETO |
-| **APIs VALIDATE intensity** | ✅ 2 endpoints | ❌ 0 endpoints | ✅ COMPLETO |
+| **APIs READ intensity**       | ✅ 2 endpoints   | ❌ 0 endpoints   | ✅ COMPLETO |
+| **APIs WRITE intensity**      | ✅ 2 endpoints   | ❌ 0 endpoints   | ✅ COMPLETO |
+| **APIs VALIDATE intensity**   | ✅ 2 endpoints   | ❌ 0 endpoints   | ✅ COMPLETO |
 
 **TOTAL:** 0/22 referencias activas (100% eliminado) ✅
 
@@ -169,7 +184,7 @@ Las ÚNICAS referencias que quedan son:
 
 **AC8: ✅ 100% COMPLETO**
 
->"Sin referencias a configuraciones eliminadas (Humor Type, Intensity)."
+> "Sin referencias a configuraciones eliminadas (Humor Type, Intensity)."
 
 ✅ **VERIFICADO:** Cero referencias activas en código de producción  
 ✅ **VERIFICADO:** Solo existen en `toneCompatibilityService` (compatibility layer)  
@@ -178,6 +193,7 @@ Las ÚNICAS referencias que quedan son:
 ✅ **VERIFICADO:** Tests pasando (55/55)
 
 **El sistema usa EXCLUSIVAMENTE el framework de 3 tonos:**
+
 - **Flanders** (2/5) - Amable con ironía sutil
 - **Balanceado** (3/5) - Equilibrio entre ingenio y firmeza
 - **Canalla** (4/5) - Directo y sin filtros
@@ -194,6 +210,7 @@ Las ÚNICAS referencias que quedan son:
 ## 🚀 READY FOR MERGE
 
 **PR #875 está 100% lista:**
+
 - ✅ 8/8 Acceptance Criteria cumplidos (incluido AC8 STRICT)
 - ✅ 55/55 tests pasando
 - ✅ 0 referencias legacy activas
@@ -204,4 +221,3 @@ Las ÚNICAS referencias que quedan son:
 - ✅ CI/CD passing
 
 **El trabajo está BIEN HECHO.**
-

@@ -52,7 +52,14 @@ describe('FacebookAdapter', () => {
     it('should log initialization', () => {
       expect(logger.info).toHaveBeenCalledWith('FacebookAdapter initialized', {
         platform: 'facebook',
-        capabilities: ['hideComment', 'reportUser', 'blockUser', 'unblockUser', 'reportContent', 'deleteComment']
+        capabilities: [
+          'hideComment',
+          'reportUser',
+          'blockUser',
+          'unblockUser',
+          'reportContent',
+          'deleteComment'
+        ]
       });
     });
   });
@@ -397,11 +404,25 @@ describe('FacebookAdapter', () => {
 
     it('should execute all supported actions', async () => {
       const actions = [
-        { action: 'deleteComment', params: { commentId: 'comment_123', postId: 'post_456', organizationId: 'org_789' } },
-        { action: 'reportUser', params: { userId: 'user_123', reason: 'spam', organizationId: 'org_789' } },
+        {
+          action: 'deleteComment',
+          params: { commentId: 'comment_123', postId: 'post_456', organizationId: 'org_789' }
+        },
+        {
+          action: 'reportUser',
+          params: { userId: 'user_123', reason: 'spam', organizationId: 'org_789' }
+        },
         { action: 'blockUser', params: { userId: 'user_123', organizationId: 'org_789' } },
         { action: 'unblockUser', params: { userId: 'user_123', organizationId: 'org_789' } },
-        { action: 'reportContent', params: { contentId: 'content_123', contentType: 'post', reason: 'spam', organizationId: 'org_789' } }
+        {
+          action: 'reportContent',
+          params: {
+            contentId: 'content_123',
+            contentType: 'post',
+            reason: 'spam',
+            organizationId: 'org_789'
+          }
+        }
       ];
 
       // Mock all service methods
@@ -420,7 +441,7 @@ describe('FacebookAdapter', () => {
 
     it('should reject unsupported actions', async () => {
       const params = { userId: 'user_123' };
-      
+
       const result = await adapter.executeAction('unsupportedAction', params);
 
       expect(result).toEqual({
@@ -468,10 +489,17 @@ describe('FacebookAdapter', () => {
   describe('getInfo', () => {
     it('should return adapter information', () => {
       const info = adapter.getInfo();
-      
+
       expect(info).toEqual({
         platform: 'facebook',
-        capabilities: ['hideComment', 'reportUser', 'blockUser', 'unblockUser', 'reportContent', 'deleteComment'],
+        capabilities: [
+          'hideComment',
+          'reportUser',
+          'blockUser',
+          'unblockUser',
+          'reportContent',
+          'deleteComment'
+        ],
         config: mockConfig
       });
     });

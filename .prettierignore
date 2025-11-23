@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build output
+dist/
+build/
+frontend/build/
+coverage/
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Config files (usually have specific formatting)
+*.config.js
+*.config.cjs
+
+# Test evidence and reports
+docs/test-evidence/
+docs/backup/
+frontend/test-results/
+frontend/playwright-report/
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.*
+
+# Other
+.DS_Store
+.cache/
+.tmp/
+

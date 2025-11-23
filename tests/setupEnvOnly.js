@@ -46,7 +46,7 @@ afterAll(async () => {
     if (alertingService && typeof alertingService.shutdown === 'function') {
       alertingService.shutdown();
     }
-    
+
     // Clean up any other resources that might prevent Jest from exiting
     if (global.gc) {
       global.gc();

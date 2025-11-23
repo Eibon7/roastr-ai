@@ -28,7 +28,7 @@ describe('useFeatureFlags', () => {
       ENABLE_STYLE_PROFILE: true,
       ENABLE_RQC: true,
       ENABLE_SHIELD: true,
-      ENABLE_BILLING: true,
+      ENABLE_BILLING: true
     });
 
     expect(result.current.isEnabled('ENABLE_SHOP')).toBe(false);
@@ -39,18 +39,18 @@ describe('useFeatureFlags', () => {
 
   it('should fetch flags from API when not in mock mode', async () => {
     isMockModeEnabled.mockReturnValue(false);
-    
+
     const mockFlags = {
       ENABLE_SHOP: true,
       ENABLE_STYLE_PROFILE: true,
       ENABLE_RQC: false,
       ENABLE_SHIELD: true,
-      ENABLE_BILLING: false,
+      ENABLE_BILLING: false
     };
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ flags: mockFlags }),
+      json: async () => ({ flags: mockFlags })
     });
 
     const { result } = renderHook(() => useFeatureFlags());
@@ -69,17 +69,17 @@ describe('useFeatureFlags', () => {
     expect(fetch).toHaveBeenCalledWith('/api/config/flags', {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
-      },
+        'Content-Type': 'application/json'
+      }
     });
   });
 
   it('should handle API error and return fallback flags', async () => {
     isMockModeEnabled.mockReturnValue(false);
-    
+
     fetch.mockResolvedValueOnce({
       ok: false,
-      status: 500,
+      status: 500
     });
 
     const { result } = renderHook(() => useFeatureFlags());
@@ -94,7 +94,7 @@ describe('useFeatureFlags', () => {
       ENABLE_STYLE_PROFILE: true,
       ENABLE_RQC: false,
       ENABLE_SHIELD: false,
-      ENABLE_BILLING: false,
+      ENABLE_BILLING: false
     });
 
     expect(result.current.error).toBe(null);
@@ -102,7 +102,7 @@ describe('useFeatureFlags', () => {
 
   it('should handle network error and return fallback flags', async () => {
     isMockModeEnabled.mockReturnValue(false);
-    
+
     fetch.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useFeatureFlags());
@@ -117,7 +117,7 @@ describe('useFeatureFlags', () => {
       ENABLE_STYLE_PROFILE: true,
       ENABLE_RQC: false,
       ENABLE_SHIELD: false,
-      ENABLE_BILLING: false,
+      ENABLE_BILLING: false
     });
 
     expect(result.current.error).toBe('Network error');
@@ -125,10 +125,10 @@ describe('useFeatureFlags', () => {
 
   it('should handle missing flags in API response', async () => {
     isMockModeEnabled.mockReturnValue(false);
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({}), // No flags property
+      json: async () => ({}) // No flags property
     });
 
     const { result } = renderHook(() => useFeatureFlags());
@@ -143,18 +143,18 @@ describe('useFeatureFlags', () => {
 
   it('should correctly evaluate isEnabled function', async () => {
     isMockModeEnabled.mockReturnValue(false);
-    
+
     const mockFlags = {
       ENABLE_SHOP: true,
       ENABLE_STYLE_PROFILE: false,
       ENABLE_RQC: 'true', // String value
       ENABLE_SHIELD: 1, // Number value
-      ENABLE_BILLING: null, // Null value
+      ENABLE_BILLING: null // Null value
     };
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ flags: mockFlags }),
+      json: async () => ({ flags: mockFlags })
     });
 
     const { result } = renderHook(() => useFeatureFlags());

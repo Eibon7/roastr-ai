@@ -37,19 +37,27 @@ describe('OAuth Mock Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      
+
       const data = response.body.data;
       expect(data.platforms).toBeInstanceOf(Array);
       expect(data.platforms.length).toBeGreaterThan(0);
-      
+
       // Check required platforms are present
-      const platformNames = data.platforms.map(p => p.platform);
-      const requiredPlatforms = ['twitter', 'instagram', 'youtube', 'tiktok', 'linkedin', 'facebook', 'bluesky'];
-      
-      requiredPlatforms.forEach(platform => {
+      const platformNames = data.platforms.map((p) => p.platform);
+      const requiredPlatforms = [
+        'twitter',
+        'instagram',
+        'youtube',
+        'tiktok',
+        'linkedin',
+        'facebook',
+        'bluesky'
+      ];
+
+      requiredPlatforms.forEach((platform) => {
         expect(platformNames).toContain(platform);
       });
-      
+
       expect(data.mockMode).toBe(true);
     });
 
@@ -59,15 +67,15 @@ describe('OAuth Mock Integration Tests', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       const platforms = response.body.data.platforms;
-      
-      platforms.forEach(platform => {
+
+      platforms.forEach((platform) => {
         expect(platform).toHaveProperty('platform');
         expect(platform).toHaveProperty('name');
         expect(platform).toHaveProperty('enabled');
         expect(platform).toHaveProperty('mockMode');
         expect(platform).toHaveProperty('requirements');
         expect(platform).toHaveProperty('scopes');
-        
+
         // Requirements structure
         expect(platform.requirements).toHaveProperty('permissions');
         expect(platform.requirements).toHaveProperty('notes');
@@ -85,22 +93,21 @@ describe('OAuth Mock Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      
+
       const data = response.body.data;
       expect(data.connections).toBeInstanceOf(Array);
       expect(data.totalConnected).toBe(0);
       expect(data.mockMode).toBe(true);
-      
+
       // All platforms should be disconnected initially
-      data.connections.forEach(connection => {
+      data.connections.forEach((connection) => {
         expect(connection.connected).toBe(false);
         expect(connection.status).toBe('disconnected');
       });
     });
 
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get('/api/auth/connections');
+      const response = await request(app).get('/api/auth/connections');
 
       expect(response.status).toBe(401);
     });
@@ -116,7 +123,7 @@ describe('OAuth Mock Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      
+
       const data = response.body.data;
       expect(data.authUrl).toContain(testPlatform);
       expect(data.authUrl).toContain('mock-oauth.roastr.ai');
@@ -137,8 +144,7 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should require authentication for connect', async () => {
-      const response = await request(app)
-        .post(`/api/auth/${testPlatform}/connect`);
+      const response = await request(app).post(`/api/auth/${testPlatform}/connect`);
 
       expect(response.status).toBe(401);
     });
@@ -168,8 +174,9 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should handle successful callback', async () => {
-      const response = await request(app)
-        .get(`/api/auth/twitter/callback?code=${mockCode}&state=${state}`);
+      const response = await request(app).get(
+        `/api/auth/twitter/callback?code=${mockCode}&state=${state}`
+      );
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('success=true');
@@ -178,24 +185,25 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should handle callback with error', async () => {
-      const response = await request(app)
-        .get('/api/auth/twitter/callback?error=access_denied&state=' + state);
+      const response = await request(app).get(
+        '/api/auth/twitter/callback?error=access_denied&state=' + state
+      );
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('error=');
     });
 
     it('should reject callback without required parameters', async () => {
-      const response = await request(app)
-        .get('/api/auth/twitter/callback');
+      const response = await request(app).get('/api/auth/twitter/callback');
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('error=Missing+authorization+code+or+state');
     });
 
     it('should reject callback with invalid state', async () => {
-      const response = await request(app)
-        .get('/api/auth/twitter/callback?code=testcode&state=invalid_state');
+      const response = await request(app).get(
+        '/api/auth/twitter/callback?code=testcode&state=invalid_state'
+      );
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('error=');
@@ -203,11 +211,12 @@ describe('OAuth Mock Integration Tests', () => {
 
     it('should reject expired state', async () => {
       // Create an expired state (base64 encoded with old timestamp)
-      const expiredPayload = `${mockUserId}:twitter:${Date.now() - (11 * 60 * 1000)}:random`;
+      const expiredPayload = `${mockUserId}:twitter:${Date.now() - 11 * 60 * 1000}:random`;
       const expiredState = Buffer.from(expiredPayload).toString('base64url');
 
-      const response = await request(app)
-        .get(`/api/auth/twitter/callback?code=${mockCode}&state=${expiredState}`);
+      const response = await request(app).get(
+        `/api/auth/twitter/callback?code=${mockCode}&state=${expiredState}`
+      );
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('error=');
@@ -226,7 +235,7 @@ describe('OAuth Mock Integration Tests', () => {
         .send({});
     });
 
-    platforms.forEach(platform => {
+    platforms.forEach((platform) => {
       describe(`${platform} OAuth flow`, () => {
         it('should complete full connect -> callback -> status cycle', async () => {
           // Step 1: Initiate connection
@@ -239,8 +248,9 @@ describe('OAuth Mock Integration Tests', () => {
 
           // Step 2: Simulate callback
           const mockCode = `mock_code_${platform}_${Date.now()}`;
-          const callbackResponse = await request(app)
-            .get(`/api/auth/${platform}/callback?code=${mockCode}&state=${state}`);
+          const callbackResponse = await request(app).get(
+            `/api/auth/${platform}/callback?code=${mockCode}&state=${state}`
+          );
 
           expect(callbackResponse.status).toBe(302);
           expect(callbackResponse.headers.location).toContain('success=true');
@@ -251,8 +261,9 @@ describe('OAuth Mock Integration Tests', () => {
             .set('Authorization', `Bearer ${authToken}`);
 
           expect(statusResponse.status).toBe(200);
-          const platformConnection = statusResponse.body.data.connections
-            .find(conn => conn.platform === platform);
+          const platformConnection = statusResponse.body.data.connections.find(
+            (conn) => conn.platform === platform
+          );
 
           expect(platformConnection).toBeDefined();
           expect(platformConnection.connected).toBe(true);
@@ -275,8 +286,7 @@ describe('OAuth Mock Integration Tests', () => {
       const { state } = connectResponse.body.data;
       const mockCode = 'mock_code_' + Date.now();
 
-      await request(app)
-        .get(`/api/auth/${testPlatform}/callback?code=${mockCode}&state=${state}`);
+      await request(app).get(`/api/auth/${testPlatform}/callback?code=${mockCode}&state=${state}`);
     });
 
     it('should refresh tokens successfully', async () => {
@@ -307,8 +317,9 @@ describe('OAuth Mock Integration Tests', () => {
         .get('/api/auth/connections')
         .set('Authorization', `Bearer ${authToken}`);
 
-      const platformConnection = statusResponse.body.data.connections
-        .find(conn => conn.platform === testPlatform);
+      const platformConnection = statusResponse.body.data.connections.find(
+        (conn) => conn.platform === testPlatform
+      );
 
       expect(platformConnection.connected).toBe(false);
     });
@@ -348,8 +359,7 @@ describe('OAuth Mock Integration Tests', () => {
       const { state } = connectResponse.body.data;
       const mockCode = 'mock_code_' + Date.now();
 
-      await request(app)
-        .get(`/api/auth/twitter/callback?code=${mockCode}&state=${state}`);
+      await request(app).get(`/api/auth/twitter/callback?code=${mockCode}&state=${state}`);
     });
 
     it('should reset specific platform connection', async () => {
@@ -367,8 +377,9 @@ describe('OAuth Mock Integration Tests', () => {
         .get('/api/auth/connections')
         .set('Authorization', `Bearer ${authToken}`);
 
-      const twitterConnection = statusResponse.body.data.connections
-        .find(conn => conn.platform === 'twitter');
+      const twitterConnection = statusResponse.body.data.connections.find(
+        (conn) => conn.platform === 'twitter'
+      );
 
       expect(twitterConnection.connected).toBe(false);
     });
@@ -388,7 +399,7 @@ describe('OAuth Mock Integration Tests', () => {
         .get('/api/auth/connections')
         .set('Authorization', `Bearer ${authToken}`);
 
-      statusResponse.body.data.connections.forEach(connection => {
+      statusResponse.body.data.connections.forEach((connection) => {
         expect(connection.connected).toBe(false);
       });
     });
@@ -422,8 +433,9 @@ describe('OAuth Mock Integration Tests', () => {
     });
 
     it('should handle malformed state parameter', async () => {
-      const response = await request(app)
-        .get('/api/auth/twitter/callback?code=testcode&state=invalid_base64!@#');
+      const response = await request(app).get(
+        '/api/auth/twitter/callback?code=testcode&state=invalid_base64!@#'
+      );
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('error=');
@@ -437,8 +449,9 @@ describe('OAuth Mock Integration Tests', () => {
 
       const { state } = connectResponse.body.data;
 
-      const response = await request(app)
-        .get(`/api/auth/instagram/callback?code=testcode&state=${state}`);
+      const response = await request(app).get(
+        `/api/auth/instagram/callback?code=testcode&state=${state}`
+      );
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('error=Platform+mismatch');
@@ -453,8 +466,7 @@ describe('OAuth Mock Integration Tests', () => {
       const { state } = connectResponse1.body.data;
       const mockCode = 'mock_code_' + Date.now();
 
-      await request(app)
-        .get(`/api/auth/twitter/callback?code=${mockCode}&state=${state}`);
+      await request(app).get(`/api/auth/twitter/callback?code=${mockCode}&state=${state}`);
 
       // Attempt second connection
       const connectResponse2 = await request(app)
@@ -492,20 +504,22 @@ describe('OAuth Mock Integration Tests', () => {
         const { state } = connectResponse.body.data;
         const mockCode = `mock_code_${platform}_${Date.now()}`;
 
-        await request(app)
-          .get(`/api/auth/${platform}/callback?code=${mockCode}&state=${state}`);
+        await request(app).get(`/api/auth/${platform}/callback?code=${mockCode}&state=${state}`);
 
         // Check user info
         const statusResponse = await request(app)
           .get('/api/auth/connections')
           .set('Authorization', `Bearer ${authToken}`);
 
-        const connection = statusResponse.body.data.connections
-          .find(conn => conn.platform === platform);
+        const connection = statusResponse.body.data.connections.find(
+          (conn) => conn.platform === platform
+        );
 
         expect(connection.user_info).toBeDefined();
-        expect(connection.user_info.id || connection.user_info.did || connection.user_info.open_id).toBeDefined();
-        
+        expect(
+          connection.user_info.id || connection.user_info.did || connection.user_info.open_id
+        ).toBeDefined();
+
         // Platform-specific validations
         if (platform === 'twitter') {
           expect(connection.user_info.username).toBeDefined();

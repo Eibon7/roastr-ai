@@ -8,7 +8,7 @@ export const PASSWORD_REQUIREMENTS = {
   requireNumber: true,
   requireLowercase: true,
   requireUppercaseOrSymbol: true,
-  noSpaces: true,
+  noSpaces: true
 };
 
 /**
@@ -18,7 +18,7 @@ export const PASSWORD_REQUIREMENTS = {
  */
 export const validatePassword = (password) => {
   const errors = [];
-  
+
   if (!password) {
     errors.push('La contraseña es requerida');
     return { isValid: false, errors };
@@ -48,7 +48,7 @@ export const validatePassword = (password) => {
   if (PASSWORD_REQUIREMENTS.requireUppercaseOrSymbol) {
     const hasUppercase = /[A-Z]/.test(password);
     const hasSymbol = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
-    
+
     if (!hasUppercase && !hasSymbol) {
       errors.push('La contraseña debe contener al menos una letra mayúscula o un símbolo');
     }
@@ -56,7 +56,7 @@ export const validatePassword = (password) => {
 
   return {
     isValid: errors.length === 0,
-    errors,
+    errors
   };
 };
 
@@ -67,18 +67,18 @@ export const validatePassword = (password) => {
  */
 export const getPasswordStrength = (password) => {
   if (!password) return 0;
-  
+
   let strength = 0;
-  
+
   // Length checks
   if (password.length >= 8) strength++;
   if (password.length >= 12) strength++;
-  
+
   // Complexity checks
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
   if (/\d/.test(password)) strength++;
   if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) strength++;
-  
+
   // Cap at 4
   return Math.min(strength, 4);
 };
@@ -94,9 +94,9 @@ export const getPasswordStrengthLabel = (strength) => {
     1: 'Débil',
     2: 'Regular',
     3: 'Fuerte',
-    4: 'Muy fuerte',
+    4: 'Muy fuerte'
   };
-  
+
   return labels[strength] || 'Muy débil';
 };
 
@@ -111,8 +111,8 @@ export const getPasswordStrengthColor = (strength) => {
     1: 'text-orange-600 bg-orange-100',
     2: 'text-yellow-600 bg-yellow-100',
     3: 'text-green-600 bg-green-100',
-    4: 'text-emerald-600 bg-emerald-100',
+    4: 'text-emerald-600 bg-emerald-100'
   };
-  
+
   return colors[strength] || colors[0];
 };

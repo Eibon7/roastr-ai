@@ -71,13 +71,13 @@ const NavItem = styled.button<{ $active: boolean }>`
   width: 100%;
   height: 48px;
   padding: 0 24px;
-  background: ${({ $active }) => $active ? 'rgba(80, 250, 123, 0.1)' : 'transparent'};
+  background: ${({ $active }) => ($active ? 'rgba(80, 250, 123, 0.1)' : 'transparent')};
   border: none;
-  border-left: ${({ $active }) => $active ? '3px solid #50fa7b' : '2px solid transparent'};
+  border-left: ${({ $active }) => ($active ? '3px solid #50fa7b' : '2px solid transparent')};
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
-  font-weight: ${({ $active }) => $active ? 600 : 400};
-  color: ${({ $active }) => $active ? '#50fa7b' : '#bdbdbd'};
+  font-weight: ${({ $active }) => ($active ? 600 : 400)};
+  color: ${({ $active }) => ($active ? '#50fa7b' : '#bdbdbd')};
   text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -86,7 +86,7 @@ const NavItem = styled.button<{ $active: boolean }>`
 
   &:hover {
     background: rgba(255, 255, 255, 0.05);
-    border-left-color: ${({ $active }) => $active ? '#50fa7b' : 'rgba(80, 250, 123, 0.3)'};
+    border-left-color: ${({ $active }) => ($active ? '#50fa7b' : 'rgba(80, 250, 123, 0.3)')};
   }
 
   &:focus-visible {
@@ -124,12 +124,7 @@ const getStatColor = (value: number, isRisk: boolean = false): string => {
   return '#ff5555';
 };
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({
-  activeView,
-  onViewChange,
-  stats
-}) => {
-
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeView, onViewChange, stats }) => {
   return (
     <SidebarContainer data-testid="left-sidebar">
       <Section data-testid="system-status">
@@ -137,21 +132,15 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <StatsGrid data-testid="stats-grid">
           <StatItem data-testid="stat-health">
             <StatLabel>Health</StatLabel>
-            <StatValue $color={getStatColor(stats.health)}>
-              {stats.health.toFixed(0)}
-            </StatValue>
+            <StatValue $color={getStatColor(stats.health)}>{stats.health.toFixed(0)}</StatValue>
           </StatItem>
           <StatItem data-testid="stat-drift">
             <StatLabel>Drift</StatLabel>
-            <StatValue $color={getStatColor(stats.drift, true)}>
-              {stats.drift.toFixed(0)}
-            </StatValue>
+            <StatValue $color={getStatColor(stats.drift, true)}>{stats.drift.toFixed(0)}</StatValue>
           </StatItem>
           <StatItem data-testid="stat-nodes">
             <StatLabel>Nodes</StatLabel>
-            <StatValue $color="#50fa7b">
-              {stats.nodes}
-            </StatValue>
+            <StatValue $color="#50fa7b">{stats.nodes}</StatValue>
           </StatItem>
           <StatItem data-testid="stat-coverage">
             <StatLabel>Coverage</StatLabel>
@@ -187,13 +176,23 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         >
           Reports
         </NavItem>
-        <DisabledNavItem as="div" $active={false} title="Coming soon" data-testid="nav-feature-flags">
+        <DisabledNavItem
+          as="div"
+          $active={false}
+          title="Coming soon"
+          data-testid="nav-feature-flags"
+        >
           Feature Flags
         </DisabledNavItem>
         <DisabledNavItem as="div" $active={false} title="Coming soon" data-testid="nav-user-search">
           User Search
         </DisabledNavItem>
-        <DisabledNavItem as="div" $active={false} title="Coming soon" data-testid="nav-release-panel">
+        <DisabledNavItem
+          as="div"
+          $active={false}
+          title="Coming soon"
+          data-testid="nav-release-panel"
+        >
           Release Panel
         </DisabledNavItem>
       </NavMenu>

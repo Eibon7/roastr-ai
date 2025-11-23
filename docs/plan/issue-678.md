@@ -17,12 +17,14 @@ Eliminar el plan **Free** y sustituirlo por **"Starter Trial 30 días (requiere 
 ## Estado Actual
 
 ### Plan Tiers Existentes
+
 - **Free** (10 roasts/mo, 100 analysis, 1 platform) - A ELIMINAR
 - **Starter** (€5/mo, 10 roasts, 1000 analysis, 2 platforms) - Modificar para incluir trial
 - **Pro** (€15/mo, 1000 roasts, 10000 analysis, 5 platforms)
 - **Plus** (€50/mo, 5000 roasts, 100000 analysis, 10 platforms)
 
 ### Referencias a Stripe
+
 - `src/routes/billing.js`
 - `src/routes/billingController.js`
 - `src/routes/billingFactory.js`
@@ -32,6 +34,7 @@ Eliminar el plan **Free** y sustituirlo por **"Starter Trial 30 días (requiere 
 - Env vars: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
 
 ### Referencias a "free"
+
 - 41 archivos encontrados (grep pattern `plan.*free|free.*plan`)
 - Principalmente en: services, routes, config, middleware
 
@@ -63,12 +66,12 @@ UPDATE plan_limits SET plan_id = 'starter_trial' WHERE plan_id = 'free';
 -- OR create new migration if we need to preserve data
 -- Insert new trial-enabled starter plan
 INSERT INTO plan_limits (
-  plan_id, plan_name, plan_description, max_roasts, 
+  plan_id, plan_name, plan_description, max_roasts,
   monthly_responses_limit, monthly_analysis_limit, max_platforms,
   rqc_enabled, shield_enabled, features
 ) VALUES (
-  'starter_trial', 'Starter Trial', '30-day trial (card required)', 
-  10, 10, 1000, 2, 
+  'starter_trial', 'Starter Trial', '30-day trial (card required)',
+  10, 10, 1000, 2,
   FALSE, TRUE,
   '["gpt5_roasts", "shield_basic", "basic_integrations", "trial"]'
 )
@@ -78,11 +81,13 @@ ON CONFLICT (plan_id) DO NOTHING;
 #### 1.2 Remove "Free" References
 
 **Archivos afectados:**
+
 - `src/config/tierConfig.js` - Eliminar 'free' de TIER_NAMES
 - `src/config/planMappings.js` - Eliminar mapeo 'free' → Stripe
 - `database/schema.sql` - Actualizar comentarios y valores por defecto
 
 **Cambios:**
+
 ```javascript
 // ANTES
 const TIER_NAMES = {
@@ -120,7 +125,7 @@ async isInTrial(userId) {
 async startTrial(userId, durationDays = 30) {
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + durationDays);
-  
+
   await this.supabase
     .from('user_subscriptions')
     .update({
@@ -137,10 +142,10 @@ async startTrial(userId, durationDays = 30) {
 async checkTrialExpiration(userId) {
   const subscription = await this.getSubscription(userId);
   if (!subscription?.trial_ends_at) return false;
-  
+
   const now = new Date();
   const trialEnd = new Date(subscription.trial_ends_at);
-  
+
   return trialEnd < now;
 }
 
@@ -169,6 +174,7 @@ async convertTrialToPaid(userId) {
 **Archivos a modificar:**
 
 **`src/routes/billing.js`**
+
 ```javascript
 // Remove ALL Stripe webhook handlers
 // Replace with no-ops + logs
@@ -182,7 +188,7 @@ router.post('/webhook', async (req, res) => {
 router.post('/checkout', async (req, res) => {
   logger.info('TODO:Polar - Checkout initiated', req.body);
   // Return mock session for now
-  res.json({ 
+  res.json({
     session_id: 'mock_session',
     checkout_url: 'https://app.polar.sh/checkout/mock'
   });
@@ -190,6 +196,7 @@ router.post('/checkout', async (req, res) => {
 ```
 
 **`src/services/stripeWebhookService.js`**
+
 ```javascript
 // Replace all methods with no-ops
 class StripeWebhookService {
@@ -197,12 +204,12 @@ class StripeWebhookService {
     logger.info('TODO:Polar - Handle checkout completed', { event });
     return { processed: true };
   }
-  
+
   async handleSubscriptionUpdated(event) {
     logger.info('TODO:Polar - Handle subscription updated', { event });
     return { processed: true };
   }
-  
+
   // ... all other methods
 }
 ```
@@ -222,23 +229,23 @@ class BillingInterface {
     this.config = config;
     this.logger = require('../utils/logger');
   }
-  
+
   async createCheckoutSession(params) {
     this.logger.info('TODO:Polar - Create checkout session', params);
     // Placeholder for Polar integration
     throw new Error('Billing integration not yet implemented');
   }
-  
+
   async getCustomer(subscriptionId) {
     this.logger.info('TODO:Polar - Get customer', { subscriptionId });
     // Placeholder
   }
-  
+
   async cancelSubscription(subscriptionId) {
     this.logger.info('TODO:Polar - Cancel subscription', { subscriptionId });
     // Placeholder
   }
-  
+
   // ... more methods as needed
 }
 
@@ -255,7 +262,7 @@ const BillingInterface = require('../../src/services/billingInterface');
 
 const mockBillingInterface = {
   createCheckoutSession: jest.fn(),
-  cancelSubscription: jest.fn(),
+  cancelSubscription: jest.fn()
   // ...
 };
 ```
@@ -265,6 +272,7 @@ const mockBillingInterface = {
 **Archivos:** `.env.example`, `README.md`, `.github/workflows/*.yml`
 
 **Remove:**
+
 ```
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
@@ -272,6 +280,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 **Add:**
+
 ```
 # TODO: Polar integration
 POLAR_API_KEY=
@@ -287,6 +296,7 @@ POLAR_WEBHOOK_SECRET=
 **Archivo:** `frontend/src/pages/Pricing.jsx`
 
 **Cambios:**
+
 ```jsx
 // ELIMINAR: Plan Free
 // ANTES
@@ -299,10 +309,10 @@ const plans = [
 
 // DESPUÉS
 const plans = [
-  { 
-    id: 'starter_trial', 
-    name: 'Starter Trial', 
-    price: 0, 
+  {
+    id: 'starter_trial',
+    name: 'Starter Trial',
+    price: 0,
     trialDays: 30,
     requiresCard: true,
     afterTrial: 'Starter (€5/mo)',
@@ -331,13 +341,13 @@ const handleStartTrial = async (planId) => {
     // Show card requirement modal
     const confirmed = await showCardRequirementModal();
     if (!confirmed) return;
-    
+
     // Call API to start trial
     const response = await fetch('/api/subscriptions/start-trial', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` }
     });
-    
+
     if (response.ok) {
       window.location.href = '/dashboard';
     }
@@ -355,11 +365,11 @@ const handleStartTrial = async (planId) => {
 ```jsx
 const TrialBadge = ({ subscription }) => {
   if (!subscription.is_in_trial) return null;
-  
+
   const daysLeft = Math.ceil(
     (new Date(subscription.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)
   );
-  
+
   return (
     <div className="trial-badge">
       ⏳ Trial ends in {daysLeft} days
@@ -381,7 +391,7 @@ const TrialBadge = ({ subscription }) => {
 #!/usr/bin/env node
 /**
  * Migration: Free Plan → Starter Trial
- * 
+ *
  * Converts all users on 'free' plan to 'starter_trial' with:
  * - trial_ends_at = NOW() + 30 days
  * - trial_starts_at = NOW()
@@ -390,30 +400,27 @@ const TrialBadge = ({ subscription }) => {
 
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 async function migrateFreeToTrial() {
   console.log('🔄 Starting migration: Free → Starter Trial');
-  
+
   // Get all users on 'free' plan
   const { data: freeUsers, error: fetchError } = await supabase
     .from('user_subscriptions')
     .select('id, organization_id, plan_id')
     .eq('plan_id', 'free');
-  
+
   if (fetchError) {
     console.error('❌ Error fetching users:', fetchError);
     process.exit(1);
   }
-  
+
   console.log(`📊 Found ${freeUsers.length} users on 'free' plan`);
-  
+
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + 30);
-  
+
   // Update each user
   for (const user of freeUsers) {
     const { error: updateError } = await supabase
@@ -424,14 +431,14 @@ async function migrateFreeToTrial() {
         trial_ends_at: trialEndsAt.toISOString()
       })
       .eq('id', user.id);
-    
+
     if (updateError) {
       console.error(`❌ Error updating user ${user.id}:`, updateError);
     } else {
       console.log(`✅ Migrated user ${user.organization_id}`);
     }
   }
-  
+
   console.log('✅ Migration completed');
 }
 
@@ -471,15 +478,15 @@ describe('Entitlements Trial', () => {
       trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       is_in_trial: true
     };
-    
+
     const isInTrial = await entitlementsService.isInTrial('user_123');
     expect(isInTrial).toBe(true);
   });
-  
+
   test('Trial has same limits as Starter', async () => {
     const limits = await planLimitsService.getLimits('starter_trial');
     const starterLimits = await planLimitsService.getLimits('starter');
-    
+
     expect(limits.max_roasts).toBe(starterLimits.max_roasts);
     expect(limits.max_platforms).toBe(starterLimits.max_platforms);
   });
@@ -495,30 +502,30 @@ describe('Trial Conversion', () => {
   test('Trial converts to paid Starter after expiration', async () => {
     // Start trial
     await entitlementsService.startTrial('user_123');
-    
+
     // Simulate expiration
     await supabase
       .from('user_subscriptions')
       .update({ trial_ends_at: new Date(Date.now() - 1000).toISOString() })
       .eq('organization_id', 'user_123');
-    
+
     // Check conversion
     const converted = await entitlementsService.checkTrialExpiration('user_123');
     expect(converted).toBe(true);
-    
+
     // Convert to paid
     await entitlementsService.convertTrialToPaid('user_123');
-    
+
     // Verify plan change
     const sub = await entitlementsService.getSubscription('user_123');
     expect(sub.plan_id).toBe('starter');
     expect(sub.is_in_trial).toBe(false);
   });
-  
+
   test('Cancelled trial does not convert', async () => {
     // User cancels trial
     await entitlementsService.cancelTrial('user_123');
-    
+
     // Check no conversion
     const converted = await entitlementsService.checkTrialExpiration('user_123');
     expect(converted).toBe(false);
@@ -540,20 +547,23 @@ describe('Trial Conversion', () => {
 ## Checklist de Entrega
 
 ### Entitlements
+
 - [ ] Database migration creada y testada
 - [ ] Trial fields añadidos (trial_starts_at, trial_ends_at, is_in_trial)
 - [ ] Helper methods implementados (isInTrial, startTrial, etc.)
 - [ ] Todos los archivos libres de referencias a "free"
 
 ### Billing
+
 - [ ] Stripe eliminado completamente de código
 - [ ] Webhook handlers convertidos a no-ops con logs
 - [ ] BillingInterface creado para abstracción
 - [ ] Tests actualizados sin Stripe
-- [ ] Env vars limpiados (STRIPE_* removidos)
+- [ ] Env vars limpiados (STRIPE\_\* removidos)
 - [ ] CI actualizado sin Stripe
 
 ### Frontend
+
 - [ ] Pricing page actualizado (Free → Trial)
 - [ ] Trial flow implementado (card requirement)
 - [ ] Trial status UI en dashboard
@@ -561,11 +571,13 @@ describe('Trial Conversion', () => {
 - [ ] Auto-conversion messaging
 
 ### Migración
+
 - [ ] Script de migración Free → Trial
 - [ ] Documentación de política de trial
 - [ ] Dry-run testado en staging
 
 ### Tests
+
 - [ ] Trial gating tests (mismos límites que Starter)
 - [ ] Trial conversion tests (auto después de expiration)
 - [ ] Trial cancellation tests
@@ -573,6 +585,7 @@ describe('Trial Conversion', () => {
 - [ ] Integration tests actualizados
 
 ### Documentación
+
 - [ ] CHANGELOG.md actualizado
 - [ ] README.md actualizado (env vars)
 - [ ] GDD nodes actualizados (billing, plan-features)
@@ -583,10 +596,12 @@ describe('Trial Conversion', () => {
 ## Archivos a Modificar (41 archivos encontrados)
 
 ### Database (2)
+
 - `database/schema.sql`
 - `database/migrations/XXX_add_trial_to_starter.sql` (NEW)
 
 ### Backend - Services (15)
+
 - `src/services/entitlementsService.js`
 - `src/services/planService.js`
 - `src/services/planLimitsService.js`
@@ -604,6 +619,7 @@ describe('Trial Conversion', () => {
 - `src/services/authService.js`
 
 ### Backend - Routes (8)
+
 - `src/routes/billing.js`
 - `src/routes/billingController.js`
 - `src/routes/billingFactory.js`
@@ -615,6 +631,7 @@ describe('Trial Conversion', () => {
 - `src/routes/admin.js`
 
 ### Backend - Config (6)
+
 - `src/config/tierConfig.js`
 - `src/config/planMappings.js`
 - `src/config/tierMessages.js`
@@ -622,30 +639,36 @@ describe('Trial Conversion', () => {
 - `src/config/modelAvailability.js`
 
 ### Backend - Middleware (2)
+
 - `src/middleware/requirePlan.js`
 - `src/middleware/inputValidation.js`
 
 ### Frontend (5+)
+
 - `frontend/src/pages/Pricing.jsx`
 - `frontend/src/pages/Dashboard.jsx`
 - `frontend/src/components/PlanBadge.jsx` (NEW)
 - `frontend/src/components/TrialStatus.jsx` (NEW)
 
 ### Tests (15+)
+
 - `tests/integration/billing*.test.js`
 - `tests/unit/entitlements*.test.js`
 - `tests/integration/trial-conversion.test.js` (NEW)
 - `tests/unit/entitlements-trial.test.js` (NEW)
 
 ### Scripts (3)
+
 - `scripts/migrate-free-to-trial.js` (NEW)
 - `scripts/user-manager.js`
 
 ### Docs (2)
+
 - `CHANGELOG.md`
 - `README.md`
 
 ### CI/Env (5)
+
 - `.env.example`
 - `.github/workflows/*.yml`
 - `docker-compose.yml`
@@ -669,7 +692,7 @@ describe('Trial Conversion', () => {
 ## Estimated Effort
 
 - **Phase 1 (Entitlements):** 2-3 hours
-- **Phase 2 (Billing Cleanup):** 3-4 hours  
+- **Phase 2 (Billing Cleanup):** 3-4 hours
 - **Phase 3 (Frontend):** 2-3 hours
 - **Phase 4 (Migration):** 1 hour
 - **Phase 5 (Tests):** 3-4 hours
@@ -681,6 +704,7 @@ describe('Trial Conversion', () => {
 ## Rollback Plan
 
 Si algo falla:
+
 1. Revert database migration
 2. Restore Stripe references (temporalmente)
 3. Run reverse migration: Starter Trial → Free
@@ -690,4 +714,3 @@ Si algo falla:
 ---
 
 **Next Steps:** Comenzar con FASE 1 (Entitlements) después de aprobación.
-

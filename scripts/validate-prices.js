@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * Stripe Price Validation Script - Issue #171
- * 
+ *
  * Validates that Stripe Price objects have the required metadata
  * for the entitlements system to work correctly.
- * 
+ *
  * Usage:
  *   node scripts/validate-prices.js
  *   STRIPE_SECRET_KEY=sk_test_... node scripts/validate-prices.js
@@ -95,7 +95,7 @@ const EXPECTED_VALUES = {
 
 async function validateStripePrice(stripe, lookupKey, planName) {
   console.log(`\n🔍 Validating ${planName} plan (lookup_key: ${lookupKey})...`);
-  
+
   try {
     // Find price by lookup_key
     const prices = await stripe.prices.list({
@@ -110,7 +110,7 @@ async function validateStripePrice(stripe, lookupKey, planName) {
 
     const price = prices.data[0];
     console.log(`✅ Found price: ${price.id}`);
-    
+
     // Validate metadata exists
     if (!price.metadata || Object.keys(price.metadata).length === 0) {
       console.error(`❌ Price ${price.id} has no metadata`);
@@ -128,7 +128,7 @@ async function validateStripePrice(stripe, lookupKey, planName) {
       } else {
         const expected = EXPECTED_VALUES[planName][field];
         const actual = price.metadata[field];
-        
+
         if (expected && actual !== expected) {
           incorrectValues.push({
             field,
@@ -153,18 +153,17 @@ async function validateStripePrice(stripe, lookupKey, planName) {
 
     if (missingFields.length === 0 && incorrectValues.length === 0) {
       console.log(`✅ All metadata is valid for ${planName} plan`);
-      
+
       // Show metadata summary
       console.log(`📊 Metadata summary:`);
-      requiredFields.forEach(field => {
+      requiredFields.forEach((field) => {
         console.log(`   ${field}: ${price.metadata[field]}`);
       });
-      
+
       return true;
     }
 
     return false;
-
   } catch (error) {
     console.error(`❌ Error validating ${planName} plan: ${error.message}`);
     return false;
@@ -176,7 +175,7 @@ async function validateAllPrices() {
 
   // Check if billing is enabled OR if we're in CI mode with ENABLE_BILLING=true
   const billingEnabled = flags.isEnabled('ENABLE_BILLING') || process.env.ENABLE_BILLING === 'true';
-  
+
   if (!billingEnabled) {
     console.log('⚠️  Billing is disabled, skipping validation');
     process.exit(0);
@@ -186,7 +185,7 @@ async function validateAllPrices() {
   if (!config.billing.stripe.secretKey) {
     // In CI environment, this is expected - skip validation gracefully
     const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
-    
+
     if (isCI) {
       console.log('⚠️  STRIPE_SECRET_KEY not available in CI environment');
       console.log('✅ Skipping Stripe validation in CI - this is expected behavior');
@@ -200,10 +199,10 @@ async function validateAllPrices() {
 
   // Initialize Stripe
   const stripe = require('stripe')(config.billing.stripe.secretKey);
-  
+
   console.log('🔑 Stripe client initialized');
   console.log(`📍 Using lookup keys from config:`);
-  
+
   const lookupKeys = config.billing.stripe.priceLookupKeys;
   Object.entries(lookupKeys).forEach(([plan, key]) => {
     if (key) {
@@ -216,7 +215,7 @@ async function validateAllPrices() {
 
   for (const plan of plans) {
     const lookupKey = lookupKeys[plan];
-    
+
     if (!lookupKey) {
       console.log(`⚠️  Skipping ${plan} plan - no lookup key configured`);
       continue;
@@ -251,7 +250,7 @@ async function validateAllPrices() {
 // Add environment info for debugging
 function showEnvironmentInfo() {
   const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
-  
+
   console.log('🌍 Environment Information:');
   console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
   console.log(`   CI Environment: ${isCI ? '✅ Yes' : '❌ No'}`);
@@ -272,7 +271,7 @@ process.on('unhandledRejection', (error) => {
 // Main execution
 if (require.main === module) {
   showEnvironmentInfo();
-  validateAllPrices().catch(error => {
+  validateAllPrices().catch((error) => {
     console.error('\n💥 Validation failed with error:');
     console.error(error.message);
     process.exit(1);

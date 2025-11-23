@@ -36,10 +36,7 @@ const REQUIRED_TABLES = [
 
 async function checkTable(tableName) {
   try {
-    const { error } = await supabase
-      .from(tableName)
-      .select('id')
-      .limit(0);
+    const { error } = await supabase.from(tableName).select('id').limit(0);
 
     if (error) {
       if (error.code === '42P01' || error.message.includes('does not exist')) {
@@ -62,8 +59,8 @@ async function main() {
     console.log(`${exists ? '✅' : '❌'} ${tableName}`);
   }
 
-  const existingCount = results.filter(r => r.exists).length;
-  const missingCount = results.filter(r => !r.exists).length;
+  const existingCount = results.filter((r) => r.exists).length;
+  const missingCount = results.filter((r) => !r.exists).length;
 
   console.log(`\n📊 Summary:`);
   console.log(`   Existing: ${existingCount}/${REQUIRED_TABLES.length}`);
@@ -81,7 +78,7 @@ async function main() {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('❌ Error:', err.message);
   process.exit(1);
 });

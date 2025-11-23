@@ -91,7 +91,7 @@ class GDDHealthScorer {
 
     try {
       const files = await fs.readdir(nodesDir);
-      const mdFiles = files.filter(f => f.endsWith('.md') && f !== 'README.md');
+      const mdFiles = files.filter((f) => f.endsWith('.md') && f !== 'README.md');
 
       for (const file of mdFiles) {
         const filePath = path.join(nodesDir, file);
@@ -153,17 +153,23 @@ class GDDHealthScorer {
     const depsSection = content.match(/##\s*Dependencies[\s\S]*?(?=##|$)/i);
     if (depsSection) {
       const depMatches = depsSection[0].match(/-\s*([a-z-]+)\.md/gi) || [];
-      metadata.dependencies = depMatches.map(m => m.match(/([a-z-]+)\.md/i)[1]);
+      metadata.dependencies = depMatches.map((m) => m.match(/([a-z-]+)\.md/i)[1]);
     }
 
     // Extract agents (supports both "- Agent" and "- **Agent**")
     const agentsSection = content.match(/##\s*Agentes Relevantes[\s\S]*?(?=##|$)/i);
     if (agentsSection) {
       // Match lines starting with "- " followed by optional ** and agent name
-      const agentMatches = agentsSection[0].match(/-\s*\*?\*?([A-Za-z\s]+(?:Agent|Developer|Engineer|Analyst|Orchestrator))\*?\*?/gi) || [];
-      metadata.agents = agentMatches.map(m => {
+      const agentMatches =
+        agentsSection[0].match(
+          /-\s*\*?\*?([A-Za-z\s]+(?:Agent|Developer|Engineer|Analyst|Orchestrator))\*?\*?/gi
+        ) || [];
+      metadata.agents = agentMatches.map((m) => {
         // Remove leading "- " and optional "**"
-        return m.replace(/^-\s*\*?\*?/, '').replace(/\*?\*?$/, '').trim();
+        return m
+          .replace(/^-\s*\*?\*?/, '')
+          .replace(/\*?\*?$/, '')
+          .trim();
       });
     }
 
@@ -218,17 +224,17 @@ class GDDHealthScorer {
       dependencyIntegrity: this.scoreDependencyIntegrity(nodeName, nodeData, systemMap),
       coverageEvidence: this.scoreCoverageEvidence(nodeData),
       agentRelevance: this.scoreAgentRelevance(nodeData),
-      integrityScore: await this.scoreIntegrity(nodeName, nodeData)  // Phase 15.1
+      integrityScore: await this.scoreIntegrity(nodeName, nodeData) // Phase 15.1
     };
 
     // Weighted average (adjusted to include integrity score)
     const totalScore =
-      scores.syncAccuracy * 0.25 +           // 25%
-      scores.updateFreshness * 0.15 +        // 15% (reduced from 20% to balance weights)
-      scores.dependencyIntegrity * 0.20 +    // 20%
-      scores.coverageEvidence * 0.20 +       // 20%
-      scores.agentRelevance * 0.10 +         // 10%
-      scores.integrityScore * 0.10;          // 10% (added in Phase 15.1)
+      scores.syncAccuracy * 0.25 + // 25%
+      scores.updateFreshness * 0.15 + // 15% (reduced from 20% to balance weights)
+      scores.dependencyIntegrity * 0.2 + // 20%
+      scores.coverageEvidence * 0.2 + // 20%
+      scores.agentRelevance * 0.1 + // 10%
+      scores.integrityScore * 0.1; // 10% (added in Phase 15.1)
     // Total: 25 + 15 + 20 + 20 + 10 + 10 = 100%
 
     return {
@@ -250,7 +256,7 @@ class GDDHealthScorer {
     // Check if referenced in spec.md
     if (!specContent.includes(nodeRef) && !specContent.includes(nodeName)) {
       const isInMissingRefs = this.validationData.missing_refs?.some(
-        ref => ref.node === nodeName && ref.type === 'node_not_in_spec'
+        (ref) => ref.node === nodeName && ref.type === 'node_not_in_spec'
       );
       if (isInMissingRefs) {
         score -= 10; // Critical mismatch
@@ -289,7 +295,7 @@ class GDDHealthScorer {
     const daysSince = Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
 
     // Formula: 100 - (days * 2), min 0
-    const score = Math.max(0, 100 - (daysSince * 2));
+    const score = Math.max(0, 100 - daysSince * 2);
     return score;
   }
 
@@ -300,13 +306,13 @@ class GDDHealthScorer {
     let score = 100;
 
     // Check for cycles
-    if (this.validationData.cycles?.some(cycle => cycle.includes(nodeName))) {
+    if (this.validationData.cycles?.some((cycle) => cycle.includes(nodeName))) {
       score -= 20;
     }
 
     // Check bidirectional edges
     const hasBidirectionalIssues = this.validationData.missing_refs?.some(
-      ref => ref.type === 'missing_bidirectional_edge' && ref.node === nodeName
+      (ref) => ref.type === 'missing_bidirectional_edge' && ref.node === nodeName
     );
     if (hasBidirectionalIssues) {
       score -= 20;
@@ -314,7 +320,7 @@ class GDDHealthScorer {
 
     // Check missing dependencies
     const hasMissingDeps = this.validationData.missing_refs?.some(
-      ref => ref.type === 'missing_dependency' && ref.node === nodeName
+      (ref) => ref.type === 'missing_dependency' && ref.node === nodeName
     );
     if (hasMissingDeps) {
       score -= 20;
@@ -401,19 +407,19 @@ class GDDHealthScorer {
 
     // Penalize if manual source
     if (coverageSource === 'manual') {
-      score -= 20;  // Manual coverage is discouraged
+      score -= 20; // Manual coverage is discouraged
     }
 
     // Validate coverage authenticity
     const validation = await coverageHelper.validateCoverageAuthenticity(
       nodeName,
       declaredCoverage,
-      3  // 3% tolerance
+      3 // 3% tolerance
     );
 
     if (!validation.valid && validation.actual !== null) {
       // Coverage mismatch detected - critical integrity violation
-      const diffPenalty = Math.min(50, validation.diff * 5);  // Up to 50% penalty
+      const diffPenalty = Math.min(50, validation.diff * 5); // Up to 50% penalty
       score -= diffPenalty;
     }
 
@@ -439,12 +445,12 @@ class GDDHealthScorer {
       issues.push('Orphan node (not in system-map.yaml)');
     }
 
-    const missingRefs = this.validationData.missing_refs?.filter(ref => ref.node === nodeName);
+    const missingRefs = this.validationData.missing_refs?.filter((ref) => ref.node === nodeName);
     if (missingRefs && missingRefs.length > 0) {
-      issues.push(...missingRefs.map(ref => ref.message));
+      issues.push(...missingRefs.map((ref) => ref.message));
     }
 
-    if (this.validationData.cycles?.some(cycle => cycle.includes(nodeName))) {
+    if (this.validationData.cycles?.some((cycle) => cycle.includes(nodeName))) {
       issues.push('Part of dependency cycle');
     }
 
@@ -459,9 +465,9 @@ class GDDHealthScorer {
     const totalScore = scores.reduce((sum, node) => sum + node.score, 0);
     const averageScore = scores.length > 0 ? totalScore / scores.length : 0;
 
-    const healthy = scores.filter(n => n.status === 'healthy').length;
-    const degraded = scores.filter(n => n.status === 'degraded').length;
-    const critical = scores.filter(n => n.status === 'critical').length;
+    const healthy = scores.filter((n) => n.status === 'healthy').length;
+    const degraded = scores.filter((n) => n.status === 'degraded').length;
+    const critical = scores.filter((n) => n.status === 'critical').length;
 
     let overallStatus = 'HEALTHY';
     if (critical > 0) overallStatus = 'CRITICAL';
@@ -553,7 +559,7 @@ class GDDHealthScorer {
 
       if (data.issues.length > 0) {
         markdown += `**Issues:**\n`;
-        data.issues.forEach(issue => {
+        data.issues.forEach((issue) => {
           markdown += `- ${issue}\n`;
         });
       }
@@ -633,7 +639,7 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

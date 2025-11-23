@@ -50,16 +50,19 @@ function isValidCreditCard(candidate) {
 
   // Major card networks
   const isVisa = firstDigit === '4';
-  const isMastercard = (firstTwoDigits >= '51' && firstTwoDigits <= '55') ||
-                       (firstFourDigits >= '2221' && firstFourDigits <= '2720');
+  const isMastercard =
+    (firstTwoDigits >= '51' && firstTwoDigits <= '55') ||
+    (firstFourDigits >= '2221' && firstFourDigits <= '2720');
   const isAmex = firstTwoDigits === '34' || firstTwoDigits === '37';
-  const isDiscover = firstFourDigits === '6011' || firstTwoDigits === '65' ||
-                     (firstFourDigits >= '6221' && firstFourDigits <= '6229') ||
-                     (firstFourDigits >= '6440' && firstFourDigits <= '6449') ||
-                     (firstFourDigits >= '6500' && firstFourDigits <= '6599');
+  const isDiscover =
+    firstFourDigits === '6011' ||
+    firstTwoDigits === '65' ||
+    (firstFourDigits >= '6221' && firstFourDigits <= '6229') ||
+    (firstFourDigits >= '6440' && firstFourDigits <= '6449') ||
+    (firstFourDigits >= '6500' && firstFourDigits <= '6599');
   const isDiners = firstTwoDigits === '30' || firstTwoDigits === '36' || firstTwoDigits === '38';
   const firstFour = parseInt(firstFourDigits, 10);
-  const isJCB = !isNaN(firstFour) && (firstFour >= 3528 && firstFour <= 3589);
+  const isJCB = !isNaN(firstFour) && firstFour >= 3528 && firstFour <= 3589;
 
   const isKnownNetwork = isVisa || isMastercard || isAmex || isDiscover || isDiners || isJCB;
 
@@ -92,8 +95,15 @@ function isValidSSN(candidate, context = '') {
   // If it's not in proper format, check for contextual clues
   if (!hasProperFormat) {
     const contextLower = context.toLowerCase();
-    const ssnKeywords = ['ssn', 'social security', 'social', 'security number', 'tax id', 'taxpayer id'];
-    const hasSSNContext = ssnKeywords.some(keyword => contextLower.includes(keyword));
+    const ssnKeywords = [
+      'ssn',
+      'social security',
+      'social',
+      'security number',
+      'tax id',
+      'taxpayer id'
+    ];
+    const hasSSNContext = ssnKeywords.some((keyword) => contextLower.includes(keyword));
 
     // Without proper format and context, don't flag as SSN
     if (!hasSSNContext) {
@@ -147,13 +157,20 @@ function isValidBankAccount(candidate, context = '') {
   // Check for contextual keywords nearby
   const contextLower = context.toLowerCase();
   const bankKeywords = [
-    'account', 'acct', 'bank', 'routing', 'aba', 'swift',
-    'cuenta', 'banco', 'iban', 'bic', 'sort code'
+    'account',
+    'acct',
+    'bank',
+    'routing',
+    'aba',
+    'swift',
+    'cuenta',
+    'banco',
+    'iban',
+    'bic',
+    'sort code'
   ];
 
-  const hasContext = bankKeywords.some(keyword =>
-    contextLower.includes(keyword)
-  );
+  const hasContext = bankKeywords.some((keyword) => contextLower.includes(keyword));
 
   // Require context for bank account detection
   if (!hasContext) {
@@ -174,9 +191,7 @@ function isValidBankAccount(candidate, context = '') {
   // For 9-digit numbers, check if it's specifically routing-related
   if (cleaned.length === 9) {
     const routingKeywords = ['routing', 'aba', 'transit'];
-    const hasRoutingContext = routingKeywords.some(keyword =>
-      contextLower.includes(keyword)
-    );
+    const hasRoutingContext = routingKeywords.some((keyword) => contextLower.includes(keyword));
     if (!hasRoutingContext) {
       return false;
     }
@@ -223,14 +238,34 @@ const SENSITIVE_PATTERNS = {
  * Keywords that might indicate sensitive persona data
  */
 const SENSITIVE_KEYWORDS = [
-  'dirección', 'address', 'domicilio',
-  'teléfono', 'phone', 'celular', 'móvil',
-  'email', 'correo', 'e-mail',
-  'dni', 'cedula', 'pasaporte', 'passport',
-  'tarjeta', 'card', 'cuenta', 'account',
-  'banco', 'bank', 'routing',
-  'contraseña', 'password', 'clave',
-  'token', 'api', 'secret', 'key'
+  'dirección',
+  'address',
+  'domicilio',
+  'teléfono',
+  'phone',
+  'celular',
+  'móvil',
+  'email',
+  'correo',
+  'e-mail',
+  'dni',
+  'cedula',
+  'pasaporte',
+  'passport',
+  'tarjeta',
+  'card',
+  'cuenta',
+  'account',
+  'banco',
+  'bank',
+  'routing',
+  'contraseña',
+  'password',
+  'clave',
+  'token',
+  'api',
+  'secret',
+  'key'
 ];
 
 /**
@@ -264,16 +299,19 @@ export function detectSensitiveData(text, options = {}) {
       // Apply additional validation for specific types
       switch (type) {
         case 'creditCard':
-          validMatches = matches.filter(match => isValidCreditCard(match));
+          validMatches = matches.filter((match) => isValidCreditCard(match));
           break;
         case 'nationalId':
-          validMatches = matches.filter(match => isValidSSN(match, text));
+          validMatches = matches.filter((match) => isValidSSN(match, text));
           break;
         case 'bankAccount':
           // For bank accounts, we already use contextual patterns, but double-check
-          validMatches = matches.filter(match => {
+          validMatches = matches.filter((match) => {
             // Extract just the number part for validation
-            const numberPart = match.replace(/\b(?:account|acct|bank|routing|iban|swift|bic)[\s:]*/gi, '');
+            const numberPart = match.replace(
+              /\b(?:account|acct|bank|routing|iban|swift|bic)[\s:]*/gi,
+              ''
+            );
             return isValidBankAccount(numberPart, text);
           });
           break;
@@ -313,7 +351,7 @@ export function detectSensitiveData(text, options = {}) {
 
   // Check for sensitive keywords
   const lowerText = text.toLowerCase();
-  const foundKeywords = SENSITIVE_KEYWORDS.filter(keyword => 
+  const foundKeywords = SENSITIVE_KEYWORDS.filter((keyword) =>
     lowerText.includes(keyword.toLowerCase())
   );
 
@@ -354,9 +392,7 @@ export function generateWarningMessage(detection) {
     return '';
   }
 
-  const messages = [
-    '⚠️ Se ha detectado información potencialmente sensible en el texto copiado.'
-  ];
+  const messages = ['⚠️ Se ha detectado información potencialmente sensible en el texto copiado.'];
 
   if (detection.suggestions.length > 0) {
     messages.push(...detection.suggestions.slice(0, 2)); // Limit to 2 suggestions
@@ -372,8 +408,9 @@ export function generateWarningMessage(detection) {
  * @returns {boolean} Whether clipboard clearing is supported
  */
 export function isClipboardClearingSupported() {
-  return typeof navigator !== 'undefined' &&
-         !!(navigator.clipboard && navigator.clipboard.writeText);
+  return (
+    typeof navigator !== 'undefined' && !!(navigator.clipboard && navigator.clipboard.writeText)
+  );
 }
 
 /**

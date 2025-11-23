@@ -23,17 +23,17 @@ export default function Compose() {
 
   const handlePreview = async () => {
     if (!message.trim()) return;
-    
+
     // Prevent concurrent requests
     if (loading) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // Get auth token - use consistent key
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         setError({
           type: 'auth',
@@ -41,18 +41,18 @@ export default function Compose() {
         });
         return;
       }
-      
+
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
+
       const response = await fetch('/api/roast/preview', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           text: message,
           styleProfile: styleProfile,
           persona: persona || null,
@@ -60,9 +60,9 @@ export default function Compose() {
         }),
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (response.ok) {
         const data = await response.json();
         setPreview(data.roast || data.data?.roast);
@@ -76,7 +76,7 @@ export default function Compose() {
         } catch {
           errorData = { error: 'Unknown server error' };
         }
-        
+
         if (response.status === 401) {
           setError({
             type: 'auth',
@@ -106,7 +106,7 @@ export default function Compose() {
       }
     } catch (error) {
       console.error('Failed to generate preview:', error);
-      
+
       if (error.name === 'AbortError') {
         setError({
           type: 'timeout',
@@ -130,16 +130,16 @@ export default function Compose() {
 
   const handleSend = async () => {
     if (!preview) return;
-    
+
     // Prevent concurrent requests
     if (loading) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         setError({
           type: 'auth',
@@ -147,19 +147,19 @@ export default function Compose() {
         });
         return;
       }
-      
+
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
+
       // Use the /generate endpoint to consume roast credits
       const response = await fetch('/api/roast/generate', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           text: message,
           styleProfile: styleProfile,
           persona: persona || null,
@@ -167,28 +167,27 @@ export default function Compose() {
         }),
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         // Update credits after successful roast generation
         setRoastsRemaining(data.data?.credits?.remaining || roastsRemaining - 1);
-        
+
         // Clear form
         setMessage('');
         setPreview(null);
         setPersona('');
         setError(null);
-        
+
         // Show success message
         toast({
           title: 'Success!',
           description: 'Roast generated and ready to send!',
           variant: 'success'
         });
-        
       } else {
         let errorData;
         try {
@@ -196,7 +195,7 @@ export default function Compose() {
         } catch {
           errorData = { error: 'Unknown server error' };
         }
-        
+
         if (response.status === 401) {
           setError({
             type: 'auth',
@@ -226,7 +225,7 @@ export default function Compose() {
       }
     } catch (error) {
       console.error('Failed to send roast:', error);
-      
+
       if (error.name === 'AbortError') {
         setError({
           type: 'timeout',
@@ -249,9 +248,11 @@ export default function Compose() {
   };
 
   const metrics = [
-    ...(analysisRemaining !== null ? [{ label: 'Análisis restantes', value: analysisRemaining }] : []),
+    ...(analysisRemaining !== null
+      ? [{ label: 'Análisis restantes', value: analysisRemaining }]
+      : []),
     ...(roastsRemaining !== null ? [{ label: 'Roasts restantes', value: roastsRemaining }] : []),
-    ...(tokensUsed > 0 ? [{ label: 'Tokens usados', value: tokensUsed }] : []),
+    ...(tokensUsed > 0 ? [{ label: 'Tokens usados', value: tokensUsed }] : [])
   ];
 
   return (
@@ -260,7 +261,6 @@ export default function Compose() {
       subtitle="Genera y envía roasts impulsados por IA a tus redes sociales"
       metrics={metrics.length > 0 ? metrics : undefined}
     >
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Compose Form */}
         <Card>
@@ -273,15 +273,17 @@ export default function Compose() {
           <CardContent className="space-y-4">
             {/* Error Display */}
             {error && (
-              <div className={`p-3 rounded-md text-sm ${
-                error.type === 'credits' 
-                  ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                  : error.type === 'auth'
-                  ? 'bg-blue-50 text-blue-800 border border-blue-200'
-                  : error.type === 'rate_limit' || error.type === 'timeout'
-                  ? 'bg-orange-50 text-orange-800 border border-orange-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}>
+              <div
+                className={`p-3 rounded-md text-sm ${
+                  error.type === 'credits'
+                    ? 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                    : error.type === 'auth'
+                      ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                      : error.type === 'rate_limit' || error.type === 'timeout'
+                        ? 'bg-orange-50 text-orange-800 border border-orange-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
                 {error.message}
                 {error.type === 'credits' && (
                   <div className="mt-2">
@@ -292,14 +294,24 @@ export default function Compose() {
                 )}
                 {error.type === 'auth' && (
                   <div className="mt-2">
-                    <Button size="sm" variant="outline" className="text-xs" onClick={() => window.location.href = '/login'}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={() => (window.location.href = '/login')}
+                    >
                       Iniciar Sesión
                     </Button>
                   </div>
                 )}
                 {(error.type === 'rate_limit' || error.type === 'timeout') && (
                   <div className="mt-2">
-                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setError(null)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={() => setError(null)}
+                    >
                       Reintentar
                     </Button>
                   </div>
@@ -334,7 +346,9 @@ export default function Compose() {
               >
                 <option value="twitter">🐦 Twitter</option>
                 {isEnabled('ENABLE_FACEBOOK_UI') && <option value="facebook">📘 Facebook</option>}
-                {isEnabled('ENABLE_INSTAGRAM_UI') && <option value="instagram">📷 Instagram</option>}
+                {isEnabled('ENABLE_INSTAGRAM_UI') && (
+                  <option value="instagram">📷 Instagram</option>
+                )}
                 <option value="youtube">📺 YouTube</option>
                 <option value="tiktok">🎵 TikTok</option>
                 <option value="reddit">🔴 Reddit</option>
@@ -361,7 +375,7 @@ export default function Compose() {
             </div>
 
             <div className="flex space-x-2">
-              <Button 
+              <Button
                 onClick={handlePreview}
                 disabled={!message.trim() || loading}
                 className="flex-1"
@@ -369,10 +383,7 @@ export default function Compose() {
                 <Eye className="h-4 w-4 mr-2" />
                 {loading ? 'Generating...' : 'Generate Preview'}
               </Button>
-              <Button
-                variant="outline"
-                disabled={!message.trim()}
-              >
+              <Button variant="outline" disabled={!message.trim()}>
                 <Save className="h-4 w-4 mr-2" />
                 Save Draft
               </Button>
@@ -406,7 +417,7 @@ export default function Compose() {
                   <div className="text-sm font-medium mb-2">Generated Roast:</div>
                   <div className="text-foreground">{preview}</div>
                 </div>
-                
+
                 {/* Platform and Metadata Display */}
                 <div className="space-y-3">
                   <div>
@@ -423,7 +434,7 @@ export default function Compose() {
                       {selectedPlatform === 'bluesky' && '🦋 Bluesky'}
                     </Badge>
                   </div>
-                  
+
                   {persona && (
                     <div>
                       <div className="text-sm font-medium mb-1">Persona:</div>
@@ -437,11 +448,7 @@ export default function Compose() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleSend}
-                  disabled={loading}
-                  className="w-full"
-                >
+                <Button onClick={handleSend} disabled={loading} className="w-full">
                   <Send className="h-4 w-4 mr-2" />
                   Send Roast
                 </Button>

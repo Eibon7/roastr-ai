@@ -44,7 +44,9 @@ describe('AuthService Password Recovery', () => {
 
       expect(result.message).toBe('Password reset email sent');
       expect(result.email).toBe('test@example.com');
-      expect(supabaseAnonClient.auth.resetPasswordForEmail).toHaveBeenCalledWith('test@example.com');
+      expect(supabaseAnonClient.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+        'test@example.com'
+      );
     });
 
     it('should handle password reset errors', async () => {
@@ -53,8 +55,9 @@ describe('AuthService Password Recovery', () => {
         error: { message: 'User not found' }
       });
 
-      await expect(authService.resetPassword('nonexistent@example.com'))
-        .rejects.toThrow('Password reset failed: User not found');
+      await expect(authService.resetPassword('nonexistent@example.com')).rejects.toThrow(
+        'Password reset failed: User not found'
+      );
     });
   });
 
@@ -80,8 +83,9 @@ describe('AuthService Password Recovery', () => {
         error: { message: 'Invalid email' }
       });
 
-      await expect(authService.signInWithMagicLink('invalid-email'))
-        .rejects.toThrow('Magic link sign in failed: Invalid email');
+      await expect(authService.signInWithMagicLink('invalid-email')).rejects.toThrow(
+        'Magic link sign in failed: Invalid email'
+      );
     });
   });
 
@@ -92,9 +96,9 @@ describe('AuthService Password Recovery', () => {
         error: null
       });
 
-      const result = await authService.signUpWithMagicLink({ 
-        email: 'newuser@example.com', 
-        name: 'New User' 
+      const result = await authService.signUpWithMagicLink({
+        email: 'newuser@example.com',
+        name: 'New User'
       });
 
       expect(result.message).toBe('Magic link sent to your email');
@@ -115,9 +119,11 @@ describe('AuthService Password Recovery', () => {
         error: { message: 'Email service unavailable' }
       });
 
-      await expect(authService.signUpWithMagicLink({ 
-        email: 'test@example.com' 
-      })).rejects.toThrow('Magic link signup failed: Email service unavailable');
+      await expect(
+        authService.signUpWithMagicLink({
+          email: 'test@example.com'
+        })
+      ).rejects.toThrow('Magic link signup failed: Email service unavailable');
     });
   });
 });

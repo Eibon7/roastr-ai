@@ -15,6 +15,7 @@
 **File:** `scripts/resolve-graph.js`
 
 **New Capabilities:**
+
 - ✅ **Agent Section Validation** - Checks all nodes have "## Agentes Relevantes" section
 - ✅ **Duplicate Agent Detection** - Warns if same agent listed multiple times
 - ✅ **Invalid Agent Detection** - Validates against approved agent list
@@ -23,13 +24,15 @@
 - ✅ **Validation Report Generation** - Outputs markdown report for CI/CD
 
 **New Methods Added:**
+
 ```javascript
-validateAgentsSection(docPath, nodeName)  // Validate "## Agentes Relevantes"
-extractAgents(docPath)                     // Extract agent list from markdown
-generateValidationReport(issues)           // Generate docs/system-validation.md
+validateAgentsSection(docPath, nodeName); // Validate "## Agentes Relevantes"
+extractAgents(docPath); // Extract agent list from markdown
+generateValidationReport(issues); // Generate docs/system-validation.md
 ```
 
 **New CLI Mode:**
+
 ```bash
 node scripts/resolve-graph.js --report
 # Generates docs/system-validation.md with:
@@ -40,10 +43,12 @@ node scripts/resolve-graph.js --report
 ```
 
 **Validation Rules:**
+
 - **Critical Errors (exit code 1):** Missing "## Agentes Relevantes" section
 - **Warnings (exit code 0):** Duplicate agents, invalid agents
 
 **Approved Agent List:**
+
 - UX Researcher
 - UI Designer
 - Whimsy Injector
@@ -58,6 +63,7 @@ node scripts/resolve-graph.js --report
 #### 2. All Nodes with "Agentes Relevantes" Section (12/12 - 100%)
 
 **Added Section Structure:**
+
 ```markdown
 ## Agentes Relevantes
 
@@ -70,22 +76,23 @@ node scripts/resolve-graph.js --report
 
 **Agent Assignments by Node:**
 
-| Node | Agentes Relevantes |
-|------|-------------------|
-| **roast** | Back-end Dev, Documentation Agent, Test Engineer, Performance Monitor Agent |
-| **shield** | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer |
-| **persona** | Back-end Dev, UX Researcher, Documentation Agent, Security Audit Agent, Test Engineer |
-| **tone** | Back-end Dev, UX Researcher, Documentation Agent, Test Engineer |
-| **platform-constraints** | Back-end Dev, Documentation Agent, Test Engineer |
-| **plan-features** | Back-end Dev, Documentation Agent, Test Engineer |
-| **queue-system** | Back-end Dev, Performance Monitor Agent, Documentation Agent, Test Engineer |
-| **cost-control** | Back-end Dev, Documentation Agent, Test Engineer |
-| **multi-tenant** | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer |
-| **social-platforms** | Back-end Dev, Documentation Agent, Test Engineer |
-| **trainer** | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer |
-| **analytics** | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer |
+| Node                     | Agentes Relevantes                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| **roast**                | Back-end Dev, Documentation Agent, Test Engineer, Performance Monitor Agent           |
+| **shield**               | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer                |
+| **persona**              | Back-end Dev, UX Researcher, Documentation Agent, Security Audit Agent, Test Engineer |
+| **tone**                 | Back-end Dev, UX Researcher, Documentation Agent, Test Engineer                       |
+| **platform-constraints** | Back-end Dev, Documentation Agent, Test Engineer                                      |
+| **plan-features**        | Back-end Dev, Documentation Agent, Test Engineer                                      |
+| **queue-system**         | Back-end Dev, Performance Monitor Agent, Documentation Agent, Test Engineer           |
+| **cost-control**         | Back-end Dev, Documentation Agent, Test Engineer                                      |
+| **multi-tenant**         | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer                |
+| **social-platforms**     | Back-end Dev, Documentation Agent, Test Engineer                                      |
+| **trainer**              | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer           |
+| **analytics**            | Back-end Dev, Documentation Agent, Performance Monitor Agent, Test Engineer           |
 
 **Agent Assignment Logic:**
+
 - **Core Team (all nodes):** Back-end Dev, Documentation Agent, Test Engineer
 - **Security-sensitive nodes:** + Security Audit Agent (shield, persona, multi-tenant)
 - **Performance-critical nodes:** + Performance Monitor Agent (roast, queue-system, trainer, analytics)
@@ -99,6 +106,7 @@ node scripts/resolve-graph.js --report
 **File:** `docs/system-validation.md` (auto-generated)
 
 **Content:**
+
 ```markdown
 # System Validation Report
 
@@ -132,6 +140,7 @@ node scripts/resolve-graph.js --report
 ```
 
 **Validation Results:**
+
 - **Graph Issues:** 0 (no circular deps, no missing deps, no missing docs)
 - **Agent Issues:** 0 (all sections present, no duplicates, no invalid agents)
 - **Overall Status:** ✅ ALL VALIDATIONS PASSED
@@ -143,6 +152,7 @@ node scripts/resolve-graph.js --report
 **New Section Added:** "Node-Agent Matrix" (after GDD introduction)
 
 **Content:**
+
 ```markdown
 ### Node-Agent Matrix
 
@@ -150,9 +160,10 @@ Esta tabla muestra los agentes relevantes para cada nodo del sistema.
 Los agentes son responsables de mantener y actualizar la documentación
 de su nodo correspondiente.
 
-| Node | Agentes Relevantes |
-|------|-------------------|
+| Node      | Agentes Relevantes                                                          |
+| --------- | --------------------------------------------------------------------------- |
 | **roast** | Back-end Dev, Documentation Agent, Test Engineer, Performance Monitor Agent |
+
 [... full 12-row table ...]
 
 **Última actualización:** 2025-10-03
@@ -170,11 +181,13 @@ de su nodo correspondiente.
 **New Section:** "Gestión de Agentes Relevantes (GDD Phase 4)"
 
 **Synchronization Rules:**
+
 - **Add agents:** If agent invoked during task but not listed → add automatically
 - **Remove agents:** If agent listed but no longer applies → remove it
 - **Maintain order:** Keep agents alphabetically sorted
 
 **Mandatory Checklist (7 items):**
+
 ```markdown
 ### Checklist obligatorio al cerrar nodo/PR
 
@@ -203,6 +216,7 @@ de su nodo correspondiente.
 #### CI/CD Integration Ready
 
 **Usage in CI/CD Pipeline:**
+
 ```yaml
 # .github/workflows/validate-graph.yml
 - name: Validate dependency graph and agents
@@ -220,17 +234,20 @@ de su nodo correspondiente.
 ```
 
 **Exit Codes:**
+
 - `0` - All validations passed (or warnings only)
 - `1` - Critical errors detected (missing sections, circular deps)
 
 #### Orchestrator Improvements
 
 **Before Phase 4:**
+
 - No tracking of which agents maintain each node
 - Manual synchronization between spec.md and nodes
 - No validation of agent assignments
 
 **After Phase 4:**
+
 - ✅ Explicit agent assignments in every node
 - ✅ Automatic validation via `--validate` flag
 - ✅ Auto-generated reports via `--report` flag
@@ -240,30 +257,33 @@ de su nodo correspondiente.
 
 ### 🎯 Phase 4 Goals Assessment
 
-| Goal | Status | Notes |
-|------|--------|-------|
+| Goal                                          | Status      | Notes                        |
+| --------------------------------------------- | ----------- | ---------------------------- |
 | Extend resolve-graph.js with agent validation | ✅ Complete | 3 new methods, --report mode |
-| Add "Agentes Relevantes" to all nodes | ✅ Complete | 12/12 nodes (100%) |
-| Create docs/system-validation.md | ✅ Complete | Auto-generated report |
-| Update spec.md with agent matrix | ✅ Complete | Global table added |
-| Create orchestrator checklist | ✅ Complete | 7-item mandatory checklist |
-| CI/CD integration ready | ✅ Complete | Exit codes, validation hooks |
+| Add "Agentes Relevantes" to all nodes         | ✅ Complete | 12/12 nodes (100%)           |
+| Create docs/system-validation.md              | ✅ Complete | Auto-generated report        |
+| Update spec.md with agent matrix              | ✅ Complete | Global table added           |
+| Create orchestrator checklist                 | ✅ Complete | 7-item mandatory checklist   |
+| CI/CD integration ready                       | ✅ Complete | Exit codes, validation hooks |
 
 ### 🏆 Quality Achievements
 
 **Agent Assignment Quality:**
+
 - ✅ **Logic-based assignments** - Not random, based on node functionality
 - ✅ **Consistency** - Core team (Back-end Dev, Docs, Test) on all nodes
 - ✅ **Specialization** - Security/Performance/UX added where relevant
 - ✅ **Maintainability** - Alphabetical ordering for easy scanning
 
 **Validation Robustness:**
+
 - ✅ **Regex-based section detection** - Flexible matching
 - ✅ **Graceful degradation** - Warnings vs critical errors
 - ✅ **Comprehensive reporting** - Summary + details
 - ✅ **Automation-friendly** - JSON output, exit codes
 
 **Documentation Quality:**
+
 - ✅ **Synchronized sources** - spec.md ↔ nodes ↔ validation report
 - ✅ **Timestamp tracking** - Last updated/validated dates
 - ✅ **Self-documenting** - Scripts explain their purpose
@@ -272,6 +292,7 @@ de su nodo correspondiente.
 ### 🚀 Phase 4 Tools Usage
 
 #### Validate Graph & Agents
+
 ```bash
 node scripts/resolve-graph.js --validate
 
@@ -283,6 +304,7 @@ node scripts/resolve-graph.js --validate
 ```
 
 #### Generate Validation Report
+
 ```bash
 node scripts/resolve-graph.js --report
 
@@ -296,6 +318,7 @@ node scripts/resolve-graph.js --report
 ```
 
 #### Check Specific Node Agents
+
 ```bash
 # Extract agents from a node
 grep -A 10 "## Agentes Relevantes" docs/nodes/roast.md
@@ -310,6 +333,7 @@ grep -A 10 "## Agentes Relevantes" docs/nodes/roast.md
 ```
 
 #### Orchestrator Workflow (PR Closure)
+
 ```bash
 # 1. Validate before committing
 node scripts/resolve-graph.js --validate
@@ -333,16 +357,19 @@ git commit -m "docs: Update node agents (Phase 4 checklist ✅)"
 ### 📈 Success Metrics
 
 **Coverage:**
+
 - Nodes with Agent Sections: 12/12 (100%)
 - Agents Used: 7/10 (70% of available agents)
 - Validation Passing: 100%
 
 **Automation:**
+
 - Manual Validation Steps: 0 (fully automated)
 - Report Generation Time: <200ms
 - CI/CD Integration: Ready (exit codes implemented)
 
 **Documentation Quality:**
+
 - Synchronization Accuracy: 100% (spec.md ↔ nodes ↔ report)
 - Timestamp Tracking: ✅ (auto-generated)
 - Orchestrator Guidance: ✅ (7-item checklist)
@@ -352,6 +379,7 @@ git commit -m "docs: Update node agents (Phase 4 checklist ✅)"
 **Graph Driven Development (GDD) Phase 4 is successfully completed!**
 
 We've achieved:
+
 - ✅ **Complete agent validation tooling** - Extended resolve-graph.js with 3 new methods
 - ✅ **100% node coverage** - All 12 nodes have "Agentes Relevantes" section
 - ✅ **Automated validation** - `--validate` flag catches all agent issues
@@ -361,12 +389,14 @@ We've achieved:
 - ✅ **CI/CD ready** - Exit codes and validation hooks implemented
 
 **Key Innovations:**
+
 1. **Regex-based agent extraction** - Flexible, maintainable
 2. **Two-tier validation** - Critical errors vs warnings
 3. **Auto-sync architecture** - spec.md ↔ nodes ↔ report
 4. **Logic-based agent assignments** - Security, performance, UX specialization
 
 **Phase 4 Benefits:**
+
 - **Visibility:** Know which agents maintain each node
 - **Accountability:** Clear ownership and responsibility
 - **Validation:** Automatic detection of missing/invalid agents
@@ -393,6 +423,7 @@ We've achieved:
 ## 📝 Documentation Sync History
 
 ### Last Doc Sync
+
 - **Date:** 2025-10-08
 - **Status:** 🟢 passed
 - **PR:** #492
@@ -400,6 +431,7 @@ We've achieved:
 ### Synced PRs
 
 #### PR #492 - Phase 13 Telemetry & Analytics Layer (2025-10-08)
+
 - **Type:** Infrastructure/Observability (not feature/business logic)
 - **Issue:** Phase 13 implementation
 - **Nodes updated:** 0 (infrastructure layer only)
@@ -414,6 +446,7 @@ We've achieved:
 - **Report:** docs/sync-reports/pr-492-sync.md (updated 2025-10-08T07:46:19Z)
 
 #### PR #461 - Kill-Switch Integration Tests (2025-10-05)
+
 - **Type:** Test-only PR (no src/ changes)
 - **Issue:** #414
 - **Nodes updated:** 0 (test-only)
@@ -429,6 +462,7 @@ We've achieved:
 - **Report:** docs/sync-reports/pr-461-sync.md (updated 2025-10-05 23:30 UTC - FINAL)
 
 #### PR #459 - Complete Billing DI Refactor (2025-10-05)
+
 - **Nodes updated:** billing.md
 - **Issues created:** 0
 - **Orphan nodes:** 0
@@ -437,6 +471,7 @@ We've achieved:
 - **Report:** docs/sync-reports/pr-459-sync.md
 
 #### PR #457 - Shield Integration Tests (2025-10-04)
+
 - **Nodes updated:** shield.md
 - **Issues created:** 0
 - **Orphan nodes:** 0
@@ -445,6 +480,7 @@ We've achieved:
 - **Report:** docs/sync-reports/pr-457-sync.md
 
 #### PR #453 - Multi-Tenant RLS + Queue System Tests (2025-10-03)
+
 - **Nodes updated:** multi-tenant.md, queue-system.md
 - **Issues created:** 0
 - **Orphan nodes:** 0
@@ -453,6 +489,7 @@ We've achieved:
 - **Report:** docs/sync-reports/pr-453-sync.md
 
 #### PR #458 - Demo Mode E2E Timeout + Queue System API Normalization (2025-10-06)
+
 - **Nodes updated:** queue-system.md (v1.2.0)
 - **Issues created:** 0
 - **Orphan nodes:** 0
@@ -477,9 +514,7 @@ We've achieved:
 🤖 Documentation Agent
 **Last Updated:** 2025-10-06
 
-
 ---
-
 
 ---
 

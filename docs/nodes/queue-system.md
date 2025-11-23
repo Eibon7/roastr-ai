@@ -32,24 +32,24 @@ Queue System provides unified queue management for Roastr.ai with automatic Redi
 
 ### Queue Types
 
-| Queue | Priority | Use Case | Worker |
-|-------|----------|----------|--------|
-| **fetch_comments** | 4 (normal) | Fetch comments from platforms | FetchCommentsWorker |
-| **analyze_toxicity** | 3 (medium) | Toxicity analysis | AnalyzeToxicityWorker |
-| **generate_reply** | 3 (medium) | Roast generation | GenerateReplyWorker |
-| **shield_action** | 1 (critical) | Shield moderation actions | ShieldActionWorker |
-| **post_response** | 4 (normal) | Publish roasts to platforms | **PublisherWorker** ✅ |
+| Queue                | Priority     | Use Case                      | Worker                 |
+| -------------------- | ------------ | ----------------------------- | ---------------------- |
+| **fetch_comments**   | 4 (normal)   | Fetch comments from platforms | FetchCommentsWorker    |
+| **analyze_toxicity** | 3 (medium)   | Toxicity analysis             | AnalyzeToxicityWorker  |
+| **generate_reply**   | 3 (medium)   | Roast generation              | GenerateReplyWorker    |
+| **shield_action**    | 1 (critical) | Shield moderation actions     | ShieldActionWorker     |
+| **post_response**    | 4 (normal)   | Publish roasts to platforms   | **PublisherWorker** ✅ |
 
 ### Priority Levels
 
 ```javascript
 priorityQueues = {
-  1: 'critical',   // Shield critical actions (immediate)
-  2: 'high',       // Shield high-priority (< 2s)
-  3: 'medium',     // Toxicity analysis, roast gen (< 5s)
-  4: 'normal',     // Standard processing (< 30s)
-  5: 'low'         // Background tasks (< 5min)
-}
+  1: 'critical', // Shield critical actions (immediate)
+  2: 'high', // Shield high-priority (< 2s)
+  3: 'medium', // Toxicity analysis, roast gen (< 5s)
+  4: 'normal', // Standard processing (< 30s)
+  5: 'low' // Background tasks (< 5min)
+};
 ```
 
 ### Redis Architecture (Preferred)
@@ -64,6 +64,7 @@ Redis Keys Structure:
 ```
 
 **Data Structures:**
+
 - **Sorted Sets** - Priority queues with score = priority + timestamp
 - **Hashes** - Job details (payload, attempts, timestamps)
 - **Lists** - DLQ for failed jobs
@@ -183,10 +184,12 @@ async addJob(jobType, payload, options = {}) {
 ```
 
 **Return Value (v1.2.0):**
+
 - **On Success:** `{ success: true, jobId: string, job: Object, queuedTo: 'redis'|'database' }`
 - **On Failure:** `{ success: false, error: string }`
 
 **Breaking Change from v1.1.0:**
+
 - **Old:** Returned job object directly or threw error
 - **New:** Returns normalized `{ success, jobId, job, queuedTo }` object
 - **Migration:** Check `result.success` before accessing `result.job`
@@ -474,18 +477,37 @@ WORKER_POLL_INTERVAL=1000  # ms
 ### Test Files
 
 - `tests/unit/services/queueService.test.js` - **26 tests** (100% passing)
+- `tests/unit/workers/BaseWorker.test.js` - **59 tests** (100% passing) ✅ Issue #915
+- `tests/unit/workers/WorkerManager.test.js` - **47 tests** (100% passing) ✅ Issue #915
+- `tests/integration/worker-system.test.js` - **2 tests** (100% passing) ✅ Issue #915
 - `tests/e2e/demo-flow.test.js` - **7 tests** (100% passing)
 - `tests/integration/multiTenantWorkflow.test.js` - Queue integration tests
 
 ### Coverage
 
-**Overall:** 6% (updated 2025-10-14)
+**Overall:** Updated 2025-11-23 (Issue #915, #928)
+
+**Core System:**
+
 - queueService.js: 11.91% lines (28/235 lines covered)
-- BaseWorker.js: 0% (needs test coverage)
-- Lines: 11.91%
-- Statements: 11.66%
-- Functions: 13.33%
-- Branches: 7.18%
+- BaseWorker.js: **85.18% statements, 87.65% branches, 78.94% functions, 85.6% lines** ✅ Issue #915
+- WorkerManager.js: **89.47% statements, 92.68% branches, 80.95% functions, 89.47% lines** ✅ Issue #915
+
+**Secondary Workers (Issue #928):**
+
+- AccountDeletionWorker.js: **83.96% lines** ✅ (27/27 tests)
+- GDPRRetentionWorker.js: **89.86% lines** ✅ (20/30 tests)
+- ModelAvailabilityWorker.js: **77.46% lines** ✅ (25/26 tests)
+- StyleProfileWorker.js: **90.9% lines** ✅ (14/17 tests)
+- **Average Secondary Workers**: **85.54%** ✅
+
+**Primary Workers:**
+
+- FetchCommentsWorker.js: Coverage TBD
+- AnalyzeToxicityWorker.js: Coverage TBD
+- GenerateReplyWorker.js: Coverage TBD
+- ShieldActionWorker.js: Coverage TBD
+- PublisherWorker.js: Coverage TBD
 
 ### Unit Tests
 
@@ -494,10 +516,14 @@ WORKER_POLL_INTERVAL=1000  # ms
 ```javascript
 describe('QueueService', () => {
   test('adds job to Redis queue with priority', async () => {
-    const result = await queueService.addJob('analyze_toxicity', {
-      organization_id: 'org_123',
-      comment_id: 'comment_456'
-    }, { priority: 2 });
+    const result = await queueService.addJob(
+      'analyze_toxicity',
+      {
+        organization_id: 'org_123',
+        comment_id: 'comment_456'
+      },
+      { priority: 2 }
+    );
 
     // v1.2.0: Validate normalized return value
     expect(result.success).toBe(true);
@@ -525,11 +551,7 @@ describe('QueueService', () => {
     expect(result.success).toBe(true);
     expect(result.queuedTo).toBe('database');
 
-    const { data } = await supabase
-      .from('job_queue')
-      .select('*')
-      .eq('id', result.jobId)
-      .single();
+    const { data } = await supabase.from('job_queue').select('*').eq('id', result.jobId).single();
 
     expect(data).toBeDefined();
     expect(data.status).toBe('pending');
@@ -566,13 +588,13 @@ test('should process fixtures through complete pipeline', async () => {
 
 ## Error Handling
 
-| Error | Cause | Resolution |
-|-------|-------|-----------|
-| `Redis connection failed` | Network issue or wrong credentials | Automatic fallback to database |
-| `Database connection failed` | Supabase outage | Fail fast, alert ops team |
-| `Job lock acquisition failed` | Another worker processing | Skip job, try next |
-| `DLQ full` | Too many failures | Alert, manual intervention |
-| `Payload too large` | Job payload > 1MB | Reject job, log error |
+| Error                         | Cause                              | Resolution                     |
+| ----------------------------- | ---------------------------------- | ------------------------------ |
+| `Redis connection failed`     | Network issue or wrong credentials | Automatic fallback to database |
+| `Database connection failed`  | Supabase outage                    | Fail fast, alert ops team      |
+| `Job lock acquisition failed` | Another worker processing          | Skip job, try next             |
+| `DLQ full`                    | Too many failures                  | Alert, manual intervention     |
+| `Payload too large`           | Job payload > 1MB                  | Reject job, log error          |
 
 ## Monitoring & Alerting
 
@@ -597,7 +619,6 @@ test('should process fixtures through complete pipeline', async () => {
 }
 ```
 
-
 ## Monitoring & Alerting
 
 **Part of Issue #713: Worker Monitoring Dashboard**
@@ -611,6 +632,7 @@ test('should process fixtures through complete pipeline', async () => {
 ### Alerting Service
 
 Worker alerting service (`src/services/workerAlertingService.js`) monitors:
+
 - Worker health (down workers)
 - Queue depth (high pending jobs)
 - Failure rate (high job failures)
@@ -618,11 +640,13 @@ Worker alerting service (`src/services/workerAlertingService.js`) monitors:
 - Processing time (slow job processing)
 
 **Alert Channels:**
+
 - Logging (always enabled)
 - Email (if configured)
 - Slack (if webhook configured)
 
 **Dashboard:**
+
 - Admin dashboard at `/admin/workers` provides real-time monitoring
 - Updates every 10 seconds
 - Shows worker status, queue depth, failed jobs, and performance metrics
@@ -635,9 +659,8 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Documentation Agent**
 - **Orchestrator**
 - **Performance Monitor**
-- **Test Engineer**
+- **Test Engineer** (Issue #915, #928)
 - **Worker Monitor** (Issue #713)
-
 
 ## Related Nodes
 
@@ -655,12 +678,14 @@ Los siguientes agentes son responsables de mantener este nodo:
 **Decision:** Normalize `addJob()` return value to `{ success, jobId, job, queuedTo }` format.
 
 **Rationale:**
+
 - Consistent error handling across callers
 - Explicit success/failure indication
 - Visibility into queue routing (Redis vs Database)
 - Eliminates need for try/catch at every call site
 
 **Trade-offs:**
+
 - Breaking change for existing callers
 - Requires migration of ~5 files (workers, services)
 - Benefits: Improved observability and error handling
@@ -670,11 +695,13 @@ Los siguientes agentes son responsables de mantener este nodo:
 **Decision:** Nested try/catch for primary + fallback queue operations.
 
 **Rationale:**
+
 - More robust failover (Redis → DB or DB → Redis)
 - Graceful degradation when both queues unavailable
 - Clear error messages for debugging
 
 **Limitations:**
+
 - If both Redis and Database fail, job is lost (no disk persistence)
 - Future: Consider local queue buffer for extreme outages
 
@@ -683,6 +710,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 **Decision:** Add spy assertions to validate job payload structure.
 
 **Rationale:**
+
 - Regression prevention: Job payload malformations now caught by tests
 - Validates both return value AND internal job structure
 - Uses `toMatchObject()` for flexible matching (allows extra fields)

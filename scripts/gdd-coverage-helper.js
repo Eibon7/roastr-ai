@@ -43,8 +43,8 @@ class CoverageHelper {
 
       // Check if data has at least one valid entry
       // (Either a 'total' key or at least one file entry with 'lines' property)
-      const hasValidEntry = Object.values(data).some(entry =>
-        entry && typeof entry === 'object' && entry.lines
+      const hasValidEntry = Object.values(data).some(
+        (entry) => entry && typeof entry === 'object' && entry.lines
       );
 
       if (!hasValidEntry) {
@@ -265,7 +265,10 @@ class CoverageHelper {
         const nodeFilePath = path.join(nodesDir, `${nodeName}.md`);
 
         // Check if file exists
-        const exists = await fs.access(nodeFilePath).then(() => true).catch(() => false);
+        const exists = await fs
+          .access(nodeFilePath)
+          .then(() => true)
+          .catch(() => false);
         if (!exists) {
           if (verbose) {
             out(`  ⚠  ${nodeName}: Node file not found, skipping`);
@@ -321,12 +324,14 @@ class CoverageHelper {
 
         // Report
         const changeIndicator = changed ? '✓' : '—';
-        const coverageChange = currentCoverage !== newCoverage
-          ? `${currentCoverage}% → ${newCoverage}%`
-          : `${newCoverage}%`;
-        const sourceChange = currentSource !== newSource
-          ? `(Source: ${currentSource} → ${newSource})`
-          : `(Source: ${newSource})`;
+        const coverageChange =
+          currentCoverage !== newCoverage
+            ? `${currentCoverage}% → ${newCoverage}%`
+            : `${newCoverage}%`;
+        const sourceChange =
+          currentSource !== newSource
+            ? `(Source: ${currentSource} → ${newSource})`
+            : `(Source: ${newSource})`;
 
         out(`  ${changeIndicator} ${nodeName}: ${coverageChange} ${sourceChange}`);
 
@@ -339,7 +344,6 @@ class CoverageHelper {
           changed,
           actualAvailable: actualCoverage !== null
         });
-
       } catch (error) {
         out(`  ❌ ${nodeName}: Error - ${error.message}`);
       }
@@ -349,8 +353,8 @@ class CoverageHelper {
     out('');
     out('Summary:');
     const totalNodes = updates.length;
-    const nodesUpdated = updates.filter(u => u.changed).length;
-    const autoSources = updates.filter(u => u.newSource === 'auto').length;
+    const nodesUpdated = updates.filter((u) => u.changed).length;
+    const autoSources = updates.filter((u) => u.newSource === 'auto').length;
 
     out(`  Nodes Analyzed: ${totalNodes}`);
     out(`  Nodes Updated: ${nodesUpdated}`);
@@ -376,7 +380,7 @@ if (require.main === module) {
     dryRun: args.includes('--dry-run'),
     verbose: args.includes('--verbose'),
     help: args.includes('--help') || args.includes('-h'),
-    node: args.find(arg => arg.startsWith('--node='))?.split('=')[1]
+    node: args.find((arg) => arg.startsWith('--node='))?.split('=')[1]
   };
 
   if (options.help) {
@@ -413,11 +417,12 @@ Requirements:
 
   if (options.updateFromReport) {
     const helper = new CoverageHelper();
-    helper.syncCoverageToNodes(options)
-      .then(result => {
+    helper
+      .syncCoverageToNodes(options)
+      .then((result) => {
         process.exit(0);
       })
-      .catch(error => {
+      .catch((error) => {
         err('❌ Fatal error:', error.message);
         process.exit(1);
       });

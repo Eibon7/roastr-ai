@@ -14,7 +14,7 @@ class IngestorTestUtils {
     this.setupComplete = false;
     this.mockStoredComments = [];
     this.mockStoredJobs = [];
-    
+
     // Set up global mock storage for stateful testing
     if (typeof global !== 'undefined') {
       global.mockCommentStorage = global.mockCommentStorage || [];
@@ -29,7 +29,7 @@ class IngestorTestUtils {
 
     // Check if we're in mock mode
     const { mockMode } = require('../../src/config/mockMode');
-    
+
     if (mockMode.isMockMode) {
       // Use mock clients in mock mode
       this.supabase = mockMode.generateMockSupabaseClient();
@@ -52,7 +52,7 @@ class IngestorTestUtils {
           return job;
         },
         getNextJob: async () => {
-          const pendingJobs = this.mockStoredJobs.filter(job => job.status === 'pending');
+          const pendingJobs = this.mockStoredJobs.filter((job) => job.status === 'pending');
           if (pendingJobs.length === 0) return null;
 
           // Sort by priority (lower number = higher priority) then by creation time (FIFO)
@@ -66,7 +66,7 @@ class IngestorTestUtils {
           return pendingJobs[0];
         },
         completeJob: async (job, resultData = {}) => {
-          const existingJob = this.mockStoredJobs.find(j => j.id === job.id);
+          const existingJob = this.mockStoredJobs.find((j) => j.id === job.id);
           if (existingJob) {
             existingJob.status = 'completed';
             existingJob.completed_at = new Date().toISOString();
@@ -84,7 +84,7 @@ class IngestorTestUtils {
           }
         },
         failJob: async (job, error) => {
-          const existingJob = this.mockStoredJobs.find(j => j.id === job.id);
+          const existingJob = this.mockStoredJobs.find((j) => j.id === job.id);
           if (existingJob) {
             existingJob.status = 'failed';
             existingJob.completed_at = new Date().toISOString();
@@ -100,10 +100,10 @@ class IngestorTestUtils {
           }
         },
         getQueueStats: async () => {
-          const completed = this.mockStoredJobs.filter(j => j.status === 'completed').length;
-          const failed = this.mockStoredJobs.filter(j => j.status === 'failed').length;
-          const pending = this.mockStoredJobs.filter(j => j.status === 'pending').length;
-          
+          const completed = this.mockStoredJobs.filter((j) => j.status === 'completed').length;
+          const failed = this.mockStoredJobs.filter((j) => j.status === 'failed').length;
+          const pending = this.mockStoredJobs.filter((j) => j.status === 'pending').length;
+
           return {
             timestamp: new Date().toISOString(),
             redis: false,
@@ -117,7 +117,7 @@ class IngestorTestUtils {
       // Initialize Supabase client for real integration tests
       const supabaseUrl = process.env.SUPABASE_URL;
       const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-      
+
       if (!supabaseUrl || !supabaseKey) {
         throw new Error('Supabase credentials required for integration tests');
       }
@@ -147,7 +147,7 @@ class IngestorTestUtils {
         console.warn('Error stopping worker:', error.message);
       }
     });
-    
+
     await Promise.all(stopPromises);
     this.workers = [];
 
@@ -187,10 +187,10 @@ class IngestorTestUtils {
 
     // Override the worker's queue service with our test queue service
     worker.queueService = this.queueService;
-    
+
     // Override the processing loop to prevent infinite polling in tests
     const originalProcessingLoop = worker.processingLoop;
-    worker.processingLoop = async function() {
+    worker.processingLoop = async function () {
       // Don't run the processing loop in tests - we'll call processJob directly
       return;
     };
@@ -204,7 +204,7 @@ class IngestorTestUtils {
    */
   async setupTestOrganizations(fixtures) {
     const { mockMode } = require('../../src/config/mockMode');
-    
+
     if (mockMode.isMockMode) {
       // In mock mode, just return success
       return;
@@ -240,7 +240,7 @@ class IngestorTestUtils {
    */
   async insertTestComments(organizationId, integrationConfigId, comments) {
     const { mockMode } = require('../../src/config/mockMode');
-    
+
     if (mockMode.isMockMode) {
       // In mock mode, store data in global storage and return it
       const storage = global.mockCommentStorage || [];
@@ -257,15 +257,15 @@ class IngestorTestUtils {
         status: 'pending',
         created_at: new Date().toISOString()
       }));
-      
+
       // Add to global storage for persistence in mock mode
       storage.push(...insertedComments);
       global.mockCommentStorage = storage;
-      
+
       return insertedComments;
     }
 
-    const commentsToInsert = comments.map(comment => ({
+    const commentsToInsert = comments.map((comment) => ({
       organization_id: organizationId,
       integration_config_id: integrationConfigId,
       platform: comment.platform,
@@ -278,10 +278,7 @@ class IngestorTestUtils {
       created_at: new Date().toISOString()
     }));
 
-    const { data, error } = await this.supabase
-      .from('comments')
-      .insert(commentsToInsert)
-      .select();
+    const { data, error } = await this.supabase.from('comments').insert(commentsToInsert).select();
 
     if (error) {
       throw new Error(`Failed to insert test comments: ${error.message}`);
@@ -313,11 +310,11 @@ class IngestorTestUtils {
    */
   async getCommentsByOrganization(organizationId) {
     const { mockMode } = require('../../src/config/mockMode');
-    
+
     if (mockMode.isMockMode) {
       // Return mock data from global storage
       const storage = global.mockCommentStorage || [];
-      return storage.filter(comment => comment.organization_id === organizationId);
+      return storage.filter((comment) => comment.organization_id === organizationId);
     }
 
     const { data, error } = await this.supabase
@@ -338,15 +335,17 @@ class IngestorTestUtils {
    */
   async getJobsByType(jobType) {
     const { mockMode } = require('../../src/config/mockMode');
-    
+
     if (mockMode.isMockMode) {
       // Return mock job data with proper structure
-      return this.mockStoredJobs.filter(job => job.job_type === jobType).map(job => ({
-        ...job,
-        status: job.status || 'completed',
-        completed_at: job.completed_at || new Date().toISOString(),
-        error_message: job.error_message || null
-      }));
+      return this.mockStoredJobs
+        .filter((job) => job.job_type === jobType)
+        .map((job) => ({
+          ...job,
+          status: job.status || 'completed',
+          completed_at: job.completed_at || new Date().toISOString(),
+          error_message: job.error_message || null
+        }));
     }
 
     const { data, error } = await this.supabase
@@ -367,12 +366,13 @@ class IngestorTestUtils {
    */
   async commentExists(organizationId, platformCommentId) {
     const { mockMode } = require('../../src/config/mockMode');
-    
+
     if (mockMode.isMockMode) {
       const storage = global.mockCommentStorage || [];
-      const exists = storage.some(comment => 
-        comment.organization_id === organizationId &&
-        comment.platform_comment_id === platformCommentId
+      const exists = storage.some(
+        (comment) =>
+          comment.organization_id === organizationId &&
+          comment.platform_comment_id === platformCommentId
       );
       return exists;
     }
@@ -384,7 +384,8 @@ class IngestorTestUtils {
       .eq('platform_comment_id', platformCommentId)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 = no rows found
       throw new Error(`Failed to check comment existence: ${error.message}`);
     }
 
@@ -396,12 +397,11 @@ class IngestorTestUtils {
    */
   async countCommentsByPlatformId(organizationId, platformCommentId) {
     const { mockMode } = require('../../src/config/mockMode');
-    
+
     if (mockMode.isMockMode) {
       const storage = global.mockCommentStorage || [];
-      return storage.filter(c => 
-        c.organization_id === organizationId && 
-        c.platform_comment_id === platformCommentId
+      return storage.filter(
+        (c) => c.organization_id === organizationId && c.platform_comment_id === platformCommentId
       ).length;
     }
 
@@ -430,11 +430,11 @@ class IngestorTestUtils {
    */
   async waitForJobProcessing(jobType, expectedCount, timeoutMs = 5000) {
     const startTime = Date.now();
-    
+
     while (Date.now() - startTime < timeoutMs) {
       const jobs = await this.getJobsByType(jobType);
-      const completedJobs = jobs.filter(job => 
-        job.status === 'completed' || job.status === 'failed'
+      const completedJobs = jobs.filter(
+        (job) => job.status === 'completed' || job.status === 'failed'
       );
 
       if (completedJobs.length >= expectedCount) {
@@ -444,7 +444,9 @@ class IngestorTestUtils {
       await this.sleep(100); // Check every 100ms
     }
 
-    throw new Error(`Timeout waiting for job processing. Expected ${expectedCount} jobs to complete within ${timeoutMs}ms`);
+    throw new Error(
+      `Timeout waiting for job processing. Expected ${expectedCount} jobs to complete within ${timeoutMs}ms`
+    );
   }
 
   /**
@@ -454,10 +456,10 @@ class IngestorTestUtils {
     const originalMethod = worker.fetchCommentsFromPlatform;
     let failureCounter = 0;
 
-    worker.fetchCommentsFromPlatform = async function(platformName, config, payload) {
+    worker.fetchCommentsFromPlatform = async function (platformName, config, payload) {
       if (platformName === platform && failureCounter < failureCount) {
         failureCounter++;
-        
+
         if (failureType === 'transient') {
           throw new Error(`Simulated transient failure #${failureCounter}`);
         } else if (failureType === 'permanent') {
@@ -481,7 +483,7 @@ class IngestorTestUtils {
     const originalCalculateRetryDelay = worker.calculateRetryDelay;
 
     // Override calculateRetryDelay to track actual delay values
-    worker.calculateRetryDelay = function(attempt) {
+    worker.calculateRetryDelay = function (attempt) {
       const delay = originalCalculateRetryDelay.call(this, attempt);
       retryDelays.push(delay);
       return delay;
@@ -519,21 +521,15 @@ class IngestorTestUtils {
       }
       return;
     }
-    
+
     if (!this.supabase) return;
 
     try {
       // Clean up test comments
-      await this.supabase
-        .from('comments')
-        .delete()
-        .like('organization_id', 'test-org-%');
+      await this.supabase.from('comments').delete().like('organization_id', 'test-org-%');
 
       // Clean up test jobs
-      await this.supabase
-        .from('job_queue')
-        .delete()
-        .like('organization_id', 'test-org-%');
+      await this.supabase.from('job_queue').delete().like('organization_id', 'test-org-%');
 
       // Clean up test integration configs
       await this.supabase
@@ -542,11 +538,7 @@ class IngestorTestUtils {
         .like('organization_id', 'test-org-%');
 
       // Clean up test organizations
-      await this.supabase
-        .from('organizations')
-        .delete()
-        .like('id', 'test-org-%');
-
+      await this.supabase.from('organizations').delete().like('id', 'test-org-%');
     } catch (error) {
       console.warn('Failed to cleanup test data:', error.message);
     }
@@ -556,7 +548,7 @@ class IngestorTestUtils {
    * Sleep utility for timing tests
    */
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -572,7 +564,7 @@ class IngestorTestUtils {
       if (actualDelay < minAcceptable || actualDelay > maxAcceptable) {
         throw new Error(
           `Backoff timing assertion failed at interval ${i}: ` +
-          `expected ${expectedDelay}ms ±${tolerance * 100}%, got ${actualDelay}ms`
+            `expected ${expectedDelay}ms ±${tolerance * 100}%, got ${actualDelay}ms`
         );
       }
     }
@@ -593,7 +585,7 @@ class IngestorTestUtils {
       if (actualId !== expectedId) {
         throw new Error(
           `Job order assertion failed at position ${i}: ` +
-          `expected ${expectedId}, got ${actualId}`
+            `expected ${expectedId}, got ${actualId}`
         );
       }
     }

@@ -69,9 +69,7 @@ describe('POST /api/approval/:id/regenerate', () => {
   });
 
   test('should respond with 404 for non-existent endpoints', async () => {
-    const response = await request(app)
-      .post('/api/approval/test-id/nonexistent')
-      .expect(404);
+    const response = await request(app).post('/api/approval/test-id/nonexistent').expect(404);
   });
 
   test('should be properly mounted on approval routes', () => {
@@ -83,8 +81,9 @@ describe('POST /api/approval/:id/regenerate', () => {
 describe('Roast regeneration system', () => {
   test('should have proper database migration structure', () => {
     const fs = require('fs');
-    const migrationPath = '/Users/emiliopostigo/roastr-ai/database/migrations/006_roast_regeneration_system.sql';
-    
+    const migrationPath =
+      '/Users/emiliopostigo/roastr-ai/database/migrations/006_roast_regeneration_system.sql';
+
     if (fs.existsSync(migrationPath)) {
       const content = fs.readFileSync(migrationPath, 'utf8');
       expect(content).toContain('roast_attempts');

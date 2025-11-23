@@ -15,18 +15,18 @@ const RETRYABLE_ERRORS = {
   502: 'Bad gateway',
   503: 'Service unavailable',
   504: 'Gateway timeout',
-  
+
   // OAuth/Token errors
-  'TOKEN_EXPIRED': 'Access token expired',
-  'INVALID_TOKEN': 'Invalid access token',
-  'TOKEN_REVOKED': 'Token revoked',
-  
+  TOKEN_EXPIRED: 'Access token expired',
+  INVALID_TOKEN: 'Invalid access token',
+  TOKEN_REVOKED: 'Token revoked',
+
   // Network errors
-  'ECONNRESET': 'Connection reset',
-  'ECONNREFUSED': 'Connection refused',
-  'ETIMEDOUT': 'Connection timed out',
-  'ENOTFOUND': 'DNS lookup failed',
-  'ECONNABORTED': 'Connection aborted'
+  ECONNRESET: 'Connection reset',
+  ECONNREFUSED: 'Connection refused',
+  ETIMEDOUT: 'Connection timed out',
+  ENOTFOUND: 'DNS lookup failed',
+  ECONNABORTED: 'Connection aborted'
 };
 
 /**
@@ -97,7 +97,7 @@ class RetrySystem {
     while (attempt < this.config.maxRetries) {
       try {
         const result = await operation();
-        
+
         if (attempt > 0) {
           logger.info(`Operation succeeded after ${attempt} retries`, {
             operationType: this.operationType,
@@ -107,13 +107,12 @@ class RetrySystem {
         }
 
         return result;
-
       } catch (error) {
         lastError = error;
         attempt++;
 
         const shouldRetry = this.shouldRetry(error, attempt);
-        
+
         if (!shouldRetry || attempt >= this.config.maxRetries) {
           logger.error(`Operation failed after ${attempt} attempts`, {
             operationType: this.operationType,
@@ -126,7 +125,7 @@ class RetrySystem {
         }
 
         const delay = this.calculateDelay(attempt);
-        
+
         logger.warn(`Operation failed, retrying in ${delay}ms`, {
           operationType: this.operationType,
           error: error.message,
@@ -167,7 +166,7 @@ class RetrySystem {
           try {
             await tokenRefreshFn();
             tokenRefreshed = true;
-            
+
             logger.info('Token refresh successful, retrying operation', {
               operationType: this.operationType,
               context
@@ -175,7 +174,6 @@ class RetrySystem {
 
             // Retry the operation with new token
             return await operation();
-
           } catch (refreshError) {
             logger.error('Token refresh failed', {
               operationType: this.operationType,
@@ -208,7 +206,7 @@ class RetrySystem {
     // Check HTTP status codes
     if (error.status || error.response?.status) {
       const status = error.status || error.response.status;
-      
+
       // Never retry these status codes
       if (NON_RETRYABLE_ERRORS[status]) {
         return false;
@@ -227,26 +225,29 @@ class RetrySystem {
 
     // Check error message patterns
     const message = error.message?.toLowerCase() || '';
-    
+
     // Network-related errors
-    if (message.includes('timeout') || 
-        message.includes('reset') || 
-        message.includes('refused') ||
-        message.includes('aborted') ||
-        message.includes('network')) {
+    if (
+      message.includes('timeout') ||
+      message.includes('reset') ||
+      message.includes('refused') ||
+      message.includes('aborted') ||
+      message.includes('network')
+    ) {
       return true;
     }
 
     // OAuth-related errors (excluding permanent failures)
-    if (message.includes('token expired') || 
-        message.includes('invalid_token') ||
-        message.includes('token_revoked')) {
+    if (
+      message.includes('token expired') ||
+      message.includes('invalid_token') ||
+      message.includes('token_revoked')
+    ) {
       return true;
     }
 
     // Rate limiting
-    if (message.includes('rate limit') || 
-        message.includes('too many requests')) {
+    if (message.includes('rate limit') || message.includes('too many requests')) {
       return true;
     }
 
@@ -264,10 +265,12 @@ class RetrySystem {
     if (status === 401) return true;
 
     const message = error.message?.toLowerCase() || '';
-    return message.includes('token expired') || 
-           message.includes('invalid token') ||
-           message.includes('unauthorized') ||
-           message.includes('token_revoked');
+    return (
+      message.includes('token expired') ||
+      message.includes('invalid token') ||
+      message.includes('unauthorized') ||
+      message.includes('token_revoked')
+    );
   }
 
   /**
@@ -277,15 +280,15 @@ class RetrySystem {
    */
   calculateDelay(attempt) {
     let delay = this.config.baseDelay * Math.pow(this.config.backoffFactor, attempt - 1);
-    
+
     // Cap at maximum delay
     delay = Math.min(delay, this.config.maxDelay);
-    
+
     // Add jitter to avoid thundering herd
     if (this.config.jitter) {
       delay = delay * (0.5 + Math.random() * 0.5);
     }
-    
+
     return Math.round(delay);
   }
 
@@ -295,7 +298,7 @@ class RetrySystem {
    * @returns {Promise} Promise that resolves after delay
    */
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -307,11 +310,11 @@ class RetrySystem {
   static wrap(fn, options = {}) {
     const operationType = options.operationType || 'api_call';
     const retrySystem = new RetrySystem(operationType);
-    
-    return async function(...args) {
-      const context = options.context || { 
-        function: fn.name, 
-        args: args.length 
+
+    return async function (...args) {
+      const context = options.context || {
+        function: fn.name,
+        args: args.length
       };
 
       if (options.tokenRefreshFn) {
@@ -321,10 +324,7 @@ class RetrySystem {
           context
         );
       } else {
-        return await retrySystem.execute(
-          () => fn.apply(this, args),
-          context
-        );
+        return await retrySystem.execute(() => fn.apply(this, args), context);
       }
     };
   }

@@ -11,10 +11,12 @@
 CodeRabbit está procesando la revisión de PR #659. Ha proporcionado feedback inicial de pre-merge checks con 3 warnings.
 
 **Files Changed:**
+
 - `src/services/shieldService.js` (2 fixes: table names + skip reason string)
 - `tests/unit/services/shield-action-tags.test.js` (test mock enhancements)
 
 **Changes Summary:**
+
 1. Fixed table name references: `user_behaviors` → `user_behavior` (9 locations)
 2. Fixed skip reason string: `not_reportable` → `not reportable`
 3. Enhanced test mocks for chainable Supabase operations
@@ -30,6 +32,7 @@ CodeRabbit está procesando la revisión de PR #659. Ha proporcionado feedback i
 **File:** PR metadata
 
 **Issue:**
+
 - PR is linked to Issues #1 and #2 (dependency version bumps for caniuse-lite and react-router-dom)
 - These are completely unrelated to the actual code changes
 - Actual work addresses Issue #650 (Shield action_tags migration)
@@ -41,12 +44,15 @@ Incorrect linked issues in PR description/metadata.
 Update PR linked issues to reference Issue #650 instead of #1 and #2.
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/shield.md` (primary node for Shield service)
 
 **Files to Modify:**
+
 - PR description (via GitHub UI or gh CLI)
 
 **Validation:**
+
 - `gh pr view 659 --json linkedIssues` should show #650
 
 ---
@@ -58,6 +64,7 @@ Update PR linked issues to reference Issue #650 instead of #1 and #2.
 **File:** PR metadata
 
 **Issue:**
+
 - Changes to `shieldService.js` and test file are out of scope relative to linked issues (#1, #2)
 - This is a consequence of WARNING #1 (incorrect linked issues)
 - Once linked issues are fixed to #650, this warning will auto-resolve
@@ -69,6 +76,7 @@ Same as WARNING #1 - incorrect linked issues.
 Will be resolved automatically when linked issues are updated to #650.
 
 **Validation:**
+
 - CodeRabbit re-scan should show no out-of-scope warnings after fixing linked issues
 
 ---
@@ -80,6 +88,7 @@ Will be resolved automatically when linked issues are updated to #650.
 **Files:** `src/services/shieldService.js`
 
 **Issue:**
+
 - Current docstring coverage: 0.00%
 - Required threshold: 80.00%
 - New method `executeActionsFromTags()` lacks JSDoc documentation
@@ -90,6 +99,7 @@ Implementation focused on functionality without adding comprehensive JSDoc comme
 
 **Fix Required:**
 Add JSDoc documentation to:
+
 1. `executeActionsFromTags()` method
 2. All 10 action handler methods:
    - `_handleHideComment()`
@@ -104,6 +114,7 @@ Add JSDoc documentation to:
    - `_handleGatekeeperUnavailable()`
 
 **Pattern to Follow:**
+
 ```javascript
 /**
  * Execute Shield actions based on action_tags from Gatekeeper
@@ -134,12 +145,15 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}
 ```
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/shield.md` (documentation section needs update)
 
 **Files to Modify:**
+
 - `src/services/shieldService.js` (add JSDoc to 11 methods)
 
 **Validation:**
+
 - Run `@coderabbitai generate docstrings` (CodeRabbit suggestion)
 - Or manually add JSDoc and verify coverage with CodeRabbit re-scan
 
@@ -147,11 +161,12 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}
 
 ## Subagentes Requeridos
 
-| Subagente | Razón | Priority |
-|-----------|-------|----------|
-| None | Simple documentation fixes (docstrings + PR metadata) | N/A |
+| Subagente | Razón                                                 | Priority |
+| --------- | ----------------------------------------------------- | -------- |
+| None      | Simple documentation fixes (docstrings + PR metadata) | N/A      |
 
 **Justificación:**
+
 - Fixes son triviales (JSDoc + PR linked issues)
 - No requieren análisis arquitectural
 - No tocan lógica de negocio
@@ -162,9 +177,11 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}
 ## Archivos Afectados
 
 ### Modificados (Código)
+
 - `src/services/shieldService.js` (add JSDoc to 11 methods)
 
 ### Modificados (Metadata)
+
 - PR #659 description (update linked issues via gh CLI)
 
 ---
@@ -172,12 +189,14 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}
 ## Estrategia de Implementación
 
 ### FASE 1: Fix Linked Issues (CRITICAL - 2 min)
+
 1. Update PR linked issues from #1, #2 to #650
 2. Use `gh pr edit 659 --body` to update description
 3. Or update via GitHub UI if gh CLI doesn't support linked issues directly
 4. Verify: `gh pr view 659 --json body | grep "#650"`
 
 ### FASE 2: Add JSDoc Documentation (HIGH - 15 min)
+
 1. Read existing JSDoc patterns in `shieldService.js`
 2. Add comprehensive JSDoc to `executeActionsFromTags()`
 3. Add JSDoc to all 10 private handler methods
@@ -186,6 +205,7 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}
 6. Document critical safeguards (e.g., reportable check)
 
 ### FASE 3: Validation (5 min)
+
 1. Commit changes
 2. Push to remote
 3. Wait for CodeRabbit re-scan
@@ -209,6 +229,7 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata = {}
 ## Commits Planeados
 
 ### Commit 1: Fix Linked Issues
+
 ```
 fix: Update PR #659 linked issues to #650 - CodeRabbit fix
 
@@ -231,6 +252,7 @@ Fixes CodeRabbit WARNING #1 and #2 on PR #659
 ```
 
 ### Commit 2: Add JSDoc Documentation
+
 ```
 docs(shield): Add comprehensive JSDoc to executeActionsFromTags() - CodeRabbit fix
 

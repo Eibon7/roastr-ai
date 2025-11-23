@@ -9,6 +9,7 @@
 ## Estado Actual (Task Assessment)
 
 ### Problema Identificado
+
 - **11 tests failing** en `tests/unit/routes/roastr-persona-intolerance.test.js`
 - Root cause: Código actualizado para soportar 3 campos (lo_que_me_define, lo_que_no_tolero, **lo_que_me_da_igual**)
 - Tests escritos para versión anterior con solo 2 campos
@@ -16,6 +17,7 @@
 ### Análisis de Código Actual
 
 **Implementación en `src/routes/user.js` (líneas 1668-1780+):**
+
 ```javascript
 GET /api/user/roastr-persona:
 - Returns 3 fields: loQueMeDefine, loQueNoTolero, loQueMeDaIgual
@@ -36,6 +38,7 @@ DELETE /api/user/roastr-persona:
 ```
 
 **Tests Expectation (obsoletos):**
+
 ```javascript
 GET response:
 - Expected: 2 fields (loQueMeDefine, loQueNoTolero)
@@ -54,14 +57,16 @@ DELETE behavior:
 ### Failures Breakdown
 
 **GET tests (2 failing):**
+
 1. ❌ "should return both identity and intolerance data when available"
    - Missing: loQueMeDaIgual, hasToleranceContent, tolerance flags
 2. ❌ "should handle decryption errors gracefully"
    - Missing: hasToleranceContent handling
 
-**POST tests (5 failing):**
-3. ❌ "should save intolerance preferences successfully"
-   - Error message mismatch: "actualizada" vs "updated successfully"
+**POST tests (5 failing):** 3. ❌ "should save intolerance preferences successfully"
+
+- Error message mismatch: "actualizada" vs "updated successfully"
+
 4. ❌ "should clear intolerance field when null is provided"
    - Mock expectations not met
 5. ❌ "should save both identity and intolerance fields simultaneously"
@@ -71,9 +76,10 @@ DELETE behavior:
 7. ❌ "should require at least one field for update"
    - Validation not enforced: expected 400, got 200
 
-**DELETE tests (4 failing):**
-8. ❌ "should delete only intolerance field when specified"
-   - Mock .update() not called
+**DELETE tests (4 failing):** 8. ❌ "should delete only intolerance field when specified"
+
+- Mock .update() not called
+
 9. ❌ "should delete only identity field when specified"
    - Mock .update() not called
 10. ❌ "should delete all fields when field=all"
@@ -102,11 +108,13 @@ DELETE behavior:
 **Agent:** Test Engineer
 
 **Input:**
+
 - Current implementation: `src/routes/user.js` (GET/POST/DELETE roastr-persona endpoints)
 - Failing test file: `tests/unit/routes/roastr-persona-intolerance.test.js`
 - Error output from test run
 
 **Expected Output:**
+
 - Detailed analysis of each failing test
 - Comparison of expected vs actual behavior
 - Recommendations for test updates
@@ -119,6 +127,7 @@ DELETE behavior:
 **Agent:** Test Engineer
 
 **Actions:**
+
 1. Update mock responses to include `lo_que_me_da_igual` field
 2. Add tolerance-related flags to expected responses
 3. Update error message expectations (Spanish → English)
@@ -128,12 +137,14 @@ DELETE behavior:
 7. Update all test cases to use 3-field schema
 
 **Expected Output:**
+
 - Updated test file with all 19 tests passing
 - No breaking changes to existing test coverage
 
 ### Phase 3: Validation
 
 **Orchestrator validates:**
+
 ```bash
 # Run fixed tests
 npm test -- roastr-persona-intolerance.test.js

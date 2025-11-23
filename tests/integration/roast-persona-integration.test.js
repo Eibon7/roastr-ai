@@ -20,7 +20,7 @@ jest.mock('../../src/services/csvRoastService');
 jest.mock('../../src/services/costControl');
 jest.mock('../../src/utils/featureFlags', () => ({
   isEnabled: jest.fn().mockReturnValue(false),
-  initialize: jest.fn(),
+  initialize: jest.fn()
 }));
 
 describe('Roast-Persona Integration (Issue #615)', () => {
@@ -66,8 +66,12 @@ describe('Roast-Persona Integration (Issue #615)', () => {
 
       // Verify all 3 persona fields are present in prompt
       expect(prompt).toContain('🎯 CONTEXTO DEL USUARIO:');
-      expect(prompt).toContain('- Lo que define al usuario: Soy un desarrollador senior con 10 años de experiencia');
-      expect(prompt).toContain('- Lo que NO tolera: Comentarios racistas, sexistas o discriminatorios');
+      expect(prompt).toContain(
+        '- Lo que define al usuario: Soy un desarrollador senior con 10 años de experiencia'
+      );
+      expect(prompt).toContain(
+        '- Lo que NO tolera: Comentarios racistas, sexistas o discriminatorios'
+      );
       expect(prompt).toContain('- Lo que le da igual: Críticas a mi código si son constructivas');
 
       // Verify persona placeholder replaced
@@ -209,9 +213,9 @@ describe('Roast-Persona Integration (Issue #615)', () => {
   describe('Error Handling & Edge Cases', () => {
     test('should handle PersonaService errors gracefully', async () => {
       // Mock PersonaService to throw error
-      roastGenerator.personaService.getPersona = jest.fn().mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      roastGenerator.personaService.getPersona = jest
+        .fn()
+        .mockRejectedValue(new Error('Database connection failed'));
 
       const mockOpenAI = require('../../src/services/openai');
       mockOpenAI.generateRoast = jest.fn().mockResolvedValue({
@@ -223,17 +227,12 @@ describe('Roast-Persona Integration (Issue #615)', () => {
 
       // Should not throw, should continue with null persona
       await expect(
-        roastGenerator.generateWithBasicModeration(
-          'Test comment',
-          0.5,
-          'sarcastic',
-          {
-            plan: 'pro',
-            user_id: 'error-user',
-            humor_type: 'clever',
-            intensity_level: 'medium'
-          }
-        )
+        roastGenerator.generateWithBasicModeration('Test comment', 0.5, 'sarcastic', {
+          plan: 'pro',
+          user_id: 'error-user',
+          humor_type: 'clever',
+          intensity_level: 'medium'
+        })
       ).rejects.toThrow('Database connection failed');
     });
 

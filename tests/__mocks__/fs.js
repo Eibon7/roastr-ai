@@ -34,7 +34,7 @@ const mockFs = {
     }),
 
     mkdir: jest.fn().mockResolvedValue(undefined),
-    
+
     stat: jest.fn().mockImplementation(async (path) => {
       if (!mockFileSystem.has(path)) {
         throw new Error(`ENOENT: no such file or directory, stat '${path}'`);
@@ -50,15 +50,15 @@ const mockFs = {
 
   // Métodos de utilidad para tests
   __mockFileSystem: mockFileSystem,
-  
+
   __setMockFile: (path, content) => {
     mockFileSystem.set(path, content);
   },
-  
+
   __clearMockFileSystem: () => {
     mockFileSystem.clear();
   },
-  
+
   __getMockFile: (path) => {
     return mockFileSystem.get(path);
   }

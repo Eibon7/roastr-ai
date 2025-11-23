@@ -31,6 +31,7 @@
 **Lines**: 1-45 (especially lines 11-45 where local mock was defined)
 
 **Codex Comment**:
+
 > "Import the actual `calculateDerivedMetrics` from production code instead of using a local mock. The test suite defines a local mock implementation (lines 11-45) rather than importing and testing the actual `calculateDerivedMetrics` function from `scripts/collect-gdd-telemetry.js`."
 
 ### Code Before Fix
@@ -52,16 +53,14 @@ describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
     // System stability index (0-100)
     const healthScore = metrics.health?.overall_score || 0;
     const driftScore = 100 - (metrics.drift?.average_drift_risk || 0);
-    const repairScore = metrics.repair?.success_rate ?? 100;  // ✅ Fixed: Use ?? to treat 0 as valid
+    const repairScore = metrics.repair?.success_rate ?? 100; // ✅ Fixed: Use ?? to treat 0 as valid
 
     derived.stability_index = Math.round((healthScore + driftScore + repairScore) / 3);
 
     // Node health variance
     if (metrics.health) {
       const { healthy_count, degraded_count, critical_count, total_nodes } = metrics.health;
-      const variance = total_nodes > 0
-        ? Math.abs((healthy_count / total_nodes) - 0.85) * 100
-        : 0;
+      const variance = total_nodes > 0 ? Math.abs(healthy_count / total_nodes - 0.85) * 100 : 0;
       derived.health_variance = Math.round(variance);
     }
 
@@ -89,6 +88,7 @@ describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
 ```
 
 **Problem**:
+
 - Test defines its own local mock function
 - Mock has the correct fix (`??`) but doesn't test production code
 - If production code still has the bug (`||`), tests would still pass
@@ -123,6 +123,7 @@ describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
 ```
 
 **Solution**:
+
 - Imports real `TelemetryCollector` class from production
 - Creates instance and calls actual `calculateDerivedMetrics` method
 - Helper function maintains test code compatibility
@@ -136,11 +137,11 @@ describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
 
 ```javascript
 // HYPOTHETICAL - If production had this bug:
-const repairScore = metrics.repair?.success_rate || 100;  // ❌ Bug
+const repairScore = metrics.repair?.success_rate || 100; // ❌ Bug
 
 // But test uses mock with fix:
 function calculateDerivedMetrics(metrics) {
-  const repairScore = metrics.repair?.success_rate ?? 100;  // ✅ Correct in mock
+  const repairScore = metrics.repair?.success_rate ?? 100; // ✅ Correct in mock
   // ...
 }
 
@@ -152,6 +153,7 @@ function calculateDerivedMetrics(metrics) {
 #### After Fix: True Validation
 
 **Test Execution**:
+
 ```bash
 npm test -- calculate-derived-metrics
 
@@ -211,10 +213,11 @@ Time:        0.431 s
 
 ```javascript
 // Line 297 in scripts/collect-gdd-telemetry.js
-const repairScore = metrics.repair?.success_rate ?? 100;  // ✅ Correct: uses ??
+const repairScore = metrics.repair?.success_rate ?? 100; // ✅ Correct: uses ??
 ```
 
 **Class Structure**:
+
 ```javascript
 class TelemetryCollector {
   // ...
@@ -224,7 +227,7 @@ class TelemetryCollector {
     // System stability index (0-100)
     const healthScore = metrics.health?.overall_score || 0;
     const driftScore = 100 - (metrics.drift?.average_drift_risk || 0);
-    const repairScore = metrics.repair?.success_rate ?? 100;  // ✅ Nullish coalescing
+    const repairScore = metrics.repair?.success_rate ?? 100; // ✅ Nullish coalescing
 
     derived.stability_index = Math.round((healthScore + driftScore + repairScore) / 3);
 
@@ -237,17 +240,18 @@ module.exports = TelemetryCollector;
 
 ### Test Coverage Validation
 
-| Test Case | Input | Expected Output | Production Result | Status |
-|-----------|-------|----------------|-------------------|--------|
-| **P1-1**: `success_rate = 0` | 0% auto-fix success | `repairScore = 0`, `stability_index = 62`, `system_status = DEGRADED` | ✅ Matches | PASS |
-| **P1-2**: `success_rate = null` | No repair data | `repairScore = 100`, `stability_index = 95`, `system_status = STABLE` | ✅ Matches | PASS |
-| **P1-3**: `success_rate = undefined` | Repair object missing | `repairScore = 100`, `stability_index = 95`, `system_status = STABLE` | ✅ Matches | PASS |
-| **P1-4**: `success_rate = 50` | Partial success | `repairScore = 50`, `stability_index = 78`, `system_status = DEGRADED` | ✅ Matches | PASS |
-| **Edge-1**: `success_rate = 100` | Perfect auto-fix | `repairScore = 100`, `stability_index = 95`, `system_status = STABLE` | ✅ Matches | PASS |
-| **Edge-2**: Low health + 0% success | Critical scenario | `repairScore = 0`, `stability_index = 27`, `system_status = CRITICAL` | ✅ Matches | PASS |
-| **Impact**: Before/After comparison | Inflation prevention | 33-point inflation prevented | ✅ Demonstrated | PASS |
+| Test Case                            | Input                 | Expected Output                                                        | Production Result | Status |
+| ------------------------------------ | --------------------- | ---------------------------------------------------------------------- | ----------------- | ------ |
+| **P1-1**: `success_rate = 0`         | 0% auto-fix success   | `repairScore = 0`, `stability_index = 62`, `system_status = DEGRADED`  | ✅ Matches        | PASS   |
+| **P1-2**: `success_rate = null`      | No repair data        | `repairScore = 100`, `stability_index = 95`, `system_status = STABLE`  | ✅ Matches        | PASS   |
+| **P1-3**: `success_rate = undefined` | Repair object missing | `repairScore = 100`, `stability_index = 95`, `system_status = STABLE`  | ✅ Matches        | PASS   |
+| **P1-4**: `success_rate = 50`        | Partial success       | `repairScore = 50`, `stability_index = 78`, `system_status = DEGRADED` | ✅ Matches        | PASS   |
+| **Edge-1**: `success_rate = 100`     | Perfect auto-fix      | `repairScore = 100`, `stability_index = 95`, `system_status = STABLE`  | ✅ Matches        | PASS   |
+| **Edge-2**: Low health + 0% success  | Critical scenario     | `repairScore = 0`, `stability_index = 27`, `system_status = CRITICAL`  | ✅ Matches        | PASS   |
+| **Impact**: Before/After comparison  | Inflation prevention  | 33-point inflation prevented                                           | ✅ Demonstrated   | PASS   |
 
 **Key Findings**:
+
 - ✅ Production code correctly uses `??` (nullish coalescing)
 - ✅ All tests pass against real implementation
 - ✅ 0% success rate treated as valid value (not fallback)
@@ -258,23 +262,25 @@ module.exports = TelemetryCollector;
 
 ## Files Modified
 
-| File | Changes | Lines Modified |
-|------|---------|----------------|
+| File                                                 | Changes                       | Lines Modified                   |
+| ---------------------------------------------------- | ----------------------------- | -------------------------------- |
 | `tests/unit/utils/calculate-derived-metrics.test.js` | Import real code, remove mock | 1-20 (replaced mock with import) |
-| `docs/plan/review-3311794192.md` | Implementation plan | +401 lines (new) |
-| `docs/test-evidence/review-3311794192/SUMMARY.md` | This evidence file | +400 lines (new) |
+| `docs/plan/review-3311794192.md`                     | Implementation plan           | +401 lines (new)                 |
+| `docs/test-evidence/review-3311794192/SUMMARY.md`    | This evidence file            | +400 lines (new)                 |
 
 ---
 
 ## Validation Status
 
 ### Code Quality
+
 - ✅ Major issue resolved: Test imports production code
 - ✅ Test isolation achieved
 - ✅ Production code validated (has `??` fix)
 - ✅ No mock testing (except in "Impact Analysis" for demonstration)
 
 ### Testing
+
 - ✅ 7 unit tests passing
 - ✅ All tests execute against production `TelemetryCollector.calculateDerivedMetrics()`
 - ✅ Coverage: Production method now truly tested
@@ -282,12 +288,14 @@ module.exports = TelemetryCollector;
 - ✅ Before/after impact demonstrated
 
 ### Impact
+
 - ✅ Tests now provide real validation of production code
 - ✅ Eliminates false sense of security from mock testing
 - ✅ Confirms nullish coalescing fix is in production
 - ✅ No regression: all tests still pass
 
 ### Documentation
+
 - ✅ Implementation plan created
 - ✅ Evidence package complete
 - ✅ Test results documented
@@ -300,9 +308,10 @@ module.exports = TelemetryCollector;
 ### Review #3311704785 (Codex) - Created Test
 
 **Fixed**: `collectRepairMetrics` and `calculateDerivedMetrics` (lines 243, 297)
+
 ```javascript
 // collectRepairMetrics returns null when no data
-success_rate: total > 0 ? Math.round((fixes / total) * 100) : null
+success_rate: total > 0 ? Math.round((fixes / total) * 100) : null;
 
 // calculateDerivedMetrics uses ?? to respect 0 as valid
 const repairScore = metrics.repair?.success_rate ?? 100;
@@ -313,6 +322,7 @@ const repairScore = metrics.repair?.success_rate ?? 100;
 ### Review #3311794192 (Codex) - Applied Now
 
 **Fixed**: Test isolation issue
+
 ```javascript
 // Before: Local mock function
 function calculateDerivedMetrics(metrics) { ... }
@@ -330,6 +340,7 @@ function calculateDerivedMetrics(metrics) {
 ### Synergy
 
 The two reviews work together:
+
 1. Review #3311704785 fixed the production code bug
 2. Review #3311704785 created tests (but with mock)
 3. Review #3311794192 refactored tests to validate production
@@ -377,12 +388,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ## Checklist
 
 ### Pre-Implementation
+
 - [x] Plan created in `docs/plan/review-3311794192.md`
 - [x] Issue analyzed (Major - test isolation)
 - [x] Root cause identified (local mock vs production)
 - [x] Fix strategy defined
 
 ### Implementation
+
 - [x] Verified `TelemetryCollector` export exists
 - [x] Imported real production class
 - [x] Removed local mock function
@@ -390,6 +403,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [x] All tests passing
 
 ### Validation
+
 - [x] Tests execute against production code
 - [x] Verified production has `??` fix (not `||`)
 - [x] 7/7 tests passing in 0.431s
@@ -397,12 +411,14 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [x] Coverage maintained
 
 ### Documentation
+
 - [x] Implementation plan complete
 - [x] Evidence package complete
 - [x] Test results documented
 - [x] Production code structure explained
 
 ### Quality
+
 - [x] 100% issues resolved (1 Major)
 - [x] Tests passing (7/7)
 - [x] True test isolation achieved

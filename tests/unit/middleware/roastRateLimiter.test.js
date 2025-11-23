@@ -6,7 +6,10 @@
  * 3. IP Address Spoofing Vulnerability ✓
  */
 
-const { createRoastRateLimiter, RoastRateLimitStore } = require('../../../src/middleware/roastRateLimiter');
+const {
+  createRoastRateLimiter,
+  RoastRateLimitStore
+} = require('../../../src/middleware/roastRateLimiter');
 
 // Mock logger
 jest.mock('../../../src/utils/logger', () => ({
@@ -76,15 +79,17 @@ describe('RoastRateLimiter Fixes', () => {
       }
 
       // Verify headers were set
-      expect(res.set).toHaveBeenCalledWith(expect.objectContaining({
-        'Retry-After': expect.any(Number),
-        'RateLimit-Limit': 2,
-        'RateLimit-Remaining': expect.any(Number),
-        'RateLimit-Reset': expect.any(Number),
-        'X-RateLimit-Limit': 2,
-        'X-RateLimit-Remaining': expect.any(Number),
-        'X-RateLimit-Reset': expect.any(Number)
-      }));
+      expect(res.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'Retry-After': expect.any(Number),
+          'RateLimit-Limit': 2,
+          'RateLimit-Remaining': expect.any(Number),
+          'RateLimit-Reset': expect.any(Number),
+          'X-RateLimit-Limit': 2,
+          'X-RateLimit-Remaining': expect.any(Number),
+          'X-RateLimit-Reset': expect.any(Number)
+        })
+      );
 
       expect(res.status).toHaveBeenCalledWith(429);
     });
@@ -95,17 +100,15 @@ describe('RoastRateLimiter Fixes', () => {
         rateLimiter(req, res, next);
       }
 
-      const setCall = res.set.mock.calls.find(call => 
-        call[0] && call[0]['Retry-After']
-      );
-      
+      const setCall = res.set.mock.calls.find((call) => call[0] && call[0]['Retry-After']);
+
       expect(setCall).toBeTruthy();
       const headers = setCall[0];
-      
+
       // Retry-After should be in seconds and positive
       expect(headers['Retry-After']).toBeGreaterThan(0);
       expect(headers['Retry-After']).toBeLessThanOrEqual(60);
-      
+
       // Reset time should be in the future
       expect(headers['RateLimit-Reset']).toBeGreaterThan(Math.floor(Date.now() / 1000));
     });
@@ -121,9 +124,9 @@ describe('RoastRateLimiter Fixes', () => {
     it('should clear interval on dispose', () => {
       const testStore = new RoastRateLimitStore();
       const intervalId = testStore.cleanupInterval;
-      
+
       testStore.dispose();
-      
+
       expect(testStore.cleanupInterval).toBeNull();
       expect(testStore.store.size).toBe(0);
     });
@@ -132,12 +135,12 @@ describe('RoastRateLimiter Fixes', () => {
       // Mock setInterval to return an object without unref
       const originalSetInterval = global.setInterval;
       global.setInterval = jest.fn(() => ({ id: 'test' }));
-      
+
       expect(() => {
         const testStore = new RoastRateLimitStore();
         testStore.dispose();
       }).not.toThrow();
-      
+
       global.setInterval = originalSetInterval;
     });
   });
@@ -199,24 +202,26 @@ describe('RoastRateLimiter Fixes', () => {
         rateLimiter(req, res, next);
       }
 
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        success: false,
-        error: 'Rate limit exceeded',
-        details: expect.objectContaining({
-          limit: 2,
-          windowMs: 60000,
-          retryAfter: expect.any(Number),
-          message: expect.any(String)
-        }),
-        timestamp: expect.any(String)
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: 'Rate limit exceeded',
+          details: expect.objectContaining({
+            limit: 2,
+            windowMs: 60000,
+            retryAfter: expect.any(Number),
+            message: expect.any(String)
+          }),
+          timestamp: expect.any(String)
+        })
+      );
     });
 
     it('should work with authenticated users', () => {
       req.user = { id: 'user123' };
-      
+
       rateLimiter(req, res, next);
-      
+
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });

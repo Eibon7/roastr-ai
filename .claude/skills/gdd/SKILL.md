@@ -12,6 +12,7 @@ You are the **GDD Context Loader** for the Roastr.ai project. Your mission is to
 ## Graph Driven Development (GDD) Overview
 
 GDD optimizes context loading by:
+
 - Fragmenting spec.md into specialized nodes
 - Loading ONLY relevant nodes (not entire spec.md)
 - Maintaining bidirectional sync (nodes ↔ spec.md)
@@ -24,22 +25,26 @@ GDD optimizes context loading by:
 **GDD funciona mejor cuanto mejor sincronizada esté la información entre nodos.**
 
 Before loading nodes, verify synchronization:
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 # Expected: 🟢 HEALTHY
 ```
 
 **Why synchronization matters:**
+
 - Stale nodes → Wrong decisions (status: "planned" but actually "implemented")
 - Missing dependencies → Incomplete context (auth-system without updated database schema)
 - Coverage drift → False confidence (node says 85% but reality is 65%)
 
 **If drift detected:**
+
 1. Run: `node scripts/auto-repair-gdd.js --auto-fix`
 2. Validate: `node scripts/validate-gdd-runtime.js --full`
 3. Only then proceed with loading nodes
 
 **Synchronization checkpoints:**
+
 - ✅ Post-merge: Automatic via `.github/workflows/post-merge-doc-sync.yml`
 - ✅ Pre-commit: `validate-gdd-runtime.js --full`
 - ✅ Pre-merge: `score-gdd-health.js --ci` (≥87 required)
@@ -49,11 +54,13 @@ node scripts/validate-gdd-runtime.js --full
 ### 1. Fetch Issue Metadata
 
 Execute:
+
 ```bash
 gh issue view {issue_number} --json labels,title,body,number
 ```
 
 Parse the response to extract:
+
 - **Title**: Issue title
 - **Labels**: All labels (especially `area:*`, `priority:*`, `test:*`)
 - **Body**: Full issue description
@@ -80,11 +87,13 @@ Parse the response to extract:
 ### 3. Read Known Patterns (MANDATORY)
 
 **Always read before proceeding:**
+
 ```bash
 Read: docs/patterns/coderabbit-lessons.md
 ```
 
 **Extract:**
+
 - Common mistakes for this type of issue
 - Pre-implementation checklist items
 - Security considerations
@@ -97,6 +106,7 @@ Read: docs/patterns/coderabbit-lessons.md
 ### 4. Map Labels → GDD Nodes
 
 **Execute:**
+
 ```bash
 node scripts/get-label-mapping.js --format=compact
 ```
@@ -122,11 +132,13 @@ node scripts/get-label-mapping.js --format=compact
 ### 5. Resolve GDD Dependencies
 
 **Execute:**
+
 ```bash
 node scripts/resolve-graph.js <node1> <node2> <nodeN>
 ```
 
 **This script:**
+
 - Resolves dependencies between nodes
 - Returns complete list of nodes to load
 - Prevents circular dependencies
@@ -138,11 +150,13 @@ node scripts/resolve-graph.js <node1> <node2> <nodeN>
 ### 6. Load Node Documentation
 
 For each resolved node:
+
 ```bash
 Read: docs/nodes/<node-name>.md
 ```
 
 **Extract from each node:**
+
 - **Purpose**: What this node does
 - **Current Status**: Implementation state
 - **Dependencies**: Other nodes it depends on
@@ -155,43 +169,49 @@ Read: docs/nodes/<node-name>.md
 
 Generate a structured announcement with this **exact format**:
 
-```markdown
+````markdown
 ✅ GDD Context Loaded for Issue #{issue_number}
 
 📋 **Issue**: {title}
-🏷️  **Labels**: {comma-separated labels}
+🏷️ **Labels**: {comma-separated labels}
 🎯 **Assessment**: {recommendation} ({inline | Task Assessor invoked})
 
 📦 **GDD Nodes Loaded**: ({count} nodes)
-   1. {node-name} - {brief description} [{status}]
-   2. {node-name} - {brief description} [{status}]
-   ...
 
-⚠️  **Known Patterns** (from coderabbit-lessons.md):
-   • {pattern 1}
-   • {pattern 2}
-   • {pattern 3}
+1.  {node-name} - {brief description} [{status}]
+2.  {node-name} - {brief description} [{status}]
+    ...
+
+⚠️ **Known Patterns** (from coderabbit-lessons.md):
+• {pattern 1}
+• {pattern 2}
+• {pattern 3}
 
 🔧 **Pre-Implementation Checklist**:
-   - [ ] {checklist item from lessons}
-   - [ ] {checklist item from lessons}
-   - [ ] {checklist item from lessons}
+
+- [ ] {checklist item from lessons}
+- [ ] {checklist item from lessons}
+- [ ] {checklist item from lessons}
 
 📊 **Node Health Summary**:
-   • Average Coverage: {percentage}%
-   • Nodes with Tests: {count}/{total}
-   • Dependencies Resolved: ✅
+• Average Coverage: {percentage}%
+• Nodes with Tests: {count}/{total}
+• Dependencies Resolved: ✅
 
 ---
+
 **Ready for FASE 2: Planning** 📝
 Use loaded context to create `docs/plan/issue-{id}.md`
 
 **⚠️ IMPORTANT:** Store loaded nodes for commit/PR documentation:
+
 ```bash
 # Store in temporary file for later reference
 echo "{node1},{node2},{node3}" > .gdd-nodes-active
 ```
-```
+````
+
+````
 
 ### 8. Document Nodes in Commits/PRs
 
@@ -204,7 +224,7 @@ GDD Nodes Activated: auth-system, database-layer, api-layer
 GDD Nodes Modified: auth-system (updated OAuth flow)
 
 [rest of commit message]"
-```
+````
 
 **When creating PR, include in PR body:**
 
@@ -218,6 +238,7 @@ GDD Nodes Modified: auth-system (updated OAuth flow)
 ```
 
 **Why this matters:**
+
 - Trazabilidad completa de qué contexto se usó
 - Facilita doc-sync post-merge (sabe qué nodos afectados)
 - Permite auditar decisiones basadas en contexto cargado
@@ -228,18 +249,22 @@ GDD Nodes Modified: auth-system (updated OAuth flow)
 ## Error Handling
 
 **If issue not found:**
+
 - Report error clearly
 - Suggest: `gh issue list --state open` to see available issues
 
 **If no labels:**
+
 - Use keyword fallback
 - Warn user: "No area labels found, using keyword detection"
 
 **If node resolution fails:**
+
 - Report which node failed
 - Suggest: Check node name spelling or ask user which area
 
 **If coderabbit-lessons.md missing:**
+
 - Warn but continue
 - Skip pattern announcement section
 
@@ -250,6 +275,7 @@ GDD Nodes Modified: auth-system (updated OAuth flow)
 User types: `/gdd 408`
 
 You execute:
+
 1. `gh issue view 408 --json labels,title,body,number`
 2. Count AC → 5 criteria → Invoke Task Assessor Agent
 3. Read `docs/patterns/coderabbit-lessons.md`

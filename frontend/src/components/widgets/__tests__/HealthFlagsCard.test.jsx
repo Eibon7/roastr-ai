@@ -48,7 +48,7 @@ describe('HealthFlagsCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockHealthData,
+      json: async () => mockHealthData
     });
 
     render(<HealthFlagsCard />);
@@ -59,7 +59,7 @@ describe('HealthFlagsCard', () => {
       expect(screen.getByText('billing')).toBeInTheDocument();
       expect(screen.getByText('ai')).toBeInTheDocument();
       expect(screen.getByText('db')).toBeInTheDocument();
-      
+
       expect(screen.getAllByText('ok')).toHaveLength(1);
       expect(screen.getAllByText('degraded')).toHaveLength(2);
     });
@@ -78,7 +78,7 @@ describe('HealthFlagsCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockHealthData,
+      json: async () => mockHealthData
     });
 
     render(<HealthFlagsCard />);
@@ -104,7 +104,7 @@ describe('HealthFlagsCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockHealthData,
+      json: async () => mockHealthData
     });
 
     render(<HealthFlagsCard />);
@@ -124,7 +124,7 @@ describe('HealthFlagsCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockHealthData,
+      json: async () => mockHealthData
     });
 
     render(<HealthFlagsCard />);
@@ -142,7 +142,7 @@ describe('HealthFlagsCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockHealthData,
+      json: async () => mockHealthData
     });
 
     render(<HealthFlagsCard />);
@@ -155,7 +155,7 @@ describe('HealthFlagsCard', () => {
   test('refreshes data every 30 seconds', async () => {
     fetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ services: {}, flags: {} }),
+      json: async () => ({ services: {}, flags: {} })
     });
 
     render(<HealthFlagsCard />);
@@ -177,7 +177,7 @@ describe('HealthFlagsCard', () => {
   test('calls health API endpoint on mount', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ services: {}, flags: {} }),
+      json: async () => ({ services: {}, flags: {} })
     });
 
     render(<HealthFlagsCard />);

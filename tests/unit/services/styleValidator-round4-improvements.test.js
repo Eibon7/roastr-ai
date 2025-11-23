@@ -17,7 +17,7 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
         'Sunday #roast with the family'
       ];
 
-      legitimateHashtags.forEach(text => {
+      legitimateHashtags.forEach((text) => {
         const result = validator.validate(text, 'twitter');
         expect(result.valid).toBe(true);
         expect(result.errors).not.toContainEqual(
@@ -36,7 +36,7 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
         // 'Check out roastr.ai' removed - legitimate URL mention, not a fake disclaimer
       ];
 
-      fakeDisclaimers.forEach(text => {
+      fakeDisclaimers.forEach((text) => {
         const result = validator.validate(text, 'twitter');
         expect(result.valid).toBe(false);
         expect(result.errors).toContainEqual(
@@ -64,7 +64,7 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
     it('should calculate UTF-8 byte length using Buffer.byteLength() for ASCII text', () => {
       const asciiText = 'Hello World';
       const result = validator.validate(asciiText, 'twitter');
-      
+
       // ASCII text: each character is 1 byte
       expect(result.metadata.byteLengthUtf8).toBe(11);
       expect(result.metadata.textLength).toBe(11);
@@ -73,7 +73,7 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
     it('should calculate UTF-8 byte length accurately for Unicode characters', () => {
       const unicodeText = 'Hello 世界 🌍'; // ASCII + Chinese + Emoji
       const result = validator.validate(unicodeText, 'twitter');
-      
+
       // Expected UTF-8 bytes: 'Hello ' (6) + '世界' (6) + ' ' (1) + '🌍' (4) = 17
       expect(result.metadata.byteLengthUtf8).toBe(17);
       expect(result.metadata.textLength).toBe(10); // 10 grapheme clusters (actual count)
@@ -83,7 +83,7 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
     it('should handle complex emoji sequences with accurate byte calculation', () => {
       const complexEmoji = '👨‍👩‍👧‍👦'; // Family emoji compound sequence
       const result = validator.validate(complexEmoji, 'twitter');
-      
+
       // Complex emoji takes multiple bytes but counts as 1 grapheme
       expect(result.metadata.textLength).toBe(1); // 1 grapheme cluster
       expect(result.metadata.byteLengthUtf8).toBeGreaterThan(4); // Multiple UTF-8 bytes
@@ -93,7 +93,7 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
     it('should provide accurate byte calculations for mixed content', () => {
       const mixedContent = 'Café naïve résumé 🎉 with émojis and 中文';
       const result = validator.validate(mixedContent, 'twitter');
-      
+
       expect(result.metadata.byteLengthUtf8).toBeGreaterThan(result.metadata.textLength); // Unicode takes more bytes
       expect(result.metadata.byteLengthUtf8).toBeGreaterThan(result.metadata.codeUnitLength); // UTF-8 vs UTF-16
       expect(typeof result.metadata.byteLengthUtf8).toBe('number');
@@ -109,7 +109,7 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
         'null\0undefined' // Null characters
       ];
 
-      edgeCases.forEach(text => {
+      edgeCases.forEach((text) => {
         const result = validator.validate(text, 'twitter');
         expect(typeof result.metadata.byteLengthUtf8).toBe('number');
         expect(result.metadata.byteLengthUtf8).toBeGreaterThanOrEqual(0);
@@ -121,9 +121,9 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
     it('should fallback gracefully if Buffer.byteLength() throws error', () => {
       // Mock Buffer.byteLength to throw an error
       const originalByteLength = Buffer.byteLength;
-      Buffer.byteLength = (() => {
+      Buffer.byteLength = () => {
         throw new Error('Buffer not available');
-      });
+      };
 
       const text = 'Test fallback behavior';
       const result = validator.validate(text, 'twitter');
@@ -139,11 +139,11 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
       // Mock both Buffer.byteLength and TextEncoder
       const originalByteLength = Buffer.byteLength;
       const originalTextEncoder = global.TextEncoder;
-      
-      Buffer.byteLength = (() => {
+
+      Buffer.byteLength = () => {
         throw new Error('Buffer not available');
-      });
-      
+      };
+
       global.TextEncoder = undefined;
 
       const text = 'Test final fallback';
@@ -167,12 +167,12 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
       expect(result.metadata).toHaveProperty('textLength'); // Grapheme-aware counting
       expect(result.metadata).toHaveProperty('codeUnitLength'); // UTF-16 code units
       expect(result.metadata).toHaveProperty('byteLengthUtf8'); // Round 4: Buffer.byteLength()
-      
+
       // All should be numbers and properly calculated
       expect(typeof result.metadata.textLength).toBe('number');
       expect(typeof result.metadata.codeUnitLength).toBe('number');
       expect(typeof result.metadata.byteLengthUtf8).toBe('number');
-      
+
       // UTF-8 byte length should be >= text length for Unicode content
       expect(result.metadata.byteLengthUtf8).toBeGreaterThanOrEqual(result.metadata.textLength);
     });
@@ -180,18 +180,18 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
     it('should maintain platform normalization (X → twitter) from Round 3', () => {
       const platforms = ['X', 'x', 'x.com', 'twitter'];
       const text = 'Test platform normalization';
-      
-      const results = platforms.map(platform => validator.validate(text, platform));
-      
+
+      const results = platforms.map((platform) => validator.validate(text, platform));
+
       // All should have same normalized platform in metadata
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.metadata.platform).toBe('twitter');
       });
     });
 
     it('should maintain GDPR-compliant logging without text content', () => {
       const sensitiveText = 'This contains personal information';
-      
+
       // Mock logger to capture calls
       const loggerSpy = {
         info: jest.fn(),
@@ -199,18 +199,18 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
       };
       const originalLogger = require('../../../src/utils/logger').logger.info;
       require('../../../src/utils/logger').logger.info = loggerSpy.info;
-      
+
       validator.validate(sensitiveText, 'twitter');
-      
+
       // Verify logger was called but without sensitive text
       expect(loggerSpy.info).toHaveBeenCalled();
       const logCalls = loggerSpy.info.mock.calls;
-      logCalls.forEach(call => {
+      logCalls.forEach((call) => {
         const logMessage = JSON.stringify(call);
         expect(logMessage).not.toContain('personal information');
         expect(logMessage).not.toContain(sensitiveText);
       });
-      
+
       // Restore original logger
       require('../../../src/utils/logger').logger.info = originalLogger;
     });
@@ -218,33 +218,35 @@ describe('StyleValidator - Round 4 CodeRabbit Improvements', () => {
 
   describe('Performance Validation for Round 4 Changes', () => {
     it('should maintain performance with Buffer.byteLength() vs TextEncoder', () => {
-      const testTexts = Array.from({ length: 100 }, (_, i) => 
-        `Performance test ${i} with émojis 🎉 and Unicode 中文`
+      const testTexts = Array.from(
+        { length: 100 },
+        (_, i) => `Performance test ${i} with émojis 🎉 and Unicode 中文`
       );
 
       const startTime = Date.now();
-      
-      testTexts.forEach(text => validator.validate(text, 'twitter'));
-      
+
+      testTexts.forEach((text) => validator.validate(text, 'twitter'));
+
       const endTime = Date.now();
       const averageTime = (endTime - startTime) / testTexts.length;
-      
+
       // Should complete within reasonable time (improved with Buffer.byteLength)
       expect(averageTime).toBeLessThan(100); // Less than 100ms per validation (CI-friendly)
     });
 
     it('should not degrade performance after removing hashtag pattern', () => {
-      const hashtagTexts = Array.from({ length: 50 }, (_, i) => 
-        `Text with #hashtag${i} and #roast${i} and #content${i}`
+      const hashtagTexts = Array.from(
+        { length: 50 },
+        (_, i) => `Text with #hashtag${i} and #roast${i} and #content${i}`
       );
 
       const startTime = Date.now();
-      
-      hashtagTexts.forEach(text => validator.validate(text, 'twitter'));
-      
+
+      hashtagTexts.forEach((text) => validator.validate(text, 'twitter'));
+
       const endTime = Date.now();
       const totalTime = endTime - startTime;
-      
+
       // Should process quickly without the removed #roastr pattern
       expect(totalTime).toBeLessThan(500); // Under 500ms for 50 validations
     });

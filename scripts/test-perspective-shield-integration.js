@@ -22,25 +22,25 @@ const logger = require('../src/utils/logger');
 const TEST_CASES = [
   {
     level: 'clean',
-    expectedScore: 0.00,
+    expectedScore: 0.0,
     comment: 'Hello world, this is a friendly comment!',
     description: 'Benign, positive content'
   },
   {
     level: 'low',
-    expectedScore: 0.30,
+    expectedScore: 0.3,
     comment: 'I disagree with your opinion on this topic.',
     description: 'Mild disagreement, no toxicity'
   },
   {
     level: 'medium',
     expectedScore: 0.55,
-    comment: 'You are wrong and don\'t know what you\'re talking about.',
+    comment: "You are wrong and don't know what you're talking about.",
     description: 'Dismissive, mildly toxic'
   },
   {
     level: 'high',
-    expectedScore: 0.80,
+    expectedScore: 0.8,
     comment: 'You are a complete idiot and your ideas are garbage.',
     description: 'Personal attack, insult'
   },
@@ -52,7 +52,7 @@ const TEST_CASES = [
   },
   {
     level: 'threat',
-    expectedScore: 1.00,
+    expectedScore: 1.0,
     comment: 'I will find you and hurt you, you deserve violence.',
     description: 'Explicit threat of violence'
   }
@@ -82,7 +82,10 @@ function simulateShieldDecision(severity, toxicityScore, categories) {
   let priority;
   if (severity === 'critical' || toxicityScore >= 0.95) {
     priority = PRIORITY_LEVELS.critical;
-  } else if (severity === 'high' || categories?.some(cat => ['threat', 'hate', 'harassment'].includes(cat))) {
+  } else if (
+    severity === 'high' ||
+    categories?.some((cat) => ['threat', 'hate', 'harassment'].includes(cat))
+  ) {
     priority = PRIORITY_LEVELS.high;
   } else if (severity === 'medium' || toxicityScore >= 0.6) {
     priority = PRIORITY_LEVELS.medium;
@@ -100,7 +103,7 @@ function simulateShieldDecision(severity, toxicityScore, categories) {
 
   return {
     priority,
-    priorityLabel: Object.keys(PRIORITY_LEVELS).find(k => PRIORITY_LEVELS[k] === priority),
+    priorityLabel: Object.keys(PRIORITY_LEVELS).find((k) => PRIORITY_LEVELS[k] === priority),
     action: action.action,
     escalation: action.escalation,
     autoExecute: action.auto_execute,
@@ -153,7 +156,7 @@ async function runIntegrationTest() {
         });
 
         // Add 1 second delay to respect rate limit
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Simulate Shield decision
@@ -168,7 +171,13 @@ async function runIntegrationTest() {
       console.log(`   Toxicity Score: ${analysisResult.toxicityScore.toFixed(3)}`);
       console.log(`   Severity Level: ${analysisResult.severity}`);
       console.log(`   Categories: ${analysisResult.categories.join(', ') || 'none'}`);
-      console.log(`   Raw Scores:`, JSON.stringify(analysisResult.scores, null, 2).split('\n').map((l, i) => i === 0 ? l : `              ${l}`).join('\n'));
+      console.log(
+        `   Raw Scores:`,
+        JSON.stringify(analysisResult.scores, null, 2)
+          .split('\n')
+          .map((l, i) => (i === 0 ? l : `              ${l}`))
+          .join('\n')
+      );
 
       console.log(`\n🛡️  Shield Decision:`);
       console.log(`   Priority: ${shieldDecision.priorityLabel} (${shieldDecision.priority})`);
@@ -189,8 +198,9 @@ async function runIntegrationTest() {
       // Verdict
       const expectedSeverity = getSeverityFromScore(testCase.expectedScore);
       const match = analysisResult.severity === expectedSeverity;
-      console.log(`\n${match ? '✅' : '⚠️'}  Expected: ${expectedSeverity}, Got: ${analysisResult.severity}`);
-
+      console.log(
+        `\n${match ? '✅' : '⚠️'}  Expected: ${expectedSeverity}, Got: ${analysisResult.severity}`
+      );
     } catch (error) {
       console.error(`\n❌ Error testing ${testCase.level}:`, error.message);
       results.push({
@@ -206,28 +216,30 @@ async function runIntegrationTest() {
   console.log('📋 TEST SUMMARY');
   console.log(`${'═'.repeat(80)}`);
   console.log(`\nTotal Tests: ${TEST_CASES.length}`);
-  console.log(`Successful: ${results.filter(r => !r.error).length}`);
-  console.log(`Failed: ${results.filter(r => r.error).length}`);
+  console.log(`Successful: ${results.filter((r) => !r.error).length}`);
+  console.log(`Failed: ${results.filter((r) => r.error).length}`);
 
   // Summary table
   console.log(`\n${'─'.repeat(80)}`);
   console.log('| Level      | Score | Severity | Priority | Action          | Auto | Moderate |');
   console.log(`${'─'.repeat(80)}`);
-  results.forEach(r => {
+  results.forEach((r) => {
     if (r.error) {
-      console.log(`| ${r.testCase.level.padEnd(10)} | ERROR | ${r.error.substring(0, 40).padEnd(40)} |`);
+      console.log(
+        `| ${r.testCase.level.padEnd(10)} | ERROR | ${r.error.substring(0, 40).padEnd(40)} |`
+      );
     } else {
       const tc = r.testCase;
       const pr = r.perspectiveResponse;
       const sd = r.shieldDecision;
       console.log(
         `| ${tc.level.padEnd(10)} | ` +
-        `${pr.toxicityScore.toFixed(2)} | ` +
-        `${pr.severity.padEnd(8)} | ` +
-        `${sd.priorityLabel.padEnd(8)} | ` +
-        `${sd.action.padEnd(15)} | ` +
-        `${(sd.autoExecute ? 'YES' : 'NO').padEnd(4)} | ` +
-        `${(sd.moderated ? 'YES' : 'NO').padEnd(8)} |`
+          `${pr.toxicityScore.toFixed(2)} | ` +
+          `${pr.severity.padEnd(8)} | ` +
+          `${sd.priorityLabel.padEnd(8)} | ` +
+          `${sd.action.padEnd(15)} | ` +
+          `${(sd.autoExecute ? 'YES' : 'NO').padEnd(4)} | ` +
+          `${(sd.moderated ? 'YES' : 'NO').padEnd(8)} |`
       );
     }
   });
@@ -242,12 +254,12 @@ async function runIntegrationTest() {
  */
 function mockPerspectiveResponse(testCase) {
   const scoreMap = {
-    'clean': { toxicity: 0.05, severeToxicity: 0.01, threat: 0.00 },
-    'low': { toxicity: 0.45, severeToxicity: 0.10, threat: 0.05 },
-    'medium': { toxicity: 0.65, severeToxicity: 0.30, threat: 0.15 },
-    'high': { toxicity: 0.88, severeToxicity: 0.60, threat: 0.40 },
-    'critical': { toxicity: 0.97, severeToxicity: 0.95, threat: 0.70 },
-    'threat': { toxicity: 0.99, severeToxicity: 0.98, threat: 0.99 }
+    clean: { toxicity: 0.05, severeToxicity: 0.01, threat: 0.0 },
+    low: { toxicity: 0.45, severeToxicity: 0.1, threat: 0.05 },
+    medium: { toxicity: 0.65, severeToxicity: 0.3, threat: 0.15 },
+    high: { toxicity: 0.88, severeToxicity: 0.6, threat: 0.4 },
+    critical: { toxicity: 0.97, severeToxicity: 0.95, threat: 0.7 },
+    threat: { toxicity: 0.99, severeToxicity: 0.98, threat: 0.99 }
   };
 
   const scores = scoreMap[testCase.level];
@@ -311,12 +323,12 @@ function getCategoriesFromLevel(level, scores) {
 // Run test if executed directly
 if (require.main === module) {
   runIntegrationTest()
-    .then(results => {
+    .then((results) => {
       console.log('\n✅ Test completed successfully');
       console.log(`\n💾 Results available for evidence generation`);
       process.exit(0);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('\n❌ Test failed:', error);
       process.exit(1);
     });

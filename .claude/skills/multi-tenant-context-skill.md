@@ -2,14 +2,14 @@
 name: multi-tenant-context-skill
 description: Use when working with database queries, API endpoints, or workers - ensures organization_id context is preserved through entire request lifecycle, prevents data leaks between tenants
 triggers:
-  - "database query"
-  - "SQL"
-  - "organization_id"
-  - "tenant"
-  - "RLS"
-  - "context leak"
-  - "multi-tenant"
-  - "isolation"
+  - 'database query'
+  - 'SQL'
+  - 'organization_id'
+  - 'tenant'
+  - 'RLS'
+  - 'context leak'
+  - 'multi-tenant'
+  - 'isolation'
 used_by:
   - back-end-dev
   - test-engineer
@@ -17,13 +17,13 @@ used_by:
   - orchestrator
   - guardian
 steps:
-  - paso1: "Verify request has organization_id (from JWT, session, or worker context)"
-  - paso2: "For ALL database queries: Add WHERE organization_id = $1"
-  - paso3: "For INSERT: Include organization_id in values"
-  - paso4: "For workers: Verify context passed through queue payload"
-  - paso5: "Check RLS policies in database/schema.sql match code"
+  - paso1: 'Verify request has organization_id (from JWT, session, or worker context)'
+  - paso2: 'For ALL database queries: Add WHERE organization_id = $1'
+  - paso3: 'For INSERT: Include organization_id in values'
+  - paso4: 'For workers: Verify context passed through queue payload'
+  - paso5: 'Check RLS policies in database/schema.sql match code'
   - paso6: "Add test: Create 2 orgs, verify org1 can't see org2 data"
-  - paso7: "Validate no context leak in error messages or logs"
+  - paso7: 'Validate no context leak in error messages or logs'
 output: |
   - All queries filtered by organization_id
   - Test proving tenant isolation
@@ -42,6 +42,7 @@ Ensures organization_id context is preserved throughout the entire request lifec
 ## When to Use
 
 **Triggers:**
+
 - Writing new database query (SELECT, INSERT, UPDATE, DELETE)
 - Creating new API endpoint
 - Modifying worker logic
@@ -50,6 +51,7 @@ Ensures organization_id context is preserved throughout the entire request lifec
 - Guardian agent review
 
 **Critical areas:**
+
 - Database queries (ALL must filter by organization_id)
 - Worker queue payloads
 - API response serialization
@@ -76,16 +78,19 @@ Ensures organization_id context is preserved throughout the entire request lifec
 ### Defense-in-Depth Layers
 
 **Layer 1: Application Code** (THIS SKILL)
+
 - Explicit WHERE organization_id = $1 in queries
 - Context passed through worker payloads
 - Validation at API boundaries
 
 **Layer 2: RLS Policies** (Database)
+
 - PostgreSQL Row-Level Security
 - Enforced even if application code fails
 - See `database/schema.sql`
 
 **Layer 3: Tests** (Verification)
+
 - Multi-tenant isolation tests
 - Prove org1 cannot see org2 data
 - Run in CI/CD pipeline
@@ -95,12 +100,14 @@ Ensures organization_id context is preserved throughout the entire request lifec
 ### Rule 1: Database Queries ALWAYS Filter by organization_id
 
 **❌ WRONG:**
+
 ```sql
 -- Missing organization_id filter - SECURITY BUG
 SELECT * FROM roasts WHERE user_id = $1;
 ```
 
 **✅ CORRECT:**
+
 ```sql
 -- Filters by organization_id - safe
 SELECT * FROM roasts
@@ -109,13 +116,11 @@ WHERE user_id = $1
 ```
 
 **Example (Node.js):**
+
 ```javascript
 // ❌ WRONG - Missing organization_id
 async function getRoasts(userId) {
-  const result = await db.query(
-    'SELECT * FROM roasts WHERE user_id = $1',
-    [userId]
-  );
+  const result = await db.query('SELECT * FROM roasts WHERE user_id = $1', [userId]);
   return result.rows;
 }
 
@@ -132,15 +137,17 @@ async function getRoasts(userId, organizationId) {
 ### Rule 2: INSERT Must Include organization_id
 
 **❌ WRONG:**
+
 ```javascript
 // Missing organization_id in INSERT
-await db.query(
-  'INSERT INTO roasts (user_id, text, created_at) VALUES ($1, $2, NOW())',
-  [userId, text]
-);
+await db.query('INSERT INTO roasts (user_id, text, created_at) VALUES ($1, $2, NOW())', [
+  userId,
+  text
+]);
 ```
 
 **✅ CORRECT:**
+
 ```javascript
 // Includes organization_id in INSERT
 await db.query(
@@ -152,41 +159,40 @@ await db.query(
 ### Rule 3: UPDATE Must Filter by organization_id
 
 **❌ WRONG:**
+
 ```javascript
 // Missing organization_id filter - can update other tenant's data!
-await db.query(
-  'UPDATE roasts SET status = $1 WHERE id = $2',
-  [newStatus, roastId]
-);
+await db.query('UPDATE roasts SET status = $1 WHERE id = $2', [newStatus, roastId]);
 ```
 
 **✅ CORRECT:**
+
 ```javascript
 // Filters by organization_id - prevents cross-tenant updates
-await db.query(
-  'UPDATE roasts SET status = $1 WHERE id = $2 AND organization_id = $3',
-  [newStatus, roastId, organizationId]
-);
+await db.query('UPDATE roasts SET status = $1 WHERE id = $2 AND organization_id = $3', [
+  newStatus,
+  roastId,
+  organizationId
+]);
 ```
 
 ### Rule 4: DELETE Must Filter by organization_id
 
 **❌ WRONG:**
+
 ```javascript
 // Missing organization_id filter - can delete other tenant's data!
-await db.query(
-  'DELETE FROM roasts WHERE id = $1',
-  [roastId]
-);
+await db.query('DELETE FROM roasts WHERE id = $1', [roastId]);
 ```
 
 **✅ CORRECT:**
+
 ```javascript
 // Filters by organization_id - prevents cross-tenant deletions
-await db.query(
-  'DELETE FROM roasts WHERE id = $1 AND organization_id = $2',
-  [roastId, organizationId]
-);
+await db.query('DELETE FROM roasts WHERE id = $1 AND organization_id = $2', [
+  roastId,
+  organizationId
+]);
 ```
 
 ## Context Extraction
@@ -208,7 +214,7 @@ async function authenticateJWT(req, res, next) {
     // Extract organization_id from JWT payload
     req.user = {
       id: decoded.userId,
-      organizationId: decoded.organizationId,  // CRITICAL: Always in JWT
+      organizationId: decoded.organizationId, // CRITICAL: Always in JWT
       email: decoded.email
     };
 
@@ -270,10 +276,10 @@ class AnalyzeToxicityWorker extends BaseWorker {
 
   async fetchComment(commentId, organizationId) {
     // CORRECT: Filters by organizationId
-    const result = await db.query(
-      'SELECT * FROM comments WHERE id = $1 AND organization_id = $2',
-      [commentId, organizationId]
-    );
+    const result = await db.query('SELECT * FROM comments WHERE id = $1 AND organization_id = $2', [
+      commentId,
+      organizationId
+    ]);
 
     if (result.rows.length === 0) {
       throw new Error('COMMENT_NOT_FOUND: Comment does not exist or belongs to different tenant');
@@ -289,6 +295,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
 ### Check RLS Policies in database/schema.sql
 
 **Example RLS policy:**
+
 ```sql
 -- database/schema.sql
 CREATE POLICY roasts_tenant_isolation ON roasts
@@ -298,6 +305,7 @@ ALTER TABLE roasts ENABLE ROW LEVEL SECURITY;
 ```
 
 **Set organization_id context in transaction:**
+
 ```javascript
 async function withOrganizationContext(organizationId, callback) {
   const client = await db.connect();
@@ -306,10 +314,10 @@ async function withOrganizationContext(organizationId, callback) {
     await client.query('BEGIN');
 
     // Set organization_id for RLS policy
-    await client.query(
-      'SELECT set_config($1, $2, true)',
-      ['app.current_organization_id', organizationId.toString()]
-    );
+    await client.query('SELECT set_config($1, $2, true)', [
+      'app.current_organization_id',
+      organizationId.toString()
+    ]);
 
     const result = await callback(client);
 
@@ -333,6 +341,7 @@ const roasts = await withOrganizationContext(organizationId, async (client) => {
 ### Verify RLS Policy Enforces Isolation
 
 **Test RLS in psql:**
+
 ```sql
 -- Test as org1
 SET app.current_organization_id = 1;
@@ -403,9 +412,9 @@ describe('Multi-tenant isolation', () => {
     });
 
     // Attempt to update org1's roast using org2's context
-    await expect(
-      updateRoast(roast1.id, org2.id, { text: 'Hacked text' })
-    ).rejects.toThrow('ROAST_NOT_FOUND');
+    await expect(updateRoast(roast1.id, org2.id, { text: 'Hacked text' })).rejects.toThrow(
+      'ROAST_NOT_FOUND'
+    );
 
     // Verify roast unchanged
     const roast = await getRoast(roast1.id, org1.id);
@@ -421,9 +430,7 @@ describe('Multi-tenant isolation', () => {
     });
 
     // Attempt to delete org1's roast using org2's context
-    await expect(
-      deleteRoast(roast1.id, org2.id)
-    ).rejects.toThrow('ROAST_NOT_FOUND');
+    await expect(deleteRoast(roast1.id, org2.id)).rejects.toThrow('ROAST_NOT_FOUND');
 
     // Verify roast still exists
     const roast = await getRoast(roast1.id, org1.id);
@@ -444,7 +451,7 @@ describe('Worker multi-tenant isolation', () => {
     const job = await queueService.add('analyze-toxicity', {
       commentId: comment.id,
       userId: comment.userId,
-      organizationId: org1.id  // CRITICAL: Must include
+      organizationId: org1.id // CRITICAL: Must include
     });
 
     // Process job
@@ -464,8 +471,7 @@ describe('Worker multi-tenant isolation', () => {
       }
     };
 
-    await expect(worker.process(job))
-      .rejects.toThrow('INVALID_JOB: Missing organizationId');
+    await expect(worker.process(job)).rejects.toThrow('INVALID_JOB: Missing organizationId');
   });
 });
 ```
@@ -517,7 +523,9 @@ try {
   const roast = await getRoast(roastId, organizationId);
 } catch (error) {
   // BAD: Reveals that roast exists in different org
-  throw new Error(`Roast ${roastId} not found in organization ${organizationId}, found in org ${roast.actual_org_id}`);
+  throw new Error(
+    `Roast ${roastId} not found in organization ${organizationId}, found in org ${roast.actual_org_id}`
+  );
 }
 ```
 

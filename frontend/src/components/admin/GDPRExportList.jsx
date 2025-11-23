@@ -68,7 +68,7 @@ const GDPRExportList = () => {
   const loadExports = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         page: page + 1,
@@ -80,7 +80,7 @@ const GDPRExportList = () => {
 
       const response = await fetch(`/api/admin/exports?${params}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -102,7 +102,7 @@ const GDPRExportList = () => {
     try {
       const response = await fetch('/api/admin/organizations', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -121,7 +121,7 @@ const GDPRExportList = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(exportData)
       });
@@ -148,7 +148,7 @@ const GDPRExportList = () => {
         `/api/admin/exports/${exportItem.id}/download/${exportItem.download_token}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         }
       );
@@ -175,16 +175,16 @@ const GDPRExportList = () => {
 
   const formatFileSize = (sizeInBytes) => {
     if (!sizeInBytes) return 'N/A';
-    
+
     const units = ['B', 'KB', 'MB', 'GB'];
     let size = sizeInBytes;
     let unitIndex = 0;
-    
+
     while (size >= 1024 && unitIndex < units.length - 1) {
       size /= 1024;
       unitIndex++;
     }
-    
+
     return `${size.toFixed(1)} ${units[unitIndex]}`;
   };
 
@@ -221,10 +221,8 @@ const GDPRExportList = () => {
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5">
-          GDPR Data Exports
-        </Typography>
-        
+        <Typography variant="h5">GDPR Data Exports</Typography>
+
         <Box display="flex" gap={2}>
           <Button
             variant="contained"
@@ -233,7 +231,7 @@ const GDPRExportList = () => {
           >
             New Export
           </Button>
-          
+
           <Tooltip title="Refresh exports list">
             <IconButton onClick={loadExports} disabled={loading}>
               <RefreshIcon />
@@ -258,7 +256,7 @@ const GDPRExportList = () => {
           }}
           sx={{ minWidth: 200 }}
         />
-        
+
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Status</InputLabel>
           <Select
@@ -267,27 +265,24 @@ const GDPRExportList = () => {
             label="Status"
           >
             <MenuItem value="">All</MenuItem>
-            {exportStatuses.map(status => (
+            {exportStatuses.map((status) => (
               <MenuItem key={status} value={status}>
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
-        
+
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Type</InputLabel>
-          <Select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            label="Type"
-          >
+          <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} label="Type">
             <MenuItem value="">All</MenuItem>
-            {exportTypes.map(type => (
+            {exportTypes.map((type) => (
               <MenuItem key={type} value={type}>
-                {type.split('_').map(word => 
-                  word.charAt(0).toUpperCase() + word.slice(1)
-                ).join(' ')}
+                {type
+                  .split('_')
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' ')}
               </MenuItem>
             ))}
           </Select>
@@ -295,7 +290,7 @@ const GDPRExportList = () => {
       </Box>
 
       {loading && <LinearProgress sx={{ mb: 2 }} />}
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -334,38 +329,36 @@ const GDPRExportList = () => {
                         {exportItem.id.substring(0, 8)}...
                       </Typography>
                       <Box display="flex" gap={1} mt={0.5}>
-                        <Chip 
-                          label={exportItem.export_type} 
-                          size="small" 
+                        <Chip
+                          label={exportItem.export_type}
+                          size="small"
                           color={getTypeColor(exportItem.export_type)}
                         />
-                        <Chip 
-                          label={exportItem.export_format.toUpperCase()} 
-                          size="small" 
+                        <Chip
+                          label={exportItem.export_format.toUpperCase()}
+                          size="small"
                           variant="outlined"
                         />
                       </Box>
                     </Box>
                   </TableCell>
-                  
+
                   <TableCell>
-                    <Typography variant="body2">
-                      {exportItem.organization_id}
-                    </Typography>
+                    <Typography variant="body2">{exportItem.organization_id}</Typography>
                     {exportItem.requested_by && (
                       <Typography variant="caption" color="text.secondary">
                         By: {exportItem.requested_by}
                       </Typography>
                     )}
                   </TableCell>
-                  
+
                   <TableCell>
                     <JobStatusBadge status={exportItem.status} />
                     {exportItem.status === 'processing' && exportItem.progress_percentage && (
                       <Box sx={{ mt: 1, minWidth: 80 }}>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={exportItem.progress_percentage} 
+                        <LinearProgress
+                          variant="determinate"
+                          value={exportItem.progress_percentage}
                         />
                         <Typography variant="caption" color="text.secondary">
                           {exportItem.progress_percentage}%
@@ -373,7 +366,7 @@ const GDPRExportList = () => {
                       </Box>
                     )}
                   </TableCell>
-                  
+
                   <TableCell>
                     <Typography variant="body2">
                       Size: {formatFileSize(exportItem.file_size)}
@@ -384,7 +377,7 @@ const GDPRExportList = () => {
                       </Typography>
                     )}
                   </TableCell>
-                  
+
                   <TableCell>
                     <Typography variant="body2">
                       {new Date(exportItem.created_at).toLocaleString()}
@@ -395,12 +388,15 @@ const GDPRExportList = () => {
                       </Typography>
                     )}
                   </TableCell>
-                  
+
                   <TableCell>
                     {exportItem.expires_at ? (
-                      <Typography variant="body2" color={
-                        new Date(exportItem.expires_at) < new Date() ? 'error' : 'text.primary'
-                      }>
+                      <Typography
+                        variant="body2"
+                        color={
+                          new Date(exportItem.expires_at) < new Date() ? 'error' : 'text.primary'
+                        }
+                      >
                         {new Date(exportItem.expires_at).toLocaleDateString()}
                       </Typography>
                     ) : (
@@ -409,32 +405,23 @@ const GDPRExportList = () => {
                       </Typography>
                     )}
                   </TableCell>
-                  
+
                   <TableCell align="center">
                     {exportItem.status === 'completed' && exportItem.download_token ? (
                       <Tooltip title="Download export">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleDownload(exportItem)}
-                        >
+                        <IconButton size="small" onClick={() => handleDownload(exportItem)}>
                           <DownloadIcon />
                         </IconButton>
                       </Tooltip>
                     ) : null}
-                    
+
                     <Tooltip title="View details">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => openDetailsModal(exportItem.id)}
-                      >
+                      <IconButton size="small" onClick={() => openDetailsModal(exportItem.id)}>
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>
-                    
-                    <IconButton 
-                      size="small" 
-                      onClick={(e) => openActionMenu(e, exportItem)}
-                    >
+
+                    <IconButton size="small" onClick={(e) => openActionMenu(e, exportItem)}>
                       <MoreVertIcon />
                     </IconButton>
                   </TableCell>
@@ -443,7 +430,7 @@ const GDPRExportList = () => {
             )}
           </TableBody>
         </Table>
-        
+
         <TablePagination
           component="div"
           count={-1} // Unknown total, use -1 for "more" pagination
@@ -459,21 +446,19 @@ const GDPRExportList = () => {
       </TableContainer>
 
       {/* Action Menu */}
-      <Menu
-        anchorEl={actionMenuAnchor}
-        open={Boolean(actionMenuAnchor)}
-        onClose={closeActionMenu}
-      >
+      <Menu anchorEl={actionMenuAnchor} open={Boolean(actionMenuAnchor)} onClose={closeActionMenu}>
         <MenuItem onClick={() => openDetailsModal(selectedExport?.id)}>
           <VisibilityIcon sx={{ mr: 1 }} />
           View Details
         </MenuItem>
-        
+
         {selectedExport?.status === 'completed' && selectedExport?.download_token && (
-          <MenuItem onClick={() => {
-            handleDownload(selectedExport);
-            closeActionMenu();
-          }}>
+          <MenuItem
+            onClick={() => {
+              handleDownload(selectedExport);
+              closeActionMenu();
+            }}
+          >
             <DownloadIcon sx={{ mr: 1 }} />
             Download
           </MenuItem>

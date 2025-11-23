@@ -38,7 +38,7 @@
     },
     "toxicity_score": {
       "type": "number",
-      "minimum": 0.60,
+      "minimum": 0.6,
       "maximum": 1.0,
       "description": "Toxicity score from 0.60 (low) to 1.0 (extreme)"
     },
@@ -54,7 +54,17 @@
     },
     "platform": {
       "type": "string",
-      "enum": ["twitter", "youtube", "instagram", "facebook", "discord", "twitch", "reddit", "tiktok", "bluesky"],
+      "enum": [
+        "twitter",
+        "youtube",
+        "instagram",
+        "facebook",
+        "discord",
+        "twitch",
+        "reddit",
+        "tiktok",
+        "bluesky"
+      ],
       "description": "Social media platform"
     },
     "metadata": {
@@ -87,7 +97,7 @@
     {
       "if": {
         "properties": {
-          "toxicity_score": { "minimum": 0.60, "maximum": 0.75 }
+          "toxicity_score": { "minimum": 0.6, "maximum": 0.75 }
         }
       },
       "then": {

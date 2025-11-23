@@ -1,6 +1,6 @@
 /**
  * Real API Validation Tests - Issue #90
- * 
+ *
  * Simplified structural validation tests that don't require specific endpoints.
  * Validates integration readiness without requiring production credentials.
  */
@@ -10,7 +10,7 @@ const { app } = require('../../src/index');
 
 describe('Real API Validation Suite - Issue #90', () => {
   let originalEnv;
-  
+
   beforeEach(() => {
     originalEnv = { ...process.env };
     process.env.ENABLE_MOCK_MODE = 'true';
@@ -28,12 +28,12 @@ describe('Real API Validation Suite - Issue #90', () => {
     test('should validate all required API keys are configured', () => {
       const requiredKeys = [
         'TWITTER_BEARER_TOKEN',
-        'YOUTUBE_API_KEY', 
+        'YOUTUBE_API_KEY',
         'INSTAGRAM_ACCESS_TOKEN',
         'FACEBOOK_ACCESS_TOKEN'
       ];
 
-      requiredKeys.forEach(key => {
+      requiredKeys.forEach((key) => {
         expect(process.env[key]).toBeDefined();
         expect(process.env[key]).not.toBe('');
       });
@@ -42,7 +42,7 @@ describe('Real API Validation Suite - Issue #90', () => {
     test('should validate API key format patterns', () => {
       const twitterToken = process.env.TWITTER_BEARER_TOKEN;
       expect(twitterToken).toMatch(/^[A-Za-z0-9_-]+$/);
-      
+
       const youtubeKey = process.env.YOUTUBE_API_KEY;
       expect(youtubeKey).toMatch(/^[A-Za-z0-9_-]+$/);
     });
@@ -57,8 +57,7 @@ describe('Real API Validation Suite - Issue #90', () => {
     });
 
     test('should validate basic health endpoint if available', async () => {
-      const response = await request(app)
-        .get('/api/health');
+      const response = await request(app).get('/api/health');
 
       expect([200, 404, 503]).toContain(response.status);
     });
@@ -70,14 +69,14 @@ describe('Real API Validation Suite - Issue #90', () => {
     });
 
     test('should handle concurrent requests', async () => {
-      const requests = Array(3).fill().map((_, i) => 
-        request(app).get(`/api/test/concurrent/${i}`)
-      );
+      const requests = Array(3)
+        .fill()
+        .map((_, i) => request(app).get(`/api/test/concurrent/${i}`));
 
       const responses = await Promise.all(requests);
-      
+
       expect(responses).toHaveLength(3);
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect(response.status).toBeDefined();
       });
     });

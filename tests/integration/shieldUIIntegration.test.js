@@ -1,6 +1,6 @@
 /**
  * Shield UI Integration Tests
- * 
+ *
  * Tests for Shield API endpoints including authentication, rate limiting,
  * data validation, and organization isolation.
  */
@@ -32,15 +32,15 @@ const mockSupabaseQuery = {
   order: jest.fn().mockReturnThis(),
   range: jest.fn().mockReturnThis(),
   update: jest.fn().mockReturnThis(),
-  single: jest.fn().mockReturnThis(),
+  single: jest.fn().mockReturnThis()
 };
 
 const mockSupabaseServiceClient = {
-  from: jest.fn(() => mockSupabaseQuery),
+  from: jest.fn(() => mockSupabaseQuery)
 };
 
 jest.mock('../../src/config/supabase', () => ({
-  supabaseServiceClient: mockSupabaseServiceClient,
+  supabaseServiceClient: mockSupabaseServiceClient
 }));
 
 // Mock logger
@@ -56,7 +56,7 @@ jest.mock('../../src/utils/logger', () => ({
       warn: jest.fn(),
       debug: jest.fn()
     }))
-  },
+  }
 }));
 
 // Mock feature flags
@@ -65,8 +65,8 @@ jest.mock('../../src/config/flags', () => ({
     isEnabled: jest.fn((flag) => {
       if (flag === 'ENABLE_SHIELD_UI') return true;
       return false;
-    }),
-  },
+    })
+  }
 }));
 
 // Test data
@@ -80,7 +80,7 @@ const mockShieldActions = [
     reason: 'toxic',
     created_at: '2024-01-15T10:00:00Z',
     reverted_at: null,
-    metadata: {},
+    metadata: {}
   },
   {
     id: '2',
@@ -91,37 +91,35 @@ const mockShieldActions = [
     reason: 'harassment',
     created_at: '2024-01-14T15:30:00Z',
     reverted_at: null,
-    metadata: {},
-  },
+    metadata: {}
+  }
 ];
 
 describe('Shield UI API Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default successful responses
     mockSupabaseQuery.range.mockResolvedValue({
       data: mockShieldActions,
       error: null,
-      count: 2,
+      count: 2
     });
-    
+
     mockSupabaseQuery.single.mockResolvedValue({
       data: mockShieldActions[0],
-      error: null,
+      error: null
     });
-    
+
     mockSupabaseQuery.update.mockResolvedValue({
       data: [{ ...mockShieldActions[0], reverted_at: new Date().toISOString() }],
-      error: null,
+      error: null
     });
   });
 
   describe('GET /api/shield/events', () => {
     test('should return shield events with default pagination', async () => {
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.events).toHaveLength(2);
@@ -131,75 +129,55 @@ describe('Shield UI API Integration Tests', () => {
         total: 2,
         totalPages: 1,
         hasNext: false,
-        hasPrev: false,
+        hasPrev: false
       });
     });
 
     test('should apply time range filtering', async () => {
-      await request(app)
-        .get('/api/shield/events?timeRange=7d')
-        .expect(200);
+      await request(app).get('/api/shield/events?timeRange=7d').expect(200);
 
-      expect(mockSupabaseQuery.gte).toHaveBeenCalledWith(
-        'created_at',
-        expect.any(String)
-      );
+      expect(mockSupabaseQuery.gte).toHaveBeenCalledWith('created_at', expect.any(String));
     });
 
     test('should apply category filtering', async () => {
-      await request(app)
-        .get('/api/shield/events?category=toxic')
-        .expect(200);
+      await request(app).get('/api/shield/events?category=toxic').expect(200);
 
       expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('reason', 'toxic');
     });
 
     test('should apply platform filtering', async () => {
-      await request(app)
-        .get('/api/shield/events?platform=twitter')
-        .expect(200);
+      await request(app).get('/api/shield/events?platform=twitter').expect(200);
 
       expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('platform', 'twitter');
     });
 
     test('should handle pagination parameters', async () => {
-      await request(app)
-        .get('/api/shield/events?page=2&limit=10')
-        .expect(200);
+      await request(app).get('/api/shield/events?page=2&limit=10').expect(200);
 
       expect(mockSupabaseQuery.range).toHaveBeenCalledWith(10, 19);
     });
 
     test('should enforce maximum page limit', async () => {
-      await request(app)
-        .get('/api/shield/events?limit=200')
-        .expect(200);
+      await request(app).get('/api/shield/events?limit=200').expect(200);
 
       // Should cap at 100
       expect(mockSupabaseQuery.range).toHaveBeenCalledWith(0, 99);
     });
 
     test('should include organization isolation', async () => {
-      await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      await request(app).get('/api/shield/events').expect(200);
 
-      expect(mockSupabaseQuery.eq).toHaveBeenCalledWith(
-        'organization_id',
-        'test-org-123'
-      );
+      expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-123');
     });
 
     test('should handle database errors', async () => {
       mockSupabaseQuery.range.mockResolvedValue({
         data: null,
         error: { message: 'Database connection failed' },
-        count: 0,
+        count: 0
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(500);
+      const response = await request(app).get('/api/shield/events').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error.message).toBe('Failed to fetch shield events');
@@ -225,16 +203,13 @@ describe('Shield UI API Integration Tests', () => {
         .expect(404); // Route not found without ID
 
       // Test with empty string ID
-      await request(app)
-        .post('/api/shield/revert/ ')
-        .send({ reason: 'Test' })
-        .expect(400);
+      await request(app).post('/api/shield/revert/ ').send({ reason: 'Test' }).expect(400);
     });
 
     test('should handle non-existent action', async () => {
       mockSupabaseQuery.single.mockResolvedValue({
         data: null,
-        error: { code: 'PGRST116', message: 'No rows found' },
+        error: { code: 'PGRST116', message: 'No rows found' }
       });
 
       const response = await request(app)
@@ -249,9 +224,9 @@ describe('Shield UI API Integration Tests', () => {
       mockSupabaseQuery.single.mockResolvedValue({
         data: {
           ...mockShieldActions[0],
-          reverted_at: '2024-01-15T11:00:00Z',
+          reverted_at: '2024-01-15T11:00:00Z'
         },
-        error: null,
+        error: null
       });
 
       const response = await request(app)
@@ -263,21 +238,15 @@ describe('Shield UI API Integration Tests', () => {
     });
 
     test('should enforce organization isolation', async () => {
-      await request(app)
-        .post('/api/shield/revert/1')
-        .send({ reason: 'Test' })
-        .expect(200);
+      await request(app).post('/api/shield/revert/1').send({ reason: 'Test' }).expect(200);
 
-      expect(mockSupabaseQuery.eq).toHaveBeenCalledWith(
-        'organization_id',
-        'test-org-123'
-      );
+      expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-123');
     });
 
     test('should handle database update errors', async () => {
       mockSupabaseQuery.update.mockResolvedValue({
         data: null,
-        error: { message: 'Update failed' },
+        error: { message: 'Update failed' }
       });
 
       const response = await request(app)
@@ -299,7 +268,7 @@ describe('Shield UI API Integration Tests', () => {
       expect(updateCall.metadata).toEqual({
         reverted: true,
         revertedBy: 'test-user-123',
-        revertReason: 'False positive',
+        revertReason: 'False positive'
       });
     });
   });
@@ -308,12 +277,10 @@ describe('Shield UI API Integration Tests', () => {
     test('should return shield statistics', async () => {
       mockSupabaseQuery.select.mockResolvedValue({
         data: mockShieldActions,
-        error: null,
+        error: null
       });
 
-      const response = await request(app)
-        .get('/api/shield/stats')
-        .expect(200);
+      const response = await request(app).get('/api/shield/stats').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toMatchObject({
@@ -322,50 +289,38 @@ describe('Shield UI API Integration Tests', () => {
         active: 2,
         byActionType: {
           block: 1,
-          mute: 1,
+          mute: 1
         },
         byPlatform: {
           twitter: 1,
-          youtube: 1,
+          youtube: 1
         },
         byReason: {
           toxic: 1,
-          harassment: 1,
-        },
+          harassment: 1
+        }
       });
     });
 
     test('should apply time range filtering to stats', async () => {
-      await request(app)
-        .get('/api/shield/stats?timeRange=30d')
-        .expect(200);
+      await request(app).get('/api/shield/stats?timeRange=30d').expect(200);
 
-      expect(mockSupabaseQuery.gte).toHaveBeenCalledWith(
-        'created_at',
-        expect.any(String)
-      );
+      expect(mockSupabaseQuery.gte).toHaveBeenCalledWith('created_at', expect.any(String));
     });
 
     test('should include organization isolation in stats', async () => {
-      await request(app)
-        .get('/api/shield/stats')
-        .expect(200);
+      await request(app).get('/api/shield/stats').expect(200);
 
-      expect(mockSupabaseQuery.eq).toHaveBeenCalledWith(
-        'organization_id',
-        'test-org-123'
-      );
+      expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-123');
     });
 
     test('should handle empty data in stats', async () => {
       mockSupabaseQuery.select.mockResolvedValue({
         data: [],
-        error: null,
+        error: null
       });
 
-      const response = await request(app)
-        .get('/api/shield/stats')
-        .expect(200);
+      const response = await request(app).get('/api/shield/stats').expect(200);
 
       expect(response.body.data.total).toBe(0);
       expect(response.body.data.byActionType).toEqual({});
@@ -376,9 +331,7 @@ describe('Shield UI API Integration Tests', () => {
 
   describe('GET /api/shield/config', () => {
     test('should return shield configuration', async () => {
-      const response = await request(app)
-        .get('/api/shield/config')
-        .expect(200);
+      const response = await request(app).get('/api/shield/config').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toMatchObject({
@@ -387,13 +340,13 @@ describe('Shield UI API Integration Tests', () => {
           eventFiltering: true,
           revertActions: true,
           statistics: true,
-          realTimeUpdates: false,
+          realTimeUpdates: false
         },
         limits: {
           maxEventsPerPage: 100,
           revertActionsPerWindow: 10,
-          revertWindowMinutes: 5,
-        },
+          revertWindowMinutes: 5
+        }
       });
 
       expect(response.body.data.categories).toContain('toxic');
@@ -405,9 +358,7 @@ describe('Shield UI API Integration Tests', () => {
       const { flags } = require('../../src/config/flags');
       flags.isEnabled.mockReturnValue(false);
 
-      const response = await request(app)
-        .get('/api/shield/config')
-        .expect(200);
+      const response = await request(app).get('/api/shield/config').expect(200);
 
       expect(response.body.data.enabled).toBe(false);
     });
@@ -429,11 +380,9 @@ describe('Shield UI API Integration Tests', () => {
   describe('Rate Limiting', () => {
     test('should apply rate limiting to revert endpoint', async () => {
       // This would be better tested with actual rate limiting, but we'll verify the middleware is applied
-      
+
       for (let i = 0; i < 5; i++) {
-        await request(app)
-          .post('/api/shield/revert/1')
-          .send({ reason: 'Test' });
+        await request(app).post('/api/shield/revert/1').send({ reason: 'Test' });
       }
 
       // All requests should succeed in test environment (rate limiting disabled)
@@ -443,27 +392,21 @@ describe('Shield UI API Integration Tests', () => {
 
   describe('Data Validation', () => {
     test('should validate time range parameters', async () => {
-      const response = await request(app)
-        .get('/api/shield/events?timeRange=invalid')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?timeRange=invalid').expect(200);
 
       // Should default to null (all time) for invalid time range
       expect(mockSupabaseQuery.gte).not.toHaveBeenCalled();
     });
 
     test('should validate pagination parameters', async () => {
-      await request(app)
-        .get('/api/shield/events?page=-1&limit=0')
-        .expect(200);
+      await request(app).get('/api/shield/events?page=-1&limit=0').expect(200);
 
       // Should normalize to valid values
       expect(mockSupabaseQuery.range).toHaveBeenCalledWith(0, 0); // page 1, limit 1 (minimum)
     });
 
     test('should handle non-string filter values', async () => {
-      await request(app)
-        .get('/api/shield/events?category=123&platform=456')
-        .expect(200);
+      await request(app).get('/api/shield/events?category=123&platform=456').expect(200);
 
       // Should still apply filters as strings
       expect(mockSupabaseQuery.eq).toHaveBeenCalledWith('reason', '123');
@@ -475,9 +418,7 @@ describe('Shield UI API Integration Tests', () => {
     test('should handle Supabase connection errors', async () => {
       mockSupabaseQuery.range.mockRejectedValue(new Error('Connection timeout'));
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(500);
+      const response = await request(app).get('/api/shield/events').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error.details).toBe('Connection timeout');

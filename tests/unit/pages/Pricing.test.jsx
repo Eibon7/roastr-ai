@@ -1,6 +1,6 @@
 /**
  * Pricing Component - Unit Tests
- * 
+ *
  * Tests for public pricing page with plan features integration
  */
 
@@ -23,7 +23,7 @@ describe('Pricing Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockFetchApi = jest.fn((url, options) => {
       if (url === '/api/user') {
         return Promise.resolve({
@@ -47,7 +47,7 @@ describe('Pricing Component', () => {
     });
 
     createMockFetch.mockReturnValue(mockFetchApi);
-    
+
     // Mock window.location.href
     delete window.location;
     window.location = { href: jest.fn() };
@@ -64,7 +64,7 @@ describe('Pricing Component', () => {
   describe('Rendering', () => {
     it('should render page header', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Choose Your Plan/i)).toBeInTheDocument();
       });
@@ -72,7 +72,7 @@ describe('Pricing Component', () => {
 
     it('should display all plan tiers', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText('Starter Trial')).toBeInTheDocument();
         expect(screen.getByText('Starter')).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('Pricing Component', () => {
 
     it('should show plan prices', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText('Free')).toBeInTheDocument();
         expect(screen.getByText('€5')).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe('Pricing Component', () => {
 
     it('should display feature comparison table', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Feature Comparison/i)).toBeInTheDocument();
         expect(screen.getByText(/Monthly Analyses/i)).toBeInTheDocument();
@@ -106,7 +106,7 @@ describe('Pricing Component', () => {
   describe('Plan Features', () => {
     it('should show included features for each plan', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/GPT-4 model/i)).toBeInTheDocument();
         expect(screen.getByText(/Shield protection/i)).toBeInTheDocument();
@@ -116,7 +116,7 @@ describe('Pricing Component', () => {
 
     it('should display limitations for lower tiers', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const limitations = screen.getAllByText(/No RQC embedded/i);
         expect(limitations.length).toBeGreaterThan(0);
@@ -125,7 +125,7 @@ describe('Pricing Component', () => {
 
     it('should highlight most popular plans', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const popularBadges = screen.getAllByText(/Most Popular/i);
         expect(popularBadges.length).toBeGreaterThan(0);
@@ -134,7 +134,7 @@ describe('Pricing Component', () => {
 
     it('should show enterprise badge for Plus plan', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Enterprise/i)).toBeInTheDocument();
       });
@@ -144,12 +144,12 @@ describe('Pricing Component', () => {
   describe('Plan Upgrade', () => {
     it('should handle upgrade to paid plan', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const upgradeButton = screen.getByRole('button', { name: /Upgrade to Pro/i });
         fireEvent.click(upgradeButton);
       });
-      
+
       await waitFor(() => {
         expect(mockFetchApi).toHaveBeenCalledWith(
           '/api/billing/create-checkout-session',
@@ -163,12 +163,12 @@ describe('Pricing Component', () => {
 
     it('should redirect to checkout URL on successful upgrade', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const upgradeButton = screen.getByRole('button', { name: /Upgrade to Plus/i });
         fireEvent.click(upgradeButton);
       });
-      
+
       await waitFor(() => {
         expect(window.location.href).toBe('https://checkout.stripe.com/test');
       });
@@ -184,14 +184,14 @@ describe('Pricing Component', () => {
         }
         return mockFetchApi(url);
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const trialButton = screen.getByRole('button', { name: /Start Trial/i });
         fireEvent.click(trialButton);
       });
-      
+
       await waitFor(() => {
         expect(mockFetchApi).toHaveBeenCalledWith(
           '/api/billing/start-trial',
@@ -214,14 +214,14 @@ describe('Pricing Component', () => {
           });
         }
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const upgradeButton = screen.getByRole('button', { name: /Upgrade to Pro/i });
         fireEvent.click(upgradeButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Processing.../i)).toBeInTheDocument();
       });
@@ -229,7 +229,7 @@ describe('Pricing Component', () => {
 
     it('should disable current plan button', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const currentButton = screen.getByRole('button', { name: /Current Plan/i });
         expect(currentButton).toBeDisabled();
@@ -250,14 +250,14 @@ describe('Pricing Component', () => {
           });
         }
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const upgradeButton = screen.getByRole('button', { name: /Upgrade to Pro/i });
         fireEvent.click(upgradeButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Failed to process upgrade/i)).toBeInTheDocument();
       });
@@ -277,14 +277,14 @@ describe('Pricing Component', () => {
           });
         }
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const upgradeButton = screen.getByRole('button', { name: /Upgrade to Pro/i });
         fireEvent.click(upgradeButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Request timed out/i)).toBeInTheDocument();
       });
@@ -302,19 +302,19 @@ describe('Pricing Component', () => {
           });
         }
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const upgradeButton = screen.getByRole('button', { name: /Upgrade to Pro/i });
         fireEvent.click(upgradeButton);
       });
-      
+
       await waitFor(() => {
         const closeButton = screen.getByText('×');
         fireEvent.click(closeButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.queryByText(/Failed to process upgrade/i)).not.toBeInTheDocument();
       });
@@ -324,7 +324,7 @@ describe('Pricing Component', () => {
   describe('FAQ Section', () => {
     it('should display FAQ questions', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Can I change plans anytime\?/i)).toBeInTheDocument();
         expect(screen.getByText(/What happens to unused credits\?/i)).toBeInTheDocument();
@@ -334,12 +334,12 @@ describe('Pricing Component', () => {
 
     it('should navigate to billing page', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const billingButton = screen.getByRole('button', { name: /View Current Usage & Billing/i });
         fireEvent.click(billingButton);
       });
-      
+
       expect(mockNavigate).toHaveBeenCalledWith('/billing');
     });
   });
@@ -347,7 +347,7 @@ describe('Pricing Component', () => {
   describe('RQC Embedded Highlight', () => {
     it('should show RQC embedded features', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/RQC Embedded Mode/i)).toBeInTheDocument();
         expect(screen.getByText(/Semantic context analysis/i)).toBeInTheDocument();
@@ -358,11 +358,10 @@ describe('Pricing Component', () => {
   describe('Loading State', () => {
     it('should show loading state initially', () => {
       mockFetchApi.mockImplementation(() => new Promise(() => {}));
-      
+
       renderComponent();
-      
+
       expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
     });
   });
 });
-

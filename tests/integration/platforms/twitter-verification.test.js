@@ -1,8 +1,8 @@
 /**
  * Twitter Platform Integration Verification Tests
- * 
+ *
  * Part of Issue #712: Social Platform Integration Verification
- * 
+ *
  * Tests verify:
  * - Authentication flow
  * - Core operations (fetchComments, postReply, blockUser)
@@ -45,11 +45,8 @@ describe('Twitter Platform Verification', () => {
 
   describe('Authentication', () => {
     it('should check credentials availability', () => {
-      const hasCredentials = !!(
-        process.env.TWITTER_BEARER_TOKEN ||
-        process.env.TWITTER_APP_KEY
-      );
-      
+      const hasCredentials = !!(process.env.TWITTER_BEARER_TOKEN || process.env.TWITTER_APP_KEY);
+
       // In test mode, credentials may not be present
       expect(typeof hasCredentials).toBe('boolean');
     });
@@ -81,13 +78,9 @@ describe('Twitter Platform Verification', () => {
 
     it('should validate postResponse input parameters', async () => {
       // Test with invalid inputs
-      await expect(
-        service.postResponse(null, 'test')
-      ).rejects.toThrow();
+      await expect(service.postResponse(null, 'test')).rejects.toThrow();
 
-      await expect(
-        service.postResponse('tweet-id', null)
-      ).rejects.toThrow();
+      await expect(service.postResponse('tweet-id', null)).rejects.toThrow();
     });
 
     it('should handle postResponse errors gracefully', async () => {
@@ -115,13 +108,9 @@ describe('Twitter Platform Verification', () => {
     });
 
     it('should validate input before processing', async () => {
-      await expect(
-        service.postResponse('', 'test')
-      ).rejects.toThrow();
+      await expect(service.postResponse('', 'test')).rejects.toThrow();
 
-      await expect(
-        service.postResponse('valid-id', '')
-      ).rejects.toThrow();
+      await expect(service.postResponse('valid-id', '')).rejects.toThrow();
     });
   });
 
@@ -129,14 +118,11 @@ describe('Twitter Platform Verification', () => {
     it('should have rate limiting awareness', () => {
       // Twitter service should be aware of rate limits
       // Check if service has rate limiting properties or methods
-      const hasRateLimitAwareness = 
-        service.bot?.rateLimits !== undefined ||
-        service.config?.rateLimit !== undefined;
-      
+      const hasRateLimitAwareness =
+        service.bot?.rateLimits !== undefined || service.config?.rateLimit !== undefined;
+
       // In mock mode, this may not be critical
       expect(typeof hasRateLimitAwareness).toBe('boolean');
     });
   });
 });
-
-

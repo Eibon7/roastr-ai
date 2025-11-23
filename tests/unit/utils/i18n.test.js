@@ -32,7 +32,7 @@ describe('I18n System', () => {
 
   describe('Language Management', () => {
     let i18nInstance;
-    
+
     beforeEach(() => {
       i18nInstance = new I18n();
     });
@@ -73,17 +73,17 @@ describe('I18n System', () => {
   describe('Environment Configuration', () => {
     it('should respect environment language settings', () => {
       const originalEnv = process.env.APP_LANG;
-      
+
       // Test APP_LANG
       process.env.APP_LANG = 'es';
       const newInstance = new I18n();
       expect(newInstance.getCurrentLanguage()).toBe('es');
-      
+
       // Test invalid language falls back to default
       process.env.APP_LANG = 'invalid';
       const newInstance2 = new I18n();
       expect(newInstance2.getCurrentLanguage()).toBe('en');
-      
+
       // Restore
       if (originalEnv !== undefined) {
         process.env.APP_LANG = originalEnv;

@@ -22,6 +22,7 @@
 ### Documentation Files (19 total)
 
 **Planning Documents (5 files):**
+
 - `docs/plan/comment-3394091239.md` (created)
 - `docs/plan/review-3326043773.md` (created)
 - `docs/plan/review-3326390487.md` (created)
@@ -29,6 +30,7 @@
 - `docs/plan/review-3328028224.md` (created)
 
 **Test Evidence (14 files):**
+
 - `docs/test-evidence/issue-414/SUMMARY.md` (modified)
 - `docs/test-evidence/issue-414/tests-passing.txt` (created)
 - `docs/test-evidence/comment-3394091239/SUMMARY.md` (created)
@@ -50,6 +52,7 @@
 **Verification:** Code present and functional
 
 **Documented Components:**
+
 - ✅ `checkKillSwitch` middleware - EXISTS
 - ✅ `checkPlatformAutopost()` function - EXISTS
 - ✅ `shouldBlockAutopost()` worker function - EXISTS
@@ -67,6 +70,7 @@
 **Lines:** 624 lines (documented as ~600 lines ✓)
 
 **Test Execution:**
+
 ```bash
 $ ENABLE_MOCK_MODE=true npm test -- killSwitch-issue-414.test.js
 
@@ -78,6 +82,7 @@ Time:        0.779s
 **Result:** ✅ **100% PASSING** (20/20 tests)
 
 **Test Coverage Verification:**
+
 - ✅ AC1: Kill switch blocks autopost operations (3 tests)
 - ✅ AC2: ENABLE_AUTOPOST controls behavior (2 tests)
 - ✅ AC3: Platform-specific flags (3 tests)
@@ -98,6 +103,7 @@ Time:        0.779s
 **Direct Impact:** ❌ NONE (no code changes)
 
 **Potential Nodes (if updates needed):**
+
 - `docs/nodes/multi-tenant.md` - Mentions middleware (✅ reviewed, no updates needed)
 - `docs/nodes/shield.md` - Kill-switch may interact with Shield (✅ reviewed, independent systems)
 - `docs/nodes/guardian.md` - Monitoring system (✅ reviewed, no kill-switch dependency)
@@ -105,6 +111,7 @@ Time:        0.779s
 **Assessment:** Current GDD nodes do not require updates for this documentation-only PR.
 
 **Rationale:**
+
 - Kill-switch middleware already existed
 - Tests already existed (documented October 5, 2025)
 - PR adds evidence documentation only
@@ -122,6 +129,7 @@ Time:        0.779s
 **Location:** Mentioned within multi-tenant and feature flags context
 
 **Recommendation:** ⚠️ **FUTURE ENHANCEMENT** (not blocking for PR #532)
+
 - Consider adding explicit "Kill-Switch System" section
 - Document middleware integration points
 - Reference test coverage
@@ -139,6 +147,7 @@ Time:        0.779s
 **Impact:** ✅ N/A for documentation-only PR
 
 **Rationale:**
+
 - system-map.yaml is optional GDD component
 - Not required for documentation sync
 - No architecture changes in PR #532
@@ -151,9 +160,11 @@ Time:        0.779s
 **Current Nodes:** 14 nodes in `docs/nodes/`
 
 **Files in src/ without nodes:**
+
 - `src/middleware/killSwitch.js` - **Could benefit from node** (✅ noted for future)
 
 **Recommendation:** ⚠️ **FUTURE ENHANCEMENT**
+
 - Create `docs/nodes/middleware.md` or `docs/nodes/kill-switch.md`
 - Document kill-switch middleware architecture
 - Link to tests and evidence
@@ -167,6 +178,7 @@ Time:        0.779s
 ### Scan for TODOs without Issues
 
 **Command:**
+
 ```bash
 grep -r "TODO" tests/integration/killSwitch-issue-414.test.js
 ```
@@ -174,6 +186,7 @@ grep -r "TODO" tests/integration/killSwitch-issue-414.test.js
 **Result:** ❌ No TODOs found in test file
 
 **Command:**
+
 ```bash
 grep -r "TODO" src/middleware/killSwitch.js | grep -v "issue #"
 ```
@@ -186,14 +199,14 @@ grep -r "TODO" src/middleware/killSwitch.js | grep -v "issue #"
 
 ## Synchronization Matrix
 
-| Component | Documented | Implemented | Status |
-|-----------|------------|-------------|--------|
-| **Kill-switch middleware** | ✅ Yes | ✅ Yes | 🟢 SYNCED |
-| **Integration tests (20)** | ✅ Yes | ✅ Yes | 🟢 SYNCED |
-| **Test file location** | ✅ Correct | ✅ Exists | 🟢 SYNCED |
-| **Test count** | ✅ 20 tests | ✅ 20 pass | 🟢 SYNCED |
-| **Coverage claims** | ✅ 8 AC | ✅ 8 AC | 🟢 SYNCED |
-| **Code behavior** | ✅ Documented | ✅ Matches | 🟢 SYNCED |
+| Component                  | Documented    | Implemented | Status    |
+| -------------------------- | ------------- | ----------- | --------- |
+| **Kill-switch middleware** | ✅ Yes        | ✅ Yes      | 🟢 SYNCED |
+| **Integration tests (20)** | ✅ Yes        | ✅ Yes      | 🟢 SYNCED |
+| **Test file location**     | ✅ Correct    | ✅ Exists   | 🟢 SYNCED |
+| **Test count**             | ✅ 20 tests   | ✅ 20 pass  | 🟢 SYNCED |
+| **Coverage claims**        | ✅ 8 AC       | ✅ 8 AC     | 🟢 SYNCED |
+| **Code behavior**          | ✅ Documented | ✅ Matches  | 🟢 SYNCED |
 
 **Desynchronization Score:** ✅ **0%** (perfect sync)
 
@@ -214,15 +227,20 @@ grep -r "TODO" src/middleware/killSwitch.js | grep -v "issue #"
 **Recommendation:** Create follow-up issue for kill-switch node documentation
 
 **Suggested Issue:**
+
 ```markdown
 Title: [Docs] Create GDD node for Kill-Switch Middleware
 
 Body:
+
 ## Context
+
 PR #532 documented comprehensive integration tests for kill-switch middleware (`src/middleware/killSwitch.js`). Currently, no dedicated GDD node exists for this component.
 
 ## Proposed Action
+
 Create `docs/nodes/middleware.md` or `docs/nodes/kill-switch.md` documenting:
+
 - Responsibilities (feature flag checking, autopost blocking)
 - Dependencies (Supabase feature_flags table, local cache)
 - Used by (API routes, worker functions)
@@ -231,6 +249,7 @@ Create `docs/nodes/middleware.md` or `docs/nodes/kill-switch.md` documenting:
 - Coverage (20 integration tests, 8 acceptance criteria)
 
 ## Priority
+
 P2 - Enhancement (not blocking, improves documentation completeness)
 
 Labels: documentation, enhancement, gdd
@@ -275,6 +294,7 @@ Labels: documentation, enhancement, gdd
 ### Drift Prediction Results
 
 **Command:**
+
 ```bash
 node scripts/predict-gdd-drift.js --full
 ```
@@ -282,18 +302,21 @@ node scripts/predict-gdd-drift.js --full
 **Status:** 🟢 **HEALTHY** (4/100 average risk)
 
 **Summary:**
+
 - **Total Nodes:** 14
 - 🟢 **Healthy (0-30):** 14
 - 🟡 **At Risk (31-60):** 0
 - 🔴 **Likely Drift (61-100):** 0
 
 **Top Nodes (Lowest Risk):**
+
 - `platform-constraints.md` - 0/100 risk (99 health, 100% coverage)
 - `queue-system.md` - 0/100 risk (99 health, 87% coverage)
 - `roast.md` - 0/100 risk (99 health, 100% coverage)
 - `social-platforms.md` - 0/100 risk (99 health, 100% coverage)
 
 **Nodes with Minor Risk (Still Healthy):**
+
 - `analytics.md` - 5/100 risk (93 health, 70% coverage)
 - `billing.md` - 5/100 risk (93 health, 70% coverage)
 - `cost-control.md` - 5/100 risk (93 health, 70% coverage)
@@ -318,6 +341,7 @@ node scripts/predict-gdd-drift.js --full
 **Status:** 🟢 **DOCUMENTATION FULLY SYNCED**
 
 **Summary:**
+
 - ✅ 0 code changes (documentation-only PR)
 - ✅ 20 tests documented = 20 tests implemented
 - ✅ All documented components exist in codebase
@@ -331,6 +355,7 @@ node scripts/predict-gdd-drift.js --full
 **Recommendation:** 🟢 **SAFE TO MERGE**
 
 **Rationale:**
+
 1. Documentation accurately reflects implementation
 2. All tests passing (verified execution)
 3. No code changes to introduce bugs
@@ -347,17 +372,17 @@ node scripts/predict-gdd-drift.js --full
 
 ## Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Files Changed** | 19 docs | ✅ Documentation |
-| **Code Changes** | 0 | ✅ None |
-| **Nodes Updated** | 0 | ✅ N/A |
-| **spec.md Updates** | 0 | ✅ N/A |
-| **Tests Verified** | 20/20 | ✅ Passing |
-| **Desynchronization** | 0% | ✅ Perfect |
-| **Issues Created** | 0 | ✅ None needed |
-| **Orphan Nodes** | 0 | ✅ None |
-| **TODOs Without Issues** | 0 | ✅ None |
+| Metric                   | Value   | Status           |
+| ------------------------ | ------- | ---------------- |
+| **Files Changed**        | 19 docs | ✅ Documentation |
+| **Code Changes**         | 0       | ✅ None          |
+| **Nodes Updated**        | 0       | ✅ N/A           |
+| **spec.md Updates**      | 0       | ✅ N/A           |
+| **Tests Verified**       | 20/20   | ✅ Passing       |
+| **Desynchronization**    | 0%      | ✅ Perfect       |
+| **Issues Created**       | 0       | ✅ None needed   |
+| **Orphan Nodes**         | 0       | ✅ None          |
+| **TODOs Without Issues** | 0       | ✅ None          |
 
 ---
 
@@ -386,16 +411,19 @@ synced_prs:
 ## References
 
 **PR Details:**
+
 - PR #532: [docs(tests): Issue #414 - Kill-switch integration test evidences](https://github.com/Eibon7/roastr-ai/pull/532)
 - Issue #414: Kill-switch/rollback integration tests
 - Epic #403: Testing MVP (P0)
 
 **Related Files:**
+
 - `src/middleware/killSwitch.js` - Kill-switch implementation
 - `tests/integration/killSwitch-issue-414.test.js` - Integration tests
 - `docs/test-evidence/issue-414/SUMMARY.md` - Test evidence
 
 **Validation Commands:**
+
 ```bash
 # Verify tests passing
 ENABLE_MOCK_MODE=true npm test -- killSwitch-issue-414.test.js
@@ -415,6 +443,6 @@ grep -r "TODO" src/middleware/killSwitch.js tests/integration/killSwitch-issue-4
 
 ---
 
-*Generated by Orchestrator Agent with /doc-sync process*
-*Following CLAUDE.md quality standards: Coherencia Total > Todo lo demás*
-*🤖 Generated with [Claude Code](https://claude.com/claude-code)*
+_Generated by Orchestrator Agent with /doc-sync process_
+_Following CLAUDE.md quality standards: Coherencia Total > Todo lo demás_
+_🤖 Generated with [Claude Code](https://claude.com/claude-code)_

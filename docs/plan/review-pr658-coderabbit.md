@@ -11,6 +11,7 @@
 ### 🔴 Critical (1)
 
 **C1: Missing documentation file**
+
 - **Location:** CLAUDE.md line ~387
 - **Issue:** References `docs/lessons/gdd-threshold-management.md` but file doesn't exist
 - **Impact:** Broken documentation link
@@ -22,28 +23,33 @@
 ## 2. Recommended Improvements (5)
 
 ### R1: Create tracking issue
+
 - **Type:** Process/Traceability
 - **Action:** Create issue "Optimize CLAUDE.md for token efficiency"
 - **Impact:** Audit trail, better project management
 - **Priority:** P2 (recommended)
 
 ### R2: Add PR labels
+
 - **Labels:** `documentation`, `optimization`
 - **Impact:** Better categorization, searchability
 - **Priority:** P2 (recommended)
 
 ### R3: Clarify commit reference
+
 - **Issue:** PR mentions commit c6575343 but not found in repo
 - **Actual commit:** a6a3bad
 - **Action:** Update PR description or explain discrepancy
 - **Priority:** P3 (nice-to-have)
 
 ### R4: Verify date in content
+
 - **Location:** Line ~47: "Enforcement: ✅ Active" date shows 2025-10-19
 - **Action:** Verify this is intentional future date or typo
 - **Priority:** P3 (minor)
 
 ### R5: Add validation script (optional)
+
 - **Action:** Create script to validate all doc references in CLAUDE.md
 - **File:** `scripts/validate-claude-references.js`
 - **Priority:** P4 (future enhancement)
@@ -59,10 +65,12 @@
 ## 4. Files to Modify
 
 ### To Create:
+
 1. `docs/lessons/gdd-threshold-management.md` (C1 fix)
 2. `docs/plan/review-pr658-coderabbit.md` (this file)
 
 ### To Update (optional):
+
 3. PR #658 description (clarify commit reference)
 
 ---
@@ -70,17 +78,20 @@
 ## 5. Implementation Strategy
 
 ### Phase 1: Fix Critical Issue (C1)
+
 1. Create missing doc file: `docs/lessons/gdd-threshold-management.md`
 2. Populate with content based on context from CLAUDE.md
 3. Commit: "docs(lessons): Add GDD threshold management guide - Review PR #658"
 
 ### Phase 2: Apply Recommendations (Optional, can be separate PR)
+
 1. Create tracking issue (#659?)
 2. Add labels to PR #658
 3. Verify date reference
 4. Update PR description
 
 ### Phase 3: Validation
+
 - Verify all doc links work
 - Check markdown rendering
 - Ensure CI passes
@@ -92,6 +103,7 @@
 **No automated tests needed** (docs-only)
 
 **Manual verification:**
+
 1. Read created file to ensure quality
 2. Check CLAUDE.md link resolves correctly
 3. Verify markdown formatting
@@ -101,17 +113,21 @@
 ## 7. Success Criteria
 
 ✅ **100% Critical issues resolved:**
+
 - [x] C1: Missing doc file created
 
 ✅ **Quality:**
+
 - [x] File contains meaningful content
 - [x] Proper markdown formatting
 - [x] Links work correctly
 
 ✅ **CI/CD:**
+
 - [x] All checks passing (already passing, should remain green)
 
 ✅ **No regressions:**
+
 - [x] No new broken links
 - [x] CLAUDE.md optimization intact
 

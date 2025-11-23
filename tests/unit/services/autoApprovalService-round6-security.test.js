@@ -1,7 +1,7 @@
 /**
  * Auto-Approval Service Round 6 Critical Security Tests
  * Tests for CodeRabbit review #3275898813 feedback implementation
- * 
+ *
  * COVERAGE:
  * - Content integrity validation with exact matching
  * - Organization policy validation with fail-closed patterns
@@ -42,7 +42,7 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
-    
+
     // Mock Supabase client
     mockSupabase = {
       from: jest.fn().mockReturnThis(),
@@ -79,7 +79,7 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
     const loggerModule = require('../../../src/utils/logger');
     const transparencyModule = require('../../../src/services/transparencyService');
     const planLimitsModule = require('../../../src/services/planLimitsService');
-    
+
     supabaseModule.supabaseServiceClient = mockSupabase;
     loggerModule.logger = mockLogger;
     Object.assign(transparencyModule, mockTransparencyService);
@@ -240,10 +240,7 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
         error: null
       });
 
-      const result = await autoApprovalService.validateOrganizationPolicy(
-        variant,
-        organizationId
-      );
+      const result = await autoApprovalService.validateOrganizationPolicy(variant, organizationId);
 
       expect(result.valid).toBe(true);
       expect(result.policyValidationId).toBeDefined();
@@ -261,10 +258,7 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
         error: { message: 'Database connection failed', code: 'PGRST301' }
       });
 
-      const result = await autoApprovalService.validateOrganizationPolicy(
-        variant,
-        organizationId
-      );
+      const result = await autoApprovalService.validateOrganizationPolicy(variant, organizationId);
 
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('policy_fetch_failed');
@@ -289,10 +283,7 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
         error: null
       });
 
-      const result = await autoApprovalService.validateOrganizationPolicy(
-        variant,
-        organizationId
-      );
+      const result = await autoApprovalService.validateOrganizationPolicy(variant, organizationId);
 
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('no_policies_found');
@@ -318,10 +309,7 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
         error: null
       });
 
-      const result = await autoApprovalService.validateOrganizationPolicy(
-        variant,
-        organizationId
-      );
+      const result = await autoApprovalService.validateOrganizationPolicy(variant, organizationId);
 
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('banned_phrase_detected');
@@ -332,18 +320,15 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
       const variant = { text: 'Test content' };
 
       // Mock timeout by making the promise never resolve
-      mockSupabase.single.mockImplementation(() => 
-        new Promise(() => {}) // Never resolves
+      mockSupabase.single.mockImplementation(
+        () => new Promise(() => {}) // Never resolves
       );
 
       // Override the timeout to be very short for testing
       const originalTimeout = autoApprovalService.config.policyFetchTimeout;
       autoApprovalService.config.policyFetchTimeout = 10;
 
-      const result = await autoApprovalService.validateOrganizationPolicy(
-        variant,
-        organizationId
-      );
+      const result = await autoApprovalService.validateOrganizationPolicy(variant, organizationId);
 
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('system_error');
@@ -378,7 +363,10 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
       expect(autoApprovalService.circuitBreaker.failures).toBeGreaterThanOrEqual(5);
 
       // Next call should fail immediately due to open circuit breaker
-      const resultOpen = await autoApprovalService.validateOrganizationPolicy(variant, organizationId);
+      const resultOpen = await autoApprovalService.validateOrganizationPolicy(
+        variant,
+        organizationId
+      );
       expect(resultOpen.valid).toBe(false);
       expect(resultOpen.reason).toBe('circuit_breaker_open');
     });
@@ -450,7 +438,10 @@ describe('AutoApprovalService Round 6 Critical Security Tests', () => {
       expect(result.approved).toBe(true);
       expect(result.variant.text).toBe('Generated response 🤖');
       expect(mockTransparencyService.isTransparencyRequired).toHaveBeenCalledWith(organizationId);
-      expect(mockTransparencyService.applyTransparency).toHaveBeenCalledWith(variant, organizationId);
+      expect(mockTransparencyService.applyTransparency).toHaveBeenCalledWith(
+        variant,
+        organizationId
+      );
     });
 
     test('should fail closed when transparency service fails', async () => {

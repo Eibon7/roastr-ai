@@ -12,6 +12,7 @@
 **Lines:** 264-279
 
 **Problem:**
+
 - Score distribution output showed 14 rows with four "85"s
 - Actual data has 13 nodes with three "85"s
 - Extra "85" line at position 268 caused discrepancy
@@ -41,6 +42,7 @@ $ cat after-gdd-health.json | jq '.nodes[].score' | sort -n
 ```
 
 **Issues:**
+
 - ❌ Shows 14 scores (should be 13)
 - ❌ Shows 4 scores of "85" (should be 3)
 - ❌ Misleading test evidence
@@ -69,6 +71,7 @@ $ cat after-gdd-health.json | jq '.nodes[].score' | sort -n
 ```
 
 **Improvements:**
+
 - ✅ Shows 13 scores (correct)
 - ✅ Shows 3 scores of "85" (correct)
 - ✅ Accurate test evidence
@@ -82,12 +85,14 @@ $ cat after-gdd-health.json | jq '.nodes[].score' | sort -n
 **File:** `docs/test-evidence/review-3314207411/after-gdd-health.json`
 
 **Total Nodes:**
+
 ```bash
 $ cat after-gdd-health.json | jq '.nodes | length'
 13
 ```
 
 **Scores Distribution:**
+
 ```bash
 $ cat after-gdd-health.json | jq '.nodes[].score' | sort | uniq -c
    3 85
@@ -97,18 +102,22 @@ $ cat after-gdd-health.json | jq '.nodes[].score' | sort | uniq -c
 ```
 
 **Nodes with Score 85:**
+
 - cost-control
 - multi-tenant
 - trainer
 
 **Nodes with Score 89:**
+
 - analytics
 - billing
 
 **Nodes with Score 93:**
+
 - shield
 
 **Nodes with Score 99:**
+
 - persona
 - plan-features
 - platform-constraints
@@ -122,11 +131,13 @@ $ cat after-gdd-health.json | jq '.nodes[].score' | sort | uniq -c
 ## Impact
 
 ### Before Fix
+
 - ❌ **Documentation Accuracy:** Incorrect (14 nodes instead of 13)
 - ❌ **Test Evidence Quality:** Misleading
 - ❌ **Code Quality Standards:** Not met
 
 ### After Fix
+
 - ✅ **Documentation Accuracy:** Correct (13 nodes)
 - ✅ **Test Evidence Quality:** Accurate
 - ✅ **Code Quality Standards:** Met
@@ -135,12 +146,12 @@ $ cat after-gdd-health.json | jq '.nodes[].score' | sort | uniq -c
 
 ## Summary
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| **Total Scores Listed** | 14 | 13 | ✅ Fixed |
-| **Count of "85"s** | 4 | 3 | ✅ Fixed |
+| Metric                     | Before    | After   | Change      |
+| -------------------------- | --------- | ------- | ----------- |
+| **Total Scores Listed**    | 14        | 13      | ✅ Fixed    |
+| **Count of "85"s**         | 4         | 3       | ✅ Fixed    |
 | **Documentation Accuracy** | Incorrect | Correct | ✅ Improved |
-| **Matches Source Data** | No | Yes | ✅ Verified |
+| **Matches Source Data**    | No        | Yes     | ✅ Verified |
 
 ---
 

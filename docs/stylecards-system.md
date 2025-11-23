@@ -17,18 +17,21 @@ The Stylecards system automatically generates personalized style profiles for Pr
 ### Database Schema
 
 #### `stylecards` Table
+
 - Stores generated style profiles with characteristics
 - Includes tone, formality, sarcasm levels
 - Contains AI-generated style prompts
 - Tracks source platforms and content analyzed
 
 #### `stylecard_content_samples` Table
+
 - Stores encrypted content samples used for analysis
 - Includes embeddings for similarity matching
 - Implements automatic retention policies
 - Requires explicit user consent
 
 #### `stylecard_generation_jobs` Table
+
 - Tracks generation job status and progress
 - Handles error recovery and retry logic
 - Monitors cost and API usage
@@ -100,12 +103,15 @@ The Stylecards system automatically generates personalized style profiles for Pr
 ## API Endpoints
 
 ### Generate Stylecard
+
 ```
 POST /api/stylecards/generate
 ```
+
 Triggers stylecard generation for connected platforms.
 
 **Request:**
+
 ```json
 {
   "platforms": ["twitter", "instagram"],
@@ -116,6 +122,7 @@ Triggers stylecard generation for connected platforms.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -126,21 +133,27 @@ Triggers stylecard generation for connected platforms.
 ```
 
 ### Check Generation Status
+
 ```
 GET /api/stylecards/status/:jobId
 ```
+
 Returns current status of generation job.
 
 ### Get Current Stylecard
+
 ```
 GET /api/stylecards/current?language=es
 ```
+
 Returns user's active stylecard.
 
 ### Delete Stylecard (Opt-out)
+
 ```
 DELETE /api/stylecards/current?language=es
 ```
+
 Deletes user's stylecard and all associated data.
 
 ## Automatic Activation
@@ -154,6 +167,7 @@ Deletes user's stylecard and all associated data.
 ### Webhook Integration
 
 The system integrates with Stripe webhooks to automatically trigger stylecard generation when:
+
 - `checkout.session.completed` event for Pro/Plus plans
 - User has active platform integrations
 

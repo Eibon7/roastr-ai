@@ -9,13 +9,13 @@
 
 ## 📊 Resumen Ejecutivo
 
-| Métrica | Valor |
-|---------|-------|
-| **Total Comentarios** | XX |
-| **Rondas de Review** | X |
-| **Root Causes Identificados** | X patrones |
-| **Tiempo Total** | X horas |
-| **Status Final** | ✅ 100% Resuelto |
+| Métrica                       | Valor            |
+| ----------------------------- | ---------------- |
+| **Total Comentarios**         | XX               |
+| **Rondas de Review**          | X                |
+| **Root Causes Identificados** | X patrones       |
+| **Tiempo Total**              | X horas          |
+| **Status Final**              | ✅ 100% Resuelto |
 
 ---
 
@@ -32,6 +32,7 @@ Brief description of the recurring pattern.
 Why this pattern keeps appearing (missing config, lack of understanding, etc.)
 
 **Ejemplo:**
+
 ```javascript
 // ❌ BEFORE
 const badCode = ...
@@ -41,11 +42,13 @@ const goodCode = ...
 ```
 
 **Fix Aplicado:**
+
 - Specific action taken (e.g., "Added ESLint rule: semi: ['error', 'always']")
 - Configuration change
 - Documentation update
 
 **Prevención Futura:**
+
 - Added to `docs/patterns/coderabbit-lessons.md`
 - Updated pre-commit hook
 - Added to Pre-Flight Checklist
@@ -72,29 +75,32 @@ const goodCode = ...
 
 ## ✅ Acciones Correctivas Implementadas
 
-| Acción | Impacto | Files Affected | Status |
-|--------|---------|----------------|--------|
-| Added ESLint rule: `prefer-const` | Prevents let/const issues | `.eslintrc.json` | ✅ Done |
-| Updated test template | Enforces TDD | `tests/templates/test.template.js` | ✅ Done |
-| Added pre-commit hook | Catches issues before push | `.husky/pre-commit` | ✅ Done |
-| Updated docs | Clarifies integration workflow | `docs/INTEGRATIONS.md` | ✅ Done |
+| Acción                            | Impacto                        | Files Affected                     | Status  |
+| --------------------------------- | ------------------------------ | ---------------------------------- | ------- |
+| Added ESLint rule: `prefer-const` | Prevents let/const issues      | `.eslintrc.json`                   | ✅ Done |
+| Updated test template             | Enforces TDD                   | `tests/templates/test.template.js` | ✅ Done |
+| Added pre-commit hook             | Catches issues before push     | `.husky/pre-commit`                | ✅ Done |
+| Updated docs                      | Clarifies integration workflow | `docs/INTEGRATIONS.md`             | ✅ Done |
 
 ---
 
 ## 📈 Mejoras de Proceso
 
 **Antes de este review:**
+
 - X% de comentarios eran patrones repetidos
 - No había checklist de prevención
 - ESLint config incompleto
 
 **Después de este review:**
+
 - Añadido X patrones a `coderabbit-lessons.md`
 - Creado Pre-Implementation Checklist
 - ESLint rules actualizadas
 - Pre-commit hooks configurados
 
 **Impacto Esperado:**
+
 - Reducción del X% en comentarios similares en próximas reviews
 - Tiempo de review reducido en X%
 
@@ -120,11 +126,13 @@ const goodCode = ...
 **Solo incluir si necesario para auditoría. La mayoría de reviews NO necesitan esta sección.**
 
 ### Round 1 (X comentarios)
+
 - **C1:** [Brief description] → Fixed in [commit]
 - **C2:** [Brief description] → Fixed in [commit]
 - ...
 
 ### Round 2 (X comentarios)
+
 - **C5:** [Brief description] → Fixed in [commit]
 - ...
 

@@ -32,34 +32,34 @@ async function withRetry(fn, options = {}) {
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
       const result = await fn();
-      
+
       if (attempt > 1) {
         logger.info(`${context} succeeded after ${attempt} attempts`);
       }
-      
+
       return result;
     } catch (error) {
       lastError = error;
-      
+
       // Check if we should retry
       if (attempt > maxRetries || !shouldRetry(error)) {
         logger.error(`${context} failed after ${attempt} attempts:`, error);
         throw error;
       }
-      
+
       logger.warn(`${context} failed (attempt ${attempt}/${maxRetries + 1}):`, {
         error: error.message,
         nextRetryIn: delay
       });
-      
+
       // Wait before retrying
       await sleep(delay);
-      
+
       // Calculate next delay with exponential backoff
       delay = Math.min(delay * backoffFactor, maxDelay);
     }
   }
-  
+
   throw lastError;
 }
 
@@ -69,7 +69,7 @@ async function withRetry(fn, options = {}) {
  * @returns {Promise<void>}
  */
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -84,33 +84,36 @@ function isRetryableError(error) {
   }
 
   // Network errors
-  if (error.code === 'ECONNREFUSED' || 
-      error.code === 'ETIMEDOUT' || 
-      error.code === 'ENOTFOUND' ||
-      error.code === 'ECONNRESET') {
+  if (
+    error.code === 'ECONNREFUSED' ||
+    error.code === 'ETIMEDOUT' ||
+    error.code === 'ENOTFOUND' ||
+    error.code === 'ECONNRESET'
+  ) {
     return true;
   }
-  
+
   // HTTP status codes that are retryable
   if (error.statusCode) {
     const retryableStatusCodes = [408, 429, 500, 502, 503, 504];
     return retryableStatusCodes.includes(error.statusCode);
   }
-  
+
   // Stripe-specific errors
-  if (error.type === 'StripeConnectionError' || 
-      error.type === 'StripeAPIError') {
+  if (error.type === 'StripeConnectionError' || error.type === 'StripeAPIError') {
     return true;
   }
-  
+
   // Database connection errors
-  if (error.message && (
-      error.message.includes('connection') ||
+  if (
+    error.message &&
+    (error.message.includes('connection') ||
       error.message.includes('timeout') ||
-      error.message.includes('ECONNREFUSED'))) {
+      error.message.includes('ECONNREFUSED'))
+  ) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -122,17 +125,14 @@ function isRetryableError(error) {
  */
 function createWebhookRetryHandler(handler, eventType) {
   return async (data) => {
-    return withRetry(
-      () => handler(data),
-      {
-        maxRetries: 3,
-        initialDelay: 1000,
-        maxDelay: 10000,
-        backoffFactor: 2,
-        shouldRetry: isRetryableError,
-        context: `Webhook ${eventType}`
-      }
-    );
+    return withRetry(() => handler(data), {
+      maxRetries: 3,
+      initialDelay: 1000,
+      maxDelay: 10000,
+      backoffFactor: 2,
+      shouldRetry: isRetryableError,
+      context: `Webhook ${eventType}`
+    });
   };
 }
 
@@ -143,17 +143,15 @@ function createWebhookRetryHandler(handler, eventType) {
  * @returns {Promise<Array>} Results of all operations
  */
 async function batchRetry(operations, options = {}) {
-  const results = await Promise.allSettled(
-    operations.map(op => withRetry(op, options))
-  );
-  
-  const successful = results.filter(r => r.status === 'fulfilled').map(r => r.value);
-  const failed = results.filter(r => r.status === 'rejected').map(r => r.reason);
-  
+  const results = await Promise.allSettled(operations.map((op) => withRetry(op, options)));
+
+  const successful = results.filter((r) => r.status === 'fulfilled').map((r) => r.value);
+  const failed = results.filter((r) => r.status === 'rejected').map((r) => r.reason);
+
   if (failed.length > 0) {
     logger.warn(`Batch operation completed with ${failed.length} failures:`, failed);
   }
-  
+
   return {
     successful,
     failed,

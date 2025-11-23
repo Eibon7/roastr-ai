@@ -59,7 +59,11 @@ test.describe('Authentication Flows', () => {
         const passwordField = page.locator('[name="password"]');
         const submitButton = page.locator('button[type="submit"]');
 
-        if (await usernameField.count() > 0 && await passwordField.count() > 0 && await submitButton.count() > 0) {
+        if (
+          (await usernameField.count()) > 0 &&
+          (await passwordField.count()) > 0 &&
+          (await submitButton.count()) > 0
+        ) {
           // Fill registration form
           await usernameField.fill(TEST_USER.username);
           await passwordField.fill(TEST_USER.password);
@@ -77,21 +81,27 @@ test.describe('Authentication Flows', () => {
           const isOnDashboard = newUrl.includes('/dashboard');
 
           // Check for success messages using separate locators
-          const hasSuccessClass = await page.locator('.success, .alert-success, [data-testid="success"]').count() > 0;
-          const hasSuccessText = await page.locator('text=success').count() > 0 ||
-                                await page.locator('text=created').count() > 0 ||
-                                await page.locator('text=exitosamente').count() > 0;
+          const hasSuccessClass =
+            (await page.locator('.success, .alert-success, [data-testid="success"]').count()) > 0;
+          const hasSuccessText =
+            (await page.locator('text=success').count()) > 0 ||
+            (await page.locator('text=created').count()) > 0 ||
+            (await page.locator('text=exitosamente').count()) > 0;
 
           // Check for error messages using separate locators
-          const hasErrorClass = await page.locator('.error, .alert-error, [data-testid="error"]').count() > 0;
-          const hasErrorText = await page.locator('text=error').count() > 0 ||
-                               await page.locator('text=failed').count() > 0;
+          const hasErrorClass =
+            (await page.locator('.error, .alert-error, [data-testid="error"]').count()) > 0;
+          const hasErrorText =
+            (await page.locator('text=error').count()) > 0 ||
+            (await page.locator('text=failed').count()) > 0;
 
           const hasSuccessMessage = hasSuccessClass || hasSuccessText;
           const hasErrorMessage = hasErrorClass || hasErrorText;
 
           // Test passes if we get any reasonable response
-          expect(isOnLogin || hasSuccessMessage || hasErrorMessage || isOnRegister || isOnDashboard).toBeTruthy();
+          expect(
+            isOnLogin || hasSuccessMessage || hasErrorMessage || isOnRegister || isOnDashboard
+          ).toBeTruthy();
         } else {
           // Form fields don't exist as expected, but we're on register page
           expect(true).toBeTruthy();
@@ -117,7 +127,8 @@ test.describe('Authentication Flows', () => {
       // Should either show error message or stay on same page
       await page.waitForTimeout(1000);
       const currentUrl = page.url();
-      const hasError = await page.locator('.error, .alert-error, [data-testid="error"]').count() > 0;
+      const hasError =
+        (await page.locator('.error, .alert-error, [data-testid="error"]').count()) > 0;
       const stayedOnRegister = currentUrl.includes('/register');
 
       expect(hasError || stayedOnRegister).toBeTruthy();
@@ -158,7 +169,8 @@ test.describe('Authentication Flows', () => {
 
       // Should show error or stay on register page
       const currentUrl = page.url();
-      const hasError = await page.locator('.error, .alert-error, [data-testid="error"]').count() > 0;
+      const hasError =
+        (await page.locator('.error, .alert-error, [data-testid="error"]').count()) > 0;
       const stayedOnRegister = currentUrl.includes('/register');
 
       expect(hasError || stayedOnRegister).toBeTruthy();
@@ -183,7 +195,8 @@ test.describe('Authentication Flows', () => {
       // Check if we're redirected or if there's an error
       const currentUrl = page.url();
       const isRedirected = !currentUrl.includes('/login');
-      const hasError = await page.locator('.error, .alert-error, [data-testid="error"]').count() > 0;
+      const hasError =
+        (await page.locator('.error, .alert-error, [data-testid="error"]').count()) > 0;
 
       // Either should be redirected or show an error (since test user may not exist)
       expect(isRedirected || hasError).toBeTruthy();
@@ -219,11 +232,13 @@ test.describe('Authentication Flows', () => {
       const currentUrl = page.url();
 
       // Check for error messages using separate locators
-      const hasErrorClass = await page.locator('.error, .alert-error, [data-testid="error"]').count() > 0;
-      const hasErrorText = await page.locator('text=error').count() > 0 ||
-                           await page.locator('text=incorrect').count() > 0 ||
-                           await page.locator('text=invalid').count() > 0 ||
-                           await page.locator('text=failed').count() > 0;
+      const hasErrorClass =
+        (await page.locator('.error, .alert-error, [data-testid="error"]').count()) > 0;
+      const hasErrorText =
+        (await page.locator('text=error').count()) > 0 ||
+        (await page.locator('text=incorrect').count()) > 0 ||
+        (await page.locator('text=invalid').count()) > 0 ||
+        (await page.locator('text=failed').count()) > 0;
 
       const hasError = hasErrorClass || hasErrorText;
       const stayedOnLogin = currentUrl.includes('/login');
@@ -245,7 +260,7 @@ test.describe('Authentication Flows', () => {
       // Look for toggle button - it might be an icon or button near password field
       const toggleButton = page.locator('button[type="button"]').first();
 
-      if (await toggleButton.count() > 0) {
+      if ((await toggleButton.count()) > 0) {
         // Click toggle button to show password
         await toggleButton.click();
         await page.waitForTimeout(500);
@@ -300,7 +315,7 @@ test.describe('Authentication Flows', () => {
       // Look for forgot password link
       const forgotPasswordLink = page.locator('text=¿Olvidaste tu contraseña?');
 
-      if (await forgotPasswordLink.count() > 0) {
+      if ((await forgotPasswordLink.count()) > 0) {
         // Click forgot password link
         await forgotPasswordLink.click();
         await page.waitForTimeout(1000);
@@ -312,7 +327,7 @@ test.describe('Authentication Flows', () => {
         if (isOnResetPage) {
           // Fill email and submit if on reset page
           const emailInput = page.locator('[name="email"], [name="username"]');
-          if (await emailInput.count() > 0) {
+          if ((await emailInput.count()) > 0) {
             await emailInput.fill(TEST_USER.username);
             await page.click('button[type="submit"]');
             await page.waitForTimeout(1000);
@@ -333,9 +348,11 @@ test.describe('Authentication Flows', () => {
       await page.waitForLoadState('networkidle');
 
       // Look for register link
-      const registerLink = page.locator('text=Crear cuenta, text=Create account, text=Register, a[href="/register"]');
+      const registerLink = page.locator(
+        'text=Crear cuenta, text=Create account, text=Register, a[href="/register"]'
+      );
 
-      if (await registerLink.count() > 0) {
+      if ((await registerLink.count()) > 0) {
         await registerLink.first().click();
         await page.waitForTimeout(1000);
 
@@ -343,9 +360,11 @@ test.describe('Authentication Flows', () => {
         expect(currentUrl.includes('/register')).toBeTruthy();
 
         // Look for login link on register page
-        const loginLink = page.locator('text=Inicia sesión, text=Login, text=Sign in, a[href="/login"]');
+        const loginLink = page.locator(
+          'text=Inicia sesión, text=Login, text=Sign in, a[href="/login"]'
+        );
 
-        if (await loginLink.count() > 0) {
+        if ((await loginLink.count()) > 0) {
           await loginLink.first().click();
           await page.waitForTimeout(1000);
 
@@ -376,7 +395,7 @@ test.describe('Authentication Flows', () => {
 
       let foundBenefits = false;
       for (const text of benefitsTexts) {
-        if (await page.locator(`text=${text}`).count() > 0) {
+        if ((await page.locator(`text=${text}`).count()) > 0) {
           foundBenefits = true;
           break;
         }
@@ -444,7 +463,7 @@ test.describe('Authentication Flows', () => {
 
       let hasLoadingIndicator = false;
       for (const indicator of loadingIndicators) {
-        if (await page.locator(indicator).count() > 0) {
+        if ((await page.locator(indicator).count()) > 0) {
           hasLoadingIndicator = true;
           break;
         }
@@ -461,10 +480,16 @@ test.describe('Authentication Flows', () => {
       // Check if page changed or has any response
       const currentUrl = page.url();
       const pageChanged = !currentUrl.includes('/login');
-      const hasAnyResponse = await page.locator('.error, .alert, .success, .message').count() > 0;
+      const hasAnyResponse = (await page.locator('.error, .alert, .success, .message').count()) > 0;
 
       // Test passes if we see loading indicator, disabled button, page change, or any response
-      expect(hasLoadingIndicator || isButtonDisabled || pageChanged || hasAnyResponse || await submitButton.count() > 0).toBeTruthy();
+      expect(
+        hasLoadingIndicator ||
+          isButtonDisabled ||
+          pageChanged ||
+          hasAnyResponse ||
+          (await submitButton.count()) > 0
+      ).toBeTruthy();
     });
   });
 
@@ -496,15 +521,17 @@ test.describe('Authentication Flows', () => {
       const currentUrl = page.url();
 
       // Check for error messages using separate locators
-      const hasErrorClass = await page.locator('.error, .alert, .alert-error, [data-testid="error"]').count() > 0;
-      const hasErrorText = await page.locator('text=error').count() > 0 ||
-                           await page.locator('text=failed').count() > 0 ||
-                           await page.locator('text=invalid').count() > 0;
+      const hasErrorClass =
+        (await page.locator('.error, .alert, .alert-error, [data-testid="error"]').count()) > 0;
+      const hasErrorText =
+        (await page.locator('text=error').count()) > 0 ||
+        (await page.locator('text=failed').count()) > 0 ||
+        (await page.locator('text=invalid').count()) > 0;
 
       const hasError = hasErrorClass || hasErrorText;
       const stayedOnLogin = currentUrl.includes('/login');
       const redirectedSomewhere = !currentUrl.includes('/login');
-      const hasAnyMessage = await page.locator('.message, .notification, .toast').count() > 0;
+      const hasAnyMessage = (await page.locator('.message, .notification, .toast').count()) > 0;
 
       // Test passes if we get any reasonable response
       expect(hasError || stayedOnLogin || redirectedSomewhere || hasAnyMessage).toBeTruthy();
@@ -528,8 +555,12 @@ test.describe('Authentication Flows', () => {
       const passwordLabel = page.locator('label[for="password"]');
 
       // Either should have labels or be accessible
-      const hasUsernameLabel = await usernameLabel.count() > 0 || await usernameField.getAttribute('aria-label') !== null;
-      const hasPasswordLabel = await passwordLabel.count() > 0 || await passwordField.getAttribute('aria-label') !== null;
+      const hasUsernameLabel =
+        (await usernameLabel.count()) > 0 ||
+        (await usernameField.getAttribute('aria-label')) !== null;
+      const hasPasswordLabel =
+        (await passwordLabel.count()) > 0 ||
+        (await passwordField.getAttribute('aria-label')) !== null;
 
       expect(hasUsernameLabel || hasPasswordLabel).toBeTruthy();
     });

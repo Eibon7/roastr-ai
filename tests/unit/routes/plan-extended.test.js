@@ -1,6 +1,6 @@
 /**
  * Plan Routes Extended Tests
- * 
+ *
  * Comprehensive tests for plan management routes including available plans,
  * current user plan, plan selection, and feature comparison
  */
@@ -24,7 +24,12 @@ jest.mock('../../../src/config/flags', () => ({
   }
 }));
 
-const { router, hasFeatureAccess, getUserPlan, AVAILABLE_PLANS } = require('../../../src/routes/plan');
+const {
+  router,
+  hasFeatureAccess,
+  getUserPlan,
+  AVAILABLE_PLANS
+} = require('../../../src/routes/plan');
 
 // Create test app
 const app = express();
@@ -41,14 +46,12 @@ describe('Plan Routes', () => {
 
   describe('GET /api/plan/available', () => {
     test('should return all available plans', async () => {
-      const response = await request(app)
-        .get('/api/plan/available')
-        .expect(200);
+      const response = await request(app).get('/api/plan/available').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.plans).toHaveLength(4);
 
-      const planIds = response.body.data.plans.map(p => p.id);
+      const planIds = response.body.data.plans.map((p) => p.id);
       expect(planIds).toContain('free');
       expect(planIds).toContain('starter');
       expect(planIds).toContain('pro');
@@ -56,11 +59,9 @@ describe('Plan Routes', () => {
     });
 
     test('should include correct plan structure', async () => {
-      const response = await request(app)
-        .get('/api/plan/available')
-        .expect(200);
+      const response = await request(app).get('/api/plan/available').expect(200);
 
-      const freePlan = response.body.data.plans.find(p => p.id === 'free');
+      const freePlan = response.body.data.plans.find((p) => p.id === 'free');
       expect(freePlan).toMatchObject({
         id: 'free',
         name: 'Free',
@@ -74,7 +75,7 @@ describe('Plan Routes', () => {
         }
       });
 
-      const proPlan = response.body.data.plans.find(p => p.id === 'pro');
+      const proPlan = response.body.data.plans.find((p) => p.id === 'pro');
       expect(proPlan).toMatchObject({
         id: 'pro',
         name: 'Pro',
@@ -88,7 +89,7 @@ describe('Plan Routes', () => {
         }
       });
 
-      const creatorPlan = response.body.data.plans.find(p => p.id === 'creator_plus');
+      const creatorPlan = response.body.data.plans.find((p) => p.id === 'creator_plus');
       expect(creatorPlan).toMatchObject({
         id: 'creator_plus',
         name: 'Creator+',
@@ -106,9 +107,7 @@ describe('Plan Routes', () => {
 
     test('should handle errors gracefully', async () => {
       // Test that the route exists and handles normal operation
-      const response = await request(app)
-        .get('/api/plan/available')
-        .expect(200);
+      const response = await request(app).get('/api/plan/available').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
@@ -117,9 +116,7 @@ describe('Plan Routes', () => {
 
   describe('GET /api/plan/current', () => {
     test('should return default free plan for new user', async () => {
-      const response = await request(app)
-        .get('/api/plan/current')
-        .expect(200);
+      const response = await request(app).get('/api/plan/current').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.plan).toBe('free');
@@ -129,15 +126,10 @@ describe('Plan Routes', () => {
 
     test('should return user plan if previously selected', async () => {
       // First select a pro plan
-      await request(app)
-        .post('/api/plan/select')
-        .send({ plan: 'pro' })
-        .expect(200);
+      await request(app).post('/api/plan/select').send({ plan: 'pro' }).expect(200);
 
       // Then get current plan
-      const response = await request(app)
-        .get('/api/plan/current')
-        .expect(200);
+      const response = await request(app).get('/api/plan/current').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.plan).toBe('pro');
@@ -147,15 +139,10 @@ describe('Plan Routes', () => {
 
     test('should return creator plus plan with style profile access', async () => {
       // Select creator plus plan
-      await request(app)
-        .post('/api/plan/select')
-        .send({ plan: 'creator_plus' })
-        .expect(200);
+      await request(app).post('/api/plan/select').send({ plan: 'creator_plus' }).expect(200);
 
       // Get current plan
-      const response = await request(app)
-        .get('/api/plan/current')
-        .expect(200);
+      const response = await request(app).get('/api/plan/current').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.plan).toBe('creator_plus');
@@ -167,31 +154,27 @@ describe('Plan Routes', () => {
       // Create app without auth middleware
       const noAuthApp = express();
       noAuthApp.use(express.json());
-      
+
       // Mock auth middleware that fails
       const authMiddleware = (req, res, next) => {
         res.status(401).json({ success: false, error: 'Unauthorized' });
       };
-      
+
       const noAuthRouter = express.Router();
       noAuthRouter.get('/current', authMiddleware, (req, res) => {
         res.json({ success: true });
       });
-      
+
       noAuthApp.use('/api/plan', noAuthRouter);
 
-      const response = await request(noAuthApp)
-        .get('/api/plan/current')
-        .expect(401);
+      const response = await request(noAuthApp).get('/api/plan/current').expect(401);
 
       expect(response.body.success).toBe(false);
     });
 
     test('should handle errors gracefully', async () => {
       // Test that the route exists and handles normal operation
-      const response = await request(app)
-        .get('/api/plan/current')
-        .expect(200);
+      const response = await request(app).get('/api/plan/current').expect(200);
 
       expect(response.body.success).toBe(true);
     });
@@ -211,30 +194,21 @@ describe('Plan Routes', () => {
     });
 
     test('should reject request without plan', async () => {
-      const response = await request(app)
-        .post('/api/plan/select')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/api/plan/select').send({}).expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Plan is required and must be a string');
     });
 
     test('should reject request with null plan', async () => {
-      const response = await request(app)
-        .post('/api/plan/select')
-        .send({ plan: null })
-        .expect(400);
+      const response = await request(app).post('/api/plan/select').send({ plan: null }).expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Plan is required and must be a string');
     });
 
     test('should reject request with non-string plan', async () => {
-      const response = await request(app)
-        .post('/api/plan/select')
-        .send({ plan: 123 })
-        .expect(400);
+      const response = await request(app).post('/api/plan/select').send({ plan: 123 }).expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Plan is required and must be a string');
@@ -254,7 +228,7 @@ describe('Plan Routes', () => {
     test('should select all available plans', async () => {
       // Test selecting each plan
       const plans = ['free', 'starter', 'pro', 'creator_plus'];
-      
+
       for (const planId of plans) {
         const response = await request(app)
           .post('/api/plan/select')
@@ -271,16 +245,16 @@ describe('Plan Routes', () => {
       // Create app without auth middleware
       const noAuthApp = express();
       noAuthApp.use(express.json());
-      
+
       const authMiddleware = (req, res, next) => {
         res.status(401).json({ success: false, error: 'Unauthorized' });
       };
-      
+
       const noAuthRouter = express.Router();
       noAuthRouter.post('/select', authMiddleware, (req, res) => {
         res.json({ success: true });
       });
-      
+
       noAuthApp.use('/api/plan', noAuthRouter);
 
       const response = await request(noAuthApp)
@@ -305,19 +279,17 @@ describe('Plan Routes', () => {
 
   describe('GET /api/plan/features', () => {
     test('should return feature comparison for all plans', async () => {
-      const response = await request(app)
-        .get('/api/plan/features')
-        .expect(200);
+      const response = await request(app).get('/api/plan/features').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.comparison).toHaveLength(4);
       expect(response.body.data.styleProfileAvailable).toBeDefined();
 
       const comparison = response.body.data.comparison;
-      const freePlan = comparison.find(p => p.id === 'free');
-      const starterPlan = comparison.find(p => p.id === 'starter');
-      const proPlan = comparison.find(p => p.id === 'pro');
-      const creatorPlan = comparison.find(p => p.id === 'creator_plus');
+      const freePlan = comparison.find((p) => p.id === 'free');
+      const starterPlan = comparison.find((p) => p.id === 'starter');
+      const proPlan = comparison.find((p) => p.id === 'pro');
+      const creatorPlan = comparison.find((p) => p.id === 'creator_plus');
 
       expect(freePlan).toMatchObject({
         id: 'free',
@@ -353,20 +325,16 @@ describe('Plan Routes', () => {
 
     test('should respect ENABLE_STYLE_PROFILE environment variable', async () => {
       const originalEnv = process.env.ENABLE_STYLE_PROFILE;
-      
+
       // Test with style profile enabled
       process.env.ENABLE_STYLE_PROFILE = 'true';
-      let response = await request(app)
-        .get('/api/plan/features')
-        .expect(200);
+      let response = await request(app).get('/api/plan/features').expect(200);
 
       expect(response.body.data.styleProfileAvailable).toBe(true);
 
       // Test with style profile disabled
       process.env.ENABLE_STYLE_PROFILE = 'false';
-      response = await request(app)
-        .get('/api/plan/features')
-        .expect(200);
+      response = await request(app).get('/api/plan/features').expect(200);
 
       expect(response.body.data.styleProfileAvailable).toBe(false);
 
@@ -380,9 +348,7 @@ describe('Plan Routes', () => {
 
     test('should handle errors gracefully', async () => {
       // Test that the route exists and handles normal operation
-      const response = await request(app)
-        .get('/api/plan/features')
-        .expect(200);
+      const response = await request(app).get('/api/plan/features').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
@@ -400,7 +366,7 @@ describe('Plan Routes', () => {
         // The helper functions work with the same userPlans map
         // We need to simulate a user having a plan by calling the API first
         // Since the map is internal, we test through the behavior
-        
+
         // For testing, we can check the default behavior
         const freeFeatureAccess = hasFeatureAccess('test-user', 'roastsPerMonth');
         // This will check if the feature exists, not its value
@@ -442,7 +408,7 @@ describe('Plan Routes', () => {
       });
 
       test('should have consistent structure across plans', () => {
-        Object.values(AVAILABLE_PLANS).forEach(plan => {
+        Object.values(AVAILABLE_PLANS).forEach((plan) => {
           expect(plan).toHaveProperty('id');
           expect(plan).toHaveProperty('name');
           expect(plan).toHaveProperty('price');
@@ -453,7 +419,7 @@ describe('Plan Routes', () => {
       });
 
       test('should have features with correct types', () => {
-        Object.values(AVAILABLE_PLANS).forEach(plan => {
+        Object.values(AVAILABLE_PLANS).forEach((plan) => {
           const features = plan.features;
           expect(typeof features.roastsPerMonth).toBe('number');
           expect(typeof features.platformConnections).toBe('number');
@@ -468,14 +434,10 @@ describe('Plan Routes', () => {
   describe('Plan Integration Tests', () => {
     test('should maintain plan consistency across endpoints', async () => {
       // Get available plans
-      const availableResponse = await request(app)
-        .get('/api/plan/available')
-        .expect(200);
+      const availableResponse = await request(app).get('/api/plan/available').expect(200);
 
       // Get features
-      const featuresResponse = await request(app)
-        .get('/api/plan/features')
-        .expect(200);
+      const featuresResponse = await request(app).get('/api/plan/features').expect(200);
 
       // Plans should be consistent between endpoints
       const availablePlans = availableResponse.body.data.plans;
@@ -483,8 +445,8 @@ describe('Plan Routes', () => {
 
       expect(availablePlans).toHaveLength(featureComparison.length);
 
-      availablePlans.forEach(plan => {
-        const featurePlan = featureComparison.find(fp => fp.id === plan.id);
+      availablePlans.forEach((plan) => {
+        const featurePlan = featureComparison.find((fp) => fp.id === plan.id);
         expect(featurePlan).toBeDefined();
         expect(featurePlan.name).toBe(plan.name);
         expect(featurePlan.price).toBe(plan.price);
@@ -493,16 +455,12 @@ describe('Plan Routes', () => {
 
     test('should handle complete user journey', async () => {
       // 1. Get available plans
-      const availableResponse = await request(app)
-        .get('/api/plan/available')
-        .expect(200);
+      const availableResponse = await request(app).get('/api/plan/available').expect(200);
 
       expect(availableResponse.body.success).toBe(true);
 
       // 2. Check initial plan (should be free)
-      let currentResponse = await request(app)
-        .get('/api/plan/current')
-        .expect(200);
+      let currentResponse = await request(app).get('/api/plan/current').expect(200);
 
       expect(currentResponse.body.data.plan).toBe('free');
 
@@ -515,53 +473,34 @@ describe('Plan Routes', () => {
       expect(selectResponse.body.success).toBe(true);
 
       // 4. Verify plan was selected
-      currentResponse = await request(app)
-        .get('/api/plan/current')
-        .expect(200);
+      currentResponse = await request(app).get('/api/plan/current').expect(200);
 
       expect(currentResponse.body.data.plan).toBe('pro');
 
       // 5. Get features to verify access
-      const featuresResponse = await request(app)
-        .get('/api/plan/features')
-        .expect(200);
+      const featuresResponse = await request(app).get('/api/plan/features').expect(200);
 
       expect(featuresResponse.body.success).toBe(true);
     });
 
     test('should handle plan upgrade flow', async () => {
       // Reset to free plan first (in case other tests changed it)
-      await request(app)
-        .post('/api/plan/select')
-        .send({ plan: 'free' })
-        .expect(200);
+      await request(app).post('/api/plan/select').send({ plan: 'free' }).expect(200);
 
       // Start with free plan
-      let currentResponse = await request(app)
-        .get('/api/plan/current')
-        .expect(200);
+      let currentResponse = await request(app).get('/api/plan/current').expect(200);
       expect(currentResponse.body.data.plan).toBe('free');
 
       // Upgrade to pro
-      await request(app)
-        .post('/api/plan/select')
-        .send({ plan: 'pro' })
-        .expect(200);
+      await request(app).post('/api/plan/select').send({ plan: 'pro' }).expect(200);
 
-      currentResponse = await request(app)
-        .get('/api/plan/current')
-        .expect(200);
+      currentResponse = await request(app).get('/api/plan/current').expect(200);
       expect(currentResponse.body.data.plan).toBe('pro');
 
       // Upgrade to creator plus
-      await request(app)
-        .post('/api/plan/select')
-        .send({ plan: 'creator_plus' })
-        .expect(200);
+      await request(app).post('/api/plan/select').send({ plan: 'creator_plus' }).expect(200);
 
-      currentResponse = await request(app)
-        .get('/api/plan/current')
-        .expect(200);
+      currentResponse = await request(app).get('/api/plan/current').expect(200);
       expect(currentResponse.body.data.plan).toBe('creator_plus');
       expect(currentResponse.body.data.canAccessStyleProfile).toBe(true);
     });

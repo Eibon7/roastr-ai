@@ -8,12 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  AlertTriangle, 
-  RefreshCw, 
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertTriangle,
+  RefreshCw,
   Settings,
   ExternalLink,
   Loader2,
@@ -24,7 +24,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
+  DropdownMenuSeparator
 } from '../ui/dropdown-menu';
 import { useToast } from '../../hooks/use-toast';
 
@@ -81,14 +81,14 @@ const PLATFORM_CONFIG = {
   }
 };
 
-const IntegrationStatusCard = ({ 
-  connection, 
-  onConnect, 
-  onDisconnect, 
-  onRefresh, 
+const IntegrationStatusCard = ({
+  connection,
+  onConnect,
+  onDisconnect,
+  onRefresh,
   onConfigure,
   compact = false,
-  showActions = true 
+  showActions = true
 }) => {
   const [actionLoading, setActionLoading] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
@@ -122,7 +122,7 @@ const IntegrationStatusCard = ({
       toast({
         title: `${actionName} Failed`,
         description: error.message || `Failed to ${actionName.toLowerCase()}`,
-        variant: 'destructive',
+        variant: 'destructive'
       });
     } finally {
       setActionLoading(null);
@@ -203,7 +203,9 @@ const IntegrationStatusCard = ({
   // Compact view for dashboard widgets
   if (compact) {
     return (
-      <div className={`flex items-center justify-between p-3 rounded-lg border ${statusConfig.borderColor} ${statusConfig.bgColor}`}>
+      <div
+        className={`flex items-center justify-between p-3 rounded-lg border ${statusConfig.borderColor} ${statusConfig.bgColor}`}
+      >
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white">
             <span className="text-lg">{config.icon}</span>
@@ -222,7 +224,7 @@ const IntegrationStatusCard = ({
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
           {showActions && connection.connected && (
@@ -246,7 +248,7 @@ const IntegrationStatusCard = ({
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => handleAction(onDisconnect, 'Disconnect')}
                   className="text-destructive"
                 >
@@ -267,7 +269,7 @@ const IntegrationStatusCard = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div 
+            <div
               className="flex items-center justify-center w-12 h-12 rounded-full"
               style={{ backgroundColor: config.color + '20' }}
             >
@@ -293,7 +295,7 @@ const IntegrationStatusCard = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {connection.status === 'expired' && (
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => handleAction(onRefresh, 'Refresh')}
                     disabled={actionLoading === 'Refresh'}
                   >
@@ -314,7 +316,7 @@ const IntegrationStatusCard = ({
                 {connection.connected && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => handleAction(onDisconnect, 'Disconnect')}
                       disabled={actionLoading === 'Disconnect'}
                       className="text-destructive"
@@ -341,17 +343,21 @@ const IntegrationStatusCard = ({
             {/* User Info */}
             <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
               <Avatar className="w-8 h-8">
-                <AvatarImage 
-                  src={connection.user_info.profile_image_url || connection.user_info.avatar} 
+                <AvatarImage
+                  src={connection.user_info.profile_image_url || connection.user_info.avatar}
                   alt={connection.user_info.name}
                 />
                 <AvatarFallback>
-                  {(connection.user_info.name || connection.user_info.username || 'U').charAt(0).toUpperCase()}
+                  {(connection.user_info.name || connection.user_info.username || 'U')
+                    .charAt(0)
+                    .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm truncate">
-                  {connection.user_info.name || connection.user_info.display_name || 'Connected User'}
+                  {connection.user_info.name ||
+                    connection.user_info.display_name ||
+                    'Connected User'}
                 </div>
                 {connection.user_info.username && (
                   <div className="text-xs text-muted-foreground truncate">
@@ -369,12 +375,14 @@ const IntegrationStatusCard = ({
               </div>
               <div>
                 <div className="text-muted-foreground">Last Active</div>
-                <div className="font-medium">{formatRelativeTime(connection.lastRefreshed || connection.connectedAt)}</div>
+                <div className="font-medium">
+                  {formatRelativeTime(connection.lastRefreshed || connection.connectedAt)}
+                </div>
               </div>
             </div>
 
             {/* Token Expiry Warning */}
-            {connection.expires_at && Date.now() > (connection.expires_at - (60 * 60 * 1000)) && (
+            {connection.expires_at && Date.now() > connection.expires_at - 60 * 60 * 1000 && (
               <div className="flex items-center gap-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs">
                 <Clock className="w-3 h-3 text-orange-600" />
                 <span className="text-orange-800">
@@ -388,12 +396,10 @@ const IntegrationStatusCard = ({
             <div className={`text-4xl mb-2 ${statusConfig.color}`}>
               <StatusIcon className="w-8 h-8 mx-auto" />
             </div>
-            <p className="text-sm text-muted-foreground mb-3">
-              {statusConfig.description}
-            </p>
-            
+            <p className="text-sm text-muted-foreground mb-3">{statusConfig.description}</p>
+
             {showActions && !connection.connected && (
-              <Button 
+              <Button
                 onClick={() => handleAction(onConnect, 'Connect')}
                 disabled={actionLoading === 'Connect'}
                 className="w-full"
@@ -414,8 +420,8 @@ const IntegrationStatusCard = ({
         {showActions && connection.connected && (
           <div className="flex gap-2 mt-4">
             {connection.status === 'expired' && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => handleAction(onRefresh, 'Refresh')}
                 disabled={actionLoading === 'Refresh'}
@@ -429,7 +435,7 @@ const IntegrationStatusCard = ({
                 Refresh
               </Button>
             )}
-            
+
             {connection.status === 'connected' && (
               <Button variant="outline" size="sm" className="flex-1">
                 <Zap className="w-4 h-4 mr-1" />

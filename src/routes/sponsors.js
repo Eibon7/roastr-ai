@@ -38,7 +38,7 @@ const rateLimit = require('express-rate-limit');
  */
 function createSponsorsRouter(services = {}) {
   const router = express.Router();
-  
+
   // Use injected services or create default instances
   const sponsorService = services.sponsorService || new SponsorService();
   const costControl = services.costControl || new CostControl();
@@ -64,26 +64,26 @@ function createSponsorsRouter(services = {}) {
   // ============================================================================
 
   /**
-  * POST /api/sponsors
-  * Create a new sponsor
-  *
-  * Body:
-  * {
-  *   "name": "Nike",
-  *   "url": "https://www.nike.com", // optional
-  *   "tags": ["sportswear", "sneakers"], // optional
-  *   "severity": "high", // low, medium, high, zero_tolerance (default: medium)
-  *   "tone": "professional", // normal, professional, light_humor, aggressive_irony (default: normal)
-  *   "priority": 1, // 1 (high) to 5 (low), default 3
-  *   "actions": ["hide_comment", "def_roast"] // optional array
-  * }
-  *
-  * Response 201:
-  * {
-  *   "success": true,
-  *   "data": { id, user_id, name, url, tags, severity, tone, priority, actions, active, created_at, updated_at }
-  * }
-  */
+   * POST /api/sponsors
+   * Create a new sponsor
+   *
+   * Body:
+   * {
+   *   "name": "Nike",
+   *   "url": "https://www.nike.com", // optional
+   *   "tags": ["sportswear", "sneakers"], // optional
+   *   "severity": "high", // low, medium, high, zero_tolerance (default: medium)
+   *   "tone": "professional", // normal, professional, light_humor, aggressive_irony (default: normal)
+   *   "priority": 1, // 1 (high) to 5 (low), default 3
+   *   "actions": ["hide_comment", "def_roast"] // optional array
+   * }
+   *
+   * Response 201:
+   * {
+   *   "success": true,
+   *   "data": { id, user_id, name, url, tags, severity, tone, priority, actions, active, created_at, updated_at }
+   * }
+   */
   router.post('/', async (req, res) => {
     try {
       const userId = req.user.id;
@@ -95,7 +95,6 @@ function createSponsorsRouter(services = {}) {
         success: true,
         data: sponsor
       });
-
     } catch (error) {
       logger.error('Failed to create sponsor', {
         userId: req.user.id,
@@ -127,19 +126,19 @@ function createSponsorsRouter(services = {}) {
   });
 
   /**
-  * GET /api/sponsors
-  * List all sponsors for authenticated user
-  *
-  * Query params:
-  * - includeInactive (boolean): Include inactive sponsors (default: false)
-  *
-  * Response 200:
-  * {
-  *   "success": true,
-  *   "data": [ ...sponsors ],
-  *   "count": 5
-  * }
-  */
+   * GET /api/sponsors
+   * List all sponsors for authenticated user
+   *
+   * Query params:
+   * - includeInactive (boolean): Include inactive sponsors (default: false)
+   *
+   * Response 200:
+   * {
+   *   "success": true,
+   *   "data": [ ...sponsors ],
+   *   "count": 5
+   * }
+   */
   router.get('/', async (req, res) => {
     try {
       const userId = req.user.id;
@@ -152,7 +151,6 @@ function createSponsorsRouter(services = {}) {
         data: sponsors,
         count: sponsors.length
       });
-
     } catch (error) {
       logger.error('Failed to list sponsors', {
         userId: req.user.id,
@@ -168,17 +166,17 @@ function createSponsorsRouter(services = {}) {
   });
 
   /**
-  * GET /api/sponsors/:id
-  * Get a single sponsor by ID
-  *
-  * Response 200:
-  * {
-  *   "success": true,
-  *   "data": { ...sponsor }
-  * }
-  *
-  * Response 404: Sponsor not found
-  */
+   * GET /api/sponsors/:id
+   * Get a single sponsor by ID
+   *
+   * Response 200:
+   * {
+   *   "success": true,
+   *   "data": { ...sponsor }
+   * }
+   *
+   * Response 404: Sponsor not found
+   */
   router.get('/:id', async (req, res) => {
     try {
       const userId = req.user.id;
@@ -198,7 +196,6 @@ function createSponsorsRouter(services = {}) {
         success: true,
         data: sponsor
       });
-
     } catch (error) {
       logger.error('Failed to get sponsor', {
         userId: req.user.id,
@@ -215,19 +212,19 @@ function createSponsorsRouter(services = {}) {
   });
 
   /**
-  * PUT /api/sponsors/:id
-  * Update a sponsor
-  *
-  * Body: Partial sponsor object (any of name, url, tags, severity, tone, priority, actions, active)
-  *
-  * Response 200:
-  * {
-  *   "success": true,
-  *   "data": { ...updated sponsor }
-  * }
-  *
-  * Response 404: Sponsor not found
-  */
+   * PUT /api/sponsors/:id
+   * Update a sponsor
+   *
+   * Body: Partial sponsor object (any of name, url, tags, severity, tone, priority, actions, active)
+   *
+   * Response 200:
+   * {
+   *   "success": true,
+   *   "data": { ...updated sponsor }
+   * }
+   *
+   * Response 404: Sponsor not found
+   */
   router.put('/:id', async (req, res) => {
     try {
       const userId = req.user.id;
@@ -248,7 +245,6 @@ function createSponsorsRouter(services = {}) {
         success: true,
         data: sponsor
       });
-
     } catch (error) {
       logger.error('Failed to update sponsor', {
         userId: req.user.id,
@@ -273,17 +269,17 @@ function createSponsorsRouter(services = {}) {
   });
 
   /**
-  * DELETE /api/sponsors/:id
-  * Delete a sponsor
-  *
-  * Response 200:
-  * {
-  *   "success": true,
-  *   "message": "Sponsor deleted successfully"
-  * }
-  *
-  * Response 404: Sponsor not found
-  */
+   * DELETE /api/sponsors/:id
+   * Delete a sponsor
+   *
+   * Response 200:
+   * {
+   *   "success": true,
+   *   "message": "Sponsor deleted successfully"
+   * }
+   *
+   * Response 404: Sponsor not found
+   */
   router.delete('/:id', async (req, res) => {
     try {
       const userId = req.user.id;
@@ -295,7 +291,6 @@ function createSponsorsRouter(services = {}) {
         success: true,
         message: 'Sponsor deleted successfully'
       });
-
     } catch (error) {
       logger.error('Failed to delete sponsor', {
         userId: req.user.id,
@@ -320,30 +315,30 @@ function createSponsorsRouter(services = {}) {
   });
 
   /**
-  * POST /api/sponsors/extract-tags
-  * Extract relevant tags from a sponsor URL using OpenAI
-  *
-  * Rate limited: 5 requests/min per user
-  * Cost tracked: 2 cents per extraction (via CostControl)
-  *
-  * Body:
-  * {
-  *   "url": "https://www.nike.com"
-  * }
-  *
-  * Response 200:
-  * {
-  *   "success": true,
-  *   "data": {
-  *     "url": "https://www.nike.com",
-  *     "tags": ["sportswear", "athletics", "sneakers", "apparel", "sports"]
-  *   }
-  * }
-  *
-  * Response 400: Invalid URL or missing URL
-  * Response 429: Rate limit exceeded
-  * Response 500: OpenAI error or internal error
-  */
+   * POST /api/sponsors/extract-tags
+   * Extract relevant tags from a sponsor URL using OpenAI
+   *
+   * Rate limited: 5 requests/min per user
+   * Cost tracked: 2 cents per extraction (via CostControl)
+   *
+   * Body:
+   * {
+   *   "url": "https://www.nike.com"
+   * }
+   *
+   * Response 200:
+   * {
+   *   "success": true,
+   *   "data": {
+   *     "url": "https://www.nike.com",
+   *     "tags": ["sportswear", "athletics", "sneakers", "apparel", "sports"]
+   *   }
+   * }
+   *
+   * Response 400: Invalid URL or missing URL
+   * Response 429: Rate limit exceeded
+   * Response 500: OpenAI error or internal error
+   */
   router.post('/extract-tags', tagExtractionLimiter, async (req, res) => {
     try {
       const userId = req.user.id;
@@ -370,7 +365,6 @@ function createSponsorsRouter(services = {}) {
           tags
         }
       });
-
     } catch (error) {
       logger.error('Failed to extract tags from URL', {
         userId: req.user.id,

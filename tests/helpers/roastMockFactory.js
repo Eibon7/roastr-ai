@@ -29,7 +29,7 @@ function createRoastSupabaseMock(options = {}) {
   const mockData = {
     userSubscriptions: [...(options.userSubscriptions || [])],
     roastUsage: [...(options.roastUsage || [])],
-    analysisUsage: [...(options.analysisUsage || [])]  // Issue #680: Support analysis_usage table
+    analysisUsage: [...(options.analysisUsage || [])] // Issue #680: Support analysis_usage table
   };
 
   const enableLogging = options.enableLogging || false;
@@ -83,8 +83,8 @@ function createRoastSupabaseMock(options = {}) {
         const data = tableKey && mockData[tableKey] ? mockData[tableKey] : [];
 
         // Apply filters to find matching record
-        const match = data.find(row => {
-          return Object.keys(filters).every(key => {
+        const match = data.find((row) => {
+          return Object.keys(filters).every((key) => {
             // Handle gte filters separately
             if (key.endsWith('_gte')) {
               const actualKey = key.replace('_gte', '');
@@ -138,9 +138,9 @@ function createRoastSupabaseMock(options = {}) {
    */
   const getTableKey = (tableName) => {
     const tableMap = {
-      'user_subscriptions': 'userSubscriptions',
-      'roast_usage': 'roastUsage',
-      'analysis_usage': 'analysisUsage'  // Issue #680: Support analysis_usage
+      user_subscriptions: 'userSubscriptions',
+      roast_usage: 'roastUsage',
+      analysis_usage: 'analysisUsage' // Issue #680: Support analysis_usage
     };
     return tableMap[tableName];
   };
@@ -202,11 +202,11 @@ function createRoastSupabaseMock(options = {}) {
      * Verify a table was queried
      */
     tableQueried: (tableName) => {
-      const fromOps = operations.from.filter(op => op.table === tableName);
+      const fromOps = operations.from.filter((op) => op.table === tableName);
       if (fromOps.length === 0) {
         throw new Error(
           `Expected table "${tableName}" to be queried, but found no from() calls.\n` +
-          `Tables queried: ${operations.from.map(op => op.table).join(', ')}`
+            `Tables queried: ${operations.from.map((op) => op.table).join(', ')}`
         );
       }
       return true;
@@ -216,7 +216,7 @@ function createRoastSupabaseMock(options = {}) {
      * Verify data was inserted into a table
      */
     dataInserted: (tableName, expectedFields = {}) => {
-      const insertOps = operations.insert.filter(op => op.table === tableName);
+      const insertOps = operations.insert.filter((op) => op.table === tableName);
       if (insertOps.length === 0) {
         throw new Error(
           `Expected data to be inserted into "${tableName}", but found no insert() calls`
@@ -224,15 +224,15 @@ function createRoastSupabaseMock(options = {}) {
       }
 
       // Find an insert that matches expected fields
-      const matchingInsert = insertOps.find(op => {
+      const matchingInsert = insertOps.find((op) => {
         const data = Array.isArray(op.data) ? op.data[0] : op.data;
-        return Object.keys(expectedFields).every(key => data[key] === expectedFields[key]);
+        return Object.keys(expectedFields).every((key) => data[key] === expectedFields[key]);
       });
 
       if (!matchingInsert) {
         throw new Error(
           `Expected insert into "${tableName}" with fields ${JSON.stringify(expectedFields)}, ` +
-          `but no matching insert found`
+            `but no matching insert found`
         );
       }
 
@@ -259,7 +259,7 @@ function createRoastSupabaseMock(options = {}) {
     operations.from.length = 0;
     mockData.userSubscriptions.length = 0;
     mockData.roastUsage.length = 0;
-    mockData.analysisUsage.length = 0;  // Issue #680: Reset analysis_usage
+    mockData.analysisUsage.length = 0; // Issue #680: Reset analysis_usage
   };
 
   return {
@@ -284,7 +284,8 @@ function createUserSubscriptionData(options = {}) {
     status: options.status || 'active',
     stripe_subscription_id: options.stripeId || null,
     current_period_start: options.periodStart || new Date().toISOString(),
-    current_period_end: options.periodEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    current_period_end:
+      options.periodEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     created_at: options.createdAt || new Date().toISOString(),
     updated_at: options.updatedAt || new Date().toISOString()
   };
@@ -302,10 +303,10 @@ function createRoastUsageData(options = {}) {
     organization_id: options.organizationId || 'test-org',
     plan: options.plan || 'free',
     roast_id: options.roastId || `roast_${Date.now()}`,
-    tokens_used: options.tokensUsed ?? 100,  // CodeRabbit #697: Preserve explicit 0 values
-    cost: options.cost ?? 0.002,              // CodeRabbit #697: Preserve explicit 0 values
+    tokens_used: options.tokensUsed ?? 100, // CodeRabbit #697: Preserve explicit 0 values
+    cost: options.cost ?? 0.002, // CodeRabbit #697: Preserve explicit 0 values
     created_at: options.createdAt || new Date().toISOString(),
-    count: options.count ?? 1                 // CodeRabbit #697: Preserve explicit 0 values
+    count: options.count ?? 1 // CodeRabbit #697: Preserve explicit 0 values
   };
 }
 
@@ -325,10 +326,10 @@ function createAnalysisUsageData(options = {}) {
     has_style_profile: options.hasStyleProfile || false,
     has_persona: options.hasPersona || false,
     tone: options.tone || 'sarcastic',
-    intensity: options.intensity ?? 3,        // CodeRabbit #697: Preserve explicit 0 values
+    intensity: options.intensity ?? 3, // CodeRabbit #697: Preserve explicit 0 values
     humor_type: options.humorType || 'witty',
     created_at: options.createdAt || new Date().toISOString(),
-    count: options.count ?? 1                 // CodeRabbit #697: Preserve explicit 0 values
+    count: options.count ?? 1 // CodeRabbit #697: Preserve explicit 0 values
   };
 }
 
@@ -336,5 +337,5 @@ module.exports = {
   createRoastSupabaseMock,
   createUserSubscriptionData,
   createRoastUsageData,
-  createAnalysisUsageData  // Issue #680: Export analysis usage helper
+  createAnalysisUsageData // Issue #680: Export analysis usage helper
 };

@@ -2,7 +2,7 @@
 /**
  * Script de limpieza automatizada: Issue #868
  * Elimina referencias a humor_type, humorType, intensity_level de archivos específicos
- * 
+ *
  * Usage: node scripts/cleanup-humor-type.js
  */
 
@@ -19,7 +19,7 @@ const TARGET_FILES = [
   'src/routes/roast.js',
   'src/routes/user.js',
   'src/index.js',
-  
+
   // Services (7 files)
   'src/services/roastEngine.js',
   'src/services/roastGeneratorMock.js',
@@ -27,22 +27,22 @@ const TARGET_FILES = [
   'src/services/roastPromptTemplate.js',
   'src/services/userIntegrationsService.js',
   'src/services/twitter.js',
-  
+
   // Workers (1 file)
   'src/workers/GenerateReplyWorker.js',
-  
+
   // Config (2 files)
   'src/config/integrations.js',
   'src/config/validationConstants.js',
-  
+
   // Integrations (4 files)
   'src/integrations/base/BaseIntegration.js',
   'src/integrations/discord/discordService.js',
   'src/integrations/twitch/twitchService.js',
-  
+
   // Lib (1 file)
   'src/lib/prompts/roastPrompt.js',
-  
+
   // Frontend (4 files)
   'frontend/src/pages/Approval.jsx',
   'frontend/src/pages/Configuration.jsx',
@@ -85,15 +85,15 @@ const REPLACEMENTS = [
 
 function cleanFile(filePath) {
   console.log(`\n📄 Processing: ${filePath}`);
-  
+
   if (!fs.existsSync(filePath)) {
     console.log(`   ⚠️  File not found, skipping`);
     return;
   }
-  
+
   let content = fs.readFileSync(filePath, 'utf8');
   let changes = 0;
-  
+
   REPLACEMENTS.forEach(({ pattern, replacement }) => {
     const matches = content.match(pattern);
     if (matches) {
@@ -101,7 +101,7 @@ function cleanFile(filePath) {
       changes += matches.length;
     }
   });
-  
+
   if (changes > 0) {
     fs.writeFileSync(filePath, content, 'utf8');
     console.log(`   ✅ Cleaned ${changes} references`);
@@ -111,7 +111,7 @@ function cleanFile(filePath) {
 }
 
 console.log('🚀 Issue #868: Automated Cleanup Script');
-console.log('=' .repeat(50));
+console.log('='.repeat(50));
 
 TARGET_FILES.forEach(cleanFile);
 
@@ -120,7 +120,7 @@ console.log('\n🔍 Validating syntax of modified files...');
 const { execSync } = require('child_process');
 let syntaxErrors = 0;
 
-TARGET_FILES.forEach(filePath => {
+TARGET_FILES.forEach((filePath) => {
   if (!fs.existsSync(filePath)) return;
   try {
     execSync(`node --check ${filePath}`, { stdio: 'ignore' });
@@ -144,4 +144,3 @@ console.log('\nNext steps:');
 console.log('1. Review changes: git diff');
 console.log('2. Run tests: npm test');
 console.log('3. Commit: git add . && git commit -m "refactor: automated cleanup"');
-

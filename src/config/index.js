@@ -3,13 +3,13 @@
 const config = {
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-3.5-turbo'
   },
   perspective: {
-    apiKey: process.env.PERSPECTIVE_API_KEY || '',
+    apiKey: process.env.PERSPECTIVE_API_KEY || ''
   },
   toxicity: {
-    threshold: 0.7, // Toxicity threshold (0-1)
+    threshold: 0.7 // Toxicity threshold (0-1)
   },
   billing: {
     stripe: {
@@ -23,11 +23,13 @@ const config = {
         plus: process.env.STRIPE_PRICE_PLUS_LOOKUP || 'roastr-plus-v1'
       },
       // URLs for checkout and portal
-      successUrl: process.env.STRIPE_SUCCESS_URL || 'http://localhost:3000/billing?session_id={CHECKOUT_SESSION_ID}',
+      successUrl:
+        process.env.STRIPE_SUCCESS_URL ||
+        'http://localhost:3000/billing?session_id={CHECKOUT_SESSION_ID}',
       cancelUrl: process.env.STRIPE_CANCEL_URL || 'http://localhost:3000/pricing',
       portalReturnUrl: process.env.STRIPE_PORTAL_RETURN_URL || 'http://localhost:3000/billing'
     }
-  },
+  }
 };
 
 module.exports = config;

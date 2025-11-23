@@ -89,14 +89,14 @@ describe('Ingestor Error Handling Integration Tests', () => {
       worker.fetchCommentsFromPlatform = async () => {
         attemptCount++;
         timeoutAttempts.push(Date.now());
-        
+
         if (attemptCount <= 2) {
           const error = new Error('Request timeout');
           error.code = 'ETIMEDOUT';
           error.timeout = true;
           throw error;
         }
-        
+
         return [comment];
       };
 
@@ -127,7 +127,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
       }
 
       // Should have appropriate backoff between retries
-      intervals.forEach(interval => {
+      intervals.forEach((interval) => {
         expect(interval).toBeGreaterThan(80); // At least base retry delay
       });
     });
@@ -151,7 +151,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
           attempt: attemptCount,
           timestamp: Date.now()
         });
-        
+
         if (attemptCount <= 2) {
           const error = new Error('Rate limit exceeded');
           error.statusCode = 429;
@@ -161,7 +161,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
           };
           throw error;
         }
-        
+
         return [comment];
       };
 
@@ -187,7 +187,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
 
       // Should have retried rate limit errors
       expect(rateLimitAttempts).toHaveLength(3);
-      
+
       // Verify appropriate spacing between attempts
       for (let i = 1; i < rateLimitAttempts.length; i++) {
         const interval = rateLimitAttempts[i].timestamp - rateLimitAttempts[i - 1].timestamp;
@@ -216,7 +216,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
           }
           return [fixtures.retryComments[0]];
         }
-        
+
         if (payload.test_case === 'non_recoverable') {
           const error = new Error('SSL certificate verification failed');
           error.code = 'CERT_INVALID';
@@ -247,7 +247,9 @@ describe('Ingestor Error Handling Integration Tests', () => {
           payload: { test_case: 'non_recoverable', video_ids: ['test_video_2'] }
         };
 
-        await expect(worker.processJob(nonRecoverableJob)).rejects.toThrow('SSL certificate verification failed');
+        await expect(worker.processJob(nonRecoverableJob)).rejects.toThrow(
+          'SSL certificate verification failed'
+        );
       } finally {
         // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
         await worker.stop();
@@ -433,7 +435,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
 
         for (const testCase of testCases) {
           let attemptCount = 0;
-          
+
           worker.fetchCommentsFromPlatform = async () => {
             attemptCount++;
             const error = new Error(testCase.description);
@@ -562,7 +564,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
 
       worker.fetchCommentsFromPlatform = async () => {
         attemptCount++;
-        
+
         // Check state before potential failure
         const preState = {
           attempt: attemptCount,
@@ -574,7 +576,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
         if (attemptCount <= 2) {
           throw new Error(`Transient failure #${attemptCount}`);
         }
-        
+
         return [comment];
       };
 
@@ -598,7 +600,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
       expect(result.success).toBe(true);
 
       // Verify worker maintained consistent state throughout retries
-      stateChecks.forEach(state => {
+      stateChecks.forEach((state) => {
         expect(state.workerRunning).toBe(true);
         expect(state.processedJobs).toBeGreaterThanOrEqual(0);
       });
@@ -669,7 +671,7 @@ describe('Ingestor Error Handling Integration Tests', () => {
     test('should handle partial batch failures gracefully', async () => {
       const organizationId = 'test-org-retry';
       const integrationConfigId = 'config-youtube-retry';
-      
+
       const batchComments = [
         { ...fixtures.retryComments[0], platform_comment_id: 'batch_1' },
         { ...fixtures.retryComments[0], platform_comment_id: 'batch_2' },
@@ -688,23 +690,19 @@ describe('Ingestor Error Handling Integration Tests', () => {
       worker.storeComments = async (orgId, configId, platform, comments) => {
         // Simulate failure for second comment
         const processedComments = [];
-        
+
         for (const comment of comments) {
           if (comment.platform_comment_id === 'batch_2') {
             // Skip the problematic comment (simulate constraint violation)
             continue;
           }
-          
-          const stored = await originalStoreComments.call(
-            worker, 
-            orgId, 
-            configId, 
-            platform, 
-            [comment]
-          );
+
+          const stored = await originalStoreComments.call(worker, orgId, configId, platform, [
+            comment
+          ]);
           processedComments.push(...stored);
         }
-        
+
         return processedComments;
       };
 
@@ -731,8 +729,8 @@ describe('Ingestor Error Handling Integration Tests', () => {
       // Verify only successful comments were stored
       const storedComments = await testUtils.getCommentsByOrganization(organizationId);
       expect(storedComments).toHaveLength(2);
-      
-      const commentIds = storedComments.map(c => c.platform_comment_id);
+
+      const commentIds = storedComments.map((c) => c.platform_comment_id);
       expect(commentIds).toContain('batch_1');
       expect(commentIds).toContain('batch_3');
       expect(commentIds).not.toContain('batch_2');

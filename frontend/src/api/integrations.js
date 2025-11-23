@@ -1,6 +1,6 @@
 /**
  * Integrations API Service
- * 
+ *
  * Handles platform integrations (Twitter, YouTube, etc.)
  * Issue #910 - Connect dashboard to real backend
  */
@@ -89,4 +89,3 @@ export async function importFollowers(platform) {
 export async function getImportProgress(jobId) {
   return apiClient.get(`/integrations/import/${jobId}/progress`);
 }
-

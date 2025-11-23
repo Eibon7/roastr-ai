@@ -1,6 +1,6 @@
 /**
  * Unit Tests for Shield Decision Engine
- * 
+ *
  * Tests all decision branches, corrective zones, recidivism logic,
  * idempotency mechanisms, and integration with persistence service.
  */
@@ -42,25 +42,25 @@ describe('ShieldDecisionEngine', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Save original environment and set test mode
     originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'test';
-    
+
     engine = new ShieldDecisionEngine({
       supabase: mockSupabase,
       logger: mockLogger,
       persistenceService: mockPersistenceService,
       criticalThreshold: 0.98,
       highThreshold: 0.95,
-      moderateThreshold: 0.90,
+      moderateThreshold: 0.9,
       correctiveThreshold: 0.85,
       aggressiveness: 0.95
     });
-    
+
     // Clear cache between tests
     engine.clearCache();
-    
+
     mockInput = {
       organizationId: 'org-123',
       userId: 'user-456',
@@ -95,10 +95,10 @@ describe('ShieldDecisionEngine', () => {
   describe('constructor', () => {
     test('should initialize with default configuration', () => {
       const defaultEngine = new ShieldDecisionEngine();
-      
+
       expect(defaultEngine.thresholds.toxicity.critical).toBe(0.98);
       expect(defaultEngine.thresholds.toxicity.high).toBe(0.95);
-      expect(defaultEngine.thresholds.toxicity.moderate).toBe(0.90);
+      expect(defaultEngine.thresholds.toxicity.moderate).toBe(0.9);
       expect(defaultEngine.thresholds.toxicity.corrective).toBe(0.85);
       expect(defaultEngine.thresholds.aggressiveness).toBe(0.95);
     });
@@ -108,15 +108,15 @@ describe('ShieldDecisionEngine', () => {
         criticalThreshold: 0.99,
         highThreshold: 0.92,
         moderateThreshold: 0.88,
-        correctiveThreshold: 0.80,
-        aggressiveness: 0.90
+        correctiveThreshold: 0.8,
+        aggressiveness: 0.9
       });
-      
+
       expect(customEngine.thresholds.toxicity.critical).toBe(0.99);
       expect(customEngine.thresholds.toxicity.high).toBe(0.92);
       expect(customEngine.thresholds.toxicity.moderate).toBe(0.88);
-      expect(customEngine.thresholds.toxicity.corrective).toBe(0.80);
-      expect(customEngine.thresholds.aggressiveness).toBe(0.90);
+      expect(customEngine.thresholds.toxicity.corrective).toBe(0.8);
+      expect(customEngine.thresholds.aggressiveness).toBe(0.9);
     });
 
     test('should have corrective message pools for different categories', () => {
@@ -124,7 +124,7 @@ describe('ShieldDecisionEngine', () => {
       expect(engine.correctiveMessages.insult).toBeDefined();
       expect(engine.correctiveMessages.harassment).toBeDefined();
       expect(engine.correctiveMessages.threat).toBeDefined();
-      
+
       expect(engine.correctiveMessages.general.length).toBeGreaterThan(0);
       expect(engine.correctiveMessages.insult.length).toBeGreaterThan(0);
     });
@@ -299,7 +299,7 @@ describe('ShieldDecisionEngine', () => {
 
       expect(decision.action).toBe('roastable_comment');
       expect(decision.metadata.escalationAdjustment).toBeGreaterThan(0);
-      expect(decision.toxicityScore).toBeGreaterThanOrEqual(0.90);
+      expect(decision.toxicityScore).toBeGreaterThanOrEqual(0.9);
     });
   });
 
@@ -453,7 +453,7 @@ describe('ShieldDecisionEngine', () => {
 
       // First call
       const decision1 = await engine.makeDecision(mockInput);
-      
+
       // Second call with same org + comment ID should return cached result
       const decision2 = await engine.makeDecision({
         ...mockInput,
@@ -492,7 +492,7 @@ describe('ShieldDecisionEngine', () => {
       const base = { ...mockInput, externalCommentId: 'same-id' };
       const twitterDecision = await engine.makeDecision({ ...base, platform: 'twitter' });
       const discordDecision = await engine.makeDecision({ ...base, platform: 'discord' });
-      
+
       // Should be different decision objects (not cached)
       expect(twitterDecision).not.toBe(discordDecision);
       expect(mockPersistenceService.getOffenderHistory).toHaveBeenCalledTimes(2);
@@ -508,23 +508,23 @@ describe('ShieldDecisionEngine', () => {
   describe('Threshold Adjustment', () => {
     test('should adjust thresholds based on aggressiveness setting', () => {
       // Test lower aggressiveness (more lenient = higher thresholds needed to trigger)
-      const lenientThresholds = engine.adjustThresholds(0.90);
+      const lenientThresholds = engine.adjustThresholds(0.9);
       expect(lenientThresholds.critical).toBeGreaterThan(engine.thresholds.toxicity.critical);
       expect(lenientThresholds.high).toBeGreaterThan(engine.thresholds.toxicity.high);
-      
-      // Test higher aggressiveness (stricter = lower thresholds to trigger more easily) 
+
+      // Test higher aggressiveness (stricter = lower thresholds to trigger more easily)
       const strictThresholds = engine.adjustThresholds(1.0);
       expect(strictThresholds.critical).toBeLessThan(lenientThresholds.critical);
       expect(strictThresholds.high).toBeLessThan(lenientThresholds.high);
     });
 
     test('should respect minimum threshold values and clamp aggressiveness', () => {
-      const veryLenientThresholds = engine.adjustThresholds(0.80); // will clamp to 0.90
-      const clampedThresholds = engine.adjustThresholds(0.90);
-      
+      const veryLenientThresholds = engine.adjustThresholds(0.8); // will clamp to 0.90
+      const clampedThresholds = engine.adjustThresholds(0.9);
+
       // Should be identical since 0.80 gets clamped to 0.90
       expect(veryLenientThresholds).toEqual(clampedThresholds);
-      
+
       expect(veryLenientThresholds.critical).toBeGreaterThanOrEqual(0.9);
       expect(veryLenientThresholds.high).toBeGreaterThanOrEqual(0.85);
       expect(veryLenientThresholds.moderate).toBeGreaterThanOrEqual(0.8);
@@ -569,10 +569,16 @@ describe('ShieldDecisionEngine', () => {
     });
 
     test('should calculate escalation levels correctly', () => {
-      const escalation0 = engine.calculateEscalationLevel({ isRecidivist: false, totalOffenses: 0 });
+      const escalation0 = engine.calculateEscalationLevel({
+        isRecidivist: false,
+        totalOffenses: 0
+      });
       const escalation1 = engine.calculateEscalationLevel({ isRecidivist: true, totalOffenses: 2 });
       const escalation3 = engine.calculateEscalationLevel({ isRecidivist: true, totalOffenses: 6 });
-      const escalation5 = engine.calculateEscalationLevel({ isRecidivist: true, totalOffenses: 12 });
+      const escalation5 = engine.calculateEscalationLevel({
+        isRecidivist: true,
+        totalOffenses: 12
+      });
 
       expect(escalation0).toBe(0);
       expect(escalation1).toBe(1);
@@ -591,8 +597,13 @@ describe('ShieldDecisionEngine', () => {
     });
 
     test('should get appropriate suggested actions for severity levels', () => {
-      const criticalActions = engine.getSuggestedActions('critical', 'threat', { isRecidivist: false });
-      const highActions = engine.getSuggestedActions('high', 'insult', { isRecidivist: true, totalOffenses: 4 });
+      const criticalActions = engine.getSuggestedActions('critical', 'threat', {
+        isRecidivist: false
+      });
+      const highActions = engine.getSuggestedActions('high', 'insult', {
+        isRecidivist: true,
+        totalOffenses: 4
+      });
 
       expect(criticalActions).toContain('block_user');
       expect(criticalActions).toContain('report_content');
@@ -605,7 +616,9 @@ describe('ShieldDecisionEngine', () => {
 
     test('should add category-specific actions', () => {
       const threatActions = engine.getSuggestedActions('high', 'threat', { isRecidivist: false });
-      const harassmentActions = engine.getSuggestedActions('high', 'harassment', { isRecidivist: false });
+      const harassmentActions = engine.getSuggestedActions('high', 'harassment', {
+        isRecidivist: false
+      });
 
       expect(threatActions).toContain('report_content');
       expect(harassmentActions).toContain('report_content');
@@ -614,21 +627,17 @@ describe('ShieldDecisionEngine', () => {
 
   describe('Red Line Violations', () => {
     test('should detect category-based red line violations', () => {
-      const violation = engine.checkRedLineViolations(
-        ['THREAT', 'TOXICITY'],
-        'threat',
-        { categories: ['THREAT'] }
-      );
+      const violation = engine.checkRedLineViolations(['THREAT', 'TOXICITY'], 'threat', {
+        categories: ['THREAT']
+      });
 
       expect(violation).toBe('category:THREAT');
     });
 
     test('should detect category-based red line violations case-insensitively', () => {
-      const violation = engine.checkRedLineViolations(
-        ['threat', 'toxicity'],
-        'threat',
-        { categories: ['THREAT', 'HARASSMENT'] }
-      );
+      const violation = engine.checkRedLineViolations(['threat', 'toxicity'], 'threat', {
+        categories: ['THREAT', 'HARASSMENT']
+      });
 
       expect(violation).toBe('category:threat');
     });
@@ -685,16 +694,18 @@ describe('ShieldDecisionEngine', () => {
         const testCases = [
           { labels: ['Threat'], redLines: ['THREAT'], expected: 'category:Threat' },
           { labels: ['harassment'], redLines: ['HARASSMENT'], expected: 'category:harassment' },
-          { labels: ['SEVERE_TOXICITY'], redLines: ['severe_toxicity'], expected: 'category:SEVERE_TOXICITY' },
+          {
+            labels: ['SEVERE_TOXICITY'],
+            redLines: ['severe_toxicity'],
+            expected: 'category:SEVERE_TOXICITY'
+          },
           { labels: ['InSuLt'], redLines: ['INSULT'], expected: 'category:InSuLt' }
         ];
 
         testCases.forEach(({ labels, redLines, expected }) => {
-          const violation = engine.checkRedLineViolations(
-            labels,
-            'general',
-            { categories: redLines }
-          );
+          const violation = engine.checkRedLineViolations(labels, 'general', {
+            categories: redLines
+          });
           expect(violation).toBe(expected);
         });
       });
@@ -707,11 +718,9 @@ describe('ShieldDecisionEngine', () => {
         ];
 
         testCases.forEach(({ labels, redLines, expected }) => {
-          const violation = engine.checkRedLineViolations(
-            labels,
-            'general',
-            { categories: redLines }
-          );
+          const violation = engine.checkRedLineViolations(labels, 'general', {
+            categories: redLines
+          });
           expect(violation).toBe(expected);
         });
       });
@@ -721,7 +730,11 @@ describe('ShieldDecisionEngine', () => {
           { primary: 'threat', redLines: ['THREAT'], expected: 'category:threat' },
           { primary: 'HARASSMENT', redLines: ['harassment'], expected: 'category:HARASSMENT' },
           { primary: 'InSuLt', redLines: ['insult'], expected: 'category:InSuLt' },
-          { primary: 'SEVERE_TOXICITY', redLines: ['severe_toxicity'], expected: 'category:SEVERE_TOXICITY' }
+          {
+            primary: 'SEVERE_TOXICITY',
+            redLines: ['severe_toxicity'],
+            expected: 'category:SEVERE_TOXICITY'
+          }
         ];
 
         testCases.forEach(({ primary, redLines, expected }) => {
@@ -736,8 +749,8 @@ describe('ShieldDecisionEngine', () => {
 
       test('should prioritize toxicity labels over primary category when both match', () => {
         const violation = engine.checkRedLineViolations(
-          ['harassment'],  // Label matches first
-          'threat',        // Primary also matches but should not be used
+          ['harassment'], // Label matches first
+          'threat', // Primary also matches but should not be used
           { categories: ['HARASSMENT', 'THREAT'] }
         );
 
@@ -746,18 +759,32 @@ describe('ShieldDecisionEngine', () => {
 
       test('should handle complex category names with underscores and case variations', () => {
         const complexCases = [
-          { labels: ['severe_toxicity'], redLines: ['SEVERE_TOXICITY'], expected: 'category:severe_toxicity' },
-          { labels: ['SEVERE_TOXICITY'], redLines: ['severe_toxicity'], expected: 'category:SEVERE_TOXICITY' },
-          { labels: ['Severe_Toxicity'], redLines: ['severe_toxicity'], expected: 'category:Severe_Toxicity' },
-          { labels: ['IDENTITY_ATTACK'], redLines: ['identity_attack'], expected: 'category:IDENTITY_ATTACK' }
+          {
+            labels: ['severe_toxicity'],
+            redLines: ['SEVERE_TOXICITY'],
+            expected: 'category:severe_toxicity'
+          },
+          {
+            labels: ['SEVERE_TOXICITY'],
+            redLines: ['severe_toxicity'],
+            expected: 'category:SEVERE_TOXICITY'
+          },
+          {
+            labels: ['Severe_Toxicity'],
+            redLines: ['severe_toxicity'],
+            expected: 'category:Severe_Toxicity'
+          },
+          {
+            labels: ['IDENTITY_ATTACK'],
+            redLines: ['identity_attack'],
+            expected: 'category:IDENTITY_ATTACK'
+          }
         ];
 
         complexCases.forEach(({ labels, redLines, expected }) => {
-          const violation = engine.checkRedLineViolations(
-            labels,
-            'general',
-            { categories: redLines }
-          );
+          const violation = engine.checkRedLineViolations(labels, 'general', {
+            categories: redLines
+          });
           expect(violation).toBe(expected);
         });
       });
@@ -783,36 +810,26 @@ describe('ShieldDecisionEngine', () => {
 
         testCases.forEach(({ labels, primary, redLines, expected }) => {
           const redLinesObj = redLines ? { categories: redLines } : {};
-          const violation = engine.checkRedLineViolations(
-            labels,
-            primary,
-            redLinesObj
-          );
+          const violation = engine.checkRedLineViolations(labels, primary, redLinesObj);
           expect(violation).toBe(expected);
         });
       });
 
       test('should maintain original case in violation response', () => {
         // When a violation is detected, the original case should be preserved
-        const upperCaseViolation = engine.checkRedLineViolations(
-          ['HARASSMENT'],
-          'general',
-          { categories: ['harassment'] }
-        );
+        const upperCaseViolation = engine.checkRedLineViolations(['HARASSMENT'], 'general', {
+          categories: ['harassment']
+        });
         expect(upperCaseViolation).toBe('category:HARASSMENT');
 
-        const lowerCaseViolation = engine.checkRedLineViolations(
-          ['harassment'],
-          'general',
-          { categories: ['HARASSMENT'] }
-        );
+        const lowerCaseViolation = engine.checkRedLineViolations(['harassment'], 'general', {
+          categories: ['HARASSMENT']
+        });
         expect(lowerCaseViolation).toBe('category:harassment');
 
-        const mixedCaseViolation = engine.checkRedLineViolations(
-          ['HaRaSsMeNt'],
-          'general',
-          { categories: ['harassment'] }
-        );
+        const mixedCaseViolation = engine.checkRedLineViolations(['HaRaSsMeNt'], 'general', {
+          categories: ['harassment']
+        });
         expect(mixedCaseViolation).toBe('category:HaRaSsMeNt');
       });
     });
@@ -825,7 +842,9 @@ describe('ShieldDecisionEngine', () => {
         // Missing other required fields
       };
 
-      await expect(engine.makeDecision(invalidInput)).rejects.toThrow('Missing required decision input fields');
+      await expect(engine.makeDecision(invalidInput)).rejects.toThrow(
+        'Missing required decision input fields'
+      );
     });
 
     test('should handle invalid toxicity analysis', async () => {
@@ -837,7 +856,9 @@ describe('ShieldDecisionEngine', () => {
         }
       };
 
-      await expect(engine.makeDecision(invalidToxicityInput)).rejects.toThrow('Invalid toxicity analysis data');
+      await expect(engine.makeDecision(invalidToxicityInput)).rejects.toThrow(
+        'Invalid toxicity analysis data'
+      );
     });
 
     test('should handle persistence service errors gracefully', async () => {
@@ -873,7 +894,10 @@ describe('ShieldDecisionEngine', () => {
       const decision = await engine.makeDecision(roastableInput);
 
       expect(decision.action).toBe('roastable_comment');
-      expect(mockLogger.error).toHaveBeenCalledWith('Failed to record decision', expect.any(Object));
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to record decision',
+        expect.any(Object)
+      );
     });
   });
 
@@ -902,7 +926,10 @@ describe('ShieldDecisionEngine', () => {
 
       expect(engine.thresholds.aggressiveness).toBe(0.98);
       expect(engine.correctiveMessages.custom).toEqual(['Custom corrective message']);
-      expect(mockLogger.info).toHaveBeenCalledWith('Decision engine configuration updated', expect.any(Object));
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Decision engine configuration updated',
+        expect.any(Object)
+      );
     });
   });
 
@@ -940,7 +967,7 @@ describe('ShieldDecisionEngine', () => {
       const key1 = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@account1');
       const key2 = engine.generateCacheKey('org-123', 'comment-1', 'youtube', '@account1');
       const key3 = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@account2');
-      
+
       expect(key1).not.toBe(key2); // Different platforms
       expect(key1).not.toBe(key3); // Different accounts
       expect(key2).not.toBe(key3); // Both different
@@ -948,7 +975,7 @@ describe('ShieldDecisionEngine', () => {
 
     test('should use HMAC for secure hashing', () => {
       const key = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@account');
-      
+
       expect(key).toMatch(/^[a-f0-9]{64}$/); // SHA256 hex format
     });
   });
@@ -965,27 +992,27 @@ describe('ShieldDecisionEngine', () => {
           ...mockInput,
           externalCommentId: `comment-${i}`
         };
-        
+
         mockPersistenceService.getOffenderHistory.mockResolvedValue({
           isRecidivist: false,
           totalOffenses: 0
         });
-        
+
         await engine.makeDecision(input);
       }
-      
+
       expect(engine.decisionCache.size).toBe(3);
-      
+
       // Add 4th decision - should trigger eviction
       const newInput = {
         ...mockInput,
         externalCommentId: 'comment-4'
       };
-      
+
       await engine.makeDecision(newInput);
-      
+
       expect(engine.decisionCache.size).toBe(3); // Still 3 after eviction
-      
+
       // First comment should be evicted
       const firstKey = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@testorg');
       expect(engine.decisionCache.has(firstKey)).toBe(false);
@@ -993,15 +1020,15 @@ describe('ShieldDecisionEngine', () => {
 
     test('should handle cache eviction batch size correctly', () => {
       engine.cacheEvictionBatchSize = 5;
-      
+
       // Fill cache with 10 entries
       for (let i = 0; i < 10; i++) {
         const key = `key-${i}`;
         engine.decisionCache.set(key, { action: 'test' });
       }
-      
+
       engine.evictOldestCacheEntries();
-      
+
       expect(engine.decisionCache.size).toBe(5); // 10 - 5 = 5
       expect(engine.decisionCache.has('key-0')).toBe(false);
       expect(engine.decisionCache.has('key-4')).toBe(false);
@@ -1015,14 +1042,14 @@ describe('ShieldDecisionEngine', () => {
       const baseline = engine.adjustThresholds(0.95);
       expect(baseline.critical).toBe(0.98);
       expect(baseline.high).toBe(0.95);
-      
+
       // Test with aggressiveness = 0.90 (more lenient)
-      const lenient = engine.adjustThresholds(0.90);
+      const lenient = engine.adjustThresholds(0.9);
       expect(lenient.critical).toBeGreaterThan(baseline.critical);
       expect(lenient.high).toBeGreaterThan(baseline.high);
-      
-      // Test with aggressiveness = 1.00 (stricter)  
-      const strict = engine.adjustThresholds(1.00);
+
+      // Test with aggressiveness = 1.00 (stricter)
+      const strict = engine.adjustThresholds(1.0);
       expect(strict.critical).toBeLessThan(baseline.critical);
       expect(strict.high).toBeLessThan(baseline.high);
     });
@@ -1030,19 +1057,19 @@ describe('ShieldDecisionEngine', () => {
     test('should clamp aggressiveness values to valid range', () => {
       const tooLow = engine.adjustThresholds(0.5);
       const tooHigh = engine.adjustThresholds(1.5);
-      
+
       // Should clamp to [0.90, 1.00] range
-      const minClamped = engine.adjustThresholds(0.90);
-      const maxClamped = engine.adjustThresholds(1.00);
-      
+      const minClamped = engine.adjustThresholds(0.9);
+      const maxClamped = engine.adjustThresholds(1.0);
+
       expect(tooLow).toEqual(minClamped);
       expect(tooHigh).toEqual(maxClamped);
     });
 
     test('should cap thresholds within [0, 1] range', () => {
-      const extreme = engine.adjustThresholds(1.00);
-      
-      Object.values(extreme).forEach(threshold => {
+      const extreme = engine.adjustThresholds(1.0);
+
+      Object.values(extreme).forEach((threshold) => {
         expect(threshold).toBeGreaterThanOrEqual(0);
         expect(threshold).toBeLessThanOrEqual(1);
       });
@@ -1067,7 +1094,7 @@ describe('ShieldDecisionEngine', () => {
           text,
           0.5
         );
-        
+
         if (shouldMatch) {
           expect(violation).toBe(`keyword:${keyword}`);
         } else {
@@ -1078,8 +1105,8 @@ describe('ShieldDecisionEngine', () => {
 
     test('should handle special regex characters in keywords', () => {
       const specialKeywords = ['test.', 'foo+bar', '[test]', 'a$b', '^start'];
-      
-      specialKeywords.forEach(keyword => {
+
+      specialKeywords.forEach((keyword) => {
         const text = `This contains ${keyword} exactly`;
         const violation = engine.checkRedLineViolations(
           ['TOXICITY'],
@@ -1088,7 +1115,7 @@ describe('ShieldDecisionEngine', () => {
           text,
           0.5
         );
-        
+
         expect(violation).toBe(`keyword:${keyword}`);
       });
     });
@@ -1097,7 +1124,7 @@ describe('ShieldDecisionEngine', () => {
   describe('Configuration Updates', () => {
     test('should deep merge threshold updates without data loss', () => {
       const initialThresholds = { ...engine.thresholds.toxicity };
-      
+
       engine.updateConfiguration({
         thresholds: {
           toxicity: {
@@ -1105,7 +1132,7 @@ describe('ShieldDecisionEngine', () => {
           }
         }
       });
-      
+
       expect(engine.thresholds.toxicity.high).toBe(0.92);
       expect(engine.thresholds.toxicity.critical).toBe(initialThresholds.critical);
       expect(engine.thresholds.toxicity.moderate).toBe(initialThresholds.moderate);
@@ -1117,20 +1144,20 @@ describe('ShieldDecisionEngine', () => {
         cacheMaxSize: 2000,
         cacheEvictionBatchSize: 200
       });
-      
+
       expect(engine.cacheMaxSize).toBe(2000);
       expect(engine.cacheEvictionBatchSize).toBe(200);
     });
 
     test('should preserve existing corrective message pools', () => {
       const originalGeneralMessages = [...engine.correctiveMessages.general];
-      
+
       engine.updateConfiguration({
         correctiveMessages: {
           custom: ['New custom message']
         }
       });
-      
+
       expect(engine.correctiveMessages.general).toEqual(originalGeneralMessages);
       expect(engine.correctiveMessages.custom).toEqual(['New custom message']);
     });
@@ -1138,9 +1165,9 @@ describe('ShieldDecisionEngine', () => {
 
   describe('Cross-Platform Cache Isolation', () => {
     test('should isolate cache between organizations with same comment ID', async () => {
-      mockPersistenceService.getOffenderHistory.mockResolvedValue({ 
-        isRecidivist: false, 
-        totalOffenses: 0 
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0
       });
 
       const org1Input = { ...mockInput, organizationId: 'org-1', externalCommentId: 'shared-id' };
@@ -1155,13 +1182,21 @@ describe('ShieldDecisionEngine', () => {
     });
 
     test('should isolate cache between account references with same comment ID', async () => {
-      mockPersistenceService.getOffenderHistory.mockResolvedValue({ 
-        isRecidivist: false, 
-        totalOffenses: 0 
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0
       });
 
-      const account1Input = { ...mockInput, accountRef: '@account1', externalCommentId: 'shared-id' };
-      const account2Input = { ...mockInput, accountRef: '@account2', externalCommentId: 'shared-id' };
+      const account1Input = {
+        ...mockInput,
+        accountRef: '@account1',
+        externalCommentId: 'shared-id'
+      };
+      const account2Input = {
+        ...mockInput,
+        accountRef: '@account2',
+        externalCommentId: 'shared-id'
+      };
 
       const account1Decision = await engine.makeDecision(account1Input);
       const account2Decision = await engine.makeDecision(account2Input);
@@ -1172,9 +1207,9 @@ describe('ShieldDecisionEngine', () => {
     });
 
     test('should properly isolate cache across all platform combinations', async () => {
-      mockPersistenceService.getOffenderHistory.mockResolvedValue({ 
-        isRecidivist: false, 
-        totalOffenses: 0 
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0
       });
 
       const platforms = ['twitter', 'youtube', 'discord', 'facebook', 'instagram'];
@@ -1200,32 +1235,52 @@ describe('ShieldDecisionEngine', () => {
     });
 
     test('should generate unique cache keys for cross-platform scenarios', () => {
-      const baseData = { 
-        organizationId: 'org-123', 
-        externalCommentId: 'comment-123' 
+      const baseData = {
+        organizationId: 'org-123',
+        externalCommentId: 'comment-123'
       };
 
-      const twitterKey = engine.generateCacheKey(baseData.organizationId, baseData.externalCommentId, 'twitter', '@user');
-      const youtubeKey = engine.generateCacheKey(baseData.organizationId, baseData.externalCommentId, 'youtube', '@user');
-      const discordKey = engine.generateCacheKey(baseData.organizationId, baseData.externalCommentId, 'discord', '@user');
-      const facebookKey = engine.generateCacheKey(baseData.organizationId, baseData.externalCommentId, 'facebook', '@user');
-      
+      const twitterKey = engine.generateCacheKey(
+        baseData.organizationId,
+        baseData.externalCommentId,
+        'twitter',
+        '@user'
+      );
+      const youtubeKey = engine.generateCacheKey(
+        baseData.organizationId,
+        baseData.externalCommentId,
+        'youtube',
+        '@user'
+      );
+      const discordKey = engine.generateCacheKey(
+        baseData.organizationId,
+        baseData.externalCommentId,
+        'discord',
+        '@user'
+      );
+      const facebookKey = engine.generateCacheKey(
+        baseData.organizationId,
+        baseData.externalCommentId,
+        'facebook',
+        '@user'
+      );
+
       const keys = [twitterKey, youtubeKey, discordKey, facebookKey];
-      
+
       // All keys should be unique
       const uniqueKeys = [...new Set(keys)];
       expect(uniqueKeys).toHaveLength(keys.length);
-      
+
       // All keys should be valid SHA256 hashes
-      keys.forEach(key => {
+      keys.forEach((key) => {
         expect(key).toMatch(/^[a-f0-9]{64}$/);
       });
     });
 
     test('should prevent cache pollution between platform/organization combinations', async () => {
-      mockPersistenceService.getOffenderHistory.mockResolvedValue({ 
-        isRecidivist: false, 
-        totalOffenses: 0 
+      mockPersistenceService.getOffenderHistory.mockResolvedValue({
+        isRecidivist: false,
+        totalOffenses: 0
       });
 
       // Fill cache with decisions from different platforms and organizations
@@ -1256,10 +1311,10 @@ describe('ShieldDecisionEngine', () => {
       const key2 = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '@user');
       const key3 = engine.generateCacheKey('org-123', 'comment-1', '', '@user');
       const key4 = engine.generateCacheKey('org-123', 'comment-1', 'twitter', '');
-      
+
       const keys = [key1, key2, key3, key4];
       const uniqueKeys = [...new Set(keys)];
-      
+
       // All combinations should generate unique keys
       expect(uniqueKeys).toHaveLength(keys.length);
     });

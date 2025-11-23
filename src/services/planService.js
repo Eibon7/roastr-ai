@@ -4,23 +4,23 @@
 /**
  * Plan feature definitions - SINGLE SOURCE OF TRUTH
  * Issue #841: Consolidated plan configuration
- * 
+ *
  * This is the ONLY place where plan limits and features should be defined.
  * All other services should read from here via planService or planLimitsService.
- * 
+ *
  * Business Policy for Platform Integrations (Issue #110, #841):
  * - Starter/Starter Trial: 1 account per platform (for basic individual usage)
  * - Pro/Plus: 2 accounts per platform (for creators with multiple personal accounts)
  * - Limits are PER PLATFORM, not total (e.g., Pro can have 2 X accounts + 2 Instagram accounts + 2 TikTok accounts)
  * - This policy ensures no plan can be abused by agencies to manage multiple client accounts
- * 
+ *
  * Custom Plan (Issue #841):
  * - NOT a standard plan - applied ad-hoc to brands/special accounts
  * - Pay-per-use billing (not subscription-based)
  * - Features: ONLY Custom Tones, Shield, and Style Profile
  * - Unlimited limits but billed per use
  * - Requires manual assignment (not in ADMIN_ASSIGNABLE)
- * 
+ *
  * Tokens System (Issue #841):
  * - Tokens are related to the credits system used for roasts and regenerations
  * - Regenerations consume credits when users manually review and regenerate roasts
@@ -322,7 +322,7 @@ function getAllPlans() {
 function hasFeature(planId, featureName) {
   const plan = getPlanFeatures(planId);
   if (!plan) return false;
-  
+
   return plan.features[featureName] === true;
 }
 
@@ -351,7 +351,10 @@ function checkPlanLimits(planId, usage = {}) {
   }
 
   // Check comments limit
-  if (plan.limits.commentsPerMonth !== -1 && usage.commentsThisMonth > plan.limits.commentsPerMonth) {
+  if (
+    plan.limits.commentsPerMonth !== -1 &&
+    usage.commentsThisMonth > plan.limits.commentsPerMonth
+  ) {
     exceeded.comments = {
       current: usage.commentsThisMonth,
       limit: plan.limits.commentsPerMonth
@@ -380,10 +383,10 @@ function getPlanByLookupKey(lookupKey) {
   const lookupMap = {
     [process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly']: 'pro',
     [process.env.STRIPE_PRICE_LOOKUP_CREATOR || 'plus_monthly']: 'plus',
-    'plus_monthly': 'plus',
-    'creator_plus_monthly': 'plus'
+    plus_monthly: 'plus',
+    creator_plus_monthly: 'plus'
   };
-  
+
   return lookupMap[lookupKey] || null;
 }
 
@@ -409,14 +412,14 @@ function calculatePlanEndDate(planId, startDate = new Date()) {
     // Default to 30 days if no duration configured
     return new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
   }
-  
+
   const endDate = new Date(startDate.getTime() + duration.days * 24 * 60 * 60 * 1000);
-  
+
   // Add grace period if configured
   if (duration.gracePeriod) {
     endDate.setTime(endDate.getTime() + duration.gracePeriod * 24 * 60 * 60 * 1000);
   }
-  
+
   return endDate;
 }
 

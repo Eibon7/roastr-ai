@@ -17,25 +17,13 @@ describe('ConfirmDialog', () => {
   });
 
   it('should not render when open is false', () => {
-    render(
-      <ConfirmDialog
-        open={false}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ConfirmDialog open={false} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />);
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('should render with default props when open is true', () => {
-    render(
-      <ConfirmDialog
-        open={true}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ConfirmDialog open={true} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />);
 
     expect(screen.getByText('Confirm Action')).toBeInTheDocument();
     expect(screen.getByText('Are you sure you want to proceed?')).toBeInTheDocument();
@@ -64,60 +52,36 @@ describe('ConfirmDialog', () => {
   });
 
   it('should call onConfirm when confirm button is clicked', () => {
-    render(
-      <ConfirmDialog
-        open={true}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ConfirmDialog open={true} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />);
 
     fireEvent.click(screen.getByText('Confirm'));
     expect(mockOnConfirm).toHaveBeenCalledTimes(1);
   });
 
   it('should call onCancel when cancel button is clicked', () => {
-    render(
-      <ConfirmDialog
-        open={true}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ConfirmDialog open={true} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />);
 
     fireEvent.click(screen.getByText('Cancel'));
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
   });
 
   it('should call onCancel when X button is clicked', () => {
-    render(
-      <ConfirmDialog
-        open={true}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ConfirmDialog open={true} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />);
 
     // Find the X button by its parent container and SVG
     const buttons = screen.getAllByRole('button');
-    const closeButton = buttons.find(button => {
+    const closeButton = buttons.find((button) => {
       const svg = button.querySelector('svg');
       return button.className.includes('h-6 w-6 p-0') && svg;
     });
-    
+
     expect(closeButton).toBeInTheDocument();
     fireEvent.click(closeButton);
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
   });
 
   it('should call onCancel when backdrop is clicked', () => {
-    render(
-      <ConfirmDialog
-        open={true}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ConfirmDialog open={true} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />);
 
     // Click on the backdrop (the overlay)
     const backdrop = document.querySelector('.fixed.inset-0');
@@ -126,13 +90,7 @@ describe('ConfirmDialog', () => {
   });
 
   it('should call onCancel when Escape key is pressed', () => {
-    render(
-      <ConfirmDialog
-        open={true}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ConfirmDialog open={true} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />);
 
     fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
@@ -155,35 +113,19 @@ describe('ConfirmDialog', () => {
   });
 
   it('should prevent body scroll when open', () => {
-    render(
-      <ConfirmDialog
-        open={true}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ConfirmDialog open={true} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />);
 
     expect(document.body.style.overflow).toBe('hidden');
   });
 
   it('should restore body scroll when closed', () => {
     const { rerender } = render(
-      <ConfirmDialog
-        open={true}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
+      <ConfirmDialog open={true} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />
     );
 
     expect(document.body.style.overflow).toBe('hidden');
 
-    rerender(
-      <ConfirmDialog
-        open={false}
-        onConfirm={mockOnConfirm}
-        onCancel={mockOnCancel}
-      />
-    );
+    rerender(<ConfirmDialog open={false} onConfirm={mockOnConfirm} onCancel={mockOnCancel} />);
 
     expect(document.body.style.overflow).toBe('unset');
   });

@@ -21,6 +21,7 @@ Extend GDD 2.0 with telemetry and analytics to measure system evolution over tim
 **Script:** `scripts/collect-gdd-telemetry.js` (400+ lines)
 
 **Features:**
+
 - Collects metrics from all GDD subsystems (health, drift, validation, repair)
 - Calculates derived metrics (stability index, momentum)
 - Generates automated reports
@@ -28,6 +29,7 @@ Extend GDD 2.0 with telemetry and analytics to measure system evolution over tim
 - 90-day retention policy
 
 **Metrics Collected:**
+
 ```javascript
 {
   health: { overall_score, average_score, healthy/degraded/critical counts },
@@ -40,6 +42,7 @@ Extend GDD 2.0 with telemetry and analytics to measure system evolution over tim
 ```
 
 **Usage:**
+
 ```bash
 node scripts/collect-gdd-telemetry.js          # Full output
 node scripts/collect-gdd-telemetry.js --ci     # CI mode
@@ -51,6 +54,7 @@ node scripts/collect-gdd-telemetry.js --verbose # Debug
 **Markdown Reports:** `telemetry/reports/gdd-telemetry-YYYY-MM-DD.md`
 
 Auto-generated daily with:
+
 - System status (STABLE/DEGRADED/CRITICAL)
 - Key metrics table with targets
 - Momentum analysis (improving/declining/stable)
@@ -60,6 +64,7 @@ Auto-generated daily with:
 **JSON Snapshots:** `telemetry/snapshots/gdd-metrics-history.json`
 
 Machine-readable history with:
+
 - All metrics + timestamps
 - Retention management (90 days)
 - Delta calculations for momentum
@@ -104,6 +109,7 @@ Now displays telemetry section in real-time dashboard:
 ```
 
 **New Method:** `loadTelemetrySnapshot()`
+
 - Reads latest snapshot
 - Shows momentum trend
 - Displays stability index
@@ -114,11 +120,13 @@ Now displays telemetry section in real-time dashboard:
 **Workflow:** `.github/workflows/gdd-telemetry.yml`
 
 **Triggers:**
+
 - Scheduled: Daily at 00:00 UTC
 - Manual: workflow_dispatch
 - PR: On telemetry file changes
 
 **Steps:**
+
 1. Run fresh GDD validation + health + drift
 2. Collect telemetry snapshot
 3. Auto-commit to repo (skip CI)
@@ -127,19 +135,20 @@ Now displays telemetry section in real-time dashboard:
 6. Create GitHub issue if CRITICAL
 
 **Permissions:**
+
 - contents: write (for commits)
 - issues: write (for alerts)
 - pull-requests: write (for comments)
 
 ### 📊 Metrics Tracked
 
-| Metric | Target | Weight | Description |
-|--------|--------|--------|-------------|
-| **Health Score** | ≥95 | 33% | Overall system health |
-| **Drift Risk** | <25 | 33% | Average drift risk |
-| **Auto-Fix Success** | ≥90% | 33% | Repair success rate |
-| **Stability Index** | ≥90 | - | Combined metric |
-| **Momentum** | >0 | - | Trend over time |
+| Metric               | Target | Weight | Description           |
+| -------------------- | ------ | ------ | --------------------- |
+| **Health Score**     | ≥95    | 33%    | Overall system health |
+| **Drift Risk**       | <25    | 33%    | Average drift risk    |
+| **Auto-Fix Success** | ≥90%   | 33%    | Repair success rate   |
+| **Stability Index**  | ≥90    | -      | Combined metric       |
+| **Momentum**         | >0     | -      | Trend over time       |
 
 ### 🧬 Architecture
 
@@ -213,11 +222,11 @@ Now displays telemetry section in real-time dashboard:
 
 ## 🎯 Key Metrics
 
-| Metric | Value | Target | Status |
-|--------|-------|--------|--------|
-| Health Score | 95/100 | ≥95 | ✅ |
-| Drift Risk | 18/100 | <25 | ✅ |
-| Stability Index | 92/100 | ≥90 | ✅ |
+| Metric          | Value  | Target | Status |
+| --------------- | ------ | ------ | ------ |
+| Health Score    | 95/100 | ≥95    | ✅     |
+| Drift Risk      | 18/100 | <25    | ✅     |
+| Stability Index | 92/100 | ≥90    | ✅     |
 
 ## 📈 Momentum
 
@@ -241,16 +250,19 @@ Now displays telemetry section in real-time dashboard:
 ### 📊 Impact
 
 **Visibility:**
+
 - Historical trend analysis (90 days)
 - Momentum tracking (improving/declining)
 - Early degradation detection
 
 **Automation:**
+
 - Daily telemetry collection (no manual intervention)
 - Auto-commit to repo
 - GitHub issue creation on failures
 
 **Decision Support:**
+
 - Stability index for quick health check
 - Trend analysis for planning
 - Alert thresholds for proactive action
@@ -258,6 +270,7 @@ Now displays telemetry section in real-time dashboard:
 ### 🎉 GDD 2.0 Complete Status
 
 **All Phases Complete:**
+
 - ✅ Phase 1-5: Graph foundation
 - ✅ Phase 6: Runtime validation
 - ✅ Phase 7: Health scoring
@@ -270,6 +283,7 @@ Now displays telemetry section in real-time dashboard:
 - ✅ **Phase 13: Telemetry & Analytics**
 
 **GDD 2.0 is now:**
+
 - 🟢 FULLY OPERATIONAL
 - 🔮 PREDICTIVE
 - 🔄 COHERENT
@@ -286,7 +300,6 @@ Now displays telemetry section in real-time dashboard:
 **Version:** 13.0.0
 
 ---
-
 
 ---
 

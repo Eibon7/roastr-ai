@@ -1,6 +1,6 @@
 /**
  * Shield Offender Registration Integration Tests - Issue #408
- * 
+ *
  * Tests for recording and tracking offender behavior in the Shield system:
  * - Author information recording with comprehensive metadata
  * - Severity tracking and escalation over time
@@ -22,7 +22,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock Supabase client with comprehensive database operations
     mockSupabase = {
       from: jest.fn(() => ({
@@ -77,10 +77,14 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
       };
 
       // Mock first-time user (no existing behavior)
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: null,
-        error: { code: 'PGRST116' } // Not found
-      });
+      mockSupabase
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
+          data: null,
+          error: { code: 'PGRST116' } // Not found
+        });
 
       const result = await shieldService.analyzeForShield(
         comment.organization_id,
@@ -89,7 +93,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
       );
 
       expect(result.shieldActive).toBe(true);
-      
+
       // Verify user behavior was recorded
       expect(mockSupabase.from).toHaveBeenCalledWith('user_behaviors');
       expect(mockSupabase.from().upsert).toHaveBeenCalledWith(
@@ -124,11 +128,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         toxicity_score: 0.6
       };
 
-      await shieldService.analyzeForShield(
-        comment.organization_id,
-        comment,
-        analysisResult
-      );
+      await shieldService.analyzeForShield(comment.organization_id, comment, analysisResult);
 
       // Should include metadata in the behavior record
       expect(mockSupabase.from().upsert).toHaveBeenCalledWith(
@@ -161,7 +161,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
       );
 
       expect(result.shieldActive).toBe(true);
-      
+
       // Should still record behavior with available information
       expect(mockSupabase.from().upsert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -177,7 +177,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
     it('should track severity escalation over multiple violations', async () => {
       const userId = 'user_escalation_test';
       const organizationId = 'org_123';
-      
+
       // Mock user with previous violations
       const mockBehavior = {
         organization_id: organizationId,
@@ -214,16 +214,12 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         toxicity_score: 0.7
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.shieldActive).toBe(true);
       expect(result.actions.offenseLevel).toBe('repeat');
       expect(result.userBehavior.total_violations).toBe(2);
-      
+
       // Should escalate action due to history
       expect(['mute_permanent', 'block']).toContain(result.actions.primary);
     });
@@ -244,11 +240,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         categories: ['SEVERE_TOXICITY', 'THREAT', 'INSULT']
       };
 
-      await shieldService.analyzeForShield(
-        comment.organization_id,
-        comment,
-        analysisResult
-      );
+      await shieldService.analyzeForShield(comment.organization_id, comment, analysisResult);
 
       // Verify behavior tracking includes severity and categories
       expect(mockSupabase.from().upsert).toHaveBeenCalledWith(
@@ -279,7 +271,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
 
       for (let i = 0; i < progressionSteps.length; i++) {
         const step = progressionSteps[i];
-        
+
         // Mock user with i previous violations
         const mockBehavior = {
           total_violations: i,
@@ -290,10 +282,14 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
           }))
         };
 
-        mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-          data: i > 0 ? mockBehavior : null,
-          error: i > 0 ? null : { code: 'PGRST116' }
-        });
+        mockSupabase
+          .from()
+          .select()
+          .eq()
+          .single.mockResolvedValueOnce({
+            data: i > 0 ? mockBehavior : null,
+            error: i > 0 ? null : { code: 'PGRST116' }
+          });
 
         const comment = {
           id: `comment_progression_${i}`,
@@ -357,11 +353,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         toxicity_score: 0.65
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.userBehavior.total_violations).toBe(3);
       expect(result.actions.violationCount).toBe(3);
@@ -407,11 +399,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         toxicity_score: 0.4
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.userBehavior.total_violations).toBe(2);
       // Should escalate due to cross-platform history
@@ -423,10 +411,14 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
       const organizationId = 'org_123';
 
       // Mock no existing behavior (first-time user)
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: null,
-        error: { code: 'PGRST116' }
-      });
+      mockSupabase
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
+          data: null,
+          error: { code: 'PGRST116' }
+        });
 
       const comment = {
         id: 'comment_first_time',
@@ -442,11 +434,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         toxicity_score: 0.35
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.shieldActive).toBe(true);
       expect(result.actions.offenseLevel).toBe('first');
@@ -494,15 +482,11 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         toxicity_score: 0.7
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.userBehavior.total_violations).toBe(4);
       expect(result.actions.offenseLevel).toBe('persistent');
-      
+
       // Should escalate to higher action due to risk profile
       expect(['report', 'escalate']).toContain(result.actions.primary);
     });
@@ -512,7 +496,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
       const organizationId = 'org_123';
 
       // Mock user with old violations (should have reduced impact)
-      const oldDate = new Date(Date.now() - (200 * 86400000)).toISOString(); // 200 days ago
+      const oldDate = new Date(Date.now() - 200 * 86400000).toISOString(); // 200 days ago
       const mockBehavior = {
         organization_id: organizationId,
         platform: 'twitter',
@@ -543,11 +527,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         toxicity_score: 0.3
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       // Old violations should have reduced impact
       expect(result.actions.offenseLevel).toBe('first'); // Treated as first-time due to time decay
@@ -559,10 +539,14 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
       const organizationId = 'org_123';
 
       // Mock clean user (no violations)
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: null,
-        error: { code: 'PGRST116' }
-      });
+      mockSupabase
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
+          data: null,
+          error: { code: 'PGRST116' }
+        });
 
       const comment = {
         id: 'comment_clean_slate',
@@ -578,11 +562,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         toxicity_score: 0.25
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       // Clean user should get base-level response
       expect(result.userBehavior).toEqual(
@@ -619,7 +599,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
       );
 
       expect(result.shieldActive).toBe(true);
-      
+
       // Verify data was persisted with correct structure
       expect(mockSupabase.from).toHaveBeenCalledWith('user_behaviors');
       expect(mockSupabase.from().upsert).toHaveBeenCalledWith(
@@ -743,11 +723,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
         toxicity_score: 0.3
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.userBehavior).toEqual(mockBehavior);
       expect(result.userBehavior.total_violations).toBe(3);
@@ -805,11 +781,11 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
       );
 
       expect(result.shieldActive).toBe(true);
-      
+
       // Verify that input sanitization occurred
       expect(mockSupabase.from().upsert).toHaveBeenCalled();
       const upsertCall = mockSupabase.from().upsert.mock.calls[0][0];
-      
+
       // Should not contain script tags in stored data
       expect(upsertCall.platform_user_id).not.toContain('<script>');
       expect(upsertCall.platform_username).not.toContain('<script>');
@@ -863,7 +839,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
 
       expect(result1.shieldActive).toBe(true);
       expect(result2.shieldActive).toBe(true);
-      
+
       // Both should have accessed user behavior
       expect(result1.userBehavior.total_violations).toBe(1);
       expect(result2.userBehavior.total_violations).toBe(1);
@@ -893,11 +869,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
           original_text: `Volume test comment ${i}`
         };
 
-        return shieldService.analyzeForShield(
-          organizationId,
-          comment,
-          analysisResult
-        );
+        return shieldService.analyzeForShield(organizationId, comment, analysisResult);
       });
 
       const results = await Promise.all(promises);
@@ -905,9 +877,9 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
 
       expect(results).toHaveLength(userCount);
       expect(duration).toBeLessThan(10000); // Should complete within 10 seconds
-      
+
       // All should be processed successfully
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.shieldActive).toBe(true);
       });
     });
@@ -928,7 +900,7 @@ describe('Shield Offender Registration Tests - Issue #408', () => {
       };
 
       const startTime = Date.now();
-      
+
       const result = await shieldService.analyzeForShield(
         comment.organization_id,
         comment,

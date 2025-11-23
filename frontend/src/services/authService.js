@@ -1,7 +1,7 @@
 /**
  * Auth Service
  * Handles authentication operations following the auth UI contract v1.0
- * 
+ *
  * Contract:
  * - Forms return { username, password }
  * - Errors propagate as { error: true, message: string }
@@ -119,7 +119,7 @@ class AuthService {
       return {
         success: false,
         error: true,
-        message: 'Invalid refresh token provided',
+        message: 'Invalid refresh token provided'
       };
     }
 
@@ -127,9 +127,9 @@ class AuthService {
       const response = await fetch('/api/auth/session/refresh', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ refresh_token: refreshToken }),
+        body: JSON.stringify({ refresh_token: refreshToken })
       });
 
       if (!response.ok) {
@@ -142,13 +142,13 @@ class AuthService {
       const data = payload.data || payload;
       return {
         success: true,
-        data, // { access_token, refresh_token, expires_at, expires_in, user }
+        data // { access_token, refresh_token, expires_at, expires_in, user }
       };
     } catch (error) {
       return {
         success: false,
         error: true,
-        message: error?.message || 'Session expired. Please sign in again.',
+        message: error?.message || 'Session expired. Please sign in again.'
       };
     }
   }
@@ -159,11 +159,13 @@ class AuthService {
    */
   _getErrorMessage(error, context) {
     const message = error?.message || error || 'An unexpected error occurred';
-    
+
     // Login specific errors
     if (context === 'login') {
-      if (message.includes('Invalid login credentials') ||
-          message.includes('Invalid email or password')) {
+      if (
+        message.includes('Invalid login credentials') ||
+        message.includes('Invalid email or password')
+      ) {
         return 'Wrong email or password';
       }
       if (message.includes('Email not confirmed')) {
@@ -173,7 +175,7 @@ class AuthService {
         return 'Too many login attempts. Please try again later.';
       }
     }
-    
+
     // Registration specific errors
     if (context === 'register') {
       if (message.includes('User already registered')) {
@@ -186,7 +188,7 @@ class AuthService {
         return 'Please enter a valid email address';
       }
     }
-    
+
     // Recovery specific errors
     if (context === 'recovery') {
       if (message.includes('User not found')) {
@@ -196,7 +198,7 @@ class AuthService {
         return 'Too many recovery requests. Please wait before trying again.';
       }
     }
-    
+
     // Generic fallback
     return message;
   }

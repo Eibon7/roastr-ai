@@ -1,6 +1,6 @@
 /**
  * Setup for CLI Integration Tests
- * 
+ *
  * Global setup and teardown for CLI testing environment
  */
 
@@ -20,11 +20,11 @@ beforeAll(async () => {
     path.join(__dirname, '../../../temp-test-logs'),
     path.join(__dirname, '../../../coverage/cli-integration')
   ];
-  
+
   for (const dir of testDirs) {
     await fs.ensureDir(dir);
   }
-  
+
   // Set up test environment
   process.env.NODE_ENV = 'test';
   process.env.LOG_LEVEL = 'error'; // Reduce log noise during tests
@@ -33,10 +33,8 @@ beforeAll(async () => {
 // Cleanup after all tests
 afterAll(async () => {
   // Clean up temporary directories
-  const tempDirs = [
-    path.join(__dirname, '../../../temp-test-logs')
-  ];
-  
+  const tempDirs = [path.join(__dirname, '../../../temp-test-logs')];
+
   for (const dir of tempDirs) {
     try {
       await rm(dir, { recursive: true, force: true }); // Issue #618 - use Node built-in
@@ -57,7 +55,7 @@ afterEach(() => {
   // Reset environment variables that might have been modified
   if (process.env.TEST_ORIGINAL_ENV) {
     const originalEnv = JSON.parse(process.env.TEST_ORIGINAL_ENV);
-    Object.keys(process.env).forEach(key => {
+    Object.keys(process.env).forEach((key) => {
       if (key.startsWith('LOG_') || key.startsWith('AWS_') || key.startsWith('ALERT_')) {
         delete process.env[key];
       }

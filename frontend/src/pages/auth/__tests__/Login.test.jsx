@@ -8,14 +8,14 @@ jest.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({
     isAuthenticated: false,
     user: null,
-    loading: false,
-  }),
+    loading: false
+  })
 }));
 
 // Mock auth service
 jest.mock('../../../services/authService', () => ({
   signIn: jest.fn(),
-  sendRecoveryEmail: jest.fn(),
+  sendRecoveryEmail: jest.fn()
 }));
 
 const Login = require('../Login').default;
@@ -46,7 +46,7 @@ describe('Login Component', () => {
   test('renders navigation link to register', () => {
     renderLogin();
 
-    const registerLink = screen.getByRole('link', { name: 'I don\'t have an account' });
+    const registerLink = screen.getByRole('link', { name: "I don't have an account" });
     expect(registerLink).toBeInTheDocument();
     expect(registerLink).toHaveAttribute('href', '/register');
   });

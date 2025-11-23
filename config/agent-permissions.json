@@ -9,16 +9,8 @@
   "permissions": {
     "DocumentationAgent": {
       "description": "Agent responsible for maintaining documentation coherence",
-      "allowed_actions": [
-        "read_node",
-        "update_metadata",
-        "create_issue",
-        "update_dependencies"
-      ],
-      "forbidden_actions": [
-        "trigger_auto_repair",
-        "mark_stale"
-      ]
+      "allowed_actions": ["read_node", "update_metadata", "create_issue", "update_dependencies"],
+      "forbidden_actions": ["trigger_auto_repair", "mark_stale"]
     },
 
     "Orchestrator": {
@@ -36,56 +28,26 @@
 
     "DriftWatcher": {
       "description": "Agent monitoring drift risk and triggering repairs",
-      "allowed_actions": [
-        "read_node",
-        "trigger_auto_repair",
-        "update_timestamp",
-        "create_issue"
-      ],
-      "forbidden_actions": [
-        "update_metadata",
-        "mark_stale"
-      ]
+      "allowed_actions": ["read_node", "trigger_auto_repair", "update_timestamp", "create_issue"],
+      "forbidden_actions": ["update_metadata", "mark_stale"]
     },
 
     "RuntimeValidator": {
       "description": "Validation agent with read-only access",
-      "allowed_actions": [
-        "read_node",
-        "read_only"
-      ],
-      "forbidden_actions": [
-        "update_metadata",
-        "create_issue",
-        "trigger_auto_repair",
-        "mark_stale"
-      ]
+      "allowed_actions": ["read_node", "read_only"],
+      "forbidden_actions": ["update_metadata", "create_issue", "trigger_auto_repair", "mark_stale"]
     },
 
     "TestEngineer": {
       "description": "Test generation and validation agent",
-      "allowed_actions": [
-        "read_node",
-        "create_issue",
-        "update_metadata"
-      ],
-      "forbidden_actions": [
-        "trigger_auto_repair",
-        "mark_stale"
-      ]
+      "allowed_actions": ["read_node", "create_issue", "update_metadata"],
+      "forbidden_actions": ["trigger_auto_repair", "mark_stale"]
     },
 
     "UIDesigner": {
       "description": "UI/UX design agent",
-      "allowed_actions": [
-        "read_node",
-        "create_issue"
-      ],
-      "forbidden_actions": [
-        "update_metadata",
-        "trigger_auto_repair",
-        "mark_stale"
-      ]
+      "allowed_actions": ["read_node", "create_issue"],
+      "forbidden_actions": ["update_metadata", "trigger_auto_repair", "mark_stale"]
     }
   },
 

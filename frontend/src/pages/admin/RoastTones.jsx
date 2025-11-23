@@ -1,8 +1,8 @@
 /**
  * Admin Panel: Roast Tones Management
- * 
+ *
  * Manage dynamic roast tone configuration from admin panel.
- * 
+ *
  * Issue #876: Dynamic Roast Tone Configuration System
  */
 
@@ -95,7 +95,7 @@ const RoastTones = () => {
       if (editingTone) {
         // Update existing tone
         const data = await apiClient.put(`/admin/tones/${editingTone.id}`, toneData);
-        
+
         if (data.success) {
           showAlert('success', 'Tono actualizado correctamente');
           await loadTones();
@@ -106,7 +106,7 @@ const RoastTones = () => {
       } else {
         // Create new tone
         const data = await apiClient.post('/admin/tones', toneData);
-        
+
         if (data.success) {
           showAlert('success', 'Tono creado correctamente');
           await loadTones();
@@ -128,7 +128,7 @@ const RoastTones = () => {
 
     try {
       const data = await apiClient.delete(`/admin/tones/${toneId}`);
-      
+
       if (data.success) {
         showAlert('success', 'Tono eliminado correctamente');
         await loadTones();
@@ -143,12 +143,12 @@ const RoastTones = () => {
 
   const handleToggleActive = async (tone) => {
     try {
-      const endpoint = tone.active 
+      const endpoint = tone.active
         ? `/admin/tones/${tone.id}/deactivate`
         : `/admin/tones/${tone.id}/activate`;
-      
+
       const data = await apiClient.post(endpoint);
-      
+
       if (data.success) {
         showAlert('success', `Tono ${tone.active ? 'desactivado' : 'activado'} correctamente`);
         await loadTones();
@@ -169,7 +169,7 @@ const RoastTones = () => {
       }));
 
       const data = await apiClient.put('/admin/tones/reorder', { orderArray });
-      
+
       if (data.success) {
         showAlert('success', 'Orden actualizado correctamente');
         await loadTones();
@@ -182,14 +182,14 @@ const RoastTones = () => {
     }
   };
 
-  const filteredTones = tones.filter(tone => {
+  const filteredTones = tones.filter((tone) => {
     // Filter by search
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       const nameMatch = tone.name.toLowerCase().includes(searchLower);
       const displayNameES = tone.display_name?.es?.toLowerCase().includes(searchLower) || false;
       const displayNameEN = tone.display_name?.en?.toLowerCase().includes(searchLower) || false;
-      
+
       if (!nameMatch && !displayNameES && !displayNameEN) {
         return false;
       }
@@ -219,7 +219,8 @@ const RoastTones = () => {
             Gestión de Tonos de Roast
           </h1>
           <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-            Configura los tonos de roast disponibles en el sistema. Los cambios se aplican inmediatamente.
+            Configura los tonos de roast disponibles en el sistema. Los cambios se aplican
+            inmediatamente.
           </p>
         </div>
         <button
@@ -235,20 +236,30 @@ const RoastTones = () => {
 
       {/* Alert */}
       {alert && (
-        <div className={`mb-6 rounded-md p-4 ${
-          alert.type === 'success' 
-            ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200'
-            : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
-        }`}>
+        <div
+          className={`mb-6 rounded-md p-4 ${
+            alert.type === 'success'
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+          }`}
+        >
           <div className="flex">
             <div className="flex-shrink-0">
               {alert.type === 'success' ? (
                 <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               ) : (
                 <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               )}
             </div>
@@ -262,7 +273,10 @@ const RoastTones = () => {
       {/* Filters */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="search"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Buscar
           </label>
           <input
@@ -276,7 +290,10 @@ const RoastTones = () => {
         </div>
 
         <div>
-          <label htmlFor="active" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="active"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Estado
           </label>
           <select
@@ -292,7 +309,10 @@ const RoastTones = () => {
         </div>
 
         <div>
-          <label htmlFor="language" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="language"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Idioma
           </label>
           <select
@@ -330,4 +350,3 @@ const RoastTones = () => {
 };
 
 export default RoastTones;
-

@@ -7,7 +7,7 @@ class AdvancedLogger {
   constructor() {
     this.logsDir = path.join(process.cwd(), 'logs');
     this.ensureLogsDir();
-    
+
     // Different log types
     this.logTypes = {
       normal: 'normal',
@@ -42,7 +42,12 @@ class AdvancedLogger {
     );
 
     // Transport configurations with rotation
-    const createRotatingTransport = (filename, level = 'info', maxSize = '20m', maxFiles = '30d') => {
+    const createRotatingTransport = (
+      filename,
+      level = 'info',
+      maxSize = '20m',
+      maxFiles = '30d'
+    ) => {
       return new DailyRotateFile({
         filename: path.join(this.logsDir, filename),
         datePattern: 'YYYY-MM-DD',
@@ -62,20 +67,22 @@ class AdvancedLogger {
       defaultMeta: { service: 'roastr-ai' },
       transports: [
         // Console transport for development
-        ...(process.env.NODE_ENV !== 'production' ? [
-          new winston.transports.Console({
-            format: consoleFormat,
-            level: 'debug'
-          })
-        ] : []),
+        ...(process.env.NODE_ENV !== 'production'
+          ? [
+              new winston.transports.Console({
+                format: consoleFormat,
+                level: 'debug'
+              })
+            ]
+          : []),
 
         // Application logs - daily rotation
         createRotatingTransport('application/app-%DATE%.log', 'info'),
-        
+
         // Error logs - separate file for errors only
         createRotatingTransport('application/error-%DATE%.log', 'error', '10m', '60d')
       ],
-      
+
       // Handle uncaught exceptions and rejections
       exceptionHandlers: [
         createRotatingTransport('application/exceptions-%DATE%.log', 'error', '10m', '90d')
@@ -149,13 +156,12 @@ class AdvancedLogger {
   async ensureLogsDir() {
     try {
       await fs.ensureDir(this.logsDir);
-      
+
       // Create subdirectories for different log types
       const subdirs = ['application', 'integrations', 'shield', 'security', 'workers', 'audit'];
       for (const subdir of subdirs) {
         await fs.ensureDir(path.join(this.logsDir, subdir));
       }
-      
     } catch (error) {
       console.error('Error creating logs directory:', error);
     }
@@ -199,18 +205,25 @@ class AdvancedLogger {
 
       switch (logType) {
         case this.logTypes.integration:
-          this.integrationLogger[level] ? this.integrationLogger[level](message, logData) : this.integrationLogger.info(message, logData);
+          this.integrationLogger[level]
+            ? this.integrationLogger[level](message, logData)
+            : this.integrationLogger.info(message, logData);
           break;
         case this.logTypes.shield:
-          this.shieldLogger[level] ? this.shieldLogger[level](message, logData) : this.shieldLogger.info(message, logData);
+          this.shieldLogger[level]
+            ? this.shieldLogger[level](message, logData)
+            : this.shieldLogger.info(message, logData);
           break;
         case this.logTypes.security:
-          this.securityLogger[level] ? this.securityLogger[level](message, logData) : this.securityLogger.info(message, logData);
+          this.securityLogger[level]
+            ? this.securityLogger[level](message, logData)
+            : this.securityLogger.info(message, logData);
           break;
         default:
-          this.applicationLogger[level] ? this.applicationLogger[level](message, logData) : this.applicationLogger.info(message, logData);
+          this.applicationLogger[level]
+            ? this.applicationLogger[level](message, logData)
+            : this.applicationLogger.info(message, logData);
       }
-
     } catch (error) {
       console.error('Error writing to log file:', error);
     }
@@ -251,7 +264,7 @@ class AdvancedLogger {
    */
   async logReincidence(platform, userId, username, count, severity, data = null) {
     const message = `User reincidence detected: ${username} (${userId}) - Count: ${count}, Severity: ${severity}`;
-    
+
     const logData = {
       userId,
       username,
@@ -269,7 +282,7 @@ class AdvancedLogger {
    */
   async logAutoAction(platform, action, userId, username, reason, data = null) {
     const message = `Auto-action executed: ${action} on ${username} (${userId}) - Reason: ${reason}`;
-    
+
     const logData = {
       action,
       userId,
@@ -290,7 +303,7 @@ class AdvancedLogger {
   async logRoast(platform, mode, userId, originalMessage, roastResponse, tone, data = null) {
     const isShield = mode === 'shield';
     const message = `Roast generated for ${userId} - Tone: ${tone}`;
-    
+
     const logData = {
       userId,
       originalMessage: isShield ? '[REDACTED]' : originalMessage,
@@ -321,7 +334,7 @@ class AdvancedLogger {
 
       // Get normal logs
       const normalFiles = await fs.readdir(this.logsDir);
-      logFiles.normal = normalFiles.filter(f => f.endsWith('_normal.log'));
+      logFiles.normal = normalFiles.filter((f) => f.endsWith('_normal.log'));
 
       // Get integration logs
       const integrationsDir = path.join(this.logsDir, 'integrations');
@@ -342,7 +355,6 @@ class AdvancedLogger {
       }
 
       return logFiles;
-
     } catch (error) {
       console.error('Error getting log files:', error);
       return { normal: [], integration: [], shield: [], security: [] };
@@ -355,7 +367,7 @@ class AdvancedLogger {
   async readLog(logType, filename, lines = 100) {
     try {
       let logFile;
-      
+
       switch (logType) {
         case 'integration':
           logFile = path.join(this.logsDir, 'integrations', filename);
@@ -375,20 +387,22 @@ class AdvancedLogger {
       }
 
       const content = await fs.readFile(logFile, 'utf8');
-      const logLines = content.trim().split('\n').filter(line => line.length > 0);
-      
+      const logLines = content
+        .trim()
+        .split('\n')
+        .filter((line) => line.length > 0);
+
       // Return last N lines
       const recentLines = logLines.slice(-lines);
-      
+
       // Parse JSON entries
-      return recentLines.map(line => {
+      return recentLines.map((line) => {
         try {
           return JSON.parse(line);
         } catch {
           return { raw: line, timestamp: null };
         }
       });
-
     } catch (error) {
       console.error('Error reading log file:', error);
       return [];
@@ -411,12 +425,12 @@ class AdvancedLogger {
       } = options;
 
       const retentionPolicies = {
-        'application': applicationDays,
-        'integrations': integrationDays,
-        'shield': shieldDays,
-        'security': securityDays,
-        'workers': workerDays,
-        'audit': auditDays
+        application: applicationDays,
+        integrations: integrationDays,
+        shield: shieldDays,
+        security: securityDays,
+        workers: workerDays,
+        audit: auditDays
       };
 
       let totalFilesRemoved = 0;
@@ -425,27 +439,31 @@ class AdvancedLogger {
       for (const [dirName, daysToKeep] of Object.entries(retentionPolicies)) {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-        
+
         const dir = path.join(this.logsDir, dirName);
-        
+
         if (await fs.pathExists(dir)) {
           const files = await fs.readdir(dir);
-          
+
           for (const file of files) {
             // Skip audit files (winston metadata)
             if (file.endsWith('-audit.json')) continue;
-            
+
             const filePath = path.join(dir, file);
             const stats = await fs.stat(filePath);
-            
+
             if (stats.mtime < cutoffDate) {
               if (dryRun) {
-                this.applicationLogger.info(`Would remove old log file: ${path.relative(this.logsDir, filePath)} (${this.formatFileSize(stats.size)})`);
+                this.applicationLogger.info(
+                  `Would remove old log file: ${path.relative(this.logsDir, filePath)} (${this.formatFileSize(stats.size)})`
+                );
               } else {
                 await fs.remove(filePath);
                 totalFilesRemoved++;
                 totalSizeFreed += stats.size;
-                this.applicationLogger.info(`Cleaned old log file: ${path.relative(this.logsDir, filePath)} (${this.formatFileSize(stats.size)})`);
+                this.applicationLogger.info(
+                  `Cleaned old log file: ${path.relative(this.logsDir, filePath)} (${this.formatFileSize(stats.size)})`
+                );
               }
             }
           }
@@ -453,7 +471,9 @@ class AdvancedLogger {
       }
 
       if (!dryRun && totalFilesRemoved > 0) {
-        this.applicationLogger.info(`Log cleanup completed: ${totalFilesRemoved} files removed, ${this.formatFileSize(totalSizeFreed)} freed`);
+        this.applicationLogger.info(
+          `Log cleanup completed: ${totalFilesRemoved} files removed, ${this.formatFileSize(totalSizeFreed)} freed`
+        );
       }
 
       return {
@@ -461,7 +481,6 @@ class AdvancedLogger {
         sizeFreed: totalSizeFreed,
         dryRun
       };
-
     } catch (error) {
       this.applicationLogger.error('Error cleaning old logs:', error);
       throw error;
@@ -475,19 +494,19 @@ class AdvancedLogger {
     const units = ['B', 'KB', 'MB', 'GB'];
     let size = bytes;
     let unitIndex = 0;
-    
+
     while (size >= 1024 && unitIndex < units.length - 1) {
       size /= 1024;
       unitIndex++;
     }
-    
+
     return `${size.toFixed(1)}${units[unitIndex]}`;
   }
 
   /**
    * Enhanced Winston logging methods
    */
-  
+
   // Application logging
   info(message, meta = {}) {
     this.applicationLogger.info(message, meta);
@@ -507,81 +526,81 @@ class AdvancedLogger {
 
   // Security-specific logging
   authEvent(message, meta = {}) {
-    this.securityLogger.info(message, { 
+    this.securityLogger.info(message, {
       type: 'auth_event',
       timestamp: new Date().toISOString(),
-      ...meta 
+      ...meta
     });
   }
 
   securityEvent(message, meta = {}) {
-    this.securityLogger.info(message, { 
+    this.securityLogger.info(message, {
       type: 'security_event',
       timestamp: new Date().toISOString(),
-      ...meta 
+      ...meta
     });
   }
 
   // Integration-specific logging
   integrationEvent(message, meta = {}) {
-    this.integrationLogger.info(message, { 
+    this.integrationLogger.info(message, {
       type: 'integration_event',
       timestamp: new Date().toISOString(),
-      ...meta 
+      ...meta
     });
   }
 
   apiError(message, meta = {}) {
-    this.integrationLogger.error(message, { 
+    this.integrationLogger.error(message, {
       type: 'api_error',
       timestamp: new Date().toISOString(),
-      ...meta 
+      ...meta
     });
   }
 
   // Worker-specific logging
   workerEvent(message, meta = {}) {
-    this.workerLogger.info(message, { 
+    this.workerLogger.info(message, {
       type: 'worker_event',
       timestamp: new Date().toISOString(),
-      ...meta 
+      ...meta
     });
   }
 
   queueEvent(message, meta = {}) {
-    this.workerLogger.info(message, { 
+    this.workerLogger.info(message, {
       type: 'queue_event',
       timestamp: new Date().toISOString(),
-      ...meta 
+      ...meta
     });
   }
 
   // Audit-specific logging
   auditEvent(message, meta = {}) {
-    this.auditLogger.info(message, { 
+    this.auditLogger.info(message, {
       type: 'audit_event',
       timestamp: new Date().toISOString(),
-      ...meta 
+      ...meta
     });
   }
 
   userAction(userId, action, meta = {}) {
-    this.auditLogger.info(`User action: ${action}`, { 
+    this.auditLogger.info(`User action: ${action}`, {
       type: 'user_action',
       userId,
       action,
       timestamp: new Date().toISOString(),
-      ...meta 
+      ...meta
     });
   }
 
   adminAction(adminId, action, meta = {}) {
-    this.auditLogger.info(`Admin action: ${action}`, { 
+    this.auditLogger.info(`Admin action: ${action}`, {
       type: 'admin_action',
       adminId,
       action,
       timestamp: new Date().toISOString(),
-      ...meta 
+      ...meta
     });
   }
 
@@ -599,35 +618,35 @@ class AdvancedLogger {
       };
 
       const subdirs = ['application', 'integrations', 'shield', 'security', 'workers', 'audit'];
-      
+
       for (const subdir of subdirs) {
         const dir = path.join(this.logsDir, subdir);
-        
+
         if (await fs.pathExists(dir)) {
           const files = await fs.readdir(dir);
           let dirSize = 0;
           let dirFiles = 0;
-          
+
           for (const file of files) {
             if (file.endsWith('-audit.json')) continue;
-            
+
             const filePath = path.join(dir, file);
             const stat = await fs.stat(filePath);
-            
+
             dirSize += stat.size;
             dirFiles++;
             stats.totalSize += stat.size;
             stats.totalFiles++;
-            
+
             if (!stats.oldestLog || stat.mtime < stats.oldestLog.mtime) {
               stats.oldestLog = { file: path.relative(this.logsDir, filePath), mtime: stat.mtime };
             }
-            
+
             if (!stats.newestLog || stat.mtime > stats.newestLog.mtime) {
               stats.newestLog = { file: path.relative(this.logsDir, filePath), mtime: stat.mtime };
             }
           }
-          
+
           stats.directories[subdir] = {
             files: dirFiles,
             size: dirSize,
@@ -635,11 +654,10 @@ class AdvancedLogger {
           };
         }
       }
-      
+
       stats.totalSizeFormatted = this.formatFileSize(stats.totalSize);
-      
+
       return stats;
-      
     } catch (error) {
       this.applicationLogger.error('Error getting log statistics:', error);
       throw error;
@@ -674,14 +692,7 @@ class AdvancedLogger {
    * @param {string} params.roastId - Roast/response ID (optional)
    * @returns {Object} Correlation context with timestamp
    */
-  createCorrelationContext({
-    correlationId,
-    tenantId,
-    userId,
-    commentId,
-    roastId,
-    ...meta
-  } = {}) {
+  createCorrelationContext({ correlationId, tenantId, userId, commentId, roastId, ...meta } = {}) {
     const context = {
       timestamp: new Date().toISOString(),
       ...meta

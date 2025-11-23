@@ -1,6 +1,6 @@
 /**
  * Plans API Service
- * 
+ *
  * Handles subscription plans and billing
  * Issue #910 - Connect dashboard to real backend
  */
@@ -64,4 +64,3 @@ export async function getBillingHistory() {
 export async function getUpcomingInvoice() {
   return apiClient.get('/billing/upcoming');
 }
-

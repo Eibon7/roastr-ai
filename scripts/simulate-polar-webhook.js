@@ -28,7 +28,7 @@ const colors = {
   red: '\x1b[31m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
-  cyan: '\x1b[36m',
+  cyan: '\x1b[36m'
 };
 
 function log(color, prefix, message) {
@@ -47,8 +47,8 @@ function generateOrderCreatedPayload(email, priceId = process.env.POLAR_STARTER_
       product_price_id: priceId,
       amount: 500, // €5.00 in cents
       currency: 'EUR',
-      status: 'succeeded',
-    },
+      status: 'succeeded'
+    }
   };
 }
 
@@ -63,8 +63,8 @@ function generateSubscriptionCreatedPayload(email, priceId = process.env.POLAR_P
       product_price_id: priceId,
       status: 'active',
       current_period_start: new Date().toISOString(),
-      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // +30 days
-    },
+      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // +30 days
+    }
   };
 }
 
@@ -79,8 +79,8 @@ function generateSubscriptionUpdatedPayload(email, priceId = process.env.POLAR_P
       product_price_id: priceId,
       status: 'active',
       current_period_start: new Date().toISOString(),
-      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    },
+      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    }
   };
 }
 
@@ -93,8 +93,8 @@ function generateSubscriptionCanceledPayload(email) {
       id: `sub_${Date.now()}`,
       customer_email: email,
       status: 'canceled',
-      canceled_at: new Date().toISOString(),
-    },
+      canceled_at: new Date().toISOString()
+    }
   };
 }
 
@@ -107,8 +107,8 @@ function generateCheckoutCreatedPayload(email, priceId = process.env.POLAR_START
       id: `checkout_${Date.now()}`,
       customer_email: email,
       product_price_id: priceId,
-      status: 'open',
-    },
+      status: 'open'
+    }
   };
 }
 
@@ -121,10 +121,7 @@ function calculateSignature(payload, secret) {
   }
 
   const payloadString = JSON.stringify(payload);
-  return crypto
-    .createHmac('sha256', secret)
-    .update(payloadString)
-    .digest('hex');
+  return crypto.createHmac('sha256', secret).update(payloadString).digest('hex');
 }
 
 /**
@@ -158,7 +155,11 @@ async function sendWebhook(eventType, email, baseUrl = 'http://localhost:3000') 
       break;
     default:
       log(colors.red, 'ERROR', `Unknown event type: ${eventType}`);
-      log(colors.yellow, 'HELP', 'Valid types: order.created, subscription.created, subscription.updated, subscription.canceled, checkout.created');
+      log(
+        colors.yellow,
+        'HELP',
+        'Valid types: order.created, subscription.created, subscription.updated, subscription.canceled, checkout.created'
+      );
       process.exit(1);
   }
 
@@ -173,16 +174,12 @@ async function sendWebhook(eventType, email, baseUrl = 'http://localhost:3000') 
 
   try {
     // Send webhook request
-    const response = await axios.post(
-      `${baseUrl}/api/polar/webhook`,
-      JSON.stringify(payload),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Polar-Signature': signature,
-        },
+    const response = await axios.post(`${baseUrl}/api/polar/webhook`, JSON.stringify(payload), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Polar-Signature': signature
       }
-    );
+    });
 
     log(colors.green, 'SUCCESS', `Status: ${response.status}`);
     log(colors.green, 'RESPONSE', JSON.stringify(response.data, null, 2));
@@ -255,5 +252,5 @@ module.exports = {
   generateSubscriptionCreatedPayload,
   generateSubscriptionUpdatedPayload,
   generateSubscriptionCanceledPayload,
-  generateCheckoutCreatedPayload,
+  generateCheckoutCreatedPayload
 };

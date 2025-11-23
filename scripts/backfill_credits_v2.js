@@ -2,13 +2,13 @@
 
 /**
  * Backfill Script for Credits v2 System
- * 
+ *
  * This script initializes usage_counters for all existing users
  * with their current plan limits and billing periods.
- * 
+ *
  * Usage:
  *   node scripts/backfill_credits_v2.js [--dry-run] [--batch-size=100]
- * 
+ *
  * Options:
  *   --dry-run: Show what would be done without making changes
  *   --batch-size: Number of users to process per batch (default: 100)
@@ -35,7 +35,8 @@ const PLAN_LIMITS = {
     analysis_limit: 100000,
     roast_limit: 5000
   },
-  creator_plus: { // Legacy plan mapping
+  creator_plus: {
+    // Legacy plan mapping
     analysis_limit: 100000,
     roast_limit: 5000
   }
@@ -45,11 +46,8 @@ class CreditsV2Backfill {
   constructor(options = {}) {
     this.dryRun = options.dryRun || false;
     this.batchSize = options.batchSize || 100;
-    this.supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
-    );
-    
+    this.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
     this.stats = {
       totalUsers: 0,
       processedUsers: 0,
@@ -68,21 +66,21 @@ class CreditsV2Backfill {
     try {
       // Get total user count
       await this.getTotalUserCount();
-      
+
       // Process users in batches
       let offset = 0;
       let hasMore = true;
 
       while (hasMore) {
         const users = await this.getUserBatch(offset);
-        
+
         if (users.length === 0) {
           hasMore = false;
           break;
         }
 
         await this.processBatch(users);
-        
+
         offset += this.batchSize;
         hasMore = users.length === this.batchSize;
 
@@ -95,7 +93,6 @@ class CreditsV2Backfill {
       }
 
       await this.printSummary();
-
     } catch (error) {
       logger.error('❌ Backfill process failed', error);
       process.exit(1);
@@ -118,7 +115,8 @@ class CreditsV2Backfill {
   async getUserBatch(offset) {
     const { data: users, error } = await this.supabase
       .from('users')
-      .select(`
+      .select(
+        `
         id,
         plan,
         created_at,
@@ -128,7 +126,8 @@ class CreditsV2Backfill {
           current_period_end,
           status
         )
-      `)
+      `
+      )
       .range(offset, offset + this.batchSize - 1)
       .order('created_at', { ascending: true });
 
@@ -167,10 +166,10 @@ class CreditsV2Backfill {
 
     // Get plan limits
     const planLimits = this.getPlanLimits(user.plan);
-    
+
     // Calculate billing period
     const { periodStart, periodEnd } = this.calculateBillingPeriod(user);
-    
+
     // Create usage counter record
     const usageCounter = {
       user_id: user.id,
@@ -190,9 +189,7 @@ class CreditsV2Backfill {
         ...usageCounter
       });
     } else {
-      const { error } = await this.supabase
-        .from('usage_counters')
-        .insert(usageCounter);
+      const { error } = await this.supabase.from('usage_counters').insert(usageCounter);
 
       if (error) {
         throw new Error(`Failed to create usage counter: ${error.message}`);
@@ -236,13 +233,14 @@ class CreditsV2Backfill {
 
   calculateBillingPeriod(user) {
     const subscription = user.user_subscriptions?.[0];
-    
+
     // Use Stripe billing cycle if available and active
-    if (subscription && 
-        subscription.status === 'active' && 
-        subscription.current_period_start && 
-        subscription.current_period_end) {
-      
+    if (
+      subscription &&
+      subscription.status === 'active' &&
+      subscription.current_period_start &&
+      subscription.current_period_end
+    ) {
       return {
         periodStart: subscription.current_period_start,
         periodEnd: subscription.current_period_end
@@ -264,7 +262,9 @@ class CreditsV2Backfill {
     logger.info('📋 Backfill Summary', {
       mode: this.dryRun ? 'DRY RUN' : 'LIVE',
       ...this.stats,
-      successRate: Math.round(((this.stats.processedUsers - this.stats.errors) / this.stats.processedUsers) * 100)
+      successRate: Math.round(
+        ((this.stats.processedUsers - this.stats.errors) / this.stats.processedUsers) * 100
+      )
     });
 
     if (this.stats.errors > 0) {
@@ -285,7 +285,7 @@ async function main() {
   const args = process.argv.slice(2);
   const options = {
     dryRun: args.includes('--dry-run'),
-    batchSize: parseInt(args.find(arg => arg.startsWith('--batch-size='))?.split('=')[1]) || 100
+    batchSize: parseInt(args.find((arg) => arg.startsWith('--batch-size='))?.split('=')[1]) || 100
   };
 
   // Validate environment
@@ -300,7 +300,7 @@ async function main() {
 
 // Run if called directly
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     logger.error('❌ Unhandled error in backfill script', error);
     process.exit(1);
   });

@@ -1,13 +1,15 @@
 ---
-type: "always_apply"
+type: 'always_apply'
 ---
 
 # Rule: Apply CodeRabbit Fixes Automatically (No Auto-Merge)
 
 ## Context
+
 Esta regla asegura que Augment procese automáticamente las sugerencias de CodeRabbit y valide que no rompan nada en el proyecto. El merge de la PR queda siempre bajo control del usuario.
 
 ## Behavior
+
 - Cuando CodeRabbit sugiera cambios o fixes en un commit o PR:
   1. **Aplicar automáticamente** las sugerencias en el código.
   2. **Instalar dependencias** con `npm ci` antes de ejecutar tests.
@@ -25,4 +27,5 @@ Esta regla asegura que Augment procese automáticamente las sugerencias de CodeR
 - En caso de conflicto con sugerencias de Copilot u otros agentes, **priorizar las de CodeRabbit**.
 
 ## Scope
+
 Se aplica a todas las interacciones de Augment relacionadas con revisiones de CodeRabbit.

@@ -1,7 +1,7 @@
 /**
  * System Control Panel
  * Issue #294: Kill Switch global y panel de control de feature flags para administradores
- * 
+ *
  * Dedicated admin page for kill switch and feature flags management
  */
 
@@ -11,10 +11,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { 
+import {
   ArrowLeft,
-  Power, 
-  Settings, 
+  Power,
+  Settings,
   FileText,
   Activity,
   AlertTriangle,
@@ -90,7 +90,6 @@ const SystemControlPanel = () => {
           });
         }
       }
-
     } catch (error) {
       console.error('Admin check error:', error);
       if (mountedRef.current) {
@@ -137,15 +136,13 @@ const SystemControlPanel = () => {
               <div className="h-6 w-px bg-gray-300" />
               <div className="flex items-center gap-2">
                 <Shield className="h-6 w-6 text-blue-600" />
-                <h1 className="text-xl font-semibold text-gray-900">
-                  System Control Panel
-                </h1>
+                <h1 className="text-xl font-semibold text-gray-900">System Control Panel</h1>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               {systemStatus && (
-                <Badge 
+                <Badge
                   variant={systemStatus.healthy ? 'success' : 'destructive'}
                   className="flex items-center gap-1"
                 >
@@ -153,9 +150,7 @@ const SystemControlPanel = () => {
                   {systemStatus.healthy ? 'System Healthy' : 'System Issues'}
                 </Badge>
               )}
-              <span className="text-sm text-gray-600">
-                Admin: {currentUser?.email}
-              </span>
+              <span className="text-sm text-gray-600">Admin: {currentUser?.email}</span>
             </div>
           </div>
         </div>
@@ -202,7 +197,7 @@ const SystemControlPanel = () => {
           <TabsContent value="kill-switch" className="space-y-6">
             <div className="grid gap-6">
               <KillSwitchPanel />
-              
+
               {/* Quick Actions */}
               <Card>
                 <CardHeader>

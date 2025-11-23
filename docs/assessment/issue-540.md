@@ -16,39 +16,42 @@
 
 ### Tests Pure Unit Existentes (✅ Sin Mocks)
 
-| Archivo | Estado | Coverage Estimado | Notas |
-|---------|--------|-------------------|-------|
-| `tests/unit/utils/formatUtils.test.js` | ✅ Existe | ~60% | 85 líneas, 6 describe blocks |
-| `tests/unit/utils/safeUtils.test.js` | ✅ Existe | ~70% | 139 líneas, 5 describe blocks |
-| `tests/unit/utils/parameterSanitizer.test.js` | ✅ Existe | ~80% | 6243 bytes |
-| `tests/unit/utils/jobValidator.test.js` | ✅ Existe | ~65% | 9153 bytes |
-| `tests/unit/utils/i18n.test.js` | ✅ Existe | ~50% | 2986 bytes |
+| Archivo                                       | Estado    | Coverage Estimado | Notas                         |
+| --------------------------------------------- | --------- | ----------------- | ----------------------------- |
+| `tests/unit/utils/formatUtils.test.js`        | ✅ Existe | ~60%              | 85 líneas, 6 describe blocks  |
+| `tests/unit/utils/safeUtils.test.js`          | ✅ Existe | ~70%              | 139 líneas, 5 describe blocks |
+| `tests/unit/utils/parameterSanitizer.test.js` | ✅ Existe | ~80%              | 6243 bytes                    |
+| `tests/unit/utils/jobValidator.test.js`       | ✅ Existe | ~65%              | 9153 bytes                    |
+| `tests/unit/utils/i18n.test.js`               | ✅ Existe | ~50%              | 2986 bytes                    |
 
 **Total existentes:** 5 archivos de pure unit tests
 
 ### Tests que Usan Mocks (❌ Excluir de esta issue)
 
-| Archivo | Razón para Mocks |
-|---------|------------------|
-| `tests/unit/utils/alertingUtils.test.js` | Requiere integraciones externas |
-| `tests/unit/utils/circuitBreaker.test.js` | Requiere Redis/external calls |
-| `tests/unit/utils/errorHandler.test.js` | Requiere logging/database |
-| `tests/unit/utils/logMaintenance.test.js` | Requiere filesystem/database |
-| `tests/unit/utils/shield-validation.test.js` | Requiere Supabase |
+| Archivo                                      | Razón para Mocks                |
+| -------------------------------------------- | ------------------------------- |
+| `tests/unit/utils/alertingUtils.test.js`     | Requiere integraciones externas |
+| `tests/unit/utils/circuitBreaker.test.js`    | Requiere Redis/external calls   |
+| `tests/unit/utils/errorHandler.test.js`      | Requiere logging/database       |
+| `tests/unit/utils/logMaintenance.test.js`    | Requiere filesystem/database    |
+| `tests/unit/utils/shield-validation.test.js` | Requiere Supabase               |
 
 **Nota:** Estos tests están correctos con mocks, NO modificarlos en esta issue.
 
 ### Tests Faltantes (🆕 A Crear)
 
 **Prioridad ALTA:**
+
 - [ ] `tests/unit/utils/passwordValidator.test.js` - **NO EXISTE**
 - [ ] `tests/unit/utils/retry.test.js` - **NO EXISTE**
 
 **Prioridad MEDIA:**
+
 - [ ] `tests/unit/middleware/inputValidation.test.js` - Verificar existencia
 - [ ] `tests/unit/middleware/tierValidation.test.js` - Verificar existencia
 
 **Prioridad BAJA:**
+
 - [ ] `tests/unit/config/constants.test.js` - Verificar estructura
 - [ ] `tests/unit/config/planMappings.test.js` - Validar mapeos
 - [ ] `tests/unit/config/tierMessages.test.js` - Validar mensajes
@@ -60,6 +63,7 @@
 ### Baseline (Actual)
 
 **Fuente:** `coverage/coverage-summary.json` (10-Oct-2025)
+
 - **Lines:** 3.13%
 - **Functions:** 3.77%
 - **Branches:** 1.91%
@@ -69,11 +73,13 @@
 ### Target (Post-Implementation)
 
 **Meta Realista:**
+
 - **Lines:** 15-20% (+12-17 puntos)
 - **Functions:** 20-25% (+16-21 puntos)
 - **Branches:** 10-15% (+8-13 puntos)
 
 **Estrategia:**
+
 1. **ENHANCE** tests existentes → +5-8 puntos
 2. **CREATE** tests faltantes → +7-9 puntos
 
@@ -203,10 +209,12 @@ docs/test-evidence/issue-540/
 **Effort:** 2-3 días (reducido de 3-4)
 
 **Razón:**
+
 - Muchos tests ya existen (60% del work)
 - Solo necesitamos ENHANCE + CREATE faltantes
 
 **Breakdown:**
+
 - **Día 1:** Crear passwordValidator + retry tests (4-6h)
 - **Día 2:** Expandir tests existentes (4-6h)
 - **Día 3:** Validators + config + docs (3-4h)
@@ -218,6 +226,7 @@ docs/test-evidence/issue-540/
 **Proceder a FASE 2: Planning** en `docs/plan/issue-540.md`
 
 **Estrategia recomendada:**
+
 1. Empezar con tests faltantes (passwordValidator, retry)
 2. Expandir tests existentes para aumentar coverage
 3. Añadir validators + config tests

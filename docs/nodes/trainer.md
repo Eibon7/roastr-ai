@@ -160,11 +160,13 @@ async function prepareTrainingDataset(organizationId, config) {
   // Fetch high-quality roasts from history
   const { data: approvedRoasts } = await supabase
     .from('responses')
-    .select(`
+    .select(
+      `
       *,
       comments(original_text, platform, toxicity_score),
       roast_metadata(rqc_score, quality_metrics)
-    `)
+    `
+    )
     .eq('organization_id', organizationId)
     .gte('roast_metadata.rqc_score', config.minQualityScore || 0.7)
     .order('created_at', { ascending: false })
@@ -182,7 +184,7 @@ async function prepareTrainingDataset(organizationId, config) {
     .single();
 
   // Format training examples
-  const trainingExamples = approvedRoasts.map(roast => ({
+  const trainingExamples = approvedRoasts.map((roast) => ({
     messages: [
       {
         role: 'system',
@@ -266,10 +268,7 @@ async function submitFineTuningJob(datasetId) {
     .single();
 
   // Update dataset status
-  await supabase
-    .from('training_datasets')
-    .update({ status: 'training' })
-    .eq('id', datasetId);
+  await supabase.from('training_datasets').update({ status: 'training' }).eq('id', datasetId);
 
   return { customModel, fineTuningJob };
 }
@@ -295,7 +294,9 @@ async function monitorTrainingJob(customModelId) {
       .update({
         fine_tuned_model_id: job.fine_tuned_model,
         training_completed_at: new Date().toISOString(),
-        training_duration_seconds: Math.floor((Date.now() - new Date(model.training_started_at)) / 1000),
+        training_duration_seconds: Math.floor(
+          (Date.now() - new Date(model.training_started_at)) / 1000
+        ),
         training_loss: job.trained_tokens ? job.training_loss : null,
         validation_loss: job.validation_loss,
         training_cost_cents: calculateTrainingCost(job),
@@ -306,12 +307,8 @@ async function monitorTrainingJob(customModelId) {
 
     // Notify organization
     await sendTrainingCompleteNotification(model.organization_id, customModelId);
-
   } else if (job.status === 'failed') {
-    await supabase
-      .from('custom_models')
-      .update({ is_active: false })
-      .eq('id', customModelId);
+    await supabase.from('custom_models').update({ is_active: false }).eq('id', customModelId);
 
     await sendTrainingFailedNotification(model.organization_id, job.error);
   }
@@ -401,7 +398,8 @@ async function collectFeedback(responseId, feedback) {
 
   // Check if retraining threshold reached
   const feedbackCount = await getFeedbackCount(customModel.id);
-  if (feedbackCount >= 100) { // Retrain every 100 feedback samples
+  if (feedbackCount >= 100) {
+    // Retrain every 100 feedback samples
     await scheduleRetraining(customModel.id);
   }
 }
@@ -414,11 +412,15 @@ async function collectFeedback(responseId, feedback) {
 ```javascript
 async function runABTest(organizationId, duration = 7) {
   // Enable A/B test
-  await supabase.from('custom_models').update({
-    ab_test_enabled: true,
-    ab_test_started_at: new Date().toISOString(),
-    ab_test_duration_days: duration
-  }).eq('organization_id', organizationId).eq('is_active', true);
+  await supabase
+    .from('custom_models')
+    .update({
+      ab_test_enabled: true,
+      ab_test_started_at: new Date().toISOString(),
+      ab_test_duration_days: duration
+    })
+    .eq('organization_id', organizationId)
+    .eq('is_active', true);
 
   // For each roast request, randomly select model
   const useCustomModel = Math.random() < 0.5;
@@ -434,10 +436,13 @@ async function runABTest(organizationId, duration = 7) {
   });
 
   // After test duration, analyze results
-  setTimeout(async () => {
-    const results = await analyzeABTestResults(organizationId);
-    await notifyABTestComplete(organizationId, results);
-  }, duration * 24 * 60 * 60 * 1000);
+  setTimeout(
+    async () => {
+      const results = await analyzeABTestResults(organizationId);
+      await notifyABTestComplete(organizationId, results);
+    },
+    duration * 24 * 60 * 60 * 1000
+  );
 }
 ```
 
@@ -450,7 +455,7 @@ function calculateTrainingCost(fineTuningJob) {
   // OpenAI fine-tuning pricing (as of 2025)
   const costPerToken = {
     'gpt-4o': 0.000025, // $0.025 per 1K tokens
-    'gpt-4o-mini': 0.000003, // $0.003 per 1K tokens
+    'gpt-4o-mini': 0.000003 // $0.003 per 1K tokens
   };
 
   const baseModel = fineTuningJob.model;
@@ -511,9 +516,9 @@ describe('TrainingService', () => {
   });
 
   test('rejects dataset with insufficient examples', async () => {
-    await expect(
-      trainingService.prepareTrainingDataset(newOrgId, {})
-    ).rejects.toThrow('Insufficient training data');
+    await expect(trainingService.prepareTrainingDataset(newOrgId, {})).rejects.toThrow(
+      'Insufficient training data'
+    );
   });
 
   test('calculates training cost correctly', () => {
@@ -529,13 +534,13 @@ describe('TrainingService', () => {
 
 ## Error Handling
 
-| Error | Cause | Resolution |
-|-------|-------|------------|
+| Error                        | Cause                     | Resolution                                          |
+| ---------------------------- | ------------------------- | --------------------------------------------------- |
 | `Insufficient training data` | < 100 high-quality roasts | Continue using base model until more data available |
-| `Training job failed` | OpenAI service error | Retry with lower learning rate |
-| `Model deployment failed` | Invalid model ID | Verify fine-tuning job completed |
-| `Plan restriction` | Not on Plus plan | Upgrade to Plus plan for custom models |
-| `Cost limit exceeded` | Training cost > budget | Reduce training examples or use smaller base model |
+| `Training job failed`        | OpenAI service error      | Retry with lower learning rate                      |
+| `Model deployment failed`    | Invalid model ID          | Verify fine-tuning job completed                    |
+| `Plan restriction`           | Not on Plus plan          | Upgrade to Plus plan for custom models              |
+| `Cost limit exceeded`        | Training cost > budget    | Reduce training examples or use smaller base model  |
 
 ## Monitoring & Alerts
 
@@ -559,7 +564,6 @@ describe('TrainingService', () => {
 }
 ```
 
-
 ## Agentes Relevantes
 
 Los siguientes agentes son responsables de mantener este nodo:
@@ -568,7 +572,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Backend Developer**
 - **ML Engineer**
 - **Data Scientist**
-
 
 ## Related Nodes
 
@@ -584,10 +587,12 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Ubicación de Tests
 
 **Unit Tests** (2 archivos):
+
 - `tests/unit/csvRoastService.test.js` - CSV roast reference system (full tests)
 - `tests/unit/csvRoastService-simple.test.js` - Simplified CSV tests
 
 **Test Data**:
+
 - `tests/data/roasts_test.csv` - Sample CSV data for testing
 
 ### Cobertura de Tests
@@ -599,6 +604,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Casos de Prueba Cubiertos
 
 **CSV Roast System (Current Implementation):**
+
 - ✅ CSV file loading and parsing
 - ✅ Roast retrieval by category
 - ✅ Random roast selection
@@ -607,6 +613,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Edge cases (empty CSV, invalid format)
 
 **Current Functionality:**
+
 - ✅ Reference roast database (CSV-based)
 - ✅ Category-based roast lookup
 - ✅ Integration with roast generator (basic)
@@ -614,18 +621,21 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Tests Pendientes (Trainer Roadmap)
 
 **Feedback Loop (Phase 2):**
+
 - [ ] User rating collection tests
 - [ ] Rating validation (1-5 stars)
 - [ ] Organization-scoped feedback storage
 - [ ] Aggregated rating queries
 
 **Quality Metrics (Phase 3):**
+
 - [ ] Quality score calculation tests
 - [ ] Low-quality roast detection
 - [ ] Variant comparison tests
 - [ ] A/B testing framework tests
 
 **Fine-tuning System (Phase 4-5):**
+
 - [ ] Training data generation tests
 - [ ] Fine-tuning job creation tests
 - [ ] Model versioning tests
@@ -633,6 +643,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - [ ] Performance regression detection
 
 **Auto-Improvement (Phase 6-7):**
+
 - [ ] Variant generation tests
 - [ ] Automatic retraining trigger tests
 - [ ] Quality improvement validation
@@ -654,21 +665,26 @@ npm test -- tests/unit/csvRoastService.test.js
 ### Roadmap de Testing
 
 **Fase 1 (Current)**: CSV Roast Reference System
+
 - Status: ✅ Básico implementado, 60% coverage
 
 **Fase 2**: Feedback Loop
+
 - Status: ⏳ Pendiente
 - Tests needed: User rating collection, validation, storage
 
 **Fase 3**: Quality Metrics
+
 - Status: ⏳ Pendiente
 - Tests needed: Quality scoring, low-quality detection
 
 **Fase 4**: Fine-tuning System
+
 - Status: ⏳ Pendiente
 - Tests needed: Training data, fine-tuning jobs, model versioning
 
 **Fase 5-7**: Auto-Improvement
+
 - Status: ⏳ Pendiente
 - Tests needed: Variant generation, retraining triggers, drift detection
 

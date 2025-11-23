@@ -18,57 +18,62 @@ Platform Constraints defines character limits, style guides, rate limits, and AP
 
 ## Character Limits
 
-| Platform | Max Characters | Preferred Length | Notes |
-|----------|---------------|------------------|-------|
-| **Twitter** | 280 | 240 | Leave room for RTs and threading |
-| **YouTube** | 10,000 | 800 | Supports detailed responses |
-| **Instagram** | 2,200 | 150 | Visual-first platform |
-| **Facebook** | 63,206 | 400 | Very permissive limit |
-| **Discord** | 2,000 | 300 | Community-focused |
-| **Twitch** | 500 | 200 | Fast-paced chat |
-| **Reddit** | 10,000 | 600 | Supports markdown |
-| **TikTok** | 2,200 | 200 | Trend-focused |
-| **Bluesky** | 300 | 250 | Similar to Twitter |
+| Platform      | Max Characters | Preferred Length | Notes                            |
+| ------------- | -------------- | ---------------- | -------------------------------- |
+| **Twitter**   | 280            | 240              | Leave room for RTs and threading |
+| **YouTube**   | 10,000         | 800              | Supports detailed responses      |
+| **Instagram** | 2,200          | 150              | Visual-first platform            |
+| **Facebook**  | 63,206         | 400              | Very permissive limit            |
+| **Discord**   | 2,000          | 300              | Community-focused                |
+| **Twitch**    | 500            | 200              | Fast-paced chat                  |
+| **Reddit**    | 10,000         | 600              | Supports markdown                |
+| **TikTok**    | 2,200          | 200              | Trend-focused                    |
+| **Bluesky**   | 300            | 250              | Similar to Twitter               |
 
 ## Rate Limits
 
-| Platform | Rate Limit | Window | Notes |
-|----------|------------|--------|-------|
-| **Twitter** | Varies by tier | Per hour | Free tier: 1,500 tweets/month |
-| **YouTube** | 10,000 quota units | Per day | Different operations cost different units |
-| **Instagram** | 200 requests | Per hour | Graph API limits |
-| **Facebook** | 200 requests | Per hour | Graph API limits |
-| **Discord** | 50 requests | Per second | Burst limit |
-| **Twitch** | 800 requests | Per minute | Helix API limits |
-| **Reddit** | 60 requests | Per minute | OAuth app limits |
-| **TikTok** | 1,000 requests | Per hour | Business API limits |
-| **Bluesky** | 300 requests | Per 5 minutes | AT Protocol limits |
+| Platform      | Rate Limit         | Window        | Notes                                     |
+| ------------- | ------------------ | ------------- | ----------------------------------------- |
+| **Twitter**   | Varies by tier     | Per hour      | Free tier: 1,500 tweets/month             |
+| **YouTube**   | 10,000 quota units | Per day       | Different operations cost different units |
+| **Instagram** | 200 requests       | Per hour      | Graph API limits                          |
+| **Facebook**  | 200 requests       | Per hour      | Graph API limits                          |
+| **Discord**   | 50 requests        | Per second    | Burst limit                               |
+| **Twitch**    | 800 requests       | Per minute    | Helix API limits                          |
+| **Reddit**    | 60 requests        | Per minute    | OAuth app limits                          |
+| **TikTok**    | 1,000 requests     | Per hour      | Business API limits                       |
+| **Bluesky**   | 300 requests       | Per 5 minutes | AT Protocol limits                        |
 
 ## Style Guides
 
 ### Twitter
+
 - Tone: Concise and punchy
 - Emoji usage: Moderate
 - Hashtag limit: 2
 - Supports: Hashtags, mentions, threading
 
 ### YouTube
+
 - Tone: Detailed and engaging
 - Emoji usage: Moderate
 - Hashtag limit: 15
 - Supports: Hashtags, multiline, timestamps
 
 ### Discord
+
 - Tone: Casual and community-focused
 - Emoji usage: Heavy
 - Supports: Mentions, custom emojis, markdown, code blocks
 
 ### Twitch
+
 - Tone: Fast-paced and energetic
 - Emoji usage: Heavy
 - Supports: Emotes, mentions
 
 ### Reddit
+
 - Tone: Witty and reference-heavy
 - Emoji usage: Light
 - Supports: Markdown, quotes, subreddit context
@@ -98,7 +103,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Documentation Agent**
 - **Test Engineer** (Issue #718 - Tests comprehensivos implementados)
 - **Backend Developer**
-
 
 ## Related Nodes
 

@@ -90,7 +90,9 @@ async function createTestOrganization(name, planId = 'starter') {
     .limit(1);
 
   if (orgError || !orgs || orgs.length === 0) {
-    throw new Error(`Failed to get auto-created organization: ${orgError?.message || 'No org found'}`);
+    throw new Error(
+      `Failed to get auto-created organization: ${orgError?.message || 'No org found'}`
+    );
   }
 
   const org = orgs[0];
@@ -119,7 +121,7 @@ async function seedTestData(orgId, orgName) {
         external_id: `comment-${orgName}-${i}`,
         author_username: `user${i}`,
         text: `Test comment ${i} for ${orgName}`,
-        toxicity_score: 0.1 + (i * 0.1)
+        toxicity_score: 0.1 + i * 0.1
       })
       .select()
       .single();
@@ -225,9 +227,7 @@ async function testServiceRoleBypass() {
   console.log('\n🔓 Test 3: Service role can bypass RLS');
 
   // Service role should see ALL comments across all orgs
-  const { data: allComments, error: queryError } = await serviceClient
-    .from('comments')
-    .select('*');
+  const { data: allComments, error: queryError } = await serviceClient.from('comments').select('*');
 
   if (queryError) {
     throw new Error(`Failed to query all comments: ${queryError.message}`);
@@ -235,7 +235,8 @@ async function testServiceRoleBypass() {
 
   console.log(`   Service role can see ${allComments.length} comments (all orgs)`);
 
-  if (allComments.length >= 10) { // We created 5 per org
+  if (allComments.length >= 10) {
+    // We created 5 per org
     console.log(`   ✅ Service role can bypass RLS (admin access working)`);
     return true;
   } else {
@@ -259,8 +260,8 @@ async function testZeroDataLeakage(orgA, orgB, dataA, dataB) {
     .eq('organization_id', orgB.orgId);
 
   // Check for any cross-contamination
-  const orgAHasOrgBData = orgAFiltered?.some(c => c.organization_id === orgB.orgId);
-  const orgBHasOrgAData = orgBFiltered?.some(c => c.organization_id === orgA.orgId);
+  const orgAHasOrgBData = orgAFiltered?.some((c) => c.organization_id === orgB.orgId);
+  const orgBHasOrgAData = orgBFiltered?.some((c) => c.organization_id === orgA.orgId);
 
   if (orgAHasOrgBData || orgBHasOrgAData) {
     console.log(`   ❌ DATA LEAKAGE DETECTED!`);
@@ -299,7 +300,7 @@ async function cleanupTestData(orgA, orgB) {
 
 async function validateMultiTenantFlow() {
   console.log('🚀 Starting Multi-Tenant RLS Isolation Flow Validation\n');
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
 
   const startTime = Date.now();
   const results = {
@@ -379,7 +380,6 @@ async function validateMultiTenantFlow() {
       results.failed++;
       results.errors.push('Test 4: Data leakage detected between orgs');
     }
-
   } catch (error) {
     console.error(`\n❌ Validation crashed: ${error.message}`);
     results.failed++;
@@ -403,7 +403,7 @@ async function validateMultiTenantFlow() {
 
   if (results.errors.length > 0) {
     console.log(`\n❌ Errors:`);
-    results.errors.forEach(err => {
+    results.errors.forEach((err) => {
       console.log(`   - ${err}`);
     });
   }
@@ -420,8 +420,7 @@ async function validateMultiTenantFlow() {
 }
 
 // Run validation
-validateMultiTenantFlow()
-  .catch(err => {
-    console.error('\n💥 Validation crashed:', err);
-    process.exit(1);
-  });
+validateMultiTenantFlow().catch((err) => {
+  console.error('\n💥 Validation crashed:', err);
+  process.exit(1);
+});

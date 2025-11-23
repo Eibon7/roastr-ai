@@ -1,9 +1,9 @@
 /**
  * StyleProfileDashboard Component
- * 
+ *
  * Main dashboard for Style Profile feature showing user's communication patterns
  * Issue #369 - SPEC 9 - Style Profile Extraction
- * 
+ *
  * Features:
  * - Multi-language profile display
  * - Platform distribution charts
@@ -26,7 +26,7 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
   const [error, setError] = useState(null);
   const [extracting, setExtracting] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState(['twitter', 'youtube']);
-  
+
   const { flags } = useFeatureFlags();
   const isFeatureEnabled = flags.isEnabled('ENABLE_STYLE_PROFILE');
   const isPremiumUser = isPremiumPlan(userPlan);
@@ -47,7 +47,7 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
   // Load existing profiles on component mount
   useEffect(() => {
     if (!isFeatureEnabled || !isPremiumUser) return;
-    
+
     loadProfiles();
   }, [isFeatureEnabled, isPremiumUser, organizationId, userId]);
 
@@ -70,14 +70,14 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
     try {
       setExtracting(true);
       setError(null);
-      
+
       const response = await styleProfileAPI.extractStyleProfile(organizationId, userId, {
         platforms: selectedPlatforms,
         includeMetadata: true
       });
-      
+
       setProfiles(response.data.profiles || []);
-      
+
       // Show success message
       console.log(`✅ Perfil extraído exitosamente para ${response.data.totalItems} elementos`);
     } catch (err) {
@@ -89,10 +89,8 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
   };
 
   const handlePlatformToggle = (platformId) => {
-    setSelectedPlatforms(prev => 
-      prev.includes(platformId)
-        ? prev.filter(id => id !== platformId)
-        : [...prev, platformId]
+    setSelectedPlatforms((prev) =>
+      prev.includes(platformId) ? prev.filter((id) => id !== platformId) : [...prev, platformId]
     );
   };
 
@@ -103,9 +101,7 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
         <div className="flex items-center space-x-3">
           <div className="text-yellow-600 text-xl">⚠️</div>
           <div>
-            <h3 className="text-lg font-medium text-yellow-800">
-              Función en desarrollo
-            </h3>
+            <h3 className="text-lg font-medium text-yellow-800">Función en desarrollo</h3>
             <p className="text-yellow-700">
               La extracción de perfiles de estilo estará disponible próximamente.
             </p>
@@ -121,9 +117,7 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
         <div className="flex items-center space-x-3">
           <div className="text-blue-600 text-xl">🔒</div>
           <div>
-            <h3 className="text-lg font-medium text-blue-800">
-              Función Premium
-            </h3>
+            <h3 className="text-lg font-medium text-blue-800">Función Premium</h3>
             <p className="text-blue-700 mb-3">
               La extracción de perfiles de estilo está disponible para usuarios Pro y superiores.
             </p>
@@ -141,14 +135,12 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            🎭 Perfil de Estilo
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">🎭 Perfil de Estilo</h2>
           <p className="text-gray-600 dark:text-gray-400">
             Analiza tu estilo de comunicación en redes sociales
           </p>
         </div>
-        
+
         {profiles.length > 0 && (
           <div className="text-sm text-gray-500 dark:text-gray-400">
             Última actualización: {new Date(profiles[0]?.createdAt).toLocaleDateString()}
@@ -161,9 +153,9 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Seleccionar plataformas para análisis
         </h3>
-        
+
         <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3 mb-6">
-          {availablePlatforms.map(platform => (
+          {availablePlatforms.map((platform) => (
             <button
               key={platform.id}
               onClick={() => handlePlatformToggle(platform.id)}
@@ -181,9 +173,10 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
 
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            {selectedPlatforms.length} plataforma{selectedPlatforms.length !== 1 ? 's' : ''} seleccionada{selectedPlatforms.length !== 1 ? 's' : ''}
+            {selectedPlatforms.length} plataforma{selectedPlatforms.length !== 1 ? 's' : ''}{' '}
+            seleccionada{selectedPlatforms.length !== 1 ? 's' : ''}
           </div>
-          
+
           <button
             onClick={handleExtractProfile}
             disabled={extracting || selectedPlatforms.length === 0}
@@ -225,7 +218,10 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
       {!loading && profiles.length > 0 && (
         <div className="space-y-6">
           {profiles.map((profile, index) => (
-            <div key={`${profile.lang}-${index}`} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div
+              key={`${profile.lang}-${index}`}
+              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
+            >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                   📝 Perfil en {profile.lang.toUpperCase()}
@@ -247,17 +243,11 @@ const StyleProfileDashboard = ({ userId, organizationId, userPlan = 'starter_tri
 
               {/* Analysis Components */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <StyleAnalysisChart 
-                  metadata={profile.metadata}
-                  language={profile.lang}
-                />
-                <PlatformDistributionChart 
-                  sources={profile.sources}
-                  language={profile.lang}
-                />
+                <StyleAnalysisChart metadata={profile.metadata} language={profile.lang} />
+                <PlatformDistributionChart sources={profile.sources} language={profile.lang} />
               </div>
 
-              <ToneAnalysisDisplay 
+              <ToneAnalysisDisplay
                 metadata={profile.metadata}
                 examples={profile.examples}
                 language={profile.lang}

@@ -13,12 +13,14 @@
 **Recomendación:** **CREATE** (Alta confianza, scope medio)
 
 ### Infraestructura Existente ✅
+
 - Queue system con `post_response` queue (priority 4, retry: 3 intentos)
 - 9 servicios de plataforma con `createComment()` implementado
 - Schema de base de datos: `platform_post_id`, `published_at` en tabla `roasts`
 - BaseWorker foundation para workers
 
 ### Componentes Faltantes ❌
+
 - **PublisherWorker.js** - No existe (componente principal)
 - **Integration tests** - 0 tests encontrados
 - **Mecanismo de idempotencia** - Sin verificación de duplicados
@@ -28,6 +30,7 @@
 ### Cobertura de AC: 0/5 (0%)
 
 **Nodos GDD cargados:**
+
 - `queue-system.md` (707 líneas)
 - `social-platforms.md` (548 líneas)
 - `multi-tenant.md` (707 líneas)
@@ -56,6 +59,7 @@
 **Archivo:** `src/workers/PublisherWorker.js`
 
 #### 1.1 Estructura Básica (1h)
+
 - Extender `BaseWorker`
 - Constructor con queue config
 - Métodos principales: `processJob()`, `publish()`, `updateRoastRecord()`
@@ -93,6 +97,7 @@ class PublisherWorker extends BaseWorker {
 ```
 
 #### 1.2 Idempotency Check (2h)
+
 - Query `roasts` table con `SELECT platform_post_id FROM roasts WHERE id = $1`
 - Si `platform_post_id IS NOT NULL` → skip job (return early)
 - Logging de publicaciones duplicadas evitadas
@@ -101,6 +106,7 @@ class PublisherWorker extends BaseWorker {
 **AC Cubierto:** AC4 (Idempotencia)
 
 #### 1.3 Platform Service Integration (1h)
+
 - Importar services desde `src/integrations/`
 - Map `platform` → service instance
 - Llamar `service.createComment()` con roast text + metadata
@@ -128,6 +134,7 @@ async publishToPlatform(roast) {
 ```
 
 #### 1.4 Database Update (1h)
+
 - Update `roasts` table: `platform_post_id`, `published_at`
 - Transaction handling (rollback on failure)
 - Validar que update afecte 1 row (otherwise throw error)
@@ -135,6 +142,7 @@ async publishToPlatform(roast) {
 **AC Cubierto:** AC1 (Persistencia de post_id)
 
 #### 1.5 Worker Registration (1h)
+
 - Añadir a `src/workers/cli/start-workers.js`
 - Config de concurrency (2 workers para post_response)
 - Startup logging
@@ -144,6 +152,7 @@ async publishToPlatform(roast) {
 ### Fase 2: Error Handling & Rate Limits (4h)
 
 #### 2.1 Error Classification (2h)
+
 - Método `classifyError(error)` que retorna:
   - `RetriableError` (5xx, network timeout) → retry
   - `RateLimitError` (429) → retry con backoff exponencial
@@ -174,6 +183,7 @@ classifyError(error) {
 **AC Cubierto:** AC3 (Gestión de errores 4xx/5xx)
 
 #### 2.2 Rate Limit Handling (2h)
+
 - Exponential backoff: 2s → 4s → 8s (max 3 retries)
 - Respetar `retry-after` header de plataforma
 - Logging de rate limit events con retry count
@@ -185,6 +195,7 @@ classifyError(error) {
 ### Fase 3: Logging & Monitoring (2h)
 
 #### 3.1 Logging Exhaustivo (2h)
+
 - Log **antes** de publicar: roast_id, platform, attempt number
 - Log **después** de éxito: post_id, duration, platform response
 - Log **en error**: error type, status code, retry strategy
@@ -216,6 +227,7 @@ this.log('info', 'Publication successful', {
 **Archivo:** `tests/integration/publisher-issue-410.test.js`
 
 #### 4.1 Test Setup & Fixtures (2h)
+
 - Database fixtures: 2 tenants, roasts listo para publicar
 - Platform API mocks (Twitter, Discord)
 - Mock responses: success (200), rate limit (429), errors (4xx/5xx)
@@ -223,7 +235,8 @@ this.log('info', 'Publication successful', {
 ```javascript
 const platformMocks = {
   twitter: {
-    createComment: jest.fn()
+    createComment: jest
+      .fn()
       .mockResolvedValueOnce({ id: 'tweet_123' }) // success
       .mockRejectedValueOnce({ response: { status: 429 } }) // rate limit
       .mockRejectedValueOnce({ response: { status: 500 } }) // server error
@@ -232,6 +245,7 @@ const platformMocks = {
 ```
 
 #### 4.2 AC1: Persistencia de post_id (2h)
+
 - **Test 1:** `should update platform_post_id after successful publication`
   - Crear roast sin `platform_post_id`
   - Ejecutar worker job
@@ -248,6 +262,7 @@ const platformMocks = {
   - Verificar rollback (post_id no guardado)
 
 #### 4.3 AC2: Rate Limits (3h)
+
 - **Test 4:** `should detect 429 errors from platform`
   - Mock Twitter API 429 response
   - Verificar que error se clasifica como `RateLimitError`
@@ -266,6 +281,7 @@ const platformMocks = {
   - Verificar presencia de: attempt number, retry_after value
 
 #### 4.4 AC3: Error Handling (3h)
+
 - **Test 8:** `should retry on 5xx server errors`
   - Mock 500 → 503 → 200
   - Verificar retrials con backoff
@@ -289,6 +305,7 @@ const platformMocks = {
   - Verificar error details guardados
 
 #### 4.5 AC4: Idempotencia (4h)
+
 - **Test 12:** `should skip publication if platform_post_id exists`
   - Crear roast con `platform_post_id = 'existing_123'`
   - Ejecutar worker job
@@ -311,6 +328,7 @@ const platformMocks = {
   - Verificar job completa en <100ms (no network call)
 
 #### 4.6 AC5: Logging (2h)
+
 - **Test 16:** `should log publication attempts`
   - Capturar logs antes de publicar
   - Verificar: roast_id, platform, attempt number
@@ -330,24 +348,28 @@ const platformMocks = {
 #### 5.1 GDD Node Updates (1h)
 
 **queue-system.md:**
+
 - Actualizar sección `post_response` queue
 - Añadir PublisherWorker en tabla de workers
 - Documentar retry strategy y error handling
 - Añadir "PublisherWorker" a sección "Agentes Relevantes"
 
 **social-platforms.md:**
+
 - Añadir sección "Publication Pipeline"
 - Documentar rate limits por plataforma
 - Incluir ejemplos de error handling
 - Actualizar tabla de platform capabilities
 
 #### 5.2 Test Evidence (30min)
+
 - Generar reporte `docs/test-evidence/publisher-issue-410.md`
 - Incluir test coverage (18/18 passing)
 - Screenshots de logs durante tests
 - Tabla de error scenarios validados
 
 #### 5.3 Validation (30min)
+
 - Ejecutar `node scripts/resolve-graph.js --validate`
 - Verificar 0 errores de validación
 - Generar reporte de GDD con `--report`
@@ -357,14 +379,17 @@ const platformMocks = {
 ## Subagentes Especializados
 
 ### Test Engineer Agent (Fase 4)
+
 **Responsabilidad:** Crear 18 integration tests con mocks y fixtures
 
 **Input:**
+
 - PublisherWorker.js implementation
 - Platform service interfaces
 - AC requirements
 
 **Output:**
+
 - `tests/integration/publisher-issue-410.test.js` (18 tests)
 - `tests/mocks/platformMocks.js` (reusable mocks)
 - Test evidence report
@@ -374,12 +399,14 @@ const platformMocks = {
 ## Archivos Afectados
 
 ### Nuevos Archivos
+
 1. `src/workers/PublisherWorker.js` (300 líneas estimadas)
 2. `tests/integration/publisher-issue-410.test.js` (600 líneas estimadas)
 3. `tests/mocks/platformMocks.js` (150 líneas estimadas)
 4. `docs/test-evidence/publisher-issue-410.md` (reporte)
 
 ### Modificaciones
+
 1. `src/workers/cli/start-workers.js` (+10 líneas: register PublisherWorker)
 2. `docs/nodes/queue-system.md` (~20 líneas: PublisherWorker docs)
 3. `docs/nodes/social-platforms.md` (~15 líneas: publication patterns)
@@ -389,6 +416,7 @@ const platformMocks = {
 ## Criterios de Validación
 
 ### Implementación
+
 - [x] PublisherWorker extiende BaseWorker correctamente
 - [x] Idempotency check funciona (query `platform_post_id`)
 - [x] Error classification: 4xx → permanent, 5xx → retry, 429 → rate limit
@@ -396,6 +424,7 @@ const platformMocks = {
 - [x] Worker registrado en start-workers.js
 
 ### Tests (18/18 passing)
+
 - [x] AC1: 3 tests de persistencia de post_id
 - [x] AC2: 4 tests de rate limits y retries
 - [x] AC3: 4 tests de error handling
@@ -403,6 +432,7 @@ const platformMocks = {
 - [x] AC5: 3 tests de logging
 
 ### Documentación
+
 - [x] queue-system.md actualizado con PublisherWorker
 - [x] social-platforms.md actualizado con publication patterns
 - [x] Test evidence generado con coverage report
@@ -412,25 +442,25 @@ const platformMocks = {
 
 ## Estimación de Esfuerzo
 
-| Fase | Duración | Descripción |
-|------|----------|-------------|
-| Fase 1 | 6h | PublisherWorker core implementation |
-| Fase 2 | 4h | Error handling & rate limits |
-| Fase 3 | 2h | Logging & monitoring |
-| Fase 4 | 14h | Integration tests (18 tests) |
-| Fase 5 | 2h | Documentación & validación |
-| **TOTAL** | **28h** | ~4 días de trabajo |
+| Fase      | Duración | Descripción                         |
+| --------- | -------- | ----------------------------------- |
+| Fase 1    | 6h       | PublisherWorker core implementation |
+| Fase 2    | 4h       | Error handling & rate limits        |
+| Fase 3    | 2h       | Logging & monitoring                |
+| Fase 4    | 14h      | Integration tests (18 tests)        |
+| Fase 5    | 2h       | Documentación & validación          |
+| **TOTAL** | **28h**  | ~4 días de trabajo                  |
 
 ---
 
 ## Riesgos y Mitigación
 
-| Riesgo | Impacto | Mitigación |
-|--------|---------|------------|
-| Rate limit abuse por plataforma | Alto | Backoff exponencial, respetar retry-after |
-| Duplicados por race condition | Medio | Check atómico de post_id, transactions |
-| Fallos de red durante update DB | Medio | Transacciones, rollback on error |
-| Cambios en APIs de plataformas | Bajo | Graceful degradation, comprehensive logs |
+| Riesgo                          | Impacto | Mitigación                                |
+| ------------------------------- | ------- | ----------------------------------------- |
+| Rate limit abuse por plataforma | Alto    | Backoff exponencial, respetar retry-after |
+| Duplicados por race condition   | Medio   | Check atómico de post_id, transactions    |
+| Fallos de red durante update DB | Medio   | Transacciones, rollback on error          |
+| Cambios en APIs de plataformas  | Bajo    | Graceful degradation, comprehensive logs  |
 
 ---
 

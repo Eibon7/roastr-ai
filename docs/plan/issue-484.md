@@ -1,4 +1,5 @@
 # Implementation Plan: Issue #484
+
 **Multi-Tenant & Billing Test Suite - RLS, Tier Limits, Stripe Webhooks**
 
 **Status:** In Progress
@@ -24,6 +25,7 @@
 **Decision:** Use Jest mocks for Supabase client (Pattern #11)
 
 **Rationale:**
+
 - ✅ No environment setup required
 - ✅ Fast test execution
 - ✅ Follows established patterns (Pattern #11)
@@ -43,6 +45,7 @@
 **Changes Required:**
 
 1. Add Supabase mock at top of file:
+
 ```javascript
 // Mock Supabase client
 const mockSupabaseClient = {
@@ -63,6 +66,7 @@ jest.mock('@supabase/supabase-js', () => ({
 ```
 
 2. Remove conditional skip:
+
 ```javascript
 // ❌ REMOVE THIS:
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
@@ -74,6 +78,7 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
 ```
 
 3. Update beforeAll:
+
 ```javascript
 beforeAll(() => {
   const { createClient } = require('@supabase/supabase-js');
@@ -82,6 +87,7 @@ beforeAll(() => {
 ```
 
 4. Mock RLS isolation behavior:
+
 ```javascript
 // Organizations Table RLS tests
 beforeEach(() => {
@@ -101,10 +107,12 @@ beforeEach(() => {
             });
           })
         })),
-        single: jest.fn(() => Promise.resolve({
-          data: { id: `org-${orgCounter++}`, name: 'Test Org', plan: 'free' },
-          error: null
-        }))
+        single: jest.fn(() =>
+          Promise.resolve({
+            data: { id: `org-${orgCounter++}`, name: 'Test Org', plan: 'free' },
+            error: null
+          })
+        )
       };
     }
 
@@ -130,6 +138,7 @@ beforeEach(() => {
 ```
 
 5. Update assertions to verify mock calls:
+
 ```javascript
 test('should prevent cross-organization writes', async () => {
   // ... test logic ...
@@ -141,6 +150,7 @@ test('should prevent cross-organization writes', async () => {
 ```
 
 **Success Criteria:**
+
 - [ ] Test runs without env vars
 - [ ] All 5 RLS tests pass
 - [ ] Mock verifies cross-org isolation
@@ -155,6 +165,7 @@ test('should prevent cross-organization writes', async () => {
 **Changes Required:**
 
 1. Add comprehensive Supabase mock:
+
 ```javascript
 let usageTracker = {}; // Track usage per org
 
@@ -183,10 +194,12 @@ const mockSupabaseClient = {
         }),
         select: jest.fn().mockReturnThis(),
         eq: jest.fn((field, value) => ({
-          single: jest.fn(() => Promise.resolve({
-            data: { comments_this_month: usageTracker[value] || 0 },
-            error: null
-          }))
+          single: jest.fn(() =>
+            Promise.resolve({
+              data: { comments_this_month: usageTracker[value] || 0 },
+              error: null
+            })
+          )
         }))
       };
     }
@@ -223,6 +236,7 @@ jest.mock('@supabase/supabase-js', () => ({
 2. Remove conditional skip logic
 
 3. Mock rate limiting behavior:
+
 ```javascript
 // Rate limiting tests
 let requestTimestamps = {};
@@ -245,9 +259,7 @@ if (tableName === 'comments') {
       }
 
       // Check rate limit (10 requests per second for free tier)
-      const recentRequests = requestTimestamps[orgId].filter(
-        ts => now - ts < 1000
-      );
+      const recentRequests = requestTimestamps[orgId].filter((ts) => now - ts < 1000);
 
       if (recentRequests.length >= 10) {
         return Promise.resolve({
@@ -263,6 +275,7 @@ if (tableName === 'comments') {
 ```
 
 **Success Criteria:**
+
 - [ ] Test runs without env vars
 - [ ] All 7 tier limit tests pass
 - [ ] Usage tracking mocked correctly
@@ -277,6 +290,7 @@ if (tableName === 'comments') {
 **Changes Required:**
 
 1. Simple mock (tests only verify plan field):
+
 ```javascript
 const mockSupabaseClient = {
   from: jest.fn((tableName) => {
@@ -284,10 +298,12 @@ const mockSupabaseClient = {
       return {
         insert: jest.fn((data) => ({
           select: jest.fn().mockReturnThis(),
-          single: jest.fn(() => Promise.resolve({
-            data: { id: 'org-123', name: data.name, plan: data.plan },
-            error: null
-          }))
+          single: jest.fn(() =>
+            Promise.resolve({
+              data: { id: 'org-123', name: data.name, plan: data.plan },
+              error: null
+            })
+          )
         }))
       };
     }
@@ -304,6 +320,7 @@ jest.mock('@supabase/supabase-js', () => ({
 3. Tests already simple - just verify plan field matches
 
 **Success Criteria:**
+
 - [ ] Test runs without env vars
 - [ ] All 4 plan tests pass
 - [ ] Plan field verification works
@@ -317,6 +334,7 @@ jest.mock('@supabase/supabase-js', () => ({
 **Changes Required:**
 
 1. Mock Supabase client AND mock API endpoint:
+
 ```javascript
 const mockSupabaseClient = {
   from: jest.fn((tableName) => {
@@ -324,10 +342,12 @@ const mockSupabaseClient = {
       return {
         insert: jest.fn((data) => ({
           select: jest.fn().mockReturnThis(),
-          single: jest.fn(() => Promise.resolve({
-            data: { id: 'org-123', name: data.name, plan: data.plan },
-            error: null
-          }))
+          single: jest.fn(() =>
+            Promise.resolve({
+              data: { id: 'org-123', name: data.name, plan: data.plan },
+              error: null
+            })
+          )
         }))
       };
     }
@@ -355,6 +375,7 @@ jest.mock('@supabase/supabase-js', () => ({
    - **Solution:** Keep pg.Pool in implementation, mock for tests only
 
 **Success Criteria:**
+
 - [ ] 8 Supabase-dependent tests run without env vars
 - [ ] 2 error tests continue to pass
 - [ ] All 10 tests pass
@@ -368,12 +389,13 @@ jest.mock('@supabase/supabase-js', () => ({
 **Status:** ✅ Already uses mocks correctly
 
 **Tasks:**
+
 1. Verify all 9 tests still pass
 2. Add mock verification for side effects:
+
 ```javascript
 test('should update organization plan on successful checkout', async () => {
   // ... existing test ...
-
   // TODO: Add verification that database was updated
   // (requires mocking pg.Pool or adding Supabase client to webhook handler)
 });
@@ -382,6 +404,7 @@ test('should update organization plan on successful checkout', async () => {
 3. Document that webhook handlers need implementation (separate issue)
 
 **Success Criteria:**
+
 - [ ] All 9 tests pass
 - [ ] No regressions
 
@@ -394,7 +417,9 @@ test('should update organization plan on successful checkout', async () => {
 **Goal:** Make RLS tests more realistic
 
 **Changes:**
+
 1. Add JWT session context simulation:
+
 ```javascript
 class MockSupabaseWithRLS {
   constructor() {
@@ -431,6 +456,7 @@ class MockSupabaseWithRLS {
 ```
 
 2. Update tests to set RLS context:
+
 ```javascript
 test('should isolate organization data between tenants', async () => {
   const org1 = { id: 'org-1', name: 'Org 1' };
@@ -440,16 +466,14 @@ test('should isolate organization data between tenants', async () => {
   mockSupabase.setContext(org1.id);
 
   // Try to access org2 data - should fail
-  const { data } = await supabase
-    .from('comments')
-    .select()
-    .eq('organization_id', org2.id);
+  const { data } = await supabase.from('comments').select().eq('organization_id', org2.id);
 
   expect(data).toHaveLength(0); // RLS blocked access
 });
 ```
 
 **Success Criteria:**
+
 - [ ] RLS context simulation working
 - [ ] Tests verify actual isolation behavior
 - [ ] Negative test cases pass
@@ -461,6 +485,7 @@ test('should isolate organization data between tenants', async () => {
 **Goal:** Test malicious cross-org access attempts
 
 **New Tests:**
+
 ```javascript
 describe('Security: Malicious Access Attempts', () => {
   test('should prevent SQL injection via organization_id', async () => {
@@ -478,9 +503,7 @@ describe('Security: Malicious Access Attempts', () => {
   test('should prevent bulk read of all organizations', async () => {
     mockSupabase.setContext('org-1');
 
-    const { data } = await supabase
-      .from('organizations')
-      .select();
+    const { data } = await supabase.from('organizations').select();
 
     // Should only return current org, not all
     expect(data).toHaveLength(1);
@@ -502,6 +525,7 @@ describe('Security: Malicious Access Attempts', () => {
 ```
 
 **Success Criteria:**
+
 - [ ] 3 new security tests added
 - [ ] All pass with mocks
 - [ ] Tests document expected security behavior
@@ -608,15 +632,16 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 // Helper function
 function mapPriceToPlan(priceId) {
   const mapping = {
-    'price_starter_monthly': 'starter',
-    'price_pro_monthly': 'pro',
-    'price_plus_monthly': 'plus'
+    price_starter_monthly: 'starter',
+    price_pro_monthly: 'pro',
+    price_plus_monthly: 'plus'
   };
   return mapping[priceId] || 'free';
 }
 ```
 
 **Success Criteria:**
+
 - [ ] Checkout updates organization plan
 - [ ] Subscription changes update plan
 - [ ] Cancellation downgrades to free
@@ -629,6 +654,7 @@ function mapPriceToPlan(priceId) {
 **File:** `tests/integration/stripe-webhooks.test.js`
 
 **Changes:**
+
 ```javascript
 // Mock pg.Pool
 jest.mock('pg', () => ({
@@ -641,7 +667,9 @@ jest.mock('pg', () => ({
 }));
 
 test('should update organization plan on successful checkout', async () => {
-  const mockEvent = { /* ... */ };
+  const mockEvent = {
+    /* ... */
+  };
 
   const response = await request(app)
     .post('/api/webhooks/stripe')
@@ -661,6 +689,7 @@ test('should update organization plan on successful checkout', async () => {
 ```
 
 **Success Criteria:**
+
 - [ ] Tests verify database calls
 - [ ] All 9 tests still pass
 - [ ] Side effects validated
@@ -674,27 +703,32 @@ test('should update organization plan on successful checkout', async () => {
 **File:** `docs/nodes/billing.md`
 
 **Content:**
+
 ```markdown
 ## Architecture: Database Client
 
 **Decision:** Use PostgreSQL Pool (`pg`) for all database operations
 
 **Rationale:**
+
 - Consistent with existing codebase (`src/index.js`, `src/services/costControl.js`)
 - No migration needed
 - Simpler than Supabase client for basic CRUD
 - RLS policies enforced at database level (works with any client)
 
 **Testing Strategy:**
+
 - Mock `pg.Pool` in tests
 - Supabase client only used in tests that specifically test RLS (with mocks per Pattern #11)
 
 **Trade-offs:**
+
 - Pros: Consistency, simplicity, no refactoring
 - Cons: No Supabase realtime features, auth, storage (not needed currently)
 ```
 
 **Success Criteria:**
+
 - [ ] Decision documented
 - [ ] Rationale clear
 - [ ] Trade-offs listed
@@ -710,6 +744,7 @@ test('should update organization plan on successful checkout', async () => {
 **Solution:** Keep tests using Supabase mock (they work), but note architecture in comments
 
 **Changes:**
+
 ```javascript
 /**
  * Credits API Integration Tests
@@ -725,6 +760,7 @@ test('should update organization plan on successful checkout', async () => {
 ```
 
 **Alternative (if tests fail):** Mock pg.Pool instead:
+
 ```javascript
 jest.mock('pg', () => ({
   Pool: jest.fn(() => ({
@@ -748,6 +784,7 @@ jest.mock('pg', () => ({
 ```
 
 **Success Criteria:**
+
 - [ ] All 10 tests pass
 - [ ] Architecture documented
 - [ ] No environment dependencies
@@ -761,6 +798,7 @@ jest.mock('pg', () => ({
 **File:** `.github/workflows/test.yml` (or create if doesn't exist)
 
 **Content:**
+
 ```yaml
 name: Tests
 
@@ -818,6 +856,7 @@ jobs:
 ```
 
 **Success Criteria:**
+
 - [ ] CI fails if conditional skips found
 - [ ] CI verifies 31 tests execute
 - [ ] CI enforces mock usage
@@ -829,6 +868,7 @@ jobs:
 **File:** `.git/hooks/pre-commit` (or `.husky/pre-commit` if using Husky)
 
 **Content:**
+
 ```bash
 #!/bin/bash
 
@@ -863,6 +903,7 @@ echo "✅ All multi-tenant tests passed"
 ```
 
 **Success Criteria:**
+
 - [ ] Pre-commit runs multi-tenant tests
 - [ ] Blocks commit if conditional skips found
 - [ ] Blocks commit if tests fail
@@ -890,12 +931,14 @@ echo "✅ All multi-tenant tests passed"
 ## Success Metrics
 
 **Before:**
+
 - Tests: 31/31 appearing as PASSING but actually SKIPPED
 - CI Status: 🟢 GREEN (false positive)
 - Coverage: 0% (tests not running)
 - Environment: Requires Supabase setup
 
 **After:**
+
 - Tests: 31/31 PASSING (actually executing)
 - CI Status: 🟢 GREEN (real validation)
 - Coverage: ~85% (multi-tenant code tested)
@@ -906,12 +949,15 @@ echo "✅ All multi-tenant tests passed"
 ## Risk Mitigation
 
 ### Risk: Mock behavior doesn't match real Supabase
+
 **Mitigation:** Document exact RLS behavior, add E2E tests later with real Supabase
 
 ### Risk: Webhook implementation breaks existing code
+
 **Mitigation:** Thorough testing, rollback plan, feature flag
 
 ### Risk: CI enforcement breaks developer workflow
+
 **Mitigation:** Clear error messages, documentation, gradual rollout
 
 ---

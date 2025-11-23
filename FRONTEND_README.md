@@ -120,13 +120,13 @@ npm run build
 
 ### Variables de Entorno
 
-| Variable | Descripción | Requerido | Default |
-|----------|-------------|-----------|---------|
-| `REACT_APP_SUPABASE_URL` | URL de tu proyecto Supabase | ✅ | - |
-| `REACT_APP_SUPABASE_ANON_KEY` | Clave anónima de Supabase | ✅ | - |
-| `REACT_APP_USE_MAGIC_LINK` | Habilita magic links | ❌ | `false` |
-| `REACT_APP_APP_NAME` | Nombre de la aplicación | ❌ | `Roastr.ai` |
-| `REACT_APP_SUPPORT_EMAIL` | Email de soporte | ❌ | - |
+| Variable                      | Descripción                 | Requerido | Default     |
+| ----------------------------- | --------------------------- | --------- | ----------- |
+| `REACT_APP_SUPABASE_URL`      | URL de tu proyecto Supabase | ✅        | -           |
+| `REACT_APP_SUPABASE_ANON_KEY` | Clave anónima de Supabase   | ✅        | -           |
+| `REACT_APP_USE_MAGIC_LINK`    | Habilita magic links        | ❌        | `false`     |
+| `REACT_APP_APP_NAME`          | Nombre de la aplicación     | ❌        | `Roastr.ai` |
+| `REACT_APP_SUPPORT_EMAIL`     | Email de soporte            | ❌        | -           |
 
 ### Toggle de Magic Links
 
@@ -135,6 +135,7 @@ El frontend detecta automáticamente si los magic links están habilitados via `
 ## 📱 Páginas y Flujos
 
 ### 1. Login (`/login`)
+
 - Formulario de email/password por defecto
 - Toggle opcional a magic link (si está habilitado)
 - Enlace a registro
@@ -142,24 +143,28 @@ El frontend detecta automáticamente si los magic links están habilitados via `
 - Manejo de errores con mensajes claros
 
 ### 2. Registro (`/register`)
+
 - Formulario con email, password y nombre
 - Toggle opcional a magic link (si está habilitado)
 - Validación en tiempo real
 - Redirección automática después del registro
 
 ### 3. Reset Password (`/reset-password`)
+
 - Envío de enlace de recuperación
 - Confirmación visual del envío
 - Opción de reenviar enlace
 - Instrucciones claras para el usuario
 
 ### 4. Dashboard (`/dashboard`)
+
 - Página principal después del login
 - Información del usuario
 - Próximos pasos para configuración
 - Botón de logout
 
 ### 5. Auth Callback (`/auth/callback`)
+
 - Manejo automático de magic links
 - Redirección apropiada
 - Manejo de errores
@@ -167,12 +172,14 @@ El frontend detecta automáticamente si los magic links están habilitados via `
 ## 🎨 Design System
 
 ### Colores
+
 - **Primary**: Purple (`#e073ff` y variantes)
 - **Gray**: Escala completa para modo claro/oscuro
 - **Success**: Verde para estados exitosos
 - **Error**: Rojo para errores
 
 ### Componentes
+
 - **Forms**: Inputs consistentes con validación
 - **Buttons**: Estados hover, loading, disabled
 - **Alerts**: Success, error, info
@@ -194,30 +201,29 @@ import useTheme from '../hooks/useTheme';
 
 const MyComponent = () => {
   const { theme, toggleTheme } = useTheme();
-  
-  return (
-    <div className="bg-white dark:bg-gray-800">
-      Contenido que se adapta al tema
-    </div>
-  );
+
+  return <div className="bg-white dark:bg-gray-800">Contenido que se adapta al tema</div>;
 };
 ```
 
 ## 🔐 Authentication Flow
 
 ### Password Authentication
+
 1. Usuario ingresa email/password
 2. Supabase valida credenciales
 3. Retorna session si es válido
 4. Redirige a dashboard
 
 ### Magic Link Authentication
+
 1. Usuario ingresa email
 2. Supabase envía magic link
 3. Usuario hace clic en enlace
 4. Callback automático valida y redirige
 
 ### Session Management
+
 - Sessions se mantienen automáticamente
 - Refresh tokens manejados por Supabase
 - Logout limpia session local y remota
@@ -233,11 +239,13 @@ const MyComponent = () => {
 ## 📦 Build & Deploy
 
 ### Build Assets
+
 ```bash
 npm run frontend:build
 ```
 
 Genera archivos optimizados en `frontend/build/`:
+
 - HTML/CSS/JS minificados
 - Assets con hash para cache busting
 - Service worker para PWA
@@ -246,11 +254,12 @@ Genera archivos optimizados en `frontend/build/`:
 ### Deploy Options
 
 **Netlify/Vercel:**
+
 ```bash
 # Build command
 npm run frontend:build
 
-# Publish directory  
+# Publish directory
 frontend/build
 ```
 
@@ -269,6 +278,7 @@ npm test -- --watchAll     # Watch mode
 ## 🔍 Debugging
 
 ### Development Tools
+
 - React DevTools
 - Redux DevTools (si se agrega)
 - Network tab para requests a Supabase
@@ -291,7 +301,7 @@ npm test -- --watchAll     # Watch mode
 
 - **Code Splitting**: Rutas lazy-loaded
 - **Tree Shaking**: Elimina código no usado
-- **Image Optimization**: WebP cuando es posible  
+- **Image Optimization**: WebP cuando es posible
 - **CSS Purging**: TailwindCSS elimina estilos no usados
 - **Caching**: Service worker para assets estáticos
 

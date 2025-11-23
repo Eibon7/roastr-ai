@@ -37,6 +37,7 @@ Four key metrics displayed as cards:
 - **Coste acumulado:** Total costs in your currency (EUR by default)
 
 Each card shows:
+
 - Current value
 - Subtitle with additional context
 - Trend indicator (if applicable)
@@ -46,15 +47,18 @@ Each card shows:
 **Location:** Top-left, large card
 
 **Shows:**
+
 - Roasts over time (orange line)
 - Analyses over time (cyan line)
 - Shield actions over time (red line)
 
 **Controls:**
+
 - **Range:** 7, 30, 90, or 365 days
 - **Group By:** Day, Week, or Month
 
 **Empty State:**
+
 - Shows icon and message when no data available
 - Suggests trying a different time range
 
@@ -63,13 +67,16 @@ Each card shows:
 **Location:** Top-right, medium card
 
 **Shows:**
+
 - Distribution of activity across social media platforms
 - Doughnut chart with color-coded segments
 
 **Controls:**
+
 - **Platform Filter:** All platforms or specific platform
 
 **Empty State:**
+
 - Shows icon when insufficient data
 
 ### 4. Shield Actions Panel
@@ -77,6 +84,7 @@ Each card shows:
 **Location:** Middle-left, large card
 
 **Shows:**
+
 - Total Shield actions
 - Breakdown by action type (block, warn, etc.)
 - Severity distribution (high, medium, low)
@@ -87,10 +95,12 @@ Each card shows:
 **Location:** Middle-right, medium card
 
 **Shows:**
+
 - Bar chart of credits used by source (OpenAI, Perspective, etc.)
 - Total credits consumed
 
 **Empty State:**
+
 - Shows wallet icon when no data
 
 ### 6. Billing Analytics Panel
@@ -98,11 +108,13 @@ Each card shows:
 **Location:** Bottom section
 
 **Shows:**
+
 - **Local Costs:** Costs tracked internally
 - **Polar Integration:** Revenue and order data (if configured)
 - **Currency:** Display currency (EUR default)
 
 **Polar Status:**
+
 - ✅ Available: Shows live billing data
 - ❌ Not Available: Shows message to configure `POLAR_ACCESS_TOKEN`
 
@@ -113,6 +125,7 @@ Each card shows:
 ### Time Range
 
 **Options:**
+
 - Últimos 7 días
 - Últimos 30 días
 - Últimos 90 días
@@ -123,6 +136,7 @@ Each card shows:
 ### Group By
 
 **Options:**
+
 - Diario (day)
 - Semanal (week)
 - Mensual (month)
@@ -130,6 +144,7 @@ Each card shows:
 **Default:** Day
 
 **Impact:**
+
 - Day: More granular, more data points
 - Week: Balanced view
 - Month: High-level overview
@@ -137,6 +152,7 @@ Each card shows:
 ### Platform Filter
 
 **Options:**
+
 - Todas (all platforms)
 - Specific platform (Twitter, YouTube, etc.)
 
@@ -174,12 +190,14 @@ Each card shows:
 ### Export Permissions
 
 **Allowed Plans:**
+
 - ✅ Pro
 - ✅ Plus
 - ✅ Creator Plus
 - ✅ Custom
 
 **Blocked Plans:**
+
 - ❌ Free
 - ❌ Starter Trial
 - ❌ Starter
@@ -215,11 +233,13 @@ If export is blocked, you'll see: "Tu plan no permite exportar analytics. Mejora
 ### "No hay datos para el rango seleccionado"
 
 **Causes:**
+
 - No activity in selected time range
 - Organization has no data yet
 - Time range too narrow
 
 **Solutions:**
+
 - Try a longer time range
 - Check that you have activity in the system
 - Verify organization is correctly configured
@@ -227,11 +247,13 @@ If export is blocked, you'll see: "Tu plan no permite exportar analytics. Mejora
 ### "Polar no disponible"
 
 **Causes:**
+
 - `POLAR_ACCESS_TOKEN` not configured
 - Polar API unavailable
 - Integration error
 
 **Solutions:**
+
 - Configure `POLAR_ACCESS_TOKEN` in environment
 - Check Polar API status
 - Review error logs
@@ -239,21 +261,25 @@ If export is blocked, you'll see: "Tu plan no permite exportar analytics. Mejora
 ### "Export not allowed"
 
 **Causes:**
+
 - Plan doesn't support exports
 - Analytics disabled for plan
 
 **Solutions:**
+
 - Upgrade to Pro or higher plan
 - Contact support for plan upgrade
 
 ### Charts not loading
 
 **Causes:**
+
 - JavaScript errors
 - Missing Chart.js dependencies
 - Network issues
 
 **Solutions:**
+
 - Check browser console for errors
 - Verify `chart.js` and `react-chartjs-2` are installed
 - Refresh page
@@ -273,6 +299,7 @@ If export is blocked, you'll see: "Tu plan no permite exportar analytics. Mejora
 ### Screen Readers
 
 All charts include `aria-label` attributes:
+
 - Timeline chart: "Gráfico de línea mostrando timeline de roasts, análisis y acciones Shield a lo largo del tiempo"
 - Platform chart: "Gráfico de dona mostrando distribución de actividad por plataforma social"
 - Credits chart: "Gráfico de barras mostrando uso de créditos por período de tiempo"
@@ -310,7 +337,7 @@ All charts include `aria-label` attributes:
 
 ## Screenshots
 
-*Note: Screenshots should be added to `docs/test-evidence/issue-715/screenshots/` after visual validation.*
+_Note: Screenshots should be added to `docs/test-evidence/issue-715/screenshots/` after visual validation._
 
 ---
 
@@ -325,4 +352,3 @@ For API documentation, see [Analytics Dashboard API](api/analytics-dashboard.md)
 - **Issue #715:** https://github.com/Eibon7/roastr-ai/issues/715
 - **PR #847:** https://github.com/Eibon7/roastr-ai/pull/847
 - **API Docs:** `docs/api/analytics-dashboard.md`
-

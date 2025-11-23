@@ -7,18 +7,21 @@
 ## Trigger
 
 **Why this agent was invoked:**
+
 - [x] Diff match: `docs/nodes/*.md` (GDD node documentation modified)
 - [x] Condition: CodeRabbit Review #3372030941 Comment #2 (Critical)
 
 ## Decisions/Artifacts
 
 **Key decisions made by agent:**
+
 - Validated modification to `docs/nodes/shield.md` (metadata only)
 - Approved metadata changes (Last Updated timestamp, Related PRs)
 - Confirmed no functional changes to Shield system
 - No policy violations detected
 
 **Artifacts produced:**
+
 - `docs/guardian/audit-log.md` - Updated audit log
 - `docs/guardian/cases/2025-10-23-19-08-06-139.json` - Case file for this scan
 - `docs/test-evidence/review-3372030941/guardian-output.txt` - Scan output
@@ -26,6 +29,7 @@
 ## Guardrails Verified
 
 **Checklist of guardrails from agents/manifest.yaml:**
+
 - [x] No spec.md violations detected
 - [x] No schema drift detected
 - [x] No critical system impacts identified
@@ -41,10 +45,12 @@
 Guardian scan completed successfully with exit code 0. The only change detected was metadata update to `docs/nodes/shield.md` (Last Updated timestamp and Related PRs list). No violations found, all changes approved for merge.
 
 **Follow-up Actions:**
+
 - No follow-up actions required
 - Shield node metadata successfully updated
 
 **Agent Output:**
+
 ```
 🔍 Guardian Agent - Scanning for sensitive changes...
 

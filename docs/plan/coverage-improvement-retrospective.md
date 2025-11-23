@@ -35,6 +35,7 @@ Task Assessor Agent Input:
 ```
 
 **Expected Output**: `docs/assessment/coverage-improvement.md`
+
 - Recommendation: ENHANCE (nodes exist, tests exist, documentation missing)
 - Scope: Add "## Tests" sections to 5 node files
 - Estimated effort: 2-3 hours
@@ -64,7 +65,7 @@ Task Assessor Agent Input:
 2. Back-end Dev Agent:
    - Input: Generated test documentation from Test Engineer
    - Task: Integrate documentation into node .md files
-   - Output: Updated docs/nodes/*.md files with "## Tests" sections
+   - Output: Updated docs/nodes/\*.md files with "## Tests" sections
 
 3. Validation:
    - Run health scorer to verify coverage increase
@@ -104,6 +105,7 @@ Save to: docs/test-docs/shield-tests.md
 **Repeat for**: multi-tenant, cost-control, billing, trainer
 
 **Expected Deliverables**:
+
 - `docs/test-docs/shield-tests.md`
 - `docs/test-docs/multi-tenant-tests.md`
 - `docs/test-docs/cost-control-tests.md`
@@ -201,6 +203,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### When to Use Agents vs Inline
 
 **Use Agents When**:
+
 - ✅ Task involves multiple files (>3)
 - ✅ Task requires specialized expertise (testing, design, security)
 - ✅ Task has >3 acceptance criteria
@@ -208,6 +211,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - ✅ Output needs consistency across multiple components
 
 **Inline is OK When**:
+
 - ✅ Single file edit
 - ✅ Trivial change (typo fix, version bump)
 - ✅ Emergency hotfix
@@ -221,8 +225,8 @@ orchestrator.writeDocumentation(node, tests);
 
 // RIGHT (what should be done):
 await Task({
-  subagent_type: "Test Engineer",
-  description: "Document shield tests",
+  subagent_type: 'Test Engineer',
+  description: 'Document shield tests',
   prompt: `Analyze test files for shield node:
     - tests/unit/services/shield*.test.js
     - tests/integration/shield*.test.js

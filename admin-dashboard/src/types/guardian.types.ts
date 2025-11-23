@@ -213,13 +213,13 @@ export interface GuardianColors {
  * Guardian color palette (Snake Eater theme)
  */
 export const GUARDIAN_COLORS: GuardianColors = {
-  critical: '#FF0000',    // Red
-  sensitive: '#FFA500',   // Orange
-  safe: '#00FF41',        // Matrix green
-  blocked: '#FF0000',     // Red
-  review: '#FFA500',      // Orange
-  approved: '#00FF41',    // Matrix green
-  denied: '#888888'       // Gray
+  critical: '#FF0000', // Red
+  sensitive: '#FFA500', // Orange
+  safe: '#00FF41', // Matrix green
+  blocked: '#FF0000', // Red
+  review: '#FFA500', // Orange
+  approved: '#00FF41', // Matrix green
+  denied: '#888888' // Gray
 };
 
 /**
@@ -279,9 +279,7 @@ export function isSafe(severity: GuardianSeverity): boolean {
  * Check if case is pending approval
  */
 export function isPending(caseData: GuardianCase): boolean {
-  return caseData.approval_required &&
-         !caseData.approved_by &&
-         !caseData.denied_by;
+  return caseData.approval_required && !caseData.approved_by && !caseData.denied_by;
 }
 
 /**
@@ -374,12 +372,16 @@ export function formatCaseId(caseId: string, maxLength: number = 20): string {
  * Get severity color
  */
 export function getSeverityColor(severity: GuardianSeverity): string {
-  return GUARDIAN_COLORS[severity.toLowerCase() as keyof typeof GUARDIAN_COLORS] || GUARDIAN_COLORS.safe;
+  return (
+    GUARDIAN_COLORS[severity.toLowerCase() as keyof typeof GUARDIAN_COLORS] || GUARDIAN_COLORS.safe
+  );
 }
 
 /**
  * Get action color
  */
 export function getActionColor(action: GuardianAction): string {
-  return GUARDIAN_COLORS[action.toLowerCase() as keyof typeof GUARDIAN_COLORS] || GUARDIAN_COLORS.review;
+  return (
+    GUARDIAN_COLORS[action.toLowerCase() as keyof typeof GUARDIAN_COLORS] || GUARDIAN_COLORS.review
+  );
 }

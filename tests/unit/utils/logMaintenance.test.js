@@ -1,6 +1,6 @@
 /**
  * Log Maintenance Service Tests
- * 
+ *
  * Tests for log maintenance functionality including:
  * - Service initialization and configuration
  * - Scheduled cleanup and backup jobs
@@ -24,7 +24,7 @@ jest.mock('../../../src/utils/advancedLogger', () => ({
   debug: jest.fn(),
   cleanOldLogs: jest.fn(),
   getLogStatistics: jest.fn(),
-  formatFileSize: jest.fn(size => `${size} bytes`)
+  formatFileSize: jest.fn((size) => `${size} bytes`)
 }));
 
 describe('LogMaintenanceService', () => {
@@ -36,7 +36,7 @@ describe('LogMaintenanceService', () => {
   beforeEach(() => {
     // Save original environment
     originalEnv = { ...process.env };
-    
+
     // Set up test environment
     process.env.LOG_CLEANUP_ENABLED = 'true';
     process.env.LOG_RETENTION_APPLICATION_DAYS = '30';
@@ -46,13 +46,13 @@ describe('LogMaintenanceService', () => {
     process.env.LOG_RETENTION_WORKER_DAYS = '7';
     process.env.LOG_RETENTION_AUDIT_DAYS = '365';
     process.env.LOG_CLEANUP_SCHEDULE = '0 2 * * *';
-    
+
     process.env.LOG_BACKUP_ENABLED = 'true';
     process.env.LOG_BACKUP_RECENT_DAYS = '7';
     process.env.LOG_BACKUP_RETENTION_DAYS = '90';
     process.env.LOG_BACKUP_SCHEDULE = '0 3 * * *';
     process.env.LOG_BACKUP_CLEANUP_SCHEDULE = '0 4 0 * *';
-    
+
     process.env.LOG_MONITORING_ENABLED = 'true';
     process.env.LOG_MONITORING_SCHEDULE = '0 */6 * * *';
     process.env.LOG_ALERT_THRESHOLD_GB = '5.0';
@@ -114,7 +114,7 @@ describe('LogMaintenanceService', () => {
       delete process.env.LOG_ALERT_THRESHOLD_GB;
 
       const service = new LogMaintenanceService();
-      
+
       expect(service.config.cleanup.applicationDays).toBe(30); // default
       expect(service.config.backup.dailyBackupDays).toBe(7); // default
       expect(service.config.monitoring.alertThresholdGB).toBe(5.0); // default
@@ -187,8 +187,10 @@ describe('LogMaintenanceService', () => {
         filesRemoved: 10,
         sizeFreed: 1024000
       };
-      
-      require('../../../src/utils/advancedLogger').cleanOldLogs.mockResolvedValue(mockCleanupResult);
+
+      require('../../../src/utils/advancedLogger').cleanOldLogs.mockResolvedValue(
+        mockCleanupResult
+      );
 
       const result = await logMaintenanceService.runCleanup();
 
@@ -201,7 +203,7 @@ describe('LogMaintenanceService', () => {
         auditDays: 365,
         dryRun: false
       });
-      
+
       expect(result).toEqual(mockCleanupResult);
     });
 
@@ -210,15 +212,17 @@ describe('LogMaintenanceService', () => {
         filesRemoved: 5,
         sizeFreed: 512000
       };
-      
-      require('../../../src/utils/advancedLogger').cleanOldLogs.mockResolvedValue(mockCleanupResult);
+
+      require('../../../src/utils/advancedLogger').cleanOldLogs.mockResolvedValue(
+        mockCleanupResult
+      );
 
       const result = await logMaintenanceService.runCleanup({ dryRun: true });
 
       expect(require('../../../src/utils/advancedLogger').cleanOldLogs).toHaveBeenCalledWith(
         expect.objectContaining({ dryRun: true })
       );
-      
+
       expect(result).toEqual(mockCleanupResult);
     });
 
@@ -257,7 +261,7 @@ describe('LogMaintenanceService', () => {
           successRate: '95%'
         }
       };
-      
+
       mockBackupService.backupRecentLogs.mockResolvedValue(mockBackupResult);
 
       const result = await logMaintenanceService.runBackup();
@@ -266,7 +270,7 @@ describe('LogMaintenanceService', () => {
         dryRun: false,
         skipExisting: true
       });
-      
+
       expect(result).toEqual(mockBackupResult);
     });
 
@@ -274,19 +278,19 @@ describe('LogMaintenanceService', () => {
       const mockBackupResult = {
         summary: { totalDays: 3, totalUploaded: 10 }
       };
-      
+
       mockBackupService.backupRecentLogs.mockResolvedValue(mockBackupResult);
 
-      const result = await logMaintenanceService.runBackup({ 
-        days: 3, 
-        dryRun: true 
+      const result = await logMaintenanceService.runBackup({
+        days: 3,
+        dryRun: true
       });
 
       expect(mockBackupService.backupRecentLogs).toHaveBeenCalledWith(3, {
         dryRun: true,
         skipExisting: true
       });
-      
+
       expect(result).toEqual(mockBackupResult);
     });
 
@@ -333,7 +337,7 @@ describe('LogMaintenanceService', () => {
         oldestFile: new Date('2024-01-01'),
         newestFile: new Date('2024-01-31')
       };
-      
+
       require('../../../src/utils/advancedLogger').getLogStatistics.mockResolvedValue(mockStats);
 
       const result = await logMaintenanceService.performHealthCheck();
@@ -352,7 +356,7 @@ describe('LogMaintenanceService', () => {
         totalSizeFormatted: '6.0 GB',
         fileCount: 1000
       };
-      
+
       require('../../../src/utils/advancedLogger').getLogStatistics.mockResolvedValue(mockStats);
 
       const result = await logMaintenanceService.performHealthCheck();

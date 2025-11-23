@@ -6,7 +6,7 @@ class AlertService {
     this.webhookUrl = process.env.LOG_ALERT_WEBHOOK_URL;
     this.emailEnabled = process.env.EMAIL_ALERTS_ENABLED === 'true';
     this.alertingEnabled = process.env.ALERTING_ENABLED !== 'false'; // Default enabled
-    
+
     // Alert rate limiting to prevent spam
     this.alertHistory = new Map();
     this.maxAlertsPerHour = parseInt(process.env.MAX_ALERTS_PER_HOUR) || 10;
@@ -26,8 +26,8 @@ class AlertService {
       // Check rate limiting
       if (this.isRateLimited(alertType)) {
         const rateLimitInfo = this.getRateLimitInfo(alertType);
-        advancedLogger.warn('Alert rate limited', { 
-          alertType, 
+        advancedLogger.warn('Alert rate limited', {
+          alertType,
           cooldownMinutes: this.alertCooldownMinutes,
           maxAlertsPerHour: this.maxAlertsPerHour,
           ...rateLimitInfo
@@ -36,7 +36,7 @@ class AlertService {
       }
 
       const alert = this.buildAlert(alertType, data, options);
-      
+
       // Log the alert
       advancedLogger.warn(`🚨 Alert: ${alertType}`, alert);
 
@@ -76,7 +76,7 @@ class AlertService {
       // Record alert in history for rate limiting
       this.recordAlert(alertType);
 
-      const successCount = results.filter(r => r.success).length;
+      const successCount = results.filter((r) => r.success).length;
       const totalChannels = results.length;
 
       advancedLogger.info('Alert sent', {
@@ -92,7 +92,6 @@ class AlertService {
         totalChannels,
         results
       };
-
     } catch (error) {
       advancedLogger.error('Failed to send alert', { alertType, error: error.message });
       throw error;
@@ -153,7 +152,7 @@ class AlertService {
   getDefaultSeverity(alertType) {
     const criticalAlerts = ['disk_space_critical', 'maintenance_service_down'];
     const warningAlerts = ['backup_failed', 'cleanup_failed', 'stale_backup'];
-    
+
     if (criticalAlerts.includes(alertType)) return 'critical';
     if (warningAlerts.includes(alertType)) return 'warning';
     return 'info';
@@ -230,7 +229,7 @@ class AlertService {
   async sendEmailAlert(alert) {
     // This would integrate with your email service (SendGrid, SES, etc.)
     // For now, we'll just log it as a placeholder
-    
+
     const emailPayload = {
       to: process.env.ALERT_EMAIL_RECIPIENTS?.split(',') || ['admin@example.com'],
       subject: `🚨 ${alert.service.toUpperCase()} Alert: ${alert.type}`,
@@ -238,10 +237,10 @@ class AlertService {
     };
 
     advancedLogger.info('Email alert would be sent', emailPayload);
-    
+
     // TODO: Integrate with actual email service
     // return await emailService.send(emailPayload);
-    
+
     return { sent: false, reason: 'email_service_not_implemented' };
   }
 
@@ -251,7 +250,7 @@ class AlertService {
   async sendInternalAlert(alert) {
     // This could integrate with an internal notification service
     // For now, we'll store it in the application logs with a special marker
-    
+
     advancedLogger.auditEvent('System Alert Generated', {
       alertType: alert.type,
       severity: alert.severity,
@@ -290,12 +289,16 @@ class AlertService {
             <p><strong>Timestamp:</strong> ${new Date(alert.timestamp).toLocaleString()}</p>
         </div>
 
-        ${alert.data && Object.keys(alert.data).length > 0 ? `
+        ${
+          alert.data && Object.keys(alert.data).length > 0
+            ? `
         <div class="details">
             <h4>Details:</h4>
             <pre>${JSON.stringify(alert.data, null, 2)}</pre>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
 
         <div class="metadata">
             <p><strong>System:</strong> ${alert.metadata.hostname} (PID ${alert.metadata.pid})</p>
@@ -326,7 +329,7 @@ class AlertService {
   getRateLimitInfo(alertType) {
     const now = Date.now();
     const alertKey = `${alertType}`;
-    
+
     if (!this.alertHistory.has(alertKey)) {
       return {
         alertsLastHour: 0,
@@ -339,9 +342,9 @@ class AlertService {
     const lastAlert = this.alertHistory.get(alertKey);
     const timeSinceLastAlert = now - lastAlert.timestamp;
     const cooldownMs = this.alertCooldownMinutes * 60 * 1000;
-    const oneHourAgo = now - (60 * 60 * 1000);
-    const recentAlerts = lastAlert.history.filter(timestamp => timestamp > oneHourAgo);
-    
+    const oneHourAgo = now - 60 * 60 * 1000;
+    const recentAlerts = lastAlert.history.filter((timestamp) => timestamp > oneHourAgo);
+
     return {
       alertsLastHour: recentAlerts.length,
       lastAlertAgo: `${Math.floor(timeSinceLastAlert / 1000)}s`,
@@ -357,7 +360,7 @@ class AlertService {
   isRateLimited(alertType) {
     const now = Date.now();
     const alertKey = `${alertType}`;
-    
+
     if (!this.alertHistory.has(alertKey)) {
       return false;
     }
@@ -372,9 +375,9 @@ class AlertService {
     }
 
     // Check hourly rate limit
-    const oneHourAgo = now - (60 * 60 * 1000);
-    const recentAlerts = lastAlert.history.filter(timestamp => timestamp > oneHourAgo);
-    
+    const oneHourAgo = now - 60 * 60 * 1000;
+    const recentAlerts = lastAlert.history.filter((timestamp) => timestamp > oneHourAgo);
+
     return recentAlerts.length >= this.maxAlertsPerHour;
   }
 
@@ -384,7 +387,7 @@ class AlertService {
   recordAlert(alertType) {
     const now = Date.now();
     const alertKey = `${alertType}`;
-    
+
     if (!this.alertHistory.has(alertKey)) {
       this.alertHistory.set(alertKey, {
         timestamp: now,
@@ -394,10 +397,10 @@ class AlertService {
       const alertData = this.alertHistory.get(alertKey);
       alertData.timestamp = now;
       alertData.history.push(now);
-      
+
       // Keep only last 24 hours of history
-      const oneDayAgo = now - (24 * 60 * 60 * 1000);
-      alertData.history = alertData.history.filter(timestamp => timestamp > oneDayAgo);
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
+      alertData.history = alertData.history.filter((timestamp) => timestamp > oneDayAgo);
     }
   }
 
@@ -420,9 +423,9 @@ class AlertService {
     };
 
     this.alertHistory.forEach((data, alertType) => {
-      const oneHourAgo = Date.now() - (60 * 60 * 1000);
-      const recentAlerts = data.history.filter(timestamp => timestamp > oneHourAgo);
-      
+      const oneHourAgo = Date.now() - 60 * 60 * 1000;
+      const recentAlerts = data.history.filter((timestamp) => timestamp > oneHourAgo);
+
       stats.alertHistory[alertType] = {
         lastAlert: new Date(data.timestamp).toISOString(),
         alertsLastHour: recentAlerts.length,

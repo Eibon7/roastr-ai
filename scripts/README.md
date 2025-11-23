@@ -23,6 +23,7 @@ The advanced test runner (`scripts/test/runner.js`) provides scope-based test ex
 ### Available Commands
 
 #### List Test Scopes
+
 ```bash
 # Using the CLI directly
 node scripts/test/runner.js scopes
@@ -32,6 +33,7 @@ npm run test:scopes
 ```
 
 #### Run Tests by Scope
+
 ```bash
 # Basic scope execution
 node scripts/test/runner.js run auth
@@ -52,6 +54,7 @@ node scripts/test/runner.js run billing --coverage --verbose
 ```
 
 #### Run All Tests
+
 ```bash
 # Run all tests across all scopes
 node scripts/test/runner.js all
@@ -61,6 +64,7 @@ node scripts/test/runner.js all --mock-mode --coverage
 ```
 
 #### Platform Management
+
 Shows how to run tests filtered by platform.
 
 ```bash
@@ -75,6 +79,7 @@ node scripts/test/runner.js run services --platform instagram
 ```
 
 #### Validation
+
 ```bash
 # Validate test setup and configuration
 node scripts/test/runner.js validate
@@ -82,23 +87,25 @@ node scripts/test/runner.js validate
 
 ### Command Options (Issue #277 - Enhanced Documentation)
 
-| Option | Description | When to Use | Example |
-|--------|-------------|-------------|---------|
-| `--mock-mode` | Enable mocked external services. Sets `ENABLE_MOCK_MODE=true` in test environment. Mocks OpenAI, Supabase, Stripe, and other external APIs. | Use during development for faster feedback, in CI/CD pipelines, or when external services are unavailable. **Do NOT use** for integration tests that require real API responses. | `--mock-mode` |
-| `--platform <name>` | Filter tests by platform name. Filters both test files (by filename/path) and test names (by description). Available platforms: twitter, youtube, instagram, facebook, discord, twitch, reddit, tiktok, bluesky. | Use when testing platform-specific integrations or when debugging issues with a specific platform. | `--platform twitter` |
-| `--ci` | CI mode: runs tests silently (`--silent`), in sequence (`--runInBand`), and with CI-friendly output (`--ci`). | Use in CI/CD pipelines for cleaner output and to prevent parallel execution issues. | `--ci` |
-| `--coverage` | Generate code coverage report. Creates HTML report in `coverage/` directory and prints summary to console. | Use before commits, in CI/CD for coverage tracking, or when analyzing test coverage gaps. | `--coverage` |
-| `--verbose` | Enable verbose Jest output. Shows detailed information about each test, including test names, execution time, and skipped tests. | Use when debugging test failures, analyzing test performance, or when you need detailed test execution information. | `--verbose` |
+| Option              | Description                                                                                                                                                                                                      | When to Use                                                                                                                                                                      | Example              |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `--mock-mode`       | Enable mocked external services. Sets `ENABLE_MOCK_MODE=true` in test environment. Mocks OpenAI, Supabase, Stripe, and other external APIs.                                                                      | Use during development for faster feedback, in CI/CD pipelines, or when external services are unavailable. **Do NOT use** for integration tests that require real API responses. | `--mock-mode`        |
+| `--platform <name>` | Filter tests by platform name. Filters both test files (by filename/path) and test names (by description). Available platforms: twitter, youtube, instagram, facebook, discord, twitch, reddit, tiktok, bluesky. | Use when testing platform-specific integrations or when debugging issues with a specific platform.                                                                               | `--platform twitter` |
+| `--ci`              | CI mode: runs tests silently (`--silent`), in sequence (`--runInBand`), and with CI-friendly output (`--ci`).                                                                                                    | Use in CI/CD pipelines for cleaner output and to prevent parallel execution issues.                                                                                              | `--ci`               |
+| `--coverage`        | Generate code coverage report. Creates HTML report in `coverage/` directory and prints summary to console.                                                                                                       | Use before commits, in CI/CD for coverage tracking, or when analyzing test coverage gaps.                                                                                        | `--coverage`         |
+| `--verbose`         | Enable verbose Jest output. Shows detailed information about each test, including test names, execution time, and skipped tests.                                                                                 | Use when debugging test failures, analyzing test performance, or when you need detailed test execution information.                                                              | `--verbose`          |
 
 #### Understanding `--mock-mode` (Issue #277)
 
 **What it does:**
+
 - Sets `ENABLE_MOCK_MODE=true` environment variable for all tests
 - Enables mock implementations of external services (OpenAI, Supabase, Stripe, etc.)
 - Speeds up test execution by avoiding real API calls
 - Reduces costs by not consuming API quotas
 
 **What gets mocked:**
+
 - OpenAI API calls (roast generation, embeddings)
 - Supabase database operations (uses in-memory mocks)
 - Stripe payment processing
@@ -106,18 +113,21 @@ node scripts/test/runner.js validate
 - External HTTP requests
 
 **When to use:**
+
 - ✅ Development workflow (faster feedback)
 - ✅ CI/CD pipelines (faster builds, no API costs)
 - ✅ Unit tests (isolated testing)
 - ✅ When external services are unavailable
 
 **When NOT to use:**
+
 - ❌ Integration tests that require real API responses
 - ❌ E2E tests that need actual service behavior
 - ❌ Testing actual API integrations
 - ❌ Validating real service responses
 
 **Example:**
+
 ```bash
 # Fast development workflow
 node scripts/test/runner.js run services --mock-mode
@@ -129,16 +139,19 @@ node scripts/test/runner.js run unit --mock-mode --verbose
 #### Understanding `--platform` Filtering (Issue #277)
 
 **What it does:**
+
 - Filters test files by platform name in file path/filename
 - Filters test names by platform name in test descriptions
 - Only runs tests related to the specified platform
 
 **How it works:**
+
 1. **File filtering**: Matches platform name in file paths (e.g., `tests/integration/platforms/twitter-verification.test.js`)
 2. **Test name filtering**: Matches platform name in test descriptions (e.g., `describe('Twitter integration', ...)`)
 3. **Case-insensitive**: Works with any case variation (Twitter, twitter, TWITTER)
 
 **Available platforms:**
+
 - `twitter` - Twitter/X integration tests
 - `youtube` - YouTube integration tests
 - `instagram` - Instagram integration tests
@@ -150,6 +163,7 @@ node scripts/test/runner.js run unit --mock-mode --verbose
 - `bluesky` - Bluesky integration tests
 
 **Example:**
+
 ```bash
 # Run only Twitter-related tests
 node scripts/test/runner.js run services --platform twitter
@@ -164,6 +178,7 @@ node scripts/test/runner.js run integration --platform instagram --mock-mode
 Scopes are logical groupings of tests by functional area. They help organize tests and allow running related tests together.
 
 **Available scopes:**
+
 - `unit` - All unit tests (fast, isolated)
 - `integration` - Integration tests (slower, require setup)
 - `smoke` - Smoke tests (quick validation)
@@ -177,6 +192,7 @@ Scopes are logical groupings of tests by functional area. They help organize tes
 - `all` - All tests across all scopes
 
 **Example:**
+
 ```bash
 # Run all unit tests
 node scripts/test/runner.js run unit
@@ -190,14 +206,14 @@ node scripts/test/runner.js scopes
 
 ### Test Scopes
 
-| Scope | Description | Patterns |
-|-------|-------------|----------|
-| `auth` | Authentication & Authorization | `tests/unit/auth/**`, `tests/integration/auth/**` |
-| `workers` | Background Workers | `tests/unit/workers/**`, `tests/integration/workers/**` |
-| `billing` | Billing & Subscriptions | `tests/unit/routes/billing/**`, `tests/integration/*billing*`, `tests/integration/plan-*`, `tests/integration/stripe*` |
-| `services` | Core Services | `tests/unit/services/**` |
-| `routes` | API Routes | `tests/unit/routes/**` |
-| `integration` | Integration Tests | `tests/integration/**` |
+| Scope         | Description                    | Patterns                                                                                                               |
+| ------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `auth`        | Authentication & Authorization | `tests/unit/auth/**`, `tests/integration/auth/**`                                                                      |
+| `workers`     | Background Workers             | `tests/unit/workers/**`, `tests/integration/workers/**`                                                                |
+| `billing`     | Billing & Subscriptions        | `tests/unit/routes/billing/**`, `tests/integration/*billing*`, `tests/integration/plan-*`, `tests/integration/stripe*` |
+| `services`    | Core Services                  | `tests/unit/services/**`                                                                                               |
+| `routes`      | API Routes                     | `tests/unit/routes/**`                                                                                                 |
+| `integration` | Integration Tests              | `tests/integration/**`                                                                                                 |
 
 ### Supported Platforms (Enhanced in PR #282)
 
@@ -212,6 +228,7 @@ node scripts/test/runner.js scopes
 - `bluesky` - Bluesky integration tests
 
 **New Features:**
+
 - 🔶 **Mock mode recommendations** - Visual indicators for optimal test execution
 - 🔷 **Real mode recommendations** - When external services are required
 - ⚠️ **Environment variable validation** - Automatic checking of required env vars
@@ -220,6 +237,7 @@ node scripts/test/runner.js scopes
 ## 📦 NPM Scripts
 
 ### Test Execution Scripts
+
 ```bash
 # Scope management
 npm run test:scopes        # List available test scopes
@@ -237,6 +255,7 @@ npm run coverage:check     # Validate coverage thresholds
 ### Advanced Usage Examples (Issue #277 - Real-World Scenarios)
 
 #### Development Workflow
+
 ```bash
 # Quick feedback during development
 npm run test:scopes
@@ -253,6 +272,7 @@ node scripts/test/runner.js run routes --mock-mode --verbose
 ```
 
 #### CI/CD Pipeline
+
 ```bash
 # Fast CI execution with mock mode
 npm run ci:test:auth
@@ -269,6 +289,7 @@ node scripts/test/runner.js all --ci --mock-mode --coverage
 ```
 
 #### Platform-Specific Testing
+
 ```bash
 # Test Twitter integration
 node scripts/test/runner.js run services --platform twitter --mock-mode
@@ -284,6 +305,7 @@ node scripts/test/runner.js run integration --platform twitter
 ```
 
 #### Coverage Analysis
+
 ```bash
 # Generate coverage report for specific scope
 node scripts/test/runner.js run services --coverage
@@ -296,6 +318,7 @@ node scripts/test/runner.js run unit --coverage --verbose
 ```
 
 #### Debugging Test Failures
+
 ```bash
 # Run with verbose output to see detailed test information
 node scripts/test/runner.js run routes --mock-mode --verbose
@@ -308,6 +331,7 @@ node scripts/test/runner.js validate
 ```
 
 #### CI/CD Pipeline
+
 ```bash
 # Fast CI execution
 npm run ci:test:auth
@@ -321,6 +345,7 @@ node scripts/test/runner.js run billing --ci --mock-mode
 ```
 
 #### Platform-Specific Testing
+
 ```bash
 # Test Twitter integration
 node scripts/test/runner.js run services --platform twitter --mock-mode
@@ -341,7 +366,11 @@ Provides reusable mocks for organizations, users, and tenant-scoped data with en
 
 ```javascript
 // Using Jest moduleNameMapper alias (recommended)
-const { createMockOrganization, createMockUser, createMultiTenantTestScenario } = require('@tests/utils/multiTenantMocks');
+const {
+  createMockOrganization,
+  createMockUser,
+  createMultiTenantTestScenario
+} = require('@tests/utils/multiTenantMocks');
 
 // Alternative: relative path from test file location
 // For tests/unit/** files: require('../../utils/multiTenantMocks')
@@ -379,14 +408,14 @@ const customScenario = createMultiTenantTestScenario({
 
 #### Available Parameters
 
-| Parameter | Type | Description | Default | Valid Values |
-|-----------|------|-------------|---------|--------------|
-| `plan` | string | Subscription plan type | `'pro'` | `'free'`, `'starter'`, `'starter_trial'`, `'pro'`, `'enterprise'`, `'custom'` |
-| `roles` | string[] | Array of user roles to create | `['admin', 'member']` | `'admin'`, `'member'`, `'viewer'`, `'manager'`, `'owner'` |
-| `platforms` | string[] | Array of platforms to configure | `[]` | `'twitter'`, `'youtube'`, `'instagram'`, `'facebook'`, `'discord'`, `'twitch'`, `'reddit'`, `'tiktok'`, `'bluesky'` |
-| `userCount` | number | Number of users per organization | `roles.length` | Positive integer |
-| `orgCount` | number | Number of organizations to create | `1` | Positive integer |
-| `orgName` | string | Base name for organizations | `'Test Organization'` | Any string |
+| Parameter   | Type     | Description                       | Default               | Valid Values                                                                                                        |
+| ----------- | -------- | --------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `plan`      | string   | Subscription plan type            | `'pro'`               | `'free'`, `'starter'`, `'starter_trial'`, `'pro'`, `'enterprise'`, `'custom'`                                       |
+| `roles`     | string[] | Array of user roles to create     | `['admin', 'member']` | `'admin'`, `'member'`, `'viewer'`, `'manager'`, `'owner'`                                                           |
+| `platforms` | string[] | Array of platforms to configure   | `[]`                  | `'twitter'`, `'youtube'`, `'instagram'`, `'facebook'`, `'discord'`, `'twitch'`, `'reddit'`, `'tiktok'`, `'bluesky'` |
+| `userCount` | number   | Number of users per organization  | `roles.length`        | Positive integer                                                                                                    |
+| `orgCount`  | number   | Number of organizations to create | `1`                   | Positive integer                                                                                                    |
+| `orgName`   | string   | Base name for organizations       | `'Test Organization'` | Any string                                                                                                          |
 
 #### Predefined Scenarios
 
@@ -464,7 +493,11 @@ Provides consistent mocks for core system components:
 
 ```javascript
 // Using Jest moduleNameMapper alias (recommended)
-const { createMockQueueService, createMockShieldService, createMockBillingService } = require('@tests/utils/sharedMocks');
+const {
+  createMockQueueService,
+  createMockShieldService,
+  createMockBillingService
+} = require('@tests/utils/sharedMocks');
 
 // Alternative: relative path from test file location
 // For tests/unit/** files: require('../../utils/sharedMocks')
@@ -494,24 +527,27 @@ The project uses tiered coverage thresholds based on component criticality:
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ENABLE_MOCK_MODE` | Enable mocked external services | `false` |
-| `NODE_ENV` | Environment mode | `development` |
+| Variable           | Description                     | Default       |
+| ------------------ | ------------------------------- | ------------- |
+| `ENABLE_MOCK_MODE` | Enable mocked external services | `false`       |
+| `NODE_ENV`         | Environment mode                | `development` |
 
 ## 🚀 Getting Started
 
 1. **Validate your setup**:
+
    ```bash
    node scripts/test/runner.js validate
    ```
 
 2. **Explore available scopes**:
+
    ```bash
    npm run test:scopes
    ```
 
 3. **Run a quick test**:
+
    ```bash
    node scripts/test/runner.js run auth --mock-mode
    ```
@@ -526,43 +562,49 @@ The project uses tiered coverage thresholds based on component criticality:
 ### Common Issues
 
 1. **Jest not found**: Ensure Jest is installed (`npm install`)
+
    ```bash
    # Verify Jest installation
    npx jest --version
    ```
 
 2. **No test files found**: Check that test directories exist and contain `.test.js` files
+
    ```bash
    # Validate test setup
    node scripts/test/runner.js validate
    ```
 
 3. **Mock mode not working**: Verify `ENABLE_MOCK_MODE=true` is set in environment
+
    ```bash
    # Check if mock mode is active (look for "Mock mode enabled" message)
    node scripts/test/runner.js run unit --mock-mode --verbose
    ```
 
 4. **Platform filtering not working**: Ensure platform name matches file paths or test names
+
    ```bash
    # List available platforms
    node scripts/test/runner.js list-platforms
-   
+
    # Check if platform tests exist
    node scripts/test/runner.js validate
    ```
 
 5. **Tests failing with "ENABLE_MOCK_MODE not set"**: Use `--mock-mode` flag
+
    ```bash
    # Correct usage
    node scripts/test/runner.js run services --mock-mode
    ```
 
 6. **Coverage report not generated**: Ensure `--coverage` flag is used
+
    ```bash
    # Generate coverage
    node scripts/test/runner.js run unit --coverage
-   
+
    # Check coverage directory
    ls -la coverage/
    ```
@@ -570,6 +612,7 @@ The project uses tiered coverage thresholds based on component criticality:
 ### Debug Mode
 
 Add `--verbose` to any command for detailed output:
+
 ```bash
 node scripts/test/runner.js run auth --mock-mode --verbose
 ```
@@ -577,11 +620,13 @@ node scripts/test/runner.js run auth --mock-mode --verbose
 ### Environment Variables
 
 Some scopes require specific environment variables:
+
 - `billing` scope requires `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
 - Integration tests may require `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`
 - Platform tests may require platform-specific API keys
 
 Check scope requirements:
+
 ```bash
 node scripts/test/runner.js scopes
 ```
@@ -589,6 +634,7 @@ node scripts/test/runner.js scopes
 ### Debug Mode
 
 Add `--verbose` to any command for detailed output:
+
 ```bash
 node scripts/test/runner.js run auth --mock-mode --verbose
 ```
@@ -692,12 +738,12 @@ node scripts/resolve-graph.js --help
 
 ### Token Reduction Examples
 
-| Scenario | Before (spec.md) | After (GDD) | Savings |
-|----------|------------------|-------------|---------|
-| Work on Roast | 5000 lines | 500 lines | **90%** |
-| Work on Shield | 5000 lines | 800 lines | **84%** |
-| Work on Billing | 5000 lines | 600 lines | **88%** |
-| Work on Multi-tenant | 5000 lines | 350 lines | **93%** |
+| Scenario             | Before (spec.md) | After (GDD) | Savings |
+| -------------------- | ---------------- | ----------- | ------- |
+| Work on Roast        | 5000 lines       | 500 lines   | **90%** |
+| Work on Shield       | 5000 lines       | 800 lines   | **84%** |
+| Work on Billing      | 5000 lines       | 600 lines   | **88%** |
+| Work on Multi-tenant | 5000 lines       | 350 lines   | **93%** |
 
 ### Node Documentation Template
 
@@ -736,20 +782,20 @@ Links to dependent and parent nodes.
 
 ### Feature Nodes
 
-| Node | Description | Priority | Status |
-|------|-------------|----------|--------|
-| `roast` | Core roast generation system | Critical | ✅ Production |
-| `shield` | Automated content moderation | Critical | 🚧 Planned |
-| `persona` | User personality configuration | High | 🚧 Planned |
-| `tone` | Tone mapping and humor types | High | 🚧 Planned |
-| `platform-constraints` | Platform-specific rules | High | 🚧 Planned |
-| `plan-features` | Subscription plan gates | Critical | 🚧 Planned |
-| `queue-system` | Redis/Upstash queue management | Critical | 🚧 Planned |
-| `cost-control` | Usage tracking and billing | Critical | 🚧 Planned |
-| `multi-tenant` | RLS and organization isolation | Critical | 🚧 Planned |
-| `social-platforms` | 9 platform integrations | High | 🚧 Planned |
-| `trainer` | AI model fine-tuning | Medium | 📋 Future |
-| `analytics` | Usage analytics and metrics | Medium | 📋 Future |
+| Node                   | Description                    | Priority | Status        |
+| ---------------------- | ------------------------------ | -------- | ------------- |
+| `roast`                | Core roast generation system   | Critical | ✅ Production |
+| `shield`               | Automated content moderation   | Critical | 🚧 Planned    |
+| `persona`              | User personality configuration | High     | 🚧 Planned    |
+| `tone`                 | Tone mapping and humor types   | High     | 🚧 Planned    |
+| `platform-constraints` | Platform-specific rules        | High     | 🚧 Planned    |
+| `plan-features`        | Subscription plan gates        | Critical | 🚧 Planned    |
+| `queue-system`         | Redis/Upstash queue management | Critical | 🚧 Planned    |
+| `cost-control`         | Usage tracking and billing     | Critical | 🚧 Planned    |
+| `multi-tenant`         | RLS and organization isolation | Critical | 🚧 Planned    |
+| `social-platforms`     | 9 platform integrations        | High     | 🚧 Planned    |
+| `trainer`              | AI model fine-tuning           | Medium   | 📋 Future     |
+| `analytics`            | Usage analytics and metrics    | Medium   | 📋 Future     |
 
 ### Migration Status
 
@@ -780,6 +826,7 @@ Links to dependent and parent nodes.
 ### For Documentation Agent
 
 The Documentation Agent is responsible for:
+
 - Maintaining `docs/system-map.yaml` integrity
 - Validating graph structure (no circular deps, no orphaned nodes)
 - Syncing node docs with code changes
@@ -789,6 +836,7 @@ The Documentation Agent is responsible for:
 ### For Developers
 
 When working on a feature:
+
 1. Resolve dependencies: `node scripts/resolve-graph.js <feature>`
 2. Read only the resolved docs (70-93% less context)
 3. Update the relevant node docs with your changes

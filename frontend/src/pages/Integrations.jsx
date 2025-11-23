@@ -35,12 +35,12 @@ export default function Integrations() {
     // In real implementation, this would revoke the connection
   };
 
-  const connected = integrations.filter(i => i.status === 'connected');
-  const available = integrations.filter(i => i.status === 'disconnected');
+  const connected = integrations.filter((i) => i.status === 'connected');
+  const available = integrations.filter((i) => i.status === 'disconnected');
 
   if (loading) {
     return (
-      <PageLayout 
+      <PageLayout
         title="Integrations"
         subtitle="Conecta tus redes sociales para automatizar respuestas"
       >
@@ -55,7 +55,6 @@ export default function Integrations() {
       subtitle="Conecta tus redes sociales para automatizar respuestas"
       metrics={[{ label: 'Conectadas', value: `${connected.length}/${integrations.length}` }]}
     >
-
       {/* Connected Integrations */}
       {connected.length > 0 && (
         <Card>
@@ -86,7 +85,7 @@ export default function Integrations() {
                       Active
                     </Badge>
                   </div>
-                  
+
                   <div className="mt-4 flex space-x-2">
                     <Button
                       variant="outline"
@@ -136,7 +135,7 @@ export default function Integrations() {
                     Available
                   </Badge>
                 </div>
-                
+
                 <div className="mt-4">
                   <Button
                     onClick={() => handleConnect(integration.name)}

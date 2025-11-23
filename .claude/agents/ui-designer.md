@@ -54,4 +54,5 @@ criteria_of_success:
 ---
 
 output:
+
 - Mensaje: "He creado UI Spec en `docs/ui/design/<feature>/ui-spec.md` y el reporte de validación en `docs/ui-review.md`, listo para Whimsy Injector".

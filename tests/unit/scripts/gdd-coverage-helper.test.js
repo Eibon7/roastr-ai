@@ -120,7 +120,9 @@ nodes:
 
         fs.readFile
           .mockResolvedValueOnce(JSON.stringify(mockCoverage))
-          .mockResolvedValueOnce('nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js');
+          .mockResolvedValueOnce(
+            'nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js'
+          );
 
         const result = await coverageHelper.getCoverageFromReport('test-node');
 
@@ -146,7 +148,9 @@ nodes:
 
         fs.readFile
           .mockResolvedValueOnce(JSON.stringify(mockCoverage))
-          .mockResolvedValueOnce('nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js');
+          .mockResolvedValueOnce(
+            'nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js'
+          );
 
         const result = await coverageHelper.getCoverageFromReport('test-node');
 
@@ -172,7 +176,9 @@ nodes:
 
         fs.readFile
           .mockResolvedValueOnce(JSON.stringify(mockCoverage))
-          .mockResolvedValueOnce('nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js');
+          .mockResolvedValueOnce(
+            'nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js'
+          );
 
         const result = await coverageHelper.getCoverageFromReport('test-node');
 
@@ -253,7 +259,9 @@ nodes:
 
         fs.readFile
           .mockResolvedValueOnce(JSON.stringify(mockCoverage))
-          .mockResolvedValueOnce('nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js');
+          .mockResolvedValueOnce(
+            'nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js'
+          );
 
         const result = await coverageHelper.getCoverageFromReport('test-node');
 
@@ -276,7 +284,9 @@ nodes:
 
         fs.readFile
           .mockResolvedValueOnce(JSON.stringify(mockCoverage))
-          .mockResolvedValueOnce('nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js');
+          .mockResolvedValueOnce(
+            'nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js'
+          );
 
         const result = await coverageHelper.getCoverageFromReport('test-node');
 
@@ -334,7 +344,9 @@ nodes:
 
         fs.readFile
           .mockResolvedValueOnce(JSON.stringify(mockCoverage))
-          .mockResolvedValueOnce('nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js\n      - src/services/baz.js');
+          .mockResolvedValueOnce(
+            'nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js\n      - src/services/baz.js'
+          );
 
         const result = await coverageHelper.getCoverageFromReport('test-node');
 
@@ -358,7 +370,9 @@ nodes:
 
         fs.readFile
           .mockResolvedValueOnce(JSON.stringify(mockCoverage))
-          .mockResolvedValueOnce('nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js');
+          .mockResolvedValueOnce(
+            'nodes:\n  test-node:\n    files:\n      - src/services/foo.js\n      - src/services/bar.js'
+          );
 
         const result = await coverageHelper.getCoverageFromReport('test-node');
 
@@ -469,7 +483,7 @@ nodes:
         'coverage source: auto'
       ];
 
-      formats.forEach(format => {
+      formats.forEach((format) => {
         expect(coverageHelper.getCoverageSource(format)).toBe('auto');
       });
     });

@@ -13,11 +13,13 @@
 ### Trigger Analysis
 
 **Triggers Present:**
+
 - ✅ Changes in `docs/nodes/billing.md` (Guardian domain)
 - ✅ Changes in `docs/nodes/plan-features.md` (Guardian domain)
 - ✅ Label `area:billing` on issues #488, #489
 
 **Why SKIPPED:**
+
 1. **Documentation-Only Changes**
    - Changes are purely informational updates
    - No logic changes in billing system
@@ -43,16 +45,19 @@
 ### Files Changed
 
 **Documentation Updates:**
+
 - `docs/nodes/billing.md` - Plan mapping examples
 - `docs/nodes/plan-features.md` - Plan tiers table
 - `scripts/validate-flow-billing.js` - Test scenario updates
 
 **Change Type:**
+
 - ✅ `free` → `starter_trial` (consistency with migration #678)
 - ✅ Documentation of existing plan structure
 - ✅ No new billing behavior
 
 **Risk Level:** 🟢 LOW
+
 - No production code modified
 - No user-facing changes
 - No database changes
@@ -61,18 +66,21 @@
 ### What Changed
 
 **Before:**
+
 ```javascript
 planId: 'free',
 userPlan: 'basic',
 ```
 
 **After:**
+
 ```javascript
 planId: 'starter_trial',
 userPlan: 'starter_trial',
 ```
 
 **Impact:**
+
 - Aligns test scenarios with current plan structure
 - Reflects migration #678 (already deployed)
 - Documentation accuracy improvement only
@@ -82,6 +90,7 @@ userPlan: 'starter_trial',
 ## 🛡️ Security & Billing Considerations
 
 ### Guardian Domains Touched
+
 1. **Billing Node** (`docs/nodes/billing.md`)
    - ✅ Documentation update only
    - ✅ No logic changes
@@ -100,6 +109,7 @@ userPlan: 'starter_trial',
 ### Critical System Checks
 
 **No Changes To:**
+
 - ❌ `src/services/costControl.js` (billing enforcement logic)
 - ❌ `src/services/entitlementsService.js` (feature gating)
 - ❌ `src/middleware/tierValidation.js` (API protection)
@@ -115,6 +125,7 @@ No critical billing or security systems modified. Guardian invocation not requir
 ## 🔍 Risk Assessment
 
 ### Potential Risks
+
 1. **Documentation-Code Mismatch**
    - Risk: Documentation doesn't match production behavior
    - Mitigation: Changes align with migration #678 (already deployed)
@@ -131,6 +142,7 @@ No critical billing or security systems modified. Guardian invocation not requir
    - Severity: 🟢 LOW (clarity improvement)
 
 ### Risks NOT Present
+
 - ❌ No revenue impact (no billing logic changed)
 - ❌ No security impact (no RLS policy changes)
 - ❌ No user-facing impact (backend docs only)
@@ -141,9 +153,11 @@ No critical billing or security systems modified. Guardian invocation not requir
 ## ✅ Justification for SKIPPED
 
 ### Criteria for Guardian Invocation
+
 According to `agents/manifest.yaml`:
 
 **Guardian invokes when:**
+
 - Changes to billing enforcement logic
 - Changes to security policies (RLS)
 - Changes to cost control systems
@@ -151,6 +165,7 @@ According to `agents/manifest.yaml`:
 - Critical system domains
 
 **This PR:**
+
 - ✅ Updates documentation to match existing system
 - ✅ Creates validation scripts (testing only)
 - ✅ No production billing logic modified
@@ -188,16 +203,19 @@ All manual review points pass. No critical issues identified that would require 
 ## 🔗 Related Context
 
 **GDD Nodes:**
+
 - `billing.md` - Updated (documentation only)
 - `plan-features.md` - Updated (documentation only)
 - `cost-control.md` - Not modified (no trigger)
 
 **Related Issues:**
+
 - #678 - Free → Starter Trial migration (already completed)
 - #488 - Multi-Tenant RLS validation (testing existing RLS)
 - #489 - Billing limits validation (testing existing limits)
 
 **Guardian Domain Coverage:**
+
 - Billing enforcement: ✅ Not modified (validated by scripts)
 - Security policies: ✅ Not modified (validated by scripts)
 - Cost control: ✅ Not modified (limits unchanged)
@@ -209,6 +227,7 @@ All manual review points pass. No critical issues identified that would require 
 **SKIPPED Justification:** ✅ APPROVED
 
 **Reasoning:**
+
 - Documentation consistency improvements
 - Test scripts for validation only
 - No critical system modifications
@@ -223,12 +242,14 @@ Proceed with merge. Guardian guardrails not needed for this PR scope.
 ## 📈 Follow-up Actions
 
 **If Critical Billing Changes Detected in Future:**
+
 1. ⚠️ Invoke Guardian for full review
 2. ⚠️ Validate billing logic changes
 3. ⚠️ Review revenue impact
 4. ⚠️ Check security implications
 
 **For This PR:**
+
 - ✅ No follow-up required
 - ✅ Documentation accurate
 - ✅ Test scripts ready

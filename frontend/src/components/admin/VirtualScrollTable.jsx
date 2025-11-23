@@ -1,7 +1,7 @@
 /**
  * Virtual Scrolling Table Component for Admin Users List
  * Issue #261 - Implement virtual scrolling for lists exceeding 1000 records
- * 
+ *
  * Custom implementation without external dependencies to keep bundle size small
  * Optimized for performance with large datasets
  */
@@ -40,32 +40,35 @@ const VirtualScrollTable = ({
   const observerRef = useRef(null);
 
   // Handle scroll events with configurable debouncing for better performance
-  const handleScroll = useCallback((e) => {
-    // Skip scroll handling if component is not visible
-    if (!isVisible) return;
+  const handleScroll = useCallback(
+    (e) => {
+      // Skip scroll handling if component is not visible
+      if (!isVisible) return;
 
-    const newScrollTop = e.target.scrollTop;
-    
-    // Skip updates if scroll position hasn't changed significantly
-    if (Math.abs(newScrollTop - lastScrollTop.current) < rowHeight / 2) {
-      return;
-    }
+      const newScrollTop = e.target.scrollTop;
 
-    lastScrollTop.current = newScrollTop;
-    
-    // Immediate update for smooth scrolling
-    setScrollTop(newScrollTop);
-    
-    // Clear existing timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
+      // Skip updates if scroll position hasn't changed significantly
+      if (Math.abs(newScrollTop - lastScrollTop.current) < rowHeight / 2) {
+        return;
+      }
 
-    // Use configurable debounce delay for additional operations
-    scrollTimeoutRef.current = setTimeout(() => {
-      // Any additional expensive operations can go here
-    }, scrollDebounceMs);
-  }, [rowHeight, isVisible, scrollDebounceMs]);
+      lastScrollTop.current = newScrollTop;
+
+      // Immediate update for smooth scrolling
+      setScrollTop(newScrollTop);
+
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // Use configurable debounce delay for additional operations
+      scrollTimeoutRef.current = setTimeout(() => {
+        // Any additional expensive operations can go here
+      }, scrollDebounceMs);
+    },
+    [rowHeight, isVisible, scrollDebounceMs]
+  );
 
   // Set up intersection observer to track visibility
   useEffect(() => {
@@ -93,10 +96,8 @@ const VirtualScrollTable = ({
     const viewportHeight = visibleRows * rowHeight;
     const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
     // Fix off-by-one error: ensure endIndex doesn't exceed data.length - 1
-    const endIndex = Math.min(
-      data.length - 1,
-      Math.ceil((scrollTop + viewportHeight) / rowHeight) + buffer
-    ) + 1; // Add 1 back for slice() which is exclusive
+    const endIndex =
+      Math.min(data.length - 1, Math.ceil((scrollTop + viewportHeight) / rowHeight) + buffer) + 1; // Add 1 back for slice() which is exclusive
     const visibleData = data.slice(startIndex, endIndex);
     const offsetY = startIndex * rowHeight;
 
@@ -133,7 +134,8 @@ const VirtualScrollTable = ({
     );
   }
 
-  const { totalHeight, viewportHeight, startIndex, endIndex, visibleData, offsetY } = virtualScrollData;
+  const { totalHeight, viewportHeight, startIndex, endIndex, visibleData, offsetY } =
+    virtualScrollData;
 
   return (
     <div className={className}>
@@ -142,13 +144,17 @@ const VirtualScrollTable = ({
         <div className="flex">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
             </svg>
           </div>
           <div className="ml-3">
             <p className="text-sm text-blue-700 dark:text-blue-200">
-              Virtual scrolling activado: mostrando {data.length.toLocaleString()} registros. 
-              Solo se renderizan los elementos visibles para mejorar el rendimiento.
+              Virtual scrolling activado: mostrando {data.length.toLocaleString()} registros. Solo
+              se renderizan los elementos visibles para mejorar el rendimiento.
             </p>
           </div>
         </div>
@@ -156,16 +162,14 @@ const VirtualScrollTable = ({
 
       {/* Fixed header outside scroll container */}
       <div className="border border-gray-200 dark:border-gray-700 border-b-0 rounded-t-lg bg-gray-50 dark:bg-gray-700">
-        <table className="min-w-full">
-          {renderHeader && renderHeader()}
-        </table>
+        <table className="min-w-full">{renderHeader && renderHeader()}</table>
       </div>
 
       {/* Virtual scroll container */}
-      <div 
+      <div
         ref={containerRef}
         className="overflow-auto border border-gray-200 dark:border-gray-700 border-t-0 rounded-b-lg"
-        style={{ 
+        style={{
           height: `${viewportHeight}px`,
           overflowAnchor: 'none' // Prevent scroll anchoring
         }}
@@ -174,8 +178,8 @@ const VirtualScrollTable = ({
         {/* Total height container for scrollbar */}
         <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
           {/* Virtual rows container */}
-          <div 
-            style={{ 
+          <div
+            style={{
               transform: `translateY(${offsetY}px)`,
               position: 'absolute',
               top: 0,
@@ -190,14 +194,11 @@ const VirtualScrollTable = ({
                   const globalIndex = startIndex + index;
                   // Optimized key generation for better React reconciliation
                   const itemKey = item.id || `${globalIndex}-${item.email || item.name || index}`;
-                  
-                  return React.cloneElement(
-                    renderRow(item, globalIndex),
-                    { 
-                      key: itemKey,
-                      'data-index': globalIndex // For debugging and testing
-                    }
-                  );
+
+                  return React.cloneElement(renderRow(item, globalIndex), {
+                    key: itemKey,
+                    'data-index': globalIndex // For debugging and testing
+                  });
                 })}
               </tbody>
             </table>
@@ -207,7 +208,8 @@ const VirtualScrollTable = ({
 
       {/* Scroll position indicator */}
       <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center">
-        Mostrando elementos {startIndex + 1} - {Math.min(endIndex, data.length)} de {data.length.toLocaleString()}
+        Mostrando elementos {startIndex + 1} - {Math.min(endIndex, data.length)} de{' '}
+        {data.length.toLocaleString()}
       </div>
     </div>
   );

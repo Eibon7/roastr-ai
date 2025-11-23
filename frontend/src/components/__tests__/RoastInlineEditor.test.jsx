@@ -16,7 +16,7 @@ const mockLocalStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
-  clear: jest.fn(),
+  clear: jest.fn()
 };
 Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage
@@ -41,7 +41,7 @@ describe('RoastInlineEditor', () => {
   describe('View Mode Rendering', () => {
     it('should render in view mode by default', () => {
       render(<RoastInlineEditor {...defaultProps} />);
-      
+
       expect(screen.getByText('Roast Generado')).toBeInTheDocument();
       expect(screen.getByText('Este es un roast de prueba')).toBeInTheDocument();
       expect(screen.getByText('Editar')).toBeInTheDocument();
@@ -50,20 +50,20 @@ describe('RoastInlineEditor', () => {
 
     it('should show character count in view mode', () => {
       render(<RoastInlineEditor {...defaultProps} />);
-      
+
       expect(screen.getByText('26 caracteres')).toBeInTheDocument();
       expect(screen.getByText('Límite: 280')).toBeInTheDocument();
     });
 
     it('should handle empty roast content', () => {
       render(<RoastInlineEditor {...defaultProps} roast="" />);
-      
+
       expect(screen.getByText('0 caracteres')).toBeInTheDocument();
     });
 
     it('should display correct platform badge', () => {
       render(<RoastInlineEditor {...defaultProps} platform="instagram" />);
-      
+
       expect(screen.getByText('instagram')).toBeInTheDocument();
     });
   });
@@ -71,9 +71,9 @@ describe('RoastInlineEditor', () => {
   describe('Edit Mode Transition', () => {
     it('should switch to edit mode when edit button is clicked', () => {
       render(<RoastInlineEditor {...defaultProps} />);
-      
+
       fireEvent.click(screen.getByText('Editar'));
-      
+
       expect(screen.getByText('Editor de Roast')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Este es un roast de prueba')).toBeInTheDocument();
       expect(screen.getByText('Guardar')).toBeInTheDocument();
@@ -82,9 +82,9 @@ describe('RoastInlineEditor', () => {
 
     it('should initialize textarea with current roast content', () => {
       render(<RoastInlineEditor {...defaultProps} />);
-      
+
       fireEvent.click(screen.getByText('Editar'));
-      
+
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
       expect(textarea).toBeInTheDocument();
       expect(textarea.value).toBe('Este es un roast de prueba');
@@ -99,28 +99,28 @@ describe('RoastInlineEditor', () => {
 
     it('should update character count as user types', async () => {
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
-      
+
       await userEvent.clear(textarea);
       await userEvent.type(textarea, 'Nuevo roast');
-      
+
       expect(screen.getByText('11 / 280 caracteres')).toBeInTheDocument();
     });
 
     it('should show unsaved changes badge when text is modified', async () => {
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
-      
+
       await userEvent.type(textarea, ' modificado');
-      
+
       expect(screen.getByText('Cambios sin guardar')).toBeInTheDocument();
     });
 
     it('should warn when character limit is exceeded', async () => {
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
       const longText = 'a'.repeat(300);
-      
+
       await userEvent.clear(textarea);
       await userEvent.type(textarea, longText);
-      
+
       expect(screen.getByText('(¡20 sobre el límite!)')).toBeInTheDocument();
       expect(screen.getByText('300 / 280 caracteres')).toHaveClass('text-red-500');
     });
@@ -128,10 +128,10 @@ describe('RoastInlineEditor', () => {
     it('should show character count warnings at different thresholds', async () => {
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
       const nearLimitText = 'a'.repeat(270);
-      
+
       await userEvent.clear(textarea);
       await userEvent.type(textarea, nearLimitText);
-      
+
       expect(screen.getByText('270 / 280 caracteres')).toHaveClass('text-yellow-500');
     });
   });
@@ -140,21 +140,21 @@ describe('RoastInlineEditor', () => {
     it('should use Instagram character limit', () => {
       render(<RoastInlineEditor {...defaultProps} platform="instagram" />);
       fireEvent.click(screen.getByText('Editar'));
-      
+
       expect(screen.getByText('26 / 2200 caracteres')).toBeInTheDocument();
     });
 
     it('should use Facebook character limit', () => {
       render(<RoastInlineEditor {...defaultProps} platform="facebook" />);
       fireEvent.click(screen.getByText('Editar'));
-      
+
       expect(screen.getByText('26 / 63206 caracteres')).toBeInTheDocument();
     });
 
     it('should default to Twitter limit for unknown platforms', () => {
       render(<RoastInlineEditor {...defaultProps} platform="unknown" />);
       fireEvent.click(screen.getByText('Editar'));
-      
+
       expect(screen.getByText('26 / 280 caracteres')).toBeInTheDocument();
     });
   });
@@ -192,7 +192,7 @@ describe('RoastInlineEditor', () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer mock-auth-token'
+            Authorization: 'Bearer mock-auth-token'
           },
           body: JSON.stringify({
             text: 'Este es un roast de prueba editado',
@@ -273,9 +273,7 @@ describe('RoastInlineEditor', () => {
             validation: {
               valid: true,
               errors: [],
-              warnings: [
-                { rule: 'STYLE_WARNING', message: 'Considera mejorar el estilo' }
-              ],
+              warnings: [{ rule: 'STYLE_WARNING', message: 'Considera mejorar el estilo' }],
               metadata: { textLength: 26 }
             },
             credits: { remaining: 99 }
@@ -325,7 +323,9 @@ describe('RoastInlineEditor', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Error de Red')).toBeInTheDocument();
-        expect(screen.getByText('Network error. Please check your connection.')).toBeInTheDocument();
+        expect(
+          screen.getByText('Network error. Please check your connection.')
+        ).toBeInTheDocument();
       });
     });
 
@@ -337,19 +337,29 @@ describe('RoastInlineEditor', () => {
     it('should disable validation button when text is empty', async () => {
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
       await userEvent.clear(textarea);
-      
+
       const validateButton = screen.getByText('Validar');
       expect(validateButton).toBeDisabled();
     });
 
     it('should show loading state during validation', async () => {
       // Mock a slow API response
-      fetch.mockImplementationOnce(() => new Promise(resolve => {
-        setTimeout(() => resolve({
-          ok: true,
-          json: async () => ({ success: true, data: { validation: { valid: true, errors: [], warnings: [] } } })
-        }), 100);
-      }));
+      fetch.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(
+              () =>
+                resolve({
+                  ok: true,
+                  json: async () => ({
+                    success: true,
+                    data: { validation: { valid: true, errors: [], warnings: [] } }
+                  })
+                }),
+              100
+            );
+          })
+      );
 
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
       await userEvent.type(textarea, ' cargando');
@@ -452,14 +462,14 @@ describe('RoastInlineEditor', () => {
 
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
       expect(textarea).toHaveAttribute('placeholder', 'Edita tu roast aquí...');
-      
+
       // Check button accessibility
       const validateButton = screen.getByText('Validar');
       expect(validateButton).toBeInTheDocument();
-      
+
       const saveButton = screen.getByText('Guardar');
       expect(saveButton).toBeInTheDocument();
-      
+
       const cancelButton = screen.getByText('Cancelar');
       expect(cancelButton).toBeInTheDocument();
     });
@@ -469,7 +479,7 @@ describe('RoastInlineEditor', () => {
       fireEvent.click(screen.getByText('Editar'));
 
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
-      
+
       // Test that textarea can receive focus
       textarea.focus();
       expect(document.activeElement).toBe(textarea);
@@ -479,17 +489,17 @@ describe('RoastInlineEditor', () => {
   describe('Edge Cases', () => {
     it('should handle missing roast prop', () => {
       render(<RoastInlineEditor {...defaultProps} roast={null} />);
-      
+
       expect(screen.getByText('0 caracteres')).toBeInTheDocument();
     });
 
     it('should handle missing roastId', () => {
       render(<RoastInlineEditor {...defaultProps} roastId={null} />);
       fireEvent.click(screen.getByText('Editar'));
-      
+
       const textarea = screen.getByDisplayValue('Este es un roast de prueba');
       userEvent.type(textarea, ' sin ID');
-      
+
       const validateButton = screen.getByText('Validar');
       expect(validateButton).toBeDisabled(); // Should be disabled without roastId
     });

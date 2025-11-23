@@ -14,7 +14,7 @@ class TwitchCollector {
       videos: { requests: 800, window: 60 * 1000 },
       users: { requests: 800, window: 60 * 1000 }
     };
-    
+
     this.lastRequestTimes = new Map();
   }
 
@@ -37,15 +37,19 @@ class TwitchCollector {
       const accessToken = await this.ensureAccessToken(config);
 
       // Get user's Twitch content
-      const userContent = await this.getUserContent(config, accessToken, maxContent, languageFilter);
-      
+      const userContent = await this.getUserContent(
+        config,
+        accessToken,
+        maxContent,
+        languageFilter
+      );
+
       logger.info('Twitch content collection completed', {
         contentCollected: userContent.length,
         maxRequested: maxContent
       });
 
       return userContent;
-
     } catch (error) {
       logger.error('Failed to collect Twitch content', {
         error: error.message,
@@ -80,7 +84,6 @@ class TwitchCollector {
       });
 
       return response.data.access_token;
-
     } catch (error) {
       logger.error('Failed to get Twitch access token', { error: error.message });
       throw error;
@@ -95,7 +98,7 @@ class TwitchCollector {
     try {
       // Get user info first
       const userId = await this.getUserId(config.username, accessToken);
-      
+
       const contentItems = [];
 
       // Get recent videos (VODs)
@@ -104,17 +107,20 @@ class TwitchCollector {
 
       // Get recent clips if we need more content
       if (contentItems.length < maxContent) {
-        const clips = await this.getUserClips(userId, accessToken, maxContent - contentItems.length);
+        const clips = await this.getUserClips(
+          userId,
+          accessToken,
+          maxContent - contentItems.length
+        );
         contentItems.push(...clips);
       }
 
       // Filter by language if specified
-      const filteredContent = languageFilter 
-        ? contentItems.filter(item => item.language === languageFilter)
+      const filteredContent = languageFilter
+        ? contentItems.filter((item) => item.language === languageFilter)
         : contentItems;
 
       return filteredContent.slice(0, maxContent);
-
     } catch (error) {
       logger.error('Failed to get Twitch user content', {
         username: config.username,
@@ -134,7 +140,7 @@ class TwitchCollector {
     const response = await axios.get(`${this.baseURL}/users`, {
       params: { login: username },
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         'Client-Id': process.env.TWITCH_CLIENT_ID
       }
     });
@@ -161,7 +167,7 @@ class TwitchCollector {
           type: 'all'
         },
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           'Client-Id': process.env.TWITCH_CLIENT_ID
         }
       });
@@ -171,7 +177,7 @@ class TwitchCollector {
       for (const video of response.data.data || []) {
         // Combine title and description
         const fullText = `${video.title}\n\n${video.description || ''}`.trim();
-        
+
         if (fullText.length < 20) continue;
 
         // Clean the text
@@ -204,7 +210,6 @@ class TwitchCollector {
       }
 
       return contentItems;
-
     } catch (error) {
       logger.error('Failed to get Twitch videos', { error: error.message });
       return [];
@@ -226,7 +231,7 @@ class TwitchCollector {
           started_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() // Last 30 days
         },
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           'Client-Id': process.env.TWITCH_CLIENT_ID
         }
       });
@@ -235,7 +240,7 @@ class TwitchCollector {
 
       for (const clip of response.data.data || []) {
         const title = clip.title || '';
-        
+
         if (title.length < 10) continue;
 
         const cleanText = this.cleanStreamText(title);
@@ -265,7 +270,6 @@ class TwitchCollector {
       }
 
       return contentItems;
-
     } catch (error) {
       logger.error('Failed to get Twitch clips', { error: error.message });
       return [];
@@ -281,7 +285,7 @@ class TwitchCollector {
 
     // Remove URLs
     let cleanText = text.replace(/https?:\/\/[^\s]+/g, '');
-    
+
     // Remove excessive hashtags
     const hashtagPattern = /#\w+/g;
     const hashtags = cleanText.match(hashtagPattern) || [];
@@ -301,7 +305,7 @@ class TwitchCollector {
       /!discord/gi
     ];
 
-    boilerplatePatterns.forEach(pattern => {
+    boilerplatePatterns.forEach((pattern) => {
       cleanText = cleanText.replace(pattern, '');
     });
 
@@ -318,12 +322,44 @@ class TwitchCollector {
   detectLanguage(text) {
     if (!text) return 'unknown';
 
-    const spanishWords = ['el', 'la', 'de', 'que', 'y', 'en', 'un', 'es', 'se', 'no', 'te', 'lo', 'hola', 'como', 'para'];
-    const englishWords = ['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with'];
+    const spanishWords = [
+      'el',
+      'la',
+      'de',
+      'que',
+      'y',
+      'en',
+      'un',
+      'es',
+      'se',
+      'no',
+      'te',
+      'lo',
+      'hola',
+      'como',
+      'para'
+    ];
+    const englishWords = [
+      'the',
+      'be',
+      'to',
+      'of',
+      'and',
+      'a',
+      'in',
+      'that',
+      'have',
+      'i',
+      'it',
+      'for',
+      'not',
+      'on',
+      'with'
+    ];
 
     const words = text.toLowerCase().split(/\s+/);
-    const spanishCount = words.filter(word => spanishWords.includes(word)).length;
-    const englishCount = words.filter(word => englishWords.includes(word)).length;
+    const spanishCount = words.filter((word) => spanishWords.includes(word)).length;
+    const englishCount = words.filter((word) => englishWords.includes(word)).length;
 
     if (spanishCount > englishCount) return 'es';
     if (englishCount > spanishCount) return 'en';
@@ -349,7 +385,7 @@ class TwitchCollector {
         endpoint,
         waitTimeMs: waitTime
       });
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
 
     this.lastRequestTimes.set(endpoint, Date.now());
@@ -362,7 +398,7 @@ class TwitchCollector {
     if (!config.username) {
       throw new Error('Missing Twitch username');
     }
-    
+
     if (!process.env.TWITCH_CLIENT_ID || !process.env.TWITCH_CLIENT_SECRET) {
       throw new Error('Twitch client credentials not configured');
     }
@@ -376,7 +412,7 @@ class TwitchCollector {
   async testConnection(config) {
     try {
       this.validateConfig(config);
-      
+
       const accessToken = await this.ensureAccessToken(config);
       const userId = await this.getUserId(config.username, accessToken);
 
@@ -387,7 +423,6 @@ class TwitchCollector {
           username: config.username
         }
       };
-
     } catch (error) {
       return {
         success: false,

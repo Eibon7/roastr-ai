@@ -24,7 +24,7 @@ const AdminDashboard = () => {
     limit: 20,
     total: 0
   });
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,7 +76,7 @@ const AdminDashboard = () => {
 
       if (data.success) {
         setUsers(data.data.users);
-        setPagination(prev => ({
+        setPagination((prev) => ({
           ...prev,
           total: data.data.pagination.total
         }));
@@ -93,18 +93,18 @@ const AdminDashboard = () => {
   };
 
   const handleSearch = (e) => {
-    setFilters(prev => ({ ...prev, search: e.target.value }));
-    setPagination(prev => ({ ...prev, offset: 0 })); // Reset to first page
+    setFilters((prev) => ({ ...prev, search: e.target.value }));
+    setPagination((prev) => ({ ...prev, offset: 0 })); // Reset to first page
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setPagination(prev => ({ ...prev, offset: 0 })); // Reset to first page
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setPagination((prev) => ({ ...prev, offset: 0 })); // Reset to first page
   };
 
   const handleToggleActive = async (userId) => {
     try {
-      setActionLoading(prev => ({ ...prev, [`active_${userId}`]: true }));
+      setActionLoading((prev) => ({ ...prev, [`active_${userId}`]: true }));
 
       const data = await apiClient.post(`/auth/admin/users/${userId}/toggle-active`);
 
@@ -123,13 +123,13 @@ const AdminDashboard = () => {
         message: 'Error al cambiar estado: ' + error.message
       });
     } finally {
-      setActionLoading(prev => ({ ...prev, [`active_${userId}`]: false }));
+      setActionLoading((prev) => ({ ...prev, [`active_${userId}`]: false }));
     }
   };
 
   const handleSuspendUser = async (userId, reason = null) => {
     try {
-      setActionLoading(prev => ({ ...prev, [`suspend_${userId}`]: true }));
+      setActionLoading((prev) => ({ ...prev, [`suspend_${userId}`]: true }));
 
       const data = await apiClient.post(`/auth/admin/users/${userId}/suspend`, { reason });
 
@@ -148,13 +148,13 @@ const AdminDashboard = () => {
         message: 'Error al suspender usuario: ' + error.message
       });
     } finally {
-      setActionLoading(prev => ({ ...prev, [`suspend_${userId}`]: false }));
+      setActionLoading((prev) => ({ ...prev, [`suspend_${userId}`]: false }));
     }
   };
 
   const handleUnsuspendUser = async (userId) => {
     try {
-      setActionLoading(prev => ({ ...prev, [`unsuspend_${userId}`]: true }));
+      setActionLoading((prev) => ({ ...prev, [`unsuspend_${userId}`]: true }));
 
       const data = await apiClient.post(`/auth/admin/users/${userId}/unsuspend`);
 
@@ -173,13 +173,13 @@ const AdminDashboard = () => {
         message: 'Error al reactivar usuario: ' + error.message
       });
     } finally {
-      setActionLoading(prev => ({ ...prev, [`unsuspend_${userId}`]: false }));
+      setActionLoading((prev) => ({ ...prev, [`unsuspend_${userId}`]: false }));
     }
   };
 
   const handleChangePlan = async (userId, newPlan) => {
     try {
-      setActionLoading(prev => ({ ...prev, [`plan_${userId}`]: true }));
+      setActionLoading((prev) => ({ ...prev, [`plan_${userId}`]: true }));
 
       const data = await apiClient.post(`/auth/admin/users/${userId}/plan`, { newPlan });
 
@@ -198,7 +198,7 @@ const AdminDashboard = () => {
         message: 'Error al cambiar plan: ' + error.message
       });
     } finally {
-      setActionLoading(prev => ({ ...prev, [`plan_${userId}`]: false }));
+      setActionLoading((prev) => ({ ...prev, [`plan_${userId}`]: false }));
     }
   };
 
@@ -211,7 +211,6 @@ const AdminDashboard = () => {
     }
   };
 
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -222,7 +221,7 @@ const AdminDashboard = () => {
 
   const nextPage = () => {
     if (pagination.offset + pagination.limit < pagination.total) {
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         offset: prev.offset + prev.limit
       }));
@@ -231,7 +230,7 @@ const AdminDashboard = () => {
 
   const prevPage = () => {
     if (pagination.offset > 0) {
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         offset: Math.max(0, prev.offset - prev.limit)
       }));
@@ -246,9 +245,7 @@ const AdminDashboard = () => {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Cargando panel de administración...
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Por favor espera un momento
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">Por favor espera un momento</p>
         </div>
       </div>
     );
@@ -263,8 +260,18 @@ const AdminDashboard = () => {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="h-8 w-8 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-                  <svg className="h-5 w-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                  <svg
+                    className="h-5 w-5 text-red-600 dark:text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+                    />
                   </svg>
                 </div>
               </div>
@@ -277,14 +284,19 @@ const AdminDashboard = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/admin/system-control')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+                  />
                 </svg>
                 Control Panel
               </button>
@@ -294,9 +306,7 @@ const AdminDashboard = () => {
               >
                 Volver al Dashboard
               </button>
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                {currentUser?.email}
-              </div>
+              <div className="text-sm text-gray-700 dark:text-gray-300">{currentUser?.email}</div>
               <button
                 onClick={handleSignOut}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
@@ -312,20 +322,30 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Alert */}
         {alert && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            alert.type === 'success' 
-              ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800' 
-              : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
-          }`}>
+          <div
+            className={`mb-6 p-4 rounded-lg ${
+              alert.type === 'success'
+                ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
+                : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
+            }`}
+          >
             <div className="flex">
               <div className="flex-shrink-0">
                 {alert.type === 'success' ? (
                   <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 ) : (
                   <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 )}
               </div>
@@ -338,7 +358,12 @@ const AdminDashboard = () => {
                   className="inline-flex rounded-md p-1.5 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-offset-2"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -352,33 +377,27 @@ const AdminDashboard = () => {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  <svg
+                    className="h-6 w-6 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                    />
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Usuarios</dt>
-                    <dd className="text-lg font-medium text-gray-900 dark:text-white">{pagination.total}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg className="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Activos</dt>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                      Total Usuarios
+                    </dt>
                     <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                      {users.filter(u => u.active).length}
+                      {pagination.total}
                     </dd>
                   </dl>
                 </div>
@@ -390,15 +409,27 @@ const AdminDashboard = () => {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg className="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636A9 9 0 105.636 18.364" />
+                  <svg
+                    className="h-6 w-6 text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Suspendidos</dt>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                      Activos
+                    </dt>
                     <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                      {users.filter(u => u.suspended).length}
+                      {users.filter((u) => u.active).length}
                     </dd>
                   </dl>
                 </div>
@@ -410,15 +441,59 @@ const AdminDashboard = () => {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg className="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L4.268 14.5c-.77.833.192 2.5 1.732 2.5z" />
+                  <svg
+                    className="h-6 w-6 text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636A9 9 0 105.636 18.364"
+                    />
                   </svg>
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Con Alertas</dt>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                      Suspendidos
+                    </dt>
                     <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                      {users.filter(u => u.is_over_limit).length}
+                      {users.filter((u) => u.suspended).length}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-6 w-6 text-yellow-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L4.268 14.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                      Con Alertas
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900 dark:text-white">
+                      {users.filter((u) => u.is_over_limit).length}
                     </dd>
                   </dl>
                 </div>
@@ -432,7 +507,9 @@ const AdminDashboard = () => {
           <div className="px-4 py-5 sm:p-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Buscar</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Buscar
+                </label>
                 <input
                   type="text"
                   value={filters.search}
@@ -443,7 +520,9 @@ const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Plan</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Plan
+                </label>
                 <select
                   value={filters.plan}
                   onChange={(e) => handleFilterChange('plan', e.target.value)}
@@ -457,7 +536,9 @@ const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Estado
+                </label>
                 <select
                   value={filters.active}
                   onChange={(e) => handleFilterChange('active', e.target.value)}
@@ -470,7 +551,9 @@ const AdminDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Suspensión</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Suspensión
+                </label>
                 <select
                   value={filters.suspended}
                   onChange={(e) => handleFilterChange('suspended', e.target.value)}
@@ -497,7 +580,7 @@ const AdminDashboard = () => {
               )}
             </div>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
@@ -524,7 +607,10 @@ const AdminDashboard = () => {
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {users.map((user) => (
-                  <tr key={user.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${user.is_over_limit ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}`}>
+                  <tr
+                    key={user.id}
+                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${user.is_over_limit ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}`}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
@@ -534,7 +620,7 @@ const AdminDashboard = () => {
                         </div>
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
-                            <Link 
+                            <Link
                               to={`/admin/user/${user.id}`}
                               className="hover:text-primary-600 dark:hover:text-primary-400"
                             >
@@ -553,27 +639,33 @@ const AdminDashboard = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(user.plan)}`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(user.plan)}`}
+                      >
                         {user.plan}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="space-y-1">
                         <div className="flex items-center">
-                          <div className={`h-2 w-2 rounded-full mr-2 ${user.active ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+                          <div
+                            className={`h-2 w-2 rounded-full mr-2 ${user.active ? 'bg-green-400' : 'bg-gray-400'}`}
+                          ></div>
                           <span className="text-sm text-gray-900 dark:text-white">
                             {user.active ? 'Activo' : 'Inactivo'}
                           </span>
                         </div>
                         {user.suspended && (
-                          <div className="text-xs text-red-600 dark:text-red-400">
-                            Suspendido
-                          </div>
+                          <div className="text-xs text-red-600 dark:text-red-400">Suspendido</div>
                         )}
                         {user.is_over_limit && (
                           <div className="text-xs text-yellow-600 dark:text-yellow-400 flex items-center">
                             <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              <path
+                                fillRule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clipRule="evenodd"
+                              />
                             </svg>
                             Límite excedido
                           </div>
@@ -596,18 +688,31 @@ const AdminDashboard = () => {
                           onClick={() => handleToggleActive(user.id)}
                           disabled={actionLoading[`active_${user.id}`]}
                           className={`inline-flex items-center px-2 py-1 border border-transparent text-xs rounded ${
-                            user.active 
-                              ? 'text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-300' 
+                            user.active
+                              ? 'text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-300'
                               : 'text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-300'
                           } disabled:opacity-50`}
                         >
                           {actionLoading[`active_${user.id}`] ? (
                             <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
                             </svg>
+                          ) : user.active ? (
+                            'Desactivar'
                           ) : (
-                            user.active ? 'Desactivar' : 'Activar'
+                            'Activar'
                           )}
                         </button>
 
@@ -620,8 +725,19 @@ const AdminDashboard = () => {
                           >
                             {actionLoading[`unsuspend_${user.id}`] ? (
                               <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
                               </svg>
                             ) : (
                               'Reactivar'
@@ -640,8 +756,19 @@ const AdminDashboard = () => {
                           >
                             {actionLoading[`suspend_${user.id}`] ? (
                               <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
                               </svg>
                             ) : (
                               'Suspender'
@@ -696,8 +823,7 @@ const AdminDashboard = () => {
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Mostrando{' '}
-                    <span className="font-medium">{pagination.offset + 1}</span>
+                    Mostrando <span className="font-medium">{pagination.offset + 1}</span>
                     {' a '}
                     <span className="font-medium">
                       {Math.min(pagination.offset + pagination.limit, pagination.total)}
@@ -715,7 +841,11 @@ const AdminDashboard = () => {
                       className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <path
+                          fillRule="evenodd"
+                          d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                     <button
@@ -724,7 +854,11 @@ const AdminDashboard = () => {
                       className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        <path
+                          fillRule="evenodd"
+                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                   </nav>
@@ -735,10 +869,22 @@ const AdminDashboard = () => {
 
           {users.length === 0 && !loading && (
             <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No se encontraron usuarios</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                No se encontraron usuarios
+              </h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Intenta ajustar los filtros de búsqueda.
               </p>

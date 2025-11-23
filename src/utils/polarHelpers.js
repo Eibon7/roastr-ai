@@ -14,8 +14,8 @@ const { logger } = require('./logger');
 // Database uses: starter_trial/starter/pro/plus
 const PRODUCT_ID_TO_PLAN = {
   [process.env.POLAR_STARTER_PRODUCT_ID]: 'starter_trial', // Maps starter → trial (matches DB schema)
-  [process.env.POLAR_PRO_PRODUCT_ID]: 'pro',            // Direct mapping
-  [process.env.POLAR_PLUS_PRODUCT_ID]: 'plus',          // Maps plus → plus
+  [process.env.POLAR_PRO_PRODUCT_ID]: 'pro', // Direct mapping
+  [process.env.POLAR_PLUS_PRODUCT_ID]: 'plus' // Maps plus → plus
 };
 
 // Reverse mapping: plan to product ID
@@ -33,7 +33,9 @@ function getPlanFromProductId(productId) {
   const plan = PRODUCT_ID_TO_PLAN[productId];
   if (!plan) {
     logger.error('[Polar Helpers] Unknown product_id', { productId });
-    throw new Error(`Unknown product_id: ${productId}. Please check POLAR_*_PRODUCT_ID environment variables.`);
+    throw new Error(
+      `Unknown product_id: ${productId}. Please check POLAR_*_PRODUCT_ID environment variables.`
+    );
   }
   return plan;
 }
@@ -75,12 +77,16 @@ function getConfiguredProductIds() {
 // Legacy aliases for backward compatibility during migration
 // TODO: Remove after Issue #808 migration is complete
 function getPlanFromPriceId(priceId) {
-  logger.warn('[Polar Helpers] getPlanFromPriceId is deprecated, use getPlanFromProductId', { priceId });
+  logger.warn('[Polar Helpers] getPlanFromPriceId is deprecated, use getPlanFromProductId', {
+    priceId
+  });
   return getPlanFromProductId(priceId);
 }
 
 function getPriceIdFromPlan(plan) {
-  logger.warn('[Polar Helpers] getPriceIdFromPlan is deprecated, use getProductIdFromPlan', { plan });
+  logger.warn('[Polar Helpers] getPriceIdFromPlan is deprecated, use getProductIdFromPlan', {
+    plan
+  });
   return getProductIdFromPlan(plan);
 }
 
@@ -99,5 +105,5 @@ module.exports = {
   getPriceIdFromPlan,
   getConfiguredPriceIds,
   // Common utilities
-  isValidPlan,
+  isValidPlan
 };

@@ -24,7 +24,7 @@ const mockShieldData = [
     action: 'blocked'
   },
   {
-    id: '2', 
+    id: '2',
     comment: 'Another test comment',
     platform: 'instagram',
     timestamp: '2024-01-14T15:45:00Z',
@@ -41,7 +41,7 @@ jest.mock('../../../frontend/src/hooks/useAnalytics', () => ({
 }));
 
 jest.mock('../../../frontend/src/hooks/useShieldData', () => ({
-  useShieldData: mockUseShieldData  
+  useShieldData: mockUseShieldData
 }));
 
 jest.mock('../../../frontend/src/hooks/useFeatureFlags', () => ({
@@ -50,18 +50,37 @@ jest.mock('../../../frontend/src/hooks/useFeatureFlags', () => ({
 
 // Mock Material-UI components
 jest.mock('@mui/material', () => ({
-  Card: ({ children, ...props }) => <div data-testid="card" {...props}>{children}</div>,
-  CardContent: ({ children, ...props }) => <div data-testid="card-content" {...props}>{children}</div>,
+  Card: ({ children, ...props }) => (
+    <div data-testid="card" {...props}>
+      {children}
+    </div>
+  ),
+  CardContent: ({ children, ...props }) => (
+    <div data-testid="card-content" {...props}>
+      {children}
+    </div>
+  ),
   Typography: ({ children, variant, ...props }) => (
-    <div data-testid={`typography-${variant}`} {...props}>{children}</div>
+    <div data-testid={`typography-${variant}`} {...props}>
+      {children}
+    </div>
   ),
-  Box: ({ children, ...props }) => <div data-testid="box" {...props}>{children}</div>,
+  Box: ({ children, ...props }) => (
+    <div data-testid="box" {...props}>
+      {children}
+    </div>
+  ),
   CircularProgress: () => <div data-testid="loading">Loading...</div>,
-  Collapse: ({ children, in: isOpen, ...props }) => (
-    isOpen ? <div data-testid="collapse" {...props}>{children}</div> : null
-  ),
+  Collapse: ({ children, in: isOpen, ...props }) =>
+    isOpen ? (
+      <div data-testid="collapse" {...props}>
+        {children}
+      </div>
+    ) : null,
   IconButton: ({ children, onClick, ...props }) => (
-    <button data-testid="icon-button" onClick={onClick} {...props}>{children}</button>
+    <button data-testid="icon-button" onClick={onClick} {...props}>
+      {children}
+    </button>
   )
 }));
 
@@ -100,7 +119,7 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
   describe('Analytics Metrics Cards', () => {
     it('should render analytics metrics cards with correct data', async () => {
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       // Check for analytics metrics
@@ -126,7 +145,7 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
       });
 
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       expect(screen.getAllByTestId('loading')).toHaveLength(4); // One for each metric card
@@ -141,7 +160,7 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
       });
 
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       expect(screen.getByText(/error cargando métricas/i)).toBeInTheDocument();
@@ -151,33 +170,33 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
   describe('Shield UI Section', () => {
     it('should render collapsible Shield section when feature flag enabled', async () => {
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       // Check for Shield section
       expect(screen.getByText(/contenido interceptado/i)).toBeInTheDocument();
       expect(screen.getByTestId('shield-icon')).toBeInTheDocument();
-      
+
       // Should be collapsed by default
       expect(screen.queryByTestId('collapse')).not.toBeInTheDocument();
     });
 
     it('should expand/collapse Shield section when clicked', async () => {
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       const expandButton = screen.getByTestId('icon-button');
-      
+
       // Initially collapsed
       expect(screen.queryByTestId('collapse')).not.toBeInTheDocument();
-      
+
       // Click to expand
       fireEvent.click(expandButton);
       await waitFor(() => {
         expect(screen.getByTestId('collapse')).toBeInTheDocument();
       });
-      
+
       // Should show intercepted items
       expect(screen.getByText('Test intercepted comment')).toBeInTheDocument();
       expect(screen.getByText('Another test comment')).toBeInTheDocument();
@@ -191,7 +210,7 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
       });
 
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       expect(screen.queryByText(/contenido interceptado/i)).not.toBeInTheDocument();
@@ -206,7 +225,7 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
       });
 
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       // Expand Shield section
@@ -224,7 +243,7 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
       });
 
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       // Expand Shield section
@@ -238,16 +257,16 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
   describe('Responsive Design', () => {
     it('should adjust grid layout for different screen sizes', () => {
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       const { container } = render(<Dashboard />);
 
       // Check for responsive grid classes
       const gridElements = container.querySelectorAll('[class*="grid"]');
       expect(gridElements.length).toBeGreaterThan(0);
-      
+
       // Should contain responsive classes like md:grid-cols-2, lg:grid-cols-4
-      const hasResponsiveClasses = Array.from(gridElements).some(el => 
-        el.className.includes('md:') || el.className.includes('lg:')
+      const hasResponsiveClasses = Array.from(gridElements).some(
+        (el) => el.className.includes('md:') || el.className.includes('lg:')
       );
       expect(hasResponsiveClasses).toBe(true);
     });
@@ -256,13 +275,13 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
   describe('Accessibility', () => {
     it('should have proper ARIA labels for Shield section', () => {
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       const expandButton = screen.getByTestId('icon-button');
       expect(expandButton).toHaveAttribute('aria-label');
       expect(expandButton).toHaveAttribute('aria-expanded', 'false');
-      
+
       // Click to expand
       fireEvent.click(expandButton);
       expect(expandButton).toHaveAttribute('aria-expanded', 'true');
@@ -270,12 +289,12 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
 
     it('should have semantic structure for metrics cards', () => {
       const { default: Dashboard } = require('../../../frontend/src/pages/dashboard');
-      
+
       render(<Dashboard />);
 
       // Check for heading structure
       expect(screen.getByRole('main') || screen.getByTestId('dashboard-main')).toBeInTheDocument();
-      
+
       // Check for card structure
       const cards = screen.getAllByTestId('card');
       expect(cards.length).toBeGreaterThanOrEqual(4); // At least 4 metric cards

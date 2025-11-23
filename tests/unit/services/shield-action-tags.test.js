@@ -28,16 +28,18 @@ jest.mock('../../../src/config/supabase', () => ({
       })),
       select: jest.fn(() => ({
         eq: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({
-            data: {
-              total_violations: 2,
-              severe_violations: 1,
-              strikes_level_1: 1,
-              strikes_level_2: 0,
-              actions_taken: 3
-            },
-            error: null
-          }))
+          single: jest.fn(() =>
+            Promise.resolve({
+              data: {
+                total_violations: 2,
+                severe_violations: 1,
+                strikes_level_1: 1,
+                strikes_level_2: 0,
+                actions_taken: 3
+              },
+              error: null
+            })
+          )
         }))
       })),
       upsert: jest.fn(() => Promise.resolve({ data: null, error: null }))
@@ -417,7 +419,7 @@ describe('ShieldService - executeActionsFromTags()', () => {
       expect(result.actions_executed[2].tag).toBe('check_reincidence');
 
       // All should have status 'executed'
-      result.actions_executed.forEach(action => {
+      result.actions_executed.forEach((action) => {
         expect(action.status).toBe('executed');
       });
     });
@@ -546,11 +548,15 @@ describe('ShieldService - executeActionsFromTags()', () => {
       // Mock database failure
       const mockFrom = jest.fn(() => ({
         insert: jest.fn(() => ({
-          select: jest.fn(() => Promise.resolve({ data: null, error: { message: 'DB unavailable' } }))
+          select: jest.fn(() =>
+            Promise.resolve({ data: null, error: { message: 'DB unavailable' } })
+          )
         })),
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ data: null, error: { message: 'DB unavailable' } }))
+            single: jest.fn(() =>
+              Promise.resolve({ data: null, error: { message: 'DB unavailable' } })
+            )
           }))
         })),
         upsert: jest.fn(() => Promise.resolve({ data: null, error: { message: 'DB unavailable' } }))

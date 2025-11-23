@@ -34,6 +34,7 @@
 **Changed Files:** 45 files (+6,819, -335)
 
 **Key Changes:**
+
 - `docs/nodes/*.md` (5 nodes updated)
 - `docs/test-evidence/**/*` (multiple evidence files)
 - `tests/unit/**/*.test.js` (test updates)
@@ -42,6 +43,7 @@
 - `supabase/migrations/*.sql` (2 new migrations)
 
 **Required Agents (per current manifest):**
+
 - ✅ **Orchestrator** - Changes span multiple areas (docs, tests, services, workers, migrations)
 - ✅ **TestEngineer** - Changed files: `tests/unit/**/*.test.js`
 - ✅ **Guardian** - Changed files: `docs/nodes/*.md`, `src/services/costControl.js`
@@ -50,6 +52,7 @@
 **Receipts Found:** ❌ None (system not implemented)
 
 **What Should Have Happened:**
+
 1. Orchestrator creates mini-plan (AC ≥3, multi-area)
 2. Invokes TestEngineer for test updates
 3. Invokes Guardian for node changes + cost control
@@ -66,17 +69,20 @@
 **Changed Files:** 15 files (+3,920, -0)
 
 **Key Changes:**
+
 - `docs/PLATFORM-SANDBOX-COMPAT.md` (+503 lines, NEW)
 - `docs/plan/**/*.md` (10 planning files)
 - `docs/test-evidence/**/*` (5 evidence files)
 
 **Required Agents (per current manifest):**
+
 - ✅ **Orchestrator** - Multiple docs and planning
 - ⚠️ **Explore** - Could have been used for codebase research (but not strictly required)
 
 **Receipts Found:** ❌ None (system not implemented)
 
 **What Should Have Happened:**
+
 1. Orchestrator creates plan
 2. Potentially invokes Explore for research
 3. Generates receipt: `585-Orchestrator.md`
@@ -93,6 +99,7 @@
 **Changed Files:** 26 files (+3,108, -9)
 
 **Key Changes:**
+
 - `CLAUDE.md` (+27 lines, updated)
 - `scripts/verify-*.js` (5 new verification scripts)
 - `scripts/deploy-supabase-schema.js` (+182 lines, NEW)
@@ -101,6 +108,7 @@
 - `docs/test-evidence/**/*` (extensive evidence)
 
 **Required Agents (per current manifest):**
+
 - ✅ **Orchestrator** - Multi-area changes (scripts, services, docs)
 - ✅ **TestEngineer** - New scripts require testing
 - ✅ **Guardian** - Changed: `docs/nodes/observability.md`
@@ -109,6 +117,7 @@
 **Receipts Found:** ❌ None (system not implemented)
 
 **What Should Have Happened:**
+
 1. Orchestrator creates plan (multi-area, AC ≥3)
 2. Invokes general-purpose for API research
 3. Invokes TestEngineer for script validation
@@ -128,6 +137,7 @@
 **Changed Files:** 12 files (+1,503, -11)
 
 **Key Changes:**
+
 - `docs/nodes/observability.md` (+59, -9)
 - `docs/patterns/coderabbit-lessons.md` (+46, -2)
 - `docs/plan/**/*.md` (4 planning files)
@@ -135,6 +145,7 @@
 - `docs/test-evidence/**/*` (evidence files)
 
 **Required Agents (per current manifest):**
+
 - ✅ **Orchestrator** - Documentation sync
 - ✅ **Guardian** - Changed: `docs/nodes/observability.md`
 - ⚠️ **Explore** - Could have helped with sync analysis (optional)
@@ -142,6 +153,7 @@
 **Receipts Found:** ❌ None (system not implemented)
 
 **What Should Have Happened:**
+
 1. Orchestrator coordinates sync
 2. Invokes Guardian for node changes
 3. Generates receipts: `582-Orchestrator.md`, `582-Guardian.md`
@@ -157,18 +169,21 @@
 **Changed Files:** 6 files (+905, -9)
 
 **Key Changes:**
+
 - `docs/nodes/observability.md` (+59, -9)
 - `docs/plan/**/*.md` (planning file)
 - `docs/sync-reports/**/*` (sync report)
 - `docs/test-evidence/**/*` (evidence files)
 
 **Required Agents (per current manifest):**
+
 - ✅ **Orchestrator** - Documentation sync
 - ✅ **Guardian** - Changed: `docs/nodes/observability.md`
 
 **Receipts Found:** ❌ None (system not implemented)
 
 **What Should Have Happened:**
+
 1. Orchestrator coordinates sync
 2. Invokes Guardian for node changes
 3. Generates receipts: `581-Orchestrator.md`, `581-Guardian.md`
@@ -179,15 +194,16 @@
 
 ## Summary Table
 
-| PR # | Title | Required Agents | Found Receipts | Missing | Manifest Existed? | CI Existed? |
-|------|-------|----------------|----------------|---------|-------------------|-------------|
-| 587 | MVP validation | 4 (Orchestrator, TestEngineer, Guardian, general-purpose) | 0 | 4 | ❌ No | ❌ No |
-| 585 | Twitter docs | 1 (Orchestrator) | 0 | 1 | ❌ No | ❌ No |
-| 584 | API verification | 4 (Orchestrator, TestEngineer, Guardian, general-purpose) | 0 | 4 | ❌ No | ❌ No |
-| 582 | Docs sync | 2 (Orchestrator, Guardian) | 0 | 2 | ❌ No | ❌ No |
-| 581 | Docs sync | 2 (Orchestrator, Guardian) | 0 | 2 | ❌ No | ❌ No |
+| PR # | Title            | Required Agents                                           | Found Receipts | Missing | Manifest Existed? | CI Existed? |
+| ---- | ---------------- | --------------------------------------------------------- | -------------- | ------- | ----------------- | ----------- |
+| 587  | MVP validation   | 4 (Orchestrator, TestEngineer, Guardian, general-purpose) | 0              | 4       | ❌ No             | ❌ No       |
+| 585  | Twitter docs     | 1 (Orchestrator)                                          | 0              | 1       | ❌ No             | ❌ No       |
+| 584  | API verification | 4 (Orchestrator, TestEngineer, Guardian, general-purpose) | 0              | 4       | ❌ No             | ❌ No       |
+| 582  | Docs sync        | 2 (Orchestrator, Guardian)                                | 0              | 2       | ❌ No             | ❌ No       |
+| 581  | Docs sync        | 2 (Orchestrator, Guardian)                                | 0              | 2       | ❌ No             | ❌ No       |
 
 **Totals:**
+
 - **Required Agents:** 13 (across 5 PRs)
 - **Found Receipts:** 0
 - **Missing Receipts:** 13 (100%)
@@ -199,6 +215,7 @@
 ### 1. Guardian Would Have Caught Issues
 
 All 5 PRs modified `docs/nodes/*.md` or sensitive files. Guardian would have:
+
 - Validated GDD node changes
 - Detected documentation drift
 - Enforced node integrity checks
@@ -208,6 +225,7 @@ All 5 PRs modified `docs/nodes/*.md` or sensitive files. Guardian would have:
 ### 2. TestEngineer Invocation Was Informal
 
 PRs #587 and #584 had extensive test changes, but no formal TestEngineer invocation:
+
 - Tests were written (good)
 - Evidence was generated (good)
 - But NO structured receipt showing guardrails verified
@@ -217,6 +235,7 @@ PRs #587 and #584 had extensive test changes, but no formal TestEngineer invocat
 ### 3. Orchestrator Was Implicit, Not Explicit
 
 All PRs showed signs of orchestration (planning files, multi-area coordination):
+
 - `docs/plan/*.md` files existed
 - Multi-area changes were managed
 - But NO formal orchestrator receipt
@@ -274,11 +293,13 @@ Some agents may not have been needed (e.g., WhimsyInjector, UIDesigner) but no S
 ### For Current PR (docs/sync-pr-584)
 
 **Required Agents:**
+
 - Orchestrator (multi-area: agents/, docs/, scripts/, .github/)
 - TestEngineer (changes to CI script)
-- Guardian (changes to CLAUDE.md, docs/agents/*)
+- Guardian (changes to CLAUDE.md, docs/agents/\*)
 
 **Action:**
+
 1. Generate 3 receipts:
    - `docs/agents/receipts/<pr>-Orchestrator.md`
    - `docs/agents/receipts/<pr>-TestEngineer.md`
@@ -313,12 +334,14 @@ Some agents may not have been needed (e.g., WhimsyInjector, UIDesigner) but no S
 **System Now Operational:** ✅ Yes
 
 **Tests:**
+
 - [ ] Run `node scripts/ci/require-agent-receipts.js` on current branch
 - [ ] Generate receipts for current PR
 - [ ] Verify CI job runs in GitHub Actions
 - [ ] Confirm Guardian can be invoked: `node scripts/guardian-gdd.js --full`
 
 **Next Steps:**
+
 1. Generate receipts for current PR (task 8 in todo list)
 2. Test CI script locally
 3. Push and verify GitHub Action runs
@@ -331,6 +354,7 @@ Some agents may not have been needed (e.g., WhimsyInjector, UIDesigner) but no S
 **Why agents weren't invoked before:** Complete absence of infrastructure and process.
 
 **What changed:** Full agent system implemented on 2025-10-19:
+
 - Manifest
 - CI validation
 - GitHub Action

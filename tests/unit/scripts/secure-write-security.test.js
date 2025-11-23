@@ -24,7 +24,7 @@ describe('SecureWrite - Security', () => {
       path.join(rootDir, 'docs', 'test-security.md')
     ];
 
-    testFiles.forEach(file => {
+    testFiles.forEach((file) => {
       if (fs.existsSync(file)) {
         fs.unlinkSync(file);
       }
@@ -254,19 +254,16 @@ describe('SecureWrite - Security', () => {
       'scripts/../../../../../etc/hosts'
     ];
 
-    test.each(attackVectors)(
-      'should block attack vector: %s',
-      async (attackPath) => {
-        await expect(
-          secureWrite.write({
-            path: attackPath,
-            content: 'malicious payload',
-            agent: 'AttackerAgent',
-            action: 'attack_test'
-          })
-        ).rejects.toThrow(/Security violation.*outside repository root/);
-      }
-    );
+    test.each(attackVectors)('should block attack vector: %s', async (attackPath) => {
+      await expect(
+        secureWrite.write({
+          path: attackPath,
+          content: 'malicious payload',
+          agent: 'AttackerAgent',
+          action: 'attack_test'
+        })
+      ).rejects.toThrow(/Security violation.*outside repository root/);
+    });
 
     // Windows-specific tests (only run on Windows platform)
     const windowsAttackVectors = [

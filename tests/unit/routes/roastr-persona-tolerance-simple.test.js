@@ -4,19 +4,18 @@
  */
 
 describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () => {
-  
   describe('Database Migration Verification', () => {
     it('should have the correct field names defined in migration', () => {
       // Test that the field names we use match what was defined in the migration
       const expectedFields = [
         'lo_que_me_da_igual_encrypted',
-        'lo_que_me_da_igual_visible', 
+        'lo_que_me_da_igual_visible',
         'lo_que_me_da_igual_created_at',
         'lo_que_me_da_igual_updated_at'
       ];
-      
+
       // This test verifies our field naming is consistent
-      expectedFields.forEach(field => {
+      expectedFields.forEach((field) => {
         expect(typeof field).toBe('string');
         expect(field).toContain('lo_que_me_da_igual');
       });
@@ -32,12 +31,12 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
         hasToleranceContent: false,
         showToleranceForm: false
       };
-      
+
       // Verify all required fields are present
       expect(Object.keys(expectedStateFields)).toEqual(
         expect.arrayContaining([
           'loQueMeDaIgual',
-          'isToleranceVisible', 
+          'isToleranceVisible',
           'hasToleranceContent',
           'showToleranceForm'
         ])
@@ -52,7 +51,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
         loQueMeDaIgual: 'bromas sobre calvos, insultos genéricos como tonto',
         isToleranceVisible: false
       };
-      
+
       expect(expectedPayload).toHaveProperty('loQueMeDaIgual');
       expect(expectedPayload).toHaveProperty('isToleranceVisible');
       expect(typeof expectedPayload.loQueMeDaIgual).toBe('string');
@@ -64,7 +63,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
     it('should enforce 300 character limit', () => {
       const testText = 'a'.repeat(301);
       const isValid = testText.length <= 300;
-      
+
       expect(isValid).toBe(false);
       expect(testText.length).toBe(301);
     });
@@ -72,7 +71,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
     it('should allow text under 300 characters', () => {
       const testText = 'bromas sobre calvos, insultos genéricos como tonto';
       const isValid = testText.length <= 300;
-      
+
       expect(isValid).toBe(true);
       expect(testText.length).toBeLessThanOrEqual(300);
     });
@@ -83,11 +82,11 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
       // Test the priority logic we implemented
       const hasIntolerancePreference = true;
       const hasTolerancePreference = true;
-      
+
       // Intolerance should always take priority (auto-block)
       const shouldAutoBlock = hasIntolerancePreference;
       const shouldIgnore = hasTolerancePreference && !hasIntolerancePreference;
-      
+
       expect(shouldAutoBlock).toBe(true);
       expect(shouldIgnore).toBe(false);
     });
@@ -95,10 +94,10 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
     it('should apply tolerance when no intolerance match', () => {
       const hasIntolerancePreference = false;
       const hasTolerancePreference = true;
-      
+
       const shouldAutoBlock = hasIntolerancePreference;
       const shouldIgnore = hasTolerancePreference && !hasIntolerancePreference;
-      
+
       expect(shouldAutoBlock).toBe(false);
       expect(shouldIgnore).toBe(true);
     });
@@ -108,7 +107,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
     it('should set low toxicity score for tolerance matches', () => {
       const toleranceMatchScore = 0.1;
       const normalToxicityScore = 0.7;
-      
+
       expect(toleranceMatchScore).toBeLessThan(normalToxicityScore);
       expect(toleranceMatchScore).toBeLessThanOrEqual(0.2); // Very low to prevent roasting
     });
@@ -116,7 +115,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
     it('should set maximum score for intolerance matches', () => {
       const intoleranceMatchScore = 1.0;
       const normalToxicityScore = 0.7;
-      
+
       expect(intoleranceMatchScore).toBeGreaterThan(normalToxicityScore);
       expect(intoleranceMatchScore).toBe(1.0); // Maximum blocking score
     });
@@ -125,8 +124,8 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
   describe('Categories and Matching', () => {
     it('should categorize appearance-related tolerance', () => {
       const appearanceTerms = ['bald', 'calvo', 'weight', 'peso', 'glasses'];
-      
-      appearanceTerms.forEach(term => {
+
+      appearanceTerms.forEach((term) => {
         expect(typeof term).toBe('string');
         expect(term.length).toBeGreaterThan(0);
       });
@@ -134,8 +133,8 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
 
     it('should categorize generic insults tolerance', () => {
       const genericInsults = ['stupid', 'tonto', 'idiot', 'fool', 'silly'];
-      
-      genericInsults.forEach(term => {
+
+      genericInsults.forEach((term) => {
         expect(typeof term).toBe('string');
         expect(term.length).toBeGreaterThan(0);
       });
@@ -145,7 +144,7 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
   describe('Delete Operations', () => {
     it('should support tolerance-specific deletion', () => {
       const supportedFields = ['identity', 'intolerance', 'tolerance', 'all'];
-      
+
       expect(supportedFields).toContain('tolerance');
       expect(supportedFields).toContain('all');
     });
@@ -160,8 +159,8 @@ describe('Roastr Persona - Lo que me da igual (Issue #150) - Basic Tests', () =>
         'toleranceUpdatedAt',
         'hasToleranceContent'
       ];
-      
-      expectedResponseFields.forEach(field => {
+
+      expectedResponseFields.forEach((field) => {
         expect(typeof field).toBe('string');
         expect(field).toMatch(/tolerance|loQueMeDaIgual/i);
       });

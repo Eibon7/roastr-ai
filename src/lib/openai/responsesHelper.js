@@ -1,13 +1,13 @@
 /**
  * OpenAI Responses API Helper
- * 
+ *
  * Issue #858: Helper para usar Responses API con prompt caching
- * 
+ *
  * Provides a unified interface for OpenAI API calls with:
  * - Responses API support (prompt caching) when available
  * - Fallback to chat.completions API if Responses API not available
  * - Automatic token logging
- * 
+ *
  * @module lib/openai/responsesHelper
  */
 
@@ -16,7 +16,7 @@ const aiUsageLogger = require('../../services/aiUsageLogger');
 
 /**
  * Call OpenAI with Responses API (prompt caching) or fallback to chat.completions
- * 
+ *
  * @param {Object} openaiClient - OpenAI client instance
  * @param {Object} options - Request options
  * @param {string} options.model - Model to use (e.g., 'gpt-5.1', 'gpt-4o')
@@ -44,7 +44,7 @@ async function callOpenAIWithCaching(openaiClient, options = {}) {
   // 1. Model supports it (gpt-5.1, gpt-4o, etc.)
   // 2. Input string (not messages array)
   // 3. prompt_cache_retention parameter
-  
+
   // Whitelist of models that support Responses API (explicit matching to avoid false positives)
   const RESPONSES_API_MODELS = [
     'gpt-5',
@@ -56,11 +56,11 @@ async function callOpenAIWithCaching(openaiClient, options = {}) {
     'gpt-4.1-nano',
     'o3'
   ];
-  
-  const supportsResponsesAPI = RESPONSES_API_MODELS.some(supportedModel => 
-    model === supportedModel || model.startsWith(supportedModel + '-')
+
+  const supportsResponsesAPI = RESPONSES_API_MODELS.some(
+    (supportedModel) => model === supportedModel || model.startsWith(supportedModel + '-')
   );
-  
+
   let useResponsesAPI = input && typeof input === 'string' && supportsResponsesAPI;
 
   try {
@@ -95,18 +95,21 @@ async function callOpenAIWithCaching(openaiClient, options = {}) {
         logger.info('Responses API call successful', {
           model,
           cachedTokens: usage.input_cached_tokens,
-          cacheHitRatio: usage.input_tokens > 0 
-            ? (usage.input_cached_tokens / (usage.input_tokens + usage.input_cached_tokens)).toFixed(2)
-            : 0
+          cacheHitRatio:
+            usage.input_tokens > 0
+              ? (
+                  usage.input_cached_tokens /
+                  (usage.input_tokens + usage.input_cached_tokens)
+                ).toFixed(2)
+              : 0
         });
-
       } catch (responsesError) {
         // Responses API not available or failed, fallback to chat.completions
         logger.warn('Responses API failed, falling back to chat.completions', {
           error: responsesError.message,
           model
         });
-        
+
         // Fall through to chat.completions
         useResponsesAPI = false;
       }
@@ -149,10 +152,8 @@ async function callOpenAIWithCaching(openaiClient, options = {}) {
     }
 
     // Extract content
-    const content = response.choices?.[0]?.message?.content || 
-                   response.text || 
-                   response.content || 
-                   '';
+    const content =
+      response.choices?.[0]?.message?.content || response.text || response.content || '';
 
     // Log usage metrics
     if (loggingContext.userId) {
@@ -173,7 +174,6 @@ async function callOpenAIWithCaching(openaiClient, options = {}) {
       usage: usage,
       method: useResponsesAPI ? 'responses_api' : 'chat_completions'
     };
-
   } catch (error) {
     logger.error('OpenAI API call failed', {
       error: error.message,
@@ -188,4 +188,3 @@ async function callOpenAIWithCaching(openaiClient, options = {}) {
 module.exports = {
   callOpenAIWithCaching
 };
-

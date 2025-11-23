@@ -5,6 +5,7 @@
 ### 🛡️ CodeRabbit Round 2 Security Enhancements - Issue #405 Auto-Approval Flow - 2025-01-27
 
 #### Critical Security Fixes Applied
+
 - **Enhanced Toxicity Score Validation**: Dynamic threshold calculation based on original comment toxicity with fail-closed behavior
 - **Ultra-Robust Organization Policy Lookup**: Timeout-based fail-closed system (3 seconds) with database health checks
 - **Rate Limiting with Pre-flight Health Checks**: Database connectivity validation before rate limit queries to prevent bypass
@@ -12,12 +13,14 @@
 - **Transparency Validation Guard**: Route-level enforcement for auto-published content with critical error handling
 
 #### Advanced UI Component Enhancements
+
 - **Enhanced Toast API**: Rich content support for security validation details, rate limits, and content validation info
 - **SecurityValidationIndicator Improvements**: Added error, timeout, and retrying states with enhanced metadata display
 - **Enhanced Error States**: Comprehensive error handling with retry functionality and detailed failure information
 - **Accessibility Improvements**: ARIA labels, keyboard navigation, and high contrast support for all components
 
 #### Security Architecture Improvements
+
 - **Multi-Layer Content Validation**:
   - Layer 1: Exact string comparison with null handling
   - Layer 2: Enhanced SHA-256 checksum validation
@@ -28,12 +31,14 @@
 - **Organization Policy Resilience**: Timeout handling with graceful degradation
 
 #### Comprehensive Test Suite
+
 - **Security Test Coverage**: 70+ new tests across auto-approval service and content validation
 - **Integration Testing**: End-to-end security flow validation with comprehensive error scenarios
 - **Unit Testing**: Complete coverage for all security validation layers and edge cases
 - **Performance Testing**: Validation duration monitoring and optimization
 
 #### Files Enhanced
+
 - `frontend/src/components/AutoPublishNotification.jsx` - Enhanced toast with rich content support
 - `frontend/src/components/SecurityValidationIndicator.jsx` - Added error states and retry functionality
 - `src/services/autoApprovalService.js` - Advanced toxicity validation and policy lookup
@@ -43,7 +48,9 @@
 - `tests/integration/autoApprovalSecurityV2.test.js` - 15+ E2E integration tests
 
 #### CodeRabbit Round 2 Feedback Addressed
+
 All critical security concerns from CodeRabbit review #3274256755 have been resolved:
+
 1. ✅ Enhanced toxicity validation with dynamic thresholds based on original comment
 2. ✅ Ultra-robust organization policy lookup with timeout and fail-closed behavior
 3. ✅ Rate limiting with database health checks to prevent bypass during outages
@@ -54,19 +61,21 @@ All critical security concerns from CodeRabbit review #3274256755 have been reso
 8. ✅ Performance optimization with sub-100ms validation times
 
 #### Security Metrics
+
 - **Validation Layers**: 4 independent security layers for content validation
 - **Performance**: <100ms for complete security validation pipeline
 - **Fail-Closed Rate**: 100% - all security checks fail closed on errors
 - **Test Coverage**: 95%+ for all enhanced security components
 - **Race Condition Protection**: Temporal validation prevents approval/storage race conditions
 
-*Generated with Claude Code - CodeRabbit Round 2 Security Implementation*
+_Generated with Claude Code - CodeRabbit Round 2 Security Implementation_
 
 ---
 
 ### 🔧 CodeRabbit Round 5 - Issue #369 SPEC 9 Style Profile Extraction - 2025-01-20
 
 #### Critical Fixes Applied
+
 - **Worker Environment Validation**: Fixed missing `SUPABASE_SERVICE_KEY` requirement in start-workers.js:64-67
 - **Worker Manager Configuration**: Added `style_profile` and `billing` to default enabled workers in WorkerManager.js:18
 - **StyleProfileService Implementation**: Complete service with encryption, user validation, and GDPR compliance
@@ -74,18 +83,21 @@ All critical security concerns from CodeRabbit review #3274256755 have been reso
 - **Encryption Configuration**: Added `validateAndGetEncryptionKey()` with test-friendly fallback
 
 #### Security Improvements
+
 - **Database RLS Policies**: Added explicit `WITH CHECK` clauses for insert/update operations
 - **Input Validation**: Enhanced platform validation with allowed platform list
 - **Test Isolation**: Fixed test cleanup with `jest.restoreAllMocks()` to prevent test leakage
 - **Feature Flag Standardization**: Unified `ENABLE_ORIGINAL_TONE` flag naming across codebase
 
 #### Test Quality Improvements
+
 - **StyleProfileService Tests**: 28/28 tests passing with comprehensive coverage
 - **WorkerManager Tests**: 47/47 tests passing with updated worker expectations
 - **Negative Test Scenarios**: Added extensive error handling and edge case testing
 - **Security Test Coverage**: Added input validation, rate limiting, and GDPR compliance tests
 
 #### Files Changed
+
 - `src/workers/cli/start-workers.js` - Fixed environment validation (lines 64-67)
 - `src/workers/WorkerManager.js` - Added default workers (line 18)
 - `src/services/styleProfileService.js` - Complete implementation with encryption
@@ -97,9 +109,11 @@ All critical security concerns from CodeRabbit review #3274256755 have been reso
 - `database/migrations/008_user_style_profile.sql` - Database schema with RLS
 
 #### CodeRabbit Feedback Addressed
+
 All 8 issues from CodeRabbit review #3264146996 have been resolved:
+
 1. ✅ Worker environment validation fixed
-2. ✅ Default enabled workers updated  
+2. ✅ Default enabled workers updated
 3. ✅ StyleProfileService implementation completed
 4. ✅ Encryption key validation added
 5. ✅ Database RLS policies enhanced
@@ -108,17 +122,19 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 8. ✅ Comprehensive test coverage added
 
 #### Ready for Production
+
 - All tests passing (75+ tests across StyleProfileService and WorkerManager)
 - Feature flag controlled rollout (`ENABLE_ORIGINAL_TONE`)
 - GDPR compliant with encryption and user consent
 - Multi-tenant RLS security implemented
 - Pro/Plus plan restrictions enforced
 
-*Generated with Claude Code - CodeRabbit Round 5 Implementation*
+_Generated with Claude Code - CodeRabbit Round 5 Implementation_
 
 ---
 
 ### ✨ Added
+
 - **Shield Settings Configuration (Issue #362)**: Complete shield threshold configuration system
   - **Backend API**: GET/POST `/api/settings/shield` endpoints with organization and platform-specific settings
   - **Database Schema**: New organization_settings and platform_settings tables with RLS
@@ -128,6 +144,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
   - **ShieldDecisionEngine Integration**: Dynamic threshold loading from database settings
 
 ### 🎨 Frontend Components
+
 - **InfoTooltip Component**: Accessible tooltip system with keyboard navigation and ARIA support
 - **ThresholdSlider Component**: Dual slider/input interface with real-time validation and percentage conversion
 - **ShieldSettings Component**: Complete configuration panel with preset management and validation feedback
@@ -135,6 +152,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Accessibility**: Full ARIA compliance, keyboard navigation, and screen reader support
 
 ### 🧪 Testing
+
 - **Comprehensive Test Suite**: 74 tests covering unit, integration, and accessibility scenarios
 - **Component Testing**: InfoTooltip (13 tests), ThresholdSlider (20 tests), ShieldSettings (41 tests)
 - **Validation Testing**: All edge cases for threshold ordering and range constraints
@@ -142,6 +160,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Accessibility Testing**: Full keyboard navigation and screen reader compliance
 
 ### 🔧 Fixed
+
 - **Playwright MCP Server**: Corregido el servidor MCP para cumplir con el protocolo JSON-RPC 2.0
   - Implementada correcta inicialización y handshake del protocolo MCP
   - Añadido soporte completo para métodos: `initialize`, `tools/list`, `tools/call`, `shutdown`
@@ -151,6 +170,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
   - Validación de requests entrantes según especificación JSON-RPC 2.0
 
 ### 📝 Documentación
+
 - **Shield Settings Documentation**: Complete implementation guide in spec.md
 - **Test Evidence**: Comprehensive test evidence report in docs/test-evidence/
 - **MCP Usage**: El servidor Playwright MCP ahora funciona correctamente con Claude
@@ -167,12 +187,14 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 🏗️ Pilot Infrastructure Ready
 
 #### 🎛️ Feature Flags System Centralizado
+
 - **Central Configuration**: Sistema unificado en `src/config/flags.js` con 15+ flags
 - **Graceful Degradation**: Detección automática de claves faltantes → modo mock seguro
 - **Service Status**: API endpoints muestran estado de servicios (disponible/mock/unavailable)
 - **Runtime Switching**: Flags permiten activar/desactivar funcionalidades sin redeploy
 
 #### 💳 Stripe Billing System (Production Ready)
+
 - **Multi-Plan Support**: Free, Pro ($20/mo), Creator+ ($50/mo) con feature gating
 - **Webhook Processing**: Manejo completo de eventos Stripe con verificación de firmas
 - **Customer Portal**: Integración completa para gestión de subscriptions
@@ -180,12 +202,14 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Degradación Segura**: Modo "billing unavailable" cuando faltan claves
 
 #### 🔌 Mock-Ready Integrations con Persistencia
+
 - **9 Platform Support**: Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky
 - **Persistent Mocking**: Storage cifrado local + database fallback para integraciones
 - **OAuth Simulation**: Flujo completo mock para testing UX sin claves reales
 - **API Consistency**: Interfaz idéntica para servicios reales vs mock
 
 #### 🛡️ Security Hardening Completo
+
 - **Helmet Integration**: CSP, HSTS, security headers configurados
 - **CORS Strict**: Whitelist de orígenes permitidos con logging de rechazos
 - **Rate Limiting**: 3 niveles (general 100/15min, auth 10/15min, billing 20/15min)
@@ -193,18 +217,21 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Request Logging**: Audit trail completo con duración y metadata
 
 #### 📊 Audit Trail y Logging
+
 - **Event Types**: 15+ tipos de eventos críticos (auth, billing, integrations, system)
 - **Dual Storage**: Database + file fallback para máxima confiabilidad
 - **Security Events**: Rate limits, failed auth, webhook failures, etc.
 - **Admin Dashboard Ready**: APIs para mostrar logs filtrados por tipo/fecha
 
 #### 🏁 RQC Feature Flags y Orquestación
+
 - **Global Toggle**: `ENABLE_RQC` flag para activar/desactivar sistema completo
 - **Cost Control**: Con flag disabled = 0 coste extra, bypass automático
 - **Orchestration Ready**: Plumbing completo para 3-reviewer system
 - **Admin Overrides**: Endpoints para togglear RQC por usuario
 
 #### ⚡ CI/CD Pipeline (GitHub Actions)
+
 - **Multi-Node Testing**: Node 18.x y 20.x en paralelo
 - **Security Audit**: npm audit + dependency review automático
 - **Smoke Tests**: Endpoints críticos verificados en cada build
@@ -212,12 +239,14 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Slack Notifications**: Alerts automáticos en main/develop branches
 
 #### 🧪 Smoke Tests y Health Checks
+
 - **API Health**: Endpoints `/health` y `/api/health` con service status
 - **Feature Flag Tests**: Verificación de inicialización y consistency
 - **Security Headers**: Tests automáticos de CORS, rate limits, security
 - **Error Handling**: 404/405/500 responses verificados
 
 #### 📚 Documentación Completa
+
 - **Billing Guide**: Configuración Stripe step-by-step con troubleshooting
 - **Feature Flags**: Referencia completa de flags disponibles y uso
 - **API Documentation**: Endpoints, request/response formats, error codes
@@ -228,17 +257,20 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 📈 Performance y Reliability
 
 #### 🔄 Graceful Degradation
+
 - **Database Fallback**: Todas las features funcionan sin Supabase (modo mock)
-- **Service Isolation**: Fallo de un servicio no afecta el resto del sistema  
+- **Service Isolation**: Fallo de un servicio no afecta el resto del sistema
 - **Progressive Enhancement**: Core functionality siempre disponible
 
 #### 🚨 Error Handling Mejorado
+
 - **Consistent Response Format**: Códigos de error uniformes con detalles
 - **Rate Limit Feedback**: Mensajes específicos por tipo de límite
 - **Webhook Error Recovery**: Reintentos automáticos y logging detallado
 - **Feature Flag Safe Defaults**: Flags ausentes = false, nunca undefined
 
 #### 📊 Monitoring Ready
+
 - **Health Endpoints**: Status detallado de servicios y configuración
 - **Metrics Collection**: Duración requests, rate limit hits, feature usage
 - **Log Aggregation**: Formato estructurado para herramientas de monitoring
@@ -249,12 +281,14 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 🔧 Developer Experience
 
 #### 🎯 Testing Strategy
+
 - **Unit Tests**: 37+ RQC tests + servicios core
 - **Integration Tests**: API endpoints con mocks
 - **Smoke Tests**: Health checks automáticos en CI
 - **Coverage Goals**: >80% en servicios críticos
 
 #### 🚀 Easy Deployment
+
 - **Environment Detection**: Auto-configure según NODE_ENV
 - **Feature Toggle**: Flags permiten deploys graduales
 - **Docker Ready**: Configuración lista para containerización
@@ -271,6 +305,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 🎯 RQC (Roast Quality Control) System
 
 #### 🔬 Multi-Plan Architecture
+
 - **Free & Pro Plans**: Moderación básica integrada en el prompt de generación (sin llamadas extra a GPT)
 - **Creator+ Plans**: Sistema RQC avanzado con 3 revisores ejecutándose en paralelo:
   - **🛡️ Moderator**: Verifica cumplimiento de normas de plataforma y nivel de intensidad
@@ -279,6 +314,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **💰 Cost Optimization**: Free/Pro usan 1 llamada GPT, Creator+ usa sistema multi-revisor
 
 #### 🤖 Decision Logic Inteligente
+
 - **3 verdes** → Aprobado y publicado inmediatamente
 - **2 verdes (Moderador pasa)** → Aprobado en modo Creator+ Pro
 - **Moderador falla** → Regenerar siempre (non-negotiable para seguridad)
@@ -286,24 +322,28 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Max intentos** → Fallback a roast seguro garantizado
 
 #### 🗄️ Database Schema RQC
+
 - **Tabla `rqc_reviews`**: Historial completo de revisiones con métricas de performance
 - **Extensión `user_subscriptions`**: Campos RQC (enabled, intensity_level, custom_style_prompt)
 - **Tabla `rqc_plan_configs`**: Configuración específica por plan
 - **Funciones PostgreSQL**: `get_user_rqc_config()` y `log_rqc_review()` para eficiencia
 
 #### ⚙️ Configuration System
+
 - **Intensity Levels**: 1-5 (suave a brutal, siempre dentro de reglas)
 - **RQC Enable Flag**: Configurable por usuario Creator+ y administradores
 - **Custom Style Prompts**: Solo editables por admin para usuarios avanzados
 - **Max Regenerations**: Límite configurable por plan (0 Free/Pro, 3 Creator+)
 
 #### 🚀 Performance Features
+
 - **Parallel Processing**: 3 revisores se ejecutan simultáneamente para velocidad
 - **Token Tracking**: Seguimiento detallado de uso y costes por plan
 - **Smart Fallback**: Sistema que siempre publica algo, nunca falla completamente
 - **Database Logging**: Métricas completas para análisis y optimización
 
 #### 🧪 Comprehensive Testing (37 test cases)
+
 - **Plan-based Behavior**: Verificación Free/Pro vs Creator+ flows
 - **Cost Control**: Validación de no-extra-calls para planes básicos
 - **RQC Decision Logic**: Testing exhaustivo de reglas de aprobación/rechazo
@@ -311,12 +351,14 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Performance**: Tests de ejecución paralela y eficiencia
 
 ### 🔧 Technical Implementation
+
 - **`RoastGeneratorEnhanced`**: Servicio principal que reemplaza generator legacy
 - **`RQCService`**: Microservicio independiente para sistema de revisión
 - **Database Migration**: `004_rqc_system.sql` con schema completo
 - **Backward Compatibility**: API existente funciona sin cambios
 
 ### 📊 Key Benefits
+
 - **Cost Efficient**: Free/Pro mantienen eficiencia con 1 llamada API
 - **Quality Assured**: Creator+ obtiene control de calidad profesional
 - **Platform Safe**: Todo contenido cumple guidelines de plataformas
@@ -335,6 +377,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 💳 Sistema de Facturación Stripe Completo
 
 #### 🎯 Planes de Suscripción Implementados
+
 - **Free Plan**: Gratis con 100 roasts/mes, 1 plataforma, soporte básico
 - **Pro Plan**: €20/mes con 1,000 roasts/mes, 5 plataformas, analíticas avanzadas
 - **Creator+ Plan**: €50/mes con roasts ilimitados, todas las plataformas, API access
@@ -342,6 +385,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Lookup keys**: Configuración flexible de precios via variables de entorno
 
 #### 🔄 Stripe Checkout y Portal Integration
+
 - **Checkout Sessions**: Creación automática con metadata de usuario y plan
 - **Customer Portal**: Gestión completa de suscripciones (upgrade/downgrade/cancel)
 - **OAuth-style flow**: Redirección a Stripe → Success/Cancel pages
@@ -349,6 +393,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Secure redirects**: URLs configurables para success/cancel/return
 
 #### 🎣 Webhooks y Sincronización Automática
+
 - **Webhook endpoint**: `/webhooks/stripe` con verificación de firma
 - **Eventos soportados**:
   - `checkout.session.completed` → Activación de suscripción
@@ -361,6 +406,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 🛡️ Plan Gating y Control de Acceso
 
 #### 🔐 Middleware requirePlan
+
 - **Plan hierarchy**: Sistema de niveles (Free=0, Pro=1, Creator+=2)
 - **Flexible matching**: Nivel mínimo o lista exacta de planes permitidos
 - **Feature gating**: Control granular por características específicas
@@ -369,6 +415,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Rich error responses**: Códigos específicos y URLs de upgrade
 
 #### 📊 Límites Automatizados por Plan
+
 - **Platform limits**: 1/5/ilimitadas plataformas según plan
 - **Roast usage**: Tracking mensual automático con límites (100/1000/∞)
 - **Feature flags**: Control de acceso a tones avanzados, API, etc.
@@ -378,6 +425,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 🎨 Frontend de Facturación Completo
 
 #### 💰 Página de Planes (`/billing.html`)
+
 - **Grid responsive**: 3 planes con diseño adaptativo mobile-first
 - **Plan comparison**: Features, precios y beneficios claramente mostrados
 - **Current plan badge**: Indicador visual del plan activo
@@ -386,6 +434,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Loading states**: Spinners y feedback durante operaciones Stripe
 
 #### ✅ Páginas de Confirmación
+
 - **Success page**: `/billing-success.html` con detalles de suscripción
 - **Cancellation page**: `/billing-cancelled.html` con opciones de recuperación
 - **Session tracking**: Extracción y display de session_id
@@ -395,6 +444,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 🗄️ Base de Datos Multi-tenant
 
 #### 📋 Tabla user_subscriptions
+
 - **Schema completo**: user_id, stripe IDs, plan, status, períodos
 - **RLS policies**: Aislamiento completo entre usuarios y organizaciones
 - **Indexes optimizados**: Búsqueda eficiente por customer_id y subscription_id
@@ -402,6 +452,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Migration script**: Setup completo con datos default para usuarios existentes
 
 #### 🔄 Integración Supabase
+
 - **Service client**: Operaciones webhook con permisos elevados
 - **User client**: Operaciones frontend con RLS
 - **Error handling**: Logging detallado y recovery automático
@@ -410,6 +461,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 🧪 Testing Comprehensivo
 
 #### ✅ Backend Testing (Jest)
+
 - **Billing routes**: 15+ test cases cubriendo todos los endpoints
 - **Webhook testing**: Verificación de firma y manejo de eventos
 - **Plan middleware**: 20+ tests para gating y límites
@@ -417,7 +469,8 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 - **Mock strategy**: Stripe SDK completamente simulado
 - **Coverage completa**: Todos los flujos críticos testeados
 
-#### 🖥️ Frontend Testing 
+#### 🖥️ Frontend Testing
+
 - **DOM manipulation**: Tests de renderizado y estados UI
 - **API integration**: Mocking de fetch y localStorage
 - **User interactions**: Checkout flow y portal access
@@ -428,6 +481,7 @@ All 8 issues from CodeRabbit review #3264146996 have been resolved:
 ### 🔧 Configuración y Variables de Entorno
 
 #### 🎛️ Variables Stripe (.env.example)
+
 ```bash
 STRIPE_SECRET_KEY=sk_test_xxx           # Test mode secret
 STRIPE_WEBHOOK_SECRET=whsec_xxx         # Webhook signature verification
@@ -439,6 +493,7 @@ STRIPE_PORTAL_RETURN_URL=.../billing.html
 ```
 
 #### 🔒 Security Best Practices
+
 - **No secrets in logs**: Nunca se loggean claves o tokens
 - **Webhook verification**: Verificación criptográfica de firmas
 - **Environment isolation**: Test keys claramente diferenciadas
@@ -448,36 +503,39 @@ STRIPE_PORTAL_RETURN_URL=.../billing.html
 ### 📂 Arquitectura de Archivos
 
 #### Backend Implementation
+
 - `src/routes/billing.js` - 5 endpoints principales + webhook handler (450+ líneas)
 - `src/middleware/requirePlan.js` - Plan gating completo con límites (200+ líneas)
 - `database/migrations/003_user_subscriptions.sql` - Schema y RLS policies
 
 #### Frontend Pages
+
 - `public/billing.html` - Selector de planes con Stripe integration
 - `public/billing-success.html` - Confirmación post-checkout
 - `public/billing-cancelled.html` - Manejo de cancelaciones
 
 #### Testing Suite
+
 - `tests/unit/routes/billing.test.js` - Backend endpoints (450+ líneas)
-- `tests/unit/middleware/requirePlan.test.js` - Plan gating (350+ líneas) 
+- `tests/unit/middleware/requirePlan.test.js` - Plan gating (350+ líneas)
 - `tests/unit/frontend/billing.test.js` - Frontend functionality (400+ líneas)
 
 ### 🚀 API Endpoints Implementados
 
 ```javascript
 // Billing Management
-GET    /api/billing/plans                    // Lista de planes disponibles
-POST   /api/billing/create-checkout-session  // Crear sesión Stripe Checkout
-POST   /api/billing/create-portal-session    // Abrir Customer Portal
-GET    /api/billing/subscription             // Datos de suscripción actual
+GET / api / billing / plans; // Lista de planes disponibles
+POST / api / billing / create - checkout - session; // Crear sesión Stripe Checkout
+POST / api / billing / create - portal - session; // Abrir Customer Portal
+GET / api / billing / subscription; // Datos de suscripción actual
 
-// Webhook Integration  
-POST   /webhooks/stripe                      // Procesar eventos Stripe
+// Webhook Integration
+POST / webhooks / stripe; // Procesar eventos Stripe
 
 // Plan Gating Middleware (examples)
-app.use('/api/advanced-features', requirePlan('pro'))
-app.use('/api/unlimited-roasts', requirePlan('creator_plus'))
-app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
+app.use('/api/advanced-features', requirePlan('pro'));
+app.use('/api/unlimited-roasts', requirePlan('creator_plus'));
+app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }));
 ```
 
 ### 🎯 Flujo Completo de Suscripción
@@ -511,6 +569,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🎯 Sistema de Onboarding Completo (4 Pasos)
 
 #### 🚀 Flujo de Configuración Inicial
+
 - **Paso 1 - Bienvenida**: `/onboarding/step1.html` con introducción y beneficios del sistema
 - **Paso 2 - Selección de Plataformas**: Checklist interactivo de las 9 plataformas sociales disponibles
 - **Paso 3 - Configuración de Humor**: Selección de tono (sarcástico, sutil, directo, juguetón, ingenioso) y estilo (ingenioso, astuto, humor seco, salvaje, amigable)
@@ -518,7 +577,8 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Navegación fluida**: Indicadores de progreso y botones anterior/siguiente
 - **Validación inteligente**: Manejo de errores y recuperación de sesión
 
-#### 🔗 Gestión de Plataformas Sociales  
+#### 🔗 Gestión de Plataformas Sociales
+
 - **Vista principal**: `/platforms.html` con grid de las 9 plataformas integradas
 - **Estados dinámicos**: Conectado, Desconectado, Pendiente, Error con indicadores visuales
 - **Conexión simulada**: Flujo OAuth mock para todas las plataformas
@@ -529,6 +589,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🛠️ Backend API Extendido
 
 #### 🔌 Nuevos Endpoints de Usuario (`/api/user`)
+
 - `GET /api/user/integrations` - Lista todas las integraciones del usuario con estados
 - `POST /api/user/integrations/connect` - Conecta plataforma con configuración mock OAuth
 - `POST /api/user/integrations/disconnect` - Desconecta plataforma manteniendo configuración
@@ -538,8 +599,9 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Manejo robusto de errores**: Logging detallado y respuestas estandarizadas
 
 #### 🗄️ Integración Supabase Completa
+
 - **Tabla `integration_configs`**: Configuración por organización y plataforma
-- **Campo `onboarding_complete`**: Control de flujo de nuevos usuarios  
+- **Campo `onboarding_complete`**: Control de flujo de nuevos usuarios
 - **Tabla `users.preferences`**: Almacenamiento JSON de configuración personalizada
 - **Row Level Security**: Aislamiento completo entre organizaciones
 - **Configuración automática**: Creación de integration_configs basada en plataformas preferidas
@@ -547,6 +609,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🎨 Experiencia de Usuario Mejorada
 
 #### 📱 Design System Expandido
+
 - **Componentes reutilizables**: Tarjetas de plataforma, indicadores de estado, botones de acción
 - **Paleta de colores**: Colores específicos por plataforma (Twitter azul, Instagram gradiente, etc.)
 - **Estados interactivos**: Hover effects, loading states, transiciones suaves
@@ -554,6 +617,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Grid responsive**: Layout adaptativo para móviles, tablets y desktop
 
 #### 🔄 Flujos de Usuario Inteligentes
+
 - **Redirección automática**: Usuarios sin onboarding van directo al paso 1
 - **Persistencia de sesión**: Configuración guardada entre pasos con sessionStorage
 - **Recovery de configuración**: Usuarios pueden reconfigurar desde dashboard
@@ -563,6 +627,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🧪 Testing y Calidad
 
 #### ✅ Tests Unitarios Implementados
+
 - **User routes testing**: Suite completa para todos los endpoints `/api/user`
 - **Mock integration**: Supabase, middleware auth y dependencias externas
 - **Casos edge**: Validación de errores, datos faltantes, usuarios sin organización
@@ -571,6 +636,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Error scenarios**: Testing de fallos de base de datos y timeouts
 
 #### 🔍 Configuración Jest Avanzada
+
 - **Proyectos separados**: node-tests para backend, dom-tests para frontend
 - **Setup específico**: Variables de entorno mockeadas para tests
 - **Mocking strategy**: Supabase client completamente simulado
@@ -579,6 +645,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 💻 Dashboard y Navegación
 
 #### 🏠 Dashboard Actualizado
+
 - **Verificación onboarding**: Redirección automática si no está completo
 - **Enlaces rápidos**: Acceso directo a plataformas y reconfiguración
 - **Estados del usuario**: Visualización de plan, estado y configuración
@@ -588,18 +655,21 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 📂 Arquitectura de Archivos
 
 #### Frontend Onboarding
+
 - `public/onboarding/step1.html` - Página de bienvenida con features destacadas
-- `public/onboarding/step2.html` - Selección de plataformas con grid interactivo  
+- `public/onboarding/step2.html` - Selección de plataformas con grid interactivo
 - `public/onboarding/step3.html` - Configuración de humor con ejemplos en vivo
 - `public/onboarding/step4.html` - Confirmación y resumen con guardado automático
 - `public/platforms.html` - Gestión completa de conexiones de plataformas
 
 #### Backend Services
+
 - `src/routes/user.js` - Rutas completas para gestión de usuario (529 líneas)
 - `src/index.js` - Integración de rutas user en servidor principal
 - `tests/unit/routes/user.test.js` - Suite de tests para endpoints de usuario
 
 #### Configuración y Setup
+
 - `jest.config.js` - Configuración avanzada con proyectos separados
 - `tests/setupEnvOnly.js` - Setup específico para tests de backend
 - `tests/setup.js` - Setup existente actualizado con variables de entorno
@@ -607,8 +677,9 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🔧 Variables de Configuración
 
 #### Plataformas Soportadas (9 total)
+
 - **Twitter/X**: API v2 con bearer token y OAuth
-- **Instagram**: Basic Display API con refresh tokens  
+- **Instagram**: Basic Display API con refresh tokens
 - **Facebook**: Graph API con permisos de páginas
 - **YouTube**: Data API v3 con comentarios y videos
 - **Discord**: Bot API con webhooks y slash commands
@@ -631,7 +702,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - ✅ **9 plataformas** configurables con estados independientes
 - ✅ **4 pasos de onboarding** con navegación fluida y persistencia
 - ✅ **5 endpoints nuevos** completamente funcionales y testeados
-- ✅ **100% responsive** design verificado en móviles y desktop  
+- ✅ **100% responsive** design verificado en móviles y desktop
 - ✅ **Multi-tenant** architecture con RLS y aislamiento completo
 - ✅ **Error handling** robusto con logging y recovery automático
 
@@ -646,6 +717,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🔐 Sistema de Autenticación Frontend Completo
 
 #### 🎨 Páginas de Autenticación HTML+CSS
+
 - **Login página**: `/login.html` con formulario email/contraseña
 - **Registro página**: `/register.html` con verificación de email
 - **Recuperación**: `/password-reset.html` para reset de contraseñas
@@ -654,6 +726,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Estilos unificados**: `/public/css/auth.css` con componentes reutilizables
 
 #### 🔑 Google OAuth Integrado
+
 - **Flujo OAuth completo**: Redirección automática a Google
 - **Callback handler**: `/api/auth/callback` para procesar respuestas OAuth
 - **Creación automática**: Usuarios nuevos via OAuth se crean automáticamente
@@ -661,6 +734,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Manejo de errores**: Fallbacks para OAuth no configurado
 
 #### ✨ Magic Links y Recuperación de Contraseñas
+
 - **Magic link login**: Autenticación sin contraseña vía email
 - **Password recovery**: Sistema completo de reset via email
 - **Tokens seguros**: Integración con Supabase para tokens temporales
@@ -668,6 +742,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Prevención enumeración**: Mensajes genéricos para seguridad
 
 #### 💻 JavaScript Vanilla Avanzado
+
 - **Manejo de formularios**: Validación y estados de loading
 - **Gestión de sesiones**: LocalStorage con refresh tokens
 - **API integration**: Comunicación segura con backend
@@ -678,6 +753,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🛠️ Backend Extensions
 
 #### 🔌 Nuevos Endpoints de Autenticación
+
 - `GET /api/auth/google` - Inicia flujo OAuth de Google
 - `GET /api/auth/callback` - Procesa callbacks OAuth
 - `POST /api/auth/magic-link` - Envía magic link por email
@@ -686,6 +762,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Compatibilidad backward**: Endpoints legacy mantenidos
 
 #### 🔒 AuthService Extendido
+
 - **Google OAuth methods**: `signInWithGoogle()` y `handleOAuthCallback()`
 - **Magic link support**: Integración completa con Supabase OTP
 - **Password updates**: Método seguro para reset de contraseñas
@@ -695,6 +772,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🎨 Experiencia de Usuario Mejorada
 
 #### 📱 Design Responsive
+
 - **Mobile-first**: Formularios optimizados para móviles
 - **Estados visuales**: Loading spinners y feedback inmediato
 - **Validación en tiempo real**: Errores mostrados instantáneamente
@@ -702,6 +780,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Mensajes informativos**: Toast notifications para todas las acciones
 
 #### 🔄 Flujos de Autenticación Intuitivos
+
 - **Registro con verificación**: Email confirmation workflow completo
 - **Plan selection**: Dashboard con selección de planes post-registro
 - **Admin redirect**: Usuarios admin van directo al panel
@@ -711,6 +790,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🧪 Testing Comprehensivo
 
 #### ✅ Tests Unitarios Completos
+
 - **Auth routes testing**: 11 test cases con mocks completos
 - **Endpoint coverage**: Registro, login, OAuth, magic links
 - **Error scenarios**: Validación de casos edge y manejo errores
@@ -718,8 +798,9 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Mock integration**: Supabase y dependencias completamente mockeadas
 
 #### 🔍 Coverage de Funcionalidades
+
 - ✅ **User registration** con validaciones
-- ✅ **Login/logout** con sesiones persistentes  
+- ✅ **Login/logout** con sesiones persistentes
 - ✅ **Magic links** para autenticación sin contraseña
 - ✅ **Password recovery** con tokens seguros
 - ✅ **Google OAuth** con creación automática de usuarios
@@ -729,6 +810,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 📂 Archivos Nuevos/Modificados
 
 #### Frontend
+
 - `public/login.html` - Página de login con Google OAuth y magic link
 - `public/register.html` - Registro con verificación de email
 - `public/password-reset.html` - Reset de contraseña con token
@@ -738,6 +820,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - `public/js/auth.js` - JavaScript de autenticación (450+ líneas)
 
 #### Backend
+
 - `src/services/authService.js` - Métodos OAuth y password update
 - `src/routes/auth.js` - Endpoints Google OAuth y callback
 - `tests/unit/auth.test.js` - Test suite completo (11 casos)
@@ -745,12 +828,14 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🔧 Configuración y Setup
 
 #### 🌍 Variables de Entorno
+
 - `FRONTEND_URL` - URL base para redirects OAuth
 - `SUPABASE_URL` - Supabase project URL (existente)
 - `SUPABASE_ANON_KEY` - Public key para frontend (existente)
 - **Google OAuth setup**: Requiere configuración en Supabase Dashboard
 
 #### 🚀 Comandos Disponibles
+
 - `npm test -- tests/unit/auth.test.js` - Ejecutar tests de autenticación
 - `npm start` - Servidor con nuevos endpoints OAuth
 - **Acceso directo**: `http://localhost:3000/login.html`
@@ -776,23 +861,26 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🚀 Nuevas Funcionalidades Principales
 
 #### 📊 Dashboard Avanzado con Métricas Comprehensivas
+
 - **Estadísticas mejoradas**: Total usuarios con conteo de suspendidos
 - **Métricas de roasts**: Conteos diarios, semanales y mensuales en tiempo real
-- **Top 5 usuarios**: Ranking por volumen de actividad con indicadores oro/plata/bronce  
+- **Top 5 usuarios**: Ranking por volumen de actividad con indicadores oro/plata/bronce
 - **Estado de integraciones**: Monitoreo en vivo con timestamps de última ejecución
 - **Chart de actividad**: Integraciones más activas con barras de progreso animadas
 - **Actualización automática**: Dashboard con datos en tiempo real
 
-#### 🔒 Sistema de Suspensión de Usuarios  
+#### 🔒 Sistema de Suspensión de Usuarios
+
 - **Suspender usuarios**: Previene generación de roasts manteniendo acceso al dashboard
-- **Reactivar usuarios**: Restaura funcionalidad completa con log de auditoría  
+- **Reactivar usuarios**: Restaura funcionalidad completa con log de auditoría
 - **Indicadores visuales**: Estados Activo/Inactivo/Suspendido en tabla de usuarios
 - **Razón de suspensión**: Campo opcional para documentar motivos
 - **Logging administrativo**: Registro completo de acciones para compliance
 - **Permisos granulares**: Control fino sobre capacidades del usuario
 
 #### 🔌 Monitoreo de Integraciones en Tiempo Real
-- **Estado en vivo**: Badges de estado (Activa, Configurada, Deshabilitada)  
+
+- **Estado en vivo**: Badges de estado (Activa, Configurada, Deshabilitada)
 - **Timestamps de ejecución**: Última vez que cada integración se ejecutó
 - **Indicadores de salud**: Monitoreo visual del estado de cada plataforma
 - **Lista interactiva**: Vista detallada de todas las 9 integraciones
@@ -801,21 +889,24 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🛠️ Mejoras Técnicas Backend
 
 #### 🎯 MetricsService - Nuevo Servicio de Análisis
+
 - **Agregación de métricas**: Servicio comprehensivo para estadísticas del dashboard
-- **Queries optimizadas**: Consultas eficientes con manejo de errores  
+- **Queries optimizadas**: Consultas eficientes con manejo de errores
 - **Datos de fallback**: Manejo robusto cuando las tablas están vacías
 - **Cálculos inteligentes**: Métricas simuladas para desarrollo y testing
 - **Logging completo**: Trazabilidad de todas las operaciones
 
-#### 🔐 AuthService Extendido  
+#### 🔐 AuthService Extendido
+
 - **Métodos de suspensión**: `suspendUser()` y `unsuspendUser()` con metadatos
 - **Verificación de permisos**: `canUserGenerateRoasts()` para control granular
-- **Logging de actividades**: Registro automático de acciones administrativas  
+- **Logging de actividades**: Registro automático de acciones administrativas
 - **Gestión de estados**: Tracking completo de cambios de estado del usuario
 
 #### 🌐 API Endpoints Nuevos
+
 - `POST /api/admin/users/:userId/suspend` - Suspender cuenta de usuario
-- `POST /api/admin/users/:userId/reactivate` - Reactivar usuario suspendido  
+- `POST /api/admin/users/:userId/reactivate` - Reactivar usuario suspendido
 - `GET /api/admin/dashboard` - Métricas comprehensivas mejoradas
 - **Manejo de errores**: Respuestas estandarizadas con logging detallado
 - **Validación robusta**: Verificación de permisos y datos de entrada
@@ -823,39 +914,44 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🎨 Mejoras Frontend Avanzadas
 
 #### 📱 Dashboard Rediseñado
+
 - **Cards de estadísticas**: 4 cards con iconos codificados por color
 - **Top 5 usuarios**: Lista de ranking con posiciones oro/plata/bronce
-- **Estado de integraciones**: Lista visual con badges de estado  
+- **Estado de integraciones**: Lista visual con badges de estado
 - **Chart de actividad**: Barras de progreso con animaciones CSS
 - **Design responsive**: Optimizado para todos los dispositivos
 
 #### 👥 Gestión de Usuarios Mejorada
+
 - **Indicadores de suspensión**: Estados visuales en la tabla de usuarios
 - **Botones Suspender/Reactivar**: Acciones con confirmación y razón opcional
 - **Actualizaciones en tiempo real**: Estados se actualizan automáticamente
 - **Diálogos de confirmación**: UX mejorada para acciones críticas
 
 #### 🎨 Sistema de Estilos Expandido
+
 - **Listas de ranking**: Estilos para posiciones con indicadores de medalla
-- **Badges de estado**: Indicadores visuales para suspensión 
+- **Badges de estado**: Indicadores visuales para suspensión
 - **Charts de actividad**: Barras de progreso con fills animados
 - **Estados responsive**: Diseño mejorado para móviles y tablets
 
 ### 🗄️ Cambios de Base de Datos
 
 #### 📝 Schema Updates
+
 - **Tipos de actividad**: Agregado 'account_reactivated' a user_activities constraint
 - **Campos de suspensión**: Support completo para tracking de suspensiones
   - `suspended` boolean
   - `suspended_reason` texto opcional
-  - `suspended_at` timestamp  
+  - `suspended_at` timestamp
   - `suspended_by` referencia al admin
 
 ### 🧪 Testing Comprehensivo
 
 #### ✅ Cobertura de Tests Completa
+
 - **MetricsService tests**: 7 test cases con mocking completo
-- **Admin routes tests**: 17 test cases incluyendo suspend/reactivate  
+- **Admin routes tests**: 17 test cases incluyendo suspend/reactivate
 - **Manejo de errores**: Testing de casos edge y recuperación
 - **Integración**: Tests de workflows completos admin
 
@@ -877,19 +973,22 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🛡️ Panel de Administración Completo
 
 #### 🔒 Seguridad y Autenticación
+
 - **Middleware de admin** (`src/middleware/isAdmin.js`) con validación estricta de permisos
-- **Verificación JWT + RLS** usando sistema Supabase existente  
+- **Verificación JWT + RLS** usando sistema Supabase existente
 - **Acceso denegado** con mensaje claro para usuarios sin permisos
 - **Logging automático** de intentos de acceso no autorizados
 - **Validación doble** (token + base de datos) para máxima seguridad
 
 #### 📊 Dashboard y Métricas
+
 - **Estadísticas en tiempo real**: Total usuarios, activos, admins, nuevos del mes
 - **Integraciones activas**: Lista visual de plataformas habilitadas
 - **Actividad reciente**: Resumen por plataforma con métricas de uso
 - **Cards interactivas** con iconos y actualización automática
 
 #### 👥 Gestión Avanzada de Usuarios
+
 - **Lista completa** con información detallada (email, nombre, plan, estado)
 - **Búsqueda en tiempo real** por email y nombre con filtros avanzados
 - **Filtros por estado**: Solo admins, solo activos, por plan
@@ -900,18 +999,21 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Logging automático** de todas las acciones administrativas
 
 #### 🔌 Testing y Debugging
+
 - **Test de integraciones** desde el panel con output en vivo
 - **Selección de plataformas** específicas para testing
 - **Ejecución directa** de `npm run integrations:test`
 - **Visualización formato terminal** con scroll y sintaxis highlighting
 
 #### ⚙️ Configuración del Sistema
+
 - **Variables de entorno** en tiempo real
 - **Estado de integraciones**: Plataformas activas, configuración
 - **Features del sistema**: Debug, Shield, ambiente
 - **Límites y configuraciones**: Frecuencia de respuesta, tono, etc.
 
 #### 📋 Sistema de Logs Avanzado
+
 - **Visualización de logs** con filtros por tipo y categoría
 - **Descarga como archivo** (.txt) para análisis offline
 - **Filtros disponibles**: Info, Warning, Error, Integration, Shield
@@ -920,6 +1022,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🎨 Interfaz de Usuario Mejorada
 
 #### 📱 Design System Completo
+
 - **Navegación por pestañas** (Dashboard, Usuarios, Integraciones, Config, Logs)
 - **Design system consistente** con variables CSS y tokens
 - **Responsive design** optimizado para móviles y tablets
@@ -927,6 +1030,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Notificaciones toast** para todas las acciones
 
 #### 🖥️ Componentes UI Avanzados
+
 - **Cards de estadísticas** con iconos y métricas actualizadas
 - **Tablas responsivas** con acciones inline por fila
 - **Badges de estado** visual (activo/inactivo, plan, rol admin)
@@ -936,6 +1040,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 🛠️ Herramientas de Desarrollo
 
 #### 📝 Script de Configuración
+
 - **Setup automático** (`npm run admin:setup`) para crear administradores
 - **Interfaz interactiva** que solicita email, nombre y password
 - **Validación de datos** y manejo de usuarios existentes
@@ -943,6 +1048,7 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 - **Lista de admins** (`npm run admin:list`) para auditoría
 
 #### 🧪 Tests Unitarios Completos
+
 - **Middleware testing** (`tests/unit/middleware/isAdmin.test.js`) - 11 tests
   - Validación de tokens, permisos de admin, usuarios inactivos
   - Manejo de errores y casos edge
@@ -954,24 +1060,29 @@ app.use('/api/analytics', requirePlan('pro', { feature: 'analytics' }))
 ### 📂 Archivos Creados/Modificados
 
 #### Backend
+
 - `src/middleware/isAdmin.js` - Middleware de validación admin
 - `src/routes/admin.js` - 8 endpoints del panel de administración
 - `src/index.js` - Registro de rutas admin
 
 #### Frontend
+
 - `public/admin.html` - Interfaz principal del panel (5 secciones)
 - `public/css/admin.css` - Sistema de estilos responsive (800+ líneas)
 - `public/js/admin.js` - Lógica JavaScript completa (600+ líneas)
 
 #### Scripts y Configuración
+
 - `scripts/setup-admin.js` - Script interactivo de configuración
 - `package.json` - Comandos `admin:setup` y `admin:list`
 
 #### Testing
+
 - `tests/unit/middleware/isAdmin.test.js` - Tests del middleware (11 casos)
 - `tests/unit/routes/admin.test.js` - Tests de endpoints (13 casos)
 
 #### Documentación
+
 - `ADMIN_PANEL_README.md` - Guía completa de uso y configuración
 
 ### 🔧 API Endpoints Implementados
@@ -999,6 +1110,7 @@ GET    /api/admin/logs/download               // Descargar logs como .txt
 ### 🚀 Listo para Producción
 
 El panel está completamente funcional y listo para:
+
 - ✅ **Desarrollo local** → `http://localhost:3000/admin.html`
 - ✅ **Deploy en Vercel/Netlify** → Funciona donde funcione el API principal
 - ✅ **Uso inmediato** → Un comando (`npm run admin:setup`) para empezar
@@ -1014,6 +1126,7 @@ El panel está completamente funcional y listo para:
 ### 🚀 Funcionalidades Principales
 
 #### 🔐 Autenticación y Multi-Tenancy
+
 - Autenticación con Supabase (email/password y magic link).
 - Gestión de sesiones JWT segura.
 - Recuperación de contraseñas vía magic link.
@@ -1022,6 +1135,7 @@ El panel está completamente funcional y listo para:
 - CLI de gestión de usuarios (`users:list`, `users:create`, `users:delete`, etc).
 
 #### 🌐 Integraciones Sociales (esqueletos listos)
+
 - Soporte multi-plataforma para:
   - Twitter (completo)
   - Instagram (modo revisión manual)
@@ -1037,6 +1151,7 @@ El panel está completamente funcional y listo para:
 - CLI de diagnóstico (`integrations:health`, `integrations:status`).
 
 #### 🖥️ Frontend (React 19 + Tailwind 4)
+
 - Sistema de login / registro / recuperación de contraseña.
 - Selector de tema (claro, oscuro, automático).
 - Página de dashboard con datos de usuario.
@@ -1044,6 +1159,7 @@ El panel está completamente funcional y listo para:
 - Entorno configurable (`REACT_APP_USE_MAGIC_LINK`, etc).
 
 #### 🛠️ Panel de Administración
+
 - Página exclusiva para usuarios admin (`/admin/users`).
 - Lista de usuarios con:
   - Email

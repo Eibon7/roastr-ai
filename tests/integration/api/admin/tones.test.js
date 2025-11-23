@@ -1,8 +1,8 @@
 /**
  * Integration Tests: Admin Tones API
- * 
+ *
  * Tests CRUD operations for roast tones via admin API endpoints.
- * 
+ *
  * Issue #876: Dynamic Roast Tone Configuration System
  */
 
@@ -13,8 +13,8 @@ const { getToneConfigService } = require('../../../../src/services/toneConfigSer
 // Mock dependencies
 jest.mock('../../../../src/config/supabase', () => ({
   supabaseServiceClient: {
-    from: jest.fn(),
-  },
+    from: jest.fn()
+  }
 }));
 jest.mock('../../../../src/utils/logger');
 
@@ -27,7 +27,7 @@ describe('Admin Tones API Integration Tests', () => {
   beforeAll(() => {
     // Import app after mocks are set up
     app = require('../../../../src/index');
-    
+
     // Mock tokens (in real tests, these would be generated from test auth)
     adminToken = 'mock-admin-jwt-token';
     userToken = 'mock-user-jwt-token';
@@ -46,12 +46,17 @@ describe('Admin Tones API Integration Tests', () => {
         personality: 'Educado',
         resources: ['Ironía sutil'],
         restrictions: ['NO insultos'],
-        examples: [{ es: { input: 'input es', output: 'output es' }, en: { input: 'input en', output: 'output en' } }],
+        examples: [
+          {
+            es: { input: 'input es', output: 'output es' },
+            en: { input: 'input en', output: 'output en' }
+          }
+        ],
         active: true,
         is_default: true,
         sort_order: 0,
         created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z'
       },
       {
         id: '123e4567-e89b-12d3-a456-426614174001',
@@ -62,13 +67,18 @@ describe('Admin Tones API Integration Tests', () => {
         personality: 'Ingenioso',
         resources: ['Juegos de palabras'],
         restrictions: ['NO vulgaridad'],
-        examples: [{ es: { input: 'input2 es', output: 'output2 es' }, en: { input: 'input2 en', output: 'output2 en' } }],
+        examples: [
+          {
+            es: { input: 'input2 es', output: 'output2 es' },
+            en: { input: 'input2 en', output: 'output2 en' }
+          }
+        ],
         active: true,
         is_default: false,
         sort_order: 1,
         created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T00:00:00Z',
-      },
+        updated_at: '2025-01-01T00:00:00Z'
+      }
     ];
   });
 
@@ -76,7 +86,7 @@ describe('Admin Tones API Integration Tests', () => {
     it('should return all tones for admin users', async () => {
       supabaseServiceClient.from.mockReturnValue({
         select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: mockTones, error: null }),
+        order: jest.fn().mockResolvedValue({ data: mockTones, error: null })
       });
 
       const response = await request(app)
@@ -97,15 +107,13 @@ describe('Admin Tones API Integration Tests', () => {
     });
 
     it('should return 401 without authentication', async () => {
-      await request(app)
-        .get('/api/admin/tones')
-        .expect(401);
+      await request(app).get('/api/admin/tones').expect(401);
     });
 
     it('should handle database errors gracefully', async () => {
       supabaseServiceClient.from.mockReturnValue({
         select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: null, error: new Error('DB connection failed') }),
+        order: jest.fn().mockResolvedValue({ data: null, error: new Error('DB connection failed') })
       });
 
       const response = await request(app)
@@ -123,7 +131,7 @@ describe('Admin Tones API Integration Tests', () => {
       supabaseServiceClient.from.mockReturnValue({
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: mockTones[0], error: null }),
+        single: jest.fn().mockResolvedValue({ data: mockTones[0], error: null })
       });
 
       const response = await request(app)
@@ -139,7 +147,7 @@ describe('Admin Tones API Integration Tests', () => {
       supabaseServiceClient.from.mockReturnValue({
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+        single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
       });
 
       const response = await request(app)
@@ -161,16 +169,21 @@ describe('Admin Tones API Integration Tests', () => {
       personality: 'Picante',
       resources: ['Sarcasmo'],
       restrictions: ['NO tabúes'],
-      examples: [{ es: { input: 'input3 es', output: 'output3 es' }, en: { input: 'input3 en', output: 'output3 en' } }],
+      examples: [
+        {
+          es: { input: 'input3 es', output: 'output3 es' },
+          en: { input: 'input3 en', output: 'output3 en' }
+        }
+      ],
       active: true,
-      is_default: false,
+      is_default: false
     };
 
     it('should create a new tone with valid data', async () => {
       supabaseServiceClient.from.mockReturnValue({
         insert: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: { ...newTone, id: 'new-id' }, error: null }),
+        single: jest.fn().mockResolvedValue({ data: { ...newTone, id: 'new-id' }, error: null })
       });
 
       const response = await request(app)
@@ -181,7 +194,7 @@ describe('Admin Tones API Integration Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.name).toBe('canalla');
-      
+
       // Should invalidate cache
       const toneService = getToneConfigService();
       expect(toneService.cache).toBeNull();
@@ -235,7 +248,7 @@ describe('Admin Tones API Integration Tests', () => {
         update: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: updatedData, error: null }),
+        single: jest.fn().mockResolvedValue({ data: updatedData, error: null })
       });
 
       const response = await request(app)
@@ -252,7 +265,7 @@ describe('Admin Tones API Integration Tests', () => {
       // Mock: Only one active tone exists
       supabaseServiceClient.from.mockReturnValue({
         select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: [mockTones[0]], error: null }),
+        eq: jest.fn().mockResolvedValue({ data: [mockTones[0]], error: null })
       });
 
       const response = await request(app)
@@ -269,13 +282,15 @@ describe('Admin Tones API Integration Tests', () => {
   describe('DELETE /api/admin/tones/:id', () => {
     it('should delete a tone', async () => {
       // Mock: Multiple active tones exist
-      supabaseServiceClient.from.mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: mockTones, error: null }),
-      }).mockReturnValueOnce({
-        delete: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ error: null }),
-      });
+      supabaseServiceClient.from
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockResolvedValue({ data: mockTones, error: null })
+        })
+        .mockReturnValueOnce({
+          delete: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockResolvedValue({ error: null })
+        });
 
       await request(app)
         .delete(`/api/admin/tones/${mockTones[1].id}`)
@@ -287,7 +302,7 @@ describe('Admin Tones API Integration Tests', () => {
       // Mock: Only one active tone exists
       supabaseServiceClient.from.mockReturnValue({
         select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: [mockTones[0]], error: null }),
+        eq: jest.fn().mockResolvedValue({ data: [mockTones[0]], error: null })
       });
 
       const response = await request(app)
@@ -308,7 +323,9 @@ describe('Admin Tones API Integration Tests', () => {
         update: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: { ...inactiveTone, active: true }, error: null }),
+        single: jest
+          .fn()
+          .mockResolvedValue({ data: { ...inactiveTone, active: true }, error: null })
       });
 
       const response = await request(app)
@@ -324,15 +341,19 @@ describe('Admin Tones API Integration Tests', () => {
   describe('POST /api/admin/tones/:id/deactivate', () => {
     it('should deactivate an active tone when others exist', async () => {
       // Mock: Multiple active tones exist
-      supabaseServiceClient.from.mockReturnValueOnce({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: mockTones, error: null }),
-      }).mockReturnValueOnce({
-        update: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: { ...mockTones[1], active: false }, error: null }),
-      });
+      supabaseServiceClient.from
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockResolvedValue({ data: mockTones, error: null })
+        })
+        .mockReturnValueOnce({
+          update: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          select: jest.fn().mockReturnThis(),
+          single: jest
+            .fn()
+            .mockResolvedValue({ data: { ...mockTones[1], active: false }, error: null })
+        });
 
       const response = await request(app)
         .post(`/api/admin/tones/${mockTones[1].id}/deactivate`)
@@ -347,7 +368,7 @@ describe('Admin Tones API Integration Tests', () => {
       // Mock: Only one active tone exists
       supabaseServiceClient.from.mockReturnValue({
         select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: [mockTones[0]], error: null }),
+        eq: jest.fn().mockResolvedValue({ data: [mockTones[0]], error: null })
       });
 
       const response = await request(app)
@@ -365,7 +386,7 @@ describe('Admin Tones API Integration Tests', () => {
 
       supabaseServiceClient.from.mockReturnValue({
         upsert: jest.fn().mockReturnThis(),
-        select: jest.fn().mockResolvedValue({ data: mockTones, error: null }),
+        select: jest.fn().mockResolvedValue({ data: mockTones, error: null })
       });
 
       const response = await request(app)
@@ -399,4 +420,3 @@ describe('Admin Tones API Integration Tests', () => {
     });
   });
 });
-

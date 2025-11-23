@@ -23,7 +23,7 @@ describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
       const metrics = {
         health: { overall_score: 95, healthy_count: 10, total_nodes: 10 },
         drift: { average_drift_risk: 10 },
-        repair: { success_rate: 0 }  // ❌ 0% success - should NOT fallback to 100
+        repair: { success_rate: 0 } // ❌ 0% success - should NOT fallback to 100
       };
 
       const derived = calculateDerivedMetrics(metrics);
@@ -49,7 +49,7 @@ describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
       const metrics = {
         health: { overall_score: 95, healthy_count: 10, total_nodes: 10 },
         drift: { average_drift_risk: 10 },
-        repair: { success_rate: null }  // No data - should fallback to 100
+        repair: { success_rate: null } // No data - should fallback to 100
       };
 
       const derived = calculateDerivedMetrics(metrics);
@@ -92,7 +92,7 @@ describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
       const metrics = {
         health: { overall_score: 95, healthy_count: 10, total_nodes: 10 },
         drift: { average_drift_risk: 10 },
-        repair: { success_rate: 50 }  // 50% success - should use 50
+        repair: { success_rate: 50 } // 50% success - should use 50
       };
 
       const derived = calculateDerivedMetrics(metrics);
@@ -155,12 +155,12 @@ describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
 
       // AFTER FIX (with ??):
       const derivedAfterFix = calculateDerivedMetrics(metrics);
-      expect(derivedAfterFix.stability_index).toBe(62);  // Correctly low
-      expect(derivedAfterFix.system_status).toBe('DEGRADED');  // Correctly degraded
+      expect(derivedAfterFix.stability_index).toBe(62); // Correctly low
+      expect(derivedAfterFix.system_status).toBe('DEGRADED'); // Correctly degraded
 
       // BEFORE FIX (with ||) - simulated:
       function calculateDerivedMetricsBuggy(metrics) {
-        const repairScore = metrics.repair?.success_rate || 100;  // ❌ Bug: treats 0 as falsy
+        const repairScore = metrics.repair?.success_rate || 100; // ❌ Bug: treats 0 as falsy
         const healthScore = metrics.health?.overall_score || 0;
         const driftScore = 100 - (metrics.drift?.average_drift_risk || 0);
         const stability_index = Math.round((healthScore + driftScore + repairScore) / 3);
@@ -178,12 +178,12 @@ describe('calculateDerivedMetrics - Nullish Coalescing Fix', () => {
       }
 
       const derivedBeforeFix = calculateDerivedMetricsBuggy(metrics);
-      expect(derivedBeforeFix.stability_index).toBe(95);  // ❌ Incorrectly high
-      expect(derivedBeforeFix.system_status).toBe('STABLE');  // ❌ Incorrectly stable
+      expect(derivedBeforeFix.stability_index).toBe(95); // ❌ Incorrectly high
+      expect(derivedBeforeFix.system_status).toBe('STABLE'); // ❌ Incorrectly stable
 
       // Demonstrate the fix prevents 33-point inflation:
       const inflation = derivedBeforeFix.stability_index - derivedAfterFix.stability_index;
-      expect(inflation).toBe(33);  // 95 - 62 = 33 points inflation prevented
+      expect(inflation).toBe(33); // 95 - 62 = 33 points inflation prevented
     });
   });
 });

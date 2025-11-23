@@ -1,6 +1,6 @@
 /**
  * Enhanced Error Handler - Consistent error handling across workers
- * 
+ *
  * Provides standardized error handling, retry logic, and fallback mechanisms
  * to improve system resilience and user experience.
  */
@@ -29,13 +29,13 @@ class WorkerErrorHandler {
    */
   createLoggerAdapter(logger) {
     const adapter = {};
-    
+
     // Map common logging methods
     adapter.info = logger.info?.bind(logger) || logger.log?.bind(logger) || (() => {});
     adapter.warn = logger.warn?.bind(logger) || logger.log?.bind(logger) || (() => {});
     adapter.error = logger.error?.bind(logger) || logger.log?.bind(logger) || (() => {});
     adapter.debug = logger.debug?.bind(logger) || logger.log?.bind(logger) || (() => {});
-    
+
     // Handle worker-style log method (that takes level as first argument)
     if (typeof logger.log === 'function' && !logger.info && !logger.warn && !logger.error) {
       adapter.info = (message, meta = {}) => logger.log('info', message, meta);
@@ -43,7 +43,7 @@ class WorkerErrorHandler {
       adapter.error = (message, meta = {}) => logger.log('error', message, meta);
       adapter.debug = (message, meta = {}) => logger.log('debug', message, meta);
     }
-    
+
     return adapter;
   }
 
@@ -95,14 +95,16 @@ class WorkerErrorHandler {
         lastError = error;
 
         // Don't retry validation errors or non-retryable errors
-        if (error instanceof ValidationError || 
-            (error instanceof WorkerError && !error.retryable)) {
+        if (
+          error instanceof ValidationError ||
+          (error instanceof WorkerError && !error.retryable)
+        ) {
           throw error;
         }
 
         if (attempt < maxRetries) {
           const delay = this.retryDelays[attempt] || this.retryDelays[this.retryDelays.length - 1];
-          
+
           this.logger.warn(`Attempt ${attempt + 1} failed, retrying in ${delay}ms`, {
             error: error.message,
             attempt: attempt + 1,
@@ -131,12 +133,12 @@ class WorkerErrorHandler {
       operation(),
       new Promise((_, reject) => {
         setTimeout(() => {
-          reject(new WorkerError(
-            `Operation timed out after ${timeoutMs}ms`,
-            'TIMEOUT',
-            true,
-            { timeoutMs, context }
-          ));
+          reject(
+            new WorkerError(`Operation timed out after ${timeoutMs}ms`, 'TIMEOUT', true, {
+              timeoutMs,
+              context
+            })
+          );
         }, timeoutMs);
       })
     ]);
@@ -146,12 +148,7 @@ class WorkerErrorHandler {
    * Comprehensive error handling with retry, timeout, and fallback
    */
   async handleRobust(operation, options = {}) {
-    const {
-      fallback = null,
-      maxRetries = 3,
-      timeoutMs = 30000,
-      context = {}
-    } = options;
+    const { fallback = null, maxRetries = 3, timeoutMs = 30000, context = {} } = options;
 
     const wrappedOperation = () => this.handleWithTimeout(operation, timeoutMs, context);
 
@@ -172,14 +169,12 @@ class WorkerErrorHandler {
   async handleDatabaseOperation(operation, context = {}) {
     try {
       const result = await operation();
-      
+
       if (result?.error) {
-        throw new WorkerError(
-          `Database error: ${result.error.message}`,
-          'DATABASE_ERROR',
-          true,
-          { code: result.error.code, details: result.error.details }
-        );
+        throw new WorkerError(`Database error: ${result.error.message}`, 'DATABASE_ERROR', true, {
+          code: result.error.code,
+          details: result.error.details
+        });
       }
 
       return result;
@@ -190,29 +185,20 @@ class WorkerErrorHandler {
 
       // Handle common database errors
       if (error.message?.includes('connection')) {
-        throw new WorkerError(
-          'Database connection failed',
-          'DATABASE_CONNECTION_ERROR',
-          true,
-          { originalError: error.message }
-        );
+        throw new WorkerError('Database connection failed', 'DATABASE_CONNECTION_ERROR', true, {
+          originalError: error.message
+        });
       }
 
       if (error.message?.includes('timeout')) {
-        throw new WorkerError(
-          'Database operation timed out',
-          'DATABASE_TIMEOUT',
-          true,
-          { originalError: error.message }
-        );
+        throw new WorkerError('Database operation timed out', 'DATABASE_TIMEOUT', true, {
+          originalError: error.message
+        });
       }
 
-      throw new WorkerError(
-        `Database operation failed: ${error.message}`,
-        'DATABASE_ERROR',
-        true,
-        { originalError: error.message }
-      );
+      throw new WorkerError(`Database operation failed: ${error.message}`, 'DATABASE_ERROR', true, {
+        originalError: error.message
+      });
     }
   }
 
@@ -236,30 +222,27 @@ class WorkerErrorHandler {
 
       // Handle authentication errors
       if (error.status === 401 || error.status === 403) {
-        throw new WorkerError(
-          `${apiName} API authentication failed`,
-          'API_AUTH_ERROR',
-          false,
-          { apiName, status: error.status, originalError: error.message }
-        );
+        throw new WorkerError(`${apiName} API authentication failed`, 'API_AUTH_ERROR', false, {
+          apiName,
+          status: error.status,
+          originalError: error.message
+        });
       }
 
       // Handle server errors
       if (error.status >= 500) {
-        throw new WorkerError(
-          `${apiName} API server error`,
-          'API_SERVER_ERROR',
-          true,
-          { apiName, status: error.status, originalError: error.message }
-        );
+        throw new WorkerError(`${apiName} API server error`, 'API_SERVER_ERROR', true, {
+          apiName,
+          status: error.status,
+          originalError: error.message
+        });
       }
 
-      throw new WorkerError(
-        `${apiName} API error: ${error.message}`,
-        'API_ERROR',
-        false,
-        { apiName, status: error.status, originalError: error.message }
-      );
+      throw new WorkerError(`${apiName} API error: ${error.message}`, 'API_ERROR', false, {
+        apiName,
+        status: error.status,
+        originalError: error.message
+      });
     }
   }
 
@@ -328,7 +311,7 @@ class WorkerErrorHandler {
    * Sleep utility for retry delays
    */
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 

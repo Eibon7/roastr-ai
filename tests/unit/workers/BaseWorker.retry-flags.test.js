@@ -108,11 +108,10 @@ describe('BaseWorker retry flags', () => {
 
   test('success when no error thrown', async () => {
     const worker = new FlagAwareWorker();
-    await expect(
-      worker.executeJobWithRetry({ id: 'job-success' })
-    ).resolves.toEqual({ success: true });
+    await expect(worker.executeJobWithRetry({ id: 'job-success' })).resolves.toEqual({
+      success: true
+    });
 
     expect(worker.attempts).toHaveLength(1);
   });
 });
-

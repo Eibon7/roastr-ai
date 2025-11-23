@@ -1,13 +1,14 @@
 /**
  * Shared Mock Data Generators for Worker Tests
- * 
+ *
  * Centralized mock data creation to reduce duplication and improve consistency
  */
 
 /**
  * Generate unique IDs for test data
  */
-const generateId = (prefix = 'test') => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateId = (prefix = 'test') =>
+  `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 /**
  * Comment Data Generators
@@ -23,49 +24,53 @@ const createMockComment = (overrides = {}) => ({
   ...overrides
 });
 
-const createMockToxicComment = (overrides = {}) => createMockComment({
-  text: 'You are such an idiot',
-  toxicity_score: 0.85,
-  toxicity_categories: ['TOXICITY', 'INSULT'],
-  ...overrides
-});
+const createMockToxicComment = (overrides = {}) =>
+  createMockComment({
+    text: 'You are such an idiot',
+    toxicity_score: 0.85,
+    toxicity_categories: ['TOXICITY', 'INSULT'],
+    ...overrides
+  });
 
-const createMockCleanComment = (overrides = {}) => createMockComment({
-  text: 'This is a nice and respectful comment',
-  toxicity_score: 0.12,
-  toxicity_categories: [],
-  ...overrides
-});
+const createMockCleanComment = (overrides = {}) =>
+  createMockComment({
+    text: 'This is a nice and respectful comment',
+    toxicity_score: 0.12,
+    toxicity_categories: [],
+    ...overrides
+  });
 
 /**
  * Twitter-specific comment data
  */
-const createMockTwitterComment = (overrides = {}) => createMockComment({
-  platform: 'twitter',
-  id: generateId('tweet'),
-  public_metrics: {
-    like_count: 5,
-    reply_count: 2,
-    retweet_count: 1,
-    quote_count: 0
-  },
-  ...overrides
-});
+const createMockTwitterComment = (overrides = {}) =>
+  createMockComment({
+    platform: 'twitter',
+    id: generateId('tweet'),
+    public_metrics: {
+      like_count: 5,
+      reply_count: 2,
+      retweet_count: 1,
+      quote_count: 0
+    },
+    ...overrides
+  });
 
 /**
- * YouTube-specific comment data  
+ * YouTube-specific comment data
  */
-const createMockYouTubeComment = (overrides = {}) => createMockComment({
-  platform: 'youtube',
-  id: generateId('yt_comment'),
-  snippet: {
-    textDisplay: overrides.text || 'Test YouTube comment',
-    authorChannelId: { value: overrides.author_id || 'channel_123' },
-    publishedAt: new Date().toISOString(),
-    likeCount: 10
-  },
-  ...overrides
-});
+const createMockYouTubeComment = (overrides = {}) =>
+  createMockComment({
+    platform: 'youtube',
+    id: generateId('yt_comment'),
+    snippet: {
+      textDisplay: overrides.text || 'Test YouTube comment',
+      authorChannelId: { value: overrides.author_id || 'channel_123' },
+      publishedAt: new Date().toISOString(),
+      likeCount: 10
+    },
+    ...overrides
+  });
 
 /**
  * Job Data Generators
@@ -83,46 +88,50 @@ const createMockJob = (overrides = {}) => ({
   ...overrides
 });
 
-const createMockFetchCommentsJob = (overrides = {}) => createMockJob({
-  job_type: 'fetch_comments',
-  payload: {
-    post_id: 'tweet-456',
-    since_id: '100',
-    max_results: 50
-  },
-  ...overrides
-});
+const createMockFetchCommentsJob = (overrides = {}) =>
+  createMockJob({
+    job_type: 'fetch_comments',
+    payload: {
+      post_id: 'tweet-456',
+      since_id: '100',
+      max_results: 50
+    },
+    ...overrides
+  });
 
-const createMockAnalyzeToxicityJob = (overrides = {}) => createMockJob({
-  job_type: 'analyze_toxicity',
-  comment_id: generateId('comment'),
-  text: 'Test comment for analysis',
-  author_id: 'user-456',
-  ...overrides
-});
+const createMockAnalyzeToxicityJob = (overrides = {}) =>
+  createMockJob({
+    job_type: 'analyze_toxicity',
+    comment_id: generateId('comment'),
+    text: 'Test comment for analysis',
+    author_id: 'user-456',
+    ...overrides
+  });
 
-const createMockGenerateReplyJob = (overrides = {}) => createMockJob({
-  job_type: 'generate_reply',
-  comment_id: generateId('comment'),
-  text: 'This is a stupid post',
-  author_id: 'user-789',
-  toxicity_score: 0.85,
-  toxicity_categories: ['TOXICITY', 'INSULT'],
-  ...overrides
-});
+const createMockGenerateReplyJob = (overrides = {}) =>
+  createMockJob({
+    job_type: 'generate_reply',
+    comment_id: generateId('comment'),
+    text: 'This is a stupid post',
+    author_id: 'user-789',
+    toxicity_score: 0.85,
+    toxicity_categories: ['TOXICITY', 'INSULT'],
+    ...overrides
+  });
 
-const createMockShieldActionJob = (overrides = {}) => createMockJob({
-  job_type: 'shield_action',
-  action_type: 'warning',
-  user_id: 'user-456',
-  comment_id: generateId('comment'),
-  payload: {
-    warning_message: 'Please keep comments respectful',
-    toxicity_score: 0.75,
-    categories: ['TOXICITY']
-  },
-  ...overrides
-});
+const createMockShieldActionJob = (overrides = {}) =>
+  createMockJob({
+    job_type: 'shield_action',
+    action_type: 'warning',
+    user_id: 'user-456',
+    comment_id: generateId('comment'),
+    payload: {
+      warning_message: 'Please keep comments respectful',
+      toxicity_score: 0.75,
+      categories: ['TOXICITY']
+    },
+    ...overrides
+  });
 
 /**
  * Analysis Result Generators
@@ -274,9 +283,7 @@ const createMockSupabaseResponse = (data = null, error = null) => ({
 const createMockSupabaseSelect = (data = []) => ({
   select: jest.fn().mockReturnValue({
     eq: jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue(
-        createMockSupabaseResponse(data.length ? data[0] : null)
-      )
+      single: jest.fn().mockResolvedValue(createMockSupabaseResponse(data.length ? data[0] : null))
     })
   })
 });
@@ -309,46 +316,46 @@ const createMockQueueResponse = (success = true, overrides = {}) => ({
 module.exports = {
   // Utilities
   generateId,
-  
+
   // Comment generators
   createMockComment,
   createMockToxicComment,
   createMockCleanComment,
   createMockTwitterComment,
   createMockYouTubeComment,
-  
+
   // Job generators
   createMockJob,
   createMockFetchCommentsJob,
   createMockAnalyzeToxicityJob,
   createMockGenerateReplyJob,
   createMockShieldActionJob,
-  
+
   // Analysis generators
   createMockAnalysis,
   createMockPerspectiveAnalysis,
   createMockOpenAIAnalysis,
-  
+
   // Organization & User generators
   createMockOrgSettings,
   createMockUser,
-  
+
   // Platform response generators
   createMockFetchCommentsResponse,
   createMockRoastGeneration,
-  
+
   // Shield generators
   createMockShieldAnalysis,
   createMockShieldExecution,
-  
+
   // Error generators
   createMockError,
   createMockAPIError,
-  
+
   // Database generators
   createMockSupabaseResponse,
   createMockSupabaseSelect,
-  
+
   // Service response generators
   createMockCostCheck,
   createMockQueueResponse

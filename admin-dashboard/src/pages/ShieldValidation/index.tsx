@@ -274,14 +274,14 @@ export default function ShieldValidation() {
       passed: 0,
       failed: 0,
       warnings: 0,
-      testCases: state.testCases.map(t => ({ ...t, status: 'pending' }))
+      testCases: state.testCases.map((t) => ({ ...t, status: 'pending' }))
     });
 
     // Simulate validation execution
     for (let i = 0; i < state.testCases.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      setState(prev => {
+      setState((prev) => {
         const updatedTests = [...prev.testCases];
         updatedTests[i] = {
           ...updatedTests[i],
@@ -296,13 +296,13 @@ export default function ShieldValidation() {
       });
 
       // Simulate test execution (2-3 seconds)
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 1500));
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * 1000 + 1500));
 
       // Random result for demo
       const isSuccess = Math.random() > 0.1;
       const duration = Math.random() * 1000 + 1500;
 
-      setState(prev => {
+      setState((prev) => {
         const updatedTests = [...prev.testCases];
         updatedTests[i] = {
           ...updatedTests[i],
@@ -321,7 +321,7 @@ export default function ShieldValidation() {
       });
     }
 
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       isRunning: false,
       endTime: Date.now()
@@ -411,12 +411,12 @@ export default function ShieldValidation() {
   const getSeverityColor = (toxicity: number) => {
     if (toxicity >= 0.98) return 'error';
     if (toxicity >= 0.95) return 'warning';
-    if (toxicity >= 0.90) return 'info';
+    if (toxicity >= 0.9) return 'info';
     return 'success';
   };
 
-  const totalDuration = state.endTime && state.startTime ?
-    ((state.endTime - state.startTime) / 1000).toFixed(2) : '-';
+  const totalDuration =
+    state.endTime && state.startTime ? ((state.endTime - state.startTime) / 1000).toFixed(2) : '-';
 
   const progress = state.totalTests > 0 ? (state.currentTest / state.totalTests) * 100 : 0;
 
@@ -438,28 +438,15 @@ export default function ShieldValidation() {
         <Box sx={{ display: 'flex', gap: 2 }}>
           {!state.isRunning ? (
             <>
-              <Button
-                variant="outlined"
-                startIcon={<Refresh />}
-                onClick={resetValidation}
-              >
+              <Button variant="outlined" startIcon={<Refresh />} onClick={resetValidation}>
                 Reset
               </Button>
-              <Button
-                variant="contained"
-                startIcon={<PlayArrow />}
-                onClick={startValidation}
-              >
+              <Button variant="contained" startIcon={<PlayArrow />} onClick={startValidation}>
                 Start Validation
               </Button>
             </>
           ) : (
-            <Button
-              variant="contained"
-              color="error"
-              startIcon={<Stop />}
-              onClick={stopValidation}
-            >
+            <Button variant="contained" color="error" startIcon={<Stop />} onClick={stopValidation}>
               Stop
             </Button>
           )}
@@ -493,7 +480,8 @@ export default function ShieldValidation() {
                 {state.passed}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {state.totalTests > 0 ? Math.round((state.passed / state.totalTests) * 100) : 0}% success rate
+                {state.totalTests > 0 ? Math.round((state.passed / state.totalTests) * 100) : 0}%
+                success rate
               </Typography>
             </CardContent>
           </Card>
@@ -522,8 +510,11 @@ export default function ShieldValidation() {
               <Typography variant="h4" fontWeight="bold">
                 {totalDuration}s
               </Typography>
-              <Typography variant="caption" color={parseFloat(totalDuration) > 45 ? 'error.main' : 'success.main'}>
-                {"Target: <45s"}
+              <Typography
+                variant="caption"
+                color={parseFloat(totalDuration) > 45 ? 'error.main' : 'success.main'}
+              >
+                {'Target: <45s'}
               </Typography>
             </CardContent>
           </Card>
@@ -574,10 +565,12 @@ export default function ShieldValidation() {
             </Grid>
             <Grid item xs={12} md={6}>
               <Alert severity="info">
-                Toxicity: {toxicityInput} | Threshold: {
-                  selectedSeverity === 'critical' ? '≥0.98' :
-                  selectedSeverity === 'high' ? '≥0.95' : '≥0.90'
-                }
+                Toxicity: {toxicityInput} | Threshold:{' '}
+                {selectedSeverity === 'critical'
+                  ? '≥0.98'
+                  : selectedSeverity === 'high'
+                    ? '≥0.95'
+                    : '≥0.90'}
               </Alert>
             </Grid>
           </Grid>
@@ -631,14 +624,14 @@ export default function ShieldValidation() {
                           size="small"
                           color={test.actualAction === test.expectedAction ? 'success' : 'error'}
                         />
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell align="center">
                       {test.duration ? `${test.duration}ms` : '-'}
                     </TableCell>
-                    <TableCell align="center">
-                      {getStatusIcon(test.status)}
-                    </TableCell>
+                    <TableCell align="center">{getStatusIcon(test.status)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -668,15 +661,15 @@ export default function ShieldValidation() {
                     <TableCell align="center">
                       {test.duration ? `${test.duration}ms` : '-'}
                     </TableCell>
-                    <TableCell align="center">
-                      {getStatusIcon(test.status)}
-                    </TableCell>
+                    <TableCell align="center">{getStatusIcon(test.status)}</TableCell>
                     <TableCell>
                       {test.error ? (
                         <Typography variant="caption" color="error">
                           {test.error}
                         </Typography>
-                      ) : '-'}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -15,12 +15,14 @@
 **Issue Types:** Documentation quality (PR metadata, markdown linting)
 
 **Fixes Applied:**
+
 - M1-M3: Fixed PR metadata mismatches in 3 planning documents (#511 → #519)
 - M4-M5: Fixed MD036 violations (bold text as headings) in 2 files
 - M6: Fixed MD040 violations (missing language tags) in 1 file (5 occurrences)
 - n1: Fixed MD024 violation (duplicate "### References" headings) in 1 file (3 occurrences)
 
 **Validation Results:**
+
 - ✅ 0 MD036 violations (target: bold as heading)
 - ✅ 0 MD040 violations (target: fenced code language)
 - ✅ 0 MD024 violations (target: duplicate headings)
@@ -39,6 +41,7 @@
 **Root Cause:** Planning doc created in PR #511, later merged into PR #519 via rebase
 
 **Fix Applied:**
+
 ```diff
 -**PR:** #511 (feat/gdd-phase-15-cross-validation)
 +**PR:** #519 (feat/gdd-phase-16-guardian-v2)
@@ -53,6 +56,7 @@
 **File:** `docs/plan/review-3320081306.md` (line 6)
 **Issue:** Same as M1 - PR reference mismatch
 **Fix Applied:**
+
 ```diff
 -**PR:** #511 (feat/gdd-phase-15-cross-validation)
 +**PR:** #519 (feat/gdd-phase-16-guardian-v2)
@@ -67,6 +71,7 @@
 **File:** `docs/plan/review-3320264120.md` (line 6)
 **Issue:** Same as M1-M2 - PR reference mismatch
 **Fix Applied:**
+
 ```diff
 -**PR:** #511 (feat/gdd-phase-15-cross-validation)
 +**PR:** #519 (feat/gdd-phase-16-guardian-v2)
@@ -83,6 +88,7 @@
 **Impact:** Markdownlint violations prevent clean linting
 
 **Fix Applied:**
+
 ```diff
 Line 476:
 -**docs/plan/review-3320081306.md**
@@ -121,16 +127,18 @@ Line 484:
 **Fixes Applied:**
 
 **Line 960:** Added `text` language tag to Commit 1 opening fence
-```diff
+
+````diff
 ### Commit 1: Security Fix
 
 -```
 +```text
 fix(security): Fix path traversal vulnerabilities...
-```
+````
 
 **Line 1055:** Added 4 backticks for outer block (nested bash blocks inside)
-```diff
+
+`````diff
 ### Commit 2: Documentation Fixes
 
 -```text
@@ -139,14 +147,15 @@ docs: Apply CodeRabbit Review #3320289266...
 (contains nested ```bash blocks)
 -```
 +````
-```
+`````
 
 **Line 1134:** Closing fence updated to match 4 backticks (resolved nesting issue)
 
 **Line 1193:** Already had `text` tag (verified during analysis)
 
 **Line 1201 & 1282:** Added 4 backticks for final summary template (nested bash block)
-```diff
+
+`````diff
 **Template for final summary to user:**
 
 -```text
@@ -155,7 +164,7 @@ docs: Apply CodeRabbit Review #3320289266...
 (contains nested ```bash block)
 -```
 +````
-```
+`````
 
 **Validation:** ✅ 0 MD040 violations in modified file
 
@@ -170,6 +179,7 @@ docs: Apply CodeRabbit Review #3320289266...
 **Impact:** 3 headings with identical content at same level
 
 **Fix Applied:**
+
 ```diff
 Line 1042:
 -### References
@@ -196,6 +206,7 @@ Line 1185:
 ### Markdown Linting
 
 **Command:**
+
 ```bash
 npx markdownlint-cli2 "docs/plan/review-3320000924.md" \
   "docs/plan/review-3320081306.md" \
@@ -204,11 +215,13 @@ npx markdownlint-cli2 "docs/plan/review-3320000924.md" \
 ```
 
 **Target Violations (CodeRabbit Review):**
+
 - ✅ MD036 (no-emphasis-as-heading): 0 violations
 - ✅ MD040 (fenced-code-language): 0 violations
 - ✅ MD024 (no-duplicate-heading): 0 violations
 
 **Other Violations:**
+
 - 268 pre-existing style violations (MD013 line length, MD032 blanks, etc.)
 - These were NOT part of CodeRabbit review scope
 - NOT fixed in this PR (out of scope)
@@ -218,16 +231,19 @@ npx markdownlint-cli2 "docs/plan/review-3320000924.md" \
 ### Manual Verification
 
 **PR Metadata (M1-M3):**
+
 ```bash
 grep -n "^\*\*PR:\*\*" docs/plan/review-3320000924.md docs/plan/review-3320081306.md docs/plan/review-3320264120.md
 ```
 
 **Results:**
+
 - ✅ review-3320000924.md:6 shows `#519`
 - ✅ review-3320081306.md:6 shows `#519`
 - ✅ review-3320264120.md:6 shows `#519`
 
 **MD036 Violations (M4-M5):**
+
 ```bash
 npx markdownlint-cli2 "docs/plan/review-3320264120.md" 2>&1 | grep MD036
 ```
@@ -235,6 +251,7 @@ npx markdownlint-cli2 "docs/plan/review-3320264120.md" 2>&1 | grep MD036
 **Results:** ✅ No MD036 violations in target lines
 
 **MD040 Violations (M6):**
+
 ```bash
 npx markdownlint-cli2 "docs/plan/review-3320289266.md" 2>&1 | awk '/MD040\//'
 ```
@@ -242,6 +259,7 @@ npx markdownlint-cli2 "docs/plan/review-3320289266.md" 2>&1 | awk '/MD040\//'
 **Results:** ✅ No MD040 violations
 
 **MD024 Violations (n1):**
+
 ```bash
 grep -n "^### References" docs/plan/review-3320289266.md
 ```
@@ -255,6 +273,7 @@ grep -n "^### References" docs/plan/review-3320289266.md
 ### 1. docs/plan/review-3320000924.md
 
 **Changes:** 1 line
+
 - Line 6: PR reference `#511` → `#519`
 
 **Impact:** PR metadata now accurate
@@ -264,6 +283,7 @@ grep -n "^### References" docs/plan/review-3320289266.md
 ### 2. docs/plan/review-3320081306.md
 
 **Changes:** 1 line
+
 - Line 6: PR reference `#511` → `#519`
 
 **Impact:** PR metadata now accurate
@@ -273,6 +293,7 @@ grep -n "^### References" docs/plan/review-3320289266.md
 ### 3. docs/plan/review-3320264120.md
 
 **Changes:** 4 lines
+
 - Line 6: PR reference `#511` → `#519`
 - Lines 476, 480, 484: Bold filenames → `####` headings
 
@@ -283,6 +304,7 @@ grep -n "^### References" docs/plan/review-3320289266.md
 ### 4. docs/plan/review-3320289266.md
 
 **Changes:** 11 lines
+
 - Lines 960, 1055, 1134, 1201, 1282: Added/fixed language tags and nesting
 - Lines 1042, 1126, 1185: Renamed duplicate "References" headings
 
@@ -304,12 +326,14 @@ grep -n "^### References" docs/plan/review-3320289266.md
 ### Validation Metrics
 
 **Documentation Quality:**
+
 - 0 MD036 violations in target files
 - 0 MD040 violations in target files
 - 0 MD024 violations in target files
 - 100% accuracy on PR references
 
 **Process Compliance:**
+
 - ✅ Planning document created (docs/plan/review-3320433872.md)
 - ✅ Test evidence generated (this file + markdownlint report)
 - ✅ Validation passing for target issues
@@ -322,6 +346,7 @@ grep -n "^### References" docs/plan/review-3320289266.md
 **Risk Level:** 🟢 LOW
 
 **Why Low Risk:**
+
 - Documentation-only changes (historical plan files)
 - No code modifications
 - No test modifications
@@ -330,6 +355,7 @@ grep -n "^### References" docs/plan/review-3320289266.md
 
 **Rollback Plan:**
 If issue detected:
+
 ```bash
 git revert HEAD
 git push origin feat/gdd-phase-16-guardian-v2 --force-with-lease
@@ -342,17 +368,20 @@ git push origin feat/gdd-phase-16-guardian-v2 --force-with-lease
 **Status:** ✅ All CodeRabbit review comments resolved
 
 **Summary:**
+
 - 7/7 issues fixed (100% completion)
 - 0 target linting violations remaining
 - All PR metadata now accurate
 - Documentation structure improved
 
 **Merge Readiness:**
+
 - ✅ Before Fixes: 7 violations blocking merge
 - ✅ After Fixes: 0 target violations
 - ✅ Ready for CodeRabbit re-review
 
 **Quality Certification:**
+
 - ✅ 100% issues resolved
 - ✅ No shortcuts taken
 - ✅ Documentation quality improved

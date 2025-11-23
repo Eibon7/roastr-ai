@@ -1,16 +1,16 @@
 /**
  * Credits Service v2 - Dual Credit System
- * 
+ *
  * Manages analysis and roast credits with atomic consumption,
  * billing period tracking, and comprehensive audit logging.
- * 
+ *
  * Features:
  * - Dual credit types (analysis + roast)
  * - Atomic consumption with race condition protection
  * - Stripe billing cycle integration
  * - Comprehensive audit logging
  * - Feature flag support
- * 
+ *
  * @author Roastr.ai Team
  * @version 2.0.0
  */
@@ -38,7 +38,7 @@ class CreditsService {
 
     try {
       const userClient = createUserClient();
-      
+
       // Use database function for atomic operation
       const { data, error } = await userClient.rpc('get_or_create_active_period', {
         p_user_id: userId,
@@ -55,13 +55,12 @@ class CreditsService {
       }
 
       return this._formatPeriodResponse(data);
-
     } catch (error) {
       logger.error('Credits service error in getOrCreateActivePeriod', {
         userId,
         error: error.message
       });
-      
+
       // Fallback to legacy system
       return this._getFallbackPeriod(userId);
     }
@@ -88,7 +87,7 @@ class CreditsService {
       }
 
       const canConsume = creditInfo.remaining >= amount;
-      
+
       return {
         canConsume,
         remaining: creditInfo.remaining,
@@ -97,7 +96,6 @@ class CreditsService {
         reason: canConsume ? null : 'insufficient_credits',
         periodEnd: period.period_end
       };
-
     } catch (error) {
       logger.error('Failed to check credit availability', {
         userId,
@@ -105,7 +103,7 @@ class CreditsService {
         amount,
         error: error.message
       });
-      
+
       // Fail open for availability checks
       return { canConsume: true, reason: 'check_failed' };
     }
@@ -119,12 +117,7 @@ class CreditsService {
    * @returns {Promise<boolean>} Success status
    */
   async consume(userId, creditType, options = {}) {
-    const {
-      amount = 1,
-      actionType = 'unknown',
-      platform = null,
-      metadata = {}
-    } = options;
+    const { amount = 1, actionType = 'unknown', platform = null, metadata = {} } = options;
 
     if (!this.isEnabled()) {
       logger.debug('Credits v2 disabled, allowing consumption', {
@@ -137,7 +130,7 @@ class CreditsService {
 
     try {
       const userClient = createUserClient();
-      
+
       // Use database function for atomic consumption
       const { data: success, error } = await userClient.rpc('consume_credits', {
         p_user_id: userId,
@@ -177,7 +170,6 @@ class CreditsService {
       }
 
       return success;
-
     } catch (error) {
       logger.error('Credits service error in consume', {
         userId,
@@ -185,7 +177,7 @@ class CreditsService {
         amount,
         error: error.message
       });
-      
+
       // Fail open for consumption errors to prevent blocking
       return true;
     }
@@ -203,7 +195,7 @@ class CreditsService {
 
     try {
       const userClient = createUserClient();
-      
+
       const { data, error } = await userClient.rpc('check_credit_availability', {
         p_user_id: userId
       });
@@ -217,13 +209,12 @@ class CreditsService {
         creditsV2Enabled: true,
         lastUpdated: new Date().toISOString()
       };
-
     } catch (error) {
       logger.error('Failed to get credit status', {
         userId,
         error: error.message
       });
-      
+
       return this._getFallbackStatus(userId);
     }
   }
@@ -242,23 +233,21 @@ class CreditsService {
 
     try {
       const userClient = createUserClient();
-      
+
       // Get user's plan limits
       const planLimits = await this._getUserPlanLimits(userId);
-      
+
       // Create new period
-      const { error } = await userClient
-        .from('usage_counters')
-        .insert({
-          user_id: userId,
-          period_start: billingPeriod.start,
-          period_end: billingPeriod.end,
-          analysis_used: 0,
-          analysis_limit: planLimits.analysisLimit,
-          roast_used: 0,
-          roast_limit: planLimits.roastLimit,
-          stripe_customer_id: billingPeriod.stripeCustomerId
-        });
+      const { error } = await userClient.from('usage_counters').insert({
+        user_id: userId,
+        period_start: billingPeriod.start,
+        period_end: billingPeriod.end,
+        analysis_used: 0,
+        analysis_limit: planLimits.analysisLimit,
+        roast_used: 0,
+        roast_limit: planLimits.roastLimit,
+        stripe_customer_id: billingPeriod.stripeCustomerId
+      });
 
       if (error) {
         throw error;
@@ -273,7 +262,6 @@ class CreditsService {
       });
 
       return true;
-
     } catch (error) {
       logger.error('Failed to reset credits for new period', {
         userId,
@@ -291,13 +279,7 @@ class CreditsService {
    * @returns {Promise<Array>} Consumption history
    */
   async getConsumptionHistory(userId, options = {}) {
-    const {
-      creditType = null,
-      limit = 50,
-      offset = 0,
-      startDate = null,
-      endDate = null
-    } = options;
+    const { creditType = null, limit = 50, offset = 0, startDate = null, endDate = null } = options;
 
     if (!this.isEnabled()) {
       return [];
@@ -305,7 +287,7 @@ class CreditsService {
 
     try {
       const userClient = createUserClient();
-      
+
       let query = userClient
         .from('credit_consumption_log')
         .select('*')
@@ -332,7 +314,6 @@ class CreditsService {
       }
 
       return data || [];
-
     } catch (error) {
       logger.error('Failed to get consumption history', {
         userId,

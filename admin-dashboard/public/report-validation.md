@@ -28,21 +28,21 @@
 
 ### 🔮 Drift Risk Analysis
 
-| Node | Drift Risk | Status | Health Score | Last Commit | Recommendations |
-|------|------------|--------|--------------|-------------|-----------------|
-| billing | 🟡 35 | at_risk | 62 | 0d ago | Add last_updated timestamp to metadata |
-| analytics | 🟢 15 | healthy | 67 | 2d ago | Improve health score to 70+ (currently 67) |
-| cost-control | 🟢 15 | healthy | 59 | 2d ago | Improve health score to 70+ (currently 59) |
-| multi-tenant | 🟢 15 | healthy | 67 | 1d ago | Improve health score to 70+ (currently 67) |
-| persona | 🟢 15 | healthy | 67 | 2d ago | Improve health score to 70+ (currently 67) |
-| plan-features | 🟢 15 | healthy | 59 | 2d ago | Improve health score to 70+ (currently 59) |
-| platform-constraints | 🟢 15 | healthy | 59 | 2d ago | Improve health score to 70+ (currently 59) |
-| queue-system | 🟢 15 | healthy | 67 | 0d ago | Improve health score to 70+ (currently 67) |
-| roast | 🟢 15 | healthy | 67 | 2d ago | Improve health score to 70+ (currently 67) |
-| shield | 🟢 15 | healthy | 67 | 2d ago | Improve health score to 70+ (currently 67) |
-| social-platforms | 🟢 15 | healthy | 59 | 1d ago | Improve health score to 70+ (currently 59) |
-| tone | 🟢 15 | healthy | 62 | 2d ago | Improve health score to 70+ (currently 62) |
-| trainer | 🟢 15 | healthy | 64 | 2d ago | Improve health score to 70+ (currently 64) |
+| Node                 | Drift Risk | Status  | Health Score | Last Commit | Recommendations                            |
+| -------------------- | ---------- | ------- | ------------ | ----------- | ------------------------------------------ |
+| billing              | 🟡 35      | at_risk | 62           | 0d ago      | Add last_updated timestamp to metadata     |
+| analytics            | 🟢 15      | healthy | 67           | 2d ago      | Improve health score to 70+ (currently 67) |
+| cost-control         | 🟢 15      | healthy | 59           | 2d ago      | Improve health score to 70+ (currently 59) |
+| multi-tenant         | 🟢 15      | healthy | 67           | 1d ago      | Improve health score to 70+ (currently 67) |
+| persona              | 🟢 15      | healthy | 67           | 2d ago      | Improve health score to 70+ (currently 67) |
+| plan-features        | 🟢 15      | healthy | 59           | 2d ago      | Improve health score to 70+ (currently 59) |
+| platform-constraints | 🟢 15      | healthy | 59           | 2d ago      | Improve health score to 70+ (currently 59) |
+| queue-system         | 🟢 15      | healthy | 67           | 0d ago      | Improve health score to 70+ (currently 67) |
+| roast                | 🟢 15      | healthy | 67           | 2d ago      | Improve health score to 70+ (currently 67) |
+| shield               | 🟢 15      | healthy | 67           | 2d ago      | Improve health score to 70+ (currently 67) |
+| social-platforms     | 🟢 15      | healthy | 59           | 1d ago      | Improve health score to 70+ (currently 59) |
+| tone                 | 🟢 15      | healthy | 62           | 2d ago      | Improve health score to 70+ (currently 62) |
+| trainer              | 🟢 15      | healthy | 64           | 2d ago      | Improve health score to 70+ (currently 64) |
 
 ---
 

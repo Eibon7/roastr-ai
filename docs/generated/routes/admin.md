@@ -25,4 +25,3 @@
 #### POST /api/admin/users/:userId/suspend
 
 #### POST /api/admin/users/:userId/reactivate
-

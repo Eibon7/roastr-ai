@@ -383,8 +383,11 @@ index abc123..def456 100644
       };
 
       // Mock fs.readFileSync to return valid YAML
-      const readSpy = jest.spyOn(fs, 'readFileSync')
-        .mockReturnValueOnce('domains:\n  pricing:\n    files:\n      - src/services/costControl.js\n    protection_level: CRITICAL')
+      const readSpy = jest
+        .spyOn(fs, 'readFileSync')
+        .mockReturnValueOnce(
+          'domains:\n  pricing:\n    files:\n      - src/services/costControl.js\n    protection_level: CRITICAL'
+        )
         .mockReturnValueOnce('ignore_patterns:\n  - "**/*.tmp"');
 
       const result = guardian.loadConfig();
@@ -397,12 +400,11 @@ index abc123..def456 100644
     });
 
     test('should handle missing config file (ENOENT)', () => {
-      const readSpy = jest.spyOn(fs, 'readFileSync')
-        .mockImplementation(() => {
-          const error = new Error('ENOENT: no such file or directory');
-          error.code = 'ENOENT';
-          throw error;
-        });
+      const readSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => {
+        const error = new Error('ENOENT: no such file or directory');
+        error.code = 'ENOENT';
+        throw error;
+      });
 
       const result = guardian.loadConfig();
 
@@ -413,7 +415,8 @@ index abc123..def456 100644
     });
 
     test('should handle malformed YAML (parse error)', () => {
-      const readSpy = jest.spyOn(fs, 'readFileSync')
+      const readSpy = jest
+        .spyOn(fs, 'readFileSync')
         .mockReturnValue('domains:\n  invalid: [unclosed');
 
       const result = guardian.loadConfig();
@@ -425,7 +428,8 @@ index abc123..def456 100644
 
     test('should load ignore patterns when guardian-ignore.yaml exists', () => {
       const existsSpy = jest.spyOn(fs, 'existsSync').mockReturnValue(true);
-      const readSpy = jest.spyOn(fs, 'readFileSync')
+      const readSpy = jest
+        .spyOn(fs, 'readFileSync')
         .mockReturnValueOnce('domains: {}')
         .mockReturnValueOnce('ignore_patterns:\n  - "**/*.tmp"\n  - "C:\\\\Windows\\\\**"');
 
@@ -440,8 +444,7 @@ index abc123..def456 100644
 
     test('should handle missing ignore patterns gracefully', () => {
       const existsSpy = jest.spyOn(fs, 'existsSync').mockReturnValue(false);
-      const readSpy = jest.spyOn(fs, 'readFileSync')
-        .mockReturnValueOnce('domains: {}');
+      const readSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce('domains: {}');
 
       guardian.loadConfig();
 
@@ -455,7 +458,7 @@ index abc123..def456 100644
   describe('Configuration Loading: shouldIgnoreFile()', () => {
     beforeEach(() => {
       guardian.ignorePatterns = [
-        'C:/Windows/**',  // Use forward slashes for cross-platform compatibility
+        'C:/Windows/**', // Use forward slashes for cross-platform compatibility
         'docs/guardian/cases/**',
         '**/*.tmp',
         '**/.gdd-backups/**'
@@ -763,43 +766,71 @@ index abc123..def456 100644
     });
 
     test('should generate different hash for different files', () => {
-      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['pricing']);
-      const key2 = guardian.generateCaseKey(['file2.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['pricing']);
+      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', [
+        'pricing'
+      ]);
+      const key2 = guardian.generateCaseKey(['file2.js'], 'CRITICAL', 'REVIEW_REQUIRED', [
+        'pricing'
+      ]);
 
       expect(key1).not.toBe(key2);
     });
 
     test('should generate different hash for different severity', () => {
-      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['pricing']);
-      const key2 = guardian.generateCaseKey(['file1.js'], 'SENSITIVE', 'REVIEW_REQUIRED', ['pricing']);
+      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', [
+        'pricing'
+      ]);
+      const key2 = guardian.generateCaseKey(['file1.js'], 'SENSITIVE', 'REVIEW_REQUIRED', [
+        'pricing'
+      ]);
 
       expect(key1).not.toBe(key2);
     });
 
     test('should generate different hash for different action', () => {
-      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['pricing']);
+      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', [
+        'pricing'
+      ]);
       const key2 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'APPROVED', ['pricing']);
 
       expect(key1).not.toBe(key2);
     });
 
     test('should generate different hash for different domains', () => {
-      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['pricing']);
+      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', [
+        'pricing'
+      ]);
       const key2 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['auth']);
 
       expect(key1).not.toBe(key2);
     });
 
     test('should sort files before hashing (order-independent)', () => {
-      const key1 = guardian.generateCaseKey(['file1.js', 'file2.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['pricing']);
-      const key2 = guardian.generateCaseKey(['file2.js', 'file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['pricing']);
+      const key1 = guardian.generateCaseKey(
+        ['file1.js', 'file2.js'],
+        'CRITICAL',
+        'REVIEW_REQUIRED',
+        ['pricing']
+      );
+      const key2 = guardian.generateCaseKey(
+        ['file2.js', 'file1.js'],
+        'CRITICAL',
+        'REVIEW_REQUIRED',
+        ['pricing']
+      );
 
       expect(key1).toBe(key2);
     });
 
     test('should sort domains before hashing (order-independent)', () => {
-      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['pricing', 'auth']);
-      const key2 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', ['auth', 'pricing']);
+      const key1 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', [
+        'pricing',
+        'auth'
+      ]);
+      const key2 = guardian.generateCaseKey(['file1.js'], 'CRITICAL', 'REVIEW_REQUIRED', [
+        'auth',
+        'pricing'
+      ]);
 
       expect(key1).toBe(key2);
     });
@@ -818,7 +849,7 @@ index abc123..def456 100644
       const ACTUAL_CASES_DIR = path.join(__dirname, '../../../docs/guardian/cases');
       fs.mkdirSync(ACTUAL_CASES_DIR, { recursive: true });
 
-      const caseId = '2025-11-07-15-48-00-937';  // Fixed timestamp for reproducibility
+      const caseId = '2025-11-07-15-48-00-937'; // Fixed timestamp for reproducibility
       const caseData = {
         case_id: caseId,
         files_changed: ['file1.js'],
@@ -891,10 +922,20 @@ index abc123..def456 100644
 
   describe('Audit & Reporting: generateAuditLog() extended', () => {
     test('should append to existing audit log', () => {
-      guardian.violations.safe.push({ file: 'test.js', domains: ['test'], severity: 'SAFE', added: 1, removed: 0, diff: '' });
+      guardian.violations.safe.push({
+        file: 'test.js',
+        domains: ['test'],
+        severity: 'SAFE',
+        added: 1,
+        removed: 0,
+        diff: ''
+      });
       guardian.changesSummary.domains_affected = new Set(['test']);
 
-      const existsSpy = jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true).mockReturnValue(false);
+      const existsSpy = jest
+        .spyOn(fs, 'existsSync')
+        .mockReturnValueOnce(true)
+        .mockReturnValue(false);
       const appendSpy = jest.spyOn(fs, 'appendFileSync').mockImplementation(() => {});
       const writeSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
       const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
@@ -912,11 +953,20 @@ index abc123..def456 100644
     });
 
     test('should skip duplicate case (deduplication)', () => {
-      guardian.violations.critical.push({ file: 'dup.js', domains: ['test'], severity: 'CRITICAL', added: 1, removed: 0, diff: '' });
+      guardian.violations.critical.push({
+        file: 'dup.js',
+        domains: ['test'],
+        severity: 'CRITICAL',
+        added: 1,
+        removed: 0,
+        diff: ''
+      });
       guardian.changesSummary.domains_affected = new Set(['test']);
 
       // Mock caseExists to return true (duplicate)
-      jest.spyOn(guardian, 'caseExists').mockReturnValue({ exists: true, caseId: 'DUP-001', file: 'dup.json' });
+      jest
+        .spyOn(guardian, 'caseExists')
+        .mockReturnValue({ exists: true, caseId: 'DUP-001', file: 'dup.json' });
 
       const writeSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
       const appendSpy = jest.spyOn(fs, 'appendFileSync').mockImplementation(() => {});
@@ -933,7 +983,14 @@ index abc123..def456 100644
 
     test('should use GITHUB_ACTOR environment variable for actor', () => {
       process.env.GITHUB_ACTOR = 'github-user';
-      guardian.violations.safe.push({ file: 'test.js', domains: [], severity: 'SAFE', added: 1, removed: 0, diff: '' });
+      guardian.violations.safe.push({
+        file: 'test.js',
+        domains: [],
+        severity: 'SAFE',
+        added: 1,
+        removed: 0,
+        diff: ''
+      });
       guardian.changesSummary.domains_affected = new Set();
 
       const existsSpy = jest.spyOn(fs, 'existsSync').mockReturnValue(false);
@@ -968,7 +1025,14 @@ index abc123..def456 100644
     });
 
     test('should call sendNotification for CRITICAL severity', () => {
-      guardian.violations.critical.push({ file: 'critical.js', domains: ['pricing'], severity: 'CRITICAL', added: 1, removed: 0, diff: '' });
+      guardian.violations.critical.push({
+        file: 'critical.js',
+        domains: ['pricing'],
+        severity: 'CRITICAL',
+        added: 1,
+        removed: 0,
+        diff: ''
+      });
       guardian.changesSummary.domains_affected = new Set(['pricing']);
 
       const sendSpy = jest.spyOn(guardian, 'sendNotification').mockImplementation(() => {});
@@ -991,7 +1055,14 @@ index abc123..def456 100644
     });
 
     test('should not call sendNotification for SAFE severity', () => {
-      guardian.violations.safe.push({ file: 'safe.js', domains: [], severity: 'SAFE', added: 1, removed: 0, diff: '' });
+      guardian.violations.safe.push({
+        file: 'safe.js',
+        domains: [],
+        severity: 'SAFE',
+        added: 1,
+        removed: 0,
+        diff: ''
+      });
       guardian.changesSummary.domains_affected = new Set();
 
       const sendSpy = jest.spyOn(guardian, 'sendNotification').mockImplementation(() => {});
@@ -1038,7 +1109,12 @@ index abc123..def456 100644
     });
 
     test('should include critical violations section', () => {
-      guardian.violations.critical.push({ file: 'critical.js', domains: ['pricing'], added: 10, removed: 5 });
+      guardian.violations.critical.push({
+        file: 'critical.js',
+        domains: ['pricing'],
+        added: 10,
+        removed: 5
+      });
       guardian.changesSummary.domains_affected = new Set(['pricing']);
 
       const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
@@ -1054,7 +1130,12 @@ index abc123..def456 100644
     });
 
     test('should include sensitive violations section', () => {
-      guardian.violations.sensitive.push({ file: 'sensitive.js', domains: ['auth'], added: 3, removed: 1 });
+      guardian.violations.sensitive.push({
+        file: 'sensitive.js',
+        domains: ['auth'],
+        added: 3,
+        removed: 1
+      });
       guardian.changesSummary.domains_affected = new Set(['auth']);
 
       const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
@@ -1070,7 +1151,12 @@ index abc123..def456 100644
     });
 
     test('should show BLOCK recommendation for critical violations', () => {
-      guardian.violations.critical.push({ file: 'block.js', domains: ['pricing'], added: 1, removed: 0 });
+      guardian.violations.critical.push({
+        file: 'block.js',
+        domains: ['pricing'],
+        added: 1,
+        removed: 0
+      });
 
       const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
       const writeSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation((_path, content) => {
@@ -1085,7 +1171,12 @@ index abc123..def456 100644
     });
 
     test('should show MANUAL REVIEW recommendation for sensitive violations', () => {
-      guardian.violations.sensitive.push({ file: 'review.js', domains: ['auth'], added: 1, removed: 0 });
+      guardian.violations.sensitive.push({
+        file: 'review.js',
+        domains: ['auth'],
+        added: 1,
+        removed: 0
+      });
 
       const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
       const writeSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation((_path, content) => {

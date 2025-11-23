@@ -34,6 +34,7 @@ Reemplazar `#XXX` con el número real de issue.
 ### Paso 3: Pegar en Cursor Chat
 
 El sistema ejecutará automáticamente:
+
 - ✅ FASE 0: Auto-activación GDD
 - ✅ FASE 1: Planning (si AC ≥3)
 - ✅ FASE 2: Detección de agents
@@ -103,4 +104,3 @@ Antes de crear PR, verificar:
 El sistema está **100% operativo**. Solo copia el prompt y empieza a trabajar.
 
 **Calidad > Velocidad. Producto monetizable.**
-

@@ -4,14 +4,14 @@ const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Fetch Comments Worker
- * 
+ *
  * Responsible for fetching comments from various platforms:
  * - Twitter mentions and replies
  * - YouTube video comments
  * - Instagram post comments
  * - Discord server messages
  * - Other social media platforms
- * 
+ *
  * This worker operates at high frequency and handles platform-specific
  * API calls while respecting rate limits and cost controls.
  */
@@ -23,16 +23,16 @@ class FetchCommentsWorker extends BaseWorker {
       maxRetries: 2, // Quick fail for fetch operations
       ...options
     });
-    
+
     this.costControl = new CostControlService();
     this.platformClients = new Map();
     this.platformServices = new Map();
     this._integrationConfigOverride = null;
-    
+
     // Initialize platform clients
     this.initializePlatformClients();
   }
-  
+
   /**
    * Get worker-specific health details
    */
@@ -42,34 +42,34 @@ class FetchCommentsWorker extends BaseWorker {
       rateLimits: {},
       lastFetchCounts: {}
     };
-    
+
     // Check each platform client status
     for (const [platform, client] of this.platformClients.entries()) {
       details.platformClients[platform] = {
         initialized: !!client,
         status: client ? 'available' : 'not configured'
       };
-      
+
       // Add rate limit info if available
       if (this.rateLimitInfo && this.rateLimitInfo[platform]) {
         details.rateLimits[platform] = this.rateLimitInfo[platform];
       }
-      
+
       // Add last fetch counts if available
       if (this.lastFetchCounts && this.lastFetchCounts[platform]) {
         details.lastFetchCounts[platform] = this.lastFetchCounts[platform];
       }
     }
-    
+
     // Add cost control status
     details.costControl = {
       enabled: !!this.costControl,
       lastCheck: this.lastCostCheckTime || null
     };
-    
+
     return details;
   }
-  
+
   /**
    * Initialize clients for different platforms
    */
@@ -77,14 +77,17 @@ class FetchCommentsWorker extends BaseWorker {
     // Twitter client
     if (process.env.TWITTER_BEARER_TOKEN) {
       const { TwitterApi } = require('twitter-api-v2');
-      this.platformClients.set('twitter', new TwitterApi(process.env.TWITTER_BEARER_TOKEN, {
-        appKey: process.env.TWITTER_APP_KEY,
-        appSecret: process.env.TWITTER_APP_SECRET,
-        accessToken: process.env.TWITTER_ACCESS_TOKEN,
-        accessSecret: process.env.TWITTER_ACCESS_SECRET
-      }));
+      this.platformClients.set(
+        'twitter',
+        new TwitterApi(process.env.TWITTER_BEARER_TOKEN, {
+          appKey: process.env.TWITTER_APP_KEY,
+          appSecret: process.env.TWITTER_APP_SECRET,
+          accessToken: process.env.TWITTER_ACCESS_TOKEN,
+          accessSecret: process.env.TWITTER_ACCESS_SECRET
+        })
+      );
     }
-    
+
     // YouTube client
     if (process.env.YOUTUBE_API_KEY) {
       const { google } = require('googleapis');
@@ -94,7 +97,7 @@ class FetchCommentsWorker extends BaseWorker {
       });
       this.platformClients.set('youtube', youtube);
     }
-    
+
     // Bluesky client
     if (process.env.BLUESKY_HANDLE && process.env.BLUESKY_PASSWORD) {
       // Note: Bluesky client would be initialized here
@@ -102,14 +105,14 @@ class FetchCommentsWorker extends BaseWorker {
       // this.platformClients.set('bluesky', new BlueskyClient(...));
       this.log('info', 'Bluesky client configuration detected (implementation pending)');
     }
-    
+
     // Instagram client
     if (process.env.INSTAGRAM_ACCESS_TOKEN) {
       // Note: Instagram Basic Display API client
       this.log('info', 'Instagram client configuration detected (implementation pending)');
     }
   }
-  
+
   /**
    * Internal process fetch job (called by retry wrapper)
    */
@@ -122,7 +125,8 @@ class FetchCommentsWorker extends BaseWorker {
     // 2. In job.payload (job.payload.organization_id)
     const organization_id = job.organization_id || (job.payload && job.payload.organization_id);
     const platform = job.platform || (job.payload && job.payload.platform);
-    const integration_config_id = job.integration_config_id || (job.payload && job.payload.integration_config_id);
+    const integration_config_id =
+      job.integration_config_id || (job.payload && job.payload.integration_config_id);
 
     // Log job start with correlation context (Issue #417)
     advancedLogger.logJobLifecycle(this.workerName, job.id, 'started', {
@@ -139,13 +143,20 @@ class FetchCommentsWorker extends BaseWorker {
     // 3. job itself - for tests that put everything at root level
     let platformPayload;
     if (job.payload && job.payload.payload) {
-      platformPayload = job.payload.payload;  // Nested structure
-    } else if (job.payload && (job.payload.video_ids || job.payload.since_id || job.payload.test_case || job.payload.scenario || job.payload.comment_data)) {
-      platformPayload = job.payload;  // Direct payload structure
+      platformPayload = job.payload.payload; // Nested structure
+    } else if (
+      job.payload &&
+      (job.payload.video_ids ||
+        job.payload.since_id ||
+        job.payload.test_case ||
+        job.payload.scenario ||
+        job.payload.comment_data)
+    ) {
+      platformPayload = job.payload; // Direct payload structure
     } else if (job.video_ids || job.since_id || job.test_case || job.scenario || job.comment_data) {
-      platformPayload = job;  // Root level structure (legacy tests)
+      platformPayload = job; // Root level structure (legacy tests)
     } else {
-      platformPayload = job.payload || job;  // Default fallback
+      platformPayload = job.payload || job; // Default fallback
     }
 
     // Check cost control limits with enhanced tracking
@@ -183,10 +194,9 @@ class FetchCommentsWorker extends BaseWorker {
       : Array.isArray(fetchResult?.comments)
         ? fetchResult.comments
         : [];
-    const metadata = typeof fetchResult === 'object' && !Array.isArray(fetchResult)
-      ? fetchResult
-      : {};
-    
+    const metadata =
+      typeof fetchResult === 'object' && !Array.isArray(fetchResult) ? fetchResult : {};
+
     // Process and store comments
     const storedComments = await this.storeComments(
       organization_id,
@@ -194,7 +204,7 @@ class FetchCommentsWorker extends BaseWorker {
       platform,
       commentsArray
     );
-    
+
     // Record usage with enhanced tracking
     await this.costControl.recordUsage(
       organization_id,
@@ -210,7 +220,7 @@ class FetchCommentsWorker extends BaseWorker {
       null, // userId - not applicable for comment fetching
       storedComments.length // quantity - number of comments fetched
     );
-    
+
     // Queue analysis jobs for new comments
     await this.queueAnalysisJobs(organization_id, storedComments, correlationId);
 
@@ -231,16 +241,22 @@ class FetchCommentsWorker extends BaseWorker {
     };
 
     // Log job completion with correlation context (Issue #417)
-    advancedLogger.logJobLifecycle(this.workerName, job.id, 'completed', {
-      correlationId,
-      tenantId: organization_id,
-      platform,
-      commentsCount: storedComments.length
-    }, result);
+    advancedLogger.logJobLifecycle(
+      this.workerName,
+      job.id,
+      'completed',
+      {
+        correlationId,
+        tenantId: organization_id,
+        platform,
+        commentsCount: storedComments.length
+      },
+      result
+    );
 
     return result;
   }
-  
+
   /**
    * Get integration configuration from database
    */
@@ -250,17 +266,16 @@ class FetchCommentsWorker extends BaseWorker {
     }
 
     try {
-    const { data: config, error } = await this.supabase
-      .from('integration_configs')
-      .select('*')
-      .eq('organization_id', organizationId)
-      .eq('platform', platform)
-      .eq('id', configId)
-      .single();
-      
+      const { data: config, error } = await this.supabase
+        .from('integration_configs')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('platform', platform)
+        .eq('id', configId)
+        .single();
+
       if (error) throw error;
       return config;
-      
     } catch (error) {
       this.log('error', 'Failed to get integration config', {
         organizationId,
@@ -271,7 +286,7 @@ class FetchCommentsWorker extends BaseWorker {
       throw error;
     }
   }
-  
+
   /**
    * Fetch comments from specific platform
    */
@@ -282,11 +297,11 @@ class FetchCommentsWorker extends BaseWorker {
     }
 
     const platformClient = this.platformClients.get(platform);
-    
+
     if (!platformClient) {
       throw new Error(`Unsupported platform: ${platform}`);
     }
-    
+
     switch (platform) {
       case 'twitter':
         return await this.fetchTwitterComments(platformClient, config, payload);
@@ -300,7 +315,7 @@ class FetchCommentsWorker extends BaseWorker {
         throw new Error(`Unsupported platform: ${platform}`);
     }
   }
-  
+
   /**
    * Fetch Twitter mentions and replies
    */
@@ -313,15 +328,16 @@ class FetchCommentsWorker extends BaseWorker {
         expansions: ['author_id'],
         since_id: payload.since_id
       });
-      
+
       const comments = [];
-      
+
       for (const tweet of mentions.data?.data || []) {
         comments.push({
           platform: 'twitter',
           platform_comment_id: tweet.id,
           platform_user_id: tweet.author_id,
-          platform_username: mentions.includes?.users?.find(u => u.id === tweet.author_id)?.username,
+          platform_username: mentions.includes?.users?.find((u) => u.id === tweet.author_id)
+            ?.username,
           original_text: tweet.text,
           metadata: {
             created_at: tweet.created_at,
@@ -330,15 +346,14 @@ class FetchCommentsWorker extends BaseWorker {
           }
         });
       }
-      
+
       return comments;
-      
     } catch (error) {
       this.log('error', 'Failed to fetch Twitter comments', { error: error.message });
       throw new Error(`Twitter API error: ${error.message}`);
     }
   }
-  
+
   /**
    * Fetch YouTube video comments
    */
@@ -346,7 +361,7 @@ class FetchCommentsWorker extends BaseWorker {
     try {
       const videoIds = payload.video_ids || config.config.monitored_videos || [];
       const comments = [];
-      
+
       for (const videoId of videoIds) {
         try {
           const response = await client.commentThreads.list({
@@ -355,10 +370,10 @@ class FetchCommentsWorker extends BaseWorker {
             maxResults: 20,
             order: 'time'
           });
-          
+
           for (const thread of response.data.items || []) {
             const comment = thread.snippet.topLevelComment.snippet;
-            
+
             comments.push({
               platform: 'youtube',
               platform_comment_id: thread.id,
@@ -373,7 +388,6 @@ class FetchCommentsWorker extends BaseWorker {
               }
             });
           }
-          
         } catch (videoError) {
           this.log('warn', 'Failed to fetch comments for video', {
             videoId,
@@ -381,15 +395,14 @@ class FetchCommentsWorker extends BaseWorker {
           });
         }
       }
-      
+
       return comments;
-      
     } catch (error) {
       this.log('error', 'Failed to fetch YouTube comments', { error: error.message });
       throw new Error(`YouTube API error: ${error.message}`);
     }
   }
-  
+
   /**
    * Fetch Bluesky posts and replies
    */
@@ -405,7 +418,7 @@ class FetchCommentsWorker extends BaseWorker {
     this.log('info', 'Instagram comment fetching not yet implemented');
     return [];
   }
-  
+
   /**
    * Store comments in database
    */
@@ -428,19 +441,17 @@ class FetchCommentsWorker extends BaseWorker {
         }
 
         // Insert new comment
-        const insertQuery = await this.supabase
-          .from('comments')
-          .insert({
-            organization_id: organizationId,
-            integration_config_id: integrationConfigId,
-            platform: comment.platform,
-            platform_comment_id: comment.platform_comment_id,
-            platform_user_id: comment.platform_user_id,
-            platform_username: comment.platform_username,
-            original_text: comment.original_text,
-            metadata: comment.metadata,
-            status: 'pending'
-          });
+        const insertQuery = await this.supabase.from('comments').insert({
+          organization_id: organizationId,
+          integration_config_id: integrationConfigId,
+          platform: comment.platform,
+          platform_comment_id: comment.platform_comment_id,
+          platform_user_id: comment.platform_user_id,
+          platform_username: comment.platform_username,
+          original_text: comment.original_text,
+          metadata: comment.metadata,
+          status: 'pending'
+        });
 
         let stored;
         let insertError;
@@ -463,7 +474,6 @@ class FetchCommentsWorker extends BaseWorker {
         }
 
         storedComments.push(stored || comment);
-        
       } catch (error) {
         this.log('warn', 'Error processing comment', {
           commentId: comment.platform_comment_id,
@@ -471,15 +481,15 @@ class FetchCommentsWorker extends BaseWorker {
         });
       }
     }
-    
+
     return storedComments;
   }
-  
+
   /**
    * Queue analysis jobs for new comments
    */
   async queueAnalysisJobs(organizationId, comments, correlationId) {
-    const analysisJobs = comments.map(comment => ({
+    const analysisJobs = comments.map((comment) => ({
       organization_id: organizationId,
       job_type: 'analyze_toxicity',
       priority: 5, // Normal priority for analysis
@@ -492,40 +502,36 @@ class FetchCommentsWorker extends BaseWorker {
       },
       max_attempts: 3
     }));
-    
+
     if (analysisJobs.length === 0) return;
-    
+
     try {
       if (this.redis) {
         // Use Redis queue for better performance
         const pipeline = this.redis.pipeline();
-        
+
         for (const job of analysisJobs) {
           pipeline.rpush('roastr:jobs:analyze_toxicity', JSON.stringify(job));
         }
-        
+
         await pipeline.exec();
-        
       } else if (this.queueService && typeof this.queueService.addJob === 'function') {
         await Promise.all(
-          analysisJobs.map(job =>
+          analysisJobs.map((job) =>
             this.queueService.addJob(job.job_type, job.payload, job.priority)
           )
         );
       } else {
         // Use database queue as fallback
-        const { error } = await this.supabase
-          .from('job_queue')
-          .insert(analysisJobs);
-        
+        const { error } = await this.supabase.from('job_queue').insert(analysisJobs);
+
         if (error) throw error;
       }
-      
+
       this.log('info', 'Queued analysis jobs', {
         count: analysisJobs.length,
         organizationId
       });
-      
     } catch (error) {
       this.log('error', 'Failed to queue analysis jobs', {
         count: analysisJobs.length,
@@ -566,16 +572,14 @@ class FetchCommentsWorker extends BaseWorker {
       return { stored: false, duplicate: true };
     }
 
-    const { error: insertError } = await this.supabase
-      .from('comments')
-      .insert({
-        organization_id: organizationId,
-        platform,
-        platform_comment_id: comment.id,
-        platform_user_id: comment.author_id,
-        original_text: comment.text,
-        metadata: comment.metadata || {}
-      });
+    const { error: insertError } = await this.supabase.from('comments').insert({
+      organization_id: organizationId,
+      platform,
+      platform_comment_id: comment.id,
+      platform_user_id: comment.author_id,
+      original_text: comment.text,
+      metadata: comment.metadata || {}
+    });
 
     if (insertError) {
       throw insertError;

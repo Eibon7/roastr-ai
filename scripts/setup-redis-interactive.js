@@ -2,9 +2,9 @@
 
 /**
  * Interactive Redis Setup Script
- * 
+ *
  * Helps configure Redis/Upstash step by step
- * 
+ *
  * Usage:
  *   node scripts/setup-redis-interactive.js
  */
@@ -79,7 +79,6 @@ async function setupRedis() {
 
     redisUrl = await question('\nPega UPSTASH_REDIS_REST_URL (https://xxxxx.upstash.io): ');
     redisToken = await question('Pega UPSTASH_REDIS_REST_TOKEN: ');
-
   } else if (providerChoice === '2') {
     // Redis Local
     console.log('\n📋 Configuración Redis Local:\n');
@@ -94,13 +93,14 @@ async function setupRedis() {
       return;
     }
 
-    redisUrl = await question('\nRedis URL (default: redis://localhost:6379): ') || 'redis://localhost:6379';
+    redisUrl =
+      (await question('\nRedis URL (default: redis://localhost:6379): ')) ||
+      'redis://localhost:6379';
     redisToken = null; // No token for local Redis
-
   } else if (providerChoice === '3') {
     // Manual
     redisUrl = await question('\nRedis URL: ');
-    redisToken = await question('Redis Token/Password (opcional para Redis local): ') || null;
+    redisToken = (await question('Redis Token/Password (opcional para Redis local): ')) || null;
   } else {
     console.log('\n❌ Opción inválida');
     rl.close();
@@ -174,7 +174,6 @@ async function setupRedis() {
     console.log('   1. Reinicia workers: npm run workers:start');
     console.log('   2. Verifica estado: npm run workers:status');
     console.log('   3. Deberías ver "Redis: ✅ Available"\n');
-
   } catch (error) {
     console.error('❌ Error en verificación final:', error.message);
     console.log('\n⚠️  Revisa la configuración manualmente.\n');
@@ -220,9 +219,8 @@ async function verifyConnection(redisUrl, redisToken) {
   }
 }
 
-setupRedis().catch(error => {
+setupRedis().catch((error) => {
   console.error('❌ Error fatal:', error);
   rl.close();
   process.exit(1);
 });
-

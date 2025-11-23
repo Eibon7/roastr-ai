@@ -5,13 +5,8 @@
     "analytics": {
       "drift_risk": 5,
       "status": "healthy",
-      "factors": [
-        "+15 pts: Coverage 60% (<80%)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Increase test coverage to 80%+ (currently 60%)"
-      ],
+      "factors": ["+15 pts: Coverage 60% (<80%)", "-10 pts: Recent commit (0 days ago)"],
+      "recommendations": ["Increase test coverage to 80%+ (currently 60%)"],
       "git_activity": {
         "commits_last_30d": 3,
         "last_commit_days_ago": 0
@@ -22,13 +17,8 @@
     "billing": {
       "drift_risk": 5,
       "status": "healthy",
-      "factors": [
-        "+15 pts: Coverage 65% (<80%)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Increase test coverage to 80%+ (currently 65%)"
-      ],
+      "factors": ["+15 pts: Coverage 65% (<80%)", "-10 pts: Recent commit (0 days ago)"],
+      "recommendations": ["Increase test coverage to 80%+ (currently 65%)"],
       "git_activity": {
         "commits_last_30d": 8,
         "last_commit_days_ago": 0
@@ -39,13 +29,8 @@
     "cost-control": {
       "drift_risk": 5,
       "status": "healthy",
-      "factors": [
-        "+15 pts: Coverage 68% (<80%)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Increase test coverage to 80%+ (currently 68%)"
-      ],
+      "factors": ["+15 pts: Coverage 68% (<80%)", "-10 pts: Recent commit (0 days ago)"],
+      "recommendations": ["Increase test coverage to 80%+ (currently 68%)"],
       "git_activity": {
         "commits_last_30d": 3,
         "last_commit_days_ago": 0
@@ -56,13 +41,8 @@
     "multi-tenant": {
       "drift_risk": 5,
       "status": "healthy",
-      "factors": [
-        "+15 pts: Coverage 72% (<80%)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Increase test coverage to 80%+ (currently 72%)"
-      ],
+      "factors": ["+15 pts: Coverage 72% (<80%)", "-10 pts: Recent commit (0 days ago)"],
+      "recommendations": ["Increase test coverage to 80%+ (currently 72%)"],
       "git_activity": {
         "commits_last_30d": 6,
         "last_commit_days_ago": 0
@@ -73,13 +53,8 @@
     "persona": {
       "drift_risk": 5,
       "status": "healthy",
-      "factors": [
-        "+15 pts: Coverage 75% (<80%)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Increase test coverage to 80%+ (currently 75%)"
-      ],
+      "factors": ["+15 pts: Coverage 75% (<80%)", "-10 pts: Recent commit (0 days ago)"],
+      "recommendations": ["Increase test coverage to 80%+ (currently 75%)"],
       "git_activity": {
         "commits_last_30d": 3,
         "last_commit_days_ago": 0
@@ -90,13 +65,8 @@
     "plan-features": {
       "drift_risk": 5,
       "status": "healthy",
-      "factors": [
-        "+15 pts: Coverage 70% (<80%)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Increase test coverage to 80%+ (currently 70%)"
-      ],
+      "factors": ["+15 pts: Coverage 70% (<80%)", "-10 pts: Recent commit (0 days ago)"],
+      "recommendations": ["Increase test coverage to 80%+ (currently 70%)"],
       "git_activity": {
         "commits_last_30d": 3,
         "last_commit_days_ago": 0
@@ -107,9 +77,7 @@
     "platform-constraints": {
       "drift_risk": 0,
       "status": "healthy",
-      "factors": [
-        "-10 pts: Recent commit (0 days ago)"
-      ],
+      "factors": ["-10 pts: Recent commit (0 days ago)"],
       "recommendations": [],
       "git_activity": {
         "commits_last_30d": 3,
@@ -121,9 +89,7 @@
     "queue-system": {
       "drift_risk": 0,
       "status": "healthy",
-      "factors": [
-        "-10 pts: Recent commit (0 days ago)"
-      ],
+      "factors": ["-10 pts: Recent commit (0 days ago)"],
       "recommendations": [],
       "git_activity": {
         "commits_last_30d": 6,
@@ -135,9 +101,7 @@
     "roast": {
       "drift_risk": 0,
       "status": "healthy",
-      "factors": [
-        "-10 pts: Recent commit (0 days ago)"
-      ],
+      "factors": ["-10 pts: Recent commit (0 days ago)"],
       "recommendations": [],
       "git_activity": {
         "commits_last_30d": 4,
@@ -149,13 +113,8 @@
     "shield": {
       "drift_risk": 5,
       "status": "healthy",
-      "factors": [
-        "+15 pts: Coverage 78% (<80%)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Increase test coverage to 80%+ (currently 78%)"
-      ],
+      "factors": ["+15 pts: Coverage 78% (<80%)", "-10 pts: Recent commit (0 days ago)"],
+      "recommendations": ["Increase test coverage to 80%+ (currently 78%)"],
       "git_activity": {
         "commits_last_30d": 4,
         "last_commit_days_ago": 0
@@ -166,9 +125,7 @@
     "social-platforms": {
       "drift_risk": 0,
       "status": "healthy",
-      "factors": [
-        "-10 pts: Recent commit (0 days ago)"
-      ],
+      "factors": ["-10 pts: Recent commit (0 days ago)"],
       "recommendations": [],
       "git_activity": {
         "commits_last_30d": 8,
@@ -180,13 +137,8 @@
     "tone": {
       "drift_risk": 5,
       "status": "healthy",
-      "factors": [
-        "+15 pts: Coverage 73% (<80%)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Increase test coverage to 80%+ (currently 73%)"
-      ],
+      "factors": ["+15 pts: Coverage 73% (<80%)", "-10 pts: Recent commit (0 days ago)"],
+      "recommendations": ["Increase test coverage to 80%+ (currently 73%)"],
       "git_activity": {
         "commits_last_30d": 4,
         "last_commit_days_ago": 0
@@ -197,13 +149,8 @@
     "trainer": {
       "drift_risk": 5,
       "status": "healthy",
-      "factors": [
-        "+15 pts: Coverage 45% (<80%)",
-        "-10 pts: Recent commit (0 days ago)"
-      ],
-      "recommendations": [
-        "Increase test coverage to 80%+ (currently 45%)"
-      ],
+      "factors": ["+15 pts: Coverage 45% (<80%)", "-10 pts: Recent commit (0 days ago)"],
+      "recommendations": ["Increase test coverage to 80%+ (currently 45%)"],
       "git_activity": {
         "commits_last_30d": 3,
         "last_commit_days_ago": 0

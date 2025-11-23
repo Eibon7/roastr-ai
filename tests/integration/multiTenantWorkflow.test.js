@@ -1,8 +1,8 @@
 /**
  * Multi-Tenant Architecture Integration Tests
- * 
+ *
  * End-to-end tests for the complete comment processing workflow
- * 
+ *
  * See docs/testing/E2E-REQUIREMENTS.md for infrastructure requirements.
  */
 
@@ -30,7 +30,7 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
   let queueService;
   let costControl;
   let shieldService;
-  
+
   const testOrganization = {
     id: 'test-org-123',
     plan_id: 'pro',
@@ -160,18 +160,14 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
       const limitedOrgId = 'test-org-limited';
 
       // Mock organization at limit
-      jest.spyOn(costControl, 'canPerformOperation')
-        .mockResolvedValue({
-          allowed: false,
-          reason: 'monthly_limit_exceeded',
-          currentUsage: 100,
-          limit: 100
-        });
+      jest.spyOn(costControl, 'canPerformOperation').mockResolvedValue({
+        allowed: false,
+        reason: 'monthly_limit_exceeded',
+        currentUsage: 100,
+        limit: 100
+      });
 
-      const canGenerate = await costControl.canPerformOperation(
-        limitedOrgId,
-        'generate_reply'
-      );
+      const canGenerate = await costControl.canPerformOperation(limitedOrgId, 'generate_reply');
 
       expect(canGenerate.allowed).toBe(false);
       expect(canGenerate.reason).toBe('monthly_limit_exceeded');
@@ -209,13 +205,9 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
       }
 
       // Mock repeat offender behavior
-      jest.spyOn(shieldService, 'getUserRiskLevel')
-        .mockResolvedValue('high');
+      jest.spyOn(shieldService, 'getUserRiskLevel').mockResolvedValue('high');
 
-      const analysis = await shieldService.analyzeContent(
-        highToxicityContent,
-        repeatOffender
-      );
+      const analysis = await shieldService.analyzeContent(highToxicityContent, repeatOffender);
 
       expect(analysis.shouldTakeAction).toBe(true);
       expect(analysis.actionLevel).toBe('high');
@@ -256,11 +248,11 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
       }
 
       // All jobs should be queued successfully
-      expect(results.every(r => r.success)).toBe(true);
+      expect(results.every((r) => r.success)).toBe(true);
 
       // Shield action should have highest priority
       const stats = await queueService.getQueueStats();
-      
+
       if (stats.redisStats) {
         const shieldQueue = stats.redisStats.queues.shield_action;
         expect(shieldQueue.byPriority[1]).toBeGreaterThan(0); // Priority 1 has jobs
@@ -282,7 +274,7 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
 
       const job2 = await queueService.addJob('fetch_comments', {
         organization_id: org2,
-        platform: 'twitter', 
+        platform: 'twitter',
         payload: { post_id: 'tweet-org2' }
       });
 
@@ -298,13 +290,12 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
       const proOrgId = 'test-org-pro';
 
       // Mock different plan types
-      jest.spyOn(costControl, 'canUseShield')
-        .mockImplementation(async (orgId) => {
-          if (orgId === freeOrgId) {
-            return { allowed: false, planId: 'free', planName: 'Free' };
-          }
-          return { allowed: true, planId: 'pro', planName: 'Pro' };
-        });
+      jest.spyOn(costControl, 'canUseShield').mockImplementation(async (orgId) => {
+        if (orgId === freeOrgId) {
+          return { allowed: false, planId: 'free', planName: 'Free' };
+        }
+        return { allowed: true, planId: 'pro', planName: 'Pro' };
+      });
 
       const freeAccess = await costControl.canUseShield(freeOrgId);
       const proAccess = await costControl.canUseShield(proOrgId);
@@ -379,8 +370,8 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
       const processingTime = endTime - startTime;
 
       // All jobs should be processed successfully
-      expect(results.every(r => r.success)).toBe(true);
-      
+      expect(results.every((r) => r.success)).toBe(true);
+
       // Should process reasonably quickly (less than 5 seconds for 10 jobs)
       expect(processingTime).toBeLessThan(5000);
 
@@ -395,7 +386,7 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
       expect(stats.timestamp).toBeDefined();
       expect(typeof stats.redis).toBe('boolean');
       expect(typeof stats.database).toBe('boolean');
-      
+
       if (stats.redisStats) {
         expect(stats.redisStats.total).toBeGreaterThanOrEqual(0);
         expect(stats.redisStats.queues).toBeDefined();
@@ -414,24 +405,20 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
       }
 
       const orgId = testOrganization.id;
-      
-      // Mock usage recording
-      jest.spyOn(costControl, 'recordUsage')
-        .mockResolvedValue({
-          recorded: true,
-          cost: 5,
-          usage: {
-            tokens: 25,
-            operation: 'generate_reply'
-          }
-        });
 
-      const result = await costControl.recordUsage(
-        orgId,
-        'twitter',
-        'generate_reply',
-        { tokensUsed: 25 }
-      );
+      // Mock usage recording
+      jest.spyOn(costControl, 'recordUsage').mockResolvedValue({
+        recorded: true,
+        cost: 5,
+        usage: {
+          tokens: 25,
+          operation: 'generate_reply'
+        }
+      });
+
+      const result = await costControl.recordUsage(orgId, 'twitter', 'generate_reply', {
+        tokensUsed: 25
+      });
 
       expect(result.recorded).toBe(true);
       expect(result.cost).toBe(5);
@@ -441,7 +428,7 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
 
 // Helper function to wait for async operations
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // Clean up test data (if needed)

@@ -12,18 +12,21 @@
 ## Estado Actual
 
 ### Existing RLS Test Coverage
+
 - **File:** `tests/integration/multi-tenant-rls-issue-504-direct.test.js`
 - **Status:** ✅ 17/17 tests passing (100%)
 - **Coverage:** SELECT operations only across 9 tables
 - **Gap:** INSERT/UPDATE/DELETE operations not tested
 
 ### Test Infrastructure
+
 - ✅ Helper utilities exist: `tests/helpers/tenantTestUtils.js`
 - ✅ JWT context switching implemented: `setTenantContext()`
 - ✅ Two-client architecture: service client (RLS bypass) + anon client (RLS enforced)
 - ✅ Test data seeding: 9 tables with tenant A/B isolation
 
 ### Tables Currently Tested (SELECT only)
+
 1. `comments` - Platform comments
 2. `responses` - Generated roast responses
 3. `integration_configs` ⚠️ SECURITY CRITICAL
@@ -39,10 +42,12 @@
 ## Pasos de Implementación
 
 ### Step 1: Extend Existing Test File ✅ RECOMMENDED
+
 **File:** `tests/integration/multi-tenant-rls-issue-504-direct.test.js`
 **Action:** Add 3 new test suites for INSERT/UPDATE/DELETE operations
 
 **Rationale:**
+
 - Keeps related tests together
 - Reuses existing setup/cleanup infrastructure
 - Follows existing patterns
@@ -52,9 +57,11 @@
 ---
 
 ### Step 2: Implement INSERT Operation Tests
+
 **Test Suite:** `AC4: INSERT Operations RLS Enforcement`
 
 **Tables Priority:**
+
 1. **HIGH** (Security/Billing):
    - `integration_configs` - Credential isolation
    - `usage_records` - Billing data isolation
@@ -69,11 +76,13 @@
    - `user_activities`
 
 **Test Cases per Table:**
+
 1. ✅ Own org INSERT succeeds
 2. ❌ Cross-tenant INSERT fails with error code '42501'
 3. ❌ Invalid organization_id INSERT fails
 
 **Expected Behavior:**
+
 ```javascript
 // Success case
 const { data, error } = await testClient
@@ -101,14 +110,17 @@ expect(data).toBeNull();
 ---
 
 ### Step 3: Implement UPDATE Operation Tests
+
 **Test Suite:** `AC5: UPDATE Operations RLS Enforcement`
 
 **Test Cases per Table:**
+
 1. ✅ Own org UPDATE succeeds
 2. ❌ Cross-tenant UPDATE fails with error code '42501'
 3. ❌ Attempt to change organization_id fails
 
 **Expected Behavior:**
+
 ```javascript
 // Success case
 const { data, error } = await testClient
@@ -137,27 +149,24 @@ expect(data).toEqual([]); // RLS blocks
 ---
 
 ### Step 4: Implement DELETE Operation Tests
+
 **Test Suite:** `AC6: DELETE Operations RLS Enforcement`
 
 **Test Cases per Table:**
+
 1. ✅ Own org DELETE succeeds
 2. ❌ Cross-tenant DELETE fails with error code '42501'
 
 **Expected Behavior:**
+
 ```javascript
 // Success case
-const { error } = await testClient
-  .from('comments')
-  .delete()
-  .eq('id', tenantA.comments[0].id);
+const { error } = await testClient.from('comments').delete().eq('id', tenantA.comments[0].id);
 
 expect(error).toBeNull();
 
 // Failure case (cross-tenant)
-const { error } = await testClient
-  .from('comments')
-  .delete()
-  .eq('id', tenantB.comments[0].id);
+const { error } = await testClient.from('comments').delete().eq('id', tenantB.comments[0].id);
 
 expect(error).not.toBeNull();
 expect(error.code).toBe('42501');
@@ -168,9 +177,11 @@ expect(error.code).toBe('42501');
 ---
 
 ### Step 5: Cross-Tenant Isolation Verification
+
 **Test Suite:** `AC7: Bidirectional Write Isolation`
 
 **Test Cases:**
+
 1. ❌ Tenant A cannot INSERT for Tenant B
 2. ❌ Tenant B cannot INSERT for Tenant A
 3. ❌ Tenant A cannot UPDATE Tenant B data
@@ -183,6 +194,7 @@ expect(error.code).toBe('42501');
 ---
 
 ### Step 6: Documentation Updates
+
 **Files to Update:**
 
 1. **Test Evidence:** Create `docs/test-evidence/issue-801/rls-crud-validation.md`
@@ -205,14 +217,17 @@ expect(error.code).toBe('42501');
 ## Archivos a Modificar
 
 ### Core Implementation
+
 1. `tests/integration/multi-tenant-rls-issue-504-direct.test.js` - Add 3 new test suites
 
 ### Documentation
+
 1. `docs/test-evidence/issue-801/rls-crud-validation.md` - NEW
 2. `docs/nodes/multi-tenant.md` - Update with CRUD testing info
 3. `README.md` or `docs/TESTING-GUIDE.md` - Add RLS test documentation
 
 ### Agent Receipts (MANDATORY)
+
 1. `docs/agents/receipts/<pr>-TestEngineer.md` - Test implementation receipt
 2. `docs/agents/receipts/<pr>-Guardian.md` - Security validation receipt
 
@@ -221,6 +236,7 @@ expect(error.code).toBe('42501');
 ## Validation Steps
 
 ### Pre-Flight Checklist
+
 - [ ] Read `docs/patterns/coderabbit-lessons.md` ✅
 - [ ] All tests pass locally
 - [ ] Coverage ≥90% for new code
@@ -229,6 +245,7 @@ expect(error.code).toBe('42501');
 - [ ] Documentation updated
 
 ### Test Execution
+
 ```bash
 # Run specific RLS test suite
 npm test -- tests/integration/multi-tenant-rls-issue-504-direct.test.js
@@ -241,6 +258,7 @@ npm run test:coverage
 ```
 
 ### Success Criteria
+
 - ✅ All INSERT tests pass (15-21 tests)
 - ✅ All UPDATE tests pass (15-21 tests)
 - ✅ All DELETE tests pass (10-14 tests)
@@ -255,10 +273,12 @@ npm run test:coverage
 ## Agentes Relevantes
 
 **Primary:**
+
 - **TestEngineer** - Implement integration tests for CRUD operations
 - **Guardian** - Validate security implications of RLS policies
 
 **Supporting:**
+
 - **Backend Developer** - Review RLS policy correctness
 - **Orchestrator** - Coordinate agent workflow and receipt generation
 
@@ -267,14 +287,17 @@ npm run test:coverage
 ## Risk Analysis
 
 ### High Risk
+
 - **Security:** RLS violations could leak sensitive data between tenants
 - **Billing:** Unauthorized access to usage_records/monthly_usage could expose billing data
 
 ### Medium Risk
+
 - **Test Data:** Foreign key constraints may require careful cleanup order
 - **JWT Context:** Incorrect context switching could lead to false positives
 
 ### Mitigation
+
 - ✅ Test high-priority tables first (integration_configs, usage_records, monthly_usage)
 - ✅ Verify error code '42501' explicitly in all failure cases
 - ✅ Use existing cleanup helpers that respect FK constraints
@@ -285,15 +308,18 @@ npm run test:coverage
 ## Dependencies
 
 ### GDD Nodes
+
 - `multi-tenant.md` - RLS policies and organization isolation
 - `observability.md` - Test coverage tracking
 - `shield.md` - Security-related concerns (user_behaviors table)
 
 ### Related Issues
+
 - Issue #504 - Base RLS integration tests (PR #790)
 - Issue #583 - RLS policy updates
 
 ### External Dependencies
+
 - Supabase RLS policies must be deployed
 - Test environment must have valid JWT_SECRET
 - Database must have test data seeding enabled
@@ -302,17 +328,17 @@ npm run test:coverage
 
 ## Time Estimates
 
-| Task | Estimated Time | Status |
-|------|----------------|--------|
-| Research existing patterns | 15 min | ✅ DONE |
-| Create implementation plan | 15 min | ✅ DONE |
-| Implement INSERT tests | 20 min | Pending |
-| Implement UPDATE tests | 20 min | Pending |
-| Implement DELETE tests | 15 min | Pending |
-| Cross-tenant isolation tests | 10 min | Pending |
-| Documentation | 15 min | Pending |
-| Test execution & debugging | 15 min | Pending |
-| Agent receipts | 10 min | Pending |
+| Task                         | Estimated Time | Status  |
+| ---------------------------- | -------------- | ------- |
+| Research existing patterns   | 15 min         | ✅ DONE |
+| Create implementation plan   | 15 min         | ✅ DONE |
+| Implement INSERT tests       | 20 min         | Pending |
+| Implement UPDATE tests       | 20 min         | Pending |
+| Implement DELETE tests       | 15 min         | Pending |
+| Cross-tenant isolation tests | 10 min         | Pending |
+| Documentation                | 15 min         | Pending |
+| Test execution & debugging   | 15 min         | Pending |
+| Agent receipts               | 10 min         | Pending |
 
 **Total:** ~2 hours
 

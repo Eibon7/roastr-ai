@@ -28,11 +28,13 @@ jest.mock('openai', () => {
     chat: {
       completions: {
         create: jest.fn().mockResolvedValue({
-          choices: [{
-            message: {
-              content: 'sportswear, athletics, sneakers, apparel, shoes'
+          choices: [
+            {
+              message: {
+                content: 'sportswear, athletics, sneakers, apparel, shoes'
+              }
             }
-          }]
+          ]
         })
       }
     }
@@ -50,8 +52,8 @@ jest.mock('../../src/utils/logger', () => {
   return Object.assign(mockLogger, {
     logger: mockLogger,
     SafeUtils: {
-      safeUserIdPrefix: jest.fn(id => 'mock-user...'),
-      truncateString: jest.fn(str => str)
+      safeUserIdPrefix: jest.fn((id) => 'mock-user...'),
+      truncateString: jest.fn((str) => str)
     }
   });
 });
@@ -81,20 +83,20 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
 
     // Create test tenants with real Supabase
     testTenants = await createTestTenants();
-    
+
     // Get user IDs from tenants
     const { data: orgA } = await serviceClient
       .from('organizations')
       .select('owner_id')
       .eq('id', testTenants.tenantA.id)
       .single();
-    
+
     const { data: orgB } = await serviceClient
       .from('organizations')
       .select('owner_id')
       .eq('id', testTenants.tenantB.id)
       .single();
-    
+
     userAId = orgA.owner_id;
     userBId = orgB.owner_id;
 
@@ -103,14 +105,14 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
 
   afterAll(async () => {
     await cleanupTestData();
-    
+
     // Close Supabase connections to avoid open handles
     if (serviceClient && typeof serviceClient.removeAllChannels === 'function') {
       serviceClient.removeAllChannels();
     }
 
     // Give a small delay for connections to close
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   });
 
   beforeEach(() => {
@@ -177,9 +179,9 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
         await sponsorService.createSponsor(userAId, sponsorData);
 
         // Try to create duplicate
-        await expect(
-          sponsorService.createSponsor(userAId, sponsorData)
-        ).rejects.toThrow('DATABASE_ERROR');
+        await expect(sponsorService.createSponsor(userAId, sponsorData)).rejects.toThrow(
+          'DATABASE_ERROR'
+        );
       });
 
       it('should allow same sponsor name for different users', async () => {
@@ -199,13 +201,13 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       });
 
       it('should validate required fields', async () => {
-        await expect(
-          sponsorService.createSponsor(userAId, {})
-        ).rejects.toThrow('SPONSOR_NAME_REQUIRED');
+        await expect(sponsorService.createSponsor(userAId, {})).rejects.toThrow(
+          'SPONSOR_NAME_REQUIRED'
+        );
 
-        await expect(
-          sponsorService.createSponsor(null, { name: 'Test' })
-        ).rejects.toThrow('USER_ID_REQUIRED');
+        await expect(sponsorService.createSponsor(null, { name: 'Test' })).rejects.toThrow(
+          'USER_ID_REQUIRED'
+        );
       });
 
       it('should validate priority range (1-5)', async () => {
@@ -244,10 +246,7 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
     describe('getSponsors', () => {
       beforeAll(async () => {
         // Clean up any existing sponsors for this test suite
-        await serviceClient
-          .from('sponsors')
-          .delete()
-          .in('user_id', [userAId, userBId]);
+        await serviceClient.from('sponsors').delete().in('user_id', [userAId, userBId]);
       });
 
       beforeEach(async () => {
@@ -279,26 +278,23 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
 
       afterEach(async () => {
         // Clean up after each test to avoid interference
-        await serviceClient
-          .from('sponsors')
-          .delete()
-          .in('user_id', [userAId, userBId]);
+        await serviceClient.from('sponsors').delete().in('user_id', [userAId, userBId]);
       });
 
       it('should return only active sponsors by default', async () => {
         const sponsors = await sponsorService.getSponsors(userAId);
 
         expect(sponsors).toHaveLength(2);
-        expect(sponsors.every(s => s.active)).toBe(true);
-        expect(sponsors.every(s => s.user_id === userAId)).toBe(true);
+        expect(sponsors.every((s) => s.active)).toBe(true);
+        expect(sponsors.every((s) => s.user_id === userAId)).toBe(true);
       });
 
       it('should return all sponsors when includeInactive=true', async () => {
         const sponsors = await sponsorService.getSponsors(userAId, true);
 
         expect(sponsors).toHaveLength(3);
-        const activeCount = sponsors.filter(s => s.active).length;
-        const inactiveCount = sponsors.filter(s => !s.active).length;
+        const activeCount = sponsors.filter((s) => s.active).length;
+        const inactiveCount = sponsors.filter((s) => !s.active).length;
         expect(activeCount).toBe(2);
         expect(inactiveCount).toBe(1);
       });
@@ -315,12 +311,12 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
         const sponsorsB = await sponsorService.getSponsors(userBId);
 
         // User A sees only their sponsors
-        expect(sponsorsA.every(s => s.user_id === userAId)).toBe(true);
-        expect(sponsorsA.find(s => s.name === 'User B Sponsor')).toBeUndefined();
+        expect(sponsorsA.every((s) => s.user_id === userAId)).toBe(true);
+        expect(sponsorsA.find((s) => s.name === 'User B Sponsor')).toBeUndefined();
 
         // User B sees only their sponsors
-        expect(sponsorsB.every(s => s.user_id === userBId)).toBe(true);
-        expect(sponsorsB.find(s => s.name === 'Active Sponsor 1')).toBeUndefined();
+        expect(sponsorsB.every((s) => s.user_id === userBId)).toBe(true);
+        expect(sponsorsB.find((s) => s.name === 'Active Sponsor 1')).toBeUndefined();
       });
 
       it('should return empty array for new users', async () => {
@@ -420,11 +416,9 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       });
 
       it('should enforce RLS (User B cannot update User A sponsor)', async () => {
-        const updated = await sponsorService.updateSponsor(
-          sponsorId,
-          userBId,
-          { name: 'Hijacked Name' }
-        );
+        const updated = await sponsorService.updateSponsor(sponsorId, userBId, {
+          name: 'Hijacked Name'
+        });
 
         expect(updated).toBeNull(); // RLS blocks update
 
@@ -510,7 +504,9 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       // Mock global.fetch to avoid real HTTP calls (hermetic test)
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
-        text: jest.fn().mockResolvedValue('<html><title>Nike - Sportswear, Athletics, Sneakers</title></html>')
+        text: jest
+          .fn()
+          .mockResolvedValue('<html><title>Nike - Sportswear, Athletics, Sneakers</title></html>')
       });
 
       const url = 'https://www.nike.com';
@@ -523,23 +519,17 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
     });
 
     it('should reject invalid URLs', async () => {
-      await expect(
-        sponsorService.extractTagsFromURL('not-a-url')
-      ).rejects.toThrow('INVALID_URL');
+      await expect(sponsorService.extractTagsFromURL('not-a-url')).rejects.toThrow('INVALID_URL');
 
-      await expect(
-        sponsorService.extractTagsFromURL('javascript:alert(1)')
-      ).rejects.toThrow('INVALID_URL');
+      await expect(sponsorService.extractTagsFromURL('javascript:alert(1)')).rejects.toThrow(
+        'INVALID_URL'
+      );
     });
 
     it('should require URL parameter', async () => {
-      await expect(
-        sponsorService.extractTagsFromURL(null)
-      ).rejects.toThrow('URL_REQUIRED');
+      await expect(sponsorService.extractTagsFromURL(null)).rejects.toThrow('URL_REQUIRED');
 
-      await expect(
-        sponsorService.extractTagsFromURL('')
-      ).rejects.toThrow('URL_REQUIRED');
+      await expect(sponsorService.extractTagsFromURL('')).rejects.toThrow('URL_REQUIRED');
     });
 
     it('should handle fetch timeout (mocked)', async () => {
@@ -548,9 +538,9 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       abortError.name = 'AbortError';
       global.fetch = jest.fn().mockRejectedValue(abortError);
 
-      await expect(
-        sponsorService.extractTagsFromURL('https://slow-site.com')
-      ).rejects.toThrow('FETCH_TIMEOUT');
+      await expect(sponsorService.extractTagsFromURL('https://slow-site.com')).rejects.toThrow(
+        'FETCH_TIMEOUT'
+      );
 
       // Restore fetch
       delete global.fetch;
@@ -564,41 +554,35 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
   describe('Sponsor Mention Detection', () => {
     let sponsors;
 
-      beforeAll(async () => {
-        // Initialize service for this block
-        const service = new SponsorService();
-        
-        // Clean up before creating test sponsors
-        await serviceClient
-          .from('sponsors')
-          .delete()
-          .in('user_id', [userAId, userBId]);
+    beforeAll(async () => {
+      // Initialize service for this block
+      const service = new SponsorService();
 
-        // Create test sponsors once for all tests in this block
-        const timestamp = Date.now();
-        
-        const nike = await service.createSponsor(userAId, {
-          name: `Nike-${timestamp}`,
-          tags: ['sportswear', 'sneakers'],
-          priority: 1
-        });
+      // Clean up before creating test sponsors
+      await serviceClient.from('sponsors').delete().in('user_id', [userAId, userBId]);
 
-        const adidas = await service.createSponsor(userAId, {
-          name: `Adidas-${timestamp}`,
-          tags: ['athletics', 'apparel'],
-          priority: 2
-        });
+      // Create test sponsors once for all tests in this block
+      const timestamp = Date.now();
 
-        sponsors = [nike, adidas];
+      const nike = await service.createSponsor(userAId, {
+        name: `Nike-${timestamp}`,
+        tags: ['sportswear', 'sneakers'],
+        priority: 1
       });
+
+      const adidas = await service.createSponsor(userAId, {
+        name: `Adidas-${timestamp}`,
+        tags: ['athletics', 'apparel'],
+        priority: 2
+      });
+
+      sponsors = [nike, adidas];
+    });
 
     describe('Exact name matching', () => {
       it('should detect exact sponsor name (case-insensitive)', async () => {
         const comment = `${sponsors[0].name} is a great brand`;
-        const result = await sponsorService.detectSponsorMention(
-          comment,
-          sponsors
-        );
+        const result = await sponsorService.detectSponsorMention(comment, sponsors);
 
         expect(result.matched).toBe(true);
         expect(result.sponsor.name).toBe(sponsors[0].name); // Nike-{timestamp}
@@ -607,10 +591,7 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
 
       it('should match case-insensitively', async () => {
         const comment = `${sponsors[0].name.toUpperCase()} shoes are expensive`;
-        const result = await sponsorService.detectSponsorMention(
-          comment,
-          sponsors
-        );
+        const result = await sponsorService.detectSponsorMention(comment, sponsors);
 
         expect(result.matched).toBe(true);
         expect(result.sponsor.name).toBe(sponsors[0].name);
@@ -619,10 +600,7 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       it('should match with word boundaries', async () => {
         // Test that sponsor name is detected even with punctuation
         const comment = `Check out ${sponsors[0].name}.com for deals`;
-        const result = await sponsorService.detectSponsorMention(
-          comment,
-          sponsors
-        );
+        const result = await sponsorService.detectSponsorMention(comment, sponsors);
 
         expect(result.matched).toBe(true);
       });
@@ -650,10 +628,7 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       });
 
       it('should match tags case-insensitively', async () => {
-        const result = await sponsorService.detectSponsorMention(
-          'SNEAKERS are cool',
-          sponsors
-        );
+        const result = await sponsorService.detectSponsorMention('SNEAKERS are cool', sponsors);
 
         expect(result.matched).toBe(true);
         expect(result.sponsor.name).toBe(sponsors[0].name);
@@ -664,10 +639,7 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
       it('should return highest priority sponsor when multiple match', async () => {
         // Both sponsors mentioned, highest priority (1) wins
         const comment = `${sponsors[0].name} and ${sponsors[1].name} are both great`;
-        const result = await sponsorService.detectSponsorMention(
-          comment,
-          sponsors
-        );
+        const result = await sponsorService.detectSponsorMention(comment, sponsors);
 
         expect(result.matched).toBe(true);
         expect(result.sponsor.name).toBe(sponsors[0].name); // Priority 1 wins
@@ -700,29 +672,26 @@ describe('SponsorService Integration Tests (Real Supabase)', () => {
           priority: 1
         });
 
-        const result = await sponsorService.detectSponsorMention(
-          'Reebok is mentioned',
-          [inactiveSponsor]
-        );
+        const result = await sponsorService.detectSponsorMention('Reebok is mentioned', [
+          inactiveSponsor
+        ]);
 
         expect(result.matched).toBe(false); // Inactive sponsor ignored
       });
 
       it('should handle special characters in sponsor name', async () => {
         const sponsor = await sponsorService.createSponsor(userAId, {
-          name: 'L\'Oréal',
+          name: "L'Oréal",
           priority: 1
         });
 
-        const result = await sponsorService.detectSponsorMention(
-          'L\'Oréal products are great',
-          [sponsor]
-        );
+        const result = await sponsorService.detectSponsorMention("L'Oréal products are great", [
+          sponsor
+        ]);
 
         expect(result.matched).toBe(true);
-        expect(result.sponsor.name).toBe('L\'Oréal');
+        expect(result.sponsor.name).toBe("L'Oréal");
       });
     });
   });
 });
-

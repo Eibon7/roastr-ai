@@ -20,8 +20,8 @@ const PLACEHOLDERS = [
   'product_id_for',
   'price_id_for',
   're_your_resend',
-  'noreply@roastr.ai',  // Email de ejemplo
-  'http://localhost',   // URLs de ejemplo
+  'noreply@roastr.ai', // Email de ejemplo
+  'http://localhost', // URLs de ejemplo
   'https://your-project',
   'SG.your-'
 ];
@@ -29,7 +29,7 @@ const PLACEHOLDERS = [
 function isPlaceholder(value) {
   if (!value || value.trim() === '') return true;
   const val = value.toLowerCase();
-  return PLACEHOLDERS.some(ph => val.includes(ph.toLowerCase()));
+  return PLACEHOLDERS.some((ph) => val.includes(ph.toLowerCase()));
 }
 
 console.log('🔍 Analizando .env...\n');
@@ -48,14 +48,14 @@ let uncommented = 0;
 let skipped = 0;
 let alreadyActive = 0;
 
-const newLines = lines.map(line => {
+const newLines = lines.map((line) => {
   const trimmed = line.trim();
-  
+
   // Skip empty lines and section headers
   if (!trimmed || trimmed === '#' || trimmed.startsWith('# ===')) {
     return line;
   }
-  
+
   // Skip lines that are already uncommented
   if (!trimmed.startsWith('#')) {
     if (trimmed.includes('=')) {
@@ -63,16 +63,16 @@ const newLines = lines.map(line => {
     }
     return line;
   }
-  
+
   // Check if it's a commented key=value line
   const uncommentedLine = trimmed.substring(1).trim();
   if (!uncommentedLine.includes('=')) {
     return line; // Not a key=value, keep as is
   }
-  
+
   const [key, ...valueParts] = uncommentedLine.split('=');
   const value = valueParts.join('=').trim();
-  
+
   // Check if value is NOT a placeholder
   if (!isPlaceholder(value)) {
     console.log(`✅ Descomentando: ${key.trim()} (valor configurado)`);
@@ -109,4 +109,3 @@ if (uncommented > 0) {
   console.log('   - Ya están descomentadas');
   console.log('   - No hay valores configurados\n');
 }
-
