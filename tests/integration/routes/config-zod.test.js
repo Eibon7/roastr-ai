@@ -1,7 +1,7 @@
 /**
  * Integration Tests for Config Endpoints with Zod Validation
  * Issue #943: Migrar endpoints de config a Zod
- * 
+ *
  * Tests PUT /api/config/:platform with Zod validation for roast_level and shield_level
  */
 
@@ -29,33 +29,38 @@ const mockSupabase = {
       return {
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: mockOrganization,
-              error: null
-            }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: mockOrganization,
+                error: null
+              })
+            )
           }))
         }))
       };
     }
-    
+
     if (tableName === 'integration_configs') {
       return {
         upsert: jest.fn(() => ({
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: mockIntegrationConfig,
-              error: null
-            }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: mockIntegrationConfig,
+                error: null
+              })
+            )
           }))
         }))
       };
     }
-    
+
     return {};
   }),
   _setData: (table, data) => {
     if (table === 'organizations') mockOrganization = data;
-    if (table === 'integration_configs') mockIntegrationConfig = { ...mockIntegrationConfig, ...data };
+    if (table === 'integration_configs')
+      mockIntegrationConfig = { ...mockIntegrationConfig, ...data };
   },
   _reset: () => {
     mockOrganization = { id: 'org-123', owner_id: 'user-123' };
@@ -128,7 +133,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     app = express();
     app.use(express.json());
     app.use('/api/config', configRoutes);
-    
+
     // Reset mocks
     mockSupabase._reset();
     jest.clearAllMocks();
@@ -144,9 +149,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
         updated_at: new Date().toISOString()
       });
 
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: 3 });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: 3 });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -160,9 +163,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
         updated_at: new Date().toISOString()
       });
 
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: 1 });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: 1 });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -175,18 +176,14 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
         updated_at: new Date().toISOString()
       });
 
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: 5 });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: 5 });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
 
     it('should reject roast_level < 1 with Zod error', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: 0 });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: 0 });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -194,9 +191,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should reject roast_level > 5 with Zod error', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: 6 });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: 6 });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -204,9 +199,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should reject non-integer roast_level with Zod error', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: 3.5 });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: 3.5 });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -214,9 +207,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should reject string roast_level with Zod error', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: '3' });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: '3' });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -224,9 +215,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should reject null roast_level with Zod error', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: null });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: null });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -242,9 +231,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
         updated_at: new Date().toISOString()
       });
 
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ shield_level: 3 });
+      const response = await request(app).put('/api/config/twitter').send({ shield_level: 3 });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -252,9 +239,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should reject shield_level < 1 with Zod error', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ shield_level: 0 });
+      const response = await request(app).put('/api/config/twitter').send({ shield_level: 0 });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -262,9 +247,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should reject shield_level > 5 with Zod error', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ shield_level: 6 });
+      const response = await request(app).put('/api/config/twitter').send({ shield_level: 6 });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -272,9 +255,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should reject non-integer shield_level with Zod error', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ shield_level: 2.7 });
+      const response = await request(app).put('/api/config/twitter').send({ shield_level: 2.7 });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -282,9 +263,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should reject string shield_level with Zod error', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ shield_level: '4' });
+      const response = await request(app).put('/api/config/twitter').send({ shield_level: '4' });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -335,7 +314,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
   describe('Plan-based validation integration', () => {
     it('should still enforce plan-based validation after Zod validation', async () => {
       const levelConfigService = require('../../../src/services/levelConfigService');
-      
+
       // Mock plan validation to reject level 5
       levelConfigService.validateLevelAccess.mockResolvedValueOnce({
         allowed: false,
@@ -347,9 +326,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
 
       mockSupabase._setData('organizations', { id: 'org-123', owner_id: 'user-123' });
 
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: 5 });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: 5 });
 
       expect(response.status).toBe(403);
       expect(response.body.success).toBe(false);
@@ -358,9 +335,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
 
     it('should pass Zod validation before plan-based validation', async () => {
       // Invalid Zod value should fail before reaching plan validation
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ roast_level: 10 });
+      const response = await request(app).put('/api/config/twitter').send({ roast_level: 10 });
 
       expect(response.status).toBe(400); // Zod validation fails first
       expect(response.body.error).toContain('must be between 1 and 5');
@@ -381,12 +356,10 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should handle multiple validation errors', async () => {
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({
-          roast_level: 'not-a-number',
-          shield_level: 'also-invalid'
-        });
+      const response = await request(app).put('/api/config/twitter').send({
+        roast_level: 'not-a-number',
+        shield_level: 'also-invalid'
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -403,9 +376,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
         updated_at: new Date().toISOString()
       });
 
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({ enabled: true });
+      const response = await request(app).put('/api/config/twitter').send({ enabled: true });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -419,16 +390,13 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
         updated_at: new Date().toISOString()
       });
 
-      const response = await request(app)
-        .put('/api/config/twitter')
-        .send({
-          tone: 'balanceado',
-          response_frequency: 0.8
-        });
+      const response = await request(app).put('/api/config/twitter').send({
+        tone: 'balanceado',
+        response_frequency: 0.8
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
   });
 });
-

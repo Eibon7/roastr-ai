@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Zod Config Schemas
  * Issue #943: Migrar endpoints de config a Zod
- * 
+ *
  * Tests roastLevelSchema, shieldLevelSchema, platformConfigSchema
  */
 
@@ -330,4 +330,3 @@ describe('Zod Config Schemas - Issue #943', () => {
     });
   });
 });
-
