@@ -86,12 +86,12 @@ describe('QueueService', () => {
     process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token';
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'test-key';
-
+    
     // Create QueueService
     queueService = new QueueService();
-
+    
     // Wait for initialization to complete
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    await new Promise(resolve => setTimeout(resolve, 10));
   });
 
   afterEach(() => {
@@ -149,8 +149,8 @@ describe('QueueService', () => {
 
     test('should handle various job types', () => {
       const types = ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'];
-
-      types.forEach((type) => {
+      
+      types.forEach(type => {
         const key = queueService.getQueueKey(type, 3);
         expect(key).toBe(`roastr:jobs:${type}:p3`);
       });
@@ -171,7 +171,7 @@ describe('QueueService', () => {
 
     test('should generate IDs with correct format', () => {
       const id = queueService.generateJobId();
-
+      
       expect(id).toMatch(/^job_\d+_[a-z0-9]+$/); // job_timestamp_random format
       expect(id.length).toBeGreaterThan(15);
       expect(id).toContain('job_');
@@ -197,7 +197,7 @@ describe('QueueService', () => {
         max_attempts: 3,
         created_at: new Date().toISOString()
       });
-
+      
       queueService.isRedisAvailable = true;
 
       const result = await queueService.addJob('fetch_comments', jobData, { priority: 2 });
@@ -236,7 +236,7 @@ describe('QueueService', () => {
         priority: 5,
         organization_id: 'org-123'
       });
-
+      
       queueService.isRedisAvailable = true;
 
       const result = await queueService.addJob('fetch_comments', jobData);
@@ -264,7 +264,7 @@ describe('QueueService', () => {
         max_attempts: 5,
         organization_id: 'org-123'
       });
-
+      
       queueService.isRedisAvailable = true;
 
       const result = await queueService.addJob('test', jobData, { maxAttempts: 5 });
@@ -291,7 +291,7 @@ describe('QueueService', () => {
         job_type: 'test',
         organization_id: 'org-123'
       });
-
+      
       queueService.isRedisAvailable = false;
 
       const result = await queueService.addJob('test', jobData);
@@ -314,7 +314,7 @@ describe('QueueService', () => {
     test('should return null when no jobs available', async () => {
       jest.spyOn(queueService, 'getJobFromRedis').mockResolvedValue(null);
       jest.spyOn(queueService, 'getJobFromDatabase').mockResolvedValue(null);
-
+      
       queueService.isRedisAvailable = true;
 
       const result = await queueService.getNextJob('fetch_comments');
@@ -324,7 +324,7 @@ describe('QueueService', () => {
 
     test('should prioritize Redis when available', async () => {
       const mockJob = { id: 'job-123', job_type: 'fetch_comments' };
-
+      
       jest.spyOn(queueService, 'getJobFromRedis').mockResolvedValue(mockJob);
       queueService.isRedisAvailable = true;
 
@@ -336,7 +336,7 @@ describe('QueueService', () => {
 
     test('should use database when Redis unavailable', async () => {
       const mockJob = { id: 'job-123', job_type: 'fetch_comments' };
-
+      
       jest.spyOn(queueService, 'getJobFromDatabase').mockResolvedValue(mockJob);
       queueService.isRedisAvailable = false;
 
@@ -370,7 +370,7 @@ describe('QueueService', () => {
 
       // Test that completion works without Redis available
       queueService.isRedisAvailable = false;
-
+      
       // Should not throw
       await expect(queueService.completeJob(job, result)).resolves.not.toThrow();
     });
@@ -450,15 +450,13 @@ describe('QueueService', () => {
     test('should increment metrics properly', async () => {
       if (queueService.redis) {
         queueService.redis.incr = jest.fn().mockResolvedValue(1);
-
+        
         await queueService.incrementMetric('jobs_added', 'fetch_comments');
-
+        
         expect(queueService.redis.incr).toHaveBeenCalled();
       } else {
         // Just verify method doesn't throw when Redis unavailable
-        await expect(
-          queueService.incrementMetric('jobs_added', 'fetch_comments')
-        ).resolves.not.toThrow();
+        await expect(queueService.incrementMetric('jobs_added', 'fetch_comments')).resolves.not.toThrow();
       }
     });
   });
@@ -466,12 +464,12 @@ describe('QueueService', () => {
   describe('Error Handling', () => {
     test('should handle Redis connection errors gracefully', async () => {
       queueService.isRedisAvailable = false;
-
+      
       // Should fallback to database operations without throwing
       jest.spyOn(queueService, 'addJobToDatabase').mockResolvedValue({ id: 'test' });
-
+      
       const result = await queueService.addJob('test', { organization_id: 'org-123' });
-
+      
       expect(result).toBeDefined();
     });
 
@@ -479,7 +477,7 @@ describe('QueueService', () => {
       // Test that method exists and handles invalid input
       jest.spyOn(queueService, 'addJobToDatabase').mockResolvedValue({ id: 'test' });
       queueService.isRedisAvailable = false;
-
+      
       // Should throw for null payload
       await expect(queueService.addJob('test', null)).rejects.toThrow();
     });
@@ -488,11 +486,9 @@ describe('QueueService', () => {
       // Test with valid data
       jest.spyOn(queueService, 'addJobToDatabase').mockResolvedValue({ id: 'test' });
       queueService.isRedisAvailable = false;
-
+      
       // Should handle valid payload
-      await expect(
-        queueService.addJob('test', { organization_id: 'test-org' })
-      ).resolves.toBeDefined();
+      await expect(queueService.addJob('test', { organization_id: 'test-org' })).resolves.toBeDefined();
     });
   });
 
@@ -518,7 +514,7 @@ describe('QueueService', () => {
         '00000000-0000-4000-8000-000000000000'
       ];
 
-      validUUIDs.forEach((uuid) => {
+      validUUIDs.forEach(uuid => {
         expect(QueueService.validateCorrelationId(uuid)).toBe(true);
       });
     });
@@ -540,10 +536,8 @@ describe('QueueService', () => {
         '550e8400-e29b-41d4-a716' // Incomplete
       ];
 
-      invalidUUIDs.forEach((uuid) => {
-        expect(() => QueueService.validateCorrelationId(uuid)).toThrow(
-          'Invalid correlation ID format'
-        );
+      invalidUUIDs.forEach(uuid => {
+        expect(() => QueueService.validateCorrelationId(uuid)).toThrow('Invalid correlation ID format');
       });
     });
   });
@@ -585,14 +579,10 @@ describe('QueueService', () => {
 
         await queueService.moveToDeadLetterQueue(job, error);
 
-        expect(mockLog).toHaveBeenCalledWith(
-          'warn',
-          'Job moved to dead letter queue',
-          expect.objectContaining({
-            jobId: 'job-123',
-            jobType: 'test_queue'
-          })
-        );
+        expect(mockLog).toHaveBeenCalledWith('warn', 'Job moved to dead letter queue', expect.objectContaining({
+          jobId: 'job-123',
+          jobType: 'test_queue'
+        }));
       });
 
       it('should include error details in DLQ entry', async () => {
@@ -811,12 +801,8 @@ describe('QueueService', () => {
       it('should complete in both Redis and database when both available', async () => {
         queueService.isRedisAvailable = true;
         queueService.supabase = { from: jest.fn() };
-        const mockCompleteInRedis = jest
-          .spyOn(queueService, 'completeJobInRedis')
-          .mockResolvedValue();
-        const mockCompleteInDB = jest
-          .spyOn(queueService, 'completeJobInDatabase')
-          .mockResolvedValue();
+        const mockCompleteInRedis = jest.spyOn(queueService, 'completeJobInRedis').mockResolvedValue();
+        const mockCompleteInDB = jest.spyOn(queueService, 'completeJobInDatabase').mockResolvedValue();
         const mockIncrement = jest.spyOn(queueService, 'incrementMetric').mockResolvedValue();
 
         const job = { id: 'job-123', job_type: 'test' };
@@ -831,12 +817,8 @@ describe('QueueService', () => {
       it('should only complete in database when Redis unavailable', async () => {
         queueService.isRedisAvailable = false;
         queueService.supabase = { from: jest.fn() };
-        const mockCompleteInRedis = jest
-          .spyOn(queueService, 'completeJobInRedis')
-          .mockResolvedValue();
-        const mockCompleteInDB = jest
-          .spyOn(queueService, 'completeJobInDatabase')
-          .mockResolvedValue();
+        const mockCompleteInRedis = jest.spyOn(queueService, 'completeJobInRedis').mockResolvedValue();
+        const mockCompleteInDB = jest.spyOn(queueService, 'completeJobInDatabase').mockResolvedValue();
 
         const job = { id: 'job-123', job_type: 'test' };
 
@@ -853,16 +835,14 @@ describe('QueueService', () => {
       it('should check priority 1 (critical) first', async () => {
         queueService.isRedisAvailable = true;
         const mockRedis = queueService.redis;
-
+        
         // Mock rpop to return null for priorities 1-4, job for priority 5
         mockRedis.rpop = jest.fn((key) => {
           if (key.includes(':5')) {
-            return Promise.resolve(
-              JSON.stringify({
-                id: 'low-priority-job',
-                priority: 5
-              })
-            );
+            return Promise.resolve(JSON.stringify({
+              id: 'low-priority-job',
+              priority: 5
+            }));
           }
           return Promise.resolve(null);
         });
@@ -889,14 +869,13 @@ describe('QueueService', () => {
       it('should skip scheduled jobs not yet due', async () => {
         queueService.isRedisAvailable = true;
         const mockRedis = queueService.redis;
-
+        
         const futureJob = {
           id: 'future-job',
           scheduled_at: new Date(Date.now() + 60000).toISOString() // 1 minute future
         };
 
-        mockRedis.rpop = jest
-          .fn()
+        mockRedis.rpop = jest.fn()
           .mockResolvedValueOnce(JSON.stringify(futureJob)) // Priority 1 - future
           .mockResolvedValueOnce(null) // Priority 2
           .mockResolvedValueOnce(null) // Priority 3
@@ -911,9 +890,7 @@ describe('QueueService', () => {
 
     describe('getJobFromDatabase - Priority Order', () => {
       it('should query jobs ordered by priority ascending', async () => {
-        const mockSingle = jest.fn(() =>
-          Promise.resolve({ data: null, error: { code: 'PGRST116' } })
-        );
+        const mockSingle = jest.fn(() => Promise.resolve({ data: null, error: { code: 'PGRST116' } }));
         const mockLimit = jest.fn(() => ({ single: mockSingle }));
         const mockOrder = jest.fn(() => ({ order: jest.fn(() => ({ limit: mockLimit })) }));
         const mockLte = jest.fn(() => ({ order: mockOrder }));
@@ -966,12 +943,10 @@ describe('QueueService', () => {
         const mockFrom = jest.fn(() => ({
           insert: jest.fn(() => ({
             select: jest.fn(() => ({
-              single: jest.fn(() =>
-                Promise.resolve({
-                  data: { id: 'fallback-job' },
-                  error: null
-                })
-              )
+              single: jest.fn(() => Promise.resolve({
+                data: { id: 'fallback-job' },
+                error: null
+              }))
             }))
           }))
         }));
@@ -994,12 +969,10 @@ describe('QueueService', () => {
         const mockFrom = jest.fn(() => ({
           insert: jest.fn(() => ({
             select: jest.fn(() => ({
-              single: jest.fn(() =>
-                Promise.resolve({
-                  data: null,
-                  error: new Error('Database error')
-                })
-              )
+              single: jest.fn(() => Promise.resolve({
+                data: null,
+                error: new Error('Database error')
+              }))
             }))
           }))
         }));
@@ -1058,7 +1031,7 @@ describe('QueueService', () => {
         const mockMoveToDLQ = jest.spyOn(queueService, 'moveToDeadLetterQueue').mockResolvedValue();
         const mockMarkFailed = jest.spyOn(queueService, 'markJobAsFailed').mockResolvedValue();
         const mockIncrement = jest.spyOn(queueService, 'incrementMetric').mockResolvedValue();
-
+        
         // Enable DLQ for this test
         queueService.options.deadLetterQueueEnabled = true;
 
@@ -1171,8 +1144,13 @@ describe('QueueService', () => {
 
         await queueService.incrementMetric('completed', 'test_queue');
 
-        expect(mockRedis.incr).toHaveBeenCalledWith('roastr:metrics:completed:test_queue');
-        expect(mockRedis.expire).toHaveBeenCalledWith('roastr:metrics:completed:test_queue', 86400);
+        expect(mockRedis.incr).toHaveBeenCalledWith(
+          'roastr:metrics:completed:test_queue'
+        );
+        expect(mockRedis.expire).toHaveBeenCalledWith(
+          'roastr:metrics:completed:test_queue',
+          86400
+        );
       });
 
       it('should do nothing when Redis unavailable', async () => {
@@ -1218,7 +1196,7 @@ describe('QueueService', () => {
       it('should handle different queue types', () => {
         const types = ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'];
 
-        types.forEach((type) => {
+        types.forEach(type => {
           const key = queueService.getQueueKey(type, 3);
           expect(key).toContain(type);
           expect(key).toContain(':p3');
@@ -1232,7 +1210,10 @@ describe('QueueService', () => {
 
         await queueService.shutdown();
 
-        expect(mockLog).toHaveBeenCalledWith('info', 'Shutting down Queue Service');
+        expect(mockLog).toHaveBeenCalledWith(
+          'info',
+          'Shutting down Queue Service'
+        );
       });
 
       it('should handle shutdown gracefully even when not initialized', async () => {
@@ -1240,6 +1221,151 @@ describe('QueueService', () => {
         queueService.supabase = null;
 
         await expect(queueService.shutdown()).resolves.not.toThrow();
+      });
+    });
+  });
+
+  // ========== PHASE 6: PUSH TO 75%+ COVERAGE ==========
+
+  describe('Delayed/Scheduled Jobs', () => {
+    it('should handle delayed jobs with options.delay', async () => {
+      queueService.isRedisAvailable = true;
+      queueService.redis = {
+        lpush: jest.fn().mockResolvedValue(1),
+        setex: jest.fn().mockResolvedValue('OK'),
+        incr: jest.fn().mockResolvedValue(1)
+      };
+
+      const job = await queueService.addJobToRedis(
+        {
+          id: 'job-delayed',
+          job_type: 'test_queue',
+          payload: { test: 'data' },
+          priority: 3
+        },
+        { delay: 5000 } // 5 seconds delay
+      );
+
+      expect(queueService.redis.setex).toHaveBeenCalledWith(
+        expect.stringContaining(':delayed:job-delayed'),
+        5,
+        expect.any(String)
+      );
+      expect(job).toBeDefined();
+      expect(job.id).toBe('job-delayed');
+    });
+
+    it('should handle delay without Redis', async () => {
+      queueService.isRedisAvailable = false;
+      const job = { id: 'job-1', job_type: 'test', payload: {}, priority: 3 };
+
+      // Just verify it doesn't crash when Redis unavailable
+      const result = await queueService.addJobToDatabase(job);
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('Stats Methods - Direct Testing', () => {
+    describe('getRedisStats', () => {
+      it('should return stats for all job types when no jobType specified', async () => {
+        queueService.redis = {
+          llen: jest.fn()
+            .mockResolvedValueOnce(5)  // fetch_comments p1
+            .mockResolvedValueOnce(3)  // fetch_comments p2
+            .mockResolvedValueOnce(0)  // fetch_comments p3
+            .mockResolvedValueOnce(0)  // fetch_comments p4
+            .mockResolvedValueOnce(0)  // fetch_comments p5
+            .mockResolvedValueOnce(2)  // analyze_toxicity p1
+            .mockResolvedValueOnce(1)  // analyze_toxicity p2
+            .mockResolvedValueOnce(0)  // analyze_toxicity p3
+            .mockResolvedValueOnce(0)  // analyze_toxicity p4
+            .mockResolvedValueOnce(0)  // analyze_toxicity p5
+            .mockResolvedValue(0)       // remaining
+        };
+
+        const stats = await queueService.getRedisStats();
+
+        expect(stats.total).toBe(11);
+        expect(stats.queues.fetch_comments).toBeDefined();
+        expect(stats.queues.fetch_comments.total).toBe(8);
+        expect(stats.queues.analyze_toxicity.total).toBe(3);
+      });
+
+      it('should return stats for specific job type', async () => {
+        queueService.redis = {
+          llen: jest.fn().mockResolvedValue(2)
+        };
+
+        const stats = await queueService.getRedisStats('test_queue');
+
+        expect(stats.queues.test_queue).toBeDefined();
+        expect(stats.queues.test_queue.total).toBe(10); // 2 * 5 priorities
+      });
+    });
+
+    describe('getDatabaseStats', () => {
+      it('should process stats by type, status, and priority', async () => {
+        const mockJobs = [
+          { job_type: 'fetch', status: 'pending', priority: 1 },
+          { job_type: 'fetch', status: 'pending', priority: 2 },
+          { job_type: 'analyze', status: 'processing', priority: 1 },
+          { job_type: 'analyze', status: 'failed', priority: 3 }
+        ];
+
+        queueService.supabase = {
+          from: jest.fn(() => ({
+            select: jest.fn(() => ({
+              apply: jest.fn(() => Promise.resolve({ data: mockJobs, error: null }))
+            }))
+          }))
+        };
+
+        const result = await queueService.getDatabaseStats();
+
+        expect(result.total).toBe(4);
+        expect(result.byType.fetch).toBe(2);
+        expect(result.byType.analyze).toBe(2);
+        expect(result.byStatus.pending).toBe(2);
+        expect(result.byStatus.processing).toBe(1);
+        expect(result.byStatus.failed).toBe(1);
+        expect(result.byPriority[1]).toBe(2);
+        expect(result.byPriority[2]).toBe(1);
+        expect(result.byPriority[3]).toBe(1);
+      });
+
+      it('should throw error when database query fails', async () => {
+        queueService.supabase = {
+          from: jest.fn(() => ({
+            select: jest.fn(() => ({
+              apply: jest.fn(() => Promise.resolve({
+                data: [],
+                error: new Error('Database connection failed')
+              }))
+            }))
+          }))
+        };
+
+        await expect(queueService.getDatabaseStats()).rejects.toThrow('Database connection failed');
+      });
+
+      it('should filter by job type', async () => {
+        const mockJobs = [
+          { job_type: 'test', status: 'pending', priority: 1 },
+          { job_type: 'test', status: 'processing', priority: 2 }
+        ];
+
+        queueService.supabase = {
+          from: jest.fn(() => ({
+            select: jest.fn(() => ({
+              apply: jest.fn(() => Promise.resolve({ data: mockJobs, error: null }))
+            }))
+          }))
+        };
+
+        const result = await queueService.getDatabaseStats('test');
+
+        expect(result.total).toBe(2);
+        expect(result.byType.test).toBe(2);
       });
     });
   });
