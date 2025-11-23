@@ -1108,7 +1108,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Front-end Dev** (Issue #419 - Manual approval UI)
 - **Guardian** (PR #640 - Validated Fallback Mode documentation)
 - **Orchestrator**
-- **Test Engineer** (Issue #419 - E2E resilience tests)
+- **Test Engineer** (Issue #419 - E2E resilience tests, Issue #924 - middleware tests)
 
 ## Related Nodes
 

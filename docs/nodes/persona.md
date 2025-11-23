@@ -892,9 +892,9 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Backend Developer** - Implementation (PersonaService, encryption, API routes)
 - **Documentation Agent** - Node maintenance and sync
 - **FrontendDev** - UI components (StyleProfile page)
-- **TestEngineer** - Test coverage and validation
+- **Guardian** - Security validation and audit (Issue #942 - Zod migration)
 - **Orchestrator** - PR #600 coordination and planning
-- **Test Engineer** - Test implementation (unit, integration, e2e)
+- **TestEngineer** - Test coverage and validation (Issue #942 - Zod tests)
 
 ## Related Nodes
 

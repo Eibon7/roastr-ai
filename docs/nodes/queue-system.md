@@ -659,7 +659,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Documentation Agent**
 - **Orchestrator** (Issue #929 - Phase 6 coordination)
 - **Performance Monitor**
-- **Test Engineer** (Issue #915, #928, #929 - Coverage expansion 81.16%)
+- **Test Engineer** (Issue #915, #924 - middleware tests, #928, #929 - Coverage expansion 81.16%)
 - **Worker Monitor** (Issue #713)
 
 ## Related Nodes

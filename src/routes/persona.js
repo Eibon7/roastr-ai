@@ -13,42 +13,13 @@
  */
 
 const express = require('express');
-const { body, validationResult } = require('express-validator');
 const { authenticateToken } = require('../middleware/auth');
 const PersonaService = require('../services/PersonaService');
 const { logger } = require('../utils/logger');
+const { createPersonaSchema } = require('../validators/zod/persona.schema');
+const { formatZodError, isZodError } = require('../validators/zod/formatZodError');
 
 const router = express.Router();
-
-// Input validation rules
-const validatePersonaInput = [
-  body('lo_que_me_define')
-    .optional()
-    .isString()
-    .withMessage('lo_que_me_define must be a string')
-    .trim()
-    .isLength({ max: 300 })
-    .withMessage('lo_que_me_define must be 300 characters or less')
-    .escape(),
-
-  body('lo_que_no_tolero')
-    .optional()
-    .isString()
-    .withMessage('lo_que_no_tolero must be a string')
-    .trim()
-    .isLength({ max: 300 })
-    .withMessage('lo_que_no_tolero must be 300 characters or less')
-    .escape(),
-
-  body('lo_que_me_da_igual')
-    .optional()
-    .isString()
-    .withMessage('lo_que_me_da_igual must be a string')
-    .trim()
-    .isLength({ max: 300 })
-    .withMessage('lo_que_me_da_igual must be 300 characters or less')
-    .escape()
-];
 
 /**
  * GET /api/persona
@@ -135,20 +106,13 @@ router.get('/api/persona', authenticateToken, async (req, res) => {
  * - 403: Plan restriction (field not available for user's plan)
  * - 500: Internal error
  */
-router.post('/api/persona', authenticateToken, validatePersonaInput, async (req, res) => {
+router.post('/api/persona', authenticateToken, async (req, res) => {
   try {
-    // Validate input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array(),
-        code: 'VALIDATION_ERROR'
-      });
-    }
+    // Validate input with Zod (Issue #942)
+    const validatedData = createPersonaSchema.parse(req.body);
 
     const userId = req.user.id;
-    const { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual } = req.body;
+    const { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual } = validatedData;
 
     // Get user plan (from JWT or database)
     let userPlan = req.user.plan;
@@ -180,6 +144,15 @@ router.post('/api/persona', authenticateToken, validatePersonaInput, async (req,
       data: result
     });
   } catch (error) {
+    // Handle Zod validation errors (Issue #942)
+    if (isZodError(error)) {
+      logger.warn('POST /api/persona validation failed', {
+        userId: req.user?.id,
+        errors: error.issues
+      });
+      return res.status(400).json(formatZodError(error));
+    }
+
     logger.error('POST /api/persona failed', {
       userId: req.user?.id,
       error: error.message,
