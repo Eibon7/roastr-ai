@@ -178,7 +178,7 @@
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "minimatch": "^10.0.3",
-    "openai": "^5.11.0",
+    "openai": "^5.23.2",
     "papaparse": "^5.5.3",
     "postcss": "^8.5.6",
     "rate-limit-redis": "^4.2.2",
