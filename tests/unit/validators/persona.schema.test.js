@@ -52,29 +52,42 @@ describe('Persona Zod Schema - Unit Tests', () => {
       expect(() => personaFieldSchema.parse({})).toThrow(z.ZodError);
     });
 
-    describe('XSS detection', () => {
+    describe('XSS detection (DOMPurify-based)', () => {
       it('should reject <script> tags', () => {
         const input = 'Hola <script>alert(1)</script>';
         expect(() => personaFieldSchema.parse(input)).toThrow(z.ZodError);
         expect(() => personaFieldSchema.parse(input)).toThrow(/unsafe content/i);
       });
 
-      it('should reject javascript: protocol', () => {
-        const input = 'Click <a href="javascript:void(0)">here</a>';
-        expect(() => personaFieldSchema.parse(input)).toThrow(z.ZodError);
-        expect(() => personaFieldSchema.parse(input)).toThrow(/unsafe content/i);
-      });
-
-      it('should reject onerror= handlers', () => {
+      it('should reject HTML tags with event handlers', () => {
         const input = '<img src=x onerror=alert(1)>';
         expect(() => personaFieldSchema.parse(input)).toThrow(z.ZodError);
         expect(() => personaFieldSchema.parse(input)).toThrow(/unsafe content/i);
       });
 
-      it('should reject case-insensitive XSS patterns', () => {
+      it('should reject anchor tags with javascript: protocol', () => {
+        const input = 'Click <a href="javascript:void(0)">here</a>';
+        expect(() => personaFieldSchema.parse(input)).toThrow(z.ZodError);
+        expect(() => personaFieldSchema.parse(input)).toThrow(/unsafe content/i);
+      });
+
+      it('should reject case-insensitive HTML tags', () => {
         expect(() => personaFieldSchema.parse('<SCRIPT>alert(1)</SCRIPT>')).toThrow();
-        expect(() => personaFieldSchema.parse('JAVASCRIPT:alert(1)')).toThrow();
-        expect(() => personaFieldSchema.parse('OnErRoR=alert(1)')).toThrow();
+        expect(() => personaFieldSchema.parse('<IMG src=x ONERROR=alert(1)>')).toThrow();
+        expect(() => personaFieldSchema.parse('<svg onload=alert(1)>')).toThrow();
+      });
+
+      it('should accept plain text XSS patterns (safe outside HTML context)', () => {
+        // These are only dangerous when used in HTML attributes/URIs
+        // As plain text in encrypted persona data (used for prompts), they are safe
+        expect(() => personaFieldSchema.parse('JAVASCRIPT:alert(1)')).not.toThrow();
+        expect(() => personaFieldSchema.parse('OnErRoR=alert(1)')).not.toThrow();
+        expect(() => personaFieldSchema.parse('onclick=alert(1)')).not.toThrow();
+      });
+
+      it('should reject iframe and embed tags', () => {
+        expect(() => personaFieldSchema.parse('<iframe src="evil.com"></iframe>')).toThrow();
+        expect(() => personaFieldSchema.parse('<embed src="evil.swf">')).toThrow();
       });
     });
 
