@@ -47,7 +47,7 @@ function formatZodErrorDetailed(zodError) {
  * Validate request body with Zod schema (middleware-style helper)
  * @param {import('zod').ZodSchema} schema - Zod schema
  * @param {Object} data - Data to validate
- * @returns {Object} { success: boolean, data?: any, error?: string }
+ * @returns {Object} { success: boolean, data?: any, error?: string, zodError?: ZodError } - On failure, includes zodError for diagnostics
  */
 function validateWithZod(schema, data) {
   try {

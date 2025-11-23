@@ -65,15 +65,17 @@ Workers/Services Read from DB
 ## Verification Tests
 
 ### Unit Tests ✅
+
 - `tests/unit/validators/config.schema.test.js`
 - Validates Zod schemas accept 1-5, reject others
-- 29 test cases covering all edge cases
+- 41 test cases covering all edge cases
 
 ### Integration Tests ✅
+
 - `tests/integration/routes/config-zod.test.js`
 - Validates endpoints use Zod validation
 - Validates plan-based validation still works
-- 15 test cases covering end-to-end flows
+- 22 test cases covering end-to-end flows
 
 ### Manual Verification Checklist
 
