@@ -45,7 +45,6 @@ const CsvRoastService = require('./services/csvRoastService');
 const IntegrationManager = require('./integrations/integrationManager');
 const ReincidenceDetector = require('./services/reincidenceDetector');
 const advancedLogger = require('./utils/advancedLogger');
-const { logger } = require('./utils/logger');
 const monitoringService = require('./services/monitoringService');
 const alertingService = require('./services/alertingService');
 
