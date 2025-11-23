@@ -1,6 +1,6 @@
 # 🧩 GDD Runtime Validation Report
 
-**Date:** 2025-11-22T13:46:59.675Z
+**Date:** 2025-11-23T17:11:46.079Z
 **Mode:** full
 **Status:** 🟢 HEALTHY
 
@@ -70,21 +70,21 @@ Coverage authenticity issues detected:
 
 | Node | Drift Risk | Status | Health Score | Last Commit | Recommendations |
 |------|------------|--------|--------------|-------------|-----------------|
-| analytics | 🟢 15 | healthy | 83 | 7d ago | Increase test coverage to 80%+ (declared: 59%, actual: N/A) |
-| guardian | 🟢 15 | healthy | 77 | 22d ago | Increase test coverage to 80%+ (declared: 0%, actual: N/A) |
-| trainer | 🟢 15 | healthy | 79 | 22d ago | Increase test coverage to 80%+ (declared: 0%, actual: N/A) |
-| cost-control | 🟢 5 | healthy | 89 | 1d ago | Increase test coverage to 80%+ (declared: 60%, actual: N/A) |
-| observability | 🟢 5 | healthy | 82 | 1d ago | Increase test coverage to 80%+ (declared: 50%, actual: N/A) |
-| plan-features | 🟢 5 | healthy | 88 | 1d ago | Increase test coverage to 80%+ (declared: 74%, actual: N/A) |
-| queue-system | 🟢 5 | healthy | 82 | 1d ago | Increase test coverage to 80%+ (declared: 67%, actual: N/A) |
-| roast | 🟢 5 | healthy | 84 | 1d ago | Increase test coverage to 80%+ (declared: 59%, actual: N/A) |
-| social-platforms | 🟢 5 | healthy | 78 | 1d ago | Increase test coverage to 80%+ (declared: 14%, actual: N/A) |
-| billing | 🟢 0 | healthy | 97 | 9d ago | - |
-| multi-tenant | 🟢 0 | healthy | 97 | 2d ago | - |
-| persona | 🟢 0 | healthy | 91 | 1d ago | - |
-| platform-constraints | 🟢 0 | healthy | 99 | 1d ago | - |
-| shield | 🟢 0 | healthy | 94 | 1d ago | - |
-| tone | 🟢 0 | healthy | 95 | 16d ago | - |
+| analytics | 🟢 15 | healthy | 83 | 8d ago | Increase test coverage to 80%+ (declared: 59%, actual: N/A) |
+| guardian | 🟢 15 | healthy | 77 | 23d ago | Increase test coverage to 80%+ (declared: 0%, actual: N/A) |
+| trainer | 🟢 15 | healthy | 79 | 23d ago | Increase test coverage to 80%+ (declared: 0%, actual: N/A) |
+| cost-control | 🟢 5 | healthy | 94 | 0d ago | Increase test coverage to 80%+ (declared: 60%, actual: N/A) |
+| observability | 🟢 5 | healthy | 87 | 2d ago | Increase test coverage to 80%+ (declared: 50%, actual: N/A) |
+| plan-features | 🟢 5 | healthy | 93 | 2d ago | Increase test coverage to 80%+ (declared: 74%, actual: N/A) |
+| queue-system | 🟢 5 | healthy | 87 | 2d ago | Increase test coverage to 80%+ (declared: 67%, actual: N/A) |
+| roast | 🟢 5 | healthy | 89 | 2d ago | Increase test coverage to 80%+ (declared: 59%, actual: N/A) |
+| social-platforms | 🟢 5 | healthy | 83 | 0d ago | Increase test coverage to 80%+ (declared: 14%, actual: N/A) |
+| billing | 🟢 0 | healthy | 97 | 10d ago | - |
+| multi-tenant | 🟢 0 | healthy | 97 | 0d ago | - |
+| persona | 🟢 0 | healthy | 95 | 2d ago | - |
+| platform-constraints | 🟢 0 | healthy | 98 | 2d ago | - |
+| shield | 🟢 0 | healthy | 99 | 2d ago | - |
+| tone | 🟢 0 | healthy | 95 | 17d ago | - |
 
 ---
 

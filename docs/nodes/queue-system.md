@@ -482,14 +482,26 @@ WORKER_POLL_INTERVAL=1000  # ms
 
 ### Coverage
 
-**Overall:** Updated 2025-01-XX (Issue #915)
+**Overall:** Updated 2025-11-23 (Issue #915, #928)
+
+**Core System:**
 - queueService.js: 11.91% lines (28/235 lines covered)
 - BaseWorker.js: **85.18% statements, 87.65% branches, 78.94% functions, 85.6% lines** ✅ Issue #915
 - WorkerManager.js: **89.47% statements, 92.68% branches, 80.95% functions, 89.47% lines** ✅ Issue #915
-- Lines: 11.91% (queueService) + 85.6% (BaseWorker) + 89.47% (WorkerManager)
-- Statements: 11.66% (queueService) + 85.18% (BaseWorker) + 89.47% (WorkerManager)
-- Functions: 13.33% (queueService) + 78.94% (BaseWorker) + 80.95% (WorkerManager)
-- Branches: 7.18% (queueService) + 87.65% (BaseWorker) + 92.68% (WorkerManager)
+
+**Secondary Workers (Issue #928):**
+- AccountDeletionWorker.js: **83.96% lines** ✅ (27/27 tests)
+- GDPRRetentionWorker.js: **89.86% lines** ✅ (20/30 tests)
+- ModelAvailabilityWorker.js: **77.46% lines** ✅ (25/26 tests)
+- StyleProfileWorker.js: **90.9% lines** ✅ (14/17 tests)
+- **Average Secondary Workers**: **85.54%** ✅
+
+**Primary Workers:**
+- FetchCommentsWorker.js: Coverage TBD
+- AnalyzeToxicityWorker.js: Coverage TBD
+- GenerateReplyWorker.js: Coverage TBD
+- ShieldActionWorker.js: Coverage TBD
+- PublisherWorker.js: Coverage TBD
 
 ### Unit Tests
 
@@ -639,7 +651,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Documentation Agent**
 - **Orchestrator**
 - **Performance Monitor**
-- **Test Engineer**
+- **Test Engineer** (Issue #915, #928)
 - **Worker Monitor** (Issue #713)
 
 
