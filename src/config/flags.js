@@ -166,7 +166,7 @@ class FeatureFlags {
   }
 
   checkBlueskyKeys() {
-    return !!process.env.BLUESKY_USERNAME && !!process.env.BLUESKY_PASSWORD;
+    return !!process.env.BLUESKY_HANDLE && !!process.env.BLUESKY_PASSWORD;
   }
 
   checkSupabaseKeys() {
