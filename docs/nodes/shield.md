@@ -1360,7 +1360,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Guardian** (PR #640 - Validated Fallback Security Policy)
 - **Orchestrator** (Issue #929 - Phase 6 coordination)
 - **Security Engineer**
-- **Test Engineer** (Issue #924 - middleware security tests, #929 - Coverage expansion 62.5%, integration tests needed)
+- **Test Engineer** (Issue #929 - Coverage expansion 62.5%, integration tests needed)
 
 ## Related Nodes
 
