@@ -1,112 +1,295 @@
-# PR Description: Complete Implementation of Issues #276, #281, #277, and #287
+# ✅ [Issue #924] Tests para Middleware Crítico - 5/5 Completados
 
-## ✅ What This PR Implements
+## 🎯 Objetivo
 
-### Issue #287 - Fix CI Workflow, Runner CLI Command, and Test Utilities (~95% Complete)
-
-**Completed:**
-- ✅ Updated test utilities to use `effectivePlan` for `moderationLevel` and `autoResponse`
-  - Added `getModerationLevel(effectivePlan)` helper function
-  - Added `getAutoResponse(effectivePlan)` helper function
-  - Updated all scenario types to use helper functions instead of hardcoded values
-  - Fixed `case 'multiUser'` scope issue (wrapped in curly braces)
-  - Updated to new plan structure (starter_trial/starter/pro/plus) per PR #842
-
-- ✅ Verified and fixed `.github/workflows/runner-json-demo.yml`
-  - Added timeout (10 minutes) to prevent workflow hanging
-  - Added timeout command to check step (600 seconds)
-  - Improved JSON validation and error handling
-  - Updated branch triggers to include `feat/issues-276-281-277-287`
-  - Workflow now validates JSON output without failing on test failures
-
-- ✅ Verified `check --json` command works correctly
-  - Command exists in `scripts/test/runner.js`
-  - Returns valid JSON with `command`, `exitCode`, `stdout`, `stderr`
-  - Workflow correctly parses and validates JSON output
-
-**Remaining (~5%):**
-- ⚠️ Some tests may still be failing (pre-existing issues, not introduced by this PR)
+Añadir tests unitarios exhaustivos para middleware crítico de seguridad, elevando la cobertura de **0% → ≥80%** en 5 archivos de alta prioridad.
 
 ---
 
-### Issue #276 - Connected Accounts Frontend Integration Fixes
+## 📊 Resumen de Resultados
 
-**Note:** Backend endpoints are **already fully implemented in main**. This PR only fixes frontend URL issues.
+### Cobertura Lograda
 
-**Backend Status (already in main):**
-- ✅ GET /api/user/accounts/:id - Account details
-- ✅ GET /api/user/accounts/:id/roasts - Recent roasts with pagination
-- ✅ POST /api/user/accounts/:id/roasts/:roastId/approve - Approve roast
-- ✅ POST /api/user/accounts/:id/roasts/:roastId/decline - Decline roast
-- ✅ POST /api/user/accounts/:id/roasts/:roastId/regenerate - Regenerate roast
-- ✅ PATCH /api/user/accounts/:id/settings - Update account settings
-- ✅ DELETE /api/user/accounts/:id - Disconnect account
+| Archivo | Statements | Branches | Functions | Lines | AC (≥80%) | Tests |
+|---------|------------|----------|-----------|-------|-----------|-------|
+| **adminRateLimiter.js** | **100%** ✅ | 100% | 100% | 100% | ✅ PASS | 16 |
+| **responseCache.js** | **100%** ✅ | 86.04% | 100% | 100% | ✅ PASS | 21 |
+| **csrfProtection.js** | **90.14%** ✅ | 90.47% | 73.33% | 95.45% | ✅ PASS | 28 |
+| **webhookSecurity.js** | **90.14%** ✅ | 78.78% | 84.61% | 90.78% | ✅ PASS | 26 |
+| **errorHandling.js** | **81.74%** ✅ | 74.5% | 80.76% | 83.6% | ✅ PASS | 37 |
+| **PROMEDIO** | **89.93%** | 81.18% | 85.33% | 91.52% | ✅ | **128** |
 
-**Frontend Fixes in This PR:**
-- ✅ Fixed `AccountModal.js` regenerate endpoint URL (was `/api/user/roasts/...`, now `/api/user/accounts/:id/roasts/...`)
-- ✅ Fixed `dashboard.jsx` `handleAccountAction` to use correct HTTP methods (PATCH instead of POST for settings)
-- ✅ Fixed `handleAccountAction` to use correct account ID (selectedAccount.id instead of selectedAccount.platform)
-- ✅ Added comprehensive tests for decline, regenerate, and disconnect endpoints
+### Test Results
 
-**Test Coverage:**
-- ✅ All 7 endpoints have unit tests
-- ✅ Frontend integration verified with correct endpoint URLs
-
----
-
-### Issue #281/#277 - CLI Runner Completion
-
-**Status:** CLI runner was already functional. This PR only fixes glob pattern resolution.
-
-**What Was Already in Main:**
-- ✅ CLI runner with real Jest test execution
-- ✅ `--mock-mode` support (working)
-- ✅ `--platform` filtering (working)
-- ✅ `--scope` filtering (working)
-- ✅ Commands: `run`, `all`, `validate`, `check`, `list-platforms`
-
-**Fixes in This PR:**
-- ✅ Fixed glob pattern resolution in `runJest()` function
-  - Now properly resolves glob patterns to actual file paths before passing to Jest
-  - Prevents "Invalid testPattern" errors
-  - Falls back gracefully if pattern resolution fails
+```
+✅ Test Suites: 5 passed, 5 total
+✅ Tests: 128 passed, 128 total
+✅ Execution time: ~2-3 seconds
+✅ 0 tests failing
+```
 
 ---
 
-### Additional Minor Fixes
+## ✅ Acceptance Criteria
 
-1. ✅ CLI dry-run flag detection improvement (better fallback detection)
-2. ✅ Test assertion fixes (pagination structure, file size regex)
-3. ✅ Resolved merge conflicts with main (updated to new plan structure)
+- [x] `errorHandling.js` tiene ≥80% cobertura - **81.74%** ✅
+- [x] `csrfProtection.js` tiene ≥80% cobertura - **90.14%** ✅
+- [x] `webhookSecurity.js` tiene ≥80% cobertura - **90.14%** ✅
+- [x] `adminRateLimiter.js` tiene ≥80% cobertura - **100%** ✅
+- [x] `responseCache.js` tiene ≥80% cobertura - **100%** ✅
+- [x] Todos los tests pasan (0 failures) - **128/128** ✅
+- [x] Tests cubren casos de éxito, error, y edge cases ✅
+- [x] Tests usan mocks apropiados (sin llamadas reales) ✅
+- [x] Documentación GDD actualizada ✅
 
----
-
-## 📊 Scope Summary
-
-| Issue | Backend | Frontend | Tests | Status |
-|-------|---------|----------|-------|--------|
-| #276 | ✅ In main | ✅ Fixed | ✅ Complete | ✅ 100% |
-| #281 | ✅ In main | N/A | N/A | ✅ 100% |
-| #277 | ✅ In main | N/A | N/A | ✅ 100% |
-| #287 | N/A | N/A | ✅ Complete | ✅ 95% |
-
-**Total Changes:** 484 additions / 47 deletions across 10 files
+**Progreso: 5/5 archivos completados (100%)** 🎉
 
 ---
 
-## 🔍 Verification
+## 📝 Archivos Creados
 
-All changes have been:
-- ✅ Tested locally (helper functions work correctly)
-- ✅ Linter validated (no errors)
-- ✅ Merge conflicts resolved (synced with main)
-- ✅ Pushed to remote branch
+### Test Files
+1. `tests/unit/middleware/errorHandling.test.js` (37 tests, 463 líneas)
+2. `tests/unit/middleware/csrfProtection.test.js` (28 tests, 504 líneas)
+3. `tests/unit/middleware/webhookSecurity.test.js` (26 tests, 539 líneas)
+4. `tests/unit/middleware/adminRateLimiter.test.js` (16 tests, 282 líneas)
+5. `tests/unit/middleware/responseCache.test.js` (21 tests, 324 líneas)
+
+**Total:** 2,112 líneas de código de tests
+
+### Documentation
+- `docs/test-evidence/issue-924-FINAL-SUMMARY.md` (comprehensive test report)
+- `docs/plan/issue-924.md` (implementation plan)
+- `docs/agents/receipts/issue-924-TestEngineer.md` (agent receipt)
+- `docs/agents/receipts/issue-924-BackendDeveloper.md` (agent receipt)
+
+### GDD Updates
+- Updated `docs/nodes/roast.md` (added "Test Engineer" reference)
+- Updated `docs/nodes/shield.md` (added "Test Engineer" reference)
+- Updated `docs/nodes/queue-system.md` (added "Test Engineer" reference)
 
 ---
 
-## 📝 Notes
+## 🔧 Detalles Técnicos
 
-- Issue #276 backend was already complete in main - this PR only fixes frontend URL issues
-- Issue #281/#277 CLI runner was already complete - this PR only fixes glob pattern resolution
-- Issue #287 is nearly complete - only pre-existing test failures remain (not introduced by this PR)
+### 1. Error Handling Middleware (81.74% coverage)
 
+**Tests creados:**
+- Error classification (status codes + message patterns)
+- Error ID generation (UUID v4)
+- Context building (user, request, environment)
+- Response generation (prod vs dev modes)
+- Custom error classes (ValidationError, AuthenticationError, etc.)
+- asyncWrapper for async handler protection
+- notFoundHandler middleware
+
+**Edge cases cubiertos:**
+- Missing error messages
+- Non-standard status codes
+- Empty contexts
+- Production vs development environments
+
+---
+
+### 2. CSRF Protection Middleware (90.14% coverage)
+
+**Tests creados:**
+- Token generation (64-char hex, uniqueness)
+- Token storage and validation (timing-safe comparison)
+- Token expiration (2-hour TTL)
+- Cleanup of expired tokens
+- SessionId resolution (sessionID, session.id, fallback IP+UA)
+- Middleware behavior (skip paths, safe methods)
+- Cookie handling and cleanup interval management
+
+**Edge cases cubiertos:**
+- Non-hex tokens
+- Token length mismatches
+- Missing sessions
+- Expired tokens
+- Interval cleanup (fixed Jest hanging issue)
+
+---
+
+### 3. Webhook Security Middleware (90.14% coverage)
+
+**Tests creados:**
+- Stripe signature verification (timestamp, tolerance, replay protection)
+- Idempotency checking (duplicate detection, DB errors)
+- Suspicious payload detection (injection patterns, depth, array size)
+- stripeWebhookSecurity middleware (body validation, JSON parsing)
+- genericWebhookSecurity middleware (HMAC verification, skip logic)
+- Cleanup of expired idempotency records
+
+**Edge cases cubiertos:**
+- Invalid signatures
+- Timestamps outside tolerance window
+- Duplicate webhook events
+- Malicious payloads (SQL injection, XSS, deep nesting)
+- Database connection failures
+
+---
+
+### 4. Admin Rate Limiter (100% coverage)
+
+**Tests creados:**
+- Rate limiter configuration (windowMs, max, environment)
+- Test environment bypass
+- Feature flag integration
+- Key generation (user ID vs IP)
+- Rate limit exceeded handler (logging, response)
+- Health check skip logic
+- Minimum value enforcement
+
+**Edge cases cubiertos:**
+- Authenticated vs anonymous users
+- Invalid configuration values (too low windowMs/max)
+- Test vs production environments
+- Health check paths
+- Rate limit exceeded responses
+
+---
+
+### 5. Response Cache Middleware (100% coverage)
+
+**Tests creados:**
+- Cache key generation (URL, query params, user context)
+- Cache operations (get, set, expiration)
+- Pattern-based invalidation (string, RegExp)
+- Admin cache invalidation
+- Cache statistics (hits, misses, hit rate)
+- Middleware integration (GET-only, skip function)
+- LRU behavior (maxSize enforcement)
+- ETag generation and validation
+
+**Edge cases cubiertos:**
+- Cache misses
+- Expired entries
+- Max size overflow (LRU eviction)
+- Non-GET requests
+- Skip conditions
+- ETag matches (304 Not Modified)
+
+---
+
+## 🐛 Problemas Resueltos
+
+### 1. Mock de express-rate-limit
+**Problema:** El mock no funcionaba con imports directos a nivel de módulo.  
+**Solución:** Ajustado para exportar tanto la función principal como `ipKeyGenerator` como propiedad.
+
+### 2. Buffer handling en webhookSecurity
+**Problema:** Concatenación de Buffer con timestamp en verificación de firmas Stripe.  
+**Solución:** Ajustados tests para usar `timestamp + '.' + buffer` (conversión automática a string).
+
+### 3. Supabase mocks encadenados
+**Problema:** Los mocks no reflejaban correctamente las llamadas encadenadas `.from().delete().lt()`.  
+**Solución:** Restructurados mocks con encadenamiento correcto.
+
+### 4. Math.max en adminRateLimiter
+**Problema:** Tests no reflejaban la validación de valores mínimos.  
+**Solución:** Ajustados tests para verificar que `windowMs ≥1000` y `max ≥1`.
+
+### 5. timingSafeEqual en comparaciones criptográficas
+**Problema:** Error cuando buffers tienen diferente longitud.  
+**Solución:** Asegurar que ambos buffers tengan 64 caracteres hex.
+
+### 6. setInterval en csrfProtection causando hang
+**Problema:** Tests no terminaban porque el interval seguía corriendo.  
+**Solución:** Añadido `afterAll()` hook para llamar a `cleanup()` y liberar el interval.
+
+### 7. Database connection en adminRateLimiter tests
+**Problema:** Tests intentaban conectar a DB real causando errores.  
+**Solución:** Mockeados `queueService` y `supabaseServiceClient` antes de importar el módulo.
+
+---
+
+## 📈 Impacto
+
+### Seguridad
+- ✅ Middleware crítico de seguridad ahora tiene cobertura exhaustiva
+- ✅ Protección CSRF validada con timing-safe comparisons
+- ✅ Webhook security verificada (firmas, idempotencia, replay protection)
+- ✅ Error handling no expone información sensible
+
+### Mantenibilidad
+- ✅ 128 tests proporcionan red de seguridad para refactoring
+- ✅ Tests documentan comportamiento esperado
+- ✅ Mocks facilitan desarrollo sin dependencias externas
+- ✅ Cobertura ≥80% asegura cambios seguros
+
+### Performance
+- ✅ Tests rápidos (~2-3 segundos) facilitan TDD
+- ✅ Cache middleware validado (100% coverage)
+- ✅ Rate limiting verificado en múltiples escenarios
+
+---
+
+## ✅ Validaciones Pasadas
+
+### Tests
+```bash
+npm test -- tests/unit/middleware/*.test.js
+# ✅ 128/128 tests passing
+```
+
+### Coverage
+```bash
+npm test -- tests/unit/middleware/*.test.js --coverage
+# ✅ 89.93% average coverage (target: ≥80%)
+```
+
+### GDD Validation
+```bash
+node scripts/validate-gdd-runtime.js --full
+# ✅ HEALTHY
+```
+
+### GDD Health Score
+```bash
+node scripts/score-gdd-health.js --ci
+# ✅ 89.6/100 (target: ≥87)
+```
+
+---
+
+## 🔗 Referencias
+
+- **Issue:** #924
+- **Plan:** `docs/plan/issue-924.md`
+- **Test Evidence:** `docs/test-evidence/issue-924-FINAL-SUMMARY.md`
+- **Agent Receipts:** `docs/agents/receipts/issue-924-*.md`
+- **CodeRabbit Lessons:** `docs/patterns/coderabbit-lessons.md`
+- **Testing Guide:** `docs/TESTING-GUIDE.md`
+
+---
+
+## 👥 Agentes Involucrados
+
+- **Test Engineer** - Test suite creation, coverage optimization
+- **Backend Developer** - Code review, mock validation, business logic verification
+- **Orchestrator** - Task coordination, GDD updates, PR preparation
+
+---
+
+## 🎉 Conclusión
+
+**Status:** ✅ **COMPLETADO AL 100%**
+
+Todos los archivos de middleware crítico ahora tienen:
+- ✅ Tests unitarios exhaustivos (128 tests)
+- ✅ Cobertura ≥80% (promedio 89.93%)
+- ✅ 0 tests fallando
+- ✅ Mocks apropiados
+- ✅ Cobertura de casos de éxito, error y edge cases
+- ✅ Documentación completa
+- ✅ GDD actualizada y validada
+
+**El código está listo para producción.** 🚀
+
+---
+
+**Generado:** 2025-01-23  
+**Autor:** AI Assistant (Claude Sonnet 4.5)  
+**Reviewers:** Test Engineer, Backend Developer  
+**Approved by:** Orchestrator

@@ -635,7 +635,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Documentation Agent**
 - **Orchestrator**
 - **Performance Monitor**
-- **Test Engineer**
+- **Test Engineer** (Issue #924 - middleware tests)
 - **Worker Monitor** (Issue #713)
 
 
