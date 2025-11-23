@@ -997,4 +997,320 @@ describe('FetchCommentsWorker', () => {
       ).rejects.toThrow('Unsupported platform: unsupported');
     });
   });
+
+  describe('getIntegrationConfig', () => {
+    test('should retrieve integration config from database', async () => {
+      const organizationId = 'org-123';
+      const platform = 'twitter';
+      const configId = 'config-123';
+
+      const mockConfig = {
+        id: configId,
+        organization_id: organizationId,
+        platform,
+        enabled: true,
+        config: { monitored_accounts: ['@test'] }
+      };
+
+      worker.supabase = mockSupabase;
+      worker.log = jest.fn();
+      
+      const mockSingle = jest.fn().mockResolvedValue({
+        data: mockConfig,
+        error: null
+      });
+      
+      const mockEq = jest.fn()
+        .mockReturnValueOnce({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: mockSingle
+            })
+          })
+        });
+
+      mockSupabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: mockEq
+        })
+      });
+
+      const result = await worker.getIntegrationConfig(organizationId, platform, configId);
+
+      expect(result).toEqual(mockConfig);
+      expect(mockSupabase.from).toHaveBeenCalledWith('integration_configs');
+    });
+
+    test('should use override config if set', async () => {
+      const overrideConfig = { enabled: true, platform: 'twitter' };
+      worker.setIntegrationConfigOverride(overrideConfig);
+
+      const result = await worker.getIntegrationConfig('org-123', 'twitter', 'config-123');
+
+      expect(result).toEqual(overrideConfig);
+    });
+
+    test('should handle database errors', async () => {
+      worker.supabase = mockSupabase;
+      worker.log = jest.fn();
+      
+      const mockSingle = jest.fn().mockResolvedValue({
+        data: null,
+        error: { message: 'Config not found' }
+      });
+      
+      const mockEq = jest.fn()
+        .mockReturnValueOnce({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: mockSingle
+            })
+          })
+        });
+
+      mockSupabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: mockEq
+        })
+      });
+
+      await expect(
+        worker.getIntegrationConfig('org-123', 'twitter', 'config-123')
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('queueAnalysisJobs', () => {
+    test('should queue analysis jobs for stored comments', async () => {
+      const organizationId = 'org-123';
+      const correlationId = 'corr-123';
+      const storedComments = [
+        { id: 'comment-1', platform: 'twitter', original_text: 'Test 1' },
+        { id: 'comment-2', platform: 'twitter', original_text: 'Test 2' }
+      ];
+
+      worker.queueService = mockQueueService;
+      worker.log = jest.fn();
+
+      await worker.queueAnalysisJobs(organizationId, storedComments, correlationId);
+
+      expect(mockQueueService.addJob).toHaveBeenCalledTimes(2);
+      expect(mockQueueService.addJob).toHaveBeenCalledWith({
+        organization_id: organizationId,
+        job_type: 'analyze_toxicity',
+        priority: 5,
+        payload: expect.objectContaining({
+          comment_id: 'comment-1',
+          organization_id: organizationId,
+          platform: 'twitter',
+          text: 'Test 1',
+          correlationId
+        }),
+        max_attempts: 3
+      });
+    });
+
+    test('should handle empty comments array', async () => {
+      const organizationId = 'org-123';
+      const correlationId = 'corr-123';
+
+      worker.queueService = mockQueueService;
+      worker.log = jest.fn();
+
+      await worker.queueAnalysisJobs(organizationId, [], correlationId);
+
+      expect(mockQueueService.addJob).not.toHaveBeenCalled();
+    });
+
+    test('should handle queue service errors gracefully', async () => {
+      const organizationId = 'org-123';
+      const correlationId = 'corr-123';
+      const storedComments = [
+        { id: 'comment-1', platform: 'twitter', original_text: 'Test 1' }
+      ];
+
+      worker.queueService = mockQueueService;
+      worker.log = jest.fn();
+      mockQueueService.addJob.mockRejectedValue(new Error('Queue service unavailable'));
+
+      await worker.queueAnalysisJobs(organizationId, storedComments, correlationId);
+
+      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to queue analysis job', expect.any(Object));
+    });
+  });
+
+  describe('normalizeCommentData', () => {
+    test('should normalize comment data structure', () => {
+      const rawComment = {
+        id: '123',
+        text: 'Test comment',
+        author: { id: 'user-1', username: 'testuser' },
+        created_at: '2024-01-01T00:00:00Z'
+      };
+
+      const normalized = worker.normalizeCommentData(rawComment, 'twitter');
+
+      expect(normalized).toHaveProperty('platform', 'twitter');
+      expect(normalized).toHaveProperty('original_text');
+      expect(normalized).toHaveProperty('platform_comment_id');
+    });
+
+    test('should handle different comment structures', () => {
+      const rawComment = {
+        platform_comment_id: '123',
+        original_text: 'Test',
+        platform_user_id: 'user-1'
+      };
+
+      const normalized = worker.normalizeCommentData(rawComment, 'youtube');
+
+      expect(normalized.platform).toBe('youtube');
+      expect(normalized.original_text).toBe('Test');
+    });
+  });
+
+  describe('_buildServicePayload', () => {
+    test('should build service payload from config and payload', () => {
+      const config = {
+        id: 'config-123',
+        organization_id: 'org-123',
+        platform: 'twitter',
+        config: { monitored_accounts: ['@test'] }
+      };
+      const payload = { since_id: '100', max_results: 50 };
+
+      const servicePayload = worker._buildServicePayload('twitter', config, payload);
+
+      expect(servicePayload).toHaveProperty('organization_id', 'org-123');
+      expect(servicePayload).toHaveProperty('integration_config_id', 'config-123');
+      expect(servicePayload).toHaveProperty('since_id', '100');
+      expect(servicePayload).toHaveProperty('max_results', 50);
+    });
+  });
+
+  describe('storeComments edge cases', () => {
+    test('should handle comments with missing platform_comment_id', async () => {
+      const organizationId = 'org-123';
+      const integrationConfigId = 'config-123';
+      const platform = 'twitter';
+      const comments = [
+        { original_text: 'Comment without ID', platform_user_id: 'user-1' }
+      ];
+
+      worker.supabase = mockSupabase;
+      worker.log = jest.fn();
+
+      const mockMaybeSingle = jest.fn().mockResolvedValue({
+        data: null,
+        error: null
+      });
+      
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: mockMaybeSingle
+        })
+      });
+
+      mockSupabase.from = jest.fn().mockReturnValue({
+        select: mockSelect,
+        insert: jest.fn().mockResolvedValue({ error: null })
+      });
+
+      const result = await worker.storeComments(organizationId, integrationConfigId, platform, comments);
+
+      expect(result).toHaveLength(0); // Comments without platform_comment_id should be skipped
+    });
+
+    test('should handle bulk insert errors', async () => {
+      const organizationId = 'org-123';
+      const integrationConfigId = 'config-123';
+      const platform = 'twitter';
+      const comments = [
+        {
+          platform: 'twitter',
+          platform_comment_id: 'tweet-1',
+          original_text: 'Test 1',
+          platform_user_id: 'user-1'
+        },
+        {
+          platform: 'twitter',
+          platform_comment_id: 'tweet-2',
+          original_text: 'Test 2',
+          platform_user_id: 'user-2'
+        }
+      ];
+
+      worker.supabase = mockSupabase;
+      worker.log = jest.fn();
+
+      const mockMaybeSingle = jest.fn()
+        .mockResolvedValueOnce({ data: null, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
+
+      const mockSelect = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: mockMaybeSingle
+        })
+      });
+
+      const mockInsert = jest.fn().mockResolvedValueOnce({
+        error: null,
+        data: [{ id: 'comment-1' }]
+      }).mockResolvedValueOnce({
+        error: { message: 'Insert failed' }
+      });
+
+      mockSupabase.from = jest.fn().mockReturnValue({
+        select: mockSelect,
+        insert: mockInsert
+      });
+
+      const result = await worker.storeComments(organizationId, integrationConfigId, platform, comments);
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to store comment', expect.any(Object));
+    });
+  });
+
+  describe('rate limit handling', () => {
+    test('should handle rate limit errors from platform services', async () => {
+      const job = {
+        id: 'job-123',
+        organization_id: 'org-123',
+        platform: 'twitter',
+        payload: { since_id: '100' }
+      };
+
+      mockTwitterService.fetchComments.mockRejectedValue({
+        code: 429,
+        message: 'Rate limit exceeded',
+        rateLimitReset: Date.now() + 900000
+      });
+
+      worker.setIntegrationConfigOverride({ enabled: true });
+
+      await expect(worker.processJob(job)).rejects.toThrow();
+      expect(worker.log).toHaveBeenCalledWith('error', expect.stringContaining('fetch'), expect.any(Object));
+    });
+  });
+
+  describe('cost control edge cases', () => {
+    test('should handle cost control limits being reached', async () => {
+      const job = {
+        id: 'job-123',
+        organization_id: 'org-123',
+        platform: 'twitter',
+        payload: { since_id: '100' }
+      };
+
+      mockCostControlService.canPerformOperation.mockResolvedValue({
+        allowed: false,
+        reason: 'Daily limit exceeded'
+      });
+
+      worker.setIntegrationConfigOverride({ enabled: true });
+
+      await expect(worker.processJob(job)).rejects.toThrow('has reached limits');
+    });
+  });
 });
