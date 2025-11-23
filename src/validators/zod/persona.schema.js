@@ -92,14 +92,10 @@ const createPersonaSchema = z
     lo_que_no_tolero: personaFieldSchema.optional(),
     lo_que_me_da_igual: personaFieldSchema.optional()
   })
-  .refine(
-    (data) =>
-      data.lo_que_me_define || data.lo_que_no_tolero || data.lo_que_me_da_igual,
-    {
-      message: 'At least one persona field must be provided',
-      path: ['_general'] // Custom path for global validation error
-    }
-  );
+  .refine((data) => data.lo_que_me_define || data.lo_que_no_tolero || data.lo_que_me_da_igual, {
+    message: 'At least one persona field must be provided',
+    path: ['_general'] // Custom path for global validation error
+  });
 
 /**
  * Schema for PATCH /api/persona (partial update)
@@ -129,14 +125,10 @@ const strictPersonaSchema = z
     lo_que_me_da_igual: personaFieldSchema.optional()
   })
   .strict() // Reject unknown properties
-  .refine(
-    (data) =>
-      data.lo_que_me_define || data.lo_que_no_tolero || data.lo_que_me_da_igual,
-    {
-      message: 'At least one persona field must be provided',
-      path: ['_general']
-    }
-  );
+  .refine((data) => data.lo_que_me_define || data.lo_que_no_tolero || data.lo_que_me_da_igual, {
+    message: 'At least one persona field must be provided',
+    path: ['_general']
+  });
 
 module.exports = {
   personaFieldSchema,
@@ -144,4 +136,3 @@ module.exports = {
   updatePersonaSchema,
   strictPersonaSchema
 };
-

@@ -13,6 +13,7 @@
 **Status:** `CONFLICTING` → **RESOLVED** ✅
 
 **Conflicts Resolved:**
+
 - `docs/system-health.md` → Accepted incoming (regenerated with GDD health score: 89.6/100)
 - `docs/system-validation.md` → Accepted incoming (validation HEALTHY)
 - `gdd-health.json` → Regenerated with latest health metrics
@@ -20,6 +21,7 @@
 - `src/routes/persona.js` → Kept HEAD (Zod migration complete)
 
 **Verification:**
+
 ```bash
 git merge --abort  # Canceled previous merge
 git pull origin main  # Pulled latest changes
@@ -30,6 +32,7 @@ git push origin feature/issue-942
 ```
 
 **Result:**
+
 - ✅ Branch is now up-to-date with `main`
 - ✅ GDD health score: **89.6/100** (HEALTHY)
 - ✅ No merge conflicts remaining
@@ -42,6 +45,7 @@ git push origin feature/issue-942
 **Status:** ⚠️ Stakeholder sign-off **REQUIRED**
 
 **Documentation Created:**
+
 - **Primary:** `docs/plan/issue-942-breaking-changes.md`
 - **Summary:** Comprehensive breaking changes analysis with:
   - Detailed before/after behavior comparison
@@ -72,30 +76,33 @@ git push origin feature/issue-942
 **Option A: Coordinated Deployment** ✅ (RECOMMENDED)
 
 **Why:**
+
 - P0 security fix should not be delayed
 - Low risk (comprehensive test coverage: 26/26 tests passing)
 - Clear error messages for users
 - Rollback available if issues arise
 
 **Timeline:**
+
 1. Backend deploys first (PR #969)
 2. Frontend deploys immediately after (error handling updates)
 3. Validation: Test XSS patterns return `400`, empty body returns `400`
 
 **Frontend Updates Required:**
+
 ```javascript
 // Add error handling for 400 validation errors
 if (!response.ok && response.status === 400) {
   const errorData = await response.json();
-  
+
   // XSS detection
-  const xssError = errorData.errors.find(e => e.message.includes('XSS_DETECTED'));
+  const xssError = errorData.errors.find((e) => e.message.includes('XSS_DETECTED'));
   if (xssError) {
     showError('El texto contiene patrones no permitidos. Por favor, evita usar HTML.');
   }
-  
+
   // Empty body
-  const emptyError = errorData.errors.find(e => e.message.includes('At least one persona field'));
+  const emptyError = errorData.errors.find((e) => e.message.includes('At least one persona field'));
   if (emptyError) {
     showError('Debes proporcionar al menos un campo de personalidad.');
   }
@@ -103,6 +110,7 @@ if (!response.ok && response.status === 400) {
 ```
 
 **Alternative Options:**
+
 - **Option B:** Feature flag (gradual rollout) - Only if frontend coordination difficult
 - **Option C:** API versioning - Overkill for internal API
 
@@ -111,6 +119,7 @@ if (!response.ok && response.status === 400) {
 ### ✅ 4. Test Coverage Verification
 
 **All Tests Passing:**
+
 ```bash
 PASS tests/unit/validators/persona.schema.test.js (18/18)
 PASS tests/unit/validators/formatZodError.test.js (8/8)
@@ -118,12 +127,14 @@ PASS tests/integration/persona-api.test.js (all updated for breaking changes)
 ```
 
 **Security Improvements Verified:**
+
 - ✅ DOMPurify blocks `<script>`, `<iframe>`, `<embed>`, `<img onerror>`, `<svg onload>`, etc.
 - ✅ Plain text XSS patterns (e.g., `JAVASCRIPT:alert(1)`) accepted (safe in encryption/embedding context)
 - ✅ Empty body rejected with clear error message
 - ✅ SQL injection protection via DB layer (parameterized queries) verified
 
 **GDD Validation:**
+
 ```bash
 node scripts/validate-gdd-runtime.js --full  # HEALTHY
 node scripts/score-gdd-health.js --ci        # 89.6/100 (>= 87 threshold)
@@ -137,6 +148,7 @@ node scripts/predict-gdd-drift.js --full     # <60 risk
 ### Concern 1: Merge Conflicts
 
 **CodeRabbit:**
+
 > 🚨 NO - CRITICAL BLOCKER: Merge Conflicts
 > mergeable: "CONFLICTING"
 > mergeStateStatus: "DIRTY"
@@ -154,6 +166,7 @@ node scripts/predict-gdd-drift.js --full     # <60 risk
 ### Concern 2: Breaking Changes Require Stakeholder Sign-Off
 
 **CodeRabbit:**
+
 > ⚠️ Breaking Changes Require Stakeholder Sign-Off
 > While the code quality is excellent, there are documented breaking changes that affect API behavior
 
@@ -167,12 +180,14 @@ node scripts/predict-gdd-drift.js --full     # <60 risk
 - **Stakeholder sign-off checklist** created (awaiting approvals)
 
 **Required Approvals:**
+
 - [ ] Frontend Lead: Error handling updates confirmed
 - [ ] Product Owner: Breaking changes approved
 - [ ] Security Team: XSS mitigation upgrade reviewed
 - [ ] DevOps: Deployment window coordinated
 
 **Recommendation:**
+
 - **Coordinated deployment** in off-peak hours
 - Frontend + backend deployed in same window (1 hour)
 - Monitor error logs post-deployment for unexpected `400` responses
@@ -190,9 +205,11 @@ node scripts/predict-gdd-drift.js --full     # <60 risk
 5. **Data Integrity:** Empty payloads rejected (prevents useless API calls)
 
 **CodeRabbit Advisory:**
+
 > "Insufficient XSS detection - regex can be bypassed by mixed case, Unicode, encoded HTML entities, etc."
 
 **Our Fix:**
+
 - Upgraded to **DOMPurify** (OWASP-recommended)
 - **Comprehensive coverage:** Blocks `<iframe>`, `<embed>`, `<img onerror>`, `<svg onload>`, and more
 - **Context-aware:** Plain text XSS patterns (e.g., `JAVASCRIPT:alert(1)`) allowed (safe in encrypted/embedding context)
@@ -217,6 +234,7 @@ node scripts/predict-gdd-drift.js --full     # <60 risk
 ## Conclusion
 
 **Status:**
+
 - ✅ Merge conflicts: **RESOLVED**
 - ✅ Breaking changes: **DOCUMENTED & MITIGATED**
 - ✅ Security upgrade: **OWASP-recommended DOMPurify**
@@ -225,11 +243,13 @@ node scripts/predict-gdd-drift.js --full     # <60 risk
 - ⚠️ Stakeholder approvals: **PENDING**
 
 **Recommendation:**
+
 - **APPROVE PR** after frontend team confirms error handling updates
 - **Deploy via coordinated deployment** (backend + frontend same window)
 - **Monitor closely** post-deployment for any unexpected behavior
 
 **Risk Level:** 🟡 **LOW-MEDIUM**
+
 - Low technical risk (comprehensive test coverage)
 - Medium coordination risk (breaking changes require frontend updates)
 - Mitigated by: Clear documentation, code examples, rollback plan
@@ -244,4 +264,3 @@ node scripts/predict-gdd-drift.js --full     # <60 risk
 - **Security Upgrade:** `docs/plan/coderabbit-review-response.md`
 - **Test Evidence:** `tests/unit/validators/`, `tests/integration/persona-api.test.js`
 - **CodeRabbit Review:** https://github.com/Eibon7/roastr-ai/pull/969#pullrequestreview-3497982135
-

@@ -32,12 +32,14 @@
 **File:** `src/validators/zod/persona.schema.js`
 
 **Schemas:**
+
 - ✅ `personaFieldSchema` - Base validation for individual fields
 - ✅ `createPersonaSchema` - Full validation for POST `/api/persona`
 - ✅ `updatePersonaSchema` - Partial validation for PATCH `/api/persona`
 - ✅ `strictPersonaSchema` - Strict validation for internal use
 
 **Validation Rules:**
+
 - ✅ Required fields: At least one persona field must be provided
 - ✅ Optional fields: `lo_que_me_define`, `lo_que_no_tolero`, `lo_que_me_da_igual`
 - ✅ Data types: String validation enforced
@@ -52,12 +54,14 @@
 **File:** `src/validators/zod/formatZodError.js`
 
 **Functions:**
+
 - ✅ `formatZodError(error)` - Formats Zod errors to match express-validator format
 - ✅ `isZodError(error)` - Type guard for Zod errors
 - ✅ `getErrorFields(error)` - Extracts field names from errors
 - ✅ `getFirstErrorMessage(error, defaultMessage)` - Gets first error message
 
 **API Format Compatibility:**
+
 ```json
 {
   "success": false,
@@ -79,6 +83,7 @@
 **File:** `src/routes/persona.js`
 
 **Changes:**
+
 - ✅ Removed `express-validator` imports (`body`, `validationResult`)
 - ✅ Removed `validatePersonaInput` middleware
 - ✅ Integrated Zod schemas directly in route handler
@@ -86,9 +91,10 @@
 - ✅ Maintained same API contract (error format unchanged)
 
 **Before:**
+
 ```javascript
 const validatePersonaInput = [
-  body('lo_que_me_define').optional().isString().trim().isLength({ max: 300 }).escape(),
+  body('lo_que_me_define').optional().isString().trim().isLength({ max: 300 }).escape()
   // ...
 ];
 
@@ -102,6 +108,7 @@ router.post('/api/persona', authenticateToken, validatePersonaInput, async (req,
 ```
 
 **After:**
+
 ```javascript
 router.post('/api/persona', authenticateToken, async (req, res) => {
   const parsedBody = createPersonaSchema.safeParse(req.body);
@@ -124,15 +131,18 @@ router.post('/api/persona', authenticateToken, async (req, res) => {
 **Critical Improvement (CodeRabbit Feedback):**
 
 **Before (Regex):**
+
 ```javascript
 .refine(value => !/<script|javascript:|onerror=/i.test(value), {
   message: 'XSS_DETECTED: Malicious script patterns are not allowed'
 });
 ```
+
 - ❌ Insufficient: Only catches basic XSS patterns
 - ❌ Bypassable: Mixed case, Unicode, encoded HTML entities, `<iframe>`, `<embed>`, etc.
 
 **After (DOMPurify):**
+
 ```javascript
 const DOMPurify = require('isomorphic-dompurify');
 
@@ -149,11 +159,13 @@ const DOMPurify = require('isomorphic-dompurify');
   message: 'XSS_DETECTED: Malicious HTML content is not allowed'
 });
 ```
+
 - ✅ **OWASP-recommended:** Industry-standard sanitizer (GitHub, Facebook, Google)
 - ✅ **Comprehensive:** Catches `<iframe>`, `<embed>`, `<img onerror>`, `<svg onload>`, etc.
 - ✅ **Context-aware:** Plain text XSS patterns (e.g., `JAVASCRIPT:alert(1)`) allowed (safe in encrypted/embedding context)
 
 **Security Advisory:**
+
 - **Before:** Regex insufficient (CodeRabbit: "can be bypassed by mixed case, Unicode, encoded HTML entities")
 - **After:** DOMPurify comprehensive (Defense-in-depth: validation layer + encryption layer + DB layer)
 
@@ -164,6 +176,7 @@ const DOMPurify = require('isomorphic-dompurify');
 #### Unit Tests (26 tests, 100% passing)
 
 **File:** `tests/unit/validators/persona.schema.test.js` (18 tests)
+
 - ✅ Valid inputs (all fields, single field, mixed fields)
 - ✅ Invalid inputs (too long, empty string, wrong type, missing fields)
 - ✅ Trimming behavior
@@ -172,6 +185,7 @@ const DOMPurify = require('isomorphic-dompurify');
 - ✅ SQL injection patterns accepted (DB layer protection)
 
 **File:** `tests/unit/validators/formatZodError.test.js` (8 tests)
+
 - ✅ Single field errors
 - ✅ Multiple field errors
 - ✅ Global errors (no specific field)
@@ -183,11 +197,13 @@ const DOMPurify = require('isomorphic-dompurify');
 #### Integration Tests (Updated 3 tests)
 
 **File:** `tests/integration/persona-api.test.js`
+
 - ✅ Updated: `should reject HTML/script tags (XSS detection)` → Now expects `400` (previously `200` with sanitization)
 - ✅ Updated: `should reject empty request body` → Now expects `400` (previously `200`)
 - ✅ Updated: `should accept SQL injection patterns` → Relies on DB layer protection (not validation layer)
 
 **Test Results:**
+
 ```bash
 PASS tests/unit/validators/persona.schema.test.js (18/18)
 PASS tests/unit/validators/formatZodError.test.js (8/8)
@@ -201,6 +217,7 @@ Total: 81 tests passing
 ### 6. Documentation
 
 **Created Documentation:**
+
 1. ✅ `docs/plan/issue-942.md` - Implementation plan
 2. ✅ `docs/plan/coderabbit-review-response.md` - Security upgrade rationale
 3. ✅ `docs/plan/issue-942-breaking-changes.md` - **Comprehensive breaking changes analysis**
@@ -209,6 +226,7 @@ Total: 81 tests passing
 6. ✅ `docs/agents/receipts/cursor-guardian-issue-942.md` - Guardian receipt
 
 **Updated Documentation:**
+
 - ✅ `docs/nodes/persona.md` - Updated "Agentes Relevantes" section
 - ✅ `jest.config.js` - Added validators directory to testMatch patterns
 
@@ -217,6 +235,7 @@ Total: 81 tests passing
 ### 7. GDD Validation
 
 **Validation Results:**
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 # ✅ Overall Status: HEALTHY
@@ -231,6 +250,7 @@ node scripts/predict-gdd-drift.js --full
 ```
 
 **GDD Health:**
+
 - ✅ **89.6/100** (exceeds threshold of 87)
 - ✅ 13 nodes healthy, 2 degraded, 0 critical
 - ✅ All validations passing
@@ -240,11 +260,13 @@ node scripts/predict-gdd-drift.js --full
 ### 8. Agent Receipts
 
 **Agents Invoked:**
+
 - ✅ **TestEngineer** - Generated comprehensive unit and integration tests
 - ✅ **Guardian** - Reviewed security implications and breaking changes
 - ✅ **Orchestrator** (Lead) - Coordinated implementation and documentation
 
 **Receipts Generated:**
+
 - ✅ `docs/agents/receipts/cursor-test-engineer-issue-942.md`
 - ✅ `docs/agents/receipts/cursor-guardian-issue-942.md`
 
@@ -282,6 +304,7 @@ node scripts/predict-gdd-drift.js --full
 ## 📊 Merge Conflicts Resolved
 
 **Conflicts:**
+
 - `docs/system-health.md` → Accepted incoming (regenerated)
 - `docs/system-validation.md` → Accepted incoming (regenerated)
 - `gdd-health.json` → Regenerated with latest metrics
@@ -289,6 +312,7 @@ node scripts/predict-gdd-drift.js --full
 - `src/routes/persona.js` → Kept HEAD (Zod migration)
 
 **Result:**
+
 - ✅ Branch up-to-date with `main`
 - ✅ No conflicts remaining
 - ✅ PR mergeable (pending approvals)
@@ -307,19 +331,20 @@ node scripts/predict-gdd-drift.js --full
 ### 2. Frontend Updates (REQUIRED)
 
 **Code Example:**
+
 ```javascript
 // Add error handling for 400 validation errors
 if (!response.ok && response.status === 400) {
   const errorData = await response.json();
-  
+
   // XSS detection
-  const xssError = errorData.errors.find(e => e.message.includes('XSS_DETECTED'));
+  const xssError = errorData.errors.find((e) => e.message.includes('XSS_DETECTED'));
   if (xssError) {
     showError('El texto contiene patrones no permitidos. Por favor, evita usar HTML.');
   }
-  
+
   // Empty body
-  const emptyError = errorData.errors.find(e => e.message.includes('At least one persona field'));
+  const emptyError = errorData.errors.find((e) => e.message.includes('At least one persona field'));
   if (emptyError) {
     showError('Debes proporcionar al menos un campo de personalidad.');
   }
@@ -339,15 +364,15 @@ if (!response.ok && response.status === 400) {
 
 ## 📈 Quality Metrics
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Test Coverage | ≥90% | 100% (Zod validators) | ✅ |
-| Tests Passing | 100% | 81/81 (100%) | ✅ |
-| GDD Health Score | ≥87 | 89.6/100 | ✅ |
-| GDD Drift Risk | <60 | <60 | ✅ |
-| CodeRabbit Comments | 0 | 2 (breaking changes) | ⚠️ |
-| Merge Conflicts | 0 | 0 (resolved) | ✅ |
-| Agent Receipts | Required | 2/2 (TestEngineer, Guardian) | ✅ |
+| Metric              | Target   | Actual                       | Status |
+| ------------------- | -------- | ---------------------------- | ------ |
+| Test Coverage       | ≥90%     | 100% (Zod validators)        | ✅     |
+| Tests Passing       | 100%     | 81/81 (100%)                 | ✅     |
+| GDD Health Score    | ≥87      | 89.6/100                     | ✅     |
+| GDD Drift Risk      | <60      | <60                          | ✅     |
+| CodeRabbit Comments | 0        | 2 (breaking changes)         | ⚠️     |
+| Merge Conflicts     | 0        | 0 (resolved)                 | ✅     |
+| Agent Receipts      | Required | 2/2 (TestEngineer, Guardian) | ✅     |
 
 ---
 
@@ -360,6 +385,7 @@ if (!response.ok && response.status === 400) {
 5. **Data integrity:** Empty payloads rejected
 
 **Risk Level:** 🟡 **LOW-MEDIUM**
+
 - Low technical risk (comprehensive test coverage)
 - Medium coordination risk (breaking changes require frontend updates)
 - Mitigated by: Clear documentation, code examples, rollback plan
@@ -397,4 +423,3 @@ if (!response.ok && response.status === 400) {
 **Completed by:** Orchestrator (Lead Agent)  
 **Date:** 2025-11-23  
 **Worktree:** `/Users/emiliopostigo/roastr-ai/roastr-ai-worktrees/issue-942`
-
