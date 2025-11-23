@@ -5,6 +5,8 @@ const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 const levelConfigService = require('../services/levelConfigService');
 const toneCompatibilityService = require('../services/toneCompatibilityService'); // Issue #872: Tone compatibility
+const { roastLevelSchema, shieldLevelSchema } = require('../validators/zod/config.schema'); // Issue #943: Zod validation
+const { formatZodError } = require('../validators/zod/helpers'); // Issue #943: Error formatting
 
 const router = express.Router();
 
@@ -162,22 +164,24 @@ router.put('/:platform', async (req, res) => {
             });
         }
 
-        // Issue #597: Validate roast_level
+        // Issue #943: Zod validation for roast_level
         if (roast_level !== undefined) {
-            if (typeof roast_level !== 'number' || roast_level < 1 || roast_level > 5) {
+            const roastValidation = roastLevelSchema.safeParse(roast_level);
+            if (!roastValidation.success) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Roast level must be a number between 1 and 5'
+                    error: formatZodError(roastValidation.error)
                 });
             }
         }
 
-        // Issue #597: Validate shield_level
+        // Issue #943: Zod validation for shield_level
         if (shield_level !== undefined) {
-            if (typeof shield_level !== 'number' || shield_level < 1 || shield_level > 5) {
+            const shieldValidation = shieldLevelSchema.safeParse(shield_level);
+            if (!shieldValidation.success) {
                 return res.status(400).json({
                     success: false,
-                    error: 'Shield level must be a number between 1 and 5'
+                    error: formatZodError(shieldValidation.error)
                 });
             }
         }
