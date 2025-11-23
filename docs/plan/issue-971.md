@@ -33,20 +33,24 @@
 ### Paso 1: Dependencias Duplicadas (5 min)
 
 **Archivos:**
+
 - `src/services/passwordValidationService.js` (1 línea)
 - `package.json` (eliminar bcryptjs)
 
 **Acciones:**
+
 1. Cambiar import en `passwordValidationService.js`:
+
    ```javascript
    // Antes
    const bcryptjs = require('bcryptjs');
-   
+
    // Después
    const bcrypt = require('bcrypt');
    ```
 
 2. Eliminar dependencia:
+
    ```bash
    npm uninstall bcryptjs
    ```
@@ -57,6 +61,7 @@
    ```
 
 **Validación:**
+
 - [ ] Import cambiado a `bcrypt`
 - [ ] `bcryptjs` eliminado de package.json
 - [ ] Tests de password pasando
@@ -68,6 +73,7 @@
 **Script automático:** `scripts/replace-console-logs.js`
 
 **Funcionalidad:**
+
 - Buscar archivos con `console.log/warn/error`
 - Excluir CLI tools (`src/cli/`, `src/workers/cli/`)
 - Reemplazar automáticamente:
@@ -79,6 +85,7 @@
 **Archivos afectados:** ~47 archivos (estimado)
 
 **Acciones:**
+
 1. Crear script `scripts/replace-console-logs.js`
 2. Ejecutar: `node scripts/replace-console-logs.js --dry-run`
 3. Revisar cambios propuestos
@@ -87,6 +94,7 @@
 6. Ejecutar tests: `npm test`
 
 **Validación:**
+
 - [ ] Script creado y ejecutado
 - [ ] <50 console.log en código (solo CLI)
 - [ ] Tests pasando
@@ -97,27 +105,36 @@
 ### Paso 3: Documentar Script de Cobertura (2 min)
 
 **Archivos:**
+
 - `docs/CODE-QUALITY-ACTION-PLAN.md` (ya existe)
 - `CLAUDE.md` (referencia ya presente)
 
 **Acciones:**
+
 1. Añadir nota en `CODE-QUALITY-ACTION-PLAN.md`:
-   ```markdown
+
+   ````markdown
    ## Fuente de Verdad: Coverage Script
-   
+
    **Script:** `scripts/get-coverage.js` (Issue #971)
-   
+
    **Uso:**
+
    ```bash
    node scripts/get-coverage.js
    ```
-   
+   ````
+
    **Output:** Cobertura actualizada por categoría (roast, shield, workers, integrations)
-   
+
    **Este script es la FUENTE DE VERDAD para métricas de cobertura.**
+
+   ```
+
    ```
 
 **Validación:**
+
 - [ ] Documentación añadida
 - [ ] Script ejecuta correctamente
 
@@ -126,13 +143,16 @@
 ## Agentes Relevantes
 
 ### TestEngineer (REQUERIDO)
+
 **Trigger:** Cambios en `src/`, validación de tests  
 **Workflow:**
+
 1. Validar tests de password hashing
 2. Ejecutar suite completa: `npm test`
 3. Generar receipt en `docs/agents/receipts/issue-971-TestEngineer.md`
 
 ### Guardian (SKIPPED)
+
 **Razón:** No hay cambios en billing, auth, security crítica, GDD  
 **Receipt:** `docs/agents/receipts/issue-971-Guardian-SKIPPED.md`
 
@@ -141,15 +161,18 @@
 ## Archivos Afectados
 
 **Modificaciones:**
+
 - `src/services/passwordValidationService.js` (1 línea)
 - `src/**/*.js` (~47 archivos - console.log replacement)
 - `package.json` (eliminar bcryptjs)
 - `docs/CODE-QUALITY-ACTION-PLAN.md` (documentación)
 
 **Nuevos:**
+
 - `scripts/replace-console-logs.js` (script automático)
 
 **Tests:**
+
 - `tests/unit/services/passwordValidationService.test.js` (verificar)
 - `tests/unit/services/passwordHistoryService.test.js` (verificar)
 - Suite completa (verificar no breaking changes)
@@ -159,6 +182,7 @@
 ## Validación Final
 
 **Pre-Flight Checklist:**
+
 - [ ] Tests pasando (100%)
 - [ ] Solo 1 dependencia bcrypt (bcrypt o bcryptjs)
 - [ ] <50 console.log en código (solo CLI)
@@ -167,6 +191,7 @@
 - [ ] CodeRabbit: 0 comentarios
 
 **Comandos de Validación:**
+
 ```bash
 # Tests
 npm test
@@ -196,6 +221,7 @@ node scripts/get-coverage.js
 ## Notas
 
 **Lecciones de CodeRabbit (aplicadas):**
+
 - ✅ Usar `const` por defecto
 - ✅ Siempre semicolons
 - ✅ Tests ANTES de implementar (verificar existentes)
@@ -203,6 +229,7 @@ node scripts/get-coverage.js
 - ✅ Coverage Source: auto (no manual)
 
 **Estimación Realista:**
+
 - 🤖 **Para Claude/AI**: 15-20 minutos total
 - 👤 **Para Humano**: 2-3 horas (entender, probar, revisar)
 
@@ -213,4 +240,3 @@ node scripts/get-coverage.js
 
 **Plan creado:** 2025-11-23  
 **Autor:** Orchestrator (Claude)
-

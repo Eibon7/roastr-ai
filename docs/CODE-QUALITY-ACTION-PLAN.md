@@ -31,11 +31,13 @@ El script proporciona cobertura actualizada por categoría:
 ### Por Qué Este Script
 
 **Problema anterior:**
+
 - Cobertura reportada inconsistentemente entre fuentes
 - Valores manuales en nodos GDD desactualizados
 - Métricas de `npm test --coverage` no categorizadas
 
 **Solución:**
+
 - Script centralizado que lee `coverage/coverage-summary.json`
 - Agrupa archivos por área funcional
 - Proporciona métricas consistentes y verificables
@@ -69,6 +71,7 @@ node scripts/auto-repair-gdd.js --auto
 **Estado:** ✅ Completado
 
 **Archivos modificados:**
+
 - `src/services/passwordValidationService.js` - Import cambiado a `bcrypt`
 - `package.json` - `bcryptjs` eliminado
 
@@ -79,11 +82,13 @@ node scripts/auto-repair-gdd.js --auto
 **Estado:** ✅ Completado
 
 **Script ejecutado:**
+
 ```bash
 node scripts/replace-console-logs.js
 ```
 
 **Resultados:**
+
 - **Files scanned:** 223
 - **Files modified:** 36
 - **Imports added:** 28
@@ -93,6 +98,7 @@ node scripts/replace-console-logs.js
   - `console.error` → `logger.error`: 160
 
 **Excepciones (CLI tools - legítimo uso de console.log):**
+
 - `src/cli.js` - 2 console.log para user output
 - `src/cli/` - Herramientas CLI
 - `src/workers/cli/` - Worker CLI tools
@@ -111,6 +117,7 @@ node scripts/replace-console-logs.js
 **Cobertura general:** ~39% (2025-11-23)
 
 **Por área:**
+
 - roast: ~45%
 - shield: ~50%
 - workers: ~35%
@@ -199,4 +206,3 @@ npm run coderabbit:review
 **Mantenido por:** Orchestrator  
 **Última revisión:** 2025-11-23  
 **Versión:** 1.0.0
-
