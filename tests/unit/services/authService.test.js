@@ -1,3 +1,4 @@
+
 const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // ============================================================================
@@ -5,25 +6,22 @@ const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 // ============================================================================
 
 // Create Supabase mock with defaults
-const mockSupabase = createSupabaseMock(
-  {
+const mockSupabase = createSupabaseMock({
     users: []
-  },
-  {
+}, {
     // RPC functions if needed
-  }
-);
+});
 
 // Mock Supabase anon client for auth operations
 const mockSupabaseAnonClient = {
-  auth: {
-    signUp: jest.fn(),
-    signInWithPassword: jest.fn(),
-    signInWithOtp: jest.fn(),
-    resetPasswordForEmail: jest.fn(),
-    verifyOtp: jest.fn(),
-    signInWithOAuth: jest.fn()
-  }
+    auth: {
+        signUp: jest.fn(),
+        signInWithPassword: jest.fn(),
+        signInWithOtp: jest.fn(),
+        resetPasswordForEmail: jest.fn(),
+        verifyOtp: jest.fn(),
+        signInWithOAuth: jest.fn()
+    }
 };
 
 // Mock planLimitsService
@@ -119,12 +117,10 @@ describe('AuthService', () => {
       const mockTableBuilder = {
         insert: jest.fn(() => ({
           select: jest.fn(() => ({
-            single: jest.fn(() =>
-              Promise.resolve({
-                data: mockUserData,
-                error: null
-              })
-            )
+            single: jest.fn(() => Promise.resolve({
+              data: mockUserData,
+              error: null
+            }))
           }))
         }))
       };
@@ -147,12 +143,10 @@ describe('AuthService', () => {
         error: { message: 'Email already registered' }
       });
 
-      await expect(
-        authService.signUp({
-          email: 'test@example.com',
-          password: 'password123'
-        })
-      ).rejects.toThrow('Signup failed: Email already registered');
+      await expect(authService.signUp({
+        email: 'test@example.com',
+        password: 'password123'
+      })).rejects.toThrow('Signup failed: Email already registered');
     });
 
     it('should cleanup auth user if profile creation fails', async () => {
@@ -178,12 +172,10 @@ describe('AuthService', () => {
 
       supabaseServiceClient.auth.admin.deleteUser.mockResolvedValue({});
 
-      await expect(
-        authService.signUp({
-          email: 'test@example.com',
-          password: 'password123'
-        })
-      ).rejects.toThrow('Failed to create user profile: Database error');
+      await expect(authService.signUp({
+        email: 'test@example.com',
+        password: 'password123'
+      })).rejects.toThrow('Failed to create user profile: Database error');
 
       expect(supabaseServiceClient.auth.admin.deleteUser).toHaveBeenCalledWith('test-id');
     });
@@ -238,12 +230,10 @@ describe('AuthService', () => {
         error: { message: 'Invalid login credentials' }
       });
 
-      await expect(
-        authService.signIn({
-          email: 'test@example.com',
-          password: 'wrongpassword'
-        })
-      ).rejects.toThrow('Sign in failed: Invalid login credentials');
+      await expect(authService.signIn({
+        email: 'test@example.com',
+        password: 'wrongpassword'
+      })).rejects.toThrow('Sign in failed: Invalid login credentials');
     });
   });
 
@@ -282,9 +272,8 @@ describe('AuthService', () => {
         })
       });
 
-      await expect(authService.listUsers({ limit: 10, offset: 0 })).rejects.toThrow(
-        'Failed to list users: Database error'
-      );
+      await expect(authService.listUsers({ limit: 10, offset: 0 }))
+        .rejects.toThrow('Failed to list users: Database error');
     });
   });
 
@@ -310,12 +299,10 @@ describe('AuthService', () => {
       const mockTableBuilder = {
         insert: jest.fn(() => ({
           select: jest.fn(() => ({
-            single: jest.fn(() =>
-              Promise.resolve({
-                data: mockUserData,
-                error: null
-              })
-            )
+            single: jest.fn(() => Promise.resolve({
+              data: mockUserData,
+              error: null
+            }))
           }))
         }))
       };
@@ -354,12 +341,10 @@ describe('AuthService', () => {
       const mockTableBuilder = {
         insert: jest.fn(() => ({
           select: jest.fn(() => ({
-            single: jest.fn(() =>
-              Promise.resolve({
-                data: mockUserData,
-                error: null
-              })
-            )
+            single: jest.fn(() => Promise.resolve({
+              data: mockUserData,
+              error: null
+            }))
           }))
         }))
       };
@@ -404,11 +389,9 @@ describe('AuthService', () => {
         error: { message: 'Invalid email' }
       });
 
-      await expect(
-        authService.signUpWithMagicLink({
-          email: 'invalid@example.com'
-        })
-      ).rejects.toThrow('Magic link signup failed: Invalid email');
+      await expect(authService.signUpWithMagicLink({
+        email: 'invalid@example.com'
+      })).rejects.toThrow('Magic link signup failed: Invalid email');
     });
   });
 
@@ -431,9 +414,8 @@ describe('AuthService', () => {
         error: { message: 'Rate limit exceeded' }
       });
 
-      await expect(authService.signInWithMagicLink('test@example.com')).rejects.toThrow(
-        'Magic link sign in failed: Rate limit exceeded'
-      );
+      await expect(authService.signInWithMagicLink('test@example.com'))
+        .rejects.toThrow('Magic link sign in failed: Rate limit exceeded');
     });
   });
 
@@ -457,7 +439,7 @@ describe('AuthService', () => {
     it('should handle sign out errors', async () => {
       const mockUserClient = {
         auth: {
-          signOut: jest.fn().mockResolvedValue({
+          signOut: jest.fn().mockResolvedValue({ 
             error: { message: 'Token expired' }
           })
         }
@@ -466,9 +448,8 @@ describe('AuthService', () => {
       const { createUserClient } = require('../../../src/config/supabase');
       createUserClient.mockReturnValue(mockUserClient);
 
-      await expect(authService.signOut('invalid-token')).rejects.toThrow(
-        'Sign out failed: Token expired'
-      );
+      await expect(authService.signOut('invalid-token'))
+        .rejects.toThrow('Sign out failed: Token expired');
     });
   });
 
@@ -481,7 +462,9 @@ describe('AuthService', () => {
         name: 'Test User',
         organizations: [{ id: 'org-1', name: 'Test Org' }]
       };
-      const mockIntegrations = [{ platform: 'twitter', enabled: true }];
+      const mockIntegrations = [
+        { platform: 'twitter', enabled: true }
+      ];
 
       const mockUserClient = {
         auth: {
@@ -547,9 +530,8 @@ describe('AuthService', () => {
       const { createUserClient } = require('../../../src/config/supabase');
       createUserClient.mockReturnValue(mockUserClient);
 
-      await expect(authService.getCurrentUser('invalid-token')).rejects.toThrow(
-        'Invalid or expired token'
-      );
+      await expect(authService.getCurrentUser('invalid-token'))
+        .rejects.toThrow('Invalid or expired token');
     });
   });
 
@@ -572,9 +554,8 @@ describe('AuthService', () => {
         error: { message: 'Email not found' }
       });
 
-      await expect(authService.resetPassword('notfound@example.com')).rejects.toThrow(
-        'Password reset failed: Email not found'
-      );
+      await expect(authService.resetPassword('notfound@example.com'))
+        .rejects.toThrow('Password reset failed: Email not found');
     });
   });
 
@@ -643,9 +624,8 @@ describe('AuthService', () => {
       const { createUserClient } = require('../../../src/config/supabase');
       createUserClient.mockReturnValue(mockUserClient);
 
-      await expect(authService.updateProfile('test-token', { name: 'New Name' })).rejects.toThrow(
-        'Profile update failed: Update failed'
-      );
+      await expect(authService.updateProfile('test-token', { name: 'New Name' }))
+        .rejects.toThrow('Profile update failed: Update failed');
     });
   });
 
@@ -681,16 +661,15 @@ describe('AuthService', () => {
       const { createUserClient } = require('../../../src/config/supabase');
       createUserClient.mockReturnValue(mockUserClient);
 
-      await expect(authService.updatePassword('test-token', 'weak')).rejects.toThrow(
-        'Password update failed: Password too weak'
-      );
+      await expect(authService.updatePassword('test-token', 'weak'))
+        .rejects.toThrow('Password update failed: Password too weak');
     });
   });
 
   describe('verifyEmail', () => {
     it('should verify email successfully', async () => {
       const mockData = { user: { id: 'test-id' }, session: { access_token: 'token' } };
-
+      
       supabaseAnonClient.auth.verifyOtp.mockResolvedValue({
         data: mockData,
         error: null
@@ -718,9 +697,9 @@ describe('AuthService', () => {
   describe('listUsers (enhanced)', () => {
     it('should list users with enhanced features', async () => {
       const mockUsers = [
-        {
-          id: '1',
-          email: 'user1@example.com',
+        { 
+          id: '1', 
+          email: 'user1@example.com', 
           name: 'User 1',
           plan: 'pro',
           monthly_messages_sent: 10,
@@ -797,7 +776,8 @@ describe('AuthService', () => {
 
       supabaseServiceClient.from.mockReturnValue(mockFailedQuery);
 
-      await expect(authService.listUsers()).rejects.toThrow('Failed to list users: Database error');
+      await expect(authService.listUsers())
+        .rejects.toThrow('Failed to list users: Database error');
     });
   });
 
@@ -824,9 +804,8 @@ describe('AuthService', () => {
         error: { message: 'User not found' }
       });
 
-      await expect(authService.deleteUser('test-id')).rejects.toThrow(
-        'Failed to delete user from auth: User not found'
-      );
+      await expect(authService.deleteUser('test-id'))
+        .rejects.toThrow('Failed to delete user from auth: User not found');
     });
   });
 
@@ -848,12 +827,7 @@ describe('AuthService', () => {
             select: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
                 single: jest.fn().mockResolvedValue({
-                  data: {
-                    id: 'test-id',
-                    email: 'test@example.com',
-                    plan: 'starter_trial',
-                    name: 'Test'
-                  },
+                  data: { id: 'test-id', email: 'test@example.com', plan: 'starter_trial', name: 'Test' },
                   error: null
                 })
               })
@@ -908,19 +882,18 @@ describe('AuthService', () => {
     });
 
     it('should handle invalid plan', async () => {
-      await expect(authService.updateUserPlan('test-id', 'invalid')).rejects.toThrow(
-        'Invalid plan'
-      );
+      await expect(authService.updateUserPlan('test-id', 'invalid'))
+        .rejects.toThrow('Invalid plan');
     });
   });
 
   describe('toggleUserActive', () => {
     it('should toggle user active status', async () => {
       const mockCurrentUser = { active: false, email: 'test@example.com' };
-      const mockUpdatedUser = {
-        id: 'test-id',
-        active: true,
-        email: 'test@example.com'
+      const mockUpdatedUser = { 
+        id: 'test-id', 
+        active: true, 
+        email: 'test@example.com' 
       };
 
       supabaseServiceClient.from.mockReturnValue({
@@ -965,9 +938,8 @@ describe('AuthService', () => {
         })
       });
 
-      await expect(authService.toggleUserActive('invalid-id', 'admin-id')).rejects.toThrow(
-        'User not found'
-      );
+      await expect(authService.toggleUserActive('invalid-id', 'admin-id'))
+        .rejects.toThrow('User not found');
     });
   });
 
@@ -1070,15 +1042,14 @@ describe('AuthService', () => {
         error: { message: 'OAuth configuration error' }
       });
 
-      await expect(authService.signInWithGoogle()).rejects.toThrow(
-        'Google OAuth failed: OAuth configuration error'
-      );
+      await expect(authService.signInWithGoogle())
+        .rejects.toThrow('Google OAuth failed: OAuth configuration error');
     });
   });
 
   describe('getPlanLimits', () => {
     const planLimitsService = require('../../../src/services/planLimitsService');
-
+    
     beforeEach(() => {
       jest.clearAllMocks();
     });
@@ -1327,9 +1298,9 @@ describe('AuthService', () => {
     const mockToken = 'confirmation-token';
 
     it('should reject if token is missing', async () => {
-      await expect(authService.confirmEmailChange(null)).rejects.toThrow(
-        'Confirmation token is required'
-      );
+      await expect(
+        authService.confirmEmailChange(null)
+      ).rejects.toThrow('Confirmation token is required');
     });
 
     it('should handle verification errors', async () => {
@@ -1338,9 +1309,9 @@ describe('AuthService', () => {
         error: { message: 'Invalid token' }
       });
 
-      await expect(authService.confirmEmailChange(mockToken)).rejects.toThrow(
-        'Email change confirmation failed'
-      );
+      await expect(
+        authService.confirmEmailChange(mockToken)
+      ).rejects.toThrow('Email change confirmation failed');
     });
   });
 
@@ -1348,7 +1319,9 @@ describe('AuthService', () => {
     const mockUserId = 'export-user-id';
 
     it('should reject if userId is missing', async () => {
-      await expect(authService.exportUserData(null)).rejects.toThrow('User ID is required');
+      await expect(
+        authService.exportUserData(null)
+      ).rejects.toThrow('User ID is required');
     });
 
     it('should be defined for GDPR data export', () => {
