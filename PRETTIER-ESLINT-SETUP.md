@@ -10,12 +10,12 @@ Este documento resume la configuración de Prettier y ESLint integrados para uni
 
 - Instalado Prettier como dependencia de desarrollo
 - Creado `.prettierrc.json` con configuración estándar:
-  - `semi: true` - Siempre usar punto y coma
-  - `singleQuote: true` - Usar comillas simples
-  - `trailingComma: "es5"` - Comas finales según ES5
-  - `printWidth: 100` - Líneas de máximo 100 caracteres
-  - `tabWidth: 2` - 2 espacios por indentación
-  - `arrowParens: "always"` - Siempre usar paréntesis en arrow functions
+  - `semi: true` - Siempre usar punto y coma.
+  - `singleQuote: true` - Usar comillas simples.
+  - `trailingComma: "none"` - No trailing commas.
+  - `printWidth: 100` - Líneas de máximo 100 caracteres.
+  - `tabWidth: 2` - 2 espacios por indentación.
+  - `arrowParens: "always"` - Siempre usar paréntesis en arrow functions.
 
 - Creado `.prettierignore` para excluir:
   - `node_modules/`, `build/`, `dist/`, `coverage/`
@@ -99,3 +99,4 @@ npm run lint:fix
 - [ ] Obtener aprobación del equipo
 - [ ] Formatear codebase gradualmente (en PRs separados por directorio/feature)
 - [ ] Agregar check de formato en CI/CD
+
