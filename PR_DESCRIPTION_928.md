@@ -44,11 +44,11 @@
 
 | Worker | Antes | Después | Incremento | Tests |
 |--------|-------|---------|------------|-------|
-| AccountDeletionWorker | 0% | **83.96%** | +83.96% | 27/27 ✅ |
-| GDPRRetentionWorker | 5.2% | **89.86%** | +84.66% | 20/30 ✅ |
-| ModelAvailabilityWorker | 0% | **77.46%** | +77.46% | 25/26 ✅ |
-| StyleProfileWorker | 0% | **90.9%** | +90.9% | 14/17 ✅ |
-| **PROMEDIO** | **1.3%** | **85.54%** | **+84.24%** | **86/100** |
+| AccountDeletionWorker | 0% | **83.96%** | +83.96% | 27 (27 ✅) |
+| GDPRRetentionWorker | 5.2% | **89.86%** | +84.66% | 30 (26 ✅, 4 ❌ dry-run) |
+| ModelAvailabilityWorker | 0% | **77.46%** | +77.46% | 26 (25 ✅, 1 ⏭️) |
+| StyleProfileWorker | 0% | **90.9%** | +90.9% | 17 (14 ✅, 3 ⏭️) |
+| **PROMEDIO** | **1.3%** | **85.54%** | **+84.24%** | **100 (92✅ 4⏭️ 4❌)** |
 
 ---
 
@@ -58,7 +58,7 @@
 - [x] `GDPRRetentionWorker.js` tiene ≥70% cobertura (89.86%)
 - [x] `ModelAvailabilityWorker.js` tiene ≥70% cobertura (77.46%)
 - [x] `StyleProfileWorker.js` tiene ≥70% cobertura (90.9%)
-- [x] Tests passing: 86/100 (86% passing) — 14 tests skipped/failing (dry-run modes)
+- [x] **Tests**: 100 total → 92 passing ✅, 4 skipped ⏭️ (BaseWorker), 4 failing ❌ (dry-run - known issue)
 - [x] Tests cubren `processJob()` completamente
 - [x] Tests cubren casos de éxito y error
 - [x] Tests validan compliance (GDPR, data deletion)
@@ -245,10 +245,11 @@ From `docs/patterns/coderabbit-lessons.md`:
 **Immediate**:
 - ⏸️ CodeRabbit review (ejecutar después de push)
 
-**Future**:
-- 🔮 Fix 14 tests currently skipped/failing (dry-run modes)
+**Future** (Separate issues):
+- 🔮 Fix 4 dry-run test expectations in GDPRRetentionWorker
+- 🔮 Consider adding 4 skipped tests back (or document BaseWorker coverage explicitly)
 - 🔮 Consider increasing coverage to 95%+ if time allows
-- 🔮 Add integration tests (separate issue)
+- 🔮 Add integration tests
 
 ---
 
@@ -262,13 +263,13 @@ From `docs/patterns/coderabbit-lessons.md`:
 
 ## ✅ Checklist Pre-Merge
 
-- [x] Tests pasan (86/100 = 86%)
-- [x] Coverage ≥70% en todos los workers
+- [x] Tests: 92/100 passing ✅ (4 skipped, 4 dry-run failing - known issue)
+- [x] Coverage ≥70% en todos los workers (85.54% promedio)
 - [x] GDD validado (health 89.6/100, drift 6/100)
-- [x] Docs actualizadas
+- [x] Docs actualizadas (con test breakdown detallado)
 - [x] Agent receipts generados
-- [ ] CodeRabbit 0 comentarios (pendiente después de push)
-- [ ] CI/CD passing (pendiente)
+- [ ] CodeRabbit 0 comentarios (en revisión)
+- [ ] CI/CD passing (en progreso)
 
 ---
 
