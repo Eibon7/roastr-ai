@@ -92,6 +92,7 @@ All tests expect **deterministic array order**, but Promise.all() is non-determi
 ### API Behavior (Documented):
 
 **Result Structure:**
+
 ```javascript
 {
   success: boolean,  // false if ANY action fails
@@ -105,6 +106,7 @@ All tests expect **deterministic array order**, but Promise.all() is non-determi
 ```
 
 **Key Insight:**
+
 - **Success Flag**: `false` when ANY action fails
 - **Failed Actions**: Go to `failed_actions[]`, NOT `actions_executed[]`
 - **Promise.all()**: Execution order is non-deterministic
@@ -113,6 +115,7 @@ All tests expect **deterministic array order**, but Promise.all() is non-determi
 ### Test Expectations (Incorrect):
 
 Tests expect:
+
 1. ❌ Failed actions in `actions_executed[]` with `status: 'failed'`
 2. ❌ `success=true` when actions fail
 3. ❌ Deterministic array order from Promise.all()
@@ -120,6 +123,7 @@ Tests expect:
 ### Implementation (Correct):
 
 Implementation does:
+
 1. ✅ Failed actions go to separate `failed_actions[]` array
 2. ✅ `success=false` when ANY action fails
 3. ✅ Promise.all() order is non-deterministic

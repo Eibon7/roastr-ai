@@ -1,9 +1,9 @@
 /**
  * StyleAnalysisChart Component
- * 
+ *
  * Displays style analysis metrics in a visual chart format
  * Issue #369 - SPEC 9 - Style Profile Extraction
- * 
+ *
  * Features:
  * - Tone distribution visualization
  * - Writing style metrics
@@ -16,14 +16,8 @@ import React from 'react';
 const StyleAnalysisChart = ({ metadata, language = 'es' }) => {
   if (!metadata) return null;
 
-  const {
-    dominantTone,
-    styleType,
-    avgLength,
-    emojiUsage,
-    questionRate,
-    exclamationRate
-  } = metadata;
+  const { dominantTone, styleType, avgLength, emojiUsage, questionRate, exclamationRate } =
+    metadata;
 
   // Tone labels by language
   const toneLabels = {
@@ -113,7 +107,9 @@ const StyleAnalysisChart = ({ metadata, language = 'es' }) => {
           <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
             {language === 'es' ? 'Tono dominante' : 'Dominant tone'}
           </div>
-          <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${toneColors[dominantTone] || 'bg-gray-100 text-gray-800'}`}>
+          <div
+            className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${toneColors[dominantTone] || 'bg-gray-100 text-gray-800'}`}
+          >
             {currentToneLabels[dominantTone] || dominantTone}
           </div>
         </div>
@@ -122,7 +118,9 @@ const StyleAnalysisChart = ({ metadata, language = 'es' }) => {
           <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
             {language === 'es' ? 'Estilo de escritura' : 'Writing style'}
           </div>
-          <div className={`inline-block px-3 py-1 rounded-full border text-sm font-medium ${styleColors[styleType] || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+          <div
+            className={`inline-block px-3 py-1 rounded-full border text-sm font-medium ${styleColors[styleType] || 'bg-gray-100 text-gray-800 border-gray-200'}`}
+          >
             {currentStyleLabels[styleType] || styleType}
           </div>
         </div>
@@ -144,7 +142,7 @@ const StyleAnalysisChart = ({ metadata, language = 'es' }) => {
       <div className="space-y-3">
         {engagementMetrics.map((metric, index) => {
           const percentage = Math.min((metric.value / metric.max) * 100, 100);
-          
+
           return (
             <div key={index} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
@@ -153,10 +151,11 @@ const StyleAnalysisChart = ({ metadata, language = 'es' }) => {
                   <span>{metric.label}</span>
                 </span>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {metric.value.toFixed(metric.suffix ? 0 : 2)}{metric.suffix || ''}
+                  {metric.value.toFixed(metric.suffix ? 0 : 2)}
+                  {metric.suffix || ''}
                 </span>
               </div>
-              
+
               <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                 <div
                   className={`${metric.color} h-2 rounded-full transition-all duration-500`}
@@ -176,15 +175,15 @@ const StyleAnalysisChart = ({ metadata, language = 'es' }) => {
         <p className="text-sm text-blue-800 dark:text-blue-300">
           {language === 'es' ? (
             <>
-              Tu estilo es principalmente <strong>{currentToneLabels[dominantTone]}</strong> con 
-              mensajes <strong>{currentStyleLabels[styleType]}</strong>. 
+              Tu estilo es principalmente <strong>{currentToneLabels[dominantTone]}</strong> con
+              mensajes <strong>{currentStyleLabels[styleType]}</strong>.
               {emojiUsage > 0.5 && ' Usas emojis frecuentemente para expresarte.'}
               {questionRate > 20 && ' Tiendes a hacer muchas preguntas.'}
               {exclamationRate > 30 && ' Tu comunicación es muy expresiva.'}
             </>
           ) : (
             <>
-              Your style is primarily <strong>{currentToneLabels[dominantTone]}</strong> with 
+              Your style is primarily <strong>{currentToneLabels[dominantTone]}</strong> with
               <strong>{currentStyleLabels[styleType]}</strong> messages.
               {emojiUsage > 0.5 && ' You frequently use emojis to express yourself.'}
               {questionRate > 20 && ' You tend to ask many questions.'}

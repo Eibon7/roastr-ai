@@ -11,7 +11,7 @@ Rate limiting has been implemented for all notification endpoints to prevent abu
 All notification endpoints now have rate limiting applied:
 
 - `GET /api/notifications` - List user notifications
-- `GET /api/notifications/count` - Get unread count  
+- `GET /api/notifications/count` - Get unread count
 - `GET /api/notifications/banners` - Get banner notifications
 - `POST /api/notifications/:id/mark-read` - Mark notification as read
 - `POST /api/notifications/mark-all-read` - Mark all notifications as read
@@ -20,17 +20,20 @@ All notification endpoints now have rate limiting applied:
 ## Rate Limits
 
 ### General Notification Endpoints
+
 - **Limit**: 60 requests per minute per IP/user
 - **Applies to**: GET endpoints (list, count, banners)
 - **Window**: 1 minute
 
-### Notification Marking Endpoints  
+### Notification Marking Endpoints
+
 - **Limit**: 30 requests per minute per IP/user
 - **Applies to**: POST endpoints (mark-read, mark-all-read)
 - **Window**: 1 minute
 
 ### Notification Deletion Endpoints
-- **Limit**: 20 requests per minute per IP/user  
+
+- **Limit**: 20 requests per minute per IP/user
 - **Applies to**: DELETE endpoints (archive)
 - **Window**: 1 minute
 
@@ -55,8 +58,9 @@ NOTIFICATION_DELETE_RATE_MAX=20           # 20 requests
 ## Rate Limiting Key Generation
 
 Rate limiting uses a combination of IP address and user ID:
+
 - **Format**: `notification_type:${ip}:${userId}`
-- **Examples**: 
+- **Examples**:
   - `notification:127.0.0.1:user-123`
   - `notification_mark:127.0.0.1:user-123`
   - `notification_delete:127.0.0.1:user-123`
@@ -77,6 +81,7 @@ When rate limit is exceeded, endpoints return:
 **HTTP Status**: `429 Too Many Requests`
 
 **Headers Include**:
+
 - `RateLimit-Limit`: Maximum requests allowed
 - `RateLimit-Remaining`: Requests remaining in window
 - `RateLimit-Reset`: Time when window resets
@@ -84,6 +89,7 @@ When rate limit is exceeded, endpoints return:
 ## Logging
 
 Rate limit exceeded events are logged with the following information:
+
 - User IP address
 - User ID (first 8 characters + ...)
 - Endpoint path
@@ -91,6 +97,7 @@ Rate limit exceeded events are logged with the following information:
 - User agent
 
 Example log entry:
+
 ```
 WARN: Notification endpoint rate limit exceeded {
   ip: "192.168.1.100",
@@ -104,6 +111,7 @@ WARN: Notification endpoint rate limit exceeded {
 ## Bypass Options
 
 Rate limiting can be disabled via:
+
 - **Test Environment**: Automatically disabled when `NODE_ENV=test`
 - **Feature Flag**: Set `DISABLE_RATE_LIMIT=true` via flags configuration
 
@@ -120,7 +128,7 @@ Rate limiting can be disabled via:
    - Applied appropriate rate limiters to each endpoint
    - Maintains existing functionality
 
-3. **Test Coverage**: 
+3. **Test Coverage**:
    - `tests/unit/middleware/notificationRateLimiter.test.js`
    - `tests/unit/routes/notifications-rate-limit.test.js`
 
@@ -138,6 +146,7 @@ Uses the existing `express-rate-limit` library (v8.0.1) for consistent rate limi
 ## Monitoring
 
 Rate limiting events can be monitored through:
+
 - Application logs (WARN level for rate limit exceeded)
 - Rate limit headers in HTTP responses
 - Custom metrics (if implemented via logging aggregation)
@@ -145,6 +154,7 @@ Rate limiting events can be monitored through:
 ## Testing
 
 Comprehensive test suite covers:
+
 - ✅ Rate limiting middleware functionality
 - ✅ Integration with notification endpoints
 - ✅ Configuration options

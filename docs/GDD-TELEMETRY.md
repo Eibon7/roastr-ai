@@ -17,6 +17,7 @@ GDD 2.0 now includes historical telemetry and analytics to track system evolutio
 **Script:** `scripts/collect-gdd-telemetry.js`
 
 Automatically collects metrics from GDD subsystems every 24 hours:
+
 - Health scores (overall + per-node)
 - Drift risk trends
 - Auto-repair success rates
@@ -24,6 +25,7 @@ Automatically collects metrics from GDD subsystems every 24 hours:
 - Coverage metrics
 
 **Run manually:**
+
 ```bash
 node scripts/collect-gdd-telemetry.js          # Full output
 node scripts/collect-gdd-telemetry.js --ci     # CI mode (silent)
@@ -34,34 +36,38 @@ node scripts/collect-gdd-telemetry.js --verbose # Detailed output
 
 ## Key Metrics Tracked
 
-| Metric | Target | Description |
-|--------|--------|-------------|
-| Health Score | ≥95 | Overall system health |
-| Drift Risk | <25 | Average drift risk across nodes |
-| Stability Index | ≥90 | Combined health + drift + repair |
-| Auto-Fix Success | ≥90% | Successful auto-repairs |
-| Momentum | >0 | Trend over time (improving/declining) |
+| Metric           | Target | Description                           |
+| ---------------- | ------ | ------------------------------------- |
+| Health Score     | ≥95    | Overall system health                 |
+| Drift Risk       | <25    | Average drift risk across nodes       |
+| Stability Index  | ≥90    | Combined health + drift + repair      |
+| Auto-Fix Success | ≥90%   | Successful auto-repairs               |
+| Momentum         | >0     | Trend over time (improving/declining) |
 
 ---
 
 ## Outputs
 
 **1. JSON Snapshot:** `telemetry/snapshots/gdd-metrics-history.json`
+
 - Historical data (90 days retention)
 - All metrics + timestamps
 - Momentum calculations
 
 **2. Markdown Reports:** `telemetry/reports/gdd-telemetry-YYYY-MM-DD.md`
+
 - Daily summary reports
 - Trend analysis
 - Alert notifications
 
 **3. Watch Integration:**
+
 ```bash
 node scripts/watch-gdd.js  # Now includes telemetry section
 ```
 
 Displays:
+
 - 📈 Latest momentum (improving/declining/stable)
 - 🔢 Stability index
 - 📊 Total snapshots
@@ -75,6 +81,7 @@ Displays:
 **Schedule:** Daily at 00:00 UTC
 
 **Actions:**
+
 1. Run validation, health scoring, drift prediction
 2. Collect telemetry snapshot
 3. Auto-commit data to repo

@@ -10,6 +10,7 @@
 ## Resumen
 
 Implementación de tests para archivos de configuración que tenían 0% de cobertura:
+
 - `src/config/index.js` (0% → 100%)
 - `src/config/tierMessages.js` (0% → 100%)
 
@@ -24,6 +25,7 @@ Implementación de tests para archivos de configuración que tenían 0% de cober
 **Archivo:** `tests/unit/config/index.test.js`
 
 **Tests implementados:**
+
 - ✅ Módulo se carga sin errores
 - ✅ Exporta objeto `config` con estructura correcta
 - ✅ Validación de estructura completa (openai, perspective, toxicity, billing)
@@ -32,6 +34,7 @@ Implementación de tests para archivos de configuración que tenían 0% de cober
 - ✅ Validación de soporte para variables de entorno
 
 **Cobertura alcanzada:**
+
 - Statements: 100%
 - Branches: 95.45%
 - Functions: 100%
@@ -44,10 +47,12 @@ Implementación de tests para archivos de configuración que tenían 0% de cober
 **Tests implementados:**
 
 #### Estructura
+
 - ✅ Exporta `tierMessages` y todas las funciones helper
 - ✅ Validación de estructura completa (analysis, roast, platform, features, planChange, upgradeCtas)
 
 #### Funciones Helper
+
 - ✅ `getTierLimitMessage()`: 7 tests (valid tier, invalid tier, message types, edge cases)
 - ✅ `getFeatureMessage()`: 6 tests (valid feature, invalid feature, message types)
 - ✅ `getUpgradeCta()`: 7 tests (specific upgrade, default, invalid tier)
@@ -55,6 +60,7 @@ Implementación de tests para archivos de configuración que tenían 0% de cober
 - ✅ `formatUsageWarning()`: 10 tests (error/warning/info/null thresholds)
 
 **Cobertura alcanzada:**
+
 - Statements: 100%
 - Branches: 92%
 - Functions: 100%
@@ -72,6 +78,7 @@ Time:        0.668 s
 ```
 
 **Cobertura:**
+
 ```
 -----------------|---------|----------|---------|---------|
 File             | % Stmts | % Branch | % Funcs | % Lines |
@@ -106,6 +113,7 @@ File             | % Stmts | % Branch | % Funcs | % Lines |
 ### Manejo de Variables de Entorno
 
 El módulo `config/index.js` se carga una vez y se cachea. Por lo tanto, los tests verifican:
+
 - Estructura y tipos de datos
 - Valores por defecto cuando las variables no están definidas
 - Soporte para lectura de variables de entorno (sin intentar cambiarlas dinámicamente)
@@ -115,6 +123,7 @@ Esta aproximación es más robusta y no depende del estado del entorno durante l
 ### Patrones de Testing
 
 Seguidos patrones de otros tests de configuración:
+
 - `tests/unit/config/tones.test.js` - Estructura y validación
 - `tests/unit/config/environment-validation.test.js` - Manejo de entorno
 
@@ -143,4 +152,3 @@ Seguidos patrones de otros tests de configuración:
 - ✅ Tests implementados y pasando
 - ✅ Cobertura validada (≥90%)
 - ⏭️ Listo para merge
-

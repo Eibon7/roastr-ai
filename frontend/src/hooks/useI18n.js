@@ -20,7 +20,7 @@ export const I18nProvider = ({ children, defaultLanguage = 'en' }) => {
     // Get language from environment, localStorage, or use default
     const envLang = process.env.REACT_APP_LANG || process.env.REACT_APP_APP_LANG;
     const savedLang = typeof window !== 'undefined' ? localStorage.getItem('app-language') : null;
-    
+
     return envLang || savedLang || defaultLanguage;
   });
 
@@ -33,22 +33,21 @@ export const I18nProvider = ({ children, defaultLanguage = 'en' }) => {
     }
   }, [language]);
 
-  const value = useMemo(() => ({
-    language,
-    setLanguage: (lang) => {
-      if (supportedLanguages.includes(lang)) {
-        setLanguage(lang);
-      }
-    },
-    supportedLanguages,
-    locales
-  }), [language]);
-
-  return (
-    <I18nContext.Provider value={value}>
-      {children}
-    </I18nContext.Provider>
+  const value = useMemo(
+    () => ({
+      language,
+      setLanguage: (lang) => {
+        if (supportedLanguages.includes(lang)) {
+          setLanguage(lang);
+        }
+      },
+      supportedLanguages,
+      locales
+    }),
+    [language]
   );
+
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 };
 
 /**
@@ -57,7 +56,7 @@ export const I18nProvider = ({ children, defaultLanguage = 'en' }) => {
  */
 export const useI18n = () => {
   const context = useContext(I18nContext);
-  
+
   if (!context) {
     // Fallback when used outside provider
     return {
@@ -81,11 +80,11 @@ export const useI18n = () => {
   const getTranslation = (key, lang) => {
     const locale = locales[lang];
     if (!locale) return null;
-    
+
     // Navigate through nested object using dot notation
     const keys = key.split('.');
     let current = locale;
-    
+
     for (const k of keys) {
       if (current && typeof current === 'object' && k in current) {
         current = current[k];
@@ -93,7 +92,7 @@ export const useI18n = () => {
         return null;
       }
     }
-    
+
     return typeof current === 'string' ? current : null;
   };
 
@@ -107,7 +106,7 @@ export const useI18n = () => {
     if (!params || typeof params !== 'object') {
       return text;
     }
-    
+
     return text.replace(/\{([^}]+)\}/g, (match, param) => {
       if (param in params) {
         return String(params[param]);
@@ -125,17 +124,17 @@ export const useI18n = () => {
   const t = (key, params = {}) => {
     // Try to get translation in current language
     let translation = getTranslation(key, language);
-    
+
     // Fallback to English if not found
     if (!translation && language !== 'en') {
       translation = getTranslation(key, 'en');
     }
-    
+
     // Return key if no translation found
     if (!translation) {
       return key;
     }
-    
+
     // Interpolate parameters
     return interpolate(translation, params);
   };
@@ -150,17 +149,17 @@ export const useI18n = () => {
   const tl = (key, lang, params = {}) => {
     // Try to get translation in specified language
     let translation = getTranslation(key, lang);
-    
+
     // Fallback to English if not found
     if (!translation && lang !== 'en') {
       translation = getTranslation(key, 'en');
     }
-    
+
     // Return key if no translation found
     if (!translation) {
       return key;
     }
-    
+
     // Interpolate parameters
     return interpolate(translation, params);
   };

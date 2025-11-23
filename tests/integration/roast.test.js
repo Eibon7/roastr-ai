@@ -38,7 +38,7 @@ describe('Roast API Integration Tests', () => {
 
   afterAll(() => {
     // Review #3434156164 M1: Restore original environment state
-    Object.keys(originalEnv).forEach(key => {
+    Object.keys(originalEnv).forEach((key) => {
       if (originalEnv[key] === undefined) {
         delete process.env[key];
       } else {
@@ -119,7 +119,7 @@ describe('Roast API Integration Tests', () => {
         .post('/api/roast/generate')
         .set('Authorization', authToken)
         .send({
-          text: '', // Empty text
+          text: '' // Empty text
         });
 
       expect(response.status).toBe(400);
@@ -130,9 +130,7 @@ describe('Roast API Integration Tests', () => {
 
   describe('GET /api/roast/credits', () => {
     it('should return user credit status correctly', async () => {
-      const response = await request(app)
-        .get('/api/roast/credits')
-        .set('Authorization', authToken);
+      const response = await request(app).get('/api/roast/credits').set('Authorization', authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -145,12 +143,10 @@ describe('Roast API Integration Tests', () => {
 
   describe('Authentication', () => {
     it('should require authentication for preview endpoint', async () => {
-      const response = await request(app)
-        .post('/api/roast/preview')
-        .send({
-          text: 'Test message',
-          tone: 'sarcastic'
-        });
+      const response = await request(app).post('/api/roast/preview').send({
+        text: 'Test message',
+        tone: 'sarcastic'
+      });
 
       // Review #3434156164 M3: Only 401 is acceptable for auth failure
       expect(response.status).toBe(401);
@@ -163,11 +159,9 @@ describe('Roast API Integration Tests', () => {
     });
 
     it('should require authentication for generate endpoint', async () => {
-      const response = await request(app)
-        .post('/api/roast/generate')
-        .send({
-          text: 'Test message'
-        });
+      const response = await request(app).post('/api/roast/generate').send({
+        text: 'Test message'
+      });
 
       // Review #3434156164 M3: Only 401 is acceptable
       expect(response.status).toBe(401);
@@ -180,8 +174,7 @@ describe('Roast API Integration Tests', () => {
     });
 
     it('should require authentication for credits endpoint', async () => {
-      const response = await request(app)
-        .get('/api/roast/credits');
+      const response = await request(app).get('/api/roast/credits');
 
       // Review #3434156164 M3: Only 401 is acceptable
       expect(response.status).toBe(401);

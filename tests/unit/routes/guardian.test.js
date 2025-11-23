@@ -29,7 +29,7 @@ describe('Guardian Routes Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup express app
     app = express();
     app.use(express.json());
@@ -82,9 +82,7 @@ describe('Guardian Routes Tests', () => {
         });
       });
 
-      const response = await request(app)
-        .get('/api/guardian/cases')
-        .expect(200);
+      const response = await request(app).get('/api/guardian/cases').expect(200);
 
       expect(response.body).toHaveProperty('cases');
       expect(response.body.cases).toHaveLength(2);
@@ -104,9 +102,7 @@ describe('Guardian Routes Tests', () => {
         }
       });
 
-      const response = await request(app)
-        .get('/api/guardian/cases?severity=CRITICAL')
-        .expect(200);
+      const response = await request(app).get('/api/guardian/cases?severity=CRITICAL').expect(200);
 
       expect(response.body.filters.severity).toBe('CRITICAL');
     });
@@ -124,9 +120,7 @@ describe('Guardian Routes Tests', () => {
         }
       });
 
-      const response = await request(app)
-        .get('/api/guardian/cases?action=REVIEW')
-        .expect(200);
+      const response = await request(app).get('/api/guardian/cases?action=REVIEW').expect(200);
 
       expect(response.body.filters.action).toBe('REVIEW');
     });
@@ -144,9 +138,7 @@ describe('Guardian Routes Tests', () => {
         }
       });
 
-      const response = await request(app)
-        .get('/api/guardian/cases?limit=50')
-        .expect(200);
+      const response = await request(app).get('/api/guardian/cases?limit=50').expect(200);
 
       expect(response.body.filters.limit).toBe(50);
     });
@@ -157,9 +149,7 @@ describe('Guardian Routes Tests', () => {
         res.status(403).json({ error: 'Admin access required' });
       });
 
-      const response = await request(app)
-        .get('/api/guardian/cases')
-        .expect(403);
+      const response = await request(app).get('/api/guardian/cases').expect(403);
 
       expect(response.body.error).toBe('Admin access required');
     });
@@ -168,7 +158,7 @@ describe('Guardian Routes Tests', () => {
   describe('POST /api/guardian/cases/:caseId/approve', () => {
     it('should approve case successfully', async () => {
       const caseId = '2025-01-15-10-30-00-123';
-      
+
       guardianController.approveCaseController.mockImplementation(async (req, res) => {
         res.json({
           case_id: req.params.caseId,
@@ -232,7 +222,7 @@ describe('Guardian Routes Tests', () => {
   describe('POST /api/guardian/cases/:caseId/deny', () => {
     it('should deny case successfully', async () => {
       const caseId = '2025-01-15-10-30-00-456';
-      
+
       guardianController.denyCaseController.mockImplementation(async (req, res) => {
         res.json({
           case_id: req.params.caseId,
@@ -323,9 +313,8 @@ describe('Guardian Routes Tests', () => {
     it('should require admin authentication for all routes', async () => {
       // Verify isAdminMiddleware is called
       isAdminMiddleware.mockClear();
-      
-      await request(app)
-        .get('/api/guardian/cases');
+
+      await request(app).get('/api/guardian/cases');
 
       expect(isAdminMiddleware).toHaveBeenCalled();
     });

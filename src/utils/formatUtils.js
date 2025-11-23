@@ -11,24 +11,24 @@ function formatFileSize(bytes) {
   if (typeof bytes !== 'number' || isNaN(bytes)) {
     return '0B';
   }
-  
+
   if (bytes === 0) {
     return '0B';
   }
-  
+
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let size = Math.abs(bytes);
   let unitIndex = 0;
-  
+
   while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024;
     unitIndex++;
   }
-  
+
   // Use appropriate decimal places based on size
   const decimals = unitIndex === 0 ? 0 : size >= 100 ? 1 : 2;
   const formattedSize = size.toFixed(decimals);
-  
+
   return `${bytes < 0 ? '-' : ''}${formattedSize}${units[unitIndex]}`;
 }
 
@@ -41,7 +41,7 @@ function formatDuration(ms) {
   if (typeof ms !== 'number' || isNaN(ms) || ms < 0) {
     return '0ms';
   }
-  
+
   const units = [
     { name: 'd', value: 24 * 60 * 60 * 1000 },
     { name: 'h', value: 60 * 60 * 1000 },
@@ -49,27 +49,27 @@ function formatDuration(ms) {
     { name: 's', value: 1000 },
     { name: 'ms', value: 1 }
   ];
-  
+
   if (ms < 1000) {
     return `${Math.round(ms)}ms`;
   }
-  
+
   const parts = [];
   let remaining = ms;
-  
+
   for (const unit of units) {
     if (remaining >= unit.value) {
       const count = Math.floor(remaining / unit.value);
       parts.push(`${count}${unit.name}`);
       remaining = remaining % unit.value;
-      
+
       // Stop after 2 significant units for readability
       if (parts.length >= 2) {
         break;
       }
     }
   }
-  
+
   return parts.join(' ') || '0ms';
 }
 
@@ -83,7 +83,7 @@ function formatPercentage(value, decimals = 1) {
   if (typeof value !== 'number' || isNaN(value)) {
     return '0.0%';
   }
-  
+
   return `${value.toFixed(decimals)}%`;
 }
 
@@ -96,7 +96,7 @@ function formatNumber(value) {
   if (typeof value !== 'number' || isNaN(value)) {
     return '0';
   }
-  
+
   return value.toLocaleString();
 }
 

@@ -110,7 +110,9 @@ function listScopes() {
     console.log(`  ${mockIcon} ${scope.padEnd(12)} - ${config.description}`);
 
     if (config.requiresEnvVars) {
-      console.log(colors.gray(`    ${''.padEnd(12)}   Requires: ${config.requiresEnvVars.join(', ')}`));
+      console.log(
+        colors.gray(`    ${''.padEnd(12)}   Requires: ${config.requiresEnvVars.join(', ')}`)
+      );
     }
   });
 
@@ -140,11 +142,11 @@ function checkRequiredEnvVars(scope) {
   const scopeConfig = TEST_SCOPES[scope];
   if (!scopeConfig?.requiresEnvVars) return true;
 
-  const missingVars = scopeConfig.requiresEnvVars.filter(varName => !process.env[varName]);
+  const missingVars = scopeConfig.requiresEnvVars.filter((varName) => !process.env[varName]);
 
   if (missingVars.length > 0) {
     console.log(colors.yellow(`⚠️  Missing required environment variables for ${scope}:`));
-    missingVars.forEach(varName => {
+    missingVars.forEach((varName) => {
       console.log(colors.red(`   - ${varName}`));
     });
     console.log(colors.gray('\nSet these variables before running tests for this scope.'));
@@ -166,19 +168,23 @@ function filterTestsByPlatform(testFiles, platform) {
   }
 
   const platformLower = platform.toLowerCase();
-  const filtered = testFiles.filter(file => {
+  const filtered = testFiles.filter((file) => {
     const fileName = file.toLowerCase();
     // Check if filename contains platform name
-    return fileName.includes(platformLower) || 
-           fileName.includes(`/${platformLower}/`) ||
-           fileName.includes(`\\${platformLower}\\`);
+    return (
+      fileName.includes(platformLower) ||
+      fileName.includes(`/${platformLower}/`) ||
+      fileName.includes(`\\${platformLower}\\`)
+    );
   });
 
   if (filtered.length === 0) {
     console.warn(colors.yellow(`⚠️  No test files found for platform: ${platform}`));
     console.warn(colors.gray(`   Searched in ${testFiles.length} test files`));
   } else {
-    console.log(colors.magenta(`🎯 Filtered ${filtered.length} test file(s) for platform: ${platform}`));
+    console.log(
+      colors.magenta(`🎯 Filtered ${filtered.length} test file(s) for platform: ${platform}`)
+    );
   }
 
   return filtered;
@@ -195,21 +201,23 @@ function runJest(patterns, options = {}) {
     let resolvedPatterns = [];
     if (patterns && patterns.length > 0) {
       // Resolve glob patterns to actual file paths for Jest
-      resolvedPatterns = patterns.flatMap(pattern => {
+      resolvedPatterns = patterns.flatMap((pattern) => {
         try {
           const files = glob.sync(pattern, { cwd: process.cwd() });
           return files.length > 0 ? files : [pattern]; // Fallback to pattern if no matches
         } catch (error) {
-          console.warn(colors.yellow(`⚠️  Warning: Could not resolve pattern ${pattern}: ${error.message}`));
+          console.warn(
+            colors.yellow(`⚠️  Warning: Could not resolve pattern ${pattern}: ${error.message}`)
+          );
           return [pattern]; // Fallback to original pattern
         }
       });
-      
+
       // Apply platform filtering if specified (Issue #277)
       if (options.platform && resolvedPatterns.length > 0) {
         resolvedPatterns = filterTestsByPlatform(resolvedPatterns, options.platform);
       }
-      
+
       if (resolvedPatterns.length > 0) {
         jestArgs.push(...resolvedPatterns);
       } else {
@@ -319,7 +327,6 @@ program
       console.log(colors.gray(`Description: ${scopeConfig.description}\n`));
 
       await runJest(scopeConfig.patterns, options);
-
     } catch (error) {
       console.error(colors.red('❌ Test execution failed:'), error.message);
       process.exit(1);
@@ -340,11 +347,9 @@ program
       console.log(colors.cyan('🎯 Running all tests...\n'));
 
       // Collect all patterns from all scopes
-      const allPatterns = Object.values(TEST_SCOPES)
-        .flatMap(scope => scope.patterns);
+      const allPatterns = Object.values(TEST_SCOPES).flatMap((scope) => scope.patterns);
 
       await runJest(allPatterns, options);
-
     } catch (error) {
       console.error(colors.red('❌ Test execution failed:'), error.message);
       process.exit(1);
@@ -357,7 +362,7 @@ program
   .description('List all available platforms for filtering')
   .action(() => {
     console.log(colors.cyan('🌐 Available Platforms:\n'));
-    PLATFORMS.forEach(platform => {
+    PLATFORMS.forEach((platform) => {
       console.log(colors.yellow(`  ${platform}`));
     });
     console.log(colors.gray('\nUse --platform <name> to filter tests by platform'));
@@ -383,7 +388,7 @@ program
     const fs = require('fs');
     const testDirs = ['tests/unit', 'tests/integration'];
 
-    testDirs.forEach(dir => {
+    testDirs.forEach((dir) => {
       if (fs.existsSync(dir)) {
         console.log(colors.green(`✅ ${dir} directory exists`));
       } else {
@@ -394,11 +399,13 @@ program
     // Check scope patterns
     console.log(colors.cyan('\n📁 Checking scope patterns:'));
     Object.entries(TEST_SCOPES).forEach(([key, scope]) => {
-      const hasTests = scope.patterns.some(pattern => {
+      const hasTests = scope.patterns.some((pattern) => {
         try {
           return glob.sync(pattern).length > 0;
         } catch (error) {
-          console.log(colors.yellow(`⚠️  Invalid pattern for ${key}: ${pattern} - ${error.message}`));
+          console.log(
+            colors.yellow(`⚠️  Invalid pattern for ${key}: ${pattern} - ${error.message}`)
+          );
           return false;
         }
       });
@@ -578,7 +585,6 @@ program
           resolve();
         });
       });
-
     } catch (error) {
       const result = {
         command: null,
@@ -600,7 +606,11 @@ program
 // Error handling for unknown commands
 program.on('command:*', () => {
   console.error(colors.red('❌ Invalid command: %s'), program.args.join(' '));
-  console.log(colors.yellow('Available commands: scopes, run, all, list-platforms, platforms, validate, check'));
+  console.log(
+    colors.yellow(
+      'Available commands: scopes, run, all, list-platforms, platforms, validate, check'
+    )
+  );
   console.log(colors.gray('Use --help for more information'));
   process.exit(1);
 });

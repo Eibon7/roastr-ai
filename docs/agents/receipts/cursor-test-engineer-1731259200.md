@@ -19,11 +19,13 @@ Applied CodeRabbit review feedback to make CRUD RLS tests deterministic. Replace
 ## Changes Made
 
 ### File Modified
+
 - `tests/integration/multi-tenant-rls-issue-801-crud.test.js`
 
 ### Pattern Applied
 
 **Before:**
+
 ```javascript
 if (tenantA.integrationConfigs.length === 0) {
   console.log('⚠️  No integration configs to update, skipping');
@@ -32,6 +34,7 @@ if (tenantA.integrationConfigs.length === 0) {
 ```
 
 **After:**
+
 ```javascript
 // Ensure test data exists before asserting (CodeRabbit Review #3443936877)
 if (tenantA.integrationConfigs.length === 0) {
@@ -74,6 +77,7 @@ if (tenantA.integrationConfigs.length === 0) {
 ### Schema Corrections (Bonus Fix)
 
 Fixed schema mismatches discovered during fix:
+
 - `credentials_encrypted` → `credentials` (JSONB)
 - `cost_usd` → `cost_cents` (usage_records)
 - `total_roasts` → `total_responses` (monthly_usage)
@@ -83,6 +87,7 @@ Fixed schema mismatches discovered during fix:
 ## Testing
 
 **Command:**
+
 ```bash
 npm test -- tests/integration/multi-tenant-rls-issue-801-crud.test.js
 ```
@@ -109,5 +114,3 @@ npm test -- tests/integration/multi-tenant-rls-issue-801-crud.test.js
 **Agent:** TestEngineer  
 **Method:** Cursor Composer  
 **Timestamp:** 2025-11-10T15:20:00Z
-
-

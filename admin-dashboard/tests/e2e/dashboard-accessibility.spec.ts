@@ -11,11 +11,14 @@ test.describe('Dashboard Accessibility', () => {
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa'])
       .analyze();
-    
+
     if (accessibilityScanResults.violations.length > 0) {
-      console.log('Accessibility Violations:', JSON.stringify(accessibilityScanResults.violations, null, 2));
+      console.log(
+        'Accessibility Violations:',
+        JSON.stringify(accessibilityScanResults.violations, null, 2)
+      );
     }
-    
+
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
@@ -40,14 +43,14 @@ test.describe('Dashboard Accessibility', () => {
     });
 
     // Verify we moved through different elements (no focus trap)
-    const uniqueTags = new Set(focusedElements.map(el => el.tagName));
+    const uniqueTags = new Set(focusedElements.map((el) => el.tagName));
     expect(uniqueTags.size).toBeGreaterThanOrEqual(2);
   });
 
   test('should have proper semantic HTML', async ({ page }) => {
-    const hasMain = await page.locator('main, [role="main"]').count() > 0;
-    const hasHeadings = await page.locator('h1, h2, h3').count() > 0;
-    
+    const hasMain = (await page.locator('main, [role="main"]').count()) > 0;
+    const hasHeadings = (await page.locator('h1, h2, h3').count()) > 0;
+
     expect(hasMain).toBeTruthy();
     expect(hasHeadings).toBeTruthy();
   });

@@ -23,6 +23,7 @@ Add real-time telemetry system with live event streaming, enabling instant visib
 **File:** `scripts/agents/telemetry-bus.js`
 
 **Architecture:**
+
 - Extends Node.js `EventEmitter` for pub/sub pattern
 - Singleton instance accessible system-wide
 - Circular buffer (100 events, configurable)
@@ -61,6 +62,7 @@ const stats = telemetryBus.getStats(60); // Last 60 minutes
 ```
 
 **Event Types:**
+
 - `agent_action` - Agent performs operation
 - `secure_write` - File write with signature
 - `rollback` - Rollback operation
@@ -69,12 +71,14 @@ const stats = telemetryBus.getStats(60); // Last 60 minutes
 ### 2. Event Buffer System
 
 **Features:**
+
 - **Circular Buffer**: FIFO with configurable size (default: 100)
 - **Persistence**: Auto-save on exit to `gdd-telemetry-buffer.json`
 - **Retention**: 24-hour sliding window on load
 - **Filtering**: By type, agent, time range, or custom criteria
 
 **Buffer Structure:**
+
 ```json
 {
   "timestamp": "2025-10-09T18:32:15.123Z",
@@ -98,12 +102,14 @@ const stats = telemetryBus.getStats(60); // Last 60 minutes
 ### 3. Subscription System
 
 **Multi-Subscriber Support:**
+
 - Unlimited concurrent subscribers
 - Each subscription gets unique ID
 - New subscribers receive current buffer immediately
 - Graceful error handling for subscriber callbacks
 
 **Example - Real-Time Monitor:**
+
 ```javascript
 const { getInstance } = require('./scripts/agents/telemetry-bus');
 const bus = getInstance();
@@ -133,6 +139,7 @@ const stats = telemetryBus.getStats(60); // Last 60 minutes
 ```
 
 **Returns:**
+
 ```json
 {
   "total_events": 412,
@@ -156,6 +163,7 @@ const stats = telemetryBus.getStats(60); // Last 60 minutes
 ```
 
 **Metrics Calculated:**
+
 - Total events in time window
 - Event count by type
 - Event count by agent
@@ -176,6 +184,7 @@ node scripts/watch-gdd.js --agents-active --telemetry
 ```
 
 **Live Telemetry Display:**
+
 ```text
 ────────────────────────────────────────
 📡 TELEMETRY STATUS
@@ -187,6 +196,7 @@ Avg ΔHealth: ⬆️ +0.24
 ```
 
 **Auto-Broadcast Events:**
+
 - `validation_complete` - After each validation cycle
 - `agent_action` - When agents execute actions
 - `secure_write` - On file modifications
@@ -228,6 +238,7 @@ $ node scripts/agents/telemetry-bus.js --listen
 ### Test Results
 
 **Telemetry Bus Tests:**
+
 ```bash
 $ node scripts/agents/telemetry-bus.js --test
 
@@ -275,14 +286,14 @@ $ node scripts/agents/telemetry-bus.js --test
 
 ### System Metrics
 
-| Metric | Value | Details |
-|--------|-------|---------|
-| Buffer size | 100 events | Circular FIFO buffer |
-| Retention | 24 hours | Auto-cleanup on load |
-| Latency | <50ms | Event → subscriber |
-| Persistence | On exit | Auto-save to JSON |
-| Subscribers | Unlimited | Multi-subscriber support |
-| Event types | 4 core | Extensible architecture |
+| Metric      | Value      | Details                  |
+| ----------- | ---------- | ------------------------ |
+| Buffer size | 100 events | Circular FIFO buffer     |
+| Retention   | 24 hours   | Auto-cleanup on load     |
+| Latency     | <50ms      | Event → subscriber       |
+| Persistence | On exit    | Auto-save to JSON        |
+| Subscribers | Unlimited  | Multi-subscriber support |
+| Event types | 4 core     | Extensible architecture  |
 
 ### Performance
 

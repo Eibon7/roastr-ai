@@ -10,9 +10,9 @@ class TikTokCollector {
   constructor() {
     this.baseURL = 'https://open-api.tiktok.com';
     this.rateLimits = {
-      userVideos: { requests: 1000, window: 24 * 60 * 60 * 1000 }, // 1000 requests per day
+      userVideos: { requests: 1000, window: 24 * 60 * 60 * 1000 } // 1000 requests per day
     };
-    
+
     this.lastRequestTimes = new Map();
   }
 
@@ -40,14 +40,13 @@ class TikTokCollector {
 
       // Get user's TikTok content
       const userContent = await this.getUserVideos(config, maxContent, languageFilter);
-      
+
       logger.info('TikTok content collection completed', {
         contentCollected: userContent.length,
         maxRequested: maxContent
       });
 
       return userContent;
-
     } catch (error) {
       logger.error('Failed to collect TikTok content', {
         error: error.message,
@@ -71,22 +70,26 @@ class TikTokCollector {
       await this.respectRateLimit('userVideos');
 
       // TikTok API call to get user videos
-      const response = await axios.post(`${this.baseURL}/v2/video/list/`, {
-        max_count: Math.min(maxContent, 20), // TikTok API limit
-        cursor: 0
-      }, {
-        headers: {
-          'Authorization': `Bearer ${config.access_token}`,
-          'Content-Type': 'application/json'
+      const response = await axios.post(
+        `${this.baseURL}/v2/video/list/`,
+        {
+          max_count: Math.min(maxContent, 20), // TikTok API limit
+          cursor: 0
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${config.access_token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
       const contentItems = [];
 
       for (const video of response.data.data?.videos || []) {
         // Extract caption/description
         const caption = video.title || video.video_description || '';
-        
+
         if (!caption || caption.trim().length < 10) continue;
 
         // Basic language detection
@@ -121,7 +124,6 @@ class TikTokCollector {
       }
 
       return contentItems;
-
     } catch (error) {
       logger.error('Failed to get TikTok videos via API', {
         error: error.message,
@@ -144,12 +146,12 @@ class TikTokCollector {
    */
   async fallbackContentCollection(config, maxContent) {
     logger.info('Using TikTok fallback content collection method');
-    
+
     // In a real implementation, this might:
     // 1. Ask user to manually provide recent video captions
     // 2. Use web scraping (with proper rate limiting and respect for ToS)
     // 3. Integrate with third-party TikTok analytics tools
-    
+
     // For now, return empty array and log that manual input is needed
     logger.warn('TikTok content collection requires manual input or API access', {
       username: config.username,
@@ -202,12 +204,44 @@ class TikTokCollector {
   detectLanguage(text) {
     if (!text) return 'unknown';
 
-    const spanishWords = ['el', 'la', 'de', 'que', 'y', 'en', 'un', 'es', 'se', 'no', 'te', 'lo', 'para', 'con', 'por'];
-    const englishWords = ['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with'];
+    const spanishWords = [
+      'el',
+      'la',
+      'de',
+      'que',
+      'y',
+      'en',
+      'un',
+      'es',
+      'se',
+      'no',
+      'te',
+      'lo',
+      'para',
+      'con',
+      'por'
+    ];
+    const englishWords = [
+      'the',
+      'be',
+      'to',
+      'of',
+      'and',
+      'a',
+      'in',
+      'that',
+      'have',
+      'i',
+      'it',
+      'for',
+      'not',
+      'on',
+      'with'
+    ];
 
     const words = text.toLowerCase().split(/\s+/);
-    const spanishCount = words.filter(word => spanishWords.includes(word)).length;
-    const englishCount = words.filter(word => englishWords.includes(word)).length;
+    const spanishCount = words.filter((word) => spanishWords.includes(word)).length;
+    const englishCount = words.filter((word) => englishWords.includes(word)).length;
 
     if (spanishCount > englishCount) return 'es';
     if (englishCount > spanishCount) return 'en';
@@ -248,7 +282,7 @@ class TikTokCollector {
         endpoint,
         waitTimeMs: waitTime
       });
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
 
     this.lastRequestTimes.set(endpoint, Date.now());
@@ -283,7 +317,7 @@ class TikTokCollector {
       // Simple test - try to get user info
       const response = await axios.get(`${this.baseURL}/v2/user/info/`, {
         headers: {
-          'Authorization': `Bearer ${config.access_token}`
+          Authorization: `Bearer ${config.access_token}`
         }
       });
 
@@ -291,7 +325,6 @@ class TikTokCollector {
         success: true,
         user: response.data.data?.user || { username: config.username }
       };
-
     } catch (error) {
       return {
         success: false,

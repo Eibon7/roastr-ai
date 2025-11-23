@@ -59,8 +59,9 @@ function enableMaintenanceMode(snapshotRef = null) {
   const config = {
     maintenance_mode: true,
     enabled_date: new Date().toISOString(),
-    snapshot_reference: snapshotRef || `docs/snapshots/gdd-${new Date().toISOString().split('T')[0]}`,
-    notes: "Maintenance mode enabled - all GDD operations are read-only"
+    snapshot_reference:
+      snapshotRef || `docs/snapshots/gdd-${new Date().toISOString().split('T')[0]}`,
+    notes: 'Maintenance mode enabled - all GDD operations are read-only'
   };
 
   fs.writeFileSync(MAINTENANCE_FILE, JSON.stringify(config, null, 2));
@@ -77,7 +78,7 @@ function disableMaintenanceMode() {
     maintenance_mode: false,
     enabled_date: null,
     snapshot_reference: null,
-    notes: "Set maintenance_mode to true to enable read-only observer mode for all GDD automation"
+    notes: 'Set maintenance_mode to true to enable read-only observer mode for all GDD automation'
   };
 
   fs.writeFileSync(MAINTENANCE_FILE, JSON.stringify(config, null, 2));
@@ -136,7 +137,9 @@ if (require.main === module) {
       {
         const config = getMaintenanceConfig();
         console.log('\n📊 GDD Maintenance Mode Status\n');
-        console.log(`Mode: ${config.maintenance_mode ? '🧊 ENABLED (Read-Only)' : '🔓 DISABLED (Active)'}`);
+        console.log(
+          `Mode: ${config.maintenance_mode ? '🧊 ENABLED (Read-Only)' : '🔓 DISABLED (Active)'}`
+        );
         if (config.maintenance_mode) {
           console.log(`Enabled: ${config.enabled_date}`);
           console.log(`Snapshot: ${config.snapshot_reference}`);

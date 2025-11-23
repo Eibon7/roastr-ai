@@ -14,21 +14,21 @@ export default defineConfig({
       '@services': path.resolve(__dirname, './src/services'),
       '@theme': path.resolve(__dirname, './src/theme'),
       '@types': path.resolve(__dirname, './src/types'),
-      '@utils': path.resolve(__dirname, './src/utils'),
-    },
+      '@utils': path.resolve(__dirname, './src/utils')
+    }
   },
   server: {
     port: 3000,
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
-        changeOrigin: true,
+        changeOrigin: true
       },
       '/socket.io': {
         target: 'http://localhost:3001',
-        ws: true,
-      },
-    },
+        ws: true
+      }
+    }
   },
   build: {
     outDir: 'dist',
@@ -38,9 +38,9 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'd3-vendor': ['d3', 'react-force-graph'],
-          'ui-vendor': ['styled-components', '@tanstack/react-query'],
-        },
-      },
-    },
-  },
+          'ui-vendor': ['styled-components', '@tanstack/react-query']
+        }
+      }
+    }
+  }
 });

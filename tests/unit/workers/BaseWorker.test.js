@@ -1,6 +1,6 @@
 /**
  * Comprehensive BaseWorker Tests
- * 
+ *
  * Full test coverage for the BaseWorker class including:
  * - Constructor and initialization
  * - Connection management
@@ -94,11 +94,11 @@ describe('BaseWorker', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup environment variables
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
-    
+
     // Mock Supabase client
     mockSupabaseClient = {
       from: jest.fn(() => ({
@@ -108,7 +108,7 @@ describe('BaseWorker', () => {
       }))
     };
     createClient.mockReturnValue(mockSupabaseClient);
-    
+
     // Mock queue service
     mockQueueService = {
       initialize: jest.fn().mockResolvedValue(),
@@ -118,7 +118,7 @@ describe('BaseWorker', () => {
       shutdown: jest.fn().mockResolvedValue()
     };
     QueueService.mockImplementation(() => mockQueueService);
-    
+
     // Reset mock mode
     mockMode.isMockMode = false;
     mockMode.generateMockSupabaseClient.mockReturnValue({
@@ -141,14 +141,14 @@ describe('BaseWorker', () => {
   describe('constructor', () => {
     test('should initialize with correct default configuration', () => {
       worker = new TestWorker();
-      
+
       expect(worker.workerType).toBe('test_worker');
       expect(worker.workerName).toMatch(/test_worker-worker-\d+/);
       expect(worker.isRunning).toBe(false);
       expect(worker.processedJobs).toBe(0);
       expect(worker.failedJobs).toBe(0);
       expect(worker.startTime).toBeGreaterThan(0);
-      
+
       expect(worker.config.maxRetries).toBe(3);
       expect(worker.config.retryDelay).toBe(5000);
       expect(worker.config.maxConcurrency).toBe(3);
@@ -164,9 +164,9 @@ describe('BaseWorker', () => {
         pollInterval: 2000,
         gracefulShutdownTimeout: 60000
       };
-      
+
       worker = new TestWorker(customConfig);
-      
+
       expect(worker.config.maxRetries).toBe(5);
       expect(worker.config.retryDelay).toBe(10000);
       expect(worker.config.maxConcurrency).toBe(1);
@@ -176,7 +176,7 @@ describe('BaseWorker', () => {
 
     test('should throw error when missing required environment variables', () => {
       delete process.env.SUPABASE_URL;
-      
+
       expect(() => {
         new TestWorker();
       }).toThrow('SUPABASE_URL and SUPABASE_SERVICE_KEY are required');
@@ -185,34 +185,25 @@ describe('BaseWorker', () => {
     test('should initialize connections during construction', () => {
       worker = new TestWorker();
 
-      expect(createClient).toHaveBeenCalledWith(
-        'https://test.supabase.co',
-        'test-service-key'
-      );
+      expect(createClient).toHaveBeenCalledWith('https://test.supabase.co', 'test-service-key');
       expect(QueueService).toHaveBeenCalled();
     });
 
     test('should prefer SERVICE_KEY over ANON_KEY', () => {
       process.env.SUPABASE_ANON_KEY = 'test-anon-key';
-      
+
       worker = new TestWorker();
-      
-      expect(createClient).toHaveBeenCalledWith(
-        'https://test.supabase.co',
-        'test-service-key'
-      );
+
+      expect(createClient).toHaveBeenCalledWith('https://test.supabase.co', 'test-service-key');
     });
 
     test('should use ANON_KEY when SERVICE_KEY is not available', () => {
       delete process.env.SUPABASE_SERVICE_KEY;
       process.env.SUPABASE_ANON_KEY = 'test-anon-key';
-      
+
       worker = new TestWorker();
-      
-      expect(createClient).toHaveBeenCalledWith(
-        'https://test.supabase.co',
-        'test-anon-key'
-      );
+
+      expect(createClient).toHaveBeenCalledWith('https://test.supabase.co', 'test-anon-key');
     });
   });
 
@@ -221,9 +212,9 @@ describe('BaseWorker', () => {
       mockMode.isMockMode = true;
       const mockSupabase = { from: jest.fn() };
       mockMode.generateMockSupabaseClient.mockReturnValue(mockSupabase);
-      
+
       worker = new TestWorker();
-      
+
       expect(worker.supabase).toBe(mockSupabase);
       expect(worker.queueService).toBeDefined();
       expect(worker.queueService.initialize).toBeDefined();
@@ -243,7 +234,7 @@ describe('BaseWorker', () => {
           limit: jest.fn(() => ({ data: [], error: null }))
         }))
       });
-      
+
       mockQueueService.initialize.mockResolvedValue();
 
       await worker.start();
@@ -271,10 +262,12 @@ describe('BaseWorker', () => {
           limit: jest.fn(() => ({ data: [], error: null }))
         }))
       });
-      
+
       mockQueueService.initialize.mockRejectedValue(new Error('Queue connection failed'));
 
-      await expect(worker.start()).rejects.toThrow('Queue service initialization failed: Queue connection failed');
+      await expect(worker.start()).rejects.toThrow(
+        'Queue service initialization failed: Queue connection failed'
+      );
       expect(worker.isRunning).toBe(false);
     });
 
@@ -284,7 +277,7 @@ describe('BaseWorker', () => {
           limit: jest.fn(() => ({ data: [], error: null }))
         }))
       });
-      
+
       await worker.start();
 
       await expect(worker.start()).rejects.toThrow(/Worker .* is already running/);
@@ -296,7 +289,7 @@ describe('BaseWorker', () => {
           limit: jest.fn(() => ({ data: [], error: null }))
         }))
       });
-      
+
       await worker.start();
       expect(worker.isRunning).toBe(true);
 
@@ -308,9 +301,9 @@ describe('BaseWorker', () => {
 
     test('should handle stop when not running', async () => {
       expect(worker.isRunning).toBe(false);
-      
+
       await worker.stop();
-      
+
       expect(mockQueueService.shutdown).not.toHaveBeenCalled();
     });
   });
@@ -319,7 +312,7 @@ describe('BaseWorker', () => {
     test('should skip connection tests in mock mode', async () => {
       mockMode.isMockMode = true;
       worker = new TestWorker();
-      
+
       await expect(worker.testConnections()).resolves.toBeUndefined();
       expect(mockSupabaseClient.from).not.toHaveBeenCalled();
     });
@@ -345,7 +338,9 @@ describe('BaseWorker', () => {
         }))
       });
 
-      await expect(worker.testConnections()).rejects.toThrow('Database connection failed: Connection timeout');
+      await expect(worker.testConnections()).rejects.toThrow(
+        'Database connection failed: Connection timeout'
+      );
     });
 
     test('should fail queue service initialization test', async () => {
@@ -357,7 +352,9 @@ describe('BaseWorker', () => {
       });
       mockQueueService.initialize.mockRejectedValue(new Error('Redis connection failed'));
 
-      await expect(worker.testConnections()).rejects.toThrow('Queue service initialization failed: Redis connection failed');
+      await expect(worker.testConnections()).rejects.toThrow(
+        'Queue service initialization failed: Redis connection failed'
+      );
     });
   });
 
@@ -386,13 +383,11 @@ describe('BaseWorker', () => {
         expectedResult: 'success'
       };
 
-      mockQueueService.getNextJob
-        .mockResolvedValueOnce(testJob)
-        .mockResolvedValue(null); // No more jobs
+      mockQueueService.getNextJob.mockResolvedValueOnce(testJob).mockResolvedValue(null); // No more jobs
 
       // Advance timers to trigger processing loop
       await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
-      
+
       // Wait for async operations to complete
       await Promise.resolve();
 
@@ -424,10 +419,8 @@ describe('BaseWorker', () => {
 
       // Make completeJob fail
       mockQueueService.completeJob.mockRejectedValueOnce(new Error('Acknowledgment failed'));
-      
-      mockQueueService.getNextJob
-        .mockResolvedValueOnce(testJob)
-        .mockResolvedValue(null);
+
+      mockQueueService.getNextJob.mockResolvedValueOnce(testJob).mockResolvedValue(null);
 
       const logSpy = jest.spyOn(worker, 'log');
 
@@ -439,7 +432,7 @@ describe('BaseWorker', () => {
       expect(worker.internalCalls).toHaveLength(1);
       expect(worker.processedJobs).toBe(1);
       expect(worker.failedJobs).toBe(0);
-      
+
       // Should log error but continue (check for the actual log message)
       expect(logSpy).toHaveBeenCalledWith(
         'error',
@@ -462,26 +455,21 @@ describe('BaseWorker', () => {
         permanent: true
       };
 
-      mockQueueService.getNextJob
-        .mockResolvedValueOnce(failingJob)
-        .mockResolvedValue(null);
+      mockQueueService.getNextJob.mockResolvedValueOnce(failingJob).mockResolvedValue(null);
 
       // Advance timers to trigger processing loop
       await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
-      
+
       // Wait for async operations to complete
       await Promise.resolve();
 
       expect(worker.failedJobs).toBe(1);
-      expect(mockQueueService.failJob).toHaveBeenCalledWith(
-        failingJob,
-        expect.any(Error)
-      );
+      expect(mockQueueService.failJob).toHaveBeenCalledWith(failingJob, expect.any(Error));
     });
 
     test('should respect max concurrency limit', async () => {
       worker.config.maxConcurrency = 2;
-      
+
       const jobs = [
         { id: 'job-1', delay: 100 },
         { id: 'job-2', delay: 100 },
@@ -497,7 +485,7 @@ describe('BaseWorker', () => {
       // Advance timers to trigger processing loop multiple times
       await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
       await Promise.resolve();
-      
+
       // Check that only 2 jobs run concurrently
       expect(worker.currentJobs.size).toBeLessThanOrEqual(2);
     });
@@ -508,7 +496,7 @@ describe('BaseWorker', () => {
       // Advance timers to trigger processing loop
       await jest.advanceTimersByTimeAsync(worker.config.pollInterval);
       await Promise.resolve();
-      
+
       expect(worker.isRunning).toBe(true); // Should continue running
     });
 
@@ -544,11 +532,9 @@ describe('BaseWorker', () => {
 
     test('should handle job completion errors', async () => {
       const testJob = { id: 'job-1', organization_id: 'org-123' };
-      
-      mockQueueService.getNextJob
-        .mockResolvedValueOnce(testJob)
-        .mockResolvedValue(null);
-      
+
+      mockQueueService.getNextJob.mockResolvedValueOnce(testJob).mockResolvedValue(null);
+
       mockQueueService.completeJob.mockRejectedValue(new Error('Failed to mark complete'));
 
       // Advance timers to trigger processing loop
@@ -568,10 +554,8 @@ describe('BaseWorker', () => {
         permanent: true
       };
 
-      mockQueueService.getNextJob
-        .mockResolvedValueOnce(failingJob)
-        .mockResolvedValue(null);
-      
+      mockQueueService.getNextJob.mockResolvedValueOnce(failingJob).mockResolvedValue(null);
+
       mockQueueService.failJob.mockRejectedValue(new Error('Failed to mark as failed'));
 
       // Advance timers to trigger processing loop
@@ -598,25 +582,25 @@ describe('BaseWorker', () => {
           limit: jest.fn(() => ({ data: [], error: null }))
         }))
       });
-      
+
       await worker.start();
-      
+
       // Simulate a long-running job
       const longJob = { id: 'long-job', delay: 100 };
       worker.currentJobs.set('long-job', longJob);
 
       // Start the stop process (non-blocking)
       const stopPromise = worker.stop();
-      
+
       // Wait a moment then clear the job
       await jest.advanceTimersByTimeAsync(50);
       worker.currentJobs.delete('long-job');
-      
+
       // Let the stop process check for the cleared job
       await jest.advanceTimersByTimeAsync(50);
 
       await stopPromise;
-      
+
       expect(worker.isRunning).toBe(false);
     });
 
@@ -627,9 +611,9 @@ describe('BaseWorker', () => {
           limit: jest.fn(() => ({ data: [], error: null }))
         }))
       });
-      
+
       await worker.start();
-      
+
       // Simulate a job that doesn't complete
       worker.currentJobs.set('stuck-job', { id: 'stuck-job' });
 
@@ -648,7 +632,7 @@ describe('BaseWorker', () => {
       // Initialize connections but don't start processing loop
       // This ensures worker is initialized but currentJobs is never set
       await worker.initializeConnections();
-      
+
       // Stop should resolve immediately since processing loop never ran
       const stopPromise = worker.stop();
       await jest.advanceTimersByTimeAsync(100);
@@ -680,7 +664,7 @@ describe('BaseWorker', () => {
     });
 
     test('returns false for permanent status codes (400, 401, 403, 404, 422)', () => {
-      [400, 401, 403, 404, 422].forEach(statusCode => {
+      [400, 401, 403, 404, 422].forEach((statusCode) => {
         const error = new Error('Client error');
         error.statusCode = statusCode;
         expect(worker.isRetryableError(error)).toBe(false);
@@ -688,7 +672,7 @@ describe('BaseWorker', () => {
     });
 
     test('returns false for permanent error codes', () => {
-      ['UNAUTHORIZED', 'FORBIDDEN', 'BAD_REQUEST', 'NOT_FOUND', 'CERT_INVALID'].forEach(code => {
+      ['UNAUTHORIZED', 'FORBIDDEN', 'BAD_REQUEST', 'NOT_FOUND', 'CERT_INVALID'].forEach((code) => {
         const error = new Error('Permanent error');
         error.code = code;
         expect(worker.isRetryableError(error)).toBe(false);
@@ -710,14 +694,14 @@ describe('BaseWorker', () => {
         'SSL certificate error'
       ];
 
-      permanentMessages.forEach(message => {
+      permanentMessages.forEach((message) => {
         const error = new Error(message);
         expect(worker.isRetryableError(error)).toBe(false);
       });
     });
 
     test('returns true for retryable status codes (429, 500, 502, 503, 504)', () => {
-      [429, 500, 502, 503, 504].forEach(statusCode => {
+      [429, 500, 502, 503, 504].forEach((statusCode) => {
         const error = new Error('Server error');
         error.statusCode = statusCode;
         expect(worker.isRetryableError(error)).toBe(true);
@@ -725,7 +709,7 @@ describe('BaseWorker', () => {
     });
 
     test('returns true for retryable error codes', () => {
-      ['ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'].forEach(code => {
+      ['ECONNRESET', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED'].forEach((code) => {
         const error = new Error('Network error');
         error.code = code;
         expect(worker.isRetryableError(error)).toBe(true);
@@ -743,7 +727,7 @@ describe('BaseWorker', () => {
         'Gateway timeout'
       ];
 
-      retryableMessages.forEach(message => {
+      retryableMessages.forEach((message) => {
         const error = new Error(message);
         expect(worker.isRetryableError(error)).toBe(true);
       });
@@ -847,14 +831,14 @@ describe('BaseWorker', () => {
 
     test('should sleep for specified duration', async () => {
       jest.useFakeTimers();
-      
+
       const sleepPromise = worker.sleep(50);
-      
+
       // Advance timers
       jest.advanceTimersByTime(50);
-      
+
       await expect(sleepPromise).resolves.toBeUndefined();
-      
+
       jest.useRealTimers();
     });
 
@@ -895,13 +879,15 @@ describe('BaseWorker', () => {
         }
         // Missing processJob implementation
       }
-      
+
       const incompleteWorker = new IncompleteWorker({ retryDelay: 1, maxRetries: 0 });
-      
+
       const retryableSpy = jest.spyOn(incompleteWorker, 'isRetryableError').mockReturnValue(false);
 
       try {
-        await expect(incompleteWorker.processJob({})).rejects.toThrow('_processJobInternal method must be implemented by subclass');
+        await expect(incompleteWorker.processJob({})).rejects.toThrow(
+          '_processJobInternal method must be implemented by subclass'
+        );
       } finally {
         retryableSpy.mockRestore();
         process.env.NODE_ENV = originalNodeEnv;
@@ -957,10 +943,12 @@ describe('BaseWorker', () => {
       worker = new TestWorker();
 
       // Signal handlers should not be registered in test environment
-      const signalHandlerCalls = processOnSpy.mock.calls.filter(call => 
-        ['SIGTERM', 'SIGINT', 'SIGQUIT', 'uncaughtException', 'unhandledRejection'].includes(call[0])
+      const signalHandlerCalls = processOnSpy.mock.calls.filter((call) =>
+        ['SIGTERM', 'SIGINT', 'SIGQUIT', 'uncaughtException', 'unhandledRejection'].includes(
+          call[0]
+        )
       );
-      
+
       expect(signalHandlerCalls).toHaveLength(0);
     });
   });
@@ -982,7 +970,7 @@ describe('BaseWorker', () => {
 
     test('should return health status when running', async () => {
       await worker.start();
-      
+
       const health = await worker.healthcheck();
 
       expect(health).toHaveProperty('status');
@@ -1049,7 +1037,7 @@ describe('BaseWorker', () => {
       worker.processedJobs = 1; // Need at least one processed job
       // Set lastActivityTime to 6 minutes ago (more than 5 minute threshold of 300000ms)
       worker.lastActivityTime = Date.now() - 360000;
-      
+
       const health = await worker.healthcheck();
 
       expect(health.checks.processing.status).toBe('warning');
@@ -1060,7 +1048,7 @@ describe('BaseWorker', () => {
       await worker.start();
       worker.processedJobs = 10;
       worker.failedJobs = 6; // 60% failure rate
-      
+
       const health = await worker.healthcheck();
 
       expect(health.checks.performance.status).toBe('unhealthy');
@@ -1071,7 +1059,7 @@ describe('BaseWorker', () => {
       await worker.start();
       worker.processedJobs = 10;
       worker.failedJobs = 3; // 30% failure rate
-      
+
       const health = await worker.healthcheck();
 
       expect(health.checks.performance.status).toBe('warning');
@@ -1082,7 +1070,7 @@ describe('BaseWorker', () => {
       await worker.start();
       worker.processedJobs = 10;
       worker.failedJobs = 2;
-      
+
       const health = await worker.healthcheck();
 
       expect(health.metrics.successRate).toBe('80.00%');
@@ -1090,11 +1078,11 @@ describe('BaseWorker', () => {
 
     test('should handle getSpecificHealthDetails errors gracefully', async () => {
       await worker.start();
-      
+
       // Make getSpecificHealthDetails throw an error (this is inside the try-catch)
-      worker.getSpecificHealthDetails = jest.fn().mockRejectedValue(
-        new Error('Health check internal error')
-      );
+      worker.getSpecificHealthDetails = jest
+        .fn()
+        .mockRejectedValue(new Error('Health check internal error'));
 
       const health = await worker.healthcheck();
 
@@ -1110,7 +1098,7 @@ describe('BaseWorker', () => {
       worker = new TestWorker();
       // Override maxProcessingTimeSamples to test the limit logic
       worker.maxProcessingTimeSamples = 5;
-      
+
       // Simulate what happens in processJobAsync when limit is exceeded
       // The code does: push() then check if length > max, then shift()
       for (let i = 0; i < 10; i++) {
@@ -1149,7 +1137,7 @@ describe('BaseWorker', () => {
       const sleepSpy = jest.spyOn(worker, 'sleep').mockResolvedValue();
 
       await expect(worker.executeJobWithRetry(job)).rejects.toThrow('Final failure after retries');
-      
+
       // Should attempt maxRetries + 1 times (initial + retries)
       expect(attemptCount).toBe(worker.config.maxRetries + 1);
       expect(sleepSpy).toHaveBeenCalledTimes(worker.config.maxRetries);

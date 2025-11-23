@@ -19,4 +19,3 @@ Generates contextual roast responses using OpenAI GPT-4o mini with fallback to t
 ### getOrganizationSettings
 
 ### error handling
-

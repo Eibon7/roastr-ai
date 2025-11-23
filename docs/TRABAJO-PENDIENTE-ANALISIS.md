@@ -8,13 +8,13 @@
 
 ## 📊 Resumen Ejecutivo
 
-| Categoría | Issues Abiertas | Estimación Total | Prioridad |
-|-----------|----------------|------------------|-----------|
-| **Testing** | 24 issues | ~8-12 semanas | 🔴 CRÍTICO |
-| **Construcción de Plataforma** | 20 issues | ~12-16 semanas | 🟡 ALTA |
-| **Post-MVP / Trainer** | 15 issues | ~20-24 semanas | 🟢 BAJA |
-| **Trabajo No Registrado** | ~8 gaps identificados | ~4-6 semanas | 🟡 MEDIA |
-| **Tech Debt / Refactors** | 11 issues | ~6-8 semanas | 🟢 BAJA |
+| Categoría                      | Issues Abiertas       | Estimación Total | Prioridad  |
+| ------------------------------ | --------------------- | ---------------- | ---------- |
+| **Testing**                    | 24 issues             | ~8-12 semanas    | 🔴 CRÍTICO |
+| **Construcción de Plataforma** | 20 issues             | ~12-16 semanas   | 🟡 ALTA    |
+| **Post-MVP / Trainer**         | 15 issues             | ~20-24 semanas   | 🟢 BAJA    |
+| **Trabajo No Registrado**      | ~8 gaps identificados | ~4-6 semanas     | 🟡 MEDIA   |
+| **Tech Debt / Refactors**      | 11 issues             | ~6-8 semanas     | 🟢 BAJA    |
 
 **Total Issues Abiertas:** 78 issues
 **Estimación Total:** ~50-66 semanas de trabajo (sin paralelización)
@@ -29,61 +29,63 @@
 
 **Prioridad P0 (CRÍTICO - 7 issues):**
 
-| Issue | Descripción | Estimación | Estado |
-|-------|-------------|------------|--------|
-| #639 | Fix Database Security Test Suite | 3-5 días | Open |
-| #638 | Fix OAuth Integration Test Suite | 3-5 días | Open |
-| #482 | Shield Test Suite - Stability & UI Integration | 5-7 días | Open |
-| #483 | Roast Generation Test Suite | 5-7 días | Open |
-| #484 | Multi-Tenant & Billing Test Suite | 5-7 días | Open |
-| #488 | Flow Validation: Multi-Tenant RLS Isolation | 3-4 días | Open |
-| #489 | Flow Validation: Billing & Plan Limits Enforcement | 3-4 días | Open |
+| Issue | Descripción                                        | Estimación | Estado |
+| ----- | -------------------------------------------------- | ---------- | ------ |
+| #639  | Fix Database Security Test Suite                   | 3-5 días   | Open   |
+| #638  | Fix OAuth Integration Test Suite                   | 3-5 días   | Open   |
+| #482  | Shield Test Suite - Stability & UI Integration     | 5-7 días   | Open   |
+| #483  | Roast Generation Test Suite                        | 5-7 días   | Open   |
+| #484  | Multi-Tenant & Billing Test Suite                  | 5-7 días   | Open   |
+| #488  | Flow Validation: Multi-Tenant RLS Isolation        | 3-4 días   | Open   |
+| #489  | Flow Validation: Billing & Plan Limits Enforcement | 3-4 días   | Open   |
 
 **Prioridad P1 (ALTA - 4 issues):**
 
-| Issue | Descripción | Estimación | Estado |
-|-------|-------------|------------|--------|
-| #642 | Fix Tier Validation Service Tests | 2-3 días | Open |
-| #641 | Fix Integration Routes Test Suite | 3-4 días | Open |
-| #644 | Fix Worker Test Suite | 4-5 días | Open |
-| #643 | Fix Frontend/UI Test Suite | 5-6 días | Open |
-| #485 | Unit Test Suite - Routes, Middleware, Services | 5-7 días | Open |
+| Issue | Descripción                                    | Estimación | Estado |
+| ----- | ---------------------------------------------- | ---------- | ------ |
+| #642  | Fix Tier Validation Service Tests              | 2-3 días   | Open   |
+| #641  | Fix Integration Routes Test Suite              | 3-4 días   | Open   |
+| #644  | Fix Worker Test Suite                          | 4-5 días   | Open   |
+| #643  | Fix Frontend/UI Test Suite                     | 5-6 días   | Open   |
+| #485  | Unit Test Suite - Routes, Middleware, Services | 5-7 días   | Open   |
 
 **Prioridad P2 (MEDIA - 2 issues):**
 
-| Issue | Descripción | Estimación | Estado |
-|-------|-------------|------------|--------|
-| #646 | Audit and Fix Remaining Test Suites | 3-4 días | Open |
-| #645 | Fix CLI Test Suite | 2-3 días | Open |
+| Issue | Descripción                         | Estimación | Estado |
+| ----- | ----------------------------------- | ---------- | ------ |
+| #646  | Audit and Fix Remaining Test Suites | 3-4 días   | Open   |
+| #645  | Fix CLI Test Suite                  | 2-3 días   | Open   |
 
 **Bugs y Coverage (5 issues):**
 
-| Issue | Descripción | Estimación | Estado |
-|-------|-------------|------------|--------|
-| #698 | Fix 4 failing roast integration tests | 1-2 días (decisión arquitectónica) | Open (PR #695) |
-| #633 | Pre-existing Shield test failures | TBD | Open |
-| #583 | Update RLS Integration Tests for Current Schema | 2-3 días | Open |
-| #442 | Validación Tests Integración Ingestor | 2-3 días | Assigned |
+| Issue | Descripción                                     | Estimación                         | Estado         |
+| ----- | ----------------------------------------------- | ---------------------------------- | -------------- |
+| #698  | Fix 4 failing roast integration tests           | 1-2 días (decisión arquitectónica) | Open (PR #695) |
+| #633  | Pre-existing Shield test failures               | TBD                                | Open           |
+| #583  | Update RLS Integration Tests for Current Schema | 2-3 días                           | Open           |
+| #442  | Validación Tests Integración Ingestor           | 2-3 días                           | Assigned       |
 
 **Coverage Issues (#500-505 - 6 issues):**
 
-| Issue | Node | Current | Target | Estimación |
-|-------|------|---------|--------|------------|
-| #500 | cost-control | 3% | 60% | 3-4 días |
-| #501 | analytics | 49% | 65% | 2-3 días |
-| #502 | billing | 58% | 65% | 2-3 días |
-| #503 | shield | 66% | 75% | 2-3 días |
-| #504 | multi-tenant | 0% | 40% | 3-4 días |
-| #505 | trainer | 0% | 50% | 3-4 días |
+| Issue | Node         | Current | Target | Estimación |
+| ----- | ------------ | ------- | ------ | ---------- |
+| #500  | cost-control | 3%      | 60%    | 3-4 días   |
+| #501  | analytics    | 49%     | 65%    | 2-3 días   |
+| #502  | billing      | 58%     | 65%    | 2-3 días   |
+| #503  | shield       | 66%     | 75%    | 2-3 días   |
+| #504  | multi-tenant | 0%      | 40%    | 3-4 días   |
+| #505  | trainer      | 0%      | 50%    | 3-4 días   |
 
 ### 1.2 Estado de PR #695
 
 **PR #695 - Test Investigation & Fixes:**
+
 - ✅ Issue #680: Mock isolation pattern implementado
 - ✅ Issue #697: Mock factory & helper preservation arreglado
 - 🟡 Issue #698: 1/4 tests arreglados, decisión arquitectónica requerida
 
 **Decisión Pendiente (Product Owner):**
+
 1. ⭐ Usar real test database (1-2 días) ← RECOMENDADO
 2. Aceptar 4 failing integration tests como known issue
 3. Diferir refactor arquitectónico
@@ -102,48 +104,48 @@
 
 **Payment & Billing (3 issues):**
 
-| Issue | Descripción | Estimación | Labels |
-|-------|-------------|------------|--------|
-| #594 | Payment Flow con Polar (migración desde Stripe) | 2-3 semanas | `enhancement`, `high-priority` |
-| #596 | Roasting Control (Enable/Disable con Worker Sync) | 1-2 semanas | `enhancement`, `medium-priority` |
-| #597 | Level Configuration (Roast Levels 1-5 + Shield Levels) | 1-2 semanas | `enhancement`, `medium-priority` |
+| Issue | Descripción                                            | Estimación  | Labels                           |
+| ----- | ------------------------------------------------------ | ----------- | -------------------------------- |
+| #594  | Payment Flow con Polar (migración desde Stripe)        | 2-3 semanas | `enhancement`, `high-priority`   |
+| #596  | Roasting Control (Enable/Disable con Worker Sync)      | 1-2 semanas | `enhancement`, `medium-priority` |
+| #597  | Level Configuration (Roast Levels 1-5 + Shield Levels) | 1-2 semanas | `enhancement`, `medium-priority` |
 
 **Global State & Sync (1 issue):**
 
-| Issue | Descripción | Estimación | Labels |
-|-------|-------------|------------|--------|
-| #598 | Global State Synchronization (Frontend ↔ Backend ↔ Polar) | 2-3 semanas | `enhancement`, `architecture` |
+| Issue | Descripción                                                 | Estimación  | Labels                        |
+| ----- | ----------------------------------------------------------- | ----------- | ----------------------------- |
+| #598  | Global State Synchronization (Frontend ↔ Backend ↔ Polar) | 2-3 semanas | `enhancement`, `architecture` |
 
 **Frontend/UI (1 issue):**
 
-| Issue | Descripción | Estimación | Labels |
-|-------|-------------|------------|--------|
-| #683 | Nuevo diseño de dashboard (HTML + CSS + JS base) | 1-2 semanas | Sin labels |
+| Issue | Descripción                                      | Estimación  | Labels     |
+| ----- | ------------------------------------------------ | ----------- | ---------- |
+| #683  | Nuevo diseño de dashboard (HTML + CSS + JS base) | 1-2 semanas | Sin labels |
 
 ### 2.2 Integraciones y Workers
 
 **Publisher & Workers (2 issues):**
 
-| Issue | Descripción | Estimación | Labels |
-|-------|-------------|------------|--------|
-| #456 | PublisherWorker - Publicación directa e idempotencia | 1-2 semanas | `bug`, `high-priority` |
-| #415 | Complete Platform Integration & Tone Analysis | 2-3 semanas | `enhancement` |
+| Issue | Descripción                                          | Estimación  | Labels                 |
+| ----- | ---------------------------------------------------- | ----------- | ---------------------- |
+| #456  | PublisherWorker - Publicación directa e idempotencia | 1-2 semanas | `bug`, `high-priority` |
+| #415  | Complete Platform Integration & Tone Analysis        | 2-3 semanas | `enhancement`          |
 
 ### 2.3 MVP Validation Gaps
 
 **MVP Gaps (1 issue):**
 
-| Issue | Descripción | Estimación | Labels |
-|-------|-------------|------------|--------|
-| #588 | Implement MVP validation gap closures (G1, G6, G10) | 1-2 semanas | `enhancement`, `good first issue` |
+| Issue | Descripción                                         | Estimación  | Labels                            |
+| ----- | --------------------------------------------------- | ----------- | --------------------------------- |
+| #588  | Implement MVP validation gap closures (G1, G6, G10) | 1-2 semanas | `enhancement`, `good first issue` |
 
 ### 2.4 Documentación
 
 **Documentación (1 issue):**
 
-| Issue | Descripción | Estimación | Labels |
-|-------|-------------|------------|--------|
-| #649 | Documentar integración Persona + Roast Generation | 2-3 días | `documentation` |
+| Issue | Descripción                                       | Estimación | Labels          |
+| ----- | ------------------------------------------------- | ---------- | --------------- |
+| #649  | Documentar integración Persona + Roast Generation | 2-3 días   | `documentation` |
 
 ### 2.5 Post-MVP Features (15 issues)
 
@@ -156,22 +158,22 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 
 **Modo NSFW y Bot Interactions (2 issues):**
 
-| Issue | Descripción | Estimación |
-|-------|-------------|------------|
-| #311 | Modo NSFW en Roasts | 1-2 semanas |
-| #324 | Manejo Interacciones entre Bots | 1-2 semanas |
+| Issue | Descripción                     | Estimación  |
+| ----- | ------------------------------- | ----------- |
+| #311  | Modo NSFW en Roasts             | 1-2 semanas |
+| #324  | Manejo Interacciones entre Bots | 1-2 semanas |
 
 **GDPR Export y Entrenamiento (1 issue):**
 
-| Issue | Descripción | Estimación |
-|-------|-------------|------------|
-| #325 | Weekly Export + GDPR Anonymization (80 días) | 2-3 semanas |
+| Issue | Descripción                                  | Estimación  |
+| ----- | -------------------------------------------- | ----------- |
+| #325  | Weekly Export + GDPR Anonymization (80 días) | 2-3 semanas |
 
 **RQC Microservice (1 issue):**
 
-| Issue | Descripción | Estimación |
-|-------|-------------|------------|
-| #312 | Microservicio RQC con jueces virtuales | 3-4 semanas |
+| Issue | Descripción                            | Estimación  |
+| ----- | -------------------------------------- | ----------- |
+| #312  | Microservicio RQC con jueces virtuales | 3-4 semanas |
 
 ### 2.6 Estimación Total Construcción
 
@@ -180,6 +182,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 **Total:** ~28-36 semanas (sin paralelización)
 
 **Criticidad:**
+
 - Core features: 🟡 ALTA
 - Post-MVP: 🟢 BAJA (puede diferirse)
 
@@ -190,6 +193,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 ### 3.1 Gaps Identificados en GDD Nodes vs. Código
 
 **Análisis realizado:**
+
 - 13 nodos GDD documentados (~11,183 líneas)
 - 216 archivos .js en `src/`
 - 35 routes, 15 integraciones
@@ -200,6 +204,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 #### 3.1.1 Social Platforms - Integraciones Incompletas
 
 **Documentadas pero no verificadas:**
+
 - Twitter/X, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky (9 plataformas)
 
 **Estado:** Issue #490 menciona scripts de verificación, pero no hay issues específicas para cada plataforma.
@@ -209,6 +214,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 #### 3.1.2 Queue System - Worker Monitoring
 
 **Gap:** Nodo `queue-system.md` menciona monitoreo avanzado y retry logic, pero no hay issues para:
+
 - Dashboard de monitoreo de workers
 - Sistema de alertas de workers fallidos
 - Retry strategy tuning
@@ -218,6 +224,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 #### 3.1.3 Observability - Telemetría Completa
 
 **Gap:** Nodo `observability.md` existe, pero no hay issues para:
+
 - Integración completa con Sentry (Issue #379 menciona Shield, pero no sistema completo)
 - Métricas de performance
 - Dashboard de observabilidad
@@ -227,6 +234,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 #### 3.1.4 Analytics - Feature Completo
 
 **Gap:** Coverage 49% (Issue #501 aumenta a 65%), pero falta implementación completa:
+
 - Analytics dashboard (mencionado en nodo pero sin issue)
 - Exportación de datos de analytics
 - Integración con Polar para billing analytics
@@ -236,6 +244,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 #### 3.1.5 Guardian - GDD Guardian Script
 
 **Gap:** Nodo `guardian.md` documentado, pero:
+
 - Script `guardian-gdd.js` existe
 - No hay tests para Guardian
 - No hay documentación de uso
@@ -245,6 +254,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 #### 3.1.6 Tone System - Testing
 
 **Gap:** Nodo `tone.md` documentado (8,794 líneas), pero:
+
 - No hay tests específicos para tone mapping
 - No hay validación de humor types
 
@@ -253,6 +263,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 #### 3.1.7 Platform Constraints - Validación
 
 **Gap:** Nodo `platform-constraints.md` existe, pero:
+
 - No hay tests de validación por plataforma
 - No hay verificación de character limits
 
@@ -261,6 +272,7 @@ Issues #300-309: Sistema completo de entrenamiento con ART, RQC, collectors de e
 #### 3.1.8 GDD Phase 17.1 - Cron Monitoring
 
 **Gap:** Issue #541 existe pero sin progress
+
 - Cron-based Auto-Health and Drift Monitoring
 - Estado: Open, sin asignación
 
@@ -312,21 +324,25 @@ In Progress:       PR #695 (issues #680, #697, #698)
 ### 5.1 Priorización Sugerida
 
 **FASE 1 (Inmediata - 4-6 semanas):**
+
 1. ✅ Cerrar PR #695 (decisión arquitectónica #698)
 2. 🔴 Resolver P0 test issues (#639, #638, #482, #483, #484, #488, #489)
 3. 🟡 Completar coverage gaps (#500-505)
 
 **FASE 2 (Corto plazo - 4-6 semanas):**
+
 1. 🔴 Resolver P1 test issues (#642, #641, #644, #643, #485)
 2. 🟡 Features core (#594 Polar, #596 Roasting Control, #597 Level Config)
 
 **FASE 3 (Medio plazo - 6-8 semanas):**
+
 1. 🟡 Global State Sync (#598)
 2. 🟡 Publisher Worker (#456)
 3. 🟡 Dashboard UI (#683)
 4. 🟡 Resolver gaps no registrados (integraciones, observability, analytics)
 
 **FASE 4 (Largo plazo - 20-24 semanas):**
+
 1. 🟢 Post-MVP features (Trainer system #300-309)
 2. 🟢 Tech debt cleanup
 3. 🟢 Refactors arquitectónicos
@@ -334,6 +350,7 @@ In Progress:       PR #695 (issues #680, #697, #698)
 ### 5.2 Creación de Issues Faltantes
 
 **Sugerencia:** Crear issues para los 8 gaps identificados en sección 3:
+
 - [ ] Issue: Social Platform Integration Verification (9 plataformas)
 - [ ] Issue: Worker Monitoring Dashboard
 - [ ] Issue: Observability System Integration (Sentry + Metrics)
@@ -346,6 +363,7 @@ In Progress:       PR #695 (issues #680, #697, #698)
 ### 5.3 Paralelización
 
 **Con 2-3 developers trabajando en paralelo:**
+
 - Testing (P0/P1): ~6-8 semanas → **3-4 semanas**
 - Features core: ~8-12 semanas → **4-6 semanas**
 - Gaps no registrados: ~6-8 semanas → **3-4 semanas**
@@ -491,6 +509,7 @@ gantt
 **Issues sin registrar:** ~8 gaps críticos identificados
 
 **Acción requerida:**
+
 1. Decidir #698 (arquitectónica) → Desbloquea PR #695
 2. Crear 8 issues para gaps identificados
 3. Priorizar EPIC #480 (testing) como P0

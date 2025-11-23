@@ -32,7 +32,10 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Read migration SQL file
-const migrationPath = path.join(__dirname, '../database/migrations/024_atomic_user_behavior_updates.sql');
+const migrationPath = path.join(
+  __dirname,
+  '../database/migrations/024_atomic_user_behavior_updates.sql'
+);
 
 console.log('🚀 Deploying Migration 024 to Supabase');
 console.log('==========================================\n');
@@ -71,7 +74,9 @@ async function deployMigration() {
     console.log('   You have two options:\n');
     console.log('Option 1: Use Supabase SQL Editor (Recommended)');
     console.log('   1. Go to https://supabase.com/dashboard/project/rpkhiemljhncddmhrilk/sql/new');
-    console.log('   2. Copy the contents of database/migrations/024_atomic_user_behavior_updates.sql');
+    console.log(
+      '   2. Copy the contents of database/migrations/024_atomic_user_behavior_updates.sql'
+    );
     console.log('   3. Paste into the SQL editor');
     console.log('   4. Click "Run" button\n');
 
@@ -115,7 +120,6 @@ async function deployMigration() {
       console.log('\n✅ Migration 024 is already deployed.\n');
       process.exit(0);
     }
-
   } catch (error) {
     console.error('\n❌ FATAL ERROR:', error.message);
     console.error('\nStack trace:');

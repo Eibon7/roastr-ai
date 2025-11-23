@@ -1,8 +1,13 @@
-const { ShieldAdapter, ModerationInput, ModerationResult, CapabilityMap } = require('../ShieldAdapter');
+const {
+  ShieldAdapter,
+  ModerationInput,
+  ModerationResult,
+  CapabilityMap
+} = require('../ShieldAdapter');
 
 /**
  * Mock Discord Shield Adapter
- * 
+ *
  * Simulates Discord API moderation capabilities including message deletion,
  * user timeouts, and bans based on research.
  */
@@ -20,7 +25,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
 
   async initialize() {
     await this.simulateLatency();
-    
+
     // Check for required config
     if (!this.config.skipValidation && !process.env.DISCORD_BOT_TOKEN) {
       throw new Error('Missing Discord bot token configuration');
@@ -38,7 +43,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
         KICK_MEMBERS: true
       }
     };
-    
+
     this.isInitialized = true;
     this.log('info', 'Discord Shield Adapter initialized (MOCK)');
   }
@@ -55,13 +60,13 @@ class DiscordShieldAdapter extends ShieldAdapter {
 
   async deleteMessage(input) {
     this.validateInput(input, ['commentId']);
-    
+
     const startTime = Date.now();
-    
+
     try {
       await this.checkRateLimit();
       await this.simulateLatency();
-      
+
       if (this.shouldSimulateFailure()) {
         throw new Error('Discord API: Missing Access');
       }
@@ -72,13 +77,17 @@ class DiscordShieldAdapter extends ShieldAdapter {
       }
 
       // Mock successful message deletion
-      const result = this.createSuccessResult('hideComment', {
-        messageId: input.commentId,
-        channelId: input.metadata.channelId || 'mock_channel_123',
-        endpoint: 'DELETE /channels/{channel_id}/messages/{message_id}',
-        deleted: true,
-        note: 'Message permanently deleted from channel'
-      }, Date.now() - startTime);
+      const result = this.createSuccessResult(
+        'hideComment',
+        {
+          messageId: input.commentId,
+          channelId: input.metadata.channelId || 'mock_channel_123',
+          endpoint: 'DELETE /channels/{channel_id}/messages/{message_id}',
+          deleted: true,
+          note: 'Message permanently deleted from channel'
+        },
+        Date.now() - startTime
+      );
 
       this.log('info', 'Message deleted successfully (MOCK)', {
         messageId: input.commentId,
@@ -86,34 +95,38 @@ class DiscordShieldAdapter extends ShieldAdapter {
       });
 
       return result;
-
     } catch (error) {
       this.log('error', 'Failed to delete message (MOCK)', {
         messageId: input.commentId,
         error: error.message
       });
-      
+
       return this.createErrorResult('hideComment', error, Date.now() - startTime);
     }
   }
 
   async reportUser(input) {
     this.validateInput(input, ['userId']);
-    
+
     const startTime = Date.now();
-    
+
     try {
       await this.simulateLatency();
-      
+
       // Discord doesn't have API for reporting users to Discord
-      const result = this.createSuccessResult('reportUser', {
-        userId: input.userId,
-        platform: 'discord',
-        method: 'manual_review_required',
-        alternative: 'timeout_or_ban',
-        note: 'Discord user reporting must be done through the client interface. Consider timeout or ban instead.',
-        reportUrl: 'https://support.discord.com/hc/en-us/requests/new'
-      }, Date.now() - startTime, true);
+      const result = this.createSuccessResult(
+        'reportUser',
+        {
+          userId: input.userId,
+          platform: 'discord',
+          method: 'manual_review_required',
+          alternative: 'timeout_or_ban',
+          note: 'Discord user reporting must be done through the client interface. Consider timeout or ban instead.',
+          reportUrl: 'https://support.discord.com/hc/en-us/requests/new'
+        },
+        Date.now() - startTime,
+        true
+      );
 
       this.log('info', 'User report queued for manual review (MOCK)', {
         userId: input.userId,
@@ -121,7 +134,6 @@ class DiscordShieldAdapter extends ShieldAdapter {
       });
 
       return result;
-
     } catch (error) {
       return this.createErrorResult('reportUser', error, Date.now() - startTime);
     }
@@ -134,13 +146,13 @@ class DiscordShieldAdapter extends ShieldAdapter {
 
   async banUser(input) {
     this.validateInput(input, ['userId']);
-    
+
     const startTime = Date.now();
-    
+
     try {
       await this.checkRateLimit();
       await this.simulateLatency();
-      
+
       if (this.shouldSimulateFailure()) {
         throw new Error('Discord API: Unknown Guild');
       }
@@ -153,16 +165,20 @@ class DiscordShieldAdapter extends ShieldAdapter {
       // Mock successful ban
       const guildId = input.metadata.guildId || this.client.guilds[0];
       const deleteMessageDays = input.metadata.deleteMessageDays || 7;
-      
-      const result = this.createSuccessResult('blockUser', {
-        userId: input.userId,
-        guildId: guildId,
-        deleteMessageDays: deleteMessageDays,
-        reason: input.reason || 'Shield: Inappropriate behavior',
-        endpoint: 'PUT /guilds/{guild_id}/bans/{user_id}',
-        banned: true,
-        note: `User banned from server with ${deleteMessageDays} days of message history deleted`
-      }, Date.now() - startTime);
+
+      const result = this.createSuccessResult(
+        'blockUser',
+        {
+          userId: input.userId,
+          guildId: guildId,
+          deleteMessageDays: deleteMessageDays,
+          reason: input.reason || 'Shield: Inappropriate behavior',
+          endpoint: 'PUT /guilds/{guild_id}/bans/{user_id}',
+          banned: true,
+          note: `User banned from server with ${deleteMessageDays} days of message history deleted`
+        },
+        Date.now() - startTime
+      );
 
       this.log('info', 'User banned successfully (MOCK)', {
         userId: input.userId,
@@ -171,13 +187,12 @@ class DiscordShieldAdapter extends ShieldAdapter {
       });
 
       return result;
-
     } catch (error) {
       this.log('error', 'Failed to ban user (MOCK)', {
         userId: input.userId,
         error: error.message
       });
-      
+
       return this.createErrorResult('blockUser', error, Date.now() - startTime);
     }
   }
@@ -189,13 +204,13 @@ class DiscordShieldAdapter extends ShieldAdapter {
 
   async unbanUser(input) {
     this.validateInput(input, ['userId']);
-    
+
     const startTime = Date.now();
-    
+
     try {
       await this.checkRateLimit();
       await this.simulateLatency();
-      
+
       if (this.shouldSimulateFailure()) {
         throw new Error('Discord API: Member not found');
       }
@@ -207,14 +222,18 @@ class DiscordShieldAdapter extends ShieldAdapter {
 
       // Mock successful unban
       const guildId = input.metadata.guildId || this.client.guilds[0];
-      
-      const result = this.createSuccessResult('unblockUser', {
-        userId: input.userId,
-        guildId: guildId,
-        endpoint: 'DELETE /guilds/{guild_id}/bans/{user_id}',
-        unbanned: true,
-        note: 'User can now rejoin the server'
-      }, Date.now() - startTime);
+
+      const result = this.createSuccessResult(
+        'unblockUser',
+        {
+          userId: input.userId,
+          guildId: guildId,
+          endpoint: 'DELETE /guilds/{guild_id}/bans/{user_id}',
+          unbanned: true,
+          note: 'User can now rejoin the server'
+        },
+        Date.now() - startTime
+      );
 
       this.log('info', 'User unbanned successfully (MOCK)', {
         userId: input.userId,
@@ -222,7 +241,6 @@ class DiscordShieldAdapter extends ShieldAdapter {
       });
 
       return result;
-
     } catch (error) {
       return this.createErrorResult('unblockUser', error, Date.now() - startTime);
     }
@@ -233,13 +251,13 @@ class DiscordShieldAdapter extends ShieldAdapter {
    */
   async timeoutUser(input, duration = '10m') {
     this.validateInput(input, ['userId']);
-    
+
     const startTime = Date.now();
-    
+
     try {
       await this.checkRateLimit();
       await this.simulateLatency();
-      
+
       if (!this.client.permissions.MODERATE_MEMBERS) {
         throw new Error('Bot lacks MODERATE_MEMBERS permission');
       }
@@ -247,16 +265,20 @@ class DiscordShieldAdapter extends ShieldAdapter {
       // Parse duration to ISO 8601 timestamp
       const timeoutUntil = this.parseTimeoutDuration(duration);
       const guildId = input.metadata.guildId || this.client.guilds[0];
-      
-      const result = this.createSuccessResult('timeoutUser', {
-        userId: input.userId,
-        guildId: guildId,
-        timeoutUntil: timeoutUntil,
-        duration: duration,
-        endpoint: 'PATCH /guilds/{guild_id}/members/{user_id}',
-        reason: input.reason || 'Shield: Temporary timeout for rule violation',
-        note: 'User cannot send messages, react, or join voice channels during timeout'
-      }, Date.now() - startTime);
+
+      const result = this.createSuccessResult(
+        'timeoutUser',
+        {
+          userId: input.userId,
+          guildId: guildId,
+          timeoutUntil: timeoutUntil,
+          duration: duration,
+          endpoint: 'PATCH /guilds/{guild_id}/members/{user_id}',
+          reason: input.reason || 'Shield: Temporary timeout for rule violation',
+          note: 'User cannot send messages, react, or join voice channels during timeout'
+        },
+        Date.now() - startTime
+      );
 
       this.log('info', 'User timed out successfully (MOCK)', {
         userId: input.userId,
@@ -265,7 +287,6 @@ class DiscordShieldAdapter extends ShieldAdapter {
       });
 
       return result;
-
     } catch (error) {
       return this.createErrorResult('timeoutUser', error, Date.now() - startTime);
     }
@@ -273,10 +294,10 @@ class DiscordShieldAdapter extends ShieldAdapter {
 
   capabilities() {
     return new CapabilityMap({
-      hideComment: true,   // ✅ Via message deletion
-      reportUser: false,   // ❌ No API, manual only
-      blockUser: true,     // ✅ Via ban API
-      unblockUser: true,   // ✅ Via unban API
+      hideComment: true, // ✅ Via message deletion
+      reportUser: false, // ❌ No API, manual only
+      blockUser: true, // ✅ Via ban API
+      unblockUser: true, // ✅ Via unban API
       platform: 'discord',
       rateLimits: {
         global: '50 requests/second',
@@ -293,23 +314,25 @@ class DiscordShieldAdapter extends ShieldAdapter {
         'KICK_MEMBERS (for kicks)'
       ],
       fallbacks: {
-        reportUser: 'timeoutUser',     // If can't report, timeout instead
-        hideComment: 'timeoutUser',    // If can't delete message, timeout user
-        blockUser: 'timeoutUser'       // If can't ban, timeout instead
+        reportUser: 'timeoutUser', // If can't report, timeout instead
+        hideComment: 'timeoutUser', // If can't delete message, timeout user
+        blockUser: 'timeoutUser' // If can't ban, timeout instead
       },
       additionalActions: {
-        timeoutUser: true,              // Discord-specific timeout
-        kickUser: true,                 // Kick (not ban) user
-        removeFromVoice: true           // Remove from voice channels
+        timeoutUser: true, // Discord-specific timeout
+        kickUser: true, // Kick (not ban) user
+        removeFromVoice: true // Remove from voice channels
       }
     });
   }
 
   isRateLimitError(error) {
-    return error.message.includes('rate limit') || 
-           error.message.includes('Rate limited') ||
-           error.message.includes('429') ||
-           error.status === 429;
+    return (
+      error.message.includes('rate limit') ||
+      error.message.includes('Rate limited') ||
+      error.message.includes('429') ||
+      error.status === 429
+    );
   }
 
   /**
@@ -317,19 +340,19 @@ class DiscordShieldAdapter extends ShieldAdapter {
    */
   async checkRateLimit() {
     const now = Date.now();
-    
+
     // Reset counter if time window has passed
     if (now >= this.globalRateLimit.resetTime) {
       this.globalRateLimit.requests = 0;
       this.globalRateLimit.resetTime = now + 1000;
     }
-    
+
     // Check if we're at the limit
     if (this.globalRateLimit.requests >= this.globalRateLimit.limit) {
       const waitTime = this.globalRateLimit.resetTime - now;
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
-    
+
     this.globalRateLimit.requests++;
   }
 
@@ -339,12 +362,12 @@ class DiscordShieldAdapter extends ShieldAdapter {
   parseTimeoutDuration(duration) {
     const now = new Date();
     const match = duration.match(/^(\d+)([smhd])$/);
-    
+
     if (!match) {
       // Default to 10 minutes
       return new Date(now.getTime() + 10 * 60 * 1000).toISOString();
     }
-    
+
     const [, amount, unit] = match;
     const multipliers = {
       s: 1000,
@@ -352,7 +375,7 @@ class DiscordShieldAdapter extends ShieldAdapter {
       h: 60 * 60 * 1000,
       d: 24 * 60 * 60 * 1000
     };
-    
+
     const milliseconds = parseInt(amount) * (multipliers[unit] || 60000);
     return new Date(now.getTime() + milliseconds).toISOString();
   }
@@ -361,11 +384,10 @@ class DiscordShieldAdapter extends ShieldAdapter {
    * Simulate API latency
    */
   async simulateLatency() {
-    const delay = Math.random() * 
-      (this.mockLatency.max - this.mockLatency.min) + 
-      this.mockLatency.min;
-    
-    await new Promise(resolve => setTimeout(resolve, delay));
+    const delay =
+      Math.random() * (this.mockLatency.max - this.mockLatency.min) + this.mockLatency.min;
+
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   /**

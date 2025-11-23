@@ -9,6 +9,7 @@
 ## 📋 Estado Actual
 
 **Total referencias encontradas:**
+
 - `humor_type`: 41 referencias en src/
 - `intensity_level`: 26 referencias en src/
 
@@ -47,14 +48,17 @@ Estas leen campos de DB/configs pero NO los usan para lógica:
 Estas usan los campos DIRECTAMENTE sin pasar por `toneCompatibilityService`:
 
 **ARCHIVO:** `src/workers/GenerateReplyWorker.js`
+
 - Línea 473: `humorType: integrationConfig.humor_type || 'N/A'` en logs
 - **Problema:** Usa directamente sin normalización
 
 **ARCHIVO:** `src/routes/user.js`
+
 - Múltiples referencias a settings.humor_type
 - **Problema:** No están migradas a tone
 
 **ARCHIVO:** `src/routes/roast.js`
+
 - Comentarios dicen "deprecated" pero el código aún recibe estos params
 - **Problema:** No hay validación/rechazo explícito
 
@@ -77,12 +81,12 @@ Estas son solo comentarios explicando que fueron removidos:
 
 ## 📊 SUMMARY
 
-| Categoría | Count | Status |
-|-----------|-------|--------|
-| Con Compatibility Layer | ~15 | ✅ OK |
-| Solo Lectura (no lógica) | ~8 | ⚠️ Aceptable |
-| Sin Compatibility Layer | ~5 | ❌ BLOCKER |
-| Solo Comentarios | ~13 | ✅ OK |
+| Categoría                | Count | Status       |
+| ------------------------ | ----- | ------------ |
+| Con Compatibility Layer  | ~15   | ✅ OK        |
+| Solo Lectura (no lógica) | ~8    | ⚠️ Aceptable |
+| Sin Compatibility Layer  | ~5    | ❌ BLOCKER   |
+| Solo Comentarios         | ~13   | ✅ OK        |
 
 ---
 
@@ -93,11 +97,13 @@ Estas son solo comentarios explicando que fueron removidos:
 **Dos interpretaciones posibles:**
 
 ### Interpretación ESTRICTA (Reviewer):
+
 - CERO referencias activas en código
 - Solo permitido en compatibility layer
 - Cualquier uso directo = VIOLATION
 
 ### Interpretación PRAGMÁTICA (Mi implementación):
+
 - Referencias permitidas SI pasan por compatibility layer
 - Campos de DB se mantienen pero con NULL
 - API puede leer pero no usar para lógica
@@ -109,6 +115,7 @@ Estas son solo comentarios explicando que fueron removidos:
 **Para cumplir AC8 de forma ESTRICTA:**
 
 ### Opción A: Fix Inmediato (2-3 horas)
+
 1. Migrar `GenerateReplyWorker.js` para NO usar `humor_type` directamente
 2. Migrar `user.js` endpoints para usar `toneCompatibilityService`
 3. Añadir validación explícita en `roast.js` que rechace estos params
@@ -117,12 +124,14 @@ Estas son solo comentarios explicando que fueron removidos:
 **Resultado:** AC8 = 100% cumplido en esta PR
 
 ### Opción B: Dos Fases (Actual)
+
 1. **Phase 1 (Esta PR):** Compatibility layer + core migration
 2. **Phase 2 (Nueva PR):** Migración completa de callers
 
 **Resultado:** AC8 = ~80% en esta PR, 100% en Phase 2
 
 ### Opción C: Redefinir AC8
+
 Cambiar AC8 a: "Todas las referencias usan compatibility layer o están marcadas como deprecated"
 
 **Resultado:** AC8 = 100% cumplido YA
@@ -134,6 +143,7 @@ Cambiar AC8 a: "Todas las referencias usan compatibility layer o están marcadas
 **Opción A - Fix Inmediato**
 
 **Razones:**
+
 1. El usuario pidió ser ESTRICTOS
 2. AC8 es claro: "Sin referencias"
 3. Los fixes son directos (no complejos)
@@ -181,4 +191,3 @@ Cambiar AC8 a: "Todas las referencias usan compatibility layer o están marcadas
 **Mi recomendación:** **Opción A** (ser estrictos como pediste)
 
 ¿Qué opción prefieres?
-

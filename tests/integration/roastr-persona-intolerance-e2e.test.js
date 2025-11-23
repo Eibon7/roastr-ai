@@ -15,25 +15,31 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
     // Mock database state
     mockDatabase = {
       users: new Map([
-        [testUserId, {
-          id: testUserId,
-          email: 'test@example.com',
-          lo_que_me_define_encrypted: null,
-          lo_que_me_define_visible: false,
-          lo_que_no_tolero_encrypted: null,
-          lo_que_no_tolero_visible: false,
-          lo_que_me_define_created_at: null,
-          lo_que_me_define_updated_at: null,
-          lo_que_no_tolero_created_at: null,
-          lo_que_no_tolero_updated_at: null
-        }]
+        [
+          testUserId,
+          {
+            id: testUserId,
+            email: 'test@example.com',
+            lo_que_me_define_encrypted: null,
+            lo_que_me_define_visible: false,
+            lo_que_no_tolero_encrypted: null,
+            lo_que_no_tolero_visible: false,
+            lo_que_me_define_created_at: null,
+            lo_que_me_define_updated_at: null,
+            lo_que_no_tolero_created_at: null,
+            lo_que_no_tolero_updated_at: null
+          }
+        ]
       ]),
       organizations: new Map([
-        [testOrgId, {
-          id: testOrgId,
-          owner_id: testUserId,
-          name: 'Test Organization'
-        }]
+        [
+          testOrgId,
+          {
+            id: testOrgId,
+            owner_id: testUserId,
+            name: 'Test Organization'
+          }
+        ]
       ]),
       comments: new Map()
     };
@@ -99,12 +105,15 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
         const user = mockDatabase.users.get(testUserId);
         if (user.lo_que_no_tolero_encrypted) {
           const intoleranceData = mockEncryptionService.decrypt(user.lo_que_no_tolero_encrypted);
-          const intoleranceTerms = intoleranceData.toLowerCase().split(/[,;\.]+/).map(t => t.trim());
-          
-          const hasMatch = intoleranceTerms.some(term => 
-            term.length > 2 && commentText.toLowerCase().includes(term)
+          const intoleranceTerms = intoleranceData
+            .toLowerCase()
+            .split(/[,;\.]+/)
+            .map((t) => t.trim());
+
+          const hasMatch = intoleranceTerms.some(
+            (term) => term.length > 2 && commentText.toLowerCase().includes(term)
           );
-          
+
           if (hasMatch) {
             return {
               auto_blocked: true,
@@ -115,7 +124,7 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
             };
           }
         }
-        
+
         // Normal analysis
         return {
           auto_blocked: false,
@@ -157,7 +166,7 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
     // Create Express app
     app = express();
     app.use(express.json());
-    
+
     const userRoutes = require('../../../src/routes/user');
     app.use('/api/user', userRoutes);
   });
@@ -193,7 +202,9 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
         .set('Authorization', 'Bearer mock-token');
 
       expect(getResponse.status).toBe(200);
-      expect(getResponse.body.data.loQueNoTolero).toBe('insultos raciales, comentarios sobre peso, ataques homófobos');
+      expect(getResponse.body.data.loQueNoTolero).toBe(
+        'insultos raciales, comentarios sobre peso, ataques homófobos'
+      );
       expect(getResponse.body.data.hasIntoleranceContent).toBe(true);
 
       // Step 3: Test auto-blocking functionality
@@ -275,7 +286,9 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
         .set('Authorization', 'Bearer mock-token');
 
       expect(getResponse.body.data.loQueMeDefine).toBe('mujer trans, artista, vegana');
-      expect(getResponse.body.data.loQueNoTolero).toBe('comentarios transfóbicos, ataques contra veganos');
+      expect(getResponse.body.data.loQueNoTolero).toBe(
+        'comentarios transfóbicos, ataques contra veganos'
+      );
       expect(getResponse.body.data.hasContent).toBe(true);
       expect(getResponse.body.data.hasIntoleranceContent).toBe(true);
 
@@ -412,7 +425,10 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
       expect(getResponse.body.data.isIntoleranceVisible).toBe(false);
 
       // Step 5: Test that auto-blocking works without exposing sensitive data
-      const result = await mockWorker.processComment(`Texto con ${sensitiveData} incluido`, testOrgId);
+      const result = await mockWorker.processComment(
+        `Texto con ${sensitiveData} incluido`,
+        testOrgId
+      );
       expect(result.auto_blocked).toBe(true);
     });
 
@@ -423,12 +439,12 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
           .post('/api/user/roastr-persona')
           .set('Authorization', 'Bearer mock-token')
           .send({ loQueNoTolero: 'términos set 1', isIntoleranceVisible: false }),
-        
+
         request(app)
           .post('/api/user/roastr-persona')
           .set('Authorization', 'Bearer mock-token')
           .send({ loQueNoTolero: 'términos set 2', isIntoleranceVisible: false }),
-        
+
         request(app)
           .post('/api/user/roastr-persona')
           .set('Authorization', 'Bearer mock-token')
@@ -438,7 +454,7 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
       const results = await Promise.all(concurrentUpdates);
 
       // All operations should succeed
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.status).toBe(200);
         expect(result.body.success).toBe(true);
       });
@@ -450,7 +466,7 @@ describe('Roastr Persona Intolerance - End-to-End Integration (Issue #149)', () 
 
       expect(finalState.status).toBe(200);
       expect(finalState.body.data.hasIntoleranceContent).toBe(true);
-      
+
       // Should be one of the submitted values
       const finalValue = finalState.body.data.loQueNoTolero;
       expect(['términos set 1', 'términos set 2', 'términos set 3']).toContain(finalValue);

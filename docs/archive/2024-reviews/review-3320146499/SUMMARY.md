@@ -25,12 +25,14 @@
 **Issue:** Two sections of spec.md still showed "10 roasts" for Starter plan instead of "100 roasts"
 
 **Locations Fixed:**
+
 - Line 3093: `1000 análisis, 10 roasts` → `1000 análisis, 100 roasts`
 - Line 3295: `1,000 análisis / 10 roasts` → `1,000 análisis / 100 roasts`
 
 **Root Cause:** Previous review (#3320052293) fixed lines 655 and 7672 but missed these two occurrences
 
 **Verification:**
+
 ```bash
 # Before fix
 $ grep -n "Starter.*10 roasts\|10 roasts.*Starter" spec.md
@@ -50,6 +52,7 @@ $ grep -n "Starter" spec.md | grep -i "roast"
 ```
 
 **Impact:** 🟢 LOW RISK
+
 - Documentation-only change
 - Aligns with existing code behavior
 - No breaking changes
@@ -61,17 +64,19 @@ $ grep -n "Starter" spec.md | grep -i "roast"
 ### Cross-Reference with Source Code
 
 **Entitlements Service:**
+
 ```javascript
 // src/services/entitlementsService.js
 const planDefaults = {
   starter: {
     analyses_per_month: 1000,
-    roasts_per_month: 100  // ✅ Matches spec now
+    roasts_per_month: 100 // ✅ Matches spec now
   }
-}
+};
 ```
 
 **Tier Validation Middleware:**
+
 ```javascript
 // src/middleware/tierValidation.js:128
 // Comment: "Validate roast limits (10 free, 100 starter, 1,000 pro, 5,000 plus)"
@@ -79,6 +84,7 @@ const planDefaults = {
 ```
 
 **Tests:**
+
 ```javascript
 // tests/integration/tierValidationService.simple.test.js
 // Tests already expect Starter = 100 roasts
@@ -124,6 +130,7 @@ $ node scripts/predict-gdd-drift.js --full
 ### Consistency Check
 
 **All Starter Plan Mentions:**
+
 - ✅ Line 671: Starter Plan (threshold reference only)
 - ✅ Line 708: 100 roasts/month ✓
 - ✅ Line 3093: 100 roasts ✓ (FIXED)
@@ -131,6 +138,7 @@ $ node scripts/predict-gdd-drift.js --full
 - ✅ Line 7672: 100 roasts/month ✓
 
 **All Free Plan Mentions (unchanged):**
+
 - ✅ Line 707: 10 roasts/month (correct)
 - ✅ Line 3079: 10 roasts (correct)
 - ✅ Line 3294: 10 roasts (correct)
@@ -145,12 +153,14 @@ $ node scripts/predict-gdd-drift.js --full
 **Status:** 🟡 DEFERRED - Not blocking merge
 
 **Rationale:**
+
 - Issues in closed plan document (historical artifact)
 - No impact on production code or user-facing docs
 - Cosmetic only (MD034, MD040, MD036)
 - Can be fixed in dedicated cleanup sprint
 
 **Issues:**
+
 - 1x MD034 (bare URL) - line 4
 - 6x MD040 (fence language) - lines 20, 40, 68, 330, 343, 357, 371
 - 11x MD036 (bold as heading) - lines 247, 253, 258, 263, 268, 278, 284, 289, 294, 303, 311, 319, 329, 342, 356, 370
@@ -162,6 +172,7 @@ $ node scripts/predict-gdd-drift.js --full
 ### No New Tests Required
 
 **Rationale:**
+
 - Documentation-only change
 - No code modifications
 - Existing tests already validate correct behavior (100 roasts)
@@ -203,6 +214,7 @@ Coverage maintained: ~58% (no regression)
 ### Risk Level: 🟢 LOW
 
 **Why Low Risk:**
+
 1. **Documentation Only** - No code changes
 2. **Aligns with Code** - Spec now matches actual implementation
 3. **No Breaking Changes** - Users already have 100 roasts on Starter
@@ -212,6 +224,7 @@ Coverage maintained: ~58% (no regression)
 ### Rollback Plan
 
 If issue detected:
+
 ```bash
 git revert HEAD
 git push origin feat/gdd-phase-16-guardian --force-with-lease
@@ -224,11 +237,13 @@ git push origin feat/gdd-phase-16-guardian --force-with-lease
 ### Documentation Consistency
 
 **Before Fix:**
+
 - 🔴 Inconsistent: 2/4 Starter mentions had incorrect quota
 - 🔴 Contradictory: spec.md sections disagreed with each other
 - 🔴 Out of sync: spec.md contradicted code
 
 **After Fix:**
+
 - ✅ Consistent: 4/4 Starter mentions show 100 roasts
 - ✅ Coherent: All spec.md sections agree
 - ✅ Synchronized: spec.md matches code behavior

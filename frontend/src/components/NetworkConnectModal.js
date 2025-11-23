@@ -49,7 +49,7 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
     const trimmedCredentials = {};
 
     // Trim and validate each field
-    Object.keys(credentialsToValidate).forEach(key => {
+    Object.keys(credentialsToValidate).forEach((key) => {
       const value = credentialsToValidate[key];
       if (typeof value === 'string') {
         trimmedCredentials[key] = value.trim();
@@ -208,16 +208,16 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className={`w-12 h-12 rounded-lg ${networkColor} flex items-center justify-center text-xl font-bold`}>
+            <div
+              className={`w-12 h-12 rounded-lg ${networkColor} flex items-center justify-center text-xl font-bold`}
+            >
               {networkIcon}
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Conectar {networkName}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Paso {step} de 3
-              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Paso {step} de 3</p>
             </div>
           </div>
 
@@ -227,7 +227,12 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
             aria-label="Cerrar modal"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -257,7 +262,9 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                       value={credentials.apiKey}
                       onChange={(e) => handleInputChange('apiKey', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                        validationErrors.apiKey ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                        validationErrors.apiKey
+                          ? 'border-red-500 dark:border-red-500'
+                          : 'border-gray-300 dark:border-gray-600'
                       }`}
                       placeholder="Tu API Key de Twitter"
                       autoComplete="new-password"
@@ -265,7 +272,9 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                       required
                     />
                     {validationErrors.apiKey && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.apiKey}</p>
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {validationErrors.apiKey}
+                      </p>
                     )}
                   </div>
                   <div>
@@ -277,7 +286,9 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                       value={credentials.accessToken}
                       onChange={(e) => handleInputChange('accessToken', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                        validationErrors.accessToken ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                        validationErrors.accessToken
+                          ? 'border-red-500 dark:border-red-500'
+                          : 'border-gray-300 dark:border-gray-600'
                       }`}
                       placeholder="Tu Access Token de Twitter"
                       autoComplete="new-password"
@@ -285,7 +296,9 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                       required
                     />
                     {validationErrors.accessToken && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.accessToken}</p>
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {validationErrors.accessToken}
+                      </p>
                     )}
                   </div>
                 </>
@@ -302,14 +315,18 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                       value={credentials.username}
                       onChange={(e) => handleInputChange('username', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                        validationErrors.username ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                        validationErrors.username
+                          ? 'border-red-500 dark:border-red-500'
+                          : 'border-gray-300 dark:border-gray-600'
                       }`}
                       placeholder="Tu nombre de usuario"
                       autoComplete="username"
                       required
                     />
                     {validationErrors.username && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.username}</p>
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {validationErrors.username}
+                      </p>
                     )}
                   </div>
                   <div>
@@ -321,14 +338,18 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                       value={credentials.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                        validationErrors.password ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                        validationErrors.password
+                          ? 'border-red-500 dark:border-red-500'
+                          : 'border-gray-300 dark:border-gray-600'
                       }`}
                       placeholder="Tu contraseña"
                       autoComplete="current-password"
                       required
                     />
                     {validationErrors.password && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.password}</p>
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {validationErrors.password}
+                      </p>
                     )}
                   </div>
                 </>
@@ -413,8 +434,8 @@ const NetworkConnectModal = ({ network, networkName, onConnect, onClose, isOpen 
                   ¡Cuenta conectada exitosamente!
                 </h3>
                 <p className="text-sm text-green-700 dark:text-green-300">
-                  Tu cuenta de {networkName} está lista para usar con Roastr.
-                  Puedes empezar a generar roasts automáticamente.
+                  Tu cuenta de {networkName} está lista para usar con Roastr. Puedes empezar a
+                  generar roasts automáticamente.
                 </p>
               </div>
 

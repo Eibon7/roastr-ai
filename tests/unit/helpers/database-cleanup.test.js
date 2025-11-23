@@ -6,7 +6,6 @@
 const { cleanTestDatabase } = require('../../helpers/test-setup');
 
 describe('Database Cleanup - Foreign Key Order Fix (CodeRabbit)', () => {
-  
   test('should clean database without foreign key violations', async () => {
     // Skip if not in mock mode
     if (process.env.ENABLE_MOCK_MODE !== 'true') {
@@ -33,25 +32,25 @@ describe('Database Cleanup - Foreign Key Order Fix (CodeRabbit)', () => {
       'queue_jobs',
       'usage_logs',
       'shield_actions',
-      'roast_generations', 
+      'roast_generations',
       'user_sessions',
-      
+
       // Tables dependent on comments
       'toxicity_analysis',
       'roasts',
-      
+
       // Comments table (depends on organizations and users)
       'comments',
-      
+
       // Organization-dependent tables
       'organization_users',
       'organization_usage',
       'api_keys',
       'social_accounts',
-      
+
       // Users table (referenced by many other tables)
       'users',
-      
+
       // Organizations table (root parent table)
       'organizations'
     ];
@@ -61,18 +60,17 @@ describe('Database Cleanup - Foreign Key Order Fix (CodeRabbit)', () => {
     expect(expectedOrder).toContain('comments');
     expect(expectedOrder).toContain('users');
     expect(expectedOrder).toContain('organizations');
-    
+
     // Verify child tables come before parent tables
     const roastsIndex = expectedOrder.indexOf('roasts');
     const commentsIndex = expectedOrder.indexOf('comments');
     const usersIndex = expectedOrder.indexOf('users');
     const orgsIndex = expectedOrder.indexOf('organizations');
-    
+
     expect(roastsIndex).toBeLessThan(commentsIndex); // roasts deleted before comments
     expect(commentsIndex).toBeLessThan(usersIndex); // comments deleted before users
     expect(usersIndex).toBeLessThan(orgsIndex); // users deleted before organizations
-    
+
     console.log('✅ Table deletion order prevents foreign key constraint violations');
   });
-  
 });

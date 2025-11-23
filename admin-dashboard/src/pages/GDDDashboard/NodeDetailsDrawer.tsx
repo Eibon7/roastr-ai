@@ -266,11 +266,7 @@ export const NodeDetailsDrawer: React.FC<NodeDetailsDrawerProps> = ({
                   <SectionTitle>Depends On</SectionTitle>
                   <ChipsContainer>
                     {nodeData.dependsOn.map((dep) => (
-                      <NodeChip
-                        key={dep}
-                        label={dep}
-                        onClick={() => onNodeClick?.(dep)}
-                      />
+                      <NodeChip key={dep} label={dep} onClick={() => onNodeClick?.(dep)} />
                     ))}
                   </ChipsContainer>
                 </Section>
@@ -281,11 +277,7 @@ export const NodeDetailsDrawer: React.FC<NodeDetailsDrawerProps> = ({
                   <SectionTitle>Used By</SectionTitle>
                   <ChipsContainer>
                     {nodeData.usedBy.map((user) => (
-                      <NodeChip
-                        key={user}
-                        label={user}
-                        onClick={() => onNodeClick?.(user)}
-                      />
+                      <NodeChip key={user} label={user} onClick={() => onNodeClick?.(user)} />
                     ))}
                   </ChipsContainer>
                 </Section>

@@ -1,6 +1,6 @@
 /**
  * EntitlementsService - Issue #168, #594
- * 
+ *
  * Manages user entitlements based on Stripe/Polar Price metadata
  * - Reads plan limits and features from Stripe/Polar Price metadata
  * - Persists entitlements to account_entitlements table
@@ -17,929 +17,929 @@ const { getPlanFromProductId, getPlanFromPriceId } = require('../utils/polarHelp
 const { Polar } = require('@polar-sh/sdk');
 
 class EntitlementsService {
-    constructor() {
-        this.stripeWrapper = null;
-        this.polarClient = null;
-        
-        if (flags.isEnabled('ENABLE_BILLING')) {
-            // Stripe (legacy)
-            this.stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
-            
-            // Polar (primary)
-            if (process.env.POLAR_ACCESS_TOKEN) {
-                this.polarClient = new Polar({
-                    accessToken: process.env.POLAR_ACCESS_TOKEN
-                });
-            }
+  constructor() {
+    this.stripeWrapper = null;
+    this.polarClient = null;
+
+    if (flags.isEnabled('ENABLE_BILLING')) {
+      // Stripe (legacy)
+      this.stripeWrapper = new StripeWrapper(process.env.STRIPE_SECRET_KEY);
+
+      // Polar (primary)
+      if (process.env.POLAR_ACCESS_TOKEN) {
+        this.polarClient = new Polar({
+          accessToken: process.env.POLAR_ACCESS_TOKEN
+        });
+      }
+    }
+  }
+
+  /**
+   * Set user entitlements based on Stripe Price metadata
+   * @param {string} userId - User ID
+   * @param {string} stripePriceId - Stripe Price ID
+   * @param {Object} options - Additional options
+   * @returns {Promise<Object>} Result with success/error info
+   */
+  async setEntitlementsFromStripePrice(userId, stripePriceId, options = {}) {
+    try {
+      if (!this.stripeWrapper) {
+        throw new Error('Stripe integration not enabled');
+      }
+
+      // Fetch price with metadata from Stripe
+      const price = await this.stripeWrapper.prices.retrieve(stripePriceId, {
+        expand: ['product']
+      });
+
+      if (!price) {
+        throw new Error(`Price ${stripePriceId} not found`);
+      }
+
+      // Extract entitlements from price metadata
+      const entitlements = this._extractEntitlementsFromPrice(price);
+
+      // Persist to database
+      const result = await this._persistEntitlements(userId, {
+        ...entitlements,
+        stripe_price_id: stripePriceId,
+        stripe_product_id: price.product.id,
+        metadata: {
+          updated_from: 'stripe_price',
+          price_lookup_key: price.lookup_key,
+          product_name: price.product.name,
+          updated_at: new Date().toISOString(),
+          ...options.metadata
         }
+      });
+
+      logger.info('Entitlements updated from Stripe Price', {
+        userId,
+        stripePriceId,
+        planName: entitlements.plan_name,
+        analysisLimit: entitlements.analysis_limit_monthly,
+        roastLimit: entitlements.roast_limit_monthly
+      });
+
+      return {
+        success: true,
+        entitlements: result,
+        source: 'stripe_price'
+      };
+    } catch (error) {
+      logger.error('Failed to set entitlements from Stripe Price', {
+        userId,
+        stripePriceId,
+        error: error.message
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        fallback_applied: await this._applyFallbackEntitlements(userId)
+      };
     }
+  }
 
-    /**
-     * Set user entitlements based on Stripe Price metadata
-     * @param {string} userId - User ID
-     * @param {string} stripePriceId - Stripe Price ID
-     * @param {Object} options - Additional options
-     * @returns {Promise<Object>} Result with success/error info
-     */
-    async setEntitlementsFromStripePrice(userId, stripePriceId, options = {}) {
-        try {
-            if (!this.stripeWrapper) {
-                throw new Error('Stripe integration not enabled');
-            }
-
-            // Fetch price with metadata from Stripe
-            const price = await this.stripeWrapper.prices.retrieve(stripePriceId, {
-                expand: ['product']
-            });
-
-            if (!price) {
-                throw new Error(`Price ${stripePriceId} not found`);
-            }
-
-            // Extract entitlements from price metadata
-            const entitlements = this._extractEntitlementsFromPrice(price);
-            
-            // Persist to database
-            const result = await this._persistEntitlements(userId, {
-                ...entitlements,
-                stripe_price_id: stripePriceId,
-                stripe_product_id: price.product.id,
-                metadata: {
-                    updated_from: 'stripe_price',
-                    price_lookup_key: price.lookup_key,
-                    product_name: price.product.name,
-                    updated_at: new Date().toISOString(),
-                    ...options.metadata
-                }
-            });
-
-            logger.info('Entitlements updated from Stripe Price', {
-                userId,
-                stripePriceId,
-                planName: entitlements.plan_name,
-                analysisLimit: entitlements.analysis_limit_monthly,
-                roastLimit: entitlements.roast_limit_monthly
-            });
-
-            return {
-                success: true,
-                entitlements: result,
-                source: 'stripe_price'
-            };
-
-        } catch (error) {
-            logger.error('Failed to set entitlements from Stripe Price', {
-                userId,
-                stripePriceId,
-                error: error.message
-            });
-
-            return {
-                success: false,
-                error: error.message,
-                fallback_applied: await this._applyFallbackEntitlements(userId)
-            };
+  /**
+   * Set entitlements directly (for starter_trial plans or manual updates)
+   * @param {string} userId - User ID
+   * @param {Object} entitlements - Entitlements object
+   * @returns {Promise<Object>} Result with success/error info
+   */
+  async setEntitlements(userId, entitlements) {
+    try {
+      const result = await this._persistEntitlements(userId, {
+        ...entitlements,
+        metadata: {
+          updated_from: 'direct',
+          updated_at: new Date().toISOString(),
+          ...entitlements.metadata
         }
+      });
+
+      logger.info('Entitlements updated directly', {
+        userId,
+        planName: entitlements.plan_name,
+        analysisLimit: entitlements.analysis_limit_monthly,
+        roastLimit: entitlements.roast_limit_monthly
+      });
+
+      return {
+        success: true,
+        entitlements: result,
+        source: 'direct'
+      };
+    } catch (error) {
+      logger.error('Failed to set entitlements directly', {
+        userId,
+        error: error.message
+      });
+
+      return {
+        success: false,
+        error: error.message
+      };
     }
+  }
 
-    /**
-     * Set entitlements directly (for starter_trial plans or manual updates)
-     * @param {string} userId - User ID  
-     * @param {Object} entitlements - Entitlements object
-     * @returns {Promise<Object>} Result with success/error info
-     */
-    async setEntitlements(userId, entitlements) {
-        try {
-            const result = await this._persistEntitlements(userId, {
-                ...entitlements,
-                metadata: {
-                    updated_from: 'direct',
-                    updated_at: new Date().toISOString(),
-                    ...entitlements.metadata
-                }
-            });
+  /**
+   * Get user entitlements
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} User entitlements or null
+   */
+  async getEntitlements(userId) {
+    try {
+      const { data, error } = await supabaseServiceClient
+        .from('account_entitlements')
+        .select('*')
+        .eq('account_id', userId)
+        .single();
 
-            logger.info('Entitlements updated directly', {
-                userId,
-                planName: entitlements.plan_name,
-                analysisLimit: entitlements.analysis_limit_monthly,
-                roastLimit: entitlements.roast_limit_monthly
-            });
-
-            return {
-                success: true,
-                entitlements: result,
-                source: 'direct'
-            };
-
-        } catch (error) {
-            logger.error('Failed to set entitlements directly', {
-                userId,
-                error: error.message
-            });
-
-            return {
-                success: false,
-                error: error.message
-            };
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No entitlements found, return default starter_trial plan
+          return this._getDefaultEntitlements(userId);
         }
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      logger.error('Failed to get entitlements', {
+        userId,
+        error: error.message
+      });
+
+      // Return default entitlements on error
+      return this._getDefaultEntitlements(userId);
     }
+  }
 
-    /**
-     * Get user entitlements
-     * @param {string} userId - User ID
-     * @returns {Promise<Object>} User entitlements or null
-     */
-    async getEntitlements(userId) {
-        try {
-            const { data, error } = await supabaseServiceClient
-                .from('account_entitlements')
-                .select('*')
-                .eq('account_id', userId)
-                .single();
+  /**
+   * Check if user can perform an action (analysis or roast)
+   * @param {string} userId - User ID
+   * @param {string} actionType - 'analysis' or 'roasts'
+   * @returns {Promise<Object>} Result with allowed status and remaining usage
+   */
+  async checkUsageLimit(userId, actionType) {
+    try {
+      // Validate action type
+      if (!['analysis', 'roasts'].includes(actionType)) {
+        throw new Error(`Invalid action type: ${actionType}. Must be 'analysis' or 'roasts'`);
+      }
 
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    // No entitlements found, return default starter_trial plan
-                    return this._getDefaultEntitlements(userId);
-                }
-                throw error;
-            }
+      // Check using database function
+      const { data, error } = await supabaseServiceClient.rpc('check_usage_limit', {
+        user_id: userId,
+        usage_type: actionType
+      });
 
-            return data;
+      if (error) {
+        throw error;
+      }
 
-        } catch (error) {
-            logger.error('Failed to get entitlements', {
-                userId,
-                error: error.message
-            });
+      const isAllowed = data === true;
 
-            // Return default entitlements on error
-            return this._getDefaultEntitlements(userId);
-        }
+      // Get current usage and limits for detailed response
+      const [entitlements, usage] = await Promise.all([
+        this.getEntitlements(userId),
+        this.getCurrentUsage(userId)
+      ]);
+
+      const limitField =
+        actionType === 'analysis' ? 'analysis_limit_monthly' : 'roast_limit_monthly';
+      const usageField = actionType === 'analysis' ? 'analysis_used' : 'roasts_used';
+
+      const limit = entitlements[limitField];
+      const used = usage[usageField] || 0;
+      const remaining = limit === -1 ? -1 : Math.max(0, limit - used);
+
+      return {
+        allowed: isAllowed,
+        limit,
+        used,
+        remaining,
+        action_type: actionType,
+        unlimited: limit === -1,
+        period_start: usage.period_start,
+        period_end: usage.period_end
+      };
+    } catch (error) {
+      logger.error('Failed to check usage limit', {
+        userId,
+        actionType,
+        error: error.message
+      });
+
+      // Fail safe - deny on error
+      return {
+        allowed: false,
+        error: error.message,
+        action_type: actionType
+      };
     }
+  }
 
-    /**
-     * Check if user can perform an action (analysis or roast)
-     * @param {string} userId - User ID
-     * @param {string} actionType - 'analysis' or 'roasts'
-     * @returns {Promise<Object>} Result with allowed status and remaining usage
-     */
-    async checkUsageLimit(userId, actionType) {
-        try {
-            // Validate action type
-            if (!['analysis', 'roasts'].includes(actionType)) {
-                throw new Error(`Invalid action type: ${actionType}. Must be 'analysis' or 'roasts'`);
-            }
+  /**
+   * Increment usage counter
+   * @param {string} userId - User ID
+   * @param {string} actionType - 'analysis' or 'roasts'
+   * @param {number} incrementBy - Amount to increment (default: 1)
+   * @returns {Promise<Object>} Result with success status
+   */
+  async incrementUsage(userId, actionType, incrementBy = 1) {
+    try {
+      // Validate action type
+      if (!['analysis', 'roasts'].includes(actionType)) {
+        throw new Error(`Invalid action type: ${actionType}. Must be 'analysis' or 'roasts'`);
+      }
 
-            // Check using database function
-            const { data, error } = await supabaseServiceClient
-                .rpc('check_usage_limit', {
-                    user_id: userId,
-                    usage_type: actionType
-                });
+      // Use database function to increment
+      const { data, error } = await supabaseServiceClient.rpc('increment_usage', {
+        user_id: userId,
+        usage_type: actionType,
+        increment_by: incrementBy
+      });
 
-            if (error) {
-                throw error;
-            }
+      if (error) {
+        throw error;
+      }
 
-            const isAllowed = data === true;
+      logger.info('Usage incremented', {
+        userId,
+        actionType,
+        incrementBy,
+        success: data
+      });
 
-            // Get current usage and limits for detailed response
-            const [entitlements, usage] = await Promise.all([
-                this.getEntitlements(userId),
-                this.getCurrentUsage(userId)
-            ]);
+      return {
+        success: data === true,
+        action_type: actionType,
+        incremented_by: incrementBy
+      };
+    } catch (error) {
+      logger.error('Failed to increment usage', {
+        userId,
+        actionType,
+        incrementBy,
+        error: error.message
+      });
 
-            const limitField = actionType === 'analysis' ? 'analysis_limit_monthly' : 'roast_limit_monthly';
-            const usageField = actionType === 'analysis' ? 'analysis_used' : 'roasts_used';
-            
-            const limit = entitlements[limitField];
-            const used = usage[usageField] || 0;
-            const remaining = limit === -1 ? -1 : Math.max(0, limit - used);
-
-            return {
-                allowed: isAllowed,
-                limit,
-                used,
-                remaining,
-                action_type: actionType,
-                unlimited: limit === -1,
-                period_start: usage.period_start,
-                period_end: usage.period_end
-            };
-
-        } catch (error) {
-            logger.error('Failed to check usage limit', {
-                userId,
-                actionType,
-                error: error.message
-            });
-
-            // Fail safe - deny on error
-            return {
-                allowed: false,
-                error: error.message,
-                action_type: actionType
-            };
-        }
+      return {
+        success: false,
+        error: error.message,
+        action_type: actionType
+      };
     }
+  }
 
-    /**
-     * Increment usage counter
-     * @param {string} userId - User ID
-     * @param {string} actionType - 'analysis' or 'roasts'
-     * @param {number} incrementBy - Amount to increment (default: 1)
-     * @returns {Promise<Object>} Result with success status
-     */
-    async incrementUsage(userId, actionType, incrementBy = 1) {
-        try {
-            // Validate action type
-            if (!['analysis', 'roasts'].includes(actionType)) {
-                throw new Error(`Invalid action type: ${actionType}. Must be 'analysis' or 'roasts'`);
-            }
+  /**
+   * Get current usage for user
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} Current usage counters
+   */
+  async getCurrentUsage(userId) {
+    try {
+      const { data, error } = await supabaseServiceClient
+        .from('usage_counters')
+        .select('*')
+        .eq('account_id', userId)
+        .single();
 
-            // Use database function to increment
-            const { data, error } = await supabaseServiceClient
-                .rpc('increment_usage', {
-                    user_id: userId,
-                    usage_type: actionType,
-                    increment_by: incrementBy
-                });
-
-            if (error) {
-                throw error;
-            }
-
-            logger.info('Usage incremented', {
-                userId,
-                actionType,
-                incrementBy,
-                success: data
-            });
-
-            return {
-                success: data === true,
-                action_type: actionType,
-                incremented_by: incrementBy
-            };
-
-        } catch (error) {
-            logger.error('Failed to increment usage', {
-                userId,
-                actionType,
-                incrementBy,
-                error: error.message
-            });
-
-            return {
-                success: false,
-                error: error.message,
-                action_type: actionType
-            };
-        }
-    }
-
-    /**
-     * Get current usage for user
-     * @param {string} userId - User ID
-     * @returns {Promise<Object>} Current usage counters
-     */
-    async getCurrentUsage(userId) {
-        try {
-            const { data, error } = await supabaseServiceClient
-                .from('usage_counters')
-                .select('*')
-                .eq('account_id', userId)
-                .single();
-
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    // No usage record found, return zeros
-                    return {
-                        account_id: userId,
-                        analysis_used: 0,
-                        roasts_used: 0,
-                        period_start: new Date().toISOString().split('T')[0],
-                        period_end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]
-                    };
-                }
-                throw error;
-            }
-
-            return data;
-
-        } catch (error) {
-            logger.error('Failed to get current usage', {
-                userId,
-                error: error.message
-            });
-
-            // Return safe defaults on error
-            return {
-                account_id: userId,
-                analysis_used: 0,
-                roasts_used: 0,
-                period_start: new Date().toISOString().split('T')[0],
-                period_end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]
-            };
-        }
-    }
-
-    /**
-     * Reset monthly usage counters (for cron job)
-     * @returns {Promise<Object>} Result with number of accounts reset
-     */
-    async resetMonthlyUsageCounters() {
-        try {
-            const { data, error } = await supabaseServiceClient
-                .rpc('reset_monthly_usage_counters');
-
-            if (error) {
-                throw error;
-            }
-
-            logger.info('Monthly usage counters reset', {
-                accounts_reset: data,
-                reset_date: new Date().toISOString()
-            });
-
-            return {
-                success: true,
-                accounts_reset: data,
-                reset_date: new Date().toISOString()
-            };
-
-        } catch (error) {
-            logger.error('Failed to reset monthly usage counters', {
-                error: error.message
-            });
-
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    /**
-     * Extract entitlements from Stripe Price metadata
-     * @private
-     * @param {Object} price - Stripe Price object
-     * @returns {Object} Entitlements object
-     */
-    _extractEntitlementsFromPrice(price) {
-        const metadata = price.metadata || {};
-        const productMetadata = price.product?.metadata || {};
-        
-        // Combine price and product metadata, with price taking precedence
-        const combinedMetadata = { ...productMetadata, ...metadata };
-
-        // Define default values based on lookup key or product name
-        let defaults = this._getPlanDefaults(price.lookup_key || price.product?.name || '');
-
-        return {
-            analysis_limit_monthly: parseInt(combinedMetadata.analysis_limit_monthly || defaults.analysis_limit_monthly),
-            roast_limit_monthly: parseInt(combinedMetadata.roast_limit_monthly || defaults.roast_limit_monthly),
-            model: combinedMetadata.model || defaults.model,
-            shield_enabled: combinedMetadata.shield_enabled === 'true' || defaults.shield_enabled,
-            rqc_mode: combinedMetadata.rqc_mode || defaults.rqc_mode,
-            plan_name: combinedMetadata.plan_name || defaults.plan_name
-        };
-    }
-
-    /**
-     * Get plan defaults based on lookup key or name
-     * @private
-     * @param {string} identifier - Price lookup key or product name
-     * @returns {Object} Default entitlements
-     */
-    _getPlanDefaults(identifier) {
-        const lowerIdentifier = identifier.toLowerCase();
-
-        if (lowerIdentifier.includes('starter')) {
-            return {
-                analysis_limit_monthly: 1000,
-                roast_limit_monthly: 10,
-                model: 'gpt-4o',
-                shield_enabled: true,
-                rqc_mode: 'basic',
-                plan_name: 'starter'
-            };
-        } else if (lowerIdentifier.includes('pro')) {
-            return {
-                analysis_limit_monthly: 10000,
-                roast_limit_monthly: 1000,
-                model: 'gpt-4',
-                shield_enabled: true,
-                rqc_mode: 'advanced',
-                plan_name: 'pro'
-            };
-        } else if (lowerIdentifier.includes('creator') || lowerIdentifier.includes('plus')) {
-            return {
-                analysis_limit_monthly: 100000,
-                roast_limit_monthly: 5000,
-                model: 'gpt-4',
-                shield_enabled: true,
-                rqc_mode: 'premium',
-                plan_name: 'plus'
-            };
-        } else if (lowerIdentifier.includes('custom') || lowerIdentifier.includes('enterprise')) {
-            return {
-                analysis_limit_monthly: -1, // Unlimited
-                roast_limit_monthly: -1, // Unlimited
-                model: 'gpt-4',
-                shield_enabled: true,
-                rqc_mode: 'premium',
-                plan_name: 'custom'
-            };
-        } else {
-            // Default to starter_trial plan
-            return {
-                analysis_limit_monthly: 1000,
-                roast_limit_monthly: 10,
-                model: 'gpt-3.5-turbo',
-                shield_enabled: true,
-                rqc_mode: 'basic',
-                plan_name: 'starter_trial'
-            };
-        }
-    }
-
-    /**
-     * Persist entitlements to database
-     * @private
-     * @param {string} userId - User ID
-     * @param {Object} entitlements - Entitlements to persist
-     * @returns {Promise<Object>} Persisted entitlements
-     */
-    async _persistEntitlements(userId, entitlements) {
-        const { data, error } = await supabaseServiceClient
-            .from('account_entitlements')
-            .upsert({
-                account_id: userId,
-                ...entitlements,
-                updated_at: new Date().toISOString()
-            })
-            .select()
-            .single();
-
-        if (error) {
-            throw error;
-        }
-
-        return data;
-    }
-
-    /**
-     * Get default entitlements for starter_trial plan
-     * @private
-     * @param {string} userId - User ID
-     * @returns {Object} Default entitlements
-     */
-    _getDefaultEntitlements(userId) {
-        return {
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No usage record found, return zeros
+          return {
             account_id: userId,
-            analysis_limit_monthly: 100,
-            roast_limit_monthly: 10,
-            model: 'gpt-3.5-turbo',
-            shield_enabled: false,
-            rqc_mode: 'basic',
-            stripe_price_id: null,
-            stripe_product_id: null,
-            plan_name: 'starter_trial',
-            metadata: {},
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        };
-    }
-
-    /**
-     * Apply fallback entitlements when Stripe fails
-     * @private
-     * @param {string} userId - User ID
-     * @returns {Promise<boolean>} Success status
-     */
-    async _applyFallbackEntitlements(userId) {
-        try {
-            const fallbackEntitlements = this._getDefaultEntitlements(userId);
-            await this._persistEntitlements(userId, {
-                ...fallbackEntitlements,
-                metadata: {
-                    fallback_applied: true,
-                    original_error: 'stripe_fetch_failed',
-                    applied_at: new Date().toISOString()
-                }
-            });
-
-            logger.warn('Applied fallback entitlements due to Stripe failure', {
-                userId
-            });
-
-            return true;
-        } catch (error) {
-            logger.error('Failed to apply fallback entitlements', {
-                userId,
-                error: error.message
-            });
-            return false;
+            analysis_used: 0,
+            roasts_used: 0,
+            period_start: new Date().toISOString().split('T')[0],
+            period_end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
+              .toISOString()
+              .split('T')[0]
+          };
         }
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      logger.error('Failed to get current usage', {
+        userId,
+        error: error.message
+      });
+
+      // Return safe defaults on error
+      return {
+        account_id: userId,
+        analysis_used: 0,
+        roasts_used: 0,
+        period_start: new Date().toISOString().split('T')[0],
+        period_end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
+          .toISOString()
+          .split('T')[0]
+      };
+    }
+  }
+
+  /**
+   * Reset monthly usage counters (for cron job)
+   * @returns {Promise<Object>} Result with number of accounts reset
+   */
+  async resetMonthlyUsageCounters() {
+    try {
+      const { data, error } = await supabaseServiceClient.rpc('reset_monthly_usage_counters');
+
+      if (error) {
+        throw error;
+      }
+
+      logger.info('Monthly usage counters reset', {
+        accounts_reset: data,
+        reset_date: new Date().toISOString()
+      });
+
+      return {
+        success: true,
+        accounts_reset: data,
+        reset_date: new Date().toISOString()
+      };
+    } catch (error) {
+      logger.error('Failed to reset monthly usage counters', {
+        error: error.message
+      });
+
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Extract entitlements from Stripe Price metadata
+   * @private
+   * @param {Object} price - Stripe Price object
+   * @returns {Object} Entitlements object
+   */
+  _extractEntitlementsFromPrice(price) {
+    const metadata = price.metadata || {};
+    const productMetadata = price.product?.metadata || {};
+
+    // Combine price and product metadata, with price taking precedence
+    const combinedMetadata = { ...productMetadata, ...metadata };
+
+    // Define default values based on lookup key or product name
+    let defaults = this._getPlanDefaults(price.lookup_key || price.product?.name || '');
+
+    return {
+      analysis_limit_monthly: parseInt(
+        combinedMetadata.analysis_limit_monthly || defaults.analysis_limit_monthly
+      ),
+      roast_limit_monthly: parseInt(
+        combinedMetadata.roast_limit_monthly || defaults.roast_limit_monthly
+      ),
+      model: combinedMetadata.model || defaults.model,
+      shield_enabled: combinedMetadata.shield_enabled === 'true' || defaults.shield_enabled,
+      rqc_mode: combinedMetadata.rqc_mode || defaults.rqc_mode,
+      plan_name: combinedMetadata.plan_name || defaults.plan_name
+    };
+  }
+
+  /**
+   * Get plan defaults based on lookup key or name
+   * @private
+   * @param {string} identifier - Price lookup key or product name
+   * @returns {Object} Default entitlements
+   */
+  _getPlanDefaults(identifier) {
+    const lowerIdentifier = identifier.toLowerCase();
+
+    if (lowerIdentifier.includes('starter')) {
+      return {
+        analysis_limit_monthly: 1000,
+        roast_limit_monthly: 10,
+        model: 'gpt-4o',
+        shield_enabled: true,
+        rqc_mode: 'basic',
+        plan_name: 'starter'
+      };
+    } else if (lowerIdentifier.includes('pro')) {
+      return {
+        analysis_limit_monthly: 10000,
+        roast_limit_monthly: 1000,
+        model: 'gpt-4',
+        shield_enabled: true,
+        rqc_mode: 'advanced',
+        plan_name: 'pro'
+      };
+    } else if (lowerIdentifier.includes('creator') || lowerIdentifier.includes('plus')) {
+      return {
+        analysis_limit_monthly: 100000,
+        roast_limit_monthly: 5000,
+        model: 'gpt-4',
+        shield_enabled: true,
+        rqc_mode: 'premium',
+        plan_name: 'plus'
+      };
+    } else if (lowerIdentifier.includes('custom') || lowerIdentifier.includes('enterprise')) {
+      return {
+        analysis_limit_monthly: -1, // Unlimited
+        roast_limit_monthly: -1, // Unlimited
+        model: 'gpt-4',
+        shield_enabled: true,
+        rqc_mode: 'premium',
+        plan_name: 'custom'
+      };
+    } else {
+      // Default to starter_trial plan
+      return {
+        analysis_limit_monthly: 1000,
+        roast_limit_monthly: 10,
+        model: 'gpt-3.5-turbo',
+        shield_enabled: true,
+        rqc_mode: 'basic',
+        plan_name: 'starter_trial'
+      };
+    }
+  }
+
+  /**
+   * Persist entitlements to database
+   * @private
+   * @param {string} userId - User ID
+   * @param {Object} entitlements - Entitlements to persist
+   * @returns {Promise<Object>} Persisted entitlements
+   */
+  async _persistEntitlements(userId, entitlements) {
+    const { data, error } = await supabaseServiceClient
+      .from('account_entitlements')
+      .upsert({
+        account_id: userId,
+        ...entitlements,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
     }
 
-    /**
-     * Get usage summary for user (for admin/analytics)
-     * @param {string} userId - User ID
-     * @returns {Promise<Object>} Usage summary with entitlements
-     */
-    async getUsageSummary(userId) {
-        try {
-            const [entitlements, usage] = await Promise.all([
-                this.getEntitlements(userId),
-                this.getCurrentUsage(userId)
-            ]);
+    return data;
+  }
 
-            return {
-                user_id: userId,
-                entitlements,
-                usage,
-                utilization: {
-                    analysis: {
-                        used: usage.analysis_used || 0,
-                        limit: entitlements.analysis_limit_monthly,
-                        percentage: entitlements.analysis_limit_monthly === -1 ? 0 : 
-                            Math.round(((usage.analysis_used || 0) / entitlements.analysis_limit_monthly) * 100),
-                        unlimited: entitlements.analysis_limit_monthly === -1
-                    },
-                    roasts: {
-                        used: usage.roasts_used || 0,
-                        limit: entitlements.roast_limit_monthly,
-                        percentage: entitlements.roast_limit_monthly === -1 ? 0 : 
-                            Math.round(((usage.roasts_used || 0) / entitlements.roast_limit_monthly) * 100),
-                        unlimited: entitlements.roast_limit_monthly === -1
-                    }
-                },
-                period: {
-                    start: usage.period_start,
-                    end: usage.period_end,
-                    days_remaining: Math.ceil((new Date(usage.period_end) - new Date()) / (1000 * 60 * 60 * 24))
-                }
-            };
+  /**
+   * Get default entitlements for starter_trial plan
+   * @private
+   * @param {string} userId - User ID
+   * @returns {Object} Default entitlements
+   */
+  _getDefaultEntitlements(userId) {
+    return {
+      account_id: userId,
+      analysis_limit_monthly: 100,
+      roast_limit_monthly: 10,
+      model: 'gpt-3.5-turbo',
+      shield_enabled: false,
+      rqc_mode: 'basic',
+      stripe_price_id: null,
+      stripe_product_id: null,
+      plan_name: 'starter_trial',
+      metadata: {},
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  }
 
-        } catch (error) {
-            logger.error('Failed to get usage summary', {
-                userId,
-                error: error.message
-            });
-
-            throw error;
+  /**
+   * Apply fallback entitlements when Stripe fails
+   * @private
+   * @param {string} userId - User ID
+   * @returns {Promise<boolean>} Success status
+   */
+  async _applyFallbackEntitlements(userId) {
+    try {
+      const fallbackEntitlements = this._getDefaultEntitlements(userId);
+      await this._persistEntitlements(userId, {
+        ...fallbackEntitlements,
+        metadata: {
+          fallback_applied: true,
+          original_error: 'stripe_fetch_failed',
+          applied_at: new Date().toISOString()
         }
+      });
+
+      logger.warn('Applied fallback entitlements due to Stripe failure', {
+        userId
+      });
+
+      return true;
+    } catch (error) {
+      logger.error('Failed to apply fallback entitlements', {
+        userId,
+        error: error.message
+      });
+      return false;
     }
+  }
 
-    /**
-     * Get subscription details for a user
-     * @param {string} userId - User/Organization ID
-     * @returns {Promise<Object|null>} Subscription data or null if not found
-     * @throws {Error} If database query fails
-     */
-    async getSubscription(userId) {
-        try {
-            const { data, error } = await supabaseServiceClient
-                .from('organizations')
-                .select('plan_id, trial_starts_at, trial_ends_at, created_at')
-                .eq('id', userId)
-                .maybeSingle(); // Issue #678: Use maybeSingle() for robust null handling
+  /**
+   * Get usage summary for user (for admin/analytics)
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} Usage summary with entitlements
+   */
+  async getUsageSummary(userId) {
+    try {
+      const [entitlements, usage] = await Promise.all([
+        this.getEntitlements(userId),
+        this.getCurrentUsage(userId)
+      ]);
 
-            if (error) {
-                throw new Error(`Failed to get subscription: ${error.message}`);
-            }
-
-            return data;
-        } catch (error) {
-            logger.error('Failed to get subscription', {
-                userId,
-                error: error.message
-            });
-            throw error;
+      return {
+        user_id: userId,
+        entitlements,
+        usage,
+        utilization: {
+          analysis: {
+            used: usage.analysis_used || 0,
+            limit: entitlements.analysis_limit_monthly,
+            percentage:
+              entitlements.analysis_limit_monthly === -1
+                ? 0
+                : Math.round(
+                    ((usage.analysis_used || 0) / entitlements.analysis_limit_monthly) * 100
+                  ),
+            unlimited: entitlements.analysis_limit_monthly === -1
+          },
+          roasts: {
+            used: usage.roasts_used || 0,
+            limit: entitlements.roast_limit_monthly,
+            percentage:
+              entitlements.roast_limit_monthly === -1
+                ? 0
+                : Math.round(((usage.roasts_used || 0) / entitlements.roast_limit_monthly) * 100),
+            unlimited: entitlements.roast_limit_monthly === -1
+          }
+        },
+        period: {
+          start: usage.period_start,
+          end: usage.period_end,
+          days_remaining: Math.ceil(
+            (new Date(usage.period_end) - new Date()) / (1000 * 60 * 60 * 24)
+          )
         }
+      };
+    } catch (error) {
+      logger.error('Failed to get usage summary', {
+        userId,
+        error: error.message
+      });
+
+      throw error;
     }
+  }
 
-    // ============================================================================
-    // TRIAL MANAGEMENT METHODS - Issue #678
-    // ============================================================================
+  /**
+   * Get subscription details for a user
+   * @param {string} userId - User/Organization ID
+   * @returns {Promise<Object|null>} Subscription data or null if not found
+   * @throws {Error} If database query fails
+   */
+  async getSubscription(userId) {
+    try {
+      const { data, error } = await supabaseServiceClient
+        .from('organizations')
+        .select('plan_id, trial_starts_at, trial_ends_at, created_at')
+        .eq('id', userId)
+        .maybeSingle(); // Issue #678: Use maybeSingle() for robust null handling
 
-    /**
-     * Check if a user is currently in an active trial period
-     * @param {string} userId - User/Organization ID
-     * @returns {Promise<boolean>} True if user has an active trial, false otherwise
-     */
-    async isInTrial(userId) {
-        try {
-            const subscription = await this.getSubscription(userId);
-            if (!subscription?.trial_ends_at) return false;
+      if (error) {
+        throw new Error(`Failed to get subscription: ${error.message}`);
+      }
 
-            const now = new Date();
-            const trialEnd = new Date(subscription.trial_ends_at);
+      return data;
+    } catch (error) {
+      logger.error('Failed to get subscription', {
+        userId,
+        error: error.message
+      });
+      throw error;
+    }
+  }
 
-            return trialEnd > now;
-        } catch (error) {
-            logger.error('Failed to check trial status', {
-                userId,
-                error: error.message
-            });
-            return false;
+  // ============================================================================
+  // TRIAL MANAGEMENT METHODS - Issue #678
+  // ============================================================================
+
+  /**
+   * Check if a user is currently in an active trial period
+   * @param {string} userId - User/Organization ID
+   * @returns {Promise<boolean>} True if user has an active trial, false otherwise
+   */
+  async isInTrial(userId) {
+    try {
+      const subscription = await this.getSubscription(userId);
+      if (!subscription?.trial_ends_at) return false;
+
+      const now = new Date();
+      const trialEnd = new Date(subscription.trial_ends_at);
+
+      return trialEnd > now;
+    } catch (error) {
+      logger.error('Failed to check trial status', {
+        userId,
+        error: error.message
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Start a trial period for a user
+   * @param {string} userId - User/Organization ID
+   * @param {number} durationDays - Trial duration in days (default: 30)
+   * @returns {Promise<Object>} Result with trial start/end dates
+   * @throws {Error} If user is already in trial or database update fails
+   */
+  async startTrial(userId, durationDays = TRIAL_DURATION.DEFAULT_DAYS) {
+    try {
+      // Validate user has no active trial
+      const isAlreadyInTrial = await this.isInTrial(userId);
+      if (isAlreadyInTrial) {
+        throw new Error('User is already in trial period');
+      }
+
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + durationDays);
+
+      const { error } = await supabaseServiceClient
+        .from('organizations')
+        .update({
+          plan_id: PLAN_IDS.STARTER_TRIAL, // Issue #678: Use constant
+          trial_starts_at: new Date().toISOString(),
+          trial_ends_at: trialEndsAt.toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) {
+        throw new Error(`Failed to start trial: ${error.message}`);
+      }
+
+      logger.info('Trial started successfully', {
+        userId,
+        trialEndsAt: trialEndsAt.toISOString(),
+        durationDays
+      });
+
+      return {
+        success: true,
+        trial_ends_at: trialEndsAt.toISOString(),
+        duration_days: durationDays
+      };
+    } catch (error) {
+      logger.error('Failed to start trial', {
+        userId,
+        error: error.message
+      });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Check if a user's trial period has expired
+   * @param {string} userId - User/Organization ID
+   * @returns {Promise<boolean>} True if trial has expired, false otherwise
+   */
+  async checkTrialExpiration(userId) {
+    try {
+      const subscription = await this.getSubscription(userId);
+      if (!subscription?.trial_ends_at) return false;
+
+      const now = new Date();
+      const trialEnd = new Date(subscription.trial_ends_at);
+
+      return trialEnd < now;
+    } catch (error) {
+      logger.error('Failed to check trial expiration', {
+        userId,
+        error: error.message
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Cancel an active trial and convert to paid Starter plan immediately
+   * @param {string} userId - User/Organization ID
+   * @returns {Promise<Object>} Cancellation result with success and cancelled flags
+   * @throws {Error} If database update fails
+   */
+  async cancelTrial(userId) {
+    try {
+      const { error } = await supabaseServiceClient
+        .from('organizations')
+        .update({
+          plan_id: DEFAULT_CONVERSION_PLAN, // Issue #678: Use constant for conversion
+          trial_starts_at: null,
+          trial_ends_at: null
+        })
+        .eq('id', userId);
+
+      if (error) {
+        throw new Error(`Failed to cancel trial: ${error.message}`);
+      }
+
+      logger.info('Trial cancelled successfully', { userId });
+
+      return { success: true, cancelled: true };
+    } catch (error) {
+      logger.error('Failed to cancel trial', {
+        userId,
+        error: error.message
+      });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Convert an expired trial to a paid Starter plan
+   * @param {string} userId - User/Organization ID
+   * @returns {Promise<Object>} Conversion result with success, converted, and new_plan
+   * @throws {Error} If database update fails
+   */
+  async convertTrialToPaid(userId) {
+    try {
+      // TODO:Polar - Integrate with Polar billing when ready
+      // For now, just update the plan_id
+
+      const { error } = await supabaseServiceClient
+        .from('organizations')
+        .update({
+          plan_id: DEFAULT_CONVERSION_PLAN, // Issue #678: Use constant
+          trial_starts_at: null,
+          trial_ends_at: null
+        })
+        .eq('id', userId);
+
+      if (error) {
+        throw new Error(`Failed to convert trial to paid: ${error.message}`);
+      }
+
+      logger.info('Trial converted to paid successfully', { userId });
+
+      return {
+        success: true,
+        converted: true,
+        new_plan: DEFAULT_CONVERSION_PLAN
+      };
+    } catch (error) {
+      logger.error('Failed to convert trial to paid', {
+        userId,
+        error: error.message
+      });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Get comprehensive trial status information for a user
+   * @param {string} userId - User/Organization ID
+   * @returns {Promise<Object>} Trial status with in_trial, trial_starts_at, trial_ends_at, days_left, expired
+   * @throws {Error} If database query fails
+   */
+  async getTrialStatus(userId) {
+    try {
+      const subscription = await this.getSubscription(userId);
+
+      if (!subscription?.trial_starts_at) {
+        return { in_trial: false };
+      }
+
+      const now = new Date();
+      const trialStart = new Date(subscription.trial_starts_at);
+      const trialEnd = new Date(subscription.trial_ends_at);
+      const isActive = trialEnd > now;
+
+      const daysLeft = isActive ? Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24)) : 0;
+
+      return {
+        in_trial: isActive,
+        trial_starts_at: subscription.trial_starts_at,
+        trial_ends_at: subscription.trial_ends_at,
+        days_left: daysLeft,
+        expired: trialEnd < now
+      };
+    } catch (error) {
+      logger.error('Failed to get trial status', {
+        userId,
+        error: error.message
+      });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Set user entitlements based on Polar Product ID - Issue #594, Updated Issue #808
+   * @param {string} userId - User ID
+   * @param {string} polarProductId - Polar Product ID (updated from Price ID)
+   * @param {Object} options - Additional options
+   * @returns {Promise<Object>} Result with success/error info
+   */
+  async setEntitlementsFromPolarPrice(userId, polarProductId, options = {}) {
+    try {
+      if (!this.polarClient) {
+        throw new Error('Polar integration not enabled');
+      }
+
+      // Try new API first, fallback to legacy for backward compatibility
+      const planName = getPlanFromProductId(polarProductId) || getPlanFromPriceId(polarProductId);
+      const planLimits = this._getPlanLimitsFromName(planName);
+
+      const result = await this._persistEntitlements(userId, {
+        ...planLimits,
+        polar_price_id: polarProductId, // Keep column name for backward compatibility
+        metadata: {
+          updated_from: 'polar_product',
+          plan_name: planName,
+          updated_at: new Date().toISOString(),
+          ...options.metadata
         }
+      });
+
+      logger.info('Entitlements updated from Polar Product', {
+        userId,
+        polarProductId,
+        planName,
+        analysisLimit: planLimits.analysis_limit_monthly,
+        roastLimit: planLimits.roast_limit_monthly
+      });
+
+      return {
+        success: true,
+        entitlements: result,
+        source: 'polar_product'
+      };
+    } catch (error) {
+      logger.error('Failed to set entitlements from Polar Product', {
+        userId,
+        polarProductId,
+        error: error.message
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        fallback_applied: await this._applyFallbackEntitlements(userId)
+      };
     }
+  }
 
-    /**
-     * Start a trial period for a user
-     * @param {string} userId - User/Organization ID
-     * @param {number} durationDays - Trial duration in days (default: 30)
-     * @returns {Promise<Object>} Result with trial start/end dates
-     * @throws {Error} If user is already in trial or database update fails
-     */
-    async startTrial(userId, durationDays = TRIAL_DURATION.DEFAULT_DAYS) {
-        try {
-            // Validate user has no active trial
-            const isAlreadyInTrial = await this.isInTrial(userId);
-            if (isAlreadyInTrial) {
-                throw new Error('User is already in trial period');
-            }
+  /**
+   * Get plan limits from plan name - Issue #594
+   * @private
+   */
+  _getPlanLimitsFromName(planName) {
+    const planLimitsMap = {
+      starter_trial: {
+        plan_name: 'starter_trial',
+        analysis_limit_monthly: 100,
+        roast_limit_monthly: 50,
+        persona_fields_limit: 0,
+        roast_level_max: 1,
+        shield_enabled: true,
+        model: 'gpt-3.5-turbo',
+        rqc_mode: 'basic'
+      },
+      pro: {
+        plan_name: 'pro',
+        analysis_limit_monthly: 1000,
+        roast_limit_monthly: 500,
+        persona_fields_limit: 10,
+        roast_level_max: 5,
+        shield_enabled: true,
+        model: 'gpt-4',
+        rqc_mode: 'advanced'
+      },
+      plus: {
+        plan_name: 'plus',
+        analysis_limit_monthly: 10000,
+        roast_limit_monthly: 5000,
+        persona_fields_limit: 50,
+        roast_level_max: 10,
+        shield_enabled: true,
+        model: 'gpt-4',
+        rqc_mode: 'premium'
+      }
+    };
 
-            const trialEndsAt = new Date();
-            trialEndsAt.setDate(trialEndsAt.getDate() + durationDays);
-
-            const { error} = await supabaseServiceClient
-                .from('organizations')
-                .update({
-                    plan_id: PLAN_IDS.STARTER_TRIAL, // Issue #678: Use constant
-                    trial_starts_at: new Date().toISOString(),
-                    trial_ends_at: trialEndsAt.toISOString()
-                })
-                .eq('id', userId);
-
-            if (error) {
-                throw new Error(`Failed to start trial: ${error.message}`);
-            }
-
-            logger.info('Trial started successfully', {
-                userId,
-                trialEndsAt: trialEndsAt.toISOString(),
-                durationDays
-            });
-
-            return {
-                success: true,
-                trial_ends_at: trialEndsAt.toISOString(),
-                duration_days: durationDays
-            };
-
-        } catch (error) {
-            logger.error('Failed to start trial', {
-                userId,
-                error: error.message
-            });
-
-            throw error;
-        }
-    }
-
-    /**
-     * Check if a user's trial period has expired
-     * @param {string} userId - User/Organization ID
-     * @returns {Promise<boolean>} True if trial has expired, false otherwise
-     */
-    async checkTrialExpiration(userId) {
-        try {
-            const subscription = await this.getSubscription(userId);
-            if (!subscription?.trial_ends_at) return false;
-
-            const now = new Date();
-            const trialEnd = new Date(subscription.trial_ends_at);
-
-            return trialEnd < now;
-        } catch (error) {
-            logger.error('Failed to check trial expiration', {
-                userId,
-                error: error.message
-            });
-            return false;
-        }
-    }
-
-    /**
-     * Cancel an active trial and convert to paid Starter plan immediately
-     * @param {string} userId - User/Organization ID
-     * @returns {Promise<Object>} Cancellation result with success and cancelled flags
-     * @throws {Error} If database update fails
-     */
-    async cancelTrial(userId) {
-        try {
-            const { error } = await supabaseServiceClient
-                .from('organizations')
-                .update({
-                    plan_id: DEFAULT_CONVERSION_PLAN, // Issue #678: Use constant for conversion
-                    trial_starts_at: null,
-                    trial_ends_at: null
-                })
-                .eq('id', userId);
-
-            if (error) {
-                throw new Error(`Failed to cancel trial: ${error.message}`);
-            }
-
-            logger.info('Trial cancelled successfully', { userId });
-
-            return { success: true, cancelled: true };
-
-        } catch (error) {
-            logger.error('Failed to cancel trial', {
-                userId,
-                error: error.message
-            });
-
-            throw error;
-        }
-    }
-
-    /**
-     * Convert an expired trial to a paid Starter plan
-     * @param {string} userId - User/Organization ID
-     * @returns {Promise<Object>} Conversion result with success, converted, and new_plan
-     * @throws {Error} If database update fails
-     */
-    async convertTrialToPaid(userId) {
-        try {
-            // TODO:Polar - Integrate with Polar billing when ready
-            // For now, just update the plan_id
-
-            const { error } = await supabaseServiceClient
-                .from('organizations')
-                .update({
-                    plan_id: DEFAULT_CONVERSION_PLAN, // Issue #678: Use constant
-                    trial_starts_at: null,
-                    trial_ends_at: null
-                })
-                .eq('id', userId);
-
-            if (error) {
-                throw new Error(`Failed to convert trial to paid: ${error.message}`);
-            }
-
-            logger.info('Trial converted to paid successfully', { userId });
-
-            return {
-                success: true,
-                converted: true,
-                new_plan: DEFAULT_CONVERSION_PLAN
-            };
-
-        } catch (error) {
-            logger.error('Failed to convert trial to paid', {
-                userId,
-                error: error.message
-            });
-
-            throw error;
-        }
-    }
-
-    /**
-     * Get comprehensive trial status information for a user
-     * @param {string} userId - User/Organization ID
-     * @returns {Promise<Object>} Trial status with in_trial, trial_starts_at, trial_ends_at, days_left, expired
-     * @throws {Error} If database query fails
-     */
-    async getTrialStatus(userId) {
-        try {
-            const subscription = await this.getSubscription(userId);
-
-            if (!subscription?.trial_starts_at) {
-                return { in_trial: false };
-            }
-
-            const now = new Date();
-            const trialStart = new Date(subscription.trial_starts_at);
-            const trialEnd = new Date(subscription.trial_ends_at);
-            const isActive = trialEnd > now;
-
-            const daysLeft = isActive ?
-                Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24)) : 0;
-
-            return {
-                in_trial: isActive,
-                trial_starts_at: subscription.trial_starts_at,
-                trial_ends_at: subscription.trial_ends_at,
-                days_left: daysLeft,
-                expired: trialEnd < now
-            };
-
-        } catch (error) {
-            logger.error('Failed to get trial status', {
-                userId,
-                error: error.message
-            });
-
-            throw error;
-        }
-    }
-
-    /**
-     * Set user entitlements based on Polar Product ID - Issue #594, Updated Issue #808
-     * @param {string} userId - User ID
-     * @param {string} polarProductId - Polar Product ID (updated from Price ID)
-     * @param {Object} options - Additional options
-     * @returns {Promise<Object>} Result with success/error info
-     */
-    async setEntitlementsFromPolarPrice(userId, polarProductId, options = {}) {
-        try {
-            if (!this.polarClient) {
-                throw new Error('Polar integration not enabled');
-            }
-
-            // Try new API first, fallback to legacy for backward compatibility
-            const planName = getPlanFromProductId(polarProductId) || getPlanFromPriceId(polarProductId);
-            const planLimits = this._getPlanLimitsFromName(planName);
-            
-            const result = await this._persistEntitlements(userId, {
-                ...planLimits,
-                polar_price_id: polarProductId, // Keep column name for backward compatibility
-                metadata: {
-                    updated_from: 'polar_product',
-                    plan_name: planName,
-                    updated_at: new Date().toISOString(),
-                    ...options.metadata
-                }
-            });
-
-            logger.info('Entitlements updated from Polar Product', {
-                userId,
-                polarProductId,
-                planName,
-                analysisLimit: planLimits.analysis_limit_monthly,
-                roastLimit: planLimits.roast_limit_monthly
-            });
-
-            return {
-                success: true,
-                entitlements: result,
-                source: 'polar_product'
-            };
-
-        } catch (error) {
-            logger.error('Failed to set entitlements from Polar Product', {
-                userId,
-                polarProductId,
-                error: error.message
-            });
-
-            return {
-                success: false,
-                error: error.message,
-                fallback_applied: await this._applyFallbackEntitlements(userId)
-            };
-        }
-    }
-
-    /**
-     * Get plan limits from plan name - Issue #594
-     * @private
-     */
-    _getPlanLimitsFromName(planName) {
-        const planLimitsMap = {
-            'starter_trial': {
-                plan_name: 'starter_trial',
-                analysis_limit_monthly: 100,
-                roast_limit_monthly: 50,
-                persona_fields_limit: 0,
-                roast_level_max: 1,
-                shield_enabled: true,
-                model: 'gpt-3.5-turbo',
-                rqc_mode: 'basic'
-            },
-            'pro': {
-                plan_name: 'pro',
-                analysis_limit_monthly: 1000,
-                roast_limit_monthly: 500,
-                persona_fields_limit: 10,
-                roast_level_max: 5,
-                shield_enabled: true,
-                model: 'gpt-4',
-                rqc_mode: 'advanced'
-            },
-            'plus': {
-                plan_name: 'plus',
-                analysis_limit_monthly: 10000,
-                roast_limit_monthly: 5000,
-                persona_fields_limit: 50,
-                roast_level_max: 10,
-                shield_enabled: true,
-                model: 'gpt-4',
-                rqc_mode: 'premium'
-            }
-        };
-
-        return planLimitsMap[planName] || planLimitsMap['starter_trial'];
-    }
+    return planLimitsMap[planName] || planLimitsMap['starter_trial'];
+  }
 }
 
 module.exports = EntitlementsService;

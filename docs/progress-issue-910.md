@@ -9,54 +9,56 @@
 ## ✅ Completed Tasks
 
 ### FASE 0: GDD Resolution
+
 - ✅ Resolved nodos: shield, cost-control, roast, social-platforms, persona, queue-system
 - ✅ Read `docs/patterns/coderabbit-lessons.md`
 - ✅ Auto-activation via `auto-gdd-activation.js`
 
 ### FASE 1: Planning
+
 - ✅ Created detailed plan: `docs/plan/issue-910.md`
 - ✅ Identified 7 phases of implementation
 - ✅ Mapped affected GDD nodes
 - ✅ Assigned agents: FrontendDev, TestEngineer, Guardian
 
 ### FASE 2: Configuration
+
 - ✅ Verified existing `apiClient.js` with auth support
 - ✅ Confirmed CORS configuration in backend
 - ✅ No `.env` changes needed (already configured)
 
 ### FASE 3: API Services Created
+
 - ✅ **integrations.js** - Platform connections (Twitter, YouTube, etc.)
   - `getIntegrations()`, `getIntegrationStatus()`, `connectPlatform()`, `disconnectPlatform()`
   - `importFollowers()`, `getImportProgress()`
-  
 - ✅ **usage.js** - Usage tracking and limits
   - `getCurrentUsage()`, `getUsageHistory()`, `getMonthlyUsage()`
   - `getUsageBreakdown()`, `getOptimizationRecommendations()`
-  
 - ✅ **plans.js** - Subscription plans
   - `getCurrentPlan()`, `getAvailablePlans()`, `upgradePlan()`, `downgradePlan()`
   - `cancelSubscription()`, `getBillingHistory()`, `getUpcomingInvoice()`
-  
 - ✅ **roast.js** - Roast generation
   - `previewRoast()`, `generateRoast()`, `getRoastHistory()`
   - `approveRoast()`, `rejectRoast()`, `generateVariant()`, `getRoastStatistics()`
 
 -### FASE 4: Component Updates
+
 - ✅ **Connect.jsx** - Connected to real backend
--  - Replaced `createMockFetch()` with API services
--  - Using `getAvailablePlatforms()`, `getIntegrationStatus()`, `connectPlatform()`
--  - Real-time import progress via `importFollowers()` + `getImportProgress()`
--  - Error handling with retry mechanism
--  - Loading states with Loader2 spinner
--  - Error banners for failed operations
+- - Replaced `createMockFetch()` with API services
+- - Using `getAvailablePlatforms()`, `getIntegrationStatus()`, `connectPlatform()`
+- - Real-time import progress via `importFollowers()` + `getImportProgress()`
+- - Error handling with retry mechanism
+- - Loading states with Loader2 spinner
+- - Error banners for failed operations
 - ✅ **Dashboard.jsx** - Uses `apiClient` + new services for usage, accounts, plan, analytics, roasts
--  - Replaced manual `fetch` with `getIntegrations()`, `getCurrentUsage()`, `getCurrentPlan()`, `apiClient`
--  - Handles roasts, Shield data, and account actions through centralized client (token refresh, retries)
--  - Daily connection status and message toasts remain consistent
+- - Replaced manual `fetch` with `getIntegrations()`, `getCurrentUsage()`, `getCurrentPlan()`, `apiClient`
+- - Handles roasts, Shield data, and account actions through centralized client (token refresh, retries)
+- - Daily connection status and message toasts remain consistent
 - ✅ **StyleProfile.jsx** - Uses `apiClient` + integration service for real Style Profile flow
--  - Calls `/style-profile/status`, `/style-profile`, `/style-profile/generate`, `/style-profile` delete through centralized client
--  - Reuses actual `/api/integrations/status` data to gate generation
--  - Maintains error/regeneration/delete flows without mock fetch
+- - Calls `/style-profile/status`, `/style-profile`, `/style-profile/generate`, `/style-profile` delete through centralized client
+- - Reuses actual `/api/integrations/status` data to gate generation
+- - Maintains error/regeneration/delete flows without mock fetch
 - ✅ **Widgets** - `IntegrationsCard`, `UsageCostCard`, `PlanStatusCard`, `StyleProfileCard` now rely on the backend APIs with consistent loading/error UIs
 
 ---
@@ -64,9 +66,11 @@
 ## 🟡 In Progress
 
 ### FASE 5: State Components
+
 - ✅ `SkeletonLoader.jsx`, `ErrorMessage.jsx`, `EmptyState.jsx` created
 
 ### FASE 6: Testing
+
 - ✅ Unit tests for API services (`integrations`, `usage`, `plans`, `roast`) via `npx craco test --runTestsByPath src/api/__tests__/integrations.test.js ...`
 - ⏳ Playwright flows for dashboard connection & visual validation (pending)
 
@@ -75,19 +79,23 @@
 ## ⏳ Pending Tasks
 
 ### Remaining Components to Update
+
 - ✅ Dashboard, StyleProfile and widget cards now consume live backend data.
 
 ### FASE 6: Testing
+
 - ⏳ Unit tests for API services (`integrations.test.js`, `usage.test.js`, `plans.test.js`, `roast.test.js`)
 - ⏳ E2E tests with Playwright (`dashboard-connect.spec.js`, `dashboard-states.spec.js`)
 - ⏳ Visual validation (screenshots: loading, loaded, error states)
 
 ### FASE 7: Documentation
+
 - ⏳ Update `FRONTEND_DASHBOARD.md` (remove "mock-first" references)
 - ⏳ Update `docs/nodes/social-platforms.md` (dashboard integration section)
 - ⏳ Update `integration-status.json`
 
 ### Validation & Receipts
+
 - ⏳ Run all tests: `npm test`
 - ⏳ GDD validation: `node scripts/validate-gdd-runtime.js --full`
 - ⏳ GDD health check: `node scripts/score-gdd-health.js --ci` (target: ≥87)
@@ -98,14 +106,14 @@
 
 ## 📊 Acceptance Criteria Progress
 
-| AC | Description | Status |
-|----|-------------|--------|
-| AC1 | Replace mocks with real API calls | 🟡 **65%** - Connect.jsx done, Dashboard/StyleProfile pending |
-| AC2 | Show loading/error/data states | 🟡 **50%** - Connect.jsx done, widgets pending |
-| AC3 | Document env vars/feature flags | ⏳ **0%** - Not started |
-| AC4 | Auth with Supabase JWT tokens | ✅ **100%** - Already configured in apiClient.js |
-| AC5 | Tests (unit + E2E + visual) | ⏳ **0%** - Not started |
-| AC6 | Update docs (FRONTEND_DASHBOARD.md, social-platforms.md) | ⏳ **0%** - Not started |
+| AC  | Description                                              | Status                                                        |
+| --- | -------------------------------------------------------- | ------------------------------------------------------------- |
+| AC1 | Replace mocks with real API calls                        | 🟡 **65%** - Connect.jsx done, Dashboard/StyleProfile pending |
+| AC2 | Show loading/error/data states                           | 🟡 **50%** - Connect.jsx done, widgets pending                |
+| AC3 | Document env vars/feature flags                          | ⏳ **0%** - Not started                                       |
+| AC4 | Auth with Supabase JWT tokens                            | ✅ **100%** - Already configured in apiClient.js              |
+| AC5 | Tests (unit + E2E + visual)                              | ⏳ **0%** - Not started                                       |
+| AC6 | Update docs (FRONTEND_DASHBOARD.md, social-platforms.md) | ⏳ **0%** - Not started                                       |
 
 **Overall Progress:** 65% complete
 
@@ -114,12 +122,14 @@
 ## 🔧 Technical Details
 
 ### API Client Setup
+
 - **Base URL:** `process.env.REACT_APP_API_URL` (defaults to `/api`)
 - **Auth:** Bearer token from Supabase session (automatic refresh)
 - **CSRF:** X-CSRF-Token header for state-modifying requests
 - **Error Handling:** 401 auto-retry, 403/429 error messages, network error fallback
 
 ### Backend Endpoints Used
+
 - `GET /integrations` - List integrations
 - `GET /integrations/status` - Connection status
 - `GET /integrations/platforms` - Available platforms
@@ -132,6 +142,7 @@
 - `POST /roast/preview` - Preview roast
 
 ### Files Modified
+
 - ✅ `frontend/src/api/integrations.js` (created)
 - ✅ `frontend/src/api/usage.js` (created)
 - ✅ `frontend/src/api/plans.js` (created)
@@ -139,6 +150,7 @@
 - ✅ `frontend/src/pages/Connect.jsx` (updated)
 
 ### Files Pending
+
 - ⏳ `frontend/src/pages/Dashboard.jsx`
 - ⏳ `frontend/src/pages/StyleProfile.jsx`
 - ⏳ `frontend/src/components/widgets/IntegrationsCard.jsx`
@@ -172,4 +184,3 @@
 
 **Last Updated:** 2025-11-21
 **Next Update:** After FASE 5 complete
-

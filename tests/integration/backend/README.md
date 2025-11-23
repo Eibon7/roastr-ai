@@ -9,7 +9,6 @@ This directory contains integration tests for the backend API and services.
 1. **For local development with real backend:**
    - Create `.env.test.real` in the project root (not committed to git)
    - Add your test credentials and API endpoints
-   
 2. **For CI or fixture-based testing:**
    - Tests will automatically use fixtures when real backend is not available
    - Set `USE_BACKEND_FIXTURES=true` to force fixture mode

@@ -11,7 +11,7 @@ const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    user_subscriptions: []
+  user_subscriptions: []
 });
 
 // Mock dependencies
@@ -114,7 +114,9 @@ describe('EntitlementsService - Trial Management', () => {
     test('fails if user already in trial', async () => {
       service.isInTrial = jest.fn().mockResolvedValue(true);
 
-      await expect(service.startTrial('user-123')).rejects.toThrow('User is already in trial period');
+      await expect(service.startTrial('user-123')).rejects.toThrow(
+        'User is already in trial period'
+      );
     });
 
     test('handles database errors', async () => {
@@ -122,7 +124,9 @@ describe('EntitlementsService - Trial Management', () => {
 
       configureTrialUpdateResult({ error: { message: 'DB error' } });
 
-      await expect(service.startTrial('user-123')).rejects.toThrow('Failed to start trial: DB error');
+      await expect(service.startTrial('user-123')).rejects.toThrow(
+        'Failed to start trial: DB error'
+      );
     });
   });
 
@@ -170,7 +174,9 @@ describe('EntitlementsService - Trial Management', () => {
     test('handles database errors', async () => {
       configureTrialUpdateResult({ error: { message: 'DB error' } });
 
-      await expect(service.cancelTrial('user-123')).rejects.toThrow('Failed to cancel trial: DB error');
+      await expect(service.cancelTrial('user-123')).rejects.toThrow(
+        'Failed to cancel trial: DB error'
+      );
     });
   });
 
@@ -188,7 +194,9 @@ describe('EntitlementsService - Trial Management', () => {
     test('handles database errors', async () => {
       configureTrialUpdateResult({ error: { message: 'DB error' } });
 
-      await expect(service.convertTrialToPaid('user-123')).rejects.toThrow('Failed to convert trial to paid: DB error');
+      await expect(service.convertTrialToPaid('user-123')).rejects.toThrow(
+        'Failed to convert trial to paid: DB error'
+      );
     });
   });
 

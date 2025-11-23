@@ -16,12 +16,14 @@ Migrar todos los tests de billing que actualmente usan Stripe para que funcionen
 Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` están escritos para Stripe. Necesitamos migrarlos a Polar manteniendo la misma cobertura (100%).
 
 **Estado actual:**
+
 - ✅ 73 tests completados con Stripe
 - ✅ 100% cobertura alcanzada
 - ❌ Tests aún usan mocks de Stripe
-- ❌ Variables de entorno son STRIPE_*
+- ❌ Variables de entorno son STRIPE\_\*
 
 **Referencias:**
+
 - Documentación Polar: `docs/flows/payment-polar.md`
 - Issue Polar principal: `docs/issues/issue-payment-polar.md`
 - Código actual: `src/routes/billing.js` tiene `TODO:Polar` marcado
@@ -39,8 +41,8 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
   - [ ] Documentar mapeo de conceptos (customers → ?, prices → ?, etc.)
 
 - [ ] Configurar variables de entorno para Polar
-  - [ ] Crear `.env.example` con variables POLAR_*
-  - [ ] Documentar diferencias con STRIPE_*
+  - [ ] Crear `.env.example` con variables POLAR\_\*
+  - [ ] Documentar diferencias con STRIPE\_\*
 
 ### 2. Actualización de Mocks
 
@@ -140,7 +142,7 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
 ### 7. Documentación
 
 - [ ] Actualizar `docs/INTEGRATIONS.md` con información de Polar
-- [ ] Actualizar `.env.example` con variables POLAR_*
+- [ ] Actualizar `.env.example` con variables POLAR\_\*
 - [ ] Actualizar comentarios en código que mencionen Stripe
 - [ ] Documentar diferencias clave entre Stripe y Polar en tests
 
@@ -149,15 +151,18 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
 ## 📁 Archivos a Modificar
 
 ### Tests
+
 - `tests/unit/routes/billing-coverage-issue502.test.js` ⭐ **Principal**
 
 ### Código de Producción (si aplica)
+
 - `src/routes/billing.js`
 - `src/routes/billingFactory.js`
 - `src/middleware/webhookSecurity.js`
 - `src/services/billingInterface.js`
 
 ### Configuración
+
 - `.env.example`
 - `docs/INTEGRATIONS.md`
 
@@ -166,18 +171,22 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
 ## 🔍 Diferencias Clave Stripe vs Polar
 
 ### API Structure
+
 - **Stripe:** `stripe.customers.create()`, `stripe.prices.list()`
 - **Polar:** Estructura diferente (investigar API exacta)
 
 ### Webhook Events
+
 - **Stripe:** `checkout.session.completed`, `customer.subscription.updated`
 - **Polar:** Formato diferente (investigar eventos exactos)
 
 ### Lookup Keys
+
 - **Stripe:** Usa `lookup_keys` en prices
 - **Polar:** Puede usar estructura diferente
 
 ### Customer Management
+
 - **Stripe:** Customers separados de subscriptions
 - **Polar:** Puede tener estructura diferente
 
@@ -216,4 +225,3 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
 **Última actualización:** 2025-11-19
 **Completado en:** PR #886 (Issue #885) - 2025-11-19
 **Estado final:** ✅ Tests de Stripe eliminados (26 archivos) y adaptados (3 archivos) a Polar
-

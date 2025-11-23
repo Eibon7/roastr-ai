@@ -21,20 +21,20 @@ const VALID_PLANS = {
 
 // TODO:Polar - Price lookup key to plan ID mapping (formerly Stripe)
 const PLAN_MAPPINGS = {
-  'plan_starter_trial': PLAN_IDS.STARTER_TRIAL,
-  'plan_starter': PLAN_IDS.STARTER,
-  'plan_pro': PLAN_IDS.PRO,
-  'plan_plus': PLAN_IDS.PLUS,
-  'plan_creator_plus': PLAN_IDS.PLUS, // Legacy mapping
-  'plan_custom': PLAN_IDS.CUSTOM,
-  
+  plan_starter_trial: PLAN_IDS.STARTER_TRIAL,
+  plan_starter: PLAN_IDS.STARTER,
+  plan_pro: PLAN_IDS.PRO,
+  plan_plus: PLAN_IDS.PLUS,
+  plan_creator_plus: PLAN_IDS.PLUS, // Legacy mapping
+  plan_custom: PLAN_IDS.CUSTOM,
+
   // Alternative formats
-  'starter_trial': PLAN_IDS.STARTER_TRIAL,
-  'starter': PLAN_IDS.STARTER,
-  'pro': PLAN_IDS.PRO,
-  'plus': PLAN_IDS.PLUS,
-  'creator_plus': PLAN_IDS.PLUS,
-  'custom': PLAN_IDS.CUSTOM
+  starter_trial: PLAN_IDS.STARTER_TRIAL,
+  starter: PLAN_IDS.STARTER,
+  pro: PLAN_IDS.PRO,
+  plus: PLAN_IDS.PLUS,
+  creator_plus: PLAN_IDS.PLUS,
+  custom: PLAN_IDS.CUSTOM
 };
 
 // Plan hierarchy for upgrades/downgrades
@@ -55,7 +55,7 @@ function getPlanFromLookupKey(lookupKey) {
   if (!lookupKey || typeof lookupKey !== 'string') {
     return PLAN_IDS.STARTER_TRIAL;
   }
-  
+
   return PLAN_MAPPINGS[lookupKey.toLowerCase()] || PLAN_IDS.STARTER_TRIAL;
 }
 
@@ -68,9 +68,9 @@ function normalizePlanId(planId) {
   if (!planId || typeof planId !== 'string') {
     return PLAN_IDS.STARTER_TRIAL;
   }
-  
+
   const normalized = planId.toLowerCase().trim();
-  
+
   // Handle variations
   switch (normalized) {
     case 'starter_trial':
@@ -132,7 +132,7 @@ function getPlanLevel(planId) {
 function comparePlans(planA, planB) {
   const levelA = getPlanLevel(planA);
   const levelB = getPlanLevel(planB);
-  
+
   if (levelA < levelB) return -1;
   if (levelA > levelB) return 1;
   return 0;

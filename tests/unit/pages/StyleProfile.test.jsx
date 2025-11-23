@@ -1,6 +1,6 @@
 /**
  * StyleProfile Component - Unit Tests
- * 
+ *
  * Tests for AI style profile generation with persona integration
  */
 
@@ -63,7 +63,7 @@ describe('StyleProfile Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockFetchApi = jest.fn((url, options) => {
       if (url === '/api/style-profile/status') {
         return Promise.resolve({
@@ -80,7 +80,7 @@ describe('StyleProfile Component', () => {
       if (url === '/api/style-profile/generate') {
         return Promise.resolve({
           ok: true,
-          json: async () => ({ 
+          json: async () => ({
             data: { ...mockProfileData, message: 'Profile generated' }
           })
         });
@@ -97,8 +97,18 @@ describe('StyleProfile Component', () => {
           json: async () => ({
             data: {
               integrations: [
-                { platform: 'twitter', status: 'connected', importedCount: 150, displayName: 'Twitter' },
-                { platform: 'instagram', status: 'connected', importedCount: 100, displayName: 'Instagram' }
+                {
+                  platform: 'twitter',
+                  status: 'connected',
+                  importedCount: 150,
+                  displayName: 'Twitter'
+                },
+                {
+                  platform: 'instagram',
+                  status: 'connected',
+                  importedCount: 100,
+                  displayName: 'Instagram'
+                }
               ]
             }
           })
@@ -121,7 +131,7 @@ describe('StyleProfile Component', () => {
   describe('Rendering', () => {
     it('should render page header', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/AI Style Profile/i)).toBeInTheDocument();
       });
@@ -129,7 +139,7 @@ describe('StyleProfile Component', () => {
 
     it('should display profile data when available', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Style Profile Ready/i)).toBeInTheDocument();
         expect(screen.getByText(/430 posts/i)).toBeInTheDocument();
@@ -138,7 +148,7 @@ describe('StyleProfile Component', () => {
 
     it('should show language tabs', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /Spanish/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /English/i })).toBeInTheDocument();
@@ -157,9 +167,9 @@ describe('StyleProfile Component', () => {
         }
         return mockFetchApi(url);
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Generate Your Style Profile/i)).toBeInTheDocument();
       });
@@ -185,7 +195,12 @@ describe('StyleProfile Component', () => {
             json: async () => ({
               data: {
                 integrations: [
-                  { platform: 'twitter', status: 'connected', importedCount: 150, displayName: 'Twitter' }
+                  {
+                    platform: 'twitter',
+                    status: 'connected',
+                    importedCount: 150,
+                    displayName: 'Twitter'
+                  }
                 ]
               }
             })
@@ -198,14 +213,14 @@ describe('StyleProfile Component', () => {
           });
         }
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const generateButton = screen.getByRole('button', { name: /Generate Style Profile/i });
         fireEvent.click(generateButton);
       });
-      
+
       await waitFor(() => {
         expect(mockFetchApi).toHaveBeenCalledWith(
           '/api/style-profile/generate',
@@ -234,7 +249,12 @@ describe('StyleProfile Component', () => {
             json: async () => ({
               data: {
                 integrations: [
-                  { platform: 'twitter', status: 'connected', importedCount: 150, displayName: 'Twitter' }
+                  {
+                    platform: 'twitter',
+                    status: 'connected',
+                    importedCount: 150,
+                    displayName: 'Twitter'
+                  }
                 ]
               }
             })
@@ -247,14 +267,14 @@ describe('StyleProfile Component', () => {
           });
         }
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const generateButton = screen.getByRole('button', { name: /Generate Style Profile/i });
         fireEvent.click(generateButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Generating Profile.../i)).toBeInTheDocument();
       });
@@ -262,7 +282,10 @@ describe('StyleProfile Component', () => {
 
     it('should require platform connection before generation', async () => {
       mockFetchApi.mockImplementation((url) => {
-        if (url === '/api/style-profile' && !mockFetchApi.mock.calls.some(call => call[0] === '/api/style-profile' && call[1])) {
+        if (
+          url === '/api/style-profile' &&
+          !mockFetchApi.mock.calls.some((call) => call[0] === '/api/style-profile' && call[1])
+        ) {
           return Promise.resolve({
             ok: true,
             json: async () => ({ data: { available: false } })
@@ -284,9 +307,9 @@ describe('StyleProfile Component', () => {
         }
         return mockFetchApi(url);
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Connect Platforms First/i)).toBeInTheDocument();
       });
@@ -296,12 +319,12 @@ describe('StyleProfile Component', () => {
   describe('Language Selection', () => {
     it('should switch between language profiles', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const englishButton = screen.getByRole('button', { name: /English/i });
         fireEvent.click(englishButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Roast in English with wit/i)).toBeInTheDocument();
       });
@@ -309,7 +332,7 @@ describe('StyleProfile Component', () => {
 
     it('should display prompt for selected language', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Roast in Spanish with sarcasm/i)).toBeInTheDocument();
       });
@@ -317,7 +340,7 @@ describe('StyleProfile Component', () => {
 
     it('should show examples for selected language', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Example 1 in Spanish/i)).toBeInTheDocument();
         expect(screen.getByText(/Example 2 in Spanish/i)).toBeInTheDocument();
@@ -331,14 +354,14 @@ describe('StyleProfile Component', () => {
         writeText: jest.fn(() => Promise.resolve())
       };
       Object.assign(navigator, { clipboard: mockClipboard });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const copyButton = screen.getAllByRole('button', { name: /Copy/i })[0];
         fireEvent.click(copyButton);
       });
-      
+
       await waitFor(() => {
         expect(mockClipboard.writeText).toHaveBeenCalledWith('Roast in Spanish with sarcasm');
       });
@@ -349,14 +372,14 @@ describe('StyleProfile Component', () => {
         writeText: jest.fn(() => Promise.resolve())
       };
       Object.assign(navigator, { clipboard: mockClipboard });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const copyButton = screen.getAllByRole('button', { name: /Copy/i })[0];
         fireEvent.click(copyButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Copied!/i)).toBeInTheDocument();
       });
@@ -366,32 +389,34 @@ describe('StyleProfile Component', () => {
   describe('Profile Deletion', () => {
     it('should show delete confirmation dialog', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const deleteButton = screen.getByRole('button', { name: /Delete/i });
         fireEvent.click(deleteButton);
       });
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/Are you sure you want to delete your style profile\?/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Are you sure you want to delete your style profile\?/i)
+        ).toBeInTheDocument();
       });
     });
 
     it('should delete profile when confirmed', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const deleteButton = screen.getByRole('button', { name: /Delete/i });
         fireEvent.click(deleteButton);
       });
-      
+
       await waitFor(() => {
-        const confirmButton = screen.getAllByRole('button', { name: /Delete/i }).find(
-          btn => btn.closest('[role="dialog"]')
-        );
+        const confirmButton = screen
+          .getAllByRole('button', { name: /Delete/i })
+          .find((btn) => btn.closest('[role="dialog"]'));
         if (confirmButton) fireEvent.click(confirmButton);
       });
-      
+
       await waitFor(() => {
         expect(mockFetchApi).toHaveBeenCalledWith(
           '/api/style-profile',
@@ -412,9 +437,9 @@ describe('StyleProfile Component', () => {
         }
         return mockFetchApi(url);
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Creator\+ Required/i)).toBeInTheDocument();
       });
@@ -430,9 +455,9 @@ describe('StyleProfile Component', () => {
         }
         return mockFetchApi(url);
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const upgradeButton = screen.getByRole('button', { name: /Upgrade to Creator\+/i });
         expect(upgradeButton).toBeInTheDocument();
@@ -458,7 +483,12 @@ describe('StyleProfile Component', () => {
             json: async () => ({
               data: {
                 integrations: [
-                  { platform: 'twitter', status: 'connected', importedCount: 150, displayName: 'Twitter' }
+                  {
+                    platform: 'twitter',
+                    status: 'connected',
+                    importedCount: 150,
+                    displayName: 'Twitter'
+                  }
                 ]
               }
             })
@@ -471,14 +501,14 @@ describe('StyleProfile Component', () => {
           });
         }
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const generateButton = screen.getByRole('button', { name: /Generate Style Profile/i });
         fireEvent.click(generateButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Failed to generate style profile/i)).toBeInTheDocument();
       });
@@ -501,7 +531,12 @@ describe('StyleProfile Component', () => {
             json: async () => ({
               data: {
                 integrations: [
-                  { platform: 'twitter', status: 'connected', importedCount: 150, displayName: 'Twitter' }
+                  {
+                    platform: 'twitter',
+                    status: 'connected',
+                    importedCount: 150,
+                    displayName: 'Twitter'
+                  }
                 ]
               }
             })
@@ -514,14 +549,14 @@ describe('StyleProfile Component', () => {
           });
         }
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const generateButton = screen.getByRole('button', { name: /Generate Style Profile/i });
         fireEvent.click(generateButton);
       });
-      
+
       await waitFor(() => {
         const retryButton = screen.getByRole('button', { name: /Retry/i });
         expect(retryButton).toBeInTheDocument();
@@ -532,7 +567,7 @@ describe('StyleProfile Component', () => {
   describe('Profile Metadata', () => {
     it('should display creation date', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Jan 1, 2025/i)).toBeInTheDocument();
       });
@@ -540,7 +575,7 @@ describe('StyleProfile Component', () => {
 
     it('should show items analyzed count', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/430 posts/i)).toBeInTheDocument();
       });
@@ -548,7 +583,7 @@ describe('StyleProfile Component', () => {
 
     it('should display platform sources', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/twitter: 250/i)).toBeInTheDocument();
         expect(screen.getByText(/instagram: 180/i)).toBeInTheDocument();
@@ -556,4 +591,3 @@ describe('StyleProfile Component', () => {
     });
   });
 });
-

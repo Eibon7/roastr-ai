@@ -159,12 +159,9 @@ describe('Early Upgrade Integration Tests (M1)', () => {
         current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };
 
-      await mockSupabase.from('user_subscriptions')
-        .upsert(webhookData);
+      await mockSupabase.from('user_subscriptions').upsert(webhookData);
 
-      await mockSupabase.from('users')
-        .update({ plan: 'pro' })
-        .eq('id', testUserId);
+      await mockSupabase.from('users').update({ plan: 'pro' }).eq('id', testUserId);
 
       // Assert - Plan upgraded to Pro
       const updatedUser = mockSupabaseData.users[testUserId];
@@ -211,7 +208,9 @@ describe('Early Upgrade Integration Tests (M1)', () => {
         plan: 'pro',
         status: 'active',
         current_period_start: beforeUpgrade.toISOString(),
-        current_period_end: new Date(beforeUpgrade.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        current_period_end: new Date(
+          beforeUpgrade.getTime() + 30 * 24 * 60 * 60 * 1000
+        ).toISOString()
       };
 
       await mockSupabase.from('user_subscriptions').upsert(webhookData);
@@ -236,13 +235,12 @@ describe('Early Upgrade Integration Tests (M1)', () => {
 
       // Act - Upgrade to Pro
       await mockSupabase.from('users').update({ plan: 'pro' }).eq('id', testUserId);
-      await mockSupabase.from('user_subscriptions')
-        .upsert({
-          user_id: testUserId,
-          plan: 'pro',
-          status: 'active',
-          trial_end: null
-        });
+      await mockSupabase.from('user_subscriptions').upsert({
+        user_id: testUserId,
+        plan: 'pro',
+        status: 'active',
+        trial_end: null
+      });
 
       // Assert - User now has Pro limits
       const user = mockSupabaseData.users[testUserId];

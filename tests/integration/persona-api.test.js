@@ -68,11 +68,7 @@ app.use(personaRoutes);
  * Generate test JWT token
  */
 function generateToken(userId, plan = 'pro') {
-  return jwt.sign(
-    { id: userId, plan },
-    JWT_SECRET,
-    { expiresIn: '1h' }
-  );
+  return jwt.sign({ id: userId, plan }, JWT_SECRET, { expiresIn: '1h' });
 }
 
 describe('Persona API Integration Tests', () => {
@@ -192,7 +188,9 @@ describe('Persona API Integration Tests', () => {
       const token = generateToken(userId, 'free');
 
       PersonaService.updatePersona.mockRejectedValue(
-        new Error('PLAN_RESTRICTION: "lo_que_me_define" requires Starter plan or higher. Current plan: free')
+        new Error(
+          'PLAN_RESTRICTION: "lo_que_me_define" requires Starter plan or higher. Current plan: free'
+        )
       );
 
       const response = await request(app)
@@ -260,9 +258,7 @@ describe('Persona API Integration Tests', () => {
     });
 
     it('should return 401 without authentication', async () => {
-      const response = await request(app)
-        .post('/api/persona')
-        .send({ lo_que_me_define: 'Test' });
+      const response = await request(app).post('/api/persona').send({ lo_que_me_define: 'Test' });
 
       expect(response.status).toBe(401);
     });

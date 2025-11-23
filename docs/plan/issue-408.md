@@ -16,6 +16,7 @@ Verify that Shield actions (hide/block/report/escalate) are applied correctly an
 
 **Primary node:** shield (1,020 lines)
 **Dependencies:**
+
 - multi-tenant (784 lines) - RLS and organization isolation
 - plan-features (329 lines) - Shield plan restrictions
 - cost-control (477 lines) - Usage tracking for Shield actions
@@ -61,18 +62,19 @@ ShieldDecisionEngine.makeDecision()
 
 ### Key Components to Test
 
-| Component | Path | Responsibility |
-|-----------|------|----------------|
-| ShieldDecisionEngine | `src/services/shieldDecisionEngine.js` | Decision logic, thresholds, recidivism |
-| ShieldActionExecutor | `src/services/shieldActionExecutor.js` | Action execution with circuit breaker |
+| Component                | Path                                       | Responsibility                         |
+| ------------------------ | ------------------------------------------ | -------------------------------------- |
+| ShieldDecisionEngine     | `src/services/shieldDecisionEngine.js`     | Decision logic, thresholds, recidivism |
+| ShieldActionExecutor     | `src/services/shieldActionExecutor.js`     | Action execution with circuit breaker  |
 | ShieldPersistenceService | `src/services/shieldPersistenceService.js` | Database persistence, history tracking |
-| ShieldActionWorker | `src/workers/ShieldActionWorker.js` | Queue processing |
+| ShieldActionWorker       | `src/workers/ShieldActionWorker.js`        | Queue processing                       |
 
 ## Test Strategy
 
 ### 1. Unit Test Coverage Review
 
 **Existing tests (shield.md:836-881):**
+
 - `shieldService.test.js` - 80% coverage
 - `shieldDecisionEngine.test.js` - 90% coverage
 - `shieldActionExecutor.test.js` - 85% coverage
@@ -86,11 +88,13 @@ ShieldDecisionEngine.makeDecision()
 #### Scenario 1: Critical Toxicity → Block + Report
 
 **Setup:**
+
 - Organization: Pro plan (Shield enabled)
 - Comment: toxicity_score = 0.98, labels = ['threat', 'harassment']
 - Expected: Block user + Report to platform + Register in shield_offender_history
 
 **Validation:**
+
 - ✅ Shield decision = `shield_action_critical`
 - ✅ Actions queued: `blockUser`, `reportUser`
 - ✅ shield_events record created
@@ -100,11 +104,13 @@ ShieldDecisionEngine.makeDecision()
 #### Scenario 2: High Toxicity → Hide + Warn
 
 **Setup:**
+
 - Organization: Starter plan (Shield basic)
 - Comment: toxicity_score = 0.96, labels = ['insult', 'profanity']
 - Expected: Hide comment + Warn user + Register offense
 
 **Validation:**
+
 - ✅ Shield decision = `shield_action_moderate`
 - ✅ Actions queued: `hideComment`, `warnUser`
 - ✅ Offender history: total_offenses += 1, total_high += 1
@@ -113,12 +119,14 @@ ShieldDecisionEngine.makeDecision()
 #### Scenario 3: Repeat Offender Escalation
 
 **Setup:**
+
 - Organization: Plus plan (Shield advanced)
 - Comment: toxicity_score = 0.90 (moderate)
 - Offender history: 5 prior offenses, escalation_level = 2
 - Expected: Adjusted score → critical action due to recidivism
 
 **Validation:**
+
 - ✅ Recidivism adjustment applied (shield.md:109-131)
 - ✅ Escalation level increased to 3
 - ✅ Stronger action taken than first-time offender
@@ -127,12 +135,14 @@ ShieldDecisionEngine.makeDecision()
 #### Scenario 4: Red Line Violation
 
 **Setup:**
+
 - Organization: Pro plan
 - Comment: Contains keyword "kill" (user red line)
 - Toxicity score: 0.75 (would normally be roastable)
 - Expected: Immediate critical action due to red line
 
 **Validation:**
+
 - ✅ Red line detected (shield.md:145-181)
 - ✅ Immediate critical action (override thresholds)
 - ✅ metadata.redLineViolation = 'keyword:kill'
@@ -141,12 +151,14 @@ ShieldDecisionEngine.makeDecision()
 #### Scenario 5: First Strike Corrective Message
 
 **Setup:**
+
 - Organization: Pro plan
 - Comment: toxicity_score = 0.87, labels = ['insult']
 - First-time offender: total_offenses = 0
 - Expected: Corrective message sent, no harsh action
 
 **Validation:**
+
 - ✅ Corrective zone triggered (shield.md:183-220)
 - ✅ Appropriate corrective message selected from pool
 - ✅ No severe action (no block/ban)
@@ -155,11 +167,13 @@ ShieldDecisionEngine.makeDecision()
 #### Scenario 6: Platform-Specific Actions
 
 **Setup:**
+
 - Organizations with different platforms: Twitter, Discord, YouTube
 - Same toxicity score (0.97) across all
 - Expected: Platform-appropriate actions executed
 
 **Validation:**
+
 - ✅ Twitter: `block_user`, `report_user` (shield.md:272-280)
 - ✅ Discord: `kick_user`, `report_to_moderators` (shield.md:282-291)
 - ✅ YouTube: `report_comment` only (limited API) (shield.md:304-313)
@@ -171,11 +185,13 @@ ShieldDecisionEngine.makeDecision()
 **Critical validation:** When Shield acts, roast generation must be BLOCKED.
 
 **Test approach:**
+
 - Mock `roastGeneratorEnhanced.js` to track invocations
 - Assert roast generator is NEVER called when Shield decision is critical/high
 - Verify triage system respects Shield blocking (shield.md:640-671)
 
 **Expected flow:**
+
 ```
 Comment (toxicity ≥ 0.85)
     ↓
@@ -196,18 +212,18 @@ Roast generator: NEVER INVOKED ✅
 
 ```javascript
 {
-  organization_id,
-  platform,
-  external_comment_id,
-  external_author_id,
-  external_author_username,
-  toxicity_score,
-  toxicity_labels,
-  action_taken,
-  action_reason,
-  action_status,  // 'completed', 'failed', 'pending'
-  action_details,
-  metadata
+  (organization_id,
+    platform,
+    external_comment_id,
+    external_author_id,
+    external_author_username,
+    toxicity_score,
+    toxicity_labels,
+    action_taken,
+    action_reason,
+    action_status, // 'completed', 'failed', 'pending'
+    action_details,
+    metadata);
 }
 ```
 
@@ -215,22 +231,23 @@ Roast generator: NEVER INVOKED ✅
 
 ```javascript
 {
-  organization_id,
-  platform,
-  external_author_id,
-  total_offenses,
-  total_critical,
-  total_high,
-  average_toxicity,
-  escalation_level,
-  risk_level,  // 'low', 'medium', 'high'
-  recent_actions_summary,
-  last_offense_at,
-  metadata
+  (organization_id,
+    platform,
+    external_author_id,
+    total_offenses,
+    total_critical,
+    total_high,
+    average_toxicity,
+    escalation_level,
+    risk_level, // 'low', 'medium', 'high'
+    recent_actions_summary,
+    last_offense_at,
+    metadata);
 }
 ```
 
 **Validations:**
+
 - ✅ Offender history updated after each Shield action
 - ✅ Escalation level calculated correctly (shield.md:133-143)
 - ✅ Risk level assigned properly based on history
@@ -243,11 +260,13 @@ Roast generator: NEVER INVOKED ✅
 #### Scenario: Platform API Failure
 
 **Setup:**
+
 - Mock Twitter API to fail with 503
 - Comment requires `blockUser` action
 - Expected: Retry → Fallback to `reportUser` → Manual review queue
 
 **Validation:**
+
 - ✅ 3 retry attempts with exponential backoff
 - ✅ Fallback action attempted
 - ✅ Manual review queue populated
@@ -259,6 +278,7 @@ Roast generator: NEVER INVOKED ✅
 ### Phase 1: Review Existing Code (1 hour)
 
 **Files to review:**
+
 - `src/services/shieldDecisionEngine.js` - Decision logic
 - `src/services/shieldActionExecutor.js` - Action execution
 - `src/services/shieldPersistenceService.js` - Database operations
@@ -266,17 +286,20 @@ Roast generator: NEVER INVOKED ✅
 - `tests/unit/services/shieldService.test.js` - Current coverage
 
 **Agents:**
+
 - Back-end Dev (primary)
 
 ### Phase 2: Design Test Fixtures (30 min)
 
 **Create:**
+
 - `tests/fixtures/shield-comments.json` - Comment samples with various toxicity levels
 - `tests/fixtures/shield-offenders.json` - Offender history samples
 - `tests/fixtures/shield-settings.json` - Organization Shield settings
 - `tests/helpers/shieldTestUtils.js` - Shared test utilities
 
 **Agents:**
+
 - Back-end Dev
 - Test Engineer
 
@@ -285,6 +308,7 @@ Roast generator: NEVER INVOKED ✅
 **Test file:** `tests/integration/shield-integration.test.js`
 
 **Structure:**
+
 ```javascript
 describe('Shield Integration Tests - Issue #408', () => {
   describe('Critical Actions', () => {
@@ -333,6 +357,7 @@ describe('Shield Integration Tests - Issue #408', () => {
 ```
 
 **Agents:**
+
 - Back-end Dev (primary)
 - Test Engineer
 - Security Audit Agent (for red line tests)
@@ -342,11 +367,13 @@ describe('Shield Integration Tests - Issue #408', () => {
 **Critical validation file:** `tests/integration/shield-roast-blocking.test.js`
 
 **Mock strategy:**
+
 - Mock `roastGeneratorEnhanced.js` with Jest spy
 - Track all invocations during Shield actions
 - Assert **ZERO invocations** when Shield acts
 
 **Test cases:**
+
 - Shield critical → NO roast
 - Shield high → NO roast
 - Shield moderate (repeat offender) → NO roast
@@ -354,91 +381,106 @@ describe('Shield Integration Tests - Issue #408', () => {
 - First strike corrective → NO roast
 
 **Agents:**
+
 - Back-end Dev
 - Test Engineer
 
 ### Phase 5: Evidence Generation (30 min)
 
 **Create:**
+
 - `docs/test-evidence/shield-integration-report.md` - Test results summary
 - Terminal output screenshots showing all tests passing
 - Database state snapshots after Shield actions
 - Queue status showing shield_action jobs processed
 
 **Format:**
+
 ```markdown
 # Shield Integration Test Evidence - Issue #408
 
 ## Test Execution Summary
+
 - Total tests: 25
 - Passed: 25
 - Failed: 0
 - Coverage: 92%
 
 ## Critical Validation: No Roast Generation
+
 ✅ All Shield action scenarios verified - ZERO roast generations
 
 ## Database Persistence
+
 ✅ shield_events: 15 records created
 ✅ shield_offender_history: 8 records created/updated
 
 ## Platform Actions
+
 ✅ Twitter: blockUser, reportUser executed
 ✅ Discord: kickUser, reportToModerators executed
 ✅ YouTube: reportComment executed (limited API)
 
 ## Escalation & Recidivism
+
 ✅ Escalation levels calculated correctly (0→1→2→3)
 ✅ Risk levels assigned: low (3), medium (4), high (1)
 ```
 
 **Agents:**
+
 - Test Engineer (primary)
 - Documentation Agent
 
 ### Phase 6: Documentation Update (30 min)
 
 **Update shield.md:**
+
 - Add integration test section with Issue #408 reference
 - Update "Testing" section (shield.md:833-881) with new test file
 - Add "No Roast Generation" validation to key features
 - Update "Agentes Relevantes" if new agents invoked
 
 **Update docs/GDD-IMPLEMENTATION-COMPLETE.md:**
+
 - Add Phase 7: Shield Integration Tests
 - Link to issue-408.md plan
 - Link to test evidence
 
 **Agents:**
+
 - Documentation Agent
 - Back-end Dev (review)
 
 ### Phase 7: GDD Validation (15 min)
 
 **Run:**
+
 ```bash
 node scripts/resolve-graph.js --validate
 node scripts/resolve-graph.js --report > docs/test-evidence/gdd-validation-408.txt
 ```
 
 **Verify:**
+
 - ✅ All node dependencies resolved
 - ✅ "Agentes Relevantes" sections up-to-date
 - ✅ No circular dependencies
 - ✅ Shield node health score ≥ 0.8
 
 **Agents:**
+
 - Back-end Dev
 
 ## Risks & Mitigations
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Existing Shield code has bugs | High | Review + fix before tests |
-| Mock platform APIs too complex | Medium | Use simplified mocks, focus on decision flow |
-| RLS policies block test data | High | Use service role for test setup |
-| Async timing issues in tests | Medium | Use `await` + proper test timeouts |
-| Roast generator still called | Critical | Mock at service level, not API level |
+| Risk                           | Impact   | Mitigation                                   |
+| ------------------------------ | -------- | -------------------------------------------- |
+| Existing Shield code has bugs  | High     | Review + fix before tests                    |
+| Mock platform APIs too complex | Medium   | Use simplified mocks, focus on decision flow |
+| RLS policies block test data   | High     | Use service role for test setup              |
+| Async timing issues in tests   | Medium   | Use `await` + proper test timeouts           |
+| Roast generator still called   | Critical | Mock at service level, not API level         |
 
 ## Success Metrics
 
@@ -451,16 +493,16 @@ node scripts/resolve-graph.js --report > docs/test-evidence/gdd-validation-408.t
 
 ## Timeline Estimate
 
-| Phase | Duration | Agent |
-|-------|----------|-------|
-| Code review | 1 hour | Back-end Dev |
-| Fixture design | 30 min | Back-end Dev + Test Engineer |
-| Integration tests | 3 hours | Back-end Dev + Test Engineer |
-| Roast blocking tests | 1 hour | Back-end Dev + Test Engineer |
-| Evidence generation | 30 min | Test Engineer |
-| Documentation | 30 min | Documentation Agent |
-| GDD validation | 15 min | Back-end Dev |
-| **Total** | **6.75 hours** | |
+| Phase                | Duration       | Agent                        |
+| -------------------- | -------------- | ---------------------------- |
+| Code review          | 1 hour         | Back-end Dev                 |
+| Fixture design       | 30 min         | Back-end Dev + Test Engineer |
+| Integration tests    | 3 hours        | Back-end Dev + Test Engineer |
+| Roast blocking tests | 1 hour         | Back-end Dev + Test Engineer |
+| Evidence generation  | 30 min         | Test Engineer                |
+| Documentation        | 30 min         | Documentation Agent          |
+| GDD validation       | 15 min         | Back-end Dev                 |
+| **Total**            | **6.75 hours** |                              |
 
 ## Execution Summary
 
@@ -469,6 +511,7 @@ node scripts/resolve-graph.js --report > docs/test-evidence/gdd-validation-408.t
 Upon review of the codebase, **comprehensive integration tests already exist** covering ALL acceptance criteria for Issue #408.
 
 **Test Coverage Found:**
+
 - **15 integration test files**
 - **~4,000+ lines of test code**
 - **200+ test cases**
@@ -476,13 +519,13 @@ Upon review of the codebase, **comprehensive integration tests already exist** c
 
 **Acceptance Criteria Coverage:**
 
-| AC | Status | Test Files | Evidence |
-|----|--------|-----------|----------|
-| AC1 | ✅ VALIDATED | shield-actions-integration.test.js (lines 64-324) | Hide, block, report, escalate actions tested |
-| AC2 | ✅ VALIDATED | shield-offender-registration.test.js (lines 62-757) | Author, severity, reason tracking tested |
-| AC3 | ✅ VALIDATED | ALL test files (50+ assertions) | `shouldGenerateResponse === false` verified |
-| AC4 | ✅ VALIDATED | shield-escalation-logic.test.js (lines 62-843) | Escalation matrix, time decay, cross-platform tested |
-| AC5 | ✅ VALIDATED | shield-actions-integration.test.js, shield-offender-registration.test.js | Complete logs validated |
+| AC  | Status       | Test Files                                                               | Evidence                                             |
+| --- | ------------ | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| AC1 | ✅ VALIDATED | shield-actions-integration.test.js (lines 64-324)                        | Hide, block, report, escalate actions tested         |
+| AC2 | ✅ VALIDATED | shield-offender-registration.test.js (lines 62-757)                      | Author, severity, reason tracking tested             |
+| AC3 | ✅ VALIDATED | ALL test files (50+ assertions)                                          | `shouldGenerateResponse === false` verified          |
+| AC4 | ✅ VALIDATED | shield-escalation-logic.test.js (lines 62-843)                           | Escalation matrix, time decay, cross-platform tested |
+| AC5 | ✅ VALIDATED | shield-actions-integration.test.js, shield-offender-registration.test.js | Complete logs validated                              |
 
 **Test Evidence:** Full documentation available at `docs/test-evidence/shield-issue-408-evidence.md`
 

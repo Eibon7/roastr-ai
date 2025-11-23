@@ -14,11 +14,11 @@ metadata:
   high_priority_nodes: 4
   production_nodes: 15
   development_nodes: 0
-  pr: "#634"
-  changes: "CodeRabbit Security Fix - Conservative Gatekeeper fallback for Analysis Department (Issue #632, PR #634)"
+  pr: '#634'
+  changes: 'CodeRabbit Security Fix - Conservative Gatekeeper fallback for Analysis Department (Issue #632, PR #634)'
   protected: true
   last_verified: 2025-10-23
-  protection_reason: "GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze"
+  protection_reason: 'GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze'
 
 # Node Definitions
 nodes:

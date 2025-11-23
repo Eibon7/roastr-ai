@@ -35,12 +35,12 @@ testClient.data = serviceClient.data;
 
 ### 1. Operaciones CRUD con RLS
 
-| Operación | Métodos | RLS Enforced | Notas |
-|-----------|---------|--------------|-------|
-| **SELECT** | `.select()`, `.eq()`, `.in()`, `.single()`, `.maybeSingle()` | ✅ Sí | Filtra rows por `organization_id` |
-| **INSERT** | `.insert()`, `.select()` | ✅ Sí | Valida `organization_id` vs context |
-| **UPDATE** | `.update()`, `.eq()`, `.select()` | ✅ Sí | Bloquea cambios de `organization_id` |
-| **DELETE** | `.delete()`, `.eq()`, `.in()` | ✅ Sí | Solo rows de org actual |
+| Operación  | Métodos                                                      | RLS Enforced | Notas                                |
+| ---------- | ------------------------------------------------------------ | ------------ | ------------------------------------ |
+| **SELECT** | `.select()`, `.eq()`, `.in()`, `.single()`, `.maybeSingle()` | ✅ Sí        | Filtra rows por `organization_id`    |
+| **INSERT** | `.insert()`, `.select()`                                     | ✅ Sí        | Valida `organization_id` vs context  |
+| **UPDATE** | `.update()`, `.eq()`, `.select()`                            | ✅ Sí        | Bloquea cambios de `organization_id` |
+| **DELETE** | `.delete()`, `.eq()`, `.in()`                                | ✅ Sí        | Solo rows de org actual              |
 
 ### 2. Autenticación y Contexto
 
@@ -48,25 +48,29 @@ testClient.data = serviceClient.data;
 
 ```javascript
 await testClient.auth.setSession({
-  access_token: jwt.sign({
-    sub: userId,
-    organization_id: tenantId,
-    role: 'authenticated'
-  }, JWT_SECRET)
+  access_token: jwt.sign(
+    {
+      sub: userId,
+      organization_id: tenantId,
+      role: 'authenticated'
+    },
+    JWT_SECRET
+  )
 });
 ```
 
 **Contexto RLS establecido:**
+
 - `currentContext.user_id` → Usuario autenticado
 - `currentContext.organization_id` → Tenant activo
 - `currentContext.role` → Rol del usuario
 
 ### 3. Service Role vs Authenticated
 
-| Cliente | Flag `bypassRLS` | Comportamiento |
-|---------|------------------|----------------|
-| `serviceClient` | `true` | **Sin RLS** - Ve y modifica todo (como `service_role`) |
-| `testClient` | `false` | **Con RLS** - Solo accede a su org |
+| Cliente         | Flag `bypassRLS` | Comportamiento                                         |
+| --------------- | ---------------- | ------------------------------------------------------ |
+| `serviceClient` | `true`           | **Sin RLS** - Ve y modifica todo (como `service_role`) |
+| `testClient`    | `false`          | **Con RLS** - Solo accede a su org                     |
 
 ---
 
@@ -77,7 +81,7 @@ await testClient.auth.setSession({
 ```javascript
 _applyRLSFilter(table, rows) {
   if (this.bypassRLS) return rows; // Service role
-  
+
   const orgId = this.currentContext?.organization_id;
   return rows.filter(row => {
     if (!row.organization_id) return true; // Sin scope
@@ -91,7 +95,7 @@ _applyRLSFilter(table, rows) {
 ```javascript
 _checkRLSViolation(table, row) {
   if (this.bypassRLS) return null;
-  
+
   if (row.organization_id !== this.currentContext?.organization_id) {
     return {
       code: '42501',
@@ -180,14 +184,14 @@ describe('RLS Tests', () => {
 
 ### Tests Pasando
 
-| Fase | Passing | % |
-|------|---------|---|
-| Inicio (Supabase bloqueado) | 0/35 | 0% |
-| Después de mock básico | 7/35 | 20% |
-| Después de JWT decoding | 17/35 | 49% |
-| Después de RLS context | 29/35 | 83% |
-| Después de UPDATE protection | 34/35 | 97% |
-| **Final** | **35/35** | **100%** |
+| Fase                         | Passing   | %        |
+| ---------------------------- | --------- | -------- |
+| Inicio (Supabase bloqueado)  | 0/35      | 0%       |
+| Después de mock básico       | 7/35      | 20%      |
+| Después de JWT decoding      | 17/35     | 49%      |
+| Después de RLS context       | 29/35     | 83%      |
+| Después de UPDATE protection | 34/35     | 97%      |
+| **Final**                    | **35/35** | **100%** |
 
 ### Performance
 
@@ -197,14 +201,14 @@ describe('RLS Tests', () => {
 
 ### Cobertura RLS
 
-| Tabla | INSERT | UPDATE | DELETE | Priority |
-|-------|--------|--------|--------|----------|
-| `integration_configs` | ✅ | ✅ | ❌ | HIGH (SECURITY) |
-| `usage_records` | ✅ | ✅ | ❌ | HIGH (BILLING) |
-| `monthly_usage` | ✅ | ✅ | ❌ | HIGH (BILLING) |
-| `comments` | ✅ | ✅ | ✅ | MEDIUM |
-| `responses` | ✅ | ✅ | ✅ | MEDIUM |
-| `user_activities` | ❌ | ❌ | ✅ | LOW |
+| Tabla                 | INSERT | UPDATE | DELETE | Priority        |
+| --------------------- | ------ | ------ | ------ | --------------- |
+| `integration_configs` | ✅     | ✅     | ❌     | HIGH (SECURITY) |
+| `usage_records`       | ✅     | ✅     | ❌     | HIGH (BILLING)  |
+| `monthly_usage`       | ✅     | ✅     | ❌     | HIGH (BILLING)  |
+| `comments`            | ✅     | ✅     | ✅     | MEDIUM          |
+| `responses`           | ✅     | ✅     | ✅     | MEDIUM          |
+| `user_activities`     | ❌     | ❌     | ✅     | LOW             |
 
 **Total Coverage:** 5/6 tables, 15/18 operations (83%)
 
@@ -234,6 +238,7 @@ SUPABASE_ANON_KEY=eyJ...
 **Causa:** Falta `const jwt = require('jsonwebtoken');` en `supabaseMock.js`
 
 **Fix:**
+
 ```javascript
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken'); // ← Añadir
@@ -246,6 +251,7 @@ class MockSupabaseClient { ... }
 **Causa:** Tabla no inicializada en `this.data`
 
 **Fix:** El mock ahora crea tablas dinámicamente:
+
 ```javascript
 from(table) {
   if (!this.data[table]) {
@@ -260,6 +266,7 @@ from(table) {
 **Causa:** Error RLS retornando `null` en vez de array vacío
 
 **Fix:**
+
 ```javascript
 if (accessibleRows.length === 0) {
   return {
@@ -274,6 +281,7 @@ if (accessibleRows.length === 0) {
 ## Limitaciones
 
 **No implementado (no requerido para RLS tests):**
+
 - ✗ RPC functions (excepto mock básico)
 - ✗ Storage API
 - ✗ Realtime subscriptions
@@ -281,6 +289,7 @@ if (accessibleRows.length === 0) {
 - ✗ Auth admin methods (generateUser, updateUser, etc.)
 
 **Workarounds actuales:**
+
 - `ensureAuthUser()` genera user IDs sintéticos con `uuidv4()`
 - No se usa `auth.admin.createUser()` (evita network calls)
 
@@ -308,12 +317,12 @@ Modificar `_checkRLSViolation()` o `_applyRLSFilter()`:
 ```javascript
 _checkRLSViolation(table, row) {
   if (this.bypassRLS) return null;
-  
+
   // Nueva validación
   if (table === 'tabla_especial' && row.sensitive_field) {
     return { code: '42501', message: 'Custom RLS rule' };
   }
-  
+
   // ... validaciones existentes
 }
 ```
@@ -333,4 +342,3 @@ _checkRLSViolation(table, row) {
 **Status:** ✅ COMPLETE (35/35 tests passing)  
 **Updated:** 2025-11-21  
 **Maintainer:** Test Engineer Agent
-

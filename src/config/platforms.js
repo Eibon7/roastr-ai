@@ -243,7 +243,7 @@ function getPlatformConfig(platformName) {
   if (!platformName || typeof platformName !== 'string') {
     return null;
   }
-  
+
   const platform = platformName.toLowerCase();
   return PLATFORMS[platform] || null;
 }
@@ -260,7 +260,7 @@ function getPlatformLimit(platformName) {
 
 /**
  * Get preferred length for optimal engagement
- * @param {string} platformName - Platform identifier  
+ * @param {string} platformName - Platform identifier
  * @returns {number} Preferred character length
  */
 function getPreferredLength(platformName) {
@@ -287,11 +287,13 @@ function platformSupports(platformName, feature) {
  */
 function getPlatformStyle(platformName) {
   const config = getPlatformConfig(platformName);
-  return config ? config.style : {
-    tone: 'neutral',
-    preferredLength: PLATFORM_LIMITS.twitter.maxLength,
-    emojiUsage: 'moderate'
-  };
+  return config
+    ? config.style
+    : {
+        tone: 'neutral',
+        preferredLength: PLATFORM_LIMITS.twitter.maxLength,
+        emojiUsage: 'moderate'
+      };
 }
 
 /**
@@ -307,14 +309,15 @@ function validateRoastForPlatform(roast, platformName) {
 
   const limit = getPlatformLimit(platformName);
   const isValid = roast.length <= limit;
-  
+
   let adjustedText = roast;
   if (!isValid) {
     // Truncate while preserving word boundaries
     const maxLength = limit - 3; // Reserve space for "..."
     adjustedText = roast.substring(0, maxLength);
     const lastSpace = adjustedText.lastIndexOf(' ');
-    if (lastSpace > maxLength * 0.8) { // Only truncate at word boundary if reasonable
+    if (lastSpace > maxLength * 0.8) {
+      // Only truncate at word boundary if reasonable
       adjustedText = adjustedText.substring(0, lastSpace);
     }
     adjustedText += '...';

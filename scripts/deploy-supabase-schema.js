@@ -19,7 +19,8 @@ const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
 // Postgres connection string for Supabase
 // User needs to provide SUPABASE_DB_PASSWORD
 // Note: encodeURIComponent handles special characters in password (e.g., @, #, /)
-const connectionString = process.env.DATABASE_URL ||
+const connectionString =
+  process.env.DATABASE_URL ||
   `postgresql://postgres:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD || '')}@db.${projectRef}.supabase.co:5432/postgres`;
 
 async function deploySchema() {
@@ -38,7 +39,9 @@ async function deploySchema() {
     console.error('Option 1 (Recommended):');
     console.error('  SUPABASE_DB_PASSWORD=your_postgres_password\n');
     console.error('Option 2:');
-    console.error('  DATABASE_URL=postgresql://postgres:password@db.rpkhiemljhncddmhrilk.supabase.co:5432/postgres\n');
+    console.error(
+      '  DATABASE_URL=postgresql://postgres:password@db.rpkhiemljhncddmhrilk.supabase.co:5432/postgres\n'
+    );
     console.error('📍 To find your password:');
     console.error('   1. Go to https://supabase.com/dashboard/project/' + projectRef);
     console.error('   2. Settings → Database');
@@ -87,7 +90,7 @@ async function deploySchema() {
 
     if (existingTables.length > 0) {
       console.log('⚠️  WARNING: Found existing tables:');
-      existingTables.forEach(t => console.log('   -', t.tablename));
+      existingTables.forEach((t) => console.log('   -', t.tablename));
       console.log('\n⚠️  The schema will be applied. Existing tables may cause conflicts.');
       console.log('   Consider backing up your data first.\n');
 
@@ -123,7 +126,7 @@ async function deploySchema() {
     `);
 
     console.log('✅ Tables created:', newTables.length);
-    newTables.forEach(t => console.log('   ✓', t.tablename));
+    newTables.forEach((t) => console.log('   ✓', t.tablename));
 
     // Check RLS policies
     const { rows: policies } = await client.query(`
@@ -135,7 +138,7 @@ async function deploySchema() {
 
     console.log('\n✅ RLS Policies created:', policies.length);
     const policiesByTable = {};
-    policies.forEach(p => {
+    policies.forEach((p) => {
       if (!policiesByTable[p.tablename]) {
         policiesByTable[p.tablename] = [];
       }
@@ -151,7 +154,6 @@ async function deploySchema() {
     console.log('   1. Run RLS tests: npm test -- multi-tenant-rls');
     console.log('   2. Verify in Supabase Dashboard: Table Editor');
     console.log('   3. Check issue #490 as resolved\n');
-
   } catch (error) {
     console.error('\n❌ ERROR during deployment:');
     console.error('   Message:', error.message);
@@ -162,10 +164,14 @@ async function deploySchema() {
 
     if (error.message.includes('password authentication failed')) {
       console.error('\n💡 TIP: Your database password might be incorrect.');
-      console.error('   Reset it at: https://supabase.com/dashboard/project/' + projectRef + '/settings/database');
+      console.error(
+        '   Reset it at: https://supabase.com/dashboard/project/' +
+          projectRef +
+          '/settings/database'
+      );
     } else if (error.message.includes('already exists')) {
       console.error('\n💡 TIP: Some objects already exist. The schema was partially applied.');
-      console.error('   This might be OK if you\'re re-running the script.');
+      console.error("   This might be OK if you're re-running the script.");
     }
 
     process.exit(1);
@@ -176,7 +182,7 @@ async function deploySchema() {
 }
 
 // Run deployment
-deploySchema().catch(error => {
+deploySchema().catch((error) => {
   console.error('\n❌ Unexpected error:', error);
   process.exit(1);
 });

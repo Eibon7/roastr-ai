@@ -35,24 +35,24 @@ const TEST_CONFIG = {
 async function setupTestEnvironment() {
   // Set NODE_ENV to test if not already set
   process.env.NODE_ENV = 'test';
-  
+
   // Enable mock mode for testing
   process.env.ENABLE_MOCK_MODE = 'true';
-  
+
   // Set dummy API keys for testing
   if (!process.env.OPENAI_API_KEY) {
     process.env.OPENAI_API_KEY = TEST_CONFIG.mock.openaiApiKey;
   }
-  
+
   if (!process.env.PERSPECTIVE_API_KEY) {
     process.env.PERSPECTIVE_API_KEY = TEST_CONFIG.mock.perspectiveApiKey;
   }
-  
+
   // Set database URLs for testing
   process.env.SUPABASE_URL = TEST_CONFIG.database.url;
   process.env.SUPABASE_SERVICE_KEY = TEST_CONFIG.database.serviceKey;
   process.env.SUPABASE_ANON_KEY = TEST_CONFIG.database.anonKey;
-  
+
   console.log('Test environment configured successfully');
 }
 
@@ -60,16 +60,12 @@ async function setupTestEnvironment() {
  * Create test database client
  */
 function createTestDbClient() {
-  return createClient(
-    TEST_CONFIG.database.url,
-    TEST_CONFIG.database.serviceKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
+  return createClient(TEST_CONFIG.database.url, TEST_CONFIG.database.serviceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
     }
-  );
+  });
 }
 
 /**
@@ -80,9 +76,9 @@ async function cleanTestDatabase() {
     console.warn('Skipping database cleanup - mock mode disabled');
     return;
   }
-  
+
   const client = createTestDbClient();
-  
+
   try {
     // Clean test data in reverse dependency order to prevent foreign key violations
     // Child tables first, then parent tables
@@ -93,34 +89,34 @@ async function cleanTestDatabase() {
       'shield_actions',
       'roast_generations',
       'user_sessions',
-      
+
       // Tables dependent on comments
       'toxicity_analysis',
       'roasts',
-      
+
       // Comments table (depends on organizations and users)
       'comments',
-      
+
       // Organization-dependent tables
       'organization_users',
       'organization_usage',
       'api_keys',
       'social_accounts',
-      
+
       // Users table (referenced by many other tables)
       'users',
-      
+
       // Organizations table (root parent table)
       'organizations'
     ];
-    
+
     for (const table of tables) {
       const { error } = await client.from(table).delete().neq('id', '');
       if (error && !error.message.includes('does not exist')) {
         console.warn(`Warning cleaning ${table}:`, error.message);
       }
     }
-    
+
     console.log('Test database cleaned successfully');
   } catch (error) {
     console.warn('Database cleanup error:', error.message);
@@ -131,7 +127,7 @@ async function cleanTestDatabase() {
  * Wait for async operations to complete
  */
 function waitForAsync(ms = 1000) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -146,7 +142,7 @@ const TestData = {
     created_at: new Date().toISOString(),
     ...overrides
   }),
-  
+
   user: (orgId, overrides = {}) => {
     const uuid = randomUUID();
     return {
@@ -158,7 +154,7 @@ const TestData = {
       ...overrides
     };
   },
-  
+
   comment: (orgId, overrides = {}) => {
     const uuid = randomUUID();
     return {
@@ -174,7 +170,7 @@ const TestData = {
       ...overrides
     };
   },
-  
+
   roast: (commentId, orgId, overrides = {}) => ({
     id: `test-roast-${randomUUID()}`,
     comment_id: commentId,

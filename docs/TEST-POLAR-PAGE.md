@@ -24,9 +24,9 @@ Abre `public/test-polar.html` y reemplaza los Price IDs en línea ~143:
 
 ```javascript
 const POLAR_PRICE_IDS = {
-  starter: 'price_tu_starter_id_aqui',  // ← Cambia esto
-  pro: 'price_tu_pro_id_aqui',          // ← Cambia esto
-  plus: 'price_tu_plus_id_aqui',        // ← Cambia esto
+  starter: 'price_tu_starter_id_aqui', // ← Cambia esto
+  pro: 'price_tu_pro_id_aqui', // ← Cambia esto
+  plus: 'price_tu_plus_id_aqui' // ← Cambia esto
 };
 ```
 
@@ -43,6 +43,7 @@ npm start
 ```
 
 Verifica que esté corriendo:
+
 ```bash
 curl http://localhost:3000/health
 # Debería devolver: {"status":"ok",...}
@@ -51,6 +52,7 @@ curl http://localhost:3000/health
 ### Paso 2: Abre la página de test
 
 Abre en tu navegador:
+
 ```
 http://localhost:3000/test-polar.html
 ```
@@ -112,6 +114,7 @@ Cuando hagas clic en un botón, verás en la consola:
 **Causa:** El backend no está devolviendo `checkout.url`
 
 **Solución:**
+
 ```bash
 # Verifica que el backend tenga POLAR_ACCESS_TOKEN
 cat .env | grep POLAR_ACCESS_TOKEN
@@ -127,6 +130,7 @@ curl -X POST http://localhost:3000/api/checkout \
 **Causa:** Backend no está corriendo
 
 **Solución:**
+
 ```bash
 # Inicia el backend
 npm start
@@ -140,6 +144,7 @@ curl http://localhost:3000/health
 **Causa:** Falta `POLAR_ACCESS_TOKEN` en `.env`
 
 **Solución:**
+
 ```bash
 # Agrega a .env
 echo "POLAR_ACCESS_TOKEN=polar_oat_tu_token_aqui" >> .env
@@ -168,7 +173,8 @@ npm start
 Edita las líneas de precio en el HTML:
 
 ```html
-<div class="price">5€</div>   <!-- Cambia el número aquí -->
+<div class="price">5€</div>
+<!-- Cambia el número aquí -->
 <div class="period">por mes</div>
 ```
 
@@ -186,10 +192,10 @@ Edita las variables CSS al inicio:
 
 ```css
 :root {
-  --accent: #8b5cf6;        /* Color principal (púrpura) */
-  --accent-hover: #9a6eff;  /* Color hover */
-  --bg: #0d0d10;            /* Fondo oscuro */
-  --text: #f9f9fb;          /* Texto claro */
+  --accent: #8b5cf6; /* Color principal (púrpura) */
+  --accent-hover: #9a6eff; /* Color hover */
+  --bg: #0d0d10; /* Fondo oscuro */
+  --text: #f9f9fb; /* Texto claro */
 }
 ```
 
@@ -226,13 +232,13 @@ Página de éxito se muestra ✅
 
 ## 📊 Comparación con React
 
-| Aspecto | HTML Estático | React (CheckoutButton) |
-|---------|---------------|------------------------|
-| **Setup** | Solo cambiar Price IDs | Requiere componente + Auth |
-| **Rapidez** | ⚡ Instantáneo | Requiere build |
-| **Flexibilidad** | Limitada | Alta |
-| **Para testing** | ✅ Perfecto | Overkill |
-| **Para producción** | ❌ No recomendado | ✅ Recomendado |
+| Aspecto             | HTML Estático          | React (CheckoutButton)     |
+| ------------------- | ---------------------- | -------------------------- |
+| **Setup**           | Solo cambiar Price IDs | Requiere componente + Auth |
+| **Rapidez**         | ⚡ Instantáneo         | Requiere build             |
+| **Flexibilidad**    | Limitada               | Alta                       |
+| **Para testing**    | ✅ Perfecto            | Overkill                   |
+| **Para producción** | ❌ No recomendado      | ✅ Recomendado             |
 
 **Conclusión:** Usa esta página HTML para **testing rápido**. Para producción, usa los componentes React (`CheckoutButton.jsx`).
 

@@ -13,6 +13,6 @@ export function useGDDDrift() {
     queryKey: ['gdd-drift'],
     queryFn: fetchGDDDrift,
     refetchInterval: 30000,
-    staleTime: 20000,
+    staleTime: 20000
   });
 }

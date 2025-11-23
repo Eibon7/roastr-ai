@@ -137,11 +137,14 @@ class DiffCollector {
       }
 
       // Parse diff output
-      const changes = diff.trim().split('\n').map(line => {
-        const [status, ...fileParts] = line.split('\t');
-        const file = fileParts.join('\t');
-        return { status, file };
-      });
+      const changes = diff
+        .trim()
+        .split('\n')
+        .map((line) => {
+          const [status, ...fileParts] = line.split('\t');
+          const file = fileParts.join('\t');
+          return { status, file };
+        });
 
       if (flags.verbose) {
         console.log(`📊 Detected ${changes.length} changed file(s)`);
@@ -176,8 +179,8 @@ class DiffCollector {
 
       // Count lines (exclude diff headers +++ and ---)
       const lines = diff.split('\n');
-      const added = lines.filter(l => l.startsWith('+') && !l.startsWith('+++')).length;
-      const removed = lines.filter(l => l.startsWith('-') && !l.startsWith('---')).length;
+      const added = lines.filter((l) => l.startsWith('+') && !l.startsWith('+++')).length;
+      const removed = lines.filter((l) => l.startsWith('-') && !l.startsWith('---')).length;
 
       // Calculate hash
       const hash = crypto.createHash('sha256').update(diff).digest('hex');
@@ -207,8 +210,10 @@ class DiffCollector {
           const normalizedFile = file.replace(/\\/g, '/');
           const normalizedProtected = protectedFile.replace(/\\/g, '/');
 
-          if (normalizedFile.includes(normalizedProtected) ||
-              normalizedProtected.includes(normalizedFile)) {
+          if (
+            normalizedFile.includes(normalizedProtected) ||
+            normalizedProtected.includes(normalizedFile)
+          ) {
             matched = true;
             break;
           }
@@ -238,7 +243,10 @@ class DiffCollector {
         // Update highest protection level
         if (domain.protection_level === 'CRITICAL') {
           highestProtectionLevel = 'CRITICAL';
-        } else if (domain.protection_level === 'SENSITIVE' && highestProtectionLevel !== 'CRITICAL') {
+        } else if (
+          domain.protection_level === 'SENSITIVE' &&
+          highestProtectionLevel !== 'CRITICAL'
+        ) {
           highestProtectionLevel = 'SENSITIVE';
         }
       }
@@ -289,7 +297,7 @@ class DiffCollector {
       const fileEntry = {
         path: file,
         status,
-        domains: classification.domains.map(d => d.name),
+        domains: classification.domains.map((d) => d.name),
         protection_level: classification.protection_level,
         lines_added: fileDiff.added,
         lines_removed: fileDiff.removed,
@@ -324,7 +332,10 @@ class DiffCollector {
       // Update overall severity
       if (classification.protection_level === 'CRITICAL') {
         this.diffData.severity = 'CRITICAL';
-      } else if (classification.protection_level === 'SENSITIVE' && this.diffData.severity !== 'CRITICAL') {
+      } else if (
+        classification.protection_level === 'SENSITIVE' &&
+        this.diffData.severity !== 'CRITICAL'
+      ) {
         this.diffData.severity = 'SENSITIVE';
       }
     }
@@ -368,14 +379,20 @@ class DiffCollector {
     console.log(`║ Total Files: ${this.diffData.summary.total_files}`.padEnd(64) + '║');
     console.log(`║ Lines Added: ${this.diffData.summary.total_lines_added}`.padEnd(64) + '║');
     console.log(`║ Lines Removed: ${this.diffData.summary.total_lines_removed}`.padEnd(64) + '║');
-    console.log(`║ Domains Affected: ${this.diffData.domains_affected.join(', ') || 'None'}`.padEnd(64) + '║');
+    console.log(
+      `║ Domains Affected: ${this.diffData.domains_affected.join(', ') || 'None'}`.padEnd(64) + '║'
+    );
     console.log(`║ Overall Severity: ${this.diffData.severity}`.padEnd(64) + '║');
     console.log('╠═══════════════════════════════════════════════════════════════╣');
 
     if (Object.keys(this.diffData.summary.by_domain).length > 0) {
       console.log('║ By Domain:'.padEnd(64) + '║');
       for (const [domain, stats] of Object.entries(this.diffData.summary.by_domain)) {
-        console.log(`║   • ${domain}: ${stats.files} file(s), +${stats.lines_added} -${stats.lines_removed}`.padEnd(64) + '║');
+        console.log(
+          `║   • ${domain}: ${stats.files} file(s), +${stats.lines_added} -${stats.lines_removed}`.padEnd(
+            64
+          ) + '║'
+        );
       }
     }
 

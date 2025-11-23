@@ -1,6 +1,6 @@
 /**
  * Shield Routes - CodeRabbit Round 3 Security Tests
- * 
+ *
  * Tests for enhanced security features applied in Round 3:
  * - Enhanced input validation with stricter parameter checks
  * - Improved error messages with security context
@@ -15,10 +15,10 @@ const rateLimit = require('express-rate-limit');
 
 // Mock dependencies
 const mockAuthenticateToken = jest.fn((req, res, next) => {
-  req.user = { 
-    id: 'test-user-id', 
+  req.user = {
+    id: 'test-user-id',
     organizationId: 'test-org-id',
-    email: 'test@example.com' 
+    email: 'test@example.com'
   };
   next();
 });
@@ -78,7 +78,7 @@ app.use('/api/shield', shieldRoutes);
 describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset mock implementations
     mockSupabaseServiceClient.from.mockReturnValue(mockSupabaseServiceClient);
     mockSupabaseServiceClient.select.mockReturnValue(mockSupabaseServiceClient);
@@ -96,9 +96,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
         count: 0
       });
 
-      const response = await request(app)
-        .get('/api/shield/events?page=abc&limit=xyz')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?page=abc&limit=xyz').expect(200);
 
       expect(response.body).toEqual({
         success: true,
@@ -150,9 +148,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
         count: 0
       });
 
-      const response = await request(app)
-        .get('/api/shield/events?limit=999')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?limit=999').expect(200);
 
       expect(response.body.data.pagination.limit).toBe(100); // Should be capped at 100
     });
@@ -164,9 +160,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
         count: 0
       });
 
-      const response = await request(app)
-        .get('/api/shield/events?page=-5')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?page=-5').expect(200);
 
       expect(response.body.data.pagination.page).toBe(1); // Should be minimum 1
     });
@@ -203,7 +197,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
 
     test('should accept valid UUID formats for revert actions', async () => {
       const validUUID = '550e8400-e29b-41d4-a716-446655440000';
-      
+
       // Mock existing action
       mockSupabaseServiceClient.single.mockResolvedValue({
         data: {
@@ -246,7 +240,8 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
         null // Null (should be handled)
       ];
 
-      for (const invalidReason of invalidReasons.slice(0, -1)) { // Exclude null for this test
+      for (const invalidReason of invalidReasons.slice(0, -1)) {
+        // Exclude null for this test
         const response = await request(app)
           .post(`/api/shield/revert/${validUUID}`)
           .send({ reason: invalidReason })
@@ -344,9 +339,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
         count: 1
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events').expect(200);
 
       expect(response.body.data.events[0]).toEqual({
         id: '550e8400-e29b-41d4-a716-446655440000',
@@ -366,9 +359,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
       // This is actually handled gracefully now, but we test the error structure
       mockSupabaseServiceClient.select.mockRejectedValue(new Error('Database error'));
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(500);
+      const response = await request(app).get('/api/shield/events').expect(500);
 
       expect(response.body).toEqual({
         success: false,
@@ -426,9 +417,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
         error: null
       });
 
-      const response = await request(app)
-        .get('/api/shield/stats')
-        .expect(200);
+      const response = await request(app).get('/api/shield/stats').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.total).toBe(4); // All records counted
@@ -453,9 +442,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
         count: 0
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events').expect(200);
 
       expect(response.body).toEqual({
         success: true,
@@ -516,9 +503,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
       const dbError = new Error('Connection failed');
       mockSupabaseServiceClient.select.mockRejectedValue(dbError);
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(500);
+      const response = await request(app).get('/api/shield/events').expect(500);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Shield events endpoint error',
@@ -561,9 +546,7 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
     test('should return proper configuration with validation constants', async () => {
       mockFlags.isEnabled.mockReturnValue(true);
 
-      const response = await request(app)
-        .get('/api/shield/config')
-        .expect(200);
+      const response = await request(app).get('/api/shield/config').expect(200);
 
       expect(response.body).toEqual({
         success: true,
@@ -583,20 +566,39 @@ describe('Shield Routes - CodeRabbit Round 3 Security Tests', () => {
           validation: {
             categories: ['all', 'toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'],
             timeRanges: ['7d', '30d', '90d', 'all'],
-            platforms: ['all', 'twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'],
+            platforms: [
+              'all',
+              'twitter',
+              'youtube',
+              'instagram',
+              'facebook',
+              'discord',
+              'twitch',
+              'reddit',
+              'tiktok',
+              'bluesky'
+            ],
             actionTypes: ['all', 'block', 'mute', 'flag', 'report']
           },
           categories: ['toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'],
-          platforms: ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'],
+          platforms: [
+            'twitter',
+            'youtube',
+            'instagram',
+            'facebook',
+            'discord',
+            'twitch',
+            'reddit',
+            'tiktok',
+            'bluesky'
+          ],
           actionTypes: ['block', 'mute', 'flag', 'report']
         }
       });
     });
 
     test('should log configuration requests for security monitoring', async () => {
-      await request(app)
-        .get('/api/shield/config')
-        .expect(200);
+      await request(app).get('/api/shield/config').expect(200);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Shield config requested',

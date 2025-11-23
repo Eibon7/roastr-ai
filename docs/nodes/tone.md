@@ -59,23 +59,23 @@ const TONE_DEFINITIONS = Object.freeze({
 
 **Valid Values:** `['witty', 'clever', 'playful']`
 
-| Type | Description | Example |
-|------|-------------|---------|
-| **witty** | Quick, sharp humor | "Tu comentario tiene más bugs que Windows Vista" |
-| **clever** | Intelligent wordplay | "Argumentación tan sólida como JavaScript sin tipos" |
-| **playful** | Light, fun teasing | "¿Tu teclado tiene autocorrecto o solo mal gusto?" |
+| Type        | Description          | Example                                              |
+| ----------- | -------------------- | ---------------------------------------------------- |
+| **witty**   | Quick, sharp humor   | "Tu comentario tiene más bugs que Windows Vista"     |
+| **clever**  | Intelligent wordplay | "Argumentación tan sólida como JavaScript sin tipos" |
+| **playful** | Light, fun teasing   | "¿Tu teclado tiene autocorrecto o solo mal gusto?"   |
 
 ### Intensity Levels
 
 **Range:** 1-5 (integer)
 
-| Level | Description | Tone Mapping |
-|-------|-------------|--------------|
-| 1 | Very gentle | Always Flanders |
-| 2 | Mild | Flanders or light Balanceado |
-| 3 | Moderate | Balanceado |
-| 4 | Strong | Heavy Balanceado or light Canalla |
-| 5 | Maximum | Always Canalla |
+| Level | Description | Tone Mapping                      |
+| ----- | ----------- | --------------------------------- |
+| 1     | Very gentle | Always Flanders                   |
+| 2     | Mild        | Flanders or light Balanceado      |
+| 3     | Moderate    | Balanceado                        |
+| 4     | Strong      | Heavy Balanceado or light Canalla |
+| 5     | Maximum     | Always Canalla                    |
 
 ### Tone Normalization
 
@@ -86,9 +86,9 @@ const TONE_DEFINITIONS = Object.freeze({
 ```javascript
 // Canonical map (lowercase → canonical)
 const TONE_MAP_CANONICAL = {
-  'flanders': 'Flanders',
-  'balanceado': 'Balanceado',
-  'canalla': 'Canalla'
+  flanders: 'Flanders',
+  balanceado: 'Balanceado',
+  canalla: 'Canalla'
 };
 
 function normalizeTone(tone) {
@@ -98,9 +98,9 @@ function normalizeTone(tone) {
 }
 
 // Examples:
-normalizeTone('FLANDERS')    // → 'Flanders'
-normalizeTone('  Canalla  ') // → 'Canalla'
-normalizeTone('invalid')     // → null
+normalizeTone('FLANDERS'); // → 'Flanders'
+normalizeTone('  Canalla  '); // → 'Canalla'
+normalizeTone('invalid'); // → null
 ```
 
 ## Integration with Roast Generation
@@ -133,12 +133,12 @@ mapUserTone(userConfig) {
 
 ### Tone Mapping by Plan
 
-| Plan | Available Tones | Humor Types | Intensity | Custom Style |
-|------|----------------|-------------|-----------|--------------|
-| **Free** | Balanceado only | witty only | Fixed at 3 | ❌ |
-| **Starter** | All 3 | All 3 | 1-5 | ❌ |
-| **Pro** | All 3 | All 3 | 1-5 | ❌ |
-| **Plus** | All 3 | All 3 | 1-5 | ✅ |
+| Plan        | Available Tones | Humor Types | Intensity  | Custom Style |
+| ----------- | --------------- | ----------- | ---------- | ------------ |
+| **Free**    | Balanceado only | witty only  | Fixed at 3 | ❌           |
+| **Starter** | All 3           | All 3       | 1-5        | ❌           |
+| **Pro**     | All 3           | All 3       | 1-5        | ❌           |
+| **Plus**    | All 3           | All 3       | 1-5        | ✅           |
 
 ## API Routes
 
@@ -250,6 +250,7 @@ describe('Tone Validation', () => {
 **File:** `tests/integration/generation-issue-409.test.js` (**Issue #409**)
 
 **Tone Enforcement Tests (AC1):**
+
 - ✅ `should respect user tone preference in all variants` - Validates all generated variants use user's configured tone
 - ✅ `should fallback to default tone when user has no preference` - Tests default tone behavior
 - 🟡 `should reject invalid tone parameter` - Validates error handling for invalid tones (needs fix)
@@ -276,11 +277,11 @@ test('tone configuration affects roast style', async () => {
 
 ### Common Errors
 
-| Error | Cause | Resolution |
-|-------|-------|-----------|
-| `Invalid tone` | Unrecognized tone name | Use normalizeTone() before validation |
-| `Intensity out of range` | Value < 1 or > 5 | Clamp to [1, 5] or reject |
-| `Custom style on wrong plan` | Free/Starter/Pro trying custom prompt | Upgrade to Plus or disable feature |
+| Error                        | Cause                                 | Resolution                            |
+| ---------------------------- | ------------------------------------- | ------------------------------------- |
+| `Invalid tone`               | Unrecognized tone name                | Use normalizeTone() before validation |
+| `Intensity out of range`     | Value < 1 or > 5                      | Clamp to [1, 5] or reject             |
+| `Custom style on wrong plan` | Free/Starter/Pro trying custom prompt | Upgrade to Plus or disable feature    |
 
 ## Future Enhancements
 
@@ -298,30 +299,31 @@ test('tone configuration affects roast style', async () => {
 
 ### Test Files
 
-| Test File | Tests | Purpose |
-|-----------|-------|---------|
-| `tests/unit/config/tones.test.js` | 24 | Core tone definitions, normalization, validation |
-| `tests/unit/config/validationConstants-humor.test.js` | 29 | Humor type validation (5 types) |
-| `tests/unit/config/validationConstants-intensity.test.js` | 40 | Intensity level validation (1-5) |
-| `tests/unit/services/roastPromptTemplate-tone.test.js` | 61 | Integration with roast generation |
+| Test File                                                 | Tests | Purpose                                          |
+| --------------------------------------------------------- | ----- | ------------------------------------------------ |
+| `tests/unit/config/tones.test.js`                         | 24    | Core tone definitions, normalization, validation |
+| `tests/unit/config/validationConstants-humor.test.js`     | 29    | Humor type validation (5 types)                  |
+| `tests/unit/config/validationConstants-intensity.test.js` | 40    | Intensity level validation (1-5)                 |
+| `tests/unit/services/roastPromptTemplate-tone.test.js`    | 61    | Integration with roast generation                |
 
 **Total Tests:** 154 (130 new + 24 existing)
 
 ### Coverage Metrics
 
-| Component | File | Coverage | Tests |
-|-----------|------|----------|-------|
-| Tone Definitions | `src/config/tones.js` | 100% | 24 |
-| Humor Type Validation | `src/config/validationConstants.js` | 100%* | 29 |
-| Intensity Validation | `src/config/validationConstants.js` | 100%* | 40 |
-| Tone Mapping | `src/services/roastPromptTemplate.js` | 100%** | 61 |
+| Component             | File                                  | Coverage | Tests |
+| --------------------- | ------------------------------------- | -------- | ----- |
+| Tone Definitions      | `src/config/tones.js`                 | 100%     | 24    |
+| Humor Type Validation | `src/config/validationConstants.js`   | 100%\*   | 29    |
+| Intensity Validation  | `src/config/validationConstants.js`   | 100%\*   | 40    |
+| Tone Mapping          | `src/services/roastPromptTemplate.js` | 100%\*\* | 61    |
 
-*100% coverage for tone-related functions (humor types + intensity)
-**100% coverage for `mapUserTone()` function
+\*100% coverage for tone-related functions (humor types + intensity)
+\*\*100% coverage for `mapUserTone()` function
 
 ### Test Categories
 
 #### 1. Unit Tests (93 tests)
+
 - Tone normalization (case-insensitive, whitespace)
 - Humor type validation (witty, clever, sarcastic, playful, observational)
 - Intensity level validation (1-5, boundaries, decimals)
@@ -329,12 +331,14 @@ test('tone configuration affects roast style', async () => {
 - Frozen objects (immutability)
 
 #### 2. Integration Tests (61 tests)
+
 - Tone + humor combinations (18 combinations)
 - Intensity modifiers (low, medium, high)
 - Custom style prompt injection
 - Full configuration combinations
 
 #### 3. Edge Cases & Security
+
 - SQL injection attempts
 - XSS attacks
 - Very long inputs (5000+ chars)
@@ -342,6 +346,7 @@ test('tone configuration affects roast style', async () => {
 - Type confusion attacks
 
 #### 4. Performance Tests
+
 - O(1) validation time (<100ms for 30k ops)
 - Deterministic output
 - 1000 tone mappings in <100ms
@@ -375,6 +380,7 @@ mapUserTone({
 ### Test Evidence
 
 **Location:** `docs/test-evidence/issue-717/`
+
 - `SUMMARY.md` - Comprehensive test results and analysis
 - `test-output.txt` - Full test execution output
 
@@ -389,7 +395,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Test Engineer**
 - **Backend Developer**
 - **UX Designer**
-
 
 ## Related Nodes
 

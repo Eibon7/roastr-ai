@@ -12,7 +12,7 @@
 ### Why Guardian Was Invoked
 
 - **Label:** `billing` (matches trigger: `labels: ["critical", "security", "billing"]`)
-- **Diff includes:** 
+- **Diff includes:**
   - `src/routes/checkout.js` (billing-related)
   - `src/services/entitlementsService.js` (billing-related)
   - `src/routes/polarWebhook.js` (billing webhooks)
@@ -25,12 +25,14 @@
 ### 1. Billing Code Changes Review
 
 **Files Changed:**
+
 - `src/utils/polarHelpers.js` - Product ID mapping
 - `src/routes/checkout.js` - Checkout endpoint parameters
 - `src/routes/polarWebhook.js` - Webhook processing
 - `src/services/entitlementsService.js` - Entitlements from Polar
 
 **Security Review:**
+
 - ✅ No pricing changes (only ID mapping)
 - ✅ No quota modifications
 - ✅ No auth policy changes
@@ -39,12 +41,14 @@
 ### 2. Environment Variables
 
 **Variables Updated:**
+
 - `POLAR_STARTER_PRODUCT_ID` (already in .env)
 - `POLAR_PRO_PRODUCT_ID` (already in .env)
 - `POLAR_PLUS_PRODUCT_ID` (already in .env)
 - `POLAR_ALLOWED_PRODUCT_IDS` (new, optional)
 
 **Validation:**
+
 - ✅ Variables match existing .env configuration
 - ✅ No new secrets exposed
 - ✅ Documentation updated
@@ -52,12 +56,14 @@
 ### 3. Backward Compatibility
 
 **Compatibility Strategy:**
+
 - ✅ Legacy functions maintained (`getPlanFromPriceId()`, etc.)
 - ✅ Checkout endpoint accepts both `product_id` and `price_id`
 - ✅ Webhooks handle both `product_id` and `product_price_id`
 - ✅ Warnings logged for deprecated functions
 
 **Risk Assessment:**
+
 - **Risk Level:** LOW
 - **Breaking Changes:** None
 - **Migration Path:** Clear (legacy support during transition)
@@ -101,7 +107,7 @@
 - **Review Date:** 2025-11-17
 - **Reviewer:** Guardian (automated)
 - **Decision:** APPROVED for merge
-- **Conditions:** 
+- **Conditions:**
   - Manual testing recommended before merge
   - Issue #808 will add comprehensive tests
 
@@ -110,6 +116,7 @@
 ## Completion Validation
 
 **Pre-merge Checklist:**
+
 - [x] No pricing changes
 - [x] No security vulnerabilities
 - [x] Backward compatibility maintained
@@ -126,7 +133,7 @@
 This PR is a preparation step for Issue #808. It refactors the code to use Polar's `product_id` instead of Stripe's `price_id`. No functional changes, only internal refactoring with backward compatibility.
 
 Manual testing recommended:
+
 1. Test checkout creation with `product_id`
 2. Test webhook processing with `product_id`
 3. Verify backward compatibility with `price_id` (if possible)
-

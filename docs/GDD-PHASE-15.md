@@ -36,6 +36,7 @@ Compares declared coverage values in node docs against actual test coverage from
 - Flags mismatches that exceed tolerance as violations
 
 **Example:**
+
 ```yaml
 # In docs/nodes/shield.md
 **Coverage:** 70%
@@ -58,6 +59,7 @@ Validates `**Last Updated:**` fields against actual git commit history:
 - Detects future dates (declared date in future)
 
 **Example:**
+
 ```yaml
 # In docs/nodes/roast.md
 **Last Updated:** 2025-10-05
@@ -79,6 +81,7 @@ Compares declared dependencies against actual imports/requires in source code:
 - Flags phantom dependencies (imported but not declared)
 
 **Example:**
+
 ```yaml
 # In docs/nodes/roast.md
 **Dependencies:**
@@ -115,6 +118,7 @@ node scripts/validate-gdd-cross.js --full --ci
 ### Output Formats
 
 **Markdown Report** (`docs/cross-validation-report.md`):
+
 ```markdown
 # Cross-Validation Report
 
@@ -125,19 +129,21 @@ node scripts/validate-gdd-cross.js --full --ci
 ## Coverage Validation
 
 **Status:** ⚠️ FAIL
+
 - **Total Checked:** 13
 - **Matched:** 11
 - **Mismatched:** 2
 
 ### Violations
 
-| Node | Declared | Actual | Diff | Reason |
-|------|----------|--------|------|--------|
-| shield | 70% | 75% | +5% | coverage_mismatch |
-| roast | 100% | 95% | -5% | coverage_mismatch |
+| Node   | Declared | Actual | Diff | Reason            |
+| ------ | -------- | ------ | ---- | ----------------- |
+| shield | 70%      | 75%    | +5%  | coverage_mismatch |
+| roast  | 100%     | 95%    | -5%  | coverage_mismatch |
 ```
 
 **JSON Report** (`gdd-cross.json`):
+
 ```json
 {
   "nodes_validated": 13,
@@ -173,20 +179,23 @@ Monitors 9 external platform integrations:
 **Platforms:** Twitter (X), Discord, Twitch, YouTube, Instagram, Facebook, Reddit, TikTok, Bluesky
 
 **Status Levels:**
+
 - **active**: Adapter exists + credentials configured + recent successful API calls
 - **inactive**: Adapter exists + credentials missing or API calls failing
 - **not_connected**: No adapter implementation found
 
 **Health Calculation:**
+
 ```javascript
 // Per-platform health (0-100)
-health = (adapter_exists ? 40 : 0) + (credentials_present ? 60 : 0)
+health = (adapter_exists ? 40 : 0) + (credentials_present ? 60 : 0);
 
 // Overall connectivity health
-overall_health = average(all_platform_health_scores)
+overall_health = average(all_platform_health_scores);
 ```
 
 **Commands:**
+
 ```bash
 # Check all integrations
 node scripts/update-integration-status.js
@@ -199,6 +208,7 @@ node scripts/update-integration-status.js --ci
 ```
 
 **Output** (`integration-status.json`):
+
 ```json
 {
   "last_updated": "2025-10-09T12:00:00Z",
@@ -231,6 +241,7 @@ node scripts/update-integration-status.js --ci
 Phase 15 extends `scripts/score-gdd-health.js` with connectivity and cross-validation metrics.
 
 **Enhanced Health Formula:**
+
 ```javascript
 // Documentation Health (existing from Phase 7)
 doc_health = weighted_avg([
@@ -257,6 +268,7 @@ composite_health = weighted_avg([
 ```
 
 **Commands:**
+
 ```bash
 # Score with Phase 15 metrics
 node scripts/score-gdd-health.js --ci
@@ -278,6 +290,7 @@ node scripts/score-gdd-health.js --format=markdown
 Phase 15 enhances `scripts/watch-gdd.js` with real-time cross-validation and connectivity monitoring.
 
 **New Flags:**
+
 ```bash
 # Enable cross-validation in watch mode
 node scripts/watch-gdd.js --cross
@@ -293,6 +306,7 @@ node scripts/watch-gdd.js --all
 ```
 
 **Enhanced Dashboard Display:**
+
 ```text
 ╔═══════════════════════════════════════════════════════╗
 ║            GDD Runtime Validation Dashboard            ║
@@ -316,6 +330,7 @@ node scripts/watch-gdd.js --all
 ## Workflow Integration
 
 **Pre-Commit Workflow:**
+
 ```bash
 # 1. Run tests with coverage
 npm test -- --coverage
@@ -350,6 +365,7 @@ Cross-validation is automatically integrated into `.github/workflows/gdd-validat
 ```
 
 **Exit Codes:**
+
 - `0`: All validations passed
 - `1`: Warnings detected (coverage mismatches within tolerance, minor issues)
 - `2`: Critical errors detected (major violations, missing data sources)
@@ -360,12 +376,12 @@ Cross-validation is automatically integrated into `.github/workflows/gdd-validat
 
 Phase 15 meets all performance targets:
 
-| Operation | Target | Actual | Status |
-|-----------|--------|--------|--------|
-| Cross-validate 13 nodes | <1s | ~800ms | ✅ PASS |
-| Update integration status | <2s | ~1.2s | ✅ PASS |
-| Extended health scoring | <1s | ~600ms | ✅ PASS |
-| Watch mode refresh | <3s | ~2.1s | ✅ PASS |
+| Operation                 | Target | Actual | Status  |
+| ------------------------- | ------ | ------ | ------- |
+| Cross-validate 13 nodes   | <1s    | ~800ms | ✅ PASS |
+| Update integration status | <2s    | ~1.2s  | ✅ PASS |
+| Extended health scoring   | <1s    | ~600ms | ✅ PASS |
+| Watch mode refresh        | <3s    | ~2.1s  | ✅ PASS |
 
 ---
 
@@ -417,6 +433,7 @@ node scripts/validate-gdd-cross.js --full
 ## Files Added/Modified
 
 **New Files:**
+
 - `scripts/validate-gdd-cross.js` - Main cross-validation engine
 - `scripts/gdd-cross-validator.js` - Helper class with validation utilities
 - `scripts/update-integration-status.js` - Integration status updater
@@ -426,6 +443,7 @@ node scripts/validate-gdd-cross.js --full
 - `docs/plan/gdd-phase-15-cross-validation.md` - Implementation plan
 
 **Modified Files:**
+
 - `scripts/score-gdd-health.js` - Extended with Phase 15 metrics
 - `scripts/watch-gdd.js` - Added --cross and --connectivity flags
 - `CLAUDE.md` - Links to this documentation

@@ -31,6 +31,7 @@ starter_trial (30 days) → starter (€5/mo) → pro (€15/mo) → plus (€50
 **When:** New user registers
 
 **Action:**
+
 - Automatically assign: `starter_trial`
 - Trial duration: 30 days from signup
 - Limits: Full Starter plan functionality
@@ -40,6 +41,7 @@ starter_trial (30 days) → starter (€5/mo) → pro (€15/mo) → plus (€50
   - Analytics: ✅ Active
 
 **Implementation:**
+
 - `authService.js` - Default plan in `createUserManually()`
 - `subscriptionService.js` - Trial initialization
 - Database: `users.plan = 'starter_trial'`, `trial_end = NOW() + 30 days`
@@ -51,6 +53,7 @@ starter_trial (30 days) → starter (€5/mo) → pro (€15/mo) → plus (€50
 **When:** `trial_end` date is reached
 
 **Behavior:**
+
 - Platform access: ✅ Full UI access
 - Comment analysis: ❌ Disabled
 - Roast generation: ❌ Disabled
@@ -59,12 +62,14 @@ starter_trial (30 days) → starter (€5/mo) → pro (€15/mo) → plus (€50
 - Analytics dashboard: ✅ Visible (no new data)
 
 **User experience:**
+
 - Can navigate all screens
 - Can see previous roasts, analytics, configurations
 - Cannot trigger new operations
 - Banner/notice: "Trial expired - Upgrade to continue"
 
 **Implementation:**
+
 - Workers check `isPlanActive()` before processing
 - Queue service rejects jobs for expired trials
 - Frontend shows read-only mode
@@ -77,12 +82,14 @@ starter_trial (30 days) → starter (€5/mo) → pro (€15/mo) → plus (€50
 **When:** User subscribes before trial expires
 
 **Behavior:**
+
 - Upgrade: ✅ Immediate
 - Trial cancellation: Trial ends immediately
 - Billing: Starts immediately
 - Access: Full paid plan features
 
 **Flow:**
+
 ```
 starter_trial (day 10/30) → User subscribes to Pro
                            → trial_end = NOW()
@@ -92,6 +99,7 @@ starter_trial (day 10/30) → User subscribes to Pro
 ```
 
 **Implementation:**
+
 - `stripeWebhookService.js` - `checkout.session.completed`
 - Cancel trial immediately
 - Apply paid plan entitlements
@@ -104,6 +112,7 @@ starter_trial (day 10/30) → User subscribes to Pro
 **When:** User cancels paid subscription (Starter/Pro/Plus)
 
 **Behavior:**
+
 - Access: ✅ Full until period ends
 - Period end behavior: Same as trial expiry
   - Platform access: ✅ Yes
@@ -111,11 +120,13 @@ starter_trial (day 10/30) → User subscribes to Pro
   - Read-only: ✅ Historical data
 
 **Does NOT:**
+
 - ❌ Grant new trial period
 - ❌ Reset to `starter_trial`
 - ❌ Allow re-trial
 
 **Flow:**
+
 ```
 Pro (active) → User cancels → Access until period_end
                             → After period_end: Read-only mode
@@ -125,6 +136,7 @@ Pro (active) → User cancels → Access until period_end
 ```
 
 **Implementation:**
+
 - `stripeWebhookService.js` - `customer.subscription.deleted`
 - Maintain plan name
 - Set `subscription_status = 'canceled'`
@@ -137,6 +149,7 @@ Pro (active) → User cancels → Access until period_end
 **When:** `invoice.payment_failed` event from Stripe
 
 **Behavior:**
+
 - Same as trial expiry / cancellation:
   - Platform access: ✅ Yes
   - Processing: ❌ Disabled
@@ -145,11 +158,13 @@ Pro (active) → User cancels → Access until period_end
 **Grace period:** None (immediate suspension of processing)
 
 **Recovery:**
+
 - User updates payment method
 - `invoice.payment_succeeded` triggers
 - Processing re-enabled automatically
 
 **Implementation:**
+
 - `stripeWebhookService.js` - `_handlePaymentFailed()`
 - Set `subscription_status = 'past_due'`
 - Workers reject jobs for `past_due` status
@@ -162,18 +177,18 @@ Pro (active) → User cancels → Access until period_end
 
 ```javascript
 function isPlanActive(plan, status, trialEnd) {
-    // Paid plans must have 'active' status
-    if (['starter', 'pro', 'plus', 'creator_plus', 'custom'].includes(plan)) {
-        return status === 'active';
-    }
+  // Paid plans must have 'active' status
+  if (['starter', 'pro', 'plus', 'creator_plus', 'custom'].includes(plan)) {
+    return status === 'active';
+  }
 
-    // Trial plan must not be expired
-    if (plan === 'starter_trial') {
-        return new Date(trialEnd) > new Date();
-    }
+  // Trial plan must not be expired
+  if (plan === 'starter_trial') {
+    return new Date(trialEnd) > new Date();
+  }
 
-    // No other plans exist (no 'free')
-    return false;
+  // No other plans exist (no 'free')
+  return false;
 }
 ```
 
@@ -182,12 +197,12 @@ function isPlanActive(plan, status, trialEnd) {
 ```javascript
 // Before processing any job
 if (!isPlanActive(user.plan, user.subscription_status, user.trial_end)) {
-    logger.warn('Job rejected - inactive plan', { userId, plan, status });
-    return {
-        success: false,
-        error: 'PLAN_INACTIVE',
-        message: 'Subscription expired or payment failed. Please upgrade.'
-    };
+  logger.warn('Job rejected - inactive plan', { userId, plan, status });
+  return {
+    success: false,
+    error: 'PLAN_INACTIVE',
+    message: 'Subscription expired or payment failed. Please upgrade.'
+  };
 }
 ```
 
@@ -209,6 +224,7 @@ if (!isPlanActive(user.plan, user.subscription_status, user.trial_end)) {
 **Not needed currently** - No existing users with 'free' plan.
 
 If users exist in future:
+
 ```sql
 -- Hypothetical migration (NOT EXECUTING NOW)
 UPDATE users
@@ -222,6 +238,7 @@ WHERE plan = 'free';
 ### Phase 3: Worker Enforcement (Future PR)
 
 Add plan checks to:
+
 - `FetchCommentsWorker.js`
 - `AnalyzeToxicityWorker.js`
 - `GenerateReplyWorker.js`
@@ -319,8 +336,8 @@ Add plan checks to:
 
 ## Changelog
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                | Author           |
+| ---------- | --------------------- | ---------------- |
 | 2025-11-08 | Initial documentation | Claude (PR #756) |
 
 ---

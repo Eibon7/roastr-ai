@@ -40,7 +40,10 @@ jest.mock('@supabase/supabase-js', () => ({
 }));
 
 const { analyzeToxicity } = require('../../../src/services/perspective');
-const { analyzeToxicityWithOpenAI, generateRoastWithOpenAI } = require('../../../src/services/openai');
+const {
+  analyzeToxicityWithOpenAI,
+  generateRoastWithOpenAI
+} = require('../../../src/services/openai');
 
 describe('Core System Health', () => {
   beforeEach(() => {
@@ -50,9 +53,7 @@ describe('Core System Health', () => {
 
   describe('API Health Check', () => {
     it('should return healthy status', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
+      const response = await request(app).get('/health').expect(200);
 
       expect(response.body).toMatchObject({
         status: 'ok',
@@ -61,21 +62,20 @@ describe('Core System Health', () => {
     });
 
     it('should include security headers', async () => {
-      const response = await request(app)
-        .get('/health');
+      const response = await request(app).get('/health');
 
       expect(response.headers['x-content-type-options']).toBe('nosniff');
       expect(response.headers['x-frame-options']).toBe('DENY');
     });
 
     it('should handle health check endpoint gracefully under load', async () => {
-      const requests = Array(10).fill().map(() => 
-        request(app).get('/health').expect(200)
-      );
+      const requests = Array(10)
+        .fill()
+        .map(() => request(app).get('/health').expect(200));
 
       const responses = await Promise.all(requests);
-      
-      responses.forEach(response => {
+
+      responses.forEach((response) => {
         expect(response.body.status).toBe('ok');
       });
     });
@@ -137,7 +137,9 @@ describe('Core System Health', () => {
 
     it('should handle OpenAI API errors gracefully', async () => {
       // Mock service error
-      analyzeToxicityWithOpenAI.mockRejectedValueOnce(new Error('OpenAI service temporarily unavailable'));
+      analyzeToxicityWithOpenAI.mockRejectedValueOnce(
+        new Error('OpenAI service temporarily unavailable')
+      );
       generateRoastWithOpenAI.mockRejectedValueOnce(new Error('Token limit exceeded'));
 
       const errors = [];
@@ -165,30 +167,27 @@ describe('Core System Health', () => {
 
       // Test database connectivity
       const healthCheck = await supabase.rpc('ping');
-      
+
       expect(healthCheck.data).toBe('pong');
       expect(healthCheck.error).toBeNull();
 
       // Test basic query
-      const testQuery = await supabase
-        .from('test_table')
-        .select('*')
-        .single();
+      const testQuery = await supabase.from('test_table').select('*').single();
 
       expect(testQuery).toBeDefined();
     });
 
     it('should handle Supabase connection errors gracefully', async () => {
       const { createClient } = require('@supabase/supabase-js');
-      
+
       // Mock connection error
       const mockSupabase = {
         from: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         single: jest.fn().mockRejectedValue(new Error('Connection timeout')),
-        rpc: jest.fn().mockResolvedValue({ 
-          data: null, 
-          error: { message: 'Database unavailable' } 
+        rpc: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Database unavailable' }
         })
       };
 
@@ -215,7 +214,7 @@ describe('Core System Health', () => {
 
       expect(queueService).toBeDefined();
       expect(queueService.constructor.name).toBe('QueueService');
-      
+
       // Test that service can be instantiated without throwing
       expect(() => new QueueService()).not.toThrow();
     });
@@ -227,7 +226,7 @@ describe('Core System Health', () => {
       expect(shieldService).toBeDefined();
       expect(typeof shieldService.analyzeForShield).toBe('function');
       expect(typeof shieldService.queueHighPriorityAnalysis).toBe('function');
-      
+
       // Verify service configuration
       expect(shieldService.priorityLevels).toBeDefined();
       expect(shieldService.actionMatrix).toBeDefined();
@@ -239,7 +238,7 @@ describe('Core System Health', () => {
 
       expect(costControl).toBeDefined();
       expect(costControl.constructor.name).toBe('CostControlService');
-      
+
       // Test that service can be instantiated without throwing
       expect(() => new CostControlService()).not.toThrow();
     });
@@ -250,7 +249,7 @@ describe('Core System Health', () => {
       // Mock all services as healthy
       analyzeToxicity.mockResolvedValue({ score: 0.1 });
       analyzeToxicityWithOpenAI.mockResolvedValue({ toxic: false });
-      
+
       const systemHealth = {
         perspective: 'healthy',
         openai: 'healthy',
@@ -282,7 +281,7 @@ describe('Core System Health', () => {
       // Mock services with errors
       analyzeToxicity.mockRejectedValue(new Error('Service error'));
       analyzeToxicityWithOpenAI.mockRejectedValue(new Error('Rate limited'));
-      
+
       const systemHealth = {
         perspective: 'unknown',
         openai: 'unknown',
@@ -312,9 +311,9 @@ describe('Core System Health', () => {
     it('should provide system recovery detection', async () => {
       // First, services fail
       analyzeToxicity.mockRejectedValueOnce(new Error('Temporary failure'));
-      
+
       let firstAttempt, secondAttempt;
-      
+
       try {
         await analyzeToxicity('test');
         firstAttempt = 'success';
@@ -324,7 +323,7 @@ describe('Core System Health', () => {
 
       // Then, services recover
       analyzeToxicity.mockResolvedValueOnce({ score: 0.2 });
-      
+
       try {
         await analyzeToxicity('test');
         secondAttempt = 'success';
@@ -340,28 +339,25 @@ describe('Core System Health', () => {
   describe('Performance Monitoring', () => {
     it('should monitor response times for core operations', async () => {
       const startTime = Date.now();
-      
-      analyzeToxicity.mockImplementation(() => 
-        new Promise(resolve => 
-          setTimeout(() => resolve({ score: 0.1 }), 100)
-        )
+
+      analyzeToxicity.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve({ score: 0.1 }), 100))
       );
 
       await analyzeToxicity('performance test');
-      
+
       const responseTime = Date.now() - startTime;
-      
+
       expect(responseTime).toBeGreaterThan(90); // At least 90ms due to delay
-      expect(responseTime).toBeLessThan(500);   // But under acceptable threshold
+      expect(responseTime).toBeLessThan(500); // But under acceptable threshold
     });
 
     it('should detect performance degradation', async () => {
       const responses = [];
-      
-      analyzeToxicity.mockImplementation(() => 
-        new Promise(resolve => 
-          setTimeout(() => resolve({ score: 0.1 }), Math.random() * 1000)
-        )
+
+      analyzeToxicity.mockImplementation(
+        () =>
+          new Promise((resolve) => setTimeout(() => resolve({ score: 0.1 }), Math.random() * 1000))
       );
 
       // Run multiple requests to detect performance
@@ -373,12 +369,12 @@ describe('Core System Health', () => {
       }
 
       const averageResponseTime = responses.reduce((a, b) => a + b, 0) / responses.length;
-      
+
       expect(responses.length).toBe(3);
       expect(averageResponseTime).toBeGreaterThan(0);
-      
+
       // Check if any response took too long (performance degradation)
-      const slowResponses = responses.filter(time => time > 800);
+      const slowResponses = responses.filter((time) => time > 800);
       if (slowResponses.length > 0) {
         console.warn(`Performance degradation detected: ${slowResponses.length} slow responses`);
       }

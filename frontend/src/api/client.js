@@ -1,6 +1,6 @@
 /**
  * API Client for Frontend
- * 
+ *
  * Centralized HTTP client for making API requests
  * Handles authentication, error responses, and request configuration
  */
@@ -11,7 +11,7 @@ class ApiClient {
   constructor(baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3000') {
     this.baseURL = baseURL;
     this.defaultHeaders = {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     };
   }
 
@@ -39,11 +39,11 @@ class ApiClient {
 
     try {
       const response = await fetch(fullUrl, config);
-      
+
       // Handle non-JSON responses
       const contentType = response.headers.get('content-type');
       let responseData;
-      
+
       if (contentType && contentType.includes('application/json')) {
         responseData = await response.json();
       } else {
@@ -100,10 +100,8 @@ class ApiClient {
     if (isMockModeEnabled()) {
       return 'mock-jwt-token-12345';
     }
-    
-    return localStorage.getItem('auth_token') || 
-           sessionStorage.getItem('auth_token') || 
-           null;
+
+    return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || null;
   }
 
   setAuthToken(token) {

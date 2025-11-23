@@ -78,12 +78,10 @@ describe('Checkout Route - Price ID Security (M1)', () => {
     it('should reject completely unauthorized price_id', async () => {
       const UNAUTHORIZED_ID = 'price_unauthorized_attack_xxxxx';
 
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'attacker@test.com',
-          price_id: UNAUTHORIZED_ID
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'attacker@test.com',
+        price_id: UNAUTHORIZED_ID
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid price_id');
@@ -93,36 +91,30 @@ describe('Checkout Route - Price ID Security (M1)', () => {
     it('should reject price_id with SQL injection attempt', async () => {
       const sqlInjectionId = "'; DROP TABLE users; --";
 
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'attacker@test.com',
-          price_id: sqlInjectionId
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'attacker@test.com',
+        price_id: sqlInjectionId
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid price_id');
     });
 
     it('should reject empty price_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@test.com',
-          price_id: ''
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@test.com',
+        price_id: ''
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Missing required fields');
     });
 
     it('should reject request without price_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@test.com'
-          // Missing price_id
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@test.com'
+        // Missing price_id
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Missing required fields');
@@ -131,12 +123,10 @@ describe('Checkout Route - Price ID Security (M1)', () => {
     it('should enforce case-sensitive price_id matching', async () => {
       const uppercaseId = VALID_STARTER_ID.toUpperCase();
 
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@test.com',
-          price_id: uppercaseId
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@test.com',
+        price_id: uppercaseId
+      });
 
       // Should fail because price IDs are case-sensitive
       expect(res.status).toBe(400);
@@ -146,12 +136,10 @@ describe('Checkout Route - Price ID Security (M1)', () => {
 
   describe('Valid Price ID Acceptance', () => {
     it('should accept valid Starter price_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'customer@test.com',
-          price_id: VALID_STARTER_ID
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'customer@test.com',
+        price_id: VALID_STARTER_ID
+      });
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('checkout');
@@ -160,12 +148,10 @@ describe('Checkout Route - Price ID Security (M1)', () => {
     });
 
     it('should accept valid Pro price_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'customer@test.com',
-          price_id: VALID_PRO_ID
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'customer@test.com',
+        price_id: VALID_PRO_ID
+      });
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('checkout');
@@ -173,12 +159,10 @@ describe('Checkout Route - Price ID Security (M1)', () => {
     });
 
     it('should accept valid Plus price_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'customer@test.com',
-          price_id: VALID_PLUS_ID
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'customer@test.com',
+        price_id: VALID_PLUS_ID
+      });
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('checkout');
@@ -191,12 +175,10 @@ describe('Checkout Route - Price ID Security (M1)', () => {
       // Try with a price_id that's almost valid but slightly different
       const similarId = VALID_STARTER_ID.slice(0, -1) + 'x';
 
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'attacker@test.com',
-          price_id: similarId
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'attacker@test.com',
+        price_id: similarId
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid price_id');
@@ -205,36 +187,30 @@ describe('Checkout Route - Price ID Security (M1)', () => {
     it('should reject price_id with special characters', async () => {
       const specialCharsId = VALID_STARTER_ID + '?param=value';
 
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'attacker@test.com',
-          price_id: specialCharsId
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'attacker@test.com',
+        price_id: specialCharsId
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid price_id');
     });
 
     it('should reject null price_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@test.com',
-          price_id: null
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@test.com',
+        price_id: null
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Missing required fields');
     });
 
     it('should reject undefined price_id', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'test@test.com',
-          price_id: undefined
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'test@test.com',
+        price_id: undefined
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Missing required fields');
@@ -262,12 +238,10 @@ describe('Checkout Route - Price ID Security (M1)', () => {
 
   describe('Email Format Validation (M5)', () => {
     it('should reject email without @ symbol', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'invalidemailtest.com',
-          price_id: VALID_STARTER_ID
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'invalidemailtest.com',
+        price_id: VALID_STARTER_ID
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid email');
@@ -275,24 +249,20 @@ describe('Checkout Route - Price ID Security (M1)', () => {
     });
 
     it('should reject email without domain', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'invalid@',
-          price_id: VALID_STARTER_ID
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'invalid@',
+        price_id: VALID_STARTER_ID
+      });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid email');
     });
 
     it('should accept valid email format', async () => {
-      const res = await request(app)
-        .post('/api/checkout')
-        .send({
-          customer_email: 'valid.user@example.com',
-          price_id: VALID_STARTER_ID
-        });
+      const res = await request(app).post('/api/checkout').send({
+        customer_email: 'valid.user@example.com',
+        price_id: VALID_STARTER_ID
+      });
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('checkout');

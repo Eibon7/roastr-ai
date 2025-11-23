@@ -1,6 +1,7 @@
 # Issue #868 - Complete Cleanup Plan
 
 ## Estado Actual (Commit 5baa8f59)
+
 ✅ Completado: 18-25 referencias eliminadas
 ❌ Pendiente: 55+ referencias en production
 
@@ -9,9 +10,11 @@
 ## FASE 1: Workers & Core Routes (CRÍTICO) ⚠️
 
 ### 1.1 Workers (8 archivos)
+
 - [ ] `src/workers/GenerateReplyWorker.js` (8 humor_type, 1 intensity) - **PRIORITY 1**
 
 ### 1.2 Routes Core (6 archivos)
+
 - [ ] `src/routes/user.js` - User config
 - [ ] `src/routes/approval.js` - Approval system
 - [ ] `src/routes/analytics.js` - Analytics
@@ -19,6 +22,7 @@
 - [ ] `src/routes/config.js` - Config management
 
 ### 1.3 Lib & Services (2 archivos)
+
 - [ ] `src/lib/prompts/roastPrompt.js` - Prompt builder
 - [ ] `src/services/rqcService.js` - Quality control
 
@@ -54,6 +58,7 @@
 ## FASE 5: Tests Update (Selective)
 
 ### 5.1 Critical Tests (8 archivos)
+
 - [ ] `tests/unit/workers/GenerateReplyWorker.test.js`
 - [ ] `tests/unit/routes/roast.test.js`
 - [ ] `tests/unit/routes/user.test.js`
@@ -64,6 +69,7 @@
 - [ ] `tests/integration/complete-roast-flow.test.js`
 
 ### 5.2 Integration Tests (Mark as deprecated/skip)
+
 - Resto de tests con referencias obsoletas
 
 ---
@@ -91,6 +97,7 @@
 ---
 
 ## Estimación de Tiempo
+
 - FASE 1: ~30-45 min (crítico)
 - FASE 2: ~20 min
 - FASE 3: ~15 min (migrations)
@@ -103,6 +110,7 @@
 ---
 
 ## Criterio de Éxito
+
 ✅ 0 referencias a `humor_type`/`humorType` en `src/`
 ✅ 0 referencias a `intensity_level`/`intensityLevel` en `src/`
 ✅ 0 referencias en frontend crítico
@@ -115,4 +123,3 @@
 **Status:** IN PROGRESS
 **Started:** 2025-11-18
 **Current Phase:** FASE 1.1 (Workers)
-

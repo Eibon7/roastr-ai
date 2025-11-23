@@ -60,21 +60,21 @@ const requireBilling = (req, res, next) => {
  * Get available subscription plans
  */
 router.get('/plans', (req, res) => {
-    try {
-        res.json({
-            success: true,
-            data: {
-                plans: PLAN_CONFIG,
-                currentPlan: null // Will be filled by frontend based on user data
-            }
-        });
-    } catch (error) {
-        logger.error('Error fetching plans:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to fetch plans'
-        });
-    }
+  try {
+    res.json({
+      success: true,
+      data: {
+        plans: PLAN_CONFIG,
+        currentPlan: null // Will be filled by frontend based on user data
+      }
+    });
+  } catch (error) {
+    logger.error('Error fetching plans:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch plans'
+    });
+  }
 });
 
 /**
@@ -82,158 +82,159 @@ router.get('/plans', (req, res) => {
  * Create Stripe Checkout session for subscription
  */
 router.post('/create-checkout-session', authenticateToken, requireBilling, async (req, res) => {
-    try {
-        const { plan, lookupKey } = req.body;
-        const userId = req.user.id;
-        const userEmail = req.user.email;
+  try {
+    const { plan, lookupKey } = req.body;
+    const userId = req.user.id;
+    const userEmail = req.user.email;
 
-        // Support both plan and lookupKey formats
-        let targetLookupKey = lookupKey;
-        
-        if (plan && !lookupKey) {
-            // Map plan to lookup key
-            const planLookupMap = {
-                'starter': process.env.STRIPE_PRICE_LOOKUP_STARTER || 'plan_starter',
-                'pro': process.env.STRIPE_PRICE_LOOKUP_PRO || 'plan_pro',
-                'plus': process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plan_plus'
-            };
-            targetLookupKey = planLookupMap[plan];
-        }
+    // Support both plan and lookupKey formats
+    let targetLookupKey = lookupKey;
 
-        if (!targetLookupKey) {
-            return res.status(400).json({
-                success: false,
-                error: 'plan is required (free|starter|pro|plus)'
-            });
-        }
-
-        // Free plan doesn't require Stripe
-        if (plan === PLAN_IDS.STARTER_TRIAL) {
-            return res.json({
-                success: true,
-                data: {
-                    message: 'Free plan activated',
-                    plan: PLAN_IDS.STARTER_TRIAL
-                }
-            });
-        }
-
-        // Validate lookup key
-        const validLookupKeys = [
-            process.env.STRIPE_PRICE_LOOKUP_STARTER || 'plan_starter',
-            process.env.STRIPE_PRICE_LOOKUP_PRO || 'plan_pro',
-            process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plan_plus'
-        ];
-
-        if (!validLookupKeys.includes(targetLookupKey)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid plan specified'
-            });
-        }
-
-        // Get or create Stripe customer
-        let customer = null;
-        
-        // Check if user already has a Stripe customer ID
-        const { data: existingSubscription } = await supabaseServiceClient
-            .from('user_subscriptions')
-            .select('stripe_customer_id')
-            .eq('user_id', userId)
-            .single();
-
-        if (existingSubscription?.stripe_customer_id) {
-            // Retrieve existing customer
-            try {
-                customer = await getController().stripeWrapper.customers.retrieve(existingSubscription.stripe_customer_id);
-            } catch (stripeError) {
-                logger.warn('Failed to retrieve existing customer, creating new one:', stripeError.message);
-                customer = null;
-            }
-        }
-
-        // Create new customer if none exists or retrieval failed
-        if (!customer) {
-            customer = await getController().stripeWrapper.customers.create({
-                email: userEmail,
-                metadata: {
-                    user_id: userId
-                }
-            });
-
-            // Update user_subscriptions with customer ID
-            await supabaseServiceClient
-                .from('user_subscriptions')
-                .upsert({
-                    user_id: userId,
-                    stripe_customer_id: customer.id,
-                    plan: PLAN_IDS.STARTER_TRIAL, // Keep as free until checkout completes
-                    status: 'active'
-                });
-        }
-
-        // Get price by lookup key
-        const prices = await getController().stripeWrapper.prices.list({
-            lookup_keys: [targetLookupKey],
-            expand: ['data.product']
-        });
-
-        if (prices.data.length === 0) {
-            return res.status(400).json({
-                success: false,
-                error: 'Price not found for lookup key: ' + targetLookupKey
-            });
-        }
-
-        const price = prices.data[0];
-
-        // Create checkout session
-        const session = await getController().stripeWrapper.checkout.sessions.create({
-            customer: customer.id,
-            payment_method_types: ['card'],
-            mode: 'subscription',
-            line_items: [{
-                price: price.id,
-                quantity: 1
-            }],
-            success_url: process.env.STRIPE_SUCCESS_URL,
-            cancel_url: process.env.STRIPE_CANCEL_URL,
-            metadata: {
-                user_id: userId,
-                lookup_key: targetLookupKey,
-                plan: plan || 'unknown'
-            },
-            subscription_data: {
-                metadata: {
-                    user_id: userId,
-                    lookup_key: targetLookupKey,
-                    plan: plan || 'unknown'
-                }
-            }
-        });
-
-        logger.info('Stripe checkout session created:', {
-            userId,
-            sessionId: session.id,
-            lookupKey,
-            customerId: customer.id
-        });
-
-        res.json({
-            success: true,
-            data: {
-                id: session.id,
-                url: session.url
-            }
-        });
-
-    } catch (error) {
-        logger.error('Error creating checkout session:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to create checkout session'
-        });
+    if (plan && !lookupKey) {
+      // Map plan to lookup key
+      const planLookupMap = {
+        starter: process.env.STRIPE_PRICE_LOOKUP_STARTER || 'plan_starter',
+        pro: process.env.STRIPE_PRICE_LOOKUP_PRO || 'plan_pro',
+        plus: process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plan_plus'
+      };
+      targetLookupKey = planLookupMap[plan];
     }
+
+    if (!targetLookupKey) {
+      return res.status(400).json({
+        success: false,
+        error: 'plan is required (free|starter|pro|plus)'
+      });
+    }
+
+    // Free plan doesn't require Stripe
+    if (plan === PLAN_IDS.STARTER_TRIAL) {
+      return res.json({
+        success: true,
+        data: {
+          message: 'Free plan activated',
+          plan: PLAN_IDS.STARTER_TRIAL
+        }
+      });
+    }
+
+    // Validate lookup key
+    const validLookupKeys = [
+      process.env.STRIPE_PRICE_LOOKUP_STARTER || 'plan_starter',
+      process.env.STRIPE_PRICE_LOOKUP_PRO || 'plan_pro',
+      process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plan_plus'
+    ];
+
+    if (!validLookupKeys.includes(targetLookupKey)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid plan specified'
+      });
+    }
+
+    // Get or create Stripe customer
+    let customer = null;
+
+    // Check if user already has a Stripe customer ID
+    const { data: existingSubscription } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (existingSubscription?.stripe_customer_id) {
+      // Retrieve existing customer
+      try {
+        customer = await getController().stripeWrapper.customers.retrieve(
+          existingSubscription.stripe_customer_id
+        );
+      } catch (stripeError) {
+        logger.warn('Failed to retrieve existing customer, creating new one:', stripeError.message);
+        customer = null;
+      }
+    }
+
+    // Create new customer if none exists or retrieval failed
+    if (!customer) {
+      customer = await getController().stripeWrapper.customers.create({
+        email: userEmail,
+        metadata: {
+          user_id: userId
+        }
+      });
+
+      // Update user_subscriptions with customer ID
+      await supabaseServiceClient.from('user_subscriptions').upsert({
+        user_id: userId,
+        stripe_customer_id: customer.id,
+        plan: PLAN_IDS.STARTER_TRIAL, // Keep as free until checkout completes
+        status: 'active'
+      });
+    }
+
+    // Get price by lookup key
+    const prices = await getController().stripeWrapper.prices.list({
+      lookup_keys: [targetLookupKey],
+      expand: ['data.product']
+    });
+
+    if (prices.data.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Price not found for lookup key: ' + targetLookupKey
+      });
+    }
+
+    const price = prices.data[0];
+
+    // Create checkout session
+    const session = await getController().stripeWrapper.checkout.sessions.create({
+      customer: customer.id,
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      line_items: [
+        {
+          price: price.id,
+          quantity: 1
+        }
+      ],
+      success_url: process.env.STRIPE_SUCCESS_URL,
+      cancel_url: process.env.STRIPE_CANCEL_URL,
+      metadata: {
+        user_id: userId,
+        lookup_key: targetLookupKey,
+        plan: plan || 'unknown'
+      },
+      subscription_data: {
+        metadata: {
+          user_id: userId,
+          lookup_key: targetLookupKey,
+          plan: plan || 'unknown'
+        }
+      }
+    });
+
+    logger.info('Stripe checkout session created:', {
+      userId,
+      sessionId: session.id,
+      lookupKey,
+      customerId: customer.id
+    });
+
+    res.json({
+      success: true,
+      data: {
+        id: session.id,
+        url: session.url
+      }
+    });
+  } catch (error) {
+    logger.error('Error creating checkout session:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create checkout session'
+    });
+  }
 });
 
 /**
@@ -241,47 +242,46 @@ router.post('/create-checkout-session', authenticateToken, requireBilling, async
  * Create Stripe Customer Portal session (alias for frontend compatibility)
  */
 router.post('/portal', authenticateToken, requireBilling, async (req, res) => {
-    try {
-        const userId = req.user.id;
+  try {
+    const userId = req.user.id;
 
-        // Get user's Stripe customer ID
-        const { data: subscription, error } = await supabaseServiceClient
-            .from('user_subscriptions')
-            .select('stripe_customer_id')
-            .eq('user_id', userId)
-            .single();
+    // Get user's Stripe customer ID
+    const { data: subscription, error } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', userId)
+      .single();
 
-        if (error || !subscription?.stripe_customer_id) {
-            return res.status(400).json({
-                success: false,
-                error: 'No active subscription found'
-            });
-        }
-
-        // Create portal session
-        const portalSession = await getController().stripeWrapper.billingPortal.sessions.create({
-            customer: subscription.stripe_customer_id,
-            return_url: process.env.STRIPE_PORTAL_RETURN_URL || 'http://localhost:3000/billing'
-        });
-
-        logger.info('Stripe portal session created:', {
-            userId,
-            customerId: subscription.stripe_customer_id,
-            sessionId: portalSession.id
-        });
-
-        res.json({
-            success: true,
-            url: portalSession.url
-        });
-
-    } catch (error) {
-        logger.error('Error creating portal session:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to create portal session'
-        });
+    if (error || !subscription?.stripe_customer_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'No active subscription found'
+      });
     }
+
+    // Create portal session
+    const portalSession = await getController().stripeWrapper.billingPortal.sessions.create({
+      customer: subscription.stripe_customer_id,
+      return_url: process.env.STRIPE_PORTAL_RETURN_URL || 'http://localhost:3000/billing'
+    });
+
+    logger.info('Stripe portal session created:', {
+      userId,
+      customerId: subscription.stripe_customer_id,
+      sessionId: portalSession.id
+    });
+
+    res.json({
+      success: true,
+      url: portalSession.url
+    });
+  } catch (error) {
+    logger.error('Error creating portal session:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create portal session'
+    });
+  }
 });
 
 /**
@@ -289,49 +289,48 @@ router.post('/portal', authenticateToken, requireBilling, async (req, res) => {
  * Create Stripe Customer Portal session
  */
 router.post('/create-portal-session', authenticateToken, requireBilling, async (req, res) => {
-    try {
-        const userId = req.user.id;
+  try {
+    const userId = req.user.id;
 
-        // Get user's Stripe customer ID
-        const { data: subscription, error } = await supabaseServiceClient
-            .from('user_subscriptions')
-            .select('stripe_customer_id')
-            .eq('user_id', userId)
-            .single();
+    // Get user's Stripe customer ID
+    const { data: subscription, error } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', userId)
+      .single();
 
-        if (error || !subscription?.stripe_customer_id) {
-            return res.status(400).json({
-                success: false,
-                error: 'No active subscription found'
-            });
-        }
-
-        // Create portal session
-        const portalSession = await getController().stripeWrapper.billingPortal.sessions.create({
-            customer: subscription.stripe_customer_id,
-            return_url: process.env.STRIPE_PORTAL_RETURN_URL
-        });
-
-        logger.info('Stripe portal session created:', {
-            userId,
-            customerId: subscription.stripe_customer_id,
-            sessionId: portalSession.id
-        });
-
-        res.json({
-            success: true,
-            data: {
-                url: portalSession.url
-            }
-        });
-
-    } catch (error) {
-        logger.error('Error creating portal session:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to create portal session'
-        });
+    if (error || !subscription?.stripe_customer_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'No active subscription found'
+      });
     }
+
+    // Create portal session
+    const portalSession = await getController().stripeWrapper.billingPortal.sessions.create({
+      customer: subscription.stripe_customer_id,
+      return_url: process.env.STRIPE_PORTAL_RETURN_URL
+    });
+
+    logger.info('Stripe portal session created:', {
+      userId,
+      customerId: subscription.stripe_customer_id,
+      sessionId: portalSession.id
+    });
+
+    res.json({
+      success: true,
+      data: {
+        url: portalSession.url
+      }
+    });
+  } catch (error) {
+    logger.error('Error creating portal session:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create portal session'
+    });
+  }
 });
 
 /**
@@ -339,47 +338,46 @@ router.post('/create-portal-session', authenticateToken, requireBilling, async (
  * Get current user's subscription details
  */
 router.get('/subscription', authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
+  try {
+    const userId = req.user.id;
 
-        const { data: subscription, error } = await supabaseServiceClient
-            .from('user_subscriptions')
-            .select('*')
-            .eq('user_id', userId)
-            .single();
+    const { data: subscription, error } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
-        if (error) {
-            logger.error('Error fetching subscription:', error);
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to fetch subscription'
-            });
-        }
-
-        // Get plan configuration
-        const planConfig = PLAN_CONFIG[subscription?.plan || PLAN_IDS.STARTER_TRIAL];
-
-        res.json({
-            success: true,
-            data: {
-                subscription: subscription || {
-                    user_id: userId,
-                    plan: PLAN_IDS.STARTER_TRIAL,
-                    status: 'active',
-                    stripe_customer_id: null,
-                    stripe_subscription_id: null
-                },
-                planConfig
-            }
-        });
-
-    } catch (error) {
-        logger.error('Error fetching subscription details:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to fetch subscription details'
-        });
+    if (error) {
+      logger.error('Error fetching subscription:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch subscription'
+      });
     }
+
+    // Get plan configuration
+    const planConfig = PLAN_CONFIG[subscription?.plan || PLAN_IDS.STARTER_TRIAL];
+
+    res.json({
+      success: true,
+      data: {
+        subscription: subscription || {
+          user_id: userId,
+          plan: PLAN_IDS.STARTER_TRIAL,
+          status: 'active',
+          stripe_customer_id: null,
+          stripe_subscription_id: null
+        },
+        planConfig
+      }
+    });
+  } catch (error) {
+    logger.error('Error fetching subscription details:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch subscription details'
+    });
+  }
 });
 
 /**
@@ -388,88 +386,88 @@ router.get('/subscription', authenticateToken, async (req, res) => {
  */
 const { stripeWebhookSecurity } = require('../middleware/webhookSecurity');
 
-router.post('/webhooks/stripe', 
-    express.raw({ type: 'application/json' }),
-    stripeWebhookSecurity({
-        secret: process.env.STRIPE_WEBHOOK_SECRET,
-        tolerance: 300, // 5 minutes tolerance
-        enableIdempotency: true,
-        enableSuspiciousPayloadDetection: true
-    }),
-    async (req, res) => {
-        // Early return if billing is disabled
-        if (!flags.isEnabled('ENABLE_BILLING')) {
-            logger.warn('Webhook received but billing is disabled');
-            return res.status(503).json({ error: 'Billing temporarily unavailable' });
-        }
-
-        const requestId = req.webhookSecurity?.requestId;
-        let event;
-
-        try {
-            // Parse event (already validated by security middleware)
-            event = JSON.parse(req.body.toString());
-            
-            logger.info('Stripe webhook received:', {
-                requestId,
-                type: event.type,
-                id: event.id,
-                created: event.created,
-                timestampAge: req.webhookSecurity?.timestampAge,
-                bodySize: req.webhookSecurity?.bodySize
-            });
-
-            // Process event using the webhook service with enhanced context
-            const controller = getController();
-            const result = await controller.webhookService.processWebhookEvent(event, {
-                requestId,
-                securityContext: req.webhookSecurity
-            });
-
-            if (result.success) {
-                logger.info('Webhook processed successfully:', {
-                    requestId,
-                    eventId: event.id,
-                    eventType: event.type,
-                    idempotent: result.idempotent,
-                    processingTime: result.processingTimeMs
-                });
-            } else {
-                logger.error('Webhook processing failed:', {
-                    requestId,
-                    eventId: event.id,
-                    eventType: event.type,
-                    error: result.error
-                });
-            }
-
-            // Always return 200 to prevent Stripe from retrying
-            res.json({ 
-                received: true,
-                processed: result.success,
-                idempotent: result.idempotent || false,
-                message: result.message || 'Event processed',
-                requestId
-            });
-
-        } catch (error) {
-            logger.error('Critical webhook processing error:', {
-                requestId,
-                eventId: event?.id,
-                eventType: event?.type,
-                error: error.message,
-                stack: error.stack
-            });
-
-            // Still return 200 to prevent Stripe from retrying
-            res.json({ 
-                received: true,
-                processed: false,
-                error: 'Processing failed but acknowledged',
-                requestId
-            });
-        }
+router.post(
+  '/webhooks/stripe',
+  express.raw({ type: 'application/json' }),
+  stripeWebhookSecurity({
+    secret: process.env.STRIPE_WEBHOOK_SECRET,
+    tolerance: 300, // 5 minutes tolerance
+    enableIdempotency: true,
+    enableSuspiciousPayloadDetection: true
+  }),
+  async (req, res) => {
+    // Early return if billing is disabled
+    if (!flags.isEnabled('ENABLE_BILLING')) {
+      logger.warn('Webhook received but billing is disabled');
+      return res.status(503).json({ error: 'Billing temporarily unavailable' });
     }
+
+    const requestId = req.webhookSecurity?.requestId;
+    let event;
+
+    try {
+      // Parse event (already validated by security middleware)
+      event = JSON.parse(req.body.toString());
+
+      logger.info('Stripe webhook received:', {
+        requestId,
+        type: event.type,
+        id: event.id,
+        created: event.created,
+        timestampAge: req.webhookSecurity?.timestampAge,
+        bodySize: req.webhookSecurity?.bodySize
+      });
+
+      // Process event using the webhook service with enhanced context
+      const controller = getController();
+      const result = await controller.webhookService.processWebhookEvent(event, {
+        requestId,
+        securityContext: req.webhookSecurity
+      });
+
+      if (result.success) {
+        logger.info('Webhook processed successfully:', {
+          requestId,
+          eventId: event.id,
+          eventType: event.type,
+          idempotent: result.idempotent,
+          processingTime: result.processingTimeMs
+        });
+      } else {
+        logger.error('Webhook processing failed:', {
+          requestId,
+          eventId: event.id,
+          eventType: event.type,
+          error: result.error
+        });
+      }
+
+      // Always return 200 to prevent Stripe from retrying
+      res.json({
+        received: true,
+        processed: result.success,
+        idempotent: result.idempotent || false,
+        message: result.message || 'Event processed',
+        requestId
+      });
+    } catch (error) {
+      logger.error('Critical webhook processing error:', {
+        requestId,
+        eventId: event?.id,
+        eventType: event?.type,
+        error: error.message,
+        stack: error.stack
+      });
+
+      // Still return 200 to prevent Stripe from retrying
+      res.json({
+        received: true,
+        processed: false,
+        error: 'Processing failed but acknowledged',
+        requestId
+      });
+    }
+  }
 );
 
 /**
@@ -477,41 +475,40 @@ router.post('/webhooks/stripe',
  * Get webhook processing statistics (admin only)
  */
 router.get('/webhook-stats', authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
+  try {
+    const userId = req.user.id;
 
-        // Check if user is admin
-        const { data: user, error: userError } = await supabaseServiceClient
-            .from('users')
-            .select('is_admin')
-            .eq('id', userId)
-            .single();
+    // Check if user is admin
+    const { data: user, error: userError } = await supabaseServiceClient
+      .from('users')
+      .select('is_admin')
+      .eq('id', userId)
+      .single();
 
-        if (userError || !user?.is_admin) {
-            return res.status(403).json({
-                success: false,
-                error: 'Admin access required'
-            });
-        }
-
-        const daysAgo = parseInt(req.query.days) || 7;
-        const stats = await getController().webhookService.getWebhookStats(daysAgo);
-
-        res.json({
-            success: true,
-            data: {
-                period_days: daysAgo,
-                statistics: stats.data || []
-            }
-        });
-
-    } catch (error) {
-        logger.error('Error fetching webhook stats:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to fetch webhook statistics'
-        });
+    if (userError || !user?.is_admin) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
     }
+
+    const daysAgo = parseInt(req.query.days) || 7;
+    const stats = await getController().webhookService.getWebhookStats(daysAgo);
+
+    res.json({
+      success: true,
+      data: {
+        period_days: daysAgo,
+        statistics: stats.data || []
+      }
+    });
+  } catch (error) {
+    logger.error('Error fetching webhook stats:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch webhook statistics'
+    });
+  }
 });
 
 /**
@@ -519,50 +516,49 @@ router.get('/webhook-stats', authenticateToken, async (req, res) => {
  * Cleanup old webhook events (admin only)
  */
 router.post('/webhook-cleanup', express.json(), authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
+  try {
+    const userId = req.user.id;
 
-        // Check if user is admin
-        const { data: user, error: userError } = await supabaseServiceClient
-            .from('users')
-            .select('is_admin')
-            .eq('id', userId)
-            .single();
+    // Check if user is admin
+    const { data: user, error: userError } = await supabaseServiceClient
+      .from('users')
+      .select('is_admin')
+      .eq('id', userId)
+      .single();
 
-        if (userError || !user?.is_admin) {
-            return res.status(403).json({
-                success: false,
-                error: 'Admin access required'
-            });
-        }
-
-        const olderThanDays = parseInt(req.body.days) || 30;
-
-        let result;
-        try {
-            result = await getController().webhookService.cleanupOldEvents(olderThanDays);
-        } catch (cleanupError) {
-            logger.error('cleanupOldEvents threw error:', cleanupError);
-            throw cleanupError; // Re-throw to outer catch
-        }
-
-        res.json({
-            success: result.success,
-            data: {
-                events_deleted: result.eventsDeleted || 0,
-                older_than_days: olderThanDays
-            },
-            error: result.error
-        });
-
-    } catch (error) {
-        logger.error('Error cleaning up webhook events:', error.message, error.stack);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to cleanup webhook events',
-            details: process.env.NODE_ENV === 'test' ? error.message : undefined
-        });
+    if (userError || !user?.is_admin) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
+      });
     }
+
+    const olderThanDays = parseInt(req.body.days) || 30;
+
+    let result;
+    try {
+      result = await getController().webhookService.cleanupOldEvents(olderThanDays);
+    } catch (cleanupError) {
+      logger.error('cleanupOldEvents threw error:', cleanupError);
+      throw cleanupError; // Re-throw to outer catch
+    }
+
+    res.json({
+      success: result.success,
+      data: {
+        events_deleted: result.eventsDeleted || 0,
+        older_than_days: olderThanDays
+      },
+      error: result.error
+    });
+  } catch (error) {
+    logger.error('Error cleaning up webhook events:', error.message, error.stack);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to cleanup webhook events',
+      details: process.env.NODE_ENV === 'test' ? error.message : undefined
+    });
+  }
 });
 
 /**
@@ -668,7 +664,6 @@ router.post('/start-trial', authenticateToken, requireBilling, async (req, res) 
         duration_days: trialResult.duration_days
       }
     });
-
   } catch (error) {
     logger.error('Trial start failed:', {
       userId: req.user?.id,

@@ -31,4 +31,3 @@ export function ErrorMessage({ title = 'Error', message, onRetry, variant = 'dan
     </div>
   );
 }
-

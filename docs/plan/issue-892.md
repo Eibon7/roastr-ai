@@ -7,6 +7,7 @@ Fix el patrón de mocking de Supabase que está causando ~75 errores en 8 suites
 ## Estado Actual
 
 **Patrón Roto:**
+
 ```javascript
 // ❌ BROKEN: Reasignación en beforeEach después de module resolution
 jest.mock('../../src/config/supabase');
@@ -16,6 +17,7 @@ beforeEach(() => {
 ```
 
 **Patrón Correcto:**
+
 ```javascript
 // ✅ CORRECT: Crear mock ANTES de jest.mock()
 const mockSupabase = createSupabaseMock({...});
@@ -44,6 +46,7 @@ jest.mock('../../src/config/supabase', () => ({
 ## Pasos de Implementación
 
 ### Fase 1: Identificación
+
 - [x] Verificar archivos mencionados en issue
 - [ ] Identificar archivos reales con patrón roto
 - [ ] Ejecutar tests para verificar errores actuales
@@ -103,4 +106,3 @@ jest.mock('../../src/config/supabase', () => ({
 **Esfuerzo:** 4-6 horas
 **Prioridad:** P0 (ALTA)
 **Impacto:** ~75 errores resueltos, 8 suites pasando
-

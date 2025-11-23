@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Config Index
  * Issue #926 - Fase 1.3: Tests para Config Files
- * 
+ *
  * Tests configuration structure, exports, and environment variable handling
  */
 
@@ -100,7 +100,9 @@ describe('Config Index', () => {
     });
 
     test('should have default URLs', () => {
-      expect(config.billing.stripe.successUrl).toBe('http://localhost:3000/billing?session_id={CHECKOUT_SESSION_ID}');
+      expect(config.billing.stripe.successUrl).toBe(
+        'http://localhost:3000/billing?session_id={CHECKOUT_SESSION_ID}'
+      );
       expect(config.billing.stripe.cancelUrl).toBe('http://localhost:3000/pricing');
       expect(config.billing.stripe.portalReturnUrl).toBe('http://localhost:3000/billing');
     });
@@ -123,7 +125,7 @@ describe('Config Index', () => {
       expect(config.perspective).toHaveProperty('apiKey');
       expect(config.billing.stripe).toHaveProperty('secretKey');
       expect(config.billing.stripe).toHaveProperty('webhookSecret');
-      
+
       // Values will be from env if set, or empty string if not
       // This test verifies the structure supports env var reading
       expect(typeof config.openai.apiKey).toBe('string');
@@ -138,7 +140,7 @@ describe('Config Index', () => {
       expect(config.billing.stripe.priceLookupKeys).toHaveProperty('starter');
       expect(config.billing.stripe.priceLookupKeys).toHaveProperty('pro');
       expect(config.billing.stripe.priceLookupKeys).toHaveProperty('plus');
-      
+
       // All should be strings (either from env or default)
       expect(typeof config.billing.stripe.priceLookupKeys.free).toBe('string');
       expect(typeof config.billing.stripe.priceLookupKeys.starter).toBe('string');
@@ -151,7 +153,7 @@ describe('Config Index', () => {
       expect(typeof config.billing.stripe.successUrl).toBe('string');
       expect(typeof config.billing.stripe.cancelUrl).toBe('string');
       expect(typeof config.billing.stripe.portalReturnUrl).toBe('string');
-      
+
       // URLs should be valid strings
       expect(config.billing.stripe.successUrl.length).toBeGreaterThan(0);
       expect(config.billing.stripe.cancelUrl.length).toBeGreaterThan(0);

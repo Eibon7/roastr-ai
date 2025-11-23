@@ -28,14 +28,16 @@ export const AuthProvider = ({ children }) => {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
+        const {
+          data: { session }
+        } = await supabase.auth.getSession();
+
         if (!mounted) return;
-        
+
         if (session) {
           setSession(session);
           setUser(session.user);
-          
+
           // Get additional user data from API
           try {
             const additionalUserData = await authHelpers.getUserFromAPI(session.access_token);
@@ -52,9 +54,11 @@ export const AuthProvider = ({ children }) => {
                 name: session.user.user_metadata?.name || 'User',
                 plan: mockMode ? 'pro' : 'starter_trial',
                 rqcEnabled: mockMode ? true : false,
-                avatar: session.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                avatar:
+                  session.user.user_metadata?.avatar_url ||
+                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
                 joinedAt: session.user.created_at,
-                lastActive: new Date().toISOString(),
+                lastActive: new Date().toISOString()
               });
             }
           }
@@ -80,7 +84,9 @@ export const AuthProvider = ({ children }) => {
     getInitialSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
       // Issue #628 - CodeRabbit: Gate debug logs behind dev env
@@ -107,9 +113,11 @@ export const AuthProvider = ({ children }) => {
               name: session.user.user_metadata?.name || 'User',
               plan: mockMode ? 'pro' : 'starter_trial',
               rqcEnabled: mockMode ? true : false,
-              avatar: session.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+              avatar:
+                session.user.user_metadata?.avatar_url ||
+                `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
               joinedAt: session.user.created_at,
-              lastActive: new Date().toISOString(),
+              lastActive: new Date().toISOString()
             });
           }
         }
@@ -146,7 +154,9 @@ export const AuthProvider = ({ children }) => {
     const checkAndRefreshToken = async () => {
       try {
         // Get current session to check expiry
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const {
+          data: { session: currentSession }
+        } = await supabase.auth.getSession();
 
         if (!currentSession) {
           return;
@@ -171,11 +181,13 @@ export const AuthProvider = ({ children }) => {
             // Issue #628 - CodeRabbit: Update Supabase session first (canonical source)
             await supabase.auth.setSession({
               access_token: result.data.access_token,
-              refresh_token: result.data.refresh_token,
+              refresh_token: result.data.refresh_token
             });
 
             // Read back the updated session from Supabase
-            const { data: { session: updatedSession } } = await supabase.auth.getSession();
+            const {
+              data: { session: updatedSession }
+            } = await supabase.auth.getSession();
 
             // Issue #628 - CodeRabbit: Gate debug logs behind dev env
             if (process.env.NODE_ENV !== 'production') {
@@ -302,7 +314,7 @@ export const AuthProvider = ({ children }) => {
     userData,
     loading,
     mockMode,
-    
+
     // Auth actions
     signUp,
     signIn,
@@ -311,17 +323,13 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     signOut,
     refreshUserData,
-    
+
     // Helper getters
     isAuthenticated: !!user,
     isPro: userData?.plan === 'pro' || userData?.plan === 'enterprise',
     hasRQC: userData?.rqcEnabled === true,
-    isAdmin: userData?.is_admin === true,
+    isAdmin: userData?.is_admin === true
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

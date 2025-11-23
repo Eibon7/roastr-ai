@@ -103,7 +103,7 @@ function sanitizePII(data) {
   // List of common PII field names to sanitize
   const emailFields = ['email', 'customer_email', 'user_email', 'userEmail', 'customerEmail'];
 
-  emailFields.forEach(field => {
+  emailFields.forEach((field) => {
     if (sanitized[field]) {
       const originalEmail = sanitized[field];
 
@@ -140,5 +140,5 @@ module.exports = {
   hashEmail,
   maskEmail,
   sanitizePII,
-  looksLikeEmail,
+  looksLikeEmail
 };

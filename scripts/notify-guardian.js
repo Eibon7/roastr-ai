@@ -40,7 +40,7 @@ const POSTMARK_API_KEY = process.env.POSTMARK_API_KEY;
 // ============================================================
 
 const args = process.argv.slice(2);
-const caseIdArg = args.find(arg => arg.startsWith('--case-id='));
+const caseIdArg = args.find((arg) => arg.startsWith('--case-id='));
 
 if (!caseIdArg) {
   console.error('❌ Error: Missing --case-id argument');
@@ -111,7 +111,7 @@ class GuardianNotifier {
     for (const domainName of this.caseData.domains) {
       const domain = this.config.domains[domainName];
       if (domain && domain.owners) {
-        domain.owners.forEach(owner => owners.add(owner));
+        domain.owners.forEach((owner) => owners.add(owner));
       }
     }
 
@@ -223,7 +223,7 @@ Domains Affected:
 ${domains.join(', ')}
 
 Files Changed (${files_changed.length}):
-${files_changed.map(f => `  - ${f}`).join('\n')}
+${files_changed.map((f) => `  - ${f}`).join('\n')}
 
 What Happened:
 Guardian detected ${severity === 'CRITICAL' ? 'critical' : 'sensitive'} changes to protected domains.
@@ -265,7 +265,7 @@ Do not reply to this email. Visit the admin panel to take action.
         path: '/emails',
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          Authorization: `Bearer ${RESEND_API_KEY}`,
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(payload)
         }
@@ -273,7 +273,9 @@ Do not reply to this email. Visit the admin panel to take action.
 
       const req = https.request(options, (res) => {
         let data = '';
-        res.on('data', (chunk) => { data += chunk; });
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
         res.on('end', () => {
           if (res.statusCode === 200) {
             console.log('✅ Email sent via Resend');
@@ -331,7 +333,9 @@ Do not reply to this email. Visit the admin panel to take action.
 
       const req = https.request(options, (res) => {
         let data = '';
-        res.on('data', (chunk) => { data += chunk; });
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
         res.on('end', () => {
           if (res.statusCode === 200) {
             console.log('✅ Email sent via Postmark');

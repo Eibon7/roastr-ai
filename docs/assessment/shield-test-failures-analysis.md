@@ -12,12 +12,14 @@
 ## Test Files Status Summary
 
 ### 1. shield-stability.test.js (18 failures)
+
 **File**: `/Users/emiliopostigo/roastr-ai/tests/integration/shield-stability.test.js`
 **Purpose**: Visual/UI test stability for Shield dashboard using Playwright
 **Status**: ALL TESTS FAILING ❌
 **Root Cause**: Server not running (net::ERR_CONNECTION_REFUSED at http://localhost:3000/shield)
 
 **Failures**:
+
 - Network Stability and Loading States (3 tests)
 - Selector Resilience and Fallbacks (3 tests)
 - Visual Stability Enhancements (3 tests)
@@ -26,6 +28,7 @@
 - Cross-browser Compatibility Stability (2 tests)
 
 **Error Pattern**:
+
 ```
 page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/shield
 ```
@@ -35,12 +38,14 @@ page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/shield
 ---
 
 ### 2. shield-ui-complete-integration.test.js (20 failures)
+
 **File**: `/Users/emiliopostigo/roastr-ai/tests/integration/shield-ui-complete-integration.test.js`
 **Purpose**: Test Shield UI API endpoints integration (config, events, revert, stats)
 **Status**: ALL TESTS FAILING ❌
 **Root Cause**: Authentication failure - 401 Unauthorized on all API endpoints
 
 **Key Failures**:
+
 - Feature Flag Integration (2 tests)
 - Shield Events API Integration (6 tests)
 - Shield Action Revert Integration (4 tests)
@@ -50,16 +55,19 @@ page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/shield
 - Performance Integration (2 tests)
 
 **Error Pattern**:
+
 ```
 expected 200 "OK", got 401 "Unauthorized"
 ```
 
 **Root Cause Analysis**:
 The test setup uses `mockAuth` middleware that manually sets `req.user`, but the actual `/api/shield` routes use `authenticateToken` from `src/middleware/auth` which appears to be:
+
 1. Not properly mocked in the test
 2. Rejecting all requests because token validation is failing
 
 **Test Code** (lines 23-31):
+
 ```javascript
 const mockAuth = (req, res, next) => {
   req.user = {
@@ -74,8 +82,9 @@ app.use('/api/shield', require('../../src/routes/shield'));
 ```
 
 **Problem**: The mock middleware is bypassed because the actual shield.js routes file has:
+
 ```javascript
-router.use(authenticateToken);  // Line 50 in shield.js
+router.use(authenticateToken); // Line 50 in shield.js
 ```
 
 This overwrites the mock auth middleware.
@@ -83,12 +92,14 @@ This overwrites the mock auth middleware.
 ---
 
 ### 3. shield-escalation-logic.test.js (15 failures)
+
 **File**: `/Users/emiliopostigo/roastr-ai/tests/integration/shield-escalation-logic.test.js`
 **Purpose**: Test escalation matrix and behavior tracking (warn → mute → block → report)
 **Status**: ALL TESTS FAILING ❌
 **Root Cause**: `shieldService.analyzeForShield()` returns `shieldActive: false` when tests expect `true`
 
 **Test Structure**:
+
 - Tests call `shieldService.analyzeForShield(organizationId, comment, analysisResult)`
 - Expects return object with:
   - `shieldActive: true`
@@ -97,6 +108,7 @@ This overwrites the mock auth middleware.
   - `shouldGenerateResponse: false` (core requirement)
 
 **Sample Failure** (line 154):
+
 ```javascript
 expect(result.shieldActive).toBe(true);  // FAILS - receives false
 
@@ -118,11 +130,13 @@ expect(result.shieldActive).toBe(true);  // FAILS - receives false
 
 **Root Cause**:
 The mock Supabase in the test only returns mocked responses for specific query chains. When `analyzeForShield()` runs:
+
 1. It calls `getUserBehavior()` → Supabase query succeeds
 2. But then it calls methods like `determineShieldActions()`, `queueHighPriorityAnalysis()`, `executeShieldActions()`, `logShieldActivity()`
 3. These likely make additional Supabase calls that aren't mocked
 
 **Actual Implementation** (shieldService.js, lines 100-142):
+
 ```javascript
 const userBehavior = await this.getUserBehavior(...);
 const shieldActions = await this.determineShieldActions(...);
@@ -139,14 +153,17 @@ return {
 ---
 
 ### 4. shield-round3-security.test.js (15+ failures)
+
 **File**: `/Users/emiliopostigo/roastr-ai/tests/unit/routes/shield-round3-security.test.js`
 **Purpose**: Test enhanced security features (input validation, UUID validation, error messages)
 **Status**: MIXED - 2 passing, 13+ failing
 **Passing Tests**: 2/16
+
 - ✓ should prevent reverting already reverted actions
 - ✓ should log configuration requests for security monitoring
 
 **Key Failures**:
+
 1. **Input Validation Tests** (4 failures):
    - All get 500 Internal Server Error instead of expected 200 with fallback defaults
    - Tests: non-numeric pagination, invalid filter params, limit enforcement, page enforcement
@@ -170,6 +187,7 @@ return {
    - Missing proper validation constants in response
 
 **Error Pattern Examples**:
+
 ```
 Test: should handle non-numeric pagination gracefully
 Expected: 200 with default values
@@ -191,6 +209,7 @@ Received error:
 ```
 
 **Root Causes**:
+
 1. **Missing middleware/error handling** in shield.js routes
    - Query parameters not validated before use
    - No try-catch around database operations
@@ -210,6 +229,7 @@ Received error:
 ## File Status: Existence Check
 
 ### Services (ALL EXIST ✓)
+
 - `/Users/emiliopostigo/roastr-ai/src/services/shieldService.js` - ✓ EXISTS
   - Contains: `analyzeForShield()`, `executeActionsFromTags()`, action handlers
 - `/Users/emiliopostigo/roastr-ai/src/services/shieldDecisionEngine.js` - ✓ EXISTS
@@ -218,11 +238,13 @@ Received error:
 - `/Users/emiliopostigo/roastr-ai/src/services/shieldSettingsService.js` - ✓ EXISTS
 
 ### Routes (ALL EXIST ✓)
+
 - `/Users/emiliopostigo/roastr-ai/src/routes/shield.js` - ✓ EXISTS
   - Contains: GET /config, GET /events, POST /revert/:id, GET /stats, etc.
   - Has authentication, rate limiting, validation
 
 ### Workers (EXISTS ✓)
+
 - `/Users/emiliopostigo/roastr-ai/src/workers/ShieldActionWorker.js` - ✓ EXISTS
 
 ---
@@ -233,9 +255,11 @@ Received error:
 **Status**: 6/27 tests FAILING
 
 ### The Problem
+
 Test expects `executeActionsFromTags()` to EXECUTE when certain conditions are met, but implementation has an **autoActions flag gate** that PREVENTS execution by default.
 
 **Test Expectations**:
+
 ```javascript
 it('should execute block_user action', async () => {
   const result = await shieldService.executeActionsFromTags(...);
@@ -247,6 +271,7 @@ it('should execute block_user action', async () => {
 ```
 
 **Implementation Reality** (shieldService.js, lines 605-618):
+
 ```javascript
 // [A1] Gate execution by autoActions flag
 if (!this.options.autoActions) {
@@ -261,17 +286,20 @@ if (!this.options.autoActions) {
 ```
 
 **Test Setup** (line 69):
+
 ```javascript
-shieldService = new ShieldService({ autoActions: true });  // ← CORRECTLY SET
+shieldService = new ShieldService({ autoActions: true }); // ← CORRECTLY SET
 ```
 
 **Diagnosis**:
+
 1. Test creates ShieldService WITH `autoActions: true` ✓
 2. Test should pass... but it's failing
 3. This suggests the mocks for database operations might be incomplete
 4. OR the test mock for QueueService is not properly integrated
 
 **Failing Tests in shield-action-tags.test.js**:
+
 1. `should execute block_user action` - success returns false
 2. `should execute check_reincidence action` - supabase.from not called with 'user_behavior'
 3. `should execute add_strike_1 action` - supabase.from not called with 'user_behavior'
@@ -280,11 +308,13 @@ shieldService = new ShieldService({ autoActions: true });  // ← CORRECTLY SET
 6. `should complete full flow` - supabase calls not detected
 
 **Root Cause**: The mock supabase client setup expects chained calls:
+
 ```javascript
 supabase.from('table_name').insert(...) / update(...) / select(...)
 ```
 
 But the test assertions verify:
+
 ```javascript
 expect(supabase.from).toHaveBeenCalledWith('user_behavior');
 ```
@@ -296,11 +326,13 @@ The mocks are being called, but the Jest mock tracking might not be set up corre
 ## Cross-Cutting Issues
 
 ### 1. Mock Setup Fragility
+
 - **Problem**: Multiple test files with different mock strategies
 - **Impact**: Hard to maintain, easy to break with implementation changes
 - **Solution Needed**: Centralized mock factory for Supabase, QueueService
 
 ### 2. Test Server Dependencies
+
 - `shield-stability.test.js` requires:
   - Running Express server on localhost:3000
   - Shield UI routes mounted
@@ -309,12 +341,14 @@ The mocks are being called, but the Jest mock tracking might not be set up corre
 - **Fix**: Either start server in beforeAll or convert to API-only tests
 
 ### 3. API Contract Documentation Missing
+
 - Tests expect specific error codes and message formats
 - Implementation might have different codes
 - No centralized API contract documentation
 - **Fix**: Create `docs/api/shield-endpoints.md` with formal contract
 
 ### 4. Authentication Mocking
+
 - `shield-ui-complete-integration.test.js` sets up mock auth but it's overridden
 - **Root Cause**: Shield.js router applies its own `authenticateToken` middleware
 - **Fix**: Either:
@@ -327,6 +361,7 @@ The mocks are being called, but the Jest mock tracking might not be set up corre
 ## What's Working
 
 ✓ **Core ShieldService tests PASS** (tests/unit/services/shieldService.test.js - 19/19)
+
 - Service initialization
 - Content analysis
 - Action level determination
@@ -334,6 +369,7 @@ The mocks are being called, but the Jest mock tracking might not be set up corre
 - Error handling
 
 ✓ **Shield decision logic appears sound**
+
 - Action matrix for escalation defined correctly
 - Severity level mapping implemented
 - User behavior tracking in place
@@ -345,6 +381,7 @@ The mocks are being called, but the Jest mock tracking might not be set up corre
 ## Recommended Fix Priority
 
 ### P0 (Blocking)
+
 1. **Fix shield-action-tags.test.js** - 6 failures
    - Mock supabase.from() calls properly to track invocations
    - Ensure QueueService.addJob() mocks work with actual implementation
@@ -354,12 +391,14 @@ The mocks are being called, but the Jest mock tracking might not be set up corre
    - OR add test-specific auth bypass middleware
 
 ### P1 (Blocking merge)
+
 3. **Fix shield-round3-security.test.js** - 13+ failures
    - Add error handling middleware to shield.js routes
    - Implement input validation at route level
    - Document error response contracts
 
 ### P2 (Nice to have)
+
 4. **Fix shield-stability.test.js** - 18 failures
    - Start dev server for E2E tests
    - OR convert to API mocking (Playwright API mocks)
@@ -404,4 +443,3 @@ For Shield system to be considered complete:
 - [ ] Authentication properly mocked in integration tests
 - [ ] Decision pipeline properly returns all expected fields
 - [ ] Database recording tracked and verified in tests
-

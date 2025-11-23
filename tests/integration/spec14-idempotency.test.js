@@ -1,13 +1,13 @@
 /**
  * SPEC 14 - Idempotency Tests
- * 
+ *
  * Comprehensive tests to ensure system idempotency across all critical operations:
  * - No duplicate events for same external_comment_id
  * - No duplicate credit deductions
  * - Consistent processing results for identical inputs
  * - Proper handling of retry scenarios
  * - Database constraint enforcement
- * 
+ *
  * Key idempotency guarantees:
  * 1. (org_id, external_comment_id) uniqueness in comments table
  * 2. Credit deductions only occur once per comment processing
@@ -24,13 +24,16 @@ const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
 // ============================================================================
 
 // Create Supabase mock with defaults for idempotency tests
-const mockSupabase = createSupabaseMock({
-  comments: [],
-  posts: [],
-  integrations: []
-}, {
-  // RPC functions if needed
-});
+const mockSupabase = createSupabaseMock(
+  {
+    comments: [],
+    posts: [],
+    integrations: []
+  },
+  {
+    // RPC functions if needed
+  }
+);
 
 // Mock external services to prevent side effects
 jest.mock('../../src/services/openai');
@@ -68,34 +71,38 @@ describe('SPEC 14 - Idempotency Tests', () => {
 
   // Setup mocks for database operations when in mock mode
   const shouldUseMocks = process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
-  
+
   beforeEach(() => {
     // Reset all mocks before each test
     jest.clearAllMocks();
-    
+
     if (shouldUseMocks) {
       // Reset Supabase mock to defaults
       mockSupabase._reset();
-      
+
       // Configure mockSupabase.from to return mocks that work with the service
       // The service does: await supabaseServiceClient.from('table').insert(...)
       // So insert() must return a promise that resolves to { data: [...], error: null }
       const mockTableBuilder = {
-        insert: jest.fn(() => Promise.resolve({ 
-          data: [{ id: 'mock_id_123', status: 'ingested' }], 
-          error: null 
-        })),
+        insert: jest.fn(() =>
+          Promise.resolve({
+            data: [{ id: 'mock_id_123', status: 'ingested' }],
+            error: null
+          })
+        ),
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
             single: jest.fn(() => Promise.resolve({ data: null, error: null }))
           }))
         })),
-        upsert: jest.fn(() => Promise.resolve({ 
-          data: [{ id: 'mock_id_123', status: 'ingested' }], 
-          error: null 
-        }))
+        upsert: jest.fn(() =>
+          Promise.resolve({
+            data: [{ id: 'mock_id_123', status: 'ingested' }],
+            error: null
+          })
+        )
       };
-      
+
       // Configure mockSupabase.from to return our configured mockTableBuilder
       mockSupabase.from.mockReturnValue(mockTableBuilder);
     }
@@ -119,7 +126,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
     processComment: jest.fn(),
     getActions: jest.fn().mockResolvedValue([])
   };
-  
+
   const describeFunction = describe;
 
   describeFunction('Comment Ingestion Idempotency', () => {
@@ -136,7 +143,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
 
       // Mock service should handle idempotency correctly
       const firstCommentId = 'mock_comment_123';
-      
+
       // First ingestion should create new record
       mockCommentService.findByExternalId.mockResolvedValueOnce(null); // Not found
       mockCommentService.ingest.mockResolvedValueOnce({
@@ -210,7 +217,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
       expect(org2Result.org_id).toBe(org2.id);
       expect(org1Result.external_comment_id).toBe(externalCommentId);
       expect(org2Result.external_comment_id).toBe(externalCommentId);
-      
+
       // Verify both ingestions were called
       expect(mockCommentService.ingest).toHaveBeenCalledTimes(2);
     });
@@ -222,7 +229,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
       const commentId = 'mock_comment_credits_123';
       const initialCredits = 1000;
       const creditsConsumed = 50;
-      
+
       // Mock initial credit balance
       mockCommentService.getCredits.mockResolvedValue({ remaining_credits: initialCredits });
 
@@ -259,8 +266,8 @@ describe('SPEC 14 - Idempotency Tests', () => {
       expect(firstProcessResult.already_processed).toBe(false);
 
       // Mock updated credits after first processing
-      mockCommentService.getCredits.mockResolvedValueOnce({ 
-        remaining_credits: initialCredits - creditsConsumed 
+      mockCommentService.getCredits.mockResolvedValueOnce({
+        remaining_credits: initialCredits - creditsConsumed
       });
 
       const creditsAfterFirst = await mockCommentService.getCredits(testUser.id);
@@ -279,8 +286,8 @@ describe('SPEC 14 - Idempotency Tests', () => {
       expect(secondProcessResult.credits_consumed).toBe(0);
 
       // Verify credits unchanged after second processing
-      mockCommentService.getCredits.mockResolvedValueOnce({ 
-        remaining_credits: initialCredits - creditsConsumed 
+      mockCommentService.getCredits.mockResolvedValueOnce({
+        remaining_credits: initialCredits - creditsConsumed
       });
 
       const creditsAfterSecond = await mockCommentService.getCredits(testUser.id);
@@ -291,7 +298,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
       const comment = fixtures.comments.intermediate;
       const commentId = 'mock_comment_failed_456';
       const initialCredits = 1000;
-      
+
       // Mock initial credits
       mockCommentService.getCredits.mockResolvedValue({ remaining_credits: initialCredits });
 
@@ -316,9 +323,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
       });
 
       // Mock processing failure (service failure)
-      mockCommentService.processComment.mockRejectedValueOnce(
-        new Error('OpenAI service failure')
-      );
+      mockCommentService.processComment.mockRejectedValueOnce(new Error('OpenAI service failure'));
 
       try {
         await mockCommentService.processComment(commentId);
@@ -328,8 +333,8 @@ describe('SPEC 14 - Idempotency Tests', () => {
       }
 
       // Credits should remain unchanged after failure
-      mockCommentService.getCredits.mockResolvedValueOnce({ 
-        remaining_credits: initialCredits 
+      mockCommentService.getCredits.mockResolvedValueOnce({
+        remaining_credits: initialCredits
       });
 
       const creditsAfterFailure = await mockCommentService.getCredits(testUser.id);
@@ -342,7 +347,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
       const comment = fixtures.comments.critical;
       const commentId = 'mock_comment_shield_789';
       const shieldActionId = 'mock_shield_action_123';
-      
+
       // Mock critical comment ingestion
       mockCommentService.ingest.mockResolvedValueOnce({
         id: commentId,
@@ -386,12 +391,14 @@ describe('SPEC 14 - Idempotency Tests', () => {
       expect(secondProcessResult.shield_action_id).toBe(shieldActionId); // Same ID
 
       // Verify only one Shield action exists for this comment
-      mockShieldService.getActions.mockResolvedValueOnce([{
-        id: shieldActionId,
-        comment_id: commentId,
-        action_type: 'hide_comment',
-        author_id: comment.author.id
-      }]);
+      mockShieldService.getActions.mockResolvedValueOnce([
+        {
+          id: shieldActionId,
+          comment_id: commentId,
+          action_type: 'hide_comment',
+          author_id: comment.author.id
+        }
+      ]);
 
       const shieldActions = await mockShieldService.getActions({ comment_id: commentId });
       expect(shieldActions).toHaveLength(1);
@@ -411,7 +418,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
       // Mock processing of multiple critical comments from same author
       for (const comment of comments) {
         const commentId = `mock_comment_multi_${commentIndex++}`;
-        
+
         // Mock ingestion
         mockCommentService.ingest.mockResolvedValueOnce({
           id: commentId,
@@ -432,7 +439,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
         // First comment triggers first action, second triggers escalation
         const actionType = commentIndex === 1 ? 'hide_comment' : 'block_user';
         const shieldActionId = `shield_action_${commentIndex}_${author.id}`;
-        
+
         mockShieldService.processComment.mockResolvedValueOnce({
           shield_action_triggered: true,
           shield_action_id: shieldActionId,
@@ -466,11 +473,11 @@ describe('SPEC 14 - Idempotency Tests', () => {
 
       const authorActions = await mockShieldService.getActions({ author_id: author.id });
       expect(authorActions.length).toBeGreaterThan(0);
-      
+
       // Actions should be escalated, not identical
-      const actionTypes = authorActions.map(action => action.action_type);
+      const actionTypes = authorActions.map((action) => action.action_type);
       const uniqueActionTypes = [...new Set(actionTypes)];
-      
+
       // Should have escalation (different action types)
       expect(uniqueActionTypes.length).toBeGreaterThan(1);
       expect(uniqueActionTypes).toContain('hide_comment');
@@ -483,7 +490,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
       const comment = fixtures.comments.intermediate;
       const commentId = 'mock_comment_queue_999';
       const queueJobId = 'mock_queue_job_456';
-      
+
       // Mock comment ingestion
       mockCommentService.ingest.mockResolvedValueOnce({
         id: commentId,
@@ -508,37 +515,41 @@ describe('SPEC 14 - Idempotency Tests', () => {
       mockQueueService.add.mockResolvedValue({ id: queueJobId });
 
       // Queue multiple identical processing jobs
-      const jobPromises = Array(5).fill(0).map(() =>
-        mockQueueService.add({
-          job_type: 'generate_reply',
-          comment_id: commentId,
-          org_id: testOrg.id,
-          priority: 5
-        })
-      );
+      const jobPromises = Array(5)
+        .fill(0)
+        .map(() =>
+          mockQueueService.add({
+            job_type: 'generate_reply',
+            comment_id: commentId,
+            org_id: testOrg.id,
+            priority: 5
+          })
+        );
 
       const queueResults = await Promise.all(jobPromises);
-      
+
       // All requests should succeed, but should return the same job ID
-      queueResults.forEach(result => {
+      queueResults.forEach((result) => {
         expect(result.id).toBe(queueJobId);
       });
 
       // Mock queue status check - should show only one job
-      mockQueueService.getStatus.mockResolvedValueOnce([{
-        id: queueJobId,
-        job_type: 'generate_reply',
-        comment_id: commentId,
-        org_id: testOrg.id,
-        priority: 5,
-        status: 'pending'
-      }]);
+      mockQueueService.getStatus.mockResolvedValueOnce([
+        {
+          id: queueJobId,
+          job_type: 'generate_reply',
+          comment_id: commentId,
+          org_id: testOrg.id,
+          priority: 5,
+          status: 'pending'
+        }
+      ]);
 
       const queueStatus = await mockQueueService.getStatus({ comment_id: commentId });
-      
+
       // Should have only one job per comment_id + job_type combination
       const generateReplyJobs = queueStatus.filter(
-        job => job.job_type === 'generate_reply' && job.comment_id === commentId
+        (job) => job.job_type === 'generate_reply' && job.comment_id === commentId
       );
 
       expect(generateReplyJobs).toHaveLength(1);
@@ -550,7 +561,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
     test('generating response for same parameters should be deterministic', async () => {
       const comment = fixtures.comments.intermediate;
       const commentId = 'mock_comment_deterministic_456';
-      
+
       // Mock comment ingestion
       mockCommentService.ingest.mockResolvedValueOnce({
         id: commentId,
@@ -608,15 +619,15 @@ describe('SPEC 14 - Idempotency Tests', () => {
 
       // Responses should be identical due to deterministic generation
       expect(responses).toHaveLength(3);
-      
+
       // First response should be newly generated
       expect(responses[0].newly_generated).toBe(true);
       expect(responses[0].variants).toBeDefined();
-      
+
       // Subsequent responses should return cached results
       expect(responses[1].cached).toBe(true);
       expect(responses[2].cached).toBe(true);
-      
+
       // Content should be identical
       expect(responses[1].variants).toEqual(responses[0].variants);
       expect(responses[2].variants).toEqual(responses[0].variants);
@@ -627,7 +638,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
     test('unique constraints prevent duplicate records', async () => {
       const comment = fixtures.comments.light;
       const commentId = 'mock_comment_constraint_789';
-      
+
       // Attempt to create multiple records with same org_id + external_comment_id
       const duplicatePayload = {
         platform: 'twitter',
@@ -669,7 +680,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
     test('failed operations can be safely retried without side effects', async () => {
       const comment = fixtures.comments.intermediate;
       const commentId = 'mock_comment_retry_101112';
-      
+
       // Mock comment ingestion
       mockCommentService.ingest.mockResolvedValueOnce({
         id: commentId,
@@ -727,7 +738,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
     test('operations spanning multiple services maintain consistency', async () => {
       const comment = fixtures.comments.critical;
       const commentId = 'mock_comment_cross_service_131415';
-      
+
       // Mock comment ingestion
       mockCommentService.ingest.mockResolvedValueOnce({
         id: commentId,
@@ -803,7 +814,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
 
       for (let i = 0; i < iterations; i++) {
         const startTime = Date.now();
-        
+
         // Mock fast ingest operation
         mockCommentService.ingest.mockResolvedValueOnce({
           id: `mock_comment_perf_${i}`,
@@ -823,7 +834,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
 
         const duration = Date.now() - startTime;
         performanceTimes.push(duration);
-        
+
         expect(duration).toBeLessThan(maxTimePerOperation);
         expect(result.id).toBe(`mock_comment_perf_${i}`);
       }
@@ -832,7 +843,7 @@ describe('SPEC 14 - Idempotency Tests', () => {
       const maxTime = Math.max(...performanceTimes);
 
       console.log(`✅ Idempotency performance: avg ${averageTime}ms, max ${maxTime}ms`);
-      
+
       expect(averageTime).toBeLessThan(maxTimePerOperation / 2); // Should be well under limit
     });
   });

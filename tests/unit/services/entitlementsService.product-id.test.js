@@ -50,13 +50,13 @@ describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
     process.env.POLAR_STARTER_PRODUCT_ID = 'prod_starter_test';
     process.env.POLAR_PRO_PRODUCT_ID = 'prod_pro_test';
     process.env.POLAR_PLUS_PRODUCT_ID = 'prod_plus_test';
-    
+
     // Mock polarHelpers functions
     getPlanFromProductId.mockImplementation((productId) => {
       const mapping = {
-        'prod_starter_test': 'starter_trial',
-        'prod_pro_test': 'pro',
-        'prod_plus_test': 'plus'
+        prod_starter_test: 'starter_trial',
+        prod_pro_test: 'pro',
+        prod_plus_test: 'plus'
       };
       const plan = mapping[productId];
       if (!plan) {
@@ -73,7 +73,7 @@ describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
     entitlementsService = new EntitlementsService();
     // Enable polarClient for tests
     entitlementsService.polarClient = { enabled: true };
-    
+
     // Mock internal methods
     entitlementsService._getPlanLimitsFromName = jest.fn((planName) => {
       const limits = {
@@ -83,14 +83,14 @@ describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
       };
       return limits[planName] || limits.pro;
     });
-    
+
     entitlementsService._persistEntitlements = jest.fn().mockResolvedValue({
       id: 'user_123',
       plan: 'pro',
       analysis_limit_monthly: 1000,
       roast_limit_monthly: 500
     });
-    
+
     entitlementsService._applyFallbackEntitlements = jest.fn().mockResolvedValue(true);
   });
 
@@ -131,10 +131,7 @@ describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
       const { logger } = require('../../../src/utils/logger');
       jest.clearAllMocks();
 
-      await entitlementsService.setEntitlementsFromPolarPrice(
-        'user_123',
-        'prod_pro_test'
-      );
+      await entitlementsService.setEntitlementsFromPolarPrice('user_123', 'prod_pro_test');
 
       expect(logger.info).toHaveBeenCalledWith(
         'Entitlements updated from Polar Product',
@@ -147,7 +144,7 @@ describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
     it('should handle error and return fallback', async () => {
       const { logger } = require('../../../src/utils/logger');
       jest.clearAllMocks();
-      
+
       // Mock getPlanFromProductId to throw error
       getPlanFromProductId.mockImplementationOnce(() => {
         throw new Error('Unknown product_id');
@@ -172,10 +169,7 @@ describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
       // Reset mock to track calls
       entitlementsService._persistEntitlements.mockClear();
 
-      await entitlementsService.setEntitlementsFromPolarPrice(
-        'user_123',
-        'prod_pro_test'
-      );
+      await entitlementsService.setEntitlementsFromPolarPrice('user_123', 'prod_pro_test');
 
       // Verify _persistEntitlements was called with polar_price_id (backward compatibility)
       expect(entitlementsService._persistEntitlements).toHaveBeenCalledWith(
@@ -190,10 +184,7 @@ describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
       // Reset mock to track calls
       entitlementsService._persistEntitlements.mockClear();
 
-      await entitlementsService.setEntitlementsFromPolarPrice(
-        'user_123',
-        'prod_pro_test'
-      );
+      await entitlementsService.setEntitlementsFromPolarPrice('user_123', 'prod_pro_test');
 
       expect(entitlementsService._persistEntitlements).toHaveBeenCalledWith(
         'user_123',
@@ -239,4 +230,3 @@ describe('EntitlementsService with Polar Product ID (Issue #887)', () => {
     });
   });
 });
-

@@ -17,33 +17,33 @@ const { logger } = require('../../src/utils/logger');
  * @returns {void}
  */
 function setupSupabaseMocks(mockRpc) {
-    // Mock Supabase RPC function
-    supabaseServiceClient.rpc = mockRpc;
+  // Mock Supabase RPC function
+  supabaseServiceClient.rpc = mockRpc;
 
-    supabaseServiceClient._currentTable = '';
-    supabaseServiceClient.from = jest.fn().mockImplementation((table) => {
-        supabaseServiceClient._currentTable = table;
-        return supabaseServiceClient;
+  supabaseServiceClient._currentTable = '';
+  supabaseServiceClient.from = jest.fn().mockImplementation((table) => {
+    supabaseServiceClient._currentTable = table;
+    return supabaseServiceClient;
+  });
+
+  supabaseServiceClient.insert = jest.fn().mockResolvedValue({ data: null, error: null });
+  supabaseServiceClient.select = jest.fn().mockReturnThis();
+  supabaseServiceClient.eq = jest.fn().mockReturnThis();
+
+  supabaseServiceClient.single = jest.fn().mockImplementation(() => {
+    // Return different data based on which table is being queried
+    if (supabaseServiceClient._currentTable === 'roasts') {
+      return Promise.resolve({
+        data: { user_id: 'test-user-id', content: 'Original roast content' },
+        error: null
+      });
+    }
+    // Default: user_subscriptions table
+    return Promise.resolve({
+      data: { plan: 'pro', status: 'active' },
+      error: null
     });
-
-    supabaseServiceClient.insert = jest.fn().mockResolvedValue({ data: null, error: null });
-    supabaseServiceClient.select = jest.fn().mockReturnThis();
-    supabaseServiceClient.eq = jest.fn().mockReturnThis();
-
-    supabaseServiceClient.single = jest.fn().mockImplementation(() => {
-        // Return different data based on which table is being queried
-        if (supabaseServiceClient._currentTable === 'roasts') {
-            return Promise.resolve({
-                data: { user_id: 'test-user-id', content: 'Original roast content' },
-                error: null
-            });
-        }
-        // Default: user_subscriptions table
-        return Promise.resolve({
-            data: { plan: 'pro', status: 'active' },
-            error: null
-        });
-    });
+  });
 }
 
 /**
@@ -51,9 +51,9 @@ function setupSupabaseMocks(mockRpc) {
  * @returns {void}
  */
 function setupLoggerMocks() {
-    logger.info = jest.fn();
-    logger.error = jest.fn();
-    logger.warn = jest.fn();
+  logger.info = jest.fn();
+  logger.error = jest.fn();
+  logger.warn = jest.fn();
 }
 
 /**
@@ -61,9 +61,9 @@ function setupLoggerMocks() {
  * @returns {void}
  */
 function setupPlanServiceMocks() {
-    getPlanFeatures.mockReturnValue({
-        limits: { roastsPerMonth: 1000 }
-    });
+  getPlanFeatures.mockReturnValue({
+    limits: { roastsPerMonth: 1000 }
+  });
 }
 
 /**
@@ -73,28 +73,28 @@ function setupPlanServiceMocks() {
  * @returns {Object} Express app instance with routes configured
  */
 function setupRoastTestApp(mockValidator, mockRpc) {
-    // Reset all mocks
-    jest.clearAllMocks();
+  // Reset all mocks
+  jest.clearAllMocks();
 
-    // Setup express app
-    const app = express();
-    app.use(express.json());
+  // Setup express app
+  const app = express();
+  app.use(express.json());
 
-    // Setup all mocks
-    setupSupabaseMocks(mockRpc);
-    setupLoggerMocks();
-    setupPlanServiceMocks();
+  // Setup all mocks
+  setupSupabaseMocks(mockRpc);
+  setupLoggerMocks();
+  setupPlanServiceMocks();
 
-    // Import and setup routes after mocks
-    const roastRoutes = require('../../src/routes/roast');
-    app.use('/api/roast', roastRoutes);
+  // Import and setup routes after mocks
+  const roastRoutes = require('../../src/routes/roast');
+  app.use('/api/roast', roastRoutes);
 
-    return app;
+  return app;
 }
 
 module.exports = {
-    setupRoastTestApp,
-    setupSupabaseMocks,
-    setupLoggerMocks,
-    setupPlanServiceMocks
+  setupRoastTestApp,
+  setupSupabaseMocks,
+  setupLoggerMocks,
+  setupPlanServiceMocks
 };

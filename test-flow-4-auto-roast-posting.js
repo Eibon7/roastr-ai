@@ -1,6 +1,6 @@
 /**
  * 🧪 Flujo 4: Generación y publicación automática del roast
- * 
+ *
  * Test de integración completo que valida:
  * 1. Comentario recibido con toxicidad media-alta (roasteable)
  * 2. Roastr Persona no lo marca como ignorable ni ofensivo directo
@@ -18,11 +18,12 @@
 // Removed unused mocks to keep the script minimal and avoid confusion
 
 const mockTwitterService = {
-  postResponse: () => Promise.resolve({
-    success: true,
-    platform_response_id: 'tweet-123',
-    posted_at: new Date().toISOString()
-  })
+  postResponse: () =>
+    Promise.resolve({
+      success: true,
+      platform_response_id: 'tweet-123',
+      posted_at: new Date().toISOString()
+    })
 };
 
 async function testAutoRoastPostingFlow() {
@@ -35,11 +36,11 @@ async function testAutoRoastPostingFlow() {
   // CONFIGURACIÓN INICIAL
   console.log('⚙️ CONFIGURACIÓN INICIAL');
   console.log('-'.repeat(60));
-  
+
   const organizationId = 'org-auto-test-123';
   const userId = 'user-auto-test-123';
   const commentId = 'comment-toxic-456';
-  
+
   // Configuración del usuario con respuesta automática activada
   const userConfig = {
     id: userId,
@@ -52,7 +53,7 @@ async function testAutoRoastPostingFlow() {
       shield_enabled: false
     }
   };
-  
+
   // Configuración de la organización
   const organizationConfig = {
     id: organizationId,
@@ -64,7 +65,7 @@ async function testAutoRoastPostingFlow() {
       moderation_level: 'medium'
     }
   };
-  
+
   // Configuración de integración de Twitter
   const integrationConfig = {
     id: 'integration-twitter-123',
@@ -78,17 +79,23 @@ async function testAutoRoastPostingFlow() {
       response_frequency: 0.8
     }
   };
-  
+
   console.log(`✅ Usuario: ${userId} (Plan: ${userConfig.plan})`);
-  console.log(`✅ Organización: ${organizationId} (Roasts usados: ${organizationConfig.monthly_responses_used}/${organizationConfig.monthly_responses_limit})`);
-  console.log(`✅ Auto-respuesta: ${userConfig.preferences.auto_respond ? 'ACTIVADA' : 'DESACTIVADA'}`);
-  console.log(`✅ Auto-posting: ${integrationConfig.config.auto_post ? 'ACTIVADO' : 'DESACTIVADO'}`);
+  console.log(
+    `✅ Organización: ${organizationId} (Roasts usados: ${organizationConfig.monthly_responses_used}/${organizationConfig.monthly_responses_limit})`
+  );
+  console.log(
+    `✅ Auto-respuesta: ${userConfig.preferences.auto_respond ? 'ACTIVADA' : 'DESACTIVADA'}`
+  );
+  console.log(
+    `✅ Auto-posting: ${integrationConfig.config.auto_post ? 'ACTIVADO' : 'DESACTIVADO'}`
+  );
   console.log('');
 
   // ESCENARIO: Comentario con toxicidad media-alta
   console.log('📝 ESCENARIO: Comentario con toxicidad media-alta');
   console.log('-'.repeat(60));
-  
+
   const incomingComment = {
     id: commentId,
     organization_id: organizationId,
@@ -103,7 +110,7 @@ async function testAutoRoastPostingFlow() {
     status: 'pending',
     created_at: new Date().toISOString()
   };
-  
+
   console.log(`Comentario: "${incomingComment.original_text}"`);
   console.log(`Toxicidad: ${incomingComment.toxicity_score} (${incomingComment.severity_level})`);
   console.log(`Categorías: ${incomingComment.categories.join(', ')}`);
@@ -112,16 +119,16 @@ async function testAutoRoastPostingFlow() {
   // PASO 1: Análisis de Roastr Persona
   console.log('🎯 PASO 1: Análisis de Roastr Persona');
   console.log('-'.repeat(40));
-  
+
   const personaData = {
     persona_text: 'desarrollador de software, emprendedor tech',
     custom_instructions: 'Responde con humor inteligente y referencias técnicas'
   };
-  
+
   // Simular análisis de ataque personal
   const isPersonalAttack = false; // No es ataque directo a la persona
   const isIgnorable = false; // No es ignorable
-  
+
   console.log(`✅ Roastr Persona: "${personaData.persona_text}"`);
   console.log(`✅ ¿Es ataque personal?: ${isPersonalAttack ? 'SÍ' : 'NO'}`);
   console.log(`✅ ¿Es ignorable?: ${isIgnorable ? 'SÍ' : 'NO'}`);
@@ -131,13 +138,13 @@ async function testAutoRoastPostingFlow() {
   // PASO 2: Verificación de límites y disponibilidad
   console.log('📊 PASO 2: Verificación de límites y disponibilidad');
   console.log('-'.repeat(40));
-  
+
   const roastsAvailable = Math.max(
     0,
     organizationConfig.monthly_responses_limit - organizationConfig.monthly_responses_used
   );
   const canGenerateRoast = roastsAvailable > 0 && userConfig.plan !== 'free';
-  
+
   console.log(`Roasts disponibles: ${roastsAvailable}`);
   console.log(`Plan del usuario: ${userConfig.plan}`);
   console.log(`✅ Puede generar roast: ${canGenerateRoast ? 'SÍ' : 'NO'}`);
@@ -146,12 +153,13 @@ async function testAutoRoastPostingFlow() {
   // PASO 3: Generación automática del roast
   console.log('🤖 PASO 3: Generación automática del roast');
   console.log('-'.repeat(40));
-  
+
   const generatedRoast = {
     id: 'response-auto-789',
     organization_id: organizationId,
     comment_id: commentId,
-    response_text: 'Mi app será lo que sea, pero al menos no necesito insultar a desconocidos en internet para sentirme mejor. Tal vez deberías probar a programar algo antes de criticar 🤓',
+    response_text:
+      'Mi app será lo que sea, pero al menos no necesito insultar a desconocidos en internet para sentirme mejor. Tal vez deberías probar a programar algo antes de criticar 🤓',
     tone: userConfig.preferences.humor_tone,
     humor_type: userConfig.preferences.humor_style,
     generation_time_ms: 1250,
@@ -160,7 +168,7 @@ async function testAutoRoastPostingFlow() {
     post_status: 'pending',
     created_at: new Date().toISOString()
   };
-  
+
   console.log(`✅ Roast generado: "${generatedRoast.response_text}"`);
   console.log(`✅ Tono: ${generatedRoast.tone}`);
   console.log(`✅ Estilo: ${generatedRoast.humor_type}`);
@@ -171,21 +179,25 @@ async function testAutoRoastPostingFlow() {
   // PASO 4: Validaciones internas del roast
   console.log('🔍 PASO 4: Validaciones internas del roast');
   console.log('-'.repeat(40));
-  
+
   const validations = {
     lengthCheck: generatedRoast.response_text.length <= 280, // Límite de Twitter
     moderationCheck: true, // Pasa moderación interna
     toxicityCheck: true, // No es demasiado tóxico
     brandSafetyCheck: true // Es brand-safe
   };
-  
-  const allValidationsPassed = Object.values(validations).every(v => v === true);
-  
-  console.log(`✅ Longitud (≤280 chars): ${validations.lengthCheck ? 'PASS' : 'FAIL'} (${generatedRoast.response_text.length} chars)`);
+
+  const allValidationsPassed = Object.values(validations).every((v) => v === true);
+
+  console.log(
+    `✅ Longitud (≤280 chars): ${validations.lengthCheck ? 'PASS' : 'FAIL'} (${generatedRoast.response_text.length} chars)`
+  );
   console.log(`✅ Moderación interna: ${validations.moderationCheck ? 'PASS' : 'FAIL'}`);
   console.log(`✅ Control de toxicidad: ${validations.toxicityCheck ? 'PASS' : 'FAIL'}`);
   console.log(`✅ Brand safety: ${validations.brandSafetyCheck ? 'PASS' : 'FAIL'}`);
-  console.log(`✅ Resultado: ${allValidationsPassed ? 'TODAS LAS VALIDACIONES PASADAS' : 'VALIDACIONES FALLIDAS'}`);
+  console.log(
+    `✅ Resultado: ${allValidationsPassed ? 'TODAS LAS VALIDACIONES PASADAS' : 'VALIDACIONES FALLIDAS'}`
+  );
   console.log('');
 
   // PASO 5: Publicación automática en la red social
@@ -208,7 +220,6 @@ async function testAutoRoastPostingFlow() {
       generatedRoast.post_status = 'posted';
       generatedRoast.platform_response_id = postingResult.platform_response_id;
       generatedRoast.posted_at = postingResult.posted_at;
-
     } catch (error) {
       console.log(`❌ Error en publicación automática: ${error.message}`);
 
@@ -218,7 +229,6 @@ async function testAutoRoastPostingFlow() {
       generatedRoast.posted_at = null;
       generatedRoast.post_error = error.message;
     }
-
   } else {
     console.log(`❌ Publicación automática omitida:`);
     console.log(`   - Validaciones pasadas: ${allValidationsPassed}`);
@@ -230,13 +240,13 @@ async function testAutoRoastPostingFlow() {
   // PASO 6: Actualización de la base de datos
   console.log('💾 PASO 6: Actualización de la base de datos');
   console.log('-'.repeat(40));
-  
+
   // Simular inserción en tabla responses
   const responseRecord = {
     ...generatedRoast,
     updated_at: new Date().toISOString()
   };
-  
+
   // Simular inserción en tabla roast_attempts
   const attemptRecord = {
     id: 'attempt-auto-456',
@@ -249,12 +259,12 @@ async function testAutoRoastPostingFlow() {
     generated_by: userId,
     action_taken_by: 'system' // Automático
   };
-  
+
   console.log(`✅ Registro en tabla 'responses':`);
   console.log(`   - ID: ${responseRecord.id}`);
   console.log(`   - Estado: ${responseRecord.post_status}`);
   console.log(`   - ID plataforma: ${responseRecord.platform_response_id || 'N/A'}`);
-  
+
   console.log(`✅ Registro en tabla 'roast_attempts':`);
   console.log(`   - ID: ${attemptRecord.id}`);
   console.log(`   - Intento #: ${attemptRecord.attempt_number}`);
@@ -265,14 +275,16 @@ async function testAutoRoastPostingFlow() {
   // PASO 7: Actualización de métricas de uso
   console.log('📈 PASO 7: Actualización de métricas de uso');
   console.log('-'.repeat(40));
-  
+
   const updatedUsage = {
     monthly_responses_used: organizationConfig.monthly_responses_used + 1,
     total_responses_generated: (organizationConfig.total_responses_generated || 0) + 1,
     last_response_at: new Date().toISOString()
   };
-  
-  console.log(`✅ Roasts usados actualizados: ${organizationConfig.monthly_responses_used} → ${updatedUsage.monthly_responses_used}`);
+
+  console.log(
+    `✅ Roasts usados actualizados: ${organizationConfig.monthly_responses_used} → ${updatedUsage.monthly_responses_used}`
+  );
   console.log(`✅ Total de respuestas generadas: ${updatedUsage.total_responses_generated}`);
   console.log(`✅ Última respuesta: ${updatedUsage.last_response_at}`);
   console.log('');
@@ -313,7 +325,9 @@ async function testAutoRoastPostingFlow() {
   console.log('📊 ESTADÍSTICAS DEL FLUJO:');
   console.log(`   - Toxicidad del comentario: ${incomingComment?.toxicity_score || 'N/A'}`);
   console.log(`   - Tiempo de generación: ${generatedRoast?.generation_time_ms || 'N/A'}ms`);
-  console.log(`   - Longitud del roast: ${generatedRoast?.response_text?.length || 'N/A'} caracteres`);
+  console.log(
+    `   - Longitud del roast: ${generatedRoast?.response_text?.length || 'N/A'} caracteres`
+  );
   console.log(`   - Tokens consumidos: ${generatedRoast?.tokens_used || 'N/A'}`);
   console.log(`   - Costo: ${generatedRoast?.cost_cents || 'N/A'} centavos`);
   console.log(`   - Estado final: ${(generatedRoast?.post_status || 'UNKNOWN').toUpperCase()}`);

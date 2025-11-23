@@ -11,7 +11,7 @@ import IntegrationStatusCard from '../components/widgets/IntegrationStatusCard';
 // Mock toast hook
 const mockToast = jest.fn();
 jest.mock('../../hooks/use-toast', () => ({
-  useToast: () => ({ toast: mockToast }),
+  useToast: () => ({ toast: mockToast })
 }));
 
 // Mock action handlers
@@ -165,7 +165,7 @@ describe('IntegrationStatusCard Component', () => {
       expect(screen.getByText('Connected')).toBeInTheDocument();
       expect(screen.getByText('Test User')).toBeInTheDocument();
       expect(screen.getByText('@testuser')).toBeInTheDocument();
-      
+
       // Check connection stats
       expect(screen.getByText('Connected')).toBeInTheDocument();
       expect(screen.getByText('Last Active')).toBeInTheDocument();
@@ -210,7 +210,7 @@ describe('IntegrationStatusCard Component', () => {
     it('should show token expiry warning', () => {
       const soonToExpireConnection = {
         ...mockConnectedConnection,
-        expires_at: Date.now() + (30 * 60 * 1000) // 30 minutes from now
+        expires_at: Date.now() + 30 * 60 * 1000 // 30 minutes from now
       };
 
       render(
@@ -361,9 +361,9 @@ describe('IntegrationStatusCard Component', () => {
   describe('Loading States', () => {
     it('should show loading state during connect action', async () => {
       const user = userEvent.setup();
-      
+
       // Mock slow connect function
-      const slowConnect = jest.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
+      const slowConnect = jest.fn(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
       render(
         <IntegrationStatusCard
@@ -385,9 +385,9 @@ describe('IntegrationStatusCard Component', () => {
 
     it('should show loading state during refresh action', async () => {
       const user = userEvent.setup();
-      
+
       // Mock slow refresh function
-      const slowRefresh = jest.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
+      const slowRefresh = jest.fn(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
       render(
         <IntegrationStatusCard
@@ -407,9 +407,9 @@ describe('IntegrationStatusCard Component', () => {
 
     it('should show loading state during disconnect action', async () => {
       const user = userEvent.setup();
-      
+
       // Mock slow disconnect function
-      const slowDisconnect = jest.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
+      const slowDisconnect = jest.fn(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
       render(
         <IntegrationStatusCard
@@ -438,7 +438,7 @@ describe('IntegrationStatusCard Component', () => {
   describe('Error Handling', () => {
     it('should handle and display connect errors', async () => {
       const user = userEvent.setup();
-      
+
       const errorConnect = jest.fn(() => Promise.reject(new Error('Connection failed')));
 
       render(
@@ -464,7 +464,7 @@ describe('IntegrationStatusCard Component', () => {
 
     it('should handle refresh errors', async () => {
       const user = userEvent.setup();
-      
+
       const errorRefresh = jest.fn(() => Promise.reject(new Error('Refresh failed')));
 
       render(
@@ -490,7 +490,7 @@ describe('IntegrationStatusCard Component', () => {
 
     it('should handle disconnect errors', async () => {
       const user = userEvent.setup();
-      
+
       const errorDisconnect = jest.fn(() => Promise.reject(new Error('Disconnect failed')));
 
       render(
@@ -641,8 +641,8 @@ describe('IntegrationStatusCard Component', () => {
     it('should format relative time correctly', () => {
       const connection = {
         ...mockConnectedConnection,
-        connectedAt: Date.now() - (2 * 60 * 60 * 1000), // 2 hours ago
-        lastRefreshed: Date.now() - (30 * 60 * 1000) // 30 minutes ago
+        connectedAt: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
+        lastRefreshed: Date.now() - 30 * 60 * 1000 // 30 minutes ago
       };
 
       render(

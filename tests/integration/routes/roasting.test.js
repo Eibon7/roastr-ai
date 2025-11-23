@@ -301,7 +301,11 @@ describe('Roasting Control API Integration Tests', () => {
       });
 
       supabaseServiceClient.from
-        .mockReturnValueOnce({ select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: { id: 'org-123' }, error: null }) }) }) })
+        .mockReturnValueOnce({
+          select: () => ({
+            eq: () => ({ single: () => Promise.resolve({ data: { id: 'org-123' }, error: null }) })
+          })
+        })
         .mockReturnValueOnce(mockFrom1)
         .mockReturnValueOnce(mockFrom2);
 
@@ -343,7 +347,11 @@ describe('Roasting Control API Integration Tests', () => {
       });
 
       supabaseServiceClient.from
-        .mockReturnValueOnce({ select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: { id: 'org-123' }, error: null }) }) }) })
+        .mockReturnValueOnce({
+          select: () => ({
+            eq: () => ({ single: () => Promise.resolve({ data: { id: 'org-123' }, error: null }) })
+          })
+        })
         .mockReturnValueOnce(mockFrom1)
         .mockReturnValueOnce(mockFrom2);
 

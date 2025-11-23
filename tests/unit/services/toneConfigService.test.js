@@ -3,50 +3,65 @@
  * Issue #876: Dynamic Roast Tone Configuration System
  */
 
-const { ToneConfigService, getToneConfigService } = require('../../../src/services/toneConfigService');
+const {
+  ToneConfigService,
+  getToneConfigService
+} = require('../../../src/services/toneConfigService');
 
 // Mock Supabase
 const mockSupabase = {
   from: jest.fn((tableName) => ({
     select: jest.fn(() => ({
       eq: jest.fn(() => ({
-        single: jest.fn(() => Promise.resolve({
-          data: mockToneData[0],
-          error: null
-        })),
-        order: jest.fn(() => Promise.resolve({
-          data: mockToneData.filter(t => t.active),
-          error: null
-        }))
+        single: jest.fn(() =>
+          Promise.resolve({
+            data: mockToneData[0],
+            error: null
+          })
+        ),
+        order: jest.fn(() =>
+          Promise.resolve({
+            data: mockToneData.filter((t) => t.active),
+            error: null
+          })
+        )
       })),
-      order: jest.fn(() => Promise.resolve({
-        data: mockToneData,
-        error: null
-      }))
+      order: jest.fn(() =>
+        Promise.resolve({
+          data: mockToneData,
+          error: null
+        })
+      )
     })),
     insert: jest.fn(() => ({
       select: jest.fn(() => ({
-        single: jest.fn(() => Promise.resolve({
-          data: mockToneData[0],
-          error: null
-        }))
+        single: jest.fn(() =>
+          Promise.resolve({
+            data: mockToneData[0],
+            error: null
+          })
+        )
       }))
     })),
     update: jest.fn(() => ({
       eq: jest.fn(() => ({
         select: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({
-            data: mockToneData[0],
-            error: null
-          }))
+          single: jest.fn(() =>
+            Promise.resolve({
+              data: mockToneData[0],
+              error: null
+            })
+          )
         }))
       }))
     })),
     delete: jest.fn(() => ({
-      eq: jest.fn(() => Promise.resolve({
-        data: null,
-        error: null
-      }))
+      eq: jest.fn(() =>
+        Promise.resolve({
+          data: null,
+          error: null
+        })
+      )
     }))
   }))
 };
@@ -176,10 +191,12 @@ describe('ToneConfigService', () => {
       mockSupabase.from.mockReturnValueOnce({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            order: jest.fn(() => Promise.resolve({
-              data: [],
-              error: null
-            }))
+            order: jest.fn(() =>
+              Promise.resolve({
+                data: [],
+                error: null
+              })
+            )
           }))
         }))
       });
@@ -191,10 +208,12 @@ describe('ToneConfigService', () => {
       mockSupabase.from.mockReturnValueOnce({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            order: jest.fn(() => Promise.resolve({
-              data: null,
-              error: { message: 'Database error' }
-            }))
+            order: jest.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: { message: 'Database error' }
+              })
+            )
           }))
         }))
       });
@@ -225,10 +244,12 @@ describe('ToneConfigService', () => {
       mockSupabase.from.mockReturnValueOnce({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: null,
-              error: { code: 'PGRST116' }
-            }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: { code: 'PGRST116' }
+              })
+            )
           }))
         }))
       });
@@ -261,10 +282,12 @@ describe('ToneConfigService', () => {
       mockSupabase.from.mockReturnValueOnce({
         insert: jest.fn(() => ({
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: null,
-              error: { code: '23505' }
-            }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: { code: '23505' }
+              })
+            )
           }))
         }))
       });
@@ -281,13 +304,17 @@ describe('ToneConfigService', () => {
     it('should validate intensity range (1-5)', async () => {
       const invalidTone = { ...newTone, intensity: 6 };
 
-      await expect(service.createTone(invalidTone)).rejects.toThrow('intensity must be between 1 and 5');
+      await expect(service.createTone(invalidTone)).rejects.toThrow(
+        'intensity must be between 1 and 5'
+      );
     });
 
     it('should validate name format (lowercase, numbers, hyphens)', async () => {
       const invalidTone = { ...newTone, name: 'Invalid Name!' };
 
-      await expect(service.createTone(invalidTone)).rejects.toThrow('name must contain only lowercase');
+      await expect(service.createTone(invalidTone)).rejects.toThrow(
+        'name must contain only lowercase'
+      );
     });
   });
 
@@ -305,10 +332,12 @@ describe('ToneConfigService', () => {
         update: jest.fn(() => ({
           eq: jest.fn(() => ({
             select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({
-                data: null,
-                error: { code: 'PGRST116' }
-              }))
+              single: jest.fn(() =>
+                Promise.resolve({
+                  data: null,
+                  error: { code: 'PGRST116' }
+                })
+              )
             }))
           }))
         }))
@@ -336,10 +365,12 @@ describe('ToneConfigService', () => {
       // Mock only 1 active tone
       mockSupabase.from.mockReturnValueOnce({
         select: jest.fn(() => ({
-          eq: jest.fn(() => Promise.resolve({
-            data: [{ id: 'tone-1' }],
-            error: null
-          }))
+          eq: jest.fn(() =>
+            Promise.resolve({
+              data: [{ id: 'tone-1' }],
+              error: null
+            })
+          )
         }))
       });
 
@@ -360,10 +391,12 @@ describe('ToneConfigService', () => {
       // Mock 2 active tones
       mockSupabase.from.mockReturnValueOnce({
         select: jest.fn(() => ({
-          eq: jest.fn(() => Promise.resolve({
-            data: [{ id: 'tone-1' }, { id: 'tone-2' }],
-            error: null
-          }))
+          eq: jest.fn(() =>
+            Promise.resolve({
+              data: [{ id: 'tone-1' }, { id: 'tone-2' }],
+              error: null
+            })
+          )
         }))
       });
 
@@ -376,10 +409,12 @@ describe('ToneConfigService', () => {
       // Mock only 1 active tone
       mockSupabase.from.mockReturnValueOnce({
         select: jest.fn(() => ({
-          eq: jest.fn(() => Promise.resolve({
-            data: [{ id: 'tone-1' }],
-            error: null
-          }))
+          eq: jest.fn(() =>
+            Promise.resolve({
+              data: [{ id: 'tone-1' }],
+              error: null
+            })
+          )
         }))
       });
 
@@ -448,4 +483,3 @@ describe('ToneConfigService', () => {
     });
   });
 });
-

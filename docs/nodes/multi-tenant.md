@@ -10,6 +10,7 @@
 **Note:** Coverage validated via RLS integration tests (24 tables tested, 100+ tests passing). Expanded RLS coverage to remaining 13 tables. Direct RLS validation approach without JWT context switching. G6 validation complete. Issue #894: Supabase mock implemented - 35/35 RLS tests passing without network calls.
 **Related Issue:** #412 (RLS Integration Tests - Infrastructure Ready), #504 (Coverage Recovery - 40.9% achieved ✅), #588 (G6 RLS Validation ✅), #774 (Test fixes), #800 (Coverage Expansion - Phase 1 - 50% achieved ✅), #801 (CRUD-level RLS Testing - Full CRUD coverage ✅), #787 (RLS Integration Tests Phase 2 - Usage, Admin, Shield ✅), #894 (Supabase Mock - Zero Network Calls ✅)
 **Related PRs:** #499, #587, #790, #805 (Test fixes), #812 (RLS expansion), #814 (G6 validation)
+
 ## Dependencies
 
 None (foundational node)
@@ -154,10 +155,12 @@ async function getUserOrganizations(userId) {
   // Returns only orgs where user is owner or member
   const { data: orgs } = await supabaseClient
     .from('organizations')
-    .select(`
+    .select(
+      `
       *,
       organization_members!inner(role)
-    `)
+    `
+    )
     .or(`owner_id.eq.${userId},organization_members.user_id.eq.${userId}`);
 
   return orgs;
@@ -206,7 +209,8 @@ async function addOrganizationMember(organizationId, userId, role = 'member') {
     .single();
 
   if (error) {
-    if (error.code === '23505') { // Unique violation
+    if (error.code === '23505') {
+      // Unique violation
       throw new Error('User is already a member of this organization');
     }
     throw error;
@@ -233,6 +237,7 @@ CREATE POLICY org_isolation ON comments FOR ALL USING (
 ```
 
 **Tables Using This Pattern:**
+
 - `comments`, `responses`, `integration_configs`, `usage_records`, `monthly_usage`, `shield_actions`, `shield_events`, `app_logs`, `api_keys`, `audit_logs`, `stylecards`, `notifications`, `webhook_events`, `subscription_audit_log`, `feature_flags`
 
 ### 2. User Isolation (Personal Data)
@@ -247,6 +252,7 @@ CREATE POLICY user_isolation ON analysis_usage FOR ALL USING (
 ```
 
 **Tables Using This Pattern:**
+
 - `analysis_usage`, `account_deletion_requests`, `password_history`
 
 ### 3. Granular Policies (Enhanced Security)
@@ -284,10 +290,7 @@ const supabaseServiceClient = createClient(
 );
 
 // User client (RLS enforced)
-const supabaseClient = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const supabaseClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 ```
 
 ## Advisory Locks (Race Condition Prevention)
@@ -351,13 +354,12 @@ $$ LANGUAGE plpgsql;
 const { CostControlService } = require('./services/costControl');
 
 async function consumeAnalysisCredit(userId, planId, monthlyLimit) {
-  const { data: result } = await supabaseServiceClient
-    .rpc('consume_analysis_credits_safe', {
-      p_user_id: userId,
-      p_plan: planId,
-      p_monthly_limit: monthlyLimit,
-      p_metadata: { timestamp: new Date().toISOString() }
-    });
+  const { data: result } = await supabaseServiceClient.rpc('consume_analysis_credits_safe', {
+    p_user_id: userId,
+    p_plan: planId,
+    p_monthly_limit: monthlyLimit,
+    p_metadata: { timestamp: new Date().toISOString() }
+  });
 
   if (!result.success) {
     throw new Error(result.error || 'Failed to consume credit');
@@ -579,10 +581,8 @@ const { data } = await supabaseServiceClient
   .eq('organization_id', req.user.organizationId);
 
 // ✅ GOOD: Using user client (RLS enforced)
-const { data } = await supabaseClient
-  .from('comments')
-  .select('*');
-  // RLS automatically filters by organization_id
+const { data } = await supabaseClient.from('comments').select('*');
+// RLS automatically filters by organization_id
 ```
 
 ### 2. Validate Organization Access
@@ -658,21 +658,25 @@ const crypto = require('crypto');
 const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || 'super-secret-jwt-token';
 
 // ✅ GOOD: Secure fallback with crypto, fail-fast in production
-const JWT_SECRET = process.env.SUPABASE_JWT_SECRET ||
+const JWT_SECRET =
+  process.env.SUPABASE_JWT_SECRET ||
   process.env.JWT_SECRET ||
   (process.env.NODE_ENV === 'test'
-    ? crypto.randomBytes(32).toString('hex')  // Random secret for test environment
-    : (() => { throw new Error('JWT_SECRET or SUPABASE_JWT_SECRET required for production'); })()
-  );
+    ? crypto.randomBytes(32).toString('hex') // Random secret for test environment
+    : (() => {
+        throw new Error('JWT_SECRET or SUPABASE_JWT_SECRET required for production');
+      })());
 ```
 
 **Rationale:**
+
 - **Hardcoded secrets are security vulnerabilities** - Predictable, visible in version control
 - **Test environments need randomization** - Different secret for each test run prevents test interference
 - **Production environments must fail-fast** - No fallback, require explicit configuration
 - **Priority chain**: SUPABASE_JWT_SECRET (Supabase-specific) > JWT_SECRET (generic) > crypto (test only) > fail-fast (production)
 
 **Token Signing Example:**
+
 ```javascript
 const jwt = require('jsonwebtoken');
 
@@ -684,7 +688,7 @@ const token = jwt.sign(
     aud: 'authenticated',
     exp: Math.floor(Date.now() / 1000) + 3600
   },
-  JWT_SECRET,  // ✅ Uses secure secret from above
+  JWT_SECRET, // ✅ Uses secure secret from above
   { algorithm: 'HS256' }
 );
 ```
@@ -692,6 +696,7 @@ const token = jwt.sign(
 **Operational Note** (CodeRabbit #3353894295 N1):
 
 For testing RLS context switching, use `supabase.auth.setSession(...)`:
+
 ```javascript
 // Switch to tenant context for testing
 await testClient.auth.setSession({
@@ -700,11 +705,7 @@ await testClient.auth.setSession({
 });
 
 // Verify context
-const { data } = await testClient
-  .from('organizations')
-  .select('id')
-  .eq('id', tenantId)
-  .single();
+const { data } = await testClient.from('organizations').select('id').eq('id', tenantId).single();
 ```
 
 **Related Fix:** CodeRabbit Review #3353722960 (2025-10-18)
@@ -723,8 +724,8 @@ describe('Multi-Tenant RLS', () => {
     const orgB = await createOrganization(userB.id, 'Org B', 'org-b');
 
     // User A tries to access Org B data (should fail)
-    const { data: comments } = await supabaseClient
-      .auth.setAuth(userA.token)
+    const { data: comments } = await supabaseClient.auth
+      .setAuth(userA.token)
       .from('comments')
       .select('*')
       .eq('organization_id', orgB.id);
@@ -737,8 +738,8 @@ describe('Multi-Tenant RLS', () => {
     await addOrganizationMember(org.id, memberUser.id, 'member');
 
     // Member can access organization data
-    const { data: comments } = await supabaseClient
-      .auth.setAuth(memberUser.token)
+    const { data: comments } = await supabaseClient.auth
+      .setAuth(memberUser.token)
       .from('comments')
       .select('*')
       .eq('organization_id', org.id);
@@ -751,9 +752,7 @@ describe('Multi-Tenant RLS', () => {
     const org = await createOrganization(userA.id, 'Test Org', 'test-org');
 
     // Service role can access all data
-    const { data: allOrgs } = await supabaseServiceClient
-      .from('organizations')
-      .select('*');
+    const { data: allOrgs } = await supabaseServiceClient.from('organizations').select('*');
 
     expect(allOrgs).toContainEqual(expect.objectContaining({ id: org.id }));
   });
@@ -776,14 +775,14 @@ describe('Multi-Tenant Workflow', () => {
       .single();
 
     expect(settings.aggressiveness).toBe(95);
-    expect(settings.tau_shield).toBe(0.70);
+    expect(settings.tau_shield).toBe(0.7);
 
     // 3. Add member
     await addOrganizationMember(org.id, memberUser.id, 'admin');
 
     // 4. Member can access org data
-    const { data: memberOrgs } = await supabaseClient
-      .auth.setAuth(memberUser.token)
+    const { data: memberOrgs } = await supabaseClient.auth
+      .setAuth(memberUser.token)
       .from('organizations')
       .select('*');
 
@@ -794,13 +793,13 @@ describe('Multi-Tenant Workflow', () => {
 
 ## Error Handling
 
-| Error | Cause | Resolution |
-|-------|-------|------------|
-| `Access denied` | User not member of organization | Add user to organization_members |
-| `RLS policy violation` | Attempting to insert data for another org | Use correct organization_id |
-| `Unique constraint violation (23505)` | Duplicate organization member | User already added, no action needed |
-| `Foreign key violation (23503)` | Invalid organization_id or user_id | Verify IDs exist in respective tables |
-| `Lock acquisition failed` | Concurrent credit consumption | Retry request (advisory lock prevents race condition) |
+| Error                                 | Cause                                     | Resolution                                            |
+| ------------------------------------- | ----------------------------------------- | ----------------------------------------------------- |
+| `Access denied`                       | User not member of organization           | Add user to organization_members                      |
+| `RLS policy violation`                | Attempting to insert data for another org | Use correct organization_id                           |
+| `Unique constraint violation (23505)` | Duplicate organization member             | User already added, no action needed                  |
+| `Foreign key violation (23503)`       | Invalid organization_id or user_id        | Verify IDs exist in respective tables                 |
+| `Lock acquisition failed`             | Concurrent credit consumption             | Retry request (advisory lock prevents race condition) |
 
 ## Monitoring & Alerts
 
@@ -824,7 +823,6 @@ describe('Multi-Tenant Workflow', () => {
 }
 ```
 
-
 ## Testing Infrastructure (Issue #412, Issue #504)
 
 ### Test Utilities
@@ -840,6 +838,7 @@ Provides helper functions for RLS testing:
 - `cleanupTestData()` - FK-safe cleanup (roasts → comments → posts → orgs → users)
 
 **Schema Compliance:**
+
 - Creates users with required fields (email, name, plan)
 - Creates organizations with slug (UNIQUE) and owner_id (FK)
 - Respects all foreign key constraints
@@ -850,13 +849,15 @@ Provides helper functions for RLS testing:
 **⚠️ IMPORTANT**: All test utilities MUST use environment-based JWT secrets, NEVER hardcoded secrets.
 
 **JWT Secret Configuration** (`tests/helpers/tenantTestUtils.js:18-23`):
+
 ```javascript
 // Use TEST_JWT_SECRET from env, fallback to SUPABASE_JWT_SECRET, or generate random
 // NEVER use hardcoded secrets
-const JWT_SECRET = process.env.TEST_JWT_SECRET ||
-                   process.env.SUPABASE_JWT_SECRET ||
-                   process.env.JWT_SECRET ||
-                   crypto.randomBytes(32).toString('hex');
+const JWT_SECRET =
+  process.env.TEST_JWT_SECRET ||
+  process.env.SUPABASE_JWT_SECRET ||
+  process.env.JWT_SECRET ||
+  crypto.randomBytes(32).toString('hex');
 
 // Log warning if using generated secret (test may not work with real Supabase)
 if (!process.env.TEST_JWT_SECRET && !process.env.SUPABASE_JWT_SECRET && !process.env.JWT_SECRET) {
@@ -866,12 +867,14 @@ if (!process.env.TEST_JWT_SECRET && !process.env.SUPABASE_JWT_SECRET && !process
 ```
 
 **Why This Matters**:
+
 - ❌ **Hardcoded secrets**: Security vulnerability, inconsistent test behavior
 - ✅ **Environment-based**: Secure, configurable per environment
 - ✅ **Random fallback**: Prevents tests from accidentally using weak default secret
 - ✅ **Warning on fallback**: Alerts developers to configure TEST_JWT_SECRET
 
 **Configuration**:
+
 ```bash
 # Recommended: Use dedicated test secret
 TEST_JWT_SECRET=your-test-jwt-secret-here
@@ -896,6 +899,7 @@ SUPABASE_JWT_SECRET=your-supabase-jwt-secret
 **Approach:** Direct RLS validation (service role bypass vs anon client enforcement)
 
 **Test Coverage:**
+
 - Setup Verification (1 test)
 - RLS Enforcement Validation (3 tests): Service role bypass, anon client block, table accessibility
 - AC1: Service Role Data Isolation (5 tests): Tenant A/B isolation, comments, integration_configs, usage_records
@@ -907,6 +911,7 @@ SUPABASE_JWT_SECRET=your-supabase-jwt-secret
 **Critical Tables:** integration_configs (SECURITY), usage_records (BILLING), monthly_usage (BILLING), usage_tracking, usage_limits, usage_alerts, feature_flags, admin_audit_logs, audit_logs, plan_limits, plan_limits_audit, shield_actions
 
 **Status:** ✅ **17/17 tests passing (100%)** - Execution time: 5.2s
+
 - ✅ RLS enforcement confirmed
 - ✅ Service role bypass validated
 - ✅ Anon client blocking validated
@@ -919,6 +924,7 @@ SUPABASE_JWT_SECRET=your-supabase-jwt-secret
 **Approach:** JWT context switching for INSERT/UPDATE/DELETE operations
 
 **Test Coverage:**
+
 - Setup Verification (1 test)
 - AC4: INSERT Operations RLS Enforcement (10 tests): integration_configs, usage_records, monthly_usage, comments, responses
 - AC5: UPDATE Operations RLS Enforcement (11 tests): integration_configs, usage_records, monthly_usage, comments, responses
@@ -928,11 +934,13 @@ SUPABASE_JWT_SECRET=your-supabase-jwt-secret
 
 **Tables Tested:** 24 tables with full RLS coverage (15 from Issue #583 + 9 from Issue #787)
 **Priority Tables:**
+
 - HIGH: integration_configs (SECURITY CRITICAL), usage_records (BILLING CRITICAL), monthly_usage (BILLING CRITICAL), usage_tracking, usage_limits, usage_alerts, feature_flags, admin_audit_logs, audit_logs, plan_limits, plan_limits_audit, shield_actions
 - MEDIUM: comments, responses, posts, roasts
 - LOW: user_activities
 
 **Status:** ⏳ **Pending CI/CD validation** - Expected: 55+ tests passing
+
 - ✅ INSERT operations: Error code '42501' verified for unauthorized attempts
 - ✅ UPDATE operations: Error code '42501' verified for cross-tenant updates
 - ✅ DELETE operations: Error code '42501' verified for cross-tenant deletions
@@ -963,7 +971,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Security Engineer** - Security validation
 - **TestEngineer** - RLS validation and test coverage (Issue #801 CRUD testing, Issue #894 Supabase mock implementation - 35/35 tests passing)
 
-
 ## Related Nodes
 
 - **plan-features** - Plan limits are organization-scoped
@@ -980,9 +987,11 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Ubicación de Tests
 
 **Integration Tests** (1 archivo):
+
 - `tests/integration/multi-tenant-rls-issue-412.test.js` - Comprehensive RLS validation tests
 
 **Test Helpers**:
+
 - `tests/helpers/tenantTestUtils.js` - Utilities for multi-tenant testing (organization creation, user setup, etc.)
 
 ### Cobertura de Tests
@@ -994,6 +1003,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Casos de Prueba Cubiertos
 
 **Row Level Security (RLS):**
+
 - ✅ Users can only see their organization's data
 - ✅ Service role bypasses RLS (backend operations)
 - ✅ Anonymous users have no access
@@ -1002,6 +1012,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Membership-based access control
 
 **Organization Management:**
+
 - ✅ Organization creation with proper isolation
 - ✅ User assignment to organizations
 - ✅ Role-based permissions (owner, admin, member)
@@ -1009,6 +1020,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Membership CRUD operations
 
 **Data Isolation:**
+
 - ✅ Queue jobs scoped by organization
 - ✅ Shield events scoped by organization
 - ✅ Social accounts scoped by organization
@@ -1016,6 +1028,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Roast generations scoped by organization
 
 **Edge Cases:**
+
 - ✅ Users in multiple organizations
 - ✅ Orphaned data handling
 - ✅ Concurrent organization operations
@@ -1051,6 +1064,7 @@ psql $DATABASE_URL -c "SELECT schemaname, tablename, policyname FROM pg_policies
 ### Referencia
 
 **Issue #412**: Multi-tenant RLS Integration Tests
+
 - **Status**: Infrastructure ready, tests implemented
 - **Coverage**: RLS policies validated across core tables
 - **Documentation**: See test file for detailed scenarios

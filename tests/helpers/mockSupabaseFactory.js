@@ -79,8 +79,8 @@ function createShieldSupabaseMock(options = {}) {
             const data = mockData[table] || [];
 
             // Apply all accumulated filters
-            const match = data.find(row =>
-              Object.keys(newFilters).every(key => row[key] === newFilters[key])
+            const match = data.find((row) =>
+              Object.keys(newFilters).every((key) => row[key] === newFilters[key])
             );
 
             if (enableLogging) {
@@ -110,8 +110,8 @@ function createShieldSupabaseMock(options = {}) {
             const data = mockData[table] || [];
 
             // Apply all accumulated filters
-            const matches = data.filter(row =>
-              Object.keys(newFilters).every(key => row[key] === newFilters[key])
+            const matches = data.filter((row) =>
+              Object.keys(newFilters).every((key) => row[key] === newFilters[key])
             );
 
             if (enableLogging) {
@@ -147,8 +147,8 @@ function createShieldSupabaseMock(options = {}) {
             }
 
             return Promise.resolve({
-              data: mockData.userBehavior.filter(row =>
-                row[column] >= value && row[column2] <= value2
+              data: mockData.userBehavior.filter(
+                (row) => row[column] >= value && row[column2] <= value2
               ),
               error: null
             });
@@ -229,7 +229,7 @@ function createShieldSupabaseMock(options = {}) {
 
         // Actually update mock data
         const table = getCurrentTable();
-        const index = mockData[table].findIndex(row => row[column] === value);
+        const index = mockData[table].findIndex((row) => row[column] === value);
 
         if (index !== -1) {
           mockData[table][index] = { ...mockData[table][index], ...data };
@@ -261,10 +261,8 @@ function createShieldSupabaseMock(options = {}) {
     const records = Array.isArray(data) ? data : [data];
     const result = [];
 
-    records.forEach(record => {
-      const index = mockData[table].findIndex(row =>
-        row[onConflict] === record[onConflict]
-      );
+    records.forEach((record) => {
+      const index = mockData[table].findIndex((row) => row[onConflict] === record[onConflict]);
 
       if (index !== -1) {
         // Update existing
@@ -297,11 +295,11 @@ function createShieldSupabaseMock(options = {}) {
     // Map table names to mockData keys
     // Issue #482: Handle both singular and plural table names
     const tableMap = {
-      'user_behavior': 'userBehavior',
-      'user_behaviors': 'userBehavior',      // Shield uses plural
-      'shield_actions': 'shieldActions',
-      'job_queue': 'jobQueue',
-      'app_logs': 'appLogs'
+      user_behavior: 'userBehavior',
+      user_behaviors: 'userBehavior', // Shield uses plural
+      shield_actions: 'shieldActions',
+      job_queue: 'jobQueue',
+      app_logs: 'appLogs'
     };
 
     currentTable = tableMap[tableName] || tableName;
@@ -348,22 +346,27 @@ function createShieldSupabaseMock(options = {}) {
      * Returns the recorded action data for further validation
      */
     actionRecorded: (actionType) => {
-      const insertOps = operations.insert.filter(op =>
-        op.data.action_type === actionType ||
-        (Array.isArray(op.data) && op.data.some(d => d.action_type === actionType))
+      const insertOps = operations.insert.filter(
+        (op) =>
+          op.data.action_type === actionType ||
+          (Array.isArray(op.data) && op.data.some((d) => d.action_type === actionType))
       );
 
       if (insertOps.length === 0) {
         throw new Error(
           `Expected action "${actionType}" to be recorded in shield_actions, but found no matching inserts.\n` +
-          `Operations recorded: ${JSON.stringify(operations.insert.map(op => op.data.action_type || 'unknown'), null, 2)}`
+            `Operations recorded: ${JSON.stringify(
+              operations.insert.map((op) => op.data.action_type || 'unknown'),
+              null,
+              2
+            )}`
         );
       }
 
       // Return the most recent matching action
       const latestOp = insertOps[insertOps.length - 1];
       const actionData = Array.isArray(latestOp.data)
-        ? latestOp.data.find(d => d.action_type === actionType)
+        ? latestOp.data.find((d) => d.action_type === actionType)
         : latestOp.data;
 
       expect(actionData).toBeDefined();
@@ -376,14 +379,14 @@ function createShieldSupabaseMock(options = {}) {
      * Verify user_behavior was updated (strikes, violation count)
      */
     userBehaviorUpdated: (expectedFields = {}) => {
-      const updateOps = operations.update.filter(op =>
-        Object.keys(expectedFields).every(key => op.data[key] !== undefined)
+      const updateOps = operations.update.filter((op) =>
+        Object.keys(expectedFields).every((key) => op.data[key] !== undefined)
       );
 
       if (updateOps.length === 0) {
         throw new Error(
           `Expected user_behavior to be updated with fields ${Object.keys(expectedFields).join(', ')}, ` +
-          `but no matching updates found`
+            `but no matching updates found`
         );
       }
 
@@ -397,11 +400,11 @@ function createShieldSupabaseMock(options = {}) {
      */
     escalationPathFollowed: (userId, expectedPath) => {
       const actions = operations.insert
-        .filter(op => {
+        .filter((op) => {
           const data = Array.isArray(op.data) ? op.data[0] : op.data;
           return data.user_id === userId || data.platform_user_id === userId;
         })
-        .map(op => {
+        .map((op) => {
           const data = Array.isArray(op.data) ? op.data[0] : op.data;
           return data.action_type;
         });
@@ -410,9 +413,9 @@ function createShieldSupabaseMock(options = {}) {
         if (!actions.includes(expectedAction)) {
           throw new Error(
             `Escalation path verification failed:\n` +
-            `Expected step ${index + 1}: "${expectedAction}"\n` +
-            `Actual actions recorded: ${actions.join(' → ')}\n` +
-            `Missing: ${expectedAction}`
+              `Expected step ${index + 1}: "${expectedAction}"\n` +
+              `Actual actions recorded: ${actions.join(' → ')}\n` +
+              `Missing: ${expectedAction}`
           );
         }
       });

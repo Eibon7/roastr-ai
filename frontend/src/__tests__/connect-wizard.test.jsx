@@ -13,13 +13,13 @@ import Connect from '../pages/Connect';
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
-  useNavigate: () => mockNavigate,
+  useNavigate: () => mockNavigate
 }));
 
 // Mock toast hook
 const mockToast = jest.fn();
 jest.mock('../hooks/use-toast', () => ({
-  useToast: () => ({ toast: mockToast }),
+  useToast: () => ({ toast: mockToast })
 }));
 
 // Mock fetch
@@ -30,95 +30,95 @@ global.fetch = mockFetch;
 const mockLocalStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
-  removeItem: jest.fn(),
+  removeItem: jest.fn()
 };
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
 // Test wrapper with router
-const TestWrapper = ({ children }) => (
-  <BrowserRouter>{children}</BrowserRouter>
-);
+const TestWrapper = ({ children }) => <BrowserRouter>{children}</BrowserRouter>;
 
 describe('Connect Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue('mock-access-token');
-    
+
     // Default mock responses
     mockFetch.mockImplementation((url) => {
       if (url.includes('/api/integrations/connections')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
-            success: true,
-            data: {
-              connections: [
-                {
-                  platform: 'twitter',
-                  connected: false,
-                  status: 'disconnected',
-                  connectedAt: null,
-                  lastRefreshed: null,
-                  expires_at: null,
-                  user_info: null
-                },
-                {
-                  platform: 'instagram',
-                  connected: false,
-                  status: 'disconnected',
-                  connectedAt: null,
-                  lastRefreshed: null,
-                  expires_at: null,
-                  user_info: null
-                }
-              ],
-              totalConnected: 0,
-              mockMode: true
-            }
-          })
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: {
+                connections: [
+                  {
+                    platform: 'twitter',
+                    connected: false,
+                    status: 'disconnected',
+                    connectedAt: null,
+                    lastRefreshed: null,
+                    expires_at: null,
+                    user_info: null
+                  },
+                  {
+                    platform: 'instagram',
+                    connected: false,
+                    status: 'disconnected',
+                    connectedAt: null,
+                    lastRefreshed: null,
+                    expires_at: null,
+                    user_info: null
+                  }
+                ],
+                totalConnected: 0,
+                mockMode: true
+              }
+            })
         });
       }
-      
+
       if (url.includes('/api/integrations/platforms')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
-            success: true,
-            data: {
-              platforms: [
-                {
-                  platform: 'twitter',
-                  name: 'Twitter',
-                  enabled: true,
-                  mockMode: true,
-                  requirements: {
-                    permissions: ['Read tweets', 'Write tweets'],
-                    notes: 'Twitter Developer account required',
-                    estimatedTime: '5-10 minutes'
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: {
+                platforms: [
+                  {
+                    platform: 'twitter',
+                    name: 'Twitter',
+                    enabled: true,
+                    mockMode: true,
+                    requirements: {
+                      permissions: ['Read tweets', 'Write tweets'],
+                      notes: 'Twitter Developer account required',
+                      estimatedTime: '5-10 minutes'
+                    },
+                    scopes: ['read', 'write']
                   },
-                  scopes: ['read', 'write']
-                },
-                {
-                  platform: 'instagram',
-                  name: 'Instagram',
-                  enabled: true,
-                  mockMode: true,
-                  requirements: {
-                    permissions: ['Access basic profile', 'Read media'],
-                    notes: 'Personal accounts only',
-                    estimatedTime: '2-3 minutes'
-                  },
-                  scopes: ['instagram_basic']
-                }
-              ],
-              mockMode: true,
-              totalPlatforms: 2,
-              enabledPlatforms: 2
-            }
-          })
+                  {
+                    platform: 'instagram',
+                    name: 'Instagram',
+                    enabled: true,
+                    mockMode: true,
+                    requirements: {
+                      permissions: ['Access basic profile', 'Read media'],
+                      notes: 'Personal accounts only',
+                      estimatedTime: '2-3 minutes'
+                    },
+                    scopes: ['instagram_basic']
+                  }
+                ],
+                mockMode: true,
+                totalPlatforms: 2,
+                enabledPlatforms: 2
+              }
+            })
         });
       }
-      
+
       return Promise.reject(new Error('Unhandled fetch URL: ' + url));
     });
   });
@@ -135,7 +135,11 @@ describe('Connect Component', () => {
         expect(screen.getByText('Connect Your Social Media')).toBeInTheDocument();
       });
 
-      expect(screen.getByText('Connect your social media accounts to start generating AI-powered style profiles')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Connect your social media accounts to start generating AI-powered style profiles'
+        )
+      ).toBeInTheDocument();
     });
 
     it('should show loading state initially', () => {
@@ -156,7 +160,11 @@ describe('Connect Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Mock mode is enabled. All connections are simulated for testing purposes.')).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            'Mock mode is enabled. All connections are simulated for testing purposes.'
+          )
+        ).toBeInTheDocument();
       });
     });
   });
@@ -182,27 +190,28 @@ describe('Connect Component', () => {
         if (url.includes('/api/integrations/connections')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              success: true,
-              data: {
-                connections: [
-                  {
-                    platform: 'twitter',
-                    connected: true,
-                    status: 'connected',
-                    connectedAt: Date.now() - 3600000,
-                    user_info: { name: 'Test User', username: 'testuser' }
-                  },
-                  {
-                    platform: 'instagram',
-                    connected: false,
-                    status: 'disconnected'
-                  }
-                ],
-                totalConnected: 1,
-                mockMode: true
-              }
-            })
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  connections: [
+                    {
+                      platform: 'twitter',
+                      connected: true,
+                      status: 'connected',
+                      connectedAt: Date.now() - 3600000,
+                      user_info: { name: 'Test User', username: 'testuser' }
+                    },
+                    {
+                      platform: 'instagram',
+                      connected: false,
+                      status: 'disconnected'
+                    }
+                  ],
+                  totalConnected: 1,
+                  mockMode: true
+                }
+              })
           });
         }
         return mockFetch.mockImplementation.mock.calls[0][0](url);
@@ -274,22 +283,23 @@ describe('Connect Component', () => {
         if (url.includes('/api/integrations/connections')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              success: true,
-              data: {
-                connections: [
-                  {
-                    platform: 'twitter',
-                    connected: true,
-                    status: 'connected',
-                    connectedAt: Date.now(),
-                    user_info: { name: 'Test User', username: 'testuser' }
-                  }
-                ],
-                totalConnected: 1,
-                mockMode: true
-              }
-            })
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  connections: [
+                    {
+                      platform: 'twitter',
+                      connected: true,
+                      status: 'connected',
+                      connectedAt: Date.now(),
+                      user_info: { name: 'Test User', username: 'testuser' }
+                    }
+                  ],
+                  totalConnected: 1,
+                  mockMode: true
+                }
+              })
           });
         }
         return mockFetch.mockImplementation.mock.calls[0][0](url);
@@ -313,25 +323,27 @@ describe('Connect Component', () => {
   describe('Connection Flow', () => {
     it('should handle connect button click', async () => {
       const user = userEvent.setup();
-      
+
       mockFetch.mockImplementation((url, options) => {
         if (url.includes('/twitter/connect') && options?.method === 'POST') {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              success: true,
-              data: {
-                authUrl: 'https://mock-oauth.roastr.ai/twitter/authorize?client_id=mock_twitter_client&state=mockstate',
-                state: 'mockstate',
-                platform: 'twitter',
-                mock: true,
-                requirements: {
-                  permissions: ['Read tweets', 'Write tweets'],
-                  notes: 'Twitter Developer account required',
-                  estimatedTime: '5-10 minutes'
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  authUrl:
+                    'https://mock-oauth.roastr.ai/twitter/authorize?client_id=mock_twitter_client&state=mockstate',
+                  state: 'mockstate',
+                  platform: 'twitter',
+                  mock: true,
+                  requirements: {
+                    permissions: ['Read tweets', 'Write tweets'],
+                    notes: 'Twitter Developer account required',
+                    estimatedTime: '5-10 minutes'
+                  }
                 }
-              }
-            })
+              })
           });
         }
         return mockFetch.mockImplementation.mock.calls[0][0](url);
@@ -356,7 +368,7 @@ describe('Connect Component', () => {
           expect.objectContaining({
             method: 'POST',
             headers: expect.objectContaining({
-              'Authorization': 'Bearer mock-access-token'
+              Authorization: 'Bearer mock-access-token'
             })
           })
         );
@@ -365,18 +377,24 @@ describe('Connect Component', () => {
 
     it('should show connecting state during connection', async () => {
       const user = userEvent.setup();
-      
+
       // Mock slow response
       mockFetch.mockImplementation((url, options) => {
         if (url.includes('/twitter/connect') && options?.method === 'POST') {
-          return new Promise(resolve => {
+          return new Promise((resolve) => {
             setTimeout(() => {
               resolve({
                 ok: true,
-                json: () => Promise.resolve({
-                  success: true,
-                  data: { authUrl: 'mock-url', state: 'mockstate', platform: 'twitter', mock: true }
-                })
+                json: () =>
+                  Promise.resolve({
+                    success: true,
+                    data: {
+                      authUrl: 'mock-url',
+                      state: 'mockstate',
+                      platform: 'twitter',
+                      mock: true
+                    }
+                  })
               });
             }, 100);
           });
@@ -402,15 +420,16 @@ describe('Connect Component', () => {
 
     it('should handle connection errors', async () => {
       const user = userEvent.setup();
-      
+
       mockFetch.mockImplementation((url, options) => {
         if (url.includes('/twitter/connect') && options?.method === 'POST') {
           return Promise.resolve({
             ok: false,
-            json: () => Promise.resolve({
-              success: false,
-              error: 'Connection failed'
-            })
+            json: () =>
+              Promise.resolve({
+                success: false,
+                error: 'Connection failed'
+              })
           });
         }
         return mockFetch.mockImplementation.mock.calls[0][0](url);
@@ -440,18 +459,19 @@ describe('Connect Component', () => {
 
     it('should handle already connected platforms', async () => {
       const user = userEvent.setup();
-      
+
       mockFetch.mockImplementation((url, options) => {
         if (url.includes('/twitter/connect') && options?.method === 'POST') {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              success: true,
-              data: {
-                status: 'already_connected',
-                message: 'Already connected to twitter'
-              }
-            })
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  status: 'already_connected',
+                  message: 'Already connected to twitter'
+                }
+              })
           });
         }
         return mockFetch.mockImplementation.mock.calls[0][0](url);
@@ -483,20 +503,21 @@ describe('Connect Component', () => {
   describe('Mock OAuth Wizard', () => {
     it('should open wizard dialog for mock OAuth', async () => {
       const user = userEvent.setup();
-      
+
       mockFetch.mockImplementation((url, options) => {
         if (url.includes('/twitter/connect') && options?.method === 'POST') {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              success: true,
-              data: {
-                authUrl: 'https://mock-oauth.roastr.ai/twitter/authorize',
-                state: 'mockstate',
-                platform: 'twitter',
-                mock: true
-              }
-            })
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  authUrl: 'https://mock-oauth.roastr.ai/twitter/authorize',
+                  state: 'mockstate',
+                  platform: 'twitter',
+                  mock: true
+                }
+              })
           });
         }
         return mockFetch.mockImplementation.mock.calls[0][0](url);
@@ -520,25 +541,28 @@ describe('Connect Component', () => {
       });
 
       expect(screen.getByText('Authorize Access')).toBeInTheDocument();
-      expect(screen.getByText('This is a simulated OAuth flow for testing purposes.')).toBeInTheDocument();
+      expect(
+        screen.getByText('This is a simulated OAuth flow for testing purposes.')
+      ).toBeInTheDocument();
     });
 
     it('should simulate OAuth flow progression', async () => {
       const user = userEvent.setup();
-      
+
       mockFetch.mockImplementation((url, options) => {
         if (url.includes('/twitter/connect') && options?.method === 'POST') {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              success: true,
-              data: {
-                authUrl: 'https://mock-oauth.roastr.ai/twitter/authorize',
-                state: 'mockstate',
-                platform: 'twitter',
-                mock: true
-              }
-            })
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  authUrl: 'https://mock-oauth.roastr.ai/twitter/authorize',
+                  state: 'mockstate',
+                  platform: 'twitter',
+                  mock: true
+                }
+              })
           });
         }
         return mockFetch.mockImplementation.mock.calls[0][0](url);
@@ -571,9 +595,12 @@ describe('Connect Component', () => {
       });
 
       // Should show success after timeout
-      await waitFor(() => {
-        expect(screen.getByText('Successfully Connected!')).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText('Successfully Connected!')).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
@@ -583,39 +610,41 @@ describe('Connect Component', () => {
         if (url.includes('/api/integrations/connections')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              success: true,
-              data: {
-                connections: [
-                  {
-                    platform: 'twitter',
-                    connected: true,
-                    status: 'connected',
-                    connectedAt: Date.now(),
-                    user_info: { name: 'Test User', username: 'testuser' }
-                  }
-                ],
-                totalConnected: 1,
-                mockMode: true
-              }
-            })
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  connections: [
+                    {
+                      platform: 'twitter',
+                      connected: true,
+                      status: 'connected',
+                      connectedAt: Date.now(),
+                      user_info: { name: 'Test User', username: 'testuser' }
+                    }
+                  ],
+                  totalConnected: 1,
+                  mockMode: true
+                }
+              })
           });
         }
-        
+
         if (url.includes('/twitter/disconnect') && options?.method === 'POST') {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
-              success: true,
-              data: {
-                message: 'Successfully disconnected from twitter',
-                platform: 'twitter',
-                disconnected: true
-              }
-            })
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  message: 'Successfully disconnected from twitter',
+                  platform: 'twitter',
+                  disconnected: true
+                }
+              })
           });
         }
-        
+
         return mockFetch.mockImplementation.mock.calls[0][0](url);
       });
     });
@@ -642,7 +671,7 @@ describe('Connect Component', () => {
           expect.objectContaining({
             method: 'POST',
             headers: expect.objectContaining({
-              'Authorization': 'Bearer mock-access-token'
+              Authorization: 'Bearer mock-access-token'
             })
           })
         );
@@ -674,10 +703,11 @@ describe('Connect Component', () => {
         return Promise.resolve({
           ok: false,
           status: 401,
-          json: () => Promise.resolve({
-            success: false,
-            error: 'Unauthorized'
-          })
+          json: () =>
+            Promise.resolve({
+              success: false,
+              error: 'Unauthorized'
+            })
         });
       });
 
@@ -711,8 +741,12 @@ describe('Connect Component', () => {
 
       expect(screen.getByText('Why Connect Social Media?')).toBeInTheDocument();
       expect(screen.getByText('Privacy & Security')).toBeInTheDocument();
-      expect(screen.getByText('Connecting your accounts allows our AI to analyze your writing style')).toBeInTheDocument();
-      expect(screen.getByText('We only read your public posts to analyze writing patterns.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Connecting your accounts allows our AI to analyze your writing style')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('We only read your public posts to analyze writing patterns.')
+      ).toBeInTheDocument();
     });
   });
 

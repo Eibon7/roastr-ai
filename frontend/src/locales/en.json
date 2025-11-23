@@ -22,7 +22,7 @@
       "name_label": "Full Name",
       "name_placeholder": "Your full name",
       "email_label": "Email Address",
-      "email_placeholder": "your@email.com", 
+      "email_placeholder": "your@email.com",
       "password_label": "Password",
       "password_placeholder": "Enter a strong password",
       "confirm_password_label": "Confirm Password",
@@ -94,7 +94,7 @@
     "navigation": {
       "dashboard": "Dashboard",
       "accounts": "Social Accounts",
-      "approval": "Content Approval", 
+      "approval": "Content Approval",
       "logs": "Activity Logs",
       "billing": "Billing & Plans",
       "configuration": "Configuration",

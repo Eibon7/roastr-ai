@@ -41,10 +41,18 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 console.log('🚀 Feature Flags Migration - Automated Application\n');
 console.log('📋 Project:', SUPABASE_URL);
 console.log('\n⚠️  This script will attempt automated migration.');
-console.log('   If it fails, use the manual method (see apply-feature-flags-migration-manual.md)\n');
+console.log(
+  '   If it fails, use the manual method (see apply-feature-flags-migration-manual.md)\n'
+);
 
 // Read migration SQL
-const migrationPath = path.join(__dirname, '..', 'database', 'migrations', 'add_feature_flags_and_audit_system.sql');
+const migrationPath = path.join(
+  __dirname,
+  '..',
+  'database',
+  'migrations',
+  'add_feature_flags_and_audit_system.sql'
+);
 const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
 
 console.log('✅ Migration file loaded:', migrationPath);

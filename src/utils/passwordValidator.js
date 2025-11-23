@@ -8,7 +8,7 @@ const PASSWORD_REQUIREMENTS = {
   requireNumber: true,
   requireLowercase: true,
   requireUppercaseOrSymbol: true,
-  noSpaces: true,
+  noSpaces: true
 };
 
 /**
@@ -18,7 +18,7 @@ const PASSWORD_REQUIREMENTS = {
  */
 const validatePassword = (password) => {
   const errors = [];
-  
+
   if (!password) {
     errors.push('La contraseña es requerida');
     return { isValid: false, errors };
@@ -48,7 +48,7 @@ const validatePassword = (password) => {
   if (PASSWORD_REQUIREMENTS.requireUppercaseOrSymbol) {
     const hasUppercase = /[A-Z]/.test(password);
     const hasSymbol = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
-    
+
     if (!hasUppercase && !hasSymbol) {
       errors.push('La contraseña debe contener al menos una letra mayúscula o un símbolo');
     }
@@ -56,7 +56,7 @@ const validatePassword = (password) => {
 
   return {
     isValid: errors.length === 0,
-    errors,
+    errors
   };
 };
 
@@ -67,18 +67,18 @@ const validatePassword = (password) => {
  */
 const getPasswordStrength = (password) => {
   if (!password) return 0;
-  
+
   let strength = 0;
-  
+
   // Length checks
   if (password.length >= 8) strength++;
   if (password.length >= 12) strength++;
-  
+
   // Complexity checks
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
   if (/\d/.test(password)) strength++;
   if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) strength++;
-  
+
   // Cap at 4
   return Math.min(strength, 4);
 };
@@ -86,5 +86,5 @@ const getPasswordStrength = (password) => {
 module.exports = {
   validatePassword,
   getPasswordStrength,
-  PASSWORD_REQUIREMENTS,
+  PASSWORD_REQUIREMENTS
 };

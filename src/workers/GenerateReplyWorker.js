@@ -10,18 +10,18 @@ const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Generate Reply Worker - Round 6 Critical Security Enhancements
- * 
+ *
  * Responsible for generating contextual roast responses using:
  * - Primary: OpenAI GPT-4o mini for personalized roasts
  * - Fallback: Template-based responses
- * 
+ *
  * SECURITY FEATURES:
  * - Circuit breaker patterns for external service failures
  * - Enhanced error handling with comprehensive logging
  * - Content validation and integrity checks
  * - Fail-closed patterns for all critical operations
  * - Comprehensive retry logic with exponential backoff
- * 
+ *
  * This worker handles the creative core of Roastr.ai, generating
  * witty, sarcastic, and platform-appropriate responses while
  * respecting tone, humor type, and frequency settings.
@@ -34,11 +34,11 @@ class GenerateReplyWorker extends BaseWorker {
       maxRetries: 3,
       ...options
     });
-    
+
     this.costControl = new CostControlService();
     this.promptTemplate = new RoastPromptTemplate();
     this.autoApprovalService = new AutoApprovalService();
-    
+
     // ROUND 6: Initialize circuit breaker for external services
     this.circuitBreaker = {
       state: 'closed', // closed, open, half-open
@@ -49,27 +49,27 @@ class GenerateReplyWorker extends BaseWorker {
       consecutiveSuccesses: 0,
       halfOpenMaxAttempts: 1
     };
-    
+
     // Initialize OpenAI client
     this.initializeOpenAI();
-    
+
     // Roast templates for fallback
     this.initializeTemplates();
-    
+
     // Tone configurations
     this.tonePrompts = {
       sarcastic: "Respond with sharp, cutting sarcasm that's clever but not cruel.",
-      ironic: "Use irony and subtle humor to highlight the absurdity of the comment.",
+      ironic: 'Use irony and subtle humor to highlight the absurdity of the comment.',
       absurd: "Create an absurdly exaggerated response that's so over-the-top it's funny."
     };
-    
+
     this.humorStyles = {
-      witty: "Be clever and quick-witted, like a stand-up comedian.",
-      clever: "Show intellectual humor with wordplay and smart observations.",
-      playful: "Keep it light and fun, like friendly teasing between friends."
+      witty: 'Be clever and quick-witted, like a stand-up comedian.',
+      clever: 'Show intellectual humor with wordplay and smart observations.',
+      playful: 'Keep it light and fun, like friendly teasing between friends.'
     };
   }
-  
+
   /**
    * Get worker-specific health details
    */
@@ -100,10 +100,10 @@ class GenerateReplyWorker extends BaseWorker {
         fallbacksUsed: this.fallbackUseCount || 0
       }
     };
-    
+
     return details;
   }
-  
+
   /**
    * Initialize OpenAI client with mock mode support
    * Sets up either real OpenAI client or mock client based on environment
@@ -125,7 +125,7 @@ class GenerateReplyWorker extends BaseWorker {
       this.log('warn', 'No OpenAI API key configured, using template fallback only');
     }
   }
-  
+
   /**
    * Initialize response templates for fallback generation
    * Sets up pre-defined response templates categorized by tone
@@ -135,7 +135,7 @@ class GenerateReplyWorker extends BaseWorker {
       sarcastic: [
         "Oh wow, what an absolutely groundbreaking observation. I'm sure no one has ever thought of that before.",
         "Truly fascinating. I'm sure the world was desperately waiting for this insight.",
-        "Your creativity knows no bounds. How do you come up with such original thoughts?",
+        'Your creativity knows no bounds. How do you come up with such original thoughts?',
         "Amazing! You've managed to say something that adds absolutely nothing to the conversation."
       ],
       ironic: [
@@ -145,15 +145,14 @@ class GenerateReplyWorker extends BaseWorker {
         "Your comment really demonstrates that you've given this a lot of careful thought."
       ],
       absurd: [
-        "BREAKING: Local genius discovers the secret to solving all world problems in a single comment! Scientists hate them!",
-        "This comment has single-handedly convinced me to reconsider my entire existence. Truly life-changing.",
+        'BREAKING: Local genius discovers the secret to solving all world problems in a single comment! Scientists hate them!',
+        'This comment has single-handedly convinced me to reconsider my entire existence. Truly life-changing.',
         "I'm literally shaking. This comment has opened my third eye and I can now see through dimensions.",
-        "Hold on, let me alert the Nobel Prize committee. This level of insight deserves international recognition."
+        'Hold on, let me alert the Nobel Prize committee. This level of insight deserves international recognition.'
       ]
     };
   }
-  
-  
+
   /**
    * ROUND 6 CRITICAL FIX: Enhanced circuit breaker for job processing
    * Checks circuit breaker state and throws error if circuit is open
@@ -161,10 +160,10 @@ class GenerateReplyWorker extends BaseWorker {
    */
   checkCircuitBreaker() {
     const now = Date.now();
-    
+
     if (this.circuitBreaker.state === 'open') {
       const timeSinceLastFailure = now - this.circuitBreaker.lastFailureTime;
-      
+
       if (timeSinceLastFailure >= this.circuitBreaker.timeout) {
         this.circuitBreaker.state = 'half-open';
         this.circuitBreaker.consecutiveSuccesses = 0;
@@ -173,7 +172,9 @@ class GenerateReplyWorker extends BaseWorker {
           threshold: this.circuitBreaker.threshold
         });
       } else {
-        throw new Error(`Circuit breaker is open. Service unavailable. Retry in ${Math.ceil((this.circuitBreaker.timeout - timeSinceLastFailure) / 1000)} seconds`);
+        throw new Error(
+          `Circuit breaker is open. Service unavailable. Retry in ${Math.ceil((this.circuitBreaker.timeout - timeSinceLastFailure) / 1000)} seconds`
+        );
       }
     }
   }
@@ -185,7 +186,7 @@ class GenerateReplyWorker extends BaseWorker {
   recordCircuitBreakerSuccess() {
     if (this.circuitBreaker.state === 'half-open') {
       this.circuitBreaker.consecutiveSuccesses++;
-      
+
       if (this.circuitBreaker.consecutiveSuccesses >= this.circuitBreaker.halfOpenMaxAttempts) {
         this.circuitBreaker.state = 'closed';
         this.circuitBreaker.failures = 0;
@@ -203,7 +204,7 @@ class GenerateReplyWorker extends BaseWorker {
   recordCircuitBreakerFailure(error) {
     this.circuitBreaker.failures++;
     this.circuitBreaker.lastFailureTime = Date.now();
-    
+
     if (this.circuitBreaker.failures >= this.circuitBreaker.threshold) {
       this.circuitBreaker.state = 'open';
       this.log('error', 'Circuit breaker opened due to repeated failures', {
@@ -221,32 +222,37 @@ class GenerateReplyWorker extends BaseWorker {
    */
   async processJob(job) {
     const processingId = `proc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     try {
       // Check circuit breaker before processing
       this.checkCircuitBreaker();
-      
+
       // ROUND 6 FIX: Enhanced job payload validation
       if (!job) {
         throw new Error('Job is null or undefined');
       }
-      
+
       if (!job.payload || typeof job.payload !== 'object') {
         throw new Error('Invalid job: missing or invalid payload object');
       }
-      
+
       // CODERABBIT FIX: Flexible payload validation - use job payload as source of truth
       // Support both direct comment data and comment reference patterns
-      const hasDirectCommentData = job.payload.comment_id && job.payload.organization_id && 
-                                  job.payload.platform && job.payload.original_text;
+      const hasDirectCommentData =
+        job.payload.comment_id &&
+        job.payload.organization_id &&
+        job.payload.platform &&
+        job.payload.original_text;
       const hasCommentReference = job.payload.commentId || job.payload.comment_reference;
-      
+
       if (!hasDirectCommentData && !hasCommentReference) {
         // Fallback: check if we have minimum required organizational context
         if (!job.payload.organization_id && !job.payload.org_id) {
-          throw new Error('Invalid job: missing organization context (organization_id or org_id required)');
+          throw new Error(
+            'Invalid job: missing organization context (organization_id or org_id required)'
+          );
         }
-        
+
         // Log flexible validation for monitoring
         this.log('warn', 'Using flexible payload validation - no direct comment data found', {
           processingId,
@@ -255,7 +261,7 @@ class GenerateReplyWorker extends BaseWorker {
           hasReference: hasCommentReference
         });
       }
-      
+
       this.log('info', 'Starting job processing with enhanced validation', {
         processingId,
         jobId: job.id,
@@ -264,7 +270,6 @@ class GenerateReplyWorker extends BaseWorker {
         platform: job.payload.platform,
         circuitBreakerState: this.circuitBreaker.state
       });
-      
     } catch (error) {
       this.recordCircuitBreakerFailure(error);
       this.log('error', 'CRITICAL: Job processing failed during validation', {
@@ -350,31 +355,31 @@ class GenerateReplyWorker extends BaseWorker {
 
     // Check cost control limits with enhanced tracking
     const canProcess = await this.costControl.canPerformOperation(
-      organization_id, 
+      organization_id,
       'generate_reply',
       1, // quantity
       platform
     );
-    
+
     if (!canProcess.allowed) {
       throw new Error(`Organization ${organization_id} has reached limits: ${canProcess.reason}`);
     }
-    
+
     // Get comment and integration config
     const comment = await this.getComment(comment_id);
     if (!comment) {
       throw new Error(`Comment ${comment_id} not found`);
     }
-    
+
     const integrationConfig = await this.getIntegrationConfig(
-      organization_id, 
+      organization_id,
       comment.integration_config_id
     );
-    
+
     if (!integrationConfig) {
       throw new Error(`Integration config not found for comment ${comment_id}`);
     }
-    
+
     // Check response frequency (probabilistic filtering)
     if (!this.shouldRespondBasedOnFrequency(integrationConfig.response_frequency)) {
       return {
@@ -384,33 +389,29 @@ class GenerateReplyWorker extends BaseWorker {
         reason: 'frequency_filter'
       };
     }
-    
+
     // Fetch user's Roastr Persona data for enhanced response generation (Issue #81)
     const personaData = await this.fetchPersonaData(organization_id);
-    
+
     // Extract brand_safety metadata if present (Issue #859)
     const brand_safety = job.payload.brand_safety || null;
-    
+
     // Generate response
     const startTime = Date.now();
-    const response = await this.generateResponse(
-      original_text,
-      integrationConfig,
-      {
-        toxicity_score,
-        severity_level,
-        categories,
-        platform,
-        personaData, // Include persona data in context
-        brand_safety // Issue #859: Brand Safety for defensive roasts
-      }
-    );
+    const response = await this.generateResponse(original_text, integrationConfig, {
+      toxicity_score,
+      severity_level,
+      categories,
+      platform,
+      personaData, // Include persona data in context
+      brand_safety // Issue #859: Brand Safety for defensive roasts
+    });
     const generationTime = Date.now() - startTime;
-    
+
     // Check for auto-approval mode (Issue #405)
     const mode = job.payload.mode || 'manual'; // Default to manual mode
     const autoApproval = job.payload.autoApproval || false;
-    
+
     let autoApprovalResult = null;
     if (mode === 'auto' && autoApproval) {
       this.log('info', 'Processing auto-approval for generated response', {
@@ -419,7 +420,7 @@ class GenerateReplyWorker extends BaseWorker {
         mode,
         autoApproval
       });
-      
+
       // SECURITY FIX: Enhanced variant scoring for auto-approval
       // Create variant object for auto-approval processing with proper toxicity handling
       const variant = {
@@ -431,14 +432,14 @@ class GenerateReplyWorker extends BaseWorker {
         tokensUsed: response.tokensUsed,
         generationTime
       };
-      
+
       // Process auto-approval
       autoApprovalResult = await this.autoApprovalService.processAutoApproval(
         comment,
         variant,
         organization_id
       );
-      
+
       this.log('info', 'Auto-approval processing completed', {
         comment_id,
         organization_id,
@@ -446,7 +447,7 @@ class GenerateReplyWorker extends BaseWorker {
         reason: autoApprovalResult.reason || 'success'
       });
     }
-    
+
     // Store response in database
     const storedResponse = await this.storeResponse(
       comment_id,
@@ -455,7 +456,7 @@ class GenerateReplyWorker extends BaseWorker {
       integrationConfig,
       generationTime
     );
-    
+
     // Record usage and cost with enhanced tracking
     const tokensUsed = response.tokensUsed || this.estimateTokens(original_text + response.text);
     await this.costControl.recordUsage(
@@ -476,7 +477,7 @@ class GenerateReplyWorker extends BaseWorker {
       null, // userId - could be extracted from comment if needed
       1 // quantity
     );
-    
+
     // Handle auto-posting based on auto-approval result
     if (autoApprovalResult && autoApprovalResult.approved && autoApprovalResult.autoPublish) {
       // ROUND 6 CRITICAL FIX: Enhanced content validation before auto-publication
@@ -485,12 +486,13 @@ class GenerateReplyWorker extends BaseWorker {
         comment_id,
         organization_id,
         responseId: storedResponse.id,
-        transparencyApplied: autoApprovalResult.variant ? 
-          autoApprovalResult.variant.text !== response.text : false,
+        transparencyApplied: autoApprovalResult.variant
+          ? autoApprovalResult.variant.text !== response.text
+          : false,
         processingId,
         autoApprovalId: autoApprovalResult.validationId || 'unknown'
       });
-      
+
       // ROUND 6 CRITICAL FIX: Enhanced atomic content validation with checksums and transparency verification
       const contentValidation = await this.validateContentAtomically(
         storedResponse,
@@ -504,7 +506,7 @@ class GenerateReplyWorker extends BaseWorker {
           autoApprovalId: autoApprovalResult.validationId || 'unknown'
         }
       );
-      
+
       if (!contentValidation.valid) {
         this.recordCircuitBreakerFailure(new Error(contentValidation.reason));
         this.log('error', 'CRITICAL: Auto-publication blocked - atomic content validation failed', {
@@ -521,32 +523,47 @@ class GenerateReplyWorker extends BaseWorker {
         });
         throw new Error(`CRITICAL: Atomic content validation failed - ${contentValidation.reason}`);
       }
-      
+
       // ROUND 6 CRITICAL FIX: Additional transparency consistency check
-      if (autoApprovalResult.variant && autoApprovalResult.variant.text !== storedResponse.response_text) {
-        this.log('error', 'CRITICAL: Auto-publication blocked - stored content does not match approved variant', {
-          comment_id,
-          organization_id,
-          responseId: storedResponse.id,
-          processingId,
-          approvedLength: autoApprovalResult.variant.text?.length || 0,
-          storedLength: storedResponse.response_text?.length || 0,
-          reason: 'approved_stored_content_mismatch',
-          securityEvent: 'potential_content_tampering'
-        });
-        throw new Error('CRITICAL: Stored content does not match approved variant - potential tampering detected');
+      if (
+        autoApprovalResult.variant &&
+        autoApprovalResult.variant.text !== storedResponse.response_text
+      ) {
+        this.log(
+          'error',
+          'CRITICAL: Auto-publication blocked - stored content does not match approved variant',
+          {
+            comment_id,
+            organization_id,
+            responseId: storedResponse.id,
+            processingId,
+            approvedLength: autoApprovalResult.variant.text?.length || 0,
+            storedLength: storedResponse.response_text?.length || 0,
+            reason: 'approved_stored_content_mismatch',
+            securityEvent: 'potential_content_tampering'
+          }
+        );
+        throw new Error(
+          'CRITICAL: Stored content does not match approved variant - potential tampering detected'
+        );
       }
-      
-      await this.queuePostingJob(organization_id, storedResponse, platform, {
-        autoApproved: true,
-        approvalRecord: autoApprovalResult.approvalRecord,
-        contentValidated: true
-      }, correlationId);
+
+      await this.queuePostingJob(
+        organization_id,
+        storedResponse,
+        platform,
+        {
+          autoApproved: true,
+          approvalRecord: autoApprovalResult.approvalRecord,
+          contentValidated: true
+        },
+        correlationId
+      );
     } else if (!autoApprovalResult && integrationConfig.config.auto_post !== false) {
       // Standard manual flow auto-posting
       await this.queuePostingJob(organization_id, storedResponse, platform, null, correlationId);
     }
-    
+
     // ROUND 6 FIX: Build enhanced response summary with security context
     const responseData = {
       success: true,
@@ -562,10 +579,10 @@ class GenerateReplyWorker extends BaseWorker {
       circuitBreakerFailures: this.circuitBreaker.failures,
       securityValidated: true
     };
-    
+
     // Record final success for circuit breaker
     this.recordCircuitBreakerSuccess();
-    
+
     // Add auto-approval specific data for auto mode
     if (mode === 'auto' && autoApprovalResult) {
       responseData.autoApproval = {
@@ -575,14 +592,14 @@ class GenerateReplyWorker extends BaseWorker {
         variant: autoApprovalResult.variant,
         securityResults: autoApprovalResult.securityResults
       };
-      
+
       // For auto mode, return the variant info instead of standard response
       if (autoApprovalResult.approved) {
         responseData.variant = autoApprovalResult.variant;
         responseData.summary = `Auto-approved ${response.service} response: "${autoApprovalResult.variant.text.substring(0, 50)}..."`;
       }
     }
-    
+
     this.log('info', 'Job processing completed successfully', {
       processingId,
       responseId: storedResponse.id,
@@ -593,18 +610,24 @@ class GenerateReplyWorker extends BaseWorker {
     });
 
     // Log job completion with correlation context (Issue #417)
-    advancedLogger.logJobLifecycle(this.workerName, job.id, 'completed', {
-      correlationId,
-      tenantId: organization_id,
-      commentId: comment_id,
-      responseId: storedResponse.id,
-      mode,
-      processingId
-    }, responseData);
+    advancedLogger.logJobLifecycle(
+      this.workerName,
+      job.id,
+      'completed',
+      {
+        correlationId,
+        tenantId: organization_id,
+        commentId: comment_id,
+        responseId: storedResponse.id,
+        mode,
+        processingId
+      },
+      responseData
+    );
 
     return responseData;
-    
-  } catch (jobError) {
+  }
+  catch(jobError) {
     // Record failure and re-throw
     this.recordCircuitBreakerFailure(jobError);
     this.log('error', 'CRITICAL: Job processing failed', {
@@ -616,7 +639,7 @@ class GenerateReplyWorker extends BaseWorker {
     });
     throw jobError;
   }
-  
+
   /**
    * Get comment from database by ID with error handling
    * @param {string} commentId - The unique identifier for the comment
@@ -630,10 +653,9 @@ class GenerateReplyWorker extends BaseWorker {
         .select('*')
         .eq('id', commentId)
         .single();
-      
+
       if (error) throw error;
       return comment;
-      
     } catch (error) {
       this.log('error', 'Failed to get comment', {
         commentId,
@@ -642,7 +664,7 @@ class GenerateReplyWorker extends BaseWorker {
       return null;
     }
   }
-  
+
   /**
    * Get integration configuration from database
    * @param {string} organizationId - Organization identifier
@@ -657,10 +679,9 @@ class GenerateReplyWorker extends BaseWorker {
         .eq('organization_id', organizationId)
         .eq('id', configId)
         .single();
-      
+
       if (error) throw error;
       return config;
-      
     } catch (error) {
       this.log('error', 'Failed to get integration config', {
         organizationId,
@@ -697,7 +718,8 @@ class GenerateReplyWorker extends BaseWorker {
       // Fetch persona data for the owner
       const { data: userData, error: userError } = await this.supabase
         .from('users')
-        .select(`
+        .select(
+          `
           lo_que_me_define_encrypted,
           lo_que_me_define_visible,
           lo_que_no_tolero_encrypted,
@@ -706,7 +728,8 @@ class GenerateReplyWorker extends BaseWorker {
           lo_que_me_da_igual_visible,
           embeddings_generated_at,
           embeddings_model
-        `)
+        `
+        )
         .eq('id', orgData.owner_id)
         .single();
 
@@ -720,8 +743,8 @@ class GenerateReplyWorker extends BaseWorker {
 
       // Check if any persona fields are configured
       const hasPersonaData = !!(
-        userData.lo_que_me_define_encrypted || 
-        userData.lo_que_no_tolero_encrypted || 
+        userData.lo_que_me_define_encrypted ||
+        userData.lo_que_no_tolero_encrypted ||
         userData.lo_que_me_da_igual_encrypted
       );
 
@@ -759,7 +782,6 @@ class GenerateReplyWorker extends BaseWorker {
       });
 
       return personaData;
-
     } catch (error) {
       this.log('error', 'Failed to fetch persona data', {
         organizationId,
@@ -768,7 +790,7 @@ class GenerateReplyWorker extends BaseWorker {
       return null;
     }
   }
-  
+
   /**
    * Check if response should be generated based on frequency setting
    * @param {number} frequency - Response frequency between 0 and 1
@@ -777,10 +799,10 @@ class GenerateReplyWorker extends BaseWorker {
   shouldRespondBasedOnFrequency(frequency) {
     if (frequency >= 1.0) return true; // Always respond
     if (frequency <= 0.0) return false; // Never respond
-    
+
     return Math.random() < frequency;
   }
-  
+
   /**
    * Generate response using OpenAI or templates
    * @param {string} originalText - Original comment text to respond to
@@ -790,23 +812,22 @@ class GenerateReplyWorker extends BaseWorker {
    */
   async generateResponse(originalText, config, context) {
     let response = null;
-    
+
     // ROUND 6 CRITICAL FIX: Enhanced OpenAI generation with circuit breaker
     if (this.openaiClient) {
       try {
         // Check circuit breaker before OpenAI call
         this.checkCircuitBreaker();
-        
+
         response = await this.generateOpenAIResponse(originalText, config, context);
         response.service = 'openai';
-        
+
         // Record success for circuit breaker
         this.recordCircuitBreakerSuccess();
-        
       } catch (error) {
         // Record failure for circuit breaker
         this.recordCircuitBreakerFailure(error);
-        
+
         // ROUND 6 FIX: Enhanced error logging with comprehensive context
         this.log('error', 'CRITICAL: OpenAI generation failed, using template fallback', {
           error: error?.message || 'Unknown error',
@@ -822,16 +843,16 @@ class GenerateReplyWorker extends BaseWorker {
         });
       }
     }
-    
+
     // Use template fallback
     if (!response) {
       response = this.generateTemplateResponse(originalText, config, context);
       response.service = 'template';
     }
-    
+
     return response;
   }
-  
+
   /**
    * Build persona context from available persona fields
    * @private
@@ -861,8 +882,9 @@ class GenerateReplyWorker extends BaseWorker {
     }
 
     // Filter out empty or falsy elements and join with proper formatting
-    const validEnhancements = personaEnhancements.filter(enhancement =>
-      enhancement && typeof enhancement === 'string' && enhancement.trim().length > 0
+    const validEnhancements = personaEnhancements.filter(
+      (enhancement) =>
+        enhancement && typeof enhancement === 'string' && enhancement.trim().length > 0
     );
 
     if (validEnhancements.length === 0) {
@@ -886,7 +908,8 @@ class GenerateReplyWorker extends BaseWorker {
   async generateOpenAIResponse(originalText, config, context) {
     const { tone } = config;
     // Issue #872: humor_type deprecated, no longer extracted
-    const { platform, severity_level, toxicity_score, categories, personaData, brand_safety } = context;
+    const { platform, severity_level, toxicity_score, categories, personaData, brand_safety } =
+      context;
 
     // Track which persona fields will be used (Issue #81)
     const personaFieldsUsed = {
@@ -909,7 +932,7 @@ class GenerateReplyWorker extends BaseWorker {
     if (personaContext) {
       userConfig.persona_context = personaContext;
       this.log('debug', 'Enhanced response with persona context', {
-        fieldsUsed: Object.keys(personaFieldsUsed).filter(key => personaFieldsUsed[key]),
+        fieldsUsed: Object.keys(personaFieldsUsed).filter((key) => personaFieldsUsed[key]),
         contextLength: personaContext.length
       });
     }
@@ -939,27 +962,25 @@ class GenerateReplyWorker extends BaseWorker {
       });
       throw new Error(`Prompt generation failed: ${err.message}`);
     }
-    
+
     // Add platform constraints to the end of the prompt
     const platformConstraint = this.getPlatformConstraint(platform);
     const finalPrompt = systemPrompt + '\n\n' + platformConstraint;
-    
+
     const completion = await this.openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: finalPrompt }
-      ],
+      messages: [{ role: 'system', content: finalPrompt }],
       max_tokens: 200, // Keep responses concise
       temperature: 0.8, // Creative but not too random
       presence_penalty: 0.3, // Encourage varied vocabulary
       frequency_penalty: 0.2 // Reduce repetition
     });
-    
+
     const responseText = completion.choices[0].message.content.trim();
-    
+
     // Validate response length for platform
     const finalResponse = this.validateResponseLength(responseText, platform);
-    
+
     return {
       text: finalResponse,
       tokensUsed: completion.usage.total_tokens,
@@ -968,7 +989,7 @@ class GenerateReplyWorker extends BaseWorker {
       personaData: personaFieldsUsed // Track which persona fields were used
     };
   }
-  
+
   /**
    * Generate response using pre-defined templates as fallback
    * @param {string} originalText - Original comment text (not directly used in templates)
@@ -979,16 +1000,16 @@ class GenerateReplyWorker extends BaseWorker {
   generateTemplateResponse(originalText, config, context) {
     const { tone } = config;
     const templates = this.templates[tone] || this.templates.sarcastic;
-    
+
     // Select random template
     const template = templates[Math.floor(Math.random() * templates.length)];
-    
+
     return {
       text: template,
       templated: true
     };
   }
-  
+
   /**
    * Build system prompt for OpenAI (legacy method)
    * @param {string} tone - Response tone (sarcastic, ironic, absurd)
@@ -999,7 +1020,7 @@ class GenerateReplyWorker extends BaseWorker {
   buildSystemPrompt(tone, humorType, platform) {
     const toneGuide = this.tonePrompts[tone] || this.tonePrompts.sarcastic;
     const humorGuide = this.humorStyles[humorType] || this.humorStyles.witty;
-    
+
     let platformConstraints = '';
     switch (platform) {
       case 'twitter':
@@ -1014,7 +1035,7 @@ class GenerateReplyWorker extends BaseWorker {
       default:
         platformConstraints = 'Keep responses concise and platform-appropriate.';
     }
-    
+
     return `You are Roastr.ai, a witty AI that generates clever comeback responses to comments.
     
     TONE: ${toneGuide}
@@ -1031,7 +1052,7 @@ class GenerateReplyWorker extends BaseWorker {
     
     Generate a single response that roasts the comment in a clever, ${tone} way with ${humorType} humor.`;
   }
-  
+
   /**
    * Get platform-specific constraints for response generation
    * @param {string} platform - Target platform (twitter, youtube, instagram, etc.)
@@ -1039,16 +1060,20 @@ class GenerateReplyWorker extends BaseWorker {
    */
   getPlatformConstraint(platform) {
     const constraints = {
-      'twitter': `RESTRICCIÓN DE PLATAFORMA: Respuesta máxima de ${PLATFORM_LIMITS.twitter.maxLength} caracteres para Twitter.`,
-      'youtube': 'RESTRICCIÓN DE PLATAFORMA: Estilo de comentario de YouTube, puede ser ligeramente más largo pero mantén la concisión.',
-      'instagram': 'RESTRICCIÓN DE PLATAFORMA: Estilo de Instagram, amigable pero con sarcasmo.',
-      'facebook': 'RESTRICCIÓN DE PLATAFORMA: Estilo de Facebook, considera audiencia más amplia.',
-      'tiktok': 'RESTRICCIÓN DE PLATAFORMA: Estilo TikTok, dinámico y juvenil.',
-      'reddit': 'RESTRICCIÓN DE PLATAFORMA: Estilo Reddit, más intelectual y con referencias.',
-      'discord': 'RESTRICCIÓN DE PLATAFORMA: Estilo Discord casual pero ingenioso.'
+      twitter: `RESTRICCIÓN DE PLATAFORMA: Respuesta máxima de ${PLATFORM_LIMITS.twitter.maxLength} caracteres para Twitter.`,
+      youtube:
+        'RESTRICCIÓN DE PLATAFORMA: Estilo de comentario de YouTube, puede ser ligeramente más largo pero mantén la concisión.',
+      instagram: 'RESTRICCIÓN DE PLATAFORMA: Estilo de Instagram, amigable pero con sarcasmo.',
+      facebook: 'RESTRICCIÓN DE PLATAFORMA: Estilo de Facebook, considera audiencia más amplia.',
+      tiktok: 'RESTRICCIÓN DE PLATAFORMA: Estilo TikTok, dinámico y juvenil.',
+      reddit: 'RESTRICCIÓN DE PLATAFORMA: Estilo Reddit, más intelectual y con referencias.',
+      discord: 'RESTRICCIÓN DE PLATAFORMA: Estilo Discord casual pero ingenioso.'
     };
 
-    return constraints[platform] || 'RESTRICCIÓN DE PLATAFORMA: Mantén la respuesta concisa y apropiada para la plataforma.';
+    return (
+      constraints[platform] ||
+      'RESTRICCIÓN DE PLATAFORMA: Mantén la respuesta concisa y apropiada para la plataforma.'
+    );
   }
 
   /**
@@ -1059,7 +1084,7 @@ class GenerateReplyWorker extends BaseWorker {
    */
   buildUserPrompt(originalText, context) {
     const { severity_level, toxicity_score, categories } = context;
-    
+
     let contextInfo = '';
     if (severity_level && toxicity_score) {
       contextInfo = `\n\nContext: This comment has ${severity_level} toxicity (score: ${toxicity_score})`;
@@ -1067,10 +1092,10 @@ class GenerateReplyWorker extends BaseWorker {
         contextInfo += ` with categories: ${categories.join(', ')}`;
       }
     }
-    
+
     return `Roast this comment: "${originalText}"${contextInfo}`;
   }
-  
+
   /**
    * Validate response length for platform constraints and truncate if necessary
    * @param {string} response - The generated response text
@@ -1079,7 +1104,7 @@ class GenerateReplyWorker extends BaseWorker {
    */
   validateResponseLength(response, platform) {
     let maxLength;
-    
+
     switch (platform) {
       case 'twitter':
         maxLength = PLATFORM_LIMITS.twitter.maxLength - 10; // Leave room for mentions/context
@@ -1093,25 +1118,25 @@ class GenerateReplyWorker extends BaseWorker {
       default:
         maxLength = PLATFORM_LIMITS.twitter.maxLength;
     }
-    
+
     if (response.length <= maxLength) {
       return response;
     }
-    
+
     // Truncate at sentence boundary if possible
     const sentences = response.split(/[.!?]+/);
     let truncated = '';
-    
+
     for (const sentence of sentences) {
       if ((truncated + sentence).length > maxLength - 10) {
         break;
       }
       truncated += sentence + '.';
     }
-    
+
     return truncated || response.substring(0, maxLength - 3) + '...';
   }
-  
+
   /**
    * Store response in database with Roastr Persona tracking
    * Issue #81: Track which persona fields were used in response generation
@@ -1126,7 +1151,7 @@ class GenerateReplyWorker extends BaseWorker {
     try {
       // Determine which persona fields were used (if any)
       let personaFieldsUsed = null;
-      
+
       if (response.personaData) {
         personaFieldsUsed = [];
         if (response.personaData.loQueMeDefineUsed) {
@@ -1138,7 +1163,7 @@ class GenerateReplyWorker extends BaseWorker {
         if (response.personaData.loQueMeDaIgualUsed) {
           personaFieldsUsed.push('lo_que_me_da_igual');
         }
-        
+
         // Only set if fields were actually used
         if (personaFieldsUsed.length === 0) {
           personaFieldsUsed = null;
@@ -1151,10 +1176,10 @@ class GenerateReplyWorker extends BaseWorker {
         .select('owner_id')
         .eq('id', organizationId)
         .single();
-      
+
       const ownerId = orgData?.owner_id;
       let finalResponseText = response.text;
-      
+
       // Apply unified transparency disclaimer if we have owner ID (Issue #196)
       if (ownerId) {
         try {
@@ -1165,7 +1190,7 @@ class GenerateReplyWorker extends BaseWorker {
             config.platformLimit || null
           );
           finalResponseText = transparencyResult.finalText;
-          
+
           // FIX: Critical fixes from CodeRabbit review (outside diff)
           // Update disclaimer usage statistics with enhanced fallback retry logic
           let statsResult;
@@ -1194,7 +1219,7 @@ class GenerateReplyWorker extends BaseWorker {
 
             try {
               // Wait 3 seconds and retry with simpler options
-              await new Promise(resolve => setTimeout(resolve, 3000));
+              await new Promise((resolve) => setTimeout(resolve, 3000));
               statsResult = await transparencyService.updateDisclaimerStats(
                 transparencyResult.disclaimer,
                 transparencyResult.disclaimerType,
@@ -1229,7 +1254,7 @@ class GenerateReplyWorker extends BaseWorker {
               processingTime: statsResult?.processingTimeMs || 0
             });
           }
-          
+
           this.log('info', 'Applied unified transparency disclaimer', {
             organizationId,
             transparencyMode: transparencyResult.transparencyMode,
@@ -1261,11 +1286,7 @@ class GenerateReplyWorker extends BaseWorker {
       };
 
       try {
-        const result = await this.supabase
-          .from('responses')
-          .insert(insertData)
-          .select()
-          .single();
+        const result = await this.supabase.from('responses').insert(insertData).select().single();
 
         stored = result.data;
         error = result.error;
@@ -1277,7 +1298,7 @@ class GenerateReplyWorker extends BaseWorker {
 
         // Second attempt after brief delay
         try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           const retryResult = await this.supabase
             .from('responses')
             .insert(insertData)
@@ -1297,7 +1318,7 @@ class GenerateReplyWorker extends BaseWorker {
       }
 
       if (error) throw error;
-      
+
       // Log persona usage for analytics
       if (personaFieldsUsed && personaFieldsUsed.length > 0) {
         this.log('info', 'Persona fields used in response generation', {
@@ -1307,9 +1328,8 @@ class GenerateReplyWorker extends BaseWorker {
           fieldsCount: personaFieldsUsed.length
         });
       }
-      
+
       return stored;
-      
     } catch (error) {
       this.log('error', 'Failed to store response', {
         commentId,
@@ -1318,7 +1338,7 @@ class GenerateReplyWorker extends BaseWorker {
       throw error;
     }
   }
-  
+
   /**
    * Queue posting job with optional auto-approval metadata
    * ROUND 6 FIX: Enhanced to preserve GDPR-safe auto-approval metadata
@@ -1328,17 +1348,25 @@ class GenerateReplyWorker extends BaseWorker {
    * @param {Object} autoApprovalMetadata - Optional auto-approval metadata (GDPR-safe)
    * @param {string} correlationId - Correlation ID for observability (Issue #417)
    */
-  async queuePostingJob(organizationId, response, platform, autoApprovalMetadata = null, correlationId = null) {
+  async queuePostingJob(
+    organizationId,
+    response,
+    platform,
+    autoApprovalMetadata = null,
+    correlationId = null
+  ) {
     // GDPR-Safe metadata: Only include essential, non-personal data
-    const gdprSafeMetadata = autoApprovalMetadata ? {
-      autoApproved: autoApprovalMetadata.autoApproved || false,
-      contentValidated: autoApprovalMetadata.contentValidated || false,
-      approvalTimestamp: new Date().toISOString(),
-      approvalRecordId: autoApprovalMetadata.approvalRecord?.id || null,
-      // GDPR compliance: No personal text content stored
-      validationId: autoApprovalMetadata.validationId || null,
-      securityPassed: autoApprovalMetadata.securityPassed || false
-    } : null;
+    const gdprSafeMetadata = autoApprovalMetadata
+      ? {
+          autoApproved: autoApprovalMetadata.autoApproved || false,
+          contentValidated: autoApprovalMetadata.contentValidated || false,
+          approvalTimestamp: new Date().toISOString(),
+          approvalRecordId: autoApprovalMetadata.approvalRecord?.id || null,
+          // GDPR compliance: No personal text content stored
+          validationId: autoApprovalMetadata.validationId || null,
+          securityPassed: autoApprovalMetadata.securityPassed || false
+        }
+      : null;
 
     const postJob = {
       organization_id: organizationId,
@@ -1356,18 +1384,16 @@ class GenerateReplyWorker extends BaseWorker {
       },
       max_attempts: 3
     };
-    
+
     try {
       if (this.redis) {
         await this.redis.rpush('roastr:jobs:post_response', JSON.stringify(postJob));
       } else {
-        const { error } = await this.supabase
-          .from('job_queue')
-          .insert([postJob]);
-        
+        const { error } = await this.supabase.from('job_queue').insert([postJob]);
+
         if (error) throw error;
       }
-      
+
       this.log('info', 'Queued posting job', {
         responseId: response.id,
         platform,
@@ -1375,7 +1401,6 @@ class GenerateReplyWorker extends BaseWorker {
         priority: postJob.priority,
         hasMetadata: !!gdprSafeMetadata
       });
-      
     } catch (error) {
       this.log('error', 'Failed to queue posting job', {
         responseId: response.id,
@@ -1383,7 +1408,7 @@ class GenerateReplyWorker extends BaseWorker {
       });
     }
   }
-  
+
   /**
    * Estimate tokens used for cost calculation
    * @param {string} text - Text to estimate token count for
@@ -1405,12 +1430,12 @@ class GenerateReplyWorker extends BaseWorker {
     try {
       // First try to use the response score if valid
       let score = this.parseScore(responseScore);
-      
+
       // If response score is invalid, use original comment score as baseline
       if (score === null) {
         score = this.parseScore(originalScore);
       }
-      
+
       // If both are invalid, use conservative fallback
       if (score === null) {
         this.log('warn', 'No valid toxicity scores available, using conservative fallback', {
@@ -1419,19 +1444,18 @@ class GenerateReplyWorker extends BaseWorker {
         });
         return 0.8; // Conservative score for auto-approval consideration
       }
-      
+
       // For auto-approval, be slightly more conservative than original
       // If it's a roast response, it might be slightly more "toxic" by design
       const adjustedScore = Math.min(score + 0.1, 1.0);
-      
+
       this.log('debug', 'Normalized toxicity score for auto-approval', {
         responseScore,
         originalScore,
         finalScore: adjustedScore
       });
-      
+
       return adjustedScore;
-      
     } catch (error) {
       this.log('error', 'Error normalizing toxicity score, using conservative fallback', {
         responseScore,
@@ -1490,7 +1514,7 @@ class GenerateReplyWorker extends BaseWorker {
   async validateContentAtomically(storedResponse, approvedVariant, originalResponse, context) {
     const validationStart = Date.now();
     const validationId = `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     try {
       this.log('debug', 'Starting atomic content validation', {
         ...context,
@@ -1550,7 +1574,7 @@ class GenerateReplyWorker extends BaseWorker {
           approvedLength: approvedText.length,
           textMatch: false
         });
-        
+
         return {
           valid: false,
           reason: 'content_text_mismatch',
@@ -1574,7 +1598,7 @@ class GenerateReplyWorker extends BaseWorker {
           approvedChecksum,
           reason: 'checksum_algorithm_inconsistency'
         });
-        
+
         return {
           valid: false,
           reason: 'checksum_validation_failed',
@@ -1588,8 +1612,8 @@ class GenerateReplyWorker extends BaseWorker {
 
       // Layer 3: Metadata validation (additional security)
       const metadataValidation = this.validateContentMetadata(
-        storedResponse, 
-        approvedVariant, 
+        storedResponse,
+        approvedVariant,
         originalResponse,
         validationId,
         context // CODERABBIT FIX: Pass context for comment_id fallback
@@ -1644,7 +1668,6 @@ class GenerateReplyWorker extends BaseWorker {
         layersValidated: 4,
         details: 'All validation layers passed successfully'
       };
-
     } catch (error) {
       const validationDuration = Date.now() - validationStart;
       this.log('error', 'CRITICAL: Error in atomic content validation - failing closed', {
@@ -1676,7 +1699,7 @@ class GenerateReplyWorker extends BaseWorker {
     if (!content || typeof content !== 'string') {
       return 'invalid_content';
     }
-    
+
     // Simple but effective checksum using built-in crypto if available
     try {
       const crypto = require('crypto');
@@ -1686,7 +1709,7 @@ class GenerateReplyWorker extends BaseWorker {
       let hash = 0;
       for (let i = 0; i < content.length; i++) {
         const char = content.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
+        hash = (hash << 5) - hash + char;
         hash = hash & hash; // Convert to 32-bit integer
       }
       return `fallback_${hash.toString(16)}`;
@@ -1702,24 +1725,37 @@ class GenerateReplyWorker extends BaseWorker {
    * @param {Object} context - Additional context including job payload
    * @returns {Object} Metadata validation result
    */
-  validateContentMetadata(storedResponse, approvedVariant, originalResponse, validationId, context = {}) {
+  validateContentMetadata(
+    storedResponse,
+    approvedVariant,
+    originalResponse,
+    validationId,
+    context = {}
+  ) {
     const issues = [];
 
     // CODERABBIT FIX: Use context/job payload for comment ID validation when not available in response
-    const expectedCommentId = context.comment_id ?? 
-                             context.commentId ?? 
-                             originalResponse?.comment_id ?? 
-                             storedResponse?.comment_id;
+    const expectedCommentId =
+      context.comment_id ??
+      context.commentId ??
+      originalResponse?.comment_id ??
+      storedResponse?.comment_id;
 
     // Validate basic structure consistency only if we have expected comment ID
-    if (expectedCommentId && storedResponse.comment_id && 
-        storedResponse.comment_id !== expectedCommentId) {
+    if (
+      expectedCommentId &&
+      storedResponse.comment_id &&
+      storedResponse.comment_id !== expectedCommentId
+    ) {
       issues.push('comment_id_mismatch');
     }
 
     // Validate response service consistency (if available)
-    if (originalResponse.service && storedResponse.service && 
-        originalResponse.service !== storedResponse.service) {
+    if (
+      originalResponse.service &&
+      storedResponse.service &&
+      originalResponse.service !== storedResponse.service
+    ) {
       issues.push('service_mismatch');
     }
 
@@ -1728,7 +1764,7 @@ class GenerateReplyWorker extends BaseWorker {
       const storedTime = new Date(storedResponse.created_at);
       const now = new Date();
       const timeDiff = now - storedTime;
-      
+
       // Responses shouldn't be from the future or too old (1 hour max)
       if (timeDiff < 0 || timeDiff > 3600000) {
         issues.push('timestamp_anomaly');
@@ -1758,7 +1794,7 @@ class GenerateReplyWorker extends BaseWorker {
       const updatedTime = new Date(storedResponse.updated_at);
       const validationTime = new Date(validationStart);
       const timeDiff = validationTime - updatedTime;
-      
+
       // If response was updated very recently (within last 100ms), it might be a race condition
       if (timeDiff < 100) {
         issues.push('recent_modification_detected');
@@ -1767,7 +1803,8 @@ class GenerateReplyWorker extends BaseWorker {
 
     // Check validation timing itself (shouldn't take too long)
     const validationDuration = Date.now() - validationStart;
-    if (validationDuration > 5000) { // 5 seconds max
+    if (validationDuration > 5000) {
+      // 5 seconds max
       issues.push('validation_timeout_risk');
     }
 

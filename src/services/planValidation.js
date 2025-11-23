@@ -32,18 +32,18 @@ async function isChangeAllowed(currentPlanId, newPlanId, currentUsage = {}, lang
     // Check roasts limit
     if (currentUsage.roastsThisMonth > newPlan.limits.roastsPerMonth) {
       allowed = false;
-      reason = t('plan.validation.roasts_exceed_limit', language, { 
-        current: currentUsage.roastsThisMonth, 
-        limit: newPlan.limits.roastsPerMonth 
+      reason = t('plan.validation.roasts_exceed_limit', language, {
+        current: currentUsage.roastsThisMonth,
+        limit: newPlan.limits.roastsPerMonth
       });
     }
 
     // Check comments limit
     if (currentUsage.commentsThisMonth > newPlan.limits.commentsPerMonth) {
       allowed = false;
-      reason = t('plan.validation.comments_exceed_limit', language, { 
-        current: currentUsage.commentsThisMonth, 
-        limit: newPlan.limits.commentsPerMonth 
+      reason = t('plan.validation.comments_exceed_limit', language, {
+        current: currentUsage.commentsThisMonth,
+        limit: newPlan.limits.commentsPerMonth
       });
     }
 
@@ -52,9 +52,9 @@ async function isChangeAllowed(currentPlanId, newPlanId, currentUsage = {}, lang
     const maxIntegrations = getMaxIntegrations(newPlanId);
     if (activeIntegrations > maxIntegrations) {
       allowed = false;
-      reason = t('plan.validation.integrations_exceed_limit', language, { 
-        current: activeIntegrations, 
-        limit: maxIntegrations 
+      reason = t('plan.validation.integrations_exceed_limit', language, {
+        current: activeIntegrations,
+        limit: maxIntegrations
       });
     }
 
@@ -110,20 +110,20 @@ function getPlanTier(planId) {
 /**
  * Gets the maximum number of integrations for a plan
  * Enhanced with custom plan support (Issue #125)
- * 
+ *
  * Business Policy (Issue #110): All plans limited to max 2 integrations per social network
  * to prevent agency usage where multiple client accounts are managed on a single plan.
- * 
+ *
  * @param {string} planId - Plan ID
  * @returns {number} Maximum integrations allowed
  */
 function getMaxIntegrations(planId) {
   const limits = {
-    starter_trial: 1,     // 1 integration per social network (trial period)
-    starter: 1,           // 1 integration per social network (basic individual usage)
-    pro: 2,               // 2 integrations per social network (creators with multiple personal accounts)
-    plus: 2,              // 2 integrations per social network (professionals, not agencies)
-    custom: 2             // 2 integrations per social network (configurable other aspects)
+    starter_trial: 1, // 1 integration per social network (trial period)
+    starter: 1, // 1 integration per social network (basic individual usage)
+    pro: 2, // 2 integrations per social network (creators with multiple personal accounts)
+    plus: 2, // 2 integrations per social network (professionals, not agencies)
+    custom: 2 // 2 integrations per social network (configurable other aspects)
   };
   return limits[planId] || 1;
 }
@@ -143,7 +143,7 @@ function calculateProration(currentSubscription, newPlan, language = 'en') {
   const now = Date.now() / 1000;
   const periodEnd = currentSubscription.current_period_end;
   const remainingDays = Math.max(0, Math.ceil((periodEnd - now) / 86400));
-  
+
   if (remainingDays === 0) {
     return { amount: 0, description: t('plan.validation.no_proration', language) };
   }
@@ -151,7 +151,7 @@ function calculateProration(currentSubscription, newPlan, language = 'en') {
   // Calculate unused portion of current subscription
   const currentMonthlyPrice = currentSubscription.items?.data?.[0]?.price?.unit_amount || 0;
   const newMonthlyPrice = newPlan.price || 0;
-  
+
   const unusedAmount = (currentMonthlyPrice / 30) * remainingDays;
   const newAmount = (newMonthlyPrice / 30) * remainingDays;
   const prorationAmount = newAmount - unusedAmount;

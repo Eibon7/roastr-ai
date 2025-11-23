@@ -20,4 +20,3 @@ describe('UsageMeter', () => {
     expect(screen.getByText(/Restantes: 75 análisis/i)).toBeInTheDocument();
   });
 });
-

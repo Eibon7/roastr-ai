@@ -35,11 +35,7 @@ const mockAuthContext = {
 };
 
 const renderWithAuth = (component) => {
-  return render(
-    <AuthContext.Provider value={mockAuthContext}>
-      {component}
-    </AuthContext.Provider>
-  );
+  return render(<AuthContext.Provider value={mockAuthContext}>{component}</AuthContext.Provider>);
 };
 
 describe('AutoApprovalSettings', () => {
@@ -57,7 +53,7 @@ describe('AutoApprovalSettings', () => {
     });
 
     renderWithAuth(<AutoApprovalSettings />);
-    
+
     expect(screen.getByText(/Auto-Approval Settings/)).toBeInTheDocument();
   });
 
@@ -113,7 +109,9 @@ describe('AutoApprovalSettings', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Free Plan')).toBeInTheDocument();
-      expect(screen.getByText(/Auto-approval is available for Starter, Pro, and Plus plans/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Auto-approval is available for Starter, Pro, and Plus plans/)
+      ).toBeInTheDocument();
       expect(screen.getByLabelText(/Enable Auto-Approval/)).toBeDisabled();
     });
   });
@@ -149,7 +147,7 @@ describe('AutoApprovalSettings', () => {
     await waitFor(() => {
       const toggle = screen.getByLabelText(/Enable Auto-Approval/);
       expect(toggle).not.toBeChecked();
-      
+
       fireEvent.click(toggle);
     });
 
@@ -244,9 +242,9 @@ describe('AutoApprovalSettings', () => {
     supabase.from.mockReturnValue({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ 
-            data: null, 
-            error: new Error('Database error') 
+          single: jest.fn().mockResolvedValue({
+            data: null,
+            error: new Error('Database error')
           })
         })
       })

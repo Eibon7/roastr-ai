@@ -163,16 +163,14 @@ describe('Usage Tracking RLS Integration Tests - Issue #787 AC3', () => {
     });
 
     test('Tenant A can only see their own usage_tracking records', async () => {
-      const { data, error } = await testClient
-        .from('usage_tracking')
-        .select('*');
+      const { data, error } = await testClient.from('usage_tracking').select('*');
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
       expect(data.length).toBeGreaterThan(0);
-      expect(data.every(record => record.organization_id === tenantA.id)).toBe(true);
-      expect(data.some(record => record.id === usageTrackingA.id)).toBe(true);
-      expect(data.some(record => record.id === usageTrackingB.id)).toBe(false);
+      expect(data.every((record) => record.organization_id === tenantA.id)).toBe(true);
+      expect(data.some((record) => record.id === usageTrackingA.id)).toBe(true);
+      expect(data.some((record) => record.id === usageTrackingB.id)).toBe(false);
     });
 
     test('Tenant A cannot see Tenant B usage_tracking records', async () => {
@@ -222,16 +220,14 @@ describe('Usage Tracking RLS Integration Tests - Issue #787 AC3', () => {
     });
 
     test('Tenant A can only see their own usage_limits', async () => {
-      const { data, error } = await testClient
-        .from('usage_limits')
-        .select('*');
+      const { data, error } = await testClient.from('usage_limits').select('*');
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
       expect(data.length).toBeGreaterThan(0);
-      expect(data.every(limit => limit.organization_id === tenantA.id)).toBe(true);
-      expect(data.some(limit => limit.id === usageLimitsA.id)).toBe(true);
-      expect(data.some(limit => limit.id === usageLimitsB.id)).toBe(false);
+      expect(data.every((limit) => limit.organization_id === tenantA.id)).toBe(true);
+      expect(data.some((limit) => limit.id === usageLimitsA.id)).toBe(true);
+      expect(data.some((limit) => limit.id === usageLimitsB.id)).toBe(false);
     });
 
     test('Tenant A cannot see Tenant B usage_limits', async () => {
@@ -281,16 +277,14 @@ describe('Usage Tracking RLS Integration Tests - Issue #787 AC3', () => {
     });
 
     test('Tenant A can only see their own usage_alerts', async () => {
-      const { data, error } = await testClient
-        .from('usage_alerts')
-        .select('*');
+      const { data, error } = await testClient.from('usage_alerts').select('*');
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
       expect(data.length).toBeGreaterThan(0);
-      expect(data.every(alert => alert.organization_id === tenantA.id)).toBe(true);
-      expect(data.some(alert => alert.id === usageAlertsA.id)).toBe(true);
-      expect(data.some(alert => alert.id === usageAlertsB.id)).toBe(false);
+      expect(data.every((alert) => alert.organization_id === tenantA.id)).toBe(true);
+      expect(data.some((alert) => alert.id === usageAlertsA.id)).toBe(true);
+      expect(data.some((alert) => alert.id === usageAlertsB.id)).toBe(false);
     });
 
     test('Tenant A cannot see Tenant B usage_alerts', async () => {
@@ -386,4 +380,3 @@ describe('Usage Tracking RLS Integration Tests - Issue #787 AC3', () => {
     });
   });
 });
-

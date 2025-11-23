@@ -141,18 +141,26 @@ function checkTestsPassing() {
   // Compare with baseline (with tolerance for test flakiness)
   const improvement = baseline - failingSuites;
   const REGRESSION_TOLERANCE = 2; // Allow +2 suites for test flakiness
-  const isSignificantRegression = failingSuites > (baseline + REGRESSION_TOLERANCE);
+  const isSignificantRegression = failingSuites > baseline + REGRESSION_TOLERANCE;
 
   if (isSignificantRegression) {
-    logger.error(`   ❌ Tests failing: ${failingSuites} suites (+${Math.abs(improvement)} NEW failures vs baseline)`);
+    logger.error(
+      `   ❌ Tests failing: ${failingSuites} suites (+${Math.abs(improvement)} NEW failures vs baseline)`
+    );
     logger.error(`   🚨 REGRESSION DETECTED - PR introduces new test failures beyond tolerance`);
     return { passed: false, failing: failingSuites, baseline, improvement, regression: true };
-  } else if (failingSuites > baseline && failingSuites <= (baseline + REGRESSION_TOLERANCE)) {
-    logger.warn(`   ⚠️  Tests failing: ${failingSuites} suites (+${Math.abs(improvement)} vs baseline - within tolerance)`);
-    logger.info(`   ✅ Acceptable - within ${REGRESSION_TOLERANCE} suite tolerance for test flakiness`);
+  } else if (failingSuites > baseline && failingSuites <= baseline + REGRESSION_TOLERANCE) {
+    logger.warn(
+      `   ⚠️  Tests failing: ${failingSuites} suites (+${Math.abs(improvement)} vs baseline - within tolerance)`
+    );
+    logger.info(
+      `   ✅ Acceptable - within ${REGRESSION_TOLERANCE} suite tolerance for test flakiness`
+    );
     return { passed: true, failing: failingSuites, baseline, improvement: 0, regression: false };
   } else if (improvement > 0) {
-    logger.info(`   ✅ Tests failing: ${failingSuites} suites (-${improvement} vs baseline - IMPROVEMENT!)`);
+    logger.info(
+      `   ✅ Tests failing: ${failingSuites} suites (-${improvement} vs baseline - IMPROVEMENT!)`
+    );
     return { passed: true, failing: failingSuites, baseline, improvement, regression: false };
   } else {
     // Same as baseline
@@ -170,17 +178,20 @@ function checkTestsPassing() {
  */
 function isDocsOnlyPR() {
   const baseBranch = process.env.GITHUB_BASE_REF || 'main';
-  
+
   try {
     // Get changed files vs base branch
     const output = execSync(`git diff --name-only origin/${baseBranch}...HEAD`, {
       encoding: 'utf8',
       stdio: 'pipe'
     });
-    
-    const files = output.trim().split('\n').filter(f => f.length > 0);
+
+    const files = output
+      .trim()
+      .split('\n')
+      .filter((f) => f.length > 0);
     if (files.length === 0) return false;
-    
+
     // Patterns for non-production files that don't affect tests
     const nonProductionPatterns = [
       /^docs\//,
@@ -195,12 +206,12 @@ function isDocsOnlyPR() {
       /^docs\/plan\//,
       /^docs\/investigations\//
     ];
-    
+
     // Check if ALL files match non-production patterns
-    const allNonProduction = files.every(file => 
-      nonProductionPatterns.some(pattern => pattern.test(file))
+    const allNonProduction = files.every((file) =>
+      nonProductionPatterns.some((pattern) => pattern.test(file))
     );
-    
+
     return allNonProduction;
   } catch (error) {
     // If we can't determine, be conservative (don't allow regression)
@@ -218,7 +229,7 @@ function main() {
   logger.info('============================================================');
 
   const args = process.argv.slice(2);
-  const prArg = args.find(arg => arg.startsWith('--pr='));
+  const prArg = args.find((arg) => arg.startsWith('--pr='));
   const prNumber = prArg ? prArg.split('=')[1] : 'unknown';
 
   logger.info(`\n🎯 Validating PR #${prNumber} with baseline comparison...\n`);

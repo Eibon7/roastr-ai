@@ -105,7 +105,9 @@ class GDDUnlocker {
       console.log('╔════════════════════════════════════════════════════════════╗');
       if (this.options.dryRun) {
         console.log('║  🔍 DRY RUN COMPLETE                                      ║');
-        console.log(`║     Would unlock: ${String(this.changes.length).padEnd(2)} items                               ║`);
+        console.log(
+          `║     Would unlock: ${String(this.changes.length).padEnd(2)} items                               ║`
+        );
       } else {
         console.log('║  ✅ GDD 2.0 UNLOCKED SUCCESSFULLY                         ║');
         console.log('║                                                            ║');
@@ -129,7 +131,6 @@ class GDDUnlocker {
         changes: this.changes.length,
         checkpoint: this.checkpointDir
       };
-
     } catch (error) {
       console.error('❌ Unlock failed:', error.message);
       if (!this.options.dryRun && this.checkpointDir) {
@@ -287,7 +288,7 @@ class GDDUnlocker {
    * Delay helper
    */
   delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
@@ -346,7 +347,7 @@ Notes:
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(2);
   });

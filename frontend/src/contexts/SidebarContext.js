@@ -48,9 +48,5 @@ export const SidebarProvider = ({ children }) => {
     closeSidebar
   };
 
-  return (
-    <SidebarContext.Provider value={value}>
-      {children}
-    </SidebarContext.Provider>
-  );
+  return <SidebarContext.Provider value={value}>{children}</SidebarContext.Provider>;
 };

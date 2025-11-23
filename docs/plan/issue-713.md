@@ -9,6 +9,7 @@
 ## Estado Actual
 
 ### Contexto
+
 - Workers existentes: `FetchCommentsWorker`, `AnalyzeToxicityWorker`, `GenerateReplyWorker`, `ShieldActionWorker`
 - Queue system documentado en `docs/nodes/queue-system.md`
 - Existe `src/services/monitoringService.js` con métricas básicas
@@ -18,6 +19,7 @@
 - No hay sistema de alertas para workers fallidos
 
 ### Gap Identificado
+
 - No hay visibilidad en tiempo real del estado de workers
 - No hay monitoreo de profundidad de cola
 - No hay tracking de trabajos fallidos
@@ -28,6 +30,7 @@
 ## Objetivos
 
 Crear sistema completo de monitoreo y alertas para workers:
+
 1. Dashboard en tiempo real de estado de workers
 2. Monitoreo de profundidad de cola
 3. Tracking de trabajos fallidos
@@ -42,6 +45,7 @@ Crear sistema completo de monitoreo y alertas para workers:
 **Archivo:** `src/routes/workers.js` (extender)
 
 **Nuevos endpoints:**
+
 1. `GET /api/workers/metrics`
    - Métricas agregadas de todos los workers
    - Profundidad de cola por tipo
@@ -62,6 +66,7 @@ Crear sistema completo de monitoreo y alertas para workers:
    - Trabajos fallidos en DLQ
 
 **Dependencias:**
+
 - Usar `QueueService.getQueueStats()` existente
 - Usar `WorkerManager.getStats()` existente
 - Integrar con `monitoringService.js`
@@ -71,6 +76,7 @@ Crear sistema completo de monitoreo y alertas para workers:
 **Archivo:** `src/services/workerAlertingService.js` (nuevo)
 
 **Funcionalidades:**
+
 1. **Detección de condiciones:**
    - Worker caído (no responde healthcheck)
    - Cola con profundidad > threshold
@@ -89,6 +95,7 @@ Crear sistema completo de monitoreo y alertas para workers:
    - Cooldown entre alertas del mismo tipo
 
 **Dependencias:**
+
 - Integrar con `alertingService.js` si existe
 - Usar `utils/logger.js` para logging
 
@@ -97,6 +104,7 @@ Crear sistema completo de monitoreo y alertas para workers:
 **Archivo:** `admin-dashboard/src/pages/Workers/index.tsx` (nuevo)
 
 **Componentes:**
+
 1. **Worker Status Cards**
    - Estado de cada worker (running/stopped/error)
    - Métricas clave (jobs procesados, tasa de éxito)
@@ -124,6 +132,7 @@ Crear sistema completo de monitoreo y alertas para workers:
    - Configurar canales (email/Slack)
 
 **Dependencias:**
+
 - Usar React + TypeScript (stack existente)
 - Usar Chart.js o similar para gráficos
 - Polling cada 5-10 segundos para actualización en tiempo real
@@ -131,9 +140,11 @@ Crear sistema completo de monitoreo y alertas para workers:
 ### FASE 4: Backend - Recopilación de Métricas
 
 **Archivos:**
+
 - `src/services/workerMetricsService.js` (nuevo o extender `monitoringService.js`)
 
 **Funcionalidades:**
+
 1. **Recopilación de métricas:**
    - Polling de workers cada 30 segundos
    - Agregación de métricas por worker
@@ -151,6 +162,7 @@ Crear sistema completo de monitoreo y alertas para workers:
    - Performance degradation
 
 **Dependencias:**
+
 - Integrar con `WorkerManager`
 - Integrar con `QueueService`
 - Usar `monitoringService.js` existente
@@ -158,12 +170,14 @@ Crear sistema completo de monitoreo y alertas para workers:
 ### FASE 5: Tests
 
 **Archivos:**
+
 - `tests/unit/services/workerMetricsService.test.js`
 - `tests/unit/services/workerAlertingService.test.js`
 - `tests/integration/workers/monitoring.test.js`
 - `tests/e2e/admin-dashboard/workers-dashboard.test.ts`
 
 **Cobertura:**
+
 - ✅ Recopilación de métricas
 - ✅ Detección de condiciones de alerta
 - ✅ Envío de alertas
@@ -181,6 +195,7 @@ Crear sistema completo de monitoreo y alertas para workers:
 ## Archivos Afectados
 
 ### Nuevos
+
 - `src/services/workerMetricsService.js`
 - `src/services/workerAlertingService.js`
 - `admin-dashboard/src/pages/Workers/index.tsx`
@@ -193,6 +208,7 @@ Crear sistema completo de monitoreo y alertas para workers:
 - `tests/e2e/admin-dashboard/workers-dashboard.test.ts`
 
 ### Modificados
+
 - `src/routes/workers.js` (añadir endpoints de métricas)
 - `src/services/monitoringService.js` (extender si necesario)
 - `src/workers/WorkerManager.js` (exponer métricas adicionales si necesario)
@@ -201,17 +217,20 @@ Crear sistema completo de monitoreo y alertas para workers:
 ## Validación Requerida
 
 ### Tests
+
 - ✅ Tests unitarios para servicios de métricas y alertas
 - ✅ Tests de integración para endpoints API
 - ✅ Tests E2E para dashboard (Playwright)
 - ✅ Coverage ≥90% para servicios nuevos
 
 ### GDD
+
 - ✅ Actualizar `docs/nodes/queue-system.md` con información de monitoreo
 - ✅ Ejecutar `node scripts/validate-gdd-runtime.js --full` (debe pasar)
 - ✅ Ejecutar `node scripts/score-gdd-health.js --ci` (debe ≥87)
 
 ### Funcionalidad
+
 - ✅ Dashboard muestra estado de workers en tiempo real
 - ✅ Alertas se envían cuando se cumplen condiciones
 - ✅ Endpoints API retornan métricas correctas
@@ -225,12 +244,15 @@ Crear sistema completo de monitoreo y alertas para workers:
 ## Riesgos y Mitigaciones
 
 ### Riesgo 1: Performance del polling
+
 **Mitigación:** Usar polling eficiente (cada 30s), cache en memoria, WebSockets opcionales.
 
 ### Riesgo 2: Spam de alertas
+
 **Mitigación:** Implementar cooldown entre alertas, agrupar alertas similares.
 
 ### Riesgo 3: Escalabilidad de métricas
+
 **Mitigación:** Limitar historial (últimas 24h), usar agregación eficiente.
 
 ## Criterios de Aceptación
@@ -248,5 +270,3 @@ Crear sistema completo de monitoreo y alertas para workers:
 ---
 
 **Próximos pasos:** Comenzar con FASE 1 - Endpoint de métricas API
-
-

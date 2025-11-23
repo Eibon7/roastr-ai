@@ -1,9 +1,9 @@
 /**
  * Shield System - CodeRabbit Round 3 Complete Integration Tests
- * 
+ *
  * Comprehensive integration tests validating all Round 3 improvements:
  * - Database migration security enhancements
- * - API route input validation improvements  
+ * - API route input validation improvements
  * - Visual test stability fixes
  * - End-to-end user workflows
  * - Performance and security validations
@@ -19,10 +19,10 @@ process.env.ENABLE_MOCK_MODE = 'true';
 
 // Mock dependencies
 const mockAuthenticateToken = jest.fn((req, res, next) => {
-  req.user = { 
-    id: 'test-user-round3', 
+  req.user = {
+    id: 'test-user-round3',
     organizationId: 'test-org-round3',
-    email: 'round3@example.com' 
+    email: 'round3@example.com'
   };
   next();
 });
@@ -96,7 +96,7 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset Supabase mock
     jest.spyOn(supabaseServiceClient, 'from').mockImplementation((table) => {
       const mockQuery = {
@@ -157,8 +157,12 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
           expect(response.body.success).toBe(true);
           expect(response.body.data.pagination.page).toBeLessThanOrEqual(999999); // Reasonable page
           expect(response.body.data.pagination.limit).toBeLessThanOrEqual(100); // Max limit enforced
-          expect(response.body.data.filters.category).toMatch(/^(all|toxic|spam|harassment|hate_speech|inappropriate)$/);
-          expect(response.body.data.filters.platform).toMatch(/^(all|twitter|youtube|instagram|facebook|discord|twitch|reddit|tiktok|bluesky)$/);
+          expect(response.body.data.filters.category).toMatch(
+            /^(all|toxic|spam|harassment|hate_speech|inappropriate)$/
+          );
+          expect(response.body.data.filters.platform).toMatch(
+            /^(all|twitter|youtube|instagram|facebook|discord|twitch|reddit|tiktok|bluesky)$/
+          );
         }
       }
     });
@@ -209,7 +213,8 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
         'reason\twith\ttabs' // Tabs
       ];
 
-      for (const invalidReason of invalidReasons.slice(0, -2)) { // Exclude newlines/tabs for now
+      for (const invalidReason of invalidReasons.slice(0, -2)) {
+        // Exclude newlines/tabs for now
         const response = await request(app)
           .post(`/api/shield/revert/${validUUID}`)
           .send({ reason: invalidReason })
@@ -221,13 +226,11 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
     });
 
     test('should handle data sanitization properly', async () => {
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events').expect(200);
 
       // Verify organization_id is removed from all events
       expect(response.body.data.events).toHaveLength(2);
-      response.body.data.events.forEach(event => {
+      response.body.data.events.forEach((event) => {
         expect(event).not.toHaveProperty('organization_id');
         expect(event).toHaveProperty('id');
         expect(event).toHaveProperty('action_type');
@@ -246,9 +249,7 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
         range: jest.fn().mockReturnThis()
       }));
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(500);
+      const response = await request(app).get('/api/shield/events').expect(500);
 
       expect(response.body).toEqual({
         success: false,
@@ -303,9 +304,7 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
         gte: jest.fn().mockReturnThis()
       }));
 
-      const response = await request(app)
-        .get('/api/shield/stats')
-        .expect(200);
+      const response = await request(app).get('/api/shield/stats').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual({
@@ -363,9 +362,7 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
 
   describe('Round 3 Configuration and Feature Flag Integration', () => {
     test('should provide comprehensive configuration with validation constants', async () => {
-      const response = await request(app)
-        .get('/api/shield/config')
-        .expect(200);
+      const response = await request(app).get('/api/shield/config').expect(200);
 
       expect(response.body).toEqual({
         success: true,
@@ -385,11 +382,32 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
           validation: {
             categories: ['all', 'toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'],
             timeRanges: ['7d', '30d', '90d', 'all'],
-            platforms: ['all', 'twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'],
+            platforms: [
+              'all',
+              'twitter',
+              'youtube',
+              'instagram',
+              'facebook',
+              'discord',
+              'twitch',
+              'reddit',
+              'tiktok',
+              'bluesky'
+            ],
             actionTypes: ['all', 'block', 'mute', 'flag', 'report']
           },
           categories: ['toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'],
-          platforms: ['twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'],
+          platforms: [
+            'twitter',
+            'youtube',
+            'instagram',
+            'facebook',
+            'discord',
+            'twitch',
+            'reddit',
+            'tiktok',
+            'bluesky'
+          ],
           actionTypes: ['block', 'mute', 'flag', 'report']
         }
       });
@@ -409,9 +427,7 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
       // Test with feature flag disabled
       mockFlags.isEnabled.mockReturnValue(false);
 
-      const response = await request(app)
-        .get('/api/shield/config')
-        .expect(200);
+      const response = await request(app).get('/api/shield/config').expect(200);
 
       expect(response.body.data.enabled).toBe(false);
 
@@ -447,9 +463,7 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
         range: jest.fn().mockReturnThis()
       }));
 
-      const response = await request(app)
-        .get('/api/shield/events?page=1&limit=20')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?page=1&limit=20').expect(200);
 
       expect(response.body.data.events).toHaveLength(20);
       expect(response.body.data.pagination).toEqual({
@@ -462,7 +476,7 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
       });
 
       // Verify organization_id is removed from all records
-      response.body.data.events.forEach(event => {
+      response.body.data.events.forEach((event) => {
         expect(event).not.toHaveProperty('organization_id');
       });
     });
@@ -534,11 +548,9 @@ describe('Shield System - CodeRabbit Round 3 Complete Integration', () => {
       const revertReason = 'False positive detected by admin';
 
       // Step 1: Verify action exists
-      const fetchResponse = await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      const fetchResponse = await request(app).get('/api/shield/events').expect(200);
 
-      const targetAction = fetchResponse.body.data.events.find(e => e.id === actionId);
+      const targetAction = fetchResponse.body.data.events.find((e) => e.id === actionId);
       expect(targetAction).toBeTruthy();
       expect(targetAction.reverted_at).toBeNull();
 

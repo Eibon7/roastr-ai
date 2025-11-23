@@ -14,16 +14,18 @@ Applied 4 critical fixes to integration tests in `tests/integration/database/sec
 ## 🎯 Issues Addressed
 
 ### Issue 1: get_user_roast_config test (Line 219-223)
+
 **Severity:** Critical  
 **Pattern:** Test silently passed when DB function didn't exist  
-**Root Cause:** `if (error) { expect(true).toBe(true); return; }`  
+**Root Cause:** `if (error) { expect(true).toBe(true); return; }`
 
 **Fix Applied:**
+
 ```javascript
 // Before: Silent pass if function missing
 if (error) {
-    expect(true).toBe(true);
-    return;
+  expect(true).toBe(true);
+  return;
 }
 
 // After: Explicit failure if function missing
@@ -33,15 +35,17 @@ expect(data).toBeInstanceOf(Array);
 ```
 
 ### Issue 2: Data assertions (Line 226-236)
+
 **Severity:** Major  
 **Pattern:** All assertions wrapped in conditionals  
 **Root Cause:** `if (data) { ... }` allowed test to pass with null/undefined data
 
 **Fix Applied:**
+
 ```javascript
 // Before: Assertions skipped if data absent
 if (data) {
-    expect(data).toBeInstanceOf(Array);
+  expect(data).toBeInstanceOf(Array);
 }
 
 // After: Explicit data presence check first
@@ -49,26 +53,29 @@ expect(data).toBeDefined();
 expect(data).toBeInstanceOf(Array);
 
 if (data.length > 0) {
-    // Property checks only when data present
+  // Property checks only when data present
 }
 ```
 
 ### Issue 3: get_user_roast_stats test (Line 260-264)
+
 **Severity:** Critical  
 **Pattern:** Same silent pass pattern as Issue 1  
 **Fix:** Same explicit assertion pattern applied
 
 ### Issue 4: Multi-tenant isolation test (Line 330-342)
+
 **Severity:** Critical  
 **Pattern:** Auto-pass on missing table + confusing error assertion  
 **Root Cause:** `if (org1Error && ...) { expect(true).toBe(true); return; }`
 
 **Fix Applied:**
+
 ```javascript
 // Before: Auto-pass if table missing
 if (org1Error && (org1Error.code === '42P01' || org1Error.message?.includes('does not exist'))) {
-    expect(true).toBe(true);
-    return;
+  expect(true).toBe(true);
+  return;
 }
 
 // After: Explicit verification of RLS
@@ -77,18 +84,20 @@ expect(org1Data).toBeDefined();
 expect(org1Data).toBeInstanceOf(Array);
 
 if (org1Data.length > 0) {
-    expect(org1Data.every(row => row.org_id === testOrgId)).toBe(true);
+  expect(org1Data.every((row) => row.org_id === testOrgId)).toBe(true);
 }
 ```
 
 ## 📊 Impact
 
 **Files Modified:** 1
+
 - `tests/integration/database/security.test.js` (4 locations)
 
 **Lines Changed:** -34 / +28 (net -6 lines, more explicit)
 
 **Test Quality Improvement:**
+
 - **Before:** Tests could pass with broken infrastructure (false confidence)
 - **After:** Tests will fail explicitly if DB functions/tables missing (true validation)
 
@@ -104,6 +113,7 @@ Integration tests now follow **fail-fast** principle:
 ## 📚 Documentation
 
 **Pattern Documented:** New pattern #3 added to `docs/patterns/coderabbit-lessons.md`
+
 - Title: "Silent Pass in Integration Tests"
 - Occurrences: 4 (all fixed in this session)
 - Rules: Integration tests MUST fail explicitly when infrastructure is missing
@@ -113,6 +123,7 @@ Integration tests now follow **fail-fast** principle:
 ## ✅ Validation
 
 **Pre-commit checks:**
+
 - [x] All fixes applied
 - [x] Pattern documented in coderabbit-lessons.md
 - [x] No syntax errors introduced
@@ -138,4 +149,3 @@ Integration tests now follow **fail-fast** principle:
 
 **Status:** ✅ Complete  
 **Next Steps:** Commit, push, validate GDD health
-

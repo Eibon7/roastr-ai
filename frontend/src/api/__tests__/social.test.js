@@ -1,6 +1,6 @@
 /**
  * Social API SDK Tests
- * 
+ *
  * Tests for the social networks API mock implementation
  */
 
@@ -9,7 +9,7 @@ import socialAPI from '../social';
 // Mock the delay function to make tests faster
 jest.mock('../social', () => {
   const originalModule = jest.requireActual('../social');
-  
+
   return {
     ...originalModule,
     default: {
@@ -21,7 +21,7 @@ jest.mock('../social', () => {
       updateShieldSettings: jest.fn(originalModule.default.updateShieldSettings),
       updateAccountSettings: jest.fn(originalModule.default.updateAccountSettings),
       connectNetwork: jest.fn(originalModule.default.connectNetwork),
-      disconnectAccount: jest.fn(originalModule.default.disconnectAccount),
+      disconnectAccount: jest.fn(originalModule.default.disconnectAccount)
     }
   };
 });
@@ -75,9 +75,9 @@ describe('Social API SDK', () => {
       const accountId = 'acc_tw_1';
       const roastId = 'r1';
 
-      await expect(socialAPI.approveRoast(accountId, roastId))
-        .rejects
-        .toThrow('Failed to approve roast - network error');
+      await expect(socialAPI.approveRoast(accountId, roastId)).rejects.toThrow(
+        'Failed to approve roast - network error'
+      );
 
       global.Math = originalMath;
     });
@@ -149,7 +149,7 @@ describe('Social API SDK', () => {
     it('buildApiUrl constructs correct API URL', () => {
       const endpoint = '/social/accounts';
       const url = socialAPI.buildApiUrl(endpoint);
-      
+
       expect(url).toMatch(/^https?:\/\/.+\/api\/social\/accounts$/);
     });
 
@@ -158,7 +158,7 @@ describe('Social API SDK', () => {
       const mockToken = 'mock-jwt-token';
       Object.defineProperty(window, 'localStorage', {
         value: {
-          getItem: jest.fn(() => mockToken),
+          getItem: jest.fn(() => mockToken)
         },
         writable: true
       });
@@ -173,7 +173,7 @@ describe('Social API SDK', () => {
       // Mock localStorage without token
       Object.defineProperty(window, 'localStorage', {
         value: {
-          getItem: jest.fn(() => null),
+          getItem: jest.fn(() => null)
         },
         writable: true
       });
@@ -190,7 +190,7 @@ describe('Social API SDK', () => {
       // Test multiple calls to ensure error rate is reasonable
       const results = [];
       const failures = [];
-      
+
       for (let i = 0; i < 10; i++) {
         try {
           const result = await socialAPI.updateAccountSettings('test_account', { active: true });

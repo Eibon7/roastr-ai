@@ -17,7 +17,7 @@ test.describe('Dashboard Responsive Design', () => {
 
   const viewportTests = [
     { name: 'mobile (375x667)', device: devices['iPhone SE'], expectSidebar: false },
-    { name: 'tablet (768x1024)', device: devices['iPad Mini'], expectSidebar: false },
+    { name: 'tablet (768x1024)', device: devices['iPad Mini'], expectSidebar: false }
   ];
 
   for (const { name, device, expectSidebar } of viewportTests) {

@@ -1,6 +1,6 @@
 /**
  * Comprehensive WorkerManager Tests
- * 
+ *
  * Full test coverage for the WorkerManager class including:
  * - Constructor and initialization
  * - Worker lifecycle management
@@ -35,11 +35,11 @@ describe('WorkerManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Increase max listeners to avoid warnings in tests
     // Each WorkerManager instance adds 5 listeners (SIGTERM, SIGINT, SIGQUIT, uncaughtException, unhandledRejection)
     process.setMaxListeners(30);
-    
+
     // Create mock worker instances
     const createMockWorker = (type) => ({
       workerName: `${type}-worker-123`,
@@ -102,7 +102,11 @@ describe('WorkerManager', () => {
       manager = new WorkerManager();
 
       expect(manager.options.enabledWorkers).toEqual([
-        'fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action', 'billing'
+        'fetch_comments',
+        'analyze_toxicity',
+        'generate_reply',
+        'shield_action',
+        'billing'
       ]);
       expect(manager.options.workerConfig).toEqual({});
       expect(manager.options.healthCheckInterval).toBe(30000);
@@ -132,13 +136,13 @@ describe('WorkerManager', () => {
       manager = new WorkerManager();
 
       expect(manager.workerClasses).toEqual({
-        'fetch_comments': FetchCommentsWorker,
-        'analyze_toxicity': AnalyzeToxicityWorker,
-        'generate_reply': GenerateReplyWorker,
-        'shield_action': ShieldActionWorker,
-        'billing': BillingWorker,
-        'style_profile': StyleProfileWorker,
-        'post_response': PublisherWorker
+        fetch_comments: FetchCommentsWorker,
+        analyze_toxicity: AnalyzeToxicityWorker,
+        generate_reply: GenerateReplyWorker,
+        shield_action: ShieldActionWorker,
+        billing: BillingWorker,
+        style_profile: StyleProfileWorker,
+        post_response: PublisherWorker
       });
     });
 
@@ -173,13 +177,13 @@ describe('WorkerManager', () => {
 
       it('should throw error if already running', async () => {
         await manager.start();
-        
+
         await expect(manager.start()).rejects.toThrow('Worker Manager is already running');
       });
 
       it('should start health monitoring', async () => {
         jest.spyOn(manager, 'startHealthMonitoring');
-        
+
         await manager.start();
 
         expect(manager.startHealthMonitoring).toHaveBeenCalled();
@@ -188,7 +192,7 @@ describe('WorkerManager', () => {
 
       it('should setup graceful shutdown', async () => {
         jest.spyOn(manager, 'setupGracefulShutdown');
-        
+
         await manager.start();
 
         expect(manager.setupGracefulShutdown).toHaveBeenCalled();
@@ -226,7 +230,7 @@ describe('WorkerManager', () => {
 
       it('should do nothing if not running', async () => {
         expect(manager.isRunning).toBe(false);
-        
+
         await manager.stop();
 
         expect(manager.isRunning).toBe(false);
@@ -235,7 +239,7 @@ describe('WorkerManager', () => {
 
       it('should handle worker stop errors gracefully', async () => {
         await manager.start();
-        
+
         const error = new Error('Worker failed to stop');
         mockWorkerInstances.fetch_comments.stop.mockRejectedValue(error);
 
@@ -249,7 +253,7 @@ describe('WorkerManager', () => {
       it('should clear health check timer', async () => {
         await manager.start();
         const timerId = manager.healthCheckTimer;
-        
+
         await manager.stop();
 
         expect(manager.healthCheckTimer).toBeNull();
@@ -267,7 +271,7 @@ describe('WorkerManager', () => {
 
       it('should use worker-specific configuration', async () => {
         manager.options.workerConfig.fetch_comments = { maxConcurrency: 5 };
-        
+
         await manager.startWorker('fetch_comments');
 
         expect(FetchCommentsWorker).toHaveBeenCalledWith({ maxConcurrency: 5 });
@@ -283,9 +287,7 @@ describe('WorkerManager', () => {
         const error = new Error('Worker start failed');
         mockWorkerInstances.fetch_comments.start.mockRejectedValue(error);
 
-        await expect(manager.startWorker('fetch_comments')).rejects.toThrow(
-          'Worker start failed'
-        );
+        await expect(manager.startWorker('fetch_comments')).rejects.toThrow('Worker start failed');
       });
     });
 
@@ -306,13 +308,11 @@ describe('WorkerManager', () => {
 
       it('should handle worker stop failures', async () => {
         await manager.startWorker('fetch_comments');
-        
+
         const error = new Error('Worker stop failed');
         mockWorkerInstances.fetch_comments.stop.mockRejectedValue(error);
 
-        await expect(manager.stopWorker('fetch_comments')).rejects.toThrow(
-          'Worker stop failed'
-        );
+        await expect(manager.stopWorker('fetch_comments')).rejects.toThrow('Worker stop failed');
       });
     });
 
@@ -338,9 +338,7 @@ describe('WorkerManager', () => {
         const error = new Error('Restart failed');
         mockWorkerInstances.fetch_comments.start.mockRejectedValue(error);
 
-        await expect(manager.restartWorker('fetch_comments')).rejects.toThrow(
-          'Restart failed'
-        );
+        await expect(manager.restartWorker('fetch_comments')).rejects.toThrow('Restart failed');
       });
     });
   });
@@ -356,11 +354,11 @@ describe('WorkerManager', () => {
     describe('startHealthMonitoring()', () => {
       it('should start periodic health checks', () => {
         jest.spyOn(manager, 'performHealthCheck');
-        
+
         manager.startHealthMonitoring();
 
         expect(manager.healthCheckTimer).not.toBeNull();
-        
+
         // Verify timer exists (can't easily test the actual interval in unit tests)
         expect(typeof manager.healthCheckTimer).toBe('object');
       });
@@ -369,7 +367,7 @@ describe('WorkerManager', () => {
     describe('performHealthCheck()', () => {
       it('should perform health checks on all workers', async () => {
         await manager.start();
-        
+
         const healthReport = await manager.performHealthCheck();
 
         expect(healthReport).toHaveProperty('timestamp');
@@ -378,10 +376,10 @@ describe('WorkerManager', () => {
         expect(healthReport).toHaveProperty('healthyWorkers', 2);
         expect(healthReport).toHaveProperty('workers');
         expect(healthReport).toHaveProperty('overallStatus', 'healthy');
-        
+
         expect(healthReport.workers).toHaveProperty('fetch_comments');
         expect(healthReport.workers).toHaveProperty('analyze_toxicity');
-        
+
         expect(mockWorkerInstances.fetch_comments.healthcheck).toHaveBeenCalled();
         expect(mockWorkerInstances.analyze_toxicity.healthcheck).toHaveBeenCalled();
       });
@@ -449,7 +447,7 @@ describe('WorkerManager', () => {
       it('should return health status', async () => {
         await manager.start();
         jest.spyOn(manager, 'performHealthCheck');
-        
+
         const health = await manager.getHealthStatus();
 
         expect(manager.performHealthCheck).toHaveBeenCalled();
@@ -473,7 +471,7 @@ describe('WorkerManager', () => {
 
         expect(stats).toHaveProperty('managerStatus');
         expect(stats).toHaveProperty('workers');
-        
+
         expect(stats.managerStatus).toEqual({
           isRunning: true,
           startTime: expect.any(Number),
@@ -484,7 +482,7 @@ describe('WorkerManager', () => {
 
         expect(stats.workers).toHaveProperty('fetch_comments');
         expect(stats.workers).toHaveProperty('analyze_toxicity');
-        
+
         expect(mockWorkerInstances.fetch_comments.getStats).toHaveBeenCalled();
         expect(mockWorkerInstances.analyze_toxicity.getStats).toHaveBeenCalled();
       });
@@ -508,10 +506,14 @@ describe('WorkerManager', () => {
       it('should handle no processed jobs', () => {
         // Override mock to return zero jobs
         mockWorkerInstances.fetch_comments.getStats.mockReturnValue({
-          processedJobs: 0, failedJobs: 0, currentJobs: 0
+          processedJobs: 0,
+          failedJobs: 0,
+          currentJobs: 0
         });
         mockWorkerInstances.analyze_toxicity.getStats.mockReturnValue({
-          processedJobs: 0, failedJobs: 0, currentJobs: 0
+          processedJobs: 0,
+          failedJobs: 0,
+          currentJobs: 0
         });
 
         const summary = manager.getSummary();
@@ -521,7 +523,7 @@ describe('WorkerManager', () => {
 
       it('should return correct metrics when not running', async () => {
         await manager.stop();
-        
+
         const summary = manager.getSummary();
 
         expect(summary.isRunning).toBe(false);
@@ -584,7 +586,7 @@ describe('WorkerManager', () => {
 
     it('should setup signal handlers', () => {
       const processOnSpy = jest.spyOn(process, 'on');
-      
+
       manager.setupGracefulShutdown();
 
       expect(processOnSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
@@ -603,13 +605,11 @@ describe('WorkerManager', () => {
     it('should log with correct format', () => {
       manager.log('info', 'Test message', { extra: 'data' });
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('[INFO]')
-      );
-      
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('[INFO]'));
+
       const logCall = console.log.mock.calls[console.log.mock.calls.length - 1][0];
       const logEntry = JSON.parse(logCall.split('] ')[1]);
-      
+
       expect(logEntry).toMatchObject({
         level: 'info',
         component: 'WorkerManager',
@@ -622,9 +622,7 @@ describe('WorkerManager', () => {
     it('should handle logs without metadata', () => {
       manager.log('error', 'Error message');
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('[ERROR]')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('[ERROR]'));
     });
   });
 

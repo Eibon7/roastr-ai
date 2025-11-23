@@ -7,7 +7,7 @@ import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 /**
  * Shop Page Component
- * 
+ *
  * Página de tienda para addons y funcionalidades premium
  * Solo visible cuando el feature flag ENABLE_SHOP está activo
  */
@@ -91,12 +91,11 @@ export default function Shop() {
       <div className="text-center">
         <div className="flex items-center justify-center mb-4">
           <ShoppingBag className="h-12 w-12 text-primary mr-3" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Roastr Shop
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Roastr Shop</h1>
         </div>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Potencia tu experiencia con Roastr con addons premium que llevan tus roasts al siguiente nivel
+          Potencia tu experiencia con Roastr con addons premium que llevan tus roasts al siguiente
+          nivel
         </p>
       </div>
 
@@ -121,15 +120,18 @@ export default function Shop() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {addons.map((addon) => {
           const IconComponent = addon.icon;
-          
+
           return (
-            <Card key={addon.id} className={`relative ${addon.popular ? 'ring-2 ring-primary' : ''}`}>
+            <Card
+              key={addon.id}
+              className={`relative ${addon.popular ? 'ring-2 ring-primary' : ''}`}
+            >
               {addon.popular && (
                 <Badge className="absolute -top-2 left-4 bg-primary text-primary-foreground">
                   Más popular
                 </Badge>
               )}
-              
+
               <CardHeader>
                 <CardTitle className="flex items-center space-x-3">
                   <IconComponent className="h-6 w-6 text-primary" />
@@ -137,7 +139,7 @@ export default function Shop() {
                 </CardTitle>
                 <p className="text-muted-foreground">{addon.description}</p>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Price */}
                 <div className="flex items-baseline space-x-1">
@@ -164,7 +166,13 @@ export default function Shop() {
                   variant={addon.popular ? 'default' : 'outline'}
                   disabled={flagsLoading || !purchasesEnabled}
                 >
-                  {flagsLoading ? 'Cargando...' : (purchasesEnabled ? (addon.popular ? 'Obtener ahora' : 'Comprar') : 'Próximamente')}
+                  {flagsLoading
+                    ? 'Cargando...'
+                    : purchasesEnabled
+                      ? addon.popular
+                        ? 'Obtener ahora'
+                        : 'Comprar'
+                      : 'Próximamente'}
                 </Button>
               </CardContent>
             </Card>

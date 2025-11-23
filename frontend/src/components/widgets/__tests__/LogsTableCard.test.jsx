@@ -49,7 +49,7 @@ describe('LogsTableCard', () => {
   test('renders logs data after successful API call', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockLogs,
+      json: async () => mockLogs
     });
 
     render(<LogsTableCard />);
@@ -64,10 +64,10 @@ describe('LogsTableCard', () => {
 
   test('filters logs by level', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockLogs,
+      json: async () => mockLogs
     });
 
     render(<LogsTableCard />);
@@ -77,16 +77,19 @@ describe('LogsTableCard', () => {
     });
 
     // Click on the filter dropdown by finding the button trigger
-    const filterTrigger = screen.getAllByRole('button').find(btn => 
-      btn.textContent.includes('All Levels') || btn.className.includes('SelectTrigger')
-    ) || screen.getAllByRole('button')[1]; // Fallback to second button if not found
+    const filterTrigger =
+      screen
+        .getAllByRole('button')
+        .find(
+          (btn) => btn.textContent.includes('All Levels') || btn.className.includes('SelectTrigger')
+        ) || screen.getAllByRole('button')[1]; // Fallback to second button if not found
     await user.click(filterTrigger);
 
     // Wait for dropdown to open and select 'error' filter
     await waitFor(() => {
       expect(screen.getByText('Errors')).toBeInTheDocument();
     });
-    
+
     const errorOption = screen.getByText('Errors');
     await user.click(errorOption);
 
@@ -99,10 +102,10 @@ describe('LogsTableCard', () => {
 
   test('filters logs by search term', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockLogs,
+      json: async () => mockLogs
     });
 
     render(<LogsTableCard />);
@@ -123,10 +126,10 @@ describe('LogsTableCard', () => {
 
   test('combines level filter and search term', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockLogs,
+      json: async () => mockLogs
     });
 
     render(<LogsTableCard />);
@@ -145,15 +148,18 @@ describe('LogsTableCard', () => {
     });
 
     // Set level filter to 'error'
-    const filterTrigger = screen.getAllByRole('button').find(btn => 
-      btn.textContent.includes('All Levels') || btn.className.includes('SelectTrigger')
-    ) || screen.getAllByRole('button')[1]; // Fallback to second button if not found
+    const filterTrigger =
+      screen
+        .getAllByRole('button')
+        .find(
+          (btn) => btn.textContent.includes('All Levels') || btn.className.includes('SelectTrigger')
+        ) || screen.getAllByRole('button')[1]; // Fallback to second button if not found
     await user.click(filterTrigger);
 
     await waitFor(() => {
       expect(screen.getByText('Errors')).toBeInTheDocument();
     });
-    
+
     const errorOption = screen.getByText('Errors');
     await user.click(errorOption);
 
@@ -165,10 +171,10 @@ describe('LogsTableCard', () => {
 
   test('shows empty state when no logs match filters', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockLogs,
+      json: async () => mockLogs
     });
 
     render(<LogsTableCard />);
@@ -189,10 +195,10 @@ describe('LogsTableCard', () => {
 
   test('clears filters when clear button is clicked', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockLogs,
+      json: async () => mockLogs
     });
 
     render(<LogsTableCard />);
@@ -222,7 +228,7 @@ describe('LogsTableCard', () => {
   test('displays correct badge variants for log levels', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockLogs,
+      json: async () => mockLogs
     });
 
     render(<LogsTableCard />);
@@ -245,7 +251,7 @@ describe('LogsTableCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => manyLogs,
+      json: async () => manyLogs
     });
 
     render(<LogsTableCard />);
@@ -258,7 +264,7 @@ describe('LogsTableCard', () => {
   test('calls logs API with correct parameters', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => [],
+      json: async () => []
     });
 
     render(<LogsTableCard />);

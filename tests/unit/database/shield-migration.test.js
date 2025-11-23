@@ -1,6 +1,6 @@
 /**
  * Shield Migration Tests - CodeRabbit Round 2
- * 
+ *
  * Tests for 020_create_shield_actions_table.sql migration with:
  * - Temporal integrity constraints
  * - Partial indexes for active actions
@@ -42,11 +42,8 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
 
   describe('Table Structure and Constraints', () => {
     test('should have shield_actions table with correct columns', async () => {
-      const { data } = await supabase
-        .from('shield_actions')
-        .select('*')
-        .limit(0);
-      
+      const { data } = await supabase.from('shield_actions').select('*').limit(0);
+
       expect(data).toBeDefined();
       // Test passes if no error thrown (table exists)
     });
@@ -100,25 +97,20 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
 
     test('should validate metadata as JSON object', async () => {
       // Valid metadata (object)
-      const { error: validError } = await supabase
-        .from('shield_actions')
-        .insert({
-          organization_id: testOrgId,
-          action_type: 'block',
-          content_hash: 'a'.repeat(64),
-          content_snippet: 'Test content',
-          platform: 'twitter',
-          reason: 'toxic',
-          metadata: { key: 'value' }
-        });
+      const { error: validError } = await supabase.from('shield_actions').insert({
+        organization_id: testOrgId,
+        action_type: 'block',
+        content_hash: 'a'.repeat(64),
+        content_snippet: 'Test content',
+        platform: 'twitter',
+        reason: 'toxic',
+        metadata: { key: 'value' }
+      });
 
       expect(validError).toBeNull();
 
       // Clean up
-      await supabase
-        .from('shield_actions')
-        .delete()
-        .eq('organization_id', testOrgId);
+      await supabase.from('shield_actions').delete().eq('organization_id', testOrgId);
     });
 
     test('should enforce action_type constraints', async () => {
@@ -203,10 +195,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
       expect(activeActions[0].id).toBe(activeAction.id);
 
       // Cleanup
-      await supabase
-        .from('shield_actions')
-        .delete()
-        .in('id', [activeAction.id, revertedAction.id]);
+      await supabase.from('shield_actions').delete().in('id', [activeAction.id, revertedAction.id]);
     });
 
     test('should have composite indexes for filtering', async () => {
@@ -255,7 +244,10 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
       await supabase
         .from('shield_actions')
         .delete()
-        .in('id', insertedActions.map(a => a.id));
+        .in(
+          'id',
+          insertedActions.map((a) => a.id)
+        );
     });
   });
 
@@ -288,10 +280,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
       expect(orgFlag.organization_id).toBe(testOrgId);
 
       // Cleanup
-      await supabase
-        .from('feature_flags')
-        .delete()
-        .eq('id', orgFlag.id);
+      await supabase.from('feature_flags').delete().eq('id', orgFlag.id);
     });
 
     test('should enforce unique constraint per organization', async () => {
@@ -316,10 +305,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
       ).rejects.toThrow();
 
       // Cleanup
-      await supabase
-        .from('feature_flags')
-        .delete()
-        .eq('id', firstFlag.id);
+      await supabase.from('feature_flags').delete().eq('id', firstFlag.id);
     });
   });
 
@@ -327,7 +313,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
     test('should anonymize old shield actions', async () => {
       // Insert old action (simulate 81 days ago)
       const oldDate = new Date(Date.now() - 81 * 24 * 60 * 60 * 1000);
-      
+
       const { data: oldAction } = await supabase
         .from('shield_actions')
         .insert({
@@ -343,8 +329,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
         .single();
 
       // Call anonymization function
-      const { data: result } = await supabase
-        .rpc('anonymize_old_shield_actions');
+      const { data: result } = await supabase.rpc('anonymize_old_shield_actions');
 
       expect(result).toBeGreaterThanOrEqual(1);
 
@@ -359,16 +344,13 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
       expect(anonymizedAction.metadata.anonymized_at).toBeTruthy();
 
       // Cleanup
-      await supabase
-        .from('shield_actions')
-        .delete()
-        .eq('id', oldAction.id);
+      await supabase.from('shield_actions').delete().eq('id', oldAction.id);
     });
 
     test('should purge very old shield actions', async () => {
       // Insert very old action (simulate 91 days ago)
       const veryOldDate = new Date(Date.now() - 91 * 24 * 60 * 60 * 1000);
-      
+
       const { data: veryOldAction } = await supabase
         .from('shield_actions')
         .insert({
@@ -384,8 +366,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
         .single();
 
       // Call purge function
-      const { data: result } = await supabase
-        .rpc('purge_old_shield_actions');
+      const { data: result } = await supabase.rpc('purge_old_shield_actions');
 
       expect(result).toBeGreaterThanOrEqual(1);
 
@@ -428,10 +409,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
       expect(unchangedAction.metadata.anonymized_at).toBeFalsy();
 
       // Cleanup
-      await supabase
-        .from('shield_actions')
-        .delete()
-        .eq('id', recentAction.id);
+      await supabase.from('shield_actions').delete().eq('id', recentAction.id);
     });
   });
 
@@ -439,7 +417,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
     test('should enforce organization isolation', async () => {
       // This test would require setting up proper RLS context
       // For now, we'll test that the policies exist
-      
+
       // Insert action for test org
       const { data: testAction } = await supabase
         .from('shield_actions')
@@ -465,10 +443,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
       expect(retrievedAction.organization_id).toBe(testOrgId);
 
       // Cleanup
-      await supabase
-        .from('shield_actions')
-        .delete()
-        .eq('id', testAction.id);
+      await supabase.from('shield_actions').delete().eq('id', testAction.id);
     });
   });
 
@@ -491,7 +466,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
       const originalUpdatedAt = action.updated_at;
 
       // Wait a moment then update
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const { data: updatedAction } = await supabase
         .from('shield_actions')
@@ -503,10 +478,7 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
       expect(new Date(updatedAction.updated_at)).toBeAfter(new Date(originalUpdatedAt));
 
       // Cleanup
-      await supabase
-        .from('shield_actions')
-        .delete()
-        .eq('id', action.id);
+      await supabase.from('shield_actions').delete().eq('id', action.id);
     });
   });
 
@@ -514,13 +486,10 @@ describe('Shield Migration Tests - CodeRabbit Round 2', () => {
     test('should handle existing data gracefully', async () => {
       // Test that migration can handle existing shield_actions table
       // This is more of a conceptual test since we can't re-run migrations
-      
+
       // Verify table exists and has expected structure
-      const { data } = await supabase
-        .from('shield_actions')
-        .select('*')
-        .limit(0);
-      
+      const { data } = await supabase.from('shield_actions').select('*').limit(0);
+
       expect(data).toBeDefined();
     });
 

@@ -12,7 +12,7 @@ const ToastContainer = () => {
   // ROUND 4 FIX: Subscribe to ToastAPI updates with cleanup
   useEffect(() => {
     const unsubscribe = ToastAPI.subscribe(setToasts);
-    
+
     // Cleanup on unmount
     return () => {
       unsubscribe();
@@ -22,7 +22,7 @@ const ToastContainer = () => {
   // ROUND 4 FIX: Group toasts by position for proper rendering
   const groupedToasts = useMemo(() => {
     const groups = {};
-    toasts.forEach(toast => {
+    toasts.forEach((toast) => {
       const position = toast.position || 'top-right';
       if (!groups[position]) {
         groups[position] = [];
@@ -55,7 +55,13 @@ const ToastContainer = () => {
       case 'bottom-left':
         return { ...base, bottom: '16px', left: '16px', flexDirection: 'column-reverse' };
       case 'bottom-center':
-        return { ...base, bottom: '16px', left: '50%', transform: 'translateX(-50%)', flexDirection: 'column-reverse' };
+        return {
+          ...base,
+          bottom: '16px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          flexDirection: 'column-reverse'
+        };
       case 'bottom-right':
         return { ...base, bottom: '16px', right: '16px', flexDirection: 'column-reverse' };
       default:
@@ -118,7 +124,7 @@ const Toast = React.memo(({ toast, onDismiss, onPause, onResume }) => {
     const startTime = Date.now();
     const updateProgress = () => {
       if (toast.isPaused) return;
-      
+
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, 100 - (elapsed / toast.duration) * 100);
       setProgress(remaining);
@@ -204,13 +210,9 @@ const Toast = React.memo(({ toast, onDismiss, onPause, onResume }) => {
       return (
         <div>
           {toast.content.title && (
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-              {toast.content.title}
-            </div>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{toast.content.title}</div>
           )}
-          {toast.content.message && (
-            <div>{toast.content.message}</div>
-          )}
+          {toast.content.message && <div>{toast.content.message}</div>}
         </div>
       );
     }
@@ -225,12 +227,14 @@ const Toast = React.memo(({ toast, onDismiss, onPause, onResume }) => {
     }
 
     return (
-      <div style={{ 
-        marginTop: '12px', 
-        display: 'flex', 
-        gap: '8px', 
-        justifyContent: 'flex-end' 
-      }}>
+      <div
+        style={{
+          marginTop: '12px',
+          display: 'flex',
+          gap: '8px',
+          justifyContent: 'flex-end'
+        }}
+      >
         {toast.actions.map((action, index) => (
           <button
             key={index}
@@ -270,16 +274,10 @@ const Toast = React.memo(({ toast, onDismiss, onPause, onResume }) => {
       data-testid={`toast-${toast.id}`}
     >
       {/* Icon */}
-      {toast.icon && (
-        <div style={{ marginBottom: '8px', fontSize: '20px' }}>
-          {toast.icon}
-        </div>
-      )}
+      {toast.icon && <div style={{ marginBottom: '8px', fontSize: '20px' }}>{toast.icon}</div>}
 
       {/* Content */}
-      <div style={{ flex: 1 }}>
-        {renderContent()}
-      </div>
+      <div style={{ flex: 1 }}>{renderContent()}</div>
 
       {/* Dismiss button */}
       {toast.dismissible && (

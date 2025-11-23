@@ -264,6 +264,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by Claude/human)
 
 **Referenced in nodes:**
+
 - cost-control.md
 - billing.md
 - queue-system.md
@@ -356,6 +357,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by Claude/human)
 
 **Referenced in nodes:**
+
 - multi-tenant.md
 - shield.md
 
@@ -386,6 +388,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by human)
 
 **Referenced in nodes:**
+
 - multi-tenant.md
 
 ---
@@ -444,6 +447,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by human - Emilio)
 
 **Referenced in nodes:**
+
 - guardian.md
 
 ---
@@ -472,6 +476,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by Backend Developer)
 
 **Referenced in nodes:**
+
 - cost-control.md
 - billing.md
 
@@ -502,6 +507,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by Backend Developer)
 
 **Referenced in nodes:**
+
 - social-platforms.md
 
 ---
@@ -534,6 +540,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by Backend Developer)
 
 **Referenced in nodes:**
+
 - social-platforms.md
 - platform-constraints.md
 
@@ -565,6 +572,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by Backend Developer)
 
 **Referenced in nodes:**
+
 - queue-system.md
 
 ---
@@ -591,6 +599,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by human/UI Designer agent)
 
 **Referenced in nodes:**
+
 - tone.md
 - persona.md
 
@@ -619,6 +628,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by human)
 
 **Referenced in nodes:**
+
 - analytics.md
 
 ---
@@ -646,6 +656,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by Backend Developer)
 
 **Referenced in nodes:**
+
 - trainer.md
 
 ---
@@ -673,6 +684,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by human)
 
 **Referenced in nodes:**
+
 - trainer.md
 
 ---
@@ -699,6 +711,7 @@ These are logical roles referenced in GDD nodes (`docs/nodes/*.md`). They are **
 - **Status:** 🎯 **documented** (role fulfilled by human - Emilio)
 
 **Referenced in nodes:**
+
 - plan-features.md
 
 ---
@@ -744,9 +757,11 @@ Guardian is a custom governance automation system for GDD.
 - **Status:** ✅ **implemented** (Issue #423, GDD Phase 16)
 
 **Referenced in nodes:**
+
 - guardian.md
 
 **Detection Rules:**
+
 ```javascript
 // CRITICAL (Product Owner approval required)
 - Pricing changes (plan costs, tier mappings)

@@ -61,8 +61,8 @@ export default function UsageCostCard() {
         onRetry={() => {
           setLoading(true);
           getCurrentUsage()
-            .then(data => setUsage(data))
-            .catch(err => {
+            .then((data) => setUsage(data))
+            .catch((err) => {
               console.error('Retry failed:', err);
             })
             .finally(() => setLoading(false));
@@ -81,9 +81,7 @@ export default function UsageCostCard() {
             <DollarSign className="h-5 w-5" />
             <span>Usage & Costs</span>
           </div>
-          <Badge variant="outline">
-            This month
-          </Badge>
+          <Badge variant="outline">This month</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -95,11 +93,9 @@ export default function UsageCostCard() {
                 <DollarSign className="h-4 w-4 text-green-600" />
                 <span className="text-sm text-muted-foreground">Total Cost</span>
               </div>
-              <div className="text-2xl font-bold text-green-600">
-                {formattedCost}
-              </div>
+              <div className="text-2xl font-bold text-green-600">{formattedCost}</div>
             </div>
-            
+
             <div className="space-y-1">
               <div className="flex items-center space-x-1">
                 <Zap className="h-4 w-4 text-blue-500" />
@@ -178,14 +174,15 @@ export default function UsageCostCard() {
             <div className="flex justify-between text-xs mb-2">
               <span className="text-muted-foreground">Monthly limit</span>
               <span className="font-medium">
-                {usage?.aiCalls?.toLocaleString() || '0'} / {usage?.limits?.aiCallsLimit?.toLocaleString() || '1,000'}
+                {usage?.aiCalls?.toLocaleString() || '0'} /{' '}
+                {usage?.limits?.aiCallsLimit?.toLocaleString() || '1,000'}
               </span>
             </div>
             <div className="w-full bg-muted rounded-full h-2">
-              <div 
+              <div
                 className="bg-primary h-2 rounded-full transition-all"
-                style={{ 
-                  width: `${Math.min(100, ((usage?.aiCalls || 0) / (usage?.limits?.aiCallsLimit || 1000)) * 100)}%` 
+                style={{
+                  width: `${Math.min(100, ((usage?.aiCalls || 0) / (usage?.limits?.aiCallsLimit || 1000)) * 100)}%`
                 }}
               />
             </div>

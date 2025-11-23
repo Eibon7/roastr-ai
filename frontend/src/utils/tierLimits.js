@@ -66,14 +66,15 @@ export const getTierLimits = (planTier) => {
 export const validateConnectionLimit = (currentConnections, planTier) => {
   const limits = getTierLimits(planTier);
   const maxConnections = limits.social_connections;
-  
+
   return {
     allowed: currentConnections < maxConnections,
     currentConnections,
     maxConnections,
-    message: currentConnections >= maxConnections 
-      ? `Plan ${planTier} permite máximo ${maxConnections} conexión${maxConnections > 1 ? 'es' : ''}. Actualiza tu plan para conectar más plataformas.`
-      : 'Conexión permitida'
+    message:
+      currentConnections >= maxConnections
+        ? `Plan ${planTier} permite máximo ${maxConnections} conexión${maxConnections > 1 ? 'es' : ''}. Actualiza tu plan para conectar más plataformas.`
+        : 'Conexión permitida'
   };
 };
 
@@ -86,15 +87,15 @@ export const validateConnectionLimit = (currentConnections, planTier) => {
 export const getConnectionWarning = (currentConnections, planTier) => {
   const limits = getTierLimits(planTier);
   const maxConnections = limits.social_connections;
-  
+
   if (currentConnections >= maxConnections) {
     return `Has alcanzado el límite de ${maxConnections} conexión${maxConnections > 1 ? 'es' : ''} para el plan ${planTier}. Considera actualizar tu plan.`;
   }
-  
+
   if (currentConnections === maxConnections - 1) {
     return `Te queda 1 conexión disponible en tu plan ${planTier}.`;
   }
-  
+
   return null;
 };
 
@@ -116,7 +117,7 @@ export const isFeatureAvailable = (feature, planTier) => {
  */
 export const getUpgradeSuggestion = (currentPlan) => {
   const current = normalizePlanId(currentPlan || 'starter_trial');
-  
+
   const suggestions = {
     starter_trial: {
       targetPlan: 'starter',
@@ -134,7 +135,7 @@ export const getUpgradeSuggestion = (currentPlan) => {
       price: '€50/mes'
     }
   };
-  
+
   return suggestions[current] || null;
 };
 

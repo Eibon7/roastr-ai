@@ -72,7 +72,8 @@ function generateTestComment(index) {
  * Generate test metadata for Shield action
  */
 function generateTestMetadata(index) {
-  const severity = index % 4 === 0 ? 'critical' : index % 3 === 0 ? 'high' : index % 2 === 0 ? 'medium' : 'low';
+  const severity =
+    index % 4 === 0 ? 'critical' : index % 3 === 0 ? 'high' : index % 2 === 0 ? 'medium' : 'low';
   const toxicityScore = 0.5 + (index % 5) * 0.1;
 
   return {
@@ -98,7 +99,7 @@ let dbCallCount = 0;
 let dbCallTimes = [];
 
 const originalRpc = supabase.rpc.bind(supabase);
-supabase.rpc = async function(...args) {
+supabase.rpc = async function (...args) {
   const startTime = Date.now();
   dbCallCount++;
   try {
@@ -112,10 +113,10 @@ supabase.rpc = async function(...args) {
 };
 
 const originalInsert = supabase.from.bind(supabase);
-supabase.from = function(table) {
+supabase.from = function (table) {
   const query = originalInsert(table);
   const originalInsertMethod = query.insert.bind(query);
-  query.insert = async function(...args) {
+  query.insert = async function (...args) {
     const startTime = Date.now();
     dbCallCount++;
     try {
@@ -168,9 +169,10 @@ async function executeShieldAction(index) {
       latency,
       dbCalls: actionDbCalls,
       dbCallTimes: actionDbTimes,
-      avgDbCallTime: actionDbTimes.length > 0
-        ? actionDbTimes.reduce((a, b) => a + b, 0) / actionDbTimes.length
-        : 0,
+      avgDbCallTime:
+        actionDbTimes.length > 0
+          ? actionDbTimes.reduce((a, b) => a + b, 0) / actionDbTimes.length
+          : 0,
       error: result.error || null
     };
   } catch (err) {
@@ -194,7 +196,9 @@ async function runBenchmark() {
   console.log('📊 Shield Performance Benchmark');
   console.log('=================================\n');
   console.log(`Configuration:`);
-  console.log(`  Mode: ${IS_BASELINE ? 'BASELINE (before migration)' : 'POST-MIGRATION (after migration)'}`);
+  console.log(
+    `  Mode: ${IS_BASELINE ? 'BASELINE (before migration)' : 'POST-MIGRATION (after migration)'}`
+  );
   console.log(`  Actions: ${NUM_ACTIONS}`);
   console.log(`  Organization: ${ORG_ID}`);
   console.log(`  Output: ${OUTPUT_FILE}\n`);
@@ -211,19 +215,21 @@ async function runBenchmark() {
     results.push(result);
 
     // Progress indicator
-    const progress = Math.floor((i + 1) / NUM_ACTIONS * 50);
-    const percent = Math.floor((i + 1) / NUM_ACTIONS * 100);
-    process.stdout.write(`\rProgress: [${'='.repeat(progress)}${' '.repeat(50 - progress)}] ${percent}%`);
+    const progress = Math.floor(((i + 1) / NUM_ACTIONS) * 50);
+    const percent = Math.floor(((i + 1) / NUM_ACTIONS) * 100);
+    process.stdout.write(
+      `\rProgress: [${'='.repeat(progress)}${' '.repeat(50 - progress)}] ${percent}%`
+    );
   }
 
   console.log('\n\nAnalyzing results...\n');
 
   const totalTime = Date.now() - startTime;
-  const successful = results.filter(r => r.success);
-  const failed = results.filter(r => !r.success);
+  const successful = results.filter((r) => r.success);
+  const failed = results.filter((r) => !r.success);
 
   // Calculate metrics
-  const latencies = results.map(r => r.latency);
+  const latencies = results.map((r) => r.latency);
   const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
   const minLatency = Math.min(...latencies);
   const maxLatency = Math.max(...latencies);
@@ -233,10 +239,9 @@ async function runBenchmark() {
 
   const totalDbCalls = results.reduce((sum, r) => sum + r.dbCalls, 0);
   const avgDbCallsPerAction = totalDbCalls / results.length;
-  const dbCallTimes = results.flatMap(r => r.dbCallTimes);
-  const avgDbCallTime = dbCallTimes.length > 0
-    ? dbCallTimes.reduce((a, b) => a + b, 0) / dbCallTimes.length
-    : 0;
+  const dbCallTimes = results.flatMap((r) => r.dbCallTimes);
+  const avgDbCallTime =
+    dbCallTimes.length > 0 ? dbCallTimes.reduce((a, b) => a + b, 0) / dbCallTimes.length : 0;
 
   const errorRate = (failed.length / results.length) * 100;
 
@@ -272,10 +277,13 @@ async function runBenchmark() {
       avg_calls_per_action: Math.round(avgDbCallsPerAction * 100) / 100,
       avg_call_time_ms: Math.round(avgDbCallTime * 100) / 100
     },
-    errors: failed.length > 0 ? failed.map(r => ({
-      index: r.index,
-      error: r.error
-    })) : []
+    errors:
+      failed.length > 0
+        ? failed.map((r) => ({
+            index: r.index,
+            error: r.error
+          }))
+        : []
   };
 
   // Display summary
@@ -301,7 +309,7 @@ async function runBenchmark() {
 
   if (failed.length > 0) {
     console.log(`Errors (${failed.length}):`);
-    failed.slice(0, 10).forEach(r => {
+    failed.slice(0, 10).forEach((r) => {
       console.log(`  [${r.index}] ${r.error}`);
     });
     if (failed.length > 10) {
@@ -325,10 +333,9 @@ async function runBenchmark() {
 }
 
 // Execute benchmark
-runBenchmark().catch(error => {
+runBenchmark().catch((error) => {
   console.error('\n❌ FATAL ERROR:', error.message);
   console.error('\nStack trace:');
   console.error(error.stack);
   process.exit(1);
 });
-

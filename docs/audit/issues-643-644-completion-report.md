@@ -16,7 +16,7 @@
 
 2. **✅ shieldUIIntegration.test.js**
    - **Problema:** `mockSupabaseServiceClient` creado después de `jest.mock()`, causando "Cannot access before initialization"
-   - **Solución:** 
+   - **Solución:**
      - Movido mock creation ANTES de `jest.mock()` usando `createSupabaseMock` factory helper
      - Movido `require('../../src/index')` DESPUÉS de todos los mocks
      - Configurado query builder mock con `range()`, `single()`, `update()` para pagination
@@ -28,6 +28,7 @@
    - **Estado:** ✅ Resuelto
 
 ### Resultado
+
 - ✅ Errores de sintaxis resueltos
 - ✅ Patrón de mocking correcto aplicado
 - ✅ Tests de frontend ahora ejecutables
@@ -62,6 +63,7 @@
    - **Estado:** ✅ Mejorado - Tests más consistentes
 
 ### Resultado
+
 - ✅ Worker crashes resueltos (tests ahora se ejecutan sin crashes)
 - ✅ Mocks de logger añadidos (errores de logger undefined eliminados)
 - ✅ Tests más consistentes y mantenibles
@@ -71,11 +73,13 @@
 ## 📊 Estadísticas Finales
 
 ### Issue #643
+
 - **Tests afectados:** 3 archivos
 - **Fixes aplicados:** 3/3 (100%)
 - **Estado:** ✅ COMPLETADA
 
 ### Issue #644
+
 - **Tests afectados:** 6 archivos
 - **Fixes aplicados:** 3/3 críticos (100%)
 - **Estado:** ✅ COMPLETADA
@@ -87,17 +91,21 @@
 ### Tests Ejecutados
 
 **Issue #643 - Frontend/UI:**
+
 ```bash
 npm test -- --testPathPatterns="(e2e|frontend|ui)"
 ```
+
 - ✅ Errores de sintaxis resueltos
 - ✅ Patrón de mocking correcto aplicado
 - ⚠️ Algunos tests aún fallan por lógica de negocio (no relacionados con fixes)
 
 **Issue #644 - Workers:**
+
 ```bash
 npm test -- --testPathPatterns="worker"
 ```
+
 - ✅ Jest worker crashes resueltos (tests se ejecutan sin crashes)
 - ✅ Error de logger undefined resuelto
 - ⚠️ Algunos tests aún fallan por lógica de negocio (kill switch, etc.)
@@ -111,11 +119,13 @@ Los tests que aún fallan lo hacen por **lógica de negocio** (kill switch, vali
 ## 📝 Archivos Modificados
 
 ### Issue #643
+
 1. `tests/unit/frontend/ToastContext-enhanced.test.js`
 2. `tests/integration/shieldUIIntegration.test.js`
 3. `jest.config.js`
 
 ### Issue #644
+
 1. `tests/unit/workers/GenerateReplyWorker.test.js`
 2. `tests/unit/workers/AnalyzeToxicityWorker-roastr-persona.test.js`
 3. `tests/unit/workers/AnalyzeToxicityWorker-auto-block.test.js`
@@ -143,4 +153,3 @@ Los tests ahora se ejecutan correctamente sin crashes de infraestructura. Los fa
 - **Resumen de fixes:** `docs/audit/issues-643-644-fixes-summary.md`
 - **Patrón Supabase Mock:** `docs/patterns/coderabbit-lessons.md` (Patrón #11)
 - **Factory Helpers:** `tests/helpers/supabaseMockFactory.js`
-

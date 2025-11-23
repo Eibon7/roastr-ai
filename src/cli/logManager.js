@@ -7,10 +7,7 @@ const LogMaintenanceService = require('../utils/logMaintenance');
 
 const program = new Command();
 
-program
-  .name('log-manager')
-  .description('Roastr AI Log Management CLI')
-  .version('1.0.0');
+program.name('log-manager').description('Roastr AI Log Management CLI').version('1.0.0');
 
 // Stats command
 program
@@ -20,16 +17,20 @@ program
   .action(async (options) => {
     try {
       const stats = await advancedLogger.getLogStatistics();
-      
+
       if (options.format === 'json') {
         console.log(JSON.stringify(stats, null, 2));
       } else {
         console.log('\n📊 Log Statistics\n');
         console.log(`Total Files: ${stats.totalFiles}`);
         console.log(`Total Size: ${stats.totalSizeFormatted}`);
-        console.log(`Oldest Log: ${stats.oldestLog ? stats.oldestLog.file + ' (' + new Date(stats.oldestLog.mtime).toLocaleDateString() + ')' : 'None'}`);
-        console.log(`Newest Log: ${stats.newestLog ? stats.newestLog.file + ' (' + new Date(stats.newestLog.mtime).toLocaleDateString() + ')' : 'None'}`);
-        
+        console.log(
+          `Oldest Log: ${stats.oldestLog ? stats.oldestLog.file + ' (' + new Date(stats.oldestLog.mtime).toLocaleDateString() + ')' : 'None'}`
+        );
+        console.log(
+          `Newest Log: ${stats.newestLog ? stats.newestLog.file + ' (' + new Date(stats.newestLog.mtime).toLocaleDateString() + ')' : 'None'}`
+        );
+
         console.log('\n📁 By Directory:');
         Object.entries(stats.directories).forEach(([dir, data]) => {
           console.log(`  ${dir}: ${data.files} files, ${data.sizeFormatted}`);
@@ -73,11 +74,12 @@ program
       });
 
       const result = await advancedLogger.cleanOldLogs(cleanupOptions);
-      
+
       console.log('\n✅ Cleanup completed!');
       console.log(`Files ${options.dryRun ? 'would be' : ''} removed: ${result.filesRemoved}`);
-      console.log(`Space ${options.dryRun ? 'would be' : ''} freed: ${advancedLogger.formatFileSize(result.sizeFreed)}`);
-      
+      console.log(
+        `Space ${options.dryRun ? 'would be' : ''} freed: ${advancedLogger.formatFileSize(result.sizeFreed)}`
+      );
     } catch (error) {
       console.error('❌ Error during cleanup:', error.message);
       process.exit(1);
@@ -85,9 +87,7 @@ program
   });
 
 // Backup commands
-const backupCmd = program
-  .command('backup')
-  .description('Manage log backups');
+const backupCmd = program.command('backup').description('Manage log backups');
 
 backupCmd
   .command('upload')
@@ -100,14 +100,16 @@ backupCmd
       // Check for dry-run flag - Commander.js sets boolean flags to true when present
       // Use process.argv as fallback for robustness (works with both direct execution and execSync)
       // The service will handle the S3 check and allow dry-run without S3 (see logBackupService.js line 270)
-      const isDryRun = options.dryRun === true || process.argv.some(arg => arg === '--dry-run');
-      
+      const isDryRun = options.dryRun === true || process.argv.some((arg) => arg === '--dry-run');
+
       // Create service - it will handle S3 configuration check and allow dry-run without S3
       // See logBackupService.js line 270: if (!this.isBackupEnabled() && !dryRun) - service allows dry-run
       const backupService = new LogBackupService();
 
-      console.log(`\n☁️  ${isDryRun ? 'Simulating' : 'Performing'} backup of last ${options.days} days...`);
-      
+      console.log(
+        `\n☁️  ${isDryRun ? 'Simulating' : 'Performing'} backup of last ${options.days} days...`
+      );
+
       const result = await backupService.backupRecentLogs(parseInt(options.days), {
         dryRun: isDryRun,
         skipExisting: !options.force
@@ -119,17 +121,16 @@ backupCmd
       console.log(`Files skipped: ${result.summary.totalSkipped}`);
       console.log(`Total size: ${result.summary.totalSizeFormatted}`);
       console.log(`Success rate: ${result.summary.successRate}`);
-      
+
       if (result.summary.errorDates.length > 0) {
         console.log(`⚠️  Errors on dates: ${result.summary.errorDates.join(', ')}`);
       }
-      
+
       // Exit with error code if there were errors (and not in dry-run)
       // This allows tests to verify that S3 configuration is required for actual backups
       if (!isDryRun && result.summary.totalErrors > 0) {
         process.exit(1);
       }
-      
     } catch (error) {
       console.error('❌ Error during backup:', error.message);
       process.exit(1);
@@ -144,14 +145,14 @@ backupCmd
   .action(async (options) => {
     try {
       const backupService = new LogBackupService();
-      
+
       if (!backupService.isBackupEnabled()) {
         console.error('❌ S3 backup is not configured');
         process.exit(1);
       }
 
       console.log('\n☁️  Listing S3 backups...');
-      
+
       const result = await backupService.listBackups({
         date: options.date,
         maxKeys: parseInt(options.max)
@@ -164,16 +165,17 @@ backupCmd
 
       console.log(`\nFound ${result.backups.length} backups:`);
       console.log(`Total size: ${backupService.formatFileSize(result.totalSize)}\n`);
-      
-      result.backups.forEach(backup => {
+
+      result.backups.forEach((backup) => {
         console.log(`📄 ${backup.key}`);
-        console.log(`   Size: ${backup.sizeFormatted}, Modified: ${new Date(backup.lastModified).toLocaleString()}`);
+        console.log(
+          `   Size: ${backup.sizeFormatted}, Modified: ${new Date(backup.lastModified).toLocaleString()}`
+        );
       });
-      
+
       if (result.truncated) {
         console.log(`\n⚠️  Results truncated. Use --max to see more.`);
       }
-      
     } catch (error) {
       console.error('❌ Error listing backups:', error.message);
       process.exit(1);
@@ -188,18 +190,17 @@ backupCmd
   .action(async (s3Key, options) => {
     try {
       const backupService = new LogBackupService();
-      
+
       if (!backupService.isBackupEnabled()) {
         console.error('❌ S3 backup is not configured');
         process.exit(1);
       }
 
       console.log(`\n⬇️  Downloading backup: ${s3Key}`);
-      
+
       const localPath = await backupService.downloadBackup(s3Key, options.output);
-      
+
       console.log(`✅ Backup downloaded to: ${localPath}`);
-      
     } catch (error) {
       console.error('❌ Error downloading backup:', error.message);
       process.exit(1);
@@ -214,7 +215,7 @@ backupCmd
   .action(async (options) => {
     try {
       const backupService = new LogBackupService();
-      
+
       if (!backupService.isBackupEnabled()) {
         console.error('❌ S3 backup is not configured');
         process.exit(1);
@@ -222,20 +223,20 @@ backupCmd
 
       console.log(`\n🧹 ${options.dryRun ? 'Simulating' : 'Performing'} S3 backup cleanup...`);
       console.log(`Retention: ${options.retentionDays} days`);
-      
-      const result = await backupService.cleanOldBackups(
-        parseInt(options.retentionDays),
-        { dryRun: options.dryRun || false }
-      );
+
+      const result = await backupService.cleanOldBackups(parseInt(options.retentionDays), {
+        dryRun: options.dryRun || false
+      });
 
       console.log('\n✅ Backup cleanup completed!');
       console.log(`Files ${options.dryRun ? 'would be' : ''} deleted: ${result.deleted.length}`);
-      console.log(`Space ${options.dryRun ? 'would be' : ''} freed: ${backupService.formatFileSize(result.totalSize)}`);
-      
+      console.log(
+        `Space ${options.dryRun ? 'would be' : ''} freed: ${backupService.formatFileSize(result.totalSize)}`
+      );
+
       if (result.errors.length > 0) {
         console.log(`⚠️  Errors: ${result.errors.length}`);
       }
-      
     } catch (error) {
       console.error('❌ Error during backup cleanup:', error.message);
       process.exit(1);
@@ -243,9 +244,7 @@ backupCmd
   });
 
 // Maintenance service commands
-const maintenanceCmd = program
-  .command('maintenance')
-  .description('Manage log maintenance service');
+const maintenanceCmd = program.command('maintenance').description('Manage log maintenance service');
 
 maintenanceCmd
   .command('start')
@@ -253,10 +252,10 @@ maintenanceCmd
   .action(async () => {
     try {
       const maintenanceService = new LogMaintenanceService();
-      
+
       console.log('🚀 Starting log maintenance service...');
       maintenanceService.start();
-      
+
       const status = maintenanceService.getStatus();
       console.log('✅ Log maintenance service started!');
       console.log(`Active jobs: ${status.activeJobs.join(', ')}`);
@@ -264,16 +263,15 @@ maintenanceCmd
       Object.entries(status.nextRuns).forEach(([job, time]) => {
         console.log(`  ${job}: ${new Date(time).toLocaleString()}`);
       });
-      
+
       // Keep the process running
       process.on('SIGINT', () => {
         console.log('\n🛑 Stopping log maintenance service...');
         maintenanceService.stop();
         process.exit(0);
       });
-      
+
       console.log('\nPress Ctrl+C to stop the service.');
-      
     } catch (error) {
       console.error('❌ Error starting maintenance service:', error.message);
       process.exit(1);
@@ -287,28 +285,29 @@ maintenanceCmd
     try {
       const maintenanceService = new LogMaintenanceService();
       const status = maintenanceService.getStatus();
-      
+
       console.log('\n🔧 Log Maintenance Service Status\n');
       console.log(`Running: ${status.running ? '✅' : '❌'}`);
-      console.log(`Active Jobs: ${status.activeJobs.length > 0 ? status.activeJobs.join(', ') : 'None'}`);
-      
+      console.log(
+        `Active Jobs: ${status.activeJobs.length > 0 ? status.activeJobs.join(', ') : 'None'}`
+      );
+
       console.log('\n📋 Configuration:');
       console.log(`  Cleanup Enabled: ${status.config.cleanup.enabled}`);
       console.log(`  Backup Enabled: ${status.config.backup.enabled}`);
       console.log(`  Monitoring Enabled: ${status.config.monitoring.enabled}`);
-      
+
       console.log('\n☁️  Backup Service:');
       console.log(`  Enabled: ${status.backupService.enabled}`);
       console.log(`  Bucket: ${status.backupService.bucket || 'Not configured'}`);
       console.log(`  Region: ${status.backupService.region}`);
-      
+
       if (status.running && Object.keys(status.nextRuns).length > 0) {
         console.log('\n⏰ Next Runs:');
         Object.entries(status.nextRuns).forEach(([job, time]) => {
           console.log(`  ${job}: ${new Date(time).toLocaleString()}`);
         });
       }
-      
     } catch (error) {
       console.error('❌ Error getting maintenance status:', error.message);
       process.exit(1);
@@ -321,18 +320,20 @@ maintenanceCmd
   .action(async () => {
     try {
       const maintenanceService = new LogMaintenanceService();
-      
+
       console.log('🔍 Running log system health check...');
       const healthReport = await maintenanceService.performHealthCheck();
-      
-      console.log(`\n${healthReport.status === 'healthy' ? '✅' : healthReport.status === 'warning' ? '⚠️' : '❌'} Health Status: ${healthReport.status.toUpperCase()}`);
-      
+
+      console.log(
+        `\n${healthReport.status === 'healthy' ? '✅' : healthReport.status === 'warning' ? '⚠️' : '❌'} Health Status: ${healthReport.status.toUpperCase()}`
+      );
+
       if (healthReport.statistics) {
         console.log(`\n📊 Statistics:`);
         console.log(`  Total Files: ${healthReport.statistics.totalFiles}`);
         console.log(`  Total Size: ${healthReport.statistics.totalSizeFormatted}`);
       }
-      
+
       if (healthReport.backup) {
         console.log(`\n☁️  Backup: ${healthReport.backup.enabled ? 'Enabled' : 'Disabled'}`);
         if (healthReport.backup.enabled && healthReport.backup.recentBackups !== undefined) {
@@ -340,15 +341,14 @@ maintenanceCmd
           console.log(`  Total Size: ${healthReport.backup.totalSize}`);
         }
       }
-      
+
       if (healthReport.issues.length > 0) {
         console.log('\n⚠️  Issues Found:');
-        healthReport.issues.forEach(issue => {
+        healthReport.issues.forEach((issue) => {
           const icon = issue.severity === 'error' ? '❌' : '⚠️';
           console.log(`  ${icon} ${issue.type}: ${issue.message}`);
         });
       }
-      
     } catch (error) {
       console.error('❌ Error during health check:', error.message);
       process.exit(1);
@@ -363,25 +363,31 @@ program
   .action(async (options) => {
     try {
       console.log('🧪 Testing log system...\n');
-      
+
       // Test log writing
       console.log('1. Testing log writing...');
-      advancedLogger.info('Test log entry from CLI', { test: true, timestamp: new Date().toISOString() });
+      advancedLogger.info('Test log entry from CLI', {
+        test: true,
+        timestamp: new Date().toISOString()
+      });
       advancedLogger.error('Test error log entry', { test: true, error: 'simulated' });
       advancedLogger.authEvent('Test auth event', { userId: 'test-user', action: 'login' });
-      advancedLogger.integrationEvent('Test integration event', { platform: 'test', operation: 'fetch' });
+      advancedLogger.integrationEvent('Test integration event', {
+        platform: 'test',
+        operation: 'fetch'
+      });
       console.log('✅ Log writing test completed');
-      
+
       // Test statistics
       console.log('\n2. Testing log statistics...');
       const stats = await advancedLogger.getLogStatistics();
       console.log(`✅ Statistics: ${stats.totalFiles} files, ${stats.totalSizeFormatted}`);
-      
+
       // Test cleanup (dry run)
       console.log('\n3. Testing cleanup (dry run)...');
       const cleanupResult = await advancedLogger.cleanOldLogs({ dryRun: true });
       console.log(`✅ Cleanup test: ${cleanupResult.filesRemoved} files would be removed`);
-      
+
       // Test backup if configured
       if (!options.skipBackup) {
         console.log('\n4. Testing backup...');
@@ -395,9 +401,8 @@ program
           console.log('⚠️  Backup not configured, skipping backup test');
         }
       }
-      
+
       console.log('\n✅ All tests completed successfully!');
-      
     } catch (error) {
       console.error('❌ Test failed:', error.message);
       process.exit(1);

@@ -2,14 +2,19 @@
  * Tests for shop-specific formatting utilities
  */
 
-import { formatAddonName, formatCurrency, formatDate, formatStatus } from '../../../frontend/src/utils/shopFormatters';
+import {
+  formatAddonName,
+  formatCurrency,
+  formatDate,
+  formatStatus
+} from '../../../frontend/src/utils/shopFormatters';
 
 describe('shopFormatters', () => {
   describe('formatAddonName', () => {
     it('should use purchase.addon_name when available', () => {
       const purchase = { addon_name: 'Custom Addon Name' };
       const shopData = { addons: {} };
-      
+
       expect(formatAddonName(purchase, shopData)).toBe('Custom Addon Name');
     });
 
@@ -17,26 +22,24 @@ describe('shopFormatters', () => {
       const purchase = { addon_key: 'test_addon' };
       const shopData = {
         addons: {
-          category1: [
-            { key: 'test_addon', name: 'Test Addon from Shop' }
-          ]
+          category1: [{ key: 'test_addon', name: 'Test Addon from Shop' }]
         }
       };
-      
+
       expect(formatAddonName(purchase, shopData)).toBe('Test Addon from Shop');
     });
 
     it('should use hardcoded mapping for common addons', () => {
       const purchase = { addon_key: 'roasts_100' };
       const shopData = { addons: {} };
-      
+
       expect(formatAddonName(purchase, shopData)).toBe('Roasts Pack 100');
     });
 
     it('should convert addon_key to title case as fallback', () => {
       const purchase = { addon_key: 'custom_addon_key' };
       const shopData = { addons: {} };
-      
+
       expect(formatAddonName(purchase, shopData)).toBe('Custom Addon Key');
     });
   });
@@ -44,11 +47,11 @@ describe('shopFormatters', () => {
   describe('formatCurrency', () => {
     // Mock navigator.language for consistent testing
     const originalNavigator = global.navigator;
-    
+
     beforeEach(() => {
       global.navigator = { language: 'es-ES' };
     });
-    
+
     afterEach(() => {
       global.navigator = originalNavigator;
     });
@@ -78,11 +81,11 @@ describe('shopFormatters', () => {
 
   describe('formatDate', () => {
     const originalNavigator = global.navigator;
-    
+
     beforeEach(() => {
       global.navigator = { language: 'es-ES' };
     });
-    
+
     afterEach(() => {
       global.navigator = originalNavigator;
     });

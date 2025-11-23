@@ -7,6 +7,7 @@
 ## Why This Agent Could Apply
 
 **Trigger conditions present:**
+
 - [x] Label match: N/A (would match research, investigation)
 - [x] Diff match: `*` (wildcard - 79 files changed)
 - [x] Condition: Multi-area codebase changes (agents/, docs/, scripts/, .github/)
@@ -54,6 +55,7 @@ Explore agent is for "fast codebase exploration for research" per manifest. This
 ## Risk Assessment
 
 **Risks of skipping:**
+
 1. **Might have missed existing agent infrastructure** (Severity: Low)
    - Mitigation: Read existing AGENT-INVENTORY.md before implementation
    - Actual: No existing infrastructure found (confirmed in audit)
@@ -77,12 +79,14 @@ Explore agent is for "fast codebase exploration for research" per manifest. This
 **Will agent be needed later?** Maybe
 
 **If yes:**
+
 - [ ] Consider refining Explore triggers in `agents/manifest.yaml`
 - [ ] Change `diffIncludes: ["*"]` to more specific patterns
 - [ ] Example: `["src/**/*"]` (explore source code, not docs/tests)
 - [ ] Or add `conditions: ["When research needed"]` as required condition
 
 **When Explore SHOULD Be Invoked:**
+
 1. **Understanding unfamiliar codebase area**
    - Example: "How does multi-tenant work?"
    - Example: "Find all queue-related code"
@@ -96,6 +100,7 @@ Explore agent is for "fast codebase exploration for research" per manifest. This
    - Example: "Trace the flow from API to worker"
 
 **When Explore Should NOT Be Invoked:**
+
 1. Implementation from complete spec (this PR)
 2. Simple docs updates
 3. Straightforward refactors
@@ -104,26 +109,29 @@ Explore agent is for "fast codebase exploration for research" per manifest. This
 ## Manifest Improvement Recommendation
 
 **Current trigger (too broad):**
+
 ```yaml
 triggers:
-  labels: ["area:*", "research", "investigation"]
-  diffIncludes: ["*"]  # ← TOO BROAD
-  conditions: ["When research needed", ...]
+  labels: ['area:*', 'research', 'investigation']
+  diffIncludes: ['*'] # ← TOO BROAD
+  conditions: ['When research needed', ...]
 ```
 
 **Recommended change:**
+
 ```yaml
 triggers:
-  labels: ["research", "investigation", "exploration"]
-  diffIncludes: []  # Remove wildcard
+  labels: ['research', 'investigation', 'exploration']
+  diffIncludes: [] # Remove wildcard
   conditions:
-    - "When codebase structure unclear"
-    - "When pattern discovery needed"
-    - "When architecture questions arise"
-    - "When Orchestrator explicitly requests research"
+    - 'When codebase structure unclear'
+    - 'When pattern discovery needed'
+    - 'When architecture questions arise'
+    - 'When Orchestrator explicitly requests research'
 ```
 
 **Rationale:**
+
 - Conditions are more meaningful than wildcard file match
 - Avoids false positives on every PR
 - Explore should be opt-in, not opt-out

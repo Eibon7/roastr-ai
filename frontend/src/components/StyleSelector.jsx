@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import {
-  Heart,
-  Flame,
-  Zap,
-  Check,
-  Info,
-  Sparkles
-} from 'lucide-react';
+import { Heart, Flame, Zap, Check, Info, Sparkles } from 'lucide-react';
 import { apiClient } from '../lib/api';
 
 /**
@@ -43,7 +36,7 @@ const StyleSelector = () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/user/settings/style');
-      
+
       if (response.data.success) {
         // Issue #872 Fix: Backend uses 'style' field, not 'tone'
         const { style: tone } = response.data.data;
@@ -63,20 +56,20 @@ const StyleSelector = () => {
   const normalizeTone = (tone) => {
     const toneMap = {
       // New tones (ES)
-      'flanders': 'flanders',
-      'balanceado': 'balanceado',
-      'canalla': 'canalla',
+      flanders: 'flanders',
+      balanceado: 'balanceado',
+      canalla: 'canalla',
       // New tones (EN aliases)
-      'light': 'flanders',
-      'balanced': 'balanceado',
-      'savage': 'canalla',
+      light: 'flanders',
+      balanced: 'balanceado',
+      savage: 'canalla',
       // Legacy mapping (backward compat)
-      'subtle': 'flanders',
-      'sarcastic': 'balanceado',
-      'direct': 'canalla',
-      'witty': 'balanceado',
-      'playful': 'flanders',
-      'friendly': 'flanders'
+      subtle: 'flanders',
+      sarcastic: 'balanceado',
+      direct: 'canalla',
+      witty: 'balanceado',
+      playful: 'flanders',
+      friendly: 'flanders'
     };
     return toneMap[tone] || 'balanceado';
   };
@@ -85,12 +78,12 @@ const StyleSelector = () => {
     try {
       setSaving(true);
       setError(null);
-      
+
       // Issue #872 Fix: Backend expects 'style' field, not 'tone'
       const response = await apiClient.post('/user/settings/style', {
         style: tone
       });
-      
+
       if (response.data.success) {
         setSelectedTone(tone);
         setSuccess('Tono actualizado correctamente');
@@ -116,17 +109,10 @@ const StyleSelector = () => {
       intensity: '2/5',
       description: 'Tono amable pero con ironía sutil',
       personality: 'Educado, irónico, elegante',
-      example: '"Fascinante crítica. Imagino que tu experiencia en desarrollo de software es... extensa."',
-      resources: [
-        'Ironía marcada pero sutil',
-        'Double entendre',
-        'Understatement'
-      ],
-      restrictions: [
-        'NO insultos directos',
-        'NO vulgaridad',
-        'Mantener sofisticación'
-      ]
+      example:
+        '"Fascinante crítica. Imagino que tu experiencia en desarrollo de software es... extensa."',
+      resources: ['Ironía marcada pero sutil', 'Double entendre', 'Understatement'],
+      restrictions: ['NO insultos directos', 'NO vulgaridad', 'Mantener sofisticación']
     },
     {
       id: 'balanceado',
@@ -139,12 +125,9 @@ const StyleSelector = () => {
       intensity: '3/5',
       description: 'Equilibrio entre ingenio y firmeza',
       personality: 'Equilibrado, ingenioso, directo',
-      example: '"Vaya argumento interesante. Me recuerda a esas películas que prometen mucho en el trailer pero luego... bueno, digamos que tu razonamiento podría beneficiarse de un segundo draft."',
-      resources: [
-        'Sarcasmo marcado',
-        'Comparaciones inteligentes',
-        'Ironía directa'
-      ],
+      example:
+        '"Vaya argumento interesante. Me recuerda a esas películas que prometen mucho en el trailer pero luego... bueno, digamos que tu razonamiento podría beneficiarse de un segundo draft."',
+      resources: ['Sarcasmo marcado', 'Comparaciones inteligentes', 'Ironía directa'],
       restrictions: [
         'NO crueldad innecesaria',
         'NO ataques personales prohibidos',
@@ -163,17 +146,10 @@ const StyleSelector = () => {
       intensity: '4/5',
       description: 'Directo y sin filtros, más picante',
       personality: 'Directo, sin filtros, contundente',
-      example: '"Tu conocimiento es como el WiFi del aeropuerto: teóricamente existe, pero nadie lo encuentra. Y cuando lo encuentras, es tan lento que deseas no haberlo intentado."',
-      resources: [
-        'Hipérbole extrema',
-        'Comparaciones brutales',
-        'Sarcasmo cortante'
-      ],
-      restrictions: [
-        'NO discriminación',
-        'NO ataques físicos',
-        'Mantener ingenio'
-      ]
+      example:
+        '"Tu conocimiento es como el WiFi del aeropuerto: teóricamente existe, pero nadie lo encuentra. Y cuando lo encuentras, es tan lento que deseas no haberlo intentado."',
+      resources: ['Hipérbole extrema', 'Comparaciones brutales', 'Sarcasmo cortante'],
+      restrictions: ['NO discriminación', 'NO ataques físicos', 'Mantener ingenio']
     }
   ];
 
@@ -198,7 +174,7 @@ const StyleSelector = () => {
           <div className="text-sm text-red-800">{error}</div>
         </div>
       )}
-      
+
       {success && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
           <div className="text-sm text-green-800">{success}</div>
@@ -208,9 +184,7 @@ const StyleSelector = () => {
       {/* Header */}
       <div className="flex items-center space-x-2">
         <Sparkles className="h-5 w-5 text-purple-600" />
-        <h3 className="text-lg font-medium text-gray-900">
-          Tono de Roasts
-        </h3>
+        <h3 className="text-lg font-medium text-gray-900">Tono de Roasts</h3>
       </div>
 
       {/* Description */}
@@ -219,13 +193,13 @@ const StyleSelector = () => {
           <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-800">
             <p className="mb-2">
-              <strong>Sistema de 3 Tonos:</strong> Elige el tono que mejor represente 
-              tu personalidad al roastear comentarios tóxicos. Cada tono tiene su propia 
-              intensidad, personalidad y restricciones de seguridad.
+              <strong>Sistema de 3 Tonos:</strong> Elige el tono que mejor represente tu
+              personalidad al roastear comentarios tóxicos. Cada tono tiene su propia intensidad,
+              personalidad y restricciones de seguridad.
             </p>
             <p className="text-xs">
-              💡 <strong>Tip:</strong> El tono Balanceado es el más versátil y recomendado 
-              para la mayoría de situaciones. Puedes cambiar de tono en cualquier momento.
+              💡 <strong>Tip:</strong> El tono Balanceado es el más versátil y recomendado para la
+              mayoría de situaciones. Puedes cambiar de tono en cualquier momento.
             </p>
           </div>
         </div>
@@ -236,7 +210,7 @@ const StyleSelector = () => {
         {toneOptions.map((tone) => {
           const IconComponent = tone.icon;
           const isSelected = selectedTone === tone.id;
-          
+
           return (
             <div
               key={tone.id}
@@ -251,25 +225,23 @@ const StyleSelector = () => {
                 {/* Header with Radio */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-2">
-                    <IconComponent className={`h-6 w-6 ${isSelected ? tone.color : 'text-gray-400'}`} />
+                    <IconComponent
+                      className={`h-6 w-6 ${isSelected ? tone.color : 'text-gray-400'}`}
+                    />
                     <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {tone.name}
-                      </h4>
-                      <span className="text-xs text-gray-500">
-                        {tone.nameEN}
-                      </span>
+                      <h4 className="font-semibold text-gray-900">{tone.name}</h4>
+                      <span className="text-xs text-gray-500">{tone.nameEN}</span>
                     </div>
                   </div>
-                  
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    isSelected
-                      ? `${tone.borderColor.replace('border-', 'border-')} ${tone.color.replace('text-', 'bg-')}`
-                      : 'border-gray-300'
-                  }`}>
-                    {isSelected && (
-                      <Check className="h-3 w-3 text-white" />
-                    )}
+
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      isSelected
+                        ? `${tone.borderColor.replace('border-', 'border-')} ${tone.color.replace('text-', 'bg-')}`
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    {isSelected && <Check className="h-3 w-3 text-white" />}
                   </div>
                 </div>
 
@@ -284,12 +256,10 @@ const StyleSelector = () => {
                     </Badge>
                   )}
                 </div>
-                
+
                 {/* Description */}
-                <p className="text-sm text-gray-700 font-medium">
-                  {tone.description}
-                </p>
-                
+                <p className="text-sm text-gray-700 font-medium">{tone.description}</p>
+
                 <p className="text-xs text-gray-600">
                   <strong>Personalidad:</strong> {tone.personality}
                 </p>
@@ -297,9 +267,7 @@ const StyleSelector = () => {
                 {/* Example */}
                 <div className="bg-gray-50 rounded p-3 border border-gray-200">
                   <div className="text-xs text-gray-500 mb-1 font-medium">Ejemplo:</div>
-                  <div className="text-xs text-gray-800 italic">
-                    {tone.example}
-                  </div>
+                  <div className="text-xs text-gray-800 italic">{tone.example}</div>
                 </div>
 
                 {/* Resources & Restrictions (Collapsible) */}
@@ -349,8 +317,8 @@ const StyleSelector = () => {
             <div className="flex items-center space-x-2 mb-1">
               <Check className="h-4 w-4 text-green-600" />
               <span className="font-medium">
-                Tono activo: {toneOptions.find(t => t.id === selectedTone)?.name} 
-                ({toneOptions.find(t => t.id === selectedTone)?.nameEN})
+                Tono activo: {toneOptions.find((t) => t.id === selectedTone)?.name}(
+                {toneOptions.find((t) => t.id === selectedTone)?.nameEN})
               </span>
             </div>
             <p className="text-xs">
@@ -363,8 +331,8 @@ const StyleSelector = () => {
       {/* Migration Notice (Issue #872) */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
         <div className="text-xs text-yellow-800">
-          <strong>📢 Actualización del sistema:</strong> Hemos simplificado los estilos de roast 
-          a 3 tonos oficiales (Flanders, Balanceado, Canalla) eliminando configuraciones obsoletas 
+          <strong>📢 Actualización del sistema:</strong> Hemos simplificado los estilos de roast a 3
+          tonos oficiales (Flanders, Balanceado, Canalla) eliminando configuraciones obsoletas
           (humor_type, intensity_level). Tus preferencias anteriores se han migrado automáticamente.
         </div>
       </div>

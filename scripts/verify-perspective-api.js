@@ -152,7 +152,6 @@ async function verifyPerspective() {
     logger.info();
 
     logger.info('🎉 Perspective API verification complete!\n');
-
   } catch (error) {
     logger.error('\n❌ ERROR during verification:');
 
@@ -204,7 +203,7 @@ async function verifyPerspective() {
 }
 
 // Run verification
-verifyPerspective().catch(error => {
+verifyPerspective().catch((error) => {
   logger.error('\n❌ Unexpected error:', error.message);
   process.exit(1);
 });

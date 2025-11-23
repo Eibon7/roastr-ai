@@ -20,10 +20,10 @@
 --text-disabled: #5a5a5a;
 
 /* Accents */
---accent-success: #50fa7b;  /* Neon green */
---accent-warning: #f1fa8c;  /* Yellow */
---accent-danger: #ff5555;   /* Red */
---accent-info: #8be9fd;     /* Cyan */
+--accent-success: #50fa7b; /* Neon green */
+--accent-warning: #f1fa8c; /* Yellow */
+--accent-danger: #ff5555; /* Red */
+--accent-info: #8be9fd; /* Cyan */
 
 /* Borders */
 --border-default: rgba(255, 255, 255, 0.12);
@@ -188,6 +188,7 @@ critical: #ff5555
 ### 3. LeftSidebar
 
 **Sections**:
+
 1. **System Stats** (top 120px)
    - Compact cards: 4 metrics in 2×2 grid
    - Each: 32px height, icon + value
@@ -198,6 +199,7 @@ critical: #ff5555
    - Padding: 12px 16px
 
 **Navigation Item States**:
+
 ```css
 /* Default */
 background: transparent;
@@ -229,6 +231,7 @@ Right: Last Updated + Refresh button
 ### 5. NodeDetailsDrawer
 
 **Dimensions**:
+
 ```
 Width: 400px
 Height: 100vh
@@ -266,6 +269,7 @@ Z-index: 100
    - "Open in Repo" button (full width)
 
 **Animation**:
+
 ```tsx
 // Framer Motion
 initial: { x: '100%' }
@@ -325,6 +329,7 @@ Last item: no border-bottom
 ```
 
 **Usage Guidelines**:
+
 - Component padding: md (16px)
 - Section gaps: lg (24px)
 - Inline gaps: sm (8px)
@@ -347,6 +352,7 @@ Last item: no border-bottom
 ```
 
 **Usage**:
+
 - Hover effects: 150ms ease-out
 - Drawer slide: 300ms spring
 - Status changes: 200ms ease-in-out
@@ -357,11 +363,13 @@ Last item: no border-bottom
 ## Accessibility
 
 **Color Contrast** (WCAG AA):
+
 - Text primary on bg-base: 9.2:1 ✓
 - Text secondary on bg-base: 5.8:1 ✓
 - Accent green on bg-base: 12.1:1 ✓
 
 **Focus Indicators**:
+
 ```css
 &:focus-visible {
   outline: 2px solid var(--accent-success);
@@ -370,6 +378,7 @@ Last item: no border-bottom
 ```
 
 **ARIA Requirements**:
+
 - All buttons: `aria-label`
 - Drawer: `role="dialog"`, `aria-modal="true"`
 - Nav items: `aria-current="page"` when active
@@ -379,20 +388,20 @@ Last item: no border-bottom
 
 ## Component Inventory
 
-| Component | Status | File Path | Props |
-|-----------|--------|-----------|-------|
-| CornerSeparator | NEW | `components/dashboard/CornerSeparator.tsx` | `variant?: 'default' \| 'success'` |
-| StatusCard | NEW | `components/dashboard/StatusCard.tsx` | `StatusCardProps` |
-| NodeChip | NEW | `components/dashboard/NodeChip.tsx` | `label, onClick, active?` |
-| ActivityLogItem | NEW | `components/dashboard/ActivityLogItem.tsx` | `timestamp, event` |
-| CommandCenterLayout | NEW | `pages/GDDDashboard/CommandCenterLayout.tsx` | `children` |
-| SystemStatusBar | NEW | `pages/GDDDashboard/SystemStatusBar.tsx` | `data: GDDData` |
-| LeftSidebar | NEW | `pages/GDDDashboard/LeftSidebar.tsx` | `activeView, onViewChange` |
-| HealthPanel | NEW | `pages/GDDDashboard/HealthPanel.tsx` | `data: GDDData` |
-| GraphView | NEW | `pages/GDDDashboard/GraphView.tsx` | `data, onNodeClick` |
-| NodeDetailsDrawer | NEW | `pages/GDDDashboard/NodeDetailsDrawer.tsx` | `nodeId, open, onClose` |
-| ReportsViewer | UPDATE | `components/dashboard/ReportsViewer.tsx` | (style updates only) |
-| DependencyGraph | KEEP | `components/dashboard/DependencyGraph.tsx` | (use as-is) |
+| Component           | Status | File Path                                    | Props                              |
+| ------------------- | ------ | -------------------------------------------- | ---------------------------------- |
+| CornerSeparator     | NEW    | `components/dashboard/CornerSeparator.tsx`   | `variant?: 'default' \| 'success'` |
+| StatusCard          | NEW    | `components/dashboard/StatusCard.tsx`        | `StatusCardProps`                  |
+| NodeChip            | NEW    | `components/dashboard/NodeChip.tsx`          | `label, onClick, active?`          |
+| ActivityLogItem     | NEW    | `components/dashboard/ActivityLogItem.tsx`   | `timestamp, event`                 |
+| CommandCenterLayout | NEW    | `pages/GDDDashboard/CommandCenterLayout.tsx` | `children`                         |
+| SystemStatusBar     | NEW    | `pages/GDDDashboard/SystemStatusBar.tsx`     | `data: GDDData`                    |
+| LeftSidebar         | NEW    | `pages/GDDDashboard/LeftSidebar.tsx`         | `activeView, onViewChange`         |
+| HealthPanel         | NEW    | `pages/GDDDashboard/HealthPanel.tsx`         | `data: GDDData`                    |
+| GraphView           | NEW    | `pages/GDDDashboard/GraphView.tsx`           | `data, onNodeClick`                |
+| NodeDetailsDrawer   | NEW    | `pages/GDDDashboard/NodeDetailsDrawer.tsx`   | `nodeId, open, onClose`            |
+| ReportsViewer       | UPDATE | `components/dashboard/ReportsViewer.tsx`     | (style updates only)               |
+| DependencyGraph     | KEEP   | `components/dashboard/DependencyGraph.tsx`   | (use as-is)                        |
 
 ---
 

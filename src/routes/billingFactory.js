@@ -44,7 +44,13 @@ const PLAN_CONFIG = {
     price: 1500, // €15.00 in cents
     currency: 'eur',
     description: 'Best for power users',
-    features: ['1,000 roasts per month', '2 platform integrations', 'Shield protection', 'Priority support', 'Advanced analytics'],
+    features: [
+      '1,000 roasts per month',
+      '2 platform integrations',
+      'Shield protection',
+      'Priority support',
+      'Advanced analytics'
+    ],
     maxPlatforms: 2,
     maxRoasts: 1000,
     lookupKey: process.env.STRIPE_PRICE_LOOKUP_PRO || 'pro_monthly'
@@ -54,7 +60,14 @@ const PLAN_CONFIG = {
     price: 5000, // €50.00 in cents
     currency: 'eur',
     description: 'For creators and professionals',
-    features: ['5,000 roasts per month', '2 platform integrations', 'Shield protection', '24/7 support', 'Custom tones', 'API access'],
+    features: [
+      '5,000 roasts per month',
+      '2 platform integrations',
+      'Shield protection',
+      '24/7 support',
+      'Custom tones',
+      'API access'
+    ],
     maxPlatforms: 2,
     maxRoasts: 5000,
     lookupKey: process.env.STRIPE_PRICE_LOOKUP_PLUS || 'plus_monthly'

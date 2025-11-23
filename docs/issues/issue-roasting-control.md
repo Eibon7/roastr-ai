@@ -17,24 +17,28 @@
 - **Sync multi-dispositivo** vía WebSocket (cambio en móvil → desktop sincroniza)
 
 **¿Por qué es importante?**
+
 - **Control de usuario:** El usuario decide cuándo quiere roasts activos
 - **Pausar temporalmente:** Desactivar durante reuniones, eventos, etc.
 - **Ahorro de costos:** No genera roasts innecesarios si no se quieren
 - **UX crítica:** Toggle debe funcionar INMEDIATAMENTE (no esperar minutos)
 
 **Arquitectura clave:**
+
 - **Redis pub/sub** para notificar a workers distribuidos
 - **WebSocket** para sync en tiempo real entre dispositivos
 - **Queue cancellation** para detener jobs pendientes
 - **Optimistic updates** en frontend para UX instantánea
 
 **Tecnologías:**
+
 - Redis pub/sub channel `roasting:status`
 - WebSocket server con auth JWT
 - Workers suscritos a cambios de estado
 - Cache en memoria en workers (evita DB queries constantes)
 
 **Flujo:**
+
 1. Usuario hace toggle en UI → Optimistic update
 2. POST /api/roasting/toggle → Actualiza DB
 3. Publica evento Redis → Workers reciben notificación
@@ -53,12 +57,14 @@ Implementar sistema de control on/off para roasting que:
 4. Sincroniza estado entre múltiples dispositivos vía WebSocket
 
 **Features clave:**
+
 - Toggle instantáneo (optimistic update en frontend)
 - Notificación a workers vía Redis pub/sub channel `roasting:status`
 - Cancelación de jobs pendientes en `generate_reply` queue
 - WebSocket broadcast para sync multi-dispositivo
 
 **Estado actual:**
+
 - ✅ Arquitectura de workers con Redis existe
 - ✅ Conceptualmente definido en assessment
 - ❌ Endpoint `/api/roasting/toggle` no implementado
@@ -72,6 +78,7 @@ Implementar sistema de control on/off para roasting que:
 ### 1. Backend: Database Schema
 
 - [ ] **Agregar columna `roasting_enabled` a tabla `users`**
+
   ```sql
   ALTER TABLE users
   ADD COLUMN roasting_enabled BOOLEAN DEFAULT TRUE;
@@ -80,6 +87,7 @@ Implementar sistema de control on/off para roasting que:
   ```
 
 - [ ] **Ejecutar migración:**
+
   ```bash
   node scripts/deploy-supabase-schema.js
   ```
@@ -98,6 +106,7 @@ Implementar sistema de control on/off para roasting que:
   - [ ] `cancelPendingJobs(userId)` → cancela jobs en queue
 
   **Implementación con Redis pub/sub:**
+
   ```javascript
   const Redis = require('ioredis');
   const publisher = new Redis(process.env.REDIS_URL);
@@ -165,6 +174,7 @@ Implementar sistema de control on/off para roasting que:
 - [ ] **Crear `POST /api/roasting/toggle`**
 
   **Request:**
+
   ```json
   {
     "enabled": true
@@ -172,6 +182,7 @@ Implementar sistema de control on/off para roasting que:
   ```
 
   **Response:**
+
   ```json
   {
     "userId": "uuid",
@@ -181,6 +192,7 @@ Implementar sistema de control on/off para roasting que:
   ```
 
   **Implementación:**
+
   ```javascript
   router.post('/roasting/toggle', authenticateJWT, async (req, res) => {
     try {
@@ -225,7 +237,6 @@ Implementar sistema de control on/off para roasting que:
         enabled,
         pendingJobsCanceled: canceledJobs
       });
-
     } catch (error) {
       logger.error('Error toggling roasting status:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -238,12 +249,12 @@ Implementar sistema de control on/off para roasting que:
 ### 4. Backend: Worker Integration
 
 - [ ] **Actualizar `GenerateReplyWorker.js`**
-
   - [ ] Suscribirse a `roasting:status` channel al iniciar
   - [ ] Mantener cache en memoria de usuarios con roasting disabled
   - [ ] Verificar estado antes de procesar job
 
   **Implementación:**
+
   ```javascript
   class GenerateReplyWorker extends BaseWorker {
     constructor() {
@@ -251,17 +262,15 @@ Implementar sistema de control on/off para roasting que:
       this.disabledUsers = new Set(); // Cache de usuarios con roasting off
 
       // Suscribirse a cambios de estado
-      WorkerNotificationService.subscribeToRoastingStatus(
-        (userId, enabled) => {
-          if (enabled) {
-            this.disabledUsers.delete(userId);
-            logger.info(`User ${userId} enabled roasting`);
-          } else {
-            this.disabledUsers.add(userId);
-            logger.info(`User ${userId} disabled roasting`);
-          }
+      WorkerNotificationService.subscribeToRoastingStatus((userId, enabled) => {
+        if (enabled) {
+          this.disabledUsers.delete(userId);
+          logger.info(`User ${userId} enabled roasting`);
+        } else {
+          this.disabledUsers.add(userId);
+          logger.info(`User ${userId} disabled roasting`);
         }
-      );
+      });
     }
 
     async processJob(job) {
@@ -332,7 +341,7 @@ Implementar sistema de control on/off para roasting que:
   function broadcastToUser(userId, message) {
     if (!wss) return;
 
-    wss.clients.forEach(client => {
+    wss.clients.forEach((client) => {
       if (client.userId === userId && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(message));
       }
@@ -397,7 +406,7 @@ Implementar sistema de control on/off para roasting que:
         const response = await fetch('/api/roasting/toggle', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ enabled: newState })
@@ -410,7 +419,9 @@ Implementar sistema de control on/off para roasting que:
         const data = await response.json();
 
         if (data.pendingJobsCanceled > 0) {
-          showNotification(`✅ Roasting desactivado. ${data.pendingJobsCanceled} roasts pendientes cancelados.`);
+          showNotification(
+            `✅ Roasting desactivado. ${data.pendingJobsCanceled} roasts pendientes cancelados.`
+          );
         } else {
           showNotification(`✅ Roasting ${newState ? 'activado' : 'desactivado'}`);
         }
@@ -432,7 +443,9 @@ Implementar sistema de control on/off para roasting que:
 
         if (message.type === 'roasting_status_changed') {
           setEnabled(message.enabled);
-          showNotification(`Roasting ${message.enabled ? 'activado' : 'desactivado'} desde otro dispositivo`);
+          showNotification(
+            `Roasting ${message.enabled ? 'activado' : 'desactivado'} desde otro dispositivo`
+          );
         }
       };
     }
@@ -440,12 +453,7 @@ Implementar sistema de control on/off para roasting que:
     return (
       <div className="roasting-toggle">
         <label>
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={toggleRoasting}
-            disabled={loading}
-          />
+          <input type="checkbox" checked={enabled} onChange={toggleRoasting} disabled={loading} />
           {enabled ? 'Roasting Activado' : 'Roasting Desactivado'}
         </label>
         {loading && <span>Actualizando...</span>}
@@ -497,12 +505,15 @@ Implementar sistema de control on/off para roasting que:
 ## 🔗 Dependencias
 
 **Bloqueantes (debe resolverse antes):**
+
 - ✅ Issue Login & Registration (requiere auth)
 
 **Opcionales (mejora la feature pero no bloqueante):**
+
 - Issue Global State (sincronización avanzada)
 
 **Desbloqueadas por esta issue:**
+
 - Ninguna (feature independiente)
 
 ---
@@ -526,28 +537,31 @@ Esta issue se considera **100% completa** cuando:
 
 ## 📊 Métricas de Éxito
 
-| Métrica | Valor Actual | Objetivo | Estado |
-|---------|--------------|----------|--------|
-| Tests pasando | N/A | 100% | ⏳ Pendiente |
-| Cobertura roast control | N/A | ≥85% | ⏳ Pendiente |
-| Latencia toggle | N/A | <200ms | ⏳ Pendiente |
-| Sync multi-dispositivo | ❌ | ✅ | ⏳ Pendiente |
+| Métrica                 | Valor Actual | Objetivo | Estado       |
+| ----------------------- | ------------ | -------- | ------------ |
+| Tests pasando           | N/A          | 100%     | ⏳ Pendiente |
+| Cobertura roast control | N/A          | ≥85%     | ⏳ Pendiente |
+| Latencia toggle         | N/A          | <200ms   | ⏳ Pendiente |
+| Sync multi-dispositivo  | ❌           | ✅       | ⏳ Pendiente |
 
 ---
 
 ## 📝 Notas de Implementación
 
 **Performance:**
+
 - Redis pub/sub es instantáneo (<10ms latency)
 - Cache en memoria de workers evita DB queries constantes
 - Optimistic updates mejoran perceived performance
 
 **Reliability:**
+
 - Workers deben verificar estado en DB si cache miss
 - Jobs cancelados deben marcarse como `canceled` en queue
 - WebSocket reconnect automático si conexión cae
 
 **UX:**
+
 - Mostrar contador de jobs cancelados tras desactivar
 - Confirmación clara del estado actual
 - Indicador visual mientras sincroniza

@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 // Mock auth service
 jest.mock('../../../services/authService', () => ({
-  sendRecoveryEmail: jest.fn(),
+  sendRecoveryEmail: jest.fn()
 }));
 
 const ResetPassword = require('../ResetPassword').default;
@@ -48,7 +48,9 @@ describe('ResetPassword Component', () => {
     renderResetPassword();
 
     expect(screen.getByText('Need help?')).toBeInTheDocument();
-    expect(screen.getByText(/If you're having trouble resetting your password/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/If you're having trouble resetting your password/)
+    ).toBeInTheDocument();
 
     const supportLink = screen.getByRole('link', { name: 'support@roastr.ai' });
     expect(supportLink).toBeInTheDocument();

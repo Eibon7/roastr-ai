@@ -24,21 +24,21 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
   let getPlanFromProductId, getProductIdFromPlan, getPlanFromPriceId;
   let getPriceIdFromPlan, getConfiguredProductIds, getConfiguredPriceIds, isValidPlan;
   let logger;
-  
+
   beforeAll(() => {
     // Set environment variables BEFORE loading the module
     process.env.POLAR_STARTER_PRODUCT_ID = 'prod_starter_test';
     process.env.POLAR_PRO_PRODUCT_ID = 'prod_pro_test';
     process.env.POLAR_PLUS_PRODUCT_ID = 'prod_plus_test';
-    
+
     // Reset module cache and reload with new env vars
     jest.resetModules();
-    
+
     // Now import the module with env vars set
     const polarHelpers = require('../../../src/utils/polarHelpers');
     // CodeRabbit fix: Destructure logger from mocked module
     ({ logger } = require('../../../src/utils/logger'));
-    
+
     // Extract functions
     getPlanFromProductId = polarHelpers.getPlanFromProductId;
     getProductIdFromPlan = polarHelpers.getProductIdFromPlan;
@@ -71,11 +71,10 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
       expect(() => {
         getPlanFromProductId('prod_unknown');
       }).toThrow('Unknown product_id: prod_unknown');
-      
-      expect(logger.error).toHaveBeenCalledWith(
-        '[Polar Helpers] Unknown product_id',
-        { productId: 'prod_unknown' }
-      );
+
+      expect(logger.error).toHaveBeenCalledWith('[Polar Helpers] Unknown product_id', {
+        productId: 'prod_unknown'
+      });
     });
   });
 
@@ -94,11 +93,10 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
       expect(() => {
         getProductIdFromPlan('unknown_plan');
       }).toThrow('Unknown plan: unknown_plan');
-      
-      expect(logger.error).toHaveBeenCalledWith(
-        '[Polar Helpers] Unknown plan',
-        { plan: 'unknown_plan' }
-      );
+
+      expect(logger.error).toHaveBeenCalledWith('[Polar Helpers] Unknown plan', {
+        plan: 'unknown_plan'
+      });
     });
   });
 
@@ -109,7 +107,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
 
     it('should support legacy price_id calls with warning', () => {
       const result = getPlanFromPriceId('prod_starter_test');
-      
+
       expect(result).toBe('starter_trial');
       expect(logger.warn).toHaveBeenCalledWith(
         '[Polar Helpers] getPlanFromPriceId is deprecated, use getPlanFromProductId',
@@ -120,7 +118,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
     it('should return same plan for both product_id and price_id', () => {
       const planFromProduct = getPlanFromProductId('prod_pro_test');
       const planFromPrice = getPlanFromPriceId('prod_pro_test');
-      
+
       expect(planFromProduct).toBe(planFromPrice);
       expect(planFromProduct).toBe('pro');
     });
@@ -139,7 +137,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
 
     it('should support legacy calls with warning', () => {
       const result = getPriceIdFromPlan('pro');
-      
+
       expect(result).toBe('prod_pro_test');
       expect(logger.warn).toHaveBeenCalledWith(
         '[Polar Helpers] getPriceIdFromPlan is deprecated, use getProductIdFromPlan',
@@ -150,7 +148,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
     it('should return same product_id for both APIs', () => {
       const idFromProduct = getProductIdFromPlan('plus');
       const idFromPrice = getPriceIdFromPlan('plus');
-      
+
       expect(idFromProduct).toBe(idFromPrice);
       expect(idFromProduct).toBe('prod_plus_test');
     });
@@ -164,7 +162,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
     it('should return same IDs as getConfiguredProductIds()', () => {
       const productIds = getConfiguredProductIds();
       const priceIds = getConfiguredPriceIds();
-      
+
       expect(priceIds).toEqual(productIds);
       expect(logger.warn).toHaveBeenCalledWith(
         '[Polar Helpers] getConfiguredPriceIds is deprecated, use getConfiguredProductIds'
@@ -183,7 +181,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
       testCases.forEach(({ id, expectedPlan }) => {
         const planFromProduct = getPlanFromProductId(id);
         const planFromPrice = getPlanFromPriceId(id);
-        
+
         expect(planFromProduct).toBe(expectedPlan);
         expect(planFromPrice).toBe(expectedPlan);
         expect(planFromProduct).toBe(planFromPrice);
@@ -192,11 +190,11 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
 
     it('should maintain identical reverse mapping', () => {
       const plans = ['starter_trial', 'pro', 'plus'];
-      
-      plans.forEach(plan => {
+
+      plans.forEach((plan) => {
         const idFromProduct = getProductIdFromPlan(plan);
         const idFromPrice = getPriceIdFromPlan(plan);
-        
+
         expect(idFromProduct).toBe(idFromPrice);
       });
     });
@@ -214,7 +212,7 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
 
     it('getConfiguredProductIds() should return all configured IDs', () => {
       const ids = getConfiguredProductIds();
-      
+
       expect(ids).toContain('prod_starter_test');
       expect(ids).toContain('prod_pro_test');
       expect(ids).toContain('prod_plus_test');
@@ -222,4 +220,3 @@ describe('PRICE_ID → PRODUCT_ID Migration (Issue #887)', () => {
     });
   });
 });
-

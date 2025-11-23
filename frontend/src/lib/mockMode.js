@@ -9,13 +9,13 @@
 const isSupabaseConfigured = () => {
   const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
   const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-  
+
   return !!(
-    supabaseUrl && 
-    supabaseAnonKey && 
-    !supabaseUrl.includes('mock') && 
+    supabaseUrl &&
+    supabaseAnonKey &&
+    !supabaseUrl.includes('mock') &&
     !supabaseUrl.includes('dummy') &&
-    !supabaseAnonKey.includes('mock') && 
+    !supabaseAnonKey.includes('mock') &&
     !supabaseAnonKey.includes('dummy')
   );
 };
@@ -33,20 +33,22 @@ const isMockModeEnabled = () => {
   if (process.env.NODE_ENV === 'test') {
     return true;
   }
-  
+
   // Check explicit mock mode flag
   if (process.env.REACT_APP_ENABLE_MOCK_MODE === 'true') {
     return true;
   }
-  
+
   // If Supabase is not configured with real values, force mock mode
   if (!isSupabaseConfigured()) {
     if (process.env.NODE_ENV === 'development') {
-      console.warn('🔄 Supabase environment variables not found or contain mock values - enabling mock mode automatically');
+      console.warn(
+        '🔄 Supabase environment variables not found or contain mock values - enabling mock mode automatically'
+      );
     }
     return true;
   }
-  
+
   return false;
 };
 
@@ -59,17 +61,17 @@ const getMockModeStatus = () => {
   const mockModeForced = !supabaseConfigured || isTestEnv;
   const mockModeExplicit = process.env.REACT_APP_ENABLE_MOCK_MODE === 'true';
   const mockModeEnabled = isMockModeEnabled();
-  
+
   return {
     enabled: mockModeEnabled,
     supabaseConfigured,
     mockModeForced,
     mockModeExplicit,
-    reason: isTestEnv 
+    reason: isTestEnv
       ? 'Forced in test environment'
       : !supabaseConfigured
         ? 'Missing Supabase environment variables'
-        : mockModeExplicit 
+        : mockModeExplicit
           ? 'Explicitly enabled via REACT_APP_ENABLE_MOCK_MODE'
           : 'Disabled - using real Supabase client'
   };
@@ -91,8 +93,8 @@ const logMockModeStatus = () => {
 const createMockFetch = () => {
   return async (url, options = {}) => {
     console.log(`🎭 Frontend Mock Fetch: ${url}`);
-    
-    await new Promise(resolve => setTimeout(resolve, 100)); // Simulate network delay
+
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate network delay
 
     // Mock different API endpoints
     if (url.includes('/api/health')) {
@@ -130,7 +132,7 @@ const createMockFetch = () => {
               source: 'system'
             },
             {
-              id: '2', 
+              id: '2',
               timestamp: new Date(Date.now() - 60000).toISOString(),
               level: 'warn',
               message: 'Mock warning - rate limit approaching',
@@ -251,25 +253,31 @@ const createMockSupabaseClient = () => {
 
     from: (table) => ({
       select: (columns = '*') => ({
-        eq: (column, value) => Promise.resolve({
-          data: [{
-            id: 1,
-            [column]: value,
-            name: `Mock ${table} entry`,
-            created_at: new Date().toISOString()
-          }],
-          error: null
-        })
+        eq: (column, value) =>
+          Promise.resolve({
+            data: [
+              {
+                id: 1,
+                [column]: value,
+                name: `Mock ${table} entry`,
+                created_at: new Date().toISOString()
+              }
+            ],
+            error: null
+          })
       }),
 
-      insert: (data) => Promise.resolve({
-        data: [{
-          id: Math.random(),
-          ...data,
-          created_at: new Date().toISOString()
-        }],
-        error: null
-      })
+      insert: (data) =>
+        Promise.resolve({
+          data: [
+            {
+              id: Math.random(),
+              ...data,
+              created_at: new Date().toISOString()
+            }
+          ],
+          error: null
+        })
     })
   };
 };

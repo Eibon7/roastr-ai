@@ -9,12 +9,14 @@
 #### initialization
 
 Tests:
+
 - ✓ should initialize without errors
 - ✓ should handle multiple initialization calls
 
 #### detectLanguages
 
 Tests:
+
 - ✓ should detect single dominant language
 - ✓ should detect multiple languages with sufficient threshold
 - ✓ should filter out languages below minimum threshold
@@ -24,6 +26,7 @@ Tests:
 #### analyzeLanguageContent
 
 Tests:
+
 - ✓ should analyze Spanish content correctly
 - ✓ should return null for non-existent language
 - ✓ should detect tone indicators
@@ -32,6 +35,7 @@ Tests:
 #### generateLanguageProfile
 
 Tests:
+
 - ✓ should generate Spanish profile correctly
 - ✓ should generate English profile correctly
 - ✓ should handle Portuguese profile
@@ -41,6 +45,7 @@ Tests:
 #### generateStyleProfile
 
 Tests:
+
 - ✓ should generate complete style profile
 - ✓ should respect maxItemsPerPlatform option
 - ✓ should throw error for empty content
@@ -50,6 +55,7 @@ Tests:
 #### getProfileStats
 
 Tests:
+
 - ✓ should generate correct statistics
 - ✓ should handle empty profiles
 - ✓ should handle single profile
@@ -57,8 +63,8 @@ Tests:
 #### edge cases and error handling
 
 Tests:
+
 - ✓ should handle content with missing fields
 - ✓ should handle very long text content
 - ✓ should handle special characters and emojis
 - ✓ should handle null or undefined platform data
-

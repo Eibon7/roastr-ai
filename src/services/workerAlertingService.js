@@ -1,8 +1,8 @@
 /**
  * Worker Alerting Service
- * 
+ *
  * Part of Issue #713: Worker Monitoring Dashboard
- * 
+ *
  * Provides alerting capabilities for worker health, queue status, and job failures.
  * Supports multiple channels: email, Slack, and structured logging.
  */
@@ -29,7 +29,7 @@ class WorkerAlertingService {
 
     // Track sent alerts to prevent spam
     this.alertHistory = new Map();
-    
+
     // Initialize channels
     this.initializeChannels();
   }
@@ -49,21 +49,14 @@ class WorkerAlertingService {
    * Check if email configuration is available
    */
   checkEmailConfig() {
-    return !!(
-      process.env.SMTP_HOST ||
-      process.env.EMAIL_SERVICE ||
-      process.env.ALERT_EMAIL
-    );
+    return !!(process.env.SMTP_HOST || process.env.EMAIL_SERVICE || process.env.ALERT_EMAIL);
   }
 
   /**
    * Check if Slack configuration is available
    */
   checkSlackConfig() {
-    return !!(
-      process.env.SLACK_WEBHOOK_URL ||
-      process.env.SLACK_BOT_TOKEN
-    );
+    return !!(process.env.SLACK_WEBHOOK_URL || process.env.SLACK_BOT_TOKEN);
   }
 
   /**
@@ -84,8 +77,8 @@ class WorkerAlertingService {
           total: workerMetrics.workers.total,
           healthy: workerMetrics.workers.healthy,
           unhealthy: workerMetrics.workers.unhealthy,
-          details: workerMetrics.workers.details.filter(w => 
-            w.status !== 'healthy' && w.status !== 'operational'
+          details: workerMetrics.workers.details.filter(
+            (w) => w.status !== 'healthy' && w.status !== 'operational'
           )
         }
       });
@@ -105,9 +98,10 @@ class WorkerAlertingService {
     }
 
     // Check failure rate
-    const failureRate = workerMetrics.jobs.totalProcessed > 0
-      ? workerMetrics.jobs.totalFailed / workerMetrics.jobs.totalProcessed
-      : 0;
+    const failureRate =
+      workerMetrics.jobs.totalProcessed > 0
+        ? workerMetrics.jobs.totalFailed / workerMetrics.jobs.totalProcessed
+        : 0;
 
     if (failureRate > this.options.thresholds.failureRate) {
       alerts.push({
@@ -226,7 +220,7 @@ class WorkerAlertingService {
     try {
       // Check if email service is available
       const emailService = require('./emailService');
-      
+
       const subject = `[Roastr.ai] Worker Alert: ${alert.type}`;
       const body = `
         Worker Alert: ${alert.message}
@@ -264,18 +258,20 @@ class WorkerAlertingService {
 
       const axios = require('axios');
       const color = alert.severity === 'critical' ? 'danger' : 'warning';
-      
+
       const payload = {
         text: `Worker Alert: ${alert.message}`,
-        attachments: [{
-          color,
-          fields: [
-            { title: 'Type', value: alert.type, short: true },
-            { title: 'Severity', value: alert.severity, short: true },
-            { title: 'Timestamp', value: new Date().toISOString(), short: false },
-            { title: 'Details', value: JSON.stringify(alert.data, null, 2), short: false }
-          ]
-        }]
+        attachments: [
+          {
+            color,
+            fields: [
+              { title: 'Type', value: alert.type, short: true },
+              { title: 'Severity', value: alert.severity, short: true },
+              { title: 'Timestamp', value: new Date().toISOString(), short: false },
+              { title: 'Details', value: JSON.stringify(alert.data, null, 2), short: false }
+            ]
+          }
+        ]
       };
 
       await axios.post(webhookUrl, payload);
@@ -291,7 +287,7 @@ class WorkerAlertingService {
   getStats() {
     return {
       enabled: this.options.enabled,
-      channels: Object.keys(this.channels).filter(k => this.channels[k]),
+      channels: Object.keys(this.channels).filter((k) => this.channels[k]),
       alertsSent: this.alertHistory.size,
       thresholds: this.options.thresholds
     };
@@ -306,5 +302,3 @@ class WorkerAlertingService {
 }
 
 module.exports = WorkerAlertingService;
-
-

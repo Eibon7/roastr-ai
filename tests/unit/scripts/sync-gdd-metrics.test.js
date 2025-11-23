@@ -49,14 +49,10 @@ describe('MetricsCollector', () => {
       // Mock directory structure
       fs.readdir.mockImplementation(async (dir) => {
         if (dir === path.join(mockRootDir, 'docs', 'test-evidence')) {
-          return [
-            { name: 'phase-11', isDirectory: () => true, isFile: () => false }
-          ];
+          return [{ name: 'phase-11', isDirectory: () => true, isFile: () => false }];
         }
         if (dir.includes('phase-11')) {
-          return [
-            { name: 'lighthouse-report.json', isDirectory: () => false, isFile: () => true }
-          ];
+          return [{ name: 'lighthouse-report.json', isDirectory: () => false, isFile: () => true }];
         }
         return [];
       });
@@ -87,9 +83,7 @@ describe('MetricsCollector', () => {
     it('should return null if lighthouse data is malformed', async () => {
       fs.readdir.mockImplementation(async (dir) => {
         if (dir === path.join(mockRootDir, 'docs', 'test-evidence')) {
-          return [
-            { name: 'lighthouse-report.json', isDirectory: () => false, isFile: () => true }
-          ];
+          return [{ name: 'lighthouse-report.json', isDirectory: () => false, isFile: () => true }];
         }
         return [];
       });
@@ -164,7 +158,7 @@ describe('MetricsCollector', () => {
 
       expect(result).toEqual({
         total: 5,
-        healthy: 0,  // Clamped to 0, not negative
+        healthy: 0, // Clamped to 0, not negative
         orphans: 8,
         source: 'gdd-status.json'
       });
@@ -316,7 +310,9 @@ describe('MetricsCollector', () => {
 
     it('should handle partial failures gracefully', async () => {
       collector.collectLighthouseScore = jest.fn().mockResolvedValue(null);
-      collector.collectNodeCount = jest.fn().mockResolvedValue({ total: 15, healthy: 13, orphans: 2 });
+      collector.collectNodeCount = jest
+        .fn()
+        .mockResolvedValue({ total: 15, healthy: 13, orphans: 2 });
       collector.collectHealthScore = jest.fn().mockResolvedValue(null);
       collector.collectCoverage = jest.fn().mockResolvedValue({ lines: 85.5 });
 
@@ -347,10 +343,9 @@ describe('DocumentUpdater', () => {
 
       expect(backupDir).toContain('.gdd-backups');
       expect(backupDir).toContain('metrics-sync-');
-      expect(fs.mkdir).toHaveBeenCalledWith(
-        expect.stringContaining('.gdd-backups'),
-        { recursive: true }
-      );
+      expect(fs.mkdir).toHaveBeenCalledWith(expect.stringContaining('.gdd-backups'), {
+        recursive: true
+      });
     });
 
     it('should not create backup in dry-run mode', async () => {
@@ -526,7 +521,7 @@ describe('DocumentUpdater', () => {
       fs.readFile.mockResolvedValue(mockContent);
 
       const metrics = {
-        healthScore: { score: 98.3 }  // Within 0.5 tolerance
+        healthScore: { score: 98.3 } // Within 0.5 tolerance
       };
 
       const issues = await updater.validate(metrics);
@@ -577,7 +572,13 @@ describe('CLI parseArgs and filtering logic', () => {
     lighthouse: { score: 98, source: 'test.json', timestamp: '2025-10-21T00:00:00Z' },
     nodeCount: { total: 15, healthy: 13, orphans: 2, source: 'gdd-status.json' },
     healthScore: { score: 87.5, source: 'score-gdd-health.js' },
-    coverage: { lines: 85.3, branches: 78.9, functions: 90.1, statements: 85.0, source: 'coverage-summary.json' },
+    coverage: {
+      lines: 85.3,
+      branches: 78.9,
+      functions: 90.1,
+      statements: 85.0,
+      source: 'coverage-summary.json'
+    },
     timestamp: '2025-10-21T00:00:00Z'
   };
 

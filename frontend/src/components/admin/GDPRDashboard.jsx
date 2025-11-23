@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Tabs,
-  Tab,
-  Paper,
-  Typography,
-  Container
-} from '@mui/material';
+import { Box, Tabs, Tab, Paper, Typography, Container } from '@mui/material';
 import {
   CloudDownload as CloudDownloadIcon,
   Schedule as ScheduleIcon,
@@ -32,11 +25,7 @@ function TabPanel({ children, value, index, ...other }) {
       aria-labelledby={`gdpr-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box>{children}</Box>}
     </div>
   );
 }
@@ -44,7 +33,7 @@ function TabPanel({ children, value, index, ...other }) {
 function a11yProps(index) {
   return {
     id: `gdpr-tab-${index}`,
-    'aria-controls': `gdpr-tabpanel-${index}`,
+    'aria-controls': `gdpr-tabpanel-${index}`
   };
 }
 
@@ -63,43 +52,44 @@ const GDPRDashboard = () => {
           GDPR Data Management
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Comprehensive GDPR compliance dashboard for export management, data retention, and audit monitoring
+          Comprehensive GDPR compliance dashboard for export management, data retention, and audit
+          monitoring
         </Typography>
       </Box>
 
       {/* Tabs */}
       <Paper elevation={1}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs 
-            value={currentTab} 
-            onChange={handleTabChange} 
+          <Tabs
+            value={currentTab}
+            onChange={handleTabChange}
             aria-label="GDPR Dashboard tabs"
             variant="scrollable"
             scrollButtons="auto"
           >
-            <Tab 
-              label="Data Exports" 
+            <Tab
+              label="Data Exports"
               icon={<CloudDownloadIcon />}
               iconPosition="start"
-              {...a11yProps(0)} 
+              {...a11yProps(0)}
             />
-            <Tab 
-              label="Retention Jobs" 
+            <Tab
+              label="Retention Jobs"
               icon={<ScheduleIcon />}
               iconPosition="start"
-              {...a11yProps(1)} 
+              {...a11yProps(1)}
             />
-            <Tab 
-              label="Compliance" 
+            <Tab
+              label="Compliance"
               icon={<SecurityIcon />}
               iconPosition="start"
-              {...a11yProps(2)} 
+              {...a11yProps(2)}
             />
-            <Tab 
-              label="Statistics" 
+            <Tab
+              label="Statistics"
               icon={<BarChartIcon />}
               iconPosition="start"
-              {...a11yProps(3)} 
+              {...a11yProps(3)}
             />
           </Tabs>
         </Box>
@@ -126,10 +116,10 @@ const GDPRDashboard = () => {
       <Box mt={3}>
         <Paper elevation={0} sx={{ p: 2, backgroundColor: 'grey.50' }}>
           <Typography variant="body2" color="text.secondary">
-            <strong>GDPR Compliance Information:</strong>
-            {' '}This dashboard provides tools for managing data exports (Article 20), 
-            implementing data retention policies (Article 17), and monitoring compliance status. 
-            All operations are logged for audit purposes and data is encrypted in transit and at rest.
+            <strong>GDPR Compliance Information:</strong> This dashboard provides tools for managing
+            data exports (Article 20), implementing data retention policies (Article 17), and
+            monitoring compliance status. All operations are logged for audit purposes and data is
+            encrypted in transit and at rest.
           </Typography>
         </Paper>
       </Box>

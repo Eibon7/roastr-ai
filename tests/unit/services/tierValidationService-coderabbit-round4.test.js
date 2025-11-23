@@ -1,6 +1,6 @@
 /**
  * Comprehensive Unit Tests for tierValidationService.js CodeRabbit Round 4 Improvements
- * 
+ *
  * Tests all enhanced functionality including:
  * - Enhanced caching and concurrency safety
  * - UTC date handling and cycle calculations
@@ -37,9 +37,9 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
     jest.clearAllTimers();
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2024-01-15T12:30:00Z'));
-    
+
     mockSupabaseClient = require('../../../src/config/supabase').supabaseServiceClient;
-    
+
     // Clear service cache before each test
     tierValidationService.clearCache();
   });
@@ -53,13 +53,13 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
       const userId = 'test-user-123';
       const action = 'roast';
       const requestId = 'req-123';
-      
+
       // Mock successful validation
       mockSupabaseClient.single.mockResolvedValueOnce({
         data: { plan: 'pro', status: 'active', current_period_start: '2024-01-01' },
         error: null
       });
-      
+
       planLimitsService.getPlanLimits.mockResolvedValue({
         monthlyResponsesLimit: 1000,
         monthlyAnalysisLimit: 10000
@@ -67,7 +67,7 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
 
       // First call
       const result1 = await tierValidationService.validateAction(userId, action, { requestId });
-      
+
       // Second call with same requestId should use cache
       const result2 = await tierValidationService.validateAction(userId, action, { requestId });
 
@@ -93,13 +93,13 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
 
     it('should invalidate cache after recording actions', async () => {
       const userId = 'test-user-123';
-      
+
       // Set initial cache
       tierValidationService.setCachedUsageAtomic(userId, { roastsThisMonth: 50 });
-      
+
       // Invalidate cache
       tierValidationService.invalidateUserCache(userId);
-      
+
       // Cache should be cleared
       const cached = tierValidationService.getCachedUsage(userId);
       expect(cached).toBeNull();
@@ -109,13 +109,13 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
       const userId = 'test-user-123';
       const requestId = 'req-123';
       const cacheKey = `${requestId}-${userId}-roast`;
-      
+
       // Add to request cache
       tierValidationService.requestScopedCache.set(cacheKey, { allowed: true });
-      
+
       // Fast-forward past cleanup timeout
       jest.advanceTimersByTime(35000);
-      
+
       // Cache should be cleaned up
       expect(tierValidationService.requestScopedCache.has(cacheKey)).toBe(false);
     });
@@ -124,7 +124,7 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
   describe('UTC Date Handling', () => {
     it('should handle getUserTierWithUTC with UTC date processing', async () => {
       const userId = 'test-user-123';
-      
+
       mockSupabaseClient.single.mockResolvedValue({
         data: {
           plan: 'pro',
@@ -184,7 +184,7 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
 
     it('should fail closed on database errors', async () => {
       const userId = 'test-user-123';
-      
+
       mockSupabaseClient.single.mockResolvedValue({
         data: null,
         error: new Error('Database connection failed')
@@ -204,8 +204,8 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
       const validLimits = { monthlyResponsesLimit: 1000 };
 
       const hasError = tierValidationService.detectDatabaseErrors(
-        invalidUserTier, 
-        validUsage, 
+        invalidUserTier,
+        validUsage,
         validLimits
       );
 
@@ -216,7 +216,7 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
   describe('Performance Optimizations', () => {
     it('should use parallelized data fetching with Promise.all', async () => {
       const userId = 'test-user-123';
-      
+
       // Mock concurrent responses with delays
       mockSupabaseClient.single
         .mockResolvedValueOnce({ data: { plan: 'pro' }, error: null })
@@ -245,7 +245,10 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
         count: jest.fn().mockResolvedValue({ count: 25, error: null })
       });
 
-      const result = await tierValidationService.fetchUsageFromDatabaseOptimized(userId, cycleStart);
+      const result = await tierValidationService.fetchUsageFromDatabaseOptimized(
+        userId,
+        cycleStart
+      );
 
       // Should use count queries for performance
       expect(mockSupabaseClient.select).toHaveBeenCalledWith('*', { count: 'exact', head: true });
@@ -290,11 +293,18 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
 
       mockSupabaseClient.upsert.mockResolvedValue({ data: [], error: null });
 
-      const result = await tierValidationService.handleTierUpgradeEnhanced(userId, newTier, oldTier);
+      const result = await tierValidationService.handleTierUpgradeEnhanced(
+        userId,
+        newTier,
+        oldTier
+      );
 
       expect(result.success).toBe(true);
       expect(result.effectiveImmediately).toBe(true);
-      expect(logger.info).toHaveBeenCalledWith('Processing enhanced tier upgrade:', expect.any(Object));
+      expect(logger.info).toHaveBeenCalledWith(
+        'Processing enhanced tier upgrade:',
+        expect.any(Object)
+      );
     });
 
     it('should handle enhanced tier downgrade with dynamic effective dates', async () => {
@@ -306,9 +316,9 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
       mockSupabaseClient.upsert.mockResolvedValue({ data: [], error: null });
 
       const result = await tierValidationService.handleTierDowngradeEnhanced(
-        userId, 
-        newTier, 
-        oldTier, 
+        userId,
+        newTier,
+        oldTier,
         options
       );
 
@@ -338,12 +348,12 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
   describe('Enhanced Action Validation', () => {
     it('should provide enhanced metrics and logging', async () => {
       const userId = 'test-user-123';
-      
+
       mockSupabaseClient.single.mockResolvedValue({
         data: { plan: 'pro', status: 'active' },
         error: null
       });
-      
+
       planLimitsService.getPlanLimits.mockResolvedValue({
         monthlyResponsesLimit: 1000
       });
@@ -354,13 +364,13 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
     });
 
     it('should calculate warning status for approaching limits', () => {
-      const tierLimits = { 
+      const tierLimits = {
         monthlyResponsesLimit: 100,
-        monthlyAnalysisLimit: 1000 
+        monthlyAnalysisLimit: 1000
       };
-      const currentUsage = { 
+      const currentUsage = {
         roastsThisMonth: 82,
-        analysisThisMonth: 850 
+        analysisThisMonth: 850
       };
 
       const result = tierValidationService.calculateWarningStatus(tierLimits, currentUsage);
@@ -368,8 +378,8 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
       // 82/100 = 82% > 80% threshold
       expect(result.roast).toBeDefined();
       expect(result.roast.percentage).toBe(82);
-      
-      // 850/1000 = 85% > 80% threshold  
+
+      // 850/1000 = 85% > 80% threshold
       expect(result.analysis).toBeDefined();
       expect(result.analysis.percentage).toBe(85);
     });
@@ -390,12 +400,12 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
 
     it('should track validation metrics accurately', async () => {
       const userId = 'test-user-123';
-      
+
       mockSupabaseClient.single.mockResolvedValue({
         data: { plan: 'free', status: 'active' },
         error: null
       });
-      
+
       planLimitsService.getPlanLimits.mockResolvedValue({
         monthlyResponsesLimit: 10
       });
@@ -418,7 +428,7 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
   describe('Edge Cases and Error Handling', () => {
     it('should handle malformed user tier data gracefully', async () => {
       const userId = 'test-user-123';
-      
+
       mockSupabaseClient.single.mockResolvedValue({
         data: { plan: null, status: undefined },
         error: null
@@ -440,7 +450,10 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
         count: jest.fn().mockRejectedValue(new Error('Database error'))
       });
 
-      const result = await tierValidationService.fetchUsageFromDatabaseOptimized(userId, cycleStart);
+      const result = await tierValidationService.fetchUsageFromDatabaseOptimized(
+        userId,
+        cycleStart
+      );
 
       expect(result.error).toBe(true);
       expect(result.roastsThisMonth).toBe(0); // Safe defaults
@@ -465,7 +478,7 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
   describe('Backwards Compatibility', () => {
     it('should maintain legacy method compatibility', async () => {
       const userId = 'test-user-123';
-      
+
       mockSupabaseClient.single.mockResolvedValue({
         data: { plan: 'pro', status: 'active' },
         error: null
@@ -484,7 +497,7 @@ describe('TierValidationService - CodeRabbit Round 4 Improvements', () => {
 
       // Legacy cache method should work
       tierValidationService.setCachedUsage(userId, usage);
-      
+
       // Should be retrievable
       const cached = tierValidationService.getCachedUsage(userId);
       expect(cached.roastsThisMonth).toBe(50);

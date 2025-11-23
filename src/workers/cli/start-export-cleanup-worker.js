@@ -2,7 +2,7 @@
 
 /**
  * Export Cleanup Worker CLI (Issue #116)
- * 
+ *
  * Starts the export file cleanup worker for GDPR compliance.
  * Automatically deletes expired export files based on retention rules.
  */
@@ -17,97 +17,100 @@ const { logger } = require('../../utils/logger');
  * @returns {number} Parsed integer or default value
  */
 function parseEnvInt(envVar, defaultValue) {
-    if (envVar === undefined || envVar === null || envVar === '') {
-        return defaultValue;
-    }
-    const parsed = parseInt(envVar, 10);
-    return isNaN(parsed) ? defaultValue : parsed;
+  if (envVar === undefined || envVar === null || envVar === '') {
+    return defaultValue;
+  }
+  const parsed = parseInt(envVar, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
 }
 
 // Configuration (Issue #278: Fixed EXPORT_MAX_AGE_HOURS=0 parsing bug)
 const config = {
-    scanInterval: parseEnvInt(process.env.EXPORT_CLEANUP_INTERVAL_MS, 15 * 60 * 1000), // 15 minutes default
-    maxAgeAfterCreation: parseEnvInt(process.env.EXPORT_MAX_AGE_HOURS, 24) * 60 * 60 * 1000, // 24 hours default
-    maxAgeAfterDownload: parseEnvInt(process.env.EXPORT_MAX_AGE_AFTER_DOWNLOAD_HOURS, 1) * 60 * 60 * 1000, // 1 hour default
+  scanInterval: parseEnvInt(process.env.EXPORT_CLEANUP_INTERVAL_MS, 15 * 60 * 1000), // 15 minutes default
+  maxAgeAfterCreation: parseEnvInt(process.env.EXPORT_MAX_AGE_HOURS, 24) * 60 * 60 * 1000, // 24 hours default
+  maxAgeAfterDownload:
+    parseEnvInt(process.env.EXPORT_MAX_AGE_AFTER_DOWNLOAD_HOURS, 1) * 60 * 60 * 1000 // 1 hour default
 };
 
 async function startExportCleanupWorker() {
-    logger.info('Starting Export Cleanup Worker for GDPR Compliance', {
-        pid: process.pid,
-        nodeVersion: process.version,
-        config
+  logger.info('Starting Export Cleanup Worker for GDPR Compliance', {
+    pid: process.pid,
+    nodeVersion: process.version,
+    config
+  });
+
+  try {
+    const worker = new ExportCleanupWorker({
+      scanInterval: config.scanInterval,
+      maxAgeAfterCreation: config.maxAgeAfterCreation,
+      maxAgeAfterDownload: config.maxAgeAfterDownload
     });
 
-    try {
-        const worker = new ExportCleanupWorker({
-            scanInterval: config.scanInterval,
-            maxAgeAfterCreation: config.maxAgeAfterCreation,
-            maxAgeAfterDownload: config.maxAgeAfterDownload
-        });
+    // Start the worker
+    await worker.start();
 
-        // Start the worker
-        await worker.start();
+    // Handle process termination
+    const gracefulShutdown = async (signal) => {
+      logger.info(`Received ${signal}, shutting down export cleanup worker gracefully...`);
 
-        // Handle process termination
-        const gracefulShutdown = async (signal) => {
-            logger.info(`Received ${signal}, shutting down export cleanup worker gracefully...`);
-            
-            try {
-                await worker.stop();
-                logger.info('Export cleanup worker stopped successfully');
-                process.exit(0);
-            } catch (error) {
-                logger.error('Error during graceful shutdown', {
-                    error: error.message
-                });
-                process.exit(1);
-            }
-        };
-
-        // Listen for termination signals
-        process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-        process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-        // Handle uncaught exceptions
-        process.on('uncaughtException', (error) => {
-            logger.error('Uncaught exception in export cleanup worker', {
-                error: error.message,
-                stack: error.stack
-            });
-            process.exit(1);
-        });
-
-        process.on('unhandledRejection', (reason, promise) => {
-            logger.error('Unhandled rejection in export cleanup worker', {
-                reason: reason?.message || reason,
-                stack: reason?.stack
-            });
-            process.exit(1);
-        });
-
-        // Status reporting every 5 minutes
-        setInterval(() => {
-            const status = worker.getStatus();
-            logger.info('Export cleanup worker status', status);
-        }, 5 * 60 * 1000);
-
-        logger.info('Export cleanup worker started successfully', {
-            workerName: worker.workerName,
-            scanIntervalMinutes: config.scanInterval / (60 * 1000)
-        });
-
-    } catch (error) {
-        logger.error('Failed to start export cleanup worker', {
-            error: error.message,
-            stack: error.stack
+      try {
+        await worker.stop();
+        logger.info('Export cleanup worker stopped successfully');
+        process.exit(0);
+      } catch (error) {
+        logger.error('Error during graceful shutdown', {
+          error: error.message
         });
         process.exit(1);
-    }
+      }
+    };
+
+    // Listen for termination signals
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+    // Handle uncaught exceptions
+    process.on('uncaughtException', (error) => {
+      logger.error('Uncaught exception in export cleanup worker', {
+        error: error.message,
+        stack: error.stack
+      });
+      process.exit(1);
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+      logger.error('Unhandled rejection in export cleanup worker', {
+        reason: reason?.message || reason,
+        stack: reason?.stack
+      });
+      process.exit(1);
+    });
+
+    // Status reporting every 5 minutes
+    setInterval(
+      () => {
+        const status = worker.getStatus();
+        logger.info('Export cleanup worker status', status);
+      },
+      5 * 60 * 1000
+    );
+
+    logger.info('Export cleanup worker started successfully', {
+      workerName: worker.workerName,
+      scanIntervalMinutes: config.scanInterval / (60 * 1000)
+    });
+  } catch (error) {
+    logger.error('Failed to start export cleanup worker', {
+      error: error.message,
+      stack: error.stack
+    });
+    process.exit(1);
+  }
 }
 
 // Start the worker if this file is run directly
 if (require.main === module) {
-    startExportCleanupWorker();
+  startExportCleanupWorker();
 }
 
 module.exports = { startExportCleanupWorker };

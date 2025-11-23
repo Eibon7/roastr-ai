@@ -266,7 +266,8 @@ class DocumentUpdater {
       if (metrics.healthScore) {
         const { score } = metrics.healthScore;
         // Match: | **Average Health Score** | 98.8/100 | 🟢 HEALTHY |
-        const healthRegex = /(\|\s*\*\*Average Health Score\*\*\s*\|\s*)(\d+(?:\.\d+)?\/100)(\s*\|)/g;
+        const healthRegex =
+          /(\|\s*\*\*Average Health Score\*\*\s*\|\s*)(\d+(?:\.\d+)?\/100)(\s*\|)/g;
         const newHealth = `${score.toFixed(1)}/100`;
         const replaced = newContent.replace(healthRegex, `$1${newHealth}$3`);
         if (replaced !== newContent) {
@@ -306,7 +307,10 @@ class DocumentUpdater {
           await this.backupFile(summaryPath);
           await fs.writeFile(summaryPath, newContent, 'utf-8');
         }
-        return { updated: true, changes: this.changes.filter(c => c.file === 'GDD-IMPLEMENTATION-SUMMARY.md') };
+        return {
+          updated: true,
+          changes: this.changes.filter((c) => c.file === 'GDD-IMPLEMENTATION-SUMMARY.md')
+        };
       }
 
       return { updated: false, changes: [] };
@@ -366,12 +370,15 @@ class DocumentUpdater {
 
       // Validate health score
       if (metrics.healthScore) {
-        const healthMatch = content.match(/\*\*Average Health Score\*\*\s*\|\s*(\d+(?:\.\d+)?)\/100/);
+        const healthMatch = content.match(
+          /\*\*Average Health Score\*\*\s*\|\s*(\d+(?:\.\d+)?)\/100/
+        );
         if (healthMatch) {
           const [, docScore] = healthMatch;
           const { score } = metrics.healthScore;
           const diff = Math.abs(parseFloat(docScore) - score);
-          if (diff > 0.5) {  // Tolerance of 0.5 points
+          if (diff > 0.5) {
+            // Tolerance of 0.5 points
             issues.push({
               metric: 'health_score',
               documented: `${docScore}/100`,
@@ -407,7 +414,7 @@ class CLI {
       ci: args.includes('--ci'),
       validate: args.includes('--validate'),
       help: args.includes('--help') || args.includes('-h'),
-      metric: args.find(arg => arg.startsWith('--metric='))?.split('=')[1]
+      metric: args.find((arg) => arg.startsWith('--metric='))?.split('=')[1]
     };
   }
 
@@ -505,13 +512,17 @@ Exit Codes:
       out('');
       out('Collected Metrics:');
       if (filtered.lighthouse) {
-        out(`  ✓ Lighthouse: ${filtered.lighthouse.score}/100 (from ${filtered.lighthouse.source})`);
+        out(
+          `  ✓ Lighthouse: ${filtered.lighthouse.score}/100 (from ${filtered.lighthouse.source})`
+        );
       } else {
         out(`  ⚠ Lighthouse: Not available`);
       }
 
       if (filtered.nodeCount) {
-        out(`  ✓ Node Count: ${filtered.nodeCount.healthy}/${filtered.nodeCount.total} (${filtered.nodeCount.orphans} orphans)`);
+        out(
+          `  ✓ Node Count: ${filtered.nodeCount.healthy}/${filtered.nodeCount.total} (${filtered.nodeCount.orphans} orphans)`
+        );
       } else {
         out(`  ⚠ Node Count: Not available`);
       }
@@ -523,7 +534,9 @@ Exit Codes:
       }
 
       if (filtered.coverage) {
-        out(`  ✓ Coverage: ${filtered.coverage.lines.toFixed(1)}% lines, ${filtered.coverage.branches.toFixed(1)}% branches`);
+        out(
+          `  ✓ Coverage: ${filtered.coverage.lines.toFixed(1)}% lines, ${filtered.coverage.branches.toFixed(1)}% branches`
+        );
       } else {
         out(`  ⚠ Coverage: Not available`);
       }
@@ -547,9 +560,11 @@ Exit Codes:
       }
 
       out(`  ⚠️  Found ${issues.length} inconsistencies:`);
-      issues.forEach(issue => {
+      issues.forEach((issue) => {
         const severity = issue.severity === 'error' ? '❌' : '⚠️';
-        out(`    ${severity} ${issue.metric}: documented=${issue.documented}, actual=${issue.actual}${issue.diff ? ` (diff: ${issue.diff})` : ''}`);
+        out(
+          `    ${severity} ${issue.metric}: documented=${issue.documented}, actual=${issue.actual}${issue.diff ? ` (diff: ${issue.diff})` : ''}`
+        );
       });
       return 1;
     }
@@ -561,7 +576,9 @@ Exit Codes:
     // Check for errors (Issue #621, CodeRabbit P1)
     if (results.summary.error) {
       if (ciMode) {
-        process.stdout.write(JSON.stringify({ error: results.summary.error, results, metrics: filtered }, null, 2));
+        process.stdout.write(
+          JSON.stringify({ error: results.summary.error, results, metrics: filtered }, null, 2)
+        );
         return 1;
       }
       err('');
@@ -579,7 +596,7 @@ Exit Codes:
     out('📝 Update Results:');
     if (results.summary.updated) {
       out(`  ✓ GDD-IMPLEMENTATION-SUMMARY.md: ${results.summary.changes.length} changes`);
-      results.summary.changes.forEach(change => {
+      results.summary.changes.forEach((change) => {
         out(`    - ${change.metric}: updated to ${change.new}`);
       });
     } else {
@@ -603,9 +620,10 @@ Exit Codes:
 // Run CLI if executed directly
 if (require.main === module) {
   const cli = new CLI();
-  cli.run()
-    .then(exitCode => process.exit(exitCode))
-    .catch(error => {
+  cli
+    .run()
+    .then((exitCode) => process.exit(exitCode))
+    .catch((error) => {
       err(`❌ Fatal error: ${error.message}`);
       if (error.stack) {
         err(error.stack);

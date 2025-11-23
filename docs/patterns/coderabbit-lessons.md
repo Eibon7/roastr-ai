@@ -15,18 +15,21 @@
 **Pattern:** Missing semicolons, inconsistent const/let usage, console.logs in production
 
 **❌ Mistake:**
+
 ```javascript
-let count = 0  // Missing semicolon
-console.log('Debug:', data) // console.log in production
+let count = 0; // Missing semicolon
+console.log('Debug:', data); // console.log in production
 ```
 
 **✅ Fix:**
+
 ```javascript
 const count = 0; // Prefer const, always semicolon
 logger.debug('Debug:', data); // Use logger utility
 ```
 
 **Rules to apply:**
+
 - Always use semicolons (ESLint: `semi: ["error", "always"]`)
 - Prefer `const` over `let` (ESLint: `prefer-const: "error"`)
 - Use `utils/logger.js` instead of `console.log`
@@ -39,6 +42,7 @@ logger.debug('Debug:', data); // Use logger utility
 **Pattern:** Implementing code without tests, tests only cover happy path, mock assertions missing
 
 **❌ Mistake:**
+
 ```javascript
 // Implement feature first
 function processPayment(amount) {
@@ -49,6 +53,7 @@ function processPayment(amount) {
 ```
 
 **✅ Fix:**
+
 ```javascript
 // TDD: Write test FIRST
 describe('processPayment', () => {
@@ -75,6 +80,7 @@ function processPayment(amount) {
 ```
 
 **Rules to apply:**
+
 - Write tests BEFORE implementation (TDD)
 - Cover happy path + error cases + edge cases
 - Verify mock calls: `expect(mock).toHaveBeenCalledWith(...)`
@@ -87,6 +93,7 @@ function processPayment(amount) {
 **Pattern:** Missing type definitions, implicit `any`, functions without @param/@returns
 
 **❌ Mistake:**
+
 ```javascript
 function calculateDiscount(price, percent) {
   return price * (percent / 100);
@@ -94,6 +101,7 @@ function calculateDiscount(price, percent) {
 ```
 
 **✅ Fix:**
+
 ```javascript
 /**
  * Calculate discount amount for a given price and percentage
@@ -107,6 +115,7 @@ function calculateDiscount(price, percent) {
 ```
 
 **Rules to apply:**
+
 - Add JSDoc to all exported functions
 - Include `@param` for each parameter with type
 - Include `@returns` with return type
@@ -119,26 +128,31 @@ function calculateDiscount(price, percent) {
 **Pattern:** Forgetting to update coverage, missing "Agentes Relevantes", manual coverage modification
 
 **❌ Mistake:**
+
 ```markdown
-**Coverage:** 75%  <!-- Manually entered -->
+**Coverage:** 75% <!-- Manually entered -->
 **Coverage Source:** manual
 
 ## Agentes Relevantes
-- Backend Developer  <!-- Forgot to add Front-end Dev -->
+
+- Backend Developer <!-- Forgot to add Front-end Dev -->
 ```
 
 **✅ Fix:**
+
 ```markdown
-**Coverage:** 75%  <!-- Auto-generated from coverage-summary.json -->
+**Coverage:** 75% <!-- Auto-generated from coverage-summary.json -->
 **Coverage Source:** auto
 
 ## Agentes Relevantes
+
 - Backend Developer
-- Front-end Dev  <!-- Added after invoking agent -->
-- Test Engineer  <!-- Added after invoking agent -->
+- Front-end Dev <!-- Added after invoking agent -->
+- Test Engineer <!-- Added after invoking agent -->
 ```
 
 **Rules to apply:**
+
 - NEVER modify `**Coverage:**` manually
 - Always use `**Coverage Source:** auto`
 - Update "Agentes Relevantes" when invoking agent
@@ -151,6 +165,7 @@ function calculateDiscount(price, percent) {
 **Pattern:** Generic error messages, no retry logic, missing error codes
 
 **❌ Mistake:**
+
 ```javascript
 try {
   const result = await apiCall();
@@ -160,6 +175,7 @@ try {
 ```
 
 **✅ Fix:**
+
 ```javascript
 const MAX_RETRIES = 3;
 
@@ -179,6 +195,7 @@ async function apiCallWithRetry(attempt = 1) {
 ```
 
 **Rules to apply:**
+
 - Use specific error codes (e.g., `E_TIMEOUT`, `E_VALIDATION`)
 - Implement retry logic for transient errors
 - Log errors with context (attempt number, user ID, etc.)
@@ -191,12 +208,14 @@ async function apiCallWithRetry(attempt = 1) {
 **Pattern:** Hardcoded credentials, env vars in docs, sensitive data in logs
 
 **❌ Mistake:**
+
 ```javascript
 const API_KEY = 'sk-abc123...'; // Hardcoded
 logger.info('User data:', { email, password }); // Sensitive data logged
 ```
 
 **✅ Fix:**
+
 ```javascript
 const API_KEY = process.env.OPENAI_API_KEY; // From env
 if (!API_KEY) throw new Error('OPENAI_API_KEY not configured');
@@ -205,6 +224,7 @@ logger.info('User data:', { email, passwordHash }); // Hash only
 ```
 
 **Rules to apply:**
+
 - NO hardcoded credentials in code
 - NO env var examples in public docs (use "🔐 Requires environment variables")
 - NO sensitive data (passwords, tokens) in logs
@@ -217,12 +237,14 @@ logger.info('User data:', { email, passwordHash }); // Hash only
 **Pattern:** Claude merges PRs without user approval, bypassing final review opportunity
 
 **❌ Mistake:**
+
 ```bash
 # After resolving conflicts and CI passing
 gh pr merge 581 --squash --delete-branch  # ❌ NEVER DO THIS
 ```
 
 **✅ Fix:**
+
 ```bash
 # After resolving conflicts and CI passing
 echo "✅ PR #581 ready to merge:"
@@ -235,6 +257,7 @@ echo "⏸️  Waiting for your approval to merge."
 ```
 
 **Why this matters:**
+
 - **CodeRabbit needs time to review** after final changes
 - **User is the project owner** - only they decide when to merge
 - **Final review opportunity** - user may spot issues Claude missed
@@ -242,6 +265,7 @@ echo "⏸️  Waiting for your approval to merge."
 - **Unauthorized merges break trust** - Claude is an assistant, not the decision maker
 
 **Rules to apply:**
+
 - NEVER run `gh pr merge` command
 - NEVER click merge buttons
 - NEVER assume CI passing = ready to merge
@@ -260,6 +284,7 @@ echo "⏸️  Waiting for your approval to merge."
 **Pattern:** CodeRabbit generates reviews on temporary intermediate commit states during multi-step git operations (cherry-picks, rebases, merges) before completion.
 
 **❌ Mistake:**
+
 ```bash
 # During cherry-pick with conflicts
 git cherry-pick abc123
@@ -282,6 +307,7 @@ git cherry-pick --continue  # Complete resolution
 ```
 
 **✅ Fix:**
+
 ```bash
 # Verify current state BEFORE applying fixes
 grep -rn "<<<<<<< HEAD\|=======\|>>>>>>>" <files-mentioned-in-review>
@@ -305,6 +331,7 @@ chmod +x .git/hooks/pre-push
 ```
 
 **Rules to apply:**
+
 - Always verify current file state before assuming issues exist
 - Complete cherry-pick/rebase operations promptly to avoid intermediate states
 - Run `git grep "<<<<<<< HEAD"` before pushing to catch stray markers
@@ -313,12 +340,14 @@ chmod +x .git/hooks/pre-push
 - Add pre-push hook to detect conflict markers automatically
 
 **Why this happens:**
+
 - Cherry-picks/rebases can take multiple steps to complete
 - CodeRabbit review queue may process intermediate commits before resolution
 - Temporary conflict markers trigger reviews even if resolved moments later
 - Review arrives after conflicts already cleaned up
 
 **Response Protocol:**
+
 1. Verify current state first (don't assume issues exist)
 2. If pre-resolved, document why and when resolution occurred
 3. Create evidence showing verification of clean state
@@ -331,20 +360,20 @@ chmod +x .git/hooks/pre-push
 
 ## 📊 Estadísticas
 
-| Patrón | Ocurrencias | Tasa Reducción | Última Ocurrencia |
-|--------|-------------|----------------|-------------------|
-| Missing semicolons | 12 | -60% | 2025-10-10 |
-| const vs let | 8 | -75% | 2025-10-09 |
-| Missing tests | 5 | -40% | 2025-10-12 |
-| Console.log usage | 15 | -80% | 2025-10-08 |
-| Coverage manual | 4 | -100% | 2025-10-07 |
-| Generic errors | 6 | -50% | 2025-10-11 |
-| Unauthorized merge | 1 | N/A | 2025-10-15 |
-| Cherry-pick reviews | 1 | N/A | 2025-10-16 |
-| Jest integration tests | 7 | -100% (fixed) | 2025-10-20 |
-| fs-extra deprecated | 4 | -100% (fixed) | 2025-10-20 |
-| logger import pattern | 2 | -100% (fixed) | 2025-10-20 |
-| Jest module cache | 1 | -100% (fixed) | 2025-11-08 |
+| Patrón                 | Ocurrencias | Tasa Reducción | Última Ocurrencia |
+| ---------------------- | ----------- | -------------- | ----------------- |
+| Missing semicolons     | 12          | -60%           | 2025-10-10        |
+| const vs let           | 8           | -75%           | 2025-10-09        |
+| Missing tests          | 5           | -40%           | 2025-10-12        |
+| Console.log usage      | 15          | -80%           | 2025-10-08        |
+| Coverage manual        | 4           | -100%          | 2025-10-07        |
+| Generic errors         | 6           | -50%           | 2025-10-11        |
+| Unauthorized merge     | 1           | N/A            | 2025-10-15        |
+| Cherry-pick reviews    | 1           | N/A            | 2025-10-16        |
+| Jest integration tests | 7           | -100% (fixed)  | 2025-10-20        |
+| fs-extra deprecated    | 4           | -100% (fixed)  | 2025-10-20        |
+| logger import pattern  | 2           | -100% (fixed)  | 2025-10-20        |
+| Jest module cache      | 1           | -100% (fixed)  | 2025-11-08        |
 
 **Objetivo:** Reducir tasa de repetición <10% en todos los patrones
 
@@ -369,11 +398,13 @@ Antes de escribir código, verificar:
 ## 🔄 Proceso de Actualización
 
 **Cuándo actualizar este archivo:**
+
 - Después de recibir review de CodeRabbit con ≥3 comentarios
 - Si detectas patrón nuevo que se repite ≥2 veces
 - Cuando implementes fix para error recurrente
 
 **Cómo actualizar:**
+
 1. Identificar patrón en review de CodeRabbit
 2. Añadir sección con ❌ Mistake / ✅ Fix
 3. Actualizar estadísticas (ocurrencias, última fecha)
@@ -390,50 +421,55 @@ Antes de escribir código, verificar:
 **Issue:** Test Fixing Session (2025-10-20) - From 0% to 87.5% passing
 
 **❌ Mistake 1: Router Mounting Order**
+
 ```javascript
 // Wrong: Generic routes registered before specific ones
-app.use('/api', dashboardRoutes);       // Has /roast/preview
-app.use('/api/roast', roastRoutes);     // Has /preview (intercepted!)
+app.use('/api', dashboardRoutes); // Has /roast/preview
+app.use('/api/roast', roastRoutes); // Has /preview (intercepted!)
 ```
 
 **✅ Fix:**
+
 ```javascript
 // Correct: Most specific routes first, or remove duplicates
 // Option 1: Remove duplicate from dashboard
 // Option 2: Register specific routes first
-app.use('/api/roast', roastRoutes);     // Register first
-app.use('/api', dashboardRoutes);       // Generic last
+app.use('/api/roast', roastRoutes); // Register first
+app.use('/api', dashboardRoutes); // Generic last
 ```
 
 **❌ Mistake 2: Module-level calls without defensive checks**
+
 ```javascript
 // src/routes/roast.js
 const { flags } = require('../config/flags');
 
 // Called at module load time - breaks in Jest
 if (flags.isEnabled('ENABLE_REAL_OPENAI')) {
-    roastGenerator = new RoastGeneratorEnhanced();
+  roastGenerator = new RoastGeneratorEnhanced();
 }
 ```
 
 **✅ Fix:**
+
 ```javascript
 // Add defensive helper function
 const isFlagEnabled = (flagName) => {
-    try {
-        return flags && typeof flags.isEnabled === 'function' && flags.isEnabled(flagName);
-    } catch (error) {
-        logger.warn(`⚠️ Error checking flag ${flagName}:`, error.message);
-        return false;
-    }
+  try {
+    return flags && typeof flags.isEnabled === 'function' && flags.isEnabled(flagName);
+  } catch (error) {
+    logger.warn(`⚠️ Error checking flag ${flagName}:`, error.message);
+    return false;
+  }
 };
 
 if (isFlagEnabled('ENABLE_REAL_OPENAI')) {
-    roastGenerator = new RoastGeneratorEnhanced();
+  roastGenerator = new RoastGeneratorEnhanced();
 }
 ```
 
 **❌ Mistake 3: Rate limiters in test environment**
+
 ```javascript
 // express-rate-limit throws errors with trust proxy in Jest
 const roastRateLimit = createRoastRateLimiter();
@@ -442,72 +478,82 @@ router.post('/preview', roastRateLimit, handler);
 ```
 
 **✅ Fix:**
+
 ```javascript
 function createRoastRateLimiter(options = {}) {
-    // Issue #618: Disable rate limiting in test environment
-    if (process.env.NODE_ENV === 'test') {
-        return (req, res, next) => next();
-    }
+  // Issue #618: Disable rate limiting in test environment
+  if (process.env.NODE_ENV === 'test') {
+    return (req, res, next) => next();
+  }
 
-    // Normal rate limiter setup for production
-    return (req, res, next) => { /* ... */ };
+  // Normal rate limiter setup for production
+  return (req, res, next) => {
+    /* ... */
+  };
 }
 ```
 
 **❌ Mistake 4: Global mocks interfering with integration tests**
+
 ```javascript
 // tests/setupEnvOnly.js
 jest.mock('../src/config/flags', () => ({
-    flags: { isEnabled: jest.fn() }
+  flags: { isEnabled: jest.fn() }
 }));
 // This breaks ALL tests, including integration tests that need real behavior
 ```
 
 **✅ Fix:**
+
 ```javascript
 // Remove global mocks from setupEnvOnly.js
 // Let each unit test define its own mocks:
 // tests/unit/service.test.js
 jest.mock('../../src/config/flags', () => ({
-    flags: { isEnabled: jest.fn() }
+  flags: { isEnabled: jest.fn() }
 }));
 ```
 
 **❌ Mistake 5: External dependencies not available in test**
+
 ```javascript
 // src/services/perspectiveService.js
-this.client = google.commentanalyzer({  // Breaks in Jest
-    version: 'v1alpha1',
-    auth: this.apiKey
+this.client = google.commentanalyzer({
+  // Breaks in Jest
+  version: 'v1alpha1',
+  auth: this.apiKey
 });
 ```
 
 **✅ Fix:**
+
 ```javascript
 try {
-    // Check if available before using
-    if (!google || typeof google.commentanalyzer !== 'function') {
-        logger.warn('Google Perspective API client not available (likely test environment)');
-        this.enabled = false;
-        return;
-    }
-
-    this.client = google.commentanalyzer({
-        version: 'v1alpha1',
-        auth: this.apiKey
-    });
-} catch (error) {
-    logger.warn('⚠️ Failed to initialize Perspective API:', error.message);
+  // Check if available before using
+  if (!google || typeof google.commentanalyzer !== 'function') {
+    logger.warn('Google Perspective API client not available (likely test environment)');
     this.enabled = false;
+    return;
+  }
+
+  this.client = google.commentanalyzer({
+    version: 'v1alpha1',
+    auth: this.apiKey
+  });
+} catch (error) {
+  logger.warn('⚠️ Failed to initialize Perspective API:', error.message);
+  this.enabled = false;
 }
 ```
 
 **Impact:**
+
 - **Before:** 0/24 tests passing (100% failure)
 - **After:** 21/24 tests passing (87.5% success)
 - **Discovered:** Critical production bug (duplicate endpoint serving wrong responses)
 
 **Files affected:**
+
 - src/routes/dashboard.js (duplicate endpoint removed)
 - src/routes/roast.js (defensive flag checks)
 - src/services/perspectiveService.js (defensive initialization)
@@ -516,6 +562,7 @@ try {
 - tests/integration/roast.test.js (rewritten for production quality)
 
 **Prevention checklist:**
+
 - [ ] Check router mounting order (specific before generic)
 - [ ] Add defensive checks for module-level calls
 - [ ] Disable rate limiters in test environment
@@ -525,6 +572,7 @@ try {
 - [ ] Verify no duplicate endpoints across route files
 
 **Occurrences:**
+
 - Router order: 1 (dashboard intercepting roast)
 - Module loading: 3 (flags, perspectiveService, roastEngine)
 - Rate limiter: Multiple (all routes with rate limiting)
@@ -533,6 +581,7 @@ try {
 **Last occurrence:** 2025-10-20 (Issue #618)
 
 **Related patterns:**
+
 - Testing Patterns (#2) - Write production-quality tests
 - Integration Workflow - Check for duplicates before adding endpoints
 
@@ -545,6 +594,7 @@ try {
 **Issue:** Test Fixing Session #2 (2025-10-20) - Fixed 6 more errors after roast.test.js success
 
 **❌ Mistake 1: Using deprecated fs-extra methods**
+
 ```javascript
 // Wrong: fs.remove() deprecated/unavailable in fs-extra 11.x
 const fs = require('fs-extra');
@@ -555,6 +605,7 @@ afterAll(async () => {
 ```
 
 **✅ Fix:**
+
 ```javascript
 // Correct: Use Node's built-in fs/promises.rm()
 const fs = require('fs-extra');
@@ -566,6 +617,7 @@ afterAll(async () => {
 ```
 
 **❌ Mistake 2: Logger import not matching Jest mock structure**
+
 ```javascript
 // Wrong: Import entire module when tests export { logger: {...} }
 const logger = require('../utils/logger');
@@ -576,6 +628,7 @@ constructor() {
 ```
 
 **✅ Fix:**
+
 ```javascript
 // Correct: Destructure logger to match Jest mock structure
 const { logger } = require('../utils/logger'); // Issue #618 - destructure
@@ -586,15 +639,18 @@ constructor() {
 ```
 
 **Impact:**
+
 - **Before:** 6 errors blocking multiple test suites
 - **After:** fs.remove errors resolved (4), logger.info errors resolved (2)
 - **Tests unblocked:** logCommands.test.js, autoApprovalSecurityV2.test.js
 
 **Files affected:**
+
 - tests/integration/cli/logCommands.test.js (fs.remove → rm)
 - src/services/PersonaService.js (logger import destructured)
 
 **Prevention checklist:**
+
 - [ ] Check library version supports the method you're using
 - [ ] Prefer Node built-ins over library methods when available
 - [ ] Ensure imports match Jest mock structure (destructure if mock exports object)
@@ -603,12 +659,14 @@ constructor() {
 - [ ] When errors say "is not a function", verify import/export pattern match
 
 **Occurrences:**
+
 - fs.remove: 4 (all in logCommands.test.js)
 - logger incorrect import: 2 (PersonaService.js affected multiple tests)
 
 **Last occurrence:** 2025-10-20 (Issue #618, commit 9d4cede1)
 
 **Related patterns:**
+
 - Jest Integration Tests (#9) - Module-level calls need defensive checks
 - Testing Patterns (#2) - Use production code paths in tests
 
@@ -619,6 +677,7 @@ constructor() {
 **Pattern:** Tests attempt to reassign mock properties in `beforeEach()` after module resolution, causing "supabaseServiceClient.from is not a function" errors.
 
 **Error signature:**
+
 ```
 TypeError: supabaseServiceClient.from is not a function
 ```
@@ -635,6 +694,7 @@ beforeEach(() => {
 ```
 
 **❌ BROKEN Pattern:**
+
 ```javascript
 // tests/unit/workers/ShieldActionWorker.test.js (BEFORE FIX)
 
@@ -652,6 +712,7 @@ beforeEach(() => {
 ```
 
 **✅ CORRECT Pattern:**
+
 ```javascript
 // Create mock BEFORE jest.mock() call
 const mockSupabase = {
@@ -682,16 +743,20 @@ jest.mock('../../src/config/supabase', () => ({
 ```
 
 **Even Better: Use Factory Helper:**
+
 ```javascript
 const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
 
 // Step 1: Create mock with defaults
-const mockSupabase = createSupabaseMock({
-  user_subscriptions: { plan: 'pro', status: 'active' },
-  roast_usage: { count: 15 }
-}, {
-  get_subscription_tier: { data: 'PRO', error: null }
-});
+const mockSupabase = createSupabaseMock(
+  {
+    user_subscriptions: { plan: 'pro', status: 'active' },
+    roast_usage: { count: 15 }
+  },
+  {
+    get_subscription_tier: { data: 'PRO', error: null }
+  }
+);
 
 // Step 2: Reference in jest.mock()
 jest.mock('../../src/config/supabase', () => ({
@@ -709,6 +774,7 @@ beforeEach(() => {
 ```
 
 **Rules to apply:**
+
 - **ALWAYS** create mocks BEFORE `jest.mock()` calls
 - **NEVER** reassign mock properties in `beforeEach()` - reference is frozen
 - **USE** `tests/helpers/supabaseMockFactory.js` for consistent mocking
@@ -717,6 +783,7 @@ beforeEach(() => {
 - Verify mock calls in assertions: `expect(mockSupabase.from).toHaveBeenCalledWith('table_name')`
 
 **Affected Files (8 files, 75 errors):**
+
 - `tests/unit/workers/ShieldActionWorker.test.js` (19 errors)
 - `tests/unit/workers/FetchCommentsWorker.test.js` (15 errors)
 - `tests/unit/workers/AnalyzeToxicityWorker.test.js` (6 errors)
@@ -727,11 +794,13 @@ beforeEach(() => {
 - `tests/unit/services/tokenRefreshService.test.js` (2 errors)
 
 **Reference Implementation:**
+
 - Working example: `tests/integration/roast.test.js` (lines 59-108)
 - Factory helper: `tests/helpers/supabaseMockFactory.js`
 - Test template: `tests/templates/service.test.template.js`
 
 **Related patterns:**
+
 - Jest Integration Tests (#9) - Module-level mock timing
 - Testing Patterns (#2) - Comprehensive test coverage + mock verification
 
@@ -748,12 +817,14 @@ beforeEach(() => {
 **Root Cause:** Jest caches required modules. When tests modify mocks after the module is loaded, the module retains old mock references.
 
 **Symptoms:**
+
 - Tests ✅ PASS when executed individually
 - Tests ❌ FAIL when executed in full suite
 - `beforeEach` uses `mockReset()` or modifies mocks extensively
 - Different `describe` blocks need different mock configurations
 
 **❌ Mistake:**
+
 ```javascript
 // tests/unit/routes/endpoint.test.js
 describe('Suite A', () => {
@@ -800,6 +871,7 @@ describe('Suite B', () => {
 ```
 
 **Prevention checklist:**
+
 - [ ] If tests pass individually but fail in suite → module cache issue
 - [ ] Separate test files when different `describe` blocks need different mock states
 - [ ] Avoid `mockReset()` in nested `beforeEach` - signals module reload needed
@@ -807,17 +879,20 @@ describe('Suite B', () => {
 - [ ] Add comment explaining why tests are separated (reference issue number)
 
 **Impact:**
+
 - **Before:** 18/22 tests passing (82%), 4 failing in suite but passing individually
 - **After:** 18+4 = 22/22 tests passing (100%) in 2 separate files
 - **Resolution:** Clean separation, no module cache interference
 
 **Files affected (Issue #754):**
+
 - `tests/unit/routes/roast-validation-issue364.test.js` (18 tests)
 - `tests/unit/routes/roast-validation-gdpr-perf.test.js` (4 tests - separated)
 
 **Last occurrence:** 2025-11-08 (Issue #754)
 
 **Related patterns:**
+
 - Jest Integration Tests (#9) - Module-level calls need defensive checks
 - Testing Patterns (#2) - Write production-quality tests
 

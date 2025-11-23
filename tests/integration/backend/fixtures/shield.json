@@ -4,7 +4,7 @@
     "intercepted": [
       {
         "id": "shield_staging_1",
-        "accountId": "acc_tw_staging_1", 
+        "accountId": "acc_tw_staging_1",
         "category": "Insultos graves",
         "action": "Bloquear usuario",
         "preview": "***censurado por contenido extremo***",
@@ -95,7 +95,7 @@
         "originalHidden": "Tu contenido es bastante mediocre, la verdad. Deberías dedicarte a otra cosa",
         "toxicityScore": 0.71,
         "confidence": 0.65,
-        "language": "es", 
+        "language": "es",
         "createdAt": "2024-01-30T14:30:00Z",
         "processedAt": "2024-01-30T14:30:01Z",
         "actionTaken": false,
@@ -148,7 +148,12 @@
       },
       "available": {
         "categories": ["Insultos graves", "Amenazas", "Spam", "Toxicidad moderada"],
-        "actions": ["Bloquear usuario", "Reportar a plataforma", "Ocultar comentario", "Monitorear"],
+        "actions": [
+          "Bloquear usuario",
+          "Reportar a plataforma",
+          "Ocultar comentario",
+          "Monitorear"
+        ],
         "platforms": ["twitter", "instagram"],
         "dateRanges": ["today", "last_7_days", "last_30_days", "all"]
       }

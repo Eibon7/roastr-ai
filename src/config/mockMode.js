@@ -1,6 +1,6 @@
 /**
  * Central Mock Mode Configuration
- * 
+ *
  * Controls whether the application uses real APIs or mock responses
  * Switch: ENABLE_MOCK_MODE=true/false
  */
@@ -17,7 +17,9 @@ const timeoutPromise = (promise, timeoutMs, operation, organizationId) => {
   return Promise.race([
     promise,
     new Promise((_, reject) => {
-      const err = new Error(`${operation} timeout after ${timeoutMs}ms for organization ${organizationId}`);
+      const err = new Error(
+        `${operation} timeout after ${timeoutMs}ms for organization ${organizationId}`
+      );
       err.isTimeout = true;
       err.operation = operation;
       err.organizationId = organizationId;
@@ -46,21 +48,19 @@ class MockModeManager {
     if (process.env.NODE_ENV === 'test') {
       return true;
     }
-    
+
     // Check explicit mock mode setting
     if (process.env.ENABLE_MOCK_MODE === 'true') {
       return true;
     }
-    
+
     // Auto-detect mock mode if critical keys are missing
-    const criticalKeys = [
-      'OPENAI_API_KEY',
-      'SUPABASE_URL', 
-      'SUPABASE_SERVICE_KEY'
-    ];
-    
-    const missingKeys = criticalKeys.filter(key => !process.env[key] || process.env[key].startsWith('mock'));
-    
+    const criticalKeys = ['OPENAI_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
+
+    const missingKeys = criticalKeys.filter(
+      (key) => !process.env[key] || process.env[key].startsWith('mock')
+    );
+
     return missingKeys.length > 0;
   }
 
@@ -92,19 +92,22 @@ class MockModeManager {
     }
     return {
       auth: {
-        signInWithPassword: () => Promise.resolve({
-          data: { user: { id: 'mock-user-123', email: 'test@example.com' } },
-          error: null
-        }),
-        signUp: () => Promise.resolve({
-          data: { user: { id: 'mock-user-123', email: 'test@example.com' } },
-          error: null
-        }),
+        signInWithPassword: () =>
+          Promise.resolve({
+            data: { user: { id: 'mock-user-123', email: 'test@example.com' } },
+            error: null
+          }),
+        signUp: () =>
+          Promise.resolve({
+            data: { user: { id: 'mock-user-123', email: 'test@example.com' } },
+            error: null
+          }),
         signOut: () => Promise.resolve({ error: null }),
-        getUser: () => Promise.resolve({
-          data: { user: { id: 'mock-user-123', email: 'test@example.com' } },
-          error: null
-        }),
+        getUser: () =>
+          Promise.resolve({
+            data: { user: { id: 'mock-user-123', email: 'test@example.com' } },
+            error: null
+          }),
         onAuthStateChange: (callback) => {
           callback('SIGNED_IN', { id: 'mock-user-123', email: 'test@example.com' });
           return { data: { subscription: { unsubscribe: () => {} } } };
@@ -112,7 +115,7 @@ class MockModeManager {
       },
       from: (table) => {
         let currentQueries = {}; // Single queries object per table query
-        
+
         const chainable = {
           select: (columns = '*') => {
             currentQueries.select = columns;
@@ -125,7 +128,7 @@ class MockModeManager {
           single: () => {
             // Make a copy of currentQueries for this specific call to avoid pollution
             const queries = { ...currentQueries };
-            
+
             if (table === 'integration_configs') {
               return Promise.resolve({
                 data: {
@@ -138,20 +141,21 @@ class MockModeManager {
                 error: null
               });
             }
-            
+
             if (table === 'organizations') {
               return Promise.resolve({
                 data: { id: 'test-org', name: 'Test Organization' },
                 error: null
               });
             }
-            
+
             if (table === 'user_behaviors') {
               const storage = global.mockUserBehaviorStorage || [];
-              const existing = storage.find(behavior =>
-                behavior.organization_id === queries.organization_id &&
-                behavior.platform === queries.platform &&
-                behavior.platform_user_id === queries.platform_user_id
+              const existing = storage.find(
+                (behavior) =>
+                  behavior.organization_id === queries.organization_id &&
+                  behavior.platform === queries.platform &&
+                  behavior.platform_user_id === queries.platform_user_id
               );
 
               if (existing) {
@@ -173,10 +177,11 @@ class MockModeManager {
               console.log('🔍 Mock: Checking for existing comment with queries:', queries);
               console.log('🔍 Mock: Current storage has', storage.length, 'comments');
 
-              const existing = storage.find(comment =>
-                comment.organization_id === queries.organization_id &&
-                comment.platform === queries.platform &&
-                comment.platform_comment_id === queries.platform_comment_id
+              const existing = storage.find(
+                (comment) =>
+                  comment.organization_id === queries.organization_id &&
+                  comment.platform === queries.platform &&
+                  comment.platform_comment_id === queries.platform_comment_id
               );
 
               console.log('🔍 Mock: Found existing comment:', !!existing);
@@ -214,12 +219,13 @@ class MockModeManager {
               const dataArray = Array.isArray(data) ? data : [data];
               const results = [];
 
-              dataArray.forEach(item => {
+              dataArray.forEach((item) => {
                 // Check for existing comment to enforce deduplication
-                const existing = storage.find(comment =>
-                  comment.organization_id === item.organization_id &&
-                  comment.platform === item.platform &&
-                  comment.platform_comment_id === item.platform_comment_id
+                const existing = storage.find(
+                  (comment) =>
+                    comment.organization_id === item.organization_id &&
+                    comment.platform === item.platform &&
+                    comment.platform_comment_id === item.platform_comment_id
                 );
 
                 if (existing) {
@@ -279,21 +285,43 @@ class MockModeManager {
                 return Object.assign(selectChain, {
                   then: (onFulfilled, onRejected) => {
                     const resultData = Array.isArray(insertedData)
-                      ? insertedData.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
-                      : [{ ...insertedData, id: insertedData.id || 1, created_at: insertedData.created_at || new Date().toISOString() }];
+                      ? insertedData.map((item, i) => ({
+                          ...item,
+                          id: item.id || i + 1,
+                          created_at: item.created_at || new Date().toISOString()
+                        }))
+                      : [
+                          {
+                            ...insertedData,
+                            id: insertedData.id || 1,
+                            created_at: insertedData.created_at || new Date().toISOString()
+                          }
+                        ];
                     return Promise.resolve({
                       data: resultData,
                       error: null
-                    }).then(result => {
-                      // Attach single method to the resolved result for further chaining
-                      result.single = selectChain.single;
-                      return result;
-                    }).then(onFulfilled, onRejected);
+                    })
+                      .then((result) => {
+                        // Attach single method to the resolved result for further chaining
+                        result.single = selectChain.single;
+                        return result;
+                      })
+                      .then(onFulfilled, onRejected);
                   },
                   catch: (onRejected) => {
                     const resultData = Array.isArray(insertedData)
-                      ? insertedData.map((item, i) => ({ ...item, id: item.id || (i + 1), created_at: item.created_at || new Date().toISOString() }))
-                      : [{ ...insertedData, id: insertedData.id || 1, created_at: insertedData.created_at || new Date().toISOString() }];
+                      ? insertedData.map((item, i) => ({
+                          ...item,
+                          id: item.id || i + 1,
+                          created_at: item.created_at || new Date().toISOString()
+                        }))
+                      : [
+                          {
+                            ...insertedData,
+                            id: insertedData.id || 1,
+                            created_at: insertedData.created_at || new Date().toISOString()
+                          }
+                        ];
                     return Promise.resolve({
                       data: resultData,
                       error: null
@@ -317,10 +345,11 @@ class MockModeManager {
             return chainableInsert;
           },
           update: (data) => ({
-            eq: (column, value) => Promise.resolve({
-              data: [{ id: 1, ...data, updated_at: new Date().toISOString() }],
-              error: null
-            })
+            eq: (column, value) =>
+              Promise.resolve({
+                data: [{ id: 1, ...data, updated_at: new Date().toISOString() }],
+                error: null
+              })
           }),
           delete: () => ({
             eq: (column, value) => Promise.resolve({ data: null, error: null }),
@@ -334,22 +363,26 @@ class MockModeManager {
             // Return filtered comments based on current queries
             const storage = global.mockCommentStorage || [];
             let filteredData = storage;
-            
+
             // Apply filters based on current queries
             if (currentQueries.organization_id) {
-              filteredData = filteredData.filter(c => c.organization_id === currentQueries.organization_id);
+              filteredData = filteredData.filter(
+                (c) => c.organization_id === currentQueries.organization_id
+              );
             }
             if (currentQueries.platform) {
-              filteredData = filteredData.filter(c => c.platform === currentQueries.platform);
+              filteredData = filteredData.filter((c) => c.platform === currentQueries.platform);
             }
             if (currentQueries.platform_comment_id) {
-              filteredData = filteredData.filter(c => c.platform_comment_id === currentQueries.platform_comment_id);
+              filteredData = filteredData.filter(
+                (c) => c.platform_comment_id === currentQueries.platform_comment_id
+              );
             }
-            
+
             return Promise.resolve({
               data: filteredData,
               error: null
-            }).then(result => {
+            }).then((result) => {
               // Attach chainable methods to the result
               Object.assign(result, obj);
               return result;
@@ -358,14 +391,14 @@ class MockModeManager {
             return Promise.resolve({
               data: [{ id: 1, name: 'Mock Data', created_at: new Date().toISOString() }],
               error: null
-            }).then(result => {
+            }).then((result) => {
               // Attach chainable methods to the result
               Object.assign(result, obj);
               return result;
             });
           }
         };
-        
+
         // Make the chainable object act like a Promise
         return Object.assign(chainable, {
           then: (onFulfilled, onRejected) => {
@@ -376,13 +409,13 @@ class MockModeManager {
           }
         });
       },
-      
+
       // RPC method for database functions (required by CostControlService)
       rpc: (functionName, params = {}) => {
         if (functionName === 'can_perform_operation') {
           return Promise.resolve({
-            data: { 
-              allowed: true, 
+            data: {
+              allowed: true,
               reason: 'mock_allowed',
               current_usage: 0,
               limit: 1000,
@@ -391,21 +424,21 @@ class MockModeManager {
             error: null
           });
         }
-        
+
         if (functionName === 'record_usage') {
           return Promise.resolve({
-            data: { 
-              usage_recorded: true, 
+            data: {
+              usage_recorded: true,
               current_usage: params.amount || 1,
-              total_usage: (params.amount || 1) * 2 
+              total_usage: (params.amount || 1) * 2
             },
             error: null
           });
         }
-        
+
         if (functionName === 'increment_usage') {
           return Promise.resolve({
-            data: { 
+            data: {
               usage_incremented: true,
               new_count: (params.increment || 1) + 5,
               limit_reached: false
@@ -413,7 +446,7 @@ class MockModeManager {
             error: null
           });
         }
-        
+
         // Default RPC response for unknown functions
         return Promise.resolve({
           data: { mock_rpc_result: true, function: functionName },
@@ -436,7 +469,8 @@ class MockModeManager {
             choices: [
               {
                 message: {
-                  content: "🎭 This is a mock roast response! In real mode, this would be a witty comeback generated by OpenAI."
+                  content:
+                    '🎭 This is a mock roast response! In real mode, this would be a witty comeback generated by OpenAI.'
                 }
               }
             ],
@@ -467,12 +501,13 @@ class MockModeManager {
         retrieve: () => Promise.resolve({ id: 'sub_mock123', status: 'active' })
       },
       prices: {
-        list: () => Promise.resolve({
-          data: [
-            { id: 'price_mock_basic', unit_amount: 999, nickname: 'Basic Plan' },
-            { id: 'price_mock_pro', unit_amount: 2999, nickname: 'Pro Plan' }
-          ]
-        })
+        list: () =>
+          Promise.resolve({
+            data: [
+              { id: 'price_mock_basic', unit_amount: 999, nickname: 'Basic Plan' },
+              { id: 'price_mock_pro', unit_amount: 2999, nickname: 'Pro Plan' }
+            ]
+          })
       },
       webhooks: {
         constructEvent: () => ({ type: 'invoice.payment_succeeded', data: { object: {} } })
@@ -488,15 +523,16 @@ class MockModeManager {
   generateMockPerspective() {
     return {
       comments: {
-        analyze: () => Promise.resolve({
-          data: {
-            attributeScores: {
-              TOXICITY: { summaryScore: { value: 0.1 } },
-              SEVERE_TOXICITY: { summaryScore: { value: 0.05 } },
-              IDENTITY_ATTACK: { summaryScore: { value: 0.03 } }
+        analyze: () =>
+          Promise.resolve({
+            data: {
+              attributeScores: {
+                TOXICITY: { summaryScore: { value: 0.1 } },
+                SEVERE_TOXICITY: { summaryScore: { value: 0.05 } },
+                IDENTITY_ATTACK: { summaryScore: { value: 0.03 } }
+              }
             }
-          }
-        })
+          })
       }
     };
   }
@@ -509,35 +545,47 @@ class MockModeManager {
   generateMockFetch() {
     return async (url, options = {}) => {
       console.log(`🎭 Mock fetch called: ${url}`);
-      
+
       // Mock different API responses based on URL
       if (url.includes('/api/health')) {
         return {
           ok: true,
           status: 200,
-          json: () => Promise.resolve({
-            status: 'ok',
-            timestamp: new Date().toISOString(),
-            services: {
-              database: 'mock',
-              queue: 'mock', 
-              ai: 'mock'
-            }
-          })
+          json: () =>
+            Promise.resolve({
+              status: 'ok',
+              timestamp: new Date().toISOString(),
+              services: {
+                database: 'mock',
+                queue: 'mock',
+                ai: 'mock'
+              }
+            })
         };
       }
-      
+
       if (url.includes('/api/logs')) {
         return {
           ok: true,
           status: 200,
-          json: () => Promise.resolve({
-            logs: [
-              { id: 1, level: 'info', message: 'Mock log entry', timestamp: new Date().toISOString() },
-              { id: 2, level: 'warn', message: 'Mock warning', timestamp: new Date().toISOString() }
-            ],
-            total: 2
-          })
+          json: () =>
+            Promise.resolve({
+              logs: [
+                {
+                  id: 1,
+                  level: 'info',
+                  message: 'Mock log entry',
+                  timestamp: new Date().toISOString()
+                },
+                {
+                  id: 2,
+                  level: 'warn',
+                  message: 'Mock warning',
+                  timestamp: new Date().toISOString()
+                }
+              ],
+              total: 2
+            })
         };
       }
 

@@ -13,6 +13,7 @@
 ### ✅ What Exists
 
 **Core Shield Implementation (Issue #408):**
+
 - ShieldService fully implemented with decision logic, action execution, history tracking
 - ShieldActionWorker operational with queue-based processing
 - Decision matrix implemented (toxicity thresholds + user risk levels)
@@ -23,6 +24,7 @@
 - Queue system (Redis/Upstash + Database) operational
 
 **Documentation:**
+
 - `docs/nodes/shield.md` - Comprehensive node documentation (1200+ lines)
 - `docs/nodes/guardian.md` - Governance and monitoring layer
 - Decision matrix documented and validated
@@ -30,6 +32,7 @@
 ### ❌ What's Missing
 
 **Critical Gaps:**
+
 1. **Validation Script:** `scripts/validate-flow-shield.js` does NOT exist (PRIMARY DELIVERABLE)
 2. **Supabase Schema:** `shield_actions` and `user_behavior` tables NOT deployed (🔴 BLOCKER)
 3. **Evidence Directory:** `docs/test-evidence/flow-shield/` does NOT exist
@@ -40,6 +43,7 @@
 8. **Dashboard (Optional):** Shield Validation Dashboard does NOT exist
 
 **GDD Concerns:**
+
 - Shield node coverage: 2% (likely outdated - needs auto-repair after test additions)
 - No E2E test file references in node documentation
 - Low coverage negatively impacts GDD health score (current threshold: ≥87)
@@ -51,6 +55,7 @@
 **Action:** CREATE (comprehensive E2E validation script)
 
 **Rationale:**
+
 - No existing E2E flow validation exists
 - Critical P0 issue for MVP
 - Clear deliverables and acceptance criteria (16 AC)
@@ -74,6 +79,7 @@
    - Check if tables exist in Supabase but missing from codebase documentation
 
 2. **Add Shield Tables if Missing:**
+
    ```sql
    -- shield_actions table
    CREATE TABLE shield_actions (
@@ -134,6 +140,7 @@
    ```
 
 3. **Deploy Schema:**
+
    ```bash
    node scripts/deploy-supabase-schema.js
    ```
@@ -148,6 +155,7 @@
 **Estimated Time:** 1-2 hours
 
 **Success Criteria:**
+
 - `shield_actions` table exists in Supabase
 - `user_behavior` table exists in Supabase
 - Test query succeeds: `SELECT count(*) FROM shield_actions;`
@@ -162,9 +170,11 @@
 **Goal:** Resolve blocker and create basic validation infrastructure
 
 #### Task 1.1: Deploy Supabase Schema (1-2 hours)
+
 **Owner:** Backend Developer Agent
 
 **Steps:**
+
 1. Read `database/schema.sql` to check if Shield tables exist
 2. Add `shield_actions` and `user_behavior` tables if missing
 3. Deploy schema using `scripts/deploy-supabase-schema.js`
@@ -172,10 +182,12 @@
 5. Document schema changes in `database/CHANGELOG.md`
 
 **Files Affected:**
+
 - `database/schema.sql` (if tables missing)
 - `database/CHANGELOG.md`
 
 **Validation:**
+
 ```bash
 psql $SUPABASE_URL -c "\d shield_actions"
 psql $SUPABASE_URL -c "\d user_behavior"
@@ -184,19 +196,23 @@ psql $SUPABASE_URL -c "\d user_behavior"
 ---
 
 #### Task 1.2: Create Evidence Infrastructure (15 mins)
+
 **Owner:** Orchestrator
 
 **Steps:**
+
 1. Create directory: `docs/test-evidence/flow-shield/`
 2. Add `.gitkeep` to ensure directory is tracked
 3. Create `README.md` with evidence file naming convention
 4. Document evidence requirements (logs, DB dumps, screenshots, VALIDATION.md)
 
 **Files Created:**
+
 - `docs/test-evidence/flow-shield/.gitkeep`
 - `docs/test-evidence/flow-shield/README.md`
 
 **Evidence Naming Convention:**
+
 ```
 logs-<timestamp>.json           # Execution logs
 db-dump-shield-actions-<timestamp>.json
@@ -209,21 +225,26 @@ screenshots/                    # Dashboard screenshots (optional)
 ---
 
 #### Task 1.3: Create VALIDATION.md Template (30 mins)
+
 **Owner:** Documentation Agent
 
 **Steps:**
+
 1. Create template: `docs/templates/VALIDATION-template.md`
 2. Define sections: Summary, Test Cases, Results, Evidence, Recommendations
 3. Add example content for each section
 
 **Files Created:**
+
 - `docs/templates/VALIDATION-template.md`
 
 **Template Structure:**
+
 ```markdown
 # Flow Validation: Shield Automated Moderation
 
 ## Summary
+
 - **Date:** YYYY-MM-DD
 - **Issue:** #487
 - **Validator:** [Name]
@@ -231,15 +252,19 @@ screenshots/                    # Dashboard screenshots (optional)
 - **Overall Result:** PASS/FAIL
 
 ## Test Cases Executed
+
 [Table with test ID, scenario, expected result, actual result, status]
 
 ## Performance Metrics
+
 [Execution time, API latency, queue processing time]
 
 ## Evidence
+
 [Links to logs, DB dumps, screenshots]
 
 ## Recommendations
+
 [Next steps, concerns, follow-up actions]
 ```
 
@@ -250,9 +275,11 @@ screenshots/                    # Dashboard screenshots (optional)
 **Goal:** Create comprehensive E2E validation script
 
 #### Task 2.1: Build Core Validation Script (3 hours)
+
 **Owner:** Test Engineer Agent
 
 **Steps:**
+
 1. Create `scripts/validate-flow-shield.js`
 2. Implement test case generation (Decision Matrix: 9 combinations)
 3. Add toxicity simulation (Perspective API or mock)
@@ -270,9 +297,11 @@ screenshots/                    # Dashboard screenshots (optional)
 7. Implement evidence collection (logs, DB dumps, metrics)
 
 **Files Created:**
+
 - `scripts/validate-flow-shield.js`
 
 **CLI Interface:**
+
 ```bash
 # Usage examples
 node scripts/validate-flow-shield.js --toxicity=0.98
@@ -285,37 +314,39 @@ node scripts/validate-flow-shield.js --dry-run           # Preview without execu
 
 **Test Cases to Implement (Decision Matrix):**
 
-| Test ID | Toxicity | User Risk | Expected Action | Platform |
-|---------|----------|-----------|----------------|----------|
-| DM-01 | 0.98 | Low | Block + Report | Twitter |
-| DM-02 | 0.98 | High | Block + Report | YouTube |
-| DM-03 | 0.96 | Low | Mute/Timeout | Discord |
-| DM-04 | 0.96 | Medium | Mute/Timeout | Instagram |
-| DM-05 | 0.96 | High | Block | Reddit |
-| DM-06 | 0.91 | Low | Monitor + Roast | Facebook |
-| DM-07 | 0.91 | Medium | Monitor + Roast | Twitch |
-| DM-08 | 0.91 | High | Mute | TikTok |
-| DM-09 | 0.85 | Any | No Action | Bluesky |
+| Test ID | Toxicity | User Risk | Expected Action | Platform  |
+| ------- | -------- | --------- | --------------- | --------- |
+| DM-01   | 0.98     | Low       | Block + Report  | Twitter   |
+| DM-02   | 0.98     | High      | Block + Report  | YouTube   |
+| DM-03   | 0.96     | Low       | Mute/Timeout    | Discord   |
+| DM-04   | 0.96     | Medium    | Mute/Timeout    | Instagram |
+| DM-05   | 0.96     | High      | Block           | Reddit    |
+| DM-06   | 0.91     | Low       | Monitor + Roast | Facebook  |
+| DM-07   | 0.91     | Medium    | Monitor + Roast | Twitch    |
+| DM-08   | 0.91     | High      | Mute            | TikTok    |
+| DM-09   | 0.85     | Any       | No Action       | Bluesky   |
 
 **Edge Cases to Test:**
 
-| Test ID | Scenario | Expected Outcome |
-|---------|----------|------------------|
-| EDGE-01 | Platform API timeout (>5s) | Action marked failed, retry queued |
-| EDGE-02 | Duplicate action (same comment ID) | Second action skipped (idempotency) |
-| EDGE-03 | Queue priority | Shield actions processed before roast generation |
-| EDGE-04 | Database write failure | Transaction rolled back, error logged |
-| EDGE-05 | Offender history at threshold | Risk level escalated correctly |
-| EDGE-06 | Multiple platforms (same user) | Actions executed independently |
+| Test ID | Scenario                           | Expected Outcome                                 |
+| ------- | ---------------------------------- | ------------------------------------------------ |
+| EDGE-01 | Platform API timeout (>5s)         | Action marked failed, retry queued               |
+| EDGE-02 | Duplicate action (same comment ID) | Second action skipped (idempotency)              |
+| EDGE-03 | Queue priority                     | Shield actions processed before roast generation |
+| EDGE-04 | Database write failure             | Transaction rolled back, error logged            |
+| EDGE-05 | Offender history at threshold      | Risk level escalated correctly                   |
+| EDGE-06 | Multiple platforms (same user)     | Actions executed independently                   |
 
 **Total Test Cases:** 15
 
 ---
 
 #### Task 2.2: Add Error Handling & Edge Cases (1 hour)
+
 **Owner:** Test Engineer Agent
 
 **Steps:**
+
 1. Add Platform API failure simulation
 2. Add Queue priority validation (Shield priority 1 vs roast priority 3)
 3. Add Timeout handling (5s API limit)
@@ -323,6 +354,7 @@ node scripts/validate-flow-shield.js --dry-run           # Preview without execu
 5. Add Circuit breaker validation (ShieldActionExecutor)
 
 **Error Scenarios:**
+
 - Perspective API failure → OpenAI fallback
 - Platform API timeout → Retry with exponential backoff
 - Database connection lost → Queue job for retry
@@ -331,15 +363,18 @@ node scripts/validate-flow-shield.js --dry-run           # Preview without execu
 ---
 
 #### Task 2.3: Generate Structured Output (1 hour)
+
 **Owner:** Test Engineer Agent
 
 **Steps:**
+
 1. Export logs to `docs/test-evidence/flow-shield/logs-<timestamp>.json`
 2. Generate VALIDATION.md report using template
 3. Create DB dump (JSON export of `shield_actions` and `user_behavior`)
 4. Add CLI summary output (formatted table)
 
 **Output Example:**
+
 ```text
 ╔═══════════════════════════════════════════════════════════════╗
 ║         Shield Flow Validation Results                       ║
@@ -370,9 +405,11 @@ node scripts/validate-flow-shield.js --dry-run           # Preview without execu
 **Goal:** Run validation and collect comprehensive evidence
 
 #### Task 3.1: Execute Full Validation Run (1 hour)
+
 **Owner:** Test Engineer Agent
 
 **Steps:**
+
 1. Run script: `node scripts/validate-flow-shield.js --full`
 2. Collect all evidence artifacts
 3. Verify all 16 AC are covered
@@ -380,6 +417,7 @@ node scripts/validate-flow-shield.js --dry-run           # Preview without execu
 5. Take screenshots of database state (if applicable)
 
 **Validation Checklist (16 AC):**
+
 - [ ] AC1: Comment analyzed with toxicity ≥ 0.95
 - [ ] AC2: Shield Decision Engine calculates action level correctly
 - [ ] AC3: Offender history consulted from `user_behavior` table
@@ -400,9 +438,11 @@ node scripts/validate-flow-shield.js --dry-run           # Preview without execu
 ---
 
 #### Task 3.2: Document Results (1 hour)
+
 **Owner:** Documentation Agent
 
 **Steps:**
+
 1. Complete `docs/test-evidence/flow-shield/VALIDATION.md` with actual results
 2. Add decision matrix coverage table (9/9 test cases)
 3. Include performance metrics (execution time, API latency, queue processing)
@@ -410,6 +450,7 @@ node scripts/validate-flow-shield.js --dry-run           # Preview without execu
 5. Add recommendations for improvements
 
 **VALIDATION.md Content:**
+
 - Summary (date, validator, environment, result)
 - Test Cases Executed (table with 15 rows)
 - Performance Metrics (3s requirement, 5s API timeout, 1s queue processing)
@@ -419,9 +460,11 @@ node scripts/validate-flow-shield.js --dry-run           # Preview without execu
 ---
 
 #### Task 3.3: Update GDD Nodes (30 mins)
+
 **Owner:** Orchestrator
 
 **Steps:**
+
 1. Add validation script reference to `docs/nodes/shield.md`
 2. Add E2E test file reference to Shield node
 3. Update "Agentes Relevantes" if Test Engineer or other agents were invoked
@@ -430,10 +473,12 @@ node scripts/validate-flow-shield.js --dry-run           # Preview without execu
 6. Run `node scripts/validate-gdd-runtime.js --full` to verify no violations
 
 **Files Modified:**
+
 - `docs/nodes/shield.md` (add validation script, update coverage)
 - `docs/nodes/guardian.md` (if governance was involved)
 
 **GDD Validation:**
+
 ```bash
 # Update coverage automatically
 npm test -- --coverage
@@ -446,6 +491,7 @@ node scripts/predict-gdd-drift.js --full
 ```
 
 **Expected Coverage Improvement:**
+
 - Shield node: 2% → >50% (validation script + E2E tests)
 - Guardian node: 50% → >60% (if governance validation added)
 
@@ -456,9 +502,11 @@ node scripts/predict-gdd-drift.js --full
 **Goal:** Visual monitoring interface (can be deferred to separate PR)
 
 #### Task 4.1: Create Validation Dashboard (2 hours)
+
 **Owner:** Front-end Dev Agent
 
 **Steps:**
+
 1. Create `admin-dashboard/src/pages/ShieldValidationDashboard.jsx`
 2. Add components:
    - Severity selector (Critical/High/Moderate)
@@ -472,11 +520,13 @@ node scripts/predict-gdd-drift.js --full
 4. Add real-time status updates
 
 **Files Created:**
+
 - `admin-dashboard/src/pages/ShieldValidationDashboard.jsx`
 - `admin-dashboard/src/components/ShieldTimeline.jsx` (optional)
 - `admin-dashboard/src/components/DecisionEnginePanel.jsx` (optional)
 
 **Dashboard Features:**
+
 - Run validation with custom toxicity scores
 - Display decision matrix heatmap
 - Show recent Shield actions (last 24h)
@@ -486,15 +536,18 @@ node scripts/predict-gdd-drift.js --full
 ---
 
 #### Task 4.2: Capture Dashboard Evidence (30 mins)
+
 **Owner:** UI Designer Agent
 
 **Steps:**
+
 1. Use Playwright MCP to capture dashboard screenshots
 2. Add screenshots to `docs/test-evidence/flow-shield/screenshots/`
 3. Update VALIDATION.md with screenshot references
 4. Verify UI matches design specifications
 
 **Playwright Commands:**
+
 ```bash
 # Launch browser
 mcp__playwright__browse http://localhost:3000/admin/shield-validation
@@ -508,6 +561,7 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 ```
 
 **Evidence Files:**
+
 - `screenshots/dashboard-full.png` - Full dashboard view
 - `screenshots/decision-panel.png` - Decision engine panel
 - `screenshots/timeline.png` - Actions timeline
@@ -517,20 +571,21 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 
 ## Subagentes Involucrados
 
-| Agent | Phase | Responsibilities |
-|-------|-------|------------------|
-| **Backend Developer** | 1.1 | Deploy Supabase schema, verify tables exist |
-| **Test Engineer** | 2.1, 2.2, 2.3, 3.1 | Build validation script, implement test cases, execute validation |
-| **Documentation Agent** | 1.3, 3.2 | Create VALIDATION.md template, document results |
-| **Orchestrator** | 1.2, 3.3 | Create evidence infrastructure, update GDD nodes, coordinate workflow |
-| **Front-end Dev** (Optional) | 4.1 | Create Shield Validation Dashboard |
-| **UI Designer** (Optional) | 4.2 | Capture dashboard screenshots with Playwright |
+| Agent                        | Phase              | Responsibilities                                                      |
+| ---------------------------- | ------------------ | --------------------------------------------------------------------- |
+| **Backend Developer**        | 1.1                | Deploy Supabase schema, verify tables exist                           |
+| **Test Engineer**            | 2.1, 2.2, 2.3, 3.1 | Build validation script, implement test cases, execute validation     |
+| **Documentation Agent**      | 1.3, 3.2           | Create VALIDATION.md template, document results                       |
+| **Orchestrator**             | 1.2, 3.3           | Create evidence infrastructure, update GDD nodes, coordinate workflow |
+| **Front-end Dev** (Optional) | 4.1                | Create Shield Validation Dashboard                                    |
+| **UI Designer** (Optional)   | 4.2                | Capture dashboard screenshots with Playwright                         |
 
 ---
 
 ## Archivos Afectados
 
 ### Created (New Files)
+
 - `scripts/validate-flow-shield.js` - Main validation script
 - `docs/test-evidence/flow-shield/.gitkeep` - Evidence directory
 - `docs/test-evidence/flow-shield/README.md` - Evidence documentation
@@ -542,6 +597,7 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 - `admin-dashboard/src/pages/ShieldValidationDashboard.jsx` (Optional)
 
 ### Modified (Existing Files)
+
 - `database/schema.sql` - Add Shield tables if missing
 - `database/CHANGELOG.md` - Document schema changes
 - `docs/nodes/shield.md` - Add validation script reference, update coverage
@@ -549,6 +605,7 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 - `package.json` - Add validation script to `scripts` section (optional)
 
 ### Read-Only (Reference)
+
 - `src/services/shieldService.js` - Shield core logic
 - `src/workers/ShieldActionWorker.js` - Action execution worker
 - `src/services/queueService.js` - Queue management
@@ -561,6 +618,7 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 ## Criterios de Validación
 
 ### Functional Validation (6 AC)
+
 1. ✅ **Toxicity Detection:** Comment with score ≥0.95 triggers Shield
 2. ✅ **Decision Accuracy:** ShieldDecisionEngine calculates correct action level
 3. ✅ **History Check:** Offender history consulted from `user_behavior` table
@@ -569,28 +627,33 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 6. ✅ **Worker Execution:** ShieldActionWorker processes job without errors
 
 ### Technical Validation (4 AC)
+
 7. ✅ **Platform API Call:** API called or mock verified
 8. ✅ **Action Logging:** Full context logged in `shield_actions` table
 9. ✅ **User Tracking:** `user_behavior` table updated correctly
 10. ✅ **No Mocks:** Test against Perspective API + real DB
 
 ### Performance Validation (3 AC)
+
 11. ✅ **Execution Time:** Total flow completes in <3 seconds
 12. ✅ **API Timeout:** Platform API timeout set to 5 seconds
 13. ✅ **Queue Processing:** Shield jobs processed in <1 second
 
 ### Evidence Validation (3 AC)
+
 14. ✅ **Logs Exported:** Execution logs saved to evidence directory
 15. ✅ **DB Dump:** Database state captured (shield_actions + user_behavior)
 16. ✅ **VALIDATION.md:** Complete validation report generated
 
 ### Code Quality Validation
+
 17. ✅ **ESLint Passing:** No semicolons, const/let rules, no console.log
 18. ✅ **Security:** No hardcoded credentials, input validation
 19. ✅ **Error Handling:** Platform API failures don't break flow
 20. ✅ **Idempotency:** Duplicate actions prevented
 
 ### GDD Validation
+
 21. ✅ **Coverage Authenticity:** Coverage Source: auto (NEVER manual)
 22. ✅ **Health Score:** ≥87 (temp threshold until 2025-10-31)
 23. ✅ **Drift Risk:** <60
@@ -601,6 +664,7 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 ## Success Criteria (Pre-Merge)
 
 **Code Deliverables:**
+
 - [ ] `scripts/validate-flow-shield.js` created and executable
 - [ ] All 15 test cases passing (9 decision matrix + 6 edge cases)
 - [ ] Performance requirements met (<3s, <5s, <1s)
@@ -608,36 +672,42 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 - [ ] Error handling tested (Platform API failures gracefully handled)
 
 **Evidence Deliverables:**
+
 - [ ] `docs/test-evidence/flow-shield/` directory created
-- [ ] Execution logs exported (logs-*.json)
-- [ ] DB dumps captured (db-dump-*.json)
-- [ ] Performance metrics collected (metrics-*.json)
+- [ ] Execution logs exported (logs-\*.json)
+- [ ] DB dumps captured (db-dump-\*.json)
+- [ ] Performance metrics collected (metrics-\*.json)
 - [ ] VALIDATION.md report completed with all sections
 
 **Database Deliverables:**
+
 - [ ] Supabase schema deployed (`shield_actions` + `user_behavior` tables exist)
-- [ ] Test queries succeed (SELECT count(*) FROM shield_actions)
+- [ ] Test queries succeed (SELECT count(\*) FROM shield_actions)
 - [ ] RLS policies applied (organization isolation)
 
 **Documentation Deliverables:**
+
 - [ ] `docs/nodes/shield.md` updated (validation script reference, coverage)
 - [ ] `docs/nodes/guardian.md` updated (if applicable)
 - [ ] `docs/templates/VALIDATION-template.md` created for reuse
 - [ ] All 16 AC validated and documented
 
 **GDD Deliverables:**
+
 - [ ] Coverage updated via auto-repair (shield >50%, guardian >60%)
 - [ ] GDD health ≥87 (passing threshold)
 - [ ] GDD drift <60 (low risk)
 - [ ] All GDD validation scripts passing
 
 **Code Quality Deliverables:**
+
 - [ ] ESLint passing (semicolons, const/let, no console.log)
 - [ ] Security validated (no hardcoded credentials)
 - [ ] CodeRabbit self-review completed (0 expected comments)
 - [ ] Pre-Flight Checklist executed
 
 **CI/CD Deliverables:**
+
 - [ ] All tests passing (178/178 + new validation script)
 - [ ] Coverage report generated
 - [ ] No regressions introduced
@@ -647,29 +717,30 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 
 ## Estimated Timeline
 
-| Phase | Duration | Dependencies |
-|-------|----------|--------------|
-| **Phase 1: Foundation** | 4-5 hours | None (can start immediately) |
-| - Deploy Supabase Schema | 1-2 hours | Blocker resolution |
-| - Create Evidence Infrastructure | 15 mins | None |
-| - Create VALIDATION.md Template | 30 mins | None |
-| **Phase 2: Validation Script** | 4-5 hours | Supabase schema deployed |
-| - Build Core Script | 3 hours | Phase 1.1 complete |
-| - Add Error Handling | 1 hour | Phase 2.1 complete |
-| - Generate Structured Output | 1 hour | Phase 2.2 complete |
-| **Phase 3: Evidence & Validation** | 2-3 hours | Validation script complete |
-| - Execute Validation Run | 1 hour | Phase 2 complete |
-| - Document Results | 1 hour | Phase 3.1 complete |
-| - Update GDD Nodes | 30 mins | Phase 3.2 complete |
-| **Phase 4: Dashboard (Optional)** | 2-3 hours | Can run in parallel or defer |
-| - Create Dashboard | 2 hours | None (independent) |
-| - Capture Evidence | 30 mins | Phase 4.1 complete |
-| **TOTAL (P0 only)** | **10-13 hours** | - |
-| **TOTAL (with dashboard)** | **12-16 hours** | - |
+| Phase                              | Duration        | Dependencies                 |
+| ---------------------------------- | --------------- | ---------------------------- |
+| **Phase 1: Foundation**            | 4-5 hours       | None (can start immediately) |
+| - Deploy Supabase Schema           | 1-2 hours       | Blocker resolution           |
+| - Create Evidence Infrastructure   | 15 mins         | None                         |
+| - Create VALIDATION.md Template    | 30 mins         | None                         |
+| **Phase 2: Validation Script**     | 4-5 hours       | Supabase schema deployed     |
+| - Build Core Script                | 3 hours         | Phase 1.1 complete           |
+| - Add Error Handling               | 1 hour          | Phase 2.1 complete           |
+| - Generate Structured Output       | 1 hour          | Phase 2.2 complete           |
+| **Phase 3: Evidence & Validation** | 2-3 hours       | Validation script complete   |
+| - Execute Validation Run           | 1 hour          | Phase 2 complete             |
+| - Document Results                 | 1 hour          | Phase 3.1 complete           |
+| - Update GDD Nodes                 | 30 mins         | Phase 3.2 complete           |
+| **Phase 4: Dashboard (Optional)**  | 2-3 hours       | Can run in parallel or defer |
+| - Create Dashboard                 | 2 hours         | None (independent)           |
+| - Capture Evidence                 | 30 mins         | Phase 4.1 complete           |
+| **TOTAL (P0 only)**                | **10-13 hours** | -                            |
+| **TOTAL (with dashboard)**         | **12-16 hours** | -                            |
 
 **Critical Path:** Phase 1.1 (Supabase schema) → Phase 2 → Phase 3
 
 **Parallelization Opportunities:**
+
 - Phase 1.2 and 1.3 can run in parallel with 1.1
 - Phase 4 (Dashboard) can be deferred to separate PR or developed in parallel
 
@@ -677,19 +748,20 @@ mcp__playwright__screenshot --path=docs/test-evidence/flow-shield/screenshots/de
 
 ## Risk Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| **Supabase schema deploy fails** | High - Blocks all work | Review schema carefully, test locally first, have rollback plan |
-| **Platform API rate limits** | Medium - Test failures | Use test accounts, implement rate limit backoff, mock APIs if needed |
-| **Performance requirement not met (<3s)** | Medium - AC failure | Optimize code, separate network time from processing time, document results |
-| **Evidence collection complexity** | Low - Time overrun | Start with CLI evidence, defer dashboard to Phase 4 |
-| **Test data generation** | Low - Incomplete coverage | Use programmatic test case generation, validate all matrix combinations |
+| Risk                                      | Impact                    | Mitigation                                                                  |
+| ----------------------------------------- | ------------------------- | --------------------------------------------------------------------------- |
+| **Supabase schema deploy fails**          | High - Blocks all work    | Review schema carefully, test locally first, have rollback plan             |
+| **Platform API rate limits**              | Medium - Test failures    | Use test accounts, implement rate limit backoff, mock APIs if needed        |
+| **Performance requirement not met (<3s)** | Medium - AC failure       | Optimize code, separate network time from processing time, document results |
+| **Evidence collection complexity**        | Low - Time overrun        | Start with CLI evidence, defer dashboard to Phase 4                         |
+| **Test data generation**                  | Low - Incomplete coverage | Use programmatic test case generation, validate all matrix combinations     |
 
 ---
 
 ## Next Steps (Immediate Actions)
 
 ### 1. Resolve Blocker (1-2 hours)
+
 ```bash
 # Review existing schema
 cat database/schema.sql | grep -A 30 "shield_actions\|user_behavior"
@@ -703,6 +775,7 @@ psql $SUPABASE_URL -c "\dt shield_actions"
 ```
 
 ### 2. Create Evidence Infrastructure (15 mins)
+
 ```bash
 mkdir -p docs/test-evidence/flow-shield
 touch docs/test-evidence/flow-shield/.gitkeep
@@ -710,6 +783,7 @@ echo "# Shield Flow Validation Evidence" > docs/test-evidence/flow-shield/README
 ```
 
 ### 3. Start Validation Script Development (3-4 hours)
+
 ```bash
 # Create script file
 touch scripts/validate-flow-shield.js
@@ -722,11 +796,13 @@ touch scripts/validate-flow-shield.js
 ## Related Issues & Documentation
 
 **Issues:**
+
 - #408 - Shield Implementation (✅ Closed) - Foundation
 - #480 - Test Suite Stabilization (🔄 Open) - Related effort
 - #482 - Shield Test Suite (🔄 Open) - Component tests
 
 **Documentation:**
+
 - `docs/assessment/issue-487.md` - Full assessment (created by Task Assessor)
 - `docs/nodes/shield.md` - Shield node documentation
 - `docs/nodes/guardian.md` - Guardian node documentation
@@ -734,6 +810,7 @@ touch scripts/validate-flow-shield.js
 - `docs/QUALITY-STANDARDS.md` - Pre-merge requirements
 
 **Scripts:**
+
 - `scripts/deploy-supabase-schema.js` - Schema deployment
 - `scripts/validate-gdd-runtime.js` - GDD validation
 - `scripts/auto-repair-gdd.js` - Coverage auto-repair

@@ -5,7 +5,7 @@ import Billing from '../Billing';
 // Mock react-router-dom
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate,
+  useNavigate: () => mockNavigate
 }));
 
 // Mock lucide-react icons
@@ -149,7 +149,7 @@ describe('Billing Page', () => {
 
   it('handles billing portal button click', async () => {
     mockApiResponses();
-    
+
     // Mock portal response
     mockFetch.mockResolvedValueOnce({
       ok: true,

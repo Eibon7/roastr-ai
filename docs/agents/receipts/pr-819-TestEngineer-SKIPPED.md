@@ -38,6 +38,7 @@ TestEngineer was NOT invoked for this PR because:
 **Risk Level:** 🟢 LOW
 
 **Rationale:**
+
 - CI workflows are validated by GitHub Actions parser
 - No unit/integration tests needed for workflow files
 - Documentation changes don't require automated tests
@@ -50,6 +51,7 @@ TestEngineer was NOT invoked for this PR because:
 ## Validation Plan (Post-Merge)
 
 **Manual validation steps documented in PR:**
+
 - [ ] Verify workflow appears in Actions tab
 - [ ] Test manual execution: `gh workflow run gdd-auto-monitor.yml`
 - [ ] Verify first report generated in `docs/auto-health-reports/`

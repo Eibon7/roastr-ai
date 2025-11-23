@@ -94,7 +94,7 @@ function generateMockContent(platform, count, languages) {
       'I totally disagree with this approach',
       'Great content, thanks for sharing!',
       'What do you think about this topic?',
-      'This doesn\'t make sense to me',
+      "This doesn't make sense to me",
       'Love this, very helpful information'
     ],
     pt: [
@@ -107,7 +107,7 @@ function generateMockContent(platform, count, languages) {
 
   for (let i = 0; i < count; i++) {
     // Random language selection based on platform supported languages
-    const availableLangs = languages.filter(lang => sampleTexts[lang]);
+    const availableLangs = languages.filter((lang) => sampleTexts[lang]);
     const randomLang = availableLangs[Math.floor(Math.random() * availableLangs.length)];
     const texts = sampleTexts[randomLang];
     const randomText = texts[Math.floor(Math.random() * texts.length)];
@@ -134,8 +134,8 @@ function generateMockContent(platform, count, languages) {
  */
 function detectLanguageHints(content) {
   const langCount = {};
-  
-  content.forEach(item => {
+
+  content.forEach((item) => {
     if (langCount[item.lang]) {
       langCount[item.lang]++;
     } else {
@@ -190,8 +190,8 @@ router.get('/status', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
     const userConnections = userIntegrations.get(userId) || {};
-    
-    const status = Object.keys(SUPPORTED_PLATFORMS).map(platform => {
+
+    const status = Object.keys(SUPPORTED_PLATFORMS).map((platform) => {
       const connection = userConnections[platform];
       return {
         platform,
@@ -207,7 +207,7 @@ router.get('/status', authenticateToken, (req, res) => {
       success: true,
       data: {
         integrations: status,
-        connectedCount: status.filter(s => s.status === 'connected').length,
+        connectedCount: status.filter((s) => s.status === 'connected').length,
         totalPlatforms: status.length
       }
     });
@@ -246,7 +246,7 @@ router.post('/connect', authenticateToken, (req, res) => {
 
     // Mock OAuth success (in production, this would involve real OAuth flow)
     let userConnections = userIntegrations.get(userId) || {};
-    
+
     // Simulate occasional connection failures (5% chance)
     if (Math.random() < 0.05) {
       return res.status(400).json({
@@ -327,7 +327,7 @@ router.post('/import', authenticateToken, (req, res) => {
     // Issue #641: Always return 'importing' status immediately, then process in background
     // In test mode, process synchronously after response; in production, use setTimeout
     // This ensures consistent API contract: endpoint always returns 'importing' status
-    
+
     // Send immediate response with 'importing' status
     res.json({
       success: true,
@@ -336,7 +336,10 @@ router.post('/import', authenticateToken, (req, res) => {
         imported: actualLimit,
         languageHints,
         status: 'importing',
-        estimatedTime: (process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') ? '0s' : `${platformConfig.importDelay / 1000}s`,
+        estimatedTime:
+          process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true'
+            ? '0s'
+            : `${platformConfig.importDelay / 1000}s`,
         message: `Started importing from ${platformConfig.displayName}`
       }
     });
@@ -346,8 +349,8 @@ router.post('/import', authenticateToken, (req, res) => {
       try {
         // Generate mock content
         const importedContent = generateMockContent(
-          platform, 
-          actualLimit, 
+          platform,
+          actualLimit,
           platformConfig.languages
         );
 
@@ -366,9 +369,13 @@ router.post('/import', authenticateToken, (req, res) => {
         userIntegrations.set(userId, userConnections);
 
         if (process.env.NODE_ENV === 'test') {
-          logger.debug(`📥 User ${userId} imported ${importedContent.length} items from ${platform} (test mode)`);
+          logger.debug(
+            `📥 User ${userId} imported ${importedContent.length} items from ${platform} (test mode)`
+          );
         } else {
-          logger.info(`📥 User ${userId} imported ${importedContent.length} items from ${platform}`);
+          logger.info(
+            `📥 User ${userId} imported ${importedContent.length} items from ${platform}`
+          );
         }
       } catch (error) {
         logger.error('❌ Error processing import:', error.message);
@@ -459,7 +466,7 @@ router.post('/disconnect', authenticateToken, (req, res) => {
     }
 
     const userConnections = userIntegrations.get(userId) || {};
-    
+
     if (!userConnections[platform]) {
       return res.status(400).json({
         success: false,
@@ -504,7 +511,7 @@ function getUserImportedContent(userId, platform) {
 function getAllUserContent(userId) {
   const userHistory = importHistory.get(userId) || {};
   const allContent = [];
-  
+
   Object.entries(userHistory).forEach(([platform, content]) => {
     allContent.push(...content);
   });

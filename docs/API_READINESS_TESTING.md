@@ -48,24 +48,28 @@ npm test tests/integration/rate-limiting-token-expiration.test.js
 The system supports multiple environments with different validation requirements:
 
 ### Test Environment
+
 - **Purpose**: Unit and integration testing with mocks
 - **Real API Calls**: Disabled
 - **Credentials Required**: No
 - **Features**: Mock defaults, error simulation, webhook validation
 
 ### Development Environment
+
 - **Purpose**: Local development with optional real API integration
 - **Real API Calls**: Optional (set `REAL_API_TEST=true`)
 - **Credentials Required**: Only if `REAL_API_TEST=true`
 - **Features**: Mock defaults, error simulation
 
 ### Staging Environment
+
 - **Purpose**: Pre-production testing with development API apps
 - **Real API Calls**: Enabled
 - **Credentials Required**: Yes
 - **Features**: Real API calls, webhook validation, rate limit testing
 
 ### Production Environment
+
 - **Purpose**: Live production environment
 - **Real API Calls**: Enabled
 - **Credentials Required**: Yes (all credentials)
@@ -201,6 +205,7 @@ The system generates realistic mock credentials:
 The `validate-api-readiness.js` script provides comprehensive validation:
 
 ### Features
+
 - ✅ Environment detection and validation
 - ✅ Credential validation with detailed reporting
 - ✅ Automated test suite execution
@@ -319,23 +324,27 @@ The tests work with existing Jest configuration. Add to `package.json`:
 ## Benefits
 
 ### ✅ No Production Credentials Required
+
 - Tests work entirely with mocks in test/development environments
 - Safe to run in CI/CD without exposing credentials
 - Validates integration structure without real API calls
 
 ### ✅ Comprehensive Coverage
+
 - Tests all major error scenarios that occur in production
 - Validates OAuth flows and security measures
 - Tests rate limiting and token management
 - Covers all supported platforms (Twitter, YouTube, Instagram, Facebook)
 
 ### ✅ Production-Ready Validation
+
 - Simulates realistic production conditions
 - Tests error recovery and retry logic
 - Validates webhook security and signature verification
 - Ensures proper error handling and user experience
 
 ### ✅ Easy Integration
+
 - Works with existing test infrastructure
 - Provides detailed reporting and CI/CD integration
 - Supports multiple environments (test, staging, production)

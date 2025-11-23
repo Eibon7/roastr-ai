@@ -152,14 +152,13 @@ describe('CrossValidationRunner - Validation Structure (Issue #3)', () => {
   describe('Mixed scenarios', () => {
     test('should correctly separate warnings and violations', async () => {
       // Node 1: Warning (coverage_data_unavailable)
-      validator.validator.validateCoverage = jest.fn()
-        .mockResolvedValueOnce({
-          valid: false,
-          reason: 'coverage_data_unavailable',
-          declared: 70,
-          actual: null,
-          diff: null
-        });
+      validator.validator.validateCoverage = jest.fn().mockResolvedValueOnce({
+        valid: false,
+        reason: 'coverage_data_unavailable',
+        declared: 70,
+        actual: null,
+        diff: null
+      });
 
       const mockNodeData1 = {
         metadata: { coverage: 70, last_updated: null },
@@ -169,14 +168,13 @@ describe('CrossValidationRunner - Validation Structure (Issue #3)', () => {
       await validator.validateNode('node-1', mockNodeData1);
 
       // Node 2: True mismatch
-      validator.validator.validateCoverage = jest.fn()
-        .mockResolvedValueOnce({
-          valid: false,
-          reason: 'coverage_mismatch',
-          declared: 80,
-          actual: 60,
-          diff: 20
-        });
+      validator.validator.validateCoverage = jest.fn().mockResolvedValueOnce({
+        valid: false,
+        reason: 'coverage_mismatch',
+        declared: 80,
+        actual: 60,
+        diff: 20
+      });
 
       const mockNodeData2 = {
         metadata: { coverage: 80, last_updated: null },
@@ -186,14 +184,13 @@ describe('CrossValidationRunner - Validation Structure (Issue #3)', () => {
       await validator.validateNode('node-2', mockNodeData2);
 
       // Node 3: Another warning (no_source_files_found)
-      validator.validator.validateCoverage = jest.fn()
-        .mockResolvedValueOnce({
-          valid: false,
-          reason: 'no_source_files_found',
-          declared: 90,
-          actual: null,
-          diff: null
-        });
+      validator.validator.validateCoverage = jest.fn().mockResolvedValueOnce({
+        valid: false,
+        reason: 'no_source_files_found',
+        declared: 90,
+        actual: null,
+        diff: null
+      });
 
       const mockNodeData3 = {
         metadata: { coverage: 90, last_updated: null },

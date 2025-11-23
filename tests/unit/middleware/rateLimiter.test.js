@@ -11,13 +11,13 @@ jest.mock('../../../src/config/flags', () => ({
   }
 }));
 
-const { 
-  loginRateLimiter, 
-  getRateLimitMetrics, 
-  resetRateLimit, 
-  RateLimitStore, 
+const {
+  loginRateLimiter,
+  getRateLimitMetrics,
+  resetRateLimit,
+  RateLimitStore,
   getClientIP,
-  store 
+  store
 } = require('../../../src/middleware/rateLimiter');
 const { flags } = require('../../../src/config/flags');
 
@@ -26,7 +26,7 @@ describe('Rate Limiter Middleware', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockReq = {
       path: '/auth/login',
       method: 'POST',
@@ -112,9 +112,9 @@ describe('Rate Limiter Middleware', () => {
       it('should return true for blocked key within time window', () => {
         const key = 'test-key';
         const expiresAt = Date.now() + 10000; // 10 seconds from now
-        
+
         rateLimitStore.blocked.set(key, { expiresAt, blockedAt: Date.now() });
-        
+
         const result = rateLimitStore.isBlocked(key);
         expect(result.blocked).toBe(true);
         expect(result.expiresAt).toBe(expiresAt);
@@ -124,9 +124,9 @@ describe('Rate Limiter Middleware', () => {
       it('should clean up expired blocks', () => {
         const key = 'test-key';
         const expiresAt = Date.now() - 1000; // 1 second ago
-        
+
         rateLimitStore.blocked.set(key, { expiresAt, blockedAt: Date.now() - 2000 });
-        
+
         const result = rateLimitStore.isBlocked(key);
         expect(result.blocked).toBe(false);
         expect(rateLimitStore.blocked.has(key)).toBe(false);
@@ -139,7 +139,7 @@ describe('Rate Limiter Middleware', () => {
 
       it('should record first attempt correctly', () => {
         const result = rateLimitStore.recordAttempt(key, ip);
-        
+
         expect(result.blocked).toBe(false);
         expect(result.attemptCount).toBe(1);
         expect(result.maxAttempts).toBe(5);
@@ -152,7 +152,7 @@ describe('Rate Limiter Middleware', () => {
         rateLimitStore.recordAttempt(key, ip);
         rateLimitStore.recordAttempt(key, ip);
         const result = rateLimitStore.recordAttempt(key, ip);
-        
+
         expect(result.attemptCount).toBe(3);
         expect(result.remainingAttempts).toBe(2);
       });
@@ -162,9 +162,9 @@ describe('Rate Limiter Middleware', () => {
         for (let i = 0; i < 4; i++) {
           rateLimitStore.recordAttempt(key, ip);
         }
-        
+
         const result = rateLimitStore.recordAttempt(key, ip);
-        
+
         expect(result.blocked).toBe(true);
         expect(result.attemptCount).toBe(5);
         expect(result.expiresAt).toBeGreaterThan(Date.now());
@@ -174,14 +174,14 @@ describe('Rate Limiter Middleware', () => {
       it('should reset attempt window after 15 minutes', () => {
         const oldAttempt = {
           count: 3,
-          firstAttempt: Date.now() - (16 * 60 * 1000), // 16 minutes ago
-          lastAttempt: Date.now() - (16 * 60 * 1000)
+          firstAttempt: Date.now() - 16 * 60 * 1000, // 16 minutes ago
+          lastAttempt: Date.now() - 16 * 60 * 1000
         };
-        
+
         rateLimitStore.attempts.set(key, oldAttempt);
-        
+
         const result = rateLimitStore.recordAttempt(key, ip);
-        
+
         expect(result.attemptCount).toBe(1); // Reset to 1
       });
 
@@ -190,7 +190,7 @@ describe('Rate Limiter Middleware', () => {
         for (let i = 0; i < 5; i++) {
           rateLimitStore.recordAttempt(key, ip);
         }
-        
+
         expect(rateLimitStore.metrics.recentBlocks).toHaveLength(1);
         expect(rateLimitStore.metrics.recentBlocks[0]).toMatchObject({
           key,
@@ -204,13 +204,13 @@ describe('Rate Limiter Middleware', () => {
         for (let i = 0; i < 101; i++) {
           const uniqueKey = `key-${i}`;
           const uniqueIp = `192.168.1.${i % 255}`;
-          
+
           // Record 5 attempts for each key to trigger block
           for (let j = 0; j < 5; j++) {
             rateLimitStore.recordAttempt(uniqueKey, uniqueIp);
           }
         }
-        
+
         expect(rateLimitStore.metrics.recentBlocks).toHaveLength(100);
       });
     });
@@ -219,14 +219,14 @@ describe('Rate Limiter Middleware', () => {
       it('should clear attempts and blocks for successful login', () => {
         const key = 'test-key';
         const ip = '192.168.1.1';
-        
+
         // Record some attempts
         rateLimitStore.recordAttempt(key, ip);
         rateLimitStore.recordAttempt(key, ip);
-        
+
         // Record success
         rateLimitStore.recordSuccess(key);
-        
+
         expect(rateLimitStore.attempts.has(key)).toBe(false);
         expect(rateLimitStore.blocked.has(key)).toBe(false);
       });
@@ -237,13 +237,13 @@ describe('Rate Limiter Middleware', () => {
         const key = 'test-key';
         const oldAttempt = {
           count: 3,
-          firstAttempt: Date.now() - (20 * 60 * 1000), // 20 minutes ago
-          lastAttempt: Date.now() - (20 * 60 * 1000)
+          firstAttempt: Date.now() - 20 * 60 * 1000, // 20 minutes ago
+          lastAttempt: Date.now() - 20 * 60 * 1000
         };
-        
+
         rateLimitStore.attempts.set(key, oldAttempt);
         rateLimitStore.cleanup();
-        
+
         expect(rateLimitStore.attempts.has(key)).toBe(false);
       });
 
@@ -253,10 +253,10 @@ describe('Rate Limiter Middleware', () => {
           blockedAt: Date.now() - 2000,
           expiresAt: Date.now() - 1000 // 1 second ago
         };
-        
+
         rateLimitStore.blocked.set(key, expiredBlock);
         rateLimitStore.cleanup();
-        
+
         expect(rateLimitStore.blocked.has(key)).toBe(false);
       });
     });
@@ -266,13 +266,13 @@ describe('Rate Limiter Middleware', () => {
         const rateLimitStore = new RateLimitStore();
         const ip1 = '192.168.1.1';
         const ip2 = '192.168.1.2';
-        
+
         // Record some attempts
         rateLimitStore.recordAttempt('key1', ip1);
         rateLimitStore.recordAttempt('key2', ip2);
-        
+
         const metrics = rateLimitStore.getMetrics();
-        
+
         expect(metrics.totalAttempts).toBe(2);
         expect(metrics.uniqueIPs).toBe(2);
         expect(metrics.activeAttempts).toBe(2);
@@ -298,10 +298,10 @@ describe('Rate Limiter Middleware', () => {
     });
 
     it('should fall back to connection.socket.remoteAddress', () => {
-      const req = { 
-        connection: { 
-          socket: { remoteAddress: '192.168.1.103' } 
-        } 
+      const req = {
+        connection: {
+          socket: { remoteAddress: '192.168.1.103' }
+        }
       };
       expect(getClientIP(req)).toBe('192.168.1.103');
     });
@@ -340,7 +340,7 @@ describe('Rate Limiter Middleware', () => {
     it('should block requests when rate limit exceeded', async () => {
       const email = 'blocked@example.com';
       const ip = '192.168.1.100';
-      
+
       mockReq.body.email = email;
       mockReq.ip = ip;
 
@@ -364,7 +364,7 @@ describe('Rate Limiter Middleware', () => {
     it('should intercept failed login responses', async () => {
       const email = 'test@example.com';
       const ip = '192.168.1.1';
-      
+
       mockReq.body.email = email;
       mockReq.ip = ip;
 
@@ -389,7 +389,7 @@ describe('Rate Limiter Middleware', () => {
     it('should reset attempts on successful login', async () => {
       const email = 'success@example.com';
       const ip = '192.168.1.1';
-      
+
       mockReq.body.email = email;
       mockReq.ip = ip;
 
@@ -415,12 +415,7 @@ describe('Rate Limiter Middleware', () => {
     });
 
     it('should handle auth endpoint variations', async () => {
-      const authEndpoints = [
-        '/auth/login',
-        '/api/auth/login',
-        '/login',
-        '/auth/signin'
-      ];
+      const authEndpoints = ['/auth/login', '/api/auth/login', '/login', '/auth/signin'];
 
       for (const path of authEndpoints) {
         mockReq.path = path;
@@ -453,7 +448,7 @@ describe('Rate Limiter Middleware', () => {
 
     it('should log debug information when enabled', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      
+
       flags.isEnabled.mockImplementation((flag) => {
         switch (flag) {
           case 'ENABLE_RATE_LIMIT':
@@ -466,7 +461,7 @@ describe('Rate Limiter Middleware', () => {
 
       const email = 'debug@example.com';
       const ip = '192.168.1.1';
-      
+
       mockReq.body.email = email;
       mockReq.ip = ip;
 
@@ -478,7 +473,7 @@ describe('Rate Limiter Middleware', () => {
       await loginRateLimiter(mockReq, mockRes, mockNext);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Blocked login attempt:', 
+        'Blocked login attempt:',
         expect.objectContaining({ ip, remainingMs: expect.any(Number) })
       );
 
@@ -488,9 +483,7 @@ describe('Rate Limiter Middleware', () => {
 
   describe('getRateLimitMetrics endpoint', () => {
     it('should return metrics in mock mode', async () => {
-      flags.isEnabled.mockImplementation((flag) => 
-        flag === 'ENABLE_MOCK_MODE'
-      );
+      flags.isEnabled.mockImplementation((flag) => flag === 'ENABLE_MOCK_MODE');
 
       await getRateLimitMetrics(mockReq, mockRes);
 
@@ -511,7 +504,7 @@ describe('Rate Limiter Middleware', () => {
     it('should deny access outside mock mode', async () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production'; // Simulate non-test environment
-      
+
       flags.isEnabled.mockReturnValue(false);
 
       await getRateLimitMetrics(mockReq, mockRes);
@@ -521,14 +514,14 @@ describe('Rate Limiter Middleware', () => {
         success: false,
         error: 'Metrics only available in mock mode'
       });
-      
+
       process.env.NODE_ENV = originalEnv; // Restore
     });
 
     it('should work in test environment', async () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'test';
-      
+
       flags.isEnabled.mockReturnValue(false);
 
       await getRateLimitMetrics(mockReq, mockRes);
@@ -551,13 +544,11 @@ describe('Rate Limiter Middleware', () => {
     });
 
     it('should reset rate limit for specific IP/email', async () => {
-      flags.isEnabled.mockImplementation((flag) => 
-        flag === 'ENABLE_MOCK_MODE'
-      );
+      flags.isEnabled.mockImplementation((flag) => flag === 'ENABLE_MOCK_MODE');
 
       const { ip, email } = mockReq.body;
       const key = store.getKey(ip, email);
-      
+
       // Create some attempts
       store.recordAttempt(key, ip);
       store.recordAttempt(key, ip);
@@ -576,9 +567,7 @@ describe('Rate Limiter Middleware', () => {
     });
 
     it('should require IP and email parameters', async () => {
-      flags.isEnabled.mockImplementation((flag) => 
-        flag === 'ENABLE_MOCK_MODE'
-      );
+      flags.isEnabled.mockImplementation((flag) => flag === 'ENABLE_MOCK_MODE');
 
       mockReq.body = { ip: '192.168.1.1' }; // Missing email
 
@@ -594,7 +583,7 @@ describe('Rate Limiter Middleware', () => {
     it('should deny access outside mock mode', async () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production'; // Simulate non-test environment
-      
+
       flags.isEnabled.mockReturnValue(false);
 
       await resetRateLimit(mockReq, mockRes);
@@ -604,14 +593,14 @@ describe('Rate Limiter Middleware', () => {
         success: false,
         error: 'Rate limit reset only available in mock mode'
       });
-      
+
       process.env.NODE_ENV = originalEnv; // Restore
     });
 
     it('should work in test environment', async () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'test';
-      
+
       flags.isEnabled.mockReturnValue(false);
 
       await resetRateLimit(mockReq, mockRes);
@@ -648,7 +637,7 @@ describe('Rate Limiter Middleware', () => {
 
     it('should handle response end interception errors', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       mockReq.body.email = 'test@example.com';
       mockReq.ip = '192.168.1.1';
 
@@ -680,11 +669,13 @@ describe('Rate Limiter Middleware', () => {
       const email = 'concurrent@example.com';
       const ip = '192.168.1.1';
 
-      const requests = Array(3).fill(null).map(() => ({
-        ...mockReq,
-        body: { email },
-        ip
-      }));
+      const requests = Array(3)
+        .fill(null)
+        .map(() => ({
+          ...mockReq,
+          body: { email },
+          ip
+        }));
 
       const responses = requests.map(() => ({
         ...mockRes,
@@ -695,9 +686,7 @@ describe('Rate Limiter Middleware', () => {
       }));
 
       // Process requests concurrently
-      const promises = requests.map((req, i) => 
-        loginRateLimiter(req, responses[i], mockNext)
-      );
+      const promises = requests.map((req, i) => loginRateLimiter(req, responses[i], mockNext));
 
       await Promise.all(promises);
 
@@ -705,7 +694,7 @@ describe('Rate Limiter Middleware', () => {
       expect(mockNext).toHaveBeenCalledTimes(3);
 
       // Simulate all failing
-      responses.forEach(res => res.end('{"success": false}'));
+      responses.forEach((res) => res.end('{"success": false}'));
 
       // Should record attempts correctly
       const key = store.getKey(ip, email);

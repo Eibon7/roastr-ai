@@ -19,14 +19,12 @@ describe('Dashboard API Endpoints', () => {
 
   describe('GET /api/health', () => {
     test('returns system health status', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       expect(response.body).toHaveProperty('services');
       expect(response.body).toHaveProperty('flags');
       expect(response.body).toHaveProperty('timestamp');
-      
+
       // mock-mode adjustment: Check actual services structure from backend
       expect(response.body.services).toHaveProperty('api');
       expect(response.body.services).toHaveProperty('billing');
@@ -41,9 +39,7 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('includes valid timestamp', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       const timestamp = new Date(response.body.timestamp);
       expect(timestamp).toBeInstanceOf(Date);
@@ -51,18 +47,16 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('services have valid status values', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       const validStatuses = ['ok', 'degraded', 'error'];
       const services = response.body.services;
 
       // mock-mode adjustment: Test actual service status values
-      Object.values(services).forEach(status => {
+      Object.values(services).forEach((status) => {
         expect(validStatuses).toContain(status);
       });
-      
+
       // mock-mode adjustment: In mock mode, expect specific statuses
       expect(services.api).toBe('ok');
       expect(['ok', 'degraded']).toContain(services.billing);
@@ -73,9 +67,7 @@ describe('Dashboard API Endpoints', () => {
 
   describe('GET /api/user', () => {
     test('returns mock user data', async () => {
-      const response = await request(app)
-        .get('/api/user')
-        .expect(200);
+      const response = await request(app).get('/api/user').expect(200);
 
       // mock-mode adjustment: Use actual backend response structure
       expect(response.body).toHaveProperty('email', 'user@roastr.ai');
@@ -89,9 +81,7 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('includes user metadata', async () => {
-      const response = await request(app)
-        .get('/api/user')
-        .expect(200);
+      const response = await request(app).get('/api/user').expect(200);
 
       // mock-mode adjustment: Test actual user response fields
       expect(response.body).toHaveProperty('id');
@@ -103,9 +93,7 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('includes rqc status', async () => {
-      const response = await request(app)
-        .get('/api/user')
-        .expect(200);
+      const response = await request(app).get('/api/user').expect(200);
 
       // mock-mode adjustment: rqcEnabled is direct property, not nested in features
       expect(typeof response.body.rqcEnabled).toBe('boolean');
@@ -115,20 +103,16 @@ describe('Dashboard API Endpoints', () => {
 
   describe('GET /api/integrations', () => {
     test('returns list of integrations', async () => {
-      const response = await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      const response = await request(app).get('/api/integrations').expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body.length).toBeGreaterThan(0);
     });
 
     test('each integration has required fields', async () => {
-      const response = await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      const response = await request(app).get('/api/integrations').expect(200);
 
-      response.body.forEach(integration => {
+      response.body.forEach((integration) => {
         expect(integration).toHaveProperty('name');
         expect(integration).toHaveProperty('displayName');
         expect(integration).toHaveProperty('icon');
@@ -138,12 +122,10 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('shows integration status in mock mode', async () => {
-      const response = await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      const response = await request(app).get('/api/integrations').expect(200);
 
-      const connected = response.body.filter(i => i.status === 'connected');
-      const disconnected = response.body.filter(i => i.status === 'disconnected');
+      const connected = response.body.filter((i) => i.status === 'connected');
+      const disconnected = response.body.filter((i) => i.status === 'disconnected');
 
       // mock-mode adjustment: In mock mode, most/all integrations are disconnected by default
       expect(disconnected.length).toBeGreaterThan(0);
@@ -154,20 +136,16 @@ describe('Dashboard API Endpoints', () => {
 
   describe('GET /api/logs', () => {
     test('returns list of logs', async () => {
-      const response = await request(app)
-        .get('/api/logs')
-        .expect(200);
+      const response = await request(app).get('/api/logs').expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body.length).toBeGreaterThan(0);
     });
 
     test('each log entry has required fields', async () => {
-      const response = await request(app)
-        .get('/api/logs')
-        .expect(200);
+      const response = await request(app).get('/api/logs').expect(200);
 
-      response.body.forEach(log => {
+      response.body.forEach((log) => {
         expect(log).toHaveProperty('id');
         expect(log).toHaveProperty('timestamp');
         expect(log).toHaveProperty('level');
@@ -178,17 +156,13 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('respects limit parameter', async () => {
-      const response = await request(app)
-        .get('/api/logs?limit=5')
-        .expect(200);
+      const response = await request(app).get('/api/logs?limit=5').expect(200);
 
       expect(response.body.length).toBeLessThanOrEqual(5);
     });
 
     test('defaults to 50 logs when no limit specified', async () => {
-      const response = await request(app)
-        .get('/api/logs')
-        .expect(200);
+      const response = await request(app).get('/api/logs').expect(200);
 
       // mock-mode adjustment: Backend defaults to 50 logs, not 20
       expect(response.body.length).toBeLessThanOrEqual(50);
@@ -198,9 +172,7 @@ describe('Dashboard API Endpoints', () => {
 
   describe('GET /api/usage', () => {
     test('returns usage statistics', async () => {
-      const response = await request(app)
-        .get('/api/usage')
-        .expect(200);
+      const response = await request(app).get('/api/usage').expect(200);
 
       expect(response.body).toHaveProperty('aiCalls');
       expect(response.body).toHaveProperty('costCents');
@@ -209,9 +181,7 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('includes usage breakdown', async () => {
-      const response = await request(app)
-        .get('/api/usage')
-        .expect(200);
+      const response = await request(app).get('/api/usage').expect(200);
 
       expect(response.body.breakdown).toHaveProperty('roastGeneration');
       expect(response.body.breakdown).toHaveProperty('toxicityAnalysis');
@@ -219,9 +189,7 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('includes limits', async () => {
-      const response = await request(app)
-        .get('/api/usage')
-        .expect(200);
+      const response = await request(app).get('/api/usage').expect(200);
 
       expect(response.body.limits).toHaveProperty('aiCallsLimit');
       expect(typeof response.body.limits.aiCallsLimit).toBe('number');
@@ -230,8 +198,7 @@ describe('Dashboard API Endpoints', () => {
 
   describe('POST /api/billing/portal', () => {
     test('returns billing portal response', async () => {
-      const response = await request(app)
-        .post('/api/billing/portal');
+      const response = await request(app).post('/api/billing/portal');
 
       // mock-mode adjustment: Accept both mock (200) and unavailable (503) responses
       if (response.status === 200) {
@@ -240,7 +207,7 @@ describe('Dashboard API Endpoints', () => {
         expect(response.body).toHaveProperty('message');
         expect(response.body.url).toBe('#mock-portal');
       } else if (response.status === 503) {
-        // Real mode but billing not configured  
+        // Real mode but billing not configured
         expect(response.body).toHaveProperty('error');
         expect(response.body.error).toBe('billing_unavailable');
       } else {
@@ -253,7 +220,7 @@ describe('Dashboard API Endpoints', () => {
     test('generates roast preview from text', async () => {
       // mock-mode adjustment: Use 'text' field instead of 'message'
       const text = 'This is a test message to roast';
-      
+
       const response = await request(app)
         .post('/api/roast/preview')
         .send({ text, platform: 'twitter', intensity: 3 })
@@ -271,10 +238,7 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('requires text in request body', async () => {
-      const response = await request(app)
-        .post('/api/roast/preview')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/api/roast/preview').send({}).expect(400);
 
       // mock-mode adjustment: Error structure matches backend
       expect(response.body).toHaveProperty('error');
@@ -283,10 +247,7 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('handles empty text', async () => {
-      const response = await request(app)
-        .post('/api/roast/preview')
-        .send({ text: '' })
-        .expect(400);
+      const response = await request(app).post('/api/roast/preview').send({ text: '' }).expect(400);
 
       // mock-mode adjustment: Test with correct field name
       expect(response.body).toHaveProperty('error');
@@ -295,7 +256,7 @@ describe('Dashboard API Endpoints', () => {
 
     test('handles very long text', async () => {
       const longText = 'a'.repeat(1000);
-      
+
       const response = await request(app)
         .post('/api/roast/preview')
         .send({ text: longText, platform: 'twitter', intensity: 3 })
@@ -318,9 +279,7 @@ describe('Dashboard API Endpoints', () => {
     });
 
     test('returns 404 for non-existent endpoints', async () => {
-      await request(app)
-        .get('/api/nonexistent')
-        .expect(404);
+      await request(app).get('/api/nonexistent').expect(404);
     });
   });
 
@@ -335,10 +294,8 @@ describe('Dashboard API Endpoints', () => {
       ];
 
       for (const endpoint of endpoints) {
-        const response = await request(app)
-          .get(endpoint)
-          .expect(200);
-        
+        const response = await request(app).get(endpoint).expect(200);
+
         expect(response.headers['content-type']).toMatch(/application\/json/);
       }
     });
@@ -358,9 +315,9 @@ describe('Dashboard API Endpoints', () => {
       const response2 = await request(app).get('/api/logs');
 
       // Log timestamps should be different due to random generation
-      const timestamps1 = response1.body.map(l => l.timestamp);
-      const timestamps2 = response2.body.map(l => l.timestamp);
-      
+      const timestamps1 = response1.body.map((l) => l.timestamp);
+      const timestamps2 = response2.body.map((l) => l.timestamp);
+
       expect(timestamps1).not.toEqual(timestamps2);
     });
   });

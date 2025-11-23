@@ -1,11 +1,15 @@
 /**
  * Integration Tests for Shield Adapter System
- * 
+ *
  * These tests verify that the Shield adapters work correctly with the
  * existing Shield service and can be integrated into the worker system.
  */
 
-const { ShieldAdapter, ModerationInput, ModerationResult } = require('../../src/adapters/ShieldAdapter');
+const {
+  ShieldAdapter,
+  ModerationInput,
+  ModerationResult
+} = require('../../src/adapters/ShieldAdapter');
 const TwitterShieldAdapter = require('../../src/adapters/mock/TwitterShieldAdapter');
 const YouTubeShieldAdapter = require('../../src/adapters/mock/YouTubeShieldAdapter');
 const DiscordShieldAdapter = require('../../src/adapters/mock/DiscordShieldAdapter');
@@ -22,7 +26,7 @@ describe('Shield Adapter Integration Tests', () => {
   beforeAll(async () => {
     // Create a registry of all adapters
     adapterRegistry = new Map();
-    
+
     const adapters = [
       { platform: 'twitter', class: TwitterShieldAdapter },
       { platform: 'youtube', class: YouTubeShieldAdapter },
@@ -64,14 +68,16 @@ describe('Shield Adapter Integration Tests', () => {
 
       // Verify all platforms returned valid results
       expect(results.size).toBe(4);
-      
+
       for (const [platform, result] of results) {
         expect(result).toBeInstanceOf(ModerationResult);
         expect(result.action).toBe('hide_comment');
         expect(result.details.platform).toBe(platform);
-        
+
         // Log the result for debugging
-        console.log(`${platform}: ${result.success ? 'SUCCESS' : 'FAILED'} - ${result.requiresManualReview ? 'MANUAL REVIEW' : 'AUTOMATED'}`);
+        console.log(
+          `${platform}: ${result.success ? 'SUCCESS' : 'FAILED'} - ${result.requiresManualReview ? 'MANUAL REVIEW' : 'AUTOMATED'}`
+        );
       }
     });
 
@@ -96,9 +102,9 @@ describe('Shield Adapter Integration Tests', () => {
       for (const { platform, action, shouldSucceed } of platformTests) {
         const adapter = adapterRegistry.get(platform);
         const input = new ModerationInput({ ...mockInput, platform });
-        
+
         const result = await adapter[action](input);
-        
+
         if (!shouldSucceed) {
           expect(result.requiresManualReview || !result.success).toBe(true);
         }
@@ -168,10 +174,10 @@ describe('Shield Adapter Integration Tests', () => {
 
       // Verify workflow executed correctly
       expect(workflowResults.length).toBe(4); // 2 platforms × 2 actions
-      
-      const hideActions = workflowResults.filter(r => r.step === 'hide_comment');
-      const blockActions = workflowResults.filter(r => r.step === 'block_user');
-      
+
+      const hideActions = workflowResults.filter((r) => r.step === 'hide_comment');
+      const blockActions = workflowResults.filter((r) => r.step === 'block_user');
+
       expect(hideActions.length).toBe(2);
       expect(blockActions.length).toBe(2);
 
@@ -214,7 +220,7 @@ describe('Shield Adapter Integration Tests', () => {
 
         async executeAction(platform, action, input) {
           const adapter = await this.getAdapter(platform);
-          
+
           switch (action) {
             case 'hide':
               return await adapter.hideComment(input);
@@ -278,7 +284,7 @@ describe('Shield Adapter Integration Tests', () => {
       for (let i = 0; i < 20; i++) {
         const platform = platforms[i % platforms.length];
         const adapter = adapterRegistry.get(platform);
-        
+
         const input = new ModerationInput({
           platform: platform,
           commentId: `concurrent_comment_${i}`,
@@ -288,7 +294,7 @@ describe('Shield Adapter Integration Tests', () => {
           orgId: 'concurrent_test_org'
         });
 
-        const task = adapter.hideComment(input).then(result => ({
+        const task = adapter.hideComment(input).then((result) => ({
           taskId: i,
           platform,
           success: result.success,
@@ -305,10 +311,11 @@ describe('Shield Adapter Integration Tests', () => {
 
       // Verify all tasks completed
       expect(results.length).toBe(20);
-      
+
       // Calculate performance metrics
-      const avgExecutionTime = results.reduce((sum, r) => sum + r.executionTime, 0) / results.length;
-      const successRate = results.filter(r => r.success).length / results.length;
+      const avgExecutionTime =
+        results.reduce((sum, r) => sum + r.executionTime, 0) / results.length;
+      const successRate = results.filter((r) => r.success).length / results.length;
 
       console.log(`Concurrent execution stats:`);
       console.log(`  Total time: ${totalTime}ms`);
@@ -338,7 +345,7 @@ describe('Shield Adapter Integration Tests', () => {
       });
 
       const results = [];
-      
+
       // Run multiple attempts to test error handling
       for (let i = 0; i < 10; i++) {
         const result = await unreliableAdapter.hideComment(input);
@@ -346,22 +353,22 @@ describe('Shield Adapter Integration Tests', () => {
       }
 
       // Verify all results are valid ModerationResult objects
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeInstanceOf(ModerationResult);
         expect(typeof result.success).toBe('boolean');
         expect(result.action).toBe('hide_comment');
         expect(result.details.platform).toBe('twitter');
-        
+
         if (!result.success) {
           expect(result.error).toBeDefined();
         }
       });
 
-      const successCount = results.filter(r => r.success).length;
-      const failureCount = results.filter(r => !r.success).length;
-      
+      const successCount = results.filter((r) => r.success).length;
+      const failureCount = results.filter((r) => !r.success).length;
+
       console.log(`Error handling test: ${successCount} successes, ${failureCount} failures`);
-      
+
       // With 80% failure rate, we should see some failures
       expect(failureCount).toBeGreaterThan(0);
     });

@@ -68,6 +68,9 @@
     "test:spec14:tiers": "node scripts/run-spec14-tests.js --suite=tier",
     "test:spec14:e2e": "node scripts/run-spec14-tests.js --suite=scenario",
     "lint": "eslint src/ tests/ --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
+    "lint:fix": "eslint src/ tests/ --fix --quiet --no-error-on-unmatched-pattern || echo 'Linting completed with warnings'",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md,yaml,yml}\"",
     "test:integrations": "jest tests/unit/integrations/ --verbose",
     "test:smoke": "jest tests/smoke/ --verbose",
     "test:rls": "jest tests/rls/ --verbose",
@@ -212,6 +215,8 @@
     "babel-jest": "^30.0.5",
     "cross-env": "^10.0.0",
     "eslint": "^9.39.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "glob": "^10.3.10",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
@@ -222,6 +227,7 @@
     "nock": "^13.3.3",
     "pg": "^8.16.3",
     "playwright": "^1.56.0",
+    "prettier": "^3.4.2",
     "supabase-test": "^0.2.4",
     "supertest": "^7.1.4"
   }

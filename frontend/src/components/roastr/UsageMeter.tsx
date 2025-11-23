@@ -36,8 +36,7 @@ export function UsageMeter({
 }: UsageMeterProps) {
   const isUnlimited = limit < 0;
   const safeLimit = isUnlimited ? Math.max(used || 1, 1) : limit;
-  const percentage =
-    safeLimit === 0 ? 0 : Math.min(100, Math.round((used / safeLimit) * 100));
+  const percentage = safeLimit === 0 ? 0 : Math.min(100, Math.round((used / safeLimit) * 100));
   const remaining = isUnlimited ? '∞' : Math.max(safeLimit - used, 0).toLocaleString();
 
   return (
@@ -85,4 +84,3 @@ export function UsageMeter({
 }
 
 export default UsageMeter;
-

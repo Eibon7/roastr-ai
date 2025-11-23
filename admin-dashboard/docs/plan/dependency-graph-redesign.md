@@ -7,12 +7,14 @@ Rediseñar completamente el Dependency Graph para que tenga el estilo visual de 
 ## 📋 Estado Actual (Assessment)
 
 **Existente:**
+
 - ✅ Componente DependencyGraph funcional con D3.js
 - ✅ 13 nodos GDD con dependencias
 - ✅ 3 layouts (force, circular, hierarchical)
 - ✅ Datos en `gdd-graph.json`
 
 **Problemas:**
+
 - ❌ Estilo básico de grafo de red (nodos circulares + edges)
 - ❌ No se parece al estilo workflow/pipeline de la referencia
 - ❌ Falta el aspecto de "boxes conectados con flechas"
@@ -62,9 +64,11 @@ Rediseñar completamente el Dependency Graph para que tenga el estilo visual de 
 ## 📐 Plan de Implementación
 
 ### Fase 1: UI/UX Design (UI Designer Agent)
+
 **Objetivo**: Crear especificaciones detalladas del nuevo diseño
 
 **Tareas**:
+
 1. Analizar imagen de referencia en detalle
 2. Definir dimensiones exactas de nodos (width, height, padding)
 3. Especificar colores exactos (backgrounds, borders, text, hover states)
@@ -75,9 +79,11 @@ Rediseñar completamente el Dependency Graph para que tenga el estilo visual de 
 **Output**: `docs/ui/dependency-graph-workflow-spec.md`
 
 ### Fase 2: Whimsy Injection (Whimsy Injector Agent)
+
 **Objetivo**: Añadir microinteracciones y detalles sutiles que eleven la UX
 
 **Tareas**:
+
 1. Diseñar animaciones de hover (border pulse, glow expansion)
 2. Crear transiciones suaves entre estados
 3. Añadir feedback visual al drag & drop
@@ -87,9 +93,11 @@ Rediseñar completamente el Dependency Graph para que tenga el estilo visual de 
 **Output**: `docs/ui/dependency-graph-whimsy.md`
 
 ### Fase 3: Frontend Implementation (Front-end Dev Agent)
+
 **Objetivo**: Reescribir completamente el componente DependencyGraph
 
 **Tareas**:
+
 1. **Reemplazar D3 force layout** → Custom hierarchical layout
 2. **Rediseñar nodos**:
    - SVG `<rect>` en lugar de `<circle>`
@@ -110,9 +118,11 @@ Rediseñar completamente el Dependency Graph para que tenga el estilo visual de 
 **Output**: Nuevo `src/components/dashboard/DependencyGraph.tsx` (completo rewrite)
 
 ### Fase 4: Testing & Polish (Test Engineer Agent)
+
 **Objetivo**: Validar visualmente el nuevo diseño
 
 **Tareas**:
+
 1. Playwright visual tests en múltiples viewports
 2. Screenshots de comparación (antes/después)
 3. Test de interactividad (hover, click, drag)

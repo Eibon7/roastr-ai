@@ -31,6 +31,7 @@
 **Line**: 297 (method `calculateDerivedMetrics`)
 
 **Codex Comment**:
+
 > "`calculateDerivedMetrics` defaults `repairScore` to `100` via `metrics.repair?.success_rate || 100`. Because `||` treats `0` and `null` as falsy, any run with 0% auto-fix success (or missing data) inflates `stability_index` and `system_status` to the "STABLE" path even when auto-fixes are completely failing. This misreports health and prevents the workflow from signalling a true degradation."
 
 ### Code Before Fix
@@ -60,6 +61,7 @@ calculateDerivedMetrics(metrics) {
 ```
 
 **Problem**:
+
 - When `success_rate = 0` (0% auto-fix success) → `|| 100` returns `100` ❌
 - When `success_rate = null` (no data) → `|| 100` returns `100` ✅ (intended)
 - Both cases treated identically, but 0% ≠ no data
@@ -91,6 +93,7 @@ calculateDerivedMetrics(metrics) {
 ```
 
 **Solution**:
+
 - When `success_rate = 0` → `?? 100` returns `0` ✅ (correct)
 - When `success_rate = null` → `?? 100` returns `100` ✅ (fallback)
 - Nullish coalescing only applies fallback for `null`/`undefined`, not `0`
@@ -100,6 +103,7 @@ calculateDerivedMetrics(metrics) {
 #### Scenario 1: Auto-fix completely failing (0% success)
 
 **Metrics Input**:
+
 ```json
 {
   "health": { "overall_score": 95 },
@@ -109,6 +113,7 @@ calculateDerivedMetrics(metrics) {
 ```
 
 **Before Fix** (with `||`):
+
 ```javascript
 healthScore = 95
 driftScore = 90  // 100 - 10
@@ -122,6 +127,7 @@ system_status = "STABLE"  // ❌ WRONG - auto-fixes are failing!
 ```
 
 **After Fix** (with `??`):
+
 ```javascript
 healthScore = 95
 driftScore = 90  // 100 - 10
@@ -137,6 +143,7 @@ system_status = "DEGRADED"  // ✅ CORRECT - reflects failing auto-fixes
 ```
 
 **Impact**:
+
 - `stability_index`: 95 → 62 (33-point decrease)
 - `system_status`: "STABLE" → "DEGRADED" (correct degradation)
 - Alerts: Not triggered → Triggered appropriately
@@ -144,6 +151,7 @@ system_status = "DEGRADED"  // ✅ CORRECT - reflects failing auto-fixes
 #### Scenario 2: No repair data (null)
 
 **Metrics Input**:
+
 ```json
 {
   "health": { "overall_score": 95 },
@@ -153,17 +161,19 @@ system_status = "DEGRADED"  // ✅ CORRECT - reflects failing auto-fixes
 ```
 
 **Before Fix** (with `||`):
+
 ```javascript
-repairScore = 100  // null || 100 = 100 ✅
-stability_index = 95
-system_status = "STABLE"  // ✅ Correct - no data to contradict
+repairScore = 100; // null || 100 = 100 ✅
+stability_index = 95;
+system_status = 'STABLE'; // ✅ Correct - no data to contradict
 ```
 
 **After Fix** (with `??`):
+
 ```javascript
-repairScore = 100  // null ?? 100 = 100 ✅
-stability_index = 95
-system_status = "STABLE"  // ✅ Correct - same behavior for null
+repairScore = 100; // null ?? 100 = 100 ✅
+stability_index = 95;
+system_status = 'STABLE'; // ✅ Correct - same behavior for null
 ```
 
 **Impact**: No change (correct behavior maintained)
@@ -199,16 +209,17 @@ Time:        0.462 s
 
 ### Test Case Matrix
 
-| Test Case | `success_rate` | `repairScore` (Before) | `repairScore` (After) | `stability_index` (Before) | `stability_index` (After) | `system_status` (Before) | `system_status` (After) |
-|-----------|----------------|------------------------|-----------------------|---------------------------|--------------------------|-------------------------|------------------------|
-| **P1-1**  | `0`            | `100` ❌               | `0` ✅                | `95` ❌                    | `62` ✅                   | `STABLE` ❌              | `DEGRADED` ✅           |
-| **P1-2**  | `null`         | `100` ✅               | `100` ✅              | `95` ✅                    | `95` ✅                   | `STABLE` ✅              | `STABLE` ✅             |
-| **P1-3**  | `undefined`    | `100` ✅               | `100` ✅              | `95` ✅                    | `95` ✅                   | `STABLE` ✅              | `STABLE` ✅             |
-| **P1-4**  | `50`           | `50` ✅                | `50` ✅               | `78` ✅                    | `78` ✅                   | `DEGRADED` ✅            | `DEGRADED` ✅           |
-| **Edge-1** | `100`          | `100` ✅               | `100` ✅              | `95` ✅                    | `95` ✅                   | `STABLE` ✅              | `STABLE` ✅             |
-| **Edge-2** | `0` (low health) | `100` ❌             | `0` ✅                | `60` ❌                    | `27` ✅                   | `CRITICAL` ✅ (luck)     | `CRITICAL` ✅           |
+| Test Case  | `success_rate`   | `repairScore` (Before) | `repairScore` (After) | `stability_index` (Before) | `stability_index` (After) | `system_status` (Before) | `system_status` (After) |
+| ---------- | ---------------- | ---------------------- | --------------------- | -------------------------- | ------------------------- | ------------------------ | ----------------------- |
+| **P1-1**   | `0`              | `100` ❌               | `0` ✅                | `95` ❌                    | `62` ✅                   | `STABLE` ❌              | `DEGRADED` ✅           |
+| **P1-2**   | `null`           | `100` ✅               | `100` ✅              | `95` ✅                    | `95` ✅                   | `STABLE` ✅              | `STABLE` ✅             |
+| **P1-3**   | `undefined`      | `100` ✅               | `100` ✅              | `95` ✅                    | `95` ✅                   | `STABLE` ✅              | `STABLE` ✅             |
+| **P1-4**   | `50`             | `50` ✅                | `50` ✅               | `78` ✅                    | `78` ✅                   | `DEGRADED` ✅            | `DEGRADED` ✅           |
+| **Edge-1** | `100`            | `100` ✅               | `100` ✅              | `95` ✅                    | `95` ✅                   | `STABLE` ✅              | `STABLE` ✅             |
+| **Edge-2** | `0` (low health) | `100` ❌               | `0` ✅                | `60` ❌                    | `27` ✅                   | `CRITICAL` ✅ (luck)     | `CRITICAL` ✅           |
 
 **Key Findings**:
+
 - ❌ Before fix: Test **P1-1** incorrectly reports STABLE when auto-fixes failing
 - ✅ After fix: All scenarios correctly reflect system health
 - 🎯 Fix targets: Only affects `success_rate = 0` case (intended fix)
@@ -243,24 +254,26 @@ inflation = 95 - 62 = 33 points
 
 ## Files Modified
 
-| File | Changes | Lines Modified |
-|------|---------|----------------|
-| `scripts/collect-gdd-telemetry.js` | Changed `\|\|` to `??` + comment | 297 (+1 char, +15 chars comment) |
-| `tests/unit/utils/calculate-derived-metrics.test.js` | New test file | +217 lines |
-| `docs/plan/review-3311704785.md` | Implementation plan | +515 lines |
-| `docs/test-evidence/review-3311704785/SUMMARY.md` | This evidence file | +350 lines |
+| File                                                 | Changes                          | Lines Modified                   |
+| ---------------------------------------------------- | -------------------------------- | -------------------------------- |
+| `scripts/collect-gdd-telemetry.js`                   | Changed `\|\|` to `??` + comment | 297 (+1 char, +15 chars comment) |
+| `tests/unit/utils/calculate-derived-metrics.test.js` | New test file                    | +217 lines                       |
+| `docs/plan/review-3311704785.md`                     | Implementation plan              | +515 lines                       |
+| `docs/test-evidence/review-3311704785/SUMMARY.md`    | This evidence file               | +350 lines                       |
 
 ---
 
 ## Validation Status
 
 ### Code Quality
+
 - ✅ P1 issue resolved: Nullish coalescing implemented
 - ✅ 0% success rate treated as valid value
 - ✅ null/undefined still use fallback (100)
 - ✅ Comment added for future maintainers
 
 ### Testing
+
 - ✅ 7 unit tests created
 - ✅ All tests passing (0.462s)
 - ✅ Coverage: `calculateDerivedMetrics` now 100% covered
@@ -268,12 +281,14 @@ inflation = 95 - 62 = 33 points
 - ✅ Before/after impact demonstrated
 
 ### Impact
+
 - ✅ `stability_index` now correctly reflects auto-fix failures
 - ✅ `system_status` properly transitions to DEGRADED/CRITICAL
 - ✅ Alerts trigger appropriately when auto-fixes fail
 - ✅ No regression: null/undefined behavior unchanged
 
 ### Documentation
+
 - ✅ Implementation plan created
 - ✅ Evidence package complete
 - ✅ Test results documented
@@ -286,12 +301,13 @@ inflation = 95 - 62 = 33 points
 ### Review #3311553722 (CodeRabbit) - Applied Earlier
 
 **Fixed**: `collectRepairMetrics` (line 243)
+
 ```javascript
 // Before:
-success_rate: total > 0 ? Math.round((fixes / total) * 100) : 100  // ❌
+success_rate: total > 0 ? Math.round((fixes / total) * 100) : 100; // ❌
 
 // After:
-success_rate: total > 0 ? Math.round((fixes / total) * 100) : null  // ✅
+success_rate: total > 0 ? Math.round((fixes / total) * 100) : null; // ✅
 ```
 
 **Impact**: When no repair data exists, return `null` instead of `100`
@@ -299,12 +315,13 @@ success_rate: total > 0 ? Math.round((fixes / total) * 100) : null  // ✅
 ### Review #3311704785 (Codex) - Applied Now
 
 **Fixed**: `calculateDerivedMetrics` (line 297)
+
 ```javascript
 // Before:
-const repairScore = metrics.repair?.success_rate || 100;  // ❌
+const repairScore = metrics.repair?.success_rate || 100; // ❌
 
 // After:
-const repairScore = metrics.repair?.success_rate ?? 100;  // ✅
+const repairScore = metrics.repair?.success_rate ?? 100; // ✅
 ```
 
 **Impact**: When `success_rate = 0`, treat as valid value (not fallback)
@@ -312,6 +329,7 @@ const repairScore = metrics.repair?.success_rate ?? 100;  // ✅
 ### Synergy
 
 The two fixes work together:
+
 1. `collectRepairMetrics` returns `null` when no data (not `100`)
 2. `calculateDerivedMetrics` uses `??` to only fallback on `null` (not `0`)
 3. Result: System correctly differentiates between:
@@ -359,30 +377,35 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ## Checklist
 
 ### Pre-Implementation
+
 - [x] Plan created in `docs/plan/review-3311704785.md`
 - [x] Issue analyzed (P1 - nullish coalescing)
 - [x] Root cause identified (|| vs ??)
 - [x] Fix strategy defined
 
 ### Implementation
+
 - [x] Changed `||` to `??` on line 297
 - [x] Added comment for clarity
 - [x] Created 7 unit tests
 - [x] All tests passing
 
 ### Validation
+
 - [x] Tests demonstrate correct behavior
 - [x] Impact analysis shows 33-point inflation prevented
 - [x] No regressions (null/undefined behavior unchanged)
 - [x] Edge cases covered
 
 ### Documentation
+
 - [x] Implementation plan complete
 - [x] Evidence package complete
 - [x] Test results documented
 - [x] Before/after impact quantified
 
 ### Quality
+
 - [x] 100% issues resolved (1 P1)
 - [x] Tests passing (7/7)
 - [x] Coverage increased (calculateDerivedMetrics now tested)

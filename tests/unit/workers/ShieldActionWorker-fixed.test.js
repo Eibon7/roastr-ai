@@ -1,6 +1,6 @@
 /**
  * Shield Action Worker Tests - Fixed and Comprehensive
- * 
+ *
  * Tests for the Shield Action Worker focusing on:
  * - Core moderation actions (warning, mute, block, content removal)
  * - Platform integration (Twitter, Discord, YouTube)
@@ -121,14 +121,14 @@ describe('ShieldActionWorker - Fixed Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Set up environment variables for testing
     process.env.TWITTER_BEARER_TOKEN = 'test-token';
     process.env.TWITTER_APP_KEY = 'test-key';
     process.env.TWITTER_APP_SECRET = 'test-secret';
     process.env.TWITTER_ACCESS_TOKEN = 'test-access-token';
     process.env.TWITTER_ACCESS_SECRET = 'test-access-secret';
-    
+
     worker = new ShieldActionWorker();
   });
 
@@ -301,9 +301,9 @@ describe('ShieldActionWorker - Fixed Tests', () => {
 
       // Mock Twitter API to fail
       const mockTwitterClient = worker.platformClients.get('twitter');
-      mockTwitterClient.v2.reply = jest.fn().mockRejectedValue(
-        new Error('Twitter API rate limit exceeded')
-      );
+      mockTwitterClient.v2.reply = jest
+        .fn()
+        .mockRejectedValue(new Error('Twitter API rate limit exceeded'));
 
       const result = await worker.processJob(job);
 
@@ -482,10 +482,10 @@ describe('ShieldActionWorker - Fixed Tests', () => {
         shield_mode: true
       }));
 
-      const promises = jobs.map(job => worker.processJob(job));
+      const promises = jobs.map((job) => worker.processJob(job));
       const results = await Promise.all(promises);
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.success).toBe(true);
       });
     });
@@ -550,9 +550,7 @@ describe('ShieldActionWorker - Fixed Tests', () => {
 
       // Mock Twitter API to timeout
       const mockTwitterClient = worker.platformClients.get('twitter');
-      mockTwitterClient.v2.reply = jest.fn().mockRejectedValue(
-        new Error('ETIMEDOUT')
-      );
+      mockTwitterClient.v2.reply = jest.fn().mockRejectedValue(new Error('ETIMEDOUT'));
 
       const result = await worker.processJob(job);
       expect(result.success).toBe(true);
@@ -650,7 +648,7 @@ describe('ShieldActionWorker - Fixed Tests', () => {
       const promises = Array.from({ length: 50 }, () => worker.processJob(job));
       const results = await Promise.all(promises);
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.success).toBe(true);
       });
     });

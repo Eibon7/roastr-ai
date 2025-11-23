@@ -171,8 +171,8 @@ class AgentInterface {
           // Extract dependency list
           const deps = match[1]
             .split('\n')
-            .filter(line => line.startsWith('- '))
-            .map(line => line.replace('- ', '').trim());
+            .filter((line) => line.startsWith('- '))
+            .map((line) => line.replace('- ', '').trim());
           metadata[key] = deps;
         } else {
           metadata[key] = match[1].trim();
@@ -247,7 +247,10 @@ class AgentInterface {
 
       // Check if health degraded
       if (healthAfter.overall_score < healthBefore.overall_score) {
-        this.log('warn', `Health degraded after write: ${healthBefore.overall_score} → ${healthAfter.overall_score}`);
+        this.log(
+          'warn',
+          `Health degraded after write: ${healthBefore.overall_score} → ${healthAfter.overall_score}`
+        );
 
         // Rollback
         await secureWrite.rollback({
@@ -298,7 +301,6 @@ class AgentInterface {
         hash_after: hashAfter,
         health_delta: healthAfter.overall_score - healthBefore.overall_score
       };
-
     } catch (error) {
       this.log('error', `Failed to write node field: ${error.message}`);
       throw error;
@@ -455,13 +457,13 @@ class AgentInterface {
       const healthData = JSON.parse(fs.readFileSync(healthPath, 'utf8'));
 
       return {
-        overall_score: healthData.overall_score ?? 0,  // ✅ NEW KEY
-        average_score: healthData.overall_score ?? 0,  // ✅ NEW KEY (alias for compatibility)
+        overall_score: healthData.overall_score ?? 0, // ✅ NEW KEY
+        average_score: healthData.overall_score ?? 0, // ✅ NEW KEY (alias for compatibility)
         healthy_count: healthData.healthy_count ?? 0,
         degraded_count: healthData.degraded_count ?? 0,
         critical_count: healthData.critical_count ?? 0,
-        total_nodes: healthData.total_nodes ?? 0,      // ✅ NEW KEY
-        status: healthData.status || 'unknown'          // ✅ NEW KEY
+        total_nodes: healthData.total_nodes ?? 0, // ✅ NEW KEY
+        status: healthData.status || 'unknown' // ✅ NEW KEY
       };
     } catch (error) {
       this.log('error', `Failed to get system health: ${error.message}`);
@@ -526,7 +528,8 @@ class AgentInterface {
     try {
       // Create history file if not exists
       if (!fs.existsSync(this.historyPath)) {
-        const header = `# GDD Agent Activity History\n\n` +
+        const header =
+          `# GDD Agent Activity History\n\n` +
           `**Version:** 1.0.0\n` +
           `**Phase:** GDD 2.0 Phase 15\n` +
           `**Created:** ${new Date().toISOString()}\n\n` +
@@ -537,7 +540,8 @@ class AgentInterface {
       // Format event
       const timestamp = new Date(event.timestamp).toLocaleString();
       const status = event.result?.success ? '✅' : '❌';
-      const entry = `## ${timestamp} - ${event.agent}\n\n` +
+      const entry =
+        `## ${timestamp} - ${event.agent}\n\n` +
         `- ${status} **Action:** ${event.action}\n` +
         `- **Target:** ${event.target}\n` +
         `- **Result:** \`${JSON.stringify(event.result)}\`\n\n` +
@@ -554,10 +558,7 @@ class AgentInterface {
    * Calculate SHA-256 hash of content
    */
   calculateHash(content) {
-    return crypto
-      .createHash('sha256')
-      .update(content)
-      .digest('hex');
+    return crypto.createHash('sha256').update(content).digest('hex');
   }
 
   /**
@@ -613,9 +614,15 @@ if (require.main === module) {
 
         // 3. Check permissions
         console.log('\n3️⃣ Testing permissions...');
-        console.log(`Orchestrator can sync_nodes: ${ail.hasPermission('Orchestrator', 'sync_nodes')}`);
-        console.log(`RuntimeValidator can update_metadata: ${ail.hasPermission('RuntimeValidator', 'update_metadata')}`);
-        console.log(`DriftWatcher can trigger_auto_repair: ${ail.hasPermission('DriftWatcher', 'trigger_auto_repair')}`);
+        console.log(
+          `Orchestrator can sync_nodes: ${ail.hasPermission('Orchestrator', 'sync_nodes')}`
+        );
+        console.log(
+          `RuntimeValidator can update_metadata: ${ail.hasPermission('RuntimeValidator', 'update_metadata')}`
+        );
+        console.log(
+          `DriftWatcher can trigger_auto_repair: ${ail.hasPermission('DriftWatcher', 'trigger_auto_repair')}`
+        );
 
         console.log('\n✅ All simulation tests passed!\n');
       } catch (error) {

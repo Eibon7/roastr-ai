@@ -10,10 +10,30 @@ describe('textNormalizer', () => {
   describe('normalizeUnicode', () => {
     // AC1: Tables of test cases for unicode
     const unicodeTestCases = [
-      { input: 'café', form: 'NFC', expected: 'café', description: 'Composed form (é as single character)' },
-      { input: 'café', form: 'NFD', expected: 'café', description: 'Decomposed form (é as e + combining accent)' },
-      { input: 'Å', form: 'NFC', expected: 'Å', description: 'Latin capital A with ring above (composed)' },
-      { input: 'Å', form: 'NFD', expected: 'Å', description: 'Latin capital A with ring above (decomposed)' },
+      {
+        input: 'café',
+        form: 'NFC',
+        expected: 'café',
+        description: 'Composed form (é as single character)'
+      },
+      {
+        input: 'café',
+        form: 'NFD',
+        expected: 'café',
+        description: 'Decomposed form (é as e + combining accent)'
+      },
+      {
+        input: 'Å',
+        form: 'NFC',
+        expected: 'Å',
+        description: 'Latin capital A with ring above (composed)'
+      },
+      {
+        input: 'Å',
+        form: 'NFD',
+        expected: 'Å',
+        description: 'Latin capital A with ring above (decomposed)'
+      },
       { input: '①②③', form: 'NFKC', expected: '123', description: 'Circled numbers to ASCII' },
       { input: 'ﬁle', form: 'NFKC', expected: 'file', description: 'Ligature to separate letters' },
       { input: '🔥', form: 'NFC', expected: '🔥', description: 'Emoji normalization' },
@@ -202,7 +222,7 @@ describe('textNormalizer', () => {
     it('should sanitize URLs efficiently', () => {
       const urls = Array(1000).fill('https://example.com/path');
       const start = Date.now();
-      urls.forEach(url => sanitizeUrl(url));
+      urls.forEach((url) => sanitizeUrl(url));
       const duration = Date.now() - start;
       expect(duration).toBeLessThan(500); // Should complete in <500ms
     });
@@ -211,13 +231,48 @@ describe('textNormalizer', () => {
   describe('normalizeQuotes', () => {
     // AC1: Tables of test cases for quotes
     const quoteTestCases = [
-      { input: '\u201Chello\u201D', expected: '"hello"', style: 'straight', description: 'Smart double quotes to straight' },
-      { input: '\u2018hello\u2019', expected: "'hello'", style: 'straight', description: 'Smart single quotes to straight' },
-      { input: '\u201Ahello\u2019', expected: "'hello'", style: 'straight', description: 'Low-9 quote to straight' },
-      { input: '\u201Ehello\u201D', expected: '"hello"', style: 'straight', description: 'Double low-9 quote to straight' },
-      { input: '\u2032hello\u2032', expected: "'hello'", style: 'straight', description: 'Prime marks to straight quotes' },
-      { input: '"hello"', expected: '\u201Chello\u201D', style: 'smart', description: 'Straight to smart double quotes' },
-      { input: "'hello'", expected: '\u2018hello\u2019', style: 'smart', description: 'Straight to smart single quotes' }
+      {
+        input: '\u201Chello\u201D',
+        expected: '"hello"',
+        style: 'straight',
+        description: 'Smart double quotes to straight'
+      },
+      {
+        input: '\u2018hello\u2019',
+        expected: "'hello'",
+        style: 'straight',
+        description: 'Smart single quotes to straight'
+      },
+      {
+        input: '\u201Ahello\u2019',
+        expected: "'hello'",
+        style: 'straight',
+        description: 'Low-9 quote to straight'
+      },
+      {
+        input: '\u201Ehello\u201D',
+        expected: '"hello"',
+        style: 'straight',
+        description: 'Double low-9 quote to straight'
+      },
+      {
+        input: '\u2032hello\u2032',
+        expected: "'hello'",
+        style: 'straight',
+        description: 'Prime marks to straight quotes'
+      },
+      {
+        input: '"hello"',
+        expected: '\u201Chello\u201D',
+        style: 'smart',
+        description: 'Straight to smart double quotes'
+      },
+      {
+        input: "'hello'",
+        expected: '\u2018hello\u2019',
+        style: 'smart',
+        description: 'Straight to smart single quotes'
+      }
     ];
 
     quoteTestCases.forEach(({ input, expected, style, description }) => {
@@ -276,14 +331,54 @@ describe('textNormalizer', () => {
   describe('normalizeSpaces', () => {
     // AC1: Tables of test cases for spaces
     const spaceTestCases = [
-      { input: '  hello  ', expected: 'hello', options: {}, description: 'Trim leading/trailing spaces' },
-      { input: 'hello  world', expected: 'hello world', options: {}, description: 'Collapse multiple spaces' },
-      { input: 'hello\t\tworld', expected: 'hello world', options: {}, description: 'Collapse multiple tabs' },
-      { input: 'hello\u00A0world', expected: 'hello world', options: { removeNonBreaking: true }, description: 'Remove non-breaking spaces' },
-      { input: 'hello\r\nworld', expected: 'hello\nworld', options: { normalizeLineBreaks: true }, description: 'Normalize CRLF to LF' },
-      { input: 'hello\rworld', expected: 'hello\nworld', options: { normalizeLineBreaks: true }, description: 'Normalize CR to LF' },
-      { input: '  hello  ', expected: ' hello ', options: { trim: false }, description: 'Keep leading/trailing with trim=false (but still collapse)' },
-      { input: 'hello  world', expected: 'hello  world', options: { collapseMultiple: false }, description: 'Keep multiple spaces with collapseMultiple=false' }
+      {
+        input: '  hello  ',
+        expected: 'hello',
+        options: {},
+        description: 'Trim leading/trailing spaces'
+      },
+      {
+        input: 'hello  world',
+        expected: 'hello world',
+        options: {},
+        description: 'Collapse multiple spaces'
+      },
+      {
+        input: 'hello\t\tworld',
+        expected: 'hello world',
+        options: {},
+        description: 'Collapse multiple tabs'
+      },
+      {
+        input: 'hello\u00A0world',
+        expected: 'hello world',
+        options: { removeNonBreaking: true },
+        description: 'Remove non-breaking spaces'
+      },
+      {
+        input: 'hello\r\nworld',
+        expected: 'hello\nworld',
+        options: { normalizeLineBreaks: true },
+        description: 'Normalize CRLF to LF'
+      },
+      {
+        input: 'hello\rworld',
+        expected: 'hello\nworld',
+        options: { normalizeLineBreaks: true },
+        description: 'Normalize CR to LF'
+      },
+      {
+        input: '  hello  ',
+        expected: ' hello ',
+        options: { trim: false },
+        description: 'Keep leading/trailing with trim=false (but still collapse)'
+      },
+      {
+        input: 'hello  world',
+        expected: 'hello  world',
+        options: { collapseMultiple: false },
+        description: 'Keep multiple spaces with collapseMultiple=false'
+      }
     ];
 
     spaceTestCases.forEach(({ input, expected, options, description }) => {
@@ -435,7 +530,7 @@ describe('textNormalizer', () => {
         'vbscript:msgbox',
         'file:///etc/passwd'
       ];
-      xssUrls.forEach(url => {
+      xssUrls.forEach((url) => {
         expect(sanitizeUrl(url)).toBe(null);
       });
     });
@@ -481,7 +576,7 @@ describe('textNormalizer', () => {
         '%66%69%6c%65:///etc/passwd', // file:
         '%62%6c%6f%62:https://example.com/uuid' // blob:
       ];
-      dangerousEncoded.forEach(url => {
+      dangerousEncoded.forEach((url) => {
         expect(sanitizeUrl(url)).toBe(null);
       });
     });

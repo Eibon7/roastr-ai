@@ -18,7 +18,13 @@ import {
 import SeverityTag from './SeverityTag';
 import ActionTag from './ActionTag';
 
-export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny, onViewDiff, isLoading }) => {
+export const CaseCard: React.FC<CaseCardProps> = ({
+  caseData,
+  onApprove,
+  onDeny,
+  onViewDiff,
+  isLoading
+}) => {
   const [approver, setApprover] = useState('');
   const [denier, setDenier] = useState('');
   const [reason, setReason] = useState('');
@@ -90,9 +96,7 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
     <div style={cardStyles}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
         <div>
-          <h3 style={{ margin: '0 0 10px 0', color: GUARDIAN_COLORS.safe }}>
-            {caseData.case_id}
-          </h3>
+          <h3 style={{ margin: '0 0 10px 0', color: GUARDIAN_COLORS.safe }}>{caseData.case_id}</h3>
           <p style={{ margin: '5px 0', fontSize: '12px', opacity: 0.8 }}>
             {formatTimestamp(caseData.timestamp)} by {caseData.actor}
           </p>
@@ -177,10 +181,21 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
       </div>
 
       {showApproveForm && (
-        <div style={{ marginTop: '15px', padding: '15px', border: `1px solid ${GUARDIAN_COLORS.approved}` }}>
+        <div
+          style={{
+            marginTop: '15px',
+            padding: '15px',
+            border: `1px solid ${GUARDIAN_COLORS.approved}`
+          }}
+        >
           <label
             htmlFor={`approver-input-${caseData.case_id}`}
-            style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: GUARDIAN_COLORS.safe }}
+            style={{
+              display: 'block',
+              marginBottom: '5px',
+              fontSize: '12px',
+              color: GUARDIAN_COLORS.safe
+            }}
           >
             Approver Name:
           </label>
@@ -189,7 +204,7 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
             type="text"
             placeholder="Your name"
             value={approver}
-            onChange={e => setApprover(e.target.value)}
+            onChange={(e) => setApprover(e.target.value)}
             aria-invalid={!!errors.approve}
             aria-describedby={errors.approve ? `approver-error-${caseData.case_id}` : undefined}
             disabled={isLoading}
@@ -238,10 +253,21 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
       )}
 
       {showDenyForm && (
-        <div style={{ marginTop: '15px', padding: '15px', border: `1px solid ${GUARDIAN_COLORS.critical}` }}>
+        <div
+          style={{
+            marginTop: '15px',
+            padding: '15px',
+            border: `1px solid ${GUARDIAN_COLORS.critical}`
+          }}
+        >
           <label
             htmlFor={`denier-input-${caseData.case_id}`}
-            style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: GUARDIAN_COLORS.safe }}
+            style={{
+              display: 'block',
+              marginBottom: '5px',
+              fontSize: '12px',
+              color: GUARDIAN_COLORS.safe
+            }}
           >
             Your Name:
           </label>
@@ -250,7 +276,7 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
             type="text"
             placeholder="Your name"
             value={denier}
-            onChange={e => setDenier(e.target.value)}
+            onChange={(e) => setDenier(e.target.value)}
             aria-invalid={!!errors.deny}
             aria-describedby={errors.deny ? `deny-error-${caseData.case_id}` : undefined}
             disabled={isLoading}
@@ -267,7 +293,12 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
           />
           <label
             htmlFor={`reason-input-${caseData.case_id}`}
-            style={{ display: 'block', marginBottom: '5px', fontSize: '12px', color: GUARDIAN_COLORS.safe }}
+            style={{
+              display: 'block',
+              marginBottom: '5px',
+              fontSize: '12px',
+              color: GUARDIAN_COLORS.safe
+            }}
           >
             Denial Reason (min 10 characters):
           </label>
@@ -275,7 +306,7 @@ export const CaseCard: React.FC<CaseCardProps> = ({ caseData, onApprove, onDeny,
             id={`reason-input-${caseData.case_id}`}
             placeholder="Reason for denial (min 10 characters)"
             value={reason}
-            onChange={e => setReason(e.target.value)}
+            onChange={(e) => setReason(e.target.value)}
             rows={3}
             aria-invalid={!!errors.deny}
             aria-describedby={errors.deny ? `deny-error-${caseData.case_id}` : undefined}

@@ -24,12 +24,14 @@
 **Diferencia con Stripe:** Polar simplifica compliance internacional y reduce carga operacional vs Stripe (que requiere gestión manual de impuestos).
 
 **Tecnologías clave:**
+
 - Polar API + Checkout SDK
 - Webhooks con HMAC signature validation
 - PostgreSQL para tracking de subscriptions
 - Sincronización bidireccional (Polar ↔ Backend)
 
 **Business Logic:**
+
 - Free plan: Acceso limitado (0 persona fields, nivel fijo)
 - Starter: 2 persona fields, niveles 1-3
 - Pro/Plus: Features completos
@@ -48,6 +50,7 @@ Migrar sistema de pagos de Stripe a Polar como Merchant of Record, implementando
 - Upgrade/downgrade entre planes
 
 **Contexto:**
+
 - Polar actúa como MoR (facturación, impuestos, compliance)
 - Stripe actual en `docs/nodes/billing.md` (70% coverage) debe reemplazarse
 - Frontend debe integrarse con Polar Checkout SDK
@@ -69,6 +72,7 @@ Migrar sistema de pagos de Stripe a Polar como Merchant of Record, implementando
   - [ ] `handleWebhook(event)` → procesa eventos de webhook
 
   **Configuración:**
+
   ```javascript
   const POLAR_CONFIG = {
     apiKey: process.env.POLAR_API_KEY, // 🔐 Secret key
@@ -84,14 +88,12 @@ Migrar sistema de pagos de Stripe a Polar como Merchant of Record, implementando
   ```
 
 - [ ] Implementar validación de webhook signature (HMAC SHA-256)
+
   ```javascript
   function verifyWebhookSignature(payload, signature, secret) {
     const hmac = crypto.createHmac('sha256', secret);
     const digest = hmac.update(payload).digest('hex');
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(digest)
-    );
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
   }
   ```
 
@@ -102,6 +104,7 @@ Migrar sistema de pagos de Stripe a Polar como Merchant of Record, implementando
 ### 2. Backend: Database Schema
 
 - [ ] **Crear tabla `polar_subscriptions`** (si no existe)
+
   ```sql
   CREATE TABLE polar_subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -129,6 +132,7 @@ Migrar sistema de pagos de Stripe a Polar como Merchant of Record, implementando
   ```
 
 - [ ] **Crear tabla `polar_webhook_events`** (para idempotencia)
+
   ```sql
   CREATE TABLE polar_webhook_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -199,18 +203,20 @@ Migrar sistema de pagos de Stripe a Polar como Merchant of Record, implementando
 ### 4. Frontend: Polar Integration
 
 - [ ] Instalar Polar SDK (si existe) o usar fetch directo
+
   ```bash
   npm install @polar-sh/sdk
   # O implementar fetch wrapper si no hay SDK oficial
   ```
 
 - [ ] Implementar función `initiateCheckout(plan)`
+
   ```javascript
   async function initiateCheckout(plan) {
     const response = await fetch('/api/polar/checkout', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ plan })
@@ -302,9 +308,11 @@ Migrar sistema de pagos de Stripe a Polar como Merchant of Record, implementando
 ## 🔗 Dependencias
 
 **Bloqueantes (debe resolverse antes):**
+
 - ✅ Issue Login & Registration (requiere auth funcional)
 
 **Desbloqueadas por esta issue:**
+
 - Issue Persona Setup (requiere plan activo para features)
 - Issue Level Configuration (features bloqueadas por plan)
 - Issue Global State (incluye `subscription` en estado global)
@@ -330,34 +338,38 @@ Esta issue se considera **100% completa** cuando:
 
 ## 📊 Métricas de Éxito
 
-| Métrica | Valor Actual | Objetivo | Estado |
-|---------|--------------|----------|--------|
-| Tests pasando | N/A | 100% | ⏳ Pendiente |
-| Cobertura billing module | 70% | ≥85% | ⏳ Pendiente |
-| Tiempo de implementación | 0h | ≤12h | ⏳ Pendiente |
-| Webhooks procesados correctamente | N/A | 100% | ⏳ Pendiente |
+| Métrica                           | Valor Actual | Objetivo | Estado       |
+| --------------------------------- | ------------ | -------- | ------------ |
+| Tests pasando                     | N/A          | 100%     | ⏳ Pendiente |
+| Cobertura billing module          | 70%          | ≥85%     | ⏳ Pendiente |
+| Tiempo de implementación          | 0h           | ≤12h     | ⏳ Pendiente |
+| Webhooks procesados correctamente | N/A          | 100%     | ⏳ Pendiente |
 
 ---
 
 ## 📝 Notas de Implementación
 
 **Seguridad:**
+
 - NUNCA exponer `POLAR_API_KEY` en frontend
 - Validar TODAS las signatures de webhook
 - Usar HTTPS en webhook endpoint (requerido por Polar)
 - Implementar rate limiting en endpoints de pago
 
 **Performance:**
+
 - Webhooks deben responder en <3 segundos (Polar reintenta si timeout)
 - Cachear estado de suscripción en Redis (TTL 5 minutos)
 - Usar transacciones DB para garantizar consistencia
 
 **UX:**
+
 - Mostrar loader claro durante redirect a Polar
 - Mensaje de confirmación tras pago exitoso
 - Email de bienvenida tras activación (usar servicio de email existente)
 
 **Compliance:**
+
 - Polar maneja GDPR, pero debemos retener logs de transacciones 7 años
 - Incluir link a Polar Terms en página de checkout
 

@@ -153,11 +153,11 @@ describe('Tier Validation Middleware', () => {
         const middleware = validateTierLimit('roast', options);
         await middleware(mockReq, mockRes, mockNext);
 
-        expect(tierValidationService.validateAction).toHaveBeenCalledWith(
-          'test-user-id',
-          'roast',
-          { style: 'brutal', platform: 'twitter', count: '5' }
-        );
+        expect(tierValidationService.validateAction).toHaveBeenCalledWith('test-user-id', 'roast', {
+          style: 'brutal',
+          platform: 'twitter',
+          count: '5'
+        });
         expect(mockNext).toHaveBeenCalled();
       });
     });
@@ -213,9 +213,9 @@ describe('Tier Validation Middleware', () => {
       it('should return 503 on service error in production', async () => {
         process.env.NODE_ENV = 'production';
         process.env.TIER_VALIDATION_FAIL_OPEN = 'false';
-        tierValidationService.validateAction = jest.fn().mockRejectedValue(
-          new Error('Database connection failed')
-        );
+        tierValidationService.validateAction = jest
+          .fn()
+          .mockRejectedValue(new Error('Database connection failed'));
 
         const middleware = validateTierLimit('analysis');
         await middleware(mockReq, mockRes, mockNext);
@@ -236,9 +236,9 @@ describe('Tier Validation Middleware', () => {
       it('should fail-open in development mode with TIER_VALIDATION_FAIL_OPEN enabled', async () => {
         process.env.NODE_ENV = 'development';
         process.env.TIER_VALIDATION_FAIL_OPEN = 'true';
-        tierValidationService.validateAction = jest.fn().mockRejectedValue(
-          new Error('Service error')
-        );
+        tierValidationService.validateAction = jest
+          .fn()
+          .mockRejectedValue(new Error('Service error'));
 
         const middleware = validateTierLimit('roast');
         await middleware(mockReq, mockRes, mockNext);
@@ -255,9 +255,7 @@ describe('Tier Validation Middleware', () => {
       it('should fail-open in test mode with TIER_VALIDATION_FAIL_OPEN enabled', async () => {
         process.env.NODE_ENV = 'test';
         process.env.TIER_VALIDATION_FAIL_OPEN = 'true';
-        tierValidationService.validateAction = jest.fn().mockRejectedValue(
-          new Error('Test error')
-        );
+        tierValidationService.validateAction = jest.fn().mockRejectedValue(new Error('Test error'));
 
         const middleware = validateTierLimit('analysis');
         await middleware(mockReq, mockRes, mockNext);
@@ -351,9 +349,9 @@ describe('Tier Validation Middleware', () => {
 
     describe('Error Handling', () => {
       it('should return 500 on service error (deny on error for security)', async () => {
-        tierValidationService.validateFeature = jest.fn().mockRejectedValue(
-          new Error('Database error')
-        );
+        tierValidationService.validateFeature = jest
+          .fn()
+          .mockRejectedValue(new Error('Database error'));
 
         const middleware = validateFeatureAccess('shield');
         await middleware(mockReq, mockRes, mockNext);
@@ -373,9 +371,9 @@ describe('Tier Validation Middleware', () => {
 
       it('should deny on error even in development mode', async () => {
         process.env.NODE_ENV = 'development';
-        tierValidationService.validateFeature = jest.fn().mockRejectedValue(
-          new Error('Service error')
-        );
+        tierValidationService.validateFeature = jest
+          .fn()
+          .mockRejectedValue(new Error('Service error'));
 
         const middleware = validateFeatureAccess('embedded_judge');
         await middleware(mockReq, mockRes, mockNext);
@@ -425,7 +423,8 @@ describe('Tier Validation Middleware', () => {
 
     describe('validateMultiple', () => {
       it('should validate multiple actions and call next() if all pass', async () => {
-        tierValidationService.validateAction = jest.fn()
+        tierValidationService.validateAction = jest
+          .fn()
           .mockResolvedValueOnce({ allowed: true, currentTier: 'pro' })
           .mockResolvedValueOnce({ allowed: true, currentTier: 'pro' });
 
@@ -438,7 +437,8 @@ describe('Tier Validation Middleware', () => {
       });
 
       it('should return 403 if first action fails', async () => {
-        tierValidationService.validateAction = jest.fn()
+        tierValidationService.validateAction = jest
+          .fn()
           .mockResolvedValueOnce({
             allowed: false,
             message: 'Analysis limit exceeded',
@@ -460,7 +460,8 @@ describe('Tier Validation Middleware', () => {
       });
 
       it('should return 403 if second action fails', async () => {
-        tierValidationService.validateAction = jest.fn()
+        tierValidationService.validateAction = jest
+          .fn()
           .mockResolvedValueOnce({ allowed: true, currentTier: 'starter' })
           .mockResolvedValueOnce({
             allowed: false,
@@ -490,9 +491,9 @@ describe('Tier Validation Middleware', () => {
       it('should fail-open in development mode on error', async () => {
         process.env.NODE_ENV = 'development';
         process.env.TIER_VALIDATION_FAIL_OPEN = 'true';
-        tierValidationService.validateAction = jest.fn().mockRejectedValue(
-          new Error('Service error')
-        );
+        tierValidationService.validateAction = jest
+          .fn()
+          .mockRejectedValue(new Error('Service error'));
 
         const middleware = tierMiddleware.validateMultiple(['analysis', 'roast']);
         await middleware(mockReq, mockRes, mockNext);
@@ -532,7 +533,10 @@ describe('Tier Validation Middleware', () => {
       mockRes.json({ success: true });
 
       expect(mockSetImmediate).toHaveBeenCalled();
-      expect(supabaseServiceClient.rpc).toHaveBeenCalledWith('record_analysis_usage', expect.any(Object));
+      expect(supabaseServiceClient.rpc).toHaveBeenCalledWith(
+        'record_analysis_usage',
+        expect.any(Object)
+      );
     });
 
     it('should record usage on successful response (201)', async () => {
@@ -584,12 +588,9 @@ describe('Tier Validation Middleware', () => {
       mockRes.json({ success: true });
 
       // Wait for async error handling to complete
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Failed to record usage:',
-        expect.any(Error)
-      );
+      expect(logger.error).toHaveBeenCalledWith('Failed to record usage:', expect.any(Error));
     });
 
     it('should handle platform_add action', async () => {

@@ -55,7 +55,8 @@ class PublisherWorker extends BaseWorker {
    * @returns {Object} Publication result
    */
   async _processJobInternal(job) {
-    const { response_id, organization_id, platform, response_text, comment_id } = job.payload || job.data || {};
+    const { response_id, organization_id, platform, response_text, comment_id } =
+      job.payload || job.data || {};
     const startTime = Date.now();
 
     this.log('info', 'Processing publication job', {
@@ -151,7 +152,6 @@ class PublisherWorker extends BaseWorker {
         platform: responsePlatform,
         duration
       };
-
     } catch (error) {
       const duration = Date.now() - startTime;
 
@@ -180,13 +180,15 @@ class PublisherWorker extends BaseWorker {
   async fetchResponse(responseId, organizationId) {
     const query = this.supabase
       .from('responses')
-      .select('id, response_text, comment_id, platform_response_id, posted_at, post_status, organization_id')
+      .select(
+        'id, response_text, comment_id, platform_response_id, posted_at, post_status, organization_id'
+      )
       .eq('id', responseId);
-    
+
     if (organizationId) {
       query.eq('organization_id', organizationId);
     }
-    
+
     const { data, error } = await query.single();
 
     if (error) {
@@ -207,7 +209,9 @@ class PublisherWorker extends BaseWorker {
   async fetchComment(commentId, organizationId) {
     const { data, error } = await this.supabase
       .from('comments')
-      .select('id, platform, platform_comment_id, platform_user_id, platform_username, original_text, metadata')
+      .select(
+        'id, platform, platform_comment_id, platform_user_id, platform_username, original_text, metadata'
+      )
       .eq('id', commentId)
       .eq('organization_id', organizationId)
       .single();
@@ -259,15 +263,11 @@ class PublisherWorker extends BaseWorker {
 
       // Call platform service's postResponse method with platform-specific arguments
       // Each platform has its own signature - we adapt here
-      const publishResponse = await this.callPlatformPostResponse(
-        service,
-        platform,
-        {
-          response,
-          comment,
-          responseText
-        }
-      );
+      const publishResponse = await this.callPlatformPostResponse(service, platform, {
+        response,
+        comment,
+        responseText
+      });
 
       if (!publishResponse.success) {
         throw new Error(publishResponse.error || 'Platform API returned success: false');
@@ -278,7 +278,6 @@ class PublisherWorker extends BaseWorker {
         postId: publishResponse.responseId || publishResponse.id || publishResponse.postId,
         publishedAt: new Date().toISOString()
       };
-
     } catch (error) {
       // Enhance error with platform context
       error.platform = platform;
@@ -316,10 +315,7 @@ class PublisherWorker extends BaseWorker {
 
       case 'youtube':
         // YouTube: postResponse(commentId, responseText)
-        return await service.postResponse(
-          comment.platform_comment_id,
-          responseText
-        );
+        return await service.postResponse(comment.platform_comment_id, responseText);
 
       case 'facebook':
       case 'instagram':
@@ -514,7 +510,6 @@ class PublisherWorker extends BaseWorker {
       });
 
       return service;
-
     } catch (error) {
       this.log('error', 'Failed to load platform service', {
         platform,
@@ -580,9 +575,10 @@ class PublisherWorker extends BaseWorker {
 
     // Network/timeout errors (no status code)
     if (!statusCode) {
-      const isTimeout = error.message?.includes('timeout') ||
-                       error.code === 'ETIMEDOUT' ||
-                       error.code === 'ECONNRESET';
+      const isTimeout =
+        error.message?.includes('timeout') ||
+        error.code === 'ETIMEDOUT' ||
+        error.code === 'ECONNRESET';
 
       if (isTimeout) {
         return {

@@ -5,6 +5,7 @@ Complete guide for integrating Polar checkout in the Roastr frontend (React/Crea
 ## 🎯 Overview
 
 This integration provides:
+
 - **CheckoutButton** component for creating Polar checkout sessions
 - **CheckoutSuccess** page for handling post-payment redirects
 - Ready-to-use pricing page example
@@ -96,14 +97,14 @@ Creates a Polar checkout session and redirects to payment page.
 
 **Props:**
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `priceId` | string | ✅ Yes | Polar price ID (e.g., `price_xxxxx`) |
-| `planName` | string | ✅ Yes | Display name (e.g., "Pro", "Starter") |
-| `customerEmail` | string | ✅ Yes | User's email address |
-| `buttonText` | string | No | Custom button text (default: `Subscribe to {planName}`) |
-| `className` | string | No | Additional CSS classes |
-| `disabled` | boolean | No | Disable button (default: `false`) |
+| Prop            | Type    | Required | Description                                             |
+| --------------- | ------- | -------- | ------------------------------------------------------- |
+| `priceId`       | string  | ✅ Yes   | Polar price ID (e.g., `price_xxxxx`)                    |
+| `planName`      | string  | ✅ Yes   | Display name (e.g., "Pro", "Starter")                   |
+| `customerEmail` | string  | ✅ Yes   | User's email address                                    |
+| `buttonText`    | string  | No       | Custom button text (default: `Subscribe to {planName}`) |
+| `className`     | string  | No       | Additional CSS classes                                  |
+| `disabled`      | boolean | No       | Disable button (default: `false`)                       |
 
 **Example:**
 
@@ -118,6 +119,7 @@ Creates a Polar checkout session and redirects to payment page.
 ```
 
 **Features:**
+
 - ✅ Loading state with spinner
 - ✅ Error handling with user-friendly messages
 - ✅ Console logging for debugging
@@ -133,6 +135,7 @@ Post-payment success page that handles Polar redirects.
 **URL:** `/success?checkout_id={CHECKOUT_ID}`
 
 **Features:**
+
 - ✅ Success animation
 - ✅ Checkout ID display
 - ✅ Optional: Fetches checkout details from backend
@@ -198,6 +201,7 @@ User clicks "Go to Dashboard"
 ### Test 1: Simulate Checkout Flow
 
 1. Start backend and frontend:
+
    ```bash
    npm start                    # Backend
    cd frontend && npm start     # Frontend
@@ -206,12 +210,9 @@ User clicks "Go to Dashboard"
 2. Visit: http://localhost:3001
 
 3. Import and use CheckoutButton:
+
    ```jsx
-   <CheckoutButton
-     priceId="price_test_123"
-     planName="Pro"
-     customerEmail="test@example.com"
-   />
+   <CheckoutButton priceId="price_test_123" planName="Pro" customerEmail="test@example.com" />
    ```
 
 4. Click button and check console logs:
@@ -225,6 +226,7 @@ User clicks "Go to Dashboard"
 ### Test 2: Test Success Page
 
 1. Navigate directly to:
+
    ```
    http://localhost:3001/success?checkout_id=checkout_test_123
    ```
@@ -259,7 +261,7 @@ import CheckoutButton from '../components/CheckoutButton';
   planName={plan.name}
   customerEmail={user?.email}
   buttonText={`Get ${plan.name}`}
-/>
+/>;
 ```
 
 ### Pattern 2: Conditional Payment Provider
@@ -277,11 +279,7 @@ function PlanCard({ plan, user }) {
   }
 
   return (
-    <CheckoutButton
-      priceId={plan.polarPriceId}
-      planName={plan.name}
-      customerEmail={user.email}
-    />
+    <CheckoutButton priceId={plan.polarPriceId} planName={plan.name} customerEmail={user.email} />
   );
 }
 ```
@@ -299,9 +297,7 @@ function PricingWithModal({ plan, user }) {
 
   return (
     <>
-      <button onClick={() => setShowModal(true)}>
-        View Plan Details
-      </button>
+      <button onClick={() => setShowModal(true)}>View Plan Details</button>
 
       {showModal && (
         <div className="modal">
@@ -392,12 +388,14 @@ const handleCheckout = async () => {
 ### Issue: Button does nothing when clicked
 
 **Check:**
+
 1. ✅ Backend is running on port 3000
 2. ✅ `customerEmail` prop is not empty
 3. ✅ `priceId` is valid
 4. ✅ Console for error messages
 
 **Solution:**
+
 ```bash
 # Check backend
 curl http://localhost:3000/health
@@ -411,6 +409,7 @@ curl http://localhost:3000/health
 **Cause:** `customerEmail` or `priceId` is empty.
 
 **Solution:**
+
 ```jsx
 // Ensure user is authenticated
 const { user } = useContext(AuthContext);
@@ -422,8 +421,8 @@ if (!user || !user.email) {
 <CheckoutButton
   priceId={process.env.REACT_APP_POLAR_PRO_PRICE_ID}
   planName="Pro"
-  customerEmail={user.email}  // ← Must be valid email
-/>
+  customerEmail={user.email} // ← Must be valid email
+/>;
 ```
 
 ### Issue: CORS errors
@@ -433,6 +432,7 @@ if (!user || !user.email) {
 **Solution:**
 
 Ensure `frontend/package.json` has:
+
 ```json
 {
   "proxy": "http://localhost:3000"
@@ -460,6 +460,7 @@ This is optional. The success page works without fetching details. If you want t
 ### 1. Update Environment Variables
 
 **Backend (.env):**
+
 ```bash
 POLAR_ACCESS_TOKEN=polar_oat_your_production_token
 POLAR_SUCCESS_URL=https://app.yourdomain.com/success?checkout_id={CHECKOUT_ID}
@@ -467,6 +468,7 @@ POLAR_WEBHOOK_SECRET=whsec_your_webhook_secret
 ```
 
 **Frontend (.env.production):**
+
 ```bash
 REACT_APP_POLAR_STARTER_PRICE_ID=price_production_starter_id
 REACT_APP_POLAR_PRO_PRICE_ID=price_production_pro_id
@@ -500,7 +502,7 @@ const handleCheckout = async () => {
   analytics.track('Checkout Started', {
     plan: planName,
     priceId: priceId,
-    email: customerEmail,
+    email: customerEmail
   });
 
   try {
@@ -509,14 +511,13 @@ const handleCheckout = async () => {
     // Track checkout success
     analytics.track('Checkout Succeeded', {
       plan: planName,
-      checkoutUrl: data.checkout.url,
+      checkoutUrl: data.checkout.url
     });
-
   } catch (error) {
     // Track checkout error
     analytics.track('Checkout Failed', {
       plan: planName,
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -531,7 +532,7 @@ useEffect(() => {
   if (checkoutId) {
     analytics.track('Checkout Completed', {
       checkoutId,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     });
   }
 }, [checkoutId]);
@@ -567,6 +568,7 @@ Before going live, ensure:
 ## 🆘 Support
 
 For issues:
+
 - **Polar API**: https://docs.polar.sh/
 - **Roastr Support**: support@roastr.ai
 - **Check logs**: Browser console + Backend logs

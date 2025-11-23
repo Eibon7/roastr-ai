@@ -131,7 +131,8 @@ export default function HealthFlagsCard() {
 
           {/* Timestamp */}
           <div className="pt-2 text-xs text-muted-foreground text-center">
-            Last updated: {health?.timestamp ? new Date(health.timestamp).toLocaleTimeString() : 'Unknown'}
+            Last updated:{' '}
+            {health?.timestamp ? new Date(health.timestamp).toLocaleTimeString() : 'Unknown'}
           </div>
         </div>
       </CardContent>

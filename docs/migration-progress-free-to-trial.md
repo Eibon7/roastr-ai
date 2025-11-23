@@ -10,21 +10,21 @@
 
 ### Archivos Migrados (13 archivos)
 
-| Archivo | Referencias | Status |
-|---------|-------------|--------|
-| authService.js | 4 | ✅ |
-| subscriptionService.js | 2 | ✅ |
-| workerNotificationService.js | 1 | ✅ |
-| stripeWebhookService.js | 3 | ✅ |
-| modelAvailabilityService.js | 2 | ✅ |
-| userIntegrationsService.js | 8 | ✅ |
-| requirePlan.js | 4 | ✅ |
-| inputValidation.js | 2 | ✅ |
-| roastGeneratorEnhanced.js | 9 | ✅ |
-| monitoring.js | 1 | ✅ |
-| modelAvailability.js (routes) | 2 | ✅ |
-| planLimitsService.js | 3 | ✅ (previo) |
-| **planService.js** | CRÍTICO | ✅ ELIMINADO 'free', AGREGADO 'starter_trial' |
+| Archivo                       | Referencias | Status                                        |
+| ----------------------------- | ----------- | --------------------------------------------- |
+| authService.js                | 4           | ✅                                            |
+| subscriptionService.js        | 2           | ✅                                            |
+| workerNotificationService.js  | 1           | ✅                                            |
+| stripeWebhookService.js       | 3           | ✅                                            |
+| modelAvailabilityService.js   | 2           | ✅                                            |
+| userIntegrationsService.js    | 8           | ✅                                            |
+| requirePlan.js                | 4           | ✅                                            |
+| inputValidation.js            | 2           | ✅                                            |
+| roastGeneratorEnhanced.js     | 9           | ✅                                            |
+| monitoring.js                 | 1           | ✅                                            |
+| modelAvailability.js (routes) | 2           | ✅                                            |
+| planLimitsService.js          | 3           | ✅ (previo)                                   |
+| **planService.js**            | CRÍTICO     | ✅ ELIMINADO 'free', AGREGADO 'starter_trial' |
 
 **Total migrado:** ~40 referencias
 
@@ -106,6 +106,7 @@ starter_trial: {
 ```
 
 **Diferencias clave vs antiguo 'free':**
+
 - ✅ Shield habilitado en trial
 - ✅ 1000 comments/month (vs 100)
 - ✅ Trial type: 'fixed' (no rolling)

@@ -8,12 +8,14 @@
 ## Análisis
 
 **Issues identificados:**
+
 - Critical: 0
 - Major: 1 - console.log usage instead of logger utility
 - Minor: 0
 - Nits: 0
 
 **Por issue:**
+
 - `src/workers/PublisherWorker.js:548-563` | Major | Logging | Usa console.log/error/warn en lugar de logger utility (patrón conocido de coderabbit-lessons.md)
 
 ## GDD
@@ -30,7 +32,7 @@
 
 ## Archivos
 
-- **Mencionados:** 
+- **Mencionados:**
   - `src/workers/PublisherWorker.js` (método log())
 - **Dependientes:** N/A
 - **Tests:** N/A (no afecta funcionalidad, solo logging)
@@ -52,6 +54,7 @@
 ## Cambios Aplicados
 
 ### Fix #1: Logging Method (Major)
+
 **Archivo:** `src/workers/PublisherWorker.js:548-563`
 **Problema:** Usa `console.log/error/warn` directamente en lugar de logger utility
 **Patrón conocido:** Sí - documentado en coderabbit-lessons.md sección 1

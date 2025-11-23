@@ -59,10 +59,7 @@ const TESTED_TABLES = [
 
 async function checkTable(tableName) {
   try {
-    const { error } = await supabase
-      .from(tableName)
-      .select('id')
-      .limit(0);
+    const { error } = await supabase.from(tableName).select('id').limit(0);
 
     if (error) {
       if (error.code === '42P01' || error.message.includes('does not exist')) {
@@ -96,10 +93,10 @@ async function main() {
     console.log(`${status.padEnd(25)} ${tableName}`);
   }
 
-  const existingCount = results.filter(r => r.exists).length;
-  const testedCount = results.filter(r => r.tested).length;
-  const needsTestCount = results.filter(r => r.exists && !r.tested).length;
-  const missingCount = results.filter(r => !r.exists).length;
+  const existingCount = results.filter((r) => r.exists).length;
+  const testedCount = results.filter((r) => r.tested).length;
+  const needsTestCount = results.filter((r) => r.exists && !r.tested).length;
+  const missingCount = results.filter((r) => !r.exists).length;
 
   console.log(`\n📊 Summary:`);
   console.log(`   Total tables: ${ALL_TABLES.length}`);
@@ -110,19 +107,17 @@ async function main() {
   if (needsTestCount > 0) {
     console.log(`\n🎯 These ${needsTestCount} tables EXIST and NEED TESTS:`);
     results
-      .filter(r => r.exists && !r.tested)
+      .filter((r) => r.exists && !r.tested)
       .forEach((r, i) => console.log(`   ${i + 1}. ${r.table}`));
   }
 
   if (missingCount > 0) {
     console.log(`\n⚠️  These ${missingCount} tables are MISSING (need migrations):`);
-    results
-      .filter(r => !r.exists)
-      .forEach((r, i) => console.log(`   ${i + 1}. ${r.table}`));
+    results.filter((r) => !r.exists).forEach((r, i) => console.log(`   ${i + 1}. ${r.table}`));
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('❌ Error:', err.message);
   process.exit(1);
 });

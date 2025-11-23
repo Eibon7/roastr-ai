@@ -61,7 +61,7 @@ const TEST_COMMENTS = [
 
 async function validateBasicRoastFlow() {
   console.log('🚀 Starting Basic Roast Generation Flow Validation\n');
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
 
   const startTime = Date.now();
   const results = {
@@ -115,7 +115,9 @@ async function validateBasicRoastFlow() {
       const commentStartTime = Date.now();
 
       console.log(`\n${'='.repeat(60)}`);
-      console.log(`\n📝 Test ${i + 1}/${TEST_COMMENTS.length}: ${testComment.text.substring(0, 50)}...`);
+      console.log(
+        `\n📝 Test ${i + 1}/${TEST_COMMENTS.length}: ${testComment.text.substring(0, 50)}...`
+      );
       console.log(`Expected toxicity: ${testComment.expectedToxicity}`);
 
       try {
@@ -135,11 +137,15 @@ async function validateBasicRoastFlow() {
         // Validate toxicity range
         const toxicityMatch =
           (testComment.expectedToxicity === 'high' && toxicityScore > 0.7) ||
-          (testComment.expectedToxicity === 'medium' && toxicityScore >= 0.4 && toxicityScore <= 0.7) ||
+          (testComment.expectedToxicity === 'medium' &&
+            toxicityScore >= 0.4 &&
+            toxicityScore <= 0.7) ||
           (testComment.expectedToxicity === 'low' && toxicityScore < 0.4);
 
         if (!toxicityMatch) {
-          console.log(`⚠️  Toxicity score (${toxicityScore}) doesn't match expected (${testComment.expectedToxicity})`);
+          console.log(
+            `⚠️  Toxicity score (${toxicityScore}) doesn't match expected (${testComment.expectedToxicity})`
+          );
         }
 
         // Step 3: Store comment
@@ -213,14 +219,16 @@ async function validateBasicRoastFlow() {
         console.log('\n🔍 Step 6: Verifying retrieval...');
         const { data: retrieved, error: retrieveError } = await client
           .from('roasts')
-          .select(`
+          .select(
+            `
             *,
             comments (
               original_text,
               toxicity_score,
               platform
             )
-          `)
+          `
+          )
           .eq('id', roast.id)
           .single();
 
@@ -249,7 +257,9 @@ async function validateBasicRoastFlow() {
             `Quality check FAILED: Roast too short (${roastResult.roast.length} chars, minimum: ${MIN_ROAST_LENGTH})`
           );
         }
-        console.log(`✅ Quality check passed: ${roastResult.roast.length} chars (>${MIN_ROAST_LENGTH} required)`);
+        console.log(
+          `✅ Quality check passed: ${roastResult.roast.length} chars (>${MIN_ROAST_LENGTH} required)`
+        );
 
         results.passed++;
         results.details.push({
@@ -262,7 +272,6 @@ async function validateBasicRoastFlow() {
         });
 
         console.log(`\n✅ Test ${i + 1} PASSED`);
-
       } catch (error) {
         results.failed++;
         results.errors.push({
@@ -282,7 +291,6 @@ async function validateBasicRoastFlow() {
     await client.from('organizations').delete().eq('id', testOrgId);
     await client.from('users').delete().eq('id', testUserId);
     console.log('✅ Cleanup complete');
-
   } catch (setupError) {
     console.error(`\n❌ Setup failed: ${setupError.message}`);
     results.errors.push({ test: 'setup', error: setupError.message });
@@ -301,7 +309,7 @@ async function validateBasicRoastFlow() {
 
   if (results.errors.length > 0) {
     console.log(`\n❌ Errors:`);
-    results.errors.forEach(err => {
+    results.errors.forEach((err) => {
       console.log(`   - Test ${err.test}: ${err.error}`);
     });
   }
@@ -318,8 +326,7 @@ async function validateBasicRoastFlow() {
 }
 
 // Run validation
-validateBasicRoastFlow()
-  .catch(err => {
-    console.error('\n💥 Validation crashed:', err);
-    process.exit(1);
-  });
+validateBasicRoastFlow().catch((err) => {
+  console.error('\n💥 Validation crashed:', err);
+  process.exit(1);
+});

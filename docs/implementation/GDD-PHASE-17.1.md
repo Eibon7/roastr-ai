@@ -55,10 +55,12 @@ Generate workflow summary
 ### 1. Workflow: `.github/workflows/gdd-auto-monitor.yml`
 
 **Triggers:**
+
 - **Schedule:** Every 3 days at 8:00 UTC (`0 8 */3 * *`)
 - **Manual:** `workflow_dispatch` (allow manual execution)
 
 **Key Features:**
+
 - ✅ Runs only on `main` branch (prevents noise from feature branches)
 - ✅ Respects GDD maintenance mode (monitoring only, no issue creation)
 - ✅ Generates timestamped reports for historical tracking
@@ -67,14 +69,16 @@ Generate workflow summary
 - ✅ Commits reports directly to main (preserves history)
 
 **Permissions:**
+
 ```yaml
 permissions:
-  contents: write     # Commit reports to main
-  issues: write       # Create/update issues
+  contents: write # Commit reports to main
+  issues: write # Create/update issues
   pull-requests: read # Read PR context (future use)
 ```
 
 **Configuration Inputs:**
+
 ```yaml
 inputs:
   create_issues:
@@ -89,16 +93,17 @@ inputs:
 
 **Report Types:**
 
-| File Pattern | Format | Purpose |
-|--------------|--------|---------|
-| `auto-health-{timestamp}.md` | Markdown | Human-readable summary |
-| `auto-health-{timestamp}.json` | JSON | Health scoring data |
-| `auto-drift-{timestamp}.json` | JSON | Drift prediction data |
-| `auto-status-{timestamp}.json` | JSON | Validation status data |
+| File Pattern                   | Format   | Purpose                |
+| ------------------------------ | -------- | ---------------------- |
+| `auto-health-{timestamp}.md`   | Markdown | Human-readable summary |
+| `auto-health-{timestamp}.json` | JSON     | Health scoring data    |
+| `auto-drift-{timestamp}.json`  | JSON     | Drift prediction data  |
+| `auto-status-{timestamp}.json` | JSON     | Validation status data |
 
 **Timestamp Format:** `YYYY-MM-DD-HH-MM` (e.g., `2025-11-11-08-00`)
 
 **Example Report:**
+
 ```markdown
 # GDD Auto-Health Report
 
@@ -110,20 +115,22 @@ inputs:
 
 ## Summary
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Health Score** | 98.8/100 | 🟢 HEALTHY |
-| **Drift Risk** | 15/100 | 🟢 LOW |
-| **Nodes Validated** | 13/13 | ✅ |
+| Metric              | Value    | Status     |
+| ------------------- | -------- | ---------- |
+| **Health Score**    | 98.8/100 | 🟢 HEALTHY |
+| **Drift Risk**      | 15/100   | 🟢 LOW     |
+| **Nodes Validated** | 13/13    | ✅         |
 
 ---
 
 ## Health Breakdown
+
 - 🟢 Healthy nodes: 13
 - 🟡 Degraded nodes: 0
 - 🔴 Critical nodes: 0
 
 ## Drift Analysis
+
 - 🟢 Low risk: 13
 - 🟡 At risk: 0
 - 🔴 High risk: 0
@@ -131,6 +138,7 @@ inputs:
 ---
 
 ## Actions Taken
+
 - ✅ Validation completed
 - ✅ Health scoring completed
 - ✅ Drift prediction completed
@@ -144,11 +152,13 @@ inputs:
 **Objective:** Prevent unbounded growth of reports directory
 
 **Strategy:**
+
 - Keep latest `N` reports (default: 30)
 - Sort by timestamp (filename)
 - Delete oldest reports when count exceeds limit
 
 **Implementation:**
+
 ```bash
 # Count total reports
 TOTAL_REPORTS=$(ls -1 auto-health-*.md | wc -l)
@@ -166,6 +176,7 @@ fi
 ```
 
 **Retention:**
+
 - 30 reports @ 3 days/report = ~90 days history
 - Configurable via `.gddrc.json` (`auto_monitor.max_reports`)
 
@@ -174,6 +185,7 @@ fi
 ### 4. Issue Creation Logic
 
 **Duplicate Prevention:**
+
 ```javascript
 // Search for existing issue (prevents spam)
 const { data: searchResults } = await github.rest.search.issuesAndPullRequests({
@@ -194,28 +206,34 @@ if (searchResults.items.length > 0) {
 **Issue Types:**
 
 #### A. Health Degradation Issue
+
 **Title:** `[GDD] Auto-Monitor Alert: Health Below Threshold`
 
 **Triggers:**
+
 - `health_score < min_health_score` (.gddrc.json)
 
 **Labels:** `documentation`, `gdd`, `tech-debt`, `priority:P1`, `auto-monitor`
 
 **Content:**
+
 - Current health score vs threshold
 - Critical/degraded nodes breakdown
 - Links to reports
 - Action checklist
 
 #### B. High Drift Risk Issue
+
 **Title:** `[GDD] Auto-Monitor Alert: High Drift Risk`
 
 **Triggers:**
+
 - `drift_risk > max_drift_risk` (.gddrc.json, default: 60)
 
 **Labels:** `documentation`, `gdd`, `tech-debt`, `priority:P2`, `auto-monitor`
 
 **Content:**
+
 - Current drift risk vs threshold
 - High-risk nodes breakdown
 - Links to reports
@@ -246,6 +264,7 @@ if (searchResults.items.length > 0) {
 ```
 
 **New Fields:**
+
 - `auto_monitor.enabled`: Enable/disable auto-monitoring (default: `true`)
 - `auto_monitor.schedule`: Cron expression for schedule (default: `0 8 */3 * *`)
 - `auto_monitor.max_drift_risk`: Threshold for drift issue creation (default: `60`)
@@ -257,16 +276,17 @@ if (searchResults.items.length > 0) {
 
 ### Relationship with `gdd-validate.yml`
 
-| Aspect | gdd-validate.yml | gdd-auto-monitor.yml |
-|--------|------------------|----------------------|
-| **Trigger** | PRs to main | Cron (every 3 days) |
-| **Branch** | PR branch | main |
-| **Purpose** | Pre-merge validation | Continuous monitoring |
-| **Fail CI?** | Yes (blocks merge) | No (creates issues) |
-| **Issue Creation** | On PR failure | On threshold violations |
-| **Reports** | PR comment | Versioned files in repo |
+| Aspect             | gdd-validate.yml     | gdd-auto-monitor.yml    |
+| ------------------ | -------------------- | ----------------------- |
+| **Trigger**        | PRs to main          | Cron (every 3 days)     |
+| **Branch**         | PR branch            | main                    |
+| **Purpose**        | Pre-merge validation | Continuous monitoring   |
+| **Fail CI?**       | Yes (blocks merge)   | No (creates issues)     |
+| **Issue Creation** | On PR failure        | On threshold violations |
+| **Reports**        | PR comment           | Versioned files in repo |
 
 **No Conflicts:** Both workflows use the same GDD scripts but different triggers. They complement each other:
+
 - **gdd-validate.yml:** Prevents bad PRs from merging
 - **gdd-auto-monitor.yml:** Detects degradation on main between PRs
 
@@ -282,6 +302,7 @@ if: steps.maintenance.outputs.maintenance_mode != 'true'
 ```
 
 **Behavior:**
+
 - ✅ Validation runs (monitoring active)
 - ✅ Reports generated
 - ✅ Reports committed
@@ -336,21 +357,25 @@ gh run view --workflow=gdd-auto-monitor.yml --log
 ## Benefits
 
 ### 1. **Proactive Detection**
+
 - Catches documentation degradation between PRs
 - No more "silent drift" on main branch
 - Early warning system for health issues
 
 ### 2. **Historical Tracking**
+
 - 90 days of health/drift history (30 reports @ 3 days)
 - Trend analysis via timestamped reports
 - Audit trail for quality metrics
 
 ### 3. **Reduced Manual Overhead**
+
 - Autonomous execution (no human intervention)
 - Automatic issue creation (no manual checks)
 - Self-cleaning reports (no manual cleanup)
 
 ### 4. **Continuous Compliance**
+
 - Ensures GDD health ≥ threshold at all times
 - Prevents quality regressions from accumulating
 - Enforces documentation standards continuously
@@ -362,6 +387,7 @@ gh run view --workflow=gdd-auto-monitor.yml --log
 ### Workflow Health
 
 **Check workflow status:**
+
 ```bash
 gh run list --workflow=gdd-auto-monitor.yml --limit 5
 ```
@@ -369,6 +395,7 @@ gh run list --workflow=gdd-auto-monitor.yml --limit 5
 **Expected frequency:** Every 3 days (approximately 10 runs/month)
 
 **Alert if:**
+
 - Workflow fails to execute for >7 days
 - Health score drops >10 points between runs
 - Drift risk increases >20 points between runs
@@ -376,11 +403,13 @@ gh run list --workflow=gdd-auto-monitor.yml --limit 5
 ### Issue Health
 
 **Check auto-monitor issues:**
+
 ```bash
 gh issue list --label auto-monitor --state open
 ```
 
 **Alert if:**
+
 - Health issue open for >7 days (degradation not addressed)
 - Multiple drift issues accumulating (>3 open issues)
 
@@ -393,6 +422,7 @@ gh issue list --label auto-monitor --state open
 **Symptom:** No new reports in 3+ days
 
 **Diagnosis:**
+
 ```bash
 # Check workflow status
 gh run list --workflow=gdd-auto-monitor.yml --limit 1
@@ -402,6 +432,7 @@ grep 'cron:' .github/workflows/gdd-auto-monitor.yml
 ```
 
 **Solutions:**
+
 - Verify cron expression is valid
 - Check workflow is not disabled
 - Manually trigger: `gh workflow run gdd-auto-monitor.yml`
@@ -413,6 +444,7 @@ grep 'cron:' .github/workflows/gdd-auto-monitor.yml
 **Symptom:** Workflow runs but no new reports in repo
 
 **Diagnosis:**
+
 ```bash
 # Check workflow logs
 gh run view --workflow=gdd-auto-monitor.yml --log | grep "Commit reports"
@@ -422,6 +454,7 @@ grep 'permissions:' .github/workflows/gdd-auto-monitor.yml -A5
 ```
 
 **Solutions:**
+
 - Verify `contents: write` permission
 - Check git config in workflow
 - Verify no protected branch rules blocking commits
@@ -433,12 +466,14 @@ grep 'permissions:' .github/workflows/gdd-auto-monitor.yml -A5
 **Symptom:** Multiple issues with same title
 
 **Diagnosis:**
+
 ```bash
 # Check for duplicates
 gh issue list --label auto-monitor --state open | grep "Auto-Monitor Alert"
 ```
 
 **Solutions:**
+
 - Verify search query in workflow (Step: "Create or update issue...")
 - Check labels match exactly (`auto-monitor`, `gdd`)
 - Close duplicates manually and let workflow update remaining issue
@@ -464,15 +499,18 @@ gh issue list --label auto-monitor --state open | grep "Auto-Monitor Alert"
 **Location:** `CLAUDE.md` - "GDD 2.0 - Quick Reference" section
 
 **Rule:**
+
 > ⚠️ **CRITICAL:** Auto-monitoring cannot be disabled without equivalent replacement. This ensures continuous health tracking of GDD system. If you need to disable auto-monitor, you MUST provide an alternative monitoring solution and get Product Owner approval.
 
 **Rationale:**
+
 - Documentation health is a critical quality metric
 - Autonomous monitoring prevents silent degradation
 - Manual monitoring is unreliable and error-prone
 - This is a **non-negotiable requirement** for GDD system integrity
 
 **Enforcement:**
+
 - Any PR that disables auto-monitor without replacement → Rejected
 - `.gddrc.json` changes that set `auto_monitor.enabled: false` → Requires PO approval
 - Workflow deletion → Blocked by CODEOWNERS review
@@ -503,13 +541,13 @@ gh issue list --label auto-monitor --state open | grep "Auto-Monitor Alert"
 
 ### Success Criteria
 
-| Metric | Target | Current |
-|--------|--------|---------|
-| **Workflow Success Rate** | >95% | TBD |
-| **Reports Generated** | 100% of runs | TBD |
-| **Issue Accuracy** | 0 false positives | TBD |
-| **Duplicate Issues** | 0 duplicates | TBD |
-| **Storage Growth** | <10MB/year | TBD |
+| Metric                    | Target            | Current |
+| ------------------------- | ----------------- | ------- |
+| **Workflow Success Rate** | >95%              | TBD     |
+| **Reports Generated**     | 100% of runs      | TBD     |
+| **Issue Accuracy**        | 0 false positives | TBD     |
+| **Duplicate Issues**      | 0 duplicates      | TBD     |
+| **Storage Growth**        | <10MB/year        | TBD     |
 
 ### Performance
 
@@ -523,17 +561,20 @@ gh issue list --label auto-monitor --state open | grep "Auto-Monitor Alert"
 ## Rollout Plan
 
 ### Phase 1: Validation (Week 1)
+
 - ✅ Deploy workflow to main
 - ✅ Monitor first 3 scheduled runs
 - ✅ Verify no duplicate issues
 - ✅ Confirm reports generated correctly
 
 ### Phase 2: Optimization (Week 2)
+
 - [ ] Adjust thresholds based on data (if needed)
 - [ ] Fine-tune cron schedule (if needed)
 - [ ] Add Slack notifications (optional)
 
 ### Phase 3: Documentation (Week 3)
+
 - ✅ Update GDD-IMPLEMENTATION-SUMMARY.md
 - ✅ Add Phase 17.1 to phase index
 - ✅ Create this implementation guide

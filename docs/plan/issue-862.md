@@ -5,18 +5,20 @@
 **Epic Padre:** #846  
 **Prioridad:** High  
 **Labels:** `area:ui`, `area:billing`, `frontend`, `refactor`  
-**Fecha:** 2025-11-18  
+**Fecha:** 2025-11-18
 
 ---
 
 ## 📊 Estado Actual
 
 ### Contexto
+
 - **Epic #846:** Migración completa UI a shadcn/ui
 - **Fase 3 completada:** Dashboard, Compose, Integrations, Connect, Configuration, Approval, Billing, Settings, Logs
 - **Fase 4 (esta issue):** Última fase - E-commerce y Onboarding (6 pantallas)
 
 ### Pantallas Afectadas
+
 1. **PlanPicker** - Selector de planes con comparativa de features
 2. **Pricing** - Tabla pública de precios con toggle mensual/anual
 3. **StyleProfile** - Onboarding de personalidad y tono
@@ -25,6 +27,7 @@
 6. **CheckoutSuccess** - Confirmación post-pago
 
 ### Archivos Existentes
+
 ```
 frontend/src/pages/
 ├── PlanPicker.jsx      (196 líneas)
@@ -36,6 +39,7 @@ frontend/src/pages/
 ```
 
 ### Dependencias Técnicas
+
 - **shadcn/ui:** Ya instalado y configurado (Fase 1)
 - **Componentes disponibles:** Card, Button, Badge, Table, Switch, Form, Radio, Textarea, Select, Alert, Dialog
 - **Componentes Roastr:** PageLayout, RoastrComment (ya migrados)
@@ -59,6 +63,7 @@ frontend/src/pages/
 9. ✅ Epic #846 cerrado automáticamente
 
 ### Criterios de Éxito
+
 - Funcionalidad 100% preservada
 - UI consistente con shadcn/ui design system
 - Responsive en 3 viewports (desktop, tablet, mobile)
@@ -72,6 +77,7 @@ frontend/src/pages/
 ### Fase 1: Preparación y Análisis (15 min)
 
 **Tarea 1.1: Analizar componentes existentes**
+
 ```bash
 # Leer archivos actuales para entender estructura
 @frontend/src/pages/PlanPicker.jsx
@@ -83,6 +89,7 @@ frontend/src/pages/
 ```
 
 **Tarea 1.2: Identificar dependencias shadcn/ui**
+
 - PlanPicker → Card, Badge, Button
 - Pricing → Table, Switch, Badge, Button
 - StyleProfile → Form, Radio, Textarea, Button, Card
@@ -91,6 +98,7 @@ frontend/src/pages/
 - CheckoutSuccess → Alert, Card, Button
 
 **Tarea 1.3: Validar componentes instalados**
+
 ```bash
 # Verificar que todos los componentes shadcn/ui necesarios existen
 ls frontend/src/components/ui/
@@ -103,6 +111,7 @@ ls frontend/src/components/ui/
 **Orden de implementación:** De menos a más complejo
 
 #### 2.1 CheckoutSuccess (30 min) - SIMPLE
+
 - **Complejidad:** Baja (solo display, sin lógica compleja)
 - **Componentes:** Alert, Card, Button
 - **Pasos:**
@@ -112,6 +121,7 @@ ls frontend/src/components/ui/
   4. Añadir tests unitarios
 
 #### 2.2 Shop (45 min) - SIMPLE
+
 - **Complejidad:** Media-Baja (marketplace futuro, ahora solo mock)
 - **Componentes:** Card, Button, Dialog, Badge
 - **Pasos:**
@@ -121,6 +131,7 @@ ls frontend/src/components/ui/
   4. Mantener estructura de datos de productos
 
 #### 2.3 PlanPicker (1 hora) - MEDIO
+
 - **Complejidad:** Media (comparativa de planes)
 - **Componentes:** Card, Badge, Button
 - **Dependencias:** `plan-features` node
@@ -132,6 +143,7 @@ ls frontend/src/components/ui/
   5. Verificar integración con billing
 
 #### 2.4 Pricing (1 hora) - MEDIO
+
 - **Complejidad:** Media (tabla de features + toggle)
 - **Componentes:** Table, Switch, Badge, Button
 - **Dependencias:** `plan-features` node
@@ -142,6 +154,7 @@ ls frontend/src/components/ui/
   4. Sincronizar con PlanPicker
 
 #### 2.5 AccountsPage (1 hora) - COMPLEJO
+
 - **Complejidad:** Alta (multi-tenant, permisos, RLS)
 - **Componentes:** Select, Card, Alert, Button
 - **Dependencias:** `multi-tenant` (RLS, org isolation)
@@ -153,6 +166,7 @@ ls frontend/src/components/ui/
   5. Validar RLS en switches de org
 
 #### 2.6 StyleProfile (1.5 horas) - COMPLEJO
+
 - **Complejidad:** Alta (onboarding, embeddings, encryption)
 - **Componentes:** Form, Radio, Textarea, Button, Card
 - **Dependencias:** `persona` node (lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual)
@@ -170,6 +184,7 @@ ls frontend/src/components/ui/
 ### Fase 3: Testing (1.5 horas)
 
 **Tarea 3.1: Tests Unitarios**
+
 ```bash
 # Generar tests para cada componente
 tests/unit/pages/
@@ -184,6 +199,7 @@ tests/unit/pages/
 **Coverage mínimo:** 90% en archivos modificados
 
 **Test cases por componente:**
+
 - PlanPicker: Render de planes, click en CTA, feature comparison
 - Pricing: Toggle mensual/anual, tabla responsive
 - StyleProfile: Submit de form, validación, preview de roasts
@@ -192,6 +208,7 @@ tests/unit/pages/
 - CheckoutSuccess: Confirmación, next steps
 
 **Tarea 3.2: Tests E2E con Playwright**
+
 ```bash
 # Crear test E2E de flujo completo
 tests/e2e/ui-migration-fase4.spec.js
@@ -200,6 +217,7 @@ tests/e2e/ui-migration-fase4.spec.js
 **Flujo crítico:** Pricing → PlanPicker → Checkout → CheckoutSuccess
 
 **Tarea 3.3: Validación Visual**
+
 ```bash
 # Ejecutar Playwright MCP para screenshots
 # Viewports: desktop (1920x1080), tablet (768x1024), mobile (375x667)
@@ -210,6 +228,7 @@ tests/e2e/ui-migration-fase4.spec.js
 ### Fase 4: Validación y Evidencias (1 hora)
 
 **Tarea 4.1: Build y Tests**
+
 ```bash
 cd frontend
 npm run build:ci  # Debe exitoso
@@ -218,6 +237,7 @@ npm run test:coverage  # >= 90%
 ```
 
 **Tarea 4.2: Screenshots y Documentación**
+
 ```bash
 # Crear directorio de evidencias
 mkdir -p docs/test-evidence/issue-862/screenshots/
@@ -238,6 +258,7 @@ docs/test-evidence/issue-862/summary.md
 ⚠️ **CRÍTICO:** Este es el AC #8 - blocking
 
 **Checklist manual:**
+
 - [ ] PlanPicker permite seleccionar plan
 - [ ] Click en upgrade redirige a checkout
 - [ ] Checkout procesa pago (mock en dev)
@@ -246,6 +267,7 @@ docs/test-evidence/issue-862/summary.md
 - [ ] Settings muestra features desbloqueadas
 
 **Tarea 4.4: GDD Updates**
+
 ```bash
 # Actualizar nodos afectados
 @docs/nodes/plan-features.md   # Añadir referencias a nuevos componentes
@@ -264,6 +286,7 @@ docs/test-evidence/issue-862/summary.md
 ### Fase 5: PR y Cierre (30 min)
 
 **Tarea 5.1: Pre-Flight Validation**
+
 ```bash
 # GDD Health
 node scripts/validate-gdd-runtime.js --full
@@ -277,6 +300,7 @@ npm run coderabbit:review  # 0 comentarios
 ```
 
 **Tarea 5.2: Crear PR**
+
 ```bash
 gh pr create \
   --title "feat(ui): Fase 4 - Migrate E-commerce & Onboarding to shadcn/ui (closes #846)" \
@@ -285,6 +309,7 @@ gh pr create \
 ```
 
 **Tarea 5.3: PR Body**
+
 ```markdown
 # Fase 4: E-commerce & Onboarding Migration
 
@@ -292,9 +317,11 @@ Closes #862
 Closes #846 (Epic completo)
 
 ## 🎯 Resumen
+
 Migración final de 6 pantallas a shadcn/ui, completando el Epic #846.
 
 ## ✅ Pantallas Migradas
+
 - [x] PlanPicker (comparativa de planes)
 - [x] Pricing (tabla pública)
 - [x] StyleProfile (onboarding persona)
@@ -303,20 +330,23 @@ Migración final de 6 pantallas a shadcn/ui, completando el Epic #846.
 - [x] CheckoutSuccess (confirmación)
 
 ## 📸 Evidencias
+
 - Screenshots en docs/test-evidence/issue-862/
 - Tests E2E pasando 100%
 - Checkout flow validado manualmente
 
 ## 🧪 Testing
+
 - Tests unitarios: 90%+ coverage
 - E2E: Flujo completo Pricing → Checkout → Success
 - Visual: 3 viewports (desktop, tablet, mobile)
 
 ## 🚀 Epic #846 Status
+
 ✅ Fase 1: Fundación técnica  
 ✅ Fase 2: Dashboard + Core  
 ✅ Fase 3: Configuration + Admin  
-✅ Fase 4: E-commerce + Onboarding (ESTA PR)  
+✅ Fase 4: E-commerce + Onboarding (ESTA PR)
 
 **Resultado:** 100% UI migrada a shadcn/ui
 ```
@@ -326,25 +356,31 @@ Migración final de 6 pantallas a shadcn/ui, completando el Epic #846.
 ## 🚧 Riesgos y Mitigaciones
 
 ### Riesgo 1: Checkout Flow Roto
+
 **Probabilidad:** Media  
 **Impacto:** Crítico (AC #8 blocking)  
 **Mitigación:**
+
 - Validación manual exhaustiva antes de merge
 - Tests E2E específicos para flujo completo
 - Rollback plan: mantener versión anterior si falla
 
 ### Riesgo 2: RLS en AccountsPage
+
 **Probabilidad:** Baja  
 **Impacto:** Alto (seguridad multi-tenant)  
 **Mitigación:**
+
 - Tests de integración con múltiples orgs
 - Validar queries con RLS activo
 - Revisar con Guardian agent
 
 ### Riesgo 3: Persona Encryption
+
 **Probabilidad:** Baja  
 **Impacto:** Crítico (GDPR, security)  
 **Mitigación:**
+
 - No tocar lógica de encryption
 - Solo migrar UI, mantener backend intacto
 - Tests de integración con API /api/persona
@@ -354,6 +390,7 @@ Migración final de 6 pantallas a shadcn/ui, completando el Epic #846.
 ## 📦 Archivos Afectados
 
 ### Modificados
+
 ```
 frontend/src/pages/
 ├── PlanPicker.jsx
@@ -365,6 +402,7 @@ frontend/src/pages/
 ```
 
 ### Creados
+
 ```
 tests/unit/pages/
 ├── PlanPicker.test.jsx
@@ -389,6 +427,7 @@ docs/test-evidence/issue-862/
 ```
 
 ### Actualizados (GDD)
+
 ```
 docs/nodes/
 ├── plan-features.md  (añadir "Agentes Relevantes: FrontendDev, TestEngineer")
@@ -427,6 +466,7 @@ docs/nodes/
 ## 📚 Referencias
 
 ### Documentación Técnica
+
 - Epic #846: UI Refactor completo
 - Issue #847: Fase 2 (Dashboard + Core)
 - Issue #848: Fase 3 (Configuration + Admin)
@@ -434,12 +474,14 @@ docs/nodes/
 - `docs/ai-ui-rules.md`: Reglas de diseño
 
 ### Nodos GDD
+
 - `@docs/nodes/plan-features.md`: Tiers, limits, feature gates
 - `@docs/nodes/persona.md`: Identity, boundaries, tolerance
 - `@docs/nodes/multi-tenant.md`: RLS, org isolation
 - `@docs/nodes/roast.md`: Roast generation flow
 
 ### CodeRabbit Lessons
+
 - `@docs/patterns/coderabbit-lessons.md`: Patrones a evitar
 
 ---
@@ -466,4 +508,3 @@ docs/nodes/
 **Complejidad:** Alta (CRÍTICO: checkout flow + encryption + RLS)  
 **Prioridad:** High (cierra Epic completo)  
 **Status:** 🟢 READY TO START
-

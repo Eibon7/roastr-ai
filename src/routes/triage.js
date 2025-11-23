@@ -58,15 +58,15 @@ const statsRateLimit = rateLimit({
 
 /**
  * POST /api/triage/analyze
- * 
+ *
  * Analyze a comment and get triage routing decision
- * 
+ *
  * Body parameters:
  * - content (required): Comment content to analyze
  * - platform (optional): Source platform (twitter, youtube, etc.)
  * - metadata (optional): Additional context for analysis
  * - user_preferences (optional): User-specific preferences for analysis
- * 
+ *
  * Returns:
  * - action: 'publish', 'roast', 'block', 'defer', 'skip', 'error'
  * - reasoning: Human-readable explanation of decision
@@ -78,7 +78,7 @@ const statsRateLimit = rateLimit({
  */
 router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => {
   const correlationId = `api-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  
+
   try {
     const { content, platform, metadata, user_preferences } = req.body;
     const { organization, user } = req;
@@ -92,7 +92,7 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
         content_type: typeof content,
         content_length: content?.length
       });
-      
+
       return res.status(400).json({
         success: false,
         error: 'Content is required and must be a string',
@@ -130,13 +130,15 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
     };
 
     // Enrich user context with preferences
-    const enrichedUser = user ? {
-      ...user,
-      preferences: {
-        ...user.preferences,
-        ...user_preferences
-      }
-    } : null;
+    const enrichedUser = user
+      ? {
+          ...user,
+          preferences: {
+            ...user.preferences,
+            ...user_preferences
+          }
+        }
+      : null;
 
     logger.info('Triage API: Starting analysis', {
       correlation_id: correlationId,
@@ -149,15 +151,10 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
 
     // Perform triage analysis
     const startTime = Date.now();
-    const decision = await getTriageService().analyzeAndRoute(
-      comment,
-      organization,
-      enrichedUser,
-      {
-        api_request: true,
-        correlation_id: correlationId
-      }
-    );
+    const decision = await getTriageService().analyzeAndRoute(comment, organization, enrichedUser, {
+      api_request: true,
+      correlation_id: correlationId
+    });
     const totalTime = Date.now() - startTime;
 
     logger.info('Triage API: Analysis completed', {
@@ -196,7 +193,6 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
         correlation_id: correlationId
       }
     });
-
   } catch (error) {
     logger.error('Triage API: Analysis failed', {
       correlation_id: correlationId,
@@ -211,9 +207,13 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
     });
 
     // Return error response with appropriate status code
-    const statusCode = error.message.includes('limit') ? 429 :
-                      error.message.includes('validation') ? 400 :
-                      error.message.includes('permission') ? 403 : 500;
+    const statusCode = error.message.includes('limit')
+      ? 429
+      : error.message.includes('validation')
+        ? 400
+        : error.message.includes('permission')
+          ? 403
+          : 500;
 
     res.status(statusCode).json({
       success: false,
@@ -228,13 +228,13 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
 
 /**
  * GET /api/triage/stats
- * 
+ *
  * Get triage decision statistics and performance metrics
- * 
+ *
  * Query parameters:
  * - time_range (optional): '1h', '24h', '7d', '30d' (default: '1h')
  * - include_cache (optional): Include cache performance stats (default: false)
- * 
+ *
  * Returns:
  * - decision_counts: Breakdown of decisions by type
  * - performance_metrics: Analysis timing and throughput
@@ -244,7 +244,7 @@ router.post('/analyze', authenticateToken, triageRateLimit, async (req, res) => 
  */
 router.get('/stats', authenticateToken, statsRateLimit, async (req, res) => {
   const correlationId = `stats-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  
+
   try {
     const { time_range = '1h', include_cache = 'false' } = req.query;
     const { organization, user } = req;
@@ -305,7 +305,6 @@ router.get('/stats', authenticateToken, statsRateLimit, async (req, res) => {
       stats: enrichedStats,
       correlation_id: correlationId
     });
-
   } catch (error) {
     logger.error('Triage API: Stats request failed', {
       correlation_id: correlationId,
@@ -328,15 +327,15 @@ router.get('/stats', authenticateToken, statsRateLimit, async (req, res) => {
 
 /**
  * POST /api/triage/batch
- * 
+ *
  * Analyze multiple comments in a single request
  * Useful for bulk processing and efficiency
- * 
+ *
  * Body parameters:
  * - comments (required): Array of comment objects to analyze
  *   - Each comment must have: content, platform (optional), metadata (optional)
  * - options (optional): Global options for all comments
- * 
+ *
  * Returns:
  * - results: Array of triage decisions for each comment
  * - summary: Aggregate statistics for the batch
@@ -344,7 +343,7 @@ router.get('/stats', authenticateToken, statsRateLimit, async (req, res) => {
  */
 router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
   const correlationId = `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  
+
   try {
     const { comments, options = {} } = req.body;
     const { organization, user } = req;
@@ -392,7 +391,7 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
     // Process each comment
     for (let i = 0; i < comments.length; i++) {
       const commentData = comments[i];
-      
+
       try {
         // Validate individual comment
         if (!commentData.content || typeof commentData.content !== 'string') {
@@ -415,24 +414,18 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
         };
 
         // Perform analysis
-        const decision = await getTriageService().analyzeAndRoute(
-          comment,
-          organization,
-          user,
-          {
-            ...options,
-            batch_request: true,
-            correlation_id: correlationId,
-            batch_index: i
-          }
-        );
+        const decision = await getTriageService().analyzeAndRoute(comment, organization, user, {
+          ...options,
+          batch_request: true,
+          correlation_id: correlationId,
+          batch_index: i
+        });
 
         results.push({
           index: i,
           comment_id: comment.id,
           ...decision
         });
-
       } catch (commentError) {
         logger.error('Triage API: Batch comment analysis failed', {
           correlation_id: correlationId,
@@ -456,16 +449,17 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
       successful_analyses: results.length,
       failed_analyses: errors.length,
       decisions: {
-        publish: results.filter(r => r.action === 'publish').length,
-        roast: results.filter(r => r.action === 'roast').length,
-        block: results.filter(r => r.action === 'block').length,
-        defer: results.filter(r => r.action === 'defer').length,
-        skip: results.filter(r => r.action === 'skip').length
+        publish: results.filter((r) => r.action === 'publish').length,
+        roast: results.filter((r) => r.action === 'roast').length,
+        block: results.filter((r) => r.action === 'block').length,
+        defer: results.filter((r) => r.action === 'defer').length,
+        skip: results.filter((r) => r.action === 'skip').length
       },
-      average_toxicity: results.length > 0 
-        ? results.reduce((sum, r) => sum + (r.toxicity_score || 0), 0) / results.length 
-        : 0,
-      shield_actions: results.filter(r => r.shield_decision).length
+      average_toxicity:
+        results.length > 0
+          ? results.reduce((sum, r) => sum + (r.toxicity_score || 0), 0) / results.length
+          : 0,
+      shield_actions: results.filter((r) => r.shield_decision).length
     };
 
     logger.info('Triage API: Batch analysis completed', {
@@ -484,11 +478,11 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
       performance: {
         total_time_ms: totalTime,
         average_time_per_comment: comments.length > 0 ? totalTime / comments.length : 0,
-        comments_per_second: totalTime > 0 && comments.length > 0 ? (comments.length / totalTime) * 1000 : 0
+        comments_per_second:
+          totalTime > 0 && comments.length > 0 ? (comments.length / totalTime) * 1000 : 0
       },
       correlation_id: correlationId
     });
-
   } catch (error) {
     logger.error('Triage API: Batch analysis failed', {
       correlation_id: correlationId,
@@ -510,14 +504,14 @@ router.post('/batch', authenticateToken, triageRateLimit, async (req, res) => {
 
 /**
  * POST /api/triage/cache/clear
- * 
+ *
  * Clear the triage decision cache
  * Useful for testing and when configuration changes
  * Restricted to admin users only
  */
 router.post('/cache/clear', authenticateToken, async (req, res) => {
   const correlationId = `cache-clear-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  
+
   try {
     const { organization, user } = req;
 
@@ -553,7 +547,6 @@ router.post('/cache/clear', authenticateToken, async (req, res) => {
       timestamp: new Date().toISOString(),
       correlation_id: correlationId
     });
-
   } catch (error) {
     logger.error('Triage API: Cache clear failed', {
       correlation_id: correlationId,

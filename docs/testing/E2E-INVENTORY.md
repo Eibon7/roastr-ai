@@ -1,4 +1,5 @@
 # E2E Test Suite Inventory
+
 ## Issue #896 - Fase 5: Documentar E2E Requirements
 
 **Fecha:** 2025-11-21  
@@ -8,14 +9,14 @@
 
 ## Resumen
 
-| Categoría | Cantidad | Estado | Requirements |
-|-----------|----------|--------|--------------|
-| **Playwright E2E** | 2 | 2 skipped | Playwright + servidor |
-| **Database Integration** | 1 | 1 skipped | Supabase real |
-| **Multi-tenant Workflow** | 1 | 1 conditional skip | Redis/Queue + mocks |
-| **API Health Smoke** | 2 | Active | Servidor corriendo |
-| **Visual Tests** | 1 | Active con @playwright/test | Servidor + Playwright |
-| **TOTAL** | **7** | **4 skipped, 3 active** | Variable |
+| Categoría                 | Cantidad | Estado                      | Requirements          |
+| ------------------------- | -------- | --------------------------- | --------------------- |
+| **Playwright E2E**        | 2        | 2 skipped                   | Playwright + servidor |
+| **Database Integration**  | 1        | 1 skipped                   | Supabase real         |
+| **Multi-tenant Workflow** | 1        | 1 conditional skip          | Redis/Queue + mocks   |
+| **API Health Smoke**      | 2        | Active                      | Servidor corriendo    |
+| **Visual Tests**          | 1        | Active con @playwright/test | Servidor + Playwright |
+| **TOTAL**                 | **7**    | **4 skipped, 3 active**     | Variable              |
 
 ---
 
@@ -26,6 +27,7 @@
 **Archivo:** `tests/integration/shield-stability.test.js`
 
 **Requirements:**
+
 - ✅ Playwright installed (`npx playwright install`)
 - ✅ Servidor corriendo en `http://localhost:3000`
 - ✅ Playwright matchers configurados en Jest (actualmente NO disponible)
@@ -34,6 +36,7 @@
 **Estado actual:** `describe.skip` (18 tests)
 
 **Suites afectadas:**
+
 - Network Stability and Loading States (3 tests)
 - Selector Resilience and Fallbacks (3 tests)
 - Visual Stability Enhancements (3 tests)
@@ -42,6 +45,7 @@
 - Cross-browser Compatibility Stability (2 tests)
 
 **Razón del skip:**
+
 ```javascript
 /**
  * NOTE: These tests are currently skipped because they use Playwright matchers
@@ -57,6 +61,7 @@
 ```
 
 **Alternativas:**
+
 1. Migrar a `@playwright/test` framework
 2. Usar Playwright MCP para validación visual
 3. Reescribir assertions con Jest + métodos `is*` de Playwright
@@ -70,6 +75,7 @@
 **Archivo:** `tests/visual/shieldUI.test.js`
 
 **Requirements:**
+
 - ✅ `@playwright/test` installed (diferente de `playwright` package)
 - ✅ Playwright browsers: `npx playwright install chromium firefox webkit`
 - ✅ Servidor corriendo (default: `http://localhost:3000`, override con `TEST_URL`)
@@ -78,6 +84,7 @@
 **Estado actual:** ✅ **ACTIVE** (631 lines, comprehensive tests)
 
 **Test categories:**
+
 - Multi-viewport testing (desktop 1920x1080, tablet 768x1024, mobile 375x667)
 - Shield panel rendering and empty states
 - Filtering and sorting functionality
@@ -89,6 +96,7 @@
 - Loading states
 
 **Execution:**
+
 ```bash
 # Requires Playwright Test runner
 npx playwright test tests/visual/shieldUI.test.js
@@ -106,6 +114,7 @@ TEST_URL=http://localhost:4000 npx playwright test tests/visual/shieldUI.test.js
 **Archivo:** `tests/integration/multiTenantWorkflow.test.js`
 
 **Requirements:**
+
 - ⚠️ Redis/Queue service (puede usar mocks)
 - ⚠️ External services mocked (Twitter, Perspective, OpenAI)
 - ⚠️ Conditional: Se skipea con `SKIP_E2E=true`
@@ -113,6 +122,7 @@ TEST_URL=http://localhost:4000 npx playwright test tests/visual/shieldUI.test.js
 **Estado actual:** ✅ **CONDITIONAL** (se ejecuta si `SKIP_E2E !== 'true'`)
 
 **Skip logic implementado:**
+
 ```javascript
 // Using helper from tests/helpers/e2ePrerequisites.js
 const { skipIfNoE2E } = require('../helpers/e2ePrerequisites');
@@ -124,12 +134,13 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
     requireServer: false,
     requirePlaywright: false
   });
-  
+
   // Tests...
 });
 ```
 
 **Test categories:**
+
 - Queue integration (enqueue, process, complete)
 - Worker orchestration (FetchComments → AnalyzeToxicity → GenerateReply)
 - Cost control validation
@@ -137,6 +148,7 @@ describe('Multi-Tenant Architecture Integration Tests', () => {
 - Multi-tenant isolation
 
 **Execution:**
+
 ```bash
 # Run locally (default, E2E enabled)
 npm test tests/integration/multiTenantWorkflow.test.js
@@ -154,12 +166,14 @@ SKIP_E2E=true npm test tests/integration/multiTenantWorkflow.test.js
 **Archivo:** `tests/integration/trial-management.test.js`
 
 **Requirements:**
+
 - ❌ **BLOCKER:** Supabase real instance (NOT mocks)
 - ❌ Stateful database for trial lifecycle testing
 
 **Estado actual:** `describe.skip` (needs real DB)
 
 **Skip reason:**
+
 ```javascript
 // TODO: These integration tests require a real Supabase instance or stateful mocks
 // Unit tests (entitlementsService-trial.test.js) already cover all functionality
@@ -167,6 +181,7 @@ SKIP_E2E=true npm test tests/integration/multiTenantWorkflow.test.js
 ```
 
 **Test categories:**
+
 - Trial start
 - Trial status checking
 - Trial expiration
@@ -183,18 +198,21 @@ SKIP_E2E=true npm test tests/integration/multiTenantWorkflow.test.js
 **Archivo:** `tests/smoke/api-health.test.js`
 
 **Requirements:**
+
 - ✅ Servidor corriendo en `http://localhost:3000` (default)
 - ✅ Endpoints `/health` y `/api/health` disponibles
 
 **Estado actual:** ✅ **ACTIVE**
 
 **Test categories:**
+
 - Basic server availability
 - Health endpoint response
 - API endpoint response times
 - Error handling
 
 **Execution:**
+
 ```bash
 # Requires server running
 npm start &  # Start server
@@ -210,6 +228,7 @@ npm test tests/smoke/api-health.test.js
 **Archivo:** `tests/smoke/simple-health.test.js`
 
 **Requirements:**
+
 - ✅ Servidor corriendo (similar a api-health)
 - ✅ Minimal dependencies
 
@@ -224,19 +243,23 @@ npm test tests/smoke/api-health.test.js
 **Archivo:** `tests/integration/tierValidationSecurity.test.js`
 
 **Requirements:**
+
 - ⚠️ Conditional: Se skipea en mock mode
 - ⚠️ Requiere database real para validación de tier security
 
 **Estado actual:** ✅ **CONDITIONAL**
 
 **Skip logic implementado:**
+
 ```javascript
 // Skip these tests in mock mode or test environment
-const shouldSkipIntegrationTests = process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
+const shouldSkipIntegrationTests =
+  process.env.ENABLE_MOCK_MODE === 'true' || process.env.NODE_ENV === 'test';
 const describeFunction = shouldSkipIntegrationTests ? describe.skip : describe;
 ```
 
 **Execution:**
+
 ```bash
 # Run with real DB (production mode)
 npm test tests/integration/tierValidationSecurity.test.js
@@ -257,10 +280,12 @@ NODE_ENV=test npm test tests/integration/tierValidationSecurity.test.js
 **Problema:** `playwright` package vs `@playwright/test` framework
 
 **Tests afectados:**
+
 - `shield-stability.test.js` (usa `playwright` con Jest → matchers no disponibles)
 - `shieldUI.test.js` (usa `@playwright/test` → funciona correctamente)
 
 **Solución:**
+
 1. Migrar tests a `@playwright/test` framework, O
 2. Reescribir assertions sin matchers de Playwright
 
@@ -269,6 +294,7 @@ NODE_ENV=test npm test tests/integration/tierValidationSecurity.test.js
 ### Pattern 2: Conditional Skip with Environment Variables
 
 **Tests afectados:**
+
 - `multiTenantWorkflow.test.js` (`SKIP_E2E=true`)
 - `tierValidationSecurity.test.js` (`ENABLE_MOCK_MODE=true`)
 
@@ -279,9 +305,11 @@ NODE_ENV=test npm test tests/integration/tierValidationSecurity.test.js
 ### Pattern 3: Real Database Dependency
 
 **Tests afectados:**
+
 - `trial-management.test.js` (requiere Supabase real)
 
-**Solución:** 
+**Solución:**
+
 1. Skip permanente + coverage alternativa (unit tests), O
 2. Refactor para usar mocks stateful con `mockSupabaseFactory.js`
 
@@ -290,6 +318,7 @@ NODE_ENV=test npm test tests/integration/tierValidationSecurity.test.js
 ### Pattern 4: Server Dependency
 
 **Tests afectados:**
+
 - `api-health.test.js`
 - `simple-health.test.js`
 - `shieldUI.test.js`
@@ -344,11 +373,13 @@ NODE_ENV=test npm test tests/integration/tierValidationSecurity.test.js
 ## Estadísticas
 
 **Tests E2E por estado:**
+
 - ✅ Active: 3 (43%)
 - ⚠️ Conditional: 2 (29%)
 - ❌ Skipped: 2 (29%)
 
 **Blockers principales:**
+
 1. Playwright matchers en Jest (Issue #482) - 1 suite
 2. Real database dependency - 1 suite
 
@@ -370,4 +401,3 @@ NODE_ENV=test npm test tests/integration/tierValidationSecurity.test.js
 **Última actualización:** 2025-11-21  
 **Mantenido por:** TestEngineer  
 **Próxima revisión:** Cuando se añadan nuevos tests E2E
-

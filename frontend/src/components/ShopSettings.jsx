@@ -22,7 +22,7 @@ const ShopSettings = ({ user, onNotification }) => {
     categories: {},
     isLoading: true
   });
-  
+
   const [userAddons, setUserAddons] = useState({
     credits: { roasts: 0, analysis: 0 },
     features: { rqc_enabled: false },
@@ -53,7 +53,7 @@ const ShopSettings = ({ user, onNotification }) => {
       }
     } catch (error) {
       console.error('Failed to load shop data:', error);
-      setShopData(prev => ({ ...prev, isLoading: false }));
+      setShopData((prev) => ({ ...prev, isLoading: false }));
       onNotification?.('Error al cargar la tienda', 'error');
     }
   };
@@ -69,7 +69,7 @@ const ShopSettings = ({ user, onNotification }) => {
       }
     } catch (error) {
       console.error('Failed to load user addons:', error);
-      setUserAddons(prev => ({ ...prev, isLoading: false }));
+      setUserAddons((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -85,7 +85,7 @@ const ShopSettings = ({ user, onNotification }) => {
     }
 
     // Set loading state for this specific addon
-    setPurchaseState(prev => ({
+    setPurchaseState((prev) => ({
       ...prev,
       loadingByKey: new Set([...prev.loadingByKey, addonKey]),
       error: null,
@@ -94,7 +94,6 @@ const ShopSettings = ({ user, onNotification }) => {
 
     try {
       const result = await apiClient.post('/shop/checkout', { addonKey });
-
 
       if (result.success && result.data.url) {
         // Redirect to Stripe Checkout
@@ -110,7 +109,12 @@ const ShopSettings = ({ user, onNotification }) => {
       let notificationMessage = 'Error en la compra';
 
       // Check if it's a network error (no response from server)
-      if (!error.response && (error.code === 'NETWORK_ERROR' || error.message?.includes('fetch') || error.message?.includes('network'))) {
+      if (
+        !error.response &&
+        (error.code === 'NETWORK_ERROR' ||
+          error.message?.includes('fetch') ||
+          error.message?.includes('network'))
+      ) {
         errorMessage = 'Error de conexión — por favor verifica tu conexión a internet.';
         notificationMessage = 'Error de conexión';
       }
@@ -127,7 +131,7 @@ const ShopSettings = ({ user, onNotification }) => {
         notificationMessage = `Error del servidor (${status})`;
       }
 
-      setPurchaseState(prev => {
+      setPurchaseState((prev) => {
         const newLoadingByKey = new Set(prev.loadingByKey);
         newLoadingByKey.delete(addonKey);
         return {
@@ -143,10 +147,14 @@ const ShopSettings = ({ user, onNotification }) => {
 
   const getCategoryIcon = (category) => {
     switch (category) {
-      case 'roasts': return <Zap className="h-5 w-5" />;
-      case 'analysis': return <BarChart3 className="h-5 w-5" />;
-      case 'features': return <Shield className="h-5 w-5" />;
-      default: return <ShoppingCart className="h-5 w-5" />;
+      case 'roasts':
+        return <Zap className="h-5 w-5" />;
+      case 'analysis':
+        return <BarChart3 className="h-5 w-5" />;
+      case 'features':
+        return <Shield className="h-5 w-5" />;
+      default:
+        return <ShoppingCart className="h-5 w-5" />;
     }
   };
 
@@ -164,15 +172,11 @@ const ShopSettings = ({ user, onNotification }) => {
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
-          {addon.description}
-        </p>
-        
+        <p className="text-sm text-muted-foreground mb-4">{addon.description}</p>
+
         {addon.type === 'credits' && (
           <div className="flex items-center space-x-2 mb-4">
-            <Badge variant="outline">
-              +{addon.creditAmount.toLocaleString()} créditos
-            </Badge>
+            <Badge variant="outline">+{addon.creditAmount.toLocaleString()} créditos</Badge>
           </div>
         )}
 
@@ -213,14 +217,14 @@ const ShopSettings = ({ user, onNotification }) => {
             </div>
             <div className="text-sm text-muted-foreground">Roasts Extra</div>
           </div>
-          
+
           <div className="text-center p-4 bg-muted rounded-lg">
             <div className="text-2xl font-bold text-primary">
               {userAddons.credits.analysis.toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">Análisis Extra</div>
           </div>
-          
+
           <div className="text-center p-4 bg-muted rounded-lg">
             <div className="text-2xl font-bold">
               {userAddons.features.rqc_enabled ? (
@@ -247,7 +251,7 @@ const ShopSettings = ({ user, onNotification }) => {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <div 
+            <div
               className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
               role="status"
               aria-busy="true"
@@ -271,7 +275,8 @@ const ShopSettings = ({ user, onNotification }) => {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Mejora tu experiencia en Roastr con addons puntuales. Elige lo que necesitas y actívalo al instante.
+            Mejora tu experiencia en Roastr con addons puntuales. Elige lo que necesitas y actívalo
+            al instante.
           </p>
         </CardContent>
       </Card>
@@ -305,7 +310,7 @@ const ShopSettings = ({ user, onNotification }) => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {addons.map(addon => renderAddonCard(addon, category))}
+              {addons.map((addon) => renderAddonCard(addon, category))}
             </div>
           </CardContent>
         </Card>
@@ -330,20 +335,20 @@ const ShopSettings = ({ user, onNotification }) => {
                   // Second priority: lookup from shop data
                   if (shopData.addons) {
                     for (const category of Object.values(shopData.addons)) {
-                      const addon = category.find(a => a.key === purchase.addon_key);
+                      const addon = category.find((a) => a.key === purchase.addon_key);
                       if (addon) return addon.name;
                     }
                   }
 
                   // Third priority: hardcoded mapping for common addons
                   const addonNameMap = {
-                    'roasts_100': 'Roasts Pack 100',
-                    'roasts_500': 'Roasts Pack 500',
-                    'roasts_1000': 'Roasts Pack 1000',
-                    'analysis_10k': 'Análisis Pack 10K',
-                    'analysis_50k': 'Análisis Pack 50K',
-                    'analysis_100k': 'Análisis Pack 100K',
-                    'rqc_monthly': 'RQC (Roastr Quality Check)'
+                    roasts_100: 'Roasts Pack 100',
+                    roasts_500: 'Roasts Pack 500',
+                    roasts_1000: 'Roasts Pack 1000',
+                    analysis_10k: 'Análisis Pack 10K',
+                    analysis_50k: 'Análisis Pack 50K',
+                    analysis_100k: 'Análisis Pack 100K',
+                    rqc_monthly: 'RQC (Roastr Quality Check)'
                   };
 
                   if (addonNameMap[purchase.addon_key]) {
@@ -353,10 +358,8 @@ const ShopSettings = ({ user, onNotification }) => {
                   // Final fallback: convert addon_key to title case
                   return purchase.addon_key
                     .replace(/_/g, ' ')
-                    .replace(/\b\w/g, l => l.toUpperCase());
+                    .replace(/\b\w/g, (l) => l.toUpperCase());
                 };
-
-
 
                 const formatDate = (dateString) => {
                   return new Date(dateString).toLocaleDateString('en-US', {
@@ -370,19 +373,31 @@ const ShopSettings = ({ user, onNotification }) => {
                   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
                 };
                 return (
-                  <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                  >
                     <div className="flex-1">
-                      <div className="text-sm font-medium" aria-label={`Addon: ${formatAddonName(purchase)}`}>
+                      <div
+                        className="text-sm font-medium"
+                        aria-label={`Addon: ${formatAddonName(purchase)}`}
+                      >
                         {formatAddonName(purchase)}
                       </div>
                       {purchase.created_at && (
-                        <div className="text-xs text-muted-foreground mt-1" aria-label={`Purchase date: ${formatDate(purchase.created_at)}`}>
+                        <div
+                          className="text-xs text-muted-foreground mt-1"
+                          aria-label={`Purchase date: ${formatDate(purchase.created_at)}`}
+                        >
                           {formatDate(purchase.created_at)}
                         </div>
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-semibold" aria-label={`Amount: ${formatCurrency(purchase.amount_cents, purchase.currency)}`}>
+                      <span
+                        className="text-sm font-semibold"
+                        aria-label={`Amount: ${formatCurrency(purchase.amount_cents, purchase.currency)}`}
+                      >
                         {formatCurrency(purchase.amount_cents, purchase.currency)}
                       </span>
                       <Badge

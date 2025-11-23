@@ -14,7 +14,11 @@
  * @see docs/plan/issue-595.md (Phase 2 tests)
  */
 
-const { encryptField, decryptField, validateEncryptionKey } = require('../../../src/utils/encryption');
+const {
+  encryptField,
+  decryptField,
+  validateEncryptionKey
+} = require('../../../src/utils/encryption');
 const crypto = require('crypto');
 
 describe('Encryption Utilities', () => {
@@ -50,7 +54,7 @@ describe('Encryption Utilities', () => {
       const encrypted = encryptField(longText);
 
       expect(encrypted).toBeTruthy();
-      expect(encrypted.length).toBeLessThan(500 * 4 / 3); // Base64 encoding < 500 chars
+      expect(encrypted.length).toBeLessThan((500 * 4) / 3); // Base64 encoding < 500 chars
     });
 
     it('should generate unique IVs for same plaintext', () => {
@@ -106,7 +110,7 @@ describe('Encryption Utilities', () => {
 
       // Decode, modify, re-encode
       const buffer = Buffer.from(encrypted, 'base64');
-      buffer[32] ^= 0xFF; // Flip bits in ciphertext
+      buffer[32] ^= 0xff; // Flip bits in ciphertext
       const tampered = buffer.toString('base64');
 
       expect(() => decryptField(tampered)).toThrow(/Decryption failed/);
@@ -137,7 +141,7 @@ describe('Encryption Utilities', () => {
         'A'.repeat(300) // Max length
       ];
 
-      plaintexts.forEach(plaintext => {
+      plaintexts.forEach((plaintext) => {
         const encrypted = encryptField(plaintext);
         const decrypted = decryptField(encrypted);
         expect(decrypted).toBe(plaintext);
@@ -296,7 +300,7 @@ describe('Encryption Utilities', () => {
       const decrypted = decryptField(encrypted);
 
       expect(decrypted).toBe(maxLength);
-      expect(encrypted.length).toBeLessThan(500 * 4 / 3); // Base64 encoding
+      expect(encrypted.length).toBeLessThan((500 * 4) / 3); // Base64 encoding
     });
   });
 });

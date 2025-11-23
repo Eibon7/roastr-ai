@@ -41,7 +41,7 @@ describe('Path Traversal Security Tests (CWE-22)', () => {
       path.join(repoRoot, '.gdd-test-security.txt')
     ];
 
-    testFiles.forEach(file => {
+    testFiles.forEach((file) => {
       try {
         if (fs.existsSync(file)) {
           fs.unlinkSync(file);

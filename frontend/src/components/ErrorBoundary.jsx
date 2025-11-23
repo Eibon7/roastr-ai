@@ -20,7 +20,7 @@ class ErrorBoundary extends React.Component {
       error: error,
       errorInfo: errorInfo
     });
-    
+
     // In development, log to console for debugging
     if (process.env.NODE_ENV === 'development') {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
@@ -45,10 +45,10 @@ class ErrorBoundary extends React.Component {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-red-700">
-              {this.props.fallbackMessage || 
-                "An unexpected error occurred while rendering this component."}
+              {this.props.fallbackMessage ||
+                'An unexpected error occurred while rendering this component.'}
             </p>
-            
+
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="text-xs text-red-600 bg-red-100 p-2 rounded">
                 <summary className="cursor-pointer font-medium mb-2">
@@ -60,9 +60,9 @@ class ErrorBoundary extends React.Component {
                 </pre>
               </details>
             )}
-            
+
             <div className="flex space-x-2">
-              <Button 
+              <Button
                 onClick={this.handleRetry}
                 variant="outline"
                 size="sm"
@@ -71,9 +71,9 @@ class ErrorBoundary extends React.Component {
                 <RefreshCw className="h-3 w-3 mr-1" />
                 Try Again
               </Button>
-              
+
               {this.props.onError && (
-                <Button 
+                <Button
                   onClick={() => this.props.onError(this.state.error)}
                   variant="outline"
                   size="sm"

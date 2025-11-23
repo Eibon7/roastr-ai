@@ -148,7 +148,12 @@ const MarkdownContent = styled.div`
   color: ${({ theme }) => theme.colors.textPrimary};
   line-height: ${({ theme }) => theme.typography.lineHeight.relaxed};
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: ${({ theme }) => theme.typography.fontFamily.primary};
     color: ${({ theme }) => theme.colors.primary};
     margin-top: ${({ theme }) => theme.spacing(6)};
@@ -198,7 +203,8 @@ const MarkdownContent = styled.div`
     }
   }
 
-  ul, ol {
+  ul,
+  ol {
     margin-bottom: ${({ theme }) => theme.spacing(4)};
     padding-left: ${({ theme }) => theme.spacing(6)};
   }
@@ -214,7 +220,8 @@ const MarkdownContent = styled.div`
     font-size: ${({ theme }) => theme.typography.fontSize.sm};
   }
 
-  th, td {
+  th,
+  td {
     padding: ${({ theme }) => theme.spacing(3)};
     text-align: left;
     border: 1px solid ${({ theme }) => theme.colors.border};
@@ -298,7 +305,7 @@ const EmptyState = styled.div`
 const reports = [
   { id: 'validation', label: 'System Validation Report', file: 'report-validation.md' },
   { id: 'health', label: 'Health Score Report', file: 'report-health.md' },
-  { id: 'drift', label: 'Drift Prediction Report', file: 'report-drift.md' },
+  { id: 'drift', label: 'Drift Prediction Report', file: 'report-drift.md' }
 ];
 
 /**
@@ -316,7 +323,7 @@ export function ReportsViewer() {
 
   useEffect(() => {
     async function fetchReport() {
-      const report = reports.find(r => r.id === selectedReport);
+      const report = reports.find((r) => r.id === selectedReport);
       if (!report) return;
 
       setLoading(true);
@@ -340,7 +347,7 @@ export function ReportsViewer() {
   }, [selectedReport]);
 
   const handleDownload = () => {
-    const report = reports.find(r => r.id === selectedReport);
+    const report = reports.find((r) => r.id === selectedReport);
     if (!report || !content) return;
 
     const blob = new Blob([content], { type: 'text/markdown' });
@@ -357,11 +364,8 @@ export function ReportsViewer() {
       <Header>
         <Title>Reports Viewer</Title>
         <Controls>
-          <ReportSelect
-            value={selectedReport}
-            onChange={(e) => setSelectedReport(e.target.value)}
-          >
-            {reports.map(report => (
+          <ReportSelect value={selectedReport} onChange={(e) => setSelectedReport(e.target.value)}>
+            {reports.map((report) => (
               <option key={report.id} value={report.id}>
                 {report.label}
               </option>
@@ -376,14 +380,10 @@ export function ReportsViewer() {
       <ContentContainer>
         {loading && <LoadingSpinner>Loading report...</LoadingSpinner>}
         {error && <ErrorMessage>⚠️ {error}</ErrorMessage>}
-        {!loading && !error && !content && (
-          <EmptyState>No report content available</EmptyState>
-        )}
+        {!loading && !error && !content && <EmptyState>No report content available</EmptyState>}
         {!loading && !error && content && (
           <MarkdownContent>
-            <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-              {content}
-            </ReactMarkdown>
+            <ReactMarkdown rehypePlugins={[rehypeHighlight]}>{content}</ReactMarkdown>
           </MarkdownContent>
         )}
       </ContentContainer>

@@ -28,11 +28,11 @@ if (flags.isEnabled('ENABLE_BILLING')) {
   queueService = new QueueService();
   queueService.initialize();
   entitlementsService = new EntitlementsService();
-  webhookService = new StripeWebhookService();  // ❌ Hardcoded
+  webhookService = new StripeWebhookService(); // ❌ Hardcoded
 } else {
   logger.warn('⚠️ Stripe billing disabled - missing configuration keys');
   entitlementsService = new EntitlementsService();
-  webhookService = new StripeWebhookService();  // ❌ Hardcoded
+  webhookService = new StripeWebhookService(); // ❌ Hardcoded
 }
 ```
 
@@ -66,6 +66,7 @@ if (flags.isEnabled('ENABLE_BILLING')) {
 **Tiempo invertido:** 2+ horas de debugging
 
 **Intentos realizados:**
+
 - ✅ Configurar `jest.mock()` correctamente en archivo de test
 - ✅ Verificar que el mock devuelve valores correctos
 - ✅ Eliminar imports tempranos de StripeWebhookService
@@ -73,6 +74,7 @@ if (flags.isEnabled('ENABLE_BILLING')) {
 - ✅ Crear test diagnóstico para confirmar ejecución del mock
 
 **Resultado del diagnóstico:**
+
 - Mock está correctamente configurado
 - Mock NO se ejecuta porque billing.js tiene arquitectura no testeable
 - **Solución requerida:** Refactorizar con Dependency Injection
@@ -131,13 +133,27 @@ class BillingController {
   }
 
   // Métodos de negocio (extraídos de billing.js)
-  async handleCheckoutCompleted(session) { /* ... */ }
-  async handleSubscriptionUpdated(subscription) { /* ... */ }
-  async handleSubscriptionDeleted(subscription) { /* ... */ }
-  async handlePaymentSucceeded(invoice) { /* ... */ }
-  async handlePaymentFailed(invoice) { /* ... */ }
-  async applyPlanLimits(userId, plan, status) { /* ... */ }
-  async queueBillingJob(jobType, webhookData) { /* ... */ }
+  async handleCheckoutCompleted(session) {
+    /* ... */
+  }
+  async handleSubscriptionUpdated(subscription) {
+    /* ... */
+  }
+  async handleSubscriptionDeleted(subscription) {
+    /* ... */
+  }
+  async handlePaymentSucceeded(invoice) {
+    /* ... */
+  }
+  async handlePaymentFailed(invoice) {
+    /* ... */
+  }
+  async applyPlanLimits(userId, plan, status) {
+    /* ... */
+  }
+  async queueBillingJob(jobType, webhookData) {
+    /* ... */
+  }
 }
 
 module.exports = BillingController;
@@ -226,9 +242,12 @@ const requireBilling = (req, res, next) => {
 };
 
 // Endpoints usan el controller
-router.post('/webhooks/stripe',
+router.post(
+  '/webhooks/stripe',
   express.raw({ type: 'application/json' }),
-  stripeWebhookSecurity({ /* ... */ }),
+  stripeWebhookSecurity({
+    /* ... */
+  }),
   async (req, res) => {
     if (!flags.isEnabled('ENABLE_BILLING')) {
       logger.warn('Webhook received but billing is disabled');
@@ -277,12 +296,14 @@ module.exports = router;
 **Objetivo:** Crear plan completo y nodo GDD
 
 #### Tarea 1.1: Crear plan completo ✅ ACTUAL
+
 - [x] Analizar `billing.js` completo (líneas 1-1243)
 - [x] Identificar todas las dependencias hardcodeadas
 - [x] Diseñar arquitectura DI con Controller + Factory
 - [x] Documentar en `docs/plan/billing-refactor-di.md`
 
 #### Tarea 1.2: Crear nodo GDD `docs/nodes/billing.md`
+
 - [ ] Definir propósito del nodo
 - [ ] Listar dependencias:
   - `cost-control` (entitlements)
@@ -297,12 +318,14 @@ module.exports = router;
 - [ ] Definir edges a otros nodos
 
 #### Tarea 1.3: Validar grafo de dependencias
+
 - [ ] Ejecutar `node scripts/resolve-graph.js billing`
 - [ ] Confirmar que no hay ciclos
 - [ ] Verificar que todas las dependencias existen
 - [ ] Obtener confirmación del plan antes de proceder
 
 **Criterio de éxito Fase 1:**
+
 - ✅ Plan completo guardado en `docs/plan/billing-refactor-di.md`
 - ✅ Nodo `docs/nodes/billing.md` creado y validado
 - ✅ Grafo acíclico confirmado
@@ -315,6 +338,7 @@ module.exports = router;
 **Objetivo:** Implementar DI sin romper funcionalidad existente
 
 #### Tarea 2.1: Crear BillingController
+
 - [ ] Crear archivo `src/routes/billingController.js`
 - [ ] Definir constructor con inyección de dependencias
 - [ ] Extraer métodos de negocio de `billing.js`:
@@ -329,6 +353,7 @@ module.exports = router;
 - [ ] Mantener toda la lógica de negocio intacta
 
 #### Tarea 2.2: Crear BillingFactory
+
 - [ ] Crear archivo `src/routes/billingFactory.js`
 - [ ] Implementar método `createController(dependencies)`
 - [ ] Permitir override de todas las dependencias
@@ -336,6 +361,7 @@ module.exports = router;
 - [ ] Documentar parámetros opcionales para tests
 
 #### Tarea 2.3: Refactorizar billing.js
+
 - [ ] Importar `BillingFactory` en lugar de servicios
 - [ ] Crear controller al inicio: `const billingController = BillingFactory.createController()`
 - [ ] Actualizar endpoints para usar `billingController.webhookService`
@@ -345,11 +371,13 @@ module.exports = router;
 - [ ] Verificar que no hay imports innecesarios
 
 #### Tarea 2.4: Actualizar imports en archivos dependientes
+
 - [ ] Buscar referencias a billing.js: `grep -r "require.*billing" src/`
 - [ ] Verificar compatibilidad
 - [ ] Ajustar imports si es necesario
 
 **Criterio de éxito Fase 2:**
+
 - ✅ 3 archivos nuevos creados: Controller, Factory, Router refactorizado
 - ✅ Lógica de negocio preservada 100%
 - ✅ No hay instanciación hardcodeada
@@ -362,8 +390,10 @@ module.exports = router;
 **Objetivo:** Tests con >90% cobertura usando DI
 
 #### Tarea 3.1: Actualizar tests de integración
+
 - [ ] Modificar `tests/integration/stripeWebhooksFlow.test.js`
 - [ ] Crear controller con mocks inyectados:
+
   ```javascript
   const BillingFactory = require('../../src/routes/billingFactory');
   const MockStripeWebhookService = jest.fn().mockImplementation(() => ({
@@ -383,10 +413,12 @@ module.exports = router;
   app.use('/api/billing', billingRouter);
   billingRouter.setController(billingController);
   ```
+
 - [ ] Ejecutar tests: `npm test -- stripeWebhooksFlow.test.js`
 - [ ] Confirmar 16/16 tests pasando (100%)
 
 #### Tarea 3.2: Crear tests unitarios para BillingController
+
 - [ ] Crear `tests/unit/routes/billingController.test.js`
 - [ ] Testear cada método de negocio con mocks:
   - `handleCheckoutCompleted`
@@ -400,6 +432,7 @@ module.exports = router;
 - [ ] Cobertura objetivo: >90% de líneas
 
 #### Tarea 3.3: Tests de BillingFactory
+
 - [ ] Crear `tests/unit/routes/billingFactory.test.js`
 - [ ] Testear creación con defaults
 - [ ] Testear creación con overrides
@@ -407,6 +440,7 @@ module.exports = router;
 - [ ] Verificar manejo de flags (ENABLE_BILLING)
 
 #### Tarea 3.4: Coverage report
+
 - [ ] Ejecutar `npm run test:coverage`
 - [ ] Confirmar >90% en:
   - `src/routes/billingController.js`
@@ -416,6 +450,7 @@ module.exports = router;
 - [ ] Guardar en `docs/test-evidence/billing-refactor/`
 
 **Criterio de éxito Fase 3:**
+
 - ✅ 16/16 tests integración pasando (100%)
 - ✅ Tests unitarios completos para Controller y Factory
 - ✅ Cobertura >90% confirmada
@@ -428,24 +463,28 @@ module.exports = router;
 **Objetivo:** Confirmar que no hay regresiones
 
 #### Tarea 4.1: Test suite completo
+
 - [ ] Ejecutar todos los tests: `npm test`
 - [ ] Confirmar 0 tests fallando
 - [ ] Verificar que no hay warnings de deprecation
 - [ ] Revisar logs para confirmar no hay errores inesperados
 
 #### Tarea 4.2: Tests de integración E2E
+
 - [ ] Ejecutar `npm test -- tests/integration/`
 - [ ] Confirmar que multi-tenant workflow pasa
 - [ ] Confirmar que demo-flow pasa
 - [ ] Verificar que otros workflows de billing funcionan
 
 #### Tarea 4.3: Validación manual (si aplicable)
+
 - [ ] Levantar servidor: `npm run dev`
 - [ ] Probar endpoint `/api/billing/plans` (GET)
 - [ ] Probar webhook endpoint (POST con mock event)
 - [ ] Verificar logs en consola
 
 **Criterio de éxito Fase 4:**
+
 - ✅ Test suite completo pasa (0 failures)
 - ✅ No hay regresiones detectadas
 - ✅ Logs limpios sin errores
@@ -457,6 +496,7 @@ module.exports = router;
 **Objetivo:** Generar evidencias y actualizar spec.md
 
 #### Tarea 5.1: Generar evidencias visuales
+
 - [ ] Capturar screenshots de:
   - Test output (16/16 passing)
   - Coverage report (>90%)
@@ -465,6 +505,7 @@ module.exports = router;
 - [ ] Crear archivo `test-report.md` con resumen
 
 #### Tarea 5.2: Actualizar spec.md
+
 - [ ] Añadir sección "Billing Architecture" en spec.md
 - [ ] Documentar patrón DI implementado
 - [ ] Referenciar nodo `docs/nodes/billing.md`
@@ -479,11 +520,13 @@ module.exports = router;
 - [ ] Actualizar tabla de nodos en spec.md
 
 #### Tarea 5.3: Actualizar CLAUDE.md
+
 - [ ] Añadir sección sobre arquitectura billing
 - [ ] Documentar cómo crear controladores con DI
 - [ ] Añadir ejemplo de testing con DI
 
 #### Tarea 5.4: Crear changelog
+
 - [ ] Crear archivo `docs/test-evidence/billing-refactor/CHANGELOG.md`
 - [ ] Documentar:
   - Problema original
@@ -493,6 +536,7 @@ module.exports = router;
   - Archivos modificados/creados
 
 **Criterio de éxito Fase 5:**
+
 - ✅ Evidencias guardadas en `docs/test-evidence/billing-refactor/`
 - ✅ spec.md actualizado con nueva arquitectura
 - ✅ CLAUDE.md actualizado
@@ -536,14 +580,14 @@ module.exports = router;
 
 ## 📊 Estimación de Tiempo
 
-| Fase | Tarea | Tiempo Estimado | Tiempo Real |
-|------|-------|-----------------|-------------|
-| 1 | Planning & GDD | 30-45 min | ⏱️ En progreso |
-| 2 | Refactor | 1-2 horas | - |
-| 3 | Testing | 1-2 horas | - |
-| 4 | Validación | 30 min | - |
-| 5 | Evidencias | 15 min | - |
-| **Total** | **3-4.5 horas** | **-** |
+| Fase      | Tarea           | Tiempo Estimado | Tiempo Real    |
+| --------- | --------------- | --------------- | -------------- |
+| 1         | Planning & GDD  | 30-45 min       | ⏱️ En progreso |
+| 2         | Refactor        | 1-2 horas       | -              |
+| 3         | Testing         | 1-2 horas       | -              |
+| 4         | Validación      | 30 min          | -              |
+| 5         | Evidencias      | 15 min          | -              |
+| **Total** | **3-4.5 horas** | **-**           |
 
 ---
 
@@ -574,6 +618,7 @@ module.exports = router;
 4. **Cualquier momento:** Commit frecuente para poder hacer rollback granular
 
 **Comando de rollback:**
+
 ```bash
 git stash
 git checkout fix/issue-413-stripe-webhooks

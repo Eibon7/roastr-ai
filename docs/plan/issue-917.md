@@ -44,6 +44,7 @@
 ### FASE 2: AC1 - Gestión de Suscripciones
 
 **Tests a implementar:**
+
 - ✅ `getUserUsage` - Obtener métricas de uso del usuario
 - ✅ `updateUserSubscription` - Actualizar suscripción en BD
 - ✅ `processSubscriptionUpdate` - Procesar actualización desde webhook
@@ -57,6 +58,7 @@
 ### FASE 3: AC2 - Validación de Planes
 
 **Tests a implementar:**
+
 - ✅ `determinePlanFromSubscription` - Determinar plan desde objeto Stripe
 - ✅ Tests de validación de plan válido
 - ✅ Tests de validación de plan inválido
@@ -67,6 +69,7 @@
 ### FASE 4: AC3 - Cambios de Plan
 
 **Tests a implementar:**
+
 - ✅ `processSubscriptionUpdate` con cambio de plan
 - ✅ Tests de upgrade de plan (inmediato y con prorating)
 - ✅ Tests de downgrade de plan (inmediato y al final del período)
@@ -78,6 +81,7 @@
 ### FASE 5: AC4 - Webhooks
 
 **Tests a implementar:**
+
 - ✅ `processSubscriptionUpdate` con diferentes eventos Stripe
 - ✅ Tests de procesamiento de webhook de Stripe (customer.subscription.created, updated, deleted)
 - ✅ Tests de procesamiento de webhook de Polar (si aplica)
@@ -88,6 +92,7 @@
 ### FASE 6: AC5 - Edge Cases
 
 **Tests a implementar:**
+
 - ✅ Tests de suscripción expirada
 - ✅ Tests de suscripción en período de gracia
 - ✅ Tests de suscripción cancelada pero activa hasta fin de período
@@ -99,6 +104,7 @@
 ### FASE 7: AC6 - Integración
 
 **Tests a implementar:**
+
 - ✅ Tests de integración con BillingWorker (mock)
 - ✅ Tests de integración con planLimitsService (mock)
 - ✅ Tests de integración con entitlementsService (mock)
@@ -108,6 +114,7 @@
 ### FASE 8: AC7 - Calidad de Tests
 
 **Validaciones:**
+
 - ✅ Tests validan comportamiento real (no solo mocks)
 - ✅ Tests cubren edge cases y errores
 - ✅ Tests son rápidos (<1s cada uno)
@@ -150,4 +157,3 @@
 - Guía de testing: `docs/TESTING-GUIDE.md`
 - Documentación de planes: `docs/nodes/plan-features.md`
 - Patrones de tests: `docs/patterns/coderabbit-lessons.md`
-

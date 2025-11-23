@@ -40,20 +40,26 @@ const query = `
     ordinal_position;
 `;
 
-supabase.rpc('exec_sql', { sql: query })
-  .then(result => {
+supabase
+  .rpc('exec_sql', { sql: query })
+  .then((result) => {
     if (result.error) {
       // exec_sql might not exist, try direct query
-      return supabase.from('information_schema.columns').select('*').eq('table_name', 'user_behaviors');
+      return supabase
+        .from('information_schema.columns')
+        .select('*')
+        .eq('table_name', 'user_behaviors');
     }
     return result;
   })
-  .then(result => {
+  .then((result) => {
     console.log('Current schema:', JSON.stringify(result, null, 2));
   })
-  .catch(error => {
+  .catch((error) => {
     console.error('Error querying schema:', error.message);
     console.log('\nℹ️  Supabase JS client cannot query information_schema directly.');
-    console.log('   We need to check the schema via SQL Editor or create the ALTER TABLE migration.');
+    console.log(
+      '   We need to check the schema via SQL Editor or create the ALTER TABLE migration.'
+    );
     process.exit(1);
   });

@@ -1,6 +1,6 @@
 /**
  * Roast API Service
- * 
+ *
  * Handles roast generation and preview
  * Issue #910 - Connect dashboard to real backend
  */
@@ -82,4 +82,3 @@ export async function generateVariant(roastId) {
 export async function getRoastStatistics() {
   return apiClient.get('/roast/statistics');
 }
-

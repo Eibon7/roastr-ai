@@ -47,13 +47,41 @@ const TestApp = ({ onLocationChange }) => {
         {onLocationChange && <LocationTracker onLocationChange={onLocationChange} />}
         <Routes>
           {/* Public routes - redirect if already authenticated */}
-          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/reset-password"
+            element={
+              <PublicRoute>
+                <ResetPassword />
+              </PublicRoute>
+            }
+          />
           <Route path="/auth/callback" element={<AuthCallback />} />
 
           {/* Protected routes with AppShell - require authentication */}
-          <Route path="/" element={<AuthRoute><AppShell /></AuthRoute>}>
+          <Route
+            path="/"
+            element={
+              <AuthRoute>
+                <AppShell />
+              </AuthRoute>
+            }
+          >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="compose" element={<Compose />} />
@@ -74,7 +102,14 @@ const TestApp = ({ onLocationChange }) => {
           </Route>
 
           {/* Admin routes with AdminLayout - require admin permissions */}
-          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
             <Route index element={<Navigate to="/admin/users" replace />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="users/:userId" element={<UserDetail />} />
@@ -102,7 +137,7 @@ describe('Navigation Flow Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     fetch.mockClear();
-    
+
     // Mock feature flags API response
     fetch.mockResolvedValue({
       ok: true,
@@ -112,9 +147,9 @@ describe('Navigation Flow Integration Tests', () => {
           ENABLE_STYLE_PROFILE: true,
           ENABLE_RQC: true,
           ENABLE_SHIELD: true,
-          ENABLE_BILLING: true,
+          ENABLE_BILLING: true
         }
-      }),
+      })
     });
 
     isMockModeEnabled.mockReturnValue(false);
@@ -126,7 +161,7 @@ describe('Navigation Flow Integration Tests', () => {
         isAuthenticated: false,
         isAdmin: false,
         loading: false,
-        userData: null,
+        userData: null
       });
     });
 
@@ -183,8 +218,8 @@ describe('Navigation Flow Integration Tests', () => {
           id: '1',
           email: 'user@test.com',
           name: 'Test User',
-          is_admin: false,
-        },
+          is_admin: false
+        }
       });
     });
 
@@ -288,8 +323,8 @@ describe('Navigation Flow Integration Tests', () => {
           id: '1',
           email: 'admin@test.com',
           name: 'Admin User',
-          is_admin: true,
-        },
+          is_admin: true
+        }
       });
     });
 
@@ -364,7 +399,7 @@ describe('Navigation Flow Integration Tests', () => {
         isAuthenticated: false,
         isAdmin: false,
         loading: true,
-        userData: null,
+        userData: null
       });
 
       render(
@@ -390,8 +425,8 @@ describe('Navigation Flow Integration Tests', () => {
           id: '1',
           email: 'user@test.com',
           name: 'Test User',
-          is_admin: false,
-        },
+          is_admin: false
+        }
       });
 
       render(
@@ -417,8 +452,8 @@ describe('Navigation Flow Integration Tests', () => {
           id: '1',
           email: 'user@test.com',
           name: 'Test User',
-          is_admin: false,
-        },
+          is_admin: false
+        }
       });
 
       let currentPath = '/nonexistent';

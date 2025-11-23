@@ -132,7 +132,11 @@ const RoastingToggle = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {roastingEnabled ? <Zap className="w-5 h-5 text-orange-500" /> : <ZapOff className="w-5 h-5 text-gray-400" />}
+          {roastingEnabled ? (
+            <Zap className="w-5 h-5 text-orange-500" />
+          ) : (
+            <ZapOff className="w-5 h-5 text-gray-400" />
+          )}
           Roasting Control
         </CardTitle>
         <CardDescription>
@@ -188,8 +192,8 @@ const RoastingToggle = () => {
         <Alert>
           <Info className="w-4 h-4" />
           <div className="ml-2 text-sm">
-            <strong>Note:</strong> Disabling roasting will pause new roast generation but won't affect pending jobs.
-            Enable it again anytime to resume.
+            <strong>Note:</strong> Disabling roasting will pause new roast generation but won't
+            affect pending jobs. Enable it again anytime to resume.
           </div>
         </Alert>
       </CardContent>

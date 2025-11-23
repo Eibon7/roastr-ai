@@ -28,6 +28,7 @@ http://localhost:3000/success.html?checkout_id={ID}
 ```
 
 **Importante:**
+
 - ✅ **Usas TU propia página de success** (no la de Polar)
 - ✅ Polar solo maneja el pago, luego te devuelve el control
 - ✅ La página `/success.html` es la que creamos con tu diseño
@@ -44,6 +45,7 @@ npm start
 ```
 
 **Verás algo como:**
+
 ```
 🔥 Roastr.ai API escuchando en http://localhost:3000
 ```
@@ -75,9 +77,11 @@ http://localhost:3000/test-polar.html
 ## 🎨 Páginas Disponibles
 
 ### 1. Página de Planes (Test)
+
 **URL:** `http://localhost:3000/test-polar.html`
 
 **Características:**
+
 - Diseño con tus estilos (oscuro, gradientes)
 - 3 planes: Starter, Pro, Plus
 - Ya configurado con tus Price IDs
@@ -85,6 +89,7 @@ http://localhost:3000/test-polar.html
 - Logs en consola
 
 **Para probar:**
+
 ```bash
 # 1. Inicia backend
 npm start
@@ -98,9 +103,11 @@ xdg-open http://localhost:3000/test-polar.html
 ---
 
 ### 2. Página de Éxito
+
 **URL:** `http://localhost:3000/success.html?checkout_id=test_123`
 
 **Características:**
+
 - Diseño con tus estilos (animación check)
 - Muestra el Checkout ID
 - Botones: "Ir al panel" y "Ver suscripción"
@@ -108,6 +115,7 @@ xdg-open http://localhost:3000/test-polar.html
 - Logs en consola
 
 **Para probar directamente:**
+
 ```bash
 # Abre en navegador (sin hacer checkout real)
 open http://localhost:3000/success.html?checkout_id=test_ejemplo_123
@@ -131,12 +139,14 @@ open http://localhost:3000/success.html?checkout_id=test_ejemplo_123
 ```
 
 **El script:**
+
 - ✅ Verifica que el backend esté corriendo
 - ✅ Crea un checkout con Polar
 - ✅ Te muestra la URL de checkout
 - ✅ Te pregunta si quieres abrirla en el navegador
 
 **Salida esperada:**
+
 ```
 ✅ Checkout creado exitosamente!
 
@@ -164,6 +174,7 @@ curl -X POST http://localhost:3000/api/checkout \
 ```
 
 **Respuesta esperada:**
+
 ```json
 {
   "success": true,
@@ -188,6 +199,7 @@ Luego abre el `checkout.url` en tu navegador.
 **Causa:** El backend no está corriendo.
 
 **Solución:**
+
 ```bash
 # Verifica si hay proceso corriendo
 curl http://localhost:3000/health
@@ -207,6 +219,7 @@ curl http://localhost:3000/health
 **Causa:** Ruta incorrecta o backend no iniciado.
 
 **Solución:**
+
 ```bash
 # 1. Verifica que el archivo existe
 ls -la public/test-polar.html
@@ -227,18 +240,21 @@ open http://localhost:3000/test-polar.html
 **Solución:**
 
 1. Verifica el `.env`:
+
 ```bash
 cat .env | grep POLAR_SUCCESS_URL
 # Debe mostrar: POLAR_SUCCESS_URL=http://localhost:3000/success.html?checkout_id={CHECKOUT_ID}
 ```
 
 2. Si está mal, corrígelo:
+
 ```bash
 # Abre .env y cambia la línea a:
 POLAR_SUCCESS_URL=http://localhost:3000/success.html?checkout_id={CHECKOUT_ID}
 ```
 
 3. Reinicia el backend:
+
 ```bash
 # Detén el proceso (Ctrl+C)
 # Reinicia
@@ -267,11 +283,13 @@ npm start
 **2. Price IDs incorrectos**
 
 Verifica que los IDs en `test-polar.html` sean correctos:
+
 ```bash
 grep "POLAR_PRICE_IDS" public/test-polar.html
 ```
 
 Deben ser:
+
 - Starter: `e242580e-41df-4997-aebe-604492249f39`
 - Pro: `c1787586-00b7-4790-ba43-1f1e6a60b095`
 - Plus: `176df9af-337f-4607-9524-48978eae8bea`
@@ -353,12 +371,12 @@ node scripts/simulate-polar-webhook.js order.created
 
 ## 🔗 URLs de Referencia
 
-| Página | URL | Descripción |
-|--------|-----|-------------|
-| **Backend Health** | http://localhost:3000/health | Verifica que el backend está corriendo |
-| **Test Polar** | http://localhost:3000/test-polar.html | Página para probar checkout |
-| **Success** | http://localhost:3000/success.html?checkout_id=test | Página de éxito post-pago |
-| **Dashboard** | http://localhost:3000/dashboard | Tu dashboard principal |
+| Página             | URL                                                 | Descripción                            |
+| ------------------ | --------------------------------------------------- | -------------------------------------- |
+| **Backend Health** | http://localhost:3000/health                        | Verifica que el backend está corriendo |
+| **Test Polar**     | http://localhost:3000/test-polar.html               | Página para probar checkout            |
+| **Success**        | http://localhost:3000/success.html?checkout_id=test | Página de éxito post-pago              |
+| **Dashboard**      | http://localhost:3000/dashboard                     | Tu dashboard principal                 |
 
 ---
 

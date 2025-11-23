@@ -9,6 +9,7 @@
 ## Estado Actual
 
 ### Contexto
+
 - 9 plataformas integradas: Twitter/X, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky
 - Código existe en `src/integrations/`
 - Documentación existe en `docs/INTEGRATIONS.md` y `docs/nodes/social-platforms.md`
@@ -16,6 +17,7 @@
 - No hay verificación sistemática end-to-end con llamadas API reales
 
 ### Gap Identificado
+
 - No hay verificación de que cada plataforma funcione end-to-end
 - No hay tests de rate limiting
 - No hay verificación de error handling
@@ -24,6 +26,7 @@
 ## Objetivos
 
 Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
+
 1. Autenticación OAuth/API keys
 2. Operaciones core (fetchComments, postReply, blockUser)
 3. Rate limiting y backoff
@@ -37,6 +40,7 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 **Archivo:** `scripts/verify-all-platforms.js`
 
 **Funcionalidades:**
+
 1. Para cada plataforma (9 total):
    - Verificar autenticación
    - Verificar fetchComments() (con límite de 1-2 comentarios)
@@ -53,6 +57,7 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
    - Quirks documentados
 
 **Dependencias:**
+
 - Usar servicios existentes en `src/integrations/`
 - Integrar con `scripts/update-integration-status.js`
 - Usar `utils/logger.js` para logging
@@ -60,6 +65,7 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 ### FASE 2: Tests de Integración
 
 **Archivos:**
+
 - `tests/integration/platforms/twitter-verification.test.js`
 - `tests/integration/platforms/youtube-verification.test.js`
 - `tests/integration/platforms/discord-verification.test.js`
@@ -71,6 +77,7 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 - `tests/integration/platforms/bluesky-verification.test.js`
 
 **Cobertura por test:**
+
 - ✅ Autenticación exitosa
 - ✅ fetchComments() retorna datos válidos
 - ✅ postReply() publica correctamente (o falla gracefulmente)
@@ -82,6 +89,7 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 ### FASE 3: Actualización de Documentación
 
 **Archivos a actualizar:**
+
 1. `docs/INTEGRATIONS.md`
    - Añadir sección "Verification Status" por plataforma
    - Añadir fecha de última verificación
@@ -106,6 +114,7 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 **Archivo:** `.github/workflows/verify-platforms.yml`
 
 **Funcionalidad:**
+
 - Ejecutar `scripts/verify-all-platforms.js` en CI
 - Fallar si alguna plataforma crítica falla
 - Generar reporte de verificación
@@ -121,6 +130,7 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 ## Archivos Afectados
 
 ### Nuevos
+
 - `scripts/verify-all-platforms.js`
 - `tests/integration/platforms/*.test.js` (9 archivos)
 - `docs/nodes/platform-constraints.md`
@@ -128,6 +138,7 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 - `.github/workflows/verify-platforms.yml`
 
 ### Modificados
+
 - `scripts/update-integration-status.js` (extender con resultados de verificación)
 - `docs/INTEGRATIONS.md`
 - `docs/nodes/social-platforms.md`
@@ -135,21 +146,25 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 ## Validación Requerida
 
 ### Tests
+
 - ✅ Todos los tests de integración pasando (9 plataformas × 6 tests = 54 tests mínimo)
 - ✅ Coverage ≥80% para cada servicio de plataforma
 - ✅ Tests cubren success + error paths
 
 ### GDD
+
 - ✅ Actualizar `docs/nodes/social-platforms.md` con status de verificación
 - ✅ Ejecutar `node scripts/validate-gdd-runtime.js --full` (debe pasar)
 - ✅ Ejecutar `node scripts/score-gdd-health.js --ci` (debe ≥87)
 
 ### Documentación
+
 - ✅ `docs/INTEGRATIONS.md` actualizado con status
 - ✅ `docs/nodes/platform-constraints.md` creado y documentado
 - ✅ `docs/patterns/api-quirks.md` creado con quirks conocidos
 
 ### Scripts
+
 - ✅ `scripts/verify-all-platforms.js` ejecuta sin errores
 - ✅ `scripts/update-integration-status.js` incluye resultados de verificación
 - ✅ Reporte generado correctamente
@@ -162,12 +177,15 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 ## Riesgos y Mitigaciones
 
 ### Riesgo 1: Credenciales de API en tests
+
 **Mitigación:** Usar variables de entorno, nunca hardcodear. Usar modo dry-run cuando sea posible.
 
 ### Riesgo 2: Rate limiting en CI
+
 **Mitigación:** Limitar número de llamadas por plataforma. Usar mocks cuando sea posible.
 
 ### Riesgo 3: APIs cambiantes
+
 **Mitigación:** Documentar versiones de API usadas. Añadir tests de compatibilidad.
 
 ## Criterios de Aceptación
@@ -220,5 +238,3 @@ Verificar sistemáticamente que las 9 integraciones funcionen correctamente con:
 ---
 
 **Próximos pasos:** Comenzar con FASE 1 - Script de verificación unificado
-
-

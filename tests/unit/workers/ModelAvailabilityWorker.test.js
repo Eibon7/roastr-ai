@@ -1,7 +1,7 @@
 /**
  * ModelAvailabilityWorker Tests
  * Issue #928 - Fase 2.2: Tests para Workers Secundarios
- * 
+ *
  * Coverage goal: ≥70% (lines, statements, functions, branches)
  */
 
@@ -58,16 +58,16 @@ describe('ModelAvailabilityWorker', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    
+
     // Set default mock return value
     mockModelService.forceRefresh.mockResolvedValue({
       gpt5Available: false,
       models: {},
       nextCheck: new Date().toISOString()
     });
-    
+
     mockModelService.getModelStats.mockResolvedValue({});
-    
+
     worker = new ModelAvailabilityWorker();
   });
 
@@ -479,4 +479,3 @@ describe('ModelAvailabilityWorker', () => {
     });
   });
 });
-

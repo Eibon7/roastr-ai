@@ -66,7 +66,10 @@ const AdminLayout = () => {
     <div className="h-screen flex overflow-hidden bg-gray-100 dark:bg-gray-900">
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 flex z-40 md:hidden ${sidebarOpen ? '' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 bg-gray-600 bg-opacity-75"
+          onClick={() => setSidebarOpen(false)}
+        />
         <div className="relative flex-1 flex flex-col max-w-xs w-full pt-5 pb-4 bg-white dark:bg-gray-800">
           <div className="absolute top-0 right-0 -mr-12 pt-2">
             <button
@@ -75,15 +78,35 @@ const AdminLayout = () => {
               onClick={() => setSidebarOpen(false)}
             >
               <span className="sr-only">Cerrar sidebar</span>
-              <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-6 w-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
           <div className="flex-shrink-0 flex items-center px-4">
             <div className="h-8 w-8 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-              <svg className="h-5 w-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+              <svg
+                className="h-5 w-5 text-red-600 dark:text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+                />
               </svg>
             </div>
             <h1 className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">
@@ -100,8 +123,8 @@ const AdminLayout = () => {
                     item.current
                       ? 'bg-red-100 text-red-900 dark:bg-red-900/20 dark:text-red-300'
                       : item.disabled
-                      ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
+                        ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
                     'group flex items-center px-2 py-2 text-base font-medium rounded-md'
                   )}
                   onClick={(e) => {
@@ -117,15 +140,20 @@ const AdminLayout = () => {
                       item.current
                         ? 'text-red-500 dark:text-red-400'
                         : item.disabled
-                        ? 'text-gray-400 dark:text-gray-600'
-                        : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300',
+                          ? 'text-gray-400 dark:text-gray-600'
+                          : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300',
                       'mr-4 flex-shrink-0 h-6 w-6'
                     )}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d={item.icon}
+                    />
                   </svg>
                   {item.name}
                   {item.disabled && (
@@ -147,8 +175,18 @@ const AdminLayout = () => {
           <div className="flex flex-col h-0 flex-1">
             <div className="flex items-center h-16 flex-shrink-0 px-4 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
               <div className="h-8 w-8 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-                <svg className="h-5 w-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                <svg
+                  className="h-5 w-5 text-red-600 dark:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+                  />
                 </svg>
               </div>
               <h1 className="ml-3 text-lg font-semibold text-gray-900 dark:text-white">
@@ -165,8 +203,8 @@ const AdminLayout = () => {
                       item.current
                         ? 'bg-red-100 text-red-900 dark:bg-red-900/20 dark:text-red-300'
                         : item.disabled
-                        ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
+                          ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
                       'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
                     )}
                     onClick={(e) => {
@@ -180,15 +218,20 @@ const AdminLayout = () => {
                         item.current
                           ? 'text-red-500 dark:text-red-400'
                           : item.disabled
-                          ? 'text-gray-400 dark:text-gray-600'
-                          : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300',
+                            ? 'text-gray-400 dark:text-gray-600'
+                            : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300',
                         'mr-3 flex-shrink-0 h-6 w-6'
                       )}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d={item.icon}
+                      />
                     </svg>
                     {item.name}
                     {item.disabled && (
@@ -215,7 +258,12 @@ const AdminLayout = () => {
           >
             <span className="sr-only">Abrir sidebar</span>
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h7"
+              />
             </svg>
           </button>
           <div className="flex-1 px-4 flex justify-between">
@@ -224,7 +272,7 @@ const AdminLayout = () => {
                 <div className="relative w-full flex items-center text-gray-400 focus-within:text-gray-600">
                   <div className="flex items-center">
                     <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                      {navigation.find(item => item.current)?.name || 'Panel de Administración'}
+                      {navigation.find((item) => item.current)?.name || 'Panel de Administración'}
                     </h2>
                   </div>
                 </div>
@@ -242,7 +290,12 @@ const AdminLayout = () => {
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                  />
                 </svg>
                 <span>Cerrar sesión</span>
               </button>

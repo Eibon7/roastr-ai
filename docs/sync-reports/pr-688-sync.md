@@ -15,6 +15,7 @@
 **Scope:** 19 code files + 46 guardian cases + test evidence
 
 ### Key Changes
+
 - ✅ Fixed Jest compatibility issues in tests
 - ✅ Implemented completion validation system (exit codes 0/1/2)
 - ✅ Enhanced CI pre-merge validation workflow
@@ -26,17 +27,20 @@
 ## 🗂️ Files Changed (65+ files)
 
 ### CI/CD & Validation (3)
+
 - `.github/workflows/pre-merge-validation.yml` - Added validation job + test reuse
 - `scripts/ci/validate-completion.js` - Complete rewrite with baseline mode
 - `tests/unit/scripts/validate-completion.test.js` - Unit tests for validator
 
 ### Documentation (11)
+
 - `CLAUDE.md` - Added completion validation policy
 - `.claude/skills/gdd/SKILL.md` - Updated GDD activation guide
 - `docs/policies/completion-validation.md` - New completion policy doc
 - `docs/test-evidence/issue-618/` (8 checkpoint files) - Session evidence
 
 ### Code Changes (5)
+
 - `src/routes/auth.js` - Minor fixes
 - `tests/integration/adminEndpoints.test.js` - Jest compatibility
 - `tests/integration/complete-roast-flow.test.js` - Jest compatibility
@@ -44,9 +48,11 @@
 - `tests/unit/workers/FetchCommentsWorker.test.js` - Jest compatibility
 
 ### Guardian Cases (46)
+
 - `docs/guardian/cases/` - 46 new guardian validation cases
 
 ### Package (1)
+
 - `package.json` - Added validate:completion script
 
 ---
@@ -54,14 +60,17 @@
 ## 🎯 Node Updates
 
 ### guardian.md
+
 **Change:** Updated responsibilities
 **New Features:**
+
 - Completion validation (MANDATORY before merge)
 - Exit code enforcement (0=complete, 1=incomplete, 2=critical)
 - Baseline comparison for test regression
 - Docs-only PR tolerance (+3 tests allowed)
 
 **Testing Updates:**
+
 - Added validation script tests
 - Integration with CI workflow
 - Guardian case generation (46 new cases)
@@ -69,8 +78,10 @@
 **Last Updated:** 2025-10-29
 
 ### observability.md (affected)
+
 **Change:** New monitoring for completion validation
 **Metrics Added:**
+
 - Validation run count
 - Exit code distribution (0/1/2)
 - Regression detection rate
@@ -85,12 +96,14 @@
 ### Pre-Merge Validation Workflow
 
 **New Features:**
+
 1. **Test Reuse** - Run tests once, reuse results in validation
 2. **Baseline Comparison** - Compare against main branch baseline
 3. **Regression Tolerance** - Allow +3 tests for docs-only PRs
 4. **Exit Codes** - Enforce strict exit codes (0/1/2)
 
 **Workflow Structure:**
+
 ```yaml
 jobs:
   validate-completion:
@@ -109,6 +122,7 @@ jobs:
 ```
 
 **Impact:**
+
 - ✅ Faster validation (no test re-runs)
 - ✅ More accurate (baseline comparison)
 - ✅ Tolerant of flaky tests (docs-only PRs)
@@ -119,12 +133,14 @@ jobs:
 ## 🧪 Jest Compatibility Fixes
 
 ### Issues Resolved
+
 1. **Async Test Hangs** - Fixed timeout issues in integration tests
 2. **Mock Cleanup** - Proper jest.resetAllMocks() between tests
 3. **Timer Handling** - Fixed jest.useFakeTimers() conflicts
 4. **Global State** - Isolated test state properly
 
 ### Files Fixed (5)
+
 ```javascript
 // Before: Tests hung on async operations
 test('should handle async', async () => {
@@ -139,6 +155,7 @@ test('should handle async', async () => {
 ```
 
 ### Test Files Updated
+
 1. `tests/integration/adminEndpoints.test.js`
    - Fixed async handling
    - Added proper cleanup
@@ -164,6 +181,7 @@ test('should handle async', async () => {
 ## 📊 Completion Validation System
 
 ### Exit Codes
+
 ```javascript
 // Exit Code 0: Complete
 - All AC met
@@ -184,10 +202,11 @@ test('should handle async', async () => {
 ```
 
 ### Baseline Comparison
+
 ```javascript
 // Compare against main branch
 const mainBaseline = 179; // failing tests on main
-const prTests = 183;      // failing tests on PR
+const prTests = 183; // failing tests on PR
 const regression = prTests - mainBaseline; // +4
 
 // Apply tolerance for docs-only PRs
@@ -197,6 +216,7 @@ if (isDocsOnly && regression <= 3) {
 ```
 
 ### Docs-Only Detection
+
 ```javascript
 const docsOnlyPatterns = [
   /^docs\//,
@@ -216,6 +236,7 @@ const isDocs Only = files.every(f =>
 ## ✅ Validation Checks
 
 ### Pre-Merge Checklist
+
 - [x] All Jest compatibility issues fixed
 - [x] Completion validator implemented (exit codes 0/1/2)
 - [x] CI workflow enhanced (test reuse + baseline)
@@ -226,6 +247,7 @@ const isDocs Only = files.every(f =>
 - [x] All tests passing (baseline + tolerance)
 
 ### Test Results
+
 ```bash
 # Baseline (main branch)
 179 failing test suites
@@ -238,6 +260,7 @@ const isDocs Only = files.every(f =>
 ```
 
 ### Coverage
+
 ```bash
 # Coverage maintained
 - Unit tests: ~85%
@@ -250,12 +273,14 @@ const isDocs Only = files.every(f =>
 ## 📝 spec.md Synchronization
 
 ### Sections Added
+
 - **Completion Validation** - Policy + workflow
 - **Exit Code Standards** - 0/1/2 meanings
 - **Baseline Comparison** - Regression detection
 - **Docs-Only Tolerance** - Flaky test handling
 
 ### Coherence Validation
+
 - ✅ Policy documented in CLAUDE.md
 - ✅ Scripts match documentation
 - ✅ Tests validate all scenarios
@@ -266,6 +291,7 @@ const isDocs Only = files.every(f =>
 ## 🎯 Drift Prediction
 
 ### Current Risk: LOW (18/100)
+
 ```bash
 node scripts/predict-gdd-drift.js --full
 
@@ -276,6 +302,7 @@ node scripts/predict-gdd-drift.js --full
 ```
 
 ### Predicted Issues (Next 30 days)
+
 - **Flaky tests** - Monitor baseline drift
 - **Tolerance tuning** - May need adjustment (currently +3)
 
@@ -284,14 +311,16 @@ node scripts/predict-gdd-drift.js --full
 ## 🔍 Test Evidence
 
 ### Checkpoints Created (14)
+
 1. `CHECKPOINT-12.md` - Validation script v1 implementation
 2. `CHECKPOINT-13.md` - Baseline comparison logic
 3. `CHECKPOINT-14.md` - Docs-only tolerance
 4. `CHECKPOINT-SESSION-RESTART.md` - Mid-session recovery
-5-11. Additional checkpoints tracking implementation steps
-12-14. Final validation and merge preparation
+   5-11. Additional checkpoints tracking implementation steps
+   12-14. Final validation and merge preparation
 
 ### Evidence Quality
+
 - ✅ All checkpoints timestamped
 - ✅ Test outputs captured
 - ✅ Decisions documented
@@ -302,6 +331,7 @@ node scripts/predict-gdd-drift.js --full
 ## 🚨 Guardian Cases (46 new)
 
 ### Case Categories
+
 1. **Completion Validation** (15 cases)
    - Exit code 0/1/2 scenarios
    - Baseline comparison
@@ -323,6 +353,7 @@ node scripts/predict-gdd-drift.js --full
    - Exit code enforcement
 
 ### Validation Status
+
 - ✅ All 46 cases passing
 - ✅ Edge cases covered
 - ✅ False positives handled
@@ -332,9 +363,11 @@ node scripts/predict-gdd-drift.js --full
 ## 📦 Issues Created
 
 ### Auto-Generated Issues
+
 - None (no orphan nodes or undocumented TODOs)
 
 ### Issues Referenced
+
 - #618 - Original issue (Jest compatibility) - CLOSED ✅
 - #688 - This PR - MERGED ✅
 
@@ -343,6 +376,7 @@ node scripts/predict-gdd-drift.js --full
 ## 🎉 Completion Status
 
 ### Final Checklist
+
 - [x] Jest compatibility fixed (5 test files)
 - [x] Completion validator implemented
 - [x] CI workflow enhanced
@@ -354,6 +388,7 @@ node scripts/predict-gdd-drift.js --full
 - [x] Documentation coherent
 
 ### Result
+
 **🟢 SAFE TO MERGE** ✅
 
 ---
@@ -361,16 +396,19 @@ node scripts/predict-gdd-drift.js --full
 ## 📚 References
 
 ### PRs
+
 - #688 - This PR (merged)
 - #689 - GDD coverage fixes (merged after)
 - #618 - Original issue
 
 ### Documentation
+
 - `docs/policies/completion-validation.md` - NEW
 - `CLAUDE.md` - Updated with validation policy
 - `docs/test-evidence/issue-618/` - 14 checkpoint files
 
 ### Scripts
+
 - `scripts/ci/validate-completion.js` - NEW (complete rewrite)
 - `tests/unit/scripts/validate-completion.test.js` - NEW
 
@@ -379,12 +417,15 @@ node scripts/predict-gdd-drift.js --full
 ## 🔄 Migration Notes
 
 ### Breaking Changes
+
 - None (additive changes only)
 
 ### Deprecations
+
 - Old validation approach (if any) - replaced with baseline mode
 
 ### New Requirements
+
 - PRs must pass completion validation (exit code 0)
 - Tests must not regress beyond tolerance (+3 for docs-only)
 - CI jobs must be green or have explicit reason

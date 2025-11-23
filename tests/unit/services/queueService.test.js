@@ -86,12 +86,12 @@ describe('QueueService', () => {
     process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token';
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'test-key';
-    
+
     // Create QueueService
     queueService = new QueueService();
-    
+
     // Wait for initialization to complete
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
   });
 
   afterEach(() => {
@@ -149,8 +149,8 @@ describe('QueueService', () => {
 
     test('should handle various job types', () => {
       const types = ['fetch_comments', 'analyze_toxicity', 'generate_reply', 'shield_action'];
-      
-      types.forEach(type => {
+
+      types.forEach((type) => {
         const key = queueService.getQueueKey(type, 3);
         expect(key).toBe(`roastr:jobs:${type}:p3`);
       });
@@ -171,7 +171,7 @@ describe('QueueService', () => {
 
     test('should generate IDs with correct format', () => {
       const id = queueService.generateJobId();
-      
+
       expect(id).toMatch(/^job_\d+_[a-z0-9]+$/); // job_timestamp_random format
       expect(id.length).toBeGreaterThan(15);
       expect(id).toContain('job_');
@@ -197,7 +197,7 @@ describe('QueueService', () => {
         max_attempts: 3,
         created_at: new Date().toISOString()
       });
-      
+
       queueService.isRedisAvailable = true;
 
       const result = await queueService.addJob('fetch_comments', jobData, { priority: 2 });
@@ -236,7 +236,7 @@ describe('QueueService', () => {
         priority: 5,
         organization_id: 'org-123'
       });
-      
+
       queueService.isRedisAvailable = true;
 
       const result = await queueService.addJob('fetch_comments', jobData);
@@ -264,7 +264,7 @@ describe('QueueService', () => {
         max_attempts: 5,
         organization_id: 'org-123'
       });
-      
+
       queueService.isRedisAvailable = true;
 
       const result = await queueService.addJob('test', jobData, { maxAttempts: 5 });
@@ -291,7 +291,7 @@ describe('QueueService', () => {
         job_type: 'test',
         organization_id: 'org-123'
       });
-      
+
       queueService.isRedisAvailable = false;
 
       const result = await queueService.addJob('test', jobData);
@@ -314,7 +314,7 @@ describe('QueueService', () => {
     test('should return null when no jobs available', async () => {
       jest.spyOn(queueService, 'getJobFromRedis').mockResolvedValue(null);
       jest.spyOn(queueService, 'getJobFromDatabase').mockResolvedValue(null);
-      
+
       queueService.isRedisAvailable = true;
 
       const result = await queueService.getNextJob('fetch_comments');
@@ -324,7 +324,7 @@ describe('QueueService', () => {
 
     test('should prioritize Redis when available', async () => {
       const mockJob = { id: 'job-123', job_type: 'fetch_comments' };
-      
+
       jest.spyOn(queueService, 'getJobFromRedis').mockResolvedValue(mockJob);
       queueService.isRedisAvailable = true;
 
@@ -336,7 +336,7 @@ describe('QueueService', () => {
 
     test('should use database when Redis unavailable', async () => {
       const mockJob = { id: 'job-123', job_type: 'fetch_comments' };
-      
+
       jest.spyOn(queueService, 'getJobFromDatabase').mockResolvedValue(mockJob);
       queueService.isRedisAvailable = false;
 
@@ -370,7 +370,7 @@ describe('QueueService', () => {
 
       // Test that completion works without Redis available
       queueService.isRedisAvailable = false;
-      
+
       // Should not throw
       await expect(queueService.completeJob(job, result)).resolves.not.toThrow();
     });
@@ -450,13 +450,15 @@ describe('QueueService', () => {
     test('should increment metrics properly', async () => {
       if (queueService.redis) {
         queueService.redis.incr = jest.fn().mockResolvedValue(1);
-        
+
         await queueService.incrementMetric('jobs_added', 'fetch_comments');
-        
+
         expect(queueService.redis.incr).toHaveBeenCalled();
       } else {
         // Just verify method doesn't throw when Redis unavailable
-        await expect(queueService.incrementMetric('jobs_added', 'fetch_comments')).resolves.not.toThrow();
+        await expect(
+          queueService.incrementMetric('jobs_added', 'fetch_comments')
+        ).resolves.not.toThrow();
       }
     });
   });
@@ -464,12 +466,12 @@ describe('QueueService', () => {
   describe('Error Handling', () => {
     test('should handle Redis connection errors gracefully', async () => {
       queueService.isRedisAvailable = false;
-      
+
       // Should fallback to database operations without throwing
       jest.spyOn(queueService, 'addJobToDatabase').mockResolvedValue({ id: 'test' });
-      
+
       const result = await queueService.addJob('test', { organization_id: 'org-123' });
-      
+
       expect(result).toBeDefined();
     });
 
@@ -477,7 +479,7 @@ describe('QueueService', () => {
       // Test that method exists and handles invalid input
       jest.spyOn(queueService, 'addJobToDatabase').mockResolvedValue({ id: 'test' });
       queueService.isRedisAvailable = false;
-      
+
       // Should throw for null payload
       await expect(queueService.addJob('test', null)).rejects.toThrow();
     });
@@ -486,9 +488,11 @@ describe('QueueService', () => {
       // Test with valid data
       jest.spyOn(queueService, 'addJobToDatabase').mockResolvedValue({ id: 'test' });
       queueService.isRedisAvailable = false;
-      
+
       // Should handle valid payload
-      await expect(queueService.addJob('test', { organization_id: 'test-org' })).resolves.toBeDefined();
+      await expect(
+        queueService.addJob('test', { organization_id: 'test-org' })
+      ).resolves.toBeDefined();
     });
   });
 });

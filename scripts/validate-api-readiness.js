@@ -2,7 +2,7 @@
 
 /**
  * API Readiness Validation Script - Issue #90
- * 
+ *
  * Comprehensive validation script that runs all readiness tests and generates a report.
  * This script can be used in CI/CD pipelines to validate API integration readiness.
  */
@@ -61,7 +61,7 @@ class ApiReadinessValidator {
    */
   async validateEnvironment() {
     console.log('📋 Validating environment configuration...');
-    
+
     try {
       const env = getCurrentEnvironment();
       this.results.environment = {
@@ -73,7 +73,9 @@ class ApiReadinessValidator {
       console.log(`✅ Environment: ${env.name}`);
       console.log(`   Real API calls: ${env.features.realApiCalls ? 'Enabled' : 'Disabled'}`);
       console.log(`   Error simulation: ${env.features.errorSimulation ? 'Enabled' : 'Disabled'}`);
-      console.log(`   Rate limit testing: ${env.features.rateLimitTesting ? 'Enabled' : 'Disabled'}\n`);
+      console.log(
+        `   Rate limit testing: ${env.features.rateLimitTesting ? 'Enabled' : 'Disabled'}\n`
+      );
     } catch (error) {
       console.error('❌ Environment validation failed:', error.message);
       throw error;
@@ -94,14 +96,14 @@ class ApiReadinessValidator {
         console.log('✅ All required credentials are present');
       } else {
         console.log('⚠️  Some credentials are missing:');
-        validation.missing.forEach(cred => {
+        validation.missing.forEach((cred) => {
           console.log(`   - ${cred}`);
         });
       }
 
       if (validation.warnings.length > 0) {
         console.log('⚠️  Warnings:');
-        validation.warnings.forEach(warning => {
+        validation.warnings.forEach((warning) => {
           console.log(`   - ${warning}`);
         });
       }
@@ -160,7 +162,7 @@ class ApiReadinessValidator {
 
     try {
       const result = await this.executeTest(suite.file);
-      
+
       this.results.tests[suite.name] = {
         status: result.success ? 'passed' : 'failed',
         details: {
@@ -173,10 +175,14 @@ class ApiReadinessValidator {
       };
 
       if (result.success) {
-        console.log(`✅ ${suite.description}: ${result.testsPassed}/${result.testsRun} tests passed`);
+        console.log(
+          `✅ ${suite.description}: ${result.testsPassed}/${result.testsRun} tests passed`
+        );
         this.results.summary.passed++;
       } else {
-        console.log(`❌ ${suite.description}: ${result.testsFailed}/${result.testsRun} tests failed`);
+        console.log(
+          `❌ ${suite.description}: ${result.testsFailed}/${result.testsRun} tests failed`
+        );
         this.results.summary.failed++;
       }
 
@@ -184,7 +190,7 @@ class ApiReadinessValidator {
     } catch (error) {
       console.log(`❌ ${suite.description}: Test execution failed`);
       console.log(`   Error: ${error.message}\n`);
-      
+
       this.results.tests[suite.name] = {
         status: 'failed',
         details: { error: error.message }
@@ -217,16 +223,18 @@ class ApiReadinessValidator {
 
       testProcess.on('close', (code) => {
         const duration = Date.now() - startTime;
-        
+
         try {
           // Try to parse Jest JSON output
-          const lines = stdout.split('\n').filter(line => line.trim());
-          const jsonLine = lines.find(line => line.startsWith('{') && line.includes('"testResults"'));
-          
+          const lines = stdout.split('\n').filter((line) => line.trim());
+          const jsonLine = lines.find(
+            (line) => line.startsWith('{') && line.includes('"testResults"')
+          );
+
           if (jsonLine) {
             const result = JSON.parse(jsonLine);
             const summary = result.testResults[0];
-            
+
             resolve({
               success: code === 0,
               testsRun: summary.numPassingTests + summary.numFailingTests,
@@ -265,8 +273,9 @@ class ApiReadinessValidator {
 
     // Determine production readiness
     const allTestsPassed = this.results.summary.failed === 0;
-    const hasValidCredentials = this.results.credentials?.valid || !getCurrentEnvironment().credentials.required;
-    
+    const hasValidCredentials =
+      this.results.credentials?.valid || !getCurrentEnvironment().credentials.required;
+
     this.results.summary.readyForProduction = allTestsPassed && hasValidCredentials;
 
     // Print summary
@@ -277,7 +286,9 @@ class ApiReadinessValidator {
     console.log(`Tests Passed: ${this.results.summary.passed}`);
     console.log(`Tests Failed: ${this.results.summary.failed}`);
     console.log(`Warnings: ${this.results.summary.warnings}`);
-    console.log(`Production Ready: ${this.results.summary.readyForProduction ? '✅ YES' : '❌ NO'}`);
+    console.log(
+      `Production Ready: ${this.results.summary.readyForProduction ? '✅ YES' : '❌ NO'}`
+    );
     console.log('=' * 60);
 
     // Detailed test results
@@ -285,12 +296,12 @@ class ApiReadinessValidator {
     Object.entries(this.results.tests).forEach(([testName, result]) => {
       const status = result.status === 'passed' ? '✅' : '❌';
       console.log(`${status} ${testName}: ${result.status}`);
-      
+
       if (result.details && result.details.testsRun) {
         console.log(`   Tests: ${result.details.testsPassed}/${result.details.testsRun} passed`);
         console.log(`   Duration: ${result.details.duration}ms`);
       }
-      
+
       if (result.details && result.details.error) {
         console.log(`   Error: ${result.details.error}`);
       }
@@ -298,20 +309,20 @@ class ApiReadinessValidator {
 
     // Production readiness recommendations
     console.log('\n🎯 PRODUCTION READINESS CHECKLIST:');
-    
+
     if (this.results.summary.readyForProduction) {
       console.log('✅ All validation checks passed');
       console.log('✅ API integration is ready for production deployment');
     } else {
       console.log('❌ Some validation checks failed or require attention:');
-      
+
       if (this.results.summary.failed > 0) {
         console.log('   - Fix failing test suites before deployment');
       }
-      
+
       if (!this.results.credentials?.valid && getCurrentEnvironment().credentials.required) {
         console.log('   - Configure missing API credentials');
-        this.results.credentials.missing.forEach(cred => {
+        this.results.credentials.missing.forEach((cred) => {
           console.log(`     * ${cred}`);
         });
       }
@@ -330,7 +341,7 @@ class ApiReadinessValidator {
 // CLI interface
 if (require.main === module) {
   const validator = new ApiReadinessValidator();
-  validator.validate().catch(error => {
+  validator.validate().catch((error) => {
     console.error('Validation failed:', error);
     process.exit(1);
   });

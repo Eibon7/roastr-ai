@@ -141,17 +141,17 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
 
       // Simulate failure with exponential backoff
       const startTime = Date.now();
-      
+
       // First failure
       await testUtils.queueService.failJob(job, new Error('Simulated failure 1'));
-      
+
       // Verify job was marked as failed
       const endTime = Date.now();
       const totalTime = endTime - startTime;
-      
+
       // Should have processed quickly (job failure marking)
       expect(totalTime).toBeLessThan(100); // Quick operation
-      
+
       // Verify the job now has failed status
       expect(job.status).toBe('failed');
       expect(job.error_message).toContain('Simulated failure 1');
@@ -175,7 +175,7 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         const currentTime = Date.now();
         retryTimes.push(currentTime);
         attemptCount++;
-        
+
         if (attemptCount <= 4) {
           throw new Error(`Backoff test failure #${attemptCount}`);
         }
@@ -281,7 +281,8 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         }
       };
 
-      let transientResult, permanentAttempts = 0;
+      let transientResult,
+        permanentAttempts = 0;
       try {
         await worker.start();
 
@@ -296,7 +297,7 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
         };
 
         await expect(worker.processJob(permanentJob)).rejects.toThrow('401 Unauthorized');
-        
+
         // Should have only attempted once for permanent error
         expect(permanentAttempts).toBe(1);
       } finally {
@@ -321,7 +322,7 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       worker.fetchCommentsFromPlatform = async () => {
         rateLimitAttempts++;
         rateLimitTimes.push(Date.now());
-        
+
         if (rateLimitAttempts <= 2) {
           const error = new Error('Rate limit exceeded');
           error.status = 429;
@@ -359,7 +360,7 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       }
 
       // Should respect rate limit backoff (at least 100ms base delay)
-      intervals.forEach(interval => {
+      intervals.forEach((interval) => {
         expect(interval).toBeGreaterThan(80); // Allow some timing variance
       });
     });
@@ -383,7 +384,7 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       worker.fetchCommentsFromPlatform = async () => {
         retryTimes.push(Date.now());
         attemptCount++;
-        
+
         if (attemptCount <= 2) {
           throw new Error(`Custom delay test #${attemptCount}`);
         }
@@ -419,7 +420,7 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       // Should use custom delay: 200ms, 400ms
       expect(intervals[0]).toBeGreaterThan(160); // 200ms - 20% tolerance
       expect(intervals[0]).toBeLessThan(240); // 200ms + 20% tolerance
-      
+
       if (intervals[1]) {
         expect(intervals[1]).toBeGreaterThan(320); // 400ms - 20% tolerance
         expect(intervals[1]).toBeLessThan(480); // 400ms + 20% tolerance
@@ -442,7 +443,7 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
       worker.fetchCommentsFromPlatform = async () => {
         retryTimes.push(Date.now());
         attemptCount++;
-        
+
         if (attemptCount <= 8) {
           throw new Error(`Max backoff test #${attemptCount}`);
         }
@@ -477,7 +478,7 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
 
       // Later intervals should not exceed maxRetryDelay
       const laterIntervals = intervals.slice(2); // After first few exponential increases
-      laterIntervals.forEach(interval => {
+      laterIntervals.forEach((interval) => {
         expect(interval).toBeLessThanOrEqual(600); // 500ms + some tolerance
       });
     });

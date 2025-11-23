@@ -1,6 +1,6 @@
 /**
  * Unit Tests for TierValidationService - CodeRabbit Round 5 Improvements
- * 
+ *
  * Tests the enhanced features added in CodeRabbit Round 5:
  * 1. Fail-closed for unknown features
  * 2. Enhanced plan normalization
@@ -41,9 +41,9 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
     jest.clearAllTimers();
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2024-01-15T12:30:00Z'));
-    
+
     mockSupabaseClient = require('../../../src/config/supabase').supabaseServiceClient;
-    
+
     // Clear service cache before each test
     tierValidationService.clearCache();
   });
@@ -56,7 +56,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
     it('should return fail-closed response for unknown feature', () => {
       const tierLimits = { customTones: true };
       const result = tierValidationService.checkFeatureAccess('unknown_feature', tierLimits, 'pro');
-      
+
       expect(result).toEqual({
         available: false,
         reason: 'unknown_feature',
@@ -67,7 +67,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
     it('should return fail-closed response for null feature', () => {
       const tierLimits = { customTones: true };
       const result = tierValidationService.checkFeatureAccess(null, tierLimits, 'pro');
-      
+
       expect(result).toEqual({
         available: false,
         reason: 'unknown_feature',
@@ -78,10 +78,10 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
     it('should return fail-closed response for undefined feature', () => {
       const tierLimits = { customTones: true };
       const result = tierValidationService.checkFeatureAccess(undefined, tierLimits, 'pro');
-      
+
       expect(result).toEqual({
         available: false,
-        reason: 'unknown_feature', 
+        reason: 'unknown_feature',
         message: "Feature 'undefined' is not recognized"
       });
     });
@@ -89,7 +89,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
     it('should work correctly for known features', () => {
       const tierLimits = { customTones: true };
       const result = tierValidationService.checkFeatureAccess('custom_tones', tierLimits, 'pro');
-      
+
       expect(result).toEqual({
         available: true
       });
@@ -99,10 +99,10 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
   describe('2. Enhanced plan normalization', () => {
     it('should normalize valid plan values correctly', async () => {
       const validPlans = ['free', 'starter', 'pro', 'plus'];
-      
+
       for (const plan of validPlans) {
         mockSupabaseClient.single.mockResolvedValue({
-          data: { 
+          data: {
             plan: plan,
             status: 'active',
             current_period_start: '2024-01-01T00:00:00Z',
@@ -118,10 +118,10 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
 
     it('should default invalid plan values to free', async () => {
       const invalidPlans = [null, undefined, 'invalid_plan', 123, { type: 'pro' }];
-      
+
       for (const invalidPlan of invalidPlans) {
         mockSupabaseClient.single.mockResolvedValue({
-          data: { 
+          data: {
             plan: invalidPlan,
             status: 'active',
             current_period_start: '2024-01-01T00:00:00Z',
@@ -140,7 +140,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
     it('should calculate next cycle start from current date when no period end provided', () => {
       const result = tierValidationService.getNextCycleStartUTC();
       const expected = new Date(Date.UTC(2024, 1, 1)); // February 1st, 2024
-      
+
       expect(result).toBe(expected.toISOString());
     });
 
@@ -148,7 +148,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
       const periodEndIso = '2024-06-30T23:59:59Z';
       const result = tierValidationService.getNextCycleStartUTC(periodEndIso);
       const expected = new Date('2024-07-01T00:00:00Z');
-      
+
       expect(result).toBe(expected.toISOString());
     });
 
@@ -156,7 +156,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
       const periodEndIso = '2024-02-29T23:59:59Z';
       const result = tierValidationService.getNextCycleStartUTC(periodEndIso);
       const expected = new Date('2024-03-01T00:00:00Z');
-      
+
       expect(result).toBe(expected.toISOString());
     });
 
@@ -164,7 +164,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
       const periodEndIso = '2024-12-31T23:59:59Z';
       const result = tierValidationService.getNextCycleStartUTC(periodEndIso);
       const expected = new Date('2025-01-01T00:00:00Z');
-      
+
       expect(result).toBe(expected.toISOString());
     });
   });
@@ -536,7 +536,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
 
     it('should handle rapid successive calls without degradation', async () => {
       const tierLimits = { customTones: true };
-      
+
       const promises = Array.from({ length: 50 }, () =>
         tierValidationService.checkFeatureAccess('custom_tones', tierLimits, 'pro')
       );
@@ -546,7 +546,7 @@ describe('TierValidationService - CodeRabbit Round 5 Improvements', () => {
       const endTime = Date.now();
 
       expect(endTime - startTime).toBeLessThan(100); // Should complete quickly
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.available).toBe(true);
       });
     });

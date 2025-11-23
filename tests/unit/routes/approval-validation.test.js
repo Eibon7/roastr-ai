@@ -1,6 +1,6 @@
 /**
  * Approval API Validation Tests
- * 
+ *
  * Tests for the approval endpoints with focus on:
  * - Character limit validation
  * - Platform-specific constraints
@@ -157,7 +157,7 @@ describe('Approval API - Character Limit Validation', () => {
 
     test('should approve response with valid edited text', async () => {
       const editedText = 'This is a valid edited response for Twitter';
-      
+
       supabaseServiceClient.update.mockResolvedValue({
         data: { ...mockResponse, response_text: editedText, post_status: 'approved' },
         error: null
@@ -179,7 +179,7 @@ describe('Approval API - Character Limit Validation', () => {
     test('should trim whitespace from edited text', async () => {
       const editedTextWithWhitespace = '  Valid response with whitespace  ';
       const trimmedText = 'Valid response with whitespace';
-      
+
       supabaseServiceClient.update.mockResolvedValue({
         data: { ...mockResponse, response_text: trimmedText, post_status: 'approved' },
         error: null
@@ -219,7 +219,7 @@ describe('Approval API - Character Limit Validation', () => {
 
     test('should handle very long edited text gracefully', async () => {
       const veryLongText = 'a'.repeat(10000); // Much longer than any platform limit
-      
+
       supabaseServiceClient.update.mockResolvedValue({
         data: { ...mockResponse, response_text: veryLongText, post_status: 'approved' },
         error: null
@@ -338,7 +338,7 @@ describe('Approval API - Character Limit Validation', () => {
   describe('Platform-Specific Validation', () => {
     test('should handle different platform contexts', async () => {
       const platforms = ['twitter', 'instagram', 'youtube', 'discord'];
-      
+
       for (const platform of platforms) {
         const mockResponseForPlatform = {
           id: `response-${platform}`,

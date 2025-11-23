@@ -10,21 +10,26 @@
 ## Estado Actual
 
 ### Job 1: E2E Tests - Failing after 4m
+
 **Síntoma**: Server timeout - never reaches `app.listen()`
 **Root Cause**: Module `src/index.js` not finishing initialization
 **Evidence**:
+
 - Services initialize OK (Feature flags, Kill switch, etc.)
 - Debug logs from line 510+ NEVER appear
 - `if (require.main === module)` block never executes
 
 ### Job 2: build-check (Smoke Tests) - Failing after 2m
+
 **Síntoma**: Test assertion failure
+
 ```
 ● Shield Action Executor Smoke Test › should handle mock action execution
   Expected: true
   Received: false
   at tests/smoke/simple-health.test.js:113
 ```
+
 **Root Cause**: TBD - Shield action executor returning `success: false`
 
 ---
@@ -36,6 +41,7 @@
 **Approach**: Use incremental debug logging to pinpoint exact failure point
 
 **Actions**:
+
 1. Wait for latest CI run (commit `10412e46`) to see debug logs
 2. Identify which route import is hanging/crashing
 3. Check if issue is:
@@ -55,21 +61,25 @@
 **Possible Solutions** (based on diagnosis):
 
 #### Solution A: Circular Dependency
+
 - Use `require()` inside route handlers instead of top-level
 - Defer initialization of problematic modules
 - Use dependency injection pattern
 
 #### Solution B: Async Blocking
+
 - Move async initialization to `app.listen()` callback
 - Use lazy loading for heavy modules
 - Defer worker startup until after server binds
 
 #### Solution C: Missing/Broken File
+
 - Fix import path
 - Add missing export
 - Fix syntax error
 
 **Implementation Steps**:
+
 1. Apply identified fix
 2. Remove debug logs (keep minimal for troubleshooting)
 3. Test locally if possible: `NODE_ENV=test npm start`
@@ -77,6 +87,7 @@
 5. Push and verify CI
 
 **Success Criteria**:
+
 - Server starts successfully in E2E environment
 - "🔥 Roastr.ai API escuchando en http://localhost:3000" appears in logs
 - E2E tests can connect to server
@@ -88,6 +99,7 @@
 **Approach**: Analyze Shield Action Executor test expectations vs actual behavior
 
 **Actions**:
+
 1. Read `tests/smoke/simple-health.test.js` lines 100-115
 2. Understand what the test expects
 3. Read Shield Action Executor implementation
@@ -95,6 +107,7 @@
 5. Identify why `result.success` is `false`
 
 **Possible Causes**:
+
 - Mock adapter not properly configured
 - Circuit breaker tripped in test
 - Validation failing in executor
@@ -111,21 +124,25 @@
 **Possible Solutions** (based on diagnosis):
 
 #### Solution A: Mock Adapter Configuration
+
 - Fix mock adapter to return `success: true`
 - Ensure mock mode is properly detected
 - Add proper test fixtures
 
 #### Solution B: Circuit Breaker Issue
+
 - Reset circuit breaker before test
 - Mock circuit breaker state
 - Disable circuit breaker in tests
 
 #### Solution C: Validation Issue
+
 - Fix validation logic to accept test inputs
 - Update test to provide valid inputs
 - Mock validation dependencies
 
 **Implementation Steps**:
+
 1. Apply identified fix to Shield Action Executor or test
 2. Run smoke tests locally: `npm test tests/smoke/simple-health.test.js`
 3. Verify test passes
@@ -133,6 +150,7 @@
 5. Push and verify CI
 
 **Success Criteria**:
+
 - Smoke test passes: `✓ should handle mock action execution`
 - No regressions in other smoke tests
 - 42/42 tests passing
@@ -142,6 +160,7 @@
 ### FASE 5: Validate All Fixes
 
 **Actions**:
+
 1. Wait for both fixes to be pushed
 2. Monitor CI for all jobs:
    - ✅ E2E Tests pass
@@ -151,6 +170,7 @@
 4. Verify no regressions introduced
 
 **Success Criteria**:
+
 - All CI jobs green
 - No new CodeRabbit comments
 - E2E tests complete successfully (not timeout)
@@ -161,6 +181,7 @@
 ### FASE 6: Clean Up Debug Logs
 
 **Actions**:
+
 1. Remove temporary debug logs from `src/index.js`:
    - Lines 49, 73, 76 (route import logs)
    - Lines 510, 513 (guardian routes logs)
@@ -173,6 +194,7 @@
 4. Final commit and push
 
 **Success Criteria**:
+
 - No debug console.logs in production code
 - CI still passes after cleanup
 - Code ready for merge
@@ -182,15 +204,18 @@
 ## Risk Assessment
 
 ### High Risk
+
 - **Circular dependencies**: May require significant refactoring
 - **Async module code**: Could affect other parts of system
 - **Breaking changes**: Fixes might introduce regressions
 
 ### Medium Risk
+
 - **Mock configuration**: Changes might affect other tests
 - **Circuit breaker state**: Could have side effects in production
 
 ### Low Risk
+
 - **Test fixtures**: Well-isolated changes
 - **Debug log cleanup**: Purely cosmetic
 
@@ -199,15 +224,18 @@
 ## Parallel Execution Strategy
 
 **Phase 1 (Diagnostic) - Can run in parallel**:
+
 - Task A: Monitor CI for E2E debug logs (passive wait)
 - Task B: Analyze smoke test failure (active investigation)
 
 **Phase 2 (Implementation) - Sequential per problem**:
+
 - Fix E2E first (blocks everything)
 - Then fix smoke test
 - OR fix both if root causes are independent
 
 **Phase 3 (Validation) - All together**:
+
 - Single CI run validates both fixes
 
 ---
@@ -215,19 +243,25 @@
 ## Decision Points
 
 ### Decision 1: E2E Fix Complexity
+
 **IF** circular dependency detected:
+
 - **THEN** use lazy loading pattern
 - **ELSE** apply simple fix
 
 ### Decision 2: Smoke Test Root Cause
+
 **IF** mock configuration issue:
+
 - **THEN** fix mock adapter
 - **ELSE IF** validation issue:
 - **THEN** fix validation logic
 - **ELSE** investigate circuit breaker
 
 ### Decision 3: Parallel vs Sequential
+
 **IF** both root causes identified and independent:
+
 - **THEN** fix both in parallel (separate commits)
 - **ELSE** fix E2E first (higher priority)
 
@@ -236,18 +270,21 @@
 ## Quality Gates
 
 ### Before Commit
+
 - [ ] Root cause clearly identified
 - [ ] Fix is architectural, not a patch
 - [ ] No new debug/console logs (except essential)
 - [ ] Tests pass locally if possible
 
 ### Before Push
+
 - [ ] Commit message follows standards
 - [ ] No unrelated changes included
 - [ ] GDD validation not broken
 - [ ] Pre-commit hooks pass
 
 ### Before Declaring Done
+
 - [ ] CI fully green (all jobs)
 - [ ] CodeRabbit has 0 new comments
 - [ ] Documentation updated if needed
@@ -258,6 +295,7 @@
 ## Rollback Plan
 
 **IF** fixes cause more issues:
+
 1. Revert problematic commit
 2. Re-analyze with more data
 3. Apply alternative solution

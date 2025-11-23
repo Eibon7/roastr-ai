@@ -7,7 +7,12 @@
  * Related: CodeRabbit Review #3424304067 (C1, C2, C3 - CRITICAL)
  */
 
-const { hashEmail, maskEmail, sanitizePII, looksLikeEmail } = require('../../../src/utils/piiSanitizer');
+const {
+  hashEmail,
+  maskEmail,
+  sanitizePII,
+  looksLikeEmail
+} = require('../../../src/utils/piiSanitizer');
 
 describe('PII Sanitizer', () => {
   describe('hashEmail', () => {
@@ -125,7 +130,7 @@ describe('PII Sanitizer', () => {
     it('should sanitize customer_email field', () => {
       const input = {
         customer_email: 'user@example.com',
-        order_id: '12345',
+        order_id: '12345'
       };
 
       const result = sanitizePII(input);
@@ -139,7 +144,7 @@ describe('PII Sanitizer', () => {
     it('should sanitize email field', () => {
       const input = {
         email: 'test@example.com',
-        metadata: 'some data',
+        metadata: 'some data'
       };
 
       const result = sanitizePII(input);
@@ -151,7 +156,7 @@ describe('PII Sanitizer', () => {
 
     it('should sanitize user_email field', () => {
       const input = {
-        user_email: 'admin@example.com',
+        user_email: 'admin@example.com'
       };
 
       const result = sanitizePII(input);
@@ -163,7 +168,7 @@ describe('PII Sanitizer', () => {
     it('should sanitize multiple email fields', () => {
       const input = {
         email: 'user@example.com',
-        customer_email: 'customer@example.com',
+        customer_email: 'customer@example.com'
       };
 
       const result = sanitizePII(input);
@@ -177,7 +182,7 @@ describe('PII Sanitizer', () => {
     it('should not mutate original object', () => {
       const input = {
         customer_email: 'user@example.com',
-        order_id: '12345',
+        order_id: '12345'
       };
 
       const originalEmail = input.customer_email;
@@ -190,7 +195,7 @@ describe('PII Sanitizer', () => {
     it('should handle camelCase email fields', () => {
       const input = {
         userEmail: 'user@example.com',
-        customerEmail: 'customer@example.com',
+        customerEmail: 'customer@example.com'
       };
 
       const result = sanitizePII(input);
@@ -217,7 +222,7 @@ describe('PII Sanitizer', () => {
     it('should handle object with no email fields', () => {
       const input = {
         order_id: '12345',
-        amount: 100,
+        amount: 100
       };
 
       const result = sanitizePII(input);
@@ -237,7 +242,7 @@ describe('PII Sanitizer', () => {
         order_id: '12345',
         amount: 100,
         currency: 'EUR',
-        metadata: { key: 'value' },
+        metadata: { key: 'value' }
       };
 
       const result = sanitizePII(input);
@@ -287,7 +292,7 @@ describe('PII Sanitizer', () => {
         customer_email: 'john.doe@example.com',
         price_id: 'price_123',
         amount: 1200,
-        currency: 'EUR',
+        currency: 'EUR'
       };
 
       const safeData = sanitizePII(checkoutData);
@@ -310,7 +315,7 @@ describe('PII Sanitizer', () => {
       const errorData = {
         error: 'User not found',
         customer_email: 'unknown@example.com',
-        order_id: 'ord_456',
+        order_id: 'ord_456'
       };
 
       const safeData = sanitizePII(errorData);

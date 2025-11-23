@@ -5,6 +5,7 @@ Este documento describe la arquitectura y plan de implementación para integrar 
 ## 🏗️ Arquitectura General
 
 ### Estructura de Carpetas
+
 ```
 src/integrations/
 ├── youtube/
@@ -26,6 +27,7 @@ src/integrations/
 ```
 
 ### Patrón de Diseño
+
 Todas las integraciones seguirán el patrón **Strategy Pattern** con una clase base común que define la interfaz estándar:
 
 ```javascript
@@ -36,7 +38,7 @@ class BaseIntegration {
   async processComment(comment)
   async generateResponse(comment, tone)
   async postResponse(parentId, response)
-  
+
   // Métodos opcionales con implementación por defecto
   async validatePermissions()
   async handleRateLimit()
@@ -47,17 +49,20 @@ class BaseIntegration {
 ## 📺 YouTube Integration
 
 ### Funcionalidades Objetivo
+
 - Monitorear comentarios en videos específicos
 - Responder a comentarios que mencionen palabras clave
 - Sistema de moderación automática con Perspective API
 - Dashboard para gestionar canales monitoreados
 
 ### APIs Requeridas
+
 - **YouTube Data API v3**: Para leer comentarios y responder
 - **YouTube Analytics API**: Para métricas opcionales
 - **OAuth 2.0**: Para autenticación de canal
 
 ### Configuración Necesaria
+
 ```env
 YOUTUBE_CLIENT_ID=your_client_id
 YOUTUBE_CLIENT_SECRET=your_client_secret
@@ -67,6 +72,7 @@ YOUTUBE_MONITORED_VIDEOS=video_id_1,video_id_2
 ```
 
 ### Implementación Técnica
+
 ```javascript
 // Ejemplo de estructura del servicio
 class YouTubeService extends BaseIntegration {
@@ -75,7 +81,7 @@ class YouTubeService extends BaseIntegration {
     // Filtrar por palabras clave configurables
     // Procesar solo comentarios no respondidos
   }
-  
+
   async processComment(comment) {
     // Validar que no sea spam
     // Verificar toxicidad con Perspective API
@@ -86,6 +92,7 @@ class YouTubeService extends BaseIntegration {
 ```
 
 ### Limitaciones de la API
+
 - **Cuota diaria**: ~10,000 unidades por día
 - **Rate limiting**: 100 requests por 100 segundos
 - **Comentarios**: Solo canales propios o públicos
@@ -93,17 +100,20 @@ class YouTubeService extends BaseIntegration {
 ## 🦋 Bluesky Integration
 
 ### Funcionalidades Objetivo
+
 - Monitoreo en tiempo real del firehose AT Protocol
 - Respuestas automáticas a menciones
 - Integración con feeds personalizados
 - Sistema de moderación distribuida
 
 ### Protocolo Utilizado
+
 - **AT Protocol**: Protocolo descentralizado de Bluesky
 - **Firehose**: Stream en tiempo real de todos los posts
 - **XRPC**: Para llamadas a servicios distribuidos
 
 ### Configuración Necesaria
+
 ```env
 BLUESKY_HANDLE=your_handle.bsky.social
 BLUESKY_PASSWORD=your_password
@@ -112,6 +122,7 @@ BLUESKY_FIREHOSE_URL=wss://bsky.social/xrpc/com.atproto.sync.subscribeRepos
 ```
 
 ### Implementación Técnica
+
 ```javascript
 class BlueskyService extends BaseIntegration {
   async listenForMentions() {
@@ -119,7 +130,7 @@ class BlueskyService extends BaseIntegration {
     // Filtrar por menciones a nuestro handle
     // Procesar posts en tiempo real
   }
-  
+
   async processComment(post) {
     // Verificar que es una mención válida
     // Generar respuesta contextual
@@ -129,6 +140,7 @@ class BlueskyService extends BaseIntegration {
 ```
 
 ### Ventajas de Bluesky
+
 - **Sin límites de API estrictos** (por ahora)
 - **Datos en tiempo real** via firehose
 - **Descentralización** permite mayor control
@@ -137,17 +149,20 @@ class BlueskyService extends BaseIntegration {
 ## 📸 Instagram Integration
 
 ### Funcionalidades Objetivo
+
 - Monitorear comentarios en posts específicos
 - Responder a mentions en stories (si es posible)
 - Integración con Instagram Business API
 - Análisis de sentiment en comentarios
 
 ### APIs Requeridas
+
 - **Instagram Graph API**: Para comentarios y respuestas
 - **Instagram Basic Display API**: Para contenido personal
 - **Webhooks**: Para notificaciones en tiempo real
 
 ### Configuración Necesaria
+
 ```env
 INSTAGRAM_APP_ID=your_app_id
 INSTAGRAM_APP_SECRET=your_app_secret
@@ -157,6 +172,7 @@ INSTAGRAM_WEBHOOK_VERIFY_TOKEN=your_webhook_token
 ```
 
 ### Implementación Técnica
+
 ```javascript
 class InstagramService extends BaseIntegration {
   async listenForMentions() {
@@ -164,7 +180,7 @@ class InstagramService extends BaseIntegration {
     // Procesar notificaciones en tiempo real
     // Fallback: polling cada 10 minutos
   }
-  
+
   async processComment(comment) {
     // Validar permisos de respuesta
     // Verificar contexto del post
@@ -174,6 +190,7 @@ class InstagramService extends BaseIntegration {
 ```
 
 ### Limitaciones de Instagram
+
 - **Restricciones estrictas** para bots automatizados
 - **Requiere Instagram Business Account**
 - **Rate limits agresivos**: 200 requests/hora
@@ -182,6 +199,7 @@ class InstagramService extends BaseIntegration {
 ## 🛠️ Componentes Comunes
 
 ### 1. BaseIntegration.js
+
 Clase abstracta que define la interfaz común para todas las integraciones:
 
 ```javascript
@@ -192,12 +210,18 @@ class BaseIntegration {
     this.contentFilter = new ContentFilter(config.filters);
     this.roastGenerator = new RoastGeneratorReal();
   }
-  
+
   // Métodos abstractos que cada integración debe implementar
-  async authenticate() { throw new Error('Must implement authenticate()'); }
-  async listenForMentions() { throw new Error('Must implement listenForMentions()'); }
-  async postResponse(parentId, response) { throw new Error('Must implement postResponse()'); }
-  
+  async authenticate() {
+    throw new Error('Must implement authenticate()');
+  }
+  async listenForMentions() {
+    throw new Error('Must implement listenForMentions()');
+  }
+  async postResponse(parentId, response) {
+    throw new Error('Must implement postResponse()');
+  }
+
   // Métodos comunes con implementación base
   async processComment(comment, platform) {
     // Lógica común de procesamiento
@@ -209,6 +233,7 @@ class BaseIntegration {
 ```
 
 ### 2. RateLimiter.js
+
 Control unificado de límites de velocidad para todas las plataformas:
 
 ```javascript
@@ -217,13 +242,13 @@ class RateLimiter {
     this.limits = limits; // Por plataforma
     this.windows = new Map(); // Ventanas deslizantes
   }
-  
+
   async canMakeRequest(platform, endpoint) {
     // Verificar límites específicos por plataforma y endpoint
     // Implementar sliding window algorithm
     // Retornar tiempo de espera si es necesario
   }
-  
+
   recordRequest(platform, endpoint) {
     // Registrar request para tracking de límites
   }
@@ -231,6 +256,7 @@ class RateLimiter {
 ```
 
 ### 3. ContentFilter.js
+
 Filtros de contenido y moderación comunes:
 
 ```javascript
@@ -239,7 +265,7 @@ class ContentFilter {
     this.perspectiveAPI = new PerspectiveAPI(config.perspectiveKey);
     this.customFilters = config.customFilters || [];
   }
-  
+
   async shouldProcessComment(comment, platform) {
     // Verificar toxicidad con Perspective API
     // Aplicar filtros personalizados
@@ -252,12 +278,14 @@ class ContentFilter {
 ## 🚀 Plan de Implementación
 
 ### Fase 1: Infraestructura Base (Semana 1-2)
+
 - [ ] Crear estructura de carpetas
 - [ ] Implementar BaseIntegration.js
 - [ ] Implementar RateLimiter.js y ContentFilter.js
 - [ ] Crear tests unitarios para componentes base
 
 ### Fase 2: YouTube Integration (Semana 3-4)
+
 - [ ] Implementar YouTubeService.js
 - [ ] Configurar OAuth 2.0 flow
 - [ ] Implementar polling de comentarios
@@ -265,18 +293,21 @@ class ContentFilter {
 - [ ] Dashboard básico de administración
 
 ### Fase 3: Bluesky Integration (Semana 5-6)
+
 - [ ] Implementar cliente AT Protocol
 - [ ] Conectar al firehose en tiempo real
 - [ ] Sistema de filtrado de menciones
 - [ ] Integración con feeds personalizados
 
 ### Fase 4: Instagram Integration (Semana 7-8)
+
 - [ ] Configurar Instagram Graph API
 - [ ] Implementar sistema de webhooks
 - [ ] Manejo de comentarios y respuestas
 - [ ] Sistema de aprobación manual para respuestas sensibles
 
 ### Fase 5: Optimización y Monitoreo (Semana 9-10)
+
 - [ ] Dashboard unificado para todas las plataformas
 - [ ] Métricas y analytics detallados
 - [ ] Sistema de alertas y monitoreo
@@ -285,32 +316,34 @@ class ContentFilter {
 ## ⚙️ Configuración y Deployment
 
 ### Estructura de Configuración
+
 ```javascript
 // config/integrations.js
 module.exports = {
   enabled: process.env.INTEGRATIONS_ENABLED?.split(',') || ['twitter'],
-  
+
   youtube: {
     enabled: process.env.YOUTUBE_ENABLED === 'true',
-    clientId: process.env.YOUTUBE_CLIENT_ID,
+    clientId: process.env.YOUTUBE_CLIENT_ID
     // ... más configuraciones
   },
-  
+
   bluesky: {
     enabled: process.env.BLUESKY_ENABLED === 'true',
-    handle: process.env.BLUESKY_HANDLE,
+    handle: process.env.BLUESKY_HANDLE
     // ... más configuraciones
   },
-  
+
   instagram: {
     enabled: process.env.INSTAGRAM_ENABLED === 'true',
-    appId: process.env.INSTAGRAM_APP_ID,
+    appId: process.env.INSTAGRAM_APP_ID
     // ... más configuraciones
   }
 };
 ```
 
 ### Variables de Entorno Adicionales
+
 ```env
 # Control general de integraciones
 INTEGRATIONS_ENABLED=twitter,youtube
@@ -331,6 +364,7 @@ GLOBAL_MIN_DELAY_BETWEEN_RESPONSES=30000
 ## 📊 Métricas y Monitoreo
 
 ### KPIs por Integración
+
 - **Comentarios procesados por hora**
 - **Respuestas generadas exitosamente**
 - **Rate limit violations**
@@ -339,6 +373,7 @@ GLOBAL_MIN_DELAY_BETWEEN_RESPONSES=30000
 - **Engagement rate** (likes, replies a nuestras respuestas)
 
 ### Alertas Automáticas
+
 - API credentials próximos a expirar
 - Rate limits alcanzados frecuentemente
 - Errores de autenticación
@@ -348,6 +383,7 @@ GLOBAL_MIN_DELAY_BETWEEN_RESPONSES=30000
 ## 🔐 Seguridad y Compliance
 
 ### Consideraciones de Seguridad
+
 - **Rotación automática** de tokens de acceso
 - **Encriptación** de credentials sensibles
 - **Logging seguro** sin exponer datos personales
@@ -355,6 +391,7 @@ GLOBAL_MIN_DELAY_BETWEEN_RESPONSES=30000
 - **Rate limiting defensivo** para prevenir abuse
 
 ### Compliance y Privacidad
+
 - **GDPR compliance** para usuarios europeos
 - **Términos de servicio** claros para cada plataforma
 - **Opt-out mechanism** para usuarios que no deseen interacción
@@ -363,4 +400,4 @@ GLOBAL_MIN_DELAY_BETWEEN_RESPONSES=30000
 
 ---
 
-*Este documento será actualizado según evolucionen los requerimientos y capacidades de cada plataforma.*
+_Este documento será actualizado según evolucionen los requerimientos y capacidades de cada plataforma._

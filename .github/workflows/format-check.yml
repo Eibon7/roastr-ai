@@ -1,0 +1,55 @@
+name: Format Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  format-check:
+    name: Check Code Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Prettier formatting
+        run: npm run format:check
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Report status
+        if: success()
+        run: |
+          echo "✅ Code formatting and linting checks passed!"
+          echo "All files are properly formatted according to Prettier and ESLint rules."
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "❌ Code formatting or linting issues detected!"
+          echo ""
+          echo "To fix formatting issues, run:"
+          echo "  npm run format"
+          echo ""
+          echo "To fix linting issues, run:"
+          echo "  npm run lint:fix"
+          echo ""
+          echo "Then commit the changes and push again."
+          exit 1

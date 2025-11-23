@@ -9,7 +9,7 @@ This guide covers the comprehensive testing suite for Roastr AI MVP, implementin
 ### Test Categories
 
 1. **E2E Tests** (`tests/e2e/`) - End-to-end user flows
-2. **Integration Tests** (`tests/integration/`) - Component integration validation  
+2. **Integration Tests** (`tests/integration/`) - Component integration validation
 3. **Unit Tests** (`tests/unit/`) - Individual component testing
 
 ### Priority Levels
@@ -28,7 +28,7 @@ npm run test:mvp
 
 # Run by category
 npm run test:mvp:e2e          # End-to-end tests
-npm run test:mvp:integration  # Integration tests  
+npm run test:mvp:integration  # Integration tests
 npm run test:mvp:unit        # Unit tests
 
 # Generate coverage report
@@ -70,61 +70,73 @@ ENABLE_PERSPECTIVE_API=true
 ### P0 Issues (Critical)
 
 #### #404 - [E2E] Flujo manual (auto-approval OFF)
+
 - **File**: `tests/e2e/manual-flow.test.js`
 - **Validates**: Complete manual approval workflow
 - **Status**: ⏳ Pending
 
-#### #405 - [E2E] Flujo automático (auto-approval ON)  
+#### #405 - [E2E] Flujo automático (auto-approval ON)
+
 - **File**: `tests/e2e/automatic-flow.test.js`
 - **Validates**: Automated processing pipeline
 - **Status**: ⏳ Pending
 
 #### #406 - [Integración] Ingestor
+
 - **File**: `tests/integration/ingestor.test.js`
 - **Validates**: Comment deduplication, order, backoff, acknowledgment
 - **Status**: ⏳ Pending
 
 #### #407 - [Integración] Triage
-- **File**: `tests/integration/triage.test.js`  
+
+- **File**: `tests/integration/triage.test.js`
 - **Validates**: Block/roast/publish decision matrix
 - **Status**: ⏳ Pending
 
 #### #408 - [Integración] Shield
+
 - **File**: `tests/integration/shield.test.js`
 - **Validates**: Shield actions and offender registry
 - **Status**: ⏳ Pending
 
 #### #409 - [Integración] Generación
+
 - **File**: `tests/integration/generation.test.js`
 - **Validates**: Tone-based generation with 2+1 variants
 - **Status**: ⏳ Pending
 
 #### #410 - [Integración] Publisher
+
 - **File**: `tests/integration/publisher.test.js`
 - **Validates**: Direct publication and idempotency
 - **Status**: ⏳ Pending
 
 #### #411 - [Integración] Workers
+
 - **File**: `tests/integration/workers.test.js`
 - **Validates**: Worker idempotency and retries
 - **Status**: ⏳ Pending
 
 #### #412 - [Integración] Multi-tenant (RLS)
+
 - **File**: `tests/integration/multi-tenant.test.js`
 - **Validates**: Strict tenant isolation
 - **Status**: ⏳ Pending
 
 #### #413 - [Integración] Billing/Entitlements
+
 - **File**: `tests/integration/billing.test.js`
 - **Validates**: Plan-based gating with Stripe
 - **Status**: ⏳ Pending
 
 #### #414 - [Integración] Kill-switch
+
 - **File**: `tests/integration/kill-switch.test.js`
 - **Validates**: Publisher rollback functionality
 - **Status**: ⏳ Pending
 
 #### #416 - [E2E] Demo Mode
+
 - **File**: `tests/e2e/demo-flow.test.js`
 - **Validates**: Fixtures traverse complete pipeline
 - **Status**: ✅ Initial implementation complete
@@ -132,21 +144,25 @@ ENABLE_PERSPECTIVE_API=true
 ### P1 Issues (Robustez/UX/Observabilidad)
 
 #### #417 - [Integración] Observabilidad
+
 - **File**: `tests/integration/observability.test.js`
 - **Validates**: Structured logs and correlation
 - **Status**: ⏳ Pending
 
 #### #419 - [E2E] Resiliencia UI
-- **File**: `tests/e2e/ui-resilience.test.js`  
+
+- **File**: `tests/e2e/ui-resilience.test.js`
 - **Validates**: Timeout/error handling, "no more variants"
 - **Status**: ⏳ Pending
 
 #### #420 - [Integración] Fixtures/Seeds
+
 - **File**: `tests/integration/fixtures.test.js`
 - **Validates**: Complete fixture system
 - **Status**: ✅ Base fixtures implemented
 
 #### #421 - [DOC] Guía de ejecución
+
 - **File**: `docs/testing-mvp-guide.md`
 - **Validates**: Complete testing documentation
 - **Status**: ✅ This document
@@ -154,11 +170,13 @@ ENABLE_PERSPECTIVE_API=true
 ### P2 Issues (Pulido Técnico)
 
 #### #422 - [Unit] Utilidades
+
 - **File**: `tests/unit/utils/sanitization.test.js`
 - **Validates**: Text sanitization/normalization utilities
 - **Status**: ⏳ Pending
 
 #### #423 - [Integración] Compatibilidad sandbox
+
 - **File**: `tests/integration/sandbox-compat.test.js`
 - **Validates**: Platform sandbox compatibility
 - **Status**: ⏳ Pending
@@ -176,7 +194,7 @@ ENABLE_PERSPECTIVE_API=true
 - **`jest.testing-mvp.config.js`** - Jest configuration for MVP tests
 - **Test timeout settings**:
   - Unit tests: 10 seconds
-  - Integration tests: 45 seconds  
+  - Integration tests: 45 seconds
   - E2E tests: 60 seconds
 
 ### Fixtures System
@@ -207,12 +225,14 @@ const scenario = createTestScenario('test-name', {
 ## Coverage Requirements
 
 ### Global Targets
+
 - **Branches**: 70%
 - **Functions**: 75%
-- **Lines**: 80%  
+- **Lines**: 80%
 - **Statements**: 80%
 
 ### Critical Services (Higher Requirements)
+
 - **`src/services/`**: 90% line coverage
 - **`src/workers/`**: 85% line coverage
 
@@ -226,7 +246,7 @@ The testing MVP integrates with CI/CD:
 # Run MVP tests in CI
 - name: Run MVP Test Suite
   run: npm run test:mvp:ci
-  
+
 # Upload coverage reports
 - name: Upload Coverage
   uses: codecov/codecov-action@v3
@@ -237,7 +257,7 @@ The testing MVP integrates with CI/CD:
 ### Test Reports
 
 - **JUnit XML**: `test-results/testing-mvp-results.xml`
-- **Coverage HTML**: `coverage/testing-mvp/index.html`  
+- **Coverage HTML**: `coverage/testing-mvp/index.html`
 - **Coverage JSON**: `coverage/testing-mvp/coverage-final.json`
 
 ## Troubleshooting
@@ -245,6 +265,7 @@ The testing MVP integrates with CI/CD:
 ### Common Issues
 
 1. **Mock mode not enabled**
+
    ```bash
    export ENABLE_MOCK_MODE=true
    ```
@@ -302,7 +323,7 @@ All testing MVP changes require:
 
 - ✅ All P0 tests passing
 - ✅ Coverage targets met
-- ✅ CI/CD pipeline stable  
+- ✅ CI/CD pipeline stable
 - ✅ Documentation complete
 - ✅ Zero flaky tests
 

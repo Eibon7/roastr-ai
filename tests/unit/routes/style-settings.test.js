@@ -27,7 +27,7 @@ jest.mock('../../../src/utils/logger', () => ({
     }))
   },
   SafeUtils: {
-    safeUserIdPrefix: jest.fn(id => id?.substring(0, 8) + '...' || 'unknown')
+    safeUserIdPrefix: jest.fn((id) => id?.substring(0, 8) + '...' || 'unknown')
   }
 }));
 
@@ -64,9 +64,7 @@ describe('Style Settings Endpoints', () => {
 
     it('should include authentication check', async () => {
       // Authentication is mocked in this test, so we just verify the mock is called
-      await request(app)
-        .get('/api/user/settings/style')
-        .set('Authorization', 'Bearer test-token');
+      await request(app).get('/api/user/settings/style').set('Authorization', 'Bearer test-token');
 
       expect(mockAuthenticateToken).toHaveBeenCalled();
     });
@@ -222,7 +220,7 @@ describe('Style Settings Endpoints', () => {
 
     it('should accept all valid style options', async () => {
       const validStyles = ['sarcastic', 'witty', 'playful', 'direct', 'friendly', 'custom'];
-      
+
       for (const style of validStyles) {
         const response = await request(app)
           .post('/api/user/settings/style')
@@ -237,12 +235,12 @@ describe('Style Settings Endpoints', () => {
 
     it('should accept all valid humor types', async () => {
       const validHumorTypes = ['witty', 'sarcastic', 'playful', 'dry', 'gentle', 'custom'];
-      
+
       for (const humorType of validHumorTypes) {
         const response = await request(app)
           .post('/api/user/settings/style')
           .set('Authorization', 'Bearer test-token')
-          .send({ 
+          .send({
             style: 'custom',
             settings: { humor_type: humorType }
           });

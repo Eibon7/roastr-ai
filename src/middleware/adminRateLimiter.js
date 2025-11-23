@@ -22,7 +22,10 @@ const createAdminRateLimiter = (options = {}) => {
   const parsedMax = parseInt(process.env.ADMIN_RATE_LIMIT_MAX, 10);
 
   const config = {
-    windowMs: Math.max(1000, Number.isFinite(parsedWindowMs) ? parsedWindowMs : options.windowMs || 5 * 60 * 1000), // Minimum 1 second
+    windowMs: Math.max(
+      1000,
+      Number.isFinite(parsedWindowMs) ? parsedWindowMs : options.windowMs || 5 * 60 * 1000
+    ), // Minimum 1 second
     max: Math.max(1, Number.isFinite(parsedMax) ? parsedMax : options.max || 50), // Minimum 1 request
     ...options
   };

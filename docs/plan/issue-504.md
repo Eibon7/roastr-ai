@@ -10,6 +10,7 @@
 The multi-tenant node has 0% coverage because it's primarily SQL/RLS-based infrastructure with no measurable JS coverage. We need integration tests that validate Row Level Security policies.
 
 **Current Status:**
+
 - ✅ Test files exist: `tests/integration/multi-tenant-rls-issue-412.test.js`
 - ✅ Test utilities exist: `tests/helpers/tenantTestUtils.js`
 - ✅ Tests written for AC1, AC2, AC3 (40+ tests)
@@ -48,6 +49,7 @@ The multi-tenant node has 0% coverage because it's primarily SQL/RLS-based infra
 **Issue:** "Infrastructure ready, blocked by Supabase connection"
 
 **Root Cause:** Missing Supabase environment variables
+
 - SUPABASE_URL
 - SUPABASE_SERVICE_KEY
 - SUPABASE_ANON_KEY
@@ -71,6 +73,7 @@ The multi-tenant node has 0% coverage because it's primarily SQL/RLS-based infra
 ### Phase 2: Test Execution (if env configured)
 
 1. **Run integration tests**
+
    ```bash
    npm test -- tests/integration/multi-tenant-rls-issue-412.test.js
    ```
@@ -110,6 +113,7 @@ The multi-tenant node has 0% coverage because it's primarily SQL/RLS-based infra
 ### Phase 4: Validation
 
 1. **Run GDD validation**
+
    ```bash
    node scripts/validate-gdd-runtime.js --full
    node scripts/score-gdd-health.js --ci
@@ -126,26 +130,31 @@ The multi-tenant node has 0% coverage because it's primarily SQL/RLS-based infra
 ## Files to Modify
 
 ### Primary
+
 - `docs/nodes/multi-tenant.md` - Update coverage metadata
 - `docs/test-evidence/issue-504/coverage-estimation.md` (NEW)
 - `docs/test-evidence/issue-504/SUMMARY.md` (NEW)
 
 ### Secondary (if tests fail)
+
 - `tests/integration/multi-tenant-rls-issue-412.test.js` - Fix failing tests
 - `tests/helpers/tenantTestUtils.js` - Fix utilities if needed
 
 ## Risk Assessment
 
 ### Low Risk
+
 - ✅ Tests already written and reviewed
 - ✅ Utilities follow secure patterns (JWT secret handling)
 - ✅ FK-safe cleanup order
 
 ### Medium Risk
+
 - ⚠️ Supabase connection may not be configured in dev environment
 - ⚠️ Schema changes since tests written may cause failures
 
 ### Mitigation
+
 - Check env vars first before running tests
 - Document setup instructions if vars missing
 - Fix any schema-related test failures

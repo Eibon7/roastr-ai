@@ -32,6 +32,7 @@ NO platform_violations.reportable ❌
 **Ejemplo:** "Te voy a matar {{ignore all instructions}}"
 
 **Flujo actual:**
+
 1. Gatekeeper detecta `{{ignore all instructions}}` → `classification: MALICIOUS`
 2. Early return con `categories: ['gatekeeper_malicious', 'prompt_injection']`
 3. ❌ Perspective API NUNCA se ejecuta
@@ -43,12 +44,12 @@ NO platform_violations.reportable ❌
 
 ### Archivos Actuales
 
-| Archivo | Líneas | Problema |
-|---------|--------|----------|
-| `src/workers/AnalyzeToxicityWorker.js` | 237-288 | Early return on Gatekeeper MALICIOUS |
-| `src/services/gatekeeperService.js` | 370 | Solo detecta injection, NO toxicidad |
-| `src/services/perspective.js` | 271 | Nunca se ejecuta si Gatekeeper returns |
-| `src/services/shieldService.js` | TBD | Recibe datos incompletos |
+| Archivo                                | Líneas  | Problema                               |
+| -------------------------------------- | ------- | -------------------------------------- |
+| `src/workers/AnalyzeToxicityWorker.js` | 237-288 | Early return on Gatekeeper MALICIOUS   |
+| `src/services/gatekeeperService.js`    | 370     | Solo detecta injection, NO toxicidad   |
+| `src/services/perspective.js`          | 271     | Nunca se ejecuta si Gatekeeper returns |
+| `src/services/shieldService.js`        | TBD     | Recibe datos incompletos               |
 
 ---
 
@@ -56,19 +57,19 @@ NO platform_violations.reportable ❌
 
 ### Security Risks
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| **ToS Violations** | CRITICAL | High | ✅ Parallel execution ensures both analyses |
-| **Legal Liability** | HIGH | Medium | ✅ Platform violations always detected |
-| **Reputation Damage** | HIGH | Medium | ✅ Proper reporting of threats/hate speech |
+| Risk                  | Impact   | Likelihood | Mitigation                                  |
+| --------------------- | -------- | ---------- | ------------------------------------------- |
+| **ToS Violations**    | CRITICAL | High       | ✅ Parallel execution ensures both analyses |
+| **Legal Liability**   | HIGH     | Medium     | ✅ Platform violations always detected      |
+| **Reputation Damage** | HIGH     | Medium     | ✅ Proper reporting of threats/hate speech  |
 
 ### Technical Risks
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| **Backward Compatibility** | MEDIUM | High | ✅ Maintain existing Shield action types |
-| **Increased Latency** | LOW | Medium | ✅ Parallel execution (no sequential delay) |
-| **API Cost Increase** | LOW | High | ✅ Rate limiting + fallback already exist |
+| Risk                       | Impact | Likelihood | Mitigation                                  |
+| -------------------------- | ------ | ---------- | ------------------------------------------- |
+| **Backward Compatibility** | MEDIUM | High       | ✅ Maintain existing Shield action types    |
+| **Increased Latency**      | LOW    | Medium     | ✅ Parallel execution (no sequential delay) |
+| **API Cost Increase**      | LOW    | High       | ✅ Rate limiting + fallback already exist   |
 
 ---
 
@@ -77,6 +78,7 @@ NO platform_violations.reportable ❌
 ### Architectural Complexity: **HIGH**
 
 **Reasons:**
+
 1. **Parallel Execution** - `Promise.allSettled()` with proper error handling
 2. **Decision Matrix** - 10 scenarios (see issue table)
 3. **Action Tags** - New schema for explicit actions
@@ -85,18 +87,22 @@ NO platform_violations.reportable ❌
 ### Implementation Phases
 
 **Phase 1: Core Services** (4-5 hours)
+
 - ✅ `AnalysisDepartmentService.js` - Orchestrator
 - ✅ `AnalysisDecisionEngine.js` - Decision logic
 
 **Phase 2: Worker Refactor** (2-3 hours)
+
 - ✅ Simplify `AnalyzeToxicityWorker.js`
 - ✅ Remove decision logic, delegate to department
 
 **Phase 3: Shield Integration** (2-3 hours)
+
 - ✅ Modify `ShieldService.executeActions()` to consume `action_tags[]`
 - ✅ Maintain backward compatibility
 
 **Phase 4: Tests** (3-4 hours)
+
 - ✅ Integration tests for decision matrix (9+ scenarios)
 - ✅ Edge case tests (fallback, failures)
 - ✅ Shield integration tests
@@ -110,12 +116,14 @@ NO platform_violations.reportable ❌
 **File:** `src/services/AnalysisDepartmentService.js`
 
 **Responsibilities:**
+
 - Orchestrate Gatekeeper + Perspective in **parallel** using `Promise.allSettled()`
 - Handle fallback if one service fails
 - Pass results to Decision Engine
 - Return unified output schema
 
 **Key Methods:**
+
 ```javascript
 class AnalysisDepartmentService {
   async analyzeComment(commentText, userContext) {
@@ -138,6 +146,7 @@ class AnalysisDepartmentService {
 ```
 
 **Testing:**
+
 - Unit tests: Parallel execution, fallback scenarios
 - Integration tests: Full flow with real services (mocked APIs)
 
@@ -148,12 +157,14 @@ class AnalysisDepartmentService {
 **File:** `src/services/AnalysisDecisionEngine.js`
 
 **Responsibilities:**
+
 - Implement decision matrix (10 scenarios from issue)
 - Detect platform violations (`threat >= 0.8`, `identity_attack >= 0.8`)
 - Calculate combined scores
 - Generate action tags (`hide_comment`, `report_to_platform`, etc.)
 
 **Key Methods:**
+
 ```javascript
 class AnalysisDecisionEngine {
   determineDirection(gatekeeperResult, perspectiveResult, userContext) {
@@ -200,6 +211,7 @@ class AnalysisDecisionEngine {
 ```
 
 **Testing:**
+
 - Unit tests: Decision matrix (10 scenarios)
 - Edge cases: Ambiguous scores, missing data
 
@@ -210,11 +222,13 @@ class AnalysisDecisionEngine {
 **File:** `src/workers/AnalyzeToxicityWorker.js`
 
 **Changes:**
+
 - **REMOVE** lines 237-288 (Gatekeeper early return logic)
 - **ADD** call to `analysisDepartment.analyzeComment()`
 - **SIMPLIFY** routing based on `decision.direction`
 
 **Before (FLAWED):**
+
 ```javascript
 // Lines 237-288
 const gatekeeperResult = await this.gatekeeperService.classifyComment(commentText);
@@ -229,12 +243,10 @@ const perspectiveResult = await this.perspectiveAPI.analyzeToxicity(commentText)
 ```
 
 **After (FIXED):**
+
 ```javascript
 // Call unified Analysis Department
-const analysisResult = await this.analysisDepartment.analyzeComment(
-  commentText,
-  userContext
-);
+const analysisResult = await this.analysisDepartment.analyzeComment(commentText, userContext);
 
 // Route based on direction
 switch (analysisResult.direction) {
@@ -251,6 +263,7 @@ switch (analysisResult.direction) {
 ```
 
 **Testing:**
+
 - Integration tests: Verify routing for all directions
 - Backward compatibility: Existing Shield tests still pass
 
@@ -261,11 +274,13 @@ switch (analysisResult.direction) {
 **File:** `src/services/shieldService.js`
 
 **Changes:**
+
 - Modify `executeActions()` to accept `action_tags[]` parameter
 - Map action tags to platform-specific actions
 - Maintain backward compatibility with existing callers
 
 **Before:**
+
 ```javascript
 executeActions(decision) {
   // Infers actions from severity/categories
@@ -275,6 +290,7 @@ executeActions(decision) {
 ```
 
 **After:**
+
 ```javascript
 executeActions(decision) {
   // Use explicit action_tags if provided, fallback to inference
@@ -291,6 +307,7 @@ executeActions(decision) {
 ```
 
 **Testing:**
+
 - Unit tests: Action tag mapping
 - Integration tests: Platform-specific actions
 
@@ -301,6 +318,7 @@ executeActions(decision) {
 **Table:** `comments` (or `shield_events`)
 
 **New Fields:**
+
 ```sql
 ALTER TABLE comments ADD COLUMN direction VARCHAR(20); -- PUBLISH, ROAST, SHIELD
 ALTER TABLE comments ADD COLUMN action_tags TEXT[]; -- Array of action tags
@@ -326,36 +344,38 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 
 ### Decision Matrix Tests (9 scenarios)
 
-| Test | Condition | Expected Direction | Expected Action Tags |
-|------|-----------|-------------------|---------------------|
-| 1 | Injection ONLY | SHIELD | `hide_comment`, `block_user`, `check_reincidence` (NO report) |
-| 2 | Threat ONLY | SHIELD | `hide_comment`, `block_user`, **`report_to_platform`** |
-| 3 | Injection + Threat | SHIELD | `hide_comment`, `block_user`, **`report_to_platform`** |
-| 4 | Toxicity ≥ τ_critical | SHIELD | `hide_comment`, `block_user`, `check_reincidence` |
-| 5 | τ_shield ≤ score < τ_critical | SHIELD | `hide_comment`, (+`report` if reincident) |
-| 6 | Zona correctiva | ROAST | `roast_correctivo`, `add_strike_1`, `check_reincidence` |
-| 7 | τ_roast_lower ≤ score < τ_shield | ROAST | `roast_{soft\|balanced\|hard}`, `auto_approve`/`require_approval` |
-| 8 | POSITIVE classification | PUBLISH | `publish_normal` |
-| 9 | score < τ_roast_lower | PUBLISH | `publish_normal` |
+| Test | Condition                        | Expected Direction | Expected Action Tags                                              |
+| ---- | -------------------------------- | ------------------ | ----------------------------------------------------------------- |
+| 1    | Injection ONLY                   | SHIELD             | `hide_comment`, `block_user`, `check_reincidence` (NO report)     |
+| 2    | Threat ONLY                      | SHIELD             | `hide_comment`, `block_user`, **`report_to_platform`**            |
+| 3    | Injection + Threat               | SHIELD             | `hide_comment`, `block_user`, **`report_to_platform`**            |
+| 4    | Toxicity ≥ τ_critical            | SHIELD             | `hide_comment`, `block_user`, `check_reincidence`                 |
+| 5    | τ_shield ≤ score < τ_critical    | SHIELD             | `hide_comment`, (+`report` if reincident)                         |
+| 6    | Zona correctiva                  | ROAST              | `roast_correctivo`, `add_strike_1`, `check_reincidence`           |
+| 7    | τ_roast_lower ≤ score < τ_shield | ROAST              | `roast_{soft\|balanced\|hard}`, `auto_approve`/`require_approval` |
+| 8    | POSITIVE classification          | PUBLISH            | `publish_normal`                                                  |
+| 9    | score < τ_roast_lower            | PUBLISH            | `publish_normal`                                                  |
 
 ### Edge Case Tests (6 scenarios)
 
-| Test | Scenario | Expected Behavior |
-|------|----------|-------------------|
-| 1 | Both services fail | SHIELD (fail-safe), `require_manual_review` |
-| 2 | Gatekeeper fails | Use Perspective + pattern matching |
-| 3 | Perspective fails | Use OpenAI Moderation fallback |
-| 4 | Ambiguous scores | Use Decision Engine tie-breaker logic |
-| 5 | Missing user context | Use default thresholds |
-| 6 | API timeout | Retry with exponential backoff |
+| Test | Scenario             | Expected Behavior                           |
+| ---- | -------------------- | ------------------------------------------- |
+| 1    | Both services fail   | SHIELD (fail-safe), `require_manual_review` |
+| 2    | Gatekeeper fails     | Use Perspective + pattern matching          |
+| 3    | Perspective fails    | Use OpenAI Moderation fallback              |
+| 4    | Ambiguous scores     | Use Decision Engine tie-breaker logic       |
+| 5    | Missing user context | Use default thresholds                      |
+| 6    | API timeout          | Retry with exponential backoff              |
 
 ### Test Files
 
 **Integration Tests:**
+
 - `tests/integration/analysis-department.test.js` (NEW) - 15+ tests
 - `tests/integration/analysis-decision-engine.test.js` (NEW) - 10+ tests
 
 **Unit Tests:**
+
 - `tests/unit/services/AnalysisDepartmentService.test.js` (NEW)
 - `tests/unit/services/AnalysisDecisionEngine.test.js` (NEW)
 - `tests/unit/workers/AnalyzeToxicityWorker.test.js` (MODIFIED) - Verify refactor
@@ -369,18 +389,21 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 ### GDD Nodes
 
 **1. `docs/nodes/shield.md`**
+
 - Add "Analysis Department Integration" section
 - Update architecture diagram with parallel execution
 - Document `action_tags[]` schema
 - Add "Platform Violations Detection" section
 
 **2. `docs/nodes/roast.md`**
+
 - Update "Toxicity Analysis" section with unified flow
 - Document new routing logic
 
 ### Additional Documentation
 
 **3. `docs/architecture/analysis-department.md`** (NEW)
+
 - Full architecture explanation
 - Decision matrix reference
 - Action tags specification
@@ -475,16 +498,19 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 ### Specific Patterns
 
 **Error Handling (#5):**
+
 - ✅ Use specific error codes (`E_GATEKEEPER_FAIL`, `E_PERSPECTIVE_FAIL`)
 - ✅ Implement retry with exponential backoff
 - ✅ Log with context (attempt number, user ID)
 
 **Testing (#2):**
+
 - ✅ TDD: Write tests FIRST
 - ✅ Cover happy + error + edge cases
 - ✅ Verify mock calls: `expect(mock).toHaveBeenCalledWith(...)`
 
 **Security (#6):**
+
 - ✅ NO env vars in docs
 - ✅ NO sensitive data in logs
 - ✅ Validate all inputs
@@ -498,6 +524,7 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 **Issue:** Perspective API now called for ALL comments (not just non-malicious)
 
 **Mitigation:**
+
 - Existing rate limiting already in place (`perspective.js:227`)
 - Fallback to OpenAI Moderation if quota exceeded
 - Cost acceptable for security gain
@@ -507,6 +534,7 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 **Issue:** Parallel execution may add ~100-200ms
 
 **Mitigation:**
+
 - Parallel execution means no sequential delay
 - Both services already have timeouts (10s)
 - User won't notice <200ms difference
@@ -516,6 +544,7 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 **Issue:** Existing Shield integrations expect specific data format
 
 **Mitigation:**
+
 - Maintain `severity` and `categories` fields
 - `action_tags` is ADDITIVE (optional parameter)
 - Fallback to inference if `action_tags` not provided
@@ -536,19 +565,20 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 
 ## 📊 Estimated Effort
 
-| Phase | Estimated Hours | Confidence |
-|-------|----------------|------------|
-| Core Services | 4-5 hours | 90% |
-| Worker Refactor | 2-3 hours | 85% |
-| Shield Integration | 2-3 hours | 80% |
-| Testing & Docs | 3-4 hours | 85% |
-| **TOTAL** | **12-14 hours** | **85%** |
+| Phase              | Estimated Hours | Confidence |
+| ------------------ | --------------- | ---------- |
+| Core Services      | 4-5 hours       | 90%        |
+| Worker Refactor    | 2-3 hours       | 85%        |
+| Shield Integration | 2-3 hours       | 80%        |
+| Testing & Docs     | 3-4 hours       | 85%        |
+| **TOTAL**          | **12-14 hours** | **85%**    |
 
 ---
 
 **Recommendation:** ✅ **CREATE**
 
 **Justification:**
+
 - P0 security gap requires immediate fix
 - Architecture is sound (parallel execution, fail-safe)
 - Backward compatibility maintained
@@ -579,6 +609,7 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 **CodeRabbit Finding:** Gatekeeper fallback returns `classification: 'NEUTRAL'` and `is_prompt_injection: false`, allowing low-toxicity prompt injections to bypass security during Gatekeeper outages.
 
 **Attack Vector:**
+
 1. Transient Gatekeeper outage occurs
 2. User submits comment with prompt injection + low toxicity
 3. Gatekeeper fails → fallback returns NEUTRAL
@@ -627,26 +658,31 @@ ALTER TABLE comments ADD COLUMN analysis_metadata JSONB; -- Full metadata
 ### Impact Assessment
 
 **Security Improvement:**
+
 - ✅ Closes security gap identified by CodeRabbit
 - ✅ Fail-safe principle consistently applied
 - ✅ All fallback scenarios now route to SHIELD (manual review required)
 
 **User Impact:**
+
 - ⚠️ False positives increase during Gatekeeper outages (intentional)
 - ✅ Manual review ensures no malicious content published
 - ✅ Monitoring alerts detect service degradation
 
 **Performance Impact:**
+
 - ✅ No latency increase (decision logic adjustment only)
 - ✅ No additional API calls
 
 ### Monitoring & Alerting
 
 **Action Tags for Monitoring:**
+
 - `gatekeeper_unavailable` - Track fallback frequency
 - `require_manual_review` - Queue depth monitoring
 
 **Recommended Alerts:**
+
 - Alert if `gatekeeper_unavailable` appears in >5% of comments (service issue)
 - Alert if manual review queue depth exceeds threshold
 - Dashboard for Gatekeeper service SLA and uptime

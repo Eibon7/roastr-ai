@@ -14,16 +14,18 @@
 **Archivo**: `src/services/tierValidationService.js`
 
 **Métricas actuales** (líneas 48-54):
+
 ```javascript
 this.metrics = {
-    validationCalls: 0,
-    allowedActions: 0,
-    blockedActions: 0,
-    errors: 0
+  validationCalls: 0,
+  allowedActions: 0,
+  blockedActions: 0,
+  errors: 0
 };
 ```
 
 **Cache existente**:
+
 - `usageCache`: Map con timeout de 5 minutos
 - `requestScopedCache`: Cache por request
 - TTL: `CACHE_CONFIG.timeouts.usage` (300,000ms = 5min)
@@ -39,6 +41,7 @@ this.metrics = {
 **Objetivo**: Rastrear hit rates y rendimiento del cache de 5 minutos
 
 **Implementación**:
+
 1. Añadir métricas de cache a `this.metrics`:
    - `cacheHits` - Número de hits de cache
    - `cacheMisses` - Número de misses
@@ -52,6 +55,7 @@ this.metrics = {
    - TTL actual, hit rate, size, performance
 
 **Archivos afectados**:
+
 - `src/services/tierValidationService.js` (modificar métricas + métodos cache)
 
 ---
@@ -61,10 +65,12 @@ this.metrics = {
 **Objetivo**: Configurar alerting para `this.metrics.errors`
 
 **Thresholds**:
+
 - Error rate >5% (errors / validationCalls)
 - Absolute count >100 errors/hour
 
 **Implementación**:
+
 1. Crear `src/services/monitoring/tierValidationMonitor.js`:
    - Clase `TierValidationMonitor`
    - Método `checkErrorThresholds()`
@@ -85,6 +91,7 @@ this.metrics = {
    - Incluir: userId, error rate, absolute count, threshold
 
 **Archivos afectados**:
+
 - `src/services/tierValidationService.js` (añadir errorTimestamps + alerting)
 - `src/services/monitoring/tierValidationMonitor.js` (NUEVO)
 
@@ -95,6 +102,7 @@ this.metrics = {
 **Objetivo**: Mejorar error tracking con Sentry breadcrumbs
 
 **Implementación**:
+
 1. Verificar si Sentry ya está configurado:
    - Buscar `@sentry/node` en package.json
    - Buscar inicialización en `src/index.js` o `src/app.js`
@@ -116,6 +124,7 @@ this.metrics = {
    - Incluir contexto completo: userId, action, metrics
 
 **Archivos afectados**:
+
 - `package.json` (si es necesario)
 - `src/config/sentry.js` (NUEVO, opcional)
 - `src/services/tierValidationService.js` (integración Sentry)
@@ -127,19 +136,21 @@ this.metrics = {
 ### Paso 1: Cache Performance Monitoring (AC1)
 
 1. Extender `this.metrics`:
+
    ```javascript
    this.metrics = {
-       validationCalls: 0,
-       allowedActions: 0,
-       blockedActions: 0,
-       errors: 0,
-       // NEW:
-       cacheHits: 0,
-       cacheMisses: 0
+     validationCalls: 0,
+     allowedActions: 0,
+     blockedActions: 0,
+     errors: 0,
+     // NEW:
+     cacheHits: 0,
+     cacheMisses: 0
    };
    ```
 
 2. Instrumentar `getCachedUsage()`:
+
    ```javascript
    getCachedUsage(userId) {
        const cached = this.usageCache.get(userId);
@@ -153,6 +164,7 @@ this.metrics = {
    ```
 
 3. Crear `getCachePerformanceMetrics()`:
+
    ```javascript
    getCachePerformanceMetrics() {
        const totalRequests = this.metrics.cacheHits + this.metrics.cacheMisses;
@@ -186,6 +198,7 @@ this.metrics = {
 ### Paso 2: Error Alerting System (AC2) 🔴
 
 1. Añadir tracking temporal:
+
    ```javascript
    constructor() {
        // ... existing
@@ -196,6 +209,7 @@ this.metrics = {
    ```
 
 2. Método para registrar errors:
+
    ```javascript
    recordError(userId, action, error) {
        this.metrics.errors++;
@@ -208,6 +222,7 @@ this.metrics = {
    ```
 
 3. Método para limpiar errors antiguos:
+
    ```javascript
    pruneOldErrors() {
        const oneHourAgo = Date.now() - (60 * 60 * 1000);
@@ -216,6 +231,7 @@ this.metrics = {
    ```
 
 4. Método de alerting:
+
    ```javascript
    checkErrorThresholds(userId, action, error) {
        this.pruneOldErrors();
@@ -262,6 +278,7 @@ this.metrics = {
    ```
 
 5. Método para triggerar alerta:
+
    ```javascript
    triggerAlert(alertData) {
        logger.error('🚨 TIER VALIDATION ALERT: Error threshold exceeded', alertData);
@@ -290,40 +307,43 @@ this.metrics = {
 ### Paso 3: Sentry Integration (AC3)
 
 1. Verificar existencia de Sentry:
+
    ```bash
    grep -r "@sentry/node" package.json src/
    ```
 
 2. Si NO existe, añadir:
+
    ```bash
    npm install @sentry/node --save
    ```
 
 3. Crear configuración:
+
    ```javascript
    // src/config/sentry.js
    const Sentry = require('@sentry/node');
    const { logger } = require('../utils/logger');
 
-   const SENTRY_ENABLED = process.env.SENTRY_ENABLED === 'true' &&
-                          process.env.SENTRY_DSN;
+   const SENTRY_ENABLED = process.env.SENTRY_ENABLED === 'true' && process.env.SENTRY_DSN;
 
    if (SENTRY_ENABLED) {
-       Sentry.init({
-           dsn: process.env.SENTRY_DSN,
-           environment: process.env.NODE_ENV || 'development',
-           tracesSampleRate: 0.1  // 10% transaction sampling
-       });
+     Sentry.init({
+       dsn: process.env.SENTRY_DSN,
+       environment: process.env.NODE_ENV || 'development',
+       tracesSampleRate: 0.1 // 10% transaction sampling
+     });
 
-       logger.info('Sentry initialized for tier validation monitoring');
+     logger.info('Sentry initialized for tier validation monitoring');
    } else {
-       logger.debug('Sentry disabled or not configured');
+     logger.debug('Sentry disabled or not configured');
    }
 
    module.exports = { Sentry, SENTRY_ENABLED };
    ```
 
 4. Integrar en `tierValidationService.js`:
+
    ```javascript
    // At top of file
    const { Sentry, SENTRY_ENABLED } = require('../config/sentry');
@@ -346,6 +366,7 @@ this.metrics = {
    ```
 
 5. Añadir breadcrumbs en puntos clave:
+
    ```javascript
    async validateAction(userId, action, options = {}) {
        this.addSentryBreadcrumb('validation_start', {
@@ -403,30 +424,30 @@ this.metrics = {
 
 ```javascript
 describe('Cache Performance Monitoring', () => {
-    it('should track cache hits', async () => {
-        // Call twice with same userId - second should hit cache
-        await service.validateAction(userId, 'roast');
-        await service.validateAction(userId, 'roast');
+  it('should track cache hits', async () => {
+    // Call twice with same userId - second should hit cache
+    await service.validateAction(userId, 'roast');
+    await service.validateAction(userId, 'roast');
 
-        const metrics = service.getMetrics();
-        expect(metrics.cacheHits).toBeGreaterThan(0);
-    });
+    const metrics = service.getMetrics();
+    expect(metrics.cacheHits).toBeGreaterThan(0);
+  });
 
-    it('should track cache misses', async () => {
-        const metrics1 = service.getMetrics();
-        await service.validateAction(userId, 'roast');
-        const metrics2 = service.getMetrics();
+  it('should track cache misses', async () => {
+    const metrics1 = service.getMetrics();
+    await service.validateAction(userId, 'roast');
+    const metrics2 = service.getMetrics();
 
-        expect(metrics2.cacheMisses).toBe(metrics1.cacheMisses + 1);
-    });
+    expect(metrics2.cacheMisses).toBe(metrics1.cacheMisses + 1);
+  });
 
-    it('should calculate hit rate correctly', () => {
-        service.metrics.cacheHits = 80;
-        service.metrics.cacheMisses = 20;
+  it('should calculate hit rate correctly', () => {
+    service.metrics.cacheHits = 80;
+    service.metrics.cacheMisses = 20;
 
-        const perf = service.getCachePerformanceMetrics();
-        expect(perf.hitRate).toBe('80.00%');
-    });
+    const perf = service.getCachePerformanceMetrics();
+    expect(perf.hitRate).toBe('80.00%');
+  });
 });
 ```
 
@@ -434,50 +455,50 @@ describe('Cache Performance Monitoring', () => {
 
 ```javascript
 describe('Error Alerting', () => {
-    it('should trigger alert when error rate >5%', () => {
-        // Simulate 100 validations with 6 errors (6%)
-        service.metrics.validationCalls = 100;
-        service.metrics.errors = 0;
+  it('should trigger alert when error rate >5%', () => {
+    // Simulate 100 validations with 6 errors (6%)
+    service.metrics.validationCalls = 100;
+    service.metrics.errors = 0;
 
-        const alertSpy = jest.spyOn(service, 'triggerAlert');
+    const alertSpy = jest.spyOn(service, 'triggerAlert');
 
-        // Trigger 6th error
-        for (let i = 0; i < 6; i++) {
-            service.recordError(userId, 'roast', new Error('test'));
-        }
+    // Trigger 6th error
+    for (let i = 0; i < 6; i++) {
+      service.recordError(userId, 'roast', new Error('test'));
+    }
 
-        expect(alertSpy).toHaveBeenCalled();
-        expect(alertSpy.mock.calls[0][0].violations.rateExceeded).toBe(true);
-    });
+    expect(alertSpy).toHaveBeenCalled();
+    expect(alertSpy.mock.calls[0][0].violations.rateExceeded).toBe(true);
+  });
 
-    it('should trigger alert when errors >100/hour', () => {
-        const alertSpy = jest.spyOn(service, 'triggerAlert');
+  it('should trigger alert when errors >100/hour', () => {
+    const alertSpy = jest.spyOn(service, 'triggerAlert');
 
-        // Simulate 101 errors in last hour
-        for (let i = 0; i < 101; i++) {
-            service.recordError(userId, 'roast', new Error('test'));
-        }
+    // Simulate 101 errors in last hour
+    for (let i = 0; i < 101; i++) {
+      service.recordError(userId, 'roast', new Error('test'));
+    }
 
-        expect(alertSpy).toHaveBeenCalled();
-        expect(alertSpy.mock.calls[0][0].violations.countExceeded).toBe(true);
-    });
+    expect(alertSpy).toHaveBeenCalled();
+    expect(alertSpy.mock.calls[0][0].violations.countExceeded).toBe(true);
+  });
 
-    it('should respect alert cooldown period', () => {
-        service.metrics.validationCalls = 100;
-        const alertSpy = jest.spyOn(service, 'triggerAlert');
+  it('should respect alert cooldown period', () => {
+    service.metrics.validationCalls = 100;
+    const alertSpy = jest.spyOn(service, 'triggerAlert');
 
-        // First alert
-        for (let i = 0; i < 10; i++) {
-            service.recordError(userId, 'roast', new Error('test'));
-        }
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+    // First alert
+    for (let i = 0; i < 10; i++) {
+      service.recordError(userId, 'roast', new Error('test'));
+    }
+    expect(alertSpy).toHaveBeenCalledTimes(1);
 
-        // Second batch within cooldown
-        for (let i = 0; i < 10; i++) {
-            service.recordError(userId, 'roast', new Error('test'));
-        }
-        expect(alertSpy).toHaveBeenCalledTimes(1);  // Still only once
-    });
+    // Second batch within cooldown
+    for (let i = 0; i < 10; i++) {
+      service.recordError(userId, 'roast', new Error('test'));
+    }
+    expect(alertSpy).toHaveBeenCalledTimes(1); // Still only once
+  });
 });
 ```
 
@@ -485,43 +506,43 @@ describe('Error Alerting', () => {
 
 ```javascript
 describe('Sentry Integration', () => {
-    beforeEach(() => {
-        process.env.SENTRY_ENABLED = 'true';
-        jest.clearAllMocks();
+  beforeEach(() => {
+    process.env.SENTRY_ENABLED = 'true';
+    jest.clearAllMocks();
+  });
+
+  it('should add breadcrumb on validation start', async () => {
+    const breadcrumbSpy = jest.spyOn(Sentry, 'addBreadcrumb');
+
+    await service.validateAction(userId, 'roast');
+
+    expect(breadcrumbSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'tier_validation.validation_start'
+      })
+    );
+  });
+
+  it('should capture exception with context on error', async () => {
+    const captureSpy = jest.spyOn(Sentry, 'captureException');
+
+    // Force an error
+    mockSupabase.from.mockImplementation(() => {
+      throw new Error('Database error');
     });
 
-    it('should add breadcrumb on validation start', async () => {
-        const breadcrumbSpy = jest.spyOn(Sentry, 'addBreadcrumb');
+    await service.validateAction(userId, 'roast').catch(() => {});
 
-        await service.validateAction(userId, 'roast');
-
-        expect(breadcrumbSpy).toHaveBeenCalledWith(
-            expect.objectContaining({
-                category: 'tier_validation.validation_start'
-            })
-        );
-    });
-
-    it('should capture exception with context on error', async () => {
-        const captureSpy = jest.spyOn(Sentry, 'captureException');
-
-        // Force an error
-        mockSupabase.from.mockImplementation(() => {
-            throw new Error('Database error');
-        });
-
-        await service.validateAction(userId, 'roast').catch(() => {});
-
-        expect(captureSpy).toHaveBeenCalledWith(
-            expect.any(Error),
-            expect.objectContaining({
-                extra: expect.objectContaining({
-                    userId,
-                    metrics: expect.any(Object)
-                })
-            })
-        );
-    });
+    expect(captureSpy).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: expect.objectContaining({
+          userId,
+          metrics: expect.any(Object)
+        })
+      })
+    );
+  });
 });
 ```
 
@@ -539,22 +560,26 @@ Añadir nueva sección:
 Production monitoring for tier validation system:
 
 **Cache Performance**:
+
 - Hit rate tracking (target: >80%)
 - TTL: 5 minutes
 - Metrics: hits, misses, hitRate, size
 
 **Error Alerting**:
+
 - Threshold 1: Error rate >5%
 - Threshold 2: Absolute count >100 errors/hour
 - Alert cooldown: 5 minutes
 - Delivery: Structured logs + optional webhook
 
 **Sentry Integration**:
+
 - Breadcrumbs at validation lifecycle points
 - Enhanced exception capture with full context
 - Feature flag: `SENTRY_ENABLED=true`
 
 **Endpoints**:
+
 - `/api/tier-validation/metrics` - Get current metrics
 - `/api/tier-validation/cache-performance` - Cache stats
 ```

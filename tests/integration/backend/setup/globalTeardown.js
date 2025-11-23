@@ -1,6 +1,6 @@
 /**
  * Global Teardown for Backend Integration Tests
- * 
+ *
  * Runs once after all tests complete
  */
 
@@ -41,13 +41,9 @@ module.exports = async () => {
   try {
     const reportsDir = path.resolve(__dirname, '../reports');
     const summaryPath = path.join(reportsDir, 'integration-summary.json');
-    
-    await fs.writeFile(
-      summaryPath,
-      JSON.stringify(summaryReport, null, 2),
-      'utf-8'
-    );
-    
+
+    await fs.writeFile(summaryPath, JSON.stringify(summaryReport, null, 2), 'utf-8');
+
     console.log(`📊 Test summary saved to: ${summaryPath}`);
   } catch (error) {
     console.warn('⚠️  Failed to save test summary:', error.message);
@@ -67,7 +63,7 @@ module.exports = async () => {
 
   // Log completion message
   console.log('✅ Backend Integration Tests completed successfully');
-  
+
   if (process.env.USE_FIXTURES === 'true') {
     console.log('💡 Tests ran in fixture mode. To test against real backend:');
     console.log('   npm run test:integration-backend');

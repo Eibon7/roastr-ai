@@ -37,7 +37,12 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
-const { generateCsrfToken, setCsrfToken, validateCsrfToken, getCsrfToken } = require('../../../src/middleware/csrf');
+const {
+  generateCsrfToken,
+  setCsrfToken,
+  validateCsrfToken,
+  getCsrfToken
+} = require('../../../src/middleware/csrf');
 
 describe('CSRF Middleware', () => {
   describe('generateCsrfToken', () => {
@@ -281,7 +286,7 @@ describe('CSRF Middleware', () => {
     describe('State-modifying methods', () => {
       const methods = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
-      methods.forEach(method => {
+      methods.forEach((method) => {
         test(`should validate CSRF token for ${method} requests`, () => {
           req.method = method;
           req.headers = {}; // No CSRF token

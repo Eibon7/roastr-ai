@@ -45,7 +45,7 @@ describe('Guardian Workflow - Integration Tests', () => {
     // Clean existing case files
     if (fs.existsSync(testCasesDir)) {
       const files = fs.readdirSync(testCasesDir);
-      files.forEach(file => {
+      files.forEach((file) => {
         fs.unlinkSync(path.join(testCasesDir, file));
       });
     }
@@ -63,7 +63,7 @@ describe('Guardian Workflow - Integration Tests', () => {
     // Cleanup test artifacts
     if (fs.existsSync(testCasesDir)) {
       const files = fs.readdirSync(testCasesDir);
-      files.forEach(file => {
+      files.forEach((file) => {
         fs.unlinkSync(path.join(testCasesDir, file));
       });
     }

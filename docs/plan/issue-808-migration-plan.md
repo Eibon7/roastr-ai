@@ -26,6 +26,7 @@ Migrar todos los tests de billing que actualmente usan Stripe para que funcionen
 ## 🎯 Objetivo
 
 Migrar 73 tests de `billing-coverage-issue502.test.js` de Stripe a Polar manteniendo:
+
 - ✅ 100% cobertura
 - ✅ Misma funcionalidad
 - ✅ Mocks de Polar en lugar de Stripe
@@ -36,12 +37,14 @@ Migrar 73 tests de `billing-coverage-issue502.test.js` de Stripe a Polar manteni
 ## 📝 Archivos a Migrar
 
 ### Principal:
+
 1. **`tests/unit/routes/billing-coverage-issue502.test.js`** ⭐
    - 73 tests con Stripe
    - Mocks de `stripeWrapper` y `billingInterface`
    - Variables de entorno `STRIPE_*`
 
 ### Secundarios (evaluar después):
+
 2. `tests/unit/routes/billing.test.js`
 3. `tests/unit/routes/billing-webhooks.test.js`
 4. `tests/unit/routes/billing-transactions-issue95.test.js`
@@ -56,31 +59,34 @@ Migrar 73 tests de `billing-coverage-issue502.test.js` de Stripe a Polar manteni
 ### 1. Variables de Entorno
 
 **De:**
+
 ```javascript
-STRIPE_SECRET_KEY
-STRIPE_WEBHOOK_SECRET
-STRIPE_PRICE_LOOKUP_STARTER
-STRIPE_PRICE_LOOKUP_PRO
-STRIPE_PRICE_LOOKUP_PLUS
-STRIPE_SUCCESS_URL
-STRIPE_CANCEL_URL
-STRIPE_PORTAL_RETURN_URL
+STRIPE_SECRET_KEY;
+STRIPE_WEBHOOK_SECRET;
+STRIPE_PRICE_LOOKUP_STARTER;
+STRIPE_PRICE_LOOKUP_PRO;
+STRIPE_PRICE_LOOKUP_PLUS;
+STRIPE_SUCCESS_URL;
+STRIPE_CANCEL_URL;
+STRIPE_PORTAL_RETURN_URL;
 ```
 
 **A:**
+
 ```javascript
-POLAR_ACCESS_TOKEN
-POLAR_WEBHOOK_SECRET
-POLAR_STARTER_PRODUCT_ID
-POLAR_PRO_PRODUCT_ID
-POLAR_PLUS_PRODUCT_ID
-POLAR_SUCCESS_URL
-POLAR_ALLOWED_PRODUCT_IDS
+POLAR_ACCESS_TOKEN;
+POLAR_WEBHOOK_SECRET;
+POLAR_STARTER_PRODUCT_ID;
+POLAR_PRO_PRODUCT_ID;
+POLAR_PLUS_PRODUCT_ID;
+POLAR_SUCCESS_URL;
+POLAR_ALLOWED_PRODUCT_IDS;
 ```
 
 ### 2. Mocks
 
 **De:**
+
 ```javascript
 mockStripe = {
   customers: { create, retrieve },
@@ -89,27 +95,30 @@ mockStripe = {
   billingPortal: { sessions: { create } },
   subscriptions: { retrieve },
   webhooks: { constructEvent }
-}
+};
 ```
 
 **A:**
+
 ```javascript
 mockPolar = {
   checkouts: { create, get },
   orders: { list },
-  subscriptions: { get, update, cancel },
+  subscriptions: { get, update, cancel }
   // Webhook validation diferente (HMAC)
-}
+};
 ```
 
 ### 3. Estructura de Respuestas
 
 **Stripe:**
+
 - `checkout.session.id` → `cs_test_123`
 - `checkout.session.url` → `https://checkout.stripe.com/...`
 - `price.id` → `price_xxx`
 
 **Polar:**
+
 - `checkout.id` → `checkout_xxx`
 - `checkout.url` → `https://polar.sh/checkout/...`
 - `product.id` → `product_xxx` (no price_id)
@@ -117,11 +126,13 @@ mockPolar = {
 ### 4. Webhooks
 
 **Stripe:**
+
 - `checkout.session.completed`
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
 
 **Polar:**
+
 - `checkout.created`
 - `order.created`
 - `subscription.created`
@@ -133,6 +144,7 @@ mockPolar = {
 ## 📋 Checklist de Migración
 
 ### Fase 1: Setup y Preparación
+
 - [ ] Crear rama: `feature/issue-808-polar-tests-migration`
 - [ ] Leer `docs/plan/issue-808-migration-summary.md`
 - [ ] Verificar que PR #888 está mergeada o incluir cambios
@@ -140,12 +152,14 @@ mockPolar = {
 - [ ] Actualizar variables de entorno en tests
 
 ### Fase 2: Migración de Mocks
+
 - [ ] Reemplazar `mockStripe` con `mockPolar`
 - [ ] Actualizar estructura de mocks (checkouts, orders, subscriptions)
 - [ ] Crear helper para webhook signature validation (HMAC)
 - [ ] Actualizar respuestas mock para formato Polar
 
 ### Fase 3: Migración de Tests
+
 - [ ] Actualizar `beforeAll` con variables Polar
 - [ ] Migrar tests de checkout session creation
 - [ ] Migrar tests de portal session creation
@@ -154,6 +168,7 @@ mockPolar = {
 - [ ] Actualizar validaciones de lookup keys → product IDs
 
 ### Fase 4: Validación
+
 - [ ] Ejecutar todos los tests: `npm test -- billing-coverage-issue502`
 - [ ] Verificar cobertura sigue siendo 100%
 - [ ] Verificar que todos los tests pasan
@@ -212,7 +227,7 @@ function createPolarWebhookEvent(type, data) {
     .createHmac('sha256', process.env.POLAR_WEBHOOK_SECRET)
     .update(payload)
     .digest('hex');
-  
+
   return {
     payload,
     signature: `sha256=${signature}`,
@@ -259,4 +274,3 @@ function createPolarWebhookEvent(type, data) {
 3. ⏭️ Migrar mocks primero
 4. ⏭️ Migrar tests uno por uno
 5. ⏭️ Validar y crear PR
-

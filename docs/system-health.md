@@ -17,23 +17,23 @@
 
 ## Node Scores
 
-| Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
-|------|-------|--------|--------------|----------|--------------|--------|
-| guardian | 🟡 77 | degraded | 2025-10-23 | 0% | 0 | 0 |
-| trainer | 🟡 79 | degraded | 2025-10-29 | 0% | 0 | 0 |
-| social-platforms | 🟢 82 | healthy | 2025-11-11 | 14% | 0 | 0 |
-| analytics | 🟢 83 | healthy | 2025-10-29 | 59% | 0 | 0 |
-| observability | 🟢 86 | healthy | 2025-11-11 | 46% | 0 | 0 |
-| queue-system | 🟢 86 | healthy | 2025-10-28 | 67% | 0 | 0 |
-| roast | 🟢 88 | healthy | 2025-11-17 | 59% | 0 | 0 |
-| cost-control | 🟢 93 | healthy | 2025-11-21 | 60% | 0 | 0 |
-| plan-features | 🟢 93 | healthy | 2025-11-18 | 74% | 0 | 0 |
-| tone | 🟢 94 | healthy | 2025-11-04 | 100% | 0 | 0 |
-| persona | 🟢 95 | healthy | 2025-11-06 | 90% | 0 | 0 |
-| billing | 🟢 96 | healthy | 2025-11-11 | 97.63% | 0 | 0 |
-| multi-tenant | 🟢 96 | healthy | 2025-11-11 | 94.25% | 0 | 0 |
-| platform-constraints | 🟢 98 | healthy | 2025-11-16 | 100% | 0 | 0 |
-| shield | 🟢 98 | healthy | 2025-11-17 | 86% | 0 | 0 |
+| Node                 | Score | Status   | Last Updated | Coverage | Dependencies | Issues |
+| -------------------- | ----- | -------- | ------------ | -------- | ------------ | ------ |
+| guardian             | 🟡 77 | degraded | 2025-10-23   | 0%       | 0            | 0      |
+| trainer              | 🟡 79 | degraded | 2025-10-29   | 0%       | 0            | 0      |
+| social-platforms     | 🟢 82 | healthy  | 2025-11-11   | 14%      | 0            | 0      |
+| analytics            | 🟢 83 | healthy  | 2025-10-29   | 59%      | 0            | 0      |
+| observability        | 🟢 86 | healthy  | 2025-11-11   | 46%      | 0            | 0      |
+| queue-system         | 🟢 86 | healthy  | 2025-10-28   | 67%      | 0            | 0      |
+| roast                | 🟢 88 | healthy  | 2025-11-17   | 59%      | 0            | 0      |
+| cost-control         | 🟢 93 | healthy  | 2025-11-21   | 60%      | 0            | 0      |
+| plan-features        | 🟢 93 | healthy  | 2025-11-18   | 74%      | 0            | 0      |
+| tone                 | 🟢 94 | healthy  | 2025-11-04   | 100%     | 0            | 0      |
+| persona              | 🟢 95 | healthy  | 2025-11-06   | 90%      | 0            | 0      |
+| billing              | 🟢 96 | healthy  | 2025-11-11   | 97.63%   | 0            | 0      |
+| multi-tenant         | 🟢 96 | healthy  | 2025-11-11   | 94.25%   | 0            | 0      |
+| platform-constraints | 🟢 98 | healthy  | 2025-11-16   | 100%     | 0            | 0      |
+| shield               | 🟢 98 | healthy  | 2025-11-17   | 86%      | 0            | 0      |
 
 ---
 
@@ -44,6 +44,7 @@
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 38/100
 - Dependency Integrity: 100/100
@@ -51,25 +52,25 @@
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
-
 ### trainer (Score: 79)
 
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 50/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
-
 
 ### social-platforms (Score: 82)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 76/100
 - Dependency Integrity: 100/100
@@ -77,12 +78,12 @@
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
-
 ### analytics (Score: 83)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 50/100
 - Dependency Integrity: 100/100
@@ -90,19 +91,18 @@
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
-
 ### observability (Score: 86)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
+
 - Sync Accuracy: 100/100
 - Update Freshness: 76/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
-
 
 ---
 

@@ -1,6 +1,6 @@
 /**
  * RQC (Roast Quality Control) Service
- * 
+ *
  * Implements 3 parallel reviewers for Creator+ plans:
  * 1. Moderator: Checks compliance and intensity
  * 2. Comedian: Evaluates humor quality
@@ -39,7 +39,8 @@ class RQCService {
       ]);
 
       const reviewDuration = Date.now() - startTime;
-      const totalTokens = moderatorResult.tokensUsed + comedianResult.tokensUsed + styleResult.tokensUsed;
+      const totalTokens =
+        moderatorResult.tokensUsed + comedianResult.tokensUsed + styleResult.tokensUsed;
 
       // Apply decision logic
       const decision = this.makeRQCDecision(moderatorResult, comedianResult, styleResult);
@@ -48,15 +49,15 @@ class RQCService {
         // Individual reviewer results
         moderatorPass: moderatorResult.verdict === 'pass',
         moderatorReason: moderatorResult.reason,
-        comedianPass: comedianResult.verdict === 'pass', 
+        comedianPass: comedianResult.verdict === 'pass',
         comedianReason: comedianResult.reason,
         stylePass: styleResult.verdict === 'pass',
         styleReason: styleResult.reason,
-        
+
         // Final decision
         decision: decision.action,
         decisionReason: decision.reason,
-        
+
         // Metadata
         reviewDuration,
         tokensUsed: totalTokens,
@@ -112,19 +113,20 @@ RESPUESTA:`;
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
-            content: "Eres un moderador experto. Responde solo con PASS/FAIL y el motivo si es necesario."
+            role: 'system',
+            content:
+              'Eres un moderador experto. Responde solo con PASS/FAIL y el motivo si es necesario.'
           },
           {
-            role: "user",
+            role: 'user',
             content: prompt
           }
         ],
         max_tokens: 100,
-        temperature: 0.1, // Low temperature for consistency
+        temperature: 0.1 // Low temperature for consistency
       });
 
       const response = completion.choices[0].message.content.trim();
@@ -176,19 +178,20 @@ RESPUESTA:`;
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
-            content: "Eres un comediante profesional evaluando roasts. Responde solo con PASS/FAIL y motivo."
+            role: 'system',
+            content:
+              'Eres un comediante profesional evaluando roasts. Responde solo con PASS/FAIL y motivo.'
           },
           {
-            role: "user",
+            role: 'user',
             content: prompt
           }
         ],
         max_tokens: 100,
-        temperature: 0.2,
+        temperature: 0.2
       });
 
       const response = completion.choices[0].message.content.trim();
@@ -247,19 +250,19 @@ RESPUESTA:`;
 
     try {
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
-            content: "Eres un revisor de estilo. Responde solo con PASS/FAIL y motivo si aplica."
+            role: 'system',
+            content: 'Eres un revisor de estilo. Responde solo con PASS/FAIL y motivo si aplica.'
           },
           {
-            role: "user",
+            role: 'user',
             content: prompt
           }
         ],
         max_tokens: 100,
-        temperature: 0.1,
+        temperature: 0.1
       });
 
       const response = completion.choices[0].message.content.trim();
@@ -282,8 +285,9 @@ RESPUESTA:`;
    * Apply RQC decision logic based on reviewer results
    */
   makeRQCDecision(moderatorResult, comedianResult, styleResult) {
-    const passes = [moderatorResult.verdict, comedianResult.verdict, styleResult.verdict]
-      .filter(v => v === 'pass').length;
+    const passes = [moderatorResult.verdict, comedianResult.verdict, styleResult.verdict].filter(
+      (v) => v === 'pass'
+    ).length;
 
     // Moderator MUST pass - non-negotiable
     if (moderatorResult.verdict === 'fail') {

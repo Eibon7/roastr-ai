@@ -15,12 +15,14 @@
 **What Happened:**
 
 Worked directly on `feat/epic-480-week-3` (shared epic branch) instead of creating a dedicated issue branch. This caused:
+
 - Mixed commits from different issues
 - Difficulty tracking work per issue
 - Potential conflicts with other work on epic branch
 - Violation of branch guard policy
 
 **Incorrect Flow:**
+
 ```bash
 # ❌ WRONG
 git checkout feat/epic-480-week-3
@@ -32,6 +34,7 @@ git push origin feat/epic-480-week-3  # WRONG! Pollutes epic branch
 ### ✅ CORRECT APPROACH: Dedicated Branch Per Issue
 
 **Correct Flow:**
+
 ```bash
 # ✅ CORRECT
 git checkout -b fix/issue-680-mock-isolation main
@@ -54,6 +57,7 @@ gh pr create --base main --head fix/issue-680-mock-isolation
 **Pattern:** `<type>/issue-<number>-<short-description>`
 
 **Types:**
+
 - `fix/` - Bug fixes
 - `feat/` - New features
 - `refactor/` - Code refactoring
@@ -62,6 +66,7 @@ gh pr create --base main --head fix/issue-680-mock-isolation
 - `chore/` - Maintenance tasks
 
 **Examples:**
+
 ```bash
 fix/issue-680-mock-isolation
 feat/issue-595-persona-encryption
@@ -88,6 +93,7 @@ git commit -m "chore: Set issue lock for #123"
 ```
 
 **Why This Matters:**
+
 - Pre-commit hooks validate you're on correct branch
 - Prevents accidental commits to wrong branch
 - Forces discipline in branch management
@@ -118,6 +124,7 @@ git worktree remove ../roastr-issue-680
 ```
 
 **Benefits:**
+
 - Complete isolation (no branch switching needed)
 - Can run tests in both environments simultaneously
 - No risk of mixing work
@@ -151,6 +158,7 @@ git push origin <wrong-branch> --force-with-lease
 ```
 
 **What I Did for Issue #680:**
+
 ```bash
 git checkout -b fix/issue-680-mock-isolation b1513450
 git cherry-pick 8163f025 a85cd827 0a321a05
@@ -218,11 +226,13 @@ Before starting ANY issue:
 ## 📈 Success Metrics
 
 **Before this lesson:**
+
 - ❌ Committed to wrong branch (feat/epic-480-week-3)
 - ❌ Mixed issue work with epic work
 - ❌ Had to force-push to clean up
 
 **After applying this lesson:**
+
 - ✅ Clean branch per issue
 - ✅ Issue lock enforced
 - ✅ Traceable git history

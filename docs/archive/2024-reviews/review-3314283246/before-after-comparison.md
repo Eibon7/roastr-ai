@@ -13,11 +13,13 @@
 
 ```markdown
 **Fixes applied:**
+
 - [object Object]
 - [object Object]
 ```
 
 **Problem:**
+
 - JavaScript objects were being converted to strings directly
 - Result: Unreadable `[object Object]` placeholders
 - Made changelog useless for tracking auto-repair actions
@@ -28,6 +30,7 @@
 
 ```markdown
 **Fixes applied:**
+
 - Fix description unavailable (legacy entry - serialization bug fixed in review #3314283246)
 ```
 
@@ -35,11 +38,13 @@
 
 ```markdown
 **Fixes applied:**
+
 - multi-tenant: Missing coverage field
 - trainer: Missing coverage field
 ```
 
 **Improvement:**
+
 - ✅ Readable descriptions
 - ✅ Clear action taken per fix
 - ✅ Useful for debugging and audit trail
@@ -62,6 +67,7 @@ if (!coverageMatch) {
 ```
 
 **Problem:**
+
 - Nodes without coverage received perfect score (100)
 - Incentivized omitting coverage to avoid integrity checks
 - Gaming the system: "No coverage = perfect integrity"
@@ -81,12 +87,14 @@ if (!coverageMatch) {
 ```
 
 **Improvement:**
+
 - ✅ Mild penalty (80) for unverifiable coverage
 - ✅ Discourages omitting coverage
 - ✅ Aligns with GDD integrity principles
 - ✅ Still allows "healthy" status (80 ≥ threshold)
 
 **Impact:**
+
 - Current: No immediate impact (all nodes have coverage)
 - Future: New nodes without coverage will score 80 instead of 100
 
@@ -99,19 +107,25 @@ if (!coverageMatch) {
 **Files:** `docs/plan/review-3314207411.md`, `docs/test-evidence/review-3314207411/test-results.md`
 
 **Example from `docs/plan/review-3314207411.md` (line 3):**
+
 ```markdown
 **Review:** https://github.com/Eibon7/roastr-ai/pull/499#pullrequestreview-3314207411
 ```
 
 **Example from code blocks (line 276):**
+
 ```markdown
 **Ejemplo de cálculo erróneo (nodo "persona"):**
 ```
-syncAccuracy: 100 * 0.25 = 25.0
+
+syncAccuracy: 100 \* 0.25 = 25.0
+
 ```
+
 ```
 
 **Problems:**
+
 - MD034: Bare URLs without angle brackets
 - MD040: Fenced code blocks without language specifiers
 - Impacts syntax highlighting and rendering
@@ -119,17 +133,22 @@ syncAccuracy: 100 * 0.25 = 25.0
 ### After Fix
 
 **Example from `docs/plan/review-3314207411.md` (line 3):**
+
 ```markdown
 **Review:** <https://github.com/Eibon7/roastr-ai/pull/499#pullrequestreview-3314207411>
 ```
 
 **Example from code blocks (line 276):**
-```markdown
+
+````markdown
 **Ejemplo de cálculo erróneo (nodo "persona"):**
+
 ```text
 syncAccuracy: 100 * 0.25 = 25.0
 ```
-```
+````
+
+````
 
 **Improvements:**
 - ✅ URLs wrapped in angle brackets (MD034 fixed)
@@ -157,7 +176,7 @@ syncAccuracy: 100 * 0.25 = 25.0
   "degraded_count": 0,
   "critical_count": 0
 }
-```
+````
 
 ### After Fix
 
@@ -174,6 +193,7 @@ syncAccuracy: 100 * 0.25 = 25.0
 ```
 
 **Analysis:**
+
 - ✅ **No regression:** Average score maintained at 93.8/100
 - ✅ **Status unchanged:** HEALTHY
 - ✅ **All nodes healthy:** 13/13
@@ -186,6 +206,7 @@ syncAccuracy: 100 * 0.25 = 25.0
 ### Before Fix (Dry-Run)
 
 **Hypothetical output with bug:**
+
 ```text
 🔍 DRY RUN - Would apply these fixes:
    1. [object Object]
@@ -195,6 +216,7 @@ syncAccuracy: 100 * 0.25 = 25.0
 ### After Fix (Dry-Run)
 
 **Actual output:**
+
 ```text
 🔍 DRY RUN - Would apply these fixes:
    1. multi-tenant: Missing coverage field
@@ -202,6 +224,7 @@ syncAccuracy: 100 * 0.25 = 25.0
 ```
 
 **Improvement:**
+
 - ✅ Clear, actionable descriptions
 - ✅ Easy to understand what will be fixed
 - ✅ Useful for review before applying fixes
@@ -210,30 +233,33 @@ syncAccuracy: 100 * 0.25 = 25.0
 
 ## Summary
 
-| Issue | Before | After | Status |
-|-------|--------|-------|--------|
-| **Serialization Bug** | `[object Object]` | `multi-tenant: Missing coverage field` | ✅ FIXED |
-| **Coverage Penalty** | `return 100` (no penalty) | `return 80` (mild penalty) | ✅ FIXED |
-| **Markdown URLs** | `https://...` | `<https://...>` | ✅ FIXED |
-| **Code Block Lang** | ` ``` ` | ` ```text ` | ✅ FIXED |
-| **Health Score** | 93.8/100 | 93.8/100 | ✅ MAINTAINED |
-| **System Status** | HEALTHY | HEALTHY | ✅ MAINTAINED |
+| Issue                 | Before                    | After                                  | Status        |
+| --------------------- | ------------------------- | -------------------------------------- | ------------- |
+| **Serialization Bug** | `[object Object]`         | `multi-tenant: Missing coverage field` | ✅ FIXED      |
+| **Coverage Penalty**  | `return 100` (no penalty) | `return 80` (mild penalty)             | ✅ FIXED      |
+| **Markdown URLs**     | `https://...`             | `<https://...>`                        | ✅ FIXED      |
+| **Code Block Lang**   | ` ``` `                   | ` ```text `                            | ✅ FIXED      |
+| **Health Score**      | 93.8/100                  | 93.8/100                               | ✅ MAINTAINED |
+| **System Status**     | HEALTHY                   | HEALTHY                                | ✅ MAINTAINED |
 
 ---
 
 ## Quality Improvements
 
 ### Code Quality
+
 - ✅ More maintainable (clear extraction of `.description` field)
 - ✅ Prevents future bugs (explicitly handles missing coverage)
 - ✅ Better documentation (language specifiers improve rendering)
 
 ### GDD Integrity
+
 - ✅ Discourages gaming metrics
 - ✅ Aligns with integrity principles
 - ✅ Maintains high standards (80 penalty is reasonable)
 
 ### Developer Experience
+
 - ✅ Readable changelog entries
 - ✅ Clear dry-run output
 - ✅ Better markdown rendering

@@ -53,19 +53,20 @@ Each Stripe Price object must include the following metadata for the entitlement
 
 ### Required Fields
 
-| Field | Type | Description | Example Values |
-|-------|------|-------------|----------------|
-| `plan_name` | string | Plan identifier | `free`, `starter`, `pro`, `plus` |
-| `analysis_limit_monthly` | string | Monthly toxicity analysis limit | `100`, `1000`, `10000`, `50000` |
-| `roast_limit_monthly` | string | Monthly roast generation limit | `100`, `500`, `1000`, `5000` |
-| `shield_limit_monthly` | string | Monthly Shield moderation actions | `0`, `50`, `100`, `500` |
-| `model` | string | AI model to use | `gpt-3.5-turbo`, `gpt-4` |
-| `shield_enabled` | string | Enable Shield moderation | `true`, `false` |
-| `rqc_mode` | string | RQC system mode | `basic`, `advanced`, `premium` |
+| Field                    | Type   | Description                       | Example Values                   |
+| ------------------------ | ------ | --------------------------------- | -------------------------------- |
+| `plan_name`              | string | Plan identifier                   | `free`, `starter`, `pro`, `plus` |
+| `analysis_limit_monthly` | string | Monthly toxicity analysis limit   | `100`, `1000`, `10000`, `50000`  |
+| `roast_limit_monthly`    | string | Monthly roast generation limit    | `100`, `500`, `1000`, `5000`     |
+| `shield_limit_monthly`   | string | Monthly Shield moderation actions | `0`, `50`, `100`, `500`          |
+| `model`                  | string | AI model to use                   | `gpt-3.5-turbo`, `gpt-4`         |
+| `shield_enabled`         | string | Enable Shield moderation          | `true`, `false`                  |
+| `rqc_mode`               | string | RQC system mode                   | `basic`, `advanced`, `premium`   |
 
 ### Example Metadata
 
 #### Free Plan
+
 ```json
 {
   "plan_name": "free",
@@ -79,6 +80,7 @@ Each Stripe Price object must include the following metadata for the entitlement
 ```
 
 #### Starter Plan
+
 ```json
 {
   "plan_name": "starter",
@@ -92,6 +94,7 @@ Each Stripe Price object must include the following metadata for the entitlement
 ```
 
 #### Pro Plan
+
 ```json
 {
   "plan_name": "pro",
@@ -105,6 +108,7 @@ Each Stripe Price object must include the following metadata for the entitlement
 ```
 
 #### Plus Plan
+
 ```json
 {
   "plan_name": "plus",
@@ -139,17 +143,20 @@ npm run validate:prices:ci
 The system includes automated validation through GitHub Actions:
 
 #### Triggers
+
 - **Push/PR**: Validates when billing-related files change
 - **Daily Schedule**: Runs at 6 AM UTC to detect configuration drift
 - **Manual Dispatch**: Can be triggered manually for test or production
 
 #### Environments
+
 - **Test Environment**: Validates using `STRIPE_TEST_SECRET_KEY`
 - **Production Environment**: Validates using `STRIPE_LIVE_SECRET_KEY` (main branch only)
 
 ### Validation Outputs
 
 #### Success Example
+
 ```
 🚀 Starting Stripe Price metadata validation...
 
@@ -176,6 +183,7 @@ The system includes automated validation through GitHub Actions:
 ```
 
 #### Failure Example
+
 ```
 🔍 Validating pro plan (lookup_key: price_pro_v1_eur_1500)...
 ✅ Found price: price_1234567890
@@ -220,16 +228,19 @@ npm run validate:prices
 ### Common Issues
 
 #### "No price found with lookup_key"
+
 - Verify the lookup key exists in Stripe Dashboard
 - Check that you're using the correct Stripe environment (test/live)
 - Ensure environment variables are set correctly
 
 #### "Missing required metadata fields"
+
 - Add the missing fields to the Stripe Price metadata
 - Ensure all field names match exactly (case-sensitive)
 - All values must be strings, even numbers and booleans
 
 #### "Incorrect metadata values"
+
 - Check the expected values in the validation script
 - Update Stripe Price metadata to match expectations
 - Ensure boolean values are strings: `"true"` or `"false"`
@@ -237,11 +248,13 @@ npm run validate:prices
 ### Debug Steps
 
 1. **Check Configuration**:
+
    ```bash
    node -e "console.log(require('./src/config').billing.stripe.priceLookupKeys)"
    ```
 
 2. **Verify Stripe Connection**:
+
    ```bash
    STRIPE_SECRET_KEY=sk_test_... node -e "
    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -276,11 +289,13 @@ The validation system ensures that:
 ## Monitoring and Alerts
 
 ### Automated Monitoring
+
 - Daily validation runs detect configuration drift
 - Failed validations create GitHub issues automatically
 - PR comments alert developers to validation failures
 
 ### Manual Monitoring
+
 - Run validation before deployments
 - Check after manual Stripe configuration changes
 - Validate both test and production environments

@@ -35,7 +35,7 @@ describe('Model Availability Routes Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup express app
     app = express();
     app.use(express.json());
@@ -117,9 +117,7 @@ describe('Model Availability Routes Tests', () => {
 
   describe('GET /api/model-availability/status', () => {
     it('should get model availability status successfully', async () => {
-      const response = await request(app)
-        .get('/api/model-availability/status')
-        .expect(200);
+      const response = await request(app).get('/api/model-availability/status').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('models');
@@ -137,9 +135,7 @@ describe('Model Availability Routes Tests', () => {
         new Error('Failed to get status')
       );
 
-      const response = await request(app)
-        .get('/api/model-availability/status')
-        .expect(500);
+      const response = await request(app).get('/api/model-availability/status').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to get model availability status');
@@ -153,9 +149,7 @@ describe('Model Availability Routes Tests', () => {
       });
 
       // The route's requireAdmin middleware should reject non-admin users
-      const response = await request(app)
-        .get('/api/model-availability/status')
-        .expect(403);
+      const response = await request(app).get('/api/model-availability/status').expect(403);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Admin access required');
@@ -164,9 +158,7 @@ describe('Model Availability Routes Tests', () => {
 
   describe('POST /api/model-availability/check', () => {
     it('should run manual check successfully', async () => {
-      const response = await request(app)
-        .post('/api/model-availability/check')
-        .expect(200);
+      const response = await request(app).post('/api/model-availability/check').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('checkCompleted', true);
@@ -176,13 +168,9 @@ describe('Model Availability Routes Tests', () => {
     });
 
     it('should return 500 if worker throws error', async () => {
-      mockWorker.runManualCheck.mockRejectedValueOnce(
-        new Error('Failed to run check')
-      );
+      mockWorker.runManualCheck.mockRejectedValueOnce(new Error('Failed to run check'));
 
-      const response = await request(app)
-        .post('/api/model-availability/check')
-        .expect(500);
+      const response = await request(app).post('/api/model-availability/check').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to check model availability');
@@ -194,9 +182,7 @@ describe('Model Availability Routes Tests', () => {
         next();
       });
 
-      const response = await request(app)
-        .post('/api/model-availability/check')
-        .expect(403);
+      const response = await request(app).post('/api/model-availability/check').expect(403);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Admin access required');
@@ -220,9 +206,7 @@ describe('Model Availability Routes Tests', () => {
     });
 
     it('should return 500 if service throws error', async () => {
-      mockModelService.isModelAvailable.mockRejectedValueOnce(
-        new Error('Failed to check model')
-      );
+      mockModelService.isModelAvailable.mockRejectedValueOnce(new Error('Failed to check model'));
 
       const modelId = 'gpt-4o';
       const response = await request(app)
@@ -251,9 +235,7 @@ describe('Model Availability Routes Tests', () => {
 
   describe('GET /api/model-availability/stats', () => {
     it('should get model stats successfully', async () => {
-      const response = await request(app)
-        .get('/api/model-availability/stats')
-        .expect(200);
+      const response = await request(app).get('/api/model-availability/stats').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('total_requests');
@@ -262,13 +244,9 @@ describe('Model Availability Routes Tests', () => {
     });
 
     it('should return 500 if service throws error', async () => {
-      mockModelService.getModelStats.mockRejectedValueOnce(
-        new Error('Failed to get stats')
-      );
+      mockModelService.getModelStats.mockRejectedValueOnce(new Error('Failed to get stats'));
 
-      const response = await request(app)
-        .get('/api/model-availability/stats')
-        .expect(500);
+      const response = await request(app).get('/api/model-availability/stats').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to get model statistics');
@@ -280,9 +258,7 @@ describe('Model Availability Routes Tests', () => {
         next();
       });
 
-      const response = await request(app)
-        .get('/api/model-availability/stats')
-        .expect(403);
+      const response = await request(app).get('/api/model-availability/stats').expect(403);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Admin access required');
@@ -291,9 +267,7 @@ describe('Model Availability Routes Tests', () => {
 
   describe('GET /api/model-availability/plans', () => {
     it('should get plan model assignments successfully', async () => {
-      const response = await request(app)
-        .get('/api/model-availability/plans')
-        .expect(200);
+      const response = await request(app).get('/api/model-availability/plans').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('planModels');
@@ -308,13 +282,9 @@ describe('Model Availability Routes Tests', () => {
     });
 
     it('should return 500 if service throws error', async () => {
-      mockModelService.getModelForPlan.mockRejectedValueOnce(
-        new Error('Failed to get plan model')
-      );
+      mockModelService.getModelForPlan.mockRejectedValueOnce(new Error('Failed to get plan model'));
 
-      const response = await request(app)
-        .get('/api/model-availability/plans')
-        .expect(500);
+      const response = await request(app).get('/api/model-availability/plans').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to get plan model assignments');
@@ -326,9 +296,7 @@ describe('Model Availability Routes Tests', () => {
         next();
       });
 
-      const response = await request(app)
-        .get('/api/model-availability/plans')
-        .expect(403);
+      const response = await request(app).get('/api/model-availability/plans').expect(403);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Admin access required');
@@ -337,9 +305,7 @@ describe('Model Availability Routes Tests', () => {
 
   describe('POST /api/model-availability/worker/start', () => {
     it('should start worker successfully', async () => {
-      const response = await request(app)
-        .post('/api/model-availability/worker/start')
-        .expect(200);
+      const response = await request(app).post('/api/model-availability/worker/start').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('Model availability worker');
@@ -352,9 +318,7 @@ describe('Model Availability Routes Tests', () => {
         isRunning: true
       });
 
-      const response = await request(app)
-        .post('/api/model-availability/worker/start')
-        .expect(200);
+      const response = await request(app).post('/api/model-availability/worker/start').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('already running');
@@ -365,9 +329,7 @@ describe('Model Availability Routes Tests', () => {
         throw new Error('Failed to get status');
       });
 
-      const response = await request(app)
-        .post('/api/model-availability/worker/start')
-        .expect(500);
+      const response = await request(app).post('/api/model-availability/worker/start').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to start worker');
@@ -379,9 +341,7 @@ describe('Model Availability Routes Tests', () => {
         next();
       });
 
-      const response = await request(app)
-        .post('/api/model-availability/worker/start')
-        .expect(403);
+      const response = await request(app).post('/api/model-availability/worker/start').expect(403);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Admin access required');
@@ -390,9 +350,7 @@ describe('Model Availability Routes Tests', () => {
 
   describe('POST /api/model-availability/worker/stop', () => {
     it('should stop worker successfully', async () => {
-      const response = await request(app)
-        .post('/api/model-availability/worker/stop')
-        .expect(200);
+      const response = await request(app).post('/api/model-availability/worker/stop').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('Model availability worker stopped');
@@ -405,9 +363,7 @@ describe('Model Availability Routes Tests', () => {
         throw new Error('Failed to stop');
       });
 
-      const response = await request(app)
-        .post('/api/model-availability/worker/stop')
-        .expect(500);
+      const response = await request(app).post('/api/model-availability/worker/stop').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to stop worker');
@@ -419,9 +375,7 @@ describe('Model Availability Routes Tests', () => {
         next();
       });
 
-      const response = await request(app)
-        .post('/api/model-availability/worker/stop')
-        .expect(403);
+      const response = await request(app).post('/api/model-availability/worker/stop').expect(403);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Admin access required');
@@ -434,22 +388,20 @@ describe('Model Availability Routes Tests', () => {
       // is applied to all routes. We verify that the middleware is in place
       // by checking that routes work when authenticated (tested in other tests)
       // and that authenticateToken is called.
-      
+
       // Reset mock to track calls
       authenticateToken.mockClear();
-      
+
       // Mock authenticateToken to allow access (since we just want to verify it's called)
       authenticateToken.mockImplementation((req, res, next) => {
         req.user = mockAdminUser;
         next();
       });
-      
-      await request(app)
-        .get('/api/model-availability/status');
+
+      await request(app).get('/api/model-availability/status');
 
       // Verify authenticateToken was called
       expect(authenticateToken).toHaveBeenCalled();
     });
   });
 });
-

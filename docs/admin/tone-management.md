@@ -48,15 +48,15 @@ CREATE TABLE roast_tones (
 
 ### Constraints y Validaciones
 
-| Constraint | Descripción |
-|------------|-------------|
-| `valid_name` | Solo caracteres alfanuméricos, guiones y underscores |
-| `valid_display_name` | JSONB object válido |
-| `valid_description` | JSONB object válido |
-| `valid_examples` | JSONB array válido |
-| `intensity CHECK` | Valor entre 1 y 5 |
-| `ensure_at_least_one_active_tone()` | Al menos 1 tono activo (trigger) |
-| `idx_roast_tones_default` | Solo 1 tono default (unique index WHERE is_default = true) |
+| Constraint                          | Descripción                                                |
+| ----------------------------------- | ---------------------------------------------------------- |
+| `valid_name`                        | Solo caracteres alfanuméricos, guiones y underscores       |
+| `valid_display_name`                | JSONB object válido                                        |
+| `valid_description`                 | JSONB object válido                                        |
+| `valid_examples`                    | JSONB array válido                                         |
+| `intensity CHECK`                   | Valor entre 1 y 5                                          |
+| `ensure_at_least_one_active_tone()` | Al menos 1 tono activo (trigger)                           |
+| `idx_roast_tones_default`           | Solo 1 tono default (unique index WHERE is_default = true) |
 
 ---
 
@@ -71,6 +71,7 @@ CREATE TABLE roast_tones (
 ### Authentication
 
 Todos los endpoints requieren:
+
 - ✅ JWT válido (`Authorization: Bearer <token>`)
 - ✅ Usuario con `is_admin = true`
 
@@ -83,6 +84,7 @@ GET /api/admin/tones
 ```
 
 **Respuesta:**
+
 ```json
 {
   "success": true,
@@ -119,6 +121,7 @@ GET /api/admin/tones/:id
 ```
 
 **Respuesta:**
+
 ```json
 {
   "success": true,
@@ -127,6 +130,7 @@ GET /api/admin/tones/:id
 ```
 
 **Errores:**
+
 - `404` - Tone not found
 
 #### 3. Crear nuevo tono
@@ -174,6 +178,7 @@ Content-Type: application/json
 ```
 
 **Respuesta:**
+
 ```json
 {
   "success": true,
@@ -182,6 +187,7 @@ Content-Type: application/json
 ```
 
 **Errores:**
+
 - `400` - Validation failed
 - `409` - Tone name already exists
 
@@ -198,6 +204,7 @@ Content-Type: application/json
 ```
 
 **Respuesta:**
+
 ```json
 {
   "success": true,
@@ -206,6 +213,7 @@ Content-Type: application/json
 ```
 
 **Errores:**
+
 - `400` - Validation failed
 - `404` - Tone not found
 - `409` - Tone name already exists
@@ -217,6 +225,7 @@ DELETE /api/admin/tones/:id
 ```
 
 **Respuesta:**
+
 ```json
 {
   "success": true,
@@ -225,6 +234,7 @@ DELETE /api/admin/tones/:id
 ```
 
 **Errores:**
+
 - `400` - Cannot delete last active tone
 - `404` - Tone not found
 
@@ -235,6 +245,7 @@ POST /api/admin/tones/:id/activate
 ```
 
 **Respuesta:**
+
 ```json
 {
   "success": true,
@@ -249,6 +260,7 @@ POST /api/admin/tones/:id/deactivate
 ```
 
 **Respuesta:**
+
 ```json
 {
   "success": true,
@@ -257,6 +269,7 @@ POST /api/admin/tones/:id/deactivate
 ```
 
 **Errores:**
+
 - `400` - Cannot deactivate last active tone
 
 #### 8. Reordenar tonos
@@ -275,6 +288,7 @@ Content-Type: application/json
 ```
 
 **Respuesta:**
+
 ```json
 {
   "success": true,
@@ -288,12 +302,12 @@ Content-Type: application/json
 
 ### Cache Configuration
 
-| Parameter | Value |
-|-----------|-------|
-| **TTL** | 5 minutos |
-| **Storage** | En memoria (singleton service) |
-| **Invalidation** | Automática en POST/PUT/DELETE |
-| **Localization** | Por idioma (ES/EN) |
+| Parameter        | Value                          |
+| ---------------- | ------------------------------ |
+| **TTL**          | 5 minutos                      |
+| **Storage**      | En memoria (singleton service) |
+| **Invalidation** | Automática en POST/PUT/DELETE  |
+| **Localization** | Por idioma (ES/EN)             |
 
 ### Cache Behavior
 
@@ -331,10 +345,12 @@ await toneService.updateTone(id, { intensity: 4 });
 **URL:** `/admin/roast-tones`
 
 **Componentes:**
+
 - `TonesList.jsx` - Lista de tonos con filtros y acciones
 - `ToneEditor.jsx` - Editor multiidioma con validaciones
 
 **Features:**
+
 - ✅ Tabla de tonos (activos/inactivos)
 - ✅ Filtros: activo/inactivo, idioma
 - ✅ Búsqueda por nombre
@@ -384,10 +400,10 @@ ${i + 1}. ${tone.display_name.toUpperCase()} (Intensidad: ${tone.intensity}/5)
    Personalidad: ${tone.personality}
    Recursos permitidos:
    ${tone.resources.map(r => `- ${r}`).join('\n   ')}
-   
+
    Restricciones CRÍTICAS:
    ${tone.restrictions.map(r => `- ${r}`).join('\n   ')}
-   
+
    Ejemplo:
    Input: "${tone.examples[0].input}"
    Output: "${tone.examples[0].output}"
@@ -412,6 +428,7 @@ ${tonesText}
 ### Creating New Tones
 
 **DO:**
+
 - ✅ Proporcionar nombres descriptivos (ES/EN)
 - ✅ Definir intensidad apropiada (1-5)
 - ✅ Incluir al menos 2-3 recursos
@@ -420,6 +437,7 @@ ${tonesText}
 - ✅ Probar el tono antes de activar
 
 **DON'T:**
+
 - ❌ Crear tonos sin restricciones
 - ❌ Usar intensidades extremas sin justificación
 - ❌ Omitir ejemplos (críticos para IA)
@@ -428,12 +446,14 @@ ${tonesText}
 ### Editing Existing Tones
 
 **Safe Changes:**
+
 - ✅ Ajustar intensidad (+/- 1)
 - ✅ Añadir recursos/restricciones
 - ✅ Mejorar descripciones
 - ✅ Añadir ejemplos
 
 **Risky Changes:**
+
 - ⚠️ Cambiar nombre (puede romper referencias)
 - ⚠️ Eliminar restricciones (puede generar contenido inapropiado)
 - ⚠️ Cambiar intensidad dramáticamente (+/- 2+)
@@ -475,18 +495,19 @@ ${tonesText}
 
 ### Key Metrics
 
-| Metric | Description | Alert Threshold |
-|--------|-------------|-----------------|
-| Active tones count | Tonos activos en sistema | < 1 (critical) |
-| Cache hit rate | % requests servidas desde cache | < 80% (warning) |
-| Tone load latency | Tiempo de carga desde DB | > 500ms (warning) |
-| Tone update frequency | Updates por día | > 50 (unusual) |
+| Metric                | Description                     | Alert Threshold   |
+| --------------------- | ------------------------------- | ----------------- |
+| Active tones count    | Tonos activos en sistema        | < 1 (critical)    |
+| Cache hit rate        | % requests servidas desde cache | < 80% (warning)   |
+| Tone load latency     | Tiempo de carga desde DB        | > 500ms (warning) |
+| Tone update frequency | Updates por día                 | > 50 (unusual)    |
 
 ### Logs
 
 **Location:** `src/services/toneConfigService.js`
 
 **Events Logged:**
+
 - Tone CRUD operations (info)
 - Cache invalidations (info)
 - Database errors (error)
@@ -543,4 +564,3 @@ ${tonesText}
 **Review Frequency:** Monthly or on feature changes  
 **Last Updated:** 2025-11-18  
 **Version:** 1.0.0
-

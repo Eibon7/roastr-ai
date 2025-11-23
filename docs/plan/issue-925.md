@@ -41,21 +41,25 @@
 ## Dependencias Identificadas
 
 ### comments.js
+
 - `authenticateToken` (middleware/auth)
 - `logger` (utils/logger)
 - `sanitizeForLogging` (utils/parameterSanitizer)
 - Variables de entorno: `ENABLE_MOCK_MODE`, `NODE_ENV`
 
 ### guardian.js
+
 - `guardianController` (controllers/guardianController)
 - `isAdminMiddleware` (middleware/isAdmin)
 
 ### integrations.js
+
 - `userIntegrationsService` (services/userIntegrationsService)
 - `authenticateToken` (middleware/auth)
 - `logger` (utils/logger)
 
 ### modelAvailability.js
+
 - `getModelAvailabilityService` (services/modelAvailabilityService)
 - `getModelAvailabilityWorker` (workers/ModelAvailabilityWorker)
 - `authenticateToken` (middleware/auth)
@@ -80,19 +84,18 @@
 ### FASE 2: Tests para comments.js (≥60% cobertura)
 
 **Tests implementados (15/15):**
+
 - POST /ingest:
   - ✅ Debe validar campos requeridos (platform, external_comment_id, comment_text)
   - ✅ Debe retornar 400 si faltan campos
   - ✅ Debe retornar 201 en mock mode con respuesta mock
   - ✅ Debe retornar 501 en production mode
   - ✅ Debe manejar errores internos (500)
-  
 - POST /:id/generate:
   - ✅ Debe generar respuesta mock en mock mode
   - ✅ Debe retornar 501 en production mode
   - ✅ Debe respetar generate_count
   - ✅ Debe manejar errores internos (500)
-  
 - POST /:id/generate-advanced:
   - ✅ Debe generar respuesta avanzada en mock mode
   - ✅ Debe retornar 501 en production mode
@@ -102,6 +105,7 @@
 ### FASE 3: Tests para guardian.js (≥60% cobertura)
 
 **Tests implementados (14/14):**
+
 - GET /cases:
   - ✅ Debe listar casos exitosamente
   - ✅ Debe filtrar por severity válido
@@ -110,13 +114,11 @@
   - ✅ Debe validar action inválido (400)
   - ✅ Debe validar limit (1-1000)
   - ✅ Debe requerir admin authentication (403)
-  
 - POST /cases/:caseId/approve:
   - ✅ Debe aprobar caso exitosamente
   - ✅ Debe validar approver requerido (400)
   - ✅ Debe retornar 404 si caso no existe
   - ✅ Debe requerir admin authentication (403) // Probado en bloque general
-  
 - POST /cases/:caseId/deny:
   - ✅ Debe denegar caso exitosamente
   - ✅ Debe validar denier requerido (400)
@@ -127,34 +129,28 @@
 ### FASE 4: Tests para integrations.js (≥60% cobertura)
 
 **Tests implementados (17/17):**
+
 - GET /:
   - ✅ Debe obtener integraciones exitosamente
   - ✅ Debe retornar 400 si error en servicio
-  
 - GET /platforms:
   - ✅ Debe obtener plataformas disponibles
   - ✅ Debe retornar 400 si error en servicio
-  
 - POST /:platform:
   - ✅ Debe crear/actualizar integración exitosamente
   - ✅ Debe retornar 400 si error en servicio
-  
 - PUT /:platform:
   - ✅ Debe actualizar integración exitosamente
   - ✅ Debe retornar 400 si error en servicio
-  
 - DELETE /:platform:
   - ✅ Debe eliminar integración exitosamente
   - ✅ Debe retornar 400 si error en servicio
-  
 - GET /metrics:
   - ✅ Debe obtener métricas exitosamente
   - ✅ Debe retornar 400 si error en servicio
-  
 - POST /:platform/enable:
   - ✅ Debe habilitar integración exitosamente
   - ✅ Debe retornar 400 si error en servicio
-  
 - POST /:platform/disable:
   - ✅ Debe deshabilitar integración exitosamente
   - ✅ Debe retornar 400 si error en servicio
@@ -162,36 +158,31 @@
 ### FASE 5: Tests para modelAvailability.js (≥60% cobertura)
 
 **Tests implementados (23/23):**
+
 - GET /status:
   - ✅ Debe obtener estado exitosamente
   - ✅ Debe retornar 500 si error en servicio
   - ✅ Debe requerir admin authentication (403)
-  
 - POST /check:
   - ✅ Debe ejecutar verificación manual exitosamente
   - ✅ Debe retornar 500 si error en servicio
   - ✅ Debe requerir admin authentication (403)
-  
 - GET /model/:modelId:
   - ✅ Debe obtener info de modelo específico
   - ✅ Debe retornar 500 si error en servicio
   - ✅ Debe requerir admin authentication (403)
-  
 - GET /stats:
   - ✅ Debe obtener estadísticas exitosamente
   - ✅ Debe retornar 500 si error en servicio
   - ✅ Debe requerir admin authentication (403)
-  
 - GET /plans:
   - ✅ Debe obtener asignaciones por plan
   - ✅ Debe retornar 500 si error en servicio
   - ✅ Debe requerir admin authentication (403)
-  
 - POST /worker/start:
   - ✅ Debe iniciar worker exitosamente
   - ✅ Debe retornar 500 si error en servicio
   - ✅ Debe requerir admin authentication (403)
-  
 - POST /worker/stop:
   - ✅ Debe detener worker exitosamente
   - ✅ Debe retornar 500 si error en servicio

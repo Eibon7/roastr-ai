@@ -92,12 +92,10 @@ describe('Worker System Integration', () => {
       payload: { comment: 'test' }
     };
 
-    mockQueueService.getNextJob
-      .mockResolvedValueOnce(job)
-      .mockResolvedValue(null);
+    mockQueueService.getNextJob.mockResolvedValueOnce(job).mockResolvedValue(null);
 
     await worker.start();
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
     await Promise.resolve();
 
     expect(mockQueueService.getNextJob).toHaveBeenCalled();
@@ -131,14 +129,12 @@ describe('Worker System Integration', () => {
       payload: {}
     };
 
-    mockQueueService.getNextJob
-      .mockResolvedValueOnce(job)
-      .mockResolvedValue(null);
+    mockQueueService.getNextJob.mockResolvedValueOnce(job).mockResolvedValue(null);
 
     mockCostControl.recordUsage.mockResolvedValueOnce({ allowed: false, reason: 'limit' });
 
     await worker.start();
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
     await Promise.resolve();
 
     expect(mockQueueService.getNextJob).toHaveBeenCalled();
@@ -147,4 +143,3 @@ describe('Worker System Integration', () => {
     expect(worker.failedJobs).toBe(1);
   });
 });
-

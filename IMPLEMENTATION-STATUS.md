@@ -32,6 +32,7 @@
 - ✅ Singleton pattern with TTL cache
 
 **Cache System:**
+
 - TTL: 5 minutes (300000ms)
 - Storage: In-memory singleton
 - Auto-invalidation: POST/PUT/DELETE operations
@@ -42,6 +43,7 @@
 **File:** `src/routes/admin/tones.js` (680+ lines with Joi validation)
 
 **8 Endpoints:**
+
 - ✅ `GET /api/admin/tones` - List all
 - ✅ `GET /api/admin/tones/:id` - Get one
 - ✅ `POST /api/admin/tones` - Create
@@ -52,6 +54,7 @@
 - ✅ `PUT /api/admin/tones/reorder` - Reorder
 
 **Security:**
+
 - ✅ JWT authentication (`authenticateToken`)
 - ✅ Admin-only access (`requireAdmin`)
 - ✅ Joi input validation
@@ -59,6 +62,7 @@
 - ✅ Comprehensive logging
 
 **Integration:**
+
 - ✅ Mounted in `src/routes/admin.js`
 
 ### 4. Roast Generation Integration ✅
@@ -66,6 +70,7 @@
 **File:** `src/lib/prompts/roastPrompt.js`
 
 **Changes:**
+
 - ✅ Import `getToneConfigService`
 - ✅ Initialize `this.toneService` in constructor
 - ✅ `buildBlockA()` → `async buildBlockA(language = 'es')`
@@ -77,6 +82,7 @@
 - ✅ Language parameter propagated
 
 **Backward Compatibility:**
+
 - ✅ Tone names maintained (flanders, balanceado, canalla)
 - ✅ Existing users experience no changes
 - ✅ Graceful degradation
@@ -84,11 +90,13 @@
 ### 5. Frontend UI ✅
 
 **Created Files:**
+
 - ✅ `frontend/src/pages/admin/RoastTones.jsx` (370+ lines)
 - ✅ `frontend/src/components/admin/TonesList.jsx` (210+ lines)
 - ✅ `frontend/src/components/admin/ToneEditor.jsx` (680+ lines)
 
 **Features Implemented:**
+
 - ✅ Admin panel page at `/admin/roast-tones`
 - ✅ Table with active/inactive tones
 - ✅ Filters: active/inactive, language (ES/EN)
@@ -103,6 +111,7 @@
 - ✅ Responsive design
 
 **Router Integration:**
+
 - ✅ Route added to `frontend/src/App.js`
 - ✅ Menu item added to `AdminLayout.jsx` ("Tonos de Roast")
 - ✅ Icon: chat bubble SVG
@@ -111,6 +120,7 @@
 
 **Unit Tests:**
 **File:** `tests/unit/services/toneConfigService.test.js` (220+ lines)
+
 - ✅ getActiveTones: localization ES/EN, cache, errors
 - ✅ Cache invalidation
 - ✅ Localization fallbacks
@@ -120,6 +130,7 @@
 
 **Integration Tests:**
 **File:** `tests/integration/api/admin/tones.test.js` (360+ lines)
+
 - ✅ GET /api/admin/tones (all tones, 401 non-admin, DB errors)
 - ✅ GET /api/admin/tones/:id (by ID, 404 not found)
 - ✅ POST /api/admin/tones (create, validation, cache invalidation)
@@ -130,6 +141,7 @@
 - ✅ PUT /api/admin/tones/reorder (reordering, invalid arrays)
 
 **File:** `tests/integration/lib/prompts/roastPrompt.test.js` (280+ lines)
+
 - ✅ buildBlockA with dynamic tones (ES/EN)
 - ✅ Fallback to static Block A on DB failure
 - ✅ Empty tones array handling
@@ -142,6 +154,7 @@
 ### 7. Documentation ✅
 
 **Created:**
+
 - ✅ `docs/admin/tone-management.md` (350+ lines)
   - Complete management guide
   - API reference
@@ -160,6 +173,7 @@
   - Backend receipt
 
 **Updated:**
+
 - ✅ `docs/nodes/roast.md`
   - Voice Styles section updated
   - References dynamic system
@@ -167,6 +181,7 @@
 ### 8. GDD Validations ✅
 
 **Executed:**
+
 - ✅ `node scripts/validate-gdd-runtime.js --full`
   - Status: HEALTHY 🟢
   - 15 nodes validated
@@ -184,20 +199,20 @@
 
 ## 📊 Acceptance Criteria Status
 
-| AC | Description | Status | Notes |
-|----|-------------|--------|-------|
-| **AC1** | Tabla `roast_tones` creada con schema completo | ✅ COMPLETE | Migration ready |
-| **AC2** | API admin funcional (CRUD + activate/deactivate) | ✅ COMPLETE | 8 endpoints |
-| **AC3** | Integración con `roastPrompt.js` (carga desde DB) | ✅ COMPLETE | Async buildBlockA |
-| **AC4** | Cache funcional (5min TTL, invalidación al cambiar) | ✅ COMPLETE | In-memory singleton |
-| **AC5** | Migración inicial con 3 tonos actuales ejecutada | ✅ COMPLETE | Seed in migration |
-| **AC6** | Panel admin en `/admin/roast-tones` operativo | ✅ COMPLETE | Full UI with filters |
-| **AC7** | Editor multiidioma (ES/EN) funcional | ✅ COMPLETE | Modal with tabs |
-| **AC8** | Solo accesible para admin | ✅ COMPLETE | Middleware applied |
-| **AC9** | NO permitir desactivar todos los tonos | ✅ COMPLETE | Trigger + validation |
-| **AC10** | Soporte completo ES/EN en todos los campos | ✅ COMPLETE | JSONB structure |
-| **AC11** | Al menos 15 tests pasando (unit + integration) | ✅ COMPLETE | 50+ tests |
-| **AC12** | Documentación actualizada | ✅ COMPLETE | Full docs |
+| AC       | Description                                         | Status      | Notes                |
+| -------- | --------------------------------------------------- | ----------- | -------------------- |
+| **AC1**  | Tabla `roast_tones` creada con schema completo      | ✅ COMPLETE | Migration ready      |
+| **AC2**  | API admin funcional (CRUD + activate/deactivate)    | ✅ COMPLETE | 8 endpoints          |
+| **AC3**  | Integración con `roastPrompt.js` (carga desde DB)   | ✅ COMPLETE | Async buildBlockA    |
+| **AC4**  | Cache funcional (5min TTL, invalidación al cambiar) | ✅ COMPLETE | In-memory singleton  |
+| **AC5**  | Migración inicial con 3 tonos actuales ejecutada    | ✅ COMPLETE | Seed in migration    |
+| **AC6**  | Panel admin en `/admin/roast-tones` operativo       | ✅ COMPLETE | Full UI with filters |
+| **AC7**  | Editor multiidioma (ES/EN) funcional                | ✅ COMPLETE | Modal with tabs      |
+| **AC8**  | Solo accesible para admin                           | ✅ COMPLETE | Middleware applied   |
+| **AC9**  | NO permitir desactivar todos los tonos              | ✅ COMPLETE | Trigger + validation |
+| **AC10** | Soporte completo ES/EN en todos los campos          | ✅ COMPLETE | JSONB structure      |
+| **AC11** | Al menos 15 tests pasando (unit + integration)      | ✅ COMPLETE | 50+ tests            |
+| **AC12** | Documentación actualizada                           | ✅ COMPLETE | Full docs            |
 
 **Total:** 12/12 ✅ (100%)
 
@@ -207,19 +222,19 @@
 
 ### Code Added
 
-| Component | Lines | Files |
-|-----------|-------|-------|
-| **Migration** | 464 | 1 |
-| **Service** | 485 | 1 |
-| **API Routes** | 680 | 1 |
-| **Frontend Pages** | 370 | 1 |
-| **Frontend Components** | 890 | 2 |
-| **Integration (roastPrompt)** | +88 | 1 modified |
-| **Router Integration** | +12 | 2 modified |
-| **Tests (Unit)** | 220 | 1 |
-| **Tests (Integration)** | 640 | 2 |
-| **Documentation** | 800+ | 3 |
-| **TOTAL** | **4,649+** | **16** |
+| Component                     | Lines      | Files      |
+| ----------------------------- | ---------- | ---------- |
+| **Migration**                 | 464        | 1          |
+| **Service**                   | 485        | 1          |
+| **API Routes**                | 680        | 1          |
+| **Frontend Pages**            | 370        | 1          |
+| **Frontend Components**       | 890        | 2          |
+| **Integration (roastPrompt)** | +88        | 1 modified |
+| **Router Integration**        | +12        | 2 modified |
+| **Tests (Unit)**              | 220        | 1          |
+| **Tests (Integration)**       | 640        | 2          |
+| **Documentation**             | 800+       | 3          |
+| **TOTAL**                     | **4,649+** | **16**     |
 
 ---
 
@@ -246,6 +261,7 @@
 ### Rollback Plan
 
 If issues arise:
+
 1. Revert feature branch
 2. Drop table `roast_tones`
 3. Roast generation falls back to static Block A (already implemented)
@@ -284,12 +300,14 @@ If issues arise:
 ## 📞 References
 
 **Documentation:**
+
 - `docs/admin/tone-management.md` - Admin guide
 - `docs/plan/issue-876.md` - Implementation plan
 - `docs/agents/receipts/cursor-backend-876-2025-11-18.md` - Backend receipt
 - `docs/nodes/roast.md` - GDD node (Voice Styles)
 
 **Code:**
+
 - `database/migrations/030_roast_tones_table.sql`
 - `src/services/toneConfigService.js`
 - `src/routes/admin/tones.js`
@@ -299,6 +317,7 @@ If issues arise:
 - `frontend/src/components/admin/ToneEditor.jsx`
 
 **Tests:**
+
 - `tests/unit/services/toneConfigService.test.js`
 - `tests/integration/api/admin/tones.test.js`
 - `tests/integration/lib/prompts/roastPrompt.test.js`
@@ -309,4 +328,3 @@ If issues arise:
 **Progress:** **100% Complete** ✅  
 **GDD Health:** **90.6/100** (HEALTHY 🟢)  
 **Updated:** 2025-11-19
-

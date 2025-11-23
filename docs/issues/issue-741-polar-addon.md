@@ -15,6 +15,7 @@
 ### 1. Frontend Integration (~6-8 horas) 🎨
 
 - [ ] **Instalar Polar SDK**
+
   ```bash
   npm install @polar-sh/sdk
   ```
@@ -54,15 +55,16 @@
 ### 2. Production Environment (~2-3 horas) 🚀
 
 - [ ] **Configurar Environment Variables en Producción**
+
   ```bash
   # Polar API (CRITICAL - usar keys de producción)
   POLAR_ACCESS_TOKEN=polar_live_***
   POLAR_WEBHOOK_SECRET=whsec_***
-  
+
   # URLs (producción)
   POLAR_SUCCESS_URL=https://app.roastr.ai/billing/success?checkout_id={CHECKOUT_ID}
   POLAR_CANCEL_URL=https://app.roastr.ai/billing/cancel
-  
+
   # Price IDs (obtener de Polar Dashboard - Production)
   POLAR_ALLOWED_PRICE_IDS=price_live_starter_*,price_live_pro_*,price_live_plus_*
   POLAR_STARTER_PRICE_ID=price_live_starter_***
@@ -71,10 +73,12 @@
   ```
 
 - [ ] **Ejecutar Migraciones DB en Producción**
+
   ```bash
   psql $DATABASE_URL_PROD < database/migrations/027_polar_subscriptions.sql
   psql $DATABASE_URL_PROD < database/migrations/028_polar_webhook_events.sql
   ```
+
   - Verificar tablas: `SELECT * FROM polar_subscriptions LIMIT 1;`
   - Verificar RLS policies
 
@@ -96,36 +100,34 @@
 - [ ] **Grafana Dashboards - "Polar Billing"**
   - Panel 1: **Checkout Conversions**
     - Checkouts created vs completed
-    - Conversion rate % 
+    - Conversion rate %
     - Breakdown por plan (Starter, Pro, Plus)
-  
   - Panel 2: **Webhook Health**
     - Webhooks received (count por event type)
     - Success vs failures
     - Signature errors (security alert)
     - Average processing time
-  
   - Panel 3: **Subscription Lifecycle**
     - Active subscriptions por plan
     - New subscriptions (hoy, semana, mes)
     - Churn rate
     - Trial → Paid conversion %
-  
   - Panel 4: **Revenue Metrics**
     - MRR (Monthly Recurring Revenue)
     - MRR por plan
     - New MRR vs Churned MRR
 
 - [ ] **Queries SQL para Dashboards**
+
   ```sql
   -- Active subscriptions by plan
   SELECT plan, COUNT(*) as count
   FROM polar_subscriptions
   WHERE status = 'active'
   GROUP BY plan;
-  
+
   -- Webhook success rate (24h)
-  SELECT 
+  SELECT
     event_type,
     COUNT(*) as total,
     SUM(CASE WHEN processed THEN 1 ELSE 0 END) as processed,
@@ -140,7 +142,6 @@
     - Webhook signature failures > 5/min (potential security issue)
     - Webhook processing errors > 10/5min
     - Database transaction failures
-  
   - **WARNING:**
     - Checkout creation failures > 5/5min
     - Webhook processing time > 5s (p95)
@@ -198,28 +199,28 @@
   - Frontend load time < 1s
 
 - [ ] **Smoke Tests en Producción (4 scenarios)**
-  
+
   **Test 1: New subscription (Starter)**
   - User clicks "Subscribe to Starter"
   - Completes Polar checkout (test card)
   - Redirected to success page
   - Dashboard shows "Starter plan"
   - Entitlements: 100 analysis/month, 50 roasts/month
-  
+
   **Test 2: Upgrade (Starter → Pro)**
   - User clicks "Upgrade to Pro"
   - Completes payment
   - Dashboard shows "Pro plan"
   - Entitlements: 1000 analysis/month, 500 roasts/month
   - Pro-rating aplicado correctamente
-  
+
   **Test 3: Cancellation**
   - User clicks "Cancel Subscription"
   - Confirmation modal
   - Subscription canceled (cancel_at_period_end = true)
   - Access continúa hasta fin de período
   - Email notification enviado
-  
+
   **Test 4: Webhook Resilience**
   - Trigger test webhook desde Polar Dashboard
   - Verify idempotency (same event twice)
@@ -253,6 +254,7 @@
 ## 📊 Resumen Técnico
 
 **Backend (✅ Completo en #594, #808):**
+
 - `src/routes/checkout.js` (198 líneas) - Checkout API
 - `src/routes/polarWebhook.js` (425 líneas) - Webhook handlers
 - `src/services/entitlementsService.js` - `setEntitlementsFromPolarPrice()`
@@ -262,6 +264,7 @@
 - **Coverage:** ≥90% en todos los módulos Polar
 
 **Referencias:**
+
 - `docs/POLAR-INTEGRATION-SUMMARY.md` - Resumen completo backend
 - `docs/flows/payment-polar.md` - Flow documentation
 - `docs/POLAR-ENV-VARIABLES.md` - Env vars reference
@@ -273,4 +276,3 @@
 **Estimación Total:** 15-21 horas  
 **Sprint Plan:** Week 1 (Frontend + Prod Env), Week 2 (Monitoring + Docs + Validation)  
 **Launch Target:** End of Week 2
-

@@ -1,6 +1,6 @@
 /**
  * Demo script for Issue #187 - AI Transparency Settings
- * 
+ *
  * This script demonstrates how the new transparency functionality works
  * for different transparency modes (bio, signature, creative).
  */
@@ -11,9 +11,9 @@ async function demoTransparencyFeature() {
   console.log('🔍 AI Transparency Settings Demo - Issue #187');
   console.log('===============================================\n');
 
-  const testRoast = "Your comment has the creativity of a broken calculator.";
+  const testRoast = 'Your comment has the creativity of a broken calculator.';
   const testUserId = 'demo-user-123';
-  
+
   console.log('Original Roast:');
   console.log(`"${testRoast}"`);
   console.log();
@@ -21,13 +21,17 @@ async function demoTransparencyFeature() {
   // Demo bio mode
   console.log('1. 📄 BIO MODE (Default)');
   console.log('-------------------------');
-  
+
   // Mock the transparency mode
   const originalGetMode = transparencyService.getUserTransparencyMode;
   transparencyService.getUserTransparencyMode = () => Promise.resolve('bio');
-  
-  const bioResult = await transparencyService.applyTransparencyDisclaimer(testRoast, testUserId, 'es');
-  
+
+  const bioResult = await transparencyService.applyTransparencyDisclaimer(
+    testRoast,
+    testUserId,
+    'es'
+  );
+
   console.log('Final Roast:', `"${bioResult.finalText}"`);
   console.log('Bio Text Suggestion:', `"${bioResult.bioText}"`);
   console.log('Transparency Mode:', bioResult.transparencyMode);
@@ -36,11 +40,15 @@ async function demoTransparencyFeature() {
   // Demo signature mode
   console.log('2. ✍️  SIGNATURE MODE');
   console.log('--------------------');
-  
+
   transparencyService.getUserTransparencyMode = () => Promise.resolve('signature');
-  
-  const signatureResult = await transparencyService.applyTransparencyDisclaimer(testRoast, testUserId, 'es');
-  
+
+  const signatureResult = await transparencyService.applyTransparencyDisclaimer(
+    testRoast,
+    testUserId,
+    'es'
+  );
+
   console.log('Final Roast:', `"${signatureResult.finalText}"`);
   console.log('Transparency Mode:', signatureResult.transparencyMode);
   console.log('✅ Classic signature automatically appended\n');
@@ -48,11 +56,15 @@ async function demoTransparencyFeature() {
   // Demo creative mode
   console.log('3. 🎭 CREATIVE MODE');
   console.log('------------------');
-  
+
   transparencyService.getUserTransparencyMode = () => Promise.resolve('creative');
-  
+
   for (let i = 1; i <= 3; i++) {
-    const creativeResult = await transparencyService.applyTransparencyDisclaimer(testRoast, testUserId, 'es');
+    const creativeResult = await transparencyService.applyTransparencyDisclaimer(
+      testRoast,
+      testUserId,
+      'es'
+    );
     console.log(`Creative Example ${i}:`, `"${creativeResult.finalText}"`);
   }
   console.log('✅ Random creative disclaimers for variety\n');
@@ -60,28 +72,36 @@ async function demoTransparencyFeature() {
   // Demo English language
   console.log('4. 🌍 ENGLISH LANGUAGE SUPPORT');
   console.log('------------------------------');
-  
+
   transparencyService.getUserTransparencyMode = () => Promise.resolve('signature');
-  
-  const englishResult = await transparencyService.applyTransparencyDisclaimer(testRoast, testUserId, 'en');
-  
+
+  const englishResult = await transparencyService.applyTransparencyDisclaimer(
+    testRoast,
+    testUserId,
+    'en'
+  );
+
   console.log('English Signature:', `"${englishResult.finalText}"`);
   console.log('✅ Multi-language support\n');
 
   // Demo transparency options for frontend
   console.log('5. ⚙️  FRONTEND CONFIGURATION OPTIONS');
   console.log('-----------------------------------');
-  
+
   const spanishOptions = transparencyService.getTransparencyOptions('es');
   console.log('Spanish Options:');
-  spanishOptions.forEach(option => {
-    console.log(`  • ${option.value}: ${option.label} - ${option.description} ${option.is_default ? '(default)' : ''}`);
+  spanishOptions.forEach((option) => {
+    console.log(
+      `  • ${option.value}: ${option.label} - ${option.description} ${option.is_default ? '(default)' : ''}`
+    );
   });
-  
+
   console.log('\nEnglish Options:');
   const englishOptions = transparencyService.getTransparencyOptions('en');
-  englishOptions.forEach(option => {
-    console.log(`  • ${option.value}: ${option.label} - ${option.description} ${option.is_default ? '(default)' : ''}`);
+  englishOptions.forEach((option) => {
+    console.log(
+      `  • ${option.value}: ${option.label} - ${option.description} ${option.is_default ? '(default)' : ''}`
+    );
   });
 
   // Demo API integration
@@ -89,26 +109,38 @@ async function demoTransparencyFeature() {
   console.log('-----------------------------');
   console.log('GET /api/user/settings/transparency-mode');
   console.log('Response example:');
-  console.log(JSON.stringify({
-    success: true,
-    data: {
-      transparency_mode: 'bio',
-      bio_text: 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI',
-      options: spanishOptions
-    }
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        success: true,
+        data: {
+          transparency_mode: 'bio',
+          bio_text: 'Respuestas a comentarios inapropiados proporcionados por @Roastr.AI',
+          options: spanishOptions
+        }
+      },
+      null,
+      2
+    )
+  );
 
   console.log('\nPATCH /api/user/settings/transparency-mode');
   console.log('Request body: { "mode": "signature" }');
   console.log('Response example:');
-  console.log(JSON.stringify({
-    success: true,
-    message: 'Transparency mode updated successfully',
-    data: {
-      transparency_mode: 'signature',
-      bio_text: null
-    }
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        success: true,
+        message: 'Transparency mode updated successfully',
+        data: {
+          transparency_mode: 'signature',
+          bio_text: null
+        }
+      },
+      null,
+      2
+    )
+  );
 
   // Restore original function
   transparencyService.getUserTransparencyMode = originalGetMode;

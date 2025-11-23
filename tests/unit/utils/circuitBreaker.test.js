@@ -1,11 +1,15 @@
 /**
  * Circuit Breaker Tests
- * 
+ *
  * Tests for the circuit breaker pattern implementation to ensure
  * proper failure detection and recovery mechanisms.
  */
 
-const { CircuitBreaker, CircuitBreakerManager, CircuitBreakerError } = require('../../../src/utils/circuitBreaker');
+const {
+  CircuitBreaker,
+  CircuitBreakerManager,
+  CircuitBreakerError
+} = require('../../../src/utils/circuitBreaker');
 
 describe('CircuitBreaker', () => {
   let circuitBreaker;
@@ -79,8 +83,7 @@ describe('CircuitBreaker', () => {
     test('should reject requests immediately when open', async () => {
       const operation = jest.fn().mockResolvedValue('success');
 
-      await expect(circuitBreaker.execute(operation))
-        .rejects.toThrow(CircuitBreakerError);
+      await expect(circuitBreaker.execute(operation)).rejects.toThrow(CircuitBreakerError);
 
       expect(operation).not.toHaveBeenCalled();
     });
@@ -98,7 +101,7 @@ describe('CircuitBreaker', () => {
 
     test('should transition to HALF_OPEN after recovery timeout', async () => {
       // Wait for recovery timeout
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      await new Promise((resolve) => setTimeout(resolve, 1100));
 
       const operation = jest.fn().mockResolvedValue('success');
       const result = await circuitBreaker.execute(operation);
@@ -118,9 +121,9 @@ describe('CircuitBreaker', () => {
       for (let i = 0; i < 3; i++) {
         await expect(circuitBreaker.execute(failingOperation)).rejects.toThrow();
       }
-      
+
       // Wait for recovery timeout to enable HALF_OPEN transition
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      await new Promise((resolve) => setTimeout(resolve, 1100));
     });
 
     test('should close on successful operation', async () => {
@@ -134,7 +137,8 @@ describe('CircuitBreaker', () => {
     });
 
     test('should open immediately on failure', async () => {
-      const operation = jest.fn()
+      const operation = jest
+        .fn()
         .mockResolvedValueOnce('trigger half-open') // First call to transition to HALF_OPEN
         .mockRejectedValueOnce(new Error('Fail in half-open')); // Second call to test failure
 
@@ -159,15 +163,18 @@ describe('CircuitBreaker', () => {
         logger: mockLogger
       });
 
-      const operation = jest.fn()
+      const operation = jest
+        .fn()
         .mockRejectedValueOnce(new Error('Expected error'))
         .mockRejectedValueOnce(new Error('Validation failed'))
         .mockRejectedValueOnce(new Error('Real error'));
 
       // First two should not count as failures
       await expect(breakerWithExpectedErrors.execute(operation)).rejects.toThrow('Expected error');
-      await expect(breakerWithExpectedErrors.execute(operation)).rejects.toThrow('Validation failed');
-      
+      await expect(breakerWithExpectedErrors.execute(operation)).rejects.toThrow(
+        'Validation failed'
+      );
+
       expect(breakerWithExpectedErrors.state).toBe('CLOSED');
       expect(breakerWithExpectedErrors.failureCount).toBe(0);
 
@@ -199,7 +206,8 @@ describe('CircuitBreaker', () => {
 
   describe('Metrics', () => {
     test('should provide accurate metrics', async () => {
-      const operation = jest.fn()
+      const operation = jest
+        .fn()
         .mockResolvedValueOnce('success')
         .mockRejectedValueOnce(new Error('failure'))
         .mockResolvedValueOnce('success');
@@ -216,7 +224,7 @@ describe('CircuitBreaker', () => {
         failureCount: 1,
         successCount: 2,
         requestCount: 3,
-        failureRate: 1/3,
+        failureRate: 1 / 3,
         lastFailureTime: expect.any(Number),
         timeSinceLastFailure: expect.any(Number)
       });
@@ -274,7 +282,7 @@ describe('CircuitBreakerManager', () => {
       // Force circuit to open
       const breaker = manager.getBreaker('unreliable-service', { failureThreshold: 1 });
       await expect(manager.execute('unreliable-service', failingOperation)).rejects.toThrow();
-      
+
       // Now it should use fallback
       const result = await manager.execute('unreliable-service', failingOperation, fallback);
       expect(result).toBe('fallback result');
@@ -302,7 +310,7 @@ describe('CircuitBreakerManager', () => {
       const failOperation = jest.fn().mockRejectedValue(new Error('failure'));
 
       await manager.execute('healthy-service', successOperation);
-      
+
       // Force unhealthy service to open
       const breaker = manager.getBreaker('unhealthy-service', { failureThreshold: 1 });
       await expect(manager.execute('unhealthy-service', failOperation)).rejects.toThrow();
@@ -317,7 +325,7 @@ describe('CircuitBreakerManager', () => {
     test('should reset all circuit breakers', async () => {
       // Create some breakers with failures
       const failOperation = jest.fn().mockRejectedValue(new Error('failure'));
-      
+
       await expect(manager.execute('service1', failOperation)).rejects.toThrow();
       await expect(manager.execute('service2', failOperation)).rejects.toThrow();
 

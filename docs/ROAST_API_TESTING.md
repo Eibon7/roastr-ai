@@ -5,6 +5,7 @@ This document provides comprehensive testing guidelines for the Roastr.ai roast 
 ## Overview
 
 The Roastr.ai roast API provides AI-powered roast generation with the following key features:
+
 - **OpenAI Integration**: Real AI-powered roast generation (flagged by `ENABLE_REAL_OPENAI`)
 - **Perspective API Moderation**: Content safety analysis and toxicity detection
 - **IPv6-Safe Rate Limiting**: Robust rate limiting that handles both IPv4 and IPv6 addresses
@@ -14,12 +15,14 @@ The Roastr.ai roast API provides AI-powered roast generation with the following 
 ## Endpoints
 
 ### 1. POST /api/roast/preview
+
 Generate a roast preview without consuming user credits.
 
 **Authentication**: Required  
 **Rate Limit**: 30 requests/15min (authenticated), 5 requests/15min (anonymous)
 
 #### Request Body
+
 ```json
 {
   "text": "string (required, max 2000 chars)",
@@ -30,11 +33,13 @@ Generate a roast preview without consuming user credits.
 ```
 
 #### Valid Values
+
 - **tone**: `sarcastic`, `witty`, `clever`, `playful`, `savage`
 - **humorType**: `witty`, `clever`, `sarcastic`, `playful`, `observational`
 - **intensity**: 1 (gentle) to 5 (savage)
 
 #### Success Response (200)
+
 ```json
 {
   "success": true,
@@ -57,15 +62,18 @@ Generate a roast preview without consuming user credits.
 ```
 
 ### 2. POST /api/roast/generate
+
 Generate a roast and consume user credits.
 
 **Authentication**: Required  
 **Rate Limit**: 30 requests/15min (authenticated), 5 requests/15min (anonymous)
 
 #### Request Body
+
 Same as `/preview` endpoint.
 
 #### Success Response (200)
+
 ```json
 {
   "success": true,
@@ -93,11 +101,13 @@ Same as `/preview` endpoint.
 ```
 
 ### 3. GET /api/roast/credits
+
 Get user's current credit status.
 
 **Authentication**: Required
 
 #### Success Response (200)
+
 ```json
 {
   "success": true,
@@ -120,6 +130,7 @@ Get user's current credit status.
 ### 1. Basic Functionality Tests
 
 #### Test Case: Successful Roast Generation
+
 ```bash
 curl -X POST http://localhost:3000/api/roast/preview \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -134,6 +145,7 @@ curl -X POST http://localhost:3000/api/roast/preview \
 **Expected**: 200 response with roast and metadata
 
 #### Test Case: Parameter Validation
+
 ```bash
 curl -X POST http://localhost:3000/api/roast/preview \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -150,6 +162,7 @@ curl -X POST http://localhost:3000/api/roast/preview \
 ### 2. Authentication Tests
 
 #### Test Case: Missing Authentication
+
 ```bash
 curl -X POST http://localhost:3000/api/roast/preview \
   -H "Content-Type: application/json" \
@@ -161,6 +174,7 @@ curl -X POST http://localhost:3000/api/roast/preview \
 ### 3. Rate Limiting Tests
 
 #### Test Case: Rate Limit Exceeded
+
 ```bash
 # Send 31 requests rapidly (exceeds authenticated limit of 30)
 for i in {1..31}; do
@@ -177,6 +191,7 @@ wait
 ### 4. Content Moderation Tests
 
 #### Test Case: High Toxicity Content
+
 ```bash
 curl -X POST http://localhost:3000/api/roast/preview \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -191,6 +206,7 @@ curl -X POST http://localhost:3000/api/roast/preview \
 ### 5. Credit System Tests
 
 #### Test Case: Credit Consumption
+
 ```bash
 # Check initial credits
 curl -X GET http://localhost:3000/api/roast/credits \
@@ -212,6 +228,7 @@ curl -X GET http://localhost:3000/api/roast/credits \
 ## Environment Variables
 
 ### Required for Full Functionality
+
 ```bash
 # OpenAI Integration
 ENABLE_REAL_OPENAI=true
@@ -230,6 +247,7 @@ SUPABASE_SERVICE_KEY=your_service_key
 ```
 
 ### Development/Testing
+
 ```bash
 # Disable external APIs for testing
 ENABLE_REAL_OPENAI=false
@@ -244,16 +262,19 @@ DEBUG_RATE_LIMIT=true
 ## Running Tests
 
 ### Unit Tests
+
 ```bash
 npm test tests/unit/roast.test.js
 ```
 
 ### Integration Tests
+
 ```bash
 npm test tests/integration/roast.test.js
 ```
 
 ### All Roast Tests
+
 ```bash
 npm test -- --testPathPattern=roast
 ```
@@ -261,44 +282,50 @@ npm test -- --testPathPattern=roast
 ## Performance Benchmarks
 
 ### Expected Response Times
+
 - **Preview endpoint**: < 1000ms (mock), < 3000ms (real OpenAI)
 - **Generate endpoint**: < 1200ms (mock), < 3500ms (real OpenAI)
 - **Credits endpoint**: < 200ms
 
 ### Rate Limiting Thresholds
+
 - **Authenticated users**: 30 requests per 15 minutes
 - **Anonymous users**: 5 requests per 15 minutes
 - **IPv6 normalization**: Handles compressed and expanded formats
 
 ### Credit Limits by Plan
+
 - **Free**: 50 roasts per month
 - **Creator**: 500 roasts per month
 - **Pro**: Unlimited roasts
 
 ## Error Codes
 
-| Code | Description | Common Causes |
-|------|-------------|---------------|
-| 400 | Validation failed | Invalid parameters, empty text, unsupported tone |
-| 400 | Content not suitable | High toxicity score from Perspective API |
-| 401 | Authentication required | Missing or invalid token |
-| 402 | Insufficient credits | User has reached monthly limit |
-| 429 | Rate limit exceeded | Too many requests in time window |
-| 500 | Internal server error | OpenAI API error, database connection issue |
+| Code | Description             | Common Causes                                    |
+| ---- | ----------------------- | ------------------------------------------------ |
+| 400  | Validation failed       | Invalid parameters, empty text, unsupported tone |
+| 400  | Content not suitable    | High toxicity score from Perspective API         |
+| 401  | Authentication required | Missing or invalid token                         |
+| 402  | Insufficient credits    | User has reached monthly limit                   |
+| 429  | Rate limit exceeded     | Too many requests in time window                 |
+| 500  | Internal server error   | OpenAI API error, database connection issue      |
 
 ## Troubleshooting
 
 ### Common Issues
 
 #### 1. Rate Limit False Positives
+
 **Symptom**: Users getting 429 errors unexpectedly  
 **Solution**: Check IPv6 normalization, verify rate limit configuration
 
 #### 2. High Response Times
+
 **Symptom**: Requests taking > 5 seconds  
 **Solution**: Check OpenAI API status, verify database connections
 
 #### 3. Credit Calculation Errors
+
 **Symptom**: Incorrect credit counts  
 **Solution**: Verify database transactions, check for race conditions
 
@@ -321,17 +348,20 @@ curl -X GET http://localhost:3000/api/roast/credits \
 ## Security Considerations
 
 ### Input Validation
+
 - Text length limits (2000 characters)
 - Parameter type validation
 - SQL injection prevention
 - XSS prevention in responses
 
 ### Rate Limiting
+
 - IPv6-safe IP normalization
 - User-based and IP-based limits
 - Exponential backoff recommendations
 
 ### Content Safety
+
 - Perspective API integration
 - Toxicity score thresholds
 - Category-based filtering

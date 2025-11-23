@@ -92,7 +92,7 @@ const {
   simulateNetworkError,
   simulateNetworkTimeout,
   mockVariantExhaustion,
-  mockSuccessfulVariant,
+  mockSuccessfulVariant
 } = require('./helpers/network-helpers');
 
 // Simulate network error
@@ -117,7 +117,7 @@ const mockServer = createMockServer(page);
 await mockServer.mockEndpoint('POST', '**/api/endpoint', {
   status: 200,
   body: { success: true },
-  delay: 1000, // Optional delay
+  delay: 1000 // Optional delay
 });
 
 // Mock network error
@@ -148,7 +148,7 @@ const {
   waitForSuccessMessage,
   measureDuration,
   retryOperation,
-  isVisibleWithinTimeout,
+  isVisibleWithinTimeout
 } = require('./helpers/timeout-helpers');
 
 // Wait for error message
@@ -172,26 +172,31 @@ expect(isVisible).toBe(true);
 ## Test Scenarios (Issue #419)
 
 ### AC #1: Timeout Handling
+
 - Test timeout message after 30s
 - Test retry functionality after timeout
 - Verify clear error message
 
 ### AC #2: Network Error Handling
+
 - Test network error during approval
 - Test network error during variant generation
 - Verify retry button availability
 
 ### AC #3: Variants Exhaustion
+
 - Test variant limit reached (429)
 - Verify specific error message
 - Verify approve/reject still functional
 
 ### AC #4: Clear Error Messages
+
 - Test actionable error messages
 - Test no sensitive info leaked
 - Test error context included
 
 ### AC #5: Retry Functionality
+
 - Test retry button appears on recoverable errors
 - Test retry button NOT shown on non-recoverable errors
 - Test successful retry operation
@@ -210,6 +215,7 @@ E2E tests run automatically on every PR via GitHub Actions (`.github/workflows/e
 ## Test Evidence
 
 Screenshots and reports saved to:
+
 - `/docs/test-evidence/issue-419/` - Test screenshots
 - `/playwright-report/` - HTML test reports
 
@@ -222,6 +228,7 @@ npx playwright test --ui
 ```
 
 This opens the Playwright Test Runner with:
+
 - Interactive test execution
 - Time travel debugging
 - Network inspection

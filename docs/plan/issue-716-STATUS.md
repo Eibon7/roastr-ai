@@ -10,6 +10,7 @@
 ## ✅ Completed Phases
 
 ### Phase 1: Planning & Fixtures (100% Complete)
+
 - ✅ Implementation plan: `docs/plan/issue-716.md`
 - ✅ Test fixtures: 9 files in `tests/fixtures/guardian/`
   - 5 mock-diffs (pricing, auth, AI model, quota, safe doc)
@@ -17,6 +18,7 @@
   - 1 ignore config (guardian-ignore-test.yaml)
 
 ### Phase 3: Integration & CLI Tests (100% Complete)
+
 - ✅ Integration tests: `tests/integration/guardian-workflow.test.js` (480 lines, 6 E2E workflows)
   - CRITICAL change detection (pricing) → Exit 2
   - SENSITIVE change detection (AI models) → Exit 1
@@ -32,6 +34,7 @@
   - Output formatting (JSON mode, human-readable)
 
 ### Phase 4: Documentation (100% Complete)
+
 - ✅ Usage guide: `docs/GUARDIAN-USAGE.md` (849 lines)
   - Installation, configuration, usage examples
   - CI/CD integration (GitHub Actions, pre-commit/push hooks)
@@ -45,12 +48,14 @@
 ### Phase 2: Unit Test Expansion (INCOMPLETE - 18% Complete)
 
 **Current State:**
+
 - **File:** `tests/unit/scripts/guardian-gdd.test.js`
 - **Lines:** 361 (target: ~712)
 - **Tests:** 13 (target: ~66)
 - **Coverage:** ~18% of planned tests
 
 **What Exists (13 tests):**
+
 - M1: Unstaged changes detection (4 tests)
 - M2: Line counting excludes diff headers (4 tests)
 - C4: Directory creation before writes (4 tests)
@@ -82,11 +87,13 @@
 ## 🔍 CodeRabbit Assessment (Comment #3502597691)
 
 **Findings:**
+
 1. ❌ **Phase 2 claim false:** PR description says "Phase 2 complete, 362→712 lines" but actual file is 361 lines
 2. ❌ **Scope creep:** PR contained unrelated files from Issues #745 (CSRF) and #261 (Admin)
 3. ✅ **Phases 1, 3, 4:** Genuine and complete
 
 **Actions Taken:**
+
 - ✅ Removed scope creep files (CSRF utils, admin changes, review plans)
 - ✅ Documented true completion status in this file
 - ⚠️ Phase 2 remains incomplete
@@ -95,14 +102,14 @@
 
 ## 📋 Acceptance Criteria vs Reality
 
-| Criterion | Planned | Actual | Status |
-|-----------|---------|--------|--------|
-| **Integration tests with fixtures** | ✅ | ✅ 480 lines, 6 tests | ✅ DONE |
-| **CLI flag testing** | ✅ | ✅ 568 lines, 18 tests | ✅ DONE |
-| **Unit tests for core (≥80% coverage)** | ✅ | ⚠️ 361 lines, 13 tests (~18%) | ❌ INCOMPLETE |
-| **Edge cases covered** | ✅ | ✅ In CLI + integration tests | ✅ DONE |
-| **`docs/GUARDIAN-USAGE.md`** | ✅ | ✅ 849 lines | ✅ DONE |
-| **Testing framework ready** | ✅ | ✅ Structure in place | ✅ DONE |
+| Criterion                               | Planned | Actual                        | Status        |
+| --------------------------------------- | ------- | ----------------------------- | ------------- |
+| **Integration tests with fixtures**     | ✅      | ✅ 480 lines, 6 tests         | ✅ DONE       |
+| **CLI flag testing**                    | ✅      | ✅ 568 lines, 18 tests        | ✅ DONE       |
+| **Unit tests for core (≥80% coverage)** | ✅      | ⚠️ 361 lines, 13 tests (~18%) | ❌ INCOMPLETE |
+| **Edge cases covered**                  | ✅      | ✅ In CLI + integration tests | ✅ DONE       |
+| **`docs/GUARDIAN-USAGE.md`**            | ✅      | ✅ 849 lines                  | ✅ DONE       |
+| **Testing framework ready**             | ✅      | ✅ Structure in place         | ✅ DONE       |
 
 **Overall:** 5/6 criteria complete (83%)
 
@@ -111,28 +118,33 @@
 ## 🚀 Next Steps
 
 ### Option A: Merge as Partial Completion (Recommended)
+
 1. Update PR description to reflect true state (Phases 1,3,4 complete, Phase 2 incomplete)
 2. Create follow-up Issue #TBD: "Complete Guardian Unit Test Expansion (Phase 2)"
 3. Merge PR with 83% completion
 4. Address Phase 2 in follow-up (estimated: 2-3 hours)
 
 **Pros:**
+
 - Honest about completion
 - Delivers 5/6 acceptance criteria
 - Integration + CLI tests provide value now
 - Documentation ready for use
 
 ### Option B: Complete Phase 2 Before Merge
+
 1. Re-implement 53 missing unit tests (~350 lines)
 2. Verify coverage ≥80%
 3. Then merge
 
 **Pros:**
+
 - 100% completion
 - Higher confidence in Guardian script
 - Meets all acceptance criteria
 
 **Cons:**
+
 - Delays merge by ~2-3 hours
 - PR already provides substantial value
 
@@ -143,6 +155,7 @@
 **Merge with follow-up:** Accept PR #748 as 83% complete with follow-up Issue for Phase 2.
 
 **Rationale:**
+
 - Integration tests (480 lines) + CLI tests (568 lines) = 1,048 lines of high-value tests
 - Documentation (849 lines) provides immediate utility
 - Phase 2 unit tests are important but not blocking for Guardian usage
@@ -153,18 +166,21 @@
 ## 📊 Final Metrics
 
 **What's in PR #748:**
+
 - Files changed: ~8 (Guardian-specific only, scope creep removed)
 - Lines added: ~2,500 (tests + docs)
 - Tests added: 24 (6 integration + 18 CLI)
 - Documentation: 849 lines
 
 **Test Breakdown:**
+
 - Integration: 6 tests (CRITICAL/SENSITIVE/SAFE workflows)
 - CLI: 18 tests (flags, exit codes, errors)
 - Unit: 13 tests (M1, M2, C4 fixes - baseline)
 - **Total:** 37 tests
 
 **Coverage (estimated):**
+
 - Integration workflows: ~90% (comprehensive E2E scenarios)
 - CLI interface: ~95% (all flags + error paths)
 - Guardian core functions: ~18% (baseline only)

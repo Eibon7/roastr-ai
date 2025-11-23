@@ -1,7 +1,7 @@
 /**
  * Auto-Approval Service - Round 6 Critical Security Enhancements
  * Implements fail-closed security patterns, content validation, and transparency enforcement
- * 
+ *
  * SECURITY FEATURES:
  * - Fail-closed patterns for all critical operations
  * - Content validation with exact text matching
@@ -26,7 +26,7 @@ class AutoApprovalService {
       // Conservative toxicity thresholds (Round 3 fix)
       maxToxicityScore: 0.6, // Reduced from 0.7
       maxToxicityIncrease: 0.15,
-      
+
       // Plan-specific daily auto-approval caps (CodeRabbit Round 8 fix)
       planLimits: {
         starter_trial: { hourly: 10, daily: 25 },
@@ -35,19 +35,19 @@ class AutoApprovalService {
         plus: { hourly: 100, daily: 500 },
         enterprise: { hourly: 200, daily: 1000 }
       },
-      
+
       // Fallback limits (legacy)
       maxHourlyApprovals: 50,
       maxDailyApprovals: 200,
-      
+
       // Timeouts (Round 6 security hardening)
       healthCheckTimeout: 1000,
       queryTimeout: 3000,
       transparencyTimeout: 2000,
       policyFetchTimeout: 2500,
-      contentValidationTimeout: 1500,
+      contentValidationTimeout: 1500
     };
-    
+
     // Circuit breaker for external services
     this.circuitBreaker = {
       state: 'closed', // closed, open, half-open
@@ -71,7 +71,7 @@ class AutoApprovalService {
           organizationId,
           textLength: text?.length || 0
         });
-        
+
         // Basic mock analysis - always allow for backwards compatibility
         return {
           action: 'allow',
@@ -121,14 +121,13 @@ class AutoApprovalService {
       });
 
       return validation;
-      
     } catch (error) {
       logger.error('Content validation error - failing closed', {
         organizationId,
         error: error.message,
         stack: error.stack
       });
-      
+
       // Fail closed on errors
       return {
         valid: false,
@@ -139,7 +138,7 @@ class AutoApprovalService {
   }
 
   /**
-   * Validate platform compliance - Runtime Critical Fix  
+   * Validate platform compliance - Runtime Critical Fix
    * Addresses CodeRabbit issue: Missing validatePlatformCompliance method
    */
   async validatePlatformCompliance(content, platform, organizationId) {
@@ -162,7 +161,7 @@ class AutoApprovalService {
       };
 
       const rules = platformRules[platform] || platformRules.default;
-      
+
       const validation = {
         valid: true,
         reason: 'platform_compliant',
@@ -190,7 +189,6 @@ class AutoApprovalService {
       });
 
       return validation;
-      
     } catch (error) {
       logger.error('Platform compliance validation error - failing closed', {
         organizationId,
@@ -198,7 +196,7 @@ class AutoApprovalService {
         error: error.message,
         stack: error.stack
       });
-      
+
       // Fail closed on errors
       return {
         valid: false,
@@ -226,7 +224,7 @@ class AutoApprovalService {
       // ROUND 4 FIX: Enhanced database connectivity check with timeout
       const healthCheckStart = Date.now();
       let connectionHealthy = true;
-      
+
       try {
         const healthCheck = await this.timeoutPromise(
           supabaseServiceClient.from('organizations').select('id').limit(1),
@@ -234,7 +232,7 @@ class AutoApprovalService {
           'eligibility_health_check',
           organizationId
         );
-        
+
         if (healthCheck.error) {
           connectionHealthy = false;
           logger.error('CRITICAL: Database health check failed during eligibility check', {
@@ -257,8 +255,8 @@ class AutoApprovalService {
 
       // ROUND 4 FIX: Fail closed if database is unhealthy
       if (!connectionHealthy) {
-        return { 
-          eligible: false, 
+        return {
+          eligible: false,
           reason: 'system_error',
           error: 'Database connectivity verification failed'
         };
@@ -271,8 +269,11 @@ class AutoApprovalService {
           .select('plan, settings')
           .eq('id', organizationId)
           .single(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Organization query timeout')), this.config.queryTimeout)
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Organization query timeout')),
+            this.config.queryTimeout
+          )
         )
       ]);
 
@@ -288,7 +289,7 @@ class AutoApprovalService {
       }
 
       const organization = orgQuery.data;
-      
+
       // ROUND 4 FIX: Enhanced validation
       if (!organization || !organization.plan) {
         logger.error('Organization data incomplete for auto-approval eligibility', {
@@ -301,7 +302,9 @@ class AutoApprovalService {
       }
 
       // Check plan eligibility - CodeRabbit Fix: Include enterprise plans
-      const planEligible = ['pro', 'plus', 'creator_plus', 'enterprise'].includes(organization.plan);
+      const planEligible = ['pro', 'plus', 'creator_plus', 'enterprise'].includes(
+        organization.plan
+      );
       const settingsEnabled = organization.settings?.auto_approval === true;
 
       // ROUND 4 FIX: Plan-specific limits validation
@@ -319,11 +322,13 @@ class AutoApprovalService {
 
       return {
         eligible: planEligible && settingsEnabled && hasAutoApprovalCapability,
-        reason: planEligible && settingsEnabled && hasAutoApprovalCapability ? 'eligible' : 'not_eligible',
+        reason:
+          planEligible && settingsEnabled && hasAutoApprovalCapability
+            ? 'eligible'
+            : 'not_eligible',
         plan: organization.plan,
         settings: organization.settings
       };
-
     } catch (error) {
       // ROUND 4 FIX: Enhanced error logging with context
       logger.error('Error checking auto-approval eligibility - failing closed', {
@@ -332,10 +337,10 @@ class AutoApprovalService {
         stack: error.stack,
         reason: 'system_error'
       });
-      return { 
-        eligible: false, 
+      return {
+        eligible: false,
         reason: 'system_error',
-        error: error.message 
+        error: error.message
       };
     }
   }
@@ -363,13 +368,13 @@ class AutoApprovalService {
 
       // 2. Toxicity threshold check with proper null/undefined handling
       validations.toxicityThreshold = this.validateToxicityScore(
-        generatedVariant.score, 
+        generatedVariant.score,
         comment.toxicity_score
       );
 
       // 3. Platform compliance check - CodeRabbit Fix: Extract .valid boolean
       const platformComplianceResult = await this.validatePlatformCompliance(
-        generatedVariant.text, 
+        generatedVariant.text,
         comment.platform,
         organizationId
       );
@@ -390,7 +395,7 @@ class AutoApprovalService {
       validations.shieldApproval = shieldResult.action === 'allow';
 
       // CodeRabbit Fix: Now all validations are properly boolean values
-      const allPassed = Object.values(validations).every(v => v === true);
+      const allPassed = Object.values(validations).every((v) => v === true);
 
       logger.info('Auto-approval security validations completed', {
         organizationId,
@@ -405,7 +410,6 @@ class AutoApprovalService {
         validations,
         shieldResult
       };
-
     } catch (error) {
       logger.error('Error performing security validations', {
         organizationId,
@@ -416,7 +420,6 @@ class AutoApprovalService {
     }
   }
 
-
   /**
    * Check rate limits for auto-approval
    * SECURITY: Fail-closed during database errors
@@ -424,7 +427,7 @@ class AutoApprovalService {
   async checkRateLimits(organizationId) {
     const { randomUUID } = require('crypto');
     const rateLimitId = `rate_${randomUUID()}`;
-    
+
     // ROUND 4 FIX: Enhanced input validation
     if (!organizationId || typeof organizationId !== 'string' || organizationId.trim() === '') {
       return {
@@ -446,7 +449,7 @@ class AutoApprovalService {
           'rate_limit_health_check',
           organizationId
         );
-        
+
         // CRITICAL: Any error in health check means fail closed
         if (healthCheck.error) {
           connectionHealthy = false;
@@ -538,8 +541,18 @@ class AutoApprovalService {
       }
 
       // ROUND 12 FIX: Validate count values and handle edge cases - fail closed on null counts
-      const hourlyCount = this.validateCount(hourlyResult.count, 'hourly', organizationId, rateLimitId);
-      const dailyCount = this.validateCount(dailyResult.count, 'daily', organizationId, rateLimitId);
+      const hourlyCount = this.validateCount(
+        hourlyResult.count,
+        'hourly',
+        organizationId,
+        rateLimitId
+      );
+      const dailyCount = this.validateCount(
+        dailyResult.count,
+        'daily',
+        organizationId,
+        rateLimitId
+      );
 
       // CodeRabbit Critical Fix: Fail closed if count validation returns null
       if (hourlyCount === null || dailyCount === null) {
@@ -555,7 +568,8 @@ class AutoApprovalService {
         return {
           allowed: false,
           error: 'invalid_rate_limit_data',
-          reason: 'Cannot validate rate limits with invalid count data - failing closed for security',
+          reason:
+            'Cannot validate rate limits with invalid count data - failing closed for security',
           rateLimitId
         };
       }
@@ -587,7 +601,6 @@ class AutoApprovalService {
         rateLimitId,
         reason: allowed ? 'within_limits' : 'rate_limit_exceeded'
       };
-
     } catch (error) {
       // ROUND 4 FIX: Enhanced error logging
       logger.error('Error checking rate limits - failing closed', {
@@ -660,15 +673,15 @@ class AutoApprovalService {
    */
   async getPlanSpecificLimits(organizationId) {
     const validationId = `plan_limits_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     try {
       // Get organization plan from planLimitsService
       const planData = await planLimitsService.getUserPlan(organizationId);
       const userPlan = planData?.plan || 'starter_trial';
-      
+
       // Get plan-specific limits from config
       const planLimits = this.config.planLimits[userPlan] || this.config.planLimits.starter_trial;
-      
+
       logger.info('Plan-specific limits retrieved', {
         organizationId,
         validationId,
@@ -676,14 +689,13 @@ class AutoApprovalService {
         hourlyLimit: planLimits.hourly,
         dailyLimit: planLimits.daily
       });
-      
+
       return {
         hourly: planLimits.hourly,
         daily: planLimits.daily,
         plan: userPlan,
         validationId
       };
-      
     } catch (error) {
       // CRITICAL: Fail closed if cannot determine plan
       logger.error('CRITICAL: Cannot determine plan limits - failing closed to free plan limits', {
@@ -693,7 +705,7 @@ class AutoApprovalService {
         stack: error.stack,
         reason: 'plan_detection_failed'
       });
-      
+
       // Fail to most restrictive plan (starter_trial)
       return {
         hourly: this.config.planLimits.starter_trial.hourly,
@@ -711,7 +723,7 @@ class AutoApprovalService {
    */
   async validateContentIntegrity(approvedVariant, storedResponse, organizationId) {
     const validationId = `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     try {
       // CRITICAL: Exact text matching validation
       if (!approvedVariant || !storedResponse) {
@@ -725,9 +737,10 @@ class AutoApprovalService {
         return { valid: false, reason: 'missing_content_data' };
       }
 
-      const approvedText = typeof approvedVariant === 'string' ? approvedVariant : approvedVariant.text;
+      const approvedText =
+        typeof approvedVariant === 'string' ? approvedVariant : approvedVariant.text;
       const storedText = typeof storedResponse === 'string' ? storedResponse : storedResponse.text;
-      
+
       if (!approvedText || !storedText) {
         logger.error('CRITICAL: Content validation failed - empty text', {
           organizationId,
@@ -741,7 +754,7 @@ class AutoApprovalService {
 
       // CRITICAL: Byte-level exact comparison
       const contentMatch = approvedText === storedText;
-      
+
       if (!contentMatch) {
         logger.error('CRITICAL: Content mismatch detected - blocking auto-publication', {
           organizationId,
@@ -753,8 +766,8 @@ class AutoApprovalService {
           reason: 'content_mismatch',
           securityEvent: 'potential_tampering'
         });
-        return { 
-          valid: false, 
+        return {
+          valid: false,
           reason: 'content_mismatch',
           details: {
             approvedLength: approvedText.length,
@@ -772,7 +785,6 @@ class AutoApprovalService {
       });
 
       return { valid: true, validationId };
-
     } catch (error) {
       logger.error('CRITICAL: Content validation system error - failing closed', {
         organizationId,
@@ -794,7 +806,7 @@ class AutoApprovalService {
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
       const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return hash.toString(16);
@@ -822,7 +834,7 @@ class AutoApprovalService {
    */
   validateContentIntegrityUltra(approvedText, storedText, organizationId) {
     const validationId = `integrity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     try {
       // Input validation - check for null/undefined specifically for checksum generation test
       if (approvedText === null || storedText === null) {
@@ -860,11 +872,11 @@ class AutoApprovalService {
 
       // Exact string comparison
       const exactMatch = approvedText === storedText;
-      
+
       // SHA-256 checksum verification
       const approvedChecksum = this.generateContentChecksum(approvedText);
       const storedChecksum = this.generateContentChecksum(storedText);
-      
+
       if (!approvedChecksum || !storedChecksum) {
         // Fail closed on checksum generation error
         logger.error('CRITICAL: Content integrity validation failed - checksum generation error', {
@@ -881,9 +893,9 @@ class AutoApprovalService {
           validationId
         };
       }
-      
+
       const checksumMatch = approvedChecksum === storedChecksum;
-      
+
       if (exactMatch && checksumMatch) {
         logger.info('Content integrity validation passed', {
           organizationId,
@@ -945,7 +957,7 @@ class AutoApprovalService {
   timeoutPromise(promise, timeoutMs, operation, organizationId = 'unknown') {
     return Promise.race([
       promise,
-      new Promise((_, reject) => 
+      new Promise((_, reject) =>
         setTimeout(() => {
           const error = new Error(`${operation} timeout after ${timeoutMs}ms`);
           error.isTimeout = true;
@@ -981,7 +993,7 @@ class AutoApprovalService {
         });
         return fallback;
       }
-      
+
       const parsed = Number(trimmed);
       if (isNaN(parsed) || !isFinite(parsed)) {
         logger.warn('Safe number parse: non-numeric string', {
@@ -1024,7 +1036,7 @@ class AutoApprovalService {
    */
   async validateOrganizationPolicy(variant, organizationId) {
     const policyValidationId = `policy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     try {
       // Check circuit breaker state
       if (this.circuitBreaker.state === 'open') {
@@ -1051,8 +1063,11 @@ class AutoApprovalService {
           .select('content_policies, auto_approval_rules')
           .eq('organization_id', organizationId)
           .single(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Policy fetch timeout')), this.config.policyFetchTimeout)
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Policy fetch timeout')),
+            this.config.policyFetchTimeout
+          )
         )
       ]);
 
@@ -1082,16 +1097,16 @@ class AutoApprovalService {
       }
 
       const policies = policyResult.data;
-      
+
       // Validate content against policies
       if (policies.content_policies) {
         const contentValidation = await this.validateContentAgainstPolicies(
-          variant.text, 
-          policies.content_policies, 
+          variant.text,
+          policies.content_policies,
           organizationId,
           policyValidationId
         );
-        
+
         if (!contentValidation.valid) {
           logger.error('Content failed policy validation', {
             organizationId,
@@ -1115,7 +1130,6 @@ class AutoApprovalService {
       });
 
       return { valid: true, policyValidationId };
-
     } catch (error) {
       this.recordCircuitBreakerFailure();
       logger.error('CRITICAL: Organization policy validation system error - failing closed', {
@@ -1135,7 +1149,7 @@ class AutoApprovalService {
   recordCircuitBreakerFailure() {
     this.circuitBreaker.failures++;
     this.circuitBreaker.lastFailureTime = Date.now();
-    
+
     if (this.circuitBreaker.failures >= this.circuitBreaker.threshold) {
       this.circuitBreaker.state = 'open';
       logger.error('Circuit breaker opened due to repeated failures', {
@@ -1154,13 +1168,15 @@ class AutoApprovalService {
       // Timeout protection for content validation
       const validation = await Promise.race([
         this.performPolicyValidation(content, policies),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Content validation timeout')), this.config.contentValidationTimeout)
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Content validation timeout')),
+            this.config.contentValidationTimeout
+          )
         )
       ]);
 
       return validation;
-
     } catch (error) {
       logger.error('Content policy validation failed', {
         organizationId,
@@ -1199,7 +1215,7 @@ class AutoApprovalService {
    */
   async processAutoApproval(comment, variant, organizationId) {
     const validationId = `validation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     try {
       // Step 1: Check eligibility
       const eligibility = await this.checkAutoApprovalEligibility(organizationId);
@@ -1275,16 +1291,22 @@ class AutoApprovalService {
       try {
         const transparencyRequired = await Promise.race([
           this.transparencyService.isTransparencyRequired(organizationId),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Transparency check timeout')), this.config.transparencyTimeout)
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('Transparency check timeout')),
+              this.config.transparencyTimeout
+            )
           )
         ]);
 
         if (transparencyRequired) {
           const transparentVariant = await Promise.race([
             this.transparencyService.applyTransparency(variant, organizationId),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Transparency application timeout')), this.config.transparencyTimeout)
+            new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error('Transparency application timeout')),
+                this.config.transparencyTimeout
+              )
             )
           ]);
 
@@ -1327,15 +1349,20 @@ class AutoApprovalService {
           }
 
           // ROUND 6 CRITICAL FIX: Enhanced transparency indicator validation
-          const hasTransparencyIndicator = this.validateTransparencyIndicators(transparentVariant.text);
+          const hasTransparencyIndicator = this.validateTransparencyIndicators(
+            transparentVariant.text
+          );
           if (!hasTransparencyIndicator) {
-            logger.error('CRITICAL: Transparency indicators not detected in transparent content - failing closed', {
-              organizationId,
-              validationId,
-              textSample: transparentVariant.text?.substring(0, 200) + '...',
-              textLength: transparentVariant.text?.length,
-              reason: 'transparency_indicators_missing'
-            });
+            logger.error(
+              'CRITICAL: Transparency indicators not detected in transparent content - failing closed',
+              {
+                organizationId,
+                validationId,
+                textSample: transparentVariant.text?.substring(0, 200) + '...',
+                textLength: transparentVariant.text?.length,
+                reason: 'transparency_indicators_missing'
+              }
+            );
             return {
               approved: false,
               reason: 'transparency_indicators_missing',
@@ -1355,7 +1382,7 @@ class AutoApprovalService {
             originalVariantLength: variant.text.length,
             reason: 'transparency_applied_successfully'
           });
-          
+
           // Continue with transparency-modified content - no integrity check needed
           // as we've already verified transparency application was successful
 
@@ -1369,11 +1396,11 @@ class AutoApprovalService {
         } else {
           // Even if transparency not required, validate content integrity
           const contentIntegrityCheck = await this.validateContentIntegrity(
-            variant, 
-            variant, 
+            variant,
+            variant,
             organizationId
           );
-          
+
           if (!contentIntegrityCheck.valid) {
             logger.error('CRITICAL: Content integrity validation failed', {
               organizationId,
@@ -1457,7 +1484,6 @@ class AutoApprovalService {
         validationId,
         rateLimitInfo: rateLimits
       };
-
     } catch (error) {
       logger.error('Error in auto-approval process - failing closed', {
         organizationId,
@@ -1493,7 +1519,7 @@ class AutoApprovalService {
       /\balgorithm\b/i
     ];
 
-    return indicators.some(indicator => {
+    return indicators.some((indicator) => {
       if (typeof indicator === 'string') {
         return text.includes(indicator);
       } else {
@@ -1508,11 +1534,16 @@ class AutoApprovalService {
    */
   validateToxicityScore(variantScore, originalScore) {
     const validationId = `toxicity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Fail closed for invalid scores
-    if (variantScore === null || variantScore === undefined || 
-        originalScore === null || originalScore === undefined ||
-        variantScore === '' || originalScore === '') {
+    if (
+      variantScore === null ||
+      variantScore === undefined ||
+      originalScore === null ||
+      originalScore === undefined ||
+      variantScore === '' ||
+      originalScore === ''
+    ) {
       logger.warn('Toxicity validation failed: null/undefined/empty scores', {
         validationId,
         variantScore,
@@ -1584,7 +1615,7 @@ class AutoApprovalService {
     // Dynamic threshold validation based on original toxicity
     let allowedIncrease;
     let dynamicMaxScore;
-    
+
     if (original <= 0.2) {
       // Low toxicity - allows 0.4 increase
       allowedIncrease = 0.4;
@@ -1602,13 +1633,13 @@ class AutoApprovalService {
     // Check increase is within allowed range (with floating point tolerance)
     const increase = Math.round((variant - original) * 10000) / 10000; // Round to 4 decimal places to avoid floating point issues
     const tolerance = 0.0001; // Small tolerance for floating point precision
-    const increaseExceeded = increase > (allowedIncrease + tolerance);
-    
+    const increaseExceeded = increase > allowedIncrease + tolerance;
+
     // Check against dynamic maximum
     const dynamicMaxExceeded = variant > dynamicMaxScore;
-    
+
     // Prioritization logic based on test expectations:
-    // Test case (0.7, 0.2) expects "exceeds_allowed_increase" 
+    // Test case (0.7, 0.2) expects "exceeds_allowed_increase"
     // Test case (0.9, 0.6) expects "exceeds_dynamic_maximum"
     // Rule: For low original scores (< 0.5), prioritize increase check
     if (increaseExceeded && original < 0.5) {
@@ -1623,7 +1654,7 @@ class AutoApprovalService {
       });
       return false;
     }
-    
+
     if (dynamicMaxExceeded) {
       logger.warn('Toxicity validation failed: variant exceeds dynamic maximum', {
         validationId,
@@ -1635,7 +1666,7 @@ class AutoApprovalService {
       });
       return false;
     }
-    
+
     if (increaseExceeded) {
       logger.warn('Toxicity validation failed: increase exceeds allowed range', {
         validationId,

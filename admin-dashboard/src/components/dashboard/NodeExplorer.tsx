@@ -136,8 +136,7 @@ const Th = styled.th<{ sortable?: boolean }>`
   transition: all 0.15s ease;
 
   &:hover {
-    background: ${({ theme, sortable }) =>
-      sortable ? theme.colors.surfaceHover : 'transparent'};
+    background: ${({ theme, sortable }) => (sortable ? theme.colors.surfaceHover : 'transparent')};
   }
 
   @media (max-width: 768px) {
@@ -369,7 +368,7 @@ export function NodeExplorer() {
       updateFreshness: node.breakdown.updateFreshness,
       dependencyIntegrity: node.breakdown.dependencyIntegrity,
       agentRelevance: node.breakdown.agentRelevance,
-      issues: node.issues || [],
+      issues: node.issues || []
     }));
   }, [healthData]);
 
@@ -442,7 +441,8 @@ export function NodeExplorer() {
     return (
       <ExplorerContainer>
         <ErrorMessage>
-          ⚠️ Failed to load node data. Make sure the backend is running and JSON files are generated.
+          ⚠️ Failed to load node data. Make sure the backend is running and JSON files are
+          generated.
         </ErrorMessage>
       </ExplorerContainer>
     );
@@ -502,10 +502,7 @@ export function NodeExplorer() {
             ) : (
               filteredNodes.map((node) => (
                 <React.Fragment key={node.name}>
-                  <Tr
-                    expanded={expandedNode === node.name}
-                    onClick={() => toggleExpand(node.name)}
-                  >
+                  <Tr expanded={expandedNode === node.name} onClick={() => toggleExpand(node.name)}>
                     <Td>
                       <strong>{node.name}</strong>
                     </Td>

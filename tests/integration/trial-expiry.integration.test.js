@@ -196,7 +196,8 @@ describe('Trial Expiry Integration Tests (M1)', () => {
       expect(subscription.status).toBe('expired');
 
       // Act - Simulate fetching historical roasts (read-only operation)
-      const { data: user } = await mockSupabase.from('users')
+      const { data: user } = await mockSupabase
+        .from('users')
         .select()
         .eq('id', testUserId)
         .single();

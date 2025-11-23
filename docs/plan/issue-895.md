@@ -21,6 +21,7 @@
 **Suite principal:** `tests/unit/services/authService.test.js`
 
 **4 failures identificados:**
+
 1. `should update user plan successfully`
 2. `should map basic plan to free plan` (actualmente `starter_trial`)
 3. `should return fallback limits on database error`
@@ -52,13 +53,16 @@
 **Objetivo:** Identificar causas raíz exactas de cada failure
 
 **Acciones:**
+
 1. Ejecutar test suite completo para ver output detallado:
+
    ```bash
    cd /Users/emiliopostigo/roastr-ai-worktrees/issue-895
    npm test -- tests/unit/routes/billing-coverage-issue502.test.js --verbose
    ```
 
 2. Leer implementación actual de billing routes:
+
    ```bash
    @src/routes/billing.js
    @src/routes/billingFactory.js
@@ -81,6 +85,7 @@
 **Objetivo:** Alinear mocks con implementación real post-Polar
 
 **Acciones:**
+
 1. **Revisar `mockBillingController` (líneas 66-121):**
    - Decidir: ¿mantener Stripe legacy o migrar 100% a Polar?
    - Actualizar estructura de mocks según decisión
@@ -97,10 +102,11 @@
    - Añadir `.upsert()` si falta
 
 4. **Ejemplo de corrección:**
+
    ```javascript
    // ANTES (mezcla Stripe/Polar)
    mockBillingController.stripeWrapper.checkout.sessions.create.mockResolvedValue(...)
-   
+
    // DESPUÉS (solo Polar)
    mockBillingController.billingInterface.checkouts.create.mockResolvedValue({
      id: 'checkout_test_123',
@@ -124,6 +130,7 @@
 **Problema esperado:** Assertion verifica llamada a `stripeWrapper.prices.list` pero código usa Polar
 
 **Fix:**
+
 ```javascript
 // Verificar que lookupKey fue usado correctamente en Polar
 expect(mockBillingController.billingInterface.checkouts.create).toHaveBeenCalledWith(
@@ -141,10 +148,11 @@ expect(mockBillingController.billingInterface.checkouts.create).toHaveBeenCalled
 **Problema esperado:** Polar no tiene `customers.retrieve`, usa email directamente
 
 **Fix:**
+
 ```javascript
 // Polar doesn't retrieve customers - uses email directly in checkout
 // Update mock to reflect this:
-const mockSubscription = { 
+const mockSubscription = {
   customer_email: 'test@example.com' // Not stripe_customer_id
 };
 
@@ -166,6 +174,7 @@ expect(mockBillingController.billingInterface.checkouts.create).toHaveBeenCalled
 **Problema esperado:** Validación de `lookupKey` puede haber cambiado con Polar
 
 **Fix:**
+
 ```javascript
 // Check actual validation in billing.js
 // If Polar validates differently, update test:
@@ -186,6 +195,7 @@ expect(response.body.error).toContain('Invalid product specified'); // Or actual
 **Problema esperado:** Mock force error en `getPlanConfig` pero código maneja gracefully
 
 **Fix:**
+
 ```javascript
 // Simplify test to verify actual error handling:
 const mockSubscription = { plan: 'invalid_plan' };
@@ -213,6 +223,7 @@ if (response.status === 500) {
 **Objetivo:** Limpiar tests `.skip` o que ya no aplican
 
 **Acciones:**
+
 1. Identificar tests con `.skip` relacionados a Stripe portal (Polar no tiene):
    - `should create portal session successfully` (líneas 523, 589)
    - `should handle create-portal-session with missing return_url env var` (línea 1042)
@@ -237,6 +248,7 @@ if (response.status === 500) {
 **Objetivo:** Asegurar que TODOS los tests pasen
 
 **Checklist:**
+
 - [ ] Ejecutar test suite completo: `npm test -- tests/unit/routes/billing-coverage-issue502.test.js`
 - [ ] Verificar 0 tests fallando
 - [ ] Verificar 0 tests `.skip` sin justificación
@@ -245,6 +257,7 @@ if (response.status === 500) {
 - [ ] Documentar resultados en `docs/test-evidence/issue-895/`
 
 **Comandos:**
+
 ```bash
 # Run tests
 npm test -- tests/unit/routes/billing-coverage-issue502.test.js
@@ -266,33 +279,39 @@ done
 **Objetivo:** Actualizar nodos GDD y generar evidencias
 
 **Acciones:**
+
 1. Actualizar nodo `cost-control.md`:
    - Añadir "Test Engineer" a "Agentes Relevantes" si falta
    - Actualizar "Related Issue" con #895
    - Coverage se auto-actualizará con `--auto`
 
 2. Generar reporte de cobertura:
+
    ```bash
    npm test -- tests/unit/routes/billing-coverage-issue502.test.js --coverage --json --outputFile=docs/test-evidence/issue-895/coverage.json
    ```
 
 3. Crear summary:
+
    ```markdown
    # Test Evidence - Issue #895
-   
+
    ## Summary
+
    - Tests fixed: 4
    - Tests passing: 100% (XX/XX)
    - Coverage: XX%
    - Stability: 3/3 runs passing
-   
+
    ## Fixes Applied
+
    1. Updated mocks to reflect Polar SDK (not Stripe)
    2. Corrected assertions to match actual implementation
    3. Removed obsolete Stripe portal tests
    4. Fixed lookupKey validation expectations
-   
+
    ## Verification
+
    - [x] All tests passing
    - [x] Coverage >= 90%
    - [x] Stable (3/3 runs)
@@ -305,7 +324,8 @@ done
    node scripts/score-gdd-health.js --ci
    ```
 
-**Output:** 
+**Output:**
+
 - `docs/test-evidence/issue-895/summary.md`
 - `docs/test-evidence/issue-895/coverage.json`
 - Nodos GDD actualizados
@@ -313,9 +333,11 @@ done
 ## Archivos Afectados
 
 ### Tests
+
 - `tests/unit/routes/billing-coverage-issue502.test.js` - Actualizar mocks + assertions
 
 ### Documentación
+
 - `docs/nodes/cost-control.md` - Añadir issue #895 + agentes
 - `docs/test-evidence/issue-895/diagnosis.md` - Crear
 - `docs/test-evidence/issue-895/summary.md` - Crear
@@ -323,6 +345,7 @@ done
 - `docs/test-evidence/issue-895/verification-report.md` - Crear
 
 ### No tocar (fuera de scope)
+
 - `src/routes/billing.js` - Solo leer, NO modificar
 - `src/routes/billingFactory.js` - Solo leer, NO modificar
 - Otros test files
@@ -330,21 +353,25 @@ done
 ## Agentes Necesarios
 
 ### TestEngineer (Primario)
+
 - **Trigger:** Cambios en tests/
 - **Responsibility:** Fix assertions, update mocks, verify coverage
 - **Workflow:** Composer → @tests/unit/routes/billing-coverage-issue502.test.js → Fix
 
 ### Guardian (Secundario)
+
 - **Trigger:** Cambios en nodo cost-control
 - **Responsibility:** Validar GDD, verificar cobertura
 - **Workflow:** `node scripts/guardian-gdd.js --full`
 
 ### Orchestrator (Self)
+
 - **Responsibility:** Coordinar pasos, validar completion
 
 ## Validación Final
 
 **Pre-Flight Checklist:**
+
 - [ ] Tests 100% passing (0 failures)
 - [ ] Coverage >= 90%
 - [ ] GDD health >= 87
@@ -354,6 +381,7 @@ done
 - [ ] Evidence documentada
 
 **Exit Criteria (AC):**
+
 - [x] AC1: billing-coverage-issue502.test.js pasando 100% ✅
 - [x] AC2: Todos los tests con assertion issues funcionando ✅
 - [x] AC3: Expectativas actualizadas y correctas ✅
@@ -363,12 +391,15 @@ done
 ## Riesgos y Mitigaciones
 
 ### Riesgo 1: Implementación billing.js cambió pero no está documentado
+
 **Mitigación:** Leer código fuente completo en Paso 1, documentar discrepancias
 
 ### Riesgo 2: Mocks Polar no coinciden con SDK real
+
 **Mitigación:** Verificar contra documentación Polar oficial, testear con datos reales en staging
 
 ### Riesgo 3: Tests pasan localmente pero fallan en CI
+
 **Mitigación:** Ejecutar 3 veces localmente, verificar environment variables match CI
 
 ## Referencias
@@ -384,4 +415,3 @@ done
 **Plan creado:** 2025-11-21
 **Última actualización:** 2025-11-21
 **Estado:** IN_PROGRESS
-

@@ -68,7 +68,7 @@ const TEST_SCENARIOS = [
 
 async function validateBillingFlow() {
   console.log('🚀 Starting Billing Limits Enforcement Flow Validation\n');
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
 
   const startTime = Date.now();
   const results = {
@@ -138,7 +138,9 @@ async function validateBillingFlow() {
         .limit(1);
 
       if (getOrgError || !autoOrgs || autoOrgs.length === 0) {
-        throw new Error(`Failed to get auto-created organization: ${getOrgError?.message || 'No org found'}`);
+        throw new Error(
+          `Failed to get auto-created organization: ${getOrgError?.message || 'No org found'}`
+        );
       }
 
       testOrgId = autoOrgs[0].id; // Assign to outer scope variable
@@ -175,18 +177,21 @@ async function validateBillingFlow() {
       // Also update monthly_usage table (checkUsageLimit reads from here)
       const { data: monthlyUsageData, error: monthlyUsageError } = await client
         .from('monthly_usage')
-        .upsert({
-          organization_id: testOrgId,
-          year: currentYear,
-          month: currentMonth,
-          total_responses: currentUsage,
-          responses_limit: scenario.limit,
-          total_cost_cents: 0,
-          responses_by_platform: {},
-          limit_exceeded: currentUsage >= scenario.limit
-        }, {
-          onConflict: 'organization_id,year,month'
-        })
+        .upsert(
+          {
+            organization_id: testOrgId,
+            year: currentYear,
+            month: currentMonth,
+            total_responses: currentUsage,
+            responses_limit: scenario.limit,
+            total_cost_cents: 0,
+            responses_by_platform: {},
+            limit_exceeded: currentUsage >= scenario.limit
+          },
+          {
+            onConflict: 'organization_id,year,month'
+          }
+        )
         .select();
 
       if (monthlyUsageError) {
@@ -220,7 +225,7 @@ async function validateBillingFlow() {
         usageCheck = await costControl.checkUsageLimit(testOrgId);
       } catch (error) {
         checkError = error;
-        
+
         // Issue #588 G10: Enhanced error logging
         console.error(`⚠️  Check failed: ${error.message}`);
         console.log(`   Error type: ${error.constructor.name}`);
@@ -252,18 +257,21 @@ async function validateBillingFlow() {
         if (!usageCheck.canUse) {
           console.log('✅ Correctly blocked: limit exceeded');
           console.log(`   Near limit: ${usageCheck.isNearLimit}`);
-          
+
           // Issue #588 G10: Validate error indicates limit exceeded (403-equivalent)
           if (checkError) {
             const errorMessage = checkError.message.toLowerCase();
-            const isLimitError = errorMessage.includes('limit') || 
-                                 errorMessage.includes('exceeded') || 
-                                 errorMessage.includes('quota');
-            
+            const isLimitError =
+              errorMessage.includes('limit') ||
+              errorMessage.includes('exceeded') ||
+              errorMessage.includes('quota');
+
             if (isLimitError) {
               console.log(`✅ Error correctly indicates limit exceeded (HTTP 403 equivalent)`);
             } else {
-              console.log(`⚠️  Error message doesn't clearly indicate limit: ${checkError.message}`);
+              console.log(
+                `⚠️  Error message doesn't clearly indicate limit: ${checkError.message}`
+              );
             }
           }
         } else {
@@ -307,8 +315,9 @@ async function validateBillingFlow() {
           .eq('id', testOrgId)
           .single();
 
-        const usageIncrease = (usageAfter.data?.monthly_responses_used || 0) -
-                             (usageBefore.data?.monthly_responses_used || 0);
+        const usageIncrease =
+          (usageAfter.data?.monthly_responses_used || 0) -
+          (usageBefore.data?.monthly_responses_used || 0);
 
         if (usageIncrease === 1) {
           console.log('✅ Usage incremented atomically (+1)');
@@ -331,7 +340,6 @@ async function validateBillingFlow() {
       });
 
       console.log(`\n✅ Test ${i + 1} PASSED`);
-
     } catch (error) {
       results.failed++;
       results.errors.push({
@@ -375,7 +383,7 @@ async function validateBillingFlow() {
 
   if (results.errors.length > 0) {
     console.log(`\n❌ Errors:`);
-    results.errors.forEach(err => {
+    results.errors.forEach((err) => {
       console.log(`   - Test ${err.test} (${err.plan}): ${err.error}`);
     });
   }
@@ -392,8 +400,7 @@ async function validateBillingFlow() {
 }
 
 // Run validation
-validateBillingFlow()
-  .catch(err => {
-    console.error('\n💥 Validation crashed:', err);
-    process.exit(1);
-  });
+validateBillingFlow().catch((err) => {
+  console.error('\n💥 Validation crashed:', err);
+  process.exit(1);
+});

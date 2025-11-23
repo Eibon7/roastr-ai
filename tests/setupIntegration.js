@@ -15,9 +15,7 @@ const loadedEnvFiles = new Set();
 
 function safelyLoadEnvFile(envPath) {
   if (!envPath) return;
-  const absolutePath = path.isAbsolute(envPath)
-    ? envPath
-    : path.resolve(process.cwd(), envPath);
+  const absolutePath = path.isAbsolute(envPath) ? envPath : path.resolve(process.cwd(), envPath);
   if (!fs.existsSync(absolutePath)) return;
 
   dotenv.config({ path: absolutePath, override: false });
@@ -25,9 +23,7 @@ function safelyLoadEnvFile(envPath) {
 }
 
 const explicitEnv =
-  process.env.TEST_ENV_FILE ||
-  process.env.SUPABASE_TEST_ENV_FILE ||
-  process.env.SUPABASE_ENV_FILE;
+  process.env.TEST_ENV_FILE || process.env.SUPABASE_TEST_ENV_FILE || process.env.SUPABASE_ENV_FILE;
 safelyLoadEnvFile(explicitEnv);
 
 const envCandidates = [
@@ -104,10 +100,7 @@ if (loadedEnvFiles.size > 0) {
 
 const SUPABASE_ENV_FALLBACKS = {
   SUPABASE_URL: ['SUPABASE_TEST_URL', 'SUPABASE_INTEGRATION_URL'],
-  SUPABASE_SERVICE_KEY: [
-    'SUPABASE_TEST_SERVICE_KEY',
-    'SUPABASE_INTEGRATION_SERVICE_KEY'
-  ],
+  SUPABASE_SERVICE_KEY: ['SUPABASE_TEST_SERVICE_KEY', 'SUPABASE_INTEGRATION_SERVICE_KEY'],
   SUPABASE_ANON_KEY: ['SUPABASE_TEST_ANON_KEY', 'SUPABASE_INTEGRATION_ANON_KEY']
 };
 
@@ -121,9 +114,7 @@ for (const [primary, fallbacks] of Object.entries(SUPABASE_ENV_FALLBACKS)) {
 }
 
 const hasSupabaseCredentials =
-  process.env.SUPABASE_URL &&
-  process.env.SUPABASE_SERVICE_KEY &&
-  process.env.SUPABASE_ANON_KEY;
+  process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY && process.env.SUPABASE_ANON_KEY;
 
 if (!hasSupabaseCredentials) {
   if (process.env.CI || process.env.IS_TEST) {
@@ -153,7 +144,7 @@ global.console = {
 
 afterAll(async () => {
   try {
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     if (global.gc) {
       global.gc();
     }

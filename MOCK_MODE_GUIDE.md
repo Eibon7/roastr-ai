@@ -7,17 +7,19 @@ This project includes a comprehensive mock mode system that allows development a
 ## 🎯 Quick Switch Guide
 
 ### Enable Mock Mode (Default for CI/Tests)
+
 ```bash
 # Backend
 export ENABLE_MOCK_MODE=true
 npm run test
 
-# Frontend  
+# Frontend
 export REACT_APP_ENABLE_MOCK_MODE=true
 npm run test
 ```
 
 ### Enable Real API Mode (Production)
+
 ```bash
 # Backend
 export ENABLE_MOCK_MODE=false
@@ -28,7 +30,7 @@ export SUPABASE_SERVICE_KEY=your-real-service-key
 export STRIPE_SECRET_KEY=sk_live_your-real-stripe-key
 
 # Frontend
-export REACT_APP_ENABLE_MOCK_MODE=false  
+export REACT_APP_ENABLE_MOCK_MODE=false
 export REACT_APP_SUPABASE_URL=https://your-project.supabase.co
 export REACT_APP_SUPABASE_ANON_KEY=your-real-anon-key
 ```
@@ -37,7 +39,7 @@ export REACT_APP_SUPABASE_ANON_KEY=your-real-anon-key
 
 The system automatically enables mock mode when:
 
-1. `NODE_ENV=test` 
+1. `NODE_ENV=test`
 2. `ENABLE_MOCK_MODE=true` (backend) or `REACT_APP_ENABLE_MOCK_MODE=true` (frontend)
 3. Required API keys are missing or contain "mock"/"dummy" in their values
 4. Supabase URLs contain "mock", "dummy", or "localhost"
@@ -45,6 +47,7 @@ The system automatically enables mock mode when:
 ## 📁 Environment Files
 
 ### Development (.env.development)
+
 ```env
 # Real APIs for development
 ENABLE_MOCK_MODE=false
@@ -54,6 +57,7 @@ REACT_APP_ENABLE_MOCK_MODE=false
 ```
 
 ### Testing (.env.test) - Already configured
+
 ```env
 # Complete mock mode for tests
 ENABLE_MOCK_MODE=true
@@ -63,6 +67,7 @@ REACT_APP_ENABLE_MOCK_MODE=true
 ```
 
 ### Production (.env.production)
+
 ```env
 # Real APIs for production
 ENABLE_MOCK_MODE=false
@@ -74,6 +79,7 @@ REACT_APP_ENABLE_MOCK_MODE=false
 ## 🛠️ What Gets Mocked
 
 ### Backend APIs
+
 - ✅ **OpenAI**: Mock roast generation with placeholder responses
 - ✅ **Supabase**: Mock database operations and auth
 - ✅ **Stripe**: Mock payment processing and webhooks
@@ -83,6 +89,7 @@ REACT_APP_ENABLE_MOCK_MODE=false
 - ✅ **Style Profile Generation**: Mock AI style analysis and prompt generation
 
 ### Frontend APIs
+
 - ✅ **Supabase Client**: Mock auth flows and database operations
 - ✅ **Backend APIs**: Mock API endpoints (/api/health, /api/logs, etc.)
 - ✅ **External Services**: All fetch calls intercepted with mock responses
@@ -90,19 +97,23 @@ REACT_APP_ENABLE_MOCK_MODE=false
 ## 🔍 Verifying Mock Mode Status
 
 ### Backend
+
 ```javascript
 const { mockMode } = require('./src/config/mockMode');
 console.log('Mock mode enabled:', mockMode.isMockMode);
 ```
 
-### Frontend  
+### Frontend
+
 ```javascript
 import { isMockModeEnabled } from './src/lib/mockMode';
 console.log('Mock mode enabled:', isMockModeEnabled());
 ```
 
 ### Environment Logs
+
 Look for these console messages:
+
 - `🎭 Mock Mode ENABLED - Using fake data for all external APIs`
 - `🔗 Real Mode ENABLED - Using real API connections`
 
@@ -114,8 +125,8 @@ Our GitHub Actions workflow automatically uses mock mode:
 env:
   ENABLE_MOCK_MODE: true
   NODE_ENV: test
-  OPENAI_API_KEY: "mock-openai-key-sk-test123456789"
-  SUPABASE_URL: "http://localhost:54321/mock"
+  OPENAI_API_KEY: 'mock-openai-key-sk-test123456789'
+  SUPABASE_URL: 'http://localhost:54321/mock'
   REACT_APP_ENABLE_MOCK_MODE: true
   # ... all other keys are mock values
 ```
@@ -130,12 +141,14 @@ env:
 ## 🧪 Testing in Different Modes
 
 ### Run Tests in Mock Mode (Default)
+
 ```bash
 npm run test:ci
 cd frontend && npm run test:ci
 ```
 
 ### Run Tests Against Real APIs (Not Recommended)
+
 ```bash
 ENABLE_MOCK_MODE=false npm run test
 # Requires all real API keys to be set
@@ -144,6 +157,7 @@ ENABLE_MOCK_MODE=false npm run test
 ## 📊 Mock Data Examples
 
 ### Roast Generation Response
+
 ```json
 {
   "choices": [
@@ -157,6 +171,7 @@ ENABLE_MOCK_MODE=false npm run test
 ```
 
 ### Style Profile Generation (NEW)
+
 ```json
 {
   "success": true,
@@ -184,6 +199,7 @@ ENABLE_MOCK_MODE=false npm run test
 ```
 
 ### Platform Integration Mock
+
 ```json
 {
   "success": true,
@@ -197,6 +213,7 @@ ENABLE_MOCK_MODE=false npm run test
 ```
 
 ### User Authentication
+
 ```json
 {
   "user": {
@@ -211,12 +228,13 @@ ENABLE_MOCK_MODE=false npm run test
 ```
 
 ### API Health Check
+
 ```json
 {
   "status": "ok",
   "services": {
     "database": "mock",
-    "queue": "mock", 
+    "queue": "mock",
     "ai": "mock"
   },
   "flags": {
@@ -228,20 +246,26 @@ ENABLE_MOCK_MODE=false npm run test
 ## 🔧 Troubleshooting
 
 ### Issue: Tests still making real API calls
+
 **Solution**: Verify environment variables are set correctly:
+
 ```bash
 echo $ENABLE_MOCK_MODE  # Should be "true"
 echo $NODE_ENV          # Should be "test"
 ```
 
 ### Issue: Frontend not using mocks
+
 **Solution**: Check React environment variables:
+
 ```bash
 echo $REACT_APP_ENABLE_MOCK_MODE  # Should be "true"
 ```
 
 ### Issue: Some services not mocked
+
 **Solution**: Check the mock mode logs for specific service status:
+
 ```bash
 # Look for logs like:
 # 🎭 Mock Mode ENABLED - Using fake data for all external APIs
@@ -252,11 +276,12 @@ echo $REACT_APP_ENABLE_MOCK_MODE  # Should be "true"
 To add mocking for a new external service:
 
 1. **Backend**: Add mock generator to `src/config/mockMode.js`
-2. **Frontend**: Add mock implementation to `src/lib/mockMode.js` 
+2. **Frontend**: Add mock implementation to `src/lib/mockMode.js`
 3. **Tests**: Update setup files if needed
 4. **Environment**: Add mock environment variables to `.env.test`
 
 Example:
+
 ```javascript
 // In mockMode.js
 generateMockNewService() {

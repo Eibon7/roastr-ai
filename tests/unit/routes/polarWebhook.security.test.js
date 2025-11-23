@@ -140,10 +140,7 @@ describe('Polar Webhook - Security Tests (C2)', () => {
 
     it('should use constant-time comparison for signatures', async () => {
       const payload = JSON.stringify({ test: 'data' });
-      const validSig = crypto
-        .createHmac('sha256', 'test_secret')
-        .update(payload)
-        .digest('hex');
+      const validSig = crypto.createHmac('sha256', 'test_secret').update(payload).digest('hex');
 
       // Create similar but invalid signature (same length, different content)
       const invalidSig = validSig.split('').reverse().join('');
@@ -156,10 +153,7 @@ describe('Polar Webhook - Security Tests (C2)', () => {
       const time1 = Date.now() - start1;
 
       const start2 = Date.now();
-      await request(app)
-        .post('/api/polar/webhook')
-        .set('polar-signature', validSig)
-        .send(payload);
+      await request(app).post('/api/polar/webhook').set('polar-signature', validSig).send(payload);
       const time2 = Date.now() - start2;
 
       // Timing should be similar (within reasonable margin)
@@ -191,7 +185,8 @@ describe('Polar Webhook - Security Tests (C2)', () => {
       // This test verifies that the code has the buffer length check
       // The actual rejection is tested in other tests above
 
-      const verifyWebhookSignature = require('../../../src/routes/polarWebhook').__testExports?.verifyWebhookSignature;
+      const verifyWebhookSignature = require('../../../src/routes/polarWebhook').__testExports
+        ?.verifyWebhookSignature;
 
       // If the function is not exported for testing, we verify via integration tests above
       // The "should reject signature with incorrect length" test already covers this

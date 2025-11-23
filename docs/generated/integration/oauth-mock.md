@@ -9,18 +9,21 @@
 #### Platform Support
 
 Tests:
+
 - ✓ should return all supported platforms
 - ✓ should have correct platform configurations
 
 #### Connection Status
 
 Tests:
+
 - ✓ should return empty connections initially
 - ✓ should require authentication
 
 #### OAuth Connect Flow
 
 Tests:
+
 - ✓ should initiate connection successfully
 - ✓ should reject unsupported platform
 - ✓ should require authentication for connect
@@ -29,6 +32,7 @@ Tests:
 #### OAuth Callback Flow
 
 Tests:
+
 - ✓ should handle successful callback
 - ✓ should handle callback with error
 - ✓ should reject callback without required parameters
@@ -40,11 +44,13 @@ Tests:
 ##### ${platform} OAuth flow
 
 Tests:
+
 - ✓ should complete full connect -> callback -> status cycle
 
 #### Token Management
 
 Tests:
+
 - ✓ should refresh tokens successfully
 - ✓ should disconnect successfully
 - ✓ should handle refresh for non-existent connection
@@ -53,6 +59,7 @@ Tests:
 #### Mock Reset Functionality
 
 Tests:
+
 - ✓ should reset specific platform connection
 - ✓ should reset all connections
 - ✓ should only be available in mock mode
@@ -60,6 +67,7 @@ Tests:
 #### Error Handling & Edge Cases
 
 Tests:
+
 - ✓ should handle malformed state parameter
 - ✓ should handle platform mismatch in state
 - ✓ should handle already connected platform
@@ -68,5 +76,5 @@ Tests:
 #### User Info Validation
 
 Tests:
-- ✓ should provide valid user info for all platforms
 
+- ✓ should provide valid user info for all platforms

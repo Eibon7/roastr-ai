@@ -26,6 +26,7 @@ Issue #409 has **partial implementation** with existing E2E test coverage that v
 ### 1.1 Existing Test Files
 
 **E2E Test Coverage:**
+
 - ✅ **`tests/e2e/manual-flow.test.js`** (346 lines)
   - Validates complete manual flow pipeline
   - Tests 2 initial variants generation (lines 209-267)
@@ -34,11 +35,13 @@ Issue #409 has **partial implementation** with existing E2E test coverage that v
   - **Status:** PASSING (5/5 tests)
 
 **Unit Test Coverage:**
+
 - ✅ **`tests/unit/routes/roast-regeneration.test.js`** (90 lines)
   - Basic roast regeneration endpoint structure
   - **Status:** PASSING (3/3 tests)
 
 **Integration Test Coverage:**
+
 - ✅ **`tests/integration/roast.test.js`** (14,586 bytes)
   - Roast generation API endpoint tests
   - **Status:** NOT RUN (requires specific tests for Issue #409)
@@ -46,6 +49,7 @@ Issue #409 has **partial implementation** with existing E2E test coverage that v
 ### 1.2 Implementation Files
 
 **Core Services:**
+
 1. **`src/services/roastEngine.js`** (lines 1-150+)
    - Implements Roast Engine with version control
    - Supports 1-2 version generation via flag `ROAST_VERSIONS_MULTIPLE`
@@ -62,18 +66,18 @@ Issue #409 has **partial implementation** with existing E2E test coverage that v
    - Tone normalization and validation
    - Frozen constants to prevent mutation
 
-**API Routes:**
-4. **`src/routes/roast.js`** (lines 824-1020)
-   - `POST /api/roast/engine` endpoint (Issue #363)
-   - Supports version generation and auto-approve
-   - Credits consumption and validation
-   - Transparency enforcement
+**API Routes:** 4. **`src/routes/roast.js`** (lines 824-1020)
 
-**Workers:**
-5. **`src/workers/GenerateReplyWorker.js`**
-   - Background worker for roast generation
-   - Supports manual/auto modes
-   - Tone enforcement in generation pipeline
+- `POST /api/roast/engine` endpoint (Issue #363)
+- Supports version generation and auto-approve
+- Credits consumption and validation
+- Transparency enforcement
+
+**Workers:** 5. **`src/workers/GenerateReplyWorker.js`**
+
+- Background worker for roast generation
+- Supports manual/auto modes
+- Tone enforcement in generation pipeline
 
 ### 1.3 Configuration & Constants
 
@@ -143,6 +147,7 @@ Tests:       5 passed, 5 total
 **Missing dedicated integration test:** `tests/integration/generation-issue-409.test.js`
 
 **Recommendation:** Create dedicated integration test file to validate:
+
 - API endpoint behavior for variant generation
 - Tone enforcement at API level
 - Database persistence of variants
@@ -155,13 +160,13 @@ Tests:       5 passed, 5 total
 
 ### 3.1 Coverage Summary
 
-| Acceptance Criteria | Implementation | Unit Tests | Integration Tests | E2E Tests | Status |
-|---------------------|----------------|------------|-------------------|-----------|--------|
-| **AC1:** Respeta tono | ✅ roastEngine.js<br>✅ tones.js | ❌ Missing | ❌ Missing | ✅ manual-flow.test.js | **PARTIAL** |
-| **AC2:** 2 variantes iniciales | ✅ roastEngine.js<br>✅ GenerateReplyWorker.js | ❌ Missing | ❌ Missing | ✅ manual-flow.test.js | **PARTIAL** |
-| **AC3:** 1 variante tras selección | ✅ roastEngine.js<br>✅ manual-flow.test.js | ❌ Missing | ❌ Missing | ✅ manual-flow.test.js | **PARTIAL** |
-| **AC4:** Validaciones previas | ✅ roast.js<br>✅ transparencyService.js | ✅ roast-validation-issue364.test.js | ❌ Missing | ✅ manual-flow.test.js | **GOOD** |
-| **AC5:** Calidad y coherencia | ⚠️ Implicit in RQC | ❌ Missing | ❌ Missing | ⚠️ Minimal | **WEAK** |
+| Acceptance Criteria                | Implementation                                 | Unit Tests                           | Integration Tests | E2E Tests              | Status      |
+| ---------------------------------- | ---------------------------------------------- | ------------------------------------ | ----------------- | ---------------------- | ----------- |
+| **AC1:** Respeta tono              | ✅ roastEngine.js<br>✅ tones.js               | ❌ Missing                           | ❌ Missing        | ✅ manual-flow.test.js | **PARTIAL** |
+| **AC2:** 2 variantes iniciales     | ✅ roastEngine.js<br>✅ GenerateReplyWorker.js | ❌ Missing                           | ❌ Missing        | ✅ manual-flow.test.js | **PARTIAL** |
+| **AC3:** 1 variante tras selección | ✅ roastEngine.js<br>✅ manual-flow.test.js    | ❌ Missing                           | ❌ Missing        | ✅ manual-flow.test.js | **PARTIAL** |
+| **AC4:** Validaciones previas      | ✅ roast.js<br>✅ transparencyService.js       | ✅ roast-validation-issue364.test.js | ❌ Missing        | ✅ manual-flow.test.js | **GOOD**    |
+| **AC5:** Calidad y coherencia      | ⚠️ Implicit in RQC                             | ❌ Missing                           | ❌ Missing        | ⚠️ Minimal             | **WEAK**    |
 
 **Overall Coverage:** 65% (3.5/5 criteria fully covered)
 
@@ -208,6 +213,7 @@ Tests:       5 passed, 5 total
 ### 4.1 Implementation Files
 
 **Services:**
+
 - `/Users/emiliopostigo/roastr-ai/src/services/roastEngine.js` - Main roast generation engine
 - `/Users/emiliopostigo/roastr-ai/src/services/roastGeneratorEnhanced.js` - Enhanced generator with RQC
 - `/Users/emiliopostigo/roastr-ai/src/services/roastPromptTemplate.js` - Master prompt template system
@@ -215,31 +221,38 @@ Tests:       5 passed, 5 total
 - `/Users/emiliopostigo/roastr-ai/src/services/transparencyService.js` - Transparency disclaimers
 
 **Routes:**
+
 - `/Users/emiliopostigo/roastr-ai/src/routes/roast.js` - Roast API endpoints (lines 824-1020)
 
 **Workers:**
+
 - `/Users/emiliopostigo/roastr-ai/src/workers/GenerateReplyWorker.js` - Background roast generation
 
 **Config:**
+
 - `/Users/emiliopostigo/roastr-ai/src/config/validationConstants.js` - Validation constants
 
 ### 4.2 Test Files
 
 **E2E Tests:**
+
 - `/Users/emiliopostigo/roastr-ai/tests/e2e/manual-flow.test.js` - **PRIMARY TEST** (346+ lines, 5/5 passing)
 - `/Users/emiliopostigo/roastr-ai/tests/e2e/auto-approval-flow.test.js` - Auto-approval variant
 
 **Unit Tests:**
+
 - `/Users/emiliopostigo/roastr-ai/tests/unit/routes/roast-regeneration.test.js` - Regeneration endpoint
 - `/Users/emiliopostigo/roastr-ai/tests/unit/routes/roast.test.js` - Roast route unit tests
 - `/Users/emiliopostigo/roastr-ai/tests/unit/services/roastGeneratorEnhanced.test.js` - Generator unit tests
 - `/Users/emiliopostigo/roastr-ai/tests/unit/services/roastPromptTemplate.test.js` - Prompt template tests
 
 **Integration Tests:**
+
 - `/Users/emiliopostigo/roastr-ai/tests/integration/roast.test.js` - Roast integration tests (no specific #409 coverage)
 - `/Users/emiliopostigo/roastr-ai/tests/integration/complete-roast-flow.test.js` - Complete flow tests
 
 **Test Helpers:**
+
 - `/Users/emiliopostigo/roastr-ai/tests/helpers/testUtils.js` - Shared test utilities
 - `/Users/emiliopostigo/roastr-ai/tests/helpers/test-setup.js` - Test environment setup
 - `/Users/emiliopostigo/roastr-ai/tests/helpers/fixtures-loader.js` - Fixture loading
@@ -247,11 +260,13 @@ Tests:       5 passed, 5 total
 ### 4.3 Documentation Files
 
 **Node Documentation:**
+
 - `/Users/emiliopostigo/roastr-ai/docs/nodes/roast.md` - Roast system documentation (629 lines)
 - `/Users/emiliopostigo/roastr-ai/docs/nodes/tone.md` - Tone mapping documentation (302 lines)
 - `/Users/emiliopostigo/roastr-ai/docs/nodes/persona.md` - User persona configuration (717 lines)
 
 **Epic Planning:**
+
 - `/Users/emiliopostigo/roastr-ai/docs/plan/issue-403.md` - Epic #403 planning document
 
 ---
@@ -261,6 +276,7 @@ Tests:       5 passed, 5 total
 ### 5.1 Justificación
 
 **Existing Strengths:**
+
 1. ✅ E2E test coverage validates core workflow end-to-end
 2. ✅ Implementation exists in `roastEngine.js` and `roastGeneratorEnhanced.js`
 3. ✅ Tone system is well-structured with centralized configuration
@@ -268,6 +284,7 @@ Tests:       5 passed, 5 total
 5. ✅ Feature flags allow flexible version control
 
 **Critical Gaps Requiring Enhancement:**
+
 1. ❌ **No dedicated integration test file** for Issue #409
 2. ❌ **AC5 (Quality and coherence)** is weakly tested
 3. ❌ **Database-level validation** missing for variant persistence
@@ -275,18 +292,21 @@ Tests:       5 passed, 5 total
 5. ❌ **API-level tone enforcement** not explicitly validated
 
 **Why ENHANCE vs CREATE:**
+
 - Implementation exists and works (E2E tests passing)
 - Core logic is sound and validated
 - Need to **strengthen test coverage** and **add missing validations**
 - Need to **consolidate tests** into dedicated integration test file
 
 **Why ENHANCE vs FIX:**
+
 - No failing tests (E2E tests pass 5/5)
 - No broken functionality detected
 - Implementation meets basic requirements
 - Need **improvements**, not **fixes**
 
 **Why ENHANCE vs CLOSE:**
+
 - Coverage gaps exist (AC5 weak, no integration tests)
 - Test organization suboptimal (scattered across files)
 - Missing database-level validations
@@ -515,21 +535,25 @@ describe('[Integration] Roast Generation - Issue #409', () => {
 ### 6.3 Estimated Effort
 
 **Phase 1 - Integration Tests (Priority P0):**
+
 - Create `generation-issue-409.test.js`: **4-6 hours**
 - Write 15 integration test cases: **6-8 hours**
 - Database validation helpers: **2-3 hours**
 - **Subtotal:** 12-17 hours
 
 **Phase 2 - E2E Enhancements (Priority P1):**
+
 - Enhance `manual-flow.test.js`: **2-3 hours**
 - Add quality metrics validation: **2-3 hours**
 - **Subtotal:** 4-6 hours
 
 **Phase 3 - Unit Tests (Priority P2):**
+
 - Create unit tests: **3-4 hours**
 - **Subtotal:** 3-4 hours
 
 **Phase 4 - Documentation (Priority P2):**
+
 - Update node docs: **1-2 hours**
 - Generate test evidence: **1-2 hours**
 - **Subtotal:** 2-4 hours
@@ -543,16 +567,19 @@ describe('[Integration] Roast Generation - Issue #409', () => {
 ### 7.1 Technical Risks
 
 **LOW RISK:**
+
 - ✅ Core implementation exists and works
 - ✅ E2E tests passing validates end-to-end flow
 - ✅ No breaking changes required
 
 **MEDIUM RISK:**
+
 - ⚠️ AC5 quality metrics may require new implementation
 - ⚠️ Database schema may need variant metadata additions
 - ⚠️ RQC service integration may be complex
 
 **MITIGATION:**
+
 - Start with explicit tests for existing implicit behavior
 - Add quality metrics incrementally (start with simple scoring)
 - Use feature flags to enable/disable RQC for testing
@@ -632,15 +659,17 @@ describe('[Integration] Roast Generation - Issue #409', () => {
 Issue #409 has **solid foundation** with working implementation and passing E2E tests, but requires **strategic enhancements** to meet all acceptance criteria explicitly and ensure comprehensive test coverage.
 
 **The ENHANCE recommendation focuses on:**
+
 1. Creating dedicated integration test file
 2. Strengthening AC5 quality validation
 3. Adding database-level validations
 4. Consolidating test coverage
 
 **Success criteria:**
+
 - All 5 AC have explicit, dedicated test cases
 - Integration + unit + E2E tests all passing
-- >80% coverage for affected services
+- > 80% coverage for affected services
 - Documentation updated with test evidence
 
 **Estimated timeline:** 3-4 days (21-31 hours)
@@ -676,17 +705,20 @@ Tests:       5 passed, 5 total
 **Total Files Analyzed:** 35
 
 **Implementation Files:** 9
+
 - Services: 5
 - Routes: 1
 - Workers: 1
 - Config: 2
 
 **Test Files:** 26
+
 - E2E Tests: 2
 - Integration Tests: 9
 - Unit Tests: 15
 
 **Documentation Files:** 3
+
 - Node docs: 3
 
 ---

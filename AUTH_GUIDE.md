@@ -55,7 +55,7 @@ const refreshToken = localStorage.getItem('refresh_token');
 
 fetch('/api/protected-endpoint', {
   headers: {
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
     'X-Refresh-Token': refreshToken
   }
 });
@@ -134,6 +134,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -167,7 +168,7 @@ Protects against brute force attacks using IP + email combination:
 // Rate limiting configuration
 const MAX_ATTEMPTS = 5;
 const WINDOW_DURATION = 15 * 60 * 1000; // 15 minutes
-const BLOCK_DURATION = 15 * 60 * 1000;  // 15 minutes
+const BLOCK_DURATION = 15 * 60 * 1000; // 15 minutes
 
 // Key generation (privacy-preserving)
 function getKey(ip, email) {
@@ -183,6 +184,7 @@ function getKey(ip, email) {
 ### Rate Limit Responses
 
 **Too Many Attempts (429):**
+
 ```json
 {
   "success": false,
@@ -200,6 +202,7 @@ GET /api/auth/rate-limit/metrics
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -224,14 +227,14 @@ All protected endpoints validate JWT tokens:
 ```javascript
 const authenticateToken = (req, res, next) => {
   const token = extractToken(req);
-  
+
   if (!token) {
     return res.status(401).json({
       success: false,
       error: 'Access token required'
     });
   }
-  
+
   try {
     const user = jwt.verify(token, process.env.JWT_SECRET);
     req.user = user;
@@ -254,14 +257,14 @@ function sanitizePlatform(platform) {
   if (!platform || typeof platform !== 'string') {
     throw new Error('Platform parameter is required');
   }
-  
+
   // Remove dangerous characters
   const sanitized = platform.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-  
+
   if (!SUPPORTED_PLATFORMS.includes(sanitized)) {
     throw new Error(`Unsupported platform: ${sanitized}`);
   }
-  
+
   return sanitized;
 }
 ```
@@ -281,14 +284,14 @@ function generateState(userId, platform) {
 function parseState(state) {
   const payload = Buffer.from(state, 'base64url').toString();
   const [userId, platform, timestamp, random] = payload.split(':');
-  
+
   const age = Date.now() - parseInt(timestamp);
   const maxAge = 10 * 60 * 1000; // 10 minutes
-  
+
   if (age > maxAge) {
     throw new Error('State parameter expired');
   }
-  
+
   return { userId, platform, timestamp: parseInt(timestamp) };
 }
 ```
@@ -305,40 +308,41 @@ Generic error messages prevent user enumeration:
 
 ### Authentication Endpoints
 
-| Endpoint | Method | Description | Auth Required |
-|----------|--------|-------------|---------------|
-| `/api/auth/register` | POST | Register new user | No |
-| `/api/auth/login` | POST | Email/password login | No |
-| `/api/auth/magic-link` | POST | Send magic link | No |
-| `/api/auth/logout` | POST | Logout user | Yes |
-| `/api/auth/me` | GET | Get user profile | Yes |
-| `/api/auth/session/refresh` | POST | Refresh session | No |
-| `/api/auth/reset-password` | POST | Send reset email | No |
-| `/api/auth/update-password` | POST | Update password | Special |
+| Endpoint                    | Method | Description          | Auth Required |
+| --------------------------- | ------ | -------------------- | ------------- |
+| `/api/auth/register`        | POST   | Register new user    | No            |
+| `/api/auth/login`           | POST   | Email/password login | No            |
+| `/api/auth/magic-link`      | POST   | Send magic link      | No            |
+| `/api/auth/logout`          | POST   | Logout user          | Yes           |
+| `/api/auth/me`              | GET    | Get user profile     | Yes           |
+| `/api/auth/session/refresh` | POST   | Refresh session      | No            |
+| `/api/auth/reset-password`  | POST   | Send reset email     | No            |
+| `/api/auth/update-password` | POST   | Update password      | Special       |
 
 ### Admin Endpoints
 
-| Endpoint | Method | Description | Admin Required |
-|----------|--------|-------------|----------------|
-| `/api/auth/admin/users` | GET | List all users | Yes |
-| `/api/auth/admin/users` | POST | Create user manually | Yes |
-| `/api/auth/admin/users/:id` | GET | Get user details | Yes |
-| `/api/auth/admin/users/:id` | DELETE | Delete user | Yes |
-| `/api/auth/admin/users/:id/suspend` | POST | Suspend user | Yes |
-| `/api/auth/admin/users/:id/plan` | POST | Update user plan | Yes |
+| Endpoint                            | Method | Description          | Admin Required |
+| ----------------------------------- | ------ | -------------------- | -------------- |
+| `/api/auth/admin/users`             | GET    | List all users       | Yes            |
+| `/api/auth/admin/users`             | POST   | Create user manually | Yes            |
+| `/api/auth/admin/users/:id`         | GET    | Get user details     | Yes            |
+| `/api/auth/admin/users/:id`         | DELETE | Delete user          | Yes            |
+| `/api/auth/admin/users/:id/suspend` | POST   | Suspend user         | Yes            |
+| `/api/auth/admin/users/:id/plan`    | POST   | Update user plan     | Yes            |
 
 ### Rate Limiting Endpoints
 
-| Endpoint | Method | Description | Access |
-|----------|--------|-------------|--------|
-| `/api/auth/rate-limit/metrics` | GET | Get rate limit stats | Mock only |
-| `/api/auth/rate-limit/reset` | POST | Reset rate limit | Mock/Test only |
+| Endpoint                       | Method | Description          | Access         |
+| ------------------------------ | ------ | -------------------- | -------------- |
+| `/api/auth/rate-limit/metrics` | GET    | Get rate limit stats | Mock only      |
+| `/api/auth/rate-limit/reset`   | POST   | Reset rate limit     | Mock/Test only |
 
 ## Configuration
 
 ### Environment Variables
 
 **Required:**
+
 ```bash
 # Supabase Configuration
 SUPABASE_URL=https://your-project.supabase.co
@@ -351,6 +355,7 @@ ENABLE_RATE_LIMIT=true
 ```
 
 **Optional:**
+
 ```bash
 # Debug Settings
 DEBUG_SESSION=false
@@ -452,6 +457,7 @@ done
 **1. Token Refresh Not Working**
 
 Check headers are being sent:
+
 ```javascript
 // Ensure refresh token header is included
 headers: {
@@ -463,6 +469,7 @@ headers: {
 **2. Rate Limiting Too Aggressive**
 
 Adjust configuration:
+
 ```bash
 # Increase limits temporarily
 RATE_LIMIT_MAX_ATTEMPTS=10
@@ -472,6 +479,7 @@ RATE_LIMIT_WINDOW_MINUTES=30
 **3. Session Not Persisting**
 
 Check local storage:
+
 ```javascript
 // Debug session storage
 console.log('Access Token:', localStorage.getItem('access_token'));
@@ -481,12 +489,15 @@ console.log('Refresh Token:', localStorage.getItem('refresh_token'));
 **4. CORS Issues with Refresh**
 
 Ensure proper CORS headers:
+
 ```javascript
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true,
-  exposedHeaders: ['X-New-Access-Token', 'X-New-Refresh-Token']
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    exposedHeaders: ['X-New-Access-Token', 'X-New-Refresh-Token']
+  })
+);
 ```
 
 ### Debug Mode
@@ -503,6 +514,7 @@ REACT_APP_DEBUG_AUTH=true
 ```
 
 **Debug Output:**
+
 ```
 Session middleware: Token near expiry, attempting refresh
 Rate limiter: Recording attempt for key 192.168.1.1:a1b2c3d4
@@ -512,17 +524,20 @@ OAuth: Mock connection initiated for user123:twitter
 ### Health Checks
 
 **Session Health:**
+
 ```bash
 GET /api/auth/me
 Authorization: Bearer <token>
 ```
 
 **Rate Limit Status:**
+
 ```bash
 GET /api/auth/rate-limit/metrics
 ```
 
 **Feature Flag Status:**
+
 ```bash
 GET /api/health
 ```

@@ -95,7 +95,7 @@ describe('Shield Action Executor Smoke Test', () => {
     };
 
     const result = await actionExecutor.executeAction(mockAction);
-    
+
     // Debug output for CI troubleshooting
     console.log('🔍 Debug Info:');
     console.log('  Action sent:', mockAction.action);
@@ -104,7 +104,7 @@ describe('Shield Action Executor Smoke Test', () => {
     console.log('  Actual action:', result?.action);
     console.log('  Platform:', result?.platform);
     console.log('  Success:', result?.success);
-    
+
     expect(result).toBeDefined();
     expect(typeof result.success).toBe('boolean');
     expect(result.platform).toBe('twitter');

@@ -22,7 +22,7 @@ export const WIDGETS = {
   credits: CreditsCard,
   logs: LogsTableCard,
   analysisUsage: AnalysisUsageCard,
-  roastUsage: RoastUsageCard,
+  roastUsage: RoastUsageCard
 };
 
 export const DEFAULT_LAYOUT = [

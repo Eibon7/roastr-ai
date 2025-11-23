@@ -20,4 +20,3 @@ describe('SettingsSection', () => {
     expect(screen.getByText('Acción')).toBeInTheDocument();
   });
 });
-

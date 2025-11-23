@@ -210,7 +210,7 @@ class SyncReportGenerator {
 
     // Drift analysis section
     if (driftData) {
-      const highRiskNodes = driftData.nodes?.filter(n => n.risk_level === 'high') || [];
+      const highRiskNodes = driftData.nodes?.filter((n) => n.risk_level === 'high') || [];
 
       lines.push(`## 🔮 Drift Analysis`);
       lines.push(``);
@@ -263,13 +263,17 @@ class SyncReportGenerator {
     lines.push(``);
 
     if (driftData && driftData.high_risk_count > 0) {
-      lines.push(`- ⚠️ **${driftData.high_risk_count} high-risk nodes detected** - Consider updating documentation before next implementation`);
+      lines.push(
+        `- ⚠️ **${driftData.high_risk_count} high-risk nodes detected** - Consider updating documentation before next implementation`
+      );
     } else {
       lines.push(`- ✅ No high-risk drift detected`);
     }
 
     if (healthData && healthData.overall_score < healthData.threshold) {
-      lines.push(`- ⚠️ **Health score below threshold** - Run \`node scripts/auto-repair-gdd.js\` to auto-fix common issues`);
+      lines.push(
+        `- ⚠️ **Health score below threshold** - Run \`node scripts/auto-repair-gdd.js\` to auto-fix common issues`
+      );
     } else {
       lines.push(`- ✅ Health score meets threshold`);
     }
@@ -395,11 +399,12 @@ if (require.main === module) {
   const options = parseArgs();
   const generator = new SyncReportGenerator(options);
 
-  generator.generate()
-    .then(success => {
+  generator
+    .generate()
+    .then((success) => {
       process.exit(success ? 0 : 1);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error(`${colors.red}Fatal error: ${error.message}${colors.reset}`);
       process.exit(1);
     });

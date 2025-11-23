@@ -1,6 +1,6 @@
 /**
  * Shield API Routes
- * 
+ *
  * API endpoints for Shield automated moderation system:
  * - GET /api/shield/events - Paginated events with filtering
  * - POST /api/shield/revert/:id - Revert shield actions
@@ -78,12 +78,12 @@ function createContentSnippet(content, maxLength = 100) {
   if (!content || typeof content !== 'string') {
     return '[No content available]';
   }
-  
+
   const trimmed = content.trim();
   if (trimmed.length <= maxLength) {
     return trimmed;
   }
-  
+
   return trimmed.substring(0, maxLength - 3) + '...';
 }
 
@@ -94,7 +94,18 @@ function createContentSnippet(content, maxLength = 100) {
 // Whitelisted filter parameters to prevent unexpected queries
 const VALID_CATEGORIES = ['all', 'toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'];
 const VALID_TIME_RANGES = ['7d', '30d', '90d', 'all'];
-const VALID_PLATFORMS = ['all', 'twitter', 'youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+const VALID_PLATFORMS = [
+  'all',
+  'twitter',
+  'youtube',
+  'instagram',
+  'facebook',
+  'discord',
+  'twitch',
+  'reddit',
+  'tiktok',
+  'bluesky'
+];
 const VALID_ACTION_TYPES = ['all', 'block', 'mute', 'flag', 'report'];
 
 /**
@@ -104,8 +115,8 @@ const VALID_ACTION_TYPES = ['all', 'block', 'mute', 'flag', 'report'];
  */
 function validateQueryParameters(query = {}) {
   // Enhanced null safety for query object
-  const safeQuery = (query && typeof query === 'object') ? query : {};
-  
+  const safeQuery = query && typeof query === 'object' ? query : {};
+
   const {
     page = 1,
     limit = 20,
@@ -118,7 +129,7 @@ function validateQueryParameters(query = {}) {
   // Enhanced numeric validation for pagination (CodeRabbit Round 5)
   let pageNum = 1;
   let limitNum = 20;
-  
+
   // Strict numeric validation for page
   if (typeof page === 'number' && Number.isInteger(page) && page > 0) {
     pageNum = Math.min(1000, page); // Cap at 1000 pages
@@ -128,7 +139,7 @@ function validateQueryParameters(query = {}) {
       pageNum = Math.min(1000, parsedPage);
     }
   }
-  
+
   // Strict numeric validation for limit
   if (typeof limit === 'number' && Number.isInteger(limit) && limit > 0) {
     limitNum = Math.min(100, Math.max(1, limit));
@@ -140,14 +151,22 @@ function validateQueryParameters(query = {}) {
   }
 
   // Enhanced filter validation with type checking (Round 4)
-  const validatedCategory = (typeof category === 'string' && VALID_CATEGORIES.includes(category.toLowerCase())) 
-    ? category.toLowerCase() : 'all';
-  const validatedTimeRange = (typeof timeRange === 'string' && VALID_TIME_RANGES.includes(timeRange.toLowerCase())) 
-    ? timeRange.toLowerCase() : '30d';
-  const validatedPlatform = (typeof platform === 'string' && VALID_PLATFORMS.includes(platform.toLowerCase())) 
-    ? platform.toLowerCase() : 'all';
-  const validatedActionType = (typeof actionType === 'string' && VALID_ACTION_TYPES.includes(actionType.toLowerCase())) 
-    ? actionType.toLowerCase() : 'all';
+  const validatedCategory =
+    typeof category === 'string' && VALID_CATEGORIES.includes(category.toLowerCase())
+      ? category.toLowerCase()
+      : 'all';
+  const validatedTimeRange =
+    typeof timeRange === 'string' && VALID_TIME_RANGES.includes(timeRange.toLowerCase())
+      ? timeRange.toLowerCase()
+      : '30d';
+  const validatedPlatform =
+    typeof platform === 'string' && VALID_PLATFORMS.includes(platform.toLowerCase())
+      ? platform.toLowerCase()
+      : 'all';
+  const validatedActionType =
+    typeof actionType === 'string' && VALID_ACTION_TYPES.includes(actionType.toLowerCase())
+      ? actionType.toLowerCase()
+      : 'all';
 
   return {
     pageNum,
@@ -167,7 +186,7 @@ function validateQueryParameters(query = {}) {
  */
 function calculateDateRange(timeRange) {
   const now = new Date();
-  
+
   switch (timeRange) {
     case '7d':
       return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -190,24 +209,24 @@ function sanitizeResponseData(data) {
   if (!data) return data;
 
   if (Array.isArray(data)) {
-    return data.map(item => sanitizeResponseData(item));
+    return data.map((item) => sanitizeResponseData(item));
   }
 
   if (typeof data === 'object' && data !== null) {
     // Enhanced: Remove multiple sensitive fields
-    const { 
-      organization_id, 
+    const {
+      organization_id,
       content_hash, // Remove hash for additional privacy
       metadata, // Remove metadata to prevent information leakage
-      ...sanitizedItem 
+      ...sanitizedItem
     } = data;
-    
+
     // Keep only content_snippet for UI display
     return {
       ...sanitizedItem,
       // Only include safe metadata fields if needed
-      metadata: metadata && typeof metadata === 'object' ? 
-        { reverted: metadata.reverted || false } : {}
+      metadata:
+        metadata && typeof metadata === 'object' ? { reverted: metadata.reverted || false } : {}
     };
   }
 
@@ -224,28 +243,28 @@ router.get('/events', async (req, res) => {
     try {
       validated = validateQueryParameters(req.query);
     } catch (error) {
-      logger.warn('Query parameter validation error', { 
-        query: req.query, 
+      logger.warn('Query parameter validation error', {
+        query: req.query,
         error: error.message,
-        userId: req.user?.id 
+        userId: req.user?.id
       });
-      
+
       return res.status(400).json({
         success: false,
-        error: { 
-          message: 'Invalid query parameters', 
+        error: {
+          message: 'Invalid query parameters',
           code: 'INVALID_QUERY_PARAMS',
           details: 'Query parameters could not be processed'
         }
       });
     }
-    
+
     // Additional validation for edge cases (Round 4)
     if (!validated || typeof validated !== 'object') {
       return res.status(400).json({
         success: false,
-        error: { 
-          message: 'Parameter validation failed', 
+        error: {
+          message: 'Parameter validation failed',
           code: 'VALIDATION_FAILED',
           details: 'Could not validate request parameters'
         }
@@ -254,14 +273,15 @@ router.get('/events', async (req, res) => {
 
     // Extract validated parameters (Round 4 enhancement)
     const { pageNum, limitNum, category, timeRange, platform, actionType } = validated;
-    
+
     // Calculate date range using helper function
     const startDate = calculateDateRange(timeRange);
 
     // Build query with organization isolation (RLS)
     let query = supabaseServiceClient
       .from('shield_actions')
-      .select(`
+      .select(
+        `
         id,
         action_type,
         content_hash,
@@ -271,7 +291,9 @@ router.get('/events', async (req, res) => {
         created_at,
         reverted_at,
         metadata
-      `, { count: 'exact' })
+      `,
+        { count: 'exact' }
+      )
       .eq('organization_id', req.user.organizationId)
       .order('created_at', { ascending: false });
 
@@ -296,10 +318,10 @@ router.get('/events', async (req, res) => {
     const { data, error, count } = await query;
 
     if (error) {
-      logger.error('Failed to fetch shield events', { 
-        error: error.message, 
+      logger.error('Failed to fetch shield events', {
+        error: error.message,
         userId: req.user.id,
-        orgId: req.user.organizationId 
+        orgId: req.user.organizationId
       });
       throw error;
     }
@@ -308,7 +330,7 @@ router.get('/events', async (req, res) => {
 
     // Enhanced response sanitization (CodeRabbit Round 6)
     const sanitizedEvents = sanitizeResponseData(data || []);
-    
+
     res.json({
       success: true,
       data: {
@@ -329,12 +351,11 @@ router.get('/events', async (req, res) => {
         }
       }
     });
-
   } catch (error) {
-    logger.error('Shield events endpoint error', { 
-      error: error.message, 
+    logger.error('Shield events endpoint error', {
+      error: error.message,
       userId: req.user?.id,
-      orgId: req.user?.organizationId 
+      orgId: req.user?.organizationId
     });
 
     res.status(500).json({
@@ -367,7 +388,7 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
         }
       });
     }
-    
+
     // Validate UUID format (RFC 4122 compliant)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id.trim())) {
@@ -402,11 +423,11 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
       .single();
 
     if (fetchError) {
-      logger.error('Failed to fetch shield action for revert', { 
-        error: fetchError.message, 
+      logger.error('Failed to fetch shield action for revert', {
+        error: fetchError.message,
         actionId: id,
         userId: req.user.id,
-        orgId: req.user.organizationId 
+        orgId: req.user.organizationId
       });
 
       if (fetchError.code === 'PGRST116') {
@@ -438,17 +459,21 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
     let baseMetadata = {};
     try {
       // Safe metadata extraction with type checking
-      if (existingAction?.metadata && typeof existingAction.metadata === 'object' && existingAction.metadata !== null) {
+      if (
+        existingAction?.metadata &&
+        typeof existingAction.metadata === 'object' &&
+        existingAction.metadata !== null
+      ) {
         baseMetadata = Array.isArray(existingAction.metadata) ? {} : { ...existingAction.metadata };
       }
     } catch (error) {
-      logger.warn('Failed to parse existing metadata, using empty object', { 
-        actionId: id, 
-        error: error.message 
+      logger.warn('Failed to parse existing metadata, using empty object', {
+        actionId: id,
+        error: error.message
       });
       baseMetadata = {};
     }
-    
+
     const revertMetadata = {
       ...baseMetadata,
       reverted: true,
@@ -461,7 +486,7 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
     // Update the action with enhanced revert information
     const { data: updatedAction, error: updateError } = await supabaseServiceClient
       .from('shield_actions')
-      .update({ 
+      .update({
         reverted_at: new Date().toISOString(),
         metadata: revertMetadata
       })
@@ -471,11 +496,11 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
       .single();
 
     if (updateError) {
-      logger.error('Failed to revert shield action', { 
-        error: updateError.message, 
+      logger.error('Failed to revert shield action', {
+        error: updateError.message,
         actionId: id,
         userId: req.user.id,
-        orgId: req.user.organizationId 
+        orgId: req.user.organizationId
       });
       throw updateError;
     }
@@ -496,13 +521,12 @@ router.post('/revert/:id', revertActionLimit, async (req, res) => {
         message: 'Shield action reverted successfully'
       }
     });
-
   } catch (error) {
-    logger.error('Shield revert endpoint error', { 
-      error: error.message, 
+    logger.error('Shield revert endpoint error', {
+      error: error.message,
       actionId: req.params.id,
       userId: req.user?.id,
-      orgId: req.user?.organizationId 
+      orgId: req.user?.organizationId
     });
 
     res.status(500).json({
@@ -526,7 +550,7 @@ router.get('/stats', async (req, res) => {
     // Calculate date range
     let startDate = null;
     const now = new Date();
-    
+
     switch (timeRange) {
       case '7d':
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -556,10 +580,10 @@ router.get('/stats', async (req, res) => {
     const { data, error } = await query;
 
     if (error) {
-      logger.error('Failed to fetch shield stats', { 
-        error: error.message, 
+      logger.error('Failed to fetch shield stats', {
+        error: error.message,
         userId: req.user.id,
-        orgId: req.user.organizationId 
+        orgId: req.user.organizationId
       });
       throw error;
     }
@@ -568,8 +592,8 @@ router.get('/stats', async (req, res) => {
     const safeData = data || [];
     const stats = {
       total: safeData.length,
-      reverted: safeData.filter(action => action && action.reverted_at).length,
-      active: safeData.filter(action => action && !action.reverted_at).length,
+      reverted: safeData.filter((action) => action && action.reverted_at).length,
+      active: safeData.filter((action) => action && !action.reverted_at).length,
       byActionType: {},
       byPlatform: {},
       byReason: {},
@@ -579,21 +603,21 @@ router.get('/stats', async (req, res) => {
     };
 
     // Group by action type (safe iteration)
-    safeData.forEach(action => {
+    safeData.forEach((action) => {
       if (action && action.action_type) {
         stats.byActionType[action.action_type] = (stats.byActionType[action.action_type] || 0) + 1;
       }
     });
 
     // Group by platform (safe iteration)
-    safeData.forEach(action => {
+    safeData.forEach((action) => {
       if (action && action.platform) {
         stats.byPlatform[action.platform] = (stats.byPlatform[action.platform] || 0) + 1;
       }
     });
 
     // Group by reason (safe iteration)
-    safeData.forEach(action => {
+    safeData.forEach((action) => {
       if (action && action.reason) {
         stats.byReason[action.reason] = (stats.byReason[action.reason] || 0) + 1;
       }
@@ -603,12 +627,11 @@ router.get('/stats', async (req, res) => {
       success: true,
       data: stats
     });
-
   } catch (error) {
-    logger.error('Shield stats endpoint error', { 
-      error: error.message, 
+    logger.error('Shield stats endpoint error', {
+      error: error.message,
       userId: req.user?.id,
-      orgId: req.user?.organizationId 
+      orgId: req.user?.organizationId
     });
 
     res.status(500).json({
@@ -644,13 +667,7 @@ router.get('/config', async (req, res) => {
         revertActionsPerWindow: 10,
         revertWindowMinutes: 5
       },
-      categories: [
-        'toxic',
-        'spam', 
-        'harassment',
-        'hate_speech',
-        'inappropriate'
-      ],
+      categories: ['toxic', 'spam', 'harassment', 'hate_speech', 'inappropriate'],
       platforms: [
         'twitter',
         'youtube',
@@ -662,12 +679,7 @@ router.get('/config', async (req, res) => {
         'tiktok',
         'bluesky'
       ],
-      actionTypes: [
-        'block',
-        'mute',
-        'flag',
-        'report'
-      ]
+      actionTypes: ['block', 'mute', 'flag', 'report']
     };
 
     logger.info('Shield config requested', {
@@ -680,12 +692,11 @@ router.get('/config', async (req, res) => {
       success: true,
       data: config
     });
-
   } catch (error) {
-    logger.error('Shield config endpoint error', { 
-      error: error.message, 
+    logger.error('Shield config endpoint error', {
+      error: error.message,
       userId: req.user?.id,
-      orgId: req.user?.organizationId 
+      orgId: req.user?.organizationId
     });
 
     res.status(500).json({

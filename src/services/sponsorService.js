@@ -25,10 +25,10 @@ class SponsorService {
   constructor() {
     this.supabase = null;
     this.openai = null;
-    
+
     // Initialize Supabase with fail-fast validation (CodeRabbit fix)
     this.initializeSupabase();
-    
+
     // Initialize OpenAI if configured
     if (process.env.OPENAI_API_KEY) {
       this.openai = new OpenAI({
@@ -50,7 +50,7 @@ class SponsorService {
     if (!supabaseUrl || !supabaseKey) {
       throw new Error(
         'SUPABASE_UNAVAILABLE: Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables. ' +
-        'Sponsor service requires Supabase for multi-tenant data storage.'
+          'Sponsor service requires Supabase for multi-tenant data storage.'
       );
     }
 
@@ -133,19 +133,14 @@ class SponsorService {
    * @returns {Promise<Array<Object>>} List of sponsors
    */
   async getSponsors(userId, includeInactive = false) {
-    let query = this.supabase
-      .from('sponsors')
-      .select('*')
-      .eq('user_id', userId);
+    let query = this.supabase.from('sponsors').select('*').eq('user_id', userId);
 
     if (!includeInactive) {
       query = query.eq('active', true);
     }
 
     // CodeRabbit fix: Sort by priority ascending (1=highest priority comes first)
-    query = query
-      .order('priority', { ascending: true })
-      .order('created_at', { ascending: false });
+    query = query.order('priority', { ascending: true }).order('created_at', { ascending: false });
 
     const { data, error } = await query;
 
@@ -318,7 +313,8 @@ class SponsorService {
         messages: [
           {
             role: 'system',
-            content: 'You are a brand analysis assistant. Extract 5-10 relevant keywords/tags that describe this brand, product category, or industry. Return ONLY comma-separated tags, lowercase, no explanations.'
+            content:
+              'You are a brand analysis assistant. Extract 5-10 relevant keywords/tags that describe this brand, product category, or industry. Return ONLY comma-separated tags, lowercase, no explanations.'
           },
           {
             role: 'user',
@@ -332,8 +328,8 @@ class SponsorService {
       const tagsText = completion.choices[0].message.content.trim();
       const tags = tagsText
         .split(',')
-        .map(tag => tag.trim().toLowerCase())
-        .filter(tag => tag.length > 0)
+        .map((tag) => tag.trim().toLowerCase())
+        .filter((tag) => tag.length > 0)
         .slice(0, 10); // Max 10 tags
 
       logger.info('Tags extracted successfully', {
@@ -342,7 +338,6 @@ class SponsorService {
       });
 
       return tags;
-
     } catch (error) {
       if (error.name === 'AbortError') {
         throw new Error('FETCH_TIMEOUT: URL fetch timed out after 10 seconds');
@@ -421,7 +416,7 @@ class SponsorService {
   _sanitizeURL(url) {
     try {
       const parsed = new URL(url);
-      
+
       // Only allow HTTP/HTTPS protocols
       if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
         return null;

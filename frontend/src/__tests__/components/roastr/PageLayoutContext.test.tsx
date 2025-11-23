@@ -29,7 +29,7 @@ describe('PageLayoutContext', () => {
     it('throws error when used outside PageLayoutProvider', () => {
       // Suppress console.error for this test
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       expect(() => renderHook(() => usePageLayout())).toThrow(
         'usePageLayout debe usarse dentro de PageLayoutProvider'
       );
@@ -118,11 +118,11 @@ describe('PageLayoutContext', () => {
     it('resets layout on unmount', () => {
       const TestComponent = ({ show }: { show: boolean }) => {
         const { layout } = usePageLayout();
-        
+
         if (show) {
           return <ChildWithConfig />;
         }
-        
+
         return <div>{layout.title}</div>;
       };
 
@@ -149,4 +149,3 @@ describe('PageLayoutContext', () => {
     });
   });
 });
-

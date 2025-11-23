@@ -15,14 +15,17 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 ## 📋 Issues Identificados por Usuario
 
 ### Issue 1: Sección "System Overview" redundante en HealthPanel
+
 **Screenshot**: Usuario señala el elemento "SYSTEM OVERVIEW" con 4 StatusCards
 
 **Problema**:
+
 - La misma información está en el Top Status Bar (SystemStatusBar)
 - Redundancia visual innecesaria
 - Ocupa espacio valioso
 
 **Solución**:
+
 - Eliminar la sección "System Overview" completa de HealthPanel
 - Mantener solo "Recent Activity" en HealthPanel
 - El Top Status Bar ya muestra Health, Drift, Nodes, Coverage
@@ -32,12 +35,15 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 ---
 
 ### Issue 2: Emojis en Reports section
+
 **Problema**:
+
 - Emoji "📄" en el título "Reports Viewer"
 - No pega con estética cyberpunk
 - Inconsistente con resto del Command Center (sin emojis)
 
 **Solución**:
+
 - Remover emoji del título
 - Cambiar a solo "REPORTS VIEWER" (uppercase, monospace)
 
@@ -46,11 +52,14 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 ---
 
 ### Issue 3: Scroll en Reports container
+
 **Problema**:
+
 - max-height: 600px causa scroll interno
 - Rompe el flow visual
 
 **Solución**:
+
 - Eliminar max-height
 - Dejar que el contenido ocupe altura completa
 - El scroll debe ser del MainContent, no del ContentContainer
@@ -60,12 +69,15 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 ---
 
 ### Issue 4: Dropdown de Reports no tiene estilo Snake Eater
+
 **Problema**:
+
 - Dropdown usa estilos default del navegador (fondo blanco)
 - No coincide con tema dark cyberpunk
 - Falta estilo consistente con StatusCard, NodeChip, etc.
 
 **Solución**:
+
 - Rediseñar dropdown con estilos Snake Eater:
   - Background: #1f1d20
   - Border: 1px solid rgba(255, 255, 255, 0.12)
@@ -80,9 +92,11 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 ## 🎨 Workflow de Agentes
 
 ### Fase 1: UI Designer Agent
+
 **Tarea**: Specs para el dropdown Snake Eater
 
 **Deliverable**:
+
 - Especificación del ReportSelector dropdown
 - Estados: default, hover, focus, open
 - Color palette exacto
@@ -94,9 +108,11 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 ---
 
 ### Fase 2: UX Agent (opcional, inline)
+
 **Tarea**: Validar que eliminar System Overview no afecta UX
 
 **Análisis**:
+
 - ¿El usuario necesita ver métricas en HealthPanel?
   - NO, ya están en Top Status Bar (siempre visible)
 - ¿Qué valor aporta HealthPanel sin System Overview?
@@ -108,11 +124,13 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 ---
 
 ### Fase 3: Front-end Dev Agent
+
 **Tarea**: Implementar ajustes en código
 
 **Cambios**:
 
 1. **HealthPanel.tsx**:
+
    ```tsx
    // ANTES: 2 secciones (System Overview + Recent Activity)
    // DESPUÉS: 1 sección (solo Recent Activity)
@@ -131,9 +149,10 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
    ```
 
 2. **ReportsViewer.tsx**:
+
    ```tsx
    // Cambio 1: Título sin emoji
-   <Title>REPORTS VIEWER</Title> // era "📄 Reports Viewer"
+   <Title>REPORTS VIEWER</Title>; // era "📄 Reports Viewer"
 
    // Cambio 2: Eliminar max-height
    const ContentContainer = styled.div`
@@ -176,9 +195,11 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 ---
 
 ### Fase 4: Whimsy Agent (opcional)
+
 **Tarea**: Añadir microinteracciones al dropdown
 
 **Ideas**:
+
 - Hover: subtle border glow
 - Focus: pulse animation en border
 - Option select: brief highlight
@@ -190,6 +211,7 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 ## ✅ Criterios de Aceptación
 
 **Visual**:
+
 - [ ] HealthPanel solo muestra "Recent Activity" (sin System Overview)
 - [ ] Título Reports sin emoji
 - [ ] Dropdown con fondo dark (#1f1d20)
@@ -197,12 +219,14 @@ Refinar el Command Center para eliminar redundancias y mejorar consistencia visu
 - [ ] No scroll interno en Reports (o ajustado correctamente)
 
 **Funcional**:
+
 - [ ] HealthPanel sigue mostrando activity log correctamente
 - [ ] Dropdown sigue funcionando (select report)
 - [ ] Download button sigue funcionando
 - [ ] No errores de consola
 
 **Consistencia**:
+
 - [ ] Dropdown matches StatusCard, NodeChip styling
 - [ ] Typography consistent (JetBrains Mono)
 - [ ] Color palette Snake Eater (#50fa7b accent)

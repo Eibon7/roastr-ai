@@ -114,7 +114,7 @@ class TelemetryBus extends EventEmitter {
     }
 
     // Send current buffer to new subscriber
-    this.buffer.forEach(event => {
+    this.buffer.forEach((event) => {
       try {
         callback(event);
       } catch (error) {
@@ -171,12 +171,12 @@ class TelemetryBus extends EventEmitter {
 
     // Filter by type
     if (options.type) {
-      events = events.filter(e => e.type === options.type);
+      events = events.filter((e) => e.type === options.type);
     }
 
     // Filter by agent
     if (options.agent) {
-      events = events.filter(e => e.data?.agent === options.agent);
+      events = events.filter((e) => e.data?.agent === options.agent);
     }
 
     // Limit results
@@ -196,9 +196,7 @@ class TelemetryBus extends EventEmitter {
   getStats(timeWindowMinutes = 60) {
     const cutoff = new Date(Date.now() - timeWindowMinutes * 60 * 1000);
 
-    const recentEvents = this.buffer.filter(
-      e => new Date(e.timestamp) >= cutoff
-    );
+    const recentEvents = this.buffer.filter((e) => new Date(e.timestamp) >= cutoff);
 
     // Count by type
     const byType = {};
@@ -226,9 +224,7 @@ class TelemetryBus extends EventEmitter {
       }
     }
 
-    const avgHealthDelta = healthDeltaCount > 0
-      ? totalHealthDelta / healthDeltaCount
-      : 0;
+    const avgHealthDelta = healthDeltaCount > 0 ? totalHealthDelta / healthDeltaCount : 0;
 
     return {
       total_events: recentEvents.length,
@@ -283,9 +279,7 @@ class TelemetryBus extends EventEmitter {
 
         // Only keep events from last 24 hours
         const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        this.buffer = this.buffer.filter(
-          e => new Date(e.timestamp) >= cutoff
-        );
+        this.buffer = this.buffer.filter((e) => new Date(e.timestamp) >= cutoff);
 
         if (this.verbose) {
           this.log('info', `Buffer loaded (${this.buffer.length} events)`);
@@ -395,7 +389,6 @@ if (require.main === module) {
       console.log(`  Subscribers: ${stats.subscribers}`);
       console.log('');
     }, 60000);
-
   } else if (args.includes('--test')) {
     console.log('\n🧪 Testing Telemetry Bus\n');
 
@@ -455,7 +448,6 @@ if (require.main === module) {
     console.log(`✅ Unsubscribed: ${unsubscribed}\n`);
 
     console.log('✅ All Telemetry Bus tests passed!\n');
-
   } else {
     const scriptName = path.basename(__filename);
     console.log('Usage:');

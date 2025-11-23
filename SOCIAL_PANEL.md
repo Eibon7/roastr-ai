@@ -5,21 +5,25 @@ Panel de gestión de redes sociales para Roastr.AI con soporte multi-cuenta y co
 ## Características Principales
 
 ### ✅ Multi-Account Support
+
 - Soporte para múltiples cuentas por red social (ej: 3 cuentas de Twitter, 2 de Instagram)
 - Vista unificada con cards por cuenta conectada
 - Estadísticas agregadas en tiempo real
 
-### ✅ Account Management Modal 
+### ✅ Account Management Modal
+
 - **Tab de Roasts**: Últimos roasts generados con aprobación/rechazo manual
 - **Tab de Shield**: Estadísticas de protección y comentarios interceptados
 - **Tab de Settings**: Configuración de cuenta, tono por defecto, y Shield
 
 ### ✅ Optimistic UI + Rollback
+
 - Actualización inmediata de UI para mejor UX
 - Rollback automático si la API falla
 - Estados de loading en botones de acción
 
 ### ✅ Ready for Backend Integration
+
 - SDK API mock completamente preparado para intercambiar por calls reales
 - Firmas de API documentadas y consistentes
 - Manejo de errores y paginación incluido
@@ -42,18 +46,29 @@ src/components/ShieldInterceptedList.js # Lista de comentarios interceptados
 // src/hooks/useSocialAccounts.js
 const {
   // Data
-  accounts, availableNetworks,
-  
+  accounts,
+  availableNetworks,
+
   // Getters
-  getAccountById, roastsByAccount, interceptedByAccount,
-  
+  getAccountById,
+  roastsByAccount,
+  interceptedByAccount,
+
   // Stats
-  totalAccounts, activeAccounts, totalMonthlyRoasts,
-  
+  totalAccounts,
+  activeAccounts,
+  totalMonthlyRoasts,
+
   // Mutators (async con optimistic UI)
-  onApproveRoast, onRejectRoast, onToggleAutoApprove,
-  onToggleAccount, onChangeShieldLevel, onToggleShield,
-  onChangeTone, onConnectNetwork, onDisconnectAccount
+  onApproveRoast,
+  onRejectRoast,
+  onToggleAutoApprove,
+  onToggleAccount,
+  onChangeShieldLevel,
+  onToggleShield,
+  onChangeTone,
+  onConnectNetwork,
+  onDisconnectAccount
 } = useSocialAccounts();
 ```
 
@@ -73,14 +88,14 @@ await socialAPI.getShieldIntercepted(accountId, { limit: 10 });
 await socialAPI.updateShieldSettings(accountId, { enabled: true, threshold: 95 });
 
 // Settings
-await socialAPI.updateAccountSettings(accountId, { 
-  active: true, 
-  autoApprove: false, 
-  defaultTone: 'Comico' 
+await socialAPI.updateAccountSettings(accountId, {
+  active: true,
+  autoApprove: false,
+  defaultTone: 'Comico'
 });
 
 // Connection
-await socialAPI.connectNetwork('twitter');  // Returns OAuth URL
+await socialAPI.connectNetwork('twitter'); // Returns OAuth URL
 await socialAPI.disconnectAccount(accountId);
 ```
 
@@ -113,18 +128,21 @@ await socialAPI.disconnectAccount(accountId);
 ### 2. Account Modal (3 Tabs)
 
 #### Tab 1: Últimos Roasts
+
 - Lista de roasts recientes con comentario original y respuesta generada
 - **Conditional Logic**: Botones Aprobar/Rechazar solo si `autoApprove = false` y `status = 'pending'`
 - Loading states en botones durante API calls
 - Estados: pending, approved, rejected
 
-#### Tab 2: Shield  
+#### Tab 2: Shield
+
 - Stats de protección (interceptados, nivel actual, reportados)
 - Lista expandible de comentarios interceptados por Shield
 - Categorías: "Insultos graves", "Spam", "Toxicidad"
 - Acciones: "Ocultar comentario", "Reportar", "Bloquear usuario"
 
 #### Tab 3: Settings
+
 - **Auto-approval toggle**: Roasts se publican sin revisión
 - **Shield toggle + level**: Protección automática con umbral configurable
 - **Default tone**: Comico, Sarcástico, Seco, Afilado
@@ -134,11 +152,12 @@ await socialAPI.disconnectAccount(accountId);
 ## Mock Data Structure
 
 ### Account Object
+
 ```javascript
 {
   id: 'acc_tw_1',
   network: 'twitter',
-  handle: '@handle_1', 
+  handle: '@handle_1',
   status: 'active', // 'active' | 'inactive'
   monthlyRoasts: 4000,
   settings: {
@@ -151,6 +170,7 @@ await socialAPI.disconnectAccount(accountId);
 ```
 
 ### Roast Object
+
 ```javascript
 {
   id: 'r1',
@@ -162,9 +182,10 @@ await socialAPI.disconnectAccount(accountId);
 ```
 
 ### Intercepted Object
+
 ```javascript
 {
-  id: 's1', 
+  id: 's1',
   category: 'Insultos graves',
   action: 'Ocultar comentario',
   preview: '***censurado***',
@@ -176,11 +197,13 @@ await socialAPI.disconnectAccount(accountId);
 ## Testing
 
 ### Coverage Actual
+
 - **AccountModal.test.js**: 20 tests, 92.68% líneas, 90.9% funciones
 - **useSocialAccounts.test.js**: 21 tests, 73.33% líneas, 94.87% funciones
 - **social.test.js**: 15+ tests para API SDK mock
 
 ### Comandos Test
+
 ```bash
 # Frontend tests (mock mode enabled)
 cd frontend
@@ -199,15 +222,18 @@ Cambiar implementación interna en `src/api/social.ts`:
 ```typescript
 // Actual implementation
 export const approveRoast = async (accountId: string, roastId: string) => {
-  const response = await fetch(buildApiUrl(`/social/accounts/${accountId}/roasts/${roastId}/approve`), {
-    method: 'POST',
-    headers: getAuthHeaders()
-  });
-  
+  const response = await fetch(
+    buildApiUrl(`/social/accounts/${accountId}/roasts/${roastId}/approve`),
+    {
+      method: 'POST',
+      headers: getAuthHeaders()
+    }
+  );
+
   if (!response.ok) {
     throw new Error(`Failed to approve roast: ${response.statusText}`);
   }
-  
+
   return response.json();
 };
 ```
@@ -237,7 +263,7 @@ DELETE /api/social/accounts/{accountId}
   }
 }
 
-// Action responses  
+// Action responses
 {
   success: boolean
 }
@@ -246,11 +272,13 @@ DELETE /api/social/accounts/{accountId}
 ## UX Features
 
 ### ✅ Optimistic UI
+
 - Immediate visual feedback
 - Automatic rollback on error
 - Loading indicators durante calls
 
 ### 🔄 Planned Features
+
 - **Toast notifications** para success/error messages
 - **Cursor pagination** en roasts e intercepted lists
 - **Empty states** mejorados
@@ -259,12 +287,14 @@ DELETE /api/social/accounts/{accountId}
 ## Deployment
 
 ### Mock Mode (Current)
+
 ```bash
 # Frontend build with mocks
 REACT_APP_ENABLE_MOCK_MODE=true npm run build
 ```
 
 ### Production Mode (Future)
+
 ```bash
 # Frontend build with real API
 REACT_APP_ENABLE_MOCK_MODE=false \

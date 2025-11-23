@@ -1,6 +1,6 @@
 /**
  * Multi-Tenant RLS Tests
- * 
+ *
  * Validates that Row Level Security policies correctly enforce
  * multi-tenant isolation across all organization-scoped tables.
  */
@@ -18,7 +18,7 @@ beforeAll(async () => {
   const result = await getConnections(config, [
     createMigrationsSeed() // Load all migrations automatically
   ]);
-  
+
   db = result.db;
   pg = result.pg;
   teardown = result.teardown;
@@ -59,18 +59,24 @@ describe('Multi-Tenant Isolation', () => {
     userBId = userBResult.rows[0].id;
 
     // Create organizations
-    const orgAResult = await pg.query(`
+    const orgAResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id)
       VALUES (gen_random_uuid(), 'Org A', 'org-a', $1, 'starter')
       RETURNING id;
-    `, [userAId]);
+    `,
+      [userAId]
+    );
     orgAId = orgAResult.rows[0].id;
 
-    const orgBResult = await pg.query(`
+    const orgBResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id)
       VALUES (gen_random_uuid(), 'Org B', 'org-b', $1, 'starter')
       RETURNING id;
-    `, [userBId]);
+    `,
+      [userBId]
+    );
     orgBId = orgBResult.rows[0].id;
   });
 
@@ -93,12 +99,15 @@ describe('Multi-Tenant Isolation', () => {
 
   test('policies prevent collisions between different social networks', async () => {
     // Create comments for different organizations
-    await pg.query(`
+    await pg.query(
+      `
       INSERT INTO comments (id, organization_id, platform, platform_comment_id, original_text)
       VALUES 
         (gen_random_uuid(), $1, 'twitter', 'comment-a-123', 'Comment from Org A'),
         (gen_random_uuid(), $2, 'twitter', 'comment-b-456', 'Comment from Org B');
-    `, [orgAId, orgBId]);
+    `,
+      [orgAId, orgBId]
+    );
 
     // Set context as User A
     db.setContext({
@@ -118,12 +127,15 @@ describe('Multi-Tenant Isolation', () => {
 
   test('workers access only their tenant', async () => {
     // Create usage records for different organizations
-    await pg.query(`
+    await pg.query(
+      `
       INSERT INTO usage_records (id, organization_id, platform, action_type, quantity)
       VALUES 
         (gen_random_uuid(), $1, 'twitter', 'roast', 1),
         (gen_random_uuid(), $2, 'twitter', 'roast', 1);
-    `, [orgAId, orgBId]);
+    `,
+      [orgAId, orgBId]
+    );
 
     // Set context as service role (bypasses RLS)
     db.setContext({

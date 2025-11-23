@@ -1,6 +1,6 @@
 /**
  * SPEC 14 Test Setup
- * 
+ *
  * Global setup and configuration for SPEC 14 test suite.
  * Ensures consistent test environment and proper mocking.
  */
@@ -24,9 +24,11 @@ jest.mock('../src/services/openai', () => ({
 jest.mock('../src/services/perspective', () => ({
   analyzeToxicity: jest.fn().mockImplementation((text) => {
     // Deterministic toxicity scoring for consistent tests
-    const score = text.toLowerCase().includes('crítico') ? 0.9 :
-                  text.toLowerCase().includes('intermedio') ? 0.5 :
-                  0.2;
+    const score = text.toLowerCase().includes('crítico')
+      ? 0.9
+      : text.toLowerCase().includes('intermedio')
+        ? 0.5
+        : 0.2;
     return Promise.resolve({
       attributeScores: {
         TOXICITY: { score }
@@ -107,23 +109,25 @@ jest.mock('@supabase/supabase-js', () => ({
 jest.mock('../src/services/queueService', () => {
   class MockQueueService {
     constructor() {}
-    
-    addJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'queued' })
-    getJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'completed' })
-    getJobStatus = jest.fn().mockResolvedValue('completed')
-    removeJob = jest.fn().mockResolvedValue(true)
+
+    addJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'queued' });
+    getJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'completed' });
+    getJobStatus = jest.fn().mockResolvedValue('completed');
+    removeJob = jest.fn().mockResolvedValue(true);
     getQueueStatus = jest.fn().mockResolvedValue({
       waiting: 0,
       active: 0,
       completed: 1,
       failed: 0
-    })
-    isHealthy = jest.fn().mockResolvedValue(true)
+    });
+    isHealthy = jest.fn().mockResolvedValue(true);
   }
-  
+
   // Also export static methods for backward compatibility
   MockQueueService.addJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'queued' });
-  MockQueueService.getJob = jest.fn().mockResolvedValue({ id: 'job-mock-123', status: 'completed' });
+  MockQueueService.getJob = jest
+    .fn()
+    .mockResolvedValue({ id: 'job-mock-123', status: 'completed' });
   MockQueueService.getJobStatus = jest.fn().mockResolvedValue('completed');
   MockQueueService.removeJob = jest.fn().mockResolvedValue(true);
   MockQueueService.getQueueStatus = jest.fn().mockResolvedValue({
@@ -133,7 +137,7 @@ jest.mock('../src/services/queueService', () => {
     failed: 0
   });
   MockQueueService.isHealthy = jest.fn().mockResolvedValue(true);
-  
+
   return MockQueueService;
 });
 
@@ -193,7 +197,7 @@ global.testUtils = {
     user: { id: 'mock-user-id', plan: 'pro' },
     ...overrides
   }),
-  
+
   createMockRes: () => {
     const res = {
       status: jest.fn().mockReturnThis(),
@@ -203,10 +207,10 @@ global.testUtils = {
     };
     return res;
   },
-  
+
   // Wait for async operations
-  sleep: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
-  
+  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+
   // Clean test data patterns
   sanitizeTestData: (data) => {
     const dataStr = JSON.stringify(data);
@@ -217,12 +221,12 @@ global.testUtils = {
       /@yahoo\.com/g,
       /real_user_/g
     ];
-    
+
     let sanitized = dataStr;
-    sensitivePatterns.forEach(pattern => {
+    sensitivePatterns.forEach((pattern) => {
       sanitized = sanitized.replace(pattern, '[SANITIZED]');
     });
-    
+
     return JSON.parse(sanitized);
   }
 };
@@ -233,10 +237,10 @@ beforeAll(async () => {
   process.env.NODE_ENV = 'test';
   process.env.ENABLE_MOCK_MODE = 'true';
   process.env.DRY_RUN_SHIELD = 'true';
-  
+
   // Clear any existing timers
   jest.clearAllTimers();
-  
+
   console.log('🧪 SPEC 14 Test Environment Initialized');
 });
 
@@ -244,7 +248,7 @@ beforeAll(async () => {
 afterEach(async () => {
   // Clear all mocks to prevent test interference
   jest.clearAllMocks();
-  
+
   // Reset any global state
   delete global.mockUserState;
   delete global.mockOrgState;
@@ -255,7 +259,7 @@ afterAll(async () => {
   // Close any open connections
   // Clear any remaining timers
   jest.clearAllTimers();
-  
+
   console.log('🧹 SPEC 14 Test Environment Cleaned Up');
 });
 

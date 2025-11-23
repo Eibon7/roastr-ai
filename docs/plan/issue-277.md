@@ -24,12 +24,14 @@ La PR #273 cubre parcialmente los requisitos de la issue #82. Se ha avanzado en 
 #### 1. CLI Runner (`scripts/test/runner.js`) - ✅ COMPLETADO
 
 **Mejoras implementadas:**
+
 - ✅ Implementada validación y logging mejorado de `--mock-mode` (verifica que ENABLE_MOCK_MODE se propaga)
 - ✅ Implementado filtrado por plataforma que filtra tanto archivos como nombres de tests
 - ✅ Mejorado manejo de errores con mensajes descriptivos
 - ✅ Añadida función `filterTestsByPlatform()` para filtrado inteligente de archivos
 
 **AC completados:**
+
 - [x] Implementar ejecución real de tests con validación de `--mock-mode`
 - [x] Implementar compatibilidad completa con `--mock-mode` (verificar que ENABLE_MOCK_MODE se propaga correctamente)
 - [x] Soporte para filtrado por plataforma (--platform) que filtre archivos de test, no solo nombres
@@ -38,12 +40,14 @@ La PR #273 cubre parcialmente los requisitos de la issue #82. Se ha avanzado en 
 #### 2. Utilidades de mocks (`tests/utils/multiTenantMocks.js`) - ✅ COMPLETADO
 
 **Mejoras implementadas:**
+
 - ✅ Ampliada `createMultiTenantTestScenario` para soportar parametrización completa
 - ✅ Añadida función `createCustomScenario()` para escenarios personalizados
 - ✅ Añadida función `validateScenarioConfig()` con validación completa
 - ✅ Soporte para parametrización de plan, roles, plataformas, userCount, orgCount
 
 **AC completados:**
+
 - [x] Ampliar `createMultiTenantTestScenario` para soportar parametrización de plan, rol y plataformas
 - [x] Añadir validaciones a las utilidades de mocks
 - [x] Añadir manejo de errores descriptivos
@@ -51,6 +55,7 @@ La PR #273 cubre parcialmente los requisitos de la issue #82. Se ha avanzado en 
 #### 3. Documentación (`scripts/README.md`) - ✅ COMPLETADO
 
 **Mejoras implementadas:**
+
 - ✅ Añadidos ejemplos de uso reales para todos los comandos CLI
 - ✅ Explicación detallada de `--mock-mode` (qué hace, cuándo usarlo, qué mockea)
 - ✅ Explicación detallada de `--platform` (cómo filtra, plataformas disponibles)
@@ -60,6 +65,7 @@ La PR #273 cubre parcialmente los requisitos de la issue #82. Se ha avanzado en 
 - ✅ Documentación completa de utilidades de mocks con ejemplos de parametrización
 
 **AC completados:**
+
 - [x] Incluir ejemplos de uso reales de los comandos CLI
 - [x] Explicar funcionamiento de `--mock-mode`, `--platform`, `--scope`
 - [x] Describir todos los comandos y opciones con claridad
@@ -68,7 +74,7 @@ La PR #273 cubre parcialmente los requisitos de la issue #82. Se ha avanzado en 
 #### 4. Mejoras recomendadas
 
 - [ ] Unificar patrones de configuración en jest.config.js para mayor claridad
-- [ ] Verificar coherencia entre archivos específicos (billing.js) y globs (workers/**)
+- [ ] Verificar coherencia entre archivos específicos (billing.js) y globs (workers/\*\*)
 - [ ] Homogeneizar comentarios (en algunos ficheros hay referencia a la issue y en otros no)
 
 ## Pasos de Implementación
@@ -93,13 +99,14 @@ La PR #273 cubre parcialmente los requisitos de la issue #82. Se ha avanzado en 
 ### FASE 2: Ampliar Utilidades de Mocks
 
 1. **Parametrizar `createMultiTenantTestScenario`:**
+
    ```javascript
    createMultiTenantTestScenario('custom', {
      plan: 'pro',
      roles: ['admin', 'member'],
      platforms: ['twitter', 'instagram'],
      userCount: 5
-   })
+   });
    ```
 
 2. **Añadir validaciones:**
@@ -115,13 +122,14 @@ La PR #273 cubre parcialmente los requisitos de la issue #82. Se ha avanzado en 
 ### FASE 3: Mejorar Documentación
 
 1. **Añadir ejemplos de uso reales:**
+
    ```bash
    # Ejemplo 1: Ejecutar tests de auth con mock mode
    node scripts/test/runner.js run auth --mock-mode
-   
+
    # Ejemplo 2: Ejecutar tests de servicios filtrados por Twitter
    node scripts/test/runner.js run services --platform twitter
-   
+
    # Ejemplo 3: Ejecutar todos los tests con coverage
    node scripts/test/runner.js all --coverage
    ```
@@ -156,17 +164,20 @@ La PR #273 cubre parcialmente los requisitos de la issue #82. Se ha avanzado en 
 ## Archivos Afectados
 
 ### Archivos a modificar:
+
 - `scripts/test/runner.js` - Mejorar implementación de comandos
 - `tests/utils/multiTenantMocks.js` - Ampliar escenarios y parametrización
 - `scripts/README.md` - Mejorar documentación
 - `jest.config.js` - Unificar patrones (opcional)
 
 ### Archivos a crear:
+
 - Ninguno
 
 ## Validación
 
 ### Tests a ejecutar:
+
 ```bash
 # Validar que el runner funciona correctamente
 node scripts/test/runner.js validate
@@ -182,6 +193,7 @@ node scripts/test/runner.js all --coverage
 ```
 
 ### Criterios de éxito:
+
 - ✅ Todos los comandos CLI funcionan correctamente
 - ✅ `--mock-mode` se propaga correctamente a Jest
 - ✅ `--platform` filtra correctamente los tests
@@ -198,27 +210,32 @@ node scripts/test/runner.js all --coverage
 ## Estado de Implementación
 
 ### ✅ FASE 1: CLI Runner - COMPLETADO
+
 - Mejoras en `--mock-mode` con validación y logging
 - Filtrado por plataforma mejorado (archivos + nombres)
 - Manejo de errores mejorado
 
 ### ✅ FASE 2: Utilidades de Mocks - COMPLETADO
+
 - Parametrización completa de escenarios
 - Validación de configuración
 - Manejo de errores descriptivo
 
 ### ✅ FASE 3: Documentación - COMPLETADO
+
 - Ejemplos reales de uso
 - Explicaciones detalladas de opciones
 - Casos de uso y troubleshooting
 
 ### ⏳ FASE 4: Mejoras de Calidad - PENDIENTE (Opcional)
+
 - Unificar patrones en jest.config.js (mejora menor)
 - Homogeneizar comentarios (mejora menor)
 
 ## Validación Realizada
 
 ✅ Runner funciona correctamente:
+
 - `node scripts/test/runner.js validate` - ✅ PASS
 - `node scripts/test/runner.js scopes` - ✅ PASS
 - Custom scenario creation - ✅ PASS
@@ -229,4 +246,3 @@ node scripts/test/runner.js all --coverage
 - Una vez completado, actualizar la descripción de la PR para reflejar fielmente lo implementado
 - Cerrar adecuadamente la issue original (#82)
 - Las mejoras de calidad (FASE 4) son opcionales y pueden hacerse en un PR separado
-

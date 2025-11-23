@@ -53,15 +53,15 @@ export const ToastProvider = ({ children }) => {
       message: sanitizeContent(options.content || options.message || '') // Backward compatibility
     };
 
-    setToasts(prev => [...prev, newToast]);
+    setToasts((prev) => [...prev, newToast]);
 
     // Enhanced timer management with cleanup
     if (newToast.duration > 0) {
       const timer = setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
+        setToasts((prev) => prev.filter((t) => t.id !== id));
         timersRef.current.delete(id);
       }, newToast.duration);
-      
+
       timersRef.current.set(id, timer);
     }
 
@@ -75,7 +75,7 @@ export const ToastProvider = ({ children }) => {
       clearTimeout(timer);
       timersRef.current.delete(id);
     }
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   // Enhanced toast API with full options passthrough
@@ -86,37 +86,42 @@ export const ToastProvider = ({ children }) => {
       }
       return addToast(options);
     },
-    success: (content, options = {}) => addToast({ 
-      ...options, 
-      content: sanitizeContent(content), 
-      type: 'success' 
-    }),
-    error: (content, options = {}) => addToast({ 
-      ...options, 
-      content: sanitizeContent(content), 
-      type: 'error', 
-      duration: options.duration || 6000 
-    }),
-    warning: (content, options = {}) => addToast({ 
-      ...options, 
-      content: sanitizeContent(content), 
-      type: 'warning' 
-    }),
-    info: (content, options = {}) => addToast({ 
-      ...options, 
-      content: sanitizeContent(content), 
-      type: 'info' 
-    }),
-    action: (content, actionLabel, actionCallback, options = {}) => addToast({
-      ...options,
-      content: sanitizeContent(content),
-      type: options.type || 'info',
-      action: {
-        label: sanitizeContent(actionLabel),
-        callback: actionCallback
-      },
-      duration: options.duration || 8000 // Longer duration for action toasts
-    })
+    success: (content, options = {}) =>
+      addToast({
+        ...options,
+        content: sanitizeContent(content),
+        type: 'success'
+      }),
+    error: (content, options = {}) =>
+      addToast({
+        ...options,
+        content: sanitizeContent(content),
+        type: 'error',
+        duration: options.duration || 6000
+      }),
+    warning: (content, options = {}) =>
+      addToast({
+        ...options,
+        content: sanitizeContent(content),
+        type: 'warning'
+      }),
+    info: (content, options = {}) =>
+      addToast({
+        ...options,
+        content: sanitizeContent(content),
+        type: 'info'
+      }),
+    action: (content, actionLabel, actionCallback, options = {}) =>
+      addToast({
+        ...options,
+        content: sanitizeContent(content),
+        type: options.type || 'info',
+        action: {
+          label: sanitizeContent(actionLabel),
+          callback: actionCallback
+        },
+        duration: options.duration || 8000 // Longer duration for action toasts
+      })
   };
 
   return (
@@ -133,7 +138,7 @@ const ToastContainer = ({ toasts, removeToast }) => {
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <Toast key={toast.id} toast={toast} onRemove={removeToast} />
       ))}
     </div>
@@ -142,32 +147,33 @@ const ToastContainer = ({ toasts, removeToast }) => {
 
 // Enhanced Toast Component with full options support
 const Toast = ({ toast, onRemove }) => {
-  const { 
-    id, 
-    type, 
-    content, 
+  const {
+    id,
+    type,
+    content,
     message, // Backward compatibility
-    icon, 
-    action, 
+    icon,
+    action,
     className,
-    dismissible = true 
+    dismissible = true
   } = toast;
 
   const displayContent = content || message; // Use content first, fallback to message
 
-  const baseClasses = "px-4 py-3 rounded-lg shadow-lg flex items-center justify-between max-w-sm animate-fade-in";
+  const baseClasses =
+    'px-4 py-3 rounded-lg shadow-lg flex items-center justify-between max-w-sm animate-fade-in';
   const typeClasses = {
-    success: "bg-green-600 text-white",
-    error: "bg-red-600 text-white", 
-    warning: "bg-yellow-600 text-white",
-    info: "bg-blue-600 text-white"
+    success: 'bg-green-600 text-white',
+    error: 'bg-red-600 text-white',
+    warning: 'bg-yellow-600 text-white',
+    info: 'bg-blue-600 text-white'
   };
 
   const defaultIcons = {
-    success: "✓",
-    error: "✗", 
-    warning: "⚠",
-    info: "ℹ"
+    success: '✓',
+    error: '✗',
+    warning: '⚠',
+    info: 'ℹ'
   };
 
   const displayIcon = icon || defaultIcons[type];
@@ -184,7 +190,7 @@ const Toast = ({ toast, onRemove }) => {
   };
 
   return (
-    <div 
+    <div
       className={`${baseClasses} ${typeClasses[type]} ${className || ''}`}
       role="alert"
       aria-live="polite"
@@ -196,9 +202,7 @@ const Toast = ({ toast, onRemove }) => {
             {displayIcon}
           </span>
         )}
-        <span className="text-sm flex-1">
-          {displayContent}
-        </span>
+        <span className="text-sm flex-1">{displayContent}</span>
         {action && (
           <button
             onClick={handleActionClick}

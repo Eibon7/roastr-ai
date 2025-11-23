@@ -13,6 +13,6 @@ export function useGDDStatus() {
     queryKey: ['gdd-status'],
     queryFn: fetchGDDStatus,
     refetchInterval: 30000,
-    staleTime: 20000,
+    staleTime: 20000
   });
 }

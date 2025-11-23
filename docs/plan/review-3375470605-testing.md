@@ -13,6 +13,7 @@
 CodeRabbit ha identificado que **el PR está técnicamente completo pero falta validación**:
 
 **Estado Actual**:
+
 - ✅ Código funcional: Phases 6-11 implementadas
 - ✅ Build pasando: CI/CD verde
 - ✅ Componentes: 14/14 implementados (100%)
@@ -30,17 +31,20 @@ CodeRabbit ha identificado que **el PR está técnicamente completo pero falta v
 ### Pregunta 1: ¿Es seguro mergear?
 
 **Respuesta de CodeRabbit**:
+
 - **Técnicamente**: Sí - El código funciona
 - **Acceptance Criteria**: No - Faltan deliverables planificados
 
 ### Pregunta 2: ¿Implementa completamente el issue?
 
 **Confusión de Issue**:
+
 - Branch name: `fix/issue-416-demo-mode-e2e`
 - Issue #416: Demo Mode E2E tests (ya resuelto en PR #458)
 - **Este PR**: Implementa GDD Phases 6-11 (sin issue explícito)
 
 **Assessment de Scope**:
+
 - GDD Phases 6-10: ✅ Complete
 - Phase 11 Core: ✅ Complete
 - Phase 11 Testing: ❌ Incomplete
@@ -49,12 +53,14 @@ CodeRabbit ha identificado que **el PR está técnicamente completo pero falta v
 ### Pregunta 3: ¿Qué mejoras/elementos faltan?
 
 **P0 - Before Merge** (LO QUE VAMOS A HACER):
+
 1. ❌ Playwright E2E tests para admin dashboard
 2. ❌ Accessibility audit (Lighthouse >90)
 3. ❌ Visual evidence (screenshots)
 4. ❌ Actualizar documentación de progreso
 
 **P1 - Post-Merge** (Future work):
+
 - Backend API routes (static files suficientes por ahora)
 - WebSocket real-time updates
 
@@ -67,6 +73,7 @@ CodeRabbit ha identificado que **el PR está técnicamente completo pero falta v
 **Objetivo**: Validar flujo completo del admin dashboard con tests automatizados.
 
 **Scope**:
+
 - Navigation entre secciones
 - Data loading y refresh
 - Graph interactions
@@ -160,7 +167,7 @@ test.describe('GDD Admin Dashboard - Data Loading', () => {
 
   test('should handle loading states', async ({ page }) => {
     // Intercept API call to delay response
-    await page.route('**/gdd-health.json', route => {
+    await page.route('**/gdd-health.json', (route) => {
       setTimeout(() => route.continue(), 2000);
     });
 
@@ -178,7 +185,7 @@ test.describe('GDD Admin Dashboard - Data Loading', () => {
 
   test('should handle error states gracefully', async ({ page }) => {
     // Intercept API call to return error
-    await page.route('**/gdd-health.json', route => {
+    await page.route('**/gdd-health.json', (route) => {
       route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -322,40 +329,41 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3001',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    screenshot: 'only-on-failure'
   },
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'] }
     },
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { ...devices['Desktop Firefox'] }
     },
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: { ...devices['Desktop Safari'] }
     },
     {
       name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      use: { ...devices['Pixel 5'] }
     },
     {
       name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    },
+      use: { ...devices['iPhone 12'] }
+    }
   ],
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+    timeout: 120000
+  }
 });
 ```
 
 **Dependencies to Add**:
+
 ```json
 {
   "devDependencies": {
@@ -409,6 +417,7 @@ pkill -f "serve"
 #### 2.3 Accessibility Checklist
 
 **Manual Testing**:
+
 - [ ] Keyboard navigation works (Tab, Enter, Esc)
 - [ ] Screen reader announces all elements correctly
 - [ ] Color contrast meets WCAG AA (4.5:1 for text)
@@ -459,6 +468,7 @@ test.describe('GDD Admin Dashboard - Accessibility', () => {
 ```
 
 **Dependencies to Add**:
+
 ```json
 {
   "devDependencies": {
@@ -557,41 +567,51 @@ npx playwright screenshot http://localhost:3001/dashboard \
 ## Desktop Views (1920x1080)
 
 ### Overview Panel
+
 ![Overview](desktop/01-overview.png)
 
 **Features Shown**:
+
 - System status indicator (🟢 Healthy)
 - 4 metric cards (Health avg, Drift risk, Total nodes, Coverage avg)
 - Recent activity timeline
 
 ### Health Tab
+
 ![Health Tab](desktop/02-health-tab.png)
 
 **Features Shown**:
+
 - Health scores per node
 - Visual health indicators
 - Sortable table
 
 ### Status Tab
+
 ![Status Tab](desktop/03-status-tab.png)
 
 **Features Shown**:
+
 - Validation status
 - Orphans, drift, cycles detection
 - Issue breakdown
 
 ### Drift Tab
+
 ![Drift Tab](desktop/04-drift-tab.png)
 
 **Features Shown**:
+
 - Drift risk predictions
 - At-risk nodes highlighted
 - Recommendations
 
 ### Dependency Graph
+
 ![Graph](desktop/05-graph-view.png)
 
 **Features Shown**:
+
 - D3.js force-directed graph
 - Node color by health status
 - Interactive zoom/pan
@@ -599,19 +619,23 @@ npx playwright screenshot http://localhost:3001/dashboard \
 ## Mobile Views (iPhone 12)
 
 ### Overview (Mobile)
+
 ![Overview Mobile](mobile/01-overview-mobile.png)
 
 ### Mobile Menu
+
 ![Mobile Menu](mobile/02-mobile-menu.png)
 
 ## Tablet Views (iPad Pro)
 
 ### Overview (Tablet)
+
 ![Overview Tablet](tablet/01-overview-tablet.png)
 
 ## Theme Validation
 
 **Snake Eater UI Theme**:
+
 - ✅ Primary color: #00FF41 (Neon green)
 - ✅ Background: #0A0E14 (Deep space blue-black)
 - ✅ Typography: JetBrains Mono (monospace)
@@ -658,7 +682,7 @@ npx playwright screenshot http://localhost:3001/dashboard \
 
 **New Content**:
 
-```markdown
+````markdown
 # Phase 11 - GDD Admin Dashboard Progress
 
 **Last Updated**: 2025-10-06
@@ -678,6 +702,7 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 ## Completion Status
 
 ### Foundation (Phase 11.A) ✅ 100%
+
 - [x] Vite + React 18 + TypeScript setup
 - [x] Snake Eater UI theme system
 - [x] Routing with React Router v6
@@ -687,6 +712,7 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 ### UI Components (Phase 11.B) ✅ 100%
 
 **Shared Components** (6/6):
+
 - [x] Button
 - [x] Card
 - [x] Badge
@@ -695,6 +721,7 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 - [x] StatusIndicator
 
 **Dashboard Components** (8/8):
+
 - [x] OverviewPanel
 - [x] MetricCard
 - [x] NodeExplorer
@@ -705,6 +732,7 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 - [x] CommandCenterLayout
 
 ### Layout Components (6/6) ✅ 100%
+
 - [x] Sidebar
 - [x] TopBar
 - [x] ContentArea
@@ -713,6 +741,7 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 - [x] ResponsiveWrapper
 
 ### Data Integration (Phase 11.C) ✅ 100%
+
 - [x] useGDDData hook
 - [x] Health data fetching
 - [x] Status data fetching
@@ -722,6 +751,7 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 - [x] Loading states
 
 ### Testing (Phase 11.E) ✅ 100%
+
 - [x] Playwright E2E tests (4 test suites)
   - [x] Navigation tests
   - [x] Data loading tests
@@ -733,6 +763,7 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 - [x] Integration tests for components
 
 ### Validation (Phase 11.F) ✅ 100%
+
 - [x] Lighthouse accessibility audit (>90)
 - [x] WCAG 2.1 Level AA compliance
 - [x] Keyboard navigation
@@ -741,6 +772,7 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 - [x] Cross-browser testing
 
 ### Documentation (Phase 11.G) ✅ 100%
+
 - [x] README.md (admin-dashboard/)
 - [x] Component documentation
 - [x] API integration guide
@@ -753,9 +785,11 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 ## Features Implemented
 
 ### 1. Overview Panel ✅
+
 **Purpose**: System-wide health at a glance
 
 **Components**:
+
 - System status indicator (🟢 Healthy / 🟡 Warning / 🔴 Critical)
 - 4 metric cards:
   - Average Health Score
@@ -767,9 +801,11 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 **Data Source**: `gdd-health.json`, `gdd-status.json`
 
 ### 2. Node Explorer ✅
+
 **Purpose**: Detailed node analysis
 
 **Features**:
+
 - Searchable table of all GDD nodes
 - Sortable columns (Name, Health, Coverage, Drift)
 - Filter by status (Healthy, Degraded, Critical)
@@ -779,9 +815,11 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 **Data Source**: `gdd-health.json`, `gdd-drift.json`
 
 ### 3. Dependency Graph ✅
+
 **Purpose**: Visual system architecture
 
 **Features**:
+
 - D3.js force-directed graph
 - Interactive zoom/pan
 - Node color by health status
@@ -792,15 +830,18 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 **Data Source**: `docs/system-map.yaml`
 
 ### 4. Reports Viewer ✅
+
 **Purpose**: Detailed analysis reports
 
 **Tabs**:
+
 - Health Report (markdown rendering)
 - Validation Report (issue breakdown)
 - Drift Report (predictions)
 - Auto-Repair Log (recent fixes)
 
 **Features**:
+
 - Syntax highlighting for code blocks
 - Export buttons (JSON, Markdown)
 - Real-time updates
@@ -812,7 +853,9 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 ## Technical Specifications
 
 ### Theme System
+
 **Snake Eater UI**:
+
 - Primary: #00FF41 (Neon green)
 - Background: #0A0E14 (Deep space blue-black)
 - Surface: #151921
@@ -820,18 +863,21 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 - Accessibility: WCAG AA compliant contrast ratios
 
 ### Performance
+
 - Bundle size: 209.67 kB (gzipped)
 - First Contentful Paint: <1.5s
 - Time to Interactive: <2.5s
 - Auto-refresh: 30s interval (configurable)
 
 ### Browser Support
+
 - Chrome 120+
 - Firefox 121+
 - Safari 17+
 - Edge 120+
 
 ### Responsive Design
+
 - Mobile: 320px - 767px
 - Tablet: 768px - 1023px
 - Desktop: 1024px+
@@ -841,17 +887,20 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 ## Testing Coverage
 
 ### E2E Tests
+
 - **Total**: 15 test cases
 - **Passing**: 15/15 (100%)
 - **Coverage**: Navigation, data loading, interactions, responsive
 
 ### Accessibility Tests
+
 - **Lighthouse Score**: 95/100
 - **axe-core Violations**: 0
 - **WCAG Level**: AA compliant
 - **Keyboard Navigation**: Full support
 
 ### Visual Tests
+
 - **Screenshots**: 10 (desktop, mobile, tablet)
 - **Browsers**: Chrome, Firefox, Safari, Edge
 - **Resolutions**: 5 tested
@@ -861,14 +910,17 @@ Phase 11 implements a comprehensive admin dashboard for monitoring and managing 
 ## Deployment
 
 ### Development
+
 ```bash
 cd admin-dashboard
 npm install
 npm run dev
 # Dashboard: http://localhost:3001
 ```
+````
 
 ### Production
+
 ```bash
 npm run build
 npm run preview
@@ -876,6 +928,7 @@ npm run preview
 ```
 
 ### Environment Variables
+
 ```bash
 VITE_API_URL=https://api.roastr.ai
 VITE_WS_URL=wss://api.roastr.ai
@@ -886,17 +939,20 @@ VITE_WS_URL=wss://api.roastr.ai
 ## Future Enhancements (Post-Phase 11)
 
 **P1 - Backend Integration**:
+
 - [ ] Real API routes (`src/api/admin/gdd.routes.js`)
 - [ ] WebSocket for real-time updates
 - [ ] Authentication middleware
 
 **P2 - Advanced Features**:
+
 - [ ] Node editing UI
 - [ ] Diff viewer for drift
 - [ ] AI-powered suggestions
 - [ ] Export system map as code
 
 **P3 - Performance**:
+
 - [ ] Virtual scrolling for large tables
 - [ ] Graph clustering for 100+ nodes
 - [ ] Progressive loading
@@ -915,6 +971,7 @@ VITE_WS_URL=wss://api.roastr.ai
 ## Success Metrics
 
 ### Acceptance Criteria ✅ 100%
+
 - [x] All 14 components implemented
 - [x] Real data integration (static files MVP)
 - [x] Responsive design (3 breakpoints)
@@ -924,6 +981,7 @@ VITE_WS_URL=wss://api.roastr.ai
 - [x] Documentation complete
 
 ### Quality Metrics ✅
+
 - [x] Build passing (CI/CD green)
 - [x] ESLint: 0 errors (warnings only)
 - [x] TypeScript: Strict mode enabled
@@ -945,7 +1003,8 @@ VITE_WS_URL=wss://api.roastr.ai
 **Phase 11 Status**: ✅ **COMPLETE AND READY FOR MERGE**
 
 **Next**: Merge PR #475 → Deploy to production → Monitor usage → Iterate based on feedback
-```text
+
+````text
 
 #### 4.2 Update `docs/GDD-IMPLEMENTATION-SUMMARY.md`
 
@@ -988,7 +1047,7 @@ Snake Eater UI - Dark-cyber aesthetic inspired by Metal Gear Solid codec screen
 - Performance: First Contentful Paint <1.5s
 
 **Result**: ✅ Production-ready admin dashboard with comprehensive testing and documentation
-```
+````
 
 ---
 
@@ -999,6 +1058,7 @@ Snake Eater UI - Dark-cyber aesthetic inspired by Metal Gear Solid codec screen
 **Checklist Exhaustivo**:
 
 #### Phase 11.A - Foundation ✅
+
 - [x] Vite + React 18 + TypeScript configured
 - [x] Snake Eater UI theme system implemented
 - [x] Routing with React Router v6
@@ -1006,6 +1066,7 @@ Snake Eater UI - Dark-cyber aesthetic inspired by Metal Gear Solid codec screen
 - [x] Main dashboard page with placeholders
 
 #### Phase 11.B - UI Components ✅
+
 - [x] Button component with variants
 - [x] Card component with elevation
 - [x] Badge component for status
@@ -1022,6 +1083,7 @@ Snake Eater UI - Dark-cyber aesthetic inspired by Metal Gear Solid codec screen
 - [x] CommandCenterLayout
 
 #### Phase 11.C - Backend Integration ✅
+
 - [x] useGDDData hook implemented
 - [x] Health data fetching
 - [x] Status data fetching
@@ -1032,6 +1094,7 @@ Snake Eater UI - Dark-cyber aesthetic inspired by Metal Gear Solid codec screen
 - [x] Data from static files (MVP)
 
 #### Phase 11.D - Graph Visualization ✅
+
 - [x] D3.js force-directed graph
 - [x] Interactive zoom/pan
 - [x] Node color by health
@@ -1039,6 +1102,7 @@ Snake Eater UI - Dark-cyber aesthetic inspired by Metal Gear Solid codec screen
 - [x] Responsive graph sizing
 
 #### Phase 11.E - Testing ✅ (LO QUE VAMOS A HACER)
+
 - [ ] Unit tests for hooks
 - [ ] Integration tests for components
 - [ ] E2E tests with Playwright (15 cases)
@@ -1047,12 +1111,14 @@ Snake Eater UI - Dark-cyber aesthetic inspired by Metal Gear Solid codec screen
 - [ ] Cross-browser validation
 
 #### Phase 11.F - Documentation ✅ (ACTUALIZAR)
+
 - [x] admin-dashboard/README.md
 - [ ] docs/phase-11-progress.md (UPDATE)
 - [ ] docs/GDD-IMPLEMENTATION-SUMMARY.md (ADD SECTION)
 - [ ] Visual evidence screenshots (CREATE)
 
 #### Phase 11.G - Validation ✅ (LO QUE VAMOS A HACER)
+
 - [ ] Lighthouse accessibility >90
 - [ ] WCAG 2.1 Level AA
 - [ ] Keyboard navigation
@@ -1089,6 +1155,7 @@ npm run lint
 ```
 
 **Expected Results**:
+
 - ✅ All unit tests passing
 - ✅ All E2E tests passing (15/15)
 - ✅ All accessibility tests passing (0 violations)
@@ -1103,6 +1170,7 @@ npm run lint
 **Total Estimated Time**: 6-8 hours (NO shortcuts)
 
 ### Day 1 - Testing Infrastructure (3-4 hours)
+
 - ✅ Install Playwright and dependencies
 - ✅ Create test configuration
 - ✅ Write 4 E2E test suites (15 tests)
@@ -1110,6 +1178,7 @@ npm run lint
 - ✅ Run tests and fix issues
 
 ### Day 2 - Validation & Documentation (3-4 hours)
+
 - ✅ Run Lighthouse audit
 - ✅ Capture all screenshots (10+)
 - ✅ Create visual evidence documentation
@@ -1124,24 +1193,28 @@ npm run lint
 ## Success Criteria (NO NEGOCIABLES)
 
 ### Tests ✅
+
 - [ ] 15/15 E2E tests passing
 - [ ] 0 accessibility violations
 - [ ] Coverage maintains or increases
 - [ ] Build successful
 
 ### Documentation ✅
+
 - [ ] phase-11-progress.md updated (100% complete)
 - [ ] GDD-IMPLEMENTATION-SUMMARY.md Phase 11 added
 - [ ] 10+ screenshots in docs/test-evidence/phase-11/
 - [ ] Visual evidence README.md created
 
 ### Validation ✅
+
 - [ ] Lighthouse accessibility >90
 - [ ] WCAG 2.1 AA compliant
 - [ ] Keyboard navigation works
 - [ ] Responsive on mobile/tablet/desktop
 
 ### Acceptance Criteria ✅
+
 - [ ] ALL items from Phase 11.A-G checked
 - [ ] NO pending items
 - [ ] NO skipped tests
@@ -1152,6 +1225,7 @@ npm run lint
 ## Commit Strategy
 
 ### Commit 1: Add Playwright E2E Tests
+
 ```bash
 test(phase-11): Add comprehensive E2E tests for admin dashboard
 
@@ -1173,6 +1247,7 @@ Addresses CodeRabbit Comment #3375470605 (Testing requirement)
 ```
 
 ### Commit 2: Add Visual Evidence and Lighthouse Audit
+
 ```bash
 docs(phase-11): Add visual evidence and accessibility audit
 
@@ -1192,6 +1267,7 @@ Addresses CodeRabbit Comment #3375470605 (Visual evidence requirement)
 ```
 
 ### Commit 3: Update Documentation to Reflect Completion
+
 ```bash
 docs(phase-11): Update progress documentation to 100% complete
 
@@ -1217,6 +1293,7 @@ Addresses CodeRabbit Comment #3375470605 (Documentation requirement)
 Before declaring PR ready for merge:
 
 ### Code Quality ✅
+
 - [ ] All files have proper JSDoc comments
 - [ ] No console.log in production code
 - [ ] No TODOs or FIXMEs
@@ -1224,6 +1301,7 @@ Before declaring PR ready for merge:
 - [ ] ESLint 0 errors
 
 ### Testing ✅
+
 - [ ] npm test passes (100%)
 - [ ] npm run test:e2e passes (15/15)
 - [ ] npm run test:coverage shows maintained/increased coverage
@@ -1231,6 +1309,7 @@ Before declaring PR ready for merge:
 - [ ] No skipped tests
 
 ### Documentation ✅
+
 - [ ] All planning documents created
 - [ ] All evidence captured
 - [ ] All progress docs updated
@@ -1238,6 +1317,7 @@ Before declaring PR ready for merge:
 - [ ] README files complete
 
 ### Validation ✅
+
 - [ ] Lighthouse >90 all categories
 - [ ] WCAG 2.1 AA compliant
 - [ ] Keyboard navigation verified
@@ -1245,6 +1325,7 @@ Before declaring PR ready for merge:
 - [ ] Cross-browser validated
 
 ### Git ✅
+
 - [ ] All changes committed
 - [ ] All commits pushed
 - [ ] Branch up to date with origin
@@ -1267,9 +1348,9 @@ Before declaring PR ready for merge:
    - admin-dashboard/package.json (updated dependencies)
 
 3. **Visual Evidence** (12+ files):
-   - docs/test-evidence/phase-11/desktop/*.png (5)
-   - docs/test-evidence/phase-11/mobile/*.png (2)
-   - docs/test-evidence/phase-11/tablet/*.png (1)
+   - docs/test-evidence/phase-11/desktop/\*.png (5)
+   - docs/test-evidence/phase-11/mobile/\*.png (2)
+   - docs/test-evidence/phase-11/tablet/\*.png (1)
    - docs/test-evidence/phase-11/lighthouse-report.html
    - docs/test-evidence/phase-11/lighthouse-report.json
    - docs/test-evidence/phase-11/README.md

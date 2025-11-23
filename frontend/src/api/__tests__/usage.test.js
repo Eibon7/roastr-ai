@@ -28,7 +28,9 @@ describe('usage API', () => {
   it('passes query params to history and monthly endpoints', async () => {
     apiClient.get.mockResolvedValue({});
     await getUsageHistory('2025-01-01', '2025-01-31');
-    expect(apiClient.get).toHaveBeenCalledWith('/usage/history?startDate=2025-01-01&endDate=2025-01-31');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/usage/history?startDate=2025-01-01&endDate=2025-01-31'
+    );
 
     await getMonthlyUsage(5, 2025);
     expect(apiClient.get).toHaveBeenCalledWith('/usage/monthly?month=5&year=2025');
@@ -41,4 +43,3 @@ describe('usage API', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/usage/recommendations');
   });
 });
-

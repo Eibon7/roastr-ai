@@ -5,7 +5,7 @@ import Pricing from '../Pricing';
 // Mock react-router-dom
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate,
+  useNavigate: () => mockNavigate
 }));
 
 // Mock lucide-react icons
