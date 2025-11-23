@@ -1,6 +1,6 @@
 /**
  * Admin Rate Limiter Tests (Issue #924)
- * 
+ *
  * Tests for admin-specific rate limiting middleware
  */
 
@@ -42,7 +42,7 @@ jest.mock('../../../src/config/supabase', () => ({
 }));
 
 // Mock express-rate-limit
-// Must work both as default export (require('express-rate-limit')) 
+// Must work both as default export (require('express-rate-limit'))
 // and named export ({ ipKeyGenerator })
 const mockIpKeyGenerator = jest.fn((req) => req.ip || '127.0.0.1');
 
@@ -68,7 +68,10 @@ mockRateLimitFn.ipKeyGenerator = mockIpKeyGenerator;
 
 jest.mock('express-rate-limit', () => mockRateLimitFn);
 
-const { createAdminRateLimiter, adminRateLimiter } = require('../../../src/middleware/adminRateLimiter');
+const {
+  createAdminRateLimiter,
+  adminRateLimiter
+} = require('../../../src/middleware/adminRateLimiter');
 const { logger } = require('../../../src/utils/logger');
 const rateLimit = require('express-rate-limit');
 
@@ -104,9 +107,9 @@ describe('Admin Rate Limiter', () => {
     test('should be disabled in test environment', () => {
       process.env.NODE_ENV = 'test';
       const limiter = createAdminRateLimiter();
-      
+
       limiter(req, res, next);
-      
+
       expect(next).toHaveBeenCalled();
       expect(logger.info).toHaveBeenCalledWith(
         'Admin rate limiting disabled (test environment or feature flag)'
@@ -117,11 +120,11 @@ describe('Admin Rate Limiter', () => {
       process.env.NODE_ENV = 'production';
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(false);
-      
+
       const limiter = createAdminRateLimiter();
-      
+
       limiter(req, res, next);
-      
+
       expect(next).toHaveBeenCalled();
       expect(logger.info).toHaveBeenCalled();
     });
@@ -130,9 +133,9 @@ describe('Admin Rate Limiter', () => {
       process.env.NODE_ENV = 'production';
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
-      
+
       const limiter = createAdminRateLimiter();
-      
+
       expect(limiter).toBeDefined();
       expect(typeof limiter).toBe('function');
       expect(logger.info).toHaveBeenCalledWith(
@@ -148,12 +151,12 @@ describe('Admin Rate Limiter', () => {
       process.env.NODE_ENV = 'production';
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
-      
+
       const limiter = createAdminRateLimiter({
         windowMs: 60000,
         max: 10
       });
-      
+
       expect(logger.info).toHaveBeenCalledWith(
         'Admin rate limiter initialized',
         expect.objectContaining({
@@ -169,9 +172,9 @@ describe('Admin Rate Limiter', () => {
       process.env.ADMIN_RATE_LIMIT_MAX = '20';
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
-      
+
       const limiter = createAdminRateLimiter();
-      
+
       expect(logger.info).toHaveBeenCalledWith(
         'Admin rate limiter initialized',
         expect.objectContaining({
@@ -186,9 +189,9 @@ describe('Admin Rate Limiter', () => {
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
       jest.clearAllMocks();
-      
+
       const limiter = createAdminRateLimiter({ windowMs: 500 });
-      
+
       // The logger is called with the config object
       // Note: The code applies Math.max(1000, ...) but then spreads ...options which can override
       // So we verify the limiter was created successfully
@@ -205,9 +208,9 @@ describe('Admin Rate Limiter', () => {
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
       jest.clearAllMocks();
-      
+
       const limiter = createAdminRateLimiter({ max: 0 });
-      
+
       // The logger is called with the config object
       // Note: The code applies Math.max(1, ...) but then spreads ...options which can override
       // So we verify the limiter was created successfully
@@ -223,12 +226,12 @@ describe('Admin Rate Limiter', () => {
       process.env.NODE_ENV = 'production';
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
-      
+
       req.user = { id: 'user123' };
-      
+
       const limiter = createAdminRateLimiter();
       const keyGenerator = limiter.keyGenerator || (() => 'default');
-      
+
       // Rate limiter uses keyGenerator internally
       expect(limiter).toBeDefined();
     });
@@ -237,11 +240,11 @@ describe('Admin Rate Limiter', () => {
       process.env.NODE_ENV = 'production';
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
-      
+
       req.user = null;
-      
+
       const limiter = createAdminRateLimiter();
-      
+
       expect(limiter).toBeDefined();
     });
 
@@ -249,12 +252,12 @@ describe('Admin Rate Limiter', () => {
       process.env.NODE_ENV = 'production';
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
-      
+
       req.path = '/health';
-      
+
       const limiter = createAdminRateLimiter();
       const skip = limiter.skip || (() => false);
-      
+
       expect(skip(req)).toBe(true);
     });
 
@@ -262,12 +265,12 @@ describe('Admin Rate Limiter', () => {
       process.env.NODE_ENV = 'production';
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
-      
+
       req.path = '/api/health';
-      
+
       const limiter = createAdminRateLimiter();
       const skip = limiter.skip || (() => false);
-      
+
       expect(skip(req)).toBe(true);
     });
   });
@@ -285,22 +288,22 @@ describe('Admin Rate Limiter', () => {
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
       jest.clearAllMocks();
-      
+
       const limiter = createAdminRateLimiter({ windowMs: 60000, max: 10 });
-      
+
       // Get the handler from the mock
       const lastCall = rateLimit.mock.calls[rateLimit.mock.calls.length - 1];
       const options = lastCall[0];
       const handler = options.handler;
-      
+
       // Mock req with user
       req.user = { id: 'user123' };
       req.originalUrl = '/api/admin/users';
       req.method = 'POST';
-      
+
       // Execute the handler
       handler(req, res);
-      
+
       // Verify logger.warn was called
       expect(logger.warn).toHaveBeenCalledWith(
         'Admin rate limit exceeded',
@@ -311,7 +314,7 @@ describe('Admin Rate Limiter', () => {
           method: 'POST'
         })
       );
-      
+
       // Verify response
       expect(res.status).toHaveBeenCalledWith(429);
       expect(res.json).toHaveBeenCalledWith(
@@ -328,21 +331,21 @@ describe('Admin Rate Limiter', () => {
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
       jest.clearAllMocks();
-      
+
       const limiter = createAdminRateLimiter();
-      
+
       // Get the handler from the mock
       const lastCall = rateLimit.mock.calls[rateLimit.mock.calls.length - 1];
       const options = lastCall[0];
       const handler = options.handler;
-      
+
       // Mock req without user
       req.user = null;
       req.originalUrl = '/api/admin/stats';
-      
+
       // Execute the handler
       handler(req, res);
-      
+
       // Verify logger.warn was called
       expect(logger.warn).toHaveBeenCalledWith(
         'Admin rate limit exceeded',
@@ -352,7 +355,7 @@ describe('Admin Rate Limiter', () => {
           endpoint: '/api/admin/stats'
         })
       );
-      
+
       // Verify response
       expect(res.status).toHaveBeenCalledWith(429);
       expect(res.json).toHaveBeenCalled();
@@ -365,18 +368,18 @@ describe('Admin Rate Limiter', () => {
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
       jest.clearAllMocks();
-      
+
       const limiter = createAdminRateLimiter();
-      
+
       // Get the keyGenerator from the mock
       const lastCall = rateLimit.mock.calls[rateLimit.mock.calls.length - 1];
       const options = lastCall[0];
       const keyGenerator = options.keyGenerator;
-      
+
       // Test with authenticated user
       req.user = { id: 'user456' };
       const key = keyGenerator(req);
-      
+
       expect(key).toBe('user:user456');
     });
 
@@ -385,23 +388,22 @@ describe('Admin Rate Limiter', () => {
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockReturnValue(true);
       jest.clearAllMocks();
-      
+
       const limiter = createAdminRateLimiter();
-      
+
       // Get the keyGenerator from the mock
       const lastCall = rateLimit.mock.calls[rateLimit.mock.calls.length - 1];
       const options = lastCall[0];
       const keyGenerator = options.keyGenerator;
-      
+
       // Test without authenticated user
       req.user = null;
       req.ip = '192.168.1.100';
       const key = keyGenerator(req);
-      
+
       // Should use ipKeyGenerator which returns req.ip
       expect(key).toBe('ip:192.168.1.100');
       expect(mockIpKeyGenerator).toHaveBeenCalledWith(req);
     });
   });
 });
-

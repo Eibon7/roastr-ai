@@ -9,11 +9,13 @@
 ### Archivos sin cobertura (0%)
 
 **Prioridad Alta:**
+
 - `src/middleware/errorHandling.js` (0% - 126 statements)
-- `src/middleware/csrfProtection.js` (0% - 71 statements)  
+- `src/middleware/csrfProtection.js` (0% - 71 statements)
 - `src/middleware/webhookSecurity.js` (0% - 142 statements)
 
 **Prioridad Media:**
+
 - `src/middleware/adminRateLimiter.js` (0% - 22 statements)
 - `src/middleware/responseCache.js` (0% - 76 statements)
 
@@ -24,6 +26,7 @@
 **Objetivo:** ≥80% cobertura (statements, functions, branches)
 
 **Casos a cubrir:**
+
 - ✅ Clasificación de errores por status code y mensaje
 - ✅ Generación de error IDs únicos
 - ✅ Construcción de contexto de error
@@ -45,6 +48,7 @@
 **Objetivo:** ≥80% cobertura
 
 **Casos a cubrir:**
+
 - ✅ Generación de tokens únicos
 - ✅ Almacenamiento y validación de tokens
 - ✅ Expiración de tokens (maxTokenAge)
@@ -68,6 +72,7 @@
 **Objetivo:** ≥80% cobertura
 
 **Casos a cubrir:**
+
 - ✅ Verificación de firma Stripe (verifyStripeSignature):
   - Firma válida
   - Firma inválida
@@ -105,6 +110,7 @@
 **Objetivo:** ≥80% cobertura
 
 **Casos a cubrir:**
+
 - ✅ Creación de rate limiter con opciones:
   - windowMs y max configurables
   - Override por variables de entorno
@@ -127,6 +133,7 @@
 **Objetivo:** ≥80% cobertura
 
 **Casos a cubrir:**
+
 - ✅ Generación de cache keys (método, URL, user, query)
 - ✅ Get/Set de cache:
   - Cache hit
@@ -160,6 +167,7 @@
 ## Archivos Afectados
 
 **Nuevos:**
+
 - `tests/unit/middleware/errorHandling.test.js`
 - `tests/unit/middleware/csrfProtection.test.js`
 - `tests/unit/middleware/webhookSecurity.test.js`
@@ -167,6 +175,7 @@
 - `tests/unit/middleware/responseCache.test.js`
 
 **Modificados:**
+
 - Nodos GDD (actualizar cobertura cuando tests pasen)
 
 ## Validación Requerida
@@ -183,4 +192,3 @@
 - `docs/patterns/coderabbit-lessons.md` - Patrones de testing
 - `docs/TESTING-GUIDE.md` - Guía de testing
 - Tests existentes en `tests/unit/middleware/` como referencia
-

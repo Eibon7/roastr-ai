@@ -1,6 +1,6 @@
 /**
  * Webhook Security Middleware Tests (Issue #924)
- * 
+ *
  * Tests for webhook signature verification, idempotency, and security validation
  */
 
@@ -13,7 +13,7 @@ jest.mock('../../../src/utils/logger', () => ({
     info: jest.fn()
   },
   SafeUtils: {
-    safeString: jest.fn((str, maxLen) => str ? str.substring(0, maxLen) : '')
+    safeString: jest.fn((str, maxLen) => (str ? str.substring(0, maxLen) : ''))
   }
 }));
 
@@ -39,7 +39,7 @@ jest.mock('../../../src/config/supabase', () => ({
 }));
 
 // Mock express-rate-limit
-// Must work both as default export (require('express-rate-limit')) 
+// Must work both as default export (require('express-rate-limit'))
 // and named export ({ ipKeyGenerator })
 const mockIpKeyGenerator = jest.fn((req) => req.ip || '127.0.0.1');
 
@@ -119,19 +119,19 @@ describe('Webhook Security Middleware', () => {
         .createHmac('sha256', secret)
         .update(signedPayload, 'utf8')
         .digest('hex');
-      
+
       const sigHeader = `t=${timestamp},v1=${signature}`;
-      
+
       // verifyStripeSignature accepts Buffer or string
       const result = verifyStripeSignature(Buffer.from(payload), sigHeader, secret);
-      
+
       expect(result.valid).toBe(true);
       expect(result.timestamp).toBe(timestamp);
     });
 
     test('should reject signature without timestamp', () => {
       const result = verifyStripeSignature('payload', 'v1=signature', 'secret');
-      
+
       expect(result.valid).toBe(false);
       expect(result.error).toContain('timestamp');
     });
@@ -145,11 +145,11 @@ describe('Webhook Security Middleware', () => {
         .createHmac('sha256', secret)
         .update(signedPayload, 'utf8')
         .digest('hex');
-      
+
       const sigHeader = `t=${timestamp},v1=${signature}`;
-      
+
       const result = verifyStripeSignature(payload, sigHeader, secret);
-      
+
       expect(result.valid).toBe(false);
       expect(result.error).toContain('tolerance');
     });
@@ -158,22 +158,22 @@ describe('Webhook Security Middleware', () => {
       const payload = 'test payload';
       const timestamp = Math.floor(Date.now() / 1000);
       const sigHeader = `t=${timestamp},v1=invalid_signature`;
-      
+
       const result = verifyStripeSignature(payload, sigHeader, 'secret');
-      
+
       expect(result.valid).toBe(false);
     });
 
     test('should return error for missing signature', () => {
       const result = verifyStripeSignature('payload', null, 'secret');
-      
+
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Missing');
     });
 
     test('should return error for missing secret', () => {
       const result = verifyStripeSignature('payload', 'signature', null);
-      
+
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Missing');
     });
@@ -184,44 +184,52 @@ describe('Webhook Security Middleware', () => {
       mockSupabase.from.mockReturnValue({
         insert: jest.fn(() => ({
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: { id: '1', idempotency_key: 'evt_123' }, 
-              error: null 
-            }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: { id: '1', idempotency_key: 'evt_123' },
+                error: null
+              })
+            )
           }))
         }))
       });
-      
+
       const result = await checkIdempotency('evt_123', { type: 'payment' });
-      
+
       expect(result.isNew).toBe(true);
       expect(result.shouldProcess).toBe(true);
     });
 
     test('should return isNew=false for duplicate event', async () => {
       // First call - insert fails with unique constraint
-      mockSupabase.from.mockReturnValueOnce({
-        insert: jest.fn(() => ({
+      mockSupabase.from
+        .mockReturnValueOnce({
+          insert: jest.fn(() => ({
+            select: jest.fn(() => ({
+              single: jest.fn(() =>
+                Promise.resolve({
+                  data: null,
+                  error: { code: '23505' }
+                })
+              )
+            }))
+          }))
+        })
+        .mockReturnValueOnce({
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: null, 
-              error: { code: '23505' } 
+            eq: jest.fn(() => ({
+              single: jest.fn(() =>
+                Promise.resolve({
+                  data: { id: '1', idempotency_key: 'evt_123' },
+                  error: null
+                })
+              )
             }))
           }))
-        }))
-      }).mockReturnValueOnce({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: { id: '1', idempotency_key: 'evt_123' }, 
-              error: null 
-            }))
-          }))
-        }))
-      });
-      
+        });
+
       const result = await checkIdempotency('evt_123', { type: 'payment' });
-      
+
       expect(result.isNew).toBe(false);
       expect(result.shouldProcess).toBe(false);
     });
@@ -230,16 +238,18 @@ describe('Webhook Security Middleware', () => {
       mockSupabase.from.mockReturnValue({
         insert: jest.fn(() => ({
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: null, 
-              error: { code: 'OTHER_ERROR', message: 'DB error' } 
-            }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: { code: 'OTHER_ERROR', message: 'DB error' }
+              })
+            )
           }))
         }))
       });
-      
+
       const result = await checkIdempotency('evt_123', { type: 'payment' });
-      
+
       expect(result.isNew).toBe(true);
       expect(result.shouldProcess).toBe(true);
       expect(logger.warn).toHaveBeenCalled();
@@ -249,18 +259,18 @@ describe('Webhook Security Middleware', () => {
   describe('detectSuspiciousWebhookPayload', () => {
     test('should detect script injection patterns', () => {
       const payload = { data: '<script>alert("xss")</script>' };
-      
+
       const result = detectSuspiciousWebhookPayload(payload);
-      
+
       expect(result.isSuspicious).toBe(true);
       expect(result.patterns.length).toBeGreaterThan(0);
     });
 
     test('should detect JavaScript execution patterns', () => {
       const payload = { data: 'eval("malicious code")' };
-      
+
       const result = detectSuspiciousWebhookPayload(payload);
-      
+
       expect(result.isSuspicious).toBe(true);
     });
 
@@ -271,27 +281,27 @@ describe('Webhook Security Middleware', () => {
         current.nested = {};
         current = current.nested;
       }
-      
+
       const result = detectSuspiciousWebhookPayload(deepObj);
-      
+
       expect(result.isSuspicious).toBe(true);
       expect(result.tooDeep).toBe(true);
     });
 
     test('should detect large arrays', () => {
       const payload = { items: Array(2000).fill({ id: 1 }) };
-      
+
       const result = detectSuspiciousWebhookPayload(payload);
-      
+
       expect(result.isSuspicious).toBe(true);
       expect(result.hasLargeArrays).toBe(true);
     });
 
     test('should return false for normal payload', () => {
       const payload = { type: 'payment', amount: 100 };
-      
+
       const result = detectSuspiciousWebhookPayload(payload);
-      
+
       expect(result.isSuspicious).toBe(false);
     });
   });
@@ -300,9 +310,9 @@ describe('Webhook Security Middleware', () => {
     test('should reject request without body', async () => {
       req.body = null;
       const middleware = stripeWebhookSecurity();
-      
+
       await middleware(req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
@@ -315,9 +325,9 @@ describe('Webhook Security Middleware', () => {
     test('should reject body too large', async () => {
       req.body = Buffer.alloc(2 * 1024 * 1024); // 2MB
       const middleware = stripeWebhookSecurity();
-      
+
       await middleware(req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(413);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
@@ -332,9 +342,9 @@ describe('Webhook Security Middleware', () => {
         return null;
       });
       const middleware = stripeWebhookSecurity();
-      
+
       await middleware(req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
@@ -362,9 +372,9 @@ describe('Webhook Security Middleware', () => {
         return null;
       });
       const middleware = stripeWebhookSecurity();
-      
+
       await middleware(req, res, next);
-      
+
       // Should fail at JSON parsing, not signature verification
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
@@ -391,33 +401,39 @@ describe('Webhook Security Middleware', () => {
         if (header.toLowerCase() === 'stripe-signature') return `t=${timestamp},v1=${signature}`;
         return null;
       });
-      
+
       // Mock duplicate idempotency check - reset mocks first
       jest.clearAllMocks();
-      mockSupabase.from.mockReturnValueOnce({
-        insert: jest.fn(() => ({
+      mockSupabase.from
+        .mockReturnValueOnce({
+          insert: jest.fn(() => ({
+            select: jest.fn(() => ({
+              single: jest.fn(() =>
+                Promise.resolve({
+                  data: null,
+                  error: { code: '23505' }
+                })
+              )
+            }))
+          }))
+        })
+        .mockReturnValueOnce({
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: null, 
-              error: { code: '23505' } 
+            eq: jest.fn(() => ({
+              single: jest.fn(() =>
+                Promise.resolve({
+                  data: { id: '1', idempotency_key: 'evt_123' },
+                  error: null
+                })
+              )
             }))
           }))
-        }))
-      }).mockReturnValueOnce({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: { id: '1', idempotency_key: 'evt_123' }, 
-              error: null 
-            }))
-          }))
-        }))
-      });
-      
+        });
+
       const middleware = stripeWebhookSecurity({ enableIdempotency: true });
-      
+
       await middleware(req, res, next);
-      
+
       expect(res.json).toHaveBeenCalledWith({
         received: true,
         processed: false,
@@ -443,24 +459,26 @@ describe('Webhook Security Middleware', () => {
         if (header.toLowerCase() === 'stripe-signature') return `t=${timestamp},v1=${signature}`;
         return null;
       });
-      
+
       // Reset mocks
       jest.clearAllMocks();
       mockSupabase.from.mockReturnValue({
         insert: jest.fn(() => ({
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: { id: '1', idempotency_key: 'evt_123' }, 
-              error: null 
-            }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: { id: '1', idempotency_key: 'evt_123' },
+                error: null
+              })
+            )
           }))
         }))
       });
-      
+
       const middleware = stripeWebhookSecurity();
-      
+
       await middleware(req, res, next);
-      
+
       expect(next).toHaveBeenCalled();
       expect(req.webhookSecurity).toBeDefined();
       expect(req.webhookSecurity.verified).toBe(true);
@@ -470,28 +488,28 @@ describe('Webhook Security Middleware', () => {
   describe('genericWebhookSecurity middleware', () => {
     test('should skip signature verification when disabled', () => {
       const middleware = genericWebhookSecurity({ verifySignature: false });
-      
+
       expect(Array.isArray(middleware)).toBe(true);
       // First middleware is rate limiter (if enabled), second is signature check
       const signatureMiddleware = middleware[middleware.length - 1];
       signatureMiddleware(req, res, next);
-      
+
       expect(next).toHaveBeenCalled();
     });
 
     test('should reject missing signature', () => {
-      const middleware = genericWebhookSecurity({ 
-        verifySignature: true, 
+      const middleware = genericWebhookSecurity({
+        verifySignature: true,
         secret: 'test_secret',
         enableRateLimit: false // Skip rate limiter for simpler test
       });
-      
+
       req.headers = {};
       req.get = jest.fn(() => null);
-      
+
       // Signature middleware is the only one (no rate limiter)
       middleware[0](req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
@@ -514,15 +532,15 @@ describe('Webhook Security Middleware', () => {
         if (header === 'x-hub-signature-256') return `sha256=${invalidSig}`;
         return null;
       });
-      
-      const middleware = genericWebhookSecurity({ 
-        verifySignature: true, 
+
+      const middleware = genericWebhookSecurity({
+        verifySignature: true,
         secret,
         enableRateLimit: false
       });
-      
+
       middleware[0](req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
@@ -543,15 +561,15 @@ describe('Webhook Security Middleware', () => {
         if (header === 'x-hub-signature-256') return `sha256=${signature}`;
         return null;
       });
-      
-      const middleware = genericWebhookSecurity({ 
-        verifySignature: true, 
+
+      const middleware = genericWebhookSecurity({
+        verifySignature: true,
         secret,
         enableRateLimit: false
       });
-      
+
       middleware[0](req, res, next);
-      
+
       expect(next).toHaveBeenCalled();
     });
   });
@@ -561,15 +579,17 @@ describe('Webhook Security Middleware', () => {
       jest.clearAllMocks();
       mockSupabase.from.mockReturnValue({
         delete: jest.fn(() => ({
-          lt: jest.fn(() => Promise.resolve({ 
-            data: [{ id: '1' }, { id: '2' }], 
-            error: null 
-          }))
+          lt: jest.fn(() =>
+            Promise.resolve({
+              data: [{ id: '1' }, { id: '2' }],
+              error: null
+            })
+          )
         }))
       });
-      
+
       const result = await cleanupExpiredIdempotencyRecords();
-      
+
       expect(result.success).toBe(true);
       expect(result.recordsDeleted).toBe(2);
       expect(logger.info).toHaveBeenCalledWith(
@@ -582,17 +602,18 @@ describe('Webhook Security Middleware', () => {
 
     test('should handle cleanup errors', async () => {
       mockSupabase.from.mockReturnValue({
-        delete: jest.fn(() => Promise.resolve({ 
-          data: null, 
-          error: { message: 'DB error' } 
-        }))
+        delete: jest.fn(() =>
+          Promise.resolve({
+            data: null,
+            error: { message: 'DB error' }
+          })
+        )
       });
-      
+
       const result = await cleanupExpiredIdempotencyRecords();
-      
+
       expect(result.success).toBe(false);
       expect(logger.error).toHaveBeenCalled();
     });
   });
 });
-
