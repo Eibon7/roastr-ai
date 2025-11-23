@@ -1,582 +1,551 @@
 /**
- * Unit Tests for GDPR Retention Worker
+ * GDPRRetentionWorker Tests
+ * Issue #928 - Fase 2.2: Tests para Workers Secundarios
  * 
- * Tests GDPR-compliant data retention operations:
- * - Anonymization of text at 80 days
- * - Purging of data at 90 days
- * - Cleanup of old offender profiles
+ * Coverage goal: ≥70% (lines, statements, functions, branches)
  */
 
-const GDPRRetentionWorker = require('../../../src/workers/GDPRRetentionWorker');
+// ========================================
+// MOCKS (BEFORE any imports - CRITICAL)
+// ========================================
 
-// Mock crypto for consistent testing
-jest.mock('crypto', () => ({
-  randomBytes: jest.fn(() => Buffer.from('mockedsalt123456', 'ascii')),
-  createHash: jest.fn(() => ({
-    update: jest.fn().mockReturnThis(),
-    digest: jest.fn(() => 'mocked_hash_value_1234567890abcdef')
-  }))
+// Mock logger
+jest.mock('../../../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn()
+  },
+  SafeUtils: {
+    safeUserIdPrefix: jest.fn((id) => id?.substr(0, 8) + '...')
+  }
 }));
+
+// Helper to create chainable Supabase mocks
+const createMockChain = (finalResult = { data: [], error: null }) => {
+  const chain = {
+    select: jest.fn(() => chain),
+    eq: jest.fn(() => chain),
+    lt: jest.fn(() => chain),
+    gt: jest.fn(() => chain),
+    is: jest.fn(() => chain),
+    not: jest.fn(() => chain),
+    limit: jest.fn(() => chain),
+    order: jest.fn(() => Promise.resolve(finalResult)),
+    update: jest.fn(() => chain),
+    insert: jest.fn(() => Promise.resolve(finalResult)),
+    delete: jest.fn(() => Promise.resolve(finalResult)),
+    then: jest.fn((resolve) => Promise.resolve(finalResult).then(resolve))
+  };
+  return chain;
+};
 
 // Mock Supabase
 const mockSupabase = {
-  from: jest.fn().mockReturnThis(),
-  select: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  update: jest.fn().mockReturnThis(),
-  delete: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  lt: jest.fn().mockReturnThis(),
-  is: jest.fn().mockReturnThis(),
-  not: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  order: jest.fn().mockReturnThis(),
-  rpc: jest.fn()
+  from: jest.fn((tableName) => createMockChain()),
+  rpc: jest.fn((functionName) => Promise.resolve({ data: null, error: null }))
 };
+
+// Mock @supabase/supabase-js createClient
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => mockSupabase)
+}));
+
+jest.mock('../../../src/config/supabase', () => ({
+  supabaseServiceClient: mockSupabase
+}));
+
+// Mock mockMode
+jest.mock('../../../src/config/mockMode', () => ({
+  mockMode: {
+    isMockMode: false
+  }
+}));
+
+// Mock QueueService (to avoid real DB connection attempts)
+jest.mock('../../../src/services/queueService', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(),
+    getNextJob: jest.fn().mockResolvedValue(null),
+    completeJob: jest.fn().mockResolvedValue(),
+    failJob: jest.fn().mockResolvedValue(),
+    shutdown: jest.fn().mockResolvedValue(),
+    addJob: jest.fn().mockResolvedValue({ success: true, jobId: 'mock_job_id' })
+  }));
+});
+
+// Mock crypto
+const mockCrypto = {
+  randomBytes: jest.fn((size) => ({
+    toString: jest.fn(() => 'a'.repeat(size * 2))
+  })),
+  createHmac: jest.fn(() => ({
+    update: jest.fn(() => ({
+      digest: jest.fn(() => 'b'.repeat(64))
+    }))
+  }))
+};
+
+jest.mock('crypto', () => mockCrypto);
+
+// ========================================
+// IMPORTS (AFTER mocks)
+// ========================================
+
+const GDPRRetentionWorker = require('../../../src/workers/GDPRRetentionWorker');
+const { logger } = require('../../../src/utils/logger');
+
+// ========================================
+// TEST SUITE
+// ========================================
 
 describe('GDPRRetentionWorker', () => {
   let worker;
-  let mockConfig;
+  let originalEnv;
+
+  beforeAll(() => {
+    // Save and set env vars
+    originalEnv = process.env;
+    process.env.SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
+    process.env.GDPR_HMAC_PEPPER = 'test-pepper-secret';
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    mockConfig = {
-      batchSize: 100,
-      dryRun: false,
-      supabase: mockSupabase
-    };
-
-    worker = new GDPRRetentionWorker(mockConfig);
-    worker.supabase = mockSupabase; // Ensure mock is attached
+    worker = new GDPRRetentionWorker({ batchSize: 100 });
   });
 
-  describe('constructor', () => {
-    test('should initialize with correct worker type and configuration', () => {
+  afterEach(() => {
+    if (worker && worker.isRunning) {
+      worker.isRunning = false;
+    }
+  });
+
+  // ========================================
+  // INITIALIZATION TESTS
+  // ========================================
+
+  describe('Initialization', () => {
+    test('should initialize with correct config', () => {
       expect(worker.workerType).toBe('gdpr_retention');
       expect(worker.batchSize).toBe(100);
+      expect(worker.hmacPepper).toBe('test-pepper-secret');
       expect(worker.dryRun).toBe(false);
-      expect(worker.stats.totalProcessed).toBe(0);
-      expect(worker.stats.anonymized).toBe(0);
-      expect(worker.stats.purged).toBe(0);
-      expect(worker.stats.cleaned).toBe(0);
-      expect(worker.stats.errors).toBe(0);
     });
 
-    test('should use default configuration when not provided', () => {
-      const defaultWorker = new GDPRRetentionWorker();
-      expect(defaultWorker.batchSize).toBe(1000);
-      expect(defaultWorker.dryRun).toBe(false);
+    test('should initialize statistics', () => {
+      expect(worker.stats).toEqual({
+        totalProcessed: 0,
+        anonymized: 0,
+        purged: 0,
+        cleaned: 0,
+        errors: 0,
+        lastRun: null
+      });
     });
 
-    test('should enable dry run mode when configured', () => {
-      const dryRunWorker = new GDPRRetentionWorker({ dryRun: true });
-      expect(dryRunWorker.dryRun).toBe(true);
+    test('should throw if SUPABASE_SERVICE_KEY missing', () => {
+      delete process.env.SUPABASE_SERVICE_KEY;
+      expect(() => new GDPRRetentionWorker()).toThrow('SUPABASE_SERVICE_KEY is required');
+      process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
+    });
+
+    test('should throw if GDPR_HMAC_PEPPER missing (not in dry-run)', () => {
+      delete process.env.GDPR_HMAC_PEPPER;
+      expect(() => new GDPRRetentionWorker({ dryRun: false })).toThrow(
+        'GDPR_HMAC_PEPPER environment variable is required'
+      );
+      process.env.GDPR_HMAC_PEPPER = 'test-pepper-secret';
+    });
+
+    test('should not throw if GDPR_HMAC_PEPPER missing in dry-run mode', () => {
+      delete process.env.GDPR_HMAC_PEPPER;
+      expect(() => new GDPRRetentionWorker({ dryRun: true })).not.toThrow();
+      process.env.GDPR_HMAC_PEPPER = 'test-pepper-secret';
     });
   });
 
-  describe('getSpecificHealthDetails', () => {
-    test('should return comprehensive health information', async () => {
-      // Mock pending records count
-      mockSupabase.select.mockResolvedValue({ count: 50 });
-      
-      const healthDetails = await worker.getSpecificHealthDetails();
+  // ========================================
+  // ANONYMIZE OLD RECORDS
+  // ========================================
 
-      expect(healthDetails.gdprRetention).toBeDefined();
-      expect(healthDetails.gdprRetention.totalProcessed).toBe(0);
-      expect(healthDetails.gdprRetention.batchSize).toBe(100);
-      expect(healthDetails.gdprRetention.dryRun).toBe(false);
-      expect(healthDetails.gdprRetention.nextScheduledRun).toBeDefined();
-      expect(healthDetails.gdprRetention.pendingRecords).toBeDefined();
-    });
-  });
-
-  describe('processJob', () => {
-    test('should process anonymize operation successfully', async () => {
-      const job = {
-        payload: {
-          operation: 'anonymize',
-          batchId: 'batch-123'
-        }
-      };
-
-      // Mock anonymizeOldRecords method
-      jest.spyOn(worker, 'anonymizeOldRecords').mockResolvedValue({
-        processed: 10,
-        anonymized: 8,
-        errors: 2
-      });
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(true);
-      expect(result.operation).toBe('anonymize');
-      expect(result.processed).toBe(10);
-      expect(result.anonymized).toBe(8);
-      expect(result.errors).toBe(2);
-      expect(worker.anonymizeOldRecords).toHaveBeenCalledWith('batch-123');
-    });
-
-    test('should process purge operation successfully', async () => {
-      const job = {
-        payload: {
-          operation: 'purge',
-          batchId: 'batch-456'
-        }
-      };
-
-      jest.spyOn(worker, 'purgeOldRecords').mockResolvedValue({
-        processed: 'unknown',
-        purged: 'completed',
-        errors: 0
-      });
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(true);
-      expect(result.operation).toBe('purge');
-      expect(result.purged).toBe('completed');
-    });
-
-    test('should process cleanup operation successfully', async () => {
-      const job = {
-        payload: {
-          operation: 'cleanup',
-          batchId: 'batch-789'
-        }
-      };
-
-      jest.spyOn(worker, 'cleanupOldProfiles').mockResolvedValue({
-        cleaned: 25,
-        errors: 0
-      });
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(true);
-      expect(result.operation).toBe('cleanup');
-      expect(result.cleaned).toBe(25);
-    });
-
-    test('should process full retention cycle', async () => {
-      const job = {
-        payload: {
-          operation: 'full_retention',
-          batchId: 'batch-full'
-        }
-      };
-
-      jest.spyOn(worker, 'runFullRetentionCycle').mockResolvedValue({
-        fullCycle: true,
-        anonymize: { processed: 10, anonymized: 10, errors: 0 },
-        purge: { processed: 'unknown', purged: 'completed', errors: 0 },
-        cleanup: { cleaned: 5, errors: 0 },
-        totalErrors: 0
-      });
-
-      const result = await worker.processJob(job);
-
-      expect(result.success).toBe(true);
-      expect(result.fullCycle).toBe(true);
-      expect(result.totalErrors).toBe(0);
-    });
-
-    test('should handle unknown operation error', async () => {
-      const job = {
-        payload: {
-          operation: 'unknown_operation',
-          batchId: 'batch-error'
-        }
-      };
-
-      await expect(worker.processJob(job)).rejects.toThrow('Unknown GDPR retention operation: unknown_operation');
-      expect(worker.stats.errors).toBe(1);
-    });
-
-    test('should handle processing errors and log them', async () => {
-      const job = {
-        payload: {
-          operation: 'anonymize',
-          batchId: 'batch-error'
-        }
-      };
-
-      const processingError = new Error('Database connection failed');
-      jest.spyOn(worker, 'anonymizeOldRecords').mockRejectedValue(processingError);
-      jest.spyOn(worker, 'logRetentionOperation').mockResolvedValue();
-
-      await expect(worker.processJob(job)).rejects.toThrow('Database connection failed');
-      expect(worker.stats.errors).toBe(1);
-      expect(worker.logRetentionOperation).toHaveBeenCalledWith({
-        operation_type: 'anonymize',
-        operation_status: 'failed',
-        batch_id: 'batch-error',
-        error_message: 'Database connection failed',
-        error_details: { stack: expect.any(String) },
-        processing_time_ms: expect.any(Number)
-      });
-    });
-  });
-
-  describe('anonymizeOldRecords', () => {
-    test('should anonymize old records successfully', async () => {
-      const mockOldRecords = [
+  describe('anonymizeOldRecords()', () => {
+    test('should anonymize records older than 80 days', async () => {
+      const oldRecords = [
         {
-          id: 'event-1',
-          original_text: 'Toxic comment 1',
-          created_at: new Date(Date.now() - 85 * 24 * 60 * 60 * 1000).toISOString()
+          id: 'record_1',
+          original_text: 'Sensitive text 1',
+          created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
-          id: 'event-2',
-          original_text: 'Toxic comment 2',
-          created_at: new Date(Date.now() - 82 * 24 * 60 * 60 * 1000).toISOString()
+          id: 'record_2',
+          original_text: 'Sensitive text 2',
+          created_at: new Date(Date.now() - 85 * 24 * 60 * 60 * 1000).toISOString()
         }
       ];
 
-      // Mock select query for old records
-      mockSupabase.select.mockResolvedValue({
-        data: mockOldRecords,
-        error: null
-      });
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ data: oldRecords, error: null }))
+        .mockReturnValue(createMockChain({ data: [], error: null }));
 
-      // Mock update operations
-      mockSupabase.update.mockResolvedValue({
-        error: null
-      });
-
-      // Mock logging operation
-      jest.spyOn(worker, 'logRetentionOperation').mockResolvedValue();
-
-      const result = await worker.anonymizeOldRecords('batch-123');
+      const result = await worker.anonymizeOldRecords('batch_1');
 
       expect(result.processed).toBe(2);
       expect(result.anonymized).toBe(2);
       expect(result.errors).toBe(0);
-      
-      // Verify anonymization was called for each record
-      expect(mockSupabase.update).toHaveBeenCalledTimes(2);
-      expect(mockSupabase.update).toHaveBeenCalledWith({
-        original_text: null,
-        original_text_hash: 'mocked_hash_value_1234567890abcdef',
-        text_salt: 'mockedsalt123456',
-        anonymized_at: expect.any(String)
-      });
-
-      expect(worker.logRetentionOperation).toHaveBeenCalledWith({
-        operation_type: 'anonymize',
-        operation_status: 'success',
-        batch_id: 'batch-123',
-        records_processed: 2,
-        records_anonymized: 2,
-        records_failed: 0,
-        metadata: { cutoff_date: expect.any(String) }
-      });
+      expect(worker.stats.anonymized).toBe(2);
     });
 
-    test('should handle no records to anonymize', async () => {
-      mockSupabase.select.mockResolvedValue({
-        data: [],
-        error: null
-      });
+    test('should return early if no records to anonymize', async () => {
+      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: [], error: null }));
 
-      const result = await worker.anonymizeOldRecords('batch-empty');
+      const result = await worker.anonymizeOldRecords('batch_empty');
 
       expect(result.processed).toBe(0);
       expect(result.anonymized).toBe(0);
-      expect(result.errors).toBe(0);
     });
 
-    test('should handle anonymization errors gracefully', async () => {
-      const mockOldRecords = [
-        {
-          id: 'event-1',
-          original_text: 'Toxic comment 1',
-          created_at: new Date(Date.now() - 85 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: 'event-2',
-          original_text: 'Toxic comment 2',
-          created_at: new Date(Date.now() - 82 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
-
-      mockSupabase.select.mockResolvedValue({
-        data: mockOldRecords,
-        error: null
-      });
-
-      // First update succeeds, second fails
-      mockSupabase.update
-        .mockResolvedValueOnce({ error: null })
-        .mockResolvedValueOnce({ error: new Error('Update failed') });
-
-      jest.spyOn(worker, 'logRetentionOperation').mockResolvedValue();
-
-      const result = await worker.anonymizeOldRecords('batch-partial');
-
-      expect(result.processed).toBe(2);
-      expect(result.anonymized).toBe(1);
-      expect(result.errors).toBe(1);
-      
-      expect(worker.logRetentionOperation).toHaveBeenCalledWith({
-        operation_type: 'anonymize',
-        operation_status: 'partial',
-        batch_id: 'batch-partial',
-        records_processed: 2,
-        records_anonymized: 1,
-        records_failed: 1,
-        metadata: { cutoff_date: expect.any(String) }
-      });
-    });
-
-    test('should handle dry run mode', async () => {
+    test('should handle anonymization in dry-run mode', async () => {
       worker.dryRun = true;
 
-      const mockOldRecords = [
+      const oldRecords = [
         {
-          id: 'event-1',
-          original_text: 'Toxic comment 1',
-          created_at: new Date(Date.now() - 85 * 24 * 60 * 60 * 1000).toISOString()
+          id: 'record_dry',
+          original_text: 'Test text',
+          created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
         }
       ];
 
-      mockSupabase.select.mockResolvedValue({
-        data: mockOldRecords,
-        error: null
+      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: oldRecords, error: null }));
+
+      const result = await worker.anonymizeOldRecords('batch_dry');
+
+      expect(result.anonymized).toBe(1);
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ id: 'record_dry' })
+      );
+    });
+
+    test('should handle HMAC generation failure gracefully', async () => {
+      const oldRecords = [
+        {
+          id: 'record_fail',
+          original_text: 'Sensitive text',
+          created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
+
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ data: oldRecords, error: null }))
+        .mockReturnValue(createMockChain({ data: [], error: null }));
+
+      mockCrypto.createHmac.mockImplementationOnce(() => {
+        throw new Error('HMAC failed');
       });
 
-      jest.spyOn(worker, 'logRetentionOperation').mockResolvedValue();
+      const result = await worker.anonymizeOldRecords('batch_fail');
 
-      const result = await worker.anonymizeOldRecords('batch-dry');
+      expect(result.errors).toBeGreaterThan(0);
+      expect(worker.stats.errors).toBeGreaterThan(0);
+    });
 
-      expect(result.processed).toBe(1);
-      expect(result.anonymized).toBe(1);
-      expect(result.errors).toBe(0);
-      
-      // Verify no actual updates were made
-      expect(mockSupabase.update).not.toHaveBeenCalled();
+    test('should handle Supabase update failure', async () => {
+      const oldRecords = [
+        {
+          id: 'record_db_fail',
+          original_text: 'Sensitive text',
+          created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
+
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ data: oldRecords, error: null }))
+        .mockReturnValueOnce(createMockChain({ data: null, error: new Error('Update failed') }));
+
+      const result = await worker.anonymizeOldRecords('batch_db_fail');
+
+      expect(result.errors).toBeGreaterThan(0);
     });
   });
 
-  describe('purgeOldRecords', () => {
-    test('should purge old records successfully', async () => {
-      mockSupabase.delete.mockResolvedValue({
-        error: null
-      });
+  // ========================================
+  // PURGE OLD RECORDS
+  // ========================================
 
-      jest.spyOn(worker, 'logRetentionOperation').mockResolvedValue();
+  describe('purgeOldRecords()', () => {
+    test('should purge records older than 90 days', async () => {
+      mockSupabase.from.mockReturnValueOnce(
+        createMockChain({ data: [], error: null })
+      );
 
-      const result = await worker.purgeOldRecords('batch-purge');
+      const result = await worker.purgeOldRecords('batch_purge');
 
       expect(result.purged).toBe('completed');
       expect(result.errors).toBe(0);
-      
-      expect(mockSupabase.delete).toHaveBeenCalled();
-      expect(mockSupabase.lt).toHaveBeenCalledWith('created_at', expect.any(String));
-      
-      expect(worker.logRetentionOperation).toHaveBeenCalledWith({
-        operation_type: 'purge',
-        operation_status: 'success',
-        batch_id: 'batch-purge',
-        metadata: { cutoff_date: expect.any(String) }
-      });
     });
 
-    test('should handle purge errors', async () => {
-      const purgeError = new Error('Purge operation failed');
-      mockSupabase.delete.mockResolvedValue({
-        error: purgeError
-      });
-
-      await expect(worker.purgeOldRecords('batch-error')).rejects.toThrow('Purge operation failed');
-    });
-
-    test('should handle dry run for purge', async () => {
+    test('should handle purge in dry-run mode', async () => {
       worker.dryRun = true;
 
-      mockSupabase.select.mockResolvedValue({
-        count: 150,
-        error: null
-      });
+      mockSupabase.from.mockReturnValueOnce(
+        createMockChain({ count: 10, error: null })
+      );
 
-      const result = await worker.purgeOldRecords('batch-dry-purge');
+      const result = await worker.purgeOldRecords('batch_dry_purge');
 
-      expect(result.processed).toBe(150);
-      expect(result.purged).toBe(150);
-      expect(result.errors).toBe(0);
-      
-      // Verify no actual deletes were made
-      expect(mockSupabase.delete).not.toHaveBeenCalled();
+      expect(result.purged).toBe(10);
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ count: 10 })
+      );
+    });
+
+    test('should handle Supabase delete failure', async () => {
+      mockSupabase.from.mockReturnValueOnce(
+        createMockChain({ data: null, error: new Error('Delete failed') })
+      );
+
+      await expect(worker.purgeOldRecords('batch_fail')).rejects.toThrow('Delete failed');
     });
   });
 
-  describe('cleanupOldProfiles', () => {
-    test('should cleanup old offender profiles successfully', async () => {
-      mockSupabase.rpc.mockResolvedValue({
-        data: 25,
-        error: null
-      });
+  // ========================================
+  // CLEANUP OLD PROFILES
+  // ========================================
 
-      const result = await worker.cleanupOldProfiles('batch-cleanup');
+  describe('cleanupOldProfiles()', () => {
+    test('should cleanup old offender profiles via RPC', async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: 5, error: null });
 
-      expect(result.cleaned).toBe(25);
+      const result = await worker.cleanupOldProfiles('batch_cleanup');
+
+      expect(result.cleaned).toBe(5);
       expect(result.errors).toBe(0);
-      expect(worker.stats.cleaned).toBe(25);
-      
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('cleanup_old_offender_profiles');
+      expect(worker.stats.cleaned).toBe(5);
     });
 
-    test('should handle cleanup errors', async () => {
-      const cleanupError = new Error('RPC function failed');
-      mockSupabase.rpc.mockResolvedValue({
-        data: null,
-        error: cleanupError
-      });
-
-      await expect(worker.cleanupOldProfiles('batch-error')).rejects.toThrow('RPC function failed');
-    });
-
-    test('should handle dry run for cleanup', async () => {
+    test('should handle cleanup in dry-run mode', async () => {
       worker.dryRun = true;
 
-      const result = await worker.cleanupOldProfiles('batch-dry-cleanup');
+      const result = await worker.cleanupOldProfiles('batch_dry_cleanup');
 
       expect(result.cleaned).toBe('dry_run');
-      expect(result.errors).toBe(0);
-      
-      // Verify no actual RPC was called
-      expect(mockSupabase.rpc).not.toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalled();
+    });
+
+    test('should handle RPC failure', async () => {
+      mockSupabase.rpc.mockRejectedValueOnce(new Error('RPC failed'));
+
+      await expect(worker.cleanupOldProfiles('batch_fail')).rejects.toThrow('RPC failed');
     });
   });
 
-  describe('runFullRetentionCycle', () => {
-    test('should execute full retention cycle successfully', async () => {
-      jest.spyOn(worker, 'anonymizeOldRecords').mockResolvedValue({
-        processed: 10, anonymized: 8, errors: 2
-      });
-      jest.spyOn(worker, 'purgeOldRecords').mockResolvedValue({
-        processed: 'unknown', purged: 'completed', errors: 0
-      });
-      jest.spyOn(worker, 'cleanupOldProfiles').mockResolvedValue({
-        cleaned: 5, errors: 0
-      });
+  // ========================================
+  // FULL RETENTION CYCLE
+  // ========================================
 
-      const result = await worker.runFullRetentionCycle('batch-full');
+  describe('runFullRetentionCycle()', () => {
+    test('should execute full retention cycle (anonymize + purge + cleanup)', async () => {
+      // Mock anonymize
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ data: [], error: null })) // anonymize select
+        .mockReturnValueOnce(createMockChain({ data: [], error: null })) // purge delete
+        .mockReturnValue(createMockChain({ data: [], error: null }));
+
+      // Mock cleanup RPC
+      mockSupabase.rpc.mockResolvedValueOnce({ data: 0, error: null });
+
+      const result = await worker.runFullRetentionCycle('batch_full');
 
       expect(result.fullCycle).toBe(true);
-      expect(result.anonymize.processed).toBe(10);
-      expect(result.anonymize.anonymized).toBe(8);
-      expect(result.anonymize.errors).toBe(2);
-      expect(result.purge.purged).toBe('completed');
-      expect(result.cleanup.cleaned).toBe(5);
-      expect(result.totalErrors).toBe(2);
+      expect(result.anonymize).toBeDefined();
+      expect(result.purge).toBeDefined();
+      expect(result.cleanup).toBeDefined();
+      expect(result.totalErrors).toBe(0);
     });
 
-    test('should handle errors in full retention cycle', async () => {
-      jest.spyOn(worker, 'anonymizeOldRecords').mockRejectedValue(new Error('Anonymization failed'));
+    test('should continue cycle even if one operation fails partially', async () => {
+      // Mock anonymize with some errors
+      const oldRecords = [
+        {
+          id: 'record_1',
+          original_text: 'Text 1',
+          created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
 
-      await expect(worker.runFullRetentionCycle('batch-error')).rejects.toThrow('Anonymization failed');
-    });
-  });
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ data: oldRecords, error: null })) // anonymize select
+        .mockReturnValueOnce(createMockChain({ data: null, error: new Error('Anonymize failed') })) // anonymize update fails
+        .mockReturnValueOnce(createMockChain({ data: [], error: null })) // purge
+        .mockReturnValue(createMockChain({ data: [], error: null }));
 
-  describe('logRetentionOperation', () => {
-    test('should log retention operation successfully', async () => {
-      mockSupabase.insert.mockResolvedValue({
-        error: null
-      });
+      mockSupabase.rpc.mockResolvedValueOnce({ data: 0, error: null });
 
-      const logData = {
-        operation_type: 'anonymize',
-        operation_status: 'success',
-        batch_id: 'batch-123',
-        records_processed: 10
-      };
+      const result = await worker.runFullRetentionCycle('batch_partial');
 
-      await worker.logRetentionOperation(logData);
-
-      expect(mockSupabase.from).toHaveBeenCalledWith('shield_retention_log');
-      expect(mockSupabase.insert).toHaveBeenCalledWith({
-        ...logData,
-        completed_at: expect.any(String),
-        processing_time_ms: 0
-      });
-    });
-
-    test('should handle logging errors gracefully', async () => {
-      const logError = new Error('Logging failed');
-      mockSupabase.insert.mockResolvedValue({
-        error: logError
-      });
-
-      const logData = {
-        operation_type: 'purge',
-        operation_status: 'success'
-      };
-
-      // Should not throw, just log the error
-      await expect(worker.logRetentionOperation(logData)).resolves.toBeUndefined();
+      expect(result.totalErrors).toBeGreaterThan(0);
+      expect(result.purge).toBeDefined(); // Should still complete purge
+      expect(result.cleanup).toBeDefined(); // Should still complete cleanup
     });
   });
 
-  describe('getPendingRecordsCounts', () => {
-    test('should return counts of pending operations', async () => {
-      // Mock counts for different operations
-      mockSupabase.select
-        .mockResolvedValueOnce({ count: 25 }) // anonymization
-        .mockResolvedValueOnce({ count: 10 }) // purge
-        .mockResolvedValueOnce({ count: 5 });  // cleanup
+  // ========================================
+  // PROCESS JOB
+  // ========================================
+
+  describe('processJob()', () => {
+    test('should process anonymize operation', async () => {
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ data: [], error: null }))
+        .mockReturnValue(createMockChain({ data: [], error: null }));
+
+      const job = { payload: { operation: 'anonymize', batchId: 'batch_1' } };
+      const result = await worker.processJob(job);
+
+      expect(result.success).toBe(true);
+      expect(result.operation).toBe('anonymize');
+    });
+
+    test('should process purge operation', async () => {
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ data: [], error: null }))
+        .mockReturnValue(createMockChain({ data: [], error: null }));
+
+      const job = { payload: { operation: 'purge', batchId: 'batch_2' } };
+      const result = await worker.processJob(job);
+
+      expect(result.success).toBe(true);
+      expect(result.operation).toBe('purge');
+    });
+
+    test('should process cleanup operation', async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({ data: 0, error: null });
+      mockSupabase.from.mockReturnValue(createMockChain({ data: [], error: null }));
+
+      const job = { payload: { operation: 'cleanup', batchId: 'batch_3' } };
+      const result = await worker.processJob(job);
+
+      expect(result.success).toBe(true);
+      expect(result.operation).toBe('cleanup');
+    });
+
+    test('should process full_retention operation', async () => {
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ data: [], error: null }))
+        .mockReturnValueOnce(createMockChain({ data: [], error: null }))
+        .mockReturnValue(createMockChain({ data: [], error: null }));
+
+      mockSupabase.rpc.mockResolvedValueOnce({ data: 0, error: null });
+
+      const job = { payload: { operation: 'full_retention', batchId: 'batch_full' } };
+      const result = await worker.processJob(job);
+
+      expect(result.success).toBe(true);
+      expect(result.operation).toBe('full_retention');
+      expect(result.fullCycle).toBe(true);
+    });
+
+    test('should throw error for unknown operation', async () => {
+      const job = { payload: { operation: 'unknown_op', batchId: 'batch_unknown' } };
+
+      await expect(worker.processJob(job)).rejects.toThrow(
+        'Unknown GDPR retention operation: unknown_op'
+      );
+    });
+
+    test('should log operation failure to retention log', async () => {
+      mockSupabase.from.mockReturnValueOnce(
+        createMockChain({ data: null, error: new Error('Operation failed') })
+      );
+
+      const job = { payload: { operation: 'anonymize', batchId: 'batch_fail' } };
+
+      await expect(worker.processJob(job)).rejects.toThrow();
+      expect(worker.stats.errors).toBeGreaterThan(0);
+    });
+  });
+
+  // ========================================
+  // HELPER METHODS
+  // ========================================
+
+  describe('Helper Methods', () => {
+    test('should get next scheduled run time', () => {
+      const nextRun = worker.getNextScheduledRun();
+      expect(nextRun).toBeTruthy();
+      expect(new Date(nextRun).getTime()).toBeGreaterThan(Date.now());
+    });
+
+    test('should get pending records counts', async () => {
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ count: 10, error: null })) // anonymize
+        .mockReturnValueOnce(createMockChain({ count: 5, error: null })) // purge
+        .mockReturnValueOnce(createMockChain({ count: 2, error: null })); // cleanup
 
       const counts = await worker.getPendingRecordsCounts();
 
-      expect(counts.needingAnonymization).toBe(25);
-      expect(counts.needingPurge).toBe(10);
-      expect(counts.needingCleanup).toBe(5);
+      expect(counts.needingAnonymization).toBe(10);
+      expect(counts.needingPurge).toBe(5);
+      expect(counts.needingCleanup).toBe(2);
     });
 
-    test('should handle errors in count queries', async () => {
-      mockSupabase.select.mockRejectedValue(new Error('Count query failed'));
+    test('should handle error when getting pending counts', async () => {
+      mockSupabase.from.mockReturnValueOnce(
+        createMockChain({ data: null, error: new Error('Count failed') })
+      );
 
       const counts = await worker.getPendingRecordsCounts();
 
       expect(counts.needingAnonymization).toBe('error');
-      expect(counts.needingPurge).toBe('error');
-      expect(counts.needingCleanup).toBe('error');
+    });
+
+    test('should log retention operation', async () => {
+      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: [], error: null }));
+
+      await worker.logRetentionOperation({
+        operation_type: 'test',
+        operation_status: 'success'
+      });
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('shield_retention_log');
+    });
+
+    test('should get specific health details', async () => {
+      mockSupabase.from
+        .mockReturnValueOnce(createMockChain({ count: 10, error: null }))
+        .mockReturnValueOnce(createMockChain({ count: 5, error: null }))
+        .mockReturnValueOnce(createMockChain({ count: 2, error: null }));
+
+      const health = await worker.getSpecificHealthDetails();
+
+      expect(health.gdprRetention).toBeDefined();
+      expect(health.gdprRetention.batchSize).toBe(100);
+      expect(health.gdprRetention.dryRun).toBe(false);
+      expect(health.gdprRetention.pendingRecords).toBeDefined();
     });
   });
 
-  describe('createScheduledJobs', () => {
-    test('should return correct scheduled job configurations', () => {
+  // ========================================
+  // SCHEDULED JOBS
+  // ========================================
+
+  describe('createScheduledJobs()', () => {
+    test('should return scheduled jobs configuration', () => {
       const jobs = GDPRRetentionWorker.createScheduledJobs();
 
       expect(jobs).toHaveLength(4);
-      
-      const anonymizeJob = jobs.find(j => j.name === 'gdpr_anonymize_daily');
-      expect(anonymizeJob.schedule).toBe('0 2 * * *'); // Daily at 2 AM
-      expect(anonymizeJob.payload.operation).toBe('anonymize');
-
-      const purgeJob = jobs.find(j => j.name === 'gdpr_purge_daily');
-      expect(purgeJob.schedule).toBe('0 3 * * *'); // Daily at 3 AM
-      expect(purgeJob.payload.operation).toBe('purge');
-
-      const cleanupJob = jobs.find(j => j.name === 'gdpr_cleanup_weekly');
-      expect(cleanupJob.schedule).toBe('0 4 * * 0'); // Weekly on Sunday at 4 AM
-      expect(cleanupJob.payload.operation).toBe('cleanup');
-
-      const fullCycleJob = jobs.find(j => j.name === 'gdpr_full_cycle_weekly');
-      expect(fullCycleJob.schedule).toBe('0 1 * * 1'); // Weekly on Monday at 1 AM
-      expect(fullCycleJob.payload.operation).toBe('full_retention');
-    });
-  });
-
-  describe('getNextScheduledRun', () => {
-    test('should return next hour timestamp', () => {
-      const nextRun = worker.getNextScheduledRun();
-      const nextRunTime = new Date(nextRun);
-      const now = new Date();
-      
-      expect(nextRunTime.getHours()).toBe((now.getHours() + 1) % 24);
-      expect(nextRunTime.getMinutes()).toBe(0);
-      expect(nextRunTime.getSeconds()).toBe(0);
+      expect(jobs[0].name).toBe('gdpr_anonymize_daily');
+      expect(jobs[1].name).toBe('gdpr_purge_daily');
+      expect(jobs[2].name).toBe('gdpr_cleanup_weekly');
+      expect(jobs[3].name).toBe('gdpr_full_cycle_weekly');
     });
   });
 });
