@@ -20,6 +20,7 @@
 **Importancia:** Sin este flujo, no hay acceso al sistema. Es la base sobre la que se construyen todos los demás flujos (payment, persona, roasting).
 
 **Tecnologías clave:**
+
 - JWT tokens (1 hora access, 7 días refresh)
 - Supabase Auth + Row Level Security (RLS)
 - bcrypt para hashing de passwords
@@ -62,6 +63,7 @@ El flujo de Login & Registration está implementado en su mayoría, pero faltan 
 ### 2. Frontend: Auto-Refresh Strategy
 
 - [ ] Implementar función `refreshToken()` en auth module
+
   ```javascript
   async function refreshToken() {
     const refreshToken = localStorage.getItem('refreshToken');
@@ -85,16 +87,20 @@ El flujo de Login & Registration está implementado en su mayoría, pero faltan 
   ```
 
 - [ ] Implementar estrategia de refresh proactivo (15 minutos antes de expirar)
-  ```javascript
-  setInterval(async () => {
-    const expiresAt = new Date(localStorage.getItem('expiresAt'));
-    const now = new Date();
-    const minutesUntilExpiry = (expiresAt - now) / 1000 / 60;
 
-    if (minutesUntilExpiry < 15 && minutesUntilExpiry > 0) {
-      await refreshToken();
-    }
-  }, 5 * 60 * 1000); // Verificar cada 5 minutos
+  ```javascript
+  setInterval(
+    async () => {
+      const expiresAt = new Date(localStorage.getItem('expiresAt'));
+      const now = new Date();
+      const minutesUntilExpiry = (expiresAt - now) / 1000 / 60;
+
+      if (minutesUntilExpiry < 15 && minutesUntilExpiry > 0) {
+        await refreshToken();
+      }
+    },
+    5 * 60 * 1000
+  ); // Verificar cada 5 minutos
   ```
 
 - [ ] Implementar retry automático en interceptor HTTP (axios/fetch)
@@ -174,9 +180,11 @@ El flujo de Login & Registration está implementado en su mayoría, pero faltan 
 ## 🔗 Dependencias
 
 **Bloqueantes (debe resolverse antes):**
+
 - Ninguna (issue independiente)
 
 **Desbloqueadas por esta issue:**
+
 - Issue Payment (Polar) - Requiere auth funcional
 - Issue Persona Setup - Requiere sesiones de usuario activas
 - Issue Roasting Control - Requiere estado de sesión
@@ -202,29 +210,32 @@ Esta issue se considera **100% completa** cuando:
 
 ## 📊 Métricas de Éxito
 
-| Métrica | Valor Actual | Objetivo | Estado |
-|---------|--------------|----------|--------|
-| Tests pasando | N/A | 100% | ⏳ Pendiente |
-| Cobertura auth module | N/A | ≥80% | ⏳ Pendiente |
-| Tiempo de implementación | 0h | ≤3h | ⏳ Pendiente |
-| Errores en producción | N/A | 0 | ⏳ Pendiente |
+| Métrica                  | Valor Actual | Objetivo | Estado       |
+| ------------------------ | ------------ | -------- | ------------ |
+| Tests pasando            | N/A          | 100%     | ⏳ Pendiente |
+| Cobertura auth module    | N/A          | ≥80%     | ⏳ Pendiente |
+| Tiempo de implementación | 0h           | ≤3h      | ⏳ Pendiente |
+| Errores en producción    | N/A          | 0        | ⏳ Pendiente |
 
 ---
 
 ## 📝 Notas de Implementación
 
 **Seguridad:**
+
 - Refresh tokens deben tener TTL de 7 días máximo
 - Access tokens deben tener TTL de 1 hora máximo
 - NUNCA almacenar refresh tokens en cookies sin `httpOnly` flag
 - Considerar rotation de refresh tokens para prevenir replay attacks
 
 **Performance:**
+
 - Auto-refresh debe ser eficiente (verificar cada 5 min, NO cada segundo)
 - Usar `requestIdleCallback` en frontend para no bloquear UI
 - Cachear resultado de refresh por 1 minuto (evitar múltiples requests simultáneos)
 
 **UX:**
+
 - Mostrar loader discreto durante refresh automático
 - NO interrumpir flujo de usuario si refresh exitoso
 - Mostrar notificación clara si refresh falla y requiere re-login

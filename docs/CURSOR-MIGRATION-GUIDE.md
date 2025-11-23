@@ -14,6 +14,7 @@ Esta guía documenta la migración del framework GDD, agents y skills de Claude 
 ## ✅ Lo que funciona IGUAL (sin cambios)
 
 ### 1. GDD Scripts
+
 Todos los scripts Node.js funcionan exactamente igual:
 
 ```bash
@@ -32,12 +33,14 @@ node scripts/auto-repair-gdd.js --auto-fix
 **Ventaja de Cursor:** Ejecutar desde terminal integrado (`⌃` + backtick) sin cambiar de aplicación.
 
 ### 2. Estructura de Documentación
+
 - `docs/nodes/*.md` - Nodos GDD (sin cambios)
 - `docs/plan/*.md` - Planes de features (sin cambios)
 - `docs/agents/receipts/` - Receipts (formato adaptado)
 - `agents/manifest.yaml` - Manifest de agents (sin cambios)
 
 ### 3. CI/CD y Validaciones
+
 Todos los workflows de CI/CD funcionan igual. Los scripts de validación son los mismos.
 
 ---
@@ -47,17 +50,20 @@ Todos los workflows de CI/CD funcionan igual. Los scripts de validación son los
 ### 1. Skills → `.cursorrules`
 
 **Antes (Claude Code):**
+
 ```
 .claude/skills/test-generation-skill.md
 .claude/skills/gdd-sync-skill.md
 ```
 
 **Ahora (Cursor):**
+
 ```
 .cursorrules  # Consolidado, se carga automáticamente
 ```
 
 **Migración:**
+
 ```bash
 # 1. Crear .cursorrules desde CLAUDE.md
 cp CLAUDE.md .cursorrules
@@ -82,11 +88,13 @@ EOF
 ### 2. Agents → Composer Workflows
 
 **Antes (Claude Code):**
+
 ```
 Task tool → Invoke TestEngineer → Auto-execute
 ```
 
 **Ahora (Cursor):**
+
 ```
 1. Detectar triggers: node scripts/cursor-agents/detect-triggers.js
 2. Abrir Composer: Cmd+I
@@ -96,6 +104,7 @@ Task tool → Invoke TestEngineer → Auto-execute
 ```
 
 **Script Helper:**
+
 ```bash
 # Detectar qué agent usar
 node scripts/cursor-agents/detect-triggers.js
@@ -114,11 +123,13 @@ node scripts/cursor-agents/detect-triggers.js
 ### 3. Receipts (formato adaptado)
 
 **Antes (Claude Code):**
+
 ```
 docs/agents/receipts/pr-734-TestEngineer.md
 ```
 
 **Ahora (Cursor):**
+
 ```
 docs/agents/receipts/cursor-test-engineer-1735123456.md
 ```
@@ -194,11 +205,13 @@ node scripts/score-gdd-health.js --ci
 ### 1. Contexto Selectivo con @-mentions
 
 **Antes:**
+
 ```javascript
 // Cargar spec.md completo (5000+ líneas)
 ```
 
 **Ahora:**
+
 ```javascript
 // Solo cargar nodos relevantes
 @docs/nodes/roast.md @docs/nodes/shield.md
@@ -209,11 +222,13 @@ node scripts/score-gdd-health.js --ci
 ### 2. Composer Multi-file Editing
 
 **Antes:**
+
 ```
 Task tool → Agent ejecuta → Resultado
 ```
 
 **Ahora:**
+
 ```
 Composer → Seleccionar múltiples archivos → Editar en paralelo
 ```
@@ -230,6 +245,7 @@ Composer → Seleccionar múltiples archivos → Editar en paralelo
 ### 4. Receipts Automáticos
 
 El script `detect-triggers.js` crea receipts automáticamente con:
+
 - Agent detectado
 - Archivos modificados
 - Sugerencia de Composer
@@ -242,6 +258,7 @@ El script `detect-triggers.js` crea receipts automáticamente con:
 ### Problema: Cursor no carga `.cursorrules`
 
 **Solución:**
+
 1. Verificar que el archivo existe en root del proyecto
 2. Reiniciar Cursor
 3. Verificar que no hay errores de sintaxis en `.cursorrules`
@@ -249,6 +266,7 @@ El script `detect-triggers.js` crea receipts automáticamente con:
 ### Problema: `detect-triggers.js` no detecta cambios
 
 **Solución:**
+
 ```bash
 # Verificar que hay cambios
 git status
@@ -263,6 +281,7 @@ git rev-parse --abbrev-ref HEAD
 ### Problema: Receipts no se crean
 
 **Solución:**
+
 ```bash
 # Verificar que el directorio existe
 mkdir -p docs/agents/receipts
@@ -293,4 +312,3 @@ ls -la docs/agents/receipts
 
 **Última actualización:** 2025-01-XX  
 **Mantenido por:** Orchestrator / Cursor Team
-

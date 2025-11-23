@@ -27,7 +27,10 @@ jest.setTimeout(30000);
 
 function assertNoError(context, error) {
   if (error) {
-    console.error(`❌ ${context} error:`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    console.error(
+      `❌ ${context} error:`,
+      JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+    );
     const message = error.message || error.details || JSON.stringify(error);
     throw new Error(`Failed to ${context}: ${message}`);
   }
@@ -150,10 +153,10 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
         assertNoError('select user A sponsors', error);
         expect(data).toBeDefined();
         expect(data.length).toBeGreaterThanOrEqual(2);
-        expect(data.some(s => s.id === sponsorA1.id)).toBe(true);
-        expect(data.some(s => s.id === sponsorA2.id)).toBe(true);
+        expect(data.some((s) => s.id === sponsorA1.id)).toBe(true);
+        expect(data.some((s) => s.id === sponsorA2.id)).toBe(true);
         // Should NOT see user B's sponsors
-        expect(data.some(s => s.id === sponsorB1.id)).toBe(false);
+        expect(data.some((s) => s.id === sponsorB1.id)).toBe(false);
       });
 
       test('User A can SELECT specific own sponsor', async () => {
@@ -341,10 +344,10 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
         assertNoError('select user B sponsors', error);
         expect(data).toBeDefined();
         expect(data.length).toBeGreaterThanOrEqual(1);
-        expect(data.some(s => s.id === sponsorB1.id)).toBe(true);
+        expect(data.some((s) => s.id === sponsorB1.id)).toBe(true);
         // Should NOT see user A's sponsors
-        expect(data.some(s => s.id === sponsorA1.id)).toBe(false);
-        expect(data.some(s => s.id === sponsorA2.id)).toBe(false);
+        expect(data.some((s) => s.id === sponsorA1.id)).toBe(false);
+        expect(data.some((s) => s.id === sponsorA2.id)).toBe(false);
       });
 
       test('User B cannot SELECT User A sponsors', async () => {
@@ -365,13 +368,11 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
       await setTenantContext(tenantA.id);
 
       // User A should only see their own sponsors
-      const { data } = await testClient
-        .from('sponsors')
-        .select('*');
+      const { data } = await testClient.from('sponsors').select('*');
 
       expect(data).toBeDefined();
-      expect(data.every(s => s.user_id === userAId)).toBe(true);
-      expect(data.some(s => s.user_id === userBId)).toBe(false);
+      expect(data.every((s) => s.user_id === userAId)).toBe(true);
+      expect(data.some((s) => s.user_id === userBId)).toBe(false);
     });
 
     test('Policy enforces WITH CHECK clause (write access)', async () => {
@@ -398,4 +399,3 @@ describe('Sponsors RLS Integration Tests - CodeRabbit Review #3483663040', () =>
     });
   });
 });
-

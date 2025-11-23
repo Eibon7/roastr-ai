@@ -48,17 +48,19 @@ const SafeUtils = {
 
     // Mask local part: keep first character, mask the rest
     // For single-character local parts, preserve the character instead of replacing with '*'
-    const maskedLocal = localPart.length > 1
-      ? localPart.charAt(0) + '*'.repeat(Math.min(localPart.length - 1, 6))
-      : localPart.charAt(0);
+    const maskedLocal =
+      localPart.length > 1
+        ? localPart.charAt(0) + '*'.repeat(Math.min(localPart.length - 1, 6))
+        : localPart.charAt(0);
 
     // Mask domain: keep first character and TLD, mask the middle
     const domainParts = domain.split('.');
     const domainName = domainParts[0];
     const tld = domainParts[domainParts.length - 1];
-    const maskedDomain = domainName.length > 1
-      ? domainName.charAt(0) + '*'.repeat(Math.min(domainName.length - 1, 4)) + '.' + tld
-      : '***.' + tld;
+    const maskedDomain =
+      domainName.length > 1
+        ? domainName.charAt(0) + '*'.repeat(Math.min(domainName.length - 1, 4)) + '.' + tld
+        : '***.' + tld;
 
     return maskedLocal + '@' + maskedDomain;
   },

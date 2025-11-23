@@ -196,7 +196,7 @@ describe('Observability Integration Tests (Issue #417)', () => {
       });
 
       // Wait a bit to ensure different timestamp
-      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+      const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
       return delay(10).then(() => {
         const context2 = advancedLogger.createCorrelationContext({
           correlationId: testCorrelationId
@@ -291,16 +291,11 @@ describe('Observability Integration Tests (Issue #417)', () => {
       };
 
       // Log with structured format
-      advancedLogger.logJobLifecycle(
-        'test_worker',
-        mockJob.id,
-        'started',
-        {
-          correlationId: testCorrelationId,
-          tenantId: testOrganizationId,
-          platform: 'twitter'
-        }
-      );
+      advancedLogger.logJobLifecycle('test_worker', mockJob.id, 'started', {
+        correlationId: testCorrelationId,
+        tenantId: testOrganizationId,
+        platform: 'twitter'
+      });
 
       // If this doesn't throw, the log was created successfully
       expect(true).toBe(true);
@@ -343,18 +338,13 @@ describe('Observability Integration Tests (Issue #417)', () => {
 
     test('should verify log file exists after logging', async () => {
       // Log a test message
-      advancedLogger.logJobLifecycle(
-        'test_worker',
-        'test_job_123',
-        'started',
-        {
-          correlationId: testCorrelationId,
-          tenantId: testOrganizationId
-        }
-      );
+      advancedLogger.logJobLifecycle('test_worker', 'test_job_123', 'started', {
+        correlationId: testCorrelationId,
+        tenantId: testOrganizationId
+      });
 
       // Give Winston time to write to disk
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Check if log directory exists
       const logsDir = path.join(__dirname, '../../logs');
@@ -374,16 +364,11 @@ describe('Observability Integration Tests (Issue #417)', () => {
       const mockError = new Error('Test error for observability');
       mockError.stack = 'Error: Test error\n  at test.js:123';
 
-      advancedLogger.logWorkerError(
-        'test_worker',
-        'process_job',
-        mockError,
-        {
-          correlationId: testCorrelationId,
-          tenantId: testOrganizationId,
-          commentId: testCommentId
-        }
-      );
+      advancedLogger.logWorkerError('test_worker', 'process_job', mockError, {
+        correlationId: testCorrelationId,
+        tenantId: testOrganizationId,
+        commentId: testCommentId
+      });
 
       // If no exception thrown, error was logged successfully
       expect(true).toBe(true);
@@ -409,15 +394,10 @@ describe('Observability Integration Tests (Issue #417)', () => {
       const testError = new Error('Test error with stack');
 
       // Capture error log
-      advancedLogger.logWorkerError(
-        'test_worker',
-        'failing_operation',
-        testError,
-        {
-          correlationId: testCorrelationId,
-          tenantId: testOrganizationId
-        }
-      );
+      advancedLogger.logWorkerError('test_worker', 'failing_operation', testError, {
+        correlationId: testCorrelationId,
+        tenantId: testOrganizationId
+      });
 
       expect(testError.stack).toBeDefined();
       expect(testError.message).toBe('Test error with stack');
@@ -471,8 +451,9 @@ describe('Observability Integration Tests (Issue #417)', () => {
         correlationId: 'invalid-uuid-format'
       };
 
-      await expect(queueService.addJob('analyze_toxicity', payload, options))
-        .rejects.toThrow('Invalid correlation ID format');
+      await expect(queueService.addJob('analyze_toxicity', payload, options)).rejects.toThrow(
+        'Invalid correlation ID format'
+      );
     });
 
     test('should reject invalid UUID format in payload', async () => {
@@ -482,8 +463,9 @@ describe('Observability Integration Tests (Issue #417)', () => {
         correlationId: 'not-a-valid-uuid'
       };
 
-      await expect(queueService.addJob('analyze_toxicity', payload))
-        .rejects.toThrow('Invalid correlation ID format');
+      await expect(queueService.addJob('analyze_toxicity', payload)).rejects.toThrow(
+        'Invalid correlation ID format'
+      );
     });
 
     test('should reject non-string correlation IDs', async () => {
@@ -493,8 +475,9 @@ describe('Observability Integration Tests (Issue #417)', () => {
         correlationId: 12345 // Number instead of string
       };
 
-      await expect(queueService.addJob('analyze_toxicity', payload))
-        .rejects.toThrow('Invalid correlation ID: must be a string');
+      await expect(queueService.addJob('analyze_toxicity', payload)).rejects.toThrow(
+        'Invalid correlation ID: must be a string'
+      );
     });
 
     test('should accept valid UUID v4', async () => {
@@ -567,8 +550,9 @@ describe('Observability Integration Tests (Issue #417)', () => {
         correlationId: uuidV1
       };
 
-      await expect(queueService.addJob('analyze_toxicity', payload))
-        .rejects.toThrow('Invalid correlation ID format');
+      await expect(queueService.addJob('analyze_toxicity', payload)).rejects.toThrow(
+        'Invalid correlation ID format'
+      );
     });
 
     test('should validate UUID v4 variant (8, 9, a, or b in fourth segment)', async () => {
@@ -581,8 +565,9 @@ describe('Observability Integration Tests (Issue #417)', () => {
         correlationId: invalidVariant
       };
 
-      await expect(queueService.addJob('analyze_toxicity', payload))
-        .rejects.toThrow('Invalid correlation ID format');
+      await expect(queueService.addJob('analyze_toxicity', payload)).rejects.toThrow(
+        'Invalid correlation ID format'
+      );
     });
   });
 });

@@ -33,5 +33,3 @@ Ver `docs/plan/issue-905.md` para el plan completo.
 ## Agentes Relevantes
 
 - **TestEngineer**
-
-

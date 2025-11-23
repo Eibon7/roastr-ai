@@ -12,6 +12,7 @@
 ### CodeRabbit Findings
 
 **CRITICAL - Scope Mismatch:**
+
 - ❌ **Only 1 of 3 required test files addressed**
 - ❌ **PR title misleading:** Says "Complete" but work is partial
 - ❌ **Missing implementations:**
@@ -46,12 +47,14 @@
 **Pattern:** #10 in `docs/patterns/coderabbit-lessons.md`
 
 **Affected Files:**
+
 - `src/routes/checkout.js:15` ✅
 - `src/routes/polarWebhook.js:24` ✅
 - `src/routes/shop.js:11` ✅
 - `src/routes/stylecards.js:13` ✅
 
 **Applied Fix:**
+
 ```javascript
 const { logger } = require('../utils/logger'); // Issue #483: Use destructured import for test compatibility
 ```
@@ -65,6 +68,7 @@ const { logger } = require('../utils/logger'); // Issue #483: Use destructured i
 ### tests/integration/roast.test.js - 5/10 Failing
 
 Remaining failures require enhanced Supabase mocks for internal helper functions:
+
 - `getUserPlanInfo()`
 - `checkAnalysisCredits()`
 - `checkUserCredits()`

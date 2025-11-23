@@ -105,12 +105,14 @@ sequenceDiagram
 ### Frontend
 
 **責任:**
+
 - Form validation (email format, password strength)
 - Token storage (localStorage)
 - Automatic token refresh (background)
 - Session validation on page load
 
 **Files:**
+
 - `public/js/auth.js` - Auth logic
 - `public/login.html` - Login form
 - `public/register.html` - Registration form
@@ -120,6 +122,7 @@ sequenceDiagram
 #### POST `/api/auth/register`
 
 **Request:**
+
 ```json
 {
   "email": "user@example.com",
@@ -130,6 +133,7 @@ sequenceDiagram
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -152,6 +156,7 @@ sequenceDiagram
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Invalid email or password
 - `409 Conflict` - Email already registered
 - `500 Internal Server Error` - Database error
@@ -161,6 +166,7 @@ sequenceDiagram
 #### POST `/api/auth/login`
 
 **Request:**
+
 ```json
 {
   "email": "user@example.com",
@@ -169,6 +175,7 @@ sequenceDiagram
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -194,6 +201,7 @@ sequenceDiagram
 ```
 
 **Errors:**
+
 - `401 Unauthorized` - Invalid credentials
 - `403 Forbidden` - Account suspended
 - `500 Internal Server Error` - Database error
@@ -203,11 +211,13 @@ sequenceDiagram
 #### GET `/api/auth/session`
 
 **Headers:**
+
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -224,6 +234,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
 **Errors:**
+
 - `401 Unauthorized` - Token expired or invalid
 - `500 Internal Server Error` - Database error
 
@@ -232,6 +243,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 #### POST `/api/auth/refresh`
 
 **Request:**
+
 ```json
 {
   "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
@@ -239,6 +251,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -250,6 +263,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
 **Errors:**
+
 - `401 Unauthorized` - Refresh token invalid or expired
 - `500 Internal Server Error` - Auth service error
 
@@ -262,6 +276,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 #### `auth.users` (Supabase Auth)
 
 Managed by Supabase Auth:
+
 - `id` (UUID, PK)
 - `email` (VARCHAR, UNIQUE)
 - `encrypted_password` (VARCHAR)
@@ -271,6 +286,7 @@ Managed by Supabase Auth:
 #### `users` (Public Schema)
 
 Application-specific user data:
+
 ```sql
 CREATE TABLE users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -284,6 +300,7 @@ CREATE TABLE users (
 ```
 
 **RLS Policy:**
+
 ```sql
 CREATE POLICY user_isolation ON users
   FOR ALL USING (auth.uid() = id);
@@ -303,6 +320,7 @@ CREATE TABLE organizations (
 ```
 
 **RLS Policy:**
+
 ```sql
 CREATE POLICY org_isolation ON organizations
   FOR ALL USING (
@@ -345,29 +363,35 @@ If token invalid:
 ### Token Refresh Strategy
 
 **Background Refresh:**
+
 - Check token expiry every 5 minutes (setInterval)
 - Refresh if expires in < 15 minutes
 - Silent (no UI disruption)
 
 **On-Demand Refresh:**
+
 - Intercept 401 responses from API calls
 - Attempt refresh once
 - Retry original request with new token
 - If refresh fails, redirect to login
 
 **Implementation Example:**
+
 ```javascript
 // public/js/auth.js
-setInterval(async () => {
-  const token = localStorage.getItem('token');
-  const expiresAt = new Date(localStorage.getItem('expiresAt'));
-  const now = new Date();
-  const minutesUntilExpiry = (expiresAt - now) / 1000 / 60;
+setInterval(
+  async () => {
+    const token = localStorage.getItem('token');
+    const expiresAt = new Date(localStorage.getItem('expiresAt'));
+    const now = new Date();
+    const minutesUntilExpiry = (expiresAt - now) / 1000 / 60;
 
-  if (minutesUntilExpiry < 15) {
-    await refreshToken();
-  }
-}, 5 * 60 * 1000); // Every 5 minutes
+    if (minutesUntilExpiry < 15) {
+      await refreshToken();
+    }
+  },
+  5 * 60 * 1000
+); // Every 5 minutes
 ```
 
 ---
@@ -390,6 +414,7 @@ const { data: comments } = await supabase
 ### Organization Context
 
 **Stored in JWT:**
+
 ```json
 {
   "sub": "user-uuid",
@@ -403,6 +428,7 @@ const { data: comments } = await supabase
 ```
 
 **Frontend Usage:**
+
 ```javascript
 const token = parseJWT(localStorage.getItem('token'));
 const currentOrgId = token.app_metadata.organization_id;
@@ -415,6 +441,7 @@ const currentOrgId = token.app_metadata.organization_id;
 ### Invalid Credentials (Login)
 
 **Error Response:**
+
 ```json
 {
   "success": false,
@@ -424,6 +451,7 @@ const currentOrgId = token.app_metadata.organization_id;
 ```
 
 **Frontend Handling:**
+
 - Show error message: "Invalid email or password"
 - Clear password field
 - Focus email field
@@ -434,6 +462,7 @@ const currentOrgId = token.app_metadata.organization_id;
 ### Expired Token (Session)
 
 **Error Response:**
+
 ```json
 {
   "success": false,
@@ -443,6 +472,7 @@ const currentOrgId = token.app_metadata.organization_id;
 ```
 
 **Frontend Handling:**
+
 1. Attempt refresh (POST /api/auth/refresh)
 2. If refresh succeeds:
    - Update token in localStorage
@@ -456,6 +486,7 @@ const currentOrgId = token.app_metadata.organization_id;
 ### Network Error
 
 **Frontend Handling:**
+
 - Show toast: "Connection error. Retrying..."
 - Retry with exponential backoff (3 attempts)
 - If all fail: Show offline UI
@@ -467,6 +498,7 @@ const currentOrgId = token.app_metadata.organization_id;
 ### Registration
 
 **States:**
+
 1. `idle` - Form ready
 2. `validating` - Checking email format, password strength
 3. `registering` - Sending request to API
@@ -474,6 +506,7 @@ const currentOrgId = token.app_metadata.organization_id;
 5. `error` - Show error message
 
 **Visual Indicators:**
+
 - Button disabled during `validating` + `registering`
 - Spinner on button during `registering`
 - Success checkmark on `success`
@@ -484,12 +517,14 @@ const currentOrgId = token.app_metadata.organization_id;
 ### Login
 
 **States:**
+
 1. `idle` - Form ready
 2. `logging_in` - Sending credentials
 3. `success` - Login complete, redirecting
 4. `error` - Invalid credentials
 
 **Visual Indicators:**
+
 - Button shows "Logging in..." during `logging_in`
 - Spinner on button
 - Redirect with fade-out on `success`
@@ -499,11 +534,13 @@ const currentOrgId = token.app_metadata.organization_id;
 ### Session Verification (Page Load)
 
 **States:**
+
 1. `verifying` - Checking token validity
 2. `authenticated` - Token valid, show dashboard
 3. `unauthenticated` - Token invalid, redirect to login
 
 **Visual Indicators:**
+
 - Show loading spinner during `verifying` (max 2 seconds)
 - If > 2 seconds, show "Verifying session..."
 - Fade in dashboard on `authenticated`
@@ -541,13 +578,11 @@ const currentOrgId = token.app_metadata.organization_id;
 // tests/unit/auth/registration.test.js
 describe('Registration', () => {
   test('creates user with valid credentials', async () => {
-    const response = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'test@example.com',
-        password: 'SecurePass123!',
-        name: 'Test User'
-      });
+    const response = await request(app).post('/api/auth/register').send({
+      email: 'test@example.com',
+      password: 'SecurePass123!',
+      name: 'Test User'
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.data.user.email).toBe('test@example.com');
@@ -555,13 +590,11 @@ describe('Registration', () => {
   });
 
   test('rejects weak password', async () => {
-    const response = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'test@example.com',
-        password: 'weak',
-        name: 'Test User'
-      });
+    const response = await request(app).post('/api/auth/register').send({
+      email: 'test@example.com',
+      password: 'weak',
+      name: 'Test User'
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.error).toMatch(/password/i);
@@ -576,13 +609,11 @@ describe('Registration', () => {
 describe('Auth Flow', () => {
   test('complete registration → login → session validation flow', async () => {
     // 1. Register
-    const registerRes = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'flow@example.com',
-        password: 'SecurePass123!',
-        name: 'Flow Test'
-      });
+    const registerRes = await request(app).post('/api/auth/register').send({
+      email: 'flow@example.com',
+      password: 'SecurePass123!',
+      name: 'Flow Test'
+    });
 
     expect(registerRes.status).toBe(200);
     const { token, user } = registerRes.body.data;
@@ -598,12 +629,10 @@ describe('Auth Flow', () => {
     // 3. Logout (client-side: clear localStorage)
 
     // 4. Login
-    const loginRes = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: 'flow@example.com',
-        password: 'SecurePass123!'
-      });
+    const loginRes = await request(app).post('/api/auth/login').send({
+      email: 'flow@example.com',
+      password: 'SecurePass123!'
+    });
 
     expect(loginRes.status).toBe(200);
     expect(loginRes.body.data.user.email).toBe('flow@example.com');
@@ -658,12 +687,14 @@ Sent automatically upon successful registration using SendGrid.
 **Template:** `src/templates/emails/welcome.hbs`
 
 **Variables:**
+
 - `userName` - User's display name
 - `dashboardUrl` - Link to dashboard (APP_URL from env)
 - `supportEmail` - Support contact email
 - `language` - User's preferred language (default: 'es')
 
 **Example:**
+
 ```javascript
 await emailService.sendWelcomeEmail('user@example.com', {
   userName: 'John Doe',
@@ -678,12 +709,14 @@ Sent when user requests password reset via "Forgot Password" link.
 **Template:** `src/templates/emails/password_reset.hbs`
 
 **Variables:**
+
 - `userName` - User's display name
 - `resetLink` - One-time password reset link (expires in 24h)
 - `expiryTime` - Time until link expires
 - `supportEmail` - Support contact email
 
 **Flow:**
+
 1. User clicks "Forgot Password"
 2. Enter email address
 3. System sends reset link via SendGrid
@@ -693,6 +726,7 @@ Sent when user requests password reset via "Forgot Password" link.
 ### Email Configuration
 
 **Environment Variables:**
+
 ```bash
 SENDGRID_API_KEY=<your-sendgrid-api-key>
 SENDGRID_FROM_EMAIL=noreply@roastr.ai
@@ -703,6 +737,7 @@ ENABLE_EMAIL_NOTIFICATIONS=true
 ```
 
 **Service Status:**
+
 ```javascript
 const status = emailService.getStatus();
 // {

@@ -23,6 +23,7 @@
 ### Pre-Flight Checks
 
 - [ ] **Backup Created**
+
   ```bash
   pg_dump -h <staging-host> -U <user> -d <database> \
     --table=user_behaviors \
@@ -44,6 +45,7 @@
 ### Deployment Execution
 
 - [ ] **Deploy Migration Script**
+
   ```bash
   psql -h <staging-host> -U <user> -d <database> \
     -f database/migrations/024_atomic_user_behavior_updates.sql
@@ -56,6 +58,7 @@
   ```
 
 - [ ] **Verify Function Exists**
+
   ```sql
   SELECT
     proname AS function_name,
@@ -68,6 +71,7 @@
   ```
 
 - [ ] **Verify Permissions**
+
   ```sql
   SELECT grantee, privilege_type
   FROM information_schema.routine_privileges
@@ -77,6 +81,7 @@
   ```
 
 - [ ] **Manual RPC Test**
+
   ```sql
   SELECT atomic_update_user_behavior(
     '00000000-0000-0000-0000-000000000001'::uuid,
@@ -92,6 +97,7 @@
 ### Post-Deployment Validation
 
 - [ ] **Run Concurrent Actions Test**
+
   ```bash
   cd /Users/emiliopostigo/roastr-ai
   node scripts/test-concurrent-shield-actions.js \
@@ -103,6 +109,7 @@
   ```
 
 - [ ] **Verify Count Accuracy**
+
   ```bash
   node scripts/verify-user-behavior-count.js \
     --user-id=test_concurrent_staging \
@@ -117,6 +124,7 @@
   - [ ] RPC function calls completing <15ms
 
 - [ ] **Run Shield E2E Tests**
+
   ```bash
   npm test -- tests/integration/shield-system-e2e.test.js
 
@@ -148,14 +156,14 @@
 ### Performance Benchmarking
 
 - [ ] **Capture Baseline Metrics** (before Migration 024)
-  - Avg Shield action latency: _______ms
-  - Avg DB calls per action: _______
-  - Race condition events (last 24h): _______
+  - Avg Shield action latency: **\_\_\_**ms
+  - Avg DB calls per action: **\_\_\_**
+  - Race condition events (last 24h): **\_\_\_**
 
 - [ ] **Measure Post-Migration Metrics** (after 24 hours)
-  - Avg Shield action latency: _______ms (target: <50ms)
-  - Avg DB calls per action: _______ (target: ≤2)
-  - Race condition events: _______ (target: 0)
+  - Avg Shield action latency: **\_\_\_**ms (target: <50ms)
+  - Avg DB calls per action: **\_\_\_** (target: ≤2)
+  - Race condition events: **\_\_\_** (target: 0)
 
 ### Rollback Criteria
 
@@ -168,6 +176,7 @@
 - [ ] Production incident related to user_behavior updates
 
 **Rollback Procedure:**
+
 1. Drop RPC function: `DROP FUNCTION IF EXISTS atomic_update_user_behavior(...);`
 2. Verify removal: `SELECT proname FROM pg_proc WHERE proname = 'atomic_update_user_behavior';`
 3. Restore backup if data corrupted
@@ -188,12 +197,13 @@
 
 ### Sign-Off
 
-**Product Owner:** _______________________
-**Date:** _______________________
+**Product Owner:** **********\_\_\_**********
+**Date:** **********\_\_\_**********
 **Approval Decision:**
+
 - [ ] APPROVED - Proceed to production
-- [ ] CONDITIONAL - Address: _______________________
-- [ ] REJECTED - Reason: _______________________
+- [ ] CONDITIONAL - Address: **********\_\_\_**********
+- [ ] REJECTED - Reason: **********\_\_\_**********
 
 ---
 
@@ -212,6 +222,7 @@
 ### Production Backup
 
 - [ ] **Create Production Backup**
+
   ```bash
   pg_dump -h <production-host> -U <user> -d <database> \
     --table=user_behaviors \
@@ -227,12 +238,14 @@
 ### Production Deployment Execution
 
 - [ ] **Deploy Migration to Production**
+
   ```bash
   psql -h <production-host> -U <user> -d <database> \
     -f database/migrations/024_atomic_user_behavior_updates.sql
   ```
 
 - [ ] **Verify Function in Production**
+
   ```sql
   SELECT proname, pronargs, prorettype::regtype
   FROM pg_proc
@@ -240,6 +253,7 @@
   ```
 
 - [ ] **Verify Permissions in Production**
+
   ```sql
   SELECT grantee, privilege_type
   FROM information_schema.routine_privileges
@@ -290,6 +304,7 @@
 ### Merge Execution
 
 - [ ] **Verify PR #654 Status**
+
   ```bash
   gh pr view 654 --json mergeable,mergeStateStatus,statusCheckRollup
 
@@ -306,6 +321,7 @@
   - [ ] Guardian scan: SUCCESS
 
 - [ ] **Merge PR #654**
+
   ```bash
   gh pr merge 654 --squash --delete-branch
 
@@ -373,17 +389,20 @@ Is it RPC-related?
 ## Contacts & Escalation
 
 **Primary Contact:**
+
 - Name: [Product Owner Name]
 - Role: Product Owner
 - Slack: @[username]
 - Email: [email]
 
 **On-Call Engineer:**
+
 - Name: [Engineer Name]
 - Slack: @[username]
 - Phone: [number]
 
 **Escalation Path:**
+
 1. On-Call Engineer (immediate issues)
 2. Product Owner (approval/decisions)
 3. CTO (critical incidents)
@@ -410,6 +429,7 @@ Is it RPC-related?
 **Overall Progress:** 0% (0/5 phases complete)
 
 **Phase Statuses:**
+
 - Phase 1: 🔴 NOT STARTED
 - Phase 2: 🔴 NOT STARTED
 - Phase 3: 🔴 NOT STARTED

@@ -10,6 +10,7 @@
 Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation for AI-assisted development. This audit identified gaps specific to Roastr's multi-tenant, multi-platform architecture and created documentation + skills to maximize precision and reduce iterations.
 
 **Key Achievement:**
+
 - ✅ **GDD framework now fully documented** → Clarifies bidirectional sync workflow
 - ✅ **4 critical skills gaps identified** → Roadmap for next implementations
 - ✅ **Skills + agents combinations** → Proven patterns for 2+2=5 multiplier effect
@@ -21,6 +22,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 ### Skills Inventory (18 total)
 
 #### Superpowers (Process Optimization) - 10 skills
+
 1. ✅ `systematic-debugging-skill` - 4-phase debugging framework
 2. ✅ `root-cause-tracing-skill` - Backward call stack tracing
 3. ✅ `test-driven-development-skill` - RED→GREEN→REFACTOR enforcement
@@ -33,6 +35,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 10. ✅ `receiving-code-review-skill` - Rigorous review application
 
 #### Roastr-Specific (Project) - 8 skills
+
 11. ✅ `code-review-helper` (directory skill) - Pre-PR checklist
 12. ✅ `gdd` (directory skill) - **UPDATED** - Load GDD context (FASE 0)
 13. ✅ `gdd-sync-skill` - **NEW** - Sync nodes → spec.md (FASE 4)
@@ -45,6 +48,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 ### Agents Inventory (9 total)
 
 #### Built-in (8 agents)
+
 1. ✅ Orchestrator - Coordinates workflow, GDD, receipts
 2. ✅ Explore - Fast codebase research
 3. ✅ TaskAssessor - Assess AC ≥3, P0/P1
@@ -55,6 +59,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 8. ✅ general-purpose - Complex research
 
 #### Custom (1 agent)
+
 9. ✅ Guardian - Governance + completion validation (script-based)
 
 ---
@@ -66,6 +71,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 **Created:** `docs/GDD-FRAMEWORK.md`
 
 **Content:**
+
 - Complete philosophy and architecture
 - Bidirectional sync workflow (nodes ↔ spec.md)
 - FASE 0-4 detailed processes
@@ -73,12 +79,14 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - Examples and references
 
 **Impact:**
+
 - ✅ Clarifies sync automático (post-merge workflow exists)
 - ✅ Documents node structure with YAML frontmatter
 - ✅ Explains relationship: spec.md = vista expandida del grafo
 - ✅ Provides rules of gold for GDD enforcement
 
 **Confirmation:**
+
 - ✅ **Sync automático SÍ existe:** `.github/workflows/post-merge-doc-sync.yml`
 - ✅ **Proceso:** Detecta cambios → mapea nodos → sincroniza → crea PR automático
 - ✅ **No commit directo:** Crea `docs/sync-pr-{número}` para review manual
@@ -90,6 +98,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 **Purpose:** Synchronize modified nodes → spec.md post-implementation
 
 **Process:**
+
 1. Detect modified nodes (git diff or manual)
 2. Validate YAML frontmatter (id, depends_on, coverage_source)
 3. Sync metadata (Last Updated, Related PRs, Coverage)
@@ -106,6 +115,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 **Updated:** `.claude/skills/gdd/SKILL.md`
 
 **Changes:**
+
 - Added framework overview and philosophy
 - Clarified role: "Load minimal context needed"
 - Added references to `docs/GDD-FRAMEWORK.md`
@@ -118,6 +128,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 **Updated:** `.claude/skills/README.md`
 
 **Changes:**
+
 - Added GDD skill documentation
 - Added GDD Sync skill documentation
 - Clarified when each activates and output format
@@ -134,12 +145,14 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - **Impact:** -80% API debugging time
 
 **Error Classification:**
+
 - AUTH (401/403): Token refresh, scope verification
 - RATE_LIMIT (429): Exponential backoff, quota management
 - DATA (4xx): Schema validation, required fields
 - SERVER (5xx): Retry logic, fallback mechanisms
 
 **Platform Quirks Support:**
+
 - References `docs/INTEGRATIONS.md` for platform-specific behaviors
 - Documents edge cases in `docs/patterns/api-quirks.md`
 - Captures retry patterns and failure modes
@@ -152,6 +165,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - **Impact:** -100% tenant leaks
 
 **Enforcement Checklist:**
+
 1. Verify request has organization_id (JWT/session/context)
 2. Enforce WHERE organization_id = $1 in ALL queries
 3. Pass context through queue payloads (workers)
@@ -159,6 +173,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 5. Align RLS policies with application logic
 
 **Test Templates Included:**
+
 - Template 1: Query isolation (2 orgs, verify no leaks)
 - Template 2: Worker context preservation
 - Template 3: RLS policy alignment
@@ -171,6 +186,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - **Impact:** Zero quota bypass vulnerabilities
 
 **Validation Checklist:**
+
 1. Verify tier limits match business model (Free/Starter/Pro/Plus)
 2. Test quota enforcement at exact limit + 1 over
 3. Test upgrade/downgrade paths safely
@@ -178,6 +194,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 5. Verify costControl integrated in ALL credit-consuming endpoints
 
 **Critical Protection:**
+
 - Revenue protection through systematic verification
 - Business logic correctness: 100%
 - Zero tolerance for quota bypass bugs
@@ -190,12 +207,14 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - **Impact:** Zero prompt injection vulnerabilities
 
 **Defense Layers:**
+
 1. Input validation: Length limits, escape sequences
 2. Role separation: System vs user prompts isolated
 3. Adversarial testing: "Ignore previous instructions..." patterns
 4. Output validation: Verify no system prompt leakage
 
 **Test Cases Included:**
+
 - Direct injection attempts
 - Role confusion attacks
 - Context manipulation
@@ -208,6 +227,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 **Purpose:** Template to capture platform-specific API edge cases
 
 **Format:**
+
 - Pattern name and description
 - Root cause analysis
 - Error manifestation
@@ -216,6 +236,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - Last seen date
 
 **Usage:**
+
 - Empty template ready to fill as patterns discovered
 - Accumulates learnings over time
 - Referenced by api-integration-debugging-skill
@@ -230,6 +251,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 ### 1. API Integration Debugging Skill ⚠️ PRIORITY 1 (✅ COMPLETED)
 
 **Why needed:**
+
 - Roastr has 10+ social media integrations (Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky)
 - Each API has unique quirks (rate limits, auth flows, response formats)
 - Pattern in `coderabbit-lessons.md`: "Integration Workflow & Error Prevention"
@@ -238,6 +260,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 **Solution:** ✅ Created `.claude/skills/api-integration-debugging-skill.md` (commit 7b7730a)
 
 **Key features:**
+
 - Capture request/response cycles
 - Classify errors: AUTH (401/403) | RATE_LIMIT (429) | DATA (4xx) | SERVER (5xx)
 - Apply platform-specific quirks from `docs/INTEGRATIONS.md`
@@ -246,6 +269,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - Document pattern in `docs/patterns/api-quirks.md`
 
 **Expected impact:**
+
 - Debugging time: -80% (2-4 hours → 20-40 min)
 - Iterations to fix: -60% (3-5 → 1-2)
 - Systematic capture of platform quirks
@@ -253,6 +277,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 ### 2. Multi-Tenant Context Preservation Skill ⚠️ PRIORITY 2 (✅ COMPLETED)
 
 **Why needed:**
+
 - Multi-tenant architecture (RLS, organization_id everywhere)
 - Security critical: NO data leaks between tenants
 - Common bugs: queries without organization_id filter, context leak in workers
@@ -260,6 +285,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 **Solution:** ✅ Created `.claude/skills/multi-tenant-context-skill.md` (commit 7b7730a)
 
 **Key features:**
+
 - Verify request has organization_id (from JWT, session, context)
 - Enforce WHERE organization_id = $1 in ALL queries
 - Verify context passed through queue payload
@@ -267,6 +293,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - Align RLS policies in schema.sql with application logic
 
 **Expected impact:**
+
 - Tenant leaks: -100% (impossible to forget filter)
 - Security: 100% (systematic enforcement)
 - Compliance: Complete audit trail
@@ -274,6 +301,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 ### 3. Cost Control Validation Skill 🟡 PRIORITY 3 (✅ COMPLETED)
 
 **Why needed:**
+
 - Business model: Free, Starter €5/mo, Pro €15/mo, Plus €50/mo
 - `src/services/costControl.js` is CRITICAL - errors = money lost
 - Guardian protects changes, but need skill to verify quota logic
@@ -281,6 +309,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 **Solution:** ✅ Created `.claude/skills/cost-control-validation-skill.md` (commit 7b7730a)
 
 **Key features:**
+
 - Verify tier limits match business model (Free/Starter/Pro/Plus)
 - Test quota enforcement at exact limit + 1 over
 - Test upgrade/downgrade paths safely
@@ -288,6 +317,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - Verify costControl integrated in ALL credit-consuming endpoints
 
 **Expected impact:**
+
 - Quota bypass vulnerabilities: 0
 - Revenue protection: Systematic verification
 - Business logic correctness: 100%
@@ -295,6 +325,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 ### 4. Prompt Injection Defense Skill 🔵 PRIORITY 4 (✅ COMPLETED)
 
 **Why needed:**
+
 - Product uses OpenAI for roasts (master prompt)
 - Security: Injection protection, 2000 char limit
 - Need to verify user input doesn't manipulate system prompt
@@ -302,6 +333,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 **Solution:** ✅ Created `.claude/skills/prompt-injection-defense-skill.md` (commit 7b7730a)
 
 **Key features:**
+
 - Identify user-controlled fields reaching OpenAI
 - Apply defenses: length limit, role separation, escape sequences
 - Test adversarial inputs ("Ignore previous instructions...")
@@ -309,6 +341,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 - Add test cases for each adversarial pattern
 
 **Expected impact:**
+
 - Prompt injection attacks: 0
 - System prompt leakage: Impossible
 - Adversarial testing: Systematic
@@ -320,6 +353,7 @@ Roastr.ai has **18 skills + 9 agents** configured, providing a solid foundation 
 ### Combination 1: GDD Skill + Explore Agent → Contexto Preciso
 
 **Pattern:**
+
 ```
 User: /gdd 680
   ↓
@@ -333,6 +367,7 @@ Result: Precise context in 1 step
 ```
 
 **Impact:**
+
 - Precision: +80% (only relevant context)
 - Speed: 5x faster (1 invocation vs 5+ explorations)
 - Cost: -90% tokens (15k vs 100k)
@@ -340,6 +375,7 @@ Result: Precise context in 1 step
 ### Combination 2: Systematic Debugging + Root Cause Tracing → Fix Profundo
 
 **Pattern:**
+
 ```
 Test failure detected
   ↓
@@ -353,6 +389,7 @@ Fix at source + defense-in-depth at each layer
 ```
 
 **Impact:**
+
 - Precision: +95% (fix correct first-try)
 - Iterations: -70% (no more "fix reveals new problem")
 - Quality: Prevention vs patches
@@ -360,6 +397,7 @@ Fix at source + defense-in-depth at each layer
 ### Combination 3: TDD Skill + Test Engineer Agent → Tests Primero
 
 **Pattern:**
+
 ```
 Feature request
   ↓
@@ -379,6 +417,7 @@ verification-before-completion skill: npm test before "done"
 ```
 
 **Impact:**
+
 - Coverage: 100% (impossible to forget tests)
 - Bugs: -80% (TDD prevents regressions)
 - Confidence: Evidence before claims
@@ -386,6 +425,7 @@ verification-before-completion skill: npm test before "done"
 ### Combination 4: API Integration Debugging + CodeRabbit Lessons → Aprendizaje Acumulativo
 
 **Pattern:**
+
 ```
 API error detected
   ↓
@@ -403,6 +443,7 @@ Next similar error → auto-prevention
 ```
 
 **Impact:**
+
 - Speed: 10x (second error same type = auto-prevention)
 - Quality: Cumulative lessons
 - Scalability: Adding platform 11 easier than platform 1
@@ -410,6 +451,7 @@ Next similar error → auto-prevention
 ### Combination 5: Multi-Tenant Context Skill + Guardian Agent → Zero Leaks
 
 **Pattern:**
+
 ```
 Developer writes new query
   ↓
@@ -427,6 +469,7 @@ Only then allows commit
 ```
 
 **Impact:**
+
 - Security: 100% (impossible to forget filter)
 - Compliance: Complete audit trail
 - Confidence: Tests prove isolation
@@ -435,16 +478,16 @@ Only then allows commit
 
 ## 📈 Expected ROI (With New Skills)
 
-| Metric | Current | With 4 New Skills | Improvement |
-|--------|---------|-------------------|-------------|
-| **API debugging time** | 2-4 hours | 20-40 min | -80% |
-| **Tenant leaks** | 1-2/quarter | 0 | -100% |
-| **Tests forgotten** | 10-15% | <1% | -90% |
-| **Iterations to fix** | 3-5 | 1-2 | -60% |
-| **Context tokens/issue** | 50-100k | 5-15k | -85% |
-| **CodeRabbit repetitions** | 20-30% | <10% | -60% |
-| **Quota bypass bugs** | Unknown | 0 | N/A |
-| **Prompt injection risk** | Medium | None | N/A |
+| Metric                     | Current     | With 4 New Skills | Improvement |
+| -------------------------- | ----------- | ----------------- | ----------- |
+| **API debugging time**     | 2-4 hours   | 20-40 min         | -80%        |
+| **Tenant leaks**           | 1-2/quarter | 0                 | -100%       |
+| **Tests forgotten**        | 10-15%      | <1%               | -90%        |
+| **Iterations to fix**      | 3-5         | 1-2               | -60%        |
+| **Context tokens/issue**   | 50-100k     | 5-15k             | -85%        |
+| **CodeRabbit repetitions** | 20-30%      | <10%              | -60%        |
+| **Quota bypass bugs**      | Unknown     | 0                 | N/A         |
+| **Prompt injection risk**  | Medium      | None              | N/A         |
 
 **Status:** ✅ All 4 critical skills implemented (commit 7b7730a)
 **Time investment:** 4 hours creating 4 skills = **20+ hours saved/month**
@@ -495,11 +538,13 @@ Only then allows commit
 ## 🔗 References
 
 ### GDD Framework
+
 - `docs/GDD-FRAMEWORK.md` - Main framework documentation
 - `docs/GDD-ACTIVATION-GUIDE.md` - Activation guide
 - `.github/workflows/post-merge-doc-sync.yml` - Automatic sync workflow
 
 ### Skills
+
 - `.claude/skills/` - All skills directory
 - `.claude/skills/gdd/SKILL.md` - GDD context loader (FASE 0)
 - `.claude/skills/gdd-sync.md` - GDD synchronization (FASE 4)
@@ -509,10 +554,12 @@ Only then allows commit
 - `.claude/skills/prompt-injection-defense-skill.md` - Prompt injection (PRIORITY 4)
 
 ### Agents
+
 - `agents/manifest.yaml` - Agent registry
 - `docs/agents/INVENTORY.md` - Agent inventory
 
 ### Patterns
+
 - `docs/patterns/coderabbit-lessons.md` - Known patterns to avoid
 - `docs/patterns/api-quirks.md` - Platform-specific API edge cases (NEW)
 - `docs/INTEGRATIONS.md` - Platform integration details
@@ -528,7 +575,7 @@ Only then allows commit
    - Vista expandida del grafo de nodos
    - NO se edita directamente (salvo mantenimiento global)
 
-2. **docs/nodes/*.md = Nodos especializados**
+2. **docs/nodes/\*.md = Nodos especializados**
    - Fragmentos con estructura 1:1 a secciones de spec.md
    - YAML frontmatter con metadatos (id, depends_on, coverage, etc.)
    - Se cargan individualmente según necesidad
@@ -555,6 +602,7 @@ Only then allows commit
 **Principio:** Combinar skills (procedimientos) + agents (especialistas) = 2+2=5
 
 **Patrones probados:**
+
 1. GDD Skill + Explore Agent = Contexto preciso sin sobrecarga
 2. Debugging Skills stacked = Fix profundo first-try
 3. TDD Skill + Test Engineer = Tests primero siempre
@@ -562,6 +610,7 @@ Only then allows commit
 5. Context Skills + Guardian = Zero security leaks
 
 **Clave del éxito:**
+
 - Skills capturan **procedimientos repetibles**
 - Agents ejecutan **tareas especializadas**
 - Combinación = **precisión sistemática** + **escalabilidad**
@@ -571,17 +620,20 @@ Only then allows commit
 **Implementation Success:** All 4 priority skills completed in single development session (commit 7b7730a)
 
 **Skills Created:**
+
 1. ✅ **api-integration-debugging-skill** (17KB) - PRIORITY 1
 2. ✅ **multi-tenant-context-skill** (17KB) - PRIORITY 2
 3. ✅ **cost-control-validation-skill** (18KB) - PRIORITY 3
 4. ✅ **prompt-injection-defense-skill** (17KB) - PRIORITY 4
 
 **Template Created:**
+
 - ✅ **docs/patterns/api-quirks.md** - Empty template ready for knowledge capture
 
 **Time Investment:** ~4 hours creation = **20+ hours/month saved**
 
 **Key Achievement:** Systematic procedures now documented for:
+
 - Multi-platform API debugging (10+ integrations)
 - Multi-tenant security (zero-leak guarantee)
 - Revenue protection (quota enforcement)

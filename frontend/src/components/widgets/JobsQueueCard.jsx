@@ -18,12 +18,12 @@ export default function JobsQueueCard() {
           completed: Math.floor(Math.random() * 100) + 50,
           failed: Math.floor(Math.random() * 3),
           types: {
-            'roast_generation': Math.floor(Math.random() * 10) + 5,
-            'toxicity_analysis': Math.floor(Math.random() * 8) + 3,
-            'platform_sync': Math.floor(Math.random() * 5) + 1,
+            roast_generation: Math.floor(Math.random() * 10) + 5,
+            toxicity_analysis: Math.floor(Math.random() * 8) + 3,
+            platform_sync: Math.floor(Math.random() * 5) + 1
           }
         };
-        
+
         setTimeout(() => {
           setQueueData(mockData);
           setLoading(false);
@@ -60,8 +60,9 @@ export default function JobsQueueCard() {
     );
   }
 
-  const totalJobs = queueData ? 
-    queueData.active + queueData.waiting + queueData.completed + queueData.failed : 0;
+  const totalJobs = queueData
+    ? queueData.active + queueData.waiting + queueData.completed + queueData.failed
+    : 0;
 
   return (
     <Card>
@@ -90,39 +91,31 @@ export default function JobsQueueCard() {
                 <Play className="h-3 w-3 text-green-500" />
                 <span className="text-xs text-muted-foreground">Active</span>
               </div>
-              <div className="text-2xl font-bold text-green-600">
-                {queueData?.active || 0}
-              </div>
+              <div className="text-2xl font-bold text-green-600">{queueData?.active || 0}</div>
             </div>
-            
+
             <div className="space-y-1">
               <div className="flex items-center space-x-1">
                 <Pause className="h-3 w-3 text-yellow-500" />
                 <span className="text-xs text-muted-foreground">Waiting</span>
               </div>
-              <div className="text-2xl font-bold text-yellow-600">
-                {queueData?.waiting || 0}
-              </div>
+              <div className="text-2xl font-bold text-yellow-600">{queueData?.waiting || 0}</div>
             </div>
-            
+
             <div className="space-y-1">
               <div className="flex items-center space-x-1">
                 <CheckCircle className="h-3 w-3 text-blue-500" />
                 <span className="text-xs text-muted-foreground">Completed</span>
               </div>
-              <div className="text-lg font-semibold text-blue-600">
-                {queueData?.completed || 0}
-              </div>
+              <div className="text-lg font-semibold text-blue-600">{queueData?.completed || 0}</div>
             </div>
-            
+
             <div className="space-y-1">
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-3 rounded-full bg-red-500" />
                 <span className="text-xs text-muted-foreground">Failed</span>
               </div>
-              <div className="text-lg font-semibold text-red-600">
-                {queueData?.failed || 0}
-              </div>
+              <div className="text-lg font-semibold text-red-600">{queueData?.failed || 0}</div>
             </div>
           </div>
 

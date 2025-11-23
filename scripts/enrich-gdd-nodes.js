@@ -23,36 +23,82 @@ class GDDNodeEnricher {
 
     // Coverage mapping from known test files
     this.coverageMap = {
-      'roast': 85,
-      'shield': 78,
+      roast: 85,
+      shield: 78,
       'queue-system': 87,
       'multi-tenant': 72,
       'cost-control': 68,
-      'billing': 65,
+      billing: 65,
       'plan-features': 70,
-      'persona': 75,
-      'tone': 73,
+      persona: 75,
+      tone: 73,
       'platform-constraints': 80,
       'social-platforms': 82,
-      'analytics': 60,
-      'trainer': 45
+      analytics: 60,
+      trainer: 45
     };
 
     // Agent mapping by node type
     this.agentsByNode = {
-      'roast': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Orchestrator'],
-      'shield': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Security Engineer', 'Orchestrator'],
-      'queue-system': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Performance Monitor', 'Orchestrator'],
-      'multi-tenant': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Security Engineer', 'Database Admin'],
-      'cost-control': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Billing Specialist', 'Orchestrator'],
-      'billing': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Billing Specialist', 'Orchestrator'],
-      'plan-features': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Product Manager'],
-      'persona': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'UX Designer'],
-      'tone': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'UX Designer'],
-      'platform-constraints': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Integration Specialist'],
-      'social-platforms': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Integration Specialist', 'API Specialist'],
-      'analytics': ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Data Analyst'],
-      'trainer': ['Documentation Agent', 'Backend Developer', 'ML Engineer', 'Data Scientist']
+      roast: ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Orchestrator'],
+      shield: [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Security Engineer',
+        'Orchestrator'
+      ],
+      'queue-system': [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Performance Monitor',
+        'Orchestrator'
+      ],
+      'multi-tenant': [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Security Engineer',
+        'Database Admin'
+      ],
+      'cost-control': [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Billing Specialist',
+        'Orchestrator'
+      ],
+      billing: [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Billing Specialist',
+        'Orchestrator'
+      ],
+      'plan-features': [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Product Manager'
+      ],
+      persona: ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'UX Designer'],
+      tone: ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'UX Designer'],
+      'platform-constraints': [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Integration Specialist'
+      ],
+      'social-platforms': [
+        'Documentation Agent',
+        'Test Engineer',
+        'Backend Developer',
+        'Integration Specialist',
+        'API Specialist'
+      ],
+      analytics: ['Documentation Agent', 'Test Engineer', 'Backend Developer', 'Data Analyst'],
+      trainer: ['Documentation Agent', 'Backend Developer', 'ML Engineer', 'Data Scientist']
     };
   }
 
@@ -110,8 +156,8 @@ class GDDNodeEnricher {
     // Use async fs methods
     const files = await fs.promises.readdir(this.nodesDir);
     return files
-      .filter(f => f.endsWith('.md') && f !== 'README.md')
-      .map(f => path.join(this.nodesDir, f));
+      .filter((f) => f.endsWith('.md') && f !== 'README.md')
+      .map((f) => path.join(this.nodesDir, f));
   }
 
   /**
@@ -236,13 +282,14 @@ class GDDNodeEnricher {
     const agents = this.agentsByNode[nodeName] || ['Documentation Agent', 'Backend Developer'];
 
     // Check if section exists
-    const hasAgentsSection = content.includes('## Agentes Relevantes') ||
-                             content.includes('## Relevant Agents') ||
-                             content.includes('## Agents');
+    const hasAgentsSection =
+      content.includes('## Agentes Relevantes') ||
+      content.includes('## Relevant Agents') ||
+      content.includes('## Agents');
 
     if (hasAgentsSection) {
       // Section exists, validate completeness
-      const agentsMissing = agents.some(agent => !content.includes(agent));
+      const agentsMissing = agents.some((agent) => !content.includes(agent));
       if (!agentsMissing) {
         return { content, modified: false };
       }
@@ -316,7 +363,7 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

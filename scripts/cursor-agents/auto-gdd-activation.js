@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
  * Auto GDD Activation Script
- * 
+ *
  * Detecta automáticamente cuándo activar GDD basándose en:
  * - Issue labels
  * - Archivos modificados
  * - Título de issue
  * - Keywords en código
- * 
+ *
  * Uso:
  *   node scripts/cursor-agents/auto-gdd-activation.js [issue-number]
  *   node scripts/cursor-agents/auto-gdd-activation.js --from-branch
@@ -38,81 +38,85 @@ const LABEL_TO_NODES = {
 
 // Keywords → nodos (fallback)
 const KEYWORD_TO_NODES = {
-  'shield': 'shield',
-  'moderación': 'shield',
-  'ofensor': 'shield',
-  'billing': 'cost-control',
-  'stripe': 'cost-control',
-  'plan': 'cost-control',
-  'entitlements': 'cost-control',
-  'worker': 'queue-system',
-  'queue': 'queue-system',
-  'redis': 'queue-system',
-  'job': 'queue-system',
-  'roast': 'roast',
-  'generación': 'roast',
-  'prompt': 'roast',
-  'variante': 'roast',
+  shield: 'shield',
+  moderación: 'shield',
+  ofensor: 'shield',
+  billing: 'cost-control',
+  stripe: 'cost-control',
+  plan: 'cost-control',
+  entitlements: 'cost-control',
+  worker: 'queue-system',
+  queue: 'queue-system',
+  redis: 'queue-system',
+  job: 'queue-system',
+  roast: 'roast',
+  generación: 'roast',
+  prompt: 'roast',
+  variante: 'roast',
   'multi-tenant': 'multi-tenant',
-  'rls': 'multi-tenant',
-  'organization': 'multi-tenant',
-  'platform': 'social-platforms',
-  'twitter': 'social-platforms',
-  'discord': 'social-platforms',
-  'integration': 'social-platforms',
-  'persona': 'persona',
-  'tone': 'persona',
-  'style': 'persona',
-  'humor': 'persona',
+  rls: 'multi-tenant',
+  organization: 'multi-tenant',
+  platform: 'social-platforms',
+  twitter: 'social-platforms',
+  discord: 'social-platforms',
+  integration: 'social-platforms',
+  persona: 'persona',
+  tone: 'persona',
+  style: 'persona',
+  humor: 'persona',
   'demo mode': 'roast',
-  'fixtures': 'roast',
-  'seeds': 'roast',
-  'publisher': 'queue-system',
-  'publicación': 'queue-system',
-  'post': 'queue-system'
+  fixtures: 'roast',
+  seeds: 'roast',
+  publisher: 'queue-system',
+  publicación: 'queue-system',
+  post: 'queue-system'
 };
 
 // Obtener issue desde rama o número
 function getIssueInfo(issueNum = null) {
   if (issueNum) {
     try {
-      const output = execSync(`gh issue view ${issueNum} --json labels,title,body`, { encoding: 'utf8' });
+      const output = execSync(`gh issue view ${issueNum} --json labels,title,body`, {
+        encoding: 'utf8'
+      });
       return JSON.parse(output);
     } catch (e) {
       console.error(`❌ No se pudo obtener issue #${issueNum}`);
       return null;
     }
   }
-  
+
   // Intentar desde rama
   try {
     const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
     const match = branch.match(/issue[_-]?(\d+)/i);
     if (match) {
       const num = match[1];
-      const output = execSync(`gh issue view ${num} --json labels,title,body`, { encoding: 'utf8' });
+      const output = execSync(`gh issue view ${num} --json labels,title,body`, {
+        encoding: 'utf8'
+      });
       return JSON.parse(output);
     }
   } catch (e) {
     // No hay issue asociado
   }
-  
+
   return null;
 }
 
 // Detectar nodos desde labels
 function detectNodesFromLabels(labels) {
   const nodes = new Set();
-  
+
   for (const label of labels) {
     const mapped = LABEL_TO_NODES[label.name || label];
     if (mapped === 'ALL') {
       return 'ALL'; // Cargar todos los nodos
     } else if (mapped) {
-      mapped.forEach(n => nodes.add(n));
+      mapped.forEach((n) => nodes.add(n));
     }
   }
-  
+
   return Array.from(nodes);
 }
 
@@ -120,33 +124,33 @@ function detectNodesFromLabels(labels) {
 function detectNodesFromKeywords(text) {
   const nodes = new Set();
   const lowerText = text.toLowerCase();
-  
+
   for (const [keyword, node] of Object.entries(KEYWORD_TO_NODES)) {
     if (lowerText.includes(keyword.toLowerCase())) {
       nodes.add(node);
     }
   }
-  
+
   return Array.from(nodes);
 }
 
 // Detectar nodos desde archivos modificados
 function detectNodesFromFiles(files) {
   const nodes = new Set();
-  
+
   const fileToNode = {
-    'shield': 'shield',
-    'costControl': 'cost-control',
-    'billing': 'cost-control',
-    'queue': 'queue-system',
-    'worker': 'queue-system',
-    'roast': 'roast',
-    'persona': 'persona',
-    'tone': 'tone',
-    'platform': 'social-platforms',
-    'integration': 'social-platforms'
+    shield: 'shield',
+    costControl: 'cost-control',
+    billing: 'cost-control',
+    queue: 'queue-system',
+    worker: 'queue-system',
+    roast: 'roast',
+    persona: 'persona',
+    tone: 'tone',
+    platform: 'social-platforms',
+    integration: 'social-platforms'
   };
-  
+
   for (const file of files) {
     for (const [pattern, node] of Object.entries(fileToNode)) {
       if (file.toLowerCase().includes(pattern.toLowerCase())) {
@@ -154,7 +158,7 @@ function detectNodesFromFiles(files) {
       }
     }
   }
-  
+
   return Array.from(nodes);
 }
 
@@ -164,12 +168,12 @@ function resolveGraph(nodes) {
     console.log('📚 Cargando TODOS los nodos (test:e2e o area:observability)');
     return { command: 'cat docs/nodes/*.md', nodes: 'ALL' };
   }
-  
+
   if (nodes.length === 0) {
     console.log('⚠️  No se detectaron nodos específicos. Usando nodos comunes.');
     nodes = ['roast', 'shield', 'queue-system'];
   }
-  
+
   const command = `node scripts/resolve-graph.js ${nodes.join(' ')}`;
   return { command, nodes };
 }
@@ -180,12 +184,13 @@ function generateCursorInstructions(resolution, issueInfo) {
     phase: 'FASE_0',
     nodes: resolution.nodes,
     command: resolution.command,
-    cursorMentions: resolution.nodes === 'ALL' 
-      ? '@docs/nodes/'
-      : resolution.nodes.map(n => `@docs/nodes/${n}.md`).join(' '),
+    cursorMentions:
+      resolution.nodes === 'ALL'
+        ? '@docs/nodes/'
+        : resolution.nodes.map((n) => `@docs/nodes/${n}.md`).join(' '),
     workflow: []
   };
-  
+
   // Workflow paso a paso
   instructions.workflow.push({
     step: 1,
@@ -193,20 +198,20 @@ function generateCursorInstructions(resolution, issueInfo) {
     command: resolution.command,
     note: 'Esto carga solo los nodos necesarios, no spec.md completo'
   });
-  
+
   instructions.workflow.push({
     step: 2,
     action: 'Leer nodos resueltos en Cursor',
     command: `En Cursor Chat: ${instructions.cursorMentions}`,
     note: 'Usar @-mentions para contexto selectivo'
   });
-  
+
   instructions.workflow.push({
     step: 3,
     action: 'Identificar dependencias',
     note: 'Los nodos resueltos ya incluyen dependencias transitivas'
   });
-  
+
   if (issueInfo) {
     instructions.workflow.push({
       step: 4,
@@ -215,7 +220,7 @@ function generateCursorInstructions(resolution, issueInfo) {
       note: 'Siempre antes de implementar'
     });
   }
-  
+
   return instructions;
 }
 
@@ -223,26 +228,26 @@ function generateCursorInstructions(resolution, issueInfo) {
 function main() {
   const args = process.argv.slice(2);
   const fromBranch = args.includes('--from-branch');
-  const issueNum = args.find(arg => /^\d+$/.test(arg)) || null;
-  
+  const issueNum = args.find((arg) => /^\d+$/.test(arg)) || null;
+
   console.log('🔍 Auto GDD Activation Detector\n');
-  
+
   // 1. Obtener info de issue
   const issueInfo = getIssueInfo(issueNum);
   let labels = [];
   let title = '';
   let body = '';
-  
+
   if (issueInfo) {
     labels = issueInfo.labels || [];
     title = issueInfo.title || '';
     body = issueInfo.body || '';
     console.log(`📋 Issue detectado: "${title}"`);
-    console.log(`🏷️  Labels: ${labels.map(l => l.name || l).join(', ')}\n`);
+    console.log(`🏷️  Labels: ${labels.map((l) => l.name || l).join(', ')}\n`);
   } else {
     console.log('ℹ️  No se detectó issue. Usando detección por archivos.\n');
   }
-  
+
   // 2. Detectar nodos desde labels
   let nodes = [];
   if (labels.length > 0) {
@@ -253,31 +258,31 @@ function main() {
       console.log(`✅ Nodos detectados desde labels: ${nodes.join(', ')}\n`);
     }
   }
-  
+
   // 3. Fallback: keywords en título/body
   if (nodes.length === 0 && (title || body)) {
     const keywordNodes = detectNodesFromKeywords(`${title} ${body}`);
     if (keywordNodes.length > 0) {
       console.log(`✅ Nodos detectados desde keywords: ${keywordNodes.join(', ')}\n`);
-      keywordNodes.forEach(n => {
+      keywordNodes.forEach((n) => {
         if (!nodes.includes(n)) nodes.push(n);
       });
     }
   }
-  
+
   // 4. Fallback: archivos modificados
   if (nodes.length === 0) {
     try {
       const changedFiles = execSync('git diff --name-only HEAD', { encoding: 'utf8' })
         .trim()
         .split('\n')
-        .filter(f => f);
-      
+        .filter((f) => f);
+
       if (changedFiles.length > 0) {
         const fileNodes = detectNodesFromFiles(changedFiles);
         if (fileNodes.length > 0) {
           console.log(`✅ Nodos detectados desde archivos: ${fileNodes.join(', ')}\n`);
-          fileNodes.forEach(n => {
+          fileNodes.forEach((n) => {
             if (!nodes.includes(n)) nodes.push(n);
           });
         }
@@ -286,33 +291,35 @@ function main() {
       // Git no disponible o no hay cambios
     }
   }
-  
+
   // 5. Resolver dependencias
   const resolution = resolveGraph(nodes);
   console.log('🔗 Resolución de dependencias:');
   console.log(`   Comando: ${resolution.command}\n`);
-  
+
   // 6. Generar instrucciones para Cursor
   const instructions = generateCursorInstructions(resolution, issueInfo);
-  
+
   console.log('📝 Instrucciones para Cursor:\n');
   console.log(`   FASE: ${instructions.phase}`);
-  console.log(`   Nodos: ${instructions.nodes === 'ALL' ? 'TODOS' : instructions.nodes.join(', ')}`);
+  console.log(
+    `   Nodos: ${instructions.nodes === 'ALL' ? 'TODOS' : instructions.nodes.join(', ')}`
+  );
   console.log(`   @-mentions: ${instructions.cursorMentions}\n`);
-  
+
   console.log('🔄 Workflow:\n');
-  instructions.workflow.forEach(w => {
+  instructions.workflow.forEach((w) => {
     console.log(`   ${w.step}. ${w.action}`);
     if (w.command) console.log(`      → ${w.command}`);
     if (w.note) console.log(`      ℹ️  ${w.note}`);
     console.log();
   });
-  
+
   // 7. Guardar instrucciones en archivo temporal
   const instructionsPath = path.join(__dirname, '../../.gdd-activation-instructions.json');
   fs.writeFileSync(instructionsPath, JSON.stringify(instructions, null, 2));
   console.log(`💾 Instrucciones guardadas en: ${instructionsPath}\n`);
-  
+
   console.log('✅ GDD activado automáticamente. Sigue el workflow arriba.\n');
 }
 
@@ -326,4 +333,3 @@ module.exports = {
   detectNodesFromFiles,
   resolveGraph
 };
-

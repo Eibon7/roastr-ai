@@ -37,7 +37,7 @@ El **GDD (Graph Driven Development)** es un framework para desarrollo con IA que
 - Se actualiza desde nodos modificados (vía sync)
 - **NO se edita directamente** (salvo mantenimiento global)
 
-#### 2. **docs/nodes/*.md** - Nodos Especializados
+#### 2. **docs/nodes/\*.md** - Nodos Especializados
 
 - Fragmentos del spec.md con estructura 1:1
 - Unidad atómica de contexto
@@ -83,23 +83,24 @@ spec.md:
 ```
 
 **Reglas:**
+
 - Secciones principales (`##`) = nodos raíz
 - Subsecciones (`###`, `####`) = nodos hijos
 - spec.md actúa como **vista expandida del grafo**
 
 #### 4. **Scripts GDD**
 
-| Script | Función | Cuándo se ejecuta |
-|--------|---------|-------------------|
-| `resolve-graph.js` | Resuelve dependencias entre nodos | Pre-implementación (FASE 0) |
-| `sync-gdd-nodes.js` | Sincroniza metadata de nodos (post-merge) | Post-merge automático |
-| `sync-spec-md.js` | Sincroniza nodos → spec.md | Post-merge automático |
-| `validate-gdd-runtime.js` | Valida estado del grafo | Pre-commit, CI/CD |
-| `validate-gdd-cross.js` | Valida system-map.yaml | Post-sync |
-| `auto-repair-gdd.js` | Repara inconsistencias | Manual, CI/CD |
-| `score-gdd-health.js` | Calcula health score | CI/CD, pre-merge |
-| `predict-gdd-drift.js` | Predice drift de nodos | Post-sync |
-| `generate-sync-report.js` | Genera reporte de sincronización | Post-sync |
+| Script                    | Función                                   | Cuándo se ejecuta           |
+| ------------------------- | ----------------------------------------- | --------------------------- |
+| `resolve-graph.js`        | Resuelve dependencias entre nodos         | Pre-implementación (FASE 0) |
+| `sync-gdd-nodes.js`       | Sincroniza metadata de nodos (post-merge) | Post-merge automático       |
+| `sync-spec-md.js`         | Sincroniza nodos → spec.md                | Post-merge automático       |
+| `validate-gdd-runtime.js` | Valida estado del grafo                   | Pre-commit, CI/CD           |
+| `validate-gdd-cross.js`   | Valida system-map.yaml                    | Post-sync                   |
+| `auto-repair-gdd.js`      | Repara inconsistencias                    | Manual, CI/CD               |
+| `score-gdd-health.js`     | Calcula health score                      | CI/CD, pre-merge            |
+| `predict-gdd-drift.js`    | Predice drift de nodos                    | Post-sync                   |
+| `generate-sync-report.js` | Genera reporte de sincronización          | Post-sync                   |
 
 ---
 
@@ -160,6 +161,7 @@ Is it a NEW ISSUE?
 #### ✅ ALWAYS Activate (Mandatory)
 
 1. **New issue with AC ≥3**
+
    ```
    User: "Vamos con #750 - Implementar usage-based pricing"
    Orchestrator: /gdd 750
@@ -169,6 +171,7 @@ Is it a NEW ISSUE?
    ```
 
 2. **Priority P0/P1 issues**
+
    ```
    User: "Issue #755 es P0 - Bug crítico en autenticación"
    Orchestrator: /gdd 755
@@ -188,6 +191,7 @@ Is it a NEW ISSUE?
 #### 🔶 CONDITIONAL Activate (Case by Case)
 
 4. **Scope expansion mid-implementation**
+
    ```
    INITIAL:
    User: "Implementa generación de roasts"
@@ -225,11 +229,13 @@ Is it a NEW ISSUE?
 ### Activation Commands
 
 **Manual activation:**
+
 ```bash
 /gdd 750
 ```
 
 **Programmatic activation (from orchestrator):**
+
 ```javascript
 // In orchestrator logic
 if (shouldActivateGDD(issue)) {
@@ -239,11 +245,9 @@ if (shouldActivateGDD(issue)) {
 function shouldActivateGDD(issue) {
   const acCount = countAcceptanceCriteria(issue.body);
   const priority = extractPriority(issue.labels);
-  const hasAreaLabel = issue.labels.some(l => l.startsWith('area:'));
+  const hasAreaLabel = issue.labels.some((l) => l.startsWith('area:'));
 
-  return acCount >= 3 ||
-         ['P0', 'P1'].includes(priority) ||
-         hasAreaLabel;
+  return acCount >= 3 || ['P0', 'P1'].includes(priority) || hasAreaLabel;
 }
 ```
 
@@ -254,6 +258,7 @@ function shouldActivateGDD(issue) {
 **Why synchronization matters:**
 
 1. **Stale nodes = Wrong decisions**
+
    ```
    Node says: "Status: planned"
    Reality: "Status: implemented"
@@ -261,6 +266,7 @@ function shouldActivateGDD(issue) {
    ```
 
 2. **Missing dependencies = Incomplete context**
+
    ```
    auth-system depends_on: [database-layer]
    But database-layer schema changed
@@ -300,6 +306,7 @@ node scripts/validate-gdd-runtime.js --full
 **When to re-load nodes:**
 
 1. **Scope expands to new area:**
+
    ```bash
    # Initially loaded: roast, openai-integration
    # Scope expands to include: database-layer, analytics
@@ -309,6 +316,7 @@ node scripts/validate-gdd-runtime.js --full
    ```
 
 2. **Dependencies change:**
+
    ```bash
    # Working on auth-system
    # Someone merges PR changing database-layer schema
@@ -318,6 +326,7 @@ node scripts/validate-gdd-runtime.js --full
    ```
 
 3. **CodeRabbit identifies missing area:**
+
    ```bash
    # CodeRabbit: "This affects shield-system"
    # Currently loaded: roast, openai-integration
@@ -335,6 +344,7 @@ node scripts/validate-gdd-runtime.js --full
 **Cuándo:** Solo al crear nodos nuevos o refactorizar arquitectura.
 
 **Proceso:**
+
 1. Identificar sección en spec.md que merece ser nodo
 2. Crear `docs/nodes/<nombre>.md`
 3. Copiar contenido de sección
@@ -347,6 +357,7 @@ node scripts/validate-gdd-runtime.js --full
 **Cuándo:** Automáticamente al mergear PR a `main`.
 
 **Proceso (automático vía GitHub Actions):**
+
 1. Detectar archivos cambiados en PR mergeado
 2. Mapear archivos → nodos GDD afectados
 3. Ejecutar `sync-gdd-nodes.js`:
@@ -375,18 +386,21 @@ node scripts/validate-gdd-runtime.js --full
 **Objetivo:** Cargar SOLO los nodos relevantes para el issue.
 
 **Pasos:**
+
 1. **Identificar nodos relevantes**:
    - Desde labels del issue (`area:*`)
    - Desde keywords en título/body
    - Uso del skill: `/gdd {issue_number}`
 
 2. **Resolver dependencias**:
+
    ```bash
    node scripts/resolve-graph.js auth-system billing
    # Output: auth-system, billing, database-layer, api-layer
    ```
 
 3. **Cargar SOLO nodos resueltos**:
+
    ```bash
    # ✅ CORRECTO
    Read: docs/nodes/auth-system.md
@@ -408,6 +422,7 @@ node scripts/validate-gdd-runtime.js --full
 ### FASE 1-3: Implementación
 
 **Trabajo con contexto de nodos cargados:**
+
 - Modificar código según arquitectura de nodos
 - Actualizar nodos si cambia arquitectura
 - Añadir agentes a "Agentes Relevantes" si se invocan
@@ -416,6 +431,7 @@ node scripts/validate-gdd-runtime.js --full
 ### FASE 4: Sincronización (Post-Implementación)
 
 **Automático al mergear PR:**
+
 - Workflow `post-merge-doc-sync.yml` se ejecuta
 - Detecta nodos modificados
 - Sincroniza metadata + coverage
@@ -423,6 +439,7 @@ node scripts/validate-gdd-runtime.js --full
 - Crea PR automático para review
 
 **Manual (si falló automático):**
+
 ```bash
 # Prompt al orquestador:
 "Detecta nodos modificados, valida cambios, sincroniza nodos → spec.md,
@@ -430,6 +447,7 @@ verifica spec.md actualizado correctamente"
 ```
 
 **Validación final:**
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 node scripts/score-gdd-health.js --ci
@@ -474,6 +492,7 @@ node scripts/score-gdd-health.js --ci
 **Invocación:** `/gdd {issue_number}`
 
 **Proceso:**
+
 1. Fetch issue metadata (labels, body, AC count)
 2. Assessment (inline si ≤2 AC, Task Assessor si ≥3 AC)
 3. Lee `docs/patterns/coderabbit-lessons.md`
@@ -483,28 +502,31 @@ node scripts/score-gdd-health.js --ci
 7. Anuncia contexto cargado
 
 **Output:**
+
 ```markdown
 ✅ GDD Context Loaded for Issue #680
 
 📋 **Issue**: Complete roast integration test fixes
-🏷️  **Labels**: test:integration, area:roast, priority:P1
+🏷️ **Labels**: test:integration, area:roast, priority:P1
 🎯 **Assessment**: FIX (Task Assessor invoked)
 
 📦 **GDD Nodes Loaded**: (4 nodes)
-   1. roast - Roast generation system [implemented]
-   2. shield - Shield moderation [implemented]
-   3. api-layer - API endpoints [implemented]
-   4. test-infrastructure - Testing setup [implemented]
 
-⚠️  **Known Patterns** (from coderabbit-lessons.md):
-   • Jest integration tests - Module loading issues
-   • Rate limiters break tests - Disable in NODE_ENV=test
-   • Router mounting order - Specific before generic
+1.  roast - Roast generation system [implemented]
+2.  shield - Shield moderation [implemented]
+3.  api-layer - API endpoints [implemented]
+4.  test-infrastructure - Testing setup [implemented]
+
+⚠️ **Known Patterns** (from coderabbit-lessons.md):
+• Jest integration tests - Module loading issues
+• Rate limiters break tests - Disable in NODE_ENV=test
+• Router mounting order - Specific before generic
 
 🔧 **Pre-Implementation Checklist**:
-   - [ ] Add defensive checks for module-level calls
-   - [ ] Disable rate limiters in test environment
-   - [ ] Check router mounting order
+
+- [ ] Add defensive checks for module-level calls
+- [ ] Disable rate limiters in test environment
+- [ ] Check router mounting order
 ```
 
 #### `gdd-sync-skill` - Sincronizar Cambios (FASE 4)
@@ -514,6 +536,7 @@ node scripts/score-gdd-health.js --ci
 **Invocación:** Automática (post-merge workflow) o manual.
 
 **Proceso:**
+
 1. Detecta nodos modificados (git diff o checksum)
 2. Valida estructura YAML y metadatos
 3. Merge semántico → actualizar secciones en spec.md
@@ -543,6 +566,7 @@ node scripts/validate-gdd-cross.js --full
 ```
 
 **Exit codes:**
+
 - `0` - Validación exitosa
 - `1` - Warnings (continúa pero revisar)
 - `2` - Errors críticos (bloquea commit)
@@ -558,11 +582,13 @@ node scripts/score-gdd-health.js --report
 ```
 
 **Thresholds:**
+
 - **≥87** - 🟢 HEALTHY (pass)
 - **50-86** - 🟡 DEGRADED (warnings)
 - **<50** - 🔴 CRITICAL (block merge)
 
 **Health Score incluye:**
+
 - Coverage authenticity (`auto` vs `manual`)
 - Node consistency (metadata válido)
 - Drift risk (<60 risk acceptable)
@@ -580,6 +606,7 @@ node scripts/auto-repair-gdd.js --dry-run
 ```
 
 **Repara:**
+
 - Coverage desactualizado
 - Metadatos faltantes
 - Cross-references rotos
@@ -707,6 +734,7 @@ node scripts/score-gdd-health.js --ci
 ### Problema: Sync automático no se ejecutó
 
 **Diagnóstico:**
+
 ```bash
 # Verificar si PR fue mergeado a main
 git log --oneline main | head -5
@@ -719,6 +747,7 @@ grep -qE '(src/|tests/|docs/nodes/|system-map.yaml|spec.md)' changed-files.txt
 ```
 
 **Solución:**
+
 ```bash
 # Ejecutar sync manualmente
 echo '{"nodes": ["auth-system", "billing"], "pr": 700, "branch": "fix/auth"}' > affected-nodes.json
@@ -730,12 +759,14 @@ node scripts/validate-gdd-runtime.js --full
 ### Problema: Health score <87
 
 **Diagnóstico:**
+
 ```bash
 node scripts/score-gdd-health.js --ci --verbose
 # Revisa qué nodos tienen issues
 ```
 
 **Soluciones comunes:**
+
 - **Coverage manual** → `node scripts/auto-repair-gdd.js --auto-fix`
 - **Metadatos faltantes** → Añadir `id:`, `depends_on:` en frontmatter
 - **Cross-references rotos** → Actualizar links en nodos
@@ -744,17 +775,20 @@ node scripts/score-gdd-health.js --ci --verbose
 ### Problema: Drift risk >60
 
 **Diagnóstico:**
+
 ```bash
 node scripts/predict-gdd-drift.js --full
 cat gdd-drift.json | jq '.high_risk_nodes'
 ```
 
 **Causas comunes:**
+
 - Nodo sin tests (coverage 0%)
 - Nodo sin PRs recientes (stale)
 - Dependencias circulares
 
 **Soluciones:**
+
 - Añadir tests al nodo
 - Actualizar documentación
 - Revisar `depends_on:` para evitar ciclos
@@ -790,6 +824,7 @@ cat gdd-drift.json | jq '.high_risk_nodes'
 ## 📝 Changelog
 
 ### v2.0 (2025-11-02)
+
 - Documentación completa del framework GDD
 - Clarificación de flujo bidireccional
 - Ejemplos completos de workflows
@@ -797,6 +832,7 @@ cat gdd-drift.json | jq '.high_risk_nodes'
 - Reglas de oro enforcement
 
 ### v1.0 (2025-09-01)
+
 - Framework GDD inicial
 - Scripts básicos de validación
 - Workflow manual de sincronización

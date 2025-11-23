@@ -127,8 +127,9 @@ describe('StylecardService', () => {
     it('should filter out empty enhancements', () => {
       // Test the filtering logic directly
       const enhancements = ['', null, undefined, 'Valid enhancement'];
-      const validEnhancements = enhancements.filter(enhancement =>
-        enhancement && typeof enhancement === 'string' && enhancement.trim().length > 0
+      const validEnhancements = enhancements.filter(
+        (enhancement) =>
+          enhancement && typeof enhancement === 'string' && enhancement.trim().length > 0
       );
 
       expect(validEnhancements).toEqual(['Valid enhancement']);
@@ -155,8 +156,9 @@ describe('StylecardService', () => {
         personaEnhancements.push('Ten en cuenta lo que el usuario no tolera');
       }
 
-      const validEnhancements = personaEnhancements.filter(enhancement =>
-        enhancement && typeof enhancement === 'string' && enhancement.trim().length > 0
+      const validEnhancements = personaEnhancements.filter(
+        (enhancement) =>
+          enhancement && typeof enhancement === 'string' && enhancement.trim().length > 0
       );
 
       expect(validEnhancements).toHaveLength(2);
@@ -182,8 +184,8 @@ describe('StylecardService', () => {
         'My credit card is 4532 1234 5678 9012'
       ];
 
-      sensitiveTexts.forEach(text => {
-        const isSensitive = sensitivePatterns.some(pattern => pattern.test(text));
+      sensitiveTexts.forEach((text) => {
+        const isSensitive = sensitivePatterns.some((pattern) => pattern.test(text));
         expect(isSensitive).toBe(true);
       });
     });
@@ -202,8 +204,8 @@ describe('StylecardService', () => {
         'Working on some exciting projects'
       ];
 
-      normalTexts.forEach(text => {
-        const isSensitive = sensitivePatterns.some(pattern => pattern.test(text));
+      normalTexts.forEach((text) => {
+        const isSensitive = sensitivePatterns.some((pattern) => pattern.test(text));
         expect(isSensitive).toBe(false);
       });
     });
@@ -222,14 +224,19 @@ describe('StylecardService', () => {
       // Simulate tone distribution calculation
       const tones = { ligero: 0, equilibrado: 0, contundente: 0, humorous: 0, sarcastic: 0 };
 
-      contentSamples.forEach(content => {
+      contentSamples.forEach((content) => {
         const text = content.text.toLowerCase();
 
         if (text.includes('jaja') || text.includes('lol') || text.includes('😂')) {
           tones.humorous++;
         } else if (text.includes('!') && text.split('!').length > 2) {
           tones.contundente++;
-        } else if (text.includes('...') || text.includes('tal vez') || text.includes('quizás') || text.includes('maybe')) {
+        } else if (
+          text.includes('...') ||
+          text.includes('tal vez') ||
+          text.includes('quizás') ||
+          text.includes('maybe')
+        ) {
           tones.ligero++;
         } else {
           tones.equilibrado++;
@@ -268,13 +275,15 @@ describe('StylecardService', () => {
         'No me digas que esto es excelente...'
       ];
 
-      sarcasticTexts.forEach(text => {
+      sarcasticTexts.forEach((text) => {
         const lowerText = text.toLowerCase();
-        const hasSarcasmWords = lowerText.includes('obvio') ||
-                               lowerText.includes('claro que sí') ||
-                               lowerText.includes('qué sorpresa') ||
-                               lowerText.includes('no me digas');
-        const hasIronicPhrases = (/\b(genial|perfecto|excelente)\b/.test(lowerText) && lowerText.includes('...'));
+        const hasSarcasmWords =
+          lowerText.includes('obvio') ||
+          lowerText.includes('claro que sí') ||
+          lowerText.includes('qué sorpresa') ||
+          lowerText.includes('no me digas');
+        const hasIronicPhrases =
+          /\b(genial|perfecto|excelente)\b/.test(lowerText) && lowerText.includes('...');
 
         expect(hasSarcasmWords || hasIronicPhrases).toBe(true);
       });
@@ -285,20 +294,35 @@ describe('StylecardService', () => {
     it('should filter and sort content samples', () => {
       const contentSamples = [
         { text: 'Short text', engagement: 100, platform: 'twitter', created_at: new Date() },
-        { text: 'This is a medium length text that should be included', engagement: 50, platform: 'twitter', created_at: new Date() },
-        { text: 'This is a very long text that provides good context for style analysis and should definitely be included in examples', engagement: 200, platform: 'twitter', created_at: new Date() },
-        { text: 'Another good example for testing', engagement: 75, platform: 'twitter', created_at: new Date() }
+        {
+          text: 'This is a medium length text that should be included',
+          engagement: 50,
+          platform: 'twitter',
+          created_at: new Date()
+        },
+        {
+          text: 'This is a very long text that provides good context for style analysis and should definitely be included in examples',
+          engagement: 200,
+          platform: 'twitter',
+          created_at: new Date()
+        },
+        {
+          text: 'Another good example for testing',
+          engagement: 75,
+          platform: 'twitter',
+          created_at: new Date()
+        }
       ];
 
       // Simulate the filtering logic
       const filtered = contentSamples
-        .filter(c => c.text.length > 20 && c.text.length < 200)
+        .filter((c) => c.text.length > 20 && c.text.length < 200)
         .sort((a, b) => (b.engagement || 0) - (a.engagement || 0));
 
       expect(filtered).toHaveLength(3); // Short text filtered out
       expect(filtered[0].engagement).toBe(200); // Highest engagement first
-      expect(filtered.every(ex => ex.text.length >= 20)).toBe(true);
-      expect(filtered.every(ex => ex.text.length < 200)).toBe(true);
+      expect(filtered.every((ex) => ex.text.length >= 20)).toBe(true);
+      expect(filtered.every((ex) => ex.text.length < 200)).toBe(true);
     });
 
     it('should handle content length filtering', () => {
@@ -309,7 +333,7 @@ describe('StylecardService', () => {
       ];
 
       // Apply the same filtering logic
-      const filtered = contentSamples.filter(c => c.text.length > 20 && c.text.length < 200);
+      const filtered = contentSamples.filter((c) => c.text.length > 20 && c.text.length < 200);
 
       expect(filtered).toHaveLength(1);
       expect(filtered[0].text).toBe('This is good content for analysis');
@@ -352,9 +376,9 @@ describe('StylecardService Integration', () => {
       sarcasm_level: 3
     });
 
-    styleProfileGenerator.generateStylePrompt = jest.fn().mockResolvedValue(
-      'Generated style prompt for user'
-    );
+    styleProfileGenerator.generateStylePrompt = jest
+      .fn()
+      .mockResolvedValue('Generated style prompt for user');
 
     const mockContentSamples = [
       {
@@ -368,7 +392,8 @@ describe('StylecardService Integration', () => {
     ];
 
     // Test the content processing pipeline
-    const contentWithEmbeddings = await stylecardService.generateContentEmbeddings(mockContentSamples);
+    const contentWithEmbeddings =
+      await stylecardService.generateContentEmbeddings(mockContentSamples);
     expect(contentWithEmbeddings).toHaveLength(1);
     expect(contentWithEmbeddings[0].embedding).toBeDefined();
 

@@ -16,12 +16,14 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Sin GDD (spec.md monolítico)
 
 **Problemas:**
+
 - Cargar 7,034 líneas para cualquier tarea
 - Información irrelevante mezclada con relevante
 - Agentes pierden detalles críticos en el ruido
 - Context switching constante buscando información
 
 **Métricas:**
+
 - Contexto promedio cargado: **7,034 líneas**
 - Tiempo de carga: **15-30 segundos**
 - Relevancia: **20-30% del contenido es útil**
@@ -30,12 +32,14 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Con GDD (nodos modulares)
 
 **Mejoras:**
+
 - Cargar solo 500-2,000 líneas relevantes
 - Dependencias resueltas automáticamente
 - Contexto 100% relevante para la tarea
 - Información siempre actualizada
 
 **Métricas:**
+
 - Contexto promedio cargado: **500-2,000 líneas** (71-93% reducción)
 - Tiempo de carga: **2-5 segundos**
 - Relevancia: **90-100% del contenido es útil**
@@ -43,11 +47,11 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 
 **Ejemplos Reales:**
 
-| Issue | Sin GDD | Con GDD | Reducción |
-|-------|---------|---------|-----------|
-| #408 (Shield) | 7,034 líneas | 2,050 líneas | **71%** |
-| #413 (Billing) | 7,034 líneas | 1,371 líneas | **81%** |
-| #412 (Multi-tenant) | 7,034 líneas | 707 líneas | **90%** |
+| Issue               | Sin GDD      | Con GDD      | Reducción |
+| ------------------- | ------------ | ------------ | --------- |
+| #408 (Shield)       | 7,034 líneas | 2,050 líneas | **71%**   |
+| #413 (Billing)      | 7,034 líneas | 1,371 líneas | **81%**   |
+| #412 (Multi-tenant) | 7,034 líneas | 707 líneas   | **90%**   |
 
 ---
 
@@ -56,6 +60,7 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Sin herramientas estructuradas
 
 **Problemas:**
+
 - Context-related bugs: **15-20%**
 - Documentation sync errors: **10-15%**
 - Feature cross-contamination: **5-10%**
@@ -63,6 +68,7 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 - **Total bugs prevenibles: 30-45%**
 
 **Causas:**
+
 - Información desactualizada en spec.md
 - Agentes no ven dependencias completas
 - Tests se saltan por contexto overload
@@ -71,6 +77,7 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Con GDD + Agents
 
 **Mejoras:**
+
 - Context-related bugs: **5-8%** (60-67% reducción)
 - Documentation sync errors: **2-3%** (80-85% reducción)
 - Feature cross-contamination: **1-2%** (80-90% reducción)
@@ -78,6 +85,7 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 - **Total bugs prevenibles: 8-13%** (70-73% reducción)
 
 **Mecanismos:**
+
 - ✅ Validación automática de dependencias (`--validate`)
 - ✅ Health scoring detecta problemas antes
 - ✅ Drift prediction previene desincronización
@@ -147,6 +155,7 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Sin herramientas
 
 **Problemas:**
+
 - Test coverage: **60-70%** (agents saltan tests)
 - Documentation sync: **40-50% desactualizada**
 - Code consistency: **70-80%** (sin validación)
@@ -155,12 +164,14 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Con herramientas
 
 **Mejoras:**
+
 - Test coverage: **85-95%** (+25-35 puntos)
 - Documentation sync: **90-95% actualizada** (+50 puntos)
 - Code consistency: **90-95%** (+20 puntos)
 - Security issues: **1-2% de PRs** (80% reducción)
 
 **Mecanismos:**
+
 - ✅ TestEngineer genera tests automáticamente
 - ✅ GDD sync mantiene docs actualizadas
 - ✅ Guardian valida seguridad
@@ -173,12 +184,14 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Sin herramientas
 
 **Problemas:**
+
 - Spec.md crece sin control (7,034 líneas)
 - Difícil encontrar información específica
 - Dependencias ocultas causan bugs
 - Sin métricas de salud del sistema
 
 **Métricas:**
+
 - Tiempo para encontrar info: **10-20 min**
 - Bugs por dependencias ocultas: **5-10%**
 - Health score: **N/A** (sin métricas)
@@ -186,12 +199,14 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Con herramientas
 
 **Mejoras:**
+
 - Nodos modulares (500-2,000 líneas cada uno)
 - Búsqueda instantánea por nodo
 - Dependencias explícitas y validadas
 - Health scoring cuantitativo (0-100)
 
 **Métricas:**
+
 - Tiempo para encontrar info: **1-2 min** (80-90% reducción)
 - Bugs por dependencias ocultas: **1-2%** (80% reducción)
 - Health score: **95-98/100** (medible y mejorable)
@@ -203,6 +218,7 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Coste de Setup
 
 **Tiempo inicial:**
+
 - Crear nodos GDD: **2-3 horas** (una vez)
 - Configurar scripts: **1 hora** (una vez)
 - Documentar workflows: **1 hora** (una vez)
@@ -211,11 +227,13 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Beneficios por Feature
 
 **Ahorro por feature:**
+
 - Tiempo: **1.5-2 horas** (40-50% más rápido)
 - Bugs: **70% menos bugs prevenibles**
 - Re-work: **60% menos** (menos bugs = menos fixes)
 
 **ROI después de 3-4 features:**
+
 - Inversión recuperada completamente
 - Beneficios acumulativos crecen exponencialmente
 
@@ -226,6 +244,7 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Sin herramientas
 
 **Problemas al escalar:**
+
 - Spec.md crece linealmente con features
 - Context loading se vuelve insostenible
 - Bugs aumentan con complejidad
@@ -236,6 +255,7 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 ### Con herramientas
 
 **Ventajas al escalar:**
+
 - Nodos modulares escalan independientemente
 - Context loading se mantiene constante (500-2,000 líneas)
 - Bugs se mantienen bajo control (health scoring)
@@ -247,16 +267,16 @@ Usar GDD + Agents + Skills aporta mejoras medibles en **eficiencia, calidad y ma
 
 ## 🎯 8. Resumen de Mejoras Cuantificables
 
-| Métrica | Sin Herramientas | Con Herramientas | Mejora |
-|---------|------------------|------------------|--------|
-| **Contexto cargado** | 7,034 líneas | 500-2,000 líneas | **71-93% reducción** |
-| **Tiempo de carga** | 15-30 min | 2-5 min | **80-90% reducción** |
-| **Bugs prevenibles** | 30-45% | 8-13% | **70-73% reducción** |
-| **Tiempo por feature** | 3.5-6 horas | 2-4 horas | **40-50% más rápido** |
-| **Test coverage** | 60-70% | 85-95% | **+25-35 puntos** |
-| **Docs actualizadas** | 40-50% | 90-95% | **+50 puntos** |
-| **Búsqueda de info** | 10-20 min | 1-2 min | **80-90% reducción** |
-| **Security issues** | 5-10% PRs | 1-2% PRs | **80% reducción** |
+| Métrica                | Sin Herramientas | Con Herramientas | Mejora                |
+| ---------------------- | ---------------- | ---------------- | --------------------- |
+| **Contexto cargado**   | 7,034 líneas     | 500-2,000 líneas | **71-93% reducción**  |
+| **Tiempo de carga**    | 15-30 min        | 2-5 min          | **80-90% reducción**  |
+| **Bugs prevenibles**   | 30-45%           | 8-13%            | **70-73% reducción**  |
+| **Tiempo por feature** | 3.5-6 horas      | 2-4 horas        | **40-50% más rápido** |
+| **Test coverage**      | 60-70%           | 85-95%           | **+25-35 puntos**     |
+| **Docs actualizadas**  | 40-50%           | 90-95%           | **+50 puntos**        |
+| **Búsqueda de info**   | 10-20 min        | 1-2 min          | **80-90% reducción**  |
+| **Security issues**    | 5-10% PRs        | 1-2% PRs         | **80% reducción**     |
 
 ---
 
@@ -272,4 +292,3 @@ Las herramientas GDD + Agents + Skills aportan mejoras **medibles y significativ
 **ROI:** Inversión recuperada después de 3-4 features.
 
 **Recomendación:** Usar siempre. El coste de setup (4-5 horas) se recupera rápidamente y los beneficios son acumulativos.
-

@@ -109,8 +109,10 @@ class BillingController {
           if (webhookData.items?.data?.length > 0) {
             const price = webhookData.items.data[0].price;
             // TODO:Polar - Replace with billingInterface.getPrices()
-            const prices = await this.billingInterface.getPrices?.({ limit: 100 }) || { data: [] };
-            const priceData = prices.data.find(p => p.id === price.id);
+            const prices = (await this.billingInterface.getPrices?.({ limit: 100 })) || {
+              data: []
+            };
+            const priceData = prices.data.find((p) => p.id === price.id);
 
             if (priceData?.lookup_key) {
               const { getPlanFromStripeLookupKey } = require('../config/planMappings');
@@ -174,7 +176,6 @@ class BillingController {
         userId: jobData.userId,
         customerId: jobData.customerId
       });
-
     } catch (error) {
       this.logger.error('Failed to queue billing job, falling back to sync processing', {
         jobType,
@@ -210,8 +211,11 @@ class BillingController {
     }
 
     // TODO:Polar - Replace with billingInterface methods
-    const subscription = await this.billingInterface.getSubscription?.(session.subscription) || session;
-    const customer = await this.billingInterface.getCustomer?.(session.customer) || { email: 'unknown@example.com' };
+    const subscription =
+      (await this.billingInterface.getSubscription?.(session.subscription)) || session;
+    const customer = (await this.billingInterface.getCustomer?.(session.customer)) || {
+      email: 'unknown@example.com'
+    };
 
     // Get the price ID from the subscription for entitlements update
     const priceId = subscription.items?.data?.[0]?.price?.id;
@@ -226,24 +230,29 @@ class BillingController {
     }
 
     // Execute critical database operations in a transaction
-    const transactionResult = await this.supabaseClient.rpc('execute_checkout_completed_transaction', {
-      p_user_id: userId,
-      p_stripe_customer_id: customer.id,
-      p_stripe_subscription_id: subscription.id,
-      p_plan: plan,
-      p_status: subscription.status,
-      p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      p_cancel_at_period_end: subscription.cancel_at_period_end,
-      p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
-      p_price_id: priceId,
-      p_metadata: JSON.stringify({
-        subscription_id: subscription.id,
-        customer_id: customer.id,
-        checkout_session_id: session.id,
-        updated_from: 'checkout_completed'
-      })
-    });
+    const transactionResult = await this.supabaseClient.rpc(
+      'execute_checkout_completed_transaction',
+      {
+        p_user_id: userId,
+        p_stripe_customer_id: customer.id,
+        p_stripe_subscription_id: subscription.id,
+        p_plan: plan,
+        p_status: subscription.status,
+        p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+        p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        p_cancel_at_period_end: subscription.cancel_at_period_end,
+        p_trial_end: subscription.trial_end
+          ? new Date(subscription.trial_end * 1000).toISOString()
+          : null,
+        p_price_id: priceId,
+        p_metadata: JSON.stringify({
+          subscription_id: subscription.id,
+          customer_id: customer.id,
+          checkout_session_id: session.id,
+          updated_from: 'checkout_completed'
+        })
+      }
+    );
 
     if (transactionResult.error) {
       this.logger.error('Transaction failed during checkout completion:', {
@@ -275,7 +284,7 @@ class BillingController {
           oldPlanName: 'Starter Trial',
           newPlanName: planConfig.name || plan,
           newFeatures: planConfig.features || [],
-          activationDate: new Date().toLocaleDateString(),
+          activationDate: new Date().toLocaleDateString()
         });
 
         this.logger.info('📧 Upgrade success email sent:', { userId, plan, email: userEmail });
@@ -291,7 +300,7 @@ class BillingController {
           oldPlanName: 'Starter Trial',
           newPlanName: planConfig.name || plan,
           newFeatures: planConfig.features || [],
-          activationDate: new Date().toLocaleDateString(),
+          activationDate: new Date().toLocaleDateString()
         });
 
         this.logger.info('📝 Upgrade success notification created:', { userId, plan });
@@ -329,8 +338,8 @@ class BillingController {
       let newPlan = PLAN_IDS.STARTER_TRIAL;
       if (priceId) {
         // TODO:Polar - Replace with billingInterface.getPrices()
-        const prices = await this.billingInterface.getPrices?.({ limit: 100 }) || { data: [] };
-        const priceData = prices.data.find(p => p.id === priceId);
+        const prices = (await this.billingInterface.getPrices?.({ limit: 100 })) || { data: [] };
+        const priceData = prices.data.find((p) => p.id === priceId);
 
         if (priceData?.lookup_key) {
           const { getPlanFromStripeLookupKey } = require('../config/planMappings');
@@ -339,24 +348,29 @@ class BillingController {
       }
 
       // Execute subscription update operations in a transaction
-      const transactionResult = await this.supabaseClient.rpc('execute_subscription_updated_transaction', {
-        p_user_id: userId,
-        p_subscription_id: subscription.id,
-        p_customer_id: subscription.customer,
-        p_plan: newPlan,
-        p_status: subscription.status,
-        p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        p_cancel_at_period_end: subscription.cancel_at_period_end,
-        p_trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
-        p_price_id: priceId,
-        p_metadata: JSON.stringify({
-          subscription_id: subscription.id,
-          customer_id: subscription.customer,
-          updated_from: 'subscription_updated',
-          subscription_status: subscription.status
-        })
-      });
+      const transactionResult = await this.supabaseClient.rpc(
+        'execute_subscription_updated_transaction',
+        {
+          p_user_id: userId,
+          p_subscription_id: subscription.id,
+          p_customer_id: subscription.customer,
+          p_plan: newPlan,
+          p_status: subscription.status,
+          p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+          p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          p_cancel_at_period_end: subscription.cancel_at_period_end,
+          p_trial_end: subscription.trial_end
+            ? new Date(subscription.trial_end * 1000).toISOString()
+            : null,
+          p_price_id: priceId,
+          p_metadata: JSON.stringify({
+            subscription_id: subscription.id,
+            customer_id: subscription.customer,
+            updated_from: 'subscription_updated',
+            subscription_status: subscription.status
+          })
+        }
+      );
 
       if (transactionResult.error) {
         this.logger.error('Transaction failed during subscription update:', {
@@ -402,7 +416,6 @@ class BillingController {
           error: serviceError.message
         });
       }
-
     } catch (error) {
       this.logger.error('Failed to process subscription update:', error);
       // Don't throw - webhook should still return success
@@ -428,12 +441,15 @@ class BillingController {
     }
 
     // Execute critical database operations in a transaction
-    const transactionResult = await this.supabaseClient.rpc('execute_subscription_deleted_transaction', {
-      p_user_id: userSub.user_id,
-      p_subscription_id: subscription.id,
-      p_customer_id: customerId,
-      p_canceled_at: new Date().toISOString()
-    });
+    const transactionResult = await this.supabaseClient.rpc(
+      'execute_subscription_deleted_transaction',
+      {
+        p_user_id: userSub.user_id,
+        p_subscription_id: subscription.id,
+        p_customer_id: customerId,
+        p_canceled_at: new Date().toISOString()
+      }
+    );
 
     if (transactionResult.error) {
       this.logger.error('Transaction failed during subscription deletion:', {
@@ -455,7 +471,9 @@ class BillingController {
     // Send subscription canceled email notification (non-critical, outside transaction)
     try {
       // TODO:Polar - Replace with billingInterface.getCustomer()
-      const customer = await this.billingInterface.getCustomer?.(customerId) || { email: 'unknown@example.com' };
+      const customer = (await this.billingInterface.getCustomer?.(customerId)) || {
+        email: 'unknown@example.com'
+      };
       const userEmail = customer.email;
 
       // Get the canceled plan info from transaction result
@@ -465,7 +483,8 @@ class BillingController {
         userName: customer.name || userEmail.split('@')[0],
         planName: planConfig.name || 'Pro',
         cancellationDate: new Date().toLocaleDateString(),
-        accessUntilDate: transactionResult.data?.access_until_date || new Date().toLocaleDateString(),
+        accessUntilDate:
+          transactionResult.data?.access_until_date || new Date().toLocaleDateString()
       });
 
       this.logger.info('📧 Cancellation email sent:', {
@@ -483,7 +502,8 @@ class BillingController {
       await this.notificationService.createSubscriptionCanceledNotification(userSub.user_id, {
         planName: planConfig.name || 'Pro',
         cancellationDate: new Date().toLocaleDateString(),
-        accessUntilDate: transactionResult.data?.access_until_date || new Date().toLocaleDateString(),
+        accessUntilDate:
+          transactionResult.data?.access_until_date || new Date().toLocaleDateString()
       });
 
       this.logger.info('📝 Cancellation notification created:', {
@@ -509,13 +529,16 @@ class BillingController {
 
     if (!error && userSub) {
       // Execute payment success operations in a transaction
-      const transactionResult = await this.supabaseClient.rpc('execute_payment_succeeded_transaction', {
-        p_user_id: userSub.user_id,
-        p_customer_id: customerId,
-        p_invoice_id: invoice.id,
-        p_amount_paid: invoice.amount_paid,
-        p_payment_succeeded_at: new Date().toISOString()
-      });
+      const transactionResult = await this.supabaseClient.rpc(
+        'execute_payment_succeeded_transaction',
+        {
+          p_user_id: userSub.user_id,
+          p_customer_id: customerId,
+          p_invoice_id: invoice.id,
+          p_amount_paid: invoice.amount_paid,
+          p_payment_succeeded_at: new Date().toISOString()
+        }
+      );
 
       if (transactionResult.error) {
         this.logger.error('Transaction failed during payment success:', {
@@ -556,15 +579,18 @@ class BillingController {
       nextAttempt.setDate(nextAttempt.getDate() + 3);
 
       // Execute payment failure operations in a transaction
-      const transactionResult = await this.supabaseClient.rpc('execute_payment_failed_transaction', {
-        p_user_id: userSub.user_id,
-        p_customer_id: customerId,
-        p_invoice_id: invoice.id,
-        p_amount_due: invoice.amount_due,
-        p_attempt_count: invoice.attempt_count || 1,
-        p_next_attempt_date: nextAttempt.toISOString(),
-        p_payment_failed_at: new Date().toISOString()
-      });
+      const transactionResult = await this.supabaseClient.rpc(
+        'execute_payment_failed_transaction',
+        {
+          p_user_id: userSub.user_id,
+          p_customer_id: customerId,
+          p_invoice_id: invoice.id,
+          p_amount_due: invoice.amount_due,
+          p_attempt_count: invoice.attempt_count || 1,
+          p_next_attempt_date: nextAttempt.toISOString(),
+          p_payment_failed_at: new Date().toISOString()
+        }
+      );
 
       if (transactionResult.error) {
         this.logger.error('Transaction failed during payment failure:', {
@@ -588,7 +614,9 @@ class BillingController {
       // Send payment failed email notification (non-critical, outside transaction)
       try {
         // TODO:Polar - Replace with billingInterface.getCustomer()
-      const customer = await this.billingInterface.getCustomer?.(customerId) || { email: 'unknown@example.com' };
+        const customer = (await this.billingInterface.getCustomer?.(customerId)) || {
+          email: 'unknown@example.com'
+        };
         const userEmail = customer.email;
 
         const planConfig = this.PLAN_CONFIG[transactionResult.data?.plan_name] || {};
@@ -597,7 +625,7 @@ class BillingController {
           userName: customer.name || userEmail.split('@')[0],
           planName: planConfig.name || 'Pro',
           failedAmount: invoice.amount_due ? `€${(invoice.amount_due / 100).toFixed(2)}` : 'N/A',
-          nextAttemptDate: nextAttempt.toLocaleDateString(),
+          nextAttemptDate: nextAttempt.toLocaleDateString()
         });
 
         this.logger.info('📧 Payment failed email sent:', {
@@ -616,7 +644,7 @@ class BillingController {
         await this.notificationService.createPaymentFailedNotification(userSub.user_id, {
           planName: planConfig.name || 'Pro',
           failedAmount: invoice.amount_due ? `€${(invoice.amount_due / 100).toFixed(2)}` : 'N/A',
-          nextAttemptDate: nextAttempt.toLocaleDateString(),
+          nextAttemptDate: nextAttempt.toLocaleDateString()
         });
 
         this.logger.info('📝 Payment failed notification created:', {
@@ -689,7 +717,6 @@ class BillingController {
           maxPlatforms: limits.maxPlatforms
         }
       });
-
     } catch (error) {
       this.logger.error('Failed to apply plan limits:', error);
       throw error;

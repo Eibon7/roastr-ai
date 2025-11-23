@@ -27,7 +27,7 @@ const FALLBACK_FLAGS = {
   ENABLE_BILLING: false,
   ENABLE_CUSTOM_PROMPT: parseDevelopmentFlag(false, isProduction), // Disabled by default - under development
   ENABLE_FACEBOOK_UI: parseDevelopmentFlag(false, isProduction), // Disabled by default - under development
-  ENABLE_INSTAGRAM_UI: parseDevelopmentFlag(false, isProduction), // Disabled by default - under development
+  ENABLE_INSTAGRAM_UI: parseDevelopmentFlag(false, isProduction) // Disabled by default - under development
 };
 
 // Mock flags for development mode (extends fallback with mock-specific overrides)
@@ -39,7 +39,7 @@ const MOCK_FLAGS = {
   shop_enabled: true, // Enable shop in mock mode for testing
   ENABLE_CUSTOM_PROMPT: parseDevelopmentFlag(false, isProduction), // Keep disabled even in mock mode - under development
   ENABLE_FACEBOOK_UI: parseDevelopmentFlag(false, isProduction), // Keep disabled even in mock mode - under development
-  ENABLE_INSTAGRAM_UI: parseDevelopmentFlag(false, isProduction), // Keep disabled even in mock mode - under development
+  ENABLE_INSTAGRAM_UI: parseDevelopmentFlag(false, isProduction) // Keep disabled even in mock mode - under development
 };
 
 /**
@@ -69,23 +69,29 @@ export const useFeatureFlags = () => {
         // En modo real, obtener flags del backend
         const response = await fetch('/api/config/flags', {
           method: 'GET',
-          headers: { 'Accept': 'application/json' },
-          signal: controller.signal,
+          headers: { Accept: 'application/json' },
+          signal: controller.signal
         });
 
         if (response.ok) {
           const data = await response.json();
           const backendFlags = data.flags || {};
-          
+
           // Apply production safety to development features from backend
           const safeBackendFlags = {
             ...backendFlags,
             ENABLE_RQC: parseDevelopmentFlag(backendFlags.ENABLE_RQC, isProduction),
-            ENABLE_CUSTOM_PROMPT: parseDevelopmentFlag(backendFlags.ENABLE_CUSTOM_PROMPT, isProduction),
+            ENABLE_CUSTOM_PROMPT: parseDevelopmentFlag(
+              backendFlags.ENABLE_CUSTOM_PROMPT,
+              isProduction
+            ),
             ENABLE_FACEBOOK_UI: parseDevelopmentFlag(backendFlags.ENABLE_FACEBOOK_UI, isProduction),
-            ENABLE_INSTAGRAM_UI: parseDevelopmentFlag(backendFlags.ENABLE_INSTAGRAM_UI, isProduction),
+            ENABLE_INSTAGRAM_UI: parseDevelopmentFlag(
+              backendFlags.ENABLE_INSTAGRAM_UI,
+              isProduction
+            )
           };
-          
+
           const merged = { ...FALLBACK_FLAGS, ...safeBackendFlags };
           if (!cancelled) setFlags(merged);
         } else {
@@ -103,14 +109,17 @@ export const useFeatureFlags = () => {
     };
 
     fetchFlags();
-    return () => { cancelled = true; controller.abort(); };
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, []);
 
   return {
     flags,
     loading,
     error,
-    isEnabled: (flagName) => flags[flagName] === true,
+    isEnabled: (flagName) => flags[flagName] === true
   };
 };
 

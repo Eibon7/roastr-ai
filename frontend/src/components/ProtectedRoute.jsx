@@ -4,20 +4,20 @@ import { useAuth } from '../contexts/AuthContext';
 
 /**
  * ProtectedRoute Component
- * 
+ *
  * Protege rutas basándose en autenticación y roles de usuario
- * 
+ *
  * @param {Object} props
  * @param {React.ReactNode} props.children - Componentes hijos a renderizar si está autorizado
  * @param {boolean} props.requireAuth - Si requiere autenticación (default: true)
  * @param {boolean} props.requireAdmin - Si requiere permisos de admin (default: false)
  * @param {string} props.redirectTo - Ruta de redirección si no está autorizado
  */
-const ProtectedRoute = ({ 
-  children, 
-  requireAuth = true, 
+const ProtectedRoute = ({
+  children,
+  requireAuth = true,
   requireAdmin = false,
-  redirectTo = null 
+  redirectTo = null
 }) => {
   const { isAuthenticated, isAdmin, loading, userData } = useAuth();
   const location = useLocation();
@@ -48,7 +48,7 @@ const ProtectedRoute = ({
 
 /**
  * AdminRoute Component
- * 
+ *
  * Componente específico para rutas de admin
  */
 export const AdminRoute = ({ children }) => {
@@ -61,7 +61,7 @@ export const AdminRoute = ({ children }) => {
 
 /**
  * AuthRoute Component
- * 
+ *
  * Componente para rutas que requieren solo autenticación
  */
 export const AuthRoute = ({ children }) => {
@@ -74,7 +74,7 @@ export const AuthRoute = ({ children }) => {
 
 /**
  * PublicRoute Component
- * 
+ *
  * Componente para rutas públicas que redirigen si ya está autenticado
  */
 export const PublicRoute = ({ children, redirectTo = '/dashboard' }) => {

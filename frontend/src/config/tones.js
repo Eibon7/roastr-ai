@@ -21,12 +21,13 @@ export const TONE_DEFINITIONS = {
     id: 'Canalla',
     name: 'Canalla',
     description: 'Directo y agresivo',
-    example: '"¿En serio? Ese comentario necesita una ambulancia porque acaba de sufrir un accidente cerebrovascular."'
+    example:
+      '"¿En serio? Ese comentario necesita una ambulancia porque acaba de sufrir un accidente cerebrovascular."'
   }
 };
 
 // Array of valid tone IDs (canonical form)
-export const VALID_TONES = Object.values(TONE_DEFINITIONS).map(tone => tone.id);
+export const VALID_TONES = Object.values(TONE_DEFINITIONS).map((tone) => tone.id);
 
 // Tone options for dropdowns
 export const TONE_OPTIONS = VALID_TONES;

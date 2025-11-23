@@ -3,6 +3,7 @@
 **PR:** #580 - docs: Sync documentation for PRs #534, #538, #542
 **Review IDs:** #3334905895, #3334934786
 **Review URLs:**
+
 - <https://github.com/Eibon7/roastr-ai/pull/580#pullrequestreview-3334905895>
 - <https://github.com/Eibon7/roastr-ai/pull/580#pullrequestreview-3334934786>
 
@@ -18,6 +19,7 @@
 PR #580 es un doc-sync que sincroniza documentación de PRs #534 (Observability), #538 (GDD Coverage Sync), #542 (Pure Unit Tests).
 
 **Archivos en PR #580 (5 archivos de documentación):**
+
 1. `docs/nodes/observability.md`
 2. `docs/nodes/queue-system.md`
 3. `docs/nodes/roast.md`
@@ -27,6 +29,7 @@ PR #580 es un doc-sync que sincroniza documentación de PRs #534 (Observability)
 **⚠️ IMPORTANTE:** CodeRabbit revisó 22-23 archivos incluyendo código fuente y tests del PR #574 (E2E tests) que se mezclaron durante un rebase previo. Este plan SOLO aplica comentarios relevantes para los 5 archivos actuales del PR.
 
 **CI Status:**
+
 - ✅ Build Check: Pass
 - ✅ Security Audit: Pass
 - ✅ Lint and Test: Pass
@@ -35,6 +38,7 @@ PR #580 es un doc-sync que sincroniza documentación de PRs #534 (Observability)
 - ✅ All checks green
 
 **CodeRabbit Status:**
+
 - Review #3334905895: 8 actionable comments (8 nitpicks)
 - Review #3334934786: 10 actionable comments (4 outside diff + 13 nitpicks)
 - **Comentarios aplicables al PR #580:** 11 comentarios (4 major + 7 nitpicks)
@@ -52,24 +56,29 @@ PR #580 es un doc-sync que sincroniza documentación de PRs #534 (Observability)
 **Impact:** Documentation contains code examples with bugs and inconsistencies
 
 **Issue 1: Field Naming Inconsistency (líneas 113-126)**
+
 - Code mixes camelCase (`organizationId`, `jobType`) with snake_case (`max_attempts`, `scheduled_at`)
 - Tests assert snake_case keys (`job_type`, `organization_id`)
 - **Impact:** Confuses implementers, leads to bugs
 
 **Issue 2: Undefined Variable in completeJob (líneas 221-236)**
+
 - `queueName` is used but not defined/passed
 - job_queue DDL has no `result` column; updating `result` will fail
 - **Impact:** Code won't work as documented
 
 **Issue 3: Redis ZCARD Wildcards Issue (líneas 343-351)**
+
 - ZCARD doesn't accept key patterns (`roastr:jobs:${queueName}:*`)
 - **Impact:** Queue metrics calculation will fail
 
 **Issue 4: Division by Zero (líneas 375-388)**
+
 - If `stats.total` is 0, `failureRate` becomes NaN/Infinity
 - **Impact:** Health status calculation breaks
 
 **Strategy:** These are in code examples within documentation. Options:
+
 - A) Fix the code examples to match actual implementation
 - B) Remove code examples if they don't match reality
 - C) Add disclaimer that these are pseudocode examples
@@ -121,6 +130,7 @@ PR #580 es un doc-sync que sincroniza documentación de PRs #534 (Observability)
 
 **Impacto:** MAJOR - Documentation fixes for code examples
 **Cambios:**
+
 - Fix field naming consistency (snake_case)
 - Add missing parameters to function signatures
 - Fix Redis ZCARD usage
@@ -129,6 +139,7 @@ PR #580 es un doc-sync que sincroniza documentación de PRs #534 (Observability)
 **Edges Afectadas:** None (documentation only)
 
 **Validación Requerida:**
+
 - Markdown linting must pass
 - GDD validation must pass
 
@@ -136,6 +147,7 @@ PR #580 es un doc-sync que sincroniza documentación de PRs #534 (Observability)
 
 **Impacto:** MINOR - Remove stray line
 **Cambios:**
+
 - Remove misplaced "Status: production" line 17
 
 **Edges Afectadas:** None
@@ -147,6 +159,7 @@ node scripts/validate-gdd-runtime.js --full
 ```
 
 **Expected Output:**
+
 - 🟢 HEALTHY or 🟡 WARNING (acceptable)
 - All edges bidirectional
 - No orphan nodes
@@ -158,22 +171,23 @@ node scripts/validate-gdd-runtime.js --full
 ### Por Issue Type
 
 **Documentation Fixes (OD1-OD4, N1-N5):**
+
 - **Documentation Agent** - Fix code examples and markdown issues
 - **Orchestrator** - Coordinar flujo y validar GDD compliance
 
 ### Assignment Matrix
 
-| Issue | Type | Priority | Estimated Effort |
-|-------|------|----------|------------------|
-| OD1 | Code example fix | P1 | 5 min |
-| OD2 | Code example fix | P1 | 5 min |
-| OD3 | Code example fix | P1 | 3 min |
-| OD4 | Code example fix | P1 | 2 min |
-| N1 | Remove line | P2 | 1 min |
-| N2 | Add language identifiers | P2 | 2 min |
-| N3 | Fix bare URL | P2 | 1 min |
-| N4 | Add language identifiers | P2 | 5 min |
-| N5 | Convert to headings | P2 | 3 min |
+| Issue | Type                     | Priority | Estimated Effort |
+| ----- | ------------------------ | -------- | ---------------- |
+| OD1   | Code example fix         | P1       | 5 min            |
+| OD2   | Code example fix         | P1       | 5 min            |
+| OD3   | Code example fix         | P1       | 3 min            |
+| OD4   | Code example fix         | P1       | 2 min            |
+| N1    | Remove line              | P2       | 1 min            |
+| N2    | Add language identifiers | P2       | 2 min            |
+| N3    | Fix bare URL             | P2       | 1 min            |
+| N4    | Add language identifiers | P2       | 5 min            |
+| N5    | Convert to headings      | P2       | 3 min            |
 
 **Total Estimated Effort:** ~30 minutes
 
@@ -186,6 +200,7 @@ node scripts/validate-gdd-runtime.js --full
 #### `docs/nodes/queue-system.md` (MAJOR)
 
 **Changes:**
+
 - Lines 113-126: Standardize to snake_case for job object
 - Lines 221-236: Add `queueName` parameter, handle `result` column
 - Lines 343-351: Fix Redis ZCARD to iterate priority keys
@@ -197,6 +212,7 @@ node scripts/validate-gdd-runtime.js --full
 #### `docs/nodes/observability.md` (MINOR)
 
 **Changes:**
+
 - Line 17: Remove stray "Status: production"
 
 **Impact:** Low - Cosmetic fix
@@ -205,6 +221,7 @@ node scripts/validate-gdd-runtime.js --full
 #### `docs/sync-reports/prs-534-538-542-sync.md` (MINOR)
 
 **Changes:**
+
 - Lines 183, 197: Add `text` language identifier to fenced blocks
 
 **Impact:** Low - Markdown lint compliance
@@ -213,6 +230,7 @@ node scripts/validate-gdd-runtime.js --full
 #### `docs/plan/review-3334825590.md` (MINOR)
 
 **Changes:**
+
 - Line 3: Wrap URL in angle brackets
 - Multiple lines: Add language identifiers (bash, javascript, diff, etc.)
 
@@ -222,6 +240,7 @@ node scripts/validate-gdd-runtime.js --full
 #### `docs/plan/review-3332533239.md` (MINOR)
 
 **Changes:**
+
 - Lines 87, 161, 166, 171, 175, 181, 185, 191, 497, 505, 513: Convert `**Title**` to `### Title`
 
 **Impact:** Low - Markdown lint compliance
@@ -236,26 +255,31 @@ node scripts/validate-gdd-runtime.js --full
 **Order:** queue-system.md code examples
 
 **Step 1.1: Fix Field Naming Consistency (5 min)**
+
 - File: `docs/nodes/queue-system.md` líneas 113-126
 - Action: Standardize job object to snake_case
 - Validation: Consistency with actual implementation
 
 **Step 1.2: Fix completeJob Signature (5 min)**
+
 - File: `docs/nodes/queue-system.md` líneas 221-236
 - Action: Add `queueName` parameter, conditional `result` update
 - Validation: Function signature matches implementation
 
 **Step 1.3: Fix Redis ZCARD Usage (3 min)**
+
 - File: `docs/nodes/queue-system.md` líneas 343-351
 - Action: Replace wildcard with explicit priority iteration
 - Validation: Redis command is valid
 
 **Step 1.4: Add Division-by-Zero Guard (2 min)**
+
 - File: `docs/nodes/queue-system.md` líneas 375-388
 - Action: Check `total > 0` before division
 - Validation: Math is safe
 
 **Commit Strategy (Fase 1):**
+
 - Commit 1: `docs(queue-system): Fix code example inconsistencies - Review PR #580 (OD1-OD4)`
 
 ### Fase 2: Nitpick Improvements (P2) - Markdown Lint
@@ -263,31 +287,37 @@ node scripts/validate-gdd-runtime.js --full
 **Order:** Critical files → Supporting files
 
 **Step 2.1: N1 - Remove Stray Line (1 min)**
+
 - File: `docs/nodes/observability.md` line 17
 - Action: Remove misplaced "Status: production"
 - Validation: Markdown lint pass
 
 **Step 2.2: N2 - Add Language Identifiers (2 min)**
+
 - File: `docs/sync-reports/prs-534-538-542-sync.md` lines 183, 197
 - Action: Add `text` identifier to fenced blocks
 - Validation: MD040 pass
 
 **Step 2.3: N3 - Fix Bare URL (1 min)**
+
 - File: `docs/plan/review-3334825590.md` line 3
 - Action: Wrap URL in angle brackets
 - Validation: MD034 pass
 
 **Step 2.4: N4 - Add Language Identifiers (5 min)**
+
 - File: `docs/plan/review-3334825590.md` multiple lines
 - Action: Add appropriate language tags
 - Validation: MD040 pass
 
 **Step 2.5: N5 - Convert to Headings (3 min)**
+
 - File: `docs/plan/review-3332533239.md` multiple lines
 - Action: Convert emphasis to proper headings
 - Validation: MD036 pass
 
 **Commit Strategy (Fase 2):**
+
 - Commit 2: `docs(markdown): Fix MD040, MD034, MD036 violations - Review PR #580 (N1-N5)`
 
 ### Fase 3: GDD Validation
@@ -302,11 +332,13 @@ npx markdownlint-cli2 "docs/**/*.md"
 ```
 
 **Expected Results:**
+
 - ✅ GDD validation: 🟢 HEALTHY
 - ✅ Health score: ≥87/100
 - ✅ Markdown lint: 0 errors
 
 **Commit Strategy (Fase 3):**
+
 - None (validation only)
 
 ---
@@ -386,16 +418,19 @@ node scripts/validate-gdd-runtime.js --full
 ### Low Risk Items
 
 **Risk 1: Documentation Changes Only**
+
 - **Mitigation:** No code changes, only documentation fixes
 - **Impact:** Zero risk of runtime regressions
 
 **Risk 2: Markdown Lint Strictness**
+
 - **Mitigation:** Test locally before committing
 - **Impact:** CI may fail if edge cases missed
 
 ### Medium Risk Items
 
 **Risk 3: Code Examples May Not Match Implementation**
+
 - **Mitigation:** Verify against actual source files
 - **Alternative:** Add disclaimer if examples are pseudocode
 
@@ -423,16 +458,20 @@ node scripts/validate-gdd-runtime.js --full
 **Total Estimated Time:** 30-45 minutes
 
 **Phase 1 (P1 - Code Examples):** 15 min
+
 - queue-system.md fixes: 15 min
 
 **Phase 2 (P2 - Markdown Lint):** 12 min
+
 - Nitpick fixes: 12 min
 
 **Phase 3 (Validation):** 10 min
+
 - GDD validation: 5 min
 - Markdown linting: 5 min
 
 **Phase 4 (Commits & Push):** 5 min
+
 - 2 commits + push: 5 min
 
 ---
@@ -442,14 +481,17 @@ node scripts/validate-gdd-runtime.js --full
 ### Decisiones Arquitecturales
 
 **Decision 1: Fix Documentation Instead of Removing It**
+
 - **Rationale:** Code examples are valuable for developers
 - **Alternative:** Could remove examples if they diverge too much from reality
 
 **Decision 2: Apply All Nitpicks**
+
 - **Rationale:** Markdown linting compliance improves documentation quality
 - **Impact:** Small effort, high value for consistency
 
 **Decision 3: Exclude PR #574 Comments**
+
 - **Rationale:** PR #580 only contains 5 documentation files
 - **Impact:** PR #574 (E2E tests) will need separate CodeRabbit review application
 

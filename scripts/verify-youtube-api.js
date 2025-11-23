@@ -205,7 +205,6 @@ async function verifyYouTube() {
     logger.info();
 
     logger.info('🎉 YouTube Data API v3 verification complete!\n');
-
   } catch (error) {
     logger.error('\n❌ ERROR during verification:');
 
@@ -267,7 +266,7 @@ async function verifyYouTube() {
 }
 
 // Run verification
-verifyYouTube().catch(error => {
+verifyYouTube().catch((error) => {
   logger.error('\n❌ Unexpected error:', error.message);
   process.exit(1);
 });

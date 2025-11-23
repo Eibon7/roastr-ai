@@ -60,4 +60,5 @@ criteria_of_success:
 ---
 
 output:
+
 - Mensaje: "He creado/actualizado `docs/ui-whimsy.md` y validado interacciones con Playwright. Resumen en `spec.md` listo para implementación por Front-end Dev."

@@ -13,6 +13,7 @@ Este documento describe el sistema completo implementado para la detección auto
 ## 🔧 **Arquitectura del Sistema**
 
 ### **1. ModelAvailabilityService**
+
 Servicio principal que gestiona la detección y selección de modelos:
 
 ```javascript
@@ -20,11 +21,12 @@ const { getModelAvailabilityService } = require('./services/modelAvailabilitySer
 const modelService = getModelAvailabilityService();
 
 // Obtiene automáticamente el mejor modelo para un plan
-const model = await modelService.getModelForPlan('pro'); 
+const model = await modelService.getModelForPlan('pro');
 // Devuelve: 'gpt-5' (si disponible) → 'gpt-4o' → 'gpt-3.5-turbo'
 ```
 
 ### **2. ModelAvailabilityWorker**
+
 Worker en background que ejecuta verificaciones diarias:
 
 ```bash
@@ -36,6 +38,7 @@ npm start  # Incluye auto-start del worker
 ```
 
 ### **3. Base de Datos: model_availability**
+
 Tabla para cache y persistencia de estado de modelos:
 
 ```sql
@@ -48,17 +51,18 @@ SELECT get_best_model_for_plan('pro');  -- 'gpt-4o' (temporalmente)
 
 ## 🎨 **Configuración de Modelos por Plan**
 
-| Plan | Modelo Preferido | Fallback 1 | Fallback 2 |
-|------|------------------|------------|------------|
-| **Free** | `gpt-3.5-turbo` | - | - |
-| **Starter** | `gpt-5` | `gpt-4o` | `gpt-3.5-turbo` |
-| **Pro** | `gpt-5` | `gpt-4o` | `gpt-3.5-turbo` |
-| **Plus** | `gpt-5` | `gpt-4o` | `gpt-3.5-turbo` |
-| **Custom** | `gpt-5` | `gpt-4o` | `gpt-3.5-turbo` |
+| Plan        | Modelo Preferido | Fallback 1 | Fallback 2      |
+| ----------- | ---------------- | ---------- | --------------- |
+| **Free**    | `gpt-3.5-turbo`  | -          | -               |
+| **Starter** | `gpt-5`          | `gpt-4o`   | `gpt-3.5-turbo` |
+| **Pro**     | `gpt-5`          | `gpt-4o`   | `gpt-3.5-turbo` |
+| **Plus**    | `gpt-5`          | `gpt-4o`   | `gpt-3.5-turbo` |
+| **Custom**  | `gpt-5`          | `gpt-4o`   | `gpt-3.5-turbo` |
 
 ## 🔄 **Flujo de Auto-Detección**
 
 ### **1. Verificación Diaria (24h)**
+
 ```javascript
 // Se ejecuta automáticamente cada 24 horas
 const worker = getModelAvailabilityWorker();
@@ -69,6 +73,7 @@ await worker.runManualCheck();
 ```
 
 ### **2. Detección de GPT-5**
+
 ```javascript
 // Cuando GPT-5 esté disponible, el sistema:
 // 1. Detecta automáticamente la disponibilidad
@@ -78,6 +83,7 @@ await worker.runManualCheck();
 ```
 
 ### **3. Selección Inteligente**
+
 ```javascript
 // En cada generación de roast:
 const model = await getModelForPlan(userPlan);
@@ -87,6 +93,7 @@ const model = await getModelForPlan(userPlan);
 ## 🎛️ **Endpoints de Administración**
 
 ### **Estado del Sistema**
+
 ```bash
 GET /api/model-availability/status
 ```
@@ -96,9 +103,9 @@ GET /api/model-availability/status
   "success": true,
   "data": {
     "models": {
-      "gpt-5": false,        // ⏳ Aún no disponible
-      "gpt-4o": true,        // ✅ Disponible  
-      "gpt-3.5-turbo": true  // ✅ Disponible
+      "gpt-5": false, // ⏳ Aún no disponible
+      "gpt-4o": true, // ✅ Disponible
+      "gpt-3.5-turbo": true // ✅ Disponible
     },
     "summary": {
       "gpt5Available": false,
@@ -111,16 +118,19 @@ GET /api/model-availability/status
 ```
 
 ### **Forzar Verificación Manual**
+
 ```bash
 POST /api/model-availability/check
 ```
 
 ### **Estadísticas de Uso**
+
 ```bash
 GET /api/model-availability/stats
 ```
 
 ### **Estado por Plan**
+
 ```bash
 GET /api/model-availability/plans
 ```
@@ -128,6 +138,7 @@ GET /api/model-availability/plans
 ## 📊 **Monitoreo y Logging**
 
 ### **Logs de Sistema**
+
 ```bash
 # Logs normales (cada 24h)
 🔍 Running model availability check...
@@ -142,6 +153,7 @@ GET /api/model-availability/plans
 ```
 
 ### **Métricas de Uso**
+
 - Uso de modelos por los últimos 7 días
 - Requests totales por modelo
 - Tiempo de procesamiento por modelo
@@ -150,17 +162,19 @@ GET /api/model-availability/plans
 ## 🔒 **Seguridad y Robustez**
 
 ### **Fallback en Caso de Error**
+
 ```javascript
 // Si falla la detección automática:
 try {
-    return await modelService.getModelForPlan(plan);
+  return await modelService.getModelForPlan(plan);
 } catch (error) {
-    // Fallback seguro a configuración estática
-    return plan === 'free' ? 'gpt-3.5-turbo' : 'gpt-4o';
+  // Fallback seguro a configuración estática
+  return plan === 'free' ? 'gpt-3.5-turbo' : 'gpt-4o';
 }
 ```
 
 ### **Cache y Performance**
+
 - **Cache en memoria** para evitar consultas frecuentes a la base de datos
 - **Cache en base de datos** para persistencia entre reinicios
 - **Verificaciones limitadas** a una vez cada 24 horas
@@ -169,12 +183,14 @@ try {
 ## 🚀 **Implementación en Producción**
 
 ### **1. Migración de Base de Datos**
+
 ```bash
 # Ejecutar migración
 psql -f database/migrations/016_add_model_availability_table.sql
 ```
 
 ### **2. Variables de Entorno**
+
 ```bash
 # Requeridas para funcionamiento completo
 OPENAI_API_KEY=sk-...          # Para verificar modelos disponibles
@@ -183,6 +199,7 @@ SUPABASE_SERVICE_KEY=...       # Para operaciones de servicio
 ```
 
 ### **3. Inicio del Sistema**
+
 ```bash
 # Desarrollo
 npm start  # Incluye worker automáticamente
@@ -197,6 +214,7 @@ npm run worker:model-availability
 ## 🎉 **¿Qué pasa cuando GPT-5 esté disponible?**
 
 ### **Detección Automática**
+
 1. **Worker detecta GPT-5** en la verificación diaria
 2. **Base de datos se actualiza** automáticamente
 3. **Logs especiales** notifican la disponibilidad
@@ -204,6 +222,7 @@ npm run worker:model-availability
 5. **Sin reinicio necesario** - el cambio es transparente
 
 ### **Experiencia del Usuario**
+
 - **Usuarios Free**: Siguen con GPT-3.5 (sin cambios)
 - **Usuarios de pago**: Automáticamente obtienen GPT-5
 - **Metadata en respuestas**: `"model": "gpt-5"` aparece en los responses
@@ -228,7 +247,7 @@ npm run worker:model-availability
 ✅ **Endpoints de administración completos**  
 ✅ **Logging y monitoreo comprehensivo**  
 ✅ **Tests unitarios pasando**  
-✅ **Documentación completa**  
+✅ **Documentación completa**
 
 ## 🔮 **Extensibilidad Futura**
 

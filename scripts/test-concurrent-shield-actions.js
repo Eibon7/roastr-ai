@@ -48,7 +48,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 function generateViolationData(index) {
   return {
     severity: index % 3 === 0 ? 'high' : index % 2 === 0 ? 'medium' : 'low',
-    toxicity_score: 0.5 + (index * 0.1),
+    toxicity_score: 0.5 + index * 0.1,
     comment_id: `concurrent_test_comment_${Date.now()}_${index}`,
     action_tags: ['warning', 'content_removal']
   };
@@ -175,19 +175,23 @@ async function runConcurrentTest() {
   // Step 3: Analyze results
   console.log('\nStep 3: Analyzing results...\n');
 
-  const successful = results.filter(r => r.success);
-  const failed = results.filter(r => !r.success);
+  const successful = results.filter((r) => r.success);
+  const failed = results.filter((r) => !r.success);
 
   console.log(`Results Summary:`);
   console.log(`  Total calls: ${NUM_ACTIONS}`);
-  console.log(`  Successful: ${successful.length} (${(successful.length / NUM_ACTIONS * 100).toFixed(1)}%)`);
-  console.log(`  Failed: ${failed.length} (${(failed.length / NUM_ACTIONS * 100).toFixed(1)}%)`);
+  console.log(
+    `  Successful: ${successful.length} (${((successful.length / NUM_ACTIONS) * 100).toFixed(1)}%)`
+  );
+  console.log(`  Failed: ${failed.length} (${((failed.length / NUM_ACTIONS) * 100).toFixed(1)}%)`);
   console.log(`  Total time: ${totalTime}ms`);
-  console.log(`  Avg latency: ${(results.reduce((sum, r) => sum + r.latency, 0) / results.length).toFixed(2)}ms`);
+  console.log(
+    `  Avg latency: ${(results.reduce((sum, r) => sum + r.latency, 0) / results.length).toFixed(2)}ms`
+  );
 
   if (failed.length > 0) {
     console.log(`\n❌ Failed calls:`);
-    failed.forEach(r => {
+    failed.forEach((r) => {
       console.log(`   [${r.index}] ${r.error}`);
     });
   }
@@ -205,7 +209,9 @@ async function runConcurrentTest() {
   console.log(`\nFinal State:`);
   console.log(`  Total violations: ${finalState.total_violations}`);
   console.log(`  Severity counts: ${JSON.stringify(finalState.severity_counts)}`);
-  console.log(`  Actions taken count: ${finalState.actions_taken ? finalState.actions_taken.length : 0}`);
+  console.log(
+    `  Actions taken count: ${finalState.actions_taken ? finalState.actions_taken.length : 0}`
+  );
   console.log(`  Last violation: ${finalState.last_violation_at}`);
 
   // Step 5: Validate correctness
@@ -244,7 +250,7 @@ async function runConcurrentTest() {
 }
 
 // Execute test
-runConcurrentTest().catch(error => {
+runConcurrentTest().catch((error) => {
   console.error('\n❌ FATAL ERROR:', error.message);
   console.error('\nStack trace:');
   console.error(error.stack);

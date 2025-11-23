@@ -7,6 +7,7 @@
 ## Estado Actual
 
 ### ✅ Implementación Existente
+
 - `src/services/killSwitchService.js` (139 líneas) - Lógica completa
 - `src/workers/PublishResponseWorker.js` - Worker integrado
 - `database/schema.sql` - Tabla `kill_switch` con RLS
@@ -14,6 +15,7 @@
 - Audit trail ✅
 
 ### ❌ Gaps Críticos
+
 - **Zero test coverage** (P0 issue)
 - **No UI/API endpoints** (AC #3 bloqueado)
 - No monitoring/observability
@@ -51,11 +53,13 @@
 ### FASE 2: UI + API (Siguiente PR - Issue separado)
 
 **API Endpoints:** `src/routes/killSwitch.js`
+
 - POST /api/kill-switch/activate
 - POST /api/kill-switch/deactivate
 - GET /api/kill-switch/status
 
 **UI Components:** `backoffice/components/KillSwitchPanel.jsx`
+
 - Activate/deactivate toggle
 - Reason input
 - Status indicator
@@ -98,6 +102,7 @@ describe('Kill-switch Integration - Issue #414', () => {
 ### Test Patterns
 
 #### AC1: Bloqueo de publicaciones
+
 ```javascript
 it('should reject new jobs when kill-switch is active', async () => {
   // Activate kill-switch
@@ -114,6 +119,7 @@ it('should reject new jobs when kill-switch is active', async () => {
 ```
 
 #### AC2: Cancelación de jobs
+
 ```javascript
 it('should cancel pending jobs on activation', async () => {
   // Create pending jobs
@@ -124,11 +130,12 @@ it('should cancel pending jobs on activation', async () => {
 
   // Verify all jobs cancelled
   const jobs = await getPendingJobs(orgA.id);
-  expect(jobs.every(j => j.status === 'cancelled')).toBe(true);
+  expect(jobs.every((j) => j.status === 'cancelled')).toBe(true);
 });
 ```
 
 #### AC4: Persistencia
+
 ```javascript
 it('should persist state across service restarts', async () => {
   await killSwitchService.activate(orgA.id, 'Test');
@@ -142,6 +149,7 @@ it('should persist state across service restarts', async () => {
 ```
 
 #### AC5: Rollback
+
 ```javascript
 it('should resume publishing after deactivation', async () => {
   await killSwitchService.activate(orgA.id, 'Test');
@@ -155,6 +163,7 @@ it('should resume publishing after deactivation', async () => {
 ```
 
 #### Multi-tenant isolation
+
 ```javascript
 it('should only affect target org', async () => {
   await killSwitchService.activate(orgA.id, 'Test');
@@ -173,11 +182,13 @@ it('should only affect target org', async () => {
 ## Criterios de Validación
 
 ### Tests Passing
+
 - [ ] 10/10 integration tests passing
 - [ ] Coverage > 90% for `killSwitchService.js`
 - [ ] No regressions in other tests
 
 ### ACs Validados (via tests)
+
 - [ ] AC1: Bloquea publicaciones ✅
 - [ ] AC2: Jobs cancelados ✅
 - [ ] AC3: UI refleja estado ❌ (siguiente PR)
@@ -185,6 +196,7 @@ it('should only affect target org', async () => {
 - [ ] AC5: Rollback funciona ✅
 
 ### Documentación
+
 - [ ] Test evidence en `docs/test-evidence/issue-414/`
 - [ ] `queue-system.md` actualizado con kill-switch testing
 - [ ] GDD validation passing
@@ -192,6 +204,7 @@ it('should only affect target org', async () => {
 ## Archivos a Modificar/Crear
 
 ### Nuevos
+
 - `tests/integration/kill-switch-issue-414.test.js` (300+ líneas)
 - `docs/test-evidence/issue-414/tests-passing.txt`
 - `docs/test-evidence/issue-414/SUMMARY.md`
@@ -199,6 +212,7 @@ it('should only affect target org', async () => {
 - `docs/assessment/issue-414.md` (ya creado)
 
 ### Modificar
+
 - `docs/nodes/queue-system.md` (añadir sección testing)
 
 ## Siguiente Issue (AC #3 - UI)
@@ -206,6 +220,7 @@ it('should only affect target org', async () => {
 **Crear nueva issue:** "Implementar UI/API para Kill-switch - AC #3 de Issue #414"
 
 **Scope:**
+
 - API endpoints en `src/routes/killSwitch.js`
 - UI components en `backoffice/components/KillSwitchPanel.jsx`
 - Integration con admin dashboard

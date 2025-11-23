@@ -39,8 +39,8 @@ describe('Agent CI Workflow', () => {
     const content = fs.readFileSync(manifestPath, 'utf8');
     const manifest = yaml.load(content);
 
-    const hasLabelTriggers = manifest.agents.some(agent =>
-      agent.triggers && agent.triggers.labels && agent.triggers.labels.length > 0
+    const hasLabelTriggers = manifest.agents.some(
+      (agent) => agent.triggers && agent.triggers.labels && agent.triggers.labels.length > 0
     );
 
     expect(hasLabelTriggers).toBe(true);
@@ -50,8 +50,9 @@ describe('Agent CI Workflow', () => {
     const content = fs.readFileSync(manifestPath, 'utf8');
     const manifest = yaml.load(content);
 
-    const hasDiffTriggers = manifest.agents.some(agent =>
-      agent.triggers && agent.triggers.diffIncludes && agent.triggers.diffIncludes.length > 0
+    const hasDiffTriggers = manifest.agents.some(
+      (agent) =>
+        agent.triggers && agent.triggers.diffIncludes && agent.triggers.diffIncludes.length > 0
     );
 
     expect(hasDiffTriggers).toBe(true);
@@ -68,13 +69,11 @@ describe('Agent CI Workflow', () => {
   it('should validate receipt file format', () => {
     if (fs.existsSync(receiptsDir)) {
       const files = fs.readdirSync(receiptsDir);
-      const receiptFiles = files.filter(f =>
-        f.endsWith('.md') &&
-        !f.startsWith('_') &&
-        f !== 'README.md'
+      const receiptFiles = files.filter(
+        (f) => f.endsWith('.md') && !f.startsWith('_') && f !== 'README.md'
       );
 
-      receiptFiles.forEach(file => {
+      receiptFiles.forEach((file) => {
         const pattern = /^\d+-[\w-]+((-SKIPPED)?\.md)$/;
         expect(file).toMatch(pattern);
       });

@@ -58,14 +58,12 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
   describe('Fail-Closed Error Handling', () => {
     test('should fail closed when organization query times out', async () => {
       // Mock timeout scenario
-      supabaseServiceClient.single.mockImplementation(() => 
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Query timeout')), 100)
-        )
+      supabaseServiceClient.single.mockImplementation(
+        () => new Promise((_, reject) => setTimeout(() => reject(new Error('Query timeout')), 100))
       );
 
       const result = await service.checkAutoApprovalEligibility('test-org');
-      
+
       expect(result.eligible).toBe(false);
       expect(result.reason).toBe('system_error');
       expect(logger.error).toHaveBeenCalledWith(
@@ -81,7 +79,7 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
       });
 
       const result = await service.checkAutoApprovalEligibility('test-org');
-      
+
       expect(result.eligible).toBe(false);
       expect(result.reason).toBe('organization_not_found');
       expect(logger.error).toHaveBeenCalledWith(
@@ -101,7 +99,7 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
       });
 
       const result = await service.checkRateLimits('test-org');
-      
+
       expect(result.allowed).toBe(false);
       expect(result.error).toBe('database_connectivity_failed');
       expect(result.reason).toContain('Cannot verify database connectivity');
@@ -117,7 +115,7 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
         .mockResolvedValueOnce({ data: [], count: 20, error: null }); // Daily check
 
       const result = await service.checkRateLimits('test-org');
-      
+
       expect(result.allowed).toBe(true);
       expect(supabaseServiceClient.select).toHaveBeenCalledTimes(3);
       // First call should be health check with limit(1)
@@ -132,7 +130,7 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
       });
 
       const result = await service.checkRateLimits('test-org');
-      
+
       expect(result.allowed).toBe(false);
       expect(result.error).toBe('database_connectivity_failed');
       expect(result.reason).toContain('Cannot verify database connectivity');
@@ -144,10 +142,10 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
 
     test('should validate organization ID format for rate limiting', async () => {
       const invalidOrgIds = [null, undefined, '', 123, {}, []];
-      
+
       for (const invalidId of invalidOrgIds) {
         const result = await service.checkRateLimits(invalidId);
-        
+
         expect(result.allowed).toBe(false);
         expect(result.error).toBe('invalid_input');
         expect(result.reason).toBe('Invalid organization ID provided');
@@ -172,7 +170,7 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
       const variant = { id: 'variant-1', text: 'test response', score: 0.3 };
 
       const result = await service.processAutoApproval(comment, variant, 'test-org');
-      
+
       expect(result.approved).toBe(false);
       expect(result.reason).toBe('transparency_system_error');
       expect(result.requiresManualReview).toBe(true);
@@ -197,7 +195,7 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
       const variant = { id: 'variant-1', text: 'test response', score: 0.3 };
 
       const result = await service.processAutoApproval(comment, variant, 'test-org');
-      
+
       expect(result.approved).toBe(false);
       expect(result.reason).toBe('transparency_enforcement_failed');
       expect(result.requiresManualReview).toBe(true);
@@ -236,7 +234,7 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
       const variant = { id: 'variant-1', text: 'test response', score: 0.3 };
 
       const result = await service.processAutoApproval(comment, variant, 'test-org');
-      
+
       expect(result.approved).toBe(true);
       expect(result.variant.text).toContain('🤖');
       expect(logger.info).toHaveBeenCalledWith(
@@ -250,14 +248,14 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
     test('should use conservative thresholds for auto-approval', () => {
       // Test the new conservative configuration
       expect(service.config.maxToxicityScore).toBe(0.6); // Reduced from 0.7
-      
+
       // Test conservative toxicity validation
       const result1 = service.validateToxicityScore(0.5, 0.3); // Should pass
       expect(result1).toBe(true);
-      
+
       const result2 = service.validateToxicityScore(0.7, 0.3); // Should fail (above 0.6)
       expect(result2).toBe(false);
-      
+
       const result3 = service.validateToxicityScore(0.5, 0.4); // Should fail (increase > 0.15)
       expect(result3).toBe(false);
     });
@@ -284,11 +282,11 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
   describe('Input Validation Security', () => {
     test('should validate organization ID in all methods', async () => {
       const invalidOrgIds = [null, undefined, '', 123, {}, []];
-      
+
       for (const invalidId of invalidOrgIds) {
         const eligibilityResult = await service.checkAutoApprovalEligibility(invalidId);
         expect(eligibilityResult.eligible).toBe(false);
-        
+
         const rateLimitResult = await service.checkRateLimits(invalidId);
         expect(rateLimitResult.allowed).toBe(false);
       }
@@ -303,7 +301,7 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
       });
 
       await service.checkAutoApprovalEligibility('test-org');
-      
+
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('Failed to get organization'),
         expect.objectContaining({
@@ -315,7 +313,7 @@ describe('AutoApprovalService - Security Tests Round 3', () => {
 
     test('should include validation IDs for audit trails', async () => {
       const result = await service.checkRateLimits('test-org');
-      
+
       expect(result).toHaveProperty('rateLimitId');
       expect(typeof result.rateLimitId).toBe('string');
       expect(result.rateLimitId).toMatch(/^rate_\\d+_[a-z0-9]+$/);

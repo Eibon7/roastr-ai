@@ -34,11 +34,13 @@ Los 7 nodos con "missing_coverage_data":
 ## Causa Raíz
 
 Los archivos de código definidos en `docs/system-map.yaml` para estos nodos:
+
 - **NO tienen tests** que los ejecuten, O
 - **NO existen físicamente**, O
 - **NO están siendo importados** por ningún test
 
 Por lo tanto:
+
 - Estos archivos NO aparecen en `coverage/coverage-summary.json`
 - El validator no puede calcular coverage real
 - Resultado: "missing_coverage_data" (warning)
@@ -50,18 +52,19 @@ Por lo tanto:
 
 tone:
   files:
-    - src/services/toneService.js  # ❌ Sin tests o no ejecutado
+    - src/services/toneService.js # ❌ Sin tests o no ejecutado
 
 platform-constraints:
   files:
-    - src/services/platformConstraints.js  # ❌ Sin tests o no ejecutado
+    - src/services/platformConstraints.js # ❌ Sin tests o no ejecutado
 
 trainer:
   files:
-    - src/services/trainerService.js  # ❌ Sin tests o no ejecutado
+    - src/services/trainerService.js # ❌ Sin tests o no ejecutado
 ```
 
 **Verificación:**
+
 ```bash
 $ cat coverage/coverage-summary.json | jq 'keys | .[]' | grep -E "toneService|platformConstraints|trainerService"
 # (sin resultados - estos archivos no tienen coverage)
@@ -81,12 +84,12 @@ $ ls src/services/ | grep -E "tone|platform|trainer"
 
 ### Comparación
 
-| Métrica | Inicial (2025-10-28) | Actual (2025-10-29) | Delta |
-|---------|----------------------|---------------------|-------|
-| Health Score | 86.4 | 91.3 | +4.9 ✅ |
-| Status | DEGRADED | HEALTHY | ✅ |
-| PR #676 | Failing | MERGED | ✅ |
-| Threshold | 87 | 87 | = |
+| Métrica      | Inicial (2025-10-28) | Actual (2025-10-29) | Delta   |
+| ------------ | -------------------- | ------------------- | ------- |
+| Health Score | 86.4                 | 91.3                | +4.9 ✅ |
+| Status       | DEGRADED             | HEALTHY             | ✅      |
+| PR #676      | Failing              | MERGED              | ✅      |
+| Threshold    | 87                   | 87                  | =       |
 
 ## Resolución
 
@@ -121,6 +124,7 @@ if (!isWarning) {
 ```
 
 **Interpretación:**
+
 - **"missing_coverage_data"** = Warning (no hay data para validar)
 - **"coverage_mismatch"** = Violation (data existe pero difiere >3%)
 
@@ -172,14 +176,15 @@ Marcar estos nodos como "planning" en `system-map.yaml`:
 
 ```yaml
 tone:
-  status: development  # o "roadmap"
+  status: development # o "roadmap"
   priority: medium
-  coverage: 0  # Realista - sin implementación todavía
+  coverage: 0 # Realista - sin implementación todavía
 ```
 
 ### Decisión Recomendada
 
 **Opción C** es la más realista:
+
 - Refleja el estado real del proyecto
 - No bloquea desarrollo
 - Mantiene transparency sobre coverage real
@@ -196,6 +201,7 @@ tone:
 ---
 
 **Referencias:**
+
 - Issue: #677
 - PR: #676
 - Validation Reports:
@@ -204,6 +210,7 @@ tone:
   - `gdd-health.json`
 
 **Comandos de Verificación:**
+
 ```bash
 # Ver health score actual
 node scripts/score-gdd-health.js --ci
@@ -214,4 +221,3 @@ node scripts/validate-gdd-runtime.js --full
 # Ver coverage integrity
 node scripts/auto-repair-gdd.js --auto-fix
 ```
-

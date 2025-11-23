@@ -53,9 +53,9 @@ class MockServer {
         contentType: 'application/json',
         headers: {
           'Access-Control-Allow-Origin': '*',
-          ...headers,
+          ...headers
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(body)
       });
     });
 
@@ -83,9 +83,9 @@ class MockServer {
       body: {
         error: 'TIMEOUT',
         message: 'Request timeout',
-        code: 'E_TIMEOUT',
+        code: 'E_TIMEOUT'
       },
-      delay: timeoutMs,
+      delay: timeoutMs
     });
   }
 
@@ -99,8 +99,8 @@ class MockServer {
       body: {
         error: 'VARIANTS_EXHAUSTED',
         message: 'No more variants available for this roast',
-        code: 'E_VARIANT_LIMIT',
-      },
+        code: 'E_VARIANT_LIMIT'
+      }
     });
   }
 
@@ -109,16 +109,19 @@ class MockServer {
    * @param {string} [urlPattern] - URL pattern, defaults to variant endpoint
    * @param {string} [variantText] - Variant text to return
    */
-  async mockSuccessfulVariant(urlPattern = '**/api/approval/*/regenerate', variantText = 'Este es un nuevo roast generado') {
+  async mockSuccessfulVariant(
+    urlPattern = '**/api/approval/*/regenerate',
+    variantText = 'Este es un nuevo roast generado'
+  ) {
     await this.mockEndpoint('POST', urlPattern, {
       status: 200,
       body: {
         variant: {
           id: 'variant_' + Date.now(),
           text: variantText,
-          created_at: new Date().toISOString(),
-        },
-      },
+          created_at: new Date().toISOString()
+        }
+      }
     });
   }
 
@@ -131,8 +134,8 @@ class MockServer {
       status: 200,
       body: {
         success: true,
-        message: 'Roast approved and published',
-      },
+        message: 'Roast approved and published'
+      }
     });
   }
 
@@ -145,8 +148,8 @@ class MockServer {
       status: 200,
       body: {
         success: true,
-        message: 'Roast rejected',
-      },
+        message: 'Roast rejected'
+      }
     });
   }
 
@@ -165,10 +168,10 @@ class MockServer {
             comment: 'Este es un comentario tóxico',
             roast: 'Esta es una respuesta ingeniosa',
             platform: 'twitter',
-            created_at: new Date().toISOString(),
-          },
-        ],
-      },
+            created_at: new Date().toISOString()
+          }
+        ]
+      }
     });
   }
 
@@ -189,14 +192,14 @@ class MockServer {
         await route.fulfill({
           status: errorOptions.status || 500,
           contentType: 'application/json',
-          body: JSON.stringify(errorOptions.body || { error: 'Temporary error' }),
+          body: JSON.stringify(errorOptions.body || { error: 'Temporary error' })
         });
       } else {
         // Subsequent calls: return success
         await route.fulfill({
           status: successOptions.status || 200,
           contentType: 'application/json',
-          body: JSON.stringify(successOptions.body || { success: true }),
+          body: JSON.stringify(successOptions.body || { success: true })
         });
       }
     });
@@ -218,7 +221,7 @@ class MockServer {
     return {
       totalRoutes: this.routes.size,
       routes: Array.from(this.routes.keys()),
-      globalDelay: this.globalDelay,
+      globalDelay: this.globalDelay
     };
   }
 }
@@ -234,5 +237,5 @@ function createMockServer(page) {
 
 module.exports = {
   MockServer,
-  createMockServer,
+  createMockServer
 };

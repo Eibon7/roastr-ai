@@ -65,7 +65,7 @@ export const DiffModal: React.FC<DiffModalProps> = ({ isOpen, onClose, caseData 
     <div style={overlayStyles} onClick={onClose}>
       <div
         style={modalStyles}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="diff-modal-title"
@@ -92,12 +92,14 @@ export const DiffModal: React.FC<DiffModalProps> = ({ isOpen, onClose, caseData 
           <h3 style={{ color: GUARDIAN_COLORS.safe }}>Files Changed:</h3>
           <ul>
             {caseData.files_changed.map((file, idx) => (
-              <li key={idx} style={{ marginBottom: '5px' }}>{file}</li>
+              <li key={idx} style={{ marginBottom: '5px' }}>
+                {file}
+              </li>
             ))}
           </ul>
           <p style={{ marginTop: '20px', opacity: 0.7 }}>
-            Full diff viewer will be implemented with syntax highlighting.
-            For now, use: git diff {caseData.case_id}
+            Full diff viewer will be implemented with syntax highlighting. For now, use: git diff{' '}
+            {caseData.case_id}
           </p>
         </div>
       </div>

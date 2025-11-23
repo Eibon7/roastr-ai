@@ -49,7 +49,7 @@ function simulateToxicComment(options = {}) {
     en: {
       low: 'This service is not very good',
       medium: 'This service is trash',
-      high: 'You\'re an idiot and your service is horrible',
+      high: "You're an idiot and your service is horrible",
       extreme: 'Go to hell, you piece of shit'
     }
   };
@@ -166,14 +166,14 @@ function createMockAPIError(service, errorType = 'rate_limit') {
  */
 async function waitForCondition(conditionFn, timeout = 5000, interval = 100) {
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < timeout) {
     if (await conditionFn()) {
       return true;
     }
-    await new Promise(resolve => setTimeout(resolve, interval));
+    await new Promise((resolve) => setTimeout(resolve, interval));
   }
-  
+
   throw new Error(`Condition not met within ${timeout}ms`);
 }
 

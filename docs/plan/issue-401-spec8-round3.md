@@ -1,19 +1,23 @@
 # CodeRabbit Review Implementation Plan - PR #429 Round 3
 
 ## Review ID: 3275176966
+
 **Date**: 2025-09-27
 **PR**: https://github.com/Eibon7/roastr-ai/pull/429
 
 ## CodeRabbit Feedback Summary
 
 ### 1. Dashboard.jsx Code Quality & Accessibility
+
 **Issue**: Several hardening and accessibility improvements needed
+
 - **Tier Mapping**: Use explicit tier-to-max connection mapping instead of ternary
 - **Accessibility**: Add ARIA labels to warning icons and screen-reader support
 - **Button Logic**: Improve disabled state with ARIA attributes and test selectors
 - **Localization**: Enhance Spanish tooltips and messaging
 
 **Required Changes**:
+
 ```javascript
 // Instead of: const maxConn = tier === 'free' ? 1 : 2;
 const TIER_MAX = { free: 1, pro: 2, plus: 2, creator: 2 };
@@ -25,34 +29,43 @@ const maxConn = TIER_MAX[tier] ?? 2;
 ```
 
 ### 2. Test Robustness & Mocking Improvements
+
 **Issue**: Test timeout handling and Supabase mocking needs enhancement
+
 - **Fake Timers**: More deterministic timeout testing
 - **Mock Consolidation**: Better Supabase client mocking with method chaining
 - **Error Handling**: Robust error scenarios and edge cases
 
 **Required Changes**:
+
 - Improve `createMockSupabaseClient()` with better method chaining
 - Use fake timers consistently for timeout tests
 - Add comprehensive error handling scenarios
 
 ### 3. Documentation Standardization
+
 **Issue**: File naming and documentation structure needs improvement
+
 - **File Naming**: Follow repository conventions for plan documents
 - **spec.md Updates**: Reflect current implementation accurately
 - **Reference Cleanup**: Remove outdated per-platform connection limit references
 
 **Required Changes**:
+
 - Rename planning docs to follow convention: `docs/plan/issue-401-spec8.md`
 - Update spec.md with accurate implementation details
 - Clean up outdated references
 
 ### 4. Spanish Localization Enhancements
+
 **Issue**: Some Spanish text could be more natural and contextual
+
 - **Tooltip Messages**: Improve contextual Spanish tooltips
 - **Connection Status**: Better Spanish phrasing for connection limits
 - **Loading States**: Clear Spanish messaging for loading scenarios
 
 **Required Changes**:
+
 - Enhance Spanish tooltips with better context
 - Improve connection limit messaging
 - Add proper Spanish accessibility labels
@@ -60,10 +73,13 @@ const maxConn = TIER_MAX[tier] ?? 2;
 ## Implementation Plan
 
 ### Phase 1: Dashboard Code Quality & Accessibility (Front-end Dev Agent)
+
 **Files to modify**:
+
 - `frontend/src/pages/dashboard.jsx` (lines ~270-300, ~980-1010)
 
 **Changes**:
+
 1. **Tier Mapping Hardening**:
    - Replace ternary with explicit `TIER_MAX` mapping
    - Add fallback for unknown tiers
@@ -81,10 +97,13 @@ const maxConn = TIER_MAX[tier] ?? 2;
    - Natural Spanish for loading states
 
 ### Phase 2: Test Suite Enhancements (Test Engineer Agent)
+
 **Files to modify**:
+
 - `tests/integration/tierValidationSecurity.test.js`
 
 **Changes**:
+
 1. **Fake Timer Improvements**:
    - More deterministic timeout testing
    - Consistent timer management
@@ -101,12 +120,15 @@ const maxConn = TIER_MAX[tier] ?? 2;
    - Tier mapping edge cases
 
 ### Phase 3: Documentation Standardization
+
 **Files to modify**:
+
 - `docs/plan/review-429-round2.md` → `docs/plan/issue-401-spec8-round2.md`
 - `docs/plan/review-429-round3.md` → `docs/plan/issue-401-spec8-round3.md`
 - `spec.md`
 
 **Changes**:
+
 1. **File Renaming**:
    - Follow repository naming conventions
    - Maintain referential integrity
@@ -118,7 +140,9 @@ const maxConn = TIER_MAX[tier] ?? 2;
    - Add Round 3 improvements
 
 ### Phase 4: Quality Assurance & Validation
+
 **Validation criteria**:
+
 - Accessibility compliance with ARIA standards
 - Spanish localization sounds natural
 - Test suite passes consistently
@@ -127,7 +151,7 @@ const maxConn = TIER_MAX[tier] ?? 2;
 
 ## Subagents to Use
 
-1. **Front-end Dev Agent**: 
+1. **Front-end Dev Agent**:
    - Implement tier mapping hardening
    - Add accessibility improvements
    - Enhance Spanish localization
@@ -152,16 +176,19 @@ const maxConn = TIER_MAX[tier] ?? 2;
 ## Risk Assessment
 
 **Low Risk**:
+
 - Documentation updates
 - Spanish text improvements
 - File renaming
 
 **Medium Risk**:
+
 - Tier mapping changes (affects core logic)
 - Accessibility changes (need careful testing)
 - Test mock improvements (could affect reliability)
 
 **Mitigation**:
+
 - Thorough testing with all tier types
 - Accessibility testing with screen readers
 - Validate Spanish with native speakers
@@ -191,6 +218,7 @@ const maxConn = TIER_MAX[tier] ?? 2;
 ## Implementation Notes
 
 ### Tier Mapping Pattern
+
 ```javascript
 const TIER_MAX_CONNECTIONS = {
   free: 1,
@@ -203,9 +231,10 @@ const maxConn = TIER_MAX_CONNECTIONS[tier] ?? 2; // Fallback for unknown tiers
 ```
 
 ### Accessibility Pattern
+
 ```javascript
-<span 
-  aria-label="Advertencia: Límite de conexiones alcanzado" 
+<span
+  aria-label="Advertencia: Límite de conexiones alcanzado"
   role="img"
   className="text-amber-500"
 >
@@ -222,6 +251,7 @@ const maxConn = TIER_MAX_CONNECTIONS[tier] ?? 2; // Fallback for unknown tiers
 ```
 
 ### Spanish Localization Examples
+
 - "Mejora a Pro para conectar más cuentas"
 - "Has alcanzado el límite de tu plan"
 - "Conexiones disponibles: X de Y"

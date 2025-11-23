@@ -14,10 +14,10 @@ let supabaseServiceClient;
 try {
   const { supabaseServiceClient: client } = require('../src/config/supabase');
   supabaseServiceClient = client;
-  
+
   // Validate Supabase environment
   if (!process.env.SUPABASE_URL?.includes('supabase')) {
-    console.warn('⚠️  URL doesn\'t appear to be a Supabase URL');
+    console.warn("⚠️  URL doesn't appear to be a Supabase URL");
     console.warn('   Current SUPABASE_URL:', process.env.SUPABASE_URL?.substring(0, 50) + '...');
   }
 } catch (error) {
@@ -30,22 +30,22 @@ try {
 
 async function runMigration() {
   console.log('🔄 Running migration: Add test flag to users table...');
-  
+
   try {
     const migrationSQL = readFileSync(
-      join(__dirname, '..', 'database', 'migrations', '015_add_test_flag_to_users.sql'), 
+      join(__dirname, '..', 'database', 'migrations', '015_add_test_flag_to_users.sql'),
       'utf-8'
     );
-    
+
     const { error } = await supabaseServiceClient.rpc('exec_sql', {
       sql_query: migrationSQL
     });
-    
+
     if (error) {
       console.error('❌ Migration failed:', error);
       return false;
     }
-    
+
     console.log('✅ Migration completed successfully');
     return true;
   } catch (error) {
@@ -56,35 +56,32 @@ async function runMigration() {
 
 async function setupTestUsers() {
   console.log('🔄 Setting up admin user and test users...');
-  
+
   try {
-    const setupSQL = readFileSync(
-      join(__dirname, 'setup-test-users.sql'), 
-      'utf-8'
-    );
-    
+    const setupSQL = readFileSync(join(__dirname, 'setup-test-users.sql'), 'utf-8');
+
     // Split SQL into individual statements and execute them
     const statements = setupSQL
       .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
-    
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.startsWith('--'));
+
     for (const statement of statements) {
       if (statement.includes('SELECT') && statement.includes('as type')) {
         // Skip verification queries for now
         continue;
       }
-      
+
       const { error } = await supabaseServiceClient.rpc('exec_sql', {
         sql_query: statement + ';'
       });
-      
+
       if (error && !error.message.includes('already exists')) {
         console.warn('⚠️  Statement warning:', error.message.substring(0, 100));
         // Continue with other statements
       }
     }
-    
+
     console.log('✅ Test users setup completed successfully');
     return true;
   } catch (error) {
@@ -95,7 +92,7 @@ async function setupTestUsers() {
 
 async function verifySetup() {
   console.log('🔍 Verifying setup...');
-  
+
   try {
     // Check admin user
     const { data: adminUser, error: adminError } = await supabaseServiceClient
@@ -103,62 +100,67 @@ async function verifySetup() {
       .select('email, name, plan, is_admin, active, is_test')
       .eq('email', 'emiliopostigo@gmail.com')
       .single();
-    
+
     if (adminError) {
       console.error('❌ Admin user verification failed:', adminError);
       return false;
     }
-    
+
     console.log('👤 Admin user:', adminUser);
-    
+
     // Check test users
     const { data: testUsers, error: testError } = await supabaseServiceClient
       .from('users')
       .select('email, name, plan, is_admin, active, is_test, monthly_messages_sent')
       .eq('is_test', true)
       .order('email');
-    
+
     if (testError) {
       console.error('❌ Test users verification failed:', testError);
       return false;
     }
-    
+
     console.log('🧪 Test users created:');
-    testUsers.forEach(user => {
+    testUsers.forEach((user) => {
       console.log(`  - ${user.email} (${user.plan}, usage: ${user.monthly_messages_sent})`);
     });
-    
+
     // Check organizations with granular error handling
     try {
       const { data: orgs, error: orgsError } = await supabaseServiceClient
         .from('organizations')
-        .select(`
+        .select(
+          `
           name, 
           slug, 
           plan_id, 
           monthly_responses_limit, 
           monthly_responses_used,
           users!inner(email, is_test)
-        `)
+        `
+        )
         .eq('users.is_test', true);
-      
+
       if (orgsError) {
         console.warn('⚠️  Could not verify organizations:', orgsError.message);
       } else if (orgs) {
         console.log('🏢 Organizations created:');
-        orgs.forEach(org => {
-          console.log(`  - ${org.name} (${org.plan_id}, ${org.monthly_responses_used}/${org.monthly_responses_limit})`);
+        orgs.forEach((org) => {
+          console.log(
+            `  - ${org.name} (${org.plan_id}, ${org.monthly_responses_used}/${org.monthly_responses_limit})`
+          );
         });
       }
     } catch (error) {
       console.warn('⚠️  Organization verification failed:', error.message);
     }
-    
+
     // Check integrations with granular error handling
     try {
       const { data: integrations, error: intError } = await supabaseServiceClient
         .from('integration_configs')
-        .select(`
+        .select(
+          `
           platform,
           enabled,
           tone,
@@ -166,22 +168,24 @@ async function verifySetup() {
           organizations!inner(
             users!inner(email, is_test)
           )
-        `)
+        `
+        )
         .eq('organizations.users.is_test', true);
-      
+
       if (intError) {
         console.warn('⚠️  Could not verify integrations:', intError.message);
       } else if (integrations) {
         console.log('🔗 Integrations created:');
-        integrations.forEach(int => {
-          const handle = int.config?.handle || int.config?.username || int.config?.channel_id || 'N/A';
+        integrations.forEach((int) => {
+          const handle =
+            int.config?.handle || int.config?.username || int.config?.channel_id || 'N/A';
           console.log(`  - ${int.platform}: ${handle} (${int.tone})`);
         });
       }
     } catch (error) {
       console.warn('⚠️  Integration verification failed:', error.message);
     }
-    
+
     console.log('✅ Verification completed');
     return true;
   } catch (error) {
@@ -192,16 +196,16 @@ async function verifySetup() {
 
 async function main() {
   const isDryRun = process.argv.includes('--dry-run');
-  
+
   console.log('🚀 Roastr.ai Test Users Setup Script');
   console.log('=====================================');
   console.log('Issue #237: Admin and Test Users Creation');
   console.log('');
-  
+
   if (isDryRun) {
     console.log('🏃 DRY RUN MODE - No changes will be made');
     console.log('');
-    
+
     // Just show what would be created
     console.log('Would create:');
     console.log('👤 Admin user: emiliopostigo@gmail.com');
@@ -220,28 +224,28 @@ async function main() {
     console.log('Run without --dry-run to execute the setup');
     return;
   }
-  
+
   console.log('⚠️  This will create/update users and organizations in your database.');
   console.log('   Make sure you are connected to the correct database.');
   console.log('');
-  
+
   // Step 1: Run migration
   const migrationSuccess = await runMigration();
   if (!migrationSuccess) {
     console.error('❌ Migration failed. Aborting.');
     process.exit(1);
   }
-  
+
   // Step 2: Setup users
   const setupSuccess = await setupTestUsers();
   if (!setupSuccess) {
     console.error('❌ Setup failed. Some users may have been created.');
     process.exit(1);
   }
-  
+
   // Step 3: Verify setup
   await verifySetup();
-  
+
   console.log('');
   console.log('🎉 Setup completed successfully!');
   console.log('');

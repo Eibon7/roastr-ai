@@ -37,7 +37,8 @@ jest.mock('../../src/config/mockMode', () => ({
         create: jest.fn()
       }
     }),
-    generateMockSupabaseClient: jest.fn(() => ({  // Issue #618 - Add missing mock function
+    generateMockSupabaseClient: jest.fn(() => ({
+      // Issue #618 - Add missing mock function
       from: jest.fn()
     }))
   }
@@ -49,9 +50,9 @@ describe('Gatekeeper Integration with AnalyzeToxicityWorker', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     worker = new AnalyzeToxicityWorker();
-    
+
     mockComment = {
       id: 'test-comment-123',
       organization_id: 'org-123',
@@ -263,9 +264,9 @@ describe('Gatekeeper Integration with AnalyzeToxicityWorker', () => {
       };
 
       // Mock Gatekeeper failure
-      worker.gatekeeperService.classifyComment = jest.fn().mockRejectedValue(
-        new Error('Gatekeeper service unavailable')
-      );
+      worker.gatekeeperService.classifyComment = jest
+        .fn()
+        .mockRejectedValue(new Error('Gatekeeper service unavailable'));
 
       await expect(worker.processJob(job)).rejects.toThrow('Gatekeeper service unavailable');
     });

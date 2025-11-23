@@ -5,13 +5,7 @@ import { Button } from './button';
 /**
  * Modal for confirming clipboard operations with potentially sensitive data
  */
-const SensitiveDataModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  detection, 
-  textPreview 
-}) => {
+const SensitiveDataModal = ({ isOpen, onClose, onConfirm, detection, textPreview }) => {
   if (!isOpen) return null;
 
   const handleConfirm = () => {
@@ -24,9 +18,8 @@ const SensitiveDataModal = ({
   };
 
   // Truncate text preview for display
-  const truncatedPreview = textPreview && textPreview.length > 100
-    ? textPreview.substring(0, 100) + '...'
-    : textPreview;
+  const truncatedPreview =
+    textPreview && textPreview.length > 100 ? textPreview.substring(0, 100) + '...' : textPreview;
 
   // Safe access to suggestions with null check
   const suggestions = detection?.suggestions ?? [];
@@ -42,16 +35,9 @@ const SensitiveDataModal = ({
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-2">
             <AlertTriangle className="h-5 w-5 text-amber-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
-              Información Sensible Detectada
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900">Información Sensible Detectada</h3>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCancel}
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="ghost" size="sm" onClick={handleCancel} className="h-8 w-8 p-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -80,12 +66,8 @@ const SensitiveDataModal = ({
           {/* Text preview */}
           {truncatedPreview && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <p className="text-sm text-gray-600 mb-1 font-medium">
-                Texto a copiar:
-              </p>
-              <p className="text-sm text-gray-800 italic">
-                "{truncatedPreview}"
-              </p>
+              <p className="text-sm text-gray-600 mb-1 font-medium">Texto a copiar:</p>
+              <p className="text-sm text-gray-800 italic">"{truncatedPreview}"</p>
             </div>
           )}
 
@@ -105,25 +87,18 @@ const SensitiveDataModal = ({
           {/* Warning text */}
           <div className="text-sm text-gray-600">
             <p>
-              ¿Estás seguro de que quieres copiar este contenido al portapapeles? 
-              Asegúrate de no pegarlo en lugares públicos o no seguros.
+              ¿Estás seguro de que quieres copiar este contenido al portapapeles? Asegúrate de no
+              pegarlo en lugares públicos o no seguros.
             </p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end space-x-2 p-4 border-t bg-gray-50">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            className="text-gray-600"
-          >
+          <Button variant="outline" onClick={handleCancel} className="text-gray-600">
             Cancelar
           </Button>
-          <Button
-            onClick={handleConfirm}
-            className="bg-amber-600 hover:bg-amber-700 text-white"
-          >
+          <Button onClick={handleConfirm} className="bg-amber-600 hover:bg-amber-700 text-white">
             <Copy className="h-4 w-4 mr-2" />
             Copiar de todas formas
           </Button>

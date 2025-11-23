@@ -7,6 +7,7 @@
 ## Trigger
 
 **Why this agent was invoked:**
+
 - [ ] Label match: `<label>`
 - [ ] Diff match: `<file pattern>`
 - [ ] Condition: `<specific condition>`
@@ -14,17 +15,20 @@
 ## Decisions/Artifacts
 
 **Key decisions made by agent:**
+
 - Decision 1
 - Decision 2
 - Decision 3
 
 **Artifacts produced:**
+
 - `path/to/file1` - Description
 - `path/to/file2` - Description
 
 ## Guardrails Verified
 
 **Checklist of guardrails from agents/manifest.yaml:**
+
 - [ ] Guardrail 1 verified
 - [ ] Guardrail 2 verified
 - [ ] Guardrail 3 verified
@@ -37,10 +41,12 @@
 Brief description of what was accomplished.
 
 **Follow-up Actions:**
+
 - [ ] Action 1 (if any)
 - [ ] Action 2 (if any)
 
 **Agent Output:**
+
 ```
 Relevant logs, commands, or outputs from agent execution
 ```

@@ -1,6 +1,6 @@
 /**
  * Unit Tests for Shield Persistence Service
- * 
+ *
  * Tests shield event recording, offender tracking, and recidivism analysis
  * with proper GDPR compliance and data retention handling.
  */
@@ -29,7 +29,7 @@ const mockSupabase = {
 
 // Helper to reset the mock chain
 const resetSupabaseChain = () => {
-  Object.keys(mockSupabase).forEach(key => {
+  Object.keys(mockSupabase).forEach((key) => {
     if (typeof mockSupabase[key] === 'function' && key !== 'single' && key !== 'rpc') {
       mockSupabase[key].mockReturnThis();
     }
@@ -53,7 +53,7 @@ describe('ShieldPersistenceService', () => {
     // Reset all mocks
     jest.clearAllMocks();
     resetSupabaseChain();
-    
+
     // Create service with mocked dependencies
     service = new ShieldPersistenceService({
       supabase: mockSupabase,
@@ -138,7 +138,9 @@ describe('ShieldPersistenceService', () => {
         error: dbError
       });
 
-      await expect(service.recordShieldEvent(mockEventData)).rejects.toThrow('Database connection failed');
+      await expect(service.recordShieldEvent(mockEventData)).rejects.toThrow(
+        'Database connection failed'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith('Failed to record Shield event', {
         organizationId: mockEventData.organizationId,
         platform: mockEventData.platform,
@@ -224,13 +226,15 @@ describe('ShieldPersistenceService', () => {
     test('should handle update errors', async () => {
       const eventId = 'event-123';
       const updateError = new Error('Event not found');
-      
+
       mockSupabase.single.mockResolvedValue({
         data: null,
         error: updateError
       });
 
-      await expect(service.updateShieldEventStatus(eventId, 'failed')).rejects.toThrow('Event not found');
+      await expect(service.updateShieldEventStatus(eventId, 'failed')).rejects.toThrow(
+        'Event not found'
+      );
       expect(mockLogger.error).toHaveBeenCalledWith('Failed to update Shield event status', {
         eventId,
         status: 'failed',
@@ -329,7 +333,7 @@ describe('ShieldPersistenceService', () => {
 
     test('should respect custom window days', async () => {
       const customWindowDays = 30;
-      
+
       mockSupabase.single.mockResolvedValueOnce({
         data: null,
         error: { code: 'PGRST116' }
@@ -340,17 +344,12 @@ describe('ShieldPersistenceService', () => {
         error: null
       });
 
-      await service.getOffenderHistory(
-        mockOrganizationId,
-        'twitter',
-        'user_123',
-        customWindowDays
-      );
+      await service.getOffenderHistory(mockOrganizationId, 'twitter', 'user_123', customWindowDays);
 
       // Verify that the cutoff date was calculated with custom window
       const expectedCutoff = new Date();
       expectedCutoff.setDate(expectedCutoff.getDate() - customWindowDays);
-      
+
       expect(mockSupabase.gte).toHaveBeenCalledWith(
         'last_offense_at',
         expect.stringMatching(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
@@ -386,11 +385,7 @@ describe('ShieldPersistenceService', () => {
         error: null
       });
 
-      const result = await service.isRepeatOffender(
-        mockOrganizationId,
-        'twitter',
-        'new_user_123'
-      );
+      const result = await service.isRepeatOffender(mockOrganizationId, 'twitter', 'new_user_123');
 
       expect(result.isRepeat).toBe(false);
       expect(result.offenseCount).toBe(1);
@@ -403,11 +398,7 @@ describe('ShieldPersistenceService', () => {
         error: dbError
       });
 
-      const result = await service.isRepeatOffender(
-        mockOrganizationId,
-        'twitter',
-        'user_123'
-      );
+      const result = await service.isRepeatOffender(mockOrganizationId, 'twitter', 'user_123');
 
       expect(result.isRepeat).toBe(false);
       expect(result.offenseCount).toBe(0);
@@ -520,7 +511,7 @@ describe('ShieldPersistenceService', () => {
       expect(result.total).toBe(1);
       expect(result.limit).toBe(50);
       expect(result.offset).toBe(0);
-      
+
       // Verify all filters were applied
       expect(mockSupabase.eq).toHaveBeenCalledWith('organization_id', mockOrganizationId);
       expect(mockSupabase.eq).toHaveBeenCalledWith('platform', 'twitter');

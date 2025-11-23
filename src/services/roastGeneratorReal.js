@@ -15,8 +15,8 @@ class RoastGeneratorReal {
 
     this.openai = new OpenAI({
       apiKey,
-      maxRetries: 2,  // Standard resilience config (CodeRabbit #3343936799)
-      timeout: 30000  // 30 second timeout
+      maxRetries: 2, // Standard resilience config (CodeRabbit #3343936799)
+      timeout: 30000 // 30 second timeout
     });
     this.isMockMode = false;
   }
@@ -87,24 +87,24 @@ Reglas de estilo DIRECTO/CORTANTE:
       const systemContent = systemPrompts[tone] || systemPrompts.sarcastic;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
+            role: 'system',
             content: systemContent
           },
           {
-            role: "user",
+            role: 'user',
             content: text
           }
         ],
         max_tokens: 100,
-        temperature: 0.8,
+        temperature: 0.8
       });
 
       return completion.choices[0].message.content;
     } catch (error) {
-      console.error("❌ [RoastGeneratorReal] Error generando roast:");
+      console.error('❌ [RoastGeneratorReal] Error generando roast:');
       console.error(error.response?.data || error.message || error);
       throw error;
     }
@@ -112,17 +112,17 @@ Reglas de estilo DIRECTO/CORTANTE:
 
   async generateRoastWithPrompt(text, customPrompt) {
     try {
-      console.log("🎯 [RoastGeneratorReal] Generando roast con prompt personalizado...");
-      
+      console.log('🎯 [RoastGeneratorReal] Generando roast con prompt personalizado...');
+
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
+            role: 'system',
             content: customPrompt
           },
           {
-            role: "user", 
+            role: 'user',
             content: text
           }
         ],
@@ -132,7 +132,7 @@ Reglas de estilo DIRECTO/CORTANTE:
 
       return completion.choices[0].message.content;
     } catch (error) {
-      console.error("❌ [RoastGeneratorReal] Error generando roast con prompt personalizado:");
+      console.error('❌ [RoastGeneratorReal] Error generando roast con prompt personalizado:');
       console.error(error.response?.data || error.message || error);
       throw error;
     }

@@ -22,18 +22,21 @@ Un bot de Twitter que monitorea menciones automáticamente y responde con roasts
 ## 🛠️ Instalación
 
 1. **Clonar e instalar dependencias:**
+
 ```bash
 cd roastr-bot
 npm install
 ```
 
 2. **Configurar variables de entorno:**
+
 ```bash
 cp .env.example .env
 # Editar .env con tus credenciales reales
 ```
 
 3. **Verificar configuración:**
+
 ```bash
 npm run validate-env
 ```
@@ -74,21 +77,25 @@ DRY_RUN=false
 ## 🚀 Uso
 
 ### Modo Producción
+
 ```bash
 npm start
 ```
 
 ### Modo Desarrollo (con debug)
+
 ```bash
 npm run dev
 ```
 
 ### Modo Dry-Run (sin enviar tweets)
+
 ```bash
 npm run dry-run
 ```
 
 ### Solo Debug
+
 ```bash
 npm run debug
 ```
@@ -141,6 +148,7 @@ Cuando `DEBUG=true`:
 ## 🧪 Modo Dry-Run
 
 Cuando `DRY_RUN=true`:
+
 - Se procesan menciones normalmente
 - Se generan roasts reales
 - **NO se envían tweets** (solo se loguean)
@@ -161,18 +169,21 @@ El bot muestra estadísticas cada 5 minutos:
 ## 🛡️ Características de Seguridad
 
 ### Filtros Anti-Spam
+
 - No responde a sus propios tweets
 - Evita procesar la misma mención dos veces
 - Filtra contenido con muy poco texto
 - Detecta y bloquea patrones de spam comunes
 
 ### Manejo de Rate Limits
+
 - Respeta límites de la API de Twitter
 - Implementa delays entre respuestas
 - Retry automático con backoff exponencial
 - Logging detallado de errores de rate limiting
 
 ### Gestión de Errores
+
 - Reconexión automática en caso de fallos de red
 - Continuación del servicio aunque falle una mención individual
 - Logging completo de errores para debugging
@@ -181,6 +192,7 @@ El bot muestra estadísticas cada 5 minutos:
 ## 🔮 Funcionalidades Futuras
 
 ### Multi-Cuenta (Preparado)
+
 ```javascript
 // Futuro: soporte para múltiples clientes
 const bot = new RoastrBot();
@@ -188,12 +200,14 @@ await bot.initializeForAccount('client-123', clientCredentials);
 ```
 
 ### Integración con CSV
+
 ```javascript
 // Futuro: roasts desde CSV para respuestas más rápidas
 const roast = await roastService.generateRoastFromCSV(text);
 ```
 
 ### Estilos de Roast
+
 ```javascript
 // Futuro: diferentes personalidades de roast
 const roast = await roastService.generateStyledRoast(text, {
@@ -205,21 +219,25 @@ const roast = await roastService.generateStyledRoast(text, {
 ## 🐛 Troubleshooting
 
 ### Error: "Invalid Twitter credentials"
+
 - Verifica que todas las credenciales estén en el .env
 - Asegúrate de que la app tenga permisos "Read and Write"
 - Confirma que los tokens no hayan expirado
 
 ### Error: "API connection failed"
+
 - Verifica que ROAST_API_URL sea correcto
 - Confirma que ROASTR_API_KEY sea válido
 - Revisa que la API esté online
 
 ### Rate Limit Exceeded
+
 - El bot maneja esto automáticamente
 - Reduce MENTION_POLL_INTERVAL_MS si es necesario
 - Revisa logs para entender patrones de uso
 
 ### Bot no responde a menciones
+
 - Activa DEBUG=true para ver el flujo completo
 - Verifica que las menciones no estén siendo filtradas
 - Confirma que el bot tenga permisos para ver menciones
@@ -227,12 +245,14 @@ const roast = await roastService.generateStyledRoast(text, {
 ## 📝 Logs y Debugging
 
 ### Niveles de Log
+
 - **INFO**: Eventos importantes del bot
 - **DEBUG**: Información detallada (solo si DEBUG=true)
 - **ERROR**: Errores que requieren atención
 - **WARN**: Advertencias que no detienen el bot
 
 ### Ejemplo de Session Log
+
 ```bash
 [INFO] 🤖 Roastr.ai Twitter Bot inicializándose...
 [INFO] 🚀 Inicializando servicios...

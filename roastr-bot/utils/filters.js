@@ -11,7 +11,7 @@ class MentionFilters {
     // TODO: In the future, this could be persisted to a database or file
     // for multi-instance deployments and persistence across restarts
     this.processedMentions = new Set();
-    
+
     // Bot's own user ID to avoid self-replies (will be set by TwitterService)
     this.botUserId = null;
   }
@@ -89,7 +89,7 @@ class MentionFilters {
 
     // Remove @mentions and clean text
     const cleanText = text.replace(/@\w+/g, '').trim();
-    
+
     // Must have at least 3 characters of actual content
     if (cleanText.length < 3) {
       return false;
@@ -97,9 +97,9 @@ class MentionFilters {
 
     // Filter out common spam patterns (could be expanded)
     const spamPatterns = [
-      /^(rt|retweet)\s/i,  // Retweets
-      /^(dm|mp)\s/i,       // Direct message requests
-      /^(follow|seguir)\s/i, // Follow requests
+      /^(rt|retweet)\s/i, // Retweets
+      /^(dm|mp)\s/i, // Direct message requests
+      /^(follow|seguir)\s/i // Follow requests
     ];
 
     for (const pattern of spamPatterns) {
@@ -121,7 +121,7 @@ class MentionFilters {
     // For now, accept all languages since our AI can detect and respond appropriately
     // In the future, this could be more restrictive based on business requirements
     const supportedLanguages = ['es', 'en', 'und', null, undefined];
-    
+
     // 'und' means undetermined language
     // null/undefined means language detection failed
     return !lang || supportedLanguages.includes(lang);
@@ -167,7 +167,7 @@ class MentionFilters {
    */
   extractCleanText(text) {
     if (!text) return '';
-    
+
     // Remove @mentions but keep the rest of the content
     return text
       .replace(/@\w+/g, '') // Remove @mentions
@@ -190,7 +190,7 @@ class MentionFilters {
     // - Content filters (different sensitivity levels)
     // - Rate limiting per account
     // - Custom keywords or hashtags
-    
+
     return true; // For now, process all valid mentions
   }
 }

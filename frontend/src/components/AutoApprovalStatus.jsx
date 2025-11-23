@@ -7,15 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  Loader2,
-  Zap,
-  Shield
-} from 'lucide-react';
+import { Clock, CheckCircle, XCircle, AlertCircle, Loader2, Zap, Shield } from 'lucide-react';
 
 const AutoApprovalStatus = ({ commentId, onStatusChange }) => {
   const [status, setStatus] = useState('idle');
@@ -99,7 +91,10 @@ const AutoApprovalStatus = ({ commentId, onStatusChange }) => {
     if (!commentId) return;
 
     // Simulate status updates in development
-    if (process.env.NODE_ENV === 'development' || process.env.REACT_APP_ENABLE_MOCK_MODE === 'true') {
+    if (
+      process.env.NODE_ENV === 'development' ||
+      process.env.REACT_APP_ENABLE_MOCK_MODE === 'true'
+    ) {
       simulateAutoApprovalFlow();
     } else {
       // Real implementation would use WebSocket or polling
@@ -118,22 +113,22 @@ const AutoApprovalStatus = ({ commentId, onStatusChange }) => {
     ];
 
     let currentIndex = 0;
-    
+
     const runNextStep = () => {
       if (currentIndex >= steps.length) return;
-      
+
       const step = steps[currentIndex];
       setStatus(step.status);
-      
+
       // Update details based on step
       if (step.status === 'generating_variant') {
-        setDetails(prev => ({
+        setDetails((prev) => ({
           ...prev,
           currentStep: 'Generating 1 roast variant with configured tone',
           progress: 30
         }));
       } else if (step.status === 'security_validation') {
-        setDetails(prev => ({
+        setDetails((prev) => ({
           ...prev,
           currentStep: 'Running security validations',
           progress: 60,
@@ -146,7 +141,7 @@ const AutoApprovalStatus = ({ commentId, onStatusChange }) => {
           }
         }));
       } else if (step.status === 'published_successfully') {
-        setDetails(prev => ({
+        setDetails((prev) => ({
           ...prev,
           currentStep: 'Successfully published',
           progress: 100,
@@ -172,12 +167,19 @@ const AutoApprovalStatus = ({ commentId, onStatusChange }) => {
     try {
       const response = await fetch(`/api/roasts/${commentId}/auto-status`);
       const data = await response.json();
-      
+
       setStatus(data.status);
       setDetails(data.details);
-      
+
       // Continue polling if still processing
-      if (!['published_successfully', 'failed_security', 'failed_publication', 'rate_limited'].includes(data.status)) {
+      if (
+        ![
+          'published_successfully',
+          'failed_security',
+          'failed_publication',
+          'rate_limited'
+        ].includes(data.status)
+      ) {
         setTimeout(pollStatus, 2000);
       } else {
         onStatusChange?.(data.status, data.details);
@@ -185,7 +187,7 @@ const AutoApprovalStatus = ({ commentId, onStatusChange }) => {
     } catch (error) {
       console.error('Error polling status:', error);
       setStatus('failed_publication');
-      setDetails(prev => ({ ...prev, error: error.message }));
+      setDetails((prev) => ({ ...prev, error: error.message }));
     }
   };
 
@@ -204,7 +206,7 @@ const AutoApprovalStatus = ({ commentId, onStatusChange }) => {
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {currentConfig.showProgress && (
           <div className="space-y-2">

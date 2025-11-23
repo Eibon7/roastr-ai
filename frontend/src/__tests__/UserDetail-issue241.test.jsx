@@ -71,7 +71,7 @@ describe('UserDetail Component - Issue #241', () => {
         {
           id: 'shield-1',
           comment_text: 'Comentario muy tóxico',
-          platform: 'youtube', 
+          platform: 'youtube',
           toxicity_score: 0.9,
           action_taken: 'blocked',
           created_at: '2024-01-15T09:00:00Z'
@@ -91,20 +91,24 @@ describe('UserDetail Component - Issue #241', () => {
 
   beforeEach(() => {
     // Mock fetch responses
-    global.fetch = jest.fn()
-      .mockImplementationOnce(() => // Auth check
+    global.fetch = jest
+      .fn()
+      .mockImplementationOnce(() =>
+        // Auth check
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: { is_admin: true } })
         })
       )
-      .mockImplementationOnce(() => // User details
+      .mockImplementationOnce(() =>
+        // User details
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockUserData)
         })
       )
-      .mockImplementationOnce(() => // User activity
+      .mockImplementationOnce(() =>
+        // User activity
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockActivityData)
@@ -155,17 +159,17 @@ describe('UserDetail Component - Issue #241', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Configuraciones Editables')).toBeInTheDocument();
-        
+
         // Plan dropdown
         expect(screen.getByDisplayValue('pro')).toBeInTheDocument();
-        
-        // Tone dropdown  
+
+        // Tone dropdown
         expect(screen.getByDisplayValue('balanceado')).toBeInTheDocument();
-        
+
         // Shield checkbox
         const shieldCheckbox = screen.getByRole('checkbox', { name: /Shield/i });
         expect(shieldCheckbox).toBeChecked();
-        
+
         // Auto-reply checkbox
         const autoReplyCheckbox = screen.getByRole('checkbox', { name: /Auto-reply/i });
         expect(autoReplyCheckbox).not.toBeChecked();
@@ -188,7 +192,7 @@ describe('UserDetail Component - Issue #241', () => {
       await waitFor(() => {
         const saveButton = screen.getByText('Guardar Cambios');
         const cancelButton = screen.getByText('Cancelar');
-        
+
         expect(saveButton).toBeInTheDocument();
         expect(cancelButton).toBeInTheDocument();
         expect(saveButton).not.toBeDisabled();
@@ -204,7 +208,9 @@ describe('UserDetail Component - Issue #241', () => {
       await waitFor(() => {
         expect(screen.getByText('Últimos Roasts Generados')).toBeInTheDocument();
         expect(screen.getByText('Este producto es terrible')).toBeInTheDocument();
-        expect(screen.getByText('Pues mira, terrible es tu capacidad de dar feedback constructivo')).toBeInTheDocument();
+        expect(
+          screen.getByText('Pues mira, terrible es tu capacidad de dar feedback constructivo')
+        ).toBeInTheDocument();
       });
     });
 
@@ -243,26 +249,36 @@ describe('UserDetail Component - Issue #241', () => {
     });
 
     test('should handle configuration save', async () => {
-      global.fetch = jest.fn()
-        .mockImplementationOnce(() => Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ data: { is_admin: true } })
-        }))
-        .mockImplementationOnce(() => Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockUserData)
-        }))
-        .mockImplementationOnce(() => Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockActivityData)
-        }))
-        .mockImplementationOnce(() => Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({
-            success: true,
-            data: { user: mockUserData.data.user }
+      global.fetch = jest
+        .fn()
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ data: { is_admin: true } })
           })
-        }));
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockUserData)
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockActivityData)
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: { user: mockUserData.data.user }
+              })
+          })
+        );
 
       renderUserDetail();
 
@@ -277,7 +293,7 @@ describe('UserDetail Component - Issue #241', () => {
           expect.objectContaining({
             method: 'PATCH',
             headers: expect.objectContaining({
-              'Authorization': 'Bearer fake-auth-token',
+              Authorization: 'Bearer fake-auth-token',
               'Content-Type': 'application/json'
             })
           })
@@ -303,7 +319,7 @@ describe('UserDetail Component - Issue #241', () => {
         expect(screen.getByText('Mensajes Mensuales')).toBeInTheDocument();
         expect(screen.getByText('50')).toBeInTheDocument();
         expect(screen.getByText('de 100 límite')).toBeInTheDocument();
-        
+
         expect(screen.getByText('Tokens Consumidos')).toBeInTheDocument();
         expect(screen.getByText('1000')).toBeInTheDocument();
         expect(screen.getByText('de 5000 límite')).toBeInTheDocument();
@@ -314,33 +330,42 @@ describe('UserDetail Component - Issue #241', () => {
 
 describe('UserDetail Backend Integration - Issue #241', () => {
   test('should call all required backend endpoints', async () => {
-    const mockFetch = jest.fn()
-      .mockImplementationOnce(() => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ data: { is_admin: true } })
-      }))
-      .mockImplementationOnce(() => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({
-          data: {
-            user: { id: 'test-user-123', email: 'test@example.com' },
-            monthly_stats: {},
-            plan_limits: {},
-            usage_alerts: [],
-            recent_activities: []
-          }
+    const mockFetch = jest
+      .fn()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ data: { is_admin: true } })
         })
-      }))
-      .mockImplementationOnce(() => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({
-          data: {
-            recent_roasts: [],
-            shield_intercepts: [],
-            integrations_status: []
-          }
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              data: {
+                user: { id: 'test-user-123', email: 'test@example.com' },
+                monthly_stats: {},
+                plan_limits: {},
+                usage_alerts: [],
+                recent_activities: []
+              }
+            })
         })
-      }));
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              data: {
+                recent_roasts: [],
+                shield_intercepts: [],
+                integrations_status: []
+              }
+            })
+        })
+      );
 
     global.fetch = mockFetch;
 
@@ -353,8 +378,14 @@ describe('UserDetail Backend Integration - Issue #241', () => {
     await waitFor(() => {
       // Verify all required API calls were made
       expect(mockFetch).toHaveBeenCalledWith('/api/auth/me', expect.any(Object));
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/admin/users/test-user-123', expect.any(Object));
-      expect(mockFetch).toHaveBeenCalledWith('/api/admin/users/test-user-123/activity', expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/auth/admin/users/test-user-123',
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/admin/users/test-user-123/activity',
+        expect.any(Object)
+      );
     });
   });
 });

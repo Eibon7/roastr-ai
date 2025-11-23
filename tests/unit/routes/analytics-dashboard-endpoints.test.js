@@ -81,9 +81,7 @@ describe('Analytics dashboard endpoints', () => {
     expect(mockAnalyticsDashboardService.getDashboardData).toHaveBeenCalledTimes(1);
 
     // Second request should hit cache (no additional service call)
-    await request(app)
-      .get('/api/analytics/dashboard?range=30')
-      .expect(200);
+    await request(app).get('/api/analytics/dashboard?range=30').expect(200);
 
     expect(mockAnalyticsDashboardService.getDashboardData).toHaveBeenCalledTimes(1);
   });
@@ -150,4 +148,3 @@ describe('Analytics dashboard endpoints', () => {
       });
   });
 });
-

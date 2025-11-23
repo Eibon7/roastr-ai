@@ -2,7 +2,7 @@
 
 /**
  * Integration Health Check CLI Tool
- * 
+ *
  * Checks the health status of all platform integrations
  */
 
@@ -22,7 +22,7 @@ const integrations = [
 
 async function checkIntegrationHealth() {
   console.log('🏥 Integration Health Check');
-  console.log('=' .repeat(50));
+  console.log('='.repeat(50));
   console.log('');
 
   const results = {
@@ -56,7 +56,6 @@ async function checkIntegrationHealth() {
       }
 
       console.log(`${status} ${integration.name.padEnd(12)} | ${statusText}`);
-
     } catch (error) {
       console.log(`❌ ${integration.name.padEnd(12)} | Error: ${error.message}`);
       results.unhealthy++;
@@ -75,14 +74,16 @@ async function checkIntegrationHealth() {
   const envFile = path.join(__dirname, '../../../.env.example');
   const envExists = fs.existsSync(envFile);
   console.log(`   📄 .env.example: ${envExists ? '✅ Found' : '❌ Missing'}`);
-  
+
   const currentDir = process.cwd();
   const userEnvFile = path.join(currentDir, '.env');
   const userEnvExists = fs.existsSync(userEnvFile);
-  console.log(`   📄 .env:         ${userEnvExists ? '✅ Found' : '⚠️  Not found (copy from .env.example)'}`);
+  console.log(
+    `   📄 .env:         ${userEnvExists ? '✅ Found' : '⚠️  Not found (copy from .env.example)'}`
+  );
 
   console.log('');
-  
+
   if (results.unhealthy > 0) {
     console.log('⚠️  Some integrations have issues. Check the status above.');
     process.exit(1);
@@ -94,7 +95,7 @@ async function checkIntegrationHealth() {
 
 // Run the health check
 if (require.main === module) {
-  checkIntegrationHealth().catch(error => {
+  checkIntegrationHealth().catch((error) => {
     console.error('❌ Health check failed:', error.message);
     process.exit(1);
   });

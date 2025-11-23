@@ -22,6 +22,7 @@ Migration 024 adds a Postgres RPC function (`atomic_update_user_behavior`) that 
 ### What It Does
 
 Creates `atomic_update_user_behavior()` RPC function that:
+
 - Uses `INSERT...ON CONFLICT` for atomic upserts
 - Atomically increments counters (`total_violations`, `severity_counts`)
 - Appends to `actions_taken` JSONB array atomically
@@ -31,6 +32,7 @@ Creates `atomic_update_user_behavior()` RPC function that:
 ### Why It's Critical
 
 **Before M3 (Read-Update-Write):**
+
 ```
 User A: Shield action 1 → READ user_behavior (count: 5)
 User A: Shield action 2 → READ user_behavior (count: 5) [Race!]
@@ -40,6 +42,7 @@ Result: 2 actions, but count only increased by 1
 ```
 
 **After M3 (Atomic RPC):**
+
 ```
 User A: Shield action 1 → CALL atomic_update_user_behavior() [Locked]
 User A: Shield action 2 → CALL atomic_update_user_behavior() [Waits for lock]
@@ -168,17 +171,20 @@ SELECT atomic_update_user_behavior(
 **Objective:** Verify function works with single Shield action
 
 **Setup:**
+
 1. Create test organization with Shield enabled
 2. Create test toxic comment
 3. Trigger Shield analysis
 
 **Expected Result:**
+
 - RPC function called successfully
 - `user_behaviors` record created/updated
 - No errors in database logs
 - Response includes correct violation count
 
 **Validation Script:**
+
 ```bash
 # Run Shield E2E test
 npm test -- tests/integration/shield-system-e2e.test.js \
@@ -193,17 +199,20 @@ npm test -- tests/integration/shield-system-e2e.test.js \
 **Objective:** Verify atomicity under concurrent load
 
 **Setup:**
+
 1. Create test user with existing violations
 2. Trigger 5 Shield actions simultaneously on different comments
 3. All actions target same user
 
 **Expected Result:**
+
 - All 5 RPC calls succeed
 - `total_violations` increments by exactly 5
 - No lost updates
 - Database locks handled correctly
 
 **Validation Script:**
+
 ```bash
 # Run concurrent test (create if doesn't exist)
 node scripts/test-concurrent-shield-actions.js \
@@ -222,12 +231,14 @@ node scripts/verify-user-behavior-count.js \
 **Objective:** Verify graceful error handling
 
 **Test Cases:**
+
 - Invalid UUID format → Should reject with error
 - Missing required fields → Should reject with error
 - Invalid JSONB structure → Should reject with error
 - Database connection lost → Should retry/fail gracefully
 
 **Validation:**
+
 - Check error messages in logs
 - Verify no partial updates occur
 - Confirm transaction rollback on error
@@ -237,6 +248,7 @@ node scripts/verify-user-behavior-count.js \
 **Objective:** Verify performance improvements from M3
 
 **Test:**
+
 ```bash
 # Benchmark 100 Shield actions
 node scripts/benchmark-shield-performance.js \
@@ -248,6 +260,7 @@ node scripts/benchmark-shield-performance.js \
 ```
 
 **Metrics to Capture:**
+
 - Average latency per action
 - Database call count
 - Total execution time
@@ -282,22 +295,22 @@ node scripts/benchmark-shield-performance.js \
 ```yaml
 alerts:
   - metric: rpc_error_rate
-    threshold: "> 1%"
+    threshold: '> 1%'
     severity: CRITICAL
     action: Page on-call engineer
 
   - metric: rpc_execution_time
-    threshold: "> 50ms"
+    threshold: '> 50ms'
     severity: WARNING
     action: Notify DevOps channel
 
   - metric: deadlock_count
-    threshold: "> 0"
+    threshold: '> 0'
     severity: CRITICAL
     action: Page on-call engineer + rollback
 
   - metric: shield_action_failures
-    threshold: "increase > 50%"
+    threshold: 'increase > 50%'
     severity: CRITICAL
     action: Investigate immediately
 ```
@@ -309,6 +322,7 @@ alerts:
 ### When to Rollback
 
 Rollback IMMEDIATELY if:
+
 - ❌ RPC function errors >1% in first hour
 - ❌ Any deadlocks detected
 - ❌ Shield actions failing >10% more than baseline
@@ -367,23 +381,28 @@ node scripts/verify-shield-system.js --environment=staging
 **Severity:** [P0/P1/P2]
 
 ## Root Cause
+
 [Detailed analysis of why rollback was necessary]
 
 ## Impact
+
 - Affected users: [Count]
 - Failed Shield actions: [Count]
 - Data integrity issues: [Yes/No + details]
 
 ## Actions Taken
+
 1. [Step-by-step rollback actions]
 
 ## Prevention
+
 - [ ] Add additional test coverage
 - [ ] Update deployment checklist
 - [ ] Improve monitoring
 - [ ] Update documentation
 
 ## Follow-up Issues
+
 - Issue #[number]: [Description]
 ```
 
@@ -428,6 +447,7 @@ node scripts/verify-shield-system.js --environment=staging
 ### Success Criteria
 
 Production deployment is considered successful when:
+
 - ✅ RPC function executing with <15ms average latency
 - ✅ Error rate <0.1% for 24 hours
 - ✅ No deadlocks or lock contention
@@ -444,6 +464,7 @@ Production deployment is considered successful when:
 **To:** Engineering Team, DevOps, Product Owner
 **When:** 24 hours before deployment
 **Message:**
+
 ```
 🔔 Migration 024 Deployment Scheduled
 
@@ -463,6 +484,7 @@ Contact: [Your Name] for questions
 
 **To:** #engineering-alerts Slack channel
 **Message:**
+
 ```
 🚀 Migration 024 deployment IN PROGRESS
 Status: [Phase 1/2/3]
@@ -473,6 +495,7 @@ ETA: [Time]
 
 **To:** All stakeholders
 **Message (Success):**
+
 ```
 ✅ Migration 024 deployed successfully
 
@@ -486,6 +509,7 @@ Monitoring continues for 24 hours.
 ```
 
 **Message (Rollback):**
+
 ```
 ⚠️ Migration 024 rolled back
 
@@ -528,22 +552,22 @@ ETA for retry: TBD
 
 ### Technical Metrics
 
-| Metric | Baseline (Before M3) | Target (After M3) | Actual |
-|--------|---------------------|-------------------|--------|
-| Avg Latency | 25ms | <15ms (60% reduction) | _TBD_ |
-| DB Calls per Action | 3 | 1 (66% reduction) | _TBD_ |
-| Race Condition Events | 2-5 per day | 0 | _TBD_ |
-| Error Rate | <1% | <0.5% | _TBD_ |
-| Concurrent Actions | Limited | No limit | _TBD_ |
+| Metric                | Baseline (Before M3) | Target (After M3)     | Actual |
+| --------------------- | -------------------- | --------------------- | ------ |
+| Avg Latency           | 25ms                 | <15ms (60% reduction) | _TBD_  |
+| DB Calls per Action   | 3                    | 1 (66% reduction)     | _TBD_  |
+| Race Condition Events | 2-5 per day          | 0                     | _TBD_  |
+| Error Rate            | <1%                  | <0.5%                 | _TBD_  |
+| Concurrent Actions    | Limited              | No limit              | _TBD_  |
 
 ### Business Metrics
 
-| Metric | Target | Actual |
-|--------|--------|--------|
-| Zero downtime deployment | ✅ Yes | _TBD_ |
-| User-facing incidents | 0 | _TBD_ |
-| Support tickets related | 0 | _TBD_ |
-| Data integrity maintained | 100% | _TBD_ |
+| Metric                    | Target | Actual |
+| ------------------------- | ------ | ------ |
+| Zero downtime deployment  | ✅ Yes | _TBD_  |
+| User-facing incidents     | 0      | _TBD_  |
+| Support tickets related   | 0      | _TBD_  |
+| Data integrity maintained | 100%   | _TBD_  |
 
 ---
 
@@ -646,17 +670,20 @@ WHERE query LIKE '%atomic_update_user_behavior%';
 ### Impact Assessment
 
 **Risk Level:** MEDIUM
+
 - Database migration with RPC function
 - Critical dependency for PR #654
 - Affects Shield moderation system
 
 **Benefits:**
+
 - Eliminates race conditions in Shield
 - 40% performance improvement
 - 66% reduction in database calls
 - Better data integrity
 
 **Risks:**
+
 - Potential for database locking issues (mitigated by testing)
 - Rollback requires dropping function (tested in staging)
 - Requires careful monitoring (plan in place)
@@ -675,19 +702,19 @@ I, [Product Owner Name], have reviewed:
 ### Decision
 
 - [ ] **APPROVED** - Proceed with production deployment
-- [ ] **CONDITIONAL** - Approved with conditions: _______________
-- [ ] **REJECTED** - Do not proceed. Reason: _______________
+- [ ] **CONDITIONAL** - Approved with conditions: ******\_\_\_******
+- [ ] **REJECTED** - Do not proceed. Reason: ******\_\_\_******
 
-**Signature:** _______________
-**Date:** _______________
+**Signature:** ******\_\_\_******
+**Date:** ******\_\_\_******
 
 ---
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2025-10-24 | Claude Code | Initial deployment plan created |
+| Version | Date       | Author      | Changes                         |
+| ------- | ---------- | ----------- | ------------------------------- |
+| 1.0     | 2025-10-24 | Claude Code | Initial deployment plan created |
 
 ---
 

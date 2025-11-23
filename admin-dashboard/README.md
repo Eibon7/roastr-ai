@@ -154,12 +154,12 @@ GET  /api/admin/gdd/reports/:type # Markdown reports
 
 ## 📦 NPM Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server (port 3000) |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
+| Command           | Description                          |
+| ----------------- | ------------------------------------ |
+| `npm run dev`     | Start development server (port 3000) |
+| `npm run build`   | Build for production                 |
+| `npm run preview` | Preview production build             |
+| `npm run lint`    | Run ESLint                           |
 
 ---
 

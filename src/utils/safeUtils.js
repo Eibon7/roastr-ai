@@ -9,11 +9,11 @@
  * @returns {*} Parsed object or fallback
  */
 function safeJsonParse(jsonString, fallback = null) {
-    try {
-        return JSON.parse(jsonString);
-    } catch (error) {
-        return fallback;
-    }
+  try {
+    return JSON.parse(jsonString);
+  } catch (error) {
+    return fallback;
+  }
 }
 
 /**
@@ -23,11 +23,11 @@ function safeJsonParse(jsonString, fallback = null) {
  * @returns {string} JSON string or fallback
  */
 function safeJsonStringify(obj, fallback = '{}') {
-    try {
-        return JSON.stringify(obj);
-    } catch (error) {
-        return fallback;
-    }
+  try {
+    return JSON.stringify(obj);
+  } catch (error) {
+    return fallback;
+  }
 }
 
 /**
@@ -38,41 +38,44 @@ function safeJsonStringify(obj, fallback = '{}') {
  * @returns {*} Value at path or fallback
  */
 function safeGet(obj, path, fallback = undefined) {
-    if (!obj || typeof obj !== 'object') {
-        return fallback;
+  if (!obj || typeof obj !== 'object') {
+    return fallback;
+  }
+
+  // Validate and normalize path
+  let keys;
+  if (typeof path === 'string') {
+    if (path === '') {
+      return fallback;
     }
+    keys = path.split('.');
+  } else if (Array.isArray(path)) {
+    keys = path;
+  } else {
+    // Path is neither string nor array
+    return fallback;
+  }
 
-    // Validate and normalize path
-    let keys;
-    if (typeof path === 'string') {
-        if (path === '') {
-            return fallback;
-        }
-        keys = path.split('.');
-    } else if (Array.isArray(path)) {
-        keys = path;
-    } else {
-        // Path is neither string nor array
-        return fallback;
+  let current = obj;
+
+  for (const key of keys) {
+    // Disallow traversing special prototype properties
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      return fallback;
     }
-
-    let current = obj;
-
-    for (const key of keys) {
-        // Disallow traversing special prototype properties
-        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
-            return fallback;
-        }
-        // Check if current is an object and has the key as own property
-        if (current === null || current === undefined ||
-            typeof current !== 'object' ||
-            !Object.prototype.hasOwnProperty.call(current, key)) {
-            return fallback;
-        }
-        current = current[key];
+    // Check if current is an object and has the key as own property
+    if (
+      current === null ||
+      current === undefined ||
+      typeof current !== 'object' ||
+      !Object.prototype.hasOwnProperty.call(current, key)
+    ) {
+      return fallback;
     }
+    current = current[key];
+  }
 
-    return current;
+  return current;
 }
 
 /**
@@ -82,15 +85,15 @@ function safeGet(obj, path, fallback = undefined) {
  * @returns {string} String representation or fallback
  */
 function safeString(value, fallback = '') {
-    if (value === null || value === undefined) {
-        return fallback;
-    }
-    
-    try {
-        return String(value);
-    } catch (error) {
-        return fallback;
-    }
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+
+  try {
+    return String(value);
+  } catch (error) {
+    return fallback;
+  }
 }
 
 /**
@@ -100,12 +103,12 @@ function safeString(value, fallback = '') {
  * @returns {number} Number or fallback
  */
 function safeNumber(value, fallback = 0) {
-    if (value === null || value === undefined) {
-        return fallback;
-    }
-    
-    const num = Number(value);
-    return isNaN(num) ? fallback : num;
+  if (value === null || value === undefined) {
+    return fallback;
+  }
+
+  const num = Number(value);
+  return isNaN(num) ? fallback : num;
 }
 
 /**
@@ -115,36 +118,36 @@ function safeNumber(value, fallback = 0) {
  * @returns {boolean} Boolean or fallback
  */
 function safeBoolean(value, fallback = false) {
-    if (value === null || value === undefined) {
-        return fallback;
-    }
-    
-    if (typeof value === 'boolean') {
-        return value;
-    }
-    
-    if (typeof value === 'string') {
-        const lower = value.toLowerCase();
-        if (lower === 'true' || lower === '1' || lower === 'yes') {
-            return true;
-        }
-        if (lower === 'false' || lower === '0' || lower === 'no') {
-            return false;
-        }
-    }
-    
-    if (typeof value === 'number') {
-        return value !== 0;
-    }
-    
+  if (value === null || value === undefined) {
     return fallback;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const lower = value.toLowerCase();
+    if (lower === 'true' || lower === '1' || lower === 'yes') {
+      return true;
+    }
+    if (lower === 'false' || lower === '0' || lower === 'no') {
+      return false;
+    }
+  }
+
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+
+  return fallback;
 }
 
 module.exports = {
-    safeJsonParse,
-    safeJsonStringify,
-    safeGet,
-    safeString,
-    safeNumber,
-    safeBoolean
+  safeJsonParse,
+  safeJsonStringify,
+  safeGet,
+  safeString,
+  safeNumber,
+  safeBoolean
 };

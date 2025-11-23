@@ -11,7 +11,7 @@
  */
 export function formatCurrency(amountCents, currency = 'USD', locale = 'en-US') {
   // Safely normalize currency to a valid string
-  const safeCurrency = (typeof currency === 'string' && currency) ? currency.toUpperCase() : 'USD';
+  const safeCurrency = typeof currency === 'string' && currency ? currency.toUpperCase() : 'USD';
 
   if (typeof amountCents !== 'number' || isNaN(amountCents)) {
     return new Intl.NumberFormat(locale, {
@@ -65,7 +65,7 @@ export function formatNumber(value) {
   if (typeof value !== 'number' || isNaN(value)) {
     return '0';
   }
-  
+
   return value.toLocaleString();
 }
 
@@ -79,7 +79,7 @@ export function formatPercentage(value, decimals = 1) {
   if (typeof value !== 'number' || isNaN(value)) {
     return '0.0%';
   }
-  
+
   return `${value.toFixed(decimals)}%`;
 }
 

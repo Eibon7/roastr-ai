@@ -77,12 +77,10 @@ class PasswordHistoryService {
       const passwordHash = await bcrypt.hash(password, this.SALT_ROUNDS);
 
       // Add to password history
-      const { error: insertError } = await supabaseServiceClient
-        .from('password_history')
-        .insert({
-          user_id: userId,
-          password_hash: passwordHash
-        });
+      const { error: insertError } = await supabaseServiceClient.from('password_history').insert({
+        user_id: userId,
+        password_hash: passwordHash
+      });
 
       if (insertError) {
         logger.error('Error adding password to history:', insertError);
@@ -122,7 +120,7 @@ class PasswordHistoryService {
       // If we have more than the limit, delete the oldest ones
       if (allPasswords.length > this.PASSWORD_HISTORY_LIMIT) {
         const passwordsToDelete = allPasswords.slice(this.PASSWORD_HISTORY_LIMIT);
-        const idsToDelete = passwordsToDelete.map(p => p.id);
+        const idsToDelete = passwordsToDelete.map((p) => p.id);
 
         const { error: deleteError } = await supabaseServiceClient
           .from('password_history')
@@ -132,9 +130,9 @@ class PasswordHistoryService {
         if (deleteError) {
           logger.error('Error deleting old passwords:', deleteError);
         } else {
-          logger.info('Cleaned up old password history', { 
-            userId, 
-            deletedCount: idsToDelete.length 
+          logger.info('Cleaned up old password history', {
+            userId,
+            deletedCount: idsToDelete.length
           });
         }
       }
@@ -188,7 +186,10 @@ class PasswordHistoryService {
 
       return {
         count: passwordHistory.length,
-        oldestPasswordDate: passwordHistory.length > 0 ? passwordHistory[passwordHistory.length - 1].created_at : null,
+        oldestPasswordDate:
+          passwordHistory.length > 0
+            ? passwordHistory[passwordHistory.length - 1].created_at
+            : null,
         newestPasswordDate: passwordHistory.length > 0 ? passwordHistory[0].created_at : null,
         historyLimit: this.PASSWORD_HISTORY_LIMIT
       };
@@ -210,11 +211,11 @@ module.exports = {
   clearPasswordHistory: (userId) => service.clearPasswordHistory(userId),
   getPasswordHistoryStats: (userId) => service.getPasswordHistoryStats(userId),
   cleanupOldPasswords: (userId) => service.cleanupOldPasswords(userId),
-  
+
   // Legacy function names for compatibility
   isPasswordReused: (userId, password) => service.isPasswordRecentlyUsed(userId, password),
   addPasswordToHistory: (userId, password) => service.addToPasswordHistory(userId, password),
-  
+
   // Configuration functions
   isPasswordHistoryEnabled: () => flags.isEnabled('ENABLE_PASSWORD_HISTORY'),
   getConfig: () => ({

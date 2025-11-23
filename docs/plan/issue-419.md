@@ -15,6 +15,7 @@
 ### Implementación Existente
 
 **Backend Services:**
+
 - ✅ `src/services/manualApprovalQueue.js` - Core service for managing approval queue (400+ lines)
 - ✅ `src/services/roastGeneratorEnhanced.js` - Variant generation logic (500+ lines)
 - ✅ `src/routes/manualApprovalRoutes.js` - API endpoints for approval workflow (150 lines)
@@ -24,6 +25,7 @@
   - POST `/api/manual-approval/variants/:id` - Generate new variant
 
 **Frontend UI:**
+
 - ✅ `public/manual-approval.html` - Interactive UI for manual approval (600+ lines)
   - Functions: `loadPendingRoasts()`, `generateVariant()`, `approveRoast()`
   - Error display: Basic `alert()` messages (poor UX)
@@ -67,6 +69,7 @@
 ### Qué se pide exactamente
 
 Verify manual approval UI resilience when handling:
+
 1. Timeouts during variant generation
 2. Network errors during approval/publishing
 3. "No more variants available" scenario
@@ -95,16 +98,19 @@ Verify manual approval UI resilience when handling:
 ### Nodos Afectados
 
 **Cargados:**
+
 - `docs/nodes/roast.md` - Roast generation system (variant logic)
 - `docs/nodes/queue-system.md` - Queue management (background jobs)
 
 **No existentes pero relevantes:**
+
 - No hay nodo específico de UI (área frontend no tiene nodo dedicado)
 - Manual approval es parte del flujo de roast generation
 
 ### Validar Edges
 
 **Dependencias:**
+
 - `roast` → `persona`, `tone`, `platform-constraints`, `shield`, `cost-control`
 - `queue-system` → `multi-tenant`
 - E2E tests validan integración completa (no hay nuevas edges)
@@ -118,6 +124,7 @@ No se requieren cambios en el grafo GDD. Este es un issue de testing + mejoras d
 ## 4. Subagentes Requeridos
 
 ### Test Engineer (CRÍTICO)
+
 - **Fase**: Setup E2E infrastructure + Create test suite
 - **Tareas**:
   - Install Playwright
@@ -127,6 +134,7 @@ No se requieren cambios en el grafo GDD. Este es un issue de testing + mejoras d
   - Integrate with CI/CD
 
 ### Front-end Dev (ALTO)
+
 - **Fase**: Frontend enhancements
 - **Tareas**:
   - Replace `alert()` with proper error UI component
@@ -136,6 +144,7 @@ No se requieren cambios en el grafo GDD. Este es un issue de testing + mejoras d
   - Improve loading states
 
 ### Back-end Dev (MEDIO)
+
 - **Fase**: Backend improvements
 - **Tareas**:
   - Add specific error codes (TIMEOUT, NETWORK_ERROR, VARIANTS_EXHAUSTED)
@@ -144,6 +153,7 @@ No se requieren cambios en el grafo GDD. Este es un issue de testing + mejoras d
   - Improve error response format
 
 ### Documentation Agent (BAJO)
+
 - **Fase**: Documentation updates
 - **Tareas**:
   - Update GDD nodes (roast.md, queue-system.md)
@@ -157,6 +167,7 @@ No se requieren cambios en el grafo GDD. Este es un issue de testing + mejoras d
 ### Files to CREATE (9 new files)
 
 **E2E Test Infrastructure:**
+
 1. `/playwright.config.js` - Playwright configuration (~50 lines)
 2. `/tests/e2e/manual-approval-resilience.spec.js` - Main test suite (~400 lines)
 3. `/tests/e2e/helpers/network-helpers.js` - Network simulation (~100 lines)
@@ -165,41 +176,40 @@ No se requieren cambios en el grafo GDD. Este es un issue de testing + mejoras d
 6. `/tests/e2e/setup.js` - Test environment setup (~100 lines)
 7. `/tests/e2e/README.md` - E2E testing documentation (~150 lines)
 
-**CI/CD:**
-8. `/.github/workflows/e2e-tests.yml` - E2E CI workflow (~60 lines)
+**CI/CD:** 8. `/.github/workflows/e2e-tests.yml` - E2E CI workflow (~60 lines)
 
-**Supporting:**
-9. `/docs/test-evidence/issue-419/SUMMARY.md` - Evidence summary (post-implementation)
+**Supporting:** 9. `/docs/test-evidence/issue-419/SUMMARY.md` - Evidence summary (post-implementation)
 
 ### Files to MODIFY (5 files)
 
 **Frontend:**
+
 1. `/public/manual-approval.html` (~100 lines modified)
    - Lines ~250-280: Add timeout to fetch calls
    - Lines ~300-350: Replace alert() with error UI component
    - Lines ~400-450: Implement retry logic
    - Lines ~500-550: Handle "no more variants" scenario
 
-**Backend:**
-2. `/src/routes/manualApprovalRoutes.js` (~20-30 lines modified)
-   - Lines ~30-45: Improve error responses with codes
-   - Lines ~60-75: Add VARIANTS_EXHAUSTED handling
-   - Lines ~90-105: Add timeout error handling
+**Backend:** 2. `/src/routes/manualApprovalRoutes.js` (~20-30 lines modified)
+
+- Lines ~30-45: Improve error responses with codes
+- Lines ~60-75: Add VARIANTS_EXHAUSTED handling
+- Lines ~90-105: Add timeout error handling
 
 3. `/src/services/roastGeneratorEnhanced.js` (~15-20 lines modified)
    - Lines ~50-70: Add timeout configuration (VARIANT_GENERATION_TIMEOUT = 30000)
    - Lines ~150-170: Add variant limit logic (MAX_VARIANTS_PER_ROAST = 5)
 
-**Configuration:**
-4. `/package.json` (~10 lines)
-   - Add Playwright dependencies: `@playwright/test`, `playwright`
-   - Add test script: `"test:e2e": "playwright test"`
+**Configuration:** 4. `/package.json` (~10 lines)
 
-**Documentation:**
-5. `/docs/nodes/roast.md` (~20 lines)
-   - Update "Testing" section with E2E tests reference
-   - Update "Error Handling" section with new error codes
-   - Update "Agentes Relevantes" (add Test Engineer)
+- Add Playwright dependencies: `@playwright/test`, `playwright`
+- Add test script: `"test:e2e": "playwright test"`
+
+**Documentation:** 5. `/docs/nodes/roast.md` (~20 lines)
+
+- Update "Testing" section with E2E tests reference
+- Update "Error Handling" section with new error codes
+- Update "Agentes Relevantes" (add Test Engineer)
 
 ---
 
@@ -208,12 +218,14 @@ No se requieren cambios en el grafo GDD. Este es un issue de testing + mejoras d
 ### Fase 1: Setup E2E Infrastructure (2-3 hours)
 
 **Objetivos:**
+
 - Install Playwright and configure
 - Create E2E directory structure
 - Set up test helpers and fixtures
 - Configure test database
 
 **Tasks:**
+
 1. Install Playwright: `npm install --save-dev @playwright/test playwright`
 2. Initialize Playwright: `npx playwright install`
 3. Create `/playwright.config.js` with:
@@ -238,12 +250,14 @@ No se requieren cambios en el grafo GDD. Este es un issue de testing + mejoras d
 6. Create mock API server for error simulation
 
 **Validation:**
+
 - Run `npx playwright test --list` → shows test files
 - Run sample test → passes with mock data
 
 ### Fase 2: Create E2E Tests (6-8 hours)
 
 **Objetivos:**
+
 - Write 5 test suites for AC #1-5
 - Each suite tests multiple scenarios
 - Visual regression with screenshots
@@ -255,7 +269,6 @@ No se requieren cambios en el grafo GDD. Este es un issue de testing + mejoras d
 // tests/e2e/manual-approval-resilience.spec.js
 
 describe('Manual Approval UI - Resilience', () => {
-
   describe('AC #1: Timeout Handling', () => {
     test('shows clear timeout message after 30s', async ({ page }) => {
       // Mock slow variant generation
@@ -444,6 +457,7 @@ describe('Manual Approval UI - Resilience', () => {
 ```
 
 **Validation:**
+
 - All 15+ tests passing
 - Screenshots generated for error scenarios
 - Test execution time < 5 minutes
@@ -451,6 +465,7 @@ describe('Manual Approval UI - Resilience', () => {
 ### Fase 3: Frontend Enhancements (3-4 hours)
 
 **Objetivos:**
+
 - Replace `alert()` with proper error UI
 - Add timeout configuration
 - Implement retry logic
@@ -459,13 +474,12 @@ describe('Manual Approval UI - Resilience', () => {
 **Changes to `/public/manual-approval.html`:**
 
 1. **Add Error UI Component** (~line 50):
+
    ```html
    <div id="error-container" class="error-message hidden">
      <div class="error-icon">⚠️</div>
      <p id="error-text"></p>
-     <button id="retry-button" class="btn-retry hidden" data-testid="retry-btn">
-       Reintentar
-     </button>
+     <button id="retry-button" class="btn-retry hidden" data-testid="retry-btn">Reintentar</button>
      <button id="dismiss-button" class="btn-dismiss">Cerrar</button>
    </div>
 
@@ -480,16 +494,28 @@ describe('Manual Approval UI - Resilience', () => {
        padding: 20px;
        max-width: 400px;
        z-index: 1000;
-       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
      }
-     .error-message.hidden { display: none; }
-     .error-icon { font-size: 24px; margin-bottom: 10px; }
-     .btn-retry { background: #4CAF50; color: white; }
-     .btn-dismiss { background: #999; color: white; }
+     .error-message.hidden {
+       display: none;
+     }
+     .error-icon {
+       font-size: 24px;
+       margin-bottom: 10px;
+     }
+     .btn-retry {
+       background: #4caf50;
+       color: white;
+     }
+     .btn-dismiss {
+       background: #999;
+       color: white;
+     }
    </style>
    ```
 
 2. **Add Timeout-Enabled Fetch Helper** (~line 200):
+
    ```javascript
    async function fetchWithTimeout(url, options = {}, timeout = 30000) {
      const controller = new AbortController();
@@ -513,6 +539,7 @@ describe('Manual Approval UI - Resilience', () => {
    ```
 
 3. **Replace Alert with Error UI** (~line 250):
+
    ```javascript
    function showError(message, retryCallback = null) {
      const errorContainer = document.getElementById('error-container');
@@ -542,6 +569,7 @@ describe('Manual Approval UI - Resilience', () => {
    ```
 
 4. **Update Variant Generation with Timeout** (~line 300):
+
    ```javascript
    async function generateVariant(roastId) {
      try {
@@ -566,7 +594,6 @@ describe('Manual Approval UI - Resilience', () => {
 
        const data = await response.json();
        displayVariant(data.variant);
-
      } catch (error) {
        if (error.message === 'TIMEOUT') {
          showError(
@@ -574,9 +601,8 @@ describe('Manual Approval UI - Resilience', () => {
            () => generateVariant(roastId) // Retry callback
          );
        } else if (error.message.includes('Failed to fetch')) {
-         showError(
-           'Error de red. Verifica tu conexión e intenta de nuevo.',
-           () => generateVariant(roastId)
+         showError('Error de red. Verifica tu conexión e intenta de nuevo.', () =>
+           generateVariant(roastId)
          );
        } else {
          showError('Error al generar variante. Por favor, intenta de nuevo.');
@@ -586,6 +612,7 @@ describe('Manual Approval UI - Resilience', () => {
    ```
 
 5. **Update Approval with Error Handling** (~line 400):
+
    ```javascript
    async function approveRoast(roastId) {
      try {
@@ -602,18 +629,13 @@ describe('Manual Approval UI - Resilience', () => {
        // Success
        showSuccessMessage('Roast aprobado y publicado ✓');
        loadPendingRoasts();
-
      } catch (error) {
        if (error.message === 'TIMEOUT') {
-         showError(
-           'La aprobación tardó demasiado. Verifica el estado en la lista.',
-           () => approveRoast(roastId)
+         showError('La aprobación tardó demasiado. Verifica el estado en la lista.', () =>
+           approveRoast(roastId)
          );
        } else if (error.message.includes('Failed to fetch')) {
-         showError(
-           'Error de red al aprobar. Intenta de nuevo.',
-           () => approveRoast(roastId)
-         );
+         showError('Error de red al aprobar. Intenta de nuevo.', () => approveRoast(roastId));
        } else {
          showError('Error al aprobar el roast. Por favor, intenta de nuevo.');
        }
@@ -622,6 +644,7 @@ describe('Manual Approval UI - Resilience', () => {
    ```
 
 **Validation:**
+
 - Error UI displays correctly
 - Timeout triggers after 30s
 - Retry button works
@@ -631,6 +654,7 @@ describe('Manual Approval UI - Resilience', () => {
 ### Fase 4: Backend Improvements (1-2 hours)
 
 **Objetivos:**
+
 - Add specific error codes
 - Implement timeout configuration
 - Add variant limit logic
@@ -639,6 +663,7 @@ describe('Manual Approval UI - Resilience', () => {
 **Changes to `/src/routes/manualApprovalRoutes.js`:**
 
 1. **Add Error Codes** (~line 10):
+
    ```javascript
    const ERROR_CODES = {
      TIMEOUT: 'E_TIMEOUT',
@@ -650,6 +675,7 @@ describe('Manual Approval UI - Resilience', () => {
    ```
 
 2. **Improve Variant Generation Endpoint** (~line 60):
+
    ```javascript
    router.post('/variants/:id', async (req, res) => {
      try {
@@ -678,7 +704,6 @@ describe('Manual Approval UI - Resilience', () => {
        const variant = await roastGenerator.generateVariant(roast.comment);
 
        res.json({ variant });
-
      } catch (error) {
        if (error.message === 'TIMEOUT') {
          return res.status(408).json({
@@ -700,6 +725,7 @@ describe('Manual Approval UI - Resilience', () => {
 **Changes to `/src/services/roastGeneratorEnhanced.js`:**
 
 1. **Add Timeout Configuration** (~line 15):
+
    ```javascript
    const VARIANT_GENERATION_TIMEOUT = 30000; // 30 seconds
    const MAX_VARIANTS_PER_ROAST = 5;
@@ -718,6 +744,7 @@ describe('Manual Approval UI - Resilience', () => {
    ```
 
 **Validation:**
+
 - Error codes returned correctly
 - Timeout triggers after 30s
 - Variant limit enforced at 5
@@ -726,6 +753,7 @@ describe('Manual Approval UI - Resilience', () => {
 ### Fase 5: CI/CD Integration (1 hour)
 
 **Objetivos:**
+
 - Add E2E tests to GitHub Actions
 - Run on every PR
 - Upload test results on failure
@@ -815,6 +843,7 @@ jobs:
 ```
 
 **Validation:**
+
 - Workflow runs on PR
 - Tests execute successfully
 - Artifacts uploaded on failure
@@ -822,6 +851,7 @@ jobs:
 ### Fase 6: Documentation (30 minutes)
 
 **Objetivos:**
+
 - Update GDD nodes
 - Create E2E testing documentation
 
@@ -832,11 +862,12 @@ Add to "Testing" section (~line 520):
 ```markdown
 ### E2E Tests
 
-| Test File | Focus | Status |
-|-----------|-------|--------|
+| Test File                            | Focus                                                                          | Status           |
+| ------------------------------------ | ------------------------------------------------------------------------------ | ---------------- |
 | `manual-approval-resilience.spec.js` | **Issue #419** - UI resilience (timeouts, network errors, variants exhaustion) | ✅ 15/15 passing |
 
 **Playwright Configuration:**
+
 - Timeout: 30s per test
 - Retry: 1 (flaky test resilience)
 - Headless mode for CI
@@ -848,13 +879,13 @@ Add to "Error Handling" section (~line 560):
 ```markdown
 ### Error Codes (Issue #419)
 
-| Code | HTTP Status | Meaning | Recovery |
-|------|-------------|---------|----------|
-| `E_TIMEOUT` | 408 | Operation timed out | Retry available |
-| `E_NETWORK` | 500 | Network error | Retry available |
-| `E_VARIANT_LIMIT` | 429 | Max variants reached (5) | No retry, approve/reject instead |
-| `E_VALIDATION` | 400 | Invalid input | No retry, fix input |
-| `E_SERVER` | 500 | Generic server error | Retry available |
+| Code              | HTTP Status | Meaning                  | Recovery                         |
+| ----------------- | ----------- | ------------------------ | -------------------------------- |
+| `E_TIMEOUT`       | 408         | Operation timed out      | Retry available                  |
+| `E_NETWORK`       | 500         | Network error            | Retry available                  |
+| `E_VARIANT_LIMIT` | 429         | Max variants reached (5) | No retry, approve/reject instead |
+| `E_VALIDATION`    | 400         | Invalid input            | No retry, fix input              |
+| `E_SERVER`        | 500         | Generic server error     | Retry available                  |
 ```
 
 Add to "Agentes Relevantes" section (~line 615):
@@ -882,16 +913,21 @@ npx playwright install
 ## Running Tests
 
 \`\`\`bash
+
 # Run all E2E tests
+
 npm run test:e2e
 
 # Run specific test file
+
 npx playwright test manual-approval-resilience.spec.js
 
 # Run with UI mode (debugging)
+
 npx playwright test --ui
 
 # Run in headed mode (see browser)
+
 npx playwright test --headed
 \`\`\`
 
@@ -907,19 +943,19 @@ Example test structure:
 
 \`\`\`javascript
 test('should handle error gracefully', async ({ page }) => {
-  // 1. Set up mock server
-  await mockServer.setNetworkError('/api/endpoint');
+// 1. Set up mock server
+await mockServer.setNetworkError('/api/endpoint');
 
-  // 2. Navigate and interact
-  await page.goto('/manual-approval.html');
-  await page.click('[data-testid="action-btn"]');
+// 2. Navigate and interact
+await page.goto('/manual-approval.html');
+await page.click('[data-testid="action-btn"]');
 
-  // 3. Assert error handling
-  const errorText = await page.textContent('.error-message');
-  expect(errorText).toContain('expected message');
+// 3. Assert error handling
+const errorText = await page.textContent('.error-message');
+expect(errorText).toContain('expected message');
 
-  // 4. Screenshot for evidence
-  await page.screenshot({ path: 'docs/test-evidence/test-name.png' });
+// 4. Screenshot for evidence
+await page.screenshot({ path: 'docs/test-evidence/test-name.png' });
 });
 \`\`\`
 
@@ -933,6 +969,7 @@ Screenshots and reports saved to `/docs/test-evidence/issue-{id}/`.
 ```
 
 **Validation:**
+
 - Documentation complete
 - GDD nodes updated
 - README clear and helpful
@@ -994,20 +1031,24 @@ Screenshots and reports saved to `/docs/test-evidence/issue-{id}/`.
 ### Unitarios
 
 **Existing tests to update:**
+
 - `roastGeneratorEnhanced.test.js` - Add tests for timeout logic
 - `manualApprovalRoutes.test.js` - Add tests for error codes
 
 **New tests:**
+
 - N/A (E2E tests cover functionality)
 
 ### Integración
 
 **Existing tests:**
+
 - `multiTenantWorkflow.test.js` - Should still pass (no breaking changes)
 
 ### E2E (NEW)
 
 **Test suites (15+ tests):**
+
 - AC #1: Timeout handling (2 tests)
 - AC #2: Network error handling (2 tests)
 - AC #3: Variants exhaustion (1 test)
@@ -1018,6 +1059,7 @@ Screenshots and reports saved to `/docs/test-evidence/issue-{id}/`.
 ### Evidencias Necesarias
 
 **Screenshots (Playwright auto-captures):**
+
 - `timeout-error.png` - Timeout error message displayed
 - `network-error-approval.png` - Network error during approval
 - `variants-exhausted.png` - Variants exhausted message
@@ -1025,6 +1067,7 @@ Screenshots and reports saved to `/docs/test-evidence/issue-{id}/`.
 - `error-ui-component.png` - Error UI component rendering
 
 **Reports:**
+
 - `playwright-report/index.html` - Full test report
 - `docs/test-evidence/issue-419/SUMMARY.md` - Executive summary
 
@@ -1038,6 +1081,7 @@ Screenshots and reports saved to `/docs/test-evidence/issue-{id}/`.
 **Impacto:** High (CI failures, developer frustration)
 
 **Mitigación:**
+
 - Use Playwright's built-in retry logic (retry: 1)
 - Use explicit waits (`waitForSelector`) instead of arbitrary delays
 - Use stable selectors (`data-testid`)
@@ -1049,6 +1093,7 @@ Screenshots and reports saved to `/docs/test-evidence/issue-{id}/`.
 **Impacto:** Medium (slow test execution)
 
 **Mitigación:**
+
 - Mock slow responses, don't actually wait 30s
 - Use fake timers where possible
 - Configure shorter timeouts for tests (10s mock = 30s real)
@@ -1059,6 +1104,7 @@ Screenshots and reports saved to `/docs/test-evidence/issue-{id}/`.
 **Impacto:** High (production breakage)
 
 **Mitigación:**
+
 - Run full test suite before merging
 - Manual smoke testing on staging
 - Incremental rollout (feature flag if needed)
@@ -1070,6 +1116,7 @@ Screenshots and reports saved to `/docs/test-evidence/issue-{id}/`.
 **Impacto:** High (cascading failures)
 
 **Mitigación:**
+
 - Unit tests for modified services
 - Integration tests for workflows
 - Error codes are additive (no breaking changes)
@@ -1148,18 +1195,22 @@ Screenshots and reports saved to `/docs/test-evidence/issue-{id}/`.
 ### Decisiones Técnicas
 
 **Decision 1: Playwright over Cypress**
+
 - **Rationale**: Better multi-browser support, faster execution, better TypeScript support
 - **Trade-off**: Steeper learning curve, but better long-term investment
 
 **Decision 2: Mock Server for Error Simulation**
+
 - **Rationale**: More reliable than network manipulation, easier to set up
 - **Trade-off**: Doesn't test actual network failures, but tests UI behavior
 
 **Decision 3: Timeout at 30s**
+
 - **Rationale**: Balance between UX (user won't wait forever) and reliability (OpenAI can be slow)
 - **Trade-off**: Some legitimate requests may timeout, but retry is available
 
 **Decision 4: Variant Limit at 5**
+
 - **Rationale**: Cost control (5 variants = ~$0.05), prevents abuse, reasonable UX
 - **Trade-off**: Users may want more options, but can approve/reject existing
 

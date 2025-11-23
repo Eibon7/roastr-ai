@@ -15,7 +15,7 @@ const shieldSettingsService = new ShieldSettingsService();
  */
 function normalizePayloadKeys(payload) {
   const normalized = { ...payload };
-  
+
   // Handle tau key variations (τ_* → tau_*)
   if (normalized['τ_roast_lower'] !== undefined) {
     normalized.tau_roast_lower = normalized['τ_roast_lower'];
@@ -29,18 +29,18 @@ function normalizePayloadKeys(payload) {
     normalized.tau_critical = normalized['τ_critical'];
     delete normalized['τ_critical'];
   }
-  
+
   // Handle enabled key variations (enabled → shield_enabled)
   if (normalized.enabled !== undefined && normalized.shield_enabled === undefined) {
     normalized.shield_enabled = normalized.enabled;
   }
-  
+
   return normalized;
 }
 
 /**
  * Shield Settings Routes for Issue #362
- * 
+ *
  * Provides REST API endpoints for managing Shield configuration at
  * organization and platform levels with proper validation and authentication.
  */
@@ -56,18 +56,18 @@ function normalizePayloadKeys(payload) {
 router.get('/shield', authenticateToken, async (req, res) => {
   try {
     const { organizationId } = req.user;
-    
+
     if (!organizationId) {
       return res.status(400).json({
         success: false,
         error: 'Organization not found in user context'
       });
     }
-    
+
     const settings = await shieldSettingsService.getOrganizationSettings(organizationId);
     const aggressivenessLevels = shieldSettingsService.getAggressivenessLevels();
     const supportedPlatforms = shieldSettingsService.getSupportedPlatforms();
-    
+
     res.json({
       success: true,
       data: {
@@ -76,14 +76,13 @@ router.get('/shield', authenticateToken, async (req, res) => {
         supported_platforms: supportedPlatforms
       }
     });
-    
   } catch (error) {
     logger.error('Failed to get organization Shield settings', {
       userId: req.user?.id,
       organizationId: req.user?.organizationId,
       error: error.message
     });
-    
+
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve Shield settings'
@@ -95,23 +94,24 @@ router.get('/shield', authenticateToken, async (req, res) => {
  * POST /api/settings/shield
  * Update organization Shield settings
  */
-router.post('/shield', 
-  authenticateToken, 
+router.post(
+  '/shield',
+  authenticateToken,
   requirePlan(['pro', 'creator_plus', 'custom']), // Shield settings require Pro+ plan
   async (req, res) => {
     try {
       const { organizationId, id: userId } = req.user;
-      
+
       if (!organizationId) {
         return res.status(400).json({
           success: false,
           error: 'Organization not found in user context'
         });
       }
-      
+
       // Normalize payload keys to handle frontend variations
       const normalizedBody = normalizePayloadKeys(req.body);
-      
+
       const {
         aggressiveness,
         tau_roast_lower,
@@ -121,7 +121,7 @@ router.post('/shield',
         auto_approve_shield_actions,
         corrective_messages_enabled
       } = normalizedBody;
-      
+
       // Validate required fields
       if (aggressiveness === undefined) {
         return res.status(400).json({
@@ -129,7 +129,7 @@ router.post('/shield',
           error: 'Aggressiveness level is required'
         });
       }
-      
+
       // Build settings object
       const settings = {
         aggressiveness,
@@ -140,7 +140,7 @@ router.post('/shield',
         auto_approve_shield_actions,
         corrective_messages_enabled
       };
-      
+
       // Apply aggressiveness presets if thresholds not provided
       if (tau_roast_lower === undefined || tau_shield === undefined || tau_critical === undefined) {
         const thresholds = shieldSettingsService.aggressivenessToThresholds(aggressiveness);
@@ -148,33 +148,32 @@ router.post('/shield',
         settings.tau_shield = tau_shield ?? thresholds.tau_shield;
         settings.tau_critical = tau_critical ?? thresholds.tau_critical;
       }
-      
+
       const updatedSettings = await shieldSettingsService.updateOrganizationSettings(
         organizationId,
         settings,
         userId
       );
-      
+
       logger.info('Organization Shield settings updated', {
         userId,
         organizationId,
         aggressiveness: settings.aggressiveness,
         shield_enabled: settings.shield_enabled
       });
-      
+
       res.json({
         success: true,
         data: updatedSettings,
         message: 'Shield settings updated successfully'
       });
-      
     } catch (error) {
       logger.error('Failed to update organization Shield settings', {
         userId: req.user?.id,
         organizationId: req.user?.organizationId,
         error: error.message
       });
-      
+
       res.status(400).json({
         success: false,
         error: error.message || 'Failed to update Shield settings'
@@ -190,28 +189,27 @@ router.post('/shield',
 router.get('/shield/summary', authenticateToken, async (req, res) => {
   try {
     const { organizationId } = req.user;
-    
+
     if (!organizationId) {
       return res.status(400).json({
         success: false,
         error: 'Organization not found in user context'
       });
     }
-    
+
     const summary = await shieldSettingsService.getSettingsSummary(organizationId);
-    
+
     res.json({
       success: true,
       data: summary
     });
-    
   } catch (error) {
     logger.error('Failed to get Shield settings summary', {
       userId: req.user?.id,
       organizationId: req.user?.organizationId,
       error: error.message
     });
-    
+
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve Shield settings summary'
@@ -231,14 +229,14 @@ router.get('/shield/platform/:platform', authenticateToken, async (req, res) => 
   try {
     const { organizationId } = req.user;
     const { platform } = req.params;
-    
+
     if (!organizationId) {
       return res.status(400).json({
         success: false,
         error: 'Organization not found in user context'
       });
     }
-    
+
     // Validate platform
     const supportedPlatforms = shieldSettingsService.getSupportedPlatforms();
     if (!supportedPlatforms.includes(platform)) {
@@ -247,12 +245,12 @@ router.get('/shield/platform/:platform', authenticateToken, async (req, res) => 
         error: `Unsupported platform: ${platform}`
       });
     }
-    
+
     const [platformSettings, effectiveSettings] = await Promise.all([
       shieldSettingsService.getPlatformSettings(organizationId, platform),
       shieldSettingsService.getEffectiveSettings(organizationId, platform)
     ]);
-    
+
     res.json({
       success: true,
       data: {
@@ -262,7 +260,6 @@ router.get('/shield/platform/:platform', authenticateToken, async (req, res) => 
         has_overrides: !!platformSettings
       }
     });
-    
   } catch (error) {
     logger.error('Failed to get platform Shield settings', {
       userId: req.user?.id,
@@ -270,7 +267,7 @@ router.get('/shield/platform/:platform', authenticateToken, async (req, res) => 
       platform: req.params.platform,
       error: error.message
     });
-    
+
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve platform Shield settings'
@@ -282,21 +279,22 @@ router.get('/shield/platform/:platform', authenticateToken, async (req, res) => 
  * POST /api/settings/shield/platform/:platform
  * Update platform-specific Shield settings
  */
-router.post('/shield/platform/:platform', 
-  authenticateToken, 
+router.post(
+  '/shield/platform/:platform',
+  authenticateToken,
   requirePlan(['pro', 'creator_plus', 'custom']),
   async (req, res) => {
     try {
       const { organizationId, id: userId } = req.user;
       const { platform } = req.params;
-      
+
       if (!organizationId) {
         return res.status(400).json({
           success: false,
           error: 'Organization not found in user context'
         });
       }
-      
+
       // Validate platform
       const supportedPlatforms = shieldSettingsService.getSupportedPlatforms();
       if (!supportedPlatforms.includes(platform)) {
@@ -305,10 +303,10 @@ router.post('/shield/platform/:platform',
           error: `Unsupported platform: ${platform}`
         });
       }
-      
+
       // Normalize payload keys to handle frontend variations
       const normalizedBody = normalizePayloadKeys(req.body);
-      
+
       const {
         aggressiveness,
         tau_roast_lower,
@@ -321,7 +319,7 @@ router.post('/shield/platform/:platform',
         trigger_words,
         max_responses_per_hour
       } = normalizedBody;
-      
+
       const settings = {
         aggressiveness,
         tau_roast_lower,
@@ -334,23 +332,26 @@ router.post('/shield/platform/:platform',
         trigger_words,
         max_responses_per_hour
       };
-      
+
       // Apply aggressiveness presets if provided and thresholds not set
-      if (aggressiveness !== null && aggressiveness !== undefined && 
-          (tau_roast_lower === undefined || tau_shield === undefined || tau_critical === undefined)) {
+      if (
+        aggressiveness !== null &&
+        aggressiveness !== undefined &&
+        (tau_roast_lower === undefined || tau_shield === undefined || tau_critical === undefined)
+      ) {
         const thresholds = shieldSettingsService.aggressivenessToThresholds(aggressiveness);
         settings.tau_roast_lower = tau_roast_lower ?? thresholds.tau_roast_lower;
         settings.tau_shield = tau_shield ?? thresholds.tau_shield;
         settings.tau_critical = tau_critical ?? thresholds.tau_critical;
       }
-      
+
       const updatedSettings = await shieldSettingsService.updatePlatformSettings(
         organizationId,
         platform,
         settings,
         userId
       );
-      
+
       logger.info('Platform Shield settings updated', {
         userId,
         organizationId,
@@ -358,13 +359,12 @@ router.post('/shield/platform/:platform',
         aggressiveness: settings.aggressiveness,
         shield_enabled: settings.shield_enabled
       });
-      
+
       res.json({
         success: true,
         data: updatedSettings,
         message: `Shield settings updated successfully for ${platform}`
       });
-      
     } catch (error) {
       logger.error('Failed to update platform Shield settings', {
         userId: req.user?.id,
@@ -372,7 +372,7 @@ router.post('/shield/platform/:platform',
         platform: req.params.platform,
         error: error.message
       });
-      
+
       res.status(400).json({
         success: false,
         error: error.message || 'Failed to update platform Shield settings'
@@ -385,21 +385,22 @@ router.post('/shield/platform/:platform',
  * DELETE /api/settings/shield/platform/:platform
  * Delete platform-specific settings (revert to organization defaults)
  */
-router.delete('/shield/platform/:platform', 
-  authenticateToken, 
+router.delete(
+  '/shield/platform/:platform',
+  authenticateToken,
   requirePlan(['pro', 'creator_plus', 'custom']),
   async (req, res) => {
     try {
       const { organizationId, id: userId } = req.user;
       const { platform } = req.params;
-      
+
       if (!organizationId) {
         return res.status(400).json({
           success: false,
           error: 'Organization not found in user context'
         });
       }
-      
+
       // Validate platform
       const supportedPlatforms = shieldSettingsService.getSupportedPlatforms();
       if (!supportedPlatforms.includes(platform)) {
@@ -408,28 +409,27 @@ router.delete('/shield/platform/:platform',
           error: `Unsupported platform: ${platform}`
         });
       }
-      
+
       const result = await shieldSettingsService.deletePlatformSettings(
         organizationId,
         platform,
         userId
       );
-      
+
       logger.info('Platform Shield settings deleted', {
         userId,
         organizationId,
         platform,
         deleted: result.deleted
       });
-      
+
       res.json({
         success: true,
         data: result,
-        message: result.deleted 
+        message: result.deleted
           ? `Platform settings removed for ${platform}. Now using organization defaults.`
           : `No platform settings found for ${platform}.`
       });
-      
     } catch (error) {
       logger.error('Failed to delete platform Shield settings', {
         userId: req.user?.id,
@@ -437,7 +437,7 @@ router.delete('/shield/platform/:platform',
         platform: req.params.platform,
         error: error.message
       });
-      
+
       res.status(500).json({
         success: false,
         error: 'Failed to delete platform Shield settings'
@@ -454,14 +454,14 @@ router.get('/shield/platform/:platform/effective', authenticateToken, async (req
   try {
     const { organizationId } = req.user;
     const { platform } = req.params;
-    
+
     if (!organizationId) {
       return res.status(400).json({
         success: false,
         error: 'Organization not found in user context'
       });
     }
-    
+
     // Validate platform
     const supportedPlatforms = shieldSettingsService.getSupportedPlatforms();
     if (!supportedPlatforms.includes(platform)) {
@@ -470,9 +470,12 @@ router.get('/shield/platform/:platform/effective', authenticateToken, async (req
         error: `Unsupported platform: ${platform}`
       });
     }
-    
-    const effectiveSettings = await shieldSettingsService.getEffectiveSettings(organizationId, platform);
-    
+
+    const effectiveSettings = await shieldSettingsService.getEffectiveSettings(
+      organizationId,
+      platform
+    );
+
     res.json({
       success: true,
       data: {
@@ -481,7 +484,6 @@ router.get('/shield/platform/:platform/effective', authenticateToken, async (req
         aggressiveness_details: effectiveSettings.aggressiveness_details
       }
     });
-    
   } catch (error) {
     logger.error('Failed to get effective Shield settings', {
       userId: req.user?.id,
@@ -489,7 +491,7 @@ router.get('/shield/platform/:platform/effective', authenticateToken, async (req
       platform: req.params.platform,
       error: error.message
     });
-    
+
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve effective Shield settings'
@@ -508,17 +510,16 @@ router.get('/shield/platform/:platform/effective', authenticateToken, async (req
 router.get('/shield/aggressiveness-levels', (req, res) => {
   try {
     const levels = shieldSettingsService.getAggressivenessLevels();
-    
+
     res.json({
       success: true,
       data: levels
     });
-    
   } catch (error) {
     logger.error('Failed to get aggressiveness levels', {
       error: error.message
     });
-    
+
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve aggressiveness levels'
@@ -533,17 +534,16 @@ router.get('/shield/aggressiveness-levels', (req, res) => {
 router.get('/shield/platforms', (req, res) => {
   try {
     const platforms = shieldSettingsService.getSupportedPlatforms();
-    
+
     res.json({
       success: true,
       data: platforms
     });
-    
   } catch (error) {
     logger.error('Failed to get supported platforms', {
       error: error.message
     });
-    
+
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve supported platforms'
@@ -558,7 +558,7 @@ router.get('/shield/platforms', (req, res) => {
 router.post('/shield/validate', authenticateToken, async (req, res) => {
   try {
     const { type = 'organization', ...settings } = req.body;
-    
+
     if (type === 'organization') {
       shieldSettingsService.validateOrganizationSettings(settings);
     } else if (type === 'platform') {
@@ -569,7 +569,7 @@ router.post('/shield/validate', authenticateToken, async (req, res) => {
         error: 'Invalid validation type. Must be "organization" or "platform"'
       });
     }
-    
+
     res.json({
       success: true,
       data: {
@@ -577,7 +577,6 @@ router.post('/shield/validate', authenticateToken, async (req, res) => {
         message: 'Settings validation passed'
       }
     });
-    
   } catch (error) {
     res.status(400).json({
       success: false,

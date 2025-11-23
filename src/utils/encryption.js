@@ -37,14 +37,15 @@ function getEncryptionKey() {
   if (!keyHex) {
     throw new Error(
       'PERSONA_ENCRYPTION_KEY not configured. ' +
-      'Generate key with: node scripts/generate-persona-key.js'
+        'Generate key with: node scripts/generate-persona-key.js'
     );
   }
 
-  if (keyHex.length !== KEY_LENGTH * 2) { // Hex string is 2x byte length
+  if (keyHex.length !== KEY_LENGTH * 2) {
+    // Hex string is 2x byte length
     throw new Error(
       `PERSONA_ENCRYPTION_KEY must be ${KEY_LENGTH * 2} hex characters (${KEY_LENGTH} bytes). ` +
-      `Found: ${keyHex.length} characters`
+        `Found: ${keyHex.length} characters`
     );
   }
 
@@ -82,10 +83,7 @@ function encryptField(plaintext) {
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
 
     // Encrypt plaintext
-    const encrypted = Buffer.concat([
-      cipher.update(plaintext, 'utf8'),
-      cipher.final()
-    ]);
+    const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
 
     // Get authentication tag (GCM mode)
     const tag = cipher.getAuthTag();
@@ -95,7 +93,6 @@ function encryptField(plaintext) {
 
     // Return Base64-encoded for database storage
     return combined.toString('base64');
-
   } catch (error) {
     logger.error('Encryption failed', {
       error: error.message,
@@ -154,13 +151,9 @@ function decryptField(ciphertext) {
     decipher.setAuthTag(tag);
 
     // Decrypt
-    const decrypted = Buffer.concat([
-      decipher.update(encrypted),
-      decipher.final()
-    ]);
+    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 
     return decrypted.toString('utf8');
-
   } catch (error) {
     // Security: Don't log ciphertext (may contain sensitive data)
     logger.error('Decryption failed', {
@@ -190,9 +183,7 @@ function validateEncryptionKey() {
 
     // Validate key length
     if (key.length !== KEY_LENGTH) {
-      throw new Error(
-        `Encryption key must be ${KEY_LENGTH} bytes, found ${key.length} bytes`
-      );
+      throw new Error(`Encryption key must be ${KEY_LENGTH} bytes, found ${key.length} bytes`);
     }
 
     // Test encryption/decryption round-trip
@@ -209,7 +200,6 @@ function validateEncryptionKey() {
       keyLength: KEY_LENGTH,
       ivLength: IV_LENGTH
     });
-
   } catch (error) {
     logger.error('Encryption key validation failed', { error: error.message });
     throw error;

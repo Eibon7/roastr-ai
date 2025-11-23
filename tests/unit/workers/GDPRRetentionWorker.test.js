@@ -1,7 +1,7 @@
 /**
  * GDPRRetentionWorker Tests
  * Issue #928 - Fase 2.2: Tests para Workers Secundarios
- * 
+ *
  * Coverage goal: ≥70% (lines, statements, functions, branches)
  */
 
@@ -286,9 +286,7 @@ describe('GDPRRetentionWorker', () => {
 
   describe('purgeOldRecords()', () => {
     test('should purge records older than 90 days', async () => {
-      mockSupabase.from.mockReturnValueOnce(
-        createMockChain({ data: [], error: null })
-      );
+      mockSupabase.from.mockReturnValueOnce(createMockChain({ data: [], error: null }));
 
       const result = await worker.purgeOldRecords('batch_purge');
 
@@ -299,9 +297,7 @@ describe('GDPRRetentionWorker', () => {
     test('should handle purge in dry-run mode', async () => {
       worker.dryRun = true;
 
-      mockSupabase.from.mockReturnValueOnce(
-        createMockChain({ count: 10, error: null })
-      );
+      mockSupabase.from.mockReturnValueOnce(createMockChain({ count: 10, error: null }));
 
       const result = await worker.purgeOldRecords('batch_dry_purge');
 

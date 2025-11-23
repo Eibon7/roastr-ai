@@ -51,7 +51,7 @@ The GDD system was creating duplicate issues and false-positive failure reports:
 **Code:**
 
 ```javascript
-const existingIssue = existingIssues.find(issue => issue.title === issueTitle);
+const existingIssue = existingIssues.find((issue) => issue.title === issueTitle);
 if (existingIssue) {
   // Update existing + add comment
 } else {
@@ -175,23 +175,23 @@ For each open GDD issue:
 
 ### Before Implementation
 
-| Metric | Value |
-|--------|-------|
-| Open GDD Issues | 35 |
-| Duplicate Issues | 22 (63%) |
+| Metric                  | Value                   |
+| ----------------------- | ----------------------- |
+| Open GDD Issues         | 35                      |
+| Duplicate Issues        | 22 (63%)                |
 | False Positive Failures | ~4 (57% of auto-repair) |
-| Race Conditions | ~3 (43% of auto-repair) |
-| Auto-Cleanup | None |
+| Race Conditions         | ~3 (43% of auto-repair) |
+| Auto-Cleanup            | None                    |
 
 ### After Implementation
 
-| Metric | Value |
-|--------|-------|
-| Open GDD Issues | 13 (-63%) |
-| Duplicate Issues | 0 (prevented by workflow) |
-| False Positive Failures | 0 (rollback suppression) |
-| Race Conditions | 0 (concurrency control) |
-| Auto-Cleanup | Daily (30-day threshold) |
+| Metric                  | Value                     |
+| ----------------------- | ------------------------- |
+| Open GDD Issues         | 13 (-63%)                 |
+| Duplicate Issues        | 0 (prevented by workflow) |
+| False Positive Failures | 0 (rollback suppression)  |
+| Race Conditions         | 0 (concurrency control)   |
+| Auto-Cleanup            | Daily (30-day threshold)  |
 
 **Expected Reduction:** 70-80% fewer GDD issues going forward
 

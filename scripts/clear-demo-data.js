@@ -34,10 +34,7 @@ const dryRun = args.includes('--dry-run');
 const verbose = args.includes('--verbose');
 
 // Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
 // Colors for terminal output
 const colors = {
@@ -69,7 +66,6 @@ async function countRecords(table, filter) {
 
     if (error) throw error;
     return count || 0;
-
   } catch (error) {
     console.error(`${colors.red}Error counting ${table}: ${error.message}${colors.reset}`);
     return 0;
@@ -95,7 +91,6 @@ async function deleteRecords(table, filter) {
 
     if (error) throw error;
     return data ? data.length : 0;
-
   } catch (error) {
     console.error(`${colors.red}Error deleting from ${table}: ${error.message}${colors.reset}`);
     return 0;
@@ -130,11 +125,11 @@ async function clearDemoOrganizations() {
       return results;
     }
 
-    const demoOrgIds = demoOrgs.map(org => org.id);
+    const demoOrgIds = demoOrgs.map((org) => org.id);
 
     if (verbose) {
       console.log(`\n${colors.cyan}Found ${demoOrgs.length} demo organizations:${colors.reset}`);
-      demoOrgs.forEach(org => {
+      demoOrgs.forEach((org) => {
         console.log(`  ${colors.dim}- ${org.name} (${org.id})${colors.reset}`);
       });
     }
@@ -147,7 +142,6 @@ async function clearDemoOrganizations() {
         results.responses += await countRecords('responses', { organization_id: orgId });
       }
       results.organizations = demoOrgs.length;
-
     } else {
       // Delete in correct order (children first, then parents)
 
@@ -156,7 +150,9 @@ async function clearDemoOrganizations() {
         const deleted = await deleteRecords('responses', { organization_id: orgId });
         results.responses += deleted;
         if (verbose && deleted > 0) {
-          console.log(`${colors.green}  ✓ Deleted ${deleted} responses from org ${orgId}${colors.reset}`);
+          console.log(
+            `${colors.green}  ✓ Deleted ${deleted} responses from org ${orgId}${colors.reset}`
+          );
         }
       }
 
@@ -165,7 +161,9 @@ async function clearDemoOrganizations() {
         const deleted = await deleteRecords('comments', { organization_id: orgId });
         results.comments += deleted;
         if (verbose && deleted > 0) {
-          console.log(`${colors.green}  ✓ Deleted ${deleted} comments from org ${orgId}${colors.reset}`);
+          console.log(
+            `${colors.green}  ✓ Deleted ${deleted} comments from org ${orgId}${colors.reset}`
+          );
         }
       }
 
@@ -174,7 +172,9 @@ async function clearDemoOrganizations() {
         const deleted = await deleteRecords('users', { organization_id: orgId });
         results.users += deleted;
         if (verbose && deleted > 0) {
-          console.log(`${colors.green}  ✓ Deleted ${deleted} users from org ${orgId}${colors.reset}`);
+          console.log(
+            `${colors.green}  ✓ Deleted ${deleted} users from org ${orgId}${colors.reset}`
+          );
         }
       }
 
@@ -189,12 +189,15 @@ async function clearDemoOrganizations() {
       results.organizations = deletedOrgs ? deletedOrgs.length : 0;
 
       if (verbose && results.organizations > 0) {
-        console.log(`${colors.green}  ✓ Deleted ${results.organizations} organizations${colors.reset}`);
+        console.log(
+          `${colors.green}  ✓ Deleted ${results.organizations} organizations${colors.reset}`
+        );
       }
     }
-
   } catch (error) {
-    console.error(`${colors.red}Error clearing demo organizations: ${error.message}${colors.reset}`);
+    console.error(
+      `${colors.red}Error clearing demo organizations: ${error.message}${colors.reset}`
+    );
     throw error;
   }
 
@@ -228,11 +231,13 @@ async function clearDemoUsers() {
       return results;
     }
 
-    const demoUserIds = demoUsers.map(user => user.id);
+    const demoUserIds = demoUsers.map((user) => user.id);
 
     if (verbose) {
-      console.log(`\n${colors.cyan}Found ${demoUsers.length} standalone demo users:${colors.reset}`);
-      demoUsers.forEach(user => {
+      console.log(
+        `\n${colors.cyan}Found ${demoUsers.length} standalone demo users:${colors.reset}`
+      );
+      demoUsers.forEach((user) => {
         console.log(`  ${colors.dim}- ${user.email}${colors.reset}`);
       });
     }
@@ -244,7 +249,6 @@ async function clearDemoUsers() {
         results.responses += await countRecords('responses', { user_id: userId });
       }
       results.users = demoUsers.length;
-
     } else {
       // Delete in correct order (children first, then parents)
 
@@ -253,7 +257,9 @@ async function clearDemoUsers() {
         const deleted = await deleteRecords('responses', { user_id: userId });
         results.responses += deleted;
         if (verbose && deleted > 0) {
-          console.log(`${colors.green}  ✓ Deleted ${deleted} responses from user ${userId}${colors.reset}`);
+          console.log(
+            `${colors.green}  ✓ Deleted ${deleted} responses from user ${userId}${colors.reset}`
+          );
         }
       }
 
@@ -262,7 +268,9 @@ async function clearDemoUsers() {
         const deleted = await deleteRecords('comments', { user_id: userId });
         results.comments += deleted;
         if (verbose && deleted > 0) {
-          console.log(`${colors.green}  ✓ Deleted ${deleted} comments from user ${userId}${colors.reset}`);
+          console.log(
+            `${colors.green}  ✓ Deleted ${deleted} comments from user ${userId}${colors.reset}`
+          );
         }
       }
 
@@ -280,7 +288,6 @@ async function clearDemoUsers() {
         console.log(`${colors.green}  ✓ Deleted ${results.users} users${colors.reset}`);
       }
     }
-
   } catch (error) {
     console.error(`${colors.red}Error clearing demo users: ${error.message}${colors.reset}`);
     throw error;
@@ -322,16 +329,21 @@ async function main() {
     console.log(`  Users: ${totalResults.users}`);
     console.log(`  Comments: ${totalResults.comments}`);
     console.log(`  Responses: ${totalResults.responses}`);
-    console.log(`  ${colors.dim}Total records: ${Object.values(totalResults).reduce((a, b) => a + b, 0)}${colors.reset}`);
+    console.log(
+      `  ${colors.dim}Total records: ${Object.values(totalResults).reduce((a, b) => a + b, 0)}${colors.reset}`
+    );
 
     if (dryRun) {
-      console.log(`\n${colors.yellow}This was a dry run. Run without --dry-run to delete data.${colors.reset}\n`);
+      console.log(
+        `\n${colors.yellow}This was a dry run. Run without --dry-run to delete data.${colors.reset}\n`
+      );
     } else {
-      console.log(`\n${colors.green}${colors.bright}✓ Demo data cleared successfully!${colors.reset}\n`);
+      console.log(
+        `\n${colors.green}${colors.bright}✓ Demo data cleared successfully!${colors.reset}\n`
+      );
     }
 
     process.exit(0);
-
   } catch (error) {
     console.error(`\n${colors.red}${colors.bright}✗ Fatal error: ${error.message}${colors.reset}`);
     if (verbose) {

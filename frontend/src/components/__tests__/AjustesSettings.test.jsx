@@ -24,12 +24,12 @@ describe('AjustesSettings Theme Settings', () => {
       }
       if (url === '/user/settings/theme') {
         return Promise.resolve({
-          data: { 
-            success: true, 
-            data: { 
+          data: {
+            success: true,
+            data: {
               theme: undefined, // This should not crash the component
               options: undefined // This should not crash the component
-            } 
+            }
           }
         });
       }
@@ -42,21 +42,19 @@ describe('AjustesSettings Theme Settings', () => {
     });
 
     // Render the component
-    const { container } = render(
-      <AjustesSettings onNotification={mockOnNotification} />
-    );
+    const { container } = render(<AjustesSettings onNotification={mockOnNotification} />);
 
     // Wait for the component to load
-    await waitFor(() => {
-      // The component should not crash and should render without errors
-      expect(container).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        // The component should not crash and should render without errors
+        expect(container).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     // Verify no errors were thrown during rendering
-    expect(mockOnNotification).not.toHaveBeenCalledWith(
-      expect.stringContaining('Error'),
-      'error'
-    );
+    expect(mockOnNotification).not.toHaveBeenCalledWith(expect.stringContaining('Error'), 'error');
   });
 
   test('should handle API success with null theme and options', async () => {
@@ -69,12 +67,12 @@ describe('AjustesSettings Theme Settings', () => {
       }
       if (url === '/user/settings/theme') {
         return Promise.resolve({
-          data: { 
-            success: true, 
-            data: { 
+          data: {
+            success: true,
+            data: {
               theme: null, // This should not crash the component
               options: null // This should not crash the component
-            } 
+            }
           }
         });
       }
@@ -87,19 +85,17 @@ describe('AjustesSettings Theme Settings', () => {
     });
 
     // Render the component
-    const { container } = render(
-      <AjustesSettings onNotification={mockOnNotification} />
-    );
+    const { container } = render(<AjustesSettings onNotification={mockOnNotification} />);
 
     // Wait for the component to load
-    await waitFor(() => {
-      expect(container).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(container).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     // Verify no errors were thrown during rendering
-    expect(mockOnNotification).not.toHaveBeenCalledWith(
-      expect.stringContaining('Error'),
-      'error'
-    );
+    expect(mockOnNotification).not.toHaveBeenCalledWith(expect.stringContaining('Error'), 'error');
   });
 });

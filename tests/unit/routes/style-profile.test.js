@@ -29,8 +29,7 @@ describe('Style Profile Routes', () => {
 
   describe('GET /api/style-profile/status', () => {
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get('/api/style-profile/status');
+      const response = await request(app).get('/api/style-profile/status');
 
       expect(response.status).toBe(401);
     });
@@ -61,8 +60,7 @@ describe('Style Profile Routes', () => {
 
   describe('GET /api/style-profile', () => {
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get('/api/style-profile');
+      const response = await request(app).get('/api/style-profile');
 
       expect(response.status).toBe(401);
     });
@@ -219,8 +217,7 @@ describe('Style Profile Routes', () => {
     });
 
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get('/api/style-profile/preview/es');
+      const response = await request(app).get('/api/style-profile/preview/es');
 
       expect(response.status).toBe(401);
     });
@@ -263,8 +260,7 @@ describe('Style Profile Routes', () => {
 
   describe('GET /api/style-profile/stats', () => {
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get('/api/style-profile/stats');
+      const response = await request(app).get('/api/style-profile/stats');
 
       expect(response.status).toBe(401);
     });
@@ -296,8 +292,7 @@ describe('Style Profile Routes', () => {
 
   describe('DELETE /api/style-profile', () => {
     it('should require authentication', async () => {
-      const response = await request(app)
-        .delete('/api/style-profile');
+      const response = await request(app).delete('/api/style-profile');
 
       expect(response.status).toBe(401);
     });
@@ -374,7 +369,7 @@ describe('Style Profile Routes', () => {
     it('should handle insufficient content for generation', async () => {
       // Create new user token for testing insufficient content
       const newUserToken = 'mock-new-user-token';
-      
+
       await request(app)
         .post('/api/plan/select')
         .set('Authorization', `Bearer ${newUserToken}`)
@@ -392,7 +387,7 @@ describe('Style Profile Routes', () => {
     it('should handle generation with minimal content', async () => {
       // Test with very small import
       const minimalUserToken = 'mock-minimal-user-token';
-      
+
       await request(app)
         .post('/api/plan/select')
         .set('Authorization', `Bearer ${minimalUserToken}`)

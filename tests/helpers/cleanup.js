@@ -1,6 +1,6 @@
 /**
  * Test Cleanup Helper
- * 
+ *
  * Provides reusable patterns for cleaning up resources in tests
  * to prevent Jest open handles warnings
  */
@@ -12,10 +12,10 @@
 const setupCleanup = (services = []) => {
   afterAll(async () => {
     console.log('🧹 Running test cleanup...');
-    
+
     for (const service of services) {
       if (!service) continue;
-      
+
       try {
         // Try cleanup method first (most specific)
         if (typeof service.cleanup === 'function') {
@@ -23,27 +23,27 @@ const setupCleanup = (services = []) => {
           console.log(`✅ Cleaned up service: ${service.constructor?.name || 'unknown'}`);
           continue;
         }
-        
+
         // Try shutdown method (common pattern)
         if (typeof service.shutdown === 'function') {
           await service.shutdown();
           console.log(`✅ Shut down service: ${service.constructor?.name || 'unknown'}`);
           continue;
         }
-        
+
         // Try stop method (worker pattern)
         if (typeof service.stop === 'function') {
           await service.stop();
           console.log(`✅ Stopped service: ${service.constructor?.name || 'unknown'}`);
           continue;
         }
-        
+
         console.log(`⚠️ No cleanup method found for: ${service.constructor?.name || 'unknown'}`);
       } catch (error) {
         console.warn(`⚠️ Error cleaning up service: ${error.message}`);
       }
     }
-    
+
     console.log('🧹 Test cleanup completed');
   });
 };
@@ -55,14 +55,14 @@ const setupCleanup = (services = []) => {
 const setupTimerCleanup = (timers = []) => {
   afterAll(() => {
     console.log('⏰ Clearing timers...');
-    
-    timers.forEach(timer => {
+
+    timers.forEach((timer) => {
       if (timer) {
         clearTimeout(timer);
         clearInterval(timer);
       }
     });
-    
+
     console.log(`⏰ Cleared ${timers.length} timers`);
   });
 };
@@ -74,13 +74,13 @@ const setupTimerCleanup = (timers = []) => {
 const setupEventCleanup = (emitters = []) => {
   afterAll(() => {
     console.log('🎧 Removing event listeners...');
-    
-    emitters.forEach(emitter => {
+
+    emitters.forEach((emitter) => {
       if (emitter && typeof emitter.removeAllListeners === 'function') {
         emitter.removeAllListeners();
       }
     });
-    
+
     console.log(`🎧 Cleaned up ${emitters.length} event emitters`);
   });
 };

@@ -29,10 +29,10 @@ const mockPlan = {
 
 test.describe('Dashboard integration validation', () => {
   test('Connect page shows connections and allows error guard', async ({ page }) => {
-    await page.route('**/api/integrations/platforms', route =>
+    await page.route('**/api/integrations/platforms', (route) =>
       route.fulfill({ json: { platforms: mockIntegrations } })
     );
-    await page.route('**/api/integrations/status', route =>
+    await page.route('**/api/integrations/status', (route) =>
       route.fulfill({ json: { integrations: mockIntegrations } })
     );
 
@@ -45,18 +45,26 @@ test.describe('Dashboard integration validation', () => {
     });
 
     // Force error for status to trigger warning banner
-    await page.route('**/api/integrations/status', route => route.fulfill({ status: 500 }));
+    await page.route('**/api/integrations/status', (route) => route.fulfill({ status: 500 }));
     await page.reload();
     await expect(page.locator('text=Problemas cargando datos')).toBeVisible();
   });
 
   test('Dashboard shows usage, plan and shields data', async ({ page }) => {
-    await page.route('**/api/integrations', route => route.fulfill({ json: { integrations: mockIntegrations } }));
-    await page.route('**/api/usage', route => route.fulfill({ json: mockUsage }));
-    await page.route('**/api/plan/current', route => route.fulfill({ json: mockPlan }));
-    await page.route('**/api/user/roasts/recent?limit=10', route => route.fulfill({ json: { data: [] } }));
-    await page.route('**/api/shield/intercepted?limit=5', route => route.fulfill({ json: { data: [] } }));
-    await page.route('**/analytics/summary', route => route.fulfill({ json: { data: { summary: 'ok' } } }));
+    await page.route('**/api/integrations', (route) =>
+      route.fulfill({ json: { integrations: mockIntegrations } })
+    );
+    await page.route('**/api/usage', (route) => route.fulfill({ json: mockUsage }));
+    await page.route('**/api/plan/current', (route) => route.fulfill({ json: mockPlan }));
+    await page.route('**/api/user/roasts/recent?limit=10', (route) =>
+      route.fulfill({ json: { data: [] } })
+    );
+    await page.route('**/api/shield/intercepted?limit=5', (route) =>
+      route.fulfill({ json: { data: [] } })
+    );
+    await page.route('**/analytics/summary', (route) =>
+      route.fulfill({ json: { data: { summary: 'ok' } } })
+    );
 
     await page.goto('/dashboard');
     await expect(page.locator('text=Usage & Costs')).toBeVisible();
@@ -67,4 +75,3 @@ test.describe('Dashboard integration validation', () => {
     });
   });
 });
-

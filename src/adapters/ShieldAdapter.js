@@ -1,20 +1,12 @@
 /**
  * ShieldAdapter - Unified interface for platform moderation actions
- * 
+ *
  * This abstract class defines the contract that all platform-specific
  * shield adapters must implement. It provides a consistent interface
  * for the Shield system to interact with different social media platforms.
  */
 class ModerationInput {
-  constructor({
-    platform,
-    commentId,
-    userId,
-    username,
-    reason,
-    orgId,
-    metadata = {}
-  }) {
+  constructor({ platform, commentId, userId, username, reason, orgId, metadata = {} }) {
     this.platform = platform;
     this.commentId = commentId;
     this.userId = userId;
@@ -42,7 +34,7 @@ class ModerationResult {
     this.executionTime = executionTime;
     this.timestamp = new Date().toISOString();
   }
-  
+
   /**
    * Get platform from details for easy access
    */
@@ -81,7 +73,7 @@ class ShieldAdapter {
     if (this.constructor === ShieldAdapter) {
       throw new Error('ShieldAdapter is abstract and cannot be instantiated directly');
     }
-    
+
     this.platform = platform;
     this.config = config;
     this.client = null;
@@ -158,8 +150,8 @@ class ShieldAdapter {
 
   /**
    * Validate input parameters
-   * @param {ModerationInput} input 
-   * @param {string[]} requiredFields 
+   * @param {ModerationInput} input
+   * @param {string[]} requiredFields
    * @throws {Error} If validation fails
    */
   validateInput(input, requiredFields = []) {
@@ -176,9 +168,9 @@ class ShieldAdapter {
 
   /**
    * Create a standardized error result
-   * @param {string} action 
-   * @param {Error} error 
-   * @param {number} executionTime 
+   * @param {string} action
+   * @param {Error} error
+   * @param {number} executionTime
    * @returns {ModerationResult}
    */
   createErrorResult(action, error, executionTime = 0) {
@@ -197,10 +189,10 @@ class ShieldAdapter {
 
   /**
    * Create a standardized success result
-   * @param {string} action 
-   * @param {Object} details 
-   * @param {number} executionTime 
-   * @param {boolean} requiresManualReview 
+   * @param {string} action
+   * @param {Object} details
+   * @param {number} executionTime
+   * @param {boolean} requiresManualReview
    * @returns {ModerationResult}
    */
   createSuccessResult(action, details = {}, executionTime = 0, requiresManualReview = false) {
@@ -218,51 +210,53 @@ class ShieldAdapter {
 
   /**
    * Handle rate limiting with exponential backoff
-   * @param {Function} apiCall 
-   * @param {number} maxRetries 
+   * @param {Function} apiCall
+   * @param {number} maxRetries
    * @returns {Promise<any>}
    */
   async handleRateLimit(apiCall, maxRetries = 3) {
     let lastError;
-    
+
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         return await apiCall();
       } catch (error) {
         lastError = error;
-        
+
         // Check if it's a rate limit error
         if (this.isRateLimitError(error)) {
           const delay = Math.min(1000 * Math.pow(2, attempt), 30000); // Max 30 seconds
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
         }
-        
+
         // If it's not a rate limit error, throw immediately
         throw error;
       }
     }
-    
+
     throw lastError;
   }
 
   /**
    * Check if an error is related to rate limiting
-   * @param {Error} error 
+   * @param {Error} error
    * @returns {boolean}
    */
   isRateLimitError(error) {
     // Default implementation - should be overridden by specific adapters
-    return error.message.toLowerCase().includes('rate limit') || 
-           error.status === 429 ||
-           error.code === 429;
+    return (
+      error.message.toLowerCase().includes('rate limit') ||
+      error.status === 429 ||
+      error.code === 429
+    );
   }
 
   /**
    * Log adapter activity
-   * @param {string} level 
-   * @param {string} message 
-   * @param {Object} meta 
+   * @param {string} level
+   * @param {string} message
+   * @param {Object} meta
    */
   log(level, message, meta = {}) {
     const timestamp = new Date().toISOString();

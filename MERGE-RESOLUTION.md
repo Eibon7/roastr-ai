@@ -22,6 +22,7 @@ Durante el desarrollo de Issue #872, se mergeó a `main` el Issue #876 (Dynamic 
 ### 1. `.issue_lock` ✅
 
 **Conflicto:**
+
 ```diff
 <<<<<<< HEAD
 feature/issue-872
@@ -31,6 +32,7 @@ feature/issue-876-only
 ```
 
 **Resolución:**
+
 ```
 feature/issue-872
 ```
@@ -44,11 +46,13 @@ feature/issue-872
 **Conflicto:** `buildBlockA()` method
 
 **Version #872 (HEAD):**
+
 - Método síncrono: `buildBlockA()`
 - 3 tonos hardcoded en el prompt
 - Todo el contenido de #872 (Brand Safety, Platform Constraints, etc.)
 
 **Version #876 (main):**
+
 - Método async: `async buildBlockA(language)`
 - Carga tonos dinámicamente de DB (con cache de 5min)
 - Usa `toneConfigService.getActiveTones(language)`
@@ -118,6 +122,7 @@ Siempre respeta los límites de caracteres...
 ## 🔧 CAMBIOS TÉCNICOS
 
 ### Constructor
+
 ```javascript
 constructor() {
   this.version = '2.1.0'; // Issue #872: 3 tonos reales + Brand Safety
@@ -127,6 +132,7 @@ constructor() {
 ```
 
 ### buildBlockA()
+
 - ✅ Ahora es `async`
 - ✅ Acepta `language` parameter (`'es'` | `'en'`)
 - ✅ Carga tonos de DB con `toneConfigService`
@@ -134,18 +140,20 @@ constructor() {
 - ✅ Fallback a tonos estáticos si error
 
 ### buildCompletePrompt()
+
 ```javascript
 async buildCompletePrompt(options = {}) {
   const language = options.language || 'es';
-  
+
   // Issue #876: Block A is now async (loads tones from DB)
   const blockA = await this.buildBlockA(language);
-  
+
   // ... resto del código ...
 }
 ```
 
 ### Tests actualizados
+
 ```javascript
 // ANTES (síncrono)
 test('should build static Block A with 3 tones', () => {
@@ -167,18 +175,23 @@ test('should build static Block A with 3 tones', async () => {
 ## 📊 VERIFICACIÓN
 
 ### Tests
+
 ```bash
 npm test -- tests/unit/services/prompts/roastPrompt.test.js
 ```
+
 **Result:** ✅ 27/27 passing
 
 ### Linting
+
 ```bash
 npm run lint src/lib/prompts/roastPrompt.js
 ```
+
 **Result:** ✅ No errors
 
 ### Integration
+
 - ✅ #872 content preserved (Brand Safety, Platform Constraints, 3 tonos)
 - ✅ #876 dynamic system integrated (DB loading, cache, fallback)
 - ✅ Backward compatible (fallback a tonos estáticos)
@@ -195,6 +208,7 @@ npm run lint src/lib/prompts/roastPrompt.js
 - **Después (#872 + #876):** Sistema dinámico de tonos con DB, admin panel, cache, y fallback robusto
 
 **Ambos issues se complementan perfectamente:**
+
 - **#872:** Define CONTENIDO del prompt (Brand Safety, Platform Constraints, reglas)
 - **#876:** Define INFRAESTRUCTURA dinámica (DB, admin, cache)
 
@@ -203,9 +217,9 @@ npm run lint src/lib/prompts/roastPrompt.js
 ---
 
 **Commits:**
+
 - `8d2035c1` - merge: resolve conflicts with main (#876 dynamic tones)
 - `1a14d348` - docs(#872): AC8 verification - 100% strict compliance achieved
 - `20484ed1` - fix(#872): AC8 FINAL - Remove last traces of legacy fields
 
 **Status:** ✅ READY FOR MERGE
-

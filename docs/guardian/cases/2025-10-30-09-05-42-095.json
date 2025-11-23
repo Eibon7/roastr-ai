@@ -3,9 +3,7 @@
   "timestamp": "2025-10-30T09:05:42.095Z",
   "actor": "emiliopostigo",
   "domains": [],
-  "files_changed": [
-    "test.js"
-  ],
+  "files_changed": ["test.js"],
   "severity": "SAFE",
   "action": "APPROVED",
   "violations": {
@@ -16,9 +14,7 @@
   "details": [
     {
       "file": "test.js",
-      "domains": [
-        "test"
-      ],
+      "domains": ["test"],
       "severity": "SAFE",
       "lines_added": 5,
       "lines_removed": 2

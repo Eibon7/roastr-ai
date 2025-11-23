@@ -36,7 +36,9 @@ const { getPlanFromProductId, getPlanFromPriceId } = require('../utils/polarHelp
  */
 function verifyWebhookSignature(payload, signature, secret) {
   if (!secret) {
-    logger.warn('[Polar Webhook] POLAR_WEBHOOK_SECRET not configured - skipping signature verification');
+    logger.warn(
+      '[Polar Webhook] POLAR_WEBHOOK_SECRET not configured - skipping signature verification'
+    );
     return true; // Allow in development, but log warning
   }
 
@@ -46,10 +48,7 @@ function verifyWebhookSignature(payload, signature, secret) {
   }
 
   try {
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(payload)
-      .digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
     // Ensure buffers are same length before comparison to prevent crash
     if (signature.length !== expectedSignature.length) {
@@ -60,10 +59,7 @@ function verifyWebhookSignature(payload, signature, secret) {
       return false;
     }
 
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
   } catch (error) {
     logger.error('[Polar Webhook] Error verifying signature', { error: error.message });
     return false;
@@ -74,10 +70,13 @@ function verifyWebhookSignature(payload, signature, secret) {
  * Handle checkout.created event
  */
 async function handleCheckoutCreated(event) {
-  logger.info('[Polar Webhook] Checkout created', sanitizePII({
-    checkout_id: event.data.id,
-    customer_email: event.data.customer_email,
-  }));
+  logger.info(
+    '[Polar Webhook] Checkout created',
+    sanitizePII({
+      checkout_id: event.data.id,
+      customer_email: event.data.customer_email
+    })
+  );
 
   // NOTE: No action needed for checkout.created
   // Wait for order.created event which confirms payment
@@ -103,13 +102,16 @@ async function handleOrderCreated(event) {
   // Use product_id if available, fallback to product_price_id for backward compatibility
   const productId = product_id || product_price_id;
 
-  logger.info('[Polar Webhook] Processing order.created', sanitizePII({
-    order_id: orderId,
-    customer_email,
-    product_id: productId,
-    amount,
-    currency,
-  }));
+  logger.info(
+    '[Polar Webhook] Processing order.created',
+    sanitizePII({
+      order_id: orderId,
+      customer_email,
+      product_id: productId,
+      amount,
+      currency
+    })
+  );
 
   try {
     // 1. Find user by email
@@ -120,16 +122,21 @@ async function handleOrderCreated(event) {
       .single();
 
     if (userError || !user) {
-      logger.error('[Polar Webhook] User not found', sanitizePII({
-        customer_email,
-        error: userError?.message
-      }));
+      logger.error(
+        '[Polar Webhook] User not found',
+        sanitizePII({
+          customer_email,
+          error: userError?.message
+        })
+      );
       return;
     }
 
     // 2. Map product_id to plan (handles starter→free, plus→creator_plus) - Updated Issue #808
     // Try new API first, fallback to legacy for backward compatibility
-    const plan = productId ? (getPlanFromProductId(productId) || getPlanFromPriceId(productId)) : user.plan;
+    const plan = productId
+      ? getPlanFromProductId(productId) || getPlanFromPriceId(productId)
+      : user.plan;
 
     logger.info('[Polar Webhook] Mapped plan from product_id', {
       product_id: productId,
@@ -159,9 +166,8 @@ async function handleOrderCreated(event) {
     // 4. Upsert subscription record
     // NOTE: Reusing stripe_* columns for Polar data (temporary)
     // Future migration will rename to payment_provider_* columns
-    const { error: subError } = await supabaseServiceClient
-      .from('user_subscriptions')
-      .upsert({
+    const { error: subError } = await supabaseServiceClient.from('user_subscriptions').upsert(
+      {
         user_id: user.id,
         stripe_customer_id: customer_email, // Use email as identifier
         stripe_subscription_id: orderId, // Store Polar order ID
@@ -170,8 +176,10 @@ async function handleOrderCreated(event) {
         current_period_start: new Date().toISOString(),
         current_period_end: null, // Polar may not provide this in order.created
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id' });
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: 'user_id' }
+    );
 
     if (subError) {
       logger.error('[Polar Webhook] Failed to upsert subscription', {
@@ -188,14 +196,16 @@ async function handleOrderCreated(event) {
       plan,
       order_id: orderId
     });
-
   } catch (error) {
-    logger.error('[Polar Webhook] ❌ Failed to process order.created', sanitizePII({
-      error: error.message,
-      stack: error.stack,
-      order_id: orderId,
-      customer_email,
-    }));
+    logger.error(
+      '[Polar Webhook] ❌ Failed to process order.created',
+      sanitizePII({
+        error: error.message,
+        stack: error.stack,
+        order_id: orderId,
+        customer_email
+      })
+    );
     // Don't throw - webhook handler should not fail
   }
 }
@@ -204,11 +214,14 @@ async function handleOrderCreated(event) {
  * Handle subscription.created event
  */
 async function handleSubscriptionCreated(event) {
-  logger.info('[Polar Webhook] Subscription created', sanitizePII({
-    subscription_id: event.data.id,
-    customer_email: event.data.customer_email,
-    status: event.data.status,
-  }));
+  logger.info(
+    '[Polar Webhook] Subscription created',
+    sanitizePII({
+      subscription_id: event.data.id,
+      customer_email: event.data.customer_email,
+      status: event.data.status
+    })
+  );
 
   // Polar sends both order.created and subscription.created
   // Delegate to handleOrderCreated to avoid duplication
@@ -223,11 +236,14 @@ async function handleSubscriptionUpdated(event) {
   const { id: subscriptionId, customer_email, product_price_id, product_id, status } = event.data;
   const productId = product_id || product_price_id; // Use product_id if available
 
-  logger.info('[Polar Webhook] Processing subscription.updated', sanitizePII({
-    subscription_id: subscriptionId,
-    customer_email,
-    status,
-  }));
+  logger.info(
+    '[Polar Webhook] Processing subscription.updated',
+    sanitizePII({
+      subscription_id: subscriptionId,
+      customer_email,
+      status
+    })
+  );
 
   try {
     // 1. Find user
@@ -243,7 +259,9 @@ async function handleSubscriptionUpdated(event) {
     }
 
     // 2. Map new plan if product_id changed - Updated Issue #808
-    const newPlan = productId ? (getPlanFromProductId(productId) || getPlanFromPriceId(productId)) : user.plan;
+    const newPlan = productId
+      ? getPlanFromProductId(productId) || getPlanFromPriceId(productId)
+      : user.plan;
 
     // 3. Update user plan if changed
     if (newPlan !== user.plan) {
@@ -285,13 +303,12 @@ async function handleSubscriptionUpdated(event) {
     logger.info('[Polar Webhook] ✅ Subscription updated successfully', {
       user_id: user.id,
       new_plan: newPlan,
-      status,
+      status
     });
-
   } catch (error) {
     logger.error('[Polar Webhook] ❌ Failed to process subscription.updated', {
       error: error.message,
-      subscription_id: subscriptionId,
+      subscription_id: subscriptionId
     });
   }
 }
@@ -302,10 +319,13 @@ async function handleSubscriptionUpdated(event) {
 async function handleSubscriptionCanceled(event) {
   const { id: subscriptionId, customer_email } = event.data;
 
-  logger.info('[Polar Webhook] Processing subscription.canceled', sanitizePII({
-    subscription_id: subscriptionId,
-    customer_email,
-  }));
+  logger.info(
+    '[Polar Webhook] Processing subscription.canceled',
+    sanitizePII({
+      subscription_id: subscriptionId,
+      customer_email
+    })
+  );
 
   try {
     // 1. Find user
@@ -341,13 +361,12 @@ async function handleSubscriptionCanceled(event) {
 
     logger.info('[Polar Webhook] ✅ Subscription canceled successfully', {
       user_id: user.id,
-      status: 'canceled',
+      status: 'canceled'
     });
-
   } catch (error) {
     logger.error('[Polar Webhook] ❌ Failed to process subscription.canceled', {
       error: error.message,
-      subscription_id: subscriptionId,
+      subscription_id: subscriptionId
     });
   }
 }
@@ -369,11 +388,7 @@ router.post('/', async (req, res) => {
     const rawBody = req.body.toString('utf8');
 
     // Verify signature
-    const isValid = verifyWebhookSignature(
-      rawBody,
-      signature,
-      process.env.POLAR_WEBHOOK_SECRET
-    );
+    const isValid = verifyWebhookSignature(rawBody, signature, process.env.POLAR_WEBHOOK_SECRET);
 
     if (!isValid) {
       logger.error('[Polar Webhook] Invalid signature');
@@ -385,7 +400,7 @@ router.post('/', async (req, res) => {
 
     logger.info('[Polar Webhook] Received event', {
       type: event.type,
-      id: event.id,
+      id: event.id
     });
 
     // Route to appropriate handler
@@ -417,11 +432,10 @@ router.post('/', async (req, res) => {
 
     // Always return 200 to acknowledge receipt
     res.json({ received: true });
-
   } catch (error) {
     logger.error('[Polar Webhook] Error processing webhook', {
       error: error.message,
-      stack: error.stack,
+      stack: error.stack
     });
 
     // Still return 200 to avoid retries for parsing errors

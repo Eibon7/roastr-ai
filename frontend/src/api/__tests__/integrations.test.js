@@ -42,7 +42,10 @@ describe('integrations API', () => {
   it('connects/disconnects/integration settings', async () => {
     apiClient.post.mockResolvedValue({ success: true });
     await connectPlatform('twitter', { token: 'abc' });
-    expect(apiClient.post).toHaveBeenCalledWith('/integrations/connect', { platform: 'twitter', credentials: { token: 'abc' } });
+    expect(apiClient.post).toHaveBeenCalledWith('/integrations/connect', {
+      platform: 'twitter',
+      credentials: { token: 'abc' }
+    });
 
     apiClient.delete.mockResolvedValue({ success: true });
     await disconnectPlatform('integration-id');
@@ -50,7 +53,9 @@ describe('integrations API', () => {
 
     apiClient.patch.mockResolvedValue({ success: true });
     await updateIntegrationSettings('integration-id', { autoSync: true });
-    expect(apiClient.patch).toHaveBeenCalledWith('/integrations/integration-id', { autoSync: true });
+    expect(apiClient.patch).toHaveBeenCalledWith('/integrations/integration-id', {
+      autoSync: true
+    });
   });
 
   it('tests connection and imports followers', async () => {
@@ -66,4 +71,3 @@ describe('integrations API', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/integrations/import/job-123/progress');
   });
 });
-

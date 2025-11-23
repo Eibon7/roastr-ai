@@ -29,7 +29,7 @@ class PlaywrightMCPServer {
         version: this.serverVersion
       }
     });
-    
+
     console.error('[MCP] Playwright server initialized');
   }
 
@@ -80,31 +80,31 @@ class PlaywrightMCPServer {
     }
 
     const { method, params, id } = request;
-    
+
     try {
       // Handle different MCP methods
       switch (method) {
         case 'initialize':
           await this.handleInitialize(id, params);
           break;
-          
+
         case 'initialized':
           // Client confirms initialization
           console.error('[MCP] Client initialization confirmed');
           break;
-          
+
         case 'tools/list':
           await this.handleToolsList(id);
           break;
-          
+
         case 'tools/call':
           await this.handleToolCall(id, params);
           break;
-          
+
         case 'shutdown':
           await this.handleShutdown(id);
           break;
-          
+
         default:
           this.sendError(id, -32601, `Method not found: ${method}`);
       }
@@ -255,32 +255,32 @@ class PlaywrightMCPServer {
 
     try {
       let result;
-      
+
       switch (name) {
         case 'browse':
           result = await this.browse(args.url);
           break;
-          
+
         case 'screenshot':
           result = await this.screenshot(args);
           break;
-          
+
         case 'inspect':
           result = await this.inspect(args);
           break;
-          
+
         case 'visual_test':
           result = await this.visualTest(args);
           break;
-          
+
         case 'multi_viewport_test':
           result = await this.multiViewportTest(args);
           break;
-          
+
         case 'check_console':
           result = await this.checkConsoleErrors(args);
           break;
-          
+
         default:
           this.sendError(id, -32602, `Unknown tool: ${name}`);
           return;
@@ -318,7 +318,7 @@ class PlaywrightMCPServer {
       this.context = await this.browser.newContext();
       this.page = await this.context.newPage();
     }
-    
+
     await this.page.goto(url);
     return { success: true, url };
   }
@@ -327,13 +327,13 @@ class PlaywrightMCPServer {
     if (!this.page) {
       throw new Error('No page loaded. Call browse first.');
     }
-    
+
     const screenshotPath = params.path || `screenshot-${Date.now()}.png`;
-    await this.page.screenshot({ 
-      path: screenshotPath, 
-      fullPage: params.fullPage || false 
+    await this.page.screenshot({
+      path: screenshotPath,
+      fullPage: params.fullPage || false
     });
-    
+
     return { success: true, path: screenshotPath };
   }
 
@@ -341,27 +341,27 @@ class PlaywrightMCPServer {
     if (!this.page) {
       throw new Error('No page loaded. Call browse first.');
     }
-    
+
     const selector = params.selector;
     if (!selector) {
       throw new Error('Selector is required');
     }
 
     const element = await this.page.$(selector);
-    
+
     if (!element) {
       throw new Error(`Element not found: ${selector}`);
     }
-    
+
     const text = await element.textContent();
     const isVisible = await element.isVisible();
-    
+
     return { text, isVisible, selector };
   }
 
   async visualTest(params) {
     const { url, outputDir = './test-evidence', testName = 'visual-test' } = params;
-    
+
     if (!url) {
       throw new Error('URL is required');
     }
@@ -370,28 +370,28 @@ class PlaywrightMCPServer {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-    
+
     // Browse to URL
     await this.browse(url);
-    
+
     // Take screenshot
     const screenshotPath = path.join(outputDir, `${testName}-${Date.now()}.png`);
     await this.page.screenshot({ path: screenshotPath, fullPage: true });
-    
+
     // Get page title
     const title = await this.page.title();
-    
+
     // Collect console errors
     const consoleErrors = [];
-    this.page.on('console', msg => {
+    this.page.on('console', (msg) => {
       if (msg.type() === 'error') {
         consoleErrors.push(msg.text());
       }
     });
-    
+
     // Wait a bit for any console errors
     await this.page.waitForTimeout(1000);
-    
+
     return {
       success: true,
       screenshot: screenshotPath,
@@ -403,7 +403,7 @@ class PlaywrightMCPServer {
 
   async multiViewportTest(params) {
     const { url, outputDir = './test-evidence', testName = 'viewport-test' } = params;
-    
+
     if (!url) {
       throw new Error('URL is required');
     }
@@ -413,27 +413,27 @@ class PlaywrightMCPServer {
       { name: 'tablet', width: 768, height: 1024 },
       { name: 'desktop', width: 1920, height: 1080 }
     ];
-    
+
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-    
+
     const results = [];
-    
+
     for (const viewport of viewports) {
       await this.page.setViewportSize({ width: viewport.width, height: viewport.height });
       await this.page.goto(url);
-      
+
       const screenshotPath = path.join(outputDir, `${testName}-${viewport.name}-${Date.now()}.png`);
       await this.page.screenshot({ path: screenshotPath, fullPage: false });
-      
+
       results.push({
         viewport: viewport.name,
         screenshot: screenshotPath,
         dimensions: `${viewport.width}x${viewport.height}`
       });
     }
-    
+
     return {
       success: true,
       results,
@@ -443,50 +443,50 @@ class PlaywrightMCPServer {
 
   async checkConsoleErrors(params) {
     const { url } = params;
-    
+
     if (!url) {
       throw new Error('URL is required');
     }
 
     const consoleMessages = [];
     const networkErrors = [];
-    
+
     // Create fresh page for clean monitoring
     if (this.page) {
       await this.page.close();
     }
-    
+
     if (!this.browser) {
       this.browser = await chromium.launch({ headless: true });
       this.context = await this.browser.newContext();
     }
-    
+
     this.page = await this.context.newPage();
-    
+
     // Set up console monitoring
-    this.page.on('console', msg => {
+    this.page.on('console', (msg) => {
       consoleMessages.push({
         type: msg.type(),
         text: msg.text()
       });
     });
-    
+
     // Set up network monitoring
-    this.page.on('requestfailed', request => {
+    this.page.on('requestfailed', (request) => {
       networkErrors.push({
         url: request.url(),
         failure: request.failure()
       });
     });
-    
+
     await this.page.goto(url);
     await this.page.waitForTimeout(2000); // Wait for any async operations
-    
+
     return {
       success: true,
       consoleMessages,
       networkErrors,
-      hasErrors: consoleMessages.some(msg => msg.type === 'error') || networkErrors.length > 0
+      hasErrors: consoleMessages.some((msg) => msg.type === 'error') || networkErrors.length > 0
     };
   }
 
@@ -504,7 +504,7 @@ class PlaywrightMCPServer {
 const server = new PlaywrightMCPServer();
 
 // Initialize server
-server.initialize().catch(error => {
+server.initialize().catch((error) => {
   console.error('[MCP] Failed to initialize:', error);
   process.exit(1);
 });

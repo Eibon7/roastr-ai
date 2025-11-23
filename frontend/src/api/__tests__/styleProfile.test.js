@@ -1,7 +1,7 @@
 /**
  * Style Profile API Tests
  * Issue #369 - SPEC 9 - Style Profile Extraction
- * 
+ *
  * Tests cover:
  * - Profile extraction API calls
  * - Error handling for different HTTP status codes
@@ -45,11 +45,9 @@ describe('styleProfileAPI', () => {
     it('should extract style profile successfully', async () => {
       apiClient.post.mockResolvedValue(mockExtractResponse);
 
-      const result = await styleProfileAPI.extractStyleProfile(
-        'org-123',
-        'user-456',
-        { platforms: ['twitter', 'youtube'] }
-      );
+      const result = await styleProfileAPI.extractStyleProfile('org-123', 'user-456', {
+        platforms: ['twitter', 'youtube']
+      });
 
       expect(apiClient.post).toHaveBeenCalledWith('/api/style-profile/extract', {
         organizationId: 'org-123',
@@ -85,21 +83,23 @@ describe('styleProfileAPI', () => {
       };
       apiClient.post.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456'))
-        .rejects.toThrow('Esta función requiere un plan Premium. Actualiza tu plan para acceder.');
+      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456')).rejects.toThrow(
+        'Esta función requiere un plan Premium. Actualiza tu plan para acceder.'
+      );
     });
 
     it('should handle bad request error (400)', async () => {
       const mockError = {
-        response: { 
+        response: {
           status: 400,
           data: { message: 'Invalid organization ID' }
         }
       };
       apiClient.post.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456'))
-        .rejects.toThrow('Invalid organization ID');
+      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456')).rejects.toThrow(
+        'Invalid organization ID'
+      );
     });
 
     it('should handle rate limiting error (429)', async () => {
@@ -108,8 +108,9 @@ describe('styleProfileAPI', () => {
       };
       apiClient.post.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456'))
-        .rejects.toThrow('Límite de solicitudes excedido. Intenta de nuevo más tarde.');
+      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456')).rejects.toThrow(
+        'Límite de solicitudes excedido. Intenta de nuevo más tarde.'
+      );
     });
 
     it('should handle not found error (404)', async () => {
@@ -118,16 +119,18 @@ describe('styleProfileAPI', () => {
       };
       apiClient.post.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456'))
-        .rejects.toThrow('No se encontró suficiente contenido para generar el perfil');
+      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456')).rejects.toThrow(
+        'No se encontró suficiente contenido para generar el perfil'
+      );
     });
 
     it('should handle generic errors', async () => {
       const mockError = new Error('Network error');
       apiClient.post.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456'))
-        .rejects.toThrow('Error al extraer el perfil de estilo. Intenta de nuevo.');
+      await expect(styleProfileAPI.extractStyleProfile('org-123', 'user-456')).rejects.toThrow(
+        'Error al extraer el perfil de estilo. Intenta de nuevo.'
+      );
     });
   });
 
@@ -187,16 +190,18 @@ describe('styleProfileAPI', () => {
       };
       apiClient.get.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.getUserProfiles('org-123', 'user-456'))
-        .rejects.toThrow('No tienes permisos para acceder a estos perfiles');
+      await expect(styleProfileAPI.getUserProfiles('org-123', 'user-456')).rejects.toThrow(
+        'No tienes permisos para acceder a estos perfiles'
+      );
     });
 
     it('should handle generic errors', async () => {
       const mockError = new Error('Network error');
       apiClient.get.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.getUserProfiles('org-123', 'user-456'))
-        .rejects.toThrow('Error al cargar los perfiles existentes');
+      await expect(styleProfileAPI.getUserProfiles('org-123', 'user-456')).rejects.toThrow(
+        'Error al cargar los perfiles existentes'
+      );
     });
   });
 
@@ -219,8 +224,9 @@ describe('styleProfileAPI', () => {
       };
       apiClient.delete.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.deleteProfile('org-123', 'user-456', 'es'))
-        .rejects.toThrow('El perfil no existe o ya fue eliminado');
+      await expect(styleProfileAPI.deleteProfile('org-123', 'user-456', 'es')).rejects.toThrow(
+        'El perfil no existe o ya fue eliminado'
+      );
     });
 
     it('should handle permission denied error (403)', async () => {
@@ -229,8 +235,9 @@ describe('styleProfileAPI', () => {
       };
       apiClient.delete.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.deleteProfile('org-123', 'user-456', 'es'))
-        .rejects.toThrow('No tienes permisos para eliminar este perfil');
+      await expect(styleProfileAPI.deleteProfile('org-123', 'user-456', 'es')).rejects.toThrow(
+        'No tienes permisos para eliminar este perfil'
+      );
     });
   });
 
@@ -265,21 +272,23 @@ describe('styleProfileAPI', () => {
       };
       apiClient.patch.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.updateProfile('org-123', 'user-456', 'es', {}))
-        .rejects.toThrow('El perfil no existe');
+      await expect(styleProfileAPI.updateProfile('org-123', 'user-456', 'es', {})).rejects.toThrow(
+        'El perfil no existe'
+      );
     });
 
     it('should handle bad request error (400)', async () => {
       const mockError = {
-        response: { 
+        response: {
           status: 400,
           data: { message: 'Invalid update data' }
         }
       };
       apiClient.patch.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.updateProfile('org-123', 'user-456', 'es', {}))
-        .rejects.toThrow('Invalid update data');
+      await expect(styleProfileAPI.updateProfile('org-123', 'user-456', 'es', {})).rejects.toThrow(
+        'Invalid update data'
+      );
     });
   });
 
@@ -322,8 +331,9 @@ describe('styleProfileAPI', () => {
       };
       apiClient.get.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.getAvailablePlatforms('org-123', 'user-456'))
-        .rejects.toThrow('No tienes permisos para acceder a esta información');
+      await expect(styleProfileAPI.getAvailablePlatforms('org-123', 'user-456')).rejects.toThrow(
+        'No tienes permisos para acceder a esta información'
+      );
     });
   });
 
@@ -413,8 +423,9 @@ describe('styleProfileAPI', () => {
       const mockError = new Error('Network error');
       apiClient.get.mockRejectedValue(mockError);
 
-      await expect(styleProfileAPI.getProfileStats('org-123', 'user-456'))
-        .rejects.toThrow('Error al cargar las estadísticas del perfil');
+      await expect(styleProfileAPI.getProfileStats('org-123', 'user-456')).rejects.toThrow(
+        'Error al cargar las estadísticas del perfil'
+      );
     });
   });
 });

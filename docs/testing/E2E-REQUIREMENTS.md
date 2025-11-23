@@ -1,4 +1,5 @@
 # E2E Testing Requirements
+
 ## Comprehensive Guide for End-to-End Test Execution
 
 **Issue:** #896 - Fase 5: Documentar E2E Requirements  
@@ -27,6 +28,7 @@
 **End-to-End (E2E) tests** verify complete user workflows from start to finish, simulating real-world scenarios across multiple system components.
 
 **In Roastr.ai, E2E tests cover:**
+
 - Shield UI interactions (blocking, muting, reverting actions)
 - Multi-tenant workflow orchestration (fetch → analyze → reply)
 - API health and availability
@@ -37,16 +39,17 @@
 
 ### When to Run E2E Tests
 
-| Scenario | Run E2E? | Reason |
-|----------|----------|--------|
+| Scenario                      | Run E2E?    | Reason                               |
+| ----------------------------- | ----------- | ------------------------------------ |
 | **Local feature development** | ⚠️ Optional | Faster to use unit/integration tests |
-| **Pre-PR validation** | ✅ **YES** | Ensure no regressions in workflows |
-| **CI/CD on `test:e2e` label** | ✅ **YES** | Automated validation before merge |
-| **Quick fix / typo** | ❌ No | Overkill, unit tests sufficient |
-| **Visual UI changes** | ✅ **YES** | Validate across viewports + browsers |
-| **Database schema changes** | ✅ **YES** | Ensure integration tests pass |
+| **Pre-PR validation**         | ✅ **YES**  | Ensure no regressions in workflows   |
+| **CI/CD on `test:e2e` label** | ✅ **YES**  | Automated validation before merge    |
+| **Quick fix / typo**          | ❌ No       | Overkill, unit tests sufficient      |
+| **Visual UI changes**         | ✅ **YES**  | Validate across viewports + browsers |
+| **Database schema changes**   | ✅ **YES**  | Ensure integration tests pass        |
 
 **Rule of thumb:** Run E2E tests when changes affect:
+
 - User-facing workflows
 - API endpoints
 - Database interactions
@@ -88,6 +91,7 @@ See [E2E-INVENTORY.md](./E2E-INVENTORY.md) for complete list. Summary:
 **Purpose:** Most E2E tests require API server for requests/responses.
 
 **Required:**
+
 - Server running on port 3000 (default) or custom port
 - Health endpoint responding: `http://localhost:3000/health`
 - API endpoints accessible: `http://localhost:3000/api/*`
@@ -153,7 +157,7 @@ npm install playwright
 npx playwright install chromium firefox webkit
 ```
 
-**⚠️ CRITICAL:** This package does NOT include test matchers (`.toBeVisible()`, `.toHaveText()`). 
+**⚠️ CRITICAL:** This package does NOT include test matchers (`.toBeVisible()`, `.toHaveText()`).
 
 **Issue #482 tracks migration to `@playwright/test` or rewriting assertions.**
 
@@ -170,6 +174,7 @@ npx playwright install chromium firefox webkit
 ```
 
 **Includes:**
+
 - Test runner (`npx playwright test`)
 - Built-in matchers (`.toBeVisible()`, `.toHaveText()`, etc.)
 - HTML reports
@@ -196,11 +201,11 @@ npx playwright install --dry-run
 
 **Requirements:**
 
-| Test Suite | DB Type | Reason |
-|------------|---------|--------|
-| `trial-management.test.js` | ✅ Real Supabase | Trial lifecycle (start → expire → upgrade) |
-| `tierValidationSecurity.test.js` | ⚠️ Optional | Skips if `MOCK_MODE=true` |
-| Most other tests | ❌ Mocks | Use `mockSupabaseFactory.js` |
+| Test Suite                       | DB Type          | Reason                                     |
+| -------------------------------- | ---------------- | ------------------------------------------ |
+| `trial-management.test.js`       | ✅ Real Supabase | Trial lifecycle (start → expire → upgrade) |
+| `tierValidationSecurity.test.js` | ⚠️ Optional      | Skips if `MOCK_MODE=true`                  |
+| Most other tests                 | ❌ Mocks         | Use `mockSupabaseFactory.js`               |
 
 **Setup for real DB tests:**
 
@@ -226,10 +231,10 @@ npm run db:seed:test
 
 **Requirements:**
 
-| Test Suite | Redis Required? | Reason |
-|------------|-----------------|--------|
+| Test Suite                    | Redis Required?  | Reason              |
+| ----------------------------- | ---------------- | ------------------- |
 | `multiTenantWorkflow.test.js` | ⚠️ Can use mocks | Queue orchestration |
-| Most other tests | ❌ No | Don't use queue |
+| Most other tests              | ❌ No            | Don't use queue     |
 
 **Setup:**
 
@@ -350,13 +355,13 @@ npx playwright show-report
 
 Para evitar que las suites E2E fallen cuando falta infraestructura, incluimos un helper compartido que encapsula verificaciones y lógica de skip.
 
-| Función | Propósito |
-|---------|-----------|
-| `isE2EAvailable(options)` | Comprueba flags (`SKIP_E2E`, `E2E_ENABLED`), disponibilidad del servidor y Playwright cuando se solicita. |
-| `skipIfNoE2E(testFn, reason, options)` | Ejecuta `testFn.skip(...)` para suites condicionales (ej. `multiTenantWorkflow.test.js`). |
-| `skipSuiteIfNoE2E(reason, options)` | Ideal en `beforeAll` para abortar suites asincrónicas si falta infraestructura. |
-| `isServerAvailable(url, timeout)` | Verifica el endpoint `/health` y reporta si responde en el timeout esperado. |
-| `isPlaywrightAvailable()` | Verifica si `playwright` o `@playwright/test` están instalados y configurados correctamente. |
+| Función                                | Propósito                                                                                                 |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `isE2EAvailable(options)`              | Comprueba flags (`SKIP_E2E`, `E2E_ENABLED`), disponibilidad del servidor y Playwright cuando se solicita. |
+| `skipIfNoE2E(testFn, reason, options)` | Ejecuta `testFn.skip(...)` para suites condicionales (ej. `multiTenantWorkflow.test.js`).                 |
+| `skipSuiteIfNoE2E(reason, options)`    | Ideal en `beforeAll` para abortar suites asincrónicas si falta infraestructura.                           |
+| `isServerAvailable(url, timeout)`      | Verifica el endpoint `/health` y reporta si responde en el timeout esperado.                              |
+| `isPlaywrightAvailable()`              | Verifica si `playwright` o `@playwright/test` están instalados y configurados correctamente.              |
 
 `shield-stability.test.js` documenta por qué sigue skip (Playwright matchers) y referencia este helper junto a Issue #482.
 
@@ -375,10 +380,10 @@ jobs:
   e2e-tests:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
-    
+
     # Only run if PR has 'test:e2e' label
     if: contains(github.event.pull_request.labels.*.name, 'test:e2e')
-    
+
     services:
       # Postgres service
       postgres:
@@ -394,7 +399,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      
+
       # Redis service
       redis:
         image: redis:7
@@ -405,23 +410,23 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium firefox webkit
-      
+
       - name: Setup environment
         run: |
           cp .env.example .env
@@ -429,30 +434,30 @@ jobs:
           echo "REDIS_URL=redis://localhost:6379" >> .env
           echo "ENABLE_REAL_OPENAI=false" >> .env
           echo "E2E_ENABLED=true" >> .env
-      
+
       - name: Run database migrations
         run: npm run db:migrate
-      
+
       - name: Start server in background
         run: |
           npm run start:api &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
-      
+
       - name: Wait for server ready
         run: |
           timeout 30 bash -c 'until curl -f http://localhost:3000/health; do sleep 2; done'
-      
+
       - name: Run E2E tests (Jest)
         run: npm test -- tests/integration/ tests/smoke/
         env:
           TEST_SERVER_URL: http://localhost:3000
           E2E_ENABLED: true
-      
+
       - name: Run Playwright visual tests
         run: npx playwright test tests/visual/
         env:
           TEST_URL: http://localhost:3000
-      
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v3
@@ -460,7 +465,7 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
-      
+
       - name: Stop server
         if: always()
         run: kill $SERVER_PID || true
@@ -474,10 +479,11 @@ Use environment variable to skip E2E in main test job:
 - name: Run tests (skip E2E)
   run: npm test
   env:
-    SKIP_E2E: true  # Skips multiTenantWorkflow.test.js
+    SKIP_E2E: true # Skips multiTenantWorkflow.test.js
 ```
 
 **Benefits of separate job:**
+
 - ✅ Isolated environment
 - ✅ Only runs when needed (`test:e2e` label)
 - ✅ Parallel execution (faster CI)
@@ -544,9 +550,9 @@ MOCK_MODE=true npm test tests/integration/
 
 **Default timeouts:**
 
-| Framework | Default | Adjustable? |
-|-----------|---------|-------------|
-| Jest | 5000ms | ✅ `--testTimeout=30000` |
+| Framework  | Default | Adjustable?                 |
+| ---------- | ------- | --------------------------- |
+| Jest       | 5000ms  | ✅ `--testTimeout=30000`    |
 | Playwright | 30000ms | ✅ `test.setTimeout(60000)` |
 
 **Override Jest timeout:**
@@ -625,7 +631,7 @@ services:
       POSTGRES_DB: roastr_test
     ports:
       - 5432:5432
-  
+
   redis:
     image: redis:7
     ports:
@@ -695,12 +701,12 @@ if: contains(github.event.pull_request.labels.*.name, 'test:e2e')
 
 ### When to Use MCP
 
-| Scenario | Use MCP? | Reason |
-|----------|----------|--------|
-| **Quick visual validation** | ✅ Yes | No server setup needed |
-| **CI/CD on remote PR** | ✅ Yes | Isolated browser environment |
+| Scenario                    | Use MCP? | Reason                                    |
+| --------------------------- | -------- | ----------------------------------------- |
+| **Quick visual validation** | ✅ Yes   | No server setup needed                    |
+| **CI/CD on remote PR**      | ✅ Yes   | Isolated browser environment              |
 | **Comprehensive E2E suite** | ⚠️ Maybe | MCP has limitations (no custom endpoints) |
-| **Local development** | ❌ No | Easier to use local server |
+| **Local development**       | ❌ No    | Easier to use local server                |
 
 ---
 
@@ -751,6 +757,7 @@ if: contains(github.event.pull_request.labels.*.name, 'test:e2e')
 ### MCP Limitations
 
 **What MCP can do:**
+
 - ✅ Browse public URLs
 - ✅ Take screenshots (multi-viewport)
 - ✅ Check accessibility
@@ -758,6 +765,7 @@ if: contains(github.event.pull_request.labels.*.name, 'test:e2e')
 - ✅ Test responsive design
 
 **What MCP cannot do:**
+
 - ❌ Access `localhost` (no local server)
 - ❌ Run authenticated flows (no login)
 - ❌ Execute custom test assertions
@@ -1022,6 +1030,7 @@ it('slow test', async () => {
 ### Q: Do I need to run E2E tests for every PR?
 
 **A:** No, only when:
+
 - Changes affect user workflows
 - PR has `test:e2e` label
 - Pre-release validation
@@ -1034,6 +1043,7 @@ For quick fixes, unit + integration tests are sufficient.
 ### Q: Can I run E2E tests without Playwright?
 
 **A:** Partially. Tests that don't require browser automation will work:
+
 - ✅ `multiTenantWorkflow.test.js` (uses mocks)
 - ✅ `api-health.test.js` (HTTP requests only)
 - ❌ `shieldUI.test.js` (requires Playwright)
@@ -1044,6 +1054,7 @@ For quick fixes, unit + integration tests are sufficient.
 ### Q: Why are some E2E tests skipped?
 
 **A:** See [E2E-INVENTORY.md](./E2E-INVENTORY.md) for complete list. Reasons:
+
 - **Playwright matchers** - `shield-stability.test.js` (Issue #482)
 - **Real database** - `trial-management.test.js` (unit tests provide coverage)
 - **Conditional skip** - `multiTenantWorkflow.test.js` (respects `SKIP_E2E=true`)
@@ -1054,13 +1065,13 @@ For quick fixes, unit + integration tests are sufficient.
 
 **A:** **Use `@playwright/test`** (recommended).
 
-| Feature | `playwright` | `@playwright/test` |
-|---------|--------------|---------------------|
-| Browser automation | ✅ Yes | ✅ Yes |
-| Test matchers | ❌ No | ✅ Yes (`.toBeVisible()`, etc.) |
-| Test runner | ❌ No (use Jest) | ✅ Built-in (`npx playwright test`) |
-| HTML reports | ❌ No | ✅ Yes |
-| Parallel execution | Manual | ✅ Automatic |
+| Feature            | `playwright`     | `@playwright/test`                  |
+| ------------------ | ---------------- | ----------------------------------- |
+| Browser automation | ✅ Yes           | ✅ Yes                              |
+| Test matchers      | ❌ No            | ✅ Yes (`.toBeVisible()`, etc.)     |
+| Test runner        | ❌ No (use Jest) | ✅ Built-in (`npx playwright test`) |
+| HTML reports       | ❌ No            | ✅ Yes                              |
+| Parallel execution | Manual           | ✅ Automatic                        |
 
 **Verdict:** `@playwright/test` is feature-complete, easier to use, better DX.
 
@@ -1075,6 +1086,7 @@ For quick fixes, unit + integration tests are sufficient.
    - `@playwright/test` → for visual/browser tests
 
 2. **Add prerequisites check:**
+
    ```javascript
    const { skipIfNoE2E } = require('../helpers/e2ePrerequisites');
    skipIfNoE2E(describe, 'requires server running');
@@ -1104,11 +1116,13 @@ For quick fixes, unit + integration tests are sufficient.
 **A:** MCP is complementary, not a replacement.
 
 **Use MCP for:**
+
 - ✅ Quick visual validation (screenshots)
 - ✅ Accessibility checks
 - ✅ Public URL testing
 
 **Use local tests for:**
+
 - ✅ Comprehensive E2E workflows
 - ✅ Authenticated flows
 - ✅ Database integration
@@ -1128,11 +1142,11 @@ For quick fixes, unit + integration tests are sufficient.
 ```javascript
 // ❌ Wrong
 const logger = require('../utils/logger');
-logger.info('...');  // Error: logger.info is not a function
+logger.info('...'); // Error: logger.info is not a function
 
 // ✅ Correct
-const { logger } = require('../utils/logger');  // Destructure
-logger.info('...');  // Works
+const { logger } = require('../utils/logger'); // Destructure
+logger.info('...'); // Works
 ```
 
 ---
@@ -1141,14 +1155,15 @@ logger.info('...');  // Works
 
 **Benchmarks (local machine):**
 
-| Suite | Duration | Acceptable Range |
-|-------|----------|------------------|
-| `api-health.test.js` | ~2s | <5s |
-| `multiTenantWorkflow.test.js` | ~5s | <15s |
-| `shieldUI.test.js` (Playwright) | ~30s | <60s |
-| **All E2E tests** | **~40s** | **<2min** |
+| Suite                           | Duration | Acceptable Range |
+| ------------------------------- | -------- | ---------------- |
+| `api-health.test.js`            | ~2s      | <5s              |
+| `multiTenantWorkflow.test.js`   | ~5s      | <15s             |
+| `shieldUI.test.js` (Playwright) | ~30s     | <60s             |
+| **All E2E tests**               | **~40s** | **<2min**        |
 
 **If slower:**
+
 - Check server response times
 - Reduce test data size
 - Parallelize tests (Playwright does this automatically)
@@ -1172,4 +1187,3 @@ logger.info('...');  // Works
 **Last Updated:** 2025-11-21  
 **Maintained by:** TestEngineer  
 **Next Review:** When new E2E requirements identified
-

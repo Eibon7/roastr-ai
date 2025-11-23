@@ -8,7 +8,7 @@ class CSRFProtection {
     this.maxTokenAge = 2 * 60 * 60 * 1000; // 2 hours
     this.cookieName = 'csrf-token';
     this.headerName = 'x-csrf-token';
-    
+
     // Clean up expired tokens every 30 minutes
     this._cleanupInterval = setInterval(() => this.cleanupExpiredTokens(), 30 * 60 * 1000);
   }
@@ -33,7 +33,7 @@ class CSRFProtection {
 
   validateToken(sessionId, providedToken) {
     const stored = this.tokenCache.get(sessionId);
-    
+
     if (!stored) {
       return false;
     }
@@ -49,8 +49,9 @@ class CSRFProtection {
 
     // Check if providedToken is a valid hex string of expected length
     const expectedLength = stored.token.length;
-    const isValidHex = /^[0-9a-fA-F]*$/.test(normalizedProvidedToken) &&
-                       normalizedProvidedToken.length === expectedLength;
+    const isValidHex =
+      /^[0-9a-fA-F]*$/.test(normalizedProvidedToken) &&
+      normalizedProvidedToken.length === expectedLength;
 
     try {
       const storedBuffer = Buffer.from(stored.token, 'hex');
@@ -70,14 +71,14 @@ class CSRFProtection {
   cleanupExpiredTokens() {
     const now = Date.now();
     let cleaned = 0;
-    
+
     for (const [sessionId, data] of this.tokenCache.entries()) {
       if (now - data.timestamp > this.maxTokenAge) {
         this.tokenCache.delete(sessionId);
         cleaned++;
       }
     }
-    
+
     if (cleaned > 0) {
       logger.debug('CSRF token cleanup completed', { tokensRemoved: cleaned });
     }
@@ -85,11 +86,14 @@ class CSRFProtection {
 
   getSessionId(req) {
     // Use session ID if available, otherwise use IP + User-Agent as fallback
-    return req.sessionID || 
-           req.session?.id || 
-           crypto.createHash('sha256')
-             .update(req.ip + (req.get('User-Agent') || ''))
-             .digest('hex');
+    return (
+      req.sessionID ||
+      req.session?.id ||
+      crypto
+        .createHash('sha256')
+        .update(req.ip + (req.get('User-Agent') || ''))
+        .digest('hex')
+    );
   }
 }
 
@@ -114,7 +118,7 @@ const csrfProtection = (options = {}) => {
 
   return (req, res, next) => {
     // Skip CSRF protection for certain paths
-    if (skipPaths.some(path => req.path.startsWith(path))) {
+    if (skipPaths.some((path) => req.path.startsWith(path))) {
       return next();
     }
 
@@ -124,7 +128,7 @@ const csrfProtection = (options = {}) => {
     if (ignoreMethods.includes(req.method)) {
       const token = csrfProtectionInstance.generateToken();
       csrfProtectionInstance.storeToken(sessionId, token);
-      
+
       // Set token in cookie with hardened security settings
       res.cookie(csrfProtectionInstance.cookieName, token, {
         httpOnly: false, // Allow JS access for AJAX requests (required for CSRF token)
@@ -134,15 +138,14 @@ const csrfProtection = (options = {}) => {
         path: '/', // Explicit path
         domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined // Domain restriction in production
       });
-      
+
       req.csrfToken = () => token;
       return next();
     }
 
     // For unsafe methods, validate token
-    const providedToken = req.get(csrfProtectionInstance.headerName) ||
-                         req.body?._csrf ||
-                         req.query._csrf;
+    const providedToken =
+      req.get(csrfProtectionInstance.headerName) || req.body?._csrf || req.query._csrf;
 
     if (!providedToken) {
       logger.warn('CSRF token missing', {
@@ -151,7 +154,7 @@ const csrfProtection = (options = {}) => {
         path: req.path,
         userAgent: req.get('User-Agent')
       });
-      
+
       return res.status(403).json({
         error: 'CSRF token missing',
         code: 'CSRF_TOKEN_MISSING'
@@ -166,7 +169,7 @@ const csrfProtection = (options = {}) => {
         userAgent: req.get('User-Agent'),
         sessionId: sessionId.substring(0, 8) + '...' // Log partial session ID for debugging
       });
-      
+
       return res.status(403).json({
         error: 'Invalid CSRF token',
         code: 'CSRF_TOKEN_INVALID'

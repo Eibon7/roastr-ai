@@ -41,25 +41,14 @@ Create an IAM policy with the following permissions:
     {
       "Sid": "LogBackupBasicOperations",
       "Effect": "Allow",
-      "Action": [
-        "s3:PutObject",
-        "s3:GetObject",
-        "s3:DeleteObject",
-        "s3:HeadObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::your-backup-bucket-name/*"
-      ]
+      "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject", "s3:HeadObject"],
+      "Resource": ["arn:aws:s3:::your-backup-bucket-name/*"]
     },
     {
       "Sid": "LogBackupListOperations",
       "Effect": "Allow",
-      "Action": [
-        "s3:ListBucket"
-      ],
-      "Resource": [
-        "arn:aws:s3:::your-backup-bucket-name"
-      ]
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::your-backup-bucket-name"]
     }
   ]
 }
@@ -76,15 +65,8 @@ For production environments, consider this more comprehensive policy:
     {
       "Sid": "LogBackupRestrictedOperations",
       "Effect": "Allow",
-      "Action": [
-        "s3:PutObject",
-        "s3:GetObject",
-        "s3:DeleteObject",
-        "s3:HeadObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::your-backup-bucket-name/roastr-ai-logs/*"
-      ],
+      "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject", "s3:HeadObject"],
+      "Resource": ["arn:aws:s3:::your-backup-bucket-name/roastr-ai-logs/*"],
       "Condition": {
         "StringEquals": {
           "s3:x-amz-storage-class": "STANDARD_IA"
@@ -94,12 +76,8 @@ For production environments, consider this more comprehensive policy:
     {
       "Sid": "LogBackupListWithPrefix",
       "Effect": "Allow",
-      "Action": [
-        "s3:ListBucket"
-      ],
-      "Resource": [
-        "arn:aws:s3:::your-backup-bucket-name"
-      ],
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::your-backup-bucket-name"],
       "Condition": {
         "StringLike": {
           "s3:prefix": "roastr-ai-logs/*"
@@ -109,12 +87,8 @@ For production environments, consider this more comprehensive policy:
     {
       "Sid": "LogBackupEncryption",
       "Effect": "Allow",
-      "Action": [
-        "s3:PutObjectAcl"
-      ],
-      "Resource": [
-        "arn:aws:s3:::your-backup-bucket-name/roastr-ai-logs/*"
-      ],
+      "Action": ["s3:PutObjectAcl"],
+      "Resource": ["arn:aws:s3:::your-backup-bucket-name/roastr-ai-logs/*"],
       "Condition": {
         "StringEquals": {
           "s3:x-amz-server-side-encryption": "AES256"
@@ -129,21 +103,21 @@ For production environments, consider this more comprehensive policy:
 
 ### Core Permissions
 
-| Permission | Purpose | Required |
-|------------|---------|----------|
-| `s3:PutObject` | Upload log files to S3 | Yes |
-| `s3:GetObject` | Download backup files for restoration | Yes |
-| `s3:DeleteObject` | Remove old backups during cleanup | Yes |
-| `s3:HeadObject` | Check if files exist, verify integrity | Yes |
-| `s3:ListBucket` | List existing backups, enumerate files | Yes |
+| Permission        | Purpose                                | Required |
+| ----------------- | -------------------------------------- | -------- |
+| `s3:PutObject`    | Upload log files to S3                 | Yes      |
+| `s3:GetObject`    | Download backup files for restoration  | Yes      |
+| `s3:DeleteObject` | Remove old backups during cleanup      | Yes      |
+| `s3:HeadObject`   | Check if files exist, verify integrity | Yes      |
+| `s3:ListBucket`   | List existing backups, enumerate files | Yes      |
 
 ### Optional Permissions
 
-| Permission | Purpose | When Needed |
-|------------|---------|-------------|
-| `s3:PutObjectAcl` | Set object access control | When using custom ACLs |
-| `s3:GetBucketLocation` | Verify bucket region | Cross-region operations |
-| `s3:GetBucketVersioning` | Check versioning status | When versioning is enabled |
+| Permission               | Purpose                   | When Needed                |
+| ------------------------ | ------------------------- | -------------------------- |
+| `s3:PutObjectAcl`        | Set object access control | When using custom ACLs     |
+| `s3:GetBucketLocation`   | Verify bucket region      | Cross-region operations    |
+| `s3:GetBucketVersioning` | Check versioning status   | When versioning is enabled |
 
 ## IAM Role Setup (Recommended)
 
@@ -235,11 +209,7 @@ aws iam create-access-key --user-name roastr-ai-log-backup-user
       "Principal": {
         "AWS": "arn:aws:iam::YOUR-ACCOUNT-ID:role/roastr-ai-log-backup-role"
       },
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject"
-      ],
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
       "Resource": "arn:aws:s3:::your-backup-bucket-name/roastr-ai-logs/*"
     }
   ]
@@ -282,21 +252,25 @@ aws iam create-access-key --user-name roastr-ai-log-backup-user
 ## Security Best Practices
 
 ### 1. Principle of Least Privilege
+
 - Only grant permissions necessary for log backup operations
 - Use resource-level restrictions when possible
 - Implement condition-based access controls
 
 ### 2. Access Key Management
+
 - Rotate access keys regularly (every 90 days)
 - Never commit access keys to version control
 - Use AWS Secrets Manager or similar for key storage
 
 ### 3. Monitoring and Auditing
+
 - Enable CloudTrail for S3 API logging
 - Set up CloudWatch alerts for unusual S3 activity
 - Monitor backup operation success/failure rates
 
 ### 4. Network Security
+
 - Use VPC endpoints for S3 when possible
 - Implement bucket policies to restrict IP access
 - Enable S3 server-side encryption

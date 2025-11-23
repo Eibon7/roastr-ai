@@ -6,25 +6,27 @@
 
 ## 🎯 Price IDs Configurados
 
-| Plan | Price ID | Precio |
-|------|----------|--------|
-| **Starter** | `e242580e-41df-4997-aebe-604492249f39` | €5/mes |
-| **Pro** | `c1787586-00b7-4790-ba43-1f1e6a60b095` | €12/mes |
-| **Plus** | `176df9af-337f-4607-9524-48978eae8bea` | €24/mes |
+| Plan        | Price ID                               | Precio  |
+| ----------- | -------------------------------------- | ------- |
+| **Starter** | `e242580e-41df-4997-aebe-604492249f39` | €5/mes  |
+| **Pro**     | `c1787586-00b7-4790-ba43-1f1e6a60b095` | €12/mes |
+| **Plus**    | `176df9af-337f-4607-9524-48978eae8bea` | €24/mes |
 
 ---
 
 ## 📁 Archivos Ya Configurados
 
 ### ✅ Página de Test HTML
+
 **Archivo**: `public/test-polar.html`
 
 Los Price IDs ya están configurados en línea 360:
+
 ```javascript
 const POLAR_PRICE_IDS = {
   starter: 'e242580e-41df-4997-aebe-604492249f39',
   pro: 'c1787586-00b7-4790-ba43-1f1e6a60b095',
-  plus: '176df9af-337f-4607-9524-48978eae8bea',
+  plus: '176df9af-337f-4607-9524-48978eae8bea'
 };
 ```
 
@@ -33,30 +35,35 @@ const POLAR_PRICE_IDS = {
 ---
 
 ### ✅ Componente React
+
 **Archivo**: `frontend/src/components/PolarPricingExample.jsx`
 
 Los Price IDs ya están configurados en línea 19:
+
 ```javascript
 const POLAR_PRICE_IDS = {
   starter: process.env.REACT_APP_POLAR_STARTER_PRICE_ID || 'e242580e-41df-4997-aebe-604492249f39',
   pro: process.env.REACT_APP_POLAR_PRO_PRICE_ID || 'c1787586-00b7-4790-ba43-1f1e6a60b095',
-  plus: process.env.REACT_APP_POLAR_PLUS_PRICE_ID || '176df9af-337f-4607-9524-48978eae8bea',
+  plus: process.env.REACT_APP_POLAR_PLUS_PRICE_ID || '176df9af-337f-4607-9524-48978eae8bea'
 };
 ```
 
 **Uso**:
+
 ```jsx
 import PolarPricingExample from './components/PolarPricingExample';
 
-<Route path="/pricing" element={<PolarPricingExample />} />
+<Route path="/pricing" element={<PolarPricingExample />} />;
 ```
 
 ---
 
 ### ✅ Variables de Entorno (Opcional)
+
 **Archivo**: `frontend/.env.example`
 
 Si prefieres usar variables de entorno en lugar de hardcodear:
+
 ```bash
 REACT_APP_POLAR_STARTER_PRICE_ID=e242580e-41df-4997-aebe-604492249f39
 REACT_APP_POLAR_PRO_PRICE_ID=c1787586-00b7-4790-ba43-1f1e6a60b095
@@ -84,6 +91,7 @@ npm start
 ```
 
 **El script:**
+
 - ✅ Verifica que el servidor esté corriendo
 - ✅ Crea un checkout con el plan seleccionado
 - ✅ Muestra la respuesta formateada
@@ -103,6 +111,7 @@ http://localhost:3000/test-polar.html
 ```
 
 **Luego:**
+
 1. Ingresa un email (ej: `test@roastr.ai`)
 2. Haz clic en cualquier plan
 3. Abre la consola del navegador (F12)
@@ -240,6 +249,7 @@ Para confirmar que estos IDs son correctos:
 3. Verifica que los IDs coincidan con los configurados arriba
 
 **Nota importante**: Estos deben ser **Price IDs**, no Product IDs. En Polar:
+
 - **Product ID**: Identifica el producto (ej: "Plan Pro")
 - **Price ID**: Identifica el precio específico del producto (ej: "€12/mes")
 
@@ -254,6 +264,7 @@ Si tienes múltiples precios por producto (mensual, anual, etc.), asegúrate de 
 **Causa**: Falta `POLAR_ACCESS_TOKEN` en `.env`
 
 **Solución**:
+
 ```bash
 # Verifica
 cat .env | grep POLAR_ACCESS_TOKEN
@@ -272,6 +283,7 @@ npm start
 **Causa**: El Price ID no existe en Polar o es incorrecto
 
 **Solución**:
+
 1. Ve a https://polar.sh/dashboard/products
 2. Haz clic en el producto
 3. Copia el **Price ID** (no el Product ID)
@@ -284,6 +296,7 @@ npm start
 **Causa**: Posibles problemas con la configuración del producto en Polar
 
 **Solución**:
+
 1. Verifica que el producto esté activo en Polar
 2. Verifica que el precio esté configurado correctamente
 3. Usa tarjeta de test válida: `4242 4242 4242 4242`
@@ -306,18 +319,21 @@ npm start
 ## 🎉 Resumen
 
 **Price IDs configurados en:**
+
 - ✅ `public/test-polar.html`
 - ✅ `frontend/src/components/PolarPricingExample.jsx`
 - ✅ `frontend/.env.example` (como referencia)
 - ✅ `scripts/test-polar-checkout.sh`
 
 **Todo listo para:**
+
 - ✅ Crear checkouts con Polar
 - ✅ Recibir pagos
 - ✅ Procesar webhooks
 - ✅ Integrar en React
 
 **Solo falta:**
+
 - Implementar lógica de webhook para activar suscripciones
 - Integrar en tu UI de producción
 

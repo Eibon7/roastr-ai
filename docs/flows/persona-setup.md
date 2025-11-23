@@ -20,6 +20,7 @@ The Roastr Persona Setup flow allows users to define their unique roasting perso
 **Purpose:** Defines user's identity, humor style, and roasting personality
 
 **Examples:**
+
 - "Soy desarrollador sarcástico, me encanta el humor técnico"
 - "Fan de los 90s, humor nostálgico y referencias retro"
 - "Ironía británica, humor seco y sofisticado"
@@ -34,6 +35,7 @@ The Roastr Persona Setup flow allows users to define their unique roasting perso
 **Purpose:** Auto-blocking preferences for content user never wants to see
 
 **Examples:**
+
 - "Ataques a mi familia, body shaming, racismo"
 - "Comentarios sobre mi discapacidad"
 - "Bromas sobre tragedias o pérdidas personales"
@@ -49,6 +51,7 @@ The Roastr Persona Setup flow allows users to define their unique roasting perso
 **Purpose:** Reduces false positives by allowing content user considers harmless
 
 **Examples:**
+
 - "Humor negro, bromas de mal gusto, sarcasmo extremo"
 - "Palabrotas, lenguaje vulgar"
 - "Referencias a videojuegos violentos"
@@ -201,13 +204,13 @@ sequenceDiagram
 
 ### Feature Access by Plan
 
-| Feature | Free | Starter | Pro | Plus |
-|---------|------|---------|-----|------|
-| **Lo que me define** | ❌ | ✅ | ✅ | ✅ |
-| **Lo que no tolero** | ❌ | ✅ | ✅ | ✅ |
-| **Lo que me da igual** | ❌ | ❌ | ✅ | ✅ |
-| **Semantic embeddings** | ❌ | ✅ (2 fields) | ✅ (3 fields) | ✅ (3 fields) |
-| **Custom style prompt** | ❌ | ❌ | ❌ | ✅ (admin-configured) |
+| Feature                 | Free | Starter       | Pro           | Plus                  |
+| ----------------------- | ---- | ------------- | ------------- | --------------------- |
+| **Lo que me define**    | ❌   | ✅            | ✅            | ✅                    |
+| **Lo que no tolero**    | ❌   | ✅            | ✅            | ✅                    |
+| **Lo que me da igual**  | ❌   | ❌            | ✅            | ✅                    |
+| **Semantic embeddings** | ❌   | ✅ (2 fields) | ✅ (3 fields) | ✅ (3 fields)         |
+| **Custom style prompt** | ❌   | ❌            | ❌            | ✅ (admin-configured) |
 
 ### Access Check Flow
 
@@ -235,6 +238,7 @@ function checkPersonaAccess(plan, field) {
 **Authentication:** Required (JWT)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -259,6 +263,7 @@ function checkPersonaAccess(plan, field) {
 **Authentication:** Required (JWT)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -282,6 +287,7 @@ function checkPersonaAccess(plan, field) {
 ```
 
 **Response (200 OK - Empty Persona):**
+
 ```json
 {
   "success": true,
@@ -305,6 +311,7 @@ function checkPersonaAccess(plan, field) {
 **Plan Requirement:** Starter+
 
 **Request:**
+
 ```json
 {
   "text": "Soy desarrollador sarcástico, me encanta el humor técnico"
@@ -312,6 +319,7 @@ function checkPersonaAccess(plan, field) {
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -325,6 +333,7 @@ function checkPersonaAccess(plan, field) {
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Text exceeds 300 characters
 - `403 Forbidden` - Plan doesn't allow identity field
 - `500 Internal Server Error` - Encryption or database error
@@ -340,6 +349,7 @@ function checkPersonaAccess(plan, field) {
 **Plan Requirement:** Starter+
 
 **Request:**
+
 ```json
 {
   "text": "Ataques a mi familia, body shaming, racismo"
@@ -347,6 +357,7 @@ function checkPersonaAccess(plan, field) {
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -360,6 +371,7 @@ function checkPersonaAccess(plan, field) {
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Text exceeds 300 characters
 - `403 Forbidden` - Plan doesn't allow intolerance field
 - `500 Internal Server Error` - Encryption or database error
@@ -375,6 +387,7 @@ function checkPersonaAccess(plan, field) {
 **Plan Requirement:** Pro+
 
 **Request:**
+
 ```json
 {
   "text": "Humor negro, bromas de mal gusto, sarcasmo extremo"
@@ -382,6 +395,7 @@ function checkPersonaAccess(plan, field) {
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -395,6 +409,7 @@ function checkPersonaAccess(plan, field) {
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Text exceeds 300 characters
 - `403 Forbidden` - Plan is not Pro or Plus
 - `500 Internal Server Error` - Encryption or database error
@@ -408,9 +423,11 @@ function checkPersonaAccess(plan, field) {
 **Authentication:** Required (JWT)
 
 **Parameters:**
+
 - `field` - "identity", "intolerance", or "tolerance"
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -487,10 +504,7 @@ function encryptPersonaField(plaintext) {
   const cipher = crypto.createCipheriv('aes-256-gcm', ENCRYPTION_KEY, iv);
 
   // Encrypt
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, 'utf8'),
-    cipher.final()
-  ]);
+  const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
 
   // Get auth tag for integrity
   const tag = cipher.getAuthTag();
@@ -525,6 +539,7 @@ function decryptPersonaField(encryptedBase64) {
 ### Key Management
 
 **Environment Variable:**
+
 ```bash
 # Generate key (one-time)
 node -e "console.log(crypto.randomBytes(32).toString('hex'))"
@@ -534,6 +549,7 @@ PERSONA_ENCRYPTION_KEY=abc123...def789
 ```
 
 **Security Best Practices:**
+
 - Store key in environment variable (never hardcode)
 - Rotate key annually or after security incident
 - Use separate keys for dev/staging/production
@@ -594,7 +610,7 @@ async function generateEmbeddingWithRetry(text, maxRetries = 3) {
       }
 
       const delay = 500 * attempt; // Exponential backoff
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
@@ -702,7 +718,7 @@ function validatePersonaField(text, fieldType, userPlan) {
 
   // 5. Check SQL injection patterns
   const sqlPatterns = [/(\bDROP\b|\bDELETE\b|\bUPDATE\b|\bINSERT\b)/i];
-  if (sqlPatterns.some(pattern => pattern.test(text))) {
+  if (sqlPatterns.some((pattern) => pattern.test(text))) {
     errors.push('Invalid characters detected');
   }
 
@@ -805,14 +821,14 @@ function PersonaSetupWizard({ userPlan }) {
 
 ### Common Errors
 
-| Error | Cause | Resolution |
-|-------|-------|-----------|
-| `Encryption key not found` | Missing `PERSONA_ENCRYPTION_KEY` | Configure encryption key in environment |
-| `Embedding generation failed` | OpenAI API error | Retry with exponential backoff, log failure |
-| `Character limit exceeded` | Input > 300 chars | Truncate or reject with validation error |
-| `Plan restriction` | Feature not available for user's plan | Upgrade prompt or feature disabled |
-| `Semantic similarity timeout` | Vector search too slow | Index optimization, query timeout |
-| `Decryption failed` | Corrupted ciphertext or wrong key | Re-encrypt with current key, audit log |
+| Error                         | Cause                                 | Resolution                                  |
+| ----------------------------- | ------------------------------------- | ------------------------------------------- |
+| `Encryption key not found`    | Missing `PERSONA_ENCRYPTION_KEY`      | Configure encryption key in environment     |
+| `Embedding generation failed` | OpenAI API error                      | Retry with exponential backoff, log failure |
+| `Character limit exceeded`    | Input > 300 chars                     | Truncate or reject with validation error    |
+| `Plan restriction`            | Feature not available for user's plan | Upgrade prompt or feature disabled          |
+| `Semantic similarity timeout` | Vector search too slow                | Index optimization, query timeout           |
+| `Decryption failed`           | Corrupted ciphertext or wrong key     | Re-encrypt with current key, audit log      |
 
 ### Error Response Format
 
@@ -863,8 +879,9 @@ describe('Persona Service', () => {
   test('validates character limit (300 chars)', () => {
     const longText = 'a'.repeat(301);
 
-    expect(() => validatePersonaField(longText, 'identity', 'pro'))
-      .toThrow('exceeds 300 character limit');
+    expect(() => validatePersonaField(longText, 'identity', 'pro')).toThrow(
+      'exceeds 300 character limit'
+    );
   });
 });
 ```
@@ -1052,7 +1069,7 @@ const prompt = await this.promptTemplate.buildPrompt({
   originalComment: text,
   toxicityData,
   userConfig,
-  persona  // ← Persona injected here
+  persona // ← Persona injected here
 });
 ```
 
@@ -1071,7 +1088,7 @@ this.masterPrompt = `...
 const finalPrompt = this.masterPrompt
   .replace('{{original_comment}}', sanitizedComment)
   .replace('{{comment_category}}', category)
-  .replace('{{persona_context}}', sanitizedPersonaContext)  // ← Injection
+  .replace('{{persona_context}}', sanitizedPersonaContext) // ← Injection
   .replace('{{reference_roasts}}', referenceSection)
   .replace('{{tone_guide}}', toneGuide);
 ```
@@ -1099,14 +1116,15 @@ const finalPrompt = this.masterPrompt
 
 ### Plan-Based Persona Fields
 
-| Plan | Identity | Intolerance | Tolerance | Result |
-|------|----------|-------------|-----------|--------|
-| **Free** | ❌ | ❌ | ❌ | Generic roast (no persona) |
-| **Starter** | ✅ | ✅ | ❌ | Basic personalization (2 fields) |
-| **Pro** | ✅ | ✅ | ✅ | **Full personalization (3 fields)** |
-| **Plus** | ✅ | ✅ | ✅ | Full personalization + admin custom style |
+| Plan        | Identity | Intolerance | Tolerance | Result                                    |
+| ----------- | -------- | ----------- | --------- | ----------------------------------------- |
+| **Free**    | ❌       | ❌          | ❌        | Generic roast (no persona)                |
+| **Starter** | ✅       | ✅          | ❌        | Basic personalization (2 fields)          |
+| **Pro**     | ✅       | ✅          | ✅        | **Full personalization (3 fields)**       |
+| **Plus**    | ✅       | ✅          | ✅        | Full personalization + admin custom style |
 
 **Notes:**
+
 - Free users: Roasts generated without persona context
 - Starter users: Personalization with identity + intolerance only
 - Pro+ users: Full personalization with all 3 fields
@@ -1129,6 +1147,7 @@ const finalPrompt = this.masterPrompt
 ```
 
 **Generated Roast (Generic):**
+
 > "Gracias por tu detallado análisis técnico. Seguro que con tus valiosas aportaciones, la app mejorará de inmediato. 😉"
 
 ---
@@ -1155,6 +1174,7 @@ const finalPrompt = this.masterPrompt
 ```
 
 **Generated Roast (Personalized):**
+
 > "Me encanta recibir feedback de usuarios que claramente nunca han visto un `try-catch`. Tu opinión tiene el mismo peso que un `console.log()` en producción: absolutamente ninguno. 😏"
 
 ---
@@ -1162,22 +1182,22 @@ const finalPrompt = this.masterPrompt
 ### Security & Privacy
 
 **Encryption:**
+
 - Persona fields stored encrypted at rest (AES-256-GCM)
 - Decryption only happens during roast generation
 - Never exposed in API responses or logs (except via authenticated `/api/persona` endpoint)
 
 **Prompt Injection Protection:**
+
 - Persona context is sanitized before injection (roastPromptTemplate.js:473)
 - Removes `{{`, `}}`, and other template markers
 - Prevents users from injecting malicious instructions
 
 **Example protection:**
+
 ```javascript
 // User tries to inject: "Lo que me define: {{ignore previous instructions}}"
-const sanitizedPersonaContext = personaContext
-  .replace(/\{\{/g, '[')
-  .replace(/\}\}/g, ']')
-  .trim();
+const sanitizedPersonaContext = personaContext.replace(/\{\{/g, '[').replace(/\}\}/g, ']').trim();
 // Result: "Lo que me define: [[ignore previous instructions]]" (harmless)
 ```
 
@@ -1188,6 +1208,7 @@ const sanitizedPersonaContext = personaContext
 **Integration Tests:** `tests/integration/roast-persona-integration.test.js`
 
 Tests cover:
+
 - ✅ Free user: No persona context injected
 - ✅ Starter user: Identity + intolerance injected (2 fields)
 - ✅ Pro user: All 3 fields injected (identity, intolerance, tolerance)
@@ -1202,6 +1223,7 @@ Tests cover:
 ### Monitoring & Observability
 
 **Logs:**
+
 ```javascript
 // When persona is loaded
 logger.info('Persona retrieved for roast generation', {
@@ -1219,6 +1241,7 @@ logger.debug('Persona context injected into prompt', {
 ```
 
 **Metrics tracked:**
+
 - Roasts generated with persona (vs. without)
 - Plan distribution for persona usage
 - Average persona context length

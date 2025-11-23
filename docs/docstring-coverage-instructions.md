@@ -10,6 +10,7 @@
 ## Problem
 
 CodeRabbit identified that the codebase has insufficient docstring/JSDoc coverage (63.64%). This impacts:
+
 - Code maintainability
 - Developer onboarding
 - API documentation quality
@@ -32,6 +33,7 @@ Post this comment on PR #475:
 ### Step 2: Review Generated Docstrings
 
 CodeRabbit will:
+
 1. Analyze all JavaScript/TypeScript files
 2. Identify functions/classes missing docstrings
 3. Generate comprehensive JSDoc comments
@@ -163,16 +165,19 @@ class MyWorker extends BaseWorker {
 **Target**: 80% of functions/classes should have docstrings
 
 **Formula**:
+
 ```
 Coverage = (Functions with docstrings / Total functions) × 100
 ```
 
 **Current State** (estimated from CodeRabbit):
+
 - Total functions: ~550
 - Functions with docstrings: ~350
 - Coverage: 63.64%
 
 **To reach 80%**:
+
 - Need docstrings for: ~90 additional functions
 - Priority: Public APIs, exported functions, complex logic
 
@@ -181,6 +186,7 @@ Coverage = (Functions with docstrings / Total functions) × 100
 ## Validation Commands
 
 ### Option 1: Using documentation.js
+
 ```bash
 # Install
 npm install -g documentation
@@ -192,6 +198,7 @@ npx documentation build src/**/*.js -f md --shallow --coverage
 ```
 
 ### Option 2: Using jsdoc
+
 ```bash
 # Install
 npm install -g jsdoc
@@ -203,6 +210,7 @@ jsdoc -r src/ -d docs/jsdoc
 ```
 
 ### Option 3: Custom Script
+
 ```bash
 # Create coverage checker
 node scripts/check-jsdoc-coverage.js

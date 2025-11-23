@@ -68,10 +68,7 @@ describe('Ingestor Deduplication Integration Tests', () => {
       expect(storedComment.original_text).toBe('This is a test comment for deduplication');
 
       // Verify count in database
-      const count = await testUtils.countCommentsByPlatformId(
-        organizationId, 
-        '1234567890'
-      );
+      const count = await testUtils.countCommentsByPlatformId(organizationId, '1234567890');
       expect(count).toBe(1);
     });
 
@@ -118,7 +115,7 @@ describe('Ingestor Deduplication Integration Tests', () => {
 
       // Verify still only one comment in database
       const count = await testUtils.countCommentsByPlatformId(
-        organizationId, 
+        organizationId,
         comment.platform_comment_id
       );
       expect(count).toBe(1);
@@ -129,11 +126,11 @@ describe('Ingestor Deduplication Integration Tests', () => {
 
     test('should allow same platform_comment_id across different organizations', async () => {
       const comment = fixtures.duplicateComments[0];
-      
+
       // Create two different organizations
       const org1 = 'test-org-dedup';
       const org2 = 'test-org-order'; // Reuse another test org
-      
+
       const config1 = 'config-twitter-dedup';
       const config2 = 'config-twitter-order';
 
@@ -225,7 +222,7 @@ describe('Ingestor Deduplication Integration Tests', () => {
 
       // Final verification
       const finalCount = await testUtils.countCommentsByPlatformId(
-        organizationId, 
+        organizationId,
         comment.platform_comment_id
       );
       expect(finalCount).toBe(1);
@@ -236,11 +233,11 @@ describe('Ingestor Deduplication Integration Tests', () => {
     test('should efficiently handle large batches with duplicates', async () => {
       const organizationId = 'test-org-dedup';
       const integrationConfigId = 'config-twitter-dedup';
-      
+
       // Create batch with mixed unique and duplicate comments
       const baseComment = fixtures.duplicateComments[0];
       const largeBatch = [];
-      
+
       // Add 10 unique comments
       for (let i = 0; i < 10; i++) {
         largeBatch.push({
@@ -249,7 +246,7 @@ describe('Ingestor Deduplication Integration Tests', () => {
           original_text: `Unique comment ${i}`
         });
       }
-      
+
       // Add 5 duplicates of the first comment
       for (let i = 0; i < 5; i++) {
         largeBatch.push({
@@ -265,7 +262,7 @@ describe('Ingestor Deduplication Integration Tests', () => {
       await worker.start();
 
       const startTime = Date.now();
-      
+
       const job = {
         payload: {
           organization_id: organizationId,
@@ -276,9 +273,9 @@ describe('Ingestor Deduplication Integration Tests', () => {
       };
 
       const result = await worker.processJob(job);
-      
+
       const processingTime = Date.now() - startTime;
-      
+
       await worker.stop();
 
       // Should process in reasonable time (less than 2 seconds)
@@ -291,7 +288,7 @@ describe('Ingestor Deduplication Integration Tests', () => {
       expect(storedComments).toHaveLength(10);
 
       // Verify no duplicates by platform_comment_id
-      const platformIds = storedComments.map(c => c.platform_comment_id);
+      const platformIds = storedComments.map((c) => c.platform_comment_id);
       const uniqueIds = [...new Set(platformIds)];
       expect(uniqueIds).toHaveLength(10);
     });

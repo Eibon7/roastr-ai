@@ -27,10 +27,10 @@ class AnalysisDecisionEngine {
   constructor(options = {}) {
     // Default thresholds (can be overridden by user config)
     this.defaultThresholds = {
-      roast_lower: 0.30,    // Minimum roastable threshold
-      roast_upper: 0.84,    // Maximum roastable threshold
-      shield: 0.85,         // Shield activation threshold
-      critical: 0.95        // Critical action threshold
+      roast_lower: 0.3, // Minimum roastable threshold
+      roast_upper: 0.84, // Maximum roastable threshold
+      shield: 0.85, // Shield activation threshold
+      critical: 0.95 // Critical action threshold
     };
 
     this.options = options;
@@ -110,9 +110,9 @@ class AnalysisDecisionEngine {
       // prompt injections from passing through during service outages.
       // This prevents the security gap that Issue #632 aims to close.
       return {
-        classification: 'MALICIOUS',     // Conservative default
-        is_prompt_injection: true,       // Treat as potential threat
-        injection_score: 0.5,            // Moderate risk indicator
+        classification: 'MALICIOUS', // Conservative default
+        is_prompt_injection: true, // Treat as potential threat
+        injection_score: 0.5, // Moderate risk indicator
         injection_patterns: [],
         injection_categories: ['fallback_mode'],
         fallback: true,
@@ -215,10 +215,7 @@ class AnalysisDecisionEngine {
     const combined_risk = Math.max(security_risk, original_toxicity);
 
     // Final toxicity (can be adjusted by persona, reincidence, etc.)
-    const final_toxicity = this.adjustToxicityScore(
-      original_toxicity,
-      userContext
-    );
+    const final_toxicity = this.adjustToxicityScore(original_toxicity, userContext);
 
     return {
       final_toxicity,
@@ -286,7 +283,7 @@ class AnalysisDecisionEngine {
     // RULE 0.5: Brand Safety - Sponsor Protection (Issue #859)
     if (userContext.sponsorMatch?.matched) {
       const sponsor = userContext.sponsorMatch.sponsor;
-      
+
       logger.info('Brand Safety: Sponsor mention detected in toxic comment', {
         sponsor: sponsor.name,
         severity: sponsor.severity,
@@ -319,9 +316,9 @@ class AnalysisDecisionEngine {
 
       // Other severities: Adjust toxicity threshold to make SHIELD more sensitive
       const severityAdjustment = {
-        'high': -0.2,    // Lower threshold by 0.2 (more sensitive)
-        'medium': -0.1,  // Lower threshold by 0.1
-        'low': -0.05     // Minimal adjustment
+        high: -0.2, // Lower threshold by 0.2 (more sensitive)
+        medium: -0.1, // Lower threshold by 0.1
+        low: -0.05 // Minimal adjustment
       };
 
       const adjustment = severityAdjustment[sponsor.severity] || 0;
@@ -679,7 +676,7 @@ class AnalysisDecisionEngine {
     // 3. Not in critical/severe category
     return (
       perspectiveData.insult_score >= 0.7 &&
-      toxicityScore >= 0.70 &&
+      toxicityScore >= 0.7 &&
       toxicityScore < thresholds.shield &&
       perspectiveData.severe_toxicity_score < 0.8
     );

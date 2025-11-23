@@ -17,15 +17,18 @@ Sistema de protección que impide trabajar en ramas incorrectas mediante candado
 ### 2. Hooks Git
 
 #### `.git/hooks/pre-commit`
+
 - Verifica existencia de `.issue_lock`
 - Compara rama actual vs rama esperada
 - Bloquea si no coincide
 
 #### `.git/hooks/commit-msg`
+
 - Exige formato: `Issue #<id>` en mensaje de commit
 - Ejemplo válido: `feat(settings): sliders shield — Issue #362`
 
 #### `.git/hooks/pre-push`
+
 - Valida candado antes de push
 - Bloquea push directo a `main`/`master`
 
@@ -34,6 +37,7 @@ Sistema de protección que impide trabajar en ramas incorrectas mediante candado
 **Trigger:** Pull Request (abrir/actualizar)
 
 **Validaciones:**
+
 - Formato de rama: `(feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-<id>` o `feat/epic-<id>-week-<N>`
 - Referencia obligatoria a Issue en título o descripción
 - **Excepción:** Ramas de Dependabot (`dependabot/*`) se omiten automáticamente (no tienen issues asociadas)
@@ -77,6 +81,7 @@ git push
 ```
 
 El hook `pre-push` verifica:
+
 - Existencia de `.issue_lock`
 - Rama actual coincide con candado
 - No es push directo a main/master
@@ -84,6 +89,7 @@ El hook `pre-push` verifica:
 ### Paso 5: Crear Pull Request
 
 Formato requerido:
+
 - **Rama:** `<prefijo>/issue-<id>` donde `<prefijo>` puede ser:
   - `feature` - Nueva funcionalidad
   - `fix` - Corrección de errores
@@ -103,26 +109,32 @@ El workflow `.github/workflows/pr-branch-guard.yml` valida ambos requisitos.
 ## Ejemplos de Error
 
 ### Error: Rama incorrecta en commit
+
 ```
 ❌ Rama incorrecta: estás en 'feature/issue-363' pero .issue_lock exige 'feature/issue-362'.
    Cambia con: git checkout feature/issue-362
 ```
+
 **Solución:** Cambiar a la rama correcta o actualizar `.issue_lock`.
 
 ### Error: Falta referencia a Issue
+
 ```
 ❌ El commit debe incluir 'Issue #<id>' en el mensaje.
    Ejemplo: feat(settings): sliders shield — Issue #362
 ```
+
 **Solución:** Incluir `Issue #<id>` en el mensaje de commit.
 
 ### Error: Branch incorrecta en PR
+
 ```
 Branch incorrecta: myfeature/issue-362
 Formatos válidos:
   - (feature|fix|chore|docs|test|refactor|perf|ci|build|style)/issue-<id>
   - feat/epic-<id>-week-<N>
 ```
+
 **Solución:** Renombrar rama con uno de los prefijos válidos.
 
 ## Liberar Candado
@@ -153,12 +165,14 @@ ls -l .git/hooks/pre-commit .git/hooks/commit-msg .git/hooks/pre-push
 ## Troubleshooting
 
 ### Los hooks no se ejecutan
+
 ```bash
 # Reestablecer permisos
 chmod +x .git/hooks/pre-commit .git/hooks/commit-msg .git/hooks/pre-push
 ```
 
 ### Ignorar hooks temporalmente (⚠️ no recomendado)
+
 ```bash
 git commit --no-verify
 git push --no-verify
@@ -171,5 +185,3 @@ git push --no-verify
 ✅ Bloqueo de push directo a main/master  
 ✅ Validación de formato de rama en PR  
 ✅ Exigencia de referencia a Issue en PR
-
-

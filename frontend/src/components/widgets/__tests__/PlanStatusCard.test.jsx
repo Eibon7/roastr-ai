@@ -36,7 +36,7 @@ describe('PlanStatusCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockUserData,
+      json: async () => mockUserData
     });
 
     render(<PlanStatusCard />);
@@ -63,7 +63,7 @@ describe('PlanStatusCard', () => {
   test('displays correct features based on plan', async () => {
     const mockUserData = {
       plan: 'enterprise',
-      usage: { aiCalls: 500, limits: { aiCallsLimit: 10000 }},
+      usage: { aiCalls: 500, limits: { aiCallsLimit: 10000 } },
       integrations: ['twitter', 'youtube', 'instagram'],
       features: {
         shield: true,
@@ -74,7 +74,7 @@ describe('PlanStatusCard', () => {
 
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockUserData,
+      json: async () => mockUserData
     });
 
     render(<PlanStatusCard />);
@@ -90,7 +90,7 @@ describe('PlanStatusCard', () => {
   test('calls user API endpoint on mount', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ plan: 'starter_trial' }),
+      json: async () => ({ plan: 'starter_trial' })
     });
 
     render(<PlanStatusCard />);

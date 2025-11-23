@@ -1,28 +1,28 @@
 {
-  // Editor settings
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // ============================================
+  // FORMATEO OPTIMIZADO (evita formateo doble)
+  // ============================================
+  // Deshabilitar format-on-save genérico para evitar conflictos
+  "editor.formatOnSave": false,
+
+  // Usar SOLO ESLint para aplicar fixes (incluye Prettier via eslint-plugin-prettier)
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
 
-  // File-specific formatters
+  // ============================================
+  // FORMATEADORES POR LENGUAJE
+  // ============================================
+
+  // JavaScript/TypeScript: usar ESLint (que ejecuta Prettier internamente)
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  "[javascriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
+
+  // JSON: usar Prettier directamente
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
@@ -31,30 +31,45 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
+
+  // CSS: usar Prettier directamente
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
+
+  // Markdown: usar Prettier directamente
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
+
+  // YAML: usar Prettier directamente
   "[yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
 
-  // ESLint settings
+  // ============================================
+  // CONFIGURACIÓN DE ESLINT
+  // ============================================
   "eslint.enable": true,
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact"
-  ],
 
-  // Prettier settings
+  // Habilitar soporte para ESLint 9 flat config
+  "eslint.experimental.useFlatConfig": true,
+
+  // Permitir usar ESLint como formateador para "Format Document"
+  "eslint.format.enable": true,
+
+  // Validar estos tipos de archivos
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+
+  // ============================================
+  // CONFIGURACIÓN DE PRETTIER
+  // ============================================
+  // Requerir .prettierrc.json (no usar configuración por defecto)
   "prettier.requireConfig": true,
+
+  // No usar .editorconfig (usamos .prettierrc.json como fuente única)
   "prettier.useEditorConfig": false
 }
-

@@ -1,6 +1,6 @@
 /**
  * Shield Routes Round 4 Enhancement Tests
- * 
+ *
  * Tests for CodeRabbit Round 4 improvements:
  * - Enhanced input validation and sanitization
  * - UUID format validation
@@ -25,14 +25,14 @@ jest.mock('../../../src/config/supabase', () => ({
     order: jest.fn().mockReturnThis(),
     range: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-  },
+    update: jest.fn().mockReturnThis()
+  }
 }));
 
 jest.mock('../../../src/config/flags', () => ({
   flags: {
-    isEnabled: jest.fn(() => true),
-  },
+    isEnabled: jest.fn(() => true)
+  }
 }));
 
 jest.mock('../../../src/utils/logger', () => ({
@@ -47,19 +47,19 @@ jest.mock('../../../src/utils/logger', () => ({
       warn: jest.fn(),
       debug: jest.fn()
     }))
-  },
+  }
 }));
 
 const mockAuthenticateToken = jest.fn((req, res, next) => {
-  req.user = { 
-    id: 'test-user-id', 
-    organizationId: 'test-org-id' 
+  req.user = {
+    id: 'test-user-id',
+    organizationId: 'test-org-id'
   };
   next();
 });
 
 jest.mock('../../../src/middleware/auth', () => ({
-  authenticateToken: mockAuthenticateToken,
+  authenticateToken: mockAuthenticateToken
 }));
 
 const shieldRoutes = require('../../../src/routes/shield');
@@ -83,8 +83,8 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         then: jest.fn().mockResolvedValue({
           data: [],
           error: null,
-          count: 0,
-        }),
+          count: 0
+        })
       });
 
       const response = await request(app)
@@ -106,8 +106,8 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         then: jest.fn().mockResolvedValue({
           data: [],
           error: null,
-          count: 0,
-        }),
+          count: 0
+        })
       });
 
       const response = await request(app)
@@ -128,8 +128,8 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         then: jest.fn().mockResolvedValue({
           data: [],
           error: null,
-          count: 0,
-        }),
+          count: 0
+        })
       });
 
       const response = await request(app)
@@ -150,8 +150,8 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         then: jest.fn().mockResolvedValue({
           data: [],
           error: null,
-          count: 0,
-        }),
+          count: 0
+        })
       });
 
       const response = await request(app)
@@ -172,18 +172,16 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         then: jest.fn().mockResolvedValue({
           data: [],
           error: null,
-          count: 0,
-        }),
+          count: 0
+        })
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .query({ 
-          category: 'TOXIC', 
-          platform: 'TWITTER', 
-          actionType: 'BLOCK',
-          timeRange: '30D'
-        });
+      const response = await request(app).get('/api/shield/events').query({
+        category: 'TOXIC',
+        platform: 'TWITTER',
+        actionType: 'BLOCK',
+        timeRange: '30D'
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.data.filters.category).toBe('toxic');
@@ -201,17 +199,15 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         then: jest.fn().mockResolvedValue({
           data: [],
           error: null,
-          count: 0,
-        }),
+          count: 0
+        })
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .query({ 
-          category: 123, 
-          platform: true, 
-          actionType: null
-        });
+      const response = await request(app).get('/api/shield/events').query({
+        category: 123,
+        platform: true,
+        actionType: null
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.data.filters.category).toBe('all'); // Default
@@ -234,14 +230,14 @@ describe('Shield Routes - Round 4 Enhancements', () => {
 
     test('should accept valid UUID format', async () => {
       const validUuid = '123e4567-e89b-12d3-a456-426614174000';
-      
+
       supabaseServiceClient.from.mockReturnValue({
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
           data: null,
-          error: { code: 'PGRST116' }, // Not found
-        }),
+          error: { code: 'PGRST116' } // Not found
+        })
       });
 
       const response = await request(app)
@@ -268,7 +264,7 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         { id: '123e4567-e89b-42d3-a456-426614174000', valid: true },
         { id: '123e4567-e89b-72d3-f456-426614174000', valid: false }, // Invalid version
         { id: '123e4567-e89b-12d3-c456-426614174000', valid: false }, // Invalid variant
-        { id: '123e4567-e89b-12d3-a456-42661417400', valid: false }, // Too short
+        { id: '123e4567-e89b-12d3-a456-42661417400', valid: false } // Too short
       ];
 
       for (const testCase of testCases) {
@@ -278,8 +274,8 @@ describe('Shield Routes - Round 4 Enhancements', () => {
             eq: jest.fn().mockReturnThis(),
             single: jest.fn().mockResolvedValue({
               data: null,
-              error: { code: 'PGRST116' },
-            }),
+              error: { code: 'PGRST116' }
+            })
           });
         }
 
@@ -300,7 +296,7 @@ describe('Shield Routes - Round 4 Enhancements', () => {
   describe('Enhanced Metadata Safety', () => {
     test('should handle null metadata safely', async () => {
       const validUuid = '123e4567-e89b-12d3-a456-426614174000';
-      
+
       supabaseServiceClient.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnThis(),
@@ -312,10 +308,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
               content_hash: 'test-hash',
               platform: 'twitter',
               reverted_at: null,
-              metadata: null, // Null metadata
+              metadata: null // Null metadata
             },
-            error: null,
-          }),
+            error: null
+          })
         })
         .mockReturnValueOnce({
           update: jest.fn().mockReturnThis(),
@@ -325,10 +321,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
             data: {
               id: validUuid,
               reverted_at: '2024-01-15T12:00:00Z',
-              metadata: { reverted: true },
+              metadata: { reverted: true }
             },
-            error: null,
-          }),
+            error: null
+          })
         });
 
       const response = await request(app)
@@ -342,10 +338,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
 
     test('should handle invalid metadata gracefully', async () => {
       const validUuid = '123e4567-e89b-12d3-a456-426614174000';
-      
+
       // Mock an action with invalid metadata that could cause TypeError
       const invalidMetadata = 'invalid-json-string';
-      
+
       supabaseServiceClient.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnThis(),
@@ -357,10 +353,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
               content_hash: 'test-hash',
               platform: 'twitter',
               reverted_at: null,
-              metadata: invalidMetadata,
+              metadata: invalidMetadata
             },
-            error: null,
-          }),
+            error: null
+          })
         })
         .mockReturnValueOnce({
           update: jest.fn().mockReturnThis(),
@@ -370,10 +366,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
             data: {
               id: validUuid,
               reverted_at: '2024-01-15T12:00:00Z',
-              metadata: { reverted: true },
+              metadata: { reverted: true }
             },
-            error: null,
-          }),
+            error: null
+          })
         });
 
       const response = await request(app)
@@ -387,7 +383,7 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         'Invalid metadata found in shield action',
         expect.objectContaining({
           actionId: validUuid,
-          metadataType: 'string',
+          metadataType: 'string'
         })
       );
     });
@@ -397,9 +393,9 @@ describe('Shield Routes - Round 4 Enhancements', () => {
       const existingMetadata = {
         source: 'automated',
         confidence: 0.95,
-        tags: ['urgent', 'harassment'],
+        tags: ['urgent', 'harassment']
       };
-      
+
       supabaseServiceClient.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnThis(),
@@ -411,10 +407,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
               content_hash: 'test-hash',
               platform: 'twitter',
               reverted_at: null,
-              metadata: existingMetadata,
+              metadata: existingMetadata
             },
-            error: null,
-          }),
+            error: null
+          })
         })
         .mockReturnValueOnce({
           update: jest.fn().mockReturnThis(),
@@ -429,11 +425,11 @@ describe('Shield Routes - Round 4 Enhancements', () => {
                 reverted: true,
                 revertedBy: 'test-user-id',
                 revertReason: 'Test revert',
-                revertSource: 'shield_ui',
-              },
+                revertSource: 'shield_ui'
+              }
             },
-            error: null,
-          }),
+            error: null
+          })
         });
 
       const response = await request(app)
@@ -447,20 +443,22 @@ describe('Shield Routes - Round 4 Enhancements', () => {
       // Issue #618 - Add defensive check for mock.calls array
       expect(supabaseServiceClient.update.mock.calls.length).toBeGreaterThan(0);
       const updateCall = supabaseServiceClient.update.mock.calls[0][0];
-      expect(updateCall.metadata).toEqual(expect.objectContaining({
-        source: 'automated',
-        confidence: 0.95,
-        tags: ['urgent', 'harassment'],
-        reverted: true,
-        revertedBy: 'test-user-id',
-        revertReason: 'Test revert',
-        revertSource: 'shield_ui',
-      }));
+      expect(updateCall.metadata).toEqual(
+        expect.objectContaining({
+          source: 'automated',
+          confidence: 0.95,
+          tags: ['urgent', 'harassment'],
+          reverted: true,
+          revertedBy: 'test-user-id',
+          revertReason: 'Test revert',
+          revertSource: 'shield_ui'
+        })
+      );
     });
 
     test('should handle empty string reason safely', async () => {
       const validUuid = '123e4567-e89b-12d3-a456-426614174000';
-      
+
       supabaseServiceClient.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnThis(),
@@ -472,10 +470,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
               content_hash: 'test-hash',
               platform: 'twitter',
               reverted_at: null,
-              metadata: {},
+              metadata: {}
             },
-            error: null,
-          }),
+            error: null
+          })
         })
         .mockReturnValueOnce({
           update: jest.fn().mockReturnThis(),
@@ -485,10 +483,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
             data: {
               id: validUuid,
               reverted_at: '2024-01-15T12:00:00Z',
-              metadata: { reverted: true },
+              metadata: { reverted: true }
             },
-            error: null,
-          }),
+            error: null
+          })
         });
 
       const response = await request(app)
@@ -496,7 +494,7 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         .send({ reason: '   ' }); // Whitespace only
 
       expect(response.status).toBe(200);
-      
+
       // Should use default reason for empty/whitespace
       const updateCall = supabaseServiceClient.update.mock.calls[0][0];
       expect(updateCall.metadata.revertReason).toBe('Manual revert via UI');
@@ -507,10 +505,14 @@ describe('Shield Routes - Round 4 Enhancements', () => {
     test('should handle malformed query object gracefully', async () => {
       // Mock a scenario where req.query is not a proper object
       const originalGet = app.get;
-      app.get('/test-malformed-query', (req, res, next) => {
-        req.query = 'not-an-object';
-        next();
-      }, shieldRoutes);
+      app.get(
+        '/test-malformed-query',
+        (req, res, next) => {
+          req.query = 'not-an-object';
+          next();
+        },
+        shieldRoutes
+      );
 
       supabaseServiceClient.from.mockReturnValue({
         select: jest.fn().mockReturnThis(),
@@ -520,12 +522,11 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         then: jest.fn().mockResolvedValue({
           data: [],
           error: null,
-          count: 0,
-        }),
+          count: 0
+        })
       });
 
-      const response = await request(app)
-        .get('/test-malformed-query');
+      const response = await request(app).get('/test-malformed-query');
 
       expect(response.status).toBe(200);
       expect(response.body.data.pagination.page).toBe(1); // Should use defaults
@@ -538,8 +539,7 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         next();
       });
 
-      const response = await request(app)
-        .get('/api/shield/events');
+      const response = await request(app).get('/api/shield/events');
 
       // Should handle missing organizationId gracefully
       expect(response.status).toBe(200);
@@ -551,11 +551,10 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         eq: jest.fn().mockReturnThis(),
         order: jest.fn().mockReturnThis(),
         range: jest.fn().mockReturnThis(),
-        then: jest.fn().mockRejectedValue(new Error('Database connection failed')),
+        then: jest.fn().mockRejectedValue(new Error('Database connection failed'))
       });
 
-      const response = await request(app)
-        .get('/api/shield/events');
+      const response = await request(app).get('/api/shield/events');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -563,7 +562,7 @@ describe('Shield Routes - Round 4 Enhancements', () => {
       expect(logger.error).toHaveBeenCalledWith(
         'Shield events endpoint error',
         expect.objectContaining({
-          error: 'Database connection failed',
+          error: 'Database connection failed'
         })
       );
     });
@@ -577,15 +576,15 @@ describe('Shield Routes - Round 4 Enhancements', () => {
           organization_id: 'test-org-id', // Should be removed
           action_type: 'block',
           platform: 'twitter',
-          reason: 'toxic',
+          reason: 'toxic'
         },
         {
           id: 'action-2',
           organization_id: 'test-org-id', // Should be removed
           action_type: 'mute',
           platform: 'youtube',
-          reason: 'spam',
-        },
+          reason: 'spam'
+        }
       ];
 
       supabaseServiceClient.from.mockReturnValue({
@@ -596,17 +595,16 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         then: jest.fn().mockResolvedValue({
           data: mockData,
           error: null,
-          count: 2,
-        }),
+          count: 2
+        })
       });
 
-      const response = await request(app)
-        .get('/api/shield/events');
+      const response = await request(app).get('/api/shield/events');
 
       expect(response.status).toBe(200);
       expect(response.body.data.events).toHaveLength(2);
-      
-      response.body.data.events.forEach(event => {
+
+      response.body.data.events.forEach((event) => {
         expect(event).not.toHaveProperty('organization_id');
         expect(event).toHaveProperty('id');
         expect(event).toHaveProperty('action_type');
@@ -624,12 +622,11 @@ describe('Shield Routes - Round 4 Enhancements', () => {
         then: jest.fn().mockResolvedValue({
           data: null, // Null data
           error: null,
-          count: 0,
-        }),
+          count: 0
+        })
       });
 
-      const response = await request(app)
-        .get('/api/shield/events');
+      const response = await request(app).get('/api/shield/events');
 
       expect(response.status).toBe(200);
       expect(response.body.data.events).toEqual([]);

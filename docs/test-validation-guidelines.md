@@ -9,6 +9,7 @@ This document addresses the critical issues identified in CodeRabbit review for 
 ### 1. Non-Existent Adapter Imports ❌
 
 **Problem**: Importing shield adapters that don't exist
+
 ```javascript
 // ❌ Don't do this
 import InstagramShieldAdapter from '../services/shield/InstagramShieldAdapter';
@@ -16,6 +17,7 @@ import FacebookShieldAdapter from '../services/shield/FacebookShieldAdapter';
 ```
 
 **Solution**: Only import implemented adapters
+
 ```javascript
 // ✅ Do this instead
 import TwitterShieldAdapter from '../services/shield/TwitterShieldAdapter';
@@ -27,12 +29,14 @@ import TwitchShieldAdapter from '../services/shield/TwitchShieldAdapter';
 ### 2. Non-Existent API Routes ❌
 
 **Problem**: Testing against routes that don't exist
+
 ```javascript
 // ❌ Don't do this
 const response = await request(app).post('/api/comments/ingest');
 ```
 
 **Solution**: Use existing API endpoints
+
 ```javascript
 // ✅ Check src/index.js for available routes first
 const response = await request(app).post('/api/roast');
@@ -41,12 +45,14 @@ const response = await request(app).post('/api/roast');
 ### 3. Missing Dependencies ❌
 
 **Problem**: Referencing packages not in package.json
+
 ```javascript
 // ❌ If jest-html-reporters not in package.json
 const HtmlReporter = require('jest-html-reporters');
 ```
 
 **Solution**: Add to package.json or remove reference
+
 ```bash
 npm install --save-dev jest-html-reporters
 ```
@@ -54,12 +60,14 @@ npm install --save-dev jest-html-reporters
 ### 4. Performance Thresholds ❌
 
 **Problem**: Development-optimized thresholds in CI
+
 ```javascript
 // ❌ Too tight for CI
 expect(responseTime).toBeLessThan(50); // 50ms
 ```
 
 **Solution**: CI-appropriate thresholds
+
 ```javascript
 // ✅ Account for shared CI runners
 expect(responseTime).toBeLessThan(2000); // 2s for CI
@@ -68,17 +76,21 @@ expect(responseTime).toBeLessThan(2000); // 2s for CI
 ## Available Resources
 
 ### Shield Adapters (Implemented) ✅
+
 - `TwitterShieldAdapter`
 - `YouTubeShieldAdapter`
 - `DiscordShieldAdapter`
 - `TwitchShieldAdapter`
 
 ### Shield Adapters (Not Implemented) ❌
+
 - `InstagramShieldAdapter` - Do not import
 - `FacebookShieldAdapter` - Do not import
 
 ### API Endpoints
+
 Check `src/index.js` for current available routes:
+
 - `/health` - Health check endpoint
 - `/api/roast` - Main roast generation endpoint
 - Other routes as implemented in the application
@@ -88,6 +100,7 @@ Check `src/index.js` for current available routes:
 ### Before Committing Tests
 
 1. **Run validation script**:
+
    ```bash
    npm run validate:tests
    ```
@@ -124,6 +137,7 @@ grep -E "app\.(get|post|put|delete)" src/index.js
 ## Common Issues & Solutions
 
 ### Import Errors
+
 ```javascript
 // ❌ This will fail
 import NonExistentAdapter from '../adapters/NonExistentAdapter';
@@ -133,6 +147,7 @@ import ExistingService from '../services/existingService';
 ```
 
 ### Route Errors
+
 ```javascript
 // ❌ This will return 404
 await request(app).post('/api/nonexistent/endpoint');
@@ -142,6 +157,7 @@ await request(app).get('/health');
 ```
 
 ### Performance Tests
+
 ```javascript
 // ❌ Too strict for CI
 expect(duration).toBeLessThan(10); // 10ms
@@ -156,7 +172,7 @@ expect(duration).toBeLessThan(1000); // 1s
 ✅ **Fixed**: API route validation implemented  
 ✅ **Fixed**: Dependency checking automated  
 ✅ **Fixed**: Performance threshold guidelines provided  
-✅ **Fixed**: GitHub Secrets security guidance documented  
+✅ **Fixed**: GitHub Secrets security guidance documented
 
 ## Integration with CI
 
@@ -190,4 +206,4 @@ This ensures validation runs before tests, preventing CI failures from these com
 
 ---
 
-*This document addresses CodeRabbit PR #424 critical review findings and ensures robust test implementation practices.*
+_This document addresses CodeRabbit PR #424 critical review findings and ensures robust test implementation practices._

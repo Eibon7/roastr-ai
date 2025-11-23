@@ -1,8 +1,8 @@
 /**
  * Admin Component: Tones List
- * 
+ *
  * Displays tones in a table with drag & drop reordering.
- * 
+ *
  * Issue #876: Dynamic Roast Tone Configuration System
  */
 
@@ -26,17 +26,19 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
       const reorderedTones = [...tones];
       const [draggedTone] = reorderedTones.splice(draggedIndex, 1);
       reorderedTones.splice(hoveredIndex, 0, draggedTone);
-      
+
       onReorder(reorderedTones);
     }
-    
+
     setDraggedIndex(null);
     setHoveredIndex(null);
   };
 
   const getIntensityColor = (intensity) => {
-    if (intensity <= 2) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-    if (intensity === 3) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+    if (intensity <= 2)
+      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+    if (intensity === 3)
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
     return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
   };
 
@@ -54,14 +56,22 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
   if (tones.length === 0) {
     return (
       <div className="text-center py-12">
-        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        <svg
+          className="mx-auto h-12 w-12 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+          />
         </svg>
-        <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-          No hay tonos
-        </h3>
+        <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No hay tonos</h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {language === 'es' 
+          {language === 'es'
             ? 'Crea tu primer tono para empezar.'
             : 'Create your first tone to get started.'}
         </p>
@@ -74,24 +84,52 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
       <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-800">
           <tr>
-            <th scope="col" className="w-12 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+            <th
+              scope="col"
+              className="w-12 px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+            >
+              <svg
+                className="h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 8h16M4 16h16"
+                />
               </svg>
             </th>
-            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+            <th
+              scope="col"
+              className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+            >
               Nombre
             </th>
-            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+            <th
+              scope="col"
+              className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+            >
               Descripción
             </th>
-            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+            <th
+              scope="col"
+              className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+            >
               Intensidad
             </th>
-            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+            <th
+              scope="col"
+              className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+            >
               Estado
             </th>
-            <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 dark:text-white">
+            <th
+              scope="col"
+              className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 dark:text-white"
+            >
               Acciones
             </th>
           </tr>
@@ -113,8 +151,18 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
             >
               {/* Drag handle */}
               <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 8h16M4 16h16"
+                  />
                 </svg>
               </td>
 
@@ -152,7 +200,9 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
 
               {/* Intensity */}
               <td className="px-3 py-4 text-sm">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getIntensityColor(tone.intensity)}`}>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getIntensityColor(tone.intensity)}`}
+                >
                   {getIntensityLabel(tone.intensity)} {tone.intensity}/5
                 </span>
               </td>
@@ -179,11 +229,21 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
                 >
                   {tone.active ? (
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   ) : (
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   )}
                 </button>
@@ -194,7 +254,12 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
                   title="Editar"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
                   </svg>
                 </button>
 
@@ -204,7 +269,12 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
                   title="Eliminar"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                 </button>
               </td>
@@ -215,11 +285,11 @@ const TonesList = ({ tones, language, onEdit, onDelete, onToggleActive, onReorde
 
       {/* Help text */}
       <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
-        <strong>💡 Tip:</strong> Arrastra y suelta para reordenar los tonos. El orden determina cómo aparecen en la selección.
+        <strong>💡 Tip:</strong> Arrastra y suelta para reordenar los tonos. El orden determina cómo
+        aparecen en la selección.
       </div>
     </div>
   );
 };
 
 export default TonesList;
-

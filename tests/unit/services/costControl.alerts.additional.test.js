@@ -1,7 +1,7 @@
 /**
  * Cost Control Service - Additional Alert Tests
  * Issue #500: Final push to reach 60% coverage
- * 
+ *
  * Focuses on alert-related methods:
  * - checkAndSendUsageAlerts
  * - getAlertHistory
@@ -100,23 +100,23 @@ const CostControlService = require('../../../src/services/costControl');
 
 /**
  * CostControlService - Alert Methods Test Suite
- * 
+ *
  * @description Comprehensive tests for alert-related functionality
  * @issue #500 - Final push to reach 60% coverage
- * 
+ *
  * Coverage targets:
  * - getAlertHistory: Retrieve historical alerts
  * - getAlertStats: Aggregate alert statistics
  * - getEnhancedUsageStats: Detailed usage analytics
  * - checkAndSendUsageAlerts: Automated alert workflow
  * - recordUsage: Usage tracking with alert triggers
- * 
+ *
  * Alert system tests:
  * - Threshold detection (80%, 90%, 100%)
  * - Historical data queries
  * - Statistical aggregations
  * - Automated notification triggers
- * 
+ *
  * Mock pattern: Same comprehensive Supabase pattern from main test suite
  */
 describe('CostControlService - Alert Methods', () => {
@@ -126,9 +126,9 @@ describe('CostControlService - Alert Methods', () => {
     jest.clearAllMocks();
     process.env.SUPABASE_URL = 'http://test.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
-    
+
     costControl = new CostControlService();
-    
+
     mockGetPlanLimits.mockResolvedValue({
       monthlyResponsesLimit: 1000,
       shieldEnabled: true
@@ -138,13 +138,13 @@ describe('CostControlService - Alert Methods', () => {
   /**
    * @function getAlertHistory
    * @description Tests alert history retrieval with date range filtering
-   * 
+   *
    * Tests:
    * - Date range queries (gte, lte)
    * - Organization-specific filtering
    * - Result ordering (most recent first)
    * - Pagination with limit
-   * 
+   *
    * Mock: Supabase select with gte/lte filters
    */
   describe('getAlertHistory', () => {
@@ -161,10 +161,12 @@ describe('CostControlService - Alert Methods', () => {
           eq: jest.fn(() => ({
             eq: jest.fn(() => ({
               order: jest.fn(() => ({
-                range: jest.fn(() => Promise.resolve({
-                  data: mockAlerts,
-                  error: null
-                }))
+                range: jest.fn(() =>
+                  Promise.resolve({
+                    data: mockAlerts,
+                    error: null
+                  })
+                )
               }))
             }))
           }))
@@ -175,10 +177,12 @@ describe('CostControlService - Alert Methods', () => {
       mockFrom.mockReturnValueOnce({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            eq: jest.fn(() => Promise.resolve({
-              count: 2,
-              error: null
-            }))
+            eq: jest.fn(() =>
+              Promise.resolve({
+                count: 2,
+                error: null
+              })
+            )
           }))
         }))
       });
@@ -205,15 +209,15 @@ describe('CostControlService - Alert Methods', () => {
   /**
    * @function getAlertStats
    * @description Tests alert statistics aggregation
-   * 
+   *
    * Tests:
    * - Count by alert type
    * - Total alert count
    * - Organization-specific statistics
    * - Error handling for empty data
-   * 
+   *
    * Returns: { total, byType: {warning: N, critical: M} }
-   * 
+   *
    * @skip All tests skipped
    * @reason Complex query chain .select().eq().eq().gte() difficult to mock
    * Requires service refactoring for testability
@@ -228,24 +232,24 @@ describe('CostControlService - Alert Methods', () => {
   /**
    * @function getEnhancedUsageStats
    * @description Tests enhanced usage statistics with trends
-   * 
+   *
    * Tests:
    * - Current period usage
    * - Historical comparisons (previous period)
    * - Trend calculations (increasing/decreasing)
    * - Percentage changes
    * - Projection to end of month
-   * 
+   *
    * Data sources: organization_usage + monthly_usage tables
    */
   /**
    * @skip getEnhancedUsageStats tests
    * @reason Complex Supabase query chains (usage_tracking table) require service refactoring
-   * 
+   *
    * The method uses multiple nested Supabase queries that are difficult to mock accurately:
    * - .from('usage_tracking').select().eq().eq().eq() (no terminating method)
    * - .from('usage_limits').select().eq().eq()
-   * 
+   *
    * TODO: Refactor CostControlService to extract query logic into testable service layer
    * See Issue #501 recommendation for analytics module refactoring approach
    */
@@ -259,14 +263,14 @@ describe('CostControlService - Alert Methods', () => {
   /**
    * @function checkAndSendUsageAlerts
    * @description Tests automated alert checking and sending workflow
-   * 
+   *
    * Tests:
    * - Threshold detection (80%, 90%, 100% usage)
    * - Automatic alert triggering
    * - Alert deduplication (don't send duplicate alerts)
    * - Multiple alert levels
    * - Organization-wide checks
-   * 
+   *
    * Workflow: Check usage → Evaluate thresholds → Send alerts if needed
    */
   describe('checkAndSendUsageAlerts', () => {
@@ -358,13 +362,13 @@ describe('CostControlService - Alert Methods', () => {
   /**
    * @function recordUsage
    * @description Tests usage recording with integrated alert triggering
-   * 
+   *
    * Tests:
    * - Usage counter increment
    * - Automatic alert check after recording
    * - Combined workflow (record + check + alert)
    * - Platform-specific usage tracking
-   * 
+   *
    * Integration test: Combines recordUsage + checkAndSendUsageAlerts
    */
   describe('recordUsage', () => {
@@ -411,4 +415,3 @@ describe('CostControlService - Alert Methods', () => {
     });
   });
 });
-

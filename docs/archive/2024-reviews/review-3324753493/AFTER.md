@@ -10,11 +10,13 @@
 ### 1. MAJOR: Guardian Coverage Fixed (docs/sync-reports/pr-515-sync.md)
 
 **Line 70 - BEFORE:**
+
 ```markdown
 **Coverage:** 80% (estimated, pending actual test coverage run)
 ```
 
 **Line 70 - AFTER:**
+
 ```markdown
 **Coverage:** 50% (auto-validated from test coverage)
 ```
@@ -22,11 +24,13 @@
 ---
 
 **Line 187 - BEFORE:**
+
 ```markdown
 - Note: Guardian coverage set to 80% (estimated based on 14 unit tests)
 ```
 
 **Line 187 - AFTER:**
+
 ```markdown
 - Note: Guardian coverage set to 50% (auto-validated from actual test coverage)
 ```
@@ -38,11 +42,13 @@
 ### 2. CAUTION: Validation Report Metrics Updated (docs/system-validation.md)
 
 **Line 74 - BEFORE:**
+
 ```markdown
 | guardian | 🟢 5 | healthy | N/A | 0d ago | Increase test coverage to 80%+ (currently 50%) |
 ```
 
 **Line 74 - AFTER:**
+
 ```markdown
 | guardian | 🟢 5 | healthy | 90 | 0d ago | Increase test coverage to 80%+ (currently 50%) |
 ```
@@ -52,11 +58,13 @@
 ---
 
 **Line 83 - BEFORE:**
+
 ```markdown
 | roast | 🟢 0 | healthy | 100 | 1d ago | - |
 ```
 
 **Line 83 - AFTER:**
+
 ```markdown
 | roast | 🟢 0 | healthy | 100 | 0d ago | - |
 ```
@@ -68,6 +76,7 @@
 ## Verification Results
 
 ### Coverage Consistency Check
+
 ```bash
 $ grep -i "guardian.*coverage" docs/sync-reports/pr-515-sync.md
 - Note: Guardian coverage set to 50% (auto-validated from actual test coverage)
@@ -77,6 +86,7 @@ $ grep -i "guardian.*80" docs/sync-reports/pr-515-sync.md
 ```
 
 ### Validation Report Accuracy
+
 ```bash
 $ grep -A2 "guardian" docs/system-validation.md | grep "health_score"
 | guardian | 🟢 5 | healthy | 90 | 0d ago | ...
@@ -88,6 +98,7 @@ $ grep -A2 "roast" docs/system-validation.md | grep "last_commit"
 ```
 
 ### Cross-Reference Validation
+
 ```bash
 $ grep "guardian" gdd-health.json | grep -E "coverage|health_score"
 "coverage": "50",
@@ -104,6 +115,7 @@ $ grep "roast" gdd-drift.json | grep "last_commit"
 ## Markdownlint Results
 
 **AFTER fixes:**
+
 ```
 Summary: 41 error(s)
 - MD013 (line-length): 30 errors (expected - long data tables)
@@ -121,6 +133,7 @@ NO MD036 (emphasis-as-heading) errors ✅
 ## Data Consistency Achieved
 
 ### Guardian Coverage: 100% Consistent
+
 - ✅ `docs/nodes/guardian.md`: 50%
 - ✅ `gdd-health.json`: 50
 - ✅ `gdd-drift.json`: "50"
@@ -128,11 +141,13 @@ NO MD036 (emphasis-as-heading) errors ✅
 - ✅ `docs/sync-reports/pr-515-sync.md`: 50% ← **FIXED**
 
 ### Guardian Health Score: 100% Consistent
+
 - ✅ `gdd-health.json`: 90
 - ✅ `docs/system-health.md`: 90
 - ✅ `docs/system-validation.md`: 90 ← **FIXED**
 
 ### Roast Last Commit: 100% Consistent
+
 - ✅ `gdd-drift.json`: 0 days ago
 - ✅ `docs/drift-report.md`: 0d ago
 - ✅ `docs/system-validation.md`: 0d ago ← **FIXED**
@@ -142,12 +157,16 @@ NO MD036 (emphasis-as-heading) errors ✅
 ## Files Modified
 
 ### 1. docs/sync-reports/pr-515-sync.md
+
 **Changes:** 2 lines modified
+
 - Line 70: Coverage 80% → 50%
 - Line 187: Coverage 80% → 50%
 
 ### 2. docs/system-validation.md
+
 **Changes:** 2 lines modified
+
 - Line 74: Guardian health_score N/A → 90
 - Line 83: Roast last_commit 1d ago → 0d ago
 

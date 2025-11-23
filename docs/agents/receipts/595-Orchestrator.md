@@ -7,6 +7,7 @@
 ## Trigger
 
 **Why this agent was invoked:**
+
 - [x] Label match: N/A (no PR yet)
 - [x] Diff match: Multi-area changes (agents/, docs/, scripts/, .github/, CLAUDE.md)
 - [x] Condition: AC ≥3 (8 acceptance criteria), multi-area refactor
@@ -51,6 +52,7 @@
    - Created audit to explain gap before demonstrating solution
 
 **Artifacts produced:**
+
 - `agents/manifest.yaml` - Canonical agent definitions (9 agents)
 - `docs/agents/INVENTORY.md` - Quick reference table
 - `docs/agents/receipts/_TEMPLATE.md` - Normal receipt template
@@ -65,6 +67,7 @@
 ## Guardrails Verified
 
 **Checklist of guardrails from agents/manifest.yaml:**
+
 - [x] Never loaded spec.md completely (used Explore concept, but didn't load spec.md)
 - [x] Never exposed secrets or .env variable names
 - [x] Performed FASE 0 assessment (user provided clear prompt with 8 AC)
@@ -89,6 +92,7 @@ Implemented complete agent invocation and enforcement system:
 8. **Demonstration** - Generated receipts for current work
 
 **Metrics:**
+
 - Files created: 10
 - Files modified: 2 (CLAUDE.md, package.json)
 - Lines added: ~2,500+
@@ -98,12 +102,14 @@ Implemented complete agent invocation and enforcement system:
 - Todo tasks: 8/8 completed
 
 **Follow-up Actions:**
+
 - [x] Test CI script locally
 - [ ] Push changes and verify GitHub Action runs
 - [ ] Monitor first enforcement on next PR
 - [ ] Update audit if any issues found
 
 **Agent Output:**
+
 ```bash
 # System now operational:
 ✅ agents/manifest.yaml - 9 agents defined

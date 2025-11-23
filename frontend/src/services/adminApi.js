@@ -1,7 +1,7 @@
 /**
  * Admin API Service
  * Issue #294: Kill Switch global y panel de control de feature flags para administradores
- * 
+ *
  * Handles all admin-related API calls including feature flags and kill switch
  */
 
@@ -21,7 +21,10 @@ class AdminApiService {
    * Update a specific feature flag
    */
   async updateFeatureFlag(flagKey, updates) {
-    const response = await apiClient.put(`/admin/feature-flags/${encodeURIComponent(flagKey)}`, updates);
+    const response = await apiClient.put(
+      `/admin/feature-flags/${encodeURIComponent(flagKey)}`,
+      updates
+    );
     return response.data;
   }
 
@@ -110,9 +113,12 @@ class AdminApiService {
    * Get feature flag usage analytics
    */
   async getFeatureFlagAnalytics(flagKey, timeRange = '7d') {
-    const response = await apiClient.get(`/admin/feature-flags/${encodeURIComponent(flagKey)}/analytics`, {
-      params: { timeRange }
-    });
+    const response = await apiClient.get(
+      `/admin/feature-flags/${encodeURIComponent(flagKey)}/analytics`,
+      {
+        params: { timeRange }
+      }
+    );
     return response.data;
   }
 
@@ -140,9 +146,12 @@ class AdminApiService {
    * Test feature flag configuration
    */
   async testFeatureFlag(flagKey, testValue) {
-    const response = await apiClient.post(`/admin/feature-flags/${encodeURIComponent(flagKey)}/test`, {
-      test_value: testValue
-    });
+    const response = await apiClient.post(
+      `/admin/feature-flags/${encodeURIComponent(flagKey)}/test`,
+      {
+        test_value: testValue
+      }
+    );
     return response.data;
   }
 
@@ -150,7 +159,9 @@ class AdminApiService {
    * Get feature flag dependencies
    */
   async getFeatureFlagDependencies(flagKey) {
-    const response = await apiClient.get(`/admin/feature-flags/${encodeURIComponent(flagKey)}/dependencies`);
+    const response = await apiClient.get(
+      `/admin/feature-flags/${encodeURIComponent(flagKey)}/dependencies`
+    );
     return response.data;
   }
 
@@ -158,11 +169,14 @@ class AdminApiService {
    * Schedule feature flag toggle
    */
   async scheduleFeatureFlagToggle(flagKey, scheduledTime, enabled, reason = null) {
-    const response = await apiClient.post(`/admin/feature-flags/${encodeURIComponent(flagKey)}/schedule`, {
-      scheduled_time: scheduledTime,
-      enabled,
-      reason
-    });
+    const response = await apiClient.post(
+      `/admin/feature-flags/${encodeURIComponent(flagKey)}/schedule`,
+      {
+        scheduled_time: scheduledTime,
+        enabled,
+        reason
+      }
+    );
     return response.data;
   }
 
@@ -178,7 +192,9 @@ class AdminApiService {
    * Cancel scheduled feature flag change
    */
   async cancelScheduledChange(scheduleId) {
-    const response = await apiClient.delete(`/admin/feature-flags/scheduled/${encodeURIComponent(scheduleId)}`);
+    const response = await apiClient.delete(
+      `/admin/feature-flags/scheduled/${encodeURIComponent(scheduleId)}`
+    );
     return response.data;
   }
 
@@ -194,7 +210,9 @@ class AdminApiService {
    * Acknowledge system alert
    */
   async acknowledgeAlert(alertId) {
-    const response = await apiClient.post(`/admin/system-alerts/${encodeURIComponent(alertId)}/acknowledge`);
+    const response = await apiClient.post(
+      `/admin/system-alerts/${encodeURIComponent(alertId)}/acknowledge`
+    );
     return response.data;
   }
 
@@ -220,7 +238,9 @@ class AdminApiService {
    * Get feature flag rollout status
    */
   async getFeatureFlagRollout(flagKey) {
-    const response = await apiClient.get(`/admin/feature-flags/${encodeURIComponent(flagKey)}/rollout`);
+    const response = await apiClient.get(
+      `/admin/feature-flags/${encodeURIComponent(flagKey)}/rollout`
+    );
     return response.data;
   }
 
@@ -228,10 +248,13 @@ class AdminApiService {
    * Update feature flag rollout percentage
    */
   async updateFeatureFlagRollout(flagKey, percentage, targetGroups = []) {
-    const response = await apiClient.put(`/admin/feature-flags/${encodeURIComponent(flagKey)}/rollout`, {
-      percentage,
-      target_groups: targetGroups
-    });
+    const response = await apiClient.put(
+      `/admin/feature-flags/${encodeURIComponent(flagKey)}/rollout`,
+      {
+        percentage,
+        target_groups: targetGroups
+      }
+    );
     return response.data;
   }
 
@@ -285,9 +308,12 @@ class AdminApiService {
    * Update platform-specific autopost settings
    */
   async updatePlatformAutopostSettings(platform, enabled) {
-    const response = await apiClient.put(`/admin/platform-autopost/${encodeURIComponent(platform)}`, {
-      enabled
-    });
+    const response = await apiClient.put(
+      `/admin/platform-autopost/${encodeURIComponent(platform)}`,
+      {
+        enabled
+      }
+    );
     return response.data;
   }
 

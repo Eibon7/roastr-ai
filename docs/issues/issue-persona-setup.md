@@ -16,6 +16,7 @@
 3. **"Lo que me da igual"** - Neutralidad (ej: "Me da igual el fútbol")
 
 **¿Para qué sirve?**
+
 - El motor de roast generation usa estos datos para **personalizar respuestas** según la personalidad del usuario
 - Genera **embeddings semánticos** con OpenAI para matching inteligente
 - Permite roasts más **contextualizados y relevantes**
@@ -23,17 +24,20 @@
 **Importancia:** Sin Persona, los roasts son genéricos. Con Persona, son personalizados y reflejan la voz del usuario.
 
 **Seguridad:**
+
 - Datos **encriptados en DB** con AES-256-GCM (IV único por campo)
 - Solo el usuario puede acceder a su persona (RLS policies)
 - Embeddings NO revelan contenido original
 
 **Tecnologías clave:**
+
 - AES-256-GCM encryption (crypto module Node.js)
 - OpenAI `text-embedding-3-small` (1536 dimensiones)
 - pgvector para búsqueda semántica (opcional)
 - Plan-based access control
 
 **Business Logic:**
+
 - Free: Sin acceso (0 campos)
 - Starter: 2 campos (identity + intolerance)
 - Pro/Plus: 3 campos completos
@@ -49,6 +53,7 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
 3. **"Lo que me da igual"** - Neutralidad, indiferencia
 
 **Features clave:**
+
 - Encriptación AES-256-GCM para campos sensibles
 - Generación de embeddings con OpenAI `text-embedding-3-small` (1536 dimensiones)
 - Access control basado en plan:
@@ -57,6 +62,7 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
   - Pro/Plus: 3 campos completos
 
 **Estado actual:**
+
 - ✅ Tabla `user_personas` existe en schema (según assessment)
 - ✅ Columnas con encriptación definidas
 - ❌ `PersonaService.js` no existe
@@ -80,6 +86,7 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
   - [ ] `decryptField(ciphertext)` → AES-256-GCM decryption
 
   **Configuración de encriptación:**
+
   ```javascript
   const crypto = require('crypto');
   const ENCRYPTION_KEY = Buffer.from(process.env.PERSONA_ENCRYPTION_KEY, 'hex'); // 32 bytes
@@ -91,10 +98,7 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
     const iv = crypto.randomBytes(16); // IV único por campo
     const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
 
-    const encrypted = Buffer.concat([
-      cipher.update(plaintext, 'utf8'),
-      cipher.final()
-    ]);
+    const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
 
     const tag = cipher.getAuthTag(); // 16 bytes de auth tag
 
@@ -115,16 +119,14 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
     const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
     decipher.setAuthTag(tag);
 
-    const decrypted = Buffer.concat([
-      decipher.update(encrypted),
-      decipher.final()
-    ]);
+    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 
     return decrypted.toString('utf8');
   }
   ```
 
 - [ ] **Implementar embedding generation**
+
   ```javascript
   const OpenAI = require('openai');
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -150,11 +152,12 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
   ```
 
 - [ ] **Implementar plan-based access control**
+
   ```javascript
   const PLAN_LIMITS = {
     free: { fields: 0, maxCharsPerField: 0 },
     starter: { fields: 2, maxCharsPerField: 500 }, // identity + intolerance
-    pro: { fields: 3, maxCharsPerField: 1000 },    // all 3 fields
+    pro: { fields: 3, maxCharsPerField: 1000 }, // all 3 fields
     plus: { fields: 3, maxCharsPerField: 1000 }
   };
 
@@ -183,11 +186,13 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
 ### 2. Backend: Database Schema Verification
 
 - [ ] **Verificar tabla `user_personas` existe**
+
   ```bash
   node scripts/verify-supabase-tables.js
   ```
 
 - [ ] **Si NO existe, crear tabla:**
+
   ```sql
   CREATE TABLE user_personas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -274,6 +279,7 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
   - [ ] Prevenir submit si excede límites
 
 - [ ] **Implementar función `savePersona()`**
+
   ```javascript
   async function savePersona(identity, intolerance, tolerance) {
     setLoading(true);
@@ -282,7 +288,7 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
       const response = await fetch('/api/persona', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ identity, intolerance, tolerance })
@@ -307,26 +313,26 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
 ### 5. Integration con Roast Generation
 
 - [ ] **Actualizar `RoastGeneratorEnhanced.js`** (o servicio equivalente)
-
   - [ ] Cargar persona del usuario antes de generar roast
   - [ ] Inyectar campos persona en prompt template
   - [ ] Usar embeddings para matching semántico (opcional, Phase 2)
 
   **Ejemplo de inyección en prompt:**
+
   ```javascript
   async function generateRoast(userId, comment) {
     const persona = await PersonaService.getPersona(userId);
 
     const promptWithPersona = `
     Tu tarea es generar un roast personalizado.
-
+  
     CONTEXTO DEL USUARIO:
     - Lo que le define: ${persona.identity || 'No especificado'}
     - Lo que NO tolera: ${persona.intolerance || 'No especificado'}
     - Lo que le da igual: ${persona.tolerance || 'No especificado'}
-
+  
     COMENTARIO A ROASTEAR: ${comment}
-
+  
     Genera un roast que refleje la personalidad del usuario...
     `;
 
@@ -395,10 +401,12 @@ Implementar sistema de configuración de Persona con 3 campos encriptados que al
 ## 🔗 Dependencias
 
 **Bloqueantes (debe resolverse antes):**
+
 - ✅ Issue Login & Registration (requiere auth)
 - ✅ Issue Payment (Polar) (requiere plan para access control)
 
 **Desbloqueadas por esta issue:**
+
 - Issue Roasting Control (personalización basada en persona)
 - Issue Global State (incluye `persona` en estado global)
 
@@ -423,34 +431,38 @@ Esta issue se considera **100% completa** cuando:
 
 ## 📊 Métricas de Éxito
 
-| Métrica | Valor Actual | Objetivo | Estado |
-|---------|--------------|----------|--------|
-| Tests pasando | N/A | 100% | ⏳ Pendiente |
-| Cobertura persona module | 70% | ≥90% | ⏳ Pendiente |
-| Tiempo de implementación | 0h | ≤10h | ⏳ Pendiente |
-| Encriptación funcionando | ❌ | ✅ | ⏳ Pendiente |
+| Métrica                  | Valor Actual | Objetivo | Estado       |
+| ------------------------ | ------------ | -------- | ------------ |
+| Tests pasando            | N/A          | 100%     | ⏳ Pendiente |
+| Cobertura persona module | 70%          | ≥90%     | ⏳ Pendiente |
+| Tiempo de implementación | 0h           | ≤10h     | ⏳ Pendiente |
+| Encriptación funcionando | ❌           | ✅       | ⏳ Pendiente |
 
 ---
 
 ## 📝 Notas de Implementación
 
 **Seguridad:**
+
 - `PERSONA_ENCRYPTION_KEY` debe ser 32 bytes (256 bits) en hex
 - NUNCA loggear campos desencriptados
 - Usar IV único por campo (NO reutilizar)
 - Auth tag GCM previene tampering
 
 **Performance:**
+
 - Embeddings generation: ~200ms por campo (no bloqueante)
 - Cachear embeddings (solo regenerar si texto cambia)
 - Índice ivfflat para búsquedas rápidas (si se implementa similarity search)
 
 **GDPR:**
+
 - `DELETE /api/persona` debe eliminar completamente
 - Logging de eliminaciones (audit trail)
 - Usuario puede exportar datos (incluir en data export endpoint)
 
 **UX:**
+
 - Mostrar tooltip explicando cada campo
 - Ejemplos de placeholder: "Soy apasionado por la tecnología..."
 - Guardar automático cada 30 segundos (draft mode, opcional)

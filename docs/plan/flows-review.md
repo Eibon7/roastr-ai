@@ -20,14 +20,14 @@ Según el assessment completo (`docs/assessment/flows-review.md`):
 
 ### Completitud por Flujo
 
-| Flujo | Completitud | Estado | Prioridad |
-|-------|-------------|--------|-----------|
-| Login/Registro | 80% | 🟢 Funcional, needs docs | P2 |
-| Payment (Polar) | 30% | 🔴 Missing integration | P0 |
-| Persona Setup | 50% | 🟡 Partial implementation | P1 |
-| Roasting Control | 60% | 🟡 Architecture exists, no endpoints | P1 |
-| Level Configuration | 20% | 🔴 Conceptually defined only | P1 |
-| Global State Schema | 0% | 🔴 Undocumented | P2 |
+| Flujo               | Completitud | Estado                               | Prioridad |
+| ------------------- | ----------- | ------------------------------------ | --------- |
+| Login/Registro      | 80%         | 🟢 Funcional, needs docs             | P2        |
+| Payment (Polar)     | 30%         | 🔴 Missing integration               | P0        |
+| Persona Setup       | 50%         | 🟡 Partial implementation            | P1        |
+| Roasting Control    | 60%         | 🟡 Architecture exists, no endpoints | P1        |
+| Level Configuration | 20%         | 🔴 Conceptually defined only         | P1        |
+| Global State Schema | 0%          | 🔴 Undocumented                      | P2        |
 
 ### Gaps Críticos
 
@@ -167,6 +167,7 @@ guardian (shield levels)
 **Current State:** Sistema usa Stripe en código pero Polar está en business model
 **Decision:** Migrar de Stripe → Polar como Merchant of Record (MoR)
 **Why Polar:**
+
 - MoR simplifica compliance (EU VAT, US sales tax)
 - Unified billing para suscripciones + one-time purchases
 - Better developer experience con modern API
@@ -443,6 +444,7 @@ describe('Polar Payment Integration', () => {
    - Plus: Access to all 3 fields + custom style prompt (admin-configured)
 
 5. **API Endpoints**
+
    ```javascript
    // Get persona
    router.get('/api/persona', async (req, res) => {
@@ -544,6 +546,7 @@ describe('Polar Payment Integration', () => {
    - Plus: Full customization + custom thresholds
 
 5. **API Endpoints**
+
    ```javascript
    // Get config
    router.get('/api/levels', async (req, res) => {
@@ -674,6 +677,7 @@ describe('Level Config Service', () => {
 ##### 4.1 Roasting Control Endpoint
 
 1. **API Implementation**
+
    ```javascript
    // Enable/disable roasting
    router.post('/api/roasting/toggle', async (req, res) => {
@@ -719,6 +723,7 @@ describe('Level Config Service', () => {
    - Workers subscribe to channel and update in-memory cache
 
 3. **State Propagation Flow**
+
    ```
    UI Toggle (Enable/Disable)
        ↓
@@ -747,6 +752,7 @@ describe('Level Config Service', () => {
 1. **State Schema Definition**
    - Create `docs/flows/global-state.md`
    - Define complete state tree:
+
      ```typescript
      interface GlobalUserState {
        // Authentication
@@ -857,10 +863,7 @@ describe('Roasting Control', () => {
 
   test('GenerateReplyWorker skips disabled users', async () => {
     // Disable roasting
-    await supabase
-      .from('users')
-      .update({ roasting_enabled: false })
-      .eq('id', testUser.id);
+    await supabase.from('users').update({ roasting_enabled: false }).eq('id', testUser.id);
 
     // Create job for disabled user
     const job = await queueService.add('generate_reply', {
@@ -947,6 +950,7 @@ describe('Roasting Control', () => {
 ### Archivos a Crear
 
 #### Documentación (Fase 1)
+
 1. `docs/flows/login-registration.md` - Login/registration flow diagram + docs
 2. `docs/flows/payment-polar.md` - Polar integration flow diagram + docs
 3. `docs/flows/persona-setup.md` - Persona setup wizard flow diagram + docs
@@ -955,16 +959,19 @@ describe('Roasting Control', () => {
 6. `docs/flows/global-state.md` - Global state schema + sync mechanisms
 
 #### Services (Fase 2-3)
+
 7. `src/services/polarService.js` - Polar API client
 8. `src/webhooks/polarWebhooks.js` - Polar webhook handlers
 9. `src/services/personaService.js` - Persona management (encryption, embeddings)
 10. `src/services/levelConfigService.js` - Level configuration management
 
 #### Database Migrations (Fase 2-3)
+
 11. `database/migrations/add_polar_subscriptions.sql` - Polar subscription tables
 12. `database/migrations/add_roast_config.sql` - User roast config table
 
 #### Tests (Fase 5)
+
 13. `tests/unit/services/polarService.test.js` - Unit tests for Polar service
 14. `tests/unit/services/personaService.test.js` - Unit tests for Persona service
 15. `tests/unit/services/levelConfigService.test.js` - Unit tests for Level Config service
@@ -981,20 +988,24 @@ describe('Roasting Control', () => {
 ### Archivos a Modificar
 
 #### Nodos GDD (Fase 5)
+
 1. `docs/nodes/billing.md` - Update with Polar integration details
 2. `docs/nodes/persona.md` - Update with service endpoints + API
 3. `docs/nodes/roast.md` - Update with control endpoints + level config
 4. `docs/nodes/multi-tenant.md` - Update with session management docs
 
 #### Services (Fase 2-4)
+
 5. `src/services/costControl.js` - Connect to Polar subscription state
 6. `src/services/roastEngine.js` - Integrate level config
 7. `src/services/workerNotificationService.js` - Add roasting toggle notification
 
 #### API Routes (Fase 2-4)
+
 8. `src/index.js` - Add new endpoints for Polar, Persona, Levels, Roasting Control
 
 #### Configuration (Fase 2)
+
 9. `.env.example` - Add Polar API keys + Persona encryption key
 
 ---
@@ -1016,14 +1027,14 @@ describe('Roasting Control', () => {
 
 ## Riesgos y Mitigación
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|--------------|---------|------------|
-| Polar API breaking changes | Baja | Alto | Pin API version, monitor changelog |
-| Embedding generation failures | Media | Medio | Retry logic + fallback (skip embeddings) |
-| State sync conflicts | Media | Medio | Implement conflict resolution UI |
-| Performance degradation (encryption) | Baja | Medio | Cache decrypted values, use worker threads |
-| Plan restriction bypasses | Baja | Alto | Server-side validation on ALL endpoints |
-| Trial period edge cases | Media | Bajo | Comprehensive E2E tests for trial expiration |
+| Riesgo                               | Probabilidad | Impacto | Mitigación                                   |
+| ------------------------------------ | ------------ | ------- | -------------------------------------------- |
+| Polar API breaking changes           | Baja         | Alto    | Pin API version, monitor changelog           |
+| Embedding generation failures        | Media        | Medio   | Retry logic + fallback (skip embeddings)     |
+| State sync conflicts                 | Media        | Medio   | Implement conflict resolution UI             |
+| Performance degradation (encryption) | Baja         | Medio   | Cache decrypted values, use worker threads   |
+| Plan restriction bypasses            | Baja         | Alto    | Server-side validation on ALL endpoints      |
+| Trial period edge cases              | Media        | Bajo    | Comprehensive E2E tests for trial expiration |
 
 ---
 
@@ -1032,26 +1043,31 @@ describe('Roasting Control', () => {
 ### Por Fase
 
 **Fase 1 (Documentation):**
+
 - **Documentation Agent** - Lead (crear diagramas + contenido)
 - **Orchestrator** - Coordinación y validación
 
 **Fase 2 (Polar Integration):**
+
 - **Backend Developer** - Lead (implementation)
 - **Test Engineer** - Integration tests
 - **Documentation Agent** - API docs
 
 **Fase 3 (Persona + Levels):**
+
 - **Backend Developer** - Lead (implementation)
 - **Test Engineer** - Unit + integration tests
 - **UX Designer** - UI mockups
 - **Documentation Agent** - API docs + user guide
 
 **Fase 4 (Control + State):**
+
 - **Backend Developer** - Lead (implementation)
 - **Front-end Dev** - State management UI
 - **Documentation Agent** - State schema docs
 
 **Fase 5 (Testing + Validation):**
+
 - **Test Engineer** - Lead (execute all tests)
 - **Orchestrator** - Coordinate GDD validation
 - **Documentation Agent** - Update node coverage
@@ -1061,6 +1077,7 @@ describe('Roasting Control', () => {
 ## Criterios de Éxito Global
 
 ### Must Have
+
 - ✅ All 6 flows documented with diagrams
 - ✅ Polar integration functional (checkout, webhooks, sync)
 - ✅ Persona service operational (3 fields + encryption + embeddings)
@@ -1073,12 +1090,14 @@ describe('Roasting Control', () => {
 - ✅ Guardian scan SAFE/SENSITIVE
 
 ### Should Have
+
 - ✅ E2E tests for critical flows (login, payment, persona)
 - ✅ Conflict resolution strategy documented
 - ✅ Plan-based restrictions enforced
 - ✅ UI mockups for key flows
 
 ### Nice to Have
+
 - ⏳ Real-time state sync with WebSockets
 - ⏳ Performance benchmarks for encryption/embeddings
 - ⏳ User journey analytics hooks
@@ -1088,13 +1107,13 @@ describe('Roasting Control', () => {
 
 ## Timeline Estimado
 
-| Fase | Duración | Bloqueante | Dependencias |
-|------|----------|------------|--------------|
-| Fase 1: Documentation | 4-6 horas | No | None |
-| Fase 2: Polar Integration | 8-12 horas | **SÍ (P0)** | Fase 1 completa |
-| Fase 3: Persona + Levels | 8-12 horas | No | Fase 1 completa |
-| Fase 4: Control + State | 6-8 horas | No | Fase 2-3 completas |
-| Fase 5: Testing + Validation | 4-6 horas | **SÍ (Quality Gate)** | Todas las fases completas |
+| Fase                         | Duración   | Bloqueante            | Dependencias              |
+| ---------------------------- | ---------- | --------------------- | ------------------------- |
+| Fase 1: Documentation        | 4-6 horas  | No                    | None                      |
+| Fase 2: Polar Integration    | 8-12 horas | **SÍ (P0)**           | Fase 1 completa           |
+| Fase 3: Persona + Levels     | 8-12 horas | No                    | Fase 1 completa           |
+| Fase 4: Control + State      | 6-8 horas  | No                    | Fase 2-3 completas        |
+| Fase 5: Testing + Validation | 4-6 horas  | **SÍ (Quality Gate)** | Todas las fases completas |
 
 **Total:** 30-44 horas (~3.75-5.5 días de trabajo efectivo)
 

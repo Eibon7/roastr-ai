@@ -15,14 +15,14 @@ jest.mock('../../../frontend/src/components/TransparencySettings', () => {
 // Mock clipboard API
 Object.assign(navigator, {
   clipboard: {
-    writeText: jest.fn(() => Promise.resolve()),
-  },
+    writeText: jest.fn(() => Promise.resolve())
+  }
 });
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -30,8 +30,8 @@ Object.defineProperty(window, 'matchMedia', {
     removeListener: jest.fn(),
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
+    dispatchEvent: jest.fn()
+  }))
 });
 
 describe('AjustesSettings Component', () => {
@@ -65,7 +65,12 @@ describe('AjustesSettings Component', () => {
         options: [
           { value: 'light', label: 'Claro', description: 'Tema claro siempre activo' },
           { value: 'dark', label: 'Oscuro', description: 'Tema oscuro siempre activo' },
-          { value: 'system', label: 'Sistema', description: 'Sigue la configuración del sistema', isDefault: true }
+          {
+            value: 'system',
+            label: 'Sistema',
+            description: 'Sigue la configuración del sistema',
+            isDefault: true
+          }
         ]
       }
     },
@@ -80,7 +85,7 @@ describe('AjustesSettings Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     apiClient.get.mockImplementation((url) => {
       switch (url) {
         case '/user/roastr-persona':
@@ -186,7 +191,9 @@ describe('AjustesSettings Component', () => {
     fireEvent.click(screen.getByText('Copiar'));
 
     await waitFor(() => {
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('🤖 Algunas respuestas pueden ser generadas por IA');
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        '🤖 Algunas respuestas pueden ser generadas por IA'
+      );
       expect(mockOnNotification).toHaveBeenCalledWith('Texto copiado al portapapeles', 'success');
     });
   });
@@ -194,7 +201,9 @@ describe('AjustesSettings Component', () => {
   it('should show permission error when clipboard write is not allowed', async () => {
     // Make writeText reject with NotAllowedError
     const originalWriteText = navigator.clipboard.writeText;
-    navigator.clipboard.writeText = jest.fn().mockRejectedValue(Object.assign(new Error('NotAllowedError'), { name: 'NotAllowedError' }));
+    navigator.clipboard.writeText = jest
+      .fn()
+      .mockRejectedValue(Object.assign(new Error('NotAllowedError'), { name: 'NotAllowedError' }));
 
     render(<AjustesSettings user={mockUser} onNotification={mockOnNotification} />);
 
@@ -206,7 +215,10 @@ describe('AjustesSettings Component', () => {
 
     await waitFor(() => {
       expect(navigator.clipboard.writeText).toHaveBeenCalled();
-      expect(mockOnNotification).toHaveBeenCalledWith(expect.stringContaining('Permisos de portapapeles denegados'), 'error');
+      expect(mockOnNotification).toHaveBeenCalledWith(
+        expect.stringContaining('Permisos de portapapeles denegados'),
+        'error'
+      );
     });
 
     // Restore original
@@ -227,7 +239,10 @@ describe('AjustesSettings Component', () => {
 
     await waitFor(() => {
       expect(navigator.clipboard.writeText).toHaveBeenCalled();
-      expect(mockOnNotification).toHaveBeenCalledWith(expect.stringContaining('Error al copiar'), 'error');
+      expect(mockOnNotification).toHaveBeenCalledWith(
+        expect.stringContaining('Error al copiar'),
+        'error'
+      );
     });
 
     navigator.clipboard.writeText = originalWriteText;
@@ -345,7 +360,7 @@ describe('AjustesSettings Component', () => {
 
   it('should disable theme options while saving', async () => {
     // Mock a slow API response
-    apiClient.patch.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
+    apiClient.patch.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 1000)));
 
     render(<AjustesSettings user={mockUser} onNotification={mockOnNotification} />);
 
@@ -358,7 +373,7 @@ describe('AjustesSettings Component', () => {
 
     // Should disable all theme options
     const themeOptions = screen.getAllByText(/Claro|Oscuro|Sistema/);
-    themeOptions.forEach(option => {
+    themeOptions.forEach((option) => {
       expect(option.closest('div')).toHaveClass('opacity-50', 'cursor-not-allowed');
     });
   });

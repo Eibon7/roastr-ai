@@ -58,8 +58,8 @@ describe('Backoffice Settings API Routes', () => {
         id: 'global-1',
         scope: 'global',
         tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90,
+        tau_shield: 0.7,
+        tau_critical: 0.9,
         aggressiveness: 95,
         created_at: '2025-01-24T10:00:00Z',
         updated_at: '2025-01-24T10:00:00Z'
@@ -76,9 +76,7 @@ describe('Backoffice Settings API Routes', () => {
         })
       });
 
-      const response = await request(app)
-        .get('/api/admin/backoffice/thresholds')
-        .expect(200);
+      const response = await request(app).get('/api/admin/backoffice/thresholds').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.thresholds).toEqual(mockThresholds);
@@ -98,14 +96,12 @@ describe('Backoffice Settings API Routes', () => {
         })
       });
 
-      const response = await request(app)
-        .get('/api/admin/backoffice/thresholds')
-        .expect(200);
+      const response = await request(app).get('/api/admin/backoffice/thresholds').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.thresholds.tau_roast_lower).toBe(0.25);
-      expect(response.body.data.thresholds.tau_shield).toBe(0.70);
-      expect(response.body.data.thresholds.tau_critical).toBe(0.90);
+      expect(response.body.data.thresholds.tau_shield).toBe(0.7);
+      expect(response.body.data.thresholds.tau_critical).toBe(0.9);
       expect(response.body.data.thresholds.aggressiveness).toBe(95);
     });
 
@@ -121,9 +117,7 @@ describe('Backoffice Settings API Routes', () => {
         })
       });
 
-      const response = await request(app)
-        .get('/api/admin/backoffice/thresholds')
-        .expect(500);
+      const response = await request(app).get('/api/admin/backoffice/thresholds').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to retrieve global thresholds');
@@ -133,7 +127,7 @@ describe('Backoffice Settings API Routes', () => {
   describe('PUT /api/admin/backoffice/thresholds', () => {
     it('should update global thresholds successfully', async () => {
       const newThresholds = {
-        tau_roast_lower: 0.20,
+        tau_roast_lower: 0.2,
         tau_shield: 0.65,
         tau_critical: 0.85,
         aggressiveness: 98
@@ -156,8 +150,8 @@ describe('Backoffice Settings API Routes', () => {
                 single: jest.fn().mockResolvedValue({
                   data: {
                     tau_roast_lower: 0.25,
-                    tau_shield: 0.70,
-                    tau_critical: 0.90,
+                    tau_shield: 0.7,
+                    tau_critical: 0.9,
                     aggressiveness: 95
                   },
                   error: null
@@ -197,8 +191,8 @@ describe('Backoffice Settings API Routes', () => {
     it('should validate threshold values', async () => {
       const invalidThresholds = {
         tau_roast_lower: 1.5, // Invalid: > 1
-        tau_shield: 0.70,
-        tau_critical: 0.90,
+        tau_shield: 0.7,
+        tau_critical: 0.9,
         aggressiveness: 95
       };
 
@@ -213,9 +207,9 @@ describe('Backoffice Settings API Routes', () => {
 
     it('should validate threshold hierarchy', async () => {
       const invalidHierarchy = {
-        tau_roast_lower: 0.80, // Invalid: >= tau_shield
-        tau_shield: 0.70,
-        tau_critical: 0.90,
+        tau_roast_lower: 0.8, // Invalid: >= tau_shield
+        tau_shield: 0.7,
+        tau_critical: 0.9,
         aggressiveness: 95
       };
 
@@ -231,8 +225,8 @@ describe('Backoffice Settings API Routes', () => {
     it('should validate aggressiveness levels', async () => {
       const invalidAggressiveness = {
         tau_roast_lower: 0.25,
-        tau_shield: 0.70,
-        tau_critical: 0.90,
+        tau_shield: 0.7,
+        tau_critical: 0.9,
         aggressiveness: 85 // Invalid: not in [90, 95, 98, 100]
       };
 
@@ -335,10 +329,10 @@ describe('Backoffice Settings API Routes', () => {
     });
 
     it('should handle API failures', async () => {
-      global.fetch.mockResolvedValueOnce({ 
-        ok: false, 
-        status: 401, 
-        statusText: 'Unauthorized' 
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized'
       });
 
       process.env.TWITTER_BEARER_TOKEN = 'invalid-token';
@@ -391,7 +385,9 @@ describe('Backoffice Settings API Routes', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.results.twitter.status).toBe('FAIL');
-      expect(response.body.data.results.twitter.error).toBe('Twitter API credentials not configured');
+      expect(response.body.data.results.twitter.error).toBe(
+        'Twitter API credentials not configured'
+      );
     });
   });
 
@@ -480,12 +476,12 @@ describe('Backoffice Settings API Routes', () => {
               error: null
             })
           };
-          
+
           // Handle the chain of method calls
           mockQuery.select.mockReturnValue(mockQuery);
           mockQuery.gte.mockReturnValue(mockQuery);
           mockQuery.lte.mockReturnValue(mockQuery);
-          
+
           return mockQuery;
         }
         return {
@@ -525,11 +521,11 @@ describe('Backoffice Settings API Routes', () => {
               error: null
             })
           };
-          
+
           mockQuery.select.mockReturnValue(mockQuery);
           mockQuery.gte.mockReturnValue(mockQuery);
           mockQuery.lte.mockReturnValue(mockQuery);
-          
+
           return mockQuery;
         }
         return {

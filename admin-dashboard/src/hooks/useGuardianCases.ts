@@ -85,7 +85,7 @@ export function useGuardianCases(
     refetchInterval: options?.refetchInterval ?? 60000, // Configurable, defaults to 60s
     refetchOnWindowFocus: true, // Refetch when window gains focus
     retry: 2, // Retry failed requests twice
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000) // Exponential backoff
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000) // Exponential backoff
   });
 }
 
@@ -138,7 +138,7 @@ export function useApproveCase() {
 
           return {
             ...old,
-            cases: old.cases.map(c =>
+            cases: old.cases.map((c) =>
               c.case_id === caseId
                 ? {
                     ...c,
@@ -203,15 +203,8 @@ export function useDenyCase() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      caseId,
-      denier,
-      reason
-    }: {
-      caseId: string;
-      denier: string;
-      reason: string;
-    }) => denyCase(caseId, denier, reason),
+    mutationFn: ({ caseId, denier, reason }: { caseId: string; denier: string; reason: string }) =>
+      denyCase(caseId, denier, reason),
 
     // Optimistic update
     onMutate: async ({ caseId, denier, reason }) => {
@@ -231,7 +224,7 @@ export function useDenyCase() {
 
           return {
             ...old,
-            cases: old.cases.map(c =>
+            cases: old.cases.map((c) =>
               c.case_id === caseId
                 ? {
                     ...c,

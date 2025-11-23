@@ -37,15 +37,23 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
     includeComments: true,
     includeResponses: true
   });
-  
+
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   const exportTypes = [
     { value: 'full', label: 'Full Export', description: 'All user data and analytics' },
-    { value: 'personal_data', label: 'Personal Data Only', description: 'User profile and settings' },
+    {
+      value: 'personal_data',
+      label: 'Personal Data Only',
+      description: 'User profile and settings'
+    },
     { value: 'analytics', label: 'Analytics Data', description: 'Usage metrics and statistics' },
-    { value: 'comments', label: 'Comments & Interactions', description: 'User comments and engagement' },
+    {
+      value: 'comments',
+      label: 'Comments & Interactions',
+      description: 'User comments and engagement'
+    },
     { value: 'custom', label: 'Custom Selection', description: 'Choose specific data types' }
   ];
 
@@ -78,10 +86,11 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
 
     // Ensure at least one data type is selected for custom exports
     if (formData.exportType === 'custom') {
-      const hasSelection = formData.includePersonalData || 
-                          formData.includeAnalytics || 
-                          formData.includeComments || 
-                          formData.includeResponses;
+      const hasSelection =
+        formData.includePersonalData ||
+        formData.includeAnalytics ||
+        formData.includeComments ||
+        formData.includeResponses;
       if (!hasSelection) {
         newErrors.dataTypes = 'Select at least one data type for custom export';
       }
@@ -97,7 +106,7 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
     }
 
     setSubmitting(true);
-    
+
     try {
       const exportData = {
         organization_id: formData.organizationId,
@@ -140,18 +149,16 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts fixing it
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        Create Manual GDPR Export
-      </DialogTitle>
+      <DialogTitle>Create Manual GDPR Export</DialogTitle>
 
       <DialogContent>
         <Box sx={{ pt: 2 }}>
@@ -167,7 +174,7 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
               <Autocomplete
                 options={organizations}
                 getOptionLabel={(option) => option.name || option.id}
-                value={organizations.find(org => org.id === formData.organizationId) || null}
+                value={organizations.find((org) => org.id === formData.organizationId) || null}
                 onChange={(_, value) => handleInputChange('organizationId', value?.id || '')}
                 renderInput={(params) => (
                   <TextField
@@ -211,9 +218,7 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.exportType && (
-                  <FormHelperText>{errors.exportType}</FormHelperText>
-                )}
+                {errors.exportType && <FormHelperText>{errors.exportType}</FormHelperText>}
               </FormControl>
             </Grid>
 
@@ -237,9 +242,7 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.exportFormat && (
-                  <FormHelperText>{errors.exportFormat}</FormHelperText>
-                )}
+                {errors.exportFormat && <FormHelperText>{errors.exportFormat}</FormHelperText>}
               </FormControl>
             </Grid>
 
@@ -256,9 +259,7 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
                       value={formData.dateFrom}
                       onChange={(value) => handleInputChange('dateFrom', value)}
                       maxDate={new Date()}
-                      renderInput={(params) => (
-                        <TextField {...params} fullWidth />
-                      )}
+                      renderInput={(params) => <TextField {...params} fullWidth />}
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
@@ -267,15 +268,11 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
                       value={formData.dateTo}
                       onChange={(value) => handleInputChange('dateTo', value)}
                       maxDate={new Date()}
-                      renderInput={(params) => (
-                        <TextField {...params} fullWidth />
-                      )}
+                      renderInput={(params) => <TextField {...params} fullWidth />}
                     />
                   </Grid>
                 </Grid>
-                {errors.dateRange && (
-                  <FormHelperText error>{errors.dateRange}</FormHelperText>
-                )}
+                {errors.dateRange && <FormHelperText error>{errors.dateRange}</FormHelperText>}
               </LocalizationProvider>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                 Leave blank to export all historical data
@@ -290,10 +287,26 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
                 </Typography>
                 <Box sx={{ pl: 2 }}>
                   {[
-                    { key: 'includePersonalData', label: 'Personal Data', description: 'User profiles, settings, preferences' },
-                    { key: 'includeAnalytics', label: 'Analytics Data', description: 'Usage metrics, performance data' },
-                    { key: 'includeComments', label: 'Comments & Posts', description: 'User-generated content' },
-                    { key: 'includeResponses', label: 'AI Responses', description: 'Generated roasts and replies' }
+                    {
+                      key: 'includePersonalData',
+                      label: 'Personal Data',
+                      description: 'User profiles, settings, preferences'
+                    },
+                    {
+                      key: 'includeAnalytics',
+                      label: 'Analytics Data',
+                      description: 'Usage metrics, performance data'
+                    },
+                    {
+                      key: 'includeComments',
+                      label: 'Comments & Posts',
+                      description: 'User-generated content'
+                    },
+                    {
+                      key: 'includeResponses',
+                      label: 'AI Responses',
+                      description: 'Generated roasts and replies'
+                    }
                   ].map((option) => (
                     <Box key={option.key} sx={{ mb: 1 }}>
                       <label>
@@ -307,7 +320,12 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
                           {option.label}
                         </Typography>
                       </label>
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 3 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                        sx={{ ml: 3 }}
+                      >
                         {option.description}
                       </Typography>
                     </Box>
@@ -332,8 +350,7 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
                   • You will receive a notification when the export is complete
                   <br />
                   • Download links expire after 24 hours for security
-                  <br />
-                  • All exports are encrypted and access-logged for compliance
+                  <br />• All exports are encrypted and access-logged for compliance
                 </Typography>
               </Alert>
             </Grid>
@@ -345,11 +362,7 @@ const ManualExportForm = ({ open, onClose, onSubmit, organizations = [] }) => {
         <Button onClick={handleClose} disabled={submitting}>
           Cancel
         </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={submitting}
-        >
+        <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
           {submitting ? 'Creating Export...' : 'Create Export'}
         </Button>
       </DialogActions>

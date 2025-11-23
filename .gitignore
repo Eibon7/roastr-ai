@@ -30,7 +30,8 @@ frontend/build/
 .DS_Store
 Thumbs.db
 .idea/
-.vscode/
+# VS Code / Cursor - ignorar archivos personales pero permitir configuración compartida
+.vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
 

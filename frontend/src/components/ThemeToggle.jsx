@@ -14,13 +14,13 @@ const ThemeToggle = () => {
   useLayoutEffect(() => {
     const html = document.documentElement;
     const body = document.body;
-    
+
     // Remove existing theme classes
     html.classList.remove('light', 'dark');
     body.classList.remove('light', 'dark');
-    
+
     const currentTheme = localStorage.getItem('theme') || 'system';
-    
+
     if (currentTheme === 'system') {
       const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const finalTheme = isDark ? 'dark' : 'light';
@@ -32,21 +32,23 @@ const ThemeToggle = () => {
       html.classList.add(currentTheme);
       body.classList.add(currentTheme);
     }
-    
-    html.style.colorScheme = currentTheme === 'dark' || 
+
+    html.style.colorScheme =
+      currentTheme === 'dark' ||
       (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      ? 'dark' : 'light';
+        ? 'dark'
+        : 'light';
   }, []);
 
   useEffect(() => {
     const applyTheme = (currentTheme) => {
       const html = document.documentElement;
       const body = document.body;
-      
+
       // Remove existing theme classes
       html.classList.remove('light', 'dark');
       body.classList.remove('light', 'dark');
-      
+
       if (currentTheme === 'system') {
         const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const finalTheme = isDark ? 'dark' : 'light';
@@ -58,16 +60,18 @@ const ThemeToggle = () => {
         html.classList.add(currentTheme);
         body.classList.add(currentTheme);
       }
-      
+
       // Force a style recalculation
-      html.style.colorScheme = currentTheme === 'dark' || 
+      html.style.colorScheme =
+        currentTheme === 'dark' ||
         (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-        ? 'dark' : 'light';
+          ? 'dark'
+          : 'light';
     };
 
     // Apply theme immediately
     applyTheme(theme);
-    
+
     // Save to localStorage
     localStorage.setItem('theme', theme);
 
@@ -149,13 +153,21 @@ const ThemeToggle = () => {
       >
         {getIcon()}
         <span className="text-sm font-medium text-foreground">{getLabel()}</span>
-        <svg className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg
+          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-36 bg-card border border-border rounded-lg shadow-lg z-50" style={{zIndex: 9999}}>
+        <div
+          className="absolute right-0 mt-2 w-36 bg-card border border-border rounded-lg shadow-lg z-50"
+          style={{ zIndex: 9999 }}
+        >
           {['system', 'light', 'dark'].map((themeName) => (
             <button
               key={themeName}
@@ -169,7 +181,12 @@ const ThemeToggle = () => {
               {theme === themeName && (
                 <div className="ml-auto">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
               )}

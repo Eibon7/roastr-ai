@@ -9,6 +9,7 @@
 #### GET /api/auth/admin/users
 
 Tests:
+
 - ✓ should return users list for admin
 - ✓ should deny access to regular users
 - ✓ should require authentication
@@ -16,6 +17,7 @@ Tests:
 #### POST /api/auth/admin/users/update-plan
 
 Tests:
+
 - ✓ should update user plan for admin
 - ✓ should validate plan value
 - ✓ should require both userId and newPlan
@@ -24,7 +26,7 @@ Tests:
 #### POST /api/auth/admin/users/reset-password
 
 Tests:
+
 - ✓ should send password reset email for admin
 - ✓ should require userId
 - ✓ should deny access to regular users
-

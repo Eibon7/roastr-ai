@@ -3,214 +3,211 @@
 # Version: 1.0
 # Last Updated: 2025-10-09
 
-version: "1.0"
-last_updated: "2025-10-09"
+version: '1.0'
+last_updated: '2025-10-09'
 
 # Protected domains define sensitive areas of the product
 # Protection levels: SAFE | SENSITIVE | CRITICAL
 domains:
-
   # ============================================================
   # PRICING - Subscription tiers and billing logic
   # ============================================================
   pricing:
-    owner: "Product Owner"
+    owner: 'Product Owner'
     protection_level: CRITICAL
-    description: "Subscription pricing, billing logic, and payment processing"
+    description: 'Subscription pricing, billing logic, and payment processing'
     files:
-      - "src/services/costControl.js"
-      - "src/services/stripeService.js"
-      - "database/schema.sql"
-      - "docs/nodes/cost-control.md"
-      - "docs/nodes/plan-features.md"
-      - "spec.md"
+      - 'src/services/costControl.js'
+      - 'src/services/stripeService.js'
+      - 'database/schema.sql'
+      - 'docs/nodes/cost-control.md'
+      - 'docs/nodes/plan-features.md'
+      - 'spec.md'
     keywords:
-      - "price"
-      - "pricing"
-      - "subscription"
-      - "billing"
-      - "stripe"
-      - "payment"
-      - "€5"
-      - "€15"
-      - "€50"
-      - "plan_type"
-      - "free"
-      - "starter"
-      - "pro"
-      - "plus"
-      - "cost_per"
+      - 'price'
+      - 'pricing'
+      - 'subscription'
+      - 'billing'
+      - 'stripe'
+      - 'payment'
+      - '€5'
+      - '€15'
+      - '€50'
+      - 'plan_type'
+      - 'free'
+      - 'starter'
+      - 'pro'
+      - 'plus'
+      - 'cost_per'
     impact_areas:
-      - "Revenue generation"
-      - "Customer billing"
-      - "Subscription management"
+      - 'Revenue generation'
+      - 'Customer billing'
+      - 'Subscription management'
 
   # ============================================================
   # QUOTAS - Usage limits and rate limiting
   # ============================================================
   quotas:
-    owner: "Backend Dev"
+    owner: 'Backend Dev'
     protection_level: CRITICAL
-    description: "Usage limits, rate limiting, and resource allocation"
+    description: 'Usage limits, rate limiting, and resource allocation'
     files:
-      - "src/services/entitlementsService.js"
-      - "src/services/rateLimiter.js"
-      - "src/services/costControl.js"
-      - "docs/nodes/plan-features.md"
-      - "docs/nodes/cost-control.md"
+      - 'src/services/entitlementsService.js'
+      - 'src/services/rateLimiter.js'
+      - 'src/services/costControl.js'
+      - 'docs/nodes/plan-features.md'
+      - 'docs/nodes/cost-control.md'
     keywords:
-      - "limit"
-      - "quota"
-      - "throttle"
-      - "rate_limit"
-      - "max_"
-      - "per_month"
-      - "per_hour"
-      - "per_day"
-      - "roasts_limit"
-      - "analysis_limit"
-      - "platform_limit"
+      - 'limit'
+      - 'quota'
+      - 'throttle'
+      - 'rate_limit'
+      - 'max_'
+      - 'per_month'
+      - 'per_hour'
+      - 'per_day'
+      - 'roasts_limit'
+      - 'analysis_limit'
+      - 'platform_limit'
     impact_areas:
-      - "Resource consumption"
-      - "API rate limits"
-      - "Cost control"
+      - 'Resource consumption'
+      - 'API rate limits'
+      - 'Cost control'
 
   # ============================================================
   # AUTH_POLICIES - Security and access control
   # ============================================================
   auth_policies:
-    owner: "Security Engineer"
+    owner: 'Security Engineer'
     protection_level: CRITICAL
-    description: "Authentication, authorization, RLS policies, and access control"
+    description: 'Authentication, authorization, RLS policies, and access control'
     files:
-      - "database/schema.sql"
-      - "src/middleware/auth.js"
-      - "src/services/authService.js"
-      - "docs/nodes/multi-tenant.md"
+      - 'database/schema.sql'
+      - 'src/middleware/auth.js'
+      - 'src/services/authService.js'
+      - 'docs/nodes/multi-tenant.md'
     keywords:
-      - "auth"
-      - "authentication"
-      - "authorization"
-      - "RLS"
-      - "policy"
-      - "permission"
-      - "access_control"
-      - "security"
-      - "jwt"
-      - "session"
-      - "role"
-      - "grant"
-      - "revoke"
+      - 'auth'
+      - 'authentication'
+      - 'authorization'
+      - 'RLS'
+      - 'policy'
+      - 'permission'
+      - 'access_control'
+      - 'security'
+      - 'jwt'
+      - 'session'
+      - 'role'
+      - 'grant'
+      - 'revoke'
     impact_areas:
-      - "Data security"
-      - "User privacy"
-      - "Compliance (GDPR)"
+      - 'Data security'
+      - 'User privacy'
+      - 'Compliance (GDPR)'
 
   # ============================================================
   # AI_MODELS - AI configuration and prompt templates
   # ============================================================
   ai_models:
-    owner: "AI Engineer"
+    owner: 'AI Engineer'
     protection_level: SENSITIVE
-    description: "AI model selection, prompt templates, and generation parameters"
+    description: 'AI model selection, prompt templates, and generation parameters'
     files:
-      - "src/services/roastPromptTemplate.js"
-      - "src/services/roastGeneratorEnhanced.js"
-      - "src/services/openai.js"
-      - "docs/nodes/roast.md"
-      - "docs/nodes/persona.md"
+      - 'src/services/roastPromptTemplate.js'
+      - 'src/services/roastGeneratorEnhanced.js'
+      - 'src/services/openai.js'
+      - 'docs/nodes/roast.md'
+      - 'docs/nodes/persona.md'
     keywords:
-      - "gpt-"
-      - "model:"
-      - "temperature"
-      - "max_tokens"
-      - "prompt"
-      - "system_message"
-      - "openai"
-      - "anthropic"
-      - "claude"
-      - "OPENAI_API_KEY"
+      - 'gpt-'
+      - 'model:'
+      - 'temperature'
+      - 'max_tokens'
+      - 'prompt'
+      - 'system_message'
+      - 'openai'
+      - 'anthropic'
+      - 'claude'
+      - 'OPENAI_API_KEY'
     impact_areas:
-      - "AI quality"
-      - "Generation cost"
-      - "User experience"
+      - 'AI quality'
+      - 'Generation cost'
+      - 'User experience'
 
   # ============================================================
   # PUBLIC_CONTRACTS - API schemas and public interfaces
   # ============================================================
   public_contracts:
-    owner: "API Architect"
+    owner: 'API Architect'
     protection_level: SENSITIVE
-    description: "Public API schemas, webhook contracts, and external SLAs"
+    description: 'Public API schemas, webhook contracts, and external SLAs'
     files:
-      - "src/index.js"
-      - "src/routes/*.js"
-      - "docs/api-*.md"
-      - "openapi.yaml"
+      - 'src/index.js'
+      - 'src/routes/*.js'
+      - 'docs/api-*.md'
+      - 'openapi.yaml'
     keywords:
-      - "app.post"
-      - "app.get"
-      - "app.put"
-      - "app.delete"
-      - "router."
-      - "endpoint"
-      - "webhook"
-      - "callback"
-      - "response_schema"
-      - "request_schema"
+      - 'app.post'
+      - 'app.get'
+      - 'app.put'
+      - 'app.delete'
+      - 'router.'
+      - 'endpoint'
+      - 'webhook'
+      - 'callback'
+      - 'response_schema'
+      - 'request_schema'
     impact_areas:
-      - "API compatibility"
-      - "Breaking changes"
-      - "Integration stability"
+      - 'API compatibility'
+      - 'Breaking changes'
+      - 'Integration stability'
 
 # ============================================================
 # Classification Rules
 # ============================================================
 classification_rules:
-
   # CRITICAL: Blocks merge immediately
   critical_triggers:
-    - "pricing changes without approval"
-    - "auth policy modifications"
-    - "quota limit changes >10%"
-    - "billing logic changes"
-    - "RLS policy changes"
+    - 'pricing changes without approval'
+    - 'auth policy modifications'
+    - 'quota limit changes >10%'
+    - 'billing logic changes'
+    - 'RLS policy changes'
 
   # SENSITIVE: Requires manual review
   sensitive_triggers:
-    - "AI model version changes"
-    - "prompt template modifications"
-    - "API endpoint signature changes"
-    - "quota limit changes <10%"
+    - 'AI model version changes'
+    - 'prompt template modifications'
+    - 'API endpoint signature changes'
+    - 'quota limit changes <10%'
 
   # SAFE: Auto-approved
   safe_patterns:
-    - "documentation updates"
-    - "test files"
-    - "comments"
-    - "formatting changes"
-    - "log messages"
+    - 'documentation updates'
+    - 'test files'
+    - 'comments'
+    - 'formatting changes'
+    - 'log messages'
 
 # ============================================================
 # Approval Workflow
 # ============================================================
 approval_workflow:
-
   # CRITICAL requires Product Owner + 2 reviewers
   critical:
     required_approvers: 3
     roles:
-      - "Product Owner"
-      - "Tech Lead"
-      - "Backend Dev"
+      - 'Product Owner'
+      - 'Tech Lead'
+      - 'Backend Dev'
     max_approval_time_hours: 48
 
   # SENSITIVE requires Tech Lead + 1 reviewer
   sensitive:
     required_approvers: 2
     roles:
-      - "Tech Lead"
-      - "Domain Owner"
+      - 'Tech Lead'
+      - 'Domain Owner'
     max_approval_time_hours: 24
 
   # SAFE auto-approved
@@ -223,41 +220,41 @@ approval_workflow:
 # ============================================================
 alerts:
   critical:
-    - "github_issue"
-    - "email:product@roastr.ai"
-    - "slack:#critical-alerts"
+    - 'github_issue'
+    - 'email:product@roastr.ai'
+    - 'slack:#critical-alerts'
 
   sensitive:
-    - "github_issue"
-    - "slack:#dev-alerts"
+    - 'github_issue'
+    - 'slack:#dev-alerts'
 
   safe:
-    - "log_only"
+    - 'log_only'
 
 # ============================================================
 # Exemptions (use sparingly)
 # ============================================================
 exemptions:
   # Emergency hotfix bypass (requires post-facto approval)
-  - type: "emergency_hotfix"
-    requires_label: "hotfix"
+  - type: 'emergency_hotfix'
+    requires_label: 'hotfix'
     post_approval_required: true
     max_uses_per_month: 2
 
   # Documentation-only changes
-  - type: "docs_only"
+  - type: 'docs_only'
     file_patterns:
-      - "docs/**/*.md"
-      - "README.md"
-      - "CHANGELOG.md"
+      - 'docs/**/*.md'
+      - 'README.md'
+      - 'CHANGELOG.md'
     auto_approve: true
 
   # Test files (unless touching protected domain tests)
-  - type: "test_only"
+  - type: 'test_only'
     file_patterns:
-      - "tests/**/*"
+      - 'tests/**/*'
     except_keywords:
-      - "pricing"
-      - "billing"
-      - "auth"
+      - 'pricing'
+      - 'billing'
+      - 'auth'
     auto_approve: true

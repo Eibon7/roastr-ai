@@ -12,6 +12,7 @@
 ### Implementation
 
 **New Components:**
+
 1. **Health Scorer** (`scripts/score-gdd-health.js`):
    - 5-factor weighted scoring algorithm
    - Sync Accuracy (30%), Update Freshness (20%), Dependency Integrity (20%)
@@ -25,13 +26,13 @@
 
 ### Health Score Factors
 
-| Factor | Weight | Formula |
-|--------|--------|---------|
-| Sync Accuracy | 30% | 100 - (10 × critical_mismatches) |
-| Update Freshness | 20% | 100 - (days_since_update × 2) |
-| Dependency Integrity | 20% | 100 - (20 × integrity_failures) |
-| Coverage Evidence | 20% | Based on test coverage % |
-| Agent Relevance | 10% | Based on agent list completeness |
+| Factor               | Weight | Formula                          |
+| -------------------- | ------ | -------------------------------- |
+| Sync Accuracy        | 30%    | 100 - (10 × critical_mismatches) |
+| Update Freshness     | 20%    | 100 - (days_since_update × 2)    |
+| Dependency Integrity | 20%    | 100 - (20 × integrity_failures)  |
+| Coverage Evidence    | 20%    | Based on test coverage %         |
+| Agent Relevance      | 10%    | Based on agent list completeness |
 
 ### Status Levels
 
@@ -42,6 +43,7 @@
 ### Current System Health
 
 **Initial Scoring (13 nodes):**
+
 - Average Score: 63.5/100
 - Status: 🟡 DEGRADED
 - 🟢 Healthy: 0
@@ -49,6 +51,7 @@
 - 🔴 Critical: 0
 
 **Top Issues Identified:**
+
 1. Missing coverage documentation (all nodes)
 2. No last_updated timestamps (most nodes)
 3. Orphan nodes not in system-map.yaml (13/13)
@@ -69,6 +72,7 @@
 ### Integration Points
 
 **CLI Commands:**
+
 ```bash
 # Standalone scoring
 node scripts/score-gdd-health.js
@@ -81,6 +85,7 @@ node scripts/watch-gdd.js
 ```
 
 **Watcher Dashboard:**
+
 ```text
 ╔════════════════════════════════════════╗
 ║   GDD STATUS: WARNING                 ║
@@ -124,7 +129,6 @@ Average Score: 63.5/100
 🎊 **GDD 2.0 Phase 7: Node Health Scoring System Complete!** 🎊
 
 ---
-
 
 ---
 

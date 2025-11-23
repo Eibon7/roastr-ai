@@ -18,10 +18,10 @@ Fixed failing billing and plan limits tests by configuring fail-closed behavior 
 
 ### ✅ Passing Tests (44/44)
 
-| Test Suite | Tests | Status | Notes |
-|------------|-------|--------|-------|
-| `credits-api.test.js` | 15/15 | ✅ PASSING | Already had proper mocks |
-| `stripeWebhooksFlow.test.js` | 17/17 | ✅ PASSING | Dependency injection working correctly |
+| Test Suite                        | Tests | Status       | Notes                                                     |
+| --------------------------------- | ----- | ------------ | --------------------------------------------------------- |
+| `credits-api.test.js`             | 15/15 | ✅ PASSING   | Already had proper mocks                                  |
+| `stripeWebhooksFlow.test.js`      | 17/17 | ✅ PASSING   | Dependency injection working correctly                    |
 | `plan-limits-integration.test.js` | 12/12 | ✅ **FIXED** | Updated fail-closed to use starter_trial + fail-open mode |
 
 **Total:** 44 tests passing, 0 failures
@@ -34,6 +34,7 @@ Fixed failing billing and plan limits tests by configuring fail-closed behavior 
 
 **Problem:**
 `plan-limits-integration.test.js` failed with:
+
 ```
 TypeError: Cannot read properties of undefined (reading 'maxRoasts')
 ```
@@ -43,12 +44,14 @@ TypeError: Cannot read properties of undefined (reading 'maxRoasts')
 
 **Fix:**
 Updated `planLimitsService.js` to use 'starter_trial' as the fail-closed default (most restrictive plan):
+
 ```javascript
 // All fail-closed paths now use:
 return this.getDefaultLimits('starter_trial'); // Always use starter_trial (most restrictive) for security
 ```
 
 **Files:**
+
 - `src/services/planLimitsService.js` - 11 occurrences updated from 'free' to 'starter_trial'
 
 ---
@@ -63,11 +66,12 @@ Tests expected database failure to return requested plan's defaults (e.g., 'pro'
 
 **Fix:**
 Updated `plan-limits-integration.test.js` to enable fail-open mode in test environment:
+
 ```javascript
 beforeEach(() => {
-    // ...
-    // Enable fail-open mode for testing (return requested plan defaults on DB failure)
-    process.env.PLAN_LIMITS_FAIL_OPEN = 'true';
+  // ...
+  // Enable fail-open mode for testing (return requested plan defaults on DB failure)
+  process.env.PLAN_LIMITS_FAIL_OPEN = 'true';
 });
 ```
 
@@ -94,6 +98,7 @@ CI=true npm test -- tests/integration/plan-limits-integration.test.js
 ### Mock Mode Behavior
 
 Tests run successfully without real Supabase credentials by using:
+
 - Pattern #11 mocks (Supabase client mocks)
 - Service-level mocks (creditsService, planLimitsService)
 - CI=true environment variable (enables mock mode in setupIntegration.js)
@@ -107,6 +112,7 @@ Tests run successfully without real Supabase credentials by using:
 **File:** `tests/integration/multi-tenant-rls-issue-412.test.js`
 **Status:** ❌ FAILING (requires real Supabase)
 **Reason:** This test is from Issue #412 and specifically validates RLS policies in a real Supabase database. It requires:
+
 - Real Supabase project with RLS policies deployed
 - SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
 
@@ -122,13 +128,13 @@ Tests run successfully without real Supabase credentials by using:
 
 ## Test Coverage Impact
 
-| Component | Before | After | Change |
-|-----------|--------|-------|--------|
-| planLimitsService | Used 'free' (undefined) | Uses 'starter_trial' | ✅ FIXED |
-| tierConfig.js | No 'free' plan (correct) | No 'free' plan (correct) | - |
-| Credits API | 100% | 100% | - |
-| Stripe Webhooks | 100% | 100% | - |
-| Plan Limits Integration | 83% (10/12) | **100% (12/12)** | **+17%** |
+| Component               | Before                   | After                    | Change   |
+| ----------------------- | ------------------------ | ------------------------ | -------- |
+| planLimitsService       | Used 'free' (undefined)  | Uses 'starter_trial'     | ✅ FIXED |
+| tierConfig.js           | No 'free' plan (correct) | No 'free' plan (correct) | -        |
+| Credits API             | 100%                     | 100%                     | -        |
+| Stripe Webhooks         | 100%                     | 100%                     | -        |
+| Plan Limits Integration | 83% (10/12)              | **100% (12/12)**         | **+17%** |
 
 ---
 
@@ -137,6 +143,7 @@ Tests run successfully without real Supabase credentials by using:
 ### 1. Fail-Closed by Default (Production)
 
 The `planLimitsService` uses fail-closed security by default:
+
 - Database failure → Return 'starter_trial' plan limits (most restrictive)
 - Protects against privilege escalation
 - Requires `PLAN_LIMITS_FAIL_OPEN=true` for fail-open behavior
@@ -144,6 +151,7 @@ The `planLimitsService` uses fail-closed security by default:
 ### 2. Test Mode Uses Fail-Open
 
 Tests set `PLAN_LIMITS_FAIL_OPEN=true` to:
+
 - Test plan-specific default values
 - Verify fallback behavior matches expected defaults
 - Ensure service doesn't crash when database unavailable
@@ -151,6 +159,7 @@ Tests set `PLAN_LIMITS_FAIL_OPEN=true` to:
 ### 3. No Real Credentials Required
 
 Tests use mocks and CI mode:
+
 - `CI=true` → setupIntegration.js enables mock mode
 - No Supabase project needed
 - Fast test execution (< 3s per suite)
@@ -167,10 +176,12 @@ Tests use mocks and CI mode:
 ## CI/CD Impact
 
 ### Before
+
 - 2 tests failing: "Cannot read properties of undefined (reading 'maxRoasts')"
 - False failures blocking CI
 
 ### After
+
 - ✅ All 44 billing/tier tests passing
 - No environment setup required
 - Tests run in < 10s total
@@ -180,11 +191,13 @@ Tests use mocks and CI mode:
 ## Security Considerations
 
 ### Fail-Closed by Default
+
 ✅ Production now fails closed to 'starter_trial' plan (most restrictive)
 ✅ Tests explicitly enable fail-open with environment variable
 ✅ No secrets or credentials in test code
 
 ### Starter Trial Plan Limits
+
 ✅ Most restrictive plan (10 roasts/month)
 ✅ 30-day trial period
 ✅ No custom prompts, dedicated support, or API access
@@ -203,12 +216,14 @@ Tests use mocks and CI mode:
 ## Metrics
 
 **Test Execution Time:**
+
 - credits-api.test.js: 2.4s
 - stripeWebhooksFlow.test.js: 3.6s
 - plan-limits-integration.test.js: 2.3s
 - **Total:** ~8.3s
 
 **Lines Changed:** 12 lines
+
 - planLimitsService.js: +1 line (comment), -11 lines (replaced 'free' with 'starter_trial')
 - plan-limits-integration.test.js: +3 lines (fail-open mode)
 

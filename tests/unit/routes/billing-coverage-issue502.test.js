@@ -2,7 +2,7 @@
  * Additional tests for billing.js to increase coverage from 58% to 65%
  * Issue #502 - Original tests
  * Issue #808 - Migrated from Stripe to Polar as payment provider
- * 
+ *
  * Note: Code may still reference stripeWrapper internally, but tests use Polar mocks
  */
 
@@ -186,11 +186,8 @@ const crypto = require('crypto');
 function createPolarWebhookEvent(type, data) {
   const payload = JSON.stringify({ type, data });
   const secret = process.env.POLAR_WEBHOOK_SECRET || 'polar_whsec_mock';
-  const signature = crypto
-    .createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
-  
+  const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
   return {
     payload: Buffer.from(payload),
     headers: {
@@ -212,9 +209,8 @@ const createWebhookSecurityMiddleware = (bodyOverride = null) => {
     // Override body if provided, otherwise use existing body or default
     if (bodyOverride !== null) {
       // If bodyOverride is a string, use it directly; otherwise stringify it
-      const bodyString = typeof bodyOverride === 'string' 
-        ? bodyOverride 
-        : JSON.stringify(bodyOverride);
+      const bodyString =
+        typeof bodyOverride === 'string' ? bodyOverride : JSON.stringify(bodyOverride);
       req.body = Buffer.from(bodyString);
     } else if (!req.body || req.body.length === 0) {
       req.body = Buffer.from('{}');
@@ -237,19 +233,23 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
   beforeAll(() => {
     app = express();
-    
+
     // Important: Register webhook route BEFORE json parser to get raw body
     billingRoutes = require('../../../src/routes/billing');
-    
+
     // Register webhook route with raw body parser
     // Issue #808: Keep Stripe webhook route for backward compatibility, but tests will use Polar
-    app.use('/api/billing/webhooks/stripe', express.raw({ type: 'application/json' }), billingRoutes);
+    app.use(
+      '/api/billing/webhooks/stripe',
+      express.raw({ type: 'application/json' }),
+      billingRoutes
+    );
     app.use('/api/polar/webhook', express.raw({ type: 'application/json' }), billingRoutes);
-    
+
     // Other routes use JSON parser
     app.use(express.json());
     app.use('/api/billing', billingRoutes);
-    
+
     // Inject mock controller
     billingRoutes.setController(mockBillingController);
   });
@@ -272,9 +272,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       subChain.single = jest.fn(() => Promise.resolve({ data: mockSubscription, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .get('/api/billing/subscription')
-        .expect(200);
+      const response = await request(app).get('/api/billing/subscription').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.subscription).toBeDefined();
@@ -283,12 +281,12 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
     test('should handle database errors', async () => {
       const subChain = createChainableQuery({ data: null, error: new Error('DB error') });
-      subChain.single = jest.fn(() => Promise.resolve({ data: null, error: new Error('DB error') }));
+      subChain.single = jest.fn(() =>
+        Promise.resolve({ data: null, error: new Error('DB error') })
+      );
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .get('/api/billing/subscription')
-        .expect(500);
+      const response = await request(app).get('/api/billing/subscription').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to fetch subscription');
@@ -299,9 +297,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       subChain.single = jest.fn(() => Promise.resolve({ data: null, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .get('/api/billing/subscription')
-        .expect(200);
+      const response = await request(app).get('/api/billing/subscription').expect(200);
 
       expect(response.body.success).toBe(true);
       // PLAN_IDS.FREE doesn't exist, so it will use undefined which falls back to PLAN_IDS.FREE in the code
@@ -338,7 +334,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.id).toBe('checkout_test_123');
       expect(response.body.data.url).toBeDefined();
-      
+
       // Verify checkout was created
       expect(mockBillingController.stripeWrapper.checkout.sessions.create).toHaveBeenCalled();
     });
@@ -369,16 +365,16 @@ describe('Billing Routes - Coverage Issue #502', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      
+
       // Verify lookupKey was used (not plan mapping)
       expect(mockBillingController.stripeWrapper.prices.list).toHaveBeenCalledWith({
         lookup_keys: ['plan_pro'],
         expand: ['data.product']
       });
-      
+
       // Verify checkout session was created
       expect(mockBillingController.stripeWrapper.checkout.sessions.create).toHaveBeenCalled();
-      
+
       // Verify response has correct structure
       expect(response.body.data).toEqual({
         id: 'checkout_test_456',
@@ -443,7 +439,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(mockBillingController.stripeWrapper.customers.retrieve).toHaveBeenCalledWith('cus_existing');
+      expect(mockBillingController.stripeWrapper.customers.retrieve).toHaveBeenCalledWith(
+        'cus_existing'
+      );
     });
 
     test('should handle customer retrieval failure and create new', async () => {
@@ -452,7 +450,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
       const mockSession = { id: 'sess_test', url: 'https://checkout.stripe.com/test' };
       const mockSubscription = { stripe_customer_id: 'cus_old' };
 
-      mockBillingController.stripeWrapper.customers.retrieve.mockRejectedValue(new Error('Not found'));
+      mockBillingController.stripeWrapper.customers.retrieve.mockRejectedValue(
+        new Error('Not found')
+      );
       mockBillingController.stripeWrapper.customers.create.mockResolvedValue(mockCustomer);
       mockBillingController.stripeWrapper.prices.list.mockResolvedValue({ data: [mockPrice] });
       mockBillingController.stripeWrapper.checkout.sessions.create.mockResolvedValue(mockSession);
@@ -499,7 +499,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       mockBillingController.stripeWrapper.customers.create.mockResolvedValue(mockCustomer);
       mockBillingController.stripeWrapper.prices.list.mockResolvedValue({ data: [mockPrice] });
-      mockBillingController.stripeWrapper.checkout.sessions.create.mockRejectedValue(new Error('Stripe error'));
+      mockBillingController.stripeWrapper.checkout.sessions.create.mockRejectedValue(
+        new Error('Stripe error')
+      );
 
       const subChain = createChainableQuery({ data: null, error: null });
       subChain.single = jest.fn(() => Promise.resolve({ data: null, error: null }));
@@ -526,15 +528,15 @@ describe('Billing Routes - Coverage Issue #502', () => {
       const mockSubscription = { stripe_customer_id: 'cus_test' };
       const mockPortalSession = { id: 'portal_test', url: 'https://billing.stripe.com/test' };
 
-      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockResolvedValue(mockPortalSession);
+      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockResolvedValue(
+        mockPortalSession
+      );
 
       const subChain = createChainableQuery({ data: mockSubscription, error: null });
       subChain.single = jest.fn(() => Promise.resolve({ data: mockSubscription, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .post('/api/billing/portal')
-        .expect(200);
+      const response = await request(app).post('/api/billing/portal').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.url).toBeDefined();
@@ -545,9 +547,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       subChain.single = jest.fn(() => Promise.resolve({ data: null, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .post('/api/billing/portal')
-        .expect(400);
+      const response = await request(app).post('/api/billing/portal').expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('No active subscription found');
@@ -555,12 +555,12 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
     test('should handle database errors', async () => {
       const subChain = createChainableQuery({ data: null, error: new Error('DB error') });
-      subChain.single = jest.fn(() => Promise.resolve({ data: null, error: new Error('DB error') }));
+      subChain.single = jest.fn(() =>
+        Promise.resolve({ data: null, error: new Error('DB error') })
+      );
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .post('/api/billing/portal')
-        .expect(400);
+      const response = await request(app).post('/api/billing/portal').expect(400);
 
       expect(response.body.success).toBe(false);
     });
@@ -568,15 +568,15 @@ describe('Billing Routes - Coverage Issue #502', () => {
     test('should handle portal session creation errors', async () => {
       const mockSubscription = { stripe_customer_id: 'cus_test' };
 
-      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockRejectedValue(new Error('Portal error'));
+      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockRejectedValue(
+        new Error('Portal error')
+      );
 
       const subChain = createChainableQuery({ data: mockSubscription, error: null });
       subChain.single = jest.fn(() => Promise.resolve({ data: mockSubscription, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .post('/api/billing/portal')
-        .expect(500);
+      const response = await request(app).post('/api/billing/portal').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to create portal session');
@@ -592,15 +592,15 @@ describe('Billing Routes - Coverage Issue #502', () => {
       const mockSubscription = { stripe_customer_id: 'cus_test' };
       const mockPortalSession = { id: 'portal_test', url: 'https://billing.stripe.com/test' };
 
-      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockResolvedValue(mockPortalSession);
+      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockResolvedValue(
+        mockPortalSession
+      );
 
       const subChain = createChainableQuery({ data: mockSubscription, error: null });
       subChain.single = jest.fn(() => Promise.resolve({ data: mockSubscription, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .post('/api/billing/create-portal-session')
-        .expect(200);
+      const response = await request(app).post('/api/billing/create-portal-session').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.url).toBeDefined();
@@ -611,9 +611,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       subChain.single = jest.fn(() => Promise.resolve({ data: null, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .post('/api/billing/create-portal-session')
-        .expect(400);
+      const response = await request(app).post('/api/billing/create-portal-session').expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('No active subscription found');
@@ -630,9 +628,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       mockBillingController.entitlementsService.isInTrial.mockResolvedValue(false);
       mockBillingController.entitlementsService.startTrial.mockResolvedValue(mockTrialResult);
 
-      const response = await request(app)
-        .post('/api/billing/start-trial')
-        .expect(200);
+      const response = await request(app).post('/api/billing/start-trial').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.trial_ends_at).toBeDefined();
@@ -642,9 +638,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
     test('should return 400 when user already in trial', async () => {
       mockBillingController.entitlementsService.isInTrial.mockResolvedValue(true);
 
-      const response = await request(app)
-        .post('/api/billing/start-trial')
-        .expect(400);
+      const response = await request(app).post('/api/billing/start-trial').expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('User is already in trial period');
@@ -652,11 +646,11 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
     test('should handle trial start errors', async () => {
       mockBillingController.entitlementsService.isInTrial.mockResolvedValue(false);
-      mockBillingController.entitlementsService.startTrial.mockRejectedValue(new Error('Trial error'));
+      mockBillingController.entitlementsService.startTrial.mockRejectedValue(
+        new Error('Trial error')
+      );
 
-      const response = await request(app)
-        .post('/api/billing/start-trial')
-        .expect(500);
+      const response = await request(app).post('/api/billing/start-trial').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to start trial');
@@ -695,9 +689,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       userChain.single = jest.fn(() => Promise.resolve({ data: mockUser, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(userChain);
 
-      const response = await request(app)
-        .get('/api/billing/webhook-stats')
-        .expect(403);
+      const response = await request(app).get('/api/billing/webhook-stats').expect(403);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Admin access required');
@@ -705,12 +697,12 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
     test('should handle database errors', async () => {
       const userChain = createChainableQuery({ data: null, error: new Error('DB error') });
-      userChain.single = jest.fn(() => Promise.resolve({ data: null, error: new Error('DB error') }));
+      userChain.single = jest.fn(() =>
+        Promise.resolve({ data: null, error: new Error('DB error') })
+      );
       mockSupabaseServiceClient.from.mockReturnValueOnce(userChain);
 
-      const response = await request(app)
-        .get('/api/billing/webhook-stats')
-        .expect(403);
+      const response = await request(app).get('/api/billing/webhook-stats').expect(403);
 
       expect(response.body.success).toBe(false);
     });
@@ -725,9 +717,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       userChain.single = jest.fn(() => Promise.resolve({ data: mockUser, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(userChain);
 
-      const response = await request(app)
-        .get('/api/billing/webhook-stats')
-        .expect(200);
+      const response = await request(app).get('/api/billing/webhook-stats').expect(200);
 
       expect(response.body.data.period_days).toBe(7);
     });
@@ -785,10 +775,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       userChain.single = jest.fn(() => Promise.resolve({ data: mockUser, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(userChain);
 
-      const response = await request(app)
-        .post('/api/billing/webhook-cleanup')
-        .send({})
-        .expect(200);
+      const response = await request(app).post('/api/billing/webhook-cleanup').send({}).expect(200);
 
       expect(response.body.data.older_than_days).toBe(30);
     });
@@ -796,7 +783,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
     test('should handle cleanup errors', async () => {
       const mockUser = { is_admin: true };
 
-      mockBillingController.webhookService.cleanupOldEvents.mockRejectedValue(new Error('Cleanup error'));
+      mockBillingController.webhookService.cleanupOldEvents.mockRejectedValue(
+        new Error('Cleanup error')
+      );
 
       const userChain = createChainableQuery({ data: mockUser, error: null });
       userChain.single = jest.fn(() => Promise.resolve({ data: mockUser, error: null }));
@@ -835,7 +824,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       // Override middleware to set req.body correctly
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware(polarEvent.payload.toString()));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware(polarEvent.payload.toString())
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -846,7 +837,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       expect(response.body.received).toBe(true);
       expect(response.body.processed).toBe(true);
-      
+
       // Verify logger.info was called
       const { logger } = require('../../../src/utils/logger');
       expect(logger.info).toHaveBeenCalled();
@@ -861,7 +852,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       // Override middleware to set req.body correctly
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware(mockEvent));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware(mockEvent)
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -879,11 +872,15 @@ describe('Billing Routes - Coverage Issue #502', () => {
         created: Date.now()
       };
 
-      mockBillingController.webhookService.processWebhookEvent.mockRejectedValue(new Error('Processing error'));
+      mockBillingController.webhookService.processWebhookEvent.mockRejectedValue(
+        new Error('Processing error')
+      );
 
       // Override middleware to set req.body correctly
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware(mockEvent));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware(mockEvent)
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -911,7 +908,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       // Override middleware to set req.body correctly
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware(mockEvent));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware(mockEvent)
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -956,9 +955,15 @@ describe('Billing Routes - Coverage Issue #502', () => {
     beforeEach(() => {
       // Ensure all legacy functions are mocked
       mockBillingController.queueBillingJob = jest.fn().mockResolvedValue({ success: true });
-      mockBillingController.handleCheckoutCompleted = jest.fn().mockResolvedValue({ success: true });
-      mockBillingController.handleSubscriptionUpdated = jest.fn().mockResolvedValue({ success: true });
-      mockBillingController.handleSubscriptionDeleted = jest.fn().mockResolvedValue({ success: true });
+      mockBillingController.handleCheckoutCompleted = jest
+        .fn()
+        .mockResolvedValue({ success: true });
+      mockBillingController.handleSubscriptionUpdated = jest
+        .fn()
+        .mockResolvedValue({ success: true });
+      mockBillingController.handleSubscriptionDeleted = jest
+        .fn()
+        .mockResolvedValue({ success: true });
       mockBillingController.handlePaymentSucceeded = jest.fn().mockResolvedValue({ success: true });
       mockBillingController.handlePaymentFailed = jest.fn().mockResolvedValue({ success: true });
       mockBillingController.applyPlanLimits = jest.fn().mockResolvedValue({ success: true });
@@ -966,61 +971,71 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
     test('should expose queueBillingJob function', async () => {
       const result = await billingRoutes.queueBillingJob('test_type', { data: 'test' });
-      
+
       expect(result.success).toBe(true);
-      expect(mockBillingController.queueBillingJob).toHaveBeenCalledWith('test_type', { data: 'test' });
+      expect(mockBillingController.queueBillingJob).toHaveBeenCalledWith('test_type', {
+        data: 'test'
+      });
     });
 
     test('should expose handleCheckoutCompleted function', async () => {
       const mockSession = { id: 'sess_test' };
-      
+
       const result = await billingRoutes.handleCheckoutCompleted(mockSession);
-      
+
       expect(result.success).toBe(true);
       expect(mockBillingController.handleCheckoutCompleted).toHaveBeenCalledWith(mockSession);
     });
 
     test('should expose handleSubscriptionUpdated function', async () => {
       const mockSubscription = { id: 'sub_test' };
-      
+
       const result = await billingRoutes.handleSubscriptionUpdated(mockSubscription);
-      
+
       expect(result.success).toBe(true);
-      expect(mockBillingController.handleSubscriptionUpdated).toHaveBeenCalledWith(mockSubscription);
+      expect(mockBillingController.handleSubscriptionUpdated).toHaveBeenCalledWith(
+        mockSubscription
+      );
     });
 
     test('should expose handleSubscriptionDeleted function', async () => {
       const mockSubscription = { id: 'sub_test' };
-      
+
       const result = await billingRoutes.handleSubscriptionDeleted(mockSubscription);
-      
+
       expect(result.success).toBe(true);
-      expect(mockBillingController.handleSubscriptionDeleted).toHaveBeenCalledWith(mockSubscription);
+      expect(mockBillingController.handleSubscriptionDeleted).toHaveBeenCalledWith(
+        mockSubscription
+      );
     });
 
     test('should expose handlePaymentSucceeded function', async () => {
       const mockInvoice = { id: 'inv_test' };
-      
+
       const result = await billingRoutes.handlePaymentSucceeded(mockInvoice);
-      
+
       expect(result.success).toBe(true);
       expect(mockBillingController.handlePaymentSucceeded).toHaveBeenCalledWith(mockInvoice);
     });
 
     test('should expose handlePaymentFailed function', async () => {
       const mockInvoice = { id: 'inv_test' };
-      
+
       const result = await billingRoutes.handlePaymentFailed(mockInvoice);
-      
+
       expect(result.success).toBe(true);
       expect(mockBillingController.handlePaymentFailed).toHaveBeenCalledWith(mockInvoice);
     });
 
     test('should expose applyPlanLimits function', async () => {
       const result = await billingRoutes.applyPlanLimits('user_id', 'pro', 'active');
-      
+
       expect(result.success).toBe(true);
-      expect(mockBillingController.applyPlanLimits).toHaveBeenCalledWith('user_id', 'pro', 'active');
+      expect(mockBillingController.applyPlanLimits).toHaveBeenCalledWith(
+        'user_id',
+        'pro',
+        'active'
+      );
     });
   });
 
@@ -1048,18 +1063,18 @@ describe('Billing Routes - Coverage Issue #502', () => {
       const mockSubscription = { stripe_customer_id: 'cus_test' };
       const mockPortalSession = { id: 'portal_test', url: 'https://billing.stripe.com/test' };
 
-      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockResolvedValue(mockPortalSession);
+      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockResolvedValue(
+        mockPortalSession
+      );
 
       const subChain = createChainableQuery({ data: mockSubscription, error: null });
       subChain.single = jest.fn(() => Promise.resolve({ data: mockSubscription, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .post('/api/billing/create-portal-session')
-        .expect(200);
+      const response = await request(app).post('/api/billing/create-portal-session').expect(200);
 
       expect(response.body.success).toBe(true);
-      
+
       // Restore env var
       process.env.POLAR_SUCCESS_URL = originalReturnUrl;
     });
@@ -1067,22 +1082,25 @@ describe('Billing Routes - Coverage Issue #502', () => {
     test('should handle create-portal-session errors', async () => {
       const mockSubscription = { stripe_customer_id: 'cus_test' };
 
-      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockRejectedValue(new Error('Portal error'));
+      mockBillingController.stripeWrapper.billingPortal.sessions.create.mockRejectedValue(
+        new Error('Portal error')
+      );
 
       const subChain = createChainableQuery({ data: mockSubscription, error: null });
       subChain.single = jest.fn(() => Promise.resolve({ data: mockSubscription, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .post('/api/billing/create-portal-session')
-        .expect(500);
+      const response = await request(app).post('/api/billing/create-portal-session').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to create portal session');
-      
+
       // Verify logger.error was called (line 329)
       const { logger } = require('../../../src/utils/logger');
-      expect(logger.error).toHaveBeenCalledWith('Error creating portal session:', expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error creating portal session:',
+        expect.any(Error)
+      );
     });
 
     test('should handle subscription route with null subscription', async () => {
@@ -1090,9 +1108,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       subChain.single = jest.fn(() => Promise.resolve({ data: null, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .get('/api/billing/subscription')
-        .expect(200);
+      const response = await request(app).get('/api/billing/subscription').expect(200);
 
       expect(response.body.success).toBe(true);
       // Issue #808: Code may return a default plan (e.g., 'starter_trial') when subscription is null
@@ -1104,16 +1120,16 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
     test('should handle subscription route errors', async () => {
       const subChain = createChainableQuery({ data: null, error: new Error('DB error') });
-      subChain.single = jest.fn(() => Promise.resolve({ data: null, error: new Error('DB error') }));
+      subChain.single = jest.fn(() =>
+        Promise.resolve({ data: null, error: new Error('DB error') })
+      );
       mockSupabaseServiceClient.from.mockReturnValueOnce(subChain);
 
-      const response = await request(app)
-        .get('/api/billing/subscription')
-        .expect(500);
+      const response = await request(app).get('/api/billing/subscription').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to fetch subscription');
-      
+
       // Verify logger.error was called (line 352)
       const { logger } = require('../../../src/utils/logger');
       expect(logger.error).toHaveBeenCalledWith('Error fetching subscription:', expect.any(Error));
@@ -1134,15 +1150,14 @@ describe('Billing Routes - Coverage Issue #502', () => {
         throw new Error('Config error');
       });
 
-      const response = await request(app)
-        .get('/api/billing/subscription');
+      const response = await request(app).get('/api/billing/subscription');
 
       // Code may handle error gracefully (200) or throw (500)
       // Accept both behaviors for now
       if (response.status === 500) {
         expect(response.body.success).toBe(false);
         expect(response.body.error).toBe('Failed to fetch subscription details');
-        
+
         // Verify logger.error was called
         const { logger } = require('../../../src/utils/logger');
         expect(logger.error).toHaveBeenCalled();
@@ -1150,7 +1165,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
         // Code handled error gracefully - this is also acceptable
         expect(response.status).toBe(200);
       }
-      
+
       // Restore
       billingFactory.getPlanConfig = originalPlanConfig;
     });
@@ -1170,7 +1185,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       // Override middleware to set req.body correctly
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware(mockEvent));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware(mockEvent)
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -1180,7 +1197,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       expect(response.body.received).toBe(true);
       expect(response.body.processed).toBe(false);
-      
+
       // Verify logger.error was called (line 438)
       const { logger } = require('../../../src/utils/logger');
       expect(logger.error).toHaveBeenCalledWith(
@@ -1197,15 +1214,15 @@ describe('Billing Routes - Coverage Issue #502', () => {
     test('should handle webhook stats service errors', async () => {
       const mockUser = { is_admin: true };
 
-      mockBillingController.webhookService.getWebhookStats.mockRejectedValue(new Error('Stats error'));
+      mockBillingController.webhookService.getWebhookStats.mockRejectedValue(
+        new Error('Stats error')
+      );
 
       const userChain = createChainableQuery({ data: mockUser, error: null });
       userChain.single = jest.fn(() => Promise.resolve({ data: mockUser, error: null }));
       mockSupabaseServiceClient.from.mockReturnValueOnce(userChain);
 
-      const response = await request(app)
-        .get('/api/billing/webhook-stats')
-        .expect(500);
+      const response = await request(app).get('/api/billing/webhook-stats').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to fetch webhook statistics');
@@ -1237,7 +1254,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
     test('should handle webhook event parsing errors', async () => {
       // Override the middleware mock for this test to set invalid JSON
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware('invalid json'));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware('invalid json')
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -1247,7 +1266,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       expect(response.body.received).toBe(true);
       expect(response.body.processed).toBe(false);
-      
+
       // Verify logger.error was called for critical error (line 456)
       const { logger } = require('../../../src/utils/logger');
       expect(logger.error).toHaveBeenCalledWith(
@@ -1272,7 +1291,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       // Mock middleware to ensure req.body is set correctly
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware(polarEvent.payload.toString()));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware(polarEvent.payload.toString())
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -1283,7 +1304,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       expect(response.body.received).toBe(true);
       expect(response.body.processed).toBe(true);
-      
+
       // Verify logger handles missing properties
       const { logger } = require('../../../src/utils/logger');
       expect(logger.info).toHaveBeenCalled();
@@ -1299,7 +1320,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
       const result = billingRoutes.setController(newController);
       expect(result).toBe(newController);
       expect(billingRoutes.getController()).toBe(newController);
-      
+
       // Restore original controller
       billingRoutes.setController(mockBillingController);
     });
@@ -1322,7 +1343,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       // Override middleware to set req.body correctly
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware(polarEvent.payload.toString()));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware(polarEvent.payload.toString())
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -1333,10 +1356,10 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       expect(response.body.received).toBe(true);
       expect(response.body.processed).toBe(true);
-      
+
       // Verify webhook service was called with subscription event
       expect(mockBillingController.webhookService.processWebhookEvent).toHaveBeenCalled();
-      
+
       // Verify logger recorded event
       const { logger } = require('../../../src/utils/logger');
       expect(logger.info).toHaveBeenCalled();
@@ -1366,7 +1389,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       // Override middleware to set req.body correctly
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware(mockEvent));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware(mockEvent)
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -1398,7 +1423,9 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       // Override middleware to set req.body correctly
       const { stripeWebhookSecurity } = require('../../../src/middleware/webhookSecurity');
-      stripeWebhookSecurity.mockImplementationOnce(() => createWebhookSecurityMiddleware(mockEvent));
+      stripeWebhookSecurity.mockImplementationOnce(() =>
+        createWebhookSecurityMiddleware(mockEvent)
+      );
 
       const response = await request(app)
         .post('/api/billing/webhooks/stripe')
@@ -1408,7 +1435,7 @@ describe('Billing Routes - Coverage Issue #502', () => {
 
       expect(response.body.received).toBe(true);
       expect(response.body.processed).toBe(false);
-      
+
       // Verify error was logged
       const { logger } = require('../../../src/utils/logger');
       expect(logger.error).toHaveBeenCalledWith(
@@ -1425,13 +1452,13 @@ describe('Billing Routes - Coverage Issue #502', () => {
       // Since we always inject controller in beforeAll, we need to test this differently
       // We'll test by temporarily clearing the controller
       const originalController = billingRoutes.getController();
-      
+
       // Clear controller by accessing internal state (if possible) or by creating new instance
       // Actually, since we can't easily clear the controller, we'll test the getController function
       // by verifying it returns the injected controller
       const controller = billingRoutes.getController();
       expect(controller).toBe(mockBillingController);
-      
+
       // The line 24 path (lazy initialization) is hard to test because we always inject
       // a controller in beforeAll. This is acceptable as it's a fallback path.
       // In production, BillingFactory.createController() will be called if no controller
@@ -1462,13 +1489,10 @@ describe('Billing Routes - Coverage Issue #502', () => {
       });
 
       try {
-        await request(app)
-          .get('/api/billing/plans')
-          .expect(500);
+        await request(app).get('/api/billing/plans').expect(500);
       } finally {
         express.response.json = originalJson;
       }
     });
   });
 });
-

@@ -1,7 +1,7 @@
 /**
  * StyleAnalysisChart Component Tests
  * Issue #369 - SPEC 9 - Style Profile Extraction
- * 
+ *
  * Tests cover:
  * - Metadata display
  * - Tone and style indicators
@@ -75,19 +75,13 @@ describe('StyleAnalysisChart', () => {
 
       tones.forEach(({ tone, expectedSpanish, expectedEnglish }) => {
         const { unmount } = render(
-          <StyleAnalysisChart 
-            metadata={{ ...mockMetadata, dominantTone: tone }} 
-            language="es" 
-          />
+          <StyleAnalysisChart metadata={{ ...mockMetadata, dominantTone: tone }} language="es" />
         );
         expect(screen.getByText(expectedSpanish)).toBeInTheDocument();
         unmount();
 
         render(
-          <StyleAnalysisChart 
-            metadata={{ ...mockMetadata, dominantTone: tone }} 
-            language="en" 
-          />
+          <StyleAnalysisChart metadata={{ ...mockMetadata, dominantTone: tone }} language="en" />
         );
         expect(screen.getByText(expectedEnglish)).toBeInTheDocument();
         unmount();
@@ -110,19 +104,13 @@ describe('StyleAnalysisChart', () => {
 
       styles.forEach(({ style, expectedSpanish, expectedEnglish }) => {
         const { unmount } = render(
-          <StyleAnalysisChart 
-            metadata={{ ...mockMetadata, styleType: style }} 
-            language="es" 
-          />
+          <StyleAnalysisChart metadata={{ ...mockMetadata, styleType: style }} language="es" />
         );
         expect(screen.getByText(expectedSpanish)).toBeInTheDocument();
         unmount();
 
         render(
-          <StyleAnalysisChart 
-            metadata={{ ...mockMetadata, styleType: style }} 
-            language="en" 
-          />
+          <StyleAnalysisChart metadata={{ ...mockMetadata, styleType: style }} language="en" />
         );
         expect(screen.getByText(expectedEnglish)).toBeInTheDocument();
         unmount();
@@ -174,9 +162,9 @@ describe('StyleAnalysisChart', () => {
     it('should render progress bars for engagement metrics', () => {
       render(<StyleAnalysisChart metadata={mockMetadata} language="es" />);
 
-      const progressBars = screen.getAllByRole('generic').filter(el => 
-        el.className.includes('rounded-full') && el.className.includes('h-2')
-      );
+      const progressBars = screen
+        .getAllByRole('generic')
+        .filter((el) => el.className.includes('rounded-full') && el.className.includes('h-2'));
 
       // Should have at least 3 progress bars (one for each engagement metric)
       expect(progressBars.length).toBeGreaterThanOrEqual(3);

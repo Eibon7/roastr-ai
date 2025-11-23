@@ -26,7 +26,10 @@ jest.setTimeout(30000);
 
 function assertNoError(context, error) {
   if (error) {
-    console.error(`❌ ${context} error:`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    console.error(
+      `❌ ${context} error:`,
+      JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+    );
     const message = error.message || error.details || JSON.stringify(error);
     throw new Error(`Failed to ${context}: ${message}`);
   }
@@ -246,9 +249,7 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
       .single();
 
     if (!existingPro) {
-      const { error: planProError } = await serviceClient
-        .from('plan_limits')
-        .insert(planLimitPro);
+      const { error: planProError } = await serviceClient.from('plan_limits').insert(planLimitPro);
 
       assertNoError('insert plan_limits pro', planProError);
     } else {
@@ -260,7 +261,7 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
 
   afterAll(async () => {
     console.log('\n🧹 Tearing down admin RLS test environment...\n');
-    
+
     // Clean up admin and regular users created for testing
     if (adminUser?.id) {
       try {
@@ -272,7 +273,7 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
         console.warn(`⚠️  Failed to cleanup admin user: ${error.message}`);
       }
     }
-    
+
     if (regularUser?.id) {
       try {
         await serviceClient.from('users').delete().eq('id', regularUser.id);
@@ -283,7 +284,7 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
         console.warn(`⚠️  Failed to cleanup regular user: ${error.message}`);
       }
     }
-    
+
     await cleanupTestData();
     console.log('\n✅ Teardown complete\n');
   });
@@ -296,9 +297,7 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
     test('Non-admin user cannot read feature_flags', async () => {
       // Set context as regular user (non-admin)
       // Note: This test assumes RLS policy checks is_admin flag
-      const { data, error } = await testClient
-        .from('feature_flags')
-        .select('*');
+      const { data, error } = await testClient.from('feature_flags').select('*');
 
       // RLS should block non-admin access
       // Result depends on RLS policy implementation
@@ -338,9 +337,7 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
     });
 
     test('Non-admin user cannot read admin_audit_logs', async () => {
-      const { data, error } = await testClient
-        .from('admin_audit_logs')
-        .select('*');
+      const { data, error } = await testClient.from('admin_audit_logs').select('*');
 
       // RLS should block non-admin access
       expect(data).toBeDefined();
@@ -376,16 +373,14 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
     });
 
     test('Tenant A can only see their own audit_logs', async () => {
-      const { data, error } = await testClient
-        .from('audit_logs')
-        .select('*');
+      const { data, error } = await testClient.from('audit_logs').select('*');
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
       if (data && data.length > 0) {
-        expect(data.every(log => log.organization_id === tenantA.id)).toBe(true);
-        expect(data.some(log => log.id === auditLogA.id)).toBe(true);
-        expect(data.some(log => log.id === auditLogB.id)).toBe(false);
+        expect(data.every((log) => log.organization_id === tenantA.id)).toBe(true);
+        expect(data.some((log) => log.id === auditLogA.id)).toBe(true);
+        expect(data.some((log) => log.id === auditLogB.id)).toBe(false);
       }
     });
 
@@ -407,16 +402,14 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
     });
 
     test('All users can read plan_limits (public read policy)', async () => {
-      const { data, error } = await testClient
-        .from('plan_limits')
-        .select('*');
+      const { data, error } = await testClient.from('plan_limits').select('*');
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
       expect(data.length).toBeGreaterThan(0);
       // Should be able to read plan limits
-      expect(data.some(limit => limit.plan_id === 'free')).toBe(true);
-      expect(data.some(limit => limit.plan_id === 'pro')).toBe(true);
+      expect(data.some((limit) => limit.plan_id === 'free')).toBe(true);
+      expect(data.some((limit) => limit.plan_id === 'pro')).toBe(true);
     });
 
     test('Non-admin user cannot update plan_limits', async () => {
@@ -457,9 +450,7 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
     });
 
     test('Non-admin user cannot read plan_limits_audit', async () => {
-      const { data, error } = await testClient
-        .from('plan_limits_audit')
-        .select('*');
+      const { data, error } = await testClient.from('plan_limits_audit').select('*');
 
       // RLS should block non-admin access
       expect(data).toBeDefined();
@@ -469,4 +460,3 @@ describe('Admin & Feature Flags RLS Integration Tests - Issue #787 AC4', () => {
     });
   });
 });
-

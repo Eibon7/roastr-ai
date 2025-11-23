@@ -1,6 +1,6 @@
 /**
  * AccountsPage Component - Unit Tests
- * 
+ *
  * Tests for multi-tenant social accounts management with RLS
  */
 
@@ -65,18 +65,24 @@ const mockAccounts = [
 
 const mockAvailableNetworks = [
   { network: 'twitter', name: 'Twitter', canConnect: true, totalConnections: 1, maxConnections: 2 },
-  { network: 'facebook', name: 'Facebook', canConnect: false, totalConnections: 2, maxConnections: 2 }
+  {
+    network: 'facebook',
+    name: 'Facebook',
+    canConnect: false,
+    totalConnections: 2,
+    maxConnections: 2
+  }
 ];
 
 const defaultHookReturn = {
   accounts: mockAccounts,
   availableNetworks: mockAvailableNetworks,
   userData: { plan: 'pro' },
-  getAccountById: jest.fn((id) => mockAccounts.find(acc => acc.id === id)),
+  getAccountById: jest.fn((id) => mockAccounts.find((acc) => acc.id === id)),
   roastsByAccount: jest.fn(() => []),
   interceptedByAccount: jest.fn(() => []),
-  getConnectionLimits: jest.fn(() => ({ 
-    maxConnections: 2, 
+  getConnectionLimits: jest.fn(() => ({
+    maxConnections: 2,
     maxConnectionsPerPlatform: 2,
     planTier: 'pro'
   })),
@@ -115,28 +121,28 @@ describe('AccountsPage Component', () => {
   describe('Rendering', () => {
     it('should render page header', () => {
       renderComponent();
-      
+
       expect(screen.getByText(/Cuentas conectadas/i)).toBeInTheDocument();
       expect(screen.getByText(/Gestiona tus cuentas conectadas/i)).toBeInTheDocument();
     });
 
     it('should render stats cards', () => {
       renderComponent();
-      
+
       expect(screen.getByText(/2/)).toBeInTheDocument(); // Total accounts
       expect(screen.getByText(/150/)).toBeInTheDocument(); // Monthly roasts
     });
 
     it('should render connected accounts', () => {
       renderComponent();
-      
+
       expect(screen.getByTestId('account-card-acc1')).toBeInTheDocument();
       expect(screen.getByTestId('account-card-acc2')).toBeInTheDocument();
     });
 
     it('should show empty state when no accounts', () => {
       renderComponent({ accounts: [] });
-      
+
       expect(screen.getByText(/No tienes cuentas conectadas/i)).toBeInTheDocument();
     });
   });
@@ -144,7 +150,7 @@ describe('AccountsPage Component', () => {
   describe('Connection Limits Alert', () => {
     it('should display connection limits for current plan', () => {
       renderComponent();
-      
+
       expect(screen.getByText(/Límites de conexión por plan/i)).toBeInTheDocument();
       expect(screen.getByText(/Tu plan actual \(pro\)/i)).toBeInTheDocument();
     });
@@ -152,37 +158,39 @@ describe('AccountsPage Component', () => {
     it('should show upgrade message for starter plan', () => {
       renderComponent({
         userData: { plan: 'starter' },
-        getConnectionLimits: jest.fn(() => ({ 
+        getConnectionLimits: jest.fn(() => ({
           maxConnections: 1,
-          maxConnectionsPerPlatform: 1, 
-          planTier: 'starter' 
+          maxConnectionsPerPlatform: 1,
+          planTier: 'starter'
         }))
       });
-      
-      expect(screen.getByText(/Actualiza a Pro para conectar hasta 2 cuentas/i)).toBeInTheDocument();
+
+      expect(
+        screen.getByText(/Actualiza a Pro para conectar hasta 2 cuentas/i)
+      ).toBeInTheDocument();
     });
   });
 
   describe('Network Connection', () => {
     it('should render available networks', () => {
       renderComponent();
-      
+
       expect(screen.getByText(/Twitter/i)).toBeInTheDocument();
       expect(screen.getByText(/Facebook/i)).toBeInTheDocument();
     });
 
     it('should open connect modal when clicking available network', () => {
       renderComponent();
-      
+
       const twitterButton = screen.getByText(/Twitter/i);
       fireEvent.click(twitterButton);
-      
+
       expect(screen.getByTestId('network-modal')).toBeInTheDocument();
     });
 
     it('should disable connection for networks at limit', () => {
       renderComponent();
-      
+
       const facebookSection = screen.getByText(/Facebook/i).closest('div');
       expect(facebookSection).toHaveTextContent(/Límite alcanzado/i);
     });
@@ -190,13 +198,13 @@ describe('AccountsPage Component', () => {
     it('should call onConnectNetwork when connecting', async () => {
       const onConnectNetwork = jest.fn();
       renderComponent({ onConnectNetwork });
-      
+
       const twitterButton = screen.getByText(/Twitter/i);
       fireEvent.click(twitterButton);
-      
+
       const connectButton = screen.getByRole('button', { name: /Connect/i });
       fireEvent.click(connectButton);
-      
+
       await waitFor(() => {
         expect(onConnectNetwork).toHaveBeenCalledWith('twitter');
       });
@@ -206,22 +214,22 @@ describe('AccountsPage Component', () => {
   describe('Account Modal', () => {
     it('should open account modal when clicking account card', () => {
       renderComponent();
-      
+
       const accountCard = screen.getByTestId('account-card-acc1');
       fireEvent.click(accountCard);
-      
+
       expect(screen.getByTestId('account-modal')).toBeInTheDocument();
     });
 
     it('should close account modal', () => {
       renderComponent();
-      
+
       const accountCard = screen.getByTestId('account-card-acc1');
       fireEvent.click(accountCard);
-      
+
       const closeButton = screen.getByRole('button', { name: /Close/i });
       fireEvent.click(closeButton);
-      
+
       expect(screen.queryByTestId('account-modal')).not.toBeInTheDocument();
     });
   });
@@ -229,7 +237,7 @@ describe('AccountsPage Component', () => {
   describe('Multi-tenant RLS', () => {
     it('should format roast count correctly for large numbers', () => {
       renderComponent({ totalMonthlyRoasts: 1500 });
-      
+
       expect(screen.getByText(/1.5k/i)).toBeInTheDocument();
     });
 
@@ -239,11 +247,10 @@ describe('AccountsPage Component', () => {
         activeAccounts: 3,
         totalMonthlyRoasts: 420
       });
-      
+
       expect(screen.getByText('5')).toBeInTheDocument();
       expect(screen.getByText('3')).toBeInTheDocument();
       expect(screen.getByText('420')).toBeInTheDocument();
     });
   });
 });
-

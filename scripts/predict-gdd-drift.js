@@ -33,7 +33,12 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { isMaintenanceMode, hasMaintenanceFlag, showMaintenanceBanner, blockIfMaintenance } = require('./gdd-maintenance-mode');
+const {
+  isMaintenanceMode,
+  hasMaintenanceFlag,
+  showMaintenanceBanner,
+  blockIfMaintenance
+} = require('./gdd-maintenance-mode');
 
 class GDDDriftPredictor {
   constructor(options = {}) {
@@ -164,7 +169,7 @@ class GDDDriftPredictor {
         totalCommits: 0
       };
 
-      const lines = gitLog.split('\n').filter(l => l.trim());
+      const lines = gitLog.split('\n').filter((l) => l.trim());
       let currentCommit = null;
       let currentTimestamp = null;
 
@@ -189,8 +194,10 @@ class GDDDriftPredictor {
             });
 
             // Track most recent commit
-            if (!activity.lastCommitByNode[nodeName] ||
-                currentTimestamp > activity.lastCommitByNode[nodeName]) {
+            if (
+              !activity.lastCommitByNode[nodeName] ||
+              currentTimestamp > activity.lastCommitByNode[nodeName]
+            ) {
               activity.lastCommitByNode[nodeName] = currentTimestamp;
             }
           }
@@ -241,7 +248,7 @@ class GDDDriftPredictor {
       return nodes;
     }
 
-    const files = fs.readdirSync(nodesDir).filter(f => f.endsWith('.md'));
+    const files = fs.readdirSync(nodesDir).filter((f) => f.endsWith('.md'));
 
     for (const file of files) {
       const nodeName = file.replace('.md', '');
@@ -318,7 +325,9 @@ class GDDDriftPredictor {
         const points = 15;
         risk += points;
         factors.push(`+${points} pts: Coverage ${coverageNum}% (<80%)`);
-        recommendations.push(`Increase test coverage to 80%+ (declared: ${coverageNum}%, actual: N/A)`);
+        recommendations.push(
+          `Increase test coverage to 80%+ (declared: ${coverageNum}%, actual: N/A)`
+        );
       }
     }
 
@@ -329,19 +338,28 @@ class GDDDriftPredictor {
         const points = 25;
         risk += points;
         factors.push(`+${points} pts: Health score ${healthData.score} (<70)`);
-        recommendations.push(`Improve health score to 70+ (declared: ${healthData.score}, actual: N/A)`);
+        recommendations.push(
+          `Improve health score to 70+ (declared: ${healthData.score}, actual: N/A)`
+        );
       }
     }
 
     // Factor 5: Recent git activity (negative - reduces risk)
     if (gitActivity.lastCommitByNode[nodeName]) {
       const lastCommitTimestamp = gitActivity.lastCommitByNode[nodeName];
-      const daysSinceCommit = Math.floor((Date.now() / 1000 - lastCommitTimestamp) / (60 * 60 * 24));
+      const daysSinceCommit = Math.floor(
+        (Date.now() / 1000 - lastCommitTimestamp) / (60 * 60 * 24)
+      );
 
       if (daysSinceCommit < 7) {
         const points = -10;
         risk += points;
-        const dayLabel = daysSinceCommit === 0 ? 'today' : daysSinceCommit === 1 ? '1 day ago' : `${daysSinceCommit} days ago`;
+        const dayLabel =
+          daysSinceCommit === 0
+            ? 'today'
+            : daysSinceCommit === 1
+              ? '1 day ago'
+              : `${daysSinceCommit} days ago`;
         factors.push(`${points} pts: Recent commit (${dayLabel})`);
       }
     }
@@ -357,7 +375,9 @@ class GDDDriftPredictor {
       git_activity: {
         commits_last_30d: gitActivity.byNode[nodeName]?.length || 0,
         last_commit_days_ago: gitActivity.lastCommitByNode[nodeName]
-          ? Math.floor((Date.now() / 1000 - gitActivity.lastCommitByNode[nodeName]) / (60 * 60 * 24))
+          ? Math.floor(
+              (Date.now() / 1000 - gitActivity.lastCommitByNode[nodeName]) / (60 * 60 * 24)
+            )
           : null
       },
       health_score: healthData?.score || null,
@@ -372,7 +392,7 @@ class GDDDriftPredictor {
     let warnings = 0;
 
     if (validationStatus.orphans?.includes(nodeName)) warnings++;
-    if (validationStatus.missing_refs?.some(r => r.node === nodeName)) warnings++;
+    if (validationStatus.missing_refs?.some((r) => r.node === nodeName)) warnings++;
     if (validationStatus.outdated?.includes(nodeName)) warnings++;
     if (validationStatus.drift?.[nodeName]) warnings++;
 
@@ -409,14 +429,15 @@ class GDDDriftPredictor {
   calculateOverallStats() {
     const nodes = Object.values(this.driftData.nodes);
 
-    const toU = s => String(s || '').toUpperCase();
-    this.driftData.high_risk_count = nodes.filter(n => toU(n.status) === 'LIKELY_DRIFT').length;
-    this.driftData.at_risk_count = nodes.filter(n => toU(n.status) === 'AT_RISK').length;
-    this.driftData.healthy_count = nodes.filter(n => toU(n.status) === 'HEALTHY').length;
+    const toU = (s) => String(s || '').toUpperCase();
+    this.driftData.high_risk_count = nodes.filter((n) => toU(n.status) === 'LIKELY_DRIFT').length;
+    this.driftData.at_risk_count = nodes.filter((n) => toU(n.status) === 'AT_RISK').length;
+    this.driftData.healthy_count = nodes.filter((n) => toU(n.status) === 'HEALTHY').length;
 
-    this.driftData.average_drift_risk = nodes.length > 0
-      ? Math.round(nodes.reduce((sum, n) => sum + n.drift_risk, 0) / nodes.length)
-      : 0;
+    this.driftData.average_drift_risk =
+      nodes.length > 0
+        ? Math.round(nodes.reduce((sum, n) => sum + n.drift_risk, 0) / nodes.length)
+        : 0;
 
     if (this.driftData.high_risk_count > 0) {
       this.driftData.status = 'CRITICAL';
@@ -445,8 +466,9 @@ class GDDDriftPredictor {
    * Generate markdown report content
    */
   generateMarkdownReport() {
-    const nodes = Object.entries(this.driftData.nodes)
-      .sort((a, b) => b[1].drift_risk - a[1].drift_risk);
+    const nodes = Object.entries(this.driftData.nodes).sort(
+      (a, b) => b[1].drift_risk - a[1].drift_risk
+    );
 
     let md = '# 🔮 GDD Drift Risk Report\n\n';
     md += `**Generated:** ${this.driftData.generated_at}\n`;
@@ -468,12 +490,13 @@ class GDDDriftPredictor {
 
     for (const [nodeName, data] of nodes) {
       const emoji = this.getDriftEmoji(data.status);
-      const lastCommit = data.git_activity.last_commit_days_ago !== null
-        ? `${data.git_activity.last_commit_days_ago}d ago`
-        : 'N/A';
+      const lastCommit =
+        data.git_activity.last_commit_days_ago !== null
+          ? `${data.git_activity.last_commit_days_ago}d ago`
+          : 'N/A';
       const health = data.health_score !== null ? data.health_score : 'N/A';
       const coverage = data.coverage !== null ? `${data.coverage}%` : 'N/A';
-      const warnings = data.factors.filter(f => f.includes('warning')).length;
+      const warnings = data.factors.filter((f) => f.includes('warning')).length;
 
       md += `| ${nodeName} | ${emoji} ${data.drift_risk} | ${data.status} | ${health} | ${coverage} | ${lastCommit} | ${warnings} |\n`;
     }
@@ -516,8 +539,9 @@ class GDDDriftPredictor {
    * Create GitHub issues for high-risk nodes (>70)
    */
   async createHighRiskIssues() {
-    const highRiskNodes = Object.entries(this.driftData.nodes)
-      .filter(([_, data]) => data.drift_risk > 70);
+    const highRiskNodes = Object.entries(this.driftData.nodes).filter(
+      ([_, data]) => data.drift_risk > 70
+    );
 
     if (highRiskNodes.length === 0) {
       console.log('✅ No high-risk nodes detected (risk > 70)');
@@ -571,12 +595,22 @@ class GDDDriftPredictor {
   printSummary(duration) {
     console.log('');
     console.log('╔════════════════════════════════════════╗');
-    console.log(`║ ${this.getDriftEmoji(this.driftData.status.toLowerCase())}  DRIFT STATUS: ${this.driftData.status.padEnd(22)} ║`);
+    console.log(
+      `║ ${this.getDriftEmoji(this.driftData.status.toLowerCase())}  DRIFT STATUS: ${this.driftData.status.padEnd(22)} ║`
+    );
     console.log('╠════════════════════════════════════════╣');
-    console.log(`║ 📊 Average Risk:  ${String(this.driftData.average_drift_risk).padStart(3)}/100              ║`);
-    console.log(`║ 🟢 Healthy:       ${String(this.driftData.healthy_count).padStart(3)}                    ║`);
-    console.log(`║ 🟡 At Risk:       ${String(this.driftData.at_risk_count).padStart(3)}                    ║`);
-    console.log(`║ 🔴 Likely Drift:  ${String(this.driftData.high_risk_count).padStart(3)}                    ║`);
+    console.log(
+      `║ 📊 Average Risk:  ${String(this.driftData.average_drift_risk).padStart(3)}/100              ║`
+    );
+    console.log(
+      `║ 🟢 Healthy:       ${String(this.driftData.healthy_count).padStart(3)}                    ║`
+    );
+    console.log(
+      `║ 🟡 At Risk:       ${String(this.driftData.at_risk_count).padStart(3)}                    ║`
+    );
+    console.log(
+      `║ 🔴 Likely Drift:  ${String(this.driftData.high_risk_count).padStart(3)}                    ║`
+    );
     console.log('╚════════════════════════════════════════╝');
     console.log('');
     console.log(`📁 Reports generated:`);
@@ -606,7 +640,7 @@ async function main() {
   };
 
   // Parse --node=<name>
-  const nodeArg = args.find(a => a.startsWith('--node='));
+  const nodeArg = args.find((a) => a.startsWith('--node='));
   if (nodeArg) {
     options.nodeFilter = nodeArg.split('=')[1];
     options.mode = 'single';
@@ -621,7 +655,7 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

@@ -1,6 +1,6 @@
 /**
  * Unit Tests for Shield Persistence Service - GDPR Retention Features
- * 
+ *
  * Tests anonymization, purging, and retention logging functionality
  * for GDPR compliance in the Shield system.
  */
@@ -11,7 +11,7 @@ const crypto = require('crypto');
 // Create a sophisticated Supabase mock with response queue system
 const createQueryBuilderMock = () => {
   let responseQueue = [];
-  
+
   const mock = {
     // Query builder methods (chainable)
     from: jest.fn().mockReturnThis(),
@@ -28,29 +28,30 @@ const createQueryBuilderMock = () => {
     order: jest.fn().mockReturnThis(),
     range: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnThis(),
-    
+
     // Response queue management
-    __queueResponse: function(result) {
+    __queueResponse: function (result) {
       responseQueue.push(result);
       return this;
     },
-    __setResult: function(result) {
+    __setResult: function (result) {
       this.__result = result;
       return this;
     },
-    __clearQueue: function() {
+    __clearQueue: function () {
       responseQueue = [];
       return this;
     },
-    
+
     // Promise implementation for terminal operations
-    then: jest.fn().mockImplementation(function(resolve, reject) {
+    then: jest.fn().mockImplementation(function (resolve, reject) {
       try {
         // Use queued response if available, otherwise fallback to __result
-        const result = responseQueue.length > 0 
-          ? responseQueue.shift() 
-          : (this.__result || { data: null, error: null, count: 0 });
-        
+        const result =
+          responseQueue.length > 0
+            ? responseQueue.shift()
+            : this.__result || { data: null, error: null, count: 0 };
+
         if (resolve) {
           return Promise.resolve(resolve(result));
         }
@@ -62,15 +63,21 @@ const createQueryBuilderMock = () => {
         return Promise.reject(error);
       }
     }),
-    
+
     // Promise-like methods
-    catch: jest.fn().mockImplementation(function(onRejected) {
+    catch: jest.fn().mockImplementation(function (onRejected) {
       return this.then(null, onRejected);
     }),
-    finally: jest.fn().mockImplementation(function(onFinally) {
+    finally: jest.fn().mockImplementation(function (onFinally) {
       return this.then(
-        (value) => { onFinally(); return value; },
-        (reason) => { onFinally(); throw reason; }
+        (value) => {
+          onFinally();
+          return value;
+        },
+        (reason) => {
+          onFinally();
+          throw reason;
+        }
       );
     })
   };
@@ -90,18 +97,18 @@ const mockLogger = {
 
 describe('ShieldPersistenceService - GDPR Retention', () => {
   let service;
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock environment variables
     process.env.SUPABASE_URL = 'http://localhost:54321';
     process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
     process.env.SHIELD_ANONYMIZATION_SECRET = 'test-secret-for-hmac';
-    
+
     // Reset the mockSupabase to fresh state
     Object.assign(mockSupabase, createQueryBuilderMock());
-    
+
     service = new ShieldPersistenceService({
       supabase: mockSupabase,
       logger: mockLogger
@@ -115,19 +122,19 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
   describe('generateTextHash', () => {
     test('should generate consistent HMAC hash for same input', () => {
       const originalText = 'This is a test comment';
-      
+
       // Mock crypto.randomBytes to return consistent salt for testing
       const mockSalt = 'abcd1234567890ef';
       jest.spyOn(crypto, 'randomBytes').mockReturnValue(Buffer.from(mockSalt, 'hex'));
-      
+
       const result1 = service.generateTextHash(originalText);
       const result2 = service.generateTextHash(originalText);
-      
+
       expect(result1.salt).toBe(mockSalt);
       expect(result2.salt).toBe(mockSalt);
       expect(result1.hash).toBe(result2.hash);
       expect(result1.hash).toHaveLength(64); // SHA-256 hex length
-      
+
       crypto.randomBytes.mockRestore();
     });
 
@@ -139,7 +146,7 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
 
     test('should use default secret when environment variable is missing', () => {
       delete process.env.SHIELD_ANONYMIZATION_SECRET;
-      
+
       const result = service.generateTextHash('test');
       expect(result.hash).toBeDefined();
       expect(result.salt).toBeDefined();
@@ -148,7 +155,7 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     test('should generate different hashes for different inputs', () => {
       const result1 = service.generateTextHash('Comment 1');
       const result2 = service.generateTextHash('Comment 2');
-      
+
       expect(result1.hash).not.toBe(result2.hash);
       expect(result1.salt).not.toBe(result2.salt);
     });
@@ -250,10 +257,10 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     test('should use correct cutoff date for 80-day retention', async () => {
       const mockDate = '2023-12-01T09:00:00.000Z';
       const originalDate = Date;
-      
+
       jest.useFakeTimers();
       jest.setSystemTime(new Date(mockDate));
-      
+
       // Set up the mock to return empty array for cutoff date test
       mockSupabase.__setResult({
         data: [],
@@ -287,7 +294,9 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
 
       expect(result.purged).toBe(5);
       expect(mockSupabase.delete).toHaveBeenCalledWith({ count: 'exact' });
-      expect(mockLogger.info).toHaveBeenCalledWith('Shield events purge completed', { purgedCount: 5 });
+      expect(mockLogger.info).toHaveBeenCalledWith('Shield events purge completed', {
+        purgedCount: 5
+      });
     });
 
     test('should handle no records to purge', async () => {
@@ -321,7 +330,7 @@ describe('ShieldPersistenceService - GDPR Retention', () => {
     test('should use correct cutoff date for 90-day retention', async () => {
       const mockDate = '2023-12-01T09:00:00.000Z';
       const originalDate = Date;
-      
+
       jest.useFakeTimers();
       jest.setSystemTime(new Date(mockDate));
 

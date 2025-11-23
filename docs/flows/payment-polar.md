@@ -15,6 +15,7 @@ The Payment & Subscription flow manages user subscriptions through Polar (Mercha
 **Current State:** System uses Stripe in code, but business model references Polar. Migration to Polar is pending.
 
 **Why Polar:**
+
 - **Merchant of Record (MoR):** Simplifies EU VAT + US sales tax compliance
 - **Modern API:** Better developer experience than Stripe
 - **Unified Billing:** Subscriptions + one-time purchases in single platform
@@ -165,12 +166,12 @@ sequenceDiagram
 
 ### Plan Tiers
 
-| Plan | Price | Billing Cycle | Trial Period | Features |
-|------|-------|---------------|--------------|----------|
-| **Free** | €0/month | - | - | 100 roasts/month, 1 platform |
-| **Starter** | €5/month | Monthly | 30 days | 500 roasts/month, 2 platforms, basic persona |
-| **Pro** | €15/month | Monthly | 14 days | 1,000 roasts/month, 5 platforms, full persona, analytics |
-| **Plus** | €50/month | Monthly | 14 days | Unlimited roasts, all platforms, custom styles, priority support |
+| Plan        | Price     | Billing Cycle | Trial Period | Features                                                         |
+| ----------- | --------- | ------------- | ------------ | ---------------------------------------------------------------- |
+| **Free**    | €0/month  | -             | -            | 100 roasts/month, 1 platform                                     |
+| **Starter** | €5/month  | Monthly       | 30 days      | 500 roasts/month, 2 platforms, basic persona                     |
+| **Pro**     | €15/month | Monthly       | 14 days      | 1,000 roasts/month, 5 platforms, full persona, analytics         |
+| **Plus**    | €50/month | Monthly       | 14 days      | Unlimited roasts, all platforms, custom styles, priority support |
 
 **Note:** Enterprise plans not currently available but planned for future.
 
@@ -187,6 +188,7 @@ sequenceDiagram
 **Authentication:** Required (JWT)
 
 **Request:**
+
 ```json
 {
   "plan": "starter" | "pro" | "plus",
@@ -195,6 +197,7 @@ sequenceDiagram
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -206,6 +209,7 @@ sequenceDiagram
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Invalid plan
 - `401 Unauthorized` - Not authenticated
 - `409 Conflict` - User already has active subscription
@@ -220,11 +224,13 @@ sequenceDiagram
 **Authentication:** Webhook signature verification
 
 **Headers:**
+
 ```
 Polar-Signature: t=1729347000,v1=abc123...
 ```
 
 **Request Body (checkout.completed):**
+
 ```json
 {
   "id": "evt_abc123",
@@ -246,6 +252,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "received": true,
@@ -255,6 +262,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 ```
 
 **Response (200 OK - Duplicate Event):**
+
 ```json
 {
   "received": true,
@@ -273,6 +281,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 **Authentication:** Required (JWT)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -297,6 +306,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 ```
 
 **Response (404 Not Found - No Active Subscription):**
+
 ```json
 {
   "success": false,
@@ -313,6 +323,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 **Authentication:** Required (JWT)
 
 **Request:**
+
 ```json
 {
   "newPlan": "plus"
@@ -320,6 +331,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -335,6 +347,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Invalid plan or same as current
 - `404 Not Found` - No active subscription
 - `500 Internal Server Error` - Polar API error
@@ -348,6 +361,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 **Authentication:** Required (JWT)
 
 **Request:**
+
 ```json
 {
   "immediately": false // Optional: cancel immediately vs at period end
@@ -355,6 +369,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -375,6 +390,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 **Authentication:** Required (JWT)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -385,6 +401,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 ```
 
 **Note:** Polar customer portal allows users to:
+
 - Update payment method
 - View invoices
 - Manage subscription
@@ -460,6 +477,7 @@ CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
 **Fired when:** User completes checkout and subscription is created
 
 **Actions:**
+
 1. Create `polar_subscriptions` record
 2. Update `users.plan`
 3. Set `status = 'trial'` if trial period active
@@ -468,6 +486,7 @@ CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
 6. Notify workers of plan change
 
 **Example Payload:**
+
 ```json
 {
   "id": "evt_checkout_abc123",
@@ -492,6 +511,7 @@ CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
 **Fired when:** Subscription plan or status changes
 
 **Actions:**
+
 1. Update `polar_subscriptions` record
 2. Update `users.plan`
 3. Notify workers of plan change
@@ -499,6 +519,7 @@ CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
 5. If downgrade: Schedule downgrade at period end
 
 **Example Payload:**
+
 ```json
 {
   "id": "evt_update_abc123",
@@ -519,6 +540,7 @@ CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
 **Fired when:** Subscription is canceled (immediately or at period end)
 
 **Actions:**
+
 1. Update `polar_subscriptions.status = 'canceled'`
 2. If `cancel_at_period_end = true`:
    - Keep `users.plan` until `current_period_end`
@@ -529,6 +551,7 @@ CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
 5. Notify workers of plan change (if immediate)
 
 **Example Payload:**
+
 ```json
 {
   "id": "evt_cancel_abc123",
@@ -548,12 +571,14 @@ CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
 **Fired when:** Subscription payment is successful
 
 **Actions:**
+
 1. Update `polar_subscriptions.status = 'active'`
 2. Update `current_period_start` and `current_period_end`
 3. Send payment receipt email
 4. If recovering from `past_due`: Notify user of restoration
 
 **Example Payload:**
+
 ```json
 {
   "id": "evt_payment_success_abc123",
@@ -574,12 +599,14 @@ CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
 **Fired when:** Subscription payment fails
 
 **Actions:**
+
 1. Update `polar_subscriptions.status = 'past_due'`
 2. Send payment failure email with retry instructions
 3. Start grace period (7 days)
 4. If grace period expires: Cancel subscription
 
 **Example Payload:**
+
 ```json
 {
   "id": "evt_payment_failed_abc123",
@@ -599,11 +626,11 @@ CREATE INDEX idx_polar_webhook_events_type ON polar_webhook_events(event_type);
 
 ### Trial Duration by Plan
 
-| Plan | Trial Duration | Grace Period |
-|------|----------------|--------------|
-| Starter | 30 days | 3 days |
-| Pro | 14 days | 3 days |
-| Plus | 14 days | 3 days |
+| Plan    | Trial Duration | Grace Period |
+| ------- | -------------- | ------------ |
+| Starter | 30 days        | 3 days       |
+| Pro     | 14 days        | 3 days       |
+| Plus    | 14 days        | 3 days       |
 
 ### Trial Expiration Flow
 
@@ -651,6 +678,7 @@ Trial Ends (trial_end_date reached):
 **Example:** User on Starter (€5/month) upgrades to Pro (€15/month) with 15 days remaining
 
 **Calculation:**
+
 ```
 Unused Starter credit: €5 × (15/30) = €2.50
 Pro cost for 15 days: €15 × (15/30) = €7.50
@@ -667,12 +695,14 @@ Prorated charge: €7.50 - €2.50 = €5.00
 **Example:** User on Pro (€15/month) downgrades to Starter (€5/month) with 15 days remaining
 
 **Behavior:**
+
 - **Immediate effect:** NO (downgrade scheduled for period end)
 - **Access:** User keeps Pro access until `current_period_end`
 - **Next billing:** €5.00 on next cycle
 - **Refund:** None (pro-rata credit applied to next invoice)
 
 **Alternative (if user requests immediate downgrade):**
+
 ```
 Unused Pro credit: €15 × (15/30) = €7.50
 Starter cost for 15 days: €5 × (15/30) = €2.50
@@ -694,6 +724,7 @@ Polar-Signature: t=1729347000,v1=abc123...
 ```
 
 **Verification Process:**
+
 ```javascript
 const crypto = require('crypto');
 
@@ -705,20 +736,15 @@ function verifyPolarSignature(payload, signature, secret) {
 
   // Create expected signature
   const signedPayload = `${timestamp}.${JSON.stringify(payload)}`;
-  const expectedSig = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex');
+  const expectedSig = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
 
   // Compare (constant-time comparison)
-  return crypto.timingSafeEqual(
-    Buffer.from(sig),
-    Buffer.from(expectedSig)
-  );
+  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig));
 }
 ```
 
 **Reject if:**
+
 - Signature missing
 - Signature invalid
 - Timestamp > 5 minutes old (replay attack prevention)
@@ -764,6 +790,7 @@ async function processWebhook(event) {
 **Service:** `src/services/costControl.js`
 
 **Flow:**
+
 ```
 User generates roast
     ↓
@@ -787,6 +814,7 @@ If usage >= limit:
 ```
 
 **Code Example:**
+
 ```javascript
 async function checkRoastLimit(userId) {
   // Get user's subscription
@@ -834,6 +862,7 @@ async function checkRoastLimit(userId) {
 When subscription changes, workers need to update their in-memory cache of plan limits.
 
 **Flow:**
+
 ```
 Webhook: subscription.updated
     ↓
@@ -849,14 +878,18 @@ Workers update local cache:
 ```
 
 **Implementation:**
+
 ```javascript
 // src/services/workerNotificationService.js
 async function notifyPlanChange(userId, newPlan) {
-  await redis.publish('plan:updated', JSON.stringify({
-    userId,
-    plan: newPlan,
-    timestamp: Date.now()
-  }));
+  await redis.publish(
+    'plan:updated',
+    JSON.stringify({
+      userId,
+      plan: newPlan,
+      timestamp: Date.now()
+    })
+  );
 }
 
 // src/workers/BaseWorker.js
@@ -873,13 +906,13 @@ redis.subscribe('plan:updated', (message) => {
 
 ### Polar API Errors
 
-| Error Code | Cause | Resolution |
-|------------|-------|-----------|
-| `400 Bad Request` | Invalid plan or parameters | Validate input before API call |
-| `401 Unauthorized` | Invalid API key | Check `POLAR_API_KEY` env var |
-| `404 Not Found` | Subscription or customer not found | Verify ID exists in Polar |
-| `429 Too Many Requests` | Rate limit exceeded | Retry with exponential backoff |
-| `500 Internal Server Error` | Polar service issue | Retry up to 3 times, then fail gracefully |
+| Error Code                  | Cause                              | Resolution                                |
+| --------------------------- | ---------------------------------- | ----------------------------------------- |
+| `400 Bad Request`           | Invalid plan or parameters         | Validate input before API call            |
+| `401 Unauthorized`          | Invalid API key                    | Check `POLAR_API_KEY` env var             |
+| `404 Not Found`             | Subscription or customer not found | Verify ID exists in Polar                 |
+| `429 Too Many Requests`     | Rate limit exceeded                | Retry with exponential backoff            |
+| `500 Internal Server Error` | Polar service issue                | Retry up to 3 times, then fail gracefully |
 
 ---
 
@@ -890,6 +923,7 @@ redis.subscribe('plan:updated', (message) => {
 **Rationale:** Prevents Polar from retrying infinitely
 
 **Implementation:**
+
 ```javascript
 router.post('/api/billing/polar/webhooks', async (req, res) => {
   try {
@@ -937,7 +971,8 @@ describe('Polar Service', () => {
     const payload = { id: 'evt_test', type: 'checkout.completed' };
     const secret = 'test-secret';
     const timestamp = Math.floor(Date.now() / 1000);
-    const sig = crypto.createHmac('sha256', secret)
+    const sig = crypto
+      .createHmac('sha256', secret)
       .update(`${timestamp}.${JSON.stringify(payload)}`)
       .digest('hex');
     const signature = `t=${timestamp},v1=${sig}`;

@@ -24,21 +24,21 @@ const { flags } = require('../config/flags');
  * }
  */
 function isFlagEnabled(flagName) {
-    try {
-        // Defensive checks for Jest test environment
-        // flags object may not be properly initialized in tests
-        if (!flags || typeof flags.isEnabled !== 'function') {
-            return false;
-        }
-
-        return flags.isEnabled(flagName);
-    } catch (error) {
-        // Log warning but don't throw - fail safe to false
-        logger.warn(`⚠️ Error checking flag ${flagName}:`, error.message);
-        return false;
+  try {
+    // Defensive checks for Jest test environment
+    // flags object may not be properly initialized in tests
+    if (!flags || typeof flags.isEnabled !== 'function') {
+      return false;
     }
+
+    return flags.isEnabled(flagName);
+  } catch (error) {
+    // Log warning but don't throw - fail safe to false
+    logger.warn(`⚠️ Error checking flag ${flagName}:`, error.message);
+    return false;
+  }
 }
 
 module.exports = {
-    isFlagEnabled
+  isFlagEnabled
 };

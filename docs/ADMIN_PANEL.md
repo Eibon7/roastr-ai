@@ -7,6 +7,7 @@ El **Panel de Administración completo** está implementado y funcional, permiti
 ### 🎯 **Características Principales**
 
 #### **🏠 Panel Principal (`/admin`)**
+
 - **Dashboard administrativo** con estadísticas en tiempo real
 - **Cards de métricas**: Total usuarios, usuarios activos, suspendidos, alertas
 - **Tabla completa de usuarios** con búsqueda y filtros avanzados
@@ -14,6 +15,7 @@ El **Panel de Administración completo** está implementado y funcional, permiti
 - **Indicadores visuales** de estado y alertas de uso
 
 #### **👤 Gestión de Usuarios**
+
 - ✅ **Activar/Desactivar** cuentas de usuario
 - ✅ **Suspender/Restaurar** con razones documentadas
 - ✅ **Cambio de planes** (Basic, Pro, Creator Plus)
@@ -22,6 +24,7 @@ El **Panel de Administración completo** está implementado y funcional, permiti
 - ✅ **Ordenamiento** por cualquier columna
 
 #### **📊 Sistema de Estadísticas**
+
 - ✅ **Uso mensual** de mensajes y tokens por usuario
 - ✅ **Alertas automáticas** cuando se supera el 80% del límite
 - ✅ **Límites por plan** con verificación en tiempo real
@@ -29,6 +32,7 @@ El **Panel de Administración completo** está implementado y funcional, permiti
 - ✅ **Métricas agregadas** del sistema
 
 #### **🔍 Página de Detalle (`/admin/user/:id`)**
+
 - **Información completa** del usuario y su cuenta
 - **Estadísticas detalladas** de uso por plataforma
 - **Historial de actividades** recientes
@@ -38,6 +42,7 @@ El **Panel de Administración completo** está implementado y funcional, permiti
 ### 🛠️ **Arquitectura Técnica**
 
 #### **Backend - API Routes**
+
 ```javascript
 // Rutas implementadas en /src/routes/auth.js
 
@@ -51,6 +56,7 @@ GET    /api/auth/admin/users/:id/stats            // Estadísticas detalladas
 ```
 
 #### **Frontend - Componentes React**
+
 ```
 frontend/src/pages/admin/
 ├── AdminDashboard.jsx     # Panel principal (/admin)
@@ -60,16 +66,19 @@ frontend/src/pages/admin/
 ### 🚀 **Cómo Usar**
 
 #### **1. Acceso al Panel**
+
 ```
 URL: http://localhost:3000/admin
 ```
 
 #### **2. Crear Usuario Admin**
+
 ```sql
 -- Ejecutar scripts/create-test-admin.sql en Supabase
 ```
 
 #### **3. Credenciales de Prueba**
+
 ```
 Email: <YOUR_ADMIN_EMAIL>
 Password: <YOUR_ADMIN_PASSWORD>
@@ -78,6 +87,7 @@ Password: <YOUR_ADMIN_PASSWORD>
 **Nota:** Para desarrollo local únicamente. Genere las credenciales usando el script `scripts/create-test-admin.sql` o configure las variables de entorno apropiadas. Rote o elimine estas credenciales después del uso.
 
 #### **4. Navegación**
+
 ```
 /admin                    → Panel principal
 /admin/user/:userId       → Detalle de usuario específico

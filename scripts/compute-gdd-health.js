@@ -55,10 +55,16 @@ class GDDHealthComputer {
           console.error(error.stack);
         }
       } else {
-        console.log(JSON.stringify({
-          error: error.message,
-          success: false
-        }, null, 2));
+        console.log(
+          JSON.stringify(
+            {
+              error: error.message,
+              success: false
+            },
+            null,
+            2
+          )
+        );
       }
       return 2;
     }
@@ -140,20 +146,26 @@ class GDDHealthComputer {
    * Output JSON format
    */
   outputJSON(result, healthData) {
-    console.log(JSON.stringify({
-      success: result.passed,
-      score: result.score,
-      minScore: result.minScore,
-      status: result.status,
-      nodes: {
-        total: result.nodeCount,
-        healthy: result.healthyCount,
-        degraded: result.degradedCount,
-        critical: result.criticalCount
-      },
-      belowThreshold: result.nodesBelowThreshold,
-      generatedAt: result.generatedAt
-    }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          success: result.passed,
+          score: result.score,
+          minScore: result.minScore,
+          status: result.status,
+          nodes: {
+            total: result.nodeCount,
+            healthy: result.healthyCount,
+            degraded: result.degradedCount,
+            critical: result.criticalCount
+          },
+          belowThreshold: result.nodesBelowThreshold,
+          generatedAt: result.generatedAt
+        },
+        null,
+        2
+      )
+    );
   }
 
   /**
@@ -184,10 +196,12 @@ class GDDHealthComputer {
 
     // Nodes below threshold
     if (result.nodesBelowThreshold.length > 0) {
-      console.log(`⚠️  ${result.nodesBelowThreshold.length} node(s) below ${this.options.minScore} threshold:`);
+      console.log(
+        `⚠️  ${result.nodesBelowThreshold.length} node(s) below ${this.options.minScore} threshold:`
+      );
       console.log('');
 
-      result.nodesBelowThreshold.forEach(node => {
+      result.nodesBelowThreshold.forEach((node) => {
         console.log(`   📌 ${node.name} (${node.score}/100)`);
 
         if (this.options.verbose) {
@@ -217,10 +231,14 @@ class GDDHealthComputer {
     console.log('═══════════════════════════════════════════');
     if (result.passed) {
       console.log('✅ VALIDATION PASSED');
-      console.log(`   System health (${result.score}/100) meets minimum threshold (${this.options.minScore}/100)`);
+      console.log(
+        `   System health (${result.score}/100) meets minimum threshold (${this.options.minScore}/100)`
+      );
     } else {
       console.log('❌ VALIDATION FAILED');
-      console.log(`   System health (${result.score}/100) below minimum threshold (${this.options.minScore}/100)`);
+      console.log(
+        `   System health (${result.score}/100) below minimum threshold (${this.options.minScore}/100)`
+      );
       console.log(`   Gap: ${(this.options.minScore - result.score).toFixed(1)} points`);
 
       if (!this.options.verbose) {
@@ -243,9 +261,9 @@ class GDDHealthComputer {
    */
   getStatusEmoji(status) {
     const emojiMap = {
-      'HEALTHY': '🟢',
-      'DEGRADED': '🟡',
-      'CRITICAL': '🔴'
+      HEALTHY: '🟢',
+      DEGRADED: '🟡',
+      CRITICAL: '🔴'
     };
     return emojiMap[status] || '⚪';
   }
@@ -271,7 +289,7 @@ async function main() {
   };
 
   // Parse --min-score
-  const minScoreIndex = args.findIndex(arg => arg === '--min-score');
+  const minScoreIndex = args.findIndex((arg) => arg === '--min-score');
   if (minScoreIndex !== -1 && args[minScoreIndex + 1]) {
     options.minScore = parseFloat(args[minScoreIndex + 1]);
     if (isNaN(options.minScore) || options.minScore < 0 || options.minScore > 100) {
@@ -327,7 +345,7 @@ Exit Codes:
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(2);
   });

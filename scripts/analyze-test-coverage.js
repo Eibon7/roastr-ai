@@ -2,7 +2,7 @@
 
 /**
  * Test Coverage Analysis Script
- * 
+ *
  * Analyzes current test coverage and identifies gaps
  */
 
@@ -37,21 +37,21 @@ const BASELINE_COVERAGE = {
     'src/workers/GenerateReplyWorker.js': { statements: 0, priority: 'critical' },
     'src/workers/ShieldActionWorker.js': { statements: 0, priority: 'critical' },
     'src/workers/WorkerManager.js': { statements: 0, priority: 'critical' },
-    
+
     // Services
     'src/services/authService.js': { statements: 0, priority: 'critical' },
     'src/services/costControl.js': { statements: 5.63, priority: 'critical' },
     'src/services/queueService.js': { statements: 0, priority: 'critical' },
     'src/services/shieldService.js': { statements: 0, priority: 'critical' },
     'src/services/styleProfileGenerator.js': { statements: 0, priority: 'high' },
-    
+
     // Middleware
     'src/middleware/auth.js': { statements: 13.63, priority: 'critical' },
     'src/middleware/rateLimiter.js': { statements: 7.75, priority: 'high' },
     'src/middleware/requirePlan.js': { statements: 95.52, priority: 'high' },
     'src/middleware/security.js': { statements: 59.67, priority: 'high' },
     'src/middleware/sessionRefresh.js': { statements: 6.06, priority: 'medium' },
-    
+
     // Routes
     'src/routes/admin.js': { statements: 16.29, priority: 'high' },
     'src/routes/auth.js': { statements: 14.84, priority: 'critical' },
@@ -67,8 +67,8 @@ const BASELINE_COVERAGE = {
 
 // Get all source files
 async function getAllSourceFiles() {
-  const files = glob('src/**/*.js', { 
-    ignore: ['src/public/**', 'src/**/*.test.js'] 
+  const files = glob('src/**/*.js', {
+    ignore: ['src/public/**', 'src/**/*.test.js']
   });
   return files;
 }
@@ -83,7 +83,7 @@ async function getAllTestFiles() {
 function hasCorrespondingTest(srcFile) {
   const relativePath = srcFile.replace('src/', '');
   const baseName = path.basename(srcFile, '.js');
-  
+
   // Possible test locations
   const possibleTests = [
     `tests/unit/${relativePath.replace('.js', '.test.js')}`,
@@ -91,8 +91,8 @@ function hasCorrespondingTest(srcFile) {
     `tests/integration/${baseName}.test.js`,
     `tests/smoke/${baseName}.test.js`
   ];
-  
-  return possibleTests.some(testPath => {
+
+  return possibleTests.some((testPath) => {
     try {
       require.resolve(path.resolve(testPath));
       return true;
@@ -125,7 +125,7 @@ function getPriorityLevel(filePath) {
 async function generateCoverageAnalysis() {
   const sourceFiles = await getAllSourceFiles();
   const testFiles = await getAllTestFiles();
-  
+
   // Analysis results
   const analysis = {
     overview: {
@@ -153,14 +153,17 @@ async function generateCoverageAnalysis() {
       missingFunctionality: []
     }
   };
-  
+
   // Analyze each source file
   for (const file of sourceFiles) {
     const hasTests = hasCorrespondingTest(file);
-    const coverage = BASELINE_COVERAGE.files[file] || { statements: 0, priority: getPriorityLevel(file) };
+    const coverage = BASELINE_COVERAGE.files[file] || {
+      statements: 0,
+      priority: getPriorityLevel(file)
+    };
     const coverageLevel = categorizeCoverage(coverage.statements);
     const priority = coverage.priority;
-    
+
     if (hasTests) {
       analysis.overview.filesWithTests++;
     } else {
@@ -171,7 +174,7 @@ async function generateCoverageAnalysis() {
         reason: 'No corresponding test file found'
       });
     }
-    
+
     // Categorize by coverage
     analysis.coverage[coverageLevel].push({
       file,
@@ -179,7 +182,7 @@ async function generateCoverageAnalysis() {
       priority,
       hasTests
     });
-    
+
     // Categorize by priority
     analysis.priorities[priority].push({
       file,
@@ -187,7 +190,7 @@ async function generateCoverageAnalysis() {
       hasTests,
       coverageLevel
     });
-    
+
     // Identify gaps
     if (coverage.statements < CONFIG.thresholds.low) {
       analysis.gaps.lowCoverage.push({
@@ -198,7 +201,7 @@ async function generateCoverageAnalysis() {
       });
     }
   }
-  
+
   return analysis;
 }
 
@@ -206,7 +209,7 @@ async function generateCoverageAnalysis() {
 function generateMarkdownReport(analysis) {
   let md = `# Test Coverage Analysis Report\n\n`;
   md += `Generated on: ${new Date().toISOString()}\n\n`;
-  
+
   // Overview
   md += `## 📊 Coverage Overview\n\n`;
   md += `### Current Coverage Metrics\n`;
@@ -214,13 +217,13 @@ function generateMarkdownReport(analysis) {
   md += `- **Branches**: ${analysis.overview.currentCoverage.branches}%\n`;
   md += `- **Functions**: ${analysis.overview.currentCoverage.functions}%\n`;
   md += `- **Lines**: ${analysis.overview.currentCoverage.lines}%\n\n`;
-  
+
   md += `### File Coverage Summary\n`;
   md += `- **Total Source Files**: ${analysis.overview.totalSourceFiles}\n`;
   md += `- **Total Test Files**: ${analysis.overview.totalTestFiles}\n`;
   md += `- **Files with Tests**: ${analysis.overview.filesWithTests}\n`;
   md += `- **Files without Tests**: ${analysis.overview.filesWithoutTests}\n\n`;
-  
+
   // Coverage Distribution
   md += `## 📈 Coverage Distribution\n\n`;
   md += `| Category | Count | Threshold |\n`;
@@ -229,124 +232,130 @@ function generateMarkdownReport(analysis) {
   md += `| Good (≥60%) | ${analysis.coverage.good.length} | ${CONFIG.thresholds.medium}% |\n`;
   md += `| Poor (≥40%) | ${analysis.coverage.poor.length} | ${CONFIG.thresholds.low}% |\n`;
   md += `| Critical (<40%) | ${analysis.coverage.critical.length} | <${CONFIG.thresholds.low}% |\n\n`;
-  
+
   // Critical Issues
   md += `## 🚨 Critical Coverage Issues\n\n`;
   if (analysis.coverage.critical.length > 0) {
     md += `### Files with Critical Coverage (<${CONFIG.thresholds.low}%)\n\n`;
     md += `| File | Coverage | Priority | Has Tests |\n`;
     md += `|------|----------|----------|----------|\n`;
-    
+
     analysis.coverage.critical
       .sort((a, b) => a.coverage - b.coverage)
-      .forEach(item => {
+      .forEach((item) => {
         const hasTestsIcon = item.hasTests ? '✅' : '❌';
-        const priorityIcon = item.priority === 'critical' ? '🔥' : 
-                            item.priority === 'high' ? '⚠️' : '⚡';
+        const priorityIcon =
+          item.priority === 'critical' ? '🔥' : item.priority === 'high' ? '⚠️' : '⚡';
         md += `| ${item.file} | ${item.coverage}% | ${priorityIcon} ${item.priority} | ${hasTestsIcon} |\n`;
       });
     md += '\n';
   }
-  
+
   // Files without tests
   if (analysis.gaps.noTests.length > 0) {
     md += `### Files Without Tests\n\n`;
     md += `| File | Priority | Urgency |\n`;
     md += `|------|----------|---------|\n`;
-    
+
     analysis.gaps.noTests
       .sort((a, b) => {
         const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
         return priorityOrder[a.priority] - priorityOrder[b.priority];
       })
-      .forEach(item => {
-        const priorityIcon = item.priority === 'critical' ? '🔥' : 
-                            item.priority === 'high' ? '⚠️' : 
-                            item.priority === 'medium' ? '⚡' : '💡';
+      .forEach((item) => {
+        const priorityIcon =
+          item.priority === 'critical'
+            ? '🔥'
+            : item.priority === 'high'
+              ? '⚠️'
+              : item.priority === 'medium'
+                ? '⚡'
+                : '💡';
         md += `| ${item.file} | ${priorityIcon} ${item.priority} | ${item.reason} |\n`;
       });
     md += '\n';
   }
-  
+
   // Priority-based action plan
   md += `## 🎯 Action Plan by Priority\n\n`;
-  
-  ['critical', 'high', 'medium'].forEach(priority => {
+
+  ['critical', 'high', 'medium'].forEach((priority) => {
     const items = analysis.priorities[priority];
     if (items.length > 0) {
-      const priorityIcon = priority === 'critical' ? '🔥' : 
-                          priority === 'high' ? '⚠️' : '⚡';
-      
+      const priorityIcon = priority === 'critical' ? '🔥' : priority === 'high' ? '⚠️' : '⚡';
+
       md += `### ${priorityIcon} ${priority.toUpperCase()} Priority (${items.length} files)\n\n`;
-      
-      const needsTests = items.filter(item => !item.hasTests);
-      const lowCoverage = items.filter(item => item.hasTests && item.coverage < CONFIG.thresholds.medium);
-      
+
+      const needsTests = items.filter((item) => !item.hasTests);
+      const lowCoverage = items.filter(
+        (item) => item.hasTests && item.coverage < CONFIG.thresholds.medium
+      );
+
       if (needsTests.length > 0) {
         md += `**Files needing test creation:**\n`;
-        needsTests.forEach(item => {
+        needsTests.forEach((item) => {
           md += `- [ ] ${item.file} (no tests)\n`;
         });
         md += '\n';
       }
-      
+
       if (lowCoverage.length > 0) {
         md += `**Files needing coverage improvement:**\n`;
-        lowCoverage.forEach(item => {
+        lowCoverage.forEach((item) => {
           md += `- [ ] ${item.file} (${item.coverage}% coverage)\n`;
         });
         md += '\n';
       }
     }
   });
-  
+
   // Recommendations
   md += `## 💡 Recommendations\n\n`;
   md += `### Immediate Actions (Next Sprint)\n`;
   md += `1. **Critical Worker Coverage**: Add comprehensive tests for worker classes\n`;
   md += `2. **Authentication Security**: Improve auth middleware test coverage\n`;
   md += `3. **Core Services**: Add tests for queue, cost control, and shield services\n\n`;
-  
+
   md += `### Short-term Goals (Next Month)\n`;
   md += `1. **Route Coverage**: Improve API endpoint test coverage\n`;
   md += `2. **Integration Tests**: Add end-to-end workflow tests\n`;
   md += `3. **Error Handling**: Test failure scenarios and edge cases\n\n`;
-  
+
   md += `### Long-term Strategy\n`;
   md += `1. **Coverage Thresholds**: Set up CI coverage requirements\n`;
   md += `2. **Test Automation**: Implement coverage monitoring\n`;
   md += `3. **Documentation**: Keep test documentation up to date\n\n`;
-  
+
   // Success metrics
   md += `## 📈 Success Metrics\n\n`;
   md += `### Target Coverage Goals\n`;
   md += `- **Overall Coverage**: Target 80% (currently ${analysis.overview.currentCoverage.statements}%)\n`;
   md += `- **Critical Files**: Target 90% coverage for workers and core services\n`;
   md += `- **Test Files**: Ensure all source files have corresponding tests\n\n`;
-  
+
   md += `### Milestones\n`;
-  md += `- [ ] **Milestone 1**: All critical priority files have tests (${analysis.priorities.critical.filter(f => !f.hasTests).length} remaining)\n`;
+  md += `- [ ] **Milestone 1**: All critical priority files have tests (${analysis.priorities.critical.filter((f) => !f.hasTests).length} remaining)\n`;
   md += `- [ ] **Milestone 2**: Critical files reach 60% coverage\n`;
   md += `- [ ] **Milestone 3**: Overall coverage reaches 50%\n`;
   md += `- [ ] **Milestone 4**: Overall coverage reaches 80%\n\n`;
-  
+
   return md;
 }
 
 // Main execution
 async function main() {
   console.log('🔍 Analyzing test coverage...\n');
-  
+
   try {
     const analysis = await generateCoverageAnalysis();
     const report = generateMarkdownReport(analysis);
-    
+
     // Ensure docs directory exists
     await fs.mkdir('docs', { recursive: true });
-    
+
     // Write report
     await fs.writeFile(CONFIG.outputFile, report);
-    
+
     console.log('✅ Coverage analysis complete!');
     console.log(`📄 Report saved to: ${CONFIG.outputFile}`);
     console.log('\n📊 Quick Summary:');
@@ -354,7 +363,6 @@ async function main() {
     console.log(`- Files without tests: ${analysis.overview.filesWithoutTests}`);
     console.log(`- Critical coverage files: ${analysis.coverage.critical.length}`);
     console.log(`- Critical priority files: ${analysis.priorities.critical.length}`);
-    
   } catch (error) {
     console.error('❌ Error analyzing coverage:', error);
     process.exit(1);

@@ -21,6 +21,7 @@
 - [x] ✅ Cycle detection active (no circular dependencies found)
 
 **Test Results:**
+
 ```bash
 $ node scripts/resolve-graph.js --validate
 🔍 Graph Validation Results
@@ -64,6 +65,7 @@ Statistics:
 - [x] ✅ All referenced doc files exist
 
 **Nodes Defined:**
+
 1. roast (critical)
 2. shield (critical)
 3. persona (high)
@@ -91,6 +93,7 @@ Statistics:
 - [x] ✅ Total documentation: 7,024 lines
 
 **Files Verified:**
+
 ```
 ✓ roast.md (621 lines)
 ✓ shield.md (680 lines)
@@ -121,16 +124,20 @@ Statistics:
 - [x] ✅ Timestamp present (last validated: 2025-10-03T13:58:54.721Z)
 
 **Latest Validation Results:**
+
 ```markdown
 ## Summary
+
 ✅ **All validations passed!** No issues found.
 
 ## Graph Validation
+
 ✅ No circular dependencies detected
 ✅ All dependencies valid
 ✅ All documentation files exist
 
 ## Agent Validation
+
 ✅ All nodes have "Agentes Relevantes" section
 ✅ All agent sections are valid
 ```
@@ -155,6 +162,7 @@ Statistics:
 - [x] ✅ GDD checklist for PR closure
 
 **Key Sections:**
+
 - ✓ "GDD Activation - Issue Analysis & Context Loading"
 - ✓ Label mapping table (12 labels)
 - ✓ Keyword mapping table (9 keywords)
@@ -178,11 +186,12 @@ Statistics:
 - [x] ✅ Auto-generation note present
 
 **Sample Entries:**
+
 ```markdown
-| Node | Agentes Relevantes |
-|------|-------------------|
-| **roast** | Back-end Dev, Documentation Agent, Test Engineer, Performance Monitor Agent |
-| **shield** | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer |
+| Node        | Agentes Relevantes                                                                    |
+| ----------- | ------------------------------------------------------------------------------------- |
+| **roast**   | Back-end Dev, Documentation Agent, Test Engineer, Performance Monitor Agent           |
+| **shield**  | Back-end Dev, Security Audit Agent, Documentation Agent, Test Engineer                |
 | **persona** | Back-end Dev, UX Researcher, Documentation Agent, Security Audit Agent, Test Engineer |
 ```
 
@@ -222,6 +231,7 @@ Statistics:
 **Instructions Location:** `CLAUDE.md` (lines 363-514)
 
 **Capabilities Verified:**
+
 - [x] ✅ Can fetch issue metadata via `gh issue view`
 - [x] ✅ Can map labels → nodes using table
 - [x] ✅ Can map keywords → nodes as fallback
@@ -233,6 +243,7 @@ Statistics:
 - [x] ✅ Can generate GDD summary for PR
 
 **Workflow Test (Simulated with Issue #408):**
+
 ```
 1. User says: "Trabajemos en Issue #408"
 2. Orchestrator fetches: gh issue view 408 --json labels,title,body
@@ -253,33 +264,40 @@ Statistics:
 **Agent-specific GDD instructions:**
 
 #### Back-end Dev Agent
+
 - [x] ✅ Documented in `docs/GDD-IMPLEMENTATION-SUMMARY.md` (lines 427-461)
 - [x] ✅ Workflow: resolve deps → read nodes → code → update docs → validate
 - [x] ✅ Example workflow present
 
 #### Front-end Dev Agent
+
 - [x] ✅ Documented in `docs/GDD-IMPLEMENTATION-SUMMARY.md` (lines 463-474)
 - [x] ✅ Workflow: resolve UI deps → load nodes → build → update docs
 
 #### Documentation Agent
+
 - [x] ✅ Documented in `docs/GDD-IMPLEMENTATION-SUMMARY.md` (lines 397-426)
 - [x] ✅ Responsibilities: maintain system-map.yaml, validate graph, sync docs
 - [x] ✅ Workflow: validate → update → validate → regenerate diagram → commit
 
 #### Test Engineer Agent
+
 - [x] ✅ Inherits Orchestrator workflow
 - [x] ✅ Access to node docs for test context
 - [x] ✅ Updates nodes with test coverage info
 
 #### Security Audit Agent
+
 - [x] ✅ Assigned to nodes: shield, persona, multi-tenant
 - [x] ✅ Listed in "Agentes Relevantes" sections
 
 #### Performance Monitor Agent
+
 - [x] ✅ Assigned to nodes: roast, queue-system, trainer, analytics
 - [x] ✅ Listed in "Agentes Relevantes" sections
 
 #### UX Researcher Agent
+
 - [x] ✅ Assigned to nodes: persona, tone
 - [x] ✅ Listed in "Agentes Relevantes" sections
 
@@ -294,6 +312,7 @@ Statistics:
 **Current Open Issues (20 total):**
 
 Labels verified for mapping:
+
 - [x] ✅ `area:shield` → shield node (Issue #408, #379)
 - [x] ✅ `area:billing` → cost-control node (Issue #413)
 - [x] ✅ `area:multitenant` → multi-tenant node (Issue #412)
@@ -318,16 +337,16 @@ Labels verified for mapping:
 
 **Measured Reductions:**
 
-| Issue | Label | Nodes Loaded | Lines | Reduction vs spec.md |
-|-------|-------|--------------|-------|---------------------|
-| #408 Shield | area:shield | 5 nodes | ~2,051 | **71%** (7,034 → 2,051) |
-| #413 Billing | area:billing | 3 nodes | ~1,371 | **81%** (7,034 → 1,371) |
-| #412 Multi-tenant | area:multitenant | 1 node | ~707 | **90%** (7,034 → 707) |
-| #416 Demo E2E | test:e2e | 10 nodes | ~5,811 | **17%** (E2E needs full context) |
-| #411 Workers | area:workers | 2 nodes | ~1,187 | **83%** (7,034 → 1,187) |
-| #410 Publisher | area:publisher | 3 nodes | ~1,614 | **77%** (7,034 → 1,614) |
-| #409 UI | area:ui | 4 nodes | ~1,603 | **77%** (7,034 → 1,603) |
-| #422 Utils | test:unit | 1 node | ~500 | **93%** (7,034 → 500 est.) |
+| Issue             | Label            | Nodes Loaded | Lines  | Reduction vs spec.md             |
+| ----------------- | ---------------- | ------------ | ------ | -------------------------------- |
+| #408 Shield       | area:shield      | 5 nodes      | ~2,051 | **71%** (7,034 → 2,051)          |
+| #413 Billing      | area:billing     | 3 nodes      | ~1,371 | **81%** (7,034 → 1,371)          |
+| #412 Multi-tenant | area:multitenant | 1 node       | ~707   | **90%** (7,034 → 707)            |
+| #416 Demo E2E     | test:e2e         | 10 nodes     | ~5,811 | **17%** (E2E needs full context) |
+| #411 Workers      | area:workers     | 2 nodes      | ~1,187 | **83%** (7,034 → 1,187)          |
+| #410 Publisher    | area:publisher   | 3 nodes      | ~1,614 | **77%** (7,034 → 1,614)          |
+| #409 UI           | area:ui          | 4 nodes      | ~1,603 | **77%** (7,034 → 1,603)          |
+| #422 Utils        | test:unit        | 1 node       | ~500   | **93%** (7,034 → 500 est.)       |
 
 **Average Reduction (non-E2E):** 81.7%
 **Average Reduction (all issues):** 73.6%
@@ -340,44 +359,44 @@ Labels verified for mapping:
 
 ### Critical Components
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| **Graph Resolver** | ✅ PASS | All modes working (validate, report, resolve) |
-| **System Map** | ✅ PASS | 12 nodes, no circular deps, all docs exist |
-| **Node Docs** | ✅ PASS | 12/12 files, all have Agentes Relevantes |
-| **Validation Report** | ✅ PASS | Auto-generated, all checks passing |
-| **Orchestrator Instructions** | ✅ PASS | Full workflow in CLAUDE.md |
-| **Agent Matrix** | ✅ PASS | Global table in spec.md |
-| **GDD Documentation** | ✅ PASS | 3 comprehensive guides created |
-| **Issue Label Mapping** | ✅ PASS | 100% coverage of open issues |
-| **Context Reductions** | ✅ PASS | 73-93% reduction measured |
+| Component                     | Status  | Notes                                         |
+| ----------------------------- | ------- | --------------------------------------------- |
+| **Graph Resolver**            | ✅ PASS | All modes working (validate, report, resolve) |
+| **System Map**                | ✅ PASS | 12 nodes, no circular deps, all docs exist    |
+| **Node Docs**                 | ✅ PASS | 12/12 files, all have Agentes Relevantes      |
+| **Validation Report**         | ✅ PASS | Auto-generated, all checks passing            |
+| **Orchestrator Instructions** | ✅ PASS | Full workflow in CLAUDE.md                    |
+| **Agent Matrix**              | ✅ PASS | Global table in spec.md                       |
+| **GDD Documentation**         | ✅ PASS | 3 comprehensive guides created                |
+| **Issue Label Mapping**       | ✅ PASS | 100% coverage of open issues                  |
+| **Context Reductions**        | ✅ PASS | 73-93% reduction measured                     |
 
 ### Orchestrator Capabilities
 
-| Capability | Status | Verified |
-|------------|--------|----------|
-| Fetch issue metadata | ✅ READY | gh CLI available |
-| Map labels → nodes | ✅ READY | Table in CLAUDE.md |
-| Map keywords → nodes | ✅ READY | Fallback table defined |
-| Resolve dependencies | ✅ READY | resolve-graph.js tested |
-| Load only resolved nodes | ✅ READY | Workflow documented |
-| Announce context metrics | ✅ READY | Template provided |
-| Update nodes during dev | ✅ READY | Rules defined |
-| Validate before commit | ✅ READY | --validate tested |
-| Generate PR summary | ✅ READY | Template in CLAUDE.md |
+| Capability               | Status   | Verified                |
+| ------------------------ | -------- | ----------------------- |
+| Fetch issue metadata     | ✅ READY | gh CLI available        |
+| Map labels → nodes       | ✅ READY | Table in CLAUDE.md      |
+| Map keywords → nodes     | ✅ READY | Fallback table defined  |
+| Resolve dependencies     | ✅ READY | resolve-graph.js tested |
+| Load only resolved nodes | ✅ READY | Workflow documented     |
+| Announce context metrics | ✅ READY | Template provided       |
+| Update nodes during dev  | ✅ READY | Rules defined           |
+| Validate before commit   | ✅ READY | --validate tested       |
+| Generate PR summary      | ✅ READY | Template in CLAUDE.md   |
 
 ### Sub-agent Readiness
 
-| Agent | Instructions | Workflow | Status |
-|-------|--------------|----------|--------|
-| **Orchestrator** | CLAUDE.md | Complete | ✅ READY |
-| **Back-end Dev** | GDD-IMPLEMENTATION-SUMMARY.md | Complete | ✅ READY |
-| **Front-end Dev** | GDD-IMPLEMENTATION-SUMMARY.md | Complete | ✅ READY |
+| Agent                   | Instructions                  | Workflow | Status   |
+| ----------------------- | ----------------------------- | -------- | -------- |
+| **Orchestrator**        | CLAUDE.md                     | Complete | ✅ READY |
+| **Back-end Dev**        | GDD-IMPLEMENTATION-SUMMARY.md | Complete | ✅ READY |
+| **Front-end Dev**       | GDD-IMPLEMENTATION-SUMMARY.md | Complete | ✅ READY |
 | **Documentation Agent** | GDD-IMPLEMENTATION-SUMMARY.md | Complete | ✅ READY |
-| **Test Engineer** | Inherits Orchestrator | Complete | ✅ READY |
-| **Security Audit** | Node assignments | Complete | ✅ READY |
-| **Performance Monitor** | Node assignments | Complete | ✅ READY |
-| **UX Researcher** | Node assignments | Complete | ✅ READY |
+| **Test Engineer**       | Inherits Orchestrator         | Complete | ✅ READY |
+| **Security Audit**      | Node assignments              | Complete | ✅ READY |
+| **Performance Monitor** | Node assignments              | Complete | ✅ READY |
+| **UX Researcher**       | Node assignments              | Complete | ✅ READY |
 
 ---
 
@@ -415,6 +434,7 @@ When you say "Trabajemos en Issue #408":
 4. **Issue #422** (Utils) - 93% reduction (easiest)
 
 **Just say:** "Trabajemos en Issue #XXX" and I will:
+
 1. Fetch the issue
 2. Map labels → nodes
 3. Resolve dependencies

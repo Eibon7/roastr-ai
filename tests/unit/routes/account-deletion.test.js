@@ -6,16 +6,16 @@ const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    users: [],
-    account_deletion_requests: [],
-    data_exports: []
+  users: [],
+  account_deletion_requests: [],
+  data_exports: []
 });
 
 // Mock Supabase anon client for auth operations
 const mockSupabaseAnonClient = {
-    auth: {
-        signInWithPassword: jest.fn()
-    }
+  auth: {
+    signInWithPassword: jest.fn()
+  }
 };
 
 // Mock dependencies
@@ -600,9 +600,7 @@ describe('Account Deletion API Routes', () => {
         single: mockSingle
       });
 
-      const response = await request(app)
-        .get('/api/user/account/deletion/status')
-        .expect(200);
+      const response = await request(app).get('/api/user/account/deletion/status').expect(200);
 
       expect(response.body).toMatchObject({
         success: true,
@@ -631,9 +629,7 @@ describe('Account Deletion API Routes', () => {
         single: mockSingle
       });
 
-      const response = await request(app)
-        .get('/api/user/account/deletion/status')
-        .expect(200);
+      const response = await request(app).get('/api/user/account/deletion/status').expect(200);
 
       expect(response.body).toMatchObject({
         success: true,
@@ -662,9 +658,7 @@ describe('Account Deletion API Routes', () => {
       auditService.logGdprAction.mockResolvedValue({ success: true });
       auditService.logDataExport.mockResolvedValue({ success: true });
 
-      const response = await request(app)
-        .get('/api/user/data-export')
-        .expect(200);
+      const response = await request(app).get('/api/user/data-export').expect(200);
 
       expect(response.body).toMatchObject({
         success: true,

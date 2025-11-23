@@ -13,6 +13,7 @@
 PR #461 adds **comprehensive integration tests** for the kill-switch middleware (Issue #414). This is a **test-only PR** that does not modify any production code (`src/`), only adds test coverage and documentation.
 
 **Key Metrics:**
+
 - **Tests Added:** 20 integration tests (100% passing)
 - **Test File:** tests/integration/killSwitch-issue-414.test.js (614 lines)
 - **Coverage:** Kill-switch middleware now has comprehensive integration test coverage
@@ -27,6 +28,7 @@ PR #461 adds **comprehensive integration tests** for the kill-switch middleware 
 ## Files Changed in PR #461
 
 ### Tests (New)
+
 - **tests/integration/killSwitch-issue-414.test.js** (+614 lines)
   - 20 comprehensive integration tests
   - 8 acceptance criteria covered (AC1-AC8)
@@ -34,6 +36,7 @@ PR #461 adds **comprehensive integration tests** for the kill-switch middleware 
   - Validates: kill-switch blocking, cache TTL, fallback logic, fail-closed behavior
 
 ### Documentation (New)
+
 - **docs/test-evidence/issue-414/SUMMARY.md** (+322 lines)
   - Comprehensive test evidence report
   - Validation of all 8 acceptance criteria
@@ -45,6 +48,7 @@ PR #461 adds **comprehensive integration tests** for the kill-switch middleware 
   - Test strategy and architecture
 
 ### CodeRabbit Review Planning Docs (New)
+
 - **docs/plan/review-3302103120.md** (+718 lines)
 - **docs/plan/review-3302403814.md** (+758 lines)
 - **docs/plan/review-3302408711.md** (+867 lines)
@@ -58,6 +62,7 @@ PR #461 adds **comprehensive integration tests** for the kill-switch middleware 
 - **docs/plan/review-3302524244.md** (+435 lines)
 
 ### Documentation Sync (Updated)
+
 - **docs/sync-reports/pr-461-sync.md** (this file, updated)
 - **docs/GDD-IMPLEMENTATION-SUMMARY.md** (updated with PR #461 sync history + node count fix)
 
@@ -78,6 +83,7 @@ The kill-switch middleware (`src/middleware/killSwitch.js`) was implemented in I
 ### Potential Future GDD Node
 
 **Recommendation:** Consider creating `docs/nodes/feature-flags.md` or `docs/nodes/kill-switch.md` in future to document:
+
 - Kill-switch middleware architecture
 - Feature flags system
 - Admin controls
@@ -105,6 +111,7 @@ $ node scripts/resolve-graph.js --validate
 ```
 
 **Validation Details:**
+
 - ✅ No cycles detected
 - ✅ All edges bidirectional
 - ✅ 0 orphan nodes
@@ -127,16 +134,16 @@ $ node scripts/resolve-graph.js --validate
 
 ### Acceptance Criteria Covered
 
-| AC | Description | Tests | Status |
-|----|-------------|-------|--------|
-| **AC1** | Kill switch blocks all autopost operations | 3 | ✅ 100% |
-| **AC2** | ENABLE_AUTOPOST controls global behavior | 2 | ✅ 100% |
-| **AC3** | Platform-specific flags work independently | 3 | ✅ 100% |
-| **AC4** | Cache TTL (30 seconds) works correctly | 2 | ✅ 100% |
-| **AC5** | Fallback to local cache when DB fails | 3 | ✅ 100% |
-| **AC6** | shouldBlockAutopost() for workers | 4 | ✅ 100% |
-| **AC7** | Health check bypasses kill switch | 1 | ✅ 100% |
-| **AC8** | Cache invalidation | 2 | ✅ 100% |
+| AC      | Description                                | Tests | Status  |
+| ------- | ------------------------------------------ | ----- | ------- |
+| **AC1** | Kill switch blocks all autopost operations | 3     | ✅ 100% |
+| **AC2** | ENABLE_AUTOPOST controls global behavior   | 2     | ✅ 100% |
+| **AC3** | Platform-specific flags work independently | 3     | ✅ 100% |
+| **AC4** | Cache TTL (30 seconds) works correctly     | 2     | ✅ 100% |
+| **AC5** | Fallback to local cache when DB fails      | 3     | ✅ 100% |
+| **AC6** | shouldBlockAutopost() for workers          | 4     | ✅ 100% |
+| **AC7** | Health check bypasses kill switch          | 1     | ✅ 100% |
+| **AC8** | Cache invalidation                         | 2     | ✅ 100% |
 
 **Total:** 20 tests, 100% passing
 
@@ -161,6 +168,7 @@ Local Cache: .cache/kill-switch-state.json
 ```
 
 **Test Coverage Highlights:**
+
 - ✅ Middleware integration (HTTP requests via supertest)
 - ✅ Worker function integration (shouldBlockAutopost)
 - ✅ Cache behavior (30s in-memory + 60min local cache)
@@ -175,6 +183,7 @@ Local Cache: .cache/kill-switch-state.json
 ### TODOs in Code
 
 **Search performed:**
+
 ```bash
 grep -rn "TODO" tests/integration/killSwitch-issue-414.test.js
 ```
@@ -190,6 +199,7 @@ grep -rn "TODO" tests/integration/killSwitch-issue-414.test.js
 ### Orphan Detection
 
 **Command:**
+
 ```bash
 node scripts/resolve-graph.js --validate
 ```
@@ -197,6 +207,7 @@ node scripts/resolve-graph.js --validate
 **Result:** ✅ 0 orphan nodes detected
 
 **All nodes in docs/nodes/** are properly referenced in:
+
 - system-map.yaml
 - spec.md
 
@@ -274,6 +285,7 @@ PR #461 had **11 CodeRabbit reviews** with a total of **19 unique issues** (excl
 ## Quality Metrics
 
 ### Test Quality
+
 - ✅ 20/20 tests passing (100%)
 - ✅ All 8 acceptance criteria validated
 - ✅ Proper integration testing (HTTP + mocked DB)
@@ -281,12 +293,14 @@ PR #461 had **11 CodeRabbit reviews** with a total of **19 unique issues** (excl
 - ✅ Defense-in-depth architecture validated
 
 ### Documentation Quality
+
 - ✅ Comprehensive test evidence (322 lines)
 - ✅ Detailed planning docs (4+ documents, 2,713 lines total)
 - ✅ Architecture validation documented
 - ✅ Test flow diagrams and explanations
 
 ### Code Quality
+
 - ✅ 0 production code changes (test-only PR)
 - ✅ All tests use proper mocking (Supabase, Express)
 - ✅ Consistent test patterns
@@ -297,6 +311,7 @@ PR #461 had **11 CodeRabbit reviews** with a total of **19 unique issues** (excl
 ## Validation Checklist
 
 ### GDD Synchronization
+
 - ✅ Nodos GDD actualizados: N/A (test-only PR, no nodes affected)
 - ✅ spec.md actualizado: N/A (no architectural changes)
 - ✅ system-map.yaml validado: ✅ PASSED (no cycles, no orphans)
@@ -308,6 +323,7 @@ PR #461 had **11 CodeRabbit reviews** with a total of **19 unique issues** (excl
 - ✅ GDD Summary actualizado: ⏳ PENDING (will update in next step)
 
 ### Quality Standards
+
 - ✅ 0% documentación desincronizada: ✅ VERIFIED
 - ✅ Triada perfecta (spec ↔ nodes ↔ code): ✅ COHERENT
 - ✅ Todos los edges bidireccionales: ✅ VERIFIED
@@ -321,6 +337,7 @@ PR #461 had **11 CodeRabbit reviews** with a total of **19 unique issues** (excl
 ## Issues Created
 
 **None.** No issues were created during this doc sync because:
+
 - ✅ 0 TODOs without issues
 - ✅ 0 orphan nodes
 - ✅ All documentation synchronized
@@ -333,6 +350,7 @@ PR #461 had **11 CodeRabbit reviews** with a total of **19 unique issues** (excl
 ### 🟢 SAFE TO MERGE
 
 **Summary:**
+
 - ✅ Test-only PR (no production code changes)
 - ✅ 20/20 integration tests passing (100%)
 - ✅ All 8 acceptance criteria validated
@@ -349,10 +367,12 @@ PR #461 had **11 CodeRabbit reviews** with a total of **19 unique issues** (excl
 ## Recommendations
 
 ### Immediate (This PR)
+
 - ✅ All quality checks passing
 - ✅ Ready to merge
 
 ### Future Enhancements (Separate Issues)
+
 1. **Create GDD Node for Kill-Switch/Feature Flags**
    - Document kill-switch middleware architecture
    - Document feature flags system
@@ -374,13 +394,16 @@ PR #461 had **11 CodeRabbit reviews** with a total of **19 unique issues** (excl
 ## Context
 
 **Related Issues:**
+
 - Issue #414: Kill-switch integration tests (PRIMARY)
 - Issue #294: Kill-switch middleware implementation (ORIGINAL)
 
 **Related PRs:**
+
 - PR #461: This PR (kill-switch integration tests)
 
 **Related Commits:**
+
 - `abb28b64` - Initial tests
 - `79a941d3` - Markdown linting fix (Review #3302103120)
 - `22d48d7b` - AC5 test fix (Review #3302403814)

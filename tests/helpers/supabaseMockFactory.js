@@ -35,11 +35,7 @@
  * @returns {Object} Mock table builder with select, insert, update, delete methods
  */
 function createTableMock(options = {}) {
-  const {
-    defaultData = null,
-    defaultError = null,
-    single = false
-  } = options;
+  const { defaultData = null, defaultError = null, single = false } = options;
 
   const resolveValue = {
     data: single && Array.isArray(defaultData) ? defaultData[0] : defaultData,
@@ -114,13 +110,13 @@ function createSupabaseMock(tableDefaults = {}, rpcDefaults = {}) {
     }),
 
     // Utility method to reset all mocks
-    _reset: function() {
+    _reset: function () {
       this.from.mockClear();
       this.rpc.mockClear();
     },
 
     // Utility method to configure table on the fly
-    _setTableData: function(tableName, data) {
+    _setTableData: function (tableName, data) {
       const single = !Array.isArray(data);
       const existingFromMock = this.from;
 

@@ -50,11 +50,13 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
 
     // Mock Twitter Service
     mockTwitterService = {
-      postResponse: jest.fn(() => Promise.resolve({
-        success: true,
-        platform_response_id: 'tweet-123',
-        posted_at: new Date().toISOString()
-      }))
+      postResponse: jest.fn(() =>
+        Promise.resolve({
+          success: true,
+          platform_response_id: 'tweet-123',
+          posted_at: new Date().toISOString()
+        })
+      )
     };
   });
 
@@ -62,10 +64,12 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
   const createSingleChainMock = (data) => ({
     select: jest.fn(() => ({
       eq: jest.fn(() => ({
-        single: jest.fn(() => Promise.resolve({
-          data,
-          error: null
-        }))
+        single: jest.fn(() =>
+          Promise.resolve({
+            data,
+            error: null
+          })
+        )
       }))
     }))
   });
@@ -73,10 +77,12 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
   const createInsertChainMock = (data) => ({
     insert: jest.fn(() => ({
       select: jest.fn(() => ({
-        single: jest.fn(() => Promise.resolve({
-          data,
-          error: null
-        }))
+        single: jest.fn(() =>
+          Promise.resolve({
+            data,
+            error: null
+          })
+        )
       }))
     }))
   });
@@ -85,10 +91,12 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
     update: jest.fn(() => ({
       eq: jest.fn(() => ({
         select: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({
-            data,
-            error: null
-          }))
+          single: jest.fn(() =>
+            Promise.resolve({
+              data,
+              error: null
+            })
+          )
         }))
       }))
     }))
@@ -112,11 +120,7 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
       mockSupabaseClient.from.mockReturnValueOnce(createSingleChainMock(userConfig));
 
       // Act: Fetch user config
-      const result = await mockSupabaseClient
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const result = await mockSupabaseClient.from('users').select('*').eq('id', userId).single();
 
       // Assert: Auto-respond is enabled
       expect(result.data.preferences.auto_respond).toBe(true);
@@ -145,7 +149,8 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         .single();
 
       // Assert: Roasts are available
-      const roastsAvailable = result.data.monthly_responses_limit - result.data.monthly_responses_used;
+      const roastsAvailable =
+        result.data.monthly_responses_limit - result.data.monthly_responses_used;
       expect(roastsAvailable).toBeGreaterThan(0);
       expect(result.data.plan_id).not.toBe('free');
       expect(result.data.settings.auto_posting_enabled).toBe(true);
@@ -280,7 +285,8 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
 
       // Arrange: Generated roast
       const generatedRoast = {
-        response_text: 'Mi app será lo que sea, pero al menos no necesito insultar a desconocidos en internet para sentirme mejor. Tal vez deberías probar a programar algo antes de criticar 🤓',
+        response_text:
+          'Mi app será lo que sea, pero al menos no necesito insultar a desconocidos en internet para sentirme mejor. Tal vez deberías probar a programar algo antes de criticar 🤓',
         tone: 'sarcastic',
         humor_type: 'witty',
         generation_time_ms: 1250,
@@ -340,16 +346,16 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
       };
 
       mockSupabaseClient.from.mockReturnValueOnce({
-        insert: jest.fn(() => Promise.resolve({
-          data: attemptData,
-          error: null
-        }))
+        insert: jest.fn(() =>
+          Promise.resolve({
+            data: attemptData,
+            error: null
+          })
+        )
       });
 
       // Act: Insert attempt
-      const result = await mockSupabaseClient
-        .from('roast_attempts')
-        .insert(attemptData);
+      const result = await mockSupabaseClient.from('roast_attempts').insert(attemptData);
 
       // Assert: Attempt created correctly
       expect(result.data.attempt_number).toBe(1);
@@ -431,7 +437,10 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
         .single();
 
       // Assert: No roasts available
-      const roastsAvailable = Math.max(0, result.data.monthly_responses_limit - result.data.monthly_responses_used);
+      const roastsAvailable = Math.max(
+        0,
+        result.data.monthly_responses_limit - result.data.monthly_responses_used
+      );
       expect(roastsAvailable).toBe(0);
     });
 
@@ -443,7 +452,9 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
       const longRoastText = 'A'.repeat(281); // ❌ Exceeds Twitter limit
 
       // Mock Twitter service to spy on posting calls
-      const mockPostResponse = jest.fn().mockRejectedValue(new Error('Text exceeds maximum length'));
+      const mockPostResponse = jest
+        .fn()
+        .mockRejectedValue(new Error('Text exceeds maximum length'));
       const mockTwitterService = {
         postResponse: mockPostResponse
       };
@@ -459,8 +470,9 @@ describe('🧪 Flujo 4: Generación y publicación automática del roast', () =>
 
       // Test that posting would be rejected for oversized content
       if (!validationResult.isValid) {
-        await expect(mockTwitterService.postResponse('test-id', longRoastText))
-          .rejects.toThrow('Text exceeds maximum length');
+        await expect(mockTwitterService.postResponse('test-id', longRoastText)).rejects.toThrow(
+          'Text exceeds maximum length'
+        );
       }
 
       // Verify posting service was called and rejected the oversized text

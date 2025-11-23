@@ -7,7 +7,6 @@ const { logger } = require('../utils/logger');
 const { withRetry, isRetryableError } = require('../utils/retry');
 
 class AuditService {
-  
   /**
    * Log a subscription change event
    * @param {Object} changeData - Change data
@@ -66,7 +65,6 @@ class AuditService {
       });
 
       return { success: true, data: result };
-
     } catch (error) {
       logger.error('📋 Failed to log subscription change:', error);
       return { success: false, error: error.message };
@@ -95,7 +93,7 @@ class AuditService {
   async logPlanChange(changeData) {
     try {
       const changeType = this.determineChangeType(changeData.fromPlan, changeData.toPlan);
-      
+
       const result = await withRetry(
         async () => {
           const { data, error } = await supabaseServiceClient
@@ -112,7 +110,8 @@ class AuditService {
               proration_amount: changeData.prorationAmount,
               billing_period_start: changeData.billingPeriodStart?.toISOString(),
               billing_period_end: changeData.billingPeriodEnd?.toISOString(),
-              completed_at: changeData.changeStatus === 'completed' ? new Date().toISOString() : null,
+              completed_at:
+                changeData.changeStatus === 'completed' ? new Date().toISOString() : null,
               stripe_subscription_id: changeData.subscriptionId,
               stripe_invoice_id: changeData.invoiceId,
               initiated_by: changeData.initiatedBy || 'user',
@@ -140,7 +139,6 @@ class AuditService {
       });
 
       return { success: true, data: result };
-
     } catch (error) {
       logger.error('📊 Failed to log plan change:', error);
       return { success: false, error: error.message };
@@ -181,7 +179,6 @@ class AuditService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-
     } catch (error) {
       logger.error('📋 Failed to get subscription history:', error);
       return { success: false, error: error.message };
@@ -218,7 +215,6 @@ class AuditService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-
     } catch (error) {
       logger.error('📊 Failed to get plan change history:', error);
       return { success: false, error: error.message };
@@ -234,9 +230,7 @@ class AuditService {
    */
   async getPlanChangeAnalytics(options = {}) {
     try {
-      let query = supabaseServiceClient
-        .from('plan_change_analytics')
-        .select('*');
+      let query = supabaseServiceClient.from('plan_change_analytics').select('*');
 
       if (options.since) {
         query = query.gte('month', options.since.toISOString().substring(0, 7)); // YYYY-MM format
@@ -253,7 +247,6 @@ class AuditService {
       if (error) throw error;
 
       return { success: true, data: data || [] };
-
     } catch (error) {
       logger.error('📈 Failed to get plan change analytics:', error);
       return { success: false, error: error.message };
@@ -294,7 +287,6 @@ class AuditService {
       });
 
       return { success: true, data };
-
     } catch (error) {
       logger.error('📊 Failed to update plan change status:', error);
       return { success: false, error: error.message };
@@ -372,7 +364,6 @@ class AuditService {
       });
 
       return { success: true, data: result };
-
     } catch (error) {
       logger.error('📋 Failed to log GDPR action:', error);
       return { success: false, error: error.message };
@@ -383,21 +374,24 @@ class AuditService {
    * Log account deletion request
    */
   async logAccountDeletionRequest(userId, requestId, details = {}, req = null) {
-    return await this.logGdprAction({
-      action: 'account_deletion_requested',
-      userId,
-      actorId: userId,
-      actorType: 'user',
-      resourceType: 'account_deletion_request',
-      resourceId: requestId,
-      details: {
-        ...details,
-        grace_period_days: details.gracePeriodDays || 30,
-        scheduled_deletion_at: details.scheduledDeletionAt
+    return await this.logGdprAction(
+      {
+        action: 'account_deletion_requested',
+        userId,
+        actorId: userId,
+        actorType: 'user',
+        resourceType: 'account_deletion_request',
+        resourceId: requestId,
+        details: {
+          ...details,
+          grace_period_days: details.gracePeriodDays || 30,
+          scheduled_deletion_at: details.scheduledDeletionAt
+        },
+        legalBasis: 'gdpr_article_17_right_to_be_forgotten',
+        retentionPeriodDays: 2557
       },
-      legalBasis: 'gdpr_article_17_right_to_be_forgotten',
-      retentionPeriodDays: 2557
-    }, req);
+      req
+    );
   }
 
   /**
@@ -405,23 +399,26 @@ class AuditService {
    * Records password validation attempts during account deletion flow
    */
   async logAccountDeletionAttempt(userId, details = {}, req = null) {
-    return await this.logGdprAction({
-      action: 'account_deletion_attempted',
-      userId,
-      actorId: userId,
-      actorType: 'user',
-      resourceType: 'account_deletion_attempt',
-      resourceId: `attempt_${Date.now()}`,
-      details: {
-        ...details,
-        timestamp: new Date().toISOString(),
-        validation_successful: details.success || false,
-        failure_reason: details.reason || null,
-        error_message: details.error || null
+    return await this.logGdprAction(
+      {
+        action: 'account_deletion_attempted',
+        userId,
+        actorId: userId,
+        actorType: 'user',
+        resourceType: 'account_deletion_attempt',
+        resourceId: `attempt_${Date.now()}`,
+        details: {
+          ...details,
+          timestamp: new Date().toISOString(),
+          validation_successful: details.success || false,
+          failure_reason: details.reason || null,
+          error_message: details.error || null
+        },
+        legalBasis: 'legitimate_interest_security',
+        retentionPeriodDays: 90 // Shorter retention for security logs
       },
-      legalBasis: 'legitimate_interest_security',
-      retentionPeriodDays: 90 // Shorter retention for security logs
-    }, req);
+      req
+    );
   }
 
   /**
@@ -450,20 +447,23 @@ class AuditService {
    * Log account deletion cancellation
    */
   async logAccountDeletionCancellation(userId, requestId, details = {}, req = null) {
-    return await this.logGdprAction({
-      action: 'account_deletion_cancelled',
-      userId,
-      actorId: userId,
-      actorType: 'user',
-      resourceType: 'account_deletion_request',
-      resourceId: requestId,
-      details: {
-        ...details,
-        cancellation_reason: details.reason || 'user_requested'
+    return await this.logGdprAction(
+      {
+        action: 'account_deletion_cancelled',
+        userId,
+        actorId: userId,
+        actorType: 'user',
+        resourceType: 'account_deletion_request',
+        resourceId: requestId,
+        details: {
+          ...details,
+          cancellation_reason: details.reason || 'user_requested'
+        },
+        legalBasis: 'user_withdrawal_of_consent',
+        retentionPeriodDays: 2557
       },
-      legalBasis: 'user_withdrawal_of_consent',
-      retentionPeriodDays: 2557
-    }, req);
+      req
+    );
   }
 
   /**
@@ -501,7 +501,7 @@ class AuditService {
         .or(`user_id.eq.${userId},resource_id.eq.${userId}`)
         .in('action', [
           'account_deletion_requested',
-          'gdpr_data_exported', 
+          'gdpr_data_exported',
           'account_deletion_cancelled',
           'account_deletion_completed',
           'personal_data_anonymized'
@@ -519,7 +519,6 @@ class AuditService {
           hasMore: count > offset + limit
         }
       };
-
     } catch (error) {
       logger.error('📋 Failed to retrieve GDPR audit trail:', error);
       return { success: false, error: error.message };
@@ -546,7 +545,7 @@ class AuditService {
 
       // Clean plan change history (keep longer retention)
       const planCutoffDate = new Date();
-      planCutoffDate.setDate(planCutoffDate.getDate() - (retentionDays * 2));
+      planCutoffDate.setDate(planCutoffDate.getDate() - retentionDays * 2);
 
       const { error: planError, count: planCount } = await supabaseServiceClient
         .from('plan_change_history')
@@ -566,7 +565,6 @@ class AuditService {
         auditRecordsRemoved: auditCount,
         planHistoryRemoved: planCount
       };
-
     } catch (error) {
       logger.error('🧹 Failed to cleanup audit logs:', error);
       return { success: false, error: error.message };
@@ -602,7 +600,7 @@ class AuditService {
               ip_address: req?.ip || null,
               user_agent: req?.get('User-Agent') || null,
               legal_basis: 'user_consent_settings',
-              retention_period_days: 365  // 1 year retention for setting changes
+              retention_period_days: 365 // 1 year retention for setting changes
             })
             .select()
             .single();
@@ -625,7 +623,6 @@ class AuditService {
       });
 
       return { success: true, data: result };
-
     } catch (error) {
       logger.error('⚙️ Failed to log user setting change:', error);
       return { success: false, error: error.message };

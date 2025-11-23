@@ -15,12 +15,14 @@ Migrar todos los tests de billing que actualmente usan Stripe para que funcionen
 Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` están escritos para Stripe. Necesitamos migrarlos a Polar manteniendo la misma cobertura (100%).
 
 **Estado actual:**
+
 - ✅ 73 tests completados con Stripe
 - ✅ 100% cobertura alcanzada
 - ❌ Tests aún usan mocks de Stripe
-- ❌ Variables de entorno son STRIPE_*
+- ❌ Variables de entorno son STRIPE\_\*
 
 **Referencias:**
+
 - Documentación completa: `docs/issues/issue-502-polar-tests-migration.md`
 - Documentación Polar: `docs/flows/payment-polar.md`
 - Issue Polar principal: `docs/issues/issue-payment-polar.md`
@@ -29,18 +31,21 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
 ## ✅ Checklist de Migración
 
 ### 1. Investigación y Setup
+
 - [ ] Revisar documentación de Polar API
 - [ ] Identificar diferencias entre Stripe y Polar APIs
 - [ ] Configurar variables de entorno para Polar
 
 ### 2. Actualización de Mocks
+
 - [ ] Reemplazar `mockBillingController.stripeWrapper` con equivalente Polar
 - [ ] Actualizar mocks de customers, prices, checkout, billingPortal
 - [ ] Adaptar estructura de respuestas de Polar vs Stripe
 - [ ] Actualizar mocks de webhook events para formato Polar
 
 ### 3. Actualización de Tests
-- [ ] Actualizar variables de entorno (STRIPE_* → POLAR_*)
+
+- [ ] Actualizar variables de entorno (STRIPE*\* → POLAR*\*)
 - [ ] Actualizar tests de checkout session creation
 - [ ] Actualizar tests de portal session creation
 - [ ] Actualizar tests de webhook processing
@@ -48,6 +53,7 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
 - [ ] Actualizar validaciones de lookup keys
 
 ### 4. Validación
+
 - [ ] Ejecutar todos los tests y verificar que pasan
 - [ ] Verificar cobertura sigue siendo 100%
 - [ ] Actualizar documentación
@@ -62,4 +68,3 @@ Actualmente los tests en `tests/unit/routes/billing-coverage-issue502.test.js` e
 ## 📚 Referencias
 
 Ver `docs/issues/issue-502-polar-tests-migration.md` para checklist completo y detalles.
-

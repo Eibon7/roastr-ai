@@ -1,6 +1,6 @@
 /**
  * PlanPicker Component - Unit Tests
- * 
+ *
  * Tests for plan selection with plan-features integration
  */
 
@@ -65,7 +65,7 @@ describe('PlanPicker Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockFetchApi = jest.fn((url, options) => {
       if (url === '/api/plan/available') {
         return Promise.resolve({
@@ -102,7 +102,7 @@ describe('PlanPicker Component', () => {
   describe('Rendering', () => {
     it('should render page header', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Choose Your Plan/i)).toBeInTheDocument();
       });
@@ -110,7 +110,7 @@ describe('PlanPicker Component', () => {
 
     it('should fetch and display available plans', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText('Starter')).toBeInTheDocument();
         expect(screen.getByText('Pro')).toBeInTheDocument();
@@ -120,7 +120,7 @@ describe('PlanPicker Component', () => {
 
     it('should display plan features', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/10 roasts\/month/i)).toBeInTheDocument();
         expect(screen.getByText(/1,000 roasts\/month/i)).toBeInTheDocument();
@@ -130,7 +130,7 @@ describe('PlanPicker Component', () => {
 
     it('should highlight current plan', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const currentPlanBadges = screen.getAllByText(/Current Plan/i);
         expect(currentPlanBadges.length).toBeGreaterThan(0);
@@ -141,12 +141,12 @@ describe('PlanPicker Component', () => {
   describe('Plan Selection', () => {
     it('should allow selecting a different plan', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const proButton = screen.getByRole('button', { name: /Select Pro/i });
         fireEvent.click(proButton);
       });
-      
+
       await waitFor(() => {
         expect(mockFetchApi).toHaveBeenCalledWith(
           '/api/plan/select',
@@ -160,20 +160,23 @@ describe('PlanPicker Component', () => {
 
     it('should navigate after successful selection', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const proButton = screen.getByRole('button', { name: /Select Pro/i });
         fireEvent.click(proButton);
       });
-      
-      await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/integrations/connect');
-      }, { timeout: 2000 });
+
+      await waitFor(
+        () => {
+          expect(mockNavigate).toHaveBeenCalledWith('/integrations/connect');
+        },
+        { timeout: 2000 }
+      );
     });
 
     it('should disable current plan button', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         const currentButton = screen.getByRole('button', { name: /Current Plan/i });
         expect(currentButton).toBeDisabled();
@@ -187,14 +190,14 @@ describe('PlanPicker Component', () => {
         }
         return mockFetchApi(url);
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const proButton = screen.getByRole('button', { name: /Select Pro/i });
         fireEvent.click(proButton);
       });
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Selecting.../i)).toBeInTheDocument();
       });
@@ -204,7 +207,7 @@ describe('PlanPicker Component', () => {
   describe('Plan Features Display', () => {
     it('should show AI Style Profile for Plus plan', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/AI Style Profile Generation/i)).toBeInTheDocument();
       });
@@ -212,7 +215,7 @@ describe('PlanPicker Component', () => {
 
     it('should display platform connections limit', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/2 platform connections/i)).toBeInTheDocument();
         expect(screen.getByText(/5 platform connections/i)).toBeInTheDocument();
@@ -222,7 +225,7 @@ describe('PlanPicker Component', () => {
 
     it('should show premium features for higher tiers', async () => {
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/Custom roast prompts/i)).toBeInTheDocument();
         expect(screen.getByText(/Priority support/i)).toBeInTheDocument();
@@ -239,9 +242,9 @@ describe('PlanPicker Component', () => {
         }
         return mockFetchApi(url);
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         expect(screen.getByText(/No plans available/i)).toBeInTheDocument();
       });
@@ -268,14 +271,14 @@ describe('PlanPicker Component', () => {
           });
         }
       });
-      
+
       renderComponent();
-      
+
       await waitFor(() => {
         const proButton = screen.getByRole('button', { name: /Select Pro/i });
         fireEvent.click(proButton);
       });
-      
+
       // Button should be enabled again after error
       await waitFor(() => {
         const proButton = screen.getByRole('button', { name: /Select Pro/i });
@@ -287,11 +290,10 @@ describe('PlanPicker Component', () => {
   describe('Loading State', () => {
     it('should show loading state initially', () => {
       mockFetchApi.mockImplementation(() => new Promise(() => {}));
-      
+
       renderComponent();
-      
+
       expect(screen.getByText(/Loading plans.../i)).toBeInTheDocument();
     });
   });
 });
-

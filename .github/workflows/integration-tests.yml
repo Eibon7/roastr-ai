@@ -44,7 +44,7 @@ on:
 jobs:
   integration-tests:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         # Different test modes based on trigger
@@ -53,12 +53,12 @@ jobs:
           - mode: fixtures
             run_real: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.test_mode == 'real' || github.event.inputs.test_mode == 'both')) }}
             coverage: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.coverage == 'true') }}
-          
+
           # Nightly and manual: can include real backend
           - mode: real
             run_real: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.test_mode == 'real' || github.event.inputs.test_mode == 'both')) }}
             coverage: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.coverage == 'true') }}
-      
+
       # Don't cancel other jobs if one fails
       fail-fast: false
 
@@ -90,7 +90,7 @@ jobs:
           # Create necessary directories
           mkdir -p tests/integration/backend/reports
           mkdir -p tests/integration/backend/temp
-          
+
           # Log environment info
           echo "Node version: $(node --version)"
           echo "NPM version: $(npm --version)"
@@ -104,7 +104,7 @@ jobs:
           echo "🔧 Configuring for fixtures mode"
           echo "USE_BACKEND_FIXTURES=true" >> $GITHUB_ENV
           echo "REACT_APP_ENABLE_MOCK_MODE=false" >> $GITHUB_ENV
-          
+
           # Ensure fixtures exist
           if [ ! -f "tests/integration/backend/fixtures/accounts.json" ]; then
             echo "⚠️  Fixtures missing, creating minimal fixtures"
@@ -130,7 +130,7 @@ jobs:
           echo "USE_BACKEND_FIXTURES=false" >> $GITHUB_ENV
           echo "REACT_APP_API_URL=${API_BASE_URL}" >> $GITHUB_ENV
           echo "REACT_APP_ENABLE_MOCK_MODE=false" >> $GITHUB_ENV
-          
+
           # Validate required secrets
           if [ -z "$API_BASE_URL" ] || [ -z "$TEST_USER_EMAIL" ]; then
             echo "⚠️  Missing staging backend secrets, falling back to fixtures"
@@ -239,14 +239,14 @@ jobs:
         run: |
           echo "## Backend Integration Tests Summary (${{ matrix.mode }} mode) 🧪" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f "tests/integration/backend/reports/integration-summary.json" ]; then
             echo "### Test Execution Summary" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
             cat tests/integration/backend/reports/integration-summary.json >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Configuration" >> $GITHUB_STEP_SUMMARY
           echo "- **Mode**: ${{ matrix.mode }}" >> $GITHUB_STEP_SUMMARY
@@ -254,7 +254,7 @@ jobs:
           echo "- **Coverage**: ${{ matrix.coverage }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Fallback Enabled**: ${{ env.FALLBACK_TO_FIXTURES_ON_ERROR }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Backend Fixtures**: ${{ env.USE_BACKEND_FIXTURES }}" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ job.status }}" = "success" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "✅ **All integration tests passed!**" >> $GITHUB_STEP_SUMMARY

@@ -13,7 +13,7 @@ const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    feature_flags: []
+  feature_flags: []
 });
 
 // Mock Supabase for controlled testing
@@ -43,7 +43,12 @@ jest.mock('../../src/utils/logger', () => ({
 
 const request = require('supertest');
 const express = require('express');
-const { killSwitchService, checkKillSwitch, checkPlatformAutopost, shouldBlockAutopost } = require('../../src/middleware/killSwitch');
+const {
+  killSwitchService,
+  checkKillSwitch,
+  checkPlatformAutopost,
+  shouldBlockAutopost
+} = require('../../src/middleware/killSwitch');
 const { supabaseServiceClient } = require('../../src/config/supabase');
 const path = require('path');
 const fs = require('fs').promises;
@@ -126,9 +131,7 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
         error: null
       });
 
-      const response = await request(app)
-        .post('/api/autopost')
-        .send({ content: 'Test post' });
+      const response = await request(app).post('/api/autopost').send({ content: 'Test post' });
 
       expect(response.status).toBe(503);
       expect(response.body).toMatchObject({
@@ -148,9 +151,7 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
         error: null
       });
 
-      const response = await request(app)
-        .post('/api/autopost')
-        .send({ content: 'Test post' });
+      const response = await request(app).post('/api/autopost').send({ content: 'Test post' });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
@@ -193,9 +194,7 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
         error: null
       });
 
-      const response = await request(app)
-        .post('/api/autopost')
-        .send({ content: 'Test post' });
+      const response = await request(app).post('/api/autopost').send({ content: 'Test post' });
 
       expect(response.status).toBe(503);
       expect(response.body).toMatchObject({
@@ -213,9 +212,7 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
         error: null
       });
 
-      const response = await request(app)
-        .post('/api/autopost')
-        .send({ content: 'Test post' });
+      const response = await request(app).post('/api/autopost').send({ content: 'Test post' });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -374,7 +371,7 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
       expect(isActive).toBe(false);
 
       // Wait for async file write to complete
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Verify local cache file was created
       const cacheFile = path.join(process.cwd(), '.cache', 'kill-switch-state.json');
@@ -405,7 +402,7 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
       await killSwitchService.isKillSwitchActive();
 
       // Wait for cache file to be written
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Clear in-memory cache and simulate DB failure
       killSwitchService.cache.clear();
@@ -565,9 +562,7 @@ describe('Kill Switch Integration Tests - Issue #414', () => {
   describe('AC7: Health check bypasses kill switch', () => {
     it('should allow health check even when kill switch is active', async () => {
       mockIn.mockResolvedValue({
-        data: [
-          { flag_key: 'KILL_SWITCH_AUTOPOST', is_enabled: true, flag_value: true }
-        ],
+        data: [{ flag_key: 'KILL_SWITCH_AUTOPOST', is_enabled: true, flag_value: true }],
         error: null
       });
 

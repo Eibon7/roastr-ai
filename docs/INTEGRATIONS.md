@@ -5,6 +5,7 @@ This document details all social media platform integrations supported by Roastr
 ## Twitter / X
 
 ### Features
+
 - Mention monitoring for real-time engagement
 - Toxicity filtering using Perspective API + OpenAI fallback
 - AI-powered roast generation with platform-optimized tone
@@ -13,6 +14,7 @@ This document details all social media platform integrations supported by Roastr
 - OAuth 1.0a + Bearer Token authentication
 
 ### Technical Details
+
 - **API Version:** Twitter API v2
 - **Service File:** `src/integrations/twitter/twitterService.js`
 - **Rate Limits:** Configured per Twitter Developer tier
@@ -21,6 +23,7 @@ This document details all social media platform integrations supported by Roastr
 🔐 **Requires environment variables** (see internal env-setup documentation)
 
 ### Usage
+
 ```bash
 npm run twitter  # Run Twitter bot
 ```
@@ -30,12 +33,14 @@ npm run twitter  # Run Twitter bot
 ## YouTube
 
 ### Features
+
 - Comment fetching from videos and channels
 - Community post monitoring
 - Toxicity analysis on comments
 - Platform-appropriate response generation
 
 ### Technical Details
+
 - **API:** YouTube Data API v3
 - **Service File:** `src/integrations/youtube/youtubeService.js`
 - **Rate Limits:** 10,000 quota units per day (default)
@@ -47,11 +52,13 @@ npm run twitter  # Run Twitter bot
 ## Instagram
 
 ### Features
+
 - Post and story comment monitoring
 - DM-based roast responses (where permitted)
 - Media-aware context for responses
 
 ### Technical Details
+
 - **API:** Instagram Basic Display API + Graph API
 - **Service File:** `src/integrations/instagram/instagramService.js`
 - **Authentication:** OAuth2 with long-lived tokens
@@ -63,11 +70,13 @@ npm run twitter  # Run Twitter bot
 ## Facebook
 
 ### Features
+
 - Page post and comment monitoring
 - Group comment support (with permissions)
 - Multi-language support for roasts
 
 ### Technical Details
+
 - **API:** Facebook Graph API
 - **Service File:** `src/integrations/facebook/facebookService.js`
 - **Permissions:** pages_read_engagement, pages_manage_posts
@@ -79,12 +88,14 @@ npm run twitter  # Run Twitter bot
 ## Discord
 
 ### Features
+
 - Server message monitoring
 - Channel-specific bot configuration
 - Real-time roast responses
 - Slash command support
 
 ### Technical Details
+
 - **API:** Discord Bot API
 - **Service File:** `src/integrations/discord/discordService.js`
 - **Gateway:** WebSocket connection for real-time events
@@ -96,11 +107,13 @@ npm run twitter  # Run Twitter bot
 ## Twitch
 
 ### Features
+
 - Chat message monitoring
 - Streamer-specific moderation rules
 - Real-time engagement during streams
 
 ### Technical Details
+
 - **API:** Twitch API v5 + Helix
 - **Service File:** `src/integrations/twitch/twitchService.js`
 - **IRC:** Chat connection via Twitch IRC
@@ -112,11 +125,13 @@ npm run twitter  # Run Twitter bot
 ## Reddit
 
 ### Features
+
 - Subreddit comment monitoring
 - Post reply generation
 - Karma-aware engagement
 
 ### Technical Details
+
 - **API:** Reddit API (OAuth2)
 - **Service File:** `src/integrations/reddit/redditService.js`
 - **Rate Limits:** 60 requests per minute
@@ -128,11 +143,13 @@ npm run twitter  # Run Twitter bot
 ## TikTok
 
 ### Features
+
 - Video comment monitoring
 - Short-form optimized roasts
 - Hashtag tracking
 
 ### Technical Details
+
 - **API:** TikTok Business API
 - **Service File:** `src/integrations/tiktok/tiktokService.js`
 - **Webhooks:** Real-time comment events
@@ -144,11 +161,13 @@ npm run twitter  # Run Twitter bot
 ## Bluesky
 
 ### Features
+
 - AT Protocol native integration
 - Decentralized post monitoring
 - Thread-aware responses
 
 ### Technical Details
+
 - **API:** Bluesky AT Protocol
 - **Service File:** `src/integrations/bluesky/blueskyService.js`
 - **Authentication:** App password method
@@ -183,11 +202,21 @@ Each platform service must implement:
 
 ```javascript
 class PlatformService {
-  async authenticate() { /* OAuth/API key setup */ }
-  async fetchComments(context) { /* Retrieve comments */ }
-  async postReply(commentId, roastText) { /* Post response */ }
-  async deleteReply(replyId) { /* Remove response */ }
-  async blockUser(userId) { /* Shield action */ }
+  async authenticate() {
+    /* OAuth/API key setup */
+  }
+  async fetchComments(context) {
+    /* Retrieve comments */
+  }
+  async postReply(commentId, roastText) {
+    /* Post response */
+  }
+  async deleteReply(replyId) {
+    /* Remove response */
+  }
+  async blockUser(userId) {
+    /* Shield action */
+  }
 }
 ```
 
@@ -201,6 +230,7 @@ node scripts/validate-gdd-cross.js --full   # Cross-validate integration metadat
 ```
 
 Status tracked per platform:
+
 - ✅ **Connected:** API responding, credentials valid
 - ⚠️ **Degraded:** Rate limited or partial failures
 - ❌ **Offline:** Authentication failed or unreachable
@@ -220,6 +250,7 @@ To add a new platform integration:
 7. **Test coverage:** Add integration tests in `tests/integration/<platform>.test.js`
 
 **Naming conventions:**
+
 - Service file: `<platform>Service.js` (camelCase for class name)
 - Env vars: `<PLATFORM>_<PROPERTY>` (e.g., `YOUTUBE_API_KEY`)
 - Test file: `<platform>.test.js`

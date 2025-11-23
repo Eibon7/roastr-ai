@@ -1,6 +1,11 @@
 const request = require('supertest');
 const express = require('express');
-const { detectLanguage, i18nHelpers, parseAcceptLanguage, isValidLanguageCode } = require('../../../src/middleware/i18n');
+const {
+  detectLanguage,
+  i18nHelpers,
+  parseAcceptLanguage,
+  isValidLanguageCode
+} = require('../../../src/middleware/i18n');
 
 describe('I18n Middleware', () => {
   let app;
@@ -30,7 +35,7 @@ describe('I18n Middleware', () => {
     it('should handle malformed input', () => {
       const result = parseAcceptLanguage('');
       expect(result).toEqual([]);
-      
+
       const result2 = parseAcceptLanguage(null);
       expect(result2).toEqual([]);
     });
@@ -67,9 +72,7 @@ describe('I18n Middleware', () => {
     });
 
     it('should detect English from Accept-Language header', async () => {
-      const response = await request(app)
-        .get('/test')
-        .set('Accept-Language', 'en-US,en;q=0.9');
+      const response = await request(app).get('/test').set('Accept-Language', 'en-US,en;q=0.9');
 
       expect(response.status).toBe(200);
       expect(response.body.language).toBe('en');
@@ -112,21 +115,19 @@ describe('I18n Middleware', () => {
     it('should prioritize user language preference over header', async () => {
       // Create a new app with user middleware first
       const testApp = express();
-      
+
       // Add user preference middleware first
       testApp.use((req, res, next) => {
         req.user = { language: 'es' };
         next();
       });
-      
+
       testApp.use(detectLanguage);
       testApp.get('/test', (req, res) => {
         res.json({ language: req.language });
       });
 
-      const response = await request(testApp)
-        .get('/test')
-        .set('Accept-Language', 'en-US');
+      const response = await request(testApp).get('/test').set('Accept-Language', 'en-US');
 
       expect(response.status).toBe(200);
       expect(response.body.language).toBe('es');
@@ -142,9 +143,7 @@ describe('I18n Middleware', () => {
     });
 
     it('should validate and reject invalid language codes', async () => {
-      const response = await request(app)
-        .get('/test')
-        .set('Accept-Language', 'invalid123,eng,en');
+      const response = await request(app).get('/test').set('Accept-Language', 'invalid123,eng,en');
 
       expect(response.status).toBe(200);
       expect(response.body.language).toBe('en'); // Should skip invalid codes
@@ -165,9 +164,7 @@ describe('I18n Middleware', () => {
     });
 
     it('should add i18n helpers to response locals', async () => {
-      const response = await request(app)
-        .get('/test')
-        .set('Accept-Language', 'es');
+      const response = await request(app).get('/test').set('Accept-Language', 'es');
 
       expect(response.status).toBe(200);
       expect(response.body.language).toBe('es');
@@ -176,9 +173,7 @@ describe('I18n Middleware', () => {
     });
 
     it('should handle translation function in templates', async () => {
-      const response = await request(app)
-        .get('/test')
-        .set('Accept-Language', 'en');
+      const response = await request(app).get('/test').set('Accept-Language', 'en');
 
       expect(response.status).toBe(200);
       expect(response.body.translationTest).toBe('Success');
@@ -196,7 +191,7 @@ describe('I18n Middleware', () => {
         req.headers['accept-language'] = { invalid: 'object' };
         next();
       });
-      
+
       app.use(detectLanguage);
       app.get('/test', (req, res) => {
         res.json({ language: req.language });

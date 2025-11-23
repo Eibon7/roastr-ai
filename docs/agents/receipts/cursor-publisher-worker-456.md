@@ -14,6 +14,7 @@ Implemented PublisherWorker corrections and comprehensive integration tests acco
 ### 1. PublisherWorker Corrections (`src/workers/PublisherWorker.js`)
 
 **Changes:**
+
 - ✅ Changed from `roasts` table to `responses` table
 - ✅ Updated field from `platform_post_id` to `platform_response_id`
 - ✅ Changed `posted_at` field (was `published_at`)
@@ -24,6 +25,7 @@ Implemented PublisherWorker corrections and comprehensive integration tests acco
 - ✅ Fixed error classification: added `statusCode: 404` to "Comment not found" errors for proper classification
 
 **Key Methods Updated:**
+
 - `_processJobInternal()` - Now reads `response_id` from payload, fetches from `responses` table
 - `fetchResponse()` - Fetches from `responses` table with correct fields
 - `fetchComment()` - New method to get comment details
@@ -34,11 +36,13 @@ Implemented PublisherWorker corrections and comprehensive integration tests acco
 ### 2. BaseWorker Enhancement (`src/workers/BaseWorker.js`)
 
 **Changes:**
+
 - ✅ Added support for passing `supabase` and `queueService` via constructor options
 - ✅ Enhanced `isRetryableError()` to respect explicit `retriable` and `permanent` flags from errors
 - ✅ Allows test mocks to override connections without auto-initialization
 
 **Impact:**
+
 - Enables proper testing with mocked Supabase clients
 - PublisherWorker can mark errors as permanent (4xx) or retriable (5xx, 429)
 
@@ -47,29 +51,35 @@ Implemented PublisherWorker corrections and comprehensive integration tests acco
 **Created comprehensive test suite covering all AC:**
 
 **AC1: Persistencia de post_id**
+
 - ✅ Test: `should save platform_response_id after successful publication`
 - Verifies `platform_response_id` is saved to `responses` table after successful publication
 
 **AC2: Manejo de rate limits (429)**
+
 - ✅ Test: `should retry with exponential backoff on 429 rate limit error`
 - Verifies error classification as `RATE_LIMIT` with `retriable: true`
 
 **AC3: Gestión de errores 4xx/5xx**
+
 - ✅ Test: `should NOT retry on 4xx permanent errors (401, 403, 400)`
 - ✅ Test: `should retry on 5xx transient errors (500, 502, 503, 504)`
 - Verifies proper error classification and retry behavior
 
 **AC4: Idempotencia**
+
 - ✅ Test: `should skip publication if platform_response_id already exists`
 - ✅ Test: `should publish if platform_response_id is null`
 - Verifies idempotency check prevents duplicate publications
 
 **AC5: Logging completo**
+
 - ✅ Test: `should log each attempt, result, and platform_response_id`
 - ✅ Test: `should log errors with full context`
 - Verifies comprehensive logging at each step
 
 **Platform-specific tests:**
+
 - ✅ Test: `should call Twitter postResponse with correct arguments`
 - ✅ Test: `should call YouTube postResponse with correct arguments`
 - Verifies platform-specific argument mapping
@@ -81,6 +91,7 @@ Implemented PublisherWorker corrections and comprehensive integration tests acco
 ### Mock Implementation
 
 Created reusable `createMockSupabase()` helper function that:
+
 - Handles both `select().eq().single()` and `update().eq().select()` chains
 - Properly tracks filters across multiple `.eq()` calls
 - Returns appropriate data based on table name and filters
@@ -89,6 +100,7 @@ Created reusable `createMockSupabase()` helper function that:
 ### Error Classification
 
 PublisherWorker now properly classifies errors:
+
 - **429 (Rate Limit)** → `RATE_LIMIT`, `retriable: true`
 - **5xx (Server Error)** → `SERVER_ERROR`, `retriable: true`
 - **4xx (Client Error)** → `CLIENT_ERROR`, `retriable: false`, `permanent: true`
@@ -121,4 +133,3 @@ BaseWorker respects these flags via enhanced `isRetryableError()` method.
 
 - Issue #410 (Original PublisherWorker implementation)
 - Issue #456 (This implementation - corrections and tests)
-

@@ -68,5 +68,3 @@ npm test -- tests/unit/workers/FetchCommentsWorker.test.js tests/unit/workers/An
 ## Agentes Relevantes
 
 - **TestEngineer** – Fix directo a suites de test + creación de helper reusable
-
-

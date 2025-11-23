@@ -21,7 +21,7 @@ on:
 jobs:
   build-check:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -35,7 +35,7 @@ jobs:
       - name: Install root dependencies
         run: npm ci
 
-      - name: Install frontend dependencies  
+      - name: Install frontend dependencies
         run: |
           if [ -d frontend ]; then
             cd frontend && npm ci
@@ -78,7 +78,7 @@ jobs:
         run: |
           echo "## Build Check Results 🏗️" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ job.status }}" = "success" ]; then
             echo "✅ **All builds passed successfully!**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -98,7 +98,7 @@ jobs:
 
   lint-check:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5

@@ -3,9 +3,10 @@
 **Date**: 2025-10-27  
 **Review ID**: 3385157400  
 **Total Issues**: 71 actionable comments  
-**Severity Breakdown**: 
+**Severity Breakdown**:
+
 - Critical: 5
-- Security: 2  
+- Security: 2
 - Architecture: 8
 - Code Quality: 25
 - Test Coverage: 15
@@ -16,6 +17,7 @@
 ## 🎯 Executive Summary
 
 CodeRabbit identified 71 actionable items across 2 files modified in this PR:
+
 - `src/services/shieldService.js` - Critical issues with user behavior persistence, logger import, table naming
 - `tests/helpers/mockSupabaseFactory.js` - Worktree mock update chain incomplete
 
@@ -37,7 +39,7 @@ CodeRabbit identified 71 actionable items across 2 files modified in this PR:
    - **Also affects**: Line 1868-1873
 
 2. **Lines 1211-1218**: User behavior persistence inconsistent
-   - **Severity**: CRITICAL  
+   - **Severity**: CRITICAL
    - **Type**: Bug / Data Integrity
    - **Issues**:
      - `actions_taken` overwrites history instead of merging
@@ -47,7 +49,7 @@ CodeRabbit identified 71 actionable items across 2 files modified in this PR:
 
 3. **Line 1774**: Table name inconsistency (singular → plural)
    - **Severity**: CRITICAL
-   - **Type**: Bug  
+   - **Type**: Bug
    - **Issue**: Only occurrence of `user_behavior` (singular) in src/ - should be `user_behaviors`
    - **Risk**: Production/test drift
 
@@ -58,7 +60,7 @@ CodeRabbit identified 71 actionable items across 2 files modified in this PR:
    - **Risk**: Tests fail when RPC called
 
 5. **Lines 213-244**: Incomplete update mock chain
-   - **Severity**: CRITICAL  
+   - **Severity**: CRITICAL
    - **Type**: Test Infrastructure
    - **Issue**: Update mock doesn't support multiple `.eq()` + `.select()`
    - **Risk**: Shield tests fail
@@ -78,7 +80,7 @@ CodeRabbit identified 71 actionable items across 2 files modified in this PR:
 **Multiple files**: Refactoring opportunities
 
 7. **scripts/test-migration-024-connection.js (29-58)**: Promise chaining → async/await
-8. **docs/guardian/cases/*.json**: Schema inconsistencies
+8. **docs/guardian/cases/\*.json**: Schema inconsistencies
 9. **Multiple files**: Missing error handling patterns
 
 ---
@@ -90,12 +92,14 @@ CodeRabbit identified 71 actionable items across 2 files modified in this PR:
 **Estimated Time**: 45-60 minutes
 
 #### Task 1.1: Fix Logger Import
+
 - **File**: `src/services/shieldService.js:5`
 - **Action**: Change `const logger = require('../utils/logger')` → `const { logger } = require('../utils/logger')`
 - **Verification**: Test that logger methods work
 - **Files affected**: Line 5, 1868-1873
 
 #### Task 1.2: Fix User Behavior Persistence
+
 - **File**: `src/services/shieldService.js:1211-1218`
 - **Actions**:
   1. Merge `actions_taken` instead of overwrite (read existing, append new)
@@ -106,18 +110,21 @@ CodeRabbit identified 71 actionable items across 2 files modified in this PR:
 - **Files affected**: Lines 1211-1218, 1258-1265, 1372-1393, 629-642
 
 #### Task 1.3: Fix Table Name
+
 - **File**: `src/services/shieldService.js:1774`
 - **Action**: Change `user_behavior` → `user_behaviors`
 - **Verification**: Grep to confirm only plural form remains
 - **Files affected**: Line 1774 only
 
 #### Task 1.4: Add RPC Mock
+
 - **File**: `tests/helpers/mockSupabaseFactory.js`
 - **Action**: Add `.rpc()` mock support
 - **Verification**: Shield tests pass
 
 #### Task 1.5: Fix Update Chain Mock
-- **File**: `tests/helpers/mockSupabaseFactory.js:213-244`  
+
+- **File**: `tests/helpers/mockSupabaseFactory.js:213-244`
 - **Action**: Support multiple `.eq()` + `.select()` chains
 - **Verification**: Shield escalation tests pass
 
@@ -126,6 +133,7 @@ CodeRabbit identified 71 actionable items across 2 files modified in this PR:
 **Estimated Time**: 15-20 minutes
 
 #### Task 2.1: Fix Workflow Injection
+
 - **File**: `.github/workflows/pr-branch-guard.yml:10-23`
 - **Action**: Pass variables through `env:` mapping instead of command substitution
 - **Action**: Sanitize branch name before use
@@ -144,16 +152,18 @@ CodeRabbit identified 71 actionable items across 2 files modified in this PR:
 ## 🧪 Testing Plan
 
 ### Pre-Implementation
+
 ```bash
 npm test -- --testPathPattern="shield" --passWithNoTests
 ```
 
 ### Post-Fix Validation
+
 ```bash
 # Full test suite
 npm test
 
-# Specific to changes  
+# Specific to changes
 npm test -- --testPathPattern="shield" tests/helpers/mockSupabaseFactory
 
 # Coverage check
@@ -161,6 +171,7 @@ npm test -- --coverage --coveragePathIgnorePatterns="test"
 ```
 
 ### Expected Results
+
 - ✅ All Shield tests passing
 - ✅ No new test failures
 - ✅ Coverage maintains ≥85%
@@ -171,8 +182,9 @@ npm test -- --coverage --coveragePathIgnorePatterns="test"
 ## 📝 GDD Implications
 
 **Nodos afectados**:
+
 - `docs/nodes/shield.md` - Si cambios en lógica de comportamiento
-- `docs/nodes/queue.md` - Si cambios en queue integration  
+- `docs/nodes/queue.md` - Si cambios en queue integration
 - `docs/nodes/tests.md` - Nuevos tests añadidos
 
 **Acción GDD**: Después de fixes, actualizar nodos con nuevos tests + cobertura
@@ -182,6 +194,7 @@ npm test -- --coverage --coveragePathIgnorePatterns="test"
 ## 🎯 Success Criteria
 
 ### Before Merging:
+
 - [ ] All 5 Critical issues resolved
 - [ ] Security issue (workflow) resolved
 - [ ] All Shield tests passing
@@ -193,6 +206,7 @@ npm test -- --coverage --coveragePathIgnorePatterns="test"
 - [ ] GDD health ≥87 maintained
 
 ### Quality Gates:
+
 - ✅ Tests passing: 100%
 - ✅ Coverage: Maintained or improved
 - ✅ No console errors
@@ -204,13 +218,16 @@ npm test -- --coverage --coveragePathIgnorePatterns="test"
 ## 📁 Files to Modify
 
 ### Priority 1 (Critical):
+
 1. `src/services/shieldService.js` - 3 fixes
 2. `tests/helpers/mockSupabaseFactory.js` - 2 fixes
 
 ### Priority 2 (Security):
+
 3. `.github/workflows/pr-branch-guard.yml` - 1 fix
 
 ### Priority 3 (Architecture):
+
 4. `scripts/test-migration-024-connection.js` - Refactor
 5. `docs/guardian/cases/*.json` - Schema updates
 6. Multiple files - Error handling
@@ -248,14 +265,17 @@ npm test -- --coverage --coveragePathIgnorePatterns="test"
 ## ⚠️ Risks & Mitigation
 
 ### Risk 1: Breaking Existing Tests
+
 - **Mitigation**: Run test suite before/after each fix
 - **Rollback**: Use git stash if needed
 
-### Risk 2: Data Migration Issues  
+### Risk 2: Data Migration Issues
+
 - **Mitigation**: User behavior changes are additive (upsert), backward compatible
 - **Validation**: Test with production-like data
 
 ### Risk 3: Mock Factory Incompatibility
+
 - **Mitigation**: Incremental testing, verify each mock addition
 - **Validation**: Run specific failing tests first
 
@@ -264,7 +284,7 @@ npm test -- --coverage --coveragePathIgnorePatterns="test"
 ## 📚 References
 
 - **Quality Standards**: `docs/QUALITY-STANDARDS.md`
-- **CodeRabbit Lessons**: `docs/patterns/coderabbit-lessons.md`  
+- **CodeRabbit Lessons**: `docs/patterns/coderabbit-lessons.md`
 - **GDD Nodes**: `docs/nodes/shield.md`, `docs/nodes/tests.md`
 - **Shield Tests**: `tests/integration/shield-*.test.js`
 
@@ -275,7 +295,6 @@ npm test -- --coverage --coveragePathIgnorePatterns="test"
 **Status**: 📝 Plan Created  
 **Next Step**: Begin Phase 1 - Critical Fixes  
 **Assignee**: Back-end Dev + Test Engineer  
-**Estimated Completion**: 2-3 hours  
+**Estimated Completion**: 2-3 hours
 
 **Updated**: 2025-10-27
-

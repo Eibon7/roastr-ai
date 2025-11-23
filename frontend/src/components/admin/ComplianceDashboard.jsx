@@ -47,17 +47,17 @@ const ComplianceDashboard = () => {
   const loadComplianceData = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const [retentionResponse, complianceResponse] = await Promise.all([
         fetch('/api/admin/retention/status', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         }),
         fetch('/api/admin/retention/compliance', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         })
       ]);
@@ -73,7 +73,7 @@ const ComplianceDashboard = () => {
         retention: retentionData.data,
         compliance: complianceInfo.data
       });
-      
+
       setLastRefresh(new Date());
     } catch (err) {
       console.error('Error loading compliance data:', err);
@@ -123,9 +123,7 @@ const ComplianceDashboard = () => {
         <Typography variant="h5" gutterBottom>
           Compliance Dashboard
         </Typography>
-        <Alert severity="error">
-          {error}
-        </Alert>
+        <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
@@ -136,9 +134,7 @@ const ComplianceDashboard = () => {
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5">
-          Compliance Dashboard
-        </Typography>
+        <Typography variant="h5">Compliance Dashboard</Typography>
         <Box display="flex" alignItems="center" gap={2}>
           {lastRefresh && (
             <Typography variant="body2" color="text.secondary">
@@ -162,14 +158,15 @@ const ComplianceDashboard = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <AssessmentIcon sx={{ mr: 1 }} />
-                <Typography variant="h6">
-                  Overall Compliance Score
-                </Typography>
+                <Typography variant="h6">Overall Compliance Score</Typography>
               </Box>
-              
+
               {compliance?.overall_score !== undefined && (
                 <>
-                  <Typography variant="h3" color={getComplianceScoreColor(compliance.overall_score)}>
+                  <Typography
+                    variant="h3"
+                    color={getComplianceScoreColor(compliance.overall_score)}
+                  >
                     {compliance.overall_score}%
                   </Typography>
                   <LinearProgress
@@ -193,11 +190,9 @@ const ComplianceDashboard = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <ScheduleIcon sx={{ mr: 1 }} />
-                <Typography variant="h6">
-                  Data Retention Status
-                </Typography>
+                <Typography variant="h6">Data Retention Status</Typography>
               </Box>
-              
+
               {retention && (
                 <>
                   <Grid container spacing={1}>
@@ -205,26 +200,27 @@ const ComplianceDashboard = () => {
                       <Typography variant="body2" color="text.secondary">
                         Pending Jobs
                       </Typography>
-                      <Typography variant="h4">
-                        {retention.pending_jobs || 0}
-                      </Typography>
+                      <Typography variant="h4">{retention.pending_jobs || 0}</Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">
                         Overdue Jobs
                       </Typography>
-                      <Typography variant="h4" color={retention.overdue_jobs > 0 ? 'error' : 'success'}>
+                      <Typography
+                        variant="h4"
+                        color={retention.overdue_jobs > 0 ? 'error' : 'success'}
+                      >
                         {retention.overdue_jobs || 0}
                       </Typography>
                     </Grid>
                   </Grid>
-                  
+
                   <Box mt={2}>
                     <Typography variant="body2" color="text.secondary">
-                      Last Successful Run: {retention.last_successful_run ? 
-                        new Date(retention.last_successful_run).toLocaleString() : 
-                        'Never'
-                      }
+                      Last Successful Run:{' '}
+                      {retention.last_successful_run
+                        ? new Date(retention.last_successful_run).toLocaleString()
+                        : 'Never'}
                     </Typography>
                   </Box>
                 </>
@@ -239,41 +235,34 @@ const ComplianceDashboard = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <SecurityIcon sx={{ mr: 1 }} />
-                <Typography variant="h6">
-                  Security Status
-                </Typography>
+                <Typography variant="h6">Security Status</Typography>
               </Box>
-              
+
               <List dense>
                 <ListItem>
                   <ListItemIcon>
                     <CheckCircleIcon color="success" />
                   </ListItemIcon>
-                  <ListItemText 
-                    primary="S3 Encryption" 
-                    secondary="AES-256 active"
-                  />
+                  <ListItemText primary="S3 Encryption" secondary="AES-256 active" />
                 </ListItem>
-                
+
                 <ListItem>
                   <ListItemIcon>
                     <CheckCircleIcon color="success" />
                   </ListItemIcon>
-                  <ListItemText 
-                    primary="Access Logging" 
-                    secondary="All downloads tracked"
-                  />
+                  <ListItemText primary="Access Logging" secondary="All downloads tracked" />
                 </ListItem>
-                
+
                 <ListItem>
                   <ListItemIcon>
-                    {retention?.audit_logs_enabled ? 
-                      <CheckCircleIcon color="success" /> : 
+                    {retention?.audit_logs_enabled ? (
+                      <CheckCircleIcon color="success" />
+                    ) : (
                       <ErrorIcon color="error" />
-                    }
+                    )}
                   </ListItemIcon>
-                  <ListItemText 
-                    primary="Audit Logging" 
+                  <ListItemText
+                    primary="Audit Logging"
                     secondary={retention?.audit_logs_enabled ? 'Active' : 'Disabled'}
                   />
                 </ListItem>
@@ -289,39 +278,32 @@ const ComplianceDashboard = () => {
               <WarningIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
               Compliance Violations
             </Typography>
-            
+
             {compliance?.violations && compliance.violations.length > 0 ? (
               <List>
                 {compliance.violations.map((violation, index) => (
                   <React.Fragment key={index}>
                     <ListItem>
-                      <ListItemIcon>
-                        {getViolationSeverityIcon(violation.severity)}
-                      </ListItemIcon>
+                      <ListItemIcon>{getViolationSeverityIcon(violation.severity)}</ListItemIcon>
                       <ListItemText
                         primary={
                           <Box display="flex" alignItems="center" gap={1}>
-                            <Typography variant="subtitle1">
-                              {violation.type}
-                            </Typography>
-                            <Chip 
-                              label={violation.severity} 
-                              size="small" 
+                            <Typography variant="subtitle1">{violation.type}</Typography>
+                            <Chip
+                              label={violation.severity}
+                              size="small"
                               color={violation.severity === 'critical' ? 'error' : 'warning'}
                             />
                           </Box>
                         }
                         secondary={
                           <Box>
-                            <Typography variant="body2">
-                              {violation.description}
-                            </Typography>
+                            <Typography variant="body2">{violation.description}</Typography>
                             <Typography variant="caption" color="text.secondary">
-                              Organization: {violation.organization_id} | 
-                              {violation.days_overdue > 0 ? 
-                                ` ${formatDaysOverdue(violation.days_overdue)}` : 
-                                ' On schedule'
-                              }
+                              Organization: {violation.organization_id} |
+                              {violation.days_overdue > 0
+                                ? ` ${formatDaysOverdue(violation.days_overdue)}`
+                                : ' On schedule'}
                             </Typography>
                           </Box>
                         }
@@ -351,7 +333,7 @@ const ComplianceDashboard = () => {
             <Typography variant="h6" gutterBottom>
               Quick Actions
             </Typography>
-            
+
             <Box display="flex" flexDirection="column" gap={1}>
               <Button
                 variant="outlined"
@@ -361,7 +343,7 @@ const ComplianceDashboard = () => {
                   fetch('/api/admin/retention/trigger', {
                     method: 'POST',
                     headers: {
-                      'Authorization': `Bearer ${localStorage.getItem('token')}`
+                      Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                   }).then(() => loadComplianceData());
                 }}
@@ -369,7 +351,7 @@ const ComplianceDashboard = () => {
               >
                 Run Retention Jobs
               </Button>
-              
+
               <Button
                 variant="outlined"
                 startIcon={<StorageIcon />}
@@ -380,7 +362,7 @@ const ComplianceDashboard = () => {
               >
                 Download Compliance Report
               </Button>
-              
+
               <Button
                 variant="outlined"
                 startIcon={<AssessmentIcon />}
@@ -402,7 +384,7 @@ const ComplianceDashboard = () => {
               <Typography variant="h6" gutterBottom>
                 Data Retention Summary (Last 30 Days)
               </Typography>
-              
+
               <Grid container spacing={3}>
                 <Grid item xs={12} md={3}>
                   <Box textAlign="center">
@@ -414,7 +396,7 @@ const ComplianceDashboard = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="error">
@@ -425,7 +407,7 @@ const ComplianceDashboard = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="success.main">
@@ -436,7 +418,7 @@ const ComplianceDashboard = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="warning.main">

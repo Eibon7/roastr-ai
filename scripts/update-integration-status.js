@@ -96,18 +96,20 @@ class IntegrationStatusUpdater {
         integrations.push(status);
 
         if (this.options.verbose) {
-          const statusEmoji = status.status === 'active' ? '✅' :
-                            status.status === 'inactive' ? '⚠️' : '❌';
-          console.log(`${statusEmoji} ${platform.name}: ${status.status} (health: ${status.health_score})`);
+          const statusEmoji =
+            status.status === 'active' ? '✅' : status.status === 'inactive' ? '⚠️' : '❌';
+          console.log(
+            `${statusEmoji} ${platform.name}: ${status.status} (health: ${status.health_score})`
+          );
         }
       }
 
       // Calculate summary
       const summary = {
         total: integrations.length,
-        active: integrations.filter(i => i.status === 'active').length,
-        inactive: integrations.filter(i => i.status === 'inactive').length,
-        not_connected: integrations.filter(i => i.status === 'not_connected').length,
+        active: integrations.filter((i) => i.status === 'active').length,
+        inactive: integrations.filter((i) => i.status === 'inactive').length,
+        not_connected: integrations.filter((i) => i.status === 'not_connected').length,
         overall_health: this.calculateOverallHealth(integrations)
       };
 
@@ -238,7 +240,7 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

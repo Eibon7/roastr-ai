@@ -1,8 +1,8 @@
 /**
  * BillingWorker Tests - Issue #916
- * 
+ *
  * Tests exhaustivos para BillingWorker con cobertura ≥85%
- * 
+ *
  * AC1: Procesamiento de suscripciones
  * AC2: Cálculo de costos
  * AC3: Webhooks Stripe/Polar
@@ -627,7 +627,8 @@ describe('BillingWorker', () => {
         // notificationService receives userSub.user_id from database query
         // The mock returns user_id: 'user-123' from user_subscriptions table
         expect(notificationService.createPaymentActionRequiredNotification).toHaveBeenCalled();
-        const notificationCall = notificationService.createPaymentActionRequiredNotification.mock.calls[0];
+        const notificationCall =
+          notificationService.createPaymentActionRequiredNotification.mock.calls[0];
         expect(notificationCall[0]).toBe('user-123'); // user_id from mock
         expect(notificationCall[1]).toMatchObject({
           paymentIntentId: 'pi_123',
@@ -726,44 +727,44 @@ describe('BillingWorker', () => {
   });
 
   describe('AC4: Límites de Plan', () => {
-      it('should apply plan limits when subscription changes', async () => {
-        // Arrange
-        const limitsMock = createSupabaseMock({
-          user_subscriptions: {
-            user_id: 'user-123',
-            plan: 'pro',
-            status: 'active',
-            stripe_customer_id: 'cus_stripe123'
-          }
-        });
-        worker.supabase = limitsMock;
-
-        const job = {
-          id: 'job-123',
-          organization_id: 'org-123',
-          job_type: 'subscription_updated',
-          data: {
-            userId: 'user-123',
-            customerId: 'cus_stripe123',
-            subscriptionId: 'sub_stripe123',
-            newPlan: 'plus',
-            newStatus: 'active'
-          }
-        };
-
-        // Act
-        const result = await worker.processJob(job);
-
-        // Assert
-        expect(result.success).toBe(true);
-        // Verify subscription was updated (plan limits are applied via subscription update)
-        // processSubscriptionUpdated calls supabase.from('user_subscriptions').select().eq().single()
-        expect(limitsMock.from).toHaveBeenCalled();
-        expect(result.details.newPlan).toBe('plus');
-
-        // Restore original mock
-        worker.supabase = mockSupabase;
+    it('should apply plan limits when subscription changes', async () => {
+      // Arrange
+      const limitsMock = createSupabaseMock({
+        user_subscriptions: {
+          user_id: 'user-123',
+          plan: 'pro',
+          status: 'active',
+          stripe_customer_id: 'cus_stripe123'
+        }
       });
+      worker.supabase = limitsMock;
+
+      const job = {
+        id: 'job-123',
+        organization_id: 'org-123',
+        job_type: 'subscription_updated',
+        data: {
+          userId: 'user-123',
+          customerId: 'cus_stripe123',
+          subscriptionId: 'sub_stripe123',
+          newPlan: 'plus',
+          newStatus: 'active'
+        }
+      };
+
+      // Act
+      const result = await worker.processJob(job);
+
+      // Assert
+      expect(result.success).toBe(true);
+      // Verify subscription was updated (plan limits are applied via subscription update)
+      // processSubscriptionUpdated calls supabase.from('user_subscriptions').select().eq().single()
+      expect(limitsMock.from).toHaveBeenCalled();
+      expect(result.details.newPlan).toBe('plus');
+
+      // Restore original mock
+      worker.supabase = mockSupabase;
+    });
   });
 
   describe('AC5: Errores de Pago', () => {
@@ -817,43 +818,43 @@ describe('BillingWorker', () => {
   });
 
   describe('AC6: Idempotencia', () => {
-      it('should process same job multiple times safely', async () => {
-        // Arrange
-        // Use a mock that supports chained .eq() calls
-        const idempotentMock = createSupabaseMock({
-          user_subscriptions: {
-            user_id: 'user-123',
-            plan: 'pro',
-            status: 'past_due',
-            stripe_customer_id: 'cus_stripe123'
-          }
-        });
-        worker.supabase = idempotentMock;
-
-        const job = {
-          id: 'job-123',
-          organization_id: 'org-123',
-          job_type: 'payment_succeeded',
-          data: {
-            userId: 'user-123',
-            customerId: 'cus_stripe123',
-            invoiceId: 'inv_123',
-            amount: 1500
-          }
-        };
-
-        // Act - Process same job twice
-        const result1 = await worker.processJob(job);
-        const result2 = await worker.processJob(job);
-
-        // Assert
-        expect(result1.success).toBe(true);
-        expect(result2.success).toBe(true);
-        // Should not cause errors or duplicate processing
-
-        // Restore original mock
-        worker.supabase = mockSupabase;
+    it('should process same job multiple times safely', async () => {
+      // Arrange
+      // Use a mock that supports chained .eq() calls
+      const idempotentMock = createSupabaseMock({
+        user_subscriptions: {
+          user_id: 'user-123',
+          plan: 'pro',
+          status: 'past_due',
+          stripe_customer_id: 'cus_stripe123'
+        }
       });
+      worker.supabase = idempotentMock;
+
+      const job = {
+        id: 'job-123',
+        organization_id: 'org-123',
+        job_type: 'payment_succeeded',
+        data: {
+          userId: 'user-123',
+          customerId: 'cus_stripe123',
+          invoiceId: 'inv_123',
+          amount: 1500
+        }
+      };
+
+      // Act - Process same job twice
+      const result1 = await worker.processJob(job);
+      const result2 = await worker.processJob(job);
+
+      // Assert
+      expect(result1.success).toBe(true);
+      expect(result2.success).toBe(true);
+      // Should not cause errors or duplicate processing
+
+      // Restore original mock
+      worker.supabase = mockSupabase;
+    });
   });
 
   describe('AC7: Calidad de Tests', () => {
@@ -1041,4 +1042,3 @@ describe('BillingWorker', () => {
     });
   });
 });
-

@@ -17,4 +17,3 @@
 #### Performance and Scaling
 
 #### Monitoring and Observability
-

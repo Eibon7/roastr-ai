@@ -13,6 +13,7 @@
 Definir el **Prompt Maestro** de Roastr.ai con estructura de 3 bloques optimizada para **prompt caching** con OpenAI, usando **SOLO lo que existe** tras la limpieza del Issue #686.
 
 **Bloques:**
+
 - **Bloque A (System):** Contexto global con los 3 tonos reales, 100% estático, cacheable
 - **Bloque B (User):** Style Profile + Brand Safety sponsors, cacheable por `user_id`
 - **Bloque C (Dynamic):** Comentario actual + tone seleccionado, NO cacheable
@@ -84,13 +85,13 @@ Tienes EXACTAMENTE 3 tonos disponibles. Estos son los únicos tonos del sistema.
    - Double entendre
    - Subestimación deliberada (understatement)
    - Referencias culturales elegantes
-   
+
    Restricciones CRÍTICAS:
    - NO insultos directos
    - NO vulgaridad
    - NO lenguaje ofensivo explícito
    - Mantener sofisticación
-   
+
    Ejemplo:
    Input: "Esta app es horrible"
    Output: "Fascinante crítica. Imagino que tu experiencia en desarrollo de software es... extensa. O quizás sería más preciso decir... existente."
@@ -103,12 +104,12 @@ Tienes EXACTAMENTE 3 tonos disponibles. Estos son los únicos tonos del sistema.
    - Comparaciones inteligentes
    - Ironía directa
    - Wordplay y juegos de palabras
-   
+
    Restricciones CRÍTICAS:
    - NO crueldad innecesaria
    - NO ataques personales prohibidos
    - Mantener ingenio, no solo insultar
-   
+
    Ejemplo:
    Input: "No tienes ni idea"
    Output: "Vaya argumento interesante. Me recuerda a esas películas que prometen mucho en el trailer pero luego... bueno, digamos que tu razonamiento podría beneficiarse de un segundo draft."
@@ -121,13 +122,13 @@ Tienes EXACTAMENTE 3 tonos disponibles. Estos son los únicos tonos del sistema.
    - Comparaciones brutales
    - Sarcasmo cortante
    - Metáforas devastadoras
-   
+
    Restricciones CRÍTICAS (NO NEGOCIABLES):
    - NO discriminación (raza, género, orientación, religión)
    - NO ataques a rasgos físicos o discapacidades
    - NO incitación a violencia
    - Mantener ingenio, no solo agresión
-   
+
    Ejemplo:
    Input: "Tu conocimiento es inexistente"
    Output: "Tu conocimiento es como el WiFi del aeropuerto: teóricamente existe, pero nadie lo encuentra. Y cuando lo encuentras, es tan lento que deseas no haberlo intentado."
@@ -219,13 +220,13 @@ El usuario usa predominantemente: {{preferred_tone}}
 
 ### Variables del Bloque B
 
-| Variable | Tipo | Fuente | Ejemplo |
-|----------|------|--------|---------|
-| `preferred_tone` | string | user config | "balanceado" |
-| `style_profile` | string | Style Profile service | "Humor técnico, referencias 90s, sarcasmo alto" |
-| `red_lines` | string | `persona.md` | "Ataques a familia, body shaming" |
-| `tolerances` | string | `persona.md` | "Humor negro, palabrotas" |
-| `sponsors_list` | string | `sponsors` table | Lista formateada de sponsors |
+| Variable         | Tipo   | Fuente                | Ejemplo                                         |
+| ---------------- | ------ | --------------------- | ----------------------------------------------- |
+| `preferred_tone` | string | user config           | "balanceado"                                    |
+| `style_profile`  | string | Style Profile service | "Humor técnico, referencias 90s, sarcasmo alto" |
+| `red_lines`      | string | `persona.md`          | "Ataques a familia, body shaming"               |
+| `tolerances`     | string | `persona.md`          | "Humor negro, palabrotas"                       |
+| `sponsors_list`  | string | `sponsors` table      | Lista formateada de sponsors                    |
 
 ### Formato de Style Profile
 
@@ -286,6 +287,7 @@ Cuando detectes mención ofensiva a estos sponsors:
 ### Invalidación del Cache
 
 El cache del Bloque B se invalida cuando:
+
 - Usuario actualiza su Style Profile
 - Usuario añade/modifica/elimina Sponsors
 - Usuario cambia líneas rojas (lo_que_no_tolero)
@@ -336,24 +338,25 @@ Genera un roast usando:
 
 ### Variables del Bloque C
 
-| Variable | Tipo | Fuente | Ejemplo |
-|----------|------|--------|---------|
-| `original_comment` | string | comment input | "Esta app es horrible" |
-| `toxicity_score` | float | Perspective API | 0.72 |
-| `severity_level` | string | Perspective API | "medium" |
-| `toxicity_categories` | array | Perspective API | ["insult", "profanity"] |
-| `selected_tone` | string | user input | "balanceado" |
-| `tone_intensity` | integer | fixed per tone | 3 |
-| `brand_safety_status` | string | computed | Match details o "No match" |
-| `target_platform` | string | job payload | "twitter" |
-| `character_limit` | integer | platform config | 280 |
-| `limit_type` | string | platform config | "DURO" o "SOFT" |
-| `platform_instruction` | string | computed | Instrucción específica |
-| `brand_safety_instruction` | string | computed | Solo si hay match |
+| Variable                   | Tipo    | Fuente          | Ejemplo                    |
+| -------------------------- | ------- | --------------- | -------------------------- |
+| `original_comment`         | string  | comment input   | "Esta app es horrible"     |
+| `toxicity_score`           | float   | Perspective API | 0.72                       |
+| `severity_level`           | string  | Perspective API | "medium"                   |
+| `toxicity_categories`      | array   | Perspective API | ["insult", "profanity"]    |
+| `selected_tone`            | string  | user input      | "balanceado"               |
+| `tone_intensity`           | integer | fixed per tone  | 3                          |
+| `brand_safety_status`      | string  | computed        | Match details o "No match" |
+| `target_platform`          | string  | job payload     | "twitter"                  |
+| `character_limit`          | integer | platform config | 280                        |
+| `limit_type`               | string  | platform config | "DURO" o "SOFT"            |
+| `platform_instruction`     | string  | computed        | Instrucción específica     |
+| `brand_safety_instruction` | string  | computed        | Solo si hay match          |
 
 ### Formato de Brand Safety Status
 
 **Si HAY match de sponsor:**
+
 ```
 ⚠️ SPONSOR MATCH DETECTED: Nike
 
@@ -378,6 +381,7 @@ Este override tiene MÁXIMA PRIORIDAD sobre cualquier otra configuración.
 ```
 
 **Si NO hay match:**
+
 ```
 No sponsor matches detected. Procede con:
 - Tone: {{selected_tone}} ({{tone_intensity}}/5)
@@ -408,12 +412,12 @@ async function buildPrompt(params) {
     originalComment,
     toxicityData,
     platform,
-    selectedTone,  // Flanders, Balanceado, o Canalla
+    selectedTone, // Flanders, Balanceado, o Canalla
     brandSafety
   } = params;
 
   // BLOQUE A: Cargar una vez, usar siempre (cacheable global)
-  const blockA = loadBlockA();  // Estático, contenido literal
+  const blockA = loadBlockA(); // Estático, contenido literal
 
   // BLOQUE B: Construir por usuario (cacheable por user_id)
   const blockB = await buildBlockB(userId);
@@ -423,7 +427,7 @@ async function buildPrompt(params) {
     originalComment,
     toxicityData,
     platform,
-    selectedTone,  // Uno de los 3 tonos reales
+    selectedTone, // Uno de los 3 tonos reales
     brandSafety
   });
 
@@ -505,21 +509,25 @@ TOTAL: ~2700 tokens
 ### Cálculo Real (Post-#686)
 
 **Primera request:**
+
 - **Tokens totales:** 2700 tokens
 - **Coste:** $0.0027 (GPT-4o, $1/1M input tokens)
 
 **Requests subsecuentes (mismo usuario, <24h):**
+
 - **Tokens cacheados:** 2200 tokens (Bloque A + B) → $0.0011 (50% descuento)
 - **Tokens nuevos:** 500 tokens → $0.0005
 - **Coste total:** $0.0016
 - **Ahorro:** 41% por request
 
 **100 requests (mismo usuario, mismo día):**
+
 - **Sin cache:** $0.27
 - **Con cache:** $0.0027 + (99 × $0.0016) = $0.161
 - **Ahorro:** $0.109 (40%)
 
 **1000 usuarios × 10 requests cada uno:**
+
 - 1000 primeras requests: $2.70
 - 9000 subsecuentes: $14.40
 - **Total:** $17.10

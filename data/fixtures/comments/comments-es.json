@@ -260,7 +260,7 @@
     "language": "es",
     "topic": "entertainment",
     "comment_text": "Menuda basura de serie, los actores son pésimos y el guion es horrible. No vale la pena",
-    "toxicity_score": 0.70,
+    "toxicity_score": 0.7,
     "expected_action": "roast",
     "severity": "low",
     "platform": "twitter",

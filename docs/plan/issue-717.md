@@ -1,4 +1,5 @@
 # Implementation Plan - Issue #717
+
 ## Tone System Testing - Add validation for tone mapping and humor types
 
 **Issue:** #717
@@ -33,6 +34,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 ### ✅ Existing Coverage
 
 **File:** `tests/unit/config/tones.test.js` (24 tests passing)
+
 - ✅ `normalizeTone()` - case-insensitive, whitespace handling, invalid inputs
 - ✅ `isValidTone()` - strict/non-strict modes, type safety
 - ✅ `getRandomTone()` - randomness, valid outputs
@@ -74,6 +76,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 **New File:** `tests/unit/config/validationConstants-humor.test.js`
 
 **Tests to implement:**
+
 1. **VALID_HUMOR_TYPES definition**
    - Should be frozen (immutable)
    - Should contain exactly 5 types
@@ -92,6 +95,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
    - Whitespace handling → normalize and validate
 
 **Files to modify:**
+
 - Create: `tests/unit/config/validationConstants-humor.test.js`
 - Update: `src/config/validationConstants.js` (add `isValidHumorType()` if missing)
 
@@ -104,6 +108,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 **New File:** `tests/unit/config/validationConstants-intensity.test.js`
 
 **Tests to implement:**
+
 1. **MIN_INTENSITY/MAX_INTENSITY constants**
    - MIN_INTENSITY === 1
    - MAX_INTENSITY === 5
@@ -128,6 +133,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
      - 4-5 → "directo y sin filtros"
 
 **Files to modify:**
+
 - Create: `tests/unit/config/validationConstants-intensity.test.js`
 - Update: `src/config/validationConstants.js` (add validation functions)
 
@@ -140,6 +146,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 **New File:** `tests/unit/services/roastPromptTemplate-tone.test.js`
 
 **Tests to implement:**
+
 1. **mapUserTone() basic functionality**
    - Default config → default tone
    - Valid tone + humor_type → combined description
@@ -169,6 +176,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
    - Invalid values → gracefully falls back to defaults
 
 **Files to modify:**
+
 - Create: `tests/unit/services/roastPromptTemplate-tone.test.js`
 - Potentially update: `src/services/roastPromptTemplate.js` (add defensive defaults)
 
@@ -181,6 +189,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 **File to extend:** `tests/unit/config/tones.test.js` or create `tests/integration/tone-plan-access.test.js`
 
 **Tests to implement:**
+
 1. **Free plan restrictions**
    - Tone access: Balanceado only
    - Humor type: witty only
@@ -210,6 +219,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 **Files to extend:** Multiple test files
 
 **Tests to implement:**
+
 1. **Type safety across all functions**
    - Pass non-string to tone functions → null/false
    - Pass non-number to intensity functions → false
@@ -222,7 +232,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 
 3. **Normalization consistency**
    - "FLANDERS" === "flanders" === "Flanders" → all normalize to "Flanders"
-   - "  Canalla  " → "Canalla" (whitespace trimmed)
+   - " Canalla " → "Canalla" (whitespace trimmed)
 
 4. **Security: Injection protection**
    - custom_style_prompt with SQL injection attempt → sanitized
@@ -236,6 +246,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 ### Phase 6: Documentation & Evidence
 
 **Files to update:**
+
 1. `docs/nodes/tone.md`
    - Add "## Test Coverage" section
    - Document new validation functions
@@ -313,6 +324,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 **Per AC:** Tests ≥80% coverage for tone module
 
 **Current estimate:**
+
 - `src/config/tones.js`: Already 100%
 - `src/config/validationConstants.js` (tone-related functions): Will reach 90%+
 - `src/services/roastPromptTemplate.js` (mapUserTone): Will reach 85%+
@@ -358,32 +370,35 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 ## 🔗 Dependencies
 
 ### GDD Nodes
+
 - `docs/nodes/tone.md` (8,794 lines) - Must read for context
 - `docs/nodes/persona.md` - For custom_style_prompt integration
 - `docs/nodes/plan-features.md` - For plan-based access (optional)
 
 ### Code Files
+
 - `src/config/tones.js` - Core tone definitions
 - `src/config/validationConstants.js` - Humor types, intensity range
 - `src/config/constants.js` - Tone/humor mappings for prompts
 - `src/services/roastPromptTemplate.js` - Integration with roast generation
 
 ### Existing Tests
+
 - `tests/unit/config/tones.test.js` - 24 tests, must not regress
 
 ---
 
 ## 📅 Timeline Estimate
 
-| Phase | Tasks | Estimated Time |
-|-------|-------|----------------|
-| **Phase 1** | Humor type validation tests | 1 day |
-| **Phase 2** | Intensity level validation tests | 1 day |
-| **Phase 3** | Integration tests (RoastPromptTemplate) | 2 days |
-| **Phase 4** | Plan-based access tests (optional) | 1-2 days or defer |
-| **Phase 5** | Edge cases & regression tests | 1 day |
-| **Phase 6** | Documentation & evidence | 0.5 days |
-| **Validation** | Run full suite, fix issues | 0.5 days |
+| Phase          | Tasks                                   | Estimated Time    |
+| -------------- | --------------------------------------- | ----------------- |
+| **Phase 1**    | Humor type validation tests             | 1 day             |
+| **Phase 2**    | Intensity level validation tests        | 1 day             |
+| **Phase 3**    | Integration tests (RoastPromptTemplate) | 2 days            |
+| **Phase 4**    | Plan-based access tests (optional)      | 1-2 days or defer |
+| **Phase 5**    | Edge cases & regression tests           | 1 day             |
+| **Phase 6**    | Documentation & evidence                | 0.5 days          |
+| **Validation** | Run full suite, fix issues              | 0.5 days          |
 
 **Total estimated:** 6-8 days (with optional Phase 4)
 **Aligns with issue estimate:** 1 week ✅
@@ -393,6 +408,7 @@ Add comprehensive test coverage for the tone mapping system and humor type valid
 ## 🔄 Continuous Validation
 
 After each phase:
+
 1. Run `npm test -- tests/unit/config/ tests/unit/services/roastPromptTemplate`
 2. Check coverage: `npm test -- --coverage --collectCoverageFrom='src/config/tones.js' --collectCoverageFrom='src/config/validationConstants.js' --collectCoverageFrom='src/services/roastPromptTemplate.js'`
 3. Verify no regressions in existing tests
@@ -414,17 +430,18 @@ After each phase:
 
 ## 🤝 Agents Involved
 
-| Agent | Role | Phase |
-|-------|------|-------|
-| **Orchestrator** | Planning, coordination | FASE 0-1 |
-| **Test Engineer** | Test implementation, validation | FASE 2-4 |
-| **Guardian** (optional) | Security review for injection tests | FASE 5 |
+| Agent                   | Role                                | Phase    |
+| ----------------------- | ----------------------------------- | -------- |
+| **Orchestrator**        | Planning, coordination              | FASE 0-1 |
+| **Test Engineer**       | Test implementation, validation     | FASE 2-4 |
+| **Guardian** (optional) | Security review for injection tests | FASE 5   |
 
 ---
 
 ## 📊 Post-Implementation Metrics
 
 **Will measure:**
+
 - Total tests added: Target ~60-80
 - Coverage increase: Target ≥80% for tone module
 - Test execution time: Should remain <5s for unit tests

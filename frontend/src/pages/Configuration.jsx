@@ -8,16 +8,7 @@ import { Switch } from '../components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Separator } from '../components/ui/separator';
 import { useToast } from '../hooks/use-toast';
-import { 
-  Settings, 
-  Save, 
-  RefreshCw, 
-  Shield, 
-  Target,
-  Palette,
-  Volume2,
-  Hash
-} from 'lucide-react';
+import { Settings, Save, RefreshCw, Shield, Target, Palette, Volume2, Hash } from 'lucide-react';
 
 const PLATFORMS = [
   { id: 'twitter', name: 'Twitter', color: 'bg-blue-500' },
@@ -34,7 +25,11 @@ const PLATFORMS = [
 // Issue #872: New 3-tone system (post-#686)
 const TONES = [
   { value: 'flanders', label: 'Flanders (Light)', description: 'Amable con ironía sutil (2/5)' },
-  { value: 'balanceado', label: 'Balanceado (Balanced)', description: 'Equilibrio entre ingenio y firmeza (3/5)' },
+  {
+    value: 'balanceado',
+    label: 'Balanceado (Balanced)',
+    description: 'Equilibrio entre ingenio y firmeza (3/5)'
+  },
   { value: 'canalla', label: 'Canalla (Savage)', description: 'Directo y sin filtros (4/5)' }
 ];
 
@@ -51,14 +46,14 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
     try {
       await onSave(platform.id, localConfig);
       toast({
-        title: "Configuration saved",
-        description: `${platform.name} settings updated successfully`,
+        title: 'Configuration saved',
+        description: `${platform.name} settings updated successfully`
       });
     } catch (error) {
       toast({
-        title: "Error saving configuration",
+        title: 'Error saving configuration',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive'
       });
     } finally {
       setSaving(false);
@@ -66,12 +61,15 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
   };
 
   const handleToggle = (field, value) => {
-    setLocalConfig(prev => ({ ...prev, [field]: value }));
+    setLocalConfig((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleArrayChange = (field, value) => {
-    const words = value.split(',').map(w => w.trim()).filter(w => w.length > 0);
-    setLocalConfig(prev => ({ ...prev, [field]: words }));
+    const words = value
+      .split(',')
+      .map((w) => w.trim())
+      .filter((w) => w.length > 0);
+    setLocalConfig((prev) => ({ ...prev, [field]: words }));
   };
 
   return (
@@ -81,8 +79,8 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
           <div className="flex items-center space-x-3">
             <div className={`w-3 h-3 rounded-full ${platform.color}`} />
             <CardTitle className="text-lg">{platform.name}</CardTitle>
-            <Badge variant={localConfig.enabled ? "default" : "secondary"}>
-              {localConfig.enabled ? "Enabled" : "Disabled"}
+            <Badge variant={localConfig.enabled ? 'default' : 'secondary'}>
+              {localConfig.enabled ? 'Enabled' : 'Disabled'}
             </Badge>
           </div>
           <Switch
@@ -106,7 +104,7 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
                 value={localConfig.tone}
                 onValueChange={(value) => handleToggle('tone', value)}
               >
-                {TONES.map(tone => (
+                {TONES.map((tone) => (
                   <option key={tone.value} value={tone.value}>
                     {tone.label} - {tone.description}
                   </option>
@@ -135,9 +133,7 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
                   onChange={(e) => handleToggle('response_frequency', parseFloat(e.target.value))}
                   className="flex-1"
                 />
-                <Badge variant="outline">
-                  {Math.round(localConfig.response_frequency * 100)}%
-                </Badge>
+                <Badge variant="outline">{Math.round(localConfig.response_frequency * 100)}%</Badge>
               </div>
               <p className="text-xs text-muted-foreground">
                 Percentage of comments that will receive a roast response
@@ -174,14 +170,14 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
                   onCheckedChange={(checked) => handleToggle('shield_enabled', checked)}
                 />
               </div>
-              
+
               {localConfig.shield_enabled && (
                 <div className="pl-6 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Auto Actions</span>
                     <Switch
                       checked={localConfig.shield_config?.auto_actions || false}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleToggle('shield_config', {
                           ...localConfig.shield_config,
                           auto_actions: checked
@@ -193,7 +189,7 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
                     <span className="text-sm">Mute Users</span>
                     <Switch
                       checked={localConfig.shield_config?.mute_enabled || false}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleToggle('shield_config', {
                           ...localConfig.shield_config,
                           mute_enabled: checked
@@ -205,7 +201,7 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
                     <span className="text-sm">Block Users</span>
                     <Switch
                       checked={localConfig.shield_config?.block_enabled || false}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleToggle('shield_config', {
                           ...localConfig.shield_config,
                           block_enabled: checked
@@ -217,7 +213,7 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
                     <span className="text-sm">Report Users</span>
                     <Switch
                       checked={localConfig.shield_config?.report_enabled || false}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleToggle('shield_config', {
                           ...localConfig.shield_config,
                           report_enabled: checked
@@ -231,11 +227,7 @@ function ConfigurationCard({ platform, config, onSave, loading }) {
           </>
         )}
 
-        <Button 
-          onClick={handleSave} 
-          disabled={saving || loading}
-          className="w-full"
-        >
+        <Button onClick={handleSave} disabled={saving || loading} className="w-full">
           <Save className="h-4 w-4 mr-2" />
           {saving ? 'Saving...' : 'Save Configuration'}
         </Button>
@@ -258,19 +250,19 @@ export default function Configuration() {
     try {
       const response = await fetch('/api/config', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      
+
       if (!response.ok) throw new Error('Failed to load configurations');
-      
+
       const data = await response.json();
       setConfigurations(data.data.platforms);
     } catch (error) {
       toast({
-        title: "Error loading configurations",
+        title: 'Error loading configurations',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
@@ -282,7 +274,7 @@ export default function Configuration() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify(config)
     });
@@ -293,7 +285,7 @@ export default function Configuration() {
     }
 
     // Update local state
-    setConfigurations(prev => ({
+    setConfigurations((prev) => ({
       ...prev,
       [platform]: config
     }));
@@ -305,29 +297,29 @@ export default function Configuration() {
       const response = await fetch('/api/config/reload', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
       if (!response.ok) throw new Error('Failed to reload configuration');
 
       toast({
-        title: "Configuration reloaded",
-        description: "System configuration has been hot-reloaded successfully",
+        title: 'Configuration reloaded',
+        description: 'System configuration has been hot-reloaded successfully'
       });
     } catch (error) {
       toast({
-        title: "Error reloading configuration",
+        title: 'Error reloading configuration',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive'
       });
     } finally {
       setReloading(false);
     }
   };
 
-  const enabledPlatforms = PLATFORMS.filter(p => configurations[p.id]?.enabled);
-  const disabledPlatforms = PLATFORMS.filter(p => !configurations[p.id]?.enabled);
+  const enabledPlatforms = PLATFORMS.filter((p) => configurations[p.id]?.enabled);
+  const disabledPlatforms = PLATFORMS.filter((p) => !configurations[p.id]?.enabled);
 
   return (
     <div className="space-y-6">
@@ -352,24 +344,20 @@ export default function Configuration() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
-              {enabledPlatforms.length}
-            </div>
+            <div className="text-2xl font-bold text-green-600">{enabledPlatforms.length}</div>
             <p className="text-sm text-muted-foreground">Platforms Enabled</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-500">
-              {disabledPlatforms.length}
-            </div>
+            <div className="text-2xl font-bold text-gray-500">{disabledPlatforms.length}</div>
             <p className="text-sm text-muted-foreground">Platforms Disabled</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-blue-600">
-              {Object.values(configurations).filter(c => c.shield_enabled).length}
+              {Object.values(configurations).filter((c) => c.shield_enabled).length}
             </div>
             <p className="text-sm text-muted-foreground">Shield Mode Active</p>
           </CardContent>
@@ -379,17 +367,15 @@ export default function Configuration() {
       {/* Platform Configurations */}
       <Tabs defaultValue="enabled" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="enabled">
-            Enabled Platforms ({enabledPlatforms.length})
-          </TabsTrigger>
+          <TabsTrigger value="enabled">Enabled Platforms ({enabledPlatforms.length})</TabsTrigger>
           <TabsTrigger value="disabled">
             Disabled Platforms ({disabledPlatforms.length})
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="enabled" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {enabledPlatforms.map(platform => (
+            {enabledPlatforms.map((platform) => (
               <ConfigurationCard
                 key={platform.id}
                 platform={platform}
@@ -409,10 +395,10 @@ export default function Configuration() {
             )}
           </div>
         </TabsContent>
-        
+
         <TabsContent value="disabled" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {disabledPlatforms.map(platform => (
+            {disabledPlatforms.map((platform) => (
               <ConfigurationCard
                 key={platform.id}
                 platform={platform}

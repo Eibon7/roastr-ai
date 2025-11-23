@@ -1,6 +1,6 @@
 /**
  * Cost Control Service Alert Tests - Issue 72
- * 
+ *
  * Tests for 80% usage threshold alerts and alert history functionality
  */
 
@@ -96,18 +96,18 @@ describe('CostControlService - Alerts (Issue 72)', () => {
     // Mock environment variables
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_ANON_KEY = 'test-key';
-    
+
     // Clear all mocks
     jest.clearAllMocks();
     mockConsoleLog.mockClear();
-    
+
     costControl = new CostControlService();
   });
 
   describe('createDefaultUsageAlerts', () => {
     test('should create default 80% threshold alerts for all resource types', async () => {
       const organizationId = 'test-org-123';
-      
+
       // Mock that no existing alerts are found
       mockSelectEq.mockImplementation(() => ({
         eq: jest.fn(() => ({
@@ -141,15 +141,17 @@ describe('CostControlService - Alerts (Issue 72)', () => {
 
     test('should skip creating alerts that already exist', async () => {
       const organizationId = 'test-org-123';
-      
+
       // Mock that alerts already exist
       mockSelectEq.mockImplementation(() => ({
         eq: jest.fn(() => ({
           eq: jest.fn(() => ({
-            maybeSingle: jest.fn(() => Promise.resolve({ 
-              data: { id: 'existing-alert-123' }, 
-              error: null 
-            }))
+            maybeSingle: jest.fn(() =>
+              Promise.resolve({
+                data: { id: 'existing-alert-123' },
+                error: null
+              })
+            )
           }))
         }))
       }));
@@ -162,15 +164,17 @@ describe('CostControlService - Alerts (Issue 72)', () => {
 
     test('should handle database errors gracefully', async () => {
       const organizationId = 'test-org-123';
-      
+
       // Mock database error
       mockSelectEq.mockImplementation(() => ({
         eq: jest.fn(() => ({
           eq: jest.fn(() => ({
-            maybeSingle: jest.fn(() => Promise.resolve({ 
-              data: null, 
-              error: new Error('Database error') 
-            }))
+            maybeSingle: jest.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: new Error('Database error')
+              })
+            )
           }))
         }))
       }));
@@ -211,7 +215,9 @@ describe('CostControlService - Alerts (Issue 72)', () => {
 
       // Verify console logging (Issue 72 requirement)
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining('🚨 Usage Alert: 82% of monthly roasts limit reached (threshold: 80%)'),
+        expect.stringContaining(
+          '🚨 Usage Alert: 82% of monthly roasts limit reached (threshold: 80%)'
+        ),
         expect.objectContaining({
           organizationId,
           resourceType: 'roasts',
@@ -276,7 +282,9 @@ describe('CostControlService - Alerts (Issue 72)', () => {
 
       // Should use default values
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining('🚨 Usage Alert: 0% of monthly roasts limit reached (threshold: 80%)'),
+        expect.stringContaining(
+          '🚨 Usage Alert: 0% of monthly roasts limit reached (threshold: 80%)'
+        ),
         expect.any(Object)
       );
 
@@ -331,7 +339,7 @@ describe('CostControlService - Alerts (Issue 72)', () => {
 
       // Mock app_logs and alert update
       mockInsertSingle.mockResolvedValue({ data: { id: 'log-125' }, error: null });
-      
+
       // Spy on sendUsageAlert
       const sendUsageAlertSpy = jest.spyOn(costControl, 'sendUsageAlert');
       sendUsageAlertSpy.mockResolvedValue({ type: 'usage_alert' });
@@ -427,7 +435,7 @@ describe('CostControlService - Alerts (Issue 72)', () => {
 
     test('should apply resource type filter', async () => {
       const organizationId = 'test-org-123';
-      
+
       // Mock filtered results
       mockSelectOrder.mockImplementation(() => ({
         range: jest.fn(() => Promise.resolve({ data: [], error: null }))
@@ -577,19 +585,12 @@ describe('CostControlService - Alerts (Issue 72)', () => {
       const checkAlertsSpy = jest.spyOn(costControl, 'checkAndSendUsageAlerts');
       checkAlertsSpy.mockResolvedValue();
 
-      await costControl.recordUsage(
-        'test-org-123',
-        'twitter', 
-        'generate_reply',
-        { tokensUsed: 25 }
-      );
+      await costControl.recordUsage('test-org-123', 'twitter', 'generate_reply', {
+        tokensUsed: 25
+      });
 
       // Verify alerts were checked
-      expect(checkAlertsSpy).toHaveBeenCalledWith(
-        'test-org-123',
-        'roasts',
-        trackingResult
-      );
+      expect(checkAlertsSpy).toHaveBeenCalledWith('test-org-123', 'roasts', trackingResult);
     });
   });
 });

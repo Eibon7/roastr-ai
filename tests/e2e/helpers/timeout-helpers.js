@@ -155,5 +155,5 @@ module.exports = {
   verifyOperationTimeout,
   retryOperation,
   wait,
-  isVisibleWithinTimeout,
+  isVisibleWithinTimeout
 };

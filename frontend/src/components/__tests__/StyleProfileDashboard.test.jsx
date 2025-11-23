@@ -1,7 +1,7 @@
 /**
  * StyleProfileDashboard Component Tests
  * Issue #369 - SPEC 9 - Style Profile Extraction
- * 
+ *
  * Tests cover:
  * - Feature flag gating
  * - Premium user validation
@@ -28,7 +28,9 @@ jest.mock('../StyleAnalysisChart', () => {
 });
 jest.mock('../PlatformDistributionChart', () => {
   return function MockPlatformDistributionChart({ sources, language }) {
-    return <div data-testid="platform-distribution-chart">Platform Distribution Chart - {language}</div>;
+    return (
+      <div data-testid="platform-distribution-chart">Platform Distribution Chart - {language}</div>
+    );
   };
 });
 jest.mock('../ToneAnalysisDisplay', () => {
@@ -70,25 +72,25 @@ const mockFlags = {
 describe('StyleProfileDashboard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default flag setup
     mockFlags.isEnabled.mockImplementation((flag) => {
       if (flag === 'ENABLE_STYLE_PROFILE') return true;
       return false;
     });
-    
+
     useFeatureFlags.mockReturnValue({
       flags: mockFlags,
       loading: false,
       error: null
     });
-    
+
     // Default API mocks
     styleProfileAPI.getUserProfiles.mockResolvedValue({
       success: true,
       data: []
     });
-    
+
     styleProfileAPI.extractStyleProfile.mockResolvedValue({
       success: true,
       data: {
@@ -109,14 +111,20 @@ describe('StyleProfileDashboard', () => {
       render(<StyleProfileDashboard {...defaultProps} />);
 
       expect(screen.getByText('Función en desarrollo')).toBeInTheDocument();
-      expect(screen.getByText('La extracción de perfiles de estilo estará disponible próximamente.')).toBeInTheDocument();
+      expect(
+        screen.getByText('La extracción de perfiles de estilo estará disponible próximamente.')
+      ).toBeInTheDocument();
     });
 
     it('should show premium upgrade prompt for starter_trial users', () => {
       render(<StyleProfileDashboard {...defaultProps} userPlan="starter_trial" />);
 
       expect(screen.getByText('Función Premium')).toBeInTheDocument();
-      expect(screen.getByText('La extracción de perfiles de estilo está disponible para usuarios Pro y superiores.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'La extracción de perfiles de estilo está disponible para usuarios Pro y superiores.'
+        )
+      ).toBeInTheDocument();
       expect(screen.getByText('Actualizar a Pro')).toBeInTheDocument();
     });
 
@@ -134,9 +142,19 @@ describe('StyleProfileDashboard', () => {
     });
 
     it('should display all available platforms', () => {
-      const platforms = ['Twitter', 'YouTube', 'Instagram', 'Facebook', 'Discord', 'Reddit', 'TikTok', 'Twitch', 'Bluesky'];
-      
-      platforms.forEach(platform => {
+      const platforms = [
+        'Twitter',
+        'YouTube',
+        'Instagram',
+        'Facebook',
+        'Discord',
+        'Reddit',
+        'TikTok',
+        'Twitch',
+        'Bluesky'
+      ];
+
+      platforms.forEach((platform) => {
         expect(screen.getByText(platform)).toBeInTheDocument();
       });
     });
@@ -147,9 +165,9 @@ describe('StyleProfileDashboard', () => {
 
     it('should allow toggling platform selection', () => {
       const instagramButton = screen.getByText('Instagram').closest('button');
-      
+
       fireEvent.click(instagramButton);
-      
+
       expect(screen.getByText('3 plataformas seleccionadas')).toBeInTheDocument();
     });
 
@@ -157,12 +175,12 @@ describe('StyleProfileDashboard', () => {
       // Deselect both default platforms
       const twitterButton = screen.getByText('Twitter').closest('button');
       const youtubeButton = screen.getByText('YouTube').closest('button');
-      
+
       fireEvent.click(twitterButton);
       fireEvent.click(youtubeButton);
-      
+
       expect(screen.getByText('0 plataformas seleccionadas')).toBeInTheDocument();
-      
+
       const extractButton = screen.getByRole('button', { name: /extraer perfil/i });
       expect(extractButton).toBeDisabled();
     });
@@ -175,12 +193,12 @@ describe('StyleProfileDashboard', () => {
 
     it('should extract profile when button is clicked', async () => {
       const extractButton = screen.getByRole('button', { name: /extraer perfil/i });
-      
+
       fireEvent.click(extractButton);
-      
+
       expect(extractButton).toHaveTextContent('Extrayendo perfil...');
       expect(extractButton).toBeDisabled();
-      
+
       await waitFor(() => {
         expect(styleProfileAPI.extractStyleProfile).toHaveBeenCalledWith(
           'test-org-456',
@@ -195,15 +213,15 @@ describe('StyleProfileDashboard', () => {
 
     it('should display extracted profile after successful extraction', async () => {
       const extractButton = screen.getByRole('button', { name: /extraer perfil/i });
-      
+
       fireEvent.click(extractButton);
-      
+
       await waitFor(() => {
         expect(screen.getByText('📝 Perfil en ES')).toBeInTheDocument();
         expect(screen.getByText('250 elementos analizados')).toBeInTheDocument();
         expect(screen.getByText('🎯 Prompt de estilo personalizado')).toBeInTheDocument();
       });
-      
+
       expect(screen.getByTestId('style-analysis-chart')).toBeInTheDocument();
       expect(screen.getByTestId('platform-distribution-chart')).toBeInTheDocument();
       expect(screen.getByTestId('tone-analysis-display')).toBeInTheDocument();
@@ -212,11 +230,11 @@ describe('StyleProfileDashboard', () => {
     it('should handle extraction errors gracefully', async () => {
       const errorMessage = 'Insufficient content to generate profile';
       styleProfileAPI.extractStyleProfile.mockRejectedValue(new Error(errorMessage));
-      
+
       const extractButton = screen.getByRole('button', { name: /extraer perfil/i });
-      
+
       fireEvent.click(extractButton);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Error')).toBeInTheDocument();
         expect(screen.getByText(errorMessage)).toBeInTheDocument();
@@ -259,7 +277,9 @@ describe('StyleProfileDashboard', () => {
       render(<StyleProfileDashboard {...defaultProps} />);
 
       await waitFor(() => {
-        expect(screen.getByText('No se pudieron cargar los perfiles existentes')).toBeInTheDocument();
+        expect(
+          screen.getByText('No se pudieron cargar los perfiles existentes')
+        ).toBeInTheDocument();
       });
     });
   });
@@ -270,8 +290,14 @@ describe('StyleProfileDashboard', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Sin perfiles de estilo')).toBeInTheDocument();
-        expect(screen.getByText('Selecciona las plataformas y extrae tu primer perfil de estilo personalizado')).toBeInTheDocument();
-        expect(screen.getByText('💡 Necesitas al menos 50 elementos por idioma para generar un perfil')).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            'Selecciona las plataformas y extrae tu primer perfil de estilo personalizado'
+          )
+        ).toBeInTheDocument();
+        expect(
+          screen.getByText('💡 Necesitas al menos 50 elementos por idioma para generar un perfil')
+        ).toBeInTheDocument();
       });
     });
   });
@@ -280,7 +306,7 @@ describe('StyleProfileDashboard', () => {
     const premiumPlans = ['pro', 'plus', 'custom'];
     const nonPremiumPlans = ['starter_trial', 'starter'];
 
-    premiumPlans.forEach(plan => {
+    premiumPlans.forEach((plan) => {
       it(`should allow access for ${plan} users`, () => {
         render(<StyleProfileDashboard {...defaultProps} userPlan={plan} />);
 
@@ -289,7 +315,7 @@ describe('StyleProfileDashboard', () => {
       });
     });
 
-    nonPremiumPlans.forEach(plan => {
+    nonPremiumPlans.forEach((plan) => {
       it(`should show premium prompt for ${plan} users`, () => {
         render(<StyleProfileDashboard {...defaultProps} userPlan={plan} />);
 

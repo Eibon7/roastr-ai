@@ -78,14 +78,17 @@ test.describe('Dashboard Navigation', () => {
     }
 
     // Check for cyber-themed elements (neon colors, monospace fonts)
-    const hasNeonText = await page.locator('text=/node|system|gdd/i').first().evaluate((el) => {
-      const color = window.getComputedStyle(el).color;
-      const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-      if (!match) return false;
-      const [, r, g, b] = match.map(Number);
-      // Neon green theme (#39ff14): g > 200, r < 100, b < 100
-      return g > 200 && r < 100 && b < 100;
-    });
+    const hasNeonText = await page
+      .locator('text=/node|system|gdd/i')
+      .first()
+      .evaluate((el) => {
+        const color = window.getComputedStyle(el).color;
+        const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (!match) return false;
+        const [, r, g, b] = match.map(Number);
+        // Neon green theme (#39ff14): g > 200, r < 100, b < 100
+        return g > 200 && r < 100 && b < 100;
+      });
 
     expect(hasNeonText).toBeTruthy();
   });

@@ -1,10 +1,10 @@
 /**
  * Manual Flow E2E Test - Comprehensive validation of manual moderation workflow
  * Issue #404 - [E2E] Flujo manual (auto-approval OFF)
- * 
+ *
  * This test validates the complete manual flow:
  * ingest → 2 variants → selection → 1 variant → approval → direct publication
- * 
+ *
  * CodeRabbit Review Fixes Applied:
  * - Jest timeout configuration at file level
  * - Environment-gated logging with DEBUG_E2E
@@ -18,7 +18,12 @@ jest.setTimeout(90_000);
 
 const request = require('supertest');
 const { randomUUID } = require('crypto');
-const { setupTestEnvironment, cleanTestDatabase, TestData, waitForAsync } = require('../helpers/test-setup');
+const {
+  setupTestEnvironment,
+  cleanTestDatabase,
+  TestData,
+  waitForAsync
+} = require('../helpers/test-setup');
 const { createTestScenario, loadFixtures } = require('../helpers/fixtures-loader');
 const RoastEngine = require('../../src/services/roastEngine');
 
@@ -41,25 +46,25 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
     if (process.env.DEBUG_E2E) {
       console.log('🚀 Starting E2E Manual Flow Tests');
     }
-    
+
     await setupTestEnvironment();
-    
+
     // Fix #5: Avoid src/index import side effects (CodeRabbit feedback)
     // Create isolated express app for testing
     const express = require('express');
     app = express();
     app.use(express.json());
-    
+
     // Generate unique IDs for this test run (Fix #4: ID separation)
     const timestamp = Date.now();
     const { randomUUID } = require('crypto');
     uniqueVariantId = `${variantIdPrefix}${timestamp}_${randomUUID().slice(0, 8)}`;
     uniqueRoastId = `${roastIdPrefix}${timestamp}_${randomUUID().slice(0, 8)}`;
-    
+
     if (process.env.DEBUG_E2E) {
       console.log('🔧 Generated unique IDs:', { uniqueVariantId, uniqueRoastId });
     }
-    
+
     // Create test scenario for manual flow
     testScenario = createTestScenario('manual-flow', {
       orgCount: 1,
@@ -67,7 +72,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       language: 'spanish',
       manualApproval: true // Ensure auto-approval is OFF
     });
-    
+
     // Override organization to have proper plan for manual approval
     testOrganization = {
       ...testScenario.organizations[0],
@@ -78,14 +83,14 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
         default_tone: 'balanced'
       }
     };
-    
+
     // Override user with tone preference
     testUser = {
       ...testScenario.users[0],
       tone_preference: 'balanced',
       organization_id: testOrganization.id
     };
-    
+
     // Mock authentication token
     authToken = 'mock-auth-token-manual-flow';
 
@@ -130,9 +135,11 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       expect(testOrganization.plan).toMatch(/(pro|plus|starter)/);
       expect(testOrganization.settings.auto_approval).toBe(false);
       expect(testUser.tone_preference).toBeDefined();
-      
+
       if (process.env.DEBUG_E2E) {
-        console.log(`✅ Preconditions verified - Org: ${testOrganization.plan}, Auto-approval: ${testOrganization.settings.auto_approval}`);
+        console.log(
+          `✅ Preconditions verified - Org: ${testOrganization.plan}, Auto-approval: ${testOrganization.settings.auto_approval}`
+        );
       }
 
       // 2. INGEST: Create a roastable comment
@@ -152,11 +159,11 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       if (process.env.DEBUG_E2E) {
         console.log('📥 Processing comment through ingest...');
       }
-      
+
       // Use FetchCommentsWorker to process ingest
       const FetchCommentsWorker = require('../../src/workers/FetchCommentsWorker');
       const fetchWorker = new FetchCommentsWorker();
-      
+
       const ingestJobData = {
         type: 'fetch_comments',
         organizationId: testComment.organization_id,
@@ -183,10 +190,10 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       if (process.env.DEBUG_E2E) {
         console.log('🎯 Processing comment through triage...');
       }
-      
+
       const AnalyzeToxicityWorker = require('../../src/workers/AnalyzeToxicityWorker');
       const triageWorker = new AnalyzeToxicityWorker();
-      
+
       const triageJobData = {
         type: 'analyze_toxicity',
         comment: testComment,
@@ -197,7 +204,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       try {
         triageResult = await triageWorker.processJob(triageJobData);
         expect(triageResult).toBeDefined();
-        
+
         // For this test, we expect the comment to be classified as roastable
         if (triageResult.action) {
           expect(triageResult.action).toBe('roast');
@@ -216,10 +223,10 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       if (process.env.DEBUG_E2E) {
         console.log('🤖 Generating 2 initial variants with user tone...');
       }
-      
+
       const GenerateReplyWorker = require('../../src/workers/GenerateReplyWorker');
       const generationWorker = new GenerateReplyWorker();
-      
+
       const initialGenerationJobData = {
         type: 'generate_reply',
         comment: testComment,
@@ -233,12 +240,12 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       let initialVariants = [];
       try {
         const generationResult = await generationWorker.processJob(initialGenerationJobData);
-        
+
         if (generationResult && generationResult.variants) {
           initialVariants = generationResult.variants;
           // CRITICAL: Must generate exactly 2 variants in manual mode
           expect(initialVariants).toHaveLength(2);
-          
+
           // Verify each variant respects user tone
           initialVariants.forEach((variant, index) => {
             expect(variant.text).toBeDefined();
@@ -265,14 +272,14 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
             }
           ];
         }
-        
+
         expect(initialVariants).toHaveLength(2);
         if (process.env.DEBUG_E2E) {
           console.log('✅ Generated 2 initial variants successfully');
         }
       } catch (error) {
         expect(generationWorker.workerType).toBe('generate_reply');
-        
+
         // Create mock variants for test continuation
         initialVariants = [
           {
@@ -297,11 +304,11 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       if (process.env.DEBUG_E2E) {
         console.log('👤 Simulating user variant selection...');
       }
-      
+
       const selectedVariant = initialVariants[0]; // User selects first variant
       expect(selectedVariant).toBeDefined();
       expect(selectedVariant.id).toBeDefined();
-      
+
       if (process.env.DEBUG_E2E) {
         console.log(`✅ User selected variant: ${selectedVariant.text.substring(0, 50)}...`);
       }
@@ -310,7 +317,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       if (process.env.DEBUG_E2E) {
         console.log('🔄 Generating 1 additional variant after selection...');
       }
-      
+
       const postSelectionJobData = {
         type: 'generate_reply',
         comment: testComment,
@@ -325,7 +332,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       let additionalVariant;
       try {
         const additionalResult = await generationWorker.processJob(postSelectionJobData);
-        
+
         if (additionalResult && additionalResult.variant) {
           additionalVariant = additionalResult.variant;
           expect(additionalVariant.text).toBeDefined();
@@ -339,10 +346,12 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
             score: 0.85
           };
         }
-        
+
         expect(additionalVariant).toBeDefined();
         if (process.env.DEBUG_E2E) {
-          console.log(`✅ Generated 1 additional variant: ${additionalVariant.text.substring(0, 50)}...`);
+          console.log(
+            `✅ Generated 1 additional variant: ${additionalVariant.text.substring(0, 50)}...`
+          );
         }
       } catch (error) {
         // Create mock additional variant
@@ -361,9 +370,9 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       if (process.env.DEBUG_E2E) {
         console.log('✅ Simulating user approval...');
       }
-      
+
       const finalVariant = additionalVariant; // User approves the additional variant
-      
+
       // Fix #4: Use distinct roast ID instead of variant ID (CodeRabbit feedback)
       const approvalData = {
         comment_id: testComment.id,
@@ -380,11 +389,11 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       expect(approvalData.roast_id).toBeDefined();
       expect(approvalData.approved_by).toBeDefined();
       expect(approvalData.organization_id).toBe(testOrganization.id);
-      
+
       // Verify variant vs roast ID separation
       expect(approvalData.variant_id).not.toBe(approvalData.roast_id);
       expect(approvalData.roast_id).toBe(uniqueRoastId);
-      
+
       if (process.env.DEBUG_E2E) {
         console.log('✅ Approval data validated with distinct roast ID:', {
           variantId: approvalData.variant_id,
@@ -396,10 +405,10 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       if (process.env.DEBUG_E2E) {
         console.log('📤 Processing direct publication...');
       }
-      
+
       const QueueService = require('../../src/services/queueService');
       const queueService = new QueueService();
-      
+
       const publicationJob = {
         type: 'publish_response',
         comment: testComment,
@@ -422,7 +431,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       try {
         publicationJobId = await queueService.addJob(publicationJob);
         expect(publicationJobId).toBeDefined();
-        
+
         // Mock successful publication result
         mockPostId = `pub-${randomUUID()}`;
         if (process.env.DEBUG_E2E) {
@@ -430,7 +439,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
         }
       } catch (error) {
         expect(typeof queueService.addJob).toBe('function');
-        
+
         // Create mock publication result
         publicationJobId = `job-${randomUUID()}`;
         mockPostId = `pub-${randomUUID()}`;
@@ -443,7 +452,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       if (process.env.DEBUG_E2E) {
         console.log('🔍 Verifying post_id persistence...');
       }
-      
+
       const persistenceData = {
         roast_id: uniqueRoastId, // Use distinct roast ID (CodeRabbit fix #4)
         variant_id: finalVariant.id,
@@ -459,12 +468,12 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       expect(persistenceData.post_id).toBeDefined();
       expect(persistenceData.platform).toBe(testComment.platform);
       expect(persistenceData.organization_id).toBe(testOrganization.id);
-      
+
       // Verify distinct IDs (CodeRabbit fix #4)
       expect(persistenceData.roast_id).toBe(uniqueRoastId);
       expect(persistenceData.variant_id).toBe(finalVariant.id);
       expect(persistenceData.roast_id).not.toBe(persistenceData.variant_id);
-      
+
       if (process.env.DEBUG_E2E) {
         console.log(`✅ Post ID persisted with distinct roast ID: ${persistenceData.post_id}`, {
           roastId: persistenceData.roast_id,
@@ -476,7 +485,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       if (process.env.DEBUG_E2E) {
         console.log('📋 Final validation summary...');
       }
-      
+
       const flowSummary = {
         comment_processed: testComment.id,
         initial_variants_count: initialVariants.length,
@@ -494,7 +503,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       expect(flowSummary.tone_respected).toBe(true);
       expect(flowSummary.auto_approval_disabled).toBe(true);
       expect(flowSummary.persisted_post_id).toBeDefined();
-      
+
       if (process.env.DEBUG_E2E) {
         console.log('✅ Manual flow E2E test completed successfully!');
         console.log('📊 Flow Summary:', JSON.stringify(flowSummary, null, 2));
@@ -618,7 +627,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       ];
 
       // Validate endpoint structure expectations
-      requiredEndpoints.forEach(endpoint => {
+      requiredEndpoints.forEach((endpoint) => {
         expect(endpoint).toMatch(/^\/api\//);
         if (process.env.DEBUG_E2E) {
           console.log(`✅ Endpoint expected: ${endpoint}`);
@@ -629,7 +638,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
       const expectedUIStates = [
         'loading_variants',
         'variants_ready',
-        'variant_selected', 
+        'variant_selected',
         'generating_additional',
         'ready_for_approval',
         'approval_pending',

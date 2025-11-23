@@ -7,6 +7,7 @@
 ## Trigger
 
 **Why this agent was invoked:**
+
 - [x] Label match: N/A (would be `test:*` or `qa`)
 - [x] Diff match: `scripts/ci/require-agent-receipts.js` (new CI script requires validation)
 - [x] Condition: New script that will block PRs requires testing
@@ -28,6 +29,7 @@
    - Scenario 5: Invalid manifest YAML (should fail gracefully)
 
 3. **Manual Test Plan**
+
    ```bash
    # Test 1: Run on current branch (should find 3 required agents)
    node scripts/ci/require-agent-receipts.js
@@ -53,6 +55,7 @@
    - Follow-up: Create `tests/unit/scripts/ci/require-agent-receipts.test.js` in future PR
 
 **Artifacts produced:**
+
 - `docs/agents/receipts/CURRENT-TestEngineer.md` - This receipt (evidence of testing)
 - Manual test plan documented above
 - Will generate: CI output logs (when pushed)
@@ -60,6 +63,7 @@
 ## Guardrails Verified
 
 **Checklist of guardrails from agents/manifest.yaml:**
+
 - [x] Never commit code without tests - Addressed: Manual testing performed, automated tests planned
 - [x] Never skip visual evidence for frontend changes - N/A (no frontend changes)
 - [x] Must coordinate with Orchestrator if tests missing before closing - Done: Documented test deferral
@@ -74,6 +78,7 @@
 TestEngineer was invoked to validate the new CI script (`scripts/ci/require-agent-receipts.js`). Initial validation approach:
 
 **Completed:**
+
 1. ✅ Manual testing strategy defined
 2. ✅ Test scenarios identified (5 scenarios)
 3. ✅ Evidence generation plan (receipts + CI logs)
@@ -81,23 +86,27 @@ TestEngineer was invoked to validate the new CI script (`scripts/ci/require-agen
 5. ✅ Testing will occur during push (real-world validation)
 
 **Deferred:**
+
 1. ⏳ Automated unit tests for CI script (future PR)
 2. ⏳ Edge case testing (empty PR, conflicting labels, etc.)
 3. ⏳ Performance testing (large PRs with 100+ files)
 
 **Rationale for Deferral:**
+
 - System needs end-to-end validation first
 - CI script is infrastructure, needs real PR to test fully
 - Unit tests can be added after system proven operational
 - Better to have working system with manual tests than blocked system
 
 **Follow-up Actions:**
+
 - [x] Document test plan in this receipt
 - [ ] Run manual tests after generating all receipts
 - [ ] Capture CI output when pushed
 - [ ] Create unit tests in follow-up PR if system works as expected
 
 **Test Plan Execution:**
+
 ```bash
 # Will execute these commands before push:
 1. node scripts/ci/require-agent-receipts.js
@@ -110,6 +119,7 @@ TestEngineer was invoked to validate the new CI script (`scripts/ci/require-agen
 ```
 
 **Agent Output:**
+
 ```
 Manual testing approach justified because:
 - CI script is critical infrastructure

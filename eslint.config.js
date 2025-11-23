@@ -1,5 +1,5 @@
-const eslintConfigPrettier = require('eslint-config-prettier/flat');
-const eslintPluginPrettier = require('eslint-plugin-prettier');
+const prettierConfig = require('eslint-plugin-prettier');
+const prettierRecommended = require('eslint-config-prettier');
 
 module.exports = [
   {
@@ -20,17 +20,19 @@ module.exports = [
       }
     },
     plugins: {
-      prettier: eslintPluginPrettier
+      prettier: prettierConfig
     },
     rules: {
       // Disable strict rules that might break CI
       'no-unused-vars': 'warn',
       'no-console': 'off',
       'no-undef': 'off',
+      
       // Prettier integration
       'prettier/prettier': 'error',
-      // Merge Prettier config rules (disables conflicting ESLint rules)
-      ...eslintConfigPrettier.rules
+      
+      // Disable rules that conflict with Prettier
+      ...prettierRecommended.rules
     },
     ignores: [
       'frontend/',

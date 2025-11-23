@@ -68,10 +68,7 @@ describe('Polar Webhook with product_id (Issue #887)', () => {
    * Helper to create valid webhook signature
    */
   function createSignature(payload) {
-    return crypto
-      .createHmac('sha256', webhookSecret)
-      .update(payload)
-      .digest('hex');
+    return crypto.createHmac('sha256', webhookSecret).update(payload).digest('hex');
   }
 
   describe('POST /api/polar/webhook - order.created with product_id', () => {
@@ -102,7 +99,7 @@ describe('Polar Webhook with product_id (Issue #887)', () => {
 
       // Require successful response for valid webhook
       expect(res.status).toBe(200);
-      
+
       // Verify logs show product_id was used in processing
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[Polar Webhook] Processing order.created'),
@@ -110,11 +107,11 @@ describe('Polar Webhook with product_id (Issue #887)', () => {
           product_id: 'prod_pro_test'
         })
       );
-      
+
       // Verify plan mapping log contains product_id (only if user found)
       const logCalls = logger.info.mock.calls;
-      const mappedPlanLog = logCalls.find(call => 
-        call[0] && call[0].includes('[Polar Webhook] Mapped plan from product_id')
+      const mappedPlanLog = logCalls.find(
+        (call) => call[0] && call[0].includes('[Polar Webhook] Mapped plan from product_id')
       );
       if (mappedPlanLog) {
         expect(mappedPlanLog[1]).toMatchObject({
@@ -146,7 +143,7 @@ describe('Polar Webhook with product_id (Issue #887)', () => {
 
       // Require successful response for valid webhook
       expect(res.status).toBe(200);
-      
+
       // Should use product_price_id as fallback (no product_id provided)
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[Polar Webhook] Processing order.created'),
@@ -180,7 +177,7 @@ describe('Polar Webhook with product_id (Issue #887)', () => {
 
       // Require successful response for valid webhook
       expect(res.status).toBe(200);
-      
+
       // Verify product_id was used (not product_price_id) in processing log
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[Polar Webhook] Processing order.created'),
@@ -188,16 +185,16 @@ describe('Polar Webhook with product_id (Issue #887)', () => {
           product_id: 'prod_pro_test' // product_id, NOT prod_starter_test
         })
       );
-      
+
       // Verify product_price_id was NOT used - check all log calls
       const logCalls = logger.info.mock.calls;
       const allLogsString = JSON.stringify(logCalls);
       expect(allLogsString).toContain('prod_pro_test'); // product_id should be present
       expect(allLogsString).not.toContain('prod_starter_test'); // product_price_id should be ignored
-      
+
       // Verify plan mapping uses product_id (if user found and mapping occurred)
-      const mappedPlanLog = logCalls.find(call => 
-        call[0] && call[0].includes('[Polar Webhook] Mapped plan from product_id')
+      const mappedPlanLog = logCalls.find(
+        (call) => call[0] && call[0].includes('[Polar Webhook] Mapped plan from product_id')
       );
       if (mappedPlanLog) {
         expect(mappedPlanLog[1]).toMatchObject({
@@ -234,17 +231,18 @@ describe('Polar Webhook with product_id (Issue #887)', () => {
 
       // Require successful response for valid webhook
       expect(res.status).toBe(200);
-      
+
       // Verify webhook was processed (product_id is handled internally, may not be in sanitized log)
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[Polar Webhook] Processing subscription.updated'),
         expect.any(Object)
       );
-      
+
       // Verify subscription was updated successfully (confirms product_id was processed)
       const logCalls = logger.info.mock.calls;
-      const successLog = logCalls.find(call => 
-        call[0] && call[0].includes('[Polar Webhook] ✅ Subscription updated successfully')
+      const successLog = logCalls.find(
+        (call) =>
+          call[0] && call[0].includes('[Polar Webhook] ✅ Subscription updated successfully')
       );
       // If user found, should have success log
       if (successLog) {
@@ -336,4 +334,3 @@ describe('Polar Webhook with product_id (Issue #887)', () => {
     });
   });
 });
-

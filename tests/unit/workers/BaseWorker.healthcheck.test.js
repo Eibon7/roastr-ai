@@ -1,6 +1,6 @@
 /**
  * BaseWorker Healthcheck Tests
- * 
+ *
  * Tests for the healthcheck functionality in BaseWorker and all worker types
  */
 
@@ -189,14 +189,14 @@ describe('BaseWorker Healthcheck', () => {
     it('should track processing times correctly', async () => {
       worker = new BaseWorker('test_worker');
       worker.processingTimes = [100, 200, 150];
-      
+
       const avgTime = worker.getAverageProcessingTime();
       expect(avgTime).toBe('150ms');
     });
 
     it('should handle no processing times', async () => {
       worker = new BaseWorker('test_worker');
-      
+
       const avgTime = worker.getAverageProcessingTime();
       expect(avgTime).toBe('N/A');
     });
@@ -402,7 +402,7 @@ describe('Worker Status API Routes', () => {
   const { router, setWorkerManager } = require('../../../src/routes/workers');
   const express = require('express');
   const request = require('supertest');
-  
+
   let app;
   let mockManager;
 
@@ -440,9 +440,7 @@ describe('Worker Status API Routes', () => {
   });
 
   it('should return health status via API', async () => {
-    const response = await request(app)
-      .get('/api/workers/health')
-      .expect(200);
+    const response = await request(app).get('/api/workers/health').expect(200);
 
     expect(response.body).toHaveProperty('status', 'healthy');
     expect(response.body).toHaveProperty('workers');
@@ -458,9 +456,7 @@ describe('Worker Status API Routes', () => {
       workers: {}
     });
 
-    const response = await request(app)
-      .get('/api/workers/health')
-      .expect(503);
+    const response = await request(app).get('/api/workers/health').expect(503);
 
     expect(response.body.status).toBe('unhealthy');
   });
@@ -468,9 +464,7 @@ describe('Worker Status API Routes', () => {
   it('should return 503 when workers not initialized', async () => {
     setWorkerManager(null);
 
-    const response = await request(app)
-      .get('/api/workers/health')
-      .expect(503);
+    const response = await request(app).get('/api/workers/health').expect(503);
 
     expect(response.body.status).toBe('unavailable');
     expect(response.body.workers).toBe('not initialized');

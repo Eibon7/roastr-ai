@@ -49,13 +49,23 @@ describe('PersonaService', () => {
   beforeEach(() => {
     // Create chainable mock
     const createChainableMock = () => ({
-      from: jest.fn(function() { return this; }),
-      select: jest.fn(function() { return this; }),
-      update: jest.fn(function() { return this; }),
-      eq: jest.fn(function() { return this; }),
-      limit: jest.fn(function() { return this; }),
+      from: jest.fn(function () {
+        return this;
+      }),
+      select: jest.fn(function () {
+        return this;
+      }),
+      update: jest.fn(function () {
+        return this;
+      }),
+      eq: jest.fn(function () {
+        return this;
+      }),
+      limit: jest.fn(function () {
+        return this;
+      }),
       single: jest.fn(),
-      head: true  // For count queries
+      head: true // For count queries
     });
 
     mockSupabase = createChainableMock();
@@ -252,9 +262,9 @@ describe('PersonaService', () => {
       const userId = 'free-user';
       const fields = { lo_que_me_define: 'Test' };
 
-      await expect(
-        PersonaService.updatePersona(userId, fields, 'free')
-      ).rejects.toThrow(/PLAN_RESTRICTION/);
+      await expect(PersonaService.updatePersona(userId, fields, 'free')).rejects.toThrow(
+        /PLAN_RESTRICTION/
+      );
     });
 
     it('should allow Starter plan users for identity field', async () => {
@@ -277,9 +287,9 @@ describe('PersonaService', () => {
       const userId = 'starter-user';
       const fields = { lo_que_me_da_igual: 'Test tolerance' };
 
-      await expect(
-        PersonaService.updatePersona(userId, fields, 'starter')
-      ).rejects.toThrow(/PLAN_RESTRICTION.*lo_que_me_da_igual.*Pro/);
+      await expect(PersonaService.updatePersona(userId, fields, 'starter')).rejects.toThrow(
+        /PLAN_RESTRICTION.*lo_que_me_da_igual.*Pro/
+      );
     });
 
     it('should allow Pro plan users for all 3 fields', async () => {
@@ -323,9 +333,9 @@ describe('PersonaService', () => {
       const userId = 'basic-user';
       const fields = { lo_que_me_define: 'Test' };
 
-      await expect(
-        PersonaService.updatePersona(userId, fields, 'basic')
-      ).rejects.toThrow(/PLAN_RESTRICTION/);
+      await expect(PersonaService.updatePersona(userId, fields, 'basic')).rejects.toThrow(
+        /PLAN_RESTRICTION/
+      );
     });
   });
 
@@ -348,21 +358,21 @@ describe('PersonaService', () => {
       const tooLong = 'A'.repeat(301);
       const fields = { lo_que_me_define: tooLong };
 
-      await expect(
-        PersonaService.updatePersona(userId, fields, 'pro')
-      ).rejects.toThrow(/CHARACTER_LIMIT_EXCEEDED.*300/);
+      await expect(PersonaService.updatePersona(userId, fields, 'pro')).rejects.toThrow(
+        /CHARACTER_LIMIT_EXCEEDED.*300/
+      );
     });
 
     it('should validate each field independently', async () => {
       const userId = 'user-123';
       const fields = {
         lo_que_me_define: 'A'.repeat(300), // OK
-        lo_que_no_tolero: 'A'.repeat(301)  // Too long
+        lo_que_no_tolero: 'A'.repeat(301) // Too long
       };
 
-      await expect(
-        PersonaService.updatePersona(userId, fields, 'pro')
-      ).rejects.toThrow(/CHARACTER_LIMIT_EXCEEDED.*lo_que_no_tolero/);
+      await expect(PersonaService.updatePersona(userId, fields, 'pro')).rejects.toThrow(
+        /CHARACTER_LIMIT_EXCEEDED.*lo_que_no_tolero/
+      );
     });
 
     it('should allow empty strings', async () => {
@@ -461,7 +471,7 @@ describe('PersonaService', () => {
       await PersonaService.updatePersona(userId, fields, 'pro');
 
       // Wait for async embedding generation
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Embedding generation should be called (async)
       // Note: Since it's async and non-blocking, we test via _updateEmbeddings directly
@@ -474,9 +484,9 @@ describe('PersonaService', () => {
       mockSupabase.eq.mockResolvedValue({ error: null });
 
       // Mock embedding failure
-      PersonaService.embeddingsService.generateEmbedding = jest.fn().mockRejectedValue(
-        new Error('OpenAI API error')
-      );
+      PersonaService.embeddingsService.generateEmbedding = jest
+        .fn()
+        .mockRejectedValue(new Error('OpenAI API error'));
 
       // Update should still succeed
       const result = await PersonaService.updatePersona(userId, fields, 'pro');
@@ -496,9 +506,9 @@ describe('PersonaService', () => {
         error: dbError
       });
 
-      await expect(
-        PersonaService.updatePersona(userId, fields, 'pro')
-      ).rejects.toThrow(/Connection timeout/);
+      await expect(PersonaService.updatePersona(userId, fields, 'pro')).rejects.toThrow(
+        /Connection timeout/
+      );
     });
 
     it('should skip validation for unknown fields', async () => {

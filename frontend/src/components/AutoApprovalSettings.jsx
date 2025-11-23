@@ -1,7 +1,7 @@
 /**
  * AutoApprovalSettings Component
  * Issue #405 - Auto-approval flow UI implementation
- * 
+ *
  * Allows organizations to configure auto-approval and auto-publish settings
  */
 
@@ -55,7 +55,7 @@ const AutoApprovalSettings = () => {
 
       // Determine if plan allows auto-approval
       const planAllowsAuto = ['starter', 'pro', 'plus'].includes(orgData.plan);
-      
+
       setPlanInfo({
         plan: orgData.plan,
         autoApprovalAllowed: planAllowsAuto
@@ -99,7 +99,7 @@ const AutoApprovalSettings = () => {
       if (error) throw error;
 
       setSettings(newSettings);
-      
+
       toast({
         title: 'Settings Updated',
         description: 'Auto-approval settings have been saved successfully',
@@ -119,7 +119,7 @@ const AutoApprovalSettings = () => {
 
   const handleToggle = (field) => {
     const newSettings = { ...settings };
-    
+
     if (field === 'auto_approval') {
       newSettings.auto_approval = !settings.auto_approval;
       // If disabling auto-approval, also disable auto-publish
@@ -162,16 +162,14 @@ const AutoApprovalSettings = () => {
               <Zap className="w-5 h-5 text-yellow-500" />
               Auto-Approval Settings
             </CardTitle>
-            <CardDescription>
-              Configure automatic roast approval and publication
-            </CardDescription>
+            <CardDescription>Configure automatic roast approval and publication</CardDescription>
           </div>
           <Badge variant={planInfo.autoApprovalAllowed ? 'default' : 'secondary'}>
             {planInfo.plan} Plan
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {!planInfo.autoApprovalAllowed && (
           <Alert variant="warning" className="flex items-start gap-2">
@@ -179,8 +177,8 @@ const AutoApprovalSettings = () => {
             <div className="flex-1">
               <p className="text-sm font-medium">Plan Limitation</p>
               <p className="text-sm text-gray-600 mt-1">
-                Auto-approval is available for Starter, Pro, and Plus plans. 
-                Upgrade to enable automatic roast processing.
+                Auto-approval is available for Starter, Pro, and Plus plans. Upgrade to enable
+                automatic roast processing.
               </p>
             </div>
           </Alert>

@@ -7,12 +7,14 @@
 ## Current State
 
 ✅ **Backend code ready:**
+
 - Kill switch service funciona con graceful degradation
 - Si la tabla `feature_flags` no existe, el servidor arranca correctamente
 - Muestra warning claro: `⚠️ Kill switch table not found - feature disabled until migration applied`
 - Defaults seguros: autopost deshabilitado por defecto
 
 ❌ **Database migration not applied:**
+
 - Tabla `feature_flags` no existe en Supabase
 - Migración: `database/migrations/add_feature_flags_and_audit_system.sql`
 - 20 feature flags iniciales pendientes de crear
@@ -20,12 +22,14 @@
 ## Impact
 
 **Sin impacto en flujos core MVP:**
+
 - ✅ Signup/Login funcionan
 - ✅ Roast generation funciona
 - ✅ Analysis funciona
 - ✅ Todos los flujos críticos operativos
 
 **Funcionalidad deshabilitada:**
+
 - ❌ Kill switch global (emergency stop)
 - ❌ Feature flags dinámicos (admin panel)
 - ❌ Audit logs de acciones admin
@@ -79,6 +83,7 @@ GET /api/admin/audit-logs           # View admin actions
 ## Files Modified
 
 **Fix applied (2025-10-26):**
+
 ```
 src/middleware/killSwitch.js
   - Added graceful degradation for missing table
@@ -87,6 +92,7 @@ src/middleware/killSwitch.js
 ```
 
 **Documentation:**
+
 ```
 scripts/apply-feature-flags-via-api.js         # Helper script
 scripts/apply-feature-flags-migration-manual.md  # Manual instructions

@@ -67,10 +67,7 @@ export function PageLayoutContainer({ children }: { children: ReactNode }) {
   return <PageLayout {...layout}>{children}</PageLayout>;
 }
 
-export function usePageLayoutConfig(
-  config: Partial<PageLayoutConfig>,
-  deps: DependencyList = []
-) {
+export function usePageLayoutConfig(config: Partial<PageLayoutConfig>, deps: DependencyList = []) {
   const { setLayout, resetLayout } = usePageLayout();
 
   useEffect(() => {
@@ -79,4 +76,3 @@ export function usePageLayoutConfig(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setLayout, resetLayout, ...deps]);
 }
-

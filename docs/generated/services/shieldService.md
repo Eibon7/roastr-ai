@@ -7,6 +7,7 @@
 The ShieldService provides automated toxicity protection and content moderation for the Roastr.ai multi-tenant platform. It implements escalating response actions based on user behavior patterns and content severity.
 
 **Key Features:**
+
 - High-priority toxicity analysis with Perspective API integration
 - Automated user behavior tracking and violation management
 - Action tag-based execution system (Issue #650)
@@ -28,12 +29,14 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata)
 ```
 
 **Parameters:**
+
 - `organizationId` (string): Organization identifier
 - `comment` (object): Comment object with id, platform, author info
 - `action_tags` (array): Array of action tag strings from AnalysisDecisionEngine
 - `metadata` (object): Analysis metadata including platform_violations, confidence scores
 
 **Returns:**
+
 ```javascript
 {
   success: boolean,
@@ -47,6 +50,7 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata)
 ```
 
 **Supported Action Tags:**
+
 - `hide_comment`: Hide toxic comment from public view
 - `block_user`: Block user from platform
 - `report_to_platform`: Report to platform moderation (requires `metadata.platform_violations.reportable === true`)
@@ -59,12 +63,14 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata)
 - `gatekeeper_unavailable`: Log Gatekeeper service unavailability
 
 **Critical Safeguards:**
+
 - `report_to_platform` only executes if `metadata.platform_violations.reportable === true`
 - Database recording failures do not block action execution (graceful degradation)
 - All actions executed in parallel using `Promise.all()` for performance
 - Each action queued with appropriate priority (Priority 1 for Shield actions)
 
 **Example Usage:**
+
 ```javascript
 const action_tags = ['hide_comment', 'add_strike_1', 'check_reincidence'];
 const metadata = {
@@ -86,6 +92,7 @@ if (result.success) {
 ```
 
 **Database Integration:**
+
 - Records each action in `shield_actions` table with `action_tag` field
 - Updates `user_behavior` table with violation counts and strikes
 - Tracks `actions_taken` count for user behavior analytics
@@ -107,6 +114,7 @@ async executeActions(analysis, user, content)
 ```
 
 **Migration Guide:**
+
 ```javascript
 // Old API (deprecated)
 await shieldService.executeActions(analysis, user, content);
@@ -180,6 +188,7 @@ async _handle<ActionName>(organizationId, comment, metadata)
 ```
 
 **Handler List:**
+
 1. `_handleHideComment()` - Queue hide_comment job
 2. `_handleBlockUser()` - Queue block_user job
 3. `_handleReportToPlatform()` - Queue report (with reportable check)
@@ -215,6 +224,7 @@ await queueService.addJob('shield_action', jobData, { priority: 1 });
 ```
 
 **Queue Job Format:**
+
 ```javascript
 {
   organization_id: string,
@@ -277,6 +287,7 @@ CREATE TABLE user_behavior (
 ## Plan Availability
 
 **Shield Access:**
+
 - Free Plan: ❌ Not available
 - Starter Plan: ❌ Not available
 - Pro Plan: ✅ Available

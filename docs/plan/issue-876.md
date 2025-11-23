@@ -15,6 +15,7 @@
 Convertir los 3 tonos de roast (Flanders, Balanceado, Canalla) de hardcodeado en código a configuración dinámica en base de datos, gestionable desde panel admin.
 
 **Transformación:**
+
 - ❌ **ANTES:** Tonos hardcodeados en `roastPrompt.js` (#872)
 - ✅ **DESPUÉS:** Tabla `roast_tones` en DB + API Admin + Panel UI
 
@@ -25,11 +26,13 @@ Convertir los 3 tonos de roast (Flanders, Balanceado, Canalla) de hardcodeado en
 ## 📋 Contexto GDD
 
 **Nodos cargados:**
+
 - `roast.md` - Sistema de generación de roasts (actualmente hardcodeado)
 - `persona.md` - Configuración de personalidad (campos en `users`)
 - `multi-tenant.md` - RLS + aislamiento por organización
 
 **Impacto:**
+
 - Nodo `roast` necesita actualización (carga de tonos desde DB)
 - Nodo `multi-tenant` relevante si tonos son por organización (SCOPE: global, no por org)
 - `persona` no impactado (tonos son sistema-wide, no personalizados por usuario)
@@ -40,13 +43,14 @@ Convertir los 3 tonos de roast (Flanders, Balanceado, Canalla) de hardcodeado en
 
 **Tonos Actuales (Hardcodeados):**
 
-| Tono | Nombre ES | Nombre EN | Intensidad | Ubicación |
-|------|-----------|-----------|------------|-----------|
-| `flanders` | Flanders | Light | 2/5 | `roastPrompt.js` |
-| `balanceado` | Balanceado | Balanced | 3/5 | `roastPrompt.js` |
-| `canalla` | Canalla | Savage | 4/5 | `roastPrompt.js` |
+| Tono         | Nombre ES  | Nombre EN | Intensidad | Ubicación        |
+| ------------ | ---------- | --------- | ---------- | ---------------- |
+| `flanders`   | Flanders   | Light     | 2/5        | `roastPrompt.js` |
+| `balanceado` | Balanceado | Balanced  | 3/5        | `roastPrompt.js` |
+| `canalla`    | Canalla    | Savage    | 4/5        | `roastPrompt.js` |
 
 **Limitaciones Actuales:**
+
 - ❌ Cambiar tono requiere modificar código
 - ❌ Añadir nuevo tono requiere deploy
 - ❌ No hay A/B testing de tonos
@@ -62,6 +66,7 @@ Convertir los 3 tonos de roast (Flanders, Balanceado, Canalla) de hardcodeado en
 **Tabla:** `roast_tones`
 
 **Campos:**
+
 ```sql
 id UUID PRIMARY KEY
 name VARCHAR(50) UNIQUE NOT NULL           -- 'flanders', 'balanceado', 'canalla'
@@ -81,6 +86,7 @@ created_by UUID REFERENCES users(id)
 ```
 
 **Constraints:**
+
 - ✅ Al menos 1 tono activo (trigger)
 - ✅ Solo 1 default (unique index WHERE is_default = true)
 - ✅ JSONB validation (jsonb_typeof check)
@@ -90,6 +96,7 @@ created_by UUID REFERENCES users(id)
 **Servicio:** `src/services/toneConfigService.js`
 
 **Funcionalidades:**
+
 - `getActiveTones(language)` - Devuelve tonos activos localizados + cache 5min
 - `getAllTones()` - Admin: todos los tonos (activos + inactivos)
 - `getToneById(id)` - Un tono específico
@@ -102,6 +109,7 @@ created_by UUID REFERENCES users(id)
 - `invalidateCache()` - Limpiar cache (POST/PUT/DELETE)
 
 **Cache:**
+
 - En memoria (5 min TTL)
 - Invalida al guardar/editar/eliminar
 - Considera Redis si multi-instancia
@@ -120,6 +128,7 @@ PUT    /api/admin/tones/reorder  - Reordenar (sort_order)
 ```
 
 **Autenticación:**
+
 - Middleware `requireAdmin` (solo admin)
 - Validación plan en middleware si aplica
 
@@ -128,6 +137,7 @@ PUT    /api/admin/tones/reorder  - Reordenar (sort_order)
 **Página:** `/admin/roast-tones`
 
 **Componentes:**
+
 - `TonesList.jsx` - Tabla con tonos (activos/inactivos)
   - Filtros: activo/inactivo, idioma
   - Búsqueda por nombre
@@ -172,17 +182,17 @@ const tonesText = `
 async buildBlockA(language = 'es') {
   // Cargar tonos desde DB (con cache)
   const tones = await toneConfigService.getActiveTones(language);
-  
+
   const tonesText = tones.map((tone, i) => `
 ${i + 1}. ${tone.display_name.toUpperCase()} (Intensidad: ${tone.intensity}/5)
    Descripción: ${tone.description}
    Personalidad: ${tone.personality}
    Recursos permitidos:
    ${tone.resources.map(r => `- ${r}`).join('\n   ')}
-   
+
    Restricciones CRÍTICAS:
    ${tone.restrictions.map(r => `- ${r}`).join('\n   ')}
-   
+
    Ejemplo:
    Input: "${tone.examples[0].input}"
    Output: "${tone.examples[0].output}"
@@ -202,6 +212,7 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema.
 ```
 
 **Cache Invalidation:**
+
 - Al guardar/editar/eliminar → `toneConfigService.invalidateCache()`
 - Block A se regenera en siguiente request (cache de OpenAI no afectado)
 
@@ -210,6 +221,7 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema.
 ## 📝 Acceptance Criteria (12 AC)
 
 ### Backend (5 AC)
+
 - [ ] **AC1:** Tabla `roast_tones` creada con schema completo
 - [ ] **AC2:** API admin funcional (CRUD + activate/deactivate)
 - [ ] **AC3:** Integración con `roastPrompt.js` (carga desde DB)
@@ -217,18 +229,22 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema.
 - [ ] **AC5:** Migración inicial con 3 tonos actuales ejecutada
 
 ### Frontend (3 AC)
+
 - [ ] **AC6:** Panel admin en `/admin/roast-tones` operativo
 - [ ] **AC7:** Editor multiidioma (ES/EN) funcional
 - [ ] **AC8:** Solo accesible para admin
 
 ### Validaciones (2 AC)
+
 - [ ] **AC9:** NO permitir desactivar todos los tonos
 - [ ] **AC10:** Soporte completo ES/EN en todos los campos
 
 ### Testing (1 AC)
+
 - [ ] **AC11:** Al menos 15 tests pasando (unit + integration)
 
 ### Docs (1 AC)
+
 - [ ] **AC12:** Documentación actualizada
 
 ---
@@ -236,6 +252,7 @@ IMPORTANTE: Estos tonos son los ÚNICOS en el sistema.
 ## 🗂️ Archivos Afectados
 
 ### Nuevos Archivos
+
 ```
 database/migrations/XXX_roast_tones_table.sql
 src/services/toneConfigService.js
@@ -251,6 +268,7 @@ docs/admin/tone-management.md
 ```
 
 ### Archivos Modificados
+
 ```
 src/services/roastPromptTemplate.js (buildBlockA dinámico)
 src/index.js (mount admin router si no existe)
@@ -263,6 +281,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 ## 🔄 Workflow Paso a Paso
 
 ### FASE 0: Setup (COMPLETO ✅)
+
 1. ✅ Worktree creado: `roastr-ai-worktrees/issue-876`
 2. ✅ .issue_lock configurado
 3. ✅ GDD nodos cargados (roast, persona, multi-tenant)
@@ -270,6 +289,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 5. ✅ Plan creado (este documento)
 
 ### FASE 1: Backend - Database (2h)
+
 1. Crear migración `database/migrations/XXX_roast_tones_table.sql`
    - Tabla completa con todos los campos
    - Constraints (al menos 1 activo, 1 default, JSONB validation)
@@ -283,6 +303,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 4. Validar schema
 
 ### FASE 2: Backend - Service (2h)
+
 1. Crear `src/services/toneConfigService.js`
    - Implementar cache en memoria (5min TTL)
    - Métodos: getActiveTones, getAllTones, getToneById, createTone, updateTone, deleteTone, activateTone, deactivateTone, reorderTones, invalidateCache
@@ -294,6 +315,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 3. Ejecutar tests
 
 ### FASE 3: Backend - API Routes (2h)
+
 1. Crear `src/routes/admin/tones.js`
    - Implementar 8 endpoints
    - Middleware `requireAdmin` (usar existente o crear)
@@ -307,6 +329,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 4. Ejecutar tests
 
 ### FASE 4: Backend - Integration con Roast (1h)
+
 1. Modificar `src/services/roastPromptTemplate.js`
    - Hacer `buildBlockA()` async
    - Cargar tonos desde toneConfigService
@@ -320,6 +343,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 4. Ejecutar tests
 
 ### FASE 5: Frontend - Página Principal (2h)
+
 1. Crear `frontend/src/pages/admin/RoastTones.jsx`
    - Layout base
    - Integración con API (fetch tonos)
@@ -334,6 +358,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 4. Validar UI responsive
 
 ### FASE 6: Frontend - Editor (3h)
+
 1. Crear `frontend/src/components/admin/ToneEditor.jsx`
    - Modal o página separada
    - Pestañas ES/EN
@@ -354,6 +379,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 4. Feedback visual (success/error)
 
 ### FASE 7: Testing (2h)
+
 1. Tests unitarios (toneConfigService)
    - Cache TTL
    - Localization
@@ -372,6 +398,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 5. Coverage >= 90%
 
 ### FASE 8: Documentation (1h)
+
 1. Actualizar `docs/nodes/roast.md`
    - Sección "Dynamic Tone System"
    - Referencia a DB
@@ -382,6 +409,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 4. README: sección Admin Panel
 
 ### FASE 9: Validation (1h)
+
 1. GDD validations:
    ```bash
    node scripts/validate-gdd-runtime.js --full
@@ -406,11 +434,13 @@ docs/test-evidence/issue-876/summary.md (test evidence)
    - Generar roast con nuevo tono
 
 ### FASE 10: PR & Receipts (30min)
+
 1. Generar agent receipts:
    - `docs/agents/receipts/cursor-backend-[timestamp].md`
    - `docs/agents/receipts/cursor-frontend-[timestamp].md`
    - `docs/agents/receipts/cursor-test-engineer-[timestamp].md`
 2. Commit con mensaje estándar:
+
    ```
    feat(roast): Dynamic Tone Configuration System (#876)
 
@@ -434,6 +464,7 @@ docs/test-evidence/issue-876/summary.md (test evidence)
    - Updated roast.md (Dynamic Tone System)
    - Created tone-management.md
    ```
+
 3. Push & create PR
 4. Esperar CodeRabbit review
 5. Fix issues si aplica
@@ -444,26 +475,31 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 ## 🚨 Consideraciones Críticas
 
 ### Backward Compatibility
+
 - ✅ Mantener nombres de tonos actuales (`flanders`, `balanceado`, `canalla`)
 - ✅ Users existentes no deben notar cambios
 - ✅ Default tone: `flanders` (intensidad 2)
 
 ### Performance
+
 - ✅ Cache de 5min en memoria (aceptable para config que cambia poco)
 - ⚠️ Si multi-instancia → considerar Redis
 - ✅ Block A regenerado solo al cambiar tono (cache OpenAI no afectado)
 
 ### Security
+
 - ✅ Solo admin puede editar (validar en backend Y frontend)
 - ✅ Sanitizar inputs (prevenir injection)
 - ✅ Validar JSONB structure
 - ✅ RLS si tonos son por organización (SCOPE: global, no por org)
 
 ### Idiomas
+
 - ✅ Empezar con ES/EN
 - ✅ Arquitectura preparada para más idiomas (JSONB escalable)
 
 ### Quality Standards
+
 - ✅ 0 comentarios CodeRabbit
 - ✅ Tests 100% passing
 - ✅ Coverage >= 90%
@@ -474,26 +510,31 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 ## 🎯 Agentes Relevantes
 
 **Backend Developer:**
+
 - Migration
 - toneConfigService
 - API routes
 - Integration con roastPrompt
 
 **Frontend Developer:**
+
 - RoastTones page
 - TonesList component
 - ToneEditor component
 
 **Test Engineer:**
+
 - Unit tests
 - Integration tests
 - E2E tests
 
 **Guardian:**
+
 - Security review (admin-only access)
 - Validation de constraints
 
 **Documentation Agent:**
+
 - Update roast.md
 - Create tone-management.md
 
@@ -503,19 +544,19 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 
 **Total:** 12-16 horas
 
-| Fase | Horas |
-|------|-------|
-| FASE 0: Setup | 0.5h (COMPLETO) |
-| FASE 1: Backend - Database | 2h |
-| FASE 2: Backend - Service | 2h |
-| FASE 3: Backend - API Routes | 2h |
-| FASE 4: Backend - Integration | 1h |
-| FASE 5: Frontend - Página Principal | 2h |
-| FASE 6: Frontend - Editor | 3h |
-| FASE 7: Testing | 2h |
-| FASE 8: Documentation | 1h |
-| FASE 9: Validation | 1h |
-| FASE 10: PR & Receipts | 0.5h |
+| Fase                                | Horas           |
+| ----------------------------------- | --------------- |
+| FASE 0: Setup                       | 0.5h (COMPLETO) |
+| FASE 1: Backend - Database          | 2h              |
+| FASE 2: Backend - Service           | 2h              |
+| FASE 3: Backend - API Routes        | 2h              |
+| FASE 4: Backend - Integration       | 1h              |
+| FASE 5: Frontend - Página Principal | 2h              |
+| FASE 6: Frontend - Editor           | 3h              |
+| FASE 7: Testing                     | 2h              |
+| FASE 8: Documentation               | 1h              |
+| FASE 9: Validation                  | 1h              |
+| FASE 10: PR & Receipts              | 0.5h            |
 
 **Próximos pasos:** Iniciar FASE 1 (Backend - Database)
 
@@ -525,4 +566,3 @@ docs/test-evidence/issue-876/summary.md (test evidence)
 **Issue:** #876
 **Worktree:** `/Users/emiliopostigo/roastr-ai-worktrees/issue-876`
 **Branch:** `feature/issue-876-dynamic-tone-system`
-

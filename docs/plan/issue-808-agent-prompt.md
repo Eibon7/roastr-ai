@@ -25,12 +25,14 @@ Migrar todos los tests de billing que actualmente usan Stripe para que funcionen
 ### Estado del Código
 
 **✅ Ya completado (no tocar):**
+
 - `src/utils/polarHelpers.js` - Usa `POLAR_*_PRODUCT_ID`
 - `src/routes/checkout.js` - Endpoint de checkout con Polar
 - `src/routes/polarWebhook.js` - Webhooks de Polar
 - `src/services/entitlementsService.js` - Integración con Polar
 
 **🔴 Pendiente (tu trabajo):**
+
 - `tests/unit/routes/billing-coverage-issue502.test.js` - Migrar 73 tests
 
 ---
@@ -38,6 +40,7 @@ Migrar todos los tests de billing que actualmente usan Stripe para que funcionen
 ## 🎯 OBJETIVO ESPECÍFICO
 
 Migrar el archivo `tests/unit/routes/billing-coverage-issue502.test.js` para que:
+
 1. Use mocks de Polar SDK en lugar de Stripe
 2. Use variables de entorno `POLAR_*` en lugar de `STRIPE_*`
 3. Mantenga 100% de cobertura (todos los tests deben pasar)
@@ -68,6 +71,7 @@ Migrar el archivo `tests/unit/routes/billing-coverage-issue502.test.js` para que
 ### 1. Variables de Entorno
 
 **Reemplazar:**
+
 ```javascript
 STRIPE_SECRET_KEY → POLAR_ACCESS_TOKEN
 STRIPE_WEBHOOK_SECRET → POLAR_WEBHOOK_SECRET
@@ -82,6 +86,7 @@ STRIPE_PORTAL_RETURN_URL → (Polar no tiene portal, usar POLAR_SUCCESS_URL)
 ### 2. Mocks de SDK
 
 **De Stripe:**
+
 ```javascript
 const mockStripe = {
   customers: { create, retrieve },
@@ -95,6 +100,7 @@ jest.mock('stripe', () => jest.fn(() => mockStripe));
 ```
 
 **A Polar:**
+
 ```javascript
 const mockPolarClient = {
   checkouts: {
@@ -118,6 +124,7 @@ jest.mock('@polar-sh/sdk', () => ({
 ### 3. Estructura de Respuestas
 
 **Stripe checkout session:**
+
 ```javascript
 {
   id: 'cs_test_123',
@@ -129,6 +136,7 @@ jest.mock('@polar-sh/sdk', () => ({
 ```
 
 **Polar checkout:**
+
 ```javascript
 {
   id: 'checkout_123',
@@ -144,25 +152,25 @@ jest.mock('@polar-sh/sdk', () => ({
 ### 4. Webhooks
 
 **Stripe:**
+
 - Eventos: `checkout.session.completed`, `customer.subscription.updated`
 - Validación: `stripe.webhooks.constructEvent(payload, signature, secret)`
 
 **Polar:**
+
 - Eventos: `checkout.created`, `order.created`, `subscription.created`, `subscription.updated`, `subscription.canceled`
 - Validación: HMAC SHA-256 manual (ver `src/routes/polarWebhook.js`)
 
 **Helper para crear eventos Polar:**
+
 ```javascript
 const crypto = require('crypto');
 
 function createPolarWebhookEvent(type, data) {
   const payload = JSON.stringify({ type, data });
   const secret = process.env.POLAR_WEBHOOK_SECRET || 'test_secret';
-  const signature = crypto
-    .createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
-  
+  const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
   return {
     payload: Buffer.from(payload),
     headers: {
@@ -177,6 +185,7 @@ function createPolarWebhookEvent(type, data) {
 ### 5. Billing Portal
 
 **⚠️ IMPORTANTE:** Polar NO tiene "billing portal" como Stripe. Los tests que usen `billingPortal.sessions.create` deben:
+
 - O eliminarse si no aplican a Polar
 - O adaptarse para usar checkout de Polar con metadata especial
 - O marcarse como `test.skip` con nota explicativa
@@ -186,18 +195,21 @@ function createPolarWebhookEvent(type, data) {
 ## 📝 CHECKLIST DE MIGRACIÓN
 
 ### Fase 1: Preparación
+
 - [ ] Leer `tests/unit/routes/billing-coverage-issue502.test.js` completo
 - [ ] Leer `src/routes/checkout.js` para entender API de Polar
 - [ ] Leer `src/routes/polarWebhook.js` para entender webhooks
 - [ ] Crear rama: `feature/issue-808-polar-tests-migration`
 
 ### Fase 2: Setup de Mocks
+
 - [ ] Reemplazar `jest.mock('stripe')` con `jest.mock('@polar-sh/sdk')`
 - [ ] Crear `mockPolarClient` con estructura correcta
 - [ ] Actualizar `beforeAll` con variables `POLAR_*`
 - [ ] Crear helper `createPolarWebhookEvent()` si se necesitan webhooks
 
 ### Fase 3: Migración de Tests
+
 - [ ] Migrar tests de checkout session creation
 - [ ] Migrar tests de webhook processing
 - [ ] Migrar tests de subscription management
@@ -205,6 +217,7 @@ function createPolarWebhookEvent(type, data) {
 - [ ] Actualizar todas las referencias a `price_id` → `product_id`
 
 ### Fase 4: Validación
+
 - [ ] Ejecutar: `npm test -- billing-coverage-issue502`
 - [ ] Verificar que todos los tests pasan
 - [ ] Verificar cobertura: `npm run test:coverage -- billing-coverage-issue502`
@@ -220,9 +233,9 @@ function createPolarWebhookEvent(type, data) {
 test('should create checkout session with plan parameter', async () => {
   const mockCustomer = { id: 'cus_test', email: 'test@example.com' };
   const mockPrice = { id: 'price_test', product: { name: 'Pro Plan' } };
-  const mockSession = { 
-    id: 'sess_test', 
-    url: 'https://checkout.stripe.com/test' 
+  const mockSession = {
+    id: 'sess_test',
+    url: 'https://checkout.stripe.com/test'
   };
 
   mockBillingController.stripeWrapper.customers.create.mockResolvedValue(mockCustomer);
@@ -264,7 +277,7 @@ test('should create checkout session with plan parameter', async () => {
 
   expect(response.body.success).toBe(true);
   expect(response.body.data.id).toBe('checkout_123');
-  
+
   // Verificar que se llamó con product_id correcto
   expect(mockPolarClient.checkouts.create).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -280,22 +293,28 @@ test('should create checkout session with plan parameter', async () => {
 ## ⚠️ PUNTOS CRÍTICOS
 
 ### 1. Billing Portal
+
 Polar NO tiene billing portal. Tests que usen `billingPortal` deben:
+
 - Marcarse como `test.skip` con nota: `// Polar doesn't have billing portal`
 - O adaptarse para usar checkout de Polar
 
 ### 2. Product ID vs Price ID
+
 - Polar usa `product_id` (no `price_id`)
 - Usar `POLAR_*_PRODUCT_ID` de variables de entorno
 - Helper: `getProductIdFromPlan(plan)` en `polarHelpers.js`
 
 ### 3. Webhook Events
+
 - Polar usa eventos diferentes: `order.created`, `subscription.updated`, etc.
 - Validación es HMAC SHA-256 (no `constructEvent` como Stripe)
 - Ver `src/routes/polarWebhook.js` para estructura exacta
 
 ### 4. Mock BillingController
+
 El archivo usa `mockBillingController.stripeWrapper` - esto debe cambiar a:
+
 - `mockBillingController.billingInterface` (si existe)
 - O mockear directamente `mockPolarClient`
 
@@ -306,16 +325,19 @@ El archivo usa `mockBillingController.stripeWrapper` - esto debe cambiar a:
 Antes de considerar completado:
 
 1. **Todos los tests pasan:**
+
    ```bash
    npm test -- billing-coverage-issue502
    ```
 
 2. **Cobertura 100%:**
+
    ```bash
    npm run test:coverage -- billing-coverage-issue502
    ```
 
 3. **Sin referencias a Stripe:**
+
    ```bash
    grep -i "stripe" tests/unit/routes/billing-coverage-issue502.test.js
    # Debe retornar solo comentarios o nada
@@ -332,17 +354,20 @@ Antes de considerar completado:
 ## 📚 ARCHIVOS DE REFERENCIA
 
 ### Código de Producción (no modificar, solo leer):
+
 - `src/routes/checkout.js` - Checkout con Polar
 - `src/routes/polarWebhook.js` - Webhooks de Polar
 - `src/utils/polarHelpers.js` - Helpers de Polar
 - `src/services/entitlementsService.js` - Integración Polar
 
 ### Documentación:
+
 - `docs/plan/issue-808-migration-plan.md` - Plan detallado
 - `docs/plan/issue-808-migration-summary.md` - Resumen de cambios
 - `docs/plan/issue-808-credenciales-polar.md` - Info de credenciales
 
 ### Tests Existentes (referencia):
+
 - `tests/unit/routes/billing.test.js` - Otros tests de billing (pueden tener ejemplos)
 - `tests/unit/services/entitlementsService-polar.test.js` - Tests de Polar (si existe)
 
@@ -351,6 +376,7 @@ Antes de considerar completado:
 ## 🎯 RESULTADO ESPERADO
 
 Al finalizar, el archivo `tests/unit/routes/billing-coverage-issue502.test.js` debe:
+
 - ✅ Usar mocks de Polar SDK (`@polar-sh/sdk`)
 - ✅ Usar variables de entorno `POLAR_*`
 - ✅ Todos los tests pasando (73 tests)
@@ -403,4 +429,3 @@ grep -A 10 "mockPolar\|mockStripe" tests/unit/routes/billing-coverage-issue502.t
 ---
 
 **¡Buena suerte con la migración! 🚀**
-

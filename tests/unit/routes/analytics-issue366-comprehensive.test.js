@@ -15,10 +15,10 @@ const mockAnalyticsData = {
 };
 
 const mockAuthenticateToken = jest.fn((req, res, next) => {
-  req.user = { 
-    id: 'test-user-id', 
+  req.user = {
+    id: 'test-user-id',
     email: 'test@example.com',
-    org_id: 'test-org-123' 
+    org_id: 'test-org-123'
   };
   next();
 });
@@ -74,26 +74,28 @@ describe('Issue #366 - Analytics Summary Endpoint', () => {
     it('should return analytics summary with org filtering', async () => {
       // Mock successful database responses
       mockSupabaseServiceClient.single
-        .mockResolvedValueOnce({ // totalAnalyses
+        .mockResolvedValueOnce({
+          // totalAnalyses
           data: { count: 150 },
           error: null
         })
-        .mockResolvedValueOnce({ // totalRoasts  
+        .mockResolvedValueOnce({
+          // totalRoasts
           data: { count: 89 },
           error: null
         })
-        .mockResolvedValueOnce({ // last30DaysAnalyses
+        .mockResolvedValueOnce({
+          // last30DaysAnalyses
           data: { count: 45 },
           error: null
         })
-        .mockResolvedValueOnce({ // last30DaysRoasts
+        .mockResolvedValueOnce({
+          // last30DaysRoasts
           data: { count: 23 },
           error: null
         });
 
-      const response = await request(app)
-        .get('/api/analytics/summary')
-        .expect(200);
+      const response = await request(app).get('/api/analytics/summary').expect(200);
 
       expect(response.body).toEqual({
         success: true,
@@ -112,15 +114,12 @@ describe('Issue #366 - Analytics Summary Endpoint', () => {
         next();
       });
 
-      mockSupabaseServiceClient.single
-        .mockResolvedValue({
-          data: { count: 0 },
-          error: null
-        });
+      mockSupabaseServiceClient.single.mockResolvedValue({
+        data: { count: 0 },
+        error: null
+      });
 
-      const response = await request(app)
-        .get('/api/analytics/summary')
-        .expect(200);
+      const response = await request(app).get('/api/analytics/summary').expect(200);
 
       expect(response.body.success).toBe(true);
       // Should filter by null org_id
@@ -128,15 +127,12 @@ describe('Issue #366 - Analytics Summary Endpoint', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      mockSupabaseServiceClient.single
-        .mockResolvedValueOnce({
-          data: null,
-          error: { message: 'Database connection failed' }
-        });
+      mockSupabaseServiceClient.single.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Database connection failed' }
+      });
 
-      const response = await request(app)
-        .get('/api/analytics/summary')
-        .expect(500);
+      const response = await request(app).get('/api/analytics/summary').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('Failed to fetch analytics summary');
@@ -145,15 +141,13 @@ describe('Issue #366 - Analytics Summary Endpoint', () => {
     it('should require authentication', async () => {
       const appNoAuth = express();
       appNoAuth.use(express.json());
-      
+
       // Add route without auth middleware
       appNoAuth.get('/api/analytics/summary', (req, res) => {
         res.status(401).json({ error: 'Unauthorized' });
       });
 
-      await request(appNoAuth)
-        .get('/api/analytics/summary')
-        .expect(401);
+      await request(appNoAuth).get('/api/analytics/summary').expect(401);
     });
   });
 });

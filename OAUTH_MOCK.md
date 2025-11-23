@@ -35,15 +35,15 @@ The OAuth Mock System provides a complete simulation of OAuth 2.0 flows for 7 ma
 
 ## Supported Platforms
 
-| Platform | OAuth Type | Scopes Supported | Mock User Data |
-|----------|------------|------------------|----------------|
-| Twitter/X | OAuth 1.0a | read, write, offline.access | Profile, metrics, tweets |
-| Instagram | OAuth 2.0 | instagram_basic, content_publish | Profile, media count |
-| YouTube | OAuth 2.0 | youtube.readonly, youtube.upload | Channel info, statistics |
-| TikTok | OAuth 2.0 | user.info.basic, video.list | Profile, videos |
-| LinkedIn | OAuth 2.0 | r_liteprofile, w_member_social | Profile, connections |
-| Facebook | OAuth 2.0 | public_profile, pages_manage_posts | Profile, pages |
-| Bluesky | AT Protocol | read, write | Profile, posts |
+| Platform  | OAuth Type  | Scopes Supported                   | Mock User Data           |
+| --------- | ----------- | ---------------------------------- | ------------------------ |
+| Twitter/X | OAuth 1.0a  | read, write, offline.access        | Profile, metrics, tweets |
+| Instagram | OAuth 2.0   | instagram_basic, content_publish   | Profile, media count     |
+| YouTube   | OAuth 2.0   | youtube.readonly, youtube.upload   | Channel info, statistics |
+| TikTok    | OAuth 2.0   | user.info.basic, video.list        | Profile, videos          |
+| LinkedIn  | OAuth 2.0   | r_liteprofile, w_member_social     | Profile, connections     |
+| Facebook  | OAuth 2.0   | public_profile, pages_manage_posts | Profile, pages           |
+| Bluesky   | AT Protocol | read, write                        | Profile, posts           |
 
 ## Mock Architecture
 
@@ -65,18 +65,21 @@ The OAuth Mock System provides a complete simulation of OAuth 2.0 flows for 7 ma
 ### Core Components
 
 **OAuthProvider (Base Class)**
+
 - Handles OAuth flow simulation
 - Generates mock tokens and user data
 - Manages state validation
 - Provides platform-specific configurations
 
 **OAuthProviderFactory**
+
 - Creates platform-specific provider instances
 - Manages provider lifecycle
 - Validates platform support
 - Provides unified interface
 
 **MockConnectionStore**
+
 - Stores connection states per user/platform
 - Manages token expiration
 - Tracks connection metadata
@@ -87,12 +90,14 @@ The OAuth Mock System provides a complete simulation of OAuth 2.0 flows for 7 ma
 ### Connection Management
 
 #### Initiate Connection
+
 ```http
 POST /api/integrations/{platform}/connect
 Authorization: Bearer <user-token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -112,27 +117,32 @@ Authorization: Bearer <user-token>
 ```
 
 #### OAuth Callback
+
 ```http
 GET /api/auth/{platform}/callback?code=mock_code&state=encoded-state
 ```
 
 **Success Response (Redirect):**
+
 ```
 Location: /connections?success=true&platform=twitter&connected=true
 ```
 
 **Error Response (Redirect):**
+
 ```
 Location: /connections?error=Invalid%20state%20parameter&platform=twitter
 ```
 
 #### Get All Connections
+
 ```http
 GET /api/integrations/connections
 Authorization: Bearer <user-token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -172,12 +182,14 @@ Authorization: Bearer <user-token>
 ```
 
 #### Refresh Tokens
+
 ```http
 POST /api/integrations/{platform}/refresh
 Authorization: Bearer <user-token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -191,12 +203,14 @@ Authorization: Bearer <user-token>
 ```
 
 #### Disconnect Platform
+
 ```http
 POST /api/integrations/{platform}/disconnect
 Authorization: Bearer <user-token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -211,11 +225,13 @@ Authorization: Bearer <user-token>
 ### Platform Information
 
 #### Get Available Platforms
+
 ```http
 GET /api/integrations/platforms
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -244,6 +260,7 @@ GET /api/integrations/platforms
 ### Mock Management (Testing)
 
 #### Reset Connections
+
 ```http
 POST /api/integrations/mock/reset
 Authorization: Bearer <user-token>
@@ -255,6 +272,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -281,17 +299,17 @@ const ConnectionWizard = ({ platform, onSuccess }) => {
   const handleConnect = async () => {
     try {
       setConnecting(true);
-      
+
       // Initiate connection
       const response = await fetch(`/api/integrations/${platform}/connect`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`
         }
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         if (data.data.mock) {
           // Handle mock OAuth flow
@@ -315,12 +333,12 @@ const ConnectionWizard = ({ platform, onSuccess }) => {
 
   const simulateMockFlow = async (authData) => {
     // Simulate OAuth processing time
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     // Simulate callback
     const mockCode = 'mock_auth_code_' + Date.now();
     const callbackUrl = `/api/auth/${platform}/callback?code=${mockCode}&state=${authData.state}`;
-    
+
     // In real implementation, this would be handled by redirect
     setWizardStep(3);
     onSuccess?.();
@@ -336,14 +354,14 @@ const ConnectionWizard = ({ platform, onSuccess }) => {
           </button>
         </div>
       )}
-      
+
       {wizardStep === 2 && (
         <div>
           <h3>Processing...</h3>
           <p>Completing authorization...</p>
         </div>
       )}
-      
+
       {wizardStep === 3 && (
         <div>
           <h3>Success!</h3>
@@ -376,15 +394,13 @@ const PlatformStatusCard = ({ connection, onConnect, onDisconnect }) => {
     <div className="platform-card">
       <div className="platform-header">
         <h4>{connection.platform}</h4>
-        <span className={`badge badge-${badge.color}`}>
-          {badge.text}
-        </span>
+        <span className={`badge badge-${badge.color}`}>{badge.text}</span>
       </div>
-      
+
       {connection.connected && connection.user_info && (
         <div className="user-info">
-          <img 
-            src={connection.user_info.profile_image_url} 
+          <img
+            src={connection.user_info.profile_image_url}
             alt={connection.user_info.name}
             className="avatar"
           />
@@ -394,16 +410,12 @@ const PlatformStatusCard = ({ connection, onConnect, onDisconnect }) => {
           </div>
         </div>
       )}
-      
+
       <div className="actions">
         {connection.connected ? (
-          <button onClick={() => onDisconnect(connection.platform)}>
-            Disconnect
-          </button>
+          <button onClick={() => onDisconnect(connection.platform)}>Disconnect</button>
         ) : (
-          <button onClick={() => onConnect(connection.platform)}>
-            Connect
-          </button>
+          <button onClick={() => onConnect(connection.platform)}>Connect</button>
         )}
       </div>
     </div>
@@ -422,26 +434,28 @@ describe('OAuth Mock Integration', () => {
     const connectResponse = await request(app)
       .post('/api/integrations/twitter/connect')
       .set('Authorization', `Bearer ${authToken}`);
-    
+
     expect(connectResponse.status).toBe(200);
     const { state, authUrl } = connectResponse.body.data;
-    
+
     // 2. Simulate OAuth callback
     const mockCode = 'mock_auth_code_' + Date.now();
-    const callbackResponse = await request(app)
-      .get(`/api/auth/twitter/callback?code=${mockCode}&state=${state}`);
-    
+    const callbackResponse = await request(app).get(
+      `/api/auth/twitter/callback?code=${mockCode}&state=${state}`
+    );
+
     expect(callbackResponse.status).toBe(302);
     expect(callbackResponse.headers.location).toContain('success=true');
-    
+
     // 3. Verify connection status
     const statusResponse = await request(app)
       .get('/api/integrations/connections')
       .set('Authorization', `Bearer ${authToken}`);
-    
-    const twitterConnection = statusResponse.body.data.connections
-      .find(conn => conn.platform === 'twitter');
-    
+
+    const twitterConnection = statusResponse.body.data.connections.find(
+      (conn) => conn.platform === 'twitter'
+    );
+
     expect(twitterConnection.connected).toBe(true);
     expect(twitterConnection.user_info).toBeDefined();
   });
@@ -449,22 +463,23 @@ describe('OAuth Mock Integration', () => {
   it('should handle token refresh', async () => {
     // Setup connected account first
     await setupConnectedAccount('twitter');
-    
+
     // Test refresh
     const refreshResponse = await request(app)
       .post('/api/integrations/twitter/refresh')
       .set('Authorization', `Bearer ${authToken}`);
-    
+
     expect(refreshResponse.status).toBe(200);
     expect(refreshResponse.body.data.refreshed).toBe(true);
   });
 
   it('should validate state parameter', async () => {
     const invalidState = 'invalid-state-parameter';
-    
-    const response = await request(app)
-      .get(`/api/auth/twitter/callback?code=test&state=${invalidState}`);
-    
+
+    const response = await request(app).get(
+      `/api/auth/twitter/callback?code=test&state=${invalidState}`
+    );
+
     expect(response.status).toBe(302);
     expect(response.headers.location).toContain('error=');
   });
@@ -484,10 +499,11 @@ describe('Connect Page', () => {
       if (url.includes('/api/integrations/platforms')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
-            success: true,
-            data: { platforms: mockPlatforms, mockMode: true }
-          })
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: { platforms: mockPlatforms, mockMode: true }
+            })
         });
       }
     });
@@ -495,7 +511,7 @@ describe('Connect Page', () => {
 
   it('should display mock mode alert', async () => {
     render(<Connect />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Mock mode is enabled')).toBeInTheDocument();
     });
@@ -503,16 +519,16 @@ describe('Connect Page', () => {
 
   it('should handle mock connection flow', async () => {
     render(<Connect />);
-    
+
     // Wait for platforms to load
     await waitFor(() => {
       expect(screen.getByText('Twitter')).toBeInTheDocument();
     });
-    
+
     // Click connect
     const connectButton = screen.getByText('Connect');
     fireEvent.click(connectButton);
-    
+
     // Should show wizard dialog
     await waitFor(() => {
       expect(screen.getByText('Connect to twitter')).toBeInTheDocument();
@@ -526,6 +542,7 @@ describe('Connect Page', () => {
 ### Environment Variables
 
 **Required for Mock Mode:**
+
 ```bash
 # Enable OAuth mock system
 ENABLE_OAUTH_MOCK=true
@@ -538,6 +555,7 @@ DEBUG_OAUTH=false
 ```
 
 **Individual Platform Control:**
+
 ```bash
 # Set to true when real credentials are available
 ENABLE_TWITTER_OAUTH=false
@@ -550,6 +568,7 @@ ENABLE_BLUESKY_OAUTH=false
 ```
 
 **Frontend Configuration:**
+
 ```bash
 # React app environment
 REACT_APP_ENABLE_MOCK_MODE=true
@@ -594,7 +613,7 @@ const mockUsers = {
       following_count: Math.floor(Math.random() * 1000),
       tweet_count: Math.floor(Math.random() * 5000)
     }
-  },
+  }
   // ... other platforms
 };
 ```
@@ -604,11 +623,13 @@ const mockUsers = {
 ### Twitter/X Mock
 
 **OAuth Flow**: OAuth 1.0a simulation
-**Mock Endpoints**: 
+**Mock Endpoints**:
+
 - Authorization: `https://mock-oauth.roastr.ai/twitter/authorize`
 - Token Exchange: Internal mock handler
 
 **Mock User Data:**
+
 ```json
 {
   "id": "mock_twitter_user_1642784400123",
@@ -630,6 +651,7 @@ const mockUsers = {
 **Mock Scopes**: `instagram_basic`, `instagram_content_publish`
 
 **Mock User Data:**
+
 ```json
 {
   "id": "mock_instagram_user_1642784400123",
@@ -645,6 +667,7 @@ const mockUsers = {
 **Mock Scopes**: `youtube.readonly`, `youtube.upload`
 
 **Mock User Data:**
+
 ```json
 {
   "id": "mock_youtube_user_1642784400123",
@@ -669,6 +692,7 @@ const mockUsers = {
 **Mock Scopes**: `user.info.basic`, `video.list`
 
 **Mock User Data:**
+
 ```json
 {
   "open_id": "mock_tiktok_user_1642784400123",
@@ -684,6 +708,7 @@ const mockUsers = {
 **Mock Scopes**: `r_liteprofile`, `w_member_social`
 
 **Mock User Data:**
+
 ```json
 {
   "id": "mock_linkedin_user_1642784400123",
@@ -693,9 +718,7 @@ const mockUsers = {
     "displayImage~": {
       "elements": [
         {
-          "identifiers": [
-            { "identifier": "https://via.placeholder.com/400x400" }
-          ]
+          "identifiers": [{ "identifier": "https://via.placeholder.com/400x400" }]
         }
       ]
     }
@@ -709,6 +732,7 @@ const mockUsers = {
 **Mock Scopes**: `public_profile`, `pages_manage_posts`
 
 **Mock User Data:**
+
 ```json
 {
   "id": "mock_facebook_user_1642784400123",
@@ -726,6 +750,7 @@ const mockUsers = {
 **Mock Scopes**: `read`, `write`
 
 **Mock User Data:**
+
 ```json
 {
   "did": "did:mock:bluesky:1642784400123",
@@ -742,12 +767,14 @@ const mockUsers = {
 **1. Mock Mode Not Working**
 
 Check environment variables:
+
 ```bash
 echo $ENABLE_OAUTH_MOCK
 echo $ENABLE_MOCK_MODE
 ```
 
 Verify flags are loaded:
+
 ```javascript
 const { flags } = require('./src/config/flags');
 console.log('OAuth Mock Enabled:', flags.shouldUseMockOAuth());
@@ -756,6 +783,7 @@ console.log('OAuth Mock Enabled:', flags.shouldUseMockOAuth());
 **2. State Parameter Validation Errors**
 
 State parameters expire after 10 minutes. For debugging:
+
 ```javascript
 // Add debug logging
 if (flags.isEnabled('DEBUG_OAUTH')) {
@@ -766,6 +794,7 @@ if (flags.isEnabled('DEBUG_OAUTH')) {
 **3. Connection Not Persisting**
 
 Check mock store:
+
 ```javascript
 // Debug connection storage
 console.log('Mock Store Contents:', mockStore.getUserConnections(userId));
@@ -774,6 +803,7 @@ console.log('Mock Store Contents:', mockStore.getUserConnections(userId));
 **4. Frontend Not Showing Mock Mode**
 
 Verify React environment variables:
+
 ```javascript
 console.log('React Mock Mode:', process.env.REACT_APP_ENABLE_MOCK_MODE);
 ```
@@ -786,11 +816,12 @@ Enable comprehensive OAuth debugging:
 # Backend debugging
 DEBUG_OAUTH=true npm start
 
-# Frontend debugging  
+# Frontend debugging
 REACT_APP_DEBUG_OAUTH=true npm start
 ```
 
 **Debug Output Examples:**
+
 ```
 OAuth: Mock connection initiated for user123:twitter
 OAuth: State generated - userId: user123, platform: twitter
@@ -802,6 +833,7 @@ OAuth: Token refresh requested for twitter
 ### Testing Scenarios
 
 **Test State Expiration:**
+
 ```javascript
 // Generate expired state
 const expiredState = generateState('user123', 'twitter');
@@ -810,6 +842,7 @@ const result = parseState(expiredState); // Should throw error
 ```
 
 **Test Platform Validation:**
+
 ```javascript
 // Test unsupported platform
 const response = await request(app)
@@ -820,6 +853,7 @@ expect(response.status).toBe(400);
 ```
 
 **Test Connection Limits:**
+
 ```javascript
 // Test already connected
 await connectPlatform('twitter');
@@ -838,19 +872,21 @@ When ready to use real OAuth credentials:
    - etc.
 
 2. **Update environment variables**:
+
    ```bash
    # Disable mock mode
    ENABLE_OAUTH_MOCK=false
-   
+
    # Enable specific platforms
    ENABLE_TWITTER_OAUTH=true
-   
+
    # Add real credentials
    TWITTER_CLIENT_ID=real_client_id
    TWITTER_CLIENT_SECRET=real_client_secret
    ```
 
 3. **Implement real OAuth providers**:
+
    ```javascript
    class TwitterOAuthProvider extends OAuthProvider {
      async getAuthorizationUrl(state, redirectUri) {

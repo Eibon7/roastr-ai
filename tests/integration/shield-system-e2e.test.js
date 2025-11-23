@@ -1,6 +1,6 @@
 /**
  * Shield System End-to-End Integration Tests
- * 
+ *
  * Comprehensive tests for the complete Shield moderation flow:
  * - Toxicity detection and classification
  * - Action determination and execution
@@ -27,7 +27,7 @@ describe('Shield System - End-to-End Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock Supabase
     const mockSelect = jest.fn().mockResolvedValue({
       data: {
@@ -89,7 +89,7 @@ describe('Shield System - End-to-End Integration', () => {
 
     shieldWorker = new ShieldActionWorker();
     shieldWorker.supabase = mockSupabase;
-    
+
     // Initialize platform clients for testing
     shieldWorker.platformClients = new Map();
     shieldWorker.platformClients.set('twitter', {
@@ -282,9 +282,9 @@ describe('Shield System - End-to-End Integration', () => {
 
       // Mock Twitter API to fail
       const mockTwitterClient = shieldWorker.platformClients.get('twitter');
-      mockTwitterClient.v2.reply = jest.fn().mockRejectedValue(
-        new Error('Twitter API rate limit exceeded')
-      );
+      mockTwitterClient.v2.reply = jest
+        .fn()
+        .mockRejectedValue(new Error('Twitter API rate limit exceeded'));
 
       const result = await shieldWorker.processJob(job);
 
@@ -327,7 +327,7 @@ describe('Shield System - End-to-End Integration', () => {
         id: '<script>alert("xss")</script>',
         content: '"; DROP TABLE users; --',
         platform: 'twitter',
-        platform_user_id: '1\' OR \'1\'=\'1',
+        platform_user_id: "1' OR '1'='1",
         platform_username: 'hacker',
         organization_id: 'org-123'
       };
@@ -356,7 +356,7 @@ describe('Shield System - End-to-End Integration', () => {
         organization_id: 'org-123'
       }));
 
-      const promises = comments.map(comment =>
+      const promises = comments.map((comment) =>
         shieldService.analyzeContent(
           comment.content,
           comment.platform_user_id,
@@ -368,7 +368,7 @@ describe('Shield System - End-to-End Integration', () => {
       const results = await Promise.all(promises);
 
       expect(results).toHaveLength(20);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toHaveProperty('shouldTakeAction');
         expect(result).toHaveProperty('actionLevel');
         expect(result).toHaveProperty('recommendedActions');
@@ -383,7 +383,7 @@ describe('Shield System - End-to-End Integration', () => {
       };
 
       const startTime = Date.now();
-      
+
       const result = await shieldService.analyzeContent(
         comment.content,
         comment.platform_user_id,

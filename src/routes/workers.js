@@ -28,12 +28,12 @@ router.get('/status', authenticateToken, async (req, res) => {
         message: 'Worker system is not running. Please start workers using npm run workers:start'
       });
     }
-    
+
     // Get health status from worker manager
     const healthStatus = await workerManager.getHealthStatus();
     const stats = workerManager.getStats();
     const summary = workerManager.getSummary();
-    
+
     res.json({
       success: true,
       data: {
@@ -43,7 +43,6 @@ router.get('/status', authenticateToken, async (req, res) => {
         timestamp: new Date().toISOString()
       }
     });
-    
   } catch (error) {
     logger.error('Error fetching worker status', { error: error.message });
     res.status(500).json({
@@ -66,10 +65,10 @@ router.get('/health', async (req, res) => {
         workers: 'not initialized'
       });
     }
-    
+
     const summary = workerManager.getSummary();
     const health = await workerManager.getHealthStatus();
-    
+
     // Determine HTTP status based on health
     let httpStatus = 200;
     if (health.overallStatus === 'unhealthy') {
@@ -77,7 +76,7 @@ router.get('/health', async (req, res) => {
     } else if (health.overallStatus === 'warning') {
       httpStatus = 200; // Still return 200 for warnings
     }
-    
+
     res.status(httpStatus).json({
       status: health.overallStatus,
       workers: {
@@ -93,7 +92,6 @@ router.get('/health', async (req, res) => {
       },
       timestamp: new Date().toISOString()
     });
-    
   } catch (error) {
     logger.error('Error in worker health check', { error: error.message });
     res.status(500).json({
@@ -110,17 +108,17 @@ router.get('/health', async (req, res) => {
 router.get('/:workerType/health', authenticateToken, async (req, res) => {
   try {
     const { workerType } = req.params;
-    
+
     if (!workerManager) {
       return res.status(503).json({
         success: false,
         error: 'Workers not initialized'
       });
     }
-    
+
     const health = await workerManager.getHealthStatus();
     const workerHealth = health.workers[workerType];
-    
+
     if (!workerHealth) {
       return res.status(404).json({
         success: false,
@@ -128,16 +126,15 @@ router.get('/:workerType/health', authenticateToken, async (req, res) => {
         message: `Worker type '${workerType}' does not exist or is not running`
       });
     }
-    
+
     res.json({
       success: true,
       data: workerHealth
     });
-    
   } catch (error) {
-    logger.error('Error fetching worker health', { 
-      workerType: req.params.workerType, 
-      error: error.message 
+    logger.error('Error fetching worker health', {
+      workerType: req.params.workerType,
+      error: error.message
     });
     res.status(500).json({
       success: false,
@@ -154,14 +151,14 @@ router.get('/:workerType/health', authenticateToken, async (req, res) => {
 router.post('/:workerType/restart', authenticateToken, async (req, res) => {
   try {
     const { workerType } = req.params;
-    
+
     if (!workerManager) {
       return res.status(503).json({
         success: false,
         error: 'Workers not initialized'
       });
     }
-    
+
     // Check if user has admin privileges
     if (!req.user.isAdmin && !flags.isEnabled('ALLOW_WORKER_RESTART')) {
       return res.status(403).json({
@@ -170,18 +167,17 @@ router.post('/:workerType/restart', authenticateToken, async (req, res) => {
         message: 'Admin privileges required to restart workers'
       });
     }
-    
+
     await workerManager.restartWorker(workerType);
-    
+
     res.json({
       success: true,
       message: `Worker '${workerType}' restarted successfully`
     });
-    
   } catch (error) {
-    logger.error('Error restarting worker', { 
-      workerType: req.params.workerType, 
-      error: error.message 
+    logger.error('Error restarting worker', {
+      workerType: req.params.workerType,
+      error: error.message
     });
     res.status(500).json({
       success: false,

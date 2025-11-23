@@ -4,7 +4,12 @@
  */
 
 const jwt = require('jsonwebtoken');
-const { sessionRefreshMiddleware, handleSessionRefresh, extractToken, isTokenNearExpiry } = require('../../../src/middleware/sessionRefresh');
+const {
+  sessionRefreshMiddleware,
+  handleSessionRefresh,
+  extractToken,
+  isTokenNearExpiry
+} = require('../../../src/middleware/sessionRefresh');
 const { flags } = require('../../../src/config/flags');
 
 // Mock dependencies
@@ -28,7 +33,7 @@ describe('Session Refresh Middleware', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockReq = {
       headers: {},
       body: {}
@@ -125,7 +130,7 @@ describe('Session Refresh Middleware', () => {
 
   describe('sessionRefreshMiddleware', () => {
     it('should pass through when session refresh is disabled', async () => {
-      flags.isEnabled.mockImplementation((flag) => 
+      flags.isEnabled.mockImplementation((flag) =>
         flag === 'ENABLE_SESSION_REFRESH' ? false : true
       );
 
@@ -143,9 +148,9 @@ describe('Session Refresh Middleware', () => {
     });
 
     it('should pass through when token is not near expiry', async () => {
-      const futureExp = Math.floor(Date.now() / 1000) + (60 * 60); // 1 hour from now
+      const futureExp = Math.floor(Date.now() / 1000) + 60 * 60; // 1 hour from now
       const token = jwt.sign({ exp: futureExp }, 'secret');
-      
+
       mockReq.headers.authorization = `Bearer ${token}`;
 
       await sessionRefreshMiddleware(mockReq, mockRes, mockNext);
@@ -155,9 +160,9 @@ describe('Session Refresh Middleware', () => {
     });
 
     it('should pass through when no refresh token is provided', async () => {
-      const nearExp = Math.floor(Date.now() / 1000) + (2 * 60); // 2 minutes from now
+      const nearExp = Math.floor(Date.now() / 1000) + 2 * 60; // 2 minutes from now
       const token = jwt.sign({ exp: nearExp }, 'secret');
-      
+
       mockReq.headers.authorization = `Bearer ${token}`;
 
       await sessionRefreshMiddleware(mockReq, mockRes, mockNext);
@@ -180,9 +185,9 @@ describe('Session Refresh Middleware', () => {
         }
       });
 
-      const nearExp = Math.floor(Date.now() / 1000) + (2 * 60); // 2 minutes from now
+      const nearExp = Math.floor(Date.now() / 1000) + 2 * 60; // 2 minutes from now
       const token = jwt.sign({ exp: nearExp }, 'secret');
-      
+
       mockReq.headers.authorization = `Bearer ${token}`;
       mockReq.headers['x-refresh-token'] = 'refresh-token-123';
 
@@ -200,9 +205,9 @@ describe('Session Refresh Middleware', () => {
     });
 
     it('should handle refresh errors gracefully', async () => {
-      const nearExp = Math.floor(Date.now() / 1000) + (2 * 60);
+      const nearExp = Math.floor(Date.now() / 1000) + 2 * 60;
       const token = jwt.sign({ exp: nearExp }, 'secret');
-      
+
       mockReq.headers.authorization = `Bearer ${token}`;
       mockReq.headers['x-refresh-token'] = 'invalid-refresh-token';
 
@@ -230,7 +235,7 @@ describe('Session Refresh Middleware', () => {
 
     it('should log debug information when enabled', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      
+
       flags.isEnabled.mockImplementation((flag) => {
         switch (flag) {
           case 'ENABLE_SESSION_REFRESH':
@@ -241,22 +246,22 @@ describe('Session Refresh Middleware', () => {
         }
       });
 
-      const nearExp = Math.floor(Date.now() / 1000) + (2 * 60);
+      const nearExp = Math.floor(Date.now() / 1000) + 2 * 60;
       const token = jwt.sign({ exp: nearExp }, 'secret');
-      
+
       mockReq.headers.authorization = `Bearer ${token}`;
 
       await sessionRefreshMiddleware(mockReq, mockRes, mockNext);
 
       expect(consoleSpy).toHaveBeenCalledWith('Token near expiry but no refresh token provided');
-      
+
       consoleSpy.mockRestore();
     });
   });
 
   describe('handleSessionRefresh endpoint', () => {
     it('should return error when session refresh is disabled', async () => {
-      flags.isEnabled.mockImplementation((flag) => 
+      flags.isEnabled.mockImplementation((flag) =>
         flag === 'ENABLE_SESSION_REFRESH' ? false : true
       );
 
@@ -364,9 +369,7 @@ describe('Session Refresh Middleware', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'test';
 
-      flags.isEnabled.mockImplementation((flag) => 
-        flag === 'ENABLE_SESSION_REFRESH'
-      );
+      flags.isEnabled.mockImplementation((flag) => flag === 'ENABLE_SESSION_REFRESH');
 
       mockReq.body = { refresh_token: 'test-refresh-token' };
 
@@ -444,10 +447,12 @@ describe('Session Refresh Middleware', () => {
 
     it('should handle middleware errors gracefully', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       // Mock JWT decode to throw error
       const originalDecode = jwt.decode;
-      jwt.decode = jest.fn(() => { throw new Error('Invalid token'); });
+      jwt.decode = jest.fn(() => {
+        throw new Error('Invalid token');
+      });
 
       flags.isEnabled.mockImplementation((flag) => {
         switch (flag) {
@@ -480,9 +485,7 @@ describe('Session Refresh Middleware', () => {
     });
 
     it('should validate refresh token format', async () => {
-      flags.isEnabled.mockImplementation((flag) => 
-        flag === 'ENABLE_SESSION_REFRESH'
-      );
+      flags.isEnabled.mockImplementation((flag) => flag === 'ENABLE_SESSION_REFRESH');
 
       const testCases = [
         { refresh_token: '' },

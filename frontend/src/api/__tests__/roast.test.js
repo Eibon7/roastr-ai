@@ -45,4 +45,3 @@ describe('roast API', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/roast/roast-1/variant', {});
   });
 });
-

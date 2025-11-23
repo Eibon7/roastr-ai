@@ -1,6 +1,6 @@
 /**
  * User Integrations Service
- * 
+ *
  * Manages user platform integrations with mock-ready persistence
  * Falls back to encrypted local storage when database is unavailable
  */
@@ -111,15 +111,17 @@ class UserIntegrationsService {
 
     // Add status for all available platforms
     const allPlatforms = this.getAllPlatforms();
-    const result = allPlatforms.map(platform => {
-      const existing = data.find(d => d.platform === platform);
-      return existing || {
-        platform,
-        status: 'disconnected',
-        connected_at: null,
-        updated_at: null,
-        platform_username: null
-      };
+    const result = allPlatforms.map((platform) => {
+      const existing = data.find((d) => d.platform === platform);
+      return (
+        existing || {
+          platform,
+          status: 'disconnected',
+          connected_at: null,
+          updated_at: null,
+          platform_username: null
+        }
+      );
     });
 
     return {
@@ -137,11 +139,15 @@ class UserIntegrationsService {
 
     // Add status for all available platforms
     const allPlatforms = this.getAllPlatforms();
-    const result = allPlatforms.map(platform => {
+    const result = allPlatforms.map((platform) => {
       const existing = userIntegrations[platform];
-      
+
       // For testing: make Twitter connected by default for mock users
-      if (platform === 'twitter' && (userId === 'mock-user-123' || userId === 'test-user-id') && !existing) {
+      if (
+        platform === 'twitter' &&
+        (userId === 'mock-user-123' || userId === 'test-user-id') &&
+        !existing
+      ) {
         return {
           platform,
           status: 'connected',
@@ -152,20 +158,22 @@ class UserIntegrationsService {
           platform_user_id: 'mock_twitter_123'
         };
       }
-      
-      return existing || {
-        platform,
-        status: 'disconnected',
-        enabled: false,
-        connected_at: null,
-        updated_at: null,
-        platform_username: null
-      };
+
+      return (
+        existing || {
+          platform,
+          status: 'disconnected',
+          enabled: false,
+          connected_at: null,
+          updated_at: null,
+          platform_username: null
+        }
+      );
     });
 
     logger.info('Mock integrations loaded:', {
       userId: SafeUtils.safeUserIdPrefix(userId),
-      connectedPlatforms: result.filter(r => r.status === 'connected').length,
+      connectedPlatforms: result.filter((r) => r.status === 'connected').length,
       totalPlatforms: result.length
     });
 
@@ -179,9 +187,7 @@ class UserIntegrationsService {
    * Save integration to database
    */
   async saveDatabaseIntegration(integrationData) {
-    const { error } = await supabaseServiceClient
-      .from('user_integrations')
-      .upsert(integrationData);
+    const { error } = await supabaseServiceClient.from('user_integrations').upsert(integrationData);
 
     if (error) {
       throw error;
@@ -207,7 +213,7 @@ class UserIntegrationsService {
    */
   async saveMockIntegration(integrationData) {
     const mockData = await this.loadMockStorage();
-    
+
     if (!mockData[integrationData.user_id]) {
       mockData[integrationData.user_id] = {};
     }
@@ -272,7 +278,7 @@ class UserIntegrationsService {
    */
   async removeMockIntegration(userId, platform) {
     const mockData = await this.loadMockStorage();
-    
+
     if (mockData[userId] && mockData[userId][platform]) {
       delete mockData[userId][platform];
       await this.saveMockStorage(mockData);
@@ -299,7 +305,7 @@ class UserIntegrationsService {
     try {
       // Ensure data directory exists
       await fs.mkdir(path.dirname(this.mockStoragePath), { recursive: true });
-      
+
       const data = await fs.readFile(this.mockStoragePath, 'utf8');
       return JSON.parse(data);
     } catch (error) {
@@ -322,7 +328,7 @@ class UserIntegrationsService {
   getAllPlatforms() {
     return [
       'twitter',
-      'youtube', 
+      'youtube',
       'instagram',
       'facebook',
       'discord',
@@ -347,19 +353,19 @@ class UserIntegrationsService {
    */
   encryptToken(token) {
     if (!token) return null;
-    
+
     // In mock mode or when testing, use simple base64 encoding
     if (process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true') {
       return Buffer.from(token).toString('base64');
     }
-    
+
     try {
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipher('aes-256-cbc', this.encryptionKey);
-      
+
       let encrypted = cipher.update(token, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      
+
       return iv.toString('hex') + ':' + encrypted;
     } catch (error) {
       // Fallback to base64 encoding if encryption fails
@@ -372,17 +378,17 @@ class UserIntegrationsService {
    */
   decryptToken(encryptedToken) {
     if (!encryptedToken) return null;
-    
+
     try {
       const buffer = Buffer.from(encryptedToken, 'base64');
       const iv = buffer.slice(0, 16);
       const authTag = buffer.slice(16, 32);
       const encrypted = buffer.slice(32);
-      
+
       const decipher = crypto.createDecipherGCM('aes-256-gcm', this.encryptionKey);
       decipher.setIV(iv);
       decipher.setAuthTag(authTag);
-      
+
       return decipher.update(encrypted, null, 'utf8') + decipher.final('utf8');
     } catch (error) {
       logger.error('Failed to decrypt token:', error);
@@ -395,15 +401,15 @@ class UserIntegrationsService {
    */
   isPlatformRealIntegrationAvailable(platform) {
     const flagMap = {
-      'twitter': 'ENABLE_REAL_TWITTER',
-      'youtube': 'ENABLE_REAL_YOUTUBE',
-      'instagram': 'ENABLE_REAL_INSTAGRAM',
-      'facebook': 'ENABLE_REAL_FACEBOOK',
-      'discord': 'ENABLE_REAL_DISCORD',
-      'twitch': 'ENABLE_REAL_TWITCH',
-      'reddit': 'ENABLE_REAL_REDDIT',
-      'tiktok': 'ENABLE_REAL_TIKTOK',
-      'bluesky': 'ENABLE_REAL_BLUESKY'
+      twitter: 'ENABLE_REAL_TWITTER',
+      youtube: 'ENABLE_REAL_YOUTUBE',
+      instagram: 'ENABLE_REAL_INSTAGRAM',
+      facebook: 'ENABLE_REAL_FACEBOOK',
+      discord: 'ENABLE_REAL_DISCORD',
+      twitch: 'ENABLE_REAL_TWITCH',
+      reddit: 'ENABLE_REAL_REDDIT',
+      tiktok: 'ENABLE_REAL_TIKTOK',
+      bluesky: 'ENABLE_REAL_BLUESKY'
     };
 
     return flags.isEnabled(flagMap[platform] || '');
@@ -414,8 +420,8 @@ class UserIntegrationsService {
    */
   getPlatformCapabilities() {
     const platforms = this.getAllPlatforms();
-    
-    return platforms.map(platform => ({
+
+    return platforms.map((platform) => ({
       platform,
       available: true, // Always available as mock
       realIntegration: this.isPlatformRealIntegrationAvailable(platform),
@@ -428,17 +434,17 @@ class UserIntegrationsService {
    */
   getPlatformFeatures(platform) {
     const baseFeatures = ['comment_monitoring', 'automated_responses'];
-    
+
     const platformSpecific = {
-      'twitter': [...baseFeatures, 'mention_tracking', 'hashtag_monitoring'],
-      'youtube': [...baseFeatures, 'video_comments', 'community_posts'],
-      'instagram': [...baseFeatures, 'story_responses', 'dm_automation'],
-      'facebook': [...baseFeatures, 'page_management', 'group_monitoring'],
-      'discord': [...baseFeatures, 'server_moderation', 'channel_management'],
-      'twitch': [...baseFeatures, 'chat_moderation', 'stream_alerts'],
-      'reddit': [...baseFeatures, 'subreddit_monitoring', 'karma_tracking'],
-      'tiktok': [...baseFeatures, 'video_comments', 'duet_responses'],
-      'bluesky': [...baseFeatures, 'feed_monitoring', 'thread_responses']
+      twitter: [...baseFeatures, 'mention_tracking', 'hashtag_monitoring'],
+      youtube: [...baseFeatures, 'video_comments', 'community_posts'],
+      instagram: [...baseFeatures, 'story_responses', 'dm_automation'],
+      facebook: [...baseFeatures, 'page_management', 'group_monitoring'],
+      discord: [...baseFeatures, 'server_moderation', 'channel_management'],
+      twitch: [...baseFeatures, 'chat_moderation', 'stream_alerts'],
+      reddit: [...baseFeatures, 'subreddit_monitoring', 'karma_tracking'],
+      tiktok: [...baseFeatures, 'video_comments', 'duet_responses'],
+      bluesky: [...baseFeatures, 'feed_monitoring', 'thread_responses']
     };
 
     return platformSpecific[platform] || baseFeatures;
@@ -456,8 +462,8 @@ class UserIntegrationsService {
       }
 
       // Find account by ID (for mock, we'll use platform name as ID)
-      const account = userIntegrations.data.find(acc => 
-        acc.platform === accountId && acc.status === 'connected'
+      const account = userIntegrations.data.find(
+        (acc) => acc.platform === accountId && acc.status === 'connected'
       );
 
       if (!account) {
@@ -498,7 +504,6 @@ class UserIntegrationsService {
         success: true,
         data: accountDetails
       };
-
     } catch (error) {
       logger.error('Error getting account details:', error);
       return {
@@ -531,7 +536,6 @@ class UserIntegrationsService {
         data: paginatedRoasts,
         total: mockRoasts.length
       };
-
     } catch (error) {
       logger.error('Error getting account roasts:', error);
       return {
@@ -548,22 +552,22 @@ class UserIntegrationsService {
     const roasts = [];
     const statuses = ['pending', 'approved', 'rejected'];
     const mockComments = [
-      "Esta aplicación es horrible",
-      "No sirve para nada este bot",
-      "Pérdida de tiempo total",
-      "Qué basura de servicio",
-      "No funciona nunca bien"
+      'Esta aplicación es horrible',
+      'No sirve para nada este bot',
+      'Pérdida de tiempo total',
+      'Qué basura de servicio',
+      'No funciona nunca bien'
     ];
     const mockRoastResponses = [
-      "Vaya, alguien más talentoso que tú en criticar sin construir nada 🎭",
-      "Tu negatividad tiene más consistencia que tu crítica constructiva 😅",
-      "Impresionante cómo logras criticar sin ofrecer alternativas 🤔",
-      "Tu expertise en quejas es realmente... única 🏆",
-      "Qué creativo eres encontrando problemas sin soluciones 🎨"
+      'Vaya, alguien más talentoso que tú en criticar sin construir nada 🎭',
+      'Tu negatividad tiene más consistencia que tu crítica constructiva 😅',
+      'Impresionante cómo logras criticar sin ofrecer alternativas 🤔',
+      'Tu expertise en quejas es realmente... única 🏆',
+      'Qué creativo eres encontrando problemas sin soluciones 🎨'
     ];
 
     for (let i = 0; i < count; i++) {
-      const createdAt = new Date(Date.now() - (i * 1000 * 60 * 60 * 2)); // 2 hours apart
+      const createdAt = new Date(Date.now() - i * 1000 * 60 * 60 * 2); // 2 hours apart
       roasts.push({
         id: `roast_${accountId}_${i + 1}`,
         accountId: accountId,
@@ -612,7 +616,6 @@ class UserIntegrationsService {
           approvedAt: new Date().toISOString()
         }
       };
-
     } catch (error) {
       logger.error('Error approving roast:', error);
       return {
@@ -651,7 +654,6 @@ class UserIntegrationsService {
           reason
         }
       };
-
     } catch (error) {
       logger.error('Error declining roast:', error);
       return {
@@ -676,11 +678,11 @@ class UserIntegrationsService {
       // Mock regeneration - create new roast based on original
       const newRoastId = `roast_${accountId}_${Date.now()}`;
       const mockRoastResponses = [
-        "Ah, un crítico profesional sin diploma, qué refrescante 🎓",
-        "Tu dedicación a la negatividad es admirable, casi artística 🎨",
-        "Veo que tu talento especial es encontrar fallas en todo 🔍",
-        "Qué nivel de expertise en quejas, deberías dar clases 📚",
-        "Tu consistencia en criticar sin construir es impresionante 🏗️"
+        'Ah, un crítico profesional sin diploma, qué refrescante 🎓',
+        'Tu dedicación a la negatividad es admirable, casi artística 🎨',
+        'Veo que tu talento especial es encontrar fallas en todo 🔍',
+        'Qué nivel de expertise en quejas, deberías dar clases 📚',
+        'Tu consistencia en criticar sin construir es impresionante 🏗️'
       ];
 
       logger.info('Mock roast regeneration:', {
@@ -696,7 +698,7 @@ class UserIntegrationsService {
         data: {
           id: newRoastId,
           accountId,
-          original: "Esta aplicación es horrible", // Would get from original roast
+          original: 'Esta aplicación es horrible', // Would get from original roast
           roast: mockRoastResponses[Math.floor(Math.random() * mockRoastResponses.length)],
           status: 'pending',
           createdAt: new Date().toISOString(),
@@ -706,7 +708,6 @@ class UserIntegrationsService {
           intensity: options.intensity || 5
         }
       };
-
     } catch (error) {
       logger.error('Error regenerating roast:', error);
       return {
@@ -748,7 +749,6 @@ class UserIntegrationsService {
           settings: updatedSettings
         }
       };
-
     } catch (error) {
       logger.error('Error updating account settings:', error);
       return {
@@ -772,14 +772,13 @@ class UserIntegrationsService {
 
       // Use existing disconnect method
       const result = await this.disconnectIntegration(userId, accountId);
-      
+
       if (result.success) {
         result.data.platform = accountDetails.data.platform;
         result.data.handle = accountDetails.data.handle;
       }
 
       return result;
-
     } catch (error) {
       logger.error('Error disconnecting account:', error);
       return {

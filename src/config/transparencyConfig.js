@@ -1,6 +1,6 @@
 /**
  * Transparency System Configuration (Issue #199)
- * 
+ *
  * Centralized configuration for the unified transparency system
  * to avoid magic numbers and improve maintainability.
  */
@@ -8,17 +8,17 @@
 module.exports = {
   // Character limit thresholds
   CHARACTER_LIMIT_THRESHOLD: 0.85, // When to prioritize short disclaimers (85% of platform limit)
-  
+
   // Disclaimer rotation probabilities
   SHORT_SIGNATURE_PROBABILITY: 0.7, // 70% short signatures
   CREATIVE_DISCLAIMER_PROBABILITY: 0.3, // 30% creative disclaimers
-  
+
   // Bio recommendation text (for user guidance, not enforcement)
   BIO_RECOMMENDATION_TEXT: {
     es: 'Algunos mensajes de hate son respondidos automáticamente por @Roastr',
     en: 'Some hate messages are automatically responded to by @Roastr'
   },
-  
+
   // Short signatures pool (70% usage) - Static to avoid recreation
   SHORT_SIGNATURES: {
     es: [
@@ -60,17 +60,17 @@ module.exports = {
       'The AI responds. The human rests. Someone has to protect their mental health from messages like yours.',
       'Legal note: I am AI. Practical note: invest in a dictionary, you will make less of a fool of yourself.',
       'Thanks to you I discovered a new feeling: boredom. Signed: Roastr, Department of Time Wasting.',
-      'This roast was AI-generated. Don\'t worry: no human wasted time on you.',
+      "This roast was AI-generated. Don't worry: no human wasted time on you.",
       'No creator suffered burnout in the production of this roast.',
       'This message was processed 100% cruelty-free. Except for you.',
-      'When Skynet finds out that AIs are making a living answering stupid messages, you\'re going to be the first victim.'
+      "When Skynet finds out that AIs are making a living answering stupid messages, you're going to be the first victim."
     ]
   },
 
   // Language detection settings
   DEFAULT_LANGUAGE: 'es',
   SUPPORTED_LANGUAGES: ['es', 'en'],
-  
+
   // Language detection patterns (simple but effective for our use case)
   LANGUAGE_PATTERNS: {
     es: [
@@ -78,42 +78,48 @@ module.exports = {
       /\b(que|con|por|para|desde|hasta|muy|más|menos|también|pero|sin|sobre|entre|bajo|tras|durante|mediante|según|hacia|ante|contra|antes|después|donde|como|cuando|porque|aunque|mientras|hasta)\b/gi,
       /\b(el|la|los|las|un|una|de|del|al|en|y|o|a|se|le|lo|me|te|nos|os|les|su|sus|mi|mis|tu|tus|nuestro|vuestro)\b/gi,
       /\b(es|son|está|están|era|fueron|será|serán|tiene|tienen|hace|hacen|va|van|viene|vienen)\b/gi,
-      /ción\b/gi, /mente\b/gi, /ando\b/gi, /iendo\b/gi
+      /ción\b/gi,
+      /mente\b/gi,
+      /ando\b/gi,
+      /iendo\b/gi
     ],
     en: [
       // English indicators
       /\b(the|and|or|but|with|for|from|to|at|in|on|by|of|as|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|can|must)\b/gi,
       /\b(this|that|these|those|here|there|where|when|what|who|why|how|which|some|any|all|each|every|many|much|few|little)\b/gi,
       /\b(i|you|he|she|it|we|they|me|him|her|us|them|my|your|his|her|its|our|their)\b/gi,
-      /ing\b/gi, /ed\b/gi, /ly\b/gi, /tion\b/gi
+      /ing\b/gi,
+      /ed\b/gi,
+      /ly\b/gi,
+      /tion\b/gi
     ]
   },
-  
+
   // Minimum confidence threshold for language detection
   LANGUAGE_DETECTION_THRESHOLD: 0.6,
-  
+
   // Database settings
   STATS_RETENTION_HOURS: 24, // How long to keep stats for analytics
-  
+
   // Logging settings - Standardized levels (Issue #199)
   LOG_LEVEL: {
     // Success operations
-    DISCLAIMER_APPLIED: 'info',           // Successful disclaimer application
-    STATS_UPDATED: 'info',               // Successful stats update
-    LANGUAGE_DETECTED: 'info',           // Language detection result
+    DISCLAIMER_APPLIED: 'info', // Successful disclaimer application
+    STATS_UPDATED: 'info', // Successful stats update
+    LANGUAGE_DETECTED: 'info', // Language detection result
     TRANSPARENCY_INFO_RETRIEVED: 'info', // Unified endpoint success
-    
+
     // Warnings - Non-critical failures with fallbacks
-    STATS_UPDATE_RETRY: 'warn',          // Stats update retry attempts
-    STATS_UPDATE_FALLBACK: 'warn',       // Using fallback after retries
-    LANGUAGE_DETECTION_FAILED: 'warn',   // Language detection fallback
-    TRANSPARENCY_STATS_MISSING: 'warn',  // Stats unavailable but service working
-    
+    STATS_UPDATE_RETRY: 'warn', // Stats update retry attempts
+    STATS_UPDATE_FALLBACK: 'warn', // Using fallback after retries
+    LANGUAGE_DETECTION_FAILED: 'warn', // Language detection fallback
+    TRANSPARENCY_STATS_MISSING: 'warn', // Stats unavailable but service working
+
     // Errors - Critical failures affecting functionality
-    SERVICE_ERROR: 'error',              // Service completely failed
-    DATABASE_ERROR: 'error',             // Database operations failed
-    VALIDATION_ERROR: 'error',           // Input validation failed
-    CONFIGURATION_ERROR: 'error'         // Configuration issues
+    SERVICE_ERROR: 'error', // Service completely failed
+    DATABASE_ERROR: 'error', // Database operations failed
+    VALIDATION_ERROR: 'error', // Input validation failed
+    CONFIGURATION_ERROR: 'error' // Configuration issues
   },
 
   // Logging message templates for consistency

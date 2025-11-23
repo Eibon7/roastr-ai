@@ -39,23 +39,23 @@ describe('NetworkConnectModal', () => {
 
   test('renders modal when isOpen is true', () => {
     render(<NetworkConnectModal {...defaultProps} />);
-    
+
     expect(screen.getByText('Conectar Twitter')).toBeInTheDocument();
     expect(screen.getByText('Paso 1 de 3')).toBeInTheDocument();
   });
 
   test('does not render modal when isOpen is false', () => {
     render(<NetworkConnectModal {...defaultProps} isOpen={false} />);
-    
+
     expect(screen.queryByText('Conectar Twitter')).not.toBeInTheDocument();
   });
 
   test('resets state when modal opens', () => {
     const { rerender } = render(<NetworkConnectModal {...defaultProps} isOpen={false} />);
-    
+
     // Open modal
     rerender(<NetworkConnectModal {...defaultProps} isOpen={true} />);
-    
+
     // Check that form fields are empty
     expect(screen.getByLabelText('API Key de Twitter')).toHaveValue('');
     expect(screen.getByLabelText('Access Token de Twitter')).toHaveValue('');
@@ -88,10 +88,10 @@ describe('NetworkConnectModal', () => {
 
   test('masks sensitive input fields', () => {
     render(<NetworkConnectModal {...defaultProps} />);
-    
+
     const apiKeyInput = screen.getByLabelText('API Key de Twitter');
     const accessTokenInput = screen.getByLabelText('Access Token de Twitter');
-    
+
     expect(apiKeyInput).toHaveAttribute('type', 'password');
     expect(accessTokenInput).toHaveAttribute('type', 'password');
     expect(apiKeyInput).toHaveAttribute('autoComplete', 'new-password');

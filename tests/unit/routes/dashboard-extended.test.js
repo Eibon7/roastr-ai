@@ -1,6 +1,6 @@
 /**
  * Dashboard Routes Extended Tests
- * 
+ *
  * Comprehensive tests for dashboard API routes including health checks,
  * user info, integrations, logs, usage statistics, billing portal, and roast preview
  */
@@ -14,17 +14,28 @@ jest.mock('../../../src/config/flags', () => ({
     isEnabled: jest.fn((flag) => {
       // Return different values based on flag for testing
       switch (flag) {
-        case 'ENABLE_BILLING': return true;
-        case 'ENABLE_REAL_OPENAI': return true;
-        case 'ENABLE_SUPABASE': return true;
-        case 'ENABLE_RQC': return false;
-        case 'ENABLE_SHIELD': return true;
-        case 'MOCK_MODE': return false; // Changed to false to match actual behavior
-        case 'VERBOSE_LOGS': return false;
-        case 'ENABLE_REAL_TWITTER': return false;
-        case 'ENABLE_REAL_YOUTUBE': return false;
-        case 'ENABLE_REAL_BLUESKY': return false;
-        default: return false;
+        case 'ENABLE_BILLING':
+          return true;
+        case 'ENABLE_REAL_OPENAI':
+          return true;
+        case 'ENABLE_SUPABASE':
+          return true;
+        case 'ENABLE_RQC':
+          return false;
+        case 'ENABLE_SHIELD':
+          return true;
+        case 'MOCK_MODE':
+          return false; // Changed to false to match actual behavior
+        case 'VERBOSE_LOGS':
+          return false;
+        case 'ENABLE_REAL_TWITTER':
+          return false;
+        case 'ENABLE_REAL_YOUTUBE':
+          return false;
+        case 'ENABLE_REAL_BLUESKY':
+          return false;
+        default:
+          return false;
       }
     })
   }
@@ -44,9 +55,7 @@ describe('Dashboard Routes', () => {
 
   describe('GET /api/health', () => {
     test('should return system health status', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       expect(response.body).toHaveProperty('services');
       expect(response.body).toHaveProperty('flags');
@@ -56,9 +65,7 @@ describe('Dashboard Routes', () => {
     });
 
     test('should include correct service statuses', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       const services = response.body.services;
       expect(services.api).toBe('ok');
@@ -68,9 +75,7 @@ describe('Dashboard Routes', () => {
     });
 
     test('should include correct flag statuses', async () => {
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       const flags = response.body.flags;
       expect(flags.rqc).toBe(false); // ENABLE_RQC is false
@@ -86,9 +91,7 @@ describe('Dashboard Routes', () => {
         throw new Error('Test error');
       });
 
-      const response = await request(app)
-        .get('/api/health')
-        .expect(500);
+      const response = await request(app).get('/api/health').expect(500);
 
       expect(response.body).toHaveProperty('error');
       expect(response.body.error).toBe('Health check failed');
@@ -100,16 +103,18 @@ describe('Dashboard Routes', () => {
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockImplementation((flag) => {
         switch (flag) {
-          case 'ENABLE_BILLING': return false;
-          case 'ENABLE_REAL_OPENAI': return false;
-          case 'ENABLE_SUPABASE': return false;
-          default: return false;
+          case 'ENABLE_BILLING':
+            return false;
+          case 'ENABLE_REAL_OPENAI':
+            return false;
+          case 'ENABLE_SUPABASE':
+            return false;
+          default:
+            return false;
         }
       });
 
-      const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const response = await request(app).get('/api/health').expect(200);
 
       const services = response.body.services;
       expect(services.api).toBe('ok');
@@ -121,9 +126,7 @@ describe('Dashboard Routes', () => {
 
   describe('GET /api/user', () => {
     test('should return mock user data', async () => {
-      const response = await request(app)
-        .get('/api/user')
-        .expect(200);
+      const response = await request(app).get('/api/user').expect(200);
 
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('name');
@@ -141,25 +144,19 @@ describe('Dashboard Routes', () => {
 
     test('should reflect plan based on mock mode', async () => {
       // Mock mode is disabled, should return free plan
-      const response = await request(app)
-        .get('/api/user')
-        .expect(200);
+      const response = await request(app).get('/api/user').expect(200);
 
       expect(response.body.plan).toBe('free');
     });
 
     test('should reflect RQC status', async () => {
-      const response = await request(app)
-        .get('/api/user')
-        .expect(200);
+      const response = await request(app).get('/api/user').expect(200);
 
       expect(response.body.rqcEnabled).toBe(false); // ENABLE_RQC is false
     });
 
     test('should have valid timestamp format', async () => {
-      const response = await request(app)
-        .get('/api/user')
-        .expect(200);
+      const response = await request(app).get('/api/user').expect(200);
 
       expect(response.body.lastActive).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     });
@@ -167,14 +164,12 @@ describe('Dashboard Routes', () => {
 
   describe('GET /api/integrations', () => {
     test('should return all platform integrations', async () => {
-      const response = await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      const response = await request(app).get('/api/integrations').expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body).toHaveLength(7);
 
-      const platformNames = response.body.map(p => p.name);
+      const platformNames = response.body.map((p) => p.name);
       expect(platformNames).toContain('twitter');
       expect(platformNames).toContain('youtube');
       expect(platformNames).toContain('instagram');
@@ -185,11 +180,9 @@ describe('Dashboard Routes', () => {
     });
 
     test('should have correct platform structure', async () => {
-      const response = await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      const response = await request(app).get('/api/integrations').expect(200);
 
-      response.body.forEach(platform => {
+      response.body.forEach((platform) => {
         expect(platform).toHaveProperty('name');
         expect(platform).toHaveProperty('displayName');
         expect(platform).toHaveProperty('status');
@@ -200,13 +193,11 @@ describe('Dashboard Routes', () => {
     });
 
     test('should reflect real integration statuses', async () => {
-      const response = await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      const response = await request(app).get('/api/integrations').expect(200);
 
-      const twitter = response.body.find(p => p.name === 'twitter');
-      const youtube = response.body.find(p => p.name === 'youtube');
-      const bluesky = response.body.find(p => p.name === 'bluesky');
+      const twitter = response.body.find((p) => p.name === 'twitter');
+      const youtube = response.body.find((p) => p.name === 'youtube');
+      const bluesky = response.body.find((p) => p.name === 'bluesky');
 
       expect(twitter.status).toBe('disconnected'); // ENABLE_REAL_TWITTER is false
       expect(youtube.status).toBe('disconnected'); // ENABLE_REAL_YOUTUBE is false
@@ -218,20 +209,22 @@ describe('Dashboard Routes', () => {
       const { flags } = require('../../../src/config/flags');
       flags.isEnabled.mockImplementation((flag) => {
         switch (flag) {
-          case 'ENABLE_REAL_TWITTER': return true;
-          case 'ENABLE_REAL_YOUTUBE': return true;
-          case 'ENABLE_REAL_BLUESKY': return true;
-          default: return false;
+          case 'ENABLE_REAL_TWITTER':
+            return true;
+          case 'ENABLE_REAL_YOUTUBE':
+            return true;
+          case 'ENABLE_REAL_BLUESKY':
+            return true;
+          default:
+            return false;
         }
       });
 
-      const response = await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      const response = await request(app).get('/api/integrations').expect(200);
 
-      const twitter = response.body.find(p => p.name === 'twitter');
-      const youtube = response.body.find(p => p.name === 'youtube');
-      const bluesky = response.body.find(p => p.name === 'bluesky');
+      const twitter = response.body.find((p) => p.name === 'twitter');
+      const youtube = response.body.find((p) => p.name === 'youtube');
+      const bluesky = response.body.find((p) => p.name === 'bluesky');
 
       expect(twitter.status).toBe('connected');
       expect(youtube.status).toBe('connected');
@@ -242,38 +235,30 @@ describe('Dashboard Routes', () => {
 
   describe('GET /api/logs', () => {
     test('should return mock logs with default limit', async () => {
-      const response = await request(app)
-        .get('/api/logs')
-        .expect(200);
+      const response = await request(app).get('/api/logs').expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body.length).toBeLessThanOrEqual(50);
     });
 
     test('should respect limit parameter', async () => {
-      const response = await request(app)
-        .get('/api/logs?limit=10')
-        .expect(200);
+      const response = await request(app).get('/api/logs?limit=10').expect(200);
 
       expect(response.body).toHaveLength(10);
     });
 
     test('should respect level parameter', async () => {
-      const response = await request(app)
-        .get('/api/logs?level=error')
-        .expect(200);
+      const response = await request(app).get('/api/logs?level=error').expect(200);
 
-      response.body.forEach(log => {
+      response.body.forEach((log) => {
         expect(log.level).toBe('error');
       });
     });
 
     test('should have correct log structure', async () => {
-      const response = await request(app)
-        .get('/api/logs?limit=5')
-        .expect(200);
+      const response = await request(app).get('/api/logs?limit=5').expect(200);
 
-      response.body.forEach(log => {
+      response.body.forEach((log) => {
         expect(log).toHaveProperty('id');
         expect(log).toHaveProperty('level');
         expect(log).toHaveProperty('message');
@@ -285,17 +270,13 @@ describe('Dashboard Routes', () => {
     });
 
     test('should cap limit at 100', async () => {
-      const response = await request(app)
-        .get('/api/logs?limit=200')
-        .expect(200);
+      const response = await request(app).get('/api/logs?limit=200').expect(200);
 
       expect(response.body.length).toBeLessThanOrEqual(100);
     });
 
     test('should return logs sorted by timestamp descending', async () => {
-      const response = await request(app)
-        .get('/api/logs?limit=10')
-        .expect(200);
+      const response = await request(app).get('/api/logs?limit=10').expect(200);
 
       for (let i = 1; i < response.body.length; i++) {
         const current = new Date(response.body[i].timestamp);
@@ -305,9 +286,7 @@ describe('Dashboard Routes', () => {
     });
 
     test('should handle invalid limit gracefully', async () => {
-      const response = await request(app)
-        .get('/api/logs?limit=invalid')
-        .expect(200);
+      const response = await request(app).get('/api/logs?limit=invalid').expect(200);
 
       expect(response.body.length).toBeLessThanOrEqual(50); // Should use default
     });
@@ -315,9 +294,7 @@ describe('Dashboard Routes', () => {
 
   describe('GET /api/usage', () => {
     test('should return usage statistics', async () => {
-      const response = await request(app)
-        .get('/api/usage')
-        .expect(200);
+      const response = await request(app).get('/api/usage').expect(200);
 
       expect(response.body).toHaveProperty('tokens');
       expect(response.body).toHaveProperty('aiCalls');
@@ -329,9 +306,7 @@ describe('Dashboard Routes', () => {
     });
 
     test('should have valid numeric values', async () => {
-      const response = await request(app)
-        .get('/api/usage')
-        .expect(200);
+      const response = await request(app).get('/api/usage').expect(200);
 
       expect(typeof response.body.tokens).toBe('number');
       expect(typeof response.body.aiCalls).toBe('number');
@@ -344,9 +319,7 @@ describe('Dashboard Routes', () => {
     });
 
     test('should reflect RQC status in usage', async () => {
-      const response = await request(app)
-        .get('/api/usage')
-        .expect(200);
+      const response = await request(app).get('/api/usage').expect(200);
 
       expect(response.body.rqcCalls).toBe(0); // ENABLE_RQC is false
       expect(response.body.breakdown.rqcReviews).toBe(0);
@@ -354,9 +327,7 @@ describe('Dashboard Routes', () => {
     });
 
     test('should have valid period dates', async () => {
-      const response = await request(app)
-        .get('/api/usage')
-        .expect(200);
+      const response = await request(app).get('/api/usage').expect(200);
 
       expect(response.body.period.start).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
       expect(response.body.period.end).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
@@ -373,9 +344,7 @@ describe('Dashboard Routes', () => {
         return flag === 'ENABLE_RQC';
       });
 
-      const response = await request(app)
-        .get('/api/usage')
-        .expect(200);
+      const response = await request(app).get('/api/usage').expect(200);
 
       expect(response.body.rqcCalls).toBeGreaterThan(0);
       expect(response.body.breakdown.rqcReviews).toBeGreaterThan(0);
@@ -385,9 +354,7 @@ describe('Dashboard Routes', () => {
 
   describe('POST /api/billing/portal', () => {
     test('should return unavailable when not in mock mode', async () => {
-      const response = await request(app)
-        .post('/api/billing/portal')
-        .expect(503);
+      const response = await request(app).post('/api/billing/portal').expect(503);
 
       expect(response.body).toHaveProperty('error');
       expect(response.body).toHaveProperty('message');
@@ -402,9 +369,7 @@ describe('Dashboard Routes', () => {
         return flag === 'MOCK_MODE';
       });
 
-      const response = await request(app)
-        .post('/api/billing/portal')
-        .expect(200);
+      const response = await request(app).post('/api/billing/portal').expect(200);
 
       expect(response.body).toHaveProperty('url');
       expect(response.body).toHaveProperty('message');
@@ -468,7 +433,7 @@ describe('Dashboard Routes', () => {
 
     test('should handle different intensity levels', async () => {
       const intensities = [1, 2, 3, 4, 5];
-      
+
       for (const intensity of intensities) {
         const response = await request(app)
           .post('/api/roast/preview')
@@ -525,10 +490,7 @@ describe('Dashboard Routes', () => {
     });
 
     test('should handle missing Content-Type', async () => {
-      const response = await request(app)
-        .post('/api/roast/preview')
-        .send('text=test')
-        .expect(500);
+      const response = await request(app).post('/api/roast/preview').send('text=test').expect(500);
 
       // Express middleware error for malformed request
     });
@@ -536,13 +498,9 @@ describe('Dashboard Routes', () => {
 
   describe('Integration Tests', () => {
     test('should have consistent health and user data', async () => {
-      const healthResponse = await request(app)
-        .get('/api/health')
-        .expect(200);
+      const healthResponse = await request(app).get('/api/health').expect(200);
 
-      const userResponse = await request(app)
-        .get('/api/user')
-        .expect(200);
+      const userResponse = await request(app).get('/api/user').expect(200);
 
       // Both should reflect same flag states
       expect(healthResponse.body.flags.mockMode).toBe(userResponse.body.plan === 'pro');
@@ -550,50 +508,37 @@ describe('Dashboard Routes', () => {
     });
 
     test('should have consistent integration and usage data', async () => {
-      const integrationsResponse = await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      const integrationsResponse = await request(app).get('/api/integrations').expect(200);
 
-      const usageResponse = await request(app)
-        .get('/api/usage')
-        .expect(200);
+      const usageResponse = await request(app).get('/api/usage').expect(200);
 
       // RQC should be consistent
-      const hasConnectedIntegrations = integrationsResponse.body.some(p => p.status === 'connected');
+      const hasConnectedIntegrations = integrationsResponse.body.some(
+        (p) => p.status === 'connected'
+      );
       // Usage stats should be reasonable based on integrations
       expect(typeof usageResponse.body.tokens).toBe('number');
     });
 
     test('should handle complete dashboard workflow', async () => {
       // 1. Check health
-      await request(app)
-        .get('/api/health')
-        .expect(200);
+      await request(app).get('/api/health').expect(200);
 
       // 2. Get user info
-      await request(app)
-        .get('/api/user')
-        .expect(200);
+      await request(app).get('/api/user').expect(200);
 
       // 3. Check integrations
-      await request(app)
-        .get('/api/integrations')
-        .expect(200);
+      await request(app).get('/api/integrations').expect(200);
 
       // 4. Get usage
-      await request(app)
-        .get('/api/usage')
-        .expect(200);
+      await request(app).get('/api/usage').expect(200);
 
       // 5. Get logs
-      await request(app)
-        .get('/api/logs?limit=5')
-        .expect(200);
+      await request(app).get('/api/logs?limit=5').expect(200);
 
       // 6. Try billing portal (status depends on mock mode)
-      const billingResponse = await request(app)
-        .post('/api/billing/portal');
-      
+      const billingResponse = await request(app).post('/api/billing/portal');
+
       expect([200, 503]).toContain(billingResponse.status);
 
       // All should succeed

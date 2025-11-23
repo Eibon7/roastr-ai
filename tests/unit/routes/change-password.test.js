@@ -1,6 +1,6 @@
 /**
  * Change Password Endpoint Tests - Issue #89
- * 
+ *
  * Tests for the new password change functionality with current password verification
  */
 
@@ -44,7 +44,7 @@ app.use('/api/auth', authRoutes);
 describe('POST /api/auth/change-password', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock default password validation as valid
     validatePassword.mockReturnValue({
       isValid: true,
@@ -146,7 +146,10 @@ describe('POST /api/auth/change-password', () => {
     // Mock password validation failure
     validatePassword.mockReturnValue({
       isValid: false,
-      errors: ['Password must be at least 8 characters long', 'Password must contain at least one number']
+      errors: [
+        'Password must be at least 8 characters long',
+        'Password must contain at least one number'
+      ]
     });
 
     const response = await request(app)
@@ -160,7 +163,8 @@ describe('POST /api/auth/change-password', () => {
     expect(response.status).toBe(400);
     expect(response.body).toMatchObject({
       success: false,
-      error: 'Password must be at least 8 characters long. Password must contain at least one number'
+      error:
+        'Password must be at least 8 characters long. Password must contain at least one number'
     });
 
     expect(authService.updatePasswordWithVerification).not.toHaveBeenCalled();
@@ -216,9 +220,7 @@ describe('POST /api/auth/change-password', () => {
 
   test('should return 404 when user not found', async () => {
     // Mock user not found error
-    authService.updatePasswordWithVerification.mockRejectedValue(
-      new Error('User not found')
-    );
+    authService.updatePasswordWithVerification.mockRejectedValue(new Error('User not found'));
 
     const response = await request(app)
       .post('/api/auth/change-password')
@@ -257,12 +259,10 @@ describe('POST /api/auth/change-password', () => {
   });
 
   test('should handle missing authorization header gracefully', async () => {
-    const response = await request(app)
-      .post('/api/auth/change-password')
-      .send({
-        currentPassword: 'oldPassword123!',
-        newPassword: 'newPassword456!'
-      });
+    const response = await request(app).post('/api/auth/change-password').send({
+      currentPassword: 'oldPassword123!',
+      newPassword: 'newPassword456!'
+    });
 
     // This should be handled by the authenticateToken middleware
     // Since we mocked it to always pass, this test validates that our mock works

@@ -3,9 +3,7 @@
   "timestamp": "2025-10-22T22:53:19.960Z",
   "actor": "emiliopostigo",
   "domains": [],
-  "files_changed": [
-    "src/services/costControl.js"
-  ],
+  "files_changed": ["src/services/costControl.js"],
   "severity": "CRITICAL",
   "action": "BLOCKED",
   "violations": {
@@ -16,9 +14,7 @@
   "details": [
     {
       "file": "src/services/costControl.js",
-      "domains": [
-        "pricing"
-      ],
+      "domains": ["pricing"],
       "severity": "CRITICAL",
       "lines_added": 10,
       "lines_removed": 5

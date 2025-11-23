@@ -3,7 +3,14 @@
  * Validates currency formatting and other utility functions
  */
 
-const { formatCurrency, formatFileSize, formatDuration, formatPercentage, formatNumber, truncateText } = require('../../../src/utils/formatUtils');
+const {
+  formatCurrency,
+  formatFileSize,
+  formatDuration,
+  formatPercentage,
+  formatNumber,
+  truncateText
+} = require('../../../src/utils/formatUtils');
 
 describe('formatUtils', () => {
   describe('formatCurrency', () => {

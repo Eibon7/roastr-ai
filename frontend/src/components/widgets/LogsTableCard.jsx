@@ -45,13 +45,16 @@ export default function LogsTableCard() {
     }
   };
 
-  const filteredLogs = logs ? logs.filter(log => {
-    const matchesLevel = filter === 'all' || log.level === filter;
-    const matchesSearch = searchTerm === '' || 
-      log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.service.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesLevel && matchesSearch;
-  }) : [];
+  const filteredLogs = logs
+    ? logs.filter((log) => {
+        const matchesLevel = filter === 'all' || log.level === filter;
+        const matchesSearch =
+          searchTerm === '' ||
+          log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          log.service.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesLevel && matchesSearch;
+      })
+    : [];
 
   if (loading) {
     return (
@@ -140,10 +143,13 @@ export default function LogsTableCard() {
             {/* Logs */}
             <div className="space-y-1 max-h-96 overflow-y-auto">
               {filteredLogs.slice(0, 25).map((log) => (
-                <div key={log.id} className="grid grid-cols-12 gap-4 text-sm py-2 px-2 hover:bg-muted/50 rounded">
+                <div
+                  key={log.id}
+                  className="grid grid-cols-12 gap-4 text-sm py-2 px-2 hover:bg-muted/50 rounded"
+                >
                   <div className="col-span-2 text-muted-foreground font-mono text-xs">
-                    {new Date(log.timestamp).toLocaleTimeString([], { 
-                      hour: '2-digit', 
+                    {new Date(log.timestamp).toLocaleTimeString([], {
+                      hour: '2-digit',
                       minute: '2-digit',
                       second: '2-digit'
                     })}
@@ -153,9 +159,7 @@ export default function LogsTableCard() {
                       {log.level}
                     </Badge>
                   </div>
-                  <div className="col-span-2 text-muted-foreground">
-                    {log.service}
-                  </div>
+                  <div className="col-span-2 text-muted-foreground">{log.service}</div>
                   <div className="col-span-7 text-foreground">
                     <div className="truncate" title={log.message}>
                       {log.message}
@@ -178,7 +182,7 @@ export default function LogsTableCard() {
               {searchTerm || filter !== 'all' ? 'No logs match your filters' : 'No logs available'}
             </div>
             {(searchTerm || filter !== 'all') && (
-              <button 
+              <button
                 onClick={() => {
                   setSearchTerm('');
                   setFilter('all');

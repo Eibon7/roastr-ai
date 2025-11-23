@@ -30,7 +30,9 @@ function getTestUserCredentials() {
       email: process.env.E2E_VALID_USER_EMAIL || 'valid.user@example.com',
       password: process.env.E2E_VALID_USER_PASSWORD || 'ValidPass123!',
       name: process.env.E2E_VALID_USER_NAME || 'Valid User',
-      isAdmin: process.env.E2E_IS_ADMIN_VALID_USER ? process.env.E2E_IS_ADMIN_VALID_USER === 'true' : false
+      isAdmin: process.env.E2E_IS_ADMIN_VALID_USER
+        ? process.env.E2E_IS_ADMIN_VALID_USER === 'true'
+        : false
     },
 
     testUser: () => ({
@@ -43,7 +45,9 @@ function getTestUserCredentials() {
       email: process.env.E2E_ADMIN_USER_EMAIL || 'admin@example.com',
       password: process.env.E2E_ADMIN_USER_PASSWORD || 'AdminPass123!',
       name: process.env.E2E_ADMIN_USER_NAME || 'Admin User',
-      isAdmin: process.env.E2E_IS_ADMIN_ADMIN_USER ? process.env.E2E_IS_ADMIN_ADMIN_USER === 'true' : true
+      isAdmin: process.env.E2E_IS_ADMIN_ADMIN_USER
+        ? process.env.E2E_IS_ADMIN_ADMIN_USER === 'true'
+        : true
     }
   };
 }
@@ -98,8 +102,8 @@ export const INVALID_EMAILS = [
 
 /**
  * Wait for authentication to complete and user to be redirected
- * @param {import('@playwright/test').Page} page 
- * @param {string} expectedUrl 
+ * @param {import('@playwright/test').Page} page
+ * @param {string} expectedUrl
  */
 export async function waitForAuthRedirect(page, expectedUrl = '/dashboard') {
   try {
@@ -117,18 +121,18 @@ export async function waitForAuthRedirect(page, expectedUrl = '/dashboard') {
 
 /**
  * Fill authentication form
- * @param {import('@playwright/test').Page} page 
- * @param {Object} credentials 
+ * @param {import('@playwright/test').Page} page
+ * @param {Object} credentials
  */
 export async function fillAuthForm(page, credentials) {
   if (credentials.name) {
     await page.fill('[name="name"]', credentials.name);
   }
-  
+
   if (credentials.email) {
     await page.fill('[name="email"]', credentials.email);
   }
-  
+
   if (credentials.password) {
     await page.fill('[name="password"]', credentials.password);
   }
@@ -136,28 +140,28 @@ export async function fillAuthForm(page, credentials) {
 
 /**
  * Submit form and wait for response
- * @param {import('@playwright/test').Page} page 
+ * @param {import('@playwright/test').Page} page
  */
 export async function submitAuthForm(page) {
   const submitButton = page.locator('button[type="submit"]');
   await submitButton.click();
-  
+
   // Wait for either success or error response
   await page.waitForLoadState('networkidle');
 }
 
 /**
  * Check if password validation is working correctly
- * @param {import('@playwright/test').Page} page 
- * @param {string} password 
- * @param {boolean} shouldBeValid 
+ * @param {import('@playwright/test').Page} page
+ * @param {string} password
+ * @param {boolean} shouldBeValid
  */
 export async function checkPasswordValidation(page, password, shouldBeValid) {
   const passwordInput = page.locator('[name="password"]');
   const submitButton = page.locator('button[type="submit"]');
-  
+
   await passwordInput.fill(password);
-  
+
   if (shouldBeValid) {
     await expect(submitButton).not.toBeDisabled();
   } else {
@@ -167,7 +171,7 @@ export async function checkPasswordValidation(page, password, shouldBeValid) {
 
 /**
  * Navigate to authentication page
- * @param {import('@playwright/test').Page} page 
+ * @param {import('@playwright/test').Page} page
  * @param {string} type - 'login' or 'register'
  */
 export async function navigateToAuth(page, type = 'login') {
@@ -177,20 +181,20 @@ export async function navigateToAuth(page, type = 'login') {
 
 /**
  * Check for accessibility issues in auth forms
- * @param {import('@playwright/test').Page} page 
+ * @param {import('@playwright/test').Page} page
  */
 export async function checkAuthAccessibility(page) {
   // Check for required form labels
   const emailLabel = page.locator('label[for="email"]');
   const passwordLabel = page.locator('label[for="password"]');
-  
+
   await expect(emailLabel).toBeVisible();
   await expect(passwordLabel).toBeVisible();
-  
+
   // Check for proper form attributes
   const emailInput = page.locator('[name="email"]');
   const passwordInput = page.locator('[name="password"]');
-  
+
   await expect(emailInput).toHaveAttribute('type', 'email');
   await expect(emailInput).toHaveJSProperty('required', true);
   await expect(passwordInput).toHaveJSProperty('required', true);
@@ -198,7 +202,7 @@ export async function checkAuthAccessibility(page) {
 
 /**
  * Create a test user via API (if available)
- * @param {Object} userData 
+ * @param {Object} userData
  */
 export async function createTestUser(userData) {
   // This would typically make an API call to create a test user
@@ -209,7 +213,7 @@ export async function createTestUser(userData) {
 
 /**
  * Clean up test users after tests
- * @param {string} email 
+ * @param {string} email
  */
 export async function cleanupTestUser(email) {
   // This would typically make an API call to delete the test user
@@ -224,7 +228,7 @@ export async function cleanupTestUser(email) {
  * @param {Object} response
  */
 export async function mockNetworkResponse(page, endpoint, status, response) {
-  await page.route(endpoint, route => {
+  await page.route(endpoint, (route) => {
     route.fulfill({
       status,
       contentType: 'application/json',
@@ -240,7 +244,7 @@ export async function mockNetworkResponse(page, endpoint, status, response) {
  */
 export async function mockLoginSuccess(page, user) {
   await page.unroute('**/api/auth/login').catch(() => {});
-  await page.route('**/api/auth/login', async route => {
+  await page.route('**/api/auth/login', async (route) => {
     if (route.request().method() !== 'POST') {
       return route.continue();
     }
@@ -304,7 +308,7 @@ export async function mockFeatureFlags(page, flags = {}) {
     ...flags
   };
 
-  await page.route('**/api/config/flags', route => {
+  await page.route('**/api/config/flags', (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -322,7 +326,7 @@ export async function mockFeatureFlags(page, flags = {}) {
  */
 export async function mockLogout(page) {
   await page.unroute('**/api/auth/logout').catch(() => {});
-  await page.route('**/api/auth/logout', route => {
+  await page.route('**/api/auth/logout', (route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -348,13 +352,16 @@ export async function setupAuthState(page, user) {
   await page.addInitScript((userData) => {
     localStorage.setItem('auth_token', 'mock-jwt-token');
     localStorage.setItem('refresh_token', 'mock-refresh-token');
-    localStorage.setItem('user_data', JSON.stringify({
-      id: userData.isAdmin ? 'admin-user-id' : 'regular-user-id',
-      email: userData.email,
-      name: userData.name,
-      is_admin: userData.isAdmin,
-      plan: userData.isAdmin ? 'enterprise' : 'free'
-    }));
+    localStorage.setItem(
+      'user_data',
+      JSON.stringify({
+        id: userData.isAdmin ? 'admin-user-id' : 'regular-user-id',
+        email: userData.email,
+        name: userData.name,
+        is_admin: userData.isAdmin,
+        plan: userData.isAdmin ? 'enterprise' : 'free'
+      })
+    );
   }, user);
 }
 

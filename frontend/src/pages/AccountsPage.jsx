@@ -37,11 +37,15 @@ const AccountsPage = () => {
     onToggleShield,
     onChangeTone,
     onConnectNetwork,
-    onDisconnectAccount,
+    onDisconnectAccount
   } = useSocialAccounts();
 
   const [selectedAccountId, setSelectedAccountId] = useState(null);
-  const [connectModal, setConnectModal] = useState({ isOpen: false, network: null, networkName: null });
+  const [connectModal, setConnectModal] = useState({
+    isOpen: false,
+    network: null,
+    networkName: null
+  });
 
   const selectedAccount = selectedAccountId ? getAccountById(selectedAccountId) : null;
 
@@ -74,7 +78,6 @@ const AccountsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-
       {/* Main Content */}
       <div className="p-8">
         {/* Header */}
@@ -137,7 +140,7 @@ const AccountsPage = () => {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Mis redes conectadas
           </h2>
-          
+
           {accounts.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">📱</div>
@@ -150,7 +153,7 @@ const AccountsPage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {accounts.map(account => (
+              {accounts.map((account) => (
                 <AccountCard
                   key={account.id}
                   account={account}
@@ -165,18 +168,23 @@ const AccountsPage = () => {
         <Alert className="mb-6">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            <h3 className="text-sm font-medium mb-2">
-              Límites de conexión por plan
-            </h3>
+            <h3 className="text-sm font-medium mb-2">Límites de conexión por plan</h3>
             <div className="text-sm space-y-2">
               <p>
-                <strong>Tu plan actual ({userData?.plan || 'starter_trial'}):</strong> {getConnectionLimits().maxConnectionsPerPlatform} cuenta{getConnectionLimits().maxConnectionsPerPlatform !== 1 ? 's' : ''} por plataforma
+                <strong>Tu plan actual ({userData?.plan || 'starter_trial'}):</strong>{' '}
+                {getConnectionLimits().maxConnectionsPerPlatform} cuenta
+                {getConnectionLimits().maxConnectionsPerPlatform !== 1 ? 's' : ''} por plataforma
               </p>
               <div className="text-xs space-y-1 text-muted-foreground">
-                <p>• <strong>Plan Starter Trial/Starter:</strong> 1 cuenta por plataforma</p>
-                <p>• <strong>Plan Pro y Plus:</strong> 2 cuentas por plataforma</p>
+                <p>
+                  • <strong>Plan Starter Trial/Starter:</strong> 1 cuenta por plataforma
+                </p>
+                <p>
+                  • <strong>Plan Pro y Plus:</strong> 2 cuentas por plataforma
+                </p>
               </div>
-              {(getConnectionLimits().planTier === 'starter_trial' || getConnectionLimits().planTier === 'starter') && (
+              {(getConnectionLimits().planTier === 'starter_trial' ||
+                getConnectionLimits().planTier === 'starter') && (
                 <p className="text-xs mt-2">
                   💡 Actualiza a Pro para conectar hasta 2 cuentas por red social
                 </p>
@@ -190,46 +198,48 @@ const AccountsPage = () => {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Conectar otra cuenta
           </h2>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {availableNetworks.map(({ network, name, connectedCount, canConnect, limitReached, totalConnections }) => {
-              const networkIcon = NETWORK_ICONS[network] || '📱';
-              const networkColor = NETWORK_COLORS[network] || 'bg-gray-600 text-white';
-              const { maxConnections, planTier } = getConnectionLimits();
 
-              return (
-                <Card key={network} className={`relative ${!canConnect ? 'opacity-50' : ''}`}>
-                  <CardContent className="p-4">
-                    <Button
-                      onClick={() => canConnect ? handleOpenConnectModal(network, name) : null}
-                      disabled={!canConnect}
-                      variant="ghost"
-                      className="w-full h-auto flex flex-col items-center p-0 hover:bg-transparent"
-                      title={
-                        !canConnect 
-                          ? `Límite alcanzado: máximo ${maxConnections} conexión${maxConnections !== 1 ? 'es' : ''} totales (Plan ${planTier})` 
-                          : `Conectar ${name}`
-                      }
-                    >
-                      <div className={`w-12 h-12 mx-auto mb-3 rounded-lg ${networkColor} flex items-center justify-center text-2xl font-bold transition-transform ${canConnect ? 'group-hover:scale-110' : ''}`}>
-                        {networkIcon}
-                      </div>
-                      <h3 className="font-medium text-sm mb-1">
-                        {name}
-                      </h3>
-                      <Badge variant="secondary" className="text-xs mb-1">
-                        {totalConnections}/{maxConnections}
-                      </Badge>
-                      {!canConnect && (
-                        <Badge variant="destructive" className="text-xs">
-                          Límite alcanzado
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {availableNetworks.map(
+              ({ network, name, connectedCount, canConnect, limitReached, totalConnections }) => {
+                const networkIcon = NETWORK_ICONS[network] || '📱';
+                const networkColor = NETWORK_COLORS[network] || 'bg-gray-600 text-white';
+                const { maxConnections, planTier } = getConnectionLimits();
+
+                return (
+                  <Card key={network} className={`relative ${!canConnect ? 'opacity-50' : ''}`}>
+                    <CardContent className="p-4">
+                      <Button
+                        onClick={() => (canConnect ? handleOpenConnectModal(network, name) : null)}
+                        disabled={!canConnect}
+                        variant="ghost"
+                        className="w-full h-auto flex flex-col items-center p-0 hover:bg-transparent"
+                        title={
+                          !canConnect
+                            ? `Límite alcanzado: máximo ${maxConnections} conexión${maxConnections !== 1 ? 'es' : ''} totales (Plan ${planTier})`
+                            : `Conectar ${name}`
+                        }
+                      >
+                        <div
+                          className={`w-12 h-12 mx-auto mb-3 rounded-lg ${networkColor} flex items-center justify-center text-2xl font-bold transition-transform ${canConnect ? 'group-hover:scale-110' : ''}`}
+                        >
+                          {networkIcon}
+                        </div>
+                        <h3 className="font-medium text-sm mb-1">{name}</h3>
+                        <Badge variant="secondary" className="text-xs mb-1">
+                          {totalConnections}/{maxConnections}
                         </Badge>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                        {!canConnect && (
+                          <Badge variant="destructive" className="text-xs">
+                            Límite alcanzado
+                          </Badge>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              }
+            )}
           </div>
         </div>
       </div>

@@ -9,23 +9,23 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { Alert, AlertDescription } from './ui/alert';
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  Save, 
-  X, 
-  Edit3, 
+import {
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Save,
+  X,
+  Edit3,
   Sparkles,
   Eye,
   CreditCard
 } from 'lucide-react';
 
-export default function RoastInlineEditor({ 
-  roast, 
-  roastId, 
+export default function RoastInlineEditor({
+  roast,
+  roastId,
   platform = 'twitter',
-  onSave, 
+  onSave,
   onCancel,
   onValidate = null // Optional external validation callback
 }) {
@@ -38,22 +38,25 @@ export default function RoastInlineEditor({
   const [lastValidatedText, setLastValidatedText] = useState(null);
 
   // Character limits by platform (normalized platform names)
-  const characterLimits = useMemo(() => ({
-    twitter: 280,
-    instagram: 2200,
-    facebook: 63206,
-    youtube: 10000,
-    tiktok: 2200,
-    linkedin: 3000,
-    reddit: 10000,
-    discord: 2000,
-    bluesky: 300
-  }), []);
+  const characterLimits = useMemo(
+    () => ({
+      twitter: 280,
+      instagram: 2200,
+      facebook: 63206,
+      youtube: 10000,
+      tiktok: 2200,
+      linkedin: 3000,
+      reddit: 10000,
+      discord: 2000,
+      bluesky: 300
+    }),
+    []
+  );
 
   // Unicode-aware character counting for consistency with backend
   const getGraphemeLength = useCallback((text) => {
     if (!text || typeof text !== 'string') return 0;
-    
+
     // Use Intl.Segmenter for accurate grapheme counting if available
     // Use undefined locale for better Unicode support as per CodeRabbit feedback
     if (typeof Intl !== 'undefined' && Intl.Segmenter) {
@@ -64,7 +67,7 @@ export default function RoastInlineEditor({
         // Fallback if Intl.Segmenter fails
       }
     }
-    
+
     // Fallback to Array.from for basic Unicode support
     try {
       return Array.from(text).length;
@@ -77,7 +80,7 @@ export default function RoastInlineEditor({
   // Platform normalization for consistency with backend
   const normalizePlatform = useCallback((platform) => {
     const platformMap = {
-      'x': 'twitter',
+      x: 'twitter',
       'x.com': 'twitter'
     };
     const normalized = platform?.toLowerCase()?.trim();
@@ -87,7 +90,7 @@ export default function RoastInlineEditor({
   // UTF-8 byte length calculation for consistency with backend (CodeRabbit Round 4)
   const getByteLengthUtf8 = useCallback((text) => {
     if (!text || typeof text !== 'string') return 0;
-    
+
     try {
       // Use TextEncoder for UTF-8 byte calculation in browser environment
       return new TextEncoder().encode(text).length;
@@ -103,32 +106,35 @@ export default function RoastInlineEditor({
   const remainingChars = currentLimit - graphemeLength;
 
   // Handle text changes
-  const handleTextChange = useCallback((e) => {
-    const newText = e.target.value;
-    setEditedText(newText);
-    setHasUnsavedChanges(newText !== roast);
-    
-    // Clear previous validation if text changed significantly (deterministic clearing)
-    if (validation) {
-      const originalLength = validation.metadata?.textLength || 0;
-      const newGraphemeLength = getGraphemeLength(newText);
-      const lengthDiff = Math.abs(newGraphemeLength - originalLength);
-      
-      // Clear validation if text length changed by more than 5 characters
-      if (lengthDiff > 5) {
-        setValidation(null);
-        setError(null); // Clear errors when text changes
+  const handleTextChange = useCallback(
+    (e) => {
+      const newText = e.target.value;
+      setEditedText(newText);
+      setHasUnsavedChanges(newText !== roast);
+
+      // Clear previous validation if text changed significantly (deterministic clearing)
+      if (validation) {
+        const originalLength = validation.metadata?.textLength || 0;
+        const newGraphemeLength = getGraphemeLength(newText);
+        const lengthDiff = Math.abs(newGraphemeLength - originalLength);
+
+        // Clear validation if text length changed by more than 5 characters
+        if (lengthDiff > 5) {
+          setValidation(null);
+          setError(null); // Clear errors when text changes
+        }
       }
-    }
-  }, [roast, validation, getGraphemeLength]);
+    },
+    [roast, validation, getGraphemeLength]
+  );
 
   // Validate edited text with backend
   const validateText = useCallback(async () => {
     if (!editedText.trim() || !roastId) return;
-    
+
     setIsValidating(true);
     setError(null);
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -139,7 +145,7 @@ export default function RoastInlineEditor({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           text: editedText,
@@ -151,14 +157,14 @@ export default function RoastInlineEditor({
         const data = await response.json();
         setValidation(data.data.validation);
         setLastValidatedText(editedText); // Track what text was validated
-        
+
         // Call external validation callback if provided
         if (onValidate) {
           onValidate(data.data.validation, data.data.credits);
         }
       } else {
         const errorData = await response.json().catch(() => ({}));
-        
+
         if (response.status === 402) {
           setError({
             type: 'credits',
@@ -215,7 +221,7 @@ export default function RoastInlineEditor({
     setHasUnsavedChanges(false);
     setValidation(null);
     setError(null);
-    
+
     if (onCancel) {
       onCancel();
     }
@@ -287,9 +293,15 @@ export default function RoastInlineEditor({
             {validation && (
               <Badge variant={getValidationColor()} className="text-xs">
                 {validation.valid ? (
-                  <><CheckCircle className="h-3 w-3 mr-1" />Válido</>
+                  <>
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Válido
+                  </>
                 ) : (
-                  <><XCircle className="h-3 w-3 mr-1" />Inválido</>
+                  <>
+                    <XCircle className="h-3 w-3 mr-1" />
+                    Inválido
+                  </>
                 )}
               </Badge>
             )}
@@ -310,7 +322,7 @@ export default function RoastInlineEditor({
             aria-invalid={validation && !validation.valid ? 'true' : 'false'}
             aria-required="true"
           />
-          
+
           {/* Character Counter */}
           <div className="flex items-center justify-between text-xs">
             <span id="char-count" className={getCharCountColor()}>
@@ -338,7 +350,9 @@ export default function RoastInlineEditor({
                 <p className="font-medium">Problemas encontrados:</p>
                 <ul className="list-disc list-inside space-y-1">
                   {validation.errors.map((error, index) => (
-                    <li key={index} className="text-sm">{error.message}</li>
+                    <li key={index} className="text-sm">
+                      {error.message}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -355,7 +369,9 @@ export default function RoastInlineEditor({
                 <p className="font-medium">Advertencias:</p>
                 <ul className="list-disc list-inside space-y-1">
                   {validation.warnings.map((warning, index) => (
-                    <li key={index} className="text-sm">{warning.message}</li>
+                    <li key={index} className="text-sm">
+                      {warning.message}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -411,9 +427,11 @@ export default function RoastInlineEditor({
             >
               <Eye className="h-4 w-4" />
               <span>{isValidating ? 'Validando...' : 'Validar'}</span>
-              <Badge variant="secondary" className="text-xs ml-1">1 crédito</Badge>
+              <Badge variant="secondary" className="text-xs ml-1">
+                1 crédito
+              </Badge>
             </Button>
-            
+
             {validation && validation.valid && (
               <div className="flex items-center space-x-1 text-green-600 text-sm">
                 <CheckCircle className="h-4 w-4" />
@@ -432,24 +450,24 @@ export default function RoastInlineEditor({
               <X className="h-4 w-4" />
               <span>Cancelar</span>
             </Button>
-            
+
             <Button
               size="sm"
               onClick={handleSave}
               disabled={
-                !hasUnsavedChanges || 
-                remainingChars < 0 || 
+                !hasUnsavedChanges ||
+                remainingChars < 0 ||
                 (validation && !validation.valid) ||
                 (!validation && hasUnsavedChanges) || // Require validation before save
                 (validation && lastValidatedText !== editedText) // Ensure current text is validated
               }
               className="flex items-center space-x-1"
               aria-label={
-                validation && !validation.valid 
-                  ? "No se puede guardar: corrije los errores de validación"
+                validation && !validation.valid
+                  ? 'No se puede guardar: corrije los errores de validación'
                   : !validation && hasUnsavedChanges
-                  ? "Valida los cambios antes de guardar"
-                  : "Guardar cambios"
+                    ? 'Valida los cambios antes de guardar'
+                    : 'Guardar cambios'
               }
             >
               <Save className="h-4 w-4" />
@@ -460,10 +478,14 @@ export default function RoastInlineEditor({
 
         {/* Helper Text */}
         <div className="text-xs text-muted-foreground">
-          <p>💡 <strong>Tip:</strong> Debes validar tus cambios antes de poder guardar. La validación asegura que cumplan con las reglas de estilo de Roastr.</p>
-          {(!validation && hasUnsavedChanges) && (
+          <p>
+            💡 <strong>Tip:</strong> Debes validar tus cambios antes de poder guardar. La validación
+            asegura que cumplan con las reglas de estilo de Roastr.
+          </p>
+          {!validation && hasUnsavedChanges && (
             <p className="mt-1 text-amber-600">
-              ⚠️ <strong>Validación requerida:</strong> Haz clic en "Validar" para habilitar el botón "Guardar".
+              ⚠️ <strong>Validación requerida:</strong> Haz clic en "Validar" para habilitar el
+              botón "Guardar".
             </p>
           )}
         </div>

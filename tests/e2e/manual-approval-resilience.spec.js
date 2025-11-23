@@ -19,7 +19,7 @@ const {
   waitForSuccessMessage,
   waitForLoadingToComplete,
   isVisibleWithinTimeout,
-  measureDuration,
+  measureDuration
 } = require('./helpers/timeout-helpers');
 
 /**
@@ -43,8 +43,8 @@ test.describe('Manual Approval UI - Resilience', () => {
         roast: 'Esta es una respuesta ingeniosa de prueba',
         platform: 'twitter',
         toxicity_score: 0.85,
-        created_at: new Date().toISOString(),
-      },
+        created_at: new Date().toISOString()
+      }
     ]);
   });
 
@@ -90,7 +90,7 @@ test.describe('Manual Approval UI - Resilience', () => {
       // Screenshot for evidence
       await page.screenshot({
         path: 'docs/test-evidence/issue-419/timeout-error.png',
-        fullPage: true,
+        fullPage: true
       });
     });
 
@@ -110,8 +110,8 @@ test.describe('Manual Approval UI - Resilience', () => {
             body: JSON.stringify({
               error: 'TIMEOUT',
               message: 'Request timeout',
-              code: 'E_TIMEOUT',
-            }),
+              code: 'E_TIMEOUT'
+            })
           });
         } else {
           // Second attempt: success
@@ -122,9 +122,9 @@ test.describe('Manual Approval UI - Resilience', () => {
               variant: {
                 id: 'variant_success',
                 text: 'Este es el roast generado después del retry',
-                created_at: new Date().toISOString(),
-              },
-            }),
+                created_at: new Date().toISOString()
+              }
+            })
           });
         }
       });
@@ -153,7 +153,7 @@ test.describe('Manual Approval UI - Resilience', () => {
       // Screenshot success state
       await page.screenshot({
         path: 'docs/test-evidence/issue-419/timeout-retry-success.png',
-        fullPage: true,
+        fullPage: true
       });
     });
 
@@ -214,7 +214,7 @@ test.describe('Manual Approval UI - Resilience', () => {
       // Screenshot
       await page.screenshot({
         path: 'docs/test-evidence/issue-419/network-error-approval.png',
-        fullPage: true,
+        fullPage: true
       });
     });
 
@@ -242,7 +242,7 @@ test.describe('Manual Approval UI - Resilience', () => {
       // Screenshot
       await page.screenshot({
         path: 'docs/test-evidence/issue-419/network-error-variant.png',
-        fullPage: true,
+        fullPage: true
       });
     });
 
@@ -270,7 +270,7 @@ test.describe('Manual Approval UI - Resilience', () => {
       // Screenshot
       await page.screenshot({
         path: 'docs/test-evidence/issue-419/network-error-reject.png',
-        fullPage: true,
+        fullPage: true
       });
     });
 
@@ -280,7 +280,7 @@ test.describe('Manual Approval UI - Resilience', () => {
         '**/api/approval/*/regenerate',
         {
           status: 500,
-          body: { error: 'Network error', message: 'Connection failed' },
+          body: { error: 'Network error', message: 'Connection failed' }
         },
         {
           status: 200,
@@ -288,9 +288,9 @@ test.describe('Manual Approval UI - Resilience', () => {
             variant: {
               id: 'variant_recovered',
               text: 'Roast generado después de recuperarse del error',
-              created_at: new Date().toISOString(),
-            },
-          },
+              created_at: new Date().toISOString()
+            }
+          }
         }
       );
 
@@ -356,7 +356,7 @@ test.describe('Manual Approval UI - Resilience', () => {
       // Screenshot
       await page.screenshot({
         path: 'docs/test-evidence/issue-419/variants-exhausted.png',
-        fullPage: true,
+        fullPage: true
       });
     });
 
@@ -426,22 +426,22 @@ test.describe('Manual Approval UI - Resilience', () => {
           action: async () => {
             await page.locator('[data-testid="generate-variant-btn"]').first().click();
           },
-          expectedKeywords: ['generar', 'variante'],
+          expectedKeywords: ['generar', 'variante']
         },
         {
           endpoint: '**/api/approval/*/approve',
           action: async () => {
             await page.locator('[data-testid="approve-btn"]').first().click();
           },
-          expectedKeywords: ['aprobar'],
+          expectedKeywords: ['aprobar']
         },
         {
           endpoint: '**/api/approval/*/reject',
           action: async () => {
             await page.locator('[data-testid="reject-btn"]').first().click();
           },
-          expectedKeywords: ['rechazar'],
-        },
+          expectedKeywords: ['rechazar']
+        }
       ];
 
       for (const scenario of errorScenarios) {
@@ -475,8 +475,8 @@ test.describe('Manual Approval UI - Resilience', () => {
             comment: 'Test comment',
             roast: 'Test roast',
             platform: 'twitter',
-            created_at: new Date().toISOString(),
-          },
+            created_at: new Date().toISOString()
+          }
         ]);
       }
 
@@ -493,8 +493,8 @@ test.describe('Manual Approval UI - Resilience', () => {
             error: 'Database connection failed: host=db.internal.roastr.com port=5432',
             message: 'Internal server error at /api/manual-approval/variants',
             stack: 'Error at roastGenerator.js:150:12...',
-            apiKey: 'sk-abc123...',
-          }),
+            apiKey: 'sk-abc123...'
+          })
         });
       });
 
@@ -524,7 +524,7 @@ test.describe('Manual Approval UI - Resilience', () => {
       // Screenshot
       await page.screenshot({
         path: 'docs/test-evidence/issue-419/no-sensitive-info-leaked.png',
-        fullPage: true,
+        fullPage: true
       });
     });
 
@@ -568,7 +568,7 @@ test.describe('Manual Approval UI - Resilience', () => {
           trigger: async () => {
             await page.locator('[data-testid="generate-variant-btn"]').first().click();
           },
-          waitTime: 35000,
+          waitTime: 35000
         },
         {
           name: 'network error',
@@ -578,21 +578,21 @@ test.describe('Manual Approval UI - Resilience', () => {
           trigger: async () => {
             await page.locator('[data-testid="generate-variant-btn"]').first().click();
           },
-          waitTime: 10000,
+          waitTime: 10000
         },
         {
           name: '503 service unavailable',
           setup: async () => {
             await mockServer.mockEndpoint('POST', '**/api/approval/*/regenerate', {
               status: 503,
-              body: { error: 'Service temporarily unavailable' },
+              body: { error: 'Service temporarily unavailable' }
             });
           },
           trigger: async () => {
             await page.locator('[data-testid="generate-variant-btn"]').first().click();
           },
-          waitTime: 10000,
-        },
+          waitTime: 10000
+        }
       ];
 
       for (const errorType of recoverableErrors) {
@@ -605,7 +605,11 @@ test.describe('Manual Approval UI - Resilience', () => {
         await waitForErrorMessage(page, errorType.waitTime);
 
         // Assert retry button visible
-        const isRetryVisible = await isVisibleWithinTimeout(page, '[data-testid="retry-btn"]', 5000);
+        const isRetryVisible = await isVisibleWithinTimeout(
+          page,
+          '[data-testid="retry-btn"]',
+          5000
+        );
         expect(isRetryVisible).toBe(true);
 
         console.log(`✓ Retry button shown for: ${errorType.name}`);
@@ -618,8 +622,8 @@ test.describe('Manual Approval UI - Resilience', () => {
             comment: 'Test',
             roast: 'Test roast',
             platform: 'twitter',
-            created_at: new Date().toISOString(),
-          },
+            created_at: new Date().toISOString()
+          }
         ]);
       }
     });
@@ -658,8 +662,8 @@ test.describe('Manual Approval UI - Resilience', () => {
             status: 500,
             contentType: 'application/json',
             body: JSON.stringify({
-              error: 'Temporary server error',
-            }),
+              error: 'Temporary server error'
+            })
           });
         } else {
           // Retry: success
@@ -670,9 +674,9 @@ test.describe('Manual Approval UI - Resilience', () => {
               variant: {
                 id: 'variant_retry_success',
                 text: 'Roast generado exitosamente después del retry',
-                created_at: new Date().toISOString(),
-              },
-            }),
+                created_at: new Date().toISOString()
+              }
+            })
           });
         }
       });
@@ -701,7 +705,7 @@ test.describe('Manual Approval UI - Resilience', () => {
       // Screenshot success state
       await page.screenshot({
         path: 'docs/test-evidence/issue-419/retry-success-final.png',
-        fullPage: true,
+        fullPage: true
       });
     });
 
@@ -714,7 +718,7 @@ test.describe('Manual Approval UI - Resilience', () => {
         if (attemptCount === 1) {
           await route.fulfill({
             status: 500,
-            body: JSON.stringify({ error: 'Temporary error' }),
+            body: JSON.stringify({ error: 'Temporary error' })
           });
         } else {
           await route.fulfill({
@@ -723,9 +727,9 @@ test.describe('Manual Approval UI - Resilience', () => {
               variant: {
                 id: `variant_${attemptCount}`,
                 text: `Variant ${attemptCount}`,
-                created_at: new Date().toISOString(),
-              },
-            }),
+                created_at: new Date().toISOString()
+              }
+            })
           });
         }
       });

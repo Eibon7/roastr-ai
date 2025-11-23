@@ -70,4 +70,3 @@
 - [ ] Coverage: ≥90%
 - [ ] GDD health ≥87
 - [ ] CodeRabbit: 0 comentarios
-

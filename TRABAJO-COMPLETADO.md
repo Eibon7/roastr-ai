@@ -53,6 +53,7 @@
 **Propósito:** Servicio de compatibilidad backward para legacy configs
 
 **Funcionalidad:**
+
 - `mapLegacyToNewTone()`: Mapea intensity_level + humor_type → tono nuevo
 - `mapNewToLegacyTone()`: Mapea tono nuevo → legacy format
 - `normalizeTone()`: Normaliza cualquier entrada (ES/EN/legacy) → tono válido
@@ -65,6 +66,7 @@
 ### 2. `src/services/roastEngine.js` ✅
 
 **Cambios:**
+
 - `mapStyleToTone()` actualizado para retornar nuevo sistema de 3 tonos
 - Mapeo: `subtle → flanders`, `sarcastic → balanceado`, `direct → canalla`
 - Aliases EN: `light`, `balanced`, `savage`
@@ -73,6 +75,7 @@
 ### 3. `src/lib/prompts/roastPrompt.js` ✅
 
 **Cambios:**
+
 - Version actualizada a `2.1.0`
 - `buildBlockA()`: Reescrito con 3 tonos oficiales
 - `buildBlockB()`: Eliminado `humorType`, añadido `sponsors`
@@ -84,6 +87,7 @@
 ### 4. `src/services/roastGeneratorEnhanced.js` ✅
 
 **Cambios:**
+
 - Import `toneCompatibilityService`
 - Eliminado uso directo de `humor_type` e `intensity_level`
 - Intensidad derivada de tono: `getToneIntensity(tone)`
@@ -93,6 +97,7 @@
 ### 5. `src/services/roastPromptTemplate.js` ✅
 
 **Cambios:**
+
 - Marcado como **DEPRECATED** en docstring
 - `mapUserTone()` con warnings de deprecación
 - Usa `toneCompatibilityService.normalizeTone()`
@@ -101,6 +106,7 @@
 ### 6. `src/workers/GenerateReplyWorker.js` ✅
 
 **Cambios:**
+
 - Eliminado `humor_type` de configs
 - `intensity_level` eliminado, derivado de tono
 - Logs de compatibilidad para backward compat
@@ -112,6 +118,7 @@
 ### 1. `src/routes/roast.js` ✅
 
 **Cambios:**
+
 - Import `toneCompatibilityService`
 - Eliminado `humor_type` e `intensity_level` de `roastConfig`
 - Tono normalizado con `toneCompatibilityService`
@@ -119,6 +126,7 @@
 ### 2. `src/routes/config.js` ✅
 
 **Cambios:**
+
 - `VALID_TONES`: `['flanders', 'balanceado', 'canalla', 'light', 'balanced', 'savage']`
 - `VALID_HUMOR_TYPES`: Array vacío (deprecated)
 - Validación con `toneCompatibilityService.normalizeTone()`
@@ -128,6 +136,7 @@
 ### 3. `src/routes/approval.js` ✅
 
 **Cambios:**
+
 - Import `toneCompatibilityService`
 - Normalización de tono en regeneración
 - `humor_type` → NULL
@@ -139,6 +148,7 @@
 ### 1. `frontend/src/components/StyleSelector.jsx` ✅
 
 **REESCRITURA COMPLETA:**
+
 - Eliminados 6 estilos legacy (sarcastic, witty, playful, direct, friendly, custom)
 - Implementados 3 tonos oficiales (Flanders, Balanceado, Canalla)
 - Eliminados sliders de intensity, humor_type, creativity, politeness
@@ -149,6 +159,7 @@
 ### 2. `frontend/src/pages/Configuration.jsx` ✅
 
 **Cambios:**
+
 - `TONES` actualizado a 3-tone system con descripciones bilingües
 - `HUMOR_TYPES` deprecated (comentado)
 - Eliminado selector de Humor Style del UI
@@ -157,17 +168,20 @@
 ### 3. `frontend/src/pages/Approval.jsx` ✅
 
 **Cambios:**
+
 - Eliminado badge de `humor_type`
 - Solo muestra badge de tono
 
 ### 4. `frontend/src/components/LevelSelection.jsx` ✅
 
 **Cambios:**
+
 - Descripción actualizada para mencionar 3-tone system
 
 ### 5. `frontend/src/pages/__tests__/ApprovalCard.test.jsx` ✅
 
 **Cambios:**
+
 - Mock actualizado: `tone: 'balanceado'`
 - `humor_type` eliminado
 - Test actualizado para verificar solo badge de tono
@@ -177,18 +191,21 @@
 ## 📊 Métricas de Implementación
 
 ### Tests
+
 - **Total:** 55 tests passing ✅
 - **toneCompatibilityService:** 28 tests
 - **roastPrompt:** 27 tests
 - **roastEngine:** Tests existentes pasando
 
 ### Archivos Modificados
+
 - **Backend:** 10 archivos
 - **Frontend:** 5 archivos
 - **Tests:** 2 archivos
 - **Docs:** 4 archivos
 
 ### Líneas de Código
+
 - **Añadidas:** ~2,100 líneas
 - **Eliminadas:** ~450 líneas (obsoletas)
 - **Neto:** +1,650 líneas
@@ -200,6 +217,7 @@
 ### Estrategia - Compatibility Layer First
 
 **Phase 1 (This PR):**
+
 1. **`toneCompatibilityService` creado:**
    - Centraliza toda la lógica de mapeo legacy → new
    - Funciones: `mapLegacyToNewTone()`, `normalizeTone()`, `getToneIntensity()`
@@ -219,6 +237,7 @@
    - `intensity_level` → Derivado de tone via service
 
 **Phase 2 (Future PR - Tracked separately):**
+
 - Migrar 15+ archivos caller para usar directamente 3-tone system
 - Eliminar referencias a `humor_type` e `intensity_level` en configs
 - Remover columnas deprecated de DB (tras periodo de gracia)
@@ -321,6 +340,7 @@
 **Objetivo:** Panel de admin para gestionar tonos sin tocar código
 
 **Features:**
+
 - Tabla `roast_tones` en DB
 - CRUD completo de tonos desde admin panel
 - Validación de JSON schemas
@@ -342,6 +362,7 @@
 - **Issue Futura:** #876 (Dynamic Tone Config)
 
 **Documentación:**
+
 - `docs/prompts/roast-tone-system.md`
 - `docs/prompts/roast-master-prompt.md`
 - `docs/plan/issue-872.md`
@@ -364,6 +385,7 @@
 **El sistema de 3 tonos está operativo con compatibility layer completa.**
 
 **Phase 2 (Caller Migration):**
+
 - Tracked en Issue separado (a crear post-merge)
 - Migración gradual de 15+ archivos caller
 - Testing incremental por componente

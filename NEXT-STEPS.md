@@ -9,15 +9,18 @@
 ### 1. **Bandwidth Crisis Resolved** (99% reduction)
 
 **Problem:** 287% egress (14.3GB/5GB) caused by:
+
 - Workers polling every 2s = 32GB/month
 - Integration tests hitting real Supabase = 75GB/month
 
 **Solution:**
+
 - ✅ Workers: 2s → 60s polling (**97% reduction**)
 - ✅ Tests: Mock Supabase (**100% network elimination**)
 - ✅ Total: 107GB/mo → ~1GB/mo
 
 **Files Changed:**
+
 - `src/workers/cli/start-workers.js` - Increased poll intervals
 - `tests/helpers/supabaseMock.js` - Created mock Supabase with RLS
 - `tests/helpers/tenantTestUtils.js` - Use mock by default
@@ -39,6 +42,7 @@
 **Common issues to fix:**
 
 1. **Add missing mock methods:**
+
    ```javascript
    // tests/helpers/supabaseMock.js
    select: () => ({
@@ -59,6 +63,7 @@
 4. **Add `.neq()`, `.gte()`, `.lte()` filters** (if tests use them)
 
 **How to continue:**
+
 ```bash
 cd /Users/emiliopostigo/roastr-ai-worktrees/issue-894
 
@@ -87,9 +92,10 @@ npm test -- tests/integration/multi-tenant-rls-issue-801-crud.test.js
    - Wait 2-3 minutes for activation
 
 3. **Run tests against real Supabase:**
+
    ```bash
    cd /Users/emiliopostigo/roastr-ai-worktrees/issue-894
-   
+
    USE_REAL_SUPABASE=true npm test -- tests/integration/multi-tenant-rls-issue-801-crud.test.js
    ```
 
@@ -206,4 +212,3 @@ A: Mock = default (99% of time). Real = debugging RLS edge cases (1% of time).
 **Created:** 2025-11-21  
 **Last Updated:** 2025-11-21  
 **Orchestrator:** TestEngineer + Backend Developer
-

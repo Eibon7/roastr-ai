@@ -1,16 +1,16 @@
 /**
  * Roast Prompt Builder with Cacheable Blocks (A/B/C Structure)
- * 
+ *
  * Issue #858: Prompt caching con GPT-5.1
- * 
+ *
  * This module structures prompts into three cacheable blocks:
  * - Block A (Global): Static meta-prompt, rules, structure (100% cacheable across all users)
  * - Block B (User): Persona, style profile, user-specific rules (cacheable per user)
  * - Block C (Dynamic): Comment, platform, request-specific flags (not cacheable)
- * 
+ *
  * The blocks are concatenated deterministically to enable prompt caching
  * with GPT-5.1's Responses API (prompt_cache_retention: "24h").
- * 
+ *
  * @module lib/prompts/roastPrompt
  */
 
@@ -21,7 +21,7 @@ const { getToneConfigService } = require('../../services/toneConfigService'); //
 
 /**
  * RoastPromptBuilder - Builds prompts with cacheable block structure
- * 
+ *
  * @class RoastPromptBuilder
  */
 class RoastPromptBuilder {
@@ -33,17 +33,17 @@ class RoastPromptBuilder {
 
   /**
    * Build Block A - Global (100% static, cacheable across all users)
-   * 
+   *
    * Contains:
    * - Meta-prompt de Roastr (rol del modelo, estilo general)
    * - Sistema de tonos dinámico (Issue #876)
    * - Reglas globales de humor seguro
    * - Estructura esperada de la respuesta
    * - Políticas generales multi-plataforma
-   * 
+   *
    * NOTE (Issue #876): Now async to load dynamic tones from DB.
    * Cache is managed at toneConfigService level (5min TTL).
-   * 
+   *
    * @param {string} language - Language code (es, en)
    * @returns {Promise<string>} Block A - Global prompt
    */
@@ -53,20 +53,24 @@ class RoastPromptBuilder {
       const tones = await this.toneService.getActiveTones(language);
 
       // Generate dynamic tones text
-      const tonesText = tones.map((tone, i) => `
+      const tonesText = tones
+        .map(
+          (tone, i) => `
 ${i + 1}. ${tone.display_name.toUpperCase()} (Intensidad: ${tone.intensity}/5)
    Descripción: ${tone.description}
    Personalidad: ${tone.personality}
    Recursos permitidos:
-   ${tone.resources.map(r => `- ${r}`).join('\n   ')}
+   ${tone.resources.map((r) => `- ${r}`).join('\n   ')}
    
    Restricciones CRÍTICAS:
-   ${tone.restrictions.map(r => `- ${r}`).join('\n   ')}
+   ${tone.restrictions.map((r) => `- ${r}`).join('\n   ')}
    
    Ejemplo:
    Input: "${tone.examples[0].input}"
    Output: "${tone.examples[0].output}"
-      `).join('\n');
+      `
+        )
+        .join('\n');
 
       // Issue #872: Prompt structure with dynamic tones
       return `Eres Roastr, un sistema de roast generation para Roastr.ai.
@@ -259,18 +263,18 @@ Si excedes el límite DURO, acorta el roast manteniendo:
 
   /**
    * Build Block B - User (cacheable per user, stable until user changes config)
-   * 
+   *
    * Contains:
    * - Persona del usuario (texto ya generado)
    * - Style Profile del usuario (texto ya generado)
    * - Tone seleccionado (flanders/balanceado/canalla)
    * - Sponsors protegidos (Brand Safety - Plus)
-   * 
+   *
    * IMPORTANT: This block must be deterministic for the same user.
    * No timestamps, request IDs, or other variable data.
-   * 
+   *
    * Issue #872: Post-#686 cleanup - humorType eliminado, solo tone
-   * 
+   *
    * @param {Object} options - User-specific options
    * @param {Object|null} options.persona - User persona object
    * @param {Object|null} options.styleProfile - User style profile
@@ -286,15 +290,15 @@ Si excedes el límite DURO, acorta el roast manteniendo:
     // Persona context (if available)
     if (persona && typeof persona === 'object') {
       const personaParts = [];
-      
+
       if (persona.lo_que_me_define && persona.lo_que_me_define.trim()) {
         personaParts.push(`- Lo que define al usuario: ${persona.lo_que_me_define.trim()}`);
       }
-      
+
       if (persona.lo_que_no_tolero && persona.lo_que_no_tolero.trim()) {
         personaParts.push(`- Lo que NO tolera: ${persona.lo_que_no_tolero.trim()}`);
       }
-      
+
       if (persona.lo_que_me_da_igual && persona.lo_que_me_da_igual.trim()) {
         personaParts.push(`- Lo que le da igual: ${persona.lo_que_me_da_igual.trim()}`);
       }
@@ -320,16 +324,22 @@ Si excedes el límite DURO, acorta el roast manteniendo:
         styleParts.push(`Ejemplos de su estilo: ${styleProfile.examples.join(', ')}`);
       }
       if (styleParts.length > 0) {
-        parts.push(`🎨 STYLE PROFILE (Pro/Plus):\n${styleParts.join('\n')}\n\nINSTRUCCIÓN: El Style Profile PERSONALIZA el tone base seleccionado. Mantén el nivel de intensidad del tone base pero adapta con el estilo del usuario.`);
+        parts.push(
+          `🎨 STYLE PROFILE (Pro/Plus):\n${styleParts.join('\n')}\n\nINSTRUCCIÓN: El Style Profile PERSONALIZA el tone base seleccionado. Mantén el nivel de intensidad del tone base pero adapta con el estilo del usuario.`
+        );
       }
     }
 
     // Sponsors (Brand Safety - Plus)
     if (sponsors && Array.isArray(sponsors) && sponsors.length > 0) {
-      const sponsorList = sponsors.map((s, i) => {
-        return `${i + 1}. ${s.name} (prioridad: ${s.priority}, severidad: ${s.severity}, tone_override: ${s.tone_override})`;
-      }).join('\n');
-      parts.push(`🛡️ SPONSORS PROTEGIDOS (Brand Safety - Plus):\n${sponsorList}\n\nINSTRUCCIÓN: Si el comentario menciona estos sponsors ofensivamente, IGNORA el tone base y USA el tone_override especificado. Genera defensive roast protegiendo al sponsor.`);
+      const sponsorList = sponsors
+        .map((s, i) => {
+          return `${i + 1}. ${s.name} (prioridad: ${s.priority}, severidad: ${s.severity}, tone_override: ${s.tone_override})`;
+        })
+        .join('\n');
+      parts.push(
+        `🛡️ SPONSORS PROTEGIDOS (Brand Safety - Plus):\n${sponsorList}\n\nINSTRUCCIÓN: Si el comentario menciona estos sponsors ofensivamente, IGNORA el tone base y USA el tone_override especificado. Genera defensive roast protegiendo al sponsor.`
+      );
     }
 
     return parts.length > 0 ? parts.join('\n\n') + '\n\n' : '';
@@ -337,14 +347,14 @@ Si excedes el límite DURO, acorta el roast manteniendo:
 
   /**
    * Build Block C - Dynamic (not cacheable, changes per request)
-   * 
+   *
    * Contains:
    * - Comentario concreto a analizar/roastear
    * - Plataforma de origen
    * - Flags específicos de esa petición
    * - Categoría del comentario (derived from comment)
    * - Referencias de roasts (if enabled)
-   * 
+   *
    * @param {Object} options - Request-specific options
    * @param {string} options.comment - Original comment to roast
    * @param {string} options.platform - Platform (twitter, youtube, etc.)
@@ -376,7 +386,9 @@ Si excedes el límite DURO, acorta el roast manteniendo:
 
     // Category (derived from comment and toxicity data)
     const category = this.categorizeComment(sanitizedComment, toxicityData);
-    parts.push(`🎭 CATEGORÍA DEL COMENTARIO:\n${category}\n*(Ejemplos: ataque personal, body shaming, comentario machista, insulto genérico, afirmación absurda, intento fallido de burla...)*`);
+    parts.push(
+      `🎭 CATEGORÍA DEL COMENTARIO:\n${category}\n*(Ejemplos: ataque personal, body shaming, comentario machista, insulto genérico, afirmación absurda, intento fallido de burla...)*`
+    );
 
     // Platform context
     parts.push(`📱 PLATAFORMA:\n${platform}`);
@@ -384,10 +396,11 @@ Si excedes el límite DURO, acorta el roast manteniendo:
     // Reference roasts (if enabled)
     if (includeReferences) {
       try {
-        const references = typeof getReferenceRoasts === 'function'
-          ? await getReferenceRoasts(sanitizedComment)
-          : await this.getReferenceRoasts(sanitizedComment);
-        
+        const references =
+          typeof getReferenceRoasts === 'function'
+            ? await getReferenceRoasts(sanitizedComment)
+            : await this.getReferenceRoasts(sanitizedComment);
+
         if (references && references.trim()) {
           parts.push(`📚 EJEMPLOS DE ROASTS BIEN EJECUTADOS:\n${references}`);
         }
@@ -404,27 +417,27 @@ Si excedes el límite DURO, acorta el roast manteniendo:
 
   /**
    * Build complete prompt by concatenating blocks A + B + C
-   * 
+   *
    * The concatenation must be deterministic to enable caching.
-   * 
+   *
    * NOTE (Issue #876): Now awaits Block A for dynamic tone loading
-   * 
+   *
    * @param {Object} options - Complete options for all blocks
    * @returns {Promise<string>} Complete prompt ready for AI
    */
   async buildCompletePrompt(options = {}) {
     const language = options.language || 'es';
-    
+
     // Issue #876: Block A is now async (loads tones from DB)
     const blockA = await this.buildBlockA(language);
-    
+
     const blockB = this.buildBlockB({
       persona: options.persona,
       styleProfile: options.styleProfile,
       tone: options.tone || 'balanceado',
       sponsors: options.sponsors || null
     });
-    
+
     const blockC = await this.buildBlockC({
       comment: options.comment,
       platform: options.platform || 'twitter',
@@ -543,14 +556,18 @@ Si excedes el límite DURO, acorta el roast manteniendo:
     try {
       const allRoasts = await this.csvService.loadRoasts();
       const count = constants.DEFAULT_REFERENCE_COUNT || 3;
-      
+
       // Simple similarity matching (can be enhanced)
       const similarRoasts = allRoasts
         .slice(0, Math.min(count, allRoasts.length))
-        .map((roast, index) => `${index + 1}. Comentario: "${roast.comment}" → Roast: "${roast.roast}"`)
+        .map(
+          (roast, index) => `${index + 1}. Comentario: "${roast.comment}" → Roast: "${roast.roast}"`
+        )
         .join('\n');
-      
-      return similarRoasts || 'No hay ejemplos específicos disponibles para este tipo de comentario.';
+
+      return (
+        similarRoasts || 'No hay ejemplos específicos disponibles para este tipo de comentario.'
+      );
     } catch (error) {
       logger.warn('Failed to load reference roasts', { error: error.message });
       return 'Ejemplos no disponibles en este momento.';
@@ -567,4 +584,3 @@ Si excedes el límite DURO, acorta el roast manteniendo:
 }
 
 module.exports = RoastPromptBuilder;
-

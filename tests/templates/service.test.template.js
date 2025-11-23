@@ -21,15 +21,18 @@ const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
 // ============================================================================
 
 // Create Supabase mock with table-specific defaults
-const mockSupabase = createSupabaseMock({
-  // PLACEHOLDER: Add table-specific mocks
-  user_subscriptions: { plan: 'free', status: 'active' },
-  roast_usage: { count: 0 },
-  analysis_usage: { count: 0 }
-}, {
-  // PLACEHOLDER: Add RPC function mocks
-  get_subscription_tier: { data: 'FREE', error: null }
-});
+const mockSupabase = createSupabaseMock(
+  {
+    // PLACEHOLDER: Add table-specific mocks
+    user_subscriptions: { plan: 'free', status: 'active' },
+    roast_usage: { count: 0 },
+    analysis_usage: { count: 0 }
+  },
+  {
+    // PLACEHOLDER: Add RPC function mocks
+    get_subscription_tier: { data: 'FREE', error: null }
+  }
+);
 
 // ============================================================================
 // STEP 2: Reference pre-created mocks in jest.mock() calls
@@ -110,10 +113,12 @@ describe('PLACEHOLDER Service Tests', () => {
           return {
             select: jest.fn(() => ({
               eq: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: { plan: 'pro', status: 'active' },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: { plan: 'pro', status: 'active' },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -138,10 +143,12 @@ describe('PLACEHOLDER Service Tests', () => {
           return {
             select: jest.fn(() => ({
               eq: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: null,
-                  error: { message: 'Database connection failed' }
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: null,
+                    error: { message: 'Database connection failed' }
+                  })
+                )
               }))
             }))
           };
@@ -161,10 +168,12 @@ describe('PLACEHOLDER Service Tests', () => {
           return {
             select: jest.fn(() => ({
               eq: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: null,
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: null,
+                    error: null
+                  })
+                )
               }))
             }))
           };

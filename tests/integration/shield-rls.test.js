@@ -23,7 +23,10 @@ jest.setTimeout(30000);
 
 function assertNoError(context, error) {
   if (error) {
-    console.error(`❌ ${context} error:`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    console.error(
+      `❌ ${context} error:`,
+      JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+    );
     const message = error.message || error.details || JSON.stringify(error);
     throw new Error(`Failed to ${context}: ${message}`);
   }
@@ -84,7 +87,7 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
     commentB = createdCommentB;
 
     // Create shield_actions records
-    // Note: shield_actions table structure: id, organization_id, action_type, content_hash, 
+    // Note: shield_actions table structure: id, organization_id, action_type, content_hash,
     // content_snippet, platform, reason, created_at, reverted_at, updated_at, metadata
     const contentHashA = crypto.createHash('sha256').update(commentA.original_text).digest('hex');
     const contentHashB = crypto.createHash('sha256').update(commentB.original_text).digest('hex');
@@ -157,16 +160,14 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
     });
 
     test('Tenant A can only see their own shield_actions', async () => {
-      const { data, error } = await testClient
-        .from('shield_actions')
-        .select('*');
+      const { data, error } = await testClient.from('shield_actions').select('*');
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
       expect(data.length).toBeGreaterThan(0);
-      expect(data.every(action => action.organization_id === tenantA.id)).toBe(true);
-      expect(data.some(action => action.id === shieldActionA.id)).toBe(true);
-      expect(data.some(action => action.id === shieldActionB.id)).toBe(false);
+      expect(data.every((action) => action.organization_id === tenantA.id)).toBe(true);
+      expect(data.some((action) => action.id === shieldActionA.id)).toBe(true);
+      expect(data.some((action) => action.id === shieldActionB.id)).toBe(false);
     });
 
     test('Tenant A cannot see Tenant B shield_actions', async () => {
@@ -279,8 +280,8 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
-      expect(data.every(action => action.platform === 'twitter')).toBe(true);
-      expect(data.every(action => action.organization_id === tenantA.id)).toBe(true);
+      expect(data.every((action) => action.platform === 'twitter')).toBe(true);
+      expect(data.every((action) => action.organization_id === tenantA.id)).toBe(true);
     });
 
     test('Tenant A can filter shield_actions by platform_user_id in metadata', async () => {
@@ -292,12 +293,13 @@ describe('Shield Actions RLS Integration Tests - Issue #787 AC5', () => {
       expect(error).toBeNull();
       expect(data).toBeDefined();
       expect(data.length).toBeGreaterThan(0);
-      expect(data.every(action => {
-        const metadata = action.metadata || {};
-        return metadata.platform_user_id === 'twitter_user_A';
-      })).toBe(true);
-      expect(data.every(action => action.organization_id === tenantA.id)).toBe(true);
+      expect(
+        data.every((action) => {
+          const metadata = action.metadata || {};
+          return metadata.platform_user_id === 'twitter_user_A';
+        })
+      ).toBe(true);
+      expect(data.every((action) => action.organization_id === tenantA.id)).toBe(true);
     });
   });
 });
-

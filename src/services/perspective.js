@@ -90,16 +90,12 @@ class PerspectiveService {
    */
   async _makeRequestWithRetry(requestBody, attempt = 1) {
     try {
-      const response = await axios.post(
-        `${this.baseUrl}?key=${this.apiKey}`,
-        requestBody,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000 // 10 second timeout
-        }
-      );
+      const response = await axios.post(`${this.baseUrl}?key=${this.apiKey}`, requestBody, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000 // 10 second timeout
+      });
 
       return response;
     } catch (error) {
@@ -110,14 +106,18 @@ class PerspectiveService {
         // Rate limit error (429) - wait and retry
         if (status === 429 && attempt < this.maxRetries) {
           const backoffDelay = this.retryDelay * Math.pow(2, attempt - 1);
-          logger.warn(`Perspective API rate limited, retrying in ${backoffDelay}ms (attempt ${attempt}/${this.maxRetries})`);
+          logger.warn(
+            `Perspective API rate limited, retrying in ${backoffDelay}ms (attempt ${attempt}/${this.maxRetries})`
+          );
           await this._sleep(backoffDelay);
           return this._makeRequestWithRetry(requestBody, attempt + 1);
         }
 
         // Bad request (400) - invalid input, don't retry
         if (status === 400) {
-          throw new Error(`Invalid request to Perspective API: ${error.response.data?.error?.message || 'Unknown error'}`);
+          throw new Error(
+            `Invalid request to Perspective API: ${error.response.data?.error?.message || 'Unknown error'}`
+          );
         }
 
         // Unauthorized (401/403) - API key issue, don't retry
@@ -134,7 +134,11 @@ class PerspectiveService {
       }
 
       // Network errors - retry
-      if (error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT') {
+      if (
+        error.code === 'ECONNABORTED' ||
+        error.code === 'ENOTFOUND' ||
+        error.code === 'ETIMEDOUT'
+      ) {
         if (attempt < this.maxRetries) {
           logger.warn(`Network error (${error.code}), retrying in ${this.retryDelay}ms`);
           await this._sleep(this.retryDelay);
@@ -240,7 +244,7 @@ class PerspectiveService {
    * Sleep utility for retry/rate limiting
    */
   _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

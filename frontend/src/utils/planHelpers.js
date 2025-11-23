@@ -9,30 +9,30 @@
  * - 'free' and 'basic' → 'starter_trial'
  * - 'creator_plus' → 'plus'
  * - unknown → 'starter_trial' (default fallback)
- * 
+ *
  * @param {string} planId - Plan ID to normalize
  * @returns {string} Normalized plan ID
  */
 export function normalizePlanId(planId) {
   if (!planId) return 'starter_trial';
-  
+
   const normalized = planId.toLowerCase().trim();
-  
+
   // Map legacy plans to current structure
   if (normalized === 'free' || normalized === 'basic') {
     return 'starter_trial';
   }
-  
+
   if (normalized === 'creator_plus') {
     return 'plus';
   }
-  
+
   // Valid current plans
   const validPlans = ['starter_trial', 'starter', 'pro', 'plus', 'custom'];
   if (validPlans.includes(normalized)) {
     return normalized;
   }
-  
+
   // Unknown plan → default to starter_trial
   return 'starter_trial';
 }
@@ -80,4 +80,3 @@ export function isPremiumPlan(planId) {
   const normalized = normalizePlanId(planId);
   return ['pro', 'plus', 'custom'].includes(normalized);
 }
-

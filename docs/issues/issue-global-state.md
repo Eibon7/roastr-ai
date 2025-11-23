@@ -17,6 +17,7 @@
 - **Múltiples dispositivos** (WebSocket para sync en tiempo real)
 
 **¿Qué estado gestiona?**
+
 ```typescript
 {
   auth: { userId, token, isAuthenticated },
@@ -28,12 +29,14 @@
 ```
 
 **¿Por qué es complejo?**
+
 - **Múltiples fuentes:** DB, Polar API, WebSocket events
 - **Sincronización multi-dispositivo:** Cambio en móvil → desktop actualiza
 - **Conflictos:** Dos dispositivos cambian mismo dato simultáneamente
 - **Performance:** No refetch en cada render (cachear inteligentemente)
 
 **Estrategias de sincronización:**
+
 1. **Fetch inicial** al login (GET /api/state)
 2. **WebSocket** para updates en tiempo real (server push)
 3. **Polling** como fallback cada 30s (si WebSocket cae)
@@ -41,11 +44,13 @@
 5. **Conflict resolution** con Last Write Wins + version tracking
 
 **Importancia:**
+
 - **UX crítica:** Usuario espera ver cambios INMEDIATAMENTE
 - **Consistencia:** Evitar states desincronizados (ej: plan Free pero usando features Pro)
 - **Confiabilidad:** Sistema debe funcionar incluso si WebSocket falla
 
 **Tecnologías:**
+
 - React Context API o Zustand (state management)
 - WebSocket con auth JWT
 - Redis pub/sub para multi-instance deployments
@@ -58,11 +63,13 @@
 ## 📋 Descripción Técnica
 
 Implementar sistema de sincronización de estado global entre:
+
 - **Frontend**: Estado en memoria (React Context / Zustand)
 - **Backend**: Source of truth (PostgreSQL + Supabase)
 - **Polar**: Estado de suscripción (external service)
 
 **State Schema:**
+
 ```typescript
 interface GlobalUserState {
   auth: {
@@ -97,12 +104,14 @@ interface GlobalUserState {
 ```
 
 **Sincronización:**
+
 - **WebSocket** para updates en tiempo real (cambios en subscription, roasting status)
 - **Polling** como fallback (cada 30 segundos)
 - **Optimistic updates** en frontend para mejor UX
 - **Conflict resolution** con Last Write Wins + version tracking
 
 **Estado actual:**
+
 - ✅ Schema TypeScript completo definido
 - ✅ Arquitectura de sincronización diseñada
 - ❌ `StateService.js` no existe
@@ -117,10 +126,12 @@ interface GlobalUserState {
 Antes de implementar, el usuario debe decidir:
 
 **1. Frontend State Management:**
+
 - [ ] **React Context API** (built-in, más simple)
 - [ ] **Zustand** (más poderoso, mejor DevTools)
 
 **2. WebSocket Priority:**
+
 - [ ] **Implementar WebSocket completo** (tiempo real, ~6h adicionales)
 - [ ] **Solo polling por ahora** (más simple, menos features)
 
@@ -144,6 +155,7 @@ Antes de implementar, el usuario debe decidir:
   - [ ] `broadcastStateChange(userId, section, data)` → notifica cambios vía WebSocket
 
   **Implementación:**
+
   ```javascript
   class StateService {
     async getGlobalState(userId) {
@@ -174,7 +186,7 @@ Antes de implementar, el usuario debe decidir:
 
       return {
         userId: data.id,
-        isAuthenticated: true,
+        isAuthenticated: true
         // token/refreshToken NO se incluyen en state sync (security)
       };
     }
@@ -241,13 +253,11 @@ Antes de implementar, el usuario debe decidir:
       const polarData = await PolarService.getSubscriptionStatus(userId);
 
       // Actualizar DB
-      await supabase
-        .from('polar_subscriptions')
-        .upsert({
-          user_id: userId,
-          ...polarData,
-          updated_at: new Date().toISOString()
-        });
+      await supabase.from('polar_subscriptions').upsert({
+        user_id: userId,
+        ...polarData,
+        updated_at: new Date().toISOString()
+      });
 
       // Broadcast cambio
       await this.broadcastStateChange(userId, 'subscription', polarData);
@@ -296,7 +306,6 @@ Antes de implementar, el usuario debe decidir:
 ### 3. Backend: WebSocket Implementation (Advanced)
 
 - [ ] **Extender `WebSocketService.js`** (de Issue Roasting Control)
-
   - [ ] Añadir handler para mensajes `subscribe_state`
   - [ ] Mantener map de subscripciones activas
   - [ ] Broadcast solo a clientes suscritos
@@ -322,7 +331,7 @@ Antes de implementar, el usuario debe decidir:
   });
 
   function broadcastToUser(userId, message) {
-    wss.clients.forEach(client => {
+    wss.clients.forEach((client) => {
       if (client.userId === userId && client.readyState === WebSocket.OPEN) {
         // Solo enviar si cliente está suscrito a esa sección
         if (!message.section || client.subscriptions.has(message.section)) {
@@ -336,12 +345,14 @@ Antes de implementar, el usuario debe decidir:
 ### 4. Backend: Conflict Resolution
 
 - [ ] **Añadir columna `version` a tablas críticas:**
+
   ```sql
   ALTER TABLE user_roast_config ADD COLUMN version INT DEFAULT 1;
   ALTER TABLE user_personas ADD COLUMN version INT DEFAULT 1;
   ```
 
 - [ ] **Implementar Last Write Wins con version check:**
+
   ```javascript
   async function updateWithVersionCheck(table, userId, data, clientVersion) {
     const { data: current } = await supabase
@@ -372,6 +383,7 @@ Antes de implementar, el usuario debe decidir:
 **Opción A: React Context API**
 
 - [ ] **Crear `src/context/GlobalStateContext.jsx`**
+
   ```jsx
   import { createContext, useContext, useState, useEffect } from 'react';
 
@@ -396,7 +408,7 @@ Antes de implementar, el usuario debe decidir:
 
     async function fetchGlobalState() {
       const response = await fetch('/api/state', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       const data = await response.json();
       setState(data);
@@ -411,7 +423,7 @@ Antes de implementar, el usuario debe decidir:
 
         if (message.type === 'state_update') {
           // Update solo la sección cambiada
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             [message.section]: message.data
           }));
@@ -438,11 +450,13 @@ Antes de implementar, el usuario debe decidir:
 **Opción B: Zustand**
 
 - [ ] **Instalar Zustand:**
+
   ```bash
   npm install zustand
   ```
 
 - [ ] **Crear `src/stores/globalStateStore.js`:**
+
   ```javascript
   import create from 'zustand';
 
@@ -452,7 +466,7 @@ Antes de implementar, el usuario debe decidir:
 
     fetchState: async () => {
       const response = await fetch('/api/state', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       const data = await response.json();
       set({ state: data, loading: false });
@@ -472,6 +486,7 @@ Antes de implementar, el usuario debe decidir:
 ### 6. Frontend: Optimistic Updates
 
 - [ ] **Implementar en acciones de usuario:**
+
   ```jsx
   async function toggleRoasting(enabled) {
     // 1. Optimistic update
@@ -540,6 +555,7 @@ Antes de implementar, el usuario debe decidir:
 ## 🔗 Dependencias
 
 **Bloqueantes (debe resolverse antes):**
+
 - ✅ Issue Login & Registration
 - ✅ Issue Payment (Polar)
 - ✅ Issue Persona Setup
@@ -569,33 +585,37 @@ Esta issue se considera **100% completa** cuando:
 
 ## 📊 Métricas de Éxito
 
-| Métrica | Valor Actual | Objetivo | Estado |
-|---------|--------------|----------|--------|
-| Tests pasando | N/A | 100% | ⏳ Pendiente |
-| Latencia sync | N/A | <500ms | ⏳ Pendiente |
-| Tiempo de implementación | 0h | ≤16h | ⏳ Pendiente |
-| WebSocket uptime | N/A | >99% | ⏳ Pendiente |
+| Métrica                  | Valor Actual | Objetivo | Estado       |
+| ------------------------ | ------------ | -------- | ------------ |
+| Tests pasando            | N/A          | 100%     | ⏳ Pendiente |
+| Latencia sync            | N/A          | <500ms   | ⏳ Pendiente |
+| Tiempo de implementación | 0h           | ≤16h     | ⏳ Pendiente |
+| WebSocket uptime         | N/A          | >99%     | ⏳ Pendiente |
 
 ---
 
 ## 📝 Notas de Implementación
 
 **Complejidad:**
+
 - Esta es la issue más compleja (16h estimadas)
 - Requiere coordinación entre múltiples servicios
 - WebSocket añade complejidad operacional
 
 **Alternativa Simplificada:**
+
 - Si 16h es demasiado, considerar solo polling (sin WebSocket)
 - Reduce estimación a ~8h
 - Pierde sync en tiempo real pero funcional
 
 **Performance:**
+
 - Cachear estado en frontend (no fetch en cada render)
 - Invalidar cache solo cuando WebSocket notifica
 - Polling como fallback si WebSocket cae
 
 **DevOps:**
+
 - WebSocket requiere sticky sessions en load balancer
 - Redis pub/sub para multi-instance deployments
 - Monitoring de conexiones WebSocket activas

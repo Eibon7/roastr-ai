@@ -1,23 +1,18 @@
 /**
  * Audit Logs Panel Component
  * Issue #294: Kill Switch global y panel de control de feature flags para administradores
- * 
+ *
  * Displays audit trail for all administrative actions
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent 
-} from '../ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { 
-  FileText, 
-  Search, 
+import {
+  FileText,
+  Search,
   Filter,
   Download,
   Clock,
@@ -59,7 +54,7 @@ const AuditLogsPanel = () => {
 
       const response = await adminApi.getAuditLogs(filters);
       setLogs(response.data.logs);
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         total: response.data.pagination.total
       }));
@@ -80,7 +75,7 @@ const AuditLogsPanel = () => {
       };
 
       const blob = await adminApi.exportAuditLogs(filters, 'csv');
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -90,7 +85,7 @@ const AuditLogsPanel = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Audit logs exported successfully');
     } catch (error) {
       console.error('Failed to export audit logs:', error);
@@ -140,18 +135,18 @@ const AuditLogsPanel = () => {
     }
   };
 
-  const filteredLogs = logs.filter(log => {
-    const matchesSearch = 
+  const filteredLogs = logs.filter((log) => {
+    const matchesSearch =
       log.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.resource_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.admin_user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     return matchesSearch;
   });
 
   const nextPage = () => {
     if (pagination.offset + pagination.limit < pagination.total) {
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         offset: prev.offset + prev.limit
       }));
@@ -160,7 +155,7 @@ const AuditLogsPanel = () => {
 
   const prevPage = () => {
     if (pagination.offset > 0) {
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         offset: Math.max(0, prev.offset - prev.limit)
       }));
@@ -193,12 +188,7 @@ const AuditLogsPanel = () => {
             <FileText className="h-5 w-5" />
             Audit Logs
           </div>
-          <Button
-            onClick={handleExport}
-            disabled={exporting}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={handleExport} disabled={exporting} variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             {exporting ? 'Exporting...' : 'Export'}
           </Button>
@@ -256,24 +246,22 @@ const AuditLogsPanel = () => {
                         by {log.admin_user?.email || 'Unknown'}
                       </span>
                     </div>
-                    <p className="text-sm font-medium mb-1">
-                      {formatActionDescription(log)}
-                    </p>
+                    <p className="text-sm font-medium mb-1">{formatActionDescription(log)}</p>
                     {log.resource_id && (
-                      <p className="text-xs text-gray-500 mb-2">
-                        Resource: {log.resource_id}
-                      </p>
+                      <p className="text-xs text-gray-500 mb-2">Resource: {log.resource_id}</p>
                     )}
                     {(log.old_value || log.new_value) && (
                       <div className="text-xs text-gray-600 space-y-1">
                         {log.old_value && (
                           <div>
-                            <span className="font-medium">Before:</span> {JSON.stringify(log.old_value)}
+                            <span className="font-medium">Before:</span>{' '}
+                            {JSON.stringify(log.old_value)}
                           </div>
                         )}
                         {log.new_value && (
                           <div>
-                            <span className="font-medium">After:</span> {JSON.stringify(log.new_value)}
+                            <span className="font-medium">After:</span>{' '}
+                            {JSON.stringify(log.new_value)}
                           </div>
                         )}
                       </div>
@@ -285,11 +273,7 @@ const AuditLogsPanel = () => {
                     <Clock className="h-3 w-3" />
                     {new Date(log.created_at).toLocaleString()}
                   </div>
-                  {log.ip_address && (
-                    <div className="mt-1">
-                      IP: {log.ip_address}
-                    </div>
-                  )}
+                  {log.ip_address && <div className="mt-1">IP: {log.ip_address}</div>}
                 </div>
               </div>
             </div>
@@ -306,7 +290,9 @@ const AuditLogsPanel = () => {
         {pagination.total > pagination.limit && (
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-gray-600">
-              Showing {pagination.offset + 1} to {Math.min(pagination.offset + pagination.limit, pagination.total)} of {pagination.total} logs
+              Showing {pagination.offset + 1} to{' '}
+              {Math.min(pagination.offset + pagination.limit, pagination.total)} of{' '}
+              {pagination.total} logs
             </div>
             <div className="flex gap-2">
               <Button

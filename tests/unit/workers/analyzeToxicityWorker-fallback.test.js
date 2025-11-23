@@ -73,31 +73,19 @@ describe('AnalyzeToxicityWorker - Basic Fallback Tests', () => {
 
   describe('Fallback Logic Components', () => {
     it('should have pattern matching for toxicity detection', () => {
-      const toxicTexts = [
-        'you are an idiot',
-        'I hate this',
-        'stupid thing'
-      ];
+      const toxicTexts = ['you are an idiot', 'I hate this', 'stupid thing'];
 
-      toxicTexts.forEach(text => {
-        const matches = worker.toxicPatterns.some(pattern => 
-          pattern.pattern.test(text)
-        );
+      toxicTexts.forEach((text) => {
+        const matches = worker.toxicPatterns.some((pattern) => pattern.pattern.test(text));
         expect(matches).toBe(true);
       });
     });
 
     it('should not match safe content', () => {
-      const safeTexts = [
-        'this is great',
-        'I love this feature',
-        'amazing work'
-      ];
+      const safeTexts = ['this is great', 'I love this feature', 'amazing work'];
 
-      safeTexts.forEach(text => {
-        const matches = worker.toxicPatterns.some(pattern => 
-          pattern.pattern.test(text)
-        );
+      safeTexts.forEach((text) => {
+        const matches = worker.toxicPatterns.some((pattern) => pattern.pattern.test(text));
         expect(matches).toBe(false);
       });
     });
@@ -110,10 +98,10 @@ describe('AnalyzeToxicityWorker - Basic Fallback Tests', () => {
   describe('Error Handling Capabilities', () => {
     it('should handle invalid inputs gracefully in pattern matching', () => {
       const invalidInputs = [null, undefined, '', 123, {}];
-      
-      invalidInputs.forEach(input => {
+
+      invalidInputs.forEach((input) => {
         expect(() => {
-          worker.toxicPatterns.forEach(pattern => {
+          worker.toxicPatterns.forEach((pattern) => {
             try {
               pattern.pattern.test(input);
             } catch (error) {
@@ -146,7 +134,7 @@ describe('AnalyzeToxicityWorker - Basic Fallback Tests', () => {
     it('should initialize in mock mode', () => {
       process.env.ENABLE_MOCK_MODE = 'true';
       const mockWorker = new AnalyzeToxicityWorker();
-      
+
       expect(mockWorker).toBeDefined();
       expect(mockWorker.constructor.name).toBe('AnalyzeToxicityWorker');
     });

@@ -1,5 +1,9 @@
 const ShieldService = require('../../../src/services/shieldService');
-const { createMockModerationInput, simulateToxicComment, setupTestUserWithPersona } = require('../../utils/testHelpers');
+const {
+  createMockModerationInput,
+  simulateToxicComment,
+  setupTestUserWithPersona
+} = require('../../utils/testHelpers');
 
 // Mock dependencies
 jest.mock('../../../src/services/costControl');
@@ -42,7 +46,7 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
       shieldService.getUserBehavior = jest.fn().mockResolvedValue({ reincidenceCount: 0 });
 
       const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
-      
+
       expect(result.shieldActive).toBe(true);
       expect(shieldService.costControl.canUseShield).toHaveBeenCalledWith(organizationId);
     });
@@ -52,13 +56,13 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
       const comment = { platform: 'twitter', platform_user_id: 'user123' };
       const analysisResult = { toxicityScore: 0.8 };
 
-      shieldService.costControl.canUseShield = jest.fn().mockResolvedValue({ 
+      shieldService.costControl.canUseShield = jest.fn().mockResolvedValue({
         allowed: false,
-        reason: 'plan_restriction' 
+        reason: 'plan_restriction'
       });
 
       const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
-      
+
       expect(result.shieldActive).toBe(false);
       expect(result.reason).toBe('plan_restriction');
       expect(result.planRequired).toBe('pro_or_higher');
@@ -83,10 +87,10 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
 
     it('should handle different action types defined in matrix', async () => {
       const actionTypes = ['warn', 'mute_temp', 'mute_permanent', 'block', 'report'];
-      
-      actionTypes.forEach(actionType => {
+
+      actionTypes.forEach((actionType) => {
         // Check that these action types exist in the action matrix
-        const hasActionInMatrix = Object.values(shieldService.actionMatrix).some(level => 
+        const hasActionInMatrix = Object.values(shieldService.actionMatrix).some((level) =>
           Object.values(level).includes(actionType)
         );
         expect(hasActionInMatrix).toBe(true);
@@ -127,7 +131,7 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
     it('should handle database connection errors', async () => {
       const organizationId = 'org123';
       const comment = { platform: 'twitter', platform_user_id: 'user123' };
-      
+
       // Mock database error
       shieldService.supabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnThis(),
@@ -138,9 +142,11 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
       shieldService.costControl.canUseShield = jest.fn().mockResolvedValue({ allowed: true });
 
       // Should handle error gracefully
-      const result = await shieldService.analyzeForShield(organizationId, comment, {
-        toxicityScore: 0.7
-      }).catch(error => ({ error: error.message }));
+      const result = await shieldService
+        .analyzeForShield(organizationId, comment, {
+          toxicityScore: 0.7
+        })
+        .catch((error) => ({ error: error.message }));
 
       expect(result).toBeDefined();
     });
@@ -150,17 +156,19 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
       const comment = { platform: 'twitter', platform_user_id: 'user123' };
 
       // Mock cost control service failure
-      shieldService.costControl.canUseShield = jest.fn().mockRejectedValue(
-        new Error('Cost control service unavailable')
-      );
+      shieldService.costControl.canUseShield = jest
+        .fn()
+        .mockRejectedValue(new Error('Cost control service unavailable'));
 
-      const result = await shieldService.analyzeForShield(organizationId, comment, {
-        toxicityScore: 0.8
-      }).catch(error => ({ 
-        shieldActive: false, 
-        error: error.message,
-        fallback: true 
-      }));
+      const result = await shieldService
+        .analyzeForShield(organizationId, comment, {
+          toxicityScore: 0.8
+        })
+        .catch((error) => ({
+          shieldActive: false,
+          error: error.message,
+          fallback: true
+        }));
 
       expect(result.shieldActive).toBe(false);
       expect(result.error).toContain('unavailable');
@@ -185,9 +193,9 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
 
     it('should handle disabled Shield service', async () => {
       const disabledShield = new ShieldService({ enabled: false });
-      
+
       const result = await disabledShield.analyzeForShield('org123', {}, {});
-      
+
       expect(result.shieldActive).toBe(false);
       expect(result.reason).toBe('disabled');
     });
@@ -196,18 +204,20 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
   describe('Performance and Concurrent Processing', () => {
     it('should handle multiple concurrent Shield analyses', async () => {
       const organizationId = 'org123';
-      const comments = Array(5).fill(null).map((_, i) => ({
-        platform: 'twitter',
-        platform_user_id: `user-${i}`,
-        content: simulateToxicComment().comment
-      }));
+      const comments = Array(5)
+        .fill(null)
+        .map((_, i) => ({
+          platform: 'twitter',
+          platform_user_id: `user-${i}`,
+          content: simulateToxicComment().comment
+        }));
 
       shieldService.costControl.canUseShield = jest.fn().mockResolvedValue({ allowed: true });
       shieldService.getUserBehavior = jest.fn().mockResolvedValue({ reincidenceCount: 0 });
 
       const startTime = Date.now();
       const results = await Promise.all(
-        comments.map(comment => 
+        comments.map((comment) =>
           shieldService.analyzeForShield(organizationId, comment, {
             toxicityScore: 0.7,
             categories: ['TOXICITY']
@@ -218,7 +228,7 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
 
       expect(results).toHaveLength(5);
       expect(duration).toBeLessThan(1000); // Should complete in under 1 second
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.shieldActive).toBe(true);
       });
     });
@@ -228,8 +238,9 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
       const org2 = 'org2';
       const comment = { platform: 'twitter', platform_user_id: 'user123' };
 
-      shieldService.costControl.canUseShield = jest.fn()
-        .mockResolvedValueOnce({ allowed: true })  // org1
+      shieldService.costControl.canUseShield = jest
+        .fn()
+        .mockResolvedValueOnce({ allowed: true }) // org1
         .mockResolvedValueOnce({ allowed: false }); // org2
 
       const [result1, result2] = await Promise.all([

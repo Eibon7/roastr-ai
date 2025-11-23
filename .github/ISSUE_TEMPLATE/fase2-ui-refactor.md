@@ -1,7 +1,7 @@
 ---
-name: "Fase 2: Migración UI - Dashboard + Compose + Integrations + Connect"
+name: 'Fase 2: Migración UI - Dashboard + Compose + Integrations + Connect'
 about: Migrar 4 pantallas principales a shadcn/ui (parte del Epic #846)
-title: "feat(ui): Fase 2 - Migrar Dashboard, Compose, Integrations, Connect a shadcn/ui"
+title: 'feat(ui): Fase 2 - Migrar Dashboard, Compose, Integrations, Connect a shadcn/ui'
 labels: ui, frontend, refactor, enhancement, area:ui
 assignees: ''
 ---
@@ -96,4 +96,3 @@ Antes de merge, verificar:
 - [ ] CodeRabbit review aprobado
 - [ ] Screenshots documentados
 - [ ] PR mergeada a `main`
-

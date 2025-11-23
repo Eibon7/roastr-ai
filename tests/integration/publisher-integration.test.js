@@ -1,15 +1,15 @@
 /**
  * Publisher Integration Tests
- * 
+ *
  * Tests for PublisherWorker according to Issue #456 AC:
  * - Persistencia de post_id: Guardar platform_response_id en tabla responses después de publicación exitosa
  * - Manejo de rate limits: Usar exponential backoff de BaseWorker para errores 429
- * - Gestión de errores 4xx/5xx: 
+ * - Gestión de errores 4xx/5xx:
  *   - 4xx permanentes: no reintentar (401, 403, 400)
  *   - 5xx transitorios: reintentar con backoff (500, 502, 503, 504)
  * - Idempotencia: Verificar si platform_response_id ya existe antes de publicar
  * - Logging completo: Registrar cada intento, resultado, y platform_response_id
- * 
+ *
  * Related Issue: #456
  */
 
@@ -169,13 +169,13 @@ describe('PublisherWorker Integration Tests', () => {
 
       // Verify database update was called
       expect(mockSupabase.from).toHaveBeenCalledWith('responses');
-      
+
       // Verify update was called with correct data
       const updateCalls = mockSupabase.from.mock.results
-        .map(r => r.value?.update?.mock?.calls)
+        .map((r) => r.value?.update?.mock?.calls)
         .flat()
         .filter(Boolean);
-      
+
       expect(updateCalls.length).toBeGreaterThan(0);
       const updateCall = updateCalls[updateCalls.length - 1];
       expect(updateCall[0]).toMatchObject({
@@ -422,9 +422,11 @@ describe('PublisherWorker Integration Tests', () => {
       }
 
       // Verify error logging was called
-      const errorLogCalls = logSpy.mock.calls.filter(call => call[0] === 'error' && call[1] === 'Publication failed');
+      const errorLogCalls = logSpy.mock.calls.filter(
+        (call) => call[0] === 'error' && call[1] === 'Publication failed'
+      );
       expect(errorLogCalls.length).toBeGreaterThan(0);
-      
+
       const errorLogCall = errorLogCalls[0];
       expect(errorLogCall[2]).toMatchObject({
         responseId: 'response-123',
@@ -505,4 +507,3 @@ describe('PublisherWorker Integration Tests', () => {
     });
   });
 });
-

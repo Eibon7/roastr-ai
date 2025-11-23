@@ -5,9 +5,9 @@ const path = require('path');
 
 async function testPlaywrightMCP() {
   console.log('🧪 Testing Playwright MCP Server...\n');
-  
+
   const serverPath = path.join(__dirname, '..', 'playwright-mcp-server.js');
-  
+
   const tests = [
     {
       name: 'Browse Test',
@@ -27,7 +27,7 @@ async function testPlaywrightMCP() {
       name: 'Multi-Viewport Test',
       request: {
         method: 'multi_viewport_test',
-        params: { 
+        params: {
           url: 'http://localhost:3000',
           outputDir: './test-evidence',
           testName: 'roastr-viewports'
@@ -42,28 +42,28 @@ async function testPlaywrightMCP() {
       }
     }
   ];
-  
+
   for (const test of tests) {
     console.log(`📋 Running: ${test.name}`);
-    
+
     const child = spawn('node', [serverPath], {
       env: { ...process.env, MCP_TEST_MODE: 'true' }
     });
-    
+
     let output = '';
-    
+
     child.stdout.on('data', (data) => {
       output += data.toString();
     });
-    
+
     child.stderr.on('data', (data) => {
       // Ignore stderr (initialization messages)
     });
-    
+
     // Send request
     child.stdin.write(JSON.stringify(test.request) + '\n');
     child.stdin.end();
-    
+
     await new Promise((resolve) => {
       child.on('close', () => {
         try {
@@ -82,7 +82,7 @@ async function testPlaywrightMCP() {
       });
     });
   }
-  
+
   console.log('🎉 Playwright MCP Server testing complete!');
   console.log('\nTo use in Claude:');
   console.log('1. Restart Claude Code to load the MCP configuration');

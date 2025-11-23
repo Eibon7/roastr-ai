@@ -112,6 +112,7 @@ CREATE INDEX idx_analytics_events_org_category_time
 All aggregation queries use defensive null handling:
 
 #### Pattern 1: COALESCE for default values
+
 ```sql
 SELECT
   COALESCE(SUM(toxicity_score), 0) as total_toxicity,
@@ -121,6 +122,7 @@ WHERE organization_id = $1;
 ```
 
 #### Pattern 2: NULLIF to prevent division by zero
+
 ```sql
 SELECT
   COALESCE(
@@ -132,6 +134,7 @@ FROM analytics_aggregates;
 ```
 
 #### Pattern 3: Safe percentage calculations
+
 ```sql
 SELECT
   CASE
@@ -200,14 +203,14 @@ async function getUsageAnalytics(organizationId, startDate, endDate) {
 
   // Platform breakdown
   const platformBreakdown = {};
-  snapshots.forEach(snapshot => {
+  snapshots.forEach((snapshot) => {
     Object.entries(snapshot.roasts_by_platform || {}).forEach(([platform, count]) => {
       platformBreakdown[platform] = (platformBreakdown[platform] || 0) + count;
     });
   });
 
   // Time series data
-  const timeSeries = snapshots.map(s => ({
+  const timeSeries = snapshots.map((s) => ({
     date: s.period_start,
     roasts: s.total_roasts,
     analyses: s.total_analyses,
@@ -234,30 +237,34 @@ async function getPerformanceAnalytics(organizationId, startDate, endDate) {
   // Get performance metrics from roast_metadata
   const { data: metrics } = await supabase
     .from('roast_metadata')
-    .select(`
+    .select(
+      `
       rqc_score,
       response_time_ms,
       quality_metrics,
       responses!inner(organization_id, created_at)
-    `)
+    `
+    )
     .eq('responses.organization_id', organizationId)
     .gte('responses.created_at', startDate)
     .lte('responses.created_at', endDate);
 
   // Calculate averages (with null safety to prevent divide-by-zero)
-  const avgRQCScore = metrics.length > 0
-    ? metrics.reduce((sum, m) => sum + (m.rqc_score || 0), 0) / metrics.length
-    : 0;
-  const avgResponseTime = metrics.length > 0
-    ? metrics.reduce((sum, m) => sum + (m.response_time_ms || 0), 0) / metrics.length
-    : 0;
+  const avgRQCScore =
+    metrics.length > 0
+      ? metrics.reduce((sum, m) => sum + (m.rqc_score || 0), 0) / metrics.length
+      : 0;
+  const avgResponseTime =
+    metrics.length > 0
+      ? metrics.reduce((sum, m) => sum + (m.response_time_ms || 0), 0) / metrics.length
+      : 0;
 
   // Quality distribution
   const qualityDistribution = {
-    excellent: metrics.filter(m => m.rqc_score >= 0.9).length,
-    good: metrics.filter(m => m.rqc_score >= 0.7 && m.rqc_score < 0.9).length,
-    fair: metrics.filter(m => m.rqc_score >= 0.5 && m.rqc_score < 0.7).length,
-    poor: metrics.filter(m => m.rqc_score < 0.5).length
+    excellent: metrics.filter((m) => m.rqc_score >= 0.9).length,
+    good: metrics.filter((m) => m.rqc_score >= 0.7 && m.rqc_score < 0.9).length,
+    fair: metrics.filter((m) => m.rqc_score >= 0.5 && m.rqc_score < 0.7).length,
+    poor: metrics.filter((m) => m.rqc_score < 0.5).length
   };
 
   // User approval rate (from model_feedback if available)
@@ -268,8 +275,8 @@ async function getPerformanceAnalytics(organizationId, startDate, endDate) {
     .gte('created_at', startDate)
     .lte('created_at', endDate);
 
-  const approvals = feedback.filter(f => f.feedback_type === 'approved').length;
-  const rejections = feedback.filter(f => f.feedback_type === 'rejected').length;
+  const approvals = feedback.filter((f) => f.feedback_type === 'approved').length;
+  const rejections = feedback.filter((f) => f.feedback_type === 'rejected').length;
   const approvalRate = feedback.length > 0 ? approvals / feedback.length : null;
 
   return {
@@ -355,10 +362,12 @@ async function getEngagementAnalytics(organizationId, startDate, endDate) {
   // Get responses with engagement data
   const { data: responses } = await supabase
     .from('responses')
-    .select(`
+    .select(
+      `
       *,
       comments(platform, platform_username)
-    `)
+    `
+    )
     .eq('organization_id', organizationId)
     .gte('created_at', startDate)
     .lte('created_at', endDate);
@@ -369,7 +378,7 @@ async function getEngagementAnalytics(organizationId, startDate, endDate) {
   const totalShares = responses.reduce((sum, r) => sum + (r.metadata?.shares || 0), 0);
 
   // Identify viral roasts (> 1000 likes)
-  const viralRoasts = responses.filter(r => (r.metadata?.likes || 0) > 1000);
+  const viralRoasts = responses.filter((r) => (r.metadata?.likes || 0) > 1000);
 
   // Engagement by platform
   const engagementByPlatform = responses.reduce((acc, r) => {
@@ -385,7 +394,7 @@ async function getEngagementAnalytics(organizationId, startDate, endDate) {
   }, {});
 
   // Calculate engagement rate
-  Object.keys(engagementByPlatform).forEach(platform => {
+  Object.keys(engagementByPlatform).forEach((platform) => {
     const data = engagementByPlatform[platform];
     data.engagementRate = (data.likes + data.replies + data.shares) / data.roasts;
   });
@@ -394,7 +403,7 @@ async function getEngagementAnalytics(organizationId, startDate, endDate) {
   const topRoasts = responses
     .sort((a, b) => (b.metadata?.likes || 0) - (a.metadata?.likes || 0))
     .slice(0, 10)
-    .map(r => ({
+    .map((r) => ({
       text: r.response_text,
       likes: r.metadata?.likes || 0,
       platform: r.comments.platform,
@@ -436,6 +445,7 @@ WHERE ae.organization_id = $1
 ```
 
 **Key safety checks**:
+
 - COALESCE for missing JSONB fields
 - jsonb_typeof to validate array types
 - Explicit NULL checks before accessing nested fields
@@ -471,7 +481,7 @@ async function getShieldAnalytics(organizationId, startDate, endDate) {
     .eq('organization_id', organizationId)
     .gte('updated_at', startDate);
 
-  const recidivismRate = recidivism.filter(r => r.total_warnings > 1).length / recidivism.length;
+  const recidivismRate = recidivism.filter((r) => r.total_warnings > 1).length / recidivism.length;
 
   // Calculate effectiveness
   const totalComments = await getTotalComments(organizationId, startDate, endDate);
@@ -505,12 +515,13 @@ async function generateRecommendations(organizationId) {
   const usageAnalytics = await getUsageAnalytics(organizationId, startDate, endDate);
 
   // Cost optimization recommendations
-  if (costAnalytics.avgCostPerRoast > 10) { // > $0.10 per roast
+  if (costAnalytics.avgCostPerRoast > 10) {
+    // > $0.10 per roast
     recommendations.push({
       type: 'cost_optimization',
       priority: 'high',
       title: 'Enable RQC to reduce failed generations',
-      description: `Your average cost per roast ($${(costAnalytics.avgCostPerRoast / 100).toFixed(2)}) is higher than optimal. Enabling RQC can reduce failed generations by 15%, saving approximately $${(costAnalytics.totalCost * 0.15 / 100).toFixed(2)} per month.`,
+      description: `Your average cost per roast ($${(costAnalytics.avgCostPerRoast / 100).toFixed(2)}) is higher than optimal. Enabling RQC can reduce failed generations by 15%, saving approximately $${((costAnalytics.totalCost * 0.15) / 100).toFixed(2)} per month.`,
       estimated_savings_cents: Math.floor(costAnalytics.totalCost * 0.15),
       actions: [{ action: 'enable_rqc', params: {} }]
     });
@@ -534,7 +545,8 @@ async function generateRecommendations(organizationId) {
       type: 'engagement_boost',
       priority: 'medium',
       title: 'Expand to YouTube for higher engagement',
-      description: 'YouTube comments typically have 3x higher engagement than Twitter. Consider adding YouTube integration.',
+      description:
+        'YouTube comments typically have 3x higher engagement than Twitter. Consider adding YouTube integration.',
       estimated_engagement_increase: 3.0,
       actions: [{ action: 'add_platform', params: { platform: 'youtube' } }]
     });
@@ -647,7 +659,7 @@ describe('AnalyticsService', () => {
   test('generates cost recommendations when cost is high', async () => {
     const recommendations = await generateRecommendations(highCostOrgId);
 
-    const costRec = recommendations.find(r => r.type === 'cost_optimization');
+    const costRec = recommendations.find((r) => r.type === 'cost_optimization');
     expect(costRec).toBeDefined();
     expect(costRec.priority).toBe('high');
   });
@@ -668,12 +680,12 @@ describe('AnalyticsService', () => {
 
 ## Error Handling
 
-| Error | Cause | Resolution |
-|-------|-------|------------|
-| `Insufficient data` | < 1 day of usage data | Return empty analytics with message |
-| `Plan restriction` | Analytics not available on Free plan | Upgrade to Pro+ for analytics |
-| `Snapshot generation failed` | Database error | Retry with exponential backoff |
-| `Recommendation generation timeout` | Complex calculations | Simplify recommendation logic |
+| Error                               | Cause                                | Resolution                          |
+| ----------------------------------- | ------------------------------------ | ----------------------------------- |
+| `Insufficient data`                 | < 1 day of usage data                | Return empty analytics with message |
+| `Plan restriction`                  | Analytics not available on Free plan | Upgrade to Pro+ for analytics       |
+| `Snapshot generation failed`        | Database error                       | Retry with exponential backoff      |
+| `Recommendation generation timeout` | Complex calculations                 | Simplify recommendation logic       |
 
 ## Monitoring & Alerts
 
@@ -695,7 +707,6 @@ describe('AnalyticsService', () => {
 }
 ```
 
-
 ## Agentes Relevantes
 
 Los siguientes agentes son responsables de mantener este nodo:
@@ -704,7 +715,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Test Engineer**
 - **Backend Developer**
 - **Data Analyst**
-
 
 ## Related Nodes
 

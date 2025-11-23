@@ -4,7 +4,7 @@ const crypto = require('crypto');
 
 /**
  * Shield Persistence Service
- * 
+ *
  * Manages Shield event persistence, offender tracking, and recidivism analysis
  * for the Shield decision engine. Handles GDPR-compliant data storage and retrieval.
  */
@@ -12,22 +12,20 @@ class ShieldPersistenceService {
   constructor(config = {}) {
     // Validate environment variables for Supabase connection
     this.validateEnvironment();
-    
-    this.supabase = config.supabase || createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
-    );
-    
+
+    this.supabase =
+      config.supabase || createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
     this.logger = config.logger || logger;
     this.recidivismWindowDays = config.recidivismWindowDays || 90;
   }
-  
+
   /**
    * Validate required environment variables
    */
   validateEnvironment() {
     const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
-    const missing = required.filter(env => !process.env[env]);
+    const missing = required.filter((env) => !process.env[env]);
 
     if (missing.length > 0) {
       const error = `Missing required environment variables: ${missing.join(', ')}`;
@@ -35,7 +33,7 @@ class ShieldPersistenceService {
       throw new Error(error);
     }
   }
-  
+
   /**
    * Generate HMAC-based hash for text anonymization
    * Uses SHA-256 with a secret salt for secure anonymization
@@ -44,36 +42,43 @@ class ShieldPersistenceService {
     if (!originalText || typeof originalText !== 'string') {
       return { hash: null, salt: null };
     }
-    
+
     // Generate unique salt for this record
     const salt = crypto.randomBytes(16).toString('hex');
-    
+
     // Use HMAC-SHA256 with salt for secure hashing
     const secret = process.env.SHIELD_ANONYMIZATION_SECRET;
 
     if (!secret) {
       if (process.env.NODE_ENV === 'production') {
-        throw new Error('SHIELD_ANONYMIZATION_SECRET environment variable is required in production');
+        throw new Error(
+          'SHIELD_ANONYMIZATION_SECRET environment variable is required in production'
+        );
       }
-      
+
       // Generate a session-based fallback secret for non-production environments
       // This ensures no hard-coded secrets while maintaining deterministic behavior within the same session
       if (!this._sessionFallbackSecret) {
         this._sessionFallbackSecret = crypto.randomBytes(32).toString('hex');
-        this.logger.warn('⚠️  Generated temporary fallback secret for Shield anonymization in non-production environment. Set SHIELD_ANONYMIZATION_SECRET for production.');
+        this.logger.warn(
+          '⚠️  Generated temporary fallback secret for Shield anonymization in non-production environment. Set SHIELD_ANONYMIZATION_SECRET for production.'
+        );
       }
-      
-      const hash = crypto.createHmac('sha256', this._sessionFallbackSecret).update(originalText + salt).digest('hex');
+
+      const hash = crypto
+        .createHmac('sha256', this._sessionFallbackSecret)
+        .update(originalText + salt)
+        .digest('hex');
       return { hash, salt };
     }
-    
+
     const hmac = crypto.createHmac('sha256', secret);
     hmac.update(originalText + salt);
     const hash = hmac.digest('hex');
-    
+
     return { hash, salt };
   }
-  
+
   /**
    * Anonymize text records for GDPR compliance
    * Replaces original_text with hash and clears the original content
@@ -82,9 +87,9 @@ class ShieldPersistenceService {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - 80); // 80 days ago
-      
+
       this.logger.info('Starting Shield events anonymization', { cutoffDate, batchSize });
-      
+
       // Find records that need anonymization
       const { data: recordsToAnonymize, error: selectError } = await this.supabase
         .from('shield_events')
@@ -93,24 +98,24 @@ class ShieldPersistenceService {
         .not('original_text', 'is', null)
         .lte('created_at', cutoffDate.toISOString())
         .limit(batchSize);
-      
+
       if (selectError) throw selectError;
-      
+
       if (!recordsToAnonymize || recordsToAnonymize.length === 0) {
         this.logger.info('No Shield events require anonymization');
         return { processed: 0, errors: [] };
       }
-      
+
       const results = {
         processed: 0,
         errors: []
       };
-      
+
       // Process each record
       for (const record of recordsToAnonymize) {
         try {
           const { hash, salt } = this.generateTextHash(record.original_text);
-          
+
           // Update with hash and remove original text
           const { error: updateError } = await this.supabase
             .from('shield_events')
@@ -121,7 +126,7 @@ class ShieldPersistenceService {
               anonymized_at: new Date().toISOString()
             })
             .eq('id', record.id);
-          
+
           if (updateError) {
             this.logger.error('Failed to anonymize Shield event', {
               eventId: record.id,
@@ -131,7 +136,6 @@ class ShieldPersistenceService {
           } else {
             results.processed++;
           }
-          
         } catch (recordError) {
           this.logger.error('Error processing Shield event for anonymization', {
             eventId: record.id,
@@ -140,9 +144,9 @@ class ShieldPersistenceService {
           results.errors.push({ id: record.id, error: recordError.message });
         }
       }
-      
+
       this.logger.info('Shield events anonymization completed', results);
-      
+
       // Log the anonymization operation
       await this.logRetentionOperation('anonymize', 'success', {
         recordsProcessed: recordsToAnonymize.length,
@@ -150,23 +154,22 @@ class ShieldPersistenceService {
         recordsFailed: results.errors.length,
         cutoffDate: cutoffDate.toISOString()
       });
-      
+
       return results;
-      
     } catch (error) {
       this.logger.error('Shield events anonymization failed', {
         error: error.message
       });
-      
+
       // Log failed operation
       await this.logRetentionOperation('anonymize', 'failed', {
         error: error.message
       });
-      
+
       throw error;
     }
   }
-  
+
   /**
    * Log retention operations for audit purposes
    */
@@ -185,11 +188,9 @@ class ShieldPersistenceService {
           timestamp: new Date().toISOString()
         }
       };
-      
-      const { error } = await this.supabase
-        .from('shield_retention_log')
-        .insert(logData);
-      
+
+      const { error } = await this.supabase.from('shield_retention_log').insert(logData);
+
       if (error) {
         this.logger.error('Failed to log retention operation', {
           operationType,
@@ -197,7 +198,6 @@ class ShieldPersistenceService {
           error: error.message
         });
       }
-      
     } catch (logError) {
       this.logger.error('Error logging retention operation', {
         operationType,
@@ -206,7 +206,7 @@ class ShieldPersistenceService {
       });
     }
   }
-  
+
   /**
    * Record a Shield event
    */
@@ -238,7 +238,7 @@ class ShieldPersistenceService {
         textHash = hashResult.hash;
         textSalt = hashResult.salt;
       }
-      
+
       const eventData = {
         organization_id: organizationId,
         user_id: userId,
@@ -261,15 +261,15 @@ class ShieldPersistenceService {
         metadata,
         created_at: new Date().toISOString()
       };
-      
+
       const { data, error } = await this.supabase
         .from('shield_events')
         .insert(eventData)
         .select()
         .single();
-      
+
       if (error) throw error;
-      
+
       this.logger.info('Shield event recorded', {
         eventId: data.id,
         platform,
@@ -277,9 +277,8 @@ class ShieldPersistenceService {
         externalAuthorId,
         hasOriginalText: !!originalText
       });
-      
+
       return data;
-      
     } catch (error) {
       this.logger.error('Failed to record Shield event', {
         organizationId,
@@ -290,7 +289,7 @@ class ShieldPersistenceService {
       throw error;
     }
   }
-  
+
   /**
    * Update Shield event status (e.g., when action is executed)
    */
@@ -300,32 +299,31 @@ class ShieldPersistenceService {
         action_status: status,
         updated_at: new Date().toISOString()
       };
-      
+
       if (executedAt) {
         updateData.executed_at = executedAt;
       }
-      
+
       if (actionDetails) {
         updateData.action_details = actionDetails;
       }
-      
+
       const { data, error } = await this.supabase
         .from('shield_events')
         .update(updateData)
         .eq('id', eventId)
         .select()
         .single();
-      
+
       if (error) throw error;
-      
+
       this.logger.info('Shield event status updated', {
         eventId,
         status,
         executedAt
       });
-      
+
       return data;
-      
     } catch (error) {
       this.logger.error('Failed to update Shield event status', {
         eventId,
@@ -335,7 +333,7 @@ class ShieldPersistenceService {
       throw error;
     }
   }
-  
+
   /**
    * Purge Shield events older than 90 days for GDPR compliance
    */
@@ -343,44 +341,43 @@ class ShieldPersistenceService {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - 90); // 90 days ago
-      
+
       this.logger.info('Starting Shield events purge', { cutoffDate, batchSize });
-      
+
       // Delete records older than 90 days
       const { count, error } = await this.supabase
         .from('shield_events')
         .delete({ count: 'exact' })
         .lte('created_at', cutoffDate.toISOString());
-      
+
       if (error) throw error;
-      
+
       const purgedCount = count || 0;
-      
+
       this.logger.info('Shield events purge completed', { purgedCount });
-      
+
       // Log the purge operation
       await this.logRetentionOperation('purge', 'success', {
         recordsProcessed: purgedCount,
         recordsPurged: purgedCount,
         cutoffDate: cutoffDate.toISOString()
       });
-      
+
       return { purged: purgedCount };
-      
     } catch (error) {
       this.logger.error('Shield events purge failed', {
         error: error.message
       });
-      
+
       // Log failed operation
       await this.logRetentionOperation('purge', 'failed', {
         error: error.message
       });
-      
+
       throw error;
     }
   }
-  
+
   /**
    * Get offender history for recidivism analysis
    */
@@ -389,7 +386,7 @@ class ShieldPersistenceService {
       const lookbackDays = windowDays || this.recidivismWindowDays;
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - lookbackDays);
-      
+
       // Get offender profile
       const { data: profile, error: profileError } = await this.supabase
         .from('offender_profiles')
@@ -399,15 +396,17 @@ class ShieldPersistenceService {
         .eq('external_author_id', externalAuthorId)
         .gte('last_offense_at', cutoffDate.toISOString())
         .single();
-      
-      if (profileError && profileError.code !== 'PGRST116') { // Not found is OK
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        // Not found is OK
         throw profileError;
       }
-      
+
       // Get recent Shield events
       const { data: events, error: eventsError } = await this.supabase
         .from('shield_events')
-        .select(`
+        .select(
+          `
           id,
           external_comment_id,
           toxicity_score,
@@ -416,16 +415,17 @@ class ShieldPersistenceService {
           action_status,
           created_at,
           executed_at
-        `)
+        `
+        )
         .eq('organization_id', organizationId)
         .eq('platform', platform)
         .eq('external_author_id', externalAuthorId)
         .gte('created_at', cutoffDate.toISOString())
         .order('created_at', { ascending: false })
         .limit(50);
-      
+
       if (eventsError) throw eventsError;
-      
+
       const history = {
         profile: profile || null,
         events: events || [],
@@ -438,7 +438,7 @@ class ShieldPersistenceService {
         escalationLevel: profile?.escalation_level || 0,
         recentActionsSummary: this.summarizeRecentActions(events || [])
       };
-      
+
       this.logger.debug('Retrieved offender history', {
         organizationId,
         platform,
@@ -447,9 +447,8 @@ class ShieldPersistenceService {
         totalOffenses: history.totalOffenses,
         riskLevel: history.riskLevel
       });
-      
+
       return history;
-      
     } catch (error) {
       this.logger.error('Failed to get offender history', {
         organizationId,
@@ -460,7 +459,7 @@ class ShieldPersistenceService {
       throw error;
     }
   }
-  
+
   /**
    * Check if user is a repeat offender
    */
@@ -468,7 +467,7 @@ class ShieldPersistenceService {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - thresholdDays);
-      
+
       const { count, error } = await this.supabase
         .from('shield_events')
         .select('id', { count: 'exact', head: true })
@@ -477,11 +476,11 @@ class ShieldPersistenceService {
         .eq('external_author_id', externalAuthorId)
         .eq('action_status', 'executed')
         .gte('created_at', cutoffDate.toISOString());
-      
+
       if (error) throw error;
-      
+
       const isRepeat = (count || 0) > 1;
-      
+
       this.logger.debug('Repeat offender check', {
         organizationId,
         platform,
@@ -490,13 +489,12 @@ class ShieldPersistenceService {
         thresholdDays,
         isRepeat
       });
-      
+
       return {
         isRepeat,
         offenseCount: count || 0,
         thresholdDays
       };
-      
     } catch (error) {
       this.logger.error('Failed to check repeat offender status', {
         organizationId,
@@ -507,7 +505,7 @@ class ShieldPersistenceService {
       return { isRepeat: false, offenseCount: 0, error: error.message };
     }
   }
-  
+
   /**
    * Get platform-wide offender statistics
    */
@@ -515,41 +513,45 @@ class ShieldPersistenceService {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - windowDays);
-      
+
       // Get overall statistics
       const { data: stats, error: statsError } = await this.supabase
         .from('shield_events')
-        .select(`
+        .select(
+          `
           action_taken,
           action_status,
           toxicity_score,
           created_at
-        `)
+        `
+        )
         .eq('organization_id', organizationId)
         .eq('platform', platform)
         .gte('created_at', cutoffDate.toISOString());
-      
+
       if (statsError) throw statsError;
-      
+
       // Get top offenders
       const { data: topOffenders, error: offendersError } = await this.supabase
         .from('offender_profiles')
-        .select(`
+        .select(
+          `
           external_author_id,
           external_author_username,
           offense_count,
           severity_level,
           last_offense_at,
           actions_taken
-        `)
+        `
+        )
         .eq('organization_id', organizationId)
         .eq('platform', platform)
         .gte('last_offense_at', cutoffDate.toISOString())
         .order('offense_count', { ascending: false })
         .limit(10);
-      
+
       if (offendersError) throw offendersError;
-      
+
       const result = {
         platform,
         windowDays,
@@ -559,9 +561,8 @@ class ShieldPersistenceService {
         averageToxicity: this.calculateAverageToxicity(stats || []),
         severityDistribution: this.calculateSeverityDistribution(topOffenders || [])
       };
-      
+
       return result;
-      
     } catch (error) {
       this.logger.error('Failed to get platform offender stats', {
         organizationId,
@@ -571,7 +572,7 @@ class ShieldPersistenceService {
       throw error;
     }
   }
-  
+
   /**
    * Search Shield events with filters
    */
@@ -590,7 +591,8 @@ class ShieldPersistenceService {
     try {
       let query = this.supabase
         .from('shield_events')
-        .select(`
+        .select(
+          `
           id,
           platform,
           external_comment_id,
@@ -605,30 +607,32 @@ class ShieldPersistenceService {
           created_at,
           executed_at,
           anonymized_at
-        `, { count: 'exact' })
+        `,
+          { count: 'exact' }
+        )
         .eq('organization_id', organizationId);
-      
+
       if (platform) query = query.eq('platform', platform);
       if (externalAuthorId) query = query.eq('external_author_id', externalAuthorId);
       if (actionTaken) query = query.eq('action_taken', actionTaken);
       if (actionStatus) query = query.eq('action_status', actionStatus);
-      if (minToxicityScore !== null && minToxicityScore !== undefined) query = query.gte('toxicity_score', minToxicityScore);
+      if (minToxicityScore !== null && minToxicityScore !== undefined)
+        query = query.gte('toxicity_score', minToxicityScore);
       if (dateFrom) query = query.gte('created_at', dateFrom);
       if (dateTo) query = query.lte('created_at', dateTo);
-      
+
       const { data, error, count } = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
-      
+
       if (error) throw error;
-      
+
       return {
         events: data || [],
         total: count || 0,
         limit,
         offset
       };
-      
     } catch (error) {
       this.logger.error('Failed to search Shield events', {
         organizationId,
@@ -638,7 +642,7 @@ class ShieldPersistenceService {
       throw error;
     }
   }
-  
+
   /**
    * Get retention statistics
    */
@@ -648,54 +652,55 @@ class ShieldPersistenceService {
       if (!organizationId) {
         throw new Error('organizationId is required for retention stats');
       }
-      
+
       const now = new Date();
       const day80Ago = new Date(now.getTime() - 80 * 24 * 60 * 60 * 1000);
       const day90Ago = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      
+
       // Optimize retention stats using server-side aggregation to avoid full-table scans
-      const [totalResult, needingPurgeResult, needingAnonymizationResult, anonymizedResult] = await Promise.all([
-        // Total count
-        this.supabase
-          .from('shield_events')
-          .select('id', { count: 'exact', head: true })
-          .eq('organization_id', organizationId),
-        
-        // Records needing purge (older than 90 days)
-        this.supabase
-          .from('shield_events')
-          .select('id', { count: 'exact', head: true })
-          .eq('organization_id', organizationId)
-          .lte('created_at', day90Ago.toISOString()),
-        
-        // Records needing anonymization (80+ days old, not anonymized, has original text)
-        this.supabase
-          .from('shield_events')
-          .select('id', { count: 'exact', head: true })
-          .eq('organization_id', organizationId)
-          .lte('created_at', day80Ago.toISOString())
-          .is('anonymized_at', null)
-          .not('original_text', 'is', null),
-        
-        // Records already anonymized
-        this.supabase
-          .from('shield_events')
-          .select('id', { count: 'exact', head: true })
-          .eq('organization_id', organizationId)
-          .not('anonymized_at', 'is', null)
-      ]);
-      
+      const [totalResult, needingPurgeResult, needingAnonymizationResult, anonymizedResult] =
+        await Promise.all([
+          // Total count
+          this.supabase
+            .from('shield_events')
+            .select('id', { count: 'exact', head: true })
+            .eq('organization_id', organizationId),
+
+          // Records needing purge (older than 90 days)
+          this.supabase
+            .from('shield_events')
+            .select('id', { count: 'exact', head: true })
+            .eq('organization_id', organizationId)
+            .lte('created_at', day90Ago.toISOString()),
+
+          // Records needing anonymization (80+ days old, not anonymized, has original text)
+          this.supabase
+            .from('shield_events')
+            .select('id', { count: 'exact', head: true })
+            .eq('organization_id', organizationId)
+            .lte('created_at', day80Ago.toISOString())
+            .is('anonymized_at', null)
+            .not('original_text', 'is', null),
+
+          // Records already anonymized
+          this.supabase
+            .from('shield_events')
+            .select('id', { count: 'exact', head: true })
+            .eq('organization_id', organizationId)
+            .not('anonymized_at', 'is', null)
+        ]);
+
       // Check for errors
       if (totalResult.error) throw totalResult.error;
       if (needingPurgeResult.error) throw needingPurgeResult.error;
       if (needingAnonymizationResult.error) throw needingAnonymizationResult.error;
       if (anonymizedResult.error) throw anonymizedResult.error;
-      
+
       const total = totalResult.count || 0;
       const needingPurge = needingPurgeResult.count || 0;
       const needingAnonymization = needingAnonymizationResult.count || 0;
       const anonymized = anonymizedResult.count || 0;
-      
+
       const stats = {
         total,
         needingAnonymization,
@@ -703,11 +708,12 @@ class ShieldPersistenceService {
         needingPurge,
         withinRetention: Math.max(0, total - needingPurge - anonymized)
       };
-      
+
       // Get recent retention log entries (admin-only, global scope)
       const { data: recentLogs, error: logsError } = await this.supabase
         .from('shield_retention_log')
-        .select(`
+        .select(
+          `
           operation_type,
           operation_status,
           records_processed,
@@ -716,42 +722,43 @@ class ShieldPersistenceService {
           started_at,
           completed_at,
           processing_time_ms
-        `, { count: 'exact' })
+        `,
+          { count: 'exact' }
+        )
         .order('completed_at', { ascending: false })
         .limit(10);
-      
+
       if (logsError) throw logsError;
-      
+
       return {
         ...stats,
         recentOperations: recentLogs || []
       };
-      
     } catch (error) {
       this.logger.error('Failed to get retention stats', { error: error.message });
       throw error;
     }
   }
-  
+
   /**
    * Helper: Summarize recent actions
    */
   summarizeRecentActions(events) {
     const summary = {};
-    
-    events.forEach(event => {
+
+    events.forEach((event) => {
       // Handle both snake_case and camelCase formats
       const actionStatus = event.action_status || event.actionStatus;
       const actionTaken = event.action_taken || event.actionTaken;
-      
+
       if (actionStatus === 'executed') {
         summary[actionTaken] = (summary[actionTaken] || 0) + 1;
       }
     });
-    
+
     return summary;
   }
-  
+
   /**
    * Helper: Summarize actions from events
    */
@@ -763,47 +770,47 @@ class ShieldPersistenceService {
       executed: 0,
       failed: 0
     };
-    
-    events.forEach(event => {
+
+    events.forEach((event) => {
       // Handle both snake_case and camelCase formats
       const actionTaken = event.action_taken || event.actionTaken;
       const actionStatus = event.action_status || event.actionStatus;
-      
+
       summary.byAction[actionTaken] = (summary.byAction[actionTaken] || 0) + 1;
       summary.byStatus[actionStatus] = (summary.byStatus[actionStatus] || 0) + 1;
-      
+
       if (actionStatus === 'executed') summary.executed++;
       if (actionStatus === 'failed') summary.failed++;
     });
-    
+
     return summary;
   }
-  
+
   /**
    * Helper: Calculate average toxicity
    */
   calculateAverageToxicity(events) {
     // Handle both snake_case and camelCase formats
     const scores = events
-      .filter(e => (e.toxicity_score || e.toxicityScore) !== null)
-      .map(e => e.toxicity_score || e.toxicityScore);
+      .filter((e) => (e.toxicity_score || e.toxicityScore) !== null)
+      .map((e) => e.toxicity_score || e.toxicityScore);
     return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
   }
-  
+
   /**
    * Helper: Calculate severity distribution
    */
   calculateSeverityDistribution(offenders) {
     const distribution = { low: 0, medium: 0, high: 0, critical: 0 };
-    
-    offenders.forEach(offender => {
+
+    offenders.forEach((offender) => {
       // Handle both snake_case and camelCase formats
       const severityLevel = offender.severity_level || offender.severityLevel;
       if (severityLevel && distribution.hasOwnProperty(severityLevel)) {
         distribution[severityLevel]++;
       }
     });
-    
+
     return distribution;
   }
 }

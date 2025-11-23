@@ -1,13 +1,18 @@
 /**
  * Demo Flow E2E Test - Comprehensive pipeline validation
  * Issue #403 - Testing MVP (P0)
- * 
+ *
  * This test validates that Demo Mode uses fixtures that traverse
  * the complete pipeline without shortcuts or copy/paste
  */
 
 const request = require('supertest');
-const { setupTestEnvironment, cleanTestDatabase, TestData, waitForAsync } = require('../helpers/test-setup');
+const {
+  setupTestEnvironment,
+  cleanTestDatabase,
+  TestData,
+  waitForAsync
+} = require('../helpers/test-setup');
 const { createTestScenario, loadFixtures } = require('../helpers/fixtures-loader');
 
 // Constants for worker timeout handling in mock mode
@@ -22,9 +27,7 @@ const WORKER_TIMEOUT_MS = 5000; // Timeout for worker operations in mock mode
 function withWorkerTimeout(workerPromise, timeoutMs = WORKER_TIMEOUT_MS) {
   return Promise.race([
     workerPromise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Worker timeout')), timeoutMs)
-    )
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Worker timeout')), timeoutMs))
   ]);
 }
 
@@ -35,10 +38,10 @@ describe('[E2E] Demo Flow Pipeline', () => {
 
   beforeAll(async () => {
     await setupTestEnvironment();
-    
+
     // Import app after environment setup
     app = require('../../src/index');
-    
+
     // Create test scenario with multiple orgs
     testScenario = createTestScenario('demo-flow', {
       orgCount: 2,
@@ -90,10 +93,10 @@ describe('[E2E] Demo Flow Pipeline', () => {
 
       // 1. Ingest: Use actual FetchCommentsWorker
       console.log('📥 Testing ingest phase with real worker...');
-      
+
       const FetchCommentsWorker = require('../../src/workers/FetchCommentsWorker');
       const fetchWorker = new FetchCommentsWorker();
-      
+
       // Process comment through ingest worker
       const ingestJobData = {
         type: 'fetch_comments',
@@ -101,51 +104,55 @@ describe('[E2E] Demo Flow Pipeline', () => {
         platform: testComment.platform,
         comments: [testComment]
       };
-      
+
       try {
-        const ingestResult = await withWorkerTimeout(
-          fetchWorker.processJob(ingestJobData)
-        );
+        const ingestResult = await withWorkerTimeout(fetchWorker.processJob(ingestJobData));
         expect(ingestResult.success).toBe(true);
         console.log('✅ Ingest worker processed comment successfully');
       } catch (error) {
         // In mock mode, worker may not have all dependencies - validate structure
         expect(fetchWorker.workerType).toBe('fetch_comments');
-        expect(error.message).toMatch(/Worker timeout|connection|platform.*not found|client.*configured/i);
-        console.log('✅ Ingest worker structure validated (timeout or error expected in mock mode)');
+        expect(error.message).toMatch(
+          /Worker timeout|connection|platform.*not found|client.*configured/i
+        );
+        console.log(
+          '✅ Ingest worker structure validated (timeout or error expected in mock mode)'
+        );
       }
 
       // 2. Triage: Use actual AnalyzeToxicityWorker
       console.log('🎯 Testing triage phase with real worker...');
-      
+
       const AnalyzeToxicityWorker = require('../../src/workers/AnalyzeToxicityWorker');
       const triageWorker = new AnalyzeToxicityWorker();
-      
+
       const triageJobData = {
         type: 'analyze_toxicity',
         comment: testComment,
         organizationId: testComment.organization_id
       };
-      
+
       try {
-        const triageResult = await withWorkerTimeout(
-          triageWorker.processJob(triageJobData)
-        );
+        const triageResult = await withWorkerTimeout(triageWorker.processJob(triageJobData));
         expect(triageResult).toBeDefined();
         console.log('✅ Triage worker processed comment successfully');
       } catch (error) {
         // In mock mode, validate worker exists and has correct type
         expect(triageWorker.workerType).toBe('analyze_toxicity');
-        expect(error.message).toMatch(/Worker timeout|API.*unavailable|dependency|Perspective|not found/i);
-        console.log('✅ Triage worker structure validated (timeout or error expected in mock mode)');
+        expect(error.message).toMatch(
+          /Worker timeout|API.*unavailable|dependency|Perspective|not found/i
+        );
+        console.log(
+          '✅ Triage worker structure validated (timeout or error expected in mock mode)'
+        );
       }
 
-      // 3. Generation: Use actual GenerateReplyWorker  
+      // 3. Generation: Use actual GenerateReplyWorker
       console.log('🤖 Testing generation phase with real worker...');
-      
+
       const GenerateReplyWorker = require('../../src/workers/GenerateReplyWorker');
       const generationWorker = new GenerateReplyWorker();
-      
+
       const generationJobData = {
         type: 'generate_reply',
         comment: testComment,
@@ -153,7 +160,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
         style: 'balanced',
         language: 'spanish'
       };
-      
+
       try {
         const generationResult = await withWorkerTimeout(
           generationWorker.processJob(generationJobData)
@@ -164,7 +171,9 @@ describe('[E2E] Demo Flow Pipeline', () => {
         // In mock mode, validate worker exists and has correct type
         expect(generationWorker.workerType).toBe('generate_reply');
         expect(error.message).toMatch(/Worker timeout|model.*unavailable|OpenAI|invalid.*payload/i);
-        console.log('✅ Generation worker structure validated (timeout or error expected in mock mode)');
+        console.log(
+          '✅ Generation worker structure validated (timeout or error expected in mock mode)'
+        );
       }
 
       // 4. Publication: Verify queue system integration
@@ -208,13 +217,13 @@ describe('[E2E] Demo Flow Pipeline', () => {
       }
 
       // Verify that fixtures go through actual pipeline components
-      
+
       // 1. Check that ingest processing exists
       const ingestLogic = require('../../src/workers/FetchCommentsWorker');
       expect(typeof ingestLogic).toBe('function');
       console.log('✅ Ingest worker exists and callable');
 
-      // 2. Check that triage processing exists  
+      // 2. Check that triage processing exists
       const triageLogic = require('../../src/workers/AnalyzeToxicityWorker');
       expect(typeof triageLogic).toBe('function');
       console.log('✅ Triage worker exists and callable');
@@ -226,13 +235,13 @@ describe('[E2E] Demo Flow Pipeline', () => {
 
       // 4. Verify no direct fixture→output mapping
       const fixtures = await loadFixtures('comments', 'spanish');
-      
+
       // Ensure roastable comments don't have pre-generated responses
-      fixtures.roastable.forEach(comment => {
+      fixtures.roastable.forEach((comment) => {
         expect(comment.roast_response).toBeUndefined();
         expect(comment.generated_text).toBeUndefined();
       });
-      
+
       console.log('✅ No copy/paste shortcuts detected in fixtures');
     });
 
@@ -254,7 +263,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
 
       // Verify tracking ID propagates through pipeline
       expect(testComment.tracking_id).toBe(trackingId);
-      
+
       // Mock pipeline steps with tracking
       const pipelineSteps = [
         { step: 'ingest', status: 'processed', tracking_id: trackingId },
@@ -264,7 +273,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
       ];
 
       // Validate each step maintains traceability
-      pipelineSteps.forEach(step => {
+      pipelineSteps.forEach((step) => {
         expect(step.tracking_id).toBe(trackingId);
         expect(step.status).toBeDefined();
       });
@@ -291,19 +300,19 @@ describe('[E2E] Demo Flow Pipeline', () => {
       expect(org2.settings.auto_approval).toBe(true);
 
       // Test that fixtures are processed with org-specific settings
-      const org1Comments = testScenario.comments.filter(c => c.organization_id === org1.id);
-      const org2Comments = testScenario.comments.filter(c => c.organization_id === org2.id);
+      const org1Comments = testScenario.comments.filter((c) => c.organization_id === org1.id);
+      const org2Comments = testScenario.comments.filter((c) => c.organization_id === org2.id);
 
       expect(org1Comments.length).toBeGreaterThan(0);
       expect(org2Comments.length).toBeGreaterThan(0);
       expect(org1Comments.length).toBe(org2Comments.length);
 
       // Verify organization isolation
-      org1Comments.forEach(comment => {
+      org1Comments.forEach((comment) => {
         expect(comment.organization_id).toBe(org1.id);
       });
 
-      org2Comments.forEach(comment => {
+      org2Comments.forEach((comment) => {
         expect(comment.organization_id).toBe(org2.id);
       });
 
@@ -330,7 +339,7 @@ describe('[E2E] Demo Flow Pipeline', () => {
       const fixtures2 = await loadFixtures('comments', 'spanish');
 
       expect(fixtures1).toEqual(fixtures2);
-      
+
       // Verify fixture structure is consistent
       expect(fixtures1.roastable).toHaveLength(3);
       expect(fixtures1.shield).toHaveLength(2);

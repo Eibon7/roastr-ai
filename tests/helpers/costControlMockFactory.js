@@ -72,4 +72,3 @@ function createCostControlMock(overrides = {}) {
 module.exports = {
   createCostControlMock
 };
-

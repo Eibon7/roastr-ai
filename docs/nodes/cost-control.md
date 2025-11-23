@@ -25,6 +25,7 @@
 **Why**: Cost control performs privileged operations (usage tracking, billing, limit enforcement) that require admin-level database access. Using `SUPABASE_ANON_KEY` will cause permission errors and security violations.
 
 **Configuration**:
+
 ```bash
 # Required environment variable
 SUPABASE_SERVICE_KEY=your-service-key-here
@@ -34,6 +35,7 @@ SUPABASE_SERVICE_KEY=your-service-key-here
 ```
 
 **Implementation** (`src/services/costControl.js:11-20`):
+
 ```javascript
 constructor() {
   if (mockMode.isMockMode) {
@@ -100,6 +102,7 @@ constructor() {
 ```
 
 **Rationale:**
+
 - **ANON_KEY** has limited RLS permissions (user-level access only)
 - **SERVICE_KEY** bypasses RLS and allows admin operations across all tenants
 - Cost control needs to track usage for ALL organizations, not just one
@@ -109,17 +112,18 @@ constructor() {
 
 ### Operation Costs (in cents)
 
-| Operation | Cost | Type |
-|-----------|------|------|
-| `fetch_comment` | $0.00 | Free |
-| `analyze_toxicity` | $0.01 | Per analysis |
-| `generate_reply` | $0.05 | Per roast (OpenAI cost) |
-| `post_response` | $0.00 | Free |
-| `shield_action` | $0.02 | Per action |
+| Operation          | Cost  | Type                    |
+| ------------------ | ----- | ----------------------- |
+| `fetch_comment`    | $0.00 | Free                    |
+| `analyze_toxicity` | $0.01 | Per analysis            |
+| `generate_reply`   | $0.05 | Per roast (OpenAI cost) |
+| `post_response`    | $0.00 | Free                    |
+| `shield_action`    | $0.02 | Per action              |
 
 ### Usage Tables
 
 **Table:** `usage_records`
+
 ```sql
 CREATE TABLE usage_records (
   id UUID PRIMARY KEY,
@@ -136,6 +140,7 @@ CREATE TABLE usage_records (
 ```
 
 **Table:** `monthly_usage_summary`
+
 ```sql
 CREATE TABLE monthly_usage_summary (
   id UUID PRIMARY KEY,
@@ -468,7 +473,7 @@ async upgradePlan(organizationId, newPlanId) {
 ```javascript
 describe('CostControlService', () => {
   test('blocks operation when hard limit exceeded', async () => {
-    await simulateUsage(orgId, 'roasts', 110);  // 110% of limit
+    await simulateUsage(orgId, 'roasts', 110); // 110% of limit
 
     const result = await costControl.canPerformOperation(orgId, 'generate_reply');
 
@@ -477,7 +482,7 @@ describe('CostControlService', () => {
   });
 
   test('allows operation in grace period', async () => {
-    await simulateUsage(orgId, 'roasts', 105);  // 105% of limit (in grace)
+    await simulateUsage(orgId, 'roasts', 105); // 105% of limit (in grace)
 
     const result = await costControl.canPerformOperation(orgId, 'generate_reply');
 
@@ -506,12 +511,12 @@ describe('CostControlService', () => {
 
 ## Error Handling
 
-| Error | Cause | Resolution |
-|-------|-------|-----------|
-| `monthly_limit_exceeded` | Usage >= hard limit (110%) | Block operation, upgrade prompt |
-| `stripe_payment_failed` | Card declined | Suspend features, retry payment |
-| `invalid_plan` | Plan ID not found | Use valid plan from plan_limits table |
-| `usage_record_failed` | Database error | Retry with backoff, alert ops |
+| Error                    | Cause                      | Resolution                            |
+| ------------------------ | -------------------------- | ------------------------------------- |
+| `monthly_limit_exceeded` | Usage >= hard limit (110%) | Block operation, upgrade prompt       |
+| `stripe_payment_failed`  | Card declined              | Suspend features, retry payment       |
+| `invalid_plan`           | Plan ID not found          | Use valid plan from plan_limits table |
+| `usage_record_failed`    | Database error             | Retry with backoff, alert ops         |
 
 ## Monitoring & Alerts
 
@@ -535,7 +540,6 @@ describe('CostControlService', () => {
 }
 ```
 
-
 ## Agentes Relevantes
 
 Los siguientes agentes son responsables de mantener este nodo:
@@ -545,7 +549,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Documentation Agent**
 - **Orchestrator**
 - **Test Engineer**
-
 
 ## Related Nodes
 
@@ -562,6 +565,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Ubicación de Tests
 
 **Unit Tests** (5 archivos):
+
 - `tests/unit/services/costControl.test.js` - Core cost tracking functionality
 - `tests/unit/services/costControl.enhanced.test.js` - Enhanced features and edge cases
 - `tests/unit/services/costControl-alerts.test.js` - Alert system and notifications
@@ -569,6 +573,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - `tests/unit/services/stripeWrapper.test.js` - Stripe API integration wrapper
 
 **Integration Tests** (1 archivo):
+
 - `tests/integration/entitlementsFlow.test.js` - Full entitlements and cost control flow
 
 ### Cobertura de Tests
@@ -580,6 +585,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 ### Casos de Prueba Cubiertos
 
 **Cost Tracking:**
+
 - ✅ Usage increment per operation (roasts, análisis)
 - ✅ Organization-scoped usage tracking
 - ✅ Monthly usage reset
@@ -587,6 +593,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Cost calculation per plan tier
 
 **Entitlements & Limits:**
+
 - ✅ Plan-based limits enforcement (Free, Starter, Pro, Plus)
 - ✅ Feature flag checks per plan
 - ✅ Roast limit validation (100, 500, 1000, unlimited)
@@ -595,18 +602,21 @@ Los siguientes agentes son responsables de mantener este nodo:
 - ✅ Over-limit prevention
 
 **Alerts & Notifications:**
+
 - ✅ 80% usage warning emails
 - ✅ 100% limit reached notifications
 - ✅ Alert throttling (no spam)
 - ✅ Organization admin notifications
 
 **Stripe Integration:**
+
 - ✅ Stripe API wrapper methods
 - ✅ Error handling and retries
 - ✅ Webhook payload validation
 - ✅ Subscription status sync
 
 **Edge Cases:**
+
 - ✅ Invalid organization_id handling
 - ✅ Missing subscription data
 - ✅ Concurrent usage increments

@@ -84,14 +84,13 @@ export default function ActivityFeedCard() {
         {logs && logs.length > 0 ? (
           <div className="space-y-3">
             {logs.slice(0, 8).map((log) => (
-              <div key={log.id} className="flex items-start space-x-3 pb-2 border-b border-border/50 last:border-0 last:pb-0">
-                <div className="mt-1">
-                  {getLevelIcon(log.level)}
-                </div>
+              <div
+                key={log.id}
+                className="flex items-start space-x-3 pb-2 border-b border-border/50 last:border-0 last:pb-0"
+              >
+                <div className="mt-1">{getLevelIcon(log.level)}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm text-foreground mb-1 line-clamp-2">
-                    {log.message}
-                  </div>
+                  <div className="text-sm text-foreground mb-1 line-clamp-2">{log.message}</div>
                   <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                     <Badge variant={getLevelVariant(log.level)} className="text-xs px-1.5 py-0.5">
                       {log.level}
@@ -99,16 +98,16 @@ export default function ActivityFeedCard() {
                     <span>{log.service}</span>
                     <span>•</span>
                     <span>
-                      {new Date(log.timestamp).toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                      {new Date(log.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
                       })}
                     </span>
                   </div>
                 </div>
               </div>
             ))}
-            
+
             {logs.length > 8 && (
               <div className="text-center pt-2">
                 <button className="text-xs text-primary hover:underline">

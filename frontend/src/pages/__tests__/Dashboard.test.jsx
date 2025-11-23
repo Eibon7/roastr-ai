@@ -17,17 +17,9 @@ jest.mock('../../components/widgets', () => ({
     activity: () => <div data-testid="activity-widget">Activity Widget</div>,
     queue: () => <div data-testid="queue-widget">Queue Widget</div>,
     costs: () => <div data-testid="costs-widget">Costs Widget</div>,
-    logs: () => <div data-testid="logs-widget">Logs Widget</div>,
+    logs: () => <div data-testid="logs-widget">Logs Widget</div>
   },
-  DEFAULT_LAYOUT: [
-    'planStatus',
-    'integrations', 
-    'health',
-    'activity',
-    'queue',
-    'costs',
-    'logs'
-  ],
+  DEFAULT_LAYOUT: ['planStatus', 'integrations', 'health', 'activity', 'queue', 'costs', 'logs'],
   WIDGET_CONFIGS: {
     planStatus: {
       title: 'Plan Status',
@@ -70,14 +62,16 @@ jest.mock('../../components/widgets', () => ({
 describe('Dashboard', () => {
   test('renders dashboard header', () => {
     render(<Dashboard />);
-    
+
     expect(screen.getByRole('heading', { name: /dashboard/i })).toBeInTheDocument();
-    expect(screen.getByText('Monitor your roast bot performance and system health')).toBeInTheDocument();
+    expect(
+      screen.getByText('Monitor your roast bot performance and system health')
+    ).toBeInTheDocument();
   });
 
   test('renders all 7 widgets', () => {
     render(<Dashboard />);
-    
+
     expect(screen.getByTestId('plan-status-widget')).toBeInTheDocument();
     expect(screen.getByTestId('integrations-widget')).toBeInTheDocument();
     expect(screen.getByTestId('health-widget')).toBeInTheDocument();
@@ -89,7 +83,7 @@ describe('Dashboard', () => {
 
   test('widgets are rendered in correct order', () => {
     render(<Dashboard />);
-    
+
     const widgets = screen.getAllByTestId(/-widget$/);
     const expectedOrder = [
       'plan-status-widget',
@@ -100,7 +94,7 @@ describe('Dashboard', () => {
       'costs-widget',
       'logs-widget'
     ];
-    
+
     widgets.forEach((widget, index) => {
       expect(widget).toHaveAttribute('data-testid', expectedOrder[index]);
     });
@@ -108,12 +102,12 @@ describe('Dashboard', () => {
 
   test('applies correct grid classes to widgets', () => {
     render(<Dashboard />);
-    
+
     // Check that widgets are within containers with appropriate grid classes
     const planStatusWidget = screen.getByText('Plan Status Widget');
     const planContainer = planStatusWidget.closest('div[class*="col-span"]');
     expect(planContainer).toHaveClass('md:col-span-1');
-    
+
     const logsWidget = screen.getByText('Logs Widget');
     const logsContainer = logsWidget.closest('div[class*="col-span"]');
     expect(logsContainer).toHaveClass('md:col-span-3');
@@ -122,7 +116,7 @@ describe('Dashboard', () => {
   test('handles missing widgets gracefully', () => {
     // Console spy to check for warning
     const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-    
+
     // Mock widgets with missing widget
     jest.doMock('../../components/widgets', () => ({
       WIDGETS: {
@@ -137,20 +131,20 @@ describe('Dashboard', () => {
     }));
 
     render(<Dashboard />);
-    
+
     // The Dashboard should still render without crashing
     expect(screen.getByText('Plan Status Widget')).toBeInTheDocument();
-    
+
     consoleSpy.mockRestore();
   });
 
   test('dashboard has proper semantic structure', () => {
     render(<Dashboard />);
-    
+
     // Check for proper heading hierarchy
     const mainHeading = screen.getByRole('heading', { level: 1 });
     expect(mainHeading).toHaveTextContent('Dashboard');
-    
+
     // Check for main content structure
     const gridContainer = document.querySelector('.grid');
     expect(gridContainer).toHaveClass('grid-cols-1', 'md:grid-cols-3', 'gap-4');

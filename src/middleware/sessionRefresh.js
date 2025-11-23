@@ -30,7 +30,7 @@ function isTokenNearExpiry(payload) {
   if (!payload.exp) return false;
   const now = Math.floor(Date.now() / 1000);
   const fiveMinutes = 5 * 60; // 5 minutes in seconds
-  return (payload.exp - now) < fiveMinutes;
+  return payload.exp - now < fiveMinutes;
 }
 
 /**
@@ -83,7 +83,7 @@ async function refreshUserSession(refreshToken) {
 /**
  * Middleware to handle session refresh automatically
  * @param {Object} req - Express request object
- * @param {Object} res - Express response object  
+ * @param {Object} res - Express response object
  * @param {Function} next - Next middleware function
  */
 async function sessionRefreshMiddleware(req, res, next) {
@@ -106,7 +106,7 @@ async function sessionRefreshMiddleware(req, res, next) {
     // Check if token is near expiry
     if (isTokenNearExpiry(decoded)) {
       const refreshToken = req.headers['x-refresh-token'];
-      
+
       if (!refreshToken) {
         if (flags.isEnabled('DEBUG_SESSION')) {
           logger.info('Token near expiry but no refresh token provided');
@@ -116,7 +116,7 @@ async function sessionRefreshMiddleware(req, res, next) {
 
       try {
         const newSession = await refreshUserSession(refreshToken);
-        
+
         // Add new tokens to response headers for client to update
         res.set({
           'x-new-access-token': newSession.access_token,
@@ -135,7 +135,7 @@ async function sessionRefreshMiddleware(req, res, next) {
         if (flags.isEnabled('DEBUG_SESSION')) {
           logger.error('Auto refresh failed:', refreshError.message);
         }
-        
+
         // Don't block the request, let auth middleware handle expired token
         return next();
       }

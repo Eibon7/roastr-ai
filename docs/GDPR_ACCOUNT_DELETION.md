@@ -18,28 +18,29 @@ The account deletion system provides full GDPR compliance for user data deletion
 ### 1. Database Schema
 
 #### Account Deletion Requests Table
+
 ```sql
 CREATE TABLE account_deletion_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    
+
     -- Request details
     requested_at TIMESTAMPTZ DEFAULT NOW(),
     scheduled_deletion_at TIMESTAMPTZ NOT NULL,
     grace_period_days INTEGER DEFAULT 30,
-    
+
     -- Status
     status VARCHAR(20) DEFAULT 'pending', -- pending, cancelled, processing, completed
-    
+
     -- User info at time of request (for audit trail)
     user_email VARCHAR(255) NOT NULL,
     user_name VARCHAR(255),
-    
+
     -- Processing details
     data_exported_at TIMESTAMPTZ,
     data_export_url TEXT,
     data_export_expires_at TIMESTAMPTZ,
-    
+
     -- Completion
     completed_at TIMESTAMPTZ,
     cancelled_at TIMESTAMPTZ,
@@ -48,6 +49,7 @@ CREATE TABLE account_deletion_requests (
 ```
 
 #### Audit Logs Table
+
 ```sql
 CREATE TABLE audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -63,6 +65,7 @@ CREATE TABLE audit_logs (
 ### 2. API Endpoints
 
 #### Request Account Deletion
+
 ```http
 DELETE /api/user/account
 Content-Type: application/json
@@ -75,6 +78,7 @@ Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -91,6 +95,7 @@ Authorization: Bearer <token>
 ```
 
 #### Cancel Account Deletion
+
 ```http
 POST /api/user/account/deletion/cancel
 Content-Type: application/json
@@ -102,12 +107,14 @@ Authorization: Bearer <token>
 ```
 
 #### Check Deletion Status
+
 ```http
 GET /api/user/account/deletion/status
 Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -123,12 +130,14 @@ Authorization: Bearer <token>
 ```
 
 #### Generate Data Export
+
 ```http
 GET /api/user/data-export
 Authorization: Bearer <token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -152,8 +161,9 @@ const exportResult = await dataExportService.exportUserData(userId);
 ```
 
 **Export Contents:**
+
 - `README.txt` - Explanation of export and user rights
-- `user_profile.json` - Account information and preferences  
+- `user_profile.json` - Account information and preferences
 - `organizations.json` - Organizations owned or member of
 - `integrations.json` - Platform integrations (API keys redacted)
 - `activity/comments.json` - User comments and interactions
@@ -178,8 +188,9 @@ node src/workers/cli/start-account-deletion-worker.js
 ```
 
 **Worker Process:**
+
 1. **Polls for pending deletions** every 5 minutes
-2. **Processes expired grace periods** automatically  
+2. **Processes expired grace periods** automatically
 3. **Generates final data export** if not already done
 4. **Anonymizes historical data** for compliance retention
 5. **Performs complete data deletion** with cascade cleanup
@@ -187,6 +198,7 @@ node src/workers/cli/start-account-deletion-worker.js
 7. **Logs all actions** for audit compliance
 
 **Worker Configuration:**
+
 ```javascript
 {
   pollInterval: 5 * 60 * 1000,     // 5 minutes
@@ -201,20 +213,24 @@ node src/workers/cli/start-account-deletion-worker.js
 The system sends automated emails at key stages:
 
 #### Deletion Request Confirmation
+
 - Sent immediately when deletion is requested
 - Includes data export link and cancellation instructions
 - Grace period information and timeline
 
-#### Deletion Reminder  
+#### Deletion Reminder
+
 - Sent 3 days before scheduled deletion
 - Final opportunity to cancel
 - Re-includes data export and cancellation links
 
 #### Deletion Cancelled
+
 - Sent when user cancels deletion request
 - Confirms account is safe and cancellation reason
 
 #### Deletion Completed
+
 - Sent after successful account deletion
 - Confirms all personal data removed
 - Legal retention information for anonymized data
@@ -230,7 +246,7 @@ await auditService.logAccountDeletionRequest(userId, requestId, details, req);
 // Log data export
 await auditService.logDataExport(userId, exportDetails);
 
-// Log deletion cancellation  
+// Log deletion cancellation
 await auditService.logAccountDeletionCancellation(userId, requestId, details, req);
 
 // Log completion
@@ -238,9 +254,10 @@ await auditService.logAccountDeletionCompleted(userId, requestId, details);
 ```
 
 **Audit Actions Tracked:**
+
 - `account_deletion_requested` - User requests deletion
 - `gdpr_data_exported` - Data export generated
-- `account_deletion_cancelled` - User cancels deletion  
+- `account_deletion_cancelled` - User cancels deletion
 - `account_deletion_processing_started` - Worker begins processing
 - `personal_data_anonymized` - Data anonymized for retention
 - `account_deletion_completed` - Deletion fully complete
@@ -248,16 +265,19 @@ await auditService.logAccountDeletionCompleted(userId, requestId, details);
 ## GDPR Compliance Features
 
 ### Legal Basis
+
 - **Article 17**: Right to be forgotten (account deletion)
 - **Article 20**: Right to data portability (data export)
 - **Article 15**: Right of access (audit trail access)
 
 ### Data Retention
+
 - **Audit logs**: 7 years retention for legal compliance
 - **Anonymized activity data**: 2 years for analytics (PII removed)
 - **Personal data**: Completely deleted
 
 ### Security Measures
+
 - **Re-authentication required** for deletion requests
 - **Explicit confirmation** ("DELETE") required
 - **Grace period** (30 days) for user protection
@@ -265,6 +285,7 @@ await auditService.logAccountDeletionCompleted(userId, requestId, details);
 - **Complete audit trail** for all actions
 
 ### Privacy Rights
+
 - **Right to cancel** deletion during grace period
 - **Data portability** via comprehensive export
 - **Transparent process** with status tracking
@@ -273,12 +294,13 @@ await auditService.logAccountDeletionCompleted(userId, requestId, details);
 ## Usage Examples
 
 ### Request Account Deletion
+
 ```javascript
 const response = await fetch('/api/user/account', {
   method: 'DELETE',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${userToken}`
+    Authorization: `Bearer ${userToken}`
   },
   body: JSON.stringify({
     password: userPassword,
@@ -290,10 +312,11 @@ const result = await response.json();
 ```
 
 ### Check Deletion Status
+
 ```javascript
 const response = await fetch('/api/user/account/deletion/status', {
   headers: {
-    'Authorization': `Bearer ${userToken}`
+    Authorization: `Bearer ${userToken}`
   }
 });
 
@@ -304,12 +327,13 @@ if (status.data.hasDeletionRequest) {
 ```
 
 ### Cancel Deletion
+
 ```javascript
 const response = await fetch('/api/user/account/deletion/cancel', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${userToken}`
+    Authorization: `Bearer ${userToken}`
   },
   body: JSON.stringify({
     reason: 'Changed my mind about leaving'
@@ -318,10 +342,11 @@ const response = await fetch('/api/user/account/deletion/cancel', {
 ```
 
 ### Generate Data Export
+
 ```javascript
 const response = await fetch('/api/user/data-export', {
   headers: {
-    'Authorization': `Bearer ${userToken}`
+    Authorization: `Bearer ${userToken}`
   }
 });
 
@@ -332,6 +357,7 @@ const exportData = await response.json();
 ## Deployment
 
 ### Environment Variables
+
 ```bash
 # Required
 SUPABASE_URL=your_supabase_project_url
@@ -342,7 +368,7 @@ SENDGRID_API_KEY=your_sendgrid_key
 APP_URL=https://app.roastr.ai
 
 # Worker configuration (optional)
-DELETION_POLL_INTERVAL=300000      # 5 minutes  
+DELETION_POLL_INTERVAL=300000      # 5 minutes
 DELETION_MAX_CONCURRENCY=1         # Safety limit
 DELETION_MAX_RETRIES=3              # Retry attempts
 DELETION_RETRY_DELAY=1800000        # 30 minutes
@@ -350,12 +376,14 @@ DELETION_SHUTDOWN_TIMEOUT=30000     # 30 seconds
 ```
 
 ### Database Migration
+
 ```bash
 # Apply the GDPR schema changes
 psql -h your_db_host -d your_database -f database/schema.sql
 ```
 
 ### Start Worker
+
 ```bash
 # Start the account deletion worker
 npm run worker:account-deletion
@@ -365,11 +393,12 @@ pm2 start src/workers/cli/start-account-deletion-worker.js --name account-deleti
 ```
 
 ### Monitoring
+
 ```bash
 # Check worker status
 npm run workers:status
 
-# Monitor queue status  
+# Monitor queue status
 npm run queue:status
 
 # Check processing logs
@@ -379,11 +408,12 @@ tail -f logs/account-deletion-worker.log
 ## Testing
 
 ### Unit Tests
+
 ```bash
 # Test data export service
 npm test tests/unit/services/dataExportService.test.js
 
-# Test account deletion routes  
+# Test account deletion routes
 npm test tests/unit/routes/account-deletion.test.js
 
 # Test audit service GDPR functions
@@ -391,6 +421,7 @@ npm test tests/unit/services/auditService.test.js
 ```
 
 ### Integration Tests
+
 ```bash
 # Full GDPR flow test
 npm test tests/integration/gdpr-compliance.test.js
@@ -400,6 +431,7 @@ npm test tests/integration/account-deletion-worker.test.js
 ```
 
 ### Manual Testing
+
 ```bash
 # Create test deletion request
 curl -X DELETE http://localhost:3000/api/user/account \
@@ -431,7 +463,7 @@ This implementation provides:
 ✅ **Email notifications** for transparency  
 ✅ **Data anonymization** for legal retention requirements  
 ✅ **Cascading deletion** of all related data  
-✅ **Worker-based processing** for reliable execution  
+✅ **Worker-based processing** for reliable execution
 
 ## Support
 

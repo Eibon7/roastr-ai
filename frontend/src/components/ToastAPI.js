@@ -45,7 +45,7 @@ class ToastAPI {
    * Notify all subscribers
    */
   notify() {
-    this.subscribers.forEach(callback => {
+    this.subscribers.forEach((callback) => {
       try {
         callback(Array.from(this.toasts.values()));
       } catch (error) {
@@ -59,7 +59,7 @@ class ToastAPI {
    */
   show(content, options = {}) {
     const id = this.nextId++;
-    
+
     // ROUND 4 FIX: Merge all options, allowing full customization
     const mergedOptions = {
       ...this.defaultOptions,
@@ -99,11 +99,11 @@ class ToastAPI {
     if (typeof content === 'string') {
       return content.trim();
     }
-    
+
     if (React.isValidElement(content)) {
       return content;
     }
-    
+
     if (typeof content === 'object' && content !== null) {
       // Handle object content (e.g., for rich notifications)
       if (content.title || content.message) {
@@ -114,7 +114,7 @@ class ToastAPI {
         };
       }
     }
-    
+
     // Fallback to string conversion
     return String(content).trim();
   }
@@ -131,7 +131,14 @@ class ToastAPI {
     }
 
     // Validate position
-    const validPositions = ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'];
+    const validPositions = [
+      'top-left',
+      'top-center',
+      'top-right',
+      'bottom-left',
+      'bottom-center',
+      'bottom-right'
+    ];
     if (!validPositions.includes(validated.position)) {
       validated.position = this.defaultOptions.position;
     }
@@ -143,7 +150,7 @@ class ToastAPI {
     }
 
     // Validate boolean options
-    ['dismissible', 'showProgress', 'autoHide', 'pauseOnHover', 'closeOnClick'].forEach(key => {
+    ['dismissible', 'showProgress', 'autoHide', 'pauseOnHover', 'closeOnClick'].forEach((key) => {
       if (typeof validated[key] !== 'boolean') {
         validated[key] = this.defaultOptions[key];
       }
@@ -160,18 +167,20 @@ class ToastAPI {
     }
 
     // Validate and sanitize actions
-    validated.actions = validated.actions.map(action => {
-      if (typeof action !== 'object' || !action.label) {
-        return null;
-      }
-      return {
-        label: String(action.label).trim(),
-        onClick: typeof action.onClick === 'function' ? action.onClick : () => {},
-        style: action.style || {},
-        className: action.className || '',
-        disabled: Boolean(action.disabled)
-      };
-    }).filter(Boolean);
+    validated.actions = validated.actions
+      .map((action) => {
+        if (typeof action !== 'object' || !action.label) {
+          return null;
+        }
+        return {
+          label: String(action.label).trim(),
+          onClick: typeof action.onClick === 'function' ? action.onClick : () => {},
+          style: action.style || {},
+          className: action.className || '',
+          disabled: Boolean(action.disabled)
+        };
+      })
+      .filter(Boolean);
 
     // Validate style object
     if (typeof validated.style !== 'object' || validated.style === null) {
@@ -272,7 +281,7 @@ class ToastAPI {
    */
   dismissAll() {
     // Clear all timeouts
-    this.toasts.forEach(toast => {
+    this.toasts.forEach((toast) => {
       if (toast.autoHideTimeout) {
         clearTimeout(toast.autoHideTimeout);
       }
@@ -290,9 +299,9 @@ class ToastAPI {
   }
 
   error(content, options = {}) {
-    return this.show(content, { 
-      ...options, 
-      type: 'error', 
+    return this.show(content, {
+      ...options,
+      type: 'error',
       duration: options.duration || 8000, // Longer duration for errors
       autoHide: options.autoHide !== false // Allow manual override
     });
@@ -341,10 +350,10 @@ class ToastAPI {
 
     // Validate and merge updates
     const validatedUpdates = this.validateOptions({ ...toast, ...updates });
-    
+
     this.toasts.set(id, validatedUpdates);
     this.notify();
-    
+
     return true;
   }
 
@@ -353,7 +362,7 @@ class ToastAPI {
    */
   cleanup() {
     // Clear all timeouts
-    this.toasts.forEach(toast => {
+    this.toasts.forEach((toast) => {
       if (toast.autoHideTimeout) {
         clearTimeout(toast.autoHideTimeout);
       }

@@ -47,4 +47,3 @@ declare module '@/components/ui/label' {
   import * as React from 'react';
   export const Label: React.ComponentType<any>;
 }
-

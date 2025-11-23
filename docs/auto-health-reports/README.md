@@ -8,12 +8,12 @@ This directory contains timestamped reports from the autonomous GDD monitoring s
 
 ## Report Types
 
-| File Pattern | Format | Content |
-|--------------|--------|---------|
-| `auto-health-{timestamp}.md` | Markdown | Human-readable summary with health metrics, drift analysis, and action log |
-| `auto-health-{timestamp}.json` | JSON | Detailed health scoring data (from `score-gdd-health.js`) |
-| `auto-drift-{timestamp}.json` | JSON | Drift prediction data (from `predict-gdd-drift.js`) |
-| `auto-status-{timestamp}.json` | JSON | Validation status data (from `validate-gdd-runtime.js`) |
+| File Pattern                   | Format   | Content                                                                    |
+| ------------------------------ | -------- | -------------------------------------------------------------------------- |
+| `auto-health-{timestamp}.md`   | Markdown | Human-readable summary with health metrics, drift analysis, and action log |
+| `auto-health-{timestamp}.json` | JSON     | Detailed health scoring data (from `score-gdd-health.js`)                  |
+| `auto-drift-{timestamp}.json`  | JSON     | Drift prediction data (from `predict-gdd-drift.js`)                        |
+| `auto-status-{timestamp}.json` | JSON     | Validation status data (from `validate-gdd-runtime.js`)                    |
 
 **Timestamp Format:** `YYYY-MM-DD-HH-MM` (e.g., `2025-11-11-08-00`)
 
@@ -34,16 +34,19 @@ This directory contains timestamped reports from the autonomous GDD monitoring s
 **Trigger:** Scheduled (Auto-Monitor)
 
 ## Summary
+
 - **Health Score:** 98.8/100 🟢
 - **Drift Risk:** 15/100 🟢
 - **Nodes Validated:** 13/13
 
 ## Health Breakdown
+
 - 🟢 Healthy nodes: 13
 - 🟡 Degraded nodes: 0
 - 🔴 Critical nodes: 0
 
 ## Actions Taken
+
 - ✅ Validation completed
 - ✅ No issues created (health above threshold)
 ```
@@ -71,10 +74,12 @@ jq '.' auto-health-2025-11-11-08-00.json
 **Schedule:** Every 3 days at 8:00 UTC (`0 8 */3 * *`)
 
 **Triggers:**
+
 - Scheduled (cron)
 - Manual dispatch via `gh workflow run gdd-auto-monitor.yml`
 
 **Actions:**
+
 1. Run GDD validation scripts
 2. Generate timestamped reports
 3. Commit reports to main
@@ -82,6 +87,7 @@ jq '.' auto-health-2025-11-11-08-00.json
 5. Create issues if health < threshold or drift > threshold
 
 **Issue Creation:**
+
 - **Health Issue:** Created when `health_score < min_health_score` (.gddrc.json)
 - **Drift Issue:** Created when `drift_risk > max_drift_risk` (.gddrc.json)
 - **Duplicate Prevention:** Searches for existing issues before creating
@@ -102,6 +108,7 @@ jq '.' auto-health-2025-11-11-08-00.json
 ```
 
 **Fields:**
+
 - `enabled`: Enable/disable auto-monitoring (default: `true`)
 - `schedule`: Cron expression for schedule (default: every 3 days)
 - `max_drift_risk`: Threshold for drift issue creation (default: `60`)

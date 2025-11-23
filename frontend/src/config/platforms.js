@@ -1,13 +1,13 @@
 /**
  * Platform Configuration for Roastr.ai
- * 
+ *
  * This file contains all platform-specific configurations including:
  * - Icons and visual representation
  * - Display names and branding
  * - Platform colors and themes
  * - Character limits and constraints
  * - Connection status and availability
- * 
+ *
  * @version 1.2.0
  * @author Roastr.ai Team
  */
@@ -100,7 +100,7 @@ export const platformDescriptions = {
 // Available platforms list (ordered by popularity/priority)
 export const allPlatforms = [
   'twitter',
-  'instagram', 
+  'instagram',
   'youtube',
   'facebook',
   'discord',
@@ -178,7 +178,7 @@ export const isPremiumPlatform = (platform) => {
  */
 export const getPlatformsForPlan = (plan) => {
   const normalizedPlan = normalizePlanId(plan);
-  
+
   const basePlatforms = ['twitter', 'instagram', 'youtube', 'facebook'];
   const standardPlatforms = [...basePlatforms, 'discord', 'twitch', 'reddit'];
   const premiumPlatformsAll = [...standardPlatforms, 'tiktok', 'bluesky', 'linkedin'];

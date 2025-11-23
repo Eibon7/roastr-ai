@@ -10,6 +10,7 @@
 ## Estado Actual (Assessment)
 
 ### Existing System
+
 - ✅ 13 GDD nodes in `docs/nodes/`
 - ✅ Health scoring system with 6 factors (Phase 15.1):
   - Sync Accuracy (25%)
@@ -26,12 +27,14 @@
 - ✅ Coverage tracking via `coverage/coverage-summary.json`
 
 ### Gaps Identified
+
 - ❌ No cross-validation between documentation and runtime data
 - ❌ No integration status tracking for external platforms
 - ❌ No connectivity health metrics
 - ❌ No unified system health view combining all dimensions
 
 ### Tests Status
+
 - Existing GDD validation tests: PASSING
 - Need to create tests for new cross-validation features
 
@@ -51,9 +54,11 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ## Plan de Implementación
 
 ### Phase 1: Cross-Validation Engine
+
 **File:** `scripts/validate-gdd-cross.js`
 
 **Functionality:**
+
 - Compare `coverage` values in `docs/nodes/*.md` vs `coverage/coverage-summary.json`
 - Validate `last_updated` timestamps against git commit history
 - Detect mismatches between declared dependencies and actual imports in `src/`
@@ -62,6 +67,7 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
   - `gdd-cross.json` (machine-readable)
 
 **Validation Checks:**
+
 1. **Coverage Authenticity**
    - Extract coverage % from node docs
    - Load actual coverage from `coverage-summary.json`
@@ -81,12 +87,14 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
    - Report mismatches
 
 **CLI Modes:**
+
 - `--full` - Complete cross-check (all nodes)
 - `--node=<name>` - Specific node validation
 - `--summary` - Aggregated results only
 - `--ci` - CI mode (exit 1 on errors)
 
 **Output Format:**
+
 ```javascript
 {
   status: 'HEALTHY' | 'WARNING' | 'FAIL',
@@ -115,9 +123,11 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ```
 
 ### Phase 2: Integration Status Tracking
+
 **File:** `integration-status.json`
 
 **Structure:**
+
 ```json
 {
   "last_updated": "2025-10-09T12:00:00Z",
@@ -148,6 +158,7 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ```
 
 **Platforms to Track:**
+
 - Twitter/X
 - Discord
 - Twitch
@@ -159,15 +170,18 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 - Bluesky
 
 **Helper Script:** `scripts/update-integration-status.js`
+
 - Check platform adapters exist
 - Validate credentials (env vars)
 - Update status based on availability
 - Calculate health score per integration
 
 ### Phase 3: Extended Health Metrics
+
 **Modify:** `scripts/score-gdd-health.js`
 
 **New Scoring Factors:**
+
 1. **Connectivity Score (weighting TBD)**
    - Load `integration-status.json`
    - Calculate % of active integrations
@@ -180,6 +194,7 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
    - Adjust health score based on correlation
 
 **Updated Health Schema:**
+
 ```javascript
 {
   generated_at: "2025-10-09T12:00:00Z",
@@ -214,6 +229,7 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ```
 
 ### Phase 4: Unified Health Reports
+
 **Update:** `docs/system-health.md`
 
 #### New Section: External Integrations Status
@@ -225,11 +241,12 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 **Connectivity Score:** 88/100
 **Status:** 🟢 HEALTHY
 
-| Integration | Status | Last Checked | Health Score | Related Nodes |
-|-------------|--------|--------------|--------------|---------------|
-| Twitter     | 🟢 active | 2025-10-09 | 95 | social-platforms, roast |
-| Discord     | 🟢 active | 2025-10-09 | 88 | social-platforms, shield |
-| Instagram   | 🔴 inactive | 2025-10-08 | 45 | social-platforms |
+| Integration | Status      | Last Checked | Health Score | Related Nodes            |
+| ----------- | ----------- | ------------ | ------------ | ------------------------ |
+| Twitter     | 🟢 active   | 2025-10-09   | 95           | social-platforms, roast  |
+| Discord     | 🟢 active   | 2025-10-09   | 88           | social-platforms, shield |
+| Instagram   | 🔴 inactive | 2025-10-08   | 45           | social-platforms         |
+
 ...
 ```
 
@@ -242,11 +259,13 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 **Overall Score:** 92.3/100
 
 ### Coverage Validation
+
 - ✅ Matched: 11/13 nodes
 - ⚠️ Mismatched: 2/13 nodes
 - Violations: shield.md (+5%), roast.md (-3%)
 
 ### Timestamp Validation
+
 - ✅ Valid: 10/13 nodes
 - ⚠️ Stale: 2/13 nodes (>30 days)
 - ❌ Future: 1/13 nodes
@@ -257,23 +276,26 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ```markdown
 ## System Health Intelligence Summary
 
-| Dimension | Score | Status | Weight |
-|-----------|-------|--------|--------|
-| Documentation Health | 94.2 | 🟢 HEALTHY | 40% |
-| Cross-Validation Accuracy | 92.3 | 🟡 WARNING | 30% |
-| Connectivity Health | 88.0 | 🟢 HEALTHY | 30% |
-| **Composite Score** | **91.5** | **🟢 HEALTHY** | **100%** |
+| Dimension                 | Score    | Status         | Weight   |
+| ------------------------- | -------- | -------------- | -------- |
+| Documentation Health      | 94.2     | 🟢 HEALTHY     | 40%      |
+| Cross-Validation Accuracy | 92.3     | 🟡 WARNING     | 30%      |
+| Connectivity Health       | 88.0     | 🟢 HEALTHY     | 30%      |
+| **Composite Score**       | **91.5** | **🟢 HEALTHY** | **100%** |
 ```
 
 ### Phase 5: CLI Updates
+
 **Modify:** `scripts/watch-gdd.js`, `scripts/validate-gdd-runtime.js`
 
 **New Flags:**
+
 - `--cross` - Include cross-validation in watch/validate
 - `--connectivity` - Include connectivity checks
 - `--all` - Run all checks (validation + health + drift + cross + connectivity)
 
 **Updated Dashboard Output:**
+
 ```text
 ╔════════════════════════════════════════╗
 ║  GDD STATUS: HEALTHY                  ║
@@ -302,7 +324,9 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ```
 
 ### Phase 6: Documentation Updates
+
 **Files to Update:**
+
 1. `CLAUDE.md` - Add Phase 15 section (~200+ lines)
 2. `docs/system-health.md` - Add new sections
 3. `docs/system-validation.md` - Add cross-validation docs
@@ -313,6 +337,7 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ## Archivos Afectados
 
 ### New Files
+
 - `scripts/validate-gdd-cross.js` (500+ lines)
 - `scripts/update-integration-status.js` (200+ lines)
 - `scripts/gdd-cross-validator.js` (helper class, 400+ lines)
@@ -321,6 +346,7 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 - `gdd-cross.json` (generated)
 
 ### Modified Files
+
 - `scripts/score-gdd-health.js` (+150 lines)
 - `scripts/watch-gdd.js` (+100 lines)
 - `scripts/validate-gdd-runtime.js` (+50 lines)
@@ -330,6 +356,7 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 - `docs/GDD-IMPLEMENTATION-SUMMARY.md` (+100 lines)
 
 ### Test Files (to create)
+
 - `tests/unit/scripts/validate-gdd-cross.test.js`
 - `tests/unit/scripts/update-integration-status.test.js`
 - `tests/integration/gdd-cross-validation.test.js`
@@ -339,6 +366,7 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ## Criterios de Validación
 
 ### Acceptance Criteria
+
 1. ✅ Cross-validation script works for all 13 nodes
 2. ✅ Detects real mismatches between docs and runtime data
 3. ✅ Generates both Markdown and JSON reports
@@ -349,12 +377,14 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 8. ✅ No manual review required
 
 ### Performance Targets
+
 - Cross-validation completes in <1s for 13 nodes
 - Integration status check completes in <2s
 - Health scoring with all metrics in <3s total
 - Watch mode latency <5s (full validation cycle)
 
 ### Quality Standards
+
 - No emojis in code (only in reports if needed)
 - Dark-themed, minimal UI aesthetic (Snake Eater style)
 - Consistent color-coded terminal output
@@ -367,12 +397,14 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ## Subagents Necesarios
 
 ### Primary Agents
+
 - **Orchestrator** (this agent) - Overall coordination
 - **Backend Developer** - Cross-validation logic, integration checks
 - **Test Engineer** - Unit and integration tests
 - **Documentation Agent** - Update CLAUDE.md, system docs
 
 ### Support Agents
+
 - **GDD Specialist** (inline) - Ensure GDD coherence
 - **CLI/UX Agent** (inline) - Terminal output formatting
 
@@ -381,18 +413,23 @@ Extend the GDD framework from a documentation coherence engine into a comprehens
 ## Riesgos y Mitigación
 
 ### Risk 1: Git history parsing complexity
+
 **Mitigation:** Use `git log --format="%ai" --follow` for accurate timestamps
 
 ### Risk 2: Coverage file structure changes
+
 **Mitigation:** Parse both `coverage-summary.json` and `lcov.info` as fallbacks
 
 ### Risk 3: Integration status false positives
+
 **Mitigation:** Check both file existence AND env var presence
 
 ### Risk 4: Performance degradation with large codebases
+
 **Mitigation:** Cache git queries, lazy-load coverage data, parallel validation
 
 ### Risk 5: Breaking existing GDD workflows
+
 **Mitigation:** Make all new features opt-in (flags), maintain backward compatibility
 
 ---

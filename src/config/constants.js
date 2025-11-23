@@ -1,9 +1,9 @@
 /**
  * Central constants for the RoastPromptTemplate system
- * 
+ *
  * Consolidates hardcoded values to improve maintainability
  * and performance across the roast generation system.
- * 
+ *
  * Issue #128: Centralize constants for better code organization
  */
 
@@ -39,7 +39,7 @@ const PLATFORM_LIMITS = {
 // Comment categories for classification
 const COMMENT_CATEGORIES = {
   PERSONAL_ATTACK: 'ataque personal',
-  BODY_SHAMING: 'body shaming', 
+  BODY_SHAMING: 'body shaming',
   SEXIST_COMMENT: 'comentario machista',
   RACIST_COMMENT: 'comentario racista',
   GENERIC_INSULT: 'insulto genérico',
@@ -68,7 +68,7 @@ const CATEGORY_PATTERNS = {
 // Toxicity category mappings
 const TOXICITY_CATEGORY_MAP = {
   TOXICITY: 'comentario tóxico general',
-  SEVERE_TOXICITY: 'comentario severamente tóxico', 
+  SEVERE_TOXICITY: 'comentario severamente tóxico',
   IDENTITY_ATTACK: 'ataque de identidad',
   INSULT: 'insulto directo',
   PROFANITY: 'lenguaje vulgar',
@@ -84,7 +84,7 @@ const TONE_MAP = {
   canalla: 'directo y sin filtros, más picante',
   // Legacy tonos (mantener por compatibilidad temporal)
   sarcastic: 'sarcástico y cortante',
-  ironic: 'irónico y sofisticado', 
+  ironic: 'irónico y sofisticado',
   absurd: 'absurdo y surrealista'
 };
 
@@ -124,34 +124,34 @@ module.exports = {
   TEMPLATE_VERSION,
   DEFAULT_REFERENCE_COUNT,
   MAX_INPUT_LENGTH,
-  
-  // Cache and performance  
+
+  // Cache and performance
   CSV_CACHE_EXPIRY,
   WORD_MIN_LENGTH,
   CATEGORY_SCORE_BOOST,
   SIMILARITY_SCORE_THRESHOLD,
   DEFAULT_TONE,
-  
+
   // Platform limits
   PLATFORM_LIMITS,
-  
+
   // Categories and patterns
   COMMENT_CATEGORIES,
   CATEGORY_PATTERNS,
   TOXICITY_CATEGORY_MAP,
-  
+
   // Tone configuration (Issue #868: Humor Type eliminado)
   TONE_MAP,
   TONE_GUIDES,
-  
+
   // Security
   SANITIZATION_PATTERNS,
   SANITIZATION_REPLACEMENTS,
-  
+
   // CSV processing
   CSV_REQUIRED_COLUMNS,
   DEFAULT_CSV_DELIMITER,
-  
+
   // Performance optimization
   SIMILARITY_ALGORITHM_VERSION,
   WORD_FREQUENCY_THRESHOLD,

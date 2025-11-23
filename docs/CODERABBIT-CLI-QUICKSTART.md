@@ -49,6 +49,7 @@ git push
 ### El Hook NO Bloquea
 
 **Importante:** El pre-commit hook:
+
 - ✅ Ejecuta CodeRabbit review
 - ✅ Muestra sugerencias si hay issues
 - ✅ **Permite commit incluso con issues**
@@ -67,13 +68,13 @@ git commit -m "..."
 
 ### Manual (Opcionales)
 
-| Comando | Uso | Cuándo |
-|---------|-----|--------|
-| `npm run coderabbit:review` | Review detallado | Antes de PR final |
-| `npm run coderabbit:review:quick` | Review rápido | Check intermedio |
-| `npm run coderabbit:auth` | Estado auth | Troubleshooting |
-| `npm run coderabbit:login` | Re-autenticar | Si sesión expira |
-| `npm run coderabbit:logout` | Cerrar sesión | Cambiar cuenta |
+| Comando                           | Uso              | Cuándo            |
+| --------------------------------- | ---------------- | ----------------- |
+| `npm run coderabbit:review`       | Review detallado | Antes de PR final |
+| `npm run coderabbit:review:quick` | Review rápido    | Check intermedio  |
+| `npm run coderabbit:auth`         | Estado auth      | Troubleshooting   |
+| `npm run coderabbit:login`        | Re-autenticar    | Si sesión expira  |
+| `npm run coderabbit:logout`       | Cerrar sesión    | Cambiar cuenta    |
 
 ## 💡 Escenarios Comunes
 
@@ -136,6 +137,7 @@ gh pr create
 ## ⚡ Ventajas del Modo Automático
 
 ### Antes (Sin CLI)
+
 ```
 Code → Commit → Push → Open PR → Wait CodeRabbit → Issues found → Fix → Push → Wait again...
 ⏱️ Tiempo: 30-60 min por ciclo
@@ -143,6 +145,7 @@ Code → Commit → Push → Open PR → Wait CodeRabbit → Issues found → Fi
 ```
 
 ### Ahora (Con CLI Automático)
+
 ```
 Code → Commit (auto-review) → Fix immediately → Commit → Push → Open PR → 0 issues
 ⏱️ Tiempo: 2-5 min
@@ -158,6 +161,7 @@ Code → Commit (auto-review) → Fix immediately → Commit → Push → Open P
 **Síntoma:** Hook dice que no estás autenticado
 
 **Solución:**
+
 ```bash
 npm run coderabbit:login
 # Sigue proceso OAuth en browser
@@ -168,6 +172,7 @@ npm run coderabbit:login
 **Síntoma:** Hook no encuentra el comando
 
 **Solución:**
+
 ```bash
 # Opción 1: Reiniciar terminal
 source ~/.zshrc
@@ -181,6 +186,7 @@ source ~/.zshrc
 **Causa:** Review detallado (`--plain`) es lento
 
 **Solución:** Ya está configurado con `--prompt-only` (rápido). Si aún así es lento:
+
 ```bash
 # Desactivar temporalmente (editar .husky/pre-commit)
 # Comentar la sección de CodeRabbit
@@ -192,6 +198,7 @@ SKIP=1 git commit -m "..."
 ### Quiero deshabilitar el hook permanentemente
 
 **Solución:**
+
 ```bash
 # Editar .husky/pre-commit
 # Comentar estas líneas:
@@ -206,11 +213,13 @@ SKIP=1 git commit -m "..."
 ## 📊 Métricas de Éxito
 
 **Objetivos con CodeRabbit CLI:**
+
 - ✅ 90%+ de PRs con 0 comentarios en GitHub first try
 - ✅ Reducción 80%+ en tiempo de review
 - ✅ 100% de issues detectados localmente antes de push
 
 **Cómo medir:**
+
 1. Trackear comentarios de CodeRabbit en GitHub (antes vs después)
 2. Tiempo desde PR opened hasta merged
 3. Número de pushes por PR (debería bajar a 1-2)
@@ -241,6 +250,7 @@ SKIP=1 git commit -m "..."
 ## 🆘 Soporte
 
 **Issues comunes:**
+
 - 📖 Leer troubleshooting section arriba
 - 🔍 Verificar autenticación: `npm run coderabbit:auth`
 - 🐛 Crear issue en repo si es bug del proyecto
@@ -248,6 +258,7 @@ SKIP=1 git commit -m "..."
 ---
 
 **TL;DR:**
+
 1. ✅ Ya está configurado y funcionando
 2. Commit normal → Hook revisa automáticamente
 3. Fixea issues inmediatamente

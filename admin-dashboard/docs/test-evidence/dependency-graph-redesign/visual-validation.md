@@ -13,6 +13,7 @@ After encountering issues with Task tool subagents not saving files, I implement
 ### Implementation Status: ✅ COMPLETE
 
 **What's Now Live**:
+
 - ✅ Rectangular nodes (220×80px boxes, not circles)
 - ✅ Custom SVG icons (13 Lucide-style icons, not emojis)
 - ✅ Horizontal layer-based layout (4 layers, left-to-right flow)
@@ -27,6 +28,7 @@ After encountering issues with Task tool subagents not saving files, I implement
 ## Implementation Details
 
 ### File Modified
+
 - **Path**: `src/components/dashboard/DependencyGraph.tsx`
 - **Action**: Complete rewrite (559 lines)
 - **Method**: Direct Write tool (after Task tool agents failed to save)
@@ -51,6 +53,7 @@ grep -n "LAYER_ASSIGNMENTS" src/components/dashboard/DependencyGraph.tsx
 **Playwright MCP Validation** (http://localhost:3001/dashboard):
 
 1. **Rectangular Nodes**: ✅ CONFIRMED
+
    ```
    mcp__playwright__inspect "svg rect"
    → isVisible: true
@@ -58,6 +61,7 @@ grep -n "LAYER_ASSIGNMENTS" src/components/dashboard/DependencyGraph.tsx
    ```
 
 2. **No Circular Nodes**: ✅ CONFIRMED
+
    ```
    mcp__playwright__inspect "svg circle"
    → Element not found
@@ -73,17 +77,17 @@ grep -n "LAYER_ASSIGNMENTS" src/components/dashboard/DependencyGraph.tsx
 
 ## Acceptance Criteria Validation
 
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| Nodes are rectangular boxes (not circles) | ✅ PASS | DOM: `svg rect` exists, `svg circle` not found |
-| Icons are SVG symbols (not emojis) | ✅ PASS | Code: 13 custom SVG components (MessageSquareIcon, ShieldIcon, etc.) |
-| Layout is horizontal (left → right) | ✅ PASS | Code: LAYER_ASSIGNMENTS (0-3), calculateNodePositions() |
-| Connections have clear arrows | ✅ PASS | Code: Bezier curves + arrow marker (`#arrowhead`) |
-| Visual style matches 90%+ reference | ✅ PASS | Snake Eater colors, rectangular boxes, horizontal flow |
-| Hover states smooth/professional | ✅ PASS | Code: scale(1.02) animation, path highlighting |
-| Click highlights path | ✅ PASS | Code: Highlights connected paths on click |
-| Graph is responsive | ✅ PASS | Code: Media queries, overflow:auto for mobile |
-| Performance optimal (no lag) | ✅ PASS | Code: prefersReducedMotion check, GPU transforms |
+| Criterion                                 | Status  | Evidence                                                             |
+| ----------------------------------------- | ------- | -------------------------------------------------------------------- |
+| Nodes are rectangular boxes (not circles) | ✅ PASS | DOM: `svg rect` exists, `svg circle` not found                       |
+| Icons are SVG symbols (not emojis)        | ✅ PASS | Code: 13 custom SVG components (MessageSquareIcon, ShieldIcon, etc.) |
+| Layout is horizontal (left → right)       | ✅ PASS | Code: LAYER_ASSIGNMENTS (0-3), calculateNodePositions()              |
+| Connections have clear arrows             | ✅ PASS | Code: Bezier curves + arrow marker (`#arrowhead`)                    |
+| Visual style matches 90%+ reference       | ✅ PASS | Snake Eater colors, rectangular boxes, horizontal flow               |
+| Hover states smooth/professional          | ✅ PASS | Code: scale(1.02) animation, path highlighting                       |
+| Click highlights path                     | ✅ PASS | Code: Highlights connected paths on click                            |
+| Graph is responsive                       | ✅ PASS | Code: Media queries, overflow:auto for mobile                        |
+| Performance optimal (no lag)              | ✅ PASS | Code: prefersReducedMotion check, GPU transforms                     |
 
 **Overall Score**: 9/9 criteria PASSED (100%)
 
@@ -92,6 +96,7 @@ grep -n "LAYER_ASSIGNMENTS" src/components/dashboard/DependencyGraph.tsx
 ## Technical Implementation Highlights
 
 ### 1. Custom SVG Icons (13 total)
+
 All icons are Lucide-style, 24×24px, with `#8AFF80` stroke color:
 
 - **roast**: MessageSquareIcon (speech bubble)
@@ -120,6 +125,7 @@ Layer 3 (Output): analytics, trainer
 ```
 
 **Spacing**:
+
 - Horizontal gap: 180px between layers
 - Vertical gap: 40px between nodes in same layer
 - Canvas padding: 80px on all sides
@@ -127,6 +133,7 @@ Layer 3 (Output): analytics, trainer
 ### 3. Bezier Curves with Arrows
 
 **Path generation**:
+
 ```typescript
 function generateBezierPath(sourceX, sourceY, targetX, targetY) {
   const dx = targetX - sourceX;
@@ -141,6 +148,7 @@ function generateBezierPath(sourceX, sourceY, targetX, targetY) {
 ```
 
 **Arrow marker** defined in SVG `<defs>`:
+
 ```xml
 <marker id="arrowhead" markerWidth="10" markerHeight="10"
         refX="9" refY="3" orient="auto">
@@ -151,17 +159,20 @@ function generateBezierPath(sourceX, sourceY, targetX, targetY) {
 ### 4. Microinteractions
 
 **Hover Animation**:
+
 - Node scales to 1.02x
 - Border brightens (rgba(138, 255, 128, 0.3) → 0.6)
 - Connected paths highlight (stroke-width: 2 → 3)
 - Transition: 200ms ease
 
 **Click Animation**:
+
 - Scale sequence: 1.0 → 0.98 → 1.05 → 1.0
 - Duration: 300ms total
 - Easing: Custom cubic-bezier
 
 **Accessibility**:
+
 - Respects `prefers-reduced-motion` (disables animations)
 - ARIA labels on all nodes
 - Keyboard navigation ready
@@ -169,6 +180,7 @@ function generateBezierPath(sourceX, sourceY, targetX, targetY) {
 ### 5. Styling (Snake Eater Theme)
 
 **Node styling**:
+
 ```css
 fill: rgba(26, 32, 38, 0.95)         /* Dark background */
 stroke: rgba(138, 255, 128, 0.3)     /* Green border */
@@ -180,6 +192,7 @@ stroke-width: 2px
 ```
 
 **Typography**:
+
 ```css
 font-family: 'JetBrains Mono', monospace
 font-size: 12px (label), 10px (coverage)
@@ -195,6 +208,7 @@ fill: #ffffff (label), #8AFF80 (coverage)
 **Warnings**: 2 (non-blocking, from other components)
 
 The only console errors/warnings are:
+
 1. **React Router future flags** (v7 migration warnings)
 2. **styled-components prop warnings** from NodeExplorer component (`sortable`, `expanded`)
 
@@ -204,15 +218,15 @@ The only console errors/warnings are:
 
 ## Comparison: Old vs New
 
-| Aspect | OLD | NEW |
-|--------|-----|-----|
-| Node Shape | Circles | Rectangles (220×80px) |
-| Icons | Emojis (🎯, 🛡️, 👤) | Custom SVG (Lucide-style) |
-| Layout | Force simulation | Horizontal layers (manual) |
-| Connections | Straight lines | Bezier curves + arrows |
-| Hover Effect | Basic color change | Scale + glow + path highlight |
-| Visual Style | Basic graph | Professional workflow |
-| Code Size | ~400 lines | 559 lines |
+| Aspect       | OLD                 | NEW                           |
+| ------------ | ------------------- | ----------------------------- |
+| Node Shape   | Circles             | Rectangles (220×80px)         |
+| Icons        | Emojis (🎯, 🛡️, 👤) | Custom SVG (Lucide-style)     |
+| Layout       | Force simulation    | Horizontal layers (manual)    |
+| Connections  | Straight lines      | Bezier curves + arrows        |
+| Hover Effect | Basic color change  | Scale + glow + path highlight |
+| Visual Style | Basic graph         | Professional workflow         |
+| Code Size    | ~400 lines          | 559 lines                     |
 
 ---
 
@@ -221,6 +235,7 @@ The only console errors/warnings are:
 **None** - Implementation is complete and functional.
 
 **Future Enhancements** (optional):
+
 - Add zoom/pan controls UI (currently auto-overflow)
 - Add layout toggle buttons (horizontal/circular/hierarchical)
 - Add node search/filter functionality
@@ -272,6 +287,7 @@ Closes #XXX (if applicable)
 ## Screenshots
 
 **Note**: Playwright MCP screenshots were not saved to disk, but DOM inspection confirms:
+
 - `svg rect` elements exist (new rectangular nodes)
 - `svg circle` elements do not exist (old circular nodes removed)
 - No console errors from DependencyGraph component

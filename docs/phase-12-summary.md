@@ -29,8 +29,10 @@
 ### 2. GitHub Actions Workflows
 
 #### `gdd-validate.yml`
+
 **Triggers:** PR to main/develop, manual dispatch
 **Actions:**
+
 1. Run validation (`validate-gdd-runtime.js --ci`)
 2. Score health (`score-gdd-health.js --ci`)
 3. Predict drift (`predict-gdd-drift.js --ci`)
@@ -41,8 +43,10 @@
 8. Upload artifacts (30 days)
 
 #### `gdd-repair.yml`
+
 **Triggers:** After validation, manual dispatch
 **Actions:**
+
 1. Dry-run auto-repair
 2. Apply fixes if enabled
 3. Re-validate system
@@ -59,14 +63,15 @@
 
 ### Overall Status: ✅ HEALTHY
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Health Score** | 97.3/100 | 🟢 |
-| **Drift Risk** | 18/100 | 🟢 |
-| **Nodes Validated** | 13 | ✅ |
-| **Coverage** | 85% | 🟢 |
+| Metric              | Value    | Status |
+| ------------------- | -------- | ------ |
+| **Health Score**    | 97.3/100 | 🟢     |
+| **Drift Risk**      | 18/100   | 🟢     |
+| **Nodes Validated** | 13       | ✅     |
+| **Coverage**        | 85%      | 🟢     |
 
 ### ✅ Safe to Merge
+
 All GDD checks passed. Documentation is in sync with implementation.
 ```
 
@@ -75,21 +80,25 @@ All GDD checks passed. Documentation is in sync with implementation.
 ## 🧪 Testing Scenarios
 
 ### Scenario 1: Healthy PR (health ≥ 95)
+
 ```text
 PR opened → Validation runs → Health 97 → ✅ Comment posted → Merge allowed
 ```
 
 ### Scenario 2: Unhealthy PR (health < 95)
+
 ```text
 PR opened → Validation runs → Health 87 → ❌ Merge blocked → Issue created
 ```
 
 ### Scenario 3: Auto-Repair Success
+
 ```text
 PR with orphans → Auto-repair runs → Fixes applied → Committed → Re-validated → ✅
 ```
 
 ### Scenario 4: Manual Trigger
+
 ```text
 Actions tab → Select workflow → Run workflow → Reports generated
 ```
@@ -99,6 +108,7 @@ Actions tab → Select workflow → Run workflow → Reports generated
 ## 📋 Auto-Created Issues
 
 **Types:**
+
 1. `[GDD] Validation Failed` - Health < 95
 2. `[GDD] Auto-Repair Failed` - Repair errors
 3. `[GDD] High Drift Risk` - Drift > 70
@@ -128,6 +138,7 @@ node scripts/auto-repair-gdd.js --auto-fix
 ## 📦 Artifacts (Retained 30 Days)
 
 **Validation artifacts:**
+
 - `gdd-health.json`
 - `gdd-drift.json`
 - `gdd-status.json`
@@ -136,6 +147,7 @@ node scripts/auto-repair-gdd.js --auto-fix
 - `docs/drift-report.md`
 
 **Repair artifacts:**
+
 - `gdd-repair.json`
 - `repair-summary.md`
 
@@ -160,6 +172,7 @@ node scripts/auto-repair-gdd.js --auto-fix
 ## 🚀 Quick Start
 
 1. **Create a PR:**
+
    ```bash
    git checkout -b feature/my-feature
    # Make changes to docs/nodes/*.md or system-map.yaml

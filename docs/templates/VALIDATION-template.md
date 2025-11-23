@@ -13,6 +13,7 @@
 Brief description of what was validated and why.
 
 **Key Metrics:**
+
 - **Total Test Cases:** X/X passed
 - **Execution Time:** X.Xs (requirement: <Ys)
 - **Critical Failures:** X
@@ -24,20 +25,20 @@ Brief description of what was validated and why.
 
 ### Decision Matrix / Core Functionality
 
-| Test ID | Scenario | Expected Result | Actual Result | Status | Notes |
-|---------|----------|----------------|---------------|--------|-------|
-| DM-01 | [Scenario description] | [Expected] | [Actual] | ✅ PASS | [Notes if any] |
-| DM-02 | ... | ... | ... | ❌ FAIL | [Failure reason] |
-| DM-03 | ... | ... | ... | ⚠️ WARN | [Warning details] |
+| Test ID | Scenario               | Expected Result | Actual Result | Status  | Notes             |
+| ------- | ---------------------- | --------------- | ------------- | ------- | ----------------- |
+| DM-01   | [Scenario description] | [Expected]      | [Actual]      | ✅ PASS | [Notes if any]    |
+| DM-02   | ...                    | ...             | ...           | ❌ FAIL | [Failure reason]  |
+| DM-03   | ...                    | ...             | ...           | ⚠️ WARN | [Warning details] |
 
 **Total:** X/X passed (XX%)
 
 ### Edge Cases
 
-| Test ID | Scenario | Expected Result | Actual Result | Status | Notes |
-|---------|----------|----------------|---------------|--------|-------|
-| EDGE-01 | [Scenario] | [Expected] | [Actual] | ✅ PASS | [Notes] |
-| EDGE-02 | ... | ... | ... | ✅ PASS | [Notes] |
+| Test ID | Scenario   | Expected Result | Actual Result | Status  | Notes   |
+| ------- | ---------- | --------------- | ------------- | ------- | ------- |
+| EDGE-01 | [Scenario] | [Expected]      | [Actual]      | ✅ PASS | [Notes] |
+| EDGE-02 | ...        | ...             | ...           | ✅ PASS | [Notes] |
 
 **Total:** X/X passed (XX%)
 
@@ -45,14 +46,15 @@ Brief description of what was validated and why.
 
 ## Performance Metrics
 
-| Metric | Requirement | Actual | Status | Notes |
-|--------|-------------|--------|--------|-------|
-| **Total Execution Time** | <3s | 2.8s | ✅ PASS | Within limits |
-| **API Call Latency** | <5s timeout | 1.2s avg | ✅ PASS | Network latency excluded |
-| **Queue Processing** | <1s | 0.5s | ✅ PASS | Priority queue working |
-| **Database Write** | <500ms | 250ms avg | ✅ PASS | Good performance |
+| Metric                   | Requirement | Actual    | Status  | Notes                    |
+| ------------------------ | ----------- | --------- | ------- | ------------------------ |
+| **Total Execution Time** | <3s         | 2.8s      | ✅ PASS | Within limits            |
+| **API Call Latency**     | <5s timeout | 1.2s avg  | ✅ PASS | Network latency excluded |
+| **Queue Processing**     | <1s         | 0.5s      | ✅ PASS | Priority queue working   |
+| **Database Write**       | <500ms      | 250ms avg | ✅ PASS | Good performance         |
 
 **Performance Summary:**
+
 - All metrics within acceptable limits
 - No performance bottlenecks detected
 - Average execution time: X.Xs
@@ -62,6 +64,7 @@ Brief description of what was validated and why.
 ## Evidence
 
 ### Execution Logs
+
 - **File:** `docs/test-evidence/[feature]/logs-YYYY-MM-DD-HH-MM-SS.json`
 - **Size:** X KB
 - **Test Cases:** X
@@ -69,16 +72,19 @@ Brief description of what was validated and why.
 - **Warnings:** X
 
 ### Database Dumps
+
 - **Shield Events:** `db-dump-shield-events-YYYY-MM-DD-HH-MM-SS.json` (X rows)
 - **Offender Profiles:** `db-dump-offender-profiles-YYYY-MM-DD-HH-MM-SS.json` (X rows)
 
 ### Performance Metrics
+
 - **File:** `metrics-YYYY-MM-DD-HH-MM-SS.json`
 - **Execution Time:** X.Xs
 - **API Calls:** X requests
 - **Database Queries:** X queries
 
 ### Screenshots (Optional)
+
 - **Dashboard:** `screenshots/dashboard-full.png`
 - **Decision Panel:** `screenshots/decision-panel.png`
 - **Timeline:** `screenshots/timeline.png`
@@ -182,11 +188,13 @@ Brief description of what was validated and why.
 [Brief summary of validation results - 2-3 sentences explaining whether the feature is ready, what needs to be fixed, and confidence level]
 
 **Approval Status:**
+
 - [ ] ✅ **APPROVED** - Feature is ready for production
 - [ ] ⚠️ **APPROVED WITH CONDITIONS** - Feature can proceed with noted fixes
 - [ ] ❌ **BLOCKED** - Critical issues must be resolved before proceeding
 
 **Next Steps:**
+
 1. [Immediate next action]
 2. [Secondary action]
 3. [Follow-up action]

@@ -26,19 +26,19 @@ Stripe Event → Signature Verification → Idempotency Check → Event Processi
 
 ### Core Events (Required)
 
-| Event Type | Description | Action Taken |
-|------------|-------------|--------------|
-| `checkout.session.completed` | User completes subscription purchase | Set initial entitlements from Price metadata |
-| `customer.subscription.created` | New subscription created | Update entitlements |
-| `customer.subscription.updated` | Subscription plan changed | Refresh entitlements from new Price |
-| `customer.subscription.deleted` | Subscription canceled | Reset to free plan entitlements |
+| Event Type                      | Description                          | Action Taken                                 |
+| ------------------------------- | ------------------------------------ | -------------------------------------------- |
+| `checkout.session.completed`    | User completes subscription purchase | Set initial entitlements from Price metadata |
+| `customer.subscription.created` | New subscription created             | Update entitlements                          |
+| `customer.subscription.updated` | Subscription plan changed            | Refresh entitlements from new Price          |
+| `customer.subscription.deleted` | Subscription canceled                | Reset to free plan entitlements              |
 
 ### Optional Events (Informational)
 
-| Event Type | Description | Action Taken |
-|------------|-------------|--------------|
+| Event Type                  | Description                    | Action Taken                       |
+| --------------------------- | ------------------------------ | ---------------------------------- |
 | `invoice.payment_succeeded` | Payment processed successfully | Log success, update billing status |
-| `invoice.payment_failed` | Payment failed | Log failure for monitoring |
+| `invoice.payment_failed`    | Payment failed                 | Log failure for monitoring         |
 
 ## Database Schema
 
@@ -77,17 +77,19 @@ CREATE TABLE webhook_events (
 The main webhook endpoint that receives events from Stripe.
 
 **Request Requirements:**
+
 - `stripe-signature` header with valid signature
 - Raw JSON body (not parsed by Express)
 - Content-Type: `application/json`
 
 **Response Format:**
+
 ```json
 {
-    "received": true,
-    "processed": true,
-    "idempotent": false,
-    "message": "Checkout completed and entitlements updated"
+  "received": true,
+  "processed": true,
+  "idempotent": false,
+  "message": "Checkout completed and entitlements updated"
 }
 ```
 
@@ -98,9 +100,9 @@ The main webhook endpoint that receives events from Stripe.
 ```javascript
 // Verify webhook signature using Stripe's library
 const event = stripeWrapper.webhooks.constructEvent(
-    req.body,
-    req.headers['stripe-signature'],
-    process.env.STRIPE_WEBHOOK_SECRET
+  req.body,
+  req.headers['stripe-signature'],
+  process.env.STRIPE_WEBHOOK_SECRET
 );
 ```
 
@@ -130,7 +132,7 @@ SELECT is_webhook_event_processed('evt_1234567890');
 -- Start processing with idempotency
 SELECT start_webhook_event_processing(
     'evt_1234567890',
-    'checkout.session.completed', 
+    'checkout.session.completed',
     '{"data": "..."}',
     'cus_customer123',
     'sub_subscription123'
@@ -152,6 +154,7 @@ SELECT complete_webhook_event_processing(
 
 **Trigger**: User completes subscription purchase
 **Actions:**
+
 1. Extract `user_id` from session metadata
 2. Update user's `stripe_customer_id`
 3. Retrieve subscription and price details
@@ -170,15 +173,17 @@ SELECT complete_webhook_event_processing(
 
 **Trigger**: Plan changes, status changes, etc.
 **Actions:**
+
 1. Find user by `stripe_customer_id`
 2. Extract price from subscription items
 3. Update entitlements from new Price metadata
 4. Handle special cases (canceled, incomplete)
 
-### Subscription Deleted  
+### Subscription Deleted
 
 **Trigger**: Subscription canceled or expired
 **Actions:**
+
 1. Find user by `stripe_customer_id`
 2. Reset entitlements to free plan
 3. Log cancellation reason
@@ -187,7 +192,8 @@ SELECT complete_webhook_event_processing(
 
 **Trigger**: Payment succeeded/failed
 **Actions:**
-1. Find user by `stripe_customer_id`  
+
+1. Find user by `stripe_customer_id`
 2. Log payment result for monitoring
 3. Could trigger notifications (future enhancement)
 
@@ -203,6 +209,7 @@ ALTER TABLE users ADD COLUMN stripe_customer_id VARCHAR(255);
 ```
 
 **Mapping Process:**
+
 1. **Checkout Completion**: Links user to customer during first purchase
 2. **Customer Lookup**: All subsequent events use customer ID to find user
 3. **Error Handling**: Events for unknown customers are logged but not failed
@@ -221,10 +228,10 @@ ALTER TABLE users ADD COLUMN stripe_customer_id VARCHAR(255);
 
 ```javascript
 // Always return 200 to prevent Stripe retries
-res.json({ 
-    received: true,
-    processed: result.success,
-    error: result.error || null
+res.json({
+  received: true,
+  processed: result.success,
+  error: result.error || null
 });
 ```
 
@@ -253,7 +260,7 @@ res.json({
 STRIPE_SECRET_KEY=sk_live_or_test_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_endpoint_secret
 
-# Optional (for enhanced features)  
+# Optional (for enhanced features)
 STRIPE_PRICE_LOOKUP_PRO=pro_monthly
 STRIPE_PRICE_LOOKUP_CREATOR=creator_plus_monthly
 ```
@@ -266,19 +273,19 @@ STRIPE_PRICE_LOOKUP_CREATOR=creator_plus_monthly
 
 ```json
 {
-    "success": true,
-    "data": {
-        "period_days": 7,
-        "statistics": [
-            {
-                "event_type": "checkout.session.completed",
-                "total_events": 100,
-                "completed_events": 95,
-                "failed_events": 5,
-                "success_rate": 95.0
-            }
-        ]
-    }
+  "success": true,
+  "data": {
+    "period_days": 7,
+    "statistics": [
+      {
+        "event_type": "checkout.session.completed",
+        "total_events": 100,
+        "completed_events": 95,
+        "failed_events": 5,
+        "success_rate": 95.0
+      }
+    ]
+  }
 }
 ```
 
@@ -288,7 +295,7 @@ STRIPE_PRICE_LOOKUP_CREATOR=creator_plus_monthly
 
 ```json
 {
-    "days": 30
+  "days": 30
 }
 ```
 
@@ -304,8 +311,8 @@ SELECT * FROM get_webhook_stats(NOW() - INTERVAL '24 hours');
 SELECT cleanup_webhook_events(30);
 
 -- Check failed events
-SELECT * FROM webhook_events 
-WHERE status = 'failed' 
+SELECT * FROM webhook_events
+WHERE status = 'failed'
   AND created_at >= NOW() - INTERVAL '24 hours';
 ```
 
@@ -361,25 +368,29 @@ curl -X POST http://localhost:3000/api/billing/webhooks/stripe \
 ### Common Issues
 
 **Issue**: Webhooks not being received
-**Solution**: 
+**Solution**:
+
 - Check webhook endpoint URL in Stripe Dashboard
 - Verify HTTPS certificate is valid
 - Check server logs for connection issues
 
 **Issue**: Signature verification failed
 **Solution**:
+
 - Verify `STRIPE_WEBHOOK_SECRET` environment variable
 - Ensure using webhook endpoint secret, not API secret
 - Check that body is raw (not parsed by middleware)
 
 **Issue**: Events processed multiple times
 **Solution**:
+
 - Check idempotency implementation
 - Verify `stripe_event_id` uniqueness constraint
 - Review database function `is_webhook_event_processed`
 
 **Issue**: User entitlements not updating
 **Solution**:
+
 - Verify Price metadata is configured in Stripe
 - Check EntitlementsService integration
 - Review webhook processing logs
@@ -389,25 +400,25 @@ curl -X POST http://localhost:3000/api/billing/webhooks/stripe \
 ```javascript
 // Check webhook event processing status
 const result = await supabaseServiceClient
-    .from('webhook_events')
-    .select('*')
-    .eq('stripe_event_id', 'evt_1234567890')
-    .single();
+  .from('webhook_events')
+  .select('*')
+  .eq('stripe_event_id', 'evt_1234567890')
+  .single();
 
 // Get recent failed webhook events
 const { data: failedEvents } = await supabaseServiceClient
-    .from('webhook_events')
-    .select('*')
-    .eq('status', 'failed')
-    .order('created_at', { ascending: false })
-    .limit(10);
+  .from('webhook_events')
+  .select('*')
+  .eq('status', 'failed')
+  .order('created_at', { ascending: false })
+  .limit(10);
 
 // Check user's Stripe customer mapping
 const { data: user } = await supabaseServiceClient
-    .from('users')
-    .select('id, stripe_customer_id, plan')
-    .eq('id', 'user-uuid')
-    .single();
+  .from('users')
+  .select('id, stripe_customer_id, plan')
+  .eq('id', 'user-uuid')
+  .single();
 ```
 
 ## Security Considerations
@@ -450,11 +461,13 @@ CREATE INDEX idx_webhook_events_customer_id ON webhook_events(customer_id);
 ### From Previous Webhook Implementation
 
 1. **Run Database Migration**
+
    ```bash
    psql -d your_database -f database/migrations/003_add_webhook_events_table.sql
    ```
 
 2. **Update Environment Variables**
+
    ```bash
    # Add webhook secret if not already present
    STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
@@ -466,6 +479,7 @@ CREATE INDEX idx_webhook_events_customer_id ON webhook_events(customer_id);
    - Test webhook endpoint
 
 4. **Monitor Migration**
+
    ```bash
    # Check webhook processing stats
    curl -H "Authorization: Bearer admin-token" \
@@ -494,6 +508,6 @@ The Stripe Webhooks system provides:
 ✅ **Comprehensive Logging** - Full audit trail of all events  
 ✅ **Error Handling** - Graceful failure handling and recovery  
 ✅ **Admin Tools** - Statistics and maintenance functionality  
-✅ **High Performance** - Optimized database queries and processing  
+✅ **High Performance** - Optimized database queries and processing
 
 The system meets all requirements from Issue #169 and provides a robust foundation for subscription lifecycle management.

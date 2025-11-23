@@ -34,9 +34,7 @@ describe('Backoffice Structure Tests', () => {
   const renderWithProviders = (component) => {
     return render(
       <BrowserRouter>
-        <AuthProvider>
-          {component}
-        </AuthProvider>
+        <AuthProvider>{component}</AuthProvider>
       </BrowserRouter>
     );
   };
@@ -44,7 +42,7 @@ describe('Backoffice Structure Tests', () => {
   describe('AdminLayout Sidebar', () => {
     test('should render sidebar with all menu items', () => {
       renderWithProviders(<AdminLayout />);
-      
+
       // Check if sidebar elements are present
       expect(screen.getByText('Roastr Backoffice')).toBeInTheDocument();
       expect(screen.getByText('Usuarios')).toBeInTheDocument();
@@ -55,7 +53,7 @@ describe('Backoffice Structure Tests', () => {
 
     test('should show placeholder indicators for future features', () => {
       renderWithProviders(<AdminLayout />);
-      
+
       // Check for "Próximamente" indicators
       const proximamenteElements = screen.getAllByText('Próximamente');
       expect(proximamenteElements).toHaveLength(3); // Metrics, Logs, Settings
@@ -63,7 +61,7 @@ describe('Backoffice Structure Tests', () => {
 
     test('should have logout button', () => {
       renderWithProviders(<AdminLayout />);
-      
+
       expect(screen.getByText('Cerrar sesión')).toBeInTheDocument();
     });
   });
@@ -79,10 +77,11 @@ describe('Backoffice Structure Tests', () => {
     test('should render users list with filters', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: []
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: []
+          })
       });
 
       renderWithProviders(<AdminUsersPage />);
@@ -100,10 +99,11 @@ describe('Backoffice Structure Tests', () => {
     test('should have proper table headers as specified in issue', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: []
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: []
+          })
       });
 
       renderWithProviders(<AdminUsersPage />);
@@ -122,25 +122,35 @@ describe('Backoffice Structure Tests', () => {
   describe('Placeholder Pages', () => {
     test('AdminMetrics should show placeholder content', () => {
       renderWithProviders(<AdminMetrics />);
-      
+
       expect(screen.getByText('Métricas - Próximamente')).toBeInTheDocument();
-      expect(screen.getByText('Esta sección incluirá métricas avanzadas del sistema')).toBeInTheDocument();
-      expect(screen.getByText('En desarrollo: Esta funcionalidad será implementada en futuras versiones.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Esta sección incluirá métricas avanzadas del sistema')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'En desarrollo: Esta funcionalidad será implementada en futuras versiones.'
+        )
+      ).toBeInTheDocument();
     });
 
     test('AdminLogs should show placeholder content', () => {
       renderWithProviders(<AdminLogs />);
-      
+
       expect(screen.getByText('Logs / Alertas - Próximamente')).toBeInTheDocument();
-      expect(screen.getByText('Esta sección incluirá logs del sistema, alertas de uso')).toBeInTheDocument();
+      expect(
+        screen.getByText('Esta sección incluirá logs del sistema, alertas de uso')
+      ).toBeInTheDocument();
       expect(screen.getByText('Sistema operando normalmente')).toBeInTheDocument();
     });
 
     test('AdminSettings should show placeholder content', () => {
       renderWithProviders(<AdminSettings />);
-      
+
       expect(screen.getByText('Configuración - Próximamente')).toBeInTheDocument();
-      expect(screen.getByText('Esta sección incluirá configuraciones del sistema')).toBeInTheDocument();
+      expect(
+        screen.getByText('Esta sección incluirá configuraciones del sistema')
+      ).toBeInTheDocument();
       expect(screen.getByText('Límites de Planes')).toBeInTheDocument();
       expect(screen.getByText('Integraciones')).toBeInTheDocument();
     });

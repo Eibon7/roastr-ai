@@ -89,10 +89,18 @@ describe('Multi-Tenant RLS Integration Tests - Issue #412', () => {
       expect(tenantA.userBehaviors).toBeDefined();
       expect(tenantA.userActivities).toBeDefined();
 
-      console.log(`  ✅ Tenant A: ${tenantA.posts.length} posts, ${tenantA.comments.length} comments, ${tenantA.roasts.length} roasts`);
-      console.log(`  ✅ Tenant A (new): ${tenantA.integrationConfigs.length} configs, ${tenantA.usageRecords.length} usage, ${tenantA.responses.length} responses`);
-      console.log(`  ✅ Tenant B: ${tenantB.posts.length} posts, ${tenantB.comments.length} comments, ${tenantB.roasts.length} roasts`);
-      console.log(`  ✅ Tenant B (new): ${tenantB.integrationConfigs.length} configs, ${tenantB.usageRecords.length} usage, ${tenantB.responses.length} responses`);
+      console.log(
+        `  ✅ Tenant A: ${tenantA.posts.length} posts, ${tenantA.comments.length} comments, ${tenantA.roasts.length} roasts`
+      );
+      console.log(
+        `  ✅ Tenant A (new): ${tenantA.integrationConfigs.length} configs, ${tenantA.usageRecords.length} usage, ${tenantA.responses.length} responses`
+      );
+      console.log(
+        `  ✅ Tenant B: ${tenantB.posts.length} posts, ${tenantB.comments.length} comments, ${tenantB.roasts.length} roasts`
+      );
+      console.log(
+        `  ✅ Tenant B (new): ${tenantB.integrationConfigs.length} configs, ${tenantB.usageRecords.length} usage, ${tenantB.responses.length} responses`
+      );
     });
   });
 
@@ -103,33 +111,27 @@ describe('Multi-Tenant RLS Integration Tests - Issue #412', () => {
     });
 
     test('GET /posts returns only Tenant A posts', async () => {
-      const { data, error } = await testClient
-        .from('posts')
-        .select('*');
+      const { data, error } = await testClient.from('posts').select('*');
 
       expect(error).toBeNull();
       expect(data).toHaveLength(tenantA.posts.length);
-      expect(data.every(p => p.organization_id === tenantA.id)).toBe(true);
+      expect(data.every((p) => p.organization_id === tenantA.id)).toBe(true);
     });
 
     test('GET /comments returns only Tenant A comments', async () => {
-      const { data, error } = await testClient
-        .from('comments')
-        .select('*');
+      const { data, error } = await testClient.from('comments').select('*');
 
       expect(error).toBeNull();
       expect(data).toHaveLength(tenantA.comments.length);
-      expect(data.every(c => c.organization_id === tenantA.id)).toBe(true);
+      expect(data.every((c) => c.organization_id === tenantA.id)).toBe(true);
     });
 
     test('GET /roasts returns only Tenant A roasts', async () => {
-      const { data, error } = await testClient
-        .from('roasts')
-        .select('*');
+      const { data, error } = await testClient.from('roasts').select('*');
 
       expect(error).toBeNull();
       expect(data).toHaveLength(tenantA.roasts.length);
-      expect(data.every(r => r.organization_id === tenantA.id)).toBe(true);
+      expect(data.every((r) => r.organization_id === tenantA.id)).toBe(true);
     });
   });
 
@@ -254,13 +256,11 @@ describe('Multi-Tenant RLS Integration Tests - Issue #412', () => {
     });
 
     test('GET /integration_configs returns only Tenant A configs', async () => {
-      const { data, error } = await testClient
-        .from('integration_configs')
-        .select('*');
+      const { data, error } = await testClient.from('integration_configs').select('*');
 
       expect(error).toBeNull();
       if (data && data.length > 0) {
-        expect(data.every(c => c.organization_id === tenantA.id)).toBe(true);
+        expect(data.every((c) => c.organization_id === tenantA.id)).toBe(true);
       }
     });
 
@@ -282,13 +282,11 @@ describe('Multi-Tenant RLS Integration Tests - Issue #412', () => {
     });
 
     test('GET /usage_records returns only Tenant A records', async () => {
-      const { data, error } = await testClient
-        .from('usage_records')
-        .select('*');
+      const { data, error } = await testClient.from('usage_records').select('*');
 
       expect(error).toBeNull();
       if (data && data.length > 0) {
-        expect(data.every(r => r.organization_id === tenantA.id)).toBe(true);
+        expect(data.every((r) => r.organization_id === tenantA.id)).toBe(true);
       }
     });
 
@@ -310,13 +308,11 @@ describe('Multi-Tenant RLS Integration Tests - Issue #412', () => {
     });
 
     test('GET /monthly_usage returns only Tenant A summaries', async () => {
-      const { data, error } = await testClient
-        .from('monthly_usage')
-        .select('*');
+      const { data, error } = await testClient.from('monthly_usage').select('*');
 
       expect(error).toBeNull();
       if (data && data.length > 0) {
-        expect(data.every(m => m.organization_id === tenantA.id)).toBe(true);
+        expect(data.every((m) => m.organization_id === tenantA.id)).toBe(true);
       }
     });
 
@@ -338,13 +334,11 @@ describe('Multi-Tenant RLS Integration Tests - Issue #412', () => {
     });
 
     test('GET /responses returns only Tenant A responses', async () => {
-      const { data, error } = await testClient
-        .from('responses')
-        .select('*');
+      const { data, error } = await testClient.from('responses').select('*');
 
       expect(error).toBeNull();
       if (data && data.length > 0) {
-        expect(data.every(r => r.organization_id === tenantA.id)).toBe(true);
+        expect(data.every((r) => r.organization_id === tenantA.id)).toBe(true);
       }
     });
 
@@ -366,13 +360,11 @@ describe('Multi-Tenant RLS Integration Tests - Issue #412', () => {
     });
 
     test('GET /user_behaviors returns only Tenant A behaviors', async () => {
-      const { data, error } = await testClient
-        .from('user_behaviors')
-        .select('*');
+      const { data, error } = await testClient.from('user_behaviors').select('*');
 
       expect(error).toBeNull();
       if (data && data.length > 0) {
-        expect(data.every(b => b.organization_id === tenantA.id)).toBe(true);
+        expect(data.every((b) => b.organization_id === tenantA.id)).toBe(true);
       }
     });
 
@@ -394,13 +386,11 @@ describe('Multi-Tenant RLS Integration Tests - Issue #412', () => {
     });
 
     test('GET /user_activities returns only Tenant A activities', async () => {
-      const { data, error } = await testClient
-        .from('user_activities')
-        .select('*');
+      const { data, error } = await testClient.from('user_activities').select('*');
 
       expect(error).toBeNull();
       if (data && data.length > 0) {
-        expect(data.every(a => a.organization_id === tenantA.id)).toBe(true);
+        expect(data.every((a) => a.organization_id === tenantA.id)).toBe(true);
       }
     });
 
