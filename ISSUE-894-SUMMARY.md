@@ -11,7 +11,7 @@
 
 **Problem:**
 
-- Supabase egress excedido al 287% (14.365 / 5 GB)
+- Supabase egress exceeded at 287% (14.365 / 5 GB)
 - Integration tests bloqueados (Cloudflare Error 522)
 - 0/35 RLS tests pasando
 
