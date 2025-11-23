@@ -298,7 +298,7 @@ class GenerateReplyWorker extends BaseWorker {
     // Check kill switch before processing
     const autopostCheck = await shouldBlockAutopost(platform);
     if (autopostCheck.blocked) {
-      this.logger.warn('Reply generation blocked by kill switch', {
+      this.log('warn', 'Reply generation blocked by kill switch', {
         comment_id,
         organization_id,
         platform,

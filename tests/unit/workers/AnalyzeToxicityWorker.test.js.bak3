@@ -1921,11 +1921,7 @@ describe('AnalyzeToxicityWorker', () => {
 
       const result = await worker.getComment(commentId);
 
-      // The result should match the mock comment
-      // Note: mockMode may add extra fields, so we check for the essential ones
-      expect(result).toBeDefined();
-      expect(result.id).toBe(commentId);
-      expect(result.original_text || result.text).toBe('Test comment');
+      expect(result).toEqual(mockComment);
       expect(mockSupabase.from).toHaveBeenCalledWith('comments');
       expect(mockSelect).toHaveBeenCalledWith('*');
       expect(mockEq).toHaveBeenCalledWith('id', commentId);
@@ -1998,16 +1994,16 @@ describe('AnalyzeToxicityWorker', () => {
           select: mockSelectUser
         });
 
-      // Mock encryptionService - the module is already mocked globally
-      // We just need to ensure it returns the correct value
-      mockEncryptionService.decrypt.mockReturnValueOnce('persona data');
+      // Ensure encryptionService is properly mocked
+      const encryptionService = require('../../../src/services/encryptionService');
+      encryptionService.decrypt = jest.fn().mockReturnValue('persona data');
       
       const result = await worker.getUserRoastrPersona(organizationId);
 
       expect(result).toBe('persona data');
       expect(mockSupabase.from).toHaveBeenCalledWith('organizations');
       expect(mockSupabase.from).toHaveBeenCalledWith('users');
-      expect(mockEncryptionService.decrypt).toHaveBeenCalledWith('encrypted:persona data');
+      expect(encryptionService.decrypt).toHaveBeenCalledWith('encrypted:persona data');
     });
 
     test('should return null when user has no persona', async () => {
@@ -2100,15 +2096,6 @@ describe('AnalyzeToxicityWorker', () => {
         matched_intolerance_terms: ['hate speech']
       };
       
-      // Ensure shieldService is properly set up
-      worker.shieldService = mockShieldService;
-      mockShieldService.analyzeForShield.mockResolvedValueOnce({
-        shieldActive: true,
-        priority: 0,
-        actions: { primary: ['hide', 'block'] },
-        autoExecuted: true
-      });
-      
       const result = await worker.handleAutoBlockShieldAction(organizationId, comment, analysis);
 
       expect(result).toBeDefined();
@@ -2194,9 +2181,8 @@ describe('AnalyzeToxicityWorker', () => {
     test('should detect plural variations', () => {
       // Check for plural 's' or 'es' suffix
       expect(worker.checkWordVariations('There are many idiots here', 'idiot')).toBe(true);
-      // 'stupid' is found directly in text, which matches the stem check
-      // The method checks if the word (or its stem) is included in text
-      expect(worker.checkWordVariations('These are stupid comments', 'stupid')).toBe(true);
+      // 'stupid' doesn't have plural variation in the text
+      expect(worker.checkWordVariations('These are stupid comments', 'stupid')).toBe(false);
     });
 
     test('should detect l33t speak variations', () => {

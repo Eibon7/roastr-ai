@@ -377,7 +377,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
           sponsorMatch = await this.sponsorService.detectSponsorMention(commentText, sponsors);
           
           if (sponsorMatch.matched) {
-            this.logger.info(`[Brand Safety] Sponsor match detected in comment ${comment_id}`, {
+            this.log('info', `[Brand Safety] Sponsor match detected in comment ${comment_id}`, {
               sponsor: sponsorMatch.sponsor.name,
               matchType: sponsorMatch.matchType,
               severity: sponsorMatch.sponsor.severity
@@ -387,7 +387,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
       }
     } catch (sponsorError) {
       // Non-blocking: Log error but continue analysis
-      this.logger.error('[Brand Safety] Failed to detect sponsors, continuing analysis', {
+      this.log('error', '[Brand Safety] Failed to detect sponsors, continuing analysis', {
         error: sponsorError.message,
         commentId: comment_id
       });

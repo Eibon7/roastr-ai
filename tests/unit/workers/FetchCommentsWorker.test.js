@@ -611,4 +611,390 @@ describe('FetchCommentsWorker', () => {
       expect(result.queuedForAnalysis).toBe(0);
     });
   });
+
+  describe('storeComments', () => {
+    test('should store multiple new comments', async () => {
+      const comments = [
+        {
+          platform_comment_id: 'comment-1',
+          platform_user_id: 'user-1',
+          platform_username: 'user1',
+          original_text: 'First comment',
+          platform: 'twitter',
+          metadata: {}
+        },
+        {
+          platform_comment_id: 'comment-2',
+          platform_user_id: 'user-2',
+          platform_username: 'user2',
+          original_text: 'Second comment',
+          platform: 'twitter',
+          metadata: {}
+        }
+      ];
+
+      mockSupabase.from
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: null,
+                error: null
+              })
+            })
+          })
+        })
+        .mockReturnValueOnce({
+          insert: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: 'db-comment-1', ...comments[0] },
+                error: null
+              })
+            })
+          })
+        })
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: null,
+                error: null
+              })
+            })
+          })
+        })
+        .mockReturnValueOnce({
+          insert: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: 'db-comment-2', ...comments[1] },
+                error: null
+              })
+            })
+          })
+        });
+
+      const result = await worker.storeComments('org-123', 'config-123', 'twitter', comments);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBe('db-comment-1');
+      expect(result[1].id).toBe('db-comment-2');
+    });
+
+    test('should skip duplicate comments', async () => {
+      const comments = [
+        {
+          platform_comment_id: 'existing-comment',
+          platform_user_id: 'user-1',
+          original_text: 'Existing comment',
+          platform: 'twitter'
+        },
+        {
+          platform_comment_id: 'new-comment',
+          platform_user_id: 'user-2',
+          original_text: 'New comment',
+          platform: 'twitter'
+        }
+      ];
+
+      mockSupabase.from
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: { id: 'existing-id' },
+                error: null
+              })
+            })
+          })
+        })
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: null,
+                error: null
+              })
+            })
+          })
+        })
+        .mockReturnValueOnce({
+          insert: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: 'new-id', ...comments[1] },
+                error: null
+              })
+            })
+          })
+        });
+
+      const result = await worker.storeComments('org-123', 'config-123', 'twitter', comments);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('new-id');
+    });
+
+    test('should return empty array for empty input', async () => {
+      const result = await worker.storeComments('org-123', 'config-123', 'twitter', []);
+
+      expect(result).toEqual([]);
+      expect(mockSupabase.from).not.toHaveBeenCalled();
+    });
+
+    test('should handle insert errors gracefully', async () => {
+      const comments = [
+        {
+          platform_comment_id: 'comment-error',
+          platform_user_id: 'user-1',
+          original_text: 'Comment with error',
+          platform: 'twitter'
+        }
+      ];
+
+      mockSupabase.from
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: null,
+                error: null
+              })
+            })
+          })
+        })
+        .mockReturnValueOnce({
+          insert: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Insert failed' }
+              })
+            })
+          })
+        });
+
+      const result = await worker.storeComments('org-123', 'config-123', 'twitter', comments);
+
+      expect(result).toHaveLength(0);
+      expect(worker.log).toHaveBeenCalledWith('warn', 'Failed to store comment', expect.any(Object));
+    });
+  });
+
+  describe('queueAnalysisJobs', () => {
+    test('should queue jobs with Redis', async () => {
+      const mockPipeline = {
+        rpush: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([[null, 1], [null, 1]])
+      };
+
+      worker.redis = {
+        pipeline: jest.fn(() => mockPipeline)
+      };
+
+      const comments = [
+        { id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' },
+        { id: 'comment-2', platform: 'twitter', original_text: 'Comment 2' }
+      ];
+
+      await worker.queueAnalysisJobs('org-123', comments, 'corr-123');
+
+      expect(worker.redis.pipeline).toHaveBeenCalled();
+      expect(mockPipeline.rpush).toHaveBeenCalledTimes(2);
+      expect(mockPipeline.exec).toHaveBeenCalled();
+      expect(worker.log).toHaveBeenCalledWith('info', 'Queued analysis jobs', expect.any(Object));
+    });
+
+    test('should queue jobs with queueService', async () => {
+      worker.redis = null;
+      worker.queueService = {
+        addJob: jest.fn().mockResolvedValue(true)
+      };
+
+      const comments = [
+        { id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' }
+      ];
+
+      await worker.queueAnalysisJobs('org-123', comments, 'corr-123');
+
+      expect(worker.queueService.addJob).toHaveBeenCalledWith(
+        'analyze_toxicity',
+        expect.objectContaining({
+          comment_id: 'comment-1',
+          organization_id: 'org-123',
+          platform: 'twitter',
+          correlationId: 'corr-123'
+        }),
+        5
+      );
+    });
+
+    test('should queue jobs with database fallback', async () => {
+      worker.redis = null;
+      worker.queueService = null;
+      worker.supabase = mockSupabase;
+
+      mockSupabase.from.mockReturnValue({
+        insert: jest.fn().mockResolvedValue({ error: null })
+      });
+
+      const comments = [
+        { id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' }
+      ];
+
+      await worker.queueAnalysisJobs('org-123', comments, 'corr-123');
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('job_queue');
+      expect(worker.log).toHaveBeenCalledWith('info', 'Queued analysis jobs', expect.any(Object));
+    });
+
+    test('should handle queue errors gracefully', async () => {
+      worker.redis = null;
+      worker.queueService = null;
+      worker.supabase = mockSupabase;
+
+      mockSupabase.from.mockReturnValue({
+        insert: jest.fn().mockResolvedValue({
+          error: { message: 'Database error' }
+        })
+      });
+
+      const comments = [
+        { id: 'comment-1', platform: 'twitter', original_text: 'Comment 1' }
+      ];
+
+      await worker.queueAnalysisJobs('org-123', comments, 'corr-123');
+
+      expect(worker.log).toHaveBeenCalledWith(
+        'error',
+        'Failed to queue analysis jobs',
+        expect.objectContaining({
+          count: 1,
+          error: 'Database error'
+        })
+      );
+    });
+
+    test('should return early for empty comments array', async () => {
+      await worker.queueAnalysisJobs('org-123', [], 'corr-123');
+
+      expect(mockSupabase.from).not.toHaveBeenCalled();
+      expect(worker.queueService?.addJob).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getIntegrationConfig', () => {
+    test('should return override config if set', async () => {
+      const overrideConfig = {
+        id: 'override-config',
+        platform: 'twitter',
+        enabled: true
+      };
+
+      worker.setIntegrationConfigOverride(overrideConfig);
+
+      const result = await worker.getIntegrationConfig('org-123', 'twitter', 'config-123');
+
+      expect(result).toBe(overrideConfig);
+      expect(mockSupabase.from).not.toHaveBeenCalled();
+    });
+
+    test('should fetch config from database', async () => {
+      worker.setIntegrationConfigOverride(null);
+
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: {
+                    id: 'config-123',
+                    organization_id: 'org-123',
+                    platform: 'twitter',
+                    enabled: true
+                  },
+                  error: null
+                })
+              })
+            })
+          })
+        })
+      });
+
+      const result = await worker.getIntegrationConfig('org-123', 'twitter', 'config-123');
+
+      expect(result).toBeDefined();
+      expect(result.enabled).toBe(true);
+      expect(mockSupabase.from).toHaveBeenCalledWith('integration_configs');
+    });
+
+    test('should handle database errors', async () => {
+      worker.setIntegrationConfigOverride(null);
+
+      mockSupabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { message: 'Config not found' }
+                })
+              })
+            })
+          })
+        })
+      });
+
+      await expect(
+        worker.getIntegrationConfig('org-123', 'twitter', 'config-123')
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('fetchCommentsFromPlatform', () => {
+    test('should use platform service if available', async () => {
+      const mockService = {
+        fetchComments: jest.fn().mockResolvedValue({
+          comments: [{ id: 'comment-1', text: 'Test' }]
+        })
+      };
+
+      worker.platformServices.set('twitter', mockService);
+      worker._buildServicePayload = jest.fn().mockReturnValue({ test: 'payload' });
+
+      const config = { id: 'config-123', platform: 'twitter' };
+      const payload = { post_id: 'tweet-123' };
+
+      const result = await worker.fetchCommentsFromPlatform('twitter', config, payload);
+
+      expect(mockService.fetchComments).toHaveBeenCalledWith({ test: 'payload' });
+      expect(result.comments).toBeDefined();
+    });
+
+    test('should delegate to platform-specific methods', async () => {
+      worker.fetchTwitterComments = jest.fn().mockResolvedValue({
+        comments: [{ id: 'comment-1', text: 'Twitter comment' }]
+      });
+
+      const mockClient = { test: 'client' };
+      worker.platformClients.set('twitter', mockClient);
+
+      const config = { id: 'config-123', platform: 'twitter' };
+      const payload = { post_id: 'tweet-123' };
+
+      const result = await worker.fetchCommentsFromPlatform('twitter', config, payload);
+
+      expect(worker.fetchTwitterComments).toHaveBeenCalledWith(mockClient, config, payload);
+      expect(result.comments).toBeDefined();
+    });
+
+    test('should throw error for unsupported platform', async () => {
+      await expect(
+        worker.fetchCommentsFromPlatform('unsupported', {}, {})
+      ).rejects.toThrow('Unsupported platform: unsupported');
+    });
+  });
 });
