@@ -1012,6 +1012,7 @@ describe('FetchCommentsWorker', () => {
         config: { monitored_accounts: ['@test'] }
       };
 
+      worker.setIntegrationConfigOverride(null);
       worker.supabase = mockSupabase;
       worker.log = jest.fn();
       
@@ -1020,18 +1021,23 @@ describe('FetchCommentsWorker', () => {
         error: null
       });
       
-      const mockEq = jest.fn()
-        .mockReturnValueOnce({
-          eq: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: mockSingle
-            })
-          })
-        });
+      const mockThirdEq = jest.fn().mockReturnValue({
+        single: mockSingle
+      });
+      
+      const mockSecondEq = jest.fn().mockReturnValue({
+        eq: mockThirdEq
+      });
+      
+      const mockFirstEq = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: mockSecondEq
+        })
+      });
 
       mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
-          eq: mockEq
+          eq: mockFirstEq
         })
       });
 
@@ -1051,6 +1057,7 @@ describe('FetchCommentsWorker', () => {
     });
 
     test('should handle database errors', async () => {
+      worker.setIntegrationConfigOverride(null);
       worker.supabase = mockSupabase;
       worker.log = jest.fn();
       
@@ -1059,24 +1066,31 @@ describe('FetchCommentsWorker', () => {
         error: { message: 'Config not found' }
       });
       
-      const mockEq = jest.fn()
-        .mockReturnValueOnce({
-          eq: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: mockSingle
-            })
-          })
-        });
+      const mockThirdEq = jest.fn().mockReturnValue({
+        single: mockSingle
+      });
+      
+      const mockSecondEq = jest.fn().mockReturnValue({
+        eq: mockThirdEq
+      });
+      
+      const mockFirstEq = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: mockSecondEq
+        })
+      });
 
       mockSupabase.from = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
-          eq: mockEq
+          eq: mockFirstEq
         })
       });
 
       await expect(
         worker.getIntegrationConfig('org-123', 'twitter', 'config-123')
       ).rejects.toThrow();
+      
+      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to get integration config', expect.any(Object));
     });
   });
 
@@ -1140,51 +1154,103 @@ describe('FetchCommentsWorker', () => {
   });
 
   describe('normalizeCommentData', () => {
-    test('should normalize comment data structure', () => {
+    test('should normalize Twitter comment data structure', () => {
       const rawComment = {
-        id: '123',
-        text: 'Test comment',
-        author: { id: 'user-1', username: 'testuser' },
-        created_at: '2024-01-01T00:00:00Z'
+        id: '1234567890',
+        text: 'Great tweet!',
+        author_id: '9876543210',
+        created_at: '2024-01-15T10:30:00Z',
+        public_metrics: {
+          like_count: 5,
+          reply_count: 2,
+          retweet_count: 1
+        },
+        lang: 'en'
       };
 
       const normalized = worker.normalizeCommentData(rawComment, 'twitter');
 
-      expect(normalized).toHaveProperty('platform', 'twitter');
-      expect(normalized).toHaveProperty('original_text');
-      expect(normalized).toHaveProperty('platform_comment_id');
+      expect(normalized.id).toBe('1234567890');
+      expect(normalized.text).toBe('Great tweet!');
+      expect(normalized.author_id).toBe('9876543210');
+      expect(normalized.created_at).toBe('2024-01-15T10:30:00Z');
+      expect(normalized.metrics.likes).toBe(5);
+      expect(normalized.metrics.replies).toBe(2);
+      expect(normalized.metrics.retweets).toBe(1);
+      expect(normalized.language).toBe('en');
     });
 
-    test('should handle different comment structures', () => {
+    test('should normalize YouTube comment data', () => {
+      const rawComment = {
+        id: 'yt_comment_123',
+        snippet: {
+          textDisplay: 'Amazing video!',
+          authorChannelId: { value: 'channel_456' },
+          publishedAt: '2024-01-15T10:30:00Z',
+          likeCount: 10
+        }
+      };
+
+      const normalized = worker.normalizeCommentData(rawComment, 'youtube');
+
+      expect(normalized.id).toBe('yt_comment_123');
+      expect(normalized.text).toBe('Amazing video!');
+      expect(normalized.author_id).toBe('channel_456');
+      expect(normalized.created_at).toBe('2024-01-15T10:30:00Z');
+      expect(normalized.metrics.likes).toBe(10);
+    });
+
+    test('should handle unknown platform by returning original comment', () => {
       const rawComment = {
         platform_comment_id: '123',
         original_text: 'Test',
         platform_user_id: 'user-1'
       };
 
-      const normalized = worker.normalizeCommentData(rawComment, 'youtube');
+      const normalized = worker.normalizeCommentData(rawComment, 'unknown');
 
-      expect(normalized.platform).toBe('youtube');
-      expect(normalized.original_text).toBe('Test');
+      expect(normalized).toEqual(rawComment);
     });
   });
 
   describe('_buildServicePayload', () => {
-    test('should build service payload from config and payload', () => {
+    test('should build service payload for Twitter', () => {
       const config = {
         id: 'config-123',
         organization_id: 'org-123',
         platform: 'twitter',
         config: { monitored_accounts: ['@test'] }
       };
-      const payload = { since_id: '100', max_results: 50 };
+      const payload = { post_id: 'tweet-456', since_id: '100', max_results: 50 };
 
       const servicePayload = worker._buildServicePayload('twitter', config, payload);
 
-      expect(servicePayload).toHaveProperty('organization_id', 'org-123');
-      expect(servicePayload).toHaveProperty('integration_config_id', 'config-123');
-      expect(servicePayload).toHaveProperty('since_id', '100');
-      expect(servicePayload).toHaveProperty('max_results', 50);
+      expect(servicePayload).toHaveProperty('postId', 'tweet-456');
+      expect(servicePayload).toHaveProperty('sinceId', '100');
+      expect(servicePayload).toHaveProperty('maxResults', 50);
+    });
+
+    test('should build service payload for YouTube', () => {
+      const config = {
+        id: 'config-123',
+        organization_id: 'org-123',
+        platform: 'youtube'
+      };
+      const payload = { video_id: 'video-123', page_token: 'token-456' };
+
+      const servicePayload = worker._buildServicePayload('youtube', config, payload);
+
+      expect(servicePayload).toHaveProperty('videoId', 'video-123');
+      expect(servicePayload).toHaveProperty('pageToken', 'token-456');
+    });
+
+    test('should return original payload for unknown platform', () => {
+      const config = { id: 'config-123' };
+      const payload = { custom_field: 'value' };
+
+      const servicePayload = worker._buildServicePayload('unknown', config, payload);
+
+      expect(servicePayload).toEqual({ custom_field: 'value' });
     });
   });
 
