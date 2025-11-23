@@ -26,7 +26,7 @@
 
 - ✅ roastLevelSchema: 10 tests (valid 1-5, reject invalid)
 - ✅ shieldLevelSchema: 10 tests (valid 1-5, reject invalid)
-- ✅ platformConfigSchema: 13 tests (full config validation)
+- ✅ platformConfigSchema: 10 tests (full config validation)
 - ✅ roastLevelUpdateSchema: 4 tests (dedicated endpoint support)
 - ✅ shieldLevelUpdateSchema: 4 tests (dedicated endpoint support)
 - ✅ Edge Cases: 3 tests (boundaries, type coercion)
@@ -75,7 +75,7 @@ npm test -- --testPathPatterns="validators/config.schema|config-zod"
 
 ### Results Summary
 
-```
+```text
 Test Suites: 2 passed, 2 total
 Tests:       63 passed, 63 total
 Snapshots:   0 total

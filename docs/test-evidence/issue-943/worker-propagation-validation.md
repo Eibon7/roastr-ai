@@ -32,7 +32,7 @@
 
 ### Data Flow
 
-```
+```text
 User Request (PUT /api/config/:platform)
     ↓
 Zod Validation (NEW - Issue #943)

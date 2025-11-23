@@ -93,7 +93,7 @@ node scripts/validate-gdd-runtime.js --full
 
 ### Results
 
-```
+```text
 🟢 Overall Status: HEALTHY
 ✅ Graph consistent
 ✅ spec.md synchronized

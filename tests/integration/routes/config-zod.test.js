@@ -334,11 +334,19 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
     });
 
     it('should pass Zod validation before plan-based validation', async () => {
+      const levelConfigService = require('../../../src/services/levelConfigService');
+
+      // Clear any previous calls to the mock
+      levelConfigService.validateLevelAccess.mockClear();
+
       // Invalid Zod value should fail before reaching plan validation
       const response = await request(app).put('/api/config/twitter').send({ roast_level: 10 });
 
       expect(response.status).toBe(400); // Zod validation fails first
       expect(response.body.error).toContain('must be between 1 and 5');
+
+      // Verify that plan-based validation was NOT called (short-circuit behavior)
+      expect(levelConfigService.validateLevelAccess).not.toHaveBeenCalled();
     });
   });
 
