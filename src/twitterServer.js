@@ -7,6 +7,7 @@
  */
 
 const express = require('express');
+const { logger } = require('./utils/logger'); // Issue #971: Added for console.log replacement
 const TwitterRoastBot = require('./services/twitter');
 require('dotenv').config();
 
@@ -49,14 +50,14 @@ app.post('/bot/start', async (req, res) => {
       return res.status(400).json({ error: 'Bot is already running' });
     }
 
-    console.log('📡 Starting Twitter bot via API request...');
+    logger.info('📡 Starting Twitter bot via API request...');
 
     bot = new TwitterRoastBot();
     botStatus = 'starting';
 
     // Start the bot in background
     bot.runStream().catch((error) => {
-      console.error('❌ Bot crashed:', error);
+      logger.error('❌ Bot crashed:', error);
       botStatus = 'error';
     });
 
@@ -68,7 +69,7 @@ app.post('/bot/start', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('❌ Error starting bot:', error);
+    logger.error('❌ Error starting bot:', error);
     botStatus = 'error';
     res.status(500).json({
       error: 'Failed to start bot',
@@ -84,7 +85,7 @@ app.post('/bot/stop', (req, res) => {
       return res.status(400).json({ error: 'Bot is not running' });
     }
 
-    console.log('🛑 Stopping Twitter bot via API request...');
+    logger.info('🛑 Stopping Twitter bot via API request...');
 
     if (bot && bot.stream) {
       bot.stream.close();
@@ -99,7 +100,7 @@ app.post('/bot/stop', (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('❌ Error stopping bot:', error);
+    logger.error('❌ Error stopping bot:', error);
     res.status(500).json({
       error: 'Failed to stop bot',
       message: error.message
@@ -125,26 +126,26 @@ app.get('/', (req, res) => {
 
 // Start server
 app.listen(port, async () => {
-  console.log(`🔥 Roastr.ai Twitter Bot Server running on port ${port}`);
-  console.log(`📊 Health check: http://localhost:${port}/health`);
-  console.log(`🤖 Bot status: http://localhost:${port}/bot/status`);
+  logger.info(`🔥 Roastr.ai Twitter Bot Server running on port ${port}`);
+  logger.info(`📊 Health check: http://localhost:${port}/health`);
+  logger.info(`🤖 Bot status: http://localhost:${port}/bot/status`);
 
   // Auto-start bot if environment variable is set
   if (process.env.AUTO_START_BOT === 'true') {
     try {
-      console.log('🚀 Auto-starting Twitter bot...');
+      logger.info('🚀 Auto-starting Twitter bot...');
       bot = new TwitterRoastBot();
       botStatus = 'starting';
 
       bot.runStream().catch((error) => {
-        console.error('❌ Bot crashed:', error);
+        logger.error('❌ Bot crashed:', error);
         botStatus = 'error';
       });
 
       botStatus = 'running';
-      console.log('✅ Twitter bot auto-started');
+      logger.info('✅ Twitter bot auto-started');
     } catch (error) {
-      console.error('❌ Failed to auto-start bot:', error);
+      logger.error('❌ Failed to auto-start bot:', error);
       botStatus = 'error';
     }
   }
@@ -152,7 +153,7 @@ app.listen(port, async () => {
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down server gracefully...');
+  logger.info('\n🛑 Shutting down server gracefully...');
 
   if (bot && bot.stream) {
     bot.stream.close();
@@ -162,7 +163,7 @@ process.on('SIGINT', () => {
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Received SIGTERM, shutting down gracefully...');
+  logger.info('\n🛑 Received SIGTERM, shutting down gracefully...');
 
   if (bot && bot.stream) {
     bot.stream.close();

@@ -6,6 +6,7 @@ class BaseIntegration {
 
     // Initialize advanced logger and reincidence detector
     this.advancedLogger = require('../../utils/advancedLogger');
+const { logger } = require('./../../utils/logger'); // Issue #971: Added for console.log replacement
     this.ReincidenceDetector = require('../../services/reincidenceDetector');
     this.reincidenceDetector = new this.ReincidenceDetector();
 
@@ -31,7 +32,7 @@ class BaseIntegration {
    */
   debugLog(message, ...args) {
     if (this.debug) {
-      console.log(
+      logger.info(
         `[${this.platform.toUpperCase()}-DEBUG] ${new Date().toISOString()}: ${message}`,
         ...args
       );
@@ -153,11 +154,11 @@ class BaseIntegration {
         }
       );
 
-      console.log(`📝 [${this.platform.toUpperCase()}] Comment processed successfully`);
+      logger.info(`📝 [${this.platform.toUpperCase()}] Comment processed successfully`);
       return true;
     } catch (error) {
       this.metrics.errorsEncountered++;
-      console.error(`❌ [${this.platform.toUpperCase()}] Error processing comment:`, error.message);
+      logger.error(`❌ [${this.platform.toUpperCase()}] Error processing comment:`, error.message);
 
       await this.advancedLogger.logIntegration(this.platform, 'error', 'Error processing comment', {
         error: error.message,
@@ -188,7 +189,7 @@ class BaseIntegration {
       // Platform-specific implementation should override this
       await this.performAutoAction(comment, action);
     } catch (error) {
-      console.error(`❌ Error executing auto action ${action}:`, error.message);
+      logger.error(`❌ Error executing auto action ${action}:`, error.message);
       throw error;
     }
   }
@@ -198,7 +199,7 @@ class BaseIntegration {
    */
   async performAutoAction(comment, action) {
     // Default implementation - just log
-    console.log(`🛡️ [${this.platform.toUpperCase()}] Auto-action: ${action} (not implemented)`);
+    logger.info(`🛡️ [${this.platform.toUpperCase()}] Auto-action: ${action} (not implemented)`);
   }
 
   /**
@@ -227,7 +228,7 @@ class BaseIntegration {
 
       return roast;
     } catch (error) {
-      console.error(`❌ Error generating roast with tone:`, error.message);
+      logger.error(`❌ Error generating roast with tone:`, error.message);
       throw error;
     }
   }
@@ -286,15 +287,15 @@ class BaseIntegration {
    */
   async initialize() {
     try {
-      console.log(`🚀 Initializing ${this.platform} integration...`);
+      logger.info(`🚀 Initializing ${this.platform} integration...`);
 
       // Authenticate with platform
       await this.authenticate();
 
-      console.log(`✅ ${this.platform} integration initialized successfully`);
+      logger.info(`✅ ${this.platform} integration initialized successfully`);
       return true;
     } catch (error) {
-      console.error(`❌ Failed to initialize ${this.platform} integration:`, error.message);
+      logger.error(`❌ Failed to initialize ${this.platform} integration:`, error.message);
       throw error;
     }
   }
@@ -303,12 +304,12 @@ class BaseIntegration {
    * Graceful shutdown
    */
   async shutdown() {
-    console.log(`🛑 Shutting down ${this.platform} integration...`);
+    logger.info(`🛑 Shutting down ${this.platform} integration...`);
 
     // Platform-specific cleanup would go here
     // This method can be overridden by specific integrations
 
-    console.log(`✅ ${this.platform} integration shut down successfully`);
+    logger.info(`✅ ${this.platform} integration shut down successfully`);
   }
 }
 

@@ -690,7 +690,7 @@ class AlertingService {
     if (logger && typeof logger[level] === 'function') {
       logger[level](message, metadata);
     } else {
-      console.log(`[${level.toUpperCase()}] AlertingService: ${message}`, metadata);
+      logger.info(`[${level.toUpperCase()}] AlertingService: ${message}`, metadata);
     }
   }
 }

@@ -3,6 +3,8 @@
  * Generates user style profiles based on their social media content
  */
 
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
+
 class StyleProfileGenerator {
   constructor() {
     this.isInitialized = false;
@@ -14,7 +16,7 @@ class StyleProfileGenerator {
   async initialize() {
     if (this.isInitialized) return;
 
-    console.log('🎨 Initializing Style Profile Generator');
+    logger.info('🎨 Initializing Style Profile Generator');
     this.isInitialized = true;
   }
 
@@ -265,7 +267,7 @@ class StyleProfileGenerator {
 
     const { maxItemsPerPlatform = 300 } = options;
 
-    console.log(`🎨 Generating style profile for user ${userId}`);
+    logger.info(`🎨 Generating style profile for user ${userId}`);
 
     // Collect all content
     const allContent = [];
@@ -281,13 +283,13 @@ class StyleProfileGenerator {
       throw new Error('No content available for style profile generation');
     }
 
-    console.log(
+    logger.info(
       `📊 Analyzing ${allContent.length} items across ${Object.keys(sources).length} platforms`
     );
 
     // Detect languages
     const detectedLanguages = this.detectLanguages(allContent);
-    console.log(
+    logger.info(
       `🌍 Detected languages:`,
       detectedLanguages.map((l) => `${l.lang} (${l.count} items)`)
     );
@@ -302,7 +304,7 @@ class StyleProfileGenerator {
         const profile = this.generateLanguageProfile(analysis, langInfo.lang);
         profiles.push(profile);
 
-        console.log(`✨ Generated ${langInfo.lang} profile from ${analysis.totalItems} items`);
+        logger.info(`✨ Generated ${langInfo.lang} profile from ${analysis.totalItems} items`);
       }
     }
 
