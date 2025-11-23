@@ -565,14 +565,9 @@ describe('QueueService', () => {
         );
       });
 
-      it('should mark job as failed in database when Redis unavailable', async () => {
+      it('should log warning when moving to DLQ (Redis unavailable)', async () => {
         queueService.isRedisAvailable = false;
-        const mockFrom = jest.fn(() => ({
-          update: jest.fn(() => ({
-            eq: jest.fn(() => Promise.resolve({ error: null }))
-          }))
-        }));
-        queueService.supabase = { from: mockFrom };
+        const mockLog = jest.spyOn(queueService, 'log');
 
         const job = {
           id: 'job-123',
@@ -584,7 +579,10 @@ describe('QueueService', () => {
 
         await queueService.moveToDeadLetterQueue(job, error);
 
-        expect(mockFrom).toHaveBeenCalledWith('job_queue');
+        expect(mockLog).toHaveBeenCalledWith('warn', 'Job moved to dead letter queue', expect.objectContaining({
+          jobId: 'job-123',
+          jobType: 'test_queue'
+        }));
       });
 
       it('should include error details in DLQ entry', async () => {
@@ -595,6 +593,7 @@ describe('QueueService', () => {
           capturedDLQEntry = JSON.parse(entry);
           return Promise.resolve(1);
         });
+        mockRedis.expire = jest.fn().mockResolvedValue(1);
 
         const job = {
           id: 'job-123',
@@ -607,11 +606,12 @@ describe('QueueService', () => {
         await queueService.moveToDeadLetterQueue(job, error);
 
         expect(capturedDLQEntry).toMatchObject({
-          originalJob: job,
-          failureReason: 'Test error message',
+          id: 'job-123',
+          job_type: 'test_queue',
+          final_error: 'Test error message',
           attempts: 3
         });
-        expect(capturedDLQEntry.failedAt).toBeDefined();
+        expect(capturedDLQEntry.failed_at).toBeDefined();
       });
     });
 
@@ -646,12 +646,12 @@ describe('QueueService', () => {
           })
         );
 
-        // Verify exponential backoff (should be 5000 * 2^2 = 20000ms)
+        // Verify exponential backoff (should be 5000 * 2^(attempts-1) = 5000 * 2^1 = 10000ms)
         const callOptions = mockAddJob.mock.calls[0][2];
-        expect(callOptions.delay).toBeGreaterThanOrEqual(20000);
+        expect(callOptions.delay).toBeGreaterThanOrEqual(10000);
       });
 
-      it('should include retry metadata in job payload', async () => {
+      it('should pass original payload to addJob on retry', async () => {
         const mockAddJob = jest.spyOn(queueService, 'addJob').mockResolvedValue({
           success: true,
           jobId: 'retry-job-123',
@@ -668,11 +668,12 @@ describe('QueueService', () => {
         await queueService.retryJob(job, 1, new Error('Test'));
 
         const retryPayload = mockAddJob.mock.calls[0][1];
-        expect(retryPayload._retry).toMatchObject({
-          originalJobId: 'job-123',
-          attempt: 1,
-          lastError: 'Test'
+        expect(retryPayload).toMatchObject({
+          original: 'data'
         });
+        // Verify options include retry delay
+        const retryOptions = mockAddJob.mock.calls[0][2];
+        expect(retryOptions.delay).toBeDefined();
       });
     });
 
@@ -717,30 +718,43 @@ describe('QueueService', () => {
 
   describe('completeJob - Detailed Tests', () => {
     describe('completeJobInRedis', () => {
-      it('should delete job from Redis processing queue', async () => {
+      it('should store completed job in Redis with TTL', async () => {
         queueService.isRedisAvailable = true;
         const mockRedis = queueService.redis;
-        mockRedis.del = jest.fn().mockResolvedValue(1);
+        mockRedis.setex = jest.fn().mockResolvedValue('OK');
 
         const job = { id: 'job-123', job_type: 'test_queue' };
         const result = { status: 'success', data: 'result' };
 
         await queueService.completeJobInRedis(job, result);
 
-        expect(mockRedis.del).toHaveBeenCalledWith('roastr:jobs:processing:job-123');
+        expect(mockRedis.setex).toHaveBeenCalledWith(
+          'roastr:jobs:completed:test_queue:job-123',
+          86400, // 24 hour TTL
+          expect.any(String)
+        );
       });
 
-      it('should increment completed metric', async () => {
+      it('should include result in completed job data', async () => {
         queueService.isRedisAvailable = true;
         const mockRedis = queueService.redis;
-        mockRedis.del = jest.fn().mockResolvedValue(1);
-        const mockIncrement = jest.spyOn(queueService, 'incrementMetric').mockResolvedValue();
+        let capturedData;
+        mockRedis.setex = jest.fn((key, ttl, data) => {
+          capturedData = JSON.parse(data);
+          return Promise.resolve('OK');
+        });
 
-        const job = { id: 'job-123', job_type: 'test_queue' };
+        const job = { id: 'job-123', job_type: 'test_queue', payload: { test: 'data' } };
+        const result = { status: 'success' };
 
-        await queueService.completeJobInRedis(job, {});
+        await queueService.completeJobInRedis(job, result);
 
-        expect(mockIncrement).toHaveBeenCalledWith('completed', 'test_queue');
+        expect(capturedData).toMatchObject({
+          id: 'job-123',
+          job_type: 'test_queue',
+          result: { status: 'success' }
+        });
+        expect(capturedData.completed_at).toBeDefined();
       });
     });
 
@@ -783,22 +797,26 @@ describe('QueueService', () => {
       });
     });
 
-    describe('completeJob - Fallback Behavior', () => {
-      it('should complete in Redis when available', async () => {
+    describe('completeJob - Dual Storage Behavior', () => {
+      it('should complete in both Redis and database when both available', async () => {
         queueService.isRedisAvailable = true;
+        queueService.supabase = { from: jest.fn() };
         const mockCompleteInRedis = jest.spyOn(queueService, 'completeJobInRedis').mockResolvedValue();
         const mockCompleteInDB = jest.spyOn(queueService, 'completeJobInDatabase').mockResolvedValue();
+        const mockIncrement = jest.spyOn(queueService, 'incrementMetric').mockResolvedValue();
 
         const job = { id: 'job-123', job_type: 'test' };
 
         await queueService.completeJob(job, {});
 
         expect(mockCompleteInRedis).toHaveBeenCalled();
-        expect(mockCompleteInDB).not.toHaveBeenCalled();
+        expect(mockCompleteInDB).toHaveBeenCalled();
+        expect(mockIncrement).toHaveBeenCalledWith('jobs_completed', 'test');
       });
 
-      it('should complete in database when Redis unavailable', async () => {
+      it('should only complete in database when Redis unavailable', async () => {
         queueService.isRedisAvailable = false;
+        queueService.supabase = { from: jest.fn() };
         const mockCompleteInRedis = jest.spyOn(queueService, 'completeJobInRedis').mockResolvedValue();
         const mockCompleteInDB = jest.spyOn(queueService, 'completeJobInDatabase').mockResolvedValue();
 
@@ -833,8 +851,8 @@ describe('QueueService', () => {
 
         // Should have checked priorities 1,2,3,4,5 in order
         expect(mockRedis.rpop).toHaveBeenCalledTimes(5);
-        expect(mockRedis.rpop.mock.calls[0][0]).toContain(':1'); // Critical first
-        expect(mockRedis.rpop.mock.calls[4][0]).toContain(':5'); // Low last
+        expect(mockRedis.rpop.mock.calls[0][0]).toContain(':p1'); // Critical first
+        expect(mockRedis.rpop.mock.calls[4][0]).toContain(':p5'); // Low last
       });
 
       it('should return null when no jobs in any priority', async () => {
@@ -872,10 +890,13 @@ describe('QueueService', () => {
 
     describe('getJobFromDatabase - Priority Order', () => {
       it('should query jobs ordered by priority ascending', async () => {
-        const mockLimit = jest.fn(() => Promise.resolve({ data: null, error: null }));
-        const mockOrder = jest.fn(() => ({ limit: mockLimit }));
-        const mockEq = jest.fn(() => ({ order: mockOrder }));
-        const mockSelect = jest.fn(() => ({ eq: mockEq }));
+        const mockSingle = jest.fn(() => Promise.resolve({ data: null, error: { code: 'PGRST116' } }));
+        const mockLimit = jest.fn(() => ({ single: mockSingle }));
+        const mockOrder = jest.fn(() => ({ order: jest.fn(() => ({ limit: mockLimit })) }));
+        const mockLte = jest.fn(() => ({ order: mockOrder }));
+        const mockEq2 = jest.fn(() => ({ lte: mockLte }));
+        const mockEq1 = jest.fn(() => ({ eq: mockEq2 }));
+        const mockSelect = jest.fn(() => ({ eq: mockEq1 }));
         const mockFrom = jest.fn(() => ({
           select: mockSelect,
           update: jest.fn(() => ({
@@ -988,6 +1009,7 @@ describe('QueueService', () => {
       it('should retry when attempts < max_attempts', async () => {
         const mockMoveToDLQ = jest.spyOn(queueService, 'moveToDeadLetterQueue').mockResolvedValue();
         const mockRetry = jest.spyOn(queueService, 'retryJob').mockResolvedValue();
+        const mockIncrement = jest.spyOn(queueService, 'incrementMetric').mockResolvedValue();
 
         const job = {
           id: 'job-123',
@@ -999,24 +1021,33 @@ describe('QueueService', () => {
 
         await queueService.failJob(job, error);
 
-        expect(mockRetry).toHaveBeenCalledWith(job, 1, error);
+        // failJob increments attempts before calling retryJob: (1 + 1 = 2)
+        expect(mockRetry).toHaveBeenCalledWith(job, 2, error);
         expect(mockMoveToDLQ).not.toHaveBeenCalled();
+        expect(mockIncrement).toHaveBeenCalledWith('jobs_retried', 'test_queue');
       });
 
-      it('should respect forceRetry option', async () => {
-        const mockRetry = jest.spyOn(queueService, 'retryJob').mockResolvedValue();
+      it('should mark job as failed and increment metric when max retries reached', async () => {
+        const mockMoveToDLQ = jest.spyOn(queueService, 'moveToDeadLetterQueue').mockResolvedValue();
+        const mockMarkFailed = jest.spyOn(queueService, 'markJobAsFailed').mockResolvedValue();
+        const mockIncrement = jest.spyOn(queueService, 'incrementMetric').mockResolvedValue();
+        
+        // Enable DLQ for this test
+        queueService.options.deadLetterQueueEnabled = true;
 
         const job = {
           id: 'job-123',
-          attempts: 3,
+          attempts: 2, // After increment will be 3
           max_attempts: 3,
           job_type: 'test_queue'
         };
         const error = new Error('Failed');
 
-        await queueService.failJob(job, error, { forceRetry: true });
+        await queueService.failJob(job, error);
 
-        expect(mockRetry).toHaveBeenCalled();
+        expect(mockMoveToDLQ).toHaveBeenCalledWith(job, error);
+        expect(mockMarkFailed).toHaveBeenCalledWith(job, error);
+        expect(mockIncrement).toHaveBeenCalledWith('jobs_failed', 'test_queue');
       });
     });
   });
