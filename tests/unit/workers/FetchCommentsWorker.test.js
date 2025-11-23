@@ -927,6 +927,185 @@ describe('FetchCommentsWorker', () => {
         worker.fetchCommentsFromPlatform('unsupported', {}, {})
       ).rejects.toThrow('Unsupported platform: unsupported');
     });
+
+    test('should handle platform service fetch errors', async () => {
+      const mockService = {
+        fetchComments: jest.fn().mockRejectedValue(new Error('Platform service error'))
+      };
+
+      worker.platformServices.set('twitter', mockService);
+      worker._buildServicePayload = jest.fn().mockReturnValue({ test: 'payload' });
+      worker.log = jest.fn();
+
+      const config = { id: 'config-123', platform: 'twitter' };
+      const payload = { post_id: 'tweet-123' };
+
+      await expect(
+        worker.fetchCommentsFromPlatform('twitter', config, payload)
+      ).rejects.toThrow('Platform service error');
+    });
+  });
+
+  describe('fetchTwitterComments', () => {
+    test('should fetch Twitter comments successfully', async () => {
+      const mockClient = {
+        v2: {
+          userMentionTimeline: jest.fn().mockResolvedValue({
+            data: {
+              data: [
+                {
+                  id: 'tweet-1',
+                  text: 'Test tweet',
+                  author_id: 'user-1',
+                  created_at: '2024-01-01T00:00:00Z',
+                  public_metrics: { like_count: 5, reply_count: 2 }
+                }
+              ]
+            },
+            includes: {
+              users: [{ id: 'user-1', username: 'testuser' }]
+            }
+          })
+        }
+      };
+
+      const config = { id: 'config-123' };
+      const payload = { since_id: '100' };
+
+      const result = await worker.fetchTwitterComments(mockClient, config, payload);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].platform).toBe('twitter');
+      expect(result[0].original_text).toBe('Test tweet');
+      expect(mockClient.v2.userMentionTimeline).toHaveBeenCalled();
+    });
+
+    test('should handle Twitter API errors', async () => {
+      const mockClient = {
+        v2: {
+          userMentionTimeline: jest.fn().mockRejectedValue(new Error('Twitter API error'))
+        }
+      };
+
+      worker.log = jest.fn();
+
+      await expect(
+        worker.fetchTwitterComments(mockClient, {}, {})
+      ).rejects.toThrow('Twitter API error: Twitter API error');
+      
+      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to fetch Twitter comments', expect.any(Object));
+    });
+  });
+
+  describe('fetchYouTubeComments', () => {
+    test('should fetch YouTube comments successfully', async () => {
+      const mockClient = {
+        commentThreads: {
+          list: jest.fn().mockResolvedValue({
+            data: {
+              items: [
+                {
+                  id: 'thread-1',
+                  snippet: {
+                    topLevelComment: {
+                      snippet: {
+                        textDisplay: 'Great video!',
+                        authorChannelId: { value: 'channel-1' },
+                        authorDisplayName: 'Test User',
+                        publishedAt: '2024-01-01T00:00:00Z',
+                        likeCount: 10,
+                        canReply: true
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          })
+        }
+      };
+
+      const config = { config: { monitored_videos: ['video-1'] } };
+      const payload = { video_ids: ['video-1'] };
+
+      const result = await worker.fetchYouTubeComments(mockClient, config, payload);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].platform).toBe('youtube');
+      expect(result[0].original_text).toBe('Great video!');
+      expect(mockClient.commentThreads.list).toHaveBeenCalled();
+    });
+
+    test('should handle YouTube API errors for individual videos', async () => {
+      const mockClient = {
+        commentThreads: {
+          list: jest.fn()
+            .mockRejectedValueOnce(new Error('Video not found'))
+            .mockResolvedValue({
+              data: { items: [] }
+            })
+        }
+      };
+
+      worker.log = jest.fn();
+
+      const config = { config: { monitored_videos: ['video-1', 'video-2'] } };
+      const payload = { video_ids: ['video-1', 'video-2'] };
+
+      const result = await worker.fetchYouTubeComments(mockClient, config, payload);
+
+      expect(result).toHaveLength(0);
+      expect(worker.log).toHaveBeenCalledWith('warn', 'Failed to fetch comments for video', expect.any(Object));
+    });
+
+    test('should handle YouTube API general errors', async () => {
+      const mockClient = {
+        commentThreads: {
+          list: jest.fn().mockRejectedValue(new Error('YouTube API error'))
+        }
+      };
+
+      worker.log = jest.fn();
+
+      await expect(
+        worker.fetchYouTubeComments(mockClient, {}, {})
+      ).rejects.toThrow('YouTube API error: YouTube API error');
+      
+      expect(worker.log).toHaveBeenCalledWith('error', 'Failed to fetch YouTube comments', expect.any(Object));
+    });
+  });
+
+  describe('processJob error scenarios', () => {
+    test('should handle integration config not enabled', async () => {
+      const job = {
+        id: 'job-123',
+        organization_id: 'org-123',
+        platform: 'twitter',
+        payload: { since_id: '100' }
+      };
+
+      worker.setIntegrationConfigOverride({ enabled: false });
+
+      await expect(worker.processJob(job)).rejects.toThrow('Integration twitter is not enabled');
+    });
+
+    test('should handle fetchCommentsFromPlatform returning empty array', async () => {
+      const job = {
+        id: 'job-123',
+        organization_id: 'org-123',
+        platform: 'twitter',
+        payload: { since_id: '100' }
+      };
+
+      mockTwitterService.fetchComments.mockResolvedValue([]);
+      worker.setIntegrationConfigOverride({ enabled: true });
+
+      const result = await worker.processJob(job);
+
+      expect(result.success).toBe(true);
+      expect(result.newComments).toBe(0);
+      expect(result.queuedForAnalysis).toBe(0);
+    });
   });
 
   describe('queueAnalysisJobs', () => {
