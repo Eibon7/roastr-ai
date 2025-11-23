@@ -1,17 +1,17 @@
 # 🔮 GDD Drift Risk Report
 
-**Generated:** 2025-11-22T13:47:10.814Z
+**Generated:** 2025-11-23T17:11:57.070Z
 **Analysis Period:** Last 30 days
-**Overall Status:** 🟢 HEALTHY
-**Average Drift Risk:** 5/100
+**Overall Status:** 🟡 WARNING
+**Average Drift Risk:** 6/100
 
 ---
 
 ## Summary
 
 - **Total Nodes:** 15
-- 🟢 **Healthy (0-30):** 15
-- 🟡 **At Risk (31-60):** 0
+- 🟢 **Healthy (0-30):** 14
+- 🟡 **At Risk (31-60):** 1
 - 🔴 **Likely Drift (61-100):** 0
 
 ---
@@ -20,25 +20,39 @@
 
 | Node | Risk Score | Status | Health | Coverage | Last Commit | Warnings |
 |------|------------|--------|--------|----------|-------------|----------|
-| analytics | 🟢 15 | healthy | 83 | 59% | 8d ago | 0 |
-| guardian | 🟢 15 | healthy | 77 | 0% | 23d ago | 0 |
-| trainer | 🟢 15 | healthy | 79 | 0% | 23d ago | 0 |
-| cost-control | 🟢 5 | healthy | 94 | 60% | 0d ago | 0 |
-| observability | 🟢 5 | healthy | 87 | 50% | 2d ago | 0 |
-| plan-features | 🟢 5 | healthy | 93 | 74% | 2d ago | 0 |
-| queue-system | 🟢 5 | healthy | 87 | 67% | 2d ago | 0 |
-| roast | 🟢 5 | healthy | 89 | 59% | 2d ago | 0 |
-| social-platforms | 🟢 5 | healthy | 83 | 14% | 0d ago | 0 |
-| billing | 🟢 0 | healthy | 97 | N/A | 10d ago | 0 |
-| multi-tenant | 🟢 0 | healthy | 97 | N/A | 0d ago | 0 |
-| persona | 🟢 0 | healthy | 95 | 90% | 2d ago | 0 |
-| platform-constraints | 🟢 0 | healthy | 98 | 100% | 2d ago | 0 |
-| shield | 🟢 0 | healthy | 99 | 86% | 2d ago | 0 |
-| tone | 🟢 0 | healthy | 95 | 100% | 17d ago | 0 |
+| guardian | 🟡 35 | at_risk | 77 | 0% | 24d ago | 0 |
+| analytics | 🟢 15 | healthy | 83 | 59% | 9d ago | 0 |
+| trainer | 🟢 15 | healthy | 79 | 0% | 24d ago | 0 |
+| cost-control | 🟢 5 | healthy | 93 | 60% | 2d ago | 0 |
+| observability | 🟢 5 | healthy | 86 | 50% | 4d ago | 0 |
+| plan-features | 🟢 5 | healthy | 93 | 74% | 4d ago | 0 |
+| queue-system | 🟢 5 | healthy | 86 | 67% | 0d ago | 0 |
+| roast | 🟢 5 | healthy | 88 | 59% | 4d ago | 0 |
+| social-platforms | 🟢 5 | healthy | 82 | 14% | 0d ago | 0 |
+| billing | 🟢 0 | healthy | 96 | N/A | 11d ago | 0 |
+| multi-tenant | 🟢 0 | healthy | 96 | N/A | 2d ago | 0 |
+| persona | 🟢 0 | healthy | 95 | 90% | 4d ago | 0 |
+| platform-constraints | 🟢 0 | healthy | 98 | 100% | 4d ago | 0 |
+| shield | 🟢 0 | healthy | 98 | 86% | 4d ago | 0 |
+| tone | 🟢 0 | healthy | 94 | 100% | 18d ago | 0 |
 
 ---
 
 ## ⚠️ Top 5 Nodes at Risk
+
+### guardian (Risk: 35)
+
+**Status:** 🟡 AT_RISK
+
+**Risk Factors:**
+- +20 pts: Last updated 31 days ago (>30)
+- +15 pts: Coverage 0% (<80%)
+
+**Recommendations:**
+- Update node documentation (31 days old)
+- Increase test coverage to 80%+ (declared: 0%, actual: N/A)
+
+**Git Activity:** 1 commits in last 30 days
 
 ### analytics (Risk: 15)
 
@@ -51,18 +65,6 @@
 - Increase test coverage to 80%+ (declared: 59%, actual: N/A)
 
 **Git Activity:** 2 commits in last 30 days
-
-### guardian (Risk: 15)
-
-**Status:** 🟢 HEALTHY
-
-**Risk Factors:**
-- +15 pts: Coverage 0% (<80%)
-
-**Recommendations:**
-- Increase test coverage to 80%+ (declared: 0%, actual: N/A)
-
-**Git Activity:** 1 commits in last 30 days
 
 ### trainer (Risk: 15)
 
@@ -82,7 +84,7 @@
 
 **Risk Factors:**
 - +15 pts: Coverage 60% (<80%)
-- -10 pts: Recent commit (today)
+- -10 pts: Recent commit (2 days ago)
 
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 60%, actual: N/A)
@@ -95,7 +97,7 @@
 
 **Risk Factors:**
 - +15 pts: Coverage 50% (<80%)
-- -10 pts: Recent commit (2 days ago)
+- -10 pts: Recent commit (4 days ago)
 
 **Recommendations:**
 - Increase test coverage to 80%+ (declared: 50%, actual: N/A)
