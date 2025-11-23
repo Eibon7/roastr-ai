@@ -178,7 +178,7 @@ it('should escalate action for repeat offender', async () => {
    - **Title:** `[Coverage] Shield Service: Integration Tests Strategy (62.5% → 75%)`
    - **Labels:** `test:integration`, `area:shield`, `priority:P2`
    - **Description:**
-     ```
+     ```text
      Shield Service requires integration tests approach to reach 75% coverage.
      
      Current: 62.5% (68 unit tests)
