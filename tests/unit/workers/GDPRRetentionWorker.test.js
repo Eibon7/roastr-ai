@@ -23,21 +23,23 @@ jest.mock('../../../src/utils/logger', () => ({
 }));
 
 // Helper to create chainable Supabase mocks
+// CodeRabbit fix: Use Object.assign with real Promise instead of custom `then`
 const createMockChain = (finalResult = { data: [], error: null }) => {
-  const chain = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => chain),
-    lt: jest.fn(() => chain),
-    gt: jest.fn(() => chain),
-    is: jest.fn(() => chain),
-    not: jest.fn(() => chain),
-    limit: jest.fn(() => chain),
-    order: jest.fn(() => Promise.resolve(finalResult)),
-    update: jest.fn(() => chain),
-    insert: jest.fn(() => Promise.resolve(finalResult)),
-    delete: jest.fn(() => Promise.resolve(finalResult)),
-    then: jest.fn((resolve) => Promise.resolve(finalResult).then(resolve))
-  };
+  const basePromise = Promise.resolve(finalResult);
+  const chain = Object.assign(basePromise, {});
+
+  chain.select = jest.fn(() => chain);
+  chain.eq = jest.fn(() => chain);
+  chain.lt = jest.fn(() => chain);
+  chain.gt = jest.fn(() => chain);
+  chain.is = jest.fn(() => chain);
+  chain.not = jest.fn(() => chain);
+  chain.limit = jest.fn(() => chain);
+  chain.order = jest.fn(() => chain);
+  chain.update = jest.fn(() => chain);
+  chain.insert = jest.fn(() => chain);
+  chain.delete = jest.fn(() => chain);
+
   return chain;
 };
 
@@ -105,15 +107,18 @@ describe('GDPRRetentionWorker', () => {
   let originalEnv;
 
   beforeAll(() => {
-    // Save and set env vars
-    originalEnv = process.env;
+    // Save and set env vars (CodeRabbit fix: clone instead of reference)
+    originalEnv = { ...process.env };
     process.env.SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
     process.env.GDPR_HMAC_PEPPER = 'test-pepper-secret';
   });
 
   afterAll(() => {
-    process.env = originalEnv;
+    // Restore original env (only keys we changed)
+    process.env.SUPABASE_URL = originalEnv.SUPABASE_URL;
+    process.env.SUPABASE_SERVICE_KEY = originalEnv.SUPABASE_SERVICE_KEY;
+    process.env.GDPR_HMAC_PEPPER = originalEnv.GDPR_HMAC_PEPPER;
   });
 
   beforeEach(() => {

@@ -51,19 +51,21 @@ const mockAuditService = {
 jest.mock('../../../src/services/auditService', () => mockAuditService);
 
 // Helper to create chainable Supabase mocks
+// CodeRabbit fix: Use Object.assign with real Promise instead of custom `then`
 const createMockChain = (finalResult = { data: [], error: null }) => {
-  const chain = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => chain),
-    lt: jest.fn(() => chain),
-    gt: jest.fn(() => chain),
-    is: jest.fn(() => chain),
-    limit: jest.fn(() => Promise.resolve(finalResult)),
-    update: jest.fn(() => chain),
-    insert: jest.fn(() => Promise.resolve(finalResult)),
-    delete: jest.fn(() => Promise.resolve(finalResult)),
-    then: jest.fn((resolve) => Promise.resolve(finalResult).then(resolve))
-  };
+  const basePromise = Promise.resolve(finalResult);
+  const chain = Object.assign(basePromise, {});
+
+  chain.select = jest.fn(() => chain);
+  chain.eq = jest.fn(() => chain);
+  chain.lt = jest.fn(() => chain);
+  chain.gt = jest.fn(() => chain);
+  chain.is = jest.fn(() => chain);
+  chain.limit = jest.fn(() => chain);
+  chain.update = jest.fn(() => chain);
+  chain.insert = jest.fn(() => chain);
+  chain.delete = jest.fn(() => chain);
+
   return chain;
 };
 
@@ -116,8 +118,8 @@ describe('AccountDeletionWorker', () => {
   let originalEnv;
 
   beforeAll(() => {
-    // Save original env
-    originalEnv = process.env;
+    // Save original env (CodeRabbit fix: clone instead of reference)
+    originalEnv = { ...process.env };
     
     // Set required env vars for BaseWorker initialization
     process.env.SUPABASE_URL = 'https://test.supabase.co';
@@ -125,8 +127,9 @@ describe('AccountDeletionWorker', () => {
   });
 
   afterAll(() => {
-    // Restore original env
-    process.env = originalEnv;
+    // Restore original env (only keys we changed)
+    process.env.SUPABASE_URL = originalEnv.SUPABASE_URL;
+    process.env.SUPABASE_SERVICE_KEY = originalEnv.SUPABASE_SERVICE_KEY;
   });
 
   beforeEach(() => {
