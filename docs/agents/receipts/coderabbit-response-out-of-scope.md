@@ -23,7 +23,7 @@
 
 **Recommendation:**
 
-- Create a separate issue to track this tone validation bug (possibly related to Issue #872).
+- ✅ **Created Issue #972**: "Fix: Tone validation unreachable code prevents backward compatibility"
 - Link it to the original Issue #872 for context.
 - Fix it in a dedicated PR with appropriate testing for tone compatibility.
 
@@ -48,8 +48,8 @@
 
 **Recommendation:**
 
-- Create a separate issue for "Centralize tone constants" as a code quality improvement.
-- Label it as `refactoring` and `tech-debt`.
+- ✅ **Created Issue #973**: "Tech Debt: Centralize tone enum to prevent duplication and drift"
+- Label it as `tech-debt` and `backend`.
 - Include it in a future sprint focused on code quality improvements.
 
 ---
