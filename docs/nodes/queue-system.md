@@ -659,7 +659,11 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Documentation Agent**
 - **Orchestrator**
 - **Performance Monitor**
+<<<<<<< HEAD
 - **Test Engineer** (Issue #915, #928)
+=======
+- **Test Engineer** (Issue #924 - middleware tests)
+>>>>>>> 0e0b9710 (✅ [Issue #924] Tests para middleware crítico - 5/5 completados)
 - **Worker Monitor** (Issue #713)
 
 ## Related Nodes

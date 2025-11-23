@@ -1360,7 +1360,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Guardian** (PR #640 - Validated Fallback Security Policy)
 - **Orchestrator**
 - **Security Engineer**
-- **Test Engineer**
+- **Test Engineer** (Issue #924 - middleware security tests)
 
 ## Related Nodes
 
