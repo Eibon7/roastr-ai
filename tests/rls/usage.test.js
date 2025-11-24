@@ -66,18 +66,24 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
     userBId = userBResult.rows[0].id;
 
     // Create organizations
-    const orgAResult = await pg.query(`
+    const orgAResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id)
       VALUES (gen_random_uuid(), 'Org A Usage', 'org-a-usage', $1, 'pro')
       RETURNING id;
-    `, [userAId]);
+    `,
+      [userAId]
+    );
     orgAId = orgAResult.rows[0].id;
 
-    const orgBResult = await pg.query(`
+    const orgBResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id)
       VALUES (gen_random_uuid(), 'Org B Usage', 'org-b-usage', $1, 'pro')
       RETURNING id;
-    `, [userBId]);
+    `,
+      [userBId]
+    );
     orgBId = orgBResult.rows[0].id;
 
     // Create usage_tracking records
@@ -86,48 +92,66 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
     const month = now.getMonth() + 1;
     const day = now.getDate();
 
-    const trackingAResult = await pg.query(`
+    const trackingAResult = await pg.query(
+      `
       INSERT INTO usage_tracking (id, organization_id, resource_type, year, month, day, quantity, cost_cents)
       VALUES (gen_random_uuid(), $1, 'roasts', $2, $3, $4, 10, 100)
       RETURNING id;
-    `, [orgAId, year, month, day]);
+    `,
+      [orgAId, year, month, day]
+    );
     usageTrackingAId = trackingAResult.rows[0].id;
 
-    const trackingBResult = await pg.query(`
+    const trackingBResult = await pg.query(
+      `
       INSERT INTO usage_tracking (id, organization_id, resource_type, year, month, day, quantity, cost_cents)
       VALUES (gen_random_uuid(), $1, 'roasts', $2, $3, $4, 20, 200)
       RETURNING id;
-    `, [orgBId, year, month, day]);
+    `,
+      [orgBId, year, month, day]
+    );
     usageTrackingBId = trackingBResult.rows[0].id;
 
     // Create usage_limits records
-    const limitsAResult = await pg.query(`
+    const limitsAResult = await pg.query(
+      `
       INSERT INTO usage_limits (id, organization_id, resource_type, monthly_limit, daily_limit, allow_overage, is_active)
       VALUES (gen_random_uuid(), $1, 'roasts', 1000, 50, true, true)
       RETURNING id;
-    `, [orgAId]);
+    `,
+      [orgAId]
+    );
     usageLimitsAId = limitsAResult.rows[0].id;
 
-    const limitsBResult = await pg.query(`
+    const limitsBResult = await pg.query(
+      `
       INSERT INTO usage_limits (id, organization_id, resource_type, monthly_limit, daily_limit, allow_overage, is_active)
       VALUES (gen_random_uuid(), $1, 'roasts', 2000, 100, false, true)
       RETURNING id;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
     usageLimitsBId = limitsBResult.rows[0].id;
 
     // Create usage_alerts records
-    const alertsAResult = await pg.query(`
+    const alertsAResult = await pg.query(
+      `
       INSERT INTO usage_alerts (id, organization_id, resource_type, threshold_percentage, alert_type, is_active)
       VALUES (gen_random_uuid(), $1, 'roasts', 80, 'email', true)
       RETURNING id;
-    `, [orgAId]);
+    `,
+      [orgAId]
+    );
     usageAlertsAId = alertsAResult.rows[0].id;
 
-    const alertsBResult = await pg.query(`
+    const alertsBResult = await pg.query(
+      `
       INSERT INTO usage_alerts (id, organization_id, resource_type, threshold_percentage, alert_type, is_active)
       VALUES (gen_random_uuid(), $1, 'roasts', 90, 'email', true)
       RETURNING id;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
     usageAlertsBId = alertsBResult.rows[0].id;
 
     console.log('✅ Usage tracking test data created');
@@ -156,10 +180,9 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM usage_tracking WHERE organization_id = $1;`,
-        [orgBId]
-      );
+      const result = await db.query(`SELECT * FROM usage_tracking WHERE organization_id = $1;`, [
+        orgBId
+      ]);
 
       expect(result.rows.length).toBe(0);
     });
@@ -173,10 +196,9 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM usage_tracking WHERE id = $1;`,
-        [usageTrackingAId]
-      );
+      const result = await db.query(`SELECT * FROM usage_tracking WHERE id = $1;`, [
+        usageTrackingAId
+      ]);
 
       expect(result.rows.length).toBe(1);
       expect(result.rows[0].id).toBe(usageTrackingAId);
@@ -190,10 +212,9 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM usage_tracking WHERE id = $1;`,
-        [usageTrackingBId]
-      );
+      const result = await db.query(`SELECT * FROM usage_tracking WHERE id = $1;`, [
+        usageTrackingBId
+      ]);
 
       expect(result.rows.length).toBe(0);
     });
@@ -222,10 +243,9 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM usage_limits WHERE organization_id = $1;`,
-        [orgBId]
-      );
+      const result = await db.query(`SELECT * FROM usage_limits WHERE organization_id = $1;`, [
+        orgBId
+      ]);
 
       expect(result.rows.length).toBe(0);
     });
@@ -239,10 +259,7 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM usage_limits WHERE id = $1;`,
-        [usageLimitsAId]
-      );
+      const result = await db.query(`SELECT * FROM usage_limits WHERE id = $1;`, [usageLimitsAId]);
 
       expect(result.rows.length).toBe(1);
       expect(result.rows[0].id).toBe(usageLimitsAId);
@@ -256,10 +273,7 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM usage_limits WHERE id = $1;`,
-        [usageLimitsBId]
-      );
+      const result = await db.query(`SELECT * FROM usage_limits WHERE id = $1;`, [usageLimitsBId]);
 
       expect(result.rows.length).toBe(0);
     });
@@ -288,10 +302,9 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM usage_alerts WHERE organization_id = $1;`,
-        [orgBId]
-      );
+      const result = await db.query(`SELECT * FROM usage_alerts WHERE organization_id = $1;`, [
+        orgBId
+      ]);
 
       expect(result.rows.length).toBe(0);
     });
@@ -305,10 +318,7 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM usage_alerts WHERE id = $1;`,
-        [usageAlertsAId]
-      );
+      const result = await db.query(`SELECT * FROM usage_alerts WHERE id = $1;`, [usageAlertsAId]);
 
       expect(result.rows.length).toBe(1);
       expect(result.rows[0].id).toBe(usageAlertsAId);
@@ -322,10 +332,7 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM usage_alerts WHERE id = $1;`,
-        [usageAlertsBId]
-      );
+      const result = await db.query(`SELECT * FROM usage_alerts WHERE id = $1;`, [usageAlertsBId]);
 
       expect(result.rows.length).toBe(0);
     });
@@ -340,13 +347,16 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
       });
 
       const now = new Date();
-      
+
       await expect(
-        db.query(`
+        db.query(
+          `
           INSERT INTO usage_tracking (organization_id, resource_type, year, month, day, quantity, cost_cents)
           VALUES ($1, 'roasts', $2, $3, $4, 1, 10)
           RETURNING id;
-        `, [orgBId, now.getFullYear(), now.getMonth() + 1, now.getDate()])
+        `,
+          [orgBId, now.getFullYear(), now.getMonth() + 1, now.getDate()]
+        )
       ).rejects.toThrow();
     });
 
@@ -357,12 +367,15 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(`
+      const result = await db.query(
+        `
         UPDATE usage_limits
         SET monthly_limit = 9999
         WHERE id = $1
         RETURNING id;
-      `, [usageLimitsBId]);
+      `,
+        [usageLimitsBId]
+      );
 
       expect(result.rows.length).toBe(0);
     });
@@ -374,14 +387,16 @@ describe('Usage Tracking RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(`
+      const result = await db.query(
+        `
         DELETE FROM usage_alerts
         WHERE id = $1
         RETURNING id;
-      `, [usageAlertsBId]);
+      `,
+        [usageAlertsBId]
+      );
 
       expect(result.rows.length).toBe(0);
     });
   });
 });
-

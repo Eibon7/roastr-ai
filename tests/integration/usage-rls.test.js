@@ -2,10 +2,10 @@
  * Usage Tracking RLS Integration Tests - Issue #787 AC3
  *
  * @deprecated Use tests/rls/usage.test.js instead (Issue #914 - 10-30x faster)
- * 
+ *
  * This test suite uses network-based Supabase calls with JWT context switching (slow).
  * New tests use supabase-test with local DB (10-30x faster, no bandwidth costs).
- * 
+ *
  * Migration: Issue #914 - RLS Tests Migration to supabase-test
  * New location: tests/rls/usage.test.js
  *

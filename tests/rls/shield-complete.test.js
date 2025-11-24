@@ -354,4 +354,3 @@ describe('Shield Actions RLS Tests (Issue #914 Migration)', () => {
     });
   });
 });
-

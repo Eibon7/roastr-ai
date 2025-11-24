@@ -33,16 +33,17 @@ Migrar tests RLS críticos de network-based Supabase a `supabase-test` (local DB
 
 ## 🚀 Performance Improvement
 
-| Métrica | Antes | Después | Mejora |
-|---------|-------|---------|--------|
-| **Tiempo de ejecución** | ~130s | ~7-12s | **10-18x más rápido** ✅ |
-| **Network calls** | ~200+ | 0 | **100% reducción** ✅ |
-| **Bandwidth cost** | Alto | $0 | **100% ahorro** ✅ |
-| **Test isolation** | Shared DB | Savepoints | **100% aislamiento** ✅ |
+| Métrica                 | Antes     | Después    | Mejora                   |
+| ----------------------- | --------- | ---------- | ------------------------ |
+| **Tiempo de ejecución** | ~130s     | ~7-12s     | **10-18x más rápido** ✅ |
+| **Network calls**       | ~200+     | 0          | **100% reducción** ✅    |
+| **Bandwidth cost**      | Alto      | $0         | **100% ahorro** ✅       |
+| **Test isolation**      | Shared DB | Savepoints | **100% aislamiento** ✅  |
 
 ## 🔄 Patrón de Migración
 
 ### Antes (Network-based, LENTO):
+
 ```javascript
 // JWT signing + network calls
 await setTenantContext(tenantA.id);
@@ -50,6 +51,7 @@ const { data } = await testClient.from('shield_actions').select('*');
 ```
 
 ### Después (Local DB, RÁPIDO):
+
 ```javascript
 // Local DB + savepoints
 db.setContext({ role: 'authenticated', 'jwt.claims.user_id': userAId });
@@ -77,6 +79,7 @@ const result = await db.query('SELECT * FROM shield_actions;');
 - **CI/CD:** Tests funcionarán correctamente donde PostgreSQL está disponible
 
 **Instalación (si quieres testar localmente):**
+
 ```bash
 brew install postgresql@16
 # O
@@ -86,13 +89,16 @@ npx supabase start
 ## 🎯 Próximos Pasos (Fases Futuras)
 
 **Fase 2 - Multi-tenant Básico:**
+
 - Migrar `multi-tenant-rls-issue-504-direct.test.js` (17 tests)
 
 **Fase 3 - Multi-tenant Completo:**
+
 - Migrar `multi-tenant-rls-issue-412.test.js` (30 tests)
 - Migrar `multi-tenant-rls-issue-801-crud.test.js` (55+ tests)
 
 **Fase 4 - Limpieza:**
+
 - Migrar `sponsors-rls.test.js` (5 tests)
 - Eliminar tests deprecated
 - Actualizar CI/CD paths
@@ -114,6 +120,7 @@ npx supabase start
 ## 🧪 Testing
 
 **Para validar en CI:**
+
 ```bash
 npm test -- tests/rls/shield-complete.test.js
 npm test -- tests/rls/admin.test.js
@@ -121,6 +128,7 @@ npm test -- tests/rls/usage.test.js
 ```
 
 **Medir speedup:**
+
 ```bash
 # Antes (legacy)
 time npm test -- tests/integration/shield-rls.test.js
@@ -132,9 +140,9 @@ time npm test -- tests/rls/shield-complete.test.js
 ---
 
 **Ready for Review** ✅
+
 - [x] Tests migrados y funcionando
 - [x] Documentation completa
 - [x] Legacy tests deprecated
 - [x] Performance improvement validated (calculated)
 - [ ] CI/CD validation pending (PostgreSQL required)
-

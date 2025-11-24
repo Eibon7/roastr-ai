@@ -51,88 +51,114 @@ describe('Admin & Feature Flags RLS Tests (Issue #914 Migration)', () => {
 
   beforeEach(async () => {
     // Create admin user
-    const adminResult = await pg.query(`
+    const adminResult = await pg.query(
+      `
       INSERT INTO users (id, email, name, is_admin, active, plan)
       VALUES (gen_random_uuid(), $1, 'Admin User', true, true, 'pro')
       RETURNING id;
-    `, [`admin-${Date.now()}@test.com`]);
+    `,
+      [`admin-${Date.now()}@test.com`]
+    );
     adminUserId = adminResult.rows[0].id;
 
     // Create regular user
-    const regularResult = await pg.query(`
+    const regularResult = await pg.query(
+      `
       INSERT INTO users (id, email, name, is_admin, active, plan)
       VALUES (gen_random_uuid(), $1, 'Regular User', false, true, 'pro')
       RETURNING id;
-    `, [`regular-${Date.now()}@test.com`]);
+    `,
+      [`regular-${Date.now()}@test.com`]
+    );
     regularUserId = regularResult.rows[0].id;
 
     // Create organizations
-    const orgAResult = await pg.query(`
+    const orgAResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id)
       VALUES (gen_random_uuid(), 'Org A Admin', 'org-a-admin', $1, 'pro')
       RETURNING id;
-    `, [regularUserId]);
+    `,
+      [regularUserId]
+    );
     orgAId = orgAResult.rows[0].id;
 
-    const orgBResult = await pg.query(`
+    const orgBResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id)
       VALUES (gen_random_uuid(), 'Org B Admin', 'org-b-admin', $1, 'pro')
       RETURNING id;
-    `, [regularUserId]);
+    `,
+      [regularUserId]
+    );
     orgBId = orgBResult.rows[0].id;
 
     // Create feature_flags (admin-only)
-    const flagAResult = await pg.query(`
+    const flagAResult = await pg.query(
+      `
       INSERT INTO feature_flags (id, flag_key, flag_name, is_enabled, flag_type, flag_value, category)
       VALUES (gen_random_uuid(), $1, 'Test Flag A', true, 'boolean', $2::jsonb, 'test')
       RETURNING id;
-    `, [`TEST_FLAG_A_${Date.now()}`, JSON.stringify({ value: true })]);
+    `,
+      [`TEST_FLAG_A_${Date.now()}`, JSON.stringify({ value: true })]
+    );
     featureFlagAId = flagAResult.rows[0].id;
 
-    const flagBResult = await pg.query(`
+    const flagBResult = await pg.query(
+      `
       INSERT INTO feature_flags (id, flag_key, flag_name, is_enabled, flag_type, flag_value, category)
       VALUES (gen_random_uuid(), $1, 'Test Flag B', false, 'boolean', $2::jsonb, 'test')
       RETURNING id;
-    `, [`TEST_FLAG_B_${Date.now()}`, JSON.stringify({ value: false })]);
+    `,
+      [`TEST_FLAG_B_${Date.now()}`, JSON.stringify({ value: false })]
+    );
     featureFlagBId = flagBResult.rows[0].id;
 
     // Create admin_audit_logs (admin-only)
-    const adminAuditAResult = await pg.query(`
+    const adminAuditAResult = await pg.query(
+      `
       INSERT INTO admin_audit_logs (id, admin_user_id, action_type, resource_type, resource_id, old_value, new_value)
       VALUES (gen_random_uuid(), $1, 'feature_flag_update', 'feature_flag', $2, $3::jsonb, $4::jsonb)
       RETURNING id;
-    `, [
-      adminUserId,
-      `TEST_FLAG_A_${Date.now()}`,
-      JSON.stringify({ is_enabled: false }),
-      JSON.stringify({ is_enabled: true })
-    ]);
+    `,
+      [
+        adminUserId,
+        `TEST_FLAG_A_${Date.now()}`,
+        JSON.stringify({ is_enabled: false }),
+        JSON.stringify({ is_enabled: true })
+      ]
+    );
     adminAuditLogAId = adminAuditAResult.rows[0].id;
 
-    const adminAuditBResult = await pg.query(`
+    const adminAuditBResult = await pg.query(
+      `
       INSERT INTO admin_audit_logs (id, admin_user_id, action_type, resource_type, resource_id, old_value, new_value)
       VALUES (gen_random_uuid(), $1, 'plan_limit_update', 'plan_limits', 'pro', $2::jsonb, $3::jsonb)
       RETURNING id;
-    `, [
-      adminUserId,
-      JSON.stringify({ maxRoasts: 1000 }),
-      JSON.stringify({ maxRoasts: 2000 })
-    ]);
+    `,
+      [adminUserId, JSON.stringify({ maxRoasts: 1000 }), JSON.stringify({ maxRoasts: 2000 })]
+    );
     adminAuditLogBId = adminAuditBResult.rows[0].id;
 
     // Create audit_logs (org-scoped)
-    const auditLogAResult = await pg.query(`
+    const auditLogAResult = await pg.query(
+      `
       INSERT INTO audit_logs (id, organization_id, user_id, action, resource_type, resource_id, details)
       VALUES (gen_random_uuid(), $1, $2, 'roast_generated', 'roast', gen_random_uuid(), $3::jsonb)
       RETURNING id;
-    `, [orgAId, regularUserId, JSON.stringify({ platform: 'twitter' })]);
+    `,
+      [orgAId, regularUserId, JSON.stringify({ platform: 'twitter' })]
+    );
     auditLogAId = auditLogAResult.rows[0].id;
 
-    const auditLogBResult = await pg.query(`
+    const auditLogBResult = await pg.query(
+      `
       INSERT INTO audit_logs (id, organization_id, user_id, action, resource_type, resource_id, details)
       VALUES (gen_random_uuid(), $1, $2, 'roast_generated', 'roast', gen_random_uuid(), $3::jsonb)
       RETURNING id;
-    `, [orgBId, regularUserId, JSON.stringify({ platform: 'youtube' })]);
+    `,
+      [orgBId, regularUserId, JSON.stringify({ platform: 'youtube' })]
+    );
     auditLogBId = auditLogBResult.rows[0].id;
 
     // Ensure plan_limits exist (admin-only write, public read)
@@ -176,11 +202,14 @@ describe('Admin & Feature Flags RLS Tests (Issue #914 Migration)', () => {
 
       // Attempt to insert (should fail)
       await expect(
-        db.query(`
+        db.query(
+          `
           INSERT INTO feature_flags (flag_key, flag_name, is_enabled, flag_type, flag_value, category)
           VALUES ($1, 'New Test Flag', true, 'boolean', '{"value": true}'::jsonb, 'test')
           RETURNING id;
-        `, [`TEST_FLAG_NEW_${Date.now()}`])
+        `,
+          [`TEST_FLAG_NEW_${Date.now()}`]
+        )
       ).rejects.toThrow(); // RLS policy violation
     });
   });
@@ -210,11 +239,14 @@ describe('Admin & Feature Flags RLS Tests (Issue #914 Migration)', () => {
 
       // Attempt to insert (should fail)
       await expect(
-        db.query(`
+        db.query(
+          `
           INSERT INTO admin_audit_logs (admin_user_id, action_type, resource_type, resource_id)
           VALUES ($1, 'test_action', 'test', 'test-id')
           RETURNING id;
-        `, [adminUserId])
+        `,
+          [adminUserId]
+        )
       ).rejects.toThrow(); // RLS policy violation
     });
   });
@@ -244,10 +276,7 @@ describe('Admin & Feature Flags RLS Tests (Issue #914 Migration)', () => {
         'jwt.claims.org_id': orgAId
       });
 
-      const result = await db.query(
-        `SELECT * FROM audit_logs WHERE id = $1;`,
-        [auditLogBId]
-      );
+      const result = await db.query(`SELECT * FROM audit_logs WHERE id = $1;`, [auditLogBId]);
 
       expect(result.rows.length).toBe(0); // RLS blocks access
     });
@@ -322,4 +351,3 @@ describe('Admin & Feature Flags RLS Tests (Issue #914 Migration)', () => {
     });
   });
 });
-
