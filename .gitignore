@@ -70,6 +70,7 @@ docs/backup/
 
 # Guardian security test backups (should never be committed)
 .gdd-backups/
+gdd-write-signatures.json
 
 
 # Branch Guard - issue lock file

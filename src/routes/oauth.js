@@ -9,6 +9,8 @@ const { authenticateToken } = require('../middleware/auth');
 const { OAuthProviderFactory } = require('../services/oauthProvider');
 const { flags } = require('../config/flags');
 const { logger } = require('../utils/logger');
+const { validateBody, validateQuery } = require('../validators/zod/errorFormatter');
+const { OAuthCallbackSchema, OAuthConnectionSchema } = require('../validators/zod/social.schema');
 
 const router = express.Router();
 
@@ -38,7 +40,7 @@ class MockConnectionStore {
     });
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      logger.info(`Stored connection for ${userId}:${platform}`);
+      logger.debug(`Stored connection for ${userId}:${platform}`);
     }
   }
 
@@ -204,6 +206,8 @@ router.post('//connect', authenticateToken, (req, res) => {
 /**
  * POST /api/integrations/:platform/connect
  * Initiate OAuth connection for platform
+ *
+ * Body can include optional OAuth-specific parameters (validated with Zod - Issue #948)
  */
 router.post('/:platform/connect', authenticateToken, async (req, res) => {
   try {
@@ -231,7 +235,7 @@ router.post('/:platform/connect', authenticateToken, async (req, res) => {
     const authUrl = await provider.getAuthorizationUrl(state, redirectUri);
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      logger.info(`OAuth connect initiated for ${userId}:${platform}`, {
+      logger.debug(`OAuth connect initiated for ${userId}:${platform}`, {
         authUrl,
         state,
         redirectUri
@@ -265,8 +269,13 @@ router.post('/:platform/connect', authenticateToken, async (req, res) => {
 /**
  * GET /api/auth/:platform/callback
  * Handle OAuth callback from platform
+ *
+ * Query params validated with Zod (Issue #948):
+ * - code: OAuth authorization code (required)
+ * - state: CSRF state token (required)
+ * - redirect_uri: Optional callback URL
  */
-router.get('/:platform/callback', async (req, res) => {
+router.get('/:platform/callback', validateQuery(OAuthCallbackSchema), async (req, res) => {
   try {
     const platform = sanitizePlatform(req.params.platform);
     const { code, state, error, error_description } = req.query;
@@ -274,21 +283,15 @@ router.get('/:platform/callback', async (req, res) => {
     // Handle OAuth errors
     if (error) {
       const errorMsg = error_description || error;
-      if (flags.isEnabled('DEBUG_OAUTH')) {
-        logger.error(`OAuth callback error for ${platform}:`, errorMsg);
-      }
+      logger.warn(`OAuth callback error for ${platform}`, { error: errorMsg });
 
       return res.redirect(
         `/connections?error=${encodeURIComponent(errorMsg)}&platform=${platform}`
       );
     }
 
-    // Validate required parameters
-    if (!code || !state) {
-      return res.redirect(
-        `/connections?error=Missing+authorization+code+or+state&platform=${platform}`
-      );
-    }
+    // Zod already validated code and state (validateQuery middleware)
+    // No need for manual validation
 
     // Parse and validate state
     const stateData = parseState(state);
@@ -306,7 +309,7 @@ router.get('/:platform/callback', async (req, res) => {
     mockStore.storeConnection(stateData.userId, platform, tokenData);
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      logger.info(`OAuth callback success for ${stateData.userId}:${platform}`);
+      logger.debug(`OAuth callback success for ${stateData.userId}:${platform}`);
     }
 
     // Redirect to success page
@@ -351,7 +354,7 @@ router.post('/:platform/refresh', authenticateToken, async (req, res) => {
     });
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      logger.info(`OAuth tokens refreshed for ${userId}:${platform}`);
+      logger.debug(`OAuth tokens refreshed for ${userId}:${platform}`);
     }
 
     res.json({
@@ -407,7 +410,7 @@ router.post('/:platform/disconnect', authenticateToken, async (req, res) => {
     mockStore.removeConnection(userId, platform);
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      logger.info(`OAuth connection disconnected for ${userId}:${platform}`);
+      logger.debug(`OAuth connection disconnected for ${userId}:${platform}`);
     }
 
     res.json({
@@ -580,7 +583,7 @@ router.put('/:platform/config', authenticateToken, async (req, res) => {
     // For now, store in memory (mockStore could be extended for this)
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      logger.info(`Updated config for ${userId}:${platform}:`, validatedConfig);
+      logger.debug(`Updated config for ${userId}:${platform}:`, validatedConfig);
     }
 
     res.json({
@@ -652,7 +655,7 @@ router.post('/mock/reset', authenticateToken, async (req, res) => {
     }
 
     if (flags.isEnabled('DEBUG_OAUTH')) {
-      logger.info(`Mock connections reset for ${userId}`, { platform });
+      logger.debug(`Mock connections reset for ${userId}`, { platform });
     }
   } catch (error) {
     res.status(400).json({
