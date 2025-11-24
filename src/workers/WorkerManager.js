@@ -1,4 +1,5 @@
 const FetchCommentsWorker = require('./FetchCommentsWorker');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const AnalyzeToxicityWorker = require('./AnalyzeToxicityWorker');
 const GenerateReplyWorker = require('./GenerateReplyWorker');
 const ShieldActionWorker = require('./ShieldActionWorker');
@@ -398,7 +399,7 @@ class WorkerManager {
       ...metadata
     };
 
-    console.log(`[${level.toUpperCase()}] ${JSON.stringify(logEntry)}`);
+    logger.info(`[${level.toUpperCase()}] ${JSON.stringify(logEntry)}`);
   }
 }
 

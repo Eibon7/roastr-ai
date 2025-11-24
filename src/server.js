@@ -1,12 +1,13 @@
 const express = require('express');
+const { logger } = require('./utils/logger'); // Issue #971: Added for console.log replacement
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const path = require('path');
 
 // 🔍 DEBUG: Comprobar si la API key existe en el entorno
-console.log('🔍 OPENAI_API_KEY existe?', !!process.env.OPENAI_API_KEY);
+logger.info('🔍 OPENAI_API_KEY existe?', !!process.env.OPENAI_API_KEY);
 if (process.env.OPENAI_API_KEY) {
-  console.log('🔍 OPENAI_API_KEY empieza por:', process.env.OPENAI_API_KEY.slice(0, 10));
+  logger.info('🔍 OPENAI_API_KEY empieza por:', process.env.OPENAI_API_KEY.slice(0, 10));
 }
 
 const RoastGeneratorReal = require('./services/roastGeneratorReal');
@@ -42,12 +43,12 @@ app.post('/roast', async (req, res) => {
 
     res.json({ roast });
   } catch (error) {
-    console.error('Error generando roast:', error.message);
+    logger.error('Error generando roast:', error.message);
     res.status(500).json({ error: 'Error interno generando el roast.' });
   }
 });
 
 // Arrancar servidor
 app.listen(port, () => {
-  console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
+  logger.info(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
 });

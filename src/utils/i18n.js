@@ -313,7 +313,7 @@ class I18n {
     if (logger && typeof logger[level] === 'function') {
       logger[level](`[I18n] ${message}`, metadata);
     } else {
-      console.log(`[${level.toUpperCase()}] I18n: ${message}`, metadata);
+      logger.info(`[${level.toUpperCase()}] I18n: ${message}`, metadata);
     }
   }
 }

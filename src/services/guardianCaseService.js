@@ -119,7 +119,7 @@ async function listCases(filters = {}) {
  * @example
  * const caseData = await getCaseById('CASE-20251010-001');
  * if (!caseData) {
- *   console.log('Case not found');
+ *   logger.info('Case not found');
  * }
  */
 async function getCaseById(caseId) {
@@ -201,9 +201,9 @@ function validateReason(reason) {
  * @example
  * try {
  *   const updated = await approveCase('CASE-20251010-001', 'Emilio Postigo');
- *   console.log('Approved by:', updated.approved_by);
+ *   logger.info('Approved by:', updated.approved_by);
  * } catch (error) {
- *   console.error('Approval failed:', error.message);
+ *   logger.error('Approval failed:', error.message);
  * }
  */
 async function approveCase(caseId, approver) {
@@ -265,9 +265,9 @@ async function approveCase(caseId, approver) {
  *     'Emilio Postigo',
  *     'Changes violate pricing policy'
  *   );
- *   console.log('Denied by:', updated.denied_by);
+ *   logger.info('Denied by:', updated.denied_by);
  * } catch (error) {
- *   console.error('Denial failed:', error.message);
+ *   logger.error('Denial failed:', error.message);
  * }
  */
 async function denyCase(caseId, denier, reason) {

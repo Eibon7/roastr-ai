@@ -1,4 +1,5 @@
 const MultiTenantIntegration = require('../base/MultiTenantIntegration');
+const { logger } = require('./../../utils/logger'); // Issue #971: Added for console.log replacement
 
 /**
  * Bluesky Integration Service
@@ -44,10 +45,10 @@ class BlueskyService extends MultiTenantIntegration {
       //
       // this.session = response.data;
 
-      console.log(`✅ Bluesky authentication successful for handle: ${this.config.handle}`);
+      logger.info(`✅ Bluesky authentication successful for handle: ${this.config.handle}`);
       return true;
     } catch (error) {
-      console.error('❌ Bluesky authentication failed:', error.message);
+      logger.error('❌ Bluesky authentication failed:', error.message);
       throw error;
     }
   }
@@ -57,13 +58,13 @@ class BlueskyService extends MultiTenantIntegration {
    */
   async listenForMentions() {
     try {
-      console.log('👂 Connecting to Bluesky firehose...');
+      logger.info('👂 Connecting to Bluesky firehose...');
 
       // TODO: Implement WebSocket connection to firehose
       // this.firehoseWs = new WebSocket(this.firehoseUrl);
       //
       // this.firehoseWs.on('open', () => {
-      //   console.log('🔥 Connected to Bluesky firehose');
+      //   logger.info('🔥 Connected to Bluesky firehose');
       // });
       //
       // this.firehoseWs.on('message', (data) => {
@@ -71,13 +72,13 @@ class BlueskyService extends MultiTenantIntegration {
       // });
       //
       // this.firehoseWs.on('error', (error) => {
-      //   console.error('❌ Firehose connection error:', error);
+      //   logger.error('❌ Firehose connection error:', error);
       //   this.reconnectFirehose();
       // });
 
-      console.log('🦋 Bluesky firehose monitoring started');
+      logger.info('🦋 Bluesky firehose monitoring started');
     } catch (error) {
-      console.error('❌ Failed to start Bluesky monitoring:', error.message);
+      logger.error('❌ Failed to start Bluesky monitoring:', error.message);
       throw error;
     }
   }
@@ -94,7 +95,7 @@ class BlueskyService extends MultiTenantIntegration {
       //   await this.processBlueskMention(decoded);
       // }
     } catch (error) {
-      console.error('❌ Error handling firehose message:', error.message);
+      logger.error('❌ Error handling firehose message:', error.message);
     }
   }
 
@@ -132,7 +133,7 @@ class BlueskyService extends MultiTenantIntegration {
       // const roast = await this.generateRoast(post.record.text);
       // await this.postResponse(post.uri, roast);
     } catch (error) {
-      console.error('❌ Error processing Bluesky mention:', error.message);
+      logger.error('❌ Error processing Bluesky mention:', error.message);
     }
   }
 
@@ -152,12 +153,12 @@ class BlueskyService extends MultiTenantIntegration {
       //   },
       // });
 
-      console.log(`✅ Posted Bluesky reply to ${parentUri}`);
+      logger.info(`✅ Posted Bluesky reply to ${parentUri}`);
       this.metrics.responsesGenerated++;
 
       return true;
     } catch (error) {
-      console.error(`❌ Failed to post Bluesky response:`, error.message);
+      logger.error(`❌ Failed to post Bluesky response:`, error.message);
       throw error;
     }
   }
@@ -167,7 +168,7 @@ class BlueskyService extends MultiTenantIntegration {
    */
   async reconnectFirehose() {
     try {
-      console.log('🔄 Attempting to reconnect to Bluesky firehose...');
+      logger.info('🔄 Attempting to reconnect to Bluesky firehose...');
 
       if (this.firehoseWs) {
         this.firehoseWs.close();
@@ -178,7 +179,7 @@ class BlueskyService extends MultiTenantIntegration {
 
       await this.listenForMentions();
     } catch (error) {
-      console.error('❌ Error reconnecting to firehose:', error.message);
+      logger.error('❌ Error reconnecting to firehose:', error.message);
 
       // Retry after longer delay
       setTimeout(() => this.reconnectFirehose(), 30000);
@@ -199,7 +200,7 @@ class BlueskyService extends MultiTenantIntegration {
 
       return { handle: this.config.handle }; // Placeholder
     } catch (error) {
-      console.error('❌ Error fetching profile info:', error.message);
+      logger.error('❌ Error fetching profile info:', error.message);
       throw error;
     }
   }
@@ -219,7 +220,7 @@ class BlueskyService extends MultiTenantIntegration {
 
       return []; // Placeholder
     } catch (error) {
-      console.error('❌ Error searching mentions:', error.message);
+      logger.error('❌ Error searching mentions:', error.message);
       return [];
     }
   }

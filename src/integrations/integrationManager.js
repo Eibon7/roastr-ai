@@ -1,4 +1,5 @@
 const config = require('../config/integrations');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 
 // Import integration services
 const TwitterRoastBot = require('../services/twitter');
@@ -41,7 +42,7 @@ class IntegrationManager {
    */
   debugLog(message, ...args) {
     if (this.debug) {
-      console.log(`[INTEGRATION-MANAGER] ${new Date().toISOString()}: ${message}`, ...args);
+      logger.info(`[INTEGRATION-MANAGER] ${new Date().toISOString()}: ${message}`, ...args);
     }
   }
 
@@ -50,7 +51,7 @@ class IntegrationManager {
    */
   async initializeIntegrations() {
     try {
-      console.log('🚀 Initializing Roastr.ai Integration Manager...');
+      logger.info('🚀 Initializing Roastr.ai Integration Manager...');
       this.debugLog('Enabled integrations:', this.config.enabled);
 
       const integrationPromises = [];
@@ -59,7 +60,7 @@ class IntegrationManager {
       if (this.testMode) {
         const testPlatforms =
           process.env.INTEGRATIONS_ENABLED?.split(',').map((p) => p.trim()) || [];
-        console.log(`🧪 Test mode: Initializing platforms: ${testPlatforms.join(', ')}`);
+        logger.info(`🧪 Test mode: Initializing platforms: ${testPlatforms.join(', ')}`);
 
         if (testPlatforms.includes('twitter')) {
           integrationPromises.push(this.initializeTwitter());
@@ -148,20 +149,20 @@ class IntegrationManager {
           successCount++;
         } else {
           failureCount++;
-          console.error(`❌ Integration initialization failed:`, result.reason?.message);
+          logger.error(`❌ Integration initialization failed:`, result.reason?.message);
         }
       });
 
-      console.log(
+      logger.info(
         `✅ Integration Manager initialized: ${successCount} successful, ${failureCount} failed`
       );
-      console.log(
+      logger.info(
         `🔥 Active integrations: ${Array.from(this.activeIntegrations.keys()).join(', ')}`
       );
 
       return { success: successCount, failed: failureCount };
     } catch (error) {
-      console.error('❌ Critical error initializing Integration Manager:', error.message);
+      logger.error('❌ Critical error initializing Integration Manager:', error.message);
       throw error;
     }
   }
@@ -178,20 +179,20 @@ class IntegrationManager {
         const mockTwitter = {
           platform: 'twitter',
           runOnce: async () => {
-            console.log('🧪 Twitter mock: Fetching mentions...');
+            logger.info('🧪 Twitter mock: Fetching mentions...');
             await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
-            console.log('🧪 Twitter mock: Found 3 mentions, 1 toxic comment');
-            console.log('🧪 Twitter mock: Generated witty response');
+            logger.info('🧪 Twitter mock: Found 3 mentions, 1 toxic comment');
+            logger.info('🧪 Twitter mock: Generated witty response');
             return { mentions: 3, responses: 1 };
           },
           testConnection: async () => {
-            console.log('🧪 Twitter mock: Connection test passed');
+            logger.info('🧪 Twitter mock: Connection test passed');
             return true;
           },
           getMetrics: () => ({ commentsProcessed: 3, responsesGenerated: 1 })
         };
         this.activeIntegrations.set('twitter', mockTwitter);
-        console.log('✅ Twitter integration initialized (test mode)');
+        logger.info('✅ Twitter integration initialized (test mode)');
         return;
       }
 
@@ -199,9 +200,9 @@ class IntegrationManager {
       await twitterBot.initialize();
 
       this.activeIntegrations.set('twitter', twitterBot);
-      console.log('✅ Twitter integration initialized');
+      logger.info('✅ Twitter integration initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize Twitter integration:', error.message);
+      logger.error('❌ Failed to initialize Twitter integration:', error.message);
       throw error;
     }
   }
@@ -218,20 +219,20 @@ class IntegrationManager {
         const mockYouTube = {
           platform: 'youtube',
           runOnce: async () => {
-            console.log('🧪 YouTube mock: Fetching video comments...');
+            logger.info('🧪 YouTube mock: Fetching video comments...');
             await new Promise((resolve) => setTimeout(resolve, 700)); // Simulate API call
-            console.log('🧪 YouTube mock: Found 8 comments on 2 videos, 2 toxic comments');
-            console.log('🧪 YouTube mock: Generated clever responses');
+            logger.info('🧪 YouTube mock: Found 8 comments on 2 videos, 2 toxic comments');
+            logger.info('🧪 YouTube mock: Generated clever responses');
             return { videos: 2, comments: 8, responses: 2 };
           },
           testConnection: async () => {
-            console.log('🧪 YouTube mock: API connection test passed');
+            logger.info('🧪 YouTube mock: API connection test passed');
             return true;
           },
           getMetrics: () => ({ commentsProcessed: 8, responsesGenerated: 2 })
         };
         this.activeIntegrations.set('youtube', mockYouTube);
-        console.log('✅ YouTube integration initialized (test mode)');
+        logger.info('✅ YouTube integration initialized (test mode)');
         return;
       }
 
@@ -239,9 +240,9 @@ class IntegrationManager {
       await youtubeService.initialize();
 
       this.activeIntegrations.set('youtube', youtubeService);
-      console.log('✅ YouTube integration initialized');
+      logger.info('✅ YouTube integration initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize YouTube integration:', error.message);
+      logger.error('❌ Failed to initialize YouTube integration:', error.message);
       throw error;
     }
   }
@@ -258,20 +259,20 @@ class IntegrationManager {
         const mockBluesky = {
           platform: 'bluesky',
           runOnce: async () => {
-            console.log('🧪 Bluesky mock: Monitoring firehose...');
+            logger.info('🧪 Bluesky mock: Monitoring firehose...');
             await new Promise((resolve) => setTimeout(resolve, 600)); // Simulate firehose connection
-            console.log('🧪 Bluesky mock: Found 5 mentions, 1 roast-worthy post');
-            console.log('🧪 Bluesky mock: Generated sarcastic reply');
+            logger.info('🧪 Bluesky mock: Found 5 mentions, 1 roast-worthy post');
+            logger.info('🧪 Bluesky mock: Generated sarcastic reply');
             return { mentions: 5, posts: 1, responses: 1 };
           },
           testConnection: async () => {
-            console.log('🧪 Bluesky mock: AT Protocol connection test passed');
+            logger.info('🧪 Bluesky mock: AT Protocol connection test passed');
             return true;
           },
           getMetrics: () => ({ commentsProcessed: 5, responsesGenerated: 1 })
         };
         this.activeIntegrations.set('bluesky', mockBluesky);
-        console.log('✅ Bluesky integration initialized (test mode)');
+        logger.info('✅ Bluesky integration initialized (test mode)');
         return;
       }
 
@@ -279,9 +280,9 @@ class IntegrationManager {
       await blueskyService.initialize();
 
       this.activeIntegrations.set('bluesky', blueskyService);
-      console.log('✅ Bluesky integration initialized');
+      logger.info('✅ Bluesky integration initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize Bluesky integration:', error.message);
+      logger.error('❌ Failed to initialize Bluesky integration:', error.message);
       throw error;
     }
   }
@@ -298,20 +299,20 @@ class IntegrationManager {
         const mockInstagram = {
           platform: 'instagram',
           runOnce: async () => {
-            console.log('🧪 Instagram mock: Fetching story mentions and comments...');
+            logger.info('🧪 Instagram mock: Fetching story mentions and comments...');
             await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate API call
-            console.log('🧪 Instagram mock: Found 4 mentions, 1 story reaction');
-            console.log('🧪 Instagram mock: Generated stylish response');
+            logger.info('🧪 Instagram mock: Found 4 mentions, 1 story reaction');
+            logger.info('🧪 Instagram mock: Generated stylish response');
             return { mentions: 4, stories: 2, responses: 1 };
           },
           testConnection: async () => {
-            console.log('🧪 Instagram mock: Graph API connection test passed');
+            logger.info('🧪 Instagram mock: Graph API connection test passed');
             return true;
           },
           getMetrics: () => ({ commentsProcessed: 4, responsesGenerated: 1 })
         };
         this.activeIntegrations.set('instagram', mockInstagram);
-        console.log('✅ Instagram integration initialized (test mode)');
+        logger.info('✅ Instagram integration initialized (test mode)');
         return;
       }
 
@@ -319,9 +320,9 @@ class IntegrationManager {
       await instagramService.initialize();
 
       this.activeIntegrations.set('instagram', instagramService);
-      console.log('✅ Instagram integration initialized');
+      logger.info('✅ Instagram integration initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize Instagram integration:', error.message);
+      logger.error('❌ Failed to initialize Instagram integration:', error.message);
       throw error;
     }
   }
@@ -337,9 +338,9 @@ class IntegrationManager {
       await facebookService.initialize();
 
       this.activeIntegrations.set('facebook', facebookService);
-      console.log('✅ Facebook integration initialized');
+      logger.info('✅ Facebook integration initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize Facebook integration:', error.message);
+      logger.error('❌ Failed to initialize Facebook integration:', error.message);
       throw error;
     }
   }
@@ -355,9 +356,9 @@ class IntegrationManager {
       await discordService.initialize();
 
       this.activeIntegrations.set('discord', discordService);
-      console.log('✅ Discord integration initialized');
+      logger.info('✅ Discord integration initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize Discord integration:', error.message);
+      logger.error('❌ Failed to initialize Discord integration:', error.message);
       throw error;
     }
   }
@@ -373,9 +374,9 @@ class IntegrationManager {
       await twitchService.initialize();
 
       this.activeIntegrations.set('twitch', twitchService);
-      console.log('✅ Twitch integration initialized');
+      logger.info('✅ Twitch integration initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize Twitch integration:', error.message);
+      logger.error('❌ Failed to initialize Twitch integration:', error.message);
       throw error;
     }
   }
@@ -391,9 +392,9 @@ class IntegrationManager {
       await redditService.initialize();
 
       this.activeIntegrations.set('reddit', redditService);
-      console.log('✅ Reddit integration initialized');
+      logger.info('✅ Reddit integration initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize Reddit integration:', error.message);
+      logger.error('❌ Failed to initialize Reddit integration:', error.message);
       throw error;
     }
   }
@@ -409,9 +410,9 @@ class IntegrationManager {
       await tiktokService.initialize();
 
       this.activeIntegrations.set('tiktok', tiktokService);
-      console.log('✅ TikTok integration initialized');
+      logger.info('✅ TikTok integration initialized');
     } catch (error) {
-      console.error('❌ Failed to initialize TikTok integration:', error.message);
+      logger.error('❌ Failed to initialize TikTok integration:', error.message);
       throw error;
     }
   }
@@ -421,7 +422,7 @@ class IntegrationManager {
    */
   async startListening() {
     try {
-      console.log('👂 Starting to listen for mentions across all integrations...');
+      logger.info('👂 Starting to listen for mentions across all integrations...');
 
       const listeningPromises = [];
 
@@ -429,16 +430,16 @@ class IntegrationManager {
         this.debugLog(`Starting listening for ${platform}...`);
         listeningPromises.push(
           integration.listenForMentions().catch((error) => {
-            console.error(`❌ Error starting listening for ${platform}:`, error.message);
+            logger.error(`❌ Error starting listening for ${platform}:`, error.message);
           })
         );
       }
 
       await Promise.allSettled(listeningPromises);
 
-      console.log('🎧 All integrations are now listening for mentions');
+      logger.info('🎧 All integrations are now listening for mentions');
     } catch (error) {
-      console.error('❌ Error starting listeners:', error.message);
+      logger.error('❌ Error starting listeners:', error.message);
       throw error;
     }
   }
@@ -448,10 +449,10 @@ class IntegrationManager {
    */
   async runBatch() {
     try {
-      console.log('🔄 Starting batch processing for all active integrations...');
+      logger.info('🔄 Starting batch processing for all active integrations...');
 
       if (this.activeIntegrations.size === 0) {
-        console.log('⚠️ No active integrations to process');
+        logger.info('⚠️ No active integrations to process');
         return {
           processed: 0,
           success: 0,
@@ -489,12 +490,12 @@ class IntegrationManager {
       const summary = this.processBatchResults(results);
       const duration = Date.now() - startTime;
 
-      console.log(`✅ Batch processing completed in ${duration}ms`);
+      logger.info(`✅ Batch processing completed in ${duration}ms`);
       this.printBatchSummary(summary, duration);
 
       return summary;
     } catch (error) {
-      console.error('❌ Error in batch processing:', error.message);
+      logger.error('❌ Error in batch processing:', error.message);
       this.globalMetrics.totalErrors++;
       throw error;
     }
@@ -533,7 +534,7 @@ class IntegrationManager {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error(`❌ Error running batch for ${platform}:`, error.message);
+      logger.error(`❌ Error running batch for ${platform}:`, error.message);
 
       return {
         platform,
@@ -588,26 +589,26 @@ class IntegrationManager {
    * Print batch summary
    */
   printBatchSummary(summary, duration) {
-    console.log('\n📈 BATCH PROCESSING SUMMARY');
-    console.log('============================');
-    console.log(`⏱️  Duration: ${duration}ms`);
-    console.log(`🔢 Integrations processed: ${summary.processed}`);
-    console.log(`✅ Successful: ${summary.success}`);
-    console.log(`❌ Failed: ${summary.failed}`);
-    console.log(`💬 Total comments processed: ${this.globalMetrics.totalCommentsProcessed}`);
-    console.log(`🚀 Total responses generated: ${this.globalMetrics.totalResponsesGenerated}`);
-    console.log(`⚠️  Total errors: ${this.globalMetrics.totalErrors}`);
+    logger.info('\n📈 BATCH PROCESSING SUMMARY');
+    logger.info('============================');
+    logger.info(`⏱️  Duration: ${duration}ms`);
+    logger.info(`🔢 Integrations processed: ${summary.processed}`);
+    logger.info(`✅ Successful: ${summary.success}`);
+    logger.info(`❌ Failed: ${summary.failed}`);
+    logger.info(`💬 Total comments processed: ${this.globalMetrics.totalCommentsProcessed}`);
+    logger.info(`🚀 Total responses generated: ${this.globalMetrics.totalResponsesGenerated}`);
+    logger.info(`⚠️  Total errors: ${this.globalMetrics.totalErrors}`);
 
     if (summary.failed > 0) {
-      console.log('\n❌ Failed integrations:');
+      logger.info('\n❌ Failed integrations:');
       summary.results.forEach((result) => {
         if (!result.success) {
-          console.log(`   - ${result.platform || 'unknown'}: ${result.error}`);
+          logger.info(`   - ${result.platform || 'unknown'}: ${result.error}`);
         }
       });
     }
 
-    console.log('============================\n');
+    logger.info('============================\n');
   }
 
   /**
@@ -683,17 +684,17 @@ class IntegrationManager {
    */
   async shutdown() {
     try {
-      console.log('🛑 Shutting down Integration Manager...');
+      logger.info('🛑 Shutting down Integration Manager...');
 
       // Clear metrics interval with error handling
       try {
         if (this.metricsInterval) {
           clearInterval(this.metricsInterval);
           this.metricsInterval = null;
-          console.log('🧹 Cleared metrics collection interval');
+          logger.info('🧹 Cleared metrics collection interval');
         }
       } catch (error) {
-        console.warn('⚠️ Error clearing metrics interval:', error.message);
+        logger.warn('⚠️ Error clearing metrics interval:', error.message);
       }
 
       const shutdownPromises = [];
@@ -703,7 +704,7 @@ class IntegrationManager {
         if (typeof integration.shutdown === 'function') {
           shutdownPromises.push(
             integration.shutdown().catch((error) => {
-              console.error(`❌ Error shutting down ${platform}:`, error.message);
+              logger.error(`❌ Error shutting down ${platform}:`, error.message);
             })
           );
         }
@@ -713,12 +714,12 @@ class IntegrationManager {
 
       this.activeIntegrations.clear();
 
-      console.log('✅ Integration Manager shut down successfully');
+      logger.info('✅ Integration Manager shut down successfully');
 
       // TODO: Implement shutdown timeout to prevent hanging shutdown operations
       // TODO: Add cleanup verification tests that check for resource leaks
     } catch (error) {
-      console.error('❌ Error during Integration Manager shutdown:', error.message);
+      logger.error('❌ Error during Integration Manager shutdown:', error.message);
     }
   }
 
@@ -727,7 +728,7 @@ class IntegrationManager {
    */
   async restartIntegration(platform) {
     try {
-      console.log(`🔄 Restarting ${platform} integration...`);
+      logger.info(`🔄 Restarting ${platform} integration...`);
 
       // Shutdown existing integration
       const integration = this.activeIntegrations.get(platform);
@@ -761,16 +762,16 @@ class IntegrationManager {
         await newIntegration.listenForMentions();
       }
 
-      console.log(`✅ ${platform} integration restarted successfully`);
+      logger.info(`✅ ${platform} integration restarted successfully`);
     } catch (error) {
-      console.error(`❌ Error restarting ${platform} integration:`, error.message);
+      logger.error(`❌ Error restarting ${platform} integration:`, error.message);
       throw error;
     }
   }
 
   async runAllIntegrationsOnce() {
     try {
-      console.log('🧪 Running all integrations in test mode (dry-run)...');
+      logger.info('🧪 Running all integrations in test mode (dry-run)...');
 
       // Get enabled platforms from environment variable
       const enabledPlatforms = process.env.INTEGRATIONS_ENABLED
@@ -778,11 +779,11 @@ class IntegrationManager {
         : [];
 
       if (enabledPlatforms.length === 0) {
-        console.log('⚠️ No integrations enabled in INTEGRATIONS_ENABLED environment variable');
+        logger.info('⚠️ No integrations enabled in INTEGRATIONS_ENABLED environment variable');
         return;
       }
 
-      console.log(`🎯 Testing platforms: ${enabledPlatforms.join(', ')}`);
+      logger.info(`🎯 Testing platforms: ${enabledPlatforms.join(', ')}`);
 
       // Initialize integrations first
       await this.initializeIntegrations();
@@ -796,59 +797,59 @@ class IntegrationManager {
           const integration = this.activeIntegrations.get(platform);
 
           if (!integration) {
-            console.warn(`⚠️ No active integration found for: ${platform}`);
+            logger.warn(`⚠️ No active integration found for: ${platform}`);
             failureCount++;
             continue;
           }
 
-          console.log(`🖋️ Running ${platform} integration test...`);
+          logger.info(`🖋️ Running ${platform} integration test...`);
 
           // Check if integration has runOnce method
           if (typeof integration.runOnce === 'function') {
             await integration.runOnce();
-            console.log(`✅ ${platform} test completed successfully`);
+            logger.info(`✅ ${platform} test completed successfully`);
             successCount++;
           } else {
             // Fallback: try to run a single batch or fetch operation
-            console.log(`🔄 ${platform} doesn't have runOnce(), trying alternative test...`);
+            logger.info(`🔄 ${platform} doesn't have runOnce(), trying alternative test...`);
 
             if (typeof integration.testConnection === 'function') {
               await integration.testConnection();
-              console.log(`✅ ${platform} connection test completed`);
+              logger.info(`✅ ${platform} connection test completed`);
               successCount++;
             } else if (typeof integration.fetchComments === 'function') {
               // Try to fetch comments in dry-run mode
               const comments = await integration.fetchComments({ limit: 1, dryRun: true });
-              console.log(
+              logger.info(
                 `✅ ${platform} fetch test completed (${comments?.length || 0} comments would be processed)`
               );
               successCount++;
             } else {
-              console.warn(
+              logger.warn(
                 `⚠️ ${platform} doesn't implement runOnce() or testConnection() - test skipped`
               );
               failureCount++;
             }
           }
         } catch (error) {
-          console.error(`❌ Error testing ${platform}: ${error.message}`);
+          logger.error(`❌ Error testing ${platform}: ${error.message}`);
           failureCount++;
         }
       }
 
       // Print summary
-      console.log('\n📊 Integration Test Summary:');
-      console.log('============================');
-      console.log(`✅ Successful: ${successCount}`);
-      console.log(`❌ Failed: ${failureCount}`);
-      console.log(`📋 Total: ${enabledPlatforms.length}`);
-      console.log('============================\n');
+      logger.info('\n📊 Integration Test Summary:');
+      logger.info('============================');
+      logger.info(`✅ Successful: ${successCount}`);
+      logger.info(`❌ Failed: ${failureCount}`);
+      logger.info(`📋 Total: ${enabledPlatforms.length}`);
+      logger.info('============================\n');
 
       if (failureCount > 0) {
         throw new Error(`${failureCount} integration test(s) failed`);
       }
     } catch (error) {
-      console.error('❌ Integration test error:', error.message);
+      logger.error('❌ Integration test error:', error.message);
       throw error;
     }
   }

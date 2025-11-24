@@ -13,6 +13,8 @@
  * @param {string} organizationId - Organization ID for error context
  * @returns {Promise} Promise that either resolves with the original promise or rejects with timeout error
  */
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
+
 const timeoutPromise = (promise, timeoutMs, operation, organizationId) => {
   return Promise.race([
     promise,
@@ -69,9 +71,9 @@ class MockModeManager {
    */
   logMockStatus() {
     if (this.isMockMode) {
-      console.log('🎭 Mock Mode ENABLED - Using fake data for all external APIs');
+      logger.info('🎭 Mock Mode ENABLED - Using fake data for all external APIs');
     } else {
-      console.log('🔗 Real Mode ENABLED - Using real API connections');
+      logger.info('🔗 Real Mode ENABLED - Using real API connections');
     }
   }
 
@@ -174,8 +176,8 @@ class MockModeManager {
             if (table === 'comments') {
               // Check if comment exists in global storage
               const storage = global.mockCommentStorage || [];
-              console.log('🔍 Mock: Checking for existing comment with queries:', queries);
-              console.log('🔍 Mock: Current storage has', storage.length, 'comments');
+              logger.info('🔍 Mock: Checking for existing comment with queries:', queries);
+              logger.info('🔍 Mock: Current storage has', storage.length, 'comments');
 
               const existing = storage.find(
                 (comment) =>
@@ -184,7 +186,7 @@ class MockModeManager {
                   comment.platform_comment_id === queries.platform_comment_id
               );
 
-              console.log('🔍 Mock: Found existing comment:', !!existing);
+              logger.info('🔍 Mock: Found existing comment:', !!existing);
 
               if (existing) {
                 return Promise.resolve({
@@ -229,7 +231,7 @@ class MockModeManager {
                 );
 
                 if (existing) {
-                  console.log('🔍 Mock: Duplicate comment detected, not inserting:', {
+                  logger.info('🔍 Mock: Duplicate comment detected, not inserting:', {
                     platform_comment_id: item.platform_comment_id,
                     organization_id: item.organization_id,
                     platform: item.platform
@@ -245,7 +247,7 @@ class MockModeManager {
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                   };
-                  console.log('🔍 Mock: Inserting new comment:', {
+                  logger.info('🔍 Mock: Inserting new comment:', {
                     platform_comment_id: newComment.platform_comment_id,
                     organization_id: newComment.organization_id,
                     platform: newComment.platform
@@ -256,7 +258,7 @@ class MockModeManager {
               });
 
               global.mockCommentStorage = storage;
-              console.log('🔍 Mock: Storage now has', storage.length, 'comments');
+              logger.info('🔍 Mock: Storage now has', storage.length, 'comments');
 
               // Preserve input format: return array if input was array, single object if input was object
               insertedData = Array.isArray(data) ? results : results[0];
@@ -544,7 +546,7 @@ class MockModeManager {
    */
   generateMockFetch() {
     return async (url, options = {}) => {
-      console.log(`🎭 Mock fetch called: ${url}`);
+      logger.info(`🎭 Mock fetch called: ${url}`);
 
       // Mock different API responses based on URL
       if (url.includes('/api/health')) {

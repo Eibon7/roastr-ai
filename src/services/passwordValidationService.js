@@ -11,7 +11,7 @@
  * - Security revalidations
  */
 
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt'); // Issue #971: Unified to bcrypt (native, faster)
 const {
   validatePassword: validatePasswordStrength,
   getPasswordStrength
