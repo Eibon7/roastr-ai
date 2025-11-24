@@ -60,26 +60,26 @@ function getMockUserAuthHeader() {
 
 /**
  * Generate a valid JWT test token for integration tests
- * 
+ *
  * Issue #944: Required for toggle endpoint integration tests
- * 
+ *
  * @param {string} userId - User ID for the token
  * @param {string} organizationId - Organization ID for the token
  * @returns {string} JWT token string
- * 
+ *
  * @example
  * const token = generateTestToken('user-123', 'org-456');
  * // Use in Authorization header: `Bearer ${token}`
  */
 function generateTestToken(userId, organizationId) {
   const secret = process.env.JWT_SECRET || 'test-secret-key';
-  
+
   const payload = {
     id: userId,
     organizationId: organizationId,
     email: `test-${userId}@example.com`
   };
-  
+
   // Generate token with 1 hour expiry for tests
   return jwt.sign(payload, secret, { expiresIn: '1h' });
 }

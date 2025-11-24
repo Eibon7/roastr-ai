@@ -20,14 +20,14 @@ Successfully migrated critical state-changing endpoints to **Zod validation** wi
 
 ## ✅ Acceptance Criteria
 
-| AC | Description | Status |
-|----|-------------|--------|
-| **AC1** | Todos los endpoints de toggle usan Zod | ✅ PASS |
-| **AC2** | express-validator eliminado | ✅ PASS |
-| **AC3** | Tests pasando al 100% | ✅ PASS (28/28) |
-| **AC4** | Validación de tipos correcta (boolean, UUID, etc.) | ✅ PASS |
-| **AC5** | Workers reciben datos válidos | ✅ PASS |
-| **AC6** | No breaking changes en API contracts | ✅ PASS |
+| AC      | Description                                        | Status          |
+| ------- | -------------------------------------------------- | --------------- |
+| **AC1** | Todos los endpoints de toggle usan Zod             | ✅ PASS         |
+| **AC2** | express-validator eliminado                        | ✅ PASS         |
+| **AC3** | Tests pasando al 100%                              | ✅ PASS (28/28) |
+| **AC4** | Validación de tipos correcta (boolean, UUID, etc.) | ✅ PASS         |
+| **AC5** | Workers reciben datos válidos                      | ✅ PASS         |
+| **AC6** | No breaking changes en API contracts               | ✅ PASS         |
 
 ---
 
@@ -100,23 +100,27 @@ Successfully migrated critical state-changing endpoints to **Zod validation** wi
 ### Type Coercion Prevention (P0 Critical)
 
 **Before (Manual validation):**
+
 ```javascript
 if (typeof enabled !== 'boolean') {
-    return res.status(400).json({ error: 'enabled field must be a boolean' });
+  return res.status(400).json({ error: 'enabled field must be a boolean' });
 }
 ```
 
 **Issues:**
+
 - No protection against string "true"/"false"
 - No UUID format validation
 - Inconsistent error format
 
 **After (Zod validation):**
+
 ```javascript
 const validated = roastingToggleSchema.parse(validationData);
 ```
 
 **Benefits:**
+
 - ✅ Strict boolean validation (rejects "true", "1", null, undefined)
 - ✅ UUID format validation (RFC 4122 compliant)
 - ✅ Length constraints (reason ≤500 chars)
@@ -124,14 +128,14 @@ const validated = roastingToggleSchema.parse(validationData);
 
 ### Security Test Results
 
-| Attack Vector | Before | After |
-|---------------|--------|-------|
-| `enabled: "true"` | ⚠️ Might pass | ✅ Rejected |
-| `enabled: 1` | ⚠️ Might pass | ✅ Rejected |
-| `enabled: null` | ⚠️ Might pass | ✅ Rejected |
+| Attack Vector             | Before           | After                      |
+| ------------------------- | ---------------- | -------------------------- |
+| `enabled: "true"`         | ⚠️ Might pass    | ✅ Rejected                |
+| `enabled: 1`              | ⚠️ Might pass    | ✅ Rejected                |
+| `enabled: null`           | ⚠️ Might pass    | ✅ Rejected                |
 | `organization_id: "hack"` | ⚠️ No validation | ✅ Rejected (Invalid UUID) |
-| `reason: ""` | ⚠️ Accepted | ✅ Rejected (Empty) |
-| `reason: "A"*1000` | ⚠️ Accepted | ✅ Rejected (>500 chars) |
+| `reason: ""`              | ⚠️ Accepted      | ✅ Rejected (Empty)        |
+| `reason: "A"*1000`        | ⚠️ Accepted      | ✅ Rejected (>500 chars)   |
 
 **All 12 security tests passing** ✅
 
@@ -178,6 +182,7 @@ Time:        0.737 s
 ### roastingToggleSchema → GenerateReplyWorker
 
 **Verified:**
+
 - ✅ Workers check `roasting_enabled` boolean from database
 - ✅ Zod ensures only `true`/`false` values reach database
 - ✅ No type coercion issues
@@ -186,6 +191,7 @@ Time:        0.737 s
 ### shieldToggleSchema → ShieldActionWorker
 
 **Verified:**
+
 - ✅ Workers check `shield_enabled` boolean from organization table
 - ✅ Organization-level toggle
 - ✅ Strict boolean validation prevents worker errors
@@ -197,11 +203,11 @@ Time:        0.737 s
 
 ### Validation Performance
 
-| Metric | Before (Manual) | After (Zod) | Difference |
-|--------|-----------------|-------------|------------|
-| Execution time | ~0.001ms | ~0.005ms | +0.004ms |
-| Validation scope | enabled only | enabled + UUID + reason + length | Comprehensive |
-| Error format | Inconsistent | Consistent | Improved |
+| Metric           | Before (Manual) | After (Zod)                      | Difference    |
+| ---------------- | --------------- | -------------------------------- | ------------- |
+| Execution time   | ~0.001ms        | ~0.005ms                         | +0.004ms      |
+| Validation scope | enabled only    | enabled + UUID + reason + length | Comprehensive |
+| Error format     | Inconsistent    | Consistent                       | Improved      |
 
 **Impact:** Negligible (+0.004ms per request)  
 **Benefits:** Comprehensive validation, type safety, maintainability
@@ -213,6 +219,7 @@ Time:        0.737 s
 ### POST /api/roasting/toggle (Migrated)
 
 **Request (unchanged):**
+
 ```json
 {
   "enabled": true,
@@ -221,6 +228,7 @@ Time:        0.737 s
 ```
 
 **Response (unchanged):**
+
 ```json
 {
   "success": true,
@@ -233,6 +241,7 @@ Time:        0.737 s
 ```
 
 **Error Response (improved):**
+
 ```json
 {
   "success": false,
@@ -250,6 +259,7 @@ Time:        0.737 s
 ### POST /api/shield/toggle (NEW)
 
 **Request:**
+
 ```json
 {
   "enabled": false,
@@ -258,6 +268,7 @@ Time:        0.737 s
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -293,6 +304,7 @@ Time:        0.737 s
 **Status:** ⚠️ Pending DB migration 026
 
 **Solution:**
+
 ```sql
 ALTER TABLE users ADD COLUMN IF NOT EXISTS roasting_enabled BOOLEAN DEFAULT TRUE NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS roasting_disabled_at TIMESTAMPTZ;
@@ -312,13 +324,13 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS roasting_disabled_reason TEXT;
 
 ## 🎯 Quality Metrics
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| **Unit Test Coverage** | ≥90% | 100% | ✅ PASS |
-| **Tests Passing** | 100% | 100% (28/28) | ✅ PASS |
-| **Security Tests** | ≥4 | 12 | ✅ PASS |
-| **CodeRabbit Comments** | 0 | Pending review | ⏳ |
-| **Breaking Changes** | 0 | 0 | ✅ PASS |
+| Metric                  | Target | Actual         | Status  |
+| ----------------------- | ------ | -------------- | ------- |
+| **Unit Test Coverage**  | ≥90%   | 100%           | ✅ PASS |
+| **Tests Passing**       | 100%   | 100% (28/28)   | ✅ PASS |
+| **Security Tests**      | ≥4     | 12             | ✅ PASS |
+| **CodeRabbit Comments** | 0      | Pending review | ⏳      |
+| **Breaking Changes**    | 0      | 0              | ✅ PASS |
 
 ---
 
@@ -404,6 +416,7 @@ This commit re-applies the complete migration.
 ## 🎉 Conclusion
 
 ✅ **Issue #944 successfully implemented:**
+
 - Zod validation ensures workers receive valid data types
 - Security improved (type coercion prevention)
 - 28/28 tests passing with 100% coverage
