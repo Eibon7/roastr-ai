@@ -170,9 +170,9 @@ afterAll(async () => await teardown()); // Destroy temp DB
 
 ### New Files Created (3):
 
-1. `tests/rls/shield-complete.test.js` (346 lines)
-2. `tests/rls/admin.test.js` (345 lines)
-3. `tests/rls/usage.test.js` (418 lines)
+1. `tests/rls/shield-complete.test.js`
+2. `tests/rls/admin.test.js`
+3. `tests/rls/usage.test.js`
 
 ### Deprecated (3):
 
@@ -194,8 +194,8 @@ afterAll(async () => await teardown()); // Destroy temp DB
 **PostgreSQL Dependency:**
 
 Tests requieren PostgreSQL local instalado:
-- `psql` command debe estar disponible
-- PostgreSQL server corriendo (o Supabase local)
+- `psql` command debe estar disponible.
+- El servidor de PostgreSQL debe estar corriendo (o Supabase local).
 
 **Error cuando no disponible:**
 ```

@@ -352,14 +352,22 @@ time npm test -- tests/rls/shield-complete.test.js     # Después
 
 ---
 
-## 🚀 Next Steps (Fase 1)
+## 🚀 Next Steps
+
+### ✅ Fase 1 COMPLETA
 
 1. ✅ Plan creado (este archivo)
-2. 🔄 Migrar `shield-rls.test.js` → `tests/rls/shield-complete.test.js`
-3. ⏳ Migrar `admin-rls.test.js` → `tests/rls/admin.test.js`
-4. ⏳ Migrar `usage-rls.test.js` → `tests/rls/usage.test.js`
-5. ⏳ Validar métricas (10-30x más rápido)
-6. ⏳ Documentar resultados
+2. ✅ Migrar `shield-rls.test.js` → `tests/rls/shield-complete.test.js`
+3. ✅ Migrar `admin-rls.test.js` → `tests/rls/admin.test.js`
+4. ✅ Migrar `usage-rls.test.js` → `tests/rls/usage.test.js`
+5. ⏳ Validar métricas en CI (10-30x más rápido) - pending CI validation
+6. ✅ Documentar resultados
+
+### 🔄 Fase 2 - Próximos Pasos
+
+1. ⏳ Migrar `multi-tenant-rls-issue-504-direct.test.js` (17 tests)
+2. ⏳ Validar métricas
+3. ⏳ Documentar resultados
 
 ---
 

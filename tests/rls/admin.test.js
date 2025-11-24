@@ -174,6 +174,15 @@ describe('Admin & Feature Flags RLS Tests (Issue #914 Migration)', () => {
       ON CONFLICT (plan_id) DO NOTHING;
     `);
 
+    // Create plan_limits_audit record (admin-only access test needs data to filter)
+    await pg.query(
+      `
+      INSERT INTO plan_limits_audit (id, plan_id, changed_by, change_type, old_values, new_values)
+      VALUES (gen_random_uuid(), 'free', $1, 'update', '{"max_roasts": 5}'::jsonb, '{"max_roasts": 10}'::jsonb);
+    `,
+      [adminUserId]
+    );
+
     console.log('✅ Admin test data created');
   });
 

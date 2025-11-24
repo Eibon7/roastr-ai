@@ -16,8 +16,8 @@ Migrated `shield-rls.test.js` from network-based Supabase tests to `supabase-tes
 
 ### Archivo Migrado:
 
-**From:** `tests/integration/shield-rls.test.js` (206 lines, 15 tests)
-**To:** `tests/rls/shield-complete.test.js` (346 lines, 9 tests*)
+**From:** `tests/integration/shield-rls.test.js` (206 lines, 9 tests)
+**To:** `tests/rls/shield-complete.test.js` (346 lines, 9 tests)
 
 *Nota: 9 tests consolidados cubren los mismos 4 describe blocks del original.
 
