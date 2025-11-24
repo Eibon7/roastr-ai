@@ -964,6 +964,19 @@ When a script is configured with `continue-on-error: true` to prevent blocking t
 - [ ] Log sampling for high-volume scenarios
 - [ ] Custom retention policies per organization
 
+### Phase 3 (Validation Telemetry - Issue #982)
+
+- [ ] **Validation Metrics Tracking** - Record validation failure patterns (email_invalid, password_weak, etc.)
+- [ ] **Error Distribution Dashboard** - Visualize most common validation errors
+- [ ] **User Error Rate Monitoring** - Detect potential attackers (high error rate)
+- [ ] **UX Data-Driven Insights** - Inform UX improvements based on real validation data
+
+**Status:** DEFERRED - Implement when dashboard infrastructure is ready (est. Q1 2026)
+
+**Feature Flag:** `ENABLE_VALIDATION_TELEMETRY` (default: OFF)
+
+**Related ADR:** `docs/decisions/ADR-008-auth-validation-enhancements.md`
+
 ### Monitoring Integration
 
 - Export logs to external monitoring service
@@ -1308,10 +1321,10 @@ tier_validation.cachePerformance.hitRate
 ## Agentes Relevantes
 
 - **Backend Developer** - Core implementation and worker integration
-- **Documentation Agent** - GDD node creation and maintenance
+- **Documentation Agent** - GDD node creation and maintenance (Issue #982 ADR-008)
 - **general-purpose** - General-purpose agent for research and code search
 - **Guardian** - Security review for monitoring
-- **Orchestrator** - Coordination and planning
+- **Orchestrator** - Coordination and planning (Issue #982)
 - **Test Engineer** - Integration test suite
 
 ## Version History

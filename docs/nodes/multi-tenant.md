@@ -979,6 +979,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **shield** - Shield settings per organization/platform
 - **roast** - Roast generation per organization
 - **social-platforms** - Integration configs per organization
+- **observability** - Validation telemetry (future - Issue #982)
 
 ---
 
