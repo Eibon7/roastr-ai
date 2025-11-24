@@ -8,6 +8,10 @@ const { authenticateToken } = require('../middleware/auth');
 const { logger } = require('../utils/logger');
 const { supabaseServiceClient } = require('../config/supabase');
 const workerNotificationService = require('../services/workerNotificationService');
+// Issue #944: Zod validation imports
+const { z } = require('zod');
+const { roastingToggleSchema } = require('../validators/zod/toggle.schema');
+const { formatZodError } = require('../validators/zod/formatZodError');
 
 const router = express.Router();
 
@@ -58,18 +62,30 @@ router.get('/status', async (req, res) => {
  *   enabled: boolean,
  *   reason?: string (optional reason for disabling)
  * }
+ *
+ * Issue #944: Migrated to Zod validation
  */
 router.post('/toggle', async (req, res) => {
   try {
     const { user } = req;
-    const { enabled, reason } = req.body;
 
-    // Validate input
-    if (typeof enabled !== 'boolean') {
-      return res.status(400).json({
-        success: false,
-        error: 'enabled field must be a boolean'
-      });
+    // Issue #944: Zod validation (strict type checking)
+    // Note: organization_id is derived from authenticated user, not from request body
+    const validationData = {
+      ...req.body,
+      organization_id: user.organizationId || 'temp-uuid-for-validation'
+    };
+
+    let enabled, reason;
+    try {
+      const validated = roastingToggleSchema.parse(validationData);
+      enabled = validated.enabled;
+      reason = validated.reason;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json(formatZodError(error));
+      }
+      throw error;
     }
 
     // Prepare update data

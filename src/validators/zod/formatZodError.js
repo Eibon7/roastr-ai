@@ -5,6 +5,7 @@
  * Maintains compatibility with existing express-validator error format.
  *
  * @see Issue #942 - Zod migration for persona endpoints
+ * @see Issue #944 - Zod migration for toggle endpoints
  * @see docs/plan/issue-942.md for error format specification
  */
 
@@ -128,9 +129,45 @@ function getFirstErrorMessage(zodError) {
   return zodError.issues[0].message;
 }
 
+/**
+ * Safe wrapper for Zod parsing with automatic error formatting
+ *
+ * Issue #944: Helper function for toggle endpoints
+ *
+ * @param {import('zod').ZodSchema} schema - Zod schema to validate against
+ * @param {any} data - Data to validate
+ * @returns {{success: boolean, data?: any, error?: Object}} Result object
+ *
+ * @example
+ * const result = safeParse(roastingToggleSchema, req.body);
+ *
+ * if (!result.success) {
+ *   return res.status(400).json(result.error);
+ * }
+ *
+ * // Use validated data
+ * const { enabled, organization_id } = result.data;
+ */
+function safeParse(schema, data) {
+  const result = schema.safeParse(data);
+
+  if (!result.success) {
+    return {
+      success: false,
+      error: formatZodError(result.error)
+    };
+  }
+
+  return {
+    success: true,
+    data: result.data
+  };
+}
+
 module.exports = {
   formatZodError,
   isZodError,
   getErrorFields,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  safeParse
 };
