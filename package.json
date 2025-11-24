@@ -192,7 +192,8 @@
     "twitter-api-v2": "^1.24.0",
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.18.6",

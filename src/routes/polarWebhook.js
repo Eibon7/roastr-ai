@@ -25,6 +25,7 @@ const { logger } = require('../utils/logger'); // Issue #483: Use destructured i
 const { sanitizePII } = require('../utils/piiSanitizer');
 const { supabaseServiceClient } = require('../config/supabase');
 const { getPlanFromProductId, getPlanFromPriceId } = require('../utils/polarHelpers');
+const { validateWebhook } = require('../validators/zod/billing.schema'); // Issue #945: Zod validation
 
 /**
  * Verify Polar webhook signature
@@ -385,7 +386,17 @@ router.post('/', async (req, res) => {
   try {
     // Get signature from header
     const signature = req.headers['polar-signature'];
-    const rawBody = req.body.toString('utf8');
+    
+    // Handle different body types (Buffer from express.raw(), string, or object)
+    let rawBody;
+    if (Buffer.isBuffer(req.body)) {
+      rawBody = req.body.toString('utf8');
+    } else if (typeof req.body === 'string') {
+      rawBody = req.body;
+    } else {
+      // Fallback: already parsed object (shouldn't happen with express.raw())
+      rawBody = JSON.stringify(req.body);
+    }
 
     // Verify signature
     const isValid = verifyWebhookSignature(rawBody, signature, process.env.POLAR_WEBHOOK_SECRET);
@@ -398,36 +409,55 @@ router.post('/', async (req, res) => {
     // Parse event
     const event = JSON.parse(rawBody);
 
-    logger.info('[Polar Webhook] Received event', {
-      type: event.type,
-      id: event.id
+    // Validate event structure with Zod (Issue #945)
+    const validation = validateWebhook(event);
+
+    if (!validation.success) {
+      logger.error('[Polar Webhook] Invalid event structure', {
+        errors: validation.errors,
+        receivedType: event.type,
+        receivedId: event.id
+      });
+      return res.status(400).json({
+        error: 'Invalid event structure',
+        message: 'Webhook event does not match expected format',
+        details: validation.errors
+      });
+    }
+
+    // Use validated data
+    const validatedEvent = validation.data;
+
+    logger.info('[Polar Webhook] Received valid event', {
+      type: validatedEvent.type,
+      id: validatedEvent.id,
     });
 
     // Route to appropriate handler
-    switch (event.type) {
+    switch (validatedEvent.type) {
       case 'checkout.created':
-        await handleCheckoutCreated(event);
+        await handleCheckoutCreated(validatedEvent);
         break;
 
       case 'order.created':
-        await handleOrderCreated(event);
+        await handleOrderCreated(validatedEvent);
         break;
 
       case 'subscription.created':
-        await handleSubscriptionCreated(event);
+        await handleSubscriptionCreated(validatedEvent);
         break;
 
       case 'subscription.updated':
-        await handleSubscriptionUpdated(event);
+        await handleSubscriptionUpdated(validatedEvent);
         break;
 
       case 'subscription.canceled':
       case 'subscription.cancelled': // Handle both spellings
-        await handleSubscriptionCanceled(event);
+        await handleSubscriptionCanceled(validatedEvent);
         break;
 
       default:
-        logger.warn('[Polar Webhook] Unhandled event type', { type: event.type });
+        logger.warn('[Polar Webhook] Unhandled event type', { type: validatedEvent.type });
     }
 
     // Always return 200 to acknowledge receipt

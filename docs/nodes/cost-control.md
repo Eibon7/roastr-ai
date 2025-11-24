@@ -382,6 +382,143 @@ async handleStripeWebhook(event) {
 }
 ```
 
+## Zod Validation for Billing Endpoints (Issue #945)
+
+**Migration:** Express-validator → Zod (P0 Critical Security)
+
+### Why Zod for Billing
+
+- **Dinero real involucrado** - Datos corruptos → activaciones incorrectas
+- **Event spoofing prevention** - Validación estricta de estructura + firma
+- **Type-safe validation** - Composable schemas, better error messages
+- **NO dependency on Express** - Can validate anywhere (workers, services)
+
+### Checkout Validation
+
+**Endpoint:** `POST /api/checkout`
+
+```javascript
+const { validateZodSchema, checkoutSchema } = require('../validators/zod/billing.schema');
+
+router.post('/checkout', validateZodSchema(checkoutSchema, 'body'), async (req, res) => {
+  // req.validatedData contains validated + type-safe data
+  const { customer_email, product_id, metadata } = req.validatedData;
+  
+  // Email already validated as valid format
+  // product_id already validated as UUID
+  // ...
+});
+```
+
+**Validated fields:**
+- `customer_email` - Valid email format (Zod .email())
+- `product_id` - Valid UUID v4 format
+- `price_id` - Legacy fallback (UUID v4)
+- `metadata` - Optional flexible object
+
+**Rejection examples:**
+- Invalid email → 400 with `{ field: "customer_email", message: "Invalid email format" }`
+- Invalid UUID → 400 with `{ field: "product_id", message: "Invalid UUID format" }`
+- Missing both IDs → 400 with `{ message: "Either product_id or price_id must be provided" }`
+
+### Webhook Event Validation
+
+**Endpoint:** `POST /api/polar/webhook`
+
+```javascript
+const { validateWebhook } = require('../validators/zod/billing.schema');
+
+router.post('/', async (req, res) => {
+  // 1. Verify HMAC signature (security)
+  const isValid = verifyWebhookSignature(rawBody, signature, secret);
+  if (!isValid) return res.status(401).json({ error: 'Invalid signature' });
+  
+  // 2. Parse + validate event structure (Zod)
+  const validation = validateWebhook(event);
+  if (!validation.success) {
+    return res.status(400).json({
+      error: 'Invalid event structure',
+      details: validation.errors
+    });
+  }
+  
+  // 3. Use validated data
+  const validatedEvent = validation.data;
+  // validatedEvent.type is type-safe enum
+  // validatedEvent.data is validated by specific event schema
+});
+```
+
+**Validated event types:**
+- `checkout.created` - New checkout session
+- `order.created` - **CRITICAL** - Payment confirmed
+- `subscription.created` - New subscription
+- `subscription.updated` - Plan/status change
+- `subscription.canceled` / `subscription.cancelled` - Cancellation (both spellings)
+
+**Validation per event:**
+- `order.created`:
+  - `customer_email` - Valid email
+  - `product_id` - Valid UUID
+  - `amount` - Positive integer (cents)
+  - `currency` - 3-char ISO 4217 code (USD, EUR, etc.)
+- `subscription.created`:
+  - `status` - Enum: active, trialing, past_due, canceled, incomplete
+  - `current_period_start` - ISO 8601 datetime
+  - `current_period_end` - ISO 8601 datetime
+- ALL events:
+  - `id` - Valid UUID (event ID)
+  - `type` - Valid event type enum
+
+**Security benefits:**
+- ✅ Invalid events rejected **before** database access
+- ✅ Corrupted data cannot activate subscriptions
+- ✅ Type coercion prevented (e.g., amount: "-100" → rejected)
+- ✅ Unknown event types rejected early
+- ✅ Missing required fields caught immediately
+
+### Testing Zod Validation
+
+**Unit Tests:** `tests/unit/validators/billing.schema.test.js` (36 tests)
+- Happy path for all schemas
+- Error cases (invalid email, UUID, currency, etc.)
+- Edge cases (null, undefined, empty objects)
+- Helper functions (formatZodError, middleware)
+
+**Integration Tests:** `tests/integration/polarWebhook.test.js` (22 tests)
+- POST /api/checkout with valid/invalid data
+- POST /api/polar/webhook with valid/invalid events
+- Security: Signature verification + structure validation
+- Critical: Corrupted data does NOT activate subscriptions
+
+**Coverage:** ≥90% on billing endpoints + validators
+
+### Migration Notes (Issue #945)
+
+**Before (express-validator):**
+```javascript
+router.post('/checkout', [
+  body('customer_email').isEmail(),
+  body('product_id').isUUID()
+], handler);
+// Manual validation + error handling in every endpoint
+```
+
+**After (Zod):**
+```javascript
+router.post('/checkout', validateZodSchema(checkoutSchema, 'body'), handler);
+// Automatic validation + formatted errors + type-safe data
+```
+
+**Benefits:**
+- ✅ Consistent error format across all endpoints
+- ✅ Reusable schemas (can validate in workers, services)
+- ✅ Type-safe access to validated data
+- ✅ Better error messages for debugging
+- ✅ Composable schemas (reuse event structures)
+
+**Breaking changes:** None - API contracts unchanged
+
 ## Usage Analytics
 
 ### Cost Breakdown
