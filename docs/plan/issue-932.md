@@ -11,11 +11,11 @@
 
 ### Archivos Target
 
-| Archivo | Cobertura Actual | Objetivo | Tests Existentes |
-|---------|-----------------|----------|------------------|
-| `src/routes/admin.js` | 38.9% | 70%+ | 8 archivos parciales |
-| `src/routes/monitoring.js` | 0% | 70%+ | ❌ No existen |
-| `src/routes/revenue.js` | 0% | 70%+ | ❌ No existen |
+| Archivo                    | Cobertura Actual | Objetivo | Tests Existentes     |
+| -------------------------- | ---------------- | -------- | -------------------- |
+| `src/routes/admin.js`      | 38.9%            | 70%+     | 8 archivos parciales |
+| `src/routes/monitoring.js` | 0%               | 70%+     | ❌ No existen        |
+| `src/routes/revenue.js`    | 0%               | 70%+     | ❌ No existen        |
 
 ### Tests Existentes para admin.js
 
@@ -130,4 +130,3 @@ Siguiendo `docs/patterns/coderabbit-lessons.md`:
 **Fecha creación:** 2025-11-24
 **Issue:** #932
 **Autor:** TestEngineer Agent
-
