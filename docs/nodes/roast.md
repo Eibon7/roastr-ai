@@ -4,13 +4,13 @@
 **Owner:** Backend Developer
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-11-17
+**Last Updated:** 2025-11-23
 **Coverage:** 59%
 **Coverage Source:** auto
 **Note:** Coverage value updated to match actual test coverage (gdd-status.json validation). Will be auto-updated when tests pass.
-**Related PRs:** #499, #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback), #865 (Issue #859 - Brand Safety for Sponsors)
+**Related PRs:** #499, #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback), #865 (Issue #859 - Brand Safety for Sponsors), #946 (Zod Validation Migration)
 **Protected:** true
-**Last Verified:** 2025-10-23
+**Last Verified:** 2025-11-23
 **Protection Reason:** GDD 2.0 Maintenance Mode - Phase 18 Operational Freeze
 
 ## Dependencies
@@ -1099,6 +1099,96 @@ See `shield.md` for full Brand Safety documentation.
 
 ---
 
+## Input Validation (Issue #946)
+
+### Zod Schema Validation
+
+**Implementation:** Issue #946 migrated roast endpoint validation from manual checks to Zod schemas for improved type safety and error messages.
+
+**Benefits:**
+- ✅ Declarative validation schemas
+- ✅ Automatic type inference
+- ✅ Better error messages with field-level details
+- ✅ Consistent validation across all endpoints
+- ✅ Easier to maintain and extend
+
+**Schema Location:** `src/validators/zod/roast.schema.js`
+
+**Middleware:** `src/middleware/zodValidation.js`
+
+### Validated Endpoints
+
+| Endpoint | Schema | Fields Validated |
+|----------|--------|------------------|
+| `POST /preview` | `roastPreviewSchema` | text, tone, styleProfile, persona, platform |
+| `POST /generate` | `roastGenerateSchema` | text, tone |
+| `POST /engine` | `roastEngineSchema` | comment, style, language, autoApprove, platform, commentId |
+| `POST /:id/validate` | `roastValidateSchema` | text, platform |
+
+### Validation Rules
+
+**Text:**
+- Required: `string`
+- Min length: 1 character
+- Max length: 2000 characters
+- Transformation: automatic trim
+
+**Tone/Style:**
+- Required: `enum`
+- Valid values: `Flanders`, `Balanceado`, `Canalla` (canonical form)
+- Default: `Balanceado`
+
+**Platform:**
+- Required: `enum`
+- Valid values: `twitter`, `facebook`, `instagram`, `youtube`, etc.
+- Default: `twitter`
+- Supports normalization (e.g., `X` → `twitter`)
+
+**Language:**
+- Required: `enum`
+- Valid values: `es`, `en`
+- Default: `es`
+- Supports BCP-47 normalization
+
+**Auto-Approve:**
+- Optional: `boolean`
+- Default: `false`
+
+### Error Response Format
+
+```json
+{
+  "success": false,
+  "error": "Validation failed",
+  "details": [
+    {
+      "field": "text",
+      "message": "Text cannot be empty",
+      "code": "too_small"
+    }
+  ],
+  "timestamp": "2025-11-23T..."
+}
+```
+
+**Error Details:**
+- `field`: dot-notation path to invalid field (e.g., `user.email`)
+- `message`: human-readable error message
+- `code`: Zod error code for programmatic handling
+
+### Testing
+
+**Unit Tests:** 
+- Schemas: `tests/unit/validators/zod/roast.schema.test.js` (43 tests ✅)
+- Middleware: `tests/unit/middleware/zodValidation.test.js` (22 tests ✅)
+
+**Integration Tests:**
+- Endpoint validation: `tests/integration/roast.test.js` (8 tests ✅)
+
+**Coverage:** 100% for Zod validation layer
+
+---
+
 ## Agentes Relevantes
 
 Los siguientes agentes son responsables de mantener este nodo:
@@ -1108,7 +1198,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Front-end Dev** (Issue #419 - Manual approval UI)
 - **Guardian** (PR #640 - Validated Fallback Mode documentation)
 - **Orchestrator**
-- **Test Engineer** (Issue #419 - E2E resilience tests, Issue #924 - middleware tests)
+- **Test Engineer** (Issue #419 - E2E resilience tests, Issue #924 - middleware tests, Issue #946 - Zod validation tests)
 
 ## Related Nodes
 

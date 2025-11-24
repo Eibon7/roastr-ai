@@ -57,9 +57,8 @@ describe('Roast API Integration Tests', () => {
         .set('Authorization', authToken)
         .send({
           text: 'This is a test message for roasting',
-          tone: 'sarcastic',
-          intensity: 3,
-          humorType: 'witty'
+          tone: 'Balanceado' // Issue #946: Use canonical tone format (Zod validation)
+          // Issue #872: intensity and humorType removed
         });
 
       // Issue #483: Log error if test fails
