@@ -1,7 +1,7 @@
 /**
  * Unit tests for Zod validation middleware
  * Issue #946 - Migration from manual validation to Zod
- * 
+ *
  * Tests cover:
  * - Successful validation with defaults
  * - Error formatting for client responses
@@ -36,12 +36,12 @@ describe('Zod Validation Middleware', () => {
       method: 'POST',
       user: { id: 'test-user-id' }
     };
-    
+
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis()
     };
-    
+
     next = jest.fn();
   });
 
@@ -51,12 +51,12 @@ describe('Zod Validation Middleware', () => {
         name: z.string(),
         age: z.number()
       });
-      
+
       req.body = { name: 'John', age: 30 };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(next).toHaveBeenCalledTimes(1);
       expect(next).toHaveBeenCalledWith();
       expect(res.status).not.toHaveBeenCalled();
@@ -66,12 +66,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         text: z.string().trim()
       });
-      
+
       req.body = { text: '  trimmed  ' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(req.body.text).toBe('trimmed');
       expect(next).toHaveBeenCalledTimes(1);
     });
@@ -81,12 +81,12 @@ describe('Zod Validation Middleware', () => {
         name: z.string(),
         role: z.string().default('user')
       });
-      
+
       req.body = { name: 'John' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(req.body.role).toBe('user');
       expect(next).toHaveBeenCalledTimes(1);
     });
@@ -95,13 +95,13 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         count: z.number()
       });
-      
+
       req.body = { count: 42 };
       const originalBody = req.body;
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(req.body).toEqual({ count: 42 });
       expect(next).toHaveBeenCalledTimes(1);
     });
@@ -112,12 +112,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         email: z.string().email()
       });
-      
+
       req.body = { email: 'invalid-email' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(next).not.toHaveBeenCalled();
     });
@@ -126,12 +126,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         age: z.number().min(18, 'Must be 18 or older')
       });
-      
+
       req.body = { age: 16 };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(res.json).toHaveBeenCalledWith({
         success: false,
         error: 'Validation failed',
@@ -151,12 +151,12 @@ describe('Zod Validation Middleware', () => {
         name: z.string().min(1, 'Name is required'),
         age: z.number().min(0, 'Age must be positive')
       });
-      
+
       req.body = { name: '', age: -5 };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       const jsonCall = res.json.mock.calls[0][0];
       expect(jsonCall.details).toHaveLength(2);
       expect(jsonCall.details[0].field).toBe('name');
@@ -169,12 +169,12 @@ describe('Zod Validation Middleware', () => {
           email: z.string().email()
         })
       });
-      
+
       req.body = { user: { email: 'invalid' } };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       const jsonCall = res.json.mock.calls[0][0];
       expect(jsonCall.details[0].field).toBe('user.email');
     });
@@ -183,12 +183,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         required: z.string()
       });
-      
+
       req.body = {};
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -202,12 +202,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         count: z.number()
       });
-      
+
       req.body = { count: 'not-a-number' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(400);
       const jsonCall = res.json.mock.calls[0][0];
       expect(jsonCall.details[0].field).toBe('count');
@@ -219,13 +219,13 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         email: z.string().email()
       });
-      
+
       req.body = { email: 'invalid' };
       req.user = { id: 'user-123' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(logger.warn).toHaveBeenCalledWith('Zod validation failed', {
         errors: expect.any(Array),
         endpoint: '/test',
@@ -238,13 +238,13 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         email: z.string().email()
       });
-      
+
       req.body = { email: 'invalid' };
       delete req.user;
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(logger.warn).toHaveBeenCalledWith('Zod validation failed', {
         errors: expect.any(Array),
         endpoint: '/test',
@@ -260,12 +260,12 @@ describe('Zod Validation Middleware', () => {
           throw new Error('Unexpected error');
         }
       };
-      
+
       req.body = { test: 'data' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(logger.error).toHaveBeenCalledWith('Unexpected validation error', {
         error: 'Unexpected error',
         stack: expect.any(String),
@@ -281,12 +281,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         required: z.string()
       });
-      
+
       req.body = {};
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       const jsonCall = res.json.mock.calls[0][0];
       expect(jsonCall.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     });
@@ -295,12 +295,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         required: z.string()
       });
-      
+
       req.body = {};
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       const jsonCall = res.json.mock.calls[0][0];
       expect(jsonCall.success).toBe(false);
     });
@@ -309,12 +309,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         email: z.string().email()
       });
-      
+
       req.body = { email: 'invalid' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       const jsonCall = res.json.mock.calls[0][0];
       expect(Array.isArray(jsonCall.details)).toBe(true);
       expect(jsonCall.details.length).toBeGreaterThan(0);
@@ -328,12 +328,12 @@ describe('Zod Validation Middleware', () => {
           throw new Error('Unexpected error');
         }
       };
-      
+
       req.body = { test: 'data' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
@@ -348,12 +348,12 @@ describe('Zod Validation Middleware', () => {
           throw new Error('Internal server error');
         }
       };
-      
+
       req.body = { test: 'data' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       const jsonCall = res.json.mock.calls[0][0];
       expect(jsonCall.error).toBe('Validation error');
       expect(jsonCall).not.toHaveProperty('details');
@@ -366,12 +366,12 @@ describe('Zod Validation Middleware', () => {
         required: z.string(),
         optional: z.string().optional()
       });
-      
+
       req.body = { required: 'value' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(next).toHaveBeenCalledTimes(1);
       expect(req.body.required).toBe('value');
       expect(req.body.optional).toBeUndefined();
@@ -381,12 +381,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         field: z.string().nullable()
       });
-      
+
       req.body = { field: null };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(next).toHaveBeenCalledTimes(1);
       expect(req.body.field).toBeNull();
     });
@@ -395,12 +395,12 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         status: z.enum(['active', 'inactive'])
       });
-      
+
       req.body = { status: 'active' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(next).toHaveBeenCalledTimes(1);
       expect(req.body.status).toBe('active');
     });
@@ -409,15 +409,14 @@ describe('Zod Validation Middleware', () => {
       const schema = z.object({
         status: z.enum(['active', 'inactive'])
       });
-      
+
       req.body = { status: 'pending' };
-      
+
       const middleware = validateRequest(schema);
       middleware(req, res, next);
-      
+
       expect(res.status).toHaveBeenCalledWith(400);
       expect(next).not.toHaveBeenCalled();
     });
   });
 });
-

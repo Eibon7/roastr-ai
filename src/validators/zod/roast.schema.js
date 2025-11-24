@@ -14,14 +14,15 @@ const { VALID_TONES } = require('../../config/tones');
  * Text schema - validates roast text input
  * Applies trim, min/max length validation
  */
-const textSchema = z.string({
-  required_error: 'Text is required',
-  invalid_type_error: 'Text must be a string'
-})
+const textSchema = z
+  .string({
+    required_error: 'Text is required',
+    invalid_type_error: 'Text must be a string'
+  })
   .trim()
   .min(VALIDATION_CONSTANTS.MIN_COMMENT_LENGTH, 'Text cannot be empty')
   .max(
-    VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH, 
+    VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH,
     `Text must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`
   );
 
@@ -29,31 +30,37 @@ const textSchema = z.string({
  * Tone schema - validates tone selection
  * Accepts canonical tone values (Flanders, Balanceado, Canalla)
  */
-const toneSchema = z.enum(VALID_TONES, {
-  errorMap: () => ({ 
-    message: `Tone must be one of: ${VALID_TONES.join(', ')}` 
+const toneSchema = z
+  .enum(VALID_TONES, {
+    errorMap: () => ({
+      message: `Tone must be one of: ${VALID_TONES.join(', ')}`
+    })
   })
-}).default('Balanceado');
+  .default('Balanceado');
 
 /**
  * Platform schema - validates platform selection
  * Supports normalization via normalizePlatform (e.g., 'X' → 'twitter')
  */
-const platformSchema = z.enum(VALIDATION_CONSTANTS.VALID_PLATFORMS, {
-  errorMap: () => ({ 
-    message: `Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}` 
+const platformSchema = z
+  .enum(VALIDATION_CONSTANTS.VALID_PLATFORMS, {
+    errorMap: () => ({
+      message: `Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}`
+    })
   })
-}).default('twitter');
+  .default('twitter');
 
 /**
  * Language schema - validates language selection
  * Supports BCP-47 normalization via normalizeLanguage
  */
-const languageSchema = z.enum(VALIDATION_CONSTANTS.VALID_LANGUAGES, {
-  errorMap: () => ({ 
-    message: `Language must be one of: ${VALIDATION_CONSTANTS.VALID_LANGUAGES.join(', ')}` 
+const languageSchema = z
+  .enum(VALIDATION_CONSTANTS.VALID_LANGUAGES, {
+    errorMap: () => ({
+      message: `Language must be one of: ${VALIDATION_CONSTANTS.VALID_LANGUAGES.join(', ')}`
+    })
   })
-}).default('es');
+  .default('es');
 
 /**
  * Style profile schema - validates style profile object
@@ -132,4 +139,3 @@ module.exports = {
   platformSchema,
   languageSchema
 };
-

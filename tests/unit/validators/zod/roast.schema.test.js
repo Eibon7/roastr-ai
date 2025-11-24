@@ -1,7 +1,7 @@
 /**
  * Unit tests for Zod roast validation schemas
  * Issue #946 - Migration from manual validation to Zod
- * 
+ *
  * Tests cover:
  * - Text validation (min/max length, trim)
  * - Tone validation (enum, default)
@@ -22,7 +22,6 @@ const {
 } = require('../../../../src/validators/zod/roast.schema');
 
 describe('Zod Roast Schemas - Base Schemas', () => {
-  
   describe('textSchema', () => {
     it('should accept valid text', () => {
       const result = textSchema.parse('This is a valid comment');
@@ -73,7 +72,9 @@ describe('Zod Roast Schemas - Base Schemas', () => {
     });
 
     it('should reject invalid tone', () => {
-      expect(() => toneSchema.parse('invalid')).toThrow('Tone must be one of: Flanders, Balanceado, Canalla');
+      expect(() => toneSchema.parse('invalid')).toThrow(
+        'Tone must be one of: Flanders, Balanceado, Canalla'
+      );
     });
 
     it('should reject case-sensitive mismatches', () => {
@@ -117,7 +118,6 @@ describe('Zod Roast Schemas - Base Schemas', () => {
 });
 
 describe('Zod Roast Schemas - Endpoint Schemas', () => {
-  
   describe('roastPreviewSchema', () => {
     it('should accept valid preview request', () => {
       const validData = {
@@ -333,4 +333,3 @@ describe('Zod Roast Schemas - Type Safety', () => {
     expect(() => textSchema.parse(true)).toThrow('Text must be a string');
   });
 });
-
