@@ -15,7 +15,7 @@ export const useAPI = () => {
 
     try {
       let result;
-      
+
       switch (method.toLowerCase()) {
         case 'get':
           result = await api.get(url, options);
@@ -49,7 +49,10 @@ export const useAPI = () => {
   const get = useCallback((url, options) => callAPI('get', url, null, options), [callAPI]);
   const post = useCallback((url, data, options) => callAPI('post', url, data, options), [callAPI]);
   const put = useCallback((url, data, options) => callAPI('put', url, data, options), [callAPI]);
-  const patch = useCallback((url, data, options) => callAPI('patch', url, data, options), [callAPI]);
+  const patch = useCallback(
+    (url, data, options) => callAPI('patch', url, data, options),
+    [callAPI]
+  );
   const del = useCallback((url, options) => callAPI('delete', url, null, options), [callAPI]);
 
   return {
@@ -60,7 +63,7 @@ export const useAPI = () => {
     put,
     patch,
     delete: del,
-    callAPI,
+    callAPI
   };
 };
 

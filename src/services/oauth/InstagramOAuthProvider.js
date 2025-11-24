@@ -10,18 +10,18 @@ const { logger } = require('../../utils/logger');
 class InstagramOAuthProvider extends OAuthProvider {
   constructor(config = {}) {
     super('instagram', config);
-    
+
     // Instagram OAuth 2.0 endpoints
     this.authorizationUrl = 'https://api.instagram.com/oauth/authorize';
     this.tokenUrl = 'https://api.instagram.com/oauth/access_token';
     this.longLivedTokenUrl = 'https://graph.instagram.com/access_token';
     this.refreshTokenUrl = 'https://graph.instagram.com/refresh_access_token';
     this.userInfoUrl = 'https://graph.instagram.com/me';
-    
+
     // Instagram OAuth config
     this.clientId = config.clientId || process.env.INSTAGRAM_CLIENT_ID;
     this.clientSecret = config.clientSecret || process.env.INSTAGRAM_CLIENT_SECRET;
-    
+
     if (!this.clientId || !this.clientSecret) {
       logger.warn('Instagram OAuth credentials not found. Real OAuth will not work.');
     }
@@ -48,8 +48,8 @@ class InstagramOAuthProvider extends OAuthProvider {
       });
 
       const authUrl = `${this.authorizationUrl}?${params}`;
-      
-      logger.info('Generated Instagram OAuth URL', { 
+
+      logger.info('Generated Instagram OAuth URL', {
         clientId: this.clientId,
         scopes: this.getDefaultScopes(),
         redirectUri,
@@ -57,7 +57,6 @@ class InstagramOAuthProvider extends OAuthProvider {
       });
 
       return authUrl;
-
     } catch (error) {
       logger.error('Error generating Instagram auth URL:', error);
       throw error;
@@ -106,9 +105,12 @@ class InstagramOAuthProvider extends OAuthProvider {
       const shortTokenData = await response.json();
 
       // Step 2: Exchange short-lived token for long-lived token
-      const longTokenResponse = await fetch(`${this.longLivedTokenUrl}?grant_type=ig_exchange_token&client_secret=${this.clientSecret}&access_token=${shortTokenData.access_token}`, {
-        method: 'GET'
-      });
+      const longTokenResponse = await fetch(
+        `${this.longLivedTokenUrl}?grant_type=ig_exchange_token&client_secret=${this.clientSecret}&access_token=${shortTokenData.access_token}`,
+        {
+          method: 'GET'
+        }
+      );
 
       if (!longTokenResponse.ok) {
         const errorText = await longTokenResponse.text();
@@ -133,7 +135,7 @@ class InstagramOAuthProvider extends OAuthProvider {
         refresh_token: null, // Instagram uses long-lived tokens that can be refreshed
         token_type: 'Bearer',
         expires_in: tokenData.expires_in || 5184000, // 60 days default for long-lived tokens
-        expires_at: Date.now() + ((tokenData.expires_in || 5184000) * 1000),
+        expires_at: Date.now() + (tokenData.expires_in || 5184000) * 1000,
         scope: this.getDefaultScopes().join(','),
         platform: this.platform,
         mock: false,
@@ -149,7 +151,6 @@ class InstagramOAuthProvider extends OAuthProvider {
       });
 
       return result;
-
     } catch (error) {
       logger.error('Error in Instagram token exchange:', error);
       throw error;
@@ -167,9 +168,12 @@ class InstagramOAuthProvider extends OAuthProvider {
         throw new Error('Instagram OAuth credentials not configured');
       }
 
-      const refreshResponse = await fetch(`${this.refreshTokenUrl}?grant_type=ig_refresh_token&access_token=${accessToken}`, {
-        method: 'GET'
-      });
+      const refreshResponse = await fetch(
+        `${this.refreshTokenUrl}?grant_type=ig_refresh_token&access_token=${accessToken}`,
+        {
+          method: 'GET'
+        }
+      );
 
       if (!refreshResponse.ok) {
         const errorText = await refreshResponse.text();
@@ -190,7 +194,7 @@ class InstagramOAuthProvider extends OAuthProvider {
         refresh_token: null, // Instagram doesn't use traditional refresh tokens
         token_type: 'Bearer',
         expires_in: tokenData.expires_in || 5184000, // 60 days
-        expires_at: Date.now() + ((tokenData.expires_in || 5184000) * 1000),
+        expires_at: Date.now() + (tokenData.expires_in || 5184000) * 1000,
         scope: this.getDefaultScopes().join(','),
         platform: this.platform,
         mock: false,
@@ -204,7 +208,6 @@ class InstagramOAuthProvider extends OAuthProvider {
       });
 
       return result;
-
     } catch (error) {
       logger.error('Error refreshing Instagram token:', error);
       throw error;
@@ -222,7 +225,6 @@ class InstagramOAuthProvider extends OAuthProvider {
       // The token will naturally expire after its lifetime
       logger.info('Instagram token revocation requested - tokens will expire naturally');
       return true;
-
     } catch (error) {
       logger.error('Error in Instagram token revocation:', error);
       return false;
@@ -236,9 +238,12 @@ class InstagramOAuthProvider extends OAuthProvider {
    */
   async fetchUserInfo(accessToken) {
     try {
-      const response = await fetch(`${this.userInfoUrl}?fields=id,username,account_type,media_count&access_token=${accessToken}`, {
-        method: 'GET'
-      });
+      const response = await fetch(
+        `${this.userInfoUrl}?fields=id,username,account_type,media_count&access_token=${accessToken}`,
+        {
+          method: 'GET'
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -246,14 +251,13 @@ class InstagramOAuthProvider extends OAuthProvider {
       }
 
       const userData = await response.json();
-      
+
       return {
         id: userData.id,
         username: userData.username,
         account_type: userData.account_type,
         media_count: userData.media_count
       };
-
     } catch (error) {
       logger.error('Error fetching Instagram user info:', error);
       throw error;
@@ -289,11 +293,11 @@ class InstagramOAuthProvider extends OAuthProvider {
    */
   async getAuthorizationUrl(state, redirectUri) {
     const { flags } = require('../../config/flags');
-    
+
     if (flags.shouldUseMockOAuth()) {
       return this.getMockAuthUrl(state, redirectUri);
     }
-    
+
     return await this.getRealAuthUrl(state, redirectUri);
   }
 
@@ -302,11 +306,11 @@ class InstagramOAuthProvider extends OAuthProvider {
    */
   async exchangeCodeForTokens(code, state, redirectUri) {
     const { flags } = require('../../config/flags');
-    
+
     if (flags.shouldUseMockOAuth()) {
       return this.getMockTokens(code, state, redirectUri);
     }
-    
+
     return await this.handleTokenExchange(code, state, redirectUri);
   }
 
@@ -315,11 +319,11 @@ class InstagramOAuthProvider extends OAuthProvider {
    */
   async refreshAccessToken(accessToken) {
     const { flags } = require('../../config/flags');
-    
+
     if (flags.shouldUseMockOAuth()) {
       return this.getMockRefreshedTokens(accessToken);
     }
-    
+
     return await this.refreshAccessToken(accessToken);
   }
 
@@ -327,10 +331,7 @@ class InstagramOAuthProvider extends OAuthProvider {
    * Get Instagram-specific scopes
    */
   getDefaultScopes() {
-    return [
-      'user_profile',
-      'user_media'
-    ];
+    return ['user_profile', 'user_media'];
   }
 
   /**
@@ -339,7 +340,8 @@ class InstagramOAuthProvider extends OAuthProvider {
   getConnectionRequirements() {
     return {
       permissions: ['Access basic profile', 'Read media'],
-      notes: 'Personal accounts only. Business accounts require Facebook App Review. Long-lived tokens last 60 days and can be refreshed.',
+      notes:
+        'Personal accounts only. Business accounts require Facebook App Review. Long-lived tokens last 60 days and can be refreshed.',
       estimatedTime: '2-3 minutes',
       documentation: 'https://developers.facebook.com/docs/instagram-basic-display-api',
       clientIdRequired: true,

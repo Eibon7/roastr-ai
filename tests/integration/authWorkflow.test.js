@@ -26,10 +26,10 @@ jest.mock('../../src/config/supabase', () => {
   const mockSessions = new Map();
   const mockOrganizations = new Map();
   const mockIntegrations = new Map();
-  
+
   let userIdCounter = 1;
   let orgIdCounter = 1;
-  
+
   return {
     supabaseServiceClient: {
       from: (table) => {
@@ -40,12 +40,20 @@ jest.mock('../../src/config/supabase', () => {
                 return {
                   single: () => {
                     if (table === 'users') {
-                      const user = Array.from(mockUsers.values()).find(u => u[field] === value);
-                      return Promise.resolve({ data: user || null, error: user ? null : { message: 'Not found' } });
+                      const user = Array.from(mockUsers.values()).find((u) => u[field] === value);
+                      return Promise.resolve({
+                        data: user || null,
+                        error: user ? null : { message: 'Not found' }
+                      });
                     }
                     if (table === 'organizations') {
-                      const org = Array.from(mockOrganizations.values()).find(o => o[field] === value);
-                      return Promise.resolve({ data: org || null, error: org ? null : { message: 'Not found' } });
+                      const org = Array.from(mockOrganizations.values()).find(
+                        (o) => o[field] === value
+                      );
+                      return Promise.resolve({
+                        data: org || null,
+                        error: org ? null : { message: 'Not found' }
+                      });
                     }
                     return Promise.resolve({ data: null, error: { message: 'Not found' } });
                   },
@@ -72,7 +80,7 @@ jest.mock('../../src/config/supabase', () => {
                     if (table === 'users') {
                       const newUser = { ...data, id: data.id || `user-${userIdCounter++}` };
                       mockUsers.set(newUser.id, newUser);
-                      
+
                       // Auto-create organization
                       const orgId = `org-${orgIdCounter++}`;
                       const org = {
@@ -84,7 +92,7 @@ jest.mock('../../src/config/supabase', () => {
                         monthly_responses_limit: newUser.plan === 'free' ? 100 : 1000
                       };
                       mockOrganizations.set(orgId, org);
-                      
+
                       return Promise.resolve({ data: newUser, error: null });
                     }
                     return Promise.resolve({ data: null, error: { message: 'Insert failed' } });
@@ -124,21 +132,27 @@ jest.mock('../../src/config/supabase', () => {
       auth: {
         signUp: (userData) => {
           // Check for duplicate email
-          const existingUser = Array.from(mockUsers.values()).find(u => u.email === userData.email);
+          const existingUser = Array.from(mockUsers.values()).find(
+            (u) => u.email === userData.email
+          );
           if (existingUser) {
             return Promise.resolve({
               data: null,
               error: { message: 'Email already registered' }
             });
           }
-          
+
           const userId = `auth-${userIdCounter++}`;
           const sessionToken = `session-${userId}`;
-          const user = { id: userId, email: userData.email, email_confirmed_at: new Date().toISOString() };
+          const user = {
+            id: userId,
+            email: userData.email,
+            email_confirmed_at: new Date().toISOString()
+          };
           const session = { access_token: sessionToken, user };
-          
+
           mockSessions.set(sessionToken, user);
-          
+
           return Promise.resolve({
             data: { user, session },
             error: null
@@ -146,18 +160,18 @@ jest.mock('../../src/config/supabase', () => {
         },
         signInWithPassword: (credentials) => {
           // Simple mock - in real tests you'd validate credentials
-          const user = Array.from(mockUsers.values()).find(u => u.email === credentials.email);
+          const user = Array.from(mockUsers.values()).find((u) => u.email === credentials.email);
           if (!user) {
             return Promise.resolve({
               data: null,
               error: { message: 'Invalid login credentials' }
             });
           }
-          
+
           const sessionToken = `session-${user.id}-${Date.now()}`;
           const session = { access_token: sessionToken, user: { id: user.id, email: user.email } };
           mockSessions.set(sessionToken, user);
-          
+
           return Promise.resolve({
             data: { user: { id: user.id, email: user.email }, session },
             error: null
@@ -182,11 +196,12 @@ jest.mock('../../src/config/supabase', () => {
       if (!user) {
         return {
           auth: {
-            getUser: () => Promise.resolve({ data: { user: null }, error: { message: 'Invalid token' } })
+            getUser: () =>
+              Promise.resolve({ data: { user: null }, error: { message: 'Invalid token' } })
           }
         };
       }
-      
+
       return {
         auth: {
           getUser: () => Promise.resolve({ data: { user }, error: null }),
@@ -203,12 +218,14 @@ jest.mock('../../src/config/supabase', () => {
                   if (table === 'integration_configs') {
                     return {
                       order: (orderField, orderOpts) => {
-                        const configs = Array.from(mockIntegrations.values()).filter(c => c[field] === value);
+                        const configs = Array.from(mockIntegrations.values()).filter(
+                          (c) => c[field] === value
+                        );
                         return Promise.resolve({ data: configs || [], error: null });
                       }
                     };
                   }
-                  
+
                   return {
                     single: () => {
                       if (table === 'users') {
@@ -217,14 +234,23 @@ jest.mock('../../src/config/supabase', () => {
                           // Add organization data
                           const userWithOrg = {
                             ...userData,
-                            organizations: [Array.from(mockOrganizations.values()).find(o => o.owner_id === user.id)]
+                            organizations: [
+                              Array.from(mockOrganizations.values()).find(
+                                (o) => o.owner_id === user.id
+                              )
+                            ]
                           };
                           return Promise.resolve({ data: userWithOrg, error: null });
                         }
                       }
                       if (table === 'organizations') {
-                        const org = Array.from(mockOrganizations.values()).find(o => o[field] === value);
-                        return Promise.resolve({ data: org || null, error: org ? null : { message: 'Not found' } });
+                        const org = Array.from(mockOrganizations.values()).find(
+                          (o) => o[field] === value
+                        );
+                        return Promise.resolve({
+                          data: org || null,
+                          error: org ? null : { message: 'Not found' }
+                        });
                       }
                       return Promise.resolve({ data: null, error: { message: 'Not found' } });
                     },
@@ -232,7 +258,9 @@ jest.mock('../../src/config/supabase', () => {
                       return {
                         eq: (filterField, filterValue) => {
                           if (table === 'integration_configs') {
-                            const configs = Array.from(mockIntegrations.values()).filter(c => c[filterField] === filterValue);
+                            const configs = Array.from(mockIntegrations.values()).filter(
+                              (c) => c[filterField] === filterValue
+                            );
                             return Promise.resolve({ data: configs || [], error: null });
                           }
                           return Promise.resolve({ data: [], error: null });
@@ -243,7 +271,9 @@ jest.mock('../../src/config/supabase', () => {
                       return {
                         eq: (field2, value2) => {
                           if (table === 'integration_configs') {
-                            const configs = Array.from(mockIntegrations.values()).filter(c => c[field] === value && c[field2] === value2);
+                            const configs = Array.from(mockIntegrations.values()).filter(
+                              (c) => c[field] === value && c[field2] === value2
+                            );
                             return Promise.resolve({ data: configs || [], error: null });
                           }
                           return Promise.resolve({ data: [], error: null });
@@ -286,7 +316,10 @@ jest.mock('../../src/config/supabase', () => {
                               return Promise.resolve({ data: updated, error: null });
                             }
                           }
-                          return Promise.resolve({ data: null, error: { message: 'Update failed' } });
+                          return Promise.resolve({
+                            data: null,
+                            error: { message: 'Update failed' }
+                          });
                         }
                       };
                     }
@@ -319,7 +352,7 @@ describe('Authentication Workflow Integration Tests', () => {
     app.use(bodyParser.json());
     app.use('/api/auth', authRoutes);
     app.use('/api/integrations', integrationsRoutes);
-    
+
     testUser = null;
     authToken = null;
   });
@@ -328,13 +361,11 @@ describe('Authentication Workflow Integration Tests', () => {
     it('should complete full user signup and login workflow', async () => {
       // 1. Register new user
       // Issue #947: Updated password to meet Zod validation requirements
-      const signupResponse = await request(app)
-        .post('/api/auth/signup')
-        .send({
-          email: 'testuser@example.com',
-          password: 'Password123!',
-          name: 'Test User'
-        });
+      const signupResponse = await request(app).post('/api/auth/signup').send({
+        email: 'testuser@example.com',
+        password: 'Password123!',
+        name: 'Test User'
+      });
 
       if (signupResponse.status !== 201) {
         console.log('Signup response error:', signupResponse.body);
@@ -343,7 +374,7 @@ describe('Authentication Workflow Integration Tests', () => {
       expect(signupResponse.body.success).toBe(true);
       expect(signupResponse.body.data.user.email).toBe('testuser@example.com');
       expect(signupResponse.body.data.session.access_token).toBeTruthy();
-      
+
       authToken = signupResponse.body.data.session.access_token;
 
       // 2. Get user profile
@@ -374,17 +405,15 @@ describe('Authentication Workflow Integration Tests', () => {
 
       // 4. Login with credentials
       // Issue #947: Updated password to match registration (Zod validation)
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'testuser@example.com',
-          password: 'Password123!'
-        });
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: 'testuser@example.com',
+        password: 'Password123!'
+      });
 
       expect(loginResponse.status).toBe(200);
       expect(loginResponse.body.success).toBe(true);
       expect(loginResponse.body.data.user.email).toBe('testuser@example.com');
-      
+
       const newToken = loginResponse.body.data.session.access_token;
 
       // 5. Logout
@@ -399,20 +428,16 @@ describe('Authentication Workflow Integration Tests', () => {
     it('should handle duplicate email registration', async () => {
       // First registration
       // Issue #947: Updated password to meet Zod validation requirements
-      await request(app)
-        .post('/api/auth/signup')
-        .send({
-          email: 'duplicate@example.com',
-          password: 'Password123!'
-        });
+      await request(app).post('/api/auth/signup').send({
+        email: 'duplicate@example.com',
+        password: 'Password123!'
+      });
 
       // Attempt duplicate registration
-      const duplicateResponse = await request(app)
-        .post('/api/auth/signup')
-        .send({
-          email: 'duplicate@example.com',
-          password: 'Password123!'
-        });
+      const duplicateResponse = await request(app).post('/api/auth/signup').send({
+        email: 'duplicate@example.com',
+        password: 'Password123!'
+      });
 
       expect(duplicateResponse.status).toBe(400);
       expect(duplicateResponse.body.success).toBe(false);
@@ -421,12 +446,10 @@ describe('Authentication Workflow Integration Tests', () => {
     it('should handle invalid credentials', async () => {
       // Try to login with non-existent user
       // Issue #947: Updated password to meet Zod validation (even though user doesn't exist)
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'nonexistent@example.com',
-          password: 'Password123!'
-        });
+      const loginResponse = await request(app).post('/api/auth/login').send({
+        email: 'nonexistent@example.com',
+        password: 'Password123!'
+      });
 
       expect(loginResponse.status).toBe(401);
       expect(loginResponse.body.success).toBe(false);
@@ -439,14 +462,12 @@ describe('Authentication Workflow Integration Tests', () => {
     beforeEach(async () => {
       // Create and authenticate test user
       // Issue #947: Updated password to meet Zod validation requirements
-      const signupResponse = await request(app)
-        .post('/api/auth/signup')
-        .send({
-          email: 'integrationuser@example.com',
-          password: 'Password123!',
-          name: 'Integration User'
-        });
-      
+      const signupResponse = await request(app).post('/api/auth/signup').send({
+        email: 'integrationuser@example.com',
+        password: 'Password123!',
+        name: 'Integration User'
+      });
+
       authToken = signupResponse.body.data.session.access_token;
     });
 
@@ -514,7 +535,7 @@ describe('Authentication Workflow Integration Tests', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send({ enabled: true });
 
-      // Add second integration (YouTube)  
+      // Add second integration (YouTube)
       await request(app)
         .post('/api/integrations/youtube')
         .set('Authorization', `Bearer ${authToken}`)
@@ -534,8 +555,7 @@ describe('Authentication Workflow Integration Tests', () => {
   describe('Authentication Middleware', () => {
     it('should protect authenticated endpoints', async () => {
       // Try to access protected endpoint without token
-      const response = await request(app)
-        .get('/api/auth/me');
+      const response = await request(app).get('/api/auth/me');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -555,11 +575,9 @@ describe('Authentication Workflow Integration Tests', () => {
 
   describe('Password Reset Flow', () => {
     it('should handle password reset request', async () => {
-      const resetResponse = await request(app)
-        .post('/api/auth/reset-password')
-        .send({
-          email: 'user@example.com'
-        });
+      const resetResponse = await request(app).post('/api/auth/reset-password').send({
+        email: 'user@example.com'
+      });
 
       expect(resetResponse.status).toBe(200);
       expect(resetResponse.body.success).toBe(true);
@@ -567,11 +585,9 @@ describe('Authentication Workflow Integration Tests', () => {
     });
 
     it('should handle magic link requests', async () => {
-      const magicResponse = await request(app)
-        .post('/api/auth/login/magic-link')
-        .send({
-          email: 'user@example.com'
-        });
+      const magicResponse = await request(app).post('/api/auth/login/magic-link').send({
+        email: 'user@example.com'
+      });
 
       expect(magicResponse.status).toBe(200);
       expect(magicResponse.body.success).toBe(true);

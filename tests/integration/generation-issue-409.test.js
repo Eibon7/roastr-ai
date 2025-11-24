@@ -73,10 +73,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
   afterEach(async () => {
     // Clean up test-generated roasts after each test
     if (testComment?.id) {
-      await supabaseServiceClient
-        .from('roasts_metadata')
-        .delete()
-        .eq('comment_id', testComment.id);
+      await supabaseServiceClient.from('roasts_metadata').delete().eq('comment_id', testComment.id);
     }
   });
 
@@ -112,7 +109,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Validate all variants respect tone
       expect(result.versions).toBeDefined();
       expect(result.versions.length).toBeGreaterThan(0);
-      result.versions.forEach(variant => {
+      result.versions.forEach((variant) => {
         expect(variant.style).toBe('balanceado');
       });
     });
@@ -148,7 +145,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Should use default tone (balanceado)
       expect(result.versions).toBeDefined();
       expect(result.versions.length).toBeGreaterThan(0);
-      result.versions.forEach(variant => {
+      result.versions.forEach((variant) => {
         expect(variant.style).toBeDefined();
         expect(variant.style.toLowerCase()).toBe('balanceado');
       });
@@ -179,8 +176,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       expect(result.error).toBeDefined();
       // Accept either specific error or generic fallback message
       expect(
-        result.error.match(/invalid style/i) ||
-        result.error.includes('No pudimos generar el roast')
+        result.error.match(/invalid style/i) || result.error.includes('No pudimos generar el roast')
       ).toBeTruthy();
     });
   });
@@ -248,7 +244,11 @@ describe('[Integration] Roast Generation - Issue #409', () => {
           variantText = variant.text;
         } else if (typeof variant.text === 'object' && variant.text !== null) {
           // Try multiple possible object structures
-          variantText = variant.text.content || variant.text.value || variant.text.message || JSON.stringify(variant.text);
+          variantText =
+            variant.text.content ||
+            variant.text.value ||
+            variant.text.message ||
+            JSON.stringify(variant.text);
         }
 
         // Variant MUST have non-empty text
@@ -326,7 +326,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
         expect(persistedRoasts.length).toBe(expectedVariants);
 
         // Verify persisted data matches generation
-        persistedRoasts.forEach(roast => {
+        persistedRoasts.forEach((roast) => {
           expect(roast.user_id).toBe(testUser.id);
           expect(roast.comment_id).toBe(commentId);
           const roastText = typeof roast.text === 'string' ? roast.text : roast.text?.content || '';
@@ -334,10 +334,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
         });
 
         // Cleanup
-        await supabaseServiceClient
-          .from('roasts')
-          .delete()
-          .eq('comment_id', commentId);
+        await supabaseServiceClient.from('roasts').delete().eq('comment_id', commentId);
       }
 
       // Cleanup flag
@@ -384,7 +381,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       // Variants should have metadata if supported by implementation
       expect(result.versions).toBeDefined();
       expect(result.versions.length).toBeGreaterThan(0);
-      result.versions.forEach(variant => {
+      result.versions.forEach((variant) => {
         // If variant has metadata, it MUST be valid
         if (variant.metadata) {
           expect(variant.metadata.userId).toBe(testUser.id);
@@ -403,7 +400,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
         // AC2: Ensure at least one row persisted before checking associations
         expect(persistedRoasts.length).toBeGreaterThan(0);
 
-        persistedRoasts.forEach(roast => {
+        persistedRoasts.forEach((roast) => {
           expect(roast.user_id).toBe(testUser.id);
           // org_id might not be in roasts table, check if exists
           if (roast.org_id !== undefined) {
@@ -413,10 +410,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       }
 
       // Cleanup
-      await supabaseServiceClient
-        .from('roasts')
-        .delete()
-        .eq('comment_id', commentId);
+      await supabaseServiceClient.from('roasts').delete().eq('comment_id', commentId);
 
       delete process.env.ROAST_VERSIONS_MULTIPLE;
     });
@@ -470,21 +464,29 @@ describe('[Integration] Roast Generation - Issue #409', () => {
       if (typeof result.versions[0].text === 'string') {
         text1 = result.versions[0].text;
       } else if (typeof result.versions[0].text === 'object' && result.versions[0].text !== null) {
-        text1 = result.versions[0].text.content || result.versions[0].text.value || result.versions[0].text.message || JSON.stringify(result.versions[0].text);
+        text1 =
+          result.versions[0].text.content ||
+          result.versions[0].text.value ||
+          result.versions[0].text.message ||
+          JSON.stringify(result.versions[0].text);
       }
 
       // If still empty, check if result.roast exists as fallback
       if (!text1 && result.roast) {
-        text1 = typeof result.roast === 'string' ? result.roast : result.roast.content || result.roast.value || '';
+        text1 =
+          typeof result.roast === 'string'
+            ? result.roast
+            : result.roast.content || result.roast.value || '';
       }
 
       expect(text1.length).toBeGreaterThan(10);
 
       // Only validate difference if we have 2 variants
       if (expectedVariants === 2 && result.versions.length === 2) {
-        const text2 = typeof result.versions[1].text === 'string'
-          ? result.versions[1].text
-          : result.versions[1].text?.content || result.versions[1].text?.value || '';
+        const text2 =
+          typeof result.versions[1].text === 'string'
+            ? result.versions[1].text
+            : result.versions[1].text?.content || result.versions[1].text?.value || '';
 
         // Validate variants are different
         expect(text1).not.toBe(text2);
@@ -701,24 +703,21 @@ describe('[Integration] Roast Generation - Issue #409', () => {
         expect(allVariants.length).toBe(3); // ✅ Strict assertion!
 
         // Verify phases
-        const initialVariants = allVariants.filter(v => v.phase === 'initial');
-        const postVariants = allVariants.filter(v => v.phase === 'post_selection');
+        const initialVariants = allVariants.filter((v) => v.phase === 'initial');
+        const postVariants = allVariants.filter((v) => v.phase === 'post_selection');
 
         expect(initialVariants.length).toBe(2); // 2 initial variants
-        expect(postVariants.length).toBe(1);    // 1 post-selection variant
+        expect(postVariants.length).toBe(1); // 1 post-selection variant
 
         // Verify post-selection references an initial variant
         const postVariant = postVariants[0];
         if (postVariant.base_variant_id) {
-          const baseVariant = initialVariants.find(v => v.id === postVariant.base_variant_id);
+          const baseVariant = initialVariants.find((v) => v.id === postVariant.base_variant_id);
           expect(baseVariant).toBeDefined();
         }
 
         // Cleanup if query succeeded
-        await supabaseServiceClient
-          .from('roasts')
-          .delete()
-          .eq('comment_id', commentId);
+        await supabaseServiceClient.from('roasts').delete().eq('comment_id', commentId);
       }
 
       delete process.env.ROAST_VERSIONS_MULTIPLE;
@@ -830,7 +829,7 @@ describe('[Integration] Roast Generation - Issue #409', () => {
 
       // Validate that generated roasts respect platform constraints (280 chars for Twitter)
       if (result.versions && result.versions.length > 0) {
-        result.versions.forEach(variant => {
+        result.versions.forEach((variant) => {
           const variantText = extractText(variant.text);
           expect(variantText).toBeDefined();
           expect(variantText.length).toBeGreaterThan(0);
@@ -882,7 +881,12 @@ describe('[Integration] Roast Generation - Issue #409', () => {
           if (typeof variant.text === 'string') {
             variantText = variant.text;
           } else if (typeof variant.text === 'object' && variant.text !== null) {
-            variantText = variant.text.roast || variant.text.content || variant.text.value || variant.text.message || '';
+            variantText =
+              variant.text.roast ||
+              variant.text.content ||
+              variant.text.value ||
+              variant.text.message ||
+              '';
           }
 
           // Calculate quality score for each variant with normalized text
@@ -952,14 +956,18 @@ describe('[Integration] Roast Generation - Issue #409', () => {
 
       // Coherence validation - The roast should be contextually relevant
       if (result.versions && result.versions.length > 0) {
-        result.versions.forEach(variant => {
+        result.versions.forEach((variant) => {
           // Extract text handling both string and object formats
           let variantText = '';
           if (typeof variant.text === 'string') {
             variantText = variant.text;
           } else if (typeof variant.text === 'object' && variant.text !== null) {
-            variantText = variant.text.roast || variant.text.content || variant.text.value ||
-                         variant.text.message || JSON.stringify(variant.text);
+            variantText =
+              variant.text.roast ||
+              variant.text.content ||
+              variant.text.value ||
+              variant.text.message ||
+              JSON.stringify(variant.text);
           }
 
           // Text MUST exist and have meaningful content
@@ -979,7 +987,8 @@ describe('[Integration] Roast Generation - Issue #409', () => {
         if (typeof result.text === 'string') {
           resultText = result.text;
         } else if (typeof result.text === 'object' && result.text !== null) {
-          resultText = result.text.roast || result.text.content || result.text.value || result.text.message;
+          resultText =
+            result.text.roast || result.text.content || result.text.value || result.text.message;
         } else if (result.roast) {
           resultText = result.roast;
         }

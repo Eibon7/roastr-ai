@@ -39,7 +39,8 @@ Una vez creada la base de datos:
    - Copia el **UPSTASH_REDIS_REST_TOKEN**
      - Formato: `AXxxxxx...` (token largo)
 
-**⚠️ IMPORTANTE:** 
+**⚠️ IMPORTANTE:**
+
 - Usa **REST URL** (no Redis URL directa)
 - El token es diferente al password de Redis tradicional
 
@@ -57,6 +58,7 @@ QUEUE_PREFER_REDIS=true
 ```
 
 **Ejemplo real:**
+
 ```bash
 UPSTASH_REDIS_REST_URL=https://eu-west1-xxxxx.upstash.io
 UPSTASH_REDIS_REST_TOKEN=AXxxxxx...long_token_here...
@@ -72,6 +74,7 @@ npm run redis:verify
 ```
 
 **Salida esperada:**
+
 ```
 ✅ Redis connection successful!
 ✅ Redis is fully operational!
@@ -80,6 +83,7 @@ npm run redis:verify
 ```
 
 **Si hay error:**
+
 - Verifica que copiaste bien la URL y el token
 - Asegúrate de usar REST URL (no Redis URL directa)
 - Verifica que no hay espacios extra en `.env`
@@ -97,6 +101,7 @@ npm run workers:start
 ```
 
 **Verificar que Redis está activo:**
+
 ```bash
 npm run workers:status
 # Deberías ver: "redis: true" o "Redis: ✅ Available"
@@ -107,24 +112,29 @@ npm run workers:status
 ## 🔍 Verificación Completa
 
 ### 1. Verificar Conexión
+
 ```bash
 npm run redis:verify
 ```
 
 ### 2. Verificar en Workers
+
 ```bash
 npm run workers:status
 # Busca: "redis": true o "Redis: ✅"
 ```
 
 ### 3. Verificar en Logs
+
 Cuando inicies workers, deberías ver:
+
 ```
 ✅ Redis connected successfully
 ✅ Queue Service initialized (Redis mode)
 ```
 
 ### 4. Verificar Disk IO
+
 - Supabase Dashboard → Usage → Disk IO
 - Deberías ver reducción inmediata después de activar Redis
 
@@ -133,19 +143,23 @@ Cuando inicies workers, deberías ver:
 ## 🐛 Troubleshooting
 
 ### Error: "Redis URL not configured"
+
 - Verifica que `.env` tiene `UPSTASH_REDIS_REST_URL`
 - Asegúrate de recargar variables: `source .env` o reiniciar terminal
 
 ### Error: "Connection refused" o "Timeout"
+
 - Verifica que la URL es correcta (formato: `https://xxxxx.upstash.io`)
 - Verifica que el token es correcto
 - Verifica que no hay firewall bloqueando conexiones
 
 ### Error: "Authentication failed"
+
 - Verifica que el token es correcto (copia completa)
 - Asegúrate de usar REST TOKEN (no Redis password)
 
 ### Workers siguen usando Database
+
 - Verifica `QUEUE_PREFER_REDIS=true` en `.env`
 - Reinicia workers después de cambiar `.env`
 - Verifica logs: debería decir "Redis connected"
@@ -155,11 +169,13 @@ Cuando inicies workers, deberías ver:
 ## 📊 Impacto Esperado
 
 ### Antes (Solo Database)
+
 - Disk IO: ~216,000 queries/día
 - Workers: Polling database cada 1-5s
 - Latencia: Mayor (queries a PostgreSQL)
 
 ### Después (Con Redis)
+
 - Disk IO: ~20,000-40,000 queries/día (-80-85%)
 - Workers: Polling Redis (no cuenta como Disk IO)
 - Latencia: Menor (Redis es más rápido)
@@ -175,6 +191,7 @@ Este proyecto usa el **SDK oficial de Upstash** en lugar de clientes Redis gené
 ### ¿Por qué @upstash/redis?
 
 **Ventajas:**
+
 - ✅ **REST API**: HTTP-based, no necesita conexiones TCP persistentes
 - ✅ **Stateless**: Cada operación es independiente (perfecto para serverless)
 - ✅ **Más simple**: Configuración minimal (`Redis.fromEnv()`)
@@ -203,18 +220,19 @@ const value = await redis.get('foo');
 
 ### Diferencias con ioredis
 
-| Característica | @upstash/redis | ioredis |
-|----------------|----------------|---------|
-| Protocolo | REST (HTTP) | TCP |
-| Conexiones | Stateless | Persistent |
-| Config | Minimal | Compleja |
-| Serverless | Optimizado | No ideal |
-| Event handlers | No necesarios | Requiere setup |
-| Disconnect | No necesario | Debe cerrar |
+| Característica | @upstash/redis | ioredis        |
+| -------------- | -------------- | -------------- |
+| Protocolo      | REST (HTTP)    | TCP            |
+| Conexiones     | Stateless      | Persistent     |
+| Config         | Minimal        | Compleja       |
+| Serverless     | Optimizado     | No ideal       |
+| Event handlers | No necesarios  | Requiere setup |
+| Disconnect     | No necesario   | Debe cerrar    |
 
 ## 💡 Alternativas
 
 ### Redis Local (Desarrollo)
+
 ⚠️ **Nota:** El SDK `@upstash/redis` está diseñado para Upstash. Para Redis local, considera usar Upstash para consistencia o migrar a `ioredis` si necesario.
 
 Si prefieres Redis local (no recomendado con el SDK actual):
@@ -230,11 +248,13 @@ redis-server
 ```
 
 **Ventajas:**
+
 - Gratis ilimitado
 - Más rápido (sin latencia de red)
 - Útil para desarrollo local
 
 **Desventajas:**
+
 - No disponible en producción (necesitas servidor)
 - No compatible con @upstash/redis SDK (necesitarías ioredis)
 - No persistente por defecto
@@ -261,4 +281,3 @@ redis-server
 
 **Última actualización:** 2025-11-20 (Issue #898)
 **Estado:** ✅ Guía completa - Migrado a @upstash/redis SDK
-

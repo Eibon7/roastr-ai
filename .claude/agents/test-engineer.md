@@ -72,4 +72,5 @@ criteria_of_success:
 ---
 
 output:
+
 - Mensaje: "Tests creados/actualizados en tests/ + validación visual con Playwright en docs/test-evidence/<fecha>/. spec.md actualizado con mapa de cobertura y link a evidencias."

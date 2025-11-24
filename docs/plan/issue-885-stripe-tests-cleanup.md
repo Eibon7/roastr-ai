@@ -39,11 +39,13 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 ### Fase 1: Tests Exclusivos de Stripe (Eliminar Directamente)
 
 **Archivos confirmados exclusivos de Stripe:**
+
 - ✅ `tests/unit/services/stripeWebhookService.test.js` - Verificado: 0 referencias Polar
 - ✅ `tests/unit/services/stripeWrapper.test.js` - Verificado: 0 referencias Polar
 - ✅ `tests/integration/stripeWebhooksFlow.test.js` - Verificado: 0 referencias Polar
 
 **Archivos a verificar:**
+
 - `tests/unit/routes/billing.test.js`
 - `tests/unit/routes/billing-coverage-issue502.test.js`
 - `tests/unit/routes/billing-edge-cases.test.js`
@@ -53,6 +55,7 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 ### Fase 2: Tests Mixtos (Revisar y Adaptar)
 
 **Archivos a revisar línea por línea:**
+
 - `tests/unit/services/costControl.test.js`
 - `tests/unit/services/creditsService.test.js`
 - `tests/unit/services/entitlementsService.test.js`
@@ -119,6 +122,7 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 ✅ **3 archivos adaptados** (mixtos - eliminado código Stripe, mantenido Polar)
 
 ### 🧪 Tests de Servicios (7 archivos)
+
 - [x] `tests/unit/services/stripeWebhookService.test.js` ✅ ELIMINADO
 - [x] `tests/unit/services/stripeWrapper.test.js` ✅ ELIMINADO
 - [x] `tests/unit/services/costControl.test.js` ✅ ELIMINADO
@@ -128,6 +132,7 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 - [x] `tests/unit/services/planChangeRollback.test.js` ✅ ELIMINADO
 
 ### 🔗 Tests de Integración (9 archivos)
+
 - [x] `tests/integration/stripeWebhooksFlow.test.js` ✅ ELIMINADO
 - [x] `tests/integration/adminEndpoints.test.js` ✅ ELIMINADO
 - [x] `tests/integration/ajustes-settings.test.js` ✅ ELIMINADO
@@ -139,6 +144,7 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 - [x] `tests/integration/spec14-tier-validation.test.js` ✅ ELIMINADO
 
 ### 🛣️ Tests de Rutas de Billing (5 archivos)
+
 - [x] `tests/unit/routes/billing.test.js` ✅ ELIMINADO
 - [x] `tests/unit/routes/billing-coverage-issue502.test.js` ✅ ELIMINADO
 - [x] `tests/unit/routes/billing-edge-cases.test.js` ✅ ELIMINADO
@@ -146,11 +152,13 @@ Eliminar todos los archivos de test que referencian Stripe después de la migrac
 - [x] `tests/unit/routes/billing-webhooks.test.js` ✅ ELIMINADO
 
 ### ⚙️ Tests de Workers (3 archivos)
+
 - [x] `tests/unit/workers/BillingWorker.test.js` ✅ ELIMINADO
 - [x] `tests/unit/workers/BillingWorker-cleanup.test.js` ✅ ELIMINADO
 - [x] `tests/unit/workers/BillingWorker-simple.test.js` ✅ ELIMINADO
 
 ### 🧩 Otros Tests (5 archivos)
+
 - [x] `tests/unit/middleware/webhookSecurity.test.js` ✅ ELIMINADO
 - [x] `tests/unit/config/__tests__/flags.test.js` ✅ ELIMINADO
 - [x] `tests/unit/utils/retry.test.js` ✅ ELIMINADO
@@ -238,4 +246,3 @@ npm test
 
 - Los fallos restantes en la suite de tests son preexistentes (timeouts, memoria, problemas de DB) y no están relacionados con la eliminación de archivos Stripe
 - El único archivo de test que aún contiene la palabra "stripe" es `entitlementsService-polar.test.js`, pero solo en el mock de StripeWrapper (necesario porque el código de producción aún lo usa)
-

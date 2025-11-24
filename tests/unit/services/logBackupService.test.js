@@ -1,6 +1,6 @@
 /**
  * Log Backup Service Tests
- * 
+ *
  * Tests for log backup functionality including:
  * - S3 configuration and initialization
  * - File upload and download operations
@@ -46,7 +46,7 @@ describe('LogBackupService', () => {
   beforeEach(() => {
     // Save original environment
     originalEnv = { ...process.env };
-    
+
     // Set up test environment
     process.env.LOG_BACKUP_S3_BUCKET = 'test-bucket';
     process.env.LOG_BACKUP_S3_PREFIX = 'test-logs';
@@ -63,16 +63,16 @@ describe('LogBackupService', () => {
       headBucket: jest.fn(),
       headObject: jest.fn()
     };
-    
+
     AWS.S3.mockImplementation(() => mockS3);
-    
+
     // Mock fs-extra
     fs.stat = jest.fn();
     fs.ensureDir = jest.fn();
     fs.readdir = jest.fn();
     fs.writeFile = jest.fn();
     fs.pathExists = jest.fn().mockResolvedValue(true);
-    
+
     logBackupService = new LogBackupService();
   });
 
@@ -156,7 +156,7 @@ describe('LogBackupService', () => {
           })
         })
       );
-      
+
       // Service returns lowercase keys with size
       expect(result.location).toBe('https://test-bucket.s3.amazonaws.com/test-key');
       expect(result.etag).toBe('"test-etag"');
@@ -166,7 +166,7 @@ describe('LogBackupService', () => {
     test('should handle upload errors with retry', async () => {
       const error = new Error('Network error');
       error.code = 'RequestTimeout'; // Make it retryable
-      
+
       // Mock fs.stat for file size
       fs.stat.mockResolvedValue({ size: 1024 });
 
@@ -175,21 +175,21 @@ describe('LogBackupService', () => {
       mockS3.upload.mockImplementation(() => {
         attemptCount++;
         const promiseFn = jest.fn();
-        
+
         if (attemptCount <= 2) {
           promiseFn.mockRejectedValue(error);
         } else {
-          promiseFn.mockResolvedValue({ 
+          promiseFn.mockResolvedValue({
             Location: 'https://test-bucket.s3.amazonaws.com/test-key',
             ETag: '"success-etag"'
           });
         }
-        
+
         return { promise: promiseFn };
       });
 
       const result = await logBackupService.uploadFileToS3('/test/file.log', 'test-key');
-      
+
       // Verify retry was attempted (should be called 3 times due to retry logic)
       expect(mockS3.upload).toHaveBeenCalledTimes(3);
       expect(result.location).toBe('https://test-bucket.s3.amazonaws.com/test-key');
@@ -200,7 +200,7 @@ describe('LogBackupService', () => {
     test('should fail after max retries', async () => {
       const error = new Error('Persistent error');
       error.code = 'RequestTimeout'; // Make it retryable
-      
+
       // Mock fs.stat for file size
       fs.stat.mockResolvedValue({ size: 1024 });
 
@@ -209,10 +209,10 @@ describe('LogBackupService', () => {
         promise: jest.fn().mockRejectedValue(error)
       });
 
-      await expect(
-        logBackupService.uploadFileToS3('/test/file.log', 'test-key')
-      ).rejects.toThrow('Persistent error');
-      
+      await expect(logBackupService.uploadFileToS3('/test/file.log', 'test-key')).rejects.toThrow(
+        'Persistent error'
+      );
+
       // Should be called 3 times (maxRetries)
       expect(mockS3.upload).toHaveBeenCalledTimes(3);
     });
@@ -236,7 +236,7 @@ describe('LogBackupService', () => {
 
     test('should backup logs for specific date', async () => {
       const targetDate = new Date('2024-01-01');
-      
+
       const result = await logBackupService.backupLogsForDate(targetDate, {
         includeDirectories: ['application'],
         skipExisting: false
@@ -249,7 +249,7 @@ describe('LogBackupService', () => {
 
     test('should perform dry run without uploading', async () => {
       const targetDate = new Date('2024-01-01');
-      
+
       const result = await logBackupService.backupLogsForDate(targetDate, {
         dryRun: true,
         includeDirectories: ['application']
@@ -282,24 +282,24 @@ describe('LogBackupService', () => {
       const futureDate = new Date();
       futureDate.setTime(futureDate.getTime() + 25 * 60 * 60 * 1000); // 25 hours
 
-      await expect(
-        logBackupService.backupLogsForDate(futureDate)
-      ).rejects.toThrow('targetDate cannot be more than 24 hours in the future');
+      await expect(logBackupService.backupLogsForDate(futureDate)).rejects.toThrow(
+        'targetDate cannot be more than 24 hours in the future'
+      );
 
       const oldDate = new Date();
       oldDate.setFullYear(oldDate.getFullYear() - 11);
 
-      await expect(
-        logBackupService.backupLogsForDate(oldDate)
-      ).rejects.toThrow('targetDate cannot be more than 10 years in the past');
+      await expect(logBackupService.backupLogsForDate(oldDate)).rejects.toThrow(
+        'targetDate cannot be more than 10 years in the past'
+      );
     });
 
     test('should require S3 configuration for non-dry runs', async () => {
       logBackupService.bucketName = null;
 
-      await expect(
-        logBackupService.backupLogsForDate(new Date('2024-01-01'))
-      ).rejects.toThrow('S3 backup is not configured');
+      await expect(logBackupService.backupLogsForDate(new Date('2024-01-01'))).rejects.toThrow(
+        'S3 backup is not configured'
+      );
     });
   });
 
@@ -336,9 +336,7 @@ describe('LogBackupService', () => {
     test('should filter backups by date', async () => {
       mockS3.listObjectsV2.mockReturnValue({
         promise: jest.fn().mockResolvedValue({
-          Contents: [
-            { Key: 'test-logs/2024-01-01/app.log', LastModified: new Date(), Size: 1024 }
-          ],
+          Contents: [{ Key: 'test-logs/2024-01-01/app.log', LastModified: new Date(), Size: 1024 }],
           IsTruncated: false,
           KeyCount: 1
         })

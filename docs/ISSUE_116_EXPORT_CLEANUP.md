@@ -38,23 +38,26 @@ Implemented automatic cleanup of expired GDPR export files to minimize security 
 ```javascript
 // Retention Rules (configurable via environment variables)
 maxAgeAfterCreation: 24 * 60 * 60 * 1000,  // 24 hours
-maxAgeAfterDownload: 60 * 60 * 1000,        // 1 hour  
+maxAgeAfterDownload: 60 * 60 * 1000,        // 1 hour
 scanInterval: 15 * 60 * 1000                // 15 minutes
 ```
 
 ## 🚀 Usage
 
 ### Standalone Worker
+
 ```bash
 npm run worker:export-cleanup
 ```
 
 ### With WorkerManager
+
 ```bash
 npm run workers:start  # Includes export-cleanup worker
 ```
 
 ### Environment Variables
+
 ```bash
 EXPORT_CLEANUP_INTERVAL_MS=900000          # Scan interval (15 min)
 EXPORT_MAX_AGE_HOURS=24                    # Max age after creation
@@ -64,11 +67,13 @@ EXPORT_MAX_AGE_AFTER_DOWNLOAD_HOURS=1     # Max age after download
 ## 🧪 Testing
 
 ### Unit Tests
+
 - **Location**: `tests/unit/workers/ExportCleanupWorker.test.js`
 - **Coverage**: Constructor, token cleanup, file deletion logic, status reporting, integration
 - **Command**: `ENABLE_MOCK_MODE=true npx jest ExportCleanupWorker.test.js`
 
 ### Integration Tests
+
 - **Location**: `tests/integration/export-cleanup-integration.test.js`
 - **Coverage**: Full lifecycle from export creation to cleanup
 - **Scenarios**: Mixed retention periods, download tracking, error handling
@@ -95,10 +100,11 @@ EXPORT_MAX_AGE_AFTER_DOWNLOAD_HOURS=1     # Max age after download
 ## 📊 Monitoring & Logging
 
 ### Cleanup Statistics
+
 ```javascript
 {
   filesScanned: 0,
-  filesDeleted: 0, 
+  filesDeleted: 0,
   tokensCleanedUp: 0,
   errorsEncountered: 0,
   lastRunAt: "2025-08-27T08:20:00.000Z"
@@ -106,8 +112,9 @@ EXPORT_MAX_AGE_AFTER_DOWNLOAD_HOURS=1     # Max age after download
 ```
 
 ### Log Events
+
 - Export file deleted (with reason and age)
-- Token cleanup events  
+- Token cleanup events
 - User notification attempts
 - Error conditions and recoveries
 - Performance metrics (scan duration)
@@ -133,6 +140,7 @@ EXPORT_MAX_AGE_AFTER_DOWNLOAD_HOURS=1     # Max age after download
 ## 🎯 Impact
 
 This implementation significantly improves the security posture of the GDPR export system by:
+
 - Eliminating manual cleanup requirements
 - Reducing data exposure windows by 95%+ through automation
 - Providing full audit trail for compliance reporting

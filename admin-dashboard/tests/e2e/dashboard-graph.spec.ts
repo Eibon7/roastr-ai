@@ -23,8 +23,10 @@ test.describe('Dashboard Graph Interactions', () => {
     await expect(page.getByTestId('graph-wrapper')).toBeVisible();
 
     // Check for SVG or Canvas elements (graph rendering)
-    const graphElements = page.locator('[data-testid="graph-wrapper"] svg, [data-testid="graph-wrapper"] canvas');
-    const hasGraphElement = await graphElements.count() > 0;
+    const graphElements = page.locator(
+      '[data-testid="graph-wrapper"] svg, [data-testid="graph-wrapper"] canvas'
+    );
+    const hasGraphElement = (await graphElements.count()) > 0;
 
     if (hasGraphElement) {
       // If graph rendered, verify it's visible
@@ -44,8 +46,10 @@ test.describe('Dashboard Graph Interactions', () => {
     await expect(page.getByTestId('graph-wrapper')).toBeVisible();
 
     // Graph rendering complete - check for interactive elements
-    const interactiveGraph = page.locator('[data-testid="graph-wrapper"] svg, [data-testid="graph-wrapper"] canvas');
-    if (await interactiveGraph.count() > 0) {
+    const interactiveGraph = page.locator(
+      '[data-testid="graph-wrapper"] svg, [data-testid="graph-wrapper"] canvas'
+    );
+    if ((await interactiveGraph.count()) > 0) {
       await expect(interactiveGraph.first()).toBeVisible();
     }
   });

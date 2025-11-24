@@ -4,11 +4,11 @@
  */
 
 const RoastGeneratorReal = require('../../src/services/roastGeneratorReal');
-const { 
-  createMockOpenAIResponse, 
-  getMockRoastByTone, 
-  setMockEnvVars, 
-  cleanupMocks 
+const {
+  createMockOpenAIResponse,
+  getMockRoastByTone,
+  setMockEnvVars,
+  cleanupMocks
 } = require('../helpers/testUtils');
 
 // Mock OpenAI
@@ -25,7 +25,7 @@ describe('RoastGeneratorReal', () => {
   beforeEach(() => {
     // Limpiar mocks antes de cada test
     cleanupMocks();
-    
+
     // Mock de la clase OpenAI
     const OpenAI = require('openai');
     mockOpenAI = {
@@ -36,7 +36,7 @@ describe('RoastGeneratorReal', () => {
       }
     };
     OpenAI.mockImplementation(() => mockOpenAI);
-    
+
     roastGenerator = new RoastGeneratorReal();
     // Override the openai instance with our mock
     roastGenerator.openai = mockOpenAI;
@@ -54,11 +54,11 @@ describe('RoastGeneratorReal', () => {
 
     test('debe lanzar error si no hay OPENAI_API_KEY', () => {
       delete process.env.OPENAI_API_KEY;
-      
+
       expect(() => {
         new RoastGeneratorReal();
       }).toThrow('❌ OPENAI_API_KEY environment variable is required');
-      
+
       // Restaurar para otros tests
       setMockEnvVars();
     });
@@ -70,9 +70,7 @@ describe('RoastGeneratorReal', () => {
     test('debe generar roast con tono sarcástico por defecto', async () => {
       // Arrange
       const expectedRoast = getMockRoastByTone('sarcastic', testMessage);
-      mockOpenAI.chat.completions.create.mockResolvedValue(
-        createMockOpenAIResponse(expectedRoast)
-      );
+      mockOpenAI.chat.completions.create.mockResolvedValue(createMockOpenAIResponse(expectedRoast));
 
       // Act
       const result = await roastGenerator.generateRoast(testMessage);
@@ -80,7 +78,7 @@ describe('RoastGeneratorReal', () => {
       // Assert
       expect(result).toBe(expectedRoast);
       expect(mockOpenAI.chat.completions.create).toHaveBeenCalledTimes(1);
-      
+
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       expect(callArgs.model).toBe('gpt-4o-mini');
       expect(callArgs.messages[0].role).toBe('system');
@@ -91,16 +89,14 @@ describe('RoastGeneratorReal', () => {
     test('debe generar roast con tono sutil cuando se especifica', async () => {
       // Arrange
       const expectedRoast = getMockRoastByTone('subtle', testMessage);
-      mockOpenAI.chat.completions.create.mockResolvedValue(
-        createMockOpenAIResponse(expectedRoast)
-      );
+      mockOpenAI.chat.completions.create.mockResolvedValue(createMockOpenAIResponse(expectedRoast));
 
       // Act
       const result = await roastGenerator.generateRoast(testMessage, null, 'subtle');
 
       // Assert
       expect(result).toBe(expectedRoast);
-      
+
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       expect(callArgs.messages[0].content).toContain('SUTIL/IRÓNICO ELEGANTE');
     });
@@ -108,16 +104,14 @@ describe('RoastGeneratorReal', () => {
     test('debe generar roast con tono directo cuando se especifica', async () => {
       // Arrange
       const expectedRoast = getMockRoastByTone('direct', testMessage);
-      mockOpenAI.chat.completions.create.mockResolvedValue(
-        createMockOpenAIResponse(expectedRoast)
-      );
+      mockOpenAI.chat.completions.create.mockResolvedValue(createMockOpenAIResponse(expectedRoast));
 
       // Act
       const result = await roastGenerator.generateRoast(testMessage, null, 'direct');
 
       // Assert
       expect(result).toBe(expectedRoast);
-      
+
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       expect(callArgs.messages[0].content).toContain('DIRECTO/CORTANTE');
     });
@@ -125,16 +119,14 @@ describe('RoastGeneratorReal', () => {
     test('debe usar tono sarcástico si se proporciona tono inválido', async () => {
       // Arrange
       const expectedRoast = getMockRoastByTone('sarcastic', testMessage);
-      mockOpenAI.chat.completions.create.mockResolvedValue(
-        createMockOpenAIResponse(expectedRoast)
-      );
+      mockOpenAI.chat.completions.create.mockResolvedValue(createMockOpenAIResponse(expectedRoast));
 
       // Act
       const result = await roastGenerator.generateRoast(testMessage, null, 'invalid_tone');
 
       // Assert
       expect(result).toBe(expectedRoast);
-      
+
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       expect(callArgs.messages[0].content).toContain('SARCÁSTICO-PICANTE');
     });
@@ -142,9 +134,7 @@ describe('RoastGeneratorReal', () => {
     test('debe configurar correctamente los parámetros de OpenAI', async () => {
       // Arrange
       const expectedRoast = 'Test roast';
-      mockOpenAI.chat.completions.create.mockResolvedValue(
-        createMockOpenAIResponse(expectedRoast)
-      );
+      mockOpenAI.chat.completions.create.mockResolvedValue(createMockOpenAIResponse(expectedRoast));
 
       // Act
       await roastGenerator.generateRoast(testMessage);
@@ -182,9 +172,7 @@ describe('RoastGeneratorReal', () => {
       // Arrange
       const toxicityScore = 0.8;
       const expectedRoast = 'Test roast with toxicity';
-      mockOpenAI.chat.completions.create.mockResolvedValue(
-        createMockOpenAIResponse(expectedRoast)
-      );
+      mockOpenAI.chat.completions.create.mockResolvedValue(createMockOpenAIResponse(expectedRoast));
 
       // Act
       await roastGenerator.generateRoast(testMessage, toxicityScore);
@@ -199,9 +187,7 @@ describe('RoastGeneratorReal', () => {
   describe('Configuración de prompts por tono', () => {
     test('prompt sarcástico debe contener palabras clave correctas', async () => {
       // Arrange
-      mockOpenAI.chat.completions.create.mockResolvedValue(
-        createMockOpenAIResponse('Mock roast')
-      );
+      mockOpenAI.chat.completions.create.mockResolvedValue(createMockOpenAIResponse('Mock roast'));
 
       // Act
       await roastGenerator.generateRoast('test', null, 'sarcastic');
@@ -215,9 +201,7 @@ describe('RoastGeneratorReal', () => {
 
     test('prompt sutil debe contener palabras clave correctas', async () => {
       // Arrange
-      mockOpenAI.chat.completions.create.mockResolvedValue(
-        createMockOpenAIResponse('Mock roast')
-      );
+      mockOpenAI.chat.completions.create.mockResolvedValue(createMockOpenAIResponse('Mock roast'));
 
       // Act
       await roastGenerator.generateRoast('test', null, 'subtle');
@@ -231,9 +215,7 @@ describe('RoastGeneratorReal', () => {
 
     test('prompt directo debe contener palabras clave correctas', async () => {
       // Arrange
-      mockOpenAI.chat.completions.create.mockResolvedValue(
-        createMockOpenAIResponse('Mock roast')
-      );
+      mockOpenAI.chat.completions.create.mockResolvedValue(createMockOpenAIResponse('Mock roast'));
 
       // Act
       await roastGenerator.generateRoast('test', null, 'direct');

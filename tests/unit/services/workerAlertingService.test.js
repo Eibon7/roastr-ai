@@ -1,6 +1,6 @@
 /**
  * Worker Alerting Service Tests
- * 
+ *
  * Part of Issue #713: Worker Monitoring Dashboard
  */
 
@@ -17,9 +17,13 @@ jest.mock('../../../src/utils/logger', () => ({
 }));
 
 // Mock email service
-jest.mock('../../../src/services/emailService', () => ({
-  send: jest.fn().mockResolvedValue({ success: true })
-}), { virtual: true });
+jest.mock(
+  '../../../src/services/emailService',
+  () => ({
+    send: jest.fn().mockResolvedValue({ success: true })
+  }),
+  { virtual: true }
+);
 
 // Mock axios for Slack
 jest.mock('axios', () => ({
@@ -54,7 +58,7 @@ describe('WorkerAlertingService', () => {
           queueDepth: 500
         }
       });
-      
+
       expect(customService.options.enabled).toBe(false);
       expect(customService.options.channels).toContain('email');
       expect(customService.options.thresholds.queueDepth).toBe(500);
@@ -76,7 +80,13 @@ describe('WorkerAlertingService', () => {
         status: 'warning',
         details: [
           { type: 'fetch_comments', status: 'healthy', processed: 100, failed: 2, uptime: 3600000 },
-          { type: 'analyze_toxicity', status: 'healthy', processed: 150, failed: 3, uptime: 3600000 },
+          {
+            type: 'analyze_toxicity',
+            status: 'healthy',
+            processed: 150,
+            failed: 3,
+            uptime: 3600000
+          },
           { type: 'generate_reply', status: 'healthy', processed: 80, failed: 1, uptime: 3600000 },
           { type: 'shield_action', status: 'unhealthy', processed: 50, failed: 10, uptime: 3600000 }
         ]
@@ -107,17 +117,17 @@ describe('WorkerAlertingService', () => {
 
     it('should detect unhealthy workers', async () => {
       const alerts = await service.checkWorkerHealth(mockMetrics);
-      
+
       expect(alerts.length).toBeGreaterThan(0);
-      const workerDownAlert = alerts.find(a => a.type === 'worker_down');
+      const workerDownAlert = alerts.find((a) => a.type === 'worker_down');
       expect(workerDownAlert).toBeDefined();
       expect(workerDownAlert.severity).toBe('critical');
     });
 
     it('should detect high queue depth', async () => {
       const alerts = await service.checkWorkerHealth(mockMetrics);
-      
-      const queueAlert = alerts.find(a => a.type === 'queue_depth_high');
+
+      const queueAlert = alerts.find((a) => a.type === 'queue_depth_high');
       expect(queueAlert).toBeDefined();
       expect(queueAlert.severity).toBe('warning');
       expect(queueAlert.data.totalDepth).toBe(1200);
@@ -125,8 +135,8 @@ describe('WorkerAlertingService', () => {
 
     it('should detect high failure rate', async () => {
       const alerts = await service.checkWorkerHealth(mockMetrics);
-      
-      const failureAlert = alerts.find(a => a.type === 'failure_rate_high');
+
+      const failureAlert = alerts.find((a) => a.type === 'failure_rate_high');
       // Failure rate: 20/380 = 0.0526 (5.26%) - below 10% threshold
       // So this alert may not trigger
       expect(typeof failureAlert).toBe('undefined' || 'object');
@@ -134,8 +144,8 @@ describe('WorkerAlertingService', () => {
 
     it('should detect high DLQ size', async () => {
       const alerts = await service.checkWorkerHealth(mockMetrics);
-      
-      const dlqAlert = alerts.find(a => a.type === 'dlq_size_high');
+
+      const dlqAlert = alerts.find((a) => a.type === 'dlq_size_high');
       expect(dlqAlert).toBeDefined();
       expect(dlqAlert.severity).toBe('critical');
       expect(dlqAlert.data.dlqSize).toBe(150);
@@ -143,8 +153,8 @@ describe('WorkerAlertingService', () => {
 
     it('should detect high processing time', async () => {
       const alerts = await service.checkWorkerHealth(mockMetrics);
-      
-      const processingAlert = alerts.find(a => a.type === 'processing_time_high');
+
+      const processingAlert = alerts.find((a) => a.type === 'processing_time_high');
       expect(processingAlert).toBeDefined();
       expect(processingAlert.severity).toBe('warning');
       expect(processingAlert.data.averageProcessingTime).toBe(35000);
@@ -199,7 +209,7 @@ describe('WorkerAlertingService', () => {
     it('should handle email channel when configured', async () => {
       process.env.ALERT_EMAIL = 'test@example.com';
       const emailService = require('../../../src/services/emailService');
-      
+
       const emailServiceInstance = new WorkerAlertingService({
         channels: ['log', 'email']
       });
@@ -212,7 +222,7 @@ describe('WorkerAlertingService', () => {
       };
 
       await emailServiceInstance.checkWorkerHealth(mockMetrics);
-      
+
       // Email service may not be available, so we just check it doesn't throw
       expect(true).toBe(true);
     });
@@ -221,7 +231,7 @@ describe('WorkerAlertingService', () => {
   describe('Stats', () => {
     it('should return alert statistics', () => {
       const stats = service.getStats();
-      
+
       expect(stats).toHaveProperty('enabled', true);
       expect(stats).toHaveProperty('channels');
       expect(stats).toHaveProperty('alertsSent', 0);
@@ -233,7 +243,7 @@ describe('WorkerAlertingService', () => {
     it('should clear alert history', () => {
       service.alertHistory.set('test_key', Date.now());
       expect(service.alertHistory.size).toBeGreaterThan(0);
-      
+
       service.clearHistory();
       expect(service.alertHistory.size).toBe(0);
     });
@@ -252,7 +262,7 @@ describe('WorkerAlertingService', () => {
         mockMetrics.workers.unhealthy = i;
         await service.checkWorkerHealth(mockMetrics);
         // Wait to avoid cooldown
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
       // History should be limited to 100 entries
@@ -260,5 +270,3 @@ describe('WorkerAlertingService', () => {
     });
   });
 });
-
-

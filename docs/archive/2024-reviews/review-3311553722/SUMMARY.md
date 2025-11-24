@@ -17,6 +17,7 @@
 **CodeRabbit Issues:** 1 Critical, 2 Major, 1 Minor
 
 **Key Achievements:**
+
 - ✅ Workflow Failure: File_pattern expanded to include all 6 validation artifacts
 - ✅ C1 (Critical): Failure propagation fixed - exits with error if collector doesn't generate snapshot (scheduled runs only)
 - ✅ M1 (Major): Auto-commit skipped on PR events to avoid read-only token errors
@@ -24,6 +25,7 @@
 - ✅ MIN1 (Minor): Markdown linting violations fixed (MD036, MD040)
 
 **Test Results:**
+
 - Workflow changes: ✅ Ready for manual validation (PR trigger, scheduled trigger)
 - Collector fix (M2): ✅ Logic corrected, returns `null` for edge cases
 - Markdown linting: ✅ 0 violations (MD036, MD040)
@@ -39,6 +41,7 @@
 **Severity:** CRITICAL (Blocking all workflow runs)
 
 **Problem:**
+
 - Workflow runs validation scripts that generate 6 files:
   - `gdd-status.json`
   - `gdd-health.json`
@@ -74,6 +77,7 @@ file_pattern: |
 ```
 
 **Evidence:**
+
 - ✅ All 6 validation artifacts now included in commit
 - ✅ Workflow no longer fails with "overwritten by checkout" error
 - ✅ Files successfully committed in telemetry runs
@@ -93,12 +97,14 @@ Manual workflow trigger will confirm all artifacts committed successfully.
 Workflow silences real failures in scheduled runs. If collector fails completely without generating snapshot, workflow continues with `status=UNKNOWN` instead of failing.
 
 **Root Cause:**
+
 - Collector runs with `|| true` (allows failure)
 - If snapshot file doesn't exist, sets `status=UNKNOWN`
 - Workflow continues successfully
 - In production (scheduled) runs, this masks critical failures
 
 **Expected Behavior:**
+
 - PR events: Allow failure (continue-on-error)
 - Scheduled/manual runs: Fail if collector doesn't generate snapshot
 
@@ -129,12 +135,14 @@ Workflow silences real failures in scheduled runs. If collector fails completely
 ```
 
 **Evidence:**
+
 - ✅ If snapshot missing + event != PR → `exit 1` (workflow fails)
 - ✅ If snapshot missing + event == PR → continue-on-error allows continuation
 - ✅ Error logged in both cases
 - ✅ `status=ERROR` set for downstream steps
 
 **Validation:**
+
 - **PR Event:** Workflow should continue even if snapshot missing
 - **Scheduled Event:** Workflow should fail if snapshot missing
 - **Manual Event:** Workflow should fail if snapshot missing
@@ -160,10 +168,10 @@ Skip auto-commit step entirely on PR events. Telemetry data should only be commi
 
 ```yaml
 - name: Commit telemetry data
-  if: github.event_name != 'pull_request'  # M1 Fix: Skip on PR events
+  if: github.event_name != 'pull_request' # M1 Fix: Skip on PR events
   uses: stefanzweifel/git-auto-commit-action@v5
   with:
-    commit_message: "chore(telemetry): Daily GDD metrics snapshot [skip ci]"
+    commit_message: 'chore(telemetry): Daily GDD metrics snapshot [skip ci]'
     file_pattern: |
       telemetry/snapshots/gdd-metrics-history.json
       telemetry/reports/*.md
@@ -177,11 +185,13 @@ Skip auto-commit step entirely on PR events. Telemetry data should only be commi
 ```
 
 **Evidence:**
+
 - ✅ Conditional `if: github.event_name != 'pull_request'` added
 - ✅ Step skips entirely on PR events
 - ✅ Auto-commit only runs on scheduled/manual triggers
 
 **Validation:**
+
 - **PR Event:** Step should show "Skipped" in workflow logs
 - **Scheduled Event:** Step should execute and commit files
 - **Manual Event:** Step should execute and commit files
@@ -202,14 +212,16 @@ Repair success rate incorrectly defaults to `100%` when no fixes were attempted,
 **Before (Incorrect):**
 
 ```javascript
-success_rate: total > 0 ? Math.round((fixes / total) * 100) : 100
+success_rate: total > 0 ? Math.round((fixes / total) * 100) : 100;
 ```
 
 When `total = 0` (no fixes attempted), returns `100` instead of `null`. This is misleading because:
+
 - `0` successful fixes out of `0` total ≠ 100% success
 - Should indicate "no data" not "perfect success"
 
 **Expected Behavior:**
+
 - If no report file → return `null` (already handled)
 - If report exists but `total = 0` → return `success_rate: null`
 - If `total > 0` and `fixes = 0` → return `success_rate: 0`
@@ -246,14 +258,14 @@ return {
 
 **Behavior Matrix:**
 
-| Scenario | Before | After | Correct? |
-|----------|--------|-------|----------|
-| No report file | `null` (entire object) | `null` (entire object) | ✅ |
-| Report file, total = 0 | `success_rate: 100` | `success_rate: null` | ✅ |
-| Report file, fixes = 0, total > 0 | `success_rate: 0` | `success_rate: 0` | ✅ |
-| Report file, fixes = 5, total = 10 | `success_rate: 50` | `success_rate: 50` | ✅ |
-| Report file, fixes = 10, total = 10 | `success_rate: 100` | `success_rate: 100` | ✅ |
-| Error reading report | `success_rate: 100` | `success_rate: null` | ✅ |
+| Scenario                            | Before                 | After                  | Correct? |
+| ----------------------------------- | ---------------------- | ---------------------- | -------- |
+| No report file                      | `null` (entire object) | `null` (entire object) | ✅       |
+| Report file, total = 0              | `success_rate: 100`    | `success_rate: null`   | ✅       |
+| Report file, fixes = 0, total > 0   | `success_rate: 0`      | `success_rate: 0`      | ✅       |
+| Report file, fixes = 5, total = 10  | `success_rate: 50`     | `success_rate: 50`     | ✅       |
+| Report file, fixes = 10, total = 10 | `success_rate: 100`    | `success_rate: 100`    | ✅       |
+| Error reading report                | `success_rate: 100`    | `success_rate: null`   | ✅       |
 
 **Validation:**
 Logic is correct. Unit tests recommended but not blocking (CodeRabbit didn't require tests, only fix).
@@ -267,6 +279,7 @@ Logic is correct. Unit tests recommended but not blocking (CodeRabbit didn't req
 **Severity:** Minor
 
 **Problem:**
+
 - **MD036**: Emphasis (bold) used instead of headings
 - **MD040**: Fenced code blocks missing language specification
 
@@ -310,7 +323,9 @@ fix(gdd): Apply CodeRabbit Review #3311427245 - Phase 13 Telemetry fixes
 ```markdown
 **Scenario 1: Collector succeeds**
 \`\`\`bash
+
 # code
+
 \`\`\`
 ```
 
@@ -320,7 +335,9 @@ fix(gdd): Apply CodeRabbit Review #3311427245 - Phase 13 Telemetry fixes
 #### Scenario 1: Collector succeeds
 
 \`\`\`bash
+
 # code
+
 \`\`\`
 ```
 
@@ -342,13 +359,13 @@ npx markdownlint-cli2 "docs/test-evidence/review-3311427245/*.md" 2>&1 | grep -E
 
 ## Files Modified
 
-| File | Lines Changed | Issues Fixed |
-|------|---------------|--------------|
-| `.github/workflows/gdd-telemetry.yml` | +13 | Workflow Failure, C1, M1 |
-| `scripts/collect-gdd-telemetry.js` | +4 | M2 |
-| `docs/test-evidence/review-3311427245/SUMMARY.md` | +1 | MIN1 (MD040) |
-| `docs/test-evidence/review-3311427245/workflow-fixes.md` | +21 | MIN1 (MD036 × 7) |
-| **Total** | **+39 lines** | **5 issues** |
+| File                                                     | Lines Changed | Issues Fixed             |
+| -------------------------------------------------------- | ------------- | ------------------------ |
+| `.github/workflows/gdd-telemetry.yml`                    | +13           | Workflow Failure, C1, M1 |
+| `scripts/collect-gdd-telemetry.js`                       | +4            | M2                       |
+| `docs/test-evidence/review-3311427245/SUMMARY.md`        | +1            | MIN1 (MD040)             |
+| `docs/test-evidence/review-3311427245/workflow-fixes.md` | +21           | MIN1 (MD036 × 7)         |
+| **Total**                                                | **+39 lines** | **5 issues**             |
 
 ---
 
@@ -361,18 +378,21 @@ npx markdownlint-cli2 "docs/test-evidence/review-3311427245/*.md" 2>&1 | grep -E
 **Test Scenarios:**
 
 **1. PR Event Trigger:**
+
 - ✅ Auto-commit step should skip
 - ✅ Collector failure should not abort workflow (continue-on-error)
 - ✅ Status extraction should work
 - ✅ No commit created
 
 **2. Scheduled Event Trigger:**
+
 - ✅ Auto-commit step should execute
 - ✅ All 8 files committed (2 telemetry + 6 validation artifacts)
 - ✅ If collector fails, workflow should exit with error
 - ✅ If collector succeeds, workflow continues
 
 **3. Manual Event Trigger:**
+
 - ✅ Same as scheduled event
 
 **Validation Status:** ⏳ Pending manual workflow run
@@ -383,13 +403,13 @@ npx markdownlint-cli2 "docs/test-evidence/review-3311427245/*.md" 2>&1 | grep -E
 
 **Scenarios Validated:**
 
-| Scenario | Expected | Verified |
-|----------|----------|----------|
-| No report file | `null` | ✅ (line 228) |
-| Report exists, total = 0 | `success_rate: null` | ✅ (line 243) |
-| Report exists, fixes = 0, total > 0 | `success_rate: 0` | ✅ (calculation) |
-| Report exists, fixes > 0 | `success_rate: %` | ✅ (calculation) |
-| Error reading report | `success_rate: null` | ✅ (line 251) |
+| Scenario                            | Expected             | Verified         |
+| ----------------------------------- | -------------------- | ---------------- |
+| No report file                      | `null`               | ✅ (line 228)    |
+| Report exists, total = 0            | `success_rate: null` | ✅ (line 243)    |
+| Report exists, fixes = 0, total > 0 | `success_rate: 0`    | ✅ (calculation) |
+| Report exists, fixes > 0            | `success_rate: %`    | ✅ (calculation) |
+| Error reading report                | `success_rate: null` | ✅ (line 251)    |
 
 **Validation Status:** ✅ PASSING (logic correct)
 
@@ -431,9 +451,11 @@ After:  128 errors (0 MD036/MD040)
 ### Issues Resolved
 
 **Workflow Failure (Blocker):**
+
 - ✅ RESOLVED - File_pattern expanded to include all validation artifacts
 
 **CodeRabbit #3311553722:**
+
 - ✅ C1 (Critical) - Failure propagation fixed
 - ✅ M1 (Major) - Auto-commit skipped on PRs
 - ✅ M2 (Major) - Success rate calculation fixed
@@ -444,6 +466,7 @@ After:  128 errors (0 MD036/MD040)
 ### Review Rounds Expected
 
 **Round 1:** CodeRabbit review of these fixes
+
 - Expected: 0 new comments (all issues addressed)
 
 **Round 2+:** If any comments → address and re-submit

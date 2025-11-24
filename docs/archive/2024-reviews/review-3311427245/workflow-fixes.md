@@ -8,9 +8,11 @@
 ## C1: Workflow aborts on critical alert before notifications
 
 ### Problem
+
 When collector exits with code 1 on critical alerts, bash stops executing before setting `GITHUB_OUTPUT`, preventing issue creation.
 
 ### Before Fix
+
 ```yaml
 - name: Collect telemetry
   id: telemetry
@@ -29,6 +31,7 @@ When collector exits with code 1 on critical alerts, bash stops executing before
 6. Issue creation step (`if: steps.telemetry.outputs.status == 'CRITICAL'`) never triggers
 
 ### After Fix
+
 ```yaml
 - name: Collect telemetry
   id: telemetry
@@ -67,6 +70,7 @@ $ node scripts/collect-gdd-telemetry.js --ci || true
 $ echo "status=STABLE" >> $GITHUB_OUTPUT
 (outputs.status = "STABLE")
 ```
+
 Result: ✅ Workflow continues, no issue created
 
 #### Scenario 2: Collector fails (critical health)
@@ -79,6 +83,7 @@ $ node scripts/collect-gdd-telemetry.js --ci || true
 $ echo "status=CRITICAL" >> $GITHUB_OUTPUT
 (outputs.status = "CRITICAL")
 ```
+
 Result: ✅ Workflow continues, issue created
 
 ---
@@ -86,9 +91,11 @@ Result: ✅ Workflow continues, issue created
 ## M1: Missing jq error handling
 
 ### Problem
+
 jq command fails on missing file or malformed JSON, aborting workflow.
 
 ### Before Fix
+
 ```yaml
 echo "status=$(cat telemetry/snapshots/gdd-metrics-history.json | jq -r '.snapshots[-1].metrics.derived.system_status')" >> $GITHUB_OUTPUT
 ```
@@ -101,13 +108,14 @@ echo "status=$(cat telemetry/snapshots/gdd-metrics-history.json | jq -r '.snapsh
 4. Field doesn't exist → jq returns null (less critical)
 
 ### After Fix
+
 ```yaml
 if [ -f telemetry/snapshots/gdd-metrics-history.json ]; then
-  STATUS=$(jq -r '.snapshots[-1].metrics.derived.system_status // "UNKNOWN"' telemetry/snapshots/gdd-metrics-history.json 2>/dev/null || echo "UNKNOWN")
-  echo "status=${STATUS}" >> $GITHUB_OUTPUT
+STATUS=$(jq -r '.snapshots[-1].metrics.derived.system_status // "UNKNOWN"' telemetry/snapshots/gdd-metrics-history.json 2>/dev/null || echo "UNKNOWN")
+echo "status=${STATUS}" >> $GITHUB_OUTPUT
 else
-  echo "::warning::Telemetry snapshot file not found"
-  echo "status=UNKNOWN" >> $GITHUB_OUTPUT
+echo "::warning::Telemetry snapshot file not found"
+echo "status=UNKNOWN" >> $GITHUB_OUTPUT
 fi
 ```
 
@@ -134,6 +142,7 @@ STABLE
 $ echo "status=STABLE" >> $GITHUB_OUTPUT
 (outputs.status = "STABLE")
 ```
+
 Result: ✅ Status extracted correctly
 
 #### Scenario 2: File missing
@@ -148,6 +157,7 @@ $ echo "::warning::Telemetry snapshot file not found"
 $ echo "status=UNKNOWN" >> $GITHUB_OUTPUT
 (outputs.status = "UNKNOWN")
 ```
+
 Result: ✅ Graceful fallback, no crash
 
 #### Scenario 3: Malformed JSON
@@ -159,6 +169,7 @@ UNKNOWN
 $ echo "status=UNKNOWN" >> $GITHUB_OUTPUT
 (outputs.status = "UNKNOWN")
 ```
+
 Result: ✅ Graceful fallback, no crash
 
 ---
@@ -166,17 +177,20 @@ Result: ✅ Graceful fallback, no crash
 ## M2: Missing file safety checks for issue creation
 
 ### Problem
+
 Issue creation reads report file without validating existence, crashing if file missing.
 
 ### Before Fix
+
 ```javascript
 const fs = require('fs');
-const reportPath = 'telemetry/reports/gdd-telemetry-' + new Date().toISOString().split('T')[0] + '.md';
+const reportPath =
+  'telemetry/reports/gdd-telemetry-' + new Date().toISOString().split('T')[0] + '.md';
 const report = fs.readFileSync(reportPath, 'utf8');
 
 await github.rest.issues.create({
   // ...
-  body: `## 🚨 GDD System Status Alert\n\n` + report,
+  body: `## 🚨 GDD System Status Alert\n\n` + report
   // ...
 });
 ```
@@ -189,6 +203,7 @@ await github.rest.issues.create({
 4. Issue not created
 
 ### After Fix
+
 ```javascript
 const fs = require('fs');
 const reportPath = 'telemetry/reports/gdd-telemetry-' + new Date().toISOString().split('T')[0] + '.md';
@@ -240,6 +255,7 @@ if (!fs.existsSync('telemetry/reports/gdd-telemetry-2025-10-07.md')) {
   issueBody = `## 🚨 GDD System Status Alert\n\n` + report;
 }
 ```
+
 Result: ✅ Issue created with full report
 
 #### Scenario 2: Report file missing
@@ -247,12 +263,14 @@ Result: ✅ Issue created with full report
 ```javascript
 if (!fs.existsSync('telemetry/reports/gdd-telemetry-MISSING.md')) {
   console.error('Report file not found:', reportPath);
-  issueBody = `## 🚨 GDD System Status Alert\n\n` +
-              `The GDD telemetry system has detected a **CRITICAL** status.\n\n` +
-              `**Workflow Run:** https://github.com/user/repo/actions/runs/12345\n\n` +
-              `**Note:** Detailed report unavailable (file not generated).`;
+  issueBody =
+    `## 🚨 GDD System Status Alert\n\n` +
+    `The GDD telemetry system has detected a **CRITICAL** status.\n\n` +
+    `**Workflow Run:** https://github.com/user/repo/actions/runs/12345\n\n` +
+    `**Note:** Detailed report unavailable (file not generated).`;
 }
 ```
+
 Result: ✅ Issue created with basic info, no crash
 
 ---
@@ -260,6 +278,7 @@ Result: ✅ Issue created with basic info, no crash
 ## Integration Test Scenarios
 
 ### Test 1: Normal execution (all files present)
+
 ```yaml
 Steps:
 1. Run GDD validation → generates gdd-status.json ✅
@@ -273,6 +292,7 @@ Result: ✅ Workflow succeeds, no issues created
 ```
 
 ### Test 2: Critical health (all files present)
+
 ```yaml
 Steps:
 1. Run GDD validation → generates gdd-status.json ✅
@@ -287,6 +307,7 @@ Result: ✅ Workflow succeeds, issue created with report
 ```
 
 ### Test 3: Critical health (report file missing)
+
 ```yaml
 Steps:
 1. Run GDD validation → generates gdd-status.json ✅
@@ -302,6 +323,7 @@ Result: ✅ Workflow succeeds, issue created without report
 ```
 
 ### Test 4: Telemetry snapshot missing
+
 ```yaml
 Steps:
 1. Run GDD validation → fails ❌
@@ -322,17 +344,20 @@ Result: ✅ Workflow succeeds with warnings, no crash
 ## Summary
 
 **Issues Fixed:**
+
 - ✅ C1: Workflow now handles collector failures without aborting
 - ✅ M1: jq errors handled gracefully with fallbacks
 - ✅ M2: Issue creation robust against missing report files
 
 **Validation Status:**
+
 - ✅ All failure scenarios tested
 - ✅ No crash conditions remain
 - ✅ Issues created even when files missing
 - ✅ Workflow always completes (except intentional failures)
 
 **Integration Points:**
+
 - ✅ Works with collector exit codes
 - ✅ Works with missing input files
 - ✅ Works with malformed JSON

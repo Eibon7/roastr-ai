@@ -41,13 +41,14 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should correctly map tier limits using explicit mapping', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [],
-            usage: { plan: 'free' }
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [],
+              usage: { plan: 'free' }
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
@@ -63,13 +64,14 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should handle pro tier with 2 connection limit', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [{ id: 1, platform: 'twitter' }],
-            usage: { plan: 'pro' }
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [{ id: 1, platform: 'twitter' }],
+              usage: { plan: 'pro' }
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
@@ -82,13 +84,14 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should fallback to default limit for unknown tier', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [],
-            usage: { plan: 'unknown_tier' }
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [],
+              usage: { plan: 'unknown_tier' }
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
@@ -104,20 +107,21 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should include aria-label on warning icons', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [{ id: 1, platform: 'twitter' }],
-            usage: { plan: 'free' } // Free tier with 1 account = at limit
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [{ id: 1, platform: 'twitter' }],
+              usage: { plan: 'free' } // Free tier with 1 account = at limit
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
       render(<Dashboard />);
 
       await screen.findByText(/Conectar otras cuentas/i);
-      
+
       // Should show warning icon with aria-label when at global limit
       const warningIcon = screen.getByLabelText(/Advertencia.*Límite global/i);
       expect(warningIcon).toBeInTheDocument();
@@ -127,20 +131,21 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should include data-testid on platform buttons', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [],
-            usage: { plan: 'pro' }
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [],
+              usage: { plan: 'pro' }
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
       render(<Dashboard />);
 
       await screen.findByText(/Conectar otras cuentas/i);
-      
+
       // Check for data-testid attributes on platform buttons
       const twitterButton = screen.getByTestId('connect-twitter-button');
       expect(twitterButton).toBeInTheDocument();
@@ -150,20 +155,21 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should include aria-disabled on disabled buttons', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [{ id: 1, platform: 'twitter' }],
-            usage: { plan: 'free' } // At global limit
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [{ id: 1, platform: 'twitter' }],
+              usage: { plan: 'free' } // At global limit
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
       render(<Dashboard />);
 
       await screen.findByText(/Conectar otras cuentas/i);
-      
+
       // Platform buttons should be disabled due to global limit
       const twitterButton = screen.getByTestId('connect-twitter-button');
       expect(twitterButton).toHaveAttribute('aria-disabled', 'true');
@@ -175,23 +181,24 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should display contextual Spanish tooltips', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [],
-            usage: { plan: 'pro' }
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [],
+              usage: { plan: 'pro' }
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
       render(<Dashboard />);
 
       await screen.findByText(/Conectar otras cuentas/i);
-      
+
       // Should show Spanish connection text
       expect(screen.getByText(/conexiones utilizadas/i)).toBeInTheDocument();
-      
+
       // Platform buttons should have Spanish accessibility text
       const twitterButton = screen.getByTestId('connect-twitter-button');
       expect(twitterButton).toHaveAttribute('title', 'Conectar cuenta de Twitter');
@@ -200,20 +207,21 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should show upgrade message in Spanish for free tier at limit', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [{ id: 1, platform: 'twitter' }],
-            usage: { plan: 'free' }
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [{ id: 1, platform: 'twitter' }],
+              usage: { plan: 'free' }
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
       render(<Dashboard />);
 
       await screen.findByText(/Conectar otras cuentas/i);
-      
+
       // Should show Spanish upgrade message
       expect(screen.getByText(/Mejora a Pro para conectar más cuentas/i)).toBeInTheDocument();
     });
@@ -221,20 +229,21 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should show loading message in Spanish', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [{ id: 1, platform: 'twitter' }]
-            // No usage data simulates loading state
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [{ id: 1, platform: 'twitter' }]
+              // No usage data simulates loading state
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
       render(<Dashboard />);
 
       await screen.findByText(/Conectar otras cuentas/i);
-      
+
       // Should show Spanish loading text
       expect(screen.getByText(/conexiones conectadas/i)).toBeInTheDocument();
     });
@@ -244,23 +253,24 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should prioritize global limit over platform limit', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [{ id: 1, platform: 'twitter' }],
-            usage: { plan: 'free' } // Global limit of 1, already reached
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [{ id: 1, platform: 'twitter' }],
+              usage: { plan: 'free' } // Global limit of 1, already reached
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
       render(<Dashboard />);
 
       await screen.findByText(/Conectar otras cuentas/i);
-      
+
       // Should show global limit warning, not platform limit
       expect(screen.getByText(/Límite global/i)).toBeInTheDocument();
-      
+
       // All platform buttons should be disabled due to global limit
       const twitterButton = screen.getByTestId('connect-twitter-button');
       expect(twitterButton).toHaveAttribute('title', 'Límite global alcanzado para tu plan');
@@ -269,27 +279,31 @@ describe('Dashboard Tier Mapping and Global Limits', () => {
     test('should show platform limit when global limit not reached', async () => {
       const mockResponse = {
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: {
-            accounts: [
-              { id: 1, platform: 'twitter' },
-              { id: 2, platform: 'twitter' } // 2 Twitter accounts = platform limit
-            ],
-            usage: { plan: 'pro' } // Global limit of 2, not reached
-          }
-        })
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accounts: [
+                { id: 1, platform: 'twitter' },
+                { id: 2, platform: 'twitter' } // 2 Twitter accounts = platform limit
+              ],
+              usage: { plan: 'pro' } // Global limit of 2, not reached
+            }
+          })
       };
       fetch.mockResolvedValue(mockResponse);
 
       render(<Dashboard />);
 
       await screen.findByText(/Conectar otras cuentas/i);
-      
+
       // Twitter should show platform limit
       const twitterButton = screen.getByTestId('connect-twitter-button');
-      expect(twitterButton).toHaveAttribute('title', 'Límite alcanzado (máximo 2 cuentas por plataforma)');
-      
+      expect(twitterButton).toHaveAttribute(
+        'title',
+        'Límite alcanzado (máximo 2 cuentas por plataforma)'
+      );
+
       // Other platforms should still be available
       const instagramButton = screen.getByTestId('connect-instagram-button');
       expect(instagramButton).not.toBeDisabled();

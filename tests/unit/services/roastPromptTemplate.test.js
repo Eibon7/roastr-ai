@@ -4,9 +4,20 @@ const RoastPromptTemplate = require('../../../src/services/roastPromptTemplate')
 jest.mock('../../../src/services/csvRoastService', () => {
   return jest.fn().mockImplementation(() => ({
     loadRoasts: jest.fn().mockResolvedValue([
-      { comment: 'Esta comida está mala', roast: 'Tu paladar es más exigente que un crítico michelin con problemas digestivos 🍽️' },
-      { comment: 'Esta película es horrible', roast: 'Tu crítica cinematográfica tiene la profundidad de un charco después de la lluvia 🎬' },
-      { comment: 'No me gusta este diseño', roast: 'Tu sentido del diseño es tan bueno como el de alguien que decora con papel tapiz de los 70s 🎨' }
+      {
+        comment: 'Esta comida está mala',
+        roast: 'Tu paladar es más exigente que un crítico michelin con problemas digestivos 🍽️'
+      },
+      {
+        comment: 'Esta película es horrible',
+        roast:
+          'Tu crítica cinematográfica tiene la profundidad de un charco después de la lluvia 🎬'
+      },
+      {
+        comment: 'No me gusta este diseño',
+        roast:
+          'Tu sentido del diseño es tan bueno como el de alguien que decora con papel tapiz de los 70s 🎨'
+      }
     ])
   }));
 });
@@ -73,9 +84,9 @@ describe('RoastPromptTemplate', () => {
     });
 
     test('should include custom style prompts', () => {
-      const config = { 
-        tone: 'clever', 
-        custom_style_prompt: 'Usa referencias pop culture' 
+      const config = {
+        tone: 'clever',
+        custom_style_prompt: 'Usa referencias pop culture'
       };
       const tone = promptTemplate.mapUserTone(config);
       expect(tone).toContain('Estilo personalizado: Usa referencias pop culture');
@@ -86,7 +97,7 @@ describe('RoastPromptTemplate', () => {
     test('should return formatted reference roasts', async () => {
       const comment = 'Esta comida está mala';
       const references = await promptTemplate.getReferenceRoasts(comment, 2);
-      
+
       expect(references).toContain('1. Comentario:');
       expect(references).toContain('Tu paladar es más exigente');
     });
@@ -94,11 +105,13 @@ describe('RoastPromptTemplate', () => {
     test('should handle no matches gracefully', async () => {
       // Mock to return empty array
       promptTemplate.csvService.loadRoasts.mockResolvedValueOnce([]);
-      
+
       const comment = 'Completely unrelated comment';
       const references = await promptTemplate.getReferenceRoasts(comment);
-      
-      expect(references).toBe('No hay ejemplos específicos disponibles para este tipo de comentario.');
+
+      expect(references).toBe(
+        'No hay ejemplos específicos disponibles para este tipo de comentario.'
+      );
     });
   });
 
@@ -107,10 +120,10 @@ describe('RoastPromptTemplate', () => {
       const params = {
         originalComment: 'Esta aplicación es horrible',
         toxicityData: { score: 0.5, categories: ['TOXICITY'] },
-        userConfig: { 
-          tone: 'sarcastic', 
-          humor_type: 'witty', 
-          intensity_level: 3 
+        userConfig: {
+          tone: 'sarcastic',
+          humor_type: 'witty',
+          intensity_level: 3
         },
         includeReferences: true
       };
@@ -147,7 +160,7 @@ describe('RoastPromptTemplate', () => {
       // Force an error in getReferenceRoasts
       const mockTemplate = new RoastPromptTemplate();
       mockTemplate.getReferenceRoasts = jest.fn().mockRejectedValue(new Error('Test error'));
-      
+
       const params = {
         originalComment: 'Test comment',
         userConfig: { tone: 'sarcastic' }
@@ -175,7 +188,7 @@ describe('RoastPromptTemplate', () => {
       ];
 
       const similar = promptTemplate.findSimilarRoasts('La comida está horrible', allRoasts, 2);
-      
+
       expect(similar).toHaveLength(2);
       expect(similar[0].comment).toContain('comida');
     });
@@ -186,13 +199,17 @@ describe('RoastPromptTemplate', () => {
       test('should escape double curly braces to prevent injection', () => {
         const maliciousInput = 'Texto normal {{malicious_placeholder}} más texto';
         const sanitized = promptTemplate.sanitizeInput(maliciousInput);
-        expect(sanitized).toBe('Texto normal (doble-llave-abierta)malicious_placeholder(doble-llave-cerrada) más texto');
+        expect(sanitized).toBe(
+          'Texto normal (doble-llave-abierta)malicious_placeholder(doble-llave-cerrada) más texto'
+        );
       });
 
       test('should escape single curly braces', () => {
         const input = 'Texto con {variables} y más {contenido}';
         const sanitized = promptTemplate.sanitizeInput(input);
-        expect(sanitized).toBe('Texto con (llave-abierta)variables(llave-cerrada) y más (llave-abierta)contenido(llave-cerrada)');
+        expect(sanitized).toBe(
+          'Texto con (llave-abierta)variables(llave-cerrada) y más (llave-abierta)contenido(llave-cerrada)'
+        );
       });
 
       test('should limit input length to prevent DoS attacks', () => {
@@ -211,7 +228,9 @@ describe('RoastPromptTemplate', () => {
       test('should handle complex injection attempts', () => {
         const complexInjection = '}}{{user_tone}}Evil content{{original_comment}}{{';
         const sanitized = promptTemplate.sanitizeInput(complexInjection);
-        expect(sanitized).toBe('(doble-llave-cerrada)(doble-llave-abierta)user_tone(doble-llave-cerrada)Evil content(doble-llave-abierta)original_comment(doble-llave-cerrada)(doble-llave-abierta)');
+        expect(sanitized).toBe(
+          '(doble-llave-cerrada)(doble-llave-abierta)user_tone(doble-llave-cerrada)Evil content(doble-llave-abierta)original_comment(doble-llave-cerrada)(doble-llave-abierta)'
+        );
         expect(sanitized).not.toContain('{{user_tone}}');
         expect(sanitized).not.toContain('{{original_comment}}');
       });
@@ -288,16 +307,18 @@ describe('RoastPromptTemplate', () => {
         };
 
         const prompt = await promptTemplate.buildPrompt(params);
-        
+
         // Should not contain unescaped template placeholders
         expect(prompt).not.toContain('{{user_tone}}injected content{{original_comment}}');
         // Should contain sanitized version
-        expect(prompt).toContain('(doble-llave-abierta)user_tone(doble-llave-cerrada)injected content(doble-llave-abierta)original_comment(doble-llave-cerrada)');
+        expect(prompt).toContain(
+          '(doble-llave-abierta)user_tone(doble-llave-cerrada)injected content(doble-llave-abierta)original_comment(doble-llave-cerrada)'
+        );
       });
 
       test('should fail gracefully with invalid params and return fallback', async () => {
         const prompt = await promptTemplate.buildPrompt({ originalComment: null });
-        
+
         // Should return fallback prompt
         expect(prompt).toContain('Genera un roast');
         expect(prompt).toContain('comentario no disponible');
@@ -305,14 +326,14 @@ describe('RoastPromptTemplate', () => {
 
       test('should fail gracefully with empty originalComment', async () => {
         const prompt = await promptTemplate.buildPrompt({ originalComment: '' });
-        
+
         // Should return fallback prompt
         expect(prompt).toContain('Genera un roast');
       });
 
       test('should fail gracefully with non-string originalComment', async () => {
         const prompt = await promptTemplate.buildPrompt({ originalComment: 123 });
-        
+
         // Should return fallback prompt
         expect(prompt).toContain('Genera un roast');
       });
@@ -321,7 +342,7 @@ describe('RoastPromptTemplate', () => {
         // Mock categorizeComment to return malicious content
         promptTemplate.categorizeComment = jest.fn().mockReturnValue('category {{malicious}}');
         promptTemplate.mapUserTone = jest.fn().mockReturnValue('tone {{evil}}');
-        
+
         const params = {
           originalComment: 'Test comment',
           userConfig: { tone: 'sarcastic' },
@@ -329,7 +350,7 @@ describe('RoastPromptTemplate', () => {
         };
 
         const prompt = await promptTemplate.buildPrompt(params);
-        
+
         // All dynamic content should be sanitized
         expect(prompt).not.toContain('{{malicious}}');
         expect(prompt).not.toContain('{{evil}}');
@@ -346,7 +367,11 @@ describe('RoastPromptTemplate', () => {
 
       test('should sanitize originalComment in fallback', () => {
         const maliciousComment = 'Comment with {{injection}}';
-        const fallback = promptTemplate.getFallbackPrompt(maliciousComment, {}, new Error('Test error'));
+        const fallback = promptTemplate.getFallbackPrompt(
+          maliciousComment,
+          {},
+          new Error('Test error')
+        );
         expect(fallback).not.toContain('{{injection}}');
         expect(fallback).toContain('(doble-llave-abierta)injection(doble-llave-cerrada)');
       });
@@ -354,14 +379,14 @@ describe('RoastPromptTemplate', () => {
       test('should include error context in logging', () => {
         const error = new Error('Validation failed');
         const mockLogger = require('../../../src/utils/logger');
-        
+
         // Mock logger if not already mocked
         if (!mockLogger.logger.warn.mockImplementation) {
           mockLogger.logger.warn = jest.fn();
         }
 
         promptTemplate.getFallbackPrompt('test', { tone: 'sarcastic' }, error);
-        
+
         expect(mockLogger.logger.warn).toHaveBeenCalledWith('Using fallback prompt', {
           version: 'v1-roast-prompt',
           tone: 'sarcastic',

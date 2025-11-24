@@ -11,7 +11,7 @@ class LogMaintenanceService {
     this.alertService = new AlertService();
     this.maintenanceJobs = new Map();
     this.isRunning = false;
-    
+
     // Default configuration
     this.config = {
       // Cleanup configuration
@@ -25,7 +25,7 @@ class LogMaintenanceService {
         auditDays: parseInt(process.env.LOG_RETENTION_AUDIT_DAYS) || 365,
         schedule: process.env.LOG_CLEANUP_SCHEDULE || '0 2 * * *' // Daily at 2 AM
       },
-      
+
       // Backup configuration
       backup: {
         enabled: process.env.LOG_BACKUP_ENABLED === 'true',
@@ -34,7 +34,7 @@ class LogMaintenanceService {
         schedule: process.env.LOG_BACKUP_SCHEDULE || '0 3 * * *', // Daily at 3 AM
         cleanupSchedule: process.env.LOG_BACKUP_CLEANUP_SCHEDULE || '0 4 0 * *' // Weekly on Sunday at 4 AM
       },
-      
+
       // Statistics and monitoring
       monitoring: {
         enabled: process.env.LOG_MONITORING_ENABLED !== 'false',
@@ -80,7 +80,6 @@ class LogMaintenanceService {
       this.logger.info('Log maintenance service started successfully', {
         activeJobs: Array.from(this.maintenanceJobs.keys())
       });
-
     } catch (error) {
       this.logger.error('Failed to start log maintenance service', { error: error.message });
       throw error;
@@ -128,7 +127,7 @@ class LogMaintenanceService {
 
         try {
           this.logger.info('Starting scheduled log cleanup', jobContext);
-          
+
           const cleanupOptions = {
             applicationDays: this.config.cleanup.applicationDays,
             integrationDays: this.config.cleanup.integrationDays,
@@ -140,7 +139,7 @@ class LogMaintenanceService {
           };
 
           const result = await this.logger.cleanOldLogs(cleanupOptions);
-          
+
           const duration = Date.now() - jobContext.startTime.getTime();
           this.logger.info('Scheduled log cleanup completed', {
             ...jobContext,
@@ -151,9 +150,11 @@ class LogMaintenanceService {
 
           // Alert if cleanup failed
           if (result.filesRemoved === 0) {
-            this.logger.warn('Log cleanup completed but no files were removed - check retention settings', jobContext);
+            this.logger.warn(
+              'Log cleanup completed but no files were removed - check retention settings',
+              jobContext
+            );
           }
-
         } catch (error) {
           const duration = Date.now() - jobContext.startTime.getTime();
           const errorDetails = {
@@ -165,13 +166,13 @@ class LogMaintenanceService {
           };
 
           this.logger.error('Scheduled log cleanup failed', errorDetails);
-          
+
           try {
             await this.sendAlert('cleanup_failed', errorDetails);
           } catch (alertError) {
-            this.logger.error('Failed to send cleanup failure alert', { 
+            this.logger.error('Failed to send cleanup failure alert', {
               originalError: error.message,
-              alertError: alertError.message 
+              alertError: alertError.message
             });
           }
         }
@@ -183,14 +184,14 @@ class LogMaintenanceService {
 
     // Add error handler for the cron job itself
     job.addCallback(() => {
-      this.logger.debug('Cleanup cron job callback executed', { 
+      this.logger.debug('Cleanup cron job callback executed', {
         schedule: this.config.cleanup.schedule,
         nextRun: job.nextDates().toISOString()
       });
     });
 
     this.maintenanceJobs.set('cleanup', job);
-    this.logger.info('Log cleanup job scheduled', { 
+    this.logger.info('Log cleanup job scheduled', {
       schedule: this.config.cleanup.schedule,
       nextRun: job.nextDates().toISOString()
     });
@@ -212,7 +213,7 @@ class LogMaintenanceService {
 
         try {
           this.logger.info('Starting scheduled log backup', jobContext);
-          
+
           const result = await this.backupService.backupRecentLogs(
             this.config.backup.dailyBackupDays,
             { skipExisting: true }
@@ -235,13 +236,12 @@ class LogMaintenanceService {
                 errorDates: result.summary.errorDates
               });
             } catch (alertError) {
-              this.logger.error('Failed to send backup high error rate alert', { 
+              this.logger.error('Failed to send backup high error rate alert', {
                 errorRate,
-                alertError: alertError.message 
+                alertError: alertError.message
               });
             }
           }
-
         } catch (error) {
           const duration = Date.now() - jobContext.startTime.getTime();
           const errorDetails = {
@@ -253,13 +253,13 @@ class LogMaintenanceService {
           };
 
           this.logger.error('Scheduled log backup failed', errorDetails);
-          
+
           try {
             await this.sendAlert('backup_failed', errorDetails);
           } catch (alertError) {
-            this.logger.error('Failed to send backup failure alert', { 
+            this.logger.error('Failed to send backup failure alert', {
               originalError: error.message,
-              alertError: alertError.message 
+              alertError: alertError.message
             });
           }
         }
@@ -275,7 +275,7 @@ class LogMaintenanceService {
       async () => {
         try {
           this.logger.info('Starting scheduled backup cleanup');
-          
+
           const result = await this.backupService.cleanOldBackups(
             this.config.backup.retentionDays,
             { dryRun: false }
@@ -286,7 +286,6 @@ class LogMaintenanceService {
             totalSizeFreed: formatFileSize(result.totalSize),
             errors: result.errors.length
           });
-
         } catch (error) {
           this.logger.error('Scheduled backup cleanup failed', { error: error.message });
           await this.sendAlert('backup_cleanup_failed', { error: error.message });
@@ -299,7 +298,7 @@ class LogMaintenanceService {
 
     this.maintenanceJobs.set('backup', backupJob);
     this.maintenanceJobs.set('backup_cleanup', cleanupJob);
-    
+
     this.logger.info('Backup jobs scheduled', {
       backup: this.config.backup.schedule,
       cleanup: this.config.backup.cleanupSchedule
@@ -360,8 +359,10 @@ class LogMaintenanceService {
       // Check for very old logs
       if (stats.oldestLog) {
         const oldestDate = new Date(stats.oldestLog.mtime);
-        const daysSinceOldest = Math.floor((Date.now() - oldestDate.getTime()) / (1000 * 60 * 60 * 24));
-        
+        const daysSinceOldest = Math.floor(
+          (Date.now() - oldestDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
         if (daysSinceOldest > 365) {
           healthReport.issues.push({
             type: 'old_logs',
@@ -383,9 +384,11 @@ class LogMaintenanceService {
 
           // Check if backups are recent
           if (backupList.backups.length > 0) {
-            const latestBackup = new Date(Math.max(...backupList.backups.map(b => new Date(b.lastModified))));
+            const latestBackup = new Date(
+              Math.max(...backupList.backups.map((b) => new Date(b.lastModified)))
+            );
             const hoursSinceLastBackup = (Date.now() - latestBackup.getTime()) / (1000 * 60 * 60);
-            
+
             if (hoursSinceLastBackup > 48) {
               healthReport.issues.push({
                 type: 'stale_backup',
@@ -407,9 +410,9 @@ class LogMaintenanceService {
       }
 
       // Determine overall status
-      const errorIssues = healthReport.issues.filter(i => i.severity === 'error');
-      const warningIssues = healthReport.issues.filter(i => i.severity === 'warning');
-      
+      const errorIssues = healthReport.issues.filter((i) => i.severity === 'error');
+      const warningIssues = healthReport.issues.filter((i) => i.severity === 'warning');
+
       if (errorIssues.length > 0) {
         healthReport.status = 'error';
       } else if (warningIssues.length > 0) {
@@ -434,7 +437,6 @@ class LogMaintenanceService {
       }
 
       return healthReport;
-
     } catch (error) {
       this.logger.error('Health check failed', { error: error.message });
       throw error;
@@ -456,10 +458,10 @@ class LogMaintenanceService {
     };
 
     this.logger.info('Starting manual log cleanup', cleanupOptions);
-    
+
     try {
       const result = await this.logger.cleanOldLogs(cleanupOptions);
-      
+
       this.logger.info('Manual log cleanup completed', {
         filesRemoved: result.filesRemoved,
         sizeFreed: this.logger.formatFileSize(result.sizeFreed),
@@ -467,7 +469,6 @@ class LogMaintenanceService {
       });
 
       return result;
-
     } catch (error) {
       this.logger.error('Manual log cleanup failed', { error: error.message });
       throw error;
@@ -485,7 +486,7 @@ class LogMaintenanceService {
     };
 
     this.logger.info('Starting manual log backup', backupOptions);
-    
+
     try {
       const result = await this.backupService.backupRecentLogs(backupOptions.days, {
         dryRun: backupOptions.dryRun,
@@ -494,7 +495,6 @@ class LogMaintenanceService {
 
       this.logger.info('Manual log backup completed', result.summary);
       return result;
-
     } catch (error) {
       this.logger.error('Manual log backup failed', { error: error.message });
       throw error;
@@ -525,11 +525,10 @@ class LogMaintenanceService {
       }
 
       return result;
-
     } catch (error) {
-      this.logger.error('Failed to send maintenance alert', { 
-        alertType, 
-        error: error.message 
+      this.logger.error('Failed to send maintenance alert', {
+        alertType,
+        error: error.message
       });
       throw error;
     }
@@ -553,7 +552,7 @@ class LogMaintenanceService {
    */
   getNextRunTimes() {
     const nextRuns = {};
-    
+
     this.maintenanceJobs.forEach((job, name) => {
       if (job.running) {
         nextRuns[name] = job.nextDates().toISOString();
@@ -584,15 +583,19 @@ class LogMaintenanceService {
     // Validate S3 configuration if backup is enabled
     if (this.config.backup.enabled) {
       const s3Status = this.backupService.getStatus();
-      
+
       if (!s3Status.configured.bucket) {
-        throw new Error('S3 backup is enabled but LOG_BACKUP_S3_BUCKET environment variable is not set');
+        throw new Error(
+          'S3 backup is enabled but LOG_BACKUP_S3_BUCKET environment variable is not set'
+        );
       }
-      
+
       if (!s3Status.configured.credentials) {
-        throw new Error('S3 backup is enabled but AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) are not configured');
+        throw new Error(
+          'S3 backup is enabled but AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) are not configured'
+        );
       }
-      
+
       if (!s3Status.configured.s3) {
         throw new Error('S3 backup is enabled but S3 client initialization failed');
       }
@@ -638,43 +641,43 @@ class LogMaintenanceService {
     // Validate cleanup configuration
     if (config.cleanup) {
       const { cleanup } = config;
-      
+
       if (cleanup.applicationDays !== undefined) {
         if (typeof cleanup.applicationDays !== 'number' || cleanup.applicationDays < 0) {
           throw new Error('cleanup.applicationDays must be a non-negative number');
         }
       }
-      
+
       if (cleanup.integrationDays !== undefined) {
         if (typeof cleanup.integrationDays !== 'number' || cleanup.integrationDays < 0) {
           throw new Error('cleanup.integrationDays must be a non-negative number');
         }
       }
-      
+
       if (cleanup.shieldDays !== undefined) {
         if (typeof cleanup.shieldDays !== 'number' || cleanup.shieldDays < 0) {
           throw new Error('cleanup.shieldDays must be a non-negative number');
         }
       }
-      
+
       if (cleanup.securityDays !== undefined) {
         if (typeof cleanup.securityDays !== 'number' || cleanup.securityDays < 0) {
           throw new Error('cleanup.securityDays must be a non-negative number');
         }
       }
-      
+
       if (cleanup.workerDays !== undefined) {
         if (typeof cleanup.workerDays !== 'number' || cleanup.workerDays < 0) {
           throw new Error('cleanup.workerDays must be a non-negative number');
         }
       }
-      
+
       if (cleanup.auditDays !== undefined) {
         if (typeof cleanup.auditDays !== 'number' || cleanup.auditDays < 0) {
           throw new Error('cleanup.auditDays must be a non-negative number');
         }
       }
-      
+
       if (cleanup.schedule !== undefined) {
         if (typeof cleanup.schedule !== 'string' || !this.isValidCronExpression(cleanup.schedule)) {
           throw new Error('cleanup.schedule must be a valid cron expression');
@@ -685,27 +688,30 @@ class LogMaintenanceService {
     // Validate backup configuration
     if (config.backup) {
       const { backup } = config;
-      
+
       if (backup.dailyBackupDays !== undefined) {
         if (typeof backup.dailyBackupDays !== 'number' || backup.dailyBackupDays < 0) {
           throw new Error('backup.dailyBackupDays must be a non-negative number');
         }
       }
-      
+
       if (backup.retentionDays !== undefined) {
         if (typeof backup.retentionDays !== 'number' || backup.retentionDays < 0) {
           throw new Error('backup.retentionDays must be a non-negative number');
         }
       }
-      
+
       if (backup.schedule !== undefined) {
         if (typeof backup.schedule !== 'string' || !this.isValidCronExpression(backup.schedule)) {
           throw new Error('backup.schedule must be a valid cron expression');
         }
       }
-      
+
       if (backup.cleanupSchedule !== undefined) {
-        if (typeof backup.cleanupSchedule !== 'string' || !this.isValidCronExpression(backup.cleanupSchedule)) {
+        if (
+          typeof backup.cleanupSchedule !== 'string' ||
+          !this.isValidCronExpression(backup.cleanupSchedule)
+        ) {
           throw new Error('backup.cleanupSchedule must be a valid cron expression');
         }
       }
@@ -714,13 +720,16 @@ class LogMaintenanceService {
     // Validate monitoring configuration
     if (config.monitoring) {
       const { monitoring } = config;
-      
+
       if (monitoring.schedule !== undefined) {
-        if (typeof monitoring.schedule !== 'string' || !this.isValidCronExpression(monitoring.schedule)) {
+        if (
+          typeof monitoring.schedule !== 'string' ||
+          !this.isValidCronExpression(monitoring.schedule)
+        ) {
           throw new Error('monitoring.schedule must be a valid cron expression');
         }
       }
-      
+
       if (monitoring.alertThresholdGB !== undefined) {
         if (typeof monitoring.alertThresholdGB !== 'number' || monitoring.alertThresholdGB < 0) {
           throw new Error('monitoring.alertThresholdGB must be a non-negative number');
@@ -736,7 +745,7 @@ class LogMaintenanceService {
     if (typeof cronExpression !== 'string') {
       return false;
     }
-    
+
     // Basic validation - check for 5 or 6 parts separated by spaces
     const parts = cronExpression.trim().split(/\s+/);
     return parts.length === 5 || parts.length === 6;
@@ -748,10 +757,10 @@ class LogMaintenanceService {
   updateConfig(newConfig) {
     // Validate new configuration
     this.validateConfig(newConfig);
-    
+
     const oldConfig = { ...this.config };
     this.config = { ...this.config, ...newConfig };
-    
+
     this.logger.info('Log maintenance configuration updated', {
       oldConfig,
       newConfig: this.config

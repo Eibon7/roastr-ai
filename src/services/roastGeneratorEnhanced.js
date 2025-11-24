@@ -1,6 +1,6 @@
 /**
  * Enhanced Roast Generator with integrated RQC (Roast Quality Control)
- * 
+ *
  * Features:
  * - Basic moderation integrated in prompt for Free/Pro plans
  * - Advanced RQC system for Creator+ plans with 3 parallel reviewers
@@ -31,7 +31,7 @@ class RoastGeneratorEnhanced {
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      console.warn('⚠️  OPENAI_API_KEY not found - using mock mode for enhanced generator');
+      logger.warn('⚠️  OPENAI_API_KEY not found - using mock mode for enhanced generator');
       this.mockGenerator = new RoastGeneratorMock();
       this.isMockMode = true;
       return;
@@ -85,7 +85,7 @@ class RoastGeneratorEnhanced {
    */
   async generateRoast(text, toxicityScore, tone = 'sarcastic', userConfig = {}) {
     const startTime = Date.now();
-    
+
     // If in mock mode, use mock generator
     if (this.isMockMode) {
       const mockResult = await this.mockGenerator.generateRoast(text, toxicityScore, tone);
@@ -94,12 +94,12 @@ class RoastGeneratorEnhanced {
 
       // Apply unified transparency disclaimer (Issue #196)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
-        rawRoast, 
-        userConfig.userId, 
+        rawRoast,
+        userConfig.userId,
         userConfig.language || 'es',
         userConfig.platformLimit || null
       );
-      
+
       // Update disclaimer usage statistics with robust retry logic (Issue #199)
       const statsResult = await transparencyService.updateDisclaimerStats(
         transparencyResult.disclaimer,
@@ -115,14 +115,14 @@ class RoastGeneratorEnhanced {
           }
         }
       );
-      
+
       if (!statsResult.success) {
         logger.warn('Mock mode disclaimer stats tracking failed', {
           reason: statsResult.reason,
           error: statsResult.error
         });
       }
-      
+
       return {
         roast: transparencyResult.finalText,
         plan: userConfig.plan || 'starter_trial',
@@ -137,7 +137,7 @@ class RoastGeneratorEnhanced {
         bioText: transparencyResult.bioText
       };
     }
-    
+
     try {
       logger.info('🎯 Starting roast generation with RQC', {
         userId: userConfig.userId,
@@ -148,29 +148,29 @@ class RoastGeneratorEnhanced {
 
       // Get user RQC configuration from database
       const rqcConfig = await this.getUserRQCConfig(userConfig.userId);
-      
+
       // Check if RQC is globally enabled
       const rqcGloballyEnabled = flags.isEnabled('ENABLE_RQC');
-      
+
       // For Free and Pro plans OR if RQC is disabled globally: use integrated basic moderation
       if (!rqcConfig.advanced_review_enabled || !rqcGloballyEnabled) {
         logger.info('📝 Using basic moderation for plan:', rqcConfig.plan);
-        
+
         const rawRoast = await this.generateWithBasicModeration(
-          text, 
-          toxicityScore, 
-          tone, 
+          text,
+          toxicityScore,
+          tone,
           rqcConfig
         );
-        
+
         // Apply unified transparency disclaimer (Issue #196)
         const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
-          rawRoast, 
-          userConfig.userId, 
+          rawRoast,
+          userConfig.userId,
           userConfig.language || 'es',
           userConfig.platformLimit || null
         );
-        
+
         // Update disclaimer usage statistics with robust retry logic (Issue #199)
         const statsResult = await transparencyService.updateDisclaimerStats(
           transparencyResult.disclaimer,
@@ -186,14 +186,14 @@ class RoastGeneratorEnhanced {
             }
           }
         );
-        
+
         if (!statsResult.success) {
           logger.warn('Basic moderation disclaimer stats tracking failed', {
             reason: statsResult.reason,
             error: statsResult.error
           });
         }
-        
+
         return {
           roast: transparencyResult.finalText,
           plan: rqcConfig.plan,
@@ -210,18 +210,13 @@ class RoastGeneratorEnhanced {
 
       // For Creator+ plans: use advanced RQC system
       logger.info('🔬 Using advanced RQC for plan:', rqcConfig.plan);
-      
-      const result = await this.generateWithAdvancedRQC(
-        text, 
-        toxicityScore, 
-        tone, 
-        rqcConfig
-      );
+
+      const result = await this.generateWithAdvancedRQC(text, toxicityScore, tone, rqcConfig);
 
       // Apply unified transparency disclaimer to the final roast (Issue #196)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
-        result.roast, 
-        userConfig.userId, 
+        result.roast,
+        userConfig.userId,
         userConfig.language || 'es',
         userConfig.platformLimit || null
       );
@@ -241,7 +236,7 @@ class RoastGeneratorEnhanced {
           }
         }
       );
-      
+
       if (!statsResult.success) {
         logger.warn('Advanced RQC disclaimer stats tracking failed', {
           reason: statsResult.reason,
@@ -258,16 +253,21 @@ class RoastGeneratorEnhanced {
         disclaimerType: transparencyResult.disclaimerType,
         bioText: transparencyResult.bioText
       };
-
     } catch (error) {
       logger.error('❌ Error in enhanced roast generation:', error);
-      
+
       // Fallback to safe roast (never fail)
       let rawFallbackRoast;
       try {
-        rawFallbackRoast = await this.generateFallbackRoast(text, tone, userConfig.plan || 'starter_trial');
+        rawFallbackRoast = await this.generateFallbackRoast(
+          text,
+          tone,
+          userConfig.plan || 'starter_trial'
+        );
       } catch (fallbackErr) {
-        logger.error('Fallback generation failed, using mock/static roast', { error: fallbackErr.message });
+        logger.error('Fallback generation failed, using mock/static roast', {
+          error: fallbackErr.message
+        });
         try {
           const mock = this.mockGenerator || new RoastGeneratorMock();
           const mockResult = await mock.generateRoast(text, 0.2, tone);
@@ -277,15 +277,15 @@ class RoastGeneratorEnhanced {
           rawFallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
         }
       }
-      
+
       // Apply unified transparency disclaimer even to fallback roasts (Issue #196)
       const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
-        rawFallbackRoast, 
-        userConfig.userId, 
+        rawFallbackRoast,
+        userConfig.userId,
         userConfig.language || 'es',
         userConfig.platformLimit || null
       );
-      
+
       // Update disclaimer usage statistics for fallback with robust retry logic (Issue #199)
       const statsResult = await transparencyService.updateDisclaimerStats(
         transparencyResult.disclaimer,
@@ -302,14 +302,14 @@ class RoastGeneratorEnhanced {
           }
         }
       );
-      
+
       if (!statsResult.success) {
         logger.warn('Fallback roast disclaimer stats tracking failed', {
           reason: statsResult.reason,
           error: statsResult.error
         });
       }
-      
+
       return {
         roast: transparencyResult.finalText,
         plan: userConfig.plan || 'starter_trial',
@@ -374,11 +374,13 @@ class RoastGeneratorEnhanced {
     });
 
     const roast = result.content;
-    
+
     logger.info('✅ Basic moderated roast generated', {
       plan: rqcConfig.plan,
       model: model,
-      intensityLevel: toneCompatibilityService.getToneIntensity(rqcConfig.tone || tone || 'balanceado'),
+      intensityLevel: toneCompatibilityService.getToneIntensity(
+        rqcConfig.tone || tone || 'balanceado'
+      ),
       roastLength: roast.length,
       promptVersion: this.promptTemplate.getVersion()
     });
@@ -456,7 +458,9 @@ class RoastGeneratorEnhanced {
     try {
       fallbackRoast = await this.generateFallbackRoast(text, tone);
     } catch (fallbackErr) {
-      logger.error('RQC fallback generation failed, using mock/static roast', { error: fallbackErr.message });
+      logger.error('RQC fallback generation failed, using mock/static roast', {
+        error: fallbackErr.message
+      });
       try {
         const mock = this.mockGenerator || new RoastGeneratorMock();
         const mockResult = await mock.generateRoast(text, 0.2, tone);
@@ -466,7 +470,7 @@ class RoastGeneratorEnhanced {
         fallbackRoast = '😉 Tomo nota, pero hoy prefiero mantener la clase.';
       }
     }
-    
+
     return {
       roast: fallbackRoast,
       attempt,
@@ -593,12 +597,14 @@ Configuración de usuario:
 
     // Add tone-specific instructions
     const toneInstructions = {
-      sarcastic: "- Estilo: Sarcasmo agudo pero sin insultos explícitos fuertes\n- Humor inteligente y creativo",
-      subtle: "- Estilo: Ironía sofisticada y elegante\n- Usa juegos de palabras y dobles sentidos",
-      direct: "- Estilo: Humor directo pero inteligente\n- Ve al punto sin rodeos pero mantén el ingenio"
+      sarcastic:
+        '- Estilo: Sarcasmo agudo pero sin insultos explícitos fuertes\n- Humor inteligente y creativo',
+      subtle: '- Estilo: Ironía sofisticada y elegante\n- Usa juegos de palabras y dobles sentidos',
+      direct:
+        '- Estilo: Humor directo pero inteligente\n- Ve al punto sin rodeos pero mantén el ingenio'
     };
 
-    return basePrompt + "\n\n" + (toneInstructions[tone] || toneInstructions.sarcastic);
+    return basePrompt + '\n\n' + (toneInstructions[tone] || toneInstructions.sarcastic);
   }
 
   /**
@@ -632,8 +638,9 @@ Configuración de usuario:
    */
   async getUserRQCConfig(userId) {
     try {
-      const { data, error } = await supabaseServiceClient
-        .rpc('get_user_rqc_config', { user_uuid: userId });
+      const { data, error } = await supabaseServiceClient.rpc('get_user_rqc_config', {
+        user_uuid: userId
+      });
 
       if (error) {
         logger.error('Error fetching user RQC config:', error);
@@ -690,29 +697,30 @@ Configuración de usuario:
    */
   async logRQCReview(userId, originalComment, roastText, attempt, reviewResult) {
     try {
-      await supabaseServiceClient
-        .rpc('log_rqc_review', {
-          user_uuid: userId,
-          original_comment: originalComment,
-          roast_text: roastText,
-          attempt_num: attempt,
-          moderator_pass: reviewResult.moderatorPass ? 'pass' : 'fail',
-          moderator_reason: reviewResult.moderatorReason || null,
-          comedian_pass: reviewResult.comedianPass ? 'pass' : 'fail',
-          comedian_reason: reviewResult.comedianReason || null,
-          style_pass: reviewResult.stylePass ? 'pass' : 'fail',
-          style_reason: reviewResult.styleReason || null,
-          final_decision: reviewResult.decision,
-          review_duration: reviewResult.reviewDuration || null,
-          tokens_used: reviewResult.tokensUsed || 0,
-          cost_cents: reviewResult.costCents || 0,
-          config_json: JSON.stringify({
-            tone: reviewResult.userConfig?.tone,
-            intensityLevel: toneCompatibilityService.getToneIntensity(reviewResult.userConfig?.tone || 'balanceado'),
-            customPrompt: reviewResult.userConfig?.custom_style_prompt
-          })
-        });
-      
+      await supabaseServiceClient.rpc('log_rqc_review', {
+        user_uuid: userId,
+        original_comment: originalComment,
+        roast_text: roastText,
+        attempt_num: attempt,
+        moderator_pass: reviewResult.moderatorPass ? 'pass' : 'fail',
+        moderator_reason: reviewResult.moderatorReason || null,
+        comedian_pass: reviewResult.comedianPass ? 'pass' : 'fail',
+        comedian_reason: reviewResult.comedianReason || null,
+        style_pass: reviewResult.stylePass ? 'pass' : 'fail',
+        style_reason: reviewResult.styleReason || null,
+        final_decision: reviewResult.decision,
+        review_duration: reviewResult.reviewDuration || null,
+        tokens_used: reviewResult.tokensUsed || 0,
+        cost_cents: reviewResult.costCents || 0,
+        config_json: JSON.stringify({
+          tone: reviewResult.userConfig?.tone,
+          intensityLevel: toneCompatibilityService.getToneIntensity(
+            reviewResult.userConfig?.tone || 'balanceado'
+          ),
+          customPrompt: reviewResult.userConfig?.custom_style_prompt
+        })
+      });
+
       logger.info('✅ RQC review logged to database', { userId, attempt });
     } catch (error) {
       logger.error('❌ Error logging RQC review:', error);
@@ -734,10 +742,10 @@ Configuración de usuario:
   async generateRoastWithPrompt(text, customPrompt, plan = 'pro', userId = null) {
     try {
       const model = await this.getModelForPlan(plan);
-      
+
       // Issue #858: Combine custom prompt with user input for Responses API
       const completePrompt = `${customPrompt}\n\nComentario: "${text}"\n\nRoast:`;
-      
+
       const result = await callOpenAIWithCaching(this.openai, {
         model: model,
         input: completePrompt,
@@ -753,7 +761,7 @@ Configuración de usuario:
 
       return result.content;
     } catch (error) {
-      logger.error("❌ Error generating roast with custom prompt:", error);
+      logger.error('❌ Error generating roast with custom prompt:', error);
       try {
         return await this.generateFallbackRoast(text, 'sarcastic', plan);
       } catch {
@@ -776,7 +784,7 @@ Configuración de usuario:
     try {
       const { getModelAvailabilityService } = require('./modelAvailabilityService');
       const modelService = getModelAvailabilityService();
-      
+
       // Use the smart model selection with GPT-5 detection
       return await modelService.getModelForPlan(plan);
     } catch (error) {
@@ -784,14 +792,14 @@ Configuración de usuario:
         plan,
         error: error.message
       });
-      
+
       // Safe fallback to previous logic
       const fallbackModels = {
-        'starter_trial': 'gpt-3.5-turbo',
-        'starter': 'gpt-4o',
-        'pro': 'gpt-4o', 
-        'plus': 'gpt-4o',
-        'custom': 'gpt-4o'
+        starter_trial: 'gpt-3.5-turbo',
+        starter: 'gpt-4o',
+        pro: 'gpt-4o',
+        plus: 'gpt-4o',
+        custom: 'gpt-4o'
       };
       return fallbackModels[plan] || 'gpt-4o';
     }

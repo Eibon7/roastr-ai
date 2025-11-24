@@ -4,6 +4,7 @@
  */
 
 const crypto = require('crypto');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const { flags } = require('../config/flags');
 
 /**
@@ -26,7 +27,7 @@ class OAuthProvider {
     if (flags.shouldUseMockOAuth()) {
       return this.getMockAuthUrl(state, redirectUri);
     }
-    
+
     throw new Error(`Real OAuth not implemented for ${this.platform}`);
   }
 
@@ -41,7 +42,7 @@ class OAuthProvider {
     if (flags.shouldUseMockOAuth()) {
       return this.getMockTokens(code, state, redirectUri);
     }
-    
+
     throw new Error(`Real OAuth not implemented for ${this.platform}`);
   }
 
@@ -54,7 +55,7 @@ class OAuthProvider {
     if (flags.shouldUseMockOAuth()) {
       return this.getMockRefreshedTokens(refreshToken);
     }
-    
+
     throw new Error(`Token refresh not implemented for ${this.platform}`);
   }
 
@@ -67,7 +68,7 @@ class OAuthProvider {
     if (flags.shouldUseMockOAuth()) {
       return this.mockRevokeTokens(accessToken);
     }
-    
+
     throw new Error(`Token revocation not implemented for ${this.platform}`);
   }
 
@@ -83,7 +84,7 @@ class OAuthProvider {
       platform: this.platform,
       redirectUri,
       createdAt: Date.now(),
-      expiresAt: Date.now() + (10 * 60 * 1000) // 10 minutes
+      expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
     });
 
     const params = new URLSearchParams({
@@ -126,8 +127,8 @@ class OAuthProvider {
     // Generate mock tokens
     const accessToken = `mock_${this.platform}_access_${Date.now()}_${crypto.randomBytes(16).toString('hex')}`;
     const refreshToken = `mock_${this.platform}_refresh_${Date.now()}_${crypto.randomBytes(16).toString('hex')}`;
-    const expiresAt = Date.now() + (60 * 60 * 1000); // 1 hour
-    
+    const expiresAt = Date.now() + 60 * 60 * 1000; // 1 hour
+
     const tokenData = {
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -165,7 +166,7 @@ class OAuthProvider {
     // Generate new tokens
     const newAccessToken = `mock_${this.platform}_access_${Date.now()}_${crypto.randomBytes(16).toString('hex')}`;
     const newRefreshToken = `mock_${this.platform}_refresh_${Date.now()}_${crypto.randomBytes(16).toString('hex')}`;
-    const expiresAt = Date.now() + (60 * 60 * 1000); // 1 hour
+    const expiresAt = Date.now() + 60 * 60 * 1000; // 1 hour
 
     const tokenData = {
       access_token: newAccessToken,
@@ -215,7 +216,10 @@ class OAuthProvider {
     const scopeMap = {
       twitter: ['read', 'write', 'offline.access'],
       instagram: ['instagram_basic', 'instagram_content_publish'],
-      youtube: ['https://www.googleapis.com/auth/youtube.readonly', 'https://www.googleapis.com/auth/youtube.upload'],
+      youtube: [
+        'https://www.googleapis.com/auth/youtube.readonly',
+        'https://www.googleapis.com/auth/youtube.upload'
+      ],
       tiktok: ['user.info.basic', 'video.list'],
       linkedin: ['r_liteprofile', 'r_emailaddress', 'w_member_social'],
       facebook: ['public_profile', 'email', 'pages_manage_posts'],
@@ -296,7 +300,12 @@ class OAuthProvider {
       }
     };
 
-    return mockUsers[this.platform] || { id: `mock_${this.platform}_user_${Date.now()}`, name: `Mock ${this.platform} User` };
+    return (
+      mockUsers[this.platform] || {
+        id: `mock_${this.platform}_user_${Date.now()}`,
+        name: `Mock ${this.platform} User`
+      }
+    );
   }
 
   /**
@@ -379,11 +388,13 @@ class OAuthProvider {
       }
     };
 
-    return requirements[this.platform] || {
-      permissions: ['Basic access'],
-      notes: 'Platform-specific requirements apply',
-      estimatedTime: '3-5 minutes'
-    };
+    return (
+      requirements[this.platform] || {
+        permissions: ['Basic access'],
+        notes: 'Platform-specific requirements apply',
+        estimatedTime: '3-5 minutes'
+      }
+    );
   }
 }
 
@@ -401,7 +412,7 @@ class OAuthProviderFactory {
    */
   static getProvider(platform, config = {}) {
     const key = `${platform}_${JSON.stringify(config)}`;
-    
+
     if (!this.providers.has(key)) {
       const provider = this.createProvider(platform, config);
       this.providers.set(key, provider);
@@ -418,7 +429,7 @@ class OAuthProviderFactory {
    */
   static createProvider(platform, config) {
     const { flags } = require('../config/flags');
-    
+
     // If mock mode is enabled, use base provider for all platforms
     if (flags.shouldUseMockOAuth()) {
       return new OAuthProvider(platform, config);
@@ -445,7 +456,10 @@ class OAuthProviderFactory {
       }
     } catch (error) {
       // If specialized provider fails to load, fallback to base provider
-      console.warn(`Failed to load specialized OAuth provider for ${platform}, using base provider:`, error.message);
+      logger.warn(
+        `Failed to load specialized OAuth provider for ${platform}, using base provider:`,
+        error.message
+      );
       return new OAuthProvider(platform, config);
     }
   }

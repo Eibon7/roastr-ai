@@ -4,10 +4,10 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { 
-  TEST_USERS, 
-  mockLoginSuccess, 
-  mockFeatureFlags, 
+import {
+  TEST_USERS,
+  mockLoginSuccess,
+  mockFeatureFlags,
   mockLogout,
   setupAuthState,
   clearAuthState,
@@ -20,7 +20,7 @@ test.describe('Login and Navigation - Issue #318', () => {
   test.beforeEach(async ({ page }) => {
     // Clear any existing auth state
     await clearAuthState(page);
-    
+
     // Setup default mocks
     await mockFeatureFlags(page, { ENABLE_SHOP: false });
     await mockLogout(page);
@@ -53,10 +53,10 @@ test.describe('Login and Navigation - Issue #318', () => {
       const emailInput = page.getByRole('textbox', { name: /email/i });
       const passwordInput = page.getByLabel(/password/i);
 
-      if (await emailInput.count() > 0) {
+      if ((await emailInput.count()) > 0) {
         await emailInput.fill('test@example.com');
       }
-      if (await passwordInput.count() > 0) {
+      if ((await passwordInput.count()) > 0) {
         await passwordInput.fill('password123');
       }
 
@@ -75,11 +75,11 @@ test.describe('Login and Navigation - Issue #318', () => {
       // Check email input validation
       const emailInput = page.getByRole('textbox', { name: /email/i });
 
-      if (await emailInput.count() > 0) {
+      if ((await emailInput.count()) > 0) {
         await emailInput.fill('invalid-email');
 
         // Check if HTML5 validation works
-        const isValid = await emailInput.evaluate(el => {
+        const isValid = await emailInput.evaluate((el) => {
           if (el instanceof HTMLInputElement) {
             return el.checkValidity();
           }
@@ -97,8 +97,10 @@ test.describe('Login and Navigation - Issue #318', () => {
       await page.goto('/login');
 
       // Look for forgot password link (may or may not exist)
-      const forgotPasswordLink = page.locator('a[href*="reset"], a:has-text("forgot"), a:has-text("olvidaste")');
-      const linkExists = await forgotPasswordLink.count() > 0;
+      const forgotPasswordLink = page.locator(
+        'a[href*="reset"], a:has-text("forgot"), a:has-text("olvidaste")'
+      );
+      const linkExists = (await forgotPasswordLink.count()) > 0;
 
       if (linkExists) {
         await expect(forgotPasswordLink.first()).toBeVisible();
@@ -115,8 +117,10 @@ test.describe('Login and Navigation - Issue #318', () => {
       await page.goto('/login');
 
       // Look for register link (may or may not exist)
-      const registerLink = page.locator('a[href*="register"], a:has-text("sign"), a:has-text("crear")');
-      const linkExists = await registerLink.count() > 0;
+      const registerLink = page.locator(
+        'a[href*="register"], a:has-text("sign"), a:has-text("crear")'
+      );
+      const linkExists = (await registerLink.count()) > 0;
 
       if (linkExists) {
         await expect(registerLink.first()).toBeVisible();
@@ -161,17 +165,17 @@ test.describe('Login and Navigation - Issue #318', () => {
       const emailInput = page.getByRole('textbox', { name: /email/i });
       const passwordInput = page.getByLabel(/password/i);
 
-      if (await emailInput.count() > 0) {
+      if ((await emailInput.count()) > 0) {
         await expect(emailInput).toHaveAttribute('type', 'email');
       }
 
-      if (await passwordInput.count() > 0) {
+      if ((await passwordInput.count()) > 0) {
         await expect(passwordInput).toHaveAttribute('type', 'password');
       }
 
       // Check button accessibility
       const submitButton = page.getByRole('button', { name: /submit|sign in|log in/i });
-      if (await submitButton.count() > 0) {
+      if ((await submitButton.count()) > 0) {
         await expect(submitButton).toHaveAttribute('type', 'submit');
       }
     });

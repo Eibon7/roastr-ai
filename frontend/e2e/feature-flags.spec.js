@@ -4,12 +4,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { 
-  TEST_USERS, 
-  mockFeatureFlags, 
-  setupAuthState,
-  clearAuthState
-} from './auth.fixtures.js';
+import { TEST_USERS, mockFeatureFlags, setupAuthState, clearAuthState } from './auth.fixtures.js';
 
 test.describe('Feature Flags - Shop Functionality', () => {
   test.beforeEach(async ({ page }) => {
@@ -38,7 +33,9 @@ test.describe('Feature Flags - Shop Functionality', () => {
       await expect(shopNavLink).toHaveCount(0);
     });
 
-    test('should redirect or show 404 when accessing shop URL with flag disabled', async ({ page }) => {
+    test('should redirect or show 404 when accessing shop URL with flag disabled', async ({
+      page
+    }) => {
       // Try to access shop directly
       await page.goto('/shop');
 
@@ -51,7 +48,10 @@ test.describe('Feature Flags - Shop Functionality', () => {
 
       // With shop flag disabled, should either redirect away from /shop or show 404
       const isRedirected = !currentUrl.includes('/shop');
-      const isNotFound = pageContent?.toLowerCase().includes('404') || pageContent?.toLowerCase().includes('not found') || false;
+      const isNotFound =
+        pageContent?.toLowerCase().includes('404') ||
+        pageContent?.toLowerCase().includes('not found') ||
+        false;
 
       // Should be redirected OR show 404, but not show shop content
       expect(isRedirected || isNotFound).toBeTruthy();
@@ -75,7 +75,10 @@ test.describe('Feature Flags - Shop Functionality', () => {
       // Test documents current behavior
       const isAdminPage = currentUrl.includes('/admin') && !currentUrl.includes('/login');
       const isRedirectedToLogin = currentUrl.includes('/login');
-      const isNotFound = pageContent?.toLowerCase().includes('404') || pageContent?.toLowerCase().includes('not found') || false;
+      const isNotFound =
+        pageContent?.toLowerCase().includes('404') ||
+        pageContent?.toLowerCase().includes('not found') ||
+        false;
 
       // One of these should be true
       expect(isAdminPage || isRedirectedToLogin || isNotFound).toBeTruthy();
@@ -152,14 +155,13 @@ test.describe('Feature Flags - Shop Functionality', () => {
       const mobileTitle = await page.title();
       expect(mobileTitle).toBeTruthy();
     });
-
   });
 
   test.describe('Error Handling', () => {
     test('should handle network errors gracefully', async ({ page }) => {
       // Stub specific feature-flags API endpoint with 500 error
       // Use the correct endpoint path that matches the app and fixtures
-      await page.route('**/api/config/flags', route => {
+      await page.route('**/api/config/flags', (route) => {
         route.fulfill({
           status: 500,
           contentType: 'application/json',
@@ -178,10 +180,12 @@ test.describe('Feature Flags - Shop Functionality', () => {
       });
 
       // Verify error handling or fallback UI is shown
-      const hasErrorUI = await page.locator(errorSelector).count() > 0;
+      const hasErrorUI = (await page.locator(errorSelector).count()) > 0;
       const pageContent = await page.textContent('body');
 
-      expect(hasErrorUI || pageContent.includes('error') || pageContent.includes('Error')).toBeTruthy();
+      expect(
+        hasErrorUI || pageContent.includes('error') || pageContent.includes('Error')
+      ).toBeTruthy();
     });
   });
 });

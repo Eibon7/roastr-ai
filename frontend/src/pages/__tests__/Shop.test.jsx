@@ -79,11 +79,9 @@ describe('Shop', () => {
     render(<Shop />);
 
     const buttons = screen.getAllByRole('button');
-    const purchaseButtons = buttons.filter(button =>
-      button.textContent.includes('Próximamente')
-    );
+    const purchaseButtons = buttons.filter((button) => button.textContent.includes('Próximamente'));
 
-    purchaseButtons.forEach(button => {
+    purchaseButtons.forEach((button) => {
       expect(button).toBeDisabled();
     });
   });
@@ -97,12 +95,10 @@ describe('Shop', () => {
     render(<Shop />);
 
     const buttons = screen.getAllByRole('button');
-    const purchaseButtons = buttons.filter(button =>
-      button.textContent.includes('Cargando...')
-    );
+    const purchaseButtons = buttons.filter((button) => button.textContent.includes('Cargando...'));
 
     expect(purchaseButtons.length).toBeGreaterThan(0);
-    purchaseButtons.forEach(button => {
+    purchaseButtons.forEach((button) => {
       expect(button).toBeDisabled();
     });
   });
@@ -116,11 +112,11 @@ describe('Shop', () => {
     render(<Shop />);
 
     const buttons = screen.getAllByRole('button');
-    const purchaseButtons = buttons.filter(button =>
-      button.textContent === 'Obtener ahora' || button.textContent === 'Comprar'
+    const purchaseButtons = buttons.filter(
+      (button) => button.textContent === 'Obtener ahora' || button.textContent === 'Comprar'
     );
 
-    purchaseButtons.forEach(button => {
+    purchaseButtons.forEach((button) => {
       expect(button).not.toBeDisabled();
     });
   });
@@ -134,8 +130,8 @@ describe('Shop', () => {
     render(<Shop />);
 
     const buttons = screen.getAllByRole('button');
-    const firstPurchaseButton = buttons.find(button =>
-      button.textContent === 'Obtener ahora' || button.textContent === 'Comprar'
+    const firstPurchaseButton = buttons.find(
+      (button) => button.textContent === 'Obtener ahora' || button.textContent === 'Comprar'
     );
 
     if (firstPurchaseButton) {
@@ -149,7 +145,7 @@ describe('Shop', () => {
 
     expect(screen.getByText('¿Tienes alguna sugerencia?')).toBeInTheDocument();
     expect(screen.getByText(/contáctanos en/)).toBeInTheDocument();
-    
+
     const emailLink = screen.getByRole('link', { name: /shop@roastr.ai/ });
     expect(emailLink).toBeInTheDocument();
     expect(emailLink).toHaveAttribute('href', 'mailto:shop@roastr.ai');
@@ -171,7 +167,9 @@ describe('Shop', () => {
     render(<Shop />);
 
     expect(screen.getByText(/Acceso a tonos exclusivos como/)).toBeInTheDocument();
-    expect(screen.getByText(/Protección avanzada contra contenido inapropiado/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Protección avanzada contra contenido inapropiado/)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Generación de roasts más rápida/)).toBeInTheDocument();
     expect(screen.getByText(/Métricas avanzadas y análisis de engagement/)).toBeInTheDocument();
   });

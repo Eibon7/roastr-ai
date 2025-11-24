@@ -10,19 +10,19 @@ import authService from '../../../services/authService';
 jest.mock('../../../services/authService', () => ({
   signIn: jest.fn(),
   register: jest.fn(),
-  sendRecoveryEmail: jest.fn(),
+  sendRecoveryEmail: jest.fn()
 }));
 
 // Mock the auth context
 const mockAuthContext = {
   isAuthenticated: false,
   user: null,
-  loading: false,
+  loading: false
 };
 
 jest.mock('../../../contexts/AuthContext', () => ({
   AuthProvider: ({ children }) => children,
-  useAuth: () => mockAuthContext,
+  useAuth: () => mockAuthContext
 }));
 
 const renderComponent = (Component, initialEntries = ['/']) => {

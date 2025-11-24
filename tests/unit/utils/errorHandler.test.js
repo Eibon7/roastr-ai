@@ -1,6 +1,6 @@
 /**
  * Error Handler Tests
- * 
+ *
  * Tests for the enhanced error handling system to ensure
  * robust error recovery and fallback mechanisms.
  */
@@ -55,8 +55,9 @@ describe('WorkerErrorHandler', () => {
       const operation = jest.fn().mockRejectedValue(new Error('Operation failed'));
       const fallback = jest.fn().mockRejectedValue(new Error('Fallback failed'));
 
-      await expect(errorHandler.handleWithFallback(operation, fallback))
-        .rejects.toThrow(WorkerError);
+      await expect(errorHandler.handleWithFallback(operation, fallback)).rejects.toThrow(
+        WorkerError
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Fallback also failed',
@@ -71,8 +72,9 @@ describe('WorkerErrorHandler', () => {
       const originalError = new Error('Operation failed');
       const operation = jest.fn().mockRejectedValue(originalError);
 
-      await expect(errorHandler.handleWithFallback(operation, null))
-        .rejects.toThrow('Operation failed');
+      await expect(errorHandler.handleWithFallback(operation, null)).rejects.toThrow(
+        'Operation failed'
+      );
     });
   });
 
@@ -87,7 +89,8 @@ describe('WorkerErrorHandler', () => {
     });
 
     test('should retry on failure and eventually succeed', async () => {
-      const operation = jest.fn()
+      const operation = jest
+        .fn()
         .mockRejectedValueOnce(new Error('Fail 1'))
         .mockRejectedValueOnce(new Error('Fail 2'))
         .mockResolvedValue('success');
@@ -102,19 +105,17 @@ describe('WorkerErrorHandler', () => {
     test('should not retry ValidationError', async () => {
       const operation = jest.fn().mockRejectedValue(new ValidationError('Invalid input'));
 
-      await expect(errorHandler.handleWithRetry(operation, 3))
-        .rejects.toThrow(ValidationError);
+      await expect(errorHandler.handleWithRetry(operation, 3)).rejects.toThrow(ValidationError);
 
       expect(operation).toHaveBeenCalledTimes(1);
     });
 
     test('should not retry non-retryable WorkerError', async () => {
-      const operation = jest.fn().mockRejectedValue(
-        new WorkerError('Non-retryable error', 'TEST_ERROR', false)
-      );
+      const operation = jest
+        .fn()
+        .mockRejectedValue(new WorkerError('Non-retryable error', 'TEST_ERROR', false));
 
-      await expect(errorHandler.handleWithRetry(operation, 3))
-        .rejects.toThrow(WorkerError);
+      await expect(errorHandler.handleWithRetry(operation, 3)).rejects.toThrow(WorkerError);
 
       expect(operation).toHaveBeenCalledTimes(1);
     });
@@ -122,8 +123,9 @@ describe('WorkerErrorHandler', () => {
     test('should exhaust retries and throw WorkerError', async () => {
       const operation = jest.fn().mockRejectedValue(new Error('Always fails'));
 
-      await expect(errorHandler.handleWithRetry(operation, 2))
-        .rejects.toThrow('Operation failed after 3 attempts');
+      await expect(errorHandler.handleWithRetry(operation, 2)).rejects.toThrow(
+        'Operation failed after 3 attempts'
+      );
 
       expect(operation).toHaveBeenCalledTimes(3);
     });
@@ -139,21 +141,25 @@ describe('WorkerErrorHandler', () => {
     });
 
     test('should throw timeout error when operation takes too long', async () => {
-      const operation = jest.fn().mockImplementation(() => 
-        new Promise(resolve => setTimeout(() => resolve('late'), 2000))
-      );
+      const operation = jest
+        .fn()
+        .mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve('late'), 2000))
+        );
 
-      await expect(errorHandler.handleWithTimeout(operation, 100))
-        .rejects.toThrow('Operation timed out after 100ms');
+      await expect(errorHandler.handleWithTimeout(operation, 100)).rejects.toThrow(
+        'Operation timed out after 100ms'
+      );
     });
   });
 
   describe('handleRobust', () => {
     test('should handle complex scenario with retry, timeout, and fallback', async () => {
-      const operation = jest.fn()
+      const operation = jest
+        .fn()
         .mockRejectedValueOnce(new Error('Fail 1'))
         .mockResolvedValue('success');
-      
+
       const fallback = jest.fn().mockResolvedValue('fallback');
 
       const result = await errorHandler.handleRobust(operation, {
@@ -196,22 +202,25 @@ describe('WorkerErrorHandler', () => {
         error: { message: 'Database error', code: 'DB001' }
       });
 
-      await expect(errorHandler.handleDatabaseOperation(operation))
-        .rejects.toThrow('Database error: Database error');
+      await expect(errorHandler.handleDatabaseOperation(operation)).rejects.toThrow(
+        'Database error: Database error'
+      );
     });
 
     test('should handle connection errors', async () => {
       const operation = jest.fn().mockRejectedValue(new Error('connection failed'));
 
-      await expect(errorHandler.handleDatabaseOperation(operation))
-        .rejects.toThrow('Database connection failed');
+      await expect(errorHandler.handleDatabaseOperation(operation)).rejects.toThrow(
+        'Database connection failed'
+      );
     });
 
     test('should handle timeout errors', async () => {
       const operation = jest.fn().mockRejectedValue(new Error('timeout occurred'));
 
-      await expect(errorHandler.handleDatabaseOperation(operation))
-        .rejects.toThrow('Database operation timed out');
+      await expect(errorHandler.handleDatabaseOperation(operation)).rejects.toThrow(
+        'Database operation timed out'
+      );
     });
   });
 
@@ -231,8 +240,9 @@ describe('WorkerErrorHandler', () => {
 
       const operation = jest.fn().mockRejectedValue(rateLimitError);
 
-      await expect(errorHandler.handleAPIOperation(operation, 'TestAPI'))
-        .rejects.toThrow('TestAPI API rate limit exceeded');
+      await expect(errorHandler.handleAPIOperation(operation, 'TestAPI')).rejects.toThrow(
+        'TestAPI API rate limit exceeded'
+      );
     });
 
     test('should handle authentication errors', async () => {
@@ -241,8 +251,9 @@ describe('WorkerErrorHandler', () => {
 
       const operation = jest.fn().mockRejectedValue(authError);
 
-      await expect(errorHandler.handleAPIOperation(operation, 'TestAPI'))
-        .rejects.toThrow('TestAPI API authentication failed');
+      await expect(errorHandler.handleAPIOperation(operation, 'TestAPI')).rejects.toThrow(
+        'TestAPI API authentication failed'
+      );
     });
 
     test('should handle server errors', async () => {
@@ -251,8 +262,9 @@ describe('WorkerErrorHandler', () => {
 
       const operation = jest.fn().mockRejectedValue(serverError);
 
-      await expect(errorHandler.handleAPIOperation(operation, 'TestAPI'))
-        .rejects.toThrow('TestAPI API server error');
+      await expect(errorHandler.handleAPIOperation(operation, 'TestAPI')).rejects.toThrow(
+        'TestAPI API server error'
+      );
     });
   });
 
@@ -306,7 +318,7 @@ describe('WorkerErrorHandler', () => {
   describe('logError', () => {
     test('should log retryable WorkerError as warning', () => {
       const error = new WorkerError('Retryable error', 'TEST_ERROR', true);
-      
+
       errorHandler.logError(error, { context: 'test' });
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -320,7 +332,7 @@ describe('WorkerErrorHandler', () => {
 
     test('should log non-retryable WorkerError as error', () => {
       const error = new WorkerError('Non-retryable error', 'TEST_ERROR', false);
-      
+
       errorHandler.logError(error);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -334,7 +346,7 @@ describe('WorkerErrorHandler', () => {
 
     test('should log ValidationError as warning', () => {
       const error = new ValidationError('Validation failed');
-      
+
       errorHandler.logError(error);
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -347,7 +359,7 @@ describe('WorkerErrorHandler', () => {
 
     test('should log unexpected error as error', () => {
       const error = new Error('Unexpected error');
-      
+
       errorHandler.logError(error);
 
       expect(mockLogger.error).toHaveBeenCalledWith(

@@ -1,6 +1,6 @@
 /**
  * ApprovalCard Component Tests
- * 
+ *
  * Tests for the manual roast approval component including:
  * - Basic rendering and display
  * - Edit mode functionality
@@ -46,13 +46,7 @@ jest.mock('../../components/ui/badge', () => ({
 
 jest.mock('../../components/ui/button', () => ({
   Button: ({ children, onClick, disabled, className, title, ...props }) => (
-    <button 
-      onClick={onClick} 
-      disabled={disabled} 
-      className={className}
-      title={title}
-      {...props}
-    >
+    <button onClick={onClick} disabled={disabled} className={className} title={title} {...props}>
       {children}
     </button>
   )
@@ -331,9 +325,9 @@ describe('ApprovalCard', () => {
 
       expect(mockProps.onApprove).not.toHaveBeenCalled();
       expect(mockToast).toHaveBeenCalledWith({
-        title: "Cannot approve response",
-        description: "Response exceeds 280 character limit for twitter. Please shorten the text.",
-        variant: "destructive",
+        title: 'Cannot approve response',
+        description: 'Response exceeds 280 character limit for twitter. Please shorten the text.',
+        variant: 'destructive'
       });
     });
 
@@ -363,8 +357,8 @@ describe('ApprovalCard', () => {
 
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalledWith({
-          title: "Response approved",
-          description: "The roast has been approved and queued for posting",
+          title: 'Response approved',
+          description: 'The roast has been approved and queued for posting'
         });
       });
     });
@@ -379,9 +373,9 @@ describe('ApprovalCard', () => {
 
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalledWith({
-          title: "Error approving response",
-          description: "Approval failed",
-          variant: "destructive",
+          title: 'Error approving response',
+          description: 'Approval failed',
+          variant: 'destructive'
         });
       });
     });
@@ -426,7 +420,9 @@ describe('ApprovalCard', () => {
       const cancelButton = screen.getByText('Cancel');
       await user.click(cancelButton);
 
-      expect(screen.queryByPlaceholderText('Reason for rejection (optional)...')).not.toBeInTheDocument();
+      expect(
+        screen.queryByPlaceholderText('Reason for rejection (optional)...')
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -443,7 +439,9 @@ describe('ApprovalCard', () => {
 
     test('shows loading state during regeneration', async () => {
       const user = userEvent.setup();
-      mockProps.onRegenerate.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+      mockProps.onRegenerate.mockImplementation(
+        () => new Promise((resolve) => setTimeout(resolve, 100))
+      );
       render(<ApprovalCard {...mockProps} />);
 
       const regenerateButton = screen.getByText('Regenerate');

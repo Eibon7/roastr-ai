@@ -12,12 +12,14 @@
 ### 🔴 CRITICAL
 
 **C1: DRY Violation - Create getFeatures() Helper**
+
 - **Archivo:** `scripts/resolve-graph.js`
 - **Problema:** Patrón `this.systemMap.features || this.systemMap.nodes` repetido 5 veces
 - **Solución:** Método helper centralizado `getFeatures()`
 - **Impacto:** -80% repetición, mejor maintainability
 
 **C2: Null-Object Guards**
+
 - **Archivo:** `scripts/resolve-graph.js`
 - **Problema:** `generateMermaidDiagram()` podía crashear con null
 - **Solución:** Guard defensivo antes de `Object.entries()`
@@ -26,6 +28,7 @@
 ### 🟡 MAJOR
 
 **M1: Graceful Degradation - Node-Agent Matrix**
+
 - **Archivo:** `scripts/resolve-graph.js`
 - **Problema:** Crasheaba cuando no hay nodes
 - **Solución:** Return early con mensaje helpful
@@ -34,6 +37,7 @@
 ### 🟢 MINOR
 
 **N1-N2: Documentación Consistente**
+
 - `docs/auto-repair-changelog.md`: "None" para campos vacíos
 - `docs/system-validation.md`: Bullets condensados (15→1)
 

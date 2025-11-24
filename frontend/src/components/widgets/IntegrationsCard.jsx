@@ -43,8 +43,8 @@ export default function IntegrationsCard() {
     };
   }, []);
 
-  const connected = integrations.filter(i => i.status === 'connected');
-  const disconnected = integrations.filter(i => i.status === 'disconnected');
+  const connected = integrations.filter((i) => i.status === 'connected');
+  const disconnected = integrations.filter((i) => i.status === 'disconnected');
 
   if (loading) {
     return (
@@ -70,7 +70,9 @@ export default function IntegrationsCard() {
         onRetry={() => {
           setLoading(true);
           setError(null);
-          getIntegrations().then(data => setIntegrations(data.integrations || data.data?.integrations || [])).finally(() => setLoading(false));
+          getIntegrations()
+            .then((data) => setIntegrations(data.integrations || data.data?.integrations || []))
+            .finally(() => setLoading(false));
         }}
       />
     );
@@ -109,7 +111,10 @@ export default function IntegrationsCard() {
               </div>
               <div className="space-y-2">
                 {connected.map((integration) => (
-                  <div key={integration.name} className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                  <div
+                    key={integration.name}
+                    className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/20 rounded-lg"
+                  >
                     <div className="flex items-center space-x-2">
                       <span className="text-sm">{integration.icon}</span>
                       <span className="text-sm font-medium">{integration.displayName}</span>
@@ -130,10 +135,15 @@ export default function IntegrationsCard() {
               </div>
               <div className="space-y-1">
                 {disconnected.slice(0, 3).map((integration) => (
-                  <div key={integration.name} className="flex items-center justify-between p-1.5 rounded">
+                  <div
+                    key={integration.name}
+                    className="flex items-center justify-between p-1.5 rounded"
+                  >
                     <div className="flex items-center space-x-2">
                       <span className="text-sm opacity-60">{integration.icon}</span>
-                      <span className="text-sm text-muted-foreground">{integration.displayName}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {integration.displayName}
+                      </span>
                     </div>
                     <Badge variant="outline" className="text-xs">
                       Available

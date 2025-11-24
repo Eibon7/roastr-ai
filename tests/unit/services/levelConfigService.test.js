@@ -74,13 +74,15 @@ describe('LevelConfigService - Roast Levels', () => {
     });
 
     it('should throw error for invalid level (0)', () => {
-      expect(() => levelConfigService.getRoastLevelConfig(0))
-        .toThrow('Invalid roast level: 0. Must be between 1 and 5.');
+      expect(() => levelConfigService.getRoastLevelConfig(0)).toThrow(
+        'Invalid roast level: 0. Must be between 1 and 5.'
+      );
     });
 
     it('should throw error for invalid level (6)', () => {
-      expect(() => levelConfigService.getRoastLevelConfig(6))
-        .toThrow('Invalid roast level: 6. Must be between 1 and 5.');
+      expect(() => levelConfigService.getRoastLevelConfig(6)).toThrow(
+        'Invalid roast level: 6. Must be between 1 and 5.'
+      );
     });
   });
 });
@@ -108,7 +110,7 @@ describe('LevelConfigService - Shield Levels', () => {
       expect(config).toEqual({
         name: 'Balanced',
         description: 'Standard moderation',
-        threshold: 0.70,
+        threshold: 0.7,
         autoActions: true
       });
     });
@@ -119,14 +121,15 @@ describe('LevelConfigService - Shield Levels', () => {
       expect(config).toEqual({
         name: 'Strict',
         description: 'Blocks most potentially harmful content',
-        threshold: 0.50,
+        threshold: 0.5,
         autoActions: true
       });
     });
 
     it('should throw error for invalid shield level', () => {
-      expect(() => levelConfigService.getShieldLevelConfig(10))
-        .toThrow('Invalid shield level: 10. Must be between 1 and 5.');
+      expect(() => levelConfigService.getShieldLevelConfig(10)).toThrow(
+        'Invalid shield level: 10. Must be between 1 and 5.'
+      );
     });
   });
 });

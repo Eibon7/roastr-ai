@@ -23,6 +23,7 @@ Esta issue elimina configuraciones obsoletas y redundantes del sistema de roasts
 El plan Free ya no existe. El plan de entrada es **"Starter Trial 30 días"**.
 
 **Archivos sin cambios:**
+
 - `src/config/trialConfig.js` - Ya usa `PLAN_IDS.STARTER_TRIAL`
 - Tablas de DB - Ya migradas a starter_trial
 
@@ -35,6 +36,7 @@ El plan Free ya no existe. El plan de entrada es **"Starter Trial 30 días"**.
 Eliminado por completo el sistema de humor type (witty, clever, playful) que era redundante con Style Profile.
 
 **Archivos modificados:**
+
 1. **src/config/constants.js**
    - Eliminado `HUMOR_MAP` completo
    - `TONE_MAP` actualizado con tonos oficiales (Flanders, Balanceado, Canalla)
@@ -72,6 +74,7 @@ Eliminado por completo el sistema de humor type (witty, clever, playful) que era
 Eliminado por completo el sistema de intensity level (1-5) que era redundante con los tonos predefinidos.
 
 **Archivos modificados:**
+
 1. **src/services/roastPromptTemplate.js**
    - Eliminado mapeo de `intensity_level` en `mapUserTone()`
    - JSDoc actualizado sin `intensity_level`
@@ -110,11 +113,13 @@ Eliminado por completo el sistema de intensity level (1-5) que era redundante co
 Consolidado **Tone como único selector de agresividad** con solo 3 opciones oficiales.
 
 **Tonos oficiales:**
+
 - **Flanders**: Amable pero irónico, tono sutil (intensidad: 2/5)
 - **Balanceado**: Equilibrio entre ingenio y firmeza (intensidad: 3/5)
 - **Canalla**: Directo y sin filtros, más picante (intensidad: 4/5)
 
 **Archivos modificados:**
+
 1. **src/config/constants.js**
    - `TONE_MAP` con tonos oficiales + legacy por compatibilidad
 
@@ -140,6 +145,7 @@ Consolidado **Tone como único selector de agresividad** con solo 3 opciones ofi
 Custom Style Prompt ahora está desactivado por defecto y gateado por feature flag.
 
 **Archivos modificados:**
+
 1. **src/config/flags.js**
    - `ENABLE_CUSTOM_PROMPT` con comentario actualizado (Issue #868)
    - Default: FALSE en producción
@@ -152,6 +158,7 @@ Custom Style Prompt ahora está desactivado por defecto y gateado por feature fl
    - Ya validaba flag correctamente (sin cambios adicionales)
 
 **Reglas:**
+
 - ✅ Solo accesible si `ENABLE_CUSTOM_PROMPT = true`
 - ✅ Solo para plan Plus
 - ✅ NO aparece en UI por defecto
@@ -162,6 +169,7 @@ Custom Style Prompt ahora está desactivado por defecto y gateado por feature fl
 ## 📊 Archivos Modificados
 
 ### Backend (14 archivos)
+
 ```
 src/config/constants.js
 src/config/validationConstants.js
@@ -176,6 +184,7 @@ src/services/twitter.js
 ```
 
 ### Documentación (4 archivos - pendientes actualizar)
+
 ```
 docs/nodes/roast.md
 docs/nodes/cost-control.md
@@ -203,11 +212,13 @@ docs/ISSUE-868-CHANGELOG.md (este archivo)
 ## 🚀 Próximos Pasos
 
 **Fase 6:** Actualizar documentación GDD
+
 - Actualizar `roast.md`: Eliminar referencias a humor_type e intensity_level
 - Actualizar `persona.md`: Sin referencias a humor_type
 - Actualizar "Agentes Relevantes" en nodos afectados
 
 **Validaciones:**
+
 - Tests: Actualizar tests que usan `humor_type` o `intensity_level`
 - GDD: Validar health score ≥87, drift <60
 - CodeRabbit: 0 comentarios pendientes
@@ -218,4 +229,3 @@ docs/ISSUE-868-CHANGELOG.md (este archivo)
 **Issue:** #868
 **PR:** (pendiente crear)
 **Revisado:** 2025-11-18
-

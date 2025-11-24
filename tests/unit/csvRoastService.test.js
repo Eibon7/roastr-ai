@@ -51,7 +51,7 @@ describe('CsvRoastService', () => {
       process.env.DEBUG = 'true';
       const debugService = new CsvRoastService();
       expect(debugService.debug).toBe(true);
-      
+
       process.env.DEBUG = 'false';
       const noDebugService = new CsvRoastService();
       expect(noDebugService.debug).toBe(false);
@@ -76,7 +76,7 @@ describe('CsvRoastService', () => {
       mockFs.access.mockRejectedValue(new Error('File not found'));
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
-      
+
       const mockCsvContent = 'comment,roast\n"test","test roast"';
       Papa.unparse.mockReturnValue(mockCsvContent);
 
@@ -85,11 +85,7 @@ describe('CsvRoastService', () => {
 
       // Assert
       expect(mockFs.mkdir).toHaveBeenCalled();
-      expect(mockFs.writeFile).toHaveBeenCalledWith(
-        csvService.csvFilePath, 
-        mockCsvContent, 
-        'utf8'
-      );
+      expect(mockFs.writeFile).toHaveBeenCalledWith(csvService.csvFilePath, mockCsvContent, 'utf8');
     });
   });
 
@@ -111,13 +107,11 @@ describe('CsvRoastService', () => {
     test('debe cargar datos del CSV si cache expiró', async () => {
       // Arrange
       const mockCsvContent = 'comment,roast\n"test comment","test roast"';
-      const mockParsedData = [
-        { comment: 'test comment', roast: 'test roast' }
-      ];
+      const mockParsedData = [{ comment: 'test comment', roast: 'test roast' }];
 
       // Force cache expiry
       csvService.lastLoadTime = 0;
-      
+
       jest.spyOn(csvService, 'ensureCsvExists').mockResolvedValue(undefined);
       mockFs.readFile.mockResolvedValue(mockCsvContent);
       Papa.parse.mockReturnValue({
@@ -149,7 +143,7 @@ describe('CsvRoastService', () => {
 
       // Force cache expiry
       csvService.lastLoadTime = 0;
-      
+
       jest.spyOn(csvService, 'ensureCsvExists').mockResolvedValue(undefined);
       mockFs.readFile.mockResolvedValue('mock csv');
       Papa.parse.mockReturnValue({
@@ -169,7 +163,7 @@ describe('CsvRoastService', () => {
     test('debe manejar errores de parsing del CSV', async () => {
       // Arrange
       csvService.lastLoadTime = 0; // Force reload
-      
+
       jest.spyOn(csvService, 'ensureCsvExists').mockResolvedValue(undefined);
       mockFs.readFile.mockResolvedValue('invalid csv');
       Papa.parse.mockReturnValue({
@@ -183,12 +177,10 @@ describe('CsvRoastService', () => {
 
     test('debe validar columnas requeridas', async () => {
       // Arrange
-      const mockParsedData = [
-        { comment: 'test', wrongColumn: 'missing roast column' }
-      ];
+      const mockParsedData = [{ comment: 'test', wrongColumn: 'missing roast column' }];
 
       csvService.lastLoadTime = 0; // Force reload
-      
+
       jest.spyOn(csvService, 'ensureCsvExists').mockResolvedValue(undefined);
       mockFs.readFile.mockResolvedValue('mock csv');
       Papa.parse.mockReturnValue({
@@ -217,7 +209,9 @@ describe('CsvRoastService', () => {
       const result = await csvService.findBestRoast(exactComment);
 
       // Assert
-      expect(result).toBe('¿Aburrido? Tu comentario tiene menos chispa que una bombilla fundida 💡');
+      expect(result).toBe(
+        '¿Aburrido? Tu comentario tiene menos chispa que una bombilla fundida 💡'
+      );
     });
 
     test('debe encontrar coincidencia por palabras clave', async () => {
@@ -228,7 +222,9 @@ describe('CsvRoastService', () => {
       const result = await csvService.findBestRoast(similarComment);
 
       // Assert
-      expect(result).toBe('Tu crítica cinematográfica tiene la profundidad de un charco después de la lluvia 🎬');
+      expect(result).toBe(
+        'Tu crítica cinematográfica tiene la profundidad de un charco después de la lluvia 🎬'
+      );
     });
 
     test('debe devolver roast aleatorio si no hay coincidencias', async () => {
@@ -264,11 +260,11 @@ describe('CsvRoastService', () => {
       // Arrange
       const mockData = getMockCsvData();
       csvService.roasts = mockData; // Set directly instead of mocking loadRoasts
-      
+
       const newComment = 'New comment';
       const newRoast = 'New roast';
       const mockCsvLine = '"New comment","New roast"';
-      
+
       Papa.unparse.mockReturnValue(mockCsvLine);
       mockFs.appendFile.mockResolvedValue(undefined);
 
@@ -332,8 +328,8 @@ describe('CsvRoastService', () => {
       // Arrange
       const mockData = getMockCsvData();
       csvService.roasts = mockData;
-      csvService.lastLoadTime = Date.now() - (6 * 60 * 1000); // 6 minutos atrás (expirado)
-      
+      csvService.lastLoadTime = Date.now() - 6 * 60 * 1000; // 6 minutos atrás (expirado)
+
       jest.spyOn(csvService, 'ensureCsvExists').mockResolvedValue(undefined);
       mockFs.readFile.mockResolvedValue('comment,roast\n"new","new"');
       Papa.parse.mockReturnValue({

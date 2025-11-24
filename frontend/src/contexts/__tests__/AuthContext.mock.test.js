@@ -12,7 +12,7 @@ import { AuthProvider, useAuth } from '../AuthContext';
 const originalEnv = process.env;
 
 beforeAll(() => {
-  process.env = { 
+  process.env = {
     ...originalEnv,
     NODE_ENV: 'test'
   };
@@ -29,39 +29,30 @@ const localStorageMock = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
-  clear: jest.fn(),
+  clear: jest.fn()
 };
 global.localStorage = localStorageMock;
 
 // Test component to access auth context
 const TestComponent = () => {
   const { user, session, userData, mockMode, signIn, signUp, signOut } = useAuth();
-  
+
   return (
     <div>
       <div data-testid="mock-mode">{mockMode ? 'true' : 'false'}</div>
       <div data-testid="user-email">{user?.email || 'no-user'}</div>
       <div data-testid="session-status">{session ? 'authenticated' : 'unauthenticated'}</div>
       <div data-testid="user-data">{userData?.name || 'no-user-data'}</div>
-      
-      <button 
-        onClick={() => signIn('test@example.com', 'password')}
-        data-testid="sign-in-btn"
-      >
+
+      <button onClick={() => signIn('test@example.com', 'password')} data-testid="sign-in-btn">
         Sign In
       </button>
-      
-      <button 
-        onClick={() => signUp('newuser@example.com', 'password')}
-        data-testid="sign-up-btn"
-      >
+
+      <button onClick={() => signUp('newuser@example.com', 'password')} data-testid="sign-up-btn">
         Sign Up
       </button>
-      
-      <button 
-        onClick={signOut}
-        data-testid="sign-out-btn"
-      >
+
+      <button onClick={signOut} data-testid="sign-out-btn">
         Sign Out
       </button>
     </div>
@@ -81,14 +72,14 @@ describe('AuthContext - Mock Mode', () => {
     localStorageMock.getItem.mockClear();
     localStorageMock.setItem.mockClear();
     localStorageMock.removeItem.mockClear();
-    
+
     // Default to no stored session
     localStorageMock.getItem.mockReturnValue(null);
   });
 
   test('initializes with mock mode enabled', async () => {
     renderWithAuth();
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('mock-mode')).toHaveTextContent('true');
     });
@@ -96,7 +87,7 @@ describe('AuthContext - Mock Mode', () => {
 
   test('starts with no authenticated user', async () => {
     renderWithAuth();
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('user-email')).toHaveTextContent('no-user');
       expect(screen.getByTestId('session-status')).toHaveTextContent('unauthenticated');
@@ -109,7 +100,7 @@ describe('AuthContext - Mock Mode', () => {
       access_token: 'stored-token',
       expires_at: Date.now() + 3600000 // 1 hour from now
     };
-    
+
     const mockStoredUser = {
       id: 'stored-user',
       email: 'stored@example.com',
@@ -127,7 +118,7 @@ describe('AuthContext - Mock Mode', () => {
     });
 
     renderWithAuth();
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('user-email')).toHaveTextContent('stored@example.com');
       expect(screen.getByTestId('session-status')).toHaveTextContent('authenticated');
@@ -149,7 +140,7 @@ describe('AuthContext - Mock Mode', () => {
     });
 
     renderWithAuth();
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('user-email')).toHaveTextContent('no-user');
       expect(screen.getByTestId('session-status')).toHaveTextContent('unauthenticated');
@@ -160,19 +151,19 @@ describe('AuthContext - Mock Mode', () => {
     test('signIn creates mock session and user', async () => {
       const user = userEvent.setup();
       renderWithAuth();
-      
+
       await act(async () => {
         await user.click(screen.getByTestId('sign-in-btn'));
       });
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('user-email')).toHaveTextContent('test@example.com');
         expect(screen.getByTestId('session-status')).toHaveTextContent('authenticated');
       });
-      
+
       // Verify localStorage was called to store session
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        'mock_supabase_session', 
+        'mock_supabase_session',
         expect.stringContaining('test@example.com')
       );
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
@@ -184,11 +175,11 @@ describe('AuthContext - Mock Mode', () => {
     test('signUp creates mock user and session', async () => {
       const user = userEvent.setup();
       renderWithAuth();
-      
+
       await act(async () => {
         await user.click(screen.getByTestId('sign-up-btn'));
       });
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('user-email')).toHaveTextContent('newuser@example.com');
         expect(screen.getByTestId('session-status')).toHaveTextContent('authenticated');
@@ -197,28 +188,28 @@ describe('AuthContext - Mock Mode', () => {
 
     test('signOut clears user and session', async () => {
       const user = userEvent.setup();
-      
+
       // First sign in
       renderWithAuth();
-      
+
       await act(async () => {
         await user.click(screen.getByTestId('sign-in-btn'));
       });
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('session-status')).toHaveTextContent('authenticated');
       });
-      
+
       // Then sign out
       await act(async () => {
         await user.click(screen.getByTestId('sign-out-btn'));
       });
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('user-email')).toHaveTextContent('no-user');
         expect(screen.getByTestId('session-status')).toHaveTextContent('unauthenticated');
       });
-      
+
       // Verify localStorage was cleared
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('mock_supabase_session');
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('mock_supabase_user');
@@ -229,11 +220,11 @@ describe('AuthContext - Mock Mode', () => {
     test('loads user data after authentication', async () => {
       const user = userEvent.setup();
       renderWithAuth();
-      
+
       await act(async () => {
         await user.click(screen.getByTestId('sign-in-btn'));
       });
-      
+
       await waitFor(() => {
         // In mock mode, userData should be populated with mock data
         expect(screen.getByTestId('user-data')).not.toHaveTextContent('no-user-data');
@@ -247,10 +238,10 @@ describe('AuthContext - Mock Mode', () => {
       localStorageMock.getItem.mockImplementation(() => {
         throw new Error('LocalStorage error');
       });
-      
+
       // Should not crash the app
       expect(() => renderWithAuth()).not.toThrow();
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('mock-mode')).toHaveTextContent('true');
       });
@@ -258,9 +249,9 @@ describe('AuthContext - Mock Mode', () => {
 
     test('handles invalid JSON in localStorage', async () => {
       localStorageMock.getItem.mockReturnValue('invalid-json');
-      
+
       expect(() => renderWithAuth()).not.toThrow();
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('user-email')).toHaveTextContent('no-user');
       });

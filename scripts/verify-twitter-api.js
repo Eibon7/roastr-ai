@@ -23,11 +23,11 @@ async function verifyTwitter() {
     'TWITTER_ACCESS_SECRET'
   ];
 
-  const missing = requiredVars.filter(key => !process.env[key]);
+  const missing = requiredVars.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
     logger.error('❌ ERROR: Missing required environment variables:\n');
-    missing.forEach(varName => {
+    missing.forEach((varName) => {
       logger.error(`   - ${varName}`);
     });
     logger.error('\n💡 How to get Twitter API credentials:\n');
@@ -58,14 +58,13 @@ async function verifyTwitter() {
       appKey: process.env.TWITTER_APP_KEY,
       appSecret: process.env.TWITTER_APP_SECRET,
       accessToken: process.env.TWITTER_ACCESS_TOKEN,
-      accessSecret: process.env.TWITTER_ACCESS_SECRET,
+      accessSecret: process.env.TWITTER_ACCESS_SECRET
     });
 
     // OAuth 2.0 client (for reading)
     bearerClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
 
     logger.info('✅ Twitter API clients initialized\n');
-
   } catch (error) {
     logger.error('❌ ERROR: Failed to initialize Twitter clients');
     logger.error('   Message:', error.message);
@@ -136,7 +135,8 @@ async function verifyTwitter() {
     logger.info('🔍 Test 4: Verifying write permissions...');
 
     // We don't actually post a test tweet, just verify the client is configured for write access
-    const hasWriteAccess = !!process.env.TWITTER_ACCESS_TOKEN && !!process.env.TWITTER_ACCESS_SECRET;
+    const hasWriteAccess =
+      !!process.env.TWITTER_ACCESS_TOKEN && !!process.env.TWITTER_ACCESS_SECRET;
 
     if (hasWriteAccess) {
       logger.info('✅ Write permissions configured (OAuth 1.0a)');
@@ -168,7 +168,6 @@ async function verifyTwitter() {
     logger.info('   - No streaming access\n');
 
     logger.info('🎉 Twitter API verification complete!\n');
-
   } catch (error) {
     logger.error('\n❌ ERROR during verification:');
 
@@ -181,7 +180,7 @@ async function verifyTwitter() {
       logger.error('\n💡 Solution:');
       logger.error('   1. Verify your credentials are correct');
       logger.error('   2. Check that your Twitter app has proper permissions');
-      logger.error('   3. Make sure tokens haven\'t been revoked');
+      logger.error("   3. Make sure tokens haven't been revoked");
       logger.error('   4. Regenerate tokens if necessary\n');
     } else if (status === 403) {
       logger.error('   Status: 403 Forbidden');
@@ -212,7 +211,7 @@ async function verifyTwitter() {
 }
 
 // Run verification
-verifyTwitter().catch(error => {
+verifyTwitter().catch((error) => {
   logger.error('\n❌ Unexpected error:', error.message);
   process.exit(1);
 });

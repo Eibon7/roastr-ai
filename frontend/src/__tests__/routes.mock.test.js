@@ -10,7 +10,7 @@ const originalEnv = process.env;
 
 beforeAll(() => {
   // Force mock mode by removing Supabase environment variables
-  process.env = { 
+  process.env = {
     ...originalEnv,
     NODE_ENV: 'test'
   };

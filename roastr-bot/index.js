@@ -2,9 +2,9 @@
 
 /**
  * Roastr.ai Twitter Bot - Main Entry Point
- * 
+ *
  * This bot monitors Twitter mentions and automatically responds with AI-generated roasts.
- * 
+ *
  * Features:
  * - Real-time mention monitoring
  * - AI-powered roast generation via Roastr.ai API
@@ -12,10 +12,10 @@
  * - Debug mode support
  * - Dry run mode for testing
  * - Future-ready for multi-account support
- * 
+ *
  * Usage:
  *   node index.js
- * 
+ *
  * Environment Variables:
  *   DEBUG=true|false - Enable/disable debug logging
  *   DRY_RUN=true|false - Enable dry run mode (no actual tweets)
@@ -34,7 +34,7 @@ class RoastrBot {
     this.pollInterval = null;
     this.twitterService = null;
     this.roastService = null;
-    
+
     // Configuration from environment
     this.config = {
       pollIntervalMs: parseInt(process.env.MENTION_POLL_INTERVAL_MS) || 30000,
@@ -103,7 +103,7 @@ class RoastrBot {
       }
 
       logger.info('🚀 Iniciando Roastr.ai Twitter Bot...');
-      
+
       if (this.config.isDryRun) {
         logger.info('🧪 MODO DRY RUN ACTIVADO - No se enviarán tweets reales');
       }
@@ -132,9 +132,9 @@ class RoastrBot {
       }
 
       logger.info('🛑 Deteniendo bot...');
-      
+
       this.isRunning = false;
-      
+
       if (this.pollInterval) {
         clearInterval(this.pollInterval);
         this.pollInterval = null;
@@ -178,7 +178,7 @@ class RoastrBot {
 
       // Get mentions from Twitter
       const mentions = await this.twitterService.getMentions();
-      
+
       if (mentions.length === 0) {
         logger.debug('📭 No hay nuevas menciones');
         return;
@@ -186,7 +186,7 @@ class RoastrBot {
 
       // Filter mentions that should be processed
       const filteredMentions = this.twitterService.filterMentions(mentions);
-      
+
       if (filteredMentions.length === 0) {
         logger.debug('🚫 No hay menciones válidas para procesar');
         return;
@@ -198,7 +198,7 @@ class RoastrBot {
       for (const mention of filteredMentions) {
         try {
           await this._processMention(mention);
-          
+
           // Add delay between processing to avoid rate limits
           await this._sleep(2000);
         } catch (error) {
@@ -223,7 +223,7 @@ class RoastrBot {
 
       // Process the mention to extract clean text
       const processedMention = this.twitterService.processMention(mention);
-      
+
       if (!processedMention.cleanText || processedMention.cleanText.length < 3) {
         logger.debug(`⏭️ Mención ${mention.id} no tiene suficiente contenido para roast`);
         return;
@@ -274,7 +274,7 @@ class RoastrBot {
   async _setupGracefulShutdown() {
     const shutdown = async (signal) => {
       logger.info(`📡 Received ${signal}, shutting down gracefully...`);
-      
+
       try {
         await this.stop();
         process.exit(0);
@@ -286,7 +286,7 @@ class RoastrBot {
 
     process.on('SIGINT', () => shutdown('SIGINT'));
     process.on('SIGTERM', () => shutdown('SIGTERM'));
-    
+
     // Handle uncaught exceptions
     process.on('uncaughtException', (error) => {
       logger.error('❌ Uncaught Exception:', error);
@@ -306,7 +306,7 @@ class RoastrBot {
    * @private
    */
   _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
@@ -317,7 +317,7 @@ async function main() {
   try {
     // Create bot instance
     const bot = new RoastrBot();
-    
+
     // Setup graceful shutdown
     await bot._setupGracefulShutdown();
 
@@ -338,7 +338,6 @@ async function main() {
         });
       }
     }, 300000); // Every 5 minutes
-
   } catch (error) {
     logger.error('❌ Fatal error:', error.message);
     process.exit(1);
@@ -350,7 +349,7 @@ module.exports = RoastrBot;
 
 // Run if this file is executed directly
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     logger.error('❌ Startup failed:', error.message);
     process.exit(1);
   });

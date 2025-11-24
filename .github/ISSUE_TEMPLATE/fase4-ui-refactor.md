@@ -1,7 +1,7 @@
 ---
-name: "Fase 4: Migración UI - PlanPicker + Pricing + StyleProfile + Accounts + Shop + CheckoutSuccess"
+name: 'Fase 4: Migración UI - PlanPicker + Pricing + StyleProfile + Accounts + Shop + CheckoutSuccess'
 about: Migrar 6 pantallas de e-commerce y onboarding a shadcn/ui (cierra Epic #846)
-title: "feat(ui): Fase 4 - Migrar PlanPicker, Pricing, StyleProfile, Accounts, Shop, CheckoutSuccess a shadcn/ui"
+title: 'feat(ui): Fase 4 - Migrar PlanPicker, Pricing, StyleProfile, Accounts, Shop, CheckoutSuccess a shadcn/ui'
 labels: ui, frontend, refactor, enhancement, area:ui, area:billing
 assignees: ''
 ---
@@ -124,4 +124,3 @@ Al cerrar esta issue, el Epic #846 se completa:
 
 🎯 RESULTADO: 100% de la interfaz de Roastr migrada a shadcn/ui
 ```
-

@@ -89,6 +89,7 @@ git commit -m "feat: mi feature"
 ```
 
 **Si encuentra issues:**
+
 - Hook muestra sugerencias
 - Commit continúa (no bloquea)
 - DEBES fixear antes de push
@@ -96,12 +97,12 @@ git commit -m "feat: mi feature"
 
 ### Comandos Disponibles
 
-| Comando | Uso | Cuándo |
-|---------|-----|--------|
-| `npm run coderabbit:review` | Review detallado completo | Pre-PR, análisis profundo |
-| `npm run coderabbit:review:quick` | Review rápido | Verificación rápida |
-| `npm run coderabbit:auth` | Estado autenticación | Troubleshooting |
-| Pre-commit hook | Automático | Cada commit |
+| Comando                           | Uso                       | Cuándo                    |
+| --------------------------------- | ------------------------- | ------------------------- |
+| `npm run coderabbit:review`       | Review detallado completo | Pre-PR, análisis profundo |
+| `npm run coderabbit:review:quick` | Review rápido             | Verificación rápida       |
+| `npm run coderabbit:auth`         | Estado autenticación      | Troubleshooting           |
+| Pre-commit hook                   | Automático                | Cada commit               |
 
 ### Workflow Automático
 
@@ -138,6 +139,7 @@ git push
 ### Back-end Dev Agent
 
 **Antes de completar tarea:**
+
 1. Ejecutar pre-flight checklist completo
 2. Correr tests localmente
 3. **CodeRabbit review automático en cada commit** (hook)
@@ -179,6 +181,7 @@ Después de crear PR, **SIEMPRE** ejecutar este ciclo hasta cumplir 100%:
 ### Test Engineer Agent
 
 **Estándar de calidad para tests:**
+
 - Coverage mínimo: 80% para código nuevo
 - Tests deben ser deterministas (0% flaky)
 - Nombres descriptivos: `should [expected behavior] when [condition]`
@@ -187,6 +190,7 @@ Después de crear PR, **SIEMPRE** ejecutar este ciclo hasta cumplir 100%:
 - Evidencias visuales para UI (screenshots en docs/test-evidence/)
 
 **Antes de marcar tests como completos:**
+
 1. Todos los tests passing
 2. Coverage report generado
 3. Evidencias guardadas si aplica
@@ -195,6 +199,7 @@ Después de crear PR, **SIEMPRE** ejecutar este ciclo hasta cumplir 100%:
 ### Front-end Dev Agent
 
 **Estándar adicional UI:**
+
 - Playwright validation con screenshots
 - Responsive en mobile/tablet/desktop
 - Accesibilidad básica (ARIA labels, keyboard nav)
@@ -204,6 +209,7 @@ Después de crear PR, **SIEMPRE** ejecutar este ciclo hasta cumplir 100%:
 ### Task Assessor Agent
 
 **Antes de recomendar CREATE:**
+
 1. Cross-check con docs/nodes/ OBLIGATORIO
 2. Verificar system-map.yaml
 3. Buscar implementaciones parciales
@@ -213,6 +219,7 @@ Después de crear PR, **SIEMPRE** ejecutar este ciclo hasta cumplir 100%:
 ### UX Researcher Agent
 
 **Estándar de investigación:**
+
 - Conclusiones basadas en datos, no opiniones
 - Referencias a spec.md o investigación externa
 - Propuestas con trade-offs claros
@@ -281,6 +288,7 @@ Después de crear PR, **SIEMPRE** ejecutar este ciclo hasta cumplir 100%:
 ### Para Claude Code (Orquestador)
 
 **Antes de crear PR:**
+
 - "¿Estaría orgulloso de mostrar este código en una entrevista?"
 - "¿Pagaría por software con esta calidad?"
 - "¿CodeRabbit encontrará algo que mejorar?"
@@ -290,6 +298,7 @@ Después de crear PR, **SIEMPRE** ejecutar este ciclo hasta cumplir 100%:
 ### Para Desarrolladores Humanos
 
 **Este estándar aplica igual:**
+
 - Mismo pre-flight checklist
 - Mismo requisito de 0 comentarios
 - Mismo nivel de profesionalismo
@@ -309,6 +318,7 @@ Después de crear PR, **SIEMPRE** ejecutar este ciclo hasta cumplir 100%:
 ### Review Mensual
 
 Último día de cada mes:
+
 1. Revisar métricas vs objetivos
 2. Identificar patrones de comentarios CodeRabbit
 3. Actualizar checklist si es necesario

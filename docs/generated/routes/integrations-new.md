@@ -9,17 +9,20 @@
 #### GET /api/integrations/platforms
 
 Tests:
+
 - ✓ should return all supported platforms
 
 #### GET /api/integrations/status
 
 Tests:
+
 - ✓ should require authentication
 - ✓ should return empty status for new user
 
 #### POST /api/integrations/connect
 
 Tests:
+
 - ✓ should require authentication
 - ✓ should require platform parameter
 - ✓ should reject unsupported platform
@@ -29,6 +32,7 @@ Tests:
 #### POST /api/integrations/import
 
 Tests:
+
 - ✓ should require authentication
 - ✓ should require platform parameter
 - ✓ should require platform to be connected first
@@ -38,6 +42,7 @@ Tests:
 #### GET /api/integrations/import/status/:platform
 
 Tests:
+
 - ✓ should require authentication
 - ✓ should reject unsupported platform
 - ✓ should return import status for connected platform
@@ -45,6 +50,7 @@ Tests:
 #### POST /api/integrations/disconnect
 
 Tests:
+
 - ✓ should require authentication
 - ✓ should require platform parameter
 - ✓ should fail for not connected platform
@@ -53,5 +59,5 @@ Tests:
 #### Integration flow testing
 
 Tests:
-- ✓ should handle complete connect-import-disconnect flow
 
+- ✓ should handle complete connect-import-disconnect flow

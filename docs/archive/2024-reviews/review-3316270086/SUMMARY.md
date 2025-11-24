@@ -12,6 +12,7 @@
 Successfully fixed logic flaw in coverage validation that was treating missing coverage data as successful validation.
 
 **Results:**
+
 - ✅ 1 P1 (Major) issue fixed (100%)
 - ✅ Missing coverage data now detected and reported
 - ✅ False positives eliminated
@@ -30,6 +31,7 @@ Successfully fixed logic flaw in coverage validation that was treating missing c
 
 **Problem:**
 The validation logic incremented `validated` count and reported success even when:
+
 - `coverage-summary.json` was missing or incomplete
 - A node wasn't mapped in `system-map.yaml`
 - Node files were excluded from Jest coverage
@@ -39,6 +41,7 @@ This created false confidence that coverage integrity was validated when data wa
 **Root Cause:**
 
 **Original Code (lines 560-573):**
+
 ```javascript
 validated++;
 
@@ -57,6 +60,7 @@ if (!validation.valid && validation.actual !== null) {
 ```
 
 **Problem Analysis:**
+
 1. `validated++` incremented regardless of data availability
 2. Condition `!validation.valid && validation.actual !== null` only caught coverage mismatches
 3. When `validation.valid === true` and `validation.actual === null` (missing data), **nothing was recorded**
@@ -67,6 +71,7 @@ if (!validation.valid && validation.actual !== null) {
 ## Fix Implemented
 
 **Modified Code (lines 560-598):**
+
 ```javascript
 validated++;
 
@@ -95,7 +100,9 @@ if (validation.actual === null) {
 }
 
 // Summary reporting
-const missingDataCount = this.results.coverage_integrity.filter(v => v.type === 'missing_coverage_data').length;
+const missingDataCount = this.results.coverage_integrity.filter(
+  (v) => v.type === 'missing_coverage_data'
+).length;
 
 if (violations === 0 && missingDataCount === 0) {
   this.log(`   ✅ ${validated} nodes validated, all authentic`, 'success');
@@ -104,11 +111,15 @@ if (violations === 0 && missingDataCount === 0) {
 } else if (violations === 0 && missingDataCount > 0) {
   this.log(`   ⚠️  ${missingDataCount}/${validated} nodes missing coverage data`, 'warning');
 } else {
-  this.log(`   ⚠️  ${violations} mismatches, ${missingDataCount} missing data (${validated} total)`, 'warning');
+  this.log(
+    `   ⚠️  ${violations} mismatches, ${missingDataCount} missing data (${validated} total)`,
+    'warning'
+  );
 }
 ```
 
 **Key Changes:**
+
 1. ✅ **Explicit check for missing data:** `if (validation.actual === null)`
 2. ✅ **New violation type:** `missing_coverage_data` with severity: warning
 3. ✅ **Clear messaging:** Distinguishes missing data from coverage mismatches
@@ -123,18 +134,21 @@ if (violations === 0 && missingDataCount === 0) {
 **Scenario:** Nodes are mapped in `system-map.yaml`, but coverage data cannot be resolved from `coverage-summary.json`
 
 **Before Fix:**
+
 ```
 🔢 Validating coverage authenticity...
    ✅ 13 nodes validated, all authentic
 ```
 
 **After Fix:**
+
 ```
 🔢 Validating coverage authenticity...
    ⚠️  13/13 nodes missing coverage data
 ```
 
 **gdd-status.json (After):**
+
 ```json
 {
   "coverage_integrity": [
@@ -161,6 +175,7 @@ if (violations === 0 && missingDataCount === 0) {
 ```
 
 **Validation:**
+
 - ✅ Missing data is now detected and logged
 - ✅ `coverage_integrity` array contains 13 warnings
 - ✅ Overall status is "warning" (not "healthy")
@@ -173,6 +188,7 @@ if (violations === 0 && missingDataCount === 0) {
 **Scenario:** When coverage data IS available and authentic
 
 **Expected Behavior:**
+
 ```
 🔢 Validating coverage authenticity...
    ✅ 13 nodes validated, all authentic
@@ -181,6 +197,7 @@ if (violations === 0 && missingDataCount === 0) {
 **Status:** Would pass if coverage data were available and matched
 
 **Validation:**
+
 - ✅ Original "all authentic" message preserved for valid scenarios
 - ✅ No false positives introduced
 - ✅ Backward compatible with Phase 15.1 intent
@@ -192,12 +209,14 @@ if (violations === 0 && missingDataCount === 0) {
 **Scenario:** Coverage data available but declared != actual (diff > 3%)
 
 **Expected Behavior:**
+
 ```
 🔢 Validating coverage authenticity...
    ⚠️  2/13 coverage mismatches detected
 ```
 
 **Validation:**
+
 - ✅ Original mismatch detection logic preserved
 - ✅ Still reports violations for coverage integrity violations
 - ✅ No regression in existing functionality
@@ -209,12 +228,14 @@ if (violations === 0 && missingDataCount === 0) {
 **Scenario:** Some nodes have missing data, others have mismatches
 
 **Expected Behavior:**
+
 ```
 🔢 Validating coverage authenticity...
    ⚠️  2 mismatches, 5 missing data (13 total)
 ```
 
 **Validation:**
+
 - ✅ Comprehensive reporting of both issue types
 - ✅ Clear distinction between problems
 - ✅ Accurate count for each category
@@ -225,28 +246,28 @@ if (violations === 0 && missingDataCount === 0) {
 
 ### Before Fix (False Positive)
 
-| Scenario | Validator Output | CI/CD Result | Problem |
-|----------|------------------|--------------|---------|
-| Missing `coverage-summary.json` | ✅ All authentic | ✅ Pass | ❌ False positive |
-| Unmapped node in `system-map.yaml` | ✅ All authentic | ✅ Pass | ❌ False positive |
-| Files excluded from coverage | ✅ All authentic | ✅ Pass | ❌ False positive |
-| Coverage mismatch (diff > 3%) | ⚠️ Mismatch | ⚠️ Warning | ✅ Correct |
+| Scenario                           | Validator Output | CI/CD Result | Problem           |
+| ---------------------------------- | ---------------- | ------------ | ----------------- |
+| Missing `coverage-summary.json`    | ✅ All authentic | ✅ Pass      | ❌ False positive |
+| Unmapped node in `system-map.yaml` | ✅ All authentic | ✅ Pass      | ❌ False positive |
+| Files excluded from coverage       | ✅ All authentic | ✅ Pass      | ❌ False positive |
+| Coverage mismatch (diff > 3%)      | ⚠️ Mismatch      | ⚠️ Warning   | ✅ Correct        |
 
 ### After Fix (Correct Behavior)
 
-| Scenario | Validator Output | CI/CD Result | Status |
-|----------|------------------|--------------|--------|
-| Missing `coverage-summary.json` | ⚠️ Missing data | ⚠️ Warning | ✅ Correct |
-| Unmapped node in `system-map.yaml` | ⚠️ Missing data | ⚠️ Warning | ✅ Correct |
-| Files excluded from coverage | ⚠️ Missing data | ⚠️ Warning | ✅ Correct |
-| Coverage mismatch (diff > 3%) | ⚠️ Mismatch | ⚠️ Warning | ✅ Correct |
+| Scenario                           | Validator Output | CI/CD Result | Status     |
+| ---------------------------------- | ---------------- | ------------ | ---------- |
+| Missing `coverage-summary.json`    | ⚠️ Missing data  | ⚠️ Warning   | ✅ Correct |
+| Unmapped node in `system-map.yaml` | ⚠️ Missing data  | ⚠️ Warning   | ✅ Correct |
+| Files excluded from coverage       | ⚠️ Missing data  | ⚠️ Warning   | ✅ Correct |
+| Coverage mismatch (diff > 3%)      | ⚠️ Mismatch      | ⚠️ Warning   | ✅ Correct |
 
 ---
 
 ## Files Modified
 
-| File | Changes | Lines Modified | Impact |
-|------|---------|----------------|--------|
+| File                              | Changes           | Lines Modified   | Impact                      |
+| --------------------------------- | ----------------- | ---------------- | --------------------------- |
 | `scripts/validate-gdd-runtime.js` | Logic enhancement | 560-598 (+26/-8) | Adds missing data detection |
 
 **Total Changes:** +26 lines, -8 lines (net +18)
@@ -260,6 +281,7 @@ if (violations === 0 && missingDataCount === 0) {
 **Command:** `node scripts/validate-gdd-runtime.js --full`
 
 **Output:**
+
 ```
 🔍 Running GDD Runtime Validation...
 
@@ -287,6 +309,7 @@ if (violations === 0 && missingDataCount === 0) {
 ## Coverage Integrity Array (gdd-status.json)
 
 **Sample Entry:**
+
 ```json
 {
   "type": "missing_coverage_data",
@@ -301,6 +324,7 @@ if (violations === 0 && missingDataCount === 0) {
 **Total Entries:** 13 (all nodes with declared coverage but missing data)
 
 **Status Field:**
+
 ```json
 {
   "status": "warning"
@@ -308,6 +332,7 @@ if (violations === 0 && missingDataCount === 0) {
 ```
 
 **Validation:**
+
 - ✅ `coverage_integrity` array populated correctly
 - ✅ Type: `missing_coverage_data` (new)
 - ✅ Severity: `warning` (appropriate)
@@ -318,23 +343,27 @@ if (violations === 0 && missingDataCount === 0) {
 ## Success Criteria
 
 ### Code Quality
+
 - ✅ Fix addresses root cause (explicit check for missing data)
 - ✅ Logic is clear and maintainable (commented for future reference)
 - ✅ No false positives introduced (regression tests confirm)
 - ✅ Backward compatible (normal validation still works)
 
 ### Validation Reliability
+
 - ✅ Missing `coverage-summary.json` triggers warnings
 - ✅ Unmapped nodes trigger warnings
 - ✅ Excluded files trigger warnings
 - ✅ CI/CD now detects missing coverage data
 
 ### Testing
+
 - ✅ Test evidence captured in `validation-after.txt`
 - ✅ `gdd-status.json` shows correct violations
 - ✅ All scenarios documented and validated
 
 ### Documentation
+
 - ✅ Planning document: `docs/plan/review-3316270086.md`
 - ✅ Test evidence: `docs/test-evidence/review-3316270086/`
 - ✅ Code comments reference review ID
@@ -354,11 +383,13 @@ The logic flaw identified by Codex Review #3316270086 has been successfully fixe
 5. ✅ **No Regressions:** Normal validation and mismatch detection still work
 
 **Impact:**
+
 - **CI/CD Reliability:** Missing coverage data will no longer pass silently
 - **Phase 15.1 Intent:** Coverage integrity enforcement now works as designed
 - **False Positives:** Eliminated - validator only reports success when data is present AND valid
 
 **Next Steps:**
+
 1. Commit changes with detailed message
 2. Push to branch
 3. Verify CI/CD detects missing coverage correctly

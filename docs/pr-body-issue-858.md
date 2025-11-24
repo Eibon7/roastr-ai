@@ -27,32 +27,38 @@ Actualmente, todas las llamadas a GPT-5.1 para generación de roasts y decisione
 Hemos estructurado los prompts en tres bloques lógicos para maximizar el cache hit ratio:
 
 #### **Bloque A - Global (100% cacheable, compartido entre todos los usuarios)**
+
 - Meta-prompt de Roastr (rol del modelo, estilo general)
 - Reglas globales de humor seguro
 - Estructura esperada de la respuesta (breve, 1-3 líneas)
 - Políticas generales multi-plataforma
 
 **Características:**
+
 - 100% estático (sin IDs, fechas, contadores)
 - Mismo contenido para todos los usuarios
 - Máximo cache hit ratio compartido
 
 #### **Bloque B - Usuario (cacheable por usuario, estable hasta cambio de config)**
+
 - Persona del usuario (texto ya generado)
 - Style Profile del usuario (texto ya generado)
 - Reglas del Shield específicas del usuario (líneas rojas, sensibilidad)
 
 **Características:**
+
 - Determinista para el mismo usuario
 - Solo cambia cuando el usuario modifica su persona/estilo/configuración
 - Cacheable por usuario con alta tasa de reutilización
 
 #### **Bloque C - Dinámico (no cacheable, cambia por request)**
+
 - Comentario concreto a analizar/roastear
 - Plataforma de origen (X, Twitch, YouTube, etc.)
 - Flags específicos de esa petición (modo, parámetros de generación)
 
 **Características:**
+
 - Único por cada request
 - No cacheable (es el contenido que realmente varía)
 
@@ -91,14 +97,23 @@ Nuevo módulo que construye prompts con estructura de bloques cacheables:
 
 ```javascript
 class RoastPromptBuilder {
-  buildBlockA() { /* Global, 100% estático */ }
-  buildBlockB(options) { /* Usuario, cacheable por user */ }
-  async buildBlockC(options) { /* Dinámico, no cacheable */ }
-  async buildCompletePrompt(options) { /* Concatena A + B + C */ }
+  buildBlockA() {
+    /* Global, 100% estático */
+  }
+  buildBlockB(options) {
+    /* Usuario, cacheable por user */
+  }
+  async buildBlockC(options) {
+    /* Dinámico, no cacheable */
+  }
+  async buildCompletePrompt(options) {
+    /* Concatena A + B + C */
+  }
 }
 ```
 
 **Características:**
+
 - Separación clara de responsabilidades
 - Determinismo garantizado para bloques A y B
 - Sanitización de inputs para prevenir injection attacks
@@ -124,6 +139,7 @@ const result = await callOpenAIWithCaching(openaiClient, {
 ```
 
 **Características:**
+
 - Detección automática de disponibilidad de Responses API
 - Fallback transparente a `chat.completions` si no disponible
 - Logging automático de tokens (input/output/cached)
@@ -146,6 +162,7 @@ await aiUsageLogger.logUsage({
 ```
 
 **Métricas capturadas:**
+
 - `input_tokens`: Tokens de entrada no cacheados
 - `output_tokens`: Tokens de salida
 - `input_cached_tokens`: Tokens de entrada servidos desde cache
@@ -164,29 +181,31 @@ Migrados 4 métodos principales a usar Responses API:
 4. **`generateRoastWithPrompt()`** - Roasts con prompt personalizado
 
 **Antes:**
+
 ```javascript
 const completion = await this.openai.chat.completions.create({
   model: model,
-  messages: [{ role: "system", content: systemPrompt }],
+  messages: [{ role: 'system', content: systemPrompt }],
   max_tokens: 150,
   temperature: 0.8
 });
 ```
 
 **Después:**
+
 ```javascript
 const completePrompt = await this.promptBuilder.buildCompletePrompt({
   comment: text,
   platform: rqcConfig.platform || 'twitter',
   persona: persona,
-  tone: tone,
+  tone: tone
   // ...
 });
 
 const result = await callOpenAIWithCaching(this.openai, {
   model: model,
   input: completePrompt,
-  prompt_cache_retention: '24h',
+  prompt_cache_retention: '24h'
   // ...
 });
 ```
@@ -205,8 +224,8 @@ CREATE TABLE ai_usage_logs (
   output_tokens INTEGER NOT NULL,
   input_cached_tokens INTEGER NOT NULL,
   cache_hit_ratio NUMERIC(5, 4) GENERATED ALWAYS AS (
-    CASE 
-      WHEN (input_tokens + input_cached_tokens) > 0 
+    CASE
+      WHEN (input_tokens + input_cached_tokens) > 0
       THEN input_cached_tokens::NUMERIC / (input_tokens + input_cached_tokens)::NUMERIC
       ELSE 0
     END
@@ -218,6 +237,7 @@ CREATE TABLE ai_usage_logs (
 ```
 
 **Características:**
+
 - RLS (Row Level Security) habilitado
 - Índices optimizados para consultas comunes
 - Campo calculado `cache_hit_ratio` automático
@@ -266,6 +286,7 @@ npm test -- tests/unit/services/aiUsageLogger.test.js
 - [ ] **AC5:** Se ha comprobado en staging que el coste por 100 roasts es menor que antes del cambio (a igualdad de prompts y modelo)
 
 **Nota sobre AC5:** Este criterio requiere deployment a staging y ejecución de roasts reales para medir costes. La validación se realizará después del merge de esta PR, ya que:
+
 - Requiere que la migración SQL esté aplicada (`ai_usage_logs` table)
 - Requiere ejecutar roasts reales en staging con GPT-5.1 (o modelo que soporte Responses API)
 - Requiere comparar métricas de `ai_usage_logs` antes/después
@@ -278,7 +299,7 @@ npm test -- tests/unit/services/aiUsageLogger.test.js
 **Escenario:** Usuario Pro con 1000 roasts/mes
 
 - **Antes:** 1000 roasts × 150 tokens/prompt = 150,000 tokens input
-- **Después (con 80% cache hit):** 
+- **Después (con 80% cache hit):**
   - 200,000 tokens input (incluyendo cache)
   - 160,000 tokens cacheados (80%)
   - 40,000 tokens no cacheados (20%)
@@ -321,6 +342,7 @@ npm test -- tests/unit/services/aiUsageLogger.test.js
 ### Determinismo
 
 Los bloques A y B son **100% deterministas** para garantizar máximo cache hit:
+
 - No incluyen timestamps
 - No incluyen request IDs
 - No incluyen contadores
@@ -329,6 +351,7 @@ Los bloques A y B son **100% deterministas** para garantizar máximo cache hit:
 ### Fallback Strategy
 
 El helper detecta automáticamente:
+
 1. Si Responses API está disponible → Usa Responses API con caching
 2. Si Responses API no disponible → Fallback a chat.completions
 3. Si ambos fallan → Error manejado gracefulmente
@@ -342,12 +365,14 @@ El helper detecta automáticamente:
 ## 🚀 Deployment Checklist
 
 ### Pre-Merge
+
 - [x] Código implementado y revisado
 - [x] Tests unitarios creados
 - [ ] Ejecutar tests: `npm test -- tests/unit/lib tests/unit/services/aiUsageLogger.test.js`
 - [ ] Code review completado
 
 ### Post-Merge (Staging)
+
 - [ ] Aplicar migración SQL: `database/migrations/029_create_ai_usage_logs.sql`
 - [ ] Verificar que Responses API está disponible (o fallback funciona)
 - [ ] Deploy a staging
@@ -357,6 +382,7 @@ El helper detecta automáticamente:
 - [ ] **Validar AC5:** Coste por 100 roasts menor que antes
 
 ### Post-Merge (Production)
+
 - [ ] Deploy a producción
 - [ ] Monitorear cache hit ratios en producción
 - [ ] Validar ahorro de costes real
@@ -373,4 +399,3 @@ El helper detecta automáticamente:
 ---
 
 **Closes #858**
-

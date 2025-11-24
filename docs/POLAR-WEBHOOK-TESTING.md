@@ -15,6 +15,7 @@ npm start
 ```
 
 The script will:
+
 - ✅ Check if ngrok is installed
 - ✅ Verify the server is running
 - ✅ Expose your local webhook publicly
@@ -27,11 +28,13 @@ The script will:
 ### Step 1: Install ngrok
 
 **macOS:**
+
 ```bash
 brew install ngrok
 ```
 
 **Linux:**
+
 ```bash
 snap install ngrok
 ```
@@ -40,6 +43,7 @@ snap install ngrok
 Download from https://ngrok.com/download
 
 **Alternative - localtunnel:**
+
 ```bash
 npm install -g localtunnel
 ```
@@ -54,16 +58,19 @@ npm start
 ### Step 3: Expose Webhook Publicly
 
 **Using ngrok:**
+
 ```bash
 ngrok http 3000
 ```
 
 **Using localtunnel:**
+
 ```bash
 lt --port 3000 --subdomain roastr-polar
 ```
 
 You'll see output like:
+
 ```
 Forwarding  https://abc123.ngrok.io -> http://localhost:3000
 ```
@@ -120,6 +127,7 @@ curl -X POST http://localhost:3000/api/checkout \
 ```
 
 **Expected response:**
+
 ```json
 {
   "success": true,
@@ -138,6 +146,7 @@ curl -X POST http://localhost:3000/api/checkout \
 3. Check your backend logs for webhook events
 
 **Expected logs:**
+
 ```
 [Polar Webhook] Received event { type: 'checkout.created', id: 'evt_xxxxx' }
 [Polar Webhook] Checkout created { checkout_id: 'checkout_xxxxx', customer_email: 'test@example.com' }
@@ -173,9 +182,11 @@ curl -X POST http://localhost:3000/api/polar/webhook \
 ## Webhook Events Reference
 
 ### checkout.created
+
 Fired when a new checkout session is created.
 
 **Payload example:**
+
 ```json
 {
   "type": "checkout.created",
@@ -196,9 +207,11 @@ Fired when a new checkout session is created.
 ---
 
 ### order.created ⭐
+
 Fired when payment is confirmed. **This is the most important event.**
 
 **Payload example:**
+
 ```json
 {
   "type": "order.created",
@@ -216,6 +229,7 @@ Fired when payment is confirmed. **This is the most important event.**
 **Handler:** `handleOrderCreated()` in `/src/routes/polarWebhook.js`
 
 **Action:**
+
 1. Update user's subscription in database
 2. Activate premium features
 3. Send confirmation email
@@ -223,9 +237,11 @@ Fired when payment is confirmed. **This is the most important event.**
 ---
 
 ### subscription.created
+
 Fired when a new subscription is created.
 
 **Payload example:**
+
 ```json
 {
   "type": "subscription.created",
@@ -246,9 +262,11 @@ Fired when a new subscription is created.
 ---
 
 ### subscription.canceled
+
 Fired when a subscription is canceled.
 
 **Payload example:**
+
 ```json
 {
   "type": "subscription.canceled",
@@ -264,6 +282,7 @@ Fired when a subscription is canceled.
 **Handler:** `handleSubscriptionCanceled()` in `/src/routes/polarWebhook.js`
 
 **Action:**
+
 1. Update subscription status to 'canceled'
 2. Schedule access revocation
 3. Send cancellation email
@@ -284,7 +303,7 @@ async function handleOrderCreated(event) {
     order_id: event.data.id,
     customer_email: event.data.customer_email,
     amount: event.data.amount,
-    currency: event.data.currency,
+    currency: event.data.currency
   });
 
   // Get user by email
@@ -301,25 +320,23 @@ async function handleOrderCreated(event) {
 
   // Determine plan from price_id (you'll need to map your price IDs)
   const planMapping = {
-    'price_starter_xxxxx': 'starter',
-    'price_pro_xxxxx': 'pro',
-    'price_plus_xxxxx': 'plus',
+    price_starter_xxxxx: 'starter',
+    price_pro_xxxxx: 'pro',
+    price_plus_xxxxx: 'plus'
   };
 
   const plan = planMapping[event.data.product_price_id] || 'free';
 
   // Update user subscription
-  const { error: updateError } = await supabase
-    .from('subscriptions')
-    .upsert({
-      user_id: user.id,
-      plan: plan,
-      status: 'active',
-      polar_order_id: event.data.id,
-      amount: event.data.amount,
-      currency: event.data.currency,
-      updated_at: new Date().toISOString(),
-    });
+  const { error: updateError } = await supabase.from('subscriptions').upsert({
+    user_id: user.id,
+    plan: plan,
+    status: 'active',
+    polar_order_id: event.data.id,
+    amount: event.data.amount,
+    currency: event.data.currency,
+    updated_at: new Date().toISOString()
+  });
 
   if (updateError) {
     logger.error('[Polar Webhook] Failed to update subscription', { error: updateError });
@@ -340,12 +357,14 @@ async function handleOrderCreated(event) {
 ### Webhook not receiving events
 
 **Check:**
+
 1. ✅ ngrok is running and forwarding to port 3000
 2. ✅ Webhook URL in Polar dashboard is correct
 3. ✅ Server is running and accessible at `http://localhost:3000/health`
 4. ✅ Firewall is not blocking incoming connections
 
 **Test manually:**
+
 ```bash
 curl -X POST https://your-ngrok-url.ngrok.io/api/polar/webhook \
   -H "Content-Type: application/json" \
@@ -355,12 +374,14 @@ curl -X POST https://your-ngrok-url.ngrok.io/api/polar/webhook \
 ### Signature validation fails
 
 **Check:**
+
 1. ✅ `POLAR_WEBHOOK_SECRET` is set correctly in `.env`
 2. ✅ Secret matches the one in Polar dashboard
 3. ✅ Server was restarted after adding the secret
 
 **Temporary fix for development:**
 Comment out the secret in `.env` to skip validation:
+
 ```bash
 # POLAR_WEBHOOK_SECRET=whsec_xxxxx
 ```
@@ -368,11 +389,13 @@ Comment out the secret in `.env` to skip validation:
 ### Events not logging
 
 **Check:**
+
 1. ✅ Event type is spelled correctly
 2. ✅ Handler function is defined for the event type
 3. ✅ Logs are being written (check console output)
 
 **Enable verbose logging:**
+
 ```javascript
 // In polarWebhook.js, add at the top of the POST handler:
 console.log('[DEBUG] Raw webhook body:', rawBody);
@@ -386,6 +409,7 @@ console.log('[DEBUG] Parsed event:', event);
 When deploying to production:
 
 1. **Use your real domain** instead of ngrok:
+
    ```
    https://api.yourdomain.com/api/polar/webhook
    ```

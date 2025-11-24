@@ -1,6 +1,6 @@
 /**
  * OAuth Flow Structural Validation Tests - Issue #90
- * 
+ *
  * Simplified OAuth structure validation without requiring real endpoints.
  */
 
@@ -27,7 +27,7 @@ describe('OAuth Flow Validation - Issue #90', () => {
 
     test('should validate OAuth platforms configuration', () => {
       const platforms = ['twitter', 'youtube', 'instagram', 'facebook'];
-      platforms.forEach(platform => {
+      platforms.forEach((platform) => {
         expect(platform).toMatch(/^[a-z]+$/);
         expect(platform.length).toBeGreaterThan(3);
       });
@@ -36,9 +36,9 @@ describe('OAuth Flow Validation - Issue #90', () => {
 
   describe('Security Validation', () => {
     test('should generate secure state tokens', () => {
-      const stateToken = Math.random().toString(36).substring(2, 15) + 
-                        Math.random().toString(36).substring(2, 15);
-      
+      const stateToken =
+        Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
       expect(stateToken).toMatch(/^[a-z0-9]+$/);
       expect(stateToken.length).toBeGreaterThanOrEqual(20);
     });

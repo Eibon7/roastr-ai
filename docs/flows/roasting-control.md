@@ -12,6 +12,7 @@
 The Roasting Control flow allows users to enable or disable automatic roast generation with a simple toggle. When disabled, the system stops processing toxic comments for that user, preventing roast generation while preserving all configurations and preferences.
 
 **Key Features:**
+
 - **Real-time Toggle** - Instant enable/disable without page reload
 - **Worker Synchronization** - Background workers notified of state change
 - **Persistent State** - Setting saved to database
@@ -137,6 +138,7 @@ sequenceDiagram
 **Authentication:** Required (JWT)
 
 **Request:**
+
 ```json
 {
   "enabled": true | false
@@ -144,6 +146,7 @@ sequenceDiagram
 ```
 
 **Response (200 OK - Enabled):**
+
 ```json
 {
   "success": true,
@@ -156,6 +159,7 @@ sequenceDiagram
 ```
 
 **Response (200 OK - Disabled):**
+
 ```json
 {
   "success": true,
@@ -169,6 +173,7 @@ sequenceDiagram
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Missing or invalid `enabled` parameter
 - `401 Unauthorized` - Not authenticated
 - `500 Internal Server Error` - Database or Redis error
@@ -182,6 +187,7 @@ sequenceDiagram
 **Authentication:** Required (JWT)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -221,6 +227,7 @@ UPDATE users SET roasting_enabled = TRUE WHERE roasting_enabled IS NULL;
 **Channel:** `roasting:toggle`
 
 **Message Format:**
+
 ```json
 {
   "userId": "user-uuid",
@@ -414,7 +421,7 @@ function RoastingToggle({ initialState }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken()}`
+          Authorization: `Bearer ${getToken()}`
         },
         body: JSON.stringify({ enabled: newState })
       });
@@ -446,12 +453,7 @@ function RoastingToggle({ initialState }) {
     <div className="roasting-toggle">
       <label>
         <span>Automatic Roasting</span>
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={handleToggle}
-          disabled={loading}
-        />
+        <input type="checkbox" checked={enabled} onChange={handleToggle} disabled={loading} />
         <span className="slider"></span>
       </label>
 
@@ -536,7 +538,7 @@ class WebSocketService {
       data: { enabled, timestamp }
     });
 
-    userWs.forEach(ws => {
+    userWs.forEach((ws) => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(message);
       }
@@ -597,9 +599,7 @@ class RoastingWebSocket {
 
     // Show toast notification
     showToast(
-      enabled
-        ? 'Roasting enabled on another device'
-        : 'Roasting disabled on another device',
+      enabled ? 'Roasting enabled on another device' : 'Roasting disabled on another device',
       'info'
     );
   }
@@ -705,20 +705,14 @@ describe('Roasting Control Integration', () => {
     expect(user.roasting_enabled).toBe(false);
 
     // Verify jobs cancelled
-    const { data: jobs } = await supabase
-      .from('jobs')
-      .select('status')
-      .eq('user_id', testUser.id);
+    const { data: jobs } = await supabase.from('jobs').select('status').eq('user_id', testUser.id);
 
-    expect(jobs.every(job => job.status === 'cancelled')).toBe(true);
+    expect(jobs.every((job) => job.status === 'cancelled')).toBe(true);
   });
 
   test('worker skips jobs for disabled user', async () => {
     // Disable roasting
-    await supabase
-      .from('users')
-      .update({ roasting_enabled: false })
-      .eq('id', testUser.id);
+    await supabase.from('users').update({ roasting_enabled: false }).eq('id', testUser.id);
 
     // Create job
     const job = await createTestJob(testUser.id, 'comment-1');

@@ -1,30 +1,18 @@
 /**
  * Kill Switch Panel Component
  * Issue #294: Kill Switch global y panel de control de feature flags para administradores
- * 
+ *
  * Provides emergency kill switch controls for administrators
  */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent 
-} from '../ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
-import { 
-  AlertTriangle, 
-  Power, 
-  Shield, 
-  Clock,
-  User,
-  AlertCircle
-} from 'lucide-react';
+import { AlertTriangle, Power, Shield, Clock, User, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminApi } from '../../services/adminApi';
 
@@ -115,11 +103,11 @@ const KillSwitchPanel = () => {
     try {
       setLoading(true);
       const response = await adminApi.getFeatureFlags();
-      
+
       const killSwitchFlag = response.data.flags.find(
-        flag => flag.flag_key === 'KILL_SWITCH_AUTOPOST'
+        (flag) => flag.flag_key === 'KILL_SWITCH_AUTOPOST'
       );
-      
+
       if (killSwitchFlag) {
         setKillSwitchEnabled(killSwitchFlag.is_enabled);
         setLastUpdate(killSwitchFlag.updated_at);
@@ -143,22 +131,18 @@ const KillSwitchPanel = () => {
     try {
       setToggling(true);
       setShowConfirmDialog(false);
-      
+
       await adminApi.toggleKillSwitch(pendingState, reason);
-      
+
       setKillSwitchEnabled(pendingState);
       setLastUpdate(new Date().toISOString());
       setReason('');
-      
-      toast.success(
-        `Kill switch ${pendingState ? 'activated' : 'deactivated'} successfully`,
-        {
-          description: pendingState 
-            ? 'All autopost operations are now blocked'
-            : 'Autopost operations are now allowed'
-        }
-      );
-      
+
+      toast.success(`Kill switch ${pendingState ? 'activated' : 'deactivated'} successfully`, {
+        description: pendingState
+          ? 'All autopost operations are now blocked'
+          : 'Autopost operations are now allowed'
+      });
     } catch (error) {
       console.error('Failed to toggle kill switch:', error);
       toast.error('Failed to toggle kill switch');
@@ -193,14 +177,18 @@ const KillSwitchPanel = () => {
 
   return (
     <>
-      <Card className={`border-2 ${killSwitchEnabled ? 'border-red-500 bg-red-50' : 'border-green-500 bg-green-50'}`}>
+      <Card
+        className={`border-2 ${killSwitchEnabled ? 'border-red-500 bg-red-50' : 'border-green-500 bg-green-50'}`}
+      >
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Power className={`h-5 w-5 ${killSwitchEnabled ? 'text-red-600' : 'text-green-600'}`} />
+              <Power
+                className={`h-5 w-5 ${killSwitchEnabled ? 'text-red-600' : 'text-green-600'}`}
+              />
               Emergency Kill Switch
             </div>
-            <Badge 
+            <Badge
               variant={killSwitchEnabled ? 'destructive' : 'success'}
               className="text-sm font-semibold"
             >
@@ -213,7 +201,8 @@ const KillSwitchPanel = () => {
             <Alert className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
-                <strong>Kill switch is ACTIVE!</strong> All autopost operations are currently blocked.
+                <strong>Kill switch is ACTIVE!</strong> All autopost operations are currently
+                blocked.
               </AlertDescription>
             </Alert>
           )}
@@ -222,10 +211,9 @@ const KillSwitchPanel = () => {
             <div className="space-y-1">
               <h3 className="font-medium">Global Autopost Control</h3>
               <p className="text-sm text-gray-600">
-                {killSwitchEnabled 
+                {killSwitchEnabled
                   ? 'Autopost is completely disabled across all platforms'
-                  : 'Autopost is enabled and operating normally'
-                }
+                  : 'Autopost is enabled and operating normally'}
               </p>
             </div>
             <Switch
@@ -251,82 +239,88 @@ const KillSwitchPanel = () => {
       </Card>
 
       {/* Confirmation Dialog */}
-      {showConfirmDialog && createPortal(
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              cancelToggle();
-            }
-          }}
-        >
+      {showConfirmDialog &&
+        createPortal(
           <div
-            ref={modalRef}
-            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                cancelToggle();
+              }
+            }}
           >
-            <div className="flex items-center gap-3 mb-4">
-              <AlertCircle className={`h-6 w-6 ${pendingState ? 'text-red-600' : 'text-green-600'}`} />
-              <h3 id="modal-title" className="text-lg font-semibold">
-                {pendingState ? 'Activate Kill Switch' : 'Deactivate Kill Switch'}
-              </h3>
-            </div>
-
-            <div className="space-y-4">
-              <p id="modal-description" className="text-gray-700">
-                {pendingState
-                  ? 'This will immediately stop ALL autopost operations across all platforms and users. Use only in emergencies.'
-                  : 'This will re-enable autopost operations. Make sure the issue has been resolved.'
-                }
-              </p>
-
-              <div>
-                <label htmlFor="reason-textarea" className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason (optional)
-                </label>
-                <textarea
-                  id="reason-textarea"
-                  ref={textareaRef}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder={pendingState
-                    ? 'Why are you activating the kill switch?'
-                    : 'Why are you deactivating the kill switch?'
-                  }
-                  className="w-full p-2 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
+            <div
+              ref={modalRef}
+              className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-title"
+              aria-describedby="modal-description"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle
+                  className={`h-6 w-6 ${pendingState ? 'text-red-600' : 'text-green-600'}`}
                 />
+                <h3 id="modal-title" className="text-lg font-semibold">
+                  {pendingState ? 'Activate Kill Switch' : 'Deactivate Kill Switch'}
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                <p id="modal-description" className="text-gray-700">
+                  {pendingState
+                    ? 'This will immediately stop ALL autopost operations across all platforms and users. Use only in emergencies.'
+                    : 'This will re-enable autopost operations. Make sure the issue has been resolved.'}
+                </p>
+
+                <div>
+                  <label
+                    htmlFor="reason-textarea"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Reason (optional)
+                  </label>
+                  <textarea
+                    id="reason-textarea"
+                    ref={textareaRef}
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder={
+                      pendingState
+                        ? 'Why are you activating the kill switch?'
+                        : 'Why are you deactivating the kill switch?'
+                    }
+                    className="w-full p-2 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button
+                  ref={firstFocusableRef}
+                  onClick={cancelToggle}
+                  variant="outline"
+                  className="flex-1"
+                  tabIndex={0}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  ref={lastFocusableRef}
+                  onClick={confirmToggle}
+                  variant={pendingState ? 'destructive' : 'default'}
+                  className="flex-1"
+                  disabled={toggling}
+                  tabIndex={0}
+                >
+                  {toggling ? 'Processing...' : 'Confirm'}
+                </Button>
               </div>
             </div>
-
-            <div className="flex gap-3 mt-6">
-              <Button
-                ref={firstFocusableRef}
-                onClick={cancelToggle}
-                variant="outline"
-                className="flex-1"
-                tabIndex={0}
-              >
-                Cancel
-              </Button>
-              <Button
-                ref={lastFocusableRef}
-                onClick={confirmToggle}
-                variant={pendingState ? 'destructive' : 'default'}
-                className="flex-1"
-                disabled={toggling}
-                tabIndex={0}
-              >
-                {toggling ? 'Processing...' : 'Confirm'}
-              </Button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 };

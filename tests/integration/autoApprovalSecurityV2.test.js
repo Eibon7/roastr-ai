@@ -1,7 +1,7 @@
 /**
  * Auto-Approval Security Integration Tests V2
  * Issue #405 - CodeRabbit Round 2 Security Fixes
- * 
+ *
  * End-to-end tests for the enhanced security flow with all fixes:
  * - Toxicity validation with dynamic thresholds
  * - Organization policy with fail-closed
@@ -54,7 +54,7 @@ describe('Auto-Approval Security V2 - E2E Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock auth
     supabaseServiceClient.auth.admin.getUserById.mockResolvedValue({
       data: { user: { id: testUserId, email: 'test@example.com' } },
@@ -68,12 +68,14 @@ describe('Auto-Approval Security V2 - E2E Integration', () => {
       const mockQueries = {
         // Organization policy check
         organization_policies: {
-          data: [{
-            auto_approval_enabled: true,
-            toxicity_threshold: 0.7,
-            require_transparency: true,
-            custom_restrictions: []
-          }],
+          data: [
+            {
+              auto_approval_enabled: true,
+              toxicity_threshold: 0.7,
+              require_transparency: true,
+              custom_restrictions: []
+            }
+          ],
           error: null
         },
         // Rate limit health check
@@ -136,8 +138,9 @@ describe('Auto-Approval Security V2 - E2E Integration', () => {
           mockQuery.limit.mockResolvedValue(mockQueries.roast_approvals_health);
         } else if (table === 'roast_approvals') {
           // Rate limit counts
-          mockQuery.count.mockResolvedValueOnce(mockQueries.roast_approvals_hourly)
-                       .mockResolvedValueOnce(mockQueries.roast_approvals_daily);
+          mockQuery.count
+            .mockResolvedValueOnce(mockQueries.roast_approvals_hourly)
+            .mockResolvedValueOnce(mockQueries.roast_approvals_daily);
         } else if (table === 'comments') {
           mockQuery.single.mockResolvedValue(mockQueries.comments);
         } else if (table === 'roasts') {
@@ -236,10 +239,13 @@ describe('Auto-Approval Security V2 - E2E Integration', () => {
         if (table === 'organization_policies') {
           return {
             select: jest.fn().mockReturnThis(),
-            eq: jest.fn(() => new Promise((resolve) => {
-              // Never resolve - simulate timeout
-              setTimeout(() => resolve({ data: null, error: { message: 'Timeout' } }), 10000);
-            }))
+            eq: jest.fn(
+              () =>
+                new Promise((resolve) => {
+                  // Never resolve - simulate timeout
+                  setTimeout(() => resolve({ data: null, error: { message: 'Timeout' } }), 10000);
+                })
+            )
           };
         }
         return mockSuccessfulQuery();
@@ -356,10 +362,12 @@ describe('Auto-Approval Security V2 - E2E Integration', () => {
     test('should fail when transparency is not applied for auto-publish', async () => {
       const mockQueries = {
         organization_policies: {
-          data: [{ 
-            auto_approval_enabled: true,
-            require_transparency: true 
-          }],
+          data: [
+            {
+              auto_approval_enabled: true,
+              require_transparency: true
+            }
+          ],
           error: null
         },
         roasts: {
@@ -399,7 +407,7 @@ describe('Auto-Approval Security V2 - E2E Integration', () => {
     test('should handle null toxicity scores with fail-closed behavior', async () => {
       const mockQueries = {
         comments: {
-          data: { 
+          data: {
             content: 'Comment without toxicity score',
             toxicity_score: null // No score available
           },
@@ -407,7 +415,7 @@ describe('Auto-Approval Security V2 - E2E Integration', () => {
         },
         roasts: {
           data: {
-            content: 'Roast without toxicity score', 
+            content: 'Roast without toxicity score',
             toxicity_score: null // No score available
           },
           error: null
@@ -440,7 +448,7 @@ describe('Auto-Approval Security V2 - E2E Integration', () => {
     test('should normalize toxicity scores from 0-100 scale', async () => {
       const mockQueries = {
         comments: {
-          data: { 
+          data: {
             content: 'Test comment',
             toxicity_score: 30 // 0-100 scale
           },

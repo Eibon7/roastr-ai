@@ -1,10 +1,10 @@
 /**
  * Mock Supabase Client for Integration Tests
- * 
+ *
  * Issue #894: Supabase egress exceeded (287%)
  * Root cause: Integration tests hitting real Supabase database
  * Solution: Mock client simulates RLS behavior without network calls
- * 
+ *
  * Bandwidth savings:
  * - Before: 50MB per test run × 50 runs/day = 2.5GB/day
  * - After: 0MB (no network calls)
@@ -30,14 +30,14 @@ class MockSupabaseClient {
       user_activities: [],
       roast_metadata: []
     };
-    
+
     // Current RLS context (simulates auth.uid())
     this.currentUserId = null;
     this.currentOrgId = null;
-    
+
     // Track call count for monitoring
     this.callCount = 0;
-    
+
     // Issue #894: Service role bypasses RLS (like real Supabase)
     this.bypassRLS = options.bypassRLS || false;
   }
@@ -62,7 +62,7 @@ class MockSupabaseClient {
    * Clear all data (for test cleanup)
    */
   clearAll() {
-    Object.keys(this.data).forEach(table => {
+    Object.keys(this.data).forEach((table) => {
       this.data[table] = [];
     });
     this.callCount = 0;
@@ -75,22 +75,22 @@ class MockSupabaseClient {
     // Issue #894: Use currentContext set by setSession()
     const userId = this.currentContext?.user_id || this.currentUserId;
     const contextOrg = this.currentContext?.organization_id;
-    
+
     if (!userId) return false; // Not authenticated
-    
+
     // CRITICAL: If JWT contains organization_id, trust it (simulates RLS policy)
     if (contextOrg && contextOrg === orgId) {
       return true; // User authenticated for this specific org
     }
-    
+
     // Fallback: Check if user is owner or member
-    const org = this.data.organizations?.find(o => o.id === orgId);
+    const org = this.data.organizations?.find((o) => o.id === orgId);
     if (org && org.owner_id === userId) return true;
-    
-    const member = this.data.organization_members?.find(m => 
-      m.organization_id === orgId && m.user_id === userId
+
+    const member = this.data.organization_members?.find(
+      (m) => m.organization_id === orgId && m.user_id === userId
     );
-    
+
     return !!member;
   }
 
@@ -102,17 +102,17 @@ class MockSupabaseClient {
     if (this.bypassRLS) {
       return rows; // Service role sees everything
     }
-    
+
     // Issue #894: Check currentContext (set by setSession)
     const userId = this.currentContext?.user_id || this.currentUserId;
-    
+
     if (!userId) {
       // No auth context = no access
       return [];
     }
 
     // Filter based on organization_id (RLS policy pattern)
-    return rows.filter(row => {
+    return rows.filter((row) => {
       if (!row.organization_id) return true; // No org scope = accessible
       return this._hasOrgAccess(row.organization_id);
     });
@@ -126,9 +126,9 @@ class MockSupabaseClient {
     if (this.bypassRLS) {
       return null; // Service role can insert anything
     }
-    
+
     if (!row.organization_id) return null; // No org scope = no RLS
-    
+
     if (!this._hasOrgAccess(row.organization_id)) {
       // RLS violation! Return error code 42501
       return {
@@ -138,7 +138,7 @@ class MockSupabaseClient {
         hint: null
       };
     }
-    
+
     return null; // No violation
   }
 
@@ -147,55 +147,57 @@ class MockSupabaseClient {
    */
   from(table) {
     this.callCount++;
-    
+
     return {
       select: (columns = '*') => ({
         eq: (column, value) => {
           const rows = this.data[table] || [];
-          const filtered = rows.filter(r => r[column] === value);
+          const filtered = rows.filter((r) => r[column] === value);
           const rlsFiltered = this._applyRLSFilter(table, filtered);
-          
+
           return {
             data: rlsFiltered,
             error: null,
-            
+
             // Chainable methods
-            maybeSingle: () => Promise.resolve({
-              data: rlsFiltered[0] || null,
-              error: null // No error if not found (unlike single())
-            }),
-            
-            single: () => Promise.resolve({
-              data: rlsFiltered[0] || null,
-              error: rlsFiltered.length === 0 ? { message: 'No rows found' } : null
-            }),
-            
+            maybeSingle: () =>
+              Promise.resolve({
+                data: rlsFiltered[0] || null,
+                error: null // No error if not found (unlike single())
+              }),
+
+            single: () =>
+              Promise.resolve({
+                data: rlsFiltered[0] || null,
+                error: rlsFiltered.length === 0 ? { message: 'No rows found' } : null
+              }),
+
             then: (resolve) => {
               resolve({ data: rlsFiltered, error: null });
             }
           };
         },
-        
+
         maybeSingle: () => {
           const rows = this.data[table] || [];
           const rlsFiltered = this._applyRLSFilter(table, rows);
-          
+
           return Promise.resolve({
             data: rlsFiltered[0] || null,
             error: null // No error if not found
           });
         },
-        
+
         single: () => {
           const rows = this.data[table] || [];
           const rlsFiltered = this._applyRLSFilter(table, rows);
-          
+
           return Promise.resolve({
             data: rlsFiltered[0] || null,
             error: rlsFiltered.length === 0 ? { message: 'No rows found' } : null
           });
         },
-        
+
         // Default select (all rows)
         then: (resolve) => {
           const rows = this.data[table] || [];
@@ -203,18 +205,18 @@ class MockSupabaseClient {
           resolve({ data: rlsFiltered, error: null });
         }
       }),
-      
+
       insert: (rows) => {
         const rowsArray = Array.isArray(rows) ? rows : [rows];
         const insertedRows = [];
-        
+
         // Issue #894: Auto-create table if doesn't exist (flexible mock)
         if (!this.data[table]) {
           this.data[table] = [];
         }
-        
+
         let rlsError = null;
-        
+
         for (const row of rowsArray) {
           // Check RLS before insert
           const error = this._checkRLSViolation(table, row);
@@ -222,7 +224,7 @@ class MockSupabaseClient {
             rlsError = error;
             break; // Stop on first RLS violation
           }
-          
+
           // Add generated fields
           const newRow = {
             id: row.id || uuidv4(),
@@ -230,21 +232,22 @@ class MockSupabaseClient {
             created_at: row.created_at || new Date().toISOString(),
             updated_at: row.updated_at || new Date().toISOString()
           };
-          
+
           this.data[table].push(newRow);
           insertedRows.push(newRow);
         }
-        
+
         // Return chainable object even on RLS error (for .select() support)
         if (rlsError) {
           return {
             data: null,
             error: rlsError,
             select: () => ({
-              single: () => Promise.resolve({
-                data: null,
-                error: rlsError
-              }),
+              single: () =>
+                Promise.resolve({
+                  data: null,
+                  error: rlsError
+                }),
               then: (resolve) => {
                 resolve({ data: null, error: rlsError });
               }
@@ -254,13 +257,14 @@ class MockSupabaseClient {
             }
           };
         }
-        
+
         return {
           select: () => ({
-            single: () => Promise.resolve({
-              data: insertedRows[0],
-              error: null
-            }),
+            single: () =>
+              Promise.resolve({
+                data: insertedRows[0],
+                error: null
+              }),
             then: (resolve) => {
               resolve({ data: insertedRows, error: null });
             }
@@ -270,15 +274,15 @@ class MockSupabaseClient {
           }
         };
       },
-      
+
       update: (updates) => ({
         eq: (column, value) => {
           const rows = this.data[table] || [];
-          const matchingRows = rows.filter(r => r[column] === value);
-          
+          const matchingRows = rows.filter((r) => r[column] === value);
+
           // Apply RLS filter
           const accessibleRows = this._applyRLSFilter(table, matchingRows);
-          
+
           if (accessibleRows.length === 0) {
             // RLS blocked the update
             // Issue #894: Return empty array (not null) when RLS blocks
@@ -288,23 +292,25 @@ class MockSupabaseClient {
                 code: '42501',
                 message: 'new row violates row-level security policy for table "' + table + '"'
               },
-              select: () => Promise.resolve({
-                data: [],
-                error: {
-                  code: '42501',
-                  message: 'new row violates row-level security policy for table "' + table + '"'
-                }
-              }),
-              then: (resolve) => resolve({
-                data: [],
-                error: {
-                  code: '42501',
-                  message: 'new row violates row-level security policy for table "' + table + '"'
-                }
-              })
+              select: () =>
+                Promise.resolve({
+                  data: [],
+                  error: {
+                    code: '42501',
+                    message: 'new row violates row-level security policy for table "' + table + '"'
+                  }
+                }),
+              then: (resolve) =>
+                resolve({
+                  data: [],
+                  error: {
+                    code: '42501',
+                    message: 'new row violates row-level security policy for table "' + table + '"'
+                  }
+                })
             };
           }
-          
+
           // Issue #894: CRITICAL - Prevent changing organization_id to another tenant
           // This is a common RLS violation attempt
           if (updates.organization_id && !this.bypassRLS) {
@@ -317,58 +323,62 @@ class MockSupabaseClient {
                   code: '42501',
                   message: 'cannot change organization_id: violates row-level security policy'
                 },
-                select: () => Promise.resolve({
-                  data: [],
-                  error: {
-                    code: '42501',
-                    message: 'cannot change organization_id: violates row-level security policy'
-                  }
-                }),
-                then: (resolve) => resolve({
-                  data: [],
-                  error: {
-                    code: '42501',
-                    message: 'cannot change organization_id: violates row-level security policy'
-                  }
-                })
+                select: () =>
+                  Promise.resolve({
+                    data: [],
+                    error: {
+                      code: '42501',
+                      message: 'cannot change organization_id: violates row-level security policy'
+                    }
+                  }),
+                then: (resolve) =>
+                  resolve({
+                    data: [],
+                    error: {
+                      code: '42501',
+                      message: 'cannot change organization_id: violates row-level security policy'
+                    }
+                  })
               };
             }
           }
-          
+
           // Update rows
-          accessibleRows.forEach(row => {
+          accessibleRows.forEach((row) => {
             Object.assign(row, updates, {
               updated_at: new Date().toISOString()
             });
           });
-          
+
           return {
             data: accessibleRows,
             error: null,
-            
+
             // Chainable select() after update
-            select: (columns = '*') => Promise.resolve({
-              data: accessibleRows,
-              error: null
-            }),
-            
+            select: (columns = '*') =>
+              Promise.resolve({
+                data: accessibleRows,
+                error: null
+              }),
+
             // Direct promise resolution
-            then: (resolve) => resolve({
-              data: accessibleRows,
-              error: null
-            })
+            then: (resolve) =>
+              resolve({
+                data: accessibleRows,
+                error: null
+              })
           };
         }
       }),
-      
+
       delete: () => ({
         eq: (column, value) => {
           const rows = this.data[table] || [];
-          const matchingRows = rows.filter(r => r[column] === value);
-          
+          const matchingRows = rows.filter((r) => r[column] === value);
+
           // Apply RLS filter
           const accessibleRows = this._applyRLSFilter(table, matchingRows);
-          
+
           if (accessibleRows.length === 0) {
             // RLS blocked the delete
             // Issue #894: Return empty array (not null) to match UPDATE behavior
@@ -380,23 +390,23 @@ class MockSupabaseClient {
               }
             });
           }
-          
+
           // Delete rows
-          this.data[table] = rows.filter(r => !accessibleRows.includes(r));
-          
+          this.data[table] = rows.filter((r) => !accessibleRows.includes(r));
+
           return Promise.resolve({
             data: accessibleRows,
             error: null
           });
         },
-        
+
         in: (column, values) => {
           const rows = this.data[table] || [];
-          const matchingRows = rows.filter(r => values.includes(r[column]));
-          
+          const matchingRows = rows.filter((r) => values.includes(r[column]));
+
           // Apply RLS filter
           const accessibleRows = this._applyRLSFilter(table, matchingRows);
-          
+
           if (accessibleRows.length === 0) {
             // RLS blocked the delete (no accessible rows to delete)
             // Issue #894: Return empty array (not null) to match UPDATE behavior
@@ -408,10 +418,10 @@ class MockSupabaseClient {
               }
             });
           }
-          
+
           // Delete rows
-          this.data[table] = rows.filter(r => !accessibleRows.includes(r));
-          
+          this.data[table] = rows.filter((r) => !accessibleRows.includes(r));
+
           return Promise.resolve({
             data: accessibleRows,
             error: null
@@ -430,13 +440,13 @@ class MockSupabaseClient {
         this.resetContext();
         return Promise.resolve({ error: null });
       },
-      
+
       setSession: ({ access_token }) => {
         // Issue #894: Decode JWT to extract organization_id for RLS context
         try {
           // Decode without verification (mock environment)
           const decoded = jwt.decode(access_token);
-          
+
           if (decoded && decoded.organization_id) {
             // Set RLS context based on JWT claims
             this.currentContext = {
@@ -444,12 +454,14 @@ class MockSupabaseClient {
               organization_id: decoded.organization_id,
               role: decoded.role || 'authenticated'
             };
-            
-            console.log(`🔐 Mock RLS context set: user=${decoded.sub}, org=${decoded.organization_id}`);
+
+            console.log(
+              `🔐 Mock RLS context set: user=${decoded.sub}, org=${decoded.organization_id}`
+            );
           } else {
             console.warn('⚠️  JWT missing organization_id claim');
           }
-          
+
           return Promise.resolve({
             data: { session: { access_token, user: { id: decoded?.sub } } },
             error: null
@@ -461,14 +473,16 @@ class MockSupabaseClient {
           });
         }
       },
-      
+
       getSession: () => {
         // Return current session based on context
         return Promise.resolve({
           data: {
-            session: this.currentContext ? {
-              user: { id: this.currentContext.user_id }
-            } : null
+            session: this.currentContext
+              ? {
+                  user: { id: this.currentContext.user_id }
+                }
+              : null
           },
           error: null
         });
@@ -481,7 +495,7 @@ class MockSupabaseClient {
    */
   rpc(functionName, params) {
     this.callCount++;
-    
+
     // Mock common RPC functions
     switch (functionName) {
       case 'get_subscription_tier':
@@ -489,7 +503,7 @@ class MockSupabaseClient {
           data: 'FREE',
           error: null
         });
-      
+
       default:
         return Promise.resolve({
           data: null,
@@ -504,7 +518,7 @@ class MockSupabaseClient {
   getStats() {
     return {
       callCount: this.callCount,
-      tablesUsed: Object.keys(this.data).filter(table => this.data[table].length > 0),
+      tablesUsed: Object.keys(this.data).filter((table) => this.data[table].length > 0),
       totalRows: Object.values(this.data).reduce((sum, table) => sum + table.length, 0)
     };
   }
@@ -529,4 +543,3 @@ module.exports = {
   createMockSupabaseClient,
   createMockServiceClient
 };
-

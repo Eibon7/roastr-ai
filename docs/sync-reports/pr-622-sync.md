@@ -12,6 +12,7 @@
 PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a single focused PR. This sync report documents the GDD nodes, spec.md sections, and system-map.yaml updates required to maintain documentation coherence.
 
 **Key Changes:**
+
 - 18 commits consolidated from Issue #618
 - 24/24 tests passing (100% pass rate)
 - Major refactors: perspectiveService, featureFlags, middleware IPv6 support
@@ -28,6 +29,7 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
 ### Source Files (9 files)
 
 #### Middleware (3 files)
+
 - `src/middleware/inputValidation.js` → **security.md**, **validation.md**
   - IPv6 rate limit support (ipKeyGenerator)
   - DoS protection (depth limit)
@@ -39,6 +41,7 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
   - IPv6 keyGenerator implementation
 
 #### Routes (4 files)
+
 - `src/routes/dashboard.js` → **dashboard.md**, **api-layer.md**
   - IPv6 rate limit integration
 
@@ -52,6 +55,7 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
   - IPv6 rate limit integration
 
 #### Services (2 files)
+
 - `src/services/PersonaService.js` → **persona-system.md**
   - Minor: Fixed Promise.allSettled pattern (already in this service)
 
@@ -63,6 +67,7 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
     - Individual analysis failures no longer break entire batch
 
 #### Utilities (1 new file)
+
 - `src/utils/featureFlags.js` → **NEW NODE CANDIDATE** or **security.md**
   - Extracted from perspectiveService
   - Defensive feature flag checking
@@ -71,6 +76,7 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
 ### Test Files (11 files)
 
 #### Integration Tests (7 files)
+
 - All → **testing.md**, **test-infrastructure.md**
 - `tests/integration/roast.test.js` → **roast-generation.md** (testing section)
   - Fixed auth module loading order (Issue #618)
@@ -81,6 +87,7 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
   - Fixed cleanup patterns (fs.remove → rm)
 
 #### QA Tests (4 files)
+
 - `tests/qa/*.js` → **testing.md**
   - Updated import patterns (fs-extra compatibility)
 
@@ -91,12 +98,15 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
 ### Primary Nodes (7)
 
 #### 1. **security.md** (HIGH PRIORITY)
+
 **Changes:**
+
 - IPv6 rate limit support (ipKeyGenerator across 4 middleware files)
 - DoS protection (depth limit in inputValidation)
 - Feature flag defensive checking (featureFlags.js)
 
 **Updates Required:**
+
 - `**Last Updated:** 2025-10-21`
 - `**Version:** Update to next minor version`
 - `**Related PRs:** Add #622`
@@ -105,12 +115,15 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
 - **Dependencies:** Add `utils/featureFlags.js`
 
 #### 2. **toxicity-detection.md** (HIGH PRIORITY)
+
 **Changes:**
+
 - perspectiveService refactored (batch error resilience)
 - Feature flag extraction
 - Promise.allSettled pattern
 
 **Updates Required:**
+
 - `**Last Updated:** 2025-10-21`
 - `**Version:** Update to next minor version`
 - `**Related PRs:** Add #622`
@@ -120,12 +133,15 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
 - **Testing:** Update coverage
 
 #### 3. **test-infrastructure.md** (HIGH PRIORITY)
+
 **Changes:**
+
 - CLI setup improvements (logger pattern, fs.remove → rm)
 - Mock patterns (auth module loading order)
 - fs-extra compatibility patterns
 
 **Updates Required:**
+
 - `**Last Updated:** 2025-10-21`
 - `**Version:** Update to next minor version`
 - `**Related PRs:** Add #622`
@@ -133,52 +149,67 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
 - **Testing:** Document 24/24 passing milestone
 
 #### 4. **testing.md** (MEDIUM PRIORITY)
+
 **Changes:**
+
 - Jest compatibility fixes (24/24 tests passing)
 - Integration test improvements
 - QA test pattern updates
 
 **Updates Required:**
+
 - `**Last Updated:** 2025-10-21`
 - `**Test Coverage:** Update to actual numbers from report`
 - **Milestones:** Add "24/24 tests passing (Issue #618 resolved)"
 
 #### 5. **api-layer.md** (MEDIUM PRIORITY)
+
 **Changes:**
+
 - All routes updated with IPv6 rate limit support
 
 **Updates Required:**
+
 - `**Last Updated:** 2025-10-21`
 - **Responsibilities:** Add "IPv6 rate limiting"
 - **Dependencies:** Add `middleware/security` (ipKeyGenerator)
 
 #### 6. **roast-generation.md** (LOW PRIORITY)
+
 **Changes:**
+
 - Route updated with IPv6 support
 - Tests improved (auth mock patterns)
 
 **Updates Required:**
+
 - `**Last Updated:** 2025-10-21`
 - **Testing:** Add note about improved test reliability
 
 #### 7. **shield-system.md** (LOW PRIORITY)
+
 **Changes:**
+
 - Routes updated with IPv6 support
 
 **Updates Required:**
+
 - `**Last Updated:** 2025-10-21`
 
 ### Transitive Dependencies (3)
 
 #### 8. **database-layer.md**
+
 - Used by services (perspectiveService)
 - No direct changes, but dependency graph updated
 
 #### 9. **multi-tenant.md**
+
 - Architecture impacts (rate limiting is tenant-aware)
 - No direct changes
 
 #### 10. **observability.md**
+
 - Logging pattern changes (console.warn → logger.warn)
 - Update: "Logging standards enforced in test infrastructure"
 
@@ -189,12 +220,14 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
 ### **feature-flags.md** (NEW)
 
 **Rationale:**
+
 - `src/utils/featureFlags.js` is now a standalone module
 - Provides critical defensive checking for feature flags
 - Jest compatibility layer
 - Used by perspectiveService, potentially others
 
 **Proposed Structure:**
+
 ```markdown
 # Feature Flags System
 
@@ -204,21 +237,26 @@ PR #622 consolidated all Issue #618 commits (Jest compatibility fixes) into a si
 **Last Updated:** 2025-10-21
 
 ## Purpose
+
 Defensive feature flag checking with Jest compatibility.
 
 ## Responsibilities
+
 - Safe flag checking with error handling
 - Jest environment detection
 - Graceful degradation when flags module unavailable
 
 ## API
+
 - `isFlagEnabled(flagName): boolean`
 
 ## Dependencies
+
 - config/flags (optional, graceful fallback)
 - utils/logger
 
 ## Used By
+
 - services/perspectiveService
 ```
 
@@ -229,21 +267,27 @@ Defensive feature flag checking with Jest compatibility.
 ## spec.md Sections to Update
 
 ### 1. **Security Section**
+
 **Add:**
+
 - IPv6 rate-limiting support
   - `ipKeyGenerator` function in middleware/security
   - Applied to all rate-limited routes
   - Handles IPv4 and IPv6 addresses correctly
 
 ### 2. **Toxicity Detection Section**
+
 **Update:**
+
 - Perspective API Service improvements
   - Batch error resilience with Promise.allSettled
   - Feature flag defensive checking
   - Individual analysis failures isolated
 
 ### 3. **Testing Infrastructure Section**
+
 **Update:**
+
 - Jest Compatibility Milestone
   - 24/24 tests passing (Issue #618 resolved)
   - CLI test setup with logger utility
@@ -251,9 +295,11 @@ Defensive feature flag checking with Jest compatibility.
   - Mock module loading order fixes
 
 ### 4. **Observability Section**
+
 **Add:**
+
 - Logging Standards Enforcement
-  - console.* methods replaced with logger utility
+  - console.\* methods replaced with logger utility
   - Applies to test infrastructure and all new code
 
 ---
@@ -263,23 +309,24 @@ Defensive feature flag checking with Jest compatibility.
 **Status:** ✅ Validated (manual review)
 
 ### New Dependencies Added
+
 ```yaml
 nodes:
   security:
     dependencies:
-      - utils/featureFlags  # NEW
+      - utils/featureFlags # NEW
     used_by:
       - api-layer
       - middleware/*
 
   toxicity-detection:
     dependencies:
-      - utils/featureFlags  # NEW
+      - utils/featureFlags # NEW
     used_by:
       - shield-system
       - workers/AnalyzeToxicityWorker
 
-  utils/featureFlags:  # NEW NODE
+  utils/featureFlags: # NEW NODE
     dependencies:
       - config/flags (optional)
       - utils/logger
@@ -289,6 +336,7 @@ nodes:
 ```
 
 **Validation:**
+
 - ✅ No cycles detected
 - ✅ Bidirectional edges valid
 - ✅ No orphan nodes created
@@ -310,6 +358,7 @@ nodes:
 **Total:** 0
 
 **Rationale:**
+
 - No orphan nodes detected
 - No untracked TODOs
 - All dependencies properly documented
@@ -322,6 +371,7 @@ nodes:
 **Source:** `coverage/coverage-summary.json` (post-merge)
 
 **Nodes requiring coverage updates:**
+
 1. security.md → Update from actual report
 2. toxicity-detection.md → Update from actual report
 3. test-infrastructure.md → Update from actual report
@@ -336,10 +386,12 @@ nodes:
 **Command:** `node scripts/predict-gdd-drift.js --full`
 
 **Expected Outcome:**
+
 - Risk score: <40 (low)
 - Reason: Documentation well-maintained, changes isolated to specific modules
 
 **If Risk >70:**
+
 - Run: `node scripts/predict-gdd-drift.js --create-issues`
 
 ---
@@ -365,6 +417,7 @@ nodes:
 ## Next Steps
 
 1. **Run Coverage Report**
+
    ```bash
    npm test -- --coverage
    ```
@@ -385,6 +438,7 @@ nodes:
    - Update system-map.yaml
 
 5. **Run Drift Prediction**
+
    ```bash
    node scripts/predict-gdd-drift.js --full
    ```
@@ -402,6 +456,7 @@ nodes:
 ## Status: 🟢 SAFE TO MERGE
 
 **Summary:**
+
 - PR #622 already merged to main
 - Documentation sync identified all affected nodes
 - No blocking issues detected

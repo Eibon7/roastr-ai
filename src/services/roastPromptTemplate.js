@@ -1,22 +1,22 @@
 /**
  * Roast Prompt Template Service
- * 
+ *
  * ⚠️ DEPRECATED (Issue #872): This service is legacy. Use RoastPromptBuilder from lib/prompts/roastPrompt.js instead.
  * The new builder uses the A/B/C block structure for caching optimization and the new 3-tone system.
- * 
+ *
  * This service is kept for backward compatibility but will be removed in a future version.
- * 
+ *
  * Manages the master prompt template for roast generation with optimized
  * performance, centralized configuration, and advanced similarity matching.
- * 
+ *
  * Features:
  * - Comment categorization with pattern matching
- * - Optimized reference roasts from CSV with O(n log n) similarity algorithm  
+ * - Optimized reference roasts from CSV with O(n log n) similarity algorithm
  * - User tone personalization with centralized mapping
  * - Structured roast generation guidelines
  * - Security protection against prompt injection
  * - Platform-aware constraints and formatting
- * 
+ *
  * Issue #128: Performance optimizations and code quality improvements
  */
 
@@ -28,11 +28,11 @@ const toneCompatibilityService = require('./toneCompatibilityService'); // Issue
 
 /**
  * RoastPromptTemplate - Optimized roast generation system
- * 
+ *
  * @class RoastPromptTemplate
  * @description Advanced prompt template system with performance optimizations,
  * security protections, and platform-aware generation capabilities.
- * 
+ *
  * Features:
  * - O(n log n) similarity algorithm with word frequency indexing
  * - Centralized constants and configuration management
@@ -40,39 +40,39 @@ const toneCompatibilityService = require('./toneCompatibilityService'); // Issue
  * - Platform-specific constraints and formatting
  * - Chunked CSV loading for memory optimization
  * - Comprehensive error handling and fallback system
- * 
+ *
  * @example
  * ```javascript
  * const template = new RoastPromptTemplate();
- * 
+ *
  * const prompt = await template.buildPrompt({
  *   originalComment: "Esta aplicación es horrible",
  *   toxicityData: { score: 0.8, categories: ['TOXICITY'] },
- *   userConfig: { 
+ *   userConfig: {
  *     tone: 'balanceado', // Issue #872: Use new 3-tone system
  *     platform: 'twitter'
  *   },
  *   includeReferences: true
  * });
  * ```
- * 
+ *
  * @since 1.0.0 (Issue #122 - Master Prompt Integration)
  * @version 2.0.0 (Issue #128 - Performance & Quality Improvements)
  */
 class RoastPromptTemplate {
   /**
    * Initialize RoastPromptTemplate with optimized configuration
-   * 
+   *
    * @constructor
    */
   constructor() {
     this.csvService = new CsvRoastService();
     this.version = constants.TEMPLATE_VERSION;
-    
+
     // Performance optimization: Word frequency index for O(n log n) similarity
     this.wordFrequencyIndex = new Map();
     this.lastIndexRebuild = 0;
-    
+
     // Master prompt template with placeholders
     this.masterPrompt = `Tu tarea es generar una respuesta sarcástica e ingeniosa —un roast— dirigida a un comentario ofensivo o ridículo en redes sociales.
 
@@ -152,26 +152,28 @@ class RoastPromptTemplate {
   /**
    * Get reference roasts from CSV based on optimized similarity matching
    * @param {string} comment - Original comment
-   * @param {number} count - Number of reference roasts to include  
+   * @param {number} count - Number of reference roasts to include
    * @returns {Promise<string>} Formatted reference roasts
    */
   async getReferenceRoasts(comment, count = constants.DEFAULT_REFERENCE_COUNT) {
     try {
       const allRoasts = await this.csvService.loadRoasts();
-      
+
       // Build/rebuild word frequency index if needed
       await this.ensureWordIndex(allRoasts);
-      
+
       // Get similar roasts using optimized algorithm
       const similarRoasts = this.findSimilarRoastsOptimized(comment, allRoasts, count);
-      
+
       // Format reference roasts
       if (similarRoasts.length === 0) {
         return 'No hay ejemplos específicos disponibles para este tipo de comentario.';
       }
 
       return similarRoasts
-        .map((roast, index) => `${index + 1}. Comentario: "${roast.comment}" → Roast: "${roast.roast}"`)
+        .map(
+          (roast, index) => `${index + 1}. Comentario: "${roast.comment}" → Roast: "${roast.roast}"`
+        )
         .join('\n');
     } catch (error) {
       logger.warn('Failed to load reference roasts:', error);
@@ -186,30 +188,32 @@ class RoastPromptTemplate {
    */
   async ensureWordIndex(allRoasts) {
     const now = Date.now();
-    
+
     // Rebuild index if too old or empty
-    if (this.wordFrequencyIndex.size === 0 || 
-        (now - this.lastIndexRebuild) > constants.INDEX_REBUILD_INTERVAL) {
-      
+    if (
+      this.wordFrequencyIndex.size === 0 ||
+      now - this.lastIndexRebuild > constants.INDEX_REBUILD_INTERVAL
+    ) {
       logger.info('Building word frequency index for optimized similarity matching');
       this.wordFrequencyIndex.clear();
-      
+
       // Build word frequency map
       const wordCount = new Map();
-      
+
       allRoasts.forEach((roast, roastIndex) => {
-        const words = roast.comment.toLowerCase()
+        const words = roast.comment
+          .toLowerCase()
           .split(/\s+/)
-          .filter(word => word.length > (allRoasts.length < 100 ? 1 : constants.WORD_MIN_LENGTH));
-        
-        words.forEach(word => {
+          .filter((word) => word.length > (allRoasts.length < 100 ? 1 : constants.WORD_MIN_LENGTH));
+
+        words.forEach((word) => {
           if (!wordCount.has(word)) {
             wordCount.set(word, new Set());
           }
           wordCount.get(word).add(roastIndex);
         });
       });
-      
+
       // Keep only frequent words for index (adaptive threshold for small datasets)
       const adaptiveThreshold = allRoasts.length < 100 ? 1 : constants.WORD_FREQUENCY_THRESHOLD;
       wordCount.forEach((roastIndices, word) => {
@@ -217,7 +221,7 @@ class RoastPromptTemplate {
           this.wordFrequencyIndex.set(word, roastIndices);
         }
       });
-      
+
       this.lastIndexRebuild = now;
       logger.info(`Word index built with ${this.wordFrequencyIndex.size} frequent words`);
     }
@@ -233,45 +237,44 @@ class RoastPromptTemplate {
    */
   findSimilarRoastsOptimized(inputComment, allRoasts, count) {
     const inputLower = inputComment.toLowerCase();
-    const inputWords = inputLower.split(/\s+/)
-      .filter(word => word.length > 1); // Use same threshold as temporary index
-    
+    const inputWords = inputLower.split(/\s+/).filter((word) => word.length > 1); // Use same threshold as temporary index
+
     // Score accumulator using Map for O(1) access
     const scoreMap = new Map();
-    
+
     // Fast word-based scoring using index
-    inputWords.forEach(word => {
+    inputWords.forEach((word) => {
       if (this.wordFrequencyIndex.has(word)) {
         const matchingRoastIndices = this.wordFrequencyIndex.get(word);
-        matchingRoastIndices.forEach(roastIndex => {
+        matchingRoastIndices.forEach((roastIndex) => {
           const currentScore = scoreMap.get(roastIndex) || 0;
           scoreMap.set(roastIndex, currentScore + 1);
         });
       }
     });
-    
-    // Category matching (higher weight)  
+
+    // Category matching (higher weight)
     const inputCategory = this.categorizeComment(inputComment);
-    
+
     // Convert to array and add category scores
     const scoredResults = [];
     scoreMap.forEach((wordScore, roastIndex) => {
       const roast = allRoasts[roastIndex];
       let totalScore = wordScore;
-      
+
       // Category bonus
       const roastCategory = this.categorizeComment(roast.comment);
       if (inputCategory === roastCategory) {
         totalScore += constants.CATEGORY_SCORE_BOOST;
       }
-      
+
       scoredResults.push({ ...roast, score: totalScore });
     });
-    
+
     // Sort by score (O(n log n)) and return top matches
     return scoredResults
       .sort((a, b) => b.score - a.score)
-      .filter(roast => roast.score > constants.SIMILARITY_SCORE_THRESHOLD)
+      .filter((roast) => roast.score > constants.SIMILARITY_SCORE_THRESHOLD)
       .slice(0, count);
   }
 
@@ -295,20 +298,21 @@ class RoastPromptTemplate {
    */
   buildTemporaryIndex(allRoasts) {
     const wordCount = new Map();
-    
+
     allRoasts.forEach((roast, roastIndex) => {
-      const words = roast.comment.toLowerCase()
+      const words = roast.comment
+        .toLowerCase()
         .split(/\s+/)
-        .filter(word => word.length > 1); // Less strict for small datasets
-      
-      words.forEach(word => {
+        .filter((word) => word.length > 1); // Less strict for small datasets
+
+      words.forEach((word) => {
         if (!wordCount.has(word)) {
           wordCount.set(word, new Set());
         }
         wordCount.get(word).add(roastIndex);
       });
     });
-    
+
     // For temporary index, use all words (not just frequent ones)
     wordCount.forEach((roastIndices, word) => {
       this.wordFrequencyIndex.set(word, roastIndices);
@@ -322,12 +326,14 @@ class RoastPromptTemplate {
    */
   mapUserTone(config) {
     // Issue #872: Deprecation warning
-    logger.warn('[DEPRECATED] roastPromptTemplate.mapUserTone is deprecated. Use RoastPromptBuilder instead.');
-    
+    logger.warn(
+      '[DEPRECATED] roastPromptTemplate.mapUserTone is deprecated. Use RoastPromptBuilder instead.'
+    );
+
     // Map to new 3-tone system using compatibility service
     const normalizedTone = toneCompatibilityService.normalizeTone(config.tone || 'balanceado');
     let tone = constants.TONE_MAP[normalizedTone] || constants.TONE_MAP.sarcastic;
-    
+
     // Issue #872 AC8: humor_type and intensity_level completely removed
     // (Deprecation warnings removed - these fields should no longer be passed)
 
@@ -389,13 +395,27 @@ class RoastPromptTemplate {
     }
 
     // Escape potential template injection patterns using centralized replacements
-    return input
-      .replace(constants.SANITIZATION_PATTERNS.DOUBLE_CURLY_OPEN, constants.SANITIZATION_REPLACEMENTS.DOUBLE_CURLY_OPEN)
-      .replace(constants.SANITIZATION_PATTERNS.DOUBLE_CURLY_CLOSE, constants.SANITIZATION_REPLACEMENTS.DOUBLE_CURLY_CLOSE)
-      .replace(constants.SANITIZATION_PATTERNS.SINGLE_CURLY_OPEN, constants.SANITIZATION_REPLACEMENTS.SINGLE_CURLY_OPEN)
-      .replace(constants.SANITIZATION_PATTERNS.SINGLE_CURLY_CLOSE, constants.SANITIZATION_REPLACEMENTS.SINGLE_CURLY_CLOSE)
-      // Limit length using centralized constant
-      .substring(0, constants.MAX_INPUT_LENGTH);
+    return (
+      input
+        .replace(
+          constants.SANITIZATION_PATTERNS.DOUBLE_CURLY_OPEN,
+          constants.SANITIZATION_REPLACEMENTS.DOUBLE_CURLY_OPEN
+        )
+        .replace(
+          constants.SANITIZATION_PATTERNS.DOUBLE_CURLY_CLOSE,
+          constants.SANITIZATION_REPLACEMENTS.DOUBLE_CURLY_CLOSE
+        )
+        .replace(
+          constants.SANITIZATION_PATTERNS.SINGLE_CURLY_OPEN,
+          constants.SANITIZATION_REPLACEMENTS.SINGLE_CURLY_OPEN
+        )
+        .replace(
+          constants.SANITIZATION_PATTERNS.SINGLE_CURLY_CLOSE,
+          constants.SANITIZATION_REPLACEMENTS.SINGLE_CURLY_CLOSE
+        )
+        // Limit length using centralized constant
+        .substring(0, constants.MAX_INPUT_LENGTH)
+    );
   }
 
   /**
@@ -425,7 +445,9 @@ class RoastPromptTemplate {
     }
 
     if (originalComment.length > constants.MAX_INPUT_LENGTH) {
-      throw new Error(`originalComment exceeds maximum length of ${constants.MAX_INPUT_LENGTH} characters`);
+      throw new Error(
+        `originalComment exceeds maximum length of ${constants.MAX_INPUT_LENGTH} characters`
+      );
     }
   }
 
@@ -495,7 +517,7 @@ class RoastPromptTemplate {
           originalCommentLength: params?.originalComment?.length || 0
         }
       });
-      
+
       // Return a fallback prompt with error context
       return this.getFallbackPrompt(params?.originalComment, params?.userConfig, error);
     }
@@ -504,7 +526,7 @@ class RoastPromptTemplate {
   /**
    * Get a simplified fallback prompt with error context
    * @param {string} originalComment - Original comment (if available)
-   * @param {Object} userConfig - User configuration (if available) 
+   * @param {Object} userConfig - User configuration (if available)
    * @param {Error} error - Error that triggered fallback (optional)
    * @private
    */

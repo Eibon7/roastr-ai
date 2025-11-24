@@ -76,7 +76,7 @@ function validateFixtureFile(filePath, validate) {
 
       if (!isValid) {
         results.valid = false;
-        validate.errors.forEach(error => {
+        validate.errors.forEach((error) => {
           results.errors.push({
             fixtureId: fixture.id || `fixture-${index}`,
             fixtureIndex: index,
@@ -89,12 +89,12 @@ function validateFixtureFile(filePath, validate) {
     });
 
     // Additional validation: Check for duplicate IDs
-    const ids = fixtures.map(f => f.id);
+    const ids = fixtures.map((f) => f.id);
     const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
 
     if (duplicateIds.length > 0) {
       results.valid = false;
-      duplicateIds.forEach(id => {
+      duplicateIds.forEach((id) => {
         results.errors.push({
           fixtureId: id,
           message: 'Duplicate fixture ID found',
@@ -102,7 +102,6 @@ function validateFixtureFile(filePath, validate) {
         });
       });
     }
-
   } catch (error) {
     results.valid = false;
 
@@ -138,19 +137,25 @@ function printResults(results) {
   let totalErrors = 0;
   let allValid = true;
 
-  results.forEach(result => {
+  results.forEach((result) => {
     totalFixtures += result.fixtureCount;
 
     if (result.valid) {
-      console.log(`${colors.green}✓${colors.reset} ${result.file} - ${result.fixtureCount} fixtures valid`);
+      console.log(
+        `${colors.green}✓${colors.reset} ${result.file} - ${result.fixtureCount} fixtures valid`
+      );
     } else {
       allValid = false;
       totalErrors += result.errors.length;
-      console.log(`${colors.red}✗${colors.reset} ${result.file} - ${result.errors.length} validation errors`);
+      console.log(
+        `${colors.red}✗${colors.reset} ${result.file} - ${result.errors.length} validation errors`
+      );
 
       if (verbose) {
-        result.errors.forEach(error => {
-          console.log(`  ${colors.yellow}→${colors.reset} ${error.fixtureId || 'N/A'}: ${error.message}`);
+        result.errors.forEach((error) => {
+          console.log(
+            `  ${colors.yellow}→${colors.reset} ${error.fixtureId || 'N/A'}: ${error.message}`
+          );
           if (error.path) {
             console.log(`    Path: ${error.path}`);
           }
@@ -195,16 +200,13 @@ async function main() {
     const validate = ajv.compile(schema);
 
     // Validate all fixture files
-    const results = FIXTURE_FILES.map(filePath =>
-      validateFixtureFile(filePath, validate)
-    );
+    const results = FIXTURE_FILES.map((filePath) => validateFixtureFile(filePath, validate));
 
     // Print results
     const allValid = printResults(results);
 
     // Exit with appropriate code
     process.exit(allValid ? 0 : 1);
-
   } catch (error) {
     console.error(`${colors.red}Fatal error: ${error.message}${colors.reset}`);
     if (verbose) {

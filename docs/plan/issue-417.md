@@ -16,6 +16,7 @@
 **Current State:** Strong logging foundation exists (Winston-based, JSON format, timestamps) but lacks comprehensive correlation IDs, E2E traceability, and integration tests.
 
 **What Needs to Be Done:**
+
 1. Enhance worker logging with structured logs at key lifecycle points
 2. Implement correlation ID propagation (trace IDs) across API → Queue → Worker
 3. Create comprehensive integration tests to validate all acceptance criteria
@@ -31,6 +32,7 @@
 ### ✅ What EXISTS (Strong Foundation)
 
 **Logger Infrastructure** (`src/utils/logger.js`):
+
 - ✅ Winston-based logging with multiple transports
 - ✅ Structured JSON format in production
 - ✅ Consistent timestamps (ISO 8601)
@@ -40,6 +42,7 @@
 - ✅ PII masking for security
 
 **Correlation IDs (Partial)**:
+
 - ✅ `tenant_id` - Logged in tenant actions
 - ✅ `user_id` - Present in request logging
 - ✅ Request context via `logRequest()`
@@ -48,17 +51,20 @@
 ### ❌ What's MISSING (Critical Gaps)
 
 **Correlation IDs**:
+
 - ❌ `comment_id` - Not consistently logged in comment processing
 - ❌ `roast_id` - Not consistently logged in roast generation
 - ❌ Correlation ID propagation across workers
 - ❌ End-to-end request tracing (API → Queue → Worker → Response)
 
 **Worker Logging**:
+
 - ❌ Workers lack structured logging at key lifecycle points
 - ❌ No consistent logging pattern across 4 workers
 - ❌ Missing job metadata in logs (queue name, priority, retry count)
 
 **Testing**:
+
 - ❌ **CRITICAL**: No integration tests for observability
 - ❌ No tests validating logging behavior
 - ❌ No tests for correlation ID propagation
@@ -67,11 +73,13 @@
 ### Test Files Status
 
 **Existing Tests:**
+
 - ✅ Unit tests for services (costControl, queueService, etc.)
 - ✅ E2E workflow tests (test-e2e-workflow.test.js)
 - ❌ No observability-specific tests
 
 **Search Results:**
+
 ```bash
 # No tests found for:
 tests/integration/*observability*
@@ -91,6 +99,7 @@ Verificar structured logs y correlación para observabilidad mínima.
 
 **Type:** Integration testing + implementation enhancement
 **Components Affected:**
+
 - Logger utility (`src/utils/logger.js`)
 - 4 Workers (FetchComments, AnalyzeToxicity, GenerateReply, ShieldAction)
 - Queue Service (`src/services/queueService.js`)
@@ -99,30 +108,40 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Acceptance Criteria (5 total)
 
 #### AC1: Logs estructurados por paso clave
+
 **Status:** ⚠️ PARTIAL
+
 - **Current:** Basic logging exists, but workers lack structured logs
 - **Gap:** Need structured logs at worker lifecycle points (start, success, error)
 - **Action:** Add structured logging to all 4 workers
 
 #### AC2: Correlación con tenant_id, user_id, comment_id, roast_id
+
 **Status:** ⚠️ PARTIAL
+
 - **Current:** tenant_id and user_id exist, but comment_id/roast_id inconsistent
 - **Gap:** Missing IDs in worker logs, no propagation
 - **Action:** Include all 4 IDs consistently in all logs
 
 #### AC3: Timestamps consistentes en todos los logs
+
 **Status:** ✅ MET
+
 - **Current:** Winston's `format.timestamp()` ensures ISO 8601 format
 - **Action:** No changes needed, validate in tests
 
 #### AC4: Trazabilidad end-to-end de requests
+
 **Status:** ❌ MISSING
+
 - **Current:** No trace ID that follows requests across services
 - **Gap:** No correlation between API → Queue → Worker → Response
 - **Action:** Implement correlation ID (trace ID) propagation
 
 #### AC5: Formato JSON estructurado para análisis
+
 **Status:** ✅ MET
+
 - **Current:** Production uses `winston.format.json()`
 - **Action:** No changes needed, validate in tests
 
@@ -147,6 +166,7 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Nodos Afectados
 
 **Existing Nodes** (to update):
+
 1. **`queue-system`** - Add observability notes for job logging
    - Update "Implementation Notes" with correlation ID propagation
    - Document logging patterns for workers
@@ -156,14 +176,15 @@ Verificar structured logs y correlación para observabilidad mínima.
    - Add observability notes for tenant_id logging
    - Reference integration tests
 
-**New Node** (to create):
-3. **`observability`** or update in spec.md
-   - **Decision:** Don't create new node, document in spec.md + update existing nodes
-   - **Rationale:** Observability is cross-cutting, not a standalone feature
+**New Node** (to create): 3. **`observability`** or update in spec.md
+
+- **Decision:** Don't create new node, document in spec.md + update existing nodes
+- **Rationale:** Observability is cross-cutting, not a standalone feature
 
 ### Validar Edges
 
 **Dependencies:**
+
 - observability → queue-system (worker logging)
 - observability → multi-tenant (tenant context in logs)
 - queue-system → logger utility
@@ -174,6 +195,7 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Actualizar Grafo
 
 **No Changes Needed:**
+
 - Observability is enhancement to existing system
 - No new architectural components
 - No new database tables or APIs
@@ -185,7 +207,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 **By Role:**
 
 ### Test Engineer (Critical)
+
 **Tasks:**
+
 - Create comprehensive integration tests (`tests/integration/test-observability.test.js`)
 - Design test fixtures for multi-tenant scenarios
 - Validate all 5 acceptance criteria with tests
@@ -195,7 +219,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 **Estimated Effort:** 6-8 hours
 
 ### Backend Developer (Primary)
+
 **Tasks:**
+
 - Enhance worker logging in 4 worker files
 - Implement correlation ID propagation in queueService
 - Add logger utility helpers for workers
@@ -204,7 +230,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 **Estimated Effort:** 6-8 hours
 
 ### Documentation Agent (Secondary)
+
 **Tasks:**
+
 - Update `docs/nodes/queue-system.md` with logging patterns
 - Update `docs/nodes/multi-tenant.md` with observability notes
 - Update `spec.md` if needed (minimal changes)
@@ -213,7 +241,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 **Estimated Effort:** 2-3 hours
 
 ### Orchestrator (Coordination)
+
 **Tasks:**
+
 - Coordinate subagents
 - Ensure GDD validation passes
 - Run Pre-Flight Checklist
@@ -230,7 +260,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Implementation Files (7 files)
 
 #### 1. `src/utils/logger.js` (Enhancement)
+
 **Changes:**
+
 - Add `logWorkerAction(workerName, action, meta)` helper
 - Add `createCorrelationContext(correlationId, meta)` helper
 - Improve PII masking coverage
@@ -240,7 +272,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 **Estimated Time:** 2 hours
 
 #### 2. `src/services/queueService.js` (Enhancement)
+
 **Changes:**
+
 - Add `correlationId` to job metadata
 - Propagate correlation ID from API → Queue
 - Generate UUID v4 for new correlationIds
@@ -250,13 +284,16 @@ Verificar structured logs y correlación para observabilidad mínima.
 **Estimated Time:** 1 hour
 
 #### 3-6. Workers (4 files, Enhancement)
+
 **Files:**
+
 - `src/workers/FetchCommentsWorker.js`
 - `src/workers/AnalyzeToxicityWorker.js`
 - `src/workers/GenerateReplyWorker.js`
 - `src/workers/ShieldActionWorker.js`
 
 **Changes (per worker):**
+
 - Add structured log at job start (with correlationId, commentId, tenantId, userId)
 - Add structured log at job success (with results)
 - Add structured log at job error (with error context)
@@ -268,7 +305,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Test Files (1 new file)
 
 #### 7. `tests/integration/test-observability.test.js` (Create)
+
 **Test Suites:**
+
 1. Structured Logging - Verify all key steps log with proper structure
 2. Correlation IDs - Verify tenant_id, user_id, comment_id, roast_id present
 3. Timestamp Consistency - Verify ISO 8601 format
@@ -283,7 +322,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Documentation Files (3 files)
 
 #### 8. `docs/nodes/queue-system.md` (Update)
+
 **Changes:**
+
 - Add "Observability" section with logging patterns
 - Document correlation ID propagation
 - Update "Agentes Relevantes" (add Test Engineer, Orchestrator)
@@ -293,7 +334,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 **Estimated Time:** 30 minutes
 
 #### 9. `docs/nodes/multi-tenant.md` (Update)
+
 **Changes:**
+
 - Add "Observability" section with tenant context logging
 - Reference integration tests
 - Update "Agentes Relevantes" if needed
@@ -302,7 +345,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 **Estimated Time:** 20 minutes
 
 #### 10. `CLAUDE.md` (Update)
+
 **Changes:**
+
 - Add "Logging Best Practices" section
 - Document correlation ID usage
 - Reference observability tests
@@ -313,7 +358,9 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Evidence Files
 
 #### 11. `docs/test-evidence/issue-417/` (Create directory)
+
 **Files:**
+
 - `tests-passing.txt` (test output)
 - `coverage-report.json` (auto-generated)
 - `SUMMARY.md` (executive summary)
@@ -335,6 +382,7 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Phase 1: Logger Utility Enhancement (2 hours)
 
 **Order:**
+
 1. Add `logWorkerAction()` helper to `src/utils/logger.js`
 2. Add `createCorrelationContext()` helper
 3. Improve PII masking
@@ -345,6 +393,7 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Phase 2: Correlation ID Propagation (1 hour)
 
 **Order:**
+
 1. Modify `queueService.addJob()` to accept/generate correlationId
 2. Include correlationId in job metadata
 3. Log correlationId when enqueuing jobs
@@ -354,12 +403,14 @@ Verificar structured logs y correlación para observabilidad mínima.
 ### Phase 3: Worker Logging Enhancement (4 hours)
 
 **Order (sequential per worker):**
+
 1. `FetchCommentsWorker.js` - Add structured logs
 2. `AnalyzeToxicityWorker.js` - Add structured logs
 3. `GenerateReplyWorker.js` - Add structured logs
 4. `ShieldActionWorker.js` - Add structured logs
 
 **Pattern (per worker):**
+
 ```javascript
 async processJob(job) {
   const { commentId, tenantId, userId, correlationId } = job.data;
@@ -406,12 +457,14 @@ async processJob(job) {
 ### Phase 4: Integration Tests (6 hours)
 
 **Order:**
+
 1. Create test file structure
 2. Implement log capture/mocking mechanism
 3. Write 7 test suites (one per acceptance criterion + extras)
 4. Run tests, iterate until all pass
 
 **Test Approach:**
+
 - Mock Winston logger to capture logs
 - Parse captured logs (JSON)
 - Assert structure, IDs, timestamps, traceability
@@ -423,6 +476,7 @@ async processJob(job) {
 ### Phase 5: Documentation Updates (1.5 hours)
 
 **Order:**
+
 1. Update `docs/nodes/queue-system.md`
 2. Update `docs/nodes/multi-tenant.md`
 3. Update `CLAUDE.md`
@@ -432,6 +486,7 @@ async processJob(job) {
 ### Phase 6: Evidence & Validation (3 hours)
 
 **Order:**
+
 1. Run all tests with coverage (`npm test -- --coverage`)
 2. Capture test output to `docs/test-evidence/issue-417/tests-passing.txt`
 3. Generate coverage report
@@ -444,19 +499,23 @@ async processJob(job) {
 ### Plan de Testing
 
 **Unit Tests:**
+
 - Logger utility helpers (2 new tests)
 - Queue service correlation ID (1 new test)
 
 **Integration Tests:**
+
 - 7 test suites in `test-observability.test.js`
 - ~20-30 individual test cases
 - Coverage: All 5 acceptance criteria
 
 **E2E Tests:**
+
 - Use existing E2E tests, verify logs produced
 - Validate correlation IDs in E2E workflow
 
 **Coverage Target:**
+
 - Maintain current coverage (87% for queue-system)
 - New observability test file: 100% AC coverage
 
@@ -465,15 +524,18 @@ async processJob(job) {
 **Screenshots:** Not applicable (backend logging)
 
 **Test Output:**
+
 - `tests-passing.txt` (full test output)
 - `coverage-report.json` (auto-generated)
 
 **Logs:**
+
 - Sample logs showing structured format
 - Sample logs showing correlation ID propagation
 - Sample logs showing error handling
 
 **Reports:**
+
 - `SUMMARY.md` (executive summary)
 - GDD validation report
 - Pre-Flight Checklist results
@@ -499,6 +561,7 @@ async processJob(job) {
 - [ ] Coverage maintains or increases
 
 **Command:**
+
 ```bash
 npm test -- test-observability.test.js
 # Expected: Test Suites: 1 passed, 1 total
@@ -508,10 +571,12 @@ npm test -- test-observability.test.js
 ### Coverage Mantiene o Sube (auto-updated)
 
 **Current Coverage:**
+
 - queue-system: 87%
 - logger utility: Not tracked separately
 
 **Target:**
+
 - queue-system: ≥87%
 - New observability tests: 100% AC coverage
 - Auto-updated via `npm test -- --coverage`
@@ -519,6 +584,7 @@ npm test -- test-observability.test.js
 ### GDD Validado (health ≥ 95)
 
 **Commands:**
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 # Expected: 🟢 HEALTHY
@@ -535,6 +601,7 @@ node scripts/compute-gdd-health.js --threshold=95
 **Decision:** Minimal updates to spec.md
 
 **Changes:**
+
 - Add brief mention of observability in "Logging" section (if exists)
 - Reference integration tests
 
@@ -543,6 +610,7 @@ node scripts/compute-gdd-health.js --threshold=95
 ### 0 Comentarios de CodeRabbit
 
 **Pre-Flight Self-Review:**
+
 - Code quality (no console.logs, TODOs, dead code)
 - Tests comprehensive and meaningful
 - Documentation clear and accurate
@@ -553,6 +621,7 @@ node scripts/compute-gdd-health.js --threshold=95
 ### CI/CD Passing
 
 **Required:**
+
 - ✅ All test suites pass
 - ✅ Linting passes (`npm run lint`)
 - ✅ Build succeeds (`npm run build`)
@@ -566,16 +635,17 @@ node scripts/compute-gdd-health.js --threshold=95
 
 ### Technical Risks
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Performance impact of increased logging | 🟡 Low | Winston handles high volume well, use log levels |
-| Correlation ID propagation across async boundaries | 🟡 Medium | Use job metadata, test thoroughly |
-| Log volume in production | 🟡 Low | Configure log levels per environment |
-| Test flakiness (async logging) | 🟡 Low | Use proper async/await, mock logger |
+| Risk                                               | Severity  | Mitigation                                       |
+| -------------------------------------------------- | --------- | ------------------------------------------------ |
+| Performance impact of increased logging            | 🟡 Low    | Winston handles high volume well, use log levels |
+| Correlation ID propagation across async boundaries | 🟡 Medium | Use job metadata, test thoroughly                |
+| Log volume in production                           | 🟡 Low    | Configure log levels per environment             |
+| Test flakiness (async logging)                     | 🟡 Low    | Use proper async/await, mock logger              |
 
 ### Blockers
 
 **None Identified:**
+
 - All dependencies already exist (Winston, queue service, workers)
 - No external API changes needed
 - No database schema changes
@@ -584,11 +654,13 @@ node scripts/compute-gdd-health.js --threshold=95
 ### Dependencies
 
 **Internal:**
+
 - ✅ Winston logger (already configured)
 - ✅ Queue service (supports metadata)
 - ✅ Workers (need enhancement but no breaking changes)
 
 **External:**
+
 - None
 
 ---
@@ -597,16 +669,16 @@ node scripts/compute-gdd-health.js --threshold=95
 
 **Total Estimated Effort:** 20 hours (~2.5 days)
 
-| Phase | Duration | Status |
-|-------|----------|--------|
-| **Phase 0: Assessment** | 1h | ✅ Complete |
-| **Phase 1: Logger Enhancement** | 2h | ⏭️ Next |
-| **Phase 2: Correlation ID** | 1h | ⏭️ Pending |
-| **Phase 3: Worker Logging** | 4h | ⏭️ Pending |
-| **Phase 4: Integration Tests** | 6h | ⏭️ Pending |
-| **Phase 5: Documentation** | 1.5h | ⏭️ Pending |
-| **Phase 6: Evidence & Validation** | 3h | ⏭️ Pending |
-| **Phase 7: PR & Merge** | 1.5h | ⏭️ Pending |
+| Phase                              | Duration | Status      |
+| ---------------------------------- | -------- | ----------- |
+| **Phase 0: Assessment**            | 1h       | ✅ Complete |
+| **Phase 1: Logger Enhancement**    | 2h       | ⏭️ Next     |
+| **Phase 2: Correlation ID**        | 1h       | ⏭️ Pending  |
+| **Phase 3: Worker Logging**        | 4h       | ⏭️ Pending  |
+| **Phase 4: Integration Tests**     | 6h       | ⏭️ Pending  |
+| **Phase 5: Documentation**         | 1.5h     | ⏭️ Pending  |
+| **Phase 6: Evidence & Validation** | 3h       | ⏭️ Pending  |
+| **Phase 7: PR & Merge**            | 1.5h     | ⏭️ Pending  |
 
 **Start Date:** 2025-10-12
 **Target Completion:** 2025-10-14 (2.5 days)
@@ -620,6 +692,7 @@ node scripts/compute-gdd-health.js --threshold=95
 ⚠️ **CRÍTICO**: Según workflow autónomo, **NO esperar confirmación del usuario**. Proceder directamente con implementación.
 
 **Immediate Actions:**
+
 1. ✅ Planning document saved (this file)
 2. ⏭️ **START Phase 1:** Enhance logger utility
 3. ⏭️ **START Phase 2:** Implement correlation ID propagation
@@ -630,6 +703,7 @@ node scripts/compute-gdd-health.js --threshold=95
 8. ⏭️ **START Phase 7:** Create PR & merge
 
 **Workflow:**
+
 - Execute phases sequentially
 - Validate after each phase
 - Continue automatically unless blocker encountered
@@ -640,22 +714,27 @@ node scripts/compute-gdd-health.js --threshold=95
 ## 11. References
 
 **Issue:**
+
 - Issue #417: [Integración] Observabilidad mínima – structured logs y correlación
 - URL: https://github.com/Eibon7/roastr-ai/issues/417
 
 **Assessment:**
+
 - `docs/assessment/issue-417.md` (comprehensive current state analysis)
 
 **GDD Nodes:**
+
 - `docs/nodes/queue-system.md` (worker architecture)
 - `docs/nodes/multi-tenant.md` (tenant context)
 
 **Related Files:**
+
 - `src/utils/logger.js` (logger implementation)
 - `src/services/queueService.js` (queue service)
 - `src/workers/*.js` (4 worker files)
 
 **Similar Issues/PRs:**
+
 - None directly related (first observability integration tests)
 
 ---
@@ -668,6 +747,6 @@ node scripts/compute-gdd-health.js --threshold=95
 
 ---
 
-*Generated by Orchestrator Agent - 2025-10-12*
-*Following CLAUDE.md quality standards: Calidad > Velocidad*
-*Assessment: ENHANCE (strong foundation, targeted improvements needed)*
+_Generated by Orchestrator Agent - 2025-10-12_
+_Following CLAUDE.md quality standards: Calidad > Velocidad_
+_Assessment: ENHANCE (strong foundation, targeted improvements needed)_

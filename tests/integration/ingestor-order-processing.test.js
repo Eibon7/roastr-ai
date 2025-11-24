@@ -26,7 +26,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
       const orderedComments = fixtures.orderedComments;
 
       // Create jobs in specific order
-      const jobPayloads = orderedComments.map(comment => ({
+      const jobPayloads = orderedComments.map((comment) => ({
         organization_id: organizationId,
         platform: 'twitter',
         integration_config_id: integrationConfigId,
@@ -46,7 +46,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
       });
 
       const processedOrder = [];
-      
+
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
         const comment = payload.comment_data;
         processedOrder.push({
@@ -70,7 +70,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
 
       // Verify processing order matches creation order
       expect(processedOrder).toHaveLength(orderedComments.length);
-      
+
       for (let i = 0; i < processedOrder.length; i++) {
         expect(processedOrder[i].sequence).toBe(i + 1);
         expect(processedOrder[i].platform_comment_id).toBe(`order_test_${i + 1}`);
@@ -89,7 +89,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
     test('should maintain order across multiple fetch operations', async () => {
       const organizationId = 'test-org-order';
       const integrationConfigId = 'config-twitter-order';
-      
+
       // Create three separate fetch operations
       const batch1 = [fixtures.orderedComments[0]];
       const batch2 = [fixtures.orderedComments[1]];
@@ -148,7 +148,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
 
       // Verify processing order maintained across batches
       expect(allProcessedComments).toHaveLength(3);
-      
+
       for (let i = 0; i < allProcessedComments.length; i++) {
         expect(allProcessedComments[i].metadata.sequence).toBe(i + 1);
       }
@@ -157,8 +157,8 @@ describe('Ingestor Processing Order Integration Tests', () => {
       const storedComments = await testUtils.getCommentsByOrganization(organizationId);
       expect(storedComments).toHaveLength(3);
 
-      const sortedByCreated = storedComments.sort((a, b) => 
-        new Date(a.created_at) - new Date(b.created_at)
+      const sortedByCreated = storedComments.sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
       );
 
       for (let i = 0; i < sortedByCreated.length; i++) {
@@ -190,26 +190,44 @@ describe('Ingestor Processing Order Integration Tests', () => {
       };
 
       // Create jobs in reverse priority order to test reordering
-      const lowPriorityJobs = await testUtils.createTestJobs('fetch_comments', [{
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        comment_data: lowPriorityComment
-      }], { priority: 5 }); // Low priority (higher number)
+      const lowPriorityJobs = await testUtils.createTestJobs(
+        'fetch_comments',
+        [
+          {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comment_data: lowPriorityComment
+          }
+        ],
+        { priority: 5 }
+      ); // Low priority (higher number)
 
-      const normalPriorityJobs = await testUtils.createTestJobs('fetch_comments', [{
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        comment_data: normalPriorityComment
-      }], { priority: 3 }); // Normal priority
+      const normalPriorityJobs = await testUtils.createTestJobs(
+        'fetch_comments',
+        [
+          {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comment_data: normalPriorityComment
+          }
+        ],
+        { priority: 3 }
+      ); // Normal priority
 
-      const highPriorityJobs = await testUtils.createTestJobs('fetch_comments', [{
-        organization_id: organizationId,
-        platform: 'twitter',
-        integration_config_id: integrationConfigId,
-        comment_data: highPriorityComment
-      }], { priority: 1 }); // High priority (lower number)
+      const highPriorityJobs = await testUtils.createTestJobs(
+        'fetch_comments',
+        [
+          {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comment_data: highPriorityComment
+          }
+        ],
+        { priority: 1 }
+      ); // High priority (lower number)
 
       const worker = testUtils.createTestWorker({
         maxConcurrency: 1
@@ -237,11 +255,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
       }
 
       // Should process in priority order: high, normal, low
-      expect(processedOrder).toEqual([
-        'high_priority_1',
-        'normal_priority_1',
-        'low_priority_1'
-      ]);
+      expect(processedOrder).toEqual(['high_priority_1', 'normal_priority_1', 'low_priority_1']);
     });
   });
 
@@ -258,13 +272,15 @@ describe('Ingestor Processing Order Integration Tests', () => {
           platform_comment_id: `retry_order_${i + 1}`
         };
 
-        const jobData = [{
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          comment_data: comment,
-          shouldFail: i === 1 // Middle job fails initially
-        }];
+        const jobData = [
+          {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comment_data: comment,
+            shouldFail: i === 1 // Middle job fails initially
+          }
+        ];
 
         const createdJobs = await testUtils.createTestJobs('fetch_comments', jobData, {
           priority: 5,
@@ -286,7 +302,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
         const comment = payload.comment_data;
         const commentId = comment.platform_comment_id;
-        
+
         attemptCounts[commentId] = (attemptCounts[commentId] || 0) + 1;
 
         // Middle job fails on first attempt
@@ -339,13 +355,15 @@ describe('Ingestor Processing Order Integration Tests', () => {
           platform_comment_id: `permanent_fail_${i + 1}`
         };
 
-        const jobData = [{
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          comment_data: comment,
-          shouldPermanentlyFail: i === 1
-        }];
+        const jobData = [
+          {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comment_data: comment,
+            shouldPermanentlyFail: i === 1
+          }
+        ];
 
         const createdJobs = await testUtils.createTestJobs('fetch_comments', jobData, {
           priority: 5,
@@ -365,7 +383,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
 
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
         const comment = payload.comment_data;
-        
+
         if (payload.shouldPermanentlyFail) {
           throw new Error(`Permanent failure for ${comment.platform_comment_id}`);
         }
@@ -399,16 +417,13 @@ describe('Ingestor Processing Order Integration Tests', () => {
       expect(results[2].success).toBe(true);
 
       // Only successful jobs should be in processed order
-      expect(processedOrder).toEqual([
-        'permanent_fail_1',
-        'permanent_fail_3'
-      ]);
+      expect(processedOrder).toEqual(['permanent_fail_1', 'permanent_fail_3']);
 
       // Verify database contains only successful comments
       const storedComments = await testUtils.getCommentsByOrganization(organizationId);
       expect(storedComments).toHaveLength(2);
-      
-      const commentIds = storedComments.map(c => c.platform_comment_id);
+
+      const commentIds = storedComments.map((c) => c.platform_comment_id);
       expect(commentIds).toContain('permanent_fail_1');
       expect(commentIds).toContain('permanent_fail_3');
       expect(commentIds).not.toContain('permanent_fail_2');
@@ -430,12 +445,14 @@ describe('Ingestor Processing Order Integration Tests', () => {
           metadata: { ...fixtures.orderedComments[0].metadata, sequence: i + 1 }
         };
 
-        const jobData = [{
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          comment_data: comment
-        }];
+        const jobData = [
+          {
+            organization_id: organizationId,
+            platform: 'twitter',
+            integration_config_id: integrationConfigId,
+            comment_data: comment
+          }
+        ];
 
         const jobs = await testUtils.createTestJobs('fetch_comments', jobData, {
           priority: 5 // Same priority
@@ -454,12 +471,12 @@ describe('Ingestor Processing Order Integration Tests', () => {
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
         const comment = payload.comment_data;
         const commentId = comment.platform_comment_id;
-        
+
         processingStartTimes[commentId] = Date.now();
-        
+
         // Simulate variable processing time
         await testUtils.sleep(Math.random() * 100);
-        
+
         processedComments.push({
           id: commentId,
           sequence: comment.metadata.sequence,
@@ -473,7 +490,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
         await worker.start();
 
         // Process all jobs concurrently
-        const promises = concurrentJobs.map(job => worker.processJob(job));
+        const promises = concurrentJobs.map((job) => worker.processJob(job));
         await Promise.all(promises);
       } finally {
         // CODERABBIT FIX: Ensure worker cleanup in try/finally to prevent Jest handle leaks
@@ -488,7 +505,9 @@ describe('Ingestor Processing Order Integration Tests', () => {
 
       // Should start processing in FIFO order (even if they finish out of order)
       for (let i = 0; i < sortedByStartTime.length - 1; i++) {
-        expect(sortedByStartTime[i].startTime).toBeLessThanOrEqual(sortedByStartTime[i + 1].startTime);
+        expect(sortedByStartTime[i].startTime).toBeLessThanOrEqual(
+          sortedByStartTime[i + 1].startTime
+        );
       }
 
       // Verify all comments were stored
@@ -511,12 +530,18 @@ describe('Ingestor Processing Order Integration Tests', () => {
           original_text: `Low priority ${i + 1}`
         };
 
-        const jobs = await testUtils.createTestJobs('fetch_comments', [{
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          comment_data: comment
-        }], { priority: 5 });
+        const jobs = await testUtils.createTestJobs(
+          'fetch_comments',
+          [
+            {
+              organization_id: organizationId,
+              platform: 'twitter',
+              integration_config_id: integrationConfigId,
+              comment_data: comment
+            }
+          ],
+          { priority: 5 }
+        );
 
         priorityJobs.push({ job: jobs[0], priority: 5, id: `low_${i + 1}` });
       }
@@ -529,12 +554,18 @@ describe('Ingestor Processing Order Integration Tests', () => {
           original_text: `High priority ${i + 1}`
         };
 
-        const jobs = await testUtils.createTestJobs('fetch_comments', [{
-          organization_id: organizationId,
-          platform: 'twitter',
-          integration_config_id: integrationConfigId,
-          comment_data: comment
-        }], { priority: 1 });
+        const jobs = await testUtils.createTestJobs(
+          'fetch_comments',
+          [
+            {
+              organization_id: organizationId,
+              platform: 'twitter',
+              integration_config_id: integrationConfigId,
+              comment_data: comment
+            }
+          ],
+          { priority: 1 }
+        );
 
         priorityJobs.push({ job: jobs[0], priority: 1, id: `high_${i + 1}` });
       }
@@ -548,10 +579,10 @@ describe('Ingestor Processing Order Integration Tests', () => {
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
         const comment = payload.comment_data;
         processedOrder.push(comment.platform_comment_id);
-        
+
         // Simulate processing time
         await testUtils.sleep(50);
-        
+
         return [comment];
       };
 
@@ -580,7 +611,7 @@ describe('Ingestor Processing Order Integration Tests', () => {
   describe('Order Validation Utilities', () => {
     test('should validate job order using helper assertion', async () => {
       const expectedOrder = ['order_test_1', 'order_test_2', 'order_test_3'];
-      const actualJobs = fixtures.orderedComments.map(comment => ({
+      const actualJobs = fixtures.orderedComments.map((comment) => ({
         platform_comment_id: comment.platform_comment_id
       }));
 

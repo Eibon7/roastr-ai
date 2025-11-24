@@ -6,7 +6,7 @@ const { logger, SafeUtils } = require('../utils/logger');
 
 /**
  * Account Deletion Worker for GDPR Compliance
- * 
+ *
  * Processes scheduled account deletions with proper GDPR compliance:
  * - Processes deletion requests after grace period
  * - Exports user data before deletion
@@ -24,9 +24,9 @@ class AccountDeletionWorker extends BaseWorker {
       retryDelay: 30 * 60 * 1000, // 30 minute retry delay
       ...options
     });
-    
+
     this.dataExportService = new DataExportService();
-    
+
     logger.info('AccountDeletionWorker initialized', {
       workerName: this.workerName,
       pollInterval: this.config.pollInterval,
@@ -45,14 +45,13 @@ class AccountDeletionWorker extends BaseWorker {
 
       this.isRunning = true;
       this.startTime = Date.now();
-      
+
       // Start main processing loop
       this.processingLoop();
-      
+
       logger.info('AccountDeletionWorker started successfully', {
         workerName: this.workerName
       });
-
     } catch (error) {
       logger.error('Failed to start AccountDeletionWorker', {
         workerName: this.workerName,
@@ -70,19 +69,18 @@ class AccountDeletionWorker extends BaseWorker {
       try {
         await this.processPendingDeletions();
         await this.sendReminderNotifications();
-        
+
         // Wait before next poll
         if (this.isRunning) {
           await this.sleep(this.config.pollInterval);
         }
-        
       } catch (error) {
         logger.error('Error in AccountDeletionWorker processing loop', {
           workerName: this.workerName,
           error: error.message,
           stack: error.stack
         });
-        
+
         // Wait longer on error to avoid rapid error loops
         if (this.isRunning) {
           await this.sleep(Math.min(this.config.pollInterval * 3, 300000)); // Max 5 minute wait
@@ -120,7 +118,7 @@ class AccountDeletionWorker extends BaseWorker {
       // Process each deletion
       for (const deletionRequest of pendingDeletions) {
         if (!this.isRunning) break;
-        
+
         try {
           await this.processSingleDeletion(deletionRequest);
         } catch (error) {
@@ -130,12 +128,11 @@ class AccountDeletionWorker extends BaseWorker {
             userId: deletionRequest.user_id,
             error: error.message
           });
-          
+
           // Mark as failed if max retries exceeded
           await this.handleDeletionFailure(deletionRequest, error);
         }
       }
-
     } catch (error) {
       logger.error('Error processing pending deletions', {
         workerName: this.workerName,
@@ -163,7 +160,7 @@ class AccountDeletionWorker extends BaseWorker {
     try {
       // Mark as processing
       await this.updateDeletionStatus(requestId, 'processing');
-      
+
       // Log start of processing
       await auditService.logGdprAction({
         action: 'account_deletion_processing_started',
@@ -183,10 +180,13 @@ class AccountDeletionWorker extends BaseWorker {
       // Step 1: Export user data if not already done
       let dataExportResult = null;
       if (!deletionRequest.data_exported_at) {
-        logger.info('Generating final data export before deletion', { requestId, userId: SafeUtils.safeUserIdPrefix(userId) });
-        
+        logger.info('Generating final data export before deletion', {
+          requestId,
+          userId: SafeUtils.safeUserIdPrefix(userId)
+        });
+
         dataExportResult = await this.dataExportService.exportUserData(userId);
-        
+
         if (dataExportResult.success) {
           await this.supabase
             .from('account_deletion_requests')
@@ -198,20 +198,27 @@ class AccountDeletionWorker extends BaseWorker {
             .eq('id', requestId);
 
           // Log data export
-          await auditService.logDataExport(userId, {
-            filename: dataExportResult.filename,
-            size: dataExportResult.size,
-            expiresAt: dataExportResult.expiresAt,
-            context: 'pre_deletion_export'
-          }, this.workerName);
+          await auditService.logDataExport(
+            userId,
+            {
+              filename: dataExportResult.filename,
+              size: dataExportResult.size,
+              expiresAt: dataExportResult.expiresAt,
+              context: 'pre_deletion_export'
+            },
+            this.workerName
+          );
         }
       }
 
       // Step 2: Anonymize user data for compliance
-      logger.info('Anonymizing user data for retention compliance', { requestId, userId: SafeUtils.safeUserIdPrefix(userId) });
-      
+      logger.info('Anonymizing user data for retention compliance', {
+        requestId,
+        userId: SafeUtils.safeUserIdPrefix(userId)
+      });
+
       await this.dataExportService.anonymizeUserData(userId);
-      
+
       // Log anonymization
       await auditService.logGdprAction({
         action: 'personal_data_anonymized',
@@ -230,8 +237,11 @@ class AccountDeletionWorker extends BaseWorker {
       });
 
       // Step 3: Perform complete data deletion
-      logger.info('Performing complete data deletion', { requestId, userId: SafeUtils.safeUserIdPrefix(userId) });
-      
+      logger.info('Performing complete data deletion', {
+        requestId,
+        userId: SafeUtils.safeUserIdPrefix(userId)
+      });
+
       await this.dataExportService.deleteUserData(userId);
 
       // Step 4: Mark deletion as completed
@@ -279,7 +289,6 @@ class AccountDeletionWorker extends BaseWorker {
         processingTimeMs: processingTime,
         dataExportGenerated: !!dataExportResult?.success
       });
-
     } catch (error) {
       logger.error('Account deletion processing failed', {
         workerName: this.workerName,
@@ -325,7 +334,9 @@ class AccountDeletionWorker extends BaseWorker {
 
         try {
           const scheduledDeletion = new Date(deletionRequest.scheduled_deletion_at);
-          const daysUntilDeletion = Math.ceil((scheduledDeletion.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          const daysUntilDeletion = Math.ceil(
+            (scheduledDeletion.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+          );
 
           await emailService.sendAccountDeletionReminderEmail(deletionRequest.user_email, {
             userName: deletionRequest.user_name || deletionRequest.user_email,
@@ -347,7 +358,6 @@ class AccountDeletionWorker extends BaseWorker {
             userEmail: deletionRequest.user_email,
             daysUntilDeletion
           });
-
         } catch (error) {
           logger.warn('Failed to send deletion reminder', {
             requestId: deletionRequest.id,
@@ -356,7 +366,6 @@ class AccountDeletionWorker extends BaseWorker {
           });
         }
       }
-
     } catch (error) {
       logger.error('Error sending reminder notifications', {
         workerName: this.workerName,
@@ -399,7 +408,7 @@ class AccountDeletionWorker extends BaseWorker {
       // - Retry with exponential backoff
       // - Alert administrators
       // - Move to a failed queue for manual intervention
-      
+
       logger.error('Deletion processing failed permanently', {
         workerName: this.workerName,
         requestId: deletionRequest.id,
@@ -424,7 +433,6 @@ class AccountDeletionWorker extends BaseWorker {
         legalBasis: 'gdpr_article_17_right_to_be_forgotten',
         retentionPeriodDays: 2557
       });
-
     } catch (auditError) {
       logger.error('Failed to log deletion failure', {
         workerName: this.workerName,
@@ -439,9 +447,10 @@ class AccountDeletionWorker extends BaseWorker {
    */
   getStatus() {
     const uptime = Date.now() - this.startTime;
-    const averageProcessingTime = this.processingTimes.length > 0
-      ? this.processingTimes.reduce((a, b) => a + b, 0) / this.processingTimes.length
-      : 0;
+    const averageProcessingTime =
+      this.processingTimes.length > 0
+        ? this.processingTimes.reduce((a, b) => a + b, 0) / this.processingTimes.length
+        : 0;
 
     return {
       workerName: this.workerName,
@@ -451,9 +460,10 @@ class AccountDeletionWorker extends BaseWorker {
       uptimeFormatted: this.formatDuration(uptime),
       processedJobs: this.processedJobs,
       failedJobs: this.failedJobs,
-      successRate: this.processedJobs + this.failedJobs > 0
-        ? ((this.processedJobs / (this.processedJobs + this.failedJobs)) * 100).toFixed(2) + '%'
-        : 'N/A',
+      successRate:
+        this.processedJobs + this.failedJobs > 0
+          ? ((this.processedJobs / (this.processedJobs + this.failedJobs)) * 100).toFixed(2) + '%'
+          : 'N/A',
       averageProcessingTime: Math.round(averageProcessingTime),
       lastActivityTime: this.lastActivityTime,
       lastActivityFormatted: this.lastActivityTime
@@ -499,7 +509,7 @@ class AccountDeletionWorker extends BaseWorker {
     await this.sleep(1000);
 
     clearTimeout(shutdownTimeout);
-    
+
     logger.info('AccountDeletionWorker stopped', {
       workerName: this.workerName,
       finalStats: this.getStatus()
@@ -510,7 +520,7 @@ class AccountDeletionWorker extends BaseWorker {
    * Sleep utility
    */
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

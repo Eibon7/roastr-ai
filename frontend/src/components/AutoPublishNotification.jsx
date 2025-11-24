@@ -5,54 +5,57 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
-const AutoPublishNotification = ({ 
-  isAutoPublishEnabled, 
-  onToggle, 
+const AutoPublishNotification = ({
+  isAutoPublishEnabled,
+  onToggle,
   currentStatus,
   lastPublished,
   className = '',
-  style = {} 
+  style = {}
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [dismissedAt, setDismissedAt] = useState(null);
 
   // ROUND 4 FIX: Memoized configuration to ensure deterministic props
-  const notificationConfig = useMemo(() => ({
-    variants: {
-      info: {
-        icon: 'ℹ️',
-        bgColor: 'bg-blue-50',
-        textColor: 'text-blue-800',
-        borderColor: 'border-blue-200'
+  const notificationConfig = useMemo(
+    () => ({
+      variants: {
+        info: {
+          icon: 'ℹ️',
+          bgColor: 'bg-blue-50',
+          textColor: 'text-blue-800',
+          borderColor: 'border-blue-200'
+        },
+        success: {
+          icon: '✅',
+          bgColor: 'bg-green-50',
+          textColor: 'text-green-800',
+          borderColor: 'border-green-200'
+        },
+        warning: {
+          icon: '⚠️',
+          bgColor: 'bg-yellow-50',
+          textColor: 'text-yellow-800',
+          borderColor: 'border-yellow-200'
+        },
+        error: {
+          icon: '❌',
+          bgColor: 'bg-red-50',
+          textColor: 'text-red-800',
+          borderColor: 'border-red-200'
+        }
       },
-      success: {
-        icon: '✅',
-        bgColor: 'bg-green-50',
-        textColor: 'text-green-800',
-        borderColor: 'border-green-200'
-      },
-      warning: {
-        icon: '⚠️',
-        bgColor: 'bg-yellow-50',
-        textColor: 'text-yellow-800',
-        borderColor: 'border-yellow-200'
-      },
-      error: {
-        icon: '❌',
-        bgColor: 'bg-red-50',
-        textColor: 'text-red-800',
-        borderColor: 'border-red-200'
-      }
-    },
-    autoHideDuration: 5000,
-    reappearDelay: 30000
-  }), []); // Empty dependency array ensures this is created only once
+      autoHideDuration: 5000,
+      reappearDelay: 30000
+    }),
+    []
+  ); // Empty dependency array ensures this is created only once
 
   // ROUND 4 FIX: Determine notification variant based on status
   const notificationVariant = useMemo(() => {
     if (!isAutoPublishEnabled) return 'info';
-    
+
     switch (currentStatus) {
       case 'publishing':
         return 'info';
@@ -77,7 +80,7 @@ const AutoPublishNotification = ({
     // Show notification when auto-publish is enabled or status changes
     if (isAutoPublishEnabled || currentStatus) {
       setIsVisible(true);
-      
+
       // ROUND 4 FIX: Auto-hide timer with cleanup
       const autoHideTimer = setTimeout(() => {
         setIsVisible(false);
@@ -87,7 +90,13 @@ const AutoPublishNotification = ({
         clearTimeout(autoHideTimer);
       };
     }
-  }, [isAutoPublishEnabled, currentStatus, dismissedAt, notificationConfig.autoHideDuration, notificationConfig.reappearDelay]);
+  }, [
+    isAutoPublishEnabled,
+    currentStatus,
+    dismissedAt,
+    notificationConfig.autoHideDuration,
+    notificationConfig.reappearDelay
+  ]);
 
   // ROUND 4 FIX: Timer for countdown display with proper cleanup
   useEffect(() => {
@@ -97,9 +106,9 @@ const AutoPublishNotification = ({
         const now = Date.now();
         const publishTime = lastPublished ? new Date(lastPublished).getTime() + 60000 : now + 30000;
         const remaining = Math.max(0, publishTime - now);
-        
+
         setTimeRemaining(remaining);
-        
+
         if (remaining > 0) {
           const timeoutId = setTimeout(updateTimer, 1000);
           return () => clearTimeout(timeoutId);
@@ -128,10 +137,10 @@ const AutoPublishNotification = ({
   // ROUND 4 FIX: Format time remaining
   const formatTimeRemaining = useCallback((ms) => {
     if (!ms) return '';
-    
+
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
-    
+
     if (minutes > 0) {
       return `${minutes}m ${seconds % 60}s`;
     }
@@ -184,9 +193,7 @@ const AutoPublishNotification = ({
             {variant.icon}
           </span>
           <div className="flex-1">
-            <p className="text-sm font-medium">
-              {message}
-            </p>
+            <p className="text-sm font-medium">{message}</p>
             {lastPublished && (
               <p className="text-xs mt-1 opacity-75">
                 Last published: {new Date(lastPublished).toLocaleTimeString()}
@@ -194,16 +201,17 @@ const AutoPublishNotification = ({
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center ml-4">
           {/* Toggle button */}
           <button
             onClick={handleToggle}
             className={`
               text-xs px-3 py-1 rounded-full border transition-colors duration-200
-              ${isAutoPublishEnabled 
-                ? 'bg-white border-current hover:bg-opacity-90' 
-                : 'bg-current text-white hover:bg-opacity-90'
+              ${
+                isAutoPublishEnabled
+                  ? 'bg-white border-current hover:bg-opacity-90'
+                  : 'bg-current text-white hover:bg-opacity-90'
               }
             `}
             aria-label={`${isAutoPublishEnabled ? 'Disable' : 'Enable'} auto-publish`}
@@ -211,7 +219,7 @@ const AutoPublishNotification = ({
           >
             {isAutoPublishEnabled ? 'Disable' : 'Enable'}
           </button>
-          
+
           {/* Dismiss button */}
           <button
             onClick={handleDismiss}

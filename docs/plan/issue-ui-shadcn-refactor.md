@@ -1,12 +1,14 @@
 ## Issue: UI Refactor con shadcn/ui
 
 ### Estado actual
+
 - El frontend usa React con `react-scripts`, estilos centralizados en `src/App.css` y utilidades ad-hoc que replican parcialmente Tailwind.
 - No existe configuración oficial de Tailwind ni carpeta `components/ui` alineada con shadcn/ui; la UI actual mezcla CSS global + componentes propios inconsistentes.
 - No contamos con componentes compartidos para comentarios, respuestas o layout; cada página define su propio markup y estilos.
 - No hay documentación de reglas visuales ni inventario actualizado de componentes UI personalizados.
 
 ### Pasos propuestos
+
 1. **Setup base (Tailwind + shadcn/ui)**
    - Instalar Tailwind en `frontend`, generar `tailwind.config.js`, `postcss.config.js`, `components.json` de shadcn y carpeta `src/components/ui`.
    - Configurar `content` en Tailwind para todo `src/**/*.{js,jsx,ts,tsx}` y activar plugins necesarios (forms, animate).
@@ -34,12 +36,14 @@
    - Validar UI con Playwright MCP (desktop/tablet/mobile) y adjuntar evidencia en `docs/test-evidence/`.
 
 ### Agentes / Skills requeridos
-- FrontendDev (cambios en *.jsx, *.tsx, estilos y experiencia visual)
+
+- FrontendDev (cambios en _.jsx, _.tsx, estilos y experiencia visual)
 - TestEngineer (nuevos componentes y tests)
 - VisualValidation skill (Playwright)
 - TaskAssessor (alcance con múltiples AC, ya cubierto con este plan)
 
 ### Archivos/Directorios impactados
+
 - `frontend/package.json`, `package-lock.json`
 - `frontend/tailwind.config.js`, `frontend/postcss.config.js`, `frontend/components.json`
 - `frontend/src/index.css`, `frontend/src/App.css`, `frontend/src/index.js`, `frontend/src/App.js`
@@ -50,9 +54,9 @@
 - `docs/agents/receipts/*` (nuevos)
 
 ### Validación y verificación
+
 - `npm install && npm run lint && npm run test && npm run build`
 - `node scripts/validate-gdd-runtime.js --full`
 - `node scripts/score-gdd-health.js --ci`
 - Ejecución Playwright MCP (capturas multi-viewport) documentada en `docs/test-evidence/issue-<id>/`
 - Confirmar adopción total de componentes shadcn (grep para elementos legacy críticos)
-

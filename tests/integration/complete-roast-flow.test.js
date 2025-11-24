@@ -1,6 +1,6 @@
 /**
  * Complete Roast Flow Integration Tests
- * 
+ *
  * Tests the entire pipeline from comment reception to roast delivery:
  * 1. Comment detection and fetching
  * 2. Toxicity analysis and filtering
@@ -184,9 +184,9 @@ describe('Complete Roast Flow Integration', () => {
 
         // Mock a long response that exceeds platform limit
         const longResponse = 'a'.repeat(platform.limit + 100);
-        
+
         const validatedResponse = worker.validateResponseLength(longResponse, platform.name);
-        
+
         expect(validatedResponse.length).toBeLessThanOrEqual(platform.limit);
         expect(validatedResponse).toContain('...'); // Should be truncated
       }
@@ -255,11 +255,13 @@ describe('Complete Roast Flow Integration', () => {
         chat: {
           completions: {
             create: jest.fn().mockResolvedValue({
-              choices: [{
-                message: {
-                  content: 'Your comment shows the intellectual depth of a puddle. 🧠💧'
+              choices: [
+                {
+                  message: {
+                    content: 'Your comment shows the intellectual depth of a puddle. 🧠💧'
+                  }
                 }
-              }],
+              ],
               usage: { total_tokens: 25 }
             })
           }
@@ -318,7 +320,7 @@ describe('Complete Roast Flow Integration', () => {
         };
 
         const result = await worker.processJob(job);
-        
+
         expect(result.success).toBe(true);
         expect(result.response.text).toBeDefined();
         // Should handle special characters without crashing
@@ -470,7 +472,7 @@ describe('Complete Roast Flow Integration', () => {
 
       for (const job of malformedJobs) {
         const result = await worker.processJob(job);
-        
+
         // Should handle gracefully
         expect(result).toBeDefined();
         if (result.success === false) {
@@ -486,7 +488,7 @@ describe('Complete Roast Flow Integration', () => {
       const fetchWorker = new FetchCommentsWorker();
       const toxicityWorker = new AnalyzeToxicityWorker();
       const replyWorker = new GenerateReplyWorker();
-      
+
       workers.push(fetchWorker, toxicityWorker, replyWorker);
 
       // Mock all external services
@@ -523,11 +525,13 @@ describe('Complete Roast Flow Integration', () => {
         chat: {
           completions: {
             create: jest.fn().mockResolvedValue({
-              choices: [{
-                message: {
-                  content: 'Your comment lacks the creativity of a broken calculator.'
+              choices: [
+                {
+                  message: {
+                    content: 'Your comment lacks the creativity of a broken calculator.'
+                  }
                 }
-              }],
+              ],
               usage: { total_tokens: 30 }
             })
           }
@@ -593,19 +597,22 @@ describe('Complete Roast Flow Integration', () => {
       replyWorker.openaiClient = {
         chat: {
           completions: {
-            create: jest.fn().mockImplementation(() => 
-              new Promise(resolve => {
-                setTimeout(() => {
-                  resolve({
-                    choices: [{
-                      message: {
-                        content: `Roast response ${Math.random()}`
-                      }
-                    }],
-                    usage: { total_tokens: 25 }
-                  });
-                }, Math.random() * 100); // Random delay 0-100ms
-              })
+            create: jest.fn().mockImplementation(
+              () =>
+                new Promise((resolve) => {
+                  setTimeout(() => {
+                    resolve({
+                      choices: [
+                        {
+                          message: {
+                            content: `Roast response ${Math.random()}`
+                          }
+                        }
+                      ],
+                      usage: { total_tokens: 25 }
+                    });
+                  }, Math.random() * 100); // Random delay 0-100ms
+                })
             )
           }
         }
@@ -618,18 +625,16 @@ describe('Complete Roast Flow Integration', () => {
           organization_id: 'org-123',
           platform: 'twitter',
           original_text: `Test comment ${i}`,
-          toxicity_score: 0.6 + (i * 0.01)
+          toxicity_score: 0.6 + i * 0.01
         }
       }));
 
       const startTime = Date.now();
-      const results = await Promise.all(
-        jobs.map(job => replyWorker.processJob(job))
-      );
+      const results = await Promise.all(jobs.map((job) => replyWorker.processJob(job)));
       const endTime = Date.now();
 
       // All jobs should succeed
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.success).toBe(true);
       });
 
@@ -640,12 +645,10 @@ describe('Complete Roast Flow Integration', () => {
 
   describe('UI State Management Validation', () => {
     test('should provide proper loading states via API', async () => {
-      const response = await request(app)
-        .post('/api/roast/preview')
-        .send({
-          text: 'Test comment for preview',
-          platform: 'twitter'
-        });
+      const response = await request(app).post('/api/roast/preview').send({
+        text: 'Test comment for preview',
+        platform: 'twitter'
+      });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('roast');
@@ -655,12 +658,10 @@ describe('Complete Roast Flow Integration', () => {
     });
 
     test('should handle API errors with proper error responses', async () => {
-      const response = await request(app)
-        .post('/api/roast/preview')
-        .send({
-          // Missing required text field
-          platform: 'twitter'
-        });
+      const response = await request(app).post('/api/roast/preview').send({
+        // Missing required text field
+        platform: 'twitter'
+      });
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');

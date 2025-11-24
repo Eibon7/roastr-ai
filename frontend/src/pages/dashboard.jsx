@@ -25,7 +25,13 @@ import {
 } from 'lucide-react';
 import AccountModal from '../components/AccountModal';
 import RoastInlineEditor from '../components/RoastInlineEditor';
-import { platformIcons, platformNames, allPlatforms, getPlatformIcon, getPlatformName } from '../config/platforms';
+import {
+  platformIcons,
+  platformNames,
+  allPlatforms,
+  getPlatformIcon,
+  getPlatformName
+} from '../config/platforms';
 import { normalizePlanId } from '../utils/planHelpers';
 import { apiClient } from '../lib/api';
 import { getCurrentUsage } from '../api/usage';
@@ -146,7 +152,6 @@ export default function Dashboard() {
         } finally {
           setAnalyticsLoading(false);
         }
-
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         setError('No se pudo cargar el panel. Por favor, actualiza la página.');
@@ -164,7 +169,7 @@ export default function Dashboard() {
     sessionStorage.removeItem('adminModeUser');
     setAdminMode(false);
     setAdminModeUser(null);
-    
+
     // Navigate back to admin panel
     navigate('/admin/users');
   };
@@ -205,7 +210,7 @@ export default function Dashboard() {
   };
 
   const getConnectedAccountsForPlatform = (platform) => {
-    return accounts?.filter(account => account.platform === platform) || [];
+    return accounts?.filter((account) => account.platform === platform) || [];
   };
 
   const isPlatformAtLimit = (platform) => {
@@ -223,35 +228,43 @@ export default function Dashboard() {
 
   // Compute per-platform connection limits using useMemo for performance
   // Issue #841: Limits are now PER PLATFORM, not global
-  const { planTier, maxConnectionsPerPlatform, isAtPlatformLimit, platformConnectionText, platformTooltipText } = useMemo(() => {
+  const {
+    planTier,
+    maxConnectionsPerPlatform,
+    isAtPlatformLimit,
+    platformConnectionText,
+    platformTooltipText
+  } = useMemo(() => {
     // Determine plan tier - fallback to 'starter_trial' if data is loading
-    const tier = normalizePlanId((adminModeUser?.plan || usage?.plan || 'starter_trial').toLowerCase());
+    const tier = normalizePlanId(
+      (adminModeUser?.plan || usage?.plan || 'starter_trial').toLowerCase()
+    );
     const maxPerPlatform = TIER_MAX_CONNECTIONS_PER_PLATFORM[tier] ?? 1; // Fallback for unknown tiers
-    
+
     // Check if any platform is at limit (per-platform enforcement)
-    const platformsAtLimit = allPlatforms.filter(platform => {
+    const platformsAtLimit = allPlatforms.filter((platform) => {
       const platformAccounts = getConnectedAccountsForPlatform(platform);
       return platformAccounts.length >= maxPerPlatform;
     });
-    
+
     const atPlatformLimit = platformsAtLimit.length > 0;
-    
+
     // Handle loading state gracefully without blocking UI
     const isDataLoading = !adminModeUser && !usage;
-    
+
     return {
       planTier: tier,
       maxConnectionsPerPlatform: maxPerPlatform,
       isAtPlatformLimit: atPlatformLimit,
-      platformConnectionText: isDataLoading 
-        ? 'Cargando límites del plan...' 
+      platformConnectionText: isDataLoading
+        ? 'Cargando límites del plan...'
         : `${maxPerPlatform} cuenta${maxPerPlatform !== 1 ? 's' : ''} por plataforma`,
       platformTooltipText: isDataLoading
         ? 'Cargando información del plan...'
         : atPlatformLimit
-          ? (tier === 'starter_trial' || tier === 'starter'
-              ? 'Mejora a Pro para conectar más cuentas por plataforma' 
-              : 'Has alcanzado el límite de tu plan para alguna plataforma')
+          ? tier === 'starter_trial' || tier === 'starter'
+            ? 'Mejora a Pro para conectar más cuentas por plataforma'
+            : 'Has alcanzado el límite de tu plan para alguna plataforma'
           : `Puedes conectar hasta ${maxPerPlatform} cuenta${maxPerPlatform !== 1 ? 's' : ''} por plataforma`
     };
   }, [adminModeUser, usage, accounts]);
@@ -270,17 +283,32 @@ export default function Dashboard() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'active':
-        return <Badge variant="success" className="text-xs">Activa</Badge>;
+        return (
+          <Badge variant="success" className="text-xs">
+            Activa
+          </Badge>
+        );
       case 'inactive':
-        return <Badge variant="destructive" className="text-xs">Inactiva</Badge>;
+        return (
+          <Badge variant="destructive" className="text-xs">
+            Inactiva
+          </Badge>
+        );
       default:
-        return <Badge variant="secondary" className="text-xs">Desconocido</Badge>;
+        return (
+          <Badge variant="secondary" className="text-xs">
+            Desconocido
+          </Badge>
+        );
     }
   };
 
   const totalRoastsUsed = useMemo(() => {
     if (!usage) return 0;
-    return Object.values(usage.platformUsage || {}).reduce((total, platform) => total + (platform.roasts || 0), 0);
+    return Object.values(usage.platformUsage || {}).reduce(
+      (total, platform) => total + (platform.roasts || 0),
+      0
+    );
   }, [usage]);
 
   const getTotalRoastsLimit = () => {
@@ -328,7 +356,7 @@ export default function Dashboard() {
   const handleValidationResult = (validation, credits) => {
     // Update usage data with new credit info if provided
     if (credits && usage) {
-      setUsage(prev => ({
+      setUsage((prev) => ({
         ...prev,
         roastsRemaining: credits.remaining,
         roastsLimit: credits.limit
@@ -474,10 +502,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <PageLayout 
-        title="Dashboard"
-        subtitle="Gestiona tus roasts, Shield y cuentas conectadas"
-      >
+      <PageLayout title="Dashboard" subtitle="Gestiona tus roasts, Shield y cuentas conectadas">
         <div className="space-y-6">
           <Skeleton className="h-8 w-48" />
           <Card>
@@ -509,7 +534,11 @@ export default function Dashboard() {
 
   return (
     <PageLayout
-      title={adminMode && adminModeUser ? `Dashboard de ${adminModeUser.name || adminModeUser.email}` : 'Dashboard'}
+      title={
+        adminMode && adminModeUser
+          ? `Dashboard de ${adminModeUser.name || adminModeUser.email}`
+          : 'Dashboard'
+      }
       subtitle="Gestiona tus roasts, Shield y cuentas conectadas"
     >
       {/* Admin Mode Banner - Issue #240 */}
@@ -519,7 +548,11 @@ export default function Dashboard() {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
@@ -529,7 +562,9 @@ export default function Dashboard() {
                 <p className="mt-1 text-sm text-orange-700 dark:text-orange-400">
                   {adminModeUser ? (
                     <>
-                      Viendo dashboard de: <strong>{adminModeUser.name || adminModeUser.email}</strong> ({adminModeUser.plan})
+                      Viendo dashboard de:{' '}
+                      <strong>{adminModeUser.name || adminModeUser.email}</strong> (
+                      {adminModeUser.plan})
                     </>
                   ) : (
                     'Visualizando dashboard de usuario como administrador'
@@ -545,7 +580,12 @@ export default function Dashboard() {
               >
                 <span className="sr-only">Salir del modo administrador</span>
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -570,9 +610,7 @@ export default function Dashboard() {
                 <AlertCircle className="h-5 w-5 text-red-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm text-red-700 dark:text-red-400">
-                  {error}
-                </p>
+                <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
               </div>
             </div>
             <div className="flex-shrink-0">
@@ -583,7 +621,11 @@ export default function Dashboard() {
               >
                 <span className="sr-only">Cerrar</span>
                 <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
             </div>
@@ -593,11 +635,13 @@ export default function Dashboard() {
 
       {/* Connection Status */}
       {connectionStatus && (
-        <div className={`border-l-4 p-4 mb-6 ${
-          connectionStatus.type === 'success'
-            ? 'bg-green-50 dark:bg-green-900/20 border-green-400'
-            : 'bg-red-50 dark:bg-red-900/20 border-red-400'
-        }`}>
+        <div
+          className={`border-l-4 p-4 mb-6 ${
+            connectionStatus.type === 'success'
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-400'
+              : 'bg-red-50 dark:bg-red-900/20 border-red-400'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -608,11 +652,13 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="ml-3">
-                <p className={`text-sm ${
-                  connectionStatus.type === 'success'
-                    ? 'text-green-700 dark:text-green-400'
-                    : 'text-red-700 dark:text-red-400'
-                }`}>
+                <p
+                  className={`text-sm ${
+                    connectionStatus.type === 'success'
+                      ? 'text-green-700 dark:text-green-400'
+                      : 'text-red-700 dark:text-red-400'
+                  }`}
+                >
                   {connectionStatus.message}
                 </p>
               </div>
@@ -625,7 +671,11 @@ export default function Dashboard() {
               >
                 <span className="sr-only">Cerrar</span>
                 <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
             </div>
@@ -673,9 +723,7 @@ export default function Dashboard() {
             {analyticsLoading ? (
               <Skeleton className="h-8 w-20" />
             ) : (
-              <div className="text-3xl font-bold text-blue-600">
-                {analytics?.sent_roasts ?? 0}
-              </div>
+              <div className="text-3xl font-bold text-blue-600">{analytics?.sent_roasts ?? 0}</div>
             )}
             <p className="text-sm text-muted-foreground mt-1">
               Total de roasts generados y publicados
@@ -688,7 +736,7 @@ export default function Dashboard() {
       {isEnabled('ENABLE_SHIELD_UI') && (
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle 
+            <CardTitle
               className="flex items-center justify-between cursor-pointer"
               onClick={() => setShieldExpanded(!shieldExpanded)}
             >
@@ -703,18 +751,28 @@ export default function Dashboard() {
                 <button className="p-1 hover:bg-gray-100 rounded">
                   {shieldExpanded ? (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 15l7-7 7 7"
+                      />
                     </svg>
                   ) : (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   )}
                 </button>
               </div>
             </CardTitle>
           </CardHeader>
-          
+
           {shieldExpanded && (
             <CardContent>
               {shieldLoading ? (
@@ -726,7 +784,10 @@ export default function Dashboard() {
               ) : shieldData && shieldData.length > 0 ? (
                 <div className="space-y-4">
                   {shieldData.map((item, index) => (
-                    <div key={index} className="border-l-4 border-orange-400 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-r-lg">
+                    <div
+                      key={index}
+                      className="border-l-4 border-orange-400 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-r-lg"
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
@@ -756,17 +817,19 @@ export default function Dashboard() {
                       </div>
                     </div>
                   ))}
-                  
+
                   <div className="pt-4 border-t">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
                         if (!shieldLoading) fetchShieldData();
                       }}
                       disabled={shieldLoading}
                     >
-                      <RefreshCw className={`h-4 w-4 mr-2 ${shieldLoading ? 'animate-spin' : ''}`} />
+                      <RefreshCw
+                        className={`h-4 w-4 mr-2 ${shieldLoading ? 'animate-spin' : ''}`}
+                      />
                       Actualizar
                     </Button>
                   </div>
@@ -790,9 +853,7 @@ export default function Dashboard() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Mis cuentas conectadas</span>
-            <Badge variant="outline">
-              {accounts?.length || 0} conectadas
-            </Badge>
+            <Badge variant="outline">{accounts?.length || 0} conectadas</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -800,7 +861,7 @@ export default function Dashboard() {
             accounts.map((account) => {
               const IconComponent = getPlatformIcon(account.platform);
               const platformUsage = usage?.platformUsage?.[account.platform] || {};
-              
+
               return (
                 <div
                   key={account.id}
@@ -874,8 +935,8 @@ export default function Dashboard() {
                   {platformConnectionText}
                 </span>
                 {isAtPlatformLimit && (
-                  <span 
-                    aria-label="Advertencia: Límite global de conexiones alcanzado" 
+                  <span
+                    aria-label="Advertencia: Límite global de conexiones alcanzado"
                     role="img"
                     className="text-amber-500"
                   >
@@ -883,14 +944,12 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
-              <Badge variant={isAtPlatformLimit ? "destructive" : "outline"} className="text-xs">
+              <Badge variant={isAtPlatformLimit ? 'destructive' : 'outline'} className="text-xs">
                 Plan {planTier}
               </Badge>
             </div>
             {isAtPlatformLimit && (
-              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                {platformTooltipText}
-              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">{platformTooltipText}</p>
             )}
           </div>
 
@@ -900,14 +959,14 @@ export default function Dashboard() {
               const isPlatformLimit = isPlatformAtLimit(platform);
               const isConnecting = connectingPlatform === platform;
               const isDisabled = isAtPlatformLimit || isPlatformLimit || isConnecting;
-              
+
               // Determine disable reason for accessibility
-              const disableReason = isAtPlatformLimit 
-                ? "Límite por plataforma alcanzado para tu plan"
-                : isPlatformLimit 
-                  ? "Límite alcanzado (máximo 2 cuentas por plataforma)"
-                  : "";
-              
+              const disableReason = isAtPlatformLimit
+                ? 'Límite por plataforma alcanzado para tu plan'
+                : isPlatformLimit
+                  ? 'Límite alcanzado (máximo 2 cuentas por plataforma)'
+                  : '';
+
               return (
                 <Button
                   key={platform}
@@ -917,18 +976,18 @@ export default function Dashboard() {
                   aria-disabled={isDisabled}
                   data-testid={`connect-${platform}-button`}
                   onClick={() => handleConnectPlatform(platform)}
-                  title={isDisabled ? disableReason : `Conectar cuenta de ${getPlatformName(platform)}`}
+                  title={
+                    isDisabled ? disableReason : `Conectar cuenta de ${getPlatformName(platform)}`
+                  }
                 >
                   <IconComponent className="h-5 w-5" />
                   <div className="text-left">
-                    <div className="font-medium text-xs">
-                      {getPlatformName(platform)}
-                    </div>
+                    <div className="font-medium text-xs">{getPlatformName(platform)}</div>
                     {isAtPlatformLimit ? (
                       <div className="text-xs text-muted-foreground flex items-center space-x-1">
                         <span>Límite global</span>
-                        <span 
-                          aria-label="Límite global alcanzado" 
+                        <span
+                          aria-label="Límite global alcanzado"
                           role="img"
                           className="text-amber-500"
                         >
@@ -936,9 +995,7 @@ export default function Dashboard() {
                         </span>
                       </div>
                     ) : isPlatformLimit ? (
-                      <div className="text-xs text-muted-foreground">
-                        Límite alcanzado
-                      </div>
+                      <div className="text-xs text-muted-foreground">Límite alcanzado</div>
                     ) : (
                       <div className="text-xs text-muted-foreground">
                         {getConnectedAccountsForPlatform(platform).length}/2 conectadas
@@ -946,7 +1003,7 @@ export default function Dashboard() {
                     )}
                   </div>
                   {isConnecting && (
-                    <div 
+                    <div
                       className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"
                       aria-label="Conectando..."
                     />
@@ -955,7 +1012,7 @@ export default function Dashboard() {
               );
             })}
           </div>
-          
+
           <div className="mt-4 pt-4 border-t">
             <button className="flex items-center space-x-2 text-sm text-primary hover:underline">
               <ExternalLink className="h-4 w-4" />
@@ -973,9 +1030,7 @@ export default function Dashboard() {
               <Clock className="h-5 w-5" />
               <span>Últimos roasts</span>
             </div>
-            <Badge variant="outline">
-              {recentRoasts.length} recientes
-            </Badge>
+            <Badge variant="outline">{recentRoasts.length} recientes</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1013,13 +1068,18 @@ export default function Dashboard() {
                           <IconComponent className="h-8 w-8 text-muted-foreground" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2 mb-1">
-                              <h4 className="font-medium truncate">{getPlatformName(roast.platform)}</h4>
+                              <h4 className="font-medium truncate">
+                                {getPlatformName(roast.platform)}
+                              </h4>
                               <Badge
                                 variant={roast.status === 'published' ? 'default' : 'secondary'}
                                 className="text-xs"
                               >
-                                {roast.status === 'published' ? 'Publicado' :
-                                 roast.status === 'pending' ? 'Pendiente' : 'Borrador'}
+                                {roast.status === 'published'
+                                  ? 'Publicado'
+                                  : roast.status === 'pending'
+                                    ? 'Pendiente'
+                                    : 'Borrador'}
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground truncate">
@@ -1085,7 +1145,9 @@ export default function Dashboard() {
                         roast={roast.content}
                         roastId={roast.id}
                         platform={roast.platform}
-                        onSave={(editedText, validation) => handleSaveEditedRoast(roast.id, editedText, validation)}
+                        onSave={(editedText, validation) =>
+                          handleSaveEditedRoast(roast.id, editedText, validation)
+                        }
                         onCancel={handleCancelEditRoast}
                         onValidate={handleValidationResult}
                       />

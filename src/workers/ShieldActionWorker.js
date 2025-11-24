@@ -6,11 +6,11 @@ const advancedLogger = require('../utils/advancedLogger');
 
 /**
  * Shield Action Worker
- * 
+ *
  * Background worker for executing Shield moderation actions across platforms.
  * Uses the unified ShieldActionExecutorService with circuit breaker, retry logic,
  * and fallback strategies as specified in Issue 361.
- * 
+ *
  * Processes jobs from the shield_action queue and executes:
  * - hideComment: Hide/delete toxic comments
  * - reportUser: Report users to platform moderation
@@ -26,7 +26,7 @@ class ShieldActionWorker extends BaseWorker {
       priority: 1, // High priority for Shield actions
       ...options
     });
-    
+
     // Initialize services
     this.actionExecutor = new ShieldActionExecutorService({
       maxRetries: 3,
@@ -35,10 +35,10 @@ class ShieldActionWorker extends BaseWorker {
       failureThreshold: 5,
       recoveryTimeout: 60000
     });
-    
+
     this.persistenceService = new ShieldPersistenceService();
     this.costControl = new CostControlService();
-    
+
     // Worker metrics
     this.workerMetrics = {
       totalProcessed: 0,
@@ -49,7 +49,7 @@ class ShieldActionWorker extends BaseWorker {
       lastActionTime: null
     };
   }
-  
+
   /**
    * Get worker-specific health details
    */
@@ -57,7 +57,7 @@ class ShieldActionWorker extends BaseWorker {
     const executorMetrics = this.actionExecutor.getMetrics();
     const circuitBreakerStatus = this.actionExecutor.getCircuitBreakerStatus();
     const adapterCapabilities = this.actionExecutor.getAdapterCapabilities();
-    
+
     return {
       workerMetrics: this.workerMetrics,
       actionExecutor: {
@@ -76,16 +76,16 @@ class ShieldActionWorker extends BaseWorker {
       }
     };
   }
-  
+
   /**
    * Process Shield action job
-   * 
+   *
    * Executes Shield moderation actions using the unified action executor.
    * Job payload should contain:
    * - organizationId: Organization ID
    * - userId: User ID (optional)
    * - platform: Platform name (twitter, youtube, discord, twitch)
-   * - accountRef: Platform account reference  
+   * - accountRef: Platform account reference
    * - externalCommentId: Platform-specific comment/message ID
    * - externalAuthorId: Platform-specific author ID
    * - externalAuthorUsername: Author username
@@ -134,7 +134,7 @@ class ShieldActionWorker extends BaseWorker {
       externalAuthorId,
       action
     });
-    
+
     try {
       // Execute action using the unified executor
       const result = await this.actionExecutor.executeAction({
@@ -155,13 +155,13 @@ class ShieldActionWorker extends BaseWorker {
           queueName: this.queueName
         }
       });
-      
+
       // Record usage for cost control
       await this.recordUsage(organizationId, platform, action, result, startTime);
-      
+
       // Update worker metrics
       this.updateWorkerMetrics(true, result.fallback, Date.now() - startTime);
-      
+
       this.log('info', 'Shield action completed successfully', {
         organizationId,
         platform,
@@ -185,21 +185,26 @@ class ShieldActionWorker extends BaseWorker {
       };
 
       // Log job completion with correlation context (Issue #417)
-      advancedLogger.logJobLifecycle(this.workerName, job.id, 'completed', {
-        correlationId,
-        tenantId: organizationId,
-        platform,
-        action,
-        success: result.success,
-        fallback: result.fallback
-      }, resultData);
+      advancedLogger.logJobLifecycle(
+        this.workerName,
+        job.id,
+        'completed',
+        {
+          correlationId,
+          tenantId: organizationId,
+          platform,
+          action,
+          success: result.success,
+          fallback: result.fallback
+        },
+        resultData
+      );
 
       return resultData;
-      
     } catch (error) {
       // Update worker metrics
       this.updateWorkerMetrics(false, false, Date.now() - startTime);
-      
+
       this.log('error', 'Shield action job failed', {
         organizationId,
         platform,
@@ -208,11 +213,11 @@ class ShieldActionWorker extends BaseWorker {
         error: error.message,
         processingTimeMs: Date.now() - startTime
       });
-      
+
       throw error;
     }
   }
-  
+
   /**
    * Record usage for cost control
    */
@@ -227,7 +232,7 @@ class ShieldActionWorker extends BaseWorker {
           success: result.success,
           fallback: result.fallback,
           requiresManualReview: result.requiresManualReview || false,
-          executionTime: result.executionTime || (Date.now() - startTime),
+          executionTime: result.executionTime || Date.now() - startTime,
           platform,
           timestamp: new Date().toISOString()
         },
@@ -243,32 +248,32 @@ class ShieldActionWorker extends BaseWorker {
       });
     }
   }
-  
+
   /**
    * Update worker metrics
    */
   updateWorkerMetrics(success, isFallback, processingTime) {
     this.workerMetrics.totalProcessed++;
     this.workerMetrics.lastActionTime = new Date().toISOString();
-    
+
     if (success) {
       this.workerMetrics.successfulActions++;
     } else {
       this.workerMetrics.failedActions++;
     }
-    
+
     if (isFallback) {
       this.workerMetrics.fallbackActions++;
     }
-    
+
     // Update average processing time
     const currentAvg = this.workerMetrics.averageProcessingTime;
     const totalProcessed = this.workerMetrics.totalProcessed;
-    
-    this.workerMetrics.averageProcessingTime = 
-      ((currentAvg * (totalProcessed - 1)) + processingTime) / totalProcessed;
+
+    this.workerMetrics.averageProcessingTime =
+      (currentAvg * (totalProcessed - 1) + processingTime) / totalProcessed;
   }
-  
+
   /**
    * Get worker metrics
    */

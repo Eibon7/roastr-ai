@@ -13,6 +13,7 @@
 **Reason:** Cambios sensibles en endpoints de autenticación (`/api/auth/register`, `/api/auth/login`, `/api/auth/signup`)
 
 **Trigger Conditions Met:**
+
 - ✅ Auth endpoints modified (critical security path)
 - ✅ Validation logic changed (potential security impact)
 - ✅ P1 priority issue (muy recomendado)
@@ -24,18 +25,19 @@
 ### 1. Authentication Endpoints Review
 
 **Files Audited:**
+
 - `src/routes/auth.js` (3 endpoints modified)
 - `src/validators/zod/auth.schema.js` (new validation layer)
 
 **Findings:**
 
 #### ✅ APPROVED: Zod Schema Implementation
+
 - **Email Validation:**
   - RFC 5322 compliant regex
   - Prevents consecutive dots (`..`)
   - Prevents double at signs (`@@`)
   - Type-safe (rejects objects/arrays)
-  
 - **Password Validation:**
   - Minimum 8 characters ✅
   - Requires lowercase ✅
@@ -45,11 +47,13 @@
   - Type-safe (rejects non-strings) ✅
 
 #### ✅ APPROVED: NoSQL Injection Protection
+
 - Zod automatically rejects nested objects in string fields
 - Test confirms: `{ email: { $ne: '' } }` → type error (400, not 500)
 - No manual sanitization needed (type system enforces)
 
 #### ✅ APPROVED: DoS Protection
+
 - Long emails handled gracefully (no crash)
 - Validation runs in constant time (Zod optimized)
 - No regex complexity vulnerabilities (tested with 300+ char email)
@@ -57,6 +61,7 @@
 ### 2. API Contract Preservation
 
 **Validated:**
+
 - ✅ Response structures unchanged (session + user separated)
 - ✅ Status codes preserved (400, 401, 201, 500)
 - ✅ Error message format consistent (Spanish, user-friendly)
@@ -67,12 +72,14 @@
 ### 3. Secrets & Credentials Audit
 
 **Scanned Files:**
+
 - `src/validators/zod/auth.schema.js`
 - `src/routes/auth.js`
 - `tests/unit/validators/auth.schema.test.js`
 - `tests/integration/authWorkflow.test.js`
 
 **Findings:**
+
 - ✅ No hardcoded credentials
 - ✅ No API keys exposed
 - ✅ No .env variable names in code (except tests using mock data)
@@ -81,6 +88,7 @@
 ### 4. Error Message Leakage
 
 **Reviewed Messages:**
+
 - Register: "El email no puede contener puntos consecutivos" → ✅ Safe (no info leakage)
 - Login: "Wrong email or password" → ✅ Safe (generic, no user enumeration)
 - Password: "La contraseña debe contener al menos un número" → ✅ Safe (helps UX, no sensitive data)
@@ -90,6 +98,7 @@
 ### 5. GDD Validation
 
 **Executed Checks:**
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 # Result: HEALTHY ✅
@@ -108,17 +117,20 @@ node scripts/predict-gdd-drift.js --full
 ## 🛡️ Guardrails Enforced
 
 ### 1. Pre-Implementation
+
 - ✅ GDD nodes resolved (multi-tenant)
 - ✅ CodeRabbit lessons reviewed
 - ✅ Plan created (AC ≥6, requires planning)
 
 ### 2. Implementation
+
 - ✅ No secrets exposed
 - ✅ No breaking changes
 - ✅ Type-safe validation (Zod)
 - ✅ Tests before deployment
 
 ### 3. Validation
+
 - ✅ Tests passing (29/29 unit, 6/6 critical integration)
 - ✅ Coverage 100% on auth.schema.js
 - ✅ GDD health ≥87
@@ -130,14 +142,14 @@ node scripts/predict-gdd-drift.js --full
 
 ### Risk Matrix
 
-| Risk | Likelihood | Impact | Mitigation | Status |
-|------|------------|--------|------------|--------|
-| Breaking API contracts | Low | High | Integration tests + response structure validation | ✅ Mitigated |
-| Credential exposure | Very Low | Critical | Code audit + no hardcoded secrets | ✅ Mitigated |
-| NoSQL injection | Low | High | Zod type safety + tests | ✅ Mitigated |
-| DoS via regex | Very Low | Medium | Zod optimized + tested with long inputs | ✅ Mitigated |
-| User enumeration | Low | Medium | Generic login error messages | ✅ Mitigated |
-| Password validation bypass | Very Low | High | Comprehensive tests (7 password error cases) | ✅ Mitigated |
+| Risk                       | Likelihood | Impact   | Mitigation                                        | Status       |
+| -------------------------- | ---------- | -------- | ------------------------------------------------- | ------------ |
+| Breaking API contracts     | Low        | High     | Integration tests + response structure validation | ✅ Mitigated |
+| Credential exposure        | Very Low   | Critical | Code audit + no hardcoded secrets                 | ✅ Mitigated |
+| NoSQL injection            | Low        | High     | Zod type safety + tests                           | ✅ Mitigated |
+| DoS via regex              | Very Low   | Medium   | Zod optimized + tested with long inputs           | ✅ Mitigated |
+| User enumeration           | Low        | Medium   | Generic login error messages                      | ✅ Mitigated |
+| Password validation bypass | Very Low   | High     | Comprehensive tests (7 password error cases)      | ✅ Mitigated |
 
 **Overall Risk Level:** 🟢 LOW (all risks mitigated)
 
@@ -152,6 +164,7 @@ node scripts/predict-gdd-drift.js --full
 ## ✅ Compliance Checklist
 
 ### Security Standards
+
 - [x] No hardcoded credentials
 - [x] No API keys in code
 - [x] Secrets managed via environment variables
@@ -161,12 +174,14 @@ node scripts/predict-gdd-drift.js --full
 - [x] Error messages safe (no info leakage)
 
 ### GDD Compliance
+
 - [x] Health score ≥87 (89.3/100)
 - [x] Drift risk <60 (6/100)
 - [x] Coverage source: auto (100% on auth.schema.js)
 - [x] Validation: HEALTHY
 
 ### Quality Standards
+
 - [x] Tests passing (100% unit, 100% critical integration)
 - [x] No breaking changes
 - [x] Documentation updated (plan, PR description, receipts)
@@ -176,11 +191,13 @@ node scripts/predict-gdd-drift.js --full
 ## 🎯 Recommendations
 
 ### Immediate Actions
+
 - ✅ APPROVED for merge after:
   1. CodeRabbit review (0 comentarios required)
   2. CI/CD passing (all checks green)
 
 ### Future Enhancements (Optional)
+
 - Consider extending Zod to other auth endpoints:
   - `/api/auth/reset-password`
   - `/api/auth/change-password`
@@ -193,6 +210,7 @@ node scripts/predict-gdd-drift.js --full
 ## ✅ Sign-off
 
 **Guardian Assessment:**
+
 - Security Posture: ✅ IMPROVED (NoSQL protection added)
 - Compliance: ✅ FULL COMPLIANCE
 - Risk Level: 🟢 LOW
@@ -202,6 +220,7 @@ node scripts/predict-gdd-drift.js --full
 **Decision:** ✅ APPROVED FOR MERGE
 
 **Conditions:**
+
 - CodeRabbit must review and approve (0 comentarios)
 - CI/CD must pass all checks
 - No manual merge until both conditions met
@@ -212,4 +231,3 @@ node scripts/predict-gdd-drift.js --full
 **Timestamp:** 2025-11-23
 **Status:** ✅ COMPLETE
 **Approval:** GRANTED (conditional on CodeRabbit + CI/CD)
-

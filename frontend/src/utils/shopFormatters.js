@@ -17,20 +17,20 @@ export function formatAddonName(purchase, shopData) {
   // Second priority: lookup from shop data
   if (shopData.addons) {
     for (const category of Object.values(shopData.addons)) {
-      const addon = category.find(a => a.key === purchase.addon_key);
+      const addon = category.find((a) => a.key === purchase.addon_key);
       if (addon) return addon.name;
     }
   }
 
   // Third priority: hardcoded mapping for common addons
   const addonNameMap = {
-    'roasts_100': 'Roasts Pack 100',
-    'roasts_500': 'Roasts Pack 500',
-    'roasts_1000': 'Roasts Pack 1000',
-    'analysis_10k': 'Análisis Pack 10K',
-    'analysis_50k': 'Análisis Pack 50K',
-    'analysis_100k': 'Análisis Pack 100K',
-    'rqc_monthly': 'RQC (Roastr Quality Check)'
+    roasts_100: 'Roasts Pack 100',
+    roasts_500: 'Roasts Pack 500',
+    roasts_1000: 'Roasts Pack 1000',
+    analysis_10k: 'Análisis Pack 10K',
+    analysis_50k: 'Análisis Pack 50K',
+    analysis_100k: 'Análisis Pack 100K',
+    rqc_monthly: 'RQC (Roastr Quality Check)'
   };
 
   if (addonNameMap[purchase.addon_key]) {
@@ -38,9 +38,7 @@ export function formatAddonName(purchase, shopData) {
   }
 
   // Final fallback: convert addon_key to title case
-  return purchase.addon_key
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase());
+  return purchase.addon_key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 /**
@@ -52,7 +50,7 @@ export function formatAddonName(purchase, shopData) {
  */
 export function formatCurrency(amountCents, currency = 'USD', locale = null) {
   const currencyLocale = locale || navigator.language || 'es-ES';
-  
+
   return new Intl.NumberFormat(currencyLocale, {
     style: 'currency',
     currency: (currency || 'USD').toUpperCase()
@@ -67,7 +65,7 @@ export function formatCurrency(amountCents, currency = 'USD', locale = null) {
  */
 export function formatDate(dateString, locale = null) {
   const dateLocale = locale || navigator.language || 'es-ES';
-  
+
   return new Date(dateString).toLocaleDateString(dateLocale, {
     year: 'numeric',
     month: 'short',

@@ -1,11 +1,11 @@
 /**
  * Platform Constraints Validation Tests
- * 
+ *
  * Comprehensive test suite for platform-specific constraints including:
  * - Character limits per platform (9 platforms)
  * - Formatting rules (hashtags, mentions, emojis, etc.)
  * - Edge cases (emoji handling, special characters, boundary conditions)
- * 
+ *
  * Issue #718: Platform Constraints Validation
  * Coverage Target: ≥80%
  */
@@ -62,7 +62,7 @@ describe('Platform Constraints Validation', () => {
 
   describe('validateRoastForPlatform', () => {
     describe('Character Limits - All Platforms', () => {
-      PLATFORMS.forEach(platform => {
+      PLATFORMS.forEach((platform) => {
         const limit = EXPECTED_LIMITS[platform];
 
         test(`should validate ${platform} with exact limit (${limit} chars)`, () => {
@@ -115,7 +115,10 @@ describe('Platform Constraints Validation', () => {
     describe('Truncation Logic', () => {
       test('should truncate at word boundary when reasonable', () => {
         // Create text that definitely exceeds Twitter's 280 limit
-        const roast = 'This is a very long roast that needs to be truncated at a word boundary for better readability '.repeat(5);
+        const roast =
+          'This is a very long roast that needs to be truncated at a word boundary for better readability '.repeat(
+            5
+          );
         const result = validateRoastForPlatform(roast, 'twitter'); // 280 limit
 
         expect(result.isValid).toBe(false);
@@ -321,7 +324,7 @@ describe('Platform Constraints Validation', () => {
   });
 
   describe('getPlatformLimit', () => {
-    PLATFORMS.forEach(platform => {
+    PLATFORMS.forEach((platform) => {
       test(`should return correct limit for ${platform}`, () => {
         const limit = getPlatformLimit(platform);
         expect(limit).toBe(EXPECTED_LIMITS[platform]);
@@ -352,7 +355,7 @@ describe('Platform Constraints Validation', () => {
   });
 
   describe('getPreferredLength', () => {
-    PLATFORMS.forEach(platform => {
+    PLATFORMS.forEach((platform) => {
       test(`should return correct preferred length for ${platform}`, () => {
         const preferred = getPreferredLength(platform);
         expect(preferred).toBe(EXPECTED_PREFERRED_LENGTHS[platform]);
@@ -366,7 +369,7 @@ describe('Platform Constraints Validation', () => {
   });
 
   describe('getPlatformStyle', () => {
-    PLATFORMS.forEach(platform => {
+    PLATFORMS.forEach((platform) => {
       test(`should return style config for ${platform}`, () => {
         const style = getPlatformStyle(platform);
 
@@ -402,7 +405,7 @@ describe('Platform Constraints Validation', () => {
         bluesky: 'thoughtful and concise'
       };
 
-      PLATFORMS.forEach(platform => {
+      PLATFORMS.forEach((platform) => {
         const style = getPlatformStyle(platform);
         expect(style.tone).toBe(tones[platform]);
       });
@@ -411,16 +414,23 @@ describe('Platform Constraints Validation', () => {
 
   describe('platformSupports', () => {
     describe('Hashtags Support', () => {
-      const platformsWithHashtags = ['twitter', 'instagram', 'facebook', 'youtube', 'tiktok', 'bluesky'];
+      const platformsWithHashtags = [
+        'twitter',
+        'instagram',
+        'facebook',
+        'youtube',
+        'tiktok',
+        'bluesky'
+      ];
       const platformsWithoutHashtags = ['discord', 'twitch', 'reddit'];
 
-      platformsWithHashtags.forEach(platform => {
+      platformsWithHashtags.forEach((platform) => {
         test(`${platform} should support hashtags`, () => {
           expect(platformSupports(platform, 'hashtags')).toBe(true);
         });
       });
 
-      platformsWithoutHashtags.forEach(platform => {
+      platformsWithoutHashtags.forEach((platform) => {
         test(`${platform} should not support hashtags`, () => {
           expect(platformSupports(platform, 'hashtags')).toBe(false);
         });
@@ -428,16 +438,25 @@ describe('Platform Constraints Validation', () => {
     });
 
     describe('Mentions Support', () => {
-      const platformsWithMentions = ['twitter', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+      const platformsWithMentions = [
+        'twitter',
+        'instagram',
+        'facebook',
+        'discord',
+        'twitch',
+        'reddit',
+        'tiktok',
+        'bluesky'
+      ];
       const platformsWithoutMentions = ['youtube'];
 
-      platformsWithMentions.forEach(platform => {
+      platformsWithMentions.forEach((platform) => {
         test(`${platform} should support mentions`, () => {
           expect(platformSupports(platform, 'mentions')).toBe(true);
         });
       });
 
-      platformsWithoutMentions.forEach(platform => {
+      platformsWithoutMentions.forEach((platform) => {
         test(`${platform} should not support mentions`, () => {
           expect(platformSupports(platform, 'mentions')).toBe(false);
         });
@@ -445,9 +464,19 @@ describe('Platform Constraints Validation', () => {
     });
 
     describe('Emojis Support', () => {
-      const platformsWithEmojis = ['twitter', 'instagram', 'facebook', 'youtube', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+      const platformsWithEmojis = [
+        'twitter',
+        'instagram',
+        'facebook',
+        'youtube',
+        'discord',
+        'twitch',
+        'reddit',
+        'tiktok',
+        'bluesky'
+      ];
 
-      platformsWithEmojis.forEach(platform => {
+      platformsWithEmojis.forEach((platform) => {
         test(`${platform} should support emojis`, () => {
           expect(platformSupports(platform, 'emojis')).toBe(true);
         });
@@ -456,15 +485,23 @@ describe('Platform Constraints Validation', () => {
 
     describe('Markdown Support', () => {
       const platformsWithMarkdown = ['discord', 'reddit'];
-      const platformsWithoutMarkdown = ['twitter', 'youtube', 'instagram', 'facebook', 'twitch', 'tiktok', 'bluesky'];
+      const platformsWithoutMarkdown = [
+        'twitter',
+        'youtube',
+        'instagram',
+        'facebook',
+        'twitch',
+        'tiktok',
+        'bluesky'
+      ];
 
-      platformsWithMarkdown.forEach(platform => {
+      platformsWithMarkdown.forEach((platform) => {
         test(`${platform} should support markdown`, () => {
           expect(platformSupports(platform, 'markdown')).toBe(true);
         });
       });
 
-      platformsWithoutMarkdown.forEach(platform => {
+      platformsWithoutMarkdown.forEach((platform) => {
         test(`${platform} should not support markdown`, () => {
           expect(platformSupports(platform, 'markdown')).toBe(false);
         });
@@ -473,15 +510,23 @@ describe('Platform Constraints Validation', () => {
 
     describe('Threading Support', () => {
       const platformsWithThreading = ['twitter', 'bluesky'];
-      const platformsWithoutThreading = ['youtube', 'instagram', 'facebook', 'discord', 'twitch', 'reddit', 'tiktok'];
+      const platformsWithoutThreading = [
+        'youtube',
+        'instagram',
+        'facebook',
+        'discord',
+        'twitch',
+        'reddit',
+        'tiktok'
+      ];
 
-      platformsWithThreading.forEach(platform => {
+      platformsWithThreading.forEach((platform) => {
         test(`${platform} should support threading`, () => {
           expect(platformSupports(platform, 'threading')).toBe(true);
         });
       });
 
-      platformsWithoutThreading.forEach(platform => {
+      platformsWithoutThreading.forEach((platform) => {
         test(`${platform} should not support threading`, () => {
           expect(platformSupports(platform, 'threading')).toBe(false);
         });
@@ -492,15 +537,22 @@ describe('Platform Constraints Validation', () => {
       // Note: multiline support is based on formatting.lineBreaks, not supports.multiline
       // Discord and Reddit have lineBreaks: true but no supports.multiline property
       const platformsWithMultiline = ['instagram', 'facebook', 'youtube'];
-      const platformsWithoutMultiline = ['twitter', 'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'];
+      const platformsWithoutMultiline = [
+        'twitter',
+        'discord',
+        'twitch',
+        'reddit',
+        'tiktok',
+        'bluesky'
+      ];
 
-      platformsWithMultiline.forEach(platform => {
+      platformsWithMultiline.forEach((platform) => {
         test(`${platform} should support multiline`, () => {
           expect(platformSupports(platform, 'multiline')).toBe(true);
         });
       });
 
-      platformsWithoutMultiline.forEach(platform => {
+      platformsWithoutMultiline.forEach((platform) => {
         test(`${platform} should not support multiline`, () => {
           expect(platformSupports(platform, 'multiline')).toBe(false);
         });
@@ -521,7 +573,7 @@ describe('Platform Constraints Validation', () => {
   });
 
   describe('getPlatformConfig', () => {
-    PLATFORMS.forEach(platform => {
+    PLATFORMS.forEach((platform) => {
       test(`should return complete config for ${platform}`, () => {
         const config = getPlatformConfig(platform);
 
@@ -559,7 +611,7 @@ describe('Platform Constraints Validation', () => {
       expect(Array.isArray(platforms)).toBe(true);
       expect(platforms.length).toBeGreaterThanOrEqual(9);
       // Verify all 9 core platforms are included
-      PLATFORMS.forEach(platform => {
+      PLATFORMS.forEach((platform) => {
         expect(platforms).toContain(platform);
       });
     });
@@ -571,4 +623,3 @@ describe('Platform Constraints Validation', () => {
     });
   });
 });
-

@@ -219,6 +219,7 @@ flowchart TD
 **Protocol:** Socket.IO or native WebSockets
 
 **Flow:**
+
 ```
 User A disables roasting on Device 1
     ↓
@@ -234,6 +235,7 @@ Device 2 receives message and updates UI in real-time
 ```
 
 **Implementation:**
+
 ```javascript
 // Server-side (Socket.IO)
 io.on('connection', (socket) => {
@@ -270,6 +272,7 @@ socket.on('state_update', ({ type, data }) => {
 **Frequency:** Every 30 seconds for non-critical data
 
 **Flow:**
+
 ```
 setInterval(() => {
   fetch('/api/state/sync')
@@ -279,12 +282,13 @@ setInterval(() => {
 ```
 
 **Optimized Polling:** Only fetch changed data
+
 ```javascript
 const lastSyncedAt = globalState._meta.lastSyncedAt;
 
 fetch(`/api/state/sync?since=${lastSyncedAt.toISOString()}`)
-  .then(response => response.json())
-  .then(changes => {
+  .then((response) => response.json())
+  .then((changes) => {
     if (changes.length > 0) {
       applyChanges(changes);
     }
@@ -298,6 +302,7 @@ fetch(`/api/state/sync?since=${lastSyncedAt.toISOString()}`)
 **Use Case:** Immediate UI feedback while waiting for server confirmation
 
 **Pattern:**
+
 ```javascript
 async function toggleRoasting(enabled) {
   // 1. Optimistic update (instant UI change)
@@ -338,6 +343,7 @@ async function toggleRoasting(enabled) {
 **Scenario:** User edits persona on Device A and Device B simultaneously
 
 **Flow:**
+
 ```
 Device A: Update identity at 12:00:00 (version 5)
 Device B: Update identity at 12:00:01 (version 5)
@@ -358,6 +364,7 @@ User chooses:
 ```
 
 **Implementation:**
+
 ```javascript
 // Backend
 router.put('/api/persona/identity', async (req, res) => {
@@ -401,6 +408,7 @@ router.put('/api/persona/identity', async (req, res) => {
 ### localStorage (Browser)
 
 **Stored:**
+
 - `auth.token`
 - `auth.refreshToken`
 - `auth.expiresAt`
@@ -409,11 +417,13 @@ router.put('/api/persona/identity', async (req, res) => {
 - `ui.sidebar_collapsed`
 
 **Not Stored (sensitive or temporary):**
+
 - `persona.*` (encrypted, fetch from server)
 - `subscription.*` (fetch from server)
 - `usage.*` (dynamic, fetch from server)
 
 **Implementation:**
+
 ```javascript
 // Save to localStorage
 function persistState(state) {
@@ -449,11 +459,13 @@ function loadPersistedState() {
 ### Database (Supabase)
 
 **Stored:**
+
 - All user data (auth, subscription, persona, roasting config)
 - Usage tracking (monthly_usage table)
 - Organization membership (organization_members table)
 
 **Advantages:**
+
 - Single source of truth
 - RLS for security
 - Atomic transactions
@@ -464,6 +476,7 @@ function loadPersistedState() {
 ### Redis Cache (Backend)
 
 **Stored:**
+
 - Frequently accessed data (plan limits, feature flags)
 - Session data (alternative to JWT)
 - Real-time state for workers (roasting_enabled cache)
@@ -471,6 +484,7 @@ function loadPersistedState() {
 **TTL:** 5-15 minutes (invalidate on update)
 
 **Implementation:**
+
 ```javascript
 // Cache user plan
 async function getUserPlan(userId) {
@@ -482,11 +496,7 @@ async function getUserPlan(userId) {
   }
 
   // Fetch from database
-  const { data: user } = await supabase
-    .from('users')
-    .select('plan')
-    .eq('id', userId)
-    .single();
+  const { data: user } = await supabase.from('users').select('plan').eq('id', userId).single();
 
   // Cache for 10 minutes
   await redis.setex(cacheKey, 600, JSON.stringify(user.plan));
@@ -664,6 +674,7 @@ export default useGlobalState;
 **Authentication:** Required (JWT)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -687,9 +698,11 @@ export default useGlobalState;
 **Authentication:** Required (JWT)
 
 **Query Parameters:**
+
 - `since` - ISO timestamp of last sync
 
 **Response (200 OK - No Changes):**
+
 ```json
 {
   "success": true,
@@ -699,6 +712,7 @@ export default useGlobalState;
 ```
 
 **Response (200 OK - With Changes):**
+
 ```json
 {
   "success": true,

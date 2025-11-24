@@ -1,6 +1,7 @@
 # Plan: Fix Open Handles in Jest Tests
 
 ## 🎯 Objetivo
+
 Resolver todos los "open handles" que impiden que Jest termine limpiamente, eliminando la necesidad de usar `--forceExit`.
 
 ## 📊 Análisis de Problemas Identificados
@@ -8,6 +9,7 @@ Resolver todos los "open handles" que impiden que Jest termine limpiamente, elim
 ### 🔴 **CRÍTICOS (High Priority)**
 
 #### 1. **Twitter Service - Stream Connections**
+
 - **Archivo**: `src/services/twitter.js`
 - **Líneas**: 56, 568-583, 579, 721
 - **Problema**: Stream de Twitter con event listeners y setTimeout no se cierran
@@ -16,7 +18,8 @@ Resolver todos los "open handles" que impiden que Jest termine limpiamente, elim
 - **Solución**: Agregar método `cleanup()` y llamarlo en `afterAll`
 
 #### 2. **Worker Manager - Health Check Timer**
-- **Archivo**: `src/workers/WorkerManager.js` 
+
+- **Archivo**: `src/workers/WorkerManager.js`
 - **Línea**: 204
 - **Problema**: `setInterval()` para health checks no se limpia
 - **Handle Type**: Timer intervals
@@ -24,6 +27,7 @@ Resolver todos los "open handles" que impiden que Jest termine limpiamente, elim
 - **Solución**: Limpiar `healthCheckTimer` en shutdown
 
 #### 3. **Integration Manager - Multiple Intervals**
+
 - **Archivo**: `src/integrations/integrationManager.js`
 - **Líneas**: 648, 175, 216, 257, 298, 487
 - **Problema**: Múltiples `setInterval()` y `setTimeout()` no se limpian
@@ -34,6 +38,7 @@ Resolver todos los "open handles" que impiden que Jest termine limpiamente, elim
 ### 🟡 **IMPORTANTES (Medium Priority)**
 
 #### 4. **Base Worker - Process Intervals**
+
 - **Archivo**: `src/workers/BaseWorker.js`
 - **Líneas**: 119, 204, 129
 - **Problema**: Intervals para health checks y job processing
@@ -42,6 +47,7 @@ Resolver todos los "open handles" que impiden que Jest termine limpiamente, elim
 - **Solución**: Verificar que `stop()` limpia todos los timers
 
 #### 5. **Express App Tests - Server Instances**
+
 - **Archivo**: `tests/integration/api.test.js`
 - **Líneas**: 23-24
 - **Problema**: Crea apps Express sin cleanup
@@ -51,14 +57,17 @@ Resolver todos los "open handles" que impiden que Jest termine limpiamente, elim
 ### 🟢 **VERIFICADOS (Already Good)**
 
 #### ✅ **API Health Tests**
+
 - **Archivo**: `tests/smoke/api-health.test.js`
 - **Estado**: Bien manejado con server.close() y store.stop()
 
 #### ✅ **Multi-Tenant Workflow**
+
 - **Archivo**: `tests/integration/multiTenantWorkflow.test.js`
 - **Estado**: Tiene cleanup proper con queueService.shutdown()
 
 #### ✅ **Rate Limiter**
+
 - **Archivo**: `src/middleware/rateLimiter.js`
 - **Estado**: Maneja bien test environment y tiene stop() method
 
@@ -67,6 +76,7 @@ Resolver todos los "open handles" que impiden que Jest termine limpiamente, elim
 ### **Fase 1: Servicios Críticos** ⭐
 
 #### 1.1 **Twitter Service Cleanup**
+
 ```javascript
 // src/services/twitter.js
 class TwitterService {
@@ -92,6 +102,7 @@ afterAll(async () => {
 ```
 
 #### 1.2 **Worker Manager Health Timer**
+
 ```javascript
 // src/workers/WorkerManager.js
 async shutdown() {
@@ -105,6 +116,7 @@ async shutdown() {
 ```
 
 #### 1.3 **Integration Manager Intervals**
+
 ```javascript
 // src/integrations/integrationManager.js
 async shutdown() {
@@ -118,14 +130,16 @@ async shutdown() {
 }
 ```
 
-### **Fase 2: Workers y Base Classes** 
+### **Fase 2: Workers y Base Classes**
 
 #### 2.1 **Base Worker Verification**
+
 - Verificar que `stop()` limpia todos los intervals
 - Asegurar que timeout de shutdown se limpia
 - Agregar cleanup a tests de workers
 
 #### 2.2 **Individual Worker Tests**
+
 ```javascript
 // tests/unit/workers/*.test.js
 afterAll(async () => {
@@ -138,6 +152,7 @@ afterAll(async () => {
 ### **Fase 3: Integration Tests**
 
 #### 3.1 **API Integration Tests**
+
 ```javascript
 // tests/integration/api.test.js
 afterEach(() => {
@@ -151,6 +166,7 @@ afterEach(() => {
 ### **Fase 4: Verificación y Patrón Común**
 
 #### 4.1 **Crear Helper de Cleanup**
+
 ```javascript
 // tests/helpers/cleanup.js
 export const setupCleanup = (services = []) => {
@@ -171,8 +187,9 @@ export const setupCleanup = (services = []) => {
 ```
 
 #### 4.2 **Tests que necesitan verificación específica**:
+
 - `tests/unit/workers/FetchCommentsWorker.test.js`
-- `tests/unit/workers/AnalyzeToxicityWorker.test.js` 
+- `tests/unit/workers/AnalyzeToxicityWorker.test.js`
 - `tests/unit/workers/GenerateReplyWorker.test.js`
 - `tests/unit/workers/ShieldActionWorker.test.js`
 - `tests/integration/authWorkflow.test.js`
@@ -181,12 +198,14 @@ export const setupCleanup = (services = []) => {
 ## 🧪 **Plan de Testing**
 
 ### **Verificación por Fases**:
+
 1. **Fase 1**: `npm test -- --detectOpenHandles --testPathPattern="twitter|worker"`
-2. **Fase 2**: `npm test -- --detectOpenHandles --testPathPattern="integration"`  
+2. **Fase 2**: `npm test -- --detectOpenHandles --testPathPattern="integration"`
 3. **Fase 3**: `npm test -- --detectOpenHandles` (todos los tests)
 4. **Final**: `npm test` (sin --forceExit ni --detectOpenHandles)
 
 ### **Métricas de Éxito**:
+
 - [x] Jest termina sin `--forceExit`
 - [x] No aparecen mensajes de "open handles detected"
 - [x] Tests pasan sin warnings de cleanup
@@ -195,11 +214,13 @@ export const setupCleanup = (services = []) => {
 ### **✅ COMPLETADO - RESULTADOS**:
 
 **Tests verificados sin --forceExit y con --detectOpenHandles:**
+
 - ✅ `api-simple.test.js` - 10 tests pasaron, 0 open handles
 - ✅ `content-type.test.js` - 4 tests pasaron, 0 open handles
 - ✅ Múltiples tests combinados - 14 tests pasaron, 0 open handles
 
 **Implementaciones completadas:**
+
 - ✅ Phase 1: TwitterRoastBot.cleanup(), IntegrationManager.shutdown() mejorado
 - ✅ Phase 2.1: BaseWorker.stop() con cleanup de intervals/timeouts
 - ✅ Phase 2.2: afterAll hooks en todos los worker tests
@@ -209,6 +230,7 @@ export const setupCleanup = (services = []) => {
 ## 🎯 **Resultado Esperado**
 
 Al completar este plan:
+
 1. **Todos los tests terminarán limpiamente** sin necesidad de `--forceExit`
 2. **No habrá open handles** reportados por Jest
 3. **El CI será más estable** sin handles colgados
@@ -217,18 +239,21 @@ Al completar este plan:
 ## 📝 **Archivos a Modificar**
 
 ### **Servicios Core**:
+
 - `src/services/twitter.js` - Agregar cleanup method
 - `src/workers/WorkerManager.js` - Mejorar shutdown
 - `src/integrations/integrationManager.js` - Implementar shutdown completo
 - `src/workers/BaseWorker.js` - Verificar stop method
 
 ### **Tests a Actualizar**:
+
 - `tests/unit/workers/*.test.js` - Agregar cleanup
 - `tests/integration/api.test.js` - Agregar server cleanup
 - `tests/integration/authWorkflow.test.js` - Verificar cleanup
 - `tests/integration/oauth-mock.test.js` - Verificar cleanup
 
 ### **Helper Nuevo**:
+
 - `tests/helpers/cleanup.js` - Patrón común de cleanup
 
 ---
@@ -240,9 +265,10 @@ Al completar este plan:
 ### **Safety Fixes Implementados:**
 
 #### 1. **BaseWorker.stop() Safety Check**
+
 - **Archivo**: `src/workers/BaseWorker.js:123-133`
 - **Problema Resuelto**: Race condition si `this.currentJobs` es undefined
-- **Implementación**: 
+- **Implementación**:
   ```javascript
   // Safety check: ensure currentJobs is properly initialized
   if (this.currentJobs && this.currentJobs.size === 0) {
@@ -254,12 +280,14 @@ Al completar este plan:
   ```
 
 #### 2. **Error Handling en Cleanup Operations**
+
 - **Archivos Modificados**:
   - `src/services/twitter.js:1071-1108` - Try-catch around stream/timeout cleanup
   - `src/integrations/integrationManager.js:694-702` - Error handling for metrics interval
 - **Implementación**: Wrap critical cleanup operations in try-catch blocks to prevent cascade failures
 
 #### 3. **TODOs para Mejoras Futuras**
+
 - **Ubicaciones**:
   - `src/services/twitter.js:1112-1113`
   - `src/integrations/integrationManager.js:723-724`
@@ -276,6 +304,7 @@ Al completar este plan:
 4. **🔄 Graceful Degradation**: Los servicios pueden limpiarse parcialmente sin impedir el shutdown completo
 
 ### **Verificación Recomendada:**
+
 ```bash
 # Ejecutar tests para verificar que los fixes funcionan
 npm test -- --detectOpenHandles --testPathPattern="worker|twitter"

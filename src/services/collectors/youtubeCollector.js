@@ -13,7 +13,7 @@ class YouTubeCollector {
       search: { requests: 100, window: 24 * 60 * 60 * 1000 }, // 100 requests per day
       videos: { requests: 1000000, window: 24 * 60 * 60 * 1000 } // 1M quota units per day
     };
-    
+
     this.lastRequestTimes = new Map();
   }
 
@@ -40,14 +40,13 @@ class YouTubeCollector {
 
       // Get user's channel content
       const userContent = await this.getUserContent(config, maxContent, languageFilter);
-      
+
       logger.info('YouTube content collection completed', {
         contentCollected: userContent.length,
         maxRequested: maxContent
       });
 
       return userContent;
-
     } catch (error) {
       logger.error('Failed to collect YouTube content', {
         error: error.message,
@@ -93,13 +92,13 @@ class YouTubeCollector {
 
       for (const video of videosResponse.data.items || []) {
         const snippet = video.snippet;
-        
+
         // Skip if no description or title
         if (!snippet.description && !snippet.title) continue;
 
         // Combine title and description for analysis
         const fullText = `${snippet.title}\n\n${snippet.description || ''}`.trim();
-        
+
         // Skip very short content
         if (fullText.length < 20) continue;
 
@@ -134,7 +133,6 @@ class YouTubeCollector {
       }
 
       return contentItems;
-
     } catch (error) {
       logger.error('Failed to get YouTube content', {
         error: error.message,
@@ -168,7 +166,6 @@ class YouTubeCollector {
       }
 
       throw new Error(`Channel not found for handle: ${handle}`);
-
     } catch (error) {
       logger.error('Failed to get channel ID from handle', {
         handle,
@@ -187,7 +184,7 @@ class YouTubeCollector {
 
     // Remove URLs
     let cleanText = text.replace(/https?:\/\/[^\s]+/g, '');
-    
+
     // Remove excessive hashtags (keep first few)
     const hashtagPattern = /#\w+/g;
     const hashtags = cleanText.match(hashtagPattern) || [];
@@ -210,12 +207,15 @@ class YouTubeCollector {
       /follow.*social/gi
     ];
 
-    boilerplatePatterns.forEach(pattern => {
+    boilerplatePatterns.forEach((pattern) => {
       cleanText = cleanText.replace(pattern, '');
     });
 
     // Clean up whitespace
-    cleanText = cleanText.replace(/\n{3,}/g, '\n\n').replace(/\s+/g, ' ').trim();
+    cleanText = cleanText
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\s+/g, ' ')
+      .trim();
 
     return cleanText;
   }
@@ -227,12 +227,53 @@ class YouTubeCollector {
   detectLanguage(text) {
     if (!text) return 'unknown';
 
-    const spanishWords = ['el', 'la', 'de', 'que', 'y', 'en', 'un', 'es', 'se', 'no', 'te', 'lo', 'hola', 'como', 'para', 'con', 'por', 'este', 'esta'];
-    const englishWords = ['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at'];
+    const spanishWords = [
+      'el',
+      'la',
+      'de',
+      'que',
+      'y',
+      'en',
+      'un',
+      'es',
+      'se',
+      'no',
+      'te',
+      'lo',
+      'hola',
+      'como',
+      'para',
+      'con',
+      'por',
+      'este',
+      'esta'
+    ];
+    const englishWords = [
+      'the',
+      'be',
+      'to',
+      'of',
+      'and',
+      'a',
+      'in',
+      'that',
+      'have',
+      'i',
+      'it',
+      'for',
+      'not',
+      'on',
+      'with',
+      'he',
+      'as',
+      'you',
+      'do',
+      'at'
+    ];
 
     const words = text.toLowerCase().split(/\s+/);
-    const spanishCount = words.filter(word => spanishWords.includes(word)).length;
-    const englishCount = words.filter(word => englishWords.includes(word)).length;
+    const spanishCount = words.filter((word) => spanishWords.includes(word)).length;
+    const englishCount = words.filter((word) => englishWords.includes(word)).length;
 
     if (spanishCount > englishCount) return 'es';
     if (englishCount > spanishCount) return 'en';
@@ -258,7 +299,7 @@ class YouTubeCollector {
         endpoint,
         waitTimeMs: waitTime
       });
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
 
     this.lastRequestTimes.set(endpoint, Date.now());
@@ -271,7 +312,7 @@ class YouTubeCollector {
     if (!config.channel_id && !config.channel_handle) {
       throw new Error('Missing YouTube channel ID or handle');
     }
-    
+
     if (!process.env.YOUTUBE_API_KEY) {
       throw new Error('YouTube API key not configured');
     }
@@ -313,7 +354,6 @@ class YouTubeCollector {
         success: false,
         error: 'Channel not found'
       };
-
     } catch (error) {
       return {
         success: false,

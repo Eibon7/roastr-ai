@@ -1,15 +1,15 @@
 /**
  * AI Usage Logger Service
- * 
+ *
  * Issue #858: Logging de tokens para prompt caching
- * 
+ *
  * Logs AI usage metrics including:
  * - Input/output tokens
  * - Cached tokens (when available)
  * - Model used
  * - User/org context
  * - Plan information
- * 
+ *
  * @module services/aiUsageLogger
  */
 
@@ -19,7 +19,7 @@ const { mockMode } = require('../config/mockMode');
 
 /**
  * AIUsageLogger - Logs AI usage metrics for cost analysis
- * 
+ *
  * @class AIUsageLogger
  */
 class AIUsageLogger {
@@ -29,7 +29,7 @@ class AIUsageLogger {
 
   /**
    * Log AI usage for a request
-   * 
+   *
    * @param {Object} usageData - Usage data
    * @param {string} usageData.userId - User ID
    * @param {string} usageData.orgId - Organization ID (optional)
@@ -69,7 +69,7 @@ class AIUsageLogger {
 
       // Calculate cache hit ratio
       const totalInputTokens = inputTokens + cachedTokens;
-      const cacheHitRatio = totalInputTokens > 0 ? (cachedTokens / totalInputTokens) : 0;
+      const cacheHitRatio = totalInputTokens > 0 ? cachedTokens / totalInputTokens : 0;
 
       // Prepare log entry
       const logEntry = {
@@ -87,9 +87,7 @@ class AIUsageLogger {
 
       // Try to insert into database
       try {
-        const { error } = await supabaseServiceClient
-          .from('ai_usage_logs')
-          .insert([logEntry]);
+        const { error } = await supabaseServiceClient.from('ai_usage_logs').insert([logEntry]);
 
         if (error) {
           // Table might not exist yet, log to console instead
@@ -97,7 +95,7 @@ class AIUsageLogger {
             error: error.message,
             logEntry
           });
-          
+
           // Fallback: log to console with structured format
           logger.info('AI Usage', logEntry);
         } else {
@@ -115,7 +113,6 @@ class AIUsageLogger {
         });
         logger.info('AI Usage', logEntry);
       }
-
     } catch (error) {
       // Don't throw - logging failures shouldn't break the main flow
       logger.error('Error in AI usage logging', {
@@ -127,7 +124,7 @@ class AIUsageLogger {
 
   /**
    * Get usage statistics for a user or organization
-   * 
+   *
    * @param {Object} options - Query options
    * @param {string} options.userId - User ID (optional)
    * @param {string} options.orgId - Organization ID (optional)
@@ -143,9 +140,7 @@ class AIUsageLogger {
     try {
       const { userId, orgId, startDate, endDate } = options;
 
-      let query = supabaseServiceClient
-        .from('ai_usage_logs')
-        .select('*');
+      let query = supabaseServiceClient.from('ai_usage_logs').select('*');
 
       if (userId) {
         query = query.eq('user_id', userId);
@@ -182,7 +177,7 @@ class AIUsageLogger {
         byEndpoint: {}
       };
 
-      data.forEach(entry => {
+      data.forEach((entry) => {
         stats.totalInputTokens += entry.input_tokens || 0;
         stats.totalOutputTokens += entry.output_tokens || 0;
         stats.totalCachedTokens += entry.input_cached_tokens || 0;
@@ -215,12 +210,10 @@ class AIUsageLogger {
 
       // Calculate average cache hit ratio
       const totalInputWithCache = stats.totalInputTokens + stats.totalCachedTokens;
-      stats.averageCacheHitRatio = totalInputWithCache > 0
-        ? stats.totalCachedTokens / totalInputWithCache
-        : 0;
+      stats.averageCacheHitRatio =
+        totalInputWithCache > 0 ? stats.totalCachedTokens / totalInputWithCache : 0;
 
       return stats;
-
     } catch (error) {
       logger.error('Error getting AI usage stats', { error: error.message });
       return { error: error.message };
@@ -231,4 +224,3 @@ class AIUsageLogger {
 // Export singleton instance
 const aiUsageLogger = new AIUsageLogger();
 module.exports = aiUsageLogger;
-

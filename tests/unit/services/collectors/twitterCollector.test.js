@@ -36,7 +36,9 @@ describe('TwitterCollector', () => {
         access_token_secret: 'test-secret'
       };
 
-      expect(() => twitterCollector.validateConfig(config)).toThrow('Missing Twitter configuration: access_token');
+      expect(() => twitterCollector.validateConfig(config)).toThrow(
+        'Missing Twitter configuration: access_token'
+      );
     });
 
     it('should throw error for missing access token secret', () => {
@@ -44,7 +46,9 @@ describe('TwitterCollector', () => {
         access_token: 'test-token'
       };
 
-      expect(() => twitterCollector.validateConfig(config)).toThrow('Missing Twitter configuration: access_token_secret');
+      expect(() => twitterCollector.validateConfig(config)).toThrow(
+        'Missing Twitter configuration: access_token_secret'
+      );
     });
   });
 
@@ -172,7 +176,7 @@ describe('TwitterCollector', () => {
       };
 
       const engagement = twitterCollector.calculateEngagement(metrics);
-      
+
       // 10*1 + 5*2 + 3*3 + 2*2 = 10 + 10 + 9 + 4 = 33
       expect(engagement).toBe(33);
     });
@@ -190,7 +194,7 @@ describe('TwitterCollector', () => {
       };
 
       const engagement = twitterCollector.calculateEngagement(metrics);
-      
+
       // 5*1 + 2*2 + 0*3 + 0*2 = 5 + 4 = 9
       expect(engagement).toBe(9);
     });

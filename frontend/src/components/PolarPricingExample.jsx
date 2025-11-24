@@ -18,7 +18,7 @@ import CheckoutButton from './CheckoutButton';
 const POLAR_PRICE_IDS = {
   starter: process.env.REACT_APP_POLAR_STARTER_PRICE_ID || 'e242580e-41df-4997-aebe-604492249f39',
   pro: process.env.REACT_APP_POLAR_PRO_PRICE_ID || 'c1787586-00b7-4790-ba43-1f1e6a60b095',
-  plus: process.env.REACT_APP_POLAR_PLUS_PRICE_ID || '176df9af-337f-4607-9524-48978eae8bea',
+  plus: process.env.REACT_APP_POLAR_PLUS_PRICE_ID || '176df9af-337f-4607-9524-48978eae8bea'
 };
 
 // Plan configurations
@@ -34,10 +34,10 @@ const PLANS = [
       '1,000 analyses',
       '1 platform integration',
       'Shield protection',
-      'Email support',
+      'Email support'
     ],
     priceId: POLAR_PRICE_IDS.starter,
-    popular: false,
+    popular: false
   },
   {
     id: 'pro',
@@ -50,10 +50,10 @@ const PLANS = [
       '2 platform integrations',
       'Shield protection',
       'Priority support',
-      'Advanced analytics',
+      'Advanced analytics'
     ],
     priceId: POLAR_PRICE_IDS.pro,
-    popular: true,
+    popular: true
   },
   {
     id: 'plus',
@@ -67,11 +67,11 @@ const PLANS = [
       'Shield protection',
       'Custom tones',
       'API access',
-      '24/7 support',
+      '24/7 support'
     ],
     priceId: POLAR_PRICE_IDS.plus,
-    popular: false,
-  },
+    popular: false
+  }
 ];
 
 function PolarPricingExample() {
@@ -89,9 +89,7 @@ function PolarPricingExample() {
   return (
     <div className="max-w-7xl mx-auto px-8 py-16">
       <div className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4">
-          Choose Your Plan
-        </h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4">Choose Your Plan</h1>
         <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto">
           Select the perfect plan for your needs. Start protecting your community today.
         </p>
@@ -105,9 +103,10 @@ function PolarPricingExample() {
               relative bg-white rounded-2xl p-8 flex flex-col
               transition-all duration-300 ease-in-out
               border-2
-              ${plan.popular
-                ? 'border-indigo-500 shadow-xl shadow-indigo-200'
-                : 'border-gray-200 hover:-translate-y-1 hover:shadow-2xl'
+              ${
+                plan.popular
+                  ? 'border-indigo-500 shadow-xl shadow-indigo-200'
+                  : 'border-gray-200 hover:-translate-y-1 hover:shadow-2xl'
               }
             `}
           >
@@ -118,9 +117,7 @@ function PolarPricingExample() {
             )}
 
             <div className="text-center mb-8 pb-8 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                {plan.name}
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">{plan.name}</h2>
               <div className="mb-3">
                 <span className="text-4xl md:text-5xl font-extrabold text-gray-800">
                   {plan.price}

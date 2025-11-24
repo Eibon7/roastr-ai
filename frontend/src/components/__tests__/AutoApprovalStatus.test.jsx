@@ -15,7 +15,7 @@ describe('AutoApprovalStatus', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    
+
     // Set mock mode
     process.env.REACT_APP_ENABLE_MOCK_MODE = 'true';
   });
@@ -27,7 +27,7 @@ describe('AutoApprovalStatus', () => {
 
   it('renders idle state initially', () => {
     render(<AutoApprovalStatus commentId={null} />);
-    
+
     expect(screen.getByText('Auto-Approval Status')).toBeInTheDocument();
     expect(screen.getByText('Waiting')).toBeInTheDocument();
   });
@@ -44,12 +44,7 @@ describe('AutoApprovalStatus', () => {
 
   it('shows progress through all states in mock mode', async () => {
     const onStatusChange = jest.fn();
-    render(
-      <AutoApprovalStatus 
-        commentId="comment-123" 
-        onStatusChange={onStatusChange}
-      />
-    );
+    render(<AutoApprovalStatus commentId="comment-123" onStatusChange={onStatusChange} />);
 
     // Initial state: Processing Comment
     expect(screen.getByText('Processing Comment')).toBeInTheDocument();
@@ -109,9 +104,9 @@ describe('AutoApprovalStatus', () => {
     // Switch to real mode for this test
     process.env.NODE_ENV = 'production';
     process.env.REACT_APP_ENABLE_MOCK_MODE = 'false';
-    
+
     fetch.mockRejectedValueOnce(new Error('Network error'));
-    
+
     render(<AutoApprovalStatus commentId="comment-123" />);
 
     await waitFor(() => {
@@ -122,7 +117,7 @@ describe('AutoApprovalStatus', () => {
 
   it('shows rate limited state', () => {
     render(<AutoApprovalStatus commentId="comment-123" />);
-    
+
     // Manually set to rate limited state for testing
     const badge = screen.getByText('Waiting').parentElement;
     expect(badge).toHaveClass('bg-gray-100');
@@ -154,7 +149,7 @@ describe('AutoApprovalStatus', () => {
 
   it('handles failed security validation', () => {
     render(<AutoApprovalStatus commentId="comment-123" />);
-    
+
     // Component should gracefully handle security failures
     expect(screen.getByText('Auto-Approval Status')).toBeInTheDocument();
   });

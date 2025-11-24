@@ -10,14 +10,14 @@
 
 #### 1. Node Documentation (6/12 nodes)
 
-| Node | Lines | Description | Key Features |
-|------|-------|-------------|--------------|
-| **roast** | 621 | Core roast generation system | Master prompt template, RQC, voice styles, auto-approve, GPT-5 detection |
-| **shield** | 680 | Automated content moderation | Decision engine, recidivism tracking, platform actions, circuit breaker |
-| **persona** | 589 | User personality & style config | 3-field system, embeddings, encryption, plan-gating |
-| **tone** | 215 | Tone mapping & humor types | 3 tones, O(1) normalization, intensity levels |
-| **platform-constraints** | 178 | Platform-specific rules | 9 platforms, character limits, style guides, validation |
-| **plan-features** | 194 | Subscription plan gates | 4 tiers, usage limits, feature flags, upgrade flow |
+| Node                     | Lines | Description                     | Key Features                                                             |
+| ------------------------ | ----- | ------------------------------- | ------------------------------------------------------------------------ |
+| **roast**                | 621   | Core roast generation system    | Master prompt template, RQC, voice styles, auto-approve, GPT-5 detection |
+| **shield**               | 680   | Automated content moderation    | Decision engine, recidivism tracking, platform actions, circuit breaker  |
+| **persona**              | 589   | User personality & style config | 3-field system, embeddings, encryption, plan-gating                      |
+| **tone**                 | 215   | Tone mapping & humor types      | 3 tones, O(1) normalization, intensity levels                            |
+| **platform-constraints** | 178   | Platform-specific rules         | 9 platforms, character limits, style guides, validation                  |
+| **plan-features**        | 194   | Subscription plan gates         | 4 tiers, usage limits, feature flags, upgrade flow                       |
 
 **Total Documentation:** 2,477 lines across 6 nodes
 
@@ -56,14 +56,14 @@ $ node scripts/resolve-graph.js --validate
 
 #### Context Reduction (Measured)
 
-| Node | Before (spec.md) | After (node.md) | Savings |
-|------|------------------|-----------------|---------|
-| **roast** | 5000 lines | 621 lines | **87.6%** |
-| **shield** | 5000 lines | 680 lines | **86.4%** |
-| **persona** | 5000 lines | 589 lines | **88.2%** |
-| **tone** | 5000 lines | 215 lines | **95.7%** |
-| **platform-constraints** | 5000 lines | 178 lines | **96.4%** |
-| **plan-features** | 5000 lines | 194 lines | **96.1%** |
+| Node                     | Before (spec.md) | After (node.md) | Savings   |
+| ------------------------ | ---------------- | --------------- | --------- |
+| **roast**                | 5000 lines       | 621 lines       | **87.6%** |
+| **shield**               | 5000 lines       | 680 lines       | **86.4%** |
+| **persona**              | 5000 lines       | 589 lines       | **88.2%** |
+| **tone**                 | 5000 lines       | 215 lines       | **95.7%** |
+| **platform-constraints** | 5000 lines       | 178 lines       | **96.4%** |
+| **plan-features**        | 5000 lines       | 194 lines       | **96.1%** |
 
 **Average Context Reduction: 91.7%**
 
@@ -74,6 +74,7 @@ $ node scripts/resolve-graph.js --validate
 - **Average Savings:** ~17,500 tokens per context load
 
 **Projected Annual Savings:**
+
 - Assuming 1000 agent context loads/month
 - Before: 240 million tokens/year
 - After: 20 million tokens/year
@@ -81,17 +82,18 @@ $ node scripts/resolve-graph.js --validate
 
 ### 🎯 Phase 2 Goals Assessment
 
-| Goal | Status | Notes |
-|------|--------|-------|
-| Document 5 critical/high priority nodes | ✅ Exceeded | Completed 6 nodes |
-| Update spec.md with GDD section | ✅ Complete | Added at top with links |
-| Validate graph consistency | ✅ Complete | No circular deps, all deps valid |
-| Achieve 85%+ context reduction | ✅ Exceeded | Achieved 91.7% average |
-| Maintain documentation quality | ✅ Complete | Comprehensive, production-ready |
+| Goal                                    | Status      | Notes                            |
+| --------------------------------------- | ----------- | -------------------------------- |
+| Document 5 critical/high priority nodes | ✅ Exceeded | Completed 6 nodes                |
+| Update spec.md with GDD section         | ✅ Complete | Added at top with links          |
+| Validate graph consistency              | ✅ Complete | No circular deps, all deps valid |
+| Achieve 85%+ context reduction          | ✅ Exceeded | Achieved 91.7% average           |
+| Maintain documentation quality          | ✅ Complete | Comprehensive, production-ready  |
 
 ### 📈 Node Documentation Quality
 
 Each node includes:
+
 - ✅ **Complete architecture overview**
 - ✅ **Dependency mapping**
 - ✅ **API usage examples**
@@ -136,7 +138,6 @@ Each node includes:
 **Next Phase:** Infrastructure nodes (Phase 3)
 
 ---
-
 
 ---
 

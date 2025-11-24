@@ -37,6 +37,7 @@
 ### When to Use Guardian
 
 ✅ **Use Guardian for:**
+
 - Pricing changes (subscription tiers, billing logic)
 - AI model updates (gpt-4 → gpt-4-turbo, temperature changes)
 - Authentication/authorization changes (RLS policies, JWT logic)
@@ -44,6 +45,7 @@
 - Database schema changes affecting billing
 
 ❌ **Don't Use Guardian for:**
+
 - Documentation updates (unless pricing/legal docs)
 - UI/UX changes (unless payment forms)
 - Test files
@@ -98,75 +100,75 @@ Guardian uses two YAML configuration files:
 Defines protected domains with severity levels.
 
 ```yaml
-version: "1.0"
-description: "Roastr Product Governance Configuration"
+version: '1.0'
+description: 'Roastr Product Governance Configuration'
 
 domains:
   pricing:
     files:
-      - "docs/nodes/plan-features.md"
-      - "src/billing/**"
-      - "database/migrations/*subscription*"
+      - 'docs/nodes/plan-features.md'
+      - 'src/billing/**'
+      - 'database/migrations/*subscription*'
     protection_level: CRITICAL
     keywords:
-      - "tier"
-      - "subscription"
-      - "price"
-      - "billing"
-      - "payment"
+      - 'tier'
+      - 'subscription'
+      - 'price'
+      - 'billing'
+      - 'payment'
     reviewers:
-      - "@product-owner"
-      - "@finance-lead"
+      - '@product-owner'
+      - '@finance-lead'
     action: BLOCK_AND_REVIEW
 
   ai_models:
     files:
-      - "src/services/roastGeneratorEnhanced.js"
-      - "src/services/roastPromptTemplate.js"
-      - "src/config/ai-models.js"
+      - 'src/services/roastGeneratorEnhanced.js'
+      - 'src/services/roastPromptTemplate.js'
+      - 'src/config/ai-models.js'
     protection_level: SENSITIVE
     keywords:
-      - "gpt-4"
-      - "model"
-      - "temperature"
-      - "max_tokens"
-      - "top_p"
+      - 'gpt-4'
+      - 'model'
+      - 'temperature'
+      - 'max_tokens'
+      - 'top_p'
     reviewers:
-      - "@ai-lead"
-      - "@cto"
+      - '@ai-lead'
+      - '@cto'
     action: REQUIRE_REVIEW
 
   auth_policies:
     files:
-      - "database/policies/**"
-      - "src/middleware/auth.js"
-      - "src/services/authService.js"
+      - 'database/policies/**'
+      - 'src/middleware/auth.js'
+      - 'src/services/authService.js'
     protection_level: CRITICAL
     keywords:
-      - "RLS"
-      - "policy"
-      - "authentication"
-      - "authorization"
-      - "JWT"
-      - "session"
+      - 'RLS'
+      - 'policy'
+      - 'authentication'
+      - 'authorization'
+      - 'JWT'
+      - 'session'
     reviewers:
-      - "@security-lead"
-      - "@backend-lead"
+      - '@security-lead'
+      - '@backend-lead'
     action: BLOCK_AND_REVIEW
 
   quotas:
     files:
-      - "docs/nodes/plan-features.md"
-      - "src/services/costControl.js"
-      - "src/middleware/rateLimiter.js"
+      - 'docs/nodes/plan-features.md'
+      - 'src/services/costControl.js'
+      - 'src/middleware/rateLimiter.js'
     protection_level: SENSITIVE
     keywords:
-      - "quota"
-      - "limit"
-      - "rate"
-      - "threshold"
+      - 'quota'
+      - 'limit'
+      - 'rate'
+      - 'threshold'
     reviewers:
-      - "@product-owner"
+      - '@product-owner'
     action: REQUIRE_REVIEW
 ```
 
@@ -175,32 +177,32 @@ domains:
 Files to exclude from Guardian scans.
 
 ```yaml
-version: "1.0"
-description: "Guardian Ignore Patterns"
+version: '1.0'
+description: 'Guardian Ignore Patterns'
 
 ignore_patterns:
   # Tests
-  - "**/*.test.js"
-  - "**/*.spec.js"
-  - "tests/**"
+  - '**/*.test.js'
+  - '**/*.spec.js'
+  - 'tests/**'
 
   # Documentation (non-pricing)
-  - "docs/guides/**"
-  - "docs/tutorials/**"
-  - "**/README.md"
+  - 'docs/guides/**'
+  - 'docs/tutorials/**'
+  - '**/README.md'
 
   # Build artifacts
-  - "node_modules/**"
-  - "dist/**"
-  - ".next/**"
+  - 'node_modules/**'
+  - 'dist/**'
+  - '.next/**'
 
   # Git
-  - ".git/**"
-  - ".github/workflows/**"
+  - '.git/**'
+  - '.github/workflows/**'
 
   # Temporary files
-  - "**/*.tmp"
-  - "**/.DS_Store"
+  - '**/*.tmp'
+  - '**/.DS_Store'
 ```
 
 ### Configuration Best Practices
@@ -301,6 +303,7 @@ node scripts/guardian-gdd.js --ci
 ```
 
 **Behavior:**
+
 - Exit 0: All changes SAFE → Deploy
 - Exit 1: SENSITIVE detected → Require review → Deploy after approval
 - Exit 2: CRITICAL detected → Block deployment → Require review + manual approval
@@ -327,7 +330,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Full history for diff
+          fetch-depth: 0 # Full history for diff
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -452,6 +455,7 @@ const caseKey = crypto
 ```
 
 **Behavior:**
+
 - Same files + severity + domains → Same case key
 - Case file updated with `last_detected_at`
 - No duplicate alerts
@@ -502,7 +506,7 @@ find docs/guardian/cases -name "*.json" -mtime +30 -exec \
 
 Reports are generated in Markdown format at `docs/guardian/reports/`:
 
-```markdown
+````markdown
 # Guardian GDD Report
 
 **Date:** 2025-11-07
@@ -527,14 +531,17 @@ Reports are generated in Markdown format at `docs/guardian/reports/`:
 **Severity:** CRITICAL
 **Domains:** pricing
 **Files:**
+
 - `docs/nodes/plan-features.md`
 - `src/billing/subscriptionManager.js`
 
 **Diff:**
+
 ```diff
 +| Pro | $49/month | 1000 roasts/month |
 -| Pro | $29/month | 1000 roasts/month |
 ```
+````
 
 **Action:** BLOCK_AND_REVIEW
 **Reviewers:** @product-owner, @finance-lead
@@ -543,14 +550,16 @@ Reports are generated in Markdown format at `docs/guardian/reports/`:
 
 ---
 
-### ⚠️  Case i9j0k1l2m3n4o5p6 (SENSITIVE)
+### ⚠️ Case i9j0k1l2m3n4o5p6 (SENSITIVE)
 
 **Severity:** SENSITIVE
 **Domains:** ai_models
 **Files:**
+
 - `src/services/roastGeneratorEnhanced.js`
 
 **Diff:**
+
 ```diff
 +model: 'gpt-4-turbo'
 -model: 'gpt-4'
@@ -569,10 +578,12 @@ Reports are generated in Markdown format at `docs/guardian/reports/`:
 2. **SENSITIVE (1)**: Review before merge
 
 **Next Steps:**
+
 1. Notify reviewers: @product-owner, @finance-lead, @ai-lead, @cto
 2. Schedule review meeting if needed
 3. Update case status after review
 4. Re-run Guardian after fixes
+
 ```
 
 ### Audit Logs
@@ -580,8 +591,10 @@ Reports are generated in Markdown format at `docs/guardian/reports/`:
 Audit logs are stored at `docs/guardian/audit/`:
 
 ```
+
 [2025-11-07T14:32:00Z] CRITICAL | Case a1b2c3d4e5f6g7h8 | pricing | docs/nodes/plan-features.md
 [2025-11-07T14:32:00Z] SENSITIVE | Case i9j0k1l2m3n4o5p6 | ai_models | src/services/roastGeneratorEnhanced.js
+
 ```
 
 ---
@@ -594,8 +607,10 @@ Audit logs are stored at `docs/guardian/audit/`:
 
 **Error:**
 ```
+
 Error: ENOENT: no such file or directory, open 'config/product-guard.yaml'
-```
+
+````
 
 **Solution:**
 ```bash
@@ -604,16 +619,18 @@ ls -l config/product-guard.yaml
 
 # If missing, copy from template
 cp config/product-guard.template.yaml config/product-guard.yaml
-```
+````
 
 #### 2. "Not a git repository"
 
 **Error:**
+
 ```
 fatal: not a git repository (or any of the parent directories): .git
 ```
 
 **Solution:**
+
 ```bash
 # Initialize git if needed
 git init
@@ -628,11 +645,13 @@ node scripts/guardian-gdd.js --check
 **Problem:** Guardian flags safe changes as CRITICAL/SENSITIVE
 
 **Solution:**
+
 1. Add to ignore patterns in `config/guardian-ignore.yaml`
 2. Refine keywords in `config/product-guard.yaml`
 3. Use more specific file patterns
 
 **Example:**
+
 ```yaml
 # Before (too broad)
 pricing:
@@ -650,6 +669,7 @@ pricing:
 **Problem:** Guardian shows "No changes detected" despite staged files
 
 **Solution:**
+
 ```bash
 # Verify git status
 git status
@@ -666,6 +686,7 @@ cat config/guardian-ignore.yaml
 **Problem:** Guardian always exits 0 even with CRITICAL changes
 
 **Solution:**
+
 ```bash
 # Check configuration
 node scripts/guardian-gdd.js --full --verbose
@@ -830,11 +851,11 @@ guardian.generateAuditLog([...cases]);
 
 ## Exit Codes
 
-| Code | Severity | Meaning | CI Action |
-|------|----------|---------|-----------|
-| **0** | SAFE | All changes safe | ✅ Deploy |
-| **1** | SENSITIVE | Sensitive changes detected | ⚠️  Require review |
-| **2** | CRITICAL | Critical changes detected | 🚨 Block deployment |
+| Code  | Severity  | Meaning                    | CI Action           |
+| ----- | --------- | -------------------------- | ------------------- |
+| **0** | SAFE      | All changes safe           | ✅ Deploy           |
+| **1** | SENSITIVE | Sensitive changes detected | ⚠️ Require review   |
+| **2** | CRITICAL  | Critical changes detected  | 🚨 Block deployment |
 
 ---
 

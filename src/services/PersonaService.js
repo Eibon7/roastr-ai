@@ -69,14 +69,11 @@ class PersonaService {
       if (!process.env.SUPABASE_SERVICE_KEY) {
         throw new Error(
           'SUPABASE_SERVICE_KEY is required for PersonaService. ' +
-          'This service requires admin privileges for persona management across users.'
+            'This service requires admin privileges for persona management across users.'
         );
       }
 
-      this.supabase = createClient(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_KEY
-      );
+      this.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
       logger.info('PersonaService: Supabase client initialized with SERVICE_KEY');
     }
@@ -96,7 +93,8 @@ class PersonaService {
     try {
       const { data: user, error } = await this.supabase
         .from('users')
-        .select(`
+        .select(
+          `
           lo_que_me_define_encrypted,
           lo_que_no_tolero_encrypted,
           lo_que_me_da_igual_encrypted,
@@ -106,7 +104,8 @@ class PersonaService {
           embeddings_generated_at,
           embeddings_model,
           plan
-        `)
+        `
+        )
         .eq('id', userId)
         .single();
 
@@ -141,7 +140,6 @@ class PersonaService {
       });
 
       return persona;
-
     } catch (error) {
       logger.error('Failed to get persona', { userId, error: error.message });
       throw new Error(`Failed to get persona: ${error.message}`);
@@ -214,7 +212,7 @@ class PersonaService {
       });
 
       // Generate embeddings asynchronously (non-blocking)
-      this._updateEmbeddings(userId, fields).catch(error => {
+      this._updateEmbeddings(userId, fields).catch((error) => {
         logger.error('Embedding generation failed (non-blocking)', {
           userId,
           error: error.message
@@ -222,7 +220,6 @@ class PersonaService {
       });
 
       return { success: true, fieldsUpdated: Object.keys(fields) };
-
     } catch (error) {
       logger.error('Failed to update persona', {
         userId,
@@ -270,7 +267,6 @@ class PersonaService {
       }
 
       logger.info('Persona deleted', { userId });
-
     } catch (error) {
       logger.error('Failed to delete persona', { userId, error: error.message });
       throw new Error(`Failed to delete persona: ${error.message}`);
@@ -393,10 +389,9 @@ class PersonaService {
 
         logger.info('Embeddings generated and stored', {
           userId,
-          embeddingsGenerated: Object.keys(embeddings).filter(k => k.includes('embedding')).length
+          embeddingsGenerated: Object.keys(embeddings).filter((k) => k.includes('embedding')).length
         });
       }
-
     } catch (error) {
       logger.error('Failed to update embeddings', {
         userId,
@@ -443,7 +438,6 @@ class PersonaService {
         planAccessRules: Object.keys(PLAN_ACCESS).length,
         lastCheck: new Date().toISOString()
       };
-
     } catch (error) {
       return {
         status: 'unhealthy',

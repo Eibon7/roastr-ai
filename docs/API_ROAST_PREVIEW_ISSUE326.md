@@ -7,9 +7,10 @@ This document describes the enhanced `/api/roast/preview` endpoint that connects
 ## Overview
 
 The endpoint now supports advanced roast generation with:
+
 - **Real GPT-4 integration** (GPT-3.5 for Free plan, GPT-4 for paid plans)
 - **Dual credit system**: Analysis credits for previews, Roast credits for final generation
-- **Style profiles and personas** for personalized roast generation  
+- **Style profiles and personas** for personalized roast generation
 - **Platform-specific optimization** for different social media platforms
 - **Automatic fallback to mock mode** on API failures with debugging logs
 
@@ -39,17 +40,20 @@ The endpoint now supports advanced roast generation with:
 ```
 
 #### Required Fields
+
 - `text` (string): The message to roast (max 2000 characters)
 
 #### Optional Fields
+
 - `styleProfile` (object): Style configuration for the roast
 - `persona` (string): Personality to adopt for roast generation (max 100 characters)
 - `platform` (string): Target platform for optimization
 
 #### Supported Platforms
+
 - `twitter` (default)
 - `facebook`
-- `instagram` 
+- `instagram`
 - `youtube`
 - `tiktok`
 - `reddit`
@@ -87,12 +91,14 @@ The endpoint now supports advanced roast generation with:
 ### Response Fields
 
 #### Core Response (Issue #326 Requirements)
+
 - `roast` (string): The generated roast response
-- `tokensUsed` (number): OpenAI tokens consumed for this request  
+- `tokensUsed` (number): OpenAI tokens consumed for this request
 - `analysisCountRemaining` (number): Analysis credits remaining this month
 - `roastsRemaining` (number): Roast generation credits remaining this month
 
 #### Metadata
+
 - `platform` (string): Platform the roast was optimized for
 - `styleProfile` (object): Applied style configuration
 - `persona` (string): Applied persona
@@ -103,16 +109,18 @@ The endpoint now supports advanced roast generation with:
 ## Credit System
 
 ### Analysis Credits
+
 - **Consumed**: 1 credit per preview request
 - **Purpose**: Toxicity analysis and roast preview generation
 - **Limits by Plan**:
   - Free: 1,000/month
-  - Starter: 1,000/month  
+  - Starter: 1,000/month
   - Pro: 10,000/month
   - Plus: 100,000/month
   - Custom: Unlimited
 
 ### Roast Credits
+
 - **Consumed**: 1 credit per final roast generation (via `/api/roast/generate`)
 - **Purpose**: Final roast generation for publishing
 - **Limits by Plan**:
@@ -124,17 +132,18 @@ The endpoint now supports advanced roast generation with:
 
 ## AI Model Usage by Plan
 
-| Plan | Model | Features |
-|------|--------|----------|
-| Free | GPT-3.5 Turbo | Basic roast generation |
-| Starter | GPT-4o | Enhanced quality + Shield |
-| Pro | GPT-4o | Personal tone + Analytics |
-| Plus | GPT-4o | RQC embedded + All features |
-| Custom | GPT-4o | Unlimited + Custom features |
+| Plan    | Model         | Features                    |
+| ------- | ------------- | --------------------------- |
+| Free    | GPT-3.5 Turbo | Basic roast generation      |
+| Starter | GPT-4o        | Enhanced quality + Shield   |
+| Pro     | GPT-4o        | Personal tone + Analytics   |
+| Plus    | GPT-4o        | RQC embedded + All features |
+| Custom  | GPT-4o        | Unlimited + Custom features |
 
 ## Error Handling
 
 ### Insufficient Analysis Credits (402)
+
 ```json
 {
   "success": false,
@@ -150,6 +159,7 @@ The endpoint now supports advanced roast generation with:
 ```
 
 ### Content Safety Issues (400)
+
 ```json
 {
   "success": false,
@@ -164,6 +174,7 @@ The endpoint now supports advanced roast generation with:
 ```
 
 ### OpenAI API Failure (200 - Fallback Mode)
+
 When OpenAI API fails, the system automatically falls back to mock mode:
 
 ```json
@@ -185,6 +196,7 @@ When OpenAI API fails, the system automatically falls back to mock mode:
 ## Rate Limiting
 
 The endpoint is protected by:
+
 - **Authentication**: Requires valid Bearer token
 - **Rate limiting**: Applied per user/IP
 - **Input validation**: Comprehensive request validation
@@ -193,12 +205,13 @@ The endpoint is protected by:
 ## Usage Examples
 
 ### Basic Preview
+
 ```javascript
 const response = await fetch('/api/roast/preview', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + token
+    Authorization: 'Bearer ' + token
   },
   body: JSON.stringify({
     text: 'This app is terrible'
@@ -207,12 +220,13 @@ const response = await fetch('/api/roast/preview', {
 ```
 
 ### Advanced Preview with Persona
+
 ```javascript
 const response = await fetch('/api/roast/preview', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + token
+    Authorization: 'Bearer ' + token
   },
   body: JSON.stringify({
     text: 'This app is terrible',
@@ -226,6 +240,7 @@ const response = await fetch('/api/roast/preview', {
 ## Frontend Integration
 
 The endpoint is integrated with the Compose component:
+
 - Real-time credit display
 - Error handling with upgrade prompts
 - Platform selection UI
@@ -235,6 +250,7 @@ The endpoint is integrated with the Compose component:
 ## Database Changes
 
 New table `analysis_usage` tracks analysis credit consumption:
+
 - Separate from `roast_usage` table
 - Monthly usage calculation
 - Atomic credit consumption with `consume_analysis_credits()` function
@@ -243,6 +259,7 @@ New table `analysis_usage` tracks analysis credit consumption:
 ## Migration Required
 
 Run migration `015_add_analysis_usage_table.sql` to add:
+
 - `analysis_usage` table
 - Helper functions for credit management
 - Proper indexes and RLS policies
@@ -250,7 +267,7 @@ Run migration `015_add_analysis_usage_table.sql` to add:
 ## Security Features
 
 - **Input sanitization**: All parameters validated
-- **Content moderation**: Perspective API integration  
+- **Content moderation**: Perspective API integration
 - **Credit verification**: Atomic credit consumption
 - **Error logging**: Comprehensive debug information
 - **Fallback protection**: Graceful degradation on API failures
@@ -258,6 +275,7 @@ Run migration `015_add_analysis_usage_table.sql` to add:
 ## Monitoring & Logging
 
 The endpoint logs:
+
 - Successful generations with metadata
 - API failures with fallback activation
 - Credit consumption patterns

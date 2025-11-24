@@ -1,10 +1,10 @@
 /**
  * Shield UI Complete Integration Tests
  * Issue #365 - Complete Shield UI implementation
- * 
+ *
  * Tests the complete Shield UI system including:
  * - Feature flag integration
- * - API endpoint integration  
+ * - API endpoint integration
  * - Frontend component integration
  * - Revert functionality
  * - 30-day filtering
@@ -19,7 +19,7 @@ const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    shield_actions: []
+  shield_actions: []
 });
 
 // Mock Supabase
@@ -67,7 +67,7 @@ const mockShieldActions = [
     metadata: {}
   },
   {
-    id: '2', 
+    id: '2',
     organization_id: 'test-org-456',
     action_type: 'mute',
     content_hash: 'def789hash012',
@@ -86,7 +86,7 @@ const mockShieldActions = [
   },
   {
     id: '3',
-    organization_id: 'test-org-456', 
+    organization_id: 'test-org-456',
     action_type: 'report',
     content_hash: 'ghi345hash678',
     content_snippet: 'Comentario de acoso dirigido...',
@@ -107,19 +107,19 @@ describe('Shield UI Complete Integration Tests', () => {
     jest.clearAllMocks();
     // Reset Supabase mock to defaults
     mockSupabase._reset();
-    
+
     // Create shared query object (Issue #892 - CodeRabbit fix)
     // This ensures both test stubs and route handler use the same instance
     shieldActionsQuery = {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          gte: jest.fn().mockReturnThis(),
-          order: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
       range: jest.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
       single: jest.fn().mockResolvedValue({ data: null, error: null }),
       update: jest.fn().mockResolvedValue({ data: null, error: null })
     };
-    
+
     // Mock Supabase service client to return shared instance
     mockSupabase.from.mockImplementation((table) =>
       table === 'shield_actions' ? shieldActionsQuery : {}
@@ -134,10 +134,8 @@ describe('Shield UI Complete Integration Tests', () => {
     it('should respect ENABLE_SHIELD_UI feature flag in config endpoint', async () => {
       // Mock flag as enabled
       process.env.ENABLE_SHIELD_UI = 'true';
-      
-      const response = await request(app)
-        .get('/api/shield/config')
-        .expect(200);
+
+      const response = await request(app).get('/api/shield/config').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.enabled).toBe(true);
@@ -148,10 +146,8 @@ describe('Shield UI Complete Integration Tests', () => {
     it('should disable Shield UI when feature flag is false', async () => {
       // Mock flag as disabled
       process.env.ENABLE_SHIELD_UI = 'false';
-      
-      const response = await request(app)
-        .get('/api/shield/config')
-        .expect(200);
+
+      const response = await request(app).get('/api/shield/config').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.enabled).toBe(false);
@@ -196,8 +192,8 @@ describe('Shield UI Complete Integration Tests', () => {
     });
 
     it('should filter events by category', async () => {
-      const toxicEvents = mockShieldActions.filter(item => item.reason === 'toxic');
-      
+      const toxicEvents = mockShieldActions.filter((item) => item.reason === 'toxic');
+
       // Use shared shieldActionsQuery instance
       shieldActionsQuery.eq = jest.fn().mockReturnThis();
       shieldActionsQuery.range = jest.fn().mockResolvedValue({
@@ -220,8 +216,8 @@ describe('Shield UI Complete Integration Tests', () => {
     });
 
     it('should filter events by platform', async () => {
-      const twitterEvents = mockShieldActions.filter(item => item.platform === 'twitter');
-      
+      const twitterEvents = mockShieldActions.filter((item) => item.platform === 'twitter');
+
       // Use shared shieldActionsQuery instance
       shieldActionsQuery.eq = jest.fn().mockReturnThis();
       shieldActionsQuery.range = jest.fn().mockResolvedValue({
@@ -244,10 +240,10 @@ describe('Shield UI Complete Integration Tests', () => {
     });
 
     it('should filter events by time range (30 days)', async () => {
-      const recentEvents = mockShieldActions.filter(item => 
-        new Date(item.created_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      const recentEvents = mockShieldActions.filter(
+        (item) => new Date(item.created_at) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       );
-      
+
       // Use shared shieldActionsQuery instance
       shieldActionsQuery.gte = jest.fn().mockReturnThis();
       shieldActionsQuery.range = jest.fn().mockResolvedValue({
@@ -277,14 +273,12 @@ describe('Shield UI Complete Integration Tests', () => {
         count: 3
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events').expect(200);
 
       expect(response.body.success).toBe(true);
-      
+
       // Check that organization_id is not in the response
-      response.body.data.events.forEach(event => {
+      response.body.data.events.forEach((event) => {
         expect(event.organization_id).toBeUndefined();
         expect(event.content_snippet).toBeDefined(); // Safe to include
         expect(event.id).toBeDefined(); // Safe to include
@@ -322,7 +316,7 @@ describe('Shield UI Complete Integration Tests', () => {
     it('should successfully revert a shield action', async () => {
       const actionId = '1';
       // Use shared shieldActionsQuery instance
-      
+
       // Mock finding the action
       shieldActionsQuery.single = jest.fn().mockResolvedValue({
         data: mockShieldActions[0],
@@ -368,7 +362,7 @@ describe('Shield UI Complete Integration Tests', () => {
     it('should prevent reverting already reverted actions', async () => {
       const actionId = '2'; // This action is already reverted
       // Use shared shieldActionsQuery instance
-      
+
       shieldActionsQuery.single = jest.fn().mockResolvedValue({
         data: mockShieldActions[1], // Already has reverted_at
         error: null
@@ -387,7 +381,7 @@ describe('Shield UI Complete Integration Tests', () => {
     it('should handle non-existent action IDs', async () => {
       const actionId = 'non-existent-id';
       // Use shared shieldActionsQuery instance
-      
+
       shieldActionsQuery.single = jest.fn().mockResolvedValue({
         data: null,
         error: { code: 'PGRST116' } // Supabase "not found" error
@@ -417,28 +411,28 @@ describe('Shield UI Complete Integration Tests', () => {
     it('should apply rate limiting to revert actions', async () => {
       const actionId = '1';
       // Use shared shieldActionsQuery instance
-      
+
       shieldActionsQuery.single = jest.fn().mockResolvedValue({
         data: mockShieldActions[0],
         error: null
       });
-      
+
       shieldActionsQuery.update = jest.fn().mockResolvedValue({
         data: { ...mockShieldActions[0] },
         error: null
       });
 
       // Make multiple rapid requests (simulating rate limit)
-      const requests = Array(12).fill().map(() => 
-        request(app)
-          .post(`/api/shield/revert/${actionId}`)
-          .send({ reason: 'Rate limit test' })
-      );
+      const requests = Array(12)
+        .fill()
+        .map(() =>
+          request(app).post(`/api/shield/revert/${actionId}`).send({ reason: 'Rate limit test' })
+        );
 
       const responses = await Promise.all(requests);
-      
+
       // Some requests should be rate limited (429 status)
-      const rateLimitedResponses = responses.filter(res => res.status === 429);
+      const rateLimitedResponses = responses.filter((res) => res.status === 429);
       expect(rateLimitedResponses.length).toBeGreaterThan(0);
     });
   });
@@ -490,7 +484,7 @@ describe('Shield UI Complete Integration Tests', () => {
     it('should handle different time ranges in statistics', async () => {
       // Use shared shieldActionsQuery instance
       shieldActionsQuery.eq = jest.fn().mockReturnThis();
-      
+
       // Test 7-day range
       shieldActionsQuery.gte = jest.fn().mockResolvedValue({
         data: [mockShieldActions[0]], // Only recent item
@@ -505,7 +499,7 @@ describe('Shield UI Complete Integration Tests', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.timeRange).toBe('7d');
       expect(response.body.data.startDate).toBeDefined();
-      
+
       // Verify 7-day filter was applied
       expect(shieldActionsQuery.gte).toHaveBeenCalledWith('created_at', expect.any(String));
     });
@@ -514,13 +508,13 @@ describe('Shield UI Complete Integration Tests', () => {
       // Use shared shieldActionsQuery instance
       shieldActionsQuery.eq = jest.fn().mockReturnThis();
       shieldActionsQuery.gte = jest.fn(); // Should not be called for "all" time range
-      
+
       // Mock query without time filter
       const queryWithoutGte = {
         ...shieldActionsQuery,
         gte: undefined
       };
-      
+
       mockSupabase.from.mockReturnValue({
         ...queryWithoutGte,
         select: jest.fn().mockResolvedValue({
@@ -549,9 +543,7 @@ describe('Shield UI Complete Integration Tests', () => {
         count: 0
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(500);
+      const response = await request(app).get('/api/shield/events').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error.message).toBe('Failed to fetch shield events');
@@ -560,9 +552,9 @@ describe('Shield UI Complete Integration Tests', () => {
     it('should validate query parameters and return proper error messages', async () => {
       const response = await request(app)
         .get('/api/shield/events')
-        .query({ 
-          page: -1, 
-          limit: 1000, 
+        .query({
+          page: -1,
+          limit: 1000,
           category: 'invalid-category'
         })
         .expect(200); // Should sanitize and normalize params
@@ -584,9 +576,7 @@ describe('Shield UI Complete Integration Tests', () => {
         count: 3
       });
 
-      await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      await request(app).get('/api/shield/events').expect(200);
 
       // Verify that organization filter was applied
       expect(shieldActionsQuery.eq).toHaveBeenCalledWith('organization_id', 'test-org-456');
@@ -595,7 +585,7 @@ describe('Shield UI Complete Integration Tests', () => {
     it('should sanitize sensitive data from responses', async () => {
       // Use shared shieldActionsQuery instance
       shieldActionsQuery.range = jest.fn().mockResolvedValue({
-        data: mockShieldActions.map(item => ({
+        data: mockShieldActions.map((item) => ({
           ...item,
           organization_id: 'test-org-456', // This should be removed
           sensitive_field: 'should-be-removed'
@@ -604,12 +594,10 @@ describe('Shield UI Complete Integration Tests', () => {
         count: 3
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events').expect(200);
 
       expect(response.body.success).toBe(true);
-      response.body.data.events.forEach(event => {
+      response.body.data.events.forEach((event) => {
         expect(event.organization_id).toBeUndefined();
         expect(event.sensitive_field).toBeUndefined();
         // Safe fields should remain
@@ -620,14 +608,14 @@ describe('Shield UI Complete Integration Tests', () => {
     });
 
     it('should apply proper rate limiting', async () => {
-      const requests = Array(150).fill().map(() => 
-        request(app).get('/api/shield/events')
-      );
+      const requests = Array(150)
+        .fill()
+        .map(() => request(app).get('/api/shield/events'));
 
       const responses = await Promise.all(requests);
-      
+
       // Some requests should be rate limited
-      const rateLimitedResponses = responses.filter(res => res.status === 429);
+      const rateLimitedResponses = responses.filter((res) => res.status === 429);
       expect(rateLimitedResponses.length).toBeGreaterThan(0);
     });
   });
@@ -635,11 +623,13 @@ describe('Shield UI Complete Integration Tests', () => {
   describe('Performance Integration', () => {
     it('should handle large datasets efficiently', async () => {
       // Create mock data for 1000 items
-      const largeDataset = Array(1000).fill().map((_, index) => ({
-        ...mockShieldActions[0],
-        id: `action-${index}`,
-        created_at: new Date(Date.now() - index * 60000).toISOString()
-      }));
+      const largeDataset = Array(1000)
+        .fill()
+        .map((_, index) => ({
+          ...mockShieldActions[0],
+          id: `action-${index}`,
+          created_at: new Date(Date.now() - index * 60000).toISOString()
+        }));
 
       // Use shared shieldActionsQuery instance
       shieldActionsQuery.range = jest.fn().mockResolvedValue({
@@ -659,7 +649,7 @@ describe('Shield UI Complete Integration Tests', () => {
       expect(response.body.data.events).toHaveLength(20);
       expect(response.body.data.pagination.total).toBe(1000);
       expect(response.body.data.pagination.totalPages).toBe(50);
-      
+
       // Should respond in reasonable time (< 1 second)
       expect(endTime - startTime).toBeLessThan(1000);
     });

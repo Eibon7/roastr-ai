@@ -1,6 +1,6 @@
 /**
  * React Query hook for fetching worker metrics
- * 
+ *
  * Part of Issue #713: Worker Monitoring Dashboard
  */
 
@@ -28,15 +28,18 @@ interface WorkerMetrics {
     totalProcessing: number;
     totalFailed: number;
     totalDLQ: number;
-    byQueue: Record<string, {
-      pending: number;
-      processing: number;
-      completed: number;
-      failed: number;
-      dlq: number;
-      healthStatus: string;
-      avgProcessingTime: number;
-    }>;
+    byQueue: Record<
+      string,
+      {
+        pending: number;
+        processing: number;
+        completed: number;
+        failed: number;
+        dlq: number;
+        healthStatus: string;
+        avgProcessingTime: number;
+      }
+    >;
   };
   jobs: {
     totalProcessed: number;
@@ -52,16 +55,19 @@ interface WorkerMetrics {
 
 interface QueueStatus {
   timestamp: string;
-  queues: Record<string, {
-    pending: number;
-    processing: number;
-    completed: number;
-    failed: number;
-    dlq: number;
-    healthStatus: string;
-    avgProcessingTime: number;
-    lastUpdated: string;
-  }>;
+  queues: Record<
+    string,
+    {
+      pending: number;
+      processing: number;
+      completed: number;
+      failed: number;
+      dlq: number;
+      healthStatus: string;
+      avgProcessingTime: number;
+      lastUpdated: string;
+    }
+  >;
   summary: {
     totalPending: number;
     totalProcessing: number;
@@ -90,10 +96,10 @@ interface WorkerTypeMetrics {
  */
 async function fetchWorkerMetrics(): Promise<WorkerMetrics> {
   const token = localStorage.getItem('authToken') || '';
-  
+
   const response = await fetch(`${API_BASE_URL}/api/workers/metrics`, {
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });
@@ -111,10 +117,10 @@ async function fetchWorkerMetrics(): Promise<WorkerMetrics> {
  */
 async function fetchQueueStatus(): Promise<QueueStatus> {
   const token = localStorage.getItem('authToken') || '';
-  
+
   const response = await fetch(`${API_BASE_URL}/api/workers/queues/status`, {
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });
@@ -132,10 +138,10 @@ async function fetchQueueStatus(): Promise<QueueStatus> {
  */
 async function fetchWorkerTypeMetrics(workerType: string): Promise<WorkerTypeMetrics> {
   const token = localStorage.getItem('authToken') || '';
-  
+
   const response = await fetch(`${API_BASE_URL}/api/workers/${workerType}/metrics`, {
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });
@@ -157,7 +163,7 @@ export function useWorkerMetrics() {
     queryKey: ['workerMetrics'],
     queryFn: fetchWorkerMetrics,
     refetchInterval: 10000, // Refetch every 10 seconds
-    staleTime: 5000, // Consider data stale after 5 seconds
+    staleTime: 5000 // Consider data stale after 5 seconds
   });
 }
 
@@ -170,7 +176,7 @@ export function useQueueStatus() {
     queryKey: ['queueStatus'],
     queryFn: fetchQueueStatus,
     refetchInterval: 10000, // Refetch every 10 seconds
-    staleTime: 5000, // Consider data stale after 5 seconds
+    staleTime: 5000 // Consider data stale after 5 seconds
   });
 }
 
@@ -183,8 +189,6 @@ export function useWorkerTypeMetrics(workerType: string) {
     queryFn: () => fetchWorkerTypeMetrics(workerType),
     refetchInterval: 10000,
     staleTime: 5000,
-    enabled: !!workerType, // Only fetch if workerType is provided
+    enabled: !!workerType // Only fetch if workerType is provided
   });
 }
-
-

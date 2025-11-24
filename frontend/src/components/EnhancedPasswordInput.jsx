@@ -3,19 +3,19 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Input } from './ui/input';
 import PasswordStrengthIndicator from './PasswordStrengthIndicator';
 
-const EnhancedPasswordInput = ({ 
-  value, 
-  onChange, 
-  placeholder = "Contraseña",
+const EnhancedPasswordInput = ({
+  value,
+  onChange,
+  placeholder = 'Contraseña',
   showStrength = true,
   showCriteria = true,
-  className = "",
+  className = '',
   id,
   name,
   required = false,
   autoComplete,
   disabled = false,
-  ...props 
+  ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -26,7 +26,7 @@ const EnhancedPasswordInput = ({
   // Validate password strength for minimum requirements
   const isPasswordValid = (password) => {
     if (!password) return false;
-    
+
     const criteria = [
       password.length >= 8,
       /[A-Z]/.test(password) || /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password), // At least uppercase OR special char
@@ -34,7 +34,7 @@ const EnhancedPasswordInput = ({
       /\d/.test(password),
       !/\s/.test(password) // No spaces
     ];
-    
+
     // At least 4 out of 5 criteria must be met
     const passedCriteria = criteria.filter(Boolean).length;
     return passedCriteria >= 4;
@@ -45,16 +45,16 @@ const EnhancedPasswordInput = ({
       {/* Password Input with Toggle */}
       <div className="relative">
         <Input
-          type={showPassword ? "text" : "password"}
+          type={showPassword ? 'text' : 'password'}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           className={`pr-12 ${className} ${
-            value && !isPasswordValid(value) 
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+            value && !isPasswordValid(value)
+              ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
               : value && isPasswordValid(value)
-              ? 'border-green-300 focus:border-green-500 focus:ring-green-500'
-              : ''
+                ? 'border-green-300 focus:border-green-500 focus:ring-green-500'
+                : ''
           }`}
           id={id}
           name={name}
@@ -63,7 +63,7 @@ const EnhancedPasswordInput = ({
           disabled={disabled}
           {...props}
         />
-        
+
         {/* Toggle Password Visibility */}
         {value && (
           <button
@@ -72,21 +72,14 @@ const EnhancedPasswordInput = ({
             onClick={togglePasswordVisibility}
             disabled={disabled}
           >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         )}
       </div>
 
       {/* Password Strength Indicator */}
       {(showStrength || showCriteria) && (
-        <PasswordStrengthIndicator 
-          password={value} 
-          showCriteria={showCriteria}
-        />
+        <PasswordStrengthIndicator password={value} showCriteria={showCriteria} />
       )}
     </div>
   );

@@ -11,6 +11,7 @@
 Supabase project consuming 14.3GB bandwidth in free tier (5GB limit) **WITHOUT REAL USERS**.
 
 This suggests:
+
 - Continuous polling/requests to database
 - Tests running against live Supabase repeatedly
 - Workers making excessive DB queries
@@ -24,21 +25,25 @@ This suggests:
 ### 1. Check for Running Processes
 
 **Workers:**
+
 - Queue workers polling constantly?
 - Fetch workers hitting Supabase in loop?
 - Shield workers checking DB repeatedly?
 
 **Cron Jobs:**
+
 - `cron_integrations.sh` - runs every 5 min?
 - `cron_twitter.sh` - polling frequency?
 
 **Tests:**
+
 - Integration tests running in CI constantly?
 - Local test runs hitting Supabase (not mocked)?
 
 ### 2. Check Configuration Files
 
 **Environment:**
+
 ```bash
 # Check if NODE_ENV=production is using real DB in tests
 grep -E "NODE_ENV|SUPABASE_URL" .env
@@ -48,12 +53,13 @@ grep -E "INTERVAL|POLLING|CRON" .env
 ```
 
 **Package.json scripts:**
+
 ```json
 {
   "scripts": {
-    "workers:start": "...",  // Check if auto-restarts
-    "start": "...",           // Check if runs workers by default
-    "dev": "..."              // Check if polls DB constantly
+    "workers:start": "...", // Check if auto-restarts
+    "start": "...", // Check if runs workers by default
+    "dev": "..." // Check if polls DB constantly
   }
 }
 ```
@@ -87,6 +93,7 @@ grep -E "INTERVAL|POLLING|CRON" .env
 ### Tests Consuming Real Supabase
 
 **Evidence from logs:**
+
 ```
 console.info: 🔐 Loaded test credentials from: .env, ../../roastr-ai/.env
 ```
@@ -94,11 +101,13 @@ console.info: 🔐 Loaded test credentials from: .env, ../../roastr-ai/.env
 Tests are loading REAL Supabase credentials and hitting production database!
 
 **Files affected:**
+
 - `tests/integration/multi-tenant-rls-issue-801-crud.test.js`
 - `tests/integration/multi-tenant-rls-issue-504-direct.test.js`
 - `tests/integration/multi-tenant-rls-issue-412.test.js`
 
 **Why this is a problem:**
+
 - Integration tests create/delete tenants, users, posts, comments
 - Each test run = multiple INSERT/DELETE operations
 - Running in CI + locally = 10x-100x bandwidth usage
@@ -110,6 +119,7 @@ Tests are loading REAL Supabase credentials and hitting production database!
 ### 🔥 IMMEDIATE (Stop the bleeding)
 
 1. **Stop all workers and cron jobs**
+
    ```bash
    pkill -f "node.*worker"
    pkill -f cron_integrations
@@ -117,6 +127,7 @@ Tests are loading REAL Supabase credentials and hitting production database!
    ```
 
 2. **Disable integration tests in CI temporarily**
+
    ```yaml
    # .github/workflows/*.yml
    # Comment out integration test jobs until mocked
@@ -130,11 +141,13 @@ Tests are loading REAL Supabase credentials and hitting production database!
 ### ⚠️ SHORT-TERM (Prevent recurrence)
 
 1. **Environment-based DB selection**
+
    ```javascript
    // tests/setupIntegration.js
-   const SUPABASE_URL = process.env.NODE_ENV === 'test'
-     ? 'http://localhost:54321'  // Local Supabase (free)
-     : process.env.SUPABASE_URL;  // Real Supabase (only in production)
+   const SUPABASE_URL =
+     process.env.NODE_ENV === 'test'
+       ? 'http://localhost:54321' // Local Supabase (free)
+       : process.env.SUPABASE_URL; // Real Supabase (only in production)
    ```
 
 2. **Mock all integration tests**
@@ -146,7 +159,9 @@ Tests are loading REAL Supabase credentials and hitting production database!
    ```javascript
    // Track DB calls in tests
    let dbCallCount = 0;
-   beforeEach(() => { dbCallCount = 0; });
+   beforeEach(() => {
+     dbCallCount = 0;
+   });
    afterEach(() => {
      if (dbCallCount > 100) {
        throw new Error(`Test exceeded bandwidth limit: ${dbCallCount} calls`);
@@ -200,7 +215,7 @@ class MockSupabaseClient {
       select: (columns) => ({
         eq: (column, value) => {
           // Simulate RLS filtering
-          const filtered = this.data[table].filter(row => {
+          const filtered = this.data[table].filter((row) => {
             // Check if user has access to this org
             return row.organization_id === this.currentOrg;
           });
@@ -264,12 +279,14 @@ describe('Multi-Tenant RLS CRUD Tests - Issue #801', () => {
 ## Expected Impact
 
 ### Before (Real Supabase):
+
 - **Bandwidth per test run:** ~50MB (create/delete 2 orgs, 10 users, 50 comments)
 - **Test runs per day:** ~50 (CI + local development)
 - **Daily bandwidth:** 2.5GB
 - **Monthly bandwidth:** 75GB ❌ **EXCEEDS FREE TIER**
 
 ### After (Mocked Supabase):
+
 - **Bandwidth per test run:** ~0MB (no network calls)
 - **Test runs per day:** unlimited
 - **Daily bandwidth:** ~10MB (only production traffic)
@@ -304,4 +321,3 @@ USE_MOCK_SUPABASE=true npm test -- tests/integration/
 - [ ] Documentation updated
 
 **Next Steps:** Implement mock solution immediately (Issue #894)
-

@@ -1,6 +1,6 @@
 /**
  * Unit Tests for Shield Routes - CodeRabbit Round 5 Improvements
- * 
+ *
  * Tests the enhanced features added in CodeRabbit Round 5:
  * 1. Enhanced numeric validation for pagination
  * 2. UUID format validation (RFC 4122 compliant)
@@ -30,9 +30,9 @@ jest.mock('../../../src/config/supabase', () => ({
 
 jest.mock('../../../src/middleware/auth', () => ({
   authenticateToken: (req, res, next) => {
-    req.user = { 
-      id: 'test-user-id', 
-      organizationId: 'test-org-id' 
+    req.user = {
+      id: 'test-user-id',
+      organizationId: 'test-org-id'
     };
     next();
   }
@@ -67,10 +67,10 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     app = express();
     app.use(express.json());
     app.use('/api/shield', shieldRoutes);
-    
+
     mockSupabaseClient = require('../../../src/config/supabase').supabaseServiceClient;
     jest.clearAllMocks();
-    
+
     // Skip rate limiting in tests
     process.env.NODE_ENV = 'test';
   });
@@ -89,9 +89,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     });
 
     it('should handle valid numeric string page parameter', async () => {
-      const response = await request(app)
-        .get('/api/shield/events?page=5&limit=10')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?page=5&limit=10').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.pagination.page).toBe(5);
@@ -110,9 +108,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     });
 
     it('should reject non-numeric page parameter and default to 1', async () => {
-      const response = await request(app)
-        .get('/api/shield/events?page=abc&limit=xyz')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?page=abc&limit=xyz').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.pagination.page).toBe(1);
@@ -120,9 +116,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     });
 
     it('should cap page parameter at maximum value', async () => {
-      const response = await request(app)
-        .get('/api/shield/events?page=2000&limit=200')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?page=2000&limit=200').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.pagination.page).toBe(1000); // Capped at 1000
@@ -130,9 +124,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     });
 
     it('should handle negative page and limit values', async () => {
-      const response = await request(app)
-        .get('/api/shield/events?page=-5&limit=-10')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?page=-5&limit=-10').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.pagination.page).toBe(1); // Default
@@ -140,9 +132,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     });
 
     it('should handle decimal page parameter', async () => {
-      const response = await request(app)
-        .get('/api/shield/events?page=5.7&limit=10.3')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events?page=5.7&limit=10.3').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.pagination.page).toBe(1); // Not an integer, defaults to 1
@@ -227,7 +217,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
 
     it('should handle normal metadata object safely', async () => {
       const existingMetadata = { source: 'auto', confidence: 0.8 };
-      
+
       mockSupabaseClient.single.mockResolvedValue({
         data: {
           id: testUuid,
@@ -249,7 +239,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      
+
       // Verify update was called with merged metadata
       const updateCall = mockSupabaseClient.update.mock.calls[0][0];
       expect(updateCall.metadata.source).toBe('auto'); // Preserved
@@ -279,7 +269,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      
+
       // Verify update was called with new metadata
       const updateCall = mockSupabaseClient.update.mock.calls[0][0];
       expect(updateCall.metadata.reverted).toBe(true);
@@ -308,7 +298,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      
+
       // Verify array was converted to empty object base
       const updateCall = mockSupabaseClient.update.mock.calls[0][0];
       expect(updateCall.metadata.reverted).toBe(true);
@@ -320,7 +310,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     it('should handle malformed metadata gracefully', async () => {
       // Mock logger to verify warning is logged
       const mockLogger = require('../../../src/utils/logger').logger;
-      
+
       mockSupabaseClient.single.mockResolvedValue({
         data: {
           id: testUuid,
@@ -342,7 +332,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      
+
       // Verify update was called with clean metadata
       const updateCall = mockSupabaseClient.update.mock.calls[0][0];
       expect(updateCall.metadata.reverted).toBe(true);
@@ -353,7 +343,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
   describe('GDPR Content Hashing', () => {
     // These tests would be for the helper functions if they were exported
     // For now, we test the behavior through the API endpoints
-    
+
     it('should handle content hashing in API responses', async () => {
       const mockEvents = [
         {
@@ -375,14 +365,12 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
         count: 1
       });
 
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.events[0].content_hash).toBe('abc123def456');
       expect(response.body.data.events[0].content_snippet).toBe('This is a test snippet...');
-      
+
       // Verify organization_id is removed from response
       expect(response.body.data.events[0].organization_id).toBeUndefined();
     });
@@ -399,9 +387,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
 
     it('should handle null query object safely', async () => {
       // Mock request with null query
-      const response = await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      const response = await request(app).get('/api/shield/events').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.pagination.page).toBe(1);
@@ -411,7 +397,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     it('should validate filter parameters against whitelist', async () => {
       const response = await request(app)
         .get('/api/shield/events')
-        .query({ 
+        .query({
           category: 'invalid_category',
           platform: 'invalid_platform',
           actionType: 'invalid_action'
@@ -427,7 +413,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     it('should accept valid filter parameters', async () => {
       const response = await request(app)
         .get('/api/shield/events')
-        .query({ 
+        .query({
           category: 'toxic',
           platform: 'twitter',
           actionType: 'block',
@@ -451,9 +437,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
         count: 0
       });
 
-      await request(app)
-        .get('/api/shield/events')
-        .expect(200);
+      await request(app).get('/api/shield/events').expect(200);
 
       // Verify that eq was called with organization_id
       expect(mockSupabaseClient.eq).toHaveBeenCalledWith('organization_id', 'test-org-id');
@@ -473,7 +457,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
 
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe('ACTION_NOT_FOUND');
-      
+
       // Verify organization filter was applied
       expect(mockSupabaseClient.eq).toHaveBeenCalledWith('organization_id', 'test-org-id');
     });

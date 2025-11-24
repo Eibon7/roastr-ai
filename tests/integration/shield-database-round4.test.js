@@ -1,6 +1,6 @@
 /**
  * Shield Database Round 4 Integration Tests
- * 
+ *
  * Tests for CodeRabbit Round 4 database improvements:
  * - NOT NULL timestamp constraints
  * - Enhanced temporal integrity checks
@@ -14,11 +14,11 @@ const { Pool } = require('pg');
 const mockPool = {
   query: jest.fn(),
   connect: jest.fn(),
-  end: jest.fn(),
+  end: jest.fn()
 };
 
 jest.mock('pg', () => ({
-  Pool: jest.fn(() => mockPool),
+  Pool: jest.fn(() => mockPool)
 }));
 
 describe('Shield Database - Round 4 Enhancements', () => {
@@ -40,7 +40,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
     test('should enforce NOT NULL constraint on created_at', async () => {
       mockPool.query.mockRejectedValueOnce({
         code: '23502', // NOT NULL violation
-        column: 'created_at',
+        column: 'created_at'
       });
 
       const insertQuery = `
@@ -56,7 +56,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
           'test-hash',
           'twitter',
           'toxic',
-          null, // Should violate NOT NULL constraint
+          null // Should violate NOT NULL constraint
         ]);
       } catch (error) {
         expect(error.code).toBe('23502');
@@ -67,7 +67,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
     test('should enforce NOT NULL constraint on updated_at', async () => {
       mockPool.query.mockRejectedValueOnce({
         code: '23502', // NOT NULL violation
-        column: 'updated_at',
+        column: 'updated_at'
       });
 
       const insertQuery = `
@@ -83,7 +83,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
           'test-hash',
           'twitter',
           'toxic',
-          null, // Should violate NOT NULL constraint
+          null // Should violate NOT NULL constraint
         ]);
       } catch (error) {
         expect(error.code).toBe('23502');
@@ -97,9 +97,9 @@ describe('Shield Database - Round 4 Enhancements', () => {
           {
             id: 'test-action-id',
             created_at: '2024-01-15T12:00:00Z',
-            updated_at: '2024-01-15T12:00:00Z',
+            updated_at: '2024-01-15T12:00:00Z'
           }
-        ],
+        ]
       });
 
       const insertQuery = `
@@ -114,7 +114,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
         'block',
         'test-hash',
         'twitter',
-        'toxic',
+        'toxic'
       ]);
 
       expect(result.rows[0]).toHaveProperty('id');
@@ -127,7 +127,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
     test('should enforce created_at <= updated_at constraint', async () => {
       mockPool.query.mockRejectedValueOnce({
         code: '23514', // CHECK constraint violation
-        constraint: 'shield_actions_temporal_integrity',
+        constraint: 'shield_actions_temporal_integrity'
       });
 
       const insertQuery = `
@@ -145,7 +145,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
           'twitter',
           'toxic',
           '2024-01-15T12:00:00Z', // created_at
-          '2024-01-15T11:00:00Z', // updated_at (before created_at - should fail)
+          '2024-01-15T11:00:00Z' // updated_at (before created_at - should fail)
         ]);
       } catch (error) {
         expect(error.code).toBe('23514');
@@ -156,7 +156,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
     test('should enforce reverted_at >= created_at constraint', async () => {
       mockPool.query.mockRejectedValueOnce({
         code: '23514', // CHECK constraint violation
-        constraint: 'shield_actions_temporal_integrity',
+        constraint: 'shield_actions_temporal_integrity'
       });
 
       const insertQuery = `
@@ -174,7 +174,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
           'twitter',
           'toxic',
           '2024-01-15T12:00:00Z', // created_at
-          '2024-01-15T11:00:00Z', // reverted_at (before created_at - should fail)
+          '2024-01-15T11:00:00Z' // reverted_at (before created_at - should fail)
         ]);
       } catch (error) {
         expect(error.code).toBe('23514');
@@ -189,9 +189,9 @@ describe('Shield Database - Round 4 Enhancements', () => {
             id: 'test-action-id',
             created_at: '2024-01-15T12:00:00Z',
             updated_at: '2024-01-15T12:00:00Z',
-            reverted_at: null,
+            reverted_at: null
           }
-        ],
+        ]
       });
 
       const insertQuery = `
@@ -208,7 +208,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
         'test-hash',
         'twitter',
         'toxic',
-        null, // NULL reverted_at should be allowed
+        null // NULL reverted_at should be allowed
       ]);
 
       expect(result.rows[0].reverted_at).toBeNull();
@@ -217,7 +217,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
     test('should prevent future timestamps beyond allowed skew', async () => {
       mockPool.query.mockRejectedValueOnce({
         code: '23514', // CHECK constraint violation
-        constraint: 'shield_actions_temporal_integrity',
+        constraint: 'shield_actions_temporal_integrity'
       });
 
       const futureTime = new Date();
@@ -237,7 +237,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
           'test-hash',
           'twitter',
           'toxic',
-          futureTime.toISOString(), // Too far in future - should fail
+          futureTime.toISOString() // Too far in future - should fail
         ]);
       } catch (error) {
         expect(error.code).toBe('23514');
@@ -250,9 +250,9 @@ describe('Shield Database - Round 4 Enhancements', () => {
         rows: [
           {
             id: 'test-action-id',
-            created_at: new Date().toISOString(),
+            created_at: new Date().toISOString()
           }
-        ],
+        ]
       });
 
       const nearFutureTime = new Date();
@@ -272,7 +272,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
         'test-hash',
         'twitter',
         'toxic',
-        nearFutureTime.toISOString(), // Within tolerance - should succeed
+        nearFutureTime.toISOString() // Within tolerance - should succeed
       ]);
 
       expect(result.rows[0]).toHaveProperty('id');
@@ -286,8 +286,8 @@ describe('Shield Database - Round 4 Enhancements', () => {
         rows: [
           { indexname: 'idx_shield_actions_timestamps' },
           { indexname: 'idx_shield_actions_org_time_range' },
-          { indexname: 'idx_shield_actions_recent_active' },
-        ],
+          { indexname: 'idx_shield_actions_recent_active' }
+        ]
       });
 
       const indexQuery = `
@@ -303,7 +303,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
         expect.arrayContaining([
           expect.objectContaining({ indexname: 'idx_shield_actions_timestamps' }),
           expect.objectContaining({ indexname: 'idx_shield_actions_org_time_range' }),
-          expect.objectContaining({ indexname: 'idx_shield_actions_recent_active' }),
+          expect.objectContaining({ indexname: 'idx_shield_actions_recent_active' })
         ])
       );
     });
@@ -311,15 +311,17 @@ describe('Shield Database - Round 4 Enhancements', () => {
     test('should verify partial indexes for active/reverted actions', async () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [
-          { 
+          {
             indexname: 'idx_shield_actions_active',
-            indexdef: 'CREATE INDEX idx_shield_actions_active ON shield_actions USING btree (organization_id, created_at DESC) WHERE (reverted_at IS NULL)'
+            indexdef:
+              'CREATE INDEX idx_shield_actions_active ON shield_actions USING btree (organization_id, created_at DESC) WHERE (reverted_at IS NULL)'
           },
-          { 
+          {
             indexname: 'idx_shield_actions_reverted',
-            indexdef: 'CREATE INDEX idx_shield_actions_reverted ON shield_actions USING btree (reverted_at DESC) WHERE (reverted_at IS NOT NULL)'
-          },
-        ],
+            indexdef:
+              'CREATE INDEX idx_shield_actions_reverted ON shield_actions USING btree (reverted_at DESC) WHERE (reverted_at IS NOT NULL)'
+          }
+        ]
       });
 
       const partialIndexQuery = `
@@ -333,14 +335,14 @@ describe('Shield Database - Round 4 Enhancements', () => {
 
       expect(result.rows).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ 
+          expect.objectContaining({
             indexname: 'idx_shield_actions_active',
             indexdef: expect.stringContaining('WHERE (reverted_at IS NULL)')
           }),
-          expect.objectContaining({ 
+          expect.objectContaining({
             indexname: 'idx_shield_actions_reverted',
             indexdef: expect.stringContaining('WHERE (reverted_at IS NOT NULL)')
-          }),
+          })
         ])
       );
     });
@@ -350,8 +352,8 @@ describe('Shield Database - Round 4 Enhancements', () => {
         rows: [
           { indexname: 'idx_shield_actions_org_created' },
           { indexname: 'idx_shield_actions_org_reason' },
-          { indexname: 'idx_shield_actions_org_platform' },
-        ],
+          { indexname: 'idx_shield_actions_org_platform' }
+        ]
       });
 
       const compositeIndexQuery = `
@@ -364,11 +366,11 @@ describe('Shield Database - Round 4 Enhancements', () => {
       const result = await db.query(compositeIndexQuery);
 
       expect(result.rows).toHaveLength(3);
-      expect(result.rows.map(r => r.indexname)).toEqual(
+      expect(result.rows.map((r) => r.indexname)).toEqual(
         expect.arrayContaining([
           'idx_shield_actions_org_created',
           'idx_shield_actions_org_reason',
-          'idx_shield_actions_org_platform',
+          'idx_shield_actions_org_platform'
         ])
       );
     });
@@ -378,7 +380,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
     test('should enforce NOT NULL constraints on feature_flags timestamps', async () => {
       mockPool.query.mockRejectedValueOnce({
         code: '23502', // NOT NULL violation
-        column: 'created_at',
+        column: 'created_at'
       });
 
       const insertQuery = `
@@ -391,7 +393,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
         await db.query(insertQuery, [
           'ENABLE_SHIELD_UI',
           true,
-          null, // Should violate NOT NULL constraint
+          null // Should violate NOT NULL constraint
         ]);
       } catch (error) {
         expect(error.code).toBe('23502');
@@ -402,7 +404,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
     test('should enforce unique constraint per organization', async () => {
       mockPool.query.mockRejectedValueOnce({
         code: '23505', // Unique violation
-        constraint: 'feature_flags_organization_id_flag_name_key',
+        constraint: 'feature_flags_organization_id_flag_name_key'
       });
 
       const insertQuery = `
@@ -449,9 +451,9 @@ describe('Shield Database - Round 4 Enhancements', () => {
             id: 'global-flag-id',
             organization_id: null,
             flag_name: 'ENABLE_SHIELD_UI',
-            enabled: false,
+            enabled: false
           }
-        ],
+        ]
       });
 
       const insertQuery = `
@@ -478,9 +480,9 @@ describe('Shield Database - Round 4 Enhancements', () => {
         rows: [
           {
             id: 'test-flag-id',
-            enabled: false, // Should default to false
+            enabled: false // Should default to false
           }
-        ],
+        ]
       });
 
       const insertQuery = `
@@ -490,10 +492,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
         RETURNING id, enabled
       `;
 
-      const result = await db.query(insertQuery, [
-        'test-org-id',
-        'NEW_FEATURE_FLAG'
-      ]);
+      const result = await db.query(insertQuery, ['test-org-id', 'NEW_FEATURE_FLAG']);
 
       expect(result.rows[0].enabled).toBe(false);
     });
@@ -510,9 +509,9 @@ describe('Shield Database - Round 4 Enhancements', () => {
           {
             id: 'test-action-id',
             created_at: originalTime,
-            updated_at: originalTime,
+            updated_at: originalTime
           }
-        ],
+        ]
       });
 
       // Mock update with trigger-updated timestamp
@@ -521,9 +520,9 @@ describe('Shield Database - Round 4 Enhancements', () => {
           {
             id: 'test-action-id',
             created_at: originalTime,
-            updated_at: updatedTime, // Should be automatically updated by trigger
+            updated_at: updatedTime // Should be automatically updated by trigger
           }
-        ],
+        ]
       });
 
       const insertQuery = `
@@ -538,7 +537,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
         'block',
         'test-hash',
         'twitter',
-        'toxic',
+        'toxic'
       ]);
 
       const updateQuery = `
@@ -548,10 +547,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
         RETURNING id, created_at, updated_at
       `;
 
-      const updateResult = await db.query(updateQuery, [
-        'test-action-id',
-        '2024-01-15T12:30:00Z'
-      ]);
+      const updateResult = await db.query(updateQuery, ['test-action-id', '2024-01-15T12:30:00Z']);
 
       expect(insertResult.rows[0].updated_at).toBe(originalTime);
       expect(updateResult.rows[0].updated_at).toBe(updatedTime);
@@ -562,7 +558,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
   describe('GDPR Compliance Functions', () => {
     test('should anonymize old shield actions', async () => {
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ anonymized_count: 5 }],
+        rows: [{ anonymized_count: 5 }]
       });
 
       const anonymizeQuery = `SELECT anonymize_old_shield_actions() as anonymized_count`;
@@ -573,7 +569,7 @@ describe('Shield Database - Round 4 Enhancements', () => {
 
     test('should purge very old shield actions', async () => {
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ purged_count: 3 }],
+        rows: [{ purged_count: 3 }]
       });
 
       const purgeQuery = `SELECT purge_old_shield_actions() as purged_count`;
@@ -584,14 +580,16 @@ describe('Shield Database - Round 4 Enhancements', () => {
 
     test('should handle empty result sets gracefully', async () => {
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ anonymized_count: 0 }],
+        rows: [{ anonymized_count: 0 }]
       });
 
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ purged_count: 0 }],
+        rows: [{ purged_count: 0 }]
       });
 
-      const anonymizeResult = await db.query(`SELECT anonymize_old_shield_actions() as anonymized_count`);
+      const anonymizeResult = await db.query(
+        `SELECT anonymize_old_shield_actions() as anonymized_count`
+      );
       const purgeResult = await db.query(`SELECT purge_old_shield_actions() as purged_count`);
 
       expect(anonymizeResult.rows[0].anonymized_count).toBe(0);

@@ -33,6 +33,7 @@ Modified `.gddrc.json` with temporary configuration:
 ```
 
 **Rationale:**
+
 - Current measured health: 98.8/100 (with Phase 15.1 integrity scoring)
 - Previous threshold of 95 was blocking merges due to real measured coverage <80%
 - All 13 nodes are HEALTHY (90-104 scores)
@@ -42,16 +43,17 @@ Modified `.gddrc.json` with temporary configuration:
 
 Created 6 GitHub issues tracking nodes with <80% coverage:
 
-| Issue | Node | Coverage | Target | Priority |
-|-------|------|----------|--------|----------|
-| [#500](https://github.com/Eibon7/roastr-ai/issues/500) | cost-control | 3% | 60% | P1 (Critical) |
-| [#501](https://github.com/Eibon7/roastr-ai/issues/501) | analytics | 49% | 65% | P2 |
-| [#502](https://github.com/Eibon7/roastr-ai/issues/502) | billing | 58% | 65% | P2 |
-| [#503](https://github.com/Eibon7/roastr-ai/issues/503) | shield | 66% | 75% | P2 |
-| [#504](https://github.com/Eibon7/roastr-ai/issues/504) | multi-tenant | 0% | 40% | Infrastructure |
-| [#505](https://github.com/Eibon7/roastr-ai/issues/505) | trainer | 0% | 50% | Roadmap |
+| Issue                                                  | Node         | Coverage | Target | Priority       |
+| ------------------------------------------------------ | ------------ | -------- | ------ | -------------- |
+| [#500](https://github.com/Eibon7/roastr-ai/issues/500) | cost-control | 3%       | 60%    | P1 (Critical)  |
+| [#501](https://github.com/Eibon7/roastr-ai/issues/501) | analytics    | 49%      | 65%    | P2             |
+| [#502](https://github.com/Eibon7/roastr-ai/issues/502) | billing      | 58%      | 65%    | P2             |
+| [#503](https://github.com/Eibon7/roastr-ai/issues/503) | shield       | 66%      | 75%    | P2             |
+| [#504](https://github.com/Eibon7/roastr-ai/issues/504) | multi-tenant | 0%       | 40%    | Infrastructure |
+| [#505](https://github.com/Eibon7/roastr-ai/issues/505) | trainer      | 0%       | 50%    | Roadmap        |
 
 **Issue Template:** Each issue includes:
+
 - Current vs target coverage
 - Detection method (GDD Phase 15.2)
 - Actionable steps with checkboxes
@@ -64,28 +66,31 @@ Created 6 GitHub issues tracking nodes with <80% coverage:
 Updated `docs/system-health.md` with:
 
 **Visual Notice:**
+
 ```
 ⚠️ Temporary health threshold = 93 (until Oct 31, 2025)
 Restores to 95 once coverage recovery complete.
 ```
 
 **Recovery Table:**
+
 ```markdown
 ## 🧩 Coverage Recovery Tracker
 
-| Node | Current | Target | Status | Issue | ETA |
-|------|----------|---------|--------|-------|-----|
-| cost-control | 3% | 60% | ⏳ Pending | #500 | Oct 13 |
-| analytics | 49% | 65% | ⏳ Pending | #501 | Oct 14 |
-| billing | 58% | 65% | ⏳ Pending | #502 | Oct 15 |
-| shield | 66% | 75% | ⏳ Pending | #503 | Oct 16 |
-| multi-tenant | 0% | 40% | ⚠️ Infrastructure | #504 | Oct 17 |
-| trainer | 0% | 50% | 🕓 Roadmap | #505 | Oct 20 |
+| Node         | Current | Target | Status            | Issue | ETA    |
+| ------------ | ------- | ------ | ----------------- | ----- | ------ |
+| cost-control | 3%      | 60%    | ⏳ Pending        | #500  | Oct 13 |
+| analytics    | 49%     | 65%    | ⏳ Pending        | #501  | Oct 14 |
+| billing      | 58%     | 65%    | ⏳ Pending        | #502  | Oct 15 |
+| shield       | 66%     | 75%    | ⏳ Pending        | #503  | Oct 16 |
+| multi-tenant | 0%      | 40%    | ⚠️ Infrastructure | #504  | Oct 17 |
+| trainer      | 0%      | 50%    | 🕓 Roadmap        | #505  | Oct 20 |
 ```
 
 #### 4. Auto-Restore Logic
 
 **Configuration:** `.gddrc.json` includes:
+
 ```json
 "coverage_recovery": {
   "restore_threshold_at": 95,
@@ -98,17 +103,20 @@ Restores to 95 once coverage recovery complete.
 ### 📊 Impact
 
 **Immediate:**
+
 - ✅ PR #493 can now merge (health 98.8 > threshold 93)
 - ✅ CodeRabbit feedback addressed honestly (measured coverage, not inflated)
 - ✅ All validation still active (no bypassing integrity)
 
 **Transparency:**
+
 - ✅ Visible notice in health reports about temporary threshold
 - ✅ 6 tracked issues for coverage improvement
 - ✅ Clear ETAs and ownership
 - ✅ Auto-restore plan documented
 
 **Accountability:**
+
 - ✅ Measured coverage with jest --coverage (not estimated)
 - ✅ Real data in node docs (49%, 58%, 3%, etc.)
 - ✅ Honest assessment of current state
@@ -135,6 +143,7 @@ Restores to 95 once coverage recovery complete.
 **Phase 15.2 Status:** ✅ COMPLETED (October 8, 2025)
 
 **Threshold:**
+
 - Previous: 95/100
 - Current: 93/100 (temporary until Oct 31)
 - Auto-restore: 95/100 (when all nodes ≥80% coverage)

@@ -10,6 +10,7 @@
 ## 📋 Task Summary
 
 Applied CodeRabbit review #3495070964 addressing 3 issues:
+
 1. **Major:** Access gating using wrong flag in StyleProfile.jsx
 2. **Minor:** Data normalization inconsistency in StyleProfile.jsx
 3. **Major:** Missing user-facing error messages in dashboard.jsx
@@ -25,6 +26,7 @@ Applied CodeRabbit review #3495070964 addressing 3 issues:
 **Root Cause:** Incorrect flag assignment in checkAccess callback
 
 **Fix Applied:**
+
 ```javascript
 // BEFORE:
 setHasAccess(available);
@@ -44,6 +46,7 @@ setHasAccess(hasAccessFlag);
 **Root Cause:** POST response envelope not extracted like in fetchProfileData
 
 **Fix Applied:**
+
 ```javascript
 // Already fixed in previous commit (65b91e1a)
 // Normalized to extract inner profile object:
@@ -65,6 +68,7 @@ setSelectedLanguage(profile.profiles?.[0]?.lang || null);
 **Fixes Applied:**
 
 **handleRegenerateRoast:**
+
 ```javascript
 // Success feedback:
 setConnectionStatus({
@@ -82,12 +86,14 @@ setTimeout(() => setConnectionStatus(null), 5000);
 ```
 
 **handleDiscardRoast:**
+
 ```javascript
 // Success: 'Roast descartado exitosamente'
 // Error: 'Error al descartar el roast...'
 ```
 
 **handlePublishRoast:**
+
 ```javascript
 // Success: 'Roast publicado exitosamente'
 // Error: 'Error al publicar el roast...'
@@ -100,6 +106,7 @@ setTimeout(() => setConnectionStatus(null), 5000);
 ## ✅ Validation Results
 
 ### Build Status
+
 ```bash
 ✅ Frontend build: SUCCESSFUL
    303.99 kB (+44 B from 303.94 kB)
@@ -107,6 +114,7 @@ setTimeout(() => setConnectionStatus(null), 5000);
 ```
 
 ### Test Results
+
 ```bash
 ✅ API Service Tests: 11/11 passing (0.626s)
    - integrations.test.js: PASS
@@ -116,6 +124,7 @@ setTimeout(() => setConnectionStatus(null), 5000);
 ```
 
 ### GDD Validation
+
 ```bash
 ✅ Runtime: HEALTHY (15 nodes validated)
 ✅ Health Score: 90.2/100 (≥87 required)
@@ -143,11 +152,13 @@ setTimeout(() => setConnectionStatus(null), 5000);
 ## 🧪 Testing Strategy
 
 ### Automated Tests
+
 - ✅ Unit tests passing (no regressions)
 - ✅ Build verification passing
 - ✅ GDD validation passing
 
 ### Manual Testing Required
+
 - [ ] Verify error messages display correctly in browser
 - [ ] Test access gating with different plan tiers
 - [ ] Test roast actions (regenerate, discard, publish) and verify feedback
@@ -156,23 +167,23 @@ setTimeout(() => setConnectionStatus(null), 5000);
 
 ## 📊 Quality Metrics
 
-| Metric | Before | After | Status |
-|--------|--------|-------|--------|
-| Build Size | 303.94 kB | 303.99 kB | ✅ (+44 B) |
-| Tests Passing | 11/11 | 11/11 | ✅ |
-| GDD Health | 90.2/100 | 90.2/100 | ✅ |
-| GDD Drift | 5/100 | 5/100 | ✅ |
-| ESLint Errors | 0 | 0 | ✅ |
+| Metric        | Before    | After     | Status     |
+| ------------- | --------- | --------- | ---------- |
+| Build Size    | 303.94 kB | 303.99 kB | ✅ (+44 B) |
+| Tests Passing | 11/11     | 11/11     | ✅         |
+| GDD Health    | 90.2/100  | 90.2/100  | ✅         |
+| GDD Drift     | 5/100     | 5/100     | ✅         |
+| ESLint Errors | 0         | 0         | ✅         |
 
 ---
 
 ## 🎯 CodeRabbit Resolution
 
-| Issue | File | Lines | Severity | Status |
-|-------|------|-------|----------|--------|
-| Access gating flag | StyleProfile.jsx | 58-73 | Major | ✅ RESOLVED |
-| Data normalization | StyleProfile.jsx | 118-136 | Minor | ✅ RESOLVED |
-| Error feedback | dashboard.jsx | 339-364 | Major | ✅ RESOLVED |
+| Issue              | File             | Lines   | Severity | Status      |
+| ------------------ | ---------------- | ------- | -------- | ----------- |
+| Access gating flag | StyleProfile.jsx | 58-73   | Major    | ✅ RESOLVED |
+| Data normalization | StyleProfile.jsx | 118-136 | Minor    | ✅ RESOLVED |
+| Error feedback     | dashboard.jsx    | 339-364 | Major    | ✅ RESOLVED |
 
 **Total:** 3/3 issues resolved (100%)
 
@@ -197,8 +208,8 @@ setTimeout(() => setConnectionStatus(null), 5000);
 ---
 
 **Next Steps:**
+
 1. Commit changes with protocol-compliant message
 2. Push to origin/feature/issue-910-pr
 3. Wait for CI validation
 4. CodeRabbit re-review to verify 0 pending comments
-

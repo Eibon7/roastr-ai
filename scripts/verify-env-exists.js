@@ -31,29 +31,30 @@ function main() {
   // Verificar si .env existe
   if (fs.existsSync(ENV_FILE)) {
     log('.env existe');
-    
+
     // Crear backup automático con timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const backupPath = path.join(__dirname, '..', `.env.backup-${timestamp}`);
     fs.copyFileSync(ENV_FILE, backupPath);
-    
+
     // Mantener solo los últimos 5 backups
     const backupDir = path.dirname(backupPath);
-    const backups = fs.readdirSync(backupDir)
-      .filter(f => f.startsWith('.env.backup-'))
-      .map(f => ({
+    const backups = fs
+      .readdirSync(backupDir)
+      .filter((f) => f.startsWith('.env.backup-'))
+      .map((f) => ({
         name: f,
         time: fs.statSync(path.join(backupDir, f)).mtime.getTime()
       }))
       .sort((a, b) => b.time - a.time);
-    
+
     if (backups.length > 5) {
-      backups.slice(5).forEach(b => {
+      backups.slice(5).forEach((b) => {
         fs.unlinkSync(path.join(backupDir, b.name));
         if (!silent) console.log(`🗑️  Backup antiguo eliminado: ${b.name}`);
       });
     }
-    
+
     if (!silent) console.log(`💾 Backup automático creado: ${path.basename(backupPath)}`);
     return 0;
   }
@@ -66,17 +67,17 @@ function main() {
       fs.copyFileSync(ENV_EXAMPLE, ENV_FILE);
       log('.env recreado desde .env.example');
       console.warn('⚠️  IMPORTANTE: Configura tus variables de entorno reales en .env');
-      
+
       // Validate the recreated .env
       try {
-        require('child_process').execSync('node scripts/verify-env-config.js', { 
+        require('child_process').execSync('node scripts/verify-env-config.js', {
           cwd: path.join(__dirname, '..'),
           stdio: 'inherit'
         });
       } catch (error) {
         console.warn('⚠️  Validación: Algunas configuraciones requieren atención');
       }
-      
+
       return 0;
     } else if (fs.existsSync(ENV_BACKUP)) {
       fs.copyFileSync(ENV_BACKUP, ENV_FILE);
@@ -97,4 +98,3 @@ function main() {
 }
 
 process.exit(main());
-

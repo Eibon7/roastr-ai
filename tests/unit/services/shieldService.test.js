@@ -1,6 +1,6 @@
 /**
  * Shield Service Tests
- * 
+ *
  * Tests for automated content moderation and user behavior tracking
  */
 
@@ -79,7 +79,7 @@ describe('ShieldService', () => {
   describe('initialize', () => {
     test('should initialize service and queue connections', async () => {
       await shieldService.initialize();
-      
+
       expect(mockQueueService.initialize).toHaveBeenCalled();
     });
   });
@@ -211,22 +211,40 @@ describe('ShieldService', () => {
       // Mock user behavior update method
       jest.spyOn(shieldService, '_updateUserBehaviorFromTags').mockResolvedValue({ success: true });
 
-      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
+      const result = await shieldService.executeActionsFromTags(
+        organizationId,
+        comment,
+        action_tags,
+        metadata
+      );
 
       expect(result.success).toBe(true);
       expect(result.actions_executed).toHaveLength(2);
-      expect(result.actions_executed.some(a => a.tag === 'hide_comment')).toBe(true);
-      expect(result.actions_executed.some(a => a.tag === 'block_user')).toBe(true);
+      expect(result.actions_executed.some((a) => a.tag === 'hide_comment')).toBe(true);
+      expect(result.actions_executed.some((a) => a.tag === 'block_user')).toBe(true);
 
       // Verify handler methods were called
-      expect(shieldService._handleHideComment).toHaveBeenCalledWith(organizationId, comment, metadata);
-      expect(shieldService._handleBlockUser).toHaveBeenCalledWith(organizationId, comment, metadata);
+      expect(shieldService._handleHideComment).toHaveBeenCalledWith(
+        organizationId,
+        comment,
+        metadata
+      );
+      expect(shieldService._handleBlockUser).toHaveBeenCalledWith(
+        organizationId,
+        comment,
+        metadata
+      );
 
       // Verify batch recording was called
       expect(shieldService._batchRecordShieldActions).toHaveBeenCalled();
 
       // Verify user behavior update was called
-      expect(shieldService._updateUserBehaviorFromTags).toHaveBeenCalledWith(organizationId, comment, action_tags, metadata);
+      expect(shieldService._updateUserBehaviorFromTags).toHaveBeenCalledWith(
+        organizationId,
+        comment,
+        action_tags,
+        metadata
+      );
     });
 
     test('should skip execution when no actions in tags', async () => {
@@ -240,7 +258,12 @@ describe('ShieldService', () => {
       const action_tags = [];
       const metadata = { toxicity_score: 0.2 };
 
-      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
+      const result = await shieldService.executeActionsFromTags(
+        organizationId,
+        comment,
+        action_tags,
+        metadata
+      );
 
       expect(result.success).toBe(true);
       expect(result.actions_executed).toHaveLength(0);
@@ -444,31 +467,23 @@ describe('ShieldService', () => {
   describe('action level determination', () => {
     test('should determine correct action level based on toxicity and history', () => {
       // High toxicity, no history
-      expect(
-        shieldService.determineActionLevel(0.95, 'low', ['toxicity', 'threat'])
-      ).toBe('high');
+      expect(shieldService.determineActionLevel(0.95, 'low', ['toxicity', 'threat'])).toBe('high');
 
       // Medium toxicity, medium risk user
-      expect(
-        shieldService.determineActionLevel(0.7, 'medium', ['toxicity'])
-      ).toBe('medium');
+      expect(shieldService.determineActionLevel(0.7, 'medium', ['toxicity'])).toBe('medium');
 
       // Low toxicity, high risk user
-      expect(
-        shieldService.determineActionLevel(0.4, 'high', ['toxicity'])
-      ).toBe('medium');
+      expect(shieldService.determineActionLevel(0.4, 'high', ['toxicity'])).toBe('medium');
 
       // Low toxicity, low risk user
-      expect(
-        shieldService.determineActionLevel(0.3, 'low', [])
-      ).toBe('none');
+      expect(shieldService.determineActionLevel(0.3, 'low', [])).toBe('none');
     });
   });
 
   describe('recommended actions', () => {
     test('should recommend appropriate actions for high severity', () => {
       const actions = shieldService.getRecommendedActions('high', ['threat', 'toxicity']);
-      
+
       expect(actions).toContain('temporary_mute');
       expect(actions).toContain('content_removal');
       expect(actions).toContain('escalate_to_human');
@@ -476,7 +491,7 @@ describe('ShieldService', () => {
 
     test('should recommend appropriate actions for medium severity', () => {
       const actions = shieldService.getRecommendedActions('medium', ['toxicity']);
-      
+
       expect(actions).toContain('warning');
       expect(actions).toContain('content_removal');
       expect(actions).not.toContain('permanent_ban');
@@ -484,7 +499,7 @@ describe('ShieldService', () => {
 
     test('should recommend appropriate actions for low severity', () => {
       const actions = shieldService.getRecommendedActions('low', ['toxicity']);
-      
+
       expect(actions).toContain('warning');
       expect(actions).not.toContain('temporary_mute');
       expect(actions).not.toContain('permanent_ban');
@@ -492,7 +507,7 @@ describe('ShieldService', () => {
 
     test('should return empty actions for no severity', () => {
       const actions = shieldService.getRecommendedActions('none', []);
-      
+
       expect(actions).toHaveLength(0);
     });
   });
@@ -517,9 +532,7 @@ describe('ShieldService', () => {
         })
       });
 
-      await expect(
-        shieldService.analyzeContent(content, user)
-      ).rejects.toThrow('Database error');
+      await expect(shieldService.analyzeContent(content, user)).rejects.toThrow('Database error');
     });
 
     test('should handle queue service errors gracefully', async () => {
@@ -537,7 +550,12 @@ describe('ShieldService', () => {
       // Mock queue service to throw error when handler tries to add job
       mockQueueService.addJob.mockRejectedValue(new Error('Queue error'));
 
-      const result = await shieldService.executeActionsFromTags(organizationId, comment, action_tags, metadata);
+      const result = await shieldService.executeActionsFromTags(
+        organizationId,
+        comment,
+        action_tags,
+        metadata
+      );
 
       // Expect the error to be in failed_actions array
       expect(result.success).toBe(false);
@@ -551,7 +569,7 @@ describe('ShieldService', () => {
   describe('shutdown', () => {
     test('should shutdown queue service gracefully', async () => {
       await shieldService.shutdown();
-      
+
       expect(mockQueueService.shutdown).toHaveBeenCalled();
     });
   });

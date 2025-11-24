@@ -1,4 +1,5 @@
 const express = require('express');
+const { logger } = require('./utils/logger'); // Issue #971: Added for console.log replacement
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const path = require('path');
@@ -12,11 +13,13 @@ function validateEnvironment() {
   }
 
   const requiredVars = ['IDEMPOTENCY_SECRET'];
-  const missing = requiredVars.filter(varName => !process.env[varName] || process.env[varName].trim() === '');
+  const missing = requiredVars.filter(
+    (varName) => !process.env[varName] || process.env[varName].trim() === ''
+  );
 
   if (missing.length > 0) {
-    console.error('❌ Missing required environment variables:', missing.join(', '));
-    console.error('💡 Please set IDEMPOTENCY_SECRET to a strong randomly generated secret');
+    logger.error('❌ Missing required environment variables:', missing.join(', '));
+    logger.error('💡 Please set IDEMPOTENCY_SECRET to a strong randomly generated secret');
     process.exit(1);
   }
 }
@@ -25,9 +28,9 @@ function validateEnvironment() {
 validateEnvironment();
 
 // Security and monitoring middleware
-const { 
-  helmetConfig, 
-  corsConfig, 
+const {
+  helmetConfig,
+  corsConfig,
   generalRateLimit,
   authRateLimit,
   billingRateLimit,
@@ -42,7 +45,6 @@ const CsvRoastService = require('./services/csvRoastService');
 const IntegrationManager = require('./integrations/integrationManager');
 const ReincidenceDetector = require('./services/reincidenceDetector');
 const advancedLogger = require('./utils/advancedLogger');
-const { logger } = require('./utils/logger');
 const monitoringService = require('./services/monitoringService');
 const alertingService = require('./services/alertingService');
 
@@ -113,7 +115,7 @@ app.use((req, res, next) => {
 app.get('/health', (req, res) => {
   try {
     const uptime = process.uptime();
-    
+
     // Try to load version safely
     let version = '1.0.0';
     try {
@@ -121,7 +123,7 @@ app.get('/health', (req, res) => {
     } catch (e) {
       // Ignore version loading error
     }
-    
+
     res.status(200).json({
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -130,7 +132,7 @@ app.get('/health', (req, res) => {
       environment: process.env.NODE_ENV === 'production' ? 'production' : 'development'
     });
   } catch (error) {
-    console.error('Health check error:', error);
+    logger.error('Health check error:', error);
     res.status(500).json({
       status: 'error',
       message: error.message
@@ -144,11 +146,11 @@ app.get('/api/health', async (req, res) => {
     const startTime = Date.now();
     const healthStatus = await monitoringService.getHealthStatus();
     const responseTime = Date.now() - startTime;
-    
+
     // Track response time for monitoring
     monitoringService.trackResponseTime(responseTime);
     monitoringService.trackRequest(healthStatus.status === 'error');
-    
+
     // Set appropriate HTTP status code
     let httpStatus = 200;
     if (healthStatus.status === 'unhealthy') {
@@ -158,17 +160,16 @@ app.get('/api/health', async (req, res) => {
     } else if (healthStatus.status === 'error') {
       httpStatus = 500; // Internal Server Error
     }
-    
+
     res.status(httpStatus).json({
       success: healthStatus.status !== 'error',
       data: healthStatus
     });
-    
   } catch (error) {
-    console.error('Comprehensive health check error:', error);
-    
+    logger.error('Comprehensive health check error:', error);
+
     monitoringService.trackRequest(true);
-    
+
     res.status(500).json({
       success: false,
       error: {
@@ -202,47 +203,52 @@ app.use(bodyParser.json());
 // Apply auth-specific rate limiting
 app.use('/api/auth', authRateLimit);
 
-// Apply billing-specific rate limiting  
+// Apply billing-specific rate limiting
 app.use('/api/billing', billingRateLimit);
 
 // Servir archivos estáticos de la carpeta public (legacy files) con seguridad mejorada
-app.use('/public', express.static(path.join(__dirname, '../public'), {
-  index: false, // Prevent directory indexing
-  dotfiles: 'ignore', // Ignore hidden files
-  maxAge: process.env.NODE_ENV === 'production' ? '1d' : '0', // Cache for 1 day in production
-  setHeaders: (res, path) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    
-    // Add appropriate cache headers for different file types
-    if (path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$/)) {
-      res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
-    } else if (path.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
+app.use(
+  '/public',
+  express.static(path.join(__dirname, '../public'), {
+    index: false, // Prevent directory indexing
+    dotfiles: 'ignore', // Ignore hidden files
+    maxAge: process.env.NODE_ENV === 'production' ? '1d' : '0', // Cache for 1 day in production
+    setHeaders: (res, path) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+
+      // Add appropriate cache headers for different file types
+      if (path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
+      } else if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
     }
-  }
-}));
+  })
+);
 
 // Servir archivos estáticos del frontend React con caching mejorado y prevención de indexing
-app.use(express.static(path.join(__dirname, '../frontend/build'), {
-  maxAge: process.env.NODE_ENV === 'production' ? '1y' : '0',
-  immutable: process.env.NODE_ENV === 'production',
-  index: false, // Prevent directory indexing
-  dotfiles: 'ignore', // Ignore hidden files
-  setHeaders: (res, path) => {
-    // Prevent directory indexing at header level
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    
-    if (path.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    } else if (path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$/)) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+app.use(
+  express.static(path.join(__dirname, '../frontend/build'), {
+    maxAge: process.env.NODE_ENV === 'production' ? '1y' : '0',
+    immutable: process.env.NODE_ENV === 'production',
+    index: false, // Prevent directory indexing
+    dotfiles: 'ignore', // Ignore hidden files
+    setHeaders: (res, path) => {
+      // Prevent directory indexing at header level
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+
+      if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      } else if (path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
     }
-  }
-}));
+  })
+);
 
 // Auth routes
 app.use('/api/auth', authRoutes);
@@ -353,11 +359,11 @@ app.get('/api/metrics', authenticateToken, async (req, res) => {
     const startTime = Date.now();
     const metrics = await monitoringService.getMetrics();
     const responseTime = Date.now() - startTime;
-    
+
     // Track response time for monitoring
     monitoringService.trackResponseTime(responseTime);
     monitoringService.trackRequest(false);
-    
+
     res.json({
       success: true,
       data: metrics,
@@ -366,12 +372,11 @@ app.get('/api/metrics', authenticateToken, async (req, res) => {
         timestamp: new Date().toISOString()
       }
     });
-    
   } catch (error) {
-    console.error('Metrics endpoint error:', error);
-    
+    logger.error('Metrics endpoint error:', error);
+
     monitoringService.trackRequest(true);
-    
+
     res.status(500).json({
       success: false,
       error: {
@@ -386,23 +391,23 @@ app.get('/api/metrics', authenticateToken, async (req, res) => {
 app.get('/api/analytics/summary', authenticateToken, async (req, res) => {
   try {
     const { supabaseServiceClient } = require('./config/supabase');
-    
+
     // Get org_id from token (if available) or use default for backoffice
     const orgId = req.user?.org_id || null;
-    
+
     // Build query for completed analyses with conditional org filtering
     let commentsQuery = supabaseServiceClient
       .from('comments')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'processed');
-    
+
     // Only apply org filtering when orgId is truthy and valid (Issue #366 CodeRabbit fix)
     if (orgId && orgId !== 'undefined' && orgId !== 'null') {
       commentsQuery = commentsQuery.eq('organization_id', orgId);
     }
-    
+
     const { count: completedCount, error: analysesError } = await commentsQuery;
-    
+
     if (analysesError) {
       throw analysesError;
     }
@@ -412,14 +417,14 @@ app.get('/api/analytics/summary', authenticateToken, async (req, res) => {
       .from('responses')
       .select('id', { count: 'exact', head: true })
       .not('posted_at', 'is', null);
-    
+
     // Only apply org filtering when orgId is truthy and valid (Issue #366 CodeRabbit fix)
     if (orgId && orgId !== 'undefined' && orgId !== 'null') {
       responsesQuery = responsesQuery.eq('organization_id', orgId);
     }
-    
+
     const { count: sentCount, error: roastsError } = await responsesQuery;
-    
+
     if (roastsError) {
       throw roastsError;
     }
@@ -432,13 +437,12 @@ app.get('/api/analytics/summary', authenticateToken, async (req, res) => {
       },
       meta: {
         timestamp: new Date().toISOString(),
-        organization_id: (orgId && orgId !== 'undefined' && orgId !== 'null') ? orgId : 'global'
+        organization_id: orgId && orgId !== 'undefined' && orgId !== 'null' ? orgId : 'global'
       }
     });
-    
   } catch (error) {
-    console.error('Analytics summary error:', error);
-    
+    logger.error('Analytics summary error:', error);
+
     res.status(500).json({
       success: false,
       error: {
@@ -451,81 +455,82 @@ app.get('/api/analytics/summary', authenticateToken, async (req, res) => {
 
 // Test monitoring system endpoint (authenticated) - disabled in production unless explicitly enabled
 if (process.env.NODE_ENV !== 'production' || flags.isEnabled('ENABLE_DEBUG_LOGS')) {
-app.post('/api/monitoring/test', authenticateToken, async (req, res) => {
-  try {
-    const testResults = await monitoringService.runSystemTest();
-    
-    res.json({
-      success: testResults.overall.passed,
-      data: testResults
-    });
-    
-  } catch (error) {
-    console.error('Monitoring test error:', error);
-    
-    res.status(500).json({
-      success: false,
-      error: {
-        message: 'Failed to run monitoring test',
-        details: error.message
-      }
-    });
-  }
-});
+  app.post('/api/monitoring/test', authenticateToken, async (req, res) => {
+    try {
+      const testResults = await monitoringService.runSystemTest();
+
+      res.json({
+        success: testResults.overall.passed,
+        data: testResults
+      });
+    } catch (error) {
+      logger.error('Monitoring test error:', error);
+
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to run monitoring test',
+          details: error.message
+        }
+      });
+    }
+  });
 }
 
 // Send test alert endpoint (authenticated) - disabled in production unless explicitly enabled
 if (process.env.NODE_ENV !== 'production' || flags.isEnabled('ENABLE_DEBUG_LOGS')) {
-app.post('/api/monitoring/alert/test', authenticateToken, async (req, res) => {
-  try {
-    const { severity = 'info', title = 'Test Alert', message = 'This is a test alert' } = req.body;
-    
-    const alertSent = await alertingService.sendAlert(
-      severity,
-      title,
-      message,
-      { test: true, timestamp: new Date().toISOString() },
-      { force: true, skipRateLimit: true }
-    );
-    
-    res.json({
-      success: alertSent,
-      data: {
-        alertSent,
+  app.post('/api/monitoring/alert/test', authenticateToken, async (req, res) => {
+    try {
+      const {
+        severity = 'info',
+        title = 'Test Alert',
+        message = 'This is a test alert'
+      } = req.body;
+
+      const alertSent = await alertingService.sendAlert(
         severity,
         title,
         message,
-        timestamp: new Date().toISOString()
-      }
-    });
-    
-  } catch (error) {
-    console.error('Test alert error:', error);
-    
-    res.status(500).json({
-      success: false,
-      error: {
-        message: 'Failed to send test alert',
-        details: error.message
-      }
-    });
-  }
-});
+        { test: true, timestamp: new Date().toISOString() },
+        { force: true, skipRateLimit: true }
+      );
+
+      res.json({
+        success: alertSent,
+        data: {
+          alertSent,
+          severity,
+          title,
+          message,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      logger.error('Test alert error:', error);
+
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to send test alert',
+          details: error.message
+        }
+      });
+    }
+  });
 }
 
 // Get alerting service stats (authenticated)
 app.get('/api/monitoring/alerts/stats', authenticateToken, async (req, res) => {
   try {
     const stats = alertingService.getStats();
-    
+
     res.json({
       success: true,
       data: stats
     });
-    
   } catch (error) {
-    console.error('Alert stats error:', error);
-    
+    logger.error('Alert stats error:', error);
+
     res.status(500).json({
       success: false,
       error: {
@@ -548,7 +553,7 @@ let roastGenerator;
 try {
   roastGenerator = new RoastGeneratorReal();
 } catch (error) {
-  console.error("❌ Error inicializando RoastGenerator:", error.message);
+  logger.error('❌ Error inicializando RoastGenerator:', error.message);
   process.exit(1);
 }
 
@@ -586,10 +591,10 @@ app.post('/roast', async (req, res) => {
     const roast = await roastGenerator.generateRoast(message, null, selectedTone);
     res.json({ roast, tone: selectedTone });
   } catch (error) {
-    console.error('❌ Error generando roast:', error.message);
+    logger.error('❌ Error generando roast:', error.message);
 
     if (error.response?.data) {
-      console.error('📡 Respuesta de la API:', error.response.data);
+      logger.error('📡 Respuesta de la API:', error.response.data);
     }
 
     res.status(500).json({ error: 'No se pudo generar el roast en este momento.' });
@@ -606,20 +611,20 @@ app.post('/csv-roast', async (req, res) => {
 
   try {
     const roast = await csvRoastService.findBestRoast(message);
-    res.json({ 
+    res.json({
       roast,
       source: 'csv',
       originalMessage: message
     });
   } catch (error) {
-    console.error('❌ Error generando roast desde CSV:', error.message);
-    
+    logger.error('❌ Error generando roast desde CSV:', error.message);
+
     // Log additional details if debug mode is enabled
     if (process.env.DEBUG === 'true') {
-      console.error('📡 CSV Error details:', error.stack);
+      logger.error('📡 CSV Error details:', error.stack);
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'No se pudo generar el roast desde CSV.',
       details: process.env.DEBUG === 'true' ? error.message : undefined
     });
@@ -632,7 +637,7 @@ app.get('/csv-stats', async (req, res) => {
     const stats = await csvRoastService.getStats();
     res.json(stats);
   } catch (error) {
-    console.error('❌ Error obteniendo estadísticas CSV:', error.message);
+    logger.error('❌ Error obteniendo estadísticas CSV:', error.message);
     res.status(500).json({ error: 'No se pudieron obtener las estadísticas del CSV.' });
   }
 });
@@ -651,12 +656,12 @@ app.post('/csv-add', async (req, res) => {
 
   try {
     await csvRoastService.addRoast(comment, roast);
-    res.json({ 
+    res.json({
       success: true,
       message: 'Roast añadido exitosamente al CSV'
     });
   } catch (error) {
-    console.error('❌ Error añadiendo roast al CSV:', error.message);
+    logger.error('❌ Error añadiendo roast al CSV:', error.message);
     res.status(500).json({ error: 'No se pudo añadir el roast al CSV.' });
   }
 });
@@ -669,7 +674,7 @@ app.post('/csv-add', async (req, res) => {
 app.get('/api/integrations/config', authenticateToken, async (req, res) => {
   try {
     const config = require('./config/integrations');
-    
+
     // Remove sensitive data before sending
     const publicConfig = {
       enabled: config.enabled,
@@ -693,7 +698,7 @@ app.get('/api/integrations/config', authenticateToken, async (req, res) => {
 
     res.json(publicConfig);
   } catch (error) {
-    console.error('❌ Error getting integration config:', error.message);
+    logger.error('❌ Error getting integration config:', error.message);
     res.status(500).json({ error: 'Could not get integration configuration.' });
   }
 });
@@ -709,11 +714,13 @@ app.post('/api/integrations/config/:platform', authenticateToken, async (req, re
     logger.info('Platform configuration update requested', {
       platform,
       userId: req.user?.id,
-      configKeys: Object.keys({ tone, responseFrequency, triggerWords, shieldActions }).filter(key => req.body[key] !== undefined)
+      configKeys: Object.keys({ tone, responseFrequency, triggerWords, shieldActions }).filter(
+        (key) => req.body[key] !== undefined
+      )
     });
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: `Configuration updated for ${platform}. Restart required to take effect.`,
       platform,
       config: {
@@ -725,7 +732,7 @@ app.post('/api/integrations/config/:platform', authenticateToken, async (req, re
       }
     });
   } catch (error) {
-    console.error('❌ Error updating integration config:', error.message);
+    logger.error('❌ Error updating integration config:', error.message);
     res.status(500).json({ error: 'Could not update integration configuration.' });
   }
 });
@@ -735,14 +742,14 @@ app.get('/api/integrations/metrics', authenticateToken, async (req, res) => {
   try {
     const integrationManager = new IntegrationManager();
     await integrationManager.initializeIntegrations();
-    
+
     const metrics = integrationManager.getGlobalMetrics();
-    
+
     await integrationManager.shutdown();
-    
+
     res.json(metrics);
   } catch (error) {
-    console.error('❌ Error getting integration metrics:', error.message);
+    logger.error('❌ Error getting integration metrics:', error.message);
     res.status(500).json({ error: 'Could not get integration metrics.' });
   }
 });
@@ -752,11 +759,11 @@ app.post('/api/integrations/test', authenticateToken, async (req, res) => {
   try {
     const integrationManager = new IntegrationManager();
     const initResult = await integrationManager.initializeIntegrations();
-    
+
     if (initResult.success > 0) {
       const batchResult = await integrationManager.runBatch();
       await integrationManager.shutdown();
-      
+
       res.json({
         success: true,
         message: 'Integration test completed',
@@ -774,7 +781,7 @@ app.post('/api/integrations/test', authenticateToken, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('❌ Error testing integrations:', error.message);
+    logger.error('❌ Error testing integrations:', error.message);
     res.status(500).json({ error: 'Could not test integrations.' });
   }
 });
@@ -788,10 +795,10 @@ app.get('/api/shield/reincidence', async (req, res) => {
   try {
     const detector = new ReincidenceDetector();
     const summary = detector.getGlobalSummary();
-    
+
     res.json(summary);
   } catch (error) {
-    console.error('❌ Error getting reincidence stats:', error.message);
+    logger.error('❌ Error getting reincidence stats:', error.message);
     res.status(500).json({ error: 'Could not get reincidence statistics.' });
   }
 });
@@ -802,10 +809,10 @@ app.get('/api/shield/reincidence/:platform', async (req, res) => {
     const { platform } = req.params;
     const detector = new ReincidenceDetector();
     const summary = detector.getPlatformSummary(platform);
-    
+
     res.json({ platform, summary });
   } catch (error) {
-    console.error('❌ Error getting platform reincidence stats:', error.message);
+    logger.error('❌ Error getting platform reincidence stats:', error.message);
     res.status(500).json({ error: 'Could not get platform reincidence statistics.' });
   }
 });
@@ -820,7 +827,7 @@ app.get('/api/logs', async (req, res) => {
     const logFiles = await advancedLogger.getLogFiles();
     res.json(logFiles);
   } catch (error) {
-    console.error('❌ Error getting log files:', error.message);
+    logger.error('❌ Error getting log files:', error.message);
     res.status(500).json({ error: 'Could not get log files.' });
   }
 });
@@ -830,9 +837,9 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
   try {
     const { type, filename } = req.params;
     const lines = parseInt(req.query.lines) || 100;
-    
+
     const logContent = await advancedLogger.readLog(type, filename, lines);
-    
+
     // Add warning for shield logs
     const response = {
       type,
@@ -842,12 +849,13 @@ app.get('/api/logs/:type/:filename', async (req, res) => {
     };
 
     if (type === 'shield') {
-      response.warning = '⚠️ This log contains sensitive content and may include offensive material.';
+      response.warning =
+        '⚠️ This log contains sensitive content and may include offensive material.';
     }
 
     res.json(response);
   } catch (error) {
-    console.error('❌ Error reading log file:', error.message);
+    logger.error('❌ Error reading log file:', error.message);
     res.status(500).json({ error: 'Could not read log file.' });
   }
 });
@@ -863,35 +871,38 @@ if (require.main === module) {
   // Add catch-all handler only when running as main module (not in tests)
   // This prevents path-to-regexp issues during test imports
   // Improved SPA routing with regex to exclude more paths for better performance
-  app.get(/^(?!\/api|\/static|\/webhook|\/uploads|\/health|\/public|\/favicon\.ico|\/manifest\.json|\/robots\.txt).*$/, (req, res, next) => {
-    const hasFileExtension = /\.[^.]+$/.test(req.path) && !req.path.endsWith('.html');
-    if (hasFileExtension) {
-      return next();
-    }
-    
-    // Enhanced error handling for file serving
-    res.sendFile(path.join(__dirname, '../frontend/build/index.html'), (err) => {
-      if (err) {
-        console.error('Error serving SPA:', { 
-          error: err.message, 
-          path: req.path, 
-          statusCode: err.status || 500,
-          timestamp: new Date().toISOString()
-        });
-        
-        // Provide fallback response if index.html fails to serve
-        if (err.code === 'ENOENT') {
-          return res.status(404).json({
-            success: false,
-            error: 'SPA index.html not found',
-            code: 'SPA_NOT_FOUND'
-          });
-        }
-        
-        next(err);
+  app.get(
+    /^(?!\/api|\/static|\/webhook|\/uploads|\/health|\/public|\/favicon\.ico|\/manifest\.json|\/robots\.txt).*$/,
+    (req, res, next) => {
+      const hasFileExtension = /\.[^.]+$/.test(req.path) && !req.path.endsWith('.html');
+      if (hasFileExtension) {
+        return next();
       }
-    });
-  });
+
+      // Enhanced error handling for file serving
+      res.sendFile(path.join(__dirname, '../frontend/build/index.html'), (err) => {
+        if (err) {
+          logger.error('Error serving SPA:', {
+            error: err.message,
+            path: req.path,
+            statusCode: err.status || 500,
+            timestamp: new Date().toISOString()
+          });
+
+          // Provide fallback response if index.html fails to serve
+          if (err.code === 'ENOENT') {
+            return res.status(404).json({
+              success: false,
+              error: 'SPA index.html not found',
+              code: 'SPA_NOT_FOUND'
+            });
+          }
+
+          next(err);
+        }
+      });
+    }
+  );
 
   // 404 handler for unknown routes (moved after SPA catch-all)
   app.use((req, res) => {
@@ -908,21 +919,21 @@ if (require.main === module) {
     try {
       const { startModelAvailabilityWorker } = require('./workers/ModelAvailabilityWorker');
       const worker = startModelAvailabilityWorker();
-      console.log('🔍 Model Availability Worker started (GPT-5 auto-detection)');
+      logger.info('🔍 Model Availability Worker started (GPT-5 auto-detection)');
     } catch (error) {
-      console.warn('⚠️ Failed to start Model Availability Worker:', error.message);
+      logger.warn('⚠️ Failed to start Model Availability Worker:', error.message);
     }
   }
 
   server = app.listen(port, () => {
-    console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
-    console.log(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
-    console.log(`🔄 GPT-5 Detection: Active (checks every 24h)`);
-    
+    logger.info(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
+    logger.info(`🏁 Feature flags loaded:`, Object.keys(flags.getAllFlags()).length, 'flags');
+    logger.info(`🔄 GPT-5 Detection: Active (checks every 24h)`);
+
     const serviceStatus = flags.getServiceStatus();
-    console.log(`💾 Database:`, serviceStatus.database);
-    console.log(`💳 Billing:`, serviceStatus.billing);
-    console.log(`🤖 OpenAI:`, serviceStatus.ai.openai);
+    logger.info(`💾 Database:`, serviceStatus.database);
+    logger.info(`💳 Billing:`, serviceStatus.billing);
+    logger.info(`🤖 OpenAI:`, serviceStatus.ai.openai);
   });
 }
 

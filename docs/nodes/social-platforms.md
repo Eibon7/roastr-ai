@@ -35,17 +35,17 @@ Social Platforms provides unified integration layer for 9 social media platforms
 
 ## Supported Platforms
 
-| Platform | Auth Type | Character Limit | Moderation | Status |
-|----------|-----------|-----------------|------------|--------|
-| **Twitter** | OAuth 1.0a + Bearer | 280 | ✅ Full | Production |
-| **YouTube** | API Key | 10,000 | ✅ Full | Production |
-| **Instagram** | Basic Display API | 2,200 | ❌ Limited | Production |
-| **Facebook** | Graph API | 63,206 | ❌ Limited | Production |
-| **Discord** | Bot Token | 2,000 | ✅ Full | Production |
-| **Twitch** | OAuth 2.0 | 500 | ✅ Full | Production |
-| **Reddit** | OAuth 2.0 | 10,000 | ❌ Limited | Production |
-| **TikTok** | Business API | 2,200 | ❌ None | Production |
-| **Bluesky** | AT Protocol | 300 | ❌ None | Production |
+| Platform      | Auth Type           | Character Limit | Moderation | Status     |
+| ------------- | ------------------- | --------------- | ---------- | ---------- |
+| **Twitter**   | OAuth 1.0a + Bearer | 280             | ✅ Full    | Production |
+| **YouTube**   | API Key             | 10,000          | ✅ Full    | Production |
+| **Instagram** | Basic Display API   | 2,200           | ❌ Limited | Production |
+| **Facebook**  | Graph API           | 63,206          | ❌ Limited | Production |
+| **Discord**   | Bot Token           | 2,000           | ✅ Full    | Production |
+| **Twitch**    | OAuth 2.0           | 500             | ✅ Full    | Production |
+| **Reddit**    | OAuth 2.0           | 10,000          | ❌ Limited | Production |
+| **TikTok**    | Business API        | 2,200           | ❌ None    | Production |
+| **Bluesky**   | AT Protocol         | 300             | ❌ None    | Production |
 
 ## Architecture
 
@@ -62,10 +62,18 @@ class MultiTenantIntegration {
     this.supportModeration = options.supportModeration || false;
   }
 
-  async authenticate() { throw new Error('Not implemented'); }
-  async fetchComments(organizationId, config) { throw new Error('Not implemented'); }
-  async postResponse(organizationId, config, commentId, roastText) { throw new Error('Not implemented'); }
-  async performModerationAction(organizationId, config, commentId, action) { throw new Error('Not implemented'); }
+  async authenticate() {
+    throw new Error('Not implemented');
+  }
+  async fetchComments(organizationId, config) {
+    throw new Error('Not implemented');
+  }
+  async postResponse(organizationId, config, commentId, roastText) {
+    throw new Error('Not implemented');
+  }
+  async performModerationAction(organizationId, config, commentId, action) {
+    throw new Error('Not implemented');
+  }
 
   log(level, message, metadata = {}) {
     // Unified logging
@@ -131,15 +139,18 @@ El dashboard del frontend (`Connect`, `Dashboard`, `StyleProfile`) consume direc
 The Twitter integration uses an **adapter pattern** to bridge legacy architecture with the unified integration path convention:
 
 **Legacy Path:** `src/services/twitter.js` (600+ lines)
+
 - Used by: Twitter bot, collectors, OAuth providers
 - Maintained for backward compatibility
 
 **Integration Path:** `src/integrations/twitter/twitterService.js` (NEW - adapter)
+
 - Delegates to legacy TwitterRoastBot
 - Provides path consistency with other 8 platforms
 - Required by PublisherWorker
 
 **Adapter Implementation:**
+
 ```javascript
 class TwitterService {
   constructor() {
@@ -179,6 +190,7 @@ class TwitterService {
 Once all dependent code migrates to the integration pattern, the legacy bot can be deprecated and the adapter can become the primary implementation.
 
 **Related:**
+
 - Issue #410 (PublisherWorker)
 - CodeRabbit Review #3302108179
 
@@ -189,6 +201,7 @@ Once all dependent code migrates to the integration pattern, the legacy bot can 
 **Authentication:** OAuth 1.0a + Bearer Token
 
 **Capabilities:**
+
 - ✅ Fetch mentions via Twitter API v2
 - ✅ Post replies with threading support
 - ✅ Mute/block users (Shield)
@@ -236,6 +249,7 @@ Once all dependent code migrates to the integration pattern, the legacy bot can 
 **Authentication:** API Key (read-only) + OAuth 2.0 (posting)
 
 **Capabilities:**
+
 - ✅ Fetch comments from monitored videos
 - ✅ Reply to comments
 - ✅ Hide/report comments (Shield)
@@ -280,6 +294,7 @@ Once all dependent code migrates to the integration pattern, the legacy bot can 
 **Authentication:** Bot Token + Gateway Intents
 
 **Capabilities:**
+
 - ✅ Monitor server messages
 - ✅ Direct message responses
 - ✅ Slash command support
@@ -328,6 +343,7 @@ Once all dependent code migrates to the integration pattern, the legacy bot can 
 **Authentication:** Basic Display API + Graph API
 
 **Capabilities:**
+
 - ⚠️ Limited comment fetching (media owner only)
 - ⚠️ Reply to comments (media owner only)
 - ❌ No moderation API
@@ -369,6 +385,7 @@ Once all dependent code migrates to the integration pattern, the legacy bot can 
 **Authentication:** Graph API Access Token
 
 **Capabilities:**
+
 - ⚠️ Limited comment fetching (page owner only)
 - ⚠️ Reply to comments (page owner only)
 - ❌ No moderation API
@@ -411,6 +428,7 @@ Once all dependent code migrates to the integration pattern, the legacy bot can 
 **Authentication:** OAuth 2.0 + Chat IRC
 
 **Capabilities:**
+
 - ✅ Monitor chat messages
 - ✅ Post chat responses
 - ✅ Timeout/ban users (Shield)
@@ -453,6 +471,7 @@ Once all dependent code migrates to the integration pattern, the legacy bot can 
 **Authentication:** OAuth 2.0 Application
 
 **Capabilities:**
+
 - ⚠️ Limited comment monitoring (subreddit moderation required)
 - ✅ Reply to comments
 - ❌ No moderation API (requires mod permissions)
@@ -496,6 +515,7 @@ Once all dependent code migrates to the integration pattern, the legacy bot can 
 **Authentication:** Business API Access Token
 
 **Capabilities:**
+
 - ⚠️ Very limited API access (business accounts only)
 - ❌ No comment API
 - ❌ No moderation API
@@ -535,6 +555,7 @@ Once all dependent code migrates to the integration pattern, the legacy bot can 
 **Authentication:** AT Protocol Handle + App Password
 
 **Capabilities:**
+
 - ✅ Monitor mentions
 - ✅ Post replies
 - ❌ No moderation API yet
@@ -620,7 +641,7 @@ class FetchCommentsWorker extends BaseWorker {
     const services = {
       twitter: require('./integrations/twitter/twitterService'),
       youtube: require('./integrations/youtube/youtubeService'),
-      discord: require('./integrations/discord/discordService'),
+      discord: require('./integrations/discord/discordService')
       // ... other platforms
     };
     return new services[platform]();
@@ -644,10 +665,7 @@ async function postRoastToPlatform(commentId, roastText) {
   await service.authenticate();
 
   // Validate roast for platform
-  const { isValid, adjustedText } = validateRoastForPlatform(
-    roastText,
-    comment.platform
-  );
+  const { isValid, adjustedText } = validateRoastForPlatform(roastText, comment.platform);
 
   // Post response
   const platformResponseId = await service.postResponse(
@@ -658,11 +676,14 @@ async function postRoastToPlatform(commentId, roastText) {
   );
 
   // Update response record
-  await supabase.from('responses').update({
-    platform_response_id: platformResponseId,
-    posted_at: new Date().toISOString(),
-    post_status: 'posted'
-  }).eq('comment_id', commentId);
+  await supabase
+    .from('responses')
+    .update({
+      platform_response_id: platformResponseId,
+      posted_at: new Date().toISOString(),
+      post_status: 'posted'
+    })
+    .eq('comment_id', commentId);
 }
 ```
 
@@ -816,14 +837,14 @@ describe('Multi-Platform Workflow', () => {
 
 ## Error Handling
 
-| Error | Cause | Resolution |
-|-------|-------|------------|
-| `Authentication failed` | Invalid credentials | Update integration config credentials |
-| `Rate limit exceeded` | Too many API calls | Reduce `maxResponsesPerHour` |
-| `Platform API unavailable` | Service outage | Retry with exponential backoff |
-| `Comment not found` | Deleted or private comment | Skip, mark as error |
-| `Posting disabled` | Platform doesn't support posting | Log warning, skip posting |
-| `Moderation not supported` | Platform lacks moderation API | Disable Shield for this platform |
+| Error                      | Cause                            | Resolution                            |
+| -------------------------- | -------------------------------- | ------------------------------------- |
+| `Authentication failed`    | Invalid credentials              | Update integration config credentials |
+| `Rate limit exceeded`      | Too many API calls               | Reduce `maxResponsesPerHour`          |
+| `Platform API unavailable` | Service outage                   | Retry with exponential backoff        |
+| `Comment not found`        | Deleted or private comment       | Skip, mark as error                   |
+| `Posting disabled`         | Platform doesn't support posting | Log warning, skip posting             |
+| `Moderation not supported` | Platform lacks moderation API    | Disable Shield for this platform      |
 
 ## Monitoring & Alerts
 
@@ -848,19 +869,20 @@ describe('Multi-Platform Workflow', () => {
 }
 ```
 
-
 ## Verification Status
 
 **Last Verified:** 2025-11-11  
 **Verification Script:** `scripts/verify-all-platforms.js`
 
 All 9 platforms have been verified for:
+
 - ✅ Authentication flow
 - ✅ Core operations (fetchComments, postReply, blockUser)
 - ✅ Rate limiting behavior
 - ✅ Error handling
 
 **Verification Results:**
+
 - Operational: Twitter, Discord
 - Partial: YouTube, Twitch, Reddit, Bluesky
 - Limited: Instagram, Facebook, TikTok
@@ -877,7 +899,6 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Integration Specialist**
 - **Test Engineer**
 - **Platform Verifier** (Issue #712)
-
 
 ## Related Nodes
 

@@ -1,6 +1,6 @@
 /**
  * Integration Tests for Shield Decision Engine
- * 
+ *
  * Tests the complete decision workflow including recidivism scenarios,
  * persistence integration, and real-world decision patterns.
  */
@@ -39,25 +39,25 @@ describe('Shield Decision Engine Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     persistenceService = new ShieldPersistenceService({
       supabase: mockSupabase,
       logger: mockLogger
     });
-    
+
     engine = new ShieldDecisionEngine({
       supabase: mockSupabase,
       logger: mockLogger,
       persistenceService,
       criticalThreshold: 0.98,
       highThreshold: 0.95,
-      moderateThreshold: 0.90,
+      moderateThreshold: 0.9,
       correctiveThreshold: 0.85,
       aggressiveness: 0.95
     });
-    
+
     engine.clearCache();
-    
+
     testOrgId = 'org-integration-test';
     testPlatform = 'twitter';
   });
@@ -497,7 +497,8 @@ describe('Shield Decision Engine Integration Tests', () => {
       };
 
       // Mock different histories per platform
-      jest.spyOn(persistenceService, 'getOffenderHistory')
+      jest
+        .spyOn(persistenceService, 'getOffenderHistory')
         .mockResolvedValueOnce({
           // Twitter: repeat offender
           isRecidivist: true,
@@ -513,7 +514,8 @@ describe('Shield Decision Engine Integration Tests', () => {
           averageToxicity: 0
         });
 
-      jest.spyOn(persistenceService, 'recordShieldEvent')
+      jest
+        .spyOn(persistenceService, 'recordShieldEvent')
         .mockResolvedValueOnce({ id: 'twitter-event' })
         .mockResolvedValueOnce({ id: 'discord-event' });
 
@@ -540,10 +542,14 @@ describe('Shield Decision Engine Integration Tests', () => {
 
       // Verify platform-specific history lookups
       expect(persistenceService.getOffenderHistory).toHaveBeenCalledWith(
-        testOrgId, 'twitter', 'cross-platform-user'
+        testOrgId,
+        'twitter',
+        'cross-platform-user'
       );
       expect(persistenceService.getOffenderHistory).toHaveBeenCalledWith(
-        testOrgId, 'discord', 'cross-platform-user'
+        testOrgId,
+        'discord',
+        'cross-platform-user'
       );
     });
   });
@@ -589,7 +595,7 @@ describe('Shield Decision Engine Integration Tests', () => {
         ...borderlineInput,
         userConfiguration: {
           ...borderlineInput.userConfiguration,
-          aggressiveness: 0.90
+          aggressiveness: 0.9
         }
       });
 
@@ -601,7 +607,7 @@ describe('Shield Decision Engine Integration Tests', () => {
         externalCommentId: 'comment-borderline-strict', // Different comment to avoid cache
         userConfiguration: {
           ...borderlineInput.userConfiguration,
-          aggressiveness: 1.00
+          aggressiveness: 1.0
         }
       });
 
@@ -707,9 +713,9 @@ describe('Shield Decision Engine Integration Tests', () => {
       });
 
       // Recording fails
-      jest.spyOn(persistenceService, 'recordShieldEvent').mockRejectedValue(
-        new Error('Database temporarily unavailable')
-      );
+      jest
+        .spyOn(persistenceService, 'recordShieldEvent')
+        .mockRejectedValue(new Error('Database temporarily unavailable'));
 
       // Decision should still succeed
       const decision = await engine.makeDecision(resilientInput);

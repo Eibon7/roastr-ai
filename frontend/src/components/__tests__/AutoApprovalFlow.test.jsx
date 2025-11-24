@@ -53,11 +53,7 @@ const mockComment = {
 };
 
 const renderWithAuth = (component) => {
-  return render(
-    <AuthContext.Provider value={mockAuthContext}>
-      {component}
-    </AuthContext.Provider>
-  );
+  return render(<AuthContext.Provider value={mockAuthContext}>{component}</AuthContext.Provider>);
 };
 
 describe('AutoApprovalFlow', () => {
@@ -67,7 +63,7 @@ describe('AutoApprovalFlow', () => {
 
   it('renders with rate limit status', () => {
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     expect(screen.getByText('Auto-Approval Flow')).toBeInTheDocument();
     expect(screen.getByText(/hourly/)).toBeInTheDocument();
     expect(screen.getByText(/daily/)).toBeInTheDocument();
@@ -75,7 +71,7 @@ describe('AutoApprovalFlow', () => {
 
   it('displays comment preview', () => {
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     expect(screen.getByText('@unhappy_customer')).toBeInTheDocument();
     expect(screen.getByText('This product is terrible!')).toBeInTheDocument();
     expect(screen.getByText('twitter')).toBeInTheDocument();
@@ -84,7 +80,7 @@ describe('AutoApprovalFlow', () => {
 
   it('shows start button when not processing', () => {
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     const startButton = screen.getByRole('button', { name: /Start Auto-Approval/i });
     expect(startButton).toBeInTheDocument();
     expect(startButton).not.toBeDisabled();
@@ -92,7 +88,7 @@ describe('AutoApprovalFlow', () => {
 
   it('disables start button when no comment', () => {
     renderWithAuth(<AutoApprovalFlow comment={null} />);
-    
+
     const startButton = screen.getByRole('button', { name: /Start Auto-Approval/i });
     expect(startButton).toBeDisabled();
   });
@@ -100,17 +96,17 @@ describe('AutoApprovalFlow', () => {
   it('starts auto-approval process when clicked', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ 
-        roast: { 
-          id: 'roast-123', 
+      json: async () => ({
+        roast: {
+          id: 'roast-123',
           text: 'Generated roast text',
           postId: 'post-123'
-        } 
+        }
       })
     });
 
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     const startButton = screen.getByRole('button', { name: /Start Auto-Approval/i });
     fireEvent.click(startButton);
 
@@ -121,7 +117,7 @@ describe('AutoApprovalFlow', () => {
           method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer test-token'
+            Authorization: 'Bearer test-token'
           }),
           body: JSON.stringify({
             mode: 'auto',
@@ -134,20 +130,19 @@ describe('AutoApprovalFlow', () => {
 
   it('shows rate limit warning when exceeded', async () => {
     // Mock fetch to return rate limit exceeded stats
-    global.fetch = jest.fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          hourlyUsed: 50,
-          hourlyLimit: 50,
-          dailyUsed: 200,
-          dailyLimit: 200,
-          rateLimitExceeded: true
-        })
-      });
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        hourlyUsed: 50,
+        hourlyLimit: 50,
+        dailyUsed: 200,
+        dailyLimit: 200,
+        rateLimitExceeded: true
+      })
+    });
 
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     // Wait for component to load rate limit stats
     await waitFor(() => {
       // Check for rate limit warning or disabled state
@@ -163,7 +158,7 @@ describe('AutoApprovalFlow', () => {
     fetch.mockRejectedValueOnce(new Error('Network error'));
 
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     const startButton = screen.getByRole('button', { name: /Start Auto-Approval/i });
     fireEvent.click(startButton);
 
@@ -180,10 +175,10 @@ describe('AutoApprovalFlow', () => {
     });
 
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     // Initial stats should show
     expect(screen.getByText(/hourly/)).toBeInTheDocument();
-    
+
     const startButton = screen.getByRole('button', { name: /Start Auto-Approval/i });
     fireEvent.click(startButton);
 
@@ -201,7 +196,7 @@ describe('AutoApprovalFlow', () => {
     });
 
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     const startButton = screen.getByRole('button', { name: /Start Auto-Approval/i });
     fireEvent.click(startButton);
 
@@ -217,7 +212,7 @@ describe('AutoApprovalFlow', () => {
     });
 
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     const startButton = screen.getByRole('button', { name: /Start Auto-Approval/i });
     fireEvent.click(startButton);
 
@@ -240,7 +235,7 @@ describe('AutoApprovalFlow', () => {
     });
 
     renderWithAuth(<AutoApprovalFlow comment={mockComment} />);
-    
+
     const startButton = screen.getByRole('button', { name: /Start Auto-Approval/i });
     fireEvent.click(startButton);
 

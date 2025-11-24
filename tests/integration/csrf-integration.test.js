@@ -42,7 +42,7 @@ test.describe('CSRF Token Integration', () => {
     const cookies = await context.cookies();
 
     // Find csrf-token cookie
-    const csrfCookie = cookies.find(c => c.name === 'csrf-token');
+    const csrfCookie = cookies.find((c) => c.name === 'csrf-token');
 
     // Assertions
     expect(csrfCookie, 'csrf-token cookie should exist').toBeDefined();
@@ -71,9 +71,7 @@ test.describe('CSRF Token Integration', () => {
     const tokenFromFrontend = await page.evaluate(() => {
       // Simulate frontend/src/utils/csrf.js getCsrfToken()
       const cookies = document.cookie.split(';');
-      const csrfCookie = cookies.find(cookie =>
-        cookie.trim().startsWith('csrf-token=')
-      );
+      const csrfCookie = cookies.find((cookie) => cookie.trim().startsWith('csrf-token='));
 
       if (!csrfCookie) {
         return null;
@@ -101,8 +99,12 @@ test.describe('CSRF Token Integration', () => {
 
     // Capture network requests
     const requests = [];
-    page.on('request', request => {
-      if (request.method() === 'POST' || request.method() === 'PATCH' || request.method() === 'DELETE') {
+    page.on('request', (request) => {
+      if (
+        request.method() === 'POST' ||
+        request.method() === 'PATCH' ||
+        request.method() === 'DELETE'
+      ) {
         requests.push({
           method: request.method(),
           url: request.url(),
@@ -118,8 +120,8 @@ test.describe('CSRF Token Integration', () => {
 
     // If admin page makes any POST requests, verify they include CSRF token
     if (requests.length > 0) {
-      const postRequests = requests.filter(r =>
-        r.url.includes('/api/admin') || r.url.includes('/api/auth/admin')
+      const postRequests = requests.filter(
+        (r) => r.url.includes('/api/admin') || r.url.includes('/api/auth/admin')
       );
 
       for (const req of postRequests) {
@@ -128,10 +130,9 @@ test.describe('CSRF Token Integration', () => {
           `POST ${req.url} should include X-CSRF-Token header`
         ).toBeDefined();
 
-        expect(
-          req.headers['x-csrf-token'],
-          'X-CSRF-Token header should be 64-char hex'
-        ).toMatch(/^[a-f0-9]{64}$/);
+        expect(req.headers['x-csrf-token'], 'X-CSRF-Token header should be 64-char hex').toMatch(
+          /^[a-f0-9]{64}$/
+        );
 
         console.log(`✅ Request to ${req.url} includes CSRF token`);
       }
@@ -140,7 +141,10 @@ test.describe('CSRF Token Integration', () => {
     }
   });
 
-  test('should return 200 (not 403) for admin mutation with valid CSRF token', async ({ page, request }) => {
+  test('should return 200 (not 403) for admin mutation with valid CSRF token', async ({
+    page,
+    request
+  }) => {
     // Login as admin
     await page.fill('input[type="email"]', ADMIN_USER.email);
     await page.fill('input[type="password"]', ADMIN_USER.password);
@@ -152,9 +156,7 @@ test.describe('CSRF Token Integration', () => {
     // Get CSRF token from cookie
     const csrfToken = await page.evaluate(() => {
       const cookies = document.cookie.split(';');
-      const csrfCookie = cookies.find(cookie =>
-        cookie.trim().startsWith('csrf-token=')
-      );
+      const csrfCookie = cookies.find((cookie) => cookie.trim().startsWith('csrf-token='));
       return csrfCookie ? csrfCookie.split('=')[1] : null;
     });
 
@@ -169,7 +171,7 @@ test.describe('CSRF Token Integration', () => {
     // Using POST /csrf-test to trigger CSRF validation (lightweight testing endpoint)
     const response = await request.post(`${API_URL}/api/admin/csrf-test`, {
       headers: {
-        'Authorization': `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
         'X-CSRF-Token': csrfToken,
         'Content-Type': 'application/json'
       },
@@ -178,7 +180,10 @@ test.describe('CSRF Token Integration', () => {
     });
 
     // Assertions
-    expect(response.status(), 'Admin request with CSRF token should return 200 (not 403)').toBeLessThan(400);
+    expect(
+      response.status(),
+      'Admin request with CSRF token should return 200 (not 403)'
+    ).toBeLessThan(400);
 
     console.log('✅ Admin request with CSRF token succeeded:', response.status());
   });
@@ -200,7 +205,7 @@ test.describe('CSRF Token Integration', () => {
     // Make admin POST without CSRF token (should fail)
     const response = await request.post(`${API_URL}/api/admin/csrf-test`, {
       headers: {
-        'Authorization': `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
         'Content-Type': 'application/json'
         // NOTE: X-CSRF-Token header intentionally MISSING
       },
@@ -234,7 +239,7 @@ test.describe('CSRF Token Integration', () => {
     // Make admin POST with INVALID CSRF token
     const response = await request.post(`${API_URL}/api/admin/csrf-test`, {
       headers: {
-        'Authorization': `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
         'X-CSRF-Token': 'invalid-token-12345', // Invalid token
         'Content-Type': 'application/json'
       },

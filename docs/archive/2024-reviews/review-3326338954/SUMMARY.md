@@ -42,6 +42,7 @@ Per the `docs/plan` guidelines, planning files must include a textual plan conta
 #### CodeRabbit Recommendation
 
 Add "Estado Actual" section ideally near the top (before diving into recommendations) with:
+
 - Current state of project/PR
 - What is implemented
 - What remains outstanding
@@ -105,14 +106,14 @@ grep -A 2 "## Estado Actual" docs/plan/review-3392598742.md
 
 Convert emphasized labels to proper headings and tag code blocks with language:
 
-```diff
+````diff
 -**Review Results:**
 +### Review Results
 …
 -```
 +```text
  docs: Apply CodeRabbit Review #3392598742 - Improve Issue #405 evidences
-```
+````
 
 #### Fix Applied
 
@@ -146,11 +147,11 @@ Convert emphasized labels to proper headings and tag code blocks with language:
 
 **Fix 5** (Line 553 - was ~200 after changes):
 
-```diff
+````diff
 -```
 +```text
  docs: Apply CodeRabbit Review #3392598742 - Improve Issue #405 evidences
-```
+````
 
 #### Impact
 
@@ -243,8 +244,9 @@ npx markdownlint-cli2 "docs/test-evidence/review-3392598742/SUMMARY.md" 2>&1 | g
 
 ```markdown
 **Actionable Recommendations:**
+
 1. Add test execution command to SUMMARY.md
-...
+   ...
 
 ---
 
@@ -255,8 +257,9 @@ npx markdownlint-cli2 "docs/test-evidence/review-3392598742/SUMMARY.md" 2>&1 | g
 
 ```markdown
 **Actionable Recommendations:**
+
 1. Add test execution command to SUMMARY.md
-...
+   ...
 
 ---
 
@@ -265,9 +268,10 @@ npx markdownlint-cli2 "docs/test-evidence/review-3392598742/SUMMARY.md" 2>&1 | g
 ### Current Implementation State
 
 **PR #528 Status:**
+
 - ✅ Issue #405 fully implemented (CodeRabbit confirmed)
 - ✅ All 5 acceptance criteria validated
-...
+  ...
 
 ---
 
@@ -286,13 +290,13 @@ npx markdownlint-cli2 "docs/test-evidence/review-3392598742/SUMMARY.md" 2>&1 | g
 
 **Change Summary:**
 
-| Line (approx) | Before | After |
-|---------------|--------|-------|
-| 15 | `**Review Results:**` | `### Review Results` |
-| 33 | `**CodeRabbit Finding:**` | `#### CodeRabbit Finding` |
-| 44 | `**CodeRabbit Recommendation:**` | `#### CodeRabbit Recommendation` |
-| 48 | `**Decision:**` | `#### Decision` |
-| 553 | ` ``` ` | ` ```text ` |
+| Line (approx) | Before                           | After                            |
+| ------------- | -------------------------------- | -------------------------------- |
+| 15            | `**Review Results:**`            | `### Review Results`             |
+| 33            | `**CodeRabbit Finding:**`        | `#### CodeRabbit Finding`        |
+| 44            | `**CodeRabbit Recommendation:**` | `#### CodeRabbit Recommendation` |
+| 48            | `**Decision:**`                  | `#### Decision`                  |
+| 553           | ` ``` `                          | ` ```text `                      |
 
 ---
 
@@ -390,13 +394,13 @@ npx markdownlint-cli2 "docs/test-evidence/review-3392598742/SUMMARY.md" 2>&1 | g
 
 ### Risk Breakdown
 
-| Category | Level | Evidence |
-|----------|-------|----------|
-| Breaking Changes | 🟢 None | No code touched |
-| Test Failures | 🟢 None | No tests modified |
-| Security | 🟢 None | Documentation only |
-| Performance | 🟢 None | No runtime impact |
-| Regressions | 🟢 None | Validated formatting fixes |
+| Category         | Level   | Evidence                   |
+| ---------------- | ------- | -------------------------- |
+| Breaking Changes | 🟢 None | No code touched            |
+| Test Failures    | 🟢 None | No tests modified          |
+| Security         | 🟢 None | Documentation only         |
+| Performance      | 🟢 None | No runtime impact          |
+| Regressions      | 🟢 None | Validated formatting fixes |
 
 ---
 
@@ -476,15 +480,15 @@ npx markdownlint-cli2 "docs/test-evidence/review-3392598742/SUMMARY.md" 2>&1 | g
 
 ## Timeline
 
-| Phase | Duration | Status |
-|-------|----------|--------|
-| Planning | 10 minutes | ✅ Complete |
-| M1: Add Estado Actual | 5 minutes | ✅ Complete |
-| M2: Fix MD036 violations | 3 minutes | ✅ Complete |
-| M2: Fix MD040 violation | 1 minute | ✅ Complete |
-| Validation | 2 minutes | ✅ Complete |
-| Evidence docs | 8 minutes | ✅ Complete |
-| **Total** | **29 minutes** | ✅ **Complete** |
+| Phase                    | Duration       | Status          |
+| ------------------------ | -------------- | --------------- |
+| Planning                 | 10 minutes     | ✅ Complete     |
+| M1: Add Estado Actual    | 5 minutes      | ✅ Complete     |
+| M2: Fix MD036 violations | 3 minutes      | ✅ Complete     |
+| M2: Fix MD040 violation  | 1 minute       | ✅ Complete     |
+| Validation               | 2 minutes      | ✅ Complete     |
+| Evidence docs            | 8 minutes      | ✅ Complete     |
+| **Total**                | **29 minutes** | ✅ **Complete** |
 
 ---
 
@@ -500,7 +504,7 @@ npx markdownlint-cli2 "docs/test-evidence/review-3392598742/SUMMARY.md" 2>&1 | g
 
 ## Commit Message
 
-```text
+````text
 docs: Apply CodeRabbit Review #3326338954 - Fix documentation standards
 
 ### Issues Addressed
@@ -557,7 +561,7 @@ docs: Apply CodeRabbit Review #3326338954 - Fix documentation standards
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
-```
+````
 
 ---
 

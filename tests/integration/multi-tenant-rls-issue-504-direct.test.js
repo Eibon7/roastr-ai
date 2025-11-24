@@ -72,23 +72,25 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
       expect(tenantA.comments.length).toBeGreaterThan(0);
       expect(tenantA.roasts.length).toBeGreaterThan(0);
 
-      console.log(`  ✅ Tenant A: ${tenantA.posts.length} posts, ${tenantA.comments.length} comments, ${tenantA.roasts.length} roasts`);
-      console.log(`  ✅ Tenant B: ${tenantB.posts.length} posts, ${tenantB.comments.length} comments, ${tenantB.roasts.length} roasts`);
+      console.log(
+        `  ✅ Tenant A: ${tenantA.posts.length} posts, ${tenantA.comments.length} comments, ${tenantA.roasts.length} roasts`
+      );
+      console.log(
+        `  ✅ Tenant B: ${tenantB.posts.length} posts, ${tenantB.comments.length} comments, ${tenantB.roasts.length} roasts`
+      );
     });
   });
 
   describe('RLS Enforcement Validation (Service Role vs Anon Client)', () => {
     test('Service role can access all tenant data (RLS bypassed)', async () => {
       // Service role should see all data from both tenants
-      const { data: allPosts, error } = await serviceClient
-        .from('posts')
-        .select('*');
+      const { data: allPosts, error } = await serviceClient.from('posts').select('*');
 
       expect(error).toBeNull();
       expect(allPosts.length).toBeGreaterThanOrEqual(tenantA.posts.length + tenantB.posts.length);
 
-      const tenantAPostsCount = allPosts.filter(p => p.organization_id === tenantA.id).length;
-      const tenantBPostsCount = allPosts.filter(p => p.organization_id === tenantB.id).length;
+      const tenantAPostsCount = allPosts.filter((p) => p.organization_id === tenantA.id).length;
+      const tenantBPostsCount = allPosts.filter((p) => p.organization_id === tenantB.id).length;
 
       expect(tenantAPostsCount).toBe(tenantA.posts.length);
       expect(tenantBPostsCount).toBe(tenantB.posts.length);
@@ -96,9 +98,7 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
 
     test('Anon client without auth cannot access tenant data (RLS enforced)', async () => {
       // Anon client without authentication should see no data (RLS blocks)
-      const { data: posts, error } = await testClient
-        .from('posts')
-        .select('*');
+      const { data: posts, error } = await testClient.from('posts').select('*');
 
       // RLS should return empty array (not error)
       expect(error).toBeNull();
@@ -107,15 +107,22 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
 
     test('RLS policies exist on critical tables', async () => {
       // Verify tables exist and are accessible with service role (bypasses RLS)
-      const tables = ['posts', 'comments', 'roasts', 'integration_configs', 'usage_records', 'monthly_usage', 'responses', 'user_behaviors', 'user_activities'];
+      const tables = [
+        'posts',
+        'comments',
+        'roasts',
+        'integration_configs',
+        'usage_records',
+        'monthly_usage',
+        'responses',
+        'user_behaviors',
+        'user_activities'
+      ];
 
       let accessibleTables = 0;
 
       for (const table of tables) {
-        const { data, error: tableError } = await serviceClient
-          .from(table)
-          .select('id')
-          .limit(1);
+        const { data, error: tableError } = await serviceClient.from(table).select('id').limit(1);
 
         if (!tableError) {
           accessibleTables++;
@@ -135,7 +142,7 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
         .eq('organization_id', tenantA.id);
 
       expect(posts).toHaveLength(tenantA.posts.length);
-      expect(posts.every(p => p.organization_id === tenantA.id)).toBe(true);
+      expect(posts.every((p) => p.organization_id === tenantA.id)).toBe(true);
     });
 
     test('Tenant B data exists and is isolated', async () => {
@@ -145,7 +152,7 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
         .eq('organization_id', tenantB.id);
 
       expect(posts).toHaveLength(tenantB.posts.length);
-      expect(posts.every(p => p.organization_id === tenantB.id)).toBe(true);
+      expect(posts.every((p) => p.organization_id === tenantB.id)).toBe(true);
     });
 
     test('Comments are isolated by organization', async () => {
@@ -163,8 +170,8 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
       expect(commentsB).toHaveLength(tenantB.comments.length);
 
       // Verify no cross-contamination
-      expect(commentsA.every(c => c.organization_id === tenantA.id)).toBe(true);
-      expect(commentsB.every(c => c.organization_id === tenantB.id)).toBe(true);
+      expect(commentsA.every((c) => c.organization_id === tenantA.id)).toBe(true);
+      expect(commentsB.every((c) => c.organization_id === tenantB.id)).toBe(true);
     });
 
     test('Integration configs are isolated (SECURITY CRITICAL)', async () => {
@@ -184,11 +191,11 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
         .eq('organization_id', tenantB.id);
 
       if (tenantA.integrationConfigs.length > 0) {
-        expect(configsA.every(c => c.organization_id === tenantA.id)).toBe(true);
+        expect(configsA.every((c) => c.organization_id === tenantA.id)).toBe(true);
       }
 
       if (tenantB.integrationConfigs.length > 0) {
-        expect(configsB.every(c => c.organization_id === tenantB.id)).toBe(true);
+        expect(configsB.every((c) => c.organization_id === tenantB.id)).toBe(true);
       }
     });
 
@@ -209,56 +216,46 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
         .eq('organization_id', tenantB.id);
 
       if (tenantA.usageRecords.length > 0) {
-        expect(usageA.every(u => u.organization_id === tenantA.id)).toBe(true);
+        expect(usageA.every((u) => u.organization_id === tenantA.id)).toBe(true);
       }
 
       if (tenantB.usageRecords.length > 0) {
-        expect(usageB.every(u => u.organization_id === tenantB.id)).toBe(true);
+        expect(usageB.every((u) => u.organization_id === tenantB.id)).toBe(true);
       }
     });
   });
 
   describe('AC2: RLS Policy Enforcement via Anon Client', () => {
     test('Anon client returns empty for posts (RLS blocks)', async () => {
-      const { data, error } = await testClient
-        .from('posts')
-        .select('*');
+      const { data, error } = await testClient.from('posts').select('*');
 
       expect(error).toBeNull();
       expect(data).toEqual([]); // RLS blocks, returns empty array
     });
 
     test('Anon client returns empty for comments (RLS blocks)', async () => {
-      const { data, error } = await testClient
-        .from('comments')
-        .select('*');
+      const { data, error } = await testClient.from('comments').select('*');
 
       expect(error).toBeNull();
       expect(data).toEqual([]);
     });
 
     test('Anon client returns empty for roasts (RLS blocks)', async () => {
-      const { data, error } = await testClient
-        .from('roasts')
-        .select('*');
+      const { data, error } = await testClient.from('roasts').select('*');
 
       expect(error).toBeNull();
       expect(data).toEqual([]);
     });
 
     test('Anon client returns empty for integration_configs (RLS blocks - SECURITY)', async () => {
-      const { data, error } = await testClient
-        .from('integration_configs')
-        .select('*');
+      const { data, error } = await testClient.from('integration_configs').select('*');
 
       expect(error).toBeNull();
       expect(data).toEqual([]);
     });
 
     test('Anon client returns empty for usage_records (RLS blocks - BILLING)', async () => {
-      const { data, error } = await testClient
-        .from('usage_records')
-        .select('*');
+      const { data, error } = await testClient.from('usage_records').select('*');
 
       expect(error).toBeNull();
       expect(data).toEqual([]);
@@ -273,7 +270,7 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
         .eq('organization_id', tenantB.id);
 
       // Verify no Tenant A IDs in results
-      const hasTenantAData = tenantBPosts.some(p => p.organization_id === tenantA.id);
+      const hasTenantAData = tenantBPosts.some((p) => p.organization_id === tenantA.id);
       expect(hasTenantAData).toBe(false);
     });
 
@@ -284,7 +281,7 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
         .eq('organization_id', tenantA.id);
 
       // Verify no Tenant B IDs in results
-      const hasTenantBData = tenantAPosts.some(p => p.organization_id === tenantB.id);
+      const hasTenantBData = tenantAPosts.some((p) => p.organization_id === tenantB.id);
       expect(hasTenantBData).toBe(false);
     });
 
@@ -300,25 +297,26 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
       // Verify RLS violation
       expect(data).toBeNull();
       expect(error).toBeDefined();
-      
+
       // Issue #488 G6: Verify error code indicates blocked access (403-equivalent)
       // PGRST301 = RLS policy violation
       // PGRST116 = No rows found (due to RLS filtering to empty set)
       // Both are valid 403-equivalent responses
       const validErrorCodes = ['PGRST301', 'PGRST116'];
       expect(validErrorCodes).toContain(error.code);
-      
+
       console.log('✅ RLS 403 validation passed:', error.code, error.message);
       console.log(`   (Valid codes: ${validErrorCodes.join(', ')})`);
-      
+
       // Additional verification: error message should indicate access denial
       if (error.code === 'PGRST301') {
         // For PGRST301, verify RLS keywords in message
         const errorMessage = error.message.toLowerCase();
-        const hasRLSKeywords = errorMessage.includes('permission') || 
-                                errorMessage.includes('denied') || 
-                                errorMessage.includes('policy') || 
-                                errorMessage.includes('rls');
+        const hasRLSKeywords =
+          errorMessage.includes('permission') ||
+          errorMessage.includes('denied') ||
+          errorMessage.includes('policy') ||
+          errorMessage.includes('rls');
         expect(hasRLSKeywords).toBe(true);
       }
     });
@@ -338,9 +336,15 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct)', () => {
         'user_activities'
       ];
 
-      console.log(`\n📊 Tables tested: ${tablesTested.length}/22 (${((tablesTested.length / 22) * 100).toFixed(1)}%)`);
-      console.log(`📋 Critical tables: integration_configs (SECURITY), usage_records (BILLING), monthly_usage (BILLING)`);
-      console.log(`✅ RLS patterns validated: Service role bypass, Anon client block, Data isolation\n`);
+      console.log(
+        `\n📊 Tables tested: ${tablesTested.length}/22 (${((tablesTested.length / 22) * 100).toFixed(1)}%)`
+      );
+      console.log(
+        `📋 Critical tables: integration_configs (SECURITY), usage_records (BILLING), monthly_usage (BILLING)`
+      );
+      console.log(
+        `✅ RLS patterns validated: Service role bypass, Anon client block, Data isolation\n`
+      );
 
       expect(tablesTested.length).toBe(9);
     });

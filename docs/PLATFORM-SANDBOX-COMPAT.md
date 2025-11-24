@@ -46,6 +46,7 @@ Since no sandbox is available for standard access levels:
 ### 1.3 Production Environment Requirements
 
 **Authentication:**
+
 - Bearer Token (App-only authentication)
 - OAuth 1.0a (User authentication for posting)
 - OAuth 2.0 (Modern user authentication)
@@ -69,6 +70,7 @@ Since no sandbox is available for standard access levels:
 **Location:** Tests use ENABLE_MOCK_MODE for integration testing
 
 **Mock Coverage:**
+
 - ✅ Tweet posting (postResponse)
 - ✅ Tweet fetching (getTweet)
 - ✅ Reply chains (getConversation)
@@ -80,6 +82,7 @@ Since no sandbox is available for standard access levels:
 Mocks are designed to match Twitter API v2 spec:
 
 **Response Format:**
+
 ```javascript
 // Real Twitter API v2 POST /2/tweets response
 {
@@ -99,6 +102,7 @@ Mocks are designed to match Twitter API v2 spec:
 ```
 
 **Error Format:**
+
 ```javascript
 // Real Twitter API error
 {
@@ -126,6 +130,7 @@ Mocks are designed to match Twitter API v2 spec:
 ### 2.3 Verification Against SDK
 
 **Twitter API v2 SDK Compliance:**
+
 - Character limits: 280 characters (verified)
 - Rate limits: Tier-dependent. See Section 4.1 for per-tier windows and caps.
 - Error codes: Match Twitter's error taxonomy
@@ -137,26 +142,27 @@ Mocks are designed to match Twitter API v2 spec:
 
 ### 3.1 Twitter API v2 Endpoints Used
 
-| Endpoint | Purpose | Mock Status | Production Status |
-|----------|---------|-------------|-------------------|
-| `POST /2/tweets` | Post roast reply | ✅ Mocked | ✅ Implemented |
-| `GET /2/tweets/:id` | Fetch tweet | ✅ Mocked | ✅ Implemented |
-| `GET /2/tweets/search/recent` | Search tweets | ⚠️ Partial | ✅ Implemented |
-| `POST /2/users/:id/blocking` | Block user (Shield) | ❌ Not mocked | ✅ Implemented |
-| `POST /2/users/:id/muting` | Mute user (Shield) | ❌ Not mocked | ✅ Implemented |
+| Endpoint                      | Purpose             | Mock Status   | Production Status |
+| ----------------------------- | ------------------- | ------------- | ----------------- |
+| `POST /2/tweets`              | Post roast reply    | ✅ Mocked     | ✅ Implemented    |
+| `GET /2/tweets/:id`           | Fetch tweet         | ✅ Mocked     | ✅ Implemented    |
+| `GET /2/tweets/search/recent` | Search tweets       | ⚠️ Partial    | ✅ Implemented    |
+| `POST /2/users/:id/blocking`  | Block user (Shield) | ❌ Not mocked | ✅ Implemented    |
+| `POST /2/users/:id/muting`    | Mute user (Shield)  | ❌ Not mocked | ✅ Implemented    |
 
 ### 3.2 Feature Compatibility
 
-| Feature | Sandbox | Production | Mock |
-|---------|---------|------------|------|
-| Character limit | N/A | 280 chars | ✅ 280 chars |
-| Media attachments | N/A | Supported | ⚠️ Simulated |
-| Threads | N/A | Supported | ⚠️ Simulated |
-| Rate limiting | N/A | Tier-dependent (see §4.1) | ✅ Simulated |
-| Webhooks | N/A | Supported | ❌ Not implemented |
-| Real-time streaming | N/A | Supported | ❌ Not implemented |
+| Feature             | Sandbox | Production                | Mock               |
+| ------------------- | ------- | ------------------------- | ------------------ |
+| Character limit     | N/A     | 280 chars                 | ✅ 280 chars       |
+| Media attachments   | N/A     | Supported                 | ⚠️ Simulated       |
+| Threads             | N/A     | Supported                 | ⚠️ Simulated       |
+| Rate limiting       | N/A     | Tier-dependent (see §4.1) | ✅ Simulated       |
+| Webhooks            | N/A     | Supported                 | ❌ Not implemented |
+| Real-time streaming | N/A     | Supported                 | ❌ Not implemented |
 
 **Legend:**
+
 - ✅ Fully supported
 - ⚠️ Partially supported
 - ❌ Not supported
@@ -172,19 +178,19 @@ Mocks are designed to match Twitter API v2 spec:
 
 #### Tweet Publishing (POST /2/tweets)
 
-| Tier | User Context | App Context | Daily Limit |
-|------|--------------|-------------|-------------|
+| Tier                | User Context          | App Context              | Daily Limit  |
+| ------------------- | --------------------- | ------------------------ | ------------ |
 | **Pro** ($5,000/mo) | 100 requests / 15 min | 10,000 requests / 24 hrs | 10,000 / day |
-| **Basic** ($100/mo) | 100 requests / 24 hrs | 1,667 requests / 24 hrs | 1,667 / day |
-| **Free** | 17 requests / 24 hrs | 17 requests / 24 hrs | 17 / day |
+| **Basic** ($100/mo) | 100 requests / 24 hrs | 1,667 requests / 24 hrs  | 1,667 / day  |
+| **Free**            | 17 requests / 24 hrs  | 17 requests / 24 hrs     | 17 / day     |
 
 #### Tweet Reading (GET /2/tweets/:id)
 
-| Tier | User Context | App Context |
-|------|--------------|-------------|
-| **Pro** | 900 requests / 15 min | 450 requests / 15 min |
-| **Basic** | 15 requests / 15 min | 15 requests / 15 min |
-| **Free** | 1 request / 15 min | 1 request / 15 min |
+| Tier      | User Context          | App Context           |
+| --------- | --------------------- | --------------------- |
+| **Pro**   | 900 requests / 15 min | 450 requests / 15 min |
+| **Basic** | 15 requests / 15 min  | 15 requests / 15 min  |
+| **Free**  | 1 request / 15 min    | 1 request / 15 min    |
 
 #### Tweet Search (GET /2/tweets/search/recent)
 
@@ -194,16 +200,17 @@ Mocks are designed to match Twitter API v2 spec:
 #### Moderation Actions
 
 **Blocking (POST /2/users/:id/blocking):**
+
 - Not publicly documented in official rate limit tables
 - Estimated: 50 requests / 15 minutes (based on similar endpoints)
 
 **Muting (POST /2/users/:id/muting):**
 
-| Tier | User Context |
-|------|--------------|
-| **Pro** | 50 requests / 15 min |
-| **Basic** | 5 requests / 15 min |
-| **Free** | 1 request / 15 min |
+| Tier      | User Context         |
+| --------- | -------------------- |
+| **Pro**   | 50 requests / 15 min |
+| **Basic** | 5 requests / 15 min  |
+| **Free**  | 1 request / 15 min   |
 
 **Note:** Roastr.ai targets Basic or Pro tier for production deployment. Free tier limits are too restrictive for typical usage patterns.
 
@@ -234,6 +241,7 @@ const MOCK_RATE_LIMITS = {
 ### 4.3 Rate Limit Handling
 
 **Strategy:**
+
 1. Track requests in memory (mocks) or rely on Twitter headers (production)
 2. Return 429 status when limit exceeded
 3. Parse Twitter rate-limit headers for intelligent retry
@@ -245,13 +253,14 @@ const MOCK_RATE_LIMITS = {
 
 Twitter includes rate-limit information in HTTP response headers:
 
-| Header | Description | Example Value |
-|--------|-------------|---------------|
-| `x-rate-limit-limit` | Maximum requests allowed in current window | `300` |
-| `x-rate-limit-remaining` | Requests remaining in current window | `285` |
-| `x-rate-limit-reset` | Unix timestamp when limit resets | `1634567890` |
+| Header                   | Description                                | Example Value |
+| ------------------------ | ------------------------------------------ | ------------- |
+| `x-rate-limit-limit`     | Maximum requests allowed in current window | `300`         |
+| `x-rate-limit-remaining` | Requests remaining in current window       | `285`         |
+| `x-rate-limit-reset`     | Unix timestamp when limit resets           | `1634567890`  |
 
 **Parsing Example:**
+
 ```javascript
 // Parse Twitter rate-limit headers
 function parseRateLimitHeaders(response) {
@@ -268,12 +277,15 @@ function parseRateLimitHeaders(response) {
 if (response.status === 429) {
   const rateLimitInfo = parseRateLimitHeaders(response);
   const waitSeconds = Math.ceil((rateLimitInfo.reset * 1000 - Date.now()) / 1000);
-  console.log(`Rate limited. Retry after ${waitSeconds}s (at ${rateLimitInfo.resetDate.toISOString()})`);
+  console.log(
+    `Rate limited. Retry after ${waitSeconds}s (at ${rateLimitInfo.resetDate.toISOString()})`
+  );
   // Use waitSeconds for exponential backoff calculation
 }
 ```
 
 **Benefits:**
+
 - ✅ **Accurate retry timing** based on actual reset time
 - ✅ **Avoid premature retries** that will fail again
 - ✅ **Better UX** with precise wait times
@@ -301,6 +313,7 @@ getCapabilities() {
 ### 5.1 Environment Detection
 
 **Secure Fallback Logic:**
+
 ```javascript
 // Pseudocode for fallback strategy with explicit opt-in
 if (ENABLE_MOCK_MODE === 'true') {
@@ -321,6 +334,7 @@ if (ENABLE_MOCK_MODE === 'true') {
 ```
 
 **Security Rationale:**
+
 - ❌ **Silent fallback to mocks in production is DANGEROUS**
   - Hides configuration errors
   - App appears to work but generates fake data
@@ -337,6 +351,7 @@ if (ENABLE_MOCK_MODE === 'true') {
 ### 5.2 Fallback Triggers
 
 **When to Fall Back to Mocks:**
+
 1. Missing credentials (`TWITTER_BEARER_TOKEN` not set)
 2. Test environment (`NODE_ENV=test`)
 3. Explicit mock mode (`ENABLE_MOCK_MODE=true`)
@@ -346,11 +361,13 @@ if (ENABLE_MOCK_MODE === 'true') {
 ### 5.3 Graceful Degradation
 
 **Production Behavior:**
+
 - **Primary:** Use real Twitter API with retry logic
 - **Secondary:** If persistent failures, log errors and skip posting
 - **Tertiary:** If critical, queue for retry with exponential backoff
 
 **Test Behavior:**
+
 - **Primary:** Always use mocks
 - **Secondary:** No fallback needed (mocks never fail unless designed to)
 
@@ -361,6 +378,7 @@ if (ENABLE_MOCK_MODE === 'true') {
 ### 6.1 Unit Tests
 
 **Coverage:**
+
 - TwitterService adapter instantiation
 - postResponse method validation
 - getCapabilities method
@@ -369,6 +387,7 @@ if (ENABLE_MOCK_MODE === 'true') {
 - Tweet processing (validation, moderation)
 
 **Test Files:**
+
 - [`tests/unit/twitterService.test.js`](../tests/unit/twitterService.test.js) - Comprehensive TwitterService tests (402 lines)
 - [`tests/unit/twitterService-simple.test.js`](../tests/unit/twitterService-simple.test.js) - Simplified test suite
 - [`tests/unit/services/collectors/twitterCollector.test.js`](../tests/unit/services/collectors/twitterCollector.test.js) - Twitter collector tests
@@ -376,6 +395,7 @@ if (ENABLE_MOCK_MODE === 'true') {
 ### 6.2 Integration Tests
 
 **Coverage:**
+
 - Complete happy path (mock mode enabled via `ENABLE_MOCK_MODE=true`)
 - Rate limit scenarios (429 responses, Retry-After headers)
 - Error scenarios (4xx, 5xx responses)
@@ -383,12 +403,14 @@ if (ENABLE_MOCK_MODE === 'true') {
 - Fallback to mocks when credentials missing
 
 **Test Files:**
+
 - Integration testing primarily covered in unit tests using mock mode
 - E2E testing with real API requires manual execution (see section 6.3)
 
 ### 6.3 E2E Tests (Optional)
 
 **Coverage:**
+
 - Full workflow with test Twitter account
 - Requires real credentials (run manually)
 - Not part of CI/CD pipeline
@@ -401,18 +423,19 @@ if (ENABLE_MOCK_MODE === 'true') {
 
 Since no sandbox exists, this section documents expected differences between mock and production:
 
-| Aspect | Mock | Production |
-|--------|------|------------|
-| Response time | <10ms | 100-500ms |
-| Rate limiting | Simulated | Real enforcement |
-| Tweet IDs | Sequential | Snowflake IDs (19 digits) |
-| Error codes | Simplified | Full error taxonomy |
-| Media handling | Simulated | Actual uploads |
-| Network failures | Controlled | Real network issues |
+| Aspect           | Mock       | Production                |
+| ---------------- | ---------- | ------------------------- |
+| Response time    | <10ms      | 100-500ms                 |
+| Rate limiting    | Simulated  | Real enforcement          |
+| Tweet IDs        | Sequential | Snowflake IDs (19 digits) |
+| Error codes      | Simplified | Full error taxonomy       |
+| Media handling   | Simulated  | Actual uploads            |
+| Network failures | Controlled | Real network issues       |
 
 ### 7.2 Known Limitations
 
 **Mock Limitations:**
+
 - No actual media upload (returns success without processing)
 - No real-time streaming simulation
 - Rate limit reset is immediate in tests
@@ -420,6 +443,7 @@ Since no sandbox exists, this section documents expected differences between moc
 - No rate limit headers (X-Rate-Limit-Remaining, etc.)
 
 **Production Limitations:**
+
 - Requires paid tier for higher limits
 - No sandbox for safe testing
 - Rate limits can block testing temporarily
@@ -457,12 +481,14 @@ Since no sandbox exists, this section documents expected differences between moc
 ### 9.1 Twitter API Terms
 
 **Requirements:**
+
 - Respect rate limits
 - Handle user data according to Twitter policy
 - Display proper attribution for tweets
 - Implement proper error handling
 
 **Implemented:**
+
 - ✅ Rate limits respected — see §4.1 for tier-dependent limits
 - ✅ User data not stored permanently
 - ✅ Attribution via reply threading
@@ -471,11 +497,13 @@ Since no sandbox exists, this section documents expected differences between moc
 ### 9.2 Security Considerations
 
 **Credential Storage:**
+
 - Never commit credentials to git
 - Use environment variables
 - Rotate keys periodically
 
 **API Security:**
+
 - Use HTTPS only
 - Validate all responses
 - Sanitize user input before posting
@@ -486,11 +514,13 @@ Since no sandbox exists, this section documents expected differences between moc
 ## 10. References
 
 **Twitter API Documentation:**
+
 - [Twitter API v2 Overview](https://developer.twitter.com/en/docs/twitter-api)
 - [Rate Limits Guide](https://developer.twitter.com/en/docs/twitter-api/rate-limits)
 - [Error Codes Reference](https://developer.twitter.com/en/support/twitter-api/error-troubleshooting)
 
 **Internal Documentation:**
+
 - `CLAUDE.md` - Twitter bot features
 - `TESTING-GUIDE.md` - Test execution guide
 - `src/integrations/twitter/twitterService.js` - Service implementation
@@ -500,4 +530,3 @@ Since no sandbox exists, this section documents expected differences between moc
 **Last Updated:** 2025-10-13
 **Reviewed By:** Automated Assessment
 **Next Review:** After Twitter API changes or new features
-

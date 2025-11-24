@@ -259,4 +259,5 @@ examples:
 ---
 
 output:
+
 - Mensaje: "✅ Assessment completado en docs/assessment/<issue-number>.md\n\n**Recomendación:** [CREATE|FIX|ENHANCE|CLOSE|INCONCLUSIVE]\n**Confianza:** [High|Medium|Low]\n**GDD Consistency:** [OK|Conflicts Detected|No Related Nodes]\n**Scope:** [Small|Medium|Large]\n\nVer report completo para detalles y evidencias."

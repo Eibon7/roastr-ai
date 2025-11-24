@@ -1,6 +1,6 @@
 /**
  * Credits API Integration Tests
- * 
+ *
  * Tests the complete credits API endpoints including:
  * - Authentication and authorization
  * - Credit status retrieval
@@ -51,7 +51,7 @@ describe('Credits API Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock authentication middleware
     authenticateToken.mockImplementation((req, res, next) => {
       req.user = mockUser;
@@ -80,9 +80,7 @@ describe('Credits API Integration', () => {
 
       creditsService.getCreditStatus.mockResolvedValue(mockStatus);
 
-      const response = await request(app)
-        .get('/api/user/credits/status')
-        .expect(200);
+      const response = await request(app).get('/api/user/credits/status').expect(200);
 
       expect(response.body).toEqual({
         success: true,
@@ -95,9 +93,7 @@ describe('Credits API Integration', () => {
     it('should handle service errors', async () => {
       creditsService.getCreditStatus.mockRejectedValue(new Error('Service error'));
 
-      const response = await request(app)
-        .get('/api/user/credits/status')
-        .expect(500);
+      const response = await request(app).get('/api/user/credits/status').expect(500);
 
       expect(response.body).toEqual({
         success: false,
@@ -111,9 +107,7 @@ describe('Credits API Integration', () => {
         res.status(401).json({ error: 'Unauthorized' });
       });
 
-      await request(app)
-        .get('/api/user/credits/status')
-        .expect(401);
+      await request(app).get('/api/user/credits/status').expect(401);
     });
   });
 
@@ -140,9 +134,7 @@ describe('Credits API Integration', () => {
 
       creditsService.getConsumptionHistory.mockResolvedValue(mockHistory);
 
-      const response = await request(app)
-        .get('/api/user/credits/history')
-        .expect(200);
+      const response = await request(app).get('/api/user/credits/history').expect(200);
 
       expect(response.body).toEqual({
         success: true,
@@ -279,10 +271,7 @@ describe('Credits API Integration', () => {
     it('should default amount to 1', async () => {
       creditsService.canConsume.mockResolvedValue({ canConsume: true });
 
-      await request(app)
-        .post('/api/user/credits/check')
-        .send({ creditType: 'roast' })
-        .expect(200);
+      await request(app).post('/api/user/credits/check').send({ creditType: 'roast' }).expect(200);
 
       expect(creditsService.canConsume).toHaveBeenCalledWith(mockUser.id, 'roast', 1);
     });
@@ -299,9 +288,7 @@ describe('Credits API Integration', () => {
 
       creditsService.getCreditStatus.mockResolvedValue(mockStatus);
 
-      const response = await request(app)
-        .get('/api/user/credits/summary')
-        .expect(200);
+      const response = await request(app).get('/api/user/credits/summary').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.currentPeriod).toEqual(mockStatus);
@@ -315,22 +302,20 @@ describe('Credits API Integration', () => {
 
       // Should have warnings for both credit types
       expect(response.body.data.recommendations.length).toBeGreaterThanOrEqual(2);
-      const warnings = response.body.data.recommendations.filter(r => r.type === 'warning');
+      const warnings = response.body.data.recommendations.filter((r) => r.type === 'warning');
       expect(warnings).toHaveLength(2);
     });
   });
 
   describe('GET /api/credits/config', () => {
     it('should return credit system configuration', async () => {
-      const response = await request(app)
-        .get('/api/credits/config')
-        .expect(200);
+      const response = await request(app).get('/api/credits/config').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('creditsV2Enabled');
       expect(response.body.data).toHaveProperty('creditTypes');
       expect(response.body.data).toHaveProperty('planLimits');
-      
+
       expect(response.body.data.creditTypes).toHaveLength(2);
       expect(response.body.data.creditTypes[0].type).toBe('analysis');
       expect(response.body.data.creditTypes[1].type).toBe('roast');
@@ -339,10 +324,7 @@ describe('Credits API Integration', () => {
 
   describe('Error handling', () => {
     it('should handle missing request body gracefully', async () => {
-      const response = await request(app)
-        .post('/api/user/credits/check')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/api/user/credits/check').send({}).expect(400);
 
       expect(response.body.code).toBe('INVALID_CREDIT_TYPE');
     });
@@ -350,9 +332,7 @@ describe('Credits API Integration', () => {
     it('should handle service unavailability', async () => {
       creditsService.getCreditStatus.mockRejectedValue(new Error('Database unavailable'));
 
-      const response = await request(app)
-        .get('/api/user/credits/status')
-        .expect(500);
+      const response = await request(app).get('/api/user/credits/status').expect(500);
 
       expect(response.body.code).toBe('CREDIT_STATUS_ERROR');
     });

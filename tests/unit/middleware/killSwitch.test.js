@@ -11,7 +11,7 @@ const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults
 const mockSupabase = createSupabaseMock({
-    feature_flags: []
+  feature_flags: []
 });
 
 // Mock Supabase
@@ -39,7 +39,11 @@ jest.mock('../../../src/utils/logger', () => ({
 // STEP 3: Require modules AFTER mocks are configured
 // ============================================================================
 
-const { killSwitchService, checkKillSwitch, shouldBlockAutopost } = require('../../../src/middleware/killSwitch');
+const {
+  killSwitchService,
+  checkKillSwitch,
+  shouldBlockAutopost
+} = require('../../../src/middleware/killSwitch');
 const { supabaseServiceClient } = require('../../../src/config/supabase');
 
 describe('Kill Switch Middleware', () => {
@@ -259,8 +263,12 @@ describe('Kill Switch Middleware', () => {
 
     it('should fail closed on database errors', async () => {
       // Mock the service methods to throw errors directly
-      const isKillSwitchActiveSpy = jest.spyOn(killSwitchService, 'isKillSwitchActive').mockRejectedValue(new Error('Database connection failed'));
-      const isAutopostEnabledSpy = jest.spyOn(killSwitchService, 'isAutopostEnabled').mockRejectedValue(new Error('Database connection failed'));
+      const isKillSwitchActiveSpy = jest
+        .spyOn(killSwitchService, 'isKillSwitchActive')
+        .mockRejectedValue(new Error('Database connection failed'));
+      const isAutopostEnabledSpy = jest
+        .spyOn(killSwitchService, 'isAutopostEnabled')
+        .mockRejectedValue(new Error('Database connection failed'));
 
       await checkKillSwitch(req, res, next);
 
@@ -280,7 +288,9 @@ describe('Kill Switch Middleware', () => {
 
     it('should verify fail-open behavior for isAutopostEnabled method', async () => {
       // Mock the getFlag method to throw an error to test fail-open behavior
-      const getFlagSpy = jest.spyOn(killSwitchService, 'getFlag').mockRejectedValue(new Error('Database connection failed'));
+      const getFlagSpy = jest
+        .spyOn(killSwitchService, 'getFlag')
+        .mockRejectedValue(new Error('Database connection failed'));
 
       // Test that isAutopostEnabled fails open (returns true on error)
       const result = await killSwitchService.isAutopostEnabled();
@@ -354,13 +364,17 @@ describe('Kill Switch Middleware', () => {
 
     it('should fail closed on errors', async () => {
       // Mock the service methods to throw errors directly
-      jest.spyOn(killSwitchService, 'isKillSwitchActive').mockRejectedValue(new Error('Database error'));
+      jest
+        .spyOn(killSwitchService, 'isKillSwitchActive')
+        .mockRejectedValue(new Error('Database error'));
 
       const result = await shouldBlockAutopost();
 
       expect(result.blocked).toBe(true);
       expect(result.reason).toBe('CHECK_FAILED');
-      expect(result.message).toBe('Could not verify autopost status, blocking operation for safety');
+      expect(result.message).toBe(
+        'Could not verify autopost status, blocking operation for safety'
+      );
     });
   });
 

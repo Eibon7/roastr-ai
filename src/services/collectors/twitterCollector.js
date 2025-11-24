@@ -12,7 +12,7 @@ class TwitterCollector {
       userTweets: { requests: 300, window: 15 * 60 * 1000 }, // 300 requests per 15 minutes
       userTimeline: { requests: 1500, window: 15 * 60 * 1000 }
     };
-    
+
     this.lastRequestTimes = new Map();
   }
 
@@ -33,17 +33,16 @@ class TwitterCollector {
 
       // Initialize Twitter client
       const client = this.initializeClient(config);
-      
+
       // Get user's own tweets and replies
       const userContent = await this.getUserContent(client, maxContent, languageFilter);
-      
+
       logger.info('Twitter content collection completed', {
         contentCollected: userContent.length,
         maxRequested: maxContent
       });
 
       return userContent;
-
     } catch (error) {
       logger.error('Failed to collect Twitter content', {
         error: error.message,
@@ -70,7 +69,7 @@ class TwitterCollector {
       appKey: process.env.TWITTER_API_KEY,
       appSecret: process.env.TWITTER_API_SECRET,
       accessToken: config.access_token,
-      accessSecret: config.access_token_secret,
+      accessSecret: config.access_token_secret
     });
   }
 
@@ -146,7 +145,6 @@ class TwitterCollector {
       }
 
       return contentItems;
-
     } catch (error) {
       logger.error('Failed to get user Twitter content', {
         error: error.message,
@@ -170,16 +168,11 @@ class TwitterCollector {
    */
   calculateEngagement(metrics) {
     if (!metrics) return 0;
-    
-    const {
-      retweet_count = 0,
-      like_count = 0,
-      reply_count = 0,
-      quote_count = 0
-    } = metrics;
+
+    const { retweet_count = 0, like_count = 0, reply_count = 0, quote_count = 0 } = metrics;
 
     // Weighted engagement score
-    return (like_count * 1) + (retweet_count * 2) + (reply_count * 3) + (quote_count * 2);
+    return like_count * 1 + retweet_count * 2 + reply_count * 3 + quote_count * 2;
   }
 
   /**
@@ -202,7 +195,7 @@ class TwitterCollector {
         endpoint,
         waitTimeMs: waitTime
       });
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
 
     this.lastRequestTimes.set(endpoint, Date.now());
@@ -213,8 +206,8 @@ class TwitterCollector {
    */
   validateConfig(config) {
     const required = ['access_token', 'access_token_secret'];
-    const missing = required.filter(field => !config[field]);
-    
+    const missing = required.filter((field) => !config[field]);
+
     if (missing.length > 0) {
       throw new Error(`Missing Twitter configuration: ${missing.join(', ')}`);
     }
@@ -229,10 +222,10 @@ class TwitterCollector {
     try {
       this.validateConfig(config);
       const client = this.initializeClient(config);
-      
+
       // Simple test - get user info
       const user = await client.v2.me();
-      
+
       return {
         success: true,
         user: {
@@ -241,7 +234,6 @@ class TwitterCollector {
           name: user.data.name
         }
       };
-
     } catch (error) {
       return {
         success: false,

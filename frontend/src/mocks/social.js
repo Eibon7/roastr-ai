@@ -17,8 +17,8 @@ export const MOCK_ACCOUNTS = [
       autoApprove: true,
       shieldEnabled: true,
       shieldLevel: 95,
-      defaultTone: 'Flanders',
-    },
+      defaultTone: 'Flanders'
+    }
   },
   {
     id: 'acc_tw_2',
@@ -30,8 +30,8 @@ export const MOCK_ACCOUNTS = [
       autoApprove: false,
       shieldEnabled: true,
       shieldLevel: 98,
-      defaultTone: 'Canalla',
-    },
+      defaultTone: 'Canalla'
+    }
   },
   {
     id: 'acc_ig_3',
@@ -43,9 +43,9 @@ export const MOCK_ACCOUNTS = [
       autoApprove: true,
       shieldEnabled: false,
       shieldLevel: 100,
-      defaultTone: 'Balanceado',
-    },
-  },
+      defaultTone: 'Balanceado'
+    }
+  }
 ];
 
 export const MOCK_ROASTS = {
@@ -55,22 +55,22 @@ export const MOCK_ROASTS = {
       original: 'Tu código es una basura',
       roast: 'Gracias por tu comentario, me encanta tu entusiasmo por la basura.',
       createdAt: '2025-08-01T10:00:00Z',
-      status: 'approved',
+      status: 'approved'
     },
     {
       id: 'r2',
       original: 'Nadie usa tu app',
       roast: 'Correcto, solo la gente con gusto exquisito. Por eso no te vi ahí.',
       createdAt: '2025-08-02T14:22:00Z',
-      status: 'approved',
+      status: 'approved'
     },
     {
       id: 'r4',
       original: 'Este proyecto no tiene futuro',
       roast: 'Tienes razón, mi futuro está en no responderte. Pero aquí estamos.',
       createdAt: '2025-08-01T08:30:00Z',
-      status: 'approved',
-    },
+      status: 'approved'
+    }
   ],
   acc_tw_2: [
     {
@@ -78,17 +78,17 @@ export const MOCK_ROASTS = {
       original: 'Esto es lamentable',
       roast: 'Lamentable sería que no te contestara. Aquí tienes tu momento.',
       createdAt: '2025-08-03T09:05:00Z',
-      status: 'pending',
+      status: 'pending'
     },
     {
       id: 'r5',
       original: 'No sabes programar',
       roast: 'Me enseñaste tú con este comentario. Gracias por la masterclass.',
       createdAt: '2025-08-03T11:15:00Z',
-      status: 'pending',
-    },
+      status: 'pending'
+    }
   ],
-  acc_ig_3: [],
+  acc_ig_3: []
 };
 
 export const MOCK_INTERCEPTED = {
@@ -99,7 +99,7 @@ export const MOCK_INTERCEPTED = {
       action: 'Ocultar comentario',
       preview: '***censurado***',
       originalHidden: 'Eres un **** y tu proyecto también',
-      createdAt: '2025-08-03T11:40:00Z',
+      createdAt: '2025-08-03T11:40:00Z'
     },
     {
       id: 's4',
@@ -107,8 +107,8 @@ export const MOCK_INTERCEPTED = {
       action: 'Silenciar autor',
       preview: 'spam detectado',
       originalHidden: 'COMPRA SEGUIDORES AQUÍ CLICK CLICK CLICK',
-      createdAt: '2025-08-02T15:22:00Z',
-    },
+      createdAt: '2025-08-02T15:22:00Z'
+    }
   ],
   acc_tw_2: [
     {
@@ -117,7 +117,7 @@ export const MOCK_INTERCEPTED = {
       action: 'Reportar',
       preview: '***amenaza detectada***',
       originalHidden: 'Te voy a *** si vuelves a publicar eso',
-      createdAt: '2025-08-04T16:12:00Z',
+      createdAt: '2025-08-04T16:12:00Z'
     },
     {
       id: 's3',
@@ -125,10 +125,10 @@ export const MOCK_INTERCEPTED = {
       action: 'Silenciar autor',
       preview: 'troll insistente',
       originalHidden: 'Spam repetitivo en 10 hilos',
-      createdAt: '2025-08-04T17:20:00Z',
-    },
+      createdAt: '2025-08-04T17:20:00Z'
+    }
   ],
-  acc_ig_3: [],
+  acc_ig_3: []
 };
 
 export const MOCK_AVAILABLE_NETWORKS = [
@@ -137,14 +137,14 @@ export const MOCK_AVAILABLE_NETWORKS = [
   { network: 'facebook', name: 'Facebook', connectedCount: 0 },
   { network: 'youtube', name: 'YouTube', connectedCount: 0 },
   { network: 'tiktok', name: 'TikTok', connectedCount: 0 },
-  { network: 'linkedin', name: 'LinkedIn', connectedCount: 0 },
+  { network: 'linkedin', name: 'LinkedIn', connectedCount: 0 }
 ];
 
 export const SHIELD_LEVELS = [
   { value: 90, label: '90% (Más laxo)' },
   { value: 95, label: '95%' },
   { value: 98, label: '98% (Más estricto)' },
-  { value: 100, label: '100% (El más estricto)' },
+  { value: 100, label: '100% (El más estricto)' }
 ];
 
 // Re-export for backward compatibility
@@ -157,7 +157,7 @@ export const NETWORK_ICONS = {
   facebook: '📘',
   youtube: '📺',
   tiktok: '🎵',
-  linkedin: '💼',
+  linkedin: '💼'
 };
 
 export const NETWORK_COLORS = {
@@ -166,5 +166,5 @@ export const NETWORK_COLORS = {
   facebook: 'bg-blue-600 text-white',
   youtube: 'bg-red-600 text-white',
   tiktok: 'bg-black text-white',
-  linkedin: 'bg-blue-700 text-white',
+  linkedin: 'bg-blue-700 text-white'
 };

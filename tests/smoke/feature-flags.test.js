@@ -1,6 +1,6 @@
 /**
  * Smoke Tests - Feature Flags
- * 
+ *
  * Tests to ensure feature flags are working correctly
  */
 
@@ -17,13 +17,13 @@ describe('Feature Flags Smoke Tests', () => {
   test('Should be able to check flag status', () => {
     const testFlags = [
       'ENABLE_BILLING',
-      'ENABLE_RQC', 
+      'ENABLE_RQC',
       'ENABLE_REAL_OPENAI',
       'ENABLE_SUPABASE',
       'ENABLE_REAL_TWITTER'
     ];
 
-    testFlags.forEach(flag => {
+    testFlags.forEach((flag) => {
       const result = flags.isEnabled(flag);
       expect(typeof result).toBe('boolean');
     });
@@ -31,7 +31,7 @@ describe('Feature Flags Smoke Tests', () => {
 
   test('Should return service status', () => {
     const serviceStatus = flags.getServiceStatus();
-    
+
     expect(serviceStatus).toHaveProperty('billing');
     expect(serviceStatus).toHaveProperty('ai');
     expect(serviceStatus).toHaveProperty('database');
@@ -51,12 +51,12 @@ describe('Feature Flags Smoke Tests', () => {
 
   test('Should return all flags', () => {
     const allFlags = flags.getAllFlags();
-    
+
     expect(typeof allFlags).toBe('object');
     expect(Object.keys(allFlags).length).toBeGreaterThan(0);
 
     // All flag values should be boolean
-    Object.values(allFlags).forEach(value => {
+    Object.values(allFlags).forEach((value) => {
       expect(typeof value).toBe('boolean');
     });
   });
@@ -71,7 +71,7 @@ describe('Feature Flags Smoke Tests', () => {
     const flagName = 'ENABLE_BILLING';
     const result1 = flags.isEnabled(flagName);
     const result2 = flags.isEnabled(flagName);
-    
+
     expect(result1).toBe(result2);
   });
 });

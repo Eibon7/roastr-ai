@@ -83,7 +83,9 @@ class SecureWrite {
 
       // Reject if target is outside repository (starts with .. or is absolute)
       if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
-        throw new Error(`Security violation: Refusing to write outside repository root: ${requestedPath}`);
+        throw new Error(
+          `Security violation: Refusing to write outside repository root: ${requestedPath}`
+        );
       }
 
       // 1. Read current content (if exists)
@@ -131,7 +133,10 @@ class SecureWrite {
 
       if (this.verbose) {
         this.log('success', `Secure write: ${targetPath.replace(this.rootDir, '')}`);
-        this.log('info', `  Hash: ${hashBefore?.substring(0, 8) || 'N/A'} → ${hashAfter.substring(0, 8)}`);
+        this.log(
+          'info',
+          `  Hash: ${hashBefore?.substring(0, 8) || 'N/A'} → ${hashAfter.substring(0, 8)}`
+        );
         this.log('info', `  Signature: ${signature.id}`);
       }
 
@@ -142,7 +147,6 @@ class SecureWrite {
         hashAfter,
         backupPath
       };
-
     } catch (error) {
       this.log('error', `Secure write failed: ${error.message}`);
       throw error;
@@ -170,7 +174,9 @@ class SecureWrite {
 
       // Reject if target is outside repository (starts with .. or is absolute)
       if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
-        throw new Error(`Security violation: Refusing to rollback outside repository root: ${requestedPath}`);
+        throw new Error(
+          `Security violation: Refusing to rollback outside repository root: ${requestedPath}`
+        );
       }
 
       let restoredContent = content;
@@ -178,7 +184,7 @@ class SecureWrite {
       // If signature ID provided, find backup from signature
       if (signatureId) {
         const signatures = this.loadSignatures();
-        const signature = signatures.signatures.find(s => s.id === signatureId);
+        const signature = signatures.signatures.find((s) => s.id === signatureId);
 
         if (signature && signature.backupPath && fs.existsSync(signature.backupPath)) {
           restoredContent = fs.readFileSync(signature.backupPath, 'utf8');
@@ -234,7 +240,10 @@ class SecureWrite {
       if (this.verbose) {
         this.log('warn', `Rollback: ${targetPath.replace(this.rootDir, '')}`);
         this.log('info', `  Reason: ${reason}`);
-        this.log('info', `  Hash: ${hashBefore?.substring(0, 8) || 'N/A'} → ${hashAfter.substring(0, 8)}`);
+        this.log(
+          'info',
+          `  Hash: ${hashBefore?.substring(0, 8) || 'N/A'} → ${hashAfter.substring(0, 8)}`
+        );
       }
 
       return {
@@ -243,7 +252,6 @@ class SecureWrite {
         reason,
         hashAfter
       };
-
     } catch (error) {
       this.log('error', `Rollback failed: ${error.message}`);
       throw error;
@@ -279,9 +287,10 @@ class SecureWrite {
    */
   cleanupBackups(basename, keepLast = 10) {
     try {
-      const backups = fs.readdirSync(this.backupDir)
-        .filter(f => f.startsWith(basename))
-        .map(f => ({
+      const backups = fs
+        .readdirSync(this.backupDir)
+        .filter((f) => f.startsWith(basename))
+        .map((f) => ({
           name: f,
           path: path.join(this.backupDir, f),
           mtime: fs.statSync(path.join(this.backupDir, f)).mtime
@@ -306,9 +315,10 @@ class SecureWrite {
       const relativePath = path.relative(this.rootDir, filePath);
       const safePath = relativePath.replace(/\//g, '__').replace(/\\/g, '__');
 
-      const backups = fs.readdirSync(this.backupDir)
-        .filter(f => f.startsWith(safePath))
-        .map(f => ({
+      const backups = fs
+        .readdirSync(this.backupDir)
+        .filter((f) => f.startsWith(safePath))
+        .map((f) => ({
           path: path.join(this.backupDir, f),
           mtime: fs.statSync(path.join(this.backupDir, f)).mtime
         }))
@@ -323,7 +333,15 @@ class SecureWrite {
   /**
    * Create digital signature for write operation
    */
-  createSignature({ path, agent, action, hashBefore, hashAfter, metadata = {}, backupPath = null }) {
+  createSignature({
+    path,
+    agent,
+    action,
+    hashBefore,
+    hashAfter,
+    metadata = {},
+    backupPath = null
+  }) {
     const id = crypto.randomUUID();
     const timestamp = new Date().toISOString();
 
@@ -420,10 +438,7 @@ class SecureWrite {
    * Calculate SHA-256 hash
    */
   calculateHash(content) {
-    return crypto
-      .createHash('sha256')
-      .update(content)
-      .digest('hex');
+    return crypto.createHash('sha256').update(content).digest('hex');
   }
 
   /**
@@ -477,7 +492,9 @@ if (require.main === module) {
           action: 'test_write',
           metadata: { test: true }
         });
-        console.log(`✅ Write successful (signature: ${writeResult.signature.id.substring(0, 8)}...)`);
+        console.log(
+          `✅ Write successful (signature: ${writeResult.signature.id.substring(0, 8)}...)`
+        );
 
         // Test 2: Overwrite
         console.log('\n2️⃣ Testing secure overwrite...');
@@ -488,7 +505,9 @@ if (require.main === module) {
           action: 'test_overwrite',
           metadata: { test: true, version: 2 }
         });
-        console.log(`✅ Overwrite successful (signature: ${overwriteResult.signature.id.substring(0, 8)}...)`);
+        console.log(
+          `✅ Overwrite successful (signature: ${overwriteResult.signature.id.substring(0, 8)}...)`
+        );
 
         // Test 3: Rollback
         console.log('\n3️⃣ Testing rollback...');
@@ -498,7 +517,9 @@ if (require.main === module) {
           reason: 'testing_rollback',
           agent: 'TestAgent'
         });
-        console.log(`✅ Rollback successful (signature: ${rollbackResult.signature.id.substring(0, 8)}...)`);
+        console.log(
+          `✅ Rollback successful (signature: ${rollbackResult.signature.id.substring(0, 8)}...)`
+        );
 
         // Test 4: Verify signatures
         console.log('\n4️⃣ Testing signature verification...');
@@ -513,7 +534,6 @@ if (require.main === module) {
         }
 
         console.log('\n✅ All SWP tests passed!\n');
-
       } catch (error) {
         console.error('\n❌ SWP test failed:', error.message, '\n');
         process.exit(1);

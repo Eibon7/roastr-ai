@@ -1,6 +1,6 @@
 /**
  * Rate Limiting and Token Expiration Tests - Issue #90
- * 
+ *
  * Simplified tests that validate rate limiting and token management patterns.
  */
 
@@ -38,7 +38,7 @@ describe('Rate Limiting and Token Expiration - Issue #90', () => {
         api: { max: 1000, windowMs: 60 * 60 * 1000 }
       };
 
-      Object.keys(rateLimits).forEach(endpoint => {
+      Object.keys(rateLimits).forEach((endpoint) => {
         expect(rateLimits[endpoint].max).toBeGreaterThan(0);
         expect(rateLimits[endpoint].windowMs).toBeGreaterThan(0);
       });
@@ -49,7 +49,7 @@ describe('Rate Limiting and Token Expiration - Issue #90', () => {
     test('should validate JWT token structure', () => {
       const mockToken = {
         header: { alg: 'HS256', typ: 'JWT' },
-        payload: { 
+        payload: {
           userId: '12345',
           exp: Math.floor(Date.now() / 1000) + 3600,
           iat: Math.floor(Date.now() / 1000)
@@ -104,7 +104,7 @@ describe('Rate Limiting and Token Expiration - Issue #90', () => {
         instagram: { requests: 200, windowMs: 60 * 60 * 1000 }
       };
 
-      Object.keys(platformLimits).forEach(platform => {
+      Object.keys(platformLimits).forEach((platform) => {
         expect(platformLimits[platform].requests).toBeGreaterThan(0);
         expect(platformLimits[platform].windowMs).toBeGreaterThan(0);
       });
@@ -130,11 +130,11 @@ describe('Rate Limiting and Token Expiration - Issue #90', () => {
       const retryableErrors = [429, 500, 502, 503, 504];
       const nonRetryableErrors = [400, 401, 403, 404];
 
-      retryableErrors.forEach(code => {
+      retryableErrors.forEach((code) => {
         expect(code >= 429 || code >= 500).toBe(true);
       });
 
-      nonRetryableErrors.forEach(code => {
+      nonRetryableErrors.forEach((code) => {
         expect(code >= 400 && code < 500 && code !== 429).toBe(true);
       });
     });

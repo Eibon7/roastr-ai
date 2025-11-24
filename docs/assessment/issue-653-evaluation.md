@@ -20,13 +20,13 @@ La issue #653 propone resolver problemas arquitectónicos identificados por Code
 
 ### Problemas Propuestos vs Estado Actual
 
-| Issue | Descripción | Estado | Evidencia |
-|-------|-------------|--------|----------|
-| **M1** | Ejecución secuencial para handlers que mutan estado | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:1024-1056` |
-| **M2** | Batching de inserts en `shield_actions` | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:1052-1156` |
-| **M3** | Actualizaciones atómicas en `user_behaviors` (RPC) | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:1567-1581` + `database/migrations/024_atomic_user_behavior_updates.sql` |
-| **M4** | Deprecar legacy `executeActions()` | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:1768-1769` (método removido) |
-| **A1** | Gate para `autoActions` toggle | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:999-1007` |
+| Issue  | Descripción                                         | Estado              | Evidencia                                                                                              |
+| ------ | --------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------ |
+| **M1** | Ejecución secuencial para handlers que mutan estado | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:1024-1056`                                                              |
+| **M2** | Batching de inserts en `shield_actions`             | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:1052-1156`                                                              |
+| **M3** | Actualizaciones atómicas en `user_behaviors` (RPC)  | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:1567-1581` + `database/migrations/024_atomic_user_behavior_updates.sql` |
+| **M4** | Deprecar legacy `executeActions()`                  | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:1768-1769` (método removido)                                            |
+| **A1** | Gate para `autoActions` toggle                      | ✅ **IMPLEMENTADO** | `src/services/shieldService.js:999-1007`                                                               |
 
 ---
 
@@ -44,6 +44,7 @@ La issue #653 propone resolver problemas arquitectónicos identificados por Code
 - **Resultado:** Issue #653 es una evolución natural y necesaria de #650
 
 **Evidencia:**
+
 ```javascript
 // Issue #650: Nueva API
 async executeActionsFromTags(organizationId, comment, action_tags, metadata)
@@ -63,6 +64,7 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata)
 - **Resultado:** Las mejoras de #653 benefician directamente a #865
 
 **Evidencia:**
+
 - `sponsor_protection` se ejecuta a través de `executeActionsFromTags()`
 - Se beneficia de:
   - Batching (M2) - menos DB calls
@@ -78,6 +80,7 @@ async executeActionsFromTags(organizationId, comment, action_tags, metadata)
 - Issue #653: Optimiza la ejecución de acciones generadas por el Decision Engine
 
 **Flujo coherente:**
+
 ```
 AnalysisDecisionEngine.makeDecision()
   ↓ (genera action_tags)
@@ -101,12 +104,14 @@ ShieldActionWorker
 ### Mejoras de Performance
 
 **Antes (Issue #650):**
+
 - Ejecución: 100% paralela (race conditions)
 - DB inserts: N inserts (1 por tag)
 - User behavior: Read-modify-write (3 roundtrips)
 - **Total: ~75ms + race condition risk**
 
 **Después (Issue #653):**
+
 - Ejecución: 30% secuencial + 70% paralela (sin race conditions)
 - DB inserts: 1 batch insert (N tags)
 - User behavior: 1 atomic RPC call
@@ -117,10 +122,12 @@ ShieldActionWorker
 ### Mejoras de Integridad de Datos
 
 ✅ **Race Conditions Eliminadas**
+
 - State-mutating handlers ejecutan secuencialmente
 - User behavior updates son atómicos (RPC)
 
 ✅ **Escalabilidad Mejorada**
+
 - Batching reduce DB roundtrips en 60-80%
 - Menor presión en hot rows
 
@@ -175,6 +182,7 @@ ShieldActionWorker
 **Razón:** Todo el trabajo está completado y mergeado.
 
 **Acción:**
+
 ```bash
 gh issue close 653 --comment "✅ Completado en PR #654 (merged 2025-10-25). Todos los AC cumplidos: M1, M2, M3, M4, A1 implementados y en producción."
 ```
@@ -184,6 +192,7 @@ gh issue close 653 --comment "✅ Completado en PR #654 (merged 2025-10-25). Tod
 **Razón:** Asegurar que la migración está desplegada en producción.
 
 **Acción:**
+
 - Verificar que `atomic_update_user_behavior()` existe en producción
 - Confirmar que `_updateUserBehaviorFromTags()` usa RPC (línea 1570)
 
@@ -192,6 +201,7 @@ gh issue close 653 --comment "✅ Completado en PR #654 (merged 2025-10-25). Tod
 **Razón:** Reflejar que Issue #653 está completa.
 
 **Acción:**
+
 - Actualizar `docs/nodes/shield.md` con referencia a PR #654
 - Añadir Issue #653 a "Related PRs" si no está
 
@@ -219,4 +229,3 @@ gh issue close 653 --comment "✅ Completado en PR #654 (merged 2025-10-25). Tod
 - **Migration:** `database/migrations/024_atomic_user_behavior_updates.sql`
 - **CodeRabbit Review:** #3375358448
 - **Related Issues:** #650 (Action Tags), #865 (Brand Safety), #632 (Unified Analysis), #634 (Gatekeeper Fallback)
-

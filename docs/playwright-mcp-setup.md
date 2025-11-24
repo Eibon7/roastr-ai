@@ -7,6 +7,7 @@ The Playwright MCP Server has been configured for automated visual testing and f
 ## Configuration
 
 1. **MCP Configuration**: Located at `~/.config/claude/mcp.json`
+
    ```json
    {
      "servers": {
@@ -25,19 +26,25 @@ The Playwright MCP Server has been configured for automated visual testing and f
 ## Available Methods
 
 ### 1. browse
+
 Navigate to a URL
+
 ```json
-{"method": "browse", "params": {"url": "http://localhost:3000"}}
+{ "method": "browse", "params": { "url": "http://localhost:3000" } }
 ```
 
 ### 2. screenshot
+
 Take a screenshot of the current page
+
 ```json
-{"method": "screenshot", "params": {"path": "./screenshot.png", "fullPage": true}}
+{ "method": "screenshot", "params": { "path": "./screenshot.png", "fullPage": true } }
 ```
 
 ### 3. visual_test
+
 Comprehensive visual testing with error detection
+
 ```json
 {
   "method": "visual_test",
@@ -50,7 +57,9 @@ Comprehensive visual testing with error detection
 ```
 
 ### 4. multi_viewport_test
+
 Test across multiple viewport sizes (mobile, tablet, desktop)
+
 ```json
 {
   "method": "multi_viewport_test",
@@ -63,31 +72,39 @@ Test across multiple viewport sizes (mobile, tablet, desktop)
 ```
 
 ### 5. check_console
+
 Check for console errors and network failures
+
 ```json
-{"method": "check_console", "params": {"url": "http://localhost:3000"}}
+{ "method": "check_console", "params": { "url": "http://localhost:3000" } }
 ```
 
 ### 6. inspect
+
 Inspect an element on the page
+
 ```json
-{"method": "inspect", "params": {"selector": "#main-header"}}
+{ "method": "inspect", "params": { "selector": "#main-header" } }
 ```
 
 ### 7. close
+
 Close the browser instance
+
 ```json
-{"method": "close", "params": {}}
+{ "method": "close", "params": {} }
 ```
 
 ## Usage in Claude Code
 
 1. **Verify MCP is loaded**:
+
    ```
    /mcp list
    ```
 
 2. **Execute visual tests**:
+
    ```
    /mcp exec playwright visual_test {"url":"http://localhost:3000","outputDir":"./test-evidence","testName":"ui-validation"}
    ```
@@ -100,6 +117,7 @@ Close the browser instance
 ## Testing
 
 Run the test script to verify the setup:
+
 ```bash
 node scripts/test-playwright-mcp.js
 ```
@@ -107,6 +125,7 @@ node scripts/test-playwright-mcp.js
 ## Integration with CLAUDE.md
 
 As per the project's orchestration rules, the Playwright MCP server should be used:
+
 - After any frontend changes
 - To validate UI implementations against specifications
 - To capture visual evidence for PR documentation
@@ -115,6 +134,7 @@ As per the project's orchestration rules, the Playwright MCP server should be us
 ## Test Evidence
 
 All screenshots and test results are saved in:
+
 - `./test-evidence/` - For visual test outputs
 - `./docs/ui-review.md` - For comprehensive UI review reports
 

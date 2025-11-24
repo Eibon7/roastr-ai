@@ -12,6 +12,7 @@
 ### 🔴 CRITICAL (3 issues - BLOCKING)
 
 #### C1: Template Literal Escaping (responseCache.js:142)
+
 - **Location:** `src/middleware/responseCache.js:114, 142`
 - **Impact:** ❌ **BUILD BROKEN** - SyntaxError blocks all deployments
 - **Root cause:** Escaped backticks in template literals (`\`` instead of `` ` ``)
@@ -19,6 +20,7 @@
 - **Priority:** P0 - Fix IMMEDIATELY
 
 #### C2: Email Recipient = userId not email (emailService.js:493)
+
 - **Location:** `src/services/emailService.js:458-493`
 - **Impact:** ❌ **GDPR NOTIFICATIONS NEVER SEND** - SendGrid rejects non-email recipients
 - **Root cause:** Functions pass `userId` ("user-123") to `sendEmail({ to: userId })` instead of email address
@@ -27,6 +29,7 @@
 - **Affected:** `sendExportFileDeletionNotification()`, `sendExportFileCleanupNotification()`
 
 #### C3: Worker Notifications Never Reach User (ExportCleanupWorker.js:432-483)
+
 - **Location:** `src/workers/ExportCleanupWorker.js:432-483` (Outside diff)
 - **Impact:** ❌ **GDPR COMPLIANCE BROKEN** - Users never informed of data deletion
 - **Root cause:** Worker calls `notifyUserOfFileDeletion(userId, ...)` which passes userId to emailService
@@ -36,6 +39,7 @@
 ### 🟠 MAJOR (3 issues)
 
 #### M1: Cache Invalidation Incomplete (admin.js:104)
+
 - **Location:** `src/routes/admin.js:104`
 - **Impact:** Admin UI shows stale data after suspend/reactivate/toggle admin/force re-auth
 - **Root cause:** Only invalidates cache on plan changes, not on all mutations
@@ -44,6 +48,7 @@
 - **Priority:** P1 - Fix AFTER Critical issues
 
 #### M2: Plan Comparison Uses Lexicographical Order (auditLogService.js:376)
+
 - **Location:** `src/services/auditLogService.js:367-376`
 - **Impact:** Audit logs mislabel plan transitions (e.g., "pro" → "creator_plus" = "downgrade")
 - **Root cause:** String comparison `oldPlan < newPlan` instead of plan weight map
@@ -52,6 +57,7 @@
 - **Priority:** P1 - Fix AFTER Critical issues
 
 #### M3: Database Indices in schema.sql Only (schema.sql:78)
+
 - **Location:** `database/schema.sql:78-81`
 - **Impact:** Production environments won't get performance improvements (no migration path)
 - **Root cause:** Indices added to schema.sql, not as incremental migration
@@ -64,12 +70,14 @@
 ## 2. GDD Nodes Affected
 
 **Primary nodes:**
+
 - `billing.md` - Plan comparison logic (M2)
 - `admin.md` - Cache invalidation (M1), audit logging (M2)
 - `gdpr.md` - Email notifications (C2, C3)
 - `schema.md` - Database indices (M3)
 
 **Load nodes:**
+
 ```bash
 node scripts/resolve-graph.js billing admin gdpr schema
 ```
@@ -80,16 +88,17 @@ node scripts/resolve-graph.js billing admin gdpr schema
 
 ## 3. Subagents Assignment
 
-| Issue | Severity | Type | Agent | Reason |
-|-------|----------|------|-------|--------|
-| C1 | Critical | Syntax | **Back-end Dev** | Simple syntax fix |
-| C2 | Critical | Bug | **Back-end Dev** + **Test Engineer** | Architecture change (userId → email resolution) |
-| C3 | Critical | Bug | **Back-end Dev** + **Test Engineer** | Same root cause as C2 |
-| M1 | Major | Architecture | **Back-end Dev** + **Guardian** | Cache invalidation strategy (impacts admin routes) |
-| M2 | Major | Logic | **Back-end Dev** + **Test Engineer** | Business logic fix + tests |
-| M3 | Major | Architecture | **Back-end Dev** + **Guardian** | Database migration (protected domain) |
+| Issue | Severity | Type         | Agent                                | Reason                                             |
+| ----- | -------- | ------------ | ------------------------------------ | -------------------------------------------------- |
+| C1    | Critical | Syntax       | **Back-end Dev**                     | Simple syntax fix                                  |
+| C2    | Critical | Bug          | **Back-end Dev** + **Test Engineer** | Architecture change (userId → email resolution)    |
+| C3    | Critical | Bug          | **Back-end Dev** + **Test Engineer** | Same root cause as C2                              |
+| M1    | Major    | Architecture | **Back-end Dev** + **Guardian**      | Cache invalidation strategy (impacts admin routes) |
+| M2    | Major    | Logic        | **Back-end Dev** + **Test Engineer** | Business logic fix + tests                         |
+| M3    | Major    | Architecture | **Back-end Dev** + **Guardian**      | Database migration (protected domain)              |
 
 **Agent receipts required:**
+
 - `docs/agents/receipts/739-BackEndDev.md`
 - `docs/agents/receipts/739-TestEngineer.md`
 - `docs/agents/receipts/739-Guardian.md`
@@ -101,23 +110,18 @@ node scripts/resolve-graph.js billing admin gdpr schema
 ### Modified Files (11)
 
 **Critical fixes:**
+
 1. `src/middleware/responseCache.js` - Fix template literals (C1)
 2. `src/services/emailService.js` - Add email resolution (C2)
 3. `src/workers/ExportCleanupWorker.js` - Pass email instead of userId (C3)
 4. `src/services/dataExportService.js` - Store userEmail alongside downloadToken (C2/C3 dependency)
 
-**Major fixes:**
-5. `src/routes/admin.js` - Add cache invalidation to all mutations (M1)
-6. `src/services/auditLogService.js` - Fix plan comparison logic (M2)
-7. `database/migrations/XXX_add_admin_performance_indices.sql` - **NEW FILE** (M3)
+**Major fixes:** 5. `src/routes/admin.js` - Add cache invalidation to all mutations (M1) 6. `src/services/auditLogService.js` - Fix plan comparison logic (M2) 7. `database/migrations/XXX_add_admin_performance_indices.sql` - **NEW FILE** (M3)
 
-**Test updates:**
-8. `tests/unit/services/emailService.test.js` - Update assertions to expect email not userId
-9. `tests/unit/workers/ExportCleanupWorker.test.js` - **NEW FILE** - Test email resolution
-10. `tests/integration/admin/cache-invalidation.test.js` - **NEW FILE** - Test cache clears
-11. `tests/unit/services/auditLogService.test.js` - Add plan comparison tests
+**Test updates:** 8. `tests/unit/services/emailService.test.js` - Update assertions to expect email not userId 9. `tests/unit/workers/ExportCleanupWorker.test.js` - **NEW FILE** - Test email resolution 10. `tests/integration/admin/cache-invalidation.test.js` - **NEW FILE** - Test cache clears 11. `tests/unit/services/auditLogService.test.js` - Add plan comparison tests
 
 ### Dependent Files (Context)
+
 - `src/routes/user.js` - Uses `dataExportService.generateSignedDownloadUrl()` (needs email param)
 - `src/config/database.js` - Supabase client (for email lookup)
 
@@ -130,14 +134,15 @@ node scripts/resolve-graph.js billing admin gdpr schema
 **Order:** C1 → C2/C3 (parallel)
 
 #### C1: Fix Template Literals
+
 ```javascript
 // src/middleware/responseCache.js:114
-- logger.debug(`Cache invalidation: ${count} entries removed`, { pattern });
-+ logger.debug(`Cache invalidation: ${count} entries removed`, { pattern });
+-logger.debug(`Cache invalidation: ${count} entries removed`, { pattern });
++logger.debug(`Cache invalidation: ${count} entries removed`, { pattern });
 
 // Line 142
-- logger.info(`Cache cleared: ${size} entries removed`);
-+ logger.info(`Cache cleared: ${size} entries removed`);
+-logger.info(`Cache cleared: ${size} entries removed`);
++logger.info(`Cache cleared: ${size} entries removed`);
 ```
 
 **Verification:** `npm run build` succeeds
@@ -147,14 +152,16 @@ node scripts/resolve-graph.js billing admin gdpr schema
 **Root cause:** `downloadToken` only stores `userId` string, not user email.
 
 **Solution:**
+
 1. **Modify `dataExportService.js`:** Add `userEmail` to `downloadToken` structure
+
    ```javascript
    const downloadToken = {
      token,
      filepath,
      filename,
      userId,
-     userEmail,  // ADD THIS
+     userEmail, // ADD THIS
      expiresAt,
      createdAt: Date.now(),
      downloadedAt: null
@@ -162,6 +169,7 @@ node scripts/resolve-graph.js billing admin gdpr schema
    ```
 
 2. **Update `generateSignedDownloadUrl()`:** Accept `userEmail` param, store in token
+
    ```javascript
    async generateSignedDownloadUrl(filepath, userId, userEmail) {
      // ... existing code ...
@@ -169,6 +177,7 @@ node scripts/resolve-graph.js billing admin gdpr schema
    ```
 
 3. **Update `emailService.js`:** Change signatures to accept email
+
    ```javascript
    async sendExportFileDeletionNotification(userEmail, filename, reason) {
      return this.sendEmail({
@@ -179,6 +188,7 @@ node scripts/resolve-graph.js billing admin gdpr schema
    ```
 
 4. **Update `ExportCleanupWorker.js`:** Pass `downloadToken.userEmail`
+
    ```javascript
    async notifyUserOfFileDeletion(userEmail, filename, reason) {
      await emailService.sendExportFileDeletionNotification(userEmail, filename, reason);
@@ -186,6 +196,7 @@ node scripts/resolve-graph.js billing admin gdpr schema
    ```
 
 5. **Update call sites:** `src/routes/user.js` - Fetch user email before calling `generateSignedDownloadUrl()`
+
    ```javascript
    const { data: userData } = await supabaseServiceClient
      .from('users')
@@ -196,11 +207,12 @@ node scripts/resolve-graph.js billing admin gdpr schema
    const downloadUrl = await dataExportService.generateSignedDownloadUrl(
      filepath,
      userId,
-     userData.email  // ADD THIS
+     userData.email // ADD THIS
    );
    ```
 
 **Tests:**
+
 - Unit: `emailService.test.js` - Assert `to` is valid email format
 - Integration: `ExportCleanupWorker.test.js` - Mock Supabase, verify email sent
 
@@ -213,15 +225,16 @@ node scripts/resolve-graph.js billing admin gdpr schema
 #### M1: Cache Invalidation
 
 **Create centralized helper:**
+
 ```javascript
 // src/middleware/responseCache.js
 function invalidateAdminUsersCache() {
   const patterns = [
-    /^GET:\/api\/admin\/users/,      // Base endpoint
-    /^GET:\/api\/admin\/users\?.*/   // With query params
+    /^GET:\/api\/admin\/users/, // Base endpoint
+    /^GET:\/api\/admin\/users\?.*/ // With query params
   ];
 
-  patterns.forEach(pattern => responseCache.invalidate(pattern));
+  patterns.forEach((pattern) => responseCache.invalidate(pattern));
   logger.debug('Admin users cache invalidated');
 }
 
@@ -229,6 +242,7 @@ module.exports = { responseCache, cacheResponse, invalidateAdminUsersCache };
 ```
 
 **Add to mutations:**
+
 ```javascript
 // src/routes/admin.js - After EVERY successful mutation
 const { invalidateAdminUsersCache } = require('../middleware/responseCache');
@@ -245,6 +259,7 @@ router.post('/users/:id/toggle-admin', async (req, res) => {
 ```
 
 **Mutations to update:**
+
 - `POST /users/:id/toggle-admin`
 - `POST /users/:id/toggle-active`
 - `POST /users/:id/change-plan`
@@ -253,6 +268,7 @@ router.post('/users/:id/toggle-admin', async (req, res) => {
 - `POST /users/:id/force-reauth`
 
 **Tests:** `tests/integration/admin/cache-invalidation.test.js`
+
 - Verify cache hit before mutation
 - Verify cache miss after mutation
 - Verify fresh data returned
@@ -285,6 +301,7 @@ async logAdminPlanChange(adminId, targetUserId, oldPlan, newPlan, adminEmail) {
 ```
 
 **Tests:** `tests/unit/services/auditLogService.test.js`
+
 - `free → pro` = upgrade ✅
 - `pro → free` = downgrade ✅
 - `pro → creator_plus` = upgrade ✅ (was: downgrade ❌)
@@ -294,6 +311,7 @@ async logAdminPlanChange(adminId, targetUserId, oldPlan, newPlan, adminEmail) {
 #### M3: Database Indices Migration
 
 **Create migration:**
+
 ```sql
 -- database/migrations/033_add_admin_performance_indices.sql
 
@@ -315,6 +333,7 @@ END $$;
 ```
 
 **Update schema.sql:** Add comment referencing migration
+
 ```sql
 -- Applied via migration 033_add_admin_performance_indices.sql
 CREATE INDEX IF NOT EXISTS idx_users_plan ON users(plan);
@@ -380,6 +399,7 @@ CREATE INDEX IF NOT EXISTS idx_users_active_plan ON users(active, plan) WHERE ac
 ## 7. Success Criteria
 
 ### Functional Requirements
+
 - ✅ Build succeeds (`npm run build` exit 0)
 - ✅ All tests pass (`npm test` exit 0)
 - ✅ GDPR emails deliver to real email addresses (manual test)
@@ -388,6 +408,7 @@ CREATE INDEX IF NOT EXISTS idx_users_active_plan ON users(active, plan) WHERE ac
 - ✅ Database indices exist in migration (production safe)
 
 ### Non-Functional Requirements
+
 - ✅ Test coverage ≥90% (or maintain current if already ≥90%)
 - ✅ GDD health ≥87
 - ✅ 0 CodeRabbit comments pending
@@ -395,6 +416,7 @@ CREATE INDEX IF NOT EXISTS idx_users_active_plan ON users(active, plan) WHERE ac
 - ✅ No regressions (existing tests still pass)
 
 ### Compliance
+
 - ✅ GDPR Article 15 compliance restored (email notifications functional)
 - ✅ SOC2 audit trail accuracy (correct plan transition labels)
 
@@ -403,16 +425,19 @@ CREATE INDEX IF NOT EXISTS idx_users_active_plan ON users(active, plan) WHERE ac
 ## 8. Risks & Mitigation
 
 ### Risk 1: Email Resolution Performance
+
 - **Risk:** Fetching user email from DB on every export = extra query
 - **Mitigation:** Email already stored in session context, reuse from `req.user.email` if available
 - **Fallback:** Query DB only if not in session
 
 ### Risk 2: Cache Invalidation Too Aggressive
+
 - **Risk:** Invalidating on every mutation = cache useless
 - **Mitigation:** Acceptable - Admin mutations are infrequent, UI correctness > performance
 - **Alternative:** Implement smarter invalidation (only invalidate affected page/filter)
 
 ### Risk 3: Migration Rollback
+
 - **Risk:** Dropping indices mid-query = downtime
 - **Mitigation:** Rollback plan uses `IF EXISTS`, safe to run
 - **Best Practice:** Run during low-traffic window
@@ -422,6 +447,7 @@ CREATE INDEX IF NOT EXISTS idx_users_active_plan ON users(active, plan) WHERE ac
 ## 9. Commit Strategy
 
 ### Commit 1: Critical - Build Fix
+
 ```bash
 fix(cache): Fix template literal syntax in responseCache.js
 
@@ -433,6 +459,7 @@ Issue: PR #739 review
 ```
 
 ### Commit 2: Critical - Email Delivery
+
 ```bash
 fix(gdpr): Fix GDPR email notifications recipient resolution
 
@@ -449,6 +476,7 @@ GDPR Impact: Email notifications now functional
 ```
 
 ### Commit 3: Major - Cache Invalidation
+
 ```bash
 fix(admin): Add comprehensive cache invalidation for admin mutations
 
@@ -464,6 +492,7 @@ Impact: Admin UI now shows fresh data after mutations
 ```
 
 ### Commit 4: Major - Plan Comparison
+
 ```bash
 fix(audit): Fix plan transition labeling with weight-based comparison
 
@@ -477,6 +506,7 @@ SOC2 Impact: Audit logs now correctly label upgrades/downgrades
 ```
 
 ### Commit 5: Major - Indices Migration
+
 ```bash
 feat(db): Add admin performance indices via migration
 
@@ -491,6 +521,7 @@ Performance Impact: ~90% faster admin user queries
 ```
 
 ### Commit 6: Docs & Evidence
+
 ```bash
 docs(review): Add test evidence for CodeRabbit review #739
 
@@ -532,12 +563,14 @@ git push origin fix/issue-488
 ## 11. Related Patterns (coderabbit-lessons.md)
 
 **Patterns Applied:**
+
 - ✅ #5: Error Handling - Specific error codes, retry logic for email delivery
 - ✅ #6: Security - No env vars in docs, no sensitive data in logs
 - ✅ #2: Testing Patterns - TDD (write tests before fixing bugs)
 - ✅ #4: GDD Documentation - Update coverage after changes
 
 **New Patterns Identified:**
+
 - **Email Resolution Pattern:** Always resolve userId → email BEFORE calling emailService
 - **Cache Invalidation Pattern:** Centralized invalidation function + call on ALL mutations
 - **Plan Weight Comparison:** Use explicit weight map, not lexicographical comparison
@@ -548,20 +581,20 @@ git push origin fix/issue-488
 
 ## 12. Timeline Estimate
 
-| Phase | Tasks | Estimate | Blocker |
-|-------|-------|----------|---------|
-| **Phase 1 (Critical)** | C1: Syntax fix | 5 min | None |
-| | C2/C3: Email resolution | 45 min | Architecture change |
-| | Tests for C2/C3 | 30 min | C2/C3 done |
-| **Phase 2 (Major)** | M1: Cache invalidation | 40 min | C1 done (build works) |
-| | M2: Plan comparison | 20 min | None |
-| | M3: Migration | 25 min | None |
-| | Tests for M1-M3 | 45 min | M1-M3 done |
-| **Phase 3 (Validation)** | Run full test suite | 10 min | All fixes done |
-| | GDD validation | 5 min | Tests pass |
-| | Generate evidence | 15 min | Validation done |
-| **Phase 4 (Commit)** | 6 commits | 20 min | Evidence done |
-| | Push + monitor CI | 10 min | Commits done |
+| Phase                    | Tasks                   | Estimate | Blocker               |
+| ------------------------ | ----------------------- | -------- | --------------------- |
+| **Phase 1 (Critical)**   | C1: Syntax fix          | 5 min    | None                  |
+|                          | C2/C3: Email resolution | 45 min   | Architecture change   |
+|                          | Tests for C2/C3         | 30 min   | C2/C3 done            |
+| **Phase 2 (Major)**      | M1: Cache invalidation  | 40 min   | C1 done (build works) |
+|                          | M2: Plan comparison     | 20 min   | None                  |
+|                          | M3: Migration           | 25 min   | None                  |
+|                          | Tests for M1-M3         | 45 min   | M1-M3 done            |
+| **Phase 3 (Validation)** | Run full test suite     | 10 min   | All fixes done        |
+|                          | GDD validation          | 5 min    | Tests pass            |
+|                          | Generate evidence       | 15 min   | Validation done       |
+| **Phase 4 (Commit)**     | 6 commits               | 20 min   | Evidence done         |
+|                          | Push + monitor CI       | 10 min   | Commits done          |
 
 **Total Estimate:** ~3.5 hours (aggressive timeline)
 
@@ -572,18 +605,21 @@ git push origin fix/issue-488
 ## 13. Agent Receipts Preview
 
 ### BackEndDev Receipt
+
 - **Tasks:** C1, C2, C3, M1, M2, M3
 - **Decisions:** Centralized cache invalidation, plan weight map constants
 - **Artifacts:** 6 commits, 11 files modified/created
 - **Guardrails:** No hardcoded credentials, defensive email validation
 
 ### TestEngineer Receipt
+
 - **Tasks:** Test updates for C2/C3, M1, M2
 - **Decisions:** Integration test for cache invalidation, unit tests for plan logic
 - **Artifacts:** 4 new test files, 2 modified test files
 - **Coverage Impact:** Maintain ≥90% (new code paths covered)
 
 ### Guardian Receipt (Invoked for M1, M3)
+
 - **Protected Domains:** Admin routes (M1), Database migrations (M3)
 - **Security Review:** Cache invalidation doesn't leak user data, migration has rollback
 - **Compliance:** GDPR notifications restored (C2/C3), SOC2 audit accuracy (M2)

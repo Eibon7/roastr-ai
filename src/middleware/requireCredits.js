@@ -1,15 +1,15 @@
 /**
  * Credits Middleware - Dual Credit System Guards
- * 
+ *
  * Provides middleware functions to verify and consume credits
  * before allowing access to protected endpoints.
- * 
+ *
  * Features:
  * - Pre-flight credit verification
  * - Atomic credit consumption
  * - Graceful degradation when credits system is disabled
  * - Comprehensive error handling and logging
- * 
+ *
  * @author Roastr.ai Team
  * @version 2.0.0
  */
@@ -21,7 +21,7 @@ const { flags } = require('../config/flags');
 /**
  * Middleware to require analysis credits
  * Used for: gatekeeper checks, toxicity analysis, shield protection, etc.
- * 
+ *
  * @param {Object} options - Middleware options
  * @param {number} options.amount - Number of credits to consume (default: 1)
  * @param {string} options.actionType - Type of action consuming credits
@@ -29,11 +29,7 @@ const { flags } = require('../config/flags');
  * @returns {Function} Express middleware
  */
 function requireAnalysisCredits(options = {}) {
-  const {
-    amount = 1,
-    actionType = 'analysis',
-    preCheck = false
-  } = options;
+  const { amount = 1, actionType = 'analysis', preCheck = false } = options;
 
   return async (req, res, next) => {
     // Skip if credits system is disabled
@@ -57,7 +53,7 @@ function requireAnalysisCredits(options = {}) {
     try {
       // Check credit availability
       const availability = await creditsService.canConsume(userId, 'analysis', amount);
-      
+
       if (!availability.canConsume) {
         logger.warn('Analysis credits insufficient', {
           userId,
@@ -132,7 +128,6 @@ function requireAnalysisCredits(options = {}) {
       });
 
       next();
-
     } catch (error) {
       logger.error('Analysis credits middleware error', {
         userId,
@@ -151,7 +146,7 @@ function requireAnalysisCredits(options = {}) {
 /**
  * Middleware to require roast credits
  * Used for: roast generation, response posting, etc.
- * 
+ *
  * @param {Object} options - Middleware options
  * @param {number} options.amount - Number of credits to consume (default: 1)
  * @param {string} options.actionType - Type of action consuming credits
@@ -159,11 +154,7 @@ function requireAnalysisCredits(options = {}) {
  * @returns {Function} Express middleware
  */
 function requireRoastCredits(options = {}) {
-  const {
-    amount = 1,
-    actionType = 'roast_generation',
-    preCheck = false
-  } = options;
+  const { amount = 1, actionType = 'roast_generation', preCheck = false } = options;
 
   return async (req, res, next) => {
     // Skip if credits system is disabled
@@ -187,7 +178,7 @@ function requireRoastCredits(options = {}) {
     try {
       // Check credit availability
       const availability = await creditsService.canConsume(userId, 'roast', amount);
-      
+
       if (!availability.canConsume) {
         logger.warn('Roast credits insufficient', {
           userId,
@@ -264,7 +255,6 @@ function requireRoastCredits(options = {}) {
       });
 
       next();
-
     } catch (error) {
       logger.error('Roast credits middleware error', {
         userId,
@@ -283,7 +273,7 @@ function requireRoastCredits(options = {}) {
 /**
  * Middleware to require both analysis and roast credits
  * Used for: full roast workflow (analyze + generate)
- * 
+ *
  * @param {Object} options - Middleware options
  * @param {number} options.analysisAmount - Analysis credits to consume (default: 1)
  * @param {number} options.roastAmount - Roast credits to consume (default: 1)
@@ -415,7 +405,6 @@ function requireBothCredits(options = {}) {
       });
 
       next();
-
     } catch (error) {
       logger.error('Dual credits middleware error', {
         userId,

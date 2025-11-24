@@ -8,22 +8,22 @@ const express = require('express');
 // Mock dependencies before importing
 jest.mock('../../../src/config/supabase', () => ({
   supabaseServiceClient: {
-    from: jest.fn(),
+    from: jest.fn()
   },
-  createUserClient: jest.fn(),
+  createUserClient: jest.fn()
 }));
 
 const mockAuthenticateToken = jest.fn((req, res, next) => {
-  req.user = { 
-    id: 'test-user-123', 
+  req.user = {
+    id: 'test-user-123',
     email: 'test@example.com',
-    transparency_mode: 'bio' 
+    transparency_mode: 'bio'
   };
   next();
 });
 
 jest.mock('../../../src/middleware/auth', () => ({
-  authenticateToken: mockAuthenticateToken,
+  authenticateToken: mockAuthenticateToken
 }));
 
 jest.mock('../../../src/utils/logger', () => ({
@@ -40,18 +40,18 @@ jest.mock('../../../src/utils/logger', () => ({
     }))
   },
   SafeUtils: {
-    safeUserIdPrefix: jest.fn(id => id?.substring(0, 8) + '...'),
-  },
+    safeUserIdPrefix: jest.fn((id) => id?.substring(0, 8) + '...')
+  }
 }));
 
 jest.mock('../../../src/services/auditService', () => ({
-  logUserSettingChange: jest.fn().mockResolvedValue({ success: true }),
+  logUserSettingChange: jest.fn().mockResolvedValue({ success: true })
 }));
 
 jest.mock('../../../src/config/flags', () => ({
   flags: {
-    isEnabled: jest.fn().mockReturnValue(false), // Mock mode by default
-  },
+    isEnabled: jest.fn().mockReturnValue(false) // Mock mode by default
+  }
 }));
 
 const userRoutes = require('../../../src/routes/user');
@@ -76,10 +76,12 @@ describe('Transparency Settings API', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
       expect(response.body.data.transparency_mode).toBe('bio');
-      expect(response.body.data.bio_text).toBe('Algunos mensajes de hate son respondidos automáticamente por @Roastr');
+      expect(response.body.data.bio_text).toBe(
+        'Algunos mensajes de hate son respondidos automáticamente por @Roastr'
+      );
       expect(response.body.data.options).toHaveLength(3);
-      
-      const bioOption = response.body.data.options.find(opt => opt.value === 'bio');
+
+      const bioOption = response.body.data.options.find((opt) => opt.value === 'bio');
       expect(bioOption.is_default).toBe(true);
       expect(bioOption.label).toBe('Aviso en Bio');
     });
@@ -90,17 +92,16 @@ describe('Transparency Settings API', () => {
         res.status(401).json({ error: 'Unauthorized' });
       });
 
-      const response = await request(app)
-        .get('/api/user/settings/transparency-mode');
+      const response = await request(app).get('/api/user/settings/transparency-mode');
 
       expect(response.status).toBe(401);
-      
+
       // Reset mock to default behavior
       mockAuthenticateToken.mockImplementation((req, res, next) => {
-        req.user = { 
-          id: 'test-user-123', 
+        req.user = {
+          id: 'test-user-123',
           email: 'test@example.com',
-          transparency_mode: 'bio' 
+          transparency_mode: 'bio'
         };
         next();
       });
@@ -141,7 +142,9 @@ describe('Transparency Settings API', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.transparency_mode).toBe('bio');
-      expect(response.body.data.bio_text).toBe('Algunos mensajes de hate son respondidos automáticamente por @Roastr');
+      expect(response.body.data.bio_text).toBe(
+        'Algunos mensajes de hate son respondidos automáticamente por @Roastr'
+      );
     });
 
     it('should reject invalid transparency modes', async () => {
@@ -199,13 +202,13 @@ describe('Transparency Settings API', () => {
         .send({ mode: 'signature' });
 
       expect(response.status).toBe(401);
-      
+
       // Reset mock to default behavior
       mockAuthenticateToken.mockImplementation((req, res, next) => {
-        req.user = { 
-          id: 'test-user-123', 
+        req.user = {
+          id: 'test-user-123',
           email: 'test@example.com',
-          transparency_mode: 'bio' 
+          transparency_mode: 'bio'
         };
         next();
       });

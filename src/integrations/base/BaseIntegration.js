@@ -3,18 +3,19 @@ class BaseIntegration {
     this.config = config;
     this.platform = this.constructor.name.replace('Service', '').toLowerCase();
     this.debug = process.env.DEBUG === 'true';
-    
+
     // Initialize advanced logger and reincidence detector
     this.advancedLogger = require('../../utils/advancedLogger');
+    const { logger } = require('./../../utils/logger'); // Issue #971: Added for console.log replacement
     this.ReincidenceDetector = require('../../services/reincidenceDetector');
     this.reincidenceDetector = new this.ReincidenceDetector();
-    
+
     // Get current Roastr mode
     this.roastrMode = process.env.ROASTR_MODE || 'normal';
-    
+
     // Response frequency (0.0 to 1.0)
     this.responseFrequency = config.responseFrequency || 1.0;
-    
+
     // Common tracking
     this.metrics = {
       commentsProcessed: 0,
@@ -31,7 +32,10 @@ class BaseIntegration {
    */
   debugLog(message, ...args) {
     if (this.debug) {
-      console.log(`[${this.platform.toUpperCase()}-DEBUG] ${new Date().toISOString()}: ${message}`, ...args);
+      logger.info(
+        `[${this.platform.toUpperCase()}-DEBUG] ${new Date().toISOString()}: ${message}`,
+        ...args
+      );
     }
   }
 
@@ -57,7 +61,7 @@ class BaseIntegration {
     if (this.responseFrequency >= 1.0) {
       return true; // Always respond
     }
-    
+
     return Math.random() <= this.responseFrequency;
   }
 
@@ -67,25 +71,25 @@ class BaseIntegration {
   analyzeCommentSeverity(text) {
     // Simple severity analysis - can be enhanced with ML models
     const lowerText = text.toLowerCase();
-    
+
     // Critical severity indicators
     const criticalWords = ['threat', 'kill', 'die', 'suicide', 'harm'];
-    if (criticalWords.some(word => lowerText.includes(word))) {
+    if (criticalWords.some((word) => lowerText.includes(word))) {
       return 'critical';
     }
-    
+
     // High severity indicators
     const highSeverityWords = ['hate', 'racist', 'nazi', 'terrorist'];
-    if (highSeverityWords.some(word => lowerText.includes(word))) {
+    if (highSeverityWords.some((word) => lowerText.includes(word))) {
       return 'high';
     }
-    
+
     // Medium severity indicators
     const mediumWords = ['idiot', 'stupid', 'moron', 'loser'];
-    if (mediumWords.some(word => lowerText.includes(word))) {
+    if (mediumWords.some((word) => lowerText.includes(word))) {
       return 'medium';
     }
-    
+
     return 'low';
   }
 
@@ -95,11 +99,11 @@ class BaseIntegration {
   async processComment(comment, tone = 'sarcastic') {
     try {
       this.debugLog(`Processing comment: ${comment.text?.substring(0, 50)}...`);
-      
+
       // Update metrics
       this.metrics.commentsProcessed++;
       this.metrics.lastActivity = new Date().toISOString();
-      
+
       // Check response frequency
       if (!this.shouldRespondBasedOnFrequency()) {
         this.debugLog('Skipping response due to frequency setting');
@@ -112,7 +116,7 @@ class BaseIntegration {
         );
         return false;
       }
-      
+
       // Record user interaction for reincidence detection
       const severity = this.analyzeCommentSeverity(comment.text);
       await this.reincidenceDetector.recordInteraction(
@@ -122,7 +126,7 @@ class BaseIntegration {
         comment.text,
         severity
       );
-      
+
       // Check for auto-actions in Shield mode
       if (this.roastrMode === 'shield') {
         const autoAction = this.reincidenceDetector.shouldTakeAutoAction(
@@ -130,13 +134,13 @@ class BaseIntegration {
           comment.userId || comment.author,
           severity
         );
-        
+
         if (autoAction) {
           await this.executeAutoAction(comment, autoAction, severity);
           this.metrics.autoActionsTaken++;
         }
       }
-      
+
       // Log the comment processing
       await this.advancedLogger.logIntegration(
         this.platform,
@@ -149,21 +153,18 @@ class BaseIntegration {
           mode: this.roastrMode
         }
       );
-      
-      console.log(`📝 [${this.platform.toUpperCase()}] Comment processed successfully`);
+
+      logger.info(`📝 [${this.platform.toUpperCase()}] Comment processed successfully`);
       return true;
-      
     } catch (error) {
       this.metrics.errorsEncountered++;
-      console.error(`❌ [${this.platform.toUpperCase()}] Error processing comment:`, error.message);
-      
-      await this.advancedLogger.logIntegration(
-        this.platform,
-        'error',
-        'Error processing comment',
-        { error: error.message, commentId: comment.id }
-      );
-      
+      logger.error(`❌ [${this.platform.toUpperCase()}] Error processing comment:`, error.message);
+
+      await this.advancedLogger.logIntegration(this.platform, 'error', 'Error processing comment', {
+        error: error.message,
+        commentId: comment.id
+      });
+
       throw error;
     }
   }
@@ -174,7 +175,7 @@ class BaseIntegration {
   async executeAutoAction(comment, action, severity) {
     try {
       this.debugLog(`Executing auto action: ${action} for user ${comment.author}`);
-      
+
       // Log the action
       await this.reincidenceDetector.recordAutoAction(
         this.platform,
@@ -184,12 +185,11 @@ class BaseIntegration {
         `Severity: ${severity}, auto-action triggered`,
         severity
       );
-      
+
       // Platform-specific implementation should override this
       await this.performAutoAction(comment, action);
-      
     } catch (error) {
-      console.error(`❌ Error executing auto action ${action}:`, error.message);
+      logger.error(`❌ Error executing auto action ${action}:`, error.message);
       throw error;
     }
   }
@@ -199,7 +199,7 @@ class BaseIntegration {
    */
   async performAutoAction(comment, action) {
     // Default implementation - just log
-    console.log(`🛡️ [${this.platform.toUpperCase()}] Auto-action: ${action} (not implemented)`);
+    logger.info(`🛡️ [${this.platform.toUpperCase()}] Auto-action: ${action} (not implemented)`);
   }
 
   /**
@@ -210,11 +210,11 @@ class BaseIntegration {
     try {
       const RoastGeneratorReal = require('../../services/roastGeneratorReal');
       const generator = new RoastGeneratorReal();
-      
+
       // Create custom prompt based on tone only
       const customPrompt = this.createTonePrompt(tone);
       const roast = await generator.generateRoastWithPrompt(text, customPrompt);
-      
+
       // Log roast generation
       await this.advancedLogger.logRoast(
         this.platform,
@@ -225,11 +225,10 @@ class BaseIntegration {
         tone,
         {} // Issue #868: Removed humorType from metadata
       );
-      
+
       return roast;
-      
     } catch (error) {
-      console.error(`❌ Error generating roast with tone:`, error.message);
+      logger.error(`❌ Error generating roast with tone:`, error.message);
       throw error;
     }
   }
@@ -239,25 +238,25 @@ class BaseIntegration {
    * Issue #868: Removed humorType parameter (deprecated - tone is now sole selector)
    */
   createTonePrompt(tone) {
-    const basePrompt = "You are Roastr.ai, specialized in creating humorous roast responses.";
-    
-    let toneInstruction = "";
+    const basePrompt = 'You are Roastr.ai, specialized in creating humorous roast responses.';
+
+    let toneInstruction = '';
     switch (tone) {
       case 'sarcastic':
-        toneInstruction = "Use sharp sarcasm but avoid explicit insults.";
+        toneInstruction = 'Use sharp sarcasm but avoid explicit insults.';
         break;
       case 'ironic':
-        toneInstruction = "Use sophisticated irony and elegant wordplay.";
+        toneInstruction = 'Use sophisticated irony and elegant wordplay.';
         break;
       case 'absurd':
-        toneInstruction = "Use absurd humor and unexpected comparisons.";
+        toneInstruction = 'Use absurd humor and unexpected comparisons.';
         break;
       default:
-        toneInstruction = "Use witty and clever humor.";
+        toneInstruction = 'Use witty and clever humor.';
     }
-    
+
     // Issue #868: Removed humorType logic - tone is now the sole determinant of style
-    
+
     return `${basePrompt} ${toneInstruction} Keep responses short (1-2 sentences) and appropriate. Respond in the same language as the input.`;
   }
 
@@ -276,7 +275,7 @@ class BaseIntegration {
    * Validate required configuration
    */
   validateConfig(requiredFields) {
-    const missing = requiredFields.filter(field => !this.config[field]);
+    const missing = requiredFields.filter((field) => !this.config[field]);
     if (missing.length > 0) {
       throw new Error(`${this.platform}: Missing required configuration: ${missing.join(', ')}`);
     }
@@ -288,16 +287,15 @@ class BaseIntegration {
    */
   async initialize() {
     try {
-      console.log(`🚀 Initializing ${this.platform} integration...`);
-      
+      logger.info(`🚀 Initializing ${this.platform} integration...`);
+
       // Authenticate with platform
       await this.authenticate();
-      
-      console.log(`✅ ${this.platform} integration initialized successfully`);
+
+      logger.info(`✅ ${this.platform} integration initialized successfully`);
       return true;
-      
     } catch (error) {
-      console.error(`❌ Failed to initialize ${this.platform} integration:`, error.message);
+      logger.error(`❌ Failed to initialize ${this.platform} integration:`, error.message);
       throw error;
     }
   }
@@ -306,12 +304,12 @@ class BaseIntegration {
    * Graceful shutdown
    */
   async shutdown() {
-    console.log(`🛑 Shutting down ${this.platform} integration...`);
-    
+    logger.info(`🛑 Shutting down ${this.platform} integration...`);
+
     // Platform-specific cleanup would go here
     // This method can be overridden by specific integrations
-    
-    console.log(`✅ ${this.platform} integration shut down successfully`);
+
+    logger.info(`✅ ${this.platform} integration shut down successfully`);
   }
 }
 

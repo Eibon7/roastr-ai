@@ -9,12 +9,14 @@
 ## ✅ Completado
 
 ### Core Deliverables (100%)
+
 - ✅ Dashboard.jsx → PageLayout
-- ✅ Compose.jsx → PageLayout  
+- ✅ Compose.jsx → PageLayout
 - ✅ Integrations.jsx → PageLayout
 - ✅ Connect.jsx → PageLayout
 
 ### Quality Gates
+
 - ✅ Build exitoso (`npm run build:ci`)
 - ✅ Tests pasando (`npm test`)
 - ✅ CI/CD: 26/26 checks SUCCESS
@@ -34,6 +36,7 @@
 **Ubicación:** `docs/test-evidence/issue-860/`
 
 **Screenshots requeridos (7):**
+
 - dashboard-desktop.png (1920x1080)
 - dashboard-tablet.png (768x1024)
 - dashboard-mobile.png (375x667)
@@ -45,6 +48,7 @@
 **Decisión:** No bloqueante para merge. Las screenshots se capturarán después del merge usando Playwright MCP para validación visual completa.
 
 **Justificación:**
+
 - Build y tests pasan (validación funcional completa)
 - Lógica de negocio preservada (validado por Guardian)
 - Screenshots son validación visual complementaria, no funcional
@@ -64,6 +68,7 @@
 **Estado:** Aparece en diff pero NO es parte del scope de esta PR.
 
 **Explicación:**
+
 - Archivo backend (no UI)
 - Cambios son JSDoc de commit anterior (Issue #715, commit `b6294b89`)
 - No es usado por las 4 pantallas migradas

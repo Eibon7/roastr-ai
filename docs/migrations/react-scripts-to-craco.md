@@ -22,22 +22,25 @@ Migrated frontend build system from `react-scripts` to `@craco/craco` to support
 ### Dependencies
 
 **Added:**
+
 ```json
 {
-  "@craco/craco": "^7.1.0"  // devDependencies (build-time only)
+  "@craco/craco": "^7.1.0" // devDependencies (build-time only)
 }
 ```
 
 **Kept (unchanged):**
+
 ```json
 {
-  "react-scripts": "5.0.1"  // Still required as peer dependency
+  "react-scripts": "5.0.1" // Still required as peer dependency
 }
 ```
 
 ### NPM Scripts
 
 **Before:**
+
 ```json
 {
   "start": "react-scripts start",
@@ -47,6 +50,7 @@ Migrated frontend build system from `react-scripts` to `@craco/craco` to support
 ```
 
 **After:**
+
 ```json
 {
   "start": "craco start",
@@ -63,7 +67,7 @@ Migrated frontend build system from `react-scripts` to `@craco/craco` to support
 ```javascript
 module.exports = {
   babel: {
-    plugins: process.env.CI ? [] : undefined  // Disable React Refresh in CI
+    plugins: process.env.CI ? [] : undefined // Disable React Refresh in CI
   },
   webpack: {
     configure: (config, { env }) => {
@@ -71,21 +75,21 @@ module.exports = {
       config.resolve.alias = {
         '@': path.resolve(__dirname, 'src')
       };
-      
+
       // Node.js polyfill fallbacks
       config.resolve.fallback = {
         ws: false,
         bufferutil: false,
         'utf-8-validate': false
       };
-      
+
       // Remove React Refresh in production
       if (env === 'production') {
         config.plugins = config.plugins.filter(
-          plugin => !(plugin instanceof ReactRefreshWebpackPlugin)
+          (plugin) => !(plugin instanceof ReactRefreshWebpackPlugin)
         );
       }
-      
+
       return config;
     }
   }
@@ -103,6 +107,7 @@ npm start    # Now uses craco
 ```
 
 ### No changes required for:
+
 - Environment variables (`.env`)
 - Test configuration (`jest`)
 - ESLint configuration
@@ -115,6 +120,7 @@ npm start    # Now uses craco
 **No changes required.** Workflows use `npm run build` and `npm test`, which now invoke craco transparently.
 
 **Verified workflows:**
+
 - `.github/workflows/ci.yml`
 - `.github/workflows/frontend-build.yml`
 

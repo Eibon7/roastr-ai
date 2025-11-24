@@ -1,4 +1,5 @@
 const fs = require('fs-extra');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const path = require('path');
 const advancedLogger = require('../utils/advancedLogger');
 
@@ -7,11 +8,11 @@ class ReincidenceDetector {
     this.dataDir = path.join(process.cwd(), 'data');
     this.reincidenceFile = path.join(this.dataDir, 'user_reincidence.json');
     this.actionsFile = path.join(this.dataDir, 'auto_actions.json');
-    
+
     // Initialize data structures
     this.userHistory = new Map();
     this.actionHistory = new Map();
-    
+
     this.init();
   }
 
@@ -23,7 +24,7 @@ class ReincidenceDetector {
       await fs.ensureDir(this.dataDir);
       await this.loadData();
     } catch (error) {
-      console.error('Error initializing ReincidenceDetector:', error);
+      logger.error('Error initializing ReincidenceDetector:', error);
     }
   }
 
@@ -43,9 +44,8 @@ class ReincidenceDetector {
         const actionsData = await fs.readJson(this.actionsFile);
         this.actionHistory = new Map(Object.entries(actionsData));
       }
-
     } catch (error) {
-      console.error('Error loading reincidence data:', error);
+      logger.error('Error loading reincidence data:', error);
     }
   }
 
@@ -61,9 +61,8 @@ class ReincidenceDetector {
       // Save action history
       const actionsData = Object.fromEntries(this.actionHistory);
       await fs.writeJson(this.actionsFile, actionsData, { spaces: 2 });
-
     } catch (error) {
-      console.error('Error saving reincidence data:', error);
+      logger.error('Error saving reincidence data:', error);
     }
   }
 
@@ -90,14 +89,14 @@ class ReincidenceDetector {
       }
 
       const userRecord = this.userHistory.get(userKey);
-      
+
       // Update interaction
       userRecord.interactions.push({
         timestamp,
         messageText,
         severity
       });
-      
+
       userRecord.totalCount++;
       userRecord.severityCounts[severity]++;
       userRecord.lastInteraction = timestamp;
@@ -130,9 +129,8 @@ class ReincidenceDetector {
       }
 
       return userRecord;
-
     } catch (error) {
-      console.error('Error recording interaction:', error);
+      logger.error('Error recording interaction:', error);
       return null;
     }
   }
@@ -160,25 +158,26 @@ class ReincidenceDetector {
         case 'critical':
           // Critical infractions: immediate action
           return severityCount >= severityLevel.threshold ? severityLevel.action : null;
-          
+
         case 'high':
           // High severity: action after threshold
           return severityCount >= severityLevel.threshold ? severityLevel.action : null;
-          
+
         case 'medium':
           // Medium severity: consider total interactions
-          return (severityCount >= severityLevel.threshold || totalCount >= 5) ? severityLevel.action : null;
-          
+          return severityCount >= severityLevel.threshold || totalCount >= 5
+            ? severityLevel.action
+            : null;
+
         case 'low':
           // Low severity: only if many repeated interactions
           return totalCount >= 10 ? severityLevel.action : null;
-          
+
         default:
           return null;
       }
-
     } catch (error) {
-      console.error('Error checking auto action criteria:', error);
+      logger.error('Error checking auto action criteria:', error);
       return null;
     }
   }
@@ -202,24 +201,19 @@ class ReincidenceDetector {
       };
 
       this.actionHistory.set(actionKey, actionRecord);
-      
+
       // Save data
       await this.saveData();
 
       // Log the action
-      await advancedLogger.logAutoAction(
-        platform,
-        action,
-        userId,
-        username,
-        reason,
-        { severity, actionKey }
-      );
+      await advancedLogger.logAutoAction(platform, action, userId, username, reason, {
+        severity,
+        actionKey
+      });
 
       return actionRecord;
-
     } catch (error) {
-      console.error('Error recording auto action:', error);
+      logger.error('Error recording auto action:', error);
       return null;
     }
   }
@@ -249,8 +243,8 @@ class ReincidenceDetector {
       if (userRecord.platform === platform) {
         summary.totalUsers++;
         summary.totalInteractions += userRecord.totalCount;
-        
-        Object.keys(summary.severityCounts).forEach(severity => {
+
+        Object.keys(summary.severityCounts).forEach((severity) => {
           summary.severityCounts[severity] += userRecord.severityCounts[severity] || 0;
         });
       }
@@ -315,7 +309,7 @@ class ReincidenceDetector {
       // Clean old interactions from user history
       for (const [userKey, userRecord] of this.userHistory) {
         userRecord.interactions = userRecord.interactions.filter(
-          interaction => new Date(interaction.timestamp) > cutoffDate
+          (interaction) => new Date(interaction.timestamp) > cutoffDate
         );
 
         // Remove users with no recent interactions
@@ -325,8 +319,8 @@ class ReincidenceDetector {
           // Recalculate counts based on remaining interactions
           userRecord.totalCount = userRecord.interactions.length;
           userRecord.severityCounts = { low: 0, medium: 0, high: 0, critical: 0 };
-          
-          userRecord.interactions.forEach(interaction => {
+
+          userRecord.interactions.forEach((interaction) => {
             userRecord.severityCounts[interaction.severity]++;
           });
         }
@@ -342,10 +336,9 @@ class ReincidenceDetector {
       // Save cleaned data
       await this.saveData();
 
-      console.log(`Cleaned reincidence data older than ${daysToKeep} days`);
-
+      logger.info(`Cleaned reincidence data older than ${daysToKeep} days`);
     } catch (error) {
-      console.error('Error cleaning old reincidence data:', error);
+      logger.error('Error cleaning old reincidence data:', error);
     }
   }
 }

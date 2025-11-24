@@ -41,7 +41,12 @@ export function RoastrComment({
   className
 }: RoastrCommentProps) {
   return (
-    <Card className={cn('border-border/70 bg-card/80 shadow-sm shadow-black/5 backdrop-blur', className)}>
+    <Card
+      className={cn(
+        'border-border/70 bg-card/80 shadow-sm shadow-black/5 backdrop-blur',
+        className
+      )}
+    >
       <CardHeader className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-3">
@@ -61,7 +66,8 @@ export function RoastrComment({
               <CardTitle className="text-lg font-semibold text-foreground">{author}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {handle && <span>{handle} &bull; </span>}
-                {platform && `${platform} • `}{timestamp}
+                {platform && `${platform} • `}
+                {timestamp}
               </p>
             </div>
           </div>
@@ -113,4 +119,3 @@ export function RoastrComment({
 }
 
 export default RoastrComment;
-

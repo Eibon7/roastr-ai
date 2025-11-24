@@ -4,6 +4,7 @@
  */
 
 const { flags } = require('../config/flags');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 
 /**
  * In-memory storage for rate limiting
@@ -20,7 +21,7 @@ class RateLimitStore {
       recentBlocks: []
     };
     this.cleanupInterval = null;
-    
+
     // Cleanup old entries every 10 minutes
     // Skip interval in test environment to avoid open handles
     if (process.env.NODE_ENV !== 'test') {
@@ -41,7 +42,11 @@ class RateLimitStore {
   getKey(ip, email) {
     // Don't store actual email, use hash for privacy
     const crypto = require('crypto');
-    const emailHash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex').substring(0, 8);
+    const emailHash = crypto
+      .createHash('sha256')
+      .update(email.toLowerCase())
+      .digest('hex')
+      .substring(0, 8);
     return `${ip}:${emailHash}`;
   }
 
@@ -85,7 +90,7 @@ class RateLimitStore {
 
     // Get current attempts for this key
     let attemptInfo = this.attempts.get(key);
-    if (!attemptInfo || (now - attemptInfo.firstAttempt) > windowMs) {
+    if (!attemptInfo || now - attemptInfo.firstAttempt > windowMs) {
       // Reset window
       attemptInfo = {
         count: 0,
@@ -157,7 +162,7 @@ class RateLimitStore {
 
     // Clean old attempts
     for (const [key, attemptInfo] of this.attempts) {
-      if ((now - attemptInfo.firstAttempt) > windowMs) {
+      if (now - attemptInfo.firstAttempt > windowMs) {
         this.attempts.delete(key);
       }
     }
@@ -170,7 +175,7 @@ class RateLimitStore {
     }
 
     // Clean old unique IPs (reset daily)
-    if (this.lastIPCleanup && (now - this.lastIPCleanup) > (24 * 60 * 60 * 1000)) {
+    if (this.lastIPCleanup && now - this.lastIPCleanup > 24 * 60 * 60 * 1000) {
       this.metrics.uniqueIPs.clear();
       this.lastIPCleanup = now;
     } else if (!this.lastIPCleanup) {
@@ -178,7 +183,7 @@ class RateLimitStore {
     }
 
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Rate limiter cleanup:', {
+      logger.info('Rate limiter cleanup:', {
         activeAttempts: this.attempts.size,
         blockedKeys: this.blocked.size,
         uniqueIPs: this.metrics.uniqueIPs.size
@@ -220,11 +225,13 @@ const store = new RateLimitStore();
  * @returns {string}
  */
 function getClientIP(req) {
-  return req.ip || 
-         (req.connection && req.connection.remoteAddress) ||
-         (req.socket && req.socket.remoteAddress) ||
-         (req.connection && req.connection.socket && req.connection.socket.remoteAddress) ||
-         '127.0.0.1';
+  return (
+    req.ip ||
+    (req.connection && req.connection.remoteAddress) ||
+    (req.socket && req.socket.remoteAddress) ||
+    (req.connection && req.connection.socket && req.connection.socket.remoteAddress) ||
+    '127.0.0.1'
+  );
 }
 
 /**
@@ -244,9 +251,10 @@ function loginRateLimiter(req, res, next) {
   }
 
   // Only apply to login/auth endpoints
-  const isAuthEndpoint = req.path.includes('/auth/') || 
-                        req.path.includes('/login') || 
-                        req.method === 'POST' && req.body && req.body.email;
+  const isAuthEndpoint =
+    req.path.includes('/auth/') ||
+    req.path.includes('/login') ||
+    (req.method === 'POST' && req.body && req.body.email);
 
   if (!isAuthEndpoint) {
     return next();
@@ -254,20 +262,20 @@ function loginRateLimiter(req, res, next) {
 
   const ip = getClientIP(req);
   const email = (req.body && (req.body.email || req.body.username)) || 'unknown';
-  
+
   if (!email || email === 'unknown') {
     return next();
   }
 
   const key = store.getKey(ip, email);
-  
+
   // Check if currently blocked
   const blockStatus = store.isBlocked(key);
   if (blockStatus.blocked) {
     const remainingMinutes = Math.ceil(blockStatus.remainingMs / (60 * 1000));
-    
+
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Blocked login attempt:', { ip, key, remainingMs: blockStatus.remainingMs });
+      logger.info('Blocked login attempt:', { ip, key, remainingMs: blockStatus.remainingMs });
     }
 
     return res.status(429).json({
@@ -284,47 +292,48 @@ function loginRateLimiter(req, res, next) {
   const originalEnd = res.end;
   let responseIntercepted = false;
 
-  res.end = function(chunk, encoding) {
+  res.end = function (chunk, encoding) {
     if (!responseIntercepted) {
       responseIntercepted = true;
-      
+
       // Check if this was a failed login attempt
       const isFailure = res.statusCode >= 400;
-      
+
       if (isFailure) {
         // Record failed attempt
         const result = store.recordAttempt(key, ip);
-        
+
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Failed login attempt recorded:', { ip, key, result });
+          logger.info('Failed login attempt recorded:', { ip, key, result });
         }
-        
+
         if (result.blocked) {
           // Override response for newly blocked attempts
           res.statusCode = 429;
           const remainingMinutes = Math.ceil(result.remainingMs / (60 * 1000));
-          
+
           const blockResponse = JSON.stringify({
             success: false,
             error: 'Too many failed attempts. Account temporarily locked.',
             code: 'RATE_LIMITED',
             retryAfter: remainingMinutes,
-            message: 'For security reasons, this account has been temporarily locked. Please try again later.'
+            message:
+              'For security reasons, this account has been temporarily locked. Please try again later.'
           });
-          
+
           chunk = blockResponse;
           encoding = 'utf8';
         }
       } else if (res.statusCode >= 200 && res.statusCode < 300) {
         // Successful login - reset attempts
         store.recordSuccess(key);
-        
+
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Successful login, reset attempts:', { ip, key });
+          logger.info('Successful login, reset attempts:', { ip, key });
         }
       }
     }
-    
+
     originalEnd.call(this, chunk, encoding);
   };
 
@@ -345,7 +354,7 @@ function getRateLimitMetrics(req, res) {
   }
 
   const metrics = store.getMetrics();
-  
+
   res.json({
     success: true,
     data: {
@@ -370,7 +379,7 @@ function resetRateLimit(req, res) {
   }
 
   const { ip, email } = req.body;
-  
+
   if (!ip || !email) {
     return res.status(400).json({
       success: false,
@@ -380,7 +389,7 @@ function resetRateLimit(req, res) {
 
   const key = store.getKey(ip, email);
   store.recordSuccess(key);
-  
+
   res.json({
     success: true,
     message: 'Rate limit reset successfully',
@@ -392,7 +401,7 @@ function resetRateLimit(req, res) {
  * Rate limiting middleware specifically for password change attempts (Issue #133)
  * More restrictive than login attempts since these are sensitive operations
  * @param {Object} req - Express request object
- * @param {Object} res - Express response object  
+ * @param {Object} res - Express response object
  * @param {Function} next - Next middleware function
  */
 function passwordChangeRateLimiter(req, res, next) {
@@ -402,24 +411,29 @@ function passwordChangeRateLimiter(req, res, next) {
 
   const ip = getClientIP(req);
   const userId = req.user ? req.user.id : 'anonymous';
-  
+
   // Create specific key for password changes (using user ID instead of email for authenticated users)
   const crypto = require('crypto');
   const userHash = crypto.createHash('sha256').update(userId).digest('hex').substring(0, 8);
   const key = `pwd_change:${ip}:${userHash}`;
-  
+
   // More restrictive limits for password changes
   const windowMs = 60 * 60 * 1000; // 1 hour window
   const maxAttempts = 3; // Only 3 attempts per hour
   const blockDurationMs = 60 * 60 * 1000; // Block for 1 hour
-  
+
   // Check if currently blocked
   const blockStatus = store.isBlocked(key);
   if (blockStatus.blocked) {
     const remainingMinutes = Math.ceil(blockStatus.remainingMs / (60 * 1000));
-    
+
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Blocked password change attempt:', { ip, userId, key, remainingMs: blockStatus.remainingMs });
+      logger.info('Blocked password change attempt:', {
+        ip,
+        userId,
+        key,
+        remainingMs: blockStatus.remainingMs
+      });
     }
 
     return res.status(429).json({
@@ -435,18 +449,18 @@ function passwordChangeRateLimiter(req, res, next) {
   const originalEnd = res.end;
   let responseIntercepted = false;
 
-  res.end = function(chunk, encoding) {
+  res.end = function (chunk, encoding) {
     if (!responseIntercepted) {
       responseIntercepted = true;
-      
+
       // Check if this was a failed password change attempt
       const isFailure = res.statusCode >= 400;
-      
+
       if (isFailure) {
         // Get current attempts or create new entry
         const now = Date.now();
         let attemptInfo = store.attempts.get(key);
-        if (!attemptInfo || (now - attemptInfo.firstAttempt) > windowMs) {
+        if (!attemptInfo || now - attemptInfo.firstAttempt > windowMs) {
           attemptInfo = {
             count: 0,
             firstAttempt: now,
@@ -460,13 +474,15 @@ function passwordChangeRateLimiter(req, res, next) {
         store.attempts.set(key, attemptInfo);
 
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Failed password change attempt recorded:', { 
-            ip, userId, key, 
-            count: attemptInfo.count, 
-            maxAttempts 
+          logger.info('Failed password change attempt recorded:', {
+            ip,
+            userId,
+            key,
+            count: attemptInfo.count,
+            maxAttempts
           });
         }
-        
+
         // Check if should be blocked
         if (attemptInfo.count >= maxAttempts) {
           const blockExpiresAt = now + blockDurationMs;
@@ -478,11 +494,11 @@ function passwordChangeRateLimiter(req, res, next) {
 
           // Update metrics
           store.metrics.blockedAttempts++;
-          
+
           // Override response for newly blocked attempts
           res.statusCode = 429;
           const remainingMinutes = Math.ceil(blockDurationMs / (60 * 1000));
-          
+
           const blockResponse = JSON.stringify({
             success: false,
             error: 'Too many failed password change attempts. Account temporarily locked.',
@@ -490,7 +506,7 @@ function passwordChangeRateLimiter(req, res, next) {
             retryAfter: remainingMinutes,
             message: `For security reasons, password changes have been temporarily disabled for this account. Please wait ${remainingMinutes} minutes before trying again.`
           });
-          
+
           chunk = blockResponse;
           encoding = 'utf8';
         }
@@ -498,13 +514,13 @@ function passwordChangeRateLimiter(req, res, next) {
         // Successful password change - reset attempts
         store.attempts.delete(key);
         store.blocked.delete(key);
-        
+
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Successful password change, reset attempts:', { ip, userId, key });
+          logger.info('Successful password change, reset attempts:', { ip, userId, key });
         }
       }
     }
-    
+
     originalEnd.call(this, chunk, encoding);
   };
 

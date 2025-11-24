@@ -1,6 +1,6 @@
 /**
  * Shield Action Worker Tests
- * 
+ *
  * Tests for executing automated Shield moderation actions
  */
 
@@ -177,12 +177,12 @@ describe('ShieldActionWorker', () => {
       };
 
       // Mock action executor to throw error
-      worker.actionExecutor.executeAction = jest.fn().mockRejectedValue(
-        new Error('Platform API error')
-      );
+      worker.actionExecutor.executeAction = jest
+        .fn()
+        .mockRejectedValue(new Error('Platform API error'));
 
       await expect(worker.processJob(job)).rejects.toThrow('Platform API error');
-      
+
       expect(worker.workerMetrics.failedActions).toBe(1);
     });
 
@@ -195,21 +195,22 @@ describe('ShieldActionWorker', () => {
         }
       };
 
-      await expect(worker.processJob(job)).rejects.toThrow('Missing required Shield action parameters');
+      await expect(worker.processJob(job)).rejects.toThrow(
+        'Missing required Shield action parameters'
+      );
     });
-
   });
 
   describe('getSpecificHealthDetails', () => {
     test('should return comprehensive health status', async () => {
       const healthDetails = await worker.getSpecificHealthDetails();
-      
+
       expect(healthDetails).toHaveProperty('workerMetrics');
       expect(healthDetails).toHaveProperty('actionExecutor');
       expect(healthDetails).toHaveProperty('platformCapabilities');
       expect(healthDetails).toHaveProperty('persistence');
       expect(healthDetails).toHaveProperty('costControl');
-      
+
       expect(healthDetails.workerMetrics).toBe(worker.workerMetrics);
       expect(healthDetails.persistence.connected).toBe(true);
       expect(healthDetails.costControl.enabled).toBe(true);
@@ -219,7 +220,7 @@ describe('ShieldActionWorker', () => {
   describe('getWorkerMetrics', () => {
     test('should return combined metrics', () => {
       const metrics = worker.getWorkerMetrics();
-      
+
       expect(metrics).toHaveProperty('totalProcessed');
       expect(metrics).toHaveProperty('successfulActions');
       expect(metrics).toHaveProperty('failedActions');

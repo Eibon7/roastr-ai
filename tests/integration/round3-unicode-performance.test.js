@@ -20,30 +20,32 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
   afterAll(() => {
     // Log performance summary
     if (performanceMetrics.validationTimes.length > 0) {
-      const avgValidation = performanceMetrics.validationTimes.reduce((a, b) => a + b, 0) / performanceMetrics.validationTimes.length;
+      const avgValidation =
+        performanceMetrics.validationTimes.reduce((a, b) => a + b, 0) /
+        performanceMetrics.validationTimes.length;
       console.log(`Average validation time: ${avgValidation.toFixed(2)}ms`);
     }
   });
 
   describe('Frontend-Backend Character Counting Consistency', () => {
     const testTexts = [
-      { 
+      {
         text: 'Simple ASCII text',
         description: 'ASCII only'
       },
-      { 
+      {
         text: 'Text with émojis 🎉 and ñáüé',
         description: 'Latin diacritics and emoji'
       },
-      { 
+      {
         text: 'Mixed: ASCII + 中文 + 🌟',
         description: 'Multi-script with emoji'
       },
-      { 
+      {
         text: '👨‍👩‍👧‍👦 family emoji',
         description: 'Complex emoji sequence'
       },
-      { 
+      {
         text: 'Café naïve résumé piñata',
         description: 'Various diacritics'
       },
@@ -56,10 +58,10 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
     testTexts.forEach(({ text, description }) => {
       it(`should have consistent character counting for ${description}`, () => {
         const startTime = Date.now();
-        
+
         // Backend validation
         const backendResult = validator.validate(text, 'twitter');
-        
+
         const validationEndTime = Date.now();
         const validationTime = validationEndTime - startTime;
         performanceMetrics.validationTimes.push(validationTime);
@@ -95,7 +97,7 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
       });
 
       // All Twitter-normalized platforms should have identical results
-      const twitterResults = results.filter(r => 
+      const twitterResults = results.filter((r) =>
         ['X', 'x', 'x.com', 'twitter'].includes(r.platform)
       );
 
@@ -116,22 +118,22 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
 
       // Test various platform inputs that should normalize to twitter
       const twitterVariants = ['X', 'x', 'x.com', 'X.COM', 'twitter'];
-      
-      const results = twitterVariants.map(platform => {
+
+      const results = twitterVariants.map((platform) => {
         // Normalize platform as the validator would
         const normalizedPlatform = platform?.toLowerCase()?.trim();
         const platformMap = {
-          'x': 'twitter',
+          x: 'twitter',
           'x.com': 'twitter'
         };
         const finalPlatform = platformMap[normalizedPlatform] || normalizedPlatform || 'twitter';
-        
+
         return validator.validate(testText, finalPlatform);
       });
 
       // All results should be identical since they normalize to twitter
       const firstResult = results[0];
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.metadata.textLength).toBe(firstResult.metadata.textLength);
         expect(result.metadata.codeUnitLength).toBe(firstResult.metadata.codeUnitLength);
         expect(result.metadata.byteLengthUtf8).toBe(firstResult.metadata.byteLengthUtf8);
@@ -143,10 +145,10 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
       const complexText = '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Complex émoji with 中文';
 
       const platforms = ['twitter', 'facebook', 'instagram'];
-      
-      platforms.forEach(platform => {
+
+      platforms.forEach((platform) => {
         const result = validator.validate(complexText, platform);
-        
+
         expect(result.metadata.textLength).toBeGreaterThan(0);
         expect(result.metadata.codeUnitLength).toBeGreaterThan(0);
         expect(result.metadata.byteLengthUtf8).toBeGreaterThan(0);
@@ -156,15 +158,13 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
 
   describe('Performance Under Load', () => {
     it('should handle rapid sequential validations efficiently', () => {
-      const testTexts = Array(50).fill(0).map((_, i) => 
-        `Test ${i} with émojis 🎉 and Unicode 中文`
-      );
+      const testTexts = Array(50)
+        .fill(0)
+        .map((_, i) => `Test ${i} with émojis 🎉 and Unicode 中文`);
 
       const startTime = Date.now();
-      
-      const results = testTexts.map(text => 
-        validator.validate(text, 'twitter')
-      );
+
+      const results = testTexts.map((text) => validator.validate(text, 'twitter'));
 
       const endTime = Date.now();
       const totalTime = endTime - startTime;
@@ -191,15 +191,15 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
         'Émojis çafé naïve résumé',
         '🇺🇸🇪🇸🇫🇷🇩🇪'
       ];
-      
+
       const largeText = Array(20).fill(unicodeBlocks.join(' ')).join('\n');
-      
+
       const startTime = Date.now();
       const result = validator.validate(largeText, 'twitter');
       const endTime = Date.now();
-      
+
       const executionTime = endTime - startTime;
-      
+
       expect(result.metadata.textLength).toBeGreaterThan(0);
       expect(result.metadata.codeUnitLength).toBeGreaterThan(0);
       expect(result.metadata.byteLengthUtf8).toBeGreaterThan(0);
@@ -210,19 +210,19 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
       const text = 'Performance test with platform normalization 🎯';
       const platforms = ['X', 'x', 'x.com', 'twitter'];
       const iterations = 100;
-      
+
       const startTime = Date.now();
-      
+
       for (let i = 0; i < iterations; i++) {
         const platform = platforms[i % platforms.length];
         const result = validator.validate(text, platform);
         expect(result.valid).toBeDefined();
       }
-      
+
       const endTime = Date.now();
       const totalTime = endTime - startTime;
       const averageTime = totalTime / iterations;
-      
+
       expect(averageTime).toBeLessThan(100); // Less than 100ms per validation (CI-friendly)
     });
   });
@@ -230,46 +230,48 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
   describe('Memory Management', () => {
     it('should not leak memory during extensive testing', () => {
       const initialMemory = process.memoryUsage();
-      
+
       // Perform many operations
       for (let i = 0; i < 1000; i++) {
         const text = `Memory test ${i} with Unicode 🧠 and émojis 🎭`;
         validator.validate(text, 'twitter');
       }
-      
+
       // Force garbage collection if available
       if (global.gc) {
         global.gc();
       }
-      
+
       const finalMemory = process.memoryUsage();
       const memoryIncrease = finalMemory.heapUsed - initialMemory.heapUsed;
-      
+
       // Track memory metrics for analysis
       performanceMetrics.memoryUsage.push({
         initial: initialMemory.heapUsed,
         final: finalMemory.heapUsed,
         increase: memoryIncrease
       });
-      
+
       // Memory increase should be reasonable (less than 50MB for this test)
       expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024);
     });
 
     it('should clean up resources properly', () => {
       const text = 'Resource cleanup test 🧹';
-      
+
       // Create and use multiple validator instances
-      const validators = Array(10).fill(0).map(() => new StyleValidator());
-      
+      const validators = Array(10)
+        .fill(0)
+        .map(() => new StyleValidator());
+
       validators.forEach((v, index) => {
         const result = v.validate(`${text} ${index}`, 'twitter');
         expect(result.valid).toBeDefined();
       });
-      
+
       // Clear references
       validators.length = 0;
-      
+
       // This test mainly ensures no errors occur during cleanup
       expect(true).toBe(true);
     });
@@ -280,22 +282,22 @@ describe('Round 3 Unicode Performance Integration Tests', () => {
       const spamText = 'aaaaaaaaaaaaa'; // Should trigger spam detection
       const insultText = 'eres un idiota'; // Should trigger insult detection
       const disclaimerText = 'Powered by Roastr'; // Should trigger disclaimer detection
-      
+
       const texts = [spamText, insultText, disclaimerText];
-      
+
       // Run multiple validations to test pattern reuse
       const startTime = Date.now();
-      
+
       for (let i = 0; i < 100; i++) {
-        texts.forEach(text => {
+        texts.forEach((text) => {
           const result = validator.validate(text, 'twitter');
           expect(result.valid).toBe(false); // All should fail validation
         });
       }
-      
+
       const endTime = Date.now();
       const totalTime = endTime - startTime;
-      
+
       // Should complete efficiently due to pattern reuse
       expect(totalTime).toBeLessThan(1000); // Under 1 second for 300 validations
     });

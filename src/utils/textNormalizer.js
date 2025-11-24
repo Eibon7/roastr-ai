@@ -23,7 +23,9 @@ function normalizeUnicode(text, form = 'NFC') {
 
   const validForms = ['NFC', 'NFD', 'NFKC', 'NFKD'];
   if (!validForms.includes(form)) {
-    throw new Error(`Invalid normalization form: ${form}. Must be one of: ${validForms.join(', ')}`);
+    throw new Error(
+      `Invalid normalization form: ${form}. Must be one of: ${validForms.join(', ')}`
+    );
   }
 
   return text.normalize(form);
@@ -67,20 +69,20 @@ function sanitizeUrl(url, options = {}) {
   // Comprehensive dangerous protocol blocklist (defense in depth)
   // Even though we use whitelist, block known dangerous protocols explicitly
   const dangerousProtocols = [
-    /^javascript:/i,      // Direct script execution
-    /^data:/i,            // Data URIs (can contain HTML/SVG with script)
-    /^vbscript:/i,        // VBScript (legacy IE)
-    /^file:/i,            // Local file access
-    /^about:/i,           // Browser internal pages
-    /^blob:/i,            // Blob URLs (can contain malicious content)
-    /^filesystem:/i,      // Filesystem access
-    /^jar:/i,             // Java Archive (legacy)
-    /^chrome:/i,          // Chrome internal
-    /^chrome-extension:/i,// Chrome extension
-    /^view-source:/i      // View source (can nest dangerous protocols)
+    /^javascript:/i, // Direct script execution
+    /^data:/i, // Data URIs (can contain HTML/SVG with script)
+    /^vbscript:/i, // VBScript (legacy IE)
+    /^file:/i, // Local file access
+    /^about:/i, // Browser internal pages
+    /^blob:/i, // Blob URLs (can contain malicious content)
+    /^filesystem:/i, // Filesystem access
+    /^jar:/i, // Java Archive (legacy)
+    /^chrome:/i, // Chrome internal
+    /^chrome-extension:/i, // Chrome extension
+    /^view-source:/i // View source (can nest dangerous protocols)
   ];
 
-  if (dangerousProtocols.some(pattern => pattern.test(canonicalized))) {
+  if (dangerousProtocols.some((pattern) => pattern.test(canonicalized))) {
     return null;
   }
 
@@ -130,7 +132,7 @@ function normalizeQuotes(text, options = {}) {
   if (style === 'straight') {
     // Convert all smart quotes to straight quotes
     return text
-      .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")  // Single quotes
+      .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'") // Single quotes
       .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"'); // Double quotes
   } else if (style === 'smart') {
     // Convert straight quotes to smart quotes (basic heuristic)
@@ -177,8 +179,8 @@ function normalizeSpaces(text, options = {}) {
 
   // Normalize line breaks (CRLF, CR → LF)
   if (normalizeLineBreaks) {
-    result = result.replace(/\r\n/g, '\n');  // CRLF → LF
-    result = result.replace(/\r/g, '\n');     // CR → LF
+    result = result.replace(/\r\n/g, '\n'); // CRLF → LF
+    result = result.replace(/\r/g, '\n'); // CR → LF
   }
 
   // Trim leading/trailing whitespace (do this first)

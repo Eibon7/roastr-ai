@@ -18,12 +18,7 @@
     "health_scoring": "HEALTHY",
     "auto_repair_needed": false
   },
-  "files_protected": [
-    "spec.md",
-    "system-map.yaml",
-    "docs/nodes/**/*.md",
-    "CLAUDE.md"
-  ],
+  "files_protected": ["spec.md", "system-map.yaml", "docs/nodes/**/*.md", "CLAUDE.md"],
   "git_tag": "gdd-2.0-maintenance",
   "reports": [
     "system-validation.txt",

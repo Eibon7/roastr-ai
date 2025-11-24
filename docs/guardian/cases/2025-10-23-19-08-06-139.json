@@ -3,9 +3,7 @@
   "timestamp": "2025-10-23T19:08:06.139Z",
   "actor": "emiliopostigo",
   "domains": [],
-  "files_changed": [
-    "docs/agents/receipts/640-Guardian.md"
-  ],
+  "files_changed": ["docs/agents/receipts/640-Guardian.md"],
   "severity": "SAFE",
   "action": "APPROVED",
   "violations": {

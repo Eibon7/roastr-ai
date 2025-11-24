@@ -55,12 +55,14 @@ npx jest --verbose
 ## 📊 Cobertura de Tests
 
 ### Objetivos de Cobertura
+
 - **Funciones**: >90%
 - **Líneas**: >85%
 - **Branches**: >80%
 - **Statements**: >85%
 
 ### Ver Reporte de Cobertura
+
 Después de ejecutar `npm run test:coverage`:
 
 ```bash
@@ -77,12 +79,14 @@ xdg-open coverage/lcov-report/index.html  # Linux
 ### Tests Unitarios (`/unit`)
 
 **Características:**
+
 - Prueban componentes individuales de forma aislada
 - Usan mocks para todas las dependencias externas
 - Son rápidos y determinísticos
 - No requieren conexión a internet ni APIs reales
 
 **Cobertura actual:**
+
 - ✅ `RoastGeneratorReal`: Generación de roasts con diferentes tonos
 - ✅ `CsvRoastService`: Búsqueda inteligente en CSV, cache, CRUD
 - ✅ `TwitterRoastBot`: Rate limiting, error handling, tweet processing
@@ -90,12 +94,14 @@ xdg-open coverage/lcov-report/index.html  # Linux
 ### Tests de Integración (`/integration`)
 
 **Características:**
+
 - Prueban el comportamiento end-to-end de las APIs
 - Simulan requests HTTP reales
 - Validan la integración entre componentes
 - Usan mocks para servicios externos (OpenAI, Twitter)
 
 **Cobertura actual:**
+
 - ✅ `POST /roast`: Generación con diferentes tonos y validación
 - ✅ `POST /csv-roast`: Búsqueda en CSV y manejo de errores
 - ✅ `GET /csv-stats`: Estadísticas del servicio CSV
@@ -129,10 +135,10 @@ describe('NuevoServicio', () => {
   test('debe funcionar correctamente', () => {
     // Arrange
     const input = 'test input';
-    
+
     // Act
     const result = servicio.metodo(input);
-    
+
     // Assert
     expect(result).toBe('expected output');
   });
@@ -148,10 +154,7 @@ const app = require('../../src/app'); // Importar la app Express
 
 describe('POST /nuevo-endpoint', () => {
   test('debe responder correctamente', async () => {
-    const response = await request(app)
-      .post('/nuevo-endpoint')
-      .send({ data: 'test' })
-      .expect(200);
+    const response = await request(app).post('/nuevo-endpoint').send({ data: 'test' }).expect(200);
 
     expect(response.body).toHaveProperty('result');
   });
@@ -164,17 +167,17 @@ describe('POST /nuevo-endpoint', () => {
 
 ```javascript
 const {
-  createMockOpenAIResponse,    // Mock respuesta de OpenAI
-  getMockRoastByTone,          // Mock roast por tono
-  createMockTwitterUser,       // Mock usuario de Twitter
-  createMockTweet,             // Mock tweet
-  getMockCsvData,              // Datos CSV de prueba
-  getValidTestData,            // Datos válidos para endpoints
-  setMockEnvVars,              // Configurar env vars para tests
-  cleanupMocks,                // Limpiar mocks después de tests
-  delay,                       // Utility para delays async
-  generateTestId,              // Generar IDs únicos para tests
-  validateApiResponse          // Validar estructura de respuesta
+  createMockOpenAIResponse, // Mock respuesta de OpenAI
+  getMockRoastByTone, // Mock roast por tono
+  createMockTwitterUser, // Mock usuario de Twitter
+  createMockTweet, // Mock tweet
+  getMockCsvData, // Datos CSV de prueba
+  getValidTestData, // Datos válidos para endpoints
+  setMockEnvVars, // Configurar env vars para tests
+  cleanupMocks, // Limpiar mocks después de tests
+  delay, // Utility para delays async
+  generateTestId, // Generar IDs únicos para tests
+  validateApiResponse // Validar estructura de respuesta
 } = require('./helpers/testUtils');
 ```
 
@@ -186,16 +189,18 @@ test('descripción del test', () => {
   // Arrange: configurar datos y mocks
   const input = 'test';
   mock.mockReturnValue('expected');
-  
+
   // Act: ejecutar la función a testear
   const result = functionUnderTest(input);
-  
+
   // Assert: verificar el resultado
   expect(result).toBe('expected');
 });
 
 // 2. Describir lo que hace, no cómo lo hace
-test('debe generar roast sarcástico', () => { /* ... */ });
+test('debe generar roast sarcástico', () => {
+  /* ... */
+});
 // ❌ test('debe llamar a openai.chat.completions.create', () => { /* ... */ });
 
 // 3. Usar nombres descriptivos para variables
@@ -235,10 +240,10 @@ test('debug test', () => {
 test('verificar mock calls', () => {
   // Ver todas las llamadas a un mock
   console.log(mockFunction.mock.calls);
-  
+
   // Ver argumentos de la primera llamada
   console.log(mockFunction.mock.calls[0]);
-  
+
   // Verificar cuántas veces se llamó
   expect(mockFunction).toHaveBeenCalledTimes(1);
 });
@@ -259,11 +264,13 @@ Cuando añadas una nueva funcionalidad:
 ## 🔄 Integración Continua
 
 Los tests se ejecutan automáticamente en:
+
 - ✅ Cada commit (pre-commit hook)
 - ✅ Pull requests hacia main
 - ✅ Deploy a staging
 
 ### Configuración CI/CD
+
 ```yaml
 # .github/workflows/test.yml (ejemplo)
 name: Tests
@@ -284,18 +291,21 @@ jobs:
 ### Problemas Comunes
 
 1. **"Cannot find module"**
+
    ```bash
    # Verificar que todas las dependencias estén instaladas
    npm install
    ```
 
 2. **"Timeout"**
+
    ```javascript
    // Aumentar timeout para tests lentos
    jest.setTimeout(15000); // 15 segundos
    ```
 
 3. **"Mock is not a function"**
+
    ```javascript
    // Verificar que el mock esté correctamente configurado
    mockFunction.mockImplementation(() => 'result');

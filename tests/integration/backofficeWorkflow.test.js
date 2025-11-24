@@ -1,7 +1,7 @@
 /**
  * Integration Tests for Backoffice Workflow
  * Issue #371: SPEC 15 — Backoffice (MVP): thresholds globales, flags y soporte básico
- * 
+ *
  * Tests the complete backoffice workflow including:
  * - Global thresholds management
  * - Feature flags control
@@ -33,9 +33,9 @@ const { supabaseServiceClient } = require('../../src/config/supabase');
 // Mock authentication middleware
 jest.mock('../../src/middleware/auth', () => ({
   authenticateToken: jest.fn((req, res, next) => {
-    req.user = { 
-      id: 'admin-123', 
-      email: 'admin@roastr.ai', 
+    req.user = {
+      id: 'admin-123',
+      email: 'admin@roastr.ai',
       is_admin: true,
       name: 'Test Admin'
     };
@@ -49,9 +49,9 @@ jest.mock('../../src/middleware/auth', () => ({
 // Mock the admin middleware
 jest.mock('../../src/middleware/isAdmin', () => ({
   isAdminMiddleware: jest.fn((req, res, next) => {
-    req.user = { 
-      id: 'admin-123', 
-      email: 'admin@roastr.ai', 
+    req.user = {
+      id: 'admin-123',
+      email: 'admin@roastr.ai',
       is_admin: true,
       name: 'Test Admin'
     };
@@ -92,8 +92,8 @@ function configureThresholdsForTable() {
             single: jest.fn().mockResolvedValue({
               data: {
                 tau_roast_lower: 0.25,
-                tau_shield: 0.70,
-                tau_critical: 0.90,
+                tau_shield: 0.7,
+                tau_critical: 0.9,
                 aggressiveness: 95
               },
               error: null
@@ -107,7 +107,7 @@ function configureThresholdsForTable() {
                 data: {
                   id: 'global-1',
                   scope: 'global',
-                  tau_roast_lower: 0.20,
+                  tau_roast_lower: 0.2,
                   tau_shield: 0.65,
                   tau_critical: 0.85,
                   aggressiveness: 98,
@@ -275,10 +275,10 @@ app.use('/api/admin', adminRoutes);
 describe('Backoffice Integration Workflow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-      // Mock environment variables for API credentials
-      process.env.TWITTER_BEARER_TOKEN = 'mock-twitter-token';
-      process.env.YOUTUBE_API_KEY = 'mock-youtube-key';
-      supabaseServiceClient._reset();
+    // Mock environment variables for API credentials
+    process.env.TWITTER_BEARER_TOKEN = 'mock-twitter-token';
+    process.env.YOUTUBE_API_KEY = 'mock-youtube-key';
+    supabaseServiceClient._reset();
   });
 
   afterEach(() => {
@@ -317,32 +317,29 @@ describe('Backoffice Integration Workflow', () => {
     async function updateGlobalThresholds() {
       configureThresholdsForTable();
 
-      return request(app)
-        .put('/api/admin/backoffice/thresholds')
-        .send({
-          tau_roast_lower: 0.20,
-          tau_shield: 0.65,
-          tau_critical: 0.85,
-          aggressiveness: 98
-        });
+      return request(app).put('/api/admin/backoffice/thresholds').send({
+        tau_roast_lower: 0.2,
+        tau_shield: 0.65,
+        tau_critical: 0.85,
+        aggressiveness: 98
+      });
     }
 
     // Helper function to update feature flag
     async function updateFeatureFlag() {
       configureFeatureFlagsForTable();
 
-      return request(app)
-        .put('/api/admin/feature-flags/shop_enabled')
-        .send({
-          is_enabled: true,
-          description: 'Enable shop functionality for MVP launch'
-        });
+      return request(app).put('/api/admin/feature-flags/shop_enabled').send({
+        is_enabled: true,
+        description: 'Enable shop functionality for MVP launch'
+      });
     }
 
     // Helper function to run healthcheck
     async function runHealthcheck() {
       // Mock fetch for API calls
-      global.fetch = jest.fn()
+      global.fetch = jest
+        .fn()
         .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' })
         .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK' });
 
@@ -356,7 +353,7 @@ describe('Backoffice Integration Workflow', () => {
 
       // Clean up mock
       global.fetch.mockRestore();
-      
+
       return response;
     }
 
@@ -386,8 +383,7 @@ describe('Backoffice Integration Workflow', () => {
 
       configureAuditLogsExport(mockAuditLogs);
 
-      return request(app)
-        .get('/api/admin/backoffice/audit/export?format=csv&days=1');
+      return request(app).get('/api/admin/backoffice/audit/export?format=csv&days=1');
     }
   });
 
@@ -396,9 +392,7 @@ describe('Backoffice Integration Workflow', () => {
       // Mock database error
       configureDatabaseError();
 
-      const response = await request(app)
-        .get('/api/admin/backoffice/thresholds')
-        .expect(500);
+      const response = await request(app).get('/api/admin/backoffice/thresholds').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to retrieve global thresholds');
@@ -409,9 +403,9 @@ describe('Backoffice Integration Workflow', () => {
       const response = await request(app)
         .put('/api/admin/backoffice/thresholds')
         .send({
-          tau_roast_lower: 0.80,  // Invalid: > tau_shield
-          tau_shield: 0.70,
-          tau_critical: 0.90,
+          tau_roast_lower: 0.8, // Invalid: > tau_shield
+          tau_shield: 0.7,
+          tau_critical: 0.9,
           aggressiveness: 95
         })
         .expect(400);
@@ -426,7 +420,7 @@ describe('Backoffice Integration Workflow', () => {
       await request(app)
         .put('/api/admin/backoffice/thresholds')
         .send({
-          tau_roast_lower: 0.20,
+          tau_roast_lower: 0.2,
           tau_shield: 0.65,
           tau_critical: 0.85,
           aggressiveness: 98
@@ -462,10 +456,10 @@ describe('Backoffice Integration Workflow', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual(mockAuditLogs);
-      
+
       // Verify no Roastr Persona or other sensitive user data is included
       const auditData = response.body.data;
-      auditData.forEach(log => {
+      auditData.forEach((log) => {
         expect(log).not.toHaveProperty('user_persona');
         expect(log).not.toHaveProperty('user_roast_persona');
         expect(log).not.toHaveProperty('sensitive_user_data');

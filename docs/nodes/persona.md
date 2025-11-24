@@ -20,6 +20,7 @@
 The Persona system allows users to define their unique roasting personality through three core components: personal identity, zero-tolerance boundaries, and tolerance preferences. It uses encrypted storage, semantic embeddings for intelligent matching, and plan-based feature gating to deliver personalized AI-generated roasts.
 
 **✅ Implementation Status: 100% Complete**
+
 - ✅ Issue #595: Persona Setup & API endpoints (PR #499, #600)
 - ✅ Issue #615: Persona-Roast Integration (PR #633)
 - ✅ Issue #649: Documentation (Current PR)
@@ -39,21 +40,23 @@ All acceptance criteria met. Persona data is successfully retrieved during roast
 
 ### API Endpoints (src/routes/persona.js)
 
-| Method | Endpoint | Description | Auth | Plan Required |
-|--------|----------|-------------|------|---------------|
-| `GET` | `/api/persona` | Get current user's persona fields (decrypted) | ✅ JWT | Starter+ |
-| `POST` | `/api/persona` | Create/Update persona fields | ✅ JWT | Starter+ (lo_que_me_da_igual: Pro+) |
-| `DELETE` | `/api/persona` | Delete all persona fields | ✅ JWT | Starter+ |
-| `GET` | `/api/persona/health` | Health check endpoint | ❌ Public | None |
+| Method   | Endpoint              | Description                                   | Auth      | Plan Required                       |
+| -------- | --------------------- | --------------------------------------------- | --------- | ----------------------------------- |
+| `GET`    | `/api/persona`        | Get current user's persona fields (decrypted) | ✅ JWT    | Starter+                            |
+| `POST`   | `/api/persona`        | Create/Update persona fields                  | ✅ JWT    | Starter+ (lo_que_me_da_igual: Pro+) |
+| `DELETE` | `/api/persona`        | Delete all persona fields                     | ✅ JWT    | Starter+                            |
+| `GET`    | `/api/persona/health` | Health check endpoint                         | ❌ Public | None                                |
 
 **Authentication:** All endpoints (except health) require valid JWT token via `authenticateToken` middleware.
 
 **Plan Gating:**
+
 - `lo_que_me_define` (Identity): Starter+
 - `lo_que_no_tolero` (Intolerance): Starter+
 - `lo_que_me_da_igual` (Tolerance): Pro+ **only**
 
 **Request Body Example:**
+
 ```javascript
 {
   "lo_que_me_define": "Soy desarrollador sarcástico, me encanta el humor técnico",
@@ -63,6 +66,7 @@ All acceptance criteria met. Persona data is successfully retrieved during roast
 ```
 
 **Response Format:**
+
 ```javascript
 {
   "success": true,
@@ -114,6 +118,7 @@ users table (core persona fields):
 **Purpose:** Defines user's identity, humor style, and roasting personality
 
 **Examples:**
+
 - "Soy desarrollador sarcástico, me encanta el humor técnico"
 - "Fan de los 90s, humor nostálgico y referencias retro"
 - "Ironía británica, humor seco y sofisticado"
@@ -121,6 +126,7 @@ users table (core persona fields):
 **Character Limit:** 300 characters (encrypted storage ~400-500 chars)
 
 **Use Cases:**
+
 - Personalize roast tone and references
 - Match humor style to user's personality
 - Generate contextual jokes and wordplay
@@ -130,6 +136,7 @@ users table (core persona fields):
 **Purpose:** Auto-blocking preferences for content user never wants to see
 
 **Examples:**
+
 - "Ataques a mi familia, body shaming, racismo"
 - "Comentarios sobre mi discapacidad"
 - "Bromas sobre tragedias o pérdidas personales"
@@ -139,6 +146,7 @@ users table (core persona fields):
 **Security Impact:** HIGH - Affects automatic blocking
 
 **Use Cases:**
+
 - Semantic auto-blocking of matching content
 - Red line violations in Shield system
 - Content filtering with zero false negatives
@@ -148,6 +156,7 @@ users table (core persona fields):
 **Purpose:** Reduces false positives by allowing content user considers harmless
 
 **Examples:**
+
 - "Humor negro, bromas de mal gusto, sarcasmo extremo"
 - "Palabrotas, lenguaje vulgar"
 - "Referencias a videojuegos violentos"
@@ -157,6 +166,7 @@ users table (core persona fields):
 **Security Impact:** MEDIUM - Allows more content through
 
 **Use Cases:**
+
 - False positive reduction in toxicity detection
 - Personalized toxicity threshold adjustment
 - Content allowlist for user-specific tolerances
@@ -214,11 +224,13 @@ ORDER BY similarity_score DESC;
 **Storage Format:** Base64-encoded encrypted text
 
 **Encryption Flow:**
+
 ```javascript
 plaintext → AES-256-GCM encrypt → Base64 encode → Store in *_encrypted field
 ```
 
 **Decryption Flow:**
+
 ```javascript
 Base64 decode → AES-256-GCM decrypt → Return plaintext (only to owner)
 ```
@@ -226,12 +238,14 @@ Base64 decode → AES-256-GCM decrypt → Return plaintext (only to owner)
 #### Row Level Security (RLS)
 
 **Policy:** `user_isolation`
+
 ```sql
 CREATE POLICY user_isolation ON users
   USING (auth.uid() = id);
 ```
 
 **Effect:**
+
 - Users can only read/write their own persona fields
 - Service role bypasses RLS for background jobs
 - Zero data leakage between users
@@ -243,17 +257,17 @@ CREATE POLICY user_isolation ON users
 
 #### Logged Actions
 
-| Action | Trigger | Details |
-|--------|---------|---------|
-| `roastr_persona_identity_created` | First definition of identity | Field set from NULL |
-| `roastr_persona_identity_updated` | Identity changed | Field content modified |
-| `roastr_persona_identity_deleted` | Identity removed | Field set to NULL |
-| `roastr_persona_intolerance_created` | First intolerance set | Zero-tolerance boundary created |
-| `roastr_persona_intolerance_updated` | Intolerance changed | Blocking rules modified |
-| `roastr_persona_intolerance_deleted` | Intolerance removed | Auto-blocking disabled |
-| `roastr_persona_tolerance_created` | First tolerance set | Allowlist preferences created |
-| `roastr_persona_tolerance_updated` | Tolerance changed | False positive rules modified |
-| `roastr_persona_tolerance_deleted` | Tolerance removed | Allowlist disabled |
+| Action                               | Trigger                      | Details                         |
+| ------------------------------------ | ---------------------------- | ------------------------------- |
+| `roastr_persona_identity_created`    | First definition of identity | Field set from NULL             |
+| `roastr_persona_identity_updated`    | Identity changed             | Field content modified          |
+| `roastr_persona_identity_deleted`    | Identity removed             | Field set to NULL               |
+| `roastr_persona_intolerance_created` | First intolerance set        | Zero-tolerance boundary created |
+| `roastr_persona_intolerance_updated` | Intolerance changed          | Blocking rules modified         |
+| `roastr_persona_intolerance_deleted` | Intolerance removed          | Auto-blocking disabled          |
+| `roastr_persona_tolerance_created`   | First tolerance set          | Allowlist preferences created   |
+| `roastr_persona_tolerance_updated`   | Tolerance changed            | False positive rules modified   |
+| `roastr_persona_tolerance_deleted`   | Tolerance removed            | Allowlist disabled              |
 
 #### Audit Log Entry
 
@@ -285,14 +299,14 @@ CREATE POLICY user_isolation ON users
 
 ### Feature Access by Plan
 
-| Feature | Free | Starter | Pro | Plus |
-|---------|------|---------|-----|------|
-| **Lo que me define** | ❌ | ✅ | ✅ | ✅ |
-| **Lo que no tolero** | ❌ | ✅ | ✅ | ✅ |
-| **Lo que me da igual** | ❌ | ❌ | ✅ | ✅ |
-| **Semantic embeddings** | ❌ | ✅ (1 field) | ✅ (3 fields) | ✅ (3 fields) |
-| **Custom style prompt** | ❌ | ❌ | ❌ | ✅ (admin-configured) |
-| **Visibility settings** | ❌ | ❌ | ✅ | ✅ |
+| Feature                 | Free | Starter      | Pro           | Plus                  |
+| ----------------------- | ---- | ------------ | ------------- | --------------------- |
+| **Lo que me define**    | ❌   | ✅           | ✅            | ✅                    |
+| **Lo que no tolero**    | ❌   | ✅           | ✅            | ✅                    |
+| **Lo que me da igual**  | ❌   | ❌           | ✅            | ✅                    |
+| **Semantic embeddings** | ❌   | ✅ (1 field) | ✅ (3 fields) | ✅ (3 fields)         |
+| **Custom style prompt** | ❌   | ❌           | ❌            | ✅ (admin-configured) |
+| **Visibility settings** | ❌   | ❌           | ✅            | ✅                    |
 
 ### Feature Flag
 
@@ -454,11 +468,13 @@ async generateWithBasicModeration(text, toxicityScore, tone, rqcConfig) {
 **Access:** Admin-configured, Plus plan only
 
 **Example:**
+
 ```
 "Eres un roaster que habla como un pirata del siglo XXI. Usa jerga moderna mezclada con términos náuticos. Siempre incluye referencias a la tecnología como si fueran tesoros."
 ```
 
 **Integration:**
+
 ```javascript
 // In prompt template
 if (flags.isEnabled('ENABLE_CUSTOM_PROMPT') && userConfig.custom_style_prompt) {
@@ -632,7 +648,7 @@ function encrypt(plaintext, key) {
 }
 
 // Update identity
-const identity = "Soy desarrollador sarcástico, me encanta el humor técnico";
+const identity = 'Soy desarrollador sarcástico, me encanta el humor técnico';
 const encrypted = encrypt(identity, process.env.ENCRYPTION_KEY);
 
 const { data, error } = await supabaseServiceClient
@@ -661,13 +677,13 @@ async function generateEmbedding(userId, field, text) {
     encoding_format: 'float'
   });
 
-  const embedding = response.data[0].embedding;  // Array of 1536 floats
+  const embedding = response.data[0].embedding; // Array of 1536 floats
 
   // Store in database
   const fieldMapping = {
-    'lo_que_me_define': 'lo_que_me_define_embedding',
-    'lo_que_no_tolero': 'lo_que_no_tolero_embedding',
-    'lo_que_me_da_igual': 'lo_que_me_da_igual_embedding'
+    lo_que_me_define: 'lo_que_me_define_embedding',
+    lo_que_no_tolero: 'lo_que_no_tolero_embedding',
+    lo_que_me_da_igual: 'lo_que_me_da_igual_embedding'
   };
 
   await supabaseServiceClient
@@ -706,7 +722,7 @@ async function checkSemanticBlocking(userId, commentText) {
     user.lo_que_no_tolero_embedding
   );
 
-  const threshold = 0.85;  // 85% similarity triggers blocking
+  const threshold = 0.85; // 85% similarity triggers blocking
 
   if (similarity >= threshold) {
     return {
@@ -754,40 +770,44 @@ if (user?.lo_que_me_define_encrypted) {
 
 ### Unit Tests
 
-| Test File | Coverage | Focus | Status |
-|-----------|----------|-------|--------|
-| `tests/unit/services/PersonaService.test.js` | 100% | PersonaService CRUD, plan gating, encryption, healthCheck | ✅ 36 tests passing (PR #600) |
-| `tests/unit/utils/encryption.test.js` | 100% | AES-256-GCM encryption/decryption, key management | ✅ Implemented (PR #600) |
+| Test File                                    | Coverage | Focus                                                     | Status                        |
+| -------------------------------------------- | -------- | --------------------------------------------------------- | ----------------------------- |
+| `tests/unit/services/PersonaService.test.js` | 100%     | PersonaService CRUD, plan gating, encryption, healthCheck | ✅ 36 tests passing (PR #600) |
+| `tests/unit/utils/encryption.test.js`        | 100%     | AES-256-GCM encryption/decryption, key management         | ✅ Implemented (PR #600)      |
 
 ### Integration Tests
 
-| Test File | Focus | Status |
-|-----------|-------|--------|
-| `tests/integration/persona-api.test.js` | Complete API workflow, auth, security, plan gating | ✅ 26 tests passing (PR #600) |
+| Test File                                             | Focus                                                                            | Status                             |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------- |
+| `tests/integration/persona-api.test.js`               | Complete API workflow, auth, security, plan gating                               | ✅ 26 tests passing (PR #600)      |
 | `tests/integration/roast-persona-integration.test.js` | **Persona-Roast Integration**, E2E flow PersonaService → RoastGenerator → Prompt | ✅ **9/9 tests passing (PR #633)** |
-| `tests/e2e/auth-complete-flow.test.js` | End-to-end user authentication and persona setup | ✅ Updated (PR #600) |
+| `tests/e2e/auth-complete-flow.test.js`                | End-to-end user authentication and persona setup                                 | ✅ Updated (PR #600)               |
 
 ### Test Scenarios
 
 **Encryption:**
+
 - Encrypt/decrypt round-trip maintains original text
 - Different keys produce different ciphertexts
 - Tampered ciphertext fails decryption
 - Null/empty values handled gracefully
 
 **Embeddings:**
+
 - Semantic similarity matches related content
 - Different content produces low similarity scores
 - Model/version mismatch triggers regeneration
 - Embedding generation handles API failures
 
 **Security:**
+
 - RLS prevents cross-user access
 - SQL injection attempts are sanitized
 - Character limits enforced (300 chars plaintext, 500 encrypted)
 - Audit logs capture all changes
 
 **Plan Gating:**
+
 - Free plan blocked from all persona features
 - Starter gets identity + intolerance only
 - Pro gets all three fields + embeddings
@@ -795,24 +815,24 @@ if (user?.lo_que_me_define_encrypted) {
 
 ## Feature Flags
 
-| Flag | Default | Purpose |
-|------|---------|---------|
-| `ENABLE_STYLE_PROFILE` | `true` | Enable persona configuration UI |
-| `ENABLE_CUSTOM_PROMPT` | `false` | Allow custom style prompts (Plus plan) |
-| `ENABLE_SEMANTIC_BLOCKING` | `true` | Enable embedding-based content blocking |
+| Flag                       | Default | Purpose                                 |
+| -------------------------- | ------- | --------------------------------------- |
+| `ENABLE_STYLE_PROFILE`     | `true`  | Enable persona configuration UI         |
+| `ENABLE_CUSTOM_PROMPT`     | `false` | Allow custom style prompts (Plus plan)  |
+| `ENABLE_SEMANTIC_BLOCKING` | `true`  | Enable embedding-based content blocking |
 
 ## Error Handling
 
 ### Common Errors
 
-| Error | Cause | Resolution |
-|-------|-------|-----------|
-| `Encryption key not found` | Missing ENCRYPTION_KEY env var | Configure encryption key in environment |
-| `Embedding generation failed` | OpenAI API error | Retry with exponential backoff, log failure |
-| `Character limit exceeded` | Input > 300 chars | Truncate or reject with validation error |
-| `Plan restriction` | Feature not available for user's plan | Upgrade prompt or feature disabled |
-| `Semantic similarity timeout` | Vector search too slow | Index optimization, query timeout |
-| `Decryption failed` | Corrupted ciphertext or wrong key | Re-encrypt with current key, audit log |
+| Error                         | Cause                                 | Resolution                                  |
+| ----------------------------- | ------------------------------------- | ------------------------------------------- |
+| `Encryption key not found`    | Missing ENCRYPTION_KEY env var        | Configure encryption key in environment     |
+| `Embedding generation failed` | OpenAI API error                      | Retry with exponential backoff, log failure |
+| `Character limit exceeded`    | Input > 300 chars                     | Truncate or reject with validation error    |
+| `Plan restriction`            | Feature not available for user's plan | Upgrade prompt or feature disabled          |
+| `Semantic similarity timeout` | Vector search too slow                | Index optimization, query timeout           |
+| `Decryption failed`           | Corrupted ciphertext or wrong key     | Re-encrypt with current key, audit log      |
 
 ### Error Response Format
 
@@ -840,6 +860,7 @@ if (user?.lo_que_me_define_encrypted) {
 ### Logging
 
 All persona changes logged with:
+
 - User ID and field changed
 - Action type (created, updated, deleted)
 - Security impact level (high for intolerance, medium for tolerance)
@@ -864,7 +885,6 @@ All persona changes logged with:
 - [ ] Persona effectiveness scoring
 - [ ] Visual persona builder UI
 
-
 ## Agentes Relevantes
 
 Los siguientes agentes son responsables de mantener este nodo:
@@ -872,10 +892,9 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Backend Developer** - Implementation (PersonaService, encryption, API routes)
 - **Documentation Agent** - Node maintenance and sync
 - **FrontendDev** - UI components (StyleProfile page)
-- **TestEngineer** - Test coverage and validation
+- **Guardian** - Security validation and audit (Issue #942 - Zod migration)
 - **Orchestrator** - PR #600 coordination and planning
-- **Test Engineer** - Test implementation (unit, integration, e2e)
-
+- **TestEngineer** - Test coverage and validation (Issue #942 - Zod tests)
 
 ## Related Nodes
 

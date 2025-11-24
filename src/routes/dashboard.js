@@ -1,6 +1,6 @@
 /**
  * Dashboard API Routes - Mock-first implementation
- * 
+ *
  * Provides mock data for dashboard widgets when external services are unavailable
  */
 
@@ -16,7 +16,7 @@ router.get('/health', (req, res) => {
     const services = {
       api: 'ok',
       billing: flags.isEnabled('ENABLE_BILLING') ? 'ok' : 'degraded',
-      ai: flags.isEnabled('ENABLE_REAL_OPENAI') ? 'ok' : 'degraded', 
+      ai: flags.isEnabled('ENABLE_REAL_OPENAI') ? 'ok' : 'degraded',
       db: flags.isEnabled('ENABLE_SUPABASE') ? 'ok' : 'degraded'
     };
 
@@ -66,50 +66,52 @@ router.get('/user', (req, res) => {
  */
 router.get('/integrations', (req, res) => {
   const platforms = [
-    { 
-      name: 'twitter', 
+    {
+      name: 'twitter',
       displayName: 'Twitter/X',
       status: flags.isEnabled('ENABLE_REAL_TWITTER') ? 'connected' : 'disconnected',
       icon: '𝕏',
-      lastSync: flags.isEnabled('ENABLE_REAL_TWITTER') ? new Date(Date.now() - 3600000).toISOString() : null
+      lastSync: flags.isEnabled('ENABLE_REAL_TWITTER')
+        ? new Date(Date.now() - 3600000).toISOString()
+        : null
     },
-    { 
-      name: 'youtube', 
+    {
+      name: 'youtube',
       displayName: 'YouTube',
       status: flags.isEnabled('ENABLE_REAL_YOUTUBE') ? 'connected' : 'disconnected',
       icon: '▶️',
       lastSync: null
     },
-    { 
-      name: 'instagram', 
+    {
+      name: 'instagram',
       displayName: 'Instagram',
       status: 'disconnected',
       icon: '📷',
       lastSync: null
     },
-    { 
-      name: 'discord', 
+    {
+      name: 'discord',
       displayName: 'Discord',
       status: 'disconnected',
       icon: '💬',
       lastSync: null
     },
-    { 
-      name: 'twitch', 
+    {
+      name: 'twitch',
       displayName: 'Twitch',
       status: 'disconnected',
       icon: '🟣',
       lastSync: null
     },
-    { 
-      name: 'reddit', 
+    {
+      name: 'reddit',
       displayName: 'Reddit',
       status: 'disconnected',
       icon: '🔶',
       lastSync: null
     },
-    { 
-      name: 'bluesky', 
+    {
+      name: 'bluesky',
       displayName: 'Bluesky',
       status: flags.isEnabled('ENABLE_REAL_BLUESKY') ? 'connected' : 'disconnected',
       icon: '🦋',
@@ -126,11 +128,11 @@ router.get('/integrations', (req, res) => {
 router.get('/logs', (req, res) => {
   const limit = parseInt(req.query.limit) || 50;
   const level = req.query.level || 'all';
-  
+
   const mockLogs = Array.from({ length: Math.min(limit, 100) }, (_, i) => {
     const levels = ['info', 'warn', 'error'];
     const logLevel = level === 'all' ? levels[Math.floor(Math.random() * levels.length)] : level;
-    
+
     const messages = {
       info: [
         'Roast generated successfully for user',

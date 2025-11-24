@@ -39,7 +39,7 @@ describe('RQCService', () => {
         }
       }
     };
-    
+
     rqcService = new RQCService(mockOpenAI);
   });
 
@@ -57,7 +57,7 @@ describe('RQCService', () => {
 
       const result = await rqcService.reviewRoast({
         originalComment: 'Your jokes are terrible',
-        roastText: 'At least they\'re better than your taste in comments!',
+        roastText: "At least they're better than your taste in comments!",
         userConfig: {
           user_id: 'test-user',
           intensity_level: 3,
@@ -75,8 +75,9 @@ describe('RQCService', () => {
     });
 
     it('should provide detailed review metrics', async () => {
-      mockOpenAI.chat.completions.create
-        .mockResolvedValue({ choices: [{ message: { content: 'PASS' } }] });
+      mockOpenAI.chat.completions.create.mockResolvedValue({
+        choices: [{ message: { content: 'PASS' } }]
+      });
 
       const result = await rqcService.reviewRoast({
         originalComment: 'Test comment',
@@ -112,14 +113,14 @@ describe('RQCService', () => {
 
     it('should fail roast with moderation issues', async () => {
       mockOpenAI.chat.completions.create.mockResolvedValue({
-        choices: [{ message: { content: 'FAIL\nContains inappropriate language for platform guidelines' } }]
+        choices: [
+          { message: { content: 'FAIL\nContains inappropriate language for platform guidelines' } }
+        ]
       });
 
-      const result = await rqcService.runModerator(
-        'Test comment',
-        'Inappropriate roast content',
-        { intensity_level: 2 }
-      );
+      const result = await rqcService.runModerator('Test comment', 'Inappropriate roast content', {
+        intensity_level: 2
+      });
 
       expect(result.verdict).toBe('fail');
       expect(result.reason).toBe('Contains inappropriate language for platform guidelines');
@@ -130,11 +131,7 @@ describe('RQCService', () => {
         choices: [{ message: { content: 'PASS' } }]
       });
 
-      await rqcService.runModerator(
-        'Test',
-        'Test roast',
-        { intensity_level: 5 }
-      );
+      await rqcService.runModerator('Test', 'Test roast', { intensity_level: 5 });
 
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       expect(callArgs.messages[1].content).toContain('NIVEL DE INTENSIDAD DEL USUARIO: 5/5');
@@ -157,11 +154,9 @@ describe('RQCService', () => {
         choices: [{ message: { content: 'PASS' } }]
       });
 
-      const result = await rqcService.runComedian(
-        'I think I\'m funny',
-        'Your mirror disagrees!',
-        { intensity_level: 4 }
-      );
+      const result = await rqcService.runComedian("I think I'm funny", 'Your mirror disagrees!', {
+        intensity_level: 4
+      });
 
       expect(result.verdict).toBe('pass');
     });
@@ -171,11 +166,7 @@ describe('RQCService', () => {
         choices: [{ message: { content: 'FAIL\nToo generic, lacks creativity and punch' } }]
       });
 
-      const result = await rqcService.runComedian(
-        'Test',
-        'You are wrong',
-        { intensity_level: 3 }
-      );
+      const result = await rqcService.runComedian('Test', 'You are wrong', { intensity_level: 3 });
 
       expect(result.verdict).toBe('fail');
       expect(result.reason).toBe('Too generic, lacks creativity and punch');
@@ -201,7 +192,7 @@ describe('RQCService', () => {
 
       const result = await rqcService.runStyleReviewer(
         'You have no style',
-        'Unlike you, I don\'t get my fashion tips from a scarecrow!',
+        "Unlike you, I don't get my fashion tips from a scarecrow!",
         { intensity_level: 4, custom_style_prompt: null }
       );
 
@@ -222,14 +213,10 @@ describe('RQCService', () => {
 
       const customPrompt = 'Use intellectual humor with literary references';
 
-      await rqcService.runStyleReviewer(
-        'Test',
-        'Test roast',
-        {
-          intensity_level: 3,
-          custom_style_prompt: customPrompt
-        }
-      );
+      await rqcService.runStyleReviewer('Test', 'Test roast', {
+        intensity_level: 3,
+        custom_style_prompt: customPrompt
+      });
 
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       expect(callArgs.messages[1].content).toContain(customPrompt);
@@ -250,14 +237,10 @@ describe('RQCService', () => {
 
       const customPrompt = 'Use intellectual humor with literary references';
 
-      await rqcService.runStyleReviewer(
-        'Test',
-        'Test roast',
-        {
-          intensity_level: 3,
-          custom_style_prompt: customPrompt
-        }
-      );
+      await rqcService.runStyleReviewer('Test', 'Test roast', {
+        intensity_level: 3,
+        custom_style_prompt: customPrompt
+      });
 
       const callArgs = mockOpenAI.chat.completions.create.mock.calls[0][0];
       expect(callArgs.messages[1].content).not.toContain(customPrompt);
@@ -265,19 +248,18 @@ describe('RQCService', () => {
       expect(callArgs.messages[1].content).toContain('ESTILO ESTÁNDAR');
     });
 
-    it('should fail roast that doesn\'t match configured style', async () => {
+    it("should fail roast that doesn't match configured style", async () => {
       mockOpenAI.chat.completions.create.mockResolvedValue({
-        choices: [{ message: { content: 'FAIL\nDoesn\'t match the sophisticated tone requested' } }]
+        choices: [{ message: { content: "FAIL\nDoesn't match the sophisticated tone requested" } }]
       });
 
-      const result = await rqcService.runStyleReviewer(
-        'Test',
-        'Basic roast',
-        { intensity_level: 5, custom_style_prompt: 'Sophisticated academic humor' }
-      );
+      const result = await rqcService.runStyleReviewer('Test', 'Basic roast', {
+        intensity_level: 5,
+        custom_style_prompt: 'Sophisticated academic humor'
+      });
 
       expect(result.verdict).toBe('fail');
-      expect(result.reason).toBe('Doesn\'t match the sophisticated tone requested');
+      expect(result.reason).toBe("Doesn't match the sophisticated tone requested");
     });
   });
 
@@ -342,7 +324,8 @@ describe('RQCService', () => {
   describe('Performance and Optimization', () => {
     it('should estimate tokens accurately', () => {
       const shortText = 'Hello';
-      const longText = 'This is a much longer text that should result in more estimated tokens for the calculation';
+      const longText =
+        'This is a much longer text that should result in more estimated tokens for the calculation';
 
       const shortTokens = rqcService.estimateTokens(shortText);
       const longTokens = rqcService.estimateTokens(longText);
@@ -354,12 +337,13 @@ describe('RQCService', () => {
 
     it('should run reviewers in parallel (performance check)', async () => {
       const startTime = Date.now();
-      
+
       // Mock each reviewer to take some time
-      mockOpenAI.chat.completions.create.mockImplementation(() => 
-        new Promise(resolve => 
-          setTimeout(() => resolve({ choices: [{ message: { content: 'PASS' } }] }), 100)
-        )
+      mockOpenAI.chat.completions.create.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ choices: [{ message: { content: 'PASS' } }] }), 100)
+          )
       );
 
       await rqcService.reviewRoast({
@@ -370,7 +354,7 @@ describe('RQCService', () => {
       });
 
       const duration = Date.now() - startTime;
-      
+
       // Should be closer to 100ms (parallel) than 300ms (sequential)
       // Allow some overhead but should be significantly less than 250ms
       expect(duration).toBeLessThan(250);
@@ -418,11 +402,7 @@ describe('RQCService', () => {
 
   describe('Configuration Integration', () => {
     it('should handle different intensity levels appropriately', async () => {
-      const configs = [
-        { intensity_level: 1 },
-        { intensity_level: 3 },
-        { intensity_level: 5 }
-      ];
+      const configs = [{ intensity_level: 1 }, { intensity_level: 3 }, { intensity_level: 5 }];
 
       for (const config of configs) {
         mockOpenAI.chat.completions.create.mockResolvedValue({
@@ -430,9 +410,11 @@ describe('RQCService', () => {
         });
 
         await rqcService.runModerator('Test', 'Test roast', config);
-        
+
         const lastCall = mockOpenAI.chat.completions.create.mock.calls.slice(-1)[0][0];
-        expect(lastCall.messages[1].content).toContain(`NIVEL DE INTENSIDAD DEL USUARIO: ${config.intensity_level}/5`);
+        expect(lastCall.messages[1].content).toContain(
+          `NIVEL DE INTENSIDAD DEL USUARIO: ${config.intensity_level}/5`
+        );
       }
     });
 

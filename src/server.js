@@ -1,12 +1,13 @@
 const express = require('express');
+const { logger } = require('./utils/logger'); // Issue #971: Added for console.log replacement
 const bodyParser = require('body-parser');
 require('dotenv').config();
-const path = require("path");
+const path = require('path');
 
 // 🔍 DEBUG: Comprobar si la API key existe en el entorno
-console.log("🔍 OPENAI_API_KEY existe?", !!process.env.OPENAI_API_KEY);
+logger.info('🔍 OPENAI_API_KEY existe?', !!process.env.OPENAI_API_KEY);
 if (process.env.OPENAI_API_KEY) {
-  console.log("🔍 OPENAI_API_KEY empieza por:", process.env.OPENAI_API_KEY.slice(0, 10));
+  logger.info('🔍 OPENAI_API_KEY empieza por:', process.env.OPENAI_API_KEY.slice(0, 10));
 }
 
 const RoastGeneratorReal = require('./services/roastGeneratorReal');
@@ -18,14 +19,14 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // Servir archivos estáticos desde la carpeta public
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Instancia del generador de roasts
 const roastGenerator = new RoastGeneratorReal();
 
 // Ruta para servir el frontend
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Ruta principal para generar un roast
@@ -42,12 +43,12 @@ app.post('/roast', async (req, res) => {
 
     res.json({ roast });
   } catch (error) {
-    console.error('Error generando roast:', error.message);
+    logger.error('Error generando roast:', error.message);
     res.status(500).json({ error: 'Error interno generando el roast.' });
   }
 });
 
 // Arrancar servidor
 app.listen(port, () => {
-  console.log(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
+  logger.info(`🔥 Roastr.ai API escuchando en http://localhost:${port}`);
 });

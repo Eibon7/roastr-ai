@@ -11,7 +11,9 @@ const {
 describe('SafeUtils - Issue #154: Optional chaining and safe string operations', () => {
   describe('safeUserIdPrefix', () => {
     it('should handle valid user IDs correctly', () => {
-      expect(SafeUtils.safeUserIdPrefix('12345678-abcd-efgh-ijkl-mnopqrstuvwx')).toBe('12345678...');
+      expect(SafeUtils.safeUserIdPrefix('12345678-abcd-efgh-ijkl-mnopqrstuvwx')).toBe(
+        '12345678...'
+      );
       expect(SafeUtils.safeUserIdPrefix('short')).toBe('short...');
     });
 
@@ -149,7 +151,7 @@ describe('SafeUtils - Issue #154: Optional chaining and safe string operations',
 describe('safeUtils module - Issue #540: Pure logic tests', () => {
   describe('safeJsonParse', () => {
     it('should parse valid JSON correctly', () => {
-      expect(safeJsonParse('{"name":"John","age":30}')).toEqual({name: 'John', age: 30});
+      expect(safeJsonParse('{"name":"John","age":30}')).toEqual({ name: 'John', age: 30 });
       expect(safeJsonParse('[1,2,3]')).toEqual([1, 2, 3]);
       expect(safeJsonParse('true')).toBe(true);
       expect(safeJsonParse('null')).toBe(null);
@@ -158,7 +160,7 @@ describe('safeUtils module - Issue #540: Pure logic tests', () => {
 
     it('should return fallback for invalid JSON', () => {
       expect(safeJsonParse('invalid json')).toBe(null);
-      expect(safeJsonParse('{broken', {default: 'value'})).toEqual({default: 'value'});
+      expect(safeJsonParse('{broken', { default: 'value' })).toEqual({ default: 'value' });
       expect(safeJsonParse('', [])).toEqual([]);
     });
 
@@ -173,7 +175,7 @@ describe('safeUtils module - Issue #540: Pure logic tests', () => {
 
   describe('safeJsonStringify', () => {
     it('should stringify valid objects correctly', () => {
-      expect(safeJsonStringify({name: 'John'})).toBe('{"name":"John"}');
+      expect(safeJsonStringify({ name: 'John' })).toBe('{"name":"John"}');
       expect(safeJsonStringify([1, 2, 3])).toBe('[1,2,3]');
       expect(safeJsonStringify(true)).toBe('true');
       expect(safeJsonStringify(null)).toBe('null');

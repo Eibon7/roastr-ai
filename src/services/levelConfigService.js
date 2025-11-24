@@ -84,19 +84,19 @@ const SHIELD_LEVELS = {
   3: {
     name: 'Balanced',
     description: 'Standard moderation',
-    threshold: 0.70,
+    threshold: 0.7,
     autoActions: true
   },
   4: {
     name: 'Balanced-Strict',
     description: 'Balanced with strict bias',
-    threshold: 0.60,
+    threshold: 0.6,
     autoActions: true
   },
   5: {
     name: 'Strict',
     description: 'Blocks most potentially harmful content',
-    threshold: 0.50,
+    threshold: 0.5,
     autoActions: true
   }
 };
@@ -194,7 +194,6 @@ class LevelConfigService {
         maxAllowedRoastLevel: planLimits.maxRoastLevel,
         maxAllowedShieldLevel: planLimits.maxShieldLevel
       };
-
     } catch (error) {
       logger.error('Error validating level access:', error);
       throw error;
@@ -283,7 +282,6 @@ class LevelConfigService {
           available: availableShieldLevels
         }
       };
-
     } catch (error) {
       logger.error('Error getting available levels for user:', error);
       throw error;

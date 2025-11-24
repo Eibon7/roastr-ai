@@ -1,9 +1,9 @@
 /**
  * Triage Test Fixtures - Representative comments for testing
- * 
+ *
  * Organized by expected triage decision to ensure deterministic testing
  * Each comment includes toxicity score and expected routing behavior
- * 
+ *
  * Categories:
  * - publish: Clean content, low toxicity (< roast threshold)
  * - roast: Moderate toxicity (>= roast threshold, < block threshold)
@@ -13,7 +13,6 @@
  */
 
 const TriageFixtures = {
-  
   /**
    * PUBLISH CATEGORY
    * Content that should be published directly
@@ -427,10 +426,10 @@ const TriageFixtures = {
       language: 'es',
       description: 'Between plus and pro thresholds',
       expected_actions: {
-        free: 'publish',      // 0.22 < 0.30
-        starter: 'publish',   // 0.22 < 0.30
-        pro: 'publish',       // 0.22 < 0.25
-        plus: 'roast',        // 0.22 >= 0.20
+        free: 'publish', // 0.22 < 0.30
+        starter: 'publish', // 0.22 < 0.30
+        pro: 'publish', // 0.22 < 0.25
+        plus: 'roast', // 0.22 >= 0.20
         creator_plus: 'roast' // 0.22 >= 0.20
       }
     },
@@ -443,10 +442,10 @@ const TriageFixtures = {
       language: 'en',
       description: 'Between pro and free thresholds',
       expected_actions: {
-        free: 'publish',      // 0.27 < 0.30
-        starter: 'publish',   // 0.27 < 0.30
-        pro: 'roast',         // 0.27 >= 0.25
-        plus: 'roast',        // 0.27 >= 0.20
+        free: 'publish', // 0.27 < 0.30
+        starter: 'publish', // 0.27 < 0.30
+        pro: 'roast', // 0.27 >= 0.25
+        plus: 'roast', // 0.27 >= 0.20
         creator_plus: 'roast' // 0.27 >= 0.20
       }
     }
@@ -456,16 +455,16 @@ const TriageFixtures = {
 /**
  * Helper functions for testing
  */
-TriageFixtures.getCommentsByAction = function(action) {
+TriageFixtures.getCommentsByAction = function (action) {
   const comments = [];
   for (const category of Object.keys(this)) {
     if (category === 'getCommentsByAction' || category === 'getCommentsByPlan') continue;
-    comments.push(...this[category].filter(c => c.expected_action === action));
+    comments.push(...this[category].filter((c) => c.expected_action === action));
   }
   return comments;
 };
 
-TriageFixtures.getCommentsByPlan = function(plan) {
+TriageFixtures.getCommentsByPlan = function (plan) {
   // Validate plan parameter
   const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus'];
   if (!plan || typeof plan !== 'string' || !validPlans.includes(plan)) {
@@ -478,7 +477,7 @@ TriageFixtures.getCommentsByPlan = function(plan) {
     if (category === 'getCommentsByAction' || category === 'getCommentsByPlan') continue;
 
     // Only include comments that are relevant to the specified plan
-    const filteredComments = this[category].filter(c => {
+    const filteredComments = this[category].filter((c) => {
       // If comment explicitly lists plans it applies to
       if (Array.isArray(c.expected_plans)) {
         return c.expected_plans.includes(plan);

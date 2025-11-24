@@ -17,7 +17,7 @@ const { sanitizePII } = require('../utils/piiSanitizer');
 
 // Initialize Polar client
 const polar = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN,
+  accessToken: process.env.POLAR_ACCESS_TOKEN
 });
 
 // Allowed Product IDs - only these can be used for checkout
@@ -26,13 +26,15 @@ const polar = new Polar({
 const ALLOWED_PRODUCT_IDS = new Set(
   (process.env.POLAR_ALLOWED_PRODUCT_IDS || process.env.POLAR_ALLOWED_PRICE_IDS || '')
     .split(',')
-    .map(id => id.trim())
+    .map((id) => id.trim())
     .filter(Boolean)
 );
 
 // Log configuration status on startup
 if (ALLOWED_PRODUCT_IDS.size === 0) {
-  logger.warn('[Polar] POLAR_ALLOWED_PRODUCT_IDS not configured - product validation disabled (INSECURE!)');
+  logger.warn(
+    '[Polar] POLAR_ALLOWED_PRODUCT_IDS not configured - product validation disabled (INSECURE!)'
+  );
 } else {
   logger.info('[Polar] Product ID allowlist configured', {
     allowedCount: ALLOWED_PRODUCT_IDS.size
@@ -62,23 +64,26 @@ router.post('/checkout', async (req, res) => {
     if (!customer_email || !productId) {
       logger.warn('[Polar] Missing required fields in checkout request', {
         hasEmail: !!customer_email,
-        hasProductId: !!productId,
+        hasProductId: !!productId
       });
       return res.status(400).json({
         error: 'Missing required fields',
-        message: 'customer_email and product_id are required',
+        message: 'customer_email and product_id are required'
       });
     }
 
     // Validate email format (M5 - CodeRabbit Review #3423197513)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(customer_email)) {
-      logger.warn('[Polar] Invalid email format in checkout request', sanitizePII({
-        customer_email,
-      }));
+      logger.warn(
+        '[Polar] Invalid email format in checkout request',
+        sanitizePII({
+          customer_email
+        })
+      );
       return res.status(400).json({
         error: 'Invalid email',
-        message: 'Please provide a valid email address',
+        message: 'Please provide a valid email address'
       });
     }
 
@@ -87,41 +92,49 @@ router.post('/checkout', async (req, res) => {
       logger.error('[Polar] POLAR_ACCESS_TOKEN not configured');
       return res.status(500).json({
         error: 'Configuration error',
-        message: 'Polar integration is not properly configured',
+        message: 'Polar integration is not properly configured'
       });
     }
 
     // Validate product_id against allowlist (Security: prevent authorization bypass)
     if (ALLOWED_PRODUCT_IDS.size > 0 && !ALLOWED_PRODUCT_IDS.has(productId)) {
-      logger.warn('[Polar] Rejected checkout with unauthorized product_id', sanitizePII({
-        product_id: productId,
-        customer_email,
-        allowedCount: ALLOWED_PRODUCT_IDS.size
-      }));
+      logger.warn(
+        '[Polar] Rejected checkout with unauthorized product_id',
+        sanitizePII({
+          product_id: productId,
+          customer_email,
+          allowedCount: ALLOWED_PRODUCT_IDS.size
+        })
+      );
       return res.status(400).json({
         error: 'Unauthorized product',
-        message: 'The selected plan is not available for purchase.',
+        message: 'The selected plan is not available for purchase.'
       });
     }
 
-    logger.info('[Polar] Creating checkout session', sanitizePII({
-      customer_email,
-      product_id: productId,
-      hasMetadata: !!metadata,
-    }));
+    logger.info(
+      '[Polar] Creating checkout session',
+      sanitizePII({
+        customer_email,
+        product_id: productId,
+        hasMetadata: !!metadata
+      })
+    );
 
     // Create checkout session
     // Polar SDK expects products as an array of product ID strings
     const checkout = await polar.checkouts.create({
       products: [productId],
       customerEmail: customer_email,
-      successUrl: process.env.POLAR_SUCCESS_URL || `${req.protocol}://${req.get('host')}/success?checkout_id={CHECKOUT_ID}`,
-      metadata: metadata || {},
+      successUrl:
+        process.env.POLAR_SUCCESS_URL ||
+        `${req.protocol}://${req.get('host')}/success?checkout_id={CHECKOUT_ID}`,
+      metadata: metadata || {}
     });
 
     logger.info('[Polar] Checkout session created successfully', {
       checkout_id: checkout.id,
-      checkout_url: checkout.url,
+      checkout_url: checkout.url
     });
 
     // Return the checkout object (includes checkout_url for backward compatibility)
@@ -133,20 +146,19 @@ router.post('/checkout', async (req, res) => {
         url: checkout.url,
         customer_email: checkout.customerEmail,
         product_id: checkout.productPriceId || checkout.productId, // Polar may return either field
-        status: checkout.status,
-      },
+        status: checkout.status
+      }
     });
-
   } catch (error) {
     logger.error('[Polar] Error creating checkout session', {
       error: error.message,
       stack: error.stack,
-      statusCode: error.statusCode,
+      statusCode: error.statusCode
     });
 
     res.status(500).json({
       error: 'Checkout creation failed',
-      message: error.message || 'An error occurred while creating the checkout session',
+      message: error.message || 'An error occurred while creating the checkout session'
     });
   }
 });
@@ -170,7 +182,7 @@ router.get('/checkout/:id', async (req, res) => {
 
     logger.info('[Polar] Checkout session retrieved', {
       checkout_id: checkout.id,
-      status: checkout.status,
+      status: checkout.status
     });
 
     res.json({
@@ -181,19 +193,18 @@ router.get('/checkout/:id', async (req, res) => {
         customer_email: checkout.customerEmail,
         product_id: checkout.productPriceId || checkout.productId, // Polar may return either field
         amount: checkout.amount,
-        currency: checkout.currency,
-      },
+        currency: checkout.currency
+      }
     });
-
   } catch (error) {
     logger.error('[Polar] Error retrieving checkout session', {
       checkout_id: req.params.id,
-      error: error.message,
+      error: error.message
     });
 
     res.status(error.statusCode || 500).json({
       error: 'Failed to retrieve checkout',
-      message: error.message,
+      message: error.message
     });
   }
 });

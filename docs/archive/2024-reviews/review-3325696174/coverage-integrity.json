@@ -67,9 +67,7 @@
   },
   "paths_sanitized": 8,
   "absolute_paths_remaining": 0,
-  "files_modified": [
-    "docs/test-evidence/issue-405/coverage-report.json"
-  ],
+  "files_modified": ["docs/test-evidence/issue-405/coverage-report.json"],
   "changes": {
     "type": "path_sanitization",
     "pattern_replaced": "/Users/emiliopostigo/roastr-ai/",

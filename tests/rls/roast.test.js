@@ -1,6 +1,6 @@
 /**
  * Roast RLS Tests
- * 
+ *
  * Validates that Row Level Security policies correctly enforce
  * roast generation limits and isolation.
  */
@@ -18,7 +18,7 @@ beforeAll(async () => {
   const result = await getConnections(config, [
     createMigrationsSeed() // Load all migrations automatically
   ]);
-  
+
   db = result.db;
   pg = result.pg;
   teardown = result.teardown;
@@ -63,48 +63,66 @@ describe('Roast RLS', () => {
     userBId = userBResult.rows[0].id;
 
     // Create organizations
-    const orgAResult = await pg.query(`
+    const orgAResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id, monthly_responses_limit)
       VALUES (gen_random_uuid(), 'Org A', 'org-a', $1, 'pro', 1000)
       RETURNING id;
-    `, [userAId]);
+    `,
+      [userAId]
+    );
     orgAId = orgAResult.rows[0].id;
 
-    const orgBResult = await pg.query(`
+    const orgBResult = await pg.query(
+      `
       INSERT INTO organizations (id, name, slug, owner_id, plan_id, monthly_responses_limit)
       VALUES (gen_random_uuid(), 'Org B', 'org-b', $1, 'starter', 10)
       RETURNING id;
-    `, [userBId]);
+    `,
+      [userBId]
+    );
     orgBId = orgBResult.rows[0].id;
 
     // Create comments
-    const commentAResult = await pg.query(`
+    const commentAResult = await pg.query(
+      `
       INSERT INTO comments (id, organization_id, platform, platform_comment_id, original_text)
       VALUES (gen_random_uuid(), $1, 'twitter', 'comment-a-123', 'Comment A')
       RETURNING id;
-    `, [orgAId]);
+    `,
+      [orgAId]
+    );
     commentAId = commentAResult.rows[0].id;
 
-    const commentBResult = await pg.query(`
+    const commentBResult = await pg.query(
+      `
       INSERT INTO comments (id, organization_id, platform, platform_comment_id, original_text)
       VALUES (gen_random_uuid(), $1, 'twitter', 'comment-b-456', 'Comment B')
       RETURNING id;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
     commentBId = commentBResult.rows[0].id;
 
     // Create roasts (responses table)
-    const roastAResult = await pg.query(`
+    const roastAResult = await pg.query(
+      `
       INSERT INTO responses (id, organization_id, comment_id, generated_text, tone)
       VALUES (gen_random_uuid(), $1, $2, 'Roast A', 'witty')
       RETURNING id;
-    `, [orgAId, commentAId]);
+    `,
+      [orgAId, commentAId]
+    );
     roastAId = roastAResult.rows[0].id;
 
-    const roastBResult = await pg.query(`
+    const roastBResult = await pg.query(
+      `
       INSERT INTO responses (id, organization_id, comment_id, generated_text, tone)
       VALUES (gen_random_uuid(), $1, $2, 'Roast B', 'witty')
       RETURNING id;
-    `, [orgBId, commentBId]);
+    `,
+      [orgBId, commentBId]
+    );
     roastBId = roastBResult.rows[0].id;
   });
 
@@ -117,23 +135,29 @@ describe('Roast RLS', () => {
     });
 
     // User A should be able to update their own roast
-    const updateResult = await db.query(`
+    const updateResult = await db.query(
+      `
       UPDATE responses
       SET generated_text = 'Updated Roast A'
       WHERE id = $1
       RETURNING generated_text;
-    `, [roastAId]);
+    `,
+      [roastAId]
+    );
 
     expect(updateResult.rows.length).toBe(1);
     expect(updateResult.rows[0].generated_text).toBe('Updated Roast A');
 
     // User A should NOT be able to update User B's roast
     await expect(
-      db.query(`
+      db.query(
+        `
         UPDATE responses
         SET generated_text = 'Hacked Roast B'
         WHERE id = $1;
-      `, [roastBId])
+      `,
+        [roastBId]
+      )
     ).rejects.toThrow();
   });
 
@@ -146,18 +170,24 @@ describe('Roast RLS', () => {
     });
 
     // Simulate usage reaching limit (10 roasts for Starter)
-    await pg.query(`
+    await pg.query(
+      `
       UPDATE organizations
       SET monthly_responses_used = monthly_responses_limit
       WHERE id = $1;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
 
     // Verify limit is enforced
-    const org = await db.query(`
+    const org = await db.query(
+      `
       SELECT monthly_responses_used, monthly_responses_limit
       FROM organizations
       WHERE id = $1;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
 
     expect(parseInt(org.rows[0].monthly_responses_used)).toBeGreaterThanOrEqual(
       parseInt(org.rows[0].monthly_responses_limit)
@@ -173,11 +203,14 @@ describe('Roast RLS', () => {
     });
 
     // Pro plan should have higher limit
-    const orgA = await db.query(`
+    const orgA = await db.query(
+      `
       SELECT monthly_responses_limit, plan_id
       FROM organizations
       WHERE id = $1;
-    `, [orgAId]);
+    `,
+      [orgAId]
+    );
 
     expect(orgA.rows[0].plan_id).toBe('pro');
     expect(parseInt(orgA.rows[0].monthly_responses_limit)).toBe(1000);
@@ -190,14 +223,16 @@ describe('Roast RLS', () => {
     });
 
     // Starter plan should have lower limit
-    const orgB = await db.query(`
+    const orgB = await db.query(
+      `
       SELECT monthly_responses_limit, plan_id
       FROM organizations
       WHERE id = $1;
-    `, [orgBId]);
+    `,
+      [orgBId]
+    );
 
     expect(orgB.rows[0].plan_id).toBe('starter');
     expect(parseInt(orgB.rows[0].monthly_responses_limit)).toBe(10);
   });
 });
-

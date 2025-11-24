@@ -99,7 +99,7 @@ describe('guardianCaseService', () => {
     test('should filter by severity CRITICAL', async () => {
       const cases = await listCases({ severity: 'CRITICAL' });
       expect(Array.isArray(cases)).toBe(true);
-      cases.forEach(c => {
+      cases.forEach((c) => {
         expect(c.severity).toBe('CRITICAL');
       });
     });
@@ -107,7 +107,7 @@ describe('guardianCaseService', () => {
     test('should filter by action REVIEW', async () => {
       const cases = await listCases({ action: 'REVIEW' });
       expect(Array.isArray(cases)).toBe(true);
-      cases.forEach(c => {
+      cases.forEach((c) => {
         expect(c.action).toBe('REVIEW');
       });
     });
@@ -210,11 +210,15 @@ describe('guardianCaseService', () => {
     });
 
     test('should reject approval with invalid case ID format', async () => {
-      await expect(approveCase('INVALID-CASE-999', 'Test')).rejects.toThrow('Invalid case ID format');
+      await expect(approveCase('INVALID-CASE-999', 'Test')).rejects.toThrow(
+        'Invalid case ID format'
+      );
     });
 
     test('should reject approval of non-existent case', async () => {
-      await expect(approveCase('2025-99-99-99-99-99-999', 'Test')).rejects.toThrow('Case not found');
+      await expect(approveCase('2025-99-99-99-99-99-999', 'Test')).rejects.toThrow(
+        'Case not found'
+      );
     });
 
     test('should reject approval of already approved case', async () => {
@@ -326,9 +330,9 @@ describe('guardianCaseService', () => {
       await approveCase(testCaseId, 'Test Approver');
 
       // Then try to deny
-      await expect(
-        denyCase(testCaseId, 'Test Denier', 'Valid denial reason')
-      ).rejects.toThrow('Case already resolved');
+      await expect(denyCase(testCaseId, 'Test Denier', 'Valid denial reason')).rejects.toThrow(
+        'Case already resolved'
+      );
     });
   });
 });

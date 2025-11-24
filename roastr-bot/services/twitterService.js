@@ -43,7 +43,7 @@ class TwitterService {
    */
   _validateCredentials() {
     const required = ['appKey', 'appSecret', 'accessToken', 'accessSecret'];
-    const missing = required.filter(key => !this.credentials[key]);
+    const missing = required.filter((key) => !this.credentials[key]);
 
     if (missing.length > 0) {
       const errorMsg = `Missing Twitter credentials: ${missing.join(', ')}`;
@@ -62,8 +62,12 @@ class TwitterService {
    * @private
    */
   _hasValidCredentials() {
-    return !!(this.credentials.appKey && this.credentials.appSecret && 
-              this.credentials.accessToken && this.credentials.accessSecret);
+    return !!(
+      this.credentials.appKey &&
+      this.credentials.appSecret &&
+      this.credentials.accessToken &&
+      this.credentials.accessSecret
+    );
   }
 
   /**
@@ -77,7 +81,7 @@ class TwitterService {
         appKey: this.credentials.appKey,
         appSecret: this.credentials.appSecret,
         accessToken: this.credentials.accessToken,
-        accessSecret: this.credentials.accessSecret,
+        accessSecret: this.credentials.accessSecret
       });
 
       // Bearer token client for reading public data (if available)
@@ -161,13 +165,13 @@ class TwitterService {
       return mentions.data || [];
     } catch (error) {
       logger.error('❌ Failed to fetch mentions:', error.message);
-      
+
       // Handle rate limiting
       if (error.rateLimit) {
         const resetTime = new Date(error.rateLimit.reset * 1000);
         logger.warn(`⏰ Rate limit reached. Resets at ${resetTime.toISOString()}`);
       }
-      
+
       throw error;
     }
   }
@@ -183,13 +187,13 @@ class TwitterService {
       return [];
     }
 
-    const filteredMentions = mentions.filter(mention => {
+    const filteredMentions = mentions.filter((mention) => {
       const shouldProcess = filters.shouldProcessMention(mention);
-      
+
       if (shouldProcess) {
         logger.logMentionReceived(mention);
       }
-      
+
       return shouldProcess;
     });
 
@@ -224,7 +228,7 @@ class TwitterService {
       // Ensure roast text fits Twitter's character limit
       const maxLength = PLATFORM_LIMITS.twitter.maxLength;
       let tweetText = roastText;
-      
+
       if (tweetText.length > maxLength) {
         // Truncate and add ellipsis, leaving space for ellipsis
         tweetText = tweetText.substring(0, maxLength - 3) + '...';
@@ -233,21 +237,21 @@ class TwitterService {
 
       // Post the reply
       const reply = await this.client.v2.reply(tweetText, mentionId);
-      
+
       logger.info(`✅ Successfully replied to ${mentionId}`);
       logger.logTweetResponse(mentionId, reply.data.id);
 
       return reply.data;
     } catch (error) {
       logger.error(`❌ Failed to reply to ${mentionId}:`, error.message);
-      
+
       // Handle specific Twitter API errors
       if (error.code === 403) {
         logger.error('🔒 Reply forbidden - check account permissions or tweet availability');
       } else if (error.code === 429) {
         logger.error('⏰ Rate limit exceeded - slow down posting');
       }
-      
+
       throw error;
     }
   }
@@ -261,7 +265,7 @@ class TwitterService {
     try {
       // Extract clean text for roasting
       const cleanText = filters.extractCleanText(mention.text);
-      
+
       // Mark as processed immediately to avoid duplicates
       filters.markAsProcessed(mention.id);
 
@@ -332,7 +336,7 @@ class TwitterService {
     // 3. Set account-specific filters and rules
     // 4. Initialize account-specific rate limiting
     // 5. Set up account-specific logging/monitoring
-    
+
     logger.debug('🏢 Multi-account support not yet implemented');
     throw new Error('Multi-account support not yet implemented');
   }
@@ -345,7 +349,7 @@ class TwitterService {
   async getMentionsForAccount(accountId, options = {}) {
     // TODO: Implement account-specific mention fetching
     // This would maintain separate pagination and processing state per account
-    
+
     logger.debug('🏢 Account-specific mention fetching not yet implemented');
     throw new Error('Account-specific functionality not yet implemented');
   }
@@ -359,7 +363,7 @@ class TwitterService {
   async replyAsAccount(accountId, mentionId, roastText) {
     // TODO: Implement account-specific replies
     // This would use the appropriate client instance for the account
-    
+
     logger.debug('🏢 Account-specific replies not yet implemented');
     throw new Error('Account-specific functionality not yet implemented');
   }

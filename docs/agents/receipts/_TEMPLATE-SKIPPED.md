@@ -7,6 +7,7 @@
 ## Why This Agent Could Apply
 
 **Trigger conditions present:**
+
 - [ ] Label match: `<label>`
 - [ ] Diff match: `<file pattern>`
 - [ ] Condition: `<specific condition>`
@@ -18,6 +19,7 @@
 <Detailed explanation of why the agent was skipped>
 
 Examples:
+
 - "Changes were trivial and did not require full agent workflow"
 - "Agent work was already completed in previous commit"
 - "Out of scope for this PR (tracked in issue #XXX)"
@@ -31,10 +33,12 @@ Examples:
 ## Risk Assessment
 
 **Risks of skipping:**
+
 - Risk 1 (Severity: Low/Medium/High)
 - Risk 2 (Severity: Low/Medium/High)
 
 **Mitigation:**
+
 - How we're addressing each risk
 
 ## Follow-up
@@ -42,6 +46,7 @@ Examples:
 **Will agent be needed later?** Yes / No
 
 **If yes:**
+
 - [ ] Tracked in issue #XXX
 - [ ] Planned for sprint/milestone: <name>
 

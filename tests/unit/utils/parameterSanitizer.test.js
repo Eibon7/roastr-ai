@@ -1,7 +1,7 @@
-const { 
-  sanitizeParameters, 
-  sanitizeForLogging, 
-  maskSensitiveValue 
+const {
+  sanitizeParameters,
+  sanitizeForLogging,
+  maskSensitiveValue
 } = require('../../../src/utils/parameterSanitizer');
 
 describe('parameterSanitizer', () => {
@@ -101,7 +101,7 @@ describe('parameterSanitizer', () => {
     it('should be alias for sanitizeParameters with logging defaults', () => {
       const input = { organizationId: 'org-123', token: 'secret' };
       const result = sanitizeForLogging(input);
-      
+
       expect(result.organizationId).toBe('org***');
       expect(result.token).toBe('sec***');
     });
@@ -129,8 +129,7 @@ describe('parameterSanitizer', () => {
     });
 
     it('should use custom options', () => {
-      expect(maskSensitiveValue('secret123', { prefixLength: 5, maskChar: 'X' }))
-        .toBe('secreXXX');
+      expect(maskSensitiveValue('secret123', { prefixLength: 5, maskChar: 'X' })).toBe('secreXXX');
     });
   });
 

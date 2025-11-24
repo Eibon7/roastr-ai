@@ -3,7 +3,7 @@
 **Version:** 1.0  
 **Owner:** Backend Developer  
 **Last Updated:** 2025-11-18  
-**Issue:** #872 (Post-limpieza #686)  
+**Issue:** #872 (Post-limpieza #686)
 
 ---
 
@@ -12,12 +12,14 @@
 Documentar el sistema de tonos **TAL COMO EXISTE** en Roastr tras la limpieza del Issue #686, sin inventar features adicionales.
 
 **Alcance:**
+
 - ✅ Los 3 tonos oficiales: Flanders, Balanceado, Canalla
 - ✅ Cómo Style Profile los personaliza (Pro/Plus)
 - ✅ Cómo Brand Safety los sobreescribe (Plus)
 - ✅ Integración con Platform Constraints
 
 **NO incluye:**
+
 - ❌ Perfiles adicionales inventados
 - ❌ Tipos de contestación nuevos
 - ❌ Frameworks de estilo que no existen
@@ -33,18 +35,21 @@ Roastr tiene **exactamente 3 tonos** que definen el nivel de agresividad y estil
 
 **Código:** `flanders` (ES) / `light` (EN)  
 **Intensidad:** 2/5  
-**Nombre:** Flanders (ES) / Light (EN)  
+**Nombre:** Flanders (ES) / Light (EN)
 
 **Descripción:**
+
 - **ES:** Tono amable pero con ironía sutil
 - **EN:** Gentle wit with subtle irony
 
 **Personalidad:**
+
 - Educado, irónico, elegante
 - Usa understatement deliberado
 - Mantiene la clase en todo momento
 
 **Características técnicas:**
+
 ```javascript
 {
   name: 'Flanders',
@@ -54,12 +59,14 @@ Roastr tiene **exactamente 3 tonos** que definen el nivel de agresividad y estil
 ```
 
 **Recursos retóricos permitidos:**
+
 - Ironía marcada pero sutil
 - Double entendre
 - Subestimación deliberada (understatement)
 - Referencias culturales elegantes
 
 **Restricciones:**
+
 - NO insultos directos
 - NO vulgaridad
 - NO lenguaje ofensivo explícito
@@ -84,18 +91,21 @@ Output: "Qué perspectiva tan... directa. ¿Has considerado una carrera en comun
 
 **Código:** `balanceado` (ES) / `balanced` (EN)  
 **Intensidad:** 3/5  
-**Nombre:** Balanceado (ES) / Balanced (EN)  
+**Nombre:** Balanceado (ES) / Balanced (EN)
 
 **Descripción:**
+
 - **ES:** Equilibrio entre ingenio y firmeza
 - **EN:** Perfect mix of humor and firmness
 
 **Personalidad:**
+
 - Equilibrado, ingenioso, directo
 - Balance entre humor y contundencia
 - Sarcasmo inteligente sin ser cruel
 
 **Características técnicas:**
+
 ```javascript
 {
   name: 'Balanceado',
@@ -105,12 +115,14 @@ Output: "Qué perspectiva tan... directa. ¿Has considerado una carrera en comun
 ```
 
 **Recursos retóricos permitidos:**
+
 - Sarcasmo marcado
 - Comparaciones inteligentes
 - Ironía directa
 - Wordplay y juegos de palabras
 
 **Restricciones:**
+
 - NO crueldad innecesaria
 - NO ataques personales prohibidos
 - Mantener ingenio, no solo insultar
@@ -134,18 +146,21 @@ Output: "Tu crítica es como un reloj suizo hecho de queso: técnicamente tiene 
 
 **Código:** `canalla` (ES) / `savage` (EN)  
 **Intensidad:** 4/5  
-**Nombre:** Canalla (ES) / Savage (EN)  
+**Nombre:** Canalla (ES) / Savage (EN)
 
 **Descripción:**
+
 - **ES:** Directo y sin filtros, más picante
 - **EN:** Direct and unfiltered, maximum impact
 
 **Personalidad:**
+
 - Directo, sin filtros, contundente
 - Brutal pero ingenioso
 - Máximo impacto sin cruzar líneas
 
 **Características técnicas:**
+
 ```javascript
 {
   name: 'Canalla',
@@ -155,12 +170,14 @@ Output: "Tu crítica es como un reloj suizo hecho de queso: técnicamente tiene 
 ```
 
 **Recursos retóricos permitidos:**
+
 - Hipérbole extrema
 - Comparaciones brutales
 - Sarcasmo cortante
 - Metáforas devastadoras
 
 **Restricciones (CRÍTICAS):**
+
 - NO discriminación (raza, género, orientación, religión)
 - NO ataques a rasgos físicos o discapacidades
 - NO incitación a violencia
@@ -192,6 +209,7 @@ Output: "Tu conocimiento es como el WiFi del aeropuerto: teóricamente existe, p
 El **Style Profile** NO reemplaza el tono base, lo **personaliza** con el estilo único del usuario.
 
 **Proceso:**
+
 1. Usuario selecciona tono base: Flanders / Balanceado / Canalla
 2. Sistema carga Style Profile del usuario (si existe)
 3. Prompt incluye AMBOS: tono base + personalización
@@ -216,6 +234,7 @@ Resultado: Roast con nivel Balanceado (3/5) pero usando:
 ```
 
 **Prompt Template (Bloque B):**
+
 ```
 🎭 TONO BASE: {{tone}}
 Intensidad: {{intensity}}/5
@@ -238,13 +257,14 @@ INSTRUCCIÓN:
 
 **Feature:** Brand Safety - Sponsor Protection  
 **Plan:** Plus  
-**Issue:** #859  
+**Issue:** #859
 
 ### Tone Override
 
 Cuando se detecta mención de un sponsor protegido, **Brand Safety sobreescribe el tono base**.
 
 **Flujo:**
+
 1. Usuario tiene tono: Canalla (4/5) - Directo, sin filtros
 2. Comentario menciona sponsor protegido: Nike
 3. Sponsor config: `tone_override: professional`
@@ -253,19 +273,19 @@ Cuando se detecta mención de un sponsor protegido, **Brand Safety sobreescribe 
 
 **Tonos Override Disponibles:**
 
-| Tone Override | Descripción | Uso |
-|---------------|-------------|-----|
-| `normal` | Usa el tono base del usuario | Sin override |
-| `professional` | Medido, diplomático, sin humor agresivo | Sponsors corporativos |
-| `light_humor` | Ligero, desenfadado, amigable | Sponsors lifestyle |
-| `aggressive_irony` | Irónico, cortante, marcado | Sponsors que permiten más libertad |
+| Tone Override      | Descripción                             | Uso                                |
+| ------------------ | --------------------------------------- | ---------------------------------- |
+| `normal`           | Usa el tono base del usuario            | Sin override                       |
+| `professional`     | Medido, diplomático, sin humor agresivo | Sponsors corporativos              |
+| `light_humor`      | Ligero, desenfadado, amigable           | Sponsors lifestyle                 |
+| `aggressive_irony` | Irónico, cortante, marcado              | Sponsors que permiten más libertad |
 
 **Ejemplo:**
 
 ```yaml
 Usuario:
   Tone: Canalla (4/5)
-  
+
 Comentario: "Nike es una marca horrible, roban tu dinero"
 
 Sponsor detectado: Nike
@@ -277,11 +297,12 @@ Resultado:
   - IGNORA tone base (Canalla 4/5)
   - USA tone override (professional)
   - Genera defensive roast medido y diplomático
-  
+
 Output: "Tu análisis de Nike parece... limitado. Quizás investigar sus décadas de innovación, partnerships con atletas de élite, y liderazgo en sostenibilidad ofrecería una perspectiva más matizada que generalizaciones simplistas."
 ```
 
 **Prompt Template (Bloque C):**
+
 ```
 🛡️ BRAND SAFETY STATUS:
 
@@ -306,18 +327,19 @@ INSTRUCCIÓN CRÍTICA:
 
 ### Límites por Plataforma
 
-| Plataforma | Límite | Tipo | Impacto en Tonos |
-|------------|--------|------|------------------|
-| Twitter | 280 chars | Duro | Todos los tonos: respuestas concisas |
-| Bluesky | 300 chars | Duro | Similar a Twitter |
-| Twitch | 500 chars | Duro | Roasts breves |
-| Discord | 2000 chars | Duro | Todos los tonos: libertad moderada |
-| Instagram | 2200 chars | Soft | Límite recomendado: 500 |
-| YouTube | 10000 chars | Soft | Límite recomendado: 500 |
-| Reddit | 10000 chars | Soft | Límite recomendado: 600 |
-| Facebook | 63206 chars | Soft | Límite recomendado: 1000 |
+| Plataforma | Límite      | Tipo | Impacto en Tonos                     |
+| ---------- | ----------- | ---- | ------------------------------------ |
+| Twitter    | 280 chars   | Duro | Todos los tonos: respuestas concisas |
+| Bluesky    | 300 chars   | Duro | Similar a Twitter                    |
+| Twitch     | 500 chars   | Duro | Roasts breves                        |
+| Discord    | 2000 chars  | Duro | Todos los tonos: libertad moderada   |
+| Instagram  | 2200 chars  | Soft | Límite recomendado: 500              |
+| YouTube    | 10000 chars | Soft | Límite recomendado: 500              |
+| Reddit     | 10000 chars | Soft | Límite recomendado: 600              |
+| Facebook   | 63206 chars | Soft | Límite recomendado: 1000             |
 
 **Regla Universal:**
+
 - Si el roast generado excede el límite → acortar manteniendo:
   - El tono base (Flanders/Balanceado/Canalla)
   - El punchline principal
@@ -344,6 +366,7 @@ Roast ajustado (275 chars):
 ### Configuraciones Eliminadas
 
 **Issue #686 eliminó:**
+
 - ❌ Plan Free
 - ❌ Humor Type (witty, clever, playful)
 - ❌ Intensity Level (1-5)
@@ -352,6 +375,7 @@ Roast ajustado (275 chars):
 ### Lo Que Permanece
 
 **Sistema actual (post-#686):**
+
 - ✅ **Tone:** Flanders / Balanceado / Canalla (ÚNICO selector de agresividad)
 - ✅ **Style Profile:** Pro/Plus (personaliza el tono)
 - ✅ **Brand Safety:** Plus (sobreescribe el tono)
@@ -360,6 +384,7 @@ Roast ajustado (275 chars):
 ### Migración
 
 **Antes (pre-#686):**
+
 ```javascript
 {
   plan: 'free',
@@ -370,6 +395,7 @@ Roast ajustado (275 chars):
 ```
 
 **Después (post-#686):**
+
 ```javascript
 {
   plan: 'starter_trial',  // Free eliminado
@@ -383,12 +409,12 @@ Roast ajustado (275 chars):
 
 ## 🎯 Uso Recomendado por Plan
 
-| Plan | Tonos Disponibles | Style Profile | Brand Safety | Custom Prompt |
-|------|------------------|---------------|--------------|---------------|
-| **Starter Trial** | 3 tonos | ❌ | ❌ | ❌ |
-| **Starter** | 3 tonos | ❌ | ❌ | ❌ |
-| **Pro** | 3 tonos | ✅ | ❌ | ❌ (flag OFF) |
-| **Plus** | 3 tonos | ✅ | ✅ | ❌ (flag OFF) |
+| Plan              | Tonos Disponibles | Style Profile | Brand Safety | Custom Prompt |
+| ----------------- | ----------------- | ------------- | ------------ | ------------- |
+| **Starter Trial** | 3 tonos           | ❌            | ❌           | ❌            |
+| **Starter**       | 3 tonos           | ❌            | ❌           | ❌            |
+| **Pro**           | 3 tonos           | ✅            | ❌           | ❌ (flag OFF) |
+| **Plus**          | 3 tonos           | ✅            | ✅           | ❌ (flag OFF) |
 
 ---
 
@@ -434,10 +460,10 @@ describe('Sistema de Tonos Post-#686', () => {
 
   test('Brand Safety sobreescribe tone', async () => {
     const roast = await generateRoast({
-      tone: 'canalla',  // Agresivo
+      tone: 'canalla', // Agresivo
       brand_safety: {
         sponsor: 'Nike',
-        tone_override: 'professional'  // Sobreescribe
+        tone_override: 'professional' // Sobreescribe
       }
     });
     expect(roast).not.toMatch(/brutal|agresivo/);
@@ -454,7 +480,7 @@ describe('Sistema de Tonos Post-#686', () => {
 - **Issue #686:** Limpieza de configuraciones obsoletas (en revisión)
 - **Brand Safety:** Issue #859, `docs/nodes/shield.md`
 - **Style Profile:** `docs/nodes/persona.md`, Issue #615
-- **Código:** 
+- **Código:**
   - `src/services/roastEngine.js` (voiceStyles)
   - `src/config/validationConstants.js` (VALID_STYLES)
   - `src/services/roastPromptTemplate.js`
@@ -465,4 +491,3 @@ describe('Sistema de Tonos Post-#686', () => {
 **Maintained by:** Backend Developer  
 **Review Frequency:** After major tone/prompt changes  
 **Last Reviewed:** 2025-11-18
-

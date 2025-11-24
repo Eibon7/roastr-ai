@@ -11,10 +11,12 @@
 ## TL;DR
 
 **Root Cause:** Supabase project blocked due to **egress at 287%** (14.3GB/5GB) caused by:
+
 1. Workers polling DB every 2s = **32GB/month**
 2. Integration tests hitting real Supabase = **2.5GB/day**
 
 **Solution:**
+
 1. ✅ Reduced worker polling: 2s → 60s (**97% reduction**)
 2. ✅ Created mock Supabase for tests (**100% network elimination**)
 3. ⏳ Tests: 7/35 passing (need mock refinement for remaining 28)
@@ -37,8 +39,7 @@ at createTestTenants() → ensureAuthUser() → auth.admin.listUsers()
 **Discovery:** Supabase Auth API returning HTML instead of JSON:
 
 ```html
-<!DOCTYPE html>
-<title>rpkhiemljhncddmhrilk.supabase.co | 522: Connection timed out</title>
+<!DOCTYPE html> <title>rpkhiemljhncddmhrilk.supabase.co | 522: Connection timed out</title>
 ```
 
 **Error 522:** Cloudflare connection timeout = **Supabase project DOWN**
@@ -48,16 +49,17 @@ at createTestTenants() → ensureAuthUser() → auth.admin.listUsers()
 ### Phase 2: Root Cause Analysis (🔥 CRITICAL INFRASTRUCTURE ISSUE)
 
 **User Report:**
+
 > "Egress 14,365 / 5 GB (287%)"
 
 **Bandwidth Consumption Breakdown:**
 
-| Source | Frequency | Daily | Monthly | Status |
-|--------|-----------|-------|---------|--------|
-| **Workers** | Poll every 2s | 1.08GB | 32.4GB | ❌ CRITICAL |
-| **Integration Tests** | 50 runs/day | 2.5GB | 75GB | ❌ CRITICAL |
-| **Production Traffic** | None (no users) | 0MB | 0MB | N/A |
-| **TOTAL** | | ~3.6GB | ~107GB | ❌ **21x OVER LIMIT** |
+| Source                 | Frequency       | Daily  | Monthly | Status                |
+| ---------------------- | --------------- | ------ | ------- | --------------------- |
+| **Workers**            | Poll every 2s   | 1.08GB | 32.4GB  | ❌ CRITICAL           |
+| **Integration Tests**  | 50 runs/day     | 2.5GB  | 75GB    | ❌ CRITICAL           |
+| **Production Traffic** | None (no users) | 0MB    | 0MB     | N/A                   |
+| **TOTAL**              |                 | ~3.6GB | ~107GB  | ❌ **21x OVER LIMIT** |
 
 ---
 
@@ -66,6 +68,7 @@ at createTestTenants() → ensureAuthUser() → auth.admin.listUsers()
 **File:** `src/workers/cli/start-workers.js`
 
 **Problem:**
+
 ```javascript
 workerConfig: {
   fetch_comments: {
@@ -84,12 +87,14 @@ if (environment === 'production') {
 ```
 
 **Calculation:**
+
 - 5 workers × 30 polls/min = 150 queries/min
 - 150 × 60 × 24 = **216,000 queries/day**
 - Each query ~5KB = **1.08GB/day**
 - **32.4GB/month WITHOUT USERS**
 
 **Fix Applied:**
+
 ```javascript
 workerConfig: {
   fetch_comments: {
@@ -112,6 +117,7 @@ workerConfig: {
 **Problem:** Integration tests (`tests/integration/multi-tenant-rls-*`) hitting REAL Supabase
 
 **Evidence:**
+
 ```javascript
 // tests/helpers/tenantTestUtils.js
 const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -119,6 +125,7 @@ const testClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 ```
 
 **Bandwidth per test run:**
+
 - Create 2 orgs, 2 users, 50+ comments, 50+ responses
 - INSERT/DELETE operations = **~50MB per run**
 - 50 runs/day (CI + local) = **2.5GB/day**
@@ -127,6 +134,7 @@ const testClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 **Fix Applied:** Created `tests/helpers/supabaseMock.js`
 
 Features:
+
 - ✅ Simulates RLS policies (code `42501` for violations)
 - ✅ Service role bypasses RLS (like real Supabase)
 - ✅ Auto-creates tables on demand
@@ -151,15 +159,15 @@ class MockSupabaseClient {
     this.data = {}; // In-memory data store
     this.bypassRLS = options.bypassRLS || false; // Service role flag
   }
-  
+
   // RLS simulation
   _hasOrgAccess(orgId) {
     // Check if currentUserId is owner or member
   }
-  
+
   _checkRLSViolation(table, row) {
     if (this.bypassRLS) return null; // Service role bypass
-    
+
     if (!this._hasOrgAccess(row.organization_id)) {
       return {
         code: '42501', // Real Postgres RLS error code
@@ -167,19 +175,19 @@ class MockSupabaseClient {
       };
     }
   }
-  
+
   from(table) {
     return {
       insert: (rows) => {
         // Check RLS before insert
         const error = this._checkRLSViolation(table, rows);
         if (error) return Promise.resolve({ data: null, error });
-        
+
         // Insert if allowed
         this.data[table].push(rows);
         return Promise.resolve({ data: rows, error: null });
       },
-      
+
       select: () => ({
         eq: (column, value) => {
           const filtered = this.data[table].filter(r => r[column] === value);
@@ -187,7 +195,7 @@ class MockSupabaseClient {
           return { data: rlsFiltered, error: null, maybeSingle: () => ... };
         }
       }),
-      
+
       update: (updates) => ({ ... }),
       delete: () => ({ ... })
     };
@@ -225,13 +233,13 @@ if (USE_MOCK) {
 
 **Changes:**
 
-| Worker | Before | After | Reduction |
-|--------|--------|-------|-----------|
-| fetch_comments | 2s | 60s | **30x** |
-| analyze_toxicity | 1.5s | 45s | **30x** |
-| generate_reply | 2s | 60s | **30x** |
-| post_response | 2s | 60s | **30x** |
-| healthCheck | 30s | 5min | **10x** |
+| Worker           | Before | After | Reduction |
+| ---------------- | ------ | ----- | --------- |
+| fetch_comments   | 2s     | 60s   | **30x**   |
+| analyze_toxicity | 1.5s   | 45s   | **30x**   |
+| generate_reply   | 2s     | 60s   | **30x**   |
+| post_response    | 2s     | 60s   | **30x**   |
+| healthCheck      | 30s    | 5min  | **10x**   |
 
 **Production mode:** 1s → 30s (**30x** reduction)
 
@@ -241,32 +249,36 @@ if (USE_MOCK) {
 
 ### Bandwidth Savings
 
-| Component | Before | After | Savings |
-|-----------|--------|-------|---------|
-| Workers | 32.4GB/mo | 1.08GB/mo | **31.3GB** |
-| Integration Tests | 75GB/mo | 0GB | **75GB** |
-| **TOTAL** | **107GB/mo** | **~1GB/mo** | **106GB** |
-| **Percentage** | 2140% over limit | 20% of limit | ✅ **99% reduction** |
+| Component         | Before           | After        | Savings              |
+| ----------------- | ---------------- | ------------ | -------------------- |
+| Workers           | 32.4GB/mo        | 1.08GB/mo    | **31.3GB**           |
+| Integration Tests | 75GB/mo          | 0GB          | **75GB**             |
+| **TOTAL**         | **107GB/mo**     | **~1GB/mo**  | **106GB**            |
+| **Percentage**    | 2140% over limit | 20% of limit | ✅ **99% reduction** |
 
 ### Test Results
 
 **Before Fix:**
+
 - Status: ❌ ALL FAILING (0/35 passing)
 - Error: Timeout after 120s (Supabase blocked)
 - Bandwidth: 2.5GB/day
 
 **After Fix (Current):**
+
 - Status: 🟡 PARTIAL (7/35 passing = 20%)
 - Error: None (mock works)
 - Bandwidth: 0GB/day
 - Speed: 0.47s (250x faster than 120s timeout)
 
 **Passing Tests:**
+
 - ✅ Setup Verification
 - ✅ Tenant creation with isolation
 - ✅ (5 other tests - need to review which)
 
 **Failing Tests (28):**
+
 - Mock needs refinement for complex RLS scenarios
 - Need to implement missing Supabase API methods
 - Need to handle edge cases in RLS filtering
@@ -296,6 +308,7 @@ if (USE_MOCK) {
 ### Short-term (Prevent recurrence)
 
 1. **Add bandwidth monitoring**
+
    ```javascript
    // tests/setupIntegration.js
    beforeEach(() => {
@@ -361,11 +374,13 @@ if (USE_MOCK) {
 ## Files Changed
 
 **Created:**
+
 - `tests/helpers/supabaseMock.js` (350 lines) - Mock Supabase client with RLS
 - `docs/investigation/issue-894-egress-analysis.md` - Full bandwidth analysis
 - `docs/plan/issue-894.md` - Implementation plan
 
 **Modified:**
+
 - `src/workers/cli/start-workers.js` - Poll intervals 2s → 60s
 - `tests/helpers/tenantTestUtils.js` - Use mock by default
 - `tests/integration/multi-tenant-rls-issue-801-crud.test.js` - Timeout 30s → 120s
@@ -419,11 +434,13 @@ if (USE_MOCK) {
 3. **No bandwidth monitoring** (reached 287% silently)
 
 **Solutions implemented:**
+
 1. ✅ Reduced worker polling by 97% (2s → 60s)
 2. ✅ Created comprehensive Supabase mock with RLS simulation
 3. ✅ Eliminated 75GB/month test bandwidth usage
 
 **Outcome:**
+
 - Bandwidth: 107GB/mo → ~1GB/mo (**99% reduction**)
 - Tests: 0/35 → 7/35 passing (**20% functional**, 100% network-free)
 - Speed: 120s timeout → 0.47s execution (**250x faster**)
@@ -433,6 +450,7 @@ if (USE_MOCK) {
 ---
 
 **Orchestrator Note:** This issue demonstrates the importance of:
+
 1. Infrastructure monitoring (bandwidth, costs, limits)
 2. Test isolation (never hit production in tests)
 3. Adaptive resource usage (polling intervals based on activity)
@@ -445,4 +463,3 @@ if (USE_MOCK) {
 **Receipt Generated:** 2025-11-21  
 **Time Invested:** ~3 hours (diagnosis + implementation)  
 **Status:** 🟡 PARTIAL - Core fix complete, refinement needed
-

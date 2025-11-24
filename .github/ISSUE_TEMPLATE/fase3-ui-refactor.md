@@ -1,7 +1,7 @@
 ---
-name: "Fase 3: Migración UI - Configuration + Approval + Billing + Settings + Logs"
+name: 'Fase 3: Migración UI - Configuration + Approval + Billing + Settings + Logs'
 about: Migrar 5 pantallas de administración a shadcn/ui (parte del Epic #846)
-title: "feat(ui): Fase 3 - Migrar Configuration, Approval, Billing, Settings, Logs a shadcn/ui"
+title: 'feat(ui): Fase 3 - Migrar Configuration, Approval, Billing, Settings, Logs a shadcn/ui'
 labels: ui, frontend, refactor, enhancement, area:ui, area:billing
 assignees: ''
 ---
@@ -102,4 +102,3 @@ Antes de merge, verificar:
 - [ ] CodeRabbit review aprobado
 - [ ] Screenshots documentados
 - [ ] PR mergeada a `main`
-

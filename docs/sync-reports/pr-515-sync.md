@@ -12,6 +12,7 @@
 Successfully synchronized all documentation for Guardian Agent (GDD 2.0 Phase 16) implementation. Created new `guardian` node with complete documentation, updated spec.md with Guardian section, and integrated Guardian into system-map.yaml.
 
 **Key Metrics:**
+
 - **Nodes Created:** 1 (guardian)
 - **Nodes Updated:** 0
 - **Documentation Files Created:** 2 (docs/nodes/guardian.md, docs/sync-reports/pr-515-sync.md)
@@ -28,12 +29,12 @@ Successfully synchronized all documentation for Guardian Agent (GDD 2.0 Phase 16
 
 ### Guardian Implementation Files
 
-| File | Lines | Node | Status |
-|------|-------|------|--------|
-| `scripts/guardian-gdd.js` | 598 | guardian | New (Phase 16) |
-| `config/product-guard.yaml` | 264 | guardian | New (Phase 16) |
-| `config/guardian-ignore.yaml` | 39 | guardian | New (Phase 16) |
-| `tests/unit/scripts/guardian-gdd.test.js` | 361 | guardian | New (Phase 16) |
+| File                                      | Lines | Node     | Status         |
+| ----------------------------------------- | ----- | -------- | -------------- |
+| `scripts/guardian-gdd.js`                 | 598   | guardian | New (Phase 16) |
+| `config/product-guard.yaml`               | 264   | guardian | New (Phase 16) |
+| `config/guardian-ignore.yaml`             | 39    | guardian | New (Phase 16) |
+| `tests/unit/scripts/guardian-gdd.test.js` | 361   | guardian | New (Phase 16) |
 
 **Total Lines:** 1,262 lines of new Guardian implementation
 
@@ -50,6 +51,7 @@ Successfully synchronized all documentation for Guardian Agent (GDD 2.0 Phase 16
 **Purpose:** Product governance layer that monitors and protects sensitive changes in product logic, pricing, authentication policies, and documentation.
 
 **Responsibilities:**
+
 - Monitor git changes for protected domain violations
 - Classify changes by severity (CRITICAL, SENSITIVE, SAFE)
 - Generate audit logs and case files
@@ -57,6 +59,7 @@ Successfully synchronized all documentation for Guardian Agent (GDD 2.0 Phase 16
 - CI/CD integration with semantic exit codes
 
 **Protected Domains:**
+
 1. **pricing** (CRITICAL) - Subscription tiers, billing, Stripe
 2. **quotas** (CRITICAL) - Usage limits, rate limiting
 3. **auth_policies** (CRITICAL) - RLS, authentication, authorization
@@ -70,6 +73,7 @@ Successfully synchronized all documentation for Guardian Agent (GDD 2.0 Phase 16
 **Coverage:** 50% (auto-validated from test coverage)
 
 **Testing:** 14 unit tests covering:
+
 - M1: Unstaged changes detection (4 tests)
 - M2: Line counting accuracy (4 tests)
 - C4: Directory creation (4 tests)
@@ -80,6 +84,7 @@ Successfully synchronized all documentation for Guardian Agent (GDD 2.0 Phase 16
 - Integration test (1 test)
 
 **Key Features Documented:**
+
 - GuardianEngine class with 10 public methods
 - CLI usage with 4 modes (--full, --check, --report, --ci)
 - Exit code semantics (0=safe, 1=review, 2=block)
@@ -104,6 +109,7 @@ None. Guardian is a new node with no changes to existing nodes.
 **Placement:** After Trainer Node, before system map link
 
 **Content Added:**
+
 - Purpose and overview
 - 5 protected domains with protection levels
 - Business impact (revenue protection, security compliance)
@@ -115,6 +121,7 @@ None. Guardian is a new node with no changes to existing nodes.
 - Key features (8 technical capabilities)
 
 **Validation:**
+
 - ✅ Follows standard node documentation template
 - ✅ Consistent with other node sections
 - ✅ Links to node documentation file
@@ -127,6 +134,7 @@ None. Guardian is a new node with no changes to existing nodes.
 ### system-map.yaml Changes
 
 **Metadata Updates:**
+
 - `last_updated`: 2025-10-06 → 2025-10-09
 - `total_nodes`: 13 → 14
 - `critical_nodes`: 7 → 8 (Guardian added as critical)
@@ -135,6 +143,7 @@ None. Guardian is a new node with no changes to existing nodes.
 - `changes`: Updated description to "Phase 16: Added Guardian node (product governance layer)"
 
 **Guardian Node Definition:**
+
 ```yaml
 guardian:
   description: Product governance layer for monitoring and protecting sensitive changes
@@ -166,6 +175,7 @@ guardian:
 **Command:** `node scripts/validate-gdd-runtime.js --full`
 
 **Results:**
+
 ```text
 ✔ 14 nodes validated
 ⚠ 13 coverage integrity issue(s)
@@ -174,6 +184,7 @@ guardian:
 ```
 
 **Detailed Checks:**
+
 - ✅ Graph consistent (no structural errors)
 - ✅ spec.md synchronized (Guardian section added)
 - ✅ All edges bidirectional (Guardian has no edges yet)
@@ -183,14 +194,17 @@ guardian:
 - ✅ 0 broken links (documentation files exist)
 
 **Coverage Integrity:**
+
 - ⚠️ 13/13 nodes missing coverage data (expected - requires `npm test -- --coverage`)
 - Note: Guardian coverage set to 50% (auto-validated from actual test coverage)
 
 **Drift Risk Analysis:**
+
 - Guardian not yet in drift analysis (newly created)
 - All other nodes: 🟢 healthy (drift risk 0-5)
 
 **Performance:**
+
 - Validation completed in 0.08s
 - 204 source files scanned
 
@@ -214,6 +228,7 @@ guardian:
 - [ ] Create domain ownership directory (**Issue:** #522 - to be created)
 
 ### Future Enhancements
+
 - [ ] Support multiple configuration profiles (dev, staging, prod)
 - [ ] Add machine learning for anomaly detection (unusual change patterns)
 - [ ] Integrate with Slack for real-time approval requests
@@ -230,6 +245,7 @@ guardian:
 **Result:** ✅ 0 orphan nodes
 
 All 14 nodes are properly connected:
+
 - **Leaf Nodes (no dependencies):** multi-tenant, guardian
 - **Sink Nodes (no used_by):** analytics, trainer, guardian
 - **Connected Nodes:** 11 nodes with bidirectional edges
@@ -242,14 +258,14 @@ Guardian is intentionally a leaf node (no dependencies) and sink node (no used_b
 
 ### Documentation Coverage
 
-| Category | Coverage | Details |
-|----------|----------|---------|
-| **Node Documentation** | 100% | 1/1 nodes documented (guardian.md created) |
-| **spec.md Sync** | 100% | Guardian section added (75 lines) |
-| **system-map.yaml Sync** | 100% | Guardian node + metadata updated |
-| **Implementation Files** | 100% | All 4 files mapped to guardian node |
-| **Test Coverage** | 100% | Test file documented in node |
-| **Configuration Files** | 100% | 2 config files documented |
+| Category                 | Coverage | Details                                    |
+| ------------------------ | -------- | ------------------------------------------ |
+| **Node Documentation**   | 100%     | 1/1 nodes documented (guardian.md created) |
+| **spec.md Sync**         | 100%     | Guardian section added (75 lines)          |
+| **system-map.yaml Sync** | 100%     | Guardian node + metadata updated           |
+| **Implementation Files** | 100%     | All 4 files mapped to guardian node        |
+| **Test Coverage**        | 100%     | Test file documented in node               |
+| **Configuration Files**  | 100%     | 2 config files documented                  |
 
 **Overall Documentation Synchronization:** 100% (6/6 aspects covered)
 
@@ -284,27 +300,30 @@ Guardian is intentionally a leaf node (no dependencies) and sink node (no used_b
 
 ### Node Count Evolution
 
-| Metric | Before PR #515 | After PR #515 | Change |
-|--------|----------------|---------------|--------|
-| Total Nodes | 13 | 14 | +1 |
-| Critical Nodes | 7 | 8 | +1 |
-| High Priority Nodes | 4 | 4 | 0 |
-| Production Nodes | 12 | 13 | +1 |
-| Development Nodes | 1 | 1 | 0 |
+| Metric              | Before PR #515 | After PR #515 | Change |
+| ------------------- | -------------- | ------------- | ------ |
+| Total Nodes         | 13             | 14            | +1     |
+| Critical Nodes      | 7              | 8             | +1     |
+| High Priority Nodes | 4              | 4             | 0      |
+| Production Nodes    | 12             | 13            | +1     |
+| Development Nodes   | 1              | 1             | 0      |
 
 ### Graph Properties
 
 **DAG (Directed Acyclic Graph):** ✅ Maintained
+
 - No cycles introduced by Guardian node
 - Guardian is a leaf node (depends_on: [])
 - Guardian is a sink node (used_by: [])
 
 **Bidirectional Edges:** ✅ Valid
+
 - Guardian has no edges yet (leaf + sink)
 - All other 13 nodes maintain bidirectional edges
 - Future Phase 17 will add used_by edges from CI/CD workflows
 
 **Orphan Detection:** ✅ No orphans
+
 - Guardian is in system-map.yaml
 - Guardian is in spec.md
 - Guardian has node documentation file
@@ -360,12 +379,14 @@ $ node scripts/validate-gdd-runtime.js --full
 ### Applied Fixes (from PR #515)
 
 **Review #3319715250:**
+
 - ✅ N2: Actor detection with multi-source fallback
 - ✅ N1: Case ID milliseconds (collision prevention)
 - ✅ MN1: Renamed files parsing (double-counting fix)
 - ✅ M1: Glob pattern matching (minimatch integration)
 
 **Review #3319862956:**
+
 - ✅ N1: Remove nocase option (case-sensitive matching)
 - ✅ N2: Error logging in getFileDiff()
 
@@ -405,17 +426,17 @@ $ node scripts/validate-gdd-runtime.js --full
 
 ### Created Files (2)
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `docs/nodes/guardian.md` | 4,237 | Complete Guardian node documentation |
-| `docs/sync-reports/pr-515-sync.md` | (this file) | Documentation sync report |
+| File                               | Lines       | Purpose                              |
+| ---------------------------------- | ----------- | ------------------------------------ |
+| `docs/nodes/guardian.md`           | 4,237       | Complete Guardian node documentation |
+| `docs/sync-reports/pr-515-sync.md` | (this file) | Documentation sync report            |
 
 ### Updated Files (2)
 
-| File | Changes | Description |
-|------|---------|-------------|
-| `spec.md` | +75 lines | Added Guardian section (lines 7812-7886) |
-| `docs/system-map.yaml` | +25 lines, metadata updates | Added Guardian node + updated metadata |
+| File                   | Changes                     | Description                              |
+| ---------------------- | --------------------------- | ---------------------------------------- |
+| `spec.md`              | +75 lines                   | Added Guardian section (lines 7812-7886) |
+| `docs/system-map.yaml` | +25 lines, metadata updates | Added Guardian node + updated metadata   |
 
 **Total Documentation Changes:** 4,337 lines added/modified
 
@@ -430,6 +451,7 @@ $ node scripts/validate-gdd-runtime.js --full
 **Graph Resolver:** resolve-graph.js v2.0 (note: uses legacy "features" key)
 
 **Quality Assurance:**
+
 - ✅ Manual review of all documentation
 - ✅ Cross-referenced spec.md ↔ nodes ↔ code
 - ✅ Verified all file paths exist

@@ -44,4 +44,3 @@ describe('plans API', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/plan/cancel', {});
   });
 });
-

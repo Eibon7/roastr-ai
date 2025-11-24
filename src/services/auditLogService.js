@@ -1,6 +1,6 @@
 /**
  * Audit Log Service
- * 
+ *
  * Tracks critical system events for security and compliance
  */
 
@@ -20,19 +20,22 @@ class AuditLogService {
       'auth.reset_request': { severity: 'warning', description: 'Password reset requested' },
       'auth.reset_complete': { severity: 'info', description: 'Password reset completed' },
       'auth.failed_login': { severity: 'warning', description: 'Failed login attempt' },
-      
+
       // Billing events
       'billing.checkout_created': { severity: 'info', description: 'Checkout session created' },
       'billing.webhook_received': { severity: 'info', description: 'Stripe webhook received' },
       'billing.subscription_updated': { severity: 'info', description: 'Subscription updated' },
       'billing.payment_failed': { severity: 'warning', description: 'Payment failed' },
-      'billing.subscription_cancelled': { severity: 'warning', description: 'Subscription cancelled' },
-      
+      'billing.subscription_cancelled': {
+        severity: 'warning',
+        description: 'Subscription cancelled'
+      },
+
       // Integration events
       'integrations.connect': { severity: 'info', description: 'Platform connected' },
       'integrations.disconnect': { severity: 'info', description: 'Platform disconnected' },
       'integrations.oauth_failed': { severity: 'warning', description: 'OAuth failed' },
-      
+
       // User management
       'user.suspend': { severity: 'warning', description: 'User suspended' },
       'user.reactivate': { severity: 'info', description: 'User reactivated' },
@@ -46,7 +49,10 @@ class AuditLogService {
       'admin.user_modified': { severity: 'info', description: 'Admin modified user data' },
       'admin.bulk_action': { severity: 'warning', description: 'Admin performed bulk action' },
       'admin.feature_flag_changed': { severity: 'info', description: 'Admin changed feature flag' },
-      'admin.backoffice_settings_changed': { severity: 'warning', description: 'Admin changed backoffice settings' },
+      'admin.backoffice_settings_changed': {
+        severity: 'warning',
+        description: 'Admin changed backoffice settings'
+      },
       'admin.plan_update': { severity: 'warning', description: 'Admin updated plan limits' },
       'admin.access_denied': { severity: 'error', description: 'Admin access denied' },
 
@@ -90,7 +96,10 @@ class AuditLogService {
           logger.debug('Audit event saved to database:', eventType);
           return true;
         } catch (dbError) {
-          logger.warn('Failed to save audit log to database, falling back to file:', dbError.message);
+          logger.warn(
+            'Failed to save audit log to database, falling back to file:',
+            dbError.message
+          );
         }
       }
 
@@ -98,7 +107,6 @@ class AuditLogService {
       await this.saveToFileAuditLog(auditEntry);
       logger.debug('Audit event saved to file:', eventType);
       return true;
-
     } catch (error) {
       logger.error('Failed to log audit event:', error);
       return false;
@@ -109,9 +117,7 @@ class AuditLogService {
    * Save audit log to database
    */
   async saveToDatabaseAuditLog(auditEntry) {
-    const { error } = await supabaseServiceClient
-      .from('audit_logs')
-      .insert(auditEntry);
+    const { error } = await supabaseServiceClient.from('audit_logs').insert(auditEntry);
 
     if (error) {
       throw new Error(`Database audit log error: ${error.message}`);
@@ -198,17 +204,17 @@ class AuditLogService {
     try {
       const content = await fs.readFile(this.logFile, 'utf8');
       const lines = content.trim().split('\n');
-      
+
       const logs = lines
-        .filter(line => line.trim())
-        .map(line => {
+        .filter((line) => line.trim())
+        .map((line) => {
           try {
             return JSON.parse(line);
           } catch {
             return null;
           }
         })
-        .filter(log => log !== null)
+        .filter((log) => log !== null)
         .slice(0, filters.limit || 100);
 
       return {
@@ -289,10 +295,10 @@ class AuditLogService {
         }
       };
 
-      data.forEach(log => {
+      data.forEach((log) => {
         // Count by type
         stats.byType[log.event_type] = (stats.byType[log.event_type] || 0) + 1;
-        
+
         // Count by severity
         stats.bySeverity[log.severity] = (stats.bySeverity[log.severity] || 0) + 1;
       });
@@ -302,7 +308,6 @@ class AuditLogService {
         data: stats,
         timeRange
       };
-
     } catch (error) {
       logger.error('Failed to get event stats:', error);
       return {
@@ -317,7 +322,7 @@ class AuditLogService {
    */
   getStartDateForRange(timeRange) {
     const now = new Date();
-    
+
     switch (timeRange) {
       case '1h':
         return new Date(now.getTime() - 60 * 60 * 1000).toISOString();
@@ -369,7 +374,7 @@ class AuditLogService {
     // CRITICAL FIX M2: Use plan weight comparison, not lexicographical
     // Plan hierarchy aligned with billing system
     const PLAN_WEIGHTS = {
-      starter_trial: 0,  // Issue #488: 'free' renamed to 'starter_trial'
+      starter_trial: 0, // Issue #488: 'free' renamed to 'starter_trial'
       starter: 1,
       pro: 2,
       creator_plus: 3,
@@ -397,7 +402,7 @@ class AuditLogService {
       newPlan,
       adminEmail,
       action: 'plan_change',
-      changeType  // Now correctly labels transitions
+      changeType // Now correctly labels transitions
     });
   }
 
@@ -405,7 +410,7 @@ class AuditLogService {
     return this.logEvent('admin.user_modified', {
       userId: adminId,
       targetUserId,
-      modifications,  // logEvent() will stringify this in details field
+      modifications, // logEvent() will stringify this in details field
       adminEmail,
       action: 'user_modification'
     });

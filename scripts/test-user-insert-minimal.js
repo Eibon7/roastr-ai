@@ -34,10 +34,7 @@ async function testUserInsert() {
   console.log('User data:', JSON.stringify(testUser, null, 2));
 
   try {
-    const response = await client
-      .from('users')
-      .insert(testUser)
-      .select();
+    const response = await client.from('users').insert(testUser).select();
 
     console.log('\n📊 Full Supabase Response:');
     console.log('Type:', typeof response);
@@ -59,10 +56,7 @@ async function testUserInsert() {
 
         // Clean up
         console.log('\n🧹 Cleaning up test user...');
-        const deleteResponse = await client
-          .from('users')
-          .delete()
-          .eq('id', testUser.id);
+        const deleteResponse = await client.from('users').delete().eq('id', testUser.id);
 
         if (deleteResponse.error) {
           console.log('⚠️  Cleanup error:', deleteResponse.error);
@@ -76,7 +70,6 @@ async function testUserInsert() {
       console.log('\n⚠️  WARNING: Response has no data and no error');
       console.log('This suggests the response structure might be unexpected');
     }
-
   } catch (err) {
     console.error('\n💥 Exception thrown:', err);
     console.error('Stack:', err.stack);
@@ -88,7 +81,7 @@ testUserInsert()
     console.log('\n✅ Test complete');
     process.exit(0);
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('\n❌ Test failed:', err);
     process.exit(1);
   });

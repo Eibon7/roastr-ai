@@ -5,19 +5,21 @@
 **Prioridad:** high-priority  
 **Labels:** enhancement, backend  
 **Parent Issue:** #859 (Brand Safety for Sponsors - Plan Plus)  
-**Implementation PR:** #865 (merged 2025-11-18)  
+**Implementation PR:** #865 (merged 2025-11-18)
 
 ---
 
 ## 📋 Estado Actual
 
 ### ✅ Implementación Completa (Issue #859 / PR #865)
+
 - **SponsorService**: Completo con 34 unit tests passing (100%)
 - **Routes**: `/api/sponsors` CRUD completos con plan gating
 - **Integration**: Brand Safety integrado en Analysis Department + Roast Generation
 - **Status**: ✅ 100% complete con unit tests
 
 ### ❌ Gap Identificado
+
 - **Integration tests**: Removidos en commit 824dfddb debido a complejidad de mocking
 - **Razón**: Complex middleware mocking (`authenticateToken`, `requirePlan`)
 - **Necesidad**: Validar flujo completo con Supabase real + mocked OpenAI
@@ -27,25 +29,30 @@
 ## 🎯 Objetivos (5 Acceptance Criteria)
 
 ### AC #1: Coverage ≥80% integration coverage para SponsorService + routes
+
 - Integration tests para SponsorService (CRUD operations + tag extraction)
 - Integration tests para sponsors API routes
 - Usar Supabase real con test database (RLS validation)
 
 ### AC #2: E2E: At least 2 full-flow tests (shield + roast)
+
 - Full Shield Flow: Comment → Sponsor detection → Shield action
 - Defensive Roast Flow: Comment → Sponsor detection → Roast generation con tone override
 
 ### AC #3: Plan Gating: All routes properly gated to Plus tier
+
 - Verify `requirePlan('plus', {feature: 'brand_safety'})` enforcement
 - Test Free/Basic/Pro users → 403
 - Test Plus users → 200/201
 
 ### AC #4: RLS: Sponsors isolated by user_id
+
 - Users can only CRUD their own sponsors
 - Cross-tenant sponsor access blocked
 - RLS policies validated via Supabase queries
 
 ### AC #5: CI: All tests pass in GitHub Actions
+
 - All integration tests passing locally
 - CI/CD validation passing
 - No flaky tests
@@ -61,6 +68,7 @@
 **Test Cases:**
 
 #### CRUD Operations (with real Supabase)
+
 - [ ] **Create sponsor** with RLS policy enforcement
   - Valid sponsor creation (Plus user)
   - Duplicate sponsor name error handling (409)
@@ -83,6 +91,7 @@
   - Orphaned roast decisions validated
 
 #### Tag Extraction (with mocked OpenAI)
+
 - [ ] **Extract tags from URL** with HTML scraping
   - Valid URL with meta tags → successful extraction
   - Invalid URL (malformed) → 400
@@ -96,6 +105,7 @@
   - SSL errors → error message
 
 #### Sponsor Detection
+
 - [ ] **Exact name matching**
   - "Nike" in comment → match
   - "NIKE" (case-insensitive) → match
@@ -123,6 +133,7 @@
 **Test Cases:**
 
 #### Authentication & Authorization
+
 - [ ] **Unauthenticated requests** → 401
   - No token provided
   - Invalid token format
@@ -141,12 +152,14 @@
   - DELETE /api/sponsors/:id → 204
 
 #### Plan Gating
+
 - [ ] **requirePlan('plus', {feature: 'brand_safety'})** enforcement
   - Middleware applied to all routes
   - Feature flag validation
   - Plan tier validation
 
 #### Input Validation
+
 - [ ] **Missing required fields** (name, url)
   - POST without name → 400
   - POST without url → 400 (if tag extraction requested)
@@ -163,13 +176,15 @@
 
 ### 3. E2E Flow Tests (Priority: P1)
 
-**Files:** 
+**Files:**
+
 - `tests/e2e/brand-safety-shield-flow.e2e.test.js` (Shield Flow)
 - `tests/e2e/brand-safety-defensive-roast.e2e.test.js` (Defensive Roast)
 
 **Test Cases:**
 
 #### Full Shield Flow (AC #2)
+
 - [ ] **Comment with sponsor mention ingested**
   1. User creates sponsor via `POST /api/sponsors` (Nike, high severity)
   2. Comment with sponsor mention ingested ("Nike is a scam")
@@ -187,6 +202,7 @@
      ```
 
 #### Zero Tolerance Flow
+
 - [ ] **Sponsor with zero_tolerance severity**
   1. Create sponsor with severity: "zero_tolerance"
   2. Toxic comment mentioning sponsor (toxicity: 0.65)
@@ -195,6 +211,7 @@
   5. Verify action_tags: ["hide_comment", "block_user", "sponsor_protection"]
 
 #### Defensive Roast Flow (AC #2)
+
 - [ ] **Sponsor with def_roast action**
   1. Create sponsor with actions: ["def_roast"], tone: "professional"
   2. Toxic comment mentioning sponsor (toxicity: 0.75)
@@ -210,10 +227,12 @@
 ### Mocking Strategy
 
 **From removed tests (commit 824dfddb):**
+
 - Complex middleware mocking (`authenticateToken`, `requirePlan`)
 - Supabase auth.uid() RLS policy simulation
 
 **Recommended approach:**
+
 1. Use `supertest` for API route testing
 2. Mock `authenticateToken` to inject test user
 3. Mock `requirePlan` to simulate Plus tier
@@ -239,12 +258,14 @@ const { SponsorService } = require('../../src/services/sponsorService');
 ## 📂 Archivos Afectados
 
 ### Nuevos Archivos (4 archivos)
+
 - `tests/integration/sponsor-service-integration.test.js` - SponsorService CRUD + tag extraction
 - `tests/integration/routes/sponsors.test.js` - API routes + auth + plan gating (existed, fixed)
 - `tests/e2e/brand-safety-shield-flow.e2e.test.js` - Shield Flow E2E tests
 - `tests/e2e/brand-safety-defensive-roast.e2e.test.js` - Defensive Roast E2E tests
 
 ### Archivos a Modificar (Referencias)
+
 - `src/services/sponsorService.js` - Review for integration test coverage
 - `src/routes/sponsors.js` - Validate middleware application
 - `docs/nodes/shield.md` - Update with integration test references
@@ -309,9 +330,9 @@ const { SponsorService } = require('../../src/services/sponsorService');
 ---
 
 **Agentes Relevantes:**
+
 - **TestEngineer** - Implementar integration tests y E2E tests
 - **Guardian** - Validar billing + security (Plus plan gating)
 
 **Creado:** 2025-11-19  
 **Estado:** Planning Complete → Ready for Implementation
-

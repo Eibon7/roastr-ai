@@ -28,7 +28,7 @@
         }
       },
       {
-        "id": "acc_tw_staging_2", 
+        "id": "acc_tw_staging_2",
         "network": "twitter",
         "handle": "@roastr_test_2",
         "displayName": "Roastr Test Account 2",
@@ -54,7 +54,7 @@
       },
       {
         "id": "acc_ig_staging_1",
-        "network": "instagram", 
+        "network": "instagram",
         "handle": "@roastr.test.ig",
         "displayName": "RoastrTestIG",
         "avatar": "https://instagram.com/avatars/test.jpg",
@@ -95,15 +95,7 @@
         "reddit": 0,
         "bluesky": 0
       },
-      "available": [
-        "facebook",
-        "youtube", 
-        "tiktok",
-        "discord",
-        "twitch",
-        "reddit",
-        "bluesky"
-      ]
+      "available": ["facebook", "youtube", "tiktok", "discord", "twitch", "reddit", "bluesky"]
     }
   },
   "timestamp": "2024-02-01T15:30:00Z"

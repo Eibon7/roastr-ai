@@ -24,4 +24,3 @@ describe('RoastrComment', () => {
     expect(screen.getByText(/spam/i)).toBeInTheDocument();
   });
 });
-

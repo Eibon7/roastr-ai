@@ -8,6 +8,7 @@
 ## 🛠️ Acciones realizadas
 
 Migradas 4 pantallas a PageLayout:
+
 - Dashboard.jsx
 - Compose.jsx
 - Integrations.jsx

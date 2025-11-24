@@ -1,4 +1,5 @@
 const OpenAI = require('openai');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const RoastGeneratorMock = require('./roastGeneratorMock');
 require('dotenv').config();
 
@@ -7,7 +8,7 @@ class RoastGeneratorReal {
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      console.warn('⚠️  OPENAI_API_KEY not found - falling back to mock roast generator');
+      logger.warn('⚠️  OPENAI_API_KEY not found - falling back to mock roast generator');
       this.mockGenerator = new RoastGeneratorMock();
       this.isMockMode = true;
       return;
@@ -15,8 +16,8 @@ class RoastGeneratorReal {
 
     this.openai = new OpenAI({
       apiKey,
-      maxRetries: 2,  // Standard resilience config (CodeRabbit #3343936799)
-      timeout: 30000  // 30 second timeout
+      maxRetries: 2, // Standard resilience config (CodeRabbit #3343936799)
+      timeout: 30000 // 30 second timeout
     });
     this.isMockMode = false;
   }
@@ -87,42 +88,42 @@ Reglas de estilo DIRECTO/CORTANTE:
       const systemContent = systemPrompts[tone] || systemPrompts.sarcastic;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
+            role: 'system',
             content: systemContent
           },
           {
-            role: "user",
+            role: 'user',
             content: text
           }
         ],
         max_tokens: 100,
-        temperature: 0.8,
+        temperature: 0.8
       });
 
       return completion.choices[0].message.content;
     } catch (error) {
-      console.error("❌ [RoastGeneratorReal] Error generando roast:");
-      console.error(error.response?.data || error.message || error);
+      logger.error('❌ [RoastGeneratorReal] Error generando roast:');
+      logger.error(error.response?.data || error.message || error);
       throw error;
     }
   }
 
   async generateRoastWithPrompt(text, customPrompt) {
     try {
-      console.log("🎯 [RoastGeneratorReal] Generando roast con prompt personalizado...");
-      
+      logger.info('🎯 [RoastGeneratorReal] Generando roast con prompt personalizado...');
+
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
+            role: 'system',
             content: customPrompt
           },
           {
-            role: "user", 
+            role: 'user',
             content: text
           }
         ],
@@ -132,8 +133,8 @@ Reglas de estilo DIRECTO/CORTANTE:
 
       return completion.choices[0].message.content;
     } catch (error) {
-      console.error("❌ [RoastGeneratorReal] Error generando roast con prompt personalizado:");
-      console.error(error.response?.data || error.message || error);
+      logger.error('❌ [RoastGeneratorReal] Error generando roast con prompt personalizado:');
+      logger.error(error.response?.data || error.message || error);
       throw error;
     }
   }

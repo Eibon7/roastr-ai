@@ -49,16 +49,30 @@ describe('SponsorService', () => {
   beforeEach(() => {
     // Create fully chainable Supabase mock
     const chainable = {
-      from: jest.fn(function() { return this; }),
-      select: jest.fn(function() { return this; }),
-      insert: jest.fn(function() { return this; }),
-      update: jest.fn(function() { return this; }),
-      delete: jest.fn(function() { return this; }),
-      eq: jest.fn(function() { return this; }),
-      order: jest.fn(function() { return this; }),
+      from: jest.fn(function () {
+        return this;
+      }),
+      select: jest.fn(function () {
+        return this;
+      }),
+      insert: jest.fn(function () {
+        return this;
+      }),
+      update: jest.fn(function () {
+        return this;
+      }),
+      delete: jest.fn(function () {
+        return this;
+      }),
+      eq: jest.fn(function () {
+        return this;
+      }),
+      order: jest.fn(function () {
+        return this;
+      }),
       single: jest.fn()
     };
-    
+
     mockSupabase = chainable;
 
     // Mock OpenAI API key
@@ -125,9 +139,9 @@ describe('SponsorService', () => {
         url: 'https://www.nike.com'
       };
 
-      await expect(
-        sponsorService.createSponsor(userId, sponsorData)
-      ).rejects.toThrow('SPONSOR_NAME_REQUIRED');
+      await expect(sponsorService.createSponsor(userId, sponsorData)).rejects.toThrow(
+        'SPONSOR_NAME_REQUIRED'
+      );
     });
 
     it('should throw error when userId is missing', async () => {
@@ -135,9 +149,9 @@ describe('SponsorService', () => {
         name: 'Nike'
       };
 
-      await expect(
-        sponsorService.createSponsor(null, sponsorData)
-      ).rejects.toThrow('USER_ID_REQUIRED');
+      await expect(sponsorService.createSponsor(null, sponsorData)).rejects.toThrow(
+        'USER_ID_REQUIRED'
+      );
     });
 
     it('should handle database errors gracefully', async () => {
@@ -151,9 +165,9 @@ describe('SponsorService', () => {
         error: { message: 'Database connection failed' }
       });
 
-      await expect(
-        sponsorService.createSponsor(userId, sponsorData)
-      ).rejects.toThrow('DATABASE_ERROR: Database connection failed');
+      await expect(sponsorService.createSponsor(userId, sponsorData)).rejects.toThrow(
+        'DATABASE_ERROR: Database connection failed'
+      );
     });
   });
 
@@ -167,7 +181,7 @@ describe('SponsorService', () => {
 
       // Mock order() to be chainable, with final call returning result
       let orderCallCount = 0;
-      mockSupabase.order.mockImplementation(function() {
+      mockSupabase.order.mockImplementation(function () {
         orderCallCount++;
         if (orderCallCount === 2) {
           // Second order() call returns the result
@@ -195,7 +209,7 @@ describe('SponsorService', () => {
 
       // Mock order() to be chainable, with final call returning result
       let orderCallCount = 0;
-      mockSupabase.order.mockImplementation(function() {
+      mockSupabase.order.mockImplementation(function () {
         orderCallCount++;
         if (orderCallCount === 2) {
           // Second order() call returns the result
@@ -217,7 +231,7 @@ describe('SponsorService', () => {
 
       // Mock order() to be chainable, with final call returning empty
       let orderCallCount = 0;
-      mockSupabase.order.mockImplementation(function() {
+      mockSupabase.order.mockImplementation(function () {
         orderCallCount++;
         if (orderCallCount === 2) {
           // Second order() call returns empty array
@@ -243,7 +257,11 @@ describe('SponsorService', () => {
       };
 
       mockSupabase.single.mockResolvedValue({
-        data: { id: sponsorId, severity: 'zero_tolerance', actions: ['hide_comment', 'block_user'] },
+        data: {
+          id: sponsorId,
+          severity: 'zero_tolerance',
+          actions: ['hide_comment', 'block_user']
+        },
         error: null
       });
 
@@ -260,9 +278,9 @@ describe('SponsorService', () => {
     });
 
     it('should throw error when sponsorId is missing', async () => {
-      await expect(
-        sponsorService.updateSponsor(null, 'user-123', {})
-      ).rejects.toThrow('INVALID_PARAMS');
+      await expect(sponsorService.updateSponsor(null, 'user-123', {})).rejects.toThrow(
+        'INVALID_PARAMS'
+      );
     });
   });
 
@@ -273,7 +291,7 @@ describe('SponsorService', () => {
 
       // Mock eq() to be chainable, with final call returning success
       let eqCallCount = 0;
-      mockSupabase.eq.mockImplementation(function() {
+      mockSupabase.eq.mockImplementation(function () {
         eqCallCount++;
         if (eqCallCount === 2) {
           // Second eq() call returns the result
@@ -298,7 +316,7 @@ describe('SponsorService', () => {
 
       // Mock eq() to be chainable, with final call returning error
       let eqCallCount = 0;
-      mockSupabase.eq.mockImplementation(function() {
+      mockSupabase.eq.mockImplementation(function () {
         eqCallCount++;
         if (eqCallCount === 2) {
           // Second eq() call returns error
@@ -308,9 +326,9 @@ describe('SponsorService', () => {
         return this;
       });
 
-      await expect(
-        sponsorService.deleteSponsor(sponsorId, userId)
-      ).rejects.toThrow('DATABASE_ERROR: Delete failed');
+      await expect(sponsorService.deleteSponsor(sponsorId, userId)).rejects.toThrow(
+        'DATABASE_ERROR: Delete failed'
+      );
     });
   });
 
@@ -337,11 +355,13 @@ describe('SponsorService', () => {
 
       // Mock OpenAI completion
       mockOpenAI.chat.completions.create.mockResolvedValue({
-        choices: [{
-          message: {
-            content: 'sportswear, athletics, sneakers, sports, apparel'
+        choices: [
+          {
+            message: {
+              content: 'sportswear, athletics, sneakers, sports, apparel'
+            }
           }
-        }]
+        ]
       });
     });
 
@@ -355,8 +375,10 @@ describe('SponsorService', () => {
       expect(global.fetch).toHaveBeenCalled();
       const fetchCall = global.fetch.mock.calls[0];
       expect(fetchCall[0]).toMatch(/^https:\/\/www\.nike\.com\/?$/);
-      expect(fetchCall[1].headers['User-Agent']).toBe('Roastr.ai Bot (Brand Safety Tag Extraction)');
-      
+      expect(fetchCall[1].headers['User-Agent']).toBe(
+        'Roastr.ai Bot (Brand Safety Tag Extraction)'
+      );
+
       expect(mockOpenAI.chat.completions.create).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'gpt-4o',
@@ -370,30 +392,27 @@ describe('SponsorService', () => {
       // Use actually invalid URL that URL parser will reject
       const unsafeUrl = 'javascript:alert(1)';
 
-      await expect(
-        sponsorService.extractTagsFromURL(unsafeUrl)
-      ).rejects.toThrow('INVALID_URL');
+      await expect(sponsorService.extractTagsFromURL(unsafeUrl)).rejects.toThrow('INVALID_URL');
     });
 
     it('should throw error when URL is missing', async () => {
-      await expect(
-        sponsorService.extractTagsFromURL(null)
-      ).rejects.toThrow('URL_REQUIRED');
+      await expect(sponsorService.extractTagsFromURL(null)).rejects.toThrow('URL_REQUIRED');
     });
 
     it('should throw error when OpenAI is not configured', async () => {
       sponsorService.openai = null;
 
-      await expect(
-        sponsorService.extractTagsFromURL('https://www.nike.com')
-      ).rejects.toThrow('OPENAI_UNAVAILABLE');
+      await expect(sponsorService.extractTagsFromURL('https://www.nike.com')).rejects.toThrow(
+        'OPENAI_UNAVAILABLE'
+      );
     });
 
     it('should handle fetch timeout', async () => {
-      global.fetch.mockImplementation(() => 
-        new Promise((resolve, reject) => {
-          setTimeout(() => reject(new Error('AbortError')), 100);
-        })
+      global.fetch.mockImplementation(
+        () =>
+          new Promise((resolve, reject) => {
+            setTimeout(() => reject(new Error('AbortError')), 100);
+          })
       );
 
       await expect(
@@ -415,11 +434,13 @@ describe('SponsorService', () => {
 
     it('should limit tags to maximum 10', async () => {
       mockOpenAI.chat.completions.create.mockResolvedValue({
-        choices: [{
-          message: {
-            content: 'tag1, tag2, tag3, tag4, tag5, tag6, tag7, tag8, tag9, tag10, tag11, tag12'
+        choices: [
+          {
+            message: {
+              content: 'tag1, tag2, tag3, tag4, tag5, tag6, tag7, tag8, tag9, tag10, tag11, tag12'
+            }
           }
-        }]
+        ]
       });
 
       const tags = await sponsorService.extractTagsFromURL('https://www.example.com');
@@ -436,7 +457,15 @@ describe('SponsorService', () => {
     it('should detect exact sponsor name match (case-insensitive)', async () => {
       const comment = 'Nike is a scam brand';
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: ['sportswear'], severity: 'high', tone: 'professional', actions: ['def_roast'], active: true }
+        {
+          id: 'sponsor-1',
+          name: 'Nike',
+          tags: ['sportswear'],
+          severity: 'high',
+          tone: 'professional',
+          actions: ['def_roast'],
+          active: true
+        }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);
@@ -449,7 +478,15 @@ describe('SponsorService', () => {
     it('should detect sponsor tag match', async () => {
       const comment = 'These sneakers are terrible quality';
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: ['sportswear', 'sneakers'], severity: 'medium', tone: 'normal', actions: [], active: true }
+        {
+          id: 'sponsor-1',
+          name: 'Nike',
+          tags: ['sportswear', 'sneakers'],
+          severity: 'medium',
+          tone: 'normal',
+          actions: [],
+          active: true
+        }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);
@@ -462,7 +499,15 @@ describe('SponsorService', () => {
     it('should prioritize exact match over tag match', async () => {
       const comment = 'Nike sneakers are bad';
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: ['sportswear', 'sneakers'], severity: 'high', tone: 'professional', actions: ['def_roast'], active: true }
+        {
+          id: 'sponsor-1',
+          name: 'Nike',
+          tags: ['sportswear', 'sneakers'],
+          severity: 'high',
+          tone: 'professional',
+          actions: ['def_roast'],
+          active: true
+        }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);
@@ -474,8 +519,26 @@ describe('SponsorService', () => {
     it('should respect sponsor priority when multiple matches', async () => {
       const comment = 'Adidas shoes are bad'; // Only mention Adidas to test priority
       const sponsors = [
-        { id: 'sponsor-1', name: 'Adidas', tags: [], severity: 'medium', tone: 'normal', actions: [], priority: 3, active: true },
-        { id: 'sponsor-2', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [], priority: 1, active: true }
+        {
+          id: 'sponsor-1',
+          name: 'Adidas',
+          tags: [],
+          severity: 'medium',
+          tone: 'normal',
+          actions: [],
+          priority: 3,
+          active: true
+        },
+        {
+          id: 'sponsor-2',
+          name: 'Nike',
+          tags: [],
+          severity: 'high',
+          tone: 'professional',
+          actions: [],
+          priority: 1,
+          active: true
+        }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);
@@ -487,7 +550,14 @@ describe('SponsorService', () => {
     it('should return no match when no sponsors mentioned', async () => {
       const comment = 'This is a normal comment';
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: ['sportswear'], severity: 'high', tone: 'professional', actions: [] }
+        {
+          id: 'sponsor-1',
+          name: 'Nike',
+          tags: ['sportswear'],
+          severity: 'high',
+          tone: 'professional',
+          actions: []
+        }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);
@@ -507,7 +577,14 @@ describe('SponsorService', () => {
 
     it('should handle null/undefined comment', async () => {
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [] }
+        {
+          id: 'sponsor-1',
+          name: 'Nike',
+          tags: [],
+          severity: 'high',
+          tone: 'professional',
+          actions: []
+        }
       ];
 
       const result = await sponsorService.detectSponsorMention(null, sponsors);
@@ -518,7 +595,14 @@ describe('SponsorService', () => {
     it('should handle sponsors with empty tags gracefully', async () => {
       const comment = 'Sportswear brands are overpriced';
       const sponsors = [
-        { id: 'sponsor-1', name: 'Nike', tags: [], severity: 'high', tone: 'professional', actions: [] }
+        {
+          id: 'sponsor-1',
+          name: 'Nike',
+          tags: [],
+          severity: 'high',
+          tone: 'professional',
+          actions: []
+        }
       ];
 
       const result = await sponsorService.detectSponsorMention(comment, sponsors);

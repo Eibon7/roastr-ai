@@ -1,6 +1,6 @@
 /**
  * Shield Test Helpers - Issue #408
- * 
+ *
  * Utility functions and mocks for Shield integration testing
  */
 
@@ -138,7 +138,7 @@ function generateTestComment(toxicityLevel, overrides = {}) {
   }
 
   const baseComment = baseComments[0];
-  
+
   return {
     id: `comment_${Date.now()}`,
     organization_id: 'org_test',
@@ -160,7 +160,7 @@ function generateAnalysisResult(toxicityLevel, overrides = {}) {
   }
 
   const baseComment = baseComments[0];
-  
+
   return {
     severity_level: baseComment.severity_level,
     toxicity_score: baseComment.toxicity_score,
@@ -202,20 +202,20 @@ function validateShieldResult(result, expectedAction = null) {
   expect(result).toHaveProperty('actions');
   expect(result).toHaveProperty('userBehavior');
   expect(result).toHaveProperty('priority');
-  
+
   // Core requirement: Shield actions must NEVER generate responses
   expect(result.shouldGenerateResponse).toBe(false);
-  
+
   if (result.shieldActive) {
     expect(result.actions).toHaveProperty('primary');
     expect(result.actions).toHaveProperty('severity');
     expect(result.actions).toHaveProperty('offenseLevel');
-    
+
     if (expectedAction) {
       expect(result.actions.primary).toBe(expectedAction);
     }
   }
-  
+
   return true;
 }
 
@@ -232,7 +232,7 @@ function validateOffenderRegistration(mockUpsertCall) {
     }),
     expect.any(Object)
   );
-  
+
   return true;
 }
 
@@ -244,7 +244,7 @@ function validateEscalationMatrix(severity, offenseLevel, actualAction) {
   if (expectedAction) {
     expect(actualAction).toBe(expectedAction);
   }
-  
+
   return true;
 }
 
@@ -276,7 +276,7 @@ function setupShieldTestEnvironment() {
   const mockSupabase = createMockSupabaseClient();
   const mockQueueService = createMockQueueService();
   const mockPlatformClients = createMockPlatformClients();
-  
+
   return {
     mockSupabase,
     mockQueueService,
@@ -290,15 +290,15 @@ function setupShieldTestEnvironment() {
  */
 async function cleanupShieldTestEnvironment(services = {}) {
   const { shieldService, shieldWorker } = services;
-  
+
   if (shieldService && shieldService.shutdown) {
     await shieldService.shutdown();
   }
-  
+
   if (shieldWorker && shieldWorker.shutdown) {
     await shieldWorker.shutdown();
   }
-  
+
   jest.clearAllMocks();
 }
 

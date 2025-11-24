@@ -8,118 +8,119 @@ agents:
     status: implemented
     purpose: Coordinate sub-agents, resolve GDD nodes, execute workflows per triggers and AC
     triggers:
-      labels: ["area:*", "priority:*"]
-      diffIncludes: ["*"]
+      labels: ['area:*', 'priority:*']
+      diffIncludes: ['*']
     guardrails:
-      - "Never load spec.md completely (use resolved nodes only)"
-      - "Never expose secrets or .env variable names"
-      - "Always perform FASE 0 assessment before implementation"
-      - "Generate receipts for all invoked agents"
-      - "If AC ≥3 or multi-area changes, create mini-plan in docs/plan/"
+      - 'Never load spec.md completely (use resolved nodes only)'
+      - 'Never expose secrets or .env variable names'
+      - 'Always perform FASE 0 assessment before implementation'
+      - 'Generate receipts for all invoked agents'
+      - 'If AC ≥3 or multi-area changes, create mini-plan in docs/plan/'
     outputs:
-      - "docs/plan/*.md"
-      - "docs/agents/receipts/*.md"
-      - "Updated GDD nodes"
+      - 'docs/plan/*.md'
+      - 'docs/agents/receipts/*.md'
+      - 'Updated GDD nodes'
 
   - name: Explore
     type: built-in
     status: implemented
     purpose: Fast codebase exploration for research, reduce context by finding specific patterns/files
     triggers:
-      labels: ["area:*", "research", "investigation"]
-      diffIncludes: ["*"]
-      conditions: ["When research needed", "When codebase structure unclear", "When file location uncertain"]
+      labels: ['area:*', 'research', 'investigation']
+      diffIncludes: ['*']
+      conditions:
+        ['When research needed', 'When codebase structure unclear', 'When file location uncertain']
     guardrails:
-      - "Never use for needle queries (specific file/class)"
-      - "Must specify thoroughness level: quick/medium/very thorough"
-      - "Prefer over loading spec.md for research"
+      - 'Never use for needle queries (specific file/class)'
+      - 'Must specify thoroughness level: quick/medium/very thorough'
+      - 'Prefer over loading spec.md for research'
     outputs:
-      - "File locations"
-      - "Architecture insights"
-      - "Pattern discoveries"
+      - 'File locations'
+      - 'Architecture insights'
+      - 'Pattern discoveries'
 
   - name: TaskAssessor
     type: built-in
     status: implemented
     purpose: Assess task state before implementation, recommend CREATE/FIX/ENHANCE/CLOSE
     triggers:
-      labels: ["priority:P0", "priority:P1"]
+      labels: ['priority:P0', 'priority:P1']
       diffIncludes: []
-      conditions: ["AC ≥3", "Complex features", "Integrations", "Refactors"]
+      conditions: ['AC ≥3', 'Complex features', 'Integrations', 'Refactors']
     guardrails:
-      - "Never invoke for simple tasks (≤2 AC)"
-      - "Must read docs/patterns/coderabbit-lessons.md first"
+      - 'Never invoke for simple tasks (≤2 AC)'
+      - 'Must read docs/patterns/coderabbit-lessons.md first'
       - "Assessment must include 'Estado Actual' section"
     outputs:
-      - "docs/assessment/<issue>.md"
+      - 'docs/assessment/<issue>.md'
 
   - name: TestEngineer
     type: built-in
     status: implemented
     purpose: Generate tests, execute test suites, produce visual evidence (screenshots, reports)
     triggers:
-      labels: ["test:unit", "test:integration", "test:e2e", "test:smoke", "qa", "validation"]
-      diffIncludes: ["src/", "tests/", "scripts/", "*.test.js", "*.spec.js"]
+      labels: ['test:unit', 'test:integration', 'test:e2e', 'test:smoke', 'qa', 'validation']
+      diffIncludes: ['src/', 'tests/', 'scripts/', '*.test.js', '*.spec.js']
     guardrails:
-      - "Never commit code without tests"
-      - "Never skip visual evidence for frontend changes"
-      - "Must coordinate with Orchestrator if tests missing before closing"
-      - "Must generate evidence in docs/test-evidence/"
+      - 'Never commit code without tests'
+      - 'Never skip visual evidence for frontend changes'
+      - 'Must coordinate with Orchestrator if tests missing before closing'
+      - 'Must generate evidence in docs/test-evidence/'
     outputs:
-      - "tests/unit/**/*.test.js"
-      - "tests/integration/**/*.test.js"
-      - "tests/e2e/**/*.spec.js"
-      - "docs/test-evidence/**/*"
+      - 'tests/unit/**/*.test.js'
+      - 'tests/integration/**/*.test.js'
+      - 'tests/e2e/**/*.spec.js'
+      - 'docs/test-evidence/**/*'
 
   - name: FrontendDev
     type: built-in
     status: implemented
     purpose: Implement UI components, frontend logic, state management
     triggers:
-      labels: ["area:frontend", "area:ui", "component"]
-      diffIncludes: ["frontend/", "src/components/", "*.jsx", "*.tsx", "*.css", "*.scss"]
+      labels: ['area:frontend', 'area:ui', 'component']
+      diffIncludes: ['frontend/', 'src/components/', '*.jsx', '*.tsx', '*.css', '*.scss']
     guardrails:
-      - "Never skip visual evidence (screenshots + docs/ui-review.md)"
-      - "Must use Playwright MCP for validation"
-      - "Must capture multiple viewports (desktop, tablet, mobile)"
-      - "Must check browser console and network logs"
+      - 'Never skip visual evidence (screenshots + docs/ui-review.md)'
+      - 'Must use Playwright MCP for validation'
+      - 'Must capture multiple viewports (desktop, tablet, mobile)'
+      - 'Must check browser console and network logs'
     outputs:
-      - "Frontend components"
-      - "CSS/styling"
-      - "docs/ui-review.md"
+      - 'Frontend components'
+      - 'CSS/styling'
+      - 'docs/ui-review.md'
 
   - name: UIDesigner
     type: built-in
     status: implemented
     purpose: Produce UI specs, design grids, component states, ensure accessibility
     triggers:
-      labels: ["area:ui", "design", "accessibility"]
-      diffIncludes: ["frontend/", "design/"]
+      labels: ['area:ui', 'design', 'accessibility']
+      diffIncludes: ['frontend/', 'design/']
     guardrails:
-      - "Never implement without approval"
-      - "Must align with existing design system"
-      - "Must follow WCAG 2.1 AA accessibility standards"
+      - 'Never implement without approval'
+      - 'Must align with existing design system'
+      - 'Must follow WCAG 2.1 AA accessibility standards'
     outputs:
-      - "Design specifications"
-      - "Component wireframes"
-      - "Accessibility guidelines"
+      - 'Design specifications'
+      - 'Component wireframes'
+      - 'Accessibility guidelines'
 
   - name: WhimsyInjector
     type: built-in
     status: implemented
     purpose: Add microcopy, tone, branding WITHOUT touching legal/billing/admin areas
     triggers:
-      labels: ["area:ui", "branding", "copy"]
-      diffIncludes: ["frontend/", "src/components/"]
+      labels: ['area:ui', 'branding', 'copy']
+      diffIncludes: ['frontend/', 'src/components/']
     guardrails:
-      - "NEVER modify /legal, /billing, /admin routes"
-      - "NEVER change error messages with security implications"
-      - "NEVER modify API documentation"
-      - "Must preserve technical accuracy"
+      - 'NEVER modify /legal, /billing, /admin routes'
+      - 'NEVER change error messages with security implications'
+      - 'NEVER modify API documentation'
+      - 'Must preserve technical accuracy'
     outputs:
-      - "UI microcopy"
-      - "User-facing messages"
-      - "Branding elements"
+      - 'UI microcopy'
+      - 'User-facing messages'
+      - 'Branding elements'
 
   - name: Guardian
     type: custom
@@ -128,35 +129,49 @@ agents:
     script: scripts/guardian-gdd.js
     completion_script: scripts/ci/validate-completion.js
     triggers:
-      labels: ["critical", "security", "billing", "ready-to-merge"]
-      diffIncludes: ["src/services/costControl.js", "src/services/billing.js", "database/schema.sql", "docs/nodes/*.md", ".gddrc.json"]
-      conditions: ["Pricing changes", "Quota modifications", "Auth policy changes", "RLS policy changes", "Pre-merge validation"]
+      labels: ['critical', 'security', 'billing', 'ready-to-merge']
+      diffIncludes:
+        [
+          'src/services/costControl.js',
+          'src/services/billing.js',
+          'database/schema.sql',
+          'docs/nodes/*.md',
+          '.gddrc.json'
+        ]
+      conditions:
+        [
+          'Pricing changes',
+          'Quota modifications',
+          'Auth policy changes',
+          'RLS policy changes',
+          'Pre-merge validation'
+        ]
     guardrails:
-      - "NEVER bypass CRITICAL violations without Product Owner approval"
-      - "NEVER merge PRs with exit code 2"
-      - "NEVER merge incomplete PRs (completion < 100%)"
-      - "Must document approval in PR comments"
-      - "Must review all cases in docs/guardian/cases/"
-      - "Must validate completion before merge (all AC, tests, docs, receipts)"
+      - 'NEVER bypass CRITICAL violations without Product Owner approval'
+      - 'NEVER merge PRs with exit code 2'
+      - 'NEVER merge incomplete PRs (completion < 100%)'
+      - 'Must document approval in PR comments'
+      - 'Must review all cases in docs/guardian/cases/'
+      - 'Must validate completion before merge (all AC, tests, docs, receipts)'
     capabilities:
       governance:
-        - "Validates sensitive code changes (billing, auth, quotas)"
-        - "Enforces approval workflow for CRITICAL violations"
-        - "Generates audit trail and governance reports"
+        - 'Validates sensitive code changes (billing, auth, quotas)'
+        - 'Enforces approval workflow for CRITICAL violations'
+        - 'Generates audit trail and governance reports'
       completion:
-        - "Validates all acceptance criteria completed (issue body parsing)"
-        - "Verifies test coverage ≥90% (or specified threshold)"
-        - "Confirms all tests passing (npm test exit 0)"
-        - "Validates agent receipts present (all required agents)"
-        - "Checks documentation updated (GDD nodes, test evidence)"
-        - "Confirms CodeRabbit comments = 0 (no pending reviews)"
-        - "Verifies CI/CD status (all checks passing)"
+        - 'Validates all acceptance criteria completed (issue body parsing)'
+        - 'Verifies test coverage ≥90% (or specified threshold)'
+        - 'Confirms all tests passing (npm test exit 0)'
+        - 'Validates agent receipts present (all required agents)'
+        - 'Checks documentation updated (GDD nodes, test evidence)'
+        - 'Confirms CodeRabbit comments = 0 (no pending reviews)'
+        - 'Verifies CI/CD status (all checks passing)'
     outputs:
-      - "docs/guardian/guardian-report.md"
-      - "docs/guardian/cases/*.json"
-      - "docs/guardian/audit-log.md"
-      - "Completion validation report (stdout)"
-      - "Exit code: 0 (pass), 1 (warnings/incomplete), 2 (critical)"
+      - 'docs/guardian/guardian-report.md'
+      - 'docs/guardian/cases/*.json'
+      - 'docs/guardian/audit-log.md'
+      - 'Completion validation report (stdout)'
+      - 'Exit code: 0 (pass), 1 (warnings/incomplete), 2 (critical)'
 
   - name: general-purpose
     type: built-in
@@ -165,15 +180,16 @@ agents:
     triggers:
       labels: []
       diffIncludes: []
-      conditions: ["Complex multi-step tasks", "Uncertain file locations", "Multiple search attempts needed"]
+      conditions:
+        ['Complex multi-step tasks', 'Uncertain file locations', 'Multiple search attempts needed']
     guardrails:
-      - "Never use for simple file reads (use Read tool directly)"
-      - "Never use for specific class searches (use Glob directly)"
-      - "Never use for 2-3 file searches (use Read directly)"
+      - 'Never use for simple file reads (use Read tool directly)'
+      - 'Never use for specific class searches (use Glob directly)'
+      - 'Never use for 2-3 file searches (use Read directly)'
     outputs:
-      - "Research findings"
-      - "Code locations"
-      - "Recommendations"
+      - 'Research findings'
+      - 'Code locations'
+      - 'Recommendations'
 
 # Agent roles (NOT invocable, for documentation only)
 # These are conceptual roles fulfilled by humans or the Orchestrator

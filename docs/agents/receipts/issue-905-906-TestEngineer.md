@@ -43,5 +43,4 @@ npm test -- tests/unit/workers/FetchCommentsWorker.test.js tests/unit/workers/An
 
 ## Verificación final
 
-**Estado:** Tests unitarios de FetchCommentsWorker y AnalyzeToxicityWorker pasan (37/37).  
-
+**Estado:** Tests unitarios de FetchCommentsWorker y AnalyzeToxicityWorker pasan (37/37).

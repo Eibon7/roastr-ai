@@ -17,6 +17,7 @@
 **Risk Level**: MEDIUM - Test issues can hide real bugs
 
 **Production Impact Assessment**:
+
 - Shield system cannot be verified as protecting users
 - No confidence in escalation logic (warn → mute → block → report)
 - Cannot validate security features (input sanitization, UUID validation)
@@ -40,23 +41,28 @@ This is a **monetizable product** where Shield protects users from toxic content
 ### Production-Ready Test Characteristics
 
 ✅ **Validate Real Behavior**
+
 - Test: "Does Shield escalate from warn to block after 3 violations?"
 - NOT: "Was supabase.from('user_behavior') called?"
 
 ✅ **Realistic User Flows**
+
 - Test: "User posts toxic comment → Shield warns → User posts again → Shield mutes"
 - NOT: "Mock returns { shieldActive: true } when called"
 
 ✅ **Security Edge Cases**
+
 - Test: "Attacker sends 10,000 char input → System returns 400 with safe error"
 - NOT: "validateInput() was called"
 
 ✅ **Complete Cleanup**
+
 - Each test leaves system in clean state
 - No test pollution (shared mocks, lingering state)
 - Tests pass in suite AND in isolation
 
 ✅ **Error Handling**
+
 - Test: "Database down → Shield returns graceful degradation"
 - NOT: "Mock throws error → test expects error"
 
@@ -70,21 +76,24 @@ This is a **monetizable product** where Shield protects users from toxic content
 **Security Risk**: HIGH - Tests might pass while real auth is broken
 
 **Root Cause**:
+
 ```javascript
 // Test sets up mock auth (lines 23-31 of shield-ui-complete-integration.test.js)
 app.use('/api/shield', mockAuth);
 app.use('/api/shield', require('../../src/routes/shield'));
 
 // But shield.js has (line 50)
-router.use(authenticateToken);  // Overrides mockAuth!
+router.use(authenticateToken); // Overrides mockAuth!
 ```
 
 **Why This Matters for Production**:
+
 - If auth is broken, users can access other org's Shield data
 - GDPR violation risk (seeing other users' moderation actions)
 - Tests showing "passing" while auth is bypassed
 
 **Production-Ready Fix**:
+
 - Mock authenticateToken BEFORE routes load
 - Verify mock actually runs (add spy)
 - Test auth failures explicitly (401 scenarios)
@@ -98,9 +107,10 @@ router.use(authenticateToken);  // Overrides mockAuth!
 **User Impact**: Shield might not escalate properly (warn forever, never block)
 
 **Root Cause**:
+
 ```javascript
 // Test mocks only ONE Supabase call chain
-supabase.from('user_behavior').select().eq().single()
+supabase.from('user_behavior').select().eq().single();
 
 // But analyzeForShield() makes 6+ DB operations:
 // - getUserBehavior() ← mocked ✓
@@ -110,12 +120,14 @@ supabase.from('user_behavior').select().eq().single()
 ```
 
 **Why This Matters for Production**:
+
 - Escalation matrix untested (warn → mute → block path)
 - Repeat offender logic unverified
 - Time decay for old violations not validated
 - Cross-platform aggregation untested
 
 **Production-Ready Fix**:
+
 - Complete ALL Supabase mock chains
 - Validate escalation paths with realistic scenarios
 - Test time windows (24h, 7d, 30d violation tracking)
@@ -129,6 +141,7 @@ supabase.from('user_behavior').select().eq().single()
 **Security Risk**: HIGH - No input sanitization in production code
 
 **Root Cause**:
+
 ```javascript
 // Validation function EXISTS (lines 105-150 of shield.js)
 function validateQueryParameters(query = {}) {
@@ -139,18 +152,20 @@ function validateQueryParameters(query = {}) {
 router.get('/events', async (req, res) => {
   // No validation! ❌
   // No try-catch! ❌
-  const events = await getEvents(req.query);  // Crashes on bad input
+  const events = await getEvents(req.query); // Crashes on bad input
   res.json(events);
 });
 ```
 
 **Why This Matters for Production**:
+
 - Attacker sends `?page=-1` → System crashes
 - Attacker sends `?limit=999999` → DoS attack
 - Attacker sends `?category=<script>` → Potential XSS
 - No error boundaries → Entire API down on one bad request
 
 **Production-Ready Fix**:
+
 - Wire up validation middleware to ALL routes
 - Add try-catch with graceful error responses
 - Test malicious inputs (SQL injection attempts, XSS, buffer overflow)
@@ -165,6 +180,7 @@ router.get('/events', async (req, res) => {
 **Audit Risk**: HIGH - No proof Shield actually logged moderation actions
 
 **Root Cause**:
+
 ```javascript
 // Test expects:
 expect(supabase.from).toHaveBeenCalledWith('shield_actions');
@@ -175,12 +191,14 @@ supabase.from('shield_actions').insert({...})
 ```
 
 **Why This Matters for Production**:
+
 - GDPR requires audit trail of moderation actions
 - Cannot prove Shield logged block/mute actions
 - Legal compliance risk if moderation disputes arise
 - No evidence of Shield enforcement
 
 **Production-Ready Fix**:
+
 - Restructure mocks to track all calls
 - Validate actual data inserted (not just "method was called")
 - Test: "After blocking user, shield_actions table has block record with reason"
@@ -194,6 +212,7 @@ supabase.from('shield_actions').insert({...})
 **User Impact**: Shield dashboard might be unusable in production
 
 **Root Cause**:
+
 ```javascript
 // Playwright tests expect:
 await page.goto('http://localhost:3000/shield');
@@ -203,6 +222,7 @@ await page.goto('http://localhost:3000/shield');
 ```
 
 **Why This Matters for Production**:
+
 - Cannot verify UI renders correctly
 - Network delay handling untested
 - Selector stability unverified (UI might break on updates)
@@ -212,12 +232,14 @@ await page.goto('http://localhost:3000/shield');
 **Production-Ready Fix Options**:
 
 **Option A**: Start real server (RECOMMENDED for production)
+
 - Spin up Express server in beforeAll()
 - Test against real implementation
 - Verify full stack integration
 - 5-10 second startup overhead
 
 **Option B**: Playwright API mocking
+
 - Mock network layer
 - Faster tests (no server startup)
 - But doesn't test real network behavior
@@ -236,10 +258,12 @@ await page.goto('http://localhost:3000/shield');
 #### 1.1 Fix Authentication Mocking
 
 **Files to Change**:
+
 - `tests/integration/shield-ui-complete-integration.test.js`
 - `src/middleware/auth.js` (add test bypass)
 
 **Acceptance Criteria**:
+
 - [ ] All 20 integration tests pass (GET /config, GET /events, POST /revert, GET /stats)
 - [ ] Mock auth verified to run (spy confirms execution)
 - [ ] Test added: "Unauthorized user gets 401 on /api/shield/events"
@@ -249,12 +273,13 @@ await page.goto('http://localhost:3000/shield');
 **Implementation Strategy**:
 
 **Option A - Test Environment Bypass** (RECOMMENDED):
+
 ```javascript
 // src/middleware/auth.js
 function authenticateToken(req, res, next) {
   // Issue #482: Allow test bypass
   if (process.env.NODE_ENV === 'test' && req.user) {
-    return next();  // Test already set req.user
+    return next(); // Test already set req.user
   }
 
   // Normal JWT validation...
@@ -262,6 +287,7 @@ function authenticateToken(req, res, next) {
 ```
 
 **Option B - Jest Mock Before Import**:
+
 ```javascript
 // tests/integration/shield-ui-complete-integration.test.js
 jest.mock('../../src/middleware/auth', () => ({
@@ -276,6 +302,7 @@ const app = require('../../src/index');
 ```
 
 **Validation**:
+
 ```bash
 npm test -- tests/integration/shield-ui-complete-integration.test.js
 # Expected: 20/20 PASS
@@ -284,9 +311,11 @@ npm test -- tests/integration/shield-ui-complete-integration.test.js
 #### 1.2 Add Route Validation & Error Handling
 
 **Files to Change**:
+
 - `src/routes/shield.js` (add validation middleware + try-catch)
 
 **Acceptance Criteria**:
+
 - [ ] All 13+ validation tests pass
 - [ ] Invalid pagination returns 200 with defaults (not 500)
 - [ ] Invalid UUID returns 400 with specific error code
@@ -326,34 +355,33 @@ function withValidation(validationFn) {
 }
 
 // Apply to routes
-router.get('/events',
-  withValidation(validateEventsQuery),
-  async (req, res) => {
-    try {
-      const events = await getEvents(req.validated);
-      res.json({ success: true, data: events });
-    } catch (error) {
-      logger.error('Events endpoint error:', error);
-      res.status(500).json({
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to fetch events',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        }
-      });
-    }
+router.get('/events', withValidation(validateEventsQuery), async (req, res) => {
+  try {
+    const events = await getEvents(req.validated);
+    res.json({ success: true, data: events });
+  } catch (error) {
+    logger.error('Events endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to fetch events',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      }
+    });
   }
-);
+});
 ```
 
 **Validation**:
+
 ```bash
 npm test -- tests/unit/routes/shield-round3-security.test.js
 # Expected: 15/15 PASS (currently 2/15)
 ```
 
 **Security Tests to Add**:
+
 ```javascript
 // Test XSS attempt
 it('should sanitize XSS in category parameter', async () => {
@@ -379,9 +407,7 @@ it('should reject SQL injection in filters', async () => {
 // Test buffer overflow attempt
 it('should enforce maximum parameter lengths', async () => {
   const longString = 'a'.repeat(10000);
-  const res = await request(app)
-    .get('/api/shield/events')
-    .query({ category: longString });
+  const res = await request(app).get('/api/shield/events').query({ category: longString });
 
   expect(res.status).toBe(400);
   expect(res.body.error.code).toBe('PARAMETER_TOO_LONG');
@@ -399,10 +425,12 @@ it('should enforce maximum parameter lengths', async () => {
 #### 2.1 Complete Supabase Mocking
 
 **Files to Change**:
+
 - `tests/integration/shield-escalation-logic.test.js`
 - `tests/helpers/mockSupabaseFactory.js` (create centralized factory)
 
 **Acceptance Criteria**:
+
 - [ ] All 15 escalation tests pass
 - [ ] Escalation path validated: first offense → warn, 2nd → mute_temp, 3rd → mute_perm, 4th → block
 - [ ] Time decay tested: old violations (30+ days) don't trigger escalation
@@ -464,7 +492,7 @@ function createShieldSupabaseMock(options = {}) {
       userBehaviorQueried: () => expect(fromMock).toHaveBeenCalledWith('user_behavior'),
       actionRecorded: (actionType) => {
         const calls = insertMock.mock.calls;
-        const actionCall = calls.find(call => call[0]?.action_type === actionType);
+        const actionCall = calls.find((call) => call[0]?.action_type === actionType);
         expect(actionCall).toBeDefined();
         return actionCall[0]; // Return inserted data for validation
       }
@@ -476,6 +504,7 @@ module.exports = { createShieldSupabaseMock };
 ```
 
 **Realistic Escalation Test**:
+
 ```javascript
 // Test real business scenario
 it('should escalate repeat offender correctly', async () => {
@@ -485,13 +514,15 @@ it('should escalate repeat offender correctly', async () => {
 
   // Mock existing violations
   const supabase = createShieldSupabaseMock({
-    userBehavior: [{
-      user_id: user,
-      organization_id: org,
-      violation_count: 2,  // 2 prior violations
-      last_violation: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-      strikes: 2
-    }]
+    userBehavior: [
+      {
+        user_id: user,
+        organization_id: org,
+        violation_count: 2, // 2 prior violations
+        last_violation: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
+        strikes: 2
+      }
+    ]
   });
 
   const shieldService = new ShieldService({
@@ -500,18 +531,22 @@ it('should escalate repeat offender correctly', async () => {
   });
 
   // User posts 3rd toxic comment
-  const result = await shieldService.analyzeForShield(org, {
-    id: 'comment-789',
-    text: 'Another toxic comment',
-    userId: user
-  }, {
-    toxicity: 0.85,
-    category: 'insult'
-  });
+  const result = await shieldService.analyzeForShield(
+    org,
+    {
+      id: 'comment-789',
+      text: 'Another toxic comment',
+      userId: user
+    },
+    {
+      toxicity: 0.85,
+      category: 'insult'
+    }
+  );
 
   // BUSINESS VALIDATION (not just mock calls!)
   expect(result.shieldActive).toBe(true);
-  expect(result.actions.primary).toBe('mute_temp');  // 3rd offense = temp mute
+  expect(result.actions.primary).toBe('mute_temp'); // 3rd offense = temp mute
   expect(result.actions.offenseLevel).toBe('persistent');
   expect(result.actions.violationCount).toBe(3);
 
@@ -523,6 +558,7 @@ it('should escalate repeat offender correctly', async () => {
 ```
 
 **Validation**:
+
 ```bash
 npm test -- tests/integration/shield-escalation-logic.test.js
 # Expected: 15/15 PASS (currently 0/15)
@@ -531,9 +567,11 @@ npm test -- tests/integration/shield-escalation-logic.test.js
 #### 2.2 Fix Mock Tracking for Recording
 
 **Files to Change**:
+
 - `tests/unit/services/shield-action-tags.test.js`
 
 **Acceptance Criteria**:
+
 - [ ] All 6 recording tests pass
 - [ ] Verify actual data inserted (user ID, action type, timestamp, reason)
 - [ ] Validate user_behavior table updated (strike count incremented)
@@ -576,6 +614,7 @@ it('should execute block_user action and record complete audit trail', async () 
 ```
 
 **Validation**:
+
 ```bash
 npm test -- tests/unit/services/shield-action-tags.test.js
 # Expected: 27/27 PASS (currently 21/27)
@@ -592,10 +631,12 @@ npm test -- tests/unit/services/shield-action-tags.test.js
 #### 3.1 E2E Server Setup
 
 **Files to Change**:
+
 - `tests/integration/shield-stability.test.js`
 - `tests/helpers/testServer.js` (create reusable server manager)
 
 **Acceptance Criteria**:
+
 - [ ] All 18 Playwright tests pass
 - [ ] UI renders correctly under network delays (100ms, 500ms, 2s)
 - [ ] Selectors stable (fallback strategies tested)
@@ -638,7 +679,7 @@ class TestServer {
   async stop() {
     if (this.process) {
       this.process.kill('SIGTERM');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 }
@@ -667,22 +708,26 @@ afterAll(async () => {
 ```javascript
 // Mock API responses
 beforeEach(async ({ page }) => {
-  await page.route('**/api/shield/config', async route => {
+  await page.route('**/api/shield/config', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ enabled: true, /* ... */ })
+      body: JSON.stringify({ enabled: true /* ... */ })
     });
   });
 
-  await page.route('**/api/shield/events', async route => {
+  await page.route('**/api/shield/events', async (route) => {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ events: [/* ... */] })
+      body: JSON.stringify({
+        events: [
+          /* ... */
+        ]
+      })
     });
   });
 });
@@ -694,8 +739,8 @@ beforeEach(async ({ page }) => {
 // Test real user experience
 it('should handle slow network gracefully', async ({ page }) => {
   // Throttle network to 3G speed
-  await page.route('**/api/shield/events', async route => {
-    await new Promise(resolve => setTimeout(resolve, 2000)); // 2s delay
+  await page.route('**/api/shield/events', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // 2s delay
     await route.continue();
   });
 
@@ -716,7 +761,7 @@ it('should handle slow network gracefully', async ({ page }) => {
 it('should recover from network failure', async ({ page }) => {
   let attemptCount = 0;
 
-  await page.route('**/api/shield/events', async route => {
+  await page.route('**/api/shield/events', async (route) => {
     attemptCount++;
 
     if (attemptCount === 1) {
@@ -743,6 +788,7 @@ it('should recover from network failure', async ({ page }) => {
 ```
 
 **Validation**:
+
 ```bash
 npm test -- tests/integration/shield-stability.test.js
 # Expected: 18/18 PASS (currently 0/18)
@@ -804,14 +850,14 @@ npm test -- tests/integration/shield-stability.test.js
 
 ### Risks & Mitigations
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| **Tests pass but Shield broken in production** | CRITICAL | MEDIUM | Validate business logic, not mocks. Use realistic data. Test in staging before release. |
-| **Mock complexity becomes unmaintainable** | HIGH | HIGH | Centralize mocks in factory. Document mock patterns. Use realistic defaults. |
-| **E2E tests flaky** | MEDIUM | HIGH | Add retries, increase timeouts, use stable selectors. Option: Skip in CI, run pre-release. |
-| **Security tests incomplete** | CRITICAL | MEDIUM | Consult OWASP Top 10. Add fuzzing. External security review before release. |
-| **Time investment exceeds estimate** | MEDIUM | MEDIUM | Prioritize P0→P1→P2. Ship Phase 1+2, defer Phase 3 if needed. |
-| **Tests conflict with future refactors** | LOW | HIGH | Test contracts, not implementation. Use integration tests over unit tests where possible. |
+| Risk                                           | Impact   | Probability | Mitigation                                                                                 |
+| ---------------------------------------------- | -------- | ----------- | ------------------------------------------------------------------------------------------ |
+| **Tests pass but Shield broken in production** | CRITICAL | MEDIUM      | Validate business logic, not mocks. Use realistic data. Test in staging before release.    |
+| **Mock complexity becomes unmaintainable**     | HIGH     | HIGH        | Centralize mocks in factory. Document mock patterns. Use realistic defaults.               |
+| **E2E tests flaky**                            | MEDIUM   | HIGH        | Add retries, increase timeouts, use stable selectors. Option: Skip in CI, run pre-release. |
+| **Security tests incomplete**                  | CRITICAL | MEDIUM      | Consult OWASP Top 10. Add fuzzing. External security review before release.                |
+| **Time investment exceeds estimate**           | MEDIUM   | MEDIUM      | Prioritize P0→P1→P2. Ship Phase 1+2, defer Phase 3 if needed.                              |
+| **Tests conflict with future refactors**       | LOW      | HIGH        | Test contracts, not implementation. Use integration tests over unit tests where possible.  |
 
 ### Red Flags - Stop & Reassess If
 
@@ -864,12 +910,14 @@ npm test -- tests/integration/shield-stability.test.js
 ### Start with Phase 1 (P0 Blockers)
 
 **Why**:
+
 1. Highest ROI - Unblocks 33/77 tests (43%)
 2. Security critical - Auth and validation are non-negotiable
 3. Foundation for Phase 2 - Can't test escalation without auth working
 4. Clear acceptance criteria - Measurable success
 
 **First Task**: Fix authentication mocking (1.1)
+
 - Fastest win - 20 tests with one fix
 - Enables testing of all Shield API endpoints
 - Security verification opportunity
@@ -877,22 +925,26 @@ npm test -- tests/integration/shield-stability.test.js
 ### Timeline Estimate
 
 **Optimistic** (everything works first try): 15 hours
+
 - Phase 1: 6 hours
 - Phase 2: 5 hours
 - Phase 3: 4 hours
 
 **Realistic** (some debugging required): 20 hours
+
 - Phase 1: 8 hours
 - Phase 2: 7 hours
 - Phase 3: 5 hours
 
 **Pessimistic** (discover real bugs): 30+ hours
+
 - If implementation issues found, stop and fix those first
 - Re-estimate after Phase 1 complete
 
 ### Rollback Plan
 
 If Phase 1 takes >10 hours:
+
 - Stop and reassess
 - Check if implementation has real bugs (not just test issues)
 - Consider consulting Backend Developer Agent for implementation review
@@ -921,17 +973,20 @@ tests/
 From `docs/patterns/coderabbit-lessons.md`:
 
 ✅ **Apply Lesson #9**: Jest Integration Tests
+
 - Check router mounting order (specific before generic)
 - Add defensive checks for module-level calls
 - Disable rate limiters in test environment
 - Avoid global mocks in setup files
 
 ✅ **Apply Lesson #2**: Testing Patterns
+
 - Write tests BEFORE implementation (if adding new features)
 - Cover happy path + error cases + edge cases
 - Verify mock calls with actual data, not just "was called"
 
 ✅ **Apply Lesson #5**: Error Handling
+
 - Specific error codes (not generic "Failed")
 - Retry logic for transient errors
 - Log errors with context
@@ -974,6 +1029,7 @@ From `docs/patterns/coderabbit-lessons.md`:
 See Phase 2.1 for `createShieldSupabaseMock()` implementation.
 
 Key principles:
+
 - Return realistic data structures
 - Track ALL operations (select, insert, update)
 - Provide verification helpers

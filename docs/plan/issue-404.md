@@ -1,11 +1,13 @@
 # Plan: Issue #404 - [E2E] Flujo manual (auto-approval OFF)
 
 ## Objetivo
+
 Implementar un test E2E completo para validar el flujo de moderación manual: ingest → 2 variantes → selección → 1 variante → aprobación → publicación directa.
 
 ## Análisis del Requerimiento
 
 ### Criterios de Aceptación Mapeados
+
 - ✅ **2 variantes iniciales**: Test valida exactamente 2 variantes respetando tono preseleccionado
 - ✅ **Selección de usuario**: Simula selección de variante por parte del usuario
 - ✅ **1 variante adicional**: Genera exactamente 1 variante tras selección
@@ -18,27 +20,29 @@ Implementar un test E2E completo para validar el flujo de moderación manual: in
 ### 1. Test E2E Completo (`tests/e2e/manual-flow.test.js`)
 
 **Estructura del Test:**
+
 ```javascript
 describe('[E2E] Manual Flow - Auto-approval OFF', () => {
   // Setup con organización Pro y auto-approval desactivado
   // Usuario con tono preseleccionado configurado
-  
+
   describe('Manual Flow Pipeline Validation', () => {
-    test('should process roastable comment through complete manual pipeline')
-    test('should handle edge cases in manual flow')
-    test('should maintain organization isolation in manual flow')
-  })
-  
+    test('should process roastable comment through complete manual pipeline');
+    test('should handle edge cases in manual flow');
+    test('should maintain organization isolation in manual flow');
+  });
+
   describe('Manual Flow UI Integration Points', () => {
-    test('should validate UI integration requirements')
-    test('should validate manual flow configuration requirements')
-  })
-})
+    test('should validate UI integration requirements');
+    test('should validate manual flow configuration requirements');
+  });
+});
 ```
 
 ### 2. Flujo de Pipeline Validado
 
 **Fases del Flujo:**
+
 1. **Precondiciones**: Plan Pro, auto-approval OFF, tono preseleccionado
 2. **Ingest**: FetchCommentsWorker procesa comentario roasteable
 3. **Triage**: AnalyzeToxicityWorker clasifica como 'roast'
@@ -52,6 +56,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
 ### 3. Validaciones Implementadas
 
 **Validaciones Core:**
+
 - ✅ Exactamente 2 variantes iniciales generadas
 - ✅ Respeto del tono preseleccionado del usuario
 - ✅ Selección correcta de variante por usuario
@@ -61,12 +66,14 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
 - ✅ Persistencia correcta del post_id
 
 **Validaciones de Robustez:**
+
 - ✅ Casos edge: comentarios vacíos, usuarios sin permisos
 - ✅ Aislamiento multi-tenant entre organizaciones
 - ✅ Comentarios clasificados como 'block' no llegan a generación
 - ✅ Configuración de timeouts y reintentos
 
 **Validaciones de Integración UI:**
+
 - ✅ Endpoints esperados para integración frontend
 - ✅ Estados de UI requeridos para flujo manual
 - ✅ Interacciones de usuario definidas
@@ -75,6 +82,7 @@ describe('[E2E] Manual Flow - Auto-approval OFF', () => {
 ### 4. Configuración de Test
 
 **Environment Setup:**
+
 ```javascript
 // Mock mode habilitado para testing
 process.env.ENABLE_MOCK_MODE = 'true'
@@ -96,6 +104,7 @@ user: {
 ## Resultados de Testing
 
 ### Ejecución Exitosa
+
 ```bash
 PASS tests/e2e/manual-flow.test.js
 ✓ should process roastable comment through complete manual pipeline (23ms)
@@ -108,6 +117,7 @@ Tests: 5 passed, 5 total
 ```
 
 ### Coverage del Flujo
+
 - **Ingest → Triage → Generación → Aprobación → Publicación**: ✅ 100%
 - **Workers utilizados**: FetchCommentsWorker, AnalyzeToxicityWorker, GenerateReplyWorker
 - **Servicios validados**: QueueService para publicación
@@ -116,6 +126,7 @@ Tests: 5 passed, 5 total
 ## Integración con Testing MVP
 
 ### Relación con Epic #403
+
 Este test E2E forma parte del **Epic #403 - Testing MVP** como issue **P0 (prioridad crítica)**:
 
 - ✅ Valida flujo manual completo sin shortcuts
@@ -124,6 +135,7 @@ Este test E2E forma parte del **Epic #403 - Testing MVP** como issue **P0 (prior
 - ✅ Documentación completa de criterios de aceptación
 
 ### Próximos Pasos para PR
+
 1. ✅ Test implementado y funcionando
 2. ✅ Documentación del plan completada
 3. 🔄 Crear PR con implementación

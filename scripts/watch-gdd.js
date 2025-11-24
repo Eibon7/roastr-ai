@@ -178,9 +178,11 @@ class GDDWatcher {
    */
   onFileChange(file) {
     // Ignore generated files
-    if (file.includes('system-validation.md') ||
-        file.includes('gdd-status.json') ||
-        file.includes('node_modules')) {
+    if (
+      file.includes('system-validation.md') ||
+      file.includes('gdd-status.json') ||
+      file.includes('node_modules')
+    ) {
       return;
     }
 
@@ -265,9 +267,13 @@ class GDDWatcher {
 
       // 2. DocumentationAgent: Create issue for orphan nodes (M6: with deduplication)
       if (results.orphans && results.orphans.length > 0) {
-        this.log(`📝 DocumentationAgent: ${results.orphans.length} orphan node(s) detected`, 'warning');
+        this.log(
+          `📝 DocumentationAgent: ${results.orphans.length} orphan node(s) detected`,
+          'warning'
+        );
 
-        for (const orphan of results.orphans.slice(0, 3)) { // Limit to 3 per run
+        for (const orphan of results.orphans.slice(0, 3)) {
+          // Limit to 3 per run
           const issueKey = `orphan-${orphan}`;
 
           // M6 fix: Check if issue should be created (deduplication + cooldown)
@@ -281,11 +287,11 @@ class GDDWatcher {
               'DocumentationAgent',
               `Orphan GDD node detected: ${orphan}`,
               `The node \`${orphan}\` is not referenced by any other node in the system.\n\n` +
-              `This could indicate:\n` +
-              `- Missing dependency declarations\n` +
-              `- Node should be removed\n` +
-              `- Documentation out of sync\n\n` +
-              `**Action required:** Review and update node dependencies or remove if obsolete.`
+                `This could indicate:\n` +
+                `- Missing dependency declarations\n` +
+                `- Node should be removed\n` +
+                `- Documentation out of sync\n\n` +
+                `**Action required:** Review and update node dependencies or remove if obsolete.`
             );
 
             // M6 fix: Mark issue as created
@@ -302,7 +308,8 @@ class GDDWatcher {
       if (results.outdated && results.outdated.length > 7) {
         this.log(`⏰ Orchestrator: ${results.outdated.length} outdated nodes detected`, 'warning');
 
-        for (const outdatedNode of results.outdated.slice(0, 5)) { // Limit to 5 per run
+        for (const outdatedNode of results.outdated.slice(0, 5)) {
+          // Limit to 5 per run
           try {
             await this.agentInterface.writeNodeField(
               outdatedNode,
@@ -338,7 +345,6 @@ class GDDWatcher {
           timestamp: new Date().toISOString()
         });
       }
-
     } catch (error) {
       this.log(`❌ Agent actions error: ${error.message}`, 'error');
     }
@@ -349,9 +355,9 @@ class GDDWatcher {
    */
   printStatusBar(results, healthStats, driftData) {
     const statusColors = {
-      healthy: '\x1b[42m',   // Green background
-      warning: '\x1b[43m',   // Yellow background
-      critical: '\x1b[41m'   // Red background
+      healthy: '\x1b[42m', // Green background
+      warning: '\x1b[43m', // Yellow background
+      critical: '\x1b[41m' // Red background
     };
 
     const statusEmojis = {
@@ -368,12 +374,24 @@ class GDDWatcher {
     console.log('╔════════════════════════════════════════╗');
     console.log(`║ ${color}  GDD STATUS: ${results.status.toUpperCase().padEnd(22)} ${reset}║`);
     console.log('╠════════════════════════════════════════╣');
-    console.log(`║ ${emoji} Nodes:        ${String(results.nodes_validated).padStart(3)}                    ║`);
-    console.log(`║ ${results.orphans.length > 0 ? '❌' : '✅'} Orphans:      ${String(results.orphans.length).padStart(3)}                    ║`);
-    console.log(`║ ${results.outdated.length > 3 ? '⚠️ ' : '✅'} Outdated:     ${String(results.outdated.length).padStart(3)}                    ║`);
-    console.log(`║ ${results.cycles.length > 0 ? '❌' : '✅'} Cycles:       ${String(results.cycles.length).padStart(3)}                    ║`);
-    console.log(`║ ${results.missing_refs.length > 0 ? '⚠️ ' : '✅'} Missing Refs: ${String(results.missing_refs.length).padStart(3)}                    ║`);
-    console.log(`║ ${Object.keys(results.drift).length > 0 ? '⚠️ ' : '✅'} Drift Issues: ${String(Object.keys(results.drift).length).padStart(3)}                    ║`);
+    console.log(
+      `║ ${emoji} Nodes:        ${String(results.nodes_validated).padStart(3)}                    ║`
+    );
+    console.log(
+      `║ ${results.orphans.length > 0 ? '❌' : '✅'} Orphans:      ${String(results.orphans.length).padStart(3)}                    ║`
+    );
+    console.log(
+      `║ ${results.outdated.length > 3 ? '⚠️ ' : '✅'} Outdated:     ${String(results.outdated.length).padStart(3)}                    ║`
+    );
+    console.log(
+      `║ ${results.cycles.length > 0 ? '❌' : '✅'} Cycles:       ${String(results.cycles.length).padStart(3)}                    ║`
+    );
+    console.log(
+      `║ ${results.missing_refs.length > 0 ? '⚠️ ' : '✅'} Missing Refs: ${String(results.missing_refs.length).padStart(3)}                    ║`
+    );
+    console.log(
+      `║ ${Object.keys(results.drift).length > 0 ? '⚠️ ' : '✅'} Drift Issues: ${String(Object.keys(results.drift).length).padStart(3)}                    ║`
+    );
     console.log('╚════════════════════════════════════════╝');
     console.log('');
 
@@ -381,7 +399,9 @@ class GDDWatcher {
     if (healthStats) {
       console.log('────────────────────────────────────────');
       console.log('📊 NODE HEALTH STATUS');
-      console.log(`🟢 ${healthStats.healthy_count} Healthy | 🟡 ${healthStats.degraded_count} Degraded | 🔴 ${healthStats.critical_count} Critical`);
+      console.log(
+        `🟢 ${healthStats.healthy_count} Healthy | 🟡 ${healthStats.degraded_count} Degraded | 🔴 ${healthStats.critical_count} Critical`
+      );
       console.log(`Average Score: ${healthStats.overall_score}/100`);
       console.log('────────────────────────────────────────');
       console.log('');
@@ -391,7 +411,9 @@ class GDDWatcher {
     if (driftData) {
       console.log('────────────────────────────────────────');
       console.log('🔮 DRIFT RISK STATUS');
-      console.log(`🟢 ${driftData.healthy_count} Healthy | 🟡 ${driftData.at_risk_count} At Risk | 🔴 ${driftData.high_risk_count} Likely Drift`);
+      console.log(
+        `🟢 ${driftData.healthy_count} Healthy | 🟡 ${driftData.at_risk_count} At Risk | 🔴 ${driftData.high_risk_count} Likely Drift`
+      );
       console.log(`Average Drift Risk: ${driftData.average_drift_risk}/100`);
 
       // Show top 3 highest risk nodes
@@ -403,7 +425,8 @@ class GDDWatcher {
         if (topRiskNodes.length > 0) {
           console.log('\nTop Risk Nodes:');
           for (const [nodeName, data] of topRiskNodes) {
-            const emoji = data.status === 'likely_drift' ? '🔴' : data.status === 'at_risk' ? '🟡' : '🟢';
+            const emoji =
+              data.status === 'likely_drift' ? '🔴' : data.status === 'at_risk' ? '🟡' : '🟢';
             console.log(`  ${emoji} ${nodeName}: ${data.drift_risk}/100`);
           }
         }
@@ -457,10 +480,10 @@ class GDDWatcher {
    */
   log(message, type = 'info') {
     const colors = {
-      info: '\x1b[36m',    // Cyan
+      info: '\x1b[36m', // Cyan
       success: '\x1b[32m', // Green
       warning: '\x1b[33m', // Yellow
-      error: '\x1b[31m',   // Red
+      error: '\x1b[31m', // Red
       reset: '\x1b[0m'
     };
 
@@ -486,7 +509,7 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

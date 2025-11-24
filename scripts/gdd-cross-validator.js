@@ -182,17 +182,27 @@ class GDDCrossValidator {
    */
   async getNodeSourceFiles(nodeName) {
     const mappings = {
-      'shield': ['src/services/shieldService.js', 'src/services/shieldDecisionEngine.js', 'src/services/shieldActionExecutor.js', 'src/services/shieldPersistenceService.js', 'src/workers/ShieldActionWorker.js'],
-      'roast': ['src/services/roastGeneratorEnhanced.js', 'src/services/roastPromptTemplate.js', 'src/services/csvRoastService.js'],
+      shield: [
+        'src/services/shieldService.js',
+        'src/services/shieldDecisionEngine.js',
+        'src/services/shieldActionExecutor.js',
+        'src/services/shieldPersistenceService.js',
+        'src/workers/ShieldActionWorker.js'
+      ],
+      roast: [
+        'src/services/roastGeneratorEnhanced.js',
+        'src/services/roastPromptTemplate.js',
+        'src/services/csvRoastService.js'
+      ],
       'cost-control': ['src/services/costControl.js'],
       'queue-system': ['src/services/queueService.js', 'src/workers/BaseWorker.js'],
       'multi-tenant': ['src/services/multiTenantService.js'],
       'social-platforms': ['src/integrations/*/index.js', 'src/integrations/*Service.js'],
-      'persona': ['src/services/personaService.js'],
-      'tone': ['src/services/toneService.js'],
-      'analytics': ['src/services/analyticsService.js'],
-      'billing': ['src/services/billingService.js'],
-      'publisher': ['src/services/publisherService.js'],
+      persona: ['src/services/personaService.js'],
+      tone: ['src/services/toneService.js'],
+      analytics: ['src/services/analyticsService.js'],
+      billing: ['src/services/billingService.js'],
+      publisher: ['src/services/publisherService.js'],
       'platform-constraints': ['src/services/platformConstraintsService.js'],
       'plan-features': ['src/services/planFeaturesService.js']
     };
@@ -240,10 +250,10 @@ class GDDCrossValidator {
       // Try multiple path formats to find coverage data
       // coverage-summary.json keys can be absolute, relative, or POSIX-relative
       const fileData =
-        this.coverageData[absolutePath] ??       // Try absolute path
-        this.coverageData[relPath] ??            // Try relative path
-        this.coverageData[relPosix] ??           // Try POSIX relative path
-        this.coverageData[file];                 // Try original path as-is
+        this.coverageData[absolutePath] ?? // Try absolute path
+        this.coverageData[relPath] ?? // Try relative path
+        this.coverageData[relPosix] ?? // Try POSIX relative path
+        this.coverageData[file]; // Try original path as-is
 
       if (fileData && fileData.statements) {
         totalStatements += fileData.statements.total || 0;
@@ -268,14 +278,7 @@ class GDDCrossValidator {
 
     try {
       // Get last commit date for the node file (using spawnSync to prevent command injection)
-      const result = spawnSync('git', [
-        'log',
-        '-1',
-        '--format=%ai',
-        '--follow',
-        '--',
-        nodeFile
-      ], {
+      const result = spawnSync('git', ['log', '-1', '--format=%ai', '--follow', '--', nodeFile], {
         cwd: this.rootDir,
         encoding: 'utf-8'
       });
@@ -309,7 +312,7 @@ class GDDCrossValidator {
 
       const result = {
         valid,
-        reason: valid ? null : (diffDays > 0 ? 'future_date' : 'stale_date'),
+        reason: valid ? null : diffDays > 0 ? 'future_date' : 'stale_date',
         declared: declaredDate,
         actual: actualDate,
         diffDays: Math.abs(diffDays)
@@ -362,15 +365,15 @@ class GDDCrossValidator {
     const depMappings = {
       'cost-control': ['costControl', 'CostControl'],
       'queue-system': ['queueService', 'QueueService', 'BaseWorker'],
-      'shield': ['shieldService', 'ShieldService', 'shieldDecisionEngine'],
-      'roast': ['roastGenerator', 'RoastGenerator', 'roastPrompt'],
+      shield: ['shieldService', 'ShieldService', 'shieldDecisionEngine'],
+      roast: ['roastGenerator', 'RoastGenerator', 'roastPrompt'],
       'multi-tenant': ['multiTenant', 'MultiTenant'],
       'social-platforms': ['integrations/', 'Service.js'],
-      'persona': ['personaService', 'PersonaService'],
-      'tone': ['toneService', 'ToneService'],
-      'analytics': ['analyticsService', 'AnalyticsService'],
-      'billing': ['billingService', 'BillingService'],
-      'publisher': ['publisherService', 'PublisherService'],
+      persona: ['personaService', 'PersonaService'],
+      tone: ['toneService', 'ToneService'],
+      analytics: ['analyticsService', 'AnalyticsService'],
+      billing: ['billingService', 'BillingService'],
+      publisher: ['publisherService', 'PublisherService'],
       'platform-constraints': ['platformConstraints', 'PlatformConstraints'],
       'plan-features': ['planFeatures', 'PlanFeatures']
     };
@@ -380,7 +383,7 @@ class GDDCrossValidator {
     for (const dep of declaredDeps) {
       const patterns = depMappings[dep] || [dep];
       for (const pattern of patterns) {
-        if (actualDeps.some(imp => imp.includes(pattern))) {
+        if (actualDeps.some((imp) => imp.includes(pattern))) {
           detectedDeps.add(dep);
           break;
         }
@@ -408,7 +411,7 @@ class GDDCrossValidator {
     }
 
     // Find missing and phantom dependencies
-    const missing = declaredDeps.filter(dep => !detectedDeps.has(dep));
+    const missing = declaredDeps.filter((dep) => !detectedDeps.has(dep));
     const phantom = Array.from(phantomDeps); // Phantom deps = imported but not declared
 
     const valid = missing.length === 0 && phantom.length === 0;
@@ -473,9 +476,10 @@ class GDDCrossValidator {
       coverage: this.violations.coverage,
       timestamp: this.violations.timestamp,
       dependency: this.violations.dependency,
-      total: this.violations.coverage.length +
-             this.violations.timestamp.length +
-             this.violations.dependency.length
+      total:
+        this.violations.coverage.length +
+        this.violations.timestamp.length +
+        this.violations.dependency.length
     };
   }
 
@@ -487,7 +491,10 @@ class GDDCrossValidator {
     const maxPossibleViolations = totalNodes * 3; // 3 checks per node
     const actualViolations = violations.total;
 
-    const score = Math.max(0, ((maxPossibleViolations - actualViolations) / maxPossibleViolations) * 100);
+    const score = Math.max(
+      0,
+      ((maxPossibleViolations - actualViolations) / maxPossibleViolations) * 100
+    );
     return parseFloat(score.toFixed(1));
   }
 

@@ -38,7 +38,7 @@ const mockLocalStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
-  clear: jest.fn(),
+  clear: jest.fn()
 };
 Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage
@@ -49,7 +49,7 @@ const mockSessionStorage = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
-  clear: jest.fn(),
+  clear: jest.fn()
 };
 Object.defineProperty(window, 'sessionStorage', {
   value: mockSessionStorage
@@ -98,7 +98,7 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
       created_at: '2024-01-15T10:30:00Z'
     },
     {
-      id: 'roast-2', 
+      id: 'roast-2',
       content: 'Otro roast para Instagram',
       platform: 'instagram',
       status: 'published',
@@ -119,7 +119,7 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
     jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue('mock-auth-token');
     mockSessionStorage.getItem.mockReturnValue(null);
-    
+
     // Mock successful API responses by default
     fetch.mockImplementation((url) => {
       if (url.includes('/api/user/integrations')) {
@@ -128,21 +128,21 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
           json: () => Promise.resolve({ data: [] })
         });
       }
-      
+
       if (url.includes('/api/user/usage')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockUsageData })
         });
       }
-      
+
       if (url.includes('/api/user/roasts/recent')) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockRecentRoasts })
         });
       }
-      
+
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ data: {} })
@@ -242,10 +242,10 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
       });
 
       const editButtons = screen.getAllByTitle('Editar roast');
-      
+
       // Open editor
       fireEvent.click(editButtons[0]);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Editor de Roast')).toBeInTheDocument();
       });
@@ -275,30 +275,31 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
             json: () => Promise.resolve({ data: [] })
           });
         }
-        
+
         if (url.includes('/api/user/usage')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ data: mockUsageData })
           });
         }
-        
+
         if (url.includes('/api/user/roasts/roast-1') && options?.method === 'PATCH') {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ success: true })
           });
         }
-        
+
         if (url.includes('/api/user/roasts/recent')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ 
-              data: [updatedRoast, mockRecentRoasts[1]]
-            })
+            json: () =>
+              Promise.resolve({
+                data: [updatedRoast, mockRecentRoasts[1]]
+              })
           });
         }
-        
+
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: {} })
@@ -333,7 +334,7 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
         expect(fetch).toHaveBeenCalledWith('/api/user/roasts/roast-1', {
           method: 'PATCH',
           headers: {
-            'Authorization': 'Bearer mock-auth-token',
+            Authorization: 'Bearer mock-auth-token',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -363,7 +364,7 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
             json: () => Promise.resolve({ error: 'Failed to save roast' })
           });
         }
-        
+
         // Default responses for other endpoints
         if (url.includes('/api/user/integrations')) {
           return Promise.resolve({
@@ -371,21 +372,21 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
             json: () => Promise.resolve({ data: [] })
           });
         }
-        
+
         if (url.includes('/api/user/usage')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ data: mockUsageData })
           });
         }
-        
+
         if (url.includes('/api/user/roasts/recent')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ data: mockRecentRoasts })
           });
         }
-        
+
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: {} })
@@ -559,21 +560,21 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
         if (url.includes('/api/user/roasts/recent')) {
           return Promise.reject(new Error('Network error'));
         }
-        
+
         if (url.includes('/api/user/integrations')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ data: [] })
           });
         }
-        
+
         if (url.includes('/api/user/usage')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ data: mockUsageData })
           });
         }
-        
+
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: {} })
@@ -589,12 +590,19 @@ describe('Dashboard Roast Editor Integration - SPEC 8 Issue #364', () => {
 
     it('should show loading state while fetching data', () => {
       // Mock slow API responses
-      fetch.mockImplementation(() => new Promise(resolve => {
-        setTimeout(() => resolve({
-          ok: true,
-          json: () => Promise.resolve({ data: [] })
-        }), 100);
-      }));
+      fetch.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(
+              () =>
+                resolve({
+                  ok: true,
+                  json: () => Promise.resolve({ data: [] })
+                }),
+              100
+            );
+          })
+      );
 
       renderDashboard();
 

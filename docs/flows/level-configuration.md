@@ -12,6 +12,7 @@
 The Level Configuration flow allows users to customize the intensity of roast responses and the sensitivity of Shield content moderation. Users can adjust two independent levels based on their plan tier, enabling fine-tuned control over the system's behavior.
 
 **Key Capabilities:**
+
 - **Roast Intensity:** 5 levels from gentle wit to savage burns
 - **Shield Sensitivity:** 3 levels controlling automatic blocking thresholds
 - **Plan-Based Access:** Higher plans unlock more customization options
@@ -28,15 +29,16 @@ The Level Configuration flow allows users to customize the intensity of roast re
 
 **Levels (1-5):**
 
-| Level | Name | Description | Tone | Profanity | Example |
-|-------|------|-------------|------|-----------|---------|
-| **1** | Suave | Gentle wit with subtle irony | Polite, understated | ❌ No | "I appreciate your enthusiasm, though perhaps a bit misplaced" |
-| **2** | Neutral | Balanced sarcasm with humor | Balanced | ❌ No | "That's certainly... an opinion. Thanks for sharing!" |
-| **3** | Moderado | Direct sarcasm with bite | Direct, sarcastic | ✅ Mild | "Wow, you really thought this through, didn't you?" |
-| **4** | Agresivo | Unfiltered and sharp | Cutting, no filters | ✅ Yes | "Congrats, you've achieved peak stupidity. That takes skill." |
-| **5** | Caústico | Maximum brutality | Savage, brutal | ✅ Strong | "I'd explain why you're wrong, but I don't have crayons" |
+| Level | Name     | Description                  | Tone                | Profanity | Example                                                        |
+| ----- | -------- | ---------------------------- | ------------------- | --------- | -------------------------------------------------------------- |
+| **1** | Suave    | Gentle wit with subtle irony | Polite, understated | ❌ No     | "I appreciate your enthusiasm, though perhaps a bit misplaced" |
+| **2** | Neutral  | Balanced sarcasm with humor  | Balanced            | ❌ No     | "That's certainly... an opinion. Thanks for sharing!"          |
+| **3** | Moderado | Direct sarcasm with bite     | Direct, sarcastic   | ✅ Mild   | "Wow, you really thought this through, didn't you?"            |
+| **4** | Agresivo | Unfiltered and sharp         | Cutting, no filters | ✅ Yes    | "Congrats, you've achieved peak stupidity. That takes skill."  |
+| **5** | Caústico | Maximum brutality            | Savage, brutal      | ✅ Strong | "I'd explain why you're wrong, but I don't have crayons"       |
 
 **Plan Access:**
+
 - Free: Level 3 (fixed, no customization)
 - Starter: Levels 1, 3, 5
 - Pro: All levels (1-5)
@@ -50,16 +52,17 @@ The Level Configuration flow allows users to customize the intensity of roast re
 
 **Levels (3 options):**
 
-| Level | Name | Description | τ_shield | τ_critical | Blocking Behavior |
-|-------|------|-------------|----------|------------|-------------------|
-| **Tolerante** | Tolerant | Only blocks severe violations | 0.85 | 0.95 | Blocks only critical threats/severe toxicity |
-| **Balanceado** | Balanced | Blocks high toxicity (default) | 0.70 | 0.90 | Blocks high and critical toxicity |
-| **Estricto** | Strict | Blocks medium+ toxicity | 0.50 | 0.80 | Blocks medium, high, and critical toxicity |
+| Level          | Name     | Description                    | τ_shield | τ_critical | Blocking Behavior                            |
+| -------------- | -------- | ------------------------------ | -------- | ---------- | -------------------------------------------- |
+| **Tolerante**  | Tolerant | Only blocks severe violations  | 0.85     | 0.95       | Blocks only critical threats/severe toxicity |
+| **Balanceado** | Balanced | Blocks high toxicity (default) | 0.70     | 0.90       | Blocks high and critical toxicity            |
+| **Estricto**   | Strict   | Blocks medium+ toxicity        | 0.50     | 0.80       | Blocks medium, high, and critical toxicity   |
 
 **τ_shield:** Toxicity threshold for Shield action (0-1 scale)
 **τ_critical:** Threshold for immediate critical escalation
 
 **Plan Access:**
+
 - Free: Balanceado (fixed, no customization)
 - Starter: Balanceado only
 - Pro: All 3 levels
@@ -202,21 +205,21 @@ sequenceDiagram
 
 ### Roast Level Access
 
-| Plan | Available Levels | Customization |
-|------|------------------|---------------|
-| **Free** | Level 3 only | ❌ Fixed (no customization) |
-| **Starter** | Levels 1, 3, 5 | ✅ Choose from 3 options |
-| **Pro** | Levels 1-5 | ✅ Full control |
-| **Plus** | Levels 1-5 + custom | ✅ Full control + temperature tuning |
+| Plan        | Available Levels    | Customization                        |
+| ----------- | ------------------- | ------------------------------------ |
+| **Free**    | Level 3 only        | ❌ Fixed (no customization)          |
+| **Starter** | Levels 1, 3, 5      | ✅ Choose from 3 options             |
+| **Pro**     | Levels 1-5          | ✅ Full control                      |
+| **Plus**    | Levels 1-5 + custom | ✅ Full control + temperature tuning |
 
 ### Shield Level Access
 
-| Plan | Available Levels | Customization |
-|------|------------------|---------------|
-| **Free** | Balanceado only | ❌ Fixed (τ_shield = 0.70) |
-| **Starter** | Balanceado only | ❌ Fixed |
-| **Pro** | All 3 levels | ✅ Choose sensitivity |
-| **Plus** | All 3 + custom | ✅ Custom τ_shield thresholds |
+| Plan        | Available Levels | Customization                 |
+| ----------- | ---------------- | ----------------------------- |
+| **Free**    | Balanceado only  | ❌ Fixed (τ_shield = 0.70)    |
+| **Starter** | Balanceado only  | ❌ Fixed                      |
+| **Pro**     | All 3 levels     | ✅ Choose sensitivity         |
+| **Plus**    | All 3 + custom   | ✅ Custom τ_shield thresholds |
 
 ---
 
@@ -229,6 +232,7 @@ sequenceDiagram
 **Authentication:** Required (JWT)
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -250,8 +254,8 @@ sequenceDiagram
       },
       "shield": {
         "tolerante": { "name": "Tolerante", "threshold": 0.85 },
-        "balanceado": { "name": "Balanceado", "threshold": 0.70 },
-        "estricto": { "name": "Estricto", "threshold": 0.50 }
+        "balanceado": { "name": "Balanceado", "threshold": 0.7 },
+        "estricto": { "name": "Estricto", "threshold": 0.5 }
       }
     }
   }
@@ -267,13 +271,15 @@ sequenceDiagram
 **Authentication:** Required (JWT)
 
 **Request:**
+
 ```json
 {
-  "level": 4  // 1-5
+  "level": 4 // 1-5
 }
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
@@ -286,6 +292,7 @@ sequenceDiagram
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Invalid level (not 1-5)
 - `403 Forbidden` - Level not available in user's plan
 - `500 Internal Server Error` - Database error
@@ -299,25 +306,28 @@ sequenceDiagram
 **Authentication:** Required (JWT)
 
 **Request:**
+
 ```json
 {
-  "level": "estricto"  // "tolerante", "balanceado", "estricto"
+  "level": "estricto" // "tolerante", "balanceado", "estricto"
 }
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "success": true,
   "data": {
     "shield_level": "estricto",
-    "threshold": 0.50,
+    "threshold": 0.5,
     "updated_at": "2025-10-19T12:00:00Z"
   }
 }
 ```
 
 **Errors:**
+
 - `400 Bad Request` - Invalid level
 - `403 Forbidden` - Level not available in user's plan
 - `500 Internal Server Error` - Database error
@@ -391,9 +401,9 @@ class LevelConfigService {
     };
 
     this.shieldLevelMapping = {
-      'tolerante': { tau_shield: 0.85, tau_critical: 0.95 },
-      'balanceado': { tau_shield: 0.70, tau_critical: 0.90 },
-      'estricto': { tau_shield: 0.50, tau_critical: 0.80 }
+      tolerante: { tau_shield: 0.85, tau_critical: 0.95 },
+      balanceado: { tau_shield: 0.7, tau_critical: 0.9 },
+      estricto: { tau_shield: 0.5, tau_critical: 0.8 }
     };
 
     this.planAccessMatrix = {
@@ -446,13 +456,14 @@ class LevelConfigService {
   async setRoastLevel(userId, level, plan) {
     this.validateRoastLevel(level, plan);
 
-    const { error } = await supabase
-      .from('user_roast_config')
-      .upsert({
+    const { error } = await supabase.from('user_roast_config').upsert(
+      {
         user_id: userId,
         roast_level: level,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
+      },
+      { onConflict: 'user_id' }
+    );
 
     if (error) throw error;
 
@@ -462,13 +473,14 @@ class LevelConfigService {
   async setShieldLevel(userId, level, plan) {
     this.validateShieldLevel(level, plan);
 
-    const { error } = await supabase
-      .from('user_roast_config')
-      .upsert({
+    const { error } = await supabase.from('user_roast_config').upsert(
+      {
         user_id: userId,
         shield_level: level,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
+      },
+      { onConflict: 'user_id' }
+    );
 
     if (error) throw error;
 
@@ -621,7 +633,7 @@ function LevelConfiguration({ userPlan }) {
 
   const fetchCurrentLevels = async () => {
     const response = await fetch('/api/levels', {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
+      headers: { Authorization: `Bearer ${getToken()}` }
     });
     const data = await response.json();
 
@@ -642,7 +654,7 @@ function LevelConfiguration({ userPlan }) {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
+        Authorization: `Bearer ${getToken()}`
       },
       body: JSON.stringify({ level: newLevel })
     });
@@ -667,7 +679,7 @@ function LevelConfiguration({ userPlan }) {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getToken()}`
+        Authorization: `Bearer ${getToken()}`
       },
       body: JSON.stringify({ level: newLevel })
     });
@@ -692,9 +704,7 @@ function LevelConfiguration({ userPlan }) {
           availableLevels={availableLevels.roast}
           labels={['Suave', 'Neutral', 'Moderado', 'Agresivo', 'Caústico']}
         />
-        <p className="help-text">
-          {getLevelDescription(roastLevel)}
-        </p>
+        <p className="help-text">{getLevelDescription(roastLevel)}</p>
       </div>
 
       <div className="shield-level">
@@ -743,8 +753,8 @@ describe('Level Config Service', () => {
   test('maps shield level to correct thresholds', () => {
     const params = levelConfigService.getShieldLevelParams('estricto');
 
-    expect(params.tau_shield).toBe(0.50);
-    expect(params.tau_critical).toBe(0.80);
+    expect(params.tau_shield).toBe(0.5);
+    expect(params.tau_critical).toBe(0.8);
   });
 });
 ```

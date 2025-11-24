@@ -8,7 +8,7 @@ jest.mock('../../contexts/AuthContext');
 // Mock react-router-dom
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
-  useNavigate: () => mockNavigate,
+  useNavigate: () => mockNavigate
 }));
 
 describe('usePostLoginRedirect', () => {
@@ -25,7 +25,7 @@ describe('usePostLoginRedirect', () => {
       isAuthenticated: false,
       isAdmin: false,
       userData: null,
-      loading: true,
+      loading: true
     });
 
     const { result } = renderHookWithRouter();
@@ -40,7 +40,7 @@ describe('usePostLoginRedirect', () => {
       isAuthenticated: false,
       isAdmin: false,
       userData: null,
-      loading: false,
+      loading: false
     });
 
     const { result } = renderHookWithRouter();
@@ -55,7 +55,7 @@ describe('usePostLoginRedirect', () => {
       isAuthenticated: true,
       isAdmin: true,
       userData: { id: '1', email: 'admin@test.com', is_admin: true },
-      loading: false,
+      loading: false
     });
 
     const { result } = renderHookWithRouter();
@@ -70,7 +70,7 @@ describe('usePostLoginRedirect', () => {
       isAuthenticated: true,
       isAdmin: false,
       userData: { id: '1', email: 'user@test.com', is_admin: false },
-      loading: false,
+      loading: false
     });
 
     const { result } = renderHookWithRouter();
@@ -85,7 +85,7 @@ describe('usePostLoginRedirect', () => {
       isAuthenticated: true,
       isAdmin: false,
       userData: { id: '1', email: 'user@test.com' }, // No is_admin field
-      loading: false,
+      loading: false
     });
 
     const { result } = renderHookWithRouter();
@@ -100,7 +100,7 @@ describe('usePostLoginRedirect', () => {
       isAuthenticated: true,
       isAdmin: false,
       userData: { id: '1', email: 'user@test.com', is_admin: false },
-      loading: false,
+      loading: false
     });
 
     const { rerender } = renderHookWithRouter();

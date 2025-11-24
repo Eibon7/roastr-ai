@@ -3,7 +3,7 @@ import { ToastContext } from '../contexts/ToastContext';
 
 export function useToast() {
   const context = useContext(ToastContext);
-  
+
   if (!context) {
     // Fallback if ToastContext is not available
     return {
@@ -18,12 +18,12 @@ export function useToast() {
       }
     };
   }
-  
+
   // Adapt the existing context API to our expected format
   return {
     toast: ({ title, description, variant = 'info' }) => {
       const message = `${title}${description ? `: ${description}` : ''}`;
-      
+
       if (variant === 'destructive') {
         context.toast.error(message);
       } else {

@@ -118,8 +118,8 @@ describe('RoastPromptTemplate - Tone Mapping Integration', () => {
     const tones = ['sarcastic', 'ironic', 'absurd', 'witty', 'clever', 'playful'];
     const humorTypes = ['witty', 'clever', 'playful'];
 
-    tones.forEach(tone => {
-      humorTypes.forEach(humorType => {
+    tones.forEach((tone) => {
+      humorTypes.forEach((humorType) => {
         test(`should combine ${tone} + ${humorType}`, () => {
           const result = template.mapUserTone({ tone, humor_type: humorType });
 

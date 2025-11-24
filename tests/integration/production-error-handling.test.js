@@ -1,6 +1,6 @@
 /**
  * Production Error Handling Tests - Issue #90
- * 
+ *
  * Simplified tests that validate error handling patterns without requiring specific endpoints.
  */
 
@@ -50,8 +50,8 @@ describe('Production Error Handling - Issue #90', () => {
   describe('HTTP Status Code Patterns', () => {
     test('should validate common HTTP status codes', () => {
       const statusCodes = [200, 400, 401, 403, 404, 429, 500, 503];
-      
-      statusCodes.forEach(code => {
+
+      statusCodes.forEach((code) => {
         expect(code).toBeGreaterThanOrEqual(200);
         expect(code).toBeLessThan(600);
       });
@@ -64,7 +64,7 @@ describe('Production Error Handling - Issue #90', () => {
         rateLimitErrors: [429]
       };
 
-      Object.keys(errorCategories).forEach(category => {
+      Object.keys(errorCategories).forEach((category) => {
         expect(Array.isArray(errorCategories[category])).toBe(true);
         expect(errorCategories[category].length).toBeGreaterThan(0);
       });
@@ -74,7 +74,7 @@ describe('Production Error Handling - Issue #90', () => {
   describe('Recovery Mechanism Patterns', () => {
     test('should validate exponential backoff calculation', () => {
       const calculateBackoff = (attempt) => Math.min(1000 * Math.pow(2, attempt), 30000);
-      
+
       expect(calculateBackoff(0)).toBe(1000);
       expect(calculateBackoff(1)).toBe(2000);
       expect(calculateBackoff(2)).toBe(4000);
@@ -84,7 +84,7 @@ describe('Production Error Handling - Issue #90', () => {
     test('should validate retry logic patterns', () => {
       const maxRetries = 3;
       const retryableStatuses = [429, 500, 502, 503, 504];
-      
+
       expect(maxRetries).toBeGreaterThan(0);
       expect(retryableStatuses).toContain(429);
       expect(retryableStatuses).toContain(503);

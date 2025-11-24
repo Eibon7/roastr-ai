@@ -21,7 +21,7 @@ const KEYS_TO_CHECK = [
   { key: 'POLAR_ACCESS_TOKEN', name: 'Polar Access Token' },
   { key: 'POLAR_STARTER_PRODUCT_ID', name: 'Polar Starter Product ID' },
   { key: 'POLAR_PRO_PRODUCT_ID', name: 'Polar Pro Product ID' },
-  { key: 'POLAR_PLUS_PRODUCT_ID', name: 'Polar Plus Product ID' },
+  { key: 'POLAR_PLUS_PRODUCT_ID', name: 'Polar Plus Product ID' }
 ];
 
 console.log('🔧 CONFIGURACIÓN INTERACTIVA DE .env\n');
@@ -42,11 +42,17 @@ function askNext() {
     applyChanges();
     return;
   }
-  
+
   const item = KEYS_TO_CHECK[currentIndex];
   rl.question(`¿Tienes configurado ${item.name} (${item.key})? (s/n): `, (answer) => {
     const trimmed = answer.trim().toLowerCase();
-    if (trimmed === 's' || trimmed === 'si' || trimmed === 'sí' || trimmed === 'y' || trimmed === 'yes') {
+    if (
+      trimmed === 's' ||
+      trimmed === 'si' ||
+      trimmed === 'sí' ||
+      trimmed === 'y' ||
+      trimmed === 'yes'
+    ) {
       keysToUncomment.push(item.key);
       console.log(`  ✅ ${item.key} será descomentado\n`);
     } else {
@@ -63,26 +69,26 @@ function applyChanges() {
     console.log('   El .env no ha sido modificado.\n');
     return;
   }
-  
+
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('📝 APLICANDO CAMBIOS...');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-  
+
   try {
     // Read .env
     const content = fs.readFileSync(ENV_FILE, 'utf-8');
-    
+
     // Use shared utility to uncomment keys
     const newContent = uncommentKeys(content, keysToUncomment);
-    
+
     // Log what was uncommented
-    keysToUncomment.forEach(key => {
+    keysToUncomment.forEach((key) => {
       console.log(`✅ Descomentado: ${key}`);
     });
-    
+
     // Write back
     fs.writeFileSync(ENV_FILE, newContent, 'utf-8');
-    
+
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('✅ .env ACTUALIZADO');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
@@ -96,4 +102,3 @@ function applyChanges() {
 
 // Start
 askNext();
-

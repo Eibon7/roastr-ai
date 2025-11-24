@@ -10,16 +10,19 @@
 ### 1. MAJOR: Guardian Coverage Mismatch (docs/sync-reports/pr-515-sync.md)
 
 **Line 70:**
+
 ```markdown
 **Coverage:** 80% (estimated, pending actual test coverage run)
 ```
 
 **Line 187:**
+
 ```markdown
 - Note: Guardian coverage set to 80% (estimated based on 14 unit tests)
 ```
 
 **Authoritative Sources Show 50%:**
+
 - `gdd-health.json`: Guardian coverage = **50**
 - `gdd-drift.json`: Guardian coverage = **"50"**
 - `docs/system-health.md`: Guardian coverage = **50%**
@@ -34,9 +37,11 @@
 **Current State (lines 74-85):**
 
 Guardian metrics outdated:
+
 - `health_score: "N/A"` → should be **90** (from gdd-health.json)
 
 Roast metrics outdated:
+
 - `last_commit: "1d ago"` → should be **"0d ago"** (from gdd-drift.json)
 
 ---
@@ -44,10 +49,12 @@ Roast metrics outdated:
 ### 3. NITPICK: Markdown Formatting
 
 **Missing Fence Languages (MD040):**
+
 - Lines in sync report without language specifier
 - Should add ` ```text ` or ` ```bash `
 
 **Bold as Heading (MD036):**
+
 - Need to find `**SAFE TO CONTINUE**` and convert to `###`
 
 ---
@@ -75,6 +82,7 @@ Note: MD013 (line-length) warnings are expected (long data lines), not part of t
 ## Verification Commands
 
 ### Guardian Coverage Check
+
 ```bash
 grep "guardian" gdd-health.json | grep coverage
 # Result: "coverage": "50"
@@ -87,6 +95,7 @@ grep "80%" docs/sync-reports/pr-515-sync.md
 ```
 
 ### Validation Report Metrics
+
 ```bash
 grep -A2 "guardian" docs/system-validation.md
 # Result: health_score: "N/A"

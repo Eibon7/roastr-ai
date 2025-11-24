@@ -16,16 +16,20 @@ describe('Compose', () => {
 
   test('renders compose page header', () => {
     render(<Compose />);
-    
+
     expect(screen.getByRole('heading', { name: /compose roast/i })).toBeInTheDocument();
-    expect(screen.getByText('Generate and send AI-powered roasts to your social media platforms')).toBeInTheDocument();
+    expect(
+      screen.getByText('Generate and send AI-powered roasts to your social media platforms')
+    ).toBeInTheDocument();
   });
 
   test('renders input form elements', () => {
     render(<Compose />);
-    
+
     expect(screen.getByLabelText(/message to roast/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/enter the message you want to generate a roast for/i)).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(/enter the message you want to generate a roast for/i)
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /generate preview/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save draft/i })).toBeInTheDocument();
   });
@@ -33,19 +37,19 @@ describe('Compose', () => {
   test('updates character count as user types', async () => {
     const user = userEvent.setup();
     render(<Compose />);
-    
+
     const textarea = screen.getByLabelText(/message to roast/i);
-    
+
     expect(screen.getByText('0/500 characters')).toBeInTheDocument();
-    
+
     await user.type(textarea, 'Hello world');
-    
+
     expect(screen.getByText('11/500 characters')).toBeInTheDocument();
   });
 
   test('disables generate preview button when message is empty', () => {
     render(<Compose />);
-    
+
     const generateButton = screen.getByRole('button', { name: /generate preview/i });
     expect(generateButton).toBeDisabled();
   });
@@ -53,28 +57,28 @@ describe('Compose', () => {
   test('enables generate preview button when message is entered', async () => {
     const user = userEvent.setup();
     render(<Compose />);
-    
+
     const textarea = screen.getByLabelText(/message to roast/i);
     const generateButton = screen.getByRole('button', { name: /generate preview/i });
-    
+
     await user.type(textarea, 'Test message');
-    
+
     expect(generateButton).toBeEnabled();
   });
 
   test('generates roast preview on button click', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ roast: 'This is a generated roast response' }),
+      json: async () => ({ roast: 'This is a generated roast response' })
     });
 
     render(<Compose />);
-    
+
     const textarea = screen.getByLabelText(/message to roast/i);
     const generateButton = screen.getByRole('button', { name: /generate preview/i });
-    
+
     await user.type(textarea, 'Test message for roasting');
     await user.click(generateButton);
 
@@ -92,28 +96,33 @@ describe('Compose', () => {
 
   test('shows loading state during preview generation', async () => {
     const user = userEvent.setup();
-    
+
     // Mock a delayed response
-    fetch.mockImplementation(() => 
-      new Promise(resolve => {
-        setTimeout(() => resolve({
-          ok: true,
-          json: async () => ({ roast: 'Generated roast' })
-        }), 100);
-      })
+    fetch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(
+            () =>
+              resolve({
+                ok: true,
+                json: async () => ({ roast: 'Generated roast' })
+              }),
+            100
+          );
+        })
     );
 
     render(<Compose />);
-    
+
     const textarea = screen.getByLabelText(/message to roast/i);
     const generateButton = screen.getByRole('button', { name: /generate preview/i });
-    
+
     await user.type(textarea, 'Test message');
     await user.click(generateButton);
 
     // Should show loading spinner
     expect(screen.getByRole('button', { name: /generate preview/i })).toBeDisabled();
-    
+
     await waitFor(() => {
       expect(screen.getByText('Generated roast')).toBeInTheDocument();
     });
@@ -121,17 +130,17 @@ describe('Compose', () => {
 
   test('shows platform selection after generating preview', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ roast: 'Generated roast' }),
+      json: async () => ({ roast: 'Generated roast' })
     });
 
     render(<Compose />);
-    
+
     const textarea = screen.getByLabelText(/message to roast/i);
     const generateButton = screen.getByRole('button', { name: /generate preview/i });
-    
+
     await user.type(textarea, 'Test message');
     await user.click(generateButton);
 
@@ -145,17 +154,17 @@ describe('Compose', () => {
 
   test('enables send button after generating preview', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ roast: 'Generated roast' }),
+      json: async () => ({ roast: 'Generated roast' })
     });
 
     render(<Compose />);
-    
+
     const textarea = screen.getByLabelText(/message to roast/i);
     const generateButton = screen.getByRole('button', { name: /generate preview/i });
-    
+
     await user.type(textarea, 'Test message');
     await user.click(generateButton);
 
@@ -167,17 +176,17 @@ describe('Compose', () => {
 
   test('clears form after sending roast', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ roast: 'Generated roast' }),
+      json: async () => ({ roast: 'Generated roast' })
     });
 
     render(<Compose />);
-    
+
     const textarea = screen.getByLabelText(/message to roast/i);
     const generateButton = screen.getByRole('button', { name: /generate preview/i });
-    
+
     await user.type(textarea, 'Test message');
     await user.click(generateButton);
 
@@ -197,13 +206,13 @@ describe('Compose', () => {
 
   test('shows empty state when no preview is generated', () => {
     render(<Compose />);
-    
+
     expect(screen.getByText('Generate a preview to see your roast')).toBeInTheDocument();
   });
 
   test('renders recent roasts section', () => {
     render(<Compose />);
-    
+
     expect(screen.getByText('Recent Roasts')).toBeInTheDocument();
     expect(screen.getByText('Mock roast response #1')).toBeInTheDocument();
     expect(screen.getByText('Mock roast response #2')).toBeInTheDocument();
@@ -212,14 +221,14 @@ describe('Compose', () => {
 
   test('handles API error during preview generation', async () => {
     const user = userEvent.setup();
-    
+
     fetch.mockRejectedValueOnce(new Error('API Error'));
 
     render(<Compose />);
-    
+
     const textarea = screen.getByLabelText(/message to roast/i);
     const generateButton = screen.getByRole('button', { name: /generate preview/i });
-    
+
     await user.type(textarea, 'Test message');
     await user.click(generateButton);
 
@@ -233,13 +242,13 @@ describe('Compose', () => {
   test('respects character limit', async () => {
     const user = userEvent.setup();
     render(<Compose />);
-    
+
     const textarea = screen.getByLabelText(/message to roast/i);
     const longMessage = 'a'.repeat(501);
-    
+
     // Simulate typing beyond limit (browser would typically prevent this)
     fireEvent.change(textarea, { target: { value: longMessage } });
-    
+
     expect(textarea.value).toHaveLength(501);
     expect(screen.getByText('501/500 characters')).toBeInTheDocument();
   });

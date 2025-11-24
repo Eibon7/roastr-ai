@@ -32,16 +32,17 @@ const RegisterPage = () => {
   const handleSuccess = (message, data) => {
     setAlert({
       type: 'success',
-      message,
+      message
     });
 
     // If registration was successful, show message and redirect to login
     setTimeout(() => {
       if (authMethod === 'password') {
-        navigate('/login', { 
-          state: { 
-            message: 'Cuenta creada exitosamente. Revisa tu email para confirmar tu cuenta antes de iniciar sesión.' 
-          } 
+        navigate('/login', {
+          state: {
+            message:
+              'Cuenta creada exitosamente. Revisa tu email para confirmar tu cuenta antes de iniciar sesión.'
+          }
         });
       }
     }, 2000);
@@ -50,13 +51,13 @@ const RegisterPage = () => {
   const handleError = (message, error) => {
     setAlert({
       type: 'error',
-      message,
+      message
     });
     console.error('Auth error:', error);
   };
 
   const toggleAuthMethod = () => {
-    setAuthMethod(prev => prev === 'password' ? 'magic-link' : 'password');
+    setAuthMethod((prev) => (prev === 'password' ? 'magic-link' : 'password'));
     setAlert(null); // Clear any existing alerts
   };
 
@@ -66,8 +67,18 @@ const RegisterPage = () => {
         {/* Logo/Brand */}
         <div className="text-center">
           <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900">
-            <svg className="h-8 w-8 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <svg
+              className="h-8 w-8 text-primary-600 dark:text-primary-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
             </svg>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
@@ -75,8 +86,8 @@ const RegisterPage = () => {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             ¿Ya tienes una cuenta?{' '}
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
             >
               Inicia sesión aquí
@@ -89,20 +100,30 @@ const RegisterPage = () => {
         <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {/* Alert */}
           {alert && (
-            <div className={`mb-6 p-4 rounded-lg ${
-              alert.type === 'success' 
-                ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800' 
-                : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
-            }`}>
+            <div
+              className={`mb-6 p-4 rounded-lg ${
+                alert.type === 'success'
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
+              }`}
+            >
               <div className="flex">
                 <div className="flex-shrink-0">
                   {alert.type === 'success' ? (
                     <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   ) : (
                     <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   )}
                 </div>
@@ -120,26 +141,58 @@ const RegisterPage = () => {
             </h3>
             <ul className="text-xs text-primary-700 dark:text-primary-300 space-y-1">
               <li className="flex items-center">
-                <svg className="w-3 h-3 mr-2 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className="w-3 h-3 mr-2 text-primary-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Genera roasts inteligentes automáticamente
               </li>
               <li className="flex items-center">
-                <svg className="w-3 h-3 mr-2 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className="w-3 h-3 mr-2 text-primary-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Integración con múltiples redes sociales
               </li>
               <li className="flex items-center">
-                <svg className="w-3 h-3 mr-2 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className="w-3 h-3 mr-2 text-primary-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Moderación automática con Shield
               </li>
               <li className="flex items-center">
-                <svg className="w-3 h-3 mr-2 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className="w-3 h-3 mr-2 text-primary-500"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 Plan gratuito con 100 respuestas/mes
               </li>
@@ -168,11 +221,17 @@ const RegisterPage = () => {
         <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
           <p>
             Al registrarte, aceptas nuestros{' '}
-            <a href="/terms" className="text-primary-600 hover:text-primary-500 dark:text-primary-400">
+            <a
+              href="/terms"
+              className="text-primary-600 hover:text-primary-500 dark:text-primary-400"
+            >
               Términos de Servicio
             </a>{' '}
             y{' '}
-            <a href="/privacy" className="text-primary-600 hover:text-primary-500 dark:text-primary-400">
+            <a
+              href="/privacy"
+              className="text-primary-600 hover:text-primary-500 dark:text-primary-400"
+            >
               Política de Privacidad
             </a>
           </p>

@@ -35,11 +35,7 @@ describe('InstagramAdapter', () => {
   describe('Constructor', () => {
     it('should initialize with correct platform and capabilities', () => {
       expect(adapter.platform).toBe('instagram');
-      expect(adapter.capabilities).toEqual([
-        'hideComment',
-        'reportUser',
-        'reportContent'
-      ]);
+      expect(adapter.capabilities).toEqual(['hideComment', 'reportUser', 'reportContent']);
       expect(adapter.config).toEqual(mockConfig);
     });
 
@@ -54,11 +50,7 @@ describe('InstagramAdapter', () => {
   describe('getCapabilities', () => {
     it('should return array of capabilities', () => {
       const capabilities = adapter.getCapabilities();
-      expect(capabilities).toEqual([
-        'hideComment',
-        'reportUser',
-        'reportContent'
-      ]);
+      expect(capabilities).toEqual(['hideComment', 'reportUser', 'reportContent']);
       expect(capabilities).not.toBe(adapter.capabilities); // Should be a copy
     });
   });
@@ -243,7 +235,7 @@ describe('InstagramAdapter', () => {
 
     it('should reject unsupported actions', async () => {
       const params = { userId: 'user_123' };
-      
+
       const result = await adapter.executeAction('unsupportedAction', params);
 
       expect(result).toEqual({
@@ -256,7 +248,7 @@ describe('InstagramAdapter', () => {
 
     it('should handle unknown supported actions', async () => {
       const params = { userId: 'user_123' };
-      
+
       const result = await adapter.executeAction('unknownAction', params);
 
       expect(result).toEqual({
@@ -302,7 +294,7 @@ describe('InstagramAdapter', () => {
   describe('getInfo', () => {
     it('should return adapter information', () => {
       const info = adapter.getInfo();
-      
+
       expect(info).toEqual({
         platform: 'instagram',
         capabilities: ['hideComment', 'reportUser', 'reportContent'],

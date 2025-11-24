@@ -8,6 +8,7 @@
 ## 📋 Estado Actual
 
 **Código existente:**
+
 - `src/config/platforms.js` - Funciones de validación y configuración de plataformas
 - `src/config/constants.js` - Límites de caracteres por plataforma (PLATFORM_LIMITS)
 - `tests/unit/config/platformLimits.test.js` - Test básico (solo verifica Twitter maxLength)
@@ -15,6 +16,7 @@
 **Cobertura actual:** Muy baja (solo 1 test básico)
 
 **Funciones a testear:**
+
 - `validateRoastForPlatform(roast, platformName)` - Validación principal
 - `getPlatformLimit(platformName)` - Obtener límite de caracteres
 - `getPlatformConfig(platformName)` - Obtener configuración completa
@@ -38,6 +40,7 @@
 **Archivo:** `tests/unit/config/platformConstraints.test.js` (nuevo)
 
 **Tests a implementar:**
+
 1. `validateRoastForPlatform` - Validación básica por plataforma
    - Test para cada una de las 9 plataformas
    - Verificar límites exactos (280, 2200, 63206, etc.)
@@ -56,6 +59,7 @@
 ### FASE 2: Tests de Formatting Rules (AC 2)
 
 **Tests a implementar:**
+
 1. `platformSupports` - Verificar soporte de features
    - Hashtags: Twitter ✅, Instagram ✅, YouTube ✅, etc.
    - Mentions: Twitter ✅, Discord ✅, Reddit ✅, etc.
@@ -75,6 +79,7 @@
 ### FASE 3: Edge Cases (AC 3)
 
 **Tests a implementar:**
+
 1. **Emoji handling:**
    - Roast con emojis que excede límite
    - Emojis en diferentes posiciones (inicio, medio, final)
@@ -84,7 +89,7 @@
    - Hashtags (#hashtag)
    - Mentions (@username)
    - URLs (https://...)
-   - Markdown (**, _, `, etc.)
+   - Markdown (\*\*, \_, `, etc.)
 
 3. **Boundary conditions:**
    - Texto exactamente en el límite
@@ -102,6 +107,7 @@
 ### FASE 4: Coverage y CI (AC 4, 5, 6)
 
 **Verificaciones:**
+
 1. Ejecutar `npm run test:coverage` y verificar ≥80% coverage
 2. Verificar que todos los tests pasan
 3. Verificar integración CI (tests se ejecutan automáticamente)
@@ -109,9 +115,11 @@
 ## 🔧 Archivos a Modificar/Crear
 
 **Nuevos:**
+
 - `tests/unit/config/platformConstraints.test.js` - Suite completa de tests
 
 **Modificar:**
+
 - `tests/unit/config/platformLimits.test.js` - Puede eliminarse o integrarse en el nuevo archivo
 
 ## 🧪 Estructura de Tests
@@ -122,28 +130,28 @@ describe('Platform Constraints Validation', () => {
     describe('Character Limits - All Platforms', () => {
       // Tests para cada una de las 9 plataformas
     });
-    
+
     describe('Truncation Logic', () => {
       // Tests de truncamiento
     });
-    
+
     describe('Edge Cases', () => {
       // Tests de edge cases
     });
   });
-  
+
   describe('getPlatformLimit', () => {
     // Tests de límites
   });
-  
+
   describe('getPlatformStyle', () => {
     // Tests de estilos
   });
-  
+
   describe('platformSupports', () => {
     // Tests de features
   });
-  
+
   describe('getPlatformConfig', () => {
     // Tests de configuración
   });
@@ -153,6 +161,7 @@ describe('Platform Constraints Validation', () => {
 ## ✅ Validación
 
 **Pre-merge checklist:**
+
 - [ ] Todos los tests pasan (`npm test`)
 - [ ] Coverage ≥80% (`npm run test:coverage`)
 - [ ] Tests cubren las 9 plataformas
@@ -172,4 +181,3 @@ describe('Platform Constraints Validation', () => {
 - Nodo GDD: `docs/nodes/platform-constraints.md`
 - Código fuente: `src/config/platforms.js`
 - Constantes: `src/config/constants.js`
-

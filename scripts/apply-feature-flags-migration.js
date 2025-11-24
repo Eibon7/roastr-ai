@@ -41,7 +41,13 @@ async function applyMigration() {
   }
 
   // Read migration file
-  const migrationPath = path.join(__dirname, '..', 'database', 'migrations', 'add_feature_flags_and_audit_system.sql');
+  const migrationPath = path.join(
+    __dirname,
+    '..',
+    'database',
+    'migrations',
+    'add_feature_flags_and_audit_system.sql'
+  );
 
   if (!fs.existsSync(migrationPath)) {
     console.error('❌ ERROR: Migration file not found:', migrationPath);
@@ -53,10 +59,7 @@ async function applyMigration() {
   console.log('   Size:', (sql.length / 1024).toFixed(2), 'KB\n');
 
   // Create Supabase client
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-  );
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
   try {
     console.log('📦 Executing SQL migration...');
@@ -79,7 +82,10 @@ async function applyMigration() {
       if (checkError && checkError.message.includes('does not exist')) {
         console.error('❌ Table feature_flags does not exist.');
         console.error('   Please apply migration manually via Supabase Dashboard SQL Editor:');
-        console.error('   1. Go to https://supabase.com/dashboard/project/' + process.env.SUPABASE_URL.match(/https:\/\/([^.]+)/)[1]);
+        console.error(
+          '   1. Go to https://supabase.com/dashboard/project/' +
+            process.env.SUPABASE_URL.match(/https:\/\/([^.]+)/)[1]
+        );
         console.error('   2. Open SQL Editor');
         console.error('   3. Paste contents of:', migrationPath);
         console.error('   4. Run the migration');
@@ -99,7 +105,6 @@ async function applyMigration() {
     if (!countError) {
       console.log('✅ Verified: feature_flags table exists');
     }
-
   } catch (error) {
     console.error('❌ ERROR:', error.message);
     process.exit(1);

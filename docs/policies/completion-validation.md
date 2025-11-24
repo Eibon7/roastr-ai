@@ -18,6 +18,7 @@ The Completion Validation system ensures **NO PR introduces regressions or reduc
 **Rationale:** Main branch currently has 182 failing test suites (as of 2025-10-30). Requiring 100% passing tests would block ALL PRs, including those that actually IMPROVE the situation.
 
 **New Logic:**
+
 - ✅ PR passes if `failing ≤ baseline` (no regression)
 - ✅ PR passes if `failing < baseline` (improvement!)
 - ❌ PR fails if `failing > baseline + 2` (regression beyond tolerance)
@@ -39,12 +40,15 @@ A PR is considered 100% complete when ALL of the following criteria are met:
 - **Fix:** Complete remaining AC or update issue to remove out-of-scope items
 
 **Example:**
+
 ```markdown
 ## Acceptance Criteria
+
 - [x] User can delete account
 - [x] 30-day grace period implemented
 - [ ] Email notification sent (MISSING)
 ```
+
 **Status:** ❌ Incomplete (1/3 AC pending)
 
 ### 2. Test Coverage (≥90%)
@@ -55,6 +59,7 @@ A PR is considered 100% complete when ALL of the following criteria are met:
 - **Fix:** Add tests for uncovered code paths
 
 **Example:**
+
 ```
 Lines:      92.5% ✅
 Statements: 91.2% ✅
@@ -63,6 +68,7 @@ Branches:   93.1% ✅
 
 Average: 91.2% ✅
 ```
+
 **Status:** ✅ Passed (average ≥90%)
 
 ### 3. Tests Passing (Baseline Comparison Mode)
@@ -75,6 +81,7 @@ Average: 91.2% ✅
 - **Fix:** Investigate and fix new failures introduced by PR
 
 **Example (Baseline Mode):**
+
 ```
 Baseline: 182 failing suites (main branch)
 PR:       180 failing suites
@@ -83,6 +90,7 @@ PR:       180 failing suites
 ```
 
 **Example (Regression):**
+
 ```
 Baseline: 182 failing suites (main branch)
 PR:       190 failing suites
@@ -104,6 +112,7 @@ Once main branch reaches <10 failing suites (EPIC #480 goal), validation will sw
 - **Fix:** Generate receipts using templates in `docs/agents/receipts/`
 
 **Example:**
+
 ```
 Required agents:
 ✅ TestEngineer: docs/agents/receipts/628-TestEngineer.md
@@ -121,6 +130,7 @@ Status: ❌ Incomplete (1 missing)
 - **Fix:** Update affected nodes, run auto-repair if needed
 
 **Example:**
+
 ```
 ✅ GDD nodes valid
 ✅ Test evidence SUMMARY.md present
@@ -134,9 +144,11 @@ Status: ❌ Incomplete (1 missing)
 - **Fix:** Resolve ALL CodeRabbit suggestions before validation
 
 **Example:**
+
 ```
 ❌ 3 CodeRabbit comments unresolved
 ```
+
 **Required action:** Fix all 3 before proceeding
 
 ### 7. CI/CD Status (All passing)
@@ -147,6 +159,7 @@ Status: ❌ Incomplete (1 missing)
 - **Fix:** Wait for pending checks, fix failures
 
 **Example:**
+
 ```
 ✅ Tests / Unit Tests (18s)
 ✅ Tests / Integration Tests (42s)
@@ -172,6 +185,7 @@ npm run validate:completion -- --pr=628
 **Output formats:**
 
 **100% Complete (exit 0):**
+
 ```
 ============================================================
 📊 COMPLETION VALIDATION REPORT
@@ -197,6 +211,7 @@ Date: 2025-10-23
 ```
 
 **Incomplete (exit 1):**
+
 ```
 ============================================================
 📊 COMPLETION VALIDATION REPORT
@@ -226,6 +241,7 @@ Date: 2025-10-23
 ```
 
 **Critical Issues (exit 2):**
+
 ```
 ============================================================
 📊 COMPLETION VALIDATION REPORT
@@ -260,6 +276,7 @@ Automatic validation triggers:
 **Workflow:** `.github/workflows/pre-merge-validation.yml`
 
 **Enforcement:**
+
 - Required check: `completion-required`
 - PR cannot merge if validation fails
 - Comments posted to PR with results
@@ -268,11 +285,11 @@ Automatic validation triggers:
 
 ## Exit Codes
 
-| Code | Meaning | Action |
-|------|---------|--------|
-| `0` | 100% complete | ✅ Ready to merge |
-| `1` | Incomplete | ⚠️ Continue implementation |
-| `2` | Critical blockers | 🚨 Fix immediately, do NOT merge |
+| Code | Meaning           | Action                           |
+| ---- | ----------------- | -------------------------------- |
+| `0`  | 100% complete     | ✅ Ready to merge                |
+| `1`  | Incomplete        | ⚠️ Continue implementation       |
+| `2`  | Critical blockers | 🚨 Fix immediately, do NOT merge |
 
 ---
 
@@ -283,6 +300,7 @@ Automatic validation triggers:
 **Violation:** Merging PR with validation exit code 1 or 2
 
 **Consequences:**
+
 - PR immediately rejected by code reviewer
 - Must complete ALL pending items
 - Re-work delays entire feature delivery
@@ -295,6 +313,7 @@ Automatic validation triggers:
 **Violation:** Attempting to merge without running validation
 
 **Consequences:**
+
 - Violation of "hacer las cosas bien y escalables" principle
 - Creates technical debt for team
 - May introduce bugs or incomplete features to production
@@ -307,6 +326,7 @@ Automatic validation triggers:
 **Violation:** Proceeding with merge despite failing tests or CI
 
 **Consequences:**
+
 - Unacceptable technical debt
 - May break production
 - Requires emergency rollback
@@ -343,15 +363,18 @@ Automatic validation triggers:
 ### Guardian Agent Invocation
 
 **Triggers:**
+
 - Label: `ready-to-merge`
 - Diff: Sensitive files (billing, auth, etc.)
 - Manual: `npm run validate:completion`
 
 **Capabilities:**
+
 - Governance: Validates sensitive changes
 - Completion: Ensures 100% task completion
 
 **Scripts:**
+
 - Governance: `scripts/guardian-gdd.js`
 - Completion: `scripts/ci/validate-completion.js`
 
@@ -389,6 +412,7 @@ npm run validate:completion -- --pr=628
 **Cause:** `coverage/coverage-summary.json` missing
 
 **Fix:**
+
 ```bash
 npm test -- --coverage
 npm run validate:completion -- --pr=628
@@ -399,6 +423,7 @@ npm run validate:completion -- --pr=628
 **Cause:** GitHub CLI not authenticated or PR not found
 
 **Fix:**
+
 ```bash
 gh auth login
 gh pr view 628 --json title  # Verify access
@@ -410,6 +435,7 @@ npm run validate:completion -- --pr=628
 **Cause:** Missing receipts for required agents
 
 **Fix:**
+
 1. Check `docs/agents/receipts/` for missing files
 2. Generate receipts using `docs/agents/receipts/_TEMPLATE.md`
 3. For skipped agents, use `_TEMPLATE-SKIPPED.md`
@@ -420,6 +446,7 @@ npm run validate:completion -- --pr=628
 **Cause:** Outdated or invalid GDD nodes
 
 **Fix:**
+
 ```bash
 node scripts/resolve-graph.js --validate
 node scripts/auto-repair-gdd.js --auto-fix
@@ -440,9 +467,9 @@ npm run validate:completion -- --pr=628
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2025-10-23 | Initial implementation |
+| Version | Date       | Changes                |
+| ------- | ---------- | ---------------------- |
+| 1.0     | 2025-10-23 | Initial implementation |
 
 ---
 

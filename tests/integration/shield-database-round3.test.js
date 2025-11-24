@@ -1,9 +1,9 @@
 /**
  * Shield Database Migration - CodeRabbit Round 3 Security Tests
- * 
+ *
  * Integration tests for the enhanced database migration security features:
  * - Temporal integrity constraints with proper NULL handling
- * - SECURITY DEFINER function hardening  
+ * - SECURITY DEFINER function hardening
  * - RLS policy consolidation and conflict resolution
  * - Enhanced indexes and constraints
  * - GDPR compliance functions
@@ -53,20 +53,11 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
 
     // Clean up test data
     if (testOrgId) {
-      await supabaseServiceClient
-        .from('shield_actions')
-        .delete()
-        .eq('organization_id', testOrgId);
+      await supabaseServiceClient.from('shield_actions').delete().eq('organization_id', testOrgId);
 
-      await supabaseServiceClient
-        .from('users')
-        .delete()
-        .eq('organization_id', testOrgId);
+      await supabaseServiceClient.from('users').delete().eq('organization_id', testOrgId);
 
-      await supabaseServiceClient
-        .from('organizations')
-        .delete()
-        .eq('id', testOrgId);
+      await supabaseServiceClient.from('organizations').delete().eq('id', testOrgId);
     }
   });
 
@@ -74,29 +65,35 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
     if (SKIP_INTEGRATION) return;
 
     // Clean up any test shield actions before each test
-    await supabaseServiceClient
-      .from('shield_actions')
-      .delete()
-      .eq('organization_id', testOrgId);
+    await supabaseServiceClient.from('shield_actions').delete().eq('organization_id', testOrgId);
   });
 
   describe('Table Structure and Constraints (Round 3)', () => {
     test('should have proper table structure with all required columns', async () => {
       if (SKIP_INTEGRATION) return;
 
-      const { data, error } = await supabaseServiceClient
-        .rpc('get_table_columns', { table_name: 'shield_actions' });
+      const { data, error } = await supabaseServiceClient.rpc('get_table_columns', {
+        table_name: 'shield_actions'
+      });
 
       if (error) throw error;
 
-      const columnNames = data.map(col => col.column_name);
+      const columnNames = data.map((col) => col.column_name);
       const expectedColumns = [
-        'id', 'organization_id', 'action_type', 'content_hash', 
-        'content_snippet', 'platform', 'reason', 'created_at', 
-        'reverted_at', 'updated_at', 'metadata'
+        'id',
+        'organization_id',
+        'action_type',
+        'content_hash',
+        'content_snippet',
+        'platform',
+        'reason',
+        'created_at',
+        'reverted_at',
+        'updated_at',
+        'metadata'
       ];
 
-      expectedColumns.forEach(col => {
+      expectedColumns.forEach((col) => {
         expect(columnNames).toContain(col);
       });
     });
@@ -133,9 +130,7 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
         reason: 'toxic'
       };
 
-      const { error } = await supabaseServiceClient
-        .from('shield_actions')
-        .insert(invalidPlatform);
+      const { error } = await supabaseServiceClient.from('shield_actions').insert(invalidPlatform);
 
       expect(error).toBeTruthy();
       expect(error.message).toContain('violates check constraint');
@@ -153,9 +148,7 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
         reason: 'invalid_reason' // Invalid reason
       };
 
-      const { error } = await supabaseServiceClient
-        .from('shield_actions')
-        .insert(invalidReason);
+      const { error } = await supabaseServiceClient.from('shield_actions').insert(invalidReason);
 
       expect(error).toBeTruthy();
       expect(error.message).toContain('violates check constraint');
@@ -173,9 +166,7 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
         reason: 'toxic'
       };
 
-      const { error } = await supabaseServiceClient
-        .from('shield_actions')
-        .insert(shortHash);
+      const { error } = await supabaseServiceClient.from('shield_actions').insert(shortHash);
 
       expect(error).toBeTruthy();
       expect(error.message).toContain('violates check constraint');
@@ -193,9 +184,7 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
         reason: 'toxic'
       };
 
-      const { error } = await supabaseServiceClient
-        .from('shield_actions')
-        .insert(longSnippet);
+      const { error } = await supabaseServiceClient.from('shield_actions').insert(longSnippet);
 
       expect(error).toBeTruthy();
       expect(error.message).toContain('violates check constraint');
@@ -247,9 +236,7 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
         reverted_at: pastDate.toISOString() // Earlier than created_at
       };
 
-      const { error } = await supabaseServiceClient
-        .from('shield_actions')
-        .insert(invalidTemporal);
+      const { error } = await supabaseServiceClient.from('shield_actions').insert(invalidTemporal);
 
       expect(error).toBeTruthy();
       expect(error.message).toContain('violates check constraint');
@@ -384,12 +371,12 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
       const initialUpdatedAt = new Date(initialData.updated_at);
 
       // Wait a moment to ensure timestamp difference
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Update the record
       const { data: updatedData, error: updateError } = await supabaseServiceClient
         .from('shield_actions')
-        .update({ 
+        .update({
           reverted_at: new Date().toISOString(),
           metadata: { reverted: true, reason: 'Test revert' }
         })
@@ -430,8 +417,9 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
       expect(insertError).toBeFalsy();
 
       // Run anonymization function
-      const { data: anonymizedCount, error: funcError } = await supabaseServiceClient
-        .rpc('anonymize_old_shield_actions');
+      const { data: anonymizedCount, error: funcError } = await supabaseServiceClient.rpc(
+        'anonymize_old_shield_actions'
+      );
 
       expect(funcError).toBeFalsy();
       expect(anonymizedCount).toBeGreaterThanOrEqual(1);
@@ -473,8 +461,9 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
       const actionId = oldAction.id;
 
       // Run purge function
-      const { data: purgedCount, error: funcError } = await supabaseServiceClient
-        .rpc('purge_old_shield_actions');
+      const { data: purgedCount, error: funcError } = await supabaseServiceClient.rpc(
+        'purge_old_shield_actions'
+      );
 
       expect(funcError).toBeFalsy();
       expect(purgedCount).toBeGreaterThanOrEqual(1);
@@ -515,10 +504,7 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
       // Query with various filters to test index usage
       const queries = [
         // Test organization filter (should use idx_shield_actions_org_id)
-        supabaseServiceClient
-          .from('shield_actions')
-          .select('*')
-          .eq('organization_id', testOrgId),
+        supabaseServiceClient.from('shield_actions').select('*').eq('organization_id', testOrgId),
 
         // Test created_at ordering (should use idx_shield_actions_created_at)
         supabaseServiceClient
@@ -573,14 +559,12 @@ describe('Shield Database Migration - CodeRabbit Round 3 Security', () => {
       if (SKIP_INTEGRATION) return;
 
       // Try to insert duplicate global flag
-      const { error } = await supabaseServiceClient
-        .from('feature_flags')
-        .insert({
-          organization_id: null,
-          flag_name: 'ENABLE_SHIELD_UI',
-          enabled: true,
-          description: 'Duplicate flag'
-        });
+      const { error } = await supabaseServiceClient.from('feature_flags').insert({
+        organization_id: null,
+        flag_name: 'ENABLE_SHIELD_UI',
+        enabled: true,
+        description: 'Duplicate flag'
+      });
 
       expect(error).toBeTruthy();
       expect(error.message).toContain('duplicate key value violates unique constraint');

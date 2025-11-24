@@ -1,6 +1,6 @@
 /**
  * Security Middleware Tests
- * 
+ *
  * Tests for security hardening measures including helmet, CORS, rate limiting,
  * input validation, request logging, and error handling
  */
@@ -298,7 +298,7 @@ describe('Security Middleware', () => {
 
     test('should handle ValidationError', () => {
       error.name = 'ValidationError';
-      
+
       errorHandler(error, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(400);
@@ -312,9 +312,9 @@ describe('Security Middleware', () => {
     test('should handle ValidationError in development', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
-      
+
       error.name = 'ValidationError';
-      
+
       errorHandler(error, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(400);
@@ -330,7 +330,7 @@ describe('Security Middleware', () => {
 
     test('should handle UnauthorizedError', () => {
       error.name = 'UnauthorizedError';
-      
+
       errorHandler(error, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
@@ -344,7 +344,7 @@ describe('Security Middleware', () => {
     test('should handle generic errors in production', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
-      
+
       errorHandler(error, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(500);
@@ -360,7 +360,7 @@ describe('Security Middleware', () => {
     test('should handle generic errors in development', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
-      
+
       errorHandler(error, req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(500);
@@ -378,7 +378,7 @@ describe('Security Middleware', () => {
   describe('Module Exports', () => {
     test('should export all middleware functions', () => {
       const security = require('../../../src/middleware/security');
-      
+
       expect(security.helmetConfig).toBeDefined();
       expect(security.corsConfig).toBeDefined();
       expect(security.generalRateLimit).toBeDefined();
@@ -391,7 +391,7 @@ describe('Security Middleware', () => {
 
     test('should export functions of correct types', () => {
       const security = require('../../../src/middleware/security');
-      
+
       expect(typeof security.helmetConfig).toBe('function');
       expect(typeof security.corsConfig).toBe('function');
       expect(typeof security.generalRateLimit).toBe('function');

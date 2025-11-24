@@ -15,22 +15,22 @@ function deepClone(obj) {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
-  
+
   if (obj instanceof Date) {
     return new Date(obj.getTime());
   }
-  
+
   if (Array.isArray(obj)) {
-    return obj.map(item => deepClone(item));
+    return obj.map((item) => deepClone(item));
   }
-  
+
   const cloned = {};
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
       cloned[key] = deepClone(obj[key]);
     }
   }
-  
+
   return cloned;
 }
 
@@ -48,7 +48,7 @@ const COMMENT_FIXTURES = {
       },
       {
         text: 'Qué mal diseño tiene esta interfaz',
-        category: 'criticism', 
+        category: 'criticism',
         toxicity_score: 0.3,
         expected_action: 'roast'
       },
@@ -96,7 +96,7 @@ const COMMENT_FIXTURES = {
       }
     ]
   },
-  
+
   english: {
     roastable: [
       {
@@ -173,7 +173,7 @@ const USER_FIXTURES = {
       }
     },
     {
-      id: 'test-org-2', 
+      id: 'test-org-2',
       name: 'Test Organization 2',
       plan: 'pro',
       settings: {
@@ -183,7 +183,7 @@ const USER_FIXTURES = {
       }
     }
   ],
-  
+
   users: [
     {
       id: 'test-user-1',
@@ -194,7 +194,7 @@ const USER_FIXTURES = {
     {
       id: 'test-user-2',
       email: 'user1@test.com',
-      organization_id: 'test-org-1', 
+      organization_id: 'test-org-1',
       role: 'user'
     },
     {
@@ -214,16 +214,16 @@ async function loadFixtures(category, language = 'spanish') {
   switch (category) {
     case 'comments':
       return deepClone(COMMENT_FIXTURES[language] || COMMENT_FIXTURES.spanish);
-      
+
     case 'users':
       return deepClone(USER_FIXTURES);
-      
+
     case 'all':
       return deepClone({
         comments: COMMENT_FIXTURES,
         users: USER_FIXTURES
       });
-      
+
     default:
       throw new Error(`Unknown fixture category: ${category}`);
   }
@@ -236,7 +236,7 @@ async function loadFixtures(category, language = 'spanish') {
 function generateTestComments(orgId, language = 'spanish', count = 10) {
   const fixtures = deepClone(COMMENT_FIXTURES[language] || COMMENT_FIXTURES.spanish);
   const comments = [];
-  
+
   // Get all comment types
   const allComments = [
     ...fixtures.roastable,
@@ -244,7 +244,7 @@ function generateTestComments(orgId, language = 'spanish', count = 10) {
     ...fixtures.block,
     ...fixtures.neutral
   ];
-  
+
   // Generate requested number of comments
   for (let i = 0; i < count; i++) {
     const fixture = allComments[i % allComments.length];
@@ -263,7 +263,7 @@ function generateTestComments(orgId, language = 'spanish', count = 10) {
       created_at: new Date().toISOString()
     });
   }
-  
+
   return comments;
 }
 
@@ -271,20 +271,15 @@ function generateTestComments(orgId, language = 'spanish', count = 10) {
  * Create complete test scenario
  */
 function createTestScenario(name, options = {}) {
-  const {
-    orgCount = 2,
-    commentsPerOrg = 10,
-    language = 'spanish',
-    includeUsers = true
-  } = options;
-  
+  const { orgCount = 2, commentsPerOrg = 10, language = 'spanish', includeUsers = true } = options;
+
   const scenario = {
     name,
     organizations: [],
     users: [],
     comments: []
   };
-  
+
   // Create organizations
   for (let i = 1; i <= orgCount; i++) {
     const orgUuid = randomUUID();
@@ -300,7 +295,7 @@ function createTestScenario(name, options = {}) {
       },
       created_at: new Date().toISOString()
     });
-    
+
     // Create users for each org
     if (includeUsers) {
       const userUuid = randomUUID();
@@ -312,12 +307,12 @@ function createTestScenario(name, options = {}) {
         created_at: new Date().toISOString()
       });
     }
-    
+
     // Create comments for each org
     const comments = generateTestComments(orgId, language, commentsPerOrg);
     scenario.comments.push(...comments);
   }
-  
+
   return deepClone(scenario);
 }
 
@@ -327,10 +322,10 @@ function createTestScenario(name, options = {}) {
 async function saveFixturesToFile(fixtures, filename) {
   const fixturesDir = path.join(__dirname, '..', 'fixtures');
   await fs.mkdir(fixturesDir, { recursive: true });
-  
+
   const filepath = path.join(fixturesDir, `${filename}.json`);
   await fs.writeFile(filepath, JSON.stringify(fixtures, null, 2));
-  
+
   console.log(`Fixtures saved to ${filepath}`);
 }
 

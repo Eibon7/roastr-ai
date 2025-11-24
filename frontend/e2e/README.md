@@ -7,6 +7,7 @@ This directory contains End-to-End (E2E) tests implemented using Playwright to v
 ### 🔐 Login Flow Tests (`login-navigation.spec.js`)
 
 #### Basic Login Form Validation
+
 - ✅ **Display login form correctly** - Verifies login form elements are present and accessible
 - ✅ **Handle login form submission** - Tests form interaction and validation
 - ✅ **Validate email format** - Checks HTML5 email validation
@@ -14,25 +15,30 @@ This directory contains End-to-End (E2E) tests implemented using Playwright to v
 - ✅ **Verify presence of registration link** - Ensures registration is available and accessible
 
 #### Navigation Flow Tests
+
 - ✅ **Verify application routing** - Tests basic route accessibility
 - ✅ **Protected routes redirect to login** - Verifies authentication guards
 
 #### Accessibility Validation
+
 - ✅ **Basic accessibility attributes on login form** - Checks form accessibility
 - ✅ **Keyboard navigation** - Tests keyboard accessibility
 
 ### 🏪 Feature Flags Tests (`feature-flags.spec.js`)
 
 #### Shop Feature Flag Testing
+
 - ✅ **Verify shop availability in application** - Documents current shop feature state
 - ✅ **Handle shop URL access** - Tests direct shop URL access behavior
 - ✅ **Check admin interface accessibility** - Tests admin area access patterns
 
 #### Application Navigation
+
 - ✅ **Verify main navigation structure** - Validates navigation elements
 - ✅ **Verify page responsiveness** - Tests responsive design
 
 #### Error Handling
+
 - ✅ **Handle network errors gracefully** - Tests application resilience
 
 ## Test Users Configuration
@@ -84,6 +90,7 @@ const TEST_USERS = {
 ```
 
 **Security Note**:
+
 - Default credentials are for local development only
 - Always use environment variables in CI/CD and staging environments
 - Never commit real credentials to version control
@@ -92,13 +99,16 @@ const TEST_USERS = {
 ## Test Architecture
 
 ### Simplified Approach
+
 The tests use a simplified approach that:
+
 - Tests the actual application without complex mocking
 - Validates current application state and behavior
 - Focuses on critical user journeys that work with the existing codebase
 - Provides documentation of current functionality
 
 ### Mock Functions Available (reserved for future scenarios)
+
 - `mockLoginSuccess()` - Mock successful authentication
 - `mockFeatureFlags()` - Mock feature flag responses
 - `setupAuthState()` - Setup authenticated user state
@@ -109,6 +119,7 @@ Current specs avoid these mocks unless explicitly noted in a test.
 ## Running Tests
 
 ### Local Development
+
 ```bash
 # Run all E2E tests (uses default credentials)
 npx playwright install --with-deps
@@ -126,6 +137,7 @@ npx playwright test --headed
 ```
 
 ### CI/CD Environment
+
 For secure testing in CI/CD, create a `.env.test` file or set environment variables:
 
 ```bash
@@ -140,6 +152,7 @@ npm run test:e2e
 ```
 
 Or create a `.env.test` file in the frontend directory:
+
 ```bash
 # frontend/.env.test
 E2E_ADMIN_EMAIL=admin@your-test-domain.com
@@ -151,13 +164,15 @@ E2E_USER_PASSWORD=SecureUserPassword123!
 ## Test Results
 
 All 15 tests pass:
+
 - ✅ 8 Login and Navigation tests
-- ✅ 6 Feature Flag tests  
+- ✅ 6 Feature Flag tests
 - ✅ 1 Error Handling test
 
 ## Configuration
 
 Tests are configured in `playwright.config.js`:
+
 - Base URL: `http://localhost:3000` (override with `PLAYWRIGHT_BASE_URL`)
 - Browsers: Chromium, Firefox, WebKit
 - Screenshots on failure
@@ -166,6 +181,7 @@ Tests are configured in `playwright.config.js`:
 ## Key Features Tested
 
 ### ✅ Implemented and Working
+
 1. **Login Form Validation** - Form elements, validation, accessibility
 2. **Route Protection** - Unauthenticated users redirect to login
 3. **Application Routing** - Basic navigation works correctly
@@ -174,6 +190,7 @@ Tests are configured in `playwright.config.js`:
 6. **Accessibility** - Basic keyboard navigation and form accessibility
 
 ### 📋 Documented Current State
+
 1. **Shop Feature Availability** - Currently no shop links found
 2. **Admin Interface Access** - Redirects to login when unauthenticated
 3. **Password Reset/Registration** - Links may or may not be present
@@ -191,8 +208,9 @@ Tests are configured in `playwright.config.js`:
 ## Future Enhancements
 
 When authentication and feature flags are fully implemented:
+
 1. Enable full login flow testing with real authentication
-2. Test admin vs regular user navigation differences  
+2. Test admin vs regular user navigation differences
 3. Test shop feature flag toggle behavior
 4. Add more comprehensive accessibility testing
 5. Test logout functionality when implemented

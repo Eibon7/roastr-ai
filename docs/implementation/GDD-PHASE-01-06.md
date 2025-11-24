@@ -37,6 +37,7 @@ features:
 ```
 
 **Nodes Defined:**
+
 - 6 Critical nodes (roast, shield, plan-features, queue-system, cost-control, multi-tenant)
 - 5 High priority nodes (persona, tone, platform-constraints, social-platforms, trainer)
 - 2 Medium priority nodes (analytics, billing)
@@ -53,6 +54,7 @@ Full-featured dependency resolution tool with:
 - **Statistics** - Estimate total lines, tokens, processing time
 
 **Usage:**
+
 ```bash
 # Resolve dependencies for a node
 node scripts/resolve-graph.js roast
@@ -90,6 +92,7 @@ Comprehensive 622-line documentation for the roast generation system, including:
 ### 4. Visual Dependency Graph (`docs/system-graph.mmd`)
 
 Mermaid diagram showing all 12 nodes and their dependencies, with color coding:
+
 - **Red** - Critical priority nodes
 - **Yellow** - High priority nodes
 - **Gray (dashed)** - Planned nodes
@@ -97,6 +100,7 @@ Mermaid diagram showing all 12 nodes and their dependencies, with color coding:
 ### 5. Updated Scripts README
 
 Added comprehensive GDD documentation to `scripts/README.md` including:
+
 - Overview and benefits
 - System map structure
 - Graph resolver usage
@@ -113,12 +117,12 @@ Added comprehensive GDD documentation to `scripts/README.md` including:
 
 ### Context Reduction
 
-| Scenario | Before (spec.md) | After (GDD) | Savings |
-|----------|------------------|-------------|---------|
-| Work on Roast | 5000 lines | 500 lines | **90%** |
-| Work on Shield | 5000 lines | 800 lines | **84%** |
-| Work on Billing | 5000 lines | 600 lines | **88%** |
-| Work on Multi-tenant | 5000 lines | 350 lines | **93%** |
+| Scenario             | Before (spec.md) | After (GDD) | Savings |
+| -------------------- | ---------------- | ----------- | ------- |
+| Work on Roast        | 5000 lines       | 500 lines   | **90%** |
+| Work on Shield       | 5000 lines       | 800 lines   | **84%** |
+| Work on Billing      | 5000 lines       | 600 lines   | **88%** |
+| Work on Multi-tenant | 5000 lines       | 350 lines   | **93%** |
 
 **Average Context Reduction: 88.75%**
 
@@ -265,7 +269,7 @@ generateMermaidDiagram() {
 
 Every node follows this structure for consistency:
 
-```markdown
+````markdown
 # [Feature Name]
 
 **Node ID:** `node-name`
@@ -289,8 +293,8 @@ Detailed architecture, components, flow diagrams.
 
 ### Component Files
 
-| File | Path | Purpose |
-|------|------|---------|
+| File        | Path    | Purpose     |
+| ----------- | ------- | ----------- |
 | Component 1 | src/... | Description |
 
 ## API Usage Examples
@@ -298,6 +302,7 @@ Detailed architecture, components, flow diagrams.
 ```javascript
 // Code examples
 ```
+````
 
 ## Integration Points
 
@@ -310,7 +315,7 @@ Unit tests, integration tests, coverage.
 ## Feature Flags
 
 | Flag | Default | Purpose |
-|------|---------|---------|
+| ---- | ------- | ------- |
 
 ## Error Handling
 
@@ -334,7 +339,8 @@ Links to dependent and parent nodes.
 **Review Frequency:** [Frequency]
 **Last Reviewed:** YYYY-MM-DD
 **Version:** X.Y.Z
-```
+
+````
 
 ---
 
@@ -428,11 +434,12 @@ node scripts/resolve-graph.js --graph > docs/system-graph.mmd
 # 6. Commit changes
 git add docs/nodes/shield.md docs/system-map.yaml docs/system-graph.mmd
 git commit -m "docs: Update shield node documentation"
-```
+````
 
 ### Back-end Dev Agent
 
 **Workflow:**
+
 ```bash
 # 1. Resolve dependencies for feature you're working on
 node scripts/resolve-graph.js roast
@@ -468,6 +475,7 @@ git commit -m "feat: Enhanced roast engine with new feature"
 ### Front-end Dev Agent
 
 **Workflow:**
+
 ```bash
 # 1. Resolve dependencies for UI feature
 node scripts/resolve-graph.js roast
@@ -577,25 +585,31 @@ jobs:
 ### For Developers
 
 **Before GDD:**
+
 > "I need to understand the entire roast system to make a small change"
 
 **After GDD:**
+
 > "I'll just load the roast node and its 5 dependencies - that's 90% less context!"
 
 ### For Documentation Agent
 
 **Before GDD:**
+
 > "I need to update spec.md again... hope I don't conflict with other agents"
 
 **After GDD:**
+
 > "I'll update the shield node - completely isolated from other work"
 
 ### For Orquestador
 
 **Before GDD:**
+
 > "Load spec.md (20,000 tokens) for every agent context"
 
 **After GDD:**
+
 > "Run graph resolver, load only relevant nodes (2,500 tokens average)"
 
 ---
@@ -667,6 +681,7 @@ node scripts/resolve-graph.js shield --verbose
 **Graph Driven Development (GDD) Phase 1 MVP is successfully implemented!**
 
 We've built a robust, scalable documentation system that:
+
 - Reduces agent context load by **70-93%**
 - Enables parallel agent work without conflicts
 - Provides clear dependency visualization
@@ -683,7 +698,6 @@ The foundation is solid, and we're ready to proceed with Phase 2 migration.
 **Status:** ✅ Phase 1 Complete, Phase 2 In Progress
 
 ---
-
 
 ---
 

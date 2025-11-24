@@ -1,4 +1,5 @@
 # CodeRabbit Review Implementation Plan - PR #424
+
 ## SPEC 14 - QA Test Suite Integral
 
 **Date:** 2025-09-25
@@ -10,24 +11,28 @@
 ### Critical Issues (Priority: HIGH)
 
 #### 1. Missing Adapter Implementations
+
 - **Problem:** Instagram and Facebook shield adapters are imported but don't exist
 - **Files Affected:** `tests/integration/spec14-adapter-contracts.test.js:19-22`
 - **Impact:** Tests will fail with "Cannot find module" errors
 - **Solution:** Remove non-existent adapter imports and update test definitions
 
-#### 2. Non-Existent API Routes 
+#### 2. Non-Existent API Routes
+
 - **Problem:** E2E tests target `/api/comments/ingest` routes that don't exist
 - **Files Affected:** `tests/e2e/spec14-integral-test-suite.test.js`
 - **Impact:** 404 errors preventing test completion
 - **Solution:** Update routes to existing API endpoints or create mock routes
 
 #### 3. Security - Stripe Test Keys
+
 - **Problem:** Hardcoded Stripe test keys in CI workflow
 - **Files Affected:** `.github/workflows/spec14-qa-test-suite.yml`
 - **Impact:** Potential security risk
 - **Solution:** Move to GitHub Secrets
 
 #### 4. Missing Dependencies
+
 - **Problem:** `jest-html-reporters` configured but not in package.json
 - **Files Affected:** `jest.spec14.config.js`, `package.json`
 - **Impact:** Configuration errors
@@ -36,16 +41,19 @@
 ### Performance & Quality Issues (Priority: MEDIUM)
 
 #### 5. Test Performance
+
 - **Problem:** No CI-specific thresholds for performance tests
 - **Files Affected:** `tests/e2e/spec14-integral-test-suite.test.js`
 - **Solution:** Add environment-aware thresholds
 
 #### 6. Synthetic Fixtures Alignment
+
 - **Problem:** Test data may not match mock expectations
 - **Files Affected:** `tests/helpers/syntheticFixtures.js`
 - **Solution:** Align with mock service patterns
 
 #### 7. Supabase Mock Improvements
+
 - **Problem:** Entire client made thenable, causing confusion
 - **Files Affected:** `tests/setupSpec14.js`
 - **Solution:** Create proper query builder mock
@@ -53,11 +61,13 @@
 ### Code Quality (Priority: LOW)
 
 #### 8. Test Result Processor
+
 - **Problem:** Hardcoded validation booleans
 - **Files Affected:** `tests/spec14TestResultsProcessor.js`
 - **Solution:** Implement actual validation
 
 #### 9. Tier Validation Consistency
+
 - **Problem:** Inconsistent plan limits
 - **Files Affected:** `tests/integration/spec14-tier-validation.test.js`
 - **Solution:** Standardize limits
@@ -65,6 +75,7 @@
 ## Implementation Plan
 
 ### Phase 1: Critical Fixes (Subagents: Test Engineer, UI Designer)
+
 1. **Remove Non-Existent Adapters**
    - Remove Instagram/Facebook adapter imports
    - Update adapter definitions array
@@ -85,6 +96,7 @@
    - OR remove from Jest config
 
 ### Phase 2: Performance & Quality (Subagents: Test Engineer, Front-end Dev)
+
 1. **Performance Thresholds**
    - Add CI environment detection
    - Implement adaptive thresholds
@@ -101,6 +113,7 @@
    - Remove thenable from client
 
 ### Phase 3: Code Quality (Subagents: Test Engineer)
+
 1. **Test Result Processor**
    - Implement actual coverage validation
    - Add dry run verification
@@ -114,17 +127,20 @@
 ## Files to Modify
 
 ### High Priority
+
 - `tests/integration/spec14-adapter-contracts.test.js` - Remove non-existent adapters
 - `tests/e2e/spec14-integral-test-suite.test.js` - Fix API routes and performance thresholds
 - `.github/workflows/spec14-qa-test-suite.yml` - Move Stripe keys to secrets
 - `package.json` - Add missing dependencies
 
 ### Medium Priority
+
 - `tests/helpers/syntheticFixtures.js` - Align with mock expectations
 - `tests/setupSpec14.js` - Improve Supabase mock
 - `tests/spec14TestResultsProcessor.js` - Replace hardcoded validations
 
-### Low Priority  
+### Low Priority
+
 - `tests/integration/spec14-tier-validation.test.js` - Standardize limits
 
 ## Subagents Required

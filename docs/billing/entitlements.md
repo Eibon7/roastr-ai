@@ -24,7 +24,7 @@ Stripe Subscription Created/Updated
 Webhook Event Received
     ↓
 EntitlementsService.setEntitlementsFromStripePrice()
-    ↓ 
+    ↓
 Price Metadata Extracted & Stored in account_entitlements
     ↓
 API Request with Usage Middleware
@@ -84,7 +84,7 @@ Configure your Stripe Prices with the following metadata fields:
 ```json
 {
   "analysis_limit_monthly": "2000",
-  "roast_limit_monthly": "1000", 
+  "roast_limit_monthly": "1000",
   "model": "gpt-4",
   "shield_enabled": "true",
   "rqc_mode": "advanced",
@@ -95,7 +95,7 @@ Configure your Stripe Prices with the following metadata fields:
 ### Supported Values
 
 - **analysis_limit_monthly**: Integer or "-1" for unlimited
-- **roast_limit_monthly**: Integer or "-1" for unlimited  
+- **roast_limit_monthly**: Integer or "-1" for unlimited
 - **model**: `gpt-3.5-turbo`, `gpt-4`, `gpt-4-turbo`
 - **shield_enabled**: `"true"` or `"false"`
 - **rqc_mode**: `basic`, `advanced`, `premium`
@@ -105,13 +105,13 @@ Configure your Stripe Prices with the following metadata fields:
 
 When Stripe metadata is missing, the system applies defaults based on the lookup key or product name:
 
-| Plan | Analysis Limit | Roast Limit | Model | Shield | RQC Mode |
-|------|---------------|-------------|-------|--------|----------|
-| Free | 100 | 100 | gpt-3.5-turbo | false | basic |
-| Starter | 500 | 500 | gpt-3.5-turbo | false | basic |
-| Pro | 2000 | 1000 | gpt-4 | true | advanced |
-| Creator+ | unlimited | unlimited | gpt-4 | true | premium |
-| Custom | unlimited | unlimited | gpt-4 | true | premium |
+| Plan     | Analysis Limit | Roast Limit | Model         | Shield | RQC Mode |
+| -------- | -------------- | ----------- | ------------- | ------ | -------- |
+| Free     | 100            | 100         | gpt-3.5-turbo | false  | basic    |
+| Starter  | 500            | 500         | gpt-3.5-turbo | false  | basic    |
+| Pro      | 2000           | 1000        | gpt-4         | true   | advanced |
+| Creator+ | unlimited      | unlimited   | gpt-4         | true   | premium  |
+| Custom   | unlimited      | unlimited   | gpt-4         | true   | premium  |
 
 ## API Usage
 
@@ -122,23 +122,21 @@ const EntitlementsService = require('./src/services/entitlementsService');
 const entitlementsService = new EntitlementsService();
 
 // Set entitlements from Stripe Price
-const result = await entitlementsService.setEntitlementsFromStripePrice(
-    userId, 
-    stripePriceId,
-    { metadata: { updated_from: 'webhook' } }
-);
+const result = await entitlementsService.setEntitlementsFromStripePrice(userId, stripePriceId, {
+  metadata: { updated_from: 'webhook' }
+});
 
 // Set entitlements directly (for free plans)
 await entitlementsService.setEntitlements(userId, {
-    analysis_limit_monthly: 100,
-    roast_limit_monthly: 100,
-    plan_name: 'free'
+  analysis_limit_monthly: 100,
+  roast_limit_monthly: 100,
+  plan_name: 'free'
 });
 
 // Check usage limits
 const limitCheck = await entitlementsService.checkUsageLimit(userId, 'analysis');
 if (!limitCheck.allowed) {
-    // Handle limit exceeded
+  // Handle limit exceeded
 }
 
 // Increment usage
@@ -154,36 +152,24 @@ const summary = await entitlementsService.getUsageSummary(userId);
 const { UsageEnforcementMiddleware } = require('./src/middleware/usageEnforcement');
 
 // Apply to routes
-app.post('/api/analyze', 
-    ...UsageEnforcementMiddleware.forAnalysis(1),
-    (req, res) => {
-        // Analysis logic here
-        res.json({ success: true, result: 'analysis complete' });
-    }
-);
+app.post('/api/analyze', ...UsageEnforcementMiddleware.forAnalysis(1), (req, res) => {
+  // Analysis logic here
+  res.json({ success: true, result: 'analysis complete' });
+});
 
-app.post('/api/roast',
-    ...UsageEnforcementMiddleware.forRoasts(1), 
-    (req, res) => {
-        // Roast generation logic here
-        res.json({ success: true, result: 'roast generated' });
-    }
-);
+app.post('/api/roast', ...UsageEnforcementMiddleware.forRoasts(1), (req, res) => {
+  // Roast generation logic here
+  res.json({ success: true, result: 'roast generated' });
+});
 
 // Feature requirements
-app.get('/api/shield-feature',
-    UsageEnforcementMiddleware.requireShield(),
-    (req, res) => {
-        // Shield feature logic
-    }
-);
+app.get('/api/shield-feature', UsageEnforcementMiddleware.requireShield(), (req, res) => {
+  // Shield feature logic
+});
 
-app.get('/api/premium-feature',
-    UsageEnforcementMiddleware.requirePremiumRQC(),
-    (req, res) => {
-        // Premium feature logic  
-    }
-);
+app.get('/api/premium-feature', UsageEnforcementMiddleware.requirePremiumRQC(), (req, res) => {
+  // Premium feature logic
+});
 ```
 
 ## Error Responses
@@ -194,16 +180,16 @@ The middleware returns semantic error codes for proper UI handling:
 
 ```json
 {
-    "success": false,
-    "error": "Monthly analysis limit reached",
-    "code": "LIMIT_REACHED",
-    "details": {
-        "action_type": "analysis",
-        "used": 1000,
-        "limit": 1000,
-        "period_end": "2024-01-31",
-        "unlimited": false
-    }
+  "success": false,
+  "error": "Monthly analysis limit reached",
+  "code": "LIMIT_REACHED",
+  "details": {
+    "action_type": "analysis",
+    "used": 1000,
+    "limit": 1000,
+    "period_end": "2024-01-31",
+    "unlimited": false
+  }
 }
 ```
 
@@ -211,15 +197,15 @@ The middleware returns semantic error codes for proper UI handling:
 
 ```json
 {
-    "success": false,
-    "error": "Feature 'shield_enabled' not available in your plan",
-    "code": "FEATURE_NOT_AVAILABLE",
-    "details": {
-        "feature": "shield_enabled",
-        "current_plan": "free",
-        "required_value": true,
-        "actual_value": false
-    }
+  "success": false,
+  "error": "Feature 'shield_enabled' not available in your plan",
+  "code": "FEATURE_NOT_AVAILABLE",
+  "details": {
+    "feature": "shield_enabled",
+    "current_plan": "free",
+    "required_value": true,
+    "actual_value": false
+  }
 }
 ```
 
@@ -227,9 +213,9 @@ The middleware returns semantic error codes for proper UI handling:
 
 ```json
 {
-    "success": false,
-    "error": "Usage validation failed",
-    "code": "USAGE_CHECK_FAILED"
+  "success": false,
+  "error": "Usage validation failed",
+  "code": "USAGE_CHECK_FAILED"
 }
 ```
 
@@ -262,7 +248,7 @@ The entitlements system is automatically integrated with Stripe webhooks:
 ### Supported Events
 
 - **checkout.session.completed** - Updates entitlements after successful subscription
-- **customer.subscription.updated** - Updates entitlements when subscription changes  
+- **customer.subscription.updated** - Updates entitlements when subscription changes
 - **customer.subscription.deleted** - Resets to free plan entitlements
 
 ### Webhook Processing Flow
@@ -316,24 +302,24 @@ SELECT reset_monthly_usage_counters(); -- Returns number of accounts reset
 ```javascript
 // Entitlements updated
 logger.info('Entitlements updated from Stripe Price', {
-    userId,
-    stripePriceId,
-    planName: 'pro',
-    analysisLimit: 2000
+  userId,
+  stripePriceId,
+  planName: 'pro',
+  analysisLimit: 2000
 });
 
-// Usage limit exceeded  
+// Usage limit exceeded
 logger.warn('Usage limit exceeded', {
-    userId,
-    actionType: 'analysis',
-    used: 1000,
-    limit: 1000
+  userId,
+  actionType: 'analysis',
+  used: 1000,
+  limit: 1000
 });
 
 // Monthly reset completed
 logger.info('Monthly usage counter reset completed', {
-    accounts_reset: 150,
-    duration_ms: 2500
+  accounts_reset: 150,
+  duration_ms: 2500
 });
 ```
 
@@ -345,7 +331,7 @@ logger.info('Monthly usage counter reset completed', {
 # Run EntitlementsService tests
 npm test -- tests/unit/services/entitlementsService.test.js
 
-# Run middleware tests  
+# Run middleware tests
 npm test -- tests/unit/middleware/usageEnforcement.test.js
 ```
 
@@ -374,6 +360,7 @@ curl -X POST http://localhost:3000/api/analysis \
 ### Row Level Security (RLS)
 
 All entitlements and usage tables enforce RLS:
+
 - Users can only access their own entitlements and usage
 - Service role can manage all records for system operations
 - Admin users have no special access (use service role for admin operations)
@@ -388,7 +375,7 @@ All entitlements and usage tables enforce RLS:
 ### Error Handling
 
 - Stripe API failures trigger fallback to free plan entitlements
-- Database errors fail safe (deny access on error)  
+- Database errors fail safe (deny access on error)
 - Usage increment failures don't block API responses
 - Comprehensive error logging for debugging
 
@@ -433,16 +420,18 @@ console.log('Cron status:', monthlyUsageResetJob.getStatus());
 ### From Existing System
 
 1. **Run Database Migration**
+
    ```bash
    psql -d your_database -f database/migrations/002_add_entitlements_and_usage_tracking.sql
    ```
 
 2. **Update Application Code**
+
    ```javascript
    // Add to your main app.js
    const { initializeUsageEnforcement } = require('./src/middleware/usageEnforcement');
    const { initializeMonthlyReset } = require('./src/cron/monthlyUsageReset');
-   
+
    initializeUsageEnforcement(app);
    initializeMonthlyReset();
    ```
@@ -453,12 +442,10 @@ console.log('Cron status:', monthlyUsageResetJob.getStatus());
    - Verify entitlements update correctly
 
 4. **Add Middleware to Routes**
+
    ```javascript
    // Replace manual limit checks with middleware
-   app.post('/api/analyze', 
-       ...UsageEnforcementMiddleware.forAnalysis(1),
-       analyzeController
-   );
+   app.post('/api/analyze', ...UsageEnforcementMiddleware.forAnalysis(1), analyzeController);
    ```
 
 5. **Test and Monitor**
@@ -478,6 +465,7 @@ console.log('Cron status:', monthlyUsageResetJob.getStatus());
 ### Caching Strategy
 
 The system is designed for real-time accuracy over performance:
+
 - No caching of usage data (always fresh from database)
 - Entitlements cached briefly (updated via webhooks)
 - Database functions optimized for speed
@@ -485,7 +473,7 @@ The system is designed for real-time accuracy over performance:
 ### Scalability
 
 - Usage checks use database functions (minimal application logic)
-- Monthly resets handled by single efficient SQL operation  
+- Monthly resets handled by single efficient SQL operation
 - Webhook processing is asynchronous and fault-tolerant
 - Horizontal scaling supported (stateless design)
 
@@ -500,6 +488,6 @@ The Entitlements System provides a complete solution for managing user plan limi
 ✅ **Scalable** - Database-driven with minimal application overhead  
 ✅ **Flexible** - Supports unlimited plans and custom metadata  
 ✅ **Secure** - RLS protection and fail-safe error handling  
-✅ **Testable** - Full unit and integration test coverage  
+✅ **Testable** - Full unit and integration test coverage
 
 The system meets all requirements from Issue #168 and provides a solid foundation for future plan management needs.

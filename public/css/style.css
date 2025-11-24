@@ -2,9 +2,9 @@
   --color-bg: #f8f9f9;
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-red: #E02020;
-  --color-blue: #0091FF;
-  --color-gray: #EAEEEF;
+  --color-red: #e02020;
+  --color-blue: #0091ff;
+  --color-gray: #eaeeef;
   --font-family: 'Roboto', sans-serif;
 }
 
@@ -54,7 +54,8 @@ body {
   border-color: var(--color-blue);
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   width: 100%;
   padding: 0.75rem;
   margin: 0.5rem 0;
@@ -63,7 +64,9 @@ body {
   border-radius: 5px;
   cursor: pointer;
   font-family: var(--font-family);
-  transition: background-color 0.3s ease, opacity 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .btn-primary {
@@ -72,7 +75,7 @@ body {
 }
 
 .btn-primary:hover {
-  background-color: #0074CC;
+  background-color: #0074cc;
 }
 
 .btn-primary:disabled {
@@ -87,7 +90,7 @@ body {
 }
 
 .btn-secondary:hover {
-  background-color: #D1D5D6;
+  background-color: #d1d5d6;
 }
 
 .btn-secondary:disabled {
@@ -104,7 +107,7 @@ body {
 }
 
 .link:hover {
-  color: #0074CC;
+  color: #0074cc;
   text-decoration: underline;
 }
 
@@ -118,7 +121,7 @@ body {
   cursor: pointer;
 }
 
-.checkbox input[type="checkbox"] {
+.checkbox input[type='checkbox'] {
   margin: 0;
   cursor: pointer;
 }
@@ -251,8 +254,12 @@ h2 {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive design */
@@ -262,11 +269,11 @@ h2 {
     margin: 1rem;
     max-width: calc(100vw - 2rem);
   }
-  
+
   h1 {
     font-size: 1.5rem;
   }
-  
+
   h2 {
     font-size: 1.3rem;
   }

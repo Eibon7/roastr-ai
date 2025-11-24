@@ -30,6 +30,7 @@ Migrar la validación de endpoints de autenticación (`/api/auth/register`, `/ap
 ### Archivos Existentes
 
 **`src/routes/auth.js`:**
+
 - POST `/api/auth/register` (líneas 22-95): Validación manual con regex de email y `validatePassword()`
 - POST `/api/auth/login` (líneas 135-190): Validación simple con `!email || !password`
 - Usa validación inline en cada endpoint
@@ -37,25 +38,27 @@ Migrar la validación de endpoints de autenticación (`/api/auth/register`, `/ap
 - Password validation: `lines 45-51` usando `utils/passwordValidator.js`
 
 **Validación Actual:**
+
 ```javascript
 // Register (líneas 27-32)
 if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
+  return res.status(400).json({ error: 'Email and password are required' });
 }
 
 // Email validation (líneas 36-42)
 const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@.../;
 if (!emailRegex.test(email) || email.includes('..') || email.includes('@@')) {
-    return res.status(400).json({ error: 'Invalid email format' });
+  return res.status(400).json({ error: 'Invalid email format' });
 }
 
 // Login (líneas 137-143)
 if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
+  return res.status(400).json({ error: 'Email and password are required' });
 }
 ```
 
 **Dependencias:**
+
 - `express-validator`: NO se usa actualmente en auth.js
 - `validatePassword` de `utils/passwordValidator.js`: Usado en register
 - `zod`: v3.25.76 ya instalado
@@ -69,11 +72,11 @@ if (!email || !password) {
 **Archivo:** `src/validators/zod/auth.schema.js` (nuevo)
 
 **Tareas:**
+
 1. Crear esquema `registerSchema`:
    - `email`: `z.string().email().refine()` con validaciones adicionales (no `..`, no `@@`)
    - `password`: `z.string().min(8).regex()` para complejidad (uppercase, lowercase, number, special)
    - `name`: `z.string().optional()` (usado en register)
-   
 2. Crear esquema `loginSchema`:
    - `email`: `z.string().email()` (más simple que register)
    - `password`: `z.string().min(1)` (solo no vacío)
@@ -83,15 +86,18 @@ if (!email || !password) {
    - Retorna array de strings para consistencia con validación actual
 
 **Ejemplo esperado:**
+
 ```javascript
 const { z } = require('zod');
 
 const registerSchema = z.object({
-  email: z.string()
+  email: z
+    .string()
     .email('Invalid email format')
     .refine((email) => !email.includes('..'), 'Email cannot contain consecutive dots')
     .refine((email) => !email.includes('@@'), 'Email cannot contain @@'),
-  password: z.string()
+  password: z
+    .string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain uppercase')
     .regex(/[a-z]/, 'Password must contain lowercase')
@@ -106,13 +112,14 @@ const loginSchema = z.object({
 });
 
 const formatZodError = (zodError) => {
-  return zodError.errors.map(err => err.message).join('. ');
+  return zodError.errors.map((err) => err.message).join('. ');
 };
 
 module.exports = { registerSchema, loginSchema, formatZodError };
 ```
 
 **Validación:**
+
 - Tests unitarios en `tests/unit/validators/auth.schema.test.js`
 - Verificar que todos los casos de validación actuales están cubiertos
 - Verificar mensajes de error consistentes con respuestas actuales
@@ -124,15 +131,16 @@ module.exports = { registerSchema, loginSchema, formatZodError };
 **Archivo:** `src/routes/auth.js`
 
 **Tareas:**
+
 1. Importar esquemas: `const { registerSchema, formatZodError } = require('../validators/zod/auth.schema');`
 2. Reemplazar validación manual (líneas 26-51) con:
    ```javascript
    const validation = registerSchema.safeParse(req.body);
    if (!validation.success) {
-       return res.status(400).json({
-           success: false,
-           error: formatZodError(validation.error)
-       });
+     return res.status(400).json({
+       success: false,
+       error: formatZodError(validation.error)
+     });
    }
    const { email, password, name } = validation.data;
    ```
@@ -140,6 +148,7 @@ module.exports = { registerSchema, loginSchema, formatZodError };
 4. Mantener lógica de negocio intacta (authService.signUp, emailService, etc.)
 
 **Cambios:**
+
 - Líneas 27-51: Reemplazar con `safeParse()` + `formatZodError()`
 - Sin cambios en respuestas HTTP (mantener formato actual)
 - Sin cambios en status codes (400, 201, 500)
@@ -151,21 +160,23 @@ module.exports = { registerSchema, loginSchema, formatZodError };
 **Archivo:** `src/routes/auth.js`
 
 **Tareas:**
+
 1. Importar `loginSchema` (ya importado en Paso 2)
 2. Reemplazar validación manual (líneas 137-143) con:
    ```javascript
    const validation = loginSchema.safeParse(req.body);
    if (!validation.success) {
-       return res.status(400).json({
-           success: false,
-           error: formatZodError(validation.error)
-       });
+     return res.status(400).json({
+       success: false,
+       error: formatZodError(validation.error)
+     });
    }
    const { email, password } = validation.data;
    ```
 3. Mantener lógica de autenticación intacta (authService.signInWithPassword, rate limiting, etc.)
 
 **Cambios:**
+
 - Líneas 137-143: Reemplazar con `safeParse()` + `formatZodError()`
 - Sin cambios en respuestas HTTP
 - Sin cambios en rate limiting (ya aplicado en línea 16)
@@ -177,6 +188,7 @@ module.exports = { registerSchema, loginSchema, formatZodError };
 **Archivo:** `tests/unit/validators/auth.schema.test.js` (nuevo)
 
 **Tareas:**
+
 1. Tests para `registerSchema`:
    - ✅ Valid email + strong password
    - ❌ Invalid email formats (no @, multiple @@, consecutive ..)
@@ -202,6 +214,7 @@ module.exports = { registerSchema, loginSchema, formatZodError };
 **Archivo:** `tests/integration/auth.test.js` (existente, actualizar si necesario)
 
 **Tareas:**
+
 1. Verificar tests existentes para POST `/api/auth/register`:
    - ✅ Registro exitoso con datos válidos
    - ❌ Email inválido (nested JSON, payloads raros)
@@ -220,6 +233,7 @@ module.exports = { registerSchema, loginSchema, formatZodError };
    - Estructura de respuesta JSON sin cambios
 
 **Ejecución:**
+
 ```bash
 npm test -- tests/integration/auth.test.js
 ```
@@ -231,10 +245,12 @@ npm test -- tests/integration/auth.test.js
 ### Paso 6: Eliminar Código Legacy
 
 **Archivos afectados:**
+
 - `src/routes/auth.js`: Ya limpiado en Pasos 2 y 3
 - `utils/passwordValidator.js`: **NO eliminar** - aún usado en otros lugares (password change, reset)
 
 **Verificación:**
+
 ```bash
 grep -r "validatePassword" src/routes/
 # Debe mostrar SOLO usos en password-related endpoints (no auth.js)
@@ -257,27 +273,33 @@ grep -r "validatePassword" src/routes/
 ### Verificación Manual
 
 1. **Registro exitoso:**
+
    ```bash
    curl -X POST http://localhost:3000/api/auth/register \
      -H "Content-Type: application/json" \
      -d '{"email":"test@example.com","password":"Test1234!","name":"Test User"}'
    ```
+
    Esperado: `201 Created`
 
 2. **Email inválido:**
+
    ```bash
    curl -X POST http://localhost:3000/api/auth/register \
      -H "Content-Type: application/json" \
      -d '{"email":"invalid..email@test.com","password":"Test1234!"}'
    ```
+
    Esperado: `400 Bad Request` con mensaje "Email cannot contain consecutive dots"
 
 3. **Password débil:**
+
    ```bash
    curl -X POST http://localhost:3000/api/auth/register \
      -H "Content-Type: application/json" \
      -d '{"email":"test@example.com","password":"weak"}'
    ```
+
    Esperado: `400 Bad Request` con mensajes de complejidad
 
 4. **Nested JSON attack:**
@@ -314,25 +336,31 @@ grep -r "validatePassword" src/routes/
 ## ⚠️ Riesgos y Mitigación
 
 ### Riesgo 1: Breaking Changes en API
+
 **Probabilidad:** Media
 **Impacto:** Alto
 **Mitigación:**
+
 - Tests de integración exhaustivos
 - Verificar mensajes de error similares a versión actual
 - Mantener estructura JSON de respuestas
 
 ### Riesgo 2: Password Validation Inconsistente
+
 **Probabilidad:** Baja
 **Impacto:** Medio
 **Mitigación:**
+
 - Copiar reglas exactas de `utils/passwordValidator.js`
 - Tests que validan equivalencia con validación actual
 - Verificar reglas en Zod schema vs código actual
 
 ### Riesgo 3: Performance Degradation
+
 **Probabilidad:** Muy Baja
 **Impacto:** Bajo
 **Mitigación:**
+
 - Zod es muy rápido (parseo inline)
 - No hay diferencia significativa vs validación manual
 - Monitorear logs de response time antes/después
@@ -353,4 +381,3 @@ grep -r "validatePassword" src/routes/
 **Status:** ✅ Plan completo
 **Next Step:** Paso 1 - Crear esquemas Zod
 **Estimated Time:** 2-3 horas
-

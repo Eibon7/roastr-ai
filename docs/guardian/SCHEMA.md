@@ -43,6 +43,7 @@ All new Guardian cases MUST include the following fields:
 ## Field Requirements
 
 ### Required Fields (All Cases)
+
 - `case_id`: Unique identifier based on timestamp
 - `timestamp`: ISO 8601 timestamp of case creation
 - `actor`: User who triggered the case
@@ -54,6 +55,7 @@ All new Guardian cases MUST include the following fields:
 - `notes`: Human-readable notes
 
 ### Required Fields (details array entries)
+
 - `file`: File path (REQUIRED)
 - `domains`: GDD domains affected (REQUIRED - may be empty array)
 - `severity`: File-level severity (REQUIRED)
@@ -61,6 +63,7 @@ All new Guardian cases MUST include the following fields:
 - `lines_removed`: Lines removed in change (REQUIRED)
 
 ### Optional Fields
+
 - `approved_by`: Null until case is manually approved
 - `domains` (root level): May be empty array if no domains affected
 
@@ -78,11 +81,13 @@ Cases created before the schema standardization (2025-10-30) may have **incomple
 ```
 
 **Why Fields Are Omitted:**
+
 - Historical cases were generated before full schema enforcement
 - Retroactive data population is not feasible
 - Incomplete cases remain valid for audit trail purposes
 
 **Impact:**
+
 - Historical cases are still valid for compliance auditing
 - Deduplication logic handles both complete and incomplete schemas
 - New cases (post-2025-10-30) MUST follow complete schema
@@ -101,11 +106,13 @@ The Guardian generator script (`scripts/guardian-gdd.js`) enforces complete sche
 As of 2025-10-30, Guardian implements case deduplication using:
 
 **Deduplication Key Formula:**
+
 ```text
 SHA256(sorted_files + severity + action + sorted_domains)[0:16]
 ```
 
 **Prevents:**
+
 - Multiple identical cases for the same change
 - Audit log clutter
 - Duplicate case files
@@ -115,6 +122,7 @@ SHA256(sorted_files + severity + action + sorted_domains)[0:16]
 ## Examples
 
 ### Complete Case (Current Standard)
+
 ```json
 {
   "case_id": "2025-10-30-12-00-00-000",
@@ -145,6 +153,7 @@ SHA256(sorted_files + severity + action + sorted_domains)[0:16]
 ```
 
 ### Historical Case (Pre-Standardization)
+
 ```json
 {
   "case_id": "2025-10-22-22-45-30-798",

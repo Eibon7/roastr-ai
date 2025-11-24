@@ -91,13 +91,16 @@ const DEFAULT_SETTINGS: ShieldSettings = {
   thresholds: {
     critical: 0.98,
     high: 0.95,
-    moderate: 0.90,
+    moderate: 0.9,
     corrective: 0.85
   },
-  platforms: PLATFORMS.reduce((acc, p) => ({
-    ...acc,
-    [p.id]: { enabled: true, customThresholds: false }
-  }), {})
+  platforms: PLATFORMS.reduce(
+    (acc, p) => ({
+      ...acc,
+      [p.id]: { enabled: true, customThresholds: false }
+    }),
+    {}
+  )
 };
 
 /**
@@ -228,7 +231,10 @@ export default function ShieldSettings() {
    * updatePlatform('twitter', { enabled: false });  // Disable Shield for Twitter
    * updatePlatform('discord', { customThresholds: true });  // Enable custom thresholds for Discord
    */
-  const updatePlatform = (platformId: string, updates: Partial<typeof settings.platforms[string]>) => {
+  const updatePlatform = (
+    platformId: string,
+    updates: Partial<(typeof settings.platforms)[string]>
+  ) => {
     setSettings({
       ...settings,
       platforms: {
@@ -265,12 +271,7 @@ export default function ShieldSettings() {
           >
             Reset
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<Save />}
-            onClick={handleSave}
-            disabled={loading}
-          >
+          <Button variant="contained" startIcon={<Save />} onClick={handleSave} disabled={loading}>
             Save Changes
           </Button>
         </Box>
@@ -285,7 +286,11 @@ export default function ShieldSettings() {
       {/* Global Settings */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
             <Settings /> Global Settings
           </Typography>
           <Divider sx={{ my: 2 }} />
@@ -328,7 +333,9 @@ export default function ShieldSettings() {
               </Typography>
               <Slider
                 value={settings.reincidenceThreshold}
-                onChange={(_, value) => setSettings({ ...settings, reincidenceThreshold: value as number })}
+                onChange={(_, value) =>
+                  setSettings({ ...settings, reincidenceThreshold: value as number })
+                }
                 min={1}
                 max={5}
                 marks
@@ -386,7 +393,7 @@ export default function ShieldSettings() {
                 <Slider
                   value={settings.thresholds.high}
                   onChange={(_, value) => updateThreshold('high', value as number)}
-                  min={0.80}
+                  min={0.8}
                   max={0.98}
                   step={0.01}
                   valueLabelDisplay="auto"
@@ -408,7 +415,7 @@ export default function ShieldSettings() {
                 <Slider
                   value={settings.thresholds.moderate}
                   onChange={(_, value) => updateThreshold('moderate', value as number)}
-                  min={0.70}
+                  min={0.7}
                   max={0.95}
                   step={0.01}
                   valueLabelDisplay="auto"
@@ -430,8 +437,8 @@ export default function ShieldSettings() {
                 <Slider
                   value={settings.thresholds.corrective}
                   onChange={(_, value) => updateThreshold('corrective', value as number)}
-                  min={0.60}
-                  max={0.90}
+                  min={0.6}
+                  max={0.9}
                   step={0.01}
                   valueLabelDisplay="auto"
                   disabled={!settings.enabled}
@@ -462,7 +469,14 @@ export default function ShieldSettings() {
               <Grid item xs={12} md={6} lg={4} key={platform.id}>
                 <Card variant="outlined">
                   <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        mb: 2
+                      }}
+                    >
                       <Typography variant="subtitle1" fontWeight="bold">
                         {platform.name}
                       </Typography>
@@ -478,7 +492,9 @@ export default function ShieldSettings() {
                       control={
                         <Switch
                           checked={settings.platforms[platform.id]?.customThresholds ?? false}
-                          onChange={(e) => updatePlatform(platform.id, { customThresholds: e.target.checked })}
+                          onChange={(e) =>
+                            updatePlatform(platform.id, { customThresholds: e.target.checked })
+                          }
                           disabled={!settings.enabled || !settings.platforms[platform.id]?.enabled}
                           size="small"
                         />

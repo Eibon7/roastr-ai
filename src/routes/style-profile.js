@@ -1,4 +1,5 @@
 const express = require('express');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { hasFeatureAccess } = require('./plan');
@@ -35,7 +36,7 @@ router.get('/status', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting style profile status:', error.message);
+    logger.error('❌ Error getting style profile status:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get style profile status'
@@ -84,7 +85,7 @@ router.get('/', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting style profile:', error.message);
+    logger.error('❌ Error getting style profile:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get style profile'
@@ -128,8 +129,8 @@ router.post('/generate', authenticateToken, async (req, res) => {
       });
     }
 
-    console.log(`🎨 Starting style profile generation for user ${userId}`);
-    console.log(`📱 Platforms: ${platforms.join(', ')}`);
+    logger.info(`🎨 Starting style profile generation for user ${userId}`);
+    logger.info(`📱 Platforms: ${platforms.join(', ')}`);
 
     // Collect content from specified platforms
     const contentByPlatform = {};
@@ -140,21 +141,23 @@ router.post('/generate', authenticateToken, async (req, res) => {
       if (platformContent.length > 0) {
         contentByPlatform[platform] = platformContent;
         totalCollectedItems += platformContent.length;
-        console.log(`📊 ${platform}: ${platformContent.length} items`);
+        logger.info(`📊 ${platform}: ${platformContent.length} items`);
       }
     }
 
     if (totalCollectedItems === 0) {
       return res.status(400).json({
         success: false,
-        error: 'No imported content found. Please connect and import from at least one platform first.',
+        error:
+          'No imported content found. Please connect and import from at least one platform first.',
         hint: 'Import at least 50 items from any platform to generate a style profile'
       });
     }
 
     // Check minimum content threshold
-    const platformsWithEnoughContent = Object.entries(contentByPlatform)
-      .filter(([platform, content]) => content.length >= 50);
+    const platformsWithEnoughContent = Object.entries(contentByPlatform).filter(
+      ([platform, content]) => content.length >= 50
+    );
 
     if (platformsWithEnoughContent.length === 0) {
       return res.status(400).json({
@@ -169,18 +172,16 @@ router.post('/generate', authenticateToken, async (req, res) => {
 
     // Generate style profile
     try {
-      const profileData = await profileGenerator.generateStyleProfile(
-        userId, 
-        contentByPlatform, 
-        { maxItemsPerPlatform }
-      );
+      const profileData = await profileGenerator.generateStyleProfile(userId, contentByPlatform, {
+        maxItemsPerPlatform
+      });
 
       // Store the generated profile
       userStyleProfiles.set(userId, profileData);
 
-      console.log(`✅ Style profile generated for user ${userId}`);
-      console.log(`🌍 Languages: ${profileData.profiles.map(p => p.lang).join(', ')}`);
-      console.log(`📊 Total items analyzed: ${profileData.totalItems}`);
+      logger.info(`✅ Style profile generated for user ${userId}`);
+      logger.info(`🌍 Languages: ${profileData.profiles.map((p) => p.lang).join(', ')}`);
+      logger.info(`📊 Total items analyzed: ${profileData.totalItems}`);
 
       res.json({
         success: true,
@@ -193,18 +194,16 @@ router.post('/generate', authenticateToken, async (req, res) => {
           stats: profileGenerator.getProfileStats(profileData.profiles)
         }
       });
-
     } catch (generationError) {
-      console.error('❌ Error generating style profile:', generationError.message);
+      logger.error('❌ Error generating style profile:', generationError.message);
       res.status(400).json({
         success: false,
         error: generationError.message,
         type: 'generation_error'
       });
     }
-
   } catch (error) {
-    console.error('❌ Error in style profile generation endpoint:', error.message);
+    logger.error('❌ Error in style profile generation endpoint:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not generate style profile'
@@ -237,12 +236,12 @@ router.get('/preview/:lang', authenticateToken, (req, res) => {
       });
     }
 
-    const languageProfile = profile.profiles.find(p => p.lang === lang);
+    const languageProfile = profile.profiles.find((p) => p.lang === lang);
     if (!languageProfile) {
       return res.status(404).json({
         success: false,
         error: 'Language profile not found',
-        availableLanguages: profile.profiles.map(p => p.lang)
+        availableLanguages: profile.profiles.map((p) => p.lang)
       });
     }
 
@@ -260,7 +259,7 @@ router.get('/preview/:lang', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting style profile preview:', error.message);
+    logger.error('❌ Error getting style profile preview:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get style profile preview'
@@ -293,7 +292,7 @@ router.delete('/', authenticateToken, (req, res) => {
     }
 
     userStyleProfiles.delete(userId);
-    console.log(`🗑️ Deleted style profile for user ${userId}`);
+    logger.info(`🗑️ Deleted style profile for user ${userId}`);
 
     res.json({
       success: true,
@@ -302,7 +301,7 @@ router.delete('/', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error deleting style profile:', error.message);
+    logger.error('❌ Error deleting style profile:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not delete style profile'
@@ -338,7 +337,7 @@ router.get('/stats', authenticateToken, (req, res) => {
     }
 
     const stats = profileGenerator.getProfileStats(profile.profiles);
-    
+
     res.json({
       success: true,
       data: {
@@ -349,7 +348,7 @@ router.get('/stats', authenticateToken, (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error getting style profile stats:', error.message);
+    logger.error('❌ Error getting style profile stats:', error.message);
     res.status(500).json({
       success: false,
       error: 'Could not get style profile stats'

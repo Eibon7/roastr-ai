@@ -12,7 +12,7 @@
 
 For each quirk, include:
 
-```markdown
+````markdown
 ### Platform - Quirk Title
 
 **Pattern:** Brief description of the symptom
@@ -20,11 +20,14 @@ For each quirk, include:
 **Root cause:** What actually causes this behavior
 
 **Error example:**
+
 ```json
 { "error": "Sample error message" }
 ```
+````
 
 **Fix:**
+
 ```javascript
 // Code example showing the fix
 ```
@@ -32,7 +35,8 @@ For each quirk, include:
 **Occurrences:** Issue #XXX, Issue #YYY
 **Last seen:** YYYY-MM-DD
 **Platform:** Specific API (e.g., Twitter API v2, Instagram Graph API)
-```
+
+````
 
 ---
 
@@ -64,9 +68,10 @@ When you encounter an API quirk:
 **Error:**
 ```json
 [Error message if applicable]
-```
+````
 
 **Fix:**
+
 ```javascript
 [Code solution]
 ```
@@ -74,6 +79,7 @@ When you encounter an API quirk:
 **Occurrences:** Issue #XXX
 **Last seen:** YYYY-MM-DD
 **Platform:** [Specific API]
+
 ```
 
 ---
@@ -121,3 +127,4 @@ _No quirks documented yet_
 **Maintained by:** Integration engineers + API debugging skill
 **Review frequency:** Monthly or when new platform added
 **Format version:** 1.0
+```

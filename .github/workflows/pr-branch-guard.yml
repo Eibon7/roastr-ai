@@ -44,5 +44,3 @@ jobs:
             echo "     - feat/epic-<id>-pattern-<N>-remaining"
             exit 1
           fi
-
-

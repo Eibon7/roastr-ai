@@ -66,13 +66,7 @@ const Unit = styled.span`
   color: #8a8a8a;
 `;
 
-export const StatusCard: React.FC<StatusCardProps> = ({
-  label,
-  value,
-  max,
-  unit,
-  status
-}) => {
+export const StatusCard: React.FC<StatusCardProps> = ({ label, value, max, unit, status }) => {
   const displayValue = max ? `${value}/${max}` : value.toFixed(1);
   const displayUnit = unit || (max ? '' : '');
 

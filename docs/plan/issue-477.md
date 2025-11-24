@@ -12,22 +12,26 @@
 ## Estado Actual (Assessment)
 
 ### Contexto
+
 La issue #477 fue creada durante la revisión de CodeRabbit (Review #3309784384) para evitar la edición manual de métricas de sincronización GDD. Actualmente, métricas como Lighthouse scores, E2E test results, y node counts se actualizan manualmente en la documentación.
 
 ### Infraestructura Existente
 
 **1. Coverage Auto-Generation (✅ Implementado)**
+
 - Script: `scripts/gdd-coverage-helper.js`
 - Funcionalidad: Sincroniza coverage desde `coverage/coverage-summary.json` a nodos GDD
 - Status: Todos los nodos tienen `**Coverage Source:** auto`
 
 **2. Archivos JSON Disponibles**
+
 - `gdd-status.json` - Estado del grafo GDD (node count, health, orphans, etc.)
 - `lighthouse-report.json` - Scores de accesibilidad y performance
 - `coverage/coverage-summary.json` - Cobertura de tests
 - Test results (CI logs, Jest output) - Resultados de tests E2E
 
 **3. Documentos que Requieren Actualización**
+
 - `docs/GDD-IMPLEMENTATION-SUMMARY.md` - Quick Stats section
 - `docs/nodes/*.md` - Métricas individuales de nodos (coverage ya auto-generado)
 - Posibles logs de sincronización
@@ -61,12 +65,14 @@ Según el contexto original de la issue (Review #3309784384):
 ## Análisis de Gaps
 
 ### Lo que YA existe
+
 - ✅ Coverage auto-generation (`gdd-coverage-helper.js`)
 - ✅ Health scoring (`score-gdd-health.js`)
 - ✅ GDD status validation (`validate-gdd-runtime.js` → `gdd-status.json`)
 - ✅ Archivos JSON con datos necesarios
 
 ### Lo que FALTA
+
 - ❌ Script para leer lighthouse-report.json y extraer scores
 - ❌ Script para leer gdd-status.json y actualizar node count
 - ❌ Script para leer test results y actualizar E2E metrics
@@ -105,10 +111,12 @@ Según el contexto original de la issue (Review #3309784384):
    ```
 
 **Archivos a Crear:**
+
 - `scripts/sync-gdd-metrics.js` (nuevo)
 - `tests/unit/scripts/sync-gdd-metrics.test.js` (nuevo)
 
 **Archivos a Modificar:**
+
 - `docs/GDD-IMPLEMENTATION-SUMMARY.md` (actualización automática)
 - `.github/workflows/gdd-sync.yml` (nuevo workflow, opcional)
 
@@ -119,6 +127,7 @@ Según el contexto original de la issue (Review #3309784384):
 **Acciones:**
 
 1. **Agregar marcadores en documentación**
+
    ```markdown
    <!-- GDD_METRIC:NODE_COUNT -->13/13<!-- /GDD_METRIC:NODE_COUNT -->
    <!-- GDD_METRIC:HEALTH_SCORE -->98.8/100<!-- /GDD_METRIC:HEALTH_SCORE -->
@@ -206,33 +215,39 @@ jobs:
 ## Acceptance Criteria
 
 ### AC1: Script crea/actualiza métricas desde archivos JSON
+
 - ✅ Lee lighthouse-report.json y extrae accessibility score
 - ✅ Lee gdd-status.json y extrae node count
 - ✅ Lee coverage-summary.json y calcula overall coverage
 - ✅ Lee test results y calcula E2E pass rate
 
 ### AC2: Documentación se actualiza automáticamente
+
 - ✅ GDD-IMPLEMENTATION-SUMMARY.md refleja métricas actuales
 - ✅ Marcadores preservados correctamente
 - ✅ Formato markdown no se rompe
 
 ### AC3: Modo dry-run funciona sin modificar archivos
+
 - ✅ Muestra preview de cambios
 - ✅ No escribe archivos
 - ✅ Reporta diferencias detectadas
 
 ### AC4: Tests completos y pasando
+
 - ✅ Unit tests para MetricsCollector (mocks)
 - ✅ Unit tests para DocumentUpdater (mocks)
 - ✅ Integration test end-to-end
 - ✅ 100% coverage en nuevo código
 
 ### AC5: CI mode para integración en workflows
+
 - ✅ Modo silencioso (--ci)
 - ✅ Exit code 0 si éxito, 1 si error
 - ✅ JSON output para parsear en workflows
 
 ### AC6: Documentación actualizada
+
 - ✅ README en script explica uso
 - ✅ CLAUDE.md referencia nuevo comando
 - ✅ docs/GDD-ACTIVATION-GUIDE.md incluye sync-gdd-metrics
@@ -242,27 +257,35 @@ jobs:
 ## Riesgos y Mitigación
 
 ### Riesgo 1: Archivos JSON no existen o están malformados
+
 **Mitigación:**
+
 - Validación robusta con try/catch
 - Fallback a valores actuales si JSON falta
 - Logging claro de errores
 - No modificar docs si datos inválidos
 
 ### Riesgo 2: Romper formato markdown al actualizar
+
 **Mitigación:**
+
 - Usar marcadores específicos (<!-- GDD_METRIC:* -->)
 - Regex cuidadoso que preserve estructura
 - Backup antes de modificar (como auto-repair)
 - Rollback automático si validación falla
 
 ### Riesgo 3: Desincronización entre fuentes de verdad
+
 **Mitigación:**
+
 - Validar que archivos JSON son recientes (<24h)
 - Comando --validate para detectar drift
 - CI check que alerta si docs desactualizados
 
 ### Riesgo 4: Overhead en CI/CD
+
 **Mitigación:**
+
 - Script optimizado (<5s ejecución)
 - Solo sincronizar si archivos JSON cambiaron
 - Modo --ci sin output verboso
@@ -272,18 +295,22 @@ jobs:
 ## Estimación de Esfuerzo
 
 **Fase 1: Script Core** - 1.5h
+
 - MetricsCollector: 0.5h
 - DocumentUpdater: 0.5h
 - CLI interface: 0.5h
 
 **Fase 2: Integración Docs** - 0.5h
+
 - Marcadores en GDD-IMPLEMENTATION-SUMMARY.md: 0.5h
 
 **Fase 3: Tests** - 1h
+
 - Unit tests: 0.5h
 - Integration test: 0.5h
 
 **Fase 4: CI/CD (Opcional)** - 0.5h
+
 - Workflow YAML: 0.5h
 
 **Total:** 2.5h - 3.5h (dentro del rango estimado original)
@@ -293,11 +320,13 @@ jobs:
 ## Archivos Afectados
 
 **Nuevos:**
+
 - `scripts/sync-gdd-metrics.js` (~300 líneas)
 - `tests/unit/scripts/sync-gdd-metrics.test.js` (~200 líneas)
 - `.github/workflows/gdd-sync.yml` (opcional, ~40 líneas)
 
 **Modificados:**
+
 - `docs/GDD-IMPLEMENTATION-SUMMARY.md` (agregar marcadores)
 - `CLAUDE.md` (documentar nuevo comando)
 - `docs/GDD-ACTIVATION-GUIDE.md` (incluir en workflow)

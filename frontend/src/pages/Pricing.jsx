@@ -49,7 +49,7 @@ export default function Pricing() {
   const handleUpgrade = async (planId) => {
     setUpgrading(planId);
     setError(null); // Clear any previous errors
-    
+
     try {
       if (planId === 'starter_trial') {
         // Handle trial start (card required)
@@ -111,7 +111,10 @@ export default function Pricing() {
       // Enhanced error handling
       if (error.name === 'AbortError') {
         setError('Request timed out. Please check your connection and try again.');
-      } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+      } else if (
+        error.message.includes('NetworkError') ||
+        error.message.includes('Failed to fetch')
+      ) {
         setError('Network error. Please check your internet connection.');
       } else if (error.message.includes('session has expired')) {
         setError('Your session has expired. Please log in again.');
@@ -143,10 +146,7 @@ export default function Pricing() {
         '1 platform integration',
         'Trial period - auto converts to Starter'
       ],
-      limitations: [
-        'Trial ends after 30 days',
-        'Card required to start'
-      ]
+      limitations: ['Trial ends after 30 days', 'Card required to start']
     },
     {
       id: 'starter',
@@ -165,10 +165,7 @@ export default function Pricing() {
         'Email support',
         '1 platform integration'
       ],
-      limitations: [
-        'No RQC embedded',
-        'Standard response time'
-      ]
+      limitations: ['No RQC embedded', 'Standard response time']
     },
     {
       id: 'pro',
@@ -189,9 +186,7 @@ export default function Pricing() {
         'Custom prompts',
         'Analytics dashboard'
       ],
-      limitations: [
-        'No RQC embedded'
-      ]
+      limitations: ['No RQC embedded']
     },
     {
       id: 'plus',
@@ -224,13 +219,23 @@ export default function Pricing() {
 
   const getPlanBadge = (plan) => {
     if (plan.id === currentPlan) {
-      return <Badge variant="success" className="absolute -top-2 right-4">Current Plan</Badge>;
+      return (
+        <Badge variant="success" className="absolute -top-2 right-4">
+          Current Plan
+        </Badge>
+      );
     }
     if (plan.popular) {
-      return <Badge className="absolute -top-2 right-4 bg-purple-100 text-purple-800">Most Popular</Badge>;
+      return (
+        <Badge className="absolute -top-2 right-4 bg-purple-100 text-purple-800">
+          Most Popular
+        </Badge>
+      );
     }
     if (plan.enterprise) {
-      return <Badge className="absolute -top-2 right-4 bg-yellow-100 text-yellow-800">Enterprise</Badge>;
+      return (
+        <Badge className="absolute -top-2 right-4 bg-yellow-100 text-yellow-800">Enterprise</Badge>
+      );
     }
     return null;
   };
@@ -267,9 +272,7 @@ export default function Pricing() {
       <div className="container mx-auto px-4 py-16">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            Choose Your Plan
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Choose Your Plan</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Select the perfect plan for your roasting needs. Upgrade or downgrade anytime.
           </p>
@@ -280,7 +283,7 @@ export default function Pricing() {
           <div className="max-w-4xl mx-auto mb-8">
             <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md flex items-center justify-between">
               <span>{error}</span>
-              <button 
+              <button
                 onClick={() => setError(null)}
                 className="text-red-600 hover:text-red-800 font-semibold"
               >
@@ -295,10 +298,10 @@ export default function Pricing() {
           {plans.map((plan) => {
             const isCurrentPlan = plan.id === currentPlan;
             const canUpgrade = !isCurrentPlan;
-            
+
             return (
-              <Card 
-                key={plan.id} 
+              <Card
+                key={plan.id}
                 className={`relative transform transition-all duration-200 hover:scale-105 ${
                   plan.popular ? 'border-purple-200 shadow-xl' : ''
                 } ${plan.enterprise ? 'border-yellow-200 shadow-xl' : ''} ${
@@ -306,7 +309,7 @@ export default function Pricing() {
                 }`}
               >
                 {getPlanBadge(plan)}
-                
+
                 <CardHeader className="text-center pb-4">
                   <div className={`mx-auto mb-4 ${PLAN_COLORS[plan.id]}`}>
                     {PLAN_ICONS[plan.id]}
@@ -320,17 +323,13 @@ export default function Pricing() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {plan.description}
-                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
                   {/* Features */}
                   <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-green-700">
-                      ✓ Included Features
-                    </h4>
+                    <h4 className="font-semibold text-sm text-green-700">✓ Included Features</h4>
                     {plan.features.map((feature, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -342,9 +341,7 @@ export default function Pricing() {
                   {/* Limitations */}
                   {plan.limitations.length > 0 && (
                     <div className="space-y-3">
-                      <h4 className="font-semibold text-sm text-gray-500">
-                        ✗ Not Included
-                      </h4>
+                      <h4 className="font-semibold text-sm text-gray-500">✗ Not Included</h4>
                       {plan.limitations.map((limitation, index) => (
                         <div key={index} className="flex items-center space-x-2">
                           <span className="h-4 w-4 text-gray-400 flex-shrink-0">✗</span>
@@ -383,7 +380,7 @@ export default function Pricing() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="text-left p-4 font-semibold">Feature</th>
-                      {plans.map(plan => (
+                      {plans.map((plan) => (
                         <th key={plan.id} className="text-center p-4 font-semibold">
                           {plan.name}
                         </th>
@@ -443,8 +440,8 @@ export default function Pricing() {
               <div className="flex-1">
                 <h3 className="font-bold text-2xl mb-3">RQC Embedded Mode</h3>
                 <p className="text-muted-foreground mb-6 text-lg">
-                  Exclusive to Plus plan. Advanced response quality control with embedded semantic analysis 
-                  for superior roast generation and contextual understanding.
+                  Exclusive to Plus plan. Advanced response quality control with embedded semantic
+                  analysis for superior roast generation and contextual understanding.
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="flex items-center space-x-3">
@@ -476,7 +473,8 @@ export default function Pricing() {
             <div>
               <h3 className="font-semibold mb-2">Can I change plans anytime?</h3>
               <p className="text-sm text-muted-foreground">
-                Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.
+                Yes, you can upgrade or downgrade your plan at any time. Changes take effect
+                immediately.
               </p>
             </div>
             <div>
@@ -488,22 +486,20 @@ export default function Pricing() {
             <div>
               <h3 className="font-semibold mb-2">Is there a free trial?</h3>
               <p className="text-sm text-muted-foreground">
-                Yes! Start with the Starter Trial plan to test all features. Upgrade to a paid plan when you need more capacity.
+                Yes! Start with the Starter Trial plan to test all features. Upgrade to a paid plan
+                when you need more capacity.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-2">How does billing work?</h3>
               <p className="text-sm text-muted-foreground">
-                All paid plans are billed monthly. You can manage your billing through our secure portal.
+                All paid plans are billed monthly. You can manage your billing through our secure
+                portal.
               </p>
             </div>
           </div>
           <div className="mt-12">
-            <Button 
-              onClick={() => navigate('/billing')}
-              size="lg"
-              variant="outline"
-            >
+            <Button onClick={() => navigate('/billing')} size="lg" variant="outline">
               View Current Usage & Billing
             </Button>
           </div>

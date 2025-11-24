@@ -1,6 +1,6 @@
 /**
  * Central Feature Flags System
- * 
+ *
  * Controls which features are enabled based on environment variables
  * and graceful degradation when required keys are missing
  */
@@ -15,52 +15,55 @@ class FeatureFlags {
 
   loadFlags() {
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     return {
       // Core System Features
       ENABLE_BILLING: this.checkBillingAvailable(),
       ENABLE_RQC: this.parseDevelopmentFlag(process.env.ENABLE_RQC, isProduction), // Disabled by default - under development
       ENABLE_SHIELD: this.parseFlag(process.env.ENABLE_SHIELD),
-      
+
       // Platform Integration Features
       ENABLE_REAL_TWITTER: this.checkTwitterKeys(),
       ENABLE_REAL_YOUTUBE: this.checkYouTubeKeys(),
-      ENABLE_REAL_INSTAGRAM: this.parseFlag(process.env.ENABLE_REAL_INSTAGRAM) || this.checkInstagramKeys(),
-      ENABLE_REAL_FACEBOOK: this.parseFlag(process.env.ENABLE_REAL_FACEBOOK) || this.checkFacebookKeys(),
+      ENABLE_REAL_INSTAGRAM:
+        this.parseFlag(process.env.ENABLE_REAL_INSTAGRAM) || this.checkInstagramKeys(),
+      ENABLE_REAL_FACEBOOK:
+        this.parseFlag(process.env.ENABLE_REAL_FACEBOOK) || this.checkFacebookKeys(),
       ENABLE_REAL_DISCORD: this.checkDiscordKeys(),
       ENABLE_REAL_TWITCH: this.checkTwitchKeys(),
       ENABLE_REAL_REDDIT: this.checkRedditKeys(),
       ENABLE_REAL_TIKTOK: this.checkTikTokKeys(),
       ENABLE_REAL_BLUESKY: this.checkBlueskyKeys(),
-      
+
       // AI Service Features
       ENABLE_REAL_OPENAI: !!process.env.OPENAI_API_KEY,
       ENABLE_REAL_PERSPECTIVE: !!process.env.PERSPECTIVE_API_KEY,
       ENABLE_PERSPECTIVE_API: !!process.env.PERSPECTIVE_API_KEY, // Alias for compatibility
-      
+
       // Email Features
       ENABLE_EMAIL_NOTIFICATIONS: !!process.env.SENDGRID_API_KEY,
-      
+
       // Database Features
       ENABLE_SUPABASE: this.checkSupabaseKeys(),
-      
+
       // Development Features
       ENABLE_DEBUG_LOGS: this.parseFlag(process.env.DEBUG), // Disabled by default, requires explicit environment variable
       VERBOSE_LOGS: this.parseFlag(process.env.VERBOSE_LOGS),
       MOCK_MODE: mockMode.isMockMode,
-      
-      // UI Feature Flags (Issue #366)  
+
+      // UI Feature Flags (Issue #366)
       // Removed SHOP_ENABLED duplicate - standardized to ENABLE_SHOP below
-      ENABLE_MOCK_PERSISTENCE: this.parseFlag(process.env.ENABLE_MOCK_PERSISTENCE) || mockMode.isMockMode,
-      
+      ENABLE_MOCK_PERSISTENCE:
+        this.parseFlag(process.env.ENABLE_MOCK_PERSISTENCE) || mockMode.isMockMode,
+
       // Auth Features
       ENABLE_MAGIC_LINK: this.parseFlag(process.env.ENABLE_MAGIC_LINK, true), // Default enabled
-      ENABLE_PASSWORD_HISTORY: this.parseFlag(process.env.ENABLE_PASSWORD_HISTORY, true), // Default enabled  
+      ENABLE_PASSWORD_HISTORY: this.parseFlag(process.env.ENABLE_PASSWORD_HISTORY, true), // Default enabled
       ENABLE_RATE_LIMIT: this.parseFlag(process.env.ENABLE_RATE_LIMIT, true), // Default enabled
       ENABLE_CSRF_PROTECTION: this.parseFlag(process.env.ENABLE_CSRF_PROTECTION, true), // Default enabled - Issue #261
       ENABLE_RESPONSE_CACHE: this.parseFlag(process.env.ENABLE_RESPONSE_CACHE, true), // Default enabled - Issue #261
       DEBUG_CACHE: this.parseFlag(process.env.DEBUG_CACHE), // Default disabled
-      
+
       // Style Profile Feature (basic style analysis)
       ENABLE_STYLE_PROFILE: this.parseFlag(process.env.ENABLE_STYLE_PROFILE, true), // Default enabled
 
@@ -70,7 +73,10 @@ class FeatureFlags {
       // Custom Style Prompt Feature (Issue #868: Feature Flag)
       // Permite Custom Style Prompt SOLO con flag + Plus plan
       // Default: FALSE - No aparece en UI ni onboarding
-      ENABLE_CUSTOM_PROMPT: this.parseDevelopmentFlag(process.env.ENABLE_CUSTOM_PROMPT, isProduction), // Default disabled, requires explicit activation
+      ENABLE_CUSTOM_PROMPT: this.parseDevelopmentFlag(
+        process.env.ENABLE_CUSTOM_PROMPT,
+        isProduction
+      ), // Default disabled, requires explicit activation
 
       // UI Platform Features (separate from API integration)
       ENABLE_FACEBOOK_UI: this.parseDevelopmentFlag(process.env.ENABLE_FACEBOOK_UI, isProduction), // Default disabled - under development
@@ -99,40 +105,41 @@ class FeatureFlags {
       'STRIPE_CANCEL_URL',
       'STRIPE_PORTAL_RETURN_URL'
     ];
-    
+
     // In mock mode, enable billing if mock Stripe keys are available
     if (mockMode.isMockMode) {
-      return required.every(key => !!process.env[key]);
+      return required.every((key) => !!process.env[key]);
     }
-    
-    return required.every(key => !!process.env[key]);
+
+    return required.every((key) => !!process.env[key]);
   }
 
   checkTwitterKeys() {
     // Check for OAuth 2.0 credentials (new) OR OAuth 1.0a credentials (legacy)
     const oauth2Required = ['TWITTER_CLIENT_ID', 'TWITTER_CLIENT_SECRET'];
     const oauth1Required = ['TWITTER_BEARER_TOKEN', 'TWITTER_APP_KEY', 'TWITTER_APP_SECRET'];
-    
-    const hasOAuth2 = oauth2Required.every(key => !!process.env[key]);
-    const hasOAuth1 = oauth1Required.every(key => !!process.env[key]);
-    
+
+    const hasOAuth2 = oauth2Required.every((key) => !!process.env[key]);
+    const hasOAuth1 = oauth1Required.every((key) => !!process.env[key]);
+
     return hasOAuth2 || hasOAuth1;
   }
 
   checkYouTubeKeys() {
     // Check for OAuth credentials OR API key
     const oauthRequired = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
-    const hasOAuth = oauthRequired.every(key => !!process.env[key]) || 
-                    ['YOUTUBE_CLIENT_ID', 'YOUTUBE_CLIENT_SECRET'].every(key => !!process.env[key]);
-    
+    const hasOAuth =
+      oauthRequired.every((key) => !!process.env[key]) ||
+      ['YOUTUBE_CLIENT_ID', 'YOUTUBE_CLIENT_SECRET'].every((key) => !!process.env[key]);
+
     return hasOAuth || !!process.env.YOUTUBE_API_KEY;
   }
 
   checkInstagramKeys() {
     // Check for OAuth credentials OR access token
     const oauthRequired = ['INSTAGRAM_CLIENT_ID', 'INSTAGRAM_CLIENT_SECRET'];
-    const hasOAuth = oauthRequired.every(key => !!process.env[key]);
-    
+    const hasOAuth = oauthRequired.every((key) => !!process.env[key]);
+
     return hasOAuth || !!process.env.INSTAGRAM_ACCESS_TOKEN;
   }
 
@@ -146,12 +153,12 @@ class FeatureFlags {
 
   checkTwitchKeys() {
     const required = ['TWITCH_CLIENT_ID', 'TWITCH_CLIENT_SECRET'];
-    return required.every(key => !!process.env[key]);
+    return required.every((key) => !!process.env[key]);
   }
 
   checkRedditKeys() {
     const required = ['REDDIT_CLIENT_ID', 'REDDIT_CLIENT_SECRET'];
-    return required.every(key => !!process.env[key]);
+    return required.every((key) => !!process.env[key]);
   }
 
   checkTikTokKeys() {
@@ -159,7 +166,7 @@ class FeatureFlags {
   }
 
   checkBlueskyKeys() {
-    return !!process.env.BLUESKY_USERNAME && !!process.env.BLUESKY_PASSWORD;
+    return !!process.env.BLUESKY_HANDLE && !!process.env.BLUESKY_PASSWORD;
   }
 
   checkSupabaseKeys() {
@@ -168,14 +175,14 @@ class FeatureFlags {
       return false;
     }
     const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
-    return required.every(key => !!process.env[key] && !process.env[key].includes('mock'));
+    return required.every((key) => !!process.env[key] && !process.env[key].includes('mock'));
   }
 
   logFlagsStatus() {
     const enabledFlags = Object.entries(this.flags)
       .filter(([, enabled]) => enabled)
       .map(([flag]) => flag);
-    
+
     const disabledFlags = Object.entries(this.flags)
       .filter(([, enabled]) => !enabled)
       .map(([flag]) => flag);
@@ -189,7 +196,7 @@ class FeatureFlags {
       });
     } catch (error) {
       // Fallback to console if logger not available (e.g., in tests)
-      console.log('🏁 Feature flags initialized:', {
+      logger.info('🏁 Feature flags initialized:', {
         enabled: enabledFlags.length,
         disabled: disabledFlags.length,
         total: Object.keys(this.flags).length
@@ -207,11 +214,11 @@ class FeatureFlags {
     if (value === undefined || value === null) {
       return defaultValue;
     }
-    
+
     if (typeof value === 'boolean') {
       return value;
     }
-    
+
     const stringValue = String(value).toLowerCase().trim();
     return stringValue === 'true' || stringValue === '1' || stringValue === 'yes';
   }
@@ -228,7 +235,7 @@ class FeatureFlags {
     if (isProduction) {
       return false;
     }
-    
+
     // In non-production environments, use normal parsing
     return this.parseFlag(value, false);
   }
@@ -302,9 +309,11 @@ class FeatureFlags {
       return false;
     }
 
-    return this.flags.MOCK_MODE ||
-           process.env.NODE_ENV === 'test' ||
-           this.parseFlag(process.env.FORCE_MOCK_OAUTH);
+    return (
+      this.flags.MOCK_MODE ||
+      process.env.NODE_ENV === 'test' ||
+      this.parseFlag(process.env.FORCE_MOCK_OAUTH)
+    );
   }
 
   /**

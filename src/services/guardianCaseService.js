@@ -38,14 +38,14 @@ function validateCaseId(caseId) {
     logger.warn('Path traversal attempt detected', { caseId });
     throw new Error(
       `Invalid case ID: path traversal characters detected. ` +
-      `Expected format: YYYY-MM-DD-HH-MM-SS-mmm`
+        `Expected format: YYYY-MM-DD-HH-MM-SS-mmm`
     );
   }
 
   if (!VALID_CASE_ID_REGEX.test(caseId)) {
     throw new Error(
       `Invalid case ID format: ${caseId}. ` +
-      `Expected format: YYYY-MM-DD-HH-MM-SS-mmm (e.g., 2025-10-09-18-07-06-685)`
+        `Expected format: YYYY-MM-DD-HH-MM-SS-mmm (e.g., 2025-10-09-18-07-06-685)`
     );
   }
 
@@ -74,7 +74,7 @@ async function listCases(filters = {}) {
   try {
     // Read all JSON files from cases directory
     const files = await fs.readdir(CASES_DIR);
-    const jsonFiles = files.filter(f => f.endsWith('.json'));
+    const jsonFiles = files.filter((f) => f.endsWith('.json'));
 
     // PERFORMANCE: Load all case data in parallel (not sequential)
     const casePromises = jsonFiles.map(async (file) => {
@@ -87,12 +87,12 @@ async function listCases(filters = {}) {
 
     // Apply severity filter
     if (filters.severity) {
-      cases = cases.filter(c => c.severity === filters.severity);
+      cases = cases.filter((c) => c.severity === filters.severity);
     }
 
     // Apply action filter
     if (filters.action) {
-      cases = cases.filter(c => c.action === filters.action);
+      cases = cases.filter((c) => c.action === filters.action);
     }
 
     // Sort by timestamp (newest first)
@@ -119,7 +119,7 @@ async function listCases(filters = {}) {
  * @example
  * const caseData = await getCaseById('CASE-20251010-001');
  * if (!caseData) {
- *   console.log('Case not found');
+ *   logger.info('Case not found');
  * }
  */
 async function getCaseById(caseId) {
@@ -201,9 +201,9 @@ function validateReason(reason) {
  * @example
  * try {
  *   const updated = await approveCase('CASE-20251010-001', 'Emilio Postigo');
- *   console.log('Approved by:', updated.approved_by);
+ *   logger.info('Approved by:', updated.approved_by);
  * } catch (error) {
- *   console.error('Approval failed:', error.message);
+ *   logger.error('Approval failed:', error.message);
  * }
  */
 async function approveCase(caseId, approver) {
@@ -265,9 +265,9 @@ async function approveCase(caseId, approver) {
  *     'Emilio Postigo',
  *     'Changes violate pricing policy'
  *   );
- *   console.log('Denied by:', updated.denied_by);
+ *   logger.info('Denied by:', updated.denied_by);
  * } catch (error) {
- *   console.error('Denial failed:', error.message);
+ *   logger.error('Denial failed:', error.message);
  * }
  */
 async function denyCase(caseId, denier, reason) {

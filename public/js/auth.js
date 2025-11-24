@@ -6,559 +6,572 @@ const API_BASE = '/api/auth';
 
 // Debug flag for development logging (Review #3366641810)
 const DEBUG_AUTH = false;
-const debug = (...args) => { if (DEBUG_AUTH) console.log(...args); };
-const debugErr = (...args) => { if (DEBUG_AUTH) console.error(...args); };
+const debug = (...args) => {
+  if (DEBUG_AUTH) console.log(...args);
+};
+const debugErr = (...args) => {
+  if (DEBUG_AUTH) console.error(...args);
+};
 
 // Utility functions
 function showMessage(message, type = 'error') {
-    const successEl = document.getElementById('success-message');
-    const errorEl = document.getElementById('error-message');
+  const successEl = document.getElementById('success-message');
+  const errorEl = document.getElementById('error-message');
 
-    // Hide both first
+  // Hide both first
+  if (successEl) successEl.classList.add('hidden');
+  if (errorEl) errorEl.classList.add('hidden');
+
+  // Show appropriate message
+  if (type === 'success' && successEl) {
+    successEl.textContent = message;
+    successEl.classList.remove('hidden');
+  } else if ((type === 'error' || type === 'warning') && errorEl) {
+    errorEl.textContent = message;
+    errorEl.classList.remove('hidden');
+
+    // Add warning style for rate limits
+    if (type === 'warning') {
+      errorEl.style.backgroundColor = '#ff9800';
+      errorEl.style.borderColor = '#f57c00';
+    } else {
+      // Reset to error style
+      errorEl.style.backgroundColor = '';
+      errorEl.style.borderColor = '';
+    }
+  }
+
+  // Auto-hide duration depends on type
+  const hideDelay = type === 'warning' ? 15000 : 10000;
+  setTimeout(() => {
     if (successEl) successEl.classList.add('hidden');
     if (errorEl) errorEl.classList.add('hidden');
-
-    // Show appropriate message
-    if (type === 'success' && successEl) {
-        successEl.textContent = message;
-        successEl.classList.remove('hidden');
-    } else if ((type === 'error' || type === 'warning') && errorEl) {
-        errorEl.textContent = message;
-        errorEl.classList.remove('hidden');
-
-        // Add warning style for rate limits
-        if (type === 'warning') {
-            errorEl.style.backgroundColor = '#ff9800';
-            errorEl.style.borderColor = '#f57c00';
-        } else {
-            // Reset to error style
-            errorEl.style.backgroundColor = '';
-            errorEl.style.borderColor = '';
-        }
-    }
-
-    // Auto-hide duration depends on type
-    const hideDelay = type === 'warning' ? 15000 : 10000;
-    setTimeout(() => {
-        if (successEl) successEl.classList.add('hidden');
-        if (errorEl) errorEl.classList.add('hidden');
-    }, hideDelay);
+  }, hideDelay);
 }
 
 function setLoading(buttonId, loading = true) {
-    const button = document.getElementById(buttonId);
-    if (!button) return;
+  const button = document.getElementById(buttonId);
+  if (!button) return;
 
-    if (loading) {
-        // Review #3366641810: Cache original HTML to preserve icons/nested nodes
-        if (!button.dataset.origHtml) button.dataset.origHtml = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<span class="spinner"></span>' + (button.textContent || '');
-        button.classList.add('loading');
-    } else {
-        button.disabled = false;
-        // Review #3366641810: Restore original HTML
-        button.innerHTML = button.dataset.origHtml || button.textContent || '';
-        delete button.dataset.origHtml;
-        button.classList.remove('loading');
-    }
+  if (loading) {
+    // Review #3366641810: Cache original HTML to preserve icons/nested nodes
+    if (!button.dataset.origHtml) button.dataset.origHtml = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner"></span>' + (button.textContent || '');
+    button.classList.add('loading');
+  } else {
+    button.disabled = false;
+    // Review #3366641810: Restore original HTML
+    button.innerHTML = button.dataset.origHtml || button.textContent || '';
+    delete button.dataset.origHtml;
+    button.classList.remove('loading');
+  }
 }
 
 function validateEmail(email) {
-    // Improved regex: prevents double @, consecutive dots, invalid chars
-    const re = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-    return re.test(email) && !email.includes('..') && !email.includes('@@');
+  // Improved regex: prevents double @, consecutive dots, invalid chars
+  const re =
+    /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  return re.test(email) && !email.includes('..') && !email.includes('@@');
 }
 
 function validatePassword(password) {
-    return password && password.length >= 6;
+  return password && password.length >= 6;
 }
 
 // API helper function (basic, used internally)
 async function apiCall(endpoint, method = 'POST', data = null) {
-    try {
-        const config = {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        };
+  try {
+    const config = {
+      method,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
 
-        if (data) {
-            config.body = JSON.stringify(data);
-        }
-
-        const response = await fetch(`${API_BASE}${endpoint}`, config);
-        const result = await response.json();
-
-        if (!response.ok) {
-            throw new Error(result.error || `HTTP ${response.status}`);
-        }
-
-        return result;
-    } catch (error) {
-        debugErr('API call failed:', error);
-        throw error;
+    if (data) {
+      config.body = JSON.stringify(data);
     }
+
+    const response = await fetch(`${API_BASE}${endpoint}`, config);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || `HTTP ${response.status}`);
+    }
+
+    return result;
+  } catch (error) {
+    debugErr('API call failed:', error);
+    throw error;
+  }
 }
 
 // Enhanced API call with 401 retry and comprehensive error handling
 async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry = false) {
-    try {
-        const token = localStorage.getItem('auth_token');
-        const config = {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        };
+  try {
+    const token = localStorage.getItem('auth_token');
+    const config = {
+      method,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
 
-        // Review #3366641810: Skip auth header on anonymous endpoints
-        const anonymousEndpoints = ['/login', '/register', '/reset-password', '/magic-link', '/update-password'];
-        if (token && !anonymousEndpoints.includes(endpoint)) {
-            config.headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        if (data) {
-            config.body = JSON.stringify(data);
-        }
-
-        const response = await fetch(`${API_BASE}${endpoint}`, config);
-
-        // Handle 401 Unauthorized (expired token)
-        if (response.status === 401 && !isRetry) {
-            debug('Token expired, attempting refresh...');
-
-            // Try to refresh token
-            const refreshSuccess = await refreshAuthToken();
-
-            if (refreshSuccess) {
-                // Retry original request with new token
-                debug('Token refreshed, retrying request...');
-                return await apiCallWithRetry(endpoint, method, data, true);
-            } else {
-                // Refresh failed, force logout
-                showMessage('Session expired. Please log in again.');
-                setTimeout(() => {
-                    clearAuthData();
-                    window.location.href = '/login.html';
-                }, 2000);
-                throw new Error('Session expired');
-            }
-        }
-
-        // Handle 403 Forbidden
-        if (response.status === 403) {
-            showMessage('Access denied. You do not have permission for this action.');
-            throw new Error('Access denied');
-        }
-
-        // Handle 429 Rate Limit
-        if (response.status === 429) {
-            let retryAfter = 60; // Default fallback
-            const retryAfterHeader = response.headers.get('Retry-After');
-
-            if (retryAfterHeader) {
-                // Try parsing as numeric seconds
-                const numericValue = Number(retryAfterHeader);
-                if (!isNaN(numericValue) && numericValue > 0) {
-                    retryAfter = numericValue;
-                } else {
-                    // Try parsing as HTTP-date
-                    const dateValue = Date.parse(retryAfterHeader);
-                    if (!isNaN(dateValue)) {
-                        const secondsUntilDate = Math.max(0, Math.floor((dateValue - Date.now()) / 1000));
-                        retryAfter = secondsUntilDate || 60; // Fallback if date is in past
-                    }
-                }
-            }
-
-            // Review #3366641810: Disable submit buttons during rate limit
-            const retrySeconds = Math.ceil(retryAfter);
-            showMessage(`Too many requests. Please wait ${retrySeconds} seconds and try again.`, 'warning');
-
-            const form = document.querySelector('form');
-            if (form) {
-                const buttons = form.querySelectorAll('button, [type="submit"]');
-                buttons.forEach(b => b.disabled = true);
-                setTimeout(() => buttons.forEach(b => b.disabled = false), retrySeconds * 1000);
-            }
-
-            throw new Error(`Rate limit exceeded. Retry after ${retryAfter}s`);
-        }
-
-        // Review #3366641810: Guard JSON parsing for 204 No Content and empty responses
-        let result = null;
-        const contentType = response.headers.get('content-type');
-        const hasJsonContent = contentType && contentType.includes('application/json');
-
-        // Only attempt JSON parsing if response has content and is JSON
-        if (response.status !== 204 && hasJsonContent) {
-            const text = await response.text();
-            if (text && text.trim()) {
-                try {
-                    result = JSON.parse(text);
-                } catch (e) {
-                    debugErr('JSON parse error:', e);
-                    throw new Error('Invalid JSON response');
-                }
-            }
-        }
-
-        if (!response.ok) {
-            throw new Error((result && result.error) || `HTTP ${response.status}`);
-        }
-
-        return result;
-    } catch (error) {
-        debugErr('API call failed:', error);
-        throw error;
+    // Review #3366641810: Skip auth header on anonymous endpoints
+    const anonymousEndpoints = [
+      '/login',
+      '/register',
+      '/reset-password',
+      '/magic-link',
+      '/update-password'
+    ];
+    if (token && !anonymousEndpoints.includes(endpoint)) {
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
+
+    if (data) {
+      config.body = JSON.stringify(data);
+    }
+
+    const response = await fetch(`${API_BASE}${endpoint}`, config);
+
+    // Handle 401 Unauthorized (expired token)
+    if (response.status === 401 && !isRetry) {
+      debug('Token expired, attempting refresh...');
+
+      // Try to refresh token
+      const refreshSuccess = await refreshAuthToken();
+
+      if (refreshSuccess) {
+        // Retry original request with new token
+        debug('Token refreshed, retrying request...');
+        return await apiCallWithRetry(endpoint, method, data, true);
+      } else {
+        // Refresh failed, force logout
+        showMessage('Session expired. Please log in again.');
+        setTimeout(() => {
+          clearAuthData();
+          window.location.href = '/login.html';
+        }, 2000);
+        throw new Error('Session expired');
+      }
+    }
+
+    // Handle 403 Forbidden
+    if (response.status === 403) {
+      showMessage('Access denied. You do not have permission for this action.');
+      throw new Error('Access denied');
+    }
+
+    // Handle 429 Rate Limit
+    if (response.status === 429) {
+      let retryAfter = 60; // Default fallback
+      const retryAfterHeader = response.headers.get('Retry-After');
+
+      if (retryAfterHeader) {
+        // Try parsing as numeric seconds
+        const numericValue = Number(retryAfterHeader);
+        if (!isNaN(numericValue) && numericValue > 0) {
+          retryAfter = numericValue;
+        } else {
+          // Try parsing as HTTP-date
+          const dateValue = Date.parse(retryAfterHeader);
+          if (!isNaN(dateValue)) {
+            const secondsUntilDate = Math.max(0, Math.floor((dateValue - Date.now()) / 1000));
+            retryAfter = secondsUntilDate || 60; // Fallback if date is in past
+          }
+        }
+      }
+
+      // Review #3366641810: Disable submit buttons during rate limit
+      const retrySeconds = Math.ceil(retryAfter);
+      showMessage(
+        `Too many requests. Please wait ${retrySeconds} seconds and try again.`,
+        'warning'
+      );
+
+      const form = document.querySelector('form');
+      if (form) {
+        const buttons = form.querySelectorAll('button, [type="submit"]');
+        buttons.forEach((b) => (b.disabled = true));
+        setTimeout(() => buttons.forEach((b) => (b.disabled = false)), retrySeconds * 1000);
+      }
+
+      throw new Error(`Rate limit exceeded. Retry after ${retryAfter}s`);
+    }
+
+    // Review #3366641810: Guard JSON parsing for 204 No Content and empty responses
+    let result = null;
+    const contentType = response.headers.get('content-type');
+    const hasJsonContent = contentType && contentType.includes('application/json');
+
+    // Only attempt JSON parsing if response has content and is JSON
+    if (response.status !== 204 && hasJsonContent) {
+      const text = await response.text();
+      if (text && text.trim()) {
+        try {
+          result = JSON.parse(text);
+        } catch (e) {
+          debugErr('JSON parse error:', e);
+          throw new Error('Invalid JSON response');
+        }
+      }
+    }
+
+    if (!response.ok) {
+      throw new Error((result && result.error) || `HTTP ${response.status}`);
+    }
+
+    return result;
+  } catch (error) {
+    debugErr('API call failed:', error);
+    throw error;
+  }
 }
 
 // Save auth data to localStorage
 function saveAuthData(data) {
-    localStorage.setItem('auth_token', data.access_token);
-    localStorage.setItem('refresh_token', data.refresh_token);
-    localStorage.setItem('user_data', JSON.stringify(data.user));
-    
-    // Set expiration if provided
-    if (data.expires_at) {
-        localStorage.setItem('token_expires_at', data.expires_at);
-    }
+  localStorage.setItem('auth_token', data.access_token);
+  localStorage.setItem('refresh_token', data.refresh_token);
+  localStorage.setItem('user_data', JSON.stringify(data.user));
+
+  // Set expiration if provided
+  if (data.expires_at) {
+    localStorage.setItem('token_expires_at', data.expires_at);
+  }
 }
 
 // Clear auth data
 function clearAuthData() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('token_expires_at');
-    localStorage.removeItem('pendingVerificationEmail');
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user_data');
+  localStorage.removeItem('token_expires_at');
+  localStorage.removeItem('pendingVerificationEmail');
 }
 
 // Check if user is authenticated
 function isAuthenticated() {
-    const token = localStorage.getItem('auth_token');
-    const expiresAt = localStorage.getItem('token_expires_at');
-    
-    if (!token) return false;
-    
-    if (expiresAt) {
-        const now = Date.now() / 1000;
-        const expiry = parseInt(expiresAt);
-        if (now >= expiry) {
-            clearAuthData();
-            return false;
-        }
+  const token = localStorage.getItem('auth_token');
+  const expiresAt = localStorage.getItem('token_expires_at');
+
+  if (!token) return false;
+
+  if (expiresAt) {
+    const now = Date.now() / 1000;
+    const expiry = parseInt(expiresAt);
+    if (now >= expiry) {
+      clearAuthData();
+      return false;
     }
-    
-    return true;
+  }
+
+  return true;
 }
 
 // Redirect to dashboard if already authenticated
 function checkAuthRedirect() {
-    if (isAuthenticated()) {
-        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-        if (userData.is_admin) {
-            window.location.href = '/admin.html';
-        } else {
-            window.location.href = '/dashboard.html';
-        }
+  if (isAuthenticated()) {
+    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+    if (userData.is_admin) {
+      window.location.href = '/admin.html';
+    } else {
+      window.location.href = '/dashboard.html';
     }
+  }
 }
 
 // Login page functions
 function initLoginPage() {
-    checkAuthRedirect();
-    
-    const loginForm = document.getElementById('login-form');
-    const googleBtn = document.getElementById('google-login-btn');
-    const magicLinkBtn = document.getElementById('magic-link-btn');
-    const recoveryBtn = document.getElementById('recovery-btn');
-    
-    // Login form submission
-    loginForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData(loginForm);
-        const email = formData.get('email');
-        const password = formData.get('password');
-        const keepLogged = formData.get('keepLogged') === 'on';
-        
-        // Validation
-        if (!validateEmail(email)) {
-            showMessage('Please enter a valid email address');
-            return;
-        }
-        
-        if (!validatePassword(password)) {
-            showMessage('Password must be at least 6 characters long');
-            return;
-        }
-        
-        setLoading('login-btn', true);
+  checkAuthRedirect();
 
-        try {
-            const result = await apiCallWithRetry('/login', 'POST', {
-                email,
-                password,
-                keepLogged
-            });
-            
-            // Save authentication data
-            saveAuthData(result.data);
-            
-            showMessage(result.message, 'success');
-            
-            // Redirect based on user role
-            setTimeout(() => {
-                if (result.data.user.is_admin) {
-                    window.location.href = '/admin.html';
-                } else {
-                    window.location.href = '/dashboard.html';
-                }
-            }, 1000);
-            
-        } catch (error) {
-            showMessage(error.message);
-            
-            // Show recovery section on login error
-            const recoverySection = document.getElementById('recovery-section');
-            if (recoverySection) {
-                recoverySection.classList.remove('hidden');
-            }
-        } finally {
-            setLoading('login-btn', false);
-        }
-    });
-    
-    // Google login
-    googleBtn?.addEventListener('click', async () => {
-        try {
-            setLoading('google-login-btn', true);
-            
-            // Redirect to Google OAuth
-            window.location.href = '/api/auth/google';
-            
-        } catch (error) {
-            showMessage('Google authentication failed');
-            setLoading('google-login-btn', false);
-        }
-    });
-    
-    // Magic link
-    magicLinkBtn?.addEventListener('click', async () => {
-        const email = document.getElementById('email').value;
-        
-        if (!validateEmail(email)) {
-            showMessage('Please enter a valid email address first');
-            return;
-        }
-        
-        setLoading('magic-link-btn', true);
+  const loginForm = document.getElementById('login-form');
+  const googleBtn = document.getElementById('google-login-btn');
+  const magicLinkBtn = document.getElementById('magic-link-btn');
+  const recoveryBtn = document.getElementById('recovery-btn');
 
-        try {
-            const result = await apiCallWithRetry('/magic-link', 'POST', { email });
-            showMessage(result.message, 'success');
-        } catch (error) {
-            showMessage(error.message);
-        } finally {
-            setLoading('magic-link-btn', false);
+  // Login form submission
+  loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(loginForm);
+    const email = formData.get('email');
+    const password = formData.get('password');
+    const keepLogged = formData.get('keepLogged') === 'on';
+
+    // Validation
+    if (!validateEmail(email)) {
+      showMessage('Please enter a valid email address');
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      showMessage('Password must be at least 6 characters long');
+      return;
+    }
+
+    setLoading('login-btn', true);
+
+    try {
+      const result = await apiCallWithRetry('/login', 'POST', {
+        email,
+        password,
+        keepLogged
+      });
+
+      // Save authentication data
+      saveAuthData(result.data);
+
+      showMessage(result.message, 'success');
+
+      // Redirect based on user role
+      setTimeout(() => {
+        if (result.data.user.is_admin) {
+          window.location.href = '/admin.html';
+        } else {
+          window.location.href = '/dashboard.html';
         }
-    });
-    
-    // Recovery email
-    recoveryBtn?.addEventListener('click', async () => {
-        const email = document.getElementById('email').value;
-        
-        if (!validateEmail(email)) {
-            showMessage('Please enter a valid email address first');
-            return;
-        }
-        
-        try {
-            const result = await apiCallWithRetry('/reset-password', 'POST', { email });
-            showMessage(result.message, 'success');
-            
-            // Hide recovery section
-            const recoverySection = document.getElementById('recovery-section');
-            if (recoverySection) {
-                recoverySection.classList.add('hidden');
-            }
-        } catch (error) {
-            showMessage(error.message);
-        }
-    });
+      }, 1000);
+    } catch (error) {
+      showMessage(error.message);
+
+      // Show recovery section on login error
+      const recoverySection = document.getElementById('recovery-section');
+      if (recoverySection) {
+        recoverySection.classList.remove('hidden');
+      }
+    } finally {
+      setLoading('login-btn', false);
+    }
+  });
+
+  // Google login
+  googleBtn?.addEventListener('click', async () => {
+    try {
+      setLoading('google-login-btn', true);
+
+      // Redirect to Google OAuth
+      window.location.href = '/api/auth/google';
+    } catch (error) {
+      showMessage('Google authentication failed');
+      setLoading('google-login-btn', false);
+    }
+  });
+
+  // Magic link
+  magicLinkBtn?.addEventListener('click', async () => {
+    const email = document.getElementById('email').value;
+
+    if (!validateEmail(email)) {
+      showMessage('Please enter a valid email address first');
+      return;
+    }
+
+    setLoading('magic-link-btn', true);
+
+    try {
+      const result = await apiCallWithRetry('/magic-link', 'POST', { email });
+      showMessage(result.message, 'success');
+    } catch (error) {
+      showMessage(error.message);
+    } finally {
+      setLoading('magic-link-btn', false);
+    }
+  });
+
+  // Recovery email
+  recoveryBtn?.addEventListener('click', async () => {
+    const email = document.getElementById('email').value;
+
+    if (!validateEmail(email)) {
+      showMessage('Please enter a valid email address first');
+      return;
+    }
+
+    try {
+      const result = await apiCallWithRetry('/reset-password', 'POST', { email });
+      showMessage(result.message, 'success');
+
+      // Hide recovery section
+      const recoverySection = document.getElementById('recovery-section');
+      if (recoverySection) {
+        recoverySection.classList.add('hidden');
+      }
+    } catch (error) {
+      showMessage(error.message);
+    }
+  });
 }
 
 // Register page functions
 function initRegisterPage() {
-    checkAuthRedirect();
-    
-    const registerForm = document.getElementById('register-form');
-    const googleBtn = document.getElementById('google-register-btn');
-    
-    // Register form submission
-    registerForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData(registerForm);
-        const email = formData.get('email');
-        const password = formData.get('password');
-        const confirmPassword = formData.get('confirmPassword');
-        
-        // Validation
-        if (!validateEmail(email)) {
-            showMessage('Please enter a valid email address');
-            return;
-        }
-        
-        if (!validatePassword(password)) {
-            showMessage('Password must be at least 6 characters long');
-            return;
-        }
-        
-        if (password !== confirmPassword) {
-            showMessage('Passwords do not match');
-            return;
-        }
-        
-        setLoading('register-btn', true);
+  checkAuthRedirect();
 
-        try {
-            const result = await apiCallWithRetry('/register', 'POST', {
-                email,
-                password
-            });
-            
-            showMessage(result.message, 'success');
-            
-            // Store email for verification page
-            localStorage.setItem('pendingVerificationEmail', email);
-            
-            // Redirect to verification page
-            setTimeout(() => {
-                window.location.href = `/email-verification.html?email=${encodeURIComponent(email)}`;
-            }, 2000);
-            
-        } catch (error) {
-            showMessage(error.message);
-        } finally {
-            setLoading('register-btn', false);
-        }
-    });
-    
-    // Google registration
-    googleBtn?.addEventListener('click', async () => {
-        try {
-            // Redirect to Google OAuth (same as login)
-            window.location.href = '/api/auth/google';
-            
-        } catch (error) {
-            showMessage('Google authentication failed');
-        }
-    });
+  const registerForm = document.getElementById('register-form');
+  const googleBtn = document.getElementById('google-register-btn');
+
+  // Register form submission
+  registerForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(registerForm);
+    const email = formData.get('email');
+    const password = formData.get('password');
+    const confirmPassword = formData.get('confirmPassword');
+
+    // Validation
+    if (!validateEmail(email)) {
+      showMessage('Please enter a valid email address');
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      showMessage('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showMessage('Passwords do not match');
+      return;
+    }
+
+    setLoading('register-btn', true);
+
+    try {
+      const result = await apiCallWithRetry('/register', 'POST', {
+        email,
+        password
+      });
+
+      showMessage(result.message, 'success');
+
+      // Store email for verification page
+      localStorage.setItem('pendingVerificationEmail', email);
+
+      // Redirect to verification page
+      setTimeout(() => {
+        window.location.href = `/email-verification.html?email=${encodeURIComponent(email)}`;
+      }, 2000);
+    } catch (error) {
+      showMessage(error.message);
+    } finally {
+      setLoading('register-btn', false);
+    }
+  });
+
+  // Google registration
+  googleBtn?.addEventListener('click', async () => {
+    try {
+      // Redirect to Google OAuth (same as login)
+      window.location.href = '/api/auth/google';
+    } catch (error) {
+      showMessage('Google authentication failed');
+    }
+  });
 }
 
 // Password reset page functions
 function initPasswordResetPage() {
-    const resetForm = document.getElementById('reset-form');
-    
-    // Get access token from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const accessToken = urlParams.get('access_token');
-    
-    if (!accessToken) {
-        showMessage('Invalid or missing reset token', 'error');
-        setTimeout(() => {
-            window.location.href = '/login.html';
-        }, 3000);
-        return;
-    }
-    
-    resetForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData(resetForm);
-        const password = formData.get('password');
-        const confirmPassword = formData.get('confirmPassword');
-        
-        // Validation
-        if (!validatePassword(password)) {
-            showMessage('Password must be at least 6 characters long');
-            return;
-        }
-        
-        if (password !== confirmPassword) {
-            showMessage('Passwords do not match');
-            return;
-        }
-        
-        setLoading('reset-btn', true);
+  const resetForm = document.getElementById('reset-form');
 
-        try {
-            const result = await apiCallWithRetry('/update-password', 'POST', {
-                access_token: accessToken,
-                password
-            });
-            
-            showMessage(result.message, 'success');
-            
-            // Redirect to login
-            setTimeout(() => {
-                window.location.href = '/login.html?message=Password updated successfully. You can now log in.&type=success';
-            }, 2000);
-            
-        } catch (error) {
-            showMessage(error.message);
-        } finally {
-            setLoading('reset-btn', false);
-        }
-    });
+  // Get access token from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const accessToken = urlParams.get('access_token');
+
+  if (!accessToken) {
+    showMessage('Invalid or missing reset token', 'error');
+    setTimeout(() => {
+      window.location.href = '/login.html';
+    }, 3000);
+    return;
+  }
+
+  resetForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(resetForm);
+    const password = formData.get('password');
+    const confirmPassword = formData.get('confirmPassword');
+
+    // Validation
+    if (!validatePassword(password)) {
+      showMessage('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showMessage('Passwords do not match');
+      return;
+    }
+
+    setLoading('reset-btn', true);
+
+    try {
+      const result = await apiCallWithRetry('/update-password', 'POST', {
+        access_token: accessToken,
+        password
+      });
+
+      showMessage(result.message, 'success');
+
+      // Redirect to login
+      setTimeout(() => {
+        window.location.href =
+          '/login.html?message=Password updated successfully. You can now log in.&type=success';
+      }, 2000);
+    } catch (error) {
+      showMessage(error.message);
+    } finally {
+      setLoading('reset-btn', false);
+    }
+  });
 }
 
 // Logout function
 async function logout() {
-    const token = localStorage.getItem('auth_token');
-    
-    if (token) {
-        try {
-            await fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-        } catch (error) {
-            console.error('Logout API call failed:', error);
+  const token = localStorage.getItem('auth_token');
+
+  if (token) {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
+      });
+    } catch (error) {
+      console.error('Logout API call failed:', error);
     }
-    
-    clearAuthData();
-    window.location.href = '/login.html';
+  }
+
+  clearAuthData();
+  window.location.href = '/login.html';
 }
 
 // Auto-refresh token before expiry
 function setupTokenRefresh() {
-    const refreshToken = localStorage.getItem('refresh_token');
-    const expiresAt = localStorage.getItem('token_expires_at');
+  const refreshToken = localStorage.getItem('refresh_token');
+  const expiresAt = localStorage.getItem('token_expires_at');
 
-    if (!refreshToken || !expiresAt) return;
+  if (!refreshToken || !expiresAt) return;
 
-    // Review #3366641810: Harden timer scheduling for edge cases
-    const now = Math.floor(Date.now() / 1000);
-    const expiry = Number(expiresAt);
-    if (!Number.isFinite(expiry)) return; // Guard against NaN/Infinity
+  // Review #3366641810: Harden timer scheduling for edge cases
+  const now = Math.floor(Date.now() / 1000);
+  const expiry = Number(expiresAt);
+  if (!Number.isFinite(expiry)) return; // Guard against NaN/Infinity
 
-    const refreshTime = expiry - 300; // Refresh 5 minutes before expiry
+  const refreshTime = expiry - 300; // Refresh 5 minutes before expiry
 
-    if (now < refreshTime) {
-        setTimeout(() => {
-            refreshAuthToken();
-        }, Math.max(0, (refreshTime - now) * 1000)); // Guard negative delays
-    }
+  if (now < refreshTime) {
+    setTimeout(
+      () => {
+        refreshAuthToken();
+      },
+      Math.max(0, (refreshTime - now) * 1000)
+    ); // Guard negative delays
+  }
 }
 
 // Review #3366641810: Coalesce concurrent refresh requests to prevent race conditions
@@ -567,56 +580,55 @@ let __refreshInFlight = null;
 // Refresh authentication token
 // Returns true on success, false on failure
 async function refreshAuthToken() {
-    // Review #3366641810: If refresh already in progress, await it instead of creating duplicate request
-    if (__refreshInFlight) {
-        debug('Refresh already in flight, awaiting existing request');
-        return await __refreshInFlight;
-    }
-
-    const refreshToken = localStorage.getItem('refresh_token');
-
-    if (!refreshToken) {
-        debug('No refresh token available');
-        return false;
-    }
-
-    // Review #3366641810: Create in-flight promise to coalesce concurrent calls
-    __refreshInFlight = (async () => {
-        try {
-            const response = await fetch('/api/auth/refresh', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ refresh_token: refreshToken })
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                saveAuthData(result.data);
-                setupTokenRefresh(); // Setup next refresh
-                debug('Token refresh successful');
-                return true;
-            } else {
-                debugErr('Token refresh failed with status:', response.status);
-                return false;
-            }
-
-        } catch (error) {
-            debugErr('Token refresh error:', error);
-            return false;
-        } finally {
-            // Review #3366641810: Clear in-flight promise after completion
-            __refreshInFlight = null;
-        }
-    })();
-
+  // Review #3366641810: If refresh already in progress, await it instead of creating duplicate request
+  if (__refreshInFlight) {
+    debug('Refresh already in flight, awaiting existing request');
     return await __refreshInFlight;
+  }
+
+  const refreshToken = localStorage.getItem('refresh_token');
+
+  if (!refreshToken) {
+    debug('No refresh token available');
+    return false;
+  }
+
+  // Review #3366641810: Create in-flight promise to coalesce concurrent calls
+  __refreshInFlight = (async () => {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        saveAuthData(result.data);
+        setupTokenRefresh(); // Setup next refresh
+        debug('Token refresh successful');
+        return true;
+      } else {
+        debugErr('Token refresh failed with status:', response.status);
+        return false;
+      }
+    } catch (error) {
+      debugErr('Token refresh error:', error);
+      return false;
+    } finally {
+      // Review #3366641810: Clear in-flight promise after completion
+      __refreshInFlight = null;
+    }
+  })();
+
+  return await __refreshInFlight;
 }
 
 // Initialize token refresh on page load
 if (isAuthenticated()) {
-    setupTokenRefresh();
+  setupTokenRefresh();
 }
 
 // Export functions for global use

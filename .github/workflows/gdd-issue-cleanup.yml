@@ -10,13 +10,13 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     permissions:
-      contents: read        # For actions/checkout
-      issues: write         # For closing issues
-      pull-requests: read   # For checking PR status
+      contents: read # For actions/checkout
+      issues: write # For closing issues
+      pull-requests: read # For checking PR status
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Close stale GDD issues
         uses: actions/github-script@v8

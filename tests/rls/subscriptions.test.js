@@ -1,6 +1,6 @@
 /**
  * Subscriptions (Polar) RLS Tests
- * 
+ *
  * Validates that Row Level Security policies correctly enforce
  * subscription access and plan changes.
  */
@@ -18,7 +18,7 @@ beforeAll(async () => {
   const result = await getConnections(config, [
     createMigrationsSeed() // Load all migrations automatically
   ]);
-  
+
   db = result.db;
   pg = result.pg;
   teardown = result.teardown;
@@ -59,7 +59,8 @@ describe('Subscriptions RLS', () => {
     userBId = userBResult.rows[0].id;
 
     // Create active subscription for User A
-    const subAResult = await pg.query(`
+    const subAResult = await pg.query(
+      `
       INSERT INTO polar_subscriptions (
         id, user_id, polar_subscription_id, plan, status,
         current_period_start, current_period_end
@@ -69,11 +70,14 @@ describe('Subscriptions RLS', () => {
         NOW(), NOW() + INTERVAL '1 month'
       )
       RETURNING id;
-    `, [userAId]);
+    `,
+      [userAId]
+    );
     subscriptionAId = subAResult.rows[0].id;
 
     // Create canceled subscription for User B
-    const subBResult = await pg.query(`
+    const subBResult = await pg.query(
+      `
       INSERT INTO polar_subscriptions (
         id, user_id, polar_subscription_id, plan, status,
         current_period_start, current_period_end, canceled_at
@@ -83,7 +87,9 @@ describe('Subscriptions RLS', () => {
         NOW() - INTERVAL '1 month', NOW(), NOW()
       )
       RETURNING id;
-    `, [userBId]);
+    `,
+      [userBId]
+    );
     subscriptionBId = subBResult.rows[0].id;
   });
 
@@ -95,20 +101,26 @@ describe('Subscriptions RLS', () => {
     });
 
     // User B should see their canceled subscription
-    const sub = await db.query(`
+    const sub = await db.query(
+      `
       SELECT status FROM polar_subscriptions WHERE user_id = $1;
-    `, [userBId]);
+    `,
+      [userBId]
+    );
 
     expect(sub.rows.length).toBe(1);
     expect(sub.rows[0].status).toBe('canceled');
 
     // User B should NOT be able to update to active status
     await expect(
-      db.query(`
+      db.query(
+        `
         UPDATE polar_subscriptions
         SET status = 'active', plan = 'pro'
         WHERE user_id = $1;
-      `, [userBId])
+      `,
+        [userBId]
+      )
     ).rejects.toThrow();
   });
 
@@ -120,16 +132,22 @@ describe('Subscriptions RLS', () => {
     });
 
     // Update plan via service role (simulating webhook)
-    await pg.query(`
+    await pg.query(
+      `
       UPDATE polar_subscriptions
       SET plan = 'plus', updated_at = NOW()
       WHERE user_id = $1;
-    `, [userAId]);
+    `,
+      [userAId]
+    );
 
     // Verify plan change is reflected
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT plan FROM polar_subscriptions WHERE user_id = $1;
-    `, [userAId]);
+    `,
+      [userAId]
+    );
 
     expect(result.rows[0].plan).toBe('plus');
   });
@@ -161,4 +179,3 @@ describe('Subscriptions RLS', () => {
     expect(webhook.rows[0].processed).toBe(false);
   });
 });
-

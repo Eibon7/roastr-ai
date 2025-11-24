@@ -1,14 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import {
-  LayoutGrid,
-  Settings,
-  ShoppingBag,
-  Menu,
-  X,
-  Flame,
-  BarChart3
-} from 'lucide-react';
+import { LayoutGrid, Settings, ShoppingBag, Menu, X, Flame, BarChart3 } from 'lucide-react';
 import useFeatureFlags from '../hooks/useFeatureFlags';
 import { useSidebar } from '../contexts/SidebarContext';
 
@@ -50,14 +42,14 @@ export default function Sidebar() {
   // Build navigation items based on feature flags
   const navItems = [
     ...baseNavItems,
-    ...conditionalNavItems.filter(item => {
+    ...conditionalNavItems.filter((item) => {
       if (!item.requiresFlag) return true;
-      
+
       // Support both single flag name and array of flag names
       if (Array.isArray(item.requiresFlag)) {
-        return item.requiresFlag.some(flag => isEnabled(flag));
+        return item.requiresFlag.some((flag) => isEnabled(flag));
       }
-      
+
       return isEnabled(item.requiresFlag);
     })
   ];
@@ -74,7 +66,11 @@ export default function Sidebar() {
           className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg border border-gray-200 shadow-lg lg:hidden"
           aria-label="Toggle sidebar"
         >
-          {isOpen ? <X className="h-5 w-5 text-gray-600" /> : <Menu className="h-5 w-5 text-gray-600" />}
+          {isOpen ? (
+            <X className="h-5 w-5 text-gray-600" />
+          ) : (
+            <Menu className="h-5 w-5 text-gray-600" />
+          )}
         </button>
       )}
 

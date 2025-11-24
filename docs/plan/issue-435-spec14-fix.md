@@ -9,17 +9,20 @@ PR #435 (dependabot dotenv update) was failing on the `SPEC 14 - QA Test Suite I
 The SPEC 14 validation job was using strict validation logic that required both `CORE_RESULT` and `SCENARIOS_RESULT` to be exactly `"success"`. However, for dependency-only PRs (like dependabot updates), the workflow correctly skips core tests since they don't affect SPEC 14 functionality, resulting in `CORE_RESULT="skipped"`.
 
 ### Original Logic (❌ Broken)
+
 ```bash
 if [[ "$CORE_RESULT" == "success" && "$SCENARIOS_RESULT" == "success" ]]; then
 ```
 
 This logic failed when:
+
 - `CORE_RESULT="skipped"` (dependency-only changes)
 - `SCENARIOS_RESULT="success"` (scenario validation passed)
 
 ## Solution Implemented
 
 ### Updated Logic (✅ Fixed)
+
 ```bash
 if [[ ("$CORE_RESULT" == "success" || "$CORE_RESULT" == "skipped") && ("$SCENARIOS_RESULT" == "success" || "$SCENARIOS_RESULT" == "skipped") ]]; then
 ```
@@ -33,6 +36,7 @@ if [[ ("$CORE_RESULT" == "success" || "$CORE_RESULT" == "skipped") && ("$SCENARI
 ### Enhanced Messaging
 
 - **For skipped tests**:
+
   ```
   ⚠️ Core tests skipped (dependency-only changes detected)
   ✅ Scenario verification completed successfully
@@ -53,20 +57,23 @@ if [[ ("$CORE_RESULT" == "success" || "$CORE_RESULT" == "skipped") && ("$SCENARI
 The fix was tested locally with all scenarios:
 
 ### ✅ Test Case 1: Skipped + Success (Dependency PRs)
+
 ```bash
 CORE_RESULT="skipped" SCENARIOS_RESULT="success"
 Result: ✅ PASS - Accepts legitimate skipped tests
 ```
 
-### ✅ Test Case 2: Success + Success (Normal PRs)  
+### ✅ Test Case 2: Success + Success (Normal PRs)
+
 ```bash
 CORE_RESULT="success" SCENARIOS_RESULT="success"
 Result: ✅ PASS - Accepts successful tests
 ```
 
 ### ✅ Test Case 3: Failure + Success (Actual Failures)
+
 ```bash
-CORE_RESULT="failure" SCENARIOS_RESULT="success"  
+CORE_RESULT="failure" SCENARIOS_RESULT="success"
 Result: ✅ PASS - Correctly rejects failures
 ```
 
@@ -83,7 +90,7 @@ Result: ✅ PASS - Correctly rejects failures
 ## Impact
 
 - ✅ Fixes PR #435 (dotenv dependency update)
-- ✅ Fixes PR #432 (discord.js dependency update) 
+- ✅ Fixes PR #432 (discord.js dependency update)
 - ✅ Prevents future failures for all dependabot PRs
 - ✅ Maintains strict validation for actual code changes
 - ✅ Provides clear messaging for different scenarios

@@ -2,30 +2,30 @@
 name: api-integration-debugging-skill
 description: Use when debugging social media API integrations - captures request/response cycles, identifies rate limit vs auth vs data errors, applies platform-specific quirks from integration patterns
 triggers:
-  - "API error"
-  - "rate limit"
-  - "authentication failed"
-  - "invalid token"
-  - "unexpected response"
-  - "integration test"
-  - "429"
-  - "401"
-  - "403"
+  - 'API error'
+  - 'rate limit'
+  - 'authentication failed'
+  - 'invalid token'
+  - 'unexpected response'
+  - 'integration test'
+  - '429'
+  - '401'
+  - '403'
 used_by:
   - test-engineer
   - back-end-dev
   - integration-specialist
   - orchestrator
 steps:
-  - paso1: "Identify platform (Twitter/YouTube/Instagram/Facebook/Discord/Twitch/Reddit/TikTok/Bluesky) and expected API endpoint"
-  - paso2: "Check auth state: token valid? OAuth flow complete? Credentials in env?"
-  - paso3: "Capture full request: headers, body, query params, method"
-  - paso4: "Capture full response: status code, headers, body, rate limit info"
-  - paso5: "Classify error type: AUTH (401/403) | RATE_LIMIT (429) | DATA (4xx) | SERVER (5xx)"
-  - paso6: "Apply platform-specific quirks from docs/INTEGRATIONS.md and docs/patterns/api-quirks.md"
-  - paso7: "Implement defensive retry logic with exponential backoff"
-  - paso8: "Add integration test for this specific edge case"
-  - paso9: "Document new pattern in docs/patterns/api-quirks.md if ≥2 occurrences"
+  - paso1: 'Identify platform (Twitter/YouTube/Instagram/Facebook/Discord/Twitch/Reddit/TikTok/Bluesky) and expected API endpoint'
+  - paso2: 'Check auth state: token valid? OAuth flow complete? Credentials in env?'
+  - paso3: 'Capture full request: headers, body, query params, method'
+  - paso4: 'Capture full response: status code, headers, body, rate limit info'
+  - paso5: 'Classify error type: AUTH (401/403) | RATE_LIMIT (429) | DATA (4xx) | SERVER (5xx)'
+  - paso6: 'Apply platform-specific quirks from docs/INTEGRATIONS.md and docs/patterns/api-quirks.md'
+  - paso7: 'Implement defensive retry logic with exponential backoff'
+  - paso8: 'Add integration test for this specific edge case'
+  - paso9: 'Document new pattern in docs/patterns/api-quirks.md if ≥2 occurrences'
 output: |
   - Error classified with platform context
   - Defensive code added (retry logic, better error messages)
@@ -42,6 +42,7 @@ Systematic debugging for social media API integrations (10+ platforms). Reduces 
 ## When to Use
 
 **Triggers:**
+
 - Any API error from social platforms
 - Rate limit errors (429)
 - Authentication failures (401, 403)
@@ -56,6 +57,7 @@ Systematic debugging for social media API integrations (10+ platforms). Reduces 
 ### Step 1: Identify Platform & Endpoint
 
 **Identify:**
+
 ```javascript
 // Example error location
 src/integrations/twitter/twitterService.js:145
@@ -65,6 +67,7 @@ src/integrations/twitter/twitterService.js:145
 ```
 
 **Check integration docs:**
+
 ```bash
 Read: docs/INTEGRATIONS.md
 # Find platform section for rate limits, auth requirements
@@ -73,6 +76,7 @@ Read: docs/INTEGRATIONS.md
 ### Step 2: Check Auth State
 
 **Validation checklist:**
+
 - [ ] Token present in environment variables?
 - [ ] Token not expired? (check expiry timestamp)
 - [ ] OAuth flow completed successfully?
@@ -80,6 +84,7 @@ Read: docs/INTEGRATIONS.md
 - [ ] Token format correct for platform?
 
 **Commands:**
+
 ```bash
 # Check env vars (DO NOT log actual values)
 echo "TWITTER_BEARER_TOKEN present: $([ -n "$TWITTER_BEARER_TOKEN" ] && echo 'YES' || echo 'NO')"
@@ -92,6 +97,7 @@ node scripts/check-token-expiry.js --platform=twitter --org-id=123
 ### Step 3: Capture Full Request
 
 **Add diagnostic logging:**
+
 ```javascript
 // BEFORE the API call
 logger.debug('API Request', {
@@ -99,7 +105,7 @@ logger.debug('API Request', {
   endpoint: '/2/users/:id/mentions',
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer [REDACTED]',  // NEVER log full token
+    Authorization: 'Bearer [REDACTED]', // NEVER log full token
     'Content-Type': req.headers['content-type']
   },
   params: req.params,
@@ -109,6 +115,7 @@ logger.debug('API Request', {
 ```
 
 **⚠️ Security:**
+
 - NEVER log full API keys/tokens
 - Log only token prefix: `Bearer sk-...abc123` → `Bearer sk-...REDACTED`
 - Redact sensitive fields: email, password, phone
@@ -116,6 +123,7 @@ logger.debug('API Request', {
 ### Step 4: Capture Full Response
 
 **Add response logging:**
+
 ```javascript
 try {
   const response = await apiCall();
@@ -130,7 +138,7 @@ try {
       'x-rate-limit-limit': response.headers['x-rate-limit-limit']
     },
     bodySize: JSON.stringify(response.data).length,
-    bodyPreview: JSON.stringify(response.data).substring(0, 200),  // First 200 chars
+    bodyPreview: JSON.stringify(response.data).substring(0, 200), // First 200 chars
     timestamp: new Date().toISOString()
   });
 
@@ -154,18 +162,19 @@ try {
 
 **Classification matrix:**
 
-| Status Code | Type | Typical Cause | Action |
-|-------------|------|---------------|--------|
-| **401** | AUTH | Invalid/expired token | Refresh token, check credentials |
-| **403** | AUTH | Insufficient permissions | Check OAuth scopes, request access |
-| **429** | RATE_LIMIT | Too many requests | Implement backoff, check quota |
-| **400** | DATA | Invalid request format | Validate input, check API docs |
-| **404** | DATA | Resource not found | Check resource ID, handle gracefully |
-| **422** | DATA | Validation error | Fix request payload |
-| **500** | SERVER | Platform issue | Retry with backoff |
-| **502/503/504** | SERVER | Platform down/slow | Retry with backoff, alert if persistent |
+| Status Code     | Type       | Typical Cause            | Action                                  |
+| --------------- | ---------- | ------------------------ | --------------------------------------- |
+| **401**         | AUTH       | Invalid/expired token    | Refresh token, check credentials        |
+| **403**         | AUTH       | Insufficient permissions | Check OAuth scopes, request access      |
+| **429**         | RATE_LIMIT | Too many requests        | Implement backoff, check quota          |
+| **400**         | DATA       | Invalid request format   | Validate input, check API docs          |
+| **404**         | DATA       | Resource not found       | Check resource ID, handle gracefully    |
+| **422**         | DATA       | Validation error         | Fix request payload                     |
+| **500**         | SERVER     | Platform issue           | Retry with backoff                      |
+| **502/503/504** | SERVER     | Platform down/slow       | Retry with backoff, alert if persistent |
 
 **Classification function:**
+
 ```javascript
 function classifyAPIError(error) {
   const status = error.response?.status;
@@ -199,6 +208,7 @@ function classifyAPIError(error) {
 ### Step 6: Apply Platform-Specific Quirks
 
 **Read quirks documentation:**
+
 ```bash
 Read: docs/INTEGRATIONS.md  # Platform-specific details
 Read: docs/patterns/api-quirks.md  # Known edge cases
@@ -207,43 +217,51 @@ Read: docs/patterns/api-quirks.md  # Known edge cases
 **Common quirks by platform:**
 
 #### Twitter / X
+
 - Rate limits: Per user vs app-level (check `x-rate-limit-reset`)
 - Character limit: 280 chars (enforce before sending)
 - Media uploads: Separate endpoint, chunked for >5MB
 - Error format: `data.errors[0].message` (NOT top-level)
 
 #### YouTube
+
 - Quota units: NOT requests (CommentThreads.list = 1 unit, Videos.list = 1 unit)
 - Daily limit: 10,000 units default (monitor with `quotaUser` param)
 - OAuth scopes: `youtube.force-ssl` required for comments
 
 #### Instagram
+
 - Long-lived tokens: Expire every 60 days (auto-refresh at 30 days)
 - Graph API: Needs Business Account (NOT personal)
 - Comments: May be empty if user privacy settings hide them
 - Webhooks: Must verify callback URL
 
 #### Facebook
+
 - Graph API versions: Change quarterly (pin version in URL)
 - Permissions: `pages_read_engagement` + `pages_manage_posts` required
 - Rate limit: No explicit header, uses scoring system
 
 #### Discord
+
 - WebSocket: Required for real-time events (NOT REST only)
 - Reconnect logic: Implement resume with sequence number
 - Rate limit: Per-route buckets (different endpoints = different limits)
 
 #### Twitch
+
 - Chat vs API: Separate rate limits (IRC for chat, REST for API)
 - OAuth refresh: Tokens expire every 60 days
 - Webhooks: EventSub requires HTTPS endpoint
 
 #### Reddit
+
 - User-Agent: REQUIRED or instant 429 (format: `platform:appname:version (by /u/username)`)
 - OAuth: Requires `Authorization: bearer` + User-Agent
 - Rate limit: 60 requests/minute per OAuth client
 
 **Apply quirk example:**
+
 ```javascript
 // Reddit-specific: User-Agent is MANDATORY
 async function redditAPICall(endpoint, options = {}) {
@@ -259,12 +277,13 @@ async function redditAPICall(endpoint, options = {}) {
 ### Step 7: Implement Defensive Retry Logic
 
 **Exponential backoff template:**
+
 ```javascript
 async function apiCallWithRetry(fn, options = {}) {
   const {
     maxRetries = 3,
-    initialDelay = 1000,  // 1 second
-    maxDelay = 30000,     // 30 seconds
+    initialDelay = 1000, // 1 second
+    maxDelay = 30000, // 30 seconds
     backoffFactor = 2,
     retryableStatuses = [429, 500, 502, 503, 504]
   } = options;
@@ -295,7 +314,7 @@ async function apiCallWithRetry(fn, options = {}) {
       if (status === 429) {
         const resetTime = error.response.headers['x-rate-limit-reset'];
         if (resetTime) {
-          delay = Math.max(delay, (resetTime * 1000) - Date.now());
+          delay = Math.max(delay, resetTime * 1000 - Date.now());
         }
       }
 
@@ -321,18 +340,20 @@ const mentions = await apiCallWithRetry(() => twitterService.fetchMentions(userI
 ```
 
 **Platform-specific backoff:**
+
 ```javascript
 // Twitter: Respect X-Rate-Limit-Reset header
 if (error.response.headers['x-rate-limit-reset']) {
   const resetTimestamp = parseInt(error.response.headers['x-rate-limit-reset']);
-  const waitTime = (resetTimestamp * 1000) - Date.now();
+  const waitTime = resetTimestamp * 1000 - Date.now();
   logger.warn(`Twitter rate limit hit, waiting ${waitTime}ms until reset`);
   await sleep(waitTime);
 }
 
 // YouTube: Monitor quota usage, stop if exceeded
 const quotaUsed = parseInt(error.response.headers['x-goog-api-client']);
-if (quotaUsed > 9500) {  // Near daily limit
+if (quotaUsed > 9500) {
+  // Near daily limit
   logger.error('YouTube quota nearly exhausted, stopping requests');
   throw new Error('QUOTA_EXCEEDED: Stop to preserve quota');
 }
@@ -341,6 +362,7 @@ if (quotaUsed > 9500) {  // Near daily limit
 ### Step 8: Add Integration Test
 
 **Test template:**
+
 ```javascript
 // tests/integration/api-errors.test.js
 describe('API Error Handling - Twitter', () => {
@@ -350,9 +372,13 @@ describe('API Error Handling - Twitter', () => {
     nock('https://api.twitter.com')
       .get('/2/users/123/mentions')
       .times(2)
-      .reply(429, { errors: [{ message: 'Rate limit exceeded' }] }, {
-        'x-rate-limit-reset': Math.floor(Date.now() / 1000) + 60
-      })
+      .reply(
+        429,
+        { errors: [{ message: 'Rate limit exceeded' }] },
+        {
+          'x-rate-limit-reset': Math.floor(Date.now() / 1000) + 60
+        }
+      )
       .get('/2/users/123/mentions')
       .reply(200, { data: [{ id: '1', text: 'Test mention' }] });
 
@@ -372,17 +398,16 @@ describe('API Error Handling - Twitter', () => {
       .get('/2/users/123/mentions')
       .reply(401, { errors: [{ message: 'Invalid authentication credentials' }] });
 
-    await expect(twitterService.fetchMentions('123'))
-      .rejects.toThrow('Invalid authentication credentials');
+    await expect(twitterService.fetchMentions('123')).rejects.toThrow(
+      'Invalid authentication credentials'
+    );
 
     // Verify only 1 attempt (no retries)
     expect(nock.isDone()).toBe(true);
   });
 
   it('should handle empty response gracefully', async () => {
-    nock('https://api.twitter.com')
-      .get('/2/users/123/mentions')
-      .reply(200, { data: [] });  // No mentions
+    nock('https://api.twitter.com').get('/2/users/123/mentions').reply(200, { data: [] }); // No mentions
 
     const result = await twitterService.fetchMentions('123');
 
@@ -395,12 +420,14 @@ describe('API Error Handling - Twitter', () => {
 ### Step 9: Document Pattern (If Recurring)
 
 **When to document:**
+
 - Same error ≥2 times across different issues
 - Platform-specific quirk not in docs
 - Non-obvious fix that took >30 minutes
 
 **Add to `docs/patterns/api-quirks.md`:**
-```markdown
+
+````markdown
 ### Reddit - User-Agent Required
 
 **Pattern:** Reddit API returns 429 even with valid credentials
@@ -408,11 +435,14 @@ describe('API Error Handling - Twitter', () => {
 **Root cause:** Missing User-Agent header (mandatory for Reddit)
 
 **Error:**
+
 ```json
 { "message": "Too Many Requests", "error": 429 }
 ```
+````
 
 **Fix:**
+
 ```javascript
 headers: {
   'User-Agent': 'platform:appname:version (by /u/username)'
@@ -422,7 +452,8 @@ headers: {
 **Occurrences:** Issue #680, Issue #712
 **Last seen:** 2025-11-02
 **Platform:** Reddit OAuth API
-```
+
+````
 
 ## Success Criteria
 
@@ -442,9 +473,10 @@ headers: {
 TwitterAPIError: Rate limit exceeded
   Status: 429
   Headers: { 'x-rate-limit-reset': '1698765432' }
-```
+````
 
 **Debugging:**
+
 1. **Identify:** Twitter API v2, fetchMentions endpoint
 2. **Auth:** Token valid ✅
 3. **Request:** GET /2/users/123/mentions
@@ -459,11 +491,13 @@ TwitterAPIError: Rate limit exceeded
 ### Example 2: Instagram Empty Data (Not Error)
 
 **Symptom:**
+
 ```javascript
-response.data.comments = undefined  // Expected array
+response.data.comments = undefined; // Expected array
 ```
 
 **Debugging:**
+
 1. **Identify:** Instagram Graph API, getComments endpoint
 2. **Auth:** Token valid ✅
 3. **Request:** GET /{post_id}/comments
@@ -474,6 +508,7 @@ response.data.comments = undefined  // Expected array
 8. **Test:** Mock empty response → verify graceful handling
 
 **Fix:**
+
 ```javascript
 const comments = response.data?.comments || [];
 if (comments.length === 0) {
@@ -485,6 +520,7 @@ return comments;
 ### Example 3: Reddit 429 Despite Valid Token
 
 **Error:**
+
 ```javascript
 RedditAPIError: Too Many Requests
   Status: 429
@@ -492,6 +528,7 @@ RedditAPIError: Too Many Requests
 ```
 
 **Debugging:**
+
 1. **Identify:** Reddit OAuth API
 2. **Auth:** Token valid ✅
 3. **Request:** Missing User-Agent header ⚠️
@@ -505,6 +542,7 @@ RedditAPIError: Too Many Requests
 ## Error Handling Patterns
 
 ### Pattern 1: Graceful Degradation
+
 ```javascript
 try {
   const data = await apiCall();
@@ -516,6 +554,7 @@ try {
 ```
 
 ### Pattern 2: Circuit Breaker
+
 ```javascript
 if (consecutiveFailures >= 5) {
   logger.error('Circuit breaker opened - too many failures');
@@ -524,6 +563,7 @@ if (consecutiveFailures >= 5) {
 ```
 
 ### Pattern 3: Fallback to Alternative API
+
 ```javascript
 try {
   return await perspectiveAPI.analyzeToxicity(text);

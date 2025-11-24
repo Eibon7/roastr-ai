@@ -11,12 +11,14 @@
 ## 🎯 Invocation Context
 
 **Trigger Conditions Met:**
+
 - ✅ Changes in `scripts/` (validation scripts)
 - ✅ New test scenarios created
 - ✅ Test evidence documentation added
 - ✅ Quality standards require test coverage
 
 **Labels Present:**
+
 - `test:e2e` (Issues #488, #489)
 - `priority:P0` (Critical for MVP)
 
@@ -27,6 +29,7 @@
 ### 1. Validation Script Creation
 
 **Created: `scripts/validate-flow-multi-tenant.js`**
+
 - Multi-tenant RLS isolation validation
 - 4 comprehensive test scenarios
 - Organization creation and data seeding
@@ -36,6 +39,7 @@
 - 420 lines of robust test code
 
 **Enhanced: `scripts/validate-flow-billing.js`**
+
 - Updated plan references (free → starter_trial)
 - 3 test scenarios for plan limits
 - Atomic usage counter verification
@@ -45,6 +49,7 @@
 ### 2. Test Evidence Documentation
 
 **Created:**
+
 - `docs/test-evidence/flow-multi-tenant/VALIDATION.md`
   - Complete test scenarios
   - Success criteria
@@ -61,6 +66,7 @@
 ### 3. Test Coverage Analysis
 
 **Multi-Tenant Script Coverage:**
+
 - ✅ Org A → Org B access prevention (0% data leakage)
 - ✅ Org B → Org A access prevention
 - ✅ Service role bypass for admin operations
@@ -68,6 +74,7 @@
 - ✅ Performance checks (< 1s per test)
 
 **Billing Script Coverage:**
+
 - ✅ Starter Trial limit enforcement (10 roasts/month)
 - ✅ Pro plan limits (1000 roasts/month)
 - ✅ Plus plan limits (5000 roasts/month)
@@ -80,6 +87,7 @@
 ## 📊 Quality Guardrails
 
 ### Code Quality
+
 - ✅ Scripts follow existing validation script patterns
 - ✅ Robust error handling with try/catch/finally
 - ✅ Automatic cleanup prevents test data pollution
@@ -88,6 +96,7 @@
 - ✅ No console.logs for non-test code
 
 ### Test Design
+
 - ✅ Tests are idempotent (can run multiple times)
 - ✅ Tests clean up after themselves
 - ✅ Tests verify both positive and negative cases
@@ -95,6 +104,7 @@
 - ✅ Tests provide clear pass/fail output
 
 ### Documentation
+
 - ✅ Complete test evidence documentation
 - ✅ Clear execution instructions
 - ✅ Success criteria defined
@@ -108,16 +118,19 @@
 **Status:** Scripts ready but blocked by environment setup
 
 **Issue:** Supabase credentials not available
+
 - `SUPABASE_URL` required
 - `SUPABASE_SERVICE_KEY` required
 - `SUPABASE_ANON_KEY` required (for #488)
 
 **Impact:**
+
 - ✅ Scripts are complete and ready to execute
 - ✅ All test logic implemented
 - ⚠️ Cannot execute without credentials (expected - not in repo for security)
 
 **Mitigation:**
+
 - Scripts provide clear error messages if credentials missing
 - Documentation includes setup instructions
 - Manual execution required post-merge with credentials
@@ -127,35 +140,44 @@
 ## 📝 Decisions & Artifacts
 
 ### Decision 1: Combined Validation Scripts PR
+
 **Rationale:**
+
 - Issues #488 and #489 are both "Flow Validation" scripts
 - Share same blocker (Supabase credentials)
 - Share same output pattern (docs/test-evidence/)
 - Separating would create duplicate structure
 
 **Artifacts:**
+
 - Single PR with both scripts
 - Shared documentation pattern
 - Clear changelog separating concerns
 
 ### Decision 2: No CI Execution
+
 **Rationale:**
+
 - Real Supabase credentials required (not mockable for true RLS testing)
 - Service role key cannot be in repo (security)
 - Manual execution post-merge is safer pattern
 
 **Artifacts:**
+
 - Scripts have `chmod +x` for manual execution
 - Clear documentation of manual execution process
 - No CI workflow created (intentional)
 
 ### Decision 3: Starter Trial Plan Updates
+
 **Rationale:**
+
 - Free plan eliminated in migration #678
 - All references must use `starter_trial` (30-day trial)
 - Consistent with current pricing model
 
 **Artifacts:**
+
 - Updated all test scenarios in validate-flow-billing.js
 - Updated documentation to reflect new plan structure
 - Maintained backwards compatibility with `creator_plus` naming
@@ -180,10 +202,12 @@
 ## 🔗 Related Work
 
 **GDD Nodes Updated:**
+
 - `docs/nodes/billing.md` - Plan mappings updated
 - `docs/nodes/plan-features.md` - Plan tiers updated
 
 **Related Issues:**
+
 - #488 - Multi-Tenant RLS Isolation (addressed by multi-tenant script)
 - #489 - Billing Limits Enforcement (addressed by billing script)
 - #678 - Free → Starter Trial migration (documentation cleanup)
@@ -191,6 +215,7 @@
 - #484 - Multi-Tenant & Billing Test Suite (parent epic)
 
 **Related Scripts:**
+
 - `scripts/validate-flow-basic-roast.js` (similar pattern)
 - `scripts/validate-flow-*.js` (family of validation scripts)
 
@@ -199,17 +224,20 @@
 ## 📈 Impact Assessment
 
 ### Positive Impacts
+
 - ✅ Issues #488 and #489 can be validated once credentials configured
 - ✅ Comprehensive test coverage for critical MVP flows
 - ✅ Clear documentation for manual execution
 - ✅ Reusable pattern for future validation scripts
 
 ### Risks Mitigated
+
 - ✅ RLS isolation will be verifiable (prevents data breaches)
 - ✅ Billing limits will be verifiable (prevents revenue loss)
 - ✅ Plan migrations verified (prevents user confusion)
 
 ### Follow-up Required
+
 - ⚠️ Configure Supabase credentials in secure environment
 - ⚠️ Execute both scripts manually and capture results
 - ⚠️ Update test evidence docs with execution screenshots
@@ -225,6 +253,7 @@
 **Execution Blocked:** ⚠️ YES (expected - credentials required)
 
 **Next Steps:**
+
 1. Merge PR (scripts ready)
 2. Configure Supabase credentials
 3. Execute validation scripts manually

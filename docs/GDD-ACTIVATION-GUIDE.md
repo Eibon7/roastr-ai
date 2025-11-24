@@ -22,6 +22,7 @@ Activar Graph Driven Development (GDD) en el flujo de trabajo actual **sin modif
 ### ✅ Lo que SÍ haremos
 
 **El Orchestrator aprenderá a:**
+
 1. **Analizar labels y título** de issue → identificar nodos afectados
 2. **Resolver dependencias** automáticamente con `resolve-graph.js`
 3. **Cargar contexto minimal** (solo nodos relevantes)
@@ -31,6 +32,7 @@ Activar Graph Driven Development (GDD) en el flujo de trabajo actual **sin modif
 ### ❌ Lo que NO haremos
 
 **No modificaremos:**
+
 - ❌ Issues existentes (no añadir metadata de nodos)
 - ❌ Templates de issues (mantener formato actual)
 - ❌ Flujo de creación de issues (sin overhead)
@@ -44,41 +46,42 @@ Activar Graph Driven Development (GDD) en el flujo de trabajo actual **sin modif
 
 ### Issue Labels → Node Mapping
 
-| Label | Nodos Afectados | Comando Resolver |
-|-------|----------------|------------------|
-| `area:shield` | shield, multi-tenant | `node scripts/resolve-graph.js shield` |
-| `area:billing` | cost-control, plan-features, multi-tenant | `node scripts/resolve-graph.js cost-control` |
-| `area:platforms` | social-platforms, platform-constraints | `node scripts/resolve-graph.js social-platforms` |
-| `area:workers` | queue-system, multi-tenant | `node scripts/resolve-graph.js queue-system` |
-| `area:ui` | roast, persona, tone | `node scripts/resolve-graph.js roast` |
-| `area:demo` | roast, shield, queue-system | `node scripts/resolve-graph.js roast` |
-| `area:multitenant` | multi-tenant | `node scripts/resolve-graph.js multi-tenant` |
-| `area:publisher` | queue-system, social-platforms | `node scripts/resolve-graph.js queue-system` |
-| `area:observability` | ALL nodes | `cat docs/nodes/*.md` (full context) |
-| `area:reliability` | queue-system, shield, multi-tenant | `node scripts/resolve-graph.js queue-system` |
-| `test:integration` | depends on other labels | See below |
-| `test:e2e` | ALL nodes (end-to-end) | `cat docs/nodes/*.md` |
-| `test:unit` | specific node from title | Parse title for keywords |
+| Label                | Nodos Afectados                           | Comando Resolver                                 |
+| -------------------- | ----------------------------------------- | ------------------------------------------------ |
+| `area:shield`        | shield, multi-tenant                      | `node scripts/resolve-graph.js shield`           |
+| `area:billing`       | cost-control, plan-features, multi-tenant | `node scripts/resolve-graph.js cost-control`     |
+| `area:platforms`     | social-platforms, platform-constraints    | `node scripts/resolve-graph.js social-platforms` |
+| `area:workers`       | queue-system, multi-tenant                | `node scripts/resolve-graph.js queue-system`     |
+| `area:ui`            | roast, persona, tone                      | `node scripts/resolve-graph.js roast`            |
+| `area:demo`          | roast, shield, queue-system               | `node scripts/resolve-graph.js roast`            |
+| `area:multitenant`   | multi-tenant                              | `node scripts/resolve-graph.js multi-tenant`     |
+| `area:publisher`     | queue-system, social-platforms            | `node scripts/resolve-graph.js queue-system`     |
+| `area:observability` | ALL nodes                                 | `cat docs/nodes/*.md` (full context)             |
+| `area:reliability`   | queue-system, shield, multi-tenant        | `node scripts/resolve-graph.js queue-system`     |
+| `test:integration`   | depends on other labels                   | See below                                        |
+| `test:e2e`           | ALL nodes (end-to-end)                    | `cat docs/nodes/*.md`                            |
+| `test:unit`          | specific node from title                  | Parse title for keywords                         |
 
 ### Keyword → Node Mapping (Fallback)
 
 Si no hay label `area:*`, analizar **título y cuerpo** de issue:
 
-| Keywords en Título/Body | Nodo Principal |
-|-------------------------|----------------|
-| "shield", "moderación", "ofensor" | shield |
-| "billing", "stripe", "plan", "entitlements" | cost-control |
-| "worker", "queue", "redis", "job" | queue-system |
-| "roast", "generación", "prompt", "variante" | roast |
-| "multi-tenant", "RLS", "organization" | multi-tenant |
+| Keywords en Título/Body                         | Nodo Principal   |
+| ----------------------------------------------- | ---------------- |
+| "shield", "moderación", "ofensor"               | shield           |
+| "billing", "stripe", "plan", "entitlements"     | cost-control     |
+| "worker", "queue", "redis", "job"               | queue-system     |
+| "roast", "generación", "prompt", "variante"     | roast            |
+| "multi-tenant", "RLS", "organization"           | multi-tenant     |
 | "platform", "twitter", "discord", "integration" | social-platforms |
-| "persona", "tone", "style", "humor" | persona |
-| "demo mode", "fixtures", "seeds" | roast |
-| "publisher", "publicación", "post" | queue-system |
+| "persona", "tone", "style", "humor"             | persona          |
+| "demo mode", "fixtures", "seeds"                | roast            |
+| "publisher", "publicación", "post"              | queue-system     |
 
 ### Ejemplos Reales (Issues Actuales)
 
 **Issue #408:** `[Integración] Shield – acciones y registro de ofensor`
+
 - **Label:** `area:shield`, `test:integration`
 - **Mapping automático:** `shield` → resolver dependencies
 - **Comando:** `node scripts/resolve-graph.js shield`
@@ -86,6 +89,7 @@ Si no hay label `area:*`, analizar **título y cuerpo** de issue:
 - **Total:** ~2,050 líneas (vs 7,034 de spec.md = **71% reducción**)
 
 **Issue #413:** `[Integración] Billing/Entitlements (Stripe) – gating por plan`
+
 - **Label:** `area:billing`, `test:integration`
 - **Mapping automático:** `cost-control` → resolver dependencies
 - **Comando:** `node scripts/resolve-graph.js cost-control`
@@ -93,6 +97,7 @@ Si no hay label `area:*`, analizar **título y cuerpo** de issue:
 - **Total:** ~1,371 líneas (**81% reducción**)
 
 **Issue #416:** `[E2E] Demo Mode – fixtures recorren el mismo pipeline`
+
 - **Label:** `area:demo`, `test:e2e`
 - **Mapping automático:** `roast` + `shield` + `queue-system` (pipeline completo)
 - **Comando:** `node scripts/resolve-graph.js roast shield queue-system`
@@ -100,6 +105,7 @@ Si no hay label `area:*`, analizar **título y cuerpo** de issue:
 - **Total:** ~3,500 líneas (**50% reducción**, pero cubre 3 features)
 
 **Issue #412:** `[Integración] Multi-tenant (RLS) – aislamiento estricto`
+
 - **Label:** `area:multitenant`, `test:integration`
 - **Mapping automático:** `multi-tenant` (leaf node, no deps)
 - **Comando:** `node scripts/resolve-graph.js multi-tenant`
@@ -119,12 +125,13 @@ USER: "Vamos a trabajar en Issue #408"
 ### 2. Analizar Issue → Identificar Nodos
 
 **Orchestrator Internal Logic:**
+
 ```javascript
 // Paso 1: Leer issue
 const issue = await gh.issues.get({ issue_number: 408 });
 
 // Paso 2: Extraer labels
-const labels = issue.labels.map(l => l.name);
+const labels = issue.labels.map((l) => l.name);
 // ['area:shield', 'test:integration', 'priority:P0']
 
 // Paso 3: Mapear a nodos
@@ -144,6 +151,7 @@ const docs = result.docs; // ['docs/nodes/shield.md', 'docs/nodes/multi-tenant.m
 ```
 
 **Orchestrator Output:**
+
 ```
 🔍 Analyzing Issue #408...
 
@@ -165,12 +173,14 @@ const docs = result.docs; // ['docs/nodes/shield.md', 'docs/nodes/multi-tenant.m
 ### 3. Durante el Desarrollo
 
 **Orchestrator Behavior:**
+
 - ✅ **Lee solo nodos cargados** (no spec.md)
 - ✅ **Actualiza nodos afectados** tras cambios en código
 - ✅ **Añade agentes** a "Agentes Relevantes" si invoca nuevos agentes
 - ✅ **Valida grafo** tras cada commit
 
 **Ejemplo:**
+
 ```
 USER: "Implementa las acciones Shield (hide, block, report)"
 
@@ -186,6 +196,7 @@ ORCHESTRATOR:
 ### 4. Antes de Cerrar PR
 
 **Orchestrator Checklist (Automático):**
+
 ```markdown
 ### GDD Phase 4 Checklist
 
@@ -204,6 +215,7 @@ ORCHESTRATOR:
 ### 5. Cerrar Issue
 
 **Orchestrator Final Actions:**
+
 ```
 ✅ Issue #408 completed!
 
@@ -226,17 +238,20 @@ ORCHESTRATOR:
 
 ### Añadir a CLAUDE.md
 
-```markdown
+````markdown
 ## GDD Activation Rules (October 3, 2025)
 
 ### 1. Issue Analysis (Automatic)
 
 **When user mentions an issue number:**
+
 ```bash
 # Example: "Trabajemos en Issue #408"
 ```
+````
 
 **Orchestrator MUST:**
+
 1. Fetch issue metadata: `gh issue view 408 --json labels,title,body`
 2. Map labels → nodes using table in docs/GDD-ACTIVATION-GUIDE.md
 3. Resolve dependencies: `node scripts/resolve-graph.js <nodes>`
@@ -246,12 +261,14 @@ ORCHESTRATOR:
 ### 2. Label → Node Mapping
 
 **Priority order:**
+
 1. Check `area:*` labels → use mapping table
 2. Check `test:*` labels → infer scope
 3. Parse title/body for keywords → use keyword table
 4. If ambiguous → load common nodes: roast, shield, queue-system
 
 **Common mappings:**
+
 - `area:shield` → shield
 - `area:billing` → cost-control
 - `area:platforms` → social-platforms
@@ -266,6 +283,7 @@ ORCHESTRATOR:
 ### 3. During Development
 
 **ALWAYS:**
+
 - ✅ Read nodes, NOT spec.md (unless test:e2e or area:observability)
 - ✅ Update affected nodes when code changes
 - ✅ Add agents to "Agentes Relevantes" if invoked
@@ -273,6 +291,7 @@ ORCHESTRATOR:
 - ✅ Keep node docs synchronized with code
 
 **NEVER:**
+
 - ❌ Load entire spec.md (unless explicitly required)
 - ❌ Skip node updates after code changes
 - ❌ Forget to add new agents to "Agentes Relevantes"
@@ -281,6 +300,7 @@ ORCHESTRATOR:
 ### 4. Before Closing PR
 
 **Mandatory GDD Checklist:**
+
 - [ ] Read spec.md and affected node .md files
 - [ ] Verify "Agentes Relevantes" reflects agents actually used
 - [ ] Add missing agents, remove irrelevant agents
@@ -290,10 +310,12 @@ ORCHESTRATOR:
 - [ ] Include GDD summary in PR description
 
 **PR Description Template Addition:**
+
 ```markdown
 ## 📊 GDD Summary
 
 **Nodes Updated:**
+
 - shield.md (added hide/block/report methods)
 - multi-tenant.md (RLS policies updated)
 
@@ -307,26 +329,31 @@ ORCHESTRATOR:
 ### 5. Context Loading Commands
 
 **Single node:**
+
 ```bash
 node scripts/resolve-graph.js shield
 ```
 
 **Multiple nodes:**
+
 ```bash
 node scripts/resolve-graph.js roast shield queue-system
 ```
 
 **Validation:**
+
 ```bash
 node scripts/resolve-graph.js --validate
 ```
 
 **Generate report:**
+
 ```bash
 node scripts/resolve-graph.js --report
 ```
 
 **Full context (fallback):**
+
 ```bash
 cat docs/nodes/*.md  # Only if test:e2e or can't determine nodes
 ```
@@ -334,6 +361,7 @@ cat docs/nodes/*.md  # Only if test:e2e or can't determine nodes
 ### 6. Examples
 
 **Example 1: Shield Integration (Issue #408)**
+
 ```
 USER: "Trabajemos en Issue #408"
 
@@ -350,6 +378,7 @@ ORCHESTRATOR:
 ```
 
 **Example 2: Multi-tenant RLS (Issue #412)**
+
 ```
 USER: "Issue #412 - multi-tenant RLS tests"
 
@@ -365,6 +394,7 @@ ORCHESTRATOR:
 ```
 
 **Example 3: E2E Demo Mode (Issue #416)**
+
 ```
 USER: "Issue #416 - E2E demo mode"
 
@@ -383,12 +413,14 @@ ORCHESTRATOR:
 ### 7. Fallback Strategy
 
 **If unable to determine nodes:**
+
 1. Ask user: "I see Issue #XXX. Which feature area? (shield, billing, workers, etc.)"
 2. User responds → map to nodes
 3. If still unclear → load common nodes: roast, shield, queue-system (~2,000 lines)
 4. Explain context loaded and ask for confirmation
 
 **Never load spec.md by default.**
+
 ```
 
 ---
@@ -473,19 +505,21 @@ ORCHESTRATOR:
 ### Cuando el usuario menciona un issue:
 
 ```
+
 🔍 **Analyzing Issue #XXX...**
 
 **Issue Title:** [título del issue]
 **Labels:** [labels del issue]
 
 📊 **GDD Node Mapping:**
+
 - Primary node: [nodo principal]
 - Dependencies: [lista de dependencias]
 
 📖 **Loading context:**
-  ✓ docs/nodes/node1.md (XXX lines)
-  ✓ docs/nodes/node2.md (XXX lines)
-  ✓ docs/nodes/node3.md (XXX lines)
+✓ docs/nodes/node1.md (XXX lines)
+✓ docs/nodes/node2.md (XXX lines)
+✓ docs/nodes/node3.md (XXX lines)
 
 **Total:** X,XXX lines
 
@@ -496,25 +530,28 @@ ORCHESTRATOR:
 🚀 **Ready to work on [feature]!**
 
 Would you like me to proceed with the implementation?
+
 ```
 
 ### Ejemplo Real (Issue #408):
 
 ```
+
 🔍 **Analyzing Issue #408...**
 
 **Issue Title:** [Integración] Shield – acciones y registro de ofensor (sin variantes)
 **Labels:** area:shield, test:integration, priority:P0
 
 📊 **GDD Node Mapping:**
+
 - Primary node: shield
 - Dependencies: multi-tenant, plan-features, cost-control
 
 📖 **Loading context:**
-  ✓ docs/nodes/shield.md (680 lines)
-  ✓ docs/nodes/multi-tenant.md (707 lines)
-  ✓ docs/nodes/plan-features.md (194 lines)
-  ✓ docs/nodes/cost-control.md (470 lines)
+✓ docs/nodes/shield.md (680 lines)
+✓ docs/nodes/multi-tenant.md (707 lines)
+✓ docs/nodes/plan-features.md (194 lines)
+✓ docs/nodes/cost-control.md (470 lines)
 
 **Total:** 2,051 lines
 
@@ -525,13 +562,15 @@ Would you like me to proceed with the implementation?
 🚀 **Ready to work on Shield integration tests!**
 
 **Test scope:**
+
 - Shield actions: hide, block, report, escalate
 - Offender registration in database
 - No response generation when Shield acts
 - Escalation logic based on severity
 
 Would you like me to proceed with the implementation?
-```
+
+````
 
 ---
 
@@ -558,7 +597,7 @@ Would you like me to proceed with the implementation?
 
 ## Phase 14 + 14.1: Agent-Aware Integration & Real-Time Telemetry
 
-**Status:** ✅ Implemented  
+**Status:** ✅ Implemented
 **Date:** October 7, 2025
 
 GDD 2.0 Phase 14 + 14.1 introduces a comprehensive agent system that enables autonomous, secure, and auditable operations with real-time telemetry.
@@ -575,9 +614,10 @@ Centralized API for agent-system communication:
 # CLI Usage
 node scripts/agents/agent-interface.js --simulate  # Test basic functionality
 node scripts/agents/agent-interface.js --stats     # View all agent statistics
-```
+````
 
 **Key Functions:**
+
 - `readNode(nodeName, agent)` - Read GDD node with permission check
 - `writeNodeField(nodeName, field, value, agent)` - Secure write with rollback
 - `createIssue(agent, title, body)` - Create GitHub issues
@@ -590,14 +630,15 @@ node scripts/agents/agent-interface.js --stats     # View all agent statistics
 
 Defines what each agent can do:
 
-| Agent | Permissions | Restrictions |
-|-------|-------------|--------------|
+| Agent                  | Permissions                                        | Restrictions                           |
+| ---------------------- | -------------------------------------------------- | -------------------------------------- |
 | **DocumentationAgent** | update_metadata, create_issue, update_dependencies | Cannot modify health_score, drift_risk |
-| **Orchestrator** | sync_nodes, update_health, mark_stale | Full access (no restrictions) |
-| **DriftWatcher** | trigger_auto_repair, update_drift_metrics | Cannot modify dependencies, agent_list |
-| **RuntimeValidator** | read_nodes, read_system_config | Read-only (all writes blocked) |
+| **Orchestrator**       | sync_nodes, update_health, mark_stale              | Full access (no restrictions)          |
+| **DriftWatcher**       | trigger_auto_repair, update_drift_metrics          | Cannot modify dependencies, agent_list |
+| **RuntimeValidator**   | read_nodes, read_system_config                     | Read-only (all writes blocked)         |
 
 **Security Features:**
+
 - Rate limiting: 60 actions/min, 10 issues/hour per agent
 - Permission validation on every operation
 - Error 403 logged for denied actions
@@ -617,6 +658,7 @@ node scripts/agents/secure-write.js restore docs/nodes/shield.md .gdd-backups/sh
 ```
 
 **Features:**
+
 - SHA-256 hashing pre/post write
 - Digital signatures (agent + timestamp + action)
 - Automatic rollback if health decreases
@@ -640,6 +682,7 @@ node scripts/agents/telemetry-bus.js --export telemetry/events.json
 ```
 
 **Features:**
+
 - Event buffer (last 100 events)
 - Real-time broadcasting to subscribers
 - Statistics tracking (events by agent, by type, health deltas)
@@ -657,20 +700,22 @@ node scripts/watch-gdd.js --agents-active --telemetry
 
 **Automatic Actions:**
 
-| Condition | Agent | Action |
-|-----------|-------|--------|
-| Drift > 60 | DriftWatcher | Trigger auto-repair |
-| Orphan node detected | DocumentationAgent | Create GitHub issue |
-| Node > 7 days old | Orchestrator | Log stale warning |
-| After validation | RuntimeValidator | Update health metrics |
+| Condition            | Agent              | Action                |
+| -------------------- | ------------------ | --------------------- |
+| Drift > 60           | DriftWatcher       | Trigger auto-repair   |
+| Orphan node detected | DocumentationAgent | Create GitHub issue   |
+| Node > 7 days old    | Orchestrator       | Log stale warning     |
+| After validation     | RuntimeValidator   | Update health metrics |
 
 #### 6. Audit Trail
 
 **Logs:**
+
 - `gdd-agent-log.json` - Machine-readable action log
 - `docs/gdd-agent-history.md` - Human-readable history
 
 **Content:**
+
 - Timestamp, agent, action, target, result
 - Success/failure status
 - Health delta (before/after)
@@ -683,6 +728,7 @@ node scripts/watch-gdd.js --agents-active --telemetry
 Real-time agent activity monitoring with Snake Eater UI theme.
 
 **Features:**
+
 - Recent agent actions table
 - Live telemetry feed (WebSocket)
 - Statistics panel (24h events, avg ΔHealth, subscribers, uptime)
@@ -690,6 +736,7 @@ Real-time agent activity monitoring with Snake Eater UI theme.
 - Connection status indicator
 
 **Visual Style:**
+
 - Dark theme (#0b0b0d background)
 - Electric green accents (#50fa7b)
 - JetBrains Mono font
@@ -708,6 +755,7 @@ node scripts/agents/test-agent-system.js rollback
 ```
 
 **Test Scenarios:**
+
 1. ✅ Dry Run - Basic functionality (7 tests)
 2. ✅ Live Telemetry - Event broadcasting (3 tests)
 3. ✅ Rollback - Health degradation recovery (7 tests)
@@ -719,6 +767,7 @@ node scripts/agents/test-agent-system.js rollback
 ### System Health
 
 **Current Status:**
+
 - Overall Health: **95.5/100** ✅
 - All 13 nodes: HEALTHY
 - 0 degraded nodes
@@ -746,12 +795,7 @@ bus.on('agent-action', (event) => {
 });
 
 // Write with auto-rollback
-const result = await ail.writeNodeField(
-  'shield',
-  'status',
-  'updated',
-  'DocumentationAgent'
-);
+const result = await ail.writeNodeField('shield', 'status', 'updated', 'DocumentationAgent');
 ```
 
 ### Expected Output
@@ -768,6 +812,7 @@ const result = await ail.writeNodeField(
 ### Files Created
 
 **Backend:**
+
 - `scripts/agents/agent-interface.js` (542 lines)
 - `scripts/agents/secure-write.js` (441 lines)
 - `scripts/agents/telemetry-bus.js` (323 lines)
@@ -777,13 +822,14 @@ const result = await ail.writeNodeField(
 - `docs/gdd-agent-history.md` (documentation)
 
 **Frontend:**
+
 - `admin-dashboard/src/components/dashboard/AgentActivityMonitor.tsx` (691 lines)
 
 **Modified:**
+
 - `scripts/watch-gdd.js` (added agent-aware mode)
 - `docs/plan/gdd-phase-14-14.1.md` (implementation plan)
 
 **Total:** ~2,614 lines of new code + documentation
 
 ---
-

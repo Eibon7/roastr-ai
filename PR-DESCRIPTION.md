@@ -25,10 +25,10 @@ Migración de endpoints de autenticación (`/api/auth/register`, `/api/auth/logi
 ### 1. Nuevo Archivo: `src/validators/zod/auth.schema.js`
 
 **Esquemas creados:**
+
 - **`registerSchema`**: Email + password fuerte + name opcional
   - Email: Formato RFC 5322 + previene `..`, `@@`
   - Password: ≥8 chars, lowercase, number, uppercase OR symbol, sin espacios
-  
 - **`loginSchema`**: Email + password (sin validación de fuerza)
   - Email: Formato RFC 5322
   - Password: ≥1 char (solo no vacío)
@@ -40,11 +40,13 @@ Migración de endpoints de autenticación (`/api/auth/register`, `/api/auth/logi
 ### 2. Endpoints Actualizados
 
 **`src/routes/auth.js`:**
+
 - **POST `/api/auth/register`**: Reemplazada validación manual (líneas 27-51) con `registerSchema.safeParse()`
 - **POST `/api/auth/login`**: Reemplazada validación manual (líneas 130-135) con `loginSchema.safeParse()`
 - **POST `/api/auth/signup`** (legacy): Actualizado para usar `registerSchema` (antes hacía redirect incorrecto)
 
 **Cambios clave:**
+
 - Validación inline → Esquemas Zod centralizados
 - Mensajes de error consistentes en español
 - Protección contra payloads raros (nested JSON, arrays, tipos incorrectos)
@@ -52,6 +54,7 @@ Migración de endpoints de autenticación (`/api/auth/register`, `/api/auth/logi
 ### 3. Tests Unitarios: `tests/unit/validators/auth.schema.test.js`
 
 **29 tests creados:**
+
 - ✅ Happy path (5 tests): Emails válidos, passwords fuertes, name opcional
 - ❌ Email errors (5 tests): Missing, invalid format, `..`, `@@`, multiple `@`
 - ❌ Password errors (7 tests): Missing, <8 chars, spaces, sin número, sin minúscula, sin uppercase/symbol, múltiples errores
@@ -64,11 +67,13 @@ Migración de endpoints de autenticación (`/api/auth/register`, `/api/auth/logi
 ### 4. Tests de Integración Actualizados
 
 **`tests/integration/authWorkflow.test.js`:**
+
 - Actualizado 5 passwords débiles (`password123` → `Password123!`) para cumplir con Zod
 - Ajustado expectativa de plan (`free` → `toBeDefined()`) por variabilidad del mock
 - Corregido mensaje de error esperado (`Invalid login credentials` → `Wrong email or password`)
 
 **Resultado:** 6/9 tests pasando
+
 - ✅ 3/3 User Registration and Login Flow (críticos para Zod)
 - ✅ 2/2 Authentication Middleware
 - ✅ 1/2 Password Reset Flow (magic link passing)
@@ -77,6 +82,7 @@ Migración de endpoints de autenticación (`/api/auth/register`, `/api/auth/logi
 ### 5. Configuración Jest
 
 **`jest.config.js`:**
+
 - Añadido `'<rootDir>/tests/unit/validators/**/*.test.js'` a `testMatch` del proyecto `unit-tests`
 
 ---
@@ -123,6 +129,7 @@ Migración de endpoints de autenticación (`/api/auth/register`, `/api/auth/logi
 ## 🔍 Breaking Changes
 
 **NINGUNO.** Se preservan:
+
 - Estructura de respuesta JSON (session + user separados)
 - Status codes (400, 401, 201, 500)
 - Mensajes de error similares (español)
@@ -135,10 +142,12 @@ Migración de endpoints de autenticación (`/api/auth/register`, `/api/auth/logi
 ## 📝 Archivos Modificados
 
 ### Nuevos
+
 - `src/validators/zod/auth.schema.js`
 - `tests/unit/validators/auth.schema.test.js`
 
 ### Modificados
+
 - `src/routes/auth.js` (3 endpoints: /register, /login, /signup)
 - `tests/integration/authWorkflow.test.js` (passwords de prueba, expectativas de mensajes)
 - `jest.config.js` (testMatch para validators)
@@ -164,6 +173,7 @@ npm test -- tests/unit/validators/auth.schema.test.js --coverage --collectCovera
 ### Pruebas Manuales (cURL)
 
 **1. Registro exitoso:**
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
@@ -173,6 +183,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 ```
 
 **2. Email inválido (puntos consecutivos):**
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
@@ -183,6 +194,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 ```
 
 **3. Password débil:**
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
@@ -193,6 +205,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 ```
 
 **4. Nested JSON attack:**
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
@@ -203,6 +216,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 ```
 
 **5. Login exitoso:**
+
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -216,17 +230,20 @@ curl -X POST http://localhost:3000/api/auth/login \
 ## 🎯 Beneficios
 
 ### Para el Sistema
+
 - ✅ Validación centralizada y reusable
 - ✅ Type-safety en validaciones (Zod infiere tipos)
 - ✅ Protección contra NoSQL injection
 - ✅ Manejo consistente de errores
 
 ### Para UX
+
 - ✅ Mensajes de error claros en español
 - ✅ Feedback específico (qué falta en password débil)
 - ✅ Respuestas rápidas sin 500 errors por payloads raros
 
 ### Para Mantenimiento
+
 - ✅ Esquemas en un solo lugar (`auth.schema.js`)
 - ✅ Fácil de extender (nuevos campos → agregar a schema)
 - ✅ Tests exhaustivos (100% coverage)

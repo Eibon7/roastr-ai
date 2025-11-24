@@ -44,11 +44,11 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
      * Each test will configure its own user behavior data dynamically
      */
     mockSupabase = createShieldSupabaseMock({
-      userBehavior: [],     // Populated dynamically by each test
-      shieldActions: [],    // Tracks actions for verification
-      jobQueue: [],         // For high-priority queueing
-      appLogs: [],          // For audit trail
-      enableLogging: false  // Set true for debugging
+      userBehavior: [], // Populated dynamically by each test
+      shieldActions: [], // Tracks actions for verification
+      jobQueue: [], // For high-priority queueing
+      appLogs: [], // For audit trail
+      enableLogging: false // Set true for debugging
     });
 
     // Mock CostControl to allow Shield access
@@ -107,28 +107,28 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           step: 3,
           priorViolations: 2,
           severity: 'medium',
-          expectedAction: 'block',  // Issue #684: Updated to match action matrix (medium + persistent = block)
+          expectedAction: 'block', // Issue #684: Updated to match action matrix (medium + persistent = block)
           expectedLevel: 'persistent'
         },
         {
           step: 4,
           priorViolations: 3,
           severity: 'medium',
-          expectedAction: 'block',  // Issue #684: Updated to match action matrix (medium + persistent = block)
+          expectedAction: 'block', // Issue #684: Updated to match action matrix (medium + persistent = block)
           expectedLevel: 'persistent'
         },
         {
           step: 5,
           priorViolations: 4,
           severity: 'high',
-          expectedAction: 'report',  // Issue #684: Updated to match action matrix (high + persistent = report)
+          expectedAction: 'report', // Issue #684: Updated to match action matrix (high + persistent = report)
           expectedLevel: 'persistent'
         },
         {
           step: 6,
           priorViolations: 5,
           severity: 'critical',
-          expectedAction: 'escalate',  // Issue #684: Updated to match action matrix (critical + dangerous = escalate)
+          expectedAction: 'escalate', // Issue #684: Updated to match action matrix (critical + dangerous = escalate)
           expectedLevel: 'dangerous'
         }
       ];
@@ -168,9 +168,14 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
 
         const analysisResult = {
           severity_level: step.severity,
-          toxicity_score: step.severity === 'critical' ? 0.95 :
-                         step.severity === 'high' ? 0.8 :
-                         step.severity === 'medium' ? 0.6 : 0.35
+          toxicity_score:
+            step.severity === 'critical'
+              ? 0.95
+              : step.severity === 'high'
+                ? 0.8
+                : step.severity === 'medium'
+                  ? 0.6
+                  : 0.35
         };
 
         const result = await shieldService.analyzeForShield(
@@ -197,10 +202,14 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       const organizationId = 'org_123';
 
       // Mock first-time user
-      mockSupabase.from().select().eq().single.mockResolvedValueOnce({
-        data: null,
-        error: { code: 'PGRST116' }
-      });
+      mockSupabase
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
+          data: null,
+          error: { code: 'PGRST116' }
+        });
 
       const comment = {
         id: 'comment_critical_immediate',
@@ -217,11 +226,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         categories: ['SEVERE_TOXICITY', 'THREAT', 'IDENTITY_ATTACK']
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.shieldActive).toBe(true);
       expect(result.actions.primary).toBe('report'); // Skip to report for critical
@@ -278,11 +283,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         toxicity_score: 0.65
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.shieldActive).toBe(true);
       expect(result.userBehavior.total_violations).toBe(3);
@@ -299,7 +300,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       const organizationId = 'org_123';
 
       // Mock user with old violations (should have reduced escalation impact)
-      const oldDate = new Date(Date.now() - (180 * 86400000)).toISOString(); // 180 days ago
+      const oldDate = new Date(Date.now() - 180 * 86400000).toISOString(); // 180 days ago
       const mockBehavior = {
         organization_id: organizationId,
         platform: 'twitter',
@@ -331,11 +332,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         toxicity_score: 0.35
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.shieldActive).toBe(true);
       // Old violations should have reduced impact - treated closer to first offense
@@ -407,14 +404,14 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       // Issue #482: Use time values that clearly fall into each escalation window
       // Service logic: <1h=aggressive, 1-24h=standard, 24-168h=reduced, 168+h=minimal
       const timeWindows = [
-        { hours: 0.5, expectedEscalation: 'aggressive' },  // 30 min ago (< 1 hour)
-        { hours: 12, expectedEscalation: 'standard' },     // 12h ago (1-24 hours)
-        { hours: 72, expectedEscalation: 'reduced' },      // 3 days ago (24-168 hours)
-        { hours: 360, expectedEscalation: 'minimal' }      // 15 days ago (168+ hours)
+        { hours: 0.5, expectedEscalation: 'aggressive' }, // 30 min ago (< 1 hour)
+        { hours: 12, expectedEscalation: 'standard' }, // 12h ago (1-24 hours)
+        { hours: 72, expectedEscalation: 'reduced' }, // 3 days ago (24-168 hours)
+        { hours: 360, expectedEscalation: 'minimal' } // 15 days ago (168+ hours)
       ];
 
       for (const window of timeWindows) {
-        const violationDate = new Date(Date.now() - (window.hours * 3600000)).toISOString();
+        const violationDate = new Date(Date.now() - window.hours * 3600000).toISOString();
         const mockBehavior = {
           organization_id: organizationId,
           platform: 'twitter',
@@ -459,7 +456,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
 
         expect(result.shieldActive).toBe(true);
         expect(result.shouldGenerateResponse).toBe(false);
-        
+
         // Verify escalation follows expected pattern based on time window
         if (window.expectedEscalation === 'aggressive') {
           expect(['block', 'report']).toContain(result.actions.primary);
@@ -529,7 +526,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       expect(result.shieldActive).toBe(true);
       expect(result.userBehavior.total_violations).toBe(3);
       expect(result.userBehavior.cross_platform_violations).toBeDefined();
-      
+
       // Should escalate based on total cross-platform history
       expect(['mute_permanent', 'block']).toContain(result.actions.primary);
       expect(result.shouldGenerateResponse).toBe(false);
@@ -541,8 +538,8 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
 
       const platforms = [
         { name: 'twitter', escalationPolicy: 'standard' },
-        { name: 'discord', escalationPolicy: 'aggressive' },  // Gaming community - stricter
-        { name: 'youtube', escalationPolicy: 'lenient' }      // Creator platform - more forgiving
+        { name: 'discord', escalationPolicy: 'aggressive' }, // Gaming community - stricter
+        { name: 'youtube', escalationPolicy: 'lenient' } // Creator platform - more forgiving
       ];
 
       for (const platform of platforms) {
@@ -555,9 +552,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           platform_specific_config: {
             escalation_policy: platform.escalationPolicy
           },
-          actions_taken: [
-            { action: 'warn', platform: platform.name, date: '2024-09-01' }
-          ]
+          actions_taken: [{ action: 'warn', platform: platform.name, date: '2024-09-01' }]
         };
 
         // Issue #482: Reinitialize mockSupabase with platform-specific policy
@@ -592,7 +587,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
 
         expect(result.shieldActive).toBe(true);
         expect(result.shouldGenerateResponse).toBe(false);
-        
+
         // Verify platform-specific escalation behavior
         if (platform.escalationPolicy === 'aggressive') {
           expect(['mute_permanent', 'block']).toContain(result.actions.primary);
@@ -611,9 +606,9 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       // Mock organization with custom escalation configuration
       const mockOrgConfig = {
         escalation_matrix: {
-          low_severity_threshold: 3,      // 3 strikes before escalation
-          medium_severity_threshold: 2,   // 2 strikes for medium
-          high_severity_threshold: 1,     // Immediate escalation for high
+          low_severity_threshold: 3, // 3 strikes before escalation
+          medium_severity_threshold: 2, // 2 strikes for medium
+          high_severity_threshold: 1, // Immediate escalation for high
           time_decay_enabled: true,
           cooling_off_period_hours: 48
         }
@@ -650,11 +645,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         toxicity_score: 0.4
       };
 
-      const result = await shieldService.analyzeForShield(
-        organizationId,
-        comment,
-        analysisResult
-      );
+      const result = await shieldService.analyzeForShield(organizationId, comment, analysisResult);
 
       expect(result.shieldActive).toBe(true);
       // With custom config requiring 3 strikes for low severity, this should still be warning
@@ -678,9 +669,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
           warning_threshold_multiplier: 2, // More warnings before escalation
           manual_review_required: true
         },
-        actions_taken: [
-          { action: 'warn', date: '2024-09-01' }
-        ]
+        actions_taken: [{ action: 'warn', date: '2024-09-01' }]
       };
 
       // Issue #482: Reinitialize mockSupabase with special user type data
@@ -850,7 +839,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       expect(result2.shieldActive).toBe(true);
       expect(result1.shouldGenerateResponse).toBe(false);
       expect(result2.shouldGenerateResponse).toBe(false);
-      
+
       // Both should have consistent escalation decisions based on same user history
       expect(result1.actions.primary).toBe(result2.actions.primary);
       expect(result1.userBehavior.total_violations).toBe(2);
@@ -872,9 +861,9 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
         organization_id: 'org_123',
         platform: 'twitter',
         platform_user_id: 'user_corrupted',
-        total_violations: null,  // Corrupted: should be number
-        actions_taken: 'invalid_json_string',  // Corrupted: should be array
-        last_seen_at: 'invalid_date',  // Corrupted: should be valid date
+        total_violations: null, // Corrupted: should be number
+        actions_taken: 'invalid_json_string', // Corrupted: should be array
+        last_seen_at: 'invalid_date', // Corrupted: should be valid date
         // Missing other required fields
         total_comments: 0,
         severity_counts: { low: 0, medium: 0, high: 0, critical: 0 },
@@ -926,7 +915,7 @@ describe('Shield Escalation Logic Tests - Issue #408', () => {
       };
 
       const startTime = Date.now();
-      
+
       const result = await shieldService.analyzeForShield(
         comment.organization_id,
         comment,

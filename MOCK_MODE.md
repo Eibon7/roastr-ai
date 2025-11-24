@@ -15,10 +15,10 @@ El sistema detecta automáticamente cuándo activar el mock mode:
 shouldUseMockMode() {
   const criticalKeys = [
     'OPENAI_API_KEY',
-    'PERSPECTIVE_API_KEY', 
+    'PERSPECTIVE_API_KEY',
     'SUPABASE_URL'
   ];
-  
+
   return criticalKeys.some(key => !process.env[key]);
 }
 
@@ -39,6 +39,7 @@ MOCK_MODE=false npm start
 ### Indicadores Visuales
 
 **En el TopBar del frontend:**
+
 - 🟡 **"Mock Mode"** badge cuando está activo
 - 🟢 **"Live"** badge cuando usa APIs reales
 
@@ -49,7 +50,7 @@ MOCK_MODE=false npm start
 ```json
 {
   "id": "u_mock_user",
-  "name": "Roastr User", 
+  "name": "Roastr User",
   "email": "user@roastr.ai",
   "plan": "pro",
   "rqcEnabled": true,
@@ -65,7 +66,7 @@ MOCK_MODE=false npm start
 {
   "services": {
     "api": "ok",
-    "billing": "degraded", 
+    "billing": "degraded",
     "ai": "degraded",
     "db": "degraded"
   },
@@ -92,7 +93,7 @@ MOCK_MODE=false npm start
     "lastSync": null
   },
   {
-    "name": "youtube", 
+    "name": "youtube",
     "displayName": "YouTube",
     "status": "disconnected",
     "icon": "▶️",
@@ -120,7 +121,7 @@ Genera logs realistas con diferentes niveles:
     }
   },
   {
-    "id": "log_1705678140000_1", 
+    "id": "log_1705678140000_1",
     "level": "warn",
     "message": "Mock mode active - some features limited",
     "timestamp": "2025-01-09T15:29:00Z",
@@ -143,7 +144,7 @@ Genera logs realistas con diferentes niveles:
   },
   "breakdown": {
     "roastGeneration": 280,
-    "toxicityAnalysis": 150, 
+    "toxicityAnalysis": 150,
     "rqcReviews": 75,
     "platformSync": 45
   },
@@ -158,6 +159,7 @@ Genera logs realistas con diferentes niveles:
 ### 6. Preview de Roasts (`/api/roast/preview`)
 
 **Request:**
+
 ```json
 {
   "text": "Tu comentario para roastear",
@@ -167,6 +169,7 @@ Genera logs realistas con diferentes niveles:
 ```
 
 **Response:**
+
 ```json
 {
   "roast": "Your comment just called - it wants its logic back 📞",
@@ -180,6 +183,7 @@ Genera logs realistas con diferentes niveles:
 ```
 
 **Roasts por intensidad:**
+
 - **Intensity 1**: Comentarios suaves y amigables
 - **Intensity 2**: Crítica constructiva con humor
 - **Intensity 3**: Roasts creativos y divertidos
@@ -190,35 +194,40 @@ Genera logs realistas con diferentes niveles:
 
 ### Feature Flags en Mock Mode
 
-| Feature | Mock Mode | Comportamiento |
-|---------|-----------|----------------|
-| **ENABLE_RQC** | `false` | RQC deshabilitado por defecto |
-| **ENABLE_SHIELD** | `false` | Shield protection no disponible |
-| **ENABLE_REAL_OPENAI** | `false` | Usa roasts pre-generados |
-| **ENABLE_REAL_TWITTER** | `false` | APIs de Twitter simuladas |
-| **ENABLE_BILLING** | `false` | Portal de billing mock |
-| **VERBOSE_LOGS** | `false` | Logging normal |
+| Feature                 | Mock Mode | Comportamiento                  |
+| ----------------------- | --------- | ------------------------------- |
+| **ENABLE_RQC**          | `false`   | RQC deshabilitado por defecto   |
+| **ENABLE_SHIELD**       | `false`   | Shield protection no disponible |
+| **ENABLE_REAL_OPENAI**  | `false`   | Usa roasts pre-generados        |
+| **ENABLE_REAL_TWITTER** | `false`   | APIs de Twitter simuladas       |
+| **ENABLE_BILLING**      | `false`   | Portal de billing mock          |
+| **VERBOSE_LOGS**        | `false`   | Logging normal                  |
 
 ### Servicios Simulados
 
 **✅ OpenAI API:**
+
 - Roast generation → Respuestas pre-escritas por intensidad
 - Toxicity detection → Simulación basada en palabras clave
 
 **✅ Perspective API:**
+
 - Toxicity scores → Valores aleatorios realistas (0.1 - 0.9)
 - Attribute detection → Mock data
 
 **✅ Database (Supabase):**
+
 - User data → JSON estático
 - Logs → Generación dinámica en memoria
 - Metrics → Valores calculados dinámicamente
 
 **✅ Payment (Stripe):**
+
 - Billing portal → URL mock (#mock-portal)
 - Webhooks → Eventos simulados
 
 **✅ Social Media APIs:**
+
 - Todas las plataformas → Status "disconnected"
 - Sync operations → Simulación exitosa
 
@@ -261,9 +270,7 @@ describe('Mock Mode Behavior', () => {
   });
 
   test('should show degraded services in health check', async () => {
-    const response = await request(app)
-      .get('/api/health')
-      .expect(200);
+    const response = await request(app).get('/api/health').expect(200);
 
     expect(response.body.services.ai).toBe('degraded');
     expect(response.body.flags.mockMode).toBe(true);
@@ -290,6 +297,7 @@ MOCK_MODE=false
 ### 2. Verificar Transición
 
 **Indicators que el sistema salió de mock mode:**
+
 - ✅ TopBar muestra badge "Live" en lugar de "Mock Mode"
 - ✅ `/api/health` muestra servicios con status "ok"
 - ✅ Roasts generados tienen `isMock: false`
@@ -318,7 +326,7 @@ describe('Production Mode', () => {
 // Cuando está activo
 console.log('🟡 Mock Mode Active - Using simulated data');
 
-// Cuando se desactiva  
+// Cuando se desactiva
 console.log('🟢 Production Mode - Using real APIs');
 ```
 
@@ -364,7 +372,7 @@ MOCK_MODE=true npm start
 - name: Run tests
   run: npm test
   env:
-    MOCK_MODE: true  # Fuerza mock mode en CI
+    MOCK_MODE: true # Fuerza mock mode en CI
 ```
 
 ## ⚠️ Limitaciones del Mock Mode
@@ -379,13 +387,13 @@ MOCK_MODE=true npm start
 
 ### Datos Mock vs Real
 
-| Aspecto | Mock | Real |
-|---------|------|------|
-| **Response time** | 200-1000ms | Variable |
-| **Data accuracy** | Simulated | Live |
-| **Rate limits** | None | API specific |
-| **Costs** | $0 | API usage costs |
-| **Reliability** | 100% | Depends on APIs |
+| Aspecto           | Mock       | Real            |
+| ----------------- | ---------- | --------------- |
+| **Response time** | 200-1000ms | Variable        |
+| **Data accuracy** | Simulated  | Live            |
+| **Rate limits**   | None       | API specific    |
+| **Costs**         | $0         | API usage costs |
+| **Reliability**   | 100%       | Depends on APIs |
 
 ## 🔍 Debugging Mock Mode
 
@@ -394,8 +402,8 @@ MOCK_MODE=true npm start
 ```javascript
 // En browser console
 fetch('/api/health')
-  .then(r => r.json())
-  .then(d => console.log('Mock Mode:', d.flags.mockMode));
+  .then((r) => r.json())
+  .then((d) => console.log('Mock Mode:', d.flags.mockMode));
 ```
 
 ### Environment Variables

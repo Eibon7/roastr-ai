@@ -1,24 +1,19 @@
 /**
  * Feature Flags Panel Component
  * Issue #294: Kill Switch global y panel de control de feature flags para administradores
- * 
+ *
  * Provides comprehensive feature flag management for administrators
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent 
-} from '../ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { 
-  Settings, 
-  Search, 
+import {
+  Settings,
+  Search,
   Filter,
   Eye,
   EyeOff,
@@ -49,7 +44,7 @@ const FeatureFlagsPanel = () => {
       const response = await adminApi.getFeatureFlags();
       setFlags(response.data.flags);
       setFlagsByCategory(response.data.flagsByCategory);
-      
+
       // Expand all categories by default
       const categories = Object.keys(response.data.flagsByCategory);
       const expanded = categories.reduce((acc, cat) => {
@@ -57,7 +52,6 @@ const FeatureFlagsPanel = () => {
         return acc;
       }, {});
       setExpandedCategories(expanded);
-      
     } catch (error) {
       console.error('Failed to load feature flags:', error);
       toast.error('Failed to load feature flags');
@@ -74,19 +68,19 @@ const FeatureFlagsPanel = () => {
 
     try {
       // Mark flag as updating using functional updater
-      setUpdatingFlags(prev => {
+      setUpdatingFlags((prev) => {
         const newSet = new Set(prev);
         newSet.add(flagKey);
         return newSet;
       });
 
       // Capture previous state for potential rollback
-      setFlags(prevFlags => {
-        previousFlagState = prevFlags.find(flag => flag.flag_key === flagKey);
+      setFlags((prevFlags) => {
+        previousFlagState = prevFlags.find((flag) => flag.flag_key === flagKey);
         return prevFlags;
       });
 
-      setFlagsByCategory(prevCategorized => {
+      setFlagsByCategory((prevCategorized) => {
         previousCategorizedState = { ...prevCategorized };
         return prevCategorized;
       });
@@ -97,41 +91,32 @@ const FeatureFlagsPanel = () => {
       });
 
       // Update local state using functional updaters with immutable copies
-      setFlags(prevFlags =>
-        prevFlags.map(flag =>
-          flag.flag_key === flagKey
-            ? { ...flag, is_enabled: newEnabledState }
-            : flag
+      setFlags((prevFlags) =>
+        prevFlags.map((flag) =>
+          flag.flag_key === flagKey ? { ...flag, is_enabled: newEnabledState } : flag
         )
       );
 
       // Update categorized flags with immutable copies
-      setFlagsByCategory(prevCategorized => {
+      setFlagsByCategory((prevCategorized) => {
         const newCategorized = { ...prevCategorized };
-        Object.keys(newCategorized).forEach(category => {
-          newCategorized[category] = newCategorized[category].map(flag =>
-            flag.flag_key === flagKey
-              ? { ...flag, is_enabled: newEnabledState }
-              : flag
+        Object.keys(newCategorized).forEach((category) => {
+          newCategorized[category] = newCategorized[category].map((flag) =>
+            flag.flag_key === flagKey ? { ...flag, is_enabled: newEnabledState } : flag
           );
         });
         return newCategorized;
       });
 
       toast.success(`Feature flag ${newEnabledState ? 'enabled' : 'disabled'}`);
-
     } catch (error) {
       console.error('Failed to update feature flag:', error);
       toast.error('Failed to update feature flag');
 
       // Rollback to previous state on error
       if (previousFlagState) {
-        setFlags(prevFlags =>
-          prevFlags.map(flag =>
-            flag.flag_key === flagKey
-              ? { ...previousFlagState }
-              : flag
-          )
+        setFlags((prevFlags) =>
+          prevFlags.map((flag) => (flag.flag_key === flagKey ? { ...previousFlagState } : flag))
         );
       }
 
@@ -140,7 +125,7 @@ const FeatureFlagsPanel = () => {
       }
     } finally {
       // Remove from updating flags using functional updater
-      setUpdatingFlags(prev => {
+      setUpdatingFlags((prev) => {
         const newSet = new Set(prev);
         newSet.delete(flagKey);
         return newSet;
@@ -149,19 +134,20 @@ const FeatureFlagsPanel = () => {
   };
 
   const toggleCategory = (category) => {
-    setExpandedCategories(prev => ({
+    setExpandedCategories((prev) => ({
       ...prev,
       [category]: !prev[category]
     }));
   };
 
-  const filteredFlags = flags.filter(flag => {
-    const matchesSearch = flag.flag_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         flag.flag_key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (flag.description && flag.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+  const filteredFlags = flags.filter((flag) => {
+    const matchesSearch =
+      flag.flag_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      flag.flag_key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (flag.description && flag.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
     const matchesCategory = selectedCategory === 'all' || flag.category === selectedCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -210,9 +196,7 @@ const FeatureFlagsPanel = () => {
             <Settings className="h-5 w-5" />
             Feature Flags
           </div>
-          <Badge variant="outline">
-            {flags.length} flags
-          </Badge>
+          <Badge variant="outline">{flags.length} flags</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -244,12 +228,12 @@ const FeatureFlagsPanel = () => {
         {/* Flags by Category */}
         <div className="space-y-4">
           {Object.entries(flagsByCategory).map(([category, categoryFlags]) => {
-            const visibleFlags = categoryFlags.filter(flag => 
-              filteredFlags.some(f => f.flag_key === flag.flag_key)
+            const visibleFlags = categoryFlags.filter((flag) =>
+              filteredFlags.some((f) => f.flag_key === flag.flag_key)
             );
-            
+
             if (visibleFlags.length === 0) return null;
-            
+
             return (
               <div key={category} className="border rounded-lg">
                 <button
@@ -263,12 +247,10 @@ const FeatureFlagsPanel = () => {
                       <ChevronRight className="h-4 w-4" />
                     )}
                     <h3 className="font-medium capitalize">{category}</h3>
-                    <Badge className={getCategoryBadgeColor(category)}>
-                      {visibleFlags.length}
-                    </Badge>
+                    <Badge className={getCategoryBadgeColor(category)}>{visibleFlags.length}</Badge>
                   </div>
                 </button>
-                
+
                 {expandedCategories[category] && (
                   <div className="border-t">
                     {visibleFlags.map((flag) => (
@@ -278,7 +260,7 @@ const FeatureFlagsPanel = () => {
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-lg">{getFlagIcon(flag.flag_key)}</span>
                               <h4 className="font-medium">{flag.flag_name}</h4>
-                              <Badge 
+                              <Badge
                                 variant={flag.is_enabled ? 'success' : 'secondary'}
                                 className="text-xs"
                               >

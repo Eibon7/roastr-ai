@@ -1,10 +1,10 @@
 /**
  * Tone Compatibility Service
- * 
+ *
  * Issue #872: Provides backward compatibility layer for transitioning from
  * legacy system (humor_type + intensity_level) to new 3-tone system
  * (flanders, balanceado, canalla).
- * 
+ *
  * This service ensures that all existing code continues to work while
  * gradually migrating to the new system.
  */
@@ -18,10 +18,10 @@ class ToneCompatibilityService {
 
   /**
    * Map legacy config (humor_type + intensity_level) to new tone
-   * 
+   *
    * Issue #872: This allows old code to continue working by automatically
    * converting legacy parameters to new tone IDs.
-   * 
+   *
    * @param {Object} config - Legacy config
    * @param {string} config.humor_type - Legacy humor type (witty/clever/playful/sarcastic)
    * @param {number} config.intensity_level - Legacy intensity (1-5)
@@ -38,12 +38,12 @@ class ToneCompatibilityService {
     // If using voice style, map it directly
     if (config.style) {
       const styleToTone = {
-        'flanders': 'flanders',
-        'light': 'flanders',
-        'balanceado': 'balanceado',
-        'balanced': 'balanceado',
-        'canalla': 'canalla',
-        'savage': 'canalla'
+        flanders: 'flanders',
+        light: 'flanders',
+        balanceado: 'balanceado',
+        balanced: 'balanceado',
+        canalla: 'canalla',
+        savage: 'canalla'
       };
       if (styleToTone[config.style]) {
         return styleToTone[config.style];
@@ -78,7 +78,7 @@ class ToneCompatibilityService {
     // 1-2 → Flanders (gentle)
     // 3   → Balanceado (balanced)
     // 4-5 → Canalla (savage)
-    
+
     if (intensity_level <= 2) {
       return 'flanders';
     } else if (intensity_level >= 4) {
@@ -87,31 +87,31 @@ class ToneCompatibilityService {
       // intensity 3 - check humor_type for fine-tuning
       const aggressiveTypes = ['sarcastic', 'direct', 'savage'];
       const gentleTypes = ['playful', 'subtle', 'light'];
-      
+
       if (aggressiveTypes.includes(humor_type)) {
         return 'canalla';
       } else if (gentleTypes.includes(humor_type)) {
         return 'flanders';
       }
-      
+
       return 'balanceado'; // Default for intensity 3
     }
   }
 
   /**
    * Map new tone back to legacy format (for APIs that still return legacy)
-   * 
+   *
    * @param {string} tone - New tone ID (flanders/balanceado/canalla)
    * @returns {Object} Legacy format { humor_type, intensity_level }
    */
   mapNewToneToLegacy(tone) {
     const legacyMap = {
-      'flanders': { humor_type: 'witty', intensity_level: 2 },
-      'light': { humor_type: 'witty', intensity_level: 2 },
-      'balanceado': { humor_type: 'sarcastic', intensity_level: 3 },
-      'balanced': { humor_type: 'sarcastic', intensity_level: 3 },
-      'canalla': { humor_type: 'direct', intensity_level: 4 },
-      'savage': { humor_type: 'direct', intensity_level: 4 }
+      flanders: { humor_type: 'witty', intensity_level: 2 },
+      light: { humor_type: 'witty', intensity_level: 2 },
+      balanceado: { humor_type: 'sarcastic', intensity_level: 3 },
+      balanced: { humor_type: 'sarcastic', intensity_level: 3 },
+      canalla: { humor_type: 'direct', intensity_level: 4 },
+      savage: { humor_type: 'direct', intensity_level: 4 }
     };
 
     return legacyMap[tone] || { humor_type: 'witty', intensity_level: 3 };
@@ -119,10 +119,10 @@ class ToneCompatibilityService {
 
   /**
    * Normalize config to ensure it has a valid tone
-   * 
+   *
    * This is the main entry point for all code that needs to work with tones.
    * It accepts any combination of old/new parameters and returns normalized config.
-   * 
+   *
    * @param {Object} config - Input config (may have tone, style, humor_type, or intensity_level)
    * @returns {Object} Normalized config with tone
    */
@@ -158,12 +158,12 @@ class ToneCompatibilityService {
    */
   getToneIntensity(tone) {
     const intensityMap = {
-      'flanders': 2,
-      'light': 2,
-      'balanceado': 3,
-      'balanced': 3,
-      'canalla': 4,
-      'savage': 4
+      flanders: 2,
+      light: 2,
+      balanceado: 3,
+      balanced: 3,
+      canalla: 4,
+      savage: 4
     };
     return intensityMap[tone] || 3;
   }
@@ -177,20 +177,20 @@ class ToneCompatibilityService {
   getToneDisplayName(tone, language = 'es') {
     const displayNames = {
       es: {
-        'flanders': 'Flanders',
-        'light': 'Flanders',
-        'balanceado': 'Balanceado',
-        'balanced': 'Balanceado',
-        'canalla': 'Canalla',
-        'savage': 'Canalla'
+        flanders: 'Flanders',
+        light: 'Flanders',
+        balanceado: 'Balanceado',
+        balanced: 'Balanceado',
+        canalla: 'Canalla',
+        savage: 'Canalla'
       },
       en: {
-        'flanders': 'Light',
-        'light': 'Light',
-        'balanceado': 'Balanced',
-        'balanced': 'Balanced',
-        'canalla': 'Savage',
-        'savage': 'Savage'
+        flanders: 'Light',
+        light: 'Light',
+        balanceado: 'Balanced',
+        balanced: 'Balanced',
+        canalla: 'Savage',
+        savage: 'Savage'
       }
     };
     return displayNames[language]?.[tone] || tone;
@@ -201,4 +201,3 @@ class ToneCompatibilityService {
 const toneCompatibilityService = new ToneCompatibilityService();
 
 module.exports = toneCompatibilityService;
-

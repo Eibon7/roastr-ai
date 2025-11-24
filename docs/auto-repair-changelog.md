@@ -7,6 +7,7 @@
 **Nodes affected:** cost-control, observability, persona, plan-features, queue-system, roast, shield, social-platforms
 
 **Fixes applied:**
+
 - Reset coverage to 60% for cost-control (was 0%)
 - Reset coverage to 46% for observability (was 100%)
 - Reset coverage to 90% for persona (was 0%)
@@ -17,6 +18,7 @@
 - Reset coverage to 14% for social-platforms (was 0%)
 
 **Outcome:**
+
 - Health score: 84.3 → 90.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-11-19T14-52-54-853Z`
@@ -30,9 +32,11 @@
 **Nodes affected:** platform-constraints
 
 **Fixes applied:**
+
 - Added coverage source to platform-constraints
 
 **Outcome:**
+
 - Health score: 88.5 → 91.6
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-11-18T23-08-47-560Z`
@@ -46,9 +50,11 @@
 **Nodes affected:** platform-constraints
 
 **Fixes applied:**
+
 - Added coverage to platform-constraints
 
 **Outcome:**
+
 - Health score: 90.8 → 91.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-11-18T18-36-40-960Z`
@@ -62,9 +68,11 @@
 **Nodes affected:** platform-constraints
 
 **Fixes applied:**
+
 - Added agents section to platform-constraints
 
 **Outcome:**
+
 - Health score: 89.5 → 92.2
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T17-12-36-888Z`
@@ -78,9 +86,11 @@
 **Nodes affected:** multi-tenant
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 
 **Outcome:**
+
 - Health score: 88.1 → 88.1
 - Issues created: 1 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T12-04-17-546Z`
@@ -94,10 +104,12 @@
 **Nodes affected:** billing, multi-tenant
 
 **Fixes applied:**
+
 - Added coverage to billing
 - Added coverage to multi-tenant
 
 **Outcome:**
+
 - Health score: 86.5 → 88.1
 - Issues created: 1 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-11-11T11-27-37-714Z`
@@ -108,12 +120,12 @@
 
 **Repair ID:** 2025-11-09T15:46:53Z
 **Triggered by:** Manual
-**Nodes affected:** 
+**Nodes affected:**
 
 **Fixes applied:**
 
-
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 1 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-11-09T15-46-53-267Z`
@@ -129,6 +141,7 @@
 **Fixes applied:** None
 
 **Outcome:**
+
 - Health score: 89.4 → 89.4
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-11-05T22-55-17-546Z`
@@ -142,11 +155,13 @@
 **Nodes affected:** cost-control, roast, social-platforms
 
 **Fixes applied:**
+
 - Added coverage to cost-control
 - Added coverage to roast
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T20-03-04-476Z`
@@ -160,11 +175,13 @@
 **Nodes affected:** cost-control, roast, social-platforms
 
 **Fixes applied:**
+
 - Added coverage to cost-control
 - Added coverage to roast
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T16-24-23-947Z`
@@ -178,11 +195,13 @@
 **Nodes affected:** cost-control, roast, social-platforms
 
 **Fixes applied:**
+
 - Added coverage to cost-control
 - Added coverage to roast
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T15-58-15-746Z`
@@ -196,11 +215,13 @@
 **Nodes affected:** cost-control, roast, social-platforms
 
 **Fixes applied:**
+
 - Added coverage to cost-control
 - Added coverage to roast
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T14-47-46-012Z`
@@ -214,11 +235,13 @@
 **Nodes affected:** cost-control, roast, social-platforms
 
 **Fixes applied:**
+
 - Added coverage to cost-control
 - Added coverage to roast
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T11-05-24-589Z`
@@ -232,11 +255,13 @@
 **Nodes affected:** cost-control, roast, social-platforms
 
 **Fixes applied:**
+
 - Added coverage to cost-control
 - Added coverage to roast
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-16T07-27-40-183Z`
@@ -250,11 +275,13 @@
 **Nodes affected:** cost-control, roast, social-platforms
 
 **Fixes applied:**
+
 - Added coverage to cost-control
 - Added coverage to roast
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-15T22-29-31-279Z`
@@ -268,11 +295,13 @@
 **Nodes affected:** cost-control, roast, social-platforms
 
 **Fixes applied:**
+
 - Added coverage to cost-control
 - Added coverage to roast
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-15T19-26-34-934Z`
@@ -286,6 +315,7 @@
 **Nodes affected:** cost-control, observability, queue-system, roast, social-platforms
 
 **Fixes applied:**
+
 - Reset coverage to 0% for cost-control (was 5%)
 - Reset coverage to 3% for observability (was 14%)
 - Reset coverage to 6% for queue-system (was 12%)
@@ -293,6 +323,7 @@
 - Reset coverage to 0% for social-platforms (was 50%)
 
 **Outcome:**
+
 - Health score: 87.7 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-15T17-18-40-395Z`
@@ -306,9 +337,11 @@
 **Nodes affected:** roast
 
 **Fixes applied:**
+
 - Added coverage to roast
 
 **Outcome:**
+
 - Health score: 89.9 → 89.9
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T18-16-46-342Z`
@@ -322,9 +355,11 @@
 **Nodes affected:** roast
 
 **Fixes applied:**
+
 - Added coverage to roast
 
 **Outcome:**
+
 - Health score: 89.9 → 89.9
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T18-02-43-600Z`
@@ -338,9 +373,11 @@
 **Nodes affected:** roast
 
 **Fixes applied:**
+
 - Added coverage to roast
 
 **Outcome:**
+
 - Health score: 88.7 → 89.9
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T17-03-36-895Z`
@@ -354,9 +391,11 @@
 **Nodes affected:** roast
 
 **Fixes applied:**
+
 - Added coverage to roast
 
 **Outcome:**
+
 - Health score: 88.7 → 89.9
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T16-47-00-508Z`
@@ -370,9 +409,11 @@
 **Nodes affected:** social-platforms
 
 **Fixes applied:**
+
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 89.2 → 89.2
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T15-14-07-564Z`
@@ -386,9 +427,11 @@
 **Nodes affected:** social-platforms
 
 **Fixes applied:**
+
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 89.2 → 89.2
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T15-13-09-962Z`
@@ -402,9 +445,11 @@
 **Nodes affected:** social-platforms
 
 **Fixes applied:**
+
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 89.2 → 89.2
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T15-12-06-308Z`
@@ -418,9 +463,11 @@
 **Nodes affected:** social-platforms
 
 **Fixes applied:**
+
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 89.2 → 89.2
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T15-05-23-341Z`
@@ -434,9 +481,11 @@
 **Nodes affected:** social-platforms
 
 **Fixes applied:**
+
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 89.4
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-13T09-26-13-976Z`
@@ -450,10 +499,12 @@
 **Nodes affected:** observability, social-platforms
 
 **Fixes applied:**
+
 - Added status to observability
 - Added coverage to social-platforms
 
 **Outcome:**
+
 - Health score: 88.5 → 88.5
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-12T15-03-32-531Z`
@@ -467,10 +518,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-09T07-33-29-686Z`
@@ -484,10 +537,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T22-19-46-703Z`
@@ -501,10 +556,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T17-01-50-197Z`
@@ -518,10 +575,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T16-10-35-788Z`
@@ -535,10 +594,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T15-47-55-967Z`
@@ -552,10 +613,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T15-22-25-341Z`
@@ -569,10 +632,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T15-05-11-529Z`
@@ -586,10 +651,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T14-32-00-600Z`
@@ -603,10 +670,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T14-08-25-812Z`
@@ -620,10 +689,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T13-50-23-364Z`
@@ -637,10 +708,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T13-31-18-334Z`
@@ -654,10 +727,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T13-30-25-807Z`
@@ -671,10 +746,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T12-23-26-605Z`
@@ -688,10 +765,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T11-22-36-690Z`
@@ -705,9 +784,11 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Fix description unavailable (legacy entry - serialization bug fixed in review #3314283246)
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T10-57-39-195Z`
@@ -721,9 +802,11 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Fix description unavailable (legacy entry - serialization bug fixed in review #3314283246)
 
 **Outcome:**
+
 - Health score: 98.8 → 98.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T10-32-42-721Z`
@@ -737,10 +820,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 98.8 → 98.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T10-16-48-206Z`
@@ -754,10 +839,12 @@
 **Nodes affected:** multi-tenant, trainer
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 
 **Outcome:**
+
 - Health score: 98.8 → 98.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T10-12-51-812Z`
@@ -771,6 +858,7 @@
 **Nodes affected:** multi-tenant, trainer, analytics, billing, cost-control, persona, plan-features, platform-constraints, queue-system, roast, shield, social-platforms, tone
 
 **Fixes applied:**
+
 - Added coverage to multi-tenant
 - Added coverage to trainer
 - Added coverage source to analytics
@@ -788,6 +876,7 @@
 - Added coverage source to trainer
 
 **Outcome:**
+
 - Health score: 93.8 → 93.8
 - Issues created: 0 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-08T09-09-53-564Z`

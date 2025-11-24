@@ -12,6 +12,7 @@ All endpoints support **100% mock mode** for CI/CD and development without exter
 ## 🔐 Authentication
 
 Most endpoints require authentication via JWT token in `Authorization` header:
+
 ```
 Authorization: Bearer <jwt_token>
 ```
@@ -19,9 +20,11 @@ Authorization: Bearer <jwt_token>
 ## 📋 Plan Management API
 
 ### GET /api/plan/available
+
 Get all available subscription plans.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -53,9 +56,11 @@ Get all available subscription plans.
 ```
 
 ### GET /api/plan/current
+
 Get current user's plan (authenticated).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -72,9 +77,11 @@ Get current user's plan (authenticated).
 ```
 
 ### POST /api/plan/select
+
 Select a new plan (authenticated).
 
 **Request:**
+
 ```json
 {
   "plan": "creator_plus"
@@ -82,6 +89,7 @@ Select a new plan (authenticated).
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -96,9 +104,11 @@ Select a new plan (authenticated).
 ## 🎨 Style Profile API
 
 ### GET /api/style-profile/status
+
 Check Style Profile feature access and status (authenticated).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -112,9 +122,11 @@ Check Style Profile feature access and status (authenticated).
 ```
 
 ### GET /api/style-profile
+
 Get user's existing style profile (authenticated).
 
 **Response (No Profile):**
+
 ```json
 {
   "success": true,
@@ -126,6 +138,7 @@ Get user's existing style profile (authenticated).
 ```
 
 **Response (Profile Exists):**
+
 ```json
 {
   "success": true,
@@ -153,9 +166,11 @@ Get user's existing style profile (authenticated).
 ```
 
 ### POST /api/style-profile/generate
+
 Generate a new style profile (authenticated, Creator+ required).
 
 **Request:**
+
 ```json
 {
   "platforms": ["twitter", "instagram"],
@@ -164,6 +179,7 @@ Generate a new style profile (authenticated, Creator+ required).
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -181,8 +197,8 @@ Generate a new style profile (authenticated, Creator+ required).
           "topicDistribution": {
             "humor": 0.35,
             "commentary": 0.25,
-            "personal": 0.20,
-            "other": 0.20
+            "personal": 0.2,
+            "other": 0.2
           }
         },
         "createdAt": "2025-01-09T15:30:00Z"
@@ -197,6 +213,7 @@ Generate a new style profile (authenticated, Creator+ required).
 ```
 
 **Error Response (Insufficient Plan):**
+
 ```json
 {
   "success": false,
@@ -207,9 +224,11 @@ Generate a new style profile (authenticated, Creator+ required).
 ```
 
 ### DELETE /api/style-profile
+
 Delete user's style profile (authenticated).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -220,9 +239,11 @@ Delete user's style profile (authenticated).
 ## 🔗 Integration Management API
 
 ### GET /api/integrations/platforms
+
 Get available social media platforms for integration.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -250,9 +271,11 @@ Get available social media platforms for integration.
 ```
 
 ### GET /api/integrations/status
+
 Get user's integration status (authenticated).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -280,9 +303,11 @@ Get user's integration status (authenticated).
 ```
 
 ### POST /api/integrations/connect
+
 Connect to a social media platform (authenticated).
 
 **Request:**
+
 ```json
 {
   "platform": "twitter"
@@ -290,6 +315,7 @@ Connect to a social media platform (authenticated).
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -303,9 +329,11 @@ Connect to a social media platform (authenticated).
 ```
 
 ### POST /api/integrations/import
+
 Import content from a connected platform (authenticated).
 
 **Request:**
+
 ```json
 {
   "platform": "twitter",
@@ -314,6 +342,7 @@ Import content from a connected platform (authenticated).
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -329,9 +358,11 @@ Import content from a connected platform (authenticated).
 ## 🏥 Health & Monitoring
 
 ### GET /api/health
+
 Application health check.
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -357,6 +388,7 @@ All endpoints use consistent error format:
 ```
 
 ### Common Error Codes:
+
 - `UNAUTHORIZED` (401): Invalid or missing authentication
 - `FORBIDDEN` (403): Insufficient plan or permissions
 - `NOT_FOUND` (404): Resource not found
@@ -367,6 +399,7 @@ All endpoints use consistent error format:
 ## 🎭 Mock Mode Behavior
 
 In mock mode, all endpoints:
+
 - Return realistic fake data
 - Simulate network delays (100-200ms)
 - Never make external API calls
@@ -374,6 +407,7 @@ In mock mode, all endpoints:
 - Support all error scenarios for testing
 
 ### Mock Data Features:
+
 - **Multi-language profiles** with Spanish/English content
 - **Realistic user content** from multiple platforms
 - **Plan gating simulation** with Creator+ requirements
@@ -383,17 +417,19 @@ In mock mode, all endpoints:
 ## 🔧 Environment Variables
 
 ### Mock Mode Configuration:
+
 ```bash
 # Backend Mock Mode
 ENABLE_MOCK_MODE=true
 
-# Frontend Mock Mode  
+# Frontend Mock Mode
 REACT_APP_ENABLE_MOCK_MODE=true
 REACT_APP_SUPABASE_URL=http://localhost/mock
 REACT_APP_SUPABASE_ANON_KEY=mock-anon-key
 ```
 
 ### Production Configuration:
+
 ```bash
 # Real API keys (not in repo)
 OPENAI_API_KEY=sk-real-key

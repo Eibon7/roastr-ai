@@ -1,7 +1,7 @@
 /**
  * GenerateReplyWorker Security Tests
  * Issue #405 - CodeRabbit Round 2 Security Fixes
- * 
+ *
  * Tests critical security validations for content validation:
  * - Atomic content validation with checksums
  * - Race condition prevention
@@ -17,11 +17,11 @@ const { createSupabaseMock } = require('../../helpers/supabaseMockFactory');
 
 // Create Supabase mock with defaults for all tables that might be used
 const mockSupabase = createSupabaseMock({
-    comments: [],
-    responses: [],
-    plan_limits: [],
-    organizations: [],
-    roast_approvals: []
+  comments: [],
+  responses: [],
+  plan_limits: [],
+  organizations: [],
+  roast_approvals: []
 });
 
 // Mock dependencies
@@ -143,12 +143,12 @@ const { logger } = require('../../../src/utils/logger');
 describe('GenerateReplyWorker - Security Validations', () => {
   let worker;
   let mockAutoApprovalService;
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset Supabase mock to defaults
     mockSupabase._reset();
-    
+
     // Configure mockSupabase.from to return a chainable mock
     const mockTableBuilder = {
       select: jest.fn(() => ({
@@ -161,7 +161,7 @@ describe('GenerateReplyWorker - Security Validations', () => {
       update: jest.fn(() => Promise.resolve({ data: null, error: null }))
     };
     mockSupabase.from.mockReturnValue(mockTableBuilder);
-    
+
     worker = new GenerateReplyWorker();
     mockAutoApprovalService = worker.autoApprovalService;
   });
@@ -180,9 +180,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
         const originalResponse = { content: 'This is a test roast' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
@@ -196,9 +196,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
         const originalResponse = { content: 'Original roast content' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
@@ -217,9 +217,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
         const originalResponse = { content: 'Original' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
@@ -238,10 +238,10 @@ describe('GenerateReplyWorker - Security Validations', () => {
       test('should generate consistent checksums for identical content', () => {
         const content1 = 'This is test content';
         const content2 = 'This is test content';
-        
+
         const checksum1 = worker.calculateContentChecksum(content1);
         const checksum2 = worker.calculateContentChecksum(content2);
-        
+
         expect(checksum1).toBe(checksum2);
         expect(checksum1).toMatch(/^[a-f0-9]{64}$/); // SHA-256 hex format
       });
@@ -249,10 +249,10 @@ describe('GenerateReplyWorker - Security Validations', () => {
       test('should generate different checksums for different content', () => {
         const content1 = 'Original content';
         const content2 = 'Modified content';
-        
+
         const checksum1 = worker.calculateContentChecksum(content1);
         const checksum2 = worker.calculateContentChecksum(content2);
-        
+
         expect(checksum1).not.toBe(checksum2);
       });
 
@@ -262,15 +262,15 @@ describe('GenerateReplyWorker - Security Validations', () => {
         const originalResponse = { content: 'Original roast content here' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
         expect(result.valid).toBe(false);
         expect(result.reason).toBe('content_text_mismatch');
-        
+
         // Even though lengths are same, checksums should be different
         const storedChecksum = worker.calculateContentChecksum(storedResponse.content);
         const approvedChecksum = worker.calculateContentChecksum(approvedVariant.content);
@@ -280,10 +280,10 @@ describe('GenerateReplyWorker - Security Validations', () => {
       test('should handle special characters and unicode in checksums', () => {
         const content1 = 'Roast with émojis 🔥 and special chars: áéíóú';
         const content2 = 'Roast with emojis 🔥 and special chars: aeiou'; // Different
-        
+
         const checksum1 = worker.calculateContentChecksum(content1);
         const checksum2 = worker.calculateContentChecksum(content2);
-        
+
         expect(checksum1).not.toBe(checksum2);
         expect(checksum1).toMatch(/^[a-f0-9]{64}$/);
         expect(checksum2).toMatch(/^[a-f0-9]{64}$/);
@@ -292,24 +292,24 @@ describe('GenerateReplyWorker - Security Validations', () => {
 
     describe('Layer 3: Metadata validation', () => {
       test('should validate critical metadata fields match', async () => {
-        const storedResponse = { 
+        const storedResponse = {
           content: 'Test content',
           platform: 'twitter',
           organizationId: 'org-123',
           transparency: 'signature'
         };
-        const approvedVariant = { 
+        const approvedVariant = {
           content: 'Test content',
           platform: 'twitter',
-          organizationId: 'org-123', 
+          organizationId: 'org-123',
           transparency: 'signature'
         };
         const originalResponse = { content: 'Test content' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
@@ -318,41 +318,38 @@ describe('GenerateReplyWorker - Security Validations', () => {
       });
 
       test('should fail when critical metadata differs', async () => {
-        const storedResponse = { 
+        const storedResponse = {
           content: 'Test content',
           organizationId: 'org-123',
           transparency: 'signature'
         };
-        const approvedVariant = { 
+        const approvedVariant = {
           content: 'Test content',
           organizationId: 'org-456', // Different org
-          transparency: 'disclaimer'  // Different transparency
+          transparency: 'disclaimer' // Different transparency
         };
         const originalResponse = { content: 'Test content' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
         expect(result.valid).toBe(false);
         expect(result.reason).toBe('metadata_mismatch');
-        expect(result.details.metadataDifferences).toEqual([
-          'organizationId',
-          'transparency'
-        ]);
+        expect(result.details.metadataDifferences).toEqual(['organizationId', 'transparency']);
       });
 
       test('should ignore non-critical metadata differences', async () => {
-        const storedResponse = { 
+        const storedResponse = {
           content: 'Test content',
           organizationId: 'org-123',
           timestamp: '2025-01-26T10:00:00Z',
           processingTime: 1500
         };
-        const approvedVariant = { 
+        const approvedVariant = {
           content: 'Test content',
           organizationId: 'org-123',
           timestamp: '2025-01-26T10:01:00Z', // Different timestamp - should be ignored
@@ -361,9 +358,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
         const originalResponse = { content: 'Test content' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
@@ -375,20 +372,20 @@ describe('GenerateReplyWorker - Security Validations', () => {
 
     describe('Layer 4: Temporal validation (race condition detection)', () => {
       test('should detect potential race conditions from timing analysis', async () => {
-        const storedResponse = { 
+        const storedResponse = {
           content: 'Test content',
           timestamp: '2025-01-26T10:00:00Z'
         };
-        const approvedVariant = { 
+        const approvedVariant = {
           content: 'Test content',
           approvalTimestamp: '2025-01-26T09:59:30Z' // Approved before stored
         };
         const originalResponse = { content: 'Test content' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
@@ -406,20 +403,20 @@ describe('GenerateReplyWorker - Security Validations', () => {
       });
 
       test('should pass temporal validation for normal timing', async () => {
-        const storedResponse = { 
+        const storedResponse = {
           content: 'Test content',
           timestamp: '2025-01-26T10:00:00Z'
         };
-        const approvedVariant = { 
+        const approvedVariant = {
           content: 'Test content',
           approvalTimestamp: '2025-01-26T10:00:30Z' // Approved after stored
         };
         const originalResponse = { content: 'Test content' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
@@ -433,9 +430,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
         const originalResponse = { content: 'Test content' };
 
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
@@ -456,9 +453,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
 
         const startTime = Date.now();
         const result = await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
         const duration = Date.now() - startTime;
@@ -472,27 +469,27 @@ describe('GenerateReplyWorker - Security Validations', () => {
       });
 
       test('should sanitize sensitive information from logs', async () => {
-        const storedResponse = { 
+        const storedResponse = {
           content: 'Test content with API_KEY=secret123',
-          apiKey: 'secret123' 
+          apiKey: 'secret123'
         };
-        const approvedVariant = { 
+        const approvedVariant = {
           content: 'Modified content with API_KEY=secret456',
           apiKey: 'secret456'
         };
         const originalResponse = { content: 'Original content' };
 
         await worker.validateContentAtomically(
-          storedResponse, 
-          approvedVariant, 
-          originalResponse, 
+          storedResponse,
+          approvedVariant,
+          originalResponse,
           mockContext
         );
 
         // Check that sensitive info is not logged in plain text
         const logCalls = logger.warn.mock.calls.flat();
         const loggedContent = logCalls.join(' ');
-        
+
         expect(loggedContent).not.toContain('secret123');
         expect(loggedContent).not.toContain('secret456');
         expect(loggedContent).not.toContain('API_KEY=secret');
@@ -521,9 +518,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: { 
+          data: {
             content: 'Test roast without transparency',
-            transparency_applied: false 
+            transparency_applied: false
           },
           error: null
         })
@@ -564,7 +561,7 @@ describe('GenerateReplyWorker - Security Validations', () => {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: { 
+          data: {
             content: 'Test roast with proper transparency disclaimer',
             transparency_applied: true,
             transparency_type: 'disclaimer'
@@ -600,9 +597,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
       });
 
       const result = await worker.validateContentAtomically(
-        storedResponse, 
-        approvedVariant, 
-        originalResponse, 
+        storedResponse,
+        approvedVariant,
+        originalResponse,
         mockContext
       );
 
@@ -623,9 +620,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
       const originalResponse = { content: largeContent };
 
       const result = await worker.validateContentAtomically(
-        storedResponse, 
-        approvedVariant, 
-        originalResponse, 
+        storedResponse,
+        approvedVariant,
+        originalResponse,
         mockContext
       );
 
@@ -640,9 +637,9 @@ describe('GenerateReplyWorker - Security Validations', () => {
       const originalResponse = { content: 'Normal content' };
 
       const result = await worker.validateContentAtomically(
-        storedResponse, 
-        approvedVariant, 
-        originalResponse, 
+        storedResponse,
+        approvedVariant,
+        originalResponse,
         mockContext
       );
 

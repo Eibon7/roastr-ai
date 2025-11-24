@@ -1,4 +1,5 @@
 const TwitterRoastBot = require('../../services/twitter');
+const { logger } = require('./../../utils/logger'); // Issue #971: Added for console.log replacement
 
 /**
  * Twitter Service Adapter
@@ -41,7 +42,7 @@ class TwitterService {
       this.platform = 'twitter';
       this.displayName = 'Twitter';
     } catch (error) {
-      console.error('[TwitterService Adapter] Failed to initialize legacy bot:', error.message);
+      logger.error('[TwitterService Adapter] Failed to initialize legacy bot:', error.message);
       throw new Error(`Twitter service adapter initialization failed: ${error.message}`);
     }
   }
@@ -93,9 +94,8 @@ class TwitterService {
           error: result.error || 'Unknown error from legacy Twitter bot'
         };
       }
-
     } catch (error) {
-      console.error('[TwitterService Adapter] postResponse failed:', error.message);
+      logger.error('[TwitterService Adapter] postResponse failed:', error.message);
 
       return {
         success: false,

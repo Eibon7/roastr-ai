@@ -57,10 +57,7 @@ describe.skip('Trial Management Integration (SKIPPED - needs real DB)', () => {
 
   afterEach(async () => {
     // Cleanup test data
-    await supabaseServiceClient
-      .from('organizations')
-      .delete()
-      .eq('id', testUserId);
+    await supabaseServiceClient.from('organizations').delete().eq('id', testUserId);
   });
 
   describe('EntitlementsService Trial Methods', () => {
@@ -104,7 +101,7 @@ describe.skip('Trial Management Integration (SKIPPED - needs real DB)', () => {
       expect(shortTrialResult.success).toBe(true);
 
       // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Check expiration
       const isExpired = await entitlementsService.checkTrialExpiration(testUserId);

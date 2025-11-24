@@ -47,28 +47,30 @@ export const DEFAULT_USAGE = {
 // Get default entitlements based on plan or environment
 export function getDefaultEntitlements(planName = null) {
   // Check if we're in mock mode
-  const isMockMode = process.env.REACT_APP_ENABLE_MOCK_MODE === 'true' || 
-                     window.localStorage?.getItem('mockMode') === 'true';
-  
+  const isMockMode =
+    process.env.REACT_APP_ENABLE_MOCK_MODE === 'true' ||
+    window.localStorage?.getItem('mockMode') === 'true';
+
   // In production or when plan is specified, use that plan's defaults
   if (planName && PLAN_DEFAULTS[planName]) {
     return PLAN_DEFAULTS[planName];
   }
-  
+
   // Default to starter plan in development/mock mode
   if (isMockMode || process.env.NODE_ENV === 'development') {
     return PLAN_DEFAULTS.starter;
   }
-  
+
   // Default to starter_trial plan in production when no plan specified
   return PLAN_DEFAULTS.starter_trial;
 }
 
 // Get default usage based on environment
 export function getDefaultUsage() {
-  const isMockMode = process.env.REACT_APP_ENABLE_MOCK_MODE === 'true' || 
-                     window.localStorage?.getItem('mockMode') === 'true';
-  
+  const isMockMode =
+    process.env.REACT_APP_ENABLE_MOCK_MODE === 'true' ||
+    window.localStorage?.getItem('mockMode') === 'true';
+
   // In mock/development mode, return some usage
   if (isMockMode || process.env.NODE_ENV === 'development') {
     return {
@@ -77,7 +79,7 @@ export function getDefaultUsage() {
       costCents: 1500
     };
   }
-  
+
   // In production, return empty usage
   return DEFAULT_USAGE;
 }

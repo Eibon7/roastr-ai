@@ -3,7 +3,7 @@
 /**
  * Production Deployment Checklist Script
  * Issue #90: Automated validation of production readiness for social integrations
- * 
+ *
  * This script validates all requirements for deploying social media integrations to production
  */
 
@@ -22,7 +22,7 @@ class ProductionReadinessChecker {
     };
     this.requiredEnvVars = [
       'TWITTER_CLIENT_ID',
-      'TWITTER_CLIENT_SECRET', 
+      'TWITTER_CLIENT_SECRET',
       'YOUTUBE_CLIENT_ID',
       'YOUTUBE_CLIENT_SECRET',
       'INSTAGRAM_CLIENT_ID',
@@ -35,11 +35,11 @@ class ProductionReadinessChecker {
 
   log(message, type = 'info') {
     const colors = {
-      info: '\x1b[36m',    // Cyan
-      success: '\x1b[32m', // Green  
+      info: '\x1b[36m', // Cyan
+      success: '\x1b[32m', // Green
       warning: '\x1b[33m', // Yellow
-      error: '\x1b[31m',   // Red
-      reset: '\x1b[0m'     // Reset
+      error: '\x1b[31m', // Red
+      reset: '\x1b[0m' // Reset
     };
 
     const icon = {
@@ -56,7 +56,7 @@ class ProductionReadinessChecker {
     try {
       this.log(`Checking: ${name}`, 'info');
       const result = await checkFunction();
-      
+
       if (result.passed) {
         this.results.passed++;
         this.log(`${name}: PASSED`, 'success');
@@ -80,7 +80,6 @@ class ProductionReadinessChecker {
         details: result.details,
         required
       });
-
     } catch (error) {
       this.results.failed++;
       this.log(`${name}: ERROR - ${error.message}`, 'error');
@@ -108,9 +107,10 @@ class ProductionReadinessChecker {
 
     return {
       passed: missing.length === 0,
-      message: missing.length > 0 
-        ? `Missing required environment variables: ${missing.join(', ')}`
-        : `All ${present.length} required environment variables are set`,
+      message:
+        missing.length > 0
+          ? `Missing required environment variables: ${missing.join(', ')}`
+          : `All ${present.length} required environment variables are set`,
       details: `Present: ${present.length}, Missing: ${missing.length}`
     };
   }
@@ -118,7 +118,7 @@ class ProductionReadinessChecker {
   // SSL/HTTPS configuration check
   async checkSSLConfiguration() {
     const publicUrl = process.env.PUBLIC_URL;
-    
+
     if (!publicUrl) {
       return {
         passed: false,
@@ -135,14 +135,14 @@ class ProductionReadinessChecker {
 
     try {
       // Basic connectivity test
-      const response = await fetch(`${publicUrl}/health`, { 
+      const response = await fetch(`${publicUrl}/health`, {
         timeout: 5000,
         method: 'GET'
       });
-      
+
       return {
         passed: response.ok || response.status === 404, // 404 is fine, means server is responding
-        message: response.ok 
+        message: response.ok
           ? 'HTTPS endpoint accessible'
           : `Server responding but health check failed (${response.status})`,
         details: `URL: ${publicUrl}`
@@ -176,9 +176,10 @@ class ProductionReadinessChecker {
 
       return {
         passed: isValidUrl && hasValidKey,
-        message: isValidUrl && hasValidKey 
-          ? 'Database configuration appears valid'
-          : 'Database configuration format invalid',
+        message:
+          isValidUrl && hasValidKey
+            ? 'Database configuration appears valid'
+            : 'Database configuration format invalid',
         details: `URL format valid: ${isValidUrl}, Key format valid: ${hasValidKey}`
       };
     } catch (error) {
@@ -191,11 +192,7 @@ class ProductionReadinessChecker {
 
   // File system permissions check
   async checkFileSystemPermissions() {
-    const testPaths = [
-      './logs',
-      './data',
-      './temp'
-    ];
+    const testPaths = ['./logs', './data', './temp'];
 
     const results = [];
     for (const testPath of testPaths) {
@@ -209,18 +206,18 @@ class ProductionReadinessChecker {
         const testFile = path.join(testPath, `test-${Date.now()}.tmp`);
         fs.writeFileSync(testFile, 'test');
         fs.unlinkSync(testFile);
-        
+
         results.push(`${testPath}: OK`);
       } catch (error) {
         results.push(`${testPath}: ERROR - ${error.message}`);
       }
     }
 
-    const allPassed = results.every(r => r.includes('OK'));
-    
+    const allPassed = results.every((r) => r.includes('OK'));
+
     return {
       passed: allPassed,
-      message: allPassed 
+      message: allPassed
         ? 'File system permissions verified'
         : 'Some directories have permission issues',
       details: results.join(', ')
@@ -236,7 +233,7 @@ class ProductionReadinessChecker {
     for (const platform of platforms) {
       const clientIdKey = `${platform.toUpperCase()}_CLIENT_ID`;
       const clientSecretKey = `${platform.toUpperCase()}_CLIENT_SECRET`;
-      
+
       const clientId = process.env[clientIdKey];
       const clientSecret = process.env[clientSecretKey];
 
@@ -261,14 +258,14 @@ class ProductionReadinessChecker {
             validFormat = false;
           }
           break;
-        
+
         case 'youtube':
           if (!clientId.includes('.apps.googleusercontent.com')) {
             formatIssues.push('Client ID should be Google OAuth format');
             validFormat = false;
           }
           break;
-          
+
         case 'instagram':
           if (clientId.length < 10) {
             formatIssues.push('Client ID too short');
@@ -286,26 +283,24 @@ class ProductionReadinessChecker {
 
     return {
       passed: issues.length === 0,
-      message: issues.length === 0 
-        ? `OAuth configuration valid for all ${validConfigs.length} platforms`
-        : `OAuth configuration issues: ${issues.join('; ')}`,
+      message:
+        issues.length === 0
+          ? `OAuth configuration valid for all ${validConfigs.length} platforms`
+          : `OAuth configuration issues: ${issues.join('; ')}`,
       details: `Valid: ${validConfigs.join(', ')}, Issues: ${issues.length}`
     };
   }
 
   // Webhook security validation
   async checkWebhookSecurity() {
-    const webhookSecrets = [
-      'TWITTER_WEBHOOK_SECRET',
-      'YOUTUBE_WEBHOOK_SECRET'
-    ];
+    const webhookSecrets = ['TWITTER_WEBHOOK_SECRET', 'YOUTUBE_WEBHOOK_SECRET'];
 
     const issues = [];
     const validSecrets = [];
 
     for (const secretVar of webhookSecrets) {
       const secret = process.env[secretVar];
-      
+
       if (!secret) {
         issues.push(`${secretVar} not set`);
         continue;
@@ -323,9 +318,10 @@ class ProductionReadinessChecker {
 
     return {
       passed: issues.length === 0,
-      message: issues.length === 0 
-        ? `All ${validSecrets.length} webhook secrets properly configured`
-        : `Webhook security issues: ${issues.join('; ')}`,
+      message:
+        issues.length === 0
+          ? `All ${validSecrets.length} webhook secrets properly configured`
+          : `Webhook security issues: ${issues.join('; ')}`,
       details: `Valid secrets: ${validSecrets.length}, Issues: ${issues.length}`
     };
   }
@@ -337,24 +333,25 @@ class ProductionReadinessChecker {
     const debugMode = process.env.DEBUG === 'true';
 
     const issues = [];
-    
+
     if (nodeEnv !== 'production') {
       issues.push(`NODE_ENV is '${nodeEnv}', should be 'production'`);
     }
-    
+
     if (mockMode) {
       issues.push('ENABLE_MOCK_MODE is enabled - should be disabled for production');
     }
-    
+
     if (debugMode) {
       issues.push('DEBUG mode is enabled - consider disabling for production');
     }
 
     return {
       passed: issues.length === 0,
-      message: issues.length === 0 
-        ? 'Production environment configuration correct'
-        : `Environment issues: ${issues.join('; ')}`,
+      message:
+        issues.length === 0
+          ? 'Production environment configuration correct'
+          : `Environment issues: ${issues.join('; ')}`,
       details: `NODE_ENV: ${nodeEnv}, Mock: ${mockMode}, Debug: ${debugMode}`
     };
   }
@@ -364,21 +361,21 @@ class ProductionReadinessChecker {
     try {
       const packageJson = require('../package.json');
       const issues = [];
-      
+
       // Check for security-sensitive packages
       const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies };
-      
+
       // Basic security checks
       let securityPackages = 0;
       if (dependencies['helmet']) securityPackages++;
       if (dependencies['express-rate-limit']) securityPackages++;
       if (dependencies['cors']) securityPackages++;
-      
+
       if (securityPackages < 2) {
         issues.push('Missing recommended security packages (helmet, express-rate-limit, cors)');
       }
 
-      // Check for outdated critical packages  
+      // Check for outdated critical packages
       const criticalPackages = ['express', 'jsonwebtoken', 'bcrypt'];
       for (const pkg of criticalPackages) {
         if (dependencies[pkg] && dependencies[pkg].startsWith('^0.')) {
@@ -388,9 +385,10 @@ class ProductionReadinessChecker {
 
       return {
         passed: issues.length === 0,
-        message: issues.length === 0 
-          ? 'Dependencies and security packages validated'
-          : `Dependency issues: ${issues.join('; ')}`,
+        message:
+          issues.length === 0
+            ? 'Dependencies and security packages validated'
+            : `Dependency issues: ${issues.join('; ')}`,
         details: `Security packages: ${securityPackages}, Total deps: ${Object.keys(dependencies).length}`
       };
     } catch (error) {
@@ -404,11 +402,7 @@ class ProductionReadinessChecker {
   // API endpoints accessibility check
   async checkAPIEndpoints() {
     const baseUrl = process.env.PUBLIC_URL || 'http://localhost:3000';
-    const endpoints = [
-      '/api/webhooks/status',
-      '/api/integrations/platforms',
-      '/health'
-    ];
+    const endpoints = ['/api/webhooks/status', '/api/integrations/platforms', '/health'];
 
     const results = [];
     for (const endpoint of endpoints) {
@@ -417,7 +411,7 @@ class ProductionReadinessChecker {
           timeout: 3000,
           headers: { 'User-Agent': 'ProductionReadinessChecker/1.0' }
         });
-        
+
         results.push({
           endpoint,
           status: response.status,
@@ -433,14 +427,15 @@ class ProductionReadinessChecker {
       }
     }
 
-    const accessibleCount = results.filter(r => r.accessible).length;
-    
+    const accessibleCount = results.filter((r) => r.accessible).length;
+
     return {
       passed: accessibleCount === endpoints.length,
-      message: accessibleCount === endpoints.length 
-        ? 'All API endpoints accessible'
-        : `${accessibleCount}/${endpoints.length} endpoints accessible`,
-      details: results.map(r => `${r.endpoint}: ${r.status}`).join(', ')
+      message:
+        accessibleCount === endpoints.length
+          ? 'All API endpoints accessible'
+          : `${accessibleCount}/${endpoints.length} endpoints accessible`,
+      details: results.map((r) => `${r.endpoint}: ${r.status}`).join(', ')
     };
   }
 
@@ -464,15 +459,15 @@ class ProductionReadinessChecker {
 
   generateRecommendations() {
     const recommendations = [];
-    
+
     if (this.results.failed > 0) {
       recommendations.push('❌ BLOCKING: Address all failed checks before deploying to production');
     }
-    
+
     if (this.results.warnings > 0) {
       recommendations.push('⚠️ RECOMMENDED: Address warnings to improve production stability');
     }
-    
+
     if (this.results.failed === 0 && this.results.warnings === 0) {
       recommendations.push('✅ READY: All checks passed - deployment can proceed');
     }
@@ -489,7 +484,7 @@ class ProductionReadinessChecker {
   // Main execution
   async run() {
     this.log('🚀 Production Readiness Check for Social Media Integrations', 'info');
-    this.log('=' .repeat(60), 'info');
+    this.log('='.repeat(60), 'info');
 
     // Run all checks
     await this.runCheck('Environment Variables', () => this.checkEnvironmentVariables());
@@ -504,18 +499,18 @@ class ProductionReadinessChecker {
 
     // Generate and display report
     const report = this.generateReport();
-    
-    this.log('=' .repeat(60), 'info');
+
+    this.log('='.repeat(60), 'info');
     this.log('📊 DEPLOYMENT READINESS REPORT', 'info');
-    this.log('=' .repeat(60), 'info');
-    
+    this.log('='.repeat(60), 'info');
+
     this.log(`Total Checks: ${report.summary.total}`, 'info');
     this.log(`Passed: ${report.summary.passed}`, 'success');
-    
+
     if (report.summary.failed > 0) {
       this.log(`Failed: ${report.summary.failed}`, 'error');
     }
-    
+
     if (report.summary.warnings > 0) {
       this.log(`Warnings: ${report.summary.warnings}`, 'warning');
     }
@@ -529,12 +524,17 @@ class ProductionReadinessChecker {
 
     // Recommendations
     this.log('\n📋 RECOMMENDATIONS:', 'info');
-    report.recommendations.forEach(rec => {
+    report.recommendations.forEach((rec) => {
       console.log(`   ${rec}`);
     });
 
     // Save detailed report
-    const reportPath = path.join(__dirname, '..', 'logs', `production-readiness-${Date.now()}.json`);
+    const reportPath = path.join(
+      __dirname,
+      '..',
+      'logs',
+      `production-readiness-${Date.now()}.json`
+    );
     try {
       if (!fs.existsSync(path.dirname(reportPath))) {
         fs.mkdirSync(path.dirname(reportPath), { recursive: true });
@@ -553,7 +553,7 @@ class ProductionReadinessChecker {
 // Execute if run directly
 if (require.main === module) {
   const checker = new ProductionReadinessChecker();
-  checker.run().catch(error => {
+  checker.run().catch((error) => {
     console.error('❌ Production readiness check failed:', error);
     process.exit(1);
   });

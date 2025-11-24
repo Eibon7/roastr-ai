@@ -11,12 +11,12 @@
 
 ### Severity Breakdown
 
-| Severity | Count | Type | Files Affected |
-|----------|-------|------|----------------|
-| 🔴 Critical | 1 | Test Infrastructure | tests/integration/roast.test.js |
-| 🟠 Major | 2 | Mock Pattern Bugs | tests/helpers/roastMockFactory.js (2) |
-| 🟠 P1 | 1 | Test Infrastructure | tests/integration/roast.test.js |
-| **TOTAL** | **4** | - | **2 files** |
+| Severity    | Count | Type                | Files Affected                        |
+| ----------- | ----- | ------------------- | ------------------------------------- |
+| 🔴 Critical | 1     | Test Infrastructure | tests/integration/roast.test.js       |
+| 🟠 Major    | 2     | Mock Pattern Bugs   | tests/helpers/roastMockFactory.js (2) |
+| 🟠 P1       | 1     | Test Infrastructure | tests/integration/roast.test.js       |
+| **TOTAL**   | **4** | -                   | **2 files**                           |
 
 ### Issue Categories
 
@@ -37,11 +37,13 @@
 `createRoastSupabaseMock()` attaches helper methods (`_createBuilder`, `_createBuilderWithData`) to the `from` jest.fn. When tests override `testMock.from` with a new `jest.fn()`, these helpers disappear, causing `_createBuilderWithData` to be undefined.
 
 **Impact:**
+
 - Breaks all tests that override `testMock.from`
 - Causes immediate errors: `_createBuilderWithData is not a function`
 - Affects 3 test blocks in roast.test.js
 
 **Root Cause:**
+
 ```javascript
 // ❌ Current code - helpers lost
 testMock.from = jest.fn((tableName) => {
@@ -52,6 +54,7 @@ testMock.from = jest.fn((tableName) => {
 
 **Fix Strategy:**
 Preserve original helper-bearing function before reassignment:
+
 ```javascript
 // ✅ Correct pattern
 const originalFrom = testMock.from; // Capture helpers
@@ -63,6 +66,7 @@ Object.assign(testMock.from, originalFrom); // Preserve helpers
 ```
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/testing.md` - Integration test patterns
 
 ---
@@ -75,11 +79,13 @@ Object.assign(testMock.from, originalFrom); // Preserve helpers
 `mockData` assigns option arrays by reference, allowing upstream fixtures to be mutated when `insert()` or `reset()` runs. This reintroduces state bleed.
 
 **Impact:**
+
 - Defeats the entire purpose of Issue #680 (mock isolation)
 - Calling `reset()` empties the caller's original array
 - Tests can affect each other through shared references
 
 **Root Cause:**
+
 ```javascript
 // ❌ Current code - reference leak
 const mockData = {
@@ -91,6 +97,7 @@ const mockData = {
 
 **Fix Strategy:**
 Clone arrays with spread operator:
+
 ```javascript
 // ✅ Correct pattern
 const mockData = {
@@ -101,6 +108,7 @@ const mockData = {
 ```
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/testing.md` - Mock isolation patterns
 
 ---
@@ -113,11 +121,13 @@ const mockData = {
 Using `||` for defaults incorrectly overrides legitimate `0` inputs (tokensUsed, cost, count, intensity) back to defaults. Can't model boundary cases like "zero usage but existing record."
 
 **Impact:**
+
 - Can't test zero-value scenarios
 - Explicit `0` becomes `100` (tokensUsed) or `3` (intensity)
 - Limits test coverage for edge cases
 
 **Root Cause:**
+
 ```javascript
 // ❌ Current code - 0 becomes default
 tokens_used: options.tokensUsed || 100,  // 0 → 100
@@ -128,6 +138,7 @@ intensity: options.intensity || 3         // 0 → 3
 
 **Fix Strategy:**
 Use nullish coalescing operator (`??`):
+
 ```javascript
 // ✅ Correct pattern - preserves 0
 tokens_used: options.tokensUsed ?? 100,  // 0 preserved
@@ -137,6 +148,7 @@ intensity: options.intensity ?? 3         // 0 preserved
 ```
 
 **GDD Nodes Affected:**
+
 - `docs/nodes/testing.md` - Mock helper patterns
 
 ---
@@ -194,6 +206,7 @@ Apply same fix as Issue #1
 ### Commit Grouping
 
 **Single atomic commit** - all fixes are tightly coupled:
+
 - Array mutation fix enables true isolation
 - Zero value fix ensures accurate test data
 - Helper preservation fix makes tests executable
@@ -203,11 +216,13 @@ Breaking into separate commits would create intermediate broken states.
 ### Testing Plan
 
 **Pre-Fix Verification:**
+
 ```bash
 npm test -- tests/integration/roast.test.js  # Capture current state
 ```
 
 **Post-Fix Verification:**
+
 ```bash
 # Run affected tests 3 times to verify isolation
 for i in {1..3}; do
@@ -223,6 +238,7 @@ npm test -- --coverage
 ```
 
 **Success Criteria:**
+
 - All 8 roast integration tests pass consistently
 - No "is not a function" errors
 - 3 consecutive runs show identical results
@@ -234,12 +250,14 @@ npm test -- --coverage
 ## ✅ Success Criteria
 
 ### Code Quality
+
 - ✅ All 4 CodeRabbit issues resolved
 - ✅ No new patterns introduced that violate coderabbit-lessons.md
 - ✅ JSDoc preserved and accurate
 - ✅ Code follows existing factory pattern
 
 ### Testing
+
 - ✅ 8/8 roast integration tests passing
 - ✅ 3 consecutive runs with identical results
 - ✅ Can test zero-value scenarios (tokens_used: 0, cost: 0)
@@ -247,12 +265,14 @@ npm test -- --coverage
 - ✅ Helpers accessible after mock overrides
 
 ### Documentation
+
 - ✅ Test evidence in `docs/test-evidence/review-697/`
 - ✅ SUMMARY.md with patterns (not chronology)
 - ✅ GDD nodes updated if needed
 - ✅ Coverage maintained: auto source
 
 ### Regression Prevention
+
 - ✅ 0 new test failures
 - ✅ 0 console.log statements added
 - ✅ 0 performance degradation
@@ -285,6 +305,7 @@ These issues follow known patterns from `docs/patterns/coderabbit-lessons.md`:
 No architecture changes required - these are bug fixes within existing pattern.
 
 **Factory Pattern Validation:**
+
 - ✅ Factory design is sound
 - ✅ Helper attachment pattern is correct
 - ⚠️ Helper preservation when mocking needs defensive pattern
@@ -307,12 +328,14 @@ No architecture changes required - these are bug fixes within existing pattern.
 ## 🎯 Next Actions
 
 **IMMEDIATE:**
+
 1. Apply fixes in order: #2 → #3 → #1/#4
 2. Run test validation (3x consecutive)
 3. Generate evidence
 4. Commit & push
 
 **POST-MERGE:**
+
 - Monitor for similar patterns in other test files
 - Consider adding ESLint rule for array spread in test factories
 - Document helper preservation pattern in testing guide

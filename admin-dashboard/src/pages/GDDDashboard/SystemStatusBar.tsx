@@ -106,17 +106,8 @@ export const SystemStatusBar: React.FC<SystemStatusBarProps> = ({
           max={100}
           status={getDriftStatus(driftRisk)}
         />
-        <StatusCard
-          label="Total Nodes"
-          value={totalNodes}
-          status="healthy"
-        />
-        <StatusCard
-          label="Coverage"
-          value={coverage}
-          unit="%"
-          status={getHealthStatus(coverage)}
-        />
+        <StatusCard label="Total Nodes" value={totalNodes} status="healthy" />
+        <StatusCard label="Coverage" value={coverage} unit="%" status={getHealthStatus(coverage)} />
       </CardsContainer>
 
       <RightSection>

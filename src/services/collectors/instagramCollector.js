@@ -10,9 +10,9 @@ class InstagramCollector {
   constructor() {
     this.baseURL = 'https://graph.instagram.com';
     this.rateLimits = {
-      userMedia: { requests: 200, window: 60 * 60 * 1000 }, // 200 requests per hour
+      userMedia: { requests: 200, window: 60 * 60 * 1000 } // 200 requests per hour
     };
-    
+
     this.lastRequestTimes = new Map();
   }
 
@@ -33,14 +33,13 @@ class InstagramCollector {
 
       // Get user's recent media
       const userContent = await this.getUserMedia(config, maxContent, languageFilter);
-      
+
       logger.info('Instagram content collection completed', {
         contentCollected: userContent.length,
         maxRequested: maxContent
       });
 
       return userContent;
-
     } catch (error) {
       logger.error('Failed to collect Instagram content', {
         error: error.message,
@@ -138,7 +137,6 @@ class InstagramCollector {
       }
 
       return contentItems;
-
     } catch (error) {
       logger.error('Failed to get Instagram media', {
         error: error.message,
@@ -196,7 +194,6 @@ class InstagramCollector {
       }
 
       return contentItems;
-
     } catch (error) {
       logger.warn('Failed to get Instagram next page', { error: error.message });
       return [];
@@ -248,12 +245,57 @@ class InstagramCollector {
     if (!text) return 'unknown';
 
     // Simple Spanish detection
-    const spanishWords = ['el', 'la', 'de', 'que', 'y', 'en', 'un', 'es', 'se', 'no', 'te', 'lo', 'le', 'da', 'su', 'por', 'son', 'con', 'para', 'al', 'del', 'los', 'las'];
-    const englishWords = ['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at'];
+    const spanishWords = [
+      'el',
+      'la',
+      'de',
+      'que',
+      'y',
+      'en',
+      'un',
+      'es',
+      'se',
+      'no',
+      'te',
+      'lo',
+      'le',
+      'da',
+      'su',
+      'por',
+      'son',
+      'con',
+      'para',
+      'al',
+      'del',
+      'los',
+      'las'
+    ];
+    const englishWords = [
+      'the',
+      'be',
+      'to',
+      'of',
+      'and',
+      'a',
+      'in',
+      'that',
+      'have',
+      'i',
+      'it',
+      'for',
+      'not',
+      'on',
+      'with',
+      'he',
+      'as',
+      'you',
+      'do',
+      'at'
+    ];
 
     const words = text.toLowerCase().split(/\s+/);
-    const spanishCount = words.filter(word => spanishWords.includes(word)).length;
-    const englishCount = words.filter(word => englishWords.includes(word)).length;
+    const spanishCount = words.filter((word) => spanishWords.includes(word)).length;
+    const englishCount = words.filter((word) => englishWords.includes(word)).length;
 
     if (spanishCount > englishCount) return 'es';
     if (englishCount > spanishCount) return 'en';
@@ -269,7 +311,7 @@ class InstagramCollector {
     const comments = media.comments_count || 0;
 
     // Weighted engagement score (comments are more valuable)
-    return likes + (comments * 5);
+    return likes + comments * 5;
   }
 
   /**
@@ -291,7 +333,7 @@ class InstagramCollector {
         endpoint,
         waitTimeMs: waitTime
       });
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
 
     this.lastRequestTimes.set(endpoint, Date.now());
@@ -325,7 +367,6 @@ class InstagramCollector {
         success: true,
         user: response.data
       };
-
     } catch (error) {
       return {
         success: false,

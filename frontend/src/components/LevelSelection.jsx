@@ -21,7 +21,11 @@ const LevelSelection = () => {
   const [saving, setSaving] = useState(false);
   const [availableLevels, setAvailableLevels] = useState(null);
   const [currentLevels, setCurrentLevels] = useState({ roast_level: 3, shield_level: 3 });
-  const [planInfo, setPlanInfo] = useState({ plan: 'starter_trial', maxRoastLevel: 3, maxShieldLevel: 3 });
+  const [planInfo, setPlanInfo] = useState({
+    plan: 'starter_trial',
+    maxRoastLevel: 3,
+    maxShieldLevel: 3
+  });
 
   useEffect(() => {
     loadAvailableLevels();
@@ -113,7 +117,7 @@ const LevelSelection = () => {
 
       if (error) throw error;
 
-      setCurrentLevels(prev => ({
+      setCurrentLevels((prev) => ({
         ...prev,
         [type + '_level']: level
       }));
@@ -192,8 +196,8 @@ const LevelSelection = () => {
         <div className="ml-2 text-sm">
           <strong>Your Plan: {planInfo.plan.toUpperCase()}</strong>
           <br />
-          Access levels 1-{planInfo.maxRoastLevel} for roasting and 1-{planInfo.maxShieldLevel} for shield.
-          Upgrade to unlock higher levels.
+          Access levels 1-{planInfo.maxRoastLevel} for roasting and 1-{planInfo.maxShieldLevel} for
+          shield. Upgrade to unlock higher levels.
         </div>
       </Alert>
 
@@ -223,7 +227,13 @@ const LevelSelection = () => {
             {/* Show locked levels */}
             {[...Array(5 - Object.keys(availableLevels.roast.available).length)].map((_, i) => {
               const level = Object.keys(availableLevels.roast.available).length + i + 1;
-              const allLevels = { 1: { name: 'Mild', description: 'Gentle' }, 2: { name: 'Neutral', description: 'Balanced' }, 3: { name: 'Moderate', description: 'Intense' }, 4: { name: 'Aggressive', description: 'Very intense' }, 5: { name: 'Caustic', description: 'Maximum' } };
+              const allLevels = {
+                1: { name: 'Mild', description: 'Gentle' },
+                2: { name: 'Neutral', description: 'Balanced' },
+                3: { name: 'Moderate', description: 'Intense' },
+                4: { name: 'Aggressive', description: 'Very intense' },
+                5: { name: 'Caustic', description: 'Maximum' }
+              };
               return (
                 <LevelButton
                   key={level}
@@ -246,9 +256,7 @@ const LevelSelection = () => {
             <Shield className="w-5 h-5 text-blue-500" />
             Shield Level
           </CardTitle>
-          <CardDescription>
-            Configure toxicity detection sensitivity and moderation
-          </CardDescription>
+          <CardDescription>Configure toxicity detection sensitivity and moderation</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -265,7 +273,13 @@ const LevelSelection = () => {
             {/* Show locked levels */}
             {[...Array(5 - Object.keys(availableLevels.shield.available).length)].map((_, i) => {
               const level = Object.keys(availableLevels.shield.available).length + i + 1;
-              const allLevels = { 1: { name: 'Tolerant', description: 'High threshold' }, 2: { name: 'Balanced-Tolerant', description: 'Moderate' }, 3: { name: 'Balanced', description: 'Standard' }, 4: { name: 'Balanced-Strict', description: 'Strict bias' }, 5: { name: 'Strict', description: 'Very strict' } };
+              const allLevels = {
+                1: { name: 'Tolerant', description: 'High threshold' },
+                2: { name: 'Balanced-Tolerant', description: 'Moderate' },
+                3: { name: 'Balanced', description: 'Standard' },
+                4: { name: 'Balanced-Strict', description: 'Strict bias' },
+                5: { name: 'Strict', description: 'Very strict' }
+              };
               return (
                 <LevelButton
                   key={level}

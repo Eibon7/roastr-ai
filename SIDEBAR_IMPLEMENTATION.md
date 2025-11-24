@@ -7,6 +7,7 @@ Se ha implementado exitosamente una nueva barra lateral para el dashboard de Roa
 ## Características Implementadas
 
 ### 🎨 Diseño Visual
+
 - **Color de fondo**: Rojo corporativo (#D11A1A) como se especificó
 - **Ancho**: 80px (5rem) - más estrecho que la versión anterior
 - **Altura**: 100vh (pantalla completa)
@@ -14,11 +15,13 @@ Se ha implementado exitosamente una nueva barra lateral para el dashboard de Roa
 - **Sin etiquetas de texto**: Solo iconos, siguiendo el criterio de diseño limpio
 
 ### 🧩 Estructura de Componentes
+
 - **SidebarLogo**: Icono de llama centrado en la parte superior
 - **SidebarNav**: Navegación con iconos únicamente
 - **SidebarItem**: Elementos de navegación individuales con tooltips
 
 ### 📱 Navegación Incluida
+
 1. **Dashboard** - Icono: LayoutGrid (`/dashboard`)
 2. **Compose** - Icono: Edit3 (`/compose`)
 3. **Integrations** - Icono: Link2 (`/integrations`)
@@ -26,6 +29,7 @@ Se ha implementado exitosamente una nueva barra lateral para el dashboard de Roa
 5. **Shop** - Icono: ShoppingBag (`/shop`) - Condicional con feature flag
 
 ### ✨ Interactividad
+
 - **Estados hover**: Fondo semi-transparente blanco al pasar el mouse
 - **Estado activo**: Fondo blanco semi-transparente con sombra
 - **Tooltips**: Aparecen al hacer hover, mostrando el nombre de la sección
@@ -33,6 +37,7 @@ Se ha implementado exitosamente una nueva barra lateral para el dashboard de Roa
 - **Focus states**: Anillos de enfoque para accesibilidad
 
 ### 📱 Responsive Design
+
 - **Mobile**: Sidebar se oculta y aparece un botón hamburguesa
 - **Desktop**: Sidebar siempre visible
 - **Backdrop**: Fondo oscuro en mobile cuando el sidebar está abierto
@@ -41,15 +46,18 @@ Se ha implementado exitosamente una nueva barra lateral para el dashboard de Roa
 ## Archivos Modificados
 
 ### 1. `frontend/src/components/Sidebar.jsx`
+
 - Rediseño completo del componente
 - Nuevo esquema de colores rojo
 - Iconos actualizados
 - Estructura simplificada sin texto
 
 ### 2. `frontend/src/components/AppShell.jsx`
+
 - Actualizado `margin-left` de `ml-16` a `ml-20` para acomodar el nuevo ancho
 
 ### 3. `frontend/src/App.css`
+
 - Añadidas nuevas clases CSS para el ancho de 80px (`w-20`, `ml-20`)
 - Utilidades de color rojo para la marca
 - Clases de opacidad para efectos hover

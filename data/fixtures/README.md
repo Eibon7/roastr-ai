@@ -31,13 +31,13 @@ data/fixtures/
 
 All fixtures cover **5 topics × 4 severity levels**:
 
-| Topic | Low (0.60-0.75) | Moderate (0.75-0.85) | High (0.85-0.95) | Extreme (0.95-1.0) |
-|-------|----------------|---------------------|------------------|-------------------|
-| **Politics** | 2 roast | 1 mute | 1 block | - |
-| **Sports** | 2 roast | 1 mute | 1 block | - |
-| **Technology** | 2 roast | 1 mute | - | - |
-| **Social** | 1 roast | 1 mute | 1 block | 1 report |
-| **Entertainment** | 2 roast | 1 mute | - | - |
+| Topic             | Low (0.60-0.75) | Moderate (0.75-0.85) | High (0.85-0.95) | Extreme (0.95-1.0) |
+| ----------------- | --------------- | -------------------- | ---------------- | ------------------ |
+| **Politics**      | 2 roast         | 1 mute               | 1 block          | -                  |
+| **Sports**        | 2 roast         | 1 mute               | 1 block          | -                  |
+| **Technology**    | 2 roast         | 1 mute               | -                | -                  |
+| **Social**        | 1 roast         | 1 mute               | 1 block          | 1 report           |
+| **Entertainment** | 2 roast         | 1 mute               | -                | -                  |
 
 ### Severity Mapping
 
@@ -72,6 +72,7 @@ Each comment fixture includes:
 ```
 
 **Required fields:**
+
 - `id` - Unique identifier (format: `fixture-XXX`)
 - `language` - `es` or `en`
 - `topic` - One of: politics, sports, technology, social, entertainment
@@ -82,6 +83,7 @@ Each comment fixture includes:
 - `platform` - Social media platform (twitter, youtube, facebook, etc.)
 
 **Optional metadata:**
+
 - `has_profanity` - Boolean
 - `sentiment` - negative, neutral, positive
 - `context` - Subcategory (e.g., "team-criticism", "political-complaint")
@@ -113,11 +115,13 @@ npm run demo:seed:force
 ```
 
 **What gets seeded:**
+
 - 2 demo organizations (Spanish, English)
 - 6 demo users (3 per language: Free, Starter, Pro)
 - 35 demo comments from fixtures
 
 **Demo login credentials** (password: `demo123`):
+
 - Spanish Free: `demo-free-es@demo.roastr.ai`
 - Spanish Starter: `demo-starter-es@demo.roastr.ai`
 - Spanish Pro: `demo-pro-es@demo.roastr.ai`
@@ -136,6 +140,7 @@ npm run demo:reset:dry
 ```
 
 **What gets deleted:**
+
 - All organizations with name starting with "Demo:"
 - All users with email ending in "@demo.roastr.ai"
 - All comments and responses associated with demo orgs/users
@@ -147,12 +152,14 @@ npm run demo:reset:dry
 Validates fixture files against JSON Schema Draft-07.
 
 **Features:**
+
 - Schema compliance validation
 - Duplicate ID detection
 - JSON syntax validation
 - Colored terminal output
 
 **Exit codes:**
+
 - `0` - All fixtures valid
 - `1` - Validation errors found
 
@@ -161,6 +168,7 @@ Validates fixture files against JSON Schema Draft-07.
 Seeds demo data into database (idempotent).
 
 **Features:**
+
 - Idempotent (safe to run multiple times)
 - Skips existing records
 - Transactional operations
@@ -168,11 +176,13 @@ Seeds demo data into database (idempotent).
 - Force mode (delete + reseed)
 
 **Options:**
+
 - `--dry-run` - Preview without changes
 - `--verbose` - Detailed logging
 - `--force` - Delete existing demo data before seeding
 
 **Exit codes:**
+
 - `0` - Success
 - `1` - Error occurred
 
@@ -181,22 +191,26 @@ Seeds demo data into database (idempotent).
 Clears all demo data from database.
 
 **Features:**
+
 - Cascade deletion (respects foreign keys)
 - Dry-run mode
 - Verbose logging
 - Safe (only deletes demo-identified records)
 
 **Deletion order:**
+
 1. Responses (children)
 2. Comments (children)
 3. Users (children)
 4. Organizations (parents)
 
 **Options:**
+
 - `--dry-run` - Preview what would be deleted
 - `--verbose` - Show detailed deletion process
 
 **Exit codes:**
+
 - `0` - Success
 - `1` - Error occurred
 
@@ -229,7 +243,7 @@ npm run demo:reset
   run: npm run demo:validate
 
 - name: Seed Demo Data
-  run: npm run demo:seed:force  # Force mode for clean state
+  run: npm run demo:seed:force # Force mode for clean state
   env:
     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
     SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -239,7 +253,7 @@ npm run demo:reset
 
 - name: Cleanup Demo Data
   run: npm run demo:reset
-  if: always()  # Always cleanup
+  if: always() # Always cleanup
 ```
 
 ### Testing Different Scenarios
@@ -321,6 +335,7 @@ Update this README if adding new topics, severities, or patterns.
 **Cause**: Invalid JSON syntax in fixture file
 
 **Fix**:
+
 ```bash
 # Use a JSON linter
 npx prettier --check data/fixtures/comments/*.json
@@ -334,6 +349,7 @@ npx prettier --write data/fixtures/comments/*.json
 **Cause**: Demo organizations don't exist yet
 
 **Fix**:
+
 ```bash
 # Check if demo data exists
 npm run demo:reset:dry
@@ -350,6 +366,7 @@ npm run demo:seed:force
 **Cause**: Two fixtures have the same `id` field
 
 **Fix**: Run validation with verbose to identify duplicates:
+
 ```bash
 npm run demo:validate:verbose
 ```

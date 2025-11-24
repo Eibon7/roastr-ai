@@ -68,33 +68,33 @@ docs/
 
 ### Auto-Fixable Issues (🟢)
 
-| Issue | Detection | Auto-Fix |
-|-------|-----------|----------|
-| **Missing last_updated** | No `**Last Updated:**` field | Add current date |
-| **Outdated timestamp** | > 30 days old | Update to current date |
-| **Missing coverage** | No `**Coverage:**` field | Inject from gdd-health.json |
-| **Missing agents** | No `## Agentes Relevantes` | Add default agents per node type |
-| **Broken bidirectional edges** | A depends on B, but B doesn't list A in used_by | Add missing edge |
-| **Orphan nodes** | Node in docs/nodes/ but not in system-map.yaml | Add to system-map.yaml |
-| **Missing spec references** | Node active but not in spec.md | Add GDD reference block |
-| **Missing metadata** | No status, priority, or owner | Add defaults |
+| Issue                          | Detection                                       | Auto-Fix                         |
+| ------------------------------ | ----------------------------------------------- | -------------------------------- |
+| **Missing last_updated**       | No `**Last Updated:**` field                    | Add current date                 |
+| **Outdated timestamp**         | > 30 days old                                   | Update to current date           |
+| **Missing coverage**           | No `**Coverage:**` field                        | Inject from gdd-health.json      |
+| **Missing agents**             | No `## Agentes Relevantes`                      | Add default agents per node type |
+| **Broken bidirectional edges** | A depends on B, but B doesn't list A in used_by | Add missing edge                 |
+| **Orphan nodes**               | Node in docs/nodes/ but not in system-map.yaml  | Add to system-map.yaml           |
+| **Missing spec references**    | Node active but not in spec.md                  | Add GDD reference block          |
+| **Missing metadata**           | No status, priority, or owner                   | Add defaults                     |
 
 ### Human Review Required (🟡)
 
-| Issue | Detection | Action |
-|-------|-----------|--------|
-| **Spec content drift** | Code exists but spec outdated | Create GitHub issue |
-| **Deprecated nodes** | Status=deprecated but still referenced | Flag for review |
-| **Circular dependencies** | Detected by validator | Flag for manual fix |
-| **Coverage dropped >20%** | Coverage decreased significantly | Alert + flag |
+| Issue                     | Detection                              | Action              |
+| ------------------------- | -------------------------------------- | ------------------- |
+| **Spec content drift**    | Code exists but spec outdated          | Create GitHub issue |
+| **Deprecated nodes**      | Status=deprecated but still referenced | Flag for review     |
+| **Circular dependencies** | Detected by validator                  | Flag for manual fix |
+| **Coverage dropped >20%** | Coverage decreased significantly       | Alert + flag        |
 
 ### Critical Issues (🔴)
 
-| Issue | Detection | Action |
-|-------|-----------|--------|
+| Issue                 | Detection                                       | Action              |
+| --------------------- | ----------------------------------------------- | ------------------- |
 | **Missing node file** | Referenced in system-map but file doesn't exist | Fail + create issue |
-| **Corrupted YAML** | system-map.yaml parse error | Fail + alert |
-| **Health score <85** | Below critical threshold | Fail CI/CD |
+| **Corrupted YAML**    | system-map.yaml parse error                     | Fail + alert        |
+| **Health score <85**  | Below critical threshold                        | Fail CI/CD          |
 
 ---
 
@@ -152,6 +152,7 @@ class AutoRepairEngine {
 **Location:** `/tmp/gdd-auto-repair-backups/<ISO-timestamp>/`
 
 **Files backed up:**
+
 - `docs/nodes/*.md` (all 13 nodes)
 - `spec.md`
 - `docs/system-map.yaml`
@@ -161,6 +162,7 @@ class AutoRepairEngine {
 **Retention:** Keep last 10 backups, delete older
 
 **Metadata:** `backup-manifest.json`
+
 ```json
 {
   "timestamp": "2025-10-06T14:42:00.000Z",
@@ -218,14 +220,17 @@ node scripts/rollback-gdd-repair.js --verify <timestamp>
 ## ✅ Fixes Applied (29)
 
 ### Metadata Updates (13 nodes)
+
 - Updated `last_updated` timestamps to 2025-10-06
 
 ### Structure Repairs (3)
+
 - Restored bidirectional edge: billing ↔ stripe
 - Added orphan node to system-map: trainer
 - Added spec.md reference for analytics
 
 ### Coverage Injection (4 nodes)
+
 - trainer: 45% → 72%
 - analytics: 60% → 65%
 
@@ -258,11 +263,13 @@ None
 **Nodes affected:** billing, trainer, shield (3 nodes)
 
 **Fixes applied:**
+
 - Updated last_updated timestamps (3 nodes)
 - Restored bidirectional edge between billing ↔ stripe
 - Injected coverage values (trainer: 72%)
 
 **Outcome:**
+
 - Health score: 95.5 → 97.2
 - Issues created: 2 (human review)
 - Backup: `/tmp/gdd-auto-repair-backups/2025-10-06T14:42:00.000Z/`
@@ -295,6 +302,7 @@ node scripts/watch-gdd.js --auto-repair
 ```
 
 **Auto-repair trigger:**
+
 - Health score < 90 → auto-repair
 - Drift risk > 40 → auto-repair
 - Orphan nodes detected → auto-repair
@@ -312,6 +320,7 @@ node scripts/watch-gdd.js --auto-repair
 ```
 
 **Failure conditions:**
+
 - Health score < 85 after repair
 - Critical issues > 0
 - Repair rollback occurred
@@ -319,6 +328,7 @@ node scripts/watch-gdd.js --auto-repair
 ### 3. CLAUDE.md Integration
 
 **Add to orchestrator rules:**
+
 - Log all auto-fixes to CLAUDE.md
 - Reference auto-repair-report.md in PRs
 - Auto-commit trivial fixes with [auto-repair] prefix
@@ -425,11 +435,13 @@ node scripts/watch-gdd.js --auto-repair
 ## 🎯 Expected Outcome
 
 **Before Phase 10:**
+
 - Health Score: 95.5/100
 - Manual intervention required for degradation
 - No automatic recovery
 
 **After Phase 10:**
+
 - Health Score: ≥97/100
 - Automatic detection and repair
 - Full rollback capability

@@ -18,11 +18,13 @@
 ### Issue #645 - CLI Test Suite Fixes
 
 **Problem:**
+
 - CLI tests were failing due to incorrect CLI path and command structure mismatch
 - Tests were using `src/cli.js` instead of `src/cli/logManager.js`
 - Command structure didn't match actual CLI implementation
 
 **Solution:**
+
 1. ✅ Updated CLI path from `src/cli.js` to `src/cli/logManager.js`
 2. ✅ Fixed command structure to match actual implementation:
    - `backup --days` → `backup upload --days`
@@ -36,6 +38,7 @@
 7. ✅ Fixed syntax error (missing closing brace in maintenance describe block)
 
 **Files Modified:**
+
 - `tests/integration/cli/logCommands.test.js`
 
 ---
@@ -43,11 +46,13 @@
 ### Issue #646 - Comprehensive Test Audit
 
 **Problem:**
+
 - ~179 test suites failing (55% failure rate) on main branch
 - No systematic categorization of failures
 - No clear fix strategy
 
 **Solution:**
+
 1. ✅ Created comprehensive audit document
 2. ✅ Categorized ~179 failing suites into 10 main categories:
    - OAuth Integration (~20 suites) - P0
@@ -65,6 +70,7 @@
 5. ✅ Added audit utility script for automated categorization
 
 **Files Created:**
+
 - `docs/test-evidence/issue-646-audit-summary.md`
 - `scripts/audit-test-failures.js` (utility script for future audits)
 
@@ -73,6 +79,7 @@
 ## Test Results
 
 ### CLI Tests (#645)
+
 - ✅ All CLI tests updated to use correct CLI path
 - ✅ Command structure matches actual implementation
 - ✅ Timeouts increased for stability
@@ -80,6 +87,7 @@
 - ⚠️ **Note:** Tests need to be run to validate fixes (requires proper environment setup)
 
 ### Test Audit (#646)
+
 - ✅ Comprehensive audit completed
 - ✅ 10 categories identified with priorities
 - ✅ Fix strategy documented
@@ -90,11 +98,13 @@
 ## Impact
 
 **Issue #645:**
+
 - Developer tooling now properly validated
 - CLI tests aligned with actual implementation
 - Improved test stability with increased timeouts
 
 **Issue #646:**
+
 - Clear roadmap for fixing remaining ~179 failing suites
 - Prioritized approach (P0 → P1 → P2)
 - Systematic categorization enables parallel work
@@ -105,13 +115,13 @@
 
 - [x] **Single Issue/Task Scope**: This PR addresses two related issues (#645, #646) from the same epic (#480)
 - [x] **Test Coverage**: CLI tests updated and comprehensive audit completed
-- [x] **Documentation**: 
+- [x] **Documentation**:
   - [x] Audit summary document created (`docs/test-evidence/issue-646-audit-summary.md`)
   - [x] Audit utility script documented
   - [x] PR description includes all changes and impact
 - [x] **Visual Evidence**: N/A - No UI changes
 - [x] **Changelog**: Changes documented in PR description
-- [x] **Out of Scope**: 
+- [x] **Out of Scope**:
   - Actual fixes for the ~179 failing test suites (tracked in audit document for future phases)
   - Environment setup for running CLI tests (requires external dependencies)
 
@@ -138,6 +148,7 @@
 ## Acceptance Criteria
 
 ### Issue #645 ✅
+
 - [x] All CLI tests updated to use correct CLI path
 - [x] Command structure matches actual implementation
 - [x] Timeout issues addressed
@@ -145,6 +156,7 @@
 - [x] Syntax errors fixed
 
 ### Issue #646 ✅
+
 - [x] Full test suite audit completed
 - [x] All remaining failures catalogued
 - [x] Patterns identified and documented

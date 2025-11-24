@@ -4,6 +4,7 @@
  */
 
 const { flags } = require('../config/flags');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const { getClientIP } = require('./rateLimiter');
 
 /**
@@ -15,7 +16,7 @@ class PasswordChangeRateLimitStore {
     this.attempts = new Map();
     this.blocked = new Map();
     this.cleanupInterval = null;
-    
+
     // Cleanup old entries every 5 minutes
     // Skip interval in test environment to avoid open handles
     if (process.env.NODE_ENV !== 'test') {
@@ -72,7 +73,7 @@ class PasswordChangeRateLimitStore {
 
     // Get current attempts for this key
     let attemptInfo = this.attempts.get(key);
-    if (!attemptInfo || (now - attemptInfo.firstAttempt) > windowMs) {
+    if (!attemptInfo || now - attemptInfo.firstAttempt > windowMs) {
       // Reset window
       attemptInfo = {
         count: 0,
@@ -134,7 +135,7 @@ class PasswordChangeRateLimitStore {
 
     // Clean old attempts
     for (const [key, attemptInfo] of this.attempts) {
-      if ((now - attemptInfo.firstAttempt) > windowMs) {
+      if (now - attemptInfo.firstAttempt > windowMs) {
         this.attempts.delete(key);
       }
     }
@@ -147,7 +148,7 @@ class PasswordChangeRateLimitStore {
     }
 
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Password change rate limiter cleanup:', {
+      logger.info('Password change rate limiter cleanup:', {
         activeAttempts: this.attempts.size,
         blockedKeys: this.blocked.size
       });
@@ -186,20 +187,25 @@ function passwordChangeRateLimiter(req, res, next) {
 
   const ip = getClientIP(req);
   const userId = req.user?.id || 'anonymous';
-  
+
   if (!userId || userId === 'anonymous') {
     return next(); // Skip if no authenticated user
   }
 
   const key = passwordChangeStore.getKey(ip, userId);
-  
+
   // Check if currently blocked
   const blockStatus = passwordChangeStore.isBlocked(key);
   if (blockStatus.blocked) {
     const remainingMinutes = Math.ceil(blockStatus.remainingMs / (60 * 1000));
-    
+
     if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-      console.log('Blocked password change attempt:', { ip, userId, key, remainingMs: blockStatus.remainingMs });
+      logger.info('Blocked password change attempt:', {
+        ip,
+        userId,
+        key,
+        remainingMs: blockStatus.remainingMs
+      });
     }
 
     return res.status(429).json({
@@ -213,36 +219,36 @@ function passwordChangeRateLimiter(req, res, next) {
 
   // Record this attempt
   const result = passwordChangeStore.recordAttempt(key);
-  
+
   if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-    console.log('Password change attempt recorded:', { ip, userId, key, result });
+    logger.info('Password change attempt recorded:', { ip, userId, key, result });
   }
 
   // Store original end function to intercept response
   const originalEnd = res.end;
   let responseIntercepted = false;
 
-  res.end = function(chunk, encoding) {
+  res.end = function (chunk, encoding) {
     if (!responseIntercepted) {
       responseIntercepted = true;
-      
+
       // Check if this was a successful password change
       const isSuccess = res.statusCode >= 200 && res.statusCode < 300;
-      
+
       if (isSuccess) {
         // Record successful password change
         passwordChangeStore.recordSuccess(key);
-        
+
         if (flags.isEnabled('DEBUG_RATE_LIMIT')) {
-          console.log('Successful password change recorded:', { ip, userId, key });
+          logger.info('Successful password change recorded:', { ip, userId, key });
         }
       }
-      
+
       // If blocked due to this attempt, override response
       if (result.blocked) {
         res.statusCode = 429;
         const remainingMinutes = Math.ceil(result.remainingMs / (60 * 1000));
-        
+
         const blockResponse = JSON.stringify({
           success: false,
           error: 'Too many password change attempts. Account temporarily limited.',
@@ -250,12 +256,12 @@ function passwordChangeRateLimiter(req, res, next) {
           retryAfter: remainingMinutes,
           message: `For security reasons, password changes are temporarily blocked. Please wait ${remainingMinutes} minutes.`
         });
-        
+
         chunk = blockResponse;
         encoding = 'utf8';
       }
     }
-    
+
     originalEnd.call(this, chunk, encoding);
   };
 

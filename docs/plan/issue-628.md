@@ -13,6 +13,7 @@
 ### ✅ Tests: 22/22 PASSING (100%)
 
 **Backend completamente funcional:**
+
 - All E2E auth flow tests passing
 - `/api/auth/refresh` endpoint working
 - Session management functional
@@ -25,6 +26,7 @@
 **Location:** `public/js/auth.js:409-463`
 
 **Functions:**
+
 - `setupTokenRefresh()` - Configures proactive refresh
 - `refreshAuthToken()` - Calls `/api/auth/refresh` endpoint
 - Refresh happens 5 minutes BEFORE expiry (not 15 as specified in issue)
@@ -34,6 +36,7 @@
 ### ❌ Frontend Functionality PENDING
 
 **What's Missing:**
+
 1. **HTTP Interceptor with 401 auto-retry** (CRITICAL)
    - Current: `apiCall()` does NOT retry on 401
    - Needed: Detect 401 → refresh token → retry request (1x max)
@@ -63,6 +66,7 @@
 **Location:** After existing `apiCall()` (line 82)
 
 **Implementation:**
+
 ```javascript
 /**
  * Enhanced API call with 401 retry and comprehensive error handling
@@ -72,11 +76,12 @@
  * @param {boolean} isRetry - Internal flag to prevent infinite loop
  */
 async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry = false) {
-    // Implementation details in plan below
+  // Implementation details in plan below
 }
 ```
 
 **Key Features:**
+
 - Add Authorization header if token exists
 - Detect 401 → attempt `refreshAuthToken()` → retry request once
 - Detect 403 → throw specific error
@@ -89,6 +94,7 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 **New:** Returns `boolean` (true/false)
 
 **Changes:**
+
 - Line 447: Return `true` on success
 - Line 454: Return `false` on error (instead of redirecting)
 - Caller decides whether to redirect
@@ -96,6 +102,7 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 #### Task 3: Update Error Handling in `showMessage()` (10 min)
 
 **Add support for:**
+
 - `type='warning'` for 429 rate limits (orange color)
 - Auto-redirect after 2 seconds for 401 errors
 - Different auto-hide timers per type
@@ -103,11 +110,10 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 #### Task 4: Replace `apiCall()` with `apiCallWithRetry()` (10 min)
 
 **Files affected:**
+
 - Lines 168, 207, 227, 246, 295, 366 in `auth.js`
 
 **Keep original** `apiCall()` for internal use (e.g., in `refreshAuthToken`)
-
-
 
 ---
 
@@ -179,6 +185,7 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 ## Files Affected
 
 ### Backend (7 files)
+
 - `src/routes/auth.js` (password validation, email validation, refresh endpoint)
 - `src/middleware/auth.js` (JWT verification in tests)
 - `src/middleware/rateLimiters.js` (disable in test environment)
@@ -186,6 +193,7 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 - `tests/e2e/auth-complete-flow.test.js` (fix 9 tests)
 
 ### Frontend (5 files)
+
 - `frontend/src/services/authService.js` (refreshToken function)
 - `frontend/src/utils/apiClient.js` (HTTP interceptor, error handling)
 - `frontend/src/contexts/AuthContext.jsx` (auto-refresh strategy)
@@ -193,6 +201,7 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 - `frontend/src/pages/auth/Register.jsx` (use apiClient)
 
 ### Documentation (3 files)
+
 - `docs/flows/login-registration.md` (new sections)
 - `docs/nodes/multi-tenant.md` (updated coverage)
 - `docs/test-evidence/issue-628/SUMMARY.md` (evidence)
@@ -218,27 +227,27 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 
 ## Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Tests still fail after fixes | Medium | High | Follow pattern from #618, defensive checks |
-| Session refresh endpoint unavailable | Low | Medium | Verify feature flag or mock properly |
-| Frontend auto-refresh breaks UX | Low | Medium | Test with short token expiry, add logging |
-| HTTP interceptor causes infinite loops | Medium | High | Add retry counter, max 1 retry |
-| Rate limiting breaks in test | Low | Low | Disable in test environment (proven fix #618) |
+| Risk                                   | Likelihood | Impact | Mitigation                                    |
+| -------------------------------------- | ---------- | ------ | --------------------------------------------- |
+| Tests still fail after fixes           | Medium     | High   | Follow pattern from #618, defensive checks    |
+| Session refresh endpoint unavailable   | Low        | Medium | Verify feature flag or mock properly          |
+| Frontend auto-refresh breaks UX        | Low        | Medium | Test with short token expiry, add logging     |
+| HTTP interceptor causes infinite loops | Medium     | High   | Add retry counter, max 1 retry                |
+| Rate limiting breaks in test           | Low        | Low    | Disable in test environment (proven fix #618) |
 
 ---
 
 ## Timeline
 
-| Phase | Duration | Cumulative |
-|-------|----------|------------|
-| FASE 3.1: Fix Tests | 1.5h | 1.5h |
-| FASE 3.2: Auto-Refresh | 1h | 2.5h |
-| FASE 3.3: HTTP Interceptor | 45min | 3.25h |
-| FASE 3.4: Error Handling | 30min | 3.75h |
-| FASE 4: Validation | 30min | 4.25h |
-| FASE 5: Documentation | 45min | 5h |
-| FASE 6: PR + CodeRabbit | 1h | **6h total** |
+| Phase                      | Duration | Cumulative   |
+| -------------------------- | -------- | ------------ |
+| FASE 3.1: Fix Tests        | 1.5h     | 1.5h         |
+| FASE 3.2: Auto-Refresh     | 1h       | 2.5h         |
+| FASE 3.3: HTTP Interceptor | 45min    | 3.25h        |
+| FASE 3.4: Error Handling   | 30min    | 3.75h        |
+| FASE 4: Validation         | 30min    | 4.25h        |
+| FASE 5: Documentation      | 45min    | 5h           |
+| FASE 6: PR + CodeRabbit    | 1h       | **6h total** |
 
 **Buffer:** +2h for unexpected issues = **8h max**
 
@@ -247,12 +256,14 @@ async function apiCallWithRetry(endpoint, method = 'POST', data = null, isRetry 
 ## Lessons from #593
 
 **What went wrong:**
+
 - Issue closed with 59% tests passing (violated CLAUDE.md rule)
 - Auto-refresh NOT implemented (scope incomplete)
 - HTTP interceptor NOT implemented (scope incomplete)
 - Error handling incomplete
 
 **What we'll do differently:**
+
 - ✅ Fix ALL tests BEFORE moving to next phase
 - ✅ Verify 100% passing with `npm test`
 - ✅ Implement full scope (auto-refresh, interceptor, error handling)

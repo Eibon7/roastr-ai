@@ -8,6 +8,7 @@
 ## 🎯 Objetivo
 
 Implementar code changes para 3 gaps de validación MVP documentados en `docs/test-evidence/mvp-gaps-analysis.md`:
+
 - **G1**: Quality Check (>50 chars) - Roast Validation
 - **G6**: RLS 403 Error Code Validation - Multi-Tenant RLS
 - **G10**: Billing 403 Error Code Validation - Cost Control
@@ -19,6 +20,7 @@ Implementar code changes para 3 gaps de validación MVP documentados en `docs/te
 **Objetivo**: 24/46 (52.2%) - Incremento de 3 gaps
 
 **Coverage por Issue**:
+
 - #486 (Basic Roast): 5/6 (83%) → 6/6 (100%) ✅
 - #488 (Multi-Tenant RLS): 4/10 (40%) → 5/10 (50%) ⬆️
 - #489 (Billing Limits): 6/17 (35%) → 7/17 (41%) ⬆️
@@ -40,9 +42,11 @@ Implementar code changes para 3 gaps de validación MVP documentados en `docs/te
 **Priority**: MEDIUM
 
 **Archivos**:
+
 - `scripts/validate-flow-basic-roast.js` (línea 250)
 
 **Changes**:
+
 ```javascript
 // Add after line 250 in validate-flow-basic-roast.js
 const MIN_ROAST_LENGTH = 50;
@@ -51,16 +55,20 @@ if (roastResult.roast.length < MIN_ROAST_LENGTH) {
     `Quality check FAILED: Roast too short (${roastResult.roast.length} chars, minimum: ${MIN_ROAST_LENGTH})`
   );
 }
-console.log(`✅ Quality check passed: ${roastResult.roast.length} chars (>${MIN_ROAST_LENGTH} required)`);
+console.log(
+  `✅ Quality check passed: ${roastResult.roast.length} chars (>${MIN_ROAST_LENGTH} required)`
+);
 ```
 
 **Validación**:
+
 ```bash
 node scripts/validate-flow-basic-roast.js
 # Expected: 3/3 tests passing (high/medium/low toxicity)
 ```
 
 **Expected Output**:
+
 - ✅ All 3 scenarios pass with quality check
 - ✅ Roasts >50 chars
 - ✅ Error thrown if <50 chars
@@ -74,17 +82,19 @@ node scripts/validate-flow-basic-roast.js
 **Priority**: HIGH (security-critical)
 
 **Archivos**:
+
 - `tests/integration/test-multi-tenant-rls.test.js`
 
 **Changes**:
+
 ```javascript
 // Add to test-multi-tenant-rls.test.js
 test('Cross-tenant access returns 403 error (PGRST301)', async () => {
   const { tenantA, tenantB } = await createTestTenants();
-  
+
   // Set context to Tenant A
   await setTenantContext(tenantA.id);
-  
+
   // Attempt to access Tenant B's data (should fail with RLS error)
   const { data, error } = await testClient
     .from('organizations')
@@ -97,18 +107,20 @@ test('Cross-tenant access returns 403 error (PGRST301)', async () => {
   expect(error).toBeDefined();
   expect(error.code).toBe('PGRST301'); // Supabase RLS policy violation
   expect(error.message.toLowerCase()).toMatch(/permission|denied|policy|rls/);
-  
+
   console.log('✅ RLS 403 validation passed:', error.code, error.message);
 });
 ```
 
 **Validación**:
+
 ```bash
 npm test tests/integration/test-multi-tenant-rls.test.js
 # Expected: 15/15 tests passing (was 14/14, now +1)
 ```
 
 **Expected Output**:
+
 - ✅ Error code = 'PGRST301' (Supabase RLS violation = HTTP 403)
 - ✅ Error message contains 'permission denied' or 'row-level security'
 - ✅ Data is null (access blocked)
@@ -122,9 +134,11 @@ npm test tests/integration/test-multi-tenant-rls.test.js
 **Priority**: HIGH (revenue-critical)
 
 **Archivos**:
+
 - `scripts/validate-flow-billing.js` (líneas 120-140)
 
 **Changes**:
+
 ```javascript
 // Enhance error handling in validate-flow-billing.js (around line 120-140)
 try {
@@ -139,17 +153,18 @@ try {
     console.log(`✅ Limit enforcement validated`);
     console.log(`   Error type: ${err.constructor.name}`);
     console.log(`   Message: ${err.message}`);
-    
+
     // Verify error indicates limit exceeded (403-equivalent)
     const errorMessage = err.message.toLowerCase();
-    const isLimitError = errorMessage.includes('limit') || 
-                         errorMessage.includes('exceeded') || 
-                         errorMessage.includes('quota');
-    
+    const isLimitError =
+      errorMessage.includes('limit') ||
+      errorMessage.includes('exceeded') ||
+      errorMessage.includes('quota');
+
     if (!isLimitError) {
       throw new Error(`❌ Error message doesn't indicate limit: ${err.message}`);
     }
-    
+
     console.log(`✅ Error correctly indicates limit exceeded (HTTP 403 equivalent)`);
   } else {
     // Unexpected error - operation should have succeeded
@@ -159,12 +174,14 @@ try {
 ```
 
 **Validación**:
+
 ```bash
 node scripts/validate-flow-billing.js
 # Expected: 3/3 tests passing (free/pro/creator_plus plans)
 ```
 
 **Expected Output**:
+
 - ✅ Error type logged
 - ✅ Error message contains 'limit', 'exceeded', or 'quota'
 - ✅ 403-equivalent behavior validated
@@ -175,6 +192,7 @@ node scripts/validate-flow-billing.js
 ## 🧪 Validación de Tests
 
 ### Pre-Implementation Tests
+
 ```bash
 # Baseline - verify current state
 node scripts/validate-flow-basic-roast.js  # Should pass 3/3
@@ -183,6 +201,7 @@ node scripts/validate-flow-billing.js  # Should pass 3/3
 ```
 
 ### Post-Implementation Tests
+
 ```bash
 # G1: Roast validation
 node scripts/validate-flow-basic-roast.js
@@ -198,6 +217,7 @@ node scripts/validate-flow-billing.js
 ```
 
 ### Test Evidence Generation
+
 ```bash
 # Generate test evidence
 mkdir -p docs/test-evidence/issue-588
@@ -235,8 +255,10 @@ EOF
 ## 📚 Documentación a Actualizar
 
 ### 1. mvp-validation-summary.md
+
 ```markdown
 Update coverage counts:
+
 - Issue #486: 5/6 → 6/6 (100%)
 - Issue #488: 4/10 → 5/10 (50%)
 - Issue #489: 6/17 → 7/17 (41%)
@@ -244,13 +266,17 @@ Update coverage counts:
 ```
 
 ### 2. Issues #486, #488, #489
+
 Update with:
+
 - ✅ Gap implementation complete
 - ✅ Test validation passing
 - ✅ Evidence documented
 
 ### 3. GDD Nodes
+
 Update affected nodes:
+
 - `docs/nodes/roast.md` - Add G1 validation
 - `docs/nodes/multi-tenant.md` - Add G6 RLS test
 - `docs/nodes/cost-control.md` - Add G10 billing validation
@@ -260,20 +286,26 @@ Update affected nodes:
 ## 🎯 Agentes Requeridos
 
 ### 1. TestEngineer
+
 **Trigger**: Cambios en tests + validación scripts
-**Workflow**: 
+**Workflow**:
+
 - Implement G6 test case
 - Validate all 3 gaps
 - Generate test evidence
 
 ### 2. Guardian (opcional)
+
 **Trigger**: Cambios en multi-tenant (RLS security)
 **Workflow**:
+
 - Review G6 RLS test implementation
 - Validate security implications
 
 ### 3. BackendDev (self)
+
 **Workflow**:
+
 - Implement G1 validation
 - Enhance G10 error handling
 - Update documentation
@@ -299,22 +331,22 @@ Update affected nodes:
 
 ## ⚠️ Risks & Mitigations
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Script test failures | Medium | Test in isolation first, verify baseline |
-| RLS test requires JWT secret | High | Use tenantTestUtils with crypto fallback |
-| Billing script not found | Medium | Verify path, check if exists |
-| Test count mismatch | Low | Update expected count if baseline differs |
+| Risk                         | Impact | Mitigation                                |
+| ---------------------------- | ------ | ----------------------------------------- |
+| Script test failures         | Medium | Test in isolation first, verify baseline  |
+| RLS test requires JWT secret | High   | Use tenantTestUtils with crypto fallback  |
+| Billing script not found     | Medium | Verify path, check if exists              |
+| Test count mismatch          | Low    | Update expected count if baseline differs |
 
 ---
 
 ## 📊 Expected Impact
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| #486 Coverage | 5/6 (83%) | 6/6 (100%) | +17% ✅ |
-| #488 Coverage | 4/10 (40%) | 5/10 (50%) | +10% ⬆️ |
-| #489 Coverage | 6/17 (35%) | 7/17 (41%) | +6% ⬆️ |
+| Metric            | Before        | After         | Change   |
+| ----------------- | ------------- | ------------- | -------- |
+| #486 Coverage     | 5/6 (83%)     | 6/6 (100%)    | +17% ✅  |
+| #488 Coverage     | 4/10 (40%)    | 5/10 (50%)    | +10% ⬆️  |
+| #489 Coverage     | 6/17 (35%)    | 7/17 (41%)    | +6% ⬆️   |
 | Total Gaps Closed | 21/46 (45.7%) | 24/46 (52.2%) | +6.5% ✅ |
 
 ---
@@ -322,4 +354,3 @@ Update affected nodes:
 **Plan Status**: ✅ Ready for execution
 **Next Step**: Implement G1, G6, G10 in parallel
 **Estimated Time**: 85 minutes total (~30 min each gap)
-

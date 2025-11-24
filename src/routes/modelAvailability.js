@@ -13,23 +13,23 @@ const { getModelAvailabilityWorker } = require('../workers/ModelAvailabilityWork
 
 // Admin middleware (implement as needed for your auth system)
 const requireAdmin = (req, res, next) => {
-    // Check if user exists
-    if (!req.user) {
-        return res.status(403).json({
-            success: false,
-            error: 'Admin access required'
-        });
-    }
+  // Check if user exists
+  if (!req.user) {
+    return res.status(403).json({
+      success: false,
+      error: 'Admin access required'
+    });
+  }
 
-    // Check for admin role or flag
-    if (!req.user.isAdmin && req.user.role !== 'admin') {
-        return res.status(403).json({
-            success: false,
-            error: 'Admin access required'
-        });
-    }
+  // Check for admin role or flag
+  if (!req.user.isAdmin && req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      error: 'Admin access required'
+    });
+  }
 
-    next();
+  next();
 };
 
 /**
@@ -37,45 +37,44 @@ const requireAdmin = (req, res, next) => {
  * Get current model availability status
  */
 router.get('/status', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const modelService = getModelAvailabilityService();
-        const worker = getModelAvailabilityWorker();
-        
-        const [modelStatus, workerStatus, stats] = await Promise.all([
-            modelService.getAvailabilityStatus(),
-            Promise.resolve(worker.getStatus()),
-            modelService.getModelStats()
-        ]);
+  try {
+    const modelService = getModelAvailabilityService();
+    const worker = getModelAvailabilityWorker();
 
-        res.json({
-            success: true,
-            data: {
-                models: modelStatus,
-                worker: workerStatus,
-                statistics: stats,
-                summary: {
-                    gpt5Available: modelStatus.gpt5Available,
-                    totalModels: Object.keys(modelStatus.models || {}).length,
-                    lastCheck: modelStatus.lastCheck,
-                    nextCheck: modelStatus.nextCheck,
-                    workerRunning: workerStatus.isRunning
-                }
-            },
-            timestamp: new Date().toISOString()
-        });
+    const [modelStatus, workerStatus, stats] = await Promise.all([
+      modelService.getAvailabilityStatus(),
+      Promise.resolve(worker.getStatus()),
+      modelService.getModelStats()
+    ]);
 
-    } catch (error) {
-        logger.error('Failed to get model availability status', {
-            error: error.message,
-            stack: error.stack
-        });
+    res.json({
+      success: true,
+      data: {
+        models: modelStatus,
+        worker: workerStatus,
+        statistics: stats,
+        summary: {
+          gpt5Available: modelStatus.gpt5Available,
+          totalModels: Object.keys(modelStatus.models || {}).length,
+          lastCheck: modelStatus.lastCheck,
+          nextCheck: modelStatus.nextCheck,
+          workerRunning: workerStatus.isRunning
+        }
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Failed to get model availability status', {
+      error: error.message,
+      stack: error.stack
+    });
 
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get model availability status',
-            timestamp: new Date().toISOString()
-        });
-    }
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get model availability status',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 /**
@@ -83,44 +82,43 @@ router.get('/status', authenticateToken, requireAdmin, async (req, res) => {
  * Force a manual model availability check
  */
 router.post('/check', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const worker = getModelAvailabilityWorker();
-        
-        logger.info('Manual model availability check triggered', {
-            userId: req.user.id,
-            timestamp: new Date().toISOString()
-        });
+  try {
+    const worker = getModelAvailabilityWorker();
 
-        const result = await worker.runManualCheck();
+    logger.info('Manual model availability check triggered', {
+      userId: req.user.id,
+      timestamp: new Date().toISOString()
+    });
 
-        res.json({
-            success: true,
-            data: {
-                checkCompleted: true,
-                result: result,
-                gpt5Available: result.gpt5Available,
-                modelsChecked: Object.keys(result.models || {}).length
-            },
-            message: result.gpt5Available 
-                ? '🎉 GPT-5 is available! All paid plans now use GPT-5.'
-                : 'Model availability updated. GPT-5 not yet available.',
-            timestamp: new Date().toISOString()
-        });
+    const result = await worker.runManualCheck();
 
-    } catch (error) {
-        logger.error('Manual model availability check failed', {
-            userId: req.user?.id,
-            error: error.message,
-            stack: error.stack
-        });
+    res.json({
+      success: true,
+      data: {
+        checkCompleted: true,
+        result: result,
+        gpt5Available: result.gpt5Available,
+        modelsChecked: Object.keys(result.models || {}).length
+      },
+      message: result.gpt5Available
+        ? '🎉 GPT-5 is available! All paid plans now use GPT-5.'
+        : 'Model availability updated. GPT-5 not yet available.',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Manual model availability check failed', {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack
+    });
 
-        res.status(500).json({
-            success: false,
-            error: 'Failed to check model availability',
-            details: error.message,
-            timestamp: new Date().toISOString()
-        });
-    }
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check model availability',
+      details: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 /**
@@ -128,36 +126,35 @@ router.post('/check', authenticateToken, requireAdmin, async (req, res) => {
  * Get specific model availability info
  */
 router.get('/model/:modelId', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const { modelId } = req.params;
-        const modelService = getModelAvailabilityService();
-        
-        const isAvailable = await modelService.isModelAvailable(modelId);
-        const stats = await modelService.getModelStats();
+  try {
+    const { modelId } = req.params;
+    const modelService = getModelAvailabilityService();
 
-        res.json({
-            success: true,
-            data: {
-                modelId: modelId,
-                isAvailable: isAvailable,
-                usage: stats.usage_last_7_days?.[modelId] || 0,
-                totalUsage: stats.total_requests || 0
-            },
-            timestamp: new Date().toISOString()
-        });
+    const isAvailable = await modelService.isModelAvailable(modelId);
+    const stats = await modelService.getModelStats();
 
-    } catch (error) {
-        logger.error('Failed to get model info', {
-            modelId: req.params.modelId,
-            error: error.message
-        });
+    res.json({
+      success: true,
+      data: {
+        modelId: modelId,
+        isAvailable: isAvailable,
+        usage: stats.usage_last_7_days?.[modelId] || 0,
+        totalUsage: stats.total_requests || 0
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Failed to get model info', {
+      modelId: req.params.modelId,
+      error: error.message
+    });
 
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get model information',
-            timestamp: new Date().toISOString()
-        });
-    }
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get model information',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 /**
@@ -165,27 +162,26 @@ router.get('/model/:modelId', authenticateToken, requireAdmin, async (req, res) 
  * Get detailed model usage statistics
  */
 router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const modelService = getModelAvailabilityService();
-        const stats = await modelService.getModelStats();
+  try {
+    const modelService = getModelAvailabilityService();
+    const stats = await modelService.getModelStats();
 
-        res.json({
-            success: true,
-            data: stats,
-            timestamp: new Date().toISOString()
-        });
+    res.json({
+      success: true,
+      data: stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Failed to get model stats', {
+      error: error.message
+    });
 
-    } catch (error) {
-        logger.error('Failed to get model stats', {
-            error: error.message
-        });
-
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get model statistics',
-            timestamp: new Date().toISOString()
-        });
-    }
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get model statistics',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 /**
@@ -193,42 +189,41 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
  * Get model assignments by plan
  */
 router.get('/plans', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const modelService = getModelAvailabilityService();
-        const plans = ['starter_trial', 'starter', 'pro', 'plus', 'custom'];
-        
-        const planModels = {};
-        
-        for (const plan of plans) {
-            planModels[plan] = await modelService.getModelForPlan(plan);
-        }
+  try {
+    const modelService = getModelAvailabilityService();
+    const plans = ['starter_trial', 'starter', 'pro', 'plus', 'custom'];
 
-        res.json({
-            success: true,
-            data: {
-                planModels: planModels,
-                explanation: {
-                    'starter_trial': 'Always uses GPT-3.5-turbo (30-day trial)',
-                    'starter': 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)',
-                    'pro': 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)',
-                    'plus': 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)',
-                    'custom': 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)'
-                }
-            },
-            timestamp: new Date().toISOString()
-        });
+    const planModels = {};
 
-    } catch (error) {
-        logger.error('Failed to get plan model assignments', {
-            error: error.message
-        });
-
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get plan model assignments',
-            timestamp: new Date().toISOString()
-        });
+    for (const plan of plans) {
+      planModels[plan] = await modelService.getModelForPlan(plan);
     }
+
+    res.json({
+      success: true,
+      data: {
+        planModels: planModels,
+        explanation: {
+          starter_trial: 'Always uses GPT-3.5-turbo (30-day trial)',
+          starter: 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)',
+          pro: 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)',
+          plus: 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)',
+          custom: 'GPT-5 → GPT-4o → GPT-3.5-turbo (fallback)'
+        }
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Failed to get plan model assignments', {
+      error: error.message
+    });
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get plan model assignments',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 /**
@@ -236,38 +231,37 @@ router.get('/plans', authenticateToken, requireAdmin, async (req, res) => {
  * Start the model availability worker
  */
 router.post('/worker/start', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const worker = getModelAvailabilityWorker();
-        
-        if (worker.getStatus().isRunning) {
-            return res.json({
-                success: true,
-                message: 'Worker is already running',
-                data: worker.getStatus(),
-                timestamp: new Date().toISOString()
-            });
-        }
+  try {
+    const worker = getModelAvailabilityWorker();
 
-        worker.start();
-
-        res.json({
-            success: true,
-            message: 'Model availability worker started',
-            data: worker.getStatus(),
-            timestamp: new Date().toISOString()
-        });
-
-    } catch (error) {
-        logger.error('Failed to start model availability worker', {
-            error: error.message
-        });
-
-        res.status(500).json({
-            success: false,
-            error: 'Failed to start worker',
-            timestamp: new Date().toISOString()
-        });
+    if (worker.getStatus().isRunning) {
+      return res.json({
+        success: true,
+        message: 'Worker is already running',
+        data: worker.getStatus(),
+        timestamp: new Date().toISOString()
+      });
     }
+
+    worker.start();
+
+    res.json({
+      success: true,
+      message: 'Model availability worker started',
+      data: worker.getStatus(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Failed to start model availability worker', {
+      error: error.message
+    });
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to start worker',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 /**
@@ -275,28 +269,27 @@ router.post('/worker/start', authenticateToken, requireAdmin, async (req, res) =
  * Stop the model availability worker
  */
 router.post('/worker/stop', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const worker = getModelAvailabilityWorker();
-        worker.stop();
+  try {
+    const worker = getModelAvailabilityWorker();
+    worker.stop();
 
-        res.json({
-            success: true,
-            message: 'Model availability worker stopped',
-            data: worker.getStatus(),
-            timestamp: new Date().toISOString()
-        });
+    res.json({
+      success: true,
+      message: 'Model availability worker stopped',
+      data: worker.getStatus(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Failed to stop model availability worker', {
+      error: error.message
+    });
 
-    } catch (error) {
-        logger.error('Failed to stop model availability worker', {
-            error: error.message
-        });
-
-        res.status(500).json({
-            success: false,
-            error: 'Failed to stop worker',
-            timestamp: new Date().toISOString()
-        });
-    }
+    res.status(500).json({
+      success: false,
+      error: 'Failed to stop worker',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 module.exports = router;

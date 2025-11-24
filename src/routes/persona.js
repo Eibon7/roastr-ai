@@ -13,36 +13,13 @@
  */
 
 const express = require('express');
-const { body, validationResult } = require('express-validator');
 const { authenticateToken } = require('../middleware/auth');
 const PersonaService = require('../services/PersonaService');
 const { logger } = require('../utils/logger');
+const { createPersonaSchema } = require('../validators/zod/persona.schema');
+const { formatZodError, isZodError } = require('../validators/zod/formatZodError');
 
 const router = express.Router();
-
-// Input validation rules
-const validatePersonaInput = [
-  body('lo_que_me_define')
-    .optional()
-    .isString().withMessage('lo_que_me_define must be a string')
-    .trim()
-    .isLength({ max: 300 }).withMessage('lo_que_me_define must be 300 characters or less')
-    .escape(),
-
-  body('lo_que_no_tolero')
-    .optional()
-    .isString().withMessage('lo_que_no_tolero must be a string')
-    .trim()
-    .isLength({ max: 300 }).withMessage('lo_que_no_tolero must be 300 characters or less')
-    .escape(),
-
-  body('lo_que_me_da_igual')
-    .optional()
-    .isString().withMessage('lo_que_me_da_igual must be a string')
-    .trim()
-    .isLength({ max: 300 }).withMessage('lo_que_me_da_igual must be 300 characters or less')
-    .escape()
-];
 
 /**
  * GET /api/persona
@@ -77,7 +54,6 @@ router.get('/api/persona', authenticateToken, async (req, res) => {
       success: true,
       data: persona
     });
-
   } catch (error) {
     logger.error('GET /api/persona failed', {
       userId: req.user?.id,
@@ -130,89 +106,85 @@ router.get('/api/persona', authenticateToken, async (req, res) => {
  * - 403: Plan restriction (field not available for user's plan)
  * - 500: Internal error
  */
-router.post(
-  '/api/persona',
-  authenticateToken,
-  validatePersonaInput,
-  async (req, res) => {
-    try {
-      // Validate input
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          errors: errors.array(),
-          code: 'VALIDATION_ERROR'
-        });
+router.post('/api/persona', authenticateToken, async (req, res) => {
+  try {
+    // Validate input with Zod (Issue #942)
+    const validatedData = createPersonaSchema.parse(req.body);
+
+    const userId = req.user.id;
+    const { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual } = validatedData;
+
+    // Get user plan (from JWT or database)
+    let userPlan = req.user.plan;
+
+    // If plan not in JWT, fetch from database
+    if (!userPlan) {
+      const { data: user, error: userError } = await require('../config')
+        .supabaseServiceClient.from('users')
+        .select('plan')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !user) {
+        throw new Error('Failed to retrieve user plan');
       }
 
-      const userId = req.user.id;
-      const { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual } = req.body;
+      userPlan = user.plan;
+    }
 
-      // Get user plan (from JWT or database)
-      let userPlan = req.user.plan;
+    // Update persona
+    const result = await PersonaService.updatePersona(
+      userId,
+      { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual },
+      userPlan
+    );
 
-      // If plan not in JWT, fetch from database
-      if (!userPlan) {
-        const { data: user, error: userError } = await require('../config').supabaseServiceClient
-          .from('users')
-          .select('plan')
-          .eq('id', userId)
-          .single();
-
-        if (userError || !user) {
-          throw new Error('Failed to retrieve user plan');
-        }
-
-        userPlan = user.plan;
-      }
-
-      // Update persona
-      const result = await PersonaService.updatePersona(
-        userId,
-        { lo_que_me_define, lo_que_no_tolero, lo_que_me_da_igual },
-        userPlan
-      );
-
-      res.json({
-        success: true,
-        data: result
-      });
-
-    } catch (error) {
-      logger.error('POST /api/persona failed', {
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    // Handle Zod validation errors (Issue #942)
+    if (isZodError(error)) {
+      logger.warn('POST /api/persona validation failed', {
         userId: req.user?.id,
-        error: error.message,
-        stack: error.stack
+        errors: error.issues
       });
+      return res.status(400).json(formatZodError(error));
+    }
 
-      // Handle plan restriction errors
-      if (error.message.includes('PLAN_RESTRICTION')) {
-        return res.status(403).json({
-          success: false,
-          error: error.message,
-          code: 'PLAN_RESTRICTION',
-          upgrade_url: '/pricing'
-        });
-      }
+    logger.error('POST /api/persona failed', {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack
+    });
 
-      // Handle character limit errors
-      if (error.message.includes('CHARACTER_LIMIT_EXCEEDED')) {
-        return res.status(400).json({
-          success: false,
-          error: error.message,
-          code: 'CHARACTER_LIMIT_EXCEEDED'
-        });
-      }
-
-      res.status(500).json({
+    // Handle plan restriction errors
+    if (error.message.includes('PLAN_RESTRICTION')) {
+      return res.status(403).json({
         success: false,
-        error: 'Failed to update persona',
-        code: 'INTERNAL_ERROR'
+        error: error.message,
+        code: 'PLAN_RESTRICTION',
+        upgrade_url: '/pricing'
       });
     }
+
+    // Handle character limit errors
+    if (error.message.includes('CHARACTER_LIMIT_EXCEEDED')) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+        code: 'CHARACTER_LIMIT_EXCEEDED'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update persona',
+      code: 'INTERNAL_ERROR'
+    });
   }
-);
+});
 
 /**
  * DELETE /api/persona
@@ -237,7 +209,6 @@ router.delete('/api/persona', authenticateToken, async (req, res) => {
 
     // 204 No Content (successful deletion)
     res.status(204).send();
-
   } catch (error) {
     logger.error('DELETE /api/persona failed', {
       userId: req.user?.id,
@@ -267,7 +238,6 @@ router.get('/api/persona/health', async (req, res) => {
 
     const statusCode = health.status === 'healthy' ? 200 : 503;
     res.status(statusCode).json(health);
-
   } catch (error) {
     res.status(503).json({
       status: 'unhealthy',

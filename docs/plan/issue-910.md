@@ -11,6 +11,7 @@
 ## 📊 Estado Actual
 
 El dashboard frontend está configurado como sistema **mock-first** según `FRONTEND_DASHBOARD.md`:
+
 - Usa datos simulados de `mockMode.js`
 - Páginas `Connect.jsx`, `StyleProfile.jsx`, `Dashboard.jsx` con datos estáticos
 - Widgets (`IntegrationsCard`, `UsageCostCard`, `PlanStatusCard`) sin conexión real
@@ -56,47 +57,51 @@ El dashboard frontend está configurado como sistema **mock-first** según `FRON
 **Objetivo:** Habilitar comunicación frontend-backend
 
 **Archivos:**
+
 - `frontend/.env` (crear/actualizar)
 - `frontend/lib/api/apiClient.js` (crear servicio HTTP)
 - `backend/src/server.js` (verificar CORS)
 
 **Tareas:**
+
 1. **Configurar `REACT_APP_API_URL`:**
+
    ```bash
    # frontend/.env
    REACT_APP_API_URL=http://localhost:3000
    ```
 
 2. **Crear servicio API cliente:**
+
    ```javascript
    // frontend/lib/api/apiClient.js
    import { createClient } from '@supabase/supabase-js';
-   
+
    const supabase = createClient(
      process.env.REACT_APP_SUPABASE_URL,
      process.env.REACT_APP_SUPABASE_ANON_KEY
    );
-   
+
    export async function fetchWithAuth(endpoint, options = {}) {
      const { data: session } = await supabase.auth.getSession();
-     
+
      const headers = {
        'Content-Type': 'application/json',
        ...(session?.access_token && {
-         'Authorization': `Bearer ${session.access_token}`
+         Authorization: `Bearer ${session.access_token}`
        }),
        ...options.headers
      };
-     
-     const response = await fetch(
-       `${process.env.REACT_APP_API_URL}${endpoint}`,
-       { ...options, headers }
-     );
-     
+
+     const response = await fetch(`${process.env.REACT_APP_API_URL}${endpoint}`, {
+       ...options,
+       headers
+     });
+
      if (!response.ok) {
        throw new Error(`API error: ${response.statusText}`);
      }
-     
+
      return response.json();
    }
    ```
@@ -104,14 +109,16 @@ El dashboard frontend está configurado como sistema **mock-first** según `FRON
 3. **Verificar CORS en backend:**
    ```javascript
    // src/server.js (verificar configuración existente)
-   app.use(cors({
-     origin: [
-       'http://localhost:3001', // Frontend dev
-       'http://localhost:5173', // Vite frontend
-       process.env.FRONTEND_URL
-     ],
-     credentials: true
-   }));
+   app.use(
+     cors({
+       origin: [
+         'http://localhost:3001', // Frontend dev
+         'http://localhost:5173', // Vite frontend
+         process.env.FRONTEND_URL
+       ],
+       credentials: true
+     })
+   );
    ```
 
 ---
@@ -121,12 +128,14 @@ El dashboard frontend está configurado como sistema **mock-first** según `FRON
 **Objetivo:** Crear servicios dedicados para cada endpoint
 
 **Archivos a crear:**
+
 - `frontend/lib/api/integrations.js`
 - `frontend/lib/api/usage.js`
 - `frontend/lib/api/plans.js`
 - `frontend/lib/api/roast.js`
 
 **1. Integrations Service**
+
 ```javascript
 // frontend/lib/api/integrations.js
 import { fetchWithAuth } from './apiClient';
@@ -150,6 +159,7 @@ export async function disconnectPlatform(integrationId) {
 ```
 
 **2. Usage Service**
+
 ```javascript
 // frontend/lib/api/usage.js
 import { fetchWithAuth } from './apiClient';
@@ -165,6 +175,7 @@ export async function getUsageHistory(startDate, endDate) {
 ```
 
 **3. Plans Service**
+
 ```javascript
 // frontend/lib/api/plans.js
 import { fetchWithAuth } from './apiClient';
@@ -182,6 +193,7 @@ export async function upgradePlan(planId) {
 ```
 
 **4. Roast Service**
+
 ```javascript
 // frontend/lib/api/roast.js
 import { fetchWithAuth } from './apiClient';
@@ -201,6 +213,7 @@ export async function previewRoast(commentText, toxicityScore, style) {
 **Objetivo:** Reemplazar mocks con llamadas reales
 
 **Archivos a modificar:**
+
 - `frontend/src/pages/Connect.jsx`
 - `frontend/src/pages/StyleProfile.jsx`
 - `frontend/src/pages/Dashboard.jsx`
@@ -212,6 +225,7 @@ export async function previewRoast(commentText, toxicityScore, style) {
 **Patrón de actualización:**
 
 **Antes (mock):**
+
 ```javascript
 import { mockIntegrations } from '../lib/mockMode';
 
@@ -222,6 +236,7 @@ function Connect() {
 ```
 
 **Después (real):**
+
 ```javascript
 import { useEffect, useState } from 'react';
 import { getIntegrations } from '../lib/api/integrations';
@@ -262,11 +277,13 @@ function Connect() {
 **Objetivo:** Implementar loading, error, empty states
 
 **Componentes a crear:**
+
 - `frontend/src/components/states/SkeletonLoader.jsx`
 - `frontend/src/components/states/ErrorMessage.jsx`
 - `frontend/src/components/states/EmptyState.jsx`
 
 **1. Skeleton Loader**
+
 ```javascript
 // frontend/src/components/states/SkeletonLoader.jsx
 export function SkeletonLoader({ type = 'card', count = 1 }) {
@@ -281,6 +298,7 @@ export function SkeletonLoader({ type = 'card', count = 1 }) {
 ```
 
 **2. Error Message**
+
 ```javascript
 // frontend/src/components/states/ErrorMessage.jsx
 export function ErrorMessage({ error, retry }) {
@@ -302,6 +320,7 @@ export function ErrorMessage({ error, retry }) {
 ```
 
 **3. Empty State**
+
 ```javascript
 // frontend/src/components/states/EmptyState.jsx
 export function EmptyState({ title, description, action }) {
@@ -310,9 +329,7 @@ export function EmptyState({ title, description, action }) {
       <h3 className="text-gray-600 font-semibold text-lg">{title}</h3>
       <p className="text-gray-500 text-sm mt-2">{description}</p>
       {action && (
-        <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg">
-          {action}
-        </button>
+        <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg">{action}</button>
       )}
     </div>
   );
@@ -326,6 +343,7 @@ export function EmptyState({ title, description, action }) {
 **Objetivo:** Asegurar autenticación correcta
 
 **Script de verificación:**
+
 ```bash
 # scripts/verify-dashboard-auth.js
 const { createClient } = require('@supabase/supabase-js');
@@ -338,7 +356,7 @@ async function verifyAuth() {
 
   // Test auth token
   const { data: session, error } = await supabase.auth.getSession();
-  
+
   if (error) {
     console.error('❌ Auth error:', error.message);
     return false;
@@ -377,6 +395,7 @@ verifyAuth().then(success => process.exit(success ? 0 : 1));
 **Test files a crear:**
 
 **1. Unit Tests (frontend)**
+
 ```javascript
 // frontend/tests/unit/api/integrations.test.js
 import { describe, it, expect, vi } from 'vitest';
@@ -384,14 +403,15 @@ import { getIntegrations, connectPlatform } from '../../../lib/api/integrations'
 
 describe('Integrations API', () => {
   it('fetches integrations successfully', async () => {
-    global.fetch = vi.fn(() => Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({
-        integrations: [
-          { id: '1', platform: 'twitter', enabled: true }
-        ]
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            integrations: [{ id: '1', platform: 'twitter', enabled: true }]
+          })
       })
-    }));
+    );
 
     const result = await getIntegrations();
     expect(result.integrations).toHaveLength(1);
@@ -407,6 +427,7 @@ describe('Integrations API', () => {
 ```
 
 **2. Integration Tests (E2E)**
+
 ```javascript
 // frontend/tests/e2e/dashboard-connect.spec.js
 const { test, expect } = require('@playwright/test');
@@ -429,7 +450,7 @@ test('Connect page loads integrations from backend', async ({ page }) => {
 
 test('Shows error state when API fails', async ({ page, context }) => {
   // Block API requests to simulate failure
-  await context.route('**/api/integrations', route => route.abort());
+  await context.route('**/api/integrations', (route) => route.abort());
 
   await page.goto('http://localhost:3001/connect');
 
@@ -441,13 +462,14 @@ test('Shows error state when API fails', async ({ page, context }) => {
 ```
 
 **3. Visual Validation (Playwright)**
+
 ```javascript
 // frontend/tests/visual/dashboard-states.spec.js
 const { test } = require('@playwright/test');
 
 test('Dashboard loading state', async ({ page }) => {
   await page.goto('http://localhost:3001/dashboard');
-  
+
   // Capture loading skeleton
   await page.screenshot({
     path: 'docs/test-evidence/issue-910/dashboard-loading.png',
@@ -458,7 +480,7 @@ test('Dashboard loading state', async ({ page }) => {
 test('Dashboard with data', async ({ page }) => {
   await page.goto('http://localhost:3001/dashboard');
   await page.waitForSelector('[data-testid="usage-card"]', { timeout: 5000 });
-  
+
   // Capture loaded state
   await page.screenshot({
     path: 'docs/test-evidence/issue-910/dashboard-loaded.png',
@@ -467,9 +489,9 @@ test('Dashboard with data', async ({ page }) => {
 });
 
 test('Dashboard error state', async ({ page, context }) => {
-  await context.route('**/api/usage', route => route.abort());
+  await context.route('**/api/usage', (route) => route.abort());
   await page.goto('http://localhost:3001/dashboard');
-  
+
   // Capture error state
   await page.screenshot({
     path: 'docs/test-evidence/issue-910/dashboard-error.png',
@@ -487,7 +509,8 @@ test('Dashboard error state', async ({ page, context }) => {
 **Archivos a actualizar:**
 
 **1. FRONTEND_DASHBOARD.md**
-```markdown
+
+````markdown
 # Frontend Dashboard - Backend Integration
 
 **Status:** ✅ Connected to Backend (Issue #910)
@@ -495,14 +518,18 @@ test('Dashboard error state', async ({ page, context }) => {
 ## Environment Variables Required
 
 \```bash
+
 # Backend API
+
 REACT_APP_API_URL=http://localhost:3000
 
 # Supabase Auth
+
 REACT_APP_SUPABASE_URL=https://your-project.supabase.co
 REACT_APP_SUPABASE_ANON_KEY=your-anon-key
 
 # Feature Flags
+
 REACT_APP_ENABLE_SHOP=true
 REACT_APP_ENABLE_SHIELD_UI=true
 \```
@@ -535,18 +562,23 @@ REACT_APP_ENABLE_SHIELD_UI=true
 ## Testing
 
 \```bash
+
 # Run unit tests
+
 npm test -- api
 
 # Run E2E tests
+
 npm run test:e2e -- dashboard
 
 # Visual validation
+
 npm run test:visual
 \```
-```
+````
 
 **2. docs/nodes/social-platforms.md**
+
 ```markdown
 ## Dashboard Integration (Issue #910)
 
@@ -557,6 +589,7 @@ The frontend dashboard now connects to real platform integration data via:
 - **DELETE /api/integrations/:id** - Disconnect platform
 
 Each integration shows:
+
 - Platform name and icon
 - Connection status (Conectado / Desconectado)
 - Last sync timestamp
@@ -565,6 +598,7 @@ Each integration shows:
 ```
 
 **3. integration-status.json**
+
 ```json
 {
   "lastUpdated": "2025-11-21T12:00:00Z",
@@ -588,23 +622,27 @@ Each integration shows:
 ## 🎬 Agentes Asignados
 
 ### Backend Developer
+
 - Verificar endpoints existentes: `/api/integrations`, `/api/usage`, `/api/plan/current`, `/api/roast/preview`
 - Asegurar autenticación via middleware `authenticateToken`
 - Verificar CORS configurado para frontend
 
 ### Frontend Developer
+
 - Crear servicios API (integrations.js, usage.js, plans.js, roast.js)
 - Actualizar páginas: Connect.jsx, StyleProfile.jsx, Dashboard.jsx
 - Implementar estados: loading, error, empty
 - Actualizar widgets para usar datos reales
 
 ### Test Engineer
+
 - Tests unitarios para servicios API
 - Tests E2E con Playwright
 - Validación visual (screenshots de estados)
 - Evidencias en `docs/test-evidence/issue-910/`
 
 ### Guardian
+
 - Verificar que NO se exponen secretos en frontend
 - Validar autenticación en todos los endpoints
 - Verificar políticas RLS en Supabase
@@ -614,6 +652,7 @@ Each integration shows:
 ## ✅ Criterios de Éxito
 
 **Pre-Merge Checklist:**
+
 - [ ] Todos los mocks reemplazados por fetch reales
 - [ ] Estados loading/error/empty implementados en todas las páginas
 - [ ] Authentication funcionando con Supabase JWT
@@ -632,18 +671,22 @@ Each integration shows:
 ## 🚨 Riesgos y Mitigaciones
 
 **Riesgo 1:** Endpoints backend no existen o tienen firma diferente
+
 - **Mitigación:** Verificar endpoints con `curl` o Postman antes de integrar
 - **Script:** `scripts/verify-dashboard-endpoints.sh`
 
 **Riesgo 2:** CORS bloquea requests desde frontend
+
 - **Mitigación:** Verificar configuración CORS en `src/server.js`
 - **Test:** `npm run test:cors`
 
 **Riesgo 3:** Autenticación falla por token expirado
+
 - **Mitigación:** Implementar refresh token automático en `apiClient.js`
 - **Fallback:** Redirigir a login si refresh falla
 
 **Riesgo 4:** Performance degradado por llamadas síncronas
+
 - **Mitigación:** Usar Promise.all() para parallelizar requests independientes
 - **Optimización:** Implementar cache en frontend (5 min TTL)
 
@@ -660,4 +703,3 @@ Each integration shows:
 
 **Status:** ✅ PLAN COMPLETE - Ready to proceed with implementation
 **Next Step:** FASE 1 - Configuración Inicial (crear `frontend/.env`, `apiClient.js`)
-

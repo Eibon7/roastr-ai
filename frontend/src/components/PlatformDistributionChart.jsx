@@ -1,9 +1,9 @@
 /**
  * PlatformDistributionChart Component
- * 
+ *
  * Displays the distribution of analyzed content across different social media platforms
  * Issue #369 - SPEC 9 - Style Profile Extraction
- * 
+ *
  * Features:
  * - Platform source distribution
  * - Visual percentage bars
@@ -31,16 +31,16 @@ const PlatformDistributionChart = ({ sources, language = 'es' }) => {
 
   // Calculate total and percentages
   const totalItems = Object.values(sources).reduce((sum, count) => sum + count, 0);
-  
+
   const platformData = Object.entries(sources)
     .map(([platform, count]) => ({
       platform,
       count,
       percentage: Math.round((count / totalItems) * 100),
-      config: platformConfig[platform] || { 
-        name: platform, 
-        icon: '📱', 
-        color: 'bg-gray-500' 
+      config: platformConfig[platform] || {
+        name: platform,
+        icon: '📱',
+        color: 'bg-gray-500'
       }
     }))
     .sort((a, b) => b.count - a.count);
@@ -79,9 +79,7 @@ const PlatformDistributionChart = ({ sources, language = 'es' }) => {
                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                   {count.toLocaleString()}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {percentage}%
-                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{percentage}%</div>
               </div>
             </div>
 
@@ -117,10 +115,13 @@ const PlatformDistributionChart = ({ sources, language = 'es' }) => {
             <div className="flex justify-between">
               <span>{language === 'es' ? 'Diversidad:' : 'Diversity:'}</span>
               <span className="font-medium">
-                {platformData.length >= 3 ? 
-                  (language === 'es' ? 'Alta' : 'High') : 
-                  (language === 'es' ? 'Media' : 'Medium')
-                }
+                {platformData.length >= 3
+                  ? language === 'es'
+                    ? 'Alta'
+                    : 'High'
+                  : language === 'es'
+                    ? 'Media'
+                    : 'Medium'}
               </span>
             </div>
           )}
@@ -136,15 +137,18 @@ const PlatformDistributionChart = ({ sources, language = 'es' }) => {
           <p className="text-sm text-green-800 dark:text-green-300">
             {language === 'es' ? (
               <>
-                Tu perfil se basa principalmente en contenido de <strong>{platformData[0]?.config.name}</strong> 
-                ({platformData[0]?.percentage}%), lo que proporciona una perspectiva 
-                {platformData.length >= 3 ? ' diversa' : ' equilibrada'} de tu estilo de comunicación.
+                Tu perfil se basa principalmente en contenido de{' '}
+                <strong>{platformData[0]?.config.name}</strong>({platformData[0]?.percentage}%), lo
+                que proporciona una perspectiva
+                {platformData.length >= 3 ? ' diversa' : ' equilibrada'} de tu estilo de
+                comunicación.
               </>
             ) : (
               <>
-                Your profile is primarily based on <strong>{platformData[0]?.config.name}</strong> 
-                content ({platformData[0]?.percentage}%), providing a 
-                {platformData.length >= 3 ? ' diverse' : ' balanced'} perspective of your communication style.
+                Your profile is primarily based on <strong>{platformData[0]?.config.name}</strong>
+                content ({platformData[0]?.percentage}%), providing a
+                {platformData.length >= 3 ? ' diverse' : ' balanced'} perspective of your
+                communication style.
               </>
             )}
           </p>

@@ -1,6 +1,6 @@
 /**
  * Usage API Service
- * 
+ *
  * Handles usage tracking, limits, and cost control
  * Issue #910 - Connect dashboard to real backend
  */
@@ -51,4 +51,3 @@ export async function getUsageBreakdown() {
 export async function getOptimizationRecommendations() {
   return apiClient.get('/usage/recommendations');
 }
-

@@ -92,7 +92,7 @@ class GuardianEngine {
       return { exists: false };
     }
 
-    const caseFiles = fs.readdirSync(CASES_DIR).filter(f => f.endsWith('.json'));
+    const caseFiles = fs.readdirSync(CASES_DIR).filter((f) => f.endsWith('.json'));
 
     for (const file of caseFiles) {
       try {
@@ -172,27 +172,30 @@ class GuardianEngine {
       }
 
       // Parse diff output
-      const allChanges = diff.trim().split('\n').map(line => {
-        const [status, ...fileParts] = line.split('\t');
+      const allChanges = diff
+        .trim()
+        .split('\n')
+        .map((line) => {
+          const [status, ...fileParts] = line.split('\t');
 
-        // Handle renamed files (status starts with 'R')
-        if (status.startsWith('R')) {
-          const oldFile = fileParts[0];
-          const newFile = fileParts[1] || oldFile;
-          return {
-            status,
-            file: newFile,
-            oldPath: oldFile,
-            renamed: true
-          };
-        }
+          // Handle renamed files (status starts with 'R')
+          if (status.startsWith('R')) {
+            const oldFile = fileParts[0];
+            const newFile = fileParts[1] || oldFile;
+            return {
+              status,
+              file: newFile,
+              oldPath: oldFile,
+              renamed: true
+            };
+          }
 
-        const file = fileParts.join('\t');
-        return { status, file };
-      });
+          const file = fileParts.join('\t');
+          return { status, file };
+        });
 
       // Filter out ignored files (test fixtures, Windows paths, etc.)
-      const changes = allChanges.filter(change => {
+      const changes = allChanges.filter((change) => {
         const shouldIgnore = this.shouldIgnoreFile(change.file);
         if (shouldIgnore) {
           console.log(`  ⏩ Ignoring: ${change.file} (matches ignore pattern)`);
@@ -201,7 +204,9 @@ class GuardianEngine {
       });
 
       this.changesSummary.total_files = changes.length;
-      console.log(`📊 Detected ${changes.length} changed file(s) (${allChanges.length - changes.length} ignored)`);
+      console.log(
+        `📊 Detected ${changes.length} changed file(s) (${allChanges.length - changes.length} ignored)`
+      );
 
       return changes;
     } catch (error) {
@@ -225,8 +230,8 @@ class GuardianEngine {
 
       // Count lines (exclude diff headers +++ and ---)
       const lines = diff.split('\n');
-      const added = lines.filter(l => l.startsWith('+') && !l.startsWith('+++')).length;
-      const removed = lines.filter(l => l.startsWith('-') && !l.startsWith('---')).length;
+      const added = lines.filter((l) => l.startsWith('+') && !l.startsWith('+++')).length;
+      const removed = lines.filter((l) => l.startsWith('-') && !l.startsWith('---')).length;
 
       this.changesSummary.total_lines_added += added;
       this.changesSummary.total_lines_removed += removed;
@@ -373,7 +378,11 @@ class GuardianEngine {
     console.log(`║ Total Files Changed: ${this.changesSummary.total_files}`.padEnd(64) + '║');
     console.log(`║ Lines Added: ${this.changesSummary.total_lines_added}`.padEnd(64) + '║');
     console.log(`║ Lines Removed: ${this.changesSummary.total_lines_removed}`.padEnd(64) + '║');
-    console.log(`║ Domains Affected: ${Array.from(this.changesSummary.domains_affected).join(', ')}`.padEnd(64) + '║');
+    console.log(
+      `║ Domains Affected: ${Array.from(this.changesSummary.domains_affected).join(', ')}`.padEnd(
+        64
+      ) + '║'
+    );
     console.log('╠═══════════════════════════════════════════════════════════════╣');
 
     // Violations by severity
@@ -383,14 +392,14 @@ class GuardianEngine {
 
     if (criticalCount > 0) {
       console.log(`║ 🔴 CRITICAL: ${criticalCount} violation(s) - BLOCKED`.padEnd(64) + '║');
-      this.violations.critical.forEach(v => {
+      this.violations.critical.forEach((v) => {
         console.log(`║   • ${v.file} (${v.domains.join(', ')})`.padEnd(64) + '║');
       });
     }
 
     if (sensitiveCount > 0) {
       console.log(`║ 🟡 SENSITIVE: ${sensitiveCount} change(s) - REVIEW REQUIRED`.padEnd(64) + '║');
-      this.violations.sensitive.forEach(v => {
+      this.violations.sensitive.forEach((v) => {
         console.log(`║   • ${v.file} (${v.domains.join(', ')})`.padEnd(64) + '║');
       });
     }
@@ -451,21 +460,26 @@ This file contains a chronological record of all Guardian Agent events.
     }
 
     // Append to audit log
-    const actor = process.env.GITHUB_ACTOR ||
-                  process.env.USER ||
-                  process.env.USERNAME ||
-                  'unknown';
+    const actor = process.env.GITHUB_ACTOR || process.env.USER || process.env.USERNAME || 'unknown';
     const domains = Array.from(this.changesSummary.domains_affected).join(', ') || 'none';
     const files = allViolations.length;
-    const severity = this.violations.critical.length > 0 ? 'CRITICAL' :
-                     this.violations.sensitive.length > 0 ? 'SENSITIVE' : 'SAFE';
-    const action = severity === 'CRITICAL' ? 'BLOCKED' :
-                   severity === 'SENSITIVE' ? 'REVIEW' : 'APPROVED';
-    const notes = severity === 'CRITICAL' ? 'Requires Product Owner approval' :
-                  severity === 'SENSITIVE' ? 'Requires Tech Lead review' : 'Auto-approved';
+    const severity =
+      this.violations.critical.length > 0
+        ? 'CRITICAL'
+        : this.violations.sensitive.length > 0
+          ? 'SENSITIVE'
+          : 'SAFE';
+    const action =
+      severity === 'CRITICAL' ? 'BLOCKED' : severity === 'SENSITIVE' ? 'REVIEW' : 'APPROVED';
+    const notes =
+      severity === 'CRITICAL'
+        ? 'Requires Product Owner approval'
+        : severity === 'SENSITIVE'
+          ? 'Requires Tech Lead review'
+          : 'Auto-approved';
 
     // ⭐ Deduplication check
-    const filesChanged = allViolations.map(v => v.file);
+    const filesChanged = allViolations.map((v) => v.file);
     const domainsArray = Array.from(this.changesSummary.domains_affected);
     const caseKey = this.generateCaseKey(filesChanged, severity, action, domainsArray);
     const existingCase = this.caseExists(caseKey);
@@ -490,7 +504,7 @@ This file contains a chronological record of all Guardian Agent events.
       timestamp,
       actor,
       domains: Array.from(this.changesSummary.domains_affected),
-      files_changed: allViolations.map(v => v.file),
+      files_changed: allViolations.map((v) => v.file),
       severity,
       action,
       violations: {
@@ -498,7 +512,7 @@ This file contains a chronological record of all Guardian Agent events.
         sensitive: this.violations.sensitive.length,
         safe: this.violations.safe.length
       },
-      details: allViolations.map(v => ({
+      details: allViolations.map((v) => ({
         file: v.file,
         domains: v.domains,
         severity: v.severity,
@@ -564,31 +578,59 @@ This file contains a chronological record of all Guardian Agent events.
 
 ### 🔴 Critical (${this.violations.critical.length})
 
-${this.violations.critical.length > 0 ? this.violations.critical.map(v => `
+${
+  this.violations.critical.length > 0
+    ? this.violations.critical
+        .map(
+          (v) => `
 - **File:** ${v.file}
 - **Domains:** ${v.domains.join(', ')}
 - **Changes:** +${v.added} -${v.removed} lines
-`).join('\n') : '_None_'}
+`
+        )
+        .join('\n')
+    : '_None_'
+}
 
 ### 🟡 Sensitive (${this.violations.sensitive.length})
 
-${this.violations.sensitive.length > 0 ? this.violations.sensitive.map(v => `
+${
+  this.violations.sensitive.length > 0
+    ? this.violations.sensitive
+        .map(
+          (v) => `
 - **File:** ${v.file}
 - **Domains:** ${v.domains.join(', ')}
 - **Changes:** +${v.added} -${v.removed} lines
-`).join('\n') : '_None_'}
+`
+        )
+        .join('\n')
+    : '_None_'
+}
 
 ### 🟢 Safe (${this.violations.safe.length})
 
-${this.violations.safe.length > 0 ? this.violations.safe.map(v => `
+${
+  this.violations.safe.length > 0
+    ? this.violations.safe
+        .map(
+          (v) => `
 - **File:** ${v.file}
-`).join('\n') : '_None_'}
+`
+        )
+        .join('\n')
+    : '_None_'
+}
 
 ## Recommendation
 
-${this.violations.critical.length > 0 ? '❌ **BLOCK MERGE** - Critical violations detected. Product Owner approval required.' :
-  this.violations.sensitive.length > 0 ? '⚠️ **MANUAL REVIEW** - Sensitive changes detected. Tech Lead approval required.' :
-  '✅ **APPROVE** - All changes are safe to merge.'}
+${
+  this.violations.critical.length > 0
+    ? '❌ **BLOCK MERGE** - Critical violations detected. Product Owner approval required.'
+    : this.violations.sensitive.length > 0
+      ? '⚠️ **MANUAL REVIEW** - Sensitive changes detected. Tech Lead approval required.'
+      : '✅ **APPROVE** - All changes are safe to merge.'
+}
 
 ---
 
