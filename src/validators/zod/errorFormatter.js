@@ -168,4 +168,3 @@ module.exports = {
   validateQuery,
   validateParams
 };
-

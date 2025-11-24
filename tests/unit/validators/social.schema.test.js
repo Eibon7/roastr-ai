@@ -20,7 +20,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token_12345',
         redirect_uri: 'https://roastr.ai/callback'
       };
-      
+
       const result = OAuthCodeSchema.parse(valid);
       expect(result).toEqual(valid);
     });
@@ -30,7 +30,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123xyz',
         state: 'csrf_token_12345'
       };
-      
+
       const result = OAuthCodeSchema.parse(valid);
       expect(result.code).toBe('abc123xyz');
       expect(result.state).toBe('csrf_token_12345');
@@ -38,36 +38,36 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
     });
 
     it('should reject empty code', () => {
-      const invalid = { 
-        code: '', 
-        state: 'csrf_token' 
+      const invalid = {
+        code: '',
+        state: 'csrf_token'
       };
-      
+
       expect(() => OAuthCodeSchema.parse(invalid)).toThrow('OAuth code is required');
     });
 
     it('should reject missing code', () => {
-      const invalid = { 
-        state: 'csrf_token' 
+      const invalid = {
+        state: 'csrf_token'
       };
-      
+
       expect(() => OAuthCodeSchema.parse(invalid)).toThrow();
     });
 
     it('should reject empty state', () => {
-      const invalid = { 
-        code: 'abc123', 
-        state: '' 
+      const invalid = {
+        code: 'abc123',
+        state: ''
       };
-      
+
       expect(() => OAuthCodeSchema.parse(invalid)).toThrow('State token is required');
     });
 
     it('should reject missing state', () => {
-      const invalid = { 
-        code: 'abc123' 
+      const invalid = {
+        code: 'abc123'
       };
-      
+
       expect(() => OAuthCodeSchema.parse(invalid)).toThrow();
     });
 
@@ -77,7 +77,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         redirect_uri: 'not-a-valid-url'
       };
-      
+
       expect(() => OAuthCodeSchema.parse(invalid)).toThrow('Invalid redirect URI');
     });
 
@@ -86,7 +86,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'a'.repeat(501), // 501 chars, max is 500
         state: 'csrf_token'
       };
-      
+
       expect(() => OAuthCodeSchema.parse(invalid)).toThrow('OAuth code too long');
     });
 
@@ -95,7 +95,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 's'.repeat(201) // 201 chars, max is 200
       };
-      
+
       expect(() => OAuthCodeSchema.parse(invalid)).toThrow('State token too long');
     });
 
@@ -105,7 +105,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         redirect_uri: 'https://example.com/oauth/callback'
       };
-      
+
       expect(() => OAuthCodeSchema.parse(valid)).not.toThrow();
     });
 
@@ -115,7 +115,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         redirect_uri: 'http://localhost:3000/callback'
       };
-      
+
       expect(() => OAuthCodeSchema.parse(valid)).not.toThrow();
     });
   });
@@ -140,7 +140,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
           code: 'abc123',
           state: 'csrf_token'
         };
-        
+
         expect(() => OAuthConnectionSchema.parse(valid)).not.toThrow();
       });
     });
@@ -151,7 +151,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => OAuthConnectionSchema.parse(invalid)).toThrow();
     });
 
@@ -162,7 +162,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         organization_id: '550e8400-e29b-41d4-a716-446655440000'
       };
-      
+
       const result = OAuthConnectionSchema.parse(valid);
       expect(result.organization_id).toBe('550e8400-e29b-41d4-a716-446655440000');
     });
@@ -174,7 +174,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         organization_id: 'not-a-uuid'
       };
-      
+
       expect(() => OAuthConnectionSchema.parse(invalid)).toThrow();
     });
 
@@ -185,7 +185,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         redirect_uri: 'https://roastr.ai/callback'
       };
-      
+
       expect(() => OAuthConnectionSchema.parse(valid)).not.toThrow();
     });
   });
@@ -199,7 +199,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         oauth_token: 'twitter_token_123',
         oauth_verifier: 'verifier_abc'
       };
-      
+
       const result = TwitterConnectSchema.parse(valid);
       expect(result.platform).toBe('twitter');
       expect(result.oauth_token).toBe('twitter_token_123');
@@ -212,7 +212,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => TwitterConnectSchema.parse(valid)).not.toThrow();
     });
 
@@ -222,7 +222,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => TwitterConnectSchema.parse(invalid)).toThrow();
     });
   });
@@ -235,7 +235,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         scope: 'https://www.googleapis.com/auth/youtube.force-ssl'
       };
-      
+
       const result = YouTubeConnectSchema.parse(valid);
       expect(result.platform).toBe('youtube');
       expect(result.scope).toBe('https://www.googleapis.com/auth/youtube.force-ssl');
@@ -247,7 +247,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => YouTubeConnectSchema.parse(valid)).not.toThrow();
     });
 
@@ -257,7 +257,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => YouTubeConnectSchema.parse(invalid)).toThrow();
     });
   });
@@ -270,7 +270,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         guild_id: '123456789012345678'
       };
-      
+
       const result = DiscordConnectSchema.parse(valid);
       expect(result.platform).toBe('discord');
       expect(result.guild_id).toBe('123456789012345678');
@@ -282,7 +282,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => DiscordConnectSchema.parse(valid)).not.toThrow();
     });
 
@@ -292,7 +292,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => DiscordConnectSchema.parse(invalid)).toThrow();
     });
   });
@@ -304,7 +304,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       const result = InstagramConnectSchema.parse(valid);
       expect(result.platform).toBe('instagram');
     });
@@ -315,7 +315,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => InstagramConnectSchema.parse(invalid)).toThrow();
     });
   });
@@ -328,7 +328,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         scope: 'pages_read_engagement,pages_manage_posts'
       };
-      
+
       const result = FacebookConnectSchema.parse(valid);
       expect(result.platform).toBe('facebook');
       expect(result.scope).toBe('pages_read_engagement,pages_manage_posts');
@@ -340,7 +340,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => FacebookConnectSchema.parse(valid)).not.toThrow();
     });
   });
@@ -353,7 +353,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         scope: 'chat:read chat:edit'
       };
-      
+
       const result = TwitchConnectSchema.parse(valid);
       expect(result.platform).toBe('twitch');
       expect(result.scope).toBe('chat:read chat:edit');
@@ -368,7 +368,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         scope: 'identity read submit'
       };
-      
+
       const result = RedditConnectSchema.parse(valid);
       expect(result.platform).toBe('reddit');
       expect(result.scope).toBe('identity read submit');
@@ -382,7 +382,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       const result = TikTokConnectSchema.parse(valid);
       expect(result.platform).toBe('tiktok');
     });
@@ -397,7 +397,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         handle: 'user.bsky.social',
         app_password: 'abcd-efgh-ijkl-mnop'
       };
-      
+
       const result = BlueskyConnectSchema.parse(valid);
       expect(result.platform).toBe('bluesky');
       expect(result.handle).toBe('user.bsky.social');
@@ -410,7 +410,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc123',
         state: 'csrf_token'
       };
-      
+
       expect(() => BlueskyConnectSchema.parse(valid)).not.toThrow();
     });
   });
@@ -421,7 +421,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'abc-123_xyz.456',
         state: 'csrf-token_12345'
       };
-      
+
       expect(() => OAuthCodeSchema.parse(valid)).not.toThrow();
     });
 
@@ -430,7 +430,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         code: 'a'.repeat(500), // Max length
         state: 's'.repeat(200) // Max length
       };
-      
+
       expect(() => OAuthCodeSchema.parse(valid)).not.toThrow();
     });
 
@@ -440,7 +440,7 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         redirect_uri: 'https://roastr.ai/callback?source=twitter&test=true'
       };
-      
+
       expect(() => OAuthCodeSchema.parse(valid)).not.toThrow();
     });
 
@@ -451,11 +451,10 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
         state: 'csrf_token',
         extra_field: 'should_be_stripped'
       };
-      
+
       // Zod strips extra fields by default
       const result = OAuthConnectionSchema.parse(input);
       expect(result.extra_field).toBeUndefined();
     });
   });
 });
-

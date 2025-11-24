@@ -19,12 +19,10 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
   describe('GET /api/integrations/:platform/callback', () => {
     describe('Valid OAuth Callbacks', () => {
       it('should accept valid OAuth callback with code and state', async () => {
-        const response = await request(app)
-          .get('/api/integrations/twitter/callback')
-          .query({
-            code: 'valid_oauth_code_12345',
-            state: 'csrf_token_abc123'
-          });
+        const response = await request(app).get('/api/integrations/twitter/callback').query({
+          code: 'valid_oauth_code_12345',
+          state: 'csrf_token_abc123'
+        });
 
         // Should redirect (302) or process successfully
         // Not 400 (validation error)
@@ -32,25 +30,21 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
       });
 
       it('should accept valid OAuth callback with redirect_uri', async () => {
-        const response = await request(app)
-          .get('/api/integrations/discord/callback')
-          .query({
-            code: 'discord_code_xyz',
-            state: 'csrf_state_456',
-            redirect_uri: 'https://roastr.ai/auth/callback'
-          });
+        const response = await request(app).get('/api/integrations/discord/callback').query({
+          code: 'discord_code_xyz',
+          state: 'csrf_state_456',
+          redirect_uri: 'https://roastr.ai/auth/callback'
+        });
 
         expect(response.status).not.toBe(400);
       });
 
       it('should accept callback with http localhost redirect_uri', async () => {
-        const response = await request(app)
-          .get('/api/integrations/youtube/callback')
-          .query({
-            code: 'youtube_code',
-            state: 'state_token',
-            redirect_uri: 'http://localhost:3000/callback'
-          });
+        const response = await request(app).get('/api/integrations/youtube/callback').query({
+          code: 'youtube_code',
+          state: 'state_token',
+          redirect_uri: 'http://localhost:3000/callback'
+        });
 
         expect(response.status).not.toBe(400);
       });
@@ -58,12 +52,10 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
 
     describe('Zod Validation Errors', () => {
       it('should reject callback with missing code', async () => {
-        const response = await request(app)
-          .get('/api/integrations/twitter/callback')
-          .query({
-            state: 'csrf_token_abc123'
-            // code missing
-          });
+        const response = await request(app).get('/api/integrations/twitter/callback').query({
+          state: 'csrf_token_abc123'
+          // code missing
+        });
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
@@ -78,12 +70,10 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
       });
 
       it('should reject callback with missing state', async () => {
-        const response = await request(app)
-          .get('/api/integrations/discord/callback')
-          .query({
-            code: 'valid_code'
-            // state missing
-          });
+        const response = await request(app).get('/api/integrations/discord/callback').query({
+          code: 'valid_code'
+          // state missing
+        });
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
@@ -98,12 +88,10 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
       });
 
       it('should reject callback with empty code', async () => {
-        const response = await request(app)
-          .get('/api/integrations/youtube/callback')
-          .query({
-            code: '',
-            state: 'valid_state'
-          });
+        const response = await request(app).get('/api/integrations/youtube/callback').query({
+          code: '',
+          state: 'valid_state'
+        });
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
@@ -111,25 +99,21 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
       });
 
       it('should reject callback with empty state', async () => {
-        const response = await request(app)
-          .get('/api/integrations/instagram/callback')
-          .query({
-            code: 'valid_code',
-            state: ''
-          });
+        const response = await request(app).get('/api/integrations/instagram/callback').query({
+          code: 'valid_code',
+          state: ''
+        });
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
       });
 
       it('should reject callback with invalid redirect_uri format', async () => {
-        const response = await request(app)
-          .get('/api/integrations/twitch/callback')
-          .query({
-            code: 'valid_code',
-            state: 'valid_state',
-            redirect_uri: 'not-a-valid-url'
-          });
+        const response = await request(app).get('/api/integrations/twitch/callback').query({
+          code: 'valid_code',
+          state: 'valid_state',
+          redirect_uri: 'not-a-valid-url'
+        });
 
         expect(response.status).toBe(400);
         expect(response.body.errors).toEqual(
@@ -183,9 +167,7 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
 
     describe('Multiple Validation Errors', () => {
       it('should return multiple errors when both code and state are missing', async () => {
-        const response = await request(app)
-          .get('/api/integrations/twitter/callback')
-          .query({});
+        const response = await request(app).get('/api/integrations/twitter/callback').query({});
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
@@ -199,13 +181,11 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
       });
 
       it('should return multiple errors when code empty and redirect_uri invalid', async () => {
-        const response = await request(app)
-          .get('/api/integrations/bluesky/callback')
-          .query({
-            code: '',
-            state: 'valid_state',
-            redirect_uri: 'invalid-url'
-          });
+        const response = await request(app).get('/api/integrations/bluesky/callback').query({
+          code: '',
+          state: 'valid_state',
+          redirect_uri: 'invalid-url'
+        });
 
         expect(response.status).toBe(400);
         expect(response.body.errors.length).toBeGreaterThanOrEqual(1);
@@ -214,39 +194,33 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
 
     describe('Platform-Specific OAuth Flows', () => {
       it('should handle Twitter callback (OAuth 1.0a)', async () => {
-        const response = await request(app)
-          .get('/api/integrations/twitter/callback')
-          .query({
-            code: 'twitter_oauth_code',
-            state: 'csrf_token',
-            oauth_token: 'twitter_token',
-            oauth_verifier: 'verifier_123'
-          });
+        const response = await request(app).get('/api/integrations/twitter/callback').query({
+          code: 'twitter_oauth_code',
+          state: 'csrf_token',
+          oauth_token: 'twitter_token',
+          oauth_verifier: 'verifier_123'
+        });
 
         // Twitter-specific fields should not cause validation errors
         expect(response.status).not.toBe(400);
       });
 
       it('should handle YouTube callback with scope', async () => {
-        const response = await request(app)
-          .get('/api/integrations/youtube/callback')
-          .query({
-            code: 'youtube_code',
-            state: 'csrf_token',
-            scope: 'https://www.googleapis.com/auth/youtube.force-ssl'
-          });
+        const response = await request(app).get('/api/integrations/youtube/callback').query({
+          code: 'youtube_code',
+          state: 'csrf_token',
+          scope: 'https://www.googleapis.com/auth/youtube.force-ssl'
+        });
 
         expect(response.status).not.toBe(400);
       });
 
       it('should handle Discord callback with guild_id', async () => {
-        const response = await request(app)
-          .get('/api/integrations/discord/callback')
-          .query({
-            code: 'discord_code',
-            state: 'csrf_token',
-            guild_id: '123456789012345678'
-          });
+        const response = await request(app).get('/api/integrations/discord/callback').query({
+          code: 'discord_code',
+          state: 'csrf_token',
+          guild_id: '123456789012345678'
+        });
 
         expect(response.status).not.toBe(400);
       });
@@ -254,12 +228,10 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
 
     describe('Error Response Format Compatibility', () => {
       it('should return Zod error format compatible with express-validator', async () => {
-        const response = await request(app)
-          .get('/api/integrations/twitter/callback')
-          .query({
-            state: 'valid_state'
-            // missing code
-          });
+        const response = await request(app).get('/api/integrations/twitter/callback').query({
+          state: 'valid_state'
+          // missing code
+        });
 
         expect(response.status).toBe(400);
         expect(response.body).toMatchObject({
@@ -276,12 +248,10 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
       });
 
       it('should include error codes in validation errors', async () => {
-        const response = await request(app)
-          .get('/api/integrations/youtube/callback')
-          .query({
-            code: 'valid_code'
-            // missing state
-          });
+        const response = await request(app).get('/api/integrations/youtube/callback').query({
+          code: 'valid_code'
+          // missing state
+        });
 
         expect(response.status).toBe(400);
         expect(response.body.errors[0]).toHaveProperty('code');
@@ -292,24 +262,20 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
 
     describe('Edge Cases', () => {
       it('should handle code with special characters', async () => {
-        const response = await request(app)
-          .get('/api/integrations/instagram/callback')
-          .query({
-            code: 'code-with_special.chars-123',
-            state: 'state_with-special.chars'
-          });
+        const response = await request(app).get('/api/integrations/instagram/callback').query({
+          code: 'code-with_special.chars-123',
+          state: 'state_with-special.chars'
+        });
 
         expect(response.status).not.toBe(400);
       });
 
       it('should handle redirect_uri with query params', async () => {
-        const response = await request(app)
-          .get('/api/integrations/facebook/callback')
-          .query({
-            code: 'fb_code',
-            state: 'csrf_token',
-            redirect_uri: 'https://roastr.ai/callback?source=facebook&test=true'
-          });
+        const response = await request(app).get('/api/integrations/facebook/callback').query({
+          code: 'fb_code',
+          state: 'csrf_token',
+          redirect_uri: 'https://roastr.ai/callback?source=facebook&test=true'
+        });
 
         expect(response.status).not.toBe(400);
       });
@@ -329,9 +295,7 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
 
   describe('No Breaking Changes (AC#5)', () => {
     it('should maintain same status code (400) for validation errors', async () => {
-      const response = await request(app)
-        .get('/api/integrations/twitter/callback')
-        .query({});
+      const response = await request(app).get('/api/integrations/twitter/callback').query({});
 
       expect(response.status).toBe(400);
     });
@@ -355,16 +319,13 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
     });
 
     it('should include descriptive error messages', async () => {
-      const response = await request(app)
-        .get('/api/integrations/instagram/callback')
-        .query({
-          code: '',
-          state: 'valid_state'
-        });
+      const response = await request(app).get('/api/integrations/instagram/callback').query({
+        code: '',
+        state: 'valid_state'
+      });
 
       expect(response.body.errors[0].message).toBeTruthy();
       expect(typeof response.body.errors[0].message).toBe('string');
     });
   });
 });
-

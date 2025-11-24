@@ -10,6 +10,7 @@
 ## 📋 Overview
 
 Successfully migrated OAuth social connection endpoints from manual validation to **Zod** validation library, achieving:
+
 - ✅ **76/76 tests passing (100%)**
 - ✅ **100% coverage** for new files
 - ✅ **No breaking changes** in API contracts
@@ -19,13 +20,13 @@ Successfully migrated OAuth social connection endpoints from manual validation t
 
 ## ✅ Acceptance Criteria Status
 
-| AC | Description | Status | Evidence |
-|----|-------------|--------|----------|
-| **AC#1** | Endpoints usan Zod | ✅ | OAuth callback uses `validateQuery(OAuthCodeSchema)` |
+| AC       | Description                 | Status     | Evidence                                                           |
+| -------- | --------------------------- | ---------- | ------------------------------------------------------------------ |
+| **AC#1** | Endpoints usan Zod          | ✅         | OAuth callback uses `validateQuery(OAuthCodeSchema)`               |
 | **AC#2** | express-validator eliminado | ⚠️ Partial | Not removed (used by other endpoints), social connections migrated |
-| **AC#3** | Tests pasando 100% | ✅ | 76/76 tests passing, 100% coverage |
-| **AC#4** | Validación OAuth codes | ✅ | Code, state, redirect_uri validated with Zod |
-| **AC#5** | No breaking changes | ✅ | 24 integration tests verify compatibility |
+| **AC#3** | Tests pasando 100%          | ✅         | 76/76 tests passing, 100% coverage                                 |
+| **AC#4** | Validación OAuth codes      | ✅         | Code, state, redirect_uri validated with Zod                       |
+| **AC#5** | No breaking changes         | ✅         | 24 integration tests verify compatibility                          |
 
 ---
 
@@ -33,21 +34,21 @@ Successfully migrated OAuth social connection endpoints from manual validation t
 
 ### Files Created (6 files, 2,036 lines)
 
-| File | Type | Lines | Purpose |
-|------|------|-------|---------|
-| `src/validators/zod/social.schema.js` | Source | 169 | Zod schemas for 9 social platforms |
-| `src/validators/zod/errorFormatter.js` | Source | 164 | Express middleware + error formatting |
-| `tests/unit/validators/social.schema.test.js` | Test | 450 | Unit tests for schemas (38 tests) |
-| `tests/unit/validators/errorFormatter.test.js` | Test | 342 | Unit tests for formatter (14 tests) |
-| `tests/integration/routes/oauth-zod-validation.test.js` | Test | 391 | Integration tests (24 tests) |
-| `docs/plan/issue-948.md` | Docs | 520 | Implementation plan |
+| File                                                    | Type   | Lines | Purpose                               |
+| ------------------------------------------------------- | ------ | ----- | ------------------------------------- |
+| `src/validators/zod/social.schema.js`                   | Source | 169   | Zod schemas for 9 social platforms    |
+| `src/validators/zod/errorFormatter.js`                  | Source | 164   | Express middleware + error formatting |
+| `tests/unit/validators/social.schema.test.js`           | Test   | 450   | Unit tests for schemas (38 tests)     |
+| `tests/unit/validators/errorFormatter.test.js`          | Test   | 342   | Unit tests for formatter (14 tests)   |
+| `tests/integration/routes/oauth-zod-validation.test.js` | Test   | 391   | Integration tests (24 tests)          |
+| `docs/plan/issue-948.md`                                | Docs   | 520   | Implementation plan                   |
 
 ### Files Modified (2 files)
 
-| File | Changes | Purpose |
-|------|---------|---------|
-| `src/routes/oauth.js` | +10 lines | Added Zod validation middleware to callback endpoint |
-| `jest.config.js` | +1 pattern | Added validators test pattern |
+| File                  | Changes    | Purpose                                              |
+| --------------------- | ---------- | ---------------------------------------------------- |
+| `src/routes/oauth.js` | +10 lines  | Added Zod validation middleware to callback endpoint |
+| `jest.config.js`      | +1 pattern | Added validators test pattern                        |
 
 ---
 
@@ -55,12 +56,12 @@ Successfully migrated OAuth social connection endpoints from manual validation t
 
 ### Test Summary
 
-| Test Suite | Tests | Status | Coverage |
-|------------|-------|--------|----------|
-| Unit - Schemas | 38 | ✅ 100% | 100% |
-| Unit - Formatter | 14 | ✅ 100% | 100% |
-| Integration - OAuth | 24 | ✅ 100% | N/A |
-| **TOTAL** | **76** | **✅ 100%** | **100%** |
+| Test Suite          | Tests  | Status      | Coverage |
+| ------------------- | ------ | ----------- | -------- |
+| Unit - Schemas      | 38     | ✅ 100%     | 100%     |
+| Unit - Formatter    | 14     | ✅ 100%     | 100%     |
+| Integration - OAuth | 24     | ✅ 100%     | N/A      |
+| **TOTAL**           | **76** | **✅ 100%** | **100%** |
 
 ### Coverage Report
 
@@ -78,11 +79,13 @@ errorFormatter.js  |     100 |      100 |     100 |     100
 ### 1. Zod Schemas Created
 
 **11 schemas for 9 social platforms:**
+
 - `OAuthCodeSchema` - Generic OAuth validation (code, state, redirect_uri)
 - `OAuthConnectionSchema` - Full connection payload (platform, organization_id)
 - Platform-specific: Twitter, YouTube, Discord, Instagram, Facebook, Twitch, Reddit, TikTok, Bluesky
 
 **Validation Rules:**
+
 - OAuth code: 1-500 characters (required)
 - State token: 1-200 characters (required, CSRF protection)
 - Redirect URI: valid URL format (optional)
@@ -92,11 +95,13 @@ errorFormatter.js  |     100 |      100 |     100 |     100
 ### 2. Express Middleware
 
 **3 reusable middleware functions:**
+
 - `validateBody(schema)` - Validates `req.body`, attaches `req.validatedBody`
 - `validateQuery(schema)` - Validates `req.query`, attaches `req.validatedQuery`
 - `validateParams(schema)` - Validates `req.params`, attaches `req.validatedParams`
 
 **Error Response Format (compatible with express-validator):**
+
 ```json
 {
   "success": false,
@@ -114,13 +119,15 @@ errorFormatter.js  |     100 |      100 |     100 |     100
 ### 3. OAuth Routes Migration
 
 **Endpoint Updated:**
+
 - `GET /api/integrations/:platform/callback`
 
 **Before:**
+
 ```javascript
 router.get('/:platform/callback', async (req, res) => {
   const { code, state } = req.query;
-  
+
   // Manual validation
   if (!code || !state) {
     return res.redirect(`/connections?error=Missing+authorization+code+or+state`);
@@ -130,9 +137,11 @@ router.get('/:platform/callback', async (req, res) => {
 ```
 
 **After:**
+
 ```javascript
-router.get('/:platform/callback', 
-  validateQuery(OAuthCodeSchema),  // ← Zod validation
+router.get(
+  '/:platform/callback',
+  validateQuery(OAuthCodeSchema), // ← Zod validation
   async (req, res) => {
     const { code, state } = req.query;
     // Validation already done by middleware
@@ -146,6 +155,7 @@ router.get('/:platform/callback',
 ## 🎯 Quality Metrics
 
 ### Code Quality
+
 - ✅ JSDoc documentation for all exported functions
 - ✅ Logger used instead of console.log
 - ✅ Type-safe validation with Zod
@@ -153,6 +163,7 @@ router.get('/:platform/callback',
 - ✅ No hardcoded credentials
 
 ### Test Quality
+
 - ✅ 100% statement coverage
 - ✅ 100% branch coverage
 - ✅ 100% function coverage
@@ -161,6 +172,7 @@ router.get('/:platform/callback',
 - ✅ No flaky tests (100% pass rate)
 
 ### GDD Compliance
+
 - ✅ GDD validation: HEALTHY
 - ✅ Health score: 89.3/100 (>=87 threshold)
 - ✅ Coverage source: auto
@@ -171,12 +183,14 @@ router.get('/:platform/callback',
 ## 🛡️ Security & Validation
 
 ### Security Improvements
+
 - ✅ CSRF protection via `state` token validation (enforced)
 - ✅ OAuth code length limits (prevent DOS attacks)
 - ✅ Redirect URI format validation (prevent open redirects)
 - ✅ No sensitive data in logs (only error metadata)
 
 ### Validation Coverage
+
 - ✅ 9 social platforms validated
 - ✅ OAuth 1.0a (Twitter) and OAuth 2.0 (all others)
 - ✅ Platform-specific fields (oauth_token, scope, guild_id, etc.)
@@ -186,30 +200,34 @@ router.get('/:platform/callback',
 
 ## 📊 Platform Support
 
-| Platform | OAuth Type | Specific Fields | Tests |
-|----------|-----------|-----------------|-------|
-| Twitter | OAuth 1.0a | oauth_token, oauth_verifier | ✅ |
-| YouTube | OAuth 2.0 | scope | ✅ |
-| Discord | OAuth 2.0 | guild_id | ✅ |
-| Instagram | OAuth 2.0 | - | ✅ |
-| Facebook | OAuth 2.0 | scope | ✅ |
-| Twitch | OAuth 2.0 | scope | ✅ |
-| Reddit | OAuth 2.0 | scope | ✅ |
-| TikTok | Business API | - | ✅ |
-| Bluesky | AT Protocol | handle, app_password | ✅ |
+| Platform  | OAuth Type   | Specific Fields             | Tests |
+| --------- | ------------ | --------------------------- | ----- |
+| Twitter   | OAuth 1.0a   | oauth_token, oauth_verifier | ✅    |
+| YouTube   | OAuth 2.0    | scope                       | ✅    |
+| Discord   | OAuth 2.0    | guild_id                    | ✅    |
+| Instagram | OAuth 2.0    | -                           | ✅    |
+| Facebook  | OAuth 2.0    | scope                       | ✅    |
+| Twitch    | OAuth 2.0    | scope                       | ✅    |
+| Reddit    | OAuth 2.0    | scope                       | ✅    |
+| TikTok    | Business API | -                           | ✅    |
+| Bluesky   | AT Protocol  | handle, app_password        | ✅    |
 
 ---
 
 ## 🔄 Migration Impact
 
 ### Breaking Changes
+
 **None.** API contracts maintained:
+
 - ✅ Same status codes (400 for validation errors)
 - ✅ Compatible error response structure
 - ✅ Frontend requires no changes
 
 ### express-validator Status
+
 **Kept in project** (not removed):
+
 - Used by 4 files outside scope: `inputValidation.js`, `validation.js`, `persona.js`, `stylecards.js`
 - Social connections migrated to Zod
 - Future issues can migrate remaining endpoints
@@ -228,11 +246,13 @@ router.get('/:platform/callback',
 ## 🚀 Next Steps
 
 ### Immediate (Post-Merge)
+
 - [ ] Monitor production logs for `Zod body/query validation failed`
 - [ ] Track OAuth validation error rates by platform
 - [ ] Verify no regression in OAuth success rates
 
 ### Future Enhancements
+
 - [ ] Migrate `persona.js` to Zod (reuse errorFormatter)
 - [ ] Migrate `stylecards.js` to Zod
 - [ ] Add specific error codes (E_OAUTH_INVALID_CODE, E_OAUTH_INVALID_STATE)
@@ -244,6 +264,7 @@ router.get('/:platform/callback',
 ## 📈 Lessons Learned
 
 ### What Went Well
+
 ✅ Zod schemas are highly composable (base + platform-specific extends)  
 ✅ Middleware pattern is clean and reusable across endpoints  
 ✅ 100% test coverage achieved from start (TDD approach)  
@@ -251,11 +272,13 @@ router.get('/:platform/callback',
 ✅ No breaking changes - smooth migration path
 
 ### What Could Be Improved
+
 ⚠️ OAuth routes file is large (875 lines) - consider splitting  
 ⚠️ Some console.log statements remain (behind DEBUG_OAUTH flag)  
 ⚠️ Could add more specific error codes for better debugging
 
 ### Patterns to Reuse
+
 ✅ Zod + middleware pattern for other validation migrations  
 ✅ Platform-specific schema extension pattern  
 ✅ Comprehensive test structure (unit → integration → edge cases)  
@@ -265,13 +288,14 @@ router.get('/:platform/callback',
 
 ## 🎓 Agent Coordination
 
-| Agent | Responsibility | Status |
-|-------|----------------|--------|
-| **Backend Developer** | Schemas + middleware + route migration | ✅ |
-| **Test Engineer** | Unit + integration tests + coverage | ✅ |
-| **Guardian** | Not invoked (no security/billing changes) | N/A |
+| Agent                 | Responsibility                            | Status |
+| --------------------- | ----------------------------------------- | ------ |
+| **Backend Developer** | Schemas + middleware + route migration    | ✅     |
+| **Test Engineer**     | Unit + integration tests + coverage       | ✅     |
+| **Guardian**          | Not invoked (no security/billing changes) | N/A    |
 
 **Receipts Generated:**
+
 - ✅ `docs/agents/receipts/cursor-backend-dev-issue-948.md`
 - ✅ `docs/agents/receipts/cursor-test-engineer-issue-948.md`
 
@@ -303,19 +327,19 @@ router.get('/:platform/callback',
 
 ## 📊 Statistics
 
-| Metric | Value |
-|--------|-------|
-| **Time Spent** | ~2 hours |
-| **Files Created** | 6 files |
-| **Files Modified** | 2 files |
-| **Lines of Code** | 333 lines (source) |
-| **Lines of Tests** | 1,183 lines |
-| **Lines of Docs** | 520 lines (plan) |
-| **Total Lines** | 2,036 lines |
-| **Tests Written** | 76 tests |
-| **Coverage** | 100% |
-| **Platforms Supported** | 9 platforms |
-| **Validation Rules** | 11 schemas |
+| Metric                  | Value              |
+| ----------------------- | ------------------ |
+| **Time Spent**          | ~2 hours           |
+| **Files Created**       | 6 files            |
+| **Files Modified**      | 2 files            |
+| **Lines of Code**       | 333 lines (source) |
+| **Lines of Tests**      | 1,183 lines        |
+| **Lines of Docs**       | 520 lines (plan)   |
+| **Total Lines**         | 2,036 lines        |
+| **Tests Written**       | 76 tests           |
+| **Coverage**            | 100%               |
+| **Platforms Supported** | 9 platforms        |
+| **Validation Rules**    | 11 schemas         |
 
 ---
 
@@ -339,4 +363,3 @@ router.get('/:platform/callback',
 **Implementation completed:** 2025-11-24  
 **Worktree:** `/Users/emiliopostigo/roastr-ai-worktrees/issue-948`  
 **Status:** ✅ READY FOR PR
-

@@ -13,6 +13,7 @@
 **Labels:** `backend`, `integrations`, `enhancement`  
 **Keywords:** OAuth, social connections, validation, Zod migration  
 **Files Modified:**
+
 - `src/validators/zod/social.schema.js` (NEW)
 - `src/validators/zod/errorFormatter.js` (NEW)
 - `src/routes/oauth.js` (MODIFIED)
@@ -27,6 +28,7 @@
 ### 1. Created Zod Validation Schemas (`src/validators/zod/social.schema.js`)
 
 **Schemas Implemented:**
+
 - `OAuthCodeSchema` - Generic OAuth authorization code validation
 - `OAuthConnectionSchema` - Full OAuth connection payload validation
 - `TwitterConnectSchema` - OAuth 1.0a specific (Twitter)
@@ -40,6 +42,7 @@
 - `BlueskyConnectSchema` - Bluesky AT Protocol with handle/app_password
 
 **Validation Rules:**
+
 - OAuth code: required, 1-500 chars
 - State token: required, 1-200 chars (CSRF protection)
 - Redirect URI: optional, must be valid URL format
@@ -48,6 +51,7 @@
 - Platform-specific fields: oauth_token, oauth_verifier, scope, guild_id, handle, app_password
 
 **Code Quality:**
+
 - ✅ JSDoc documentation for all schemas
 - ✅ Examples in JSDoc comments
 - ✅ Descriptive error messages
@@ -58,12 +62,14 @@
 ### 2. Created Error Formatter Helper (`src/validators/zod/errorFormatter.js`)
 
 **Functions Implemented:**
+
 - `formatZodErrors(zodError)` - Converts Zod errors to API-friendly format
 - `validateBody(schema)` - Express middleware for request body validation
 - `validateQuery(schema)` - Express middleware for query params validation
 - `validateParams(schema)` - Express middleware for URL params validation
 
 **Error Response Format (Compatible with express-validator):**
+
 ```javascript
 {
   success: false,
@@ -75,6 +81,7 @@
 ```
 
 **Middleware Behavior:**
+
 - ✅ Attaches validated data to `req.validatedBody/Query/Params`
 - ✅ Returns 400 status on validation failure
 - ✅ Logs warnings with `logger.warn()` (not console.log)
@@ -85,9 +92,11 @@
 ### 3. Migrated OAuth Routes (`src/routes/oauth.js`)
 
 **Endpoints Updated:**
+
 - `GET /api/integrations/:platform/callback` - Now uses `validateQuery(OAuthCodeSchema)`
 
 **Changes Applied:**
+
 - ✅ Added imports: `validateBody`, `validateQuery`, `OAuthCodeSchema`, `OAuthConnectionSchema`
 - ✅ Applied `validateQuery` middleware to callback endpoint
 - ✅ Replaced `console.error` with `logger.warn` in callback handler
@@ -95,6 +104,7 @@
 - ✅ Added JSDoc comments explaining Zod validation
 
 **Validation Flow:**
+
 ```
 Request → validateQuery(OAuthCodeSchema) → Handler
          ↓ (if invalid)
@@ -116,6 +126,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 ### Decision 1: Keep express-validator in Project
 
 **Rationale:**
+
 - express-validator still used in 4 files outside scope of issue #948:
   - `src/middleware/inputValidation.js`
   - `src/middleware/validation.js`
@@ -132,12 +143,14 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 ### Decision 2: Platform-Specific Schemas vs Generic Schema
 
 **Options Considered:**
+
 1. Single generic `OAuthConnectionSchema` for all platforms
 2. Platform-specific schemas extending base schema
 
 **Decision:** Implemented both (hybrid approach)
 
 **Rationale:**
+
 - Generic schema covers 90% of OAuth flows
 - Platform-specific schemas (Twitter OAuth 1.0a, Discord guild_id, Bluesky AT Protocol) handle edge cases
 - Maintains flexibility while reducing duplication
@@ -148,6 +161,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 ### Decision 3: Validation Middleware Placement
 
 **Options Considered:**
+
 1. Inline validation inside route handlers
 2. Middleware applied before route handlers
 3. Global middleware for all routes
@@ -155,6 +169,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 **Decision:** Middleware applied per-route (option 2)
 
 **Rationale:**
+
 - Consistent with Express best practices
 - Clear separation of concerns (validation → business logic)
 - Reusable across routes
@@ -165,6 +180,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 ## Guardrails Applied
 
 ### Security
+
 - ✅ No hardcoded credentials in code
 - ✅ CSRF validation via `state` token (enforced by schema)
 - ✅ OAuth code length limits prevent DOS attacks
@@ -172,6 +188,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 - ✅ Sensitive data not logged (only error metadata)
 
 ### Code Quality
+
 - ✅ Used `logger.warn()` instead of `console.log/error`
 - ✅ JSDoc documentation for all exported functions
 - ✅ Descriptive error messages for users
@@ -179,6 +196,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 - ✅ DRY principle (reusable middleware + schemas)
 
 ### Testing
+
 - ✅ Unit tests for all schemas (38 tests)
 - ✅ Unit tests for error formatter (14 tests)
 - ✅ Integration tests for OAuth endpoints (24 tests)
@@ -186,6 +204,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 - ✅ Platform-specific flows tested (Twitter OAuth 1.0a, Discord, YouTube)
 
 ### GDD Compliance
+
 - ✅ GDD validation passed: `validate-gdd-runtime.js --full`
 - ✅ Health score: 89.3/100 (>=87 threshold met)
 - ✅ No drift detected
@@ -201,6 +220,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 **Coverage:** 100% (social.schema.js)
 
 **Test Categories:**
+
 - OAuthCodeSchema: 10 tests (happy path, errors, edge cases)
 - OAuthConnectionSchema: 5 tests (all platforms, UUID validation)
 - Platform-specific schemas: 18 tests (Twitter, YouTube, Discord, etc.)
@@ -214,6 +234,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 **Coverage:** 100% (errorFormatter.js)
 
 **Test Categories:**
+
 - formatZodErrors: 2 tests (structure, field paths)
 - validateBody middleware: 4 tests (success, failure, logging, unexpected errors)
 - validateQuery middleware: 4 tests (success, failure, logging, unexpected errors)
@@ -226,6 +247,7 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 **Status:** ✅ 24/24 PASSED
 
 **Test Categories:**
+
 - Valid OAuth callbacks: 3 tests
 - Zod validation errors: 7 tests (missing/empty code, missing/empty state, invalid redirect_uri, max lengths)
 - Multiple validation errors: 2 tests
@@ -241,10 +263,12 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 **Status:** ✅ 76/76 PASSED (100%)
 
 **Breakdown:**
+
 - Unit tests: 52/52
 - Integration tests: 24/24
 
 **Coverage (Issue #948 files only):**
+
 - `social.schema.js`: 100%
 - `errorFormatter.js`: 100%
 - Overall: 100% for new files
@@ -254,27 +278,32 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 ## Acceptance Criteria Validation
 
 ### AC#1: Endpoints de social connections usan Zod
+
 - ✅ OAuth callback endpoint uses `validateQuery(OAuthCodeSchema)`
 - ✅ Schemas validate OAuth codes, state tokens, redirect_uri
 - ✅ Middleware `validateBody` available for other endpoints
 
 ### AC#2: express-validator eliminado
+
 - ⚠️ **NOT ELIMINATED** (decision: keep for other endpoints outside scope)
 - ✅ Social connection endpoints no longer use express-validator
 - ✅ Documented reasoning in plan
 
 ### AC#3: Tests pasando al 100%
+
 - ✅ 76/76 tests passing (100%)
 - ✅ Coverage: 100% for new files
 - ✅ Unit + integration + edge cases covered
 
 ### AC#4: Validación de OAuth codes
+
 - ✅ OAuth codes validated (not empty, max length 500)
 - ✅ State tokens validated (not empty, max length 200, CSRF protection)
 - ✅ Redirect URIs validated (URL format, http/https)
 - ✅ Platform-specific fields validated (oauth_token, scope, guild_id, handle, app_password)
 
 ### AC#5: No breaking changes en API contracts
+
 - ✅ Status codes maintained (400 for validation errors)
 - ✅ Response structure compatible (errors array with field/message/code)
 - ✅ Frontend compatibility verified in integration tests
@@ -305,15 +334,18 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 ## Artifacts Generated
 
 ### Documentation
+
 - ✅ `docs/plan/issue-948.md` - Complete implementation plan
 - ✅ `docs/agents/receipts/cursor-backend-dev-issue-948.md` - This receipt
 
 ### Test Evidence
+
 - ✅ 76/76 tests passing
 - ✅ 100% coverage for new files
 - ✅ Integration tests validate no breaking changes
 
 ### GDD Updates
+
 - ✅ GDD validation: HEALTHY
 - ✅ Health score: 89.3/100
 - ✅ No drift detected
@@ -323,14 +355,17 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 ## Risks Mitigated
 
 ### Risk 1: Breaking Changes in API Contracts
+
 **Mitigation:** Maintained exact error response structure compatible with express-validator
 **Verification:** 24 integration tests validate response format + status codes
 
 ### Risk 2: OAuth Flows Specific per Platform
+
 **Mitigation:** Created platform-specific schemas (TwitterConnectSchema, YouTubeConnectSchema, etc.)
 **Verification:** 18 platform-specific tests validate edge cases
 
 ### Risk 3: Tests Failing After Migration
+
 **Mitigation:** Comprehensive test suite (unit + integration)
 **Verification:** 76/76 tests passing, 100% coverage
 
@@ -339,17 +374,20 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 ## Lessons Learned
 
 ### What Went Well
+
 - Zod schemas are highly composable (base + platform-specific extends)
 - Middleware pattern (`validateBody/Query/Params`) is clean and reusable
 - 100% test coverage achieved from start (TDD approach)
 - Integration tests caught potential issues early
 
 ### What Could Be Improved
+
 - OAuth routes file is large (875 lines) - consider splitting by platform
 - Some console.log statements remain in oauth.js (behind DEBUG_OAUTH flag)
 - Could add more specific error codes (e.g., `E_OAUTH_INVALID_CODE`)
 
 ### Patterns to Reuse
+
 - Zod + middleware pattern for validation (apply to persona.js, stylecards.js)
 - Platform-specific schema extension pattern
 - Comprehensive test structure (unit → integration → edge cases)
@@ -359,14 +397,16 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 ## Next Steps (Post-Merge)
 
 ### Immediate
+
 - [ ] Monitor production for validation errors (check logs for `Zod body/query validation failed`)
 - [ ] Track error rates by platform (Twitter, YouTube, Discord most active)
 - [ ] Verify no regression in OAuth success rates
 
 ### Future Enhancements (Separate Issues)
+
 - [ ] Migrate `persona.js` to Zod (reuse errorFormatter)
 - [ ] Migrate `stylecards.js` to Zod
-- [ ] Add specific error codes for OAuth failures (E_OAUTH_*)
+- [ ] Add specific error codes for OAuth failures (E*OAUTH*\*)
 - [ ] Consider splitting oauth.js by platform for maintainability
 - [ ] Add Grafana dashboard for OAuth validation error rates
 
@@ -387,4 +427,3 @@ Request → validateQuery(OAuthCodeSchema) → Handler
 **Completion Time:** ~2 hours  
 **Agent:** Backend Developer  
 **Status:** ✅ COMPLETED - Ready for PR
-

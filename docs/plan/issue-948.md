@@ -11,6 +11,7 @@
 ## Contexto
 
 Actualmente los endpoints de social connections (Twitter, YouTube, Instagram, etc.) usan `express-validator` para validación de OAuth codes, state tokens y redirect URIs. Esto genera:
+
 - Inconsistencia con el resto del stack (Zod ya instalado v3.25.76)
 - Falta de validación estructurada para OAuth flows
 - Dificultad para debugging de errores de conexión
@@ -25,6 +26,7 @@ Actualmente los endpoints de social connections (Twitter, YouTube, Instagram, et
 ### Endpoints Afectados
 
 **Verificar existencia de estos endpoints:**
+
 - `POST /api/twitter/connect`
 - `POST /api/youtube/connect`
 - `POST /api/instagram/connect`
@@ -36,6 +38,7 @@ Actualmente los endpoints de social connections (Twitter, YouTube, Instagram, et
 - `POST /api/bluesky/connect`
 
 **Archivos actuales (a verificar):**
+
 - `src/routes/twitter.js` (o `src/integrations/twitter/routes.js`)
 - `src/routes/youtube.js`
 - `src/routes/instagram.js`
@@ -44,10 +47,12 @@ Actualmente los endpoints de social connections (Twitter, YouTube, Instagram, et
 ### Validación Actual
 
 **express-validator pattern** (ejemplo Twitter):
+
 ```javascript
 const { body, validationResult } = require('express-validator');
 
-router.post('/connect',
+router.post(
+  '/connect',
   body('code').notEmpty().withMessage('OAuth code is required'),
   body('state').notEmpty().withMessage('State token is required'),
   async (req, res) => {
@@ -63,6 +68,7 @@ router.post('/connect',
 ### Datos a Validar
 
 Según issue description:
+
 - `code` - OAuth authorization code (string, not empty)
 - `state` - CSRF token (string, not empty, matches session)
 - `redirect_uri` - Callback URL (optional, valid URL format)
@@ -73,12 +79,14 @@ Según issue description:
 ## Nodos GDD Relevantes
 
 **Resueltos con `resolve-graph.js`:**
+
 - `social-platforms.md` - 9 plataformas, OAuth flows, authentication patterns
 - `queue-system.md` - FetchCommentsWorker interaction
 - `multi-tenant.md` - Organization-scoped configs
 - `cost-control.md` - Service key requirements
 
 **Insights clave:**
+
 - Social platforms usan `MultiTenantIntegration` base class
 - OAuth credentials en `integration_configs.credentials` (JSONB encrypted)
 - Authentication patterns varían: OAuth 1.0a (Twitter), OAuth 2.0 (YouTube, Discord, Twitch), API Key (YouTube read-only)
@@ -109,15 +117,9 @@ const { z } = require('zod');
  * Validates authorization code from OAuth providers
  */
 const OAuthCodeSchema = z.object({
-  code: z.string()
-    .min(1, 'OAuth code is required')
-    .max(500, 'OAuth code too long'),
-  state: z.string()
-    .min(1, 'State token is required')
-    .max(200, 'State token too long'),
-  redirect_uri: z.string()
-    .url('Invalid redirect URI')
-    .optional()
+  code: z.string().min(1, 'OAuth code is required').max(500, 'OAuth code too long'),
+  state: z.string().min(1, 'State token is required').max(200, 'State token too long'),
+  redirect_uri: z.string().url('Invalid redirect URI').optional()
 });
 
 /**
@@ -125,10 +127,19 @@ const OAuthCodeSchema = z.object({
  * Validates full OAuth connection payload
  */
 const OAuthConnectionSchema = z.object({
-  platform: z.enum([
-    'twitter', 'youtube', 'instagram', 'facebook',
-    'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'
-  ]).describe('Social media platform'),
+  platform: z
+    .enum([
+      'twitter',
+      'youtube',
+      'instagram',
+      'facebook',
+      'discord',
+      'twitch',
+      'reddit',
+      'tiktok',
+      'bluesky'
+    ])
+    .describe('Social media platform'),
   code: z.string().min(1, 'OAuth code is required'),
   state: z.string().min(1, 'State token is required'),
   redirect_uri: z.string().url().optional(),
@@ -161,6 +172,7 @@ module.exports = {
 ```
 
 **Validación:**
+
 - [ ] Schemas creados en `src/validators/zod/social.schema.js`
 - [ ] Exportados correctamente con JSDoc
 - [ ] Linter pasando (no unused vars)
@@ -180,7 +192,7 @@ const { logger } = require('../../utils/logger');
  * @returns {Object} Formatted error response
  */
 function formatZodErrors(zodError) {
-  const errors = zodError.errors.map(err => ({
+  const errors = zodError.errors.map((err) => ({
     field: err.path.join('.'),
     message: err.message,
     code: err.code
@@ -243,6 +255,7 @@ module.exports = {
 ```
 
 **Validación:**
+
 - [ ] Helper creado con JSDoc completo
 - [ ] Middleware `validateBody` y `validateQuery` exportados
 - [ ] Logger usado (no console.log)
@@ -260,6 +273,7 @@ find src/routes -type f -name "*.js" | grep -E "(twitter|youtube|instagram|disco
 ```
 
 **Expected locations:**
+
 - `src/routes/twitter.js`
 - `src/routes/youtube.js`
 - `src/routes/instagram.js`
@@ -269,6 +283,7 @@ find src/routes -type f -name "*.js" | grep -E "(twitter|youtube|instagram|disco
 **Si no existen**: Crear routes nuevas siguiendo patrón existente.
 
 **Validación:**
+
 - [ ] Archivos de routes identificados
 - [ ] Endpoints actuales documentados
 - [ ] express-validator imports confirmados
@@ -280,35 +295,30 @@ find src/routes -type f -name "*.js" | grep -E "(twitter|youtube|instagram|disco
 #### Patrón de Migración
 
 **ANTES (express-validator):**
+
 ```javascript
 const { body, validationResult } = require('express-validator');
 
-router.post('/connect',
-  body('code').notEmpty(),
-  body('state').notEmpty(),
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    // Handle connection
+router.post('/connect', body('code').notEmpty(), body('state').notEmpty(), async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
-);
+  // Handle connection
+});
 ```
 
 **DESPUÉS (Zod):**
+
 ```javascript
 const { validateBody } = require('../validators/zod/errorFormatter');
 const { OAuthConnectionSchema } = require('../validators/zod/social.schema');
 
-router.post('/connect',
-  validateBody(OAuthConnectionSchema),
-  async (req, res) => {
-    // req.validatedBody contains validated data
-    const { code, state, redirect_uri } = req.validatedBody;
-    // Handle connection
-  }
-);
+router.post('/connect', validateBody(OAuthConnectionSchema), async (req, res) => {
+  // req.validatedBody contains validated data
+  const { code, state, redirect_uri } = req.validatedBody;
+  // Handle connection
+});
 ```
 
 #### Plataformas a Migrar (en orden)
@@ -329,6 +339,7 @@ router.post('/connect',
    - Usar `OAuthConnectionSchema` genérico o platform-specific
 
 **Validación por plataforma:**
+
 - [ ] Imports de express-validator eliminados
 - [ ] Zod schemas importados
 - [ ] Middleware `validateBody` usado
@@ -389,11 +400,18 @@ describe('Social Connection Zod Schemas', () => {
   describe('OAuthConnectionSchema', () => {
     it('should validate all supported platforms', () => {
       const platforms = [
-        'twitter', 'youtube', 'instagram', 'facebook',
-        'discord', 'twitch', 'reddit', 'tiktok', 'bluesky'
+        'twitter',
+        'youtube',
+        'instagram',
+        'facebook',
+        'discord',
+        'twitch',
+        'reddit',
+        'tiktok',
+        'bluesky'
       ];
 
-      platforms.forEach(platform => {
+      platforms.forEach((platform) => {
         const valid = {
           platform,
           code: 'abc123',
@@ -440,6 +458,7 @@ describe('Social Connection Zod Schemas', () => {
 **Coverage Target**: >=90% para `social.schema.js`
 
 **Validación:**
+
 - [ ] Tests unitarios creados
 - [ ] Happy path + error cases + edge cases
 - [ ] Coverage >=90%
@@ -450,6 +469,7 @@ describe('Social Connection Zod Schemas', () => {
 ### PASO 6: Tests de Integración (Endpoints)
 
 **Archivos a actualizar/crear:**
+
 - `tests/integration/routes/twitter.test.js` (actualizar)
 - `tests/integration/routes/youtube.test.js` (actualizar)
 - `tests/integration/routes/social-connections.test.js` (nuevo, genérico)
@@ -471,23 +491,19 @@ describe('POST /api/twitter/connect (Zod validation)', () => {
   });
 
   it('should accept valid OAuth connection', async () => {
-    const response = await request(app)
-      .post('/api/twitter/connect')
-      .send({
-        code: 'valid_oauth_code',
-        state: 'csrf_token_12345',
-        redirect_uri: 'https://roastr.ai/callback'
-      });
+    const response = await request(app).post('/api/twitter/connect').send({
+      code: 'valid_oauth_code',
+      state: 'csrf_token_12345',
+      redirect_uri: 'https://roastr.ai/callback'
+    });
 
     expect(response.status).not.toBe(400); // Validation should pass
   });
 
   it('should reject missing code', async () => {
-    const response = await request(app)
-      .post('/api/twitter/connect')
-      .send({
-        state: 'csrf_token_12345'
-      });
+    const response = await request(app).post('/api/twitter/connect').send({
+      state: 'csrf_token_12345'
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.errors).toEqual(
@@ -501,13 +517,11 @@ describe('POST /api/twitter/connect (Zod validation)', () => {
   });
 
   it('should reject invalid redirect_uri', async () => {
-    const response = await request(app)
-      .post('/api/twitter/connect')
-      .send({
-        code: 'valid_code',
-        state: 'csrf_token',
-        redirect_uri: 'not-a-valid-url'
-      });
+    const response = await request(app).post('/api/twitter/connect').send({
+      code: 'valid_code',
+      state: 'csrf_token',
+      redirect_uri: 'not-a-valid-url'
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.errors).toEqual(
@@ -525,6 +539,7 @@ describe('POST /api/twitter/connect (Zod validation)', () => {
 **Coverage Target**: >=90% para routes afectadas
 
 **Validación:**
+
 - [ ] Tests de integración actualizados para cada plataforma
 - [ ] Validation errors verificados (status 400, error structure)
 - [ ] No breaking changes en API contracts
@@ -535,11 +550,13 @@ describe('POST /api/twitter/connect (Zod validation)', () => {
 ### PASO 7: Eliminar express-validator de Dependencias
 
 **Acción:**
+
 ```bash
 npm uninstall express-validator
 ```
 
 **Verificación:**
+
 ```bash
 # No debe haber imports de express-validator
 grep -r "express-validator" src/
@@ -547,6 +564,7 @@ grep -r "express-validator" src/
 ```
 
 **Validación:**
+
 - [ ] `express-validator` eliminado de `package.json`
 - [ ] No imports residuales en código
 - [ ] Tests pasando después de desinstalación
@@ -556,27 +574,32 @@ grep -r "express-validator" src/
 ## Acceptance Criteria
 
 **AC 1: Endpoints de social connections usan Zod**
+
 - [ ] Todos los endpoints (`/connect`) usan schemas Zod
 - [ ] Middleware `validateBody` aplicado
 - [ ] Validación de OAuth codes, state tokens, redirect_uri
 
 **AC 2: express-validator eliminado**
+
 - [ ] Paquete desinstalado
 - [ ] Sin imports en código
 - [ ] Sin errores de runtime
 
 **AC 3: Tests pasando al 100%**
+
 - [ ] Tests unitarios (schemas): 100% passing
 - [ ] Tests de integración (routes): 100% passing
 - [ ] Coverage >=90% en archivos modificados
 
 **AC 4: Validación de OAuth codes**
+
 - [ ] OAuth codes validados (not empty, max length)
 - [ ] State tokens validados (CSRF protection)
 - [ ] Redirect URIs validados (URL format)
 - [ ] Platform-specific fields validados (oauth_token, scope, etc.)
 
 **AC 5: No breaking changes en API contracts**
+
 - [ ] Status codes iguales (400 para validation errors)
 - [ ] Response structure compatible (errors array)
 - [ ] Frontend no necesita cambios
@@ -586,11 +609,13 @@ grep -r "express-validator" src/
 ## Archivos Afectados
 
 ### Nuevos
+
 - `src/validators/zod/social.schema.js` (schemas Zod)
 - `src/validators/zod/errorFormatter.js` (helper para errores)
 - `tests/unit/validators/social.schema.test.js` (tests unitarios)
 
 ### Modificados
+
 - `src/routes/twitter.js` (o `src/integrations/twitter/routes.js`)
 - `src/routes/youtube.js`
 - `src/routes/instagram.js`
@@ -608,19 +633,27 @@ grep -r "express-validator" src/
 ## Riesgos y Mitigaciones
 
 ### Riesgo 1: Breaking changes en API contracts
+
 **Mitigación**: Mantener estructura de errores compatible con express-validator
+
 ```javascript
 // ANTES (express-validator)
-{ errors: [{ msg: 'Invalid value', param: 'code', location: 'body' }] }
+{
+  errors: [{ msg: 'Invalid value', param: 'code', location: 'body' }];
+}
 
 // DESPUÉS (Zod - compatible)
-{ errors: [{ message: 'Invalid value', field: 'code', code: 'invalid_type' }] }
+{
+  errors: [{ message: 'Invalid value', field: 'code', code: 'invalid_type' }];
+}
 ```
 
 ### Riesgo 2: OAuth flows específicos por plataforma
+
 **Mitigación**: Crear schemas específicos (TwitterConnectSchema, YouTubeConnectSchema) en vez de uno genérico
 
 ### Riesgo 3: Tests fallando por cambios en validación
+
 **Mitigación**: Ejecutar suite completa antes de PR, verificar >=90% coverage
 
 ---
@@ -659,6 +692,7 @@ node scripts/score-gdd-health.js --ci  # Debe >=87
 ## Receipts Generados
 
 **Agentes invocados:**
+
 1. **Backend Developer** - Implementación de schemas Zod, migración routes
    - Receipt: `docs/agents/receipts/cursor-backend-dev-[timestamp].md`
 
@@ -683,4 +717,3 @@ node scripts/score-gdd-health.js --ci  # Debe >=87
 **Plan creado**: 2025-11-23  
 **Autor**: Orchestrator (AI Assistant)  
 **Status**: ✅ Ready for Implementation
-
