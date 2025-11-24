@@ -1106,6 +1106,7 @@ See `shield.md` for full Brand Safety documentation.
 **Implementation:** Issue #946 migrated roast endpoint validation from manual checks to Zod schemas for improved type safety and error messages.
 
 **Benefits:**
+
 - ✅ Declarative validation schemas
 - ✅ Automatic type inference
 - ✅ Better error messages with field-level details
@@ -1118,39 +1119,44 @@ See `shield.md` for full Brand Safety documentation.
 
 ### Validated Endpoints
 
-| Endpoint | Schema | Fields Validated |
-|----------|--------|------------------|
-| `POST /preview` | `roastPreviewSchema` | text, tone, styleProfile, persona, platform |
-| `POST /generate` | `roastGenerateSchema` | text, tone |
-| `POST /engine` | `roastEngineSchema` | comment, style, language, autoApprove, platform, commentId |
-| `POST /:id/validate` | `roastValidateSchema` | text, platform |
+| Endpoint             | Schema                | Fields Validated                                           |
+| -------------------- | --------------------- | ---------------------------------------------------------- |
+| `POST /preview`      | `roastPreviewSchema`  | text, tone, styleProfile, persona, platform                |
+| `POST /generate`     | `roastGenerateSchema` | text, tone                                                 |
+| `POST /engine`       | `roastEngineSchema`   | comment, style, language, autoApprove, platform, commentId |
+| `POST /:id/validate` | `roastValidateSchema` | text, platform                                             |
 
 ### Validation Rules
 
 **Text:**
+
 - Required: `string`
 - Min length: 1 character
 - Max length: 2000 characters
 - Transformation: automatic trim
 
 **Tone/Style:**
+
 - Required: `enum`
 - Valid values: `Flanders`, `Balanceado`, `Canalla` (canonical form)
 - Default: `Balanceado`
 
 **Platform:**
+
 - Required: `enum`
 - Valid values: `twitter`, `facebook`, `instagram`, `youtube`, etc.
 - Default: `twitter`
 - Supports normalization (e.g., `X` → `twitter`)
 
 **Language:**
+
 - Required: `enum`
 - Valid values: `es`, `en`
 - Default: `es`
 - Supports BCP-47 normalization
 
 **Auto-Approve:**
+
 - Optional: `boolean`
 - Default: `false`
 
@@ -1172,17 +1178,20 @@ See `shield.md` for full Brand Safety documentation.
 ```
 
 **Error Details:**
+
 - `field`: dot-notation path to invalid field (e.g., `user.email`)
 - `message`: human-readable error message
 - `code`: Zod error code for programmatic handling
 
 ### Testing
 
-**Unit Tests:** 
+**Unit Tests:**
+
 - Schemas: `tests/unit/validators/zod/roast.schema.test.js` (43 tests ✅)
 - Middleware: `tests/unit/middleware/zodValidation.test.js` (22 tests ✅)
 
 **Integration Tests:**
+
 - Endpoint validation: `tests/integration/roast.test.js` (8 tests ✅)
 
 **Coverage:** 100% for Zod validation layer

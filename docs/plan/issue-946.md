@@ -15,12 +15,14 @@
 El endpoint `POST /api/roast` actualmente usa validación manual inline con funciones como `validateRoastRequest()` y constantes de validación importadas de `validationConstants.js`.
 
 **Validación actual:**
+
 - Función `validateRoastRequest()` con checks manuales
 - Constantes en `src/config/validationConstants.js`
 - No usa express-validator realmente (comentario en issue es histórico)
 - Validación dispersa a lo largo del endpoint
 
 **Problemas actuales:**
+
 - Validación manual propensa a errores
 - No hay type safety
 - Mensajes de error genéricos
@@ -44,27 +46,37 @@ El endpoint `POST /api/roast` actualmente usa validación manual inline con func
 ### 1. Crear Esquemas Zod (`src/validators/zod/roast.schema.js`)
 
 **Archivos a crear:**
+
 - `src/validators/zod/roast.schema.js`
 
 **Contenido:**
+
 ```javascript
 const { z } = require('zod');
 const { VALIDATION_CONSTANTS } = require('../../config/validationConstants');
 
 // Esquema base para validación de texto
-const textSchema = z.string()
+const textSchema = z
+  .string()
   .min(VALIDATION_CONSTANTS.MIN_COMMENT_LENGTH, 'Text cannot be empty')
-  .max(VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH, `Text must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`)
+  .max(
+    VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH,
+    `Text must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`
+  )
   .trim();
 
 // Esquema para tone (enum)
 const toneSchema = z.enum(VALIDATION_CONSTANTS.VALID_TONES, {
-  errorMap: () => ({ message: `Tone must be one of: ${VALIDATION_CONSTANTS.VALID_TONES.join(', ')}` })
+  errorMap: () => ({
+    message: `Tone must be one of: ${VALIDATION_CONSTANTS.VALID_TONES.join(', ')}`
+  })
 });
 
 // Esquema para platform (enum)
 const platformSchema = z.enum(VALIDATION_CONSTANTS.VALID_PLATFORMS, {
-  errorMap: () => ({ message: `Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}` })
+  errorMap: () => ({
+    message: `Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}`
+  })
 });
 
 // Esquema para styleProfile (objeto opcional)
@@ -115,9 +127,11 @@ module.exports = {
 ### 2. Crear Middleware de Validación Zod (`src/middleware/zodValidation.js`)
 
 **Archivos a crear:**
+
 - `src/middleware/zodValidation.js`
 
 **Contenido:**
+
 ```javascript
 const { logger } = require('../utils/logger');
 
@@ -131,26 +145,26 @@ function validateRequest(schema) {
     try {
       // Validar y parsear el body con Zod
       const parsed = schema.parse(req.body);
-      
+
       // Reemplazar req.body con el resultado parseado (con defaults aplicados)
       req.body = parsed;
-      
+
       next();
     } catch (error) {
       // Zod error - formatear para el cliente
       if (error.name === 'ZodError') {
-        const formattedErrors = error.errors.map(err => ({
+        const formattedErrors = error.errors.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code
         }));
-        
+
         logger.warn('Zod validation failed', {
           errors: formattedErrors,
           endpoint: req.path,
           userId: req.user?.id
         });
-        
+
         return res.status(400).json({
           success: false,
           error: 'Validation failed',
@@ -158,13 +172,13 @@ function validateRequest(schema) {
           timestamp: new Date().toISOString()
         });
       }
-      
+
       // Error inesperado
       logger.error('Unexpected validation error', {
         error: error.message,
         stack: error.stack
       });
-      
+
       return res.status(500).json({
         success: false,
         error: 'Validation error',
@@ -180,7 +194,9 @@ module.exports = { validateRequest };
 ### 3. Actualizar `src/routes/roast.js`
 
 **Cambios:**
+
 1. Importar esquemas Zod y middleware:
+
 ```javascript
 const { validateRequest } = require('../middleware/zodValidation');
 const {
@@ -196,37 +212,64 @@ const {
 3. Eliminar función `validateRoastEngineRequest()` (líneas 1038-1082)
 
 4. Aplicar middleware Zod a cada endpoint:
+
 ```javascript
 // POST /api/roast/preview
-router.post('/preview', authenticateToken, roastRateLimit, validateRequest(roastPreviewSchema), async (req, res) => {
-  // Eliminar líneas 434-443 (validación manual)
-  // El body ya está validado y parseado
-});
+router.post(
+  '/preview',
+  authenticateToken,
+  roastRateLimit,
+  validateRequest(roastPreviewSchema),
+  async (req, res) => {
+    // Eliminar líneas 434-443 (validación manual)
+    // El body ya está validado y parseado
+  }
+);
 
 // POST /api/roast/generate
-router.post('/generate', authenticateToken, roastRateLimit, validateRequest(roastGenerateSchema), async (req, res) => {
-  // Eliminar líneas 633-642 (validación manual)
-});
+router.post(
+  '/generate',
+  authenticateToken,
+  roastRateLimit,
+  validateRequest(roastGenerateSchema),
+  async (req, res) => {
+    // Eliminar líneas 633-642 (validación manual)
+  }
+);
 
 // POST /api/roast/engine
-router.post('/engine', authenticateToken, roastRateLimit, validateRequest(roastEngineSchema), async (req, res) => {
-  // Eliminar líneas 832-840 (validación manual)
-});
+router.post(
+  '/engine',
+  authenticateToken,
+  roastRateLimit,
+  validateRequest(roastEngineSchema),
+  async (req, res) => {
+    // Eliminar líneas 832-840 (validación manual)
+  }
+);
 
 // POST /api/roast/:id/validate
-router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(roastValidateSchema), async (req, res) => {
-  // Eliminar líneas 1210-1216 (validación manual de text)
-  // Mantener validación de roastId (línea 1217-1224) - es de params, no body
-});
+router.post(
+  '/:id/validate',
+  authenticateToken,
+  roastRateLimit,
+  validateRequest(roastValidateSchema),
+  async (req, res) => {
+    // Eliminar líneas 1210-1216 (validación manual de text)
+    // Mantener validación de roastId (línea 1217-1224) - es de params, no body
+  }
+);
 ```
 
 ### 4. Tests Unitarios
 
 **Archivos a crear:**
+
 - `tests/unit/validators/zod/roast.schema.test.js`
 - `tests/unit/middleware/zodValidation.test.js`
 
 **Tests para `roast.schema.test.js`:**
+
 - [ ] Validación de text: mínimo, máximo, trim
 - [ ] Validación de tone: valores válidos, inválidos, default
 - [ ] Validación de platform: valores válidos, inválidos, default
@@ -235,6 +278,7 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(
 - [ ] Esquemas completos: preview, generate, engine, validate
 
 **Tests para `zodValidation.test.js`:**
+
 - [ ] Middleware valida correctamente
 - [ ] Middleware aplica defaults
 - [ ] Middleware formatea errores Zod
@@ -244,9 +288,11 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(
 ### 5. Tests de Integración
 
 **Archivos a actualizar:**
+
 - `tests/integration/roast.test.js`
 
 **Tests a verificar:**
+
 - [ ] POST /preview con datos válidos (200)
 - [ ] POST /preview con text vacío (400)
 - [ ] POST /preview con text demasiado largo (400)
@@ -260,6 +306,7 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(
 - [ ] POST /:id/validate con validación fallida (400)
 
 **Verificar:**
+
 - Formato de error consistente con Zod
 - Mensajes de error específicos y útiles
 - Defaults aplicados correctamente
@@ -270,16 +317,19 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(
 ## Archivos Afectados
 
 ### Nuevos
+
 - `src/validators/zod/roast.schema.js` ✨
 - `src/middleware/zodValidation.js` ✨
 - `tests/unit/validators/zod/roast.schema.test.js` ✨
 - `tests/unit/middleware/zodValidation.test.js` ✨
 
 ### Modificados
+
 - `src/routes/roast.js` (eliminar validación manual, añadir middleware Zod)
 - `tests/integration/roast.test.js` (verificar formato de errores Zod)
 
 ### Sin cambios
+
 - `src/config/validationConstants.js` (se sigue usando como fuente de verdad)
 
 ---
@@ -287,12 +337,14 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(
 ## Validación de Completitud
 
 ### Tests
+
 - [ ] `npm test -- tests/unit/validators/zod/roast.schema.test.js` (100% passing)
 - [ ] `npm test -- tests/unit/middleware/zodValidation.test.js` (100% passing)
 - [ ] `npm test -- tests/integration/roast.test.js` (100% passing)
 - [ ] `npm run test:coverage` (≥90% coverage)
 
 ### API Contracts
+
 - [ ] POST /preview: respuesta idéntica a antes
 - [ ] POST /generate: respuesta idéntica a antes
 - [ ] POST /engine: respuesta idéntica a antes
@@ -300,11 +352,13 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(
 - [ ] Formato de errores: `{ success: false, error: string, details: array, timestamp: string }`
 
 ### Documentación
+
 - [ ] Actualizar nodo `roast.md` con nueva validación Zod
 - [ ] Añadir ejemplo de uso en `roast.md`
 - [ ] Actualizar changelog con migración
 
 ### GDD
+
 - [ ] Ejecutar `node scripts/validate-gdd-runtime.js --full` (HEALTHY)
 - [ ] Ejecutar `node scripts/score-gdd-health.js --ci` (≥87)
 - [ ] Coverage Source: `auto` en nodo roast.md
@@ -323,12 +377,15 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(
 ## Riesgos y Mitigaciones
 
 ### Riesgo 1: Breaking changes en API
+
 **Mitigación:** Mantener formato de respuesta idéntico, tests de integración exhaustivos
 
 ### Riesgo 2: Mensajes de error diferentes
+
 **Mitigación:** Mapear errores Zod a formato existente, verificar con tests
 
 ### Riesgo 3: Defaults no aplicados
+
 **Mitigación:** Tests específicos para defaults (tone, platform, language)
 
 ---
@@ -342,6 +399,7 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(
 ✅ **AC5:** No breaking changes en API contracts
 
 **Meta de calidad:**
+
 - Tests: 100% passing (0 failing)
 - Coverage: ≥90%
 - GDD Health: ≥87
@@ -352,4 +410,3 @@ router.post('/:id/validate', authenticateToken, roastRateLimit, validateRequest(
 **Estado:** 📝 Planning Complete - Ready for Implementation
 
 **Siguiente paso:** Implementar esquemas Zod + middleware
-
