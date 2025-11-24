@@ -43,7 +43,7 @@ describe('Zod Roast Schemas - Base Schemas', () => {
 
     it('should reject text exceeding max length', () => {
       const longText = 'a'.repeat(2001);
-      expect(() => textSchema.parse(longText)).toThrow('Text must be less than 2000 characters');
+      expect(() => textSchema.parse(longText)).toThrow('Text must be at most 2000 characters');
     });
 
     it('should reject non-string values', () => {

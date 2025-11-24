@@ -27,7 +27,7 @@ const textSchema = z
   .min(VALIDATION_CONSTANTS.MIN_COMMENT_LENGTH, 'Text cannot be empty')
   .max(
     VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH,
-    `Text must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`
+    `Text must be at most ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`
   );
 
 /**
@@ -37,7 +37,8 @@ const textSchema = z
  */
 const toneSchema = z.preprocess(
   (val) => {
-    if (val === undefined || val === null) return 'Balanceado';
+    if (val === undefined || val === null)
+      return normalizeTone(VALIDATION_CONSTANTS.DEFAULTS.STYLE);
     const normalized = normalizeTone(val);
     return normalized || val; // Return original if normalization fails (will be caught by enum)
   },
@@ -55,7 +56,7 @@ const toneSchema = z.preprocess(
  */
 const platformSchema = z.preprocess(
   (val) => {
-    if (val === undefined || val === null) return 'twitter';
+    if (val === undefined || val === null) return VALIDATION_CONSTANTS.DEFAULTS.PLATFORM;
     return normalizePlatform(val); // Always returns normalized value or default
   },
   z.enum(VALIDATION_CONSTANTS.VALID_PLATFORMS, {
@@ -72,7 +73,7 @@ const platformSchema = z.preprocess(
  */
 const languageSchema = z.preprocess(
   (val) => {
-    if (val === undefined || val === null) return 'es';
+    if (val === undefined || val === null) return VALIDATION_CONSTANTS.DEFAULTS.LANGUAGE;
     return normalizeLanguage(val); // Always returns normalized value or default
   },
   z.enum(VALIDATION_CONSTANTS.VALID_LANGUAGES, {

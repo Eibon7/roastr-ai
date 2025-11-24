@@ -141,6 +141,46 @@ describe('Roast API Integration Tests', () => {
   });
 
   describe('Authentication', () => {
+    describe('Input Normalization (Issue #946)', () => {
+      it('should accept platform alias X and normalize to twitter', async () => {
+        const response = await request(app)
+          .post('/api/roast/preview')
+          .set('Authorization', authToken)
+          .send({
+            text: 'Test comment for X platform',
+            platform: 'X' // Alias should normalize to 'twitter'
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+      });
+
+      it('should accept BCP-47 locale en-US and normalize to en', async () => {
+        const response = await request(app)
+          .post('/api/roast/preview')
+          .set('Authorization', authToken)
+          .send({
+            text: 'Test comment for English',
+            language: 'en-US' // BCP-47 should normalize to 'en'
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+      });
+
+      it('should accept lowercase tone and normalize to canonical form', async () => {
+        const response = await request(app)
+          .post('/api/roast/preview')
+          .set('Authorization', authToken)
+          .send({
+            text: 'Test comment with lowercase tone',
+            tone: 'flanders' // Should normalize to 'Flanders'
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+      });
+    });
     it('should require authentication for preview endpoint', async () => {
       const response = await request(app).post('/api/roast/preview').send({
         text: 'Test message',
