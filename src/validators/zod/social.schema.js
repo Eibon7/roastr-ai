@@ -12,14 +12,8 @@ const { z } = require('zod');
  * });
  */
 const OAuthCodeSchema = z.object({
-  code: z
-    .string()
-    .min(1, 'OAuth code is required')
-    .max(500, 'OAuth code too long'),
-  state: z
-    .string()
-    .min(1, 'State token is required')
-    .max(200, 'State token too long'),
+  code: z.string().min(1, 'OAuth code is required').max(500, 'OAuth code too long'),
+  state: z.string().min(1, 'State token is required').max(200, 'State token too long'),
   redirect_uri: z.string().url('Invalid redirect URI').optional()
 });
 
@@ -173,4 +167,3 @@ module.exports = {
   TikTokConnectSchema,
   BlueskyConnectSchema
 };
-

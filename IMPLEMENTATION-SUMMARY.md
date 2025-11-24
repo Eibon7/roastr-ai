@@ -64,7 +64,7 @@ Successfully migrated OAuth social connection endpoints from manual validation t
 
 ### Coverage Report
 
-```
+```text
 File               | % Stmts | % Branch | % Funcs | % Lines
 -------------------|---------|----------|---------|--------
 social.schema.js   |     100 |      100 |     100 |     100
@@ -281,7 +281,7 @@ router.get('/:platform/callback',
 
 - **Issue:** #948
 - **Plan:** `docs/plan/issue-948.md`
-- **Zod Docs:** https://zod.dev/
+- **Zod Docs:** [https://zod.dev/](https://zod.dev/)
 - **Zod Version:** v3.25.76 (already installed)
 - **GDD Nodes:** `social-platforms.md`, `multi-tenant.md`
 - **CodeRabbit Lessons:** `docs/patterns/coderabbit-lessons.md`
@@ -323,12 +323,14 @@ router.get('/:platform/callback',
 
 **Issue #948 está 100% completa y lista para PR.**
 
-✅ **Todos los Acceptance Criteria cumplidos**  
+✅ **Acceptance Criteria cumplidos (AC#2 parcial/intencional por scope)**  
 ✅ **76/76 tests pasando con 100% coverage**  
 ✅ **Sin breaking changes en API contracts**  
 ✅ **GDD health: 89.3/100 (passing threshold)**  
 ✅ **Receipts generados para Backend + Test Engineer**  
 ✅ **Documentación completa (plan + summary + receipts)**
+
+**Note:** AC#2 (express-validator removal) is intentionally partial as other endpoints outside the scope of issue #948 still require it. Social connection endpoints were successfully migrated to Zod as specified.
 
 **Calidad > Velocidad. Producto monetizable.**
 
