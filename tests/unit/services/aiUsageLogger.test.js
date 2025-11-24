@@ -5,15 +5,78 @@
 
 // Setup test environment
 process.env.NODE_ENV = 'test';
-process.env.ENABLE_MOCK_MODE = 'true';
+process.env.LOG_AI_USAGE = 'true';
 
-// Mock Supabase client with proper chaining
-const mockSupabaseServiceClient = {
-  from: jest.fn()
+// Mock queueService to prevent initialization errors
+jest.mock('../../../src/services/queueService', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(),
+    enqueue: jest.fn().mockResolvedValue({ id: 'mock-job-id' }),
+    getNextJob: jest.fn().mockResolvedValue(null),
+    completeJob: jest.fn().mockResolvedValue(),
+    failJob: jest.fn().mockResolvedValue(),
+    shutdown: jest.fn().mockResolvedValue(),
+    log: jest.fn()
+  }));
+});
+
+// Mock advancedLogger to prevent queueLogger errors
+jest.mock('../../../src/utils/advancedLogger', () => ({
+  debug: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  info: jest.fn(),
+  auditEvent: jest.fn(),
+  queueLogger: {
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn()
+  },
+  workerLogger: {
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn()
+  }
+}));
+
+// Mock alertingService to prevent setup issues
+jest.mock('../../../src/services/alertingService', () => ({
+  shutdown: jest.fn()
+}));
+
+// Create mock Supabase query builder
+const createMockQueryBuilder = (defaultData = [], defaultError = null) => {
+  let resolveData = defaultData;
+  let resolveError = defaultError;
+  
+  const builder = {
+    insert: jest.fn(() => Promise.resolve({ data: resolveData, error: resolveError })),
+    select: jest.fn(() => builder),
+    eq: jest.fn(() => builder),
+    gte: jest.fn(() => builder),
+    lte: jest.fn(() => builder),
+    // Make the builder thenable for async/await
+    then: jest.fn((resolve) => {
+      return Promise.resolve({ data: resolveData, error: resolveError }).then(resolve);
+    }),
+    catch: jest.fn((reject) => Promise.resolve().catch(reject)),
+    // Allow setting return data for tests
+    _setData: (data) => { resolveData = data; },
+    _setError: (error) => { resolveError = error; }
+  };
+  
+  return builder;
 };
 
+let mockQueryBuilder = createMockQueryBuilder();
+
+// Mock Supabase client
 jest.mock('../../../src/config/supabase', () => ({
-  supabaseServiceClient: mockSupabaseServiceClient
+  supabaseServiceClient: {
+    from: jest.fn(() => mockQueryBuilder)
+  }
 }));
 
 jest.mock('../../../src/utils/logger', () => ({
@@ -25,55 +88,30 @@ jest.mock('../../../src/utils/logger', () => ({
   }
 }));
 
+// Mock mockMode to enable logging in tests
 jest.mock('../../../src/config/mockMode', () => ({
   mockMode: {
-    isMockMode: true,
-    generateMockSupabaseClient: jest.fn(() => ({
-      from: jest.fn(() => ({
-        select: jest.fn(() => ({ data: [], error: null })),
-        insert: jest.fn(() => ({ error: null })),
-        update: jest.fn(() => ({ error: null }))
-      }))
-    }))
+    isMockMode: false // Enable actual logging for tests
   }
-}));
-
-// Mock queueService to prevent initialization errors
-jest.mock('../../../src/services/queueService', () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(),
-    getNextJob: jest.fn().mockResolvedValue(null),
-    completeJob: jest.fn().mockResolvedValue(),
-    failJob: jest.fn().mockResolvedValue(),
-    shutdown: jest.fn().mockResolvedValue()
-  }))
 }));
 
 // Import after mocks are set up
 const aiUsageLogger = require('../../../src/services/aiUsageLogger');
+const { supabaseServiceClient } = require('../../../src/config/supabase');
 
 describe('AIUsageLogger', () => {
-  let mockSupabaseQuery;
-
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Setup Supabase mock chain
-    mockSupabaseQuery = {
-      insert: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lte: jest.fn().mockReturnThis()
-    };
-
-    mockSupabaseServiceClient.from.mockReturnValue(mockSupabaseQuery);
+    // Reset the query builder for each test
+    mockQueryBuilder = createMockQueryBuilder();
+    supabaseServiceClient.from.mockReturnValue(mockQueryBuilder);
+    // Ensure logger is enabled
+    aiUsageLogger.enabled = true;
   });
 
   describe('logUsage', () => {
     test('should insert usage log to database', async () => {
-      mockSupabaseQuery.insert.mockResolvedValue({ error: null });
+      mockQueryBuilder.insert.mockResolvedValue({ error: null });
 
       await aiUsageLogger.logUsage({
         userId: 'user-123',
@@ -85,8 +123,8 @@ describe('AIUsageLogger', () => {
         endpoint: 'roast'
       });
 
-      expect(mockSupabaseServiceClient.from).toHaveBeenCalledWith('ai_usage_logs');
-      expect(mockSupabaseQuery.insert).toHaveBeenCalledWith([
+      expect(supabaseServiceClient.from).toHaveBeenCalledWith('ai_usage_logs');
+      expect(mockQueryBuilder.insert).toHaveBeenCalledWith([
         expect.objectContaining({
           user_id: 'user-123',
           model: 'gpt-5.1',
@@ -100,7 +138,7 @@ describe('AIUsageLogger', () => {
     });
 
     test('should calculate cache hit ratio correctly', async () => {
-      mockSupabaseQuery.insert.mockResolvedValue({ error: null });
+      mockQueryBuilder.insert.mockResolvedValue({ error: null });
 
       await aiUsageLogger.logUsage({
         userId: 'user-123',
@@ -110,7 +148,7 @@ describe('AIUsageLogger', () => {
         cachedTokens: 80
       });
 
-      const insertCall = mockSupabaseQuery.insert.mock.calls[0][0][0];
+      const insertCall = mockQueryBuilder.insert.mock.calls[0][0][0];
       const totalInput = 20 + 80;
       const expectedRatio = 80 / totalInput;
 
@@ -118,7 +156,7 @@ describe('AIUsageLogger', () => {
     });
 
     test('should handle zero cache hit ratio', async () => {
-      mockSupabaseQuery.insert.mockResolvedValue({ error: null });
+      mockQueryBuilder.insert.mockResolvedValue({ error: null });
 
       await aiUsageLogger.logUsage({
         userId: 'user-123',
@@ -128,7 +166,7 @@ describe('AIUsageLogger', () => {
         cachedTokens: 0
       });
 
-      const insertCall = mockSupabaseQuery.insert.mock.calls[0][0][0];
+      const insertCall = mockQueryBuilder.insert.mock.calls[0][0][0];
       expect(insertCall.cache_hit_ratio).toBe(0);
     });
 
@@ -139,7 +177,7 @@ describe('AIUsageLogger', () => {
         outputTokens: 50
       });
 
-      expect(mockSupabaseQuery.insert).not.toHaveBeenCalled();
+      expect(mockQueryBuilder.insert).not.toHaveBeenCalled();
     });
 
     test('should skip logging when model is missing', async () => {
@@ -149,12 +187,12 @@ describe('AIUsageLogger', () => {
         outputTokens: 50
       });
 
-      expect(mockSupabaseQuery.insert).not.toHaveBeenCalled();
+      expect(mockQueryBuilder.insert).not.toHaveBeenCalled();
     });
 
     test('should handle database errors gracefully', async () => {
       const dbError = new Error('Database connection failed');
-      mockSupabaseQuery.insert.mockResolvedValue({ error: dbError });
+      mockQueryBuilder.insert.mockResolvedValue({ error: dbError });
 
       // Should not throw
       await expect(
@@ -168,7 +206,7 @@ describe('AIUsageLogger', () => {
     });
 
     test('should include orgId when provided', async () => {
-      mockSupabaseQuery.insert.mockResolvedValue({ error: null });
+      mockQueryBuilder.insert.mockResolvedValue({ error: null });
 
       await aiUsageLogger.logUsage({
         userId: 'user-123',
@@ -178,24 +216,39 @@ describe('AIUsageLogger', () => {
         outputTokens: 50
       });
 
-      const insertCall = mockSupabaseQuery.insert.mock.calls[0][0][0];
+      const insertCall = mockQueryBuilder.insert.mock.calls[0][0][0];
       expect(insertCall.org_id).toBe('org-456');
     });
 
     test('should default missing fields to null or 0', async () => {
-      mockSupabaseQuery.insert.mockResolvedValue({ error: null });
+      mockQueryBuilder.insert.mockResolvedValue({ error: null });
 
       await aiUsageLogger.logUsage({
         userId: 'user-123',
         model: 'gpt-5.1'
       });
 
-      const insertCall = mockSupabaseQuery.insert.mock.calls[0][0][0];
+      const insertCall = mockQueryBuilder.insert.mock.calls[0][0][0];
       expect(insertCall.input_tokens).toBe(0);
       expect(insertCall.output_tokens).toBe(0);
       expect(insertCall.input_cached_tokens).toBe(0);
       expect(insertCall.plan).toBeNull();
       expect(insertCall.endpoint).toBeNull();
+    });
+
+    test('should skip logging when disabled', async () => {
+      aiUsageLogger.enabled = false;
+
+      await aiUsageLogger.logUsage({
+        userId: 'user-123',
+        model: 'gpt-5.1',
+        inputTokens: 100
+      });
+
+      expect(mockQueryBuilder.insert).not.toHaveBeenCalled();
+      
+      // Re-enable for other tests
+      aiUsageLogger.enabled = true;
     });
   });
 
@@ -220,25 +273,9 @@ describe('AIUsageLogger', () => {
         }
       ];
 
-      // Create a thenable object that returns itself for chaining
-      const thenableQuery = {
-        eq: jest.fn(function () {
-          return this;
-        }),
-        gte: jest.fn(function () {
-          return this;
-        }),
-        lte: jest.fn(function () {
-          return this;
-        }),
-        then: (resolve) => resolve({ data: mockData, error: null })
-      };
-
-      const mockChain = {
-        select: jest.fn(() => thenableQuery)
-      };
-
-      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
+      // Create a new query builder that returns the mock data
+      const queryBuilder = createMockQueryBuilder(mockData, null);
+      supabaseServiceClient.from.mockReturnValue(queryBuilder);
 
       const stats = await aiUsageLogger.getUsageStats({
         userId: 'user-123'
@@ -256,32 +293,24 @@ describe('AIUsageLogger', () => {
       const mockData = [
         {
           input_tokens: 20,
-          input_cached_tokens: 80
+          input_cached_tokens: 80,
+          model: 'gpt-5.1',
+          output_tokens: 0,
+          plan: 'pro',
+          endpoint: 'test'
         },
         {
           input_tokens: 30,
-          input_cached_tokens: 70
+          input_cached_tokens: 70,
+          model: 'gpt-5.1',
+          output_tokens: 0,
+          plan: 'pro',
+          endpoint: 'test'
         }
       ];
 
-      const thenableQuery = {
-        eq: jest.fn(function () {
-          return this;
-        }),
-        gte: jest.fn(function () {
-          return this;
-        }),
-        lte: jest.fn(function () {
-          return this;
-        }),
-        then: (resolve) => resolve({ data: mockData, error: null })
-      };
-
-      const mockChain = {
-        select: jest.fn(() => thenableQuery)
-      };
-
-      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
+      const queryBuilder = createMockQueryBuilder(mockData, null);
+      supabaseServiceClient.from.mockReturnValue(queryBuilder);
 
       const stats = await aiUsageLogger.getUsageStats({
         userId: 'user-123'
@@ -298,24 +327,8 @@ describe('AIUsageLogger', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-31');
 
-      const thenableQuery = {
-        eq: jest.fn(function () {
-          return this;
-        }),
-        gte: jest.fn(function () {
-          return this;
-        }),
-        lte: jest.fn(function () {
-          return this;
-        }),
-        then: (resolve) => resolve({ data: [], error: null })
-      };
-
-      const mockChain = {
-        select: jest.fn(() => thenableQuery)
-      };
-
-      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
+      const queryBuilder = createMockQueryBuilder([], null);
+      supabaseServiceClient.from.mockReturnValue(queryBuilder);
 
       await aiUsageLogger.getUsageStats({
         userId: 'user-123',
@@ -323,58 +336,26 @@ describe('AIUsageLogger', () => {
         endDate
       });
 
-      expect(thenableQuery.gte).toHaveBeenCalledWith('created_at', startDate.toISOString());
-      expect(thenableQuery.lte).toHaveBeenCalledWith('created_at', endDate.toISOString());
+      expect(queryBuilder.gte).toHaveBeenCalledWith('created_at', startDate.toISOString());
+      expect(queryBuilder.lte).toHaveBeenCalledWith('created_at', endDate.toISOString());
     });
 
     test('should filter by organization', async () => {
-      const thenableQuery = {
-        eq: jest.fn(function () {
-          return this;
-        }),
-        gte: jest.fn(function () {
-          return this;
-        }),
-        lte: jest.fn(function () {
-          return this;
-        }),
-        then: (resolve) => resolve({ data: [], error: null })
-      };
-
-      const mockChain = {
-        select: jest.fn(() => thenableQuery)
-      };
-
-      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
+      const queryBuilder = createMockQueryBuilder([], null);
+      supabaseServiceClient.from.mockReturnValue(queryBuilder);
 
       await aiUsageLogger.getUsageStats({
         orgId: 'org-456'
       });
 
-      expect(thenableQuery.eq).toHaveBeenCalledWith('org_id', 'org-456');
+      expect(queryBuilder.eq).toHaveBeenCalledWith('org_id', 'org-456');
     });
 
     test('should handle database errors', async () => {
-      const dbError = new Error('Query failed');
+      const dbError = { message: 'Query failed' };
 
-      const thenableQuery = {
-        eq: jest.fn(function () {
-          return this;
-        }),
-        gte: jest.fn(function () {
-          return this;
-        }),
-        lte: jest.fn(function () {
-          return this;
-        }),
-        then: (resolve) => resolve({ data: null, error: dbError })
-      };
-
-      const mockChain = {
-        select: jest.fn(() => thenableQuery)
-      };
-
-      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
+      const queryBuilder = createMockQueryBuilder(null, dbError);
+      supabaseServiceClient.from.mockReturnValue(queryBuilder);
 
       const stats = await aiUsageLogger.getUsageStats({
         userId: 'user-123'
@@ -385,35 +366,13 @@ describe('AIUsageLogger', () => {
 
     test('should group statistics by model, plan, and endpoint', async () => {
       const mockData = [
-        { model: 'gpt-5.1', plan: 'pro', endpoint: 'roast', input_tokens: 100, output_tokens: 50 },
-        {
-          model: 'gpt-4o',
-          plan: 'starter',
-          endpoint: 'roast',
-          input_tokens: 50,
-          output_tokens: 25
-        },
-        { model: 'gpt-5.1', plan: 'pro', endpoint: 'shield', input_tokens: 75, output_tokens: 30 }
+        { model: 'gpt-5.1', plan: 'pro', endpoint: 'roast', input_tokens: 100, output_tokens: 50, input_cached_tokens: 0 },
+        { model: 'gpt-4o', plan: 'starter', endpoint: 'roast', input_tokens: 50, output_tokens: 25, input_cached_tokens: 0 },
+        { model: 'gpt-5.1', plan: 'pro', endpoint: 'shield', input_tokens: 75, output_tokens: 30, input_cached_tokens: 0 }
       ];
 
-      const thenableQuery = {
-        eq: jest.fn(function () {
-          return this;
-        }),
-        gte: jest.fn(function () {
-          return this;
-        }),
-        lte: jest.fn(function () {
-          return this;
-        }),
-        then: (resolve) => resolve({ data: mockData, error: null })
-      };
-
-      const mockChain = {
-        select: jest.fn(() => thenableQuery)
-      };
-
-      mockSupabaseServiceClient.from.mockReturnValue(mockChain);
+      const queryBuilder = createMockQueryBuilder(mockData, null);
+      supabaseServiceClient.from.mockReturnValue(queryBuilder);
 
       const stats = await aiUsageLogger.getUsageStats({
         userId: 'user-123'
@@ -425,6 +384,52 @@ describe('AIUsageLogger', () => {
       expect(stats.byPlan['starter'].requests).toBe(1);
       expect(stats.byEndpoint['roast'].requests).toBe(2);
       expect(stats.byEndpoint['shield'].requests).toBe(1);
+    });
+
+    test('should return disabled status when logger is disabled', async () => {
+      aiUsageLogger.enabled = false;
+
+      const stats = await aiUsageLogger.getUsageStats({
+        userId: 'user-123'
+      });
+
+      expect(stats.enabled).toBe(false);
+      
+      // Re-enable for other tests
+      aiUsageLogger.enabled = true;
+    });
+
+    test('should handle empty results', async () => {
+      const queryBuilder = createMockQueryBuilder([], null);
+      supabaseServiceClient.from.mockReturnValue(queryBuilder);
+
+      const stats = await aiUsageLogger.getUsageStats({
+        userId: 'user-123'
+      });
+
+      expect(stats.totalRequests).toBe(0);
+      expect(stats.totalInputTokens).toBe(0);
+      expect(stats.totalOutputTokens).toBe(0);
+      expect(stats.totalCachedTokens).toBe(0);
+      expect(stats.averageCacheHitRatio).toBe(0);
+    });
+
+    test('should handle unknown model/plan/endpoint', async () => {
+      const mockData = [
+        { input_tokens: 100, output_tokens: 50, input_cached_tokens: 0 }
+        // model, plan, endpoint are undefined
+      ];
+
+      const queryBuilder = createMockQueryBuilder(mockData, null);
+      supabaseServiceClient.from.mockReturnValue(queryBuilder);
+
+      const stats = await aiUsageLogger.getUsageStats({
+        userId: 'user-123'
+      });
+
+      expect(stats.byModel['unknown'].requests).toBe(1);
+      expect(stats.byPlan['unknown'].requests).toBe(1);
+      expect(stats.byEndpoint['unknown'].requests).toBe(1);
     });
   });
 });
