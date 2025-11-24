@@ -1,5 +1,7 @@
 const {
   OAuthCodeSchema,
+  OAuthErrorCallbackSchema,
+  OAuthCallbackSchema,
   OAuthConnectionSchema,
   TwitterConnectSchema,
   YouTubeConnectSchema,
@@ -117,6 +119,158 @@ describe('Social Connection Zod Schemas - Issue #948', () => {
       };
 
       expect(() => OAuthCodeSchema.parse(valid)).not.toThrow();
+    });
+  });
+
+  describe('OAuthErrorCallbackSchema', () => {
+    it('should validate error callback with all fields', () => {
+      const valid = {
+        error: 'access_denied',
+        error_description: 'User denied access to the application',
+        state: 'csrf_token_12345'
+      };
+
+      const result = OAuthErrorCallbackSchema.parse(valid);
+      expect(result).toEqual(valid);
+    });
+
+    it('should validate error callback without optional fields', () => {
+      const valid = {
+        error: 'user_cancelled'
+      };
+
+      const result = OAuthErrorCallbackSchema.parse(valid);
+      expect(result).toEqual(valid);
+    });
+
+    it('should reject missing error field', () => {
+      const invalid = {
+        error_description: 'Some description'
+      };
+
+      expect(() => OAuthErrorCallbackSchema.parse(invalid)).toThrow();
+    });
+
+    it('should reject empty error string', () => {
+      const invalid = {
+        error: '',
+        error_description: 'Description'
+      };
+
+      expect(() => OAuthErrorCallbackSchema.parse(invalid)).toThrow('OAuth error code is required');
+    });
+
+    it('should accept common OAuth error codes', () => {
+      const errorCodes = [
+        'access_denied',
+        'user_cancelled',
+        'temporarily_unavailable',
+        'server_error',
+        'invalid_request',
+        'invalid_scope',
+        'unauthorized_client'
+      ];
+
+      errorCodes.forEach((code) => {
+        const valid = { error: code };
+        expect(() => OAuthErrorCallbackSchema.parse(valid)).not.toThrow();
+      });
+    });
+
+    it('should accept long error descriptions', () => {
+      const valid = {
+        error: 'server_error',
+        error_description: 'A'.repeat(500) // Long description
+      };
+
+      expect(() => OAuthErrorCallbackSchema.parse(valid)).not.toThrow();
+    });
+  });
+
+  describe('OAuthCallbackSchema (Union)', () => {
+    it('should accept success flow (code + state)', () => {
+      const valid = {
+        code: 'abc123xyz',
+        state: 'csrf_token_12345'
+      };
+
+      const result = OAuthCallbackSchema.parse(valid);
+      expect(result).toEqual(valid);
+    });
+
+    it('should accept error flow (error only)', () => {
+      const valid = {
+        error: 'access_denied'
+      };
+
+      const result = OAuthCallbackSchema.parse(valid);
+      expect(result).toEqual(valid);
+    });
+
+    it('should accept error flow with full details', () => {
+      const valid = {
+        error: 'user_cancelled',
+        error_description: 'User cancelled authorization',
+        state: 'optional_state'
+      };
+
+      const result = OAuthCallbackSchema.parse(valid);
+      expect(result).toEqual(valid);
+    });
+
+    it('should accept success flow with redirect_uri', () => {
+      const valid = {
+        code: 'abc123',
+        state: 'csrf_token',
+        redirect_uri: 'https://roastr.ai/callback'
+      };
+
+      const result = OAuthCallbackSchema.parse(valid);
+      expect(result).toEqual(valid);
+    });
+
+    it('should reject missing both code and error', () => {
+      const invalid = {
+        state: 'some_state'
+      };
+
+      expect(() => OAuthCallbackSchema.parse(invalid)).toThrow();
+    });
+
+    it('should reject empty object', () => {
+      const invalid = {};
+
+      expect(() => OAuthCallbackSchema.parse(invalid)).toThrow();
+    });
+
+    it('should handle mixed scenario (error takes precedence)', () => {
+      // If both error and code are present, union should accept it
+      // (application logic determines which flow to follow)
+      const mixed = {
+        error: 'access_denied',
+        code: 'should_be_ignored',
+        state: 'csrf_token'
+      };
+
+      const result = OAuthCallbackSchema.parse(mixed);
+      expect(result).toBeDefined();
+    });
+
+    it('should validate state format in success flow', () => {
+      const invalid = {
+        code: 'abc123',
+        state: '' // Empty state not allowed in success flow
+      };
+
+      expect(() => OAuthCallbackSchema.parse(invalid)).toThrow();
+    });
+
+    it('should accept numeric-like strings in error codes', () => {
+      const valid = {
+        error: '12345' // Some providers use numeric error codes
+      };
+
+      expect(() => OAuthCallbackSchema.parse(valid)).not.toThrow();
     });
   });
 

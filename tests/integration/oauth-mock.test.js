@@ -196,8 +196,10 @@ describe('OAuth Mock Integration Tests', () => {
     it('should reject callback without required parameters', async () => {
       const response = await request(app).get('/api/auth/twitter/callback');
 
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toContain('error=Missing+authorization+code+or+state');
+      // After Issue #948: Zod validation returns 400 for missing params (not 302 redirect)
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Validation failed');
+      expect(response.body.success).toBe(false);
     });
 
     it('should reject callback with invalid state', async () => {

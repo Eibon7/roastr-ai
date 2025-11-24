@@ -54,37 +54,27 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
       it('should reject callback with missing code', async () => {
         const response = await request(app).get('/api/integrations/twitter/callback').query({
           state: 'csrf_token_abc123'
-          // code missing
+          // code missing (and no error param either)
         });
 
+        // After Issue #948: OAuthCallbackSchema is union, so missing both code and error returns union error
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.errors).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              field: 'code',
-              message: expect.stringMatching(/required/i)
-            })
-          ])
-        );
+        expect(response.body.message).toBe('Validation failed');
+        expect(response.body.errors).toBeDefined();
       });
 
       it('should reject callback with missing state', async () => {
         const response = await request(app).get('/api/integrations/discord/callback').query({
           code: 'valid_code'
-          // state missing
+          // state missing (required in success flow)
         });
 
+        // After Issue #948: Union validates, but OAuthCodeSchema requires state
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.errors).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              field: 'state',
-              message: expect.stringMatching(/required/i)
-            })
-          ])
-        );
+        expect(response.body.message).toBe('Validation failed');
+        expect(response.body.errors).toBeDefined();
       });
 
       it('should reject callback with empty code', async () => {
@@ -169,15 +159,12 @@ describe('OAuth Routes - Zod Validation (Issue #948)', () => {
       it('should return multiple errors when both code and state are missing', async () => {
         const response = await request(app).get('/api/integrations/twitter/callback').query({});
 
+        // After Issue #948: Empty query params fail union validation (neither success nor error flow)
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.errors).toHaveLength(2);
-        expect(response.body.errors).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ field: 'code' }),
-            expect.objectContaining({ field: 'state' })
-          ])
-        );
+        expect(response.body.message).toBe('Validation failed');
+        // Union error returns single "invalid_union" error, not individual field errors
+        expect(response.body.errors.length).toBeGreaterThanOrEqual(1);
       });
 
       it('should return multiple errors when code empty and redirect_uri invalid', async () => {

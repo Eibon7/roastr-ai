@@ -18,6 +18,40 @@ const OAuthCodeSchema = z.object({
 });
 
 /**
+ * OAuth Error Callback Schema
+ * Validates OAuth provider error callbacks (user cancellation, access denied, etc.)
+ *
+ * @example
+ * const result = OAuthErrorCallbackSchema.parse({
+ *   error: 'access_denied',
+ *   error_description: 'User cancelled the authorization',
+ *   state: 'csrf_token_12345'
+ * });
+ */
+const OAuthErrorCallbackSchema = z.object({
+  error: z.string().min(1, 'OAuth error code is required'),
+  error_description: z.string().optional(),
+  state: z.string().optional()
+});
+
+/**
+ * OAuth Callback Schema (Union)
+ * Accepts either successful OAuth code exchange or provider error callback
+ *
+ * This allows the endpoint to handle both:
+ * - Success: ?code=xxx&state=yyy
+ * - Error: ?error=access_denied&error_description=...&state=yyy
+ *
+ * @example
+ * // Success flow
+ * OAuthCallbackSchema.parse({ code: 'abc', state: 'xyz' });
+ *
+ * // Error flow
+ * OAuthCallbackSchema.parse({ error: 'access_denied', error_description: 'User cancelled' });
+ */
+const OAuthCallbackSchema = z.union([OAuthCodeSchema, OAuthErrorCallbackSchema]);
+
+/**
  * OAuth Connection Request Schema
  * Validates full OAuth connection payload for social platforms
  *
@@ -156,6 +190,8 @@ const BlueskyConnectSchema = OAuthConnectionSchema.extend({
 
 module.exports = {
   OAuthCodeSchema,
+  OAuthErrorCallbackSchema,
+  OAuthCallbackSchema,
   OAuthConnectionSchema,
   TwitterConnectSchema,
   YouTubeConnectSchema,
