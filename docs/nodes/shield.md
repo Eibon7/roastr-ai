@@ -4,11 +4,11 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-11-17
-**Coverage:** 86%
+**Last Updated:** 2025-11-23
+**Coverage:** 62%
 **Coverage Source:** auto
-**Note:** Coverage value updated to match actual test coverage (gdd-status.json validation). Will be auto-updated when tests pass.
-**Related PRs:** #499, #587 (Issue #487 - Flow Validation Complete), #617 (Flow Validation Dashboard + Validation Script), #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback), #865 (Issue #859 - Brand Safety for Sponsors)
+**Note:** Coverage improved in Issue #929 but requires integration tests approach (not unit tests) to reach 75% target. 68 tests passing (100%). Large uncovered blocks need end-to-end testing (103-183, 733-849, 1208-1566). Follow-up issue recommended.
+**Related PRs:** #499, #587 (Issue #487 - Flow Validation Complete), #617 (Flow Validation Dashboard + Validation Script), #632 (Unified Analysis Department), #634 (CodeRabbit Security Fix - Conservative Gatekeeper Fallback), #865 (Issue #859 - Brand Safety for Sponsors), #968 (Issue #929 - Coverage expansion 62.5%, +30% from baseline)
 
 ## Dependencies
 
@@ -1358,9 +1358,9 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Backend Developer**
 - **Documentation Agent**
 - **Guardian** (PR #640 - Validated Fallback Security Policy)
-- **Orchestrator**
+- **Orchestrator** (Issue #929 - Phase 6 coordination)
 - **Security Engineer**
-- **Test Engineer** (Issue #924 - middleware security tests)
+- **Test Engineer** (Issue #929 - Coverage expansion 62.5%, integration tests needed)
 
 ## Related Nodes
 
