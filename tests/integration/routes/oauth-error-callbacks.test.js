@@ -29,24 +29,16 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
   });
 
   describe('GET /:platform/callback - Error Flows', () => {
-    const platforms = [
-      'twitter',
-      'youtube',
-      'discord',
-      'instagram',
-      'facebook',
-      'twitch',
-      'reddit',
-      'tiktok',
-      'bluesky'
-    ];
+    const platforms = ['twitter', 'youtube', 'discord', 'instagram', 'facebook', 'twitch', 'reddit', 'tiktok', 'bluesky'];
 
     test.each(platforms)('should handle access_denied error for %s', async (platform) => {
-      const response = await request(app).get(`/api/auth/${platform}/callback`).query({
-        error: 'access_denied',
-        error_description: 'User denied access to the application',
-        state: 'optional_state_token'
-      });
+      const response = await request(app)
+        .get(`/api/auth/${platform}/callback`)
+        .query({
+          error: 'access_denied',
+          error_description: 'User denied access to the application',
+          state: 'optional_state_token'
+        });
 
       // Should redirect (302), NOT return 400 JSON
       expect(response.status).toBe(302);
@@ -56,10 +48,12 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
     });
 
     test.each(platforms)('should handle user_cancelled error for %s', async (platform) => {
-      const response = await request(app).get(`/api/auth/${platform}/callback`).query({
-        error: 'user_cancelled',
-        error_description: 'User cancelled the authorization flow'
-      });
+      const response = await request(app)
+        .get(`/api/auth/${platform}/callback`)
+        .query({
+          error: 'user_cancelled',
+          error_description: 'User cancelled the authorization flow'
+        });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('/connections');
@@ -67,10 +61,12 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
     });
 
     test.each(platforms)('should handle server_error without state for %s', async (platform) => {
-      const response = await request(app).get(`/api/auth/${platform}/callback`).query({
-        error: 'server_error',
-        error_description: 'The authorization server encountered an error'
-      });
+      const response = await request(app)
+        .get(`/api/auth/${platform}/callback`)
+        .query({
+          error: 'server_error',
+          error_description: 'The authorization server encountered an error'
+        });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('/connections');
@@ -78,9 +74,11 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
     });
 
     test('should handle error without error_description', async () => {
-      const response = await request(app).get('/api/auth/twitter/callback').query({
-        error: 'temporarily_unavailable'
-      });
+      const response = await request(app)
+        .get('/api/auth/twitter/callback')
+        .query({
+          error: 'temporarily_unavailable'
+        });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('/connections');
@@ -90,10 +88,12 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
     test('should handle long error descriptions', async () => {
       const longDescription = 'A'.repeat(300);
 
-      const response = await request(app).get('/api/auth/discord/callback').query({
-        error: 'invalid_request',
-        error_description: longDescription
-      });
+      const response = await request(app)
+        .get('/api/auth/discord/callback')
+        .query({
+          error: 'invalid_request',
+          error_description: longDescription
+        });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('/connections');
@@ -108,10 +108,12 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
         timestamp: Date.now()
       });
 
-      const response = await request(app).get('/api/auth/twitter/callback').query({
-        code: 'mock_code_abc123',
-        state: validState
-      });
+      const response = await request(app)
+        .get('/api/auth/twitter/callback')
+        .query({
+          code: 'mock_code_abc123',
+          state: validState
+        });
 
       // In MOCK_OAUTH mode, should return 200 with mock data or redirect
       expect([200, 302]).toContain(response.status);
@@ -123,10 +125,12 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
     });
 
     test('should reject missing code in success flow', async () => {
-      const response = await request(app).get('/api/auth/youtube/callback').query({
-        // Missing code (no error param either)
-        state: 'some_state_token'
-      });
+      const response = await request(app)
+        .get('/api/auth/youtube/callback')
+        .query({
+          // Missing code (no error param either)
+          state: 'some_state_token'
+        });
 
       // Zod validation should return 400
       expect(response.status).toBe(400);
@@ -135,10 +139,12 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
     });
 
     test('should reject missing state in success flow', async () => {
-      const response = await request(app).get('/api/auth/instagram/callback').query({
-        code: 'mock_code_xyz789'
-        // Missing state (no error param either)
-      });
+      const response = await request(app)
+        .get('/api/auth/instagram/callback')
+        .query({
+          code: 'mock_code_xyz789'
+          // Missing state (no error param either)
+        });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Validation failed');
@@ -148,12 +154,14 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
 
   describe('GET /:platform/callback - Edge Cases', () => {
     test('should handle both error AND code (error takes precedence)', async () => {
-      const response = await request(app).get('/api/auth/facebook/callback').query({
-        error: 'access_denied',
-        error_description: 'User denied',
-        code: 'should_be_ignored',
-        state: 'should_also_be_ignored'
-      });
+      const response = await request(app)
+        .get('/api/auth/facebook/callback')
+        .query({
+          error: 'access_denied',
+          error_description: 'User denied',
+          code: 'should_be_ignored',
+          state: 'should_also_be_ignored'
+        });
 
       // Error flow should execute first
       expect(response.status).toBe(302);
@@ -162,7 +170,8 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
     });
 
     test('should reject completely empty query parameters', async () => {
-      const response = await request(app).get('/api/auth/twitch/callback');
+      const response = await request(app)
+        .get('/api/auth/twitch/callback');
       // No query params at all
 
       // Zod should reject (neither error nor code present)
@@ -172,10 +181,12 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
     });
 
     test('should handle invalid platform gracefully', async () => {
-      const response = await request(app).get('/api/auth/invalid_platform/callback').query({
-        error: 'access_denied',
-        error_description: 'Test error'
-      });
+      const response = await request(app)
+        .get('/api/auth/invalid_platform/callback')
+        .query({
+          error: 'access_denied',
+          error_description: 'Test error'
+        });
 
       // Should still redirect (platform validation happens inside handler)
       expect(response.status).toBe(302);
@@ -190,20 +201,24 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
         timestamp: Date.now()
       });
 
-      const response = await request(app).get('/api/auth/reddit/callback').query({
-        code: 'valid_code_123',
-        state: validState
-      });
+      const response = await request(app)
+        .get('/api/auth/reddit/callback')
+        .query({
+          code: 'valid_code_123',
+          state: validState
+        });
 
       // Should NOT break existing behavior
       expect([200, 302]).toContain(response.status);
     });
 
     test('should maintain existing error responses for missing code/state (when no error param)', async () => {
-      const response = await request(app).get('/api/auth/tiktok/callback').query({
-        // Missing both code and error
-        redirect_uri: 'https://example.com/callback'
-      });
+      const response = await request(app)
+        .get('/api/auth/tiktok/callback')
+        .query({
+          // Missing both code and error
+          redirect_uri: 'https://example.com/callback'
+        });
 
       // Should return 400 validation error (Zod rejects)
       expect(response.status).toBe(400);
@@ -212,3 +227,4 @@ describe('OAuth Error Callbacks - Integration Tests', () => {
     });
   });
 });
+

@@ -74,7 +74,7 @@ grep -rn "console\.\(log\|error\)" src/routes/oauth.js | grep -v "//"
 
 ### Final Test Status
 
-```
+```text
 OAuth tests:      127/127 passing ✅
 Validator tests:  301/301 passing ✅
 New tests:         52 tests created
@@ -119,12 +119,15 @@ node scripts/predict-gdd-drift.js --full
 
 ## CodeRabbit Lessons Updated
 
-**Pattern #1: console.log usage**
+### Pattern #1: console.log usage
+
 - Occurrences: 14 in oauth.js DEBUG_OAUTH blocks
 - Fix: Replaced with `logger.debug` and `logger.error`
 - Status: Pattern confirmed addressed ✅
 
-**New Pattern Detected:** NO (no recurring issues ≥2 times)
+### New Pattern Detected
+
+NO (no recurring issues ≥2 times)
 
 ---
 
