@@ -116,7 +116,10 @@ jest.mock('../../../src/middleware/auth', () => ({
 }));
 
 // Mock tier validation monitoring service
-jest.mock('../../../src/services/tierValidationMonitoringService', () => mockTierValidationMonitoringService);
+jest.mock(
+  '../../../src/services/tierValidationMonitoringService',
+  () => mockTierValidationMonitoringService
+);
 
 // Mock plan limits service
 jest.mock('../../../src/services/planLimitsService', () => mockPlanLimitsService);
@@ -479,10 +482,7 @@ describe('Monitoring Routes - Issue #932', () => {
       mockIsAdmin = true;
 
       // Send empty body to trigger default values (without body, req.body is undefined)
-      const response = await request(app)
-        .post('/api/monitoring/alerts/test')
-        .send({})
-        .expect(200);
+      const response = await request(app).post('/api/monitoring/alerts/test').send({}).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.message).toBe('Test alert sent successfully');
@@ -547,4 +547,3 @@ describe('Monitoring Routes - Issue #932', () => {
     });
   });
 });
-
