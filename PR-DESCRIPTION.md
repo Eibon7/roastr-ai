@@ -98,28 +98,28 @@ This PR delivers **strategic partial completion** of Issue #929, focusing on ach
 
 ### Test Statistics
 
-| Metric                  | Before | After | Delta    |
-| ----------------------- | ------ | ----- | -------- |
-| **Total Tests**         | 138    | 231   | +93      |
-| **Passing Tests**       | 138    | 231   | +93      |
-| **Pass Rate**           | 100%   | 100%  | ✅ Maintained |
-| **Services Improved**   | -      | 3/4   | 75%      |
-| **Services at Target**  | -      | 1/4   | 25%      |
+| Metric                 | Before | After | Delta         |
+| ---------------------- | ------ | ----- | ------------- |
+| **Total Tests**        | 171    | 205   | +34           |
+| **Passing Tests**      | 171    | 205   | +34           |
+| **Pass Rate**          | 100%   | 100%  | ✅ Maintained |
+| **Services Improved**  | -      | 3/4   | 75%           |
+| **Services at Target** | -      | 1/4   | 25%           |
 
 ### Coverage by Service
 
-| Service             | Before | After  | Delta   | Target | Gap     | Status |
-| ------------------- | ------ | ------ | ------- | ------ | ------- | ------ |
-| queueService.js     | 37.21% | 81.16% | +43.95% | ≥75%   | +6.16%  | ✅     |
-| shieldService.js    | 32.83% | 62.5%  | +29.67% | ≥75%   | -12.5%  | 🟡     |
-| authService.js      | 46.96% | 50.75% | +3.79%  | ≥85%   | -34.25% | 🟡     |
-| costControl.js      | 28.86% | 28.86% | 0%      | ≥85%   | -56.14% | ⏸️     |
+| Service          | Before | After  | Delta   | Target | Gap     | Status |
+| ---------------- | ------ | ------ | ------- | ------ | ------- | ------ |
+| queueService.js  | 37.21% | 81.16% | +43.95% | ≥75%   | +6.16%  | ✅     |
+| shieldService.js | 32.83% | 62.5%  | +29.67% | ≥75%   | -12.5%  | 🟡     |
+| authService.js   | 46.96% | 50.75% | +3.79%  | ≥85%   | -34.25% | 🟡     |
+| costControl.js   | 28.86% | 28.86% | 0%      | ≥85%   | -56.14% | ⏸️     |
 
 ### Acceptance Criteria: 7/10 (70%)
 
 ✅ **Completed (7):**
 
-- [x] AC1: All tests pass → ✅ **231/231 (100%)**
+- [x] AC1: All tests pass → ✅ **205/205 (100%)**
 - [x] AC2: Tests cover main methods → ✅ **All public methods**
 - [x] AC3: Tests cover success/error/edge → ✅ **Comprehensive**
 - [x] AC4: Tests cover complex business logic → ✅ **Priority, fallbacks, stats**
@@ -198,7 +198,7 @@ Continuing to force unit test coverage beyond this point would result in:
 
 ### Pre-Merge Checks
 
-- ✅ Tests 100% passing: `npm test` (231/231)
+- ✅ Tests 100% passing: `npm test` (205/205)
 - ✅ No regressions: All pre-existing tests still pass
 - ✅ GDD validated: `node scripts/validate-gdd-runtime.js --full`
 - ✅ GDD health: `node scripts/score-gdd-health.js --ci` (≥87)
@@ -270,7 +270,7 @@ Continuing to force unit test coverage beyond this point would result in:
 
 ✅ **Positive Impact:**
 
-- +93 new tests (100% passing)
+- +34 new tests (100% passing)
 - +43.95% coverage in queueService (critical service)
 - +29.67% coverage in shieldService (security service)
 - +3.79% coverage in authService (auth service)
@@ -308,8 +308,8 @@ Continuing to force unit test coverage beyond this point would result in:
 - 🟢 **queueService:** 81.16% coverage (EXCEEDED TARGET)
 - 🟡 **shieldService:** 62.5% coverage (solid foundation)
 - 🟡 **authService:** 50.75% coverage (solid foundation)
-- ✅ **231/231 tests passing (100%)**
-- ✅ **+93 new tests**
+- ✅ **205/205 tests passing (100%)**
+- ✅ **+34 new tests**
 - ✅ **Zero breaking changes**
 
 **What Remains:**

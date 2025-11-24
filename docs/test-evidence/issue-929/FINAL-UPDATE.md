@@ -64,11 +64,11 @@ Después de la **Fase 5 (Opción B)**, hemos alcanzado el **85%+ de completitud*
 
 | Metric                   | Value                  |
 | ------------------------ | ---------------------- |
-| **Total Tests Before**   | 138                    |
-| **Total Tests After**    | 231                    |
-| **Tests Added**          | **+93**                |
-| **Tests Passing**        | **231/231 (100%)** ✅  |
-| **Tests Failing**        | **0/231 (0%)** ✅      |
+| **Total Tests Before**   | 171                    |
+| **Total Tests After**    | 205                    |
+| **Tests Added**          | **+34**                |
+| **Tests Passing**        | **205/205 (100%)** ✅  |
+| **Tests Failing**        | **0/205 (0%)** ✅      |
 
 ### Coverage Metrics
 | Metric | Value |
