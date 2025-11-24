@@ -41,7 +41,10 @@ const mockStripe = {
   subscriptions: {
     list: jest.fn(() =>
       Promise.resolve({
-        data: [{ id: 'sub_1', status: 'active' }, { id: 'sub_2', status: 'active' }]
+        data: [
+          { id: 'sub_1', status: 'active' },
+          { id: 'sub_2', status: 'active' }
+        ]
       })
     )
   }
@@ -293,9 +296,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         .mockReturnValueOnce(mockPreviousSubsQuery) // Previous period subs
         .mockReturnValueOnce(mockActiveSubsQuery); // Active subs for MRR
 
-      const response = await request(app)
-        .get('/api/admin/revenue/overview?period=30')
-        .expect(200);
+      const response = await request(app).get('/api/admin/revenue/overview?period=30').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('mrr');
@@ -409,9 +410,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockAdminQuery)
-        .mockReturnValueOnce(mockErrorQuery);
+      mockSupabase.from.mockReturnValueOnce(mockAdminQuery).mockReturnValueOnce(mockErrorQuery);
 
       const response = await request(app).get('/api/admin/revenue/overview').expect(500);
 
@@ -430,9 +429,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         .mockReturnValueOnce(mockPreviousSubsQuery)
         .mockReturnValueOnce(mockActiveSubsQuery);
 
-      const response = await request(app)
-        .get('/api/admin/revenue/overview?period=60')
-        .expect(200);
+      const response = await request(app).get('/api/admin/revenue/overview?period=60').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.period.days).toBe(60);
@@ -527,9 +524,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         .mockReturnValueOnce(mockCohortQuery)
         .mockReturnValueOnce(mockCanceledQuery);
 
-      const response = await request(app)
-        .get('/api/admin/revenue/churn?period=30')
-        .expect(200);
+      const response = await request(app).get('/api/admin/revenue/churn?period=30').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('churnRate');
@@ -620,8 +615,20 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
             neq: jest.fn(() =>
               Promise.resolve({
                 data: [
-                  { user_id: 'user-1', plan: 'pro', status: 'active', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' },
-                  { user_id: 'user-2', plan: 'creator_plus', status: 'canceled', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-02-01T00:00:00Z' }
+                  {
+                    user_id: 'user-1',
+                    plan: 'pro',
+                    status: 'active',
+                    created_at: '2024-01-01T00:00:00Z',
+                    updated_at: '2024-01-01T00:00:00Z'
+                  },
+                  {
+                    user_id: 'user-2',
+                    plan: 'creator_plus',
+                    status: 'canceled',
+                    created_at: '2024-01-01T00:00:00Z',
+                    updated_at: '2024-02-01T00:00:00Z'
+                  }
                 ],
                 error: null
               })
@@ -637,7 +644,13 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
               neq: jest.fn(() =>
                 Promise.resolve({
                   data: [
-                    { user_id: 'user-2', plan: 'creator_plus', status: 'canceled', created_at: '2024-01-01T00:00:00Z', updated_at: '2024-02-01T00:00:00Z' }
+                    {
+                      user_id: 'user-2',
+                      plan: 'creator_plus',
+                      status: 'canceled',
+                      created_at: '2024-01-01T00:00:00Z',
+                      updated_at: '2024-02-01T00:00:00Z'
+                    }
                   ],
                   error: null
                 })
@@ -674,9 +687,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockAdminQuery)
-        .mockReturnValueOnce(mockErrorQuery);
+      mockSupabase.from.mockReturnValueOnce(mockAdminQuery).mockReturnValueOnce(mockErrorQuery);
 
       const response = await request(app).get('/api/admin/revenue/churn').expect(500);
 
@@ -714,10 +725,30 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
             neq: jest.fn(() =>
               Promise.resolve({
                 data: [
-                  { plan: 'pro', status: 'active', created_at: '2024-01-15T00:00:00Z', updated_at: '2024-01-15T00:00:00Z' },
-                  { plan: 'pro', status: 'active', created_at: '2024-01-16T00:00:00Z', updated_at: '2024-01-16T00:00:00Z' },
-                  { plan: 'creator_plus', status: 'active', created_at: '2024-01-17T00:00:00Z', updated_at: '2024-01-17T00:00:00Z' },
-                  { plan: 'pro', status: 'canceled', created_at: '2024-01-18T00:00:00Z', updated_at: '2024-01-20T00:00:00Z' }
+                  {
+                    plan: 'pro',
+                    status: 'active',
+                    created_at: '2024-01-15T00:00:00Z',
+                    updated_at: '2024-01-15T00:00:00Z'
+                  },
+                  {
+                    plan: 'pro',
+                    status: 'active',
+                    created_at: '2024-01-16T00:00:00Z',
+                    updated_at: '2024-01-16T00:00:00Z'
+                  },
+                  {
+                    plan: 'creator_plus',
+                    status: 'active',
+                    created_at: '2024-01-17T00:00:00Z',
+                    updated_at: '2024-01-17T00:00:00Z'
+                  },
+                  {
+                    plan: 'pro',
+                    status: 'canceled',
+                    created_at: '2024-01-18T00:00:00Z',
+                    updated_at: '2024-01-20T00:00:00Z'
+                  }
                 ],
                 error: null
               })
@@ -726,9 +757,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockAdminQuery)
-        .mockReturnValueOnce(mockTrendsQuery);
+      mockSupabase.from.mockReturnValueOnce(mockAdminQuery).mockReturnValueOnce(mockTrendsQuery);
 
       const response = await request(app)
         .get('/api/admin/revenue/trends?period=90&granularity=week')
@@ -755,9 +784,24 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
             neq: jest.fn(() =>
               Promise.resolve({
                 data: [
-                  { plan: 'pro', status: 'active', created_at: '2024-01-15T00:00:00Z', updated_at: '2024-01-15T00:00:00Z' },
-                  { plan: 'pro', status: 'active', created_at: '2024-01-15T00:00:00Z', updated_at: '2024-01-15T00:00:00Z' },
-                  { plan: 'creator_plus', status: 'active', created_at: '2024-01-16T00:00:00Z', updated_at: '2024-01-16T00:00:00Z' }
+                  {
+                    plan: 'pro',
+                    status: 'active',
+                    created_at: '2024-01-15T00:00:00Z',
+                    updated_at: '2024-01-15T00:00:00Z'
+                  },
+                  {
+                    plan: 'pro',
+                    status: 'active',
+                    created_at: '2024-01-15T00:00:00Z',
+                    updated_at: '2024-01-15T00:00:00Z'
+                  },
+                  {
+                    plan: 'creator_plus',
+                    status: 'active',
+                    created_at: '2024-01-16T00:00:00Z',
+                    updated_at: '2024-01-16T00:00:00Z'
+                  }
                 ],
                 error: null
               })
@@ -766,9 +810,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockAdminQuery)
-        .mockReturnValueOnce(mockTrendsQuery);
+      mockSupabase.from.mockReturnValueOnce(mockAdminQuery).mockReturnValueOnce(mockTrendsQuery);
 
       const response = await request(app).get('/api/admin/revenue/trends').expect(200);
 
@@ -787,10 +829,30 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
             neq: jest.fn(() =>
               Promise.resolve({
                 data: [
-                  { plan: 'pro', status: 'active', created_at: '2024-01-15T00:00:00Z', updated_at: '2024-01-15T00:00:00Z' },
-                  { plan: 'pro', status: 'active', created_at: '2024-01-15T00:00:00Z', updated_at: '2024-01-15T00:00:00Z' },
-                  { plan: 'pro', status: 'active', created_at: '2024-01-16T00:00:00Z', updated_at: '2024-01-16T00:00:00Z' },
-                  { plan: 'pro', status: 'canceled', created_at: '2024-01-16T00:00:00Z', updated_at: '2024-01-20T00:00:00Z' }
+                  {
+                    plan: 'pro',
+                    status: 'active',
+                    created_at: '2024-01-15T00:00:00Z',
+                    updated_at: '2024-01-15T00:00:00Z'
+                  },
+                  {
+                    plan: 'pro',
+                    status: 'active',
+                    created_at: '2024-01-15T00:00:00Z',
+                    updated_at: '2024-01-15T00:00:00Z'
+                  },
+                  {
+                    plan: 'pro',
+                    status: 'active',
+                    created_at: '2024-01-16T00:00:00Z',
+                    updated_at: '2024-01-16T00:00:00Z'
+                  },
+                  {
+                    plan: 'pro',
+                    status: 'canceled',
+                    created_at: '2024-01-16T00:00:00Z',
+                    updated_at: '2024-01-20T00:00:00Z'
+                  }
                 ],
                 error: null
               })
@@ -799,9 +861,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockAdminQuery)
-        .mockReturnValueOnce(mockTrendsQuery);
+      mockSupabase.from.mockReturnValueOnce(mockAdminQuery).mockReturnValueOnce(mockTrendsQuery);
 
       const response = await request(app).get('/api/admin/revenue/trends').expect(200);
 
@@ -821,7 +881,12 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
             neq: jest.fn(() =>
               Promise.resolve({
                 data: [
-                  { plan: 'pro', status: 'active', created_at: '2024-01-15T00:00:00Z', updated_at: '2024-01-15T00:00:00Z' }
+                  {
+                    plan: 'pro',
+                    status: 'active',
+                    created_at: '2024-01-15T00:00:00Z',
+                    updated_at: '2024-01-15T00:00:00Z'
+                  }
                 ],
                 error: null
               })
@@ -830,9 +895,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockAdminQuery)
-        .mockReturnValueOnce(mockTrendsQuery);
+      mockSupabase.from.mockReturnValueOnce(mockAdminQuery).mockReturnValueOnce(mockTrendsQuery);
 
       const response = await request(app)
         .get('/api/admin/revenue/trends?granularity=day')
@@ -858,9 +921,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockAdminQuery)
-        .mockReturnValueOnce(mockErrorQuery);
+      mockSupabase.from.mockReturnValueOnce(mockAdminQuery).mockReturnValueOnce(mockErrorQuery);
 
       const response = await request(app).get('/api/admin/revenue/trends').expect(500);
 
@@ -884,9 +945,7 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockAdminQuery)
-        .mockReturnValueOnce(mockEmptyQuery);
+      mockSupabase.from.mockReturnValueOnce(mockAdminQuery).mockReturnValueOnce(mockEmptyQuery);
 
       const response = await request(app).get('/api/admin/revenue/trends').expect(200);
 
@@ -898,4 +957,3 @@ describe('Revenue Dashboard Routes - Issue #932', () => {
     });
   });
 });
-
