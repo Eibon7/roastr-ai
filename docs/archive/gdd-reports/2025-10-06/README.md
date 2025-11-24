@@ -12,4 +12,3 @@ They contain:
 These files are archived to preserve historical context but are not used at runtime.
 
 Do not delete unless explicitly instructed.
-
