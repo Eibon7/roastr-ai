@@ -30,9 +30,10 @@ Los endpoints de toggle (`POST /api/roasting/toggle` y `POST /api/shield/toggle`
 ### Nodos GDD Relevantes
 
 Según auto-activación GDD:
+
 - `shield` - POST /api/shield/toggle
 - `queue-system` - Propagación a Redis y workers
-- `roast` - POST /api/roasting/toggle  
+- `roast` - POST /api/roasting/toggle
 - `multi-tenant` - Validación organization_id
 
 ## Análisis de Endpoints Afectados
@@ -42,6 +43,7 @@ Según auto-activación GDD:
 **Ubicación estimada:** `src/routes/roasting.js` o `src/routes/roast.js`
 
 **Datos a validar:**
+
 - `enabled` (boolean) - Estado on/off del roasting
 - `organization_id` (UUID) - Multi-tenant isolation
 - Posibles parámetros adicionales de configuración
@@ -53,6 +55,7 @@ Según auto-activación GDD:
 **Ubicación estimada:** `src/routes/shield.js`
 
 **Datos a validar:**
+
 - `enabled` (boolean) - Estado on/off del shield
 - `organization_id` (UUID) - Multi-tenant isolation
 - Posibles thresholds o configuración
@@ -66,6 +69,7 @@ Según auto-activación GDD:
 **Objetivo:** Encontrar archivos exactos y estructura actual
 
 **Acciones:**
+
 ```bash
 # Buscar archivos de rutas
 grep -r "POST.*toggle" src/routes/
@@ -78,6 +82,7 @@ grep -r "roasting.*enabled\|shield.*enabled" src/workers/
 ```
 
 **Output esperado:**
+
 - Ruta exacta de archivos
 - Validación actual (express-validator o manual)
 - Cómo se consume el estado en workers
@@ -120,6 +125,7 @@ module.exports = {
 ```
 
 **Validaciones clave:**
+
 - Boolean estricto (no acepta "true" string)
 - UUID válido para organization_id
 - Mensajes de error claros en español/inglés
@@ -137,7 +143,7 @@ module.exports = {
  * @returns {Object} Formatted error response
  */
 function formatZodError(zodError) {
-  const errors = zodError.errors.map(err => ({
+  const errors = zodError.errors.map((err) => ({
     field: err.path.join('.'),
     message: err.message,
     code: err.code
@@ -174,16 +180,16 @@ router.post('/toggle', async (req, res) => {
   try {
     // Validar con Zod
     const validated = roastingToggleSchema.parse(req.body);
-    
+
     // Lógica de negocio existente (mantener intacta)
     // ...
-    
+
     res.json({ success: true, data: validated });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json(formatZodError(error));
     }
-    
+
     logger.error('Error toggling roasting:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
@@ -210,35 +216,35 @@ describe('Toggle Schemas - Zod Validation', () => {
         enabled: true,
         organization_id: '123e4567-e89b-12d3-a456-426614174000'
       };
-      
+
       expect(() => roastingToggleSchema.parse(valid)).not.toThrow();
     });
-    
+
     it('should reject non-boolean enabled', () => {
       const invalid = {
         enabled: 'true', // String instead of boolean
         organization_id: '123e4567-e89b-12d3-a456-426614174000'
       };
-      
+
       expect(() => roastingToggleSchema.parse(invalid)).toThrow();
     });
-    
+
     it('should reject invalid UUID', () => {
       const invalid = {
         enabled: true,
         organization_id: 'not-a-uuid'
       };
-      
+
       expect(() => roastingToggleSchema.parse(invalid)).toThrow();
     });
-    
+
     it('should reject missing organization_id', () => {
       const invalid = { enabled: true };
-      
+
       expect(() => roastingToggleSchema.parse(invalid)).toThrow();
     });
   });
-  
+
   describe('shieldToggleSchema', () => {
     // Mismos tests para shield
   });
@@ -257,41 +263,37 @@ describe('Toggle Schemas - Zod Validation', () => {
 describe('Toggle Endpoints Integration', () => {
   describe('POST /api/roasting/toggle', () => {
     it('should toggle roasting with valid data', async () => {
-      const response = await request(app)
-        .post('/api/roasting/toggle')
-        .send({
-          enabled: true,
-          organization_id: testOrgId
-        });
-      
+      const response = await request(app).post('/api/roasting/toggle').send({
+        enabled: true,
+        organization_id: testOrgId
+      });
+
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
     });
-    
+
     it('should return 400 for invalid boolean', async () => {
-      const response = await request(app)
-        .post('/api/roasting/toggle')
-        .send({
-          enabled: 'true', // String
-          organization_id: testOrgId
-        });
-      
+      const response = await request(app).post('/api/roasting/toggle').send({
+        enabled: 'true', // String
+        organization_id: testOrgId
+      });
+
       expect(response.status).toBe(400);
       expect(response.body.validation_errors).toBeDefined();
     });
-    
+
     it('should propagate to Redis correctly', async () => {
       // Verificar que el cambio se propaga a workers
       await request(app)
         .post('/api/roasting/toggle')
         .send({ enabled: true, organization_id: testOrgId });
-      
+
       // Verificar estado en Redis
       const redisState = await redis.get(`roasting:${testOrgId}:enabled`);
       expect(redisState).toBe('true');
     });
   });
-  
+
   describe('POST /api/shield/toggle', () => {
     // Mismos tests para shield
   });
@@ -310,6 +312,7 @@ describe('Toggle Endpoints Integration', () => {
 4. No breaking changes en contracts
 
 **Archivos a verificar:**
+
 - `src/workers/GenerateReplyWorker.js`
 - `src/workers/ShieldActionWorker.js`
 - `src/services/queueService.js`
@@ -317,12 +320,14 @@ describe('Toggle Endpoints Integration', () => {
 ## Archivos Afectados
 
 ### Nuevos
+
 - `src/validators/zod/toggle.schema.js`
 - `src/validators/zod/formatZodError.js`
 - `tests/unit/validators/zod/toggle.schema.test.js`
 - `tests/integration/toggle-endpoints.test.js`
 
 ### Modificados
+
 - `src/routes/roasting.js` (o equivalente)
 - `src/routes/shield.js` (o equivalente)
 - Posibles ajustes en workers si consumen el estado
@@ -330,9 +335,11 @@ describe('Toggle Endpoints Integration', () => {
 ## Agentes a Usar
 
 ### TestEngineer
+
 **Trigger:** Cambios en src/ requieren tests
 
 **Workflow:**
+
 ```
 Cmd+I → @tests/ @src/validators/zod/
 "Generate comprehensive tests for Zod schemas following test-generation-skill"
@@ -341,6 +348,7 @@ Cmd+I → @tests/ @src/validators/zod/
 **Receipt:** `docs/agents/receipts/issue-944-TestEngineer.md`
 
 ### Guardian (Opcional)
+
 **Trigger:** Cambios en seguridad crítica (validación de inputs)
 
 **Workflow:** Manual audit después de implementación
@@ -386,16 +394,19 @@ npm run test:coverage
 ## Riesgos y Mitigación
 
 ### Riesgo 1: Breaking Changes en API
+
 **Probabilidad:** Media  
 **Impacto:** Alto  
 **Mitigación:** Tests de integración exhaustivos, verificar contratos existentes
 
 ### Riesgo 2: Workers dejan de funcionar
+
 **Probabilidad:** Baja  
 **Impacto:** Crítico  
 **Mitigación:** Verificar propagación a Redis, tests específicos para workers
 
 ### Riesgo 3: Tipos string "true" vs boolean true
+
 **Probabilidad:** Alta  
 **Impacto:** Medio  
 **Mitigación:** Zod es estricto, tests cubren este caso, considerar coercion si necesario
@@ -444,4 +455,3 @@ npm run test:coverage
 **Fecha:** 2025-11-23  
 **Issue:** #944  
 **Worktree:** /Users/emiliopostigo/roastr-ai-worktrees/issue-944
-

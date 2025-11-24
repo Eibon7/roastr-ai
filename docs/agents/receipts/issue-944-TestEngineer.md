@@ -12,7 +12,7 @@
 
 ✅ **Changes in src/:** New validators created in `src/validators/zod/`  
 ✅ **New feature:** Zod validation schemas for critical endpoints  
-✅ **P0 Priority:** State-changing endpoints affecting workers  
+✅ **P0 Priority:** State-changing endpoints affecting workers
 
 ---
 
@@ -32,12 +32,12 @@ tests/
 
 ### Test Coverage
 
-| Component | Unit Tests | Integration Tests | Coverage |
-|-----------|------------|-------------------|----------|
-| `toggle.schema.js` | 28 tests | N/A | 100% |
-| `formatZodError.js` | Covered in schema tests | N/A | 100% |
-| `/api/roasting/toggle` | Schema tests | 20 tests (DB pending) | Schema: 100% |
-| `/api/shield/toggle` | Schema tests | 20 tests (DB pending) | Schema: 100% |
+| Component              | Unit Tests              | Integration Tests     | Coverage     |
+| ---------------------- | ----------------------- | --------------------- | ------------ |
+| `toggle.schema.js`     | 28 tests                | N/A                   | 100%         |
+| `formatZodError.js`    | Covered in schema tests | N/A                   | 100%         |
+| `/api/roasting/toggle` | Schema tests            | 20 tests (DB pending) | Schema: 100% |
+| `/api/shield/toggle`   | Schema tests            | 20 tests (DB pending) | Schema: 100% |
 
 ---
 
@@ -50,6 +50,7 @@ tests/
 **Test Categories:**
 
 #### ✅ Valid Data (5 tests)
+
 - Accept valid toggle data with all required fields
 - Accept false as enabled value
 - Accept optional reason field
@@ -57,29 +58,34 @@ tests/
 - Accept edge cases (enabled=true with reason)
 
 #### ❌ Invalid enabled Field (4 tests)
+
 - Reject string "true" instead of boolean
 - Reject string "false" instead of boolean
 - Reject number 1 instead of boolean
 - Reject missing enabled field
 
 #### ❌ Invalid organization_id Field (4 tests)
+
 - Reject invalid UUID format
 - Reject empty string as organization_id
 - Reject missing organization_id
 - Reject numeric organization_id
 
 #### ❌ Invalid reason Field (3 tests)
+
 - Reject empty string as reason
 - Reject reason exceeding 500 characters
 - Reject numeric reason
 
 #### 🔐 Security: Type Coercion Prevention (4 tests)
+
 - Should NOT coerce "1" to true
 - Should NOT coerce "0" to false
 - Should NOT coerce null to false
 - Should NOT coerce undefined to false
 
 #### 🧪 Real-world Scenarios (8 tests)
+
 - Handle form data with string booleans (should reject)
 - Handle JSON with actual booleans (should accept)
 - Reject corrupted UUID with extra characters
@@ -96,16 +102,19 @@ tests/
 **Test Categories:**
 
 #### POST /api/roasting/toggle
+
 - ✅ Valid requests (3 tests)
 - ❌ Invalid requests - Zod validation (4 tests)
 - 🔐 Authentication (2 tests)
 
 #### POST /api/shield/toggle
+
 - ✅ Valid requests (3 tests)
 - ❌ Invalid requests - Zod validation (2 tests)
 - 🔐 Authentication (1 test)
 
 #### Security & Real-world
+
 - 🔒 Type coercion prevention (2 tests)
 - 🧪 Real-world scenarios (3 tests)
 
@@ -188,9 +197,9 @@ it('should reject string "true" instead of boolean', () => {
     enabled: 'true', // String instead of boolean
     organization_id: '123e4567-e89b-12d3-a456-426614174000'
   };
-  
+
   expect(() => toggleBaseSchema.parse(invalidData)).toThrow(z.ZodError);
-  
+
   try {
     toggleBaseSchema.parse(invalidData);
   } catch (error) {
@@ -210,7 +219,7 @@ it('should NOT coerce "1" to true', () => {
     enabled: '1',
     organization_id: '123e4567-e89b-12d3-a456-426614174000'
   };
-  
+
   expect(() => toggleBaseSchema.parse(data)).toThrow(z.ZodError);
 });
 ```
@@ -226,7 +235,7 @@ it('should accept enabled=true with reason (unusual but valid)', () => {
     organization_id: '123e4567-e89b-12d3-a456-426614174000',
     reason: 'Re-enabling after maintenance'
   };
-  
+
   expect(() => roastingToggleSchema.parse(validData)).not.toThrow();
 });
 ```
@@ -260,13 +269,13 @@ src/validators/zod/            |   100   |   100    |   100   |   100
 
 ## Test Quality Metrics
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| **Unit Test Coverage** | ≥90% | 100% | ✅ PASS |
-| **Tests Passing** | 100% | 100% (28/28) | ✅ PASS |
-| **Security Tests** | ≥4 | 12 | ✅ PASS |
-| **Edge Cases** | ≥2 | 8 | ✅ PASS |
-| **Error Validation** | All paths | All paths | ✅ PASS |
+| Metric                 | Target    | Actual       | Status  |
+| ---------------------- | --------- | ------------ | ------- |
+| **Unit Test Coverage** | ≥90%      | 100%         | ✅ PASS |
+| **Tests Passing**      | 100%      | 100% (28/28) | ✅ PASS |
+| **Security Tests**     | ≥4        | 12           | ✅ PASS |
+| **Edge Cases**         | ≥2        | 8            | ✅ PASS |
+| **Error Validation**   | All paths | All paths    | ✅ PASS |
 
 ---
 
@@ -274,18 +283,18 @@ src/validators/zod/            |   100   |   100    |   100   |   100
 
 ### Type Coercion Prevention (P0 Critical)
 
-| Input | Type | Expected | Actual | Status |
-|-------|------|----------|--------|--------|
-| `"true"` | String | Reject | Reject | ✅ |
-| `"false"` | String | Reject | Reject | ✅ |
-| `"1"` | String | Reject | Reject | ✅ |
-| `"0"` | String | Reject | Reject | ✅ |
-| `1` | Number | Reject | Reject | ✅ |
-| `0` | Number | Reject | Reject | ✅ |
-| `null` | Null | Reject | Reject | ✅ |
-| `undefined` | Undefined | Reject | Reject | ✅ |
-| `true` | Boolean | Accept | Accept | ✅ |
-| `false` | Boolean | Accept | Accept | ✅ |
+| Input       | Type      | Expected | Actual | Status |
+| ----------- | --------- | -------- | ------ | ------ |
+| `"true"`    | String    | Reject   | Reject | ✅     |
+| `"false"`   | String    | Reject   | Reject | ✅     |
+| `"1"`       | String    | Reject   | Reject | ✅     |
+| `"0"`       | String    | Reject   | Reject | ✅     |
+| `1`         | Number    | Reject   | Reject | ✅     |
+| `0`         | Number    | Reject   | Reject | ✅     |
+| `null`      | Null      | Reject   | Reject | ✅     |
+| `undefined` | Undefined | Reject   | Reject | ✅     |
+| `true`      | Boolean   | Accept   | Accept | ✅     |
+| `false`     | Boolean   | Accept   | Accept | ✅     |
 
 **✅ All security tests passing** - No type coercion vulnerabilities
 
@@ -298,13 +307,14 @@ src/validators/zod/            |   100   |   100    |   100   |   100
 **File:** `jest.config.js`
 
 **Change:**
+
 ```javascript
 testMatch: [
   '<rootDir>/tests/unit/routes/**/*.test.js',
   '<rootDir>/tests/unit/services/**/*.test.js',
   // ... existing paths ...
-  '<rootDir>/tests/unit/validators/**/*.test.js'  // Issue #944: Added
-]
+  '<rootDir>/tests/unit/validators/**/*.test.js' // Issue #944: Added
+];
 ```
 
 **Reason:** Enable Jest to discover new validator tests
@@ -322,18 +332,18 @@ beforeAll(async () => {
     .from('users')
     .insert({
       email: `toggle-test-${Date.now()}@example.com`,
-      roasting_enabled: true  // Requires migration 026
+      roasting_enabled: true // Requires migration 026
     })
     .select()
     .single();
-  
+
   // Get auto-created organization
   const { data: membership } = await supabaseServiceClient
     .from('organization_members')
     .select('organization_id, organizations(*)')
     .eq('user_id', user.id)
     .single();
-  
+
   testOrganization = membership.organizations;
   authToken = generateTestToken(user.id, testOrganization.id);
 });
@@ -342,6 +352,7 @@ beforeAll(async () => {
 **Blocking Issue:** Test database missing migration 026 (`roasting_enabled` column)
 
 **Solution:** Apply migration to test database:
+
 ```sql
 ALTER TABLE users ADD COLUMN IF NOT EXISTS roasting_enabled BOOLEAN DEFAULT TRUE NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS roasting_disabled_at TIMESTAMPTZ;
@@ -355,6 +366,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS roasting_disabled_reason TEXT;
 ### Unit Tests Output
 
 ✅ **28/28 tests passing**
+
 - 0 failing tests
 - 0 skipped tests
 - 0.737s execution time
@@ -363,6 +375,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS roasting_disabled_reason TEXT;
 ### Integration Tests Status
 
 ⚠️ **20 tests created, pending DB migration**
+
 - Tests are production-ready
 - Comprehensive coverage (valid, invalid, security, real-world)
 - Require migration 026 on test database
@@ -405,6 +418,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS roasting_disabled_reason TEXT;
 ## Conclusion
 
 ✅ **Test Engineer receipt complete:**
+
 - Comprehensive test suite created (28 unit + 20 integration tests)
 - All unit tests passing with 100% coverage
 - Security validated (type coercion prevention)
@@ -422,4 +436,3 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS roasting_disabled_reason TEXT;
 **Agent:** TestEngineer (Cursor)  
 **Issue:** #944  
 **Status:** ✅ Complete
-

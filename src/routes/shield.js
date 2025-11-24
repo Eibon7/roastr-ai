@@ -16,6 +16,10 @@ const { authenticateToken } = require('../middleware/auth');
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 const { logger } = require('../utils/logger');
+// Issue #944: Zod validation imports
+const { z } = require('zod');
+const { shieldToggleSchema } = require('../validators/zod/toggle.schema');
+const { formatZodError } = require('../validators/zod/formatZodError');
 
 const router = express.Router();
 
@@ -703,6 +707,113 @@ router.get('/config', async (req, res) => {
       success: false,
       error: {
         message: 'Failed to fetch shield configuration',
+        details: error.message
+      }
+    });
+  }
+});
+
+/**
+ * POST /api/shield/toggle
+ * Toggle Shield automated moderation on/off for organization
+ *
+ * Issue #944: New endpoint with Zod validation
+ *
+ * Body:
+ * {
+ *   enabled: boolean,
+ *   reason?: string (optional reason for disabling)
+ * }
+ *
+ * Why critical (P0):
+ * - Changes Shield state in real-time
+ * - Workers (ShieldActionWorker) check this state
+ * - Invalid values can break automated moderation
+ * - Affects multi-tenant isolation
+ */
+router.post('/toggle', async (req, res) => {
+  try {
+    const { user } = req;
+
+    // Issue #944: Zod validation (strict type checking)
+    // Note: organization_id is derived from authenticated user
+    const validationData = {
+      ...req.body,
+      organization_id: user.organizationId
+    };
+
+    let enabled, reason;
+    try {
+      const validated = shieldToggleSchema.parse(validationData);
+      enabled = validated.enabled;
+      reason = validated.reason;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json(formatZodError(error));
+      }
+      throw error;
+    }
+
+    // Prepare update data
+    const updateData = {
+      shield_enabled: enabled,
+      updated_at: new Date().toISOString()
+    };
+
+    // If disabling, add audit trail
+    if (!enabled) {
+      updateData.shield_disabled_at = new Date().toISOString();
+      updateData.shield_disabled_reason = reason || 'user_request';
+    } else {
+      // If enabling, clear audit trail
+      updateData.shield_disabled_at = null;
+      updateData.shield_disabled_reason = null;
+    }
+
+    // Update database (organization-level setting)
+    const { data, error } = await supabaseServiceClient
+      .from('organizations')
+      .update(updateData)
+      .eq('id', user.organizationId)
+      .select('shield_enabled, shield_disabled_at, shield_disabled_reason')
+      .single();
+
+    if (error) {
+      logger.error('Failed to update Shield state', {
+        error: error.message,
+        userId: user.id,
+        orgId: user.organizationId
+      });
+      throw error;
+    }
+
+    logger.info('Shield state changed', {
+      userId: user.id,
+      organizationId: user.organizationId,
+      enabled,
+      reason: reason || 'none'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Shield ${enabled ? 'enabled' : 'disabled'} successfully`,
+      data: {
+        shield_enabled: enabled,
+        updated_at: updateData.updated_at,
+        reason: reason || null
+      }
+    });
+  } catch (error) {
+    logger.error('Shield toggle endpoint error', {
+      error: error.message,
+      userId: req.user?.id,
+      orgId: req.user?.organizationId
+    });
+
+    res.status(500).json({
+      success: false,
+      error: {
+        message: 'Failed to toggle Shield state',
         details: error.message
       }
     });
