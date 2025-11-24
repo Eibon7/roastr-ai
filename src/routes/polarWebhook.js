@@ -386,7 +386,7 @@ router.post('/', async (req, res) => {
   try {
     // Get signature from header
     const signature = req.headers['polar-signature'];
-    
+
     // Handle different body types (Buffer from express.raw(), string, or object)
     let rawBody;
     if (Buffer.isBuffer(req.body)) {
@@ -430,7 +430,7 @@ router.post('/', async (req, res) => {
 
     logger.info('[Polar Webhook] Received valid event', {
       type: validatedEvent.type,
-      id: validatedEvent.id,
+      id: validatedEvent.id
     });
 
     // Route to appropriate handler

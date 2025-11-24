@@ -72,13 +72,13 @@ const { logger } = require('../../src/utils/logger');
 // Create Express app for testing
 function createTestApp() {
   const app = express();
-  
+
   // For webhooks, we need raw body for signature verification
   app.use('/api/polar/webhook', express.raw({ type: 'application/json' }));
-  
+
   // For other routes, use JSON parser
   app.use(express.json());
-  
+
   // Mount routes - checkout has /checkout inside, webhook has / inside
   app.use('/api', checkoutRoutes);
   app.use('/api/polar/webhook', webhookRoutes);
@@ -91,12 +91,13 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
   beforeEach(() => {
     app = createTestApp();
     jest.clearAllMocks();
-    
+
     // Set required env vars
     process.env.POLAR_ACCESS_TOKEN = 'test_token_12345';
     process.env.POLAR_WEBHOOK_SECRET = 'test_webhook_secret';
     process.env.POLAR_SUCCESS_URL = 'https://app.roastr.ai/success';
-    process.env.POLAR_ALLOWED_PRODUCT_IDS = '550e8400-e29b-41d4-a716-446655440000,660e8400-e29b-41d4-a716-446655440000';
+    process.env.POLAR_ALLOWED_PRODUCT_IDS =
+      '550e8400-e29b-41d4-a716-446655440000,660e8400-e29b-41d4-a716-446655440000';
   });
 
   afterEach(() => {
@@ -118,10 +119,7 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
         metadata: { user_id: '123' }
       };
 
-      const response = await request(app)
-        .post('/api/checkout')
-        .send(validCheckout)
-        .expect(200);
+      const response = await request(app).post('/api/checkout').send(validCheckout).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.checkout_url).toBeDefined();
@@ -134,14 +132,11 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
         product_id: '550e8400-e29b-41d4-a716-446655440000'
       };
 
-      const response = await request(app)
-        .post('/api/checkout')
-        .send(invalidCheckout)
-        .expect(400);
+      const response = await request(app).post('/api/checkout').send(invalidCheckout).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
       expect(response.body.details).toBeDefined();
-      expect(response.body.details.some(e => e.field === 'customer_email')).toBe(true);
+      expect(response.body.details.some((e) => e.field === 'customer_email')).toBe(true);
     });
 
     it('should reject checkout with invalid UUID in product_id (Zod validation)', async () => {
@@ -150,14 +145,13 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
         product_id: 'not-a-uuid'
       };
 
-      const response = await request(app)
-        .post('/api/checkout')
-        .send(invalidCheckout)
-        .expect(400);
+      const response = await request(app).post('/api/checkout').send(invalidCheckout).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
       expect(response.body.details).toBeDefined();
-      expect(response.body.details.some(e => e.field === 'product_id' && e.message.includes('UUID'))).toBe(true);
+      expect(
+        response.body.details.some((e) => e.field === 'product_id' && e.message.includes('UUID'))
+      ).toBe(true);
     });
 
     it('should reject checkout with missing customer_email (Zod validation)', async () => {
@@ -166,14 +160,11 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
         // Missing customer_email
       };
 
-      const response = await request(app)
-        .post('/api/checkout')
-        .send(invalidCheckout)
-        .expect(400);
+      const response = await request(app).post('/api/checkout').send(invalidCheckout).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
       expect(response.body.details).toBeDefined();
-      expect(response.body.details.some(e => e.field === 'customer_email')).toBe(true);
+      expect(response.body.details.some((e) => e.field === 'customer_email')).toBe(true);
     });
 
     it('should reject checkout with missing both product_id and price_id (Zod validation)', async () => {
@@ -182,14 +173,13 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
         // Missing both product_id and price_id
       };
 
-      const response = await request(app)
-        .post('/api/checkout')
-        .send(invalidCheckout)
-        .expect(400);
+      const response = await request(app).post('/api/checkout').send(invalidCheckout).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
       expect(response.body.details).toBeDefined();
-      expect(response.body.details.some(e => e.message.includes('product_id or price_id'))).toBe(true);
+      expect(response.body.details.some((e) => e.message.includes('product_id or price_id'))).toBe(
+        true
+      );
     });
 
     it('should support legacy price_id field (backward compatibility)', async () => {
@@ -198,19 +188,13 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
         price_id: '550e8400-e29b-41d4-a716-446655440000' // Legacy field
       };
 
-      const response = await request(app)
-        .post('/api/checkout')
-        .send(legacyCheckout)
-        .expect(200);
+      const response = await request(app).post('/api/checkout').send(legacyCheckout).expect(200);
 
       expect(response.body.success).toBe(true);
     });
 
     it('should reject checkout with empty body (Zod validation)', async () => {
-      const response = await request(app)
-        .post('/api/checkout')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/api/checkout').send({}).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
     });
@@ -221,10 +205,7 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
         product_id: null
       };
 
-      const response = await request(app)
-        .post('/api/checkout')
-        .send(invalidCheckout)
-        .expect(400);
+      const response = await request(app).post('/api/checkout').send(invalidCheckout).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
     });
@@ -240,10 +221,7 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
      */
     function generateWebhookSignature(payload) {
       const secret = process.env.POLAR_WEBHOOK_SECRET;
-      return crypto
-        .createHmac('sha256', secret)
-        .update(payload)
-        .digest('hex');
+      return crypto.createHmac('sha256', secret).update(payload).digest('hex');
     }
 
     /**
@@ -325,7 +303,7 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
 
       expect(response.body.error).toBe('Invalid event structure');
       expect(response.body.details).toBeDefined();
-      expect(response.body.details.some(e => e.field === 'id')).toBe(true);
+      expect(response.body.details.some((e) => e.field === 'id')).toBe(true);
     });
 
     it('should reject webhook with missing customer_email (Zod validation)', async () => {
@@ -619,13 +597,10 @@ describe('Polar Billing Integration Tests - Zod Validation', () => {
 
       // This should be rejected by Express body-parser limits
       // If it passes, Zod won't care about size, only structure
-      const response = await request(app)
-        .post('/api/checkout')
-        .send(largePayload);
+      const response = await request(app).post('/api/checkout').send(largePayload);
 
       // Either 413 (payload too large) or 400 (validation)
       expect([400, 413]).toContain(response.status);
     });
   });
 });
-

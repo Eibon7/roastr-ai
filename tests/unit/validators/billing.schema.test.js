@@ -78,7 +78,7 @@ describe('Zod Billing Schemas - Unit Tests', () => {
       const result = checkoutSchema.safeParse(invalidCheckout);
 
       expect(result.success).toBe(false);
-      expect(result.error.errors.some(e => e.path.includes('customer_email'))).toBe(true);
+      expect(result.error.errors.some((e) => e.path.includes('customer_email'))).toBe(true);
     });
 
     it('should reject checkout with invalid UUID in product_id', () => {
@@ -431,7 +431,7 @@ describe('Zod Billing Schemas - Unit Tests', () => {
       const result = webhookSchema.safeParse(invalidEvent);
       const formatted = formatZodError(result.error);
 
-      expect(formatted.some(err => err.field.includes('data'))).toBe(true);
+      expect(formatted.some((err) => err.field.includes('data'))).toBe(true);
     });
   });
 
@@ -529,7 +529,7 @@ describe('Zod Billing Schemas - Unit Tests', () => {
 
       const req = {
         body: {
-          customer_email: 'not-an-email',
+          customer_email: 'not-an-email'
           // Missing product_id
         },
         path: '/api/checkout',
@@ -644,4 +644,3 @@ describe('Zod Billing Schemas - Unit Tests', () => {
     });
   });
 });
-

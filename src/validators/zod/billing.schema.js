@@ -41,15 +41,21 @@ const uuidSchema = z.string().uuid({ message: 'Invalid UUID format' });
  * See: database/migrations/*_plans.sql
  */
 const planSchema = z.enum(['free', 'starter_trial', 'starter', 'pro', 'plus', 'creator_plus'], {
-  errorMap: () => ({ message: 'Invalid plan name. Must be one of: free, starter_trial, starter, pro, plus, creator_plus' })
+  errorMap: () => ({
+    message:
+      'Invalid plan name. Must be one of: free, starter_trial, starter, pro, plus, creator_plus'
+  })
 });
 
 /**
  * Subscription status matching Polar API
  */
-const subscriptionStatusSchema = z.enum(['active', 'trialing', 'past_due', 'canceled', 'incomplete'], {
-  errorMap: () => ({ message: 'Invalid subscription status' })
-});
+const subscriptionStatusSchema = z.enum(
+  ['active', 'trialing', 'past_due', 'canceled', 'incomplete'],
+  {
+    errorMap: () => ({ message: 'Invalid subscription status' })
+  }
+);
 
 /**
  * ISO 8601 datetime string
@@ -72,18 +78,17 @@ const datetimeSchema = z.string().datetime({ message: 'Invalid ISO 8601 datetime
  *   metadata: { user_id: "123", plan: "pro" }
  * }
  */
-const checkoutSchema = z.object({
-  customer_email: emailSchema,
-  product_id: uuidSchema.optional(), // New Polar API (preferred)
-  price_id: uuidSchema.optional(),   // Legacy fallback
-  metadata: z.record(z.unknown()).optional() // Flexible metadata (any key-value pairs)
-}).refine(
-  data => data.product_id || data.price_id,
-  {
+const checkoutSchema = z
+  .object({
+    customer_email: emailSchema,
+    product_id: uuidSchema.optional(), // New Polar API (preferred)
+    price_id: uuidSchema.optional(), // Legacy fallback
+    metadata: z.record(z.unknown()).optional() // Flexible metadata (any key-value pairs)
+  })
+  .refine((data) => data.product_id || data.price_id, {
     message: 'Either product_id or price_id must be provided',
     path: ['product_id']
-  }
-);
+  });
 
 // ============================================================================
 // Webhook Event Schemas
@@ -131,18 +136,19 @@ const webhookBaseSchema = z.object({
  */
 const checkoutCreatedSchema = webhookBaseSchema.extend({
   type: z.literal('checkout.created'),
-  data: z.object({
-    id: uuidSchema,
-    customer_email: emailSchema,
-    product_id: uuidSchema.optional(),
-    product_price_id: uuidSchema.optional(), // Legacy field
-    status: z.string().optional(),
-    amount: z.number().int().positive().optional(),
-    currency: z.string().length(3).optional() // ISO 4217 (USD, EUR, etc.)
-  }).refine(
-    data => data.product_id || data.product_price_id,
-    { message: 'Either product_id or product_price_id required' }
-  )
+  data: z
+    .object({
+      id: uuidSchema,
+      customer_email: emailSchema,
+      product_id: uuidSchema.optional(),
+      product_price_id: uuidSchema.optional(), // Legacy field
+      status: z.string().optional(),
+      amount: z.number().int().positive().optional(),
+      currency: z.string().length(3).optional() // ISO 4217 (USD, EUR, etc.)
+    })
+    .refine((data) => data.product_id || data.product_price_id, {
+      message: 'Either product_id or product_price_id required'
+    })
 });
 
 /**
@@ -166,19 +172,20 @@ const checkoutCreatedSchema = webhookBaseSchema.extend({
  */
 const orderCreatedSchema = webhookBaseSchema.extend({
   type: z.literal('order.created'),
-  data: z.object({
-    id: uuidSchema,                          // Order ID
-    customer_email: emailSchema,
-    product_id: uuidSchema.optional(),       // New API
-    product_price_id: uuidSchema.optional(), // Legacy
-    amount: z.number().int().positive(),     // Amount in cents
-    currency: z.string().length(3),          // ISO 4217
-    status: z.string().optional(),
-    created_at: datetimeSchema.optional()
-  }).refine(
-    data => data.product_id || data.product_price_id,
-    { message: 'Either product_id or product_price_id required' }
-  )
+  data: z
+    .object({
+      id: uuidSchema, // Order ID
+      customer_email: emailSchema,
+      product_id: uuidSchema.optional(), // New API
+      product_price_id: uuidSchema.optional(), // Legacy
+      amount: z.number().int().positive(), // Amount in cents
+      currency: z.string().length(3), // ISO 4217
+      status: z.string().optional(),
+      created_at: datetimeSchema.optional()
+    })
+    .refine((data) => data.product_id || data.product_price_id, {
+      message: 'Either product_id or product_price_id required'
+    })
 });
 
 /**
@@ -202,20 +209,21 @@ const orderCreatedSchema = webhookBaseSchema.extend({
  */
 const subscriptionCreatedSchema = webhookBaseSchema.extend({
   type: z.literal('subscription.created'),
-  data: z.object({
-    id: uuidSchema,                          // Subscription ID
-    customer_email: emailSchema,
-    product_id: uuidSchema.optional(),       // New API
-    product_price_id: uuidSchema.optional(), // Legacy
-    status: subscriptionStatusSchema,
-    current_period_start: datetimeSchema.optional(),
-    current_period_end: datetimeSchema.optional(),
-    cancel_at_period_end: z.boolean().optional(),
-    created_at: datetimeSchema.optional()
-  }).refine(
-    data => data.product_id || data.product_price_id,
-    { message: 'Either product_id or product_price_id required' }
-  )
+  data: z
+    .object({
+      id: uuidSchema, // Subscription ID
+      customer_email: emailSchema,
+      product_id: uuidSchema.optional(), // New API
+      product_price_id: uuidSchema.optional(), // Legacy
+      status: subscriptionStatusSchema,
+      current_period_start: datetimeSchema.optional(),
+      current_period_end: datetimeSchema.optional(),
+      cancel_at_period_end: z.boolean().optional(),
+      created_at: datetimeSchema.optional()
+    })
+    .refine((data) => data.product_id || data.product_price_id, {
+      message: 'Either product_id or product_price_id required'
+    })
 });
 
 /**
@@ -237,20 +245,21 @@ const subscriptionCreatedSchema = webhookBaseSchema.extend({
  */
 const subscriptionUpdatedSchema = webhookBaseSchema.extend({
   type: z.literal('subscription.updated'),
-  data: z.object({
-    id: uuidSchema,
-    customer_email: emailSchema,
-    product_id: uuidSchema.optional(),
-    product_price_id: uuidSchema.optional(),
-    status: subscriptionStatusSchema,
-    current_period_start: datetimeSchema.optional(),
-    current_period_end: datetimeSchema.optional(),
-    cancel_at_period_end: z.boolean().optional(),
-    updated_at: datetimeSchema.optional()
-  }).refine(
-    data => data.product_id || data.product_price_id,
-    { message: 'Either product_id or product_price_id required' }
-  )
+  data: z
+    .object({
+      id: uuidSchema,
+      customer_email: emailSchema,
+      product_id: uuidSchema.optional(),
+      product_price_id: uuidSchema.optional(),
+      status: subscriptionStatusSchema,
+      current_period_start: datetimeSchema.optional(),
+      current_period_end: datetimeSchema.optional(),
+      cancel_at_period_end: z.boolean().optional(),
+      updated_at: datetimeSchema.optional()
+    })
+    .refine((data) => data.product_id || data.product_price_id, {
+      message: 'Either product_id or product_price_id required'
+    })
 });
 
 /**
@@ -311,7 +320,7 @@ const webhookSchema = z.discriminatedUnion('type', [
  * // ]
  */
 function formatZodError(error) {
-  return error.errors.map(err => ({
+  return error.errors.map((err) => ({
     field: err.path.join('.') || 'root',
     message: err.message,
     code: err.code
@@ -439,4 +448,3 @@ module.exports = {
   validateWebhook,
   validateZodSchema
 };
-
