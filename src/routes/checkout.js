@@ -14,6 +14,7 @@ const router = express.Router();
 const { Polar } = require('@polar-sh/sdk');
 const { logger } = require('../utils/logger'); // Issue #483: Use destructured import for test compatibility
 const { sanitizePII } = require('../utils/piiSanitizer');
+const { validateZodSchema, checkoutSchema } = require('../validators/zod/billing.schema'); // Issue #945: Zod validation
 
 // Initialize Polar client
 const polar = new Polar({
@@ -47,45 +48,21 @@ if (ALLOWED_PRODUCT_IDS.size === 0) {
  * Creates a new checkout session with Polar
  *
  * Request Body:
- * @param {string} customer_email - Customer's email address
- * @param {string} product_id - Polar product ID (updated from price_id in Issue #808)
+ * @param {string} customer_email - Customer's email address (validated by Zod)
+ * @param {string} product_id - Polar product ID (validated by Zod as UUID)
  * @param {object} metadata - Optional metadata to attach to the checkout
  *
  * Response:
  * @returns {object} checkout - Full checkout object including checkout_url
+ *
+ * Issue #945: Migrated to Zod validation (replaces manual validation)
  */
-router.post('/checkout', async (req, res) => {
+router.post('/checkout', validateZodSchema(checkoutSchema, 'body'), async (req, res) => {
   try {
+    // Zod middleware validates and attaches req.validatedData
     // Support both product_id (new) and price_id (legacy) for backward compatibility
-    const { customer_email, product_id, price_id, metadata } = req.body;
+    const { customer_email, product_id, price_id, metadata } = req.validatedData;
     const productId = product_id || price_id; // Fallback to price_id for legacy support
-
-    // Validation
-    if (!customer_email || !productId) {
-      logger.warn('[Polar] Missing required fields in checkout request', {
-        hasEmail: !!customer_email,
-        hasProductId: !!productId
-      });
-      return res.status(400).json({
-        error: 'Missing required fields',
-        message: 'customer_email and product_id are required'
-      });
-    }
-
-    // Validate email format (M5 - CodeRabbit Review #3423197513)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(customer_email)) {
-      logger.warn(
-        '[Polar] Invalid email format in checkout request',
-        sanitizePII({
-          customer_email
-        })
-      );
-      return res.status(400).json({
-        error: 'Invalid email',
-        message: 'Please provide a valid email address'
-      });
-    }
 
     // Validate environment variables
     if (!process.env.POLAR_ACCESS_TOKEN) {
