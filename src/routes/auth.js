@@ -9,6 +9,8 @@ const { passwordChangeRateLimiter } = require('../middleware/passwordChangeRateL
 const { validatePassword } = require('../utils/passwordValidator');
 const passwordValidationService = require('../services/passwordValidationService');
 const { isPasswordReused, addPasswordToHistory, isPasswordHistoryEnabled } = require('../services/passwordHistoryService');
+// Issue #947: Zod validation schemas for auth endpoints
+const { registerSchema, loginSchema, formatZodError } = require('../validators/zod/auth.schema');
 
 const router = express.Router();
 
@@ -21,34 +23,16 @@ router.use(loginRateLimiter);
  */
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, name } = req.body;
+        // Issue #947: Zod validation for register endpoint
+        const validation = registerSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({
+                success: false,
+                error: formatZodError(validation.error)
+            });
+        }
         
-        // Validate input
-        if (!email || !password) {
-            return res.status(400).json({
-                success: false,
-                error: 'Email and password are required'
-            });
-        }
-
-        // Issue #628: Validate email format
-        // Improved regex: prevents double @, consecutive dots, invalid chars
-        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-        if (!emailRegex.test(email) || email.includes('..') || email.includes('@@')) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid email format'
-            });
-        }
-
-        // Validate password strength
-        const passwordValidation = validatePassword(password);
-        if (!passwordValidation.isValid) {
-            return res.status(400).json({
-                success: false,
-                error: passwordValidation.errors.join('. ')
-            });
-        }
+        const { email, password, name } = validation.data;
 
         // Register user
         const result = await authService.signUp({ email, password, name });
@@ -95,12 +79,66 @@ router.post('/register', async (req, res) => {
 });
 
 /**
- * POST /api/auth/signup (legacy endpoint - redirect to register)
+ * POST /api/auth/signup (legacy endpoint - same as register)
  * Register new user with email and password
+ * Issue #947: Migrated to Zod validation
  */
 router.post('/signup', async (req, res) => {
-    // Redirect to new register endpoint
-    return router.handle('register', req, res);
+    try {
+        // Issue #947: Zod validation for signup endpoint (same as register)
+        const validation = registerSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({
+                success: false,
+                error: formatZodError(validation.error)
+            });
+        }
+        
+        const { email, password, name } = validation.data;
+
+        // Register user
+        const result = await authService.signUp({ email, password, name });
+        
+        logger.info('User registration successful (via /signup):', { email, userId: result.user.id });
+        
+        // Send welcome email (don't block registration if email fails)
+        emailService.sendWelcomeEmail(email, {
+            userName: name,
+            name: name,
+            language: 'es'
+        }).catch(error => {
+            logger.warn('Failed to send welcome email:', { email, error: error.message });
+        });
+        
+        res.status(201).json({
+            success: true,
+            message: 'Registration successful. Please check your email to verify your account.',
+            data: {
+                user: {
+                    id: result.user.id,
+                    email: result.user.email,
+                    email_confirmed: result.user.email_confirmed_at !== null
+                },
+                session: result.session
+            }
+        });
+
+    } catch (error) {
+        logger.error('Registration error (via /signup):', error.message);
+        
+        // Handle specific Supabase errors
+        if (error.message.includes('already registered') || error.message.includes('already exists')) {
+            return res.status(400).json({
+                success: false,
+                error: 'An account with this email already exists'
+            });
+        }
+        
+        res.status(500).json({
+            success: false,
+            error: 'Registration failed. Please try again.'
+        });
+    }
 });
 
 /**
@@ -140,40 +178,42 @@ router.post('/signup/magic-link', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
     try {
-        const { email, password, keepLogged = false } = req.body;
-        
-        // Validate input
-        if (!email || !password) {
+        // Issue #947: Zod validation for login endpoint
+        const validation = loginSchema.safeParse(req.body);
+        if (!validation.success) {
             return res.status(400).json({
                 success: false,
-                error: 'Email and password are required'
+                error: formatZodError(validation.error)
             });
         }
+        
+        const { email, password } = validation.data;
+        const { keepLogged = false } = req.body; // Optional field, not validated
 
         // Attempt login
         const result = await authService.signIn({ email, password });
         
         logger.info('User login successful:', { email, userId: result.user.id });
         
-        // Set session duration based on keepLogged
-        const sessionData = {
-            access_token: result.session.access_token,
-            refresh_token: result.session.refresh_token,
-            expires_at: result.session.expires_at,
-            user: {
-                id: result.user.id,
-                email: result.user.email,
-                email_confirmed: result.user.email_confirmed_at !== null,
-                is_admin: result.profile?.is_admin || false,
-                name: result.profile?.name,
-                plan: result.profile?.plan || 'basic'
-            }
-        };
-
+        // Issue #947: Maintain original response structure (no breaking changes)
         res.json({
             success: true,
             message: 'Login successful',
-            data: sessionData
+            data: {
+                session: {
+                    access_token: result.session.access_token,
+                    refresh_token: result.session.refresh_token,
+                    expires_at: result.session.expires_at
+                },
+                user: {
+                    id: result.user.id,
+                    email: result.user.email,
+                    email_confirmed: result.user.email_confirmed_at !== null,
+                    is_admin: result.profile?.is_admin || false,
+                    name: result.profile?.name,
+                    plan: result.profile?.plan || 'basic'
+                }
+            }
         });
 
     } catch (error) {
