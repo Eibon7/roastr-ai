@@ -112,21 +112,39 @@ const mockPlanService = {
       name: 'Free',
       price: 0,
       currency: 'EUR',
-      features: { shield: false, customTones: false, prioritySupport: false, advancedAnalytics: false, apiAccess: false },
+      features: {
+        shield: false,
+        customTones: false,
+        prioritySupport: false,
+        advancedAnalytics: false,
+        apiAccess: false
+      },
       duration: 'monthly'
     },
     pro: {
       name: 'Pro',
       price: 2000,
       currency: 'EUR',
-      features: { shield: true, customTones: true, prioritySupport: false, advancedAnalytics: true, apiAccess: false },
+      features: {
+        shield: true,
+        customTones: true,
+        prioritySupport: false,
+        advancedAnalytics: true,
+        apiAccess: false
+      },
       duration: 'monthly'
     },
     creator_plus: {
       name: 'Creator Plus',
       price: 5000,
       currency: 'EUR',
-      features: { shield: true, customTones: true, prioritySupport: true, advancedAnalytics: true, apiAccess: true },
+      features: {
+        shield: true,
+        customTones: true,
+        prioritySupport: true,
+        advancedAnalytics: true,
+        apiAccess: true
+      },
       duration: 'monthly'
     }
   })),
@@ -364,9 +382,7 @@ describe('Admin Routes Extended - Issue #932', () => {
         new Error('Usage stats failed')
       );
 
-      const response = await request(app)
-        .get('/api/admin/usage/organizations/org-123')
-        .expect(500);
+      const response = await request(app).get('/api/admin/usage/organizations/org-123').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to fetch organization usage statistics');
@@ -429,10 +445,7 @@ describe('Admin Routes Extended - Issue #932', () => {
   // ==========================================================================
   describe('POST /api/admin/usage/reset', () => {
     test('should require confirmation', async () => {
-      const response = await request(app)
-        .post('/api/admin/usage/reset')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/api/admin/usage/reset').send({}).expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('requires confirmation');
@@ -450,9 +463,7 @@ describe('Admin Routes Extended - Issue #932', () => {
     });
 
     test('should handle error', async () => {
-      mockCostControlService.resetAllMonthlyUsage.mockRejectedValueOnce(
-        new Error('Reset failed')
-      );
+      mockCostControlService.resetAllMonthlyUsage.mockRejectedValueOnce(new Error('Reset failed'));
 
       const response = await request(app)
         .post('/api/admin/usage/reset')
@@ -502,9 +513,7 @@ describe('Admin Routes Extended - Issue #932', () => {
 
       mockSupabase.from.mockReturnValue(mockExportQuery);
 
-      const response = await request(app)
-        .get('/api/admin/usage/export?format=json')
-        .expect(200);
+      const response = await request(app).get('/api/admin/usage/export?format=json').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('usage_records');
@@ -545,9 +554,7 @@ describe('Admin Routes Extended - Issue #932', () => {
 
       mockSupabase.from.mockReturnValue(mockExportQuery);
 
-      const response = await request(app)
-        .get('/api/admin/usage/export?format=csv')
-        .expect(200);
+      const response = await request(app).get('/api/admin/usage/export?format=csv').expect(200);
 
       expect(response.header['content-type']).toBe('text/csv; charset=utf-8');
       expect(response.header['content-disposition']).toMatch(/attachment; filename=/);
@@ -597,13 +604,9 @@ describe('Admin Routes Extended - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockAlertsQuery)
-        .mockReturnValueOnce(mockCountQuery);
+      mockSupabase.from.mockReturnValueOnce(mockAlertsQuery).mockReturnValueOnce(mockCountQuery);
 
-      const response = await request(app)
-        .get('/api/admin/alerts/history?limit=50')
-        .expect(200);
+      const response = await request(app).get('/api/admin/alerts/history?limit=50').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('alerts');
@@ -633,9 +636,7 @@ describe('Admin Routes Extended - Issue #932', () => {
         new Error('Alert history failed')
       );
 
-      const response = await request(app)
-        .get('/api/admin/alerts/history/org-123')
-        .expect(500);
+      const response = await request(app).get('/api/admin/alerts/history/org-123').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to fetch alert history');
@@ -656,9 +657,7 @@ describe('Admin Routes Extended - Issue #932', () => {
     });
 
     test('should handle error', async () => {
-      mockCostControlService.getAlertStats.mockRejectedValueOnce(
-        new Error('Alert stats failed')
-      );
+      mockCostControlService.getAlertStats.mockRejectedValueOnce(new Error('Alert stats failed'));
 
       const response = await request(app).get('/api/admin/alerts/stats/org-123').expect(500);
 
@@ -681,9 +680,7 @@ describe('Admin Routes Extended - Issue #932', () => {
     });
 
     test('should handle error', async () => {
-      mockPlanLimitsService.getAllPlanLimits.mockRejectedValueOnce(
-        new Error('Plan limits failed')
-      );
+      mockPlanLimitsService.getAllPlanLimits.mockRejectedValueOnce(new Error('Plan limits failed'));
 
       const response = await request(app).get('/api/admin/plan-limits').expect(500);
 
@@ -706,9 +703,7 @@ describe('Admin Routes Extended - Issue #932', () => {
     });
 
     test('should handle error', async () => {
-      mockPlanLimitsService.getPlanLimits.mockRejectedValueOnce(
-        new Error('Plan limits failed')
-      );
+      mockPlanLimitsService.getPlanLimits.mockRejectedValueOnce(new Error('Plan limits failed'));
 
       const response = await request(app).get('/api/admin/plan-limits/pro').expect(500);
 
@@ -759,9 +754,7 @@ describe('Admin Routes Extended - Issue #932', () => {
     });
 
     test('should handle error', async () => {
-      mockPlanLimitsService.updatePlanLimits.mockRejectedValueOnce(
-        new Error('Update failed')
-      );
+      mockPlanLimitsService.updatePlanLimits.mockRejectedValueOnce(new Error('Update failed'));
 
       const response = await request(app)
         .put('/api/admin/plan-limits/pro')
@@ -778,9 +771,7 @@ describe('Admin Routes Extended - Issue #932', () => {
   // ==========================================================================
   describe('POST /api/admin/plan-limits/refresh-cache', () => {
     test('should clear plan limits cache', async () => {
-      const response = await request(app)
-        .post('/api/admin/plan-limits/refresh-cache')
-        .expect(200);
+      const response = await request(app).post('/api/admin/plan-limits/refresh-cache').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Plan limits cache cleared successfully');
@@ -792,9 +783,7 @@ describe('Admin Routes Extended - Issue #932', () => {
         throw new Error('Clear cache failed');
       });
 
-      const response = await request(app)
-        .post('/api/admin/plan-limits/refresh-cache')
-        .expect(500);
+      const response = await request(app).post('/api/admin/plan-limits/refresh-cache').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to clear plan limits cache');
@@ -819,7 +808,12 @@ describe('Admin Routes Extended - Issue #932', () => {
           eq: jest.fn(() => ({
             single: jest.fn(() =>
               Promise.resolve({
-                data: { tau_roast_lower: 0.2, tau_shield: 0.5, tau_critical: 0.8, aggressiveness: 90 },
+                data: {
+                  tau_roast_lower: 0.2,
+                  tau_shield: 0.5,
+                  tau_critical: 0.8,
+                  aggressiveness: 90
+                },
                 error: null
               })
             )
@@ -843,9 +837,7 @@ describe('Admin Routes Extended - Issue #932', () => {
         }))
       };
 
-      mockSupabase.from
-        .mockReturnValueOnce(mockFetchQuery)
-        .mockReturnValueOnce(mockUpdateQuery);
+      mockSupabase.from.mockReturnValueOnce(mockFetchQuery).mockReturnValueOnce(mockUpdateQuery);
 
       const response = await request(app)
         .put('/api/admin/backoffice/thresholds')
@@ -941,10 +933,7 @@ describe('Admin Routes Extended - Issue #932', () => {
         maxPlatforms: 5
       };
 
-      const response = await request(app)
-        .put('/api/admin/plans/pro')
-        .send(updates)
-        .expect(200);
+      const response = await request(app).put('/api/admin/plans/pro').send(updates).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Plan limits updated successfully');
@@ -1308,4 +1297,3 @@ describe('Admin Routes Extended - Issue #932', () => {
     });
   });
 });
-
