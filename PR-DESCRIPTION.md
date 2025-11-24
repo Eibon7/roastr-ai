@@ -90,7 +90,7 @@ router.get(
 
 **Test Coverage:**
 
-```
+```text
 social.schema.js:     100% (statements, branches, functions, lines)
 errorFormatter.js:    100% (statements, branches, functions, lines)
 Integration tests:    24/24 passing (validates no breaking changes)
@@ -136,7 +136,7 @@ Time:        0.865 s
 
 ### Coverage Report
 
-```
+```text
 File               | % Stmts | % Branch | % Funcs | % Lines
 -------------------|---------|----------|---------|--------
 social.schema.js   |     100 |      100 |     100 |     100
@@ -237,7 +237,7 @@ node scripts/predict-gdd-drift.js --full       # ✅ <60 risk
 
 ### Created (6 files, 2,036 lines)
 
-```
+```text
 src/validators/zod/
 ├── social.schema.js                           (169 lines)
 └── errorFormatter.js                          (164 lines)
@@ -259,7 +259,7 @@ docs/
 
 ### Modified (2 files)
 
-```
+```text
 src/routes/oauth.js        (+10 lines)  - Added Zod validation middleware
 jest.config.js             (+1 pattern) - Added validators test pattern
 ```
@@ -354,7 +354,7 @@ jest.config.js             (+1 pattern) - Added validators test pattern
 - **Issue:** #948
 - **Implementation Plan:** `docs/plan/issue-948.md`
 - **Summary:** `IMPLEMENTATION-SUMMARY.md`
-- **Zod Documentation:** https://zod.dev/
+- **Zod Documentation:** [Zod Docs](https://zod.dev/)
 - **Zod Version:** v3.25.76 (already installed)
 - **GDD Nodes:** `social-platforms.md`, `multi-tenant.md`
 - **CodeRabbit Lessons:** `docs/patterns/coderabbit-lessons.md`
