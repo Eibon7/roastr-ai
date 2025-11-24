@@ -1,4 +1,5 @@
 const fs = require('fs-extra');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 const path = require('path');
 const advancedLogger = require('../utils/advancedLogger');
 
@@ -23,7 +24,7 @@ class ReincidenceDetector {
       await fs.ensureDir(this.dataDir);
       await this.loadData();
     } catch (error) {
-      console.error('Error initializing ReincidenceDetector:', error);
+      logger.error('Error initializing ReincidenceDetector:', error);
     }
   }
 
@@ -44,7 +45,7 @@ class ReincidenceDetector {
         this.actionHistory = new Map(Object.entries(actionsData));
       }
     } catch (error) {
-      console.error('Error loading reincidence data:', error);
+      logger.error('Error loading reincidence data:', error);
     }
   }
 
@@ -61,7 +62,7 @@ class ReincidenceDetector {
       const actionsData = Object.fromEntries(this.actionHistory);
       await fs.writeJson(this.actionsFile, actionsData, { spaces: 2 });
     } catch (error) {
-      console.error('Error saving reincidence data:', error);
+      logger.error('Error saving reincidence data:', error);
     }
   }
 
@@ -129,7 +130,7 @@ class ReincidenceDetector {
 
       return userRecord;
     } catch (error) {
-      console.error('Error recording interaction:', error);
+      logger.error('Error recording interaction:', error);
       return null;
     }
   }
@@ -176,7 +177,7 @@ class ReincidenceDetector {
           return null;
       }
     } catch (error) {
-      console.error('Error checking auto action criteria:', error);
+      logger.error('Error checking auto action criteria:', error);
       return null;
     }
   }
@@ -212,7 +213,7 @@ class ReincidenceDetector {
 
       return actionRecord;
     } catch (error) {
-      console.error('Error recording auto action:', error);
+      logger.error('Error recording auto action:', error);
       return null;
     }
   }
@@ -335,9 +336,9 @@ class ReincidenceDetector {
       // Save cleaned data
       await this.saveData();
 
-      console.log(`Cleaned reincidence data older than ${daysToKeep} days`);
+      logger.info(`Cleaned reincidence data older than ${daysToKeep} days`);
     } catch (error) {
-      console.error('Error cleaning old reincidence data:', error);
+      logger.error('Error cleaning old reincidence data:', error);
     }
   }
 }

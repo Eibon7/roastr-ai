@@ -5,6 +5,8 @@
  * shield adapters must implement. It provides a consistent interface
  * for the Shield system to interact with different social media platforms.
  */
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
+
 class ModerationInput {
   constructor({ platform, commentId, userId, username, reason, orgId, metadata = {} }) {
     this.platform = platform;
@@ -260,7 +262,7 @@ class ShieldAdapter {
    */
   log(level, message, meta = {}) {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] [${level.toUpperCase()}] [${this.platform}] ${message}`, meta);
+    logger.info(`[${timestamp}] [${level.toUpperCase()}] [${this.platform}] ${message}`, meta);
   }
 }
 

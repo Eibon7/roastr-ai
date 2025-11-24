@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { logger } = require('./../../utils/logger'); // Issue #971: Added for console.log replacement
 const QueueService = require('../../services/queueService');
 const CostControlService = require('../../services/costControl');
 
@@ -595,7 +596,7 @@ class MultiTenantIntegration {
       ...metadata
     };
 
-    console.log(
+    logger.info(
       `[${level.toUpperCase()}] [${this.platformName.toUpperCase()}] ${JSON.stringify(logEntry)}`
     );
   }

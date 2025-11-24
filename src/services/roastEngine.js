@@ -438,13 +438,13 @@ class RoastEngine {
               });
             } else {
               // Fallback logging for production
-              console.error('SENTRY_LOG: Transparency validation failed', {
+              logger.error('SENTRY_LOG: Transparency validation failed', {
                 userId: options.userId,
                 reason: transparencyValidation.reason
               });
             }
           } catch (sentryError) {
-            console.error('Failed to log to Sentry:', sentryError);
+            logger.error('Failed to log to Sentry:', sentryError);
           }
         }
 

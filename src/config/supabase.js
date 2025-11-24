@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { logger } = require('./../utils/logger'); // Issue #971: Added for console.log replacement
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
@@ -8,7 +9,7 @@ const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const isSupabaseConfigured = supabaseUrl && supabaseServiceKey && supabaseAnonKey;
 
 if (!isSupabaseConfigured) {
-  console.warn('🔄 Supabase environment variables not set - running in mock mode');
+  logger.warn('🔄 Supabase environment variables not set - running in mock mode');
 }
 
 // Create mock client for when Supabase is not configured
@@ -262,13 +263,13 @@ const getUserFromToken = async (token) => {
     } = await supabaseAnonClient.auth.getUser(token);
 
     if (error) {
-      console.warn('Failed to get user from token:', error.message);
+      logger.warn('Failed to get user from token:', error.message);
       return null;
     }
 
     return user;
   } catch (error) {
-    console.error('Error getting user from token:', error.message);
+    logger.error('Error getting user from token:', error.message);
     return null;
   }
 };
@@ -288,7 +289,7 @@ const checkConnection = async () => {
 
     return { connected: true };
   } catch (error) {
-    console.error('Supabase connection check failed:', error.message);
+    logger.error('Supabase connection check failed:', error.message);
     return { connected: false, error: error.message };
   }
 };

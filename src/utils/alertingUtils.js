@@ -289,7 +289,7 @@ class AlertingI18n {
     if (logger && typeof logger[level] === 'function') {
       logger[level](`[AlertingI18n] ${message}`, metadata);
     } else {
-      console.log(`[${level.toUpperCase()}] AlertingI18n: ${message}`, metadata);
+      logger.info(`[${level.toUpperCase()}] AlertingI18n: ${message}`, metadata);
     }
   }
 }

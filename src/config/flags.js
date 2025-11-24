@@ -196,7 +196,7 @@ class FeatureFlags {
       });
     } catch (error) {
       // Fallback to console if logger not available (e.g., in tests)
-      console.log('🏁 Feature flags initialized:', {
+      logger.info('🏁 Feature flags initialized:', {
         enabled: enabledFlags.length,
         disabled: disabledFlags.length,
         total: Object.keys(this.flags).length
