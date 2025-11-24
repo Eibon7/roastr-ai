@@ -5,8 +5,12 @@
  */
 
 const { z } = require('zod');
-const { VALIDATION_CONSTANTS } = require('../../config/validationConstants');
-const { VALID_TONES } = require('../../config/tones');
+const {
+  VALIDATION_CONSTANTS,
+  normalizeLanguage,
+  normalizePlatform
+} = require('../../config/validationConstants');
+const { VALID_TONES, normalizeTone } = require('../../config/tones');
 
 // Base schemas for reusable validation rules
 
@@ -29,38 +33,54 @@ const textSchema = z
 /**
  * Tone schema - validates tone selection
  * Accepts canonical tone values (Flanders, Balanceado, Canalla)
+ * Normalizes aliases: 'flanders' → 'Flanders', 'balanced' → 'Balanceado', etc.
  */
-const toneSchema = z
-  .enum(VALID_TONES, {
+const toneSchema = z.preprocess(
+  (val) => {
+    if (val === undefined || val === null) return 'Balanceado';
+    const normalized = normalizeTone(val);
+    return normalized || val; // Return original if normalization fails (will be caught by enum)
+  },
+  z.enum(VALID_TONES, {
     errorMap: () => ({
       message: `Tone must be one of: ${VALID_TONES.join(', ')}`
     })
   })
-  .default('Balanceado');
+);
 
 /**
  * Platform schema - validates platform selection
- * Supports normalization via normalizePlatform (e.g., 'X' → 'twitter')
+ * Normalizes aliases: 'X' → 'twitter', 'x.com' → 'twitter', etc.
+ * CRITICAL: Maintains backward compatibility with platform aliases
  */
-const platformSchema = z
-  .enum(VALIDATION_CONSTANTS.VALID_PLATFORMS, {
+const platformSchema = z.preprocess(
+  (val) => {
+    if (val === undefined || val === null) return 'twitter';
+    return normalizePlatform(val); // Always returns normalized value or default
+  },
+  z.enum(VALIDATION_CONSTANTS.VALID_PLATFORMS, {
     errorMap: () => ({
       message: `Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}`
     })
   })
-  .default('twitter');
+);
 
 /**
  * Language schema - validates language selection
- * Supports BCP-47 normalization via normalizeLanguage
+ * Normalizes BCP-47 locales: 'en-US' → 'en', 'es-MX' → 'es', etc.
+ * CRITICAL: Maintains backward compatibility with BCP-47 locale codes
  */
-const languageSchema = z
-  .enum(VALIDATION_CONSTANTS.VALID_LANGUAGES, {
+const languageSchema = z.preprocess(
+  (val) => {
+    if (val === undefined || val === null) return 'es';
+    return normalizeLanguage(val); // Always returns normalized value or default
+  },
+  z.enum(VALIDATION_CONSTANTS.VALID_LANGUAGES, {
     errorMap: () => ({
       message: `Language must be one of: ${VALIDATION_CONSTANTS.VALID_LANGUAGES.join(', ')}`
     })
   })
-  .default('es');
+);
 
 /**
  * Style profile schema - validates style profile object

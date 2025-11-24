@@ -77,9 +77,13 @@ describe('Zod Roast Schemas - Base Schemas', () => {
       );
     });
 
-    it('should reject case-sensitive mismatches', () => {
-      // Zod enum is case-sensitive by design
-      expect(() => toneSchema.parse('flanders')).toThrow('Tone must be one of');
+    it('should normalize case-insensitive inputs', () => {
+      // Issue #946: Normalization maintains backward compatibility
+      expect(toneSchema.parse('flanders')).toBe('Flanders');
+      expect(toneSchema.parse('FLANDERS')).toBe('Flanders');
+      expect(toneSchema.parse('balanceado')).toBe('Balanceado');
+      expect(toneSchema.parse('BALANCEADO')).toBe('Balanceado');
+      expect(toneSchema.parse('canalla')).toBe('Canalla');
     });
   });
 
@@ -98,6 +102,13 @@ describe('Zod Roast Schemas - Base Schemas', () => {
     it('should reject invalid platform', () => {
       expect(() => platformSchema.parse('invalid')).toThrow('Platform must be one of');
     });
+
+    it('should normalize platform aliases (Issue #946 - AC5)', () => {
+      // CRITICAL: Maintains backward compatibility
+      expect(platformSchema.parse('X')).toBe('twitter');
+      expect(platformSchema.parse('x.com')).toBe('twitter');
+      expect(platformSchema.parse('TWITTER')).toBe('twitter');
+    });
   });
 
   describe('languageSchema', () => {
@@ -113,6 +124,14 @@ describe('Zod Roast Schemas - Base Schemas', () => {
 
     it('should reject invalid language', () => {
       expect(() => languageSchema.parse('fr')).toThrow('Language must be one of');
+    });
+
+    it('should normalize BCP-47 locale codes (Issue #946 - AC5)', () => {
+      // CRITICAL: Maintains backward compatibility with BCP-47
+      expect(languageSchema.parse('en-US')).toBe('en');
+      expect(languageSchema.parse('en-GB')).toBe('en');
+      expect(languageSchema.parse('es-MX')).toBe('es');
+      expect(languageSchema.parse('es-ES')).toBe('es');
     });
   });
 });
