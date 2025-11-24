@@ -14,11 +14,13 @@ jest.mock('../../../src/config/supabase', () => ({
 }));
 
 jest.mock('../../../src/services/planLimitsService', () => ({
-  getPlanLimits: jest.fn(() => Promise.resolve({
-    analyticsEnabled: true,
-    maxRoasts: 1000,
-    monthlyAnalysisLimit: 5000
-  }))
+  getPlanLimits: jest.fn(() =>
+    Promise.resolve({
+      analyticsEnabled: true,
+      maxRoasts: 1000,
+      monthlyAnalysisLimit: 5000
+    })
+  )
 }));
 
 jest.mock('../../../src/utils/logger', () => ({
@@ -157,10 +159,10 @@ describe('AnalyticsDashboardService', () => {
   describe('_buildTimeframe', () => {
     it('should build correct timeframe for given rangeDays', () => {
       const { startDate, endDate } = analyticsDashboardService._buildTimeframe(30);
-      
+
       expect(endDate).toBeInstanceOf(Date);
       expect(startDate).toBeInstanceOf(Date);
-      
+
       const diffDays = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
       expect(diffDays).toBe(30);
     });
@@ -169,7 +171,7 @@ describe('AnalyticsDashboardService', () => {
       const before = new Date();
       const { endDate } = analyticsDashboardService._buildTimeframe(7);
       const after = new Date();
-      
+
       expect(endDate.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(endDate.getTime()).toBeLessThanOrEqual(after.getTime() + 1000); // Allow 1s margin
     });
@@ -192,11 +194,7 @@ describe('AnalyticsDashboardService', () => {
 
   describe('_averageField', () => {
     it('should calculate average of valid numeric values', () => {
-      const rows = [
-        { field: 10 },
-        { field: 20 },
-        { field: 30 }
-      ];
+      const rows = [{ field: 10 }, { field: 20 }, { field: 30 }];
       const avg = analyticsDashboardService._averageField(rows, 'field');
       expect(avg).toBe(20);
     });
@@ -218,20 +216,12 @@ describe('AnalyticsDashboardService', () => {
     });
 
     it('should return 0 when no valid values', () => {
-      const rows = [
-        { field: null },
-        { field: 'invalid' },
-        { field: undefined }
-      ];
+      const rows = [{ field: null }, { field: 'invalid' }, { field: undefined }];
       expect(analyticsDashboardService._averageField(rows, 'field')).toBe(0);
     });
 
     it('should ignore zero values', () => {
-      const rows = [
-        { field: 10 },
-        { field: 0 },
-        { field: 20 }
-      ];
+      const rows = [{ field: 10 }, { field: 0 }, { field: 20 }];
       const avg = analyticsDashboardService._averageField(rows, 'field');
       expect(avg).toBe(15); // (10 + 20) / 2, ignoring 0
     });
@@ -279,13 +269,13 @@ describe('AnalyticsDashboardService', () => {
 
   describe('_resolveOrganizationContext', () => {
     it('should throw error when user is not authenticated', async () => {
-      await expect(
-        analyticsDashboardService._resolveOrganizationContext(null)
-      ).rejects.toThrow('Usuario no autenticado');
+      await expect(analyticsDashboardService._resolveOrganizationContext(null)).rejects.toThrow(
+        'Usuario no autenticado'
+      );
 
-      await expect(
-        analyticsDashboardService._resolveOrganizationContext({})
-      ).rejects.toThrow('Usuario no autenticado');
+      await expect(analyticsDashboardService._resolveOrganizationContext({})).rejects.toThrow(
+        'Usuario no autenticado'
+      );
     });
 
     it('should return org context when user has org_id', async () => {
@@ -351,9 +341,9 @@ describe('AnalyticsDashboardService', () => {
         return builder;
       });
 
-      await expect(
-        analyticsDashboardService._resolveOrganizationContext(user)
-      ).rejects.toThrow('No se encontró la organización del usuario');
+      await expect(analyticsDashboardService._resolveOrganizationContext(user)).rejects.toThrow(
+        'No se encontró la organización del usuario'
+      );
     });
   });
 
@@ -413,9 +403,30 @@ describe('AnalyticsDashboardService', () => {
 
     it('should aggregate stats from records', () => {
       const records = [
-        { id: '1', action_type: 'block', severity: 'high', platform: 'twitter', status: 'completed', created_at: '2025-01-01' },
-        { id: '2', action_type: 'mute', severity: 'medium', platform: 'twitter', status: 'completed', created_at: '2025-01-02' },
-        { id: '3', action_type: 'block', severity: 'high', platform: 'discord', status: 'completed', created_at: '2025-01-03' }
+        {
+          id: '1',
+          action_type: 'block',
+          severity: 'high',
+          platform: 'twitter',
+          status: 'completed',
+          created_at: '2025-01-01'
+        },
+        {
+          id: '2',
+          action_type: 'mute',
+          severity: 'medium',
+          platform: 'twitter',
+          status: 'completed',
+          created_at: '2025-01-02'
+        },
+        {
+          id: '3',
+          action_type: 'block',
+          severity: 'high',
+          platform: 'discord',
+          status: 'completed',
+          created_at: '2025-01-03'
+        }
       ];
 
       const stats = analyticsDashboardService._buildShieldStats(records);
@@ -548,9 +559,7 @@ describe('AnalyticsDashboardService', () => {
     });
 
     it('should default to otros when no resource_type', () => {
-      const usageRecords = [
-        { quantity: 10, cost_cents: 100 }
-      ];
+      const usageRecords = [{ quantity: 10, cost_cents: 100 }];
 
       const credits = analyticsDashboardService._buildCredits(usageRecords);
       expect(credits.summary.totals.otros.quantity).toBe(10);
@@ -559,14 +568,8 @@ describe('AnalyticsDashboardService', () => {
 
   describe('_buildCostOverview', () => {
     it('should calculate cost overview correctly', () => {
-      const snapshots = [
-        { total_cost_cents: 100 },
-        { total_cost_cents: 200 }
-      ];
-      const usageRecords = [
-        { cost_cents: 50 },
-        { cost_cents: 75 }
-      ];
+      const snapshots = [{ total_cost_cents: 100 }, { total_cost_cents: 200 }];
+      const usageRecords = [{ cost_cents: 50 }, { cost_cents: 75 }];
       const summary = {
         totals: { roasts: 30 }
       };
@@ -680,7 +683,11 @@ describe('AnalyticsDashboardService', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-31');
 
-      const snapshots = await analyticsDashboardService._fetchSnapshots('org-123', startDate, endDate);
+      const snapshots = await analyticsDashboardService._fetchSnapshots(
+        'org-123',
+        startDate,
+        endDate
+      );
       expect(Array.isArray(snapshots)).toBe(true);
     });
 
@@ -723,7 +730,11 @@ describe('AnalyticsDashboardService', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-31');
 
-      const records = await analyticsDashboardService._fetchUsageRecords('org-123', startDate, endDate);
+      const records = await analyticsDashboardService._fetchUsageRecords(
+        'org-123',
+        startDate,
+        endDate
+      );
       expect(Array.isArray(records)).toBe(true);
     });
 
@@ -768,7 +779,12 @@ describe('AnalyticsDashboardService', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-31');
 
-      const stats = await analyticsDashboardService._fetchShieldActions('org-123', startDate, endDate, 'all');
+      const stats = await analyticsDashboardService._fetchShieldActions(
+        'org-123',
+        startDate,
+        endDate,
+        'all'
+      );
       expect(stats.total_actions).toBe(1);
     });
 
@@ -798,7 +814,12 @@ describe('AnalyticsDashboardService', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-01-31');
 
-      const stats = await analyticsDashboardService._fetchShieldActions('org-123', startDate, endDate, 'all');
+      const stats = await analyticsDashboardService._fetchShieldActions(
+        'org-123',
+        startDate,
+        endDate,
+        'all'
+      );
       expect(stats).toEqual(analyticsDashboardService._emptyShieldStats());
     });
   });
@@ -806,10 +827,7 @@ describe('AnalyticsDashboardService', () => {
   describe('getBillingAnalytics', () => {
     it('should return billing analytics with local costs', async () => {
       const user = { id: 'user-123', org_id: 'org-456', plan: 'pro' };
-      mockSupabase._setTableData('usage_records', [
-        { cost_cents: 100 },
-        { cost_cents: 200 }
-      ]);
+      mockSupabase._setTableData('usage_records', [{ cost_cents: 100 }, { cost_cents: 200 }]);
 
       const result = await analyticsDashboardService.getBillingAnalytics({
         user,
@@ -933,9 +951,7 @@ describe('AnalyticsDashboardService', () => {
 
     it('should export events dataset', async () => {
       const user = { id: 'user-123', org_id: 'org-456', plan: 'pro' };
-      mockSupabase._setTableData('analytics_events', [
-        { id: '1', event_type: 'roast_generated' }
-      ]);
+      mockSupabase._setTableData('analytics_events', [{ id: '1', event_type: 'roast_generated' }]);
 
       const result = await analyticsDashboardService.exportAnalytics({
         user,

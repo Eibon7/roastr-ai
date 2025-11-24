@@ -148,7 +148,7 @@ describe('AlertService', () => {
       // The service uses a single key with history array
       const now = Date.now();
       const recentTimestamp = now - 20 * 60 * 1000; // 20 minutes ago (past cooldown)
-      
+
       alertService.alertHistory.set('backup_failed', {
         timestamp: recentTimestamp, // Past cooldown
         history: Array(11).fill(now - 10 * 60 * 1000) // 11 alerts in last hour (exceeds limit of 10)
@@ -360,7 +360,10 @@ describe('AlertService', () => {
         }),
         expect.objectContaining({
           timeout: 10000,
-          headers: { 'Content-Type': 'application/json', 'User-Agent': 'Roastr-AI-Alert-Service/1.0' }
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Roastr-AI-Alert-Service/1.0'
+          }
         })
       );
 

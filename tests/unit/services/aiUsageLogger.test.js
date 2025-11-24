@@ -50,7 +50,7 @@ jest.mock('../../../src/services/alertingService', () => ({
 const createMockQueryBuilder = (defaultData = [], defaultError = null) => {
   let resolveData = defaultData;
   let resolveError = defaultError;
-  
+
   const builder = {
     insert: jest.fn(() => Promise.resolve({ data: resolveData, error: resolveError })),
     select: jest.fn(() => builder),
@@ -63,10 +63,14 @@ const createMockQueryBuilder = (defaultData = [], defaultError = null) => {
     }),
     catch: jest.fn((reject) => Promise.resolve().catch(reject)),
     // Allow setting return data for tests
-    _setData: (data) => { resolveData = data; },
-    _setError: (error) => { resolveError = error; }
+    _setData: (data) => {
+      resolveData = data;
+    },
+    _setError: (error) => {
+      resolveError = error;
+    }
   };
-  
+
   return builder;
 };
 
@@ -246,7 +250,7 @@ describe('AIUsageLogger', () => {
       });
 
       expect(mockQueryBuilder.insert).not.toHaveBeenCalled();
-      
+
       // Re-enable for other tests
       aiUsageLogger.enabled = true;
     });
@@ -366,9 +370,30 @@ describe('AIUsageLogger', () => {
 
     test('should group statistics by model, plan, and endpoint', async () => {
       const mockData = [
-        { model: 'gpt-5.1', plan: 'pro', endpoint: 'roast', input_tokens: 100, output_tokens: 50, input_cached_tokens: 0 },
-        { model: 'gpt-4o', plan: 'starter', endpoint: 'roast', input_tokens: 50, output_tokens: 25, input_cached_tokens: 0 },
-        { model: 'gpt-5.1', plan: 'pro', endpoint: 'shield', input_tokens: 75, output_tokens: 30, input_cached_tokens: 0 }
+        {
+          model: 'gpt-5.1',
+          plan: 'pro',
+          endpoint: 'roast',
+          input_tokens: 100,
+          output_tokens: 50,
+          input_cached_tokens: 0
+        },
+        {
+          model: 'gpt-4o',
+          plan: 'starter',
+          endpoint: 'roast',
+          input_tokens: 50,
+          output_tokens: 25,
+          input_cached_tokens: 0
+        },
+        {
+          model: 'gpt-5.1',
+          plan: 'pro',
+          endpoint: 'shield',
+          input_tokens: 75,
+          output_tokens: 30,
+          input_cached_tokens: 0
+        }
       ];
 
       const queryBuilder = createMockQueryBuilder(mockData, null);
@@ -394,7 +419,7 @@ describe('AIUsageLogger', () => {
       });
 
       expect(stats.enabled).toBe(false);
-      
+
       // Re-enable for other tests
       aiUsageLogger.enabled = true;
     });

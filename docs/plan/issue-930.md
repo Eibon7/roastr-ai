@@ -3,7 +3,9 @@
 ## Estado: ✅ COMPLETADO
 
 ## Objetivo
+
 Aumentar cobertura de tests de servicios de soporte a ≥70%:
+
 - `analyticsDashboardService.js`
 - `auditService.js`
 - `alertService.js`
@@ -13,15 +15,16 @@ Aumentar cobertura de tests de servicios de soporte a ≥70%:
 
 ### Cobertura Alcanzada
 
-| Servicio | Statements | Branches | Functions | Lines | Tests |
-|----------|-----------|----------|-----------|-------|-------|
-| `aiUsageLogger.js` | **92.64%** ✅ | 92.30% | 100% | 92.64% | 18 |
-| `alertService.js` | **93.04%** ✅ | 92.72% | 95.45% | 92.59% | 35 |
-| `analyticsDashboardService.js` | **79.79%** ✅ | 69.46% | 87.03% | 80.07% | 72 |
-| `auditService.js` | **99.23%** ✅ | 84.78% | 100% | 100% | 38 |
-| **TOTAL** | **87.93%** | **79.54%** | **92%** | **87.97%** | **163** |
+| Servicio                       | Statements    | Branches   | Functions | Lines      | Tests   |
+| ------------------------------ | ------------- | ---------- | --------- | ---------- | ------- |
+| `aiUsageLogger.js`             | **92.64%** ✅ | 92.30%     | 100%      | 92.64%     | 18      |
+| `alertService.js`              | **93.04%** ✅ | 92.72%     | 95.45%    | 92.59%     | 35      |
+| `analyticsDashboardService.js` | **79.79%** ✅ | 69.46%     | 87.03%    | 80.07%     | 72      |
+| `auditService.js`              | **99.23%** ✅ | 84.78%     | 100%      | 100%       | 38      |
+| **TOTAL**                      | **87.93%**    | **79.54%** | **92%**   | **87.97%** | **163** |
 
 ### Resumen
+
 - ✅ **163 tests pasando**
 - ✅ **87.93% cobertura total** (objetivo: 70%)
 - ✅ Todos los servicios superan el objetivo de 70%
@@ -29,9 +32,11 @@ Aumentar cobertura de tests de servicios de soporte a ≥70%:
 ## Problemas Resueltos
 
 ### 1. Mock de `advancedLogger.queueLogger` (alertService)
+
 **Problema:** `queueService` usaba `advancedLogger.queueLogger.error()` durante inicialización.
 
 **Solución:**
+
 ```javascript
 jest.mock('../../../src/utils/advancedLogger', () => ({
   debug: jest.fn(),
@@ -49,14 +54,16 @@ jest.mock('../../../src/utils/advancedLogger', () => ({
 ```
 
 ### 2. Mock de Supabase Query Builder (aiUsageLogger)
+
 **Problema:** Los queries de Supabase usan chaining con `await`.
 
 **Solución:**
+
 ```javascript
 const createMockQueryBuilder = (defaultData = [], defaultError = null) => {
   let resolveData = defaultData;
   let resolveError = defaultError;
-  
+
   const builder = {
     insert: jest.fn(() => Promise.resolve({ data: resolveData, error: resolveError })),
     select: jest.fn(() => builder),
@@ -67,15 +74,17 @@ const createMockQueryBuilder = (defaultData = [], defaultError = null) => {
       return Promise.resolve({ data: resolveData, error: resolveError }).then(resolve);
     })
   };
-  
+
   return builder;
 };
 ```
 
 ### 3. Mock de servicios dependientes
+
 **Problema:** Algunos servicios se cargaban durante la inicialización de tests.
 
 **Solución:** Mock preventivo de `queueService` y `alertingService`:
+
 ```javascript
 jest.mock('../../../src/services/queueService', () => {
   return jest.fn().mockImplementation(() => ({
@@ -128,11 +137,12 @@ npm test -- tests/unit/services/alertService.test.js \
 ```
 
 ## Commit
+
 ```
 feat(tests): add comprehensive tests for support services #930
 ```
 
 ---
+
 **Fecha de completación:** 2025-10-24
 **Autor:** Claude AI Assistant
-

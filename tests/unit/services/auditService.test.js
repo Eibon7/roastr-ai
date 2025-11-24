@@ -70,10 +70,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: { id: 'log-1', ...changeData },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: { id: 'log-1', ...changeData },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -101,10 +103,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: null,
-                  error: { message: 'Database error' }
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: null,
+                    error: { message: 'Database error' }
+                  })
+                )
               }))
             }))
           };
@@ -139,10 +143,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: { id: 'change-1', change_type: 'upgrade', ...changeData },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: { id: 'change-1', change_type: 'upgrade', ...changeData },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -178,10 +184,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: null,
-                  error: { message: 'Insert failed' }
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: null,
+                    error: { message: 'Insert failed' }
+                  })
+                )
               }))
             }))
           };
@@ -215,10 +223,12 @@ describe('AuditService', () => {
             select: jest.fn(() => builder),
             eq: jest.fn(() => builder),
             order: jest.fn(() => builder),
-            range: jest.fn(() => Promise.resolve({
-              data: mockHistory,
-              error: null
-            }))
+            range: jest.fn(() =>
+              Promise.resolve({
+                data: mockHistory,
+                error: null
+              })
+            )
           };
           return builder;
         }
@@ -254,7 +264,7 @@ describe('AuditService', () => {
         eventType: 'plan_change'
       });
 
-      expect(eqCalls.some(c => c.key === 'event_type' && c.value === 'plan_change')).toBe(true);
+      expect(eqCalls.some((c) => c.key === 'event_type' && c.value === 'plan_change')).toBe(true);
     });
   });
 
@@ -278,10 +288,12 @@ describe('AuditService', () => {
             select: jest.fn(() => builder),
             eq: jest.fn(() => builder),
             order: jest.fn(() => builder),
-            range: jest.fn(() => Promise.resolve({
-              data: mockHistory,
-              error: null
-            }))
+            range: jest.fn(() =>
+              Promise.resolve({
+                data: mockHistory,
+                error: null
+              })
+            )
           };
           return builder;
         }
@@ -304,10 +316,12 @@ describe('AuditService', () => {
             update: jest.fn(() => ({
               eq: jest.fn(() => ({
                 select: jest.fn(() => ({
-                  single: jest.fn(() => Promise.resolve({
-                    data: { id: 'change-1', change_status: 'completed' },
-                    error: null
-                  }))
+                  single: jest.fn(() =>
+                    Promise.resolve({
+                      data: { id: 'change-1', change_status: 'completed' },
+                      error: null
+                    })
+                  )
                 }))
               }))
             }))
@@ -330,14 +344,16 @@ describe('AuditService', () => {
             update: jest.fn(() => ({
               eq: jest.fn(() => ({
                 select: jest.fn(() => ({
-                  single: jest.fn(() => Promise.resolve({
-                    data: {
-                      id: 'change-1',
-                      change_status: 'blocked',
-                      blocked_reason: 'Payment failed'
-                    },
-                    error: null
-                  }))
+                  single: jest.fn(() =>
+                    Promise.resolve({
+                      data: {
+                        id: 'change-1',
+                        change_status: 'blocked',
+                        blocked_reason: 'Payment failed'
+                      },
+                      error: null
+                    })
+                  )
                 }))
               }))
             }))
@@ -378,10 +394,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: { id: 'log-1', ...actionData },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: { id: 'log-1', ...actionData },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -414,10 +432,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: { id: 'log-1', setting_name: 'theme', ...details },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: { id: 'log-1', setting_name: 'theme', ...details },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -425,12 +445,7 @@ describe('AuditService', () => {
         return originalFrom(table);
       });
 
-      const result = await auditService.logUserSettingChange(
-        'user-123',
-        'theme',
-        details,
-        mockReq
-      );
+      const result = await auditService.logUserSettingChange('user-123', 'theme', details, mockReq);
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
@@ -444,10 +459,12 @@ describe('AuditService', () => {
         if (table === 'subscription_audit_log' || table === 'plan_change_history') {
           return {
             delete: jest.fn(() => ({
-              lt: jest.fn(() => Promise.resolve({
-                count: 10,
-                error: null
-              }))
+              lt: jest.fn(() =>
+                Promise.resolve({
+                  count: 10,
+                  error: null
+                })
+              )
             }))
           };
         }
@@ -467,10 +484,12 @@ describe('AuditService', () => {
         if (table === 'subscription_audit_log') {
           return {
             delete: jest.fn(() => ({
-              lt: jest.fn(() => Promise.resolve({
-                count: null,
-                error: { message: 'Delete failed' }
-              }))
+              lt: jest.fn(() =>
+                Promise.resolve({
+                  count: null,
+                  error: { message: 'Delete failed' }
+                })
+              )
             }))
           };
         }
@@ -498,10 +517,12 @@ describe('AuditService', () => {
             select: jest.fn(() => builder),
             gte: jest.fn(() => builder),
             lte: jest.fn(() => builder),
-            order: jest.fn(() => Promise.resolve({
-              data: mockAnalytics,
-              error: null
-            }))
+            order: jest.fn(() =>
+              Promise.resolve({
+                data: mockAnalytics,
+                error: null
+              })
+            )
           };
           return builder;
         }
@@ -523,8 +544,14 @@ describe('AuditService', () => {
         if (table === 'plan_change_analytics') {
           const builder = {
             select: jest.fn(() => builder),
-            gte: jest.fn(() => { gteCalled = true; return builder; }),
-            lte: jest.fn(() => { lteCalled = true; return builder; }),
+            gte: jest.fn(() => {
+              gteCalled = true;
+              return builder;
+            }),
+            lte: jest.fn(() => {
+              lteCalled = true;
+              return builder;
+            }),
             order: jest.fn(() => Promise.resolve({ data: [], error: null }))
           };
           return builder;
@@ -547,10 +574,12 @@ describe('AuditService', () => {
         if (table === 'plan_change_analytics') {
           const builder = {
             select: jest.fn(() => builder),
-            order: jest.fn(() => Promise.resolve({
-              data: null,
-              error: { message: 'Query failed' }
-            }))
+            order: jest.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: { message: 'Query failed' }
+              })
+            )
           };
           return builder;
         }
@@ -572,14 +601,16 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: {
-                    id: 'log-1',
-                    action: 'account_deletion_requested',
-                    user_id: 'user-123'
-                  },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: {
+                      id: 'log-1',
+                      action: 'account_deletion_requested',
+                      user_id: 'user-123'
+                    },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -587,11 +618,10 @@ describe('AuditService', () => {
         return originalFrom(table);
       });
 
-      const result = await auditService.logAccountDeletionRequest(
-        'user-123',
-        'req-456',
-        { gracePeriodDays: 30, scheduledDeletionAt: new Date().toISOString() }
-      );
+      const result = await auditService.logAccountDeletionRequest('user-123', 'req-456', {
+        gracePeriodDays: 30,
+        scheduledDeletionAt: new Date().toISOString()
+      });
 
       expect(result.success).toBe(true);
       expect(result.data.action).toBe('account_deletion_requested');
@@ -606,14 +636,16 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: {
-                    id: 'log-1',
-                    action: 'account_deletion_attempted',
-                    user_id: 'user-123'
-                  },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: {
+                      id: 'log-1',
+                      action: 'account_deletion_attempted',
+                      user_id: 'user-123'
+                    },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -621,10 +653,11 @@ describe('AuditService', () => {
         return originalFrom(table);
       });
 
-      const result = await auditService.logAccountDeletionAttempt(
-        'user-123',
-        { success: false, reason: 'invalid_password', error: 'Password mismatch' }
-      );
+      const result = await auditService.logAccountDeletionAttempt('user-123', {
+        success: false,
+        reason: 'invalid_password',
+        error: 'Password mismatch'
+      });
 
       expect(result.success).toBe(true);
       expect(result.data.action).toBe('account_deletion_attempted');
@@ -639,14 +672,16 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: {
-                    id: 'log-1',
-                    action: 'gdpr_data_exported',
-                    user_id: 'user-123'
-                  },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: {
+                      id: 'log-1',
+                      action: 'gdpr_data_exported',
+                      user_id: 'user-123'
+                    },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -672,15 +707,17 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: {
-                    id: 'log-1',
-                    action: 'gdpr_data_exported',
-                    user_id: 'user-123',
-                    actor_id: 'admin-456'
-                  },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: {
+                      id: 'log-1',
+                      action: 'gdpr_data_exported',
+                      user_id: 'user-123',
+                      actor_id: 'admin-456'
+                    },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -688,9 +725,13 @@ describe('AuditService', () => {
         return originalFrom(table);
       });
 
-      const result = await auditService.logDataExport('user-123', {
-        filename: 'export-123.zip'
-      }, 'admin-456');
+      const result = await auditService.logDataExport(
+        'user-123',
+        {
+          filename: 'export-123.zip'
+        },
+        'admin-456'
+      );
 
       expect(result.success).toBe(true);
     });
@@ -704,14 +745,16 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: {
-                    id: 'log-1',
-                    action: 'account_deletion_cancelled',
-                    user_id: 'user-123'
-                  },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: {
+                      id: 'log-1',
+                      action: 'account_deletion_cancelled',
+                      user_id: 'user-123'
+                    },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -719,11 +762,9 @@ describe('AuditService', () => {
         return originalFrom(table);
       });
 
-      const result = await auditService.logAccountDeletionCancellation(
-        'user-123',
-        'req-456',
-        { reason: 'changed_mind' }
-      );
+      const result = await auditService.logAccountDeletionCancellation('user-123', 'req-456', {
+        reason: 'changed_mind'
+      });
 
       expect(result.success).toBe(true);
       expect(result.data.action).toBe('account_deletion_cancelled');
@@ -738,14 +779,16 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: {
-                    id: 'log-1',
-                    action: 'account_deletion_completed',
-                    user_id: null
-                  },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: {
+                      id: 'log-1',
+                      action: 'account_deletion_completed',
+                      user_id: null
+                    },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -753,14 +796,10 @@ describe('AuditService', () => {
         return originalFrom(table);
       });
 
-      const result = await auditService.logAccountDeletionCompleted(
-        'user-123',
-        'req-456',
-        {
-          dataCategoriesDeleted: ['profile', 'roasts', 'comments'],
-          anonymizedRecordsCount: 50
-        }
-      );
+      const result = await auditService.logAccountDeletionCompleted('user-123', 'req-456', {
+        dataCategoriesDeleted: ['profile', 'roasts', 'comments'],
+        anonymizedRecordsCount: 50
+      });
 
       expect(result.success).toBe(true);
       expect(result.data.action).toBe('account_deletion_completed');
@@ -792,11 +831,13 @@ describe('AuditService', () => {
             or: jest.fn(() => builder),
             in: jest.fn(() => builder),
             order: jest.fn(() => builder),
-            range: jest.fn(() => Promise.resolve({
-              data: mockAuditTrail,
-              error: null,
-              count: 2
-            }))
+            range: jest.fn(() =>
+              Promise.resolve({
+                data: mockAuditTrail,
+                error: null,
+                count: 2
+              })
+            )
           };
           return builder;
         }
@@ -819,11 +860,13 @@ describe('AuditService', () => {
             or: jest.fn(() => builder),
             in: jest.fn(() => builder),
             order: jest.fn(() => builder),
-            range: jest.fn(() => Promise.resolve({
-              data: [{ id: '1' }],
-              error: null,
-              count: 150
-            }))
+            range: jest.fn(() =>
+              Promise.resolve({
+                data: [{ id: '1' }],
+                error: null,
+                count: 150
+              })
+            )
           };
           return builder;
         }
@@ -845,11 +888,13 @@ describe('AuditService', () => {
             or: jest.fn(() => builder),
             in: jest.fn(() => builder),
             order: jest.fn(() => builder),
-            range: jest.fn(() => Promise.resolve({
-              data: null,
-              error: { message: 'Query failed' },
-              count: null
-            }))
+            range: jest.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: { message: 'Query failed' },
+                count: null
+              })
+            )
           };
           return builder;
         }
@@ -873,7 +918,10 @@ describe('AuditService', () => {
           const builder = {
             select: jest.fn(() => builder),
             eq: jest.fn(() => builder),
-            gte: jest.fn(() => { gteCalled = true; return builder; }),
+            gte: jest.fn(() => {
+              gteCalled = true;
+              return builder;
+            }),
             order: jest.fn(() => builder),
             range: jest.fn(() => Promise.resolve({ data: [], error: null }))
           };
@@ -897,10 +945,12 @@ describe('AuditService', () => {
             select: jest.fn(() => builder),
             eq: jest.fn(() => builder),
             order: jest.fn(() => builder),
-            range: jest.fn(() => Promise.resolve({
-              data: null,
-              error: { message: 'Query failed' }
-            }))
+            range: jest.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: { message: 'Query failed' }
+              })
+            )
           };
           return builder;
         }
@@ -923,7 +973,10 @@ describe('AuditService', () => {
         if (table === 'plan_change_history') {
           const builder = {
             select: jest.fn(() => builder),
-            eq: jest.fn((key, value) => { eqCalls.push({ key, value }); return builder; }),
+            eq: jest.fn((key, value) => {
+              eqCalls.push({ key, value });
+              return builder;
+            }),
             order: jest.fn(() => builder),
             range: jest.fn(() => Promise.resolve({ data: [], error: null }))
           };
@@ -936,7 +989,7 @@ describe('AuditService', () => {
         changeType: 'upgrade'
       });
 
-      expect(eqCalls.some(c => c.key === 'change_type' && c.value === 'upgrade')).toBe(true);
+      expect(eqCalls.some((c) => c.key === 'change_type' && c.value === 'upgrade')).toBe(true);
     });
 
     it('should filter by since date', async () => {
@@ -948,7 +1001,10 @@ describe('AuditService', () => {
           const builder = {
             select: jest.fn(() => builder),
             eq: jest.fn(() => builder),
-            gte: jest.fn(() => { gteCalled = true; return builder; }),
+            gte: jest.fn(() => {
+              gteCalled = true;
+              return builder;
+            }),
             order: jest.fn(() => builder),
             range: jest.fn(() => Promise.resolve({ data: [], error: null }))
           };
@@ -972,10 +1028,12 @@ describe('AuditService', () => {
             select: jest.fn(() => builder),
             eq: jest.fn(() => builder),
             order: jest.fn(() => builder),
-            range: jest.fn(() => Promise.resolve({
-              data: null,
-              error: { message: 'Query failed' }
-            }))
+            range: jest.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: { message: 'Query failed' }
+              })
+            )
           };
           return builder;
         }
@@ -998,10 +1056,12 @@ describe('AuditService', () => {
             update: jest.fn(() => ({
               eq: jest.fn(() => ({
                 select: jest.fn(() => ({
-                  single: jest.fn(() => Promise.resolve({
-                    data: null,
-                    error: { message: 'Update failed' }
-                  }))
+                  single: jest.fn(() =>
+                    Promise.resolve({
+                      data: null,
+                      error: { message: 'Update failed' }
+                    })
+                  )
                 }))
               }))
             }))
@@ -1025,10 +1085,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: null,
-                  error: { message: 'Insert failed' }
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: null,
+                    error: { message: 'Insert failed' }
+                  })
+                )
               }))
             }))
           };
@@ -1052,10 +1114,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: { id: 'log-1', action: 'test_action' },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: { id: 'log-1', action: 'test_action' },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -1063,10 +1127,13 @@ describe('AuditService', () => {
         return originalFrom(table);
       });
 
-      const result = await auditService.logGdprAction({
-        action: 'test_action',
-        userId: 'user-123'
-      }, null);
+      const result = await auditService.logGdprAction(
+        {
+          action: 'test_action',
+          userId: 'user-123'
+        },
+        null
+      );
 
       expect(result.success).toBe(true);
     });
@@ -1080,10 +1147,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: null,
-                  error: { message: 'Insert failed' }
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: null,
+                    error: { message: 'Insert failed' }
+                  })
+                )
               }))
             }))
           };
@@ -1091,11 +1160,10 @@ describe('AuditService', () => {
         return originalFrom(table);
       });
 
-      const result = await auditService.logUserSettingChange(
-        'user-123',
-        'theme',
-        { old_value: 'dark', new_value: 'light' }
-      );
+      const result = await auditService.logUserSettingChange('user-123', 'theme', {
+        old_value: 'dark',
+        new_value: 'light'
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
@@ -1108,10 +1176,12 @@ describe('AuditService', () => {
           return {
             insert: jest.fn(() => ({
               select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({
-                  data: { id: 'log-1', setting_name: 'theme' },
-                  error: null
-                }))
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: { id: 'log-1', setting_name: 'theme' },
+                    error: null
+                  })
+                )
               }))
             }))
           };
@@ -1143,4 +1213,3 @@ describe('AuditService', () => {
     });
   });
 });
-
