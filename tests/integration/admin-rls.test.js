@@ -1,6 +1,14 @@
 /**
  * Admin & Feature Flags RLS Integration Tests - Issue #787 AC4
  *
+ * @deprecated Use tests/rls/admin.test.js instead (Issue #914 - 10-30x faster)
+ *
+ * This test suite uses network-based Supabase calls with JWT context switching (slow).
+ * New tests use supabase-test with local DB (10-30x faster, no bandwidth costs).
+ *
+ * Migration: Issue #914 - RLS Tests Migration to supabase-test
+ * New location: tests/rls/admin.test.js
+ *
  * Tests Row Level Security policies for admin and feature flag tables:
  * - feature_flags (admin-only access)
  * - admin_audit_logs (admin-only access)
@@ -8,7 +16,7 @@
  * - plan_limits (admin-only access)
  * - plan_limits_audit (admin-only access)
  *
- * Related Issue: #787
+ * Related Issue: #787 (original), #914 (migration)
  * Related Node: multi-tenant.md
  * Related PR: #769
  */
