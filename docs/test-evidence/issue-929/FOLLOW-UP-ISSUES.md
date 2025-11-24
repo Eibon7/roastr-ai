@@ -6,7 +6,7 @@
 |---------|----------|--------|--------|-----|
 | **queueService.js** | 81.16% | ≥75% | ✅ Done | #968 |
 | **shieldService.js** | 90.25% | ≥75% | ✅ Done | #1002 |
-| **authService.js** | 67.61% | ≥85% | 🟡 Partial | #1002 |
+| **authService.js** | 78.97% | ≥85% | 🟡 Partial | #1002 |
 | **costControl.js** | ~62% | ≥85% | 🟡 Partial | #1002 |
 
 ## Work Done in This PR (#1002)
@@ -17,9 +17,10 @@
 - Target exceeded by +15%
 
 ### authService.js 🟡
-- 43 new tests added  
-- Coverage: 50.75% → **67.61%** (+16.86%)
-- Still needs ~17% more to reach 85%
+- 157 new tests added (up from 43)
+- Coverage: 50.75% → **78.97%** (+28.22%)
+- Still needs ~6% more to reach 85%
+- Areas covered: GDPR export/deletion, rollback scenarios, logUserActivity, suspend/unsuspend
 
 ### costControl.js 🟡
 - Extended tests added
@@ -28,8 +29,8 @@
 
 ## Remaining Work for Future PR
 
-1. **authService.js** - Need additional ~17% coverage
-   - Focus areas: GDPR operations, admin functions, rollback flows
+1. **authService.js** - Need additional ~6% coverage
+   - Focus areas: Remaining rollback edge cases, changeEmail full flow
 
 2. **costControl.js** - Need additional ~23% coverage
    - Focus areas: billing operations, usage tracking, alerts
