@@ -7,6 +7,13 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken, optionalAuth } = require('../middleware/auth');
+const { validateRequest } = require('../middleware/zodValidation'); // Issue #946
+const {
+  roastPreviewSchema,
+  roastGenerateSchema,
+  roastEngineSchema,
+  roastValidateSchema
+} = require('../validators/zod/roast.schema'); // Issue #946
 const { logger } = require('../utils/logger');
 const { isFlagEnabled } = require('../utils/featureFlags');
 // CodeRabbit Round 6: Optional Sentry integration for error capture
@@ -112,42 +119,7 @@ const publicRateLimit = require('express-rate-limit')({
 /**
  * Validate roast request parameters (Enhanced for Issue #326)
  */
-function validateRoastRequest(req) {
-  // Issue #872 AC8: intensity and humorType completely removed
-  const { text, tone, styleProfile, persona, platform } = req.body;
-  const errors = [];
-
-  // Validate text - Issue #698: Fix empty string validation order
-  if (typeof text !== 'string') {
-    errors.push('Text is required and must be a string');
-  } else if (!text || text.trim().length === 0) {
-    errors.push('Text cannot be empty');
-  } else if (text.length > VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH) {
-    errors.push(`Text must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`);
-  }
-
-  // Validate optional parameters using constants
-  if (tone && !VALIDATION_CONSTANTS.VALID_TONES.includes(tone)) {
-    errors.push(`Tone must be one of: ${VALIDATION_CONSTANTS.VALID_TONES.join(', ')}`);
-  }
-
-  // Issue #872 AC8: humorType and intensity validation completely removed
-
-  // Validate new parameters for Issue #326
-  if (styleProfile && typeof styleProfile !== 'object') {
-    errors.push('Style profile must be an object');
-  }
-
-  if (persona && typeof persona !== 'string') {
-    errors.push('Persona must be a string');
-  }
-
-  if (platform && !isValidPlatform(platform)) {
-    errors.push(`Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')}`);
-  }
-
-  return errors;
-}
+// Issue #946: validateRoastRequest() removed - replaced by Zod validation middleware
 
 /**
  * Get user plan and limits
@@ -422,352 +394,346 @@ async function analyzeContent(text) {
  * Request: { text, styleProfile, persona, platform }
  * Response: { roast, tokensUsed, analysisCountRemaining, roastsRemaining }
  */
-router.post('/preview', authenticateToken, roastRateLimit, async (req, res) => {
-  const startTime = Date.now();
+router.post(
+  '/preview',
+  authenticateToken,
+  roastRateLimit,
+  validateRequest(roastPreviewSchema),
+  async (req, res) => {
+    const startTime = Date.now();
 
-  try {
-    // Validate request
-    const validationErrors = validateRoastRequest(req);
-    if (validationErrors.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        details: validationErrors,
-        timestamp: new Date().toISOString()
-      });
-    }
+    try {
+      // Issue #946: Validation now handled by Zod middleware
 
-    const {
-      text,
-      styleProfile = {},
-      persona = null,
-      platform = 'twitter',
-      tone = 'balanceado' // Issue #872: Default to new system
-      // Issue #872 AC8: intensity and humorType completely removed
-    } = req.body;
-
-    const userId = req.user.id;
-
-    // Get user plan info
-    const userPlan = await getUserPlanInfo(userId);
-
-    // Check analysis credits BEFORE processing (Issue #326)
-    const analysisCheck = await checkAnalysisCredits(userId, userPlan.plan);
-    if (!analysisCheck.hasCredits) {
-      return res.status(402).json({
-        success: false,
-        error: 'Insufficient analysis credits',
-        details: {
-          analysisCountRemaining: analysisCheck.remaining,
-          analysisLimit: analysisCheck.limit,
-          plan: userPlan.plan,
-          message: 'Agotaste tu límite de análisis, actualiza tu plan'
-        },
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Check roast credits to include in response
-    const roastCheck = await checkUserCredits(userId, userPlan.plan);
-
-    // Consume 1 analysis credit (Issue #326)
-    await recordAnalysisUsage(userId, {
-      endpoint: 'preview',
-      platform,
-      hasStyleProfile: !!styleProfile && Object.keys(styleProfile).length > 0,
-      hasPersona: !!persona,
-      tone
-      // Issue #872 AC8: intensity and humorType completely removed
-    });
-
-    // Analyze content with Perspective API
-    const contentAnalysis = await analyzeContent(text);
-
-    // Check if content is safe for roasting
-    if (!contentAnalysis.safe) {
-      return res.status(400).json({
-        success: false,
-        error: 'Content not suitable for roasting',
-        details: {
-          toxicityScore: contentAnalysis.toxicityScore,
-          categories: contentAnalysis.categories,
-          reason: 'Content exceeds toxicity threshold'
-        },
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Prepare enhanced roast generation config (Issue #326)
-    const roastConfig = {
-      plan: userPlan.plan,
-      tone,
-      // Issue #872: humor_type and intensity_level deprecated
-      preview_mode: true,
-      userId: userId,
-      styleProfile: styleProfile,
-      persona: persona,
-      platform: platform,
-      language: 'es' // Default to Spanish
-    };
-
-    // Generate roast with enhanced configuration
-    const generationResult = await roastGenerator.generateRoast(
-      text,
-      contentAnalysis.toxicityScore,
-      tone,
-      roastConfig
-    );
-
-    const processingTime = Date.now() - startTime;
-    const tokensUsed =
-      generationResult.tokensUsed || roastGenerator.estimateTokens(text + generationResult.roast);
-
-    // Calculate remaining credits after consumption
-    const analysisRemaining = Math.max(0, analysisCheck.remaining - 1);
-
-    // Log successful preview generation (Issue #326)
-    logger.info('Enhanced roast preview generated', {
-      userId,
-      plan: userPlan.plan,
-      platform,
-      hasStyleProfile: !!styleProfile && Object.keys(styleProfile).length > 0,
-      hasPersona: !!persona,
-      tone,
-      // Issue #872 AC8: intensity and humorType completely removed
-      tokensUsed,
-      analysisRemaining,
-      roastsRemaining: roastCheck.remaining,
-      toxicityScore: contentAnalysis.toxicityScore,
-      processingTimeMs: processingTime,
-      roastLength: generationResult.roast?.length || 0
-    });
-
-    // Get model info for metadata
-    const selectedModel = await getModelForPlan(userPlan.plan);
-
-    // Return Issue #326 compliant response
-    res.json({
-      success: true,
-      roast: generationResult.roast,
-      tokensUsed: tokensUsed,
-      analysisCountRemaining: analysisRemaining,
-      roastsRemaining: roastCheck.remaining,
-      metadata: {
-        platform,
-        styleProfile: styleProfile,
-        persona: persona,
-        tone,
+      const {
+        text,
+        styleProfile = {},
+        persona = null,
+        platform = 'twitter',
+        tone = 'balanceado' // Issue #872: Default to new system
         // Issue #872 AC8: intensity and humorType completely removed
-        toxicityScore: contentAnalysis.toxicityScore,
-        safe: contentAnalysis.safe,
-        plan: userPlan.plan,
-        processingTimeMs: processingTime,
-        generatedAt: new Date().toISOString(),
-        model: selectedModel
-      },
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    const processingTime = Date.now() - startTime;
+      } = req.body;
 
-    logger.error('Enhanced roast preview generation failed', {
-      userId: req.user?.id,
-      error: error.message,
-      stack: error.stack,
-      processingTimeMs: processingTime
-    });
+      const userId = req.user.id;
 
-    // Fallback to mock on OpenAI API failure (Issue #326)
-    if (error.message.includes('OpenAI') || error.message.includes('API')) {
-      logger.warn('OpenAI API failed, falling back to mock mode', {
-        userId: req.user?.id,
-        error: error.message
-      });
+      // Get user plan info
+      const userPlan = await getUserPlanInfo(userId);
 
-      try {
-        const mockGenerator = new (require('../services/roastGeneratorMock'))();
-        const mockRoast = await mockGenerator.generateRoast(
-          req.body.text || 'Error processing request',
-          0.5,
-          req.body.tone || 'sarcastic'
-        );
-
-        res.json({
-          success: true,
-          roast: mockRoast + ' (Modo de prueba)',
-          tokensUsed: 50,
-          analysisCountRemaining: 999,
-          roastsRemaining: 99,
-          metadata: {
-            fallbackMode: true,
-            error: 'OpenAI API unavailable',
-            generatedAt: new Date().toISOString()
+      // Check analysis credits BEFORE processing (Issue #326)
+      const analysisCheck = await checkAnalysisCredits(userId, userPlan.plan);
+      if (!analysisCheck.hasCredits) {
+        return res.status(402).json({
+          success: false,
+          error: 'Insufficient analysis credits',
+          details: {
+            analysisCountRemaining: analysisCheck.remaining,
+            analysisLimit: analysisCheck.limit,
+            plan: userPlan.plan,
+            message: 'Agotaste tu límite de análisis, actualiza tu plan'
           },
           timestamp: new Date().toISOString()
         });
-        return;
-      } catch (mockError) {
-        logger.error('Mock fallback also failed:', mockError);
       }
-    }
 
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate roast preview',
-      details:
-        process.env.NODE_ENV === 'development'
-          ? error.message
-          : 'Servicio temporalmente no disponible',
-      timestamp: new Date().toISOString()
-    });
+      // Check roast credits to include in response
+      const roastCheck = await checkUserCredits(userId, userPlan.plan);
+
+      // Consume 1 analysis credit (Issue #326)
+      await recordAnalysisUsage(userId, {
+        endpoint: 'preview',
+        platform,
+        hasStyleProfile: !!styleProfile && Object.keys(styleProfile).length > 0,
+        hasPersona: !!persona,
+        tone
+        // Issue #872 AC8: intensity and humorType completely removed
+      });
+
+      // Analyze content with Perspective API
+      const contentAnalysis = await analyzeContent(text);
+
+      // Check if content is safe for roasting
+      if (!contentAnalysis.safe) {
+        return res.status(400).json({
+          success: false,
+          error: 'Content not suitable for roasting',
+          details: {
+            toxicityScore: contentAnalysis.toxicityScore,
+            categories: contentAnalysis.categories,
+            reason: 'Content exceeds toxicity threshold'
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Prepare enhanced roast generation config (Issue #326)
+      const roastConfig = {
+        plan: userPlan.plan,
+        tone,
+        // Issue #872: humor_type and intensity_level deprecated
+        preview_mode: true,
+        userId: userId,
+        styleProfile: styleProfile,
+        persona: persona,
+        platform: platform,
+        language: 'es' // Default to Spanish
+      };
+
+      // Generate roast with enhanced configuration
+      const generationResult = await roastGenerator.generateRoast(
+        text,
+        contentAnalysis.toxicityScore,
+        tone,
+        roastConfig
+      );
+
+      const processingTime = Date.now() - startTime;
+      const tokensUsed =
+        generationResult.tokensUsed || roastGenerator.estimateTokens(text + generationResult.roast);
+
+      // Calculate remaining credits after consumption
+      const analysisRemaining = Math.max(0, analysisCheck.remaining - 1);
+
+      // Log successful preview generation (Issue #326)
+      logger.info('Enhanced roast preview generated', {
+        userId,
+        plan: userPlan.plan,
+        platform,
+        hasStyleProfile: !!styleProfile && Object.keys(styleProfile).length > 0,
+        hasPersona: !!persona,
+        tone,
+        // Issue #872 AC8: intensity and humorType completely removed
+        tokensUsed,
+        analysisRemaining,
+        roastsRemaining: roastCheck.remaining,
+        toxicityScore: contentAnalysis.toxicityScore,
+        processingTimeMs: processingTime,
+        roastLength: generationResult.roast?.length || 0
+      });
+
+      // Get model info for metadata
+      const selectedModel = await getModelForPlan(userPlan.plan);
+
+      // Return Issue #326 compliant response
+      res.json({
+        success: true,
+        roast: generationResult.roast,
+        tokensUsed: tokensUsed,
+        analysisCountRemaining: analysisRemaining,
+        roastsRemaining: roastCheck.remaining,
+        metadata: {
+          platform,
+          styleProfile: styleProfile,
+          persona: persona,
+          tone,
+          // Issue #872 AC8: intensity and humorType completely removed
+          toxicityScore: contentAnalysis.toxicityScore,
+          safe: contentAnalysis.safe,
+          plan: userPlan.plan,
+          processingTimeMs: processingTime,
+          generatedAt: new Date().toISOString(),
+          model: selectedModel
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const processingTime = Date.now() - startTime;
+
+      logger.error('Enhanced roast preview generation failed', {
+        userId: req.user?.id,
+        error: error.message,
+        stack: error.stack,
+        processingTimeMs: processingTime
+      });
+
+      // Fallback to mock on OpenAI API failure (Issue #326)
+      if (error.message.includes('OpenAI') || error.message.includes('API')) {
+        logger.warn('OpenAI API failed, falling back to mock mode', {
+          userId: req.user?.id,
+          error: error.message
+        });
+
+        try {
+          const mockGenerator = new (require('../services/roastGeneratorMock'))();
+          const mockRoast = await mockGenerator.generateRoast(
+            req.body.text || 'Error processing request',
+            0.5,
+            req.body.tone || 'sarcastic'
+          );
+
+          res.json({
+            success: true,
+            roast: mockRoast + ' (Modo de prueba)',
+            tokensUsed: 50,
+            analysisCountRemaining: 999,
+            roastsRemaining: 99,
+            metadata: {
+              fallbackMode: true,
+              error: 'OpenAI API unavailable',
+              generatedAt: new Date().toISOString()
+            },
+            timestamp: new Date().toISOString()
+          });
+          return;
+        } catch (mockError) {
+          logger.error('Mock fallback also failed:', mockError);
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate roast preview',
+        details:
+          process.env.NODE_ENV === 'development'
+            ? error.message
+            : 'Servicio temporalmente no disponible',
+        timestamp: new Date().toISOString()
+      });
+    }
   }
-});
+);
 
 /**
  * POST /api/roast/generate
  * Generate a roast and consume user credits
  * Requires authentication
  */
-router.post('/generate', authenticateToken, roastRateLimit, async (req, res) => {
-  const startTime = Date.now();
+router.post(
+  '/generate',
+  authenticateToken,
+  roastRateLimit,
+  validateRequest(roastGenerateSchema),
+  async (req, res) => {
+    const startTime = Date.now();
 
-  try {
-    // Validate request
-    const validationErrors = validateRoastRequest(req);
-    if (validationErrors.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        details: validationErrors,
-        timestamp: new Date().toISOString()
-      });
-    }
+    try {
+      // Issue #946: Validation now handled by Zod middleware
 
-    // Issue #872 AC8: intensity and humorType completely removed
-    const { text, tone = 'balanceado' } = req.body;
-    const userId = req.user.id;
-
-    // Get user plan info
-    const userPlan = await getUserPlanInfo(userId);
-
-    // Analyze content with Perspective API first (before consuming credits)
-    const contentAnalysis = await analyzeContent(text);
-
-    // Check if content is safe for roasting
-    if (!contentAnalysis.safe) {
-      return res.status(400).json({
-        success: false,
-        error: 'Content not suitable for roasting',
-        details: {
-          toxicityScore: contentAnalysis.toxicityScore,
-          categories: contentAnalysis.categories,
-          reason: 'Content exceeds toxicity threshold'
-        },
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Prepare metadata for credit consumption
-    const usageMetadata = {
-      tone,
       // Issue #872 AC8: intensity and humorType completely removed
-      toxicityScore: contentAnalysis.toxicityScore
-    };
+      const { text, tone = 'balanceado' } = req.body;
+      const userId = req.user.id;
 
-    // Atomically consume credits (check and record in single operation)
-    const creditResult = await consumeRoastCredits(userId, userPlan.plan, usageMetadata);
+      // Get user plan info
+      const userPlan = await getUserPlanInfo(userId);
 
-    // CodeRabbit Round 7: Fix null reference vulnerability with defensive checks
-    if (!creditResult || creditResult.success !== true) {
-      return res.status(402).json({
-        success: false,
-        error: 'Insufficient credits',
-        details: {
-          remaining: creditResult?.remaining ?? 0,
-          limit: creditResult?.limit ?? 0,
-          used: creditResult?.used ?? 0,
-          plan: userPlan?.plan ?? 'starter_trial',
-          error: creditResult?.error ?? 'Credit consumption failed'
+      // Analyze content with Perspective API first (before consuming credits)
+      const contentAnalysis = await analyzeContent(text);
+
+      // Check if content is safe for roasting
+      if (!contentAnalysis.safe) {
+        return res.status(400).json({
+          success: false,
+          error: 'Content not suitable for roasting',
+          details: {
+            toxicityScore: contentAnalysis.toxicityScore,
+            categories: contentAnalysis.categories,
+            reason: 'Content exceeds toxicity threshold'
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Prepare metadata for credit consumption
+      const usageMetadata = {
+        tone,
+        // Issue #872 AC8: intensity and humorType completely removed
+        toxicityScore: contentAnalysis.toxicityScore
+      };
+
+      // Atomically consume credits (check and record in single operation)
+      const creditResult = await consumeRoastCredits(userId, userPlan.plan, usageMetadata);
+
+      // CodeRabbit Round 7: Fix null reference vulnerability with defensive checks
+      if (!creditResult || creditResult.success !== true) {
+        return res.status(402).json({
+          success: false,
+          error: 'Insufficient credits',
+          details: {
+            remaining: creditResult?.remaining ?? 0,
+            limit: creditResult?.limit ?? 0,
+            used: creditResult?.used ?? 0,
+            plan: userPlan?.plan ?? 'starter_trial',
+            error: creditResult?.error ?? 'Credit consumption failed'
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Prepare roast generation config
+      const roastConfig = {
+        plan: userPlan.plan,
+        tone,
+        // Issue #872: humor_type and intensity_level deprecated
+        preview_mode: false
+      };
+
+      // Generate roast
+      const generationResult = await roastGenerator.generateRoast(
+        text,
+        contentAnalysis.toxicityScore,
+        tone,
+        roastConfig
+      );
+
+      // Update metadata with roast length (credits already consumed)
+      usageMetadata.roastLength = generationResult.roast?.length || 0;
+
+      const processingTime = Date.now() - startTime;
+
+      // Log successful generation
+      logger.info('Roast generated and credits consumed', {
+        userId,
+        plan: userPlan.plan,
+        tone,
+        // Issue #872 AC8: intensity and humorType completely removed
+        toxicityScore: contentAnalysis.toxicityScore,
+        processingTimeMs: processingTime,
+        roastLength: generationResult.roast?.length || 0,
+        creditsRemaining: creditResult.remaining
+      });
+
+      // Return successful response
+      res.json({
+        success: true,
+        data: {
+          roast: generationResult.roast,
+          metadata: {
+            tone,
+            // Issue #872 AC8: intensity and humorType completely removed
+            toxicityScore: contentAnalysis.toxicityScore,
+            safe: contentAnalysis.safe,
+            preview: false,
+            plan: userPlan.plan,
+            processingTimeMs: processingTime,
+            generatedAt: new Date().toISOString()
+          },
+          credits: {
+            remaining: creditResult.remaining,
+            limit: creditResult.limit,
+            used: creditResult.used,
+            unlimited: creditResult.unlimited
+          }
         },
         timestamp: new Date().toISOString()
       });
+    } catch (error) {
+      const processingTime = Date.now() - startTime;
+
+      logger.error('Roast generation failed', {
+        userId: req.user?.id,
+        error: error.message,
+        stack: error.stack,
+        processingTimeMs: processingTime
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate roast',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        timestamp: new Date().toISOString()
+      });
     }
-
-    // Prepare roast generation config
-    const roastConfig = {
-      plan: userPlan.plan,
-      tone,
-      // Issue #872: humor_type and intensity_level deprecated
-      preview_mode: false
-    };
-
-    // Generate roast
-    const generationResult = await roastGenerator.generateRoast(
-      text,
-      contentAnalysis.toxicityScore,
-      tone,
-      roastConfig
-    );
-
-    // Update metadata with roast length (credits already consumed)
-    usageMetadata.roastLength = generationResult.roast?.length || 0;
-
-    const processingTime = Date.now() - startTime;
-
-    // Log successful generation
-    logger.info('Roast generated and credits consumed', {
-      userId,
-      plan: userPlan.plan,
-      tone,
-      // Issue #872 AC8: intensity and humorType completely removed
-      toxicityScore: contentAnalysis.toxicityScore,
-      processingTimeMs: processingTime,
-      roastLength: generationResult.roast?.length || 0,
-      creditsRemaining: creditResult.remaining
-    });
-
-    // Return successful response
-    res.json({
-      success: true,
-      data: {
-        roast: generationResult.roast,
-        metadata: {
-          tone,
-          // Issue #872 AC8: intensity and humorType completely removed
-          toxicityScore: contentAnalysis.toxicityScore,
-          safe: contentAnalysis.safe,
-          preview: false,
-          plan: userPlan.plan,
-          processingTimeMs: processingTime,
-          generatedAt: new Date().toISOString()
-        },
-        credits: {
-          remaining: creditResult.remaining,
-          limit: creditResult.limit,
-          used: creditResult.used,
-          unlimited: creditResult.unlimited
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    const processingTime = Date.now() - startTime;
-
-    logger.error('Roast generation failed', {
-      userId: req.user?.id,
-      error: error.message,
-      stack: error.stack,
-      processingTimeMs: processingTime
-    });
-
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate roast',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      timestamp: new Date().toISOString()
-    });
   }
-});
+);
 
 /**
  * GET /api/roast/credits
@@ -814,277 +780,224 @@ router.get('/credits', authenticateToken, async (req, res) => {
  * Supports 1-2 versions, voice styles, auto-approve logic with transparency validation
  * Requires authentication
  */
-router.post('/engine', authenticateToken, roastRateLimit, async (req, res) => {
-  const startTime = Date.now();
+router.post(
+  '/engine',
+  authenticateToken,
+  roastRateLimit,
+  validateRequest(roastEngineSchema),
+  async (req, res) => {
+    const startTime = Date.now();
 
-  try {
-    // Check if roast engine is available
-    if (!roastEngine) {
-      return res.status(503).json({
-        success: false,
-        error: 'Roast Engine not available',
-        fallback: 'Use /api/roast/generate endpoint instead',
-        timestamp: new Date().toISOString()
+    try {
+      // Check if roast engine is available
+      if (!roastEngine) {
+        return res.status(503).json({
+          success: false,
+          error: 'Roast Engine not available',
+          fallback: 'Use /api/roast/generate endpoint instead',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Issue #946: Validation now handled by Zod middleware
+
+      const {
+        comment,
+        style = 'balanceado',
+        language = 'es',
+        autoApprove = false,
+        platform = 'twitter',
+        commentId = null
+      } = req.body;
+
+      const userId = req.user.id;
+
+      // Get user plan info
+      const userPlan = await getUserPlanInfo(userId);
+
+      // Analyze content with Perspective API first
+      const contentAnalysis = await analyzeContent(comment);
+
+      // Check if content is safe for roasting
+      if (!contentAnalysis.safe) {
+        return res.status(400).json({
+          success: false,
+          error: 'Content not suitable for roasting',
+          details: {
+            toxicityScore: contentAnalysis.toxicityScore,
+            categories: contentAnalysis.categories,
+            reason: 'Content exceeds toxicity threshold'
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Atomically consume credits before generation (prevents race conditions)
+      const creditResult = await consumeRoastCredits(userId, userPlan.plan, {
+        method: 'roast_engine',
+        style: style,
+        language: language,
+        autoApprove: autoApprove,
+        platform: platform,
+        toxicityScore: contentAnalysis.toxicityScore
       });
-    }
 
-    // Validate request
-    const validationErrors = validateRoastEngineRequest(req);
-    if (validationErrors.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        details: validationErrors,
-        timestamp: new Date().toISOString()
-      });
-    }
+      // CodeRabbit Round 7: Fix null reference vulnerability with defensive checks
+      if (!creditResult || creditResult.success !== true) {
+        return res.status(402).json({
+          success: false,
+          error: 'Insufficient credits',
+          details: {
+            remaining: creditResult?.remaining ?? 0,
+            limit: creditResult?.limit ?? 0,
+            used: creditResult?.used ?? 0,
+            plan: userPlan?.plan ?? 'starter_trial',
+            error: creditResult?.error ?? 'Credit consumption failed'
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
 
-    const {
-      comment,
-      style = 'balanceado',
-      language = 'es',
-      autoApprove = false,
-      platform = 'twitter',
-      commentId = null
-    } = req.body;
-
-    const userId = req.user.id;
-
-    // Get user plan info
-    const userPlan = await getUserPlanInfo(userId);
-
-    // Analyze content with Perspective API first
-    const contentAnalysis = await analyzeContent(comment);
-
-    // Check if content is safe for roasting
-    if (!contentAnalysis.safe) {
-      return res.status(400).json({
-        success: false,
-        error: 'Content not suitable for roasting',
-        details: {
-          toxicityScore: contentAnalysis.toxicityScore,
-          categories: contentAnalysis.categories,
-          reason: 'Content exceeds toxicity threshold'
-        },
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Atomically consume credits before generation (prevents race conditions)
-    const creditResult = await consumeRoastCredits(userId, userPlan.plan, {
-      method: 'roast_engine',
-      style: style,
-      language: language,
-      autoApprove: autoApprove,
-      platform: platform,
-      toxicityScore: contentAnalysis.toxicityScore
-    });
-
-    // CodeRabbit Round 7: Fix null reference vulnerability with defensive checks
-    if (!creditResult || creditResult.success !== true) {
-      return res.status(402).json({
-        success: false,
-        error: 'Insufficient credits',
-        details: {
-          remaining: creditResult?.remaining ?? 0,
-          limit: creditResult?.limit ?? 0,
-          used: creditResult?.used ?? 0,
-          plan: userPlan?.plan ?? 'starter_trial',
-          error: creditResult?.error ?? 'Credit consumption failed'
-        },
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Prepare input for roast engine
-    const input = {
-      comment: comment,
-      toxicityScore: contentAnalysis.toxicityScore,
-      commentId: commentId
-    };
-
-    // Validate orgId for multi-tenant safety
-    const orgId = req.user.orgId || null;
-    if (orgId && typeof orgId !== 'string') {
-      logger.warn('Invalid orgId format detected', {
-        userId: userId,
-        orgId: orgId,
-        orgIdType: typeof orgId
-      });
-    }
-
-    const options = {
-      userId: userId,
-      orgId: orgId,
-      style: normalizeStyle(style) || VALIDATION_CONSTANTS.DEFAULTS.STYLE,
-      language: normalizeLanguage(language),
-      autoApprove: autoApprove,
-      platform: normalizePlatform(platform),
-      plan: userPlan.plan
-    };
-
-    // Generate roast using the advanced engine
-    const result = await roastEngine.generateRoast(input, options);
-
-    if (!result.success) {
-      return res.status(500).json({
-        success: false,
-        error: result.error,
-        details: result.details,
-        retries: result.retries,
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Credits already consumed atomically before generation
-    // Update usage metadata can be done asynchronously if needed
-
-    const processingTime = Date.now() - startTime;
-
-    // Log successful generation
-    logger.info('🔥 Roast Engine generation completed', {
-      userId,
-      plan: userPlan.plan,
-      style,
-      language,
-      autoApprove,
-      versionsGenerated: result.metadata.versionsGenerated,
-      status: result.status,
-      processingTimeMs: processingTime
-    });
-
-    // Validate transparency for auto-approved roasts (critical guard) - CodeRabbit Round 6: Enhanced error handling
-    if (autoApprove && result.status === 'auto_approved' && !result?.transparency?.applied) {
-      const transparencyError = {
-        userId,
-        roastId: result.metadata?.id,
-        status: result.status,
-        autoApprove,
-        transparencyApplied: result?.transparency?.applied
+      // Prepare input for roast engine
+      const input = {
+        comment: comment,
+        toxicityScore: contentAnalysis.toxicityScore,
+        commentId: commentId
       };
 
-      logger.error('❌ Critical: Auto-approved roast without transparency', transparencyError);
+      // Validate orgId for multi-tenant safety
+      const orgId = req.user.orgId || null;
+      if (orgId && typeof orgId !== 'string') {
+        logger.warn('Invalid orgId format detected', {
+          userId: userId,
+          orgId: orgId,
+          orgIdType: typeof orgId
+        });
+      }
 
-      // CodeRabbit Round 6: Capture to Sentry for monitoring
-      Sentry.captureMessage('Auto-approved roast without transparency disclaimer', {
-        level: 'error',
-        extra: transparencyError,
-        tags: {
-          feature: 'roast_engine',
-          severity: 'critical',
-          type: 'transparency_validation_failure'
-        }
+      const options = {
+        userId: userId,
+        orgId: orgId,
+        style: normalizeStyle(style) || VALIDATION_CONSTANTS.DEFAULTS.STYLE,
+        language: normalizeLanguage(language),
+        autoApprove: autoApprove,
+        platform: normalizePlatform(platform),
+        plan: userPlan.plan
+      };
+
+      // Generate roast using the advanced engine
+      const result = await roastEngine.generateRoast(input, options);
+
+      if (!result.success) {
+        return res.status(500).json({
+          success: false,
+          error: result.error,
+          details: result.details,
+          retries: result.retries,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Credits already consumed atomically before generation
+      // Update usage metadata can be done asynchronously if needed
+
+      const processingTime = Date.now() - startTime;
+
+      // Log successful generation
+      logger.info('🔥 Roast Engine generation completed', {
+        userId,
+        plan: userPlan.plan,
+        style,
+        language,
+        autoApprove,
+        versionsGenerated: result.metadata.versionsGenerated,
+        status: result.status,
+        processingTimeMs: processingTime
       });
 
-      // CodeRabbit Round 6: Return 400 instead of 500 (client error, not server error)
-      return res.status(400).json({
+      // Validate transparency for auto-approved roasts (critical guard) - CodeRabbit Round 6: Enhanced error handling
+      if (autoApprove && result.status === 'auto_approved' && !result?.transparency?.applied) {
+        const transparencyError = {
+          userId,
+          roastId: result.metadata?.id,
+          status: result.status,
+          autoApprove,
+          transparencyApplied: result?.transparency?.applied
+        };
+
+        logger.error('❌ Critical: Auto-approved roast without transparency', transparencyError);
+
+        // CodeRabbit Round 6: Capture to Sentry for monitoring
+        Sentry.captureMessage('Auto-approved roast without transparency disclaimer', {
+          level: 'error',
+          extra: transparencyError,
+          tags: {
+            feature: 'roast_engine',
+            severity: 'critical',
+            type: 'transparency_validation_failure'
+          }
+        });
+
+        // CodeRabbit Round 6: Return 400 instead of 500 (client error, not server error)
+        return res.status(400).json({
+          success: false,
+          error: 'Transparency validation failed',
+          details: 'Auto-approved roast must have transparency disclaimer',
+          code: 'TRANSPARENCY_REQUIRED',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Return successful response
+      res.json({
+        success: true,
+        data: {
+          roast: result.roast,
+          versions: result.versions,
+          style: result.style,
+          language: result.language,
+          status: result.status,
+          transparency: result.transparency,
+          metadata: {
+            ...result.metadata,
+            plan: userPlan.plan,
+            toxicityScore: contentAnalysis.toxicityScore,
+            safe: contentAnalysis.safe,
+            processingTimeMs: processingTime
+          },
+          credits: {
+            remaining: creditResult.remaining,
+            limit: creditResult.limit,
+            used: creditResult.used,
+            unlimited: creditResult.unlimited
+          }
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const processingTime = Date.now() - startTime;
+
+      logger.error('Roast Engine generation failed', {
+        userId: req.user?.id,
+        error: error.message,
+        stack: error.stack,
+        processingTimeMs: processingTime
+      });
+
+      res.status(500).json({
         success: false,
-        error: 'Transparency validation failed',
-        details: 'Auto-approved roast must have transparency disclaimer',
-        code: 'TRANSPARENCY_REQUIRED',
+        error: 'Failed to generate roast with engine',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
         timestamp: new Date().toISOString()
       });
     }
-
-    // Return successful response
-    res.json({
-      success: true,
-      data: {
-        roast: result.roast,
-        versions: result.versions,
-        style: result.style,
-        language: result.language,
-        status: result.status,
-        transparency: result.transparency,
-        metadata: {
-          ...result.metadata,
-          plan: userPlan.plan,
-          toxicityScore: contentAnalysis.toxicityScore,
-          safe: contentAnalysis.safe,
-          processingTimeMs: processingTime
-        },
-        credits: {
-          remaining: creditResult.remaining,
-          limit: creditResult.limit,
-          used: creditResult.used,
-          unlimited: creditResult.unlimited
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    const processingTime = Date.now() - startTime;
-
-    logger.error('Roast Engine generation failed', {
-      userId: req.user?.id,
-      error: error.message,
-      stack: error.stack,
-      processingTimeMs: processingTime
-    });
-
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate roast with engine',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      timestamp: new Date().toISOString()
-    });
   }
-});
+);
 
 /**
  * Validate roast engine request parameters with improved normalization
  */
-function validateRoastEngineRequest(req) {
-  // CodeRabbit Round 6: Remove orgId from request body validation (security fix)
-  // orgId should come from req.user.orgId only, not user input
-  const { comment, style, language, autoApprove, platform } = req.body;
-  const errors = [];
-
-  // Validate comment (enhanced for CodeRabbit Round 5)
-  if (!comment || typeof comment !== 'string') {
-    errors.push('Comment is required and must be a string');
-  } else if (comment.trim().length === 0) {
-    errors.push('Comment cannot be empty or whitespace only');
-  } else if (comment.length > VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH) {
-    errors.push(`Comment must be less than ${VALIDATION_CONSTANTS.MAX_COMMENT_LENGTH} characters`);
-  }
-
-  // Normalize and validate style (enhanced normalization)
-  const normalizedLanguage = normalizeLanguage(language);
-  const normalizedStyle = normalizeStyle(style);
-
-  if (style && !isValidStyle(normalizedStyle, normalizedLanguage)) {
-    const validStyles = getValidStylesForLanguage(normalizedLanguage);
-    errors.push(
-      `Style must be one of: ${validStyles.join(', ')} for language '${normalizedLanguage}'`
-    );
-  }
-
-  // Validate language (enhanced with BCP-47 support) - CodeRabbit Round 6: Use normalized value
-  if (language && !isValidLanguage(normalizedLanguage)) {
-    errors.push(
-      `Language must be one of: ${VALIDATION_CONSTANTS.VALID_LANGUAGES.join(', ')} (BCP-47 codes like 'en-US' are normalized)`
-    );
-  }
-
-  // Validate autoApprove
-  if (autoApprove !== undefined && typeof autoApprove !== 'boolean') {
-    errors.push('autoApprove must be a boolean');
-  }
-
-  // Validate platform (enhanced with alias support) - CodeRabbit Round 6: Use normalized value
-  const normalizedPlatform = normalizePlatform(platform);
-  if (platform && !isValidPlatform(normalizedPlatform)) {
-    errors.push(
-      `Platform must be one of: ${VALIDATION_CONSTANTS.VALID_PLATFORMS.join(', ')} (aliases like 'X' → 'twitter' are supported)`
-    );
-  }
-
-  // CodeRabbit Round 6: Removed orgId validation from request body
-  // orgId is now only validated from req.user.orgId for security
-
-  return errors;
-}
+// Issue #946: validateRoastEngineRequest() removed - replaced by Zod validation middleware
 
 /**
  * GET /api/roast/validation
@@ -1194,177 +1107,166 @@ router.get('/styles', publicRateLimit, optionalAuth, async (req, res) => {
  * Consumes 1 credit per validation regardless of result
  * Requires authentication
  */
-router.post('/:id/validate', authenticateToken, roastRateLimit, async (req, res) => {
-  const startTime = Date.now();
+router.post(
+  '/:id/validate',
+  authenticateToken,
+  roastRateLimit,
+  validateRequest(roastValidateSchema),
+  async (req, res) => {
+    const startTime = Date.now();
 
-  try {
-    const { id: roastId } = req.params;
-    const { text, platform: rawPlatform = 'twitter' } = req.body;
-    const platform = normalizePlatform(rawPlatform);
-    if (!isValidPlatform(platform)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid platform',
-        timestamp: new Date().toISOString()
-      });
-    }
-    const userId = req.user.id;
-
-    // Validate request parameters
-    if (!text || typeof text !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Text is required and must be a string',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    if (!roastId || typeof roastId !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Roast ID is required',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Get user plan info
-    const userPlan = await getUserPlanInfo(userId);
-
-    // SECURITY: Verify roast ownership to prevent IDOR attacks
-    const { data: roastOwnership, error: ownershipError } = await supabaseServiceClient
-      .from('roasts')
-      .select('user_id, content')
-      .eq('id', roastId)
-      .eq('user_id', userId)
-      .single();
-
-    if (ownershipError || !roastOwnership) {
-      logger.warn('Attempted access to unauthorized roast', {
-        userId,
-        roastId,
-        error: ownershipError?.message
-      });
-
-      return res.status(404).json({
-        success: false,
-        error: 'Roast not found or access denied',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // CRITICAL: Consume 1 credit BEFORE validation (as per SPEC 8 requirements)
-    // This ensures credit consumption regardless of validation result
-    const creditResult = await consumeRoastCredits(userId, userPlan.plan, {
-      method: 'style_validation',
-      roastId: roastId,
-      platform: platform,
-      textLength: text.length,
-      timestamp: new Date().toISOString()
-    });
-
-    if (!creditResult || creditResult.success !== true) {
-      return res.status(402).json({
-        success: false,
-        error: 'Insufficient credits for validation',
-        details: {
-          remaining: creditResult?.remaining ?? 0,
-          limit: creditResult?.limit ?? 0,
-          used: creditResult?.used ?? 0,
-          plan: userPlan?.plan ?? 'starter_trial',
-          error: creditResult?.error ?? 'Credit consumption failed'
-        },
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Import and initialize the StyleValidator
-    const StyleValidator = require('../services/styleValidator');
-    const validator = new StyleValidator();
-
-    // Perform validation with original text for comparison
-    const validationResult = validator.validate(text, platform, roastOwnership.content);
-
-    const processingTime = Date.now() - startTime;
-
-    // Log validation activity (GDPR-compliant metadata only)
-    logger.info('Style validation completed', {
-      userId,
-      roastId,
-      plan: userPlan.plan,
-      platform,
-      valid: validationResult.valid,
-      errorsCount: validationResult.errors.length,
-      warningsCount: validationResult.warnings.length,
-      textLength: text.length,
-      processingTimeMs: processingTime,
-      creditsConsumed: 1,
-      creditsRemaining: creditResult.remaining
-    });
-
-    // Record validation usage for analytics (GDPR-compliant)
     try {
-      await recordRoastUsage(userId, {
-        type: 'style_validation',
+      const { id: roastId } = req.params;
+      const { text, platform } = req.body; // Issue #946: Validation now handled by Zod middleware
+      const userId = req.user.id;
+
+      if (!roastId || typeof roastId !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: 'Roast ID is required',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Get user plan info
+      const userPlan = await getUserPlanInfo(userId);
+
+      // SECURITY: Verify roast ownership to prevent IDOR attacks
+      const { data: roastOwnership, error: ownershipError } = await supabaseServiceClient
+        .from('roasts')
+        .select('user_id, content')
+        .eq('id', roastId)
+        .eq('user_id', userId)
+        .single();
+
+      if (ownershipError || !roastOwnership) {
+        logger.warn('Attempted access to unauthorized roast', {
+          userId,
+          roastId,
+          error: ownershipError?.message
+        });
+
+        return res.status(404).json({
+          success: false,
+          error: 'Roast not found or access denied',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // CRITICAL: Consume 1 credit BEFORE validation (as per SPEC 8 requirements)
+      // This ensures credit consumption regardless of validation result
+      const creditResult = await consumeRoastCredits(userId, userPlan.plan, {
+        method: 'style_validation',
         roastId: roastId,
         platform: platform,
         textLength: text.length,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!creditResult || creditResult.success !== true) {
+        return res.status(402).json({
+          success: false,
+          error: 'Insufficient credits for validation',
+          details: {
+            remaining: creditResult?.remaining ?? 0,
+            limit: creditResult?.limit ?? 0,
+            used: creditResult?.used ?? 0,
+            plan: userPlan?.plan ?? 'starter_trial',
+            error: creditResult?.error ?? 'Credit consumption failed'
+          },
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Import and initialize the StyleValidator
+      const StyleValidator = require('../services/styleValidator');
+      const validator = new StyleValidator();
+
+      // Perform validation with original text for comparison
+      const validationResult = validator.validate(text, platform, roastOwnership.content);
+
+      const processingTime = Date.now() - startTime;
+
+      // Log validation activity (GDPR-compliant metadata only)
+      logger.info('Style validation completed', {
+        userId,
+        roastId,
+        plan: userPlan.plan,
+        platform,
         valid: validationResult.valid,
         errorsCount: validationResult.errors.length,
         warningsCount: validationResult.warnings.length,
-        processingTimeMs: processingTime
+        textLength: text.length,
+        processingTimeMs: processingTime,
+        creditsConsumed: 1,
+        creditsRemaining: creditResult.remaining
       });
-    } catch (usageError) {
-      logger.warn('Failed to record validation usage', {
-        userId,
-        roastId,
-        error: usageError.message
-      });
-      // Don't fail the request if usage recording fails
-    }
 
-    // Return validation result
-    res.json({
-      success: true,
-      data: {
-        roastId: roastId,
-        platform: platform,
-        validation: {
+      // Record validation usage for analytics (GDPR-compliant)
+      try {
+        await recordRoastUsage(userId, {
+          type: 'style_validation',
+          roastId: roastId,
+          platform: platform,
+          textLength: text.length,
           valid: validationResult.valid,
-          errors: validationResult.errors,
-          warnings: validationResult.warnings,
-          metadata: {
-            ...validationResult.metadata,
-            processingTimeMs: processingTime
+          errorsCount: validationResult.errors.length,
+          warningsCount: validationResult.warnings.length,
+          processingTimeMs: processingTime
+        });
+      } catch (usageError) {
+        logger.warn('Failed to record validation usage', {
+          userId,
+          roastId,
+          error: usageError.message
+        });
+        // Don't fail the request if usage recording fails
+      }
+
+      // Return validation result
+      res.json({
+        success: true,
+        data: {
+          roastId: roastId,
+          platform: platform,
+          validation: {
+            valid: validationResult.valid,
+            errors: validationResult.errors,
+            warnings: validationResult.warnings,
+            metadata: {
+              ...validationResult.metadata,
+              processingTimeMs: processingTime
+            }
+          },
+          credits: {
+            remaining: creditResult.remaining,
+            limit: creditResult.limit,
+            used: creditResult.used,
+            unlimited: creditResult.unlimited,
+            consumed: 1 // Always 1 for validation
           }
         },
-        credits: {
-          remaining: creditResult.remaining,
-          limit: creditResult.limit,
-          used: creditResult.used,
-          unlimited: creditResult.unlimited,
-          consumed: 1 // Always 1 for validation
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    const processingTime = Date.now() - startTime;
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      const processingTime = Date.now() - startTime;
 
-    logger.error('Style validation endpoint failed', {
-      userId: req.user?.id,
-      roastId: req.params?.id,
-      error: error.message,
-      stack: error.stack,
-      processingTimeMs: processingTime
-    });
+      logger.error('Style validation endpoint failed', {
+        userId: req.user?.id,
+        roastId: req.params?.id,
+        error: error.message,
+        stack: error.stack,
+        processingTimeMs: processingTime
+      });
 
-    res.status(500).json({
-      success: false,
-      error: 'Validation service temporarily unavailable',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      timestamp: new Date().toISOString()
-    });
+      res.status(500).json({
+        success: false,
+        error: 'Validation service temporarily unavailable',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        timestamp: new Date().toISOString()
+      });
+    }
   }
-});
+);
 
 module.exports = router;
