@@ -25,6 +25,7 @@ Migración de validación manual de endpoints de roast a **Zod schemas** declara
 ### 1. Nuevos Archivos
 
 #### `src/validators/zod/roast.schema.js` ✨
+
 - **Propósito:** Esquemas declarativos para validación de endpoints
 - **Esquemas creados:**
   - `roastPreviewSchema` - POST /api/roast/preview
@@ -39,6 +40,7 @@ Migración de validación manual de endpoints de roast a **Zod schemas** declara
   - AutoApprove: boolean, default: false
 
 #### `src/middleware/zodValidation.js` ✨
+
 - **Propósito:** Middleware factory para Express
 - **Funciones:**
   - Validación automática con `schema.parse()`
@@ -47,6 +49,7 @@ Migración de validación manual de endpoints de roast a **Zod schemas** declara
   - Manejo de errores inesperados
 
 #### `tests/unit/validators/zod/roast.schema.test.js` ✨
+
 - **Tests:** 43 tests ✅
 - **Cobertura:**
   - Validación de texto (min/max length, trim, edge cases)
@@ -56,6 +59,7 @@ Migración de validación manual de endpoints de roast a **Zod schemas** declara
   - Unicode, multilínea, whitespace
 
 #### `tests/unit/middleware/zodValidation.test.js` ✨
+
 - **Tests:** 22 tests ✅
 - **Cobertura:**
   - Validación exitosa con transformaciones
@@ -67,6 +71,7 @@ Migración de validación manual de endpoints de roast a **Zod schemas** declara
 ### 2. Archivos Modificados
 
 #### `src/routes/roast.js`
+
 - **Líneas modificadas:** ~150
 - **Cambios principales:**
   - Importación de esquemas Zod y middleware
@@ -76,6 +81,7 @@ Migración de validación manual de endpoints de roast a **Zod schemas** declara
   - Comentarios `// Issue #946` para trazabilidad
 
 #### `tests/integration/roast.test.js`
+
 - **Líneas modificadas:** ~10
 - **Cambios:**
   - Actualización de datos de prueba: `tone: 'Balanceado'` (formato canónico)
@@ -83,11 +89,13 @@ Migración de validación manual de endpoints de roast a **Zod schemas** declara
   - Tests passing: 8/8 ✅
 
 #### `jest.config.js`
+
 - **Líneas modificadas:** 1
 - **Cambios:**
   - Añadido `'<rootDir>/tests/unit/validators/**/*.test.js'` a testMatch
 
 #### `docs/nodes/roast.md`
+
 - **Líneas añadidas:** ~80
 - **Cambios:**
   - Nueva sección "Input Validation (Issue #946)"
@@ -103,18 +111,18 @@ Migración de validación manual de endpoints de roast a **Zod schemas** declara
 
 ### Tests Nuevos
 
-| Suite | Tests | Status | Coverage |
-|-------|-------|--------|----------|
-| Zod Schemas (unit) | 43 | ✅ Passing | Base schemas + endpoint schemas |
-| Zod Middleware (unit) | 22 | ✅ Passing | Validation, errors, logging |
-| **Total Nuevos** | **65** | **✅ 100%** | **Zod validation layer** |
+| Suite                 | Tests  | Status      | Coverage                        |
+| --------------------- | ------ | ----------- | ------------------------------- |
+| Zod Schemas (unit)    | 43     | ✅ Passing  | Base schemas + endpoint schemas |
+| Zod Middleware (unit) | 22     | ✅ Passing  | Validation, errors, logging     |
+| **Total Nuevos**      | **65** | **✅ 100%** | **Zod validation layer**        |
 
 ### Tests Actualizados
 
-| Suite | Tests | Status | Notes |
-|-------|-------|--------|-------|
-| Integration (roast) | 8 | ✅ Passing | Actualizado formato de tone |
-| **Total Actualizados** | **8** | **✅ 100%** | **No breaking changes** |
+| Suite                  | Tests | Status      | Notes                       |
+| ---------------------- | ----- | ----------- | --------------------------- |
+| Integration (roast)    | 8     | ✅ Passing  | Actualizado formato de tone |
+| **Total Actualizados** | **8** | **✅ 100%** | **No breaking changes**     |
 
 ### Coverage
 
@@ -129,19 +137,25 @@ Migración de validación manual de endpoints de roast a **Zod schemas** declara
 ## 🔍 Validación GDD
 
 ### Runtime Validation
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 ```
+
 **Resultado:** ✅ HEALTHY
+
 - 15 nodes validated
 - Graph consistent
 - spec.md synchronized
 
 ### Health Score
+
 ```bash
 node scripts/score-gdd-health.js --ci
 ```
+
 **Resultado:** ✅ 89.5/100 (threshold: ≥87)
+
 - 13 nodes healthy 🟢
 - 2 nodes degraded 🟡
 - 0 nodes critical 🔴
@@ -151,19 +165,18 @@ node scripts/score-gdd-health.js --ci
 ## 📝 Formato de Error Mejorado
 
 ### Antes (Manual Validation)
+
 ```json
 {
   "success": false,
   "error": "Validation failed",
-  "details": [
-    "Text cannot be empty",
-    "Tone must be one of: sarcastic, witty, ..."
-  ],
+  "details": ["Text cannot be empty", "Tone must be one of: sarcastic, witty, ..."],
   "timestamp": "..."
 }
 ```
 
 ### Después (Zod Validation)
+
 ```json
 {
   "success": false,
@@ -185,6 +198,7 @@ node scripts/score-gdd-health.js --ci
 ```
 
 **Mejoras:**
+
 - ✅ Errores estructurados por campo
 - ✅ Códigos de error programáticos
 - ✅ Mensajes más específicos
@@ -205,10 +219,12 @@ node scripts/score-gdd-health.js --ci
 ## 📚 Documentación
 
 ### Actualizada
+
 - ✅ `docs/nodes/roast.md` - Nueva sección "Input Validation"
 - ✅ `docs/plan/issue-946.md` - Plan completo de implementación
 
 ### Referencias
+
 - Zod docs: https://zod.dev/
 - Zod v3.25.76 (ya instalado)
 - CodeRabbit lessons: `docs/patterns/coderabbit-lessons.md`
@@ -218,21 +234,25 @@ node scripts/score-gdd-health.js --ci
 ## 🚦 Checklist Pre-Merge
 
 ### Tests
+
 - [x] Tests unitarios pasando (65/65) ✅
 - [x] Tests de integración pasando (8/8) ✅
 - [x] Coverage ≥90% (Zod layer: 100%) ✅
 
 ### Documentación
+
 - [x] Nodo GDD actualizado ✅
 - [x] Changelog en PR ✅
 - [x] Comentarios en código ✅
 
 ### GDD
+
 - [x] Validación runtime HEALTHY ✅
 - [x] Health score ≥87 (89.5) ✅
 - [x] Agentes Relevantes actualizados ✅
 
 ### Quality
+
 - [ ] CodeRabbit: 0 comentarios pendientes (pending review)
 - [x] No breaking changes verificado ✅
 - [x] Linter passing ✅
@@ -260,6 +280,7 @@ node scripts/score-gdd-health.js --ci
 ## 🎉 Resultado
 
 Migración exitosa de validación manual a Zod schemas. Mejora significativa en:
+
 - ✅ **Type Safety** - TypeScript-ready schemas
 - ✅ **Mantenibilidad** - Validación declarativa y centralizada
 - ✅ **Error Messages** - Mensajes específicos por campo
@@ -267,4 +288,3 @@ Migración exitosa de validación manual a Zod schemas. Mejora significativa en:
 - ✅ **Testing** - 100% coverage de capa de validación
 
 **Calidad > Velocidad** - Producto monetizable con validación robusta.
-
