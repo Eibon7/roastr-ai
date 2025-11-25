@@ -39,9 +39,7 @@ function checkPsqlAvailable() {
 async function skipIfPsqlNotAvailable() {
   const available = await checkPsqlAvailable();
   if (!available) {
-    console.warn(
-      '⚠️  psql not found in PATH. RLS tests require PostgreSQL client tools.'
-    );
+    console.warn('⚠️  psql not found in PATH. RLS tests require PostgreSQL client tools.');
     console.warn('   Install PostgreSQL client tools or skip RLS tests.');
     console.warn('   On macOS: brew install postgresql');
     console.warn('   On Ubuntu: sudo apt-get install postgresql-client');
@@ -55,4 +53,3 @@ module.exports = {
   checkPsqlAvailable,
   skipIfPsqlNotAvailable
 };
-
