@@ -30,6 +30,11 @@ const VALIDATION_CONSTANTS = Object.freeze({
   MAX_COMMENT_LENGTH: 2000,
   MIN_COMMENT_LENGTH: 1,
 
+  // Intensity level validation (Issue #717)
+  MIN_INTENSITY: 1,
+  MAX_INTENSITY: 5,
+  DEFAULT_INTENSITY: 3,
+
   // Roast styles by language
   VALID_STYLES: Object.freeze({
     es: Object.freeze(['flanders', 'balanceado', 'canalla']),
@@ -54,12 +59,14 @@ const VALIDATION_CONSTANTS = Object.freeze({
 
   // Issue #868: Removed legacy VALID_TONES and VALID_HUMOR_TYPES
   // Use VALID_STYLES (flanders, balanceado, canalla) as único selector
+  // Note: VALID_HUMOR_TYPES removed - humor types deprecated in Issue #872
 
-  // Default values (Issue #868: Removed INTENSITY and HUMOR_TYPE)
+  // Default values (Issue #868: Removed HUMOR_TYPE from defaults)
   DEFAULTS: Object.freeze({
     STYLE: 'balanceado',
     LANGUAGE: 'es',
-    PLATFORM: 'twitter'
+    PLATFORM: 'twitter',
+    INTENSITY: 3
   })
 });
 
