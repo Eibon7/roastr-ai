@@ -13,7 +13,7 @@ This report documents the progress on Issue #929: Coverage improvement for criti
 |----|-------------|--------|-------|--------|--------|
 | **AC1** | shieldService.js ≥75% | 62.5% | **82.62%** | 75% | ✅ **EXCEEDED** |
 | **AC2** | queueService.js ≥75% | 37.21% | **81.16%** | 75% | ✅ **EXCEEDED** (PR #968) |
-| **AC3** | authService.js ≥85% | 50.75% | **62.87%** | 85% | 🟡 In Progress |
+| **AC3** | authService.js ≥85% | 50.75% | **71.02%** | 85% | 🟡 In Progress |
 | **AC4** | costControl.js ≥85% | 28.86% | 38.83% | 85% | 🟡 Deferred |
 | **AC5** | All tests pass | - | 268 tests | 100% | ✅ **ACHIEVED** |
 | **AC6** | Tests cover main methods | - | - | - | ✅ **ACHIEVED** |
@@ -45,9 +45,9 @@ Coverage: 62.5% → 82.62% (+20.12pp)
 - Initialize and shutdown (2 tests)
 - Log method (4 tests)
 
-### authService-coverage.test.js (45+ tests)
+### authService-coverage.test.js (90+ tests)
 
-Coverage: 50.75% → 62.87% (+12.12pp)
+Coverage: 50.75% → 71.02% (+20.27pp)
 
 **Test Categories:**
 - OAuth methods (3 tests)
@@ -124,7 +124,7 @@ npm test -- tests/unit/services/authService.test.js tests/unit/services/authServ
 
 - **shieldService.js**: ✅ Target exceeded (82.62% > 75%)
 - **queueService.js**: ✅ Target exceeded in PR #968 (81.16% > 75%)
-- **authService.js**: 🟡 Significant progress (62.87%), integration tests needed
+- **authService.js**: 🟡 Significant progress (71.02%), integration tests needed for 85%
 - **costControl.js**: 🟡 Deferred, integration tests needed
 
 **Overall Issue Completion: 70%** (7/10 ACs complete)
