@@ -87,10 +87,13 @@ router.get('/', authenticateToken, async (req, res) => {
         displayName: modeId
       };
 
-      // Check if mode is available (e.g., NSFW requires Grok API key)
+      // Check if mode is available (e.g., NSFW requires Grok API key or fully configured Portkey)
       let available = true;
       if (modeId === 'nsfw') {
-        available = !!(process.env.GROK_API_KEY || process.env.PORTKEY_API_KEY);
+        // NSFW requires either Grok API key or fully configured Portkey (both API_KEY and PROJECT_ID)
+        const grokApiKey = process.env.GROK_API_KEY;
+        const portkeyConfigured = !!(process.env.PORTKEY_API_KEY && process.env.PORTKEY_PROJECT_ID);
+        available = !!(grokApiKey || portkeyConfigured);
       }
 
       return {

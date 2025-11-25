@@ -15,7 +15,7 @@ const OpenAI = require('openai');
 const Portkey = require('portkey-ai');
 const { logger } = require('../../utils/logger');
 const { getRoute: getRouteConfig, getAvailableModes: getAvailableModesFromRoutes, modeExists: modeExistsInRoutes } = require('./routes');
-const { getNextFallback } = require('./fallbacks');
+const { getNextFallback, getFallbackChain: getFallbackChainFromModule } = require('./fallbacks');
 const { transformChatCompletion, transformEmbedding, extractMetadata } = require('./transformers');
 const mockMode = require('../../config/mockMode');
 
@@ -127,23 +127,12 @@ function getInstance(mode = 'default', options = {}) {
       completions: {
         create: async (params) => {
           try {
-            let response;
-            
-            if (clientType === 'portkey') {
-              // Use Portkey with route
-              response = await client.chat.completions.create({
-                ...params,
-                model: route.model,
-                ...route.config
-              });
-            } else {
-              // Use OpenAI/Grok directly
-              response = await client.chat.completions.create({
-                ...params,
-                model: route.model,
-                ...route.config
-              });
-            }
+            // Works for both Portkey and direct clients (OpenAI-compatible interface)
+            const response = await client.chat.completions.create({
+              ...params,
+              model: route.model,
+              ...route.config
+            });
             
             // Transform and add metadata
             const transformed = transformChatCompletion(response);
@@ -197,19 +186,11 @@ function getInstance(mode = 'default', options = {}) {
     embeddings: {
       create: async (embeddingParams) => {
         try {
-          let response;
-          
-          if (clientType === 'portkey') {
-            response = await client.embeddings.create({
-              ...embeddingParams,
-              model: route.model || 'text-embedding-3-small'
-            });
-          } else {
-            response = await client.embeddings.create({
-              ...embeddingParams,
-              model: route.model || 'text-embedding-3-small'
-            });
-          }
+          // Works for both Portkey and direct clients (OpenAI-compatible interface)
+          const response = await client.embeddings.create({
+            ...embeddingParams,
+            model: route.model || 'text-embedding-3-small'
+          });
           
           const transformed = transformEmbedding(response);
           return {
@@ -361,7 +342,6 @@ function getRoute(mode) {
  * Issue #920: Helper for endpoint /api/ai-modes
  */
 function getFallbackChain(mode) {
-  const { getFallbackChain: getFallbackChainFromModule } = require('./fallbacks');
   return getFallbackChainFromModule(mode);
 }
 
