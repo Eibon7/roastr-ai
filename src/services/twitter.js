@@ -42,16 +42,22 @@ class TwitterRoastBot extends BaseIntegration {
     }
 
     // Initialize Twitter client with OAuth 1.0a (for posting tweets)
-    // Skip initialization in test mode if credentials are missing
-    if (!isTestMode || (process.env.TWITTER_APP_KEY && process.env.TWITTER_APP_SECRET)) {
+    // Use all-or-nothing approach: require all 4 credentials to be present
+    const hasCredentials =
+      process.env.TWITTER_APP_KEY &&
+      process.env.TWITTER_APP_SECRET &&
+      process.env.TWITTER_ACCESS_TOKEN &&
+      process.env.TWITTER_ACCESS_SECRET;
+
+    if (!isTestMode && hasCredentials) {
       this.client = new TwitterApi({
-        appKey: process.env.TWITTER_APP_KEY || 'test-key',
-        appSecret: process.env.TWITTER_APP_SECRET || 'test-secret',
-        accessToken: process.env.TWITTER_ACCESS_TOKEN || 'test-token',
-        accessSecret: process.env.TWITTER_ACCESS_SECRET || 'test-secret'
+        appKey: process.env.TWITTER_APP_KEY,
+        appSecret: process.env.TWITTER_APP_SECRET,
+        accessToken: process.env.TWITTER_ACCESS_TOKEN,
+        accessSecret: process.env.TWITTER_ACCESS_SECRET
       });
     } else {
-      // Create mock client for test mode
+      // Create mock client for test mode or when credentials are missing
       this.client = {
         v2: {
           tweet: () => Promise.resolve({ data: { id: 'test-tweet-id' } })
@@ -60,10 +66,13 @@ class TwitterRoastBot extends BaseIntegration {
     }
 
     // Bearer token client for reading mentions (OAuth 2.0)
-    if (!isTestMode || process.env.TWITTER_BEARER_TOKEN) {
-      this.bearerClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN || 'test-bearer');
+    // Use all-or-nothing approach: require bearer token to be present
+    const hasBearerToken = !!process.env.TWITTER_BEARER_TOKEN;
+
+    if (!isTestMode && hasBearerToken) {
+      this.bearerClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
     } else {
-      // Create mock bearer client for test mode
+      // Create mock bearer client for test mode or when token is missing
       this.bearerClient = {
         v2: {
           search: () => Promise.resolve({ data: { data: [] } })
