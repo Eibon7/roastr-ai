@@ -1,6 +1,6 @@
 /**
  * AI Modes API Routes
- * 
+ *
  * Endpoint for retrieving available AI modes and their configurations
  * Issue #920: Portkey AI Gateway integration
  */
@@ -19,7 +19,7 @@ const router = express.Router();
  *
  * @auth Required (JWT)
  * @returns {Object} modes - List of available AI modes
- * 
+ *
  * Example response:
  * {
  *   success: true,
@@ -42,10 +42,10 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     logger.info('Fetching available AI modes');
     const availableModes = LLMClient.getAvailableModes();
-    
-    const modesMetadata = availableModes.map(modeId => {
+
+    const modesMetadata = availableModes.map((modeId) => {
       const route = LLMClient.getRoute(modeId);
-      
+
       // Metadata específica por modo
       const modeMetadata = {
         flanders: {
@@ -126,4 +126,3 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
-

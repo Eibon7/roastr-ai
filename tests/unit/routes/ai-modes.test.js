@@ -47,9 +47,7 @@ describe('AI Modes API Routes', () => {
 
   describe('GET /api/ai-modes', () => {
     test('should return list of available AI modes', async () => {
-      const response = await request(app)
-        .get('/api/ai-modes')
-        .expect(200);
+      const response = await request(app).get('/api/ai-modes').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
@@ -58,11 +56,9 @@ describe('AI Modes API Routes', () => {
     });
 
     test('should include all required modes', async () => {
-      const response = await request(app)
-        .get('/api/ai-modes')
-        .expect(200);
+      const response = await request(app).get('/api/ai-modes').expect(200);
 
-      const modeIds = response.body.data.map(mode => mode.id);
+      const modeIds = response.body.data.map((mode) => mode.id);
       expect(modeIds).toContain('default');
       expect(modeIds).toContain('flanders');
       expect(modeIds).toContain('balanceado');
@@ -71,11 +67,9 @@ describe('AI Modes API Routes', () => {
     });
 
     test('should include mode metadata', async () => {
-      const response = await request(app)
-        .get('/api/ai-modes')
-        .expect(200);
+      const response = await request(app).get('/api/ai-modes').expect(200);
 
-      const flandersMode = response.body.data.find(m => m.id === 'flanders');
+      const flandersMode = response.body.data.find((m) => m.id === 'flanders');
       expect(flandersMode).toBeDefined();
       expect(flandersMode.name).toBe('Flanders');
       expect(flandersMode.description).toBeDefined();
@@ -86,14 +80,12 @@ describe('AI Modes API Routes', () => {
     });
 
     test('should include fallback chain for each mode', async () => {
-      const response = await request(app)
-        .get('/api/ai-modes')
-        .expect(200);
+      const response = await request(app).get('/api/ai-modes').expect(200);
 
-      const nsfwMode = response.body.data.find(m => m.id === 'nsfw');
+      const nsfwMode = response.body.data.find((m) => m.id === 'nsfw');
       expect(nsfwMode.fallbackChain).toEqual(['grok', 'openai']);
 
-      const balanceadoMode = response.body.data.find(m => m.id === 'balanceado');
+      const balanceadoMode = response.body.data.find((m) => m.id === 'balanceado');
       expect(balanceadoMode.fallbackChain).toEqual(['openai']);
     });
 
@@ -104,11 +96,9 @@ describe('AI Modes API Routes', () => {
       delete process.env.GROK_API_KEY;
       delete process.env.PORTKEY_API_KEY;
 
-      const response = await request(app)
-        .get('/api/ai-modes')
-        .expect(200);
+      const response = await request(app).get('/api/ai-modes').expect(200);
 
-      const nsfwMode = response.body.data.find(m => m.id === 'nsfw');
+      const nsfwMode = response.body.data.find((m) => m.id === 'nsfw');
       expect(nsfwMode.available).toBe(false);
 
       // Restore
@@ -122,9 +112,7 @@ describe('AI Modes API Routes', () => {
         res.status(401).json({ error: 'Unauthorized' });
       });
 
-      await request(app)
-        .get('/api/ai-modes')
-        .expect(401);
+      await request(app).get('/api/ai-modes').expect(401);
     });
 
     test('should handle errors gracefully', async () => {
@@ -133,13 +121,10 @@ describe('AI Modes API Routes', () => {
         throw new Error('Test error');
       });
 
-      const response = await request(app)
-        .get('/api/ai-modes')
-        .expect(500);
+      const response = await request(app).get('/api/ai-modes').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBeDefined();
     });
   });
 });
-

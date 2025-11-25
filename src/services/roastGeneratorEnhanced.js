@@ -163,11 +163,16 @@ class RoastGeneratorEnhanced {
           tone,
           rqcConfig
         );
-        
+
         // Issue #920: Extract roast and metadata from result
-        const rawRoast = typeof basicModerationResult === 'string' ? basicModerationResult : basicModerationResult.roast;
-        const portkeyMetadata = (typeof basicModerationResult !== 'string' && basicModerationResult._portkeyMetadata) ?
-          basicModerationResult._portkeyMetadata : null;
+        const rawRoast =
+          typeof basicModerationResult === 'string'
+            ? basicModerationResult
+            : basicModerationResult.roast;
+        const portkeyMetadata =
+          typeof basicModerationResult !== 'string' && basicModerationResult._portkeyMetadata
+            ? basicModerationResult._portkeyMetadata
+            : null;
 
         // Apply unified transparency disclaimer (Issue #196)
         const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
@@ -393,8 +398,9 @@ class RoastGeneratorEnhanced {
     const roast = result.content;
 
     // Issue #920: Extract Portkey metadata from response if available
-    const portkeyMetadata = llmClientForTone.extractMetadata ?
-      llmClientForTone.extractMetadata(result) : null;
+    const portkeyMetadata = llmClientForTone.extractMetadata
+      ? llmClientForTone.extractMetadata(result)
+      : null;
 
     logger.info('✅ Basic moderated roast generated', {
       plan: rqcConfig.plan,
@@ -434,7 +440,8 @@ class RoastGeneratorEnhanced {
 
       // Generate initial roast
       const initialRoastResult = await this.generateInitialRoast(text, tone, rqcConfig);
-      const roast = typeof initialRoastResult === 'string' ? initialRoastResult : initialRoastResult.roast;
+      const roast =
+        typeof initialRoastResult === 'string' ? initialRoastResult : initialRoastResult.roast;
       const roastTokens = this.estimateTokens(text + roast);
       totalTokensUsed += roastTokens;
 
@@ -462,12 +469,14 @@ class RoastGeneratorEnhanced {
         });
 
         // Issue #920: Extract Portkey metadata from initial roast result
-        const portkeyMetadata = (typeof initialRoastResult !== 'string' && initialRoastResult._portkeyMetadata) ?
-          initialRoastResult._portkeyMetadata : {
-            mode: tone || rqcConfig.tone || 'balanceado',
-            provider: 'openai',
-            fallbackUsed: false
-          };
+        const portkeyMetadata =
+          typeof initialRoastResult !== 'string' && initialRoastResult._portkeyMetadata
+            ? initialRoastResult._portkeyMetadata
+            : {
+                mode: tone || rqcConfig.tone || 'balanceado',
+                provider: 'openai',
+                fallbackUsed: false
+              };
 
         return {
           roast,
@@ -575,8 +584,9 @@ class RoastGeneratorEnhanced {
     });
 
     // Issue #920: Extract Portkey metadata from response if available
-    const portkeyMetadata = llmClientForTone.extractMetadata ?
-      llmClientForTone.extractMetadata(result) : null;
+    const portkeyMetadata = llmClientForTone.extractMetadata
+      ? llmClientForTone.extractMetadata(result)
+      : null;
 
     // Issue #920: Return roast with Portkey metadata for propagation
     return {

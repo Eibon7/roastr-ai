@@ -1,6 +1,6 @@
 /**
  * LLM Response Transformers
- * 
+ *
  * Normalizes responses from different LLM providers to OpenAI-compatible format
  * Issue #920: Portkey AI Gateway integration
  */
@@ -19,13 +19,15 @@ function transformChatCompletion(response) {
   // Transform Portkey response format
   if (response.content) {
     return {
-      choices: [{
-        message: {
-          role: 'assistant',
-          content: response.content
-        },
-        finish_reason: 'stop'
-      }],
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: response.content
+          },
+          finish_reason: 'stop'
+        }
+      ],
       usage: response.usage || {},
       model: response.model || 'unknown',
       _portkey: response._portkey || {}
@@ -50,10 +52,12 @@ function transformEmbedding(response) {
   // Transform Portkey embedding format
   if (response.embedding) {
     return {
-      data: [{
-        embedding: response.embedding,
-        index: 0
-      }],
+      data: [
+        {
+          embedding: response.embedding,
+          index: 0
+        }
+      ],
       usage: response.usage || {},
       model: response.model || 'unknown',
       _portkey: response._portkey || {}
@@ -84,4 +88,3 @@ module.exports = {
   transformEmbedding,
   extractMetadata
 };
-

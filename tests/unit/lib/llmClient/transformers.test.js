@@ -3,19 +3,25 @@
  * Issue #920: Portkey AI Gateway integration
  */
 
-const { transformChatCompletion, transformEmbedding, extractMetadata } = require('../../../../src/lib/llmClient/transformers');
+const {
+  transformChatCompletion,
+  transformEmbedding,
+  extractMetadata
+} = require('../../../../src/lib/llmClient/transformers');
 
 describe('LLM Transformers', () => {
   describe('transformChatCompletion', () => {
     test('should return OpenAI-compatible response as-is', () => {
       const openAIResponse = {
-        choices: [{
-          message: {
-            role: 'assistant',
-            content: 'Test response'
-          },
-          finish_reason: 'stop'
-        }],
+        choices: [
+          {
+            message: {
+              role: 'assistant',
+              content: 'Test response'
+            },
+            finish_reason: 'stop'
+          }
+        ],
         usage: { total_tokens: 10 },
         model: 'gpt-5.1'
       };
@@ -68,10 +74,12 @@ describe('LLM Transformers', () => {
   describe('transformEmbedding', () => {
     test('should return OpenAI-compatible embedding as-is', () => {
       const openAIEmbedding = {
-        data: [{
-          embedding: [0.1, 0.2, 0.3],
-          index: 0
-        }],
+        data: [
+          {
+            embedding: [0.1, 0.2, 0.3],
+            index: 0
+          }
+        ],
         usage: { total_tokens: 5 },
         model: 'text-embedding-3-small'
       };
@@ -174,4 +182,3 @@ describe('LLM Transformers', () => {
     });
   });
 });
-

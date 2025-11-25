@@ -3,7 +3,11 @@
  * Issue #920: Portkey AI Gateway integration
  */
 
-const { getFallbackChain, getNextFallback, fallbackChains } = require('../../../../src/lib/llmClient/fallbacks');
+const {
+  getFallbackChain,
+  getNextFallback,
+  fallbackChains
+} = require('../../../../src/lib/llmClient/fallbacks');
 
 describe('LLM Fallbacks', () => {
   describe('getFallbackChain', () => {
@@ -75,7 +79,7 @@ describe('LLM Fallbacks', () => {
     });
 
     test('should have arrays for all chains', () => {
-      Object.values(fallbackChains).forEach(chain => {
+      Object.values(fallbackChains).forEach((chain) => {
         expect(Array.isArray(chain)).toBe(true);
         expect(chain.length).toBeGreaterThan(0);
       });
@@ -94,4 +98,3 @@ describe('LLM Fallbacks', () => {
     });
   });
 });
-
