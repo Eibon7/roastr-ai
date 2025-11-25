@@ -63,7 +63,7 @@ To reach 85%+:
 | costControl.coverage.test.js | 17 |
 | costControl-final.test.js | 43 |
 
-**Total: 627 new tests**
+### Total: 627 new tests
 
 ## References
 
