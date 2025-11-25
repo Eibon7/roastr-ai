@@ -31,21 +31,45 @@ class TwitterRoastBot extends BaseIntegration {
     // Call parent constructor
     super(twitterConfig);
 
-    // Validate config first
-    if (!this.validateConfig()) {
-      throw new Error('Invalid Twitter configuration');
+    // Check if we're in test mode
+    const isTestMode = process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true';
+
+    // Validate config first (skip in test mode)
+    if (!isTestMode) {
+      if (!this.validateConfig()) {
+        throw new Error('Invalid Twitter configuration');
+      }
     }
 
     // Initialize Twitter client with OAuth 1.0a (for posting tweets)
-    this.client = new TwitterApi({
-      appKey: process.env.TWITTER_APP_KEY,
-      appSecret: process.env.TWITTER_APP_SECRET,
-      accessToken: process.env.TWITTER_ACCESS_TOKEN,
-      accessSecret: process.env.TWITTER_ACCESS_SECRET
-    });
+    // Skip initialization in test mode if credentials are missing
+    if (!isTestMode || (process.env.TWITTER_APP_KEY && process.env.TWITTER_APP_SECRET)) {
+      this.client = new TwitterApi({
+        appKey: process.env.TWITTER_APP_KEY || 'test-key',
+        appSecret: process.env.TWITTER_APP_SECRET || 'test-secret',
+        accessToken: process.env.TWITTER_ACCESS_TOKEN || 'test-token',
+        accessSecret: process.env.TWITTER_ACCESS_SECRET || 'test-secret'
+      });
+    } else {
+      // Create mock client for test mode
+      this.client = {
+        v2: {
+          tweet: () => Promise.resolve({ data: { id: 'test-tweet-id' } })
+        }
+      };
+    }
 
     // Bearer token client for reading mentions (OAuth 2.0)
-    this.bearerClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
+    if (!isTestMode || process.env.TWITTER_BEARER_TOKEN) {
+      this.bearerClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN || 'test-bearer');
+    } else {
+      // Create mock bearer client for test mode
+      this.bearerClient = {
+        v2: {
+          search: () => Promise.resolve({ data: { data: [] } })
+        }
+      };
+    }
 
     // Debug mode
     this.debug = process.env.DEBUG === 'true';
