@@ -372,35 +372,27 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct) - Migrated', 
 
   describe('AC1: Service Role Data Isolation Verification', () => {
     test('Tenant A data exists and is isolated', async () => {
-      const result = await pg.query(
-        `SELECT * FROM posts WHERE organization_id = $1;`,
-        [orgAId]
-      );
+      const result = await pg.query(`SELECT * FROM posts WHERE organization_id = $1;`, [orgAId]);
 
       expect(result.rows.length).toBe(tenantAData.posts.length);
       expect(result.rows.every((p) => p.organization_id === orgAId)).toBe(true);
     });
 
     test('Tenant B data exists and is isolated', async () => {
-      const result = await pg.query(
-        `SELECT * FROM posts WHERE organization_id = $1;`,
-        [orgBId]
-      );
+      const result = await pg.query(`SELECT * FROM posts WHERE organization_id = $1;`, [orgBId]);
 
       expect(result.rows.length).toBe(tenantBData.posts.length);
       expect(result.rows.every((p) => p.organization_id === orgBId)).toBe(true);
     });
 
     test('Comments are isolated by organization', async () => {
-      const commentsA = await pg.query(
-        `SELECT * FROM comments WHERE organization_id = $1;`,
-        [orgAId]
-      );
+      const commentsA = await pg.query(`SELECT * FROM comments WHERE organization_id = $1;`, [
+        orgAId
+      ]);
 
-      const commentsB = await pg.query(
-        `SELECT * FROM comments WHERE organization_id = $1;`,
-        [orgBId]
-      );
+      const commentsB = await pg.query(`SELECT * FROM comments WHERE organization_id = $1;`, [
+        orgBId
+      ]);
 
       expect(commentsA.rows.length).toBe(tenantAData.comments.length);
       expect(commentsB.rows.length).toBe(tenantBData.comments.length);
@@ -444,15 +436,13 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct) - Migrated', 
         return;
       }
 
-      const usageA = await pg.query(
-        `SELECT * FROM usage_records WHERE organization_id = $1;`,
-        [orgAId]
-      );
+      const usageA = await pg.query(`SELECT * FROM usage_records WHERE organization_id = $1;`, [
+        orgAId
+      ]);
 
-      const usageB = await pg.query(
-        `SELECT * FROM usage_records WHERE organization_id = $1;`,
-        [orgBId]
-      );
+      const usageB = await pg.query(`SELECT * FROM usage_records WHERE organization_id = $1;`, [
+        orgBId
+      ]);
 
       if (tenantAData.usageRecords.length > 0) {
         expect(usageA.rows.every((u) => u.organization_id === orgAId)).toBe(true);
@@ -526,10 +516,7 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct) - Migrated', 
 
   describe('AC3: Cross-Tenant Isolation via Service Role Queries', () => {
     test('Tenant A data does not appear in Tenant B queries', async () => {
-      const result = await pg.query(
-        `SELECT * FROM posts WHERE organization_id = $1;`,
-        [orgBId]
-      );
+      const result = await pg.query(`SELECT * FROM posts WHERE organization_id = $1;`, [orgBId]);
 
       // Verify no Tenant A IDs in results
       const hasTenantAData = result.rows.some((p) => p.organization_id === orgAId);
@@ -537,10 +524,7 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct) - Migrated', 
     });
 
     test('Tenant B data does not appear in Tenant A queries', async () => {
-      const result = await pg.query(
-        `SELECT * FROM posts WHERE organization_id = $1;`,
-        [orgAId]
-      );
+      const result = await pg.query(`SELECT * FROM posts WHERE organization_id = $1;`, [orgAId]);
 
       // Verify no Tenant B IDs in results
       const hasTenantBData = result.rows.some((p) => p.organization_id === orgBId);
@@ -556,10 +540,7 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct) - Migrated', 
       });
 
       // Attempt to access Tenant B's organization data (RLS enforced)
-      const result = await db.query(
-        `SELECT * FROM organizations WHERE id = $1;`,
-        [orgBId]
-      );
+      const result = await db.query(`SELECT * FROM organizations WHERE id = $1;`, [orgBId]);
 
       // RLS should block access (empty result)
       expect(result.rows.length).toBe(0);
@@ -594,4 +575,3 @@ describe('Multi-Tenant RLS Integration Tests - Issue #504 (Direct) - Migrated', 
     });
   });
 });
-
