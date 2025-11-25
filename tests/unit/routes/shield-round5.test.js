@@ -79,7 +79,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     // Cleanup (Issue #1018 - Memory optimization)
     jest.clearAllMocks();
     jest.clearAllTimers();
-    
+
     delete process.env.NODE_ENV;
   });
 
@@ -87,7 +87,7 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
     // Final cleanup (Issue #1018 - Memory optimization)
     jest.clearAllMocks();
     jest.clearAllTimers();
-    
+
     // Force garbage collection if available
     if (global.gc) {
       global.gc();

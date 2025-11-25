@@ -77,18 +77,18 @@ Tests están fallando debido a problemas de memoria y recursos. Workers crashean
 ```javascript
 module.exports = {
   // ... existing config ...
-  
+
   // Memory optimization
   maxWorkers: '50%', // Reducir workers paralelos
   workerIdleMemoryLimit: '512MB', // Límite de memoria por worker
-  
+
   // Test isolation
   resetMocks: true,
   restoreMocks: true,
   clearMocks: true,
-  
+
   // Coverage optimization
-  collectCoverage: false, // Deshabilitar en desarrollo para reducir memoria
+  collectCoverage: false // Deshabilitar en desarrollo para reducir memoria
 };
 ```
 
@@ -101,10 +101,10 @@ module.exports = {
 afterEach(() => {
   // Limpiar mocks
   jest.clearAllMocks();
-  
+
   // Limpiar timers
   jest.clearAllTimers();
-  
+
   // Limpiar módulos si es necesario
   jest.resetModules();
 });
@@ -112,7 +112,7 @@ afterEach(() => {
 afterAll(async () => {
   // Limpiar conexiones si aplica
   // await connection.close();
-  
+
   // Forzar garbage collection si disponible
   if (global.gc) {
     global.gc();
@@ -137,20 +137,20 @@ class Worker {
     this.timers = [];
     this.listeners = [];
   }
-  
+
   start() {
     const timer = setInterval(() => {}, 1000);
     this.timers.push(timer);
-    
+
     process.on('event', this.handler);
     this.listeners.push({ event: 'event', handler: this.handler });
   }
-  
+
   stop() {
     // Limpiar timers
-    this.timers.forEach(timer => clearInterval(timer));
+    this.timers.forEach((timer) => clearInterval(timer));
     this.timers = [];
-    
+
     // Limpiar listeners
     this.listeners.forEach(({ event, handler }) => {
       process.removeListener(event, handler);
@@ -192,11 +192,13 @@ npm test -- tests/unit/routes/shield-round5.test.js --maxWorkers=1
 ## 🚨 Riesgos de Producción
 
 **Si no se arregla:**
+
 - Workers pueden crashear en producción bajo carga
 - Sistema puede volverse inestable
 - Posibles memory leaks que degraden performance con el tiempo
 
 **Impacto negocio:**
+
 - 🔴 Alto - Sistema puede fallar en producción
 - 🔴 Alto - Pérdida de confianza de usuarios
 - 🔴 Alto - Posibles problemas de escalabilidad
@@ -212,17 +214,20 @@ npm test -- tests/unit/routes/shield-round5.test.js --maxWorkers=1
 ### ⚠️ Problema Crítico: Worktrees y Jest
 
 **Problema:** Jest escanea todos los worktrees durante la construcción del haste map (ANTES de aplicar filtros), causando:
+
 - Mocks duplicados detectados
 - Uso excesivo de memoria (4GB+)
 - Crashes de heap
 - Colisiones de nombres de módulos (package.json duplicados)
 
 **Estado Actual:**
+
 - Worktrees activos: issue-442, issue-1018, issue-1019
 - Worktrees inactivos detectados: 914, 920, 929, 930, 931, 932, 933, 940, 972, 973
 - Jest configuración actualizada pero el problema persiste porque Jest construye haste map antes de aplicar filtros
 
 **Soluciones Implementadas:**
+
 1. ✅ Configuración Jest optimizada (`maxWorkers: '50%'`, `workerIdleMemoryLimit: '512MB'`)
 2. ✅ Cleanup en tests (`afterEach`/`afterAll` con `jest.clearAllMocks()`, `jest.clearAllTimers()`)
 3. ✅ Memory leaks arreglados en `BaseWorker.js`
@@ -230,6 +235,7 @@ npm test -- tests/unit/routes/shield-round5.test.js --maxWorkers=1
 5. ✅ `modulePathIgnorePatterns` y `watchPathIgnorePatterns` configurados
 
 **Solución Temporal (Recomendada AHORA):**
+
 ```bash
 # Limpiar worktrees antiguos (mantener solo 442, 1018, 1019)
 git worktree prune
@@ -239,6 +245,7 @@ git worktree remove ../roastr-ai-worktrees/issue-914
 ```
 
 **Solución Permanente (Recomendada FUTURO):**
+
 - Mover worktrees fuera del directorio raíz del proyecto (ej: `../worktrees/`)
 - O usar un directorio `.worktrees/` fuera del proyecto y actualizar `.gitignore`
 - Considerar usar `hasteImpl` personalizado en Jest para excluir worktrees del escaneo inicial
@@ -271,4 +278,3 @@ git worktree remove ../roastr-ai-worktrees/issue-914
 **Creado:** 2025-01-XX  
 **Estado:** En progreso  
 **Agentes:** TestEngineer, Backend Developer
-

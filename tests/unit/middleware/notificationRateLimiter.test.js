@@ -63,7 +63,7 @@ describe('Notification Rate Limiters', () => {
     // Cleanup (Issue #1018 - Memory optimization)
     jest.clearAllMocks();
     jest.clearAllTimers();
-    
+
     // Clean up environment
     delete process.env.NODE_ENV;
   });
@@ -72,7 +72,7 @@ describe('Notification Rate Limiters', () => {
     // Final cleanup (Issue #1018 - Memory optimization)
     jest.clearAllMocks();
     jest.clearAllTimers();
-    
+
     // Force garbage collection if available
     if (global.gc) {
       global.gc();

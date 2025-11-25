@@ -33,12 +33,12 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
     // Cleanup mocks (Issue #1018 - Memory optimization)
     jest.clearAllMocks();
     jest.clearAllTimers();
-    
+
     // Cleanup service instance if it has cleanup methods
     if (shieldService && typeof shieldService.shutdown === 'function') {
       shieldService.shutdown().catch(() => {});
     }
-    
+
     // Reset modules to prevent state accumulation
     jest.resetModules();
   });
@@ -47,7 +47,7 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
     // Final cleanup (Issue #1018 - Memory optimization)
     jest.clearAllMocks();
     jest.clearAllTimers();
-    
+
     // Force garbage collection if available
     if (global.gc) {
       global.gc();
