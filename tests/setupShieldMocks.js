@@ -21,7 +21,7 @@ jest.mock('../src/utils/logger', () => {
   MockLogger.warn = mockMethods.warn;
   MockLogger.error = mockMethods.error;
   MockLogger.debug = mockMethods.debug;
-  MockLogger.logger = mockMethods;
+  MockLogger.logger = MockLogger;
   MockLogger.SafeUtils = {};
 
   return MockLogger;

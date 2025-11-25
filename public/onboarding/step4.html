@@ -468,10 +468,22 @@
             // Actualizar datos del usuario en localStorage
             const currentUserData = localStorage.getItem('user_data');
             if (currentUserData) {
-              const userData = JSON.parse(currentUserData);
-              userData.onboarding_complete = true;
-              userData.preferences = result.data.user.preferences;
-              localStorage.setItem('user_data', JSON.stringify(userData));
+              try {
+                const userData = JSON.parse(currentUserData);
+                userData.onboarding_complete = true;
+                userData.preferences = result.data.user.preferences;
+                localStorage.setItem('user_data', JSON.stringify(userData));
+              } catch (parseError) {
+                console.error('Error updating user data:', parseError);
+                // Set minimal user data to mark onboarding complete
+                localStorage.setItem(
+                  'user_data',
+                  JSON.stringify({
+                    onboarding_complete: true,
+                    preferences: result.data.user.preferences
+                  })
+                );
+              }
             }
 
             // Limpiar sessionStorage
