@@ -1,1477 +1,1628 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Roastr.ai - La IA que convierte comentarios tóxicos en oportunidades. Protege tu marca, mantén tu voz única y recupera tu tiempo. Prueba gratis 30 días." />
-  <title>Roastr.ai - Convierte trolls en engagement con IA</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      /* Dark theme tokens */
-      --accent: #8b5cf6;
-      --accent-hover: #9a6eff;
-      --accent-press: #744de2;
-      --accent-light: rgba(139, 92, 246, 0.15);
-      --accent-glow: rgba(139, 92, 246, 0.4);
-      --red: #ff5a7a;
-      --red-dark: #d83c5a;
-      --success: #3bd671;
-      --warning: #ffcf66;
-      --bg: #0d0d10;
-      --panel: #18181e;
-      --surface: #1e1e25;
-      --text: #f9f9fb;
-      --muted: #a6a6b3;
-      --border: rgba(255,255,255,0.15);
-      --border-light: rgba(255,255,255,0.08);
-      --shadow: 0 4px 12px rgba(0,0,0,0.25);
-      --shadow-hover: 0 8px 24px rgba(139, 92, 246, 0.3);
-      --shadow-lg: 0 20px 60px rgba(0,0,0,0.4);
-      --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.3);
-      --radius: 12px;
-      --radius-lg: 20px;
-      --transition: 180ms cubic-bezier(.2,.8,.2,1);
-      --transition-slow: 400ms cubic-bezier(.2,.8,.2,1);
-    }
-
-    [data-theme="light"] {
-      --accent: #7c3aed;
-      --accent-hover: #8b5cf6;
-      --accent-press: #5b21b6;
-      --accent-light: rgba(124, 58, 237, 0.1);
-      --accent-glow: rgba(124, 58, 237, 0.2);
-      --red: #ef4444;
-      --red-dark: #dc2626;
-      --success: #10b981;
-      --warning: #facc15;
-      --bg: #f8f9fb;
-      --panel: #fff;
-      --surface: #fdfdfd;
-      --text: #1a1a1f;
-      --muted: #52525b;
-      --border: rgba(0,0,0,0.12);
-      --border-light: rgba(0,0,0,0.08);
-      --shadow: 0 4px 12px rgba(0,0,0,0.1);
-      --shadow-hover: 0 8px 24px rgba(124, 58, 237, 0.2);
-      --shadow-lg: 0 20px 60px rgba(0,0,0,0.15);
-      --shadow-glow: 0 0 30px rgba(124, 58, 237, 0.2);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      transition: background var(--transition-slow), color var(--transition-slow);
-      overflow-x: hidden;
-    }
-
-    /* Animations */
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(40px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideInRight {
-      from {
-        opacity: 0;
-        transform: translateX(50px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.8; transform: scale(1.05); }
-    }
-
-    @keyframes glow {
-      0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
-      50% { box-shadow: 0 0 40px var(--accent-glow), 0 0 60px var(--accent-glow); }
-    }
-
-    @keyframes gradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .fade-in {
-      animation: fadeInUp 0.8s ease forwards;
-    }
-
-    /* Navigation */
-    nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: rgba(13, 13, 16, 0.85);
-      backdrop-filter: blur(20px) saturate(180%);
-      border-bottom: 1px solid var(--border-light);
-      padding: 16px 0;
-      transition: all var(--transition);
-    }
-
-    [data-theme="light"] nav {
-      background: rgba(248, 249, 251, 0.85);
-    }
-
-    .nav-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo {
-      font-size: 26px;
-      font-weight: 900;
-      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -0.5px;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 40px;
-      align-items: center;
-    }
-
-    .nav-links a {
-      color: var(--text);
-      text-decoration: none;
-      font-size: 15px;
-      font-weight: 500;
-      transition: color var(--transition);
-      position: relative;
-    }
-
-    .nav-links a::after {
-      content: "";
-      position: absolute;
-      bottom: -4px;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: var(--accent);
-      transition: width var(--transition);
-    }
-
-    .nav-links a:hover {
-      color: var(--accent);
-    }
-
-    .nav-links a:hover::after {
-      width: 100%;
-    }
-
-    .theme-toggle {
-      padding: 8px 16px;
-      border-radius: var(--radius);
-      background: var(--panel);
-      color: var(--text);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      font-size: 14px;
-      transition: all var(--transition);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .theme-toggle:hover {
-      background: var(--accent);
-      color: #fff;
-      border-color: transparent;
-      transform: translateY(-2px);
-    }
-
-    /* Hero Section */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 140px 24px 100px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      overflow: hidden;
-      z-index: 0;
-    }
-
-    .hero-bg::before {
-      content: "";
-      position: absolute;
-      top: -30%;
-      right: -10%;
-      width: 800px;
-      height: 800px;
-      background: radial-gradient(circle, var(--accent-light) 0%, transparent 70%);
-      border-radius: 50%;
-      filter: blur(100px);
-      animation: pulse 6s ease-in-out infinite;
-    }
-
-    .hero-bg::after {
-      content: "";
-      position: absolute;
-      bottom: -20%;
-      left: -10%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(59, 214, 113, 0.1) 0%, transparent 70%);
-      border-radius: 50%;
-      filter: blur(80px);
-      animation: pulse 8s ease-in-out infinite;
-    }
-
-    .hero-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero-content {
-      animation: fadeInUp 0.8s ease forwards;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
-      border-radius: 30px;
-      background: var(--accent-light);
-      color: var(--accent);
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 32px;
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
-    }
-
-    .hero-badge span:first-child {
-      font-size: 18px;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    h1 {
-      font-size: clamp(48px, 7vw, 80px);
-      font-weight: 900;
-      line-height: 1.1;
-      margin-bottom: 32px;
-      letter-spacing: -2px;
-    }
-
-    .hero-title-gradient {
-      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 50%, var(--text) 100%);
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: gradient 3s linear infinite;
-    }
-
-    .hero-subtitle {
-      font-size: clamp(18px, 2.5vw, 24px);
-      color: var(--muted);
-      margin-bottom: 16px;
-      line-height: 1.7;
-      font-weight: 500;
-    }
-
-    .hero-benefits {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin: 32px 0 48px;
-    }
-
-    .hero-benefit {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 16px;
-      color: var(--text);
-    }
-
-    .hero-benefit-icon {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--accent-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      color: var(--accent);
-      font-weight: 700;
-    }
-
-    .cta-group {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .hero-visual {
-      position: relative;
-      animation: slideInRight 1s ease forwards;
-    }
-
-    .hero-illustration {
-      width: 100%;
-      max-width: 600px;
-      height: auto;
-      filter: drop-shadow(0 20px 60px rgba(139, 92, 246, 0.3));
-    }
-
-    .floating-card {
-      position: absolute;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      box-shadow: var(--shadow-lg);
-      animation: float 3s ease-in-out infinite;
-    }
-
-    .floating-card:nth-child(1) {
-      top: 10%;
-      right: -10%;
-      animation-delay: 0s;
-    }
-
-    .floating-card:nth-child(2) {
-      bottom: 20%;
-      left: -15%;
-      animation-delay: 1s;
-    }
-
-    /* Buttons */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 18px 36px;
-      font-size: 17px;
-      font-weight: 700;
-      border-radius: var(--radius);
-      cursor: pointer;
-      border: none;
-      transition: all var(--transition);
-      user-select: none;
-      text-decoration: none;
-      position: relative;
-      overflow: hidden;
-      letter-spacing: -0.3px;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-      color: #fff;
-      box-shadow: var(--shadow), var(--shadow-glow);
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, var(--accent-hover), var(--accent));
-      box-shadow: var(--shadow-hover), var(--shadow-glow);
-      transform: translateY(-3px);
-    }
-
-    .btn-primary:active {
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-      background: var(--panel);
-      color: var(--text);
-      border: 2px solid var(--border);
-      box-shadow: var(--shadow);
-    }
-
-    .btn-secondary:hover {
-      background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.05));
-      border-color: var(--accent);
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-hover);
-    }
-
-    .btn:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.4);
-    }
-
-    /* Stats */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 40px;
-      margin-top: 80px;
-      padding-top: 60px;
-      border-top: 1px solid var(--border-light);
-    }
-
-    .stat-item {
-      text-align: center;
-    }
-
-    .stat-number {
-      font-size: 48px;
-      font-weight: 900;
-      background: linear-gradient(135deg, var(--accent), var(--success));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 8px;
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: 16px;
-      color: var(--muted);
-      font-weight: 500;
-    }
-
-    /* Section */
-    .section {
-      padding: 120px 32px;
-      max-width: 1400px;
-      margin: 0 auto;
-      position: relative;
-    }
-
-    .section-title {
-      font-size: clamp(40px, 6vw, 64px);
-      font-weight: 900;
-      text-align: center;
-      margin-bottom: 24px;
-      letter-spacing: -2px;
-      line-height: 1.1;
-    }
-
-    .section-subtitle {
-      font-size: 22px;
-      color: var(--muted);
-      text-align: center;
-      margin-bottom: 80px;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-      font-weight: 500;
-      line-height: 1.6;
-    }
-
-    /* Problem/Solution Section */
-    .problem-solution {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
-      margin-top: 60px;
-      align-items: center;
-    }
-
-    .problem-card, .solution-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 40px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .problem-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--red), var(--warning));
-    }
-
-    .solution-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--accent), var(--success));
-    }
-
-    .problem-card h3, .solution-card h3 {
-      font-size: 28px;
-      font-weight: 800;
-      margin-bottom: 16px;
-    }
-
-    .problem-card p, .solution-card p {
-      font-size: 17px;
-      color: var(--muted);
-      line-height: 1.7;
-    }
-
-    /* Features Grid */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 32px;
-      margin-top: 80px;
-    }
-
-    .feature-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 40px;
-      transition: all var(--transition);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .feature-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), transparent);
-      opacity: 0;
-      transition: opacity var(--transition);
-    }
-
-    .feature-card:hover {
-      transform: translateY(-8px);
-      box-shadow: var(--shadow-hover);
-      border-color: var(--accent);
-    }
-
-    .feature-card:hover::before {
-      opacity: 1;
-    }
-
-    .feature-icon-wrapper {
-      width: 72px;
-      height: 72px;
-      border-radius: var(--radius-lg);
-      background: linear-gradient(135deg, var(--accent-light), transparent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      margin-bottom: 24px;
-      border: 1px solid rgba(139, 92, 246, 0.2);
-    }
-
-    .feature-title {
-      font-size: 24px;
-      font-weight: 800;
-      margin-bottom: 16px;
-      letter-spacing: -0.5px;
-    }
-
-    .feature-desc {
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1.7;
-    }
-
-    /* How It Works */
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 40px;
-      margin-top: 80px;
-      position: relative;
-    }
-
-    .steps::before {
-      content: "";
-      position: absolute;
-      top: 32px;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--accent), transparent);
-      z-index: 0;
-    }
-
-    .step {
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .step-number {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      font-weight: 900;
-      margin: 0 auto 32px;
-      box-shadow: var(--shadow-glow);
-      position: relative;
-    }
-
-    .step-number::after {
-      content: "";
-      position: absolute;
-      inset: -4px;
-      border-radius: 50%;
-      border: 2px solid var(--accent);
-      opacity: 0.3;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    .step-title {
-      font-size: 24px;
-      font-weight: 800;
-      margin-bottom: 16px;
-      letter-spacing: -0.5px;
-    }
-
-    .step-desc {
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1.7;
-    }
-
-    /* Pricing */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 32px;
-      margin-top: 80px;
-    }
-
-    .pricing-card {
-      background: var(--panel);
-      border: 2px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 48px 40px;
-      transition: all var(--transition);
-      position: relative;
-    }
-
-    .pricing-card:hover {
-      transform: translateY(-8px);
-      box-shadow: var(--shadow-hover);
-    }
-
-    .pricing-card.featured {
-      border-color: var(--accent);
-      background: linear-gradient(180deg, var(--panel), rgba(139, 92, 246, 0.08));
-      transform: scale(1.05);
-      box-shadow: var(--shadow-glow);
-    }
-
-    .pricing-card.featured::before {
-      content: "⭐ Popular";
-      position: absolute;
-      top: 24px;
-      right: 24px;
-      padding: 8px 16px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-      color: #fff;
-      border-radius: 30px;
-      font-size: 13px;
-      font-weight: 700;
-      box-shadow: var(--shadow);
-    }
-
-    .pricing-name {
-      font-size: 28px;
-      font-weight: 900;
-      margin-bottom: 12px;
-      letter-spacing: -0.5px;
-    }
-
-    .pricing-price {
-      font-size: 56px;
-      font-weight: 900;
-      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 8px;
-      line-height: 1;
-    }
-
-    .pricing-period {
-      color: var(--muted);
-      font-size: 16px;
-      margin-bottom: 32px;
-      font-weight: 500;
-    }
-
-    .pricing-features {
-      list-style: none;
-      margin-bottom: 40px;
-    }
-
-    .pricing-features li {
-      padding: 14px 0;
-      color: var(--text);
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-weight: 500;
-    }
-
-    .pricing-features li::before {
-      content: "✓";
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--success), rgba(59, 214, 113, 0.8));
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 800;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(59, 214, 113, 0.3);
-    }
-
-    /* CTA Section */
-    .cta-section {
-      background: linear-gradient(135deg, var(--accent), var(--accent-press));
-      border-radius: var(--radius-lg);
-      padding: 100px 60px;
-      text-align: center;
-      margin: 120px 32px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .cta-section::before {
-      content: "";
-      position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-      border-radius: 50%;
-      animation: pulse 4s ease-in-out infinite;
-    }
-
-    .cta-section::after {
-      content: "";
-      position: absolute;
-      bottom: -30%;
-      left: -15%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-      border-radius: 50%;
-      animation: pulse 6s ease-in-out infinite;
-    }
-
-    .cta-section h2 {
-      font-size: clamp(40px, 6vw, 64px);
-      font-weight: 900;
-      color: #fff;
-      margin-bottom: 24px;
-      position: relative;
-      z-index: 1;
-      letter-spacing: -2px;
-    }
-
-    .cta-section p {
-      font-size: 22px;
-      color: rgba(255,255,255,0.95);
-      margin-bottom: 48px;
-      position: relative;
-      z-index: 1;
-      font-weight: 500;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .cta-section .btn {
-      background: #fff;
-      color: var(--accent);
-      position: relative;
-      z-index: 1;
-      font-size: 18px;
-      padding: 20px 48px;
-    }
-
-    .cta-section .btn:hover {
-      background: rgba(255,255,255,0.95);
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-    }
-
-    /* Footer */
-    footer {
-      background: var(--panel);
-      border-top: 1px solid var(--border);
-      padding: 80px 32px 40px;
-      margin-top: 120px;
-    }
-
-    .footer-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 60px;
-    }
-
-    .footer-col h3 {
-      font-size: 18px;
-      font-weight: 800;
-      margin-bottom: 24px;
-      letter-spacing: -0.5px;
-    }
-
-    .footer-col a {
-      display: block;
-      color: var(--muted);
-      text-decoration: none;
-      margin-bottom: 14px;
-      transition: color var(--transition);
-      font-size: 15px;
-    }
-
-    .footer-col a:hover {
-      color: var(--accent);
-      transform: translateX(4px);
-    }
-
-    .footer-bottom {
-      text-align: center;
-      padding-top: 60px;
-      margin-top: 60px;
-      border-top: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 15px;
-    }
-
-    /* Responsive */
-    @media (max-width: 1024px) {
-      .hero-container {
-        grid-template-columns: 1fr;
-        gap: 60px;
-        text-align: center;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Roastr.ai - La IA que convierte comentarios tóxicos en oportunidades. Protege tu marca, mantén tu voz única y recupera tu tiempo. Prueba gratis 30 días."
+    />
+    <title>Roastr.ai - Convierte trolls en engagement con IA</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        /* Dark theme tokens */
+        --accent: #8b5cf6;
+        --accent-hover: #9a6eff;
+        --accent-press: #744de2;
+        --accent-light: rgba(139, 92, 246, 0.15);
+        --accent-glow: rgba(139, 92, 246, 0.4);
+        --red: #ff5a7a;
+        --red-dark: #d83c5a;
+        --success: #3bd671;
+        --warning: #ffcf66;
+        --bg: #0d0d10;
+        --panel: #18181e;
+        --surface: #1e1e25;
+        --text: #f9f9fb;
+        --muted: #a6a6b3;
+        --border: rgba(255, 255, 255, 0.15);
+        --border-light: rgba(255, 255, 255, 0.08);
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        --shadow-hover: 0 8px 24px rgba(139, 92, 246, 0.3);
+        --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.4);
+        --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.3);
+        --radius: 12px;
+        --radius-lg: 20px;
+        --transition: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        --transition-slow: 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
       }
 
-      .hero-visual {
-        order: -1;
+      [data-theme='light'] {
+        --accent: #7c3aed;
+        --accent-hover: #8b5cf6;
+        --accent-press: #5b21b6;
+        --accent-light: rgba(124, 58, 237, 0.1);
+        --accent-glow: rgba(124, 58, 237, 0.2);
+        --red: #ef4444;
+        --red-dark: #dc2626;
+        --success: #10b981;
+        --warning: #facc15;
+        --bg: #f8f9fb;
+        --panel: #fff;
+        --surface: #fdfdfd;
+        --text: #1a1a1f;
+        --muted: #52525b;
+        --border: rgba(0, 0, 0, 0.12);
+        --border-light: rgba(0, 0, 0, 0.08);
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --shadow-hover: 0 8px 24px rgba(124, 58, 237, 0.2);
+        --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+        --shadow-glow: 0 0 30px rgba(124, 58, 237, 0.2);
       }
 
-      .problem-solution {
-        grid-template-columns: 1fr;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
 
-      .stats {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
+      html {
+        scroll-behavior: smooth;
       }
-    }
 
-    @media (max-width: 768px) {
+      body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        transition:
+          background var(--transition-slow),
+          color var(--transition-slow);
+        overflow-x: hidden;
+      }
+
+      /* Animations */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(40px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.05);
+        }
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 0 20px var(--accent-glow);
+        }
+        50% {
+          box-shadow:
+            0 0 40px var(--accent-glow),
+            0 0 60px var(--accent-glow);
+        }
+      }
+
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .fade-in {
+        animation: fadeInUp 0.8s ease forwards;
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: rgba(13, 13, 16, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid var(--border-light);
+        padding: 16px 0;
+        transition: all var(--transition);
+      }
+
+      [data-theme='light'] nav {
+        background: rgba(248, 249, 251, 0.85);
+      }
+
+      .nav-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 26px;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.5px;
+      }
+
       .nav-links {
-        gap: 20px;
+        display: flex;
+        gap: 40px;
+        align-items: center;
       }
 
       .nav-links a {
-        font-size: 14px;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 500;
+        transition: color var(--transition);
+        position: relative;
       }
 
-      .hero {
-        padding: 120px 24px 80px;
+      .nav-links a::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--accent);
+        transition: width var(--transition);
       }
 
-      .cta-group {
-        flex-direction: column;
+      .nav-links a:hover {
+        color: var(--accent);
       }
 
-      .btn {
+      .nav-links a:hover::after {
         width: 100%;
       }
 
-      .pricing-card.featured {
-        transform: scale(1);
+      .theme-toggle {
+        padding: 8px 16px;
+        border-radius: var(--radius);
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        font-size: 14px;
+        transition: all var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
+      .theme-toggle:hover {
+        background: var(--accent);
+        color: #fff;
+        border-color: transparent;
+        transform: translateY(-2px);
+      }
+
+      /* Hero Section */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 140px 24px 100px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        z-index: 0;
+      }
+
+      .hero-bg::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -10%;
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, var(--accent-light) 0%, transparent 70%);
+        border-radius: 50%;
+        filter: blur(100px);
+        animation: pulse 6s ease-in-out infinite;
+      }
+
+      .hero-bg::after {
+        content: '';
+        position: absolute;
+        bottom: -20%;
+        left: -10%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(59, 214, 113, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        filter: blur(80px);
+        animation: pulse 8s ease-in-out infinite;
+      }
+
+      .hero-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-content {
+        animation: fadeInUp 0.8s ease forwards;
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 20px;
+        border-radius: 30px;
+        background: var(--accent-light);
+        color: var(--accent);
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 32px;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+      }
+
+      .hero-badge span:first-child {
+        font-size: 18px;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      h1 {
+        font-size: clamp(48px, 7vw, 80px);
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 32px;
+        letter-spacing: -2px;
+      }
+
+      .hero-title-gradient {
+        background: linear-gradient(135deg, var(--text) 0%, var(--accent) 50%, var(--text) 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradient 3s linear infinite;
+      }
+
+      .hero-subtitle {
+        font-size: clamp(18px, 2.5vw, 24px);
+        color: var(--muted);
+        margin-bottom: 16px;
+        line-height: 1.7;
+        font-weight: 500;
+      }
+
+      .hero-benefits {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin: 32px 0 48px;
+      }
+
+      .hero-benefit {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 16px;
+        color: var(--text);
+      }
+
+      .hero-benefit-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--accent-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .cta-group {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .hero-visual {
+        position: relative;
+        animation: slideInRight 1s ease forwards;
+      }
+
+      .hero-illustration {
+        width: 100%;
+        max-width: 600px;
+        height: auto;
+        filter: drop-shadow(0 20px 60px rgba(139, 92, 246, 0.3));
+      }
+
+      .floating-card {
+        position: absolute;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        box-shadow: var(--shadow-lg);
+        animation: float 3s ease-in-out infinite;
+      }
+
+      .floating-card:nth-child(1) {
+        top: 10%;
+        right: -10%;
+        animation-delay: 0s;
+      }
+
+      .floating-card:nth-child(2) {
+        bottom: 20%;
+        left: -15%;
+        animation-delay: 1s;
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 18px 36px;
+        font-size: 17px;
+        font-weight: 700;
+        border-radius: var(--radius);
+        cursor: pointer;
+        border: none;
+        transition: all var(--transition);
+        user-select: none;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        letter-spacing: -0.3px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        color: #fff;
+        box-shadow: var(--shadow), var(--shadow-glow);
+      }
+
+      .btn-primary:hover {
+        background: linear-gradient(135deg, var(--accent-hover), var(--accent));
+        box-shadow: var(--shadow-hover), var(--shadow-glow);
+        transform: translateY(-3px);
+      }
+
+      .btn-primary:active {
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: var(--panel);
+        color: var(--text);
+        border: 2px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+
+      .btn-secondary:hover {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        border-color: var(--accent);
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+      }
+
+      .btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.4);
+      }
+
+      /* Stats */
       .stats {
-        grid-template-columns: 1fr;
-        gap: 32px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+        margin-top: 80px;
+        padding-top: 60px;
+        border-top: 1px solid var(--border-light);
       }
 
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 48px;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--accent), var(--success));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: 16px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      /* Section */
       .section {
-        padding: 80px 24px;
+        padding: 120px 32px;
+        max-width: 1400px;
+        margin: 0 auto;
+        position: relative;
       }
 
+      .section-title {
+        font-size: clamp(40px, 6vw, 64px);
+        font-weight: 900;
+        text-align: center;
+        margin-bottom: 24px;
+        letter-spacing: -2px;
+        line-height: 1.1;
+      }
+
+      .section-subtitle {
+        font-size: 22px;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 80px;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+        font-weight: 500;
+        line-height: 1.6;
+      }
+
+      /* Problem/Solution Section */
+      .problem-solution {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        margin-top: 60px;
+        align-items: center;
+      }
+
+      .problem-card,
+      .solution-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .problem-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--red), var(--warning));
+      }
+
+      .solution-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent), var(--success));
+      }
+
+      .problem-card h3,
+      .solution-card h3 {
+        font-size: 28px;
+        font-weight: 800;
+        margin-bottom: 16px;
+      }
+
+      .problem-card p,
+      .solution-card p {
+        font-size: 17px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      /* Features Grid */
       .features-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 32px;
+        margin-top: 80px;
       }
-    }
 
-    /* Illustration Styles */
-    .illustration {
-      width: 100%;
-      height: auto;
-    }
+      .feature-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 40px;
+        transition: all var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
 
-    .illustration svg {
-      width: 100%;
-      height: auto;
-    }
-  </style>
-</head>
-<body>
-  <!-- Navigation -->
-  <nav>
-    <div class="nav-container">
-      <div class="logo">Roastr.ai</div>
-      <div class="nav-links">
-        <a href="#features">Características</a>
-        <a href="#how-it-works">Cómo funciona</a>
-        <a href="#pricing">Precios</a>
-        <button class="theme-toggle" id="themeToggle">
-          <span>🌙</span>
-          <span>Tema</span>
-        </button>
-        <a href="/login" class="btn btn-secondary" style="padding: 10px 24px; font-size: 15px;">Iniciar sesión</a>
-      </div>
-    </div>
-  </nav>
+      .feature-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), transparent);
+        opacity: 0;
+        transition: opacity var(--transition);
+      }
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-container">
-      <div class="hero-content">
-        <div class="hero-badge">
-          <span>✨</span>
-          <span>Powered by GPT-5 • Protección 24/7</span>
+      .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--accent);
+      }
+
+      .feature-card:hover::before {
+        opacity: 1;
+      }
+
+      .feature-icon-wrapper {
+        width: 72px;
+        height: 72px;
+        border-radius: var(--radius-lg);
+        background: linear-gradient(135deg, var(--accent-light), transparent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        margin-bottom: 24px;
+        border: 1px solid rgba(139, 92, 246, 0.2);
+      }
+
+      .feature-title {
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+      }
+
+      .feature-desc {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.7;
+      }
+
+      /* How It Works */
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 40px;
+        margin-top: 80px;
+        position: relative;
+      }
+
+      .steps::before {
+        content: '';
+        position: absolute;
+        top: 32px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent), transparent);
+        z-index: 0;
+      }
+
+      .step {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+      }
+
+      .step-number {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: 900;
+        margin: 0 auto 32px;
+        box-shadow: var(--shadow-glow);
+        position: relative;
+      }
+
+      .step-number::after {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+        opacity: 0.3;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .step-title {
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+      }
+
+      .step-desc {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.7;
+      }
+
+      /* Pricing */
+      .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 32px;
+        margin-top: 80px;
+      }
+
+      .pricing-card {
+        background: var(--panel);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 48px 40px;
+        transition: all var(--transition);
+        position: relative;
+      }
+
+      .pricing-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-hover);
+      }
+
+      .pricing-card.featured {
+        border-color: var(--accent);
+        background: linear-gradient(180deg, var(--panel), rgba(139, 92, 246, 0.08));
+        transform: scale(1.05);
+        box-shadow: var(--shadow-glow);
+      }
+
+      .pricing-card.featured::before {
+        content: '⭐ Popular';
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        color: #fff;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 700;
+        box-shadow: var(--shadow);
+      }
+
+      .pricing-name {
+        font-size: 28px;
+        font-weight: 900;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+      }
+
+      .pricing-price {
+        font-size: 56px;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+        line-height: 1;
+      }
+
+      .pricing-period {
+        color: var(--muted);
+        font-size: 16px;
+        margin-bottom: 32px;
+        font-weight: 500;
+      }
+
+      .pricing-features {
+        list-style: none;
+        margin-bottom: 40px;
+      }
+
+      .pricing-features li {
+        padding: 14px 0;
+        color: var(--text);
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-weight: 500;
+      }
+
+      .pricing-features li::before {
+        content: '✓';
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--success), rgba(59, 214, 113, 0.8));
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 800;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(59, 214, 113, 0.3);
+      }
+
+      /* CTA Section */
+      .cta-section {
+        background: linear-gradient(135deg, var(--accent), var(--accent-press));
+        border-radius: var(--radius-lg);
+        padding: 100px 60px;
+        text-align: center;
+        margin: 120px 32px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .cta-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: pulse 4s ease-in-out infinite;
+      }
+
+      .cta-section::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -15%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: pulse 6s ease-in-out infinite;
+      }
+
+      .cta-section h2 {
+        font-size: clamp(40px, 6vw, 64px);
+        font-weight: 900;
+        color: #fff;
+        margin-bottom: 24px;
+        position: relative;
+        z-index: 1;
+        letter-spacing: -2px;
+      }
+
+      .cta-section p {
+        font-size: 22px;
+        color: rgba(255, 255, 255, 0.95);
+        margin-bottom: 48px;
+        position: relative;
+        z-index: 1;
+        font-weight: 500;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .cta-section .btn {
+        background: #fff;
+        color: var(--accent);
+        position: relative;
+        z-index: 1;
+        font-size: 18px;
+        padding: 20px 48px;
+      }
+
+      .cta-section .btn:hover {
+        background: rgba(255, 255, 255, 0.95);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Footer */
+      footer {
+        background: var(--panel);
+        border-top: 1px solid var(--border);
+        padding: 80px 32px 40px;
+        margin-top: 120px;
+      }
+
+      .footer-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 60px;
+      }
+
+      .footer-col h3 {
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 24px;
+        letter-spacing: -0.5px;
+      }
+
+      .footer-col a {
+        display: block;
+        color: var(--muted);
+        text-decoration: none;
+        margin-bottom: 14px;
+        transition: color var(--transition);
+        font-size: 15px;
+      }
+
+      .footer-col a:hover {
+        color: var(--accent);
+        transform: translateX(4px);
+      }
+
+      .footer-bottom {
+        text-align: center;
+        padding-top: 60px;
+        margin-top: 60px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .hero-container {
+          grid-template-columns: 1fr;
+          gap: 60px;
+          text-align: center;
+        }
+
+        .hero-visual {
+          order: -1;
+        }
+
+        .problem-solution {
+          grid-template-columns: 1fr;
+        }
+
+        .stats {
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .nav-links {
+          gap: 20px;
+        }
+
+        .nav-links a {
+          font-size: 14px;
+        }
+
+        .hero {
+          padding: 120px 24px 80px;
+        }
+
+        .cta-group {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+        }
+
+        .pricing-card.featured {
+          transform: scale(1);
+        }
+
+        .stats {
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
+
+        .section {
+          padding: 80px 24px;
+        }
+
+        .features-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Illustration Styles */
+      .illustration {
+        width: 100%;
+        height: auto;
+      }
+
+      .illustration svg {
+        width: 100%;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav>
+      <div class="nav-container">
+        <div class="logo">Roastr.ai</div>
+        <div class="nav-links">
+          <a href="#features">Características</a>
+          <a href="#how-it-works">Cómo funciona</a>
+          <a href="#pricing">Precios</a>
+          <button class="theme-toggle" id="themeToggle">
+            <span>🌙</span>
+            <span>Tema</span>
+          </button>
+          <a href="/login" class="btn btn-secondary" style="padding: 10px 24px; font-size: 15px"
+            >Iniciar sesión</a
+          >
         </div>
-        <h1>
-          Imagina que cada comentario tóxico<br>
-          <span class="hero-title-gradient">se convierte en una oportunidad.</span>
-        </h1>
-        <p class="hero-subtitle">
-          Mientras tú creas contenido, Roastr.ai responde automáticamente con tu voz única. 
-          Los trolls se convierten en engagement. Tu marca se protege sola. Y recuperas horas cada día.
-        </p>
-        <div class="hero-benefits">
-          <div class="hero-benefit">
-            <div class="hero-benefit-icon">✓</div>
-            <span>Respuestas en menos de 3 segundos, con tu estilo único</span>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-container">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span>✨</span>
+            <span>Powered by GPT-5 • Protección 24/7</span>
           </div>
-          <div class="hero-benefit">
-            <div class="hero-benefit-icon">✓</div>
-            <span>Shield bloquea automáticamente contenido dañino</span>
+          <h1>
+            Imagina que cada comentario tóxico<br />
+            <span class="hero-title-gradient">se convierte en una oportunidad.</span>
+          </h1>
+          <p class="hero-subtitle">
+            Mientras tú creas contenido, Roastr.ai responde automáticamente con tu voz única. Los
+            trolls se convierten en engagement. Tu marca se protege sola. Y recuperas horas cada
+            día.
+          </p>
+          <div class="hero-benefits">
+            <div class="hero-benefit">
+              <div class="hero-benefit-icon">✓</div>
+              <span>Respuestas en menos de 3 segundos, con tu estilo único</span>
+            </div>
+            <div class="hero-benefit">
+              <div class="hero-benefit-icon">✓</div>
+              <span>Shield bloquea automáticamente contenido dañino</span>
+            </div>
+            <div class="hero-benefit">
+              <div class="hero-benefit-icon">✓</div>
+              <span>9 plataformas, un solo dashboard, cero complicaciones</span>
+            </div>
           </div>
-          <div class="hero-benefit">
-            <div class="hero-benefit-icon">✓</div>
-            <span>9 plataformas, un solo dashboard, cero complicaciones</span>
+          <div class="cta-group">
+            <a href="/register" class="btn btn-primary">Empezar trial gratis 30 días →</a>
+            <a href="#how-it-works" class="btn btn-secondary">Ver cómo funciona</a>
           </div>
         </div>
-        <div class="cta-group">
-          <a href="/register" class="btn btn-primary">Empezar trial gratis 30 días →</a>
-          <a href="#how-it-works" class="btn btn-secondary">Ver cómo funciona</a>
+        <div class="hero-visual">
+          <svg class="hero-illustration" viewBox="0 0 600 500" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background gradient -->
+            <defs>
+              <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color: var(--accent); stop-opacity: 0.2" />
+                <stop offset="100%" style="stop-color: var(--success); stop-opacity: 0.1" />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+
+            <!-- Main phone/device -->
+            <rect
+              x="150"
+              y="50"
+              width="300"
+              height="400"
+              rx="30"
+              fill="var(--panel)"
+              stroke="var(--accent)"
+              stroke-width="2"
+              filter="url(#glow)"
+            />
+
+            <!-- Screen content -->
+            <rect x="170" y="80" width="260" height="340" rx="15" fill="var(--bg)" />
+
+            <!-- Comment bubbles -->
+            <rect x="190" y="100" width="180" height="40" rx="8" fill="var(--red)" opacity="0.3" />
+            <rect x="200" y="110" width="160" height="20" rx="4" fill="var(--red)" />
+
+            <!-- AI response bubble -->
+            <rect
+              x="190"
+              y="160"
+              width="200"
+              height="50"
+              rx="8"
+              fill="var(--accent)"
+              opacity="0.8"
+            />
+            <rect x="200" y="170" width="180" height="15" rx="4" fill="#fff" />
+            <rect x="200" y="190" width="140" height="15" rx="4" fill="#fff" opacity="0.8" />
+
+            <!-- Shield icon -->
+            <path d="M300 250 L280 270 L300 290 L320 270 Z" fill="var(--success)" opacity="0.8" />
+            <circle cx="300" cy="270" r="15" fill="var(--success)" opacity="0.3" />
+
+            <!-- Social icons -->
+            <circle cx="220" cy="350" r="20" fill="var(--accent)" opacity="0.6" />
+            <circle cx="280" cy="350" r="20" fill="var(--accent)" opacity="0.6" />
+            <circle cx="340" cy="350" r="20" fill="var(--accent)" opacity="0.6" />
+
+            <!-- Floating elements -->
+            <circle
+              cx="100"
+              cy="150"
+              r="8"
+              fill="var(--accent)"
+              opacity="0.6"
+              class="floating-card"
+            />
+            <circle cx="500" cy="200" r="10" fill="var(--success)" opacity="0.5" />
+            <circle cx="80" cy="350" r="6" fill="var(--accent)" opacity="0.4" />
+          </svg>
+          <div class="floating-card" style="top: 10%; right: -5%; width: 180px">
+            <div
+              style="font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 4px"
+            >
+              Shield activo
+            </div>
+            <div style="font-size: 12px; color: var(--muted)">3 amenazas bloqueadas hoy</div>
+          </div>
+          <div class="floating-card" style="bottom: 15%; left: -10%; width: 200px">
+            <div
+              style="font-size: 14px; font-weight: 700; color: var(--success); margin-bottom: 4px"
+            >
+              87% engagement
+            </div>
+            <div style="font-size: 12px; color: var(--muted)">Respuestas optimizadas</div>
+          </div>
         </div>
       </div>
-      <div class="hero-visual">
-        <svg class="hero-illustration" viewBox="0 0 600 500" xmlns="http://www.w3.org/2000/svg">
-          <!-- Background gradient -->
-          <defs>
-            <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:var(--accent);stop-opacity:0.2" />
-              <stop offset="100%" style="stop-color:var(--success);stop-opacity:0.1" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          
-          <!-- Main phone/device -->
-          <rect x="150" y="50" width="300" height="400" rx="30" fill="var(--panel)" stroke="var(--accent)" stroke-width="2" filter="url(#glow)"/>
-          
-          <!-- Screen content -->
-          <rect x="170" y="80" width="260" height="340" rx="15" fill="var(--bg)"/>
-          
-          <!-- Comment bubbles -->
-          <rect x="190" y="100" width="180" height="40" rx="8" fill="var(--red)" opacity="0.3"/>
-          <rect x="200" y="110" width="160" height="20" rx="4" fill="var(--red)"/>
-          
-          <!-- AI response bubble -->
-          <rect x="190" y="160" width="200" height="50" rx="8" fill="var(--accent)" opacity="0.8"/>
-          <rect x="200" y="170" width="180" height="15" rx="4" fill="#fff"/>
-          <rect x="200" y="190" width="140" height="15" rx="4" fill="#fff" opacity="0.8"/>
-          
-          <!-- Shield icon -->
-          <path d="M300 250 L280 270 L300 290 L320 270 Z" fill="var(--success)" opacity="0.8"/>
-          <circle cx="300" cy="270" r="15" fill="var(--success)" opacity="0.3"/>
-          
-          <!-- Social icons -->
-          <circle cx="220" cy="350" r="20" fill="var(--accent)" opacity="0.6"/>
-          <circle cx="280" cy="350" r="20" fill="var(--accent)" opacity="0.6"/>
-          <circle cx="340" cy="350" r="20" fill="var(--accent)" opacity="0.6"/>
-          
-          <!-- Floating elements -->
-          <circle cx="100" cy="150" r="8" fill="var(--accent)" opacity="0.6" class="floating-card"/>
-          <circle cx="500" cy="200" r="10" fill="var(--success)" opacity="0.5"/>
-          <circle cx="80" cy="350" r="6" fill="var(--accent)" opacity="0.4"/>
-        </svg>
-        <div class="floating-card" style="top: 10%; right: -5%; width: 180px;">
-          <div style="font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 4px;">Shield activo</div>
-          <div style="font-size: 12px; color: var(--muted);">3 amenazas bloqueadas hoy</div>
+    </section>
+
+    <!-- Stats -->
+    <section class="section" style="padding-top: 0">
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-number">9</div>
+          <div class="stat-label">Plataformas conectadas</div>
         </div>
-        <div class="floating-card" style="bottom: 15%; left: -10%; width: 200px;">
-          <div style="font-size: 14px; font-weight: 700; color: var(--success); margin-bottom: 4px;">87% engagement</div>
-          <div style="font-size: 12px; color: var(--muted);">Respuestas optimizadas</div>
+        <div class="stat-item">
+          <div class="stat-number">87%</div>
+          <div class="stat-label">Engagement rate promedio</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">Protección automática</div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Stats -->
-  <section class="section" style="padding-top: 0;">
-    <div class="stats">
-      <div class="stat-item">
-        <div class="stat-number">9</div>
-        <div class="stat-label">Plataformas conectadas</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-number">87%</div>
-        <div class="stat-label">Engagement rate promedio</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-number">24/7</div>
-        <div class="stat-label">Protección automática</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Story Section -->
-  <section class="section">
-    <h2 class="section-title">La historia que todos conocemos</h2>
-    <p class="section-subtitle">
-      Cada creador ha estado ahí. Un comentario tóxico aparece. Te consume mentalmente. Respondes manualmente. 
-      Pierdes tiempo. Y mientras tanto, el contenido que realmente importa espera.
-    </p>
-    <div class="problem-solution">
-      <div class="problem-card">
-        <h3>❌ El ciclo sin fin</h3>
-        <p><strong>Lunes 9 AM:</strong> Publicas tu mejor contenido. <strong>9:15 AM:</strong> Aparece el primer troll. Pasas 20 minutos pensando cómo responder. <strong>Martes:</strong> Más comentarios negativos. Más tiempo perdido. <strong>Miércoles:</strong> Estás agotado. Tu engagement cae. Tu audiencia real se va.</p>
-        <p style="margin-top: 16px; font-weight: 600; color: var(--red);">Resultado: Horas perdidas cada semana. Marca dañada. Cansancio mental.</p>
-      </div>
-      <div class="solution-card">
-        <h3>✅ Tu nuevo flujo de trabajo</h3>
-        <p><strong>Lunes 9 AM:</strong> Publicas tu mejor contenido. <strong>9:15 AM:</strong> Aparece un troll. Roastr responde automáticamente con tu voz. <strong>9:16 AM:</strong> Ya estás creando el siguiente post. <strong>Martes:</strong> Shield bloquea contenido tóxico antes de que lo veas. <strong>Miércoles:</strong> Tu engagement sube. Tu audiencia crece.</p>
-        <p style="margin-top: 16px; font-weight: 600; color: var(--success);">Resultado: 10+ horas recuperadas por semana. Marca protegida. Mente libre para crear.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Value Proposition Section -->
-  <section class="section" style="background: linear-gradient(180deg, transparent, var(--accent-light), transparent); padding: 100px 32px; border-radius: var(--radius-lg); margin: 60px 32px;">
-    <div style="max-width: 900px; margin: 0 auto; text-align: center;">
-      <h2 style="font-size: clamp(32px, 5vw, 48px); font-weight: 900; margin-bottom: 24px; letter-spacing: -1px;">
-        No es solo una herramienta.<br>
-        <span style="color: var(--accent);">Es tu equipo de IA personal.</span>
-      </h2>
-      <p style="font-size: 20px; color: var(--muted); line-height: 1.7; margin-bottom: 40px;">
-        Roastr.ai no reemplaza tu voz. La amplifica. Aprende tu estilo, respeta tus límites, 
-        y genera respuestas que suenan auténticamente como tú. Mientras tú duermes, trabaja. 
-        Mientras tú creas, protege. Mientras tú creces, escala contigo.
+    <!-- Story Section -->
+    <section class="section">
+      <h2 class="section-title">La historia que todos conocemos</h2>
+      <p class="section-subtitle">
+        Cada creador ha estado ahí. Un comentario tóxico aparece. Te consume mentalmente. Respondes
+        manualmente. Pierdes tiempo. Y mientras tanto, el contenido que realmente importa espera.
       </p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 32px; margin-top: 60px;">
-        <div style="text-align: center;">
-          <div style="font-size: 48px; margin-bottom: 16px;">⏰</div>
-          <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Recupera tu tiempo</h3>
-          <p style="color: var(--muted);">10+ horas por semana que puedes usar para crear contenido que realmente importa.</p>
+      <div class="problem-solution">
+        <div class="problem-card">
+          <h3>❌ El ciclo sin fin</h3>
+          <p>
+            <strong>Lunes 9 AM:</strong> Publicas tu mejor contenido.
+            <strong>9:15 AM:</strong> Aparece el primer troll. Pasas 20 minutos pensando cómo
+            responder. <strong>Martes:</strong> Más comentarios negativos. Más tiempo perdido.
+            <strong>Miércoles:</strong> Estás agotado. Tu engagement cae. Tu audiencia real se va.
+          </p>
+          <p style="margin-top: 16px; font-weight: 600; color: var(--red)">
+            Resultado: Horas perdidas cada semana. Marca dañada. Cansancio mental.
+          </p>
         </div>
-        <div style="text-align: center;">
-          <div style="font-size: 48px; margin-bottom: 16px;">🛡️</div>
-          <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Protege tu marca</h3>
-          <p style="color: var(--muted);">Shield detecta y bloquea contenido tóxico antes de que afecte tu reputación.</p>
+        <div class="solution-card">
+          <h3>✅ Tu nuevo flujo de trabajo</h3>
+          <p>
+            <strong>Lunes 9 AM:</strong> Publicas tu mejor contenido.
+            <strong>9:15 AM:</strong> Aparece un troll. Roastr responde automáticamente con tu voz.
+            <strong>9:16 AM:</strong> Ya estás creando el siguiente post.
+            <strong>Martes:</strong> Shield bloquea contenido tóxico antes de que lo veas.
+            <strong>Miércoles:</strong> Tu engagement sube. Tu audiencia crece.
+          </p>
+          <p style="margin-top: 16px; font-weight: 600; color: var(--success)">
+            Resultado: 10+ horas recuperadas por semana. Marca protegida. Mente libre para crear.
+          </p>
         </div>
-        <div style="text-align: center;">
-          <div style="font-size: 48px; margin-bottom: 16px;">🎯</div>
-          <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Mantén tu voz</h3>
-          <p style="color: var(--muted);">Cada respuesta suena como tú. Tu personalidad única, preservada y amplificada.</p>
+      </div>
+    </section>
+
+    <!-- Value Proposition Section -->
+    <section
+      class="section"
+      style="
+        background: linear-gradient(180deg, transparent, var(--accent-light), transparent);
+        padding: 100px 32px;
+        border-radius: var(--radius-lg);
+        margin: 60px 32px;
+      "
+    >
+      <div style="max-width: 900px; margin: 0 auto; text-align: center">
+        <h2
+          style="
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 900;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+          "
+        >
+          No es solo una herramienta.<br />
+          <span style="color: var(--accent)">Es tu equipo de IA personal.</span>
+        </h2>
+        <p style="font-size: 20px; color: var(--muted); line-height: 1.7; margin-bottom: 40px">
+          Roastr.ai no reemplaza tu voz. La amplifica. Aprende tu estilo, respeta tus límites, y
+          genera respuestas que suenan auténticamente como tú. Mientras tú duermes, trabaja.
+          Mientras tú creas, protege. Mientras tú creces, escala contigo.
+        </p>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 32px;
+            margin-top: 60px;
+          "
+        >
+          <div style="text-align: center">
+            <div style="font-size: 48px; margin-bottom: 16px">⏰</div>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px">
+              Recupera tu tiempo
+            </h3>
+            <p style="color: var(--muted)">
+              10+ horas por semana que puedes usar para crear contenido que realmente importa.
+            </p>
+          </div>
+          <div style="text-align: center">
+            <div style="font-size: 48px; margin-bottom: 16px">🛡️</div>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px">Protege tu marca</h3>
+            <p style="color: var(--muted)">
+              Shield detecta y bloquea contenido tóxico antes de que afecte tu reputación.
+            </p>
+          </div>
+          <div style="text-align: center">
+            <div style="font-size: 48px; margin-bottom: 16px">🎯</div>
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px">Mantén tu voz</h3>
+            <p style="color: var(--muted)">
+              Cada respuesta suena como tú. Tu personalidad única, preservada y amplificada.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Features Section -->
-  <section class="section" id="features">
-    <h2 class="section-title">Todo lo que necesitas para dominar las redes</h2>
-    <p class="section-subtitle">
-      Herramientas profesionales diseñadas para creadores que quieren proteger su marca y mantener su voz única
-    </p>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">🤖</div>
-        <h3 class="feature-title">IA que entiende tu contexto</h3>
-        <p class="feature-desc">
-          GPT-5 no solo genera texto. Analiza el contexto completo: quién comentó, qué dijo antes, el tono de tu contenido. 
-          Cada respuesta es única, relevante y suena auténticamente como tú. No como un bot. Como tú en tu mejor día.
-        </p>
+    <!-- Features Section -->
+    <section class="section" id="features">
+      <h2 class="section-title">Todo lo que necesitas para dominar las redes</h2>
+      <p class="section-subtitle">
+        Herramientas profesionales diseñadas para creadores que quieren proteger su marca y mantener
+        su voz única
+      </p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🤖</div>
+          <h3 class="feature-title">IA que entiende tu contexto</h3>
+          <p class="feature-desc">
+            GPT-5 no solo genera texto. Analiza el contexto completo: quién comentó, qué dijo antes,
+            el tono de tu contenido. Cada respuesta es única, relevante y suena auténticamente como
+            tú. No como un bot. Como tú en tu mejor día.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🛡️</div>
+          <h3 class="feature-title">Shield: Tu guardián silencioso</h3>
+          <p class="feature-desc">
+            Mientras duermes, Shield trabaja. Detecta toxicidad en tiempo real, analiza patrones, y
+            actúa según tus reglas. Bloquea lo dañino. Reporta lo peligroso. Oculta lo irrelevante.
+            Tu marca protegida, 24/7, sin que tengas que hacer nada.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🔗</div>
+          <h3 class="feature-title">Un solo lugar para todas tus redes</h3>
+          <p class="feature-desc">
+            Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky. Todas
+            conectadas. Todas sincronizadas. Un solo dashboard donde ves todo, controlas todo, y
+            gestionas todo. Sin cambiar de aplicación. Sin perder el contexto.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🎨</div>
+          <h3 class="feature-title">Persona: Tu identidad digital aprendida</h3>
+          <p class="feature-desc">
+            No configuras reglas complicadas. Simplemente dices qué te define, qué no toleras, y qué
+            te da igual. La IA aprende tu voz única, tu estilo, tus límites. Y cada respuesta
+            refleja exactamente quién eres. Tu personalidad, preservada y amplificada.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">⚡</div>
+          <h3 class="feature-title">RQC: Tres expertos revisan cada respuesta</h3>
+          <p class="feature-desc">
+            Cada roast pasa por tres revisores en paralelo: un Moderador que verifica cumplimiento,
+            un Comediante que evalúa el humor, y un Revisor de Estilo que asegura tu tono único.
+            Tres expertos trabajando para ti, en segundos, garantizando excelencia.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🌐</div>
+          <h3 class="feature-title">Habla el idioma de tu audiencia</h3>
+          <p class="feature-desc">
+            Tu audiencia es global. Roastr también. Detecta automáticamente si un comentario está en
+            español o inglés, y responde con el contexto cultural apropiado. Tu voz, en cualquier
+            idioma, manteniendo tu esencia única.
+          </p>
+        </div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">🛡️</div>
-        <h3 class="feature-title">Shield: Tu guardián silencioso</h3>
-        <p class="feature-desc">
-          Mientras duermes, Shield trabaja. Detecta toxicidad en tiempo real, analiza patrones, y actúa según tus reglas. 
-          Bloquea lo dañino. Reporta lo peligroso. Oculta lo irrelevante. Tu marca protegida, 24/7, sin que tengas que hacer nada.
-        </p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">🔗</div>
-        <h3 class="feature-title">Un solo lugar para todas tus redes</h3>
-        <p class="feature-desc">
-          Twitter, YouTube, Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky. 
-          Todas conectadas. Todas sincronizadas. Un solo dashboard donde ves todo, controlas todo, y gestionas todo. 
-          Sin cambiar de aplicación. Sin perder el contexto.
-        </p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">🎨</div>
-        <h3 class="feature-title">Persona: Tu identidad digital aprendida</h3>
-        <p class="feature-desc">
-          No configuras reglas complicadas. Simplemente dices qué te define, qué no toleras, y qué te da igual. 
-          La IA aprende tu voz única, tu estilo, tus límites. Y cada respuesta refleja exactamente quién eres. 
-          Tu personalidad, preservada y amplificada.
-        </p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">⚡</div>
-        <h3 class="feature-title">RQC: Tres expertos revisan cada respuesta</h3>
-        <p class="feature-desc">
-          Cada roast pasa por tres revisores en paralelo: un Moderador que verifica cumplimiento, 
-          un Comediante que evalúa el humor, y un Revisor de Estilo que asegura tu tono único. 
-          Tres expertos trabajando para ti, en segundos, garantizando excelencia.
-        </p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">🌐</div>
-        <h3 class="feature-title">Habla el idioma de tu audiencia</h3>
-        <p class="feature-desc">
-          Tu audiencia es global. Roastr también. Detecta automáticamente si un comentario está en español o inglés, 
-          y responde con el contexto cultural apropiado. Tu voz, en cualquier idioma, manteniendo tu esencia única.
-        </p>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- How It Works -->
-  <section class="section" id="how-it-works">
-    <h2 class="section-title">De cero a protegido en 10 minutos</h2>
-    <p class="section-subtitle">
-      No necesitas ser técnico. No necesitas leer documentación. Solo necesitas 10 minutos y ganas de recuperar tu tiempo.
-    </p>
-    <div class="steps">
-      <div class="step">
-        <div class="step-number">1</div>
-        <h3 class="step-title">Conecta tus redes (2 minutos)</h3>
-        <p class="step-desc">
-          Haz clic en "Conectar Twitter" (o YouTube, Instagram...). Autorizas con OAuth. Listo. 
-          Sin contraseñas compartidas. Sin configuraciones complicadas. Solo conectas y ya está funcionando.
-        </p>
+    <!-- How It Works -->
+    <section class="section" id="how-it-works">
+      <h2 class="section-title">De cero a protegido en 10 minutos</h2>
+      <p class="section-subtitle">
+        No necesitas ser técnico. No necesitas leer documentación. Solo necesitas 10 minutos y ganas
+        de recuperar tu tiempo.
+      </p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3 class="step-title">Conecta tus redes (2 minutos)</h3>
+          <p class="step-desc">
+            Haz clic en "Conectar Twitter" (o YouTube, Instagram...). Autorizas con OAuth. Listo.
+            Sin contraseñas compartidas. Sin configuraciones complicadas. Solo conectas y ya está
+            funcionando.
+          </p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3 class="step-title">Cuéntale quién eres (3 minutos)</h3>
+          <p class="step-desc">
+            Tres preguntas simples: "¿Qué te define?", "¿Qué no toleras?", "¿Qué te da igual?".
+            Escribes como si le hablaras a un amigo. La IA aprende tu voz. Y listo. Ya sabe cómo
+            responder como tú.
+          </p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3 class="step-title">Activa Shield (2 minutos)</h3>
+          <p class="step-desc">
+            Decides qué hacer con contenido tóxico: bloquear automáticamente, reportar, o solo
+            ocultar. Configuras tu nivel de protección. Y Shield empieza a trabajar inmediatamente,
+            protegiendo tu marca sin que tengas que hacer nada más.
+          </p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3 class="step-title">Olvídate y crea (el resto del tiempo)</h3>
+          <p class="step-desc">
+            Roastr funciona en segundo plano. Analiza comentarios. Genera respuestas. Las publica
+            automáticamente. Tú solo recibes notificaciones de lo importante. Y mientras tanto,
+            creas el contenido que realmente importa. Sin interrupciones. Sin estrés. Solo
+            resultados.
+          </p>
+        </div>
       </div>
-      <div class="step">
-        <div class="step-number">2</div>
-        <h3 class="step-title">Cuéntale quién eres (3 minutos)</h3>
-        <p class="step-desc">
-          Tres preguntas simples: "¿Qué te define?", "¿Qué no toleras?", "¿Qué te da igual?". 
-          Escribes como si le hablaras a un amigo. La IA aprende tu voz. Y listo. Ya sabe cómo responder como tú.
-        </p>
-      </div>
-      <div class="step">
-        <div class="step-number">3</div>
-        <h3 class="step-title">Activa Shield (2 minutos)</h3>
-        <p class="step-desc">
-          Decides qué hacer con contenido tóxico: bloquear automáticamente, reportar, o solo ocultar. 
-          Configuras tu nivel de protección. Y Shield empieza a trabajar inmediatamente, protegiendo tu marca sin que tengas que hacer nada más.
-        </p>
-      </div>
-      <div class="step">
-        <div class="step-number">4</div>
-        <h3 class="step-title">Olvídate y crea (el resto del tiempo)</h3>
-        <p class="step-desc">
-          Roastr funciona en segundo plano. Analiza comentarios. Genera respuestas. Las publica automáticamente. 
-          Tú solo recibes notificaciones de lo importante. Y mientras tanto, creas el contenido que realmente importa. 
-          Sin interrupciones. Sin estrés. Solo resultados.
-        </p>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Pricing Section -->
-  <section class="section" id="pricing">
-    <h2 class="section-title">Prueba Starter gratis durante 30 días</h2>
-    <p class="section-subtitle">
-      Sin tarjeta de crédito. Sin compromisos. Solo 30 días para experimentar todo el poder de Roastr.ai. 
-      Si no te convence, cancela cuando quieras. Sin preguntas.
-    </p>
-    <div class="pricing-grid">
-      <div class="pricing-card">
-        <h3 class="pricing-name">Trial Starter</h3>
-        <div class="pricing-price">30 días</div>
-        <div class="pricing-period" style="color: var(--accent); font-weight: 700;">Gratis, sin tarjeta</div>
-        <ul class="pricing-features">
-          <li>GPT-5 completo</li>
-          <li>1,000 análisis durante el trial</li>
-          <li>10 roasts para probar</li>
-          <li>1 cuenta por red</li>
-          <li>Shield incluido</li>
-          <li>Acceso completo a todas las funciones</li>
-        </ul>
-        <a href="/register" class="btn btn-secondary" style="width: 100%; background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; border: none;">Empezar trial gratis →</a>
-        <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--muted);">Después del trial: €5/mes</p>
+    <!-- Pricing Section -->
+    <section class="section" id="pricing">
+      <h2 class="section-title">Prueba Starter gratis durante 30 días</h2>
+      <p class="section-subtitle">
+        Sin tarjeta de crédito. Sin compromisos. Solo 30 días para experimentar todo el poder de
+        Roastr.ai. Si no te convence, cancela cuando quieras. Sin preguntas.
+      </p>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <h3 class="pricing-name">Trial Starter</h3>
+          <div class="pricing-price">30 días</div>
+          <div class="pricing-period" style="color: var(--accent); font-weight: 700">
+            Gratis, sin tarjeta
+          </div>
+          <ul class="pricing-features">
+            <li>GPT-5 completo</li>
+            <li>1,000 análisis durante el trial</li>
+            <li>10 roasts para probar</li>
+            <li>1 cuenta por red</li>
+            <li>Shield incluido</li>
+            <li>Acceso completo a todas las funciones</li>
+          </ul>
+          <a
+            href="/register"
+            class="btn btn-secondary"
+            style="
+              width: 100%;
+              background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+              color: #fff;
+              border: none;
+            "
+            >Empezar trial gratis →</a
+          >
+          <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--muted)">
+            Después del trial: €5/mes
+          </p>
+        </div>
+        <div class="pricing-card featured">
+          <h3 class="pricing-name">Starter</h3>
+          <div class="pricing-price">€5</div>
+          <div class="pricing-period">por mes</div>
+          <ul class="pricing-features">
+            <li>GPT-5</li>
+            <li>1,000 análisis/mes</li>
+            <li>10 roasts/mes</li>
+            <li>1 cuenta por red</li>
+            <li>Shield incluido</li>
+          </ul>
+          <a href="/register" class="btn btn-primary" style="width: 100%">Comenzar ahora</a>
+        </div>
+        <div class="pricing-card">
+          <h3 class="pricing-name">Pro</h3>
+          <div class="pricing-price">€15</div>
+          <div class="pricing-period">por mes</div>
+          <ul class="pricing-features">
+            <li>GPT-5</li>
+            <li>10,000 análisis/mes</li>
+            <li>1,000 roasts/mes</li>
+            <li>2 cuentas por red</li>
+            <li>Shield + Tono personal</li>
+          </ul>
+          <a href="/register" class="btn btn-secondary" style="width: 100%">Elegir Pro</a>
+        </div>
+        <div class="pricing-card">
+          <h3 class="pricing-name">Plus</h3>
+          <div class="pricing-price">€50</div>
+          <div class="pricing-period">por mes</div>
+          <ul class="pricing-features">
+            <li>GPT-5</li>
+            <li>100,000 análisis/mes</li>
+            <li>5,000 roasts/mes</li>
+            <li>2 cuentas por red</li>
+            <li>Todo + Embedded Judge</li>
+          </ul>
+          <a href="/register" class="btn btn-secondary" style="width: 100%">Elegir Plus</a>
+        </div>
       </div>
-      <div class="pricing-card featured">
-        <h3 class="pricing-name">Starter</h3>
-        <div class="pricing-price">€5</div>
-        <div class="pricing-period">por mes</div>
-        <ul class="pricing-features">
-          <li>GPT-5</li>
-          <li>1,000 análisis/mes</li>
-          <li>10 roasts/mes</li>
-          <li>1 cuenta por red</li>
-          <li>Shield incluido</li>
-        </ul>
-        <a href="/register" class="btn btn-primary" style="width: 100%;">Comenzar ahora</a>
-      </div>
-      <div class="pricing-card">
-        <h3 class="pricing-name">Pro</h3>
-        <div class="pricing-price">€15</div>
-        <div class="pricing-period">por mes</div>
-        <ul class="pricing-features">
-          <li>GPT-5</li>
-          <li>10,000 análisis/mes</li>
-          <li>1,000 roasts/mes</li>
-          <li>2 cuentas por red</li>
-          <li>Shield + Tono personal</li>
-        </ul>
-        <a href="/register" class="btn btn-secondary" style="width: 100%;">Elegir Pro</a>
-      </div>
-      <div class="pricing-card">
-        <h3 class="pricing-name">Plus</h3>
-        <div class="pricing-price">€50</div>
-        <div class="pricing-period">por mes</div>
-        <ul class="pricing-features">
-          <li>GPT-5</li>
-          <li>100,000 análisis/mes</li>
-          <li>5,000 roasts/mes</li>
-          <li>2 cuentas por red</li>
-          <li>Todo + Embedded Judge</li>
-        </ul>
-        <a href="/register" class="btn btn-secondary" style="width: 100%;">Elegir Plus</a>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- CTA Section -->
-  <section class="cta-section">
-    <h2>Tu tiempo vale más que €5 al mes</h2>
-    <p>
-      Cada hora que pasas respondiendo comentarios manualmente es una hora menos creando contenido. 
-      Cada troll que afecta tu marca es una oportunidad perdida. Cada día sin Roastr es un día más lejos de tus objetivos.
-    </p>
-    <p style="margin-top: 24px; font-size: 20px; font-weight: 600;">
-      Prueba Starter gratis durante 30 días. Sin tarjeta. Sin riesgo. Solo resultados.
-    </p>
-    <a href="/register" class="btn">Empezar trial gratis ahora →</a>
-    <p style="margin-top: 24px; font-size: 14px; opacity: 0.9;">Cancela cuando quieras. Sin preguntas. Sin compromisos.</p>
-  </section>
+    <!-- CTA Section -->
+    <section class="cta-section">
+      <h2>Tu tiempo vale más que €5 al mes</h2>
+      <p>
+        Cada hora que pasas respondiendo comentarios manualmente es una hora menos creando
+        contenido. Cada troll que afecta tu marca es una oportunidad perdida. Cada día sin Roastr es
+        un día más lejos de tus objetivos.
+      </p>
+      <p style="margin-top: 24px; font-size: 20px; font-weight: 600">
+        Prueba Starter gratis durante 30 días. Sin tarjeta. Sin riesgo. Solo resultados.
+      </p>
+      <a href="/register" class="btn">Empezar trial gratis ahora →</a>
+      <p style="margin-top: 24px; font-size: 14px; opacity: 0.9">
+        Cancela cuando quieras. Sin preguntas. Sin compromisos.
+      </p>
+    </section>
 
-  <!-- Footer -->
-  <footer>
-    <div class="footer-container">
-      <div class="footer-col">
-        <h3>Producto</h3>
-        <a href="#features">Características</a>
-        <a href="#pricing">Precios</a>
-        <a href="#how-it-works">Cómo funciona</a>
-        <a href="/login">Iniciar sesión</a>
+    <!-- Footer -->
+    <footer>
+      <div class="footer-container">
+        <div class="footer-col">
+          <h3>Producto</h3>
+          <a href="#features">Características</a>
+          <a href="#pricing">Precios</a>
+          <a href="#how-it-works">Cómo funciona</a>
+          <a href="/login">Iniciar sesión</a>
+        </div>
+        <div class="footer-col">
+          <h3>Plataformas</h3>
+          <a href="#">Twitter</a>
+          <a href="#">YouTube</a>
+          <a href="#">Instagram</a>
+          <a href="#">Todas las plataformas</a>
+        </div>
+        <div class="footer-col">
+          <h3>Recursos</h3>
+          <a href="#">Documentación</a>
+          <a href="#">API</a>
+          <a href="#">Soporte</a>
+          <a href="#">Blog</a>
+        </div>
+        <div class="footer-col">
+          <h3>Legal</h3>
+          <a href="#">Privacidad</a>
+          <a href="#">Términos</a>
+          <a href="#">Cookies</a>
+        </div>
       </div>
-      <div class="footer-col">
-        <h3>Plataformas</h3>
-        <a href="#">Twitter</a>
-        <a href="#">YouTube</a>
-        <a href="#">Instagram</a>
-        <a href="#">Todas las plataformas</a>
+      <div class="footer-bottom">
+        <p>&copy; 2025 Roastr.ai. Todos los derechos reservados.</p>
       </div>
-      <div class="footer-col">
-        <h3>Recursos</h3>
-        <a href="#">Documentación</a>
-        <a href="#">API</a>
-        <a href="#">Soporte</a>
-        <a href="#">Blog</a>
-      </div>
-      <div class="footer-col">
-        <h3>Legal</h3>
-        <a href="#">Privacidad</a>
-        <a href="#">Términos</a>
-        <a href="#">Cookies</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>&copy; 2025 Roastr.ai. Todos los derechos reservados.</p>
-    </div>
-  </footer>
+    </footer>
 
-  <script>
-    // Theme toggle
-    const themeToggle = document.getElementById('themeToggle');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const savedTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+    <script>
+      // Theme toggle
+      const themeToggle = document.getElementById('themeToggle');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const savedTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
 
-    if (savedTheme === 'light') {
-      document.body.setAttribute('data-theme', 'light');
-      themeToggle.innerHTML = '<span>☀️</span><span>Tema</span>';
-    }
-
-    themeToggle.addEventListener('click', () => {
-      const current = document.body.getAttribute('data-theme');
-      if (current === 'light') {
-        document.body.removeAttribute('data-theme');
-        themeToggle.innerHTML = '<span>🌙</span><span>Tema</span>';
-        localStorage.setItem('theme', 'dark');
-      } else {
+      if (savedTheme === 'light') {
         document.body.setAttribute('data-theme', 'light');
         themeToggle.innerHTML = '<span>☀️</span><span>Tema</span>';
-        localStorage.setItem('theme', 'light');
       }
-    });
 
-    // Smooth scroll for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          const offset = 80;
-          const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
-          window.scrollTo({
-            top: targetPosition,
-            behavior: 'smooth'
-          });
+      themeToggle.addEventListener('click', () => {
+        const current = document.body.getAttribute('data-theme');
+        if (current === 'light') {
+          document.body.removeAttribute('data-theme');
+          themeToggle.innerHTML = '<span>🌙</span><span>Tema</span>';
+          localStorage.setItem('theme', 'dark');
+        } else {
+          document.body.setAttribute('data-theme', 'light');
+          themeToggle.innerHTML = '<span>☀️</span><span>Tema</span>';
+          localStorage.setItem('theme', 'light');
         }
       });
-    });
 
-    // Intersection Observer for fade-in animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -100px 0px'
-    };
+      // Smooth scroll for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            const offset = 80;
+            const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({
+              top: targetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+      // Intersection Observer for fade-in animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -100px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, observerOptions);
+
+      // Observe all cards and sections
+      document
+        .querySelectorAll('.feature-card, .pricing-card, .step, .problem-card, .solution-card')
+        .forEach((el) => {
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(40px)';
+          el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+          observer.observe(el);
+        });
+
+      // Navbar scroll effect
+      let lastScroll = 0;
+      const nav = document.querySelector('nav');
+      window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        if (currentScroll > 100) {
+          nav.style.background =
+            document.body.getAttribute('data-theme') === 'light'
+              ? 'rgba(248, 249, 251, 0.95)'
+              : 'rgba(13, 13, 16, 0.95)';
+          nav.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
+        } else {
+          nav.style.background =
+            document.body.getAttribute('data-theme') === 'light'
+              ? 'rgba(248, 249, 251, 0.85)'
+              : 'rgba(13, 13, 16, 0.85)';
+          nav.style.boxShadow = 'none';
+        }
+        lastScroll = currentScroll;
+      });
+
+      // Add parallax effect to hero illustration
+      window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const heroVisual = document.querySelector('.hero-visual');
+        if (heroVisual && scrolled < window.innerHeight) {
+          heroVisual.style.transform = `translateY(${scrolled * 0.3}px)`;
         }
       });
-    }, observerOptions);
-
-    // Observe all cards and sections
-    document.querySelectorAll('.feature-card, .pricing-card, .step, .problem-card, .solution-card').forEach(el => {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(40px)';
-      el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-      observer.observe(el);
-    });
-
-    // Navbar scroll effect
-    let lastScroll = 0;
-    const nav = document.querySelector('nav');
-    window.addEventListener('scroll', () => {
-      const currentScroll = window.pageYOffset;
-      if (currentScroll > 100) {
-        nav.style.background = document.body.getAttribute('data-theme') === 'light' 
-          ? 'rgba(248, 249, 251, 0.95)' 
-          : 'rgba(13, 13, 16, 0.95)';
-        nav.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
-      } else {
-        nav.style.background = document.body.getAttribute('data-theme') === 'light' 
-          ? 'rgba(248, 249, 251, 0.85)' 
-          : 'rgba(13, 13, 16, 0.85)';
-        nav.style.boxShadow = 'none';
-      }
-      lastScroll = currentScroll;
-    });
-
-    // Add parallax effect to hero illustration
-    window.addEventListener('scroll', () => {
-      const scrolled = window.pageYOffset;
-      const heroVisual = document.querySelector('.hero-visual');
-      if (heroVisual && scrolled < window.innerHeight) {
-        heroVisual.style.transform = `translateY(${scrolled * 0.3}px)`;
-      }
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>

@@ -1,215 +1,221 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <title>Welcome to Your New Plan!</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9fafb;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ff4444;
-            margin-bottom: 10px;
-        }
-        .success {
-            background-color: #f0fdf4;
-            border-left: 4px solid #22c55e;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 4px;
-            text-align: center;
-        }
-        .success-title {
-            font-weight: bold;
-            color: #16a34a;
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-        .plan-upgrade {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 30px 0;
-        }
-        .plan-upgrade h2 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
-        }
-        .plan-badge {
-            display: inline-block;
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .button {
-            display: inline-block;
-            background-color: #ff4444;
-            color: white;
-            padding: 14px 28px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            margin: 20px 0;
-            font-size: 16px;
-        }
-        .features {
-            background-color: #f9fafb;
-            padding: 25px;
-            border-radius: 6px;
-            margin: 25px 0;
-        }
-        .features h3 {
-            color: #374151;
-            margin-top: 0;
-        }
-        .features ul {
-            list-style: none;
-            padding: 0;
-        }
-        .features li {
-            padding: 8px 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .features li:last-child {
-            border-bottom: none;
-        }
-        .features li::before {
-            content: "✨";
-            margin-right: 10px;
-        }
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            background-color: #fef3c7;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .stat {
-            flex: 1;
-        }
-        .stat-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #d97706;
-        }
-        .stat-label {
-            font-size: 12px;
-            color: #92400e;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        .support {
-            text-align: center;
-            margin-top: 20px;
-        }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9fafb;
+      }
+      .container {
+        background: white;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ff4444;
+        margin-bottom: 10px;
+      }
+      .success {
+        background-color: #f0fdf4;
+        border-left: 4px solid #22c55e;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .success-title {
+        font-weight: bold;
+        color: #16a34a;
+        font-size: 18px;
+        margin-bottom: 8px;
+      }
+      .plan-upgrade {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+        margin: 30px 0;
+      }
+      .plan-upgrade h2 {
+        margin: 0 0 10px 0;
+        font-size: 24px;
+      }
+      .plan-badge {
+        display: inline-block;
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .button {
+        display: inline-block;
+        background-color: #ff4444;
+        color: white;
+        padding: 14px 28px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 20px 0;
+        font-size: 16px;
+      }
+      .features {
+        background-color: #f9fafb;
+        padding: 25px;
+        border-radius: 6px;
+        margin: 25px 0;
+      }
+      .features h3 {
+        color: #374151;
+        margin-top: 0;
+      }
+      .features ul {
+        list-style: none;
+        padding: 0;
+      }
+      .features li {
+        padding: 8px 0;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .features li:last-child {
+        border-bottom: none;
+      }
+      .features li::before {
+        content: '✨';
+        margin-right: 10px;
+      }
+      .stats {
+        display: flex;
+        justify-content: space-around;
+        background-color: #fef3c7;
+        padding: 20px;
+        border-radius: 6px;
+        margin: 20px 0;
+        text-align: center;
+      }
+      .stat {
+        flex: 1;
+      }
+      .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #d97706;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #92400e;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+        color: #6b7280;
+        font-size: 14px;
+      }
+      .support {
+        text-align: center;
+        margin-top: 20px;
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🔥 Roastr.ai</div>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='header'>
+        <div class='logo'>🔥 Roastr.ai</div>
+      </div>
+
+      <div class='success'>
+        <div class='success-title'>🎉 Upgrade Successful!</div>
+        <p>Your subscription has been activated and you're ready to go!</p>
+      </div>
+
+      <div class='plan-upgrade'>
+        <div class='plan-badge'>{{oldPlanName}} → {{newPlanName}}</div>
+        <h2>Welcome to {{newPlanName}}!</h2>
+        <p>Activated on {{activationDate}}</p>
+      </div>
+
+      <p>Hi {{userName}},</p>
+
+      <p>Congratulations! You've successfully upgraded to the
+        <strong>{{newPlanName}} plan</strong>. Your new features are now active and ready to use.</p>
+
+      {{#if newFeatures}}
+        <div class='features'>
+          <h3>🚀 Your New Features</h3>
+          <ul>
+            {{#each newFeatures}}
+              <li>{{this}}</li>
+            {{/each}}
+          </ul>
         </div>
+      {{/if}}
 
-        <div class="success">
-            <div class="success-title">🎉 Upgrade Successful!</div>
-            <p>Your subscription has been activated and you're ready to go!</p>
+      <div class='stats'>
+        <div class='stat'>
+          <div class='stat-number'>∞</div>
+          <div class='stat-label'>Roasts</div>
         </div>
-
-        <div class="plan-upgrade">
-            <div class="plan-badge">{{oldPlanName}} → {{newPlanName}}</div>
-            <h2>Welcome to {{newPlanName}}!</h2>
-            <p>Activated on {{activationDate}}</p>
+        <div class='stat'>
+          <div class='stat-number'>24/7</div>
+          <div class='stat-label'>Support</div>
         </div>
-
-        <p>Hi {{userName}},</p>
-
-        <p>Congratulations! You've successfully upgraded to the <strong>{{newPlanName}} plan</strong>. Your new features are now active and ready to use.</p>
-
-        {{#if newFeatures}}
-        <div class="features">
-            <h3>🚀 Your New Features</h3>
-            <ul>
-                {{#each newFeatures}}
-                <li>{{this}}</li>
-                {{/each}}
-            </ul>
+        <div class='stat'>
+          <div class='stat-number'>All</div>
+          <div class='stat-label'>Platforms</div>
         </div>
-        {{/if}}
+      </div>
 
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-number">∞</div>
-                <div class="stat-label">Roasts</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number">24/7</div>
-                <div class="stat-label">Support</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number">All</div>
-                <div class="stat-label">Platforms</div>
-            </div>
-        </div>
+      <p><strong>Ready to get started?</strong></p>
+      <p>Head over to your dashboard to explore all the new capabilities at your disposal. Our
+        enhanced roasting engine is ready to help you create better content than ever before.</p>
 
-        <p><strong>Ready to get started?</strong></p>
-        <p>Head over to your dashboard to explore all the new capabilities at your disposal. Our enhanced roasting engine is ready to help you create better content than ever before.</p>
+      <div style='text-align: center;'>
+        <a href='{{dashboardUrl}}' class='button'>Go to Dashboard</a>
+      </div>
 
-        <div style="text-align: center;">
-            <a href="{{dashboardUrl}}" class="button">Go to Dashboard</a>
-        </div>
+      <div style='background-color: #f0f9ff; padding: 20px; border-radius: 6px; margin: 25px 0;'>
+        <h4 style='color: #0369a1; margin-top: 0;'>💡 Quick Start Tips</h4>
+        <ul style='margin: 0; color: #1e40af;'>
+          <li>Connect additional social media platforms</li>
+          <li>Customize your roast tones and styles</li>
+          <li>Set up automated moderation rules</li>
+          <li>Explore advanced analytics</li>
+        </ul>
+      </div>
 
-        <div style="background-color: #f0f9ff; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <h4 style="color: #0369a1; margin-top: 0;">💡 Quick Start Tips</h4>
-            <ul style="margin: 0; color: #1e40af;">
-                <li>Connect additional social media platforms</li>
-                <li>Customize your roast tones and styles</li>
-                <li>Set up automated moderation rules</li>
-                <li>Explore advanced analytics</li>
-            </ul>
-        </div>
+      <p>If you have any questions about your new features or need help getting started, our support
+        team is here to help.</p>
 
-        <p>If you have any questions about your new features or need help getting started, our support team is here to help.</p>
+      <div class='support'>
+        <p>Questions? We're here to help at
+          <a href='mailto:{{supportEmail}}'>{{supportEmail}}</a></p>
+      </div>
 
-        <div class="support">
-            <p>Questions? We're here to help at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
-        </div>
-
-        <div class="footer">
-            <p>Welcome to the next level!<br>The Roastr.ai Team</p>
-            <p><small>Thank you for choosing Roastr.ai. We're excited to see what you'll create with your new plan!</small></p>
-        </div>
+      <div class='footer'>
+        <p>Welcome to the next level!<br />The Roastr.ai Team</p>
+        <p><small>Thank you for choosing Roastr.ai. We're excited to see what you'll create with
+            your new plan!</small></p>
+      </div>
     </div>
-</body>
+  </body>
 </html>

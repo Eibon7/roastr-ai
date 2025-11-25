@@ -1,6 +1,6 @@
 /**
  * Setup file for Shield Service tests
- * 
+ *
  * This file mocks logger BEFORE any module loads mockMode,
  * preventing the singleton creation error.
  */
@@ -15,7 +15,7 @@ jest.mock('../src/utils/logger', () => {
     error: jest.fn(),
     debug: jest.fn()
   };
-  
+
   function MockLogger() {}
   MockLogger.info = mockMethods.info;
   MockLogger.warn = mockMethods.warn;
@@ -23,8 +23,6 @@ jest.mock('../src/utils/logger', () => {
   MockLogger.debug = mockMethods.debug;
   MockLogger.logger = mockMethods;
   MockLogger.SafeUtils = {};
-  
+
   return MockLogger;
 });
-
-

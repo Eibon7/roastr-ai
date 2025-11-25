@@ -1,131 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <title>Subscription Canceled</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9fafb;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ff4444;
-            margin-bottom: 10px;
-        }
-        .info {
-            background-color: #f0f9ff;
-            border-left: 4px solid #0ea5e9;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        .info-title {
-            font-weight: bold;
-            color: #0369a1;
-            margin-bottom: 8px;
-        }
-        .button {
-            display: inline-block;
-            background-color: #0ea5e9;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            margin: 20px 0;
-        }
-        .button.secondary {
-            background-color: #6b7280;
-        }
-        .details {
-            background-color: #f9fafb;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-        }
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        .support {
-            text-align: center;
-            margin-top: 20px;
-        }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9fafb;
+      }
+      .container {
+        background: white;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ff4444;
+        margin-bottom: 10px;
+      }
+      .info {
+        background-color: #f0f9ff;
+        border-left: 4px solid #0ea5e9;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .info-title {
+        font-weight: bold;
+        color: #0369a1;
+        margin-bottom: 8px;
+      }
+      .button {
+        display: inline-block;
+        background-color: #0ea5e9;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 20px 0;
+      }
+      .button.secondary {
+        background-color: #6b7280;
+      }
+      .details {
+        background-color: #f9fafb;
+        padding: 20px;
+        border-radius: 6px;
+        margin: 20px 0;
+      }
+      .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+        color: #6b7280;
+        font-size: 14px;
+      }
+      .support {
+        text-align: center;
+        margin-top: 20px;
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🔥 Roastr.ai</div>
-            <h1>Subscription Canceled</h1>
-        </div>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='header'>
+        <div class='logo'>🔥 Roastr.ai</div>
+        <h1>Subscription Canceled</h1>
+      </div>
 
-        <p>Hi {{userName}},</p>
+      <p>Hi {{userName}},</p>
 
-        <p>We're sorry to see you go! Your <strong>{{planName}} plan</strong> subscription has been canceled as requested.</p>
+      <p>We're sorry to see you go! Your
+        <strong>{{planName}} plan</strong>
+        subscription has been canceled as requested.</p>
 
-        <div class="info">
-            <div class="info-title">📅 Important Information</div>
-            <p>You'll continue to have access to all {{planName}} features until the end of your current billing period.</p>
-        </div>
+      <div class='info'>
+        <div class='info-title'>📅 Important Information</div>
+        <p>You'll continue to have access to all
+          {{planName}}
+          features until the end of your current billing period.</p>
+      </div>
 
-        <div class="details">
-            <h3>Cancellation Details</h3>
-            <ul>
-                <li><strong>Canceled Plan:</strong> {{planName}}</li>
-                <li><strong>Cancellation Date:</strong> {{cancellationDate}}</li>
-                {{#if accessUntilDate}}
-                <li><strong>Access Until:</strong> {{accessUntilDate}}</li>
-                {{/if}}
-            </ul>
-        </div>
-
-        <p><strong>What happens next?</strong></p>
+      <div class='details'>
+        <h3>Cancellation Details</h3>
         <ul>
-            <li>You'll retain full access to your {{planName}} features until {{accessUntilDate}}</li>
-            <li>After that date, your account will revert to the Free plan</li>
-            <li>Your data and settings will be preserved</li>
-            <li>No further charges will be made to your payment method</li>
+          <li><strong>Canceled Plan:</strong> {{planName}}</li>
+          <li><strong>Cancellation Date:</strong> {{cancellationDate}}</li>
+          {{#if accessUntilDate}}
+            <li><strong>Access Until:</strong> {{accessUntilDate}}</li>
+          {{/if}}
         </ul>
+      </div>
 
-        <div style="text-align: center; margin: 30px 0;">
-            <p><strong>Changed your mind?</strong></p>
-            <a href="{{reactivateUrl}}" class="button">Reactivate Subscription</a>
-        </div>
+      <p><strong>What happens next?</strong></p>
+      <ul>
+        <li>You'll retain full access to your {{planName}} features until {{accessUntilDate}}</li>
+        <li>After that date, your account will revert to the Free plan</li>
+        <li>Your data and settings will be preserved</li>
+        <li>No further charges will be made to your payment method</li>
+      </ul>
 
-        <p>We'd love to understand how we can improve. If you have a moment, please let us know why you canceled by replying to this email. Your feedback helps us serve you better.</p>
+      <div style='text-align: center; margin: 30px 0;'>
+        <p><strong>Changed your mind?</strong></p>
+        <a href='{{reactivateUrl}}' class='button'>Reactivate Subscription</a>
+      </div>
 
-        <p><strong>We hope to see you back soon!</strong></p>
+      <p>We'd love to understand how we can improve. If you have a moment, please let us know why
+        you canceled by replying to this email. Your feedback helps us serve you better.</p>
 
-        <div class="support">
-            <p>Questions? Contact us at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
-        </div>
+      <p><strong>We hope to see you back soon!</strong></p>
 
-        <div class="footer">
-            <p>Thanks for being part of the Roastr.ai community,<br>The Roastr.ai Team</p>
-            <p><small>You can reactivate your subscription anytime by visiting your billing settings. We'll be here when you're ready!</small></p>
-        </div>
+      <div class='support'>
+        <p>Questions? Contact us at <a href='mailto:{{supportEmail}}'>{{supportEmail}}</a></p>
+      </div>
+
+      <div class='footer'>
+        <p>Thanks for being part of the Roastr.ai community,<br />The Roastr.ai Team</p>
+        <p><small>You can reactivate your subscription anytime by visiting your billing settings.
+            We'll be here when you're ready!</small></p>
+      </div>
     </div>
-</body>
+  </body>
 </html>

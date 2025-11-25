@@ -1,112 +1,125 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Magic Link enviado - Roastr.ai</title>
-    <link rel="stylesheet" href="css/style.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-</head>
-<body class="auth-bg">
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  </head>
+  <body class="auth-bg">
     <div class="card">
-        <h2>✅ Enlace enviado</h2>
-        <p class="info-message">
-            Revisa tu correo electrónico. Si tu email está registrado, recibirás un enlace para entrar a Roastr.ai.
-        </p>
+      <h2>✅ Enlace enviado</h2>
+      <p class="info-message">
+        Revisa tu correo electrónico. Si tu email está registrado, recibirás un enlace para entrar a
+        Roastr.ai.
+      </p>
 
-        <div style="margin: 2rem 0; padding: 1rem; background-color: var(--color-bg); border-radius: 5px; font-size: 0.9rem;">
-            💡 <strong>Tip:</strong> El enlace expira en 1 hora. Si no lo ves, revisa tu carpeta de spam.
-        </div>
+      <div
+        style="
+          margin: 2rem 0;
+          padding: 1rem;
+          background-color: var(--color-bg);
+          border-radius: 5px;
+          font-size: 0.9rem;
+        "
+      >
+        💡 <strong>Tip:</strong> El enlace expira en 1 hora. Si no lo ves, revisa tu carpeta de
+        spam.
+      </div>
 
-        <button type="button" class="btn-secondary" id="resend-btn">Reenviar enlace</button>
-        
-        <a class="link" href="auth.html">← Volver al inicio de sesión</a>
+      <button type="button" class="btn-secondary" id="resend-btn">Reenviar enlace</button>
+
+      <a class="link" href="auth.html">← Volver al inicio de sesión</a>
     </div>
 
     <script>
-        function showMessage(message, type = 'error') {
-            // Create a temporary message div
-            const messageDiv = document.createElement('div');
-            messageDiv.className = type === 'error' ? 'error-message show' : 'success-message show';
-            messageDiv.textContent = message;
-            
-            // Insert after the h2
-            const h2 = document.querySelector('h2');
-            h2.parentNode.insertBefore(messageDiv, h2.nextSibling);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 5000);
+      function showMessage(message, type = 'error') {
+        // Create a temporary message div
+        const messageDiv = document.createElement('div');
+        messageDiv.className = type === 'error' ? 'error-message show' : 'success-message show';
+        messageDiv.textContent = message;
+
+        // Insert after the h2
+        const h2 = document.querySelector('h2');
+        h2.parentNode.insertBefore(messageDiv, h2.nextSibling);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          messageDiv.remove();
+        }, 5000);
+      }
+
+      function setLoading(buttonId, isLoading = true) {
+        const button = document.getElementById(buttonId);
+        if (isLoading) {
+          button.disabled = true;
+          button.classList.add('loading');
+        } else {
+          button.disabled = false;
+          button.classList.remove('loading');
+        }
+      }
+
+      // Handle resend magic link
+      document.getElementById('resend-btn').addEventListener('click', async function () {
+        // Try to get email from localStorage or prompt user
+        let email = localStorage.getItem('pending_magic_link_email');
+
+        if (!email) {
+          email = prompt('Ingresa tu email para reenviar el enlace:');
+          if (!email || !email.includes('@')) {
+            showMessage('Email válido requerido.');
+            return;
+          }
         }
 
-        function setLoading(buttonId, isLoading = true) {
-            const button = document.getElementById(buttonId);
-            if (isLoading) {
-                button.disabled = true;
-                button.classList.add('loading');
-            } else {
-                button.disabled = false;
-                button.classList.remove('loading');
-            }
+        setLoading('resend-btn', true);
+
+        try {
+          const response = await fetch('/api/auth/magic-link', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            showMessage('Enlace reenviado exitosamente.', 'success');
+          } else {
+            showMessage('Enlace reenviado (si la cuenta existe).', 'success');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          showMessage('Error de conexión. Inténtalo de nuevo.');
+        } finally {
+          setLoading('resend-btn', false);
         }
+      });
 
-        // Handle resend magic link
-        document.getElementById('resend-btn').addEventListener('click', async function() {
-            // Try to get email from localStorage or prompt user
-            let email = localStorage.getItem('pending_magic_link_email');
-            
-            if (!email) {
-                email = prompt('Ingresa tu email para reenviar el enlace:');
-                if (!email || !email.includes('@')) {
-                    showMessage('Email válido requerido.');
-                    return;
-                }
-            }
+      // Store email in localStorage for potential resend
+      const urlParams = new URLSearchParams(window.location.search);
+      const email = urlParams.get('email');
+      if (email) {
+        localStorage.setItem('pending_magic_link_email', email);
+      }
 
-            setLoading('resend-btn', true);
-
-            try {
-                const response = await fetch('/api/auth/magic-link', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('Enlace reenviado exitosamente.', 'success');
-                } else {
-                    showMessage('Enlace reenviado (si la cuenta existe).', 'success');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage('Error de conexión. Inténtalo de nuevo.');
-            } finally {
-                setLoading('resend-btn', false);
-            }
-        });
-
-        // Store email in localStorage for potential resend
-        const urlParams = new URLSearchParams(window.location.search);
-        const email = urlParams.get('email');
-        if (email) {
-            localStorage.setItem('pending_magic_link_email', email);
+      // Check if user is already logged in
+      if (localStorage.getItem('auth_token')) {
+        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+        if (userData.is_admin) {
+          window.location.href = '/admin.html';
+        } else {
+          window.location.href = '/dashboard.html';
         }
-
-        // Check if user is already logged in
-        if (localStorage.getItem('auth_token')) {
-            const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-            if (userData.is_admin) {
-                window.location.href = '/admin.html';
-            } else {
-                window.location.href = '/dashboard.html';
-            }
-        }
+      }
     </script>
-</body>
+  </body>
 </html>
