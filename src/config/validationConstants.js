@@ -36,14 +36,10 @@ const PLATFORM_ALIAS_MAP = Object.freeze({
  */
 const VALID_STYLES = Object.freeze({
   es: Object.freeze(
-    VALID_TONES_WITH_ALIASES.filter((tone) =>
-      ['flanders', 'balanceado', 'canalla'].includes(tone)
-    )
+    VALID_TONES_WITH_ALIASES.filter((tone) => ['flanders', 'balanceado', 'canalla'].includes(tone))
   ),
   en: Object.freeze(
-    VALID_TONES_WITH_ALIASES.filter((tone) =>
-      ['light', 'balanced', 'savage'].includes(tone)
-    )
+    VALID_TONES_WITH_ALIASES.filter((tone) => ['light', 'balanced', 'savage'].includes(tone))
   )
 });
 
