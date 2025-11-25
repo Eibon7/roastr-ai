@@ -205,6 +205,117 @@ describe('ToneCompatibilityService - Issue #872', () => {
     });
   });
 
+  // Issue #972: Tests for normalizeTone() method
+  describe('normalizeTone() - Issue #972', () => {
+    describe('Valid canonical tones (ES)', () => {
+      test('should return flanders for "flanders"', () => {
+        expect(toneCompatibilityService.normalizeTone('flanders')).toBe('flanders');
+      });
+
+      test('should return balanceado for "balanceado"', () => {
+        expect(toneCompatibilityService.normalizeTone('balanceado')).toBe('balanceado');
+      });
+
+      test('should return canalla for "canalla"', () => {
+        expect(toneCompatibilityService.normalizeTone('canalla')).toBe('canalla');
+      });
+    });
+
+    describe('Valid alias tones (EN)', () => {
+      test('should normalize "light" to "flanders"', () => {
+        expect(toneCompatibilityService.normalizeTone('light')).toBe('flanders');
+      });
+
+      test('should normalize "balanced" to "balanceado"', () => {
+        expect(toneCompatibilityService.normalizeTone('balanced')).toBe('balanceado');
+      });
+
+      test('should normalize "savage" to "canalla"', () => {
+        expect(toneCompatibilityService.normalizeTone('savage')).toBe('canalla');
+      });
+    });
+
+    describe('Case insensitivity', () => {
+      test('should normalize uppercase tones', () => {
+        expect(toneCompatibilityService.normalizeTone('FLANDERS')).toBe('flanders');
+        expect(toneCompatibilityService.normalizeTone('BALANCEADO')).toBe('balanceado');
+        expect(toneCompatibilityService.normalizeTone('CANALLA')).toBe('canalla');
+      });
+
+      test('should normalize mixed case tones', () => {
+        expect(toneCompatibilityService.normalizeTone('Flanders')).toBe('flanders');
+        expect(toneCompatibilityService.normalizeTone('BalanceAdo')).toBe('balanceado');
+        expect(toneCompatibilityService.normalizeTone('SaVaGe')).toBe('canalla');
+      });
+
+      test('should normalize mixed case aliases', () => {
+        expect(toneCompatibilityService.normalizeTone('Light')).toBe('flanders');
+        expect(toneCompatibilityService.normalizeTone('Balanced')).toBe('balanceado');
+        expect(toneCompatibilityService.normalizeTone('Savage')).toBe('canalla');
+      });
+    });
+
+    describe('Whitespace handling', () => {
+      test('should trim leading whitespace', () => {
+        expect(toneCompatibilityService.normalizeTone('  flanders')).toBe('flanders');
+        expect(toneCompatibilityService.normalizeTone('  savage')).toBe('canalla');
+      });
+
+      test('should trim trailing whitespace', () => {
+        expect(toneCompatibilityService.normalizeTone('flanders  ')).toBe('flanders');
+        expect(toneCompatibilityService.normalizeTone('light  ')).toBe('flanders');
+      });
+
+      test('should trim both leading and trailing whitespace', () => {
+        expect(toneCompatibilityService.normalizeTone('  balanceado  ')).toBe('balanceado');
+        expect(toneCompatibilityService.normalizeTone('  balanced  ')).toBe('balanceado');
+      });
+    });
+
+    describe('Invalid tones', () => {
+      test('should return null for invalid tone', () => {
+        expect(toneCompatibilityService.normalizeTone('invalid')).toBeNull();
+      });
+
+      test('should return null for legacy humor_type values', () => {
+        expect(toneCompatibilityService.normalizeTone('witty')).toBeNull();
+        expect(toneCompatibilityService.normalizeTone('sarcastic')).toBeNull();
+        expect(toneCompatibilityService.normalizeTone('direct')).toBeNull();
+        expect(toneCompatibilityService.normalizeTone('playful')).toBeNull();
+      });
+
+      test('should return null for random strings', () => {
+        expect(toneCompatibilityService.normalizeTone('random')).toBeNull();
+        expect(toneCompatibilityService.normalizeTone('foobar')).toBeNull();
+        expect(toneCompatibilityService.normalizeTone('test')).toBeNull();
+      });
+    });
+
+    describe('Null/undefined/empty handling', () => {
+      test('should return null for null input', () => {
+        expect(toneCompatibilityService.normalizeTone(null)).toBeNull();
+      });
+
+      test('should return null for undefined input', () => {
+        expect(toneCompatibilityService.normalizeTone(undefined)).toBeNull();
+      });
+
+      test('should return null for empty string', () => {
+        expect(toneCompatibilityService.normalizeTone('')).toBeNull();
+      });
+
+      test('should return null for whitespace-only string', () => {
+        expect(toneCompatibilityService.normalizeTone('   ')).toBeNull();
+      });
+
+      test('should return null for non-string types', () => {
+        expect(toneCompatibilityService.normalizeTone(123)).toBeNull();
+        expect(toneCompatibilityService.normalizeTone({})).toBeNull();
+        expect(toneCompatibilityService.normalizeTone([])).toBeNull();
+      });
+    });
+  });
+
   describe('Backward Compatibility Scenarios', () => {
     test('should handle old API call with humor_type only', () => {
       const normalized = toneCompatibilityService.normalizeConfig({
