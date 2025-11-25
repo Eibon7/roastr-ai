@@ -1,6 +1,17 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+# Auto-format staged files with Prettier (only staged files, much faster)
+echo "🎨 Auto-formatting staged files with Prettier..."
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(js|jsx|ts|tsx|json|css|md|yaml|yml)$' || true)
+if [ -n "$STAGED_FILES" ]; then
+  echo "$STAGED_FILES" | xargs npx prettier --write 2>/dev/null || true
+  echo "$STAGED_FILES" | xargs git add  # Re-stage formatted files
+  echo "✅ Formatted $(echo "$STAGED_FILES" | wc -l | tr -d ' ') file(s)"
+else
+  echo "ℹ️  No formattable files staged"
+fi
+
 # Case sensitivity guard - basic frontend build check
 echo "🔍 Checking for case-sensitive import issues..."
 (cd frontend && npm run build:ci --if-present) || exit 1
