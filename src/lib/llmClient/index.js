@@ -1,9 +1,9 @@
 /**
  * LLM Client - Unified LLM Interface
- * 
+ *
  * Provides unified interface for LLM operations via Portkey AI Gateway
  * Issue #920: Portkey AI Gateway integration
- * 
+ *
  * Usage:
  *   const LLMClient = require('./lib/llmClient');
  *   const client = LLMClient.getInstance('default');
@@ -59,4 +59,3 @@ module.exports = {
    */
   extractMetadata: transformers.extractMetadata
 };
-

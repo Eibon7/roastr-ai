@@ -1,9 +1,9 @@
 /**
  * LLM Client Factory
- * 
+ *
  * Creates and manages LLM client instances with Portkey AI Gateway integration
  * Issue #920: Portkey AI Gateway integration
- * 
+ *
  * Features:
  * - Singleton pattern per mode/plan
  * - Automatic fallback handling
@@ -14,7 +14,11 @@
 const OpenAI = require('openai');
 const Portkey = require('portkey-ai');
 const { logger } = require('../../utils/logger');
-const { getRoute: getRouteConfig, getAvailableModes: getAvailableModesFromRoutes, modeExists: modeExistsInRoutes } = require('./routes');
+const {
+  getRoute: getRouteConfig,
+  getAvailableModes: getAvailableModesFromRoutes,
+  modeExists: modeExistsInRoutes
+} = require('./routes');
 const { getNextFallback } = require('./fallbacks');
 const { transformChatCompletion, transformEmbedding, extractMetadata } = require('./transformers');
 const mockMode = require('../../config/mockMode');
@@ -56,7 +60,7 @@ function createPortkeyClient(route, options = {}) {
  */
 function createOpenAIClient(options = {}) {
   const apiKey = process.env.OPENAI_API_KEY;
-  
+
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY not configured');
   }
@@ -79,10 +83,10 @@ function getInstance(mode = 'default', options = {}) {
   // Normalize mode
   const normalizedMode = mode.toLowerCase();
   const route = getRouteConfig(normalizedMode);
-  
+
   // Cache key: mode + plan (if provided)
   const cacheKey = `${normalizedMode}-${options.plan || 'default'}`;
-  
+
   // Return cached instance if available
   if (clientCache.has(cacheKey)) {
     return clientCache.get(cacheKey);
@@ -91,10 +95,10 @@ function getInstance(mode = 'default', options = {}) {
   // Determine client type
   let client;
   let clientType = 'openai'; // Default to OpenAI
-  
+
   // Check for Grok API key for NSFW mode
   const grokApiKey = process.env.GROK_API_KEY;
-  
+
   // Issue #920: Use Portkey if configured, otherwise fallback to OpenAI
   if (normalizedMode === 'nsfw' && grokApiKey && !isPortkeyConfigured()) {
     // Direct Grok client (when Portkey not configured)
@@ -121,14 +125,14 @@ function getInstance(mode = 'default', options = {}) {
     route,
     config: route.config,
     extractMetadata: (response) => extractMetadata(response),
-    
+
     // OpenAI-compatible chat interface
     chat: {
       completions: {
         create: async (params) => {
           try {
             let response;
-            
+
             if (clientType === 'portkey') {
               // Use Portkey with route
               response = await client.chat.completions.create({
@@ -144,7 +148,7 @@ function getInstance(mode = 'default', options = {}) {
                 ...route.config
               });
             }
-            
+
             // Transform and add metadata
             const transformed = transformChatCompletion(response);
             return {
@@ -157,11 +161,14 @@ function getInstance(mode = 'default', options = {}) {
               }
             };
           } catch (error) {
-            logger.error(`LLMClient: Error in chat.completions.create for mode "${normalizedMode}"`, {
-              error: error.message,
-              provider: route.provider
-            });
-            
+            logger.error(
+              `LLMClient: Error in chat.completions.create for mode "${normalizedMode}"`,
+              {
+                error: error.message,
+                provider: route.provider
+              }
+            );
+
             // Handle fallback
             if (clientType === 'portkey') {
               const nextProvider = getNextFallback(normalizedMode, route.provider);
@@ -173,7 +180,7 @@ function getInstance(mode = 'default', options = {}) {
                   model: route.model,
                   ...route.config
                 });
-                
+
                 return {
                   ...transformChatCompletion(response),
                   _portkey: {
@@ -186,19 +193,19 @@ function getInstance(mode = 'default', options = {}) {
                 };
               }
             }
-            
+
             throw error;
           }
         }
       }
     },
-    
+
     // OpenAI-compatible embeddings interface
     embeddings: {
       create: async (embeddingParams) => {
         try {
           let response;
-          
+
           if (clientType === 'portkey') {
             response = await client.embeddings.create({
               ...embeddingParams,
@@ -210,7 +217,7 @@ function getInstance(mode = 'default', options = {}) {
               model: route.model || 'text-embedding-3-small'
             });
           }
-          
+
           const transformed = transformEmbedding(response);
           return {
             ...transformed,
@@ -226,15 +233,17 @@ function getInstance(mode = 'default', options = {}) {
             error: error.message,
             provider: route.provider
           });
-          
+
           // Handle fallback
           if (clientType === 'portkey') {
             const nextProvider = getNextFallback(normalizedMode, route.provider);
             if (nextProvider === 'openai') {
-              logger.info(`LLMClient: Falling back to OpenAI for embeddings mode "${normalizedMode}"`);
+              logger.info(
+                `LLMClient: Falling back to OpenAI for embeddings mode "${normalizedMode}"`
+              );
               const openaiClient = createOpenAIClient(options);
               const response = await openaiClient.embeddings.create(embeddingParams);
-              
+
               return {
                 ...response,
                 _portkey: {
@@ -246,18 +255,18 @@ function getInstance(mode = 'default', options = {}) {
               };
             }
           }
-          
+
           throw error;
         }
       }
     },
-    
+
     // OpenAI-compatible responses interface (for Responses API)
     responses: {
       create: async (params) => {
         try {
           let response;
-          
+
           if (clientType === 'portkey') {
             response = await client.responses.create({
               ...params,
@@ -271,7 +280,7 @@ function getInstance(mode = 'default', options = {}) {
               ...route.config
             });
           }
-          
+
           const transformed = transformChatCompletion(response);
           return {
             ...transformed,
@@ -287,19 +296,21 @@ function getInstance(mode = 'default', options = {}) {
             error: error.message,
             provider: route.provider
           });
-          
+
           // Handle fallback
           if (clientType === 'portkey') {
             const nextProvider = getNextFallback(normalizedMode, route.provider);
             if (nextProvider === 'openai') {
-              logger.info(`LLMClient: Falling back to OpenAI for responses mode "${normalizedMode}"`);
+              logger.info(
+                `LLMClient: Falling back to OpenAI for responses mode "${normalizedMode}"`
+              );
               const openaiClient = createOpenAIClient(options);
               const response = await openaiClient.responses.create({
                 ...params,
                 model: route.model,
                 ...route.config
               });
-              
+
               return {
                 ...transformChatCompletion(response),
                 _portkey: {
@@ -312,7 +323,7 @@ function getInstance(mode = 'default', options = {}) {
               };
             }
           }
-          
+
           throw error;
         }
       }
@@ -374,4 +385,3 @@ module.exports = {
   getRoute,
   getFallbackChain
 };
-
