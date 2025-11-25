@@ -270,6 +270,53 @@ describe('LLMClient Factory', () => {
       delete process.env.PORTKEY_PROJECT_ID;
       LLMClient.clearCache();
     });
+
+    test('should fallback to fallbackModel when primary model fails', async () => {
+      // Clear cache first
+      LLMClient.clearCache();
+
+      const OpenAI = require('openai');
+      let callCount = 0;
+      const mockOpenAIInstance = {
+        chat: {
+          completions: {
+            create: jest.fn().mockImplementation((params) => {
+              callCount++;
+              // First call fails with model error, second succeeds with fallback
+              if (callCount === 1 && params.model === 'gpt-5.1') {
+                const error = new Error('Model gpt-5.1 not found');
+                error.code = 'model_not_found';
+                throw error;
+              }
+              return Promise.resolve({
+                choices: [{ message: { content: 'Fallback model response' } }],
+                usage: { total_tokens: 10 }
+              });
+            })
+          }
+        }
+      };
+      // Configure mock BEFORE creating client
+      OpenAI.mockImplementation(() => mockOpenAIInstance);
+
+      // Now create client (will use mocked OpenAI)
+      const client = LLMClient.getInstance('balanceado');
+
+      const response = await client.chat.completions.create({
+        messages: [{ role: 'user', content: 'Test' }]
+      });
+
+      // Verify fallback was used (fallbackUsed should be true when model fallback occurs)
+      expect(response._portkey.fallbackUsed).toBe(true);
+      expect(response._portkey.originalModel).toBe('gpt-5.1');
+      expect(response._portkey.fallbackModel).toBe('gpt-4-turbo');
+      // Verify both calls were made (primary model failed, fallback succeeded)
+      expect(mockOpenAIInstance.chat.completions.create).toHaveBeenCalledTimes(2);
+      // Verify second call used fallback model
+      const secondCall = mockOpenAIInstance.chat.completions.create.mock.calls[1][0];
+      expect(secondCall.model).toBe('gpt-4-turbo');
+      LLMClient.clearCache();
+    });
   });
 
   describe('Metadata extraction', () => {

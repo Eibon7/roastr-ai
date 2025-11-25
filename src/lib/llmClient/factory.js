@@ -157,15 +157,55 @@ function getInstance(mode = 'default', options = {}) {
               }
             };
           } catch (error) {
+            // Issue #920: Check if error is due to model not found/available
+            const isModelError =
+              error.message?.includes('model') ||
+              error.message?.includes('not found') ||
+              error.message?.includes('invalid') ||
+              error.code === 'model_not_found';
+
+            // Try fallback model if primary model failed and fallbackModel is configured
+            if (isModelError && route.fallbackModel && route.model !== route.fallbackModel) {
+              logger.warn(
+                `LLMClient: Model "${route.model}" not available, trying fallback "${route.fallbackModel}"`
+              );
+              try {
+                const fallbackResponse = await client.chat.completions.create({
+                  ...params,
+                  model: route.fallbackModel,
+                  ...route.config
+                });
+                const transformed = transformChatCompletion(fallbackResponse);
+                return {
+                  ...transformed,
+                  _portkey: {
+                    mode: normalizedMode,
+                    provider: route.provider,
+                    fallbackUsed: true,
+                    originalModel: route.model,
+                    fallbackModel: route.fallbackModel,
+                    metadata: {}
+                  }
+                };
+              } catch (fallbackError) {
+                logger.error(
+                  `LLMClient: Fallback model "${route.fallbackModel}" also failed`,
+                  { error: fallbackError.message }
+                );
+                // Continue to provider fallback logic below
+              }
+            }
+
             logger.error(
               `LLMClient: Error in chat.completions.create for mode "${normalizedMode}"`,
               {
                 error: error.message,
-                provider: route.provider
+                provider: route.provider,
+                model: route.model
               }
             );
 
-            // Handle fallback
+            // Handle provider fallback (Portkey → OpenAI)
             if (clientType === 'portkey') {
               const nextProvider = getNextFallback(normalizedMode, route.provider);
               if (nextProvider === 'openai') {
@@ -173,7 +213,7 @@ function getInstance(mode = 'default', options = {}) {
                 const openaiClient = createOpenAIClient(options);
                 // Issue #920: Use fallback model if route model isn't OpenAI-compatible (e.g., grok-beta)
                 const fallbackModel =
-                  route.fallbackModel || (route.provider !== 'openai' ? 'gpt-5.1' : route.model);
+                  route.fallbackModel || (route.provider !== 'openai' ? 'gpt-4-turbo' : route.model);
                 const response = await openaiClient.chat.completions.create({
                   ...params,
                   model: fallbackModel,
@@ -187,6 +227,8 @@ function getInstance(mode = 'default', options = {}) {
                     provider: 'openai',
                     fallbackUsed: true,
                     originalProvider: route.provider,
+                    originalModel: route.model,
+                    fallbackModel: fallbackModel,
                     metadata: {}
                   }
                 };
@@ -275,12 +317,52 @@ function getInstance(mode = 'default', options = {}) {
             }
           };
         } catch (error) {
+          // Issue #920: Check if error is due to model not found/available
+          const isModelError =
+            error.message?.includes('model') ||
+            error.message?.includes('not found') ||
+            error.message?.includes('invalid') ||
+            error.code === 'model_not_found';
+
+          // Try fallback model if primary model failed and fallbackModel is configured
+          if (isModelError && route.fallbackModel && route.model !== route.fallbackModel) {
+            logger.warn(
+              `LLMClient: Model "${route.model}" not available for responses, trying fallback "${route.fallbackModel}"`
+            );
+            try {
+              const fallbackResponse = await client.responses.create({
+                ...params,
+                model: route.fallbackModel,
+                ...route.config
+              });
+              const transformed = transformChatCompletion(fallbackResponse);
+              return {
+                ...transformed,
+                _portkey: {
+                  mode: normalizedMode,
+                  provider: route.provider,
+                  fallbackUsed: true,
+                  originalModel: route.model,
+                  fallbackModel: route.fallbackModel,
+                  metadata: {}
+                }
+              };
+            } catch (fallbackError) {
+              logger.error(
+                `LLMClient: Fallback model "${route.fallbackModel}" also failed for responses`,
+                { error: fallbackError.message }
+              );
+              // Continue to provider fallback logic below
+            }
+          }
+
           logger.error(`LLMClient: Error in responses.create for mode "${normalizedMode}"`, {
             error: error.message,
-            provider: route.provider
+            provider: route.provider,
+            model: route.model
           });
 
-          // Handle fallback
+          // Handle provider fallback (Portkey → OpenAI)
           if (clientType === 'portkey') {
             const nextProvider = getNextFallback(normalizedMode, route.provider);
             if (nextProvider === 'openai') {
@@ -290,7 +372,7 @@ function getInstance(mode = 'default', options = {}) {
               const openaiClient = createOpenAIClient(options);
               // Issue #920: Use fallback model if route model isn't OpenAI-compatible
               const fallbackModel =
-                route.fallbackModel || (route.provider !== 'openai' ? 'gpt-5.1' : route.model);
+                route.fallbackModel || (route.provider !== 'openai' ? 'gpt-4-turbo' : route.model);
               const response = await openaiClient.responses.create({
                 ...params,
                 model: fallbackModel,
@@ -304,6 +386,8 @@ function getInstance(mode = 'default', options = {}) {
                   provider: 'openai',
                   fallbackUsed: true,
                   originalProvider: route.provider,
+                  originalModel: route.model,
+                  fallbackModel: fallbackModel,
                   metadata: {}
                 }
               };
