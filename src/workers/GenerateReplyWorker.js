@@ -1024,7 +1024,10 @@ class GenerateReplyWorker extends BaseWorker {
     return {
       text: finalResponse,
       tokensUsed: completion.usage?.total_tokens || 0,
-      model: portkeyMetadata?.provider === 'openai' ? 'gpt-4o-mini' : portkeyMetadata?.provider || 'gpt-4o-mini',
+      model:
+        portkeyMetadata?.provider === 'openai'
+          ? 'gpt-4o-mini'
+          : portkeyMetadata?.provider || 'gpt-4o-mini',
       promptVersion: this.promptTemplate.getVersion(),
       personaData: personaFieldsUsed, // Track which persona fields were used
       // Issue #920: Propagate LLMClient metadata
