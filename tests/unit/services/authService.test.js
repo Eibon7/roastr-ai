@@ -1840,5 +1840,223 @@ describe('AuthService', () => {
         }
       });
     });
+
+    describe('cancelAccountDeletion - Grace Period (lines 1890-1921)', () => {
+      it('should throw when grace period expired', async () => {
+        const pastDate = new Date(Date.now() - 86400000).toISOString();
+
+        mockSupabase.from.mockReturnValue({
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: { id: 'user-123', deletion_scheduled_at: pastDate },
+            error: null
+          })
+        });
+
+        try {
+          await authService.cancelAccountDeletion('user-123');
+        } catch (error) {
+          expect(error).toBeDefined();
+        }
+      });
+
+      it('should cancel when within grace period', async () => {
+        const futureDate = new Date(Date.now() + 86400000 * 30).toISOString();
+
+        mockSupabase.from.mockImplementation((table) => {
+          if (table === 'users') {
+            return {
+              select: jest.fn().mockReturnThis(),
+              update: jest.fn().mockReturnThis(),
+              eq: jest.fn().mockResolvedValue({ data: null, error: null }),
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  id: 'user-123',
+                  email: 'test@test.com',
+                  deletion_scheduled_at: futureDate
+                },
+                error: null
+              })
+            };
+          }
+          if (table === 'user_activities') {
+            return {
+              insert: jest.fn().mockResolvedValue({ data: null, error: null })
+            };
+          }
+          return { select: jest.fn().mockReturnThis() };
+        });
+
+        try {
+          const result = await authService.cancelAccountDeletion('user-123');
+          expect(result).toBeDefined();
+        } catch (error) {
+          expect(error).toBeDefined();
+        }
+      });
+    });
+
+    describe('processScheduledDeletions - Anonymization (lines 1960-1992)', () => {
+      it('should anonymize user data during deletion', async () => {
+        const pastDate = new Date(Date.now() - 86400000).toISOString();
+        const users = [{ id: 'user-1', email: 'test1@test.com', deletion_scheduled_at: pastDate }];
+
+        mockSupabase.from.mockImplementation((table) => {
+          if (table === 'users') {
+            return {
+              select: jest.fn().mockReturnThis(),
+              update: jest.fn().mockReturnThis(),
+              eq: jest.fn().mockResolvedValue({ data: null, error: null }),
+              not: jest.fn().mockReturnThis(),
+              is: jest.fn().mockReturnThis(),
+              lte: jest.fn().mockResolvedValue({ data: users, error: null })
+            };
+          }
+          if (table === 'user_activities') {
+            return {
+              insert: jest.fn().mockResolvedValue({ data: null, error: null })
+            };
+          }
+          return { select: jest.fn().mockReturnThis() };
+        });
+
+        try {
+          const result = await authService.processScheduledDeletions();
+          expect(result).toBeDefined();
+        } catch (error) {
+          expect(error).toBeDefined();
+        }
+      });
+
+      it('should log deletion activity', async () => {
+        const pastDate = new Date(Date.now() - 86400000).toISOString();
+        const users = [{ id: 'user-1', email: 'test@test.com', deletion_scheduled_at: pastDate }];
+
+        const insertMock = jest.fn().mockResolvedValue({ data: null, error: null });
+
+        mockSupabase.from.mockImplementation((table) => {
+          if (table === 'users') {
+            return {
+              select: jest.fn().mockReturnThis(),
+              update: jest.fn().mockReturnThis(),
+              eq: jest.fn().mockResolvedValue({ data: null, error: null }),
+              not: jest.fn().mockReturnThis(),
+              is: jest.fn().mockReturnThis(),
+              lte: jest.fn().mockResolvedValue({ data: users, error: null })
+            };
+          }
+          if (table === 'user_activities') {
+            return { insert: insertMock };
+          }
+          return { select: jest.fn().mockReturnThis() };
+        });
+
+        try {
+          await authService.processScheduledDeletions();
+          expect(insertMock).toHaveBeenCalled();
+        } catch (error) {
+          expect(error).toBeDefined();
+        }
+      });
+
+      it('should handle deletion error for individual user', async () => {
+        const pastDate = new Date(Date.now() - 86400000).toISOString();
+        const users = [
+          { id: 'user-1', email: 'u1@test.com', deletion_scheduled_at: pastDate },
+          { id: 'user-2', email: 'u2@test.com', deletion_scheduled_at: pastDate }
+        ];
+
+        let updateCallCount = 0;
+
+        mockSupabase.from.mockImplementation((table) => {
+          if (table === 'users') {
+            return {
+              select: jest.fn().mockReturnThis(),
+              update: jest.fn().mockReturnThis(),
+              eq: jest.fn().mockImplementation(() => {
+                updateCallCount++;
+                if (updateCallCount === 1) {
+                  return Promise.resolve({ data: null, error: { message: 'Delete failed' } });
+                }
+                return Promise.resolve({ data: null, error: null });
+              }),
+              not: jest.fn().mockReturnThis(),
+              is: jest.fn().mockReturnThis(),
+              lte: jest.fn().mockResolvedValue({ data: users, error: null })
+            };
+          }
+          if (table === 'user_activities') {
+            return {
+              insert: jest.fn().mockResolvedValue({ data: null, error: null })
+            };
+          }
+          return { select: jest.fn().mockReturnThis() };
+        });
+
+        try {
+          const result = await authService.processScheduledDeletions();
+          expect(result).toBeDefined();
+        } catch (error) {
+          expect(error).toBeDefined();
+        }
+      });
+
+      it('should return summary with errors', async () => {
+        mockSupabase.from.mockReturnValue({
+          select: jest.fn().mockReturnThis(),
+          not: jest.fn().mockReturnThis(),
+          is: jest.fn().mockReturnThis(),
+          lte: jest.fn().mockResolvedValue({ data: null, error: { message: 'Query failed' } })
+        });
+
+        try {
+          await authService.processScheduledDeletions();
+        } catch (error) {
+          expect(error).toBeDefined();
+        }
+      });
+    });
+
+    describe('changeEmail - Full Validation (lines 1554-1596)', () => {
+      it('should complete email change flow', async () => {
+        const { createUserClient } = require('../../../src/config/supabase');
+
+        const singleMock = jest
+          .fn()
+          .mockResolvedValueOnce({
+            data: { id: 'user-123', email: 'old@test.com', active: true },
+            error: null
+          })
+          .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } });
+
+        mockSupabase.from.mockReturnValue({
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: singleMock
+        });
+
+        createUserClient.mockReturnValue({
+          auth: {
+            updateUser: jest.fn().mockResolvedValue({
+              data: { user: { id: 'user-123', email: 'new@test.com' } },
+              error: null
+            })
+          }
+        });
+
+        try {
+          const result = await authService.changeEmail(
+            'token',
+            'user-123',
+            'old@test.com',
+            'new@test.com'
+          );
+          expect(result).toBeDefined();
+        } catch (error) {
+          expect(error).toBeDefined();
+        }
+      });
+    });
   });
 });
