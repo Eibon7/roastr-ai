@@ -236,7 +236,20 @@ describe('Ingestor Processing Order Integration Tests', () => {
       const processedOrder = [];
 
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
-        const comment = payload.comment_data;
+        // Handle both payload structures: payload.comment_data or payload directly
+        let comment = payload.comment_data || payload;
+        
+        // Normalize comment structure if needed (handle comment_id -> platform_comment_id)
+        if (comment && comment.comment_id && !comment.platform_comment_id) {
+          comment = {
+            ...comment,
+            platform_comment_id: comment.comment_id
+          };
+        }
+        
+        if (!comment || !comment.platform_comment_id) {
+          throw new Error(`Invalid payload structure: ${JSON.stringify(payload)}`);
+        }
         processedOrder.push(comment.platform_comment_id);
         return [comment];
       };
@@ -577,7 +590,20 @@ describe('Ingestor Processing Order Integration Tests', () => {
       const processedOrder = [];
 
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
-        const comment = payload.comment_data;
+        // Handle both payload structures: payload.comment_data or payload directly
+        let comment = payload.comment_data || payload;
+        
+        // Normalize comment structure if needed (handle comment_id -> platform_comment_id)
+        if (comment && comment.comment_id && !comment.platform_comment_id) {
+          comment = {
+            ...comment,
+            platform_comment_id: comment.comment_id
+          };
+        }
+        
+        if (!comment || !comment.platform_comment_id) {
+          throw new Error(`Invalid payload structure: ${JSON.stringify(payload)}`);
+        }
         processedOrder.push(comment.platform_comment_id);
 
         // Simulate processing time

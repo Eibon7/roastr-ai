@@ -188,6 +188,12 @@ class IngestorTestUtils {
     // Override the worker's queue service with our test queue service
     worker.queueService = this.queueService;
 
+    // Override the worker's supabase client with our test supabase client
+    // This ensures the worker uses the same mock storage as the test utils
+    if (this.supabase) {
+      worker.supabase = this.supabase;
+    }
+
     // Override the processing loop to prevent infinite polling in tests
     const originalProcessingLoop = worker.processingLoop;
     worker.processingLoop = async function () {
