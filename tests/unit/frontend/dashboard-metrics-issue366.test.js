@@ -32,21 +32,12 @@ const mockShieldData = [
   }
 ];
 
-const mockUseAnalytics = jest.fn();
-const mockUseShieldData = jest.fn();
 const mockUseFeatureFlags = jest.fn();
 
-jest.mock('../../../frontend/src/hooks/useAnalytics', () => ({
-  useAnalytics: mockUseAnalytics
-}));
 
-jest.mock('../../../frontend/src/hooks/useShieldData', () => ({
-  useShieldData: mockUseShieldData
-}));
 
 jest.mock('../../../frontend/src/hooks/useFeatureFlags', () => ({
   useFeatureFlags: mockUseFeatureFlags
-}));
 
 // Mock Material-UI components
 jest.mock('@mui/material', () => ({
@@ -82,28 +73,24 @@ jest.mock('@mui/material', () => ({
       {children}
     </button>
   )
-}));
 
 jest.mock('@mui/icons-material', () => ({
   ExpandMore: () => <span data-testid="expand-more-icon">▼</span>,
   ExpandLess: () => <span data-testid="expand-less-icon">▲</span>,
   Analytics: () => <span data-testid="analytics-icon">📊</span>,
   Shield: () => <span data-testid="shield-icon">🛡️</span>
-}));
 
 describe('Issue #366 - Dashboard Metrics UI', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Default mock implementations
-    mockUseAnalytics.mockReturnValue({
       data: mockAnalyticsData,
       loading: false,
       error: null,
       refetch: jest.fn()
     });
 
-    mockUseShieldData.mockReturnValue({
       data: mockShieldData,
       loading: false,
       error: null
@@ -137,7 +124,6 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
     });
 
     it('should show loading state for analytics', () => {
-      mockUseAnalytics.mockReturnValue({
         data: null,
         loading: true,
         error: null,
@@ -152,7 +138,6 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
     });
 
     it('should handle analytics error state', () => {
-      mockUseAnalytics.mockReturnValue({
         data: null,
         loading: false,
         error: 'Failed to load analytics',
@@ -218,7 +203,6 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
     });
 
     it('should show empty state when no intercepted items', () => {
-      mockUseShieldData.mockReturnValue({
         data: [],
         loading: false,
         error: null
@@ -236,7 +220,6 @@ describe('Issue #366 - Dashboard Metrics UI', () => {
     });
 
     it('should handle Shield data loading state', () => {
-      mockUseShieldData.mockReturnValue({
         data: null,
         loading: true,
         error: null
