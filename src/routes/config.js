@@ -146,26 +146,24 @@ router.put('/:platform', async (req, res) => {
       });
     }
 
-    // Validate input
-    if (tone && !VALID_TONES.includes(tone)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid tone. Must be one of: ' + VALID_TONES.join(', ')
-      });
-    }
-
-    // Issue #872 AC8: humor_type completely removed - no validation needed
-
-    // Validate tone normalization (backwards compatibility)
-    if (tone && !VALID_TONES.includes(tone)) {
-      const normalizedTone = toneCompatibilityService.normalizeTone(tone);
+    // Issue #972: Always normalize tone to canonical form (flanders, balanceado, canalla)
+    // This handles both validation and normalization of aliases (light→flanders, etc.)
+    let normalizedTone = null;
+    if (tone) {
+      normalizedTone = toneCompatibilityService.normalizeTone(tone);
       if (!normalizedTone) {
         return res.status(400).json({
           success: false,
           error: 'Invalid tone. Must be one of: ' + VALID_TONES.join(', ')
         });
       }
+      // Log if the tone was converted from an alias
+      if (normalizedTone !== tone.toLowerCase().trim()) {
+        logger.info(`Tone normalized: ${tone} → ${normalizedTone} (Issue #872 compatibility)`);
+      }
     }
+
+    // Issue #872 AC8: humor_type completely removed - no validation needed
 
     if (
       response_frequency !== undefined &&
@@ -236,7 +234,8 @@ router.put('/:platform', async (req, res) => {
     // Prepare update data
     const updateData = {};
     if (enabled !== undefined) updateData.enabled = enabled;
-    if (tone) updateData.tone = toneCompatibilityService.normalizeTone(tone) || 'balanceado';
+    // Issue #972: Use already-normalized tone from validation step above
+    if (normalizedTone) updateData.tone = normalizedTone;
     // Issue #872 AC8: humor_type completely removed - no processing
     if (response_frequency !== undefined) updateData.response_frequency = response_frequency;
     if (trigger_words) updateData.trigger_words = trigger_words;

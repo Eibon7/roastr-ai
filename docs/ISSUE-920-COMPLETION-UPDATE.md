@@ -121,15 +121,15 @@
 
 ## ✅ Acceptance Criteria Status
 
-| AC | Descripción | Estado |
-|----|-------------|--------|
-| AC1 | LLMClient wrapper creado | ✅ Completo |
-| AC2 | Modos definidos con fallbacks | ✅ Completo |
-| AC3 | Metadata propagation implementada | ✅ Completo |
-| AC4 | Backward compatibility mantenida | ✅ Completo |
-| AC5 | Todos los servicios migrados (6/6) | ✅ Completo |
-| AC6 | Tests con buena cobertura | ✅ Completo (83 tests) |
-| AC7 | Documentación actualizada | ✅ Completo |
+| AC | Descripción | Estado | Evidencia |
+|----|-------------|--------|----------|
+| AC1 | LLMClient wrapper creado | ✅ Completo | [Commit: `9d129f0e`](https://github.com/Eibon7/roastr-ai/commit/9d129f0e) - [`src/lib/llmClient/factory.js`](src/lib/llmClient/factory.js) |
+| AC2 | Modos definidos con fallbacks | ✅ Completo | [Commit: `9d129f0e`](https://github.com/Eibon7/roastr-ai/commit/9d129f0e) - [`src/lib/llmClient/routes.js`](src/lib/llmClient/routes.js), [`src/lib/llmClient/fallbacks.js`](src/lib/llmClient/fallbacks.js) |
+| AC3 | Metadata propagation implementada | ✅ Completo | [Commit: `86d6c83c`](https://github.com/Eibon7/roastr-ai/commit/86d6c83c) - [`src/services/roastEngine.js`](src/services/roastEngine.js:persistMetadata), [`database/migrations/056_add_portkey_metadata_to_roasts.sql`](database/migrations/056_add_portkey_metadata_to_roasts.sql) |
+| AC4 | Backward compatibility mantenida | ✅ Completo | [Tests: `tests/unit/lib/llmClient/factory.test.js`](tests/unit/lib/llmClient/factory.test.js) - OpenAI-compatible interface verified |
+| AC5 | Todos los servicios migrados (6/6) | ✅ Completo | [Commit: `86d6c83c`](https://github.com/Eibon7/roastr-ai/commit/86d6c83c) - [`src/services/roastGeneratorEnhanced.js`](src/services/roastGeneratorEnhanced.js), [`src/services/roastEngine.js`](src/services/roastEngine.js), [`src/services/embeddingsService.js`](src/services/embeddingsService.js), [`src/workers/AnalyzeToxicityWorker.js`](src/workers/AnalyzeToxicityWorker.js), [`src/workers/GenerateReplyWorker.js`](src/workers/GenerateReplyWorker.js), [`src/services/PersonaService.js`](src/services/PersonaService.js) (indirect via embeddingsService) |
+| AC6 | Tests con buena cobertura | ✅ Completo | [83 tests passing](tests/unit/lib/llmClient/) - [`factory.test.js`](tests/unit/lib/llmClient/factory.test.js) (44 tests), [`fallbacks.test.js`](tests/unit/lib/llmClient/fallbacks.test.js) (12 tests), [`transformers.test.js`](tests/unit/lib/llmClient/transformers.test.js) (12 tests), [`ai-modes.test.js`](tests/unit/routes/ai-modes.test.js) (7 tests), [`embeddingsService.test.js`](tests/unit/services/embeddingsService.test.js) (39 tests) |
+| AC7 | Documentación actualizada | ✅ Completo | [`docs/ISSUE-920-COMPLETION.md`](docs/ISSUE-920-COMPLETION.md), [`docs/ISSUE-920-MIGRATION.md`](docs/ISSUE-920-MIGRATION.md), [`docs/ISSUE-920-COMPLETION-UPDATE.md`](docs/ISSUE-920-COMPLETION-UPDATE.md) |
 
 **Overall: 7/7 ACs completos (100%)**
 

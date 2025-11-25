@@ -253,17 +253,14 @@ describe('LLMClient Factory', () => {
       };
       OpenAI.mockImplementation(() => mockOpenAIInstance);
 
-      try {
-        const response = await client.chat.completions.create({
-          messages: [{ role: 'user', content: 'Test' }]
-        });
+      // Critical functionality - must assert expectations
+      expect.assertions(2);
+      const response = await client.chat.completions.create({
+        messages: [{ role: 'user', content: 'Test' }]
+      });
 
-        expect(response._portkey.fallbackUsed).toBe(true);
-        expect(response._portkey.provider).toBe('openai');
-      } catch (error) {
-        // If fallback doesn't work in test, that's okay - it's tested in integration
-        expect(error).toBeDefined();
-      }
+      expect(response._portkey.fallbackUsed).toBe(true);
+      expect(response._portkey.provider).toBe('openai');
 
       // Cleanup
       delete process.env.PORTKEY_API_KEY;
