@@ -455,9 +455,7 @@ describe('IntegrationManager', () => {
 
       await manager.runAllIntegrationsOnce();
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Integration Test Summary')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Integration Test Summary'));
     });
 
     it('should handle missing runOnce method', async () => {
@@ -477,8 +475,8 @@ describe('IntegrationManager', () => {
 
       // The code should handle gracefully when integration doesn't implement test methods
       // It either logs a warning or handles it silently
-      const summaryCalls = logger.info.mock.calls.filter((call) =>
-        call[0] && call[0].includes('Integration Test Summary')
+      const summaryCalls = logger.info.mock.calls.filter(
+        (call) => call[0] && call[0].includes('Integration Test Summary')
       );
       expect(summaryCalls.length).toBeGreaterThan(0);
     });
@@ -489,9 +487,7 @@ describe('IntegrationManager', () => {
 
       await manager.runAllIntegrationsOnce();
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('No integrations enabled')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('No integrations enabled'));
     });
   });
 
@@ -526,13 +522,13 @@ describe('IntegrationManager', () => {
       const config = require('../../../src/config/integrations');
       const originalEnableMetrics = config.logging.enableMetrics;
       config.logging.enableMetrics = true;
-      
+
       manager = new IntegrationManager();
-      
+
       // Verify metrics interval was set
       expect(manager.metricsInterval).toBeDefined();
       expect(typeof manager.metricsInterval).toBe('object');
-      
+
       // Cleanup
       if (manager.metricsInterval) {
         clearInterval(manager.metricsInterval);
@@ -545,9 +541,9 @@ describe('IntegrationManager', () => {
     it('should initialize Instagram in normal mode', async () => {
       const InstagramService = require('../../../src/integrations/instagram/instagramService');
       manager = new IntegrationManager();
-      
+
       await manager.initializeInstagram();
-      
+
       expect(InstagramService).toHaveBeenCalled();
       expect(manager.activeIntegrations.has('instagram')).toBe(true);
     });
@@ -555,9 +551,9 @@ describe('IntegrationManager', () => {
     it('should initialize Facebook in normal mode', async () => {
       const FacebookService = require('../../../src/integrations/facebook/facebookService');
       manager = new IntegrationManager();
-      
+
       await manager.initializeFacebook();
-      
+
       expect(FacebookService).toHaveBeenCalled();
       expect(manager.activeIntegrations.has('facebook')).toBe(true);
     });
@@ -565,9 +561,9 @@ describe('IntegrationManager', () => {
     it('should initialize Discord in normal mode', async () => {
       const DiscordService = require('../../../src/integrations/discord/discordService');
       manager = new IntegrationManager();
-      
+
       await manager.initializeDiscord();
-      
+
       expect(DiscordService).toHaveBeenCalled();
       expect(manager.activeIntegrations.has('discord')).toBe(true);
     });
@@ -575,9 +571,9 @@ describe('IntegrationManager', () => {
     it('should initialize Twitch in normal mode', async () => {
       const TwitchService = require('../../../src/integrations/twitch/twitchService');
       manager = new IntegrationManager();
-      
+
       await manager.initializeTwitch();
-      
+
       expect(TwitchService).toHaveBeenCalled();
       expect(manager.activeIntegrations.has('twitch')).toBe(true);
     });
@@ -585,9 +581,9 @@ describe('IntegrationManager', () => {
     it('should initialize Reddit in normal mode', async () => {
       const RedditService = require('../../../src/integrations/reddit/redditService');
       manager = new IntegrationManager();
-      
+
       await manager.initializeReddit();
-      
+
       expect(RedditService).toHaveBeenCalled();
       expect(manager.activeIntegrations.has('reddit')).toBe(true);
     });
@@ -595,9 +591,9 @@ describe('IntegrationManager', () => {
     it('should initialize TikTok in normal mode', async () => {
       const TikTokService = require('../../../src/integrations/tiktok/tiktokService');
       manager = new IntegrationManager();
-      
+
       await manager.initializeTikTok();
-      
+
       expect(TikTokService).toHaveBeenCalled();
       expect(manager.activeIntegrations.has('tiktok')).toBe(true);
     });
@@ -608,7 +604,7 @@ describe('IntegrationManager', () => {
         initialize: jest.fn().mockRejectedValue(new Error('Instagram init failed'))
       }));
       manager = new IntegrationManager();
-      
+
       await expect(manager.initializeInstagram()).rejects.toThrow('Instagram init failed');
     });
 
@@ -618,7 +614,7 @@ describe('IntegrationManager', () => {
         initialize: jest.fn().mockRejectedValue(new Error('Facebook init failed'))
       }));
       manager = new IntegrationManager();
-      
+
       await expect(manager.initializeFacebook()).rejects.toThrow('Facebook init failed');
     });
   });
@@ -627,7 +623,7 @@ describe('IntegrationManager', () => {
     it('should restart YouTube integration', async () => {
       manager = new IntegrationManager();
       await manager.initializeIntegrations();
-      
+
       // Mock YouTube service
       const YouTubeService = require('../../../src/integrations/youtube/youtubeService');
       const mockYouTube = {
@@ -637,9 +633,9 @@ describe('IntegrationManager', () => {
         shutdown: jest.fn().mockResolvedValue(true)
       };
       manager.activeIntegrations.set('youtube', mockYouTube);
-      
+
       await manager.restartIntegration('youtube');
-      
+
       expect(mockYouTube.shutdown).toHaveBeenCalled();
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('youtube integration restarted successfully')
@@ -649,7 +645,7 @@ describe('IntegrationManager', () => {
     it('should restart Bluesky integration', async () => {
       manager = new IntegrationManager();
       await manager.initializeIntegrations();
-      
+
       const mockBluesky = {
         platform: 'bluesky',
         initialize: jest.fn().mockResolvedValue(true),
@@ -657,9 +653,9 @@ describe('IntegrationManager', () => {
         shutdown: jest.fn().mockResolvedValue(true)
       };
       manager.activeIntegrations.set('bluesky', mockBluesky);
-      
+
       await manager.restartIntegration('bluesky');
-      
+
       expect(mockBluesky.shutdown).toHaveBeenCalled();
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('bluesky integration restarted successfully')
@@ -670,16 +666,16 @@ describe('IntegrationManager', () => {
       manager = new IntegrationManager();
       // Initialize Instagram first
       await manager.initializeInstagram();
-      
+
       // Ensure the mock has all required methods
       const mockInstagram = manager.activeIntegrations.get('instagram');
       if (mockInstagram) {
         mockInstagram.shutdown = jest.fn().mockResolvedValue(true);
         mockInstagram.listenForMentions = jest.fn().mockResolvedValue({});
       }
-      
+
       await manager.restartIntegration('instagram');
-      
+
       expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('instagram integration restarted successfully')
       );
@@ -690,67 +686,63 @@ describe('IntegrationManager', () => {
     it('should handle integration with testConnection method', async () => {
       process.env.INTEGRATIONS_ENABLED = 'twitter';
       manager = new IntegrationManager({ testMode: true });
-      
+
       // Override the integration after initialization
       const mockIntegration = {
         platform: 'twitter',
         testConnection: jest.fn().mockResolvedValue(true),
         getMetrics: jest.fn().mockReturnValue({ commentsProcessed: 0 })
       };
-      
+
       // Mock initializeIntegrations to set our custom integration
       const originalInit = manager.initializeIntegrations.bind(manager);
       manager.initializeIntegrations = jest.fn().mockResolvedValue({ success: 1, failed: 0 });
       manager.activeIntegrations.set('twitter', mockIntegration);
-      
+
       await manager.runAllIntegrationsOnce();
-      
+
       expect(mockIntegration.testConnection).toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Integration Test Summary')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Integration Test Summary'));
     });
 
     it('should handle integration with fetchComments method', async () => {
       process.env.INTEGRATIONS_ENABLED = 'twitter';
       manager = new IntegrationManager({ testMode: true });
-      
+
       const mockIntegration = {
         platform: 'twitter',
         fetchComments: jest.fn().mockResolvedValue([]), // Returns array, not object
         getMetrics: jest.fn().mockReturnValue({ commentsProcessed: 0 })
       };
-      
+
       manager.initializeIntegrations = jest.fn().mockResolvedValue({ success: 1, failed: 0 });
       manager.activeIntegrations.set('twitter', mockIntegration);
-      
+
       await manager.runAllIntegrationsOnce();
-      
+
       expect(mockIntegration.fetchComments).toHaveBeenCalledWith({ limit: 1, dryRun: true });
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Integration Test Summary')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Integration Test Summary'));
     });
 
     it('should handle errors during integration test', async () => {
       process.env.INTEGRATIONS_ENABLED = 'twitter';
       manager = new IntegrationManager({ testMode: true });
-      
+
       const mockIntegration = {
         platform: 'twitter',
         runOnce: jest.fn().mockRejectedValue(new Error('Test failed')),
         getMetrics: jest.fn().mockReturnValue({ commentsProcessed: 0 })
       };
-      
+
       manager.initializeIntegrations = jest.fn().mockResolvedValue({ success: 1, failed: 0 });
       manager.activeIntegrations.set('twitter', mockIntegration);
-      
+
       // The method throws error only if failureCount > 0 at the end
       await expect(manager.runAllIntegrationsOnce()).rejects.toThrow('integration test(s) failed');
-      
+
       // Check that error was logged (format: "❌ Error testing twitter: Test failed")
-      const errorCalls = logger.error.mock.calls.filter(call => 
-        call[0] && call[0].includes('Error testing')
+      const errorCalls = logger.error.mock.calls.filter(
+        (call) => call[0] && call[0].includes('Error testing')
       );
       expect(errorCalls.length).toBeGreaterThan(0);
     });
@@ -758,14 +750,14 @@ describe('IntegrationManager', () => {
     it('should handle integration not found in active integrations', async () => {
       process.env.INTEGRATIONS_ENABLED = 'twitter';
       manager = new IntegrationManager({ testMode: true });
-      
+
       // Mock initializeIntegrations to not add twitter
       manager.initializeIntegrations = jest.fn().mockResolvedValue({ success: 0, failed: 0 });
       // Don't add twitter to activeIntegrations
-      
+
       // Should throw error because failureCount > 0
       await expect(manager.runAllIntegrationsOnce()).rejects.toThrow('integration test(s) failed');
-      
+
       expect(logger.warn).toHaveBeenCalledWith(
         expect.stringContaining('No active integration found')
       );
@@ -776,15 +768,18 @@ describe('IntegrationManager', () => {
     it('should process batch results correctly', async () => {
       manager = new IntegrationManager();
       await manager.initializeIntegrations();
-      
+
       const mockResults = [
-        { status: 'fulfilled', value: { success: true, metrics: { commentsProcessed: 5, responsesGenerated: 2 } } },
+        {
+          status: 'fulfilled',
+          value: { success: true, metrics: { commentsProcessed: 5, responsesGenerated: 2 } }
+        },
         { status: 'fulfilled', value: { success: false, error: 'Failed' } },
         { status: 'rejected', reason: { message: 'Error' } }
       ];
-      
+
       const summary = manager.processBatchResults(mockResults);
-      
+
       expect(summary.processed).toBe(3);
       expect(summary.success).toBe(1);
       expect(summary.failed).toBe(2);
@@ -798,7 +793,7 @@ describe('IntegrationManager', () => {
       manager.globalMetrics.totalCommentsProcessed = 10;
       manager.globalMetrics.totalResponsesGenerated = 5;
       manager.globalMetrics.totalErrors = 1;
-      
+
       const summary = {
         processed: 3,
         success: 2,
@@ -809,16 +804,11 @@ describe('IntegrationManager', () => {
           { success: false, platform: 'bluesky', error: 'Failed' }
         ]
       };
-      
+
       manager.printBatchSummary(summary, 5000);
-      
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('BATCH PROCESSING SUMMARY')
-      );
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Failed integrations')
-      );
+
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('BATCH PROCESSING SUMMARY'));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Failed integrations'));
     });
   });
 });
-
