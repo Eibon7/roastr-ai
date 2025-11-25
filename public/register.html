@@ -36,10 +36,10 @@
             class="input-text"
             type="password"
             name="password"
-            placeholder="Contraseña (mínimo 6 caracteres)"
+            placeholder="Contraseña (mínimo 8 caracteres)"
             id="password"
             required
-            minlength="6"
+            minlength="8"
           />
           <button type="button" class="toggle-password" onclick="togglePassword('password')">
             👁️
@@ -54,7 +54,7 @@
             placeholder="Confirmar contraseña"
             id="confirmPassword"
             required
-            minlength="6"
+            minlength="8"
           />
           <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword')">
             👁️
@@ -148,8 +148,8 @@
           return;
         }
 
-        if (password.length < 6) {
-          showMessage('La contraseña debe tener al menos 6 caracteres.');
+        if (password.length < 8) {
+          showMessage('La contraseña debe tener al menos 8 caracteres.');
           return;
         }
 
