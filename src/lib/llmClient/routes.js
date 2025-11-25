@@ -58,6 +58,8 @@ const routes = {
   nsfw: {
     provider: 'grok',
     model: 'grok-beta',
+    // Issue #920: Fallback model for when Grok fails and falls back to OpenAI
+    fallbackModel: 'gpt-5.1',
     config: {
       temperature: 0.9,
       max_tokens: 150,

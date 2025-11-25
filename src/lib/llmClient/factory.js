@@ -102,8 +102,15 @@ function getInstance(mode = 'default', options = {}) {
   // Issue #920: Use Portkey if configured, otherwise fallback to OpenAI
   if (normalizedMode === 'nsfw' && grokApiKey && !isPortkeyConfigured()) {
     // Direct Grok client (when Portkey not configured)
+    // Issue #920: Use Grok API key and endpoint (OpenAI-compatible API)
     logger.info('LLMClient: Using direct Grok client for NSFW mode');
-    client = createOpenAIClient(options);
+    client = new OpenAI({
+      apiKey: grokApiKey,
+      baseURL: process.env.GROK_BASE_URL || 'https://api.x.ai/v1',
+      timeout: options.timeout || 30000,
+      maxRetries: options.maxRetries || 1,
+      ...options
+    });
     clientType = 'grok';
   } else if (isPortkeyConfigured() && !mockMode.isMockMode) {
     // Use Portkey gateway
@@ -164,9 +171,12 @@ function getInstance(mode = 'default', options = {}) {
               if (nextProvider === 'openai') {
                 logger.info(`LLMClient: Falling back to OpenAI for mode "${normalizedMode}"`);
                 const openaiClient = createOpenAIClient(options);
+                // Issue #920: Use fallback model if route model isn't OpenAI-compatible (e.g., grok-beta)
+                const fallbackModel =
+                  route.fallbackModel || (route.provider !== 'openai' ? 'gpt-5.1' : route.model);
                 const response = await openaiClient.chat.completions.create({
                   ...params,
-                  model: route.model,
+                  model: fallbackModel,
                   ...route.config
                 });
 
@@ -225,8 +235,9 @@ function getInstance(mode = 'default', options = {}) {
               const openaiClient = createOpenAIClient(options);
               const response = await openaiClient.embeddings.create(embeddingParams);
 
+              // Issue #920: Apply consistent transformation for fallback path
               return {
-                ...response,
+                ...transformEmbedding(response),
                 _portkey: {
                   mode: normalizedMode,
                   provider: 'openai',
@@ -277,9 +288,12 @@ function getInstance(mode = 'default', options = {}) {
                 `LLMClient: Falling back to OpenAI for responses mode "${normalizedMode}"`
               );
               const openaiClient = createOpenAIClient(options);
+              // Issue #920: Use fallback model if route model isn't OpenAI-compatible
+              const fallbackModel =
+                route.fallbackModel || (route.provider !== 'openai' ? 'gpt-5.1' : route.model);
               const response = await openaiClient.responses.create({
                 ...params,
-                model: route.model,
+                model: fallbackModel,
                 ...route.config
               });
 
