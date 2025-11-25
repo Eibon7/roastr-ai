@@ -3,6 +3,7 @@
 ## ✅ Todos los Blockers Críticos Resueltos
 
 ### BLOCKER 1: BaseIntegration Logger Bug ✅ RESUELTO
+
 **Commit:** `1498aadf`
 
 - Cambiado `const { logger }` a `this.logger` en constructor
@@ -10,6 +11,7 @@
 - Previene `ReferenceError: logger is not defined` en todos los servicios de integración
 
 ### BLOCKER 2: Model Name Verification ✅ RESUELTO
+
 **Commit:** `[pending]`
 
 - Añadido `fallbackModel: 'gpt-4-turbo'` a todas las rutas
@@ -18,15 +20,18 @@
 - Sistema funciona incluso si GPT-5.1 no está disponible
 
 **Estrategia de Fallback:**
+
 1. Intenta modelo primario (gpt-5.1)
 2. Si error de modelo → intenta fallbackModel (gpt-4-turbo)
 3. Si error de provider → fallback a OpenAI provider
 4. Portkey gateway maneja fallbacks adicionales
 
 ### BLOCKER 3: Service Migration ✅ COMPLETADO
+
 **Commit:** `86d6c83c`
 
 **Servicios Migrados (6/6):**
+
 - ✅ `roastGeneratorEnhanced.js` - Ya migrado (previo)
 - ✅ `roastEngine.js` - Ya migrado (previo)
 - ✅ `embeddingsService.js` - Migrado a LLMClient
@@ -39,23 +44,27 @@
 ## 🎯 Funcionalidades Implementadas
 
 ### 1. LLMClient Unificado
+
 - ✅ Factory pattern con singleton y cache
 - ✅ Interfaz compatible con OpenAI
 - ✅ Soporte para Portkey cuando está configurado
 - ✅ Fallback automático a OpenAI
 
 ### 2. Modos AI Configurados
+
 - ✅ `flanders` → GPT-5.1 (fallback: gpt-4-turbo)
 - ✅ `balanceado` → GPT-5.1 (fallback: gpt-4-turbo)
 - ✅ `canalla` → GPT-5.1 (fallback: gpt-4-turbo)
 - ✅ `nsfw` → Grok (fallback: gpt-4-turbo)
 
 ### 3. Sistema de Fallbacks Multi-Nivel
+
 - ✅ **Nivel 1:** Model fallback (gpt-5.1 → gpt-4-turbo)
 - ✅ **Nivel 2:** Provider fallback (Portkey → OpenAI)
 - ✅ **Nivel 3:** Portkey gateway fallbacks automáticos
 
 ### 4. Propagación de Metadata
+
 - ✅ `mode` - Modo AI usado
 - ✅ `provider` - Proveedor LLM usado
 - ✅ `fallbackUsed` - Si se usó fallback
@@ -64,9 +73,11 @@
 - ✅ `portkeyMetadata` - Metadata adicional
 
 ### 5. Endpoint API
+
 - ✅ `GET /api/ai-modes` - Lista modos disponibles
 
 ### 6. Migración de Base de Datos
+
 - ✅ Script SQL para añadir columnas de metadata
 - ✅ Script de ejecución automatizado
 
@@ -75,12 +86,14 @@
 ## 🧪 Tests
 
 ### Coverage
+
 - ✅ **83 tests pasando** (LLMClient + EmbeddingsService)
 - ✅ **Cobertura: 70.96%+**
 - ✅ Tests para factory, transformers, fallbacks, API routes
 - ✅ Test para model-level fallback
 
 ### Test Suites
+
 - ✅ `tests/unit/lib/llmClient/factory.test.js` - 19 tests
 - ✅ `tests/unit/lib/llmClient/fallbacks.test.js` - 12 tests
 - ✅ `tests/unit/lib/llmClient/transformers.test.js` - 12 tests
@@ -92,6 +105,7 @@
 ## 📊 Archivos Modificados
 
 ### Creados (15)
+
 - `src/lib/llmClient/factory.js`
 - `src/lib/llmClient/routes.js`
 - `src/lib/llmClient/fallbacks.js`
@@ -109,6 +123,7 @@
 - `docs/plan/review-3505843498-completion.md`
 
 ### Modificados (7)
+
 - `src/integrations/base/BaseIntegration.js` - Fix logger bug
 - `src/services/embeddingsService.js` - Migrado a LLMClient
 - `src/services/roastGeneratorEnhanced.js` - Migrado a LLMClient
@@ -121,15 +136,15 @@
 
 ## ✅ Acceptance Criteria Status
 
-| AC | Descripción | Estado | Evidencia |
-|----|-------------|--------|----------|
-| AC1 | LLMClient wrapper creado | ✅ Completo | [Commit: `9d129f0e`](https://github.com/Eibon7/roastr-ai/commit/9d129f0e) - [`src/lib/llmClient/factory.js`](src/lib/llmClient/factory.js) |
-| AC2 | Modos definidos con fallbacks | ✅ Completo | [Commit: `9d129f0e`](https://github.com/Eibon7/roastr-ai/commit/9d129f0e) - [`src/lib/llmClient/routes.js`](src/lib/llmClient/routes.js), [`src/lib/llmClient/fallbacks.js`](src/lib/llmClient/fallbacks.js) |
-| AC3 | Metadata propagation implementada | ✅ Completo | [Commit: `86d6c83c`](https://github.com/Eibon7/roastr-ai/commit/86d6c83c) - [`src/services/roastEngine.js`](src/services/roastEngine.js:persistMetadata), [`database/migrations/056_add_portkey_metadata_to_roasts.sql`](database/migrations/056_add_portkey_metadata_to_roasts.sql) |
-| AC4 | Backward compatibility mantenida | ✅ Completo | [Tests: `tests/unit/lib/llmClient/factory.test.js`](tests/unit/lib/llmClient/factory.test.js) - OpenAI-compatible interface verified |
+| AC  | Descripción                        | Estado      | Evidencia                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --- | ---------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC1 | LLMClient wrapper creado           | ✅ Completo | [Commit: `9d129f0e`](https://github.com/Eibon7/roastr-ai/commit/9d129f0e) - [`src/lib/llmClient/factory.js`](src/lib/llmClient/factory.js)                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| AC2 | Modos definidos con fallbacks      | ✅ Completo | [Commit: `9d129f0e`](https://github.com/Eibon7/roastr-ai/commit/9d129f0e) - [`src/lib/llmClient/routes.js`](src/lib/llmClient/routes.js), [`src/lib/llmClient/fallbacks.js`](src/lib/llmClient/fallbacks.js)                                                                                                                                                                                                                                                                                                                                                            |
+| AC3 | Metadata propagation implementada  | ✅ Completo | [Commit: `86d6c83c`](https://github.com/Eibon7/roastr-ai/commit/86d6c83c) - [`src/services/roastEngine.js`](src/services/roastEngine.js:persistMetadata), [`database/migrations/056_add_portkey_metadata_to_roasts.sql`](database/migrations/056_add_portkey_metadata_to_roasts.sql)                                                                                                                                                                                                                                                                                    |
+| AC4 | Backward compatibility mantenida   | ✅ Completo | [Tests: `tests/unit/lib/llmClient/factory.test.js`](tests/unit/lib/llmClient/factory.test.js) - OpenAI-compatible interface verified                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | AC5 | Todos los servicios migrados (6/6) | ✅ Completo | [Commit: `86d6c83c`](https://github.com/Eibon7/roastr-ai/commit/86d6c83c) - [`src/services/roastGeneratorEnhanced.js`](src/services/roastGeneratorEnhanced.js), [`src/services/roastEngine.js`](src/services/roastEngine.js), [`src/services/embeddingsService.js`](src/services/embeddingsService.js), [`src/workers/AnalyzeToxicityWorker.js`](src/workers/AnalyzeToxicityWorker.js), [`src/workers/GenerateReplyWorker.js`](src/workers/GenerateReplyWorker.js), [`src/services/PersonaService.js`](src/services/PersonaService.js) (indirect via embeddingsService) |
-| AC6 | Tests con buena cobertura | ✅ Completo | [83 tests passing](tests/unit/lib/llmClient/) - [`factory.test.js`](tests/unit/lib/llmClient/factory.test.js) (44 tests), [`fallbacks.test.js`](tests/unit/lib/llmClient/fallbacks.test.js) (12 tests), [`transformers.test.js`](tests/unit/lib/llmClient/transformers.test.js) (12 tests), [`ai-modes.test.js`](tests/unit/routes/ai-modes.test.js) (7 tests), [`embeddingsService.test.js`](tests/unit/services/embeddingsService.test.js) (39 tests) |
-| AC7 | Documentación actualizada | ✅ Completo | [`docs/ISSUE-920-COMPLETION.md`](docs/ISSUE-920-COMPLETION.md), [`docs/ISSUE-920-MIGRATION.md`](docs/ISSUE-920-MIGRATION.md), [`docs/ISSUE-920-COMPLETION-UPDATE.md`](docs/ISSUE-920-COMPLETION-UPDATE.md) |
+| AC6 | Tests con buena cobertura          | ✅ Completo | [83 tests passing](tests/unit/lib/llmClient/) - [`factory.test.js`](tests/unit/lib/llmClient/factory.test.js) (44 tests), [`fallbacks.test.js`](tests/unit/lib/llmClient/fallbacks.test.js) (12 tests), [`transformers.test.js`](tests/unit/lib/llmClient/transformers.test.js) (12 tests), [`ai-modes.test.js`](tests/unit/routes/ai-modes.test.js) (7 tests), [`embeddingsService.test.js`](tests/unit/services/embeddingsService.test.js) (39 tests)                                                                                                                 |
+| AC7 | Documentación actualizada          | ✅ Completo | [`docs/ISSUE-920-COMPLETION.md`](docs/ISSUE-920-COMPLETION.md), [`docs/ISSUE-920-MIGRATION.md`](docs/ISSUE-920-MIGRATION.md), [`docs/ISSUE-920-COMPLETION-UPDATE.md`](docs/ISSUE-920-COMPLETION-UPDATE.md)                                                                                                                                                                                                                                                                                                                                                              |
 
 **Overall: 7/7 ACs completos (100%)**
 
@@ -146,24 +161,30 @@
 ## 📝 Notas Técnicas
 
 ### Model Fallback Logic
+
 El sistema detecta errores de modelo mediante:
+
 - `error.message.includes('model')`
 - `error.message.includes('not found')`
 - `error.message.includes('invalid')`
 - `error.code === 'model_not_found'`
 
 Cuando se detecta un error de modelo:
+
 1. Intenta automáticamente con `route.fallbackModel`
 2. Si fallback también falla, continúa con provider fallback
 3. Portkey gateway maneja fallbacks adicionales
 
 ### Portkey Gateway Fallbacks
+
 Portkey maneja fallbacks automáticamente cuando:
+
 - El modelo no está disponible
 - El provider falla
 - Hay problemas de rate limiting
 
 Nuestro código complementa esto con:
+
 - Fallback explícito a nivel de modelo
 - Fallback a nivel de provider (Portkey → OpenAI)
 - Metadata completa para observabilidad
@@ -171,4 +192,3 @@ Nuestro código complementa esto con:
 ---
 
 **Estado Final:** ✅ **100% COMPLETO - LISTO PARA MERGE**
-
