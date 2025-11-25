@@ -236,14 +236,30 @@ describe('AnalyzeToxicityWorker', () => {
   });
 
   afterEach(() => {
+    // Cleanup mocks (Issue #1018 - Memory optimization)
     mockCostControlService._reset();
     jest.clearAllMocks();
+    jest.clearAllTimers();
+    
+    // Cleanup worker instance if it exists
+    if (worker && typeof worker.stop === 'function') {
+      worker.stop().catch(() => {});
+    }
   });
 
   afterAll(async () => {
+    // Final cleanup (Issue #1018 - Memory optimization)
+    jest.clearAllMocks();
+    jest.clearAllTimers();
+    
     // Ensure worker is properly stopped to avoid open handles
     if (worker && typeof worker.stop === 'function') {
-      await worker.stop();
+      await worker.stop().catch(() => {});
+    }
+    
+    // Force garbage collection if available
+    if (global.gc) {
+      global.gc();
     }
   });
 

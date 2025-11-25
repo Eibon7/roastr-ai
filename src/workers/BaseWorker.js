@@ -108,6 +108,7 @@ class BaseWorker {
 
   /**
    * Stop the worker gracefully
+   * Issue #1018: Improved cleanup to prevent memory leaks
    */
   async stop() {
     if (!this.isRunning) {
@@ -118,20 +119,19 @@ class BaseWorker {
     this.isRunning = false;
 
     // Wait for current jobs to complete with proper cleanup
-    let checkInterval;
-    let timeoutHandle;
+    // Issue #1018: Store timers as instance properties for proper cleanup
+    this._shutdownCheckInterval = null;
+    this._shutdownTimeoutHandle = null;
 
     const stopPromise = new Promise((resolve) => {
-      checkInterval = setInterval(() => {
+      this._shutdownCheckInterval = setInterval(() => {
         // Safety check: ensure currentJobs is properly initialized
         if (this.currentJobs && this.currentJobs.size === 0) {
-          clearInterval(checkInterval);
-          if (timeoutHandle) clearTimeout(timeoutHandle);
+          this._cleanupShutdownTimers();
           resolve();
         } else if (!this.currentJobs) {
           // If currentJobs was never initialized (processingLoop never ran), resolve immediately
-          clearInterval(checkInterval);
-          if (timeoutHandle) clearTimeout(timeoutHandle);
+          this._cleanupShutdownTimers();
           resolve();
         }
       }, 100);
@@ -139,17 +139,22 @@ class BaseWorker {
 
     // Force stop after timeout
     const timeoutPromise = new Promise((resolve) => {
-      timeoutHandle = setTimeout(() => {
-        clearInterval(checkInterval);
+      this._shutdownTimeoutHandle = setTimeout(() => {
+        this._cleanupShutdownTimers();
         resolve();
       }, this.config.gracefulShutdownTimeout);
     });
 
     await Promise.race([stopPromise, timeoutPromise]);
 
+    // Ensure timers are cleaned up even if Promise.race resolves differently
+    this._cleanupShutdownTimers();
+
     // Close connections
-    if (this.queueService) {
-      await this.queueService.shutdown();
+    if (this.queueService && typeof this.queueService.shutdown === 'function') {
+      await this.queueService.shutdown().catch((err) => {
+        this.log('warn', 'Error shutting down queue service', { error: err.message });
+      });
     }
 
     this.log('info', 'Worker stopped', {
@@ -157,6 +162,20 @@ class BaseWorker {
       failedJobs: this.failedJobs,
       uptime: Date.now() - this.startTime
     });
+  }
+
+  /**
+   * Cleanup shutdown timers (Issue #1018 - Memory leak prevention)
+   */
+  _cleanupShutdownTimers() {
+    if (this._shutdownCheckInterval) {
+      clearInterval(this._shutdownCheckInterval);
+      this._shutdownCheckInterval = null;
+    }
+    if (this._shutdownTimeoutHandle) {
+      clearTimeout(this._shutdownTimeoutHandle);
+      this._shutdownTimeoutHandle = null;
+    }
   }
 
   /**

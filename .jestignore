@@ -1,0 +1,12 @@
+# Jest ignore file (Issue #1018 - Memory optimization)
+# Exclude worktrees to prevent duplicate mock conflicts and memory issues
+
+roastr-ai-worktrees/
+node_modules/
+coverage/
+dist/
+build/
+*.log
+.env
+.env.local
+
