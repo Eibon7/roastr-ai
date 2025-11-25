@@ -29,16 +29,23 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Cleanup mocks (Issue #1018 - Memory optimization)
     jest.clearAllMocks();
     jest.clearAllTimers();
-
-    // Cleanup service instance if it has cleanup methods
+    
+    // Cleanup service instance if it has cleanup methods (Issue #1018 - CodeRabbit fix)
     if (shieldService && typeof shieldService.shutdown === 'function') {
-      shieldService.shutdown().catch(() => {});
+      try {
+        const shutdownResult = shieldService.shutdown();
+        if (shutdownResult && typeof shutdownResult.catch === 'function') {
+          await shutdownResult.catch(() => {});
+        }
+      } catch (error) {
+        // Ignore shutdown errors in tests
+      }
     }
-
+    
     // Reset modules to prevent state accumulation
     jest.resetModules();
   });
