@@ -87,7 +87,7 @@ Significant progress made on Issue #929 with comprehensive test coverage improve
 
 **Lines Not Covered:**
 - 74-111: canPerformOperation RPC calls
-- 164-165-165: checkUsageLimit edge cases
+- 164-165: checkUsageLimit edge cases
 - 235, 245-246: Usage tracking methods
 - 268, 273-274: Billing methods
 - 361-362: Plan upgrade methods
@@ -187,4 +187,5 @@ docs/test-evidence/issue-929/FINAL-PROGRESS.md (NEW)
 **Total Tests Added:** 195+ new tests
 **Total Tests Passing:** 315 tests
 **Coverage Improvement:** +93.68 percentage points combined
+
 

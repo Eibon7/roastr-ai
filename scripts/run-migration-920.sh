@@ -22,12 +22,19 @@ if [ -z "$DATABASE_URL" ]; then
     echo "⚠️  Warning: DATABASE_URL not set. Checking for .env file..."
     if [ -f "$PROJECT_ROOT/.env" ]; then
         echo "✅ Found .env file. Loading environment variables..."
-        export $(cat "$PROJECT_ROOT/.env" | grep -v '^#' | xargs)
+        set -a
+        . "$PROJECT_ROOT/.env"
+        set +a
     else
         echo "❌ Error: DATABASE_URL not set and .env file not found"
         echo "💡 Please set DATABASE_URL or create .env file"
         exit 1
     fi
+fi
+
+if [ -z "$DATABASE_URL" ]; then
+    echo "❌ Error: DATABASE_URL is still not set after loading .env"
+    exit 1
 fi
 
 # Check if psql is available

@@ -371,8 +371,8 @@ function getInstance(mode = 'default', options = {}) {
               );
               const openaiClient = createOpenAIClient(options);
               // Issue #920: Use fallback model if route model isn't OpenAI-compatible
-              const fallbackModel =
-                route.fallbackModel || (route.provider !== 'openai' ? 'gpt-4-turbo' : route.model);
+              // Don't retry the same failed OpenAI model - use a resilient default
+              const fallbackModel = route.fallbackModel || 'gpt-4-turbo';
               const response = await openaiClient.responses.create({
                 ...params,
                 model: fallbackModel,

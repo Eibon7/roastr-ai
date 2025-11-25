@@ -1370,8 +1370,6 @@ describe('CostControlService - Integration Tests', () => {
       });
 
       // Override mockFrom temporarily for this test
-      const originalMockFrom = mockFrom.getMockImplementation();
-
       let callCount = 0;
       mockFrom.mockImplementation((tableName) => {
         callCount++;
@@ -1396,8 +1394,8 @@ describe('CostControlService - Integration Tests', () => {
 
       const result = await costControl.createDefaultUsageAlerts(organizationId);
 
-      // Restore original implementation
-      mockFrom.mockImplementation(originalMockFrom);
+      // Clear the custom implementation (beforeEach will restore)
+      mockFrom.mockClear();
 
       expect(result.length).toBeGreaterThan(0);
     });
