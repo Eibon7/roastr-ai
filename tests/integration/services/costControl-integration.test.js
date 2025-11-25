@@ -1543,7 +1543,7 @@ describe('CostControlService - Integration Tests', () => {
         error: { code: 'PGRST116' } // Not found
       });
 
-      const originalMockFrom = mockFrom.getMockImplementation();
+      // Save and restore pattern - handle undefined safely
       let callCount = 0;
       mockFrom.mockImplementation((tableName) => {
         callCount++;
@@ -1566,8 +1566,8 @@ describe('CostControlService - Integration Tests', () => {
 
       const result = await costControl.checkUsageLimit(organizationId);
 
-      // Restore
-      mockFrom.mockImplementation(originalMockFrom);
+      // Clear the custom implementation (beforeEach will restore defaults)
+      mockFrom.mockClear();
 
       expect(result.canUse).toBe(true);
       expect(result.currentUsage).toBe(0);
