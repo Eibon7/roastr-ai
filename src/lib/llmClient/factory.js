@@ -313,6 +313,31 @@ function getInstance(mode = 'default', options = {}) {
           throw error;
         }
       }
+    },
+
+    // OpenAI-compatible moderations interface (for Moderation API)
+    moderations: {
+      create: async (params) => {
+        try {
+          // Moderations API is OpenAI-specific, use underlying client directly
+          const moderationResponse = await client.moderations.create(params);
+          return {
+            ...moderationResponse,
+            _portkey: {
+              mode: normalizedMode,
+              provider: route.provider,
+              fallbackUsed: false,
+              metadata: {}
+            }
+          };
+        } catch (error) {
+          logger.error(`LLMClient: Error in moderations.create for mode "${normalizedMode}"`, {
+            error: error.message,
+            provider: route.provider
+          });
+          throw error;
+        }
+      }
     }
   };
 

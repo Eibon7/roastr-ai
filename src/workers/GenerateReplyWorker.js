@@ -7,6 +7,7 @@ const { mockMode } = require('../config/mockMode');
 const { shouldBlockAutopost } = require('../middleware/killSwitch');
 const { PLATFORM_LIMITS } = require('../config/constants');
 const advancedLogger = require('../utils/advancedLogger');
+const LLMClient = require('../lib/llmClient'); // Issue #920: Use LLMClient wrapper
 
 /**
  * Generate Reply Worker - Round 6 Critical Security Enhancements
@@ -105,22 +106,46 @@ class GenerateReplyWorker extends BaseWorker {
   }
 
   /**
-   * Initialize OpenAI client with mock mode support
-   * Sets up either real OpenAI client or mock client based on environment
-   * @throws {Error} If OpenAI client initialization fails
+   * Map tone to LLMClient mode (Issue #920)
+   * @param {string} tone - Tone from config (sarcastic, ironic, absurd, flanders, balanceado, canalla, nsfw)
+   * @returns {string} LLMClient mode
+   */
+  mapToneToMode(tone) {
+    // Direct mapping if tone matches LLMClient modes
+    const modeMap = {
+      flanders: 'flanders',
+      balanceado: 'balanceado',
+      balanced: 'balanceado',
+      canalla: 'canalla',
+      savage: 'canalla',
+      nsfw: 'nsfw',
+      // Map legacy tones to modes
+      sarcastic: 'canalla', // More direct/savage
+      ironic: 'flanders', // More subtle/amiable
+      absurd: 'balanceado' // Balanced approach
+    };
+    return modeMap[tone?.toLowerCase()] || 'balanceado'; // Default to balanceado
+  }
+
+  /**
+   * Initialize LLMClient with mock mode support (Issue #920)
+   * Sets up either real LLMClient or mock client based on environment
+   * @throws {Error} If LLMClient initialization fails
    */
   initializeOpenAI() {
     if (mockMode.isMockMode) {
       this.openai = mockMode.generateMockOpenAI();
       this.openaiClient = this.openai;
     } else if (process.env.OPENAI_API_KEY) {
-      const { OpenAI } = require('openai');
-      this.openaiClient = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+      // Issue #920: Use LLMClient wrapper (will be initialized per request with correct mode)
+      // Store LLMClient module reference for per-request initialization
+      this.llmClient = LLMClient;
+      // Initialize default client for backward compatibility
+      this.openaiClient = LLMClient.getInstance('balanceado', {
         maxRetries: 2,
-        timeout: 15000 // 15 second timeout
+        timeout: 15000
       });
-      this.log('info', 'OpenAI client initialized');
+      this.log('info', 'LLMClient initialized');
     } else {
       this.log('warn', 'No OpenAI API key configured, using template fallback only');
     }
@@ -967,26 +992,47 @@ class GenerateReplyWorker extends BaseWorker {
     const platformConstraint = this.getPlatformConstraint(platform);
     const finalPrompt = systemPrompt + '\n\n' + platformConstraint;
 
-    const completion = await this.openaiClient.chat.completions.create({
-      model: 'gpt-4o-mini',
+    // Issue #920: Use LLMClient with mode based on tone
+    const llmMode = this.mapToneToMode(tone);
+    const llmClient = this.llmClient
+      ? this.llmClient.getInstance(llmMode, {
+          maxRetries: 2,
+          timeout: 15000
+        })
+      : this.openaiClient; // Fallback to default client if LLMClient not available
+
+    const completion = await llmClient.chat.completions.create({
       messages: [{ role: 'system', content: finalPrompt }],
       max_tokens: 200, // Keep responses concise
       temperature: 0.8, // Creative but not too random
       presence_penalty: 0.3, // Encourage varied vocabulary
       frequency_penalty: 0.2 // Reduce repetition
+      // Note: model is set by LLMClient based on mode
     });
 
-    const responseText = completion.choices[0].message.content.trim();
+    // Issue #920: Extract metadata if available from LLMClient response
+    const portkeyMetadata = llmClient.extractMetadata
+      ? llmClient.extractMetadata(completion)
+      : null;
+
+    const responseText = completion.choices?.[0]?.message?.content || completion.content || '';
+    const trimmedResponse = typeof responseText === 'string' ? responseText.trim() : '';
 
     // Validate response length for platform
-    const finalResponse = this.validateResponseLength(responseText, platform);
+    const finalResponse = this.validateResponseLength(trimmedResponse, platform);
 
     return {
       text: finalResponse,
-      tokensUsed: completion.usage.total_tokens,
-      model: 'gpt-4o-mini',
+      tokensUsed: completion.usage?.total_tokens || 0,
+      model: portkeyMetadata?.provider === 'openai' ? 'gpt-4o-mini' : portkeyMetadata?.provider || 'gpt-4o-mini',
       promptVersion: this.promptTemplate.getVersion(),
-      personaData: personaFieldsUsed // Track which persona fields were used
+      personaData: personaFieldsUsed, // Track which persona fields were used
+      // Issue #920: Propagate LLMClient metadata
+      _portkeyMetadata: portkeyMetadata || {
+        mode: llmMode,
+        provider: 'openai',
+        fallbackUsed: false
+      }
     };
   }
 
