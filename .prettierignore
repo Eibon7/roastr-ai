@@ -31,6 +31,12 @@ logs/
 .env
 .env.*
 
+# Git worktrees (isolated working copies)
+roastr-ai-worktrees/
+
+# Auto-generated reports
+docs/auto-health-reports/
+
 # Other
 .DS_Store
 .cache/
