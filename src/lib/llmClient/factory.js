@@ -188,10 +188,9 @@ function getInstance(mode = 'default', options = {}) {
                   }
                 };
               } catch (fallbackError) {
-                logger.error(
-                  `LLMClient: Fallback model "${route.fallbackModel}" also failed`,
-                  { error: fallbackError.message }
-                );
+                logger.error(`LLMClient: Fallback model "${route.fallbackModel}" also failed`, {
+                  error: fallbackError.message
+                });
                 // Continue to provider fallback logic below
               }
             }
@@ -213,7 +212,8 @@ function getInstance(mode = 'default', options = {}) {
                 const openaiClient = createOpenAIClient(options);
                 // Issue #920: Use fallback model if route model isn't OpenAI-compatible (e.g., grok-beta)
                 const fallbackModel =
-                  route.fallbackModel || (route.provider !== 'openai' ? 'gpt-4-turbo' : route.model);
+                  route.fallbackModel ||
+                  (route.provider !== 'openai' ? 'gpt-4-turbo' : route.model);
                 const response = await openaiClient.chat.completions.create({
                   ...params,
                   model: fallbackModel,
