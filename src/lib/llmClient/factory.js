@@ -237,21 +237,12 @@ function getInstance(mode = 'default', options = {}) {
     responses: {
       create: async (params) => {
         try {
-          let response;
-          
-          if (clientType === 'portkey') {
-            response = await client.responses.create({
-              ...params,
-              model: route.model,
-              ...route.config
-            });
-          } else {
-            response = await client.responses.create({
-              ...params,
-              model: route.model,
-              ...route.config
-            });
-          }
+          // Works for both Portkey and direct clients (OpenAI-compatible interface)
+          const response = await client.responses.create({
+            ...params,
+            model: route.model,
+            ...route.config
+          });
           
           const transformed = transformChatCompletion(response);
           return {
