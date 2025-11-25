@@ -65,26 +65,26 @@ const TONE_DEFINITIONS = Object.freeze({
 
 **Single source of truth** - All tone validation should use these constants:
 
-| Export | Type | Purpose |
-|--------|------|---------|
-| `TONE_DEFINITIONS` | Object | Core tone metadata (id, name, description, intensity, example) |
-| `VALID_TONES` | Array | Canonical tone IDs: `['Flanders', 'Balanceado', 'Canalla']` |
-| `VALID_TONES_WITH_ALIASES` | Array | All valid inputs (9): canonical + lowercase + English aliases |
-| `TONE_DISPLAY_NAMES` | Object | Display names per language (es/en) |
-| `TONE_DESCRIPTIONS` | Object | Descriptions per language (es/en) |
-| `normalizeTone()` | Function | Normalize any valid input to canonical form |
-| `isValidTone()` | Function | Validate tone (with optional strict mode) |
-| `getToneDisplayName()` | Function | Get display name for any tone alias |
-| `getToneDescription()` | Function | Get description for any tone alias |
-| `getToneIntensity()` | Function | Get intensity level (2-4) |
+| Export                     | Type     | Purpose                                                        |
+| -------------------------- | -------- | -------------------------------------------------------------- |
+| `TONE_DEFINITIONS`         | Object   | Core tone metadata (id, name, description, intensity, example) |
+| `VALID_TONES`              | Array    | Canonical tone IDs: `['Flanders', 'Balanceado', 'Canalla']`    |
+| `VALID_TONES_WITH_ALIASES` | Array    | All valid inputs (9): canonical + lowercase + English aliases  |
+| `TONE_DISPLAY_NAMES`       | Object   | Display names per language (es/en)                             |
+| `TONE_DESCRIPTIONS`        | Object   | Descriptions per language (es/en)                              |
+| `normalizeTone()`          | Function | Normalize any valid input to canonical form                    |
+| `isValidTone()`            | Function | Validate tone (with optional strict mode)                      |
+| `getToneDisplayName()`     | Function | Get display name for any tone alias                            |
+| `getToneDescription()`     | Function | Get description for any tone alias                             |
+| `getToneIntensity()`       | Function | Get intensity level (2-4)                                      |
 
 ### Tone Aliases
 
-| Canonical | Lowercase | English Alias |
-|-----------|-----------|---------------|
-| `Flanders` | `flanders` | `light` |
-| `Balanceado` | `balanceado` | `balanced` |
-| `Canalla` | `canalla` | `savage` |
+| Canonical    | Lowercase    | English Alias |
+| ------------ | ------------ | ------------- |
+| `Flanders`   | `flanders`   | `light`       |
+| `Balanceado` | `balanceado` | `balanced`    |
+| `Canalla`    | `canalla`    | `savage`      |
 
 All aliases normalize to canonical form via `normalizeTone()`.
 
@@ -138,17 +138,16 @@ function normalizeTone(tone) {
   const trimmed = tone.trim();
   if (!trimmed) return null;
   // Try exact match first, then lowercase
-  return TONE_NORMALIZATION_MAP[trimmed] ||
-         TONE_NORMALIZATION_MAP[trimmed.toLowerCase()] || null;
+  return TONE_NORMALIZATION_MAP[trimmed] || TONE_NORMALIZATION_MAP[trimmed.toLowerCase()] || null;
 }
 
 // Examples:
-normalizeTone('FLANDERS');  // → 'Flanders'
+normalizeTone('FLANDERS'); // → 'Flanders'
 normalizeTone('  Canalla  '); // → 'Canalla'
-normalizeTone('light');      // → 'Flanders' (English alias)
-normalizeTone('savage');     // → 'Canalla' (English alias)
-normalizeTone('balanced');   // → 'Balanceado' (English alias)
-normalizeTone('invalid');    // → null
+normalizeTone('light'); // → 'Flanders' (English alias)
+normalizeTone('savage'); // → 'Canalla' (English alias)
+normalizeTone('balanced'); // → 'Balanceado' (English alias)
+normalizeTone('invalid'); // → null
 ```
 
 ## Integration with Roast Generation

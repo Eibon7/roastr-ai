@@ -34,7 +34,7 @@ describe('TierConfig - CodeRabbit Round 6 Improvements', () => {
       Object.keys(tierConfig.DEFAULT_TIER_LIMITS).forEach((tier) => {
         // Skip custom tier which has unlimited limits (-1)
         if (tier === 'custom') return;
-        
+
         requiredLimitKeys.forEach((key) => {
           expect(tierConfig.DEFAULT_TIER_LIMITS[tier]).toHaveProperty(key);
           expect(typeof tierConfig.DEFAULT_TIER_LIMITS[tier][key]).toBe('number');
@@ -179,7 +179,7 @@ describe('TierConfig - CodeRabbit Round 6 Improvements', () => {
     test('should have sensible monthly to daily ratios', () => {
       // Issue #841: Only test standard tiers (exclude custom which has unlimited limits -1)
       const standardTiers = ['starter_trial', 'starter', 'pro', 'plus'];
-      
+
       standardTiers.forEach((tier) => {
         const limits = tierConfig.DEFAULT_TIER_LIMITS[tier];
         const monthlyToDailyRatio = limits.monthlyResponsesLimit / limits.maxRoasts;

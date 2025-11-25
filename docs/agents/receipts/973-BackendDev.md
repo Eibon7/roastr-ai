@@ -54,16 +54,16 @@ Centralized all tone definitions into `src/config/tones.js` as the single source
 
 ## Files Modified
 
-| File | Change |
-|------|--------|
-| `src/config/tones.js` | +160 lines - Added exports and helper functions |
-| `src/validators/zod/config.schema.js` | +2/-1 lines - Import centralized enum |
-| `src/routes/config.js` | +2/-1 lines - Import centralized enum |
-| `src/services/toneCompatibilityService.js` | +20/-20 lines - Delegate to centralized |
-| `tests/unit/config/tones.test.js` | +180 lines - New tests |
-| `tests/unit/services/toneCompatibilityService.test.js` | +1/-1 line - Fix test expectation |
-| `docs/nodes/tone.md` | +60 lines - Documentation |
-| `docs/plan/issue-973.md` | NEW - Implementation plan |
+| File                                                   | Change                                          |
+| ------------------------------------------------------ | ----------------------------------------------- |
+| `src/config/tones.js`                                  | +160 lines - Added exports and helper functions |
+| `src/validators/zod/config.schema.js`                  | +2/-1 lines - Import centralized enum           |
+| `src/routes/config.js`                                 | +2/-1 lines - Import centralized enum           |
+| `src/services/toneCompatibilityService.js`             | +20/-20 lines - Delegate to centralized         |
+| `tests/unit/config/tones.test.js`                      | +180 lines - New tests                          |
+| `tests/unit/services/toneCompatibilityService.test.js` | +1/-1 line - Fix test expectation               |
+| `docs/nodes/tone.md`                                   | +60 lines - Documentation                       |
+| `docs/plan/issue-973.md`                               | NEW - Implementation plan                       |
 
 ## Acceptance Criteria Status
 
@@ -105,4 +105,3 @@ Health Score: 90.2/100 (threshold: 87)
 - ✅ No spec.md loaded
 - ✅ Tests passing
 - ✅ GDD health >= 87
-

@@ -14,6 +14,7 @@ Added comprehensive test coverage for centralized tone enum, including consisten
 ### New Test Cases in `tests/unit/config/tones.test.js`
 
 #### VALID_TONES_WITH_ALIASES (5 tests)
+
 - Should be frozen
 - Should contain canonical forms (Flanders, Balanceado, Canalla)
 - Should contain lowercase forms (flanders, balanceado, canalla)
@@ -21,35 +22,42 @@ Added comprehensive test coverage for centralized tone enum, including consisten
 - Should have exactly 9 values
 
 #### TONE_DISPLAY_NAMES (3 tests)
+
 - Should have Spanish and English display names
 - Should map all aliases to display names in Spanish
 - Should map all aliases to display names in English
 
 #### TONE_DESCRIPTIONS (4 tests)
+
 - Should have Spanish and English descriptions
 - Should have descriptions for all canonical tones in Spanish
 - Should have descriptions for all canonical tones in English
 - Descriptions should include intensity level
 
 #### getToneDisplayName() (4 tests)
+
 - Should return Spanish display name by default
 - Should return English display name when specified
 - Should normalize aliases before lookup
 - Should return input for invalid tones
 
 #### getToneDescription() (3 tests)
+
 - Should return Spanish description by default
 - Should return English description when specified
 - Should return empty string for invalid tones
 
 #### getToneIntensity() (2 tests)
+
 - Should return correct intensity for each tone
 - Should return default intensity (3) for invalid tones
 
 #### English Aliases (1 test)
+
 - Should normalize English aliases to canonical form
 
 #### Consistency Tests (6 tests)
+
 - VALID_TONES should be subset of VALID_TONES_WITH_ALIASES
 - All VALID_TONES_WITH_ALIASES should normalize to a VALID_TONE
 - TONE_DEFINITIONS keys should match VALID_TONES
@@ -63,11 +71,11 @@ Added comprehensive test coverage for centralized tone enum, including consisten
 
 ## Test Coverage
 
-| Test File | Tests | Status |
-|-----------|-------|--------|
-| `tests/unit/config/tones.test.js` | 53 | ✅ All passing |
-| `tests/unit/validators/zod/config.schema.test.js` | 0 (module uses centralized) | ✅ N/A |
-| `tests/unit/services/toneCompatibilityService.test.js` | 28 | ✅ All passing |
+| Test File                                              | Tests                       | Status         |
+| ------------------------------------------------------ | --------------------------- | -------------- |
+| `tests/unit/config/tones.test.js`                      | 53                          | ✅ All passing |
+| `tests/unit/validators/zod/config.schema.test.js`      | 0 (module uses centralized) | ✅ N/A         |
+| `tests/unit/services/toneCompatibilityService.test.js` | 28                          | ✅ All passing |
 
 **Total Related Tests:** 81 passing
 
@@ -95,4 +103,3 @@ Tests:       81 passed, 81 total
 - ✅ Consistency tests prevent future drift
 - ✅ All assertions verify expected behavior
 - ✅ Edge cases covered (invalid tones, unknown languages)
-
