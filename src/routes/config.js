@@ -26,8 +26,6 @@ const VALID_PLATFORMS = [
   'reddit',
   'tiktok'
 ];
-// Issue #872: Use new 3-tone system, Issue #973: Centralized tones
-const VALID_TONES = VALID_TONES_WITH_ALIASES;
 // Issue #872: humor_types deprecated, kept for backward compat only
 const VALID_HUMOR_TYPES = []; // Empty - deprecated
 
@@ -147,23 +145,23 @@ router.put('/:platform', async (req, res) => {
       });
     }
 
-    // Validate input
-    if (tone && !VALID_TONES.includes(tone)) {
+    // Validate input (Issue #973: Use centralized constant directly)
+    if (tone && !VALID_TONES_WITH_ALIASES.includes(tone)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid tone. Must be one of: ' + VALID_TONES.join(', ')
+        error: 'Invalid tone. Must be one of: ' + VALID_TONES_WITH_ALIASES.join(', ')
       });
     }
 
     // Issue #872 AC8: humor_type completely removed - no validation needed
 
     // Validate tone normalization (backwards compatibility)
-    if (tone && !VALID_TONES.includes(tone)) {
+    if (tone) {
       const normalizedTone = toneCompatibilityService.normalizeTone(tone);
       if (!normalizedTone) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid tone. Must be one of: ' + VALID_TONES.join(', ')
+          error: 'Invalid tone. Must be one of: ' + VALID_TONES_WITH_ALIASES.join(', ')
         });
       }
     }
@@ -364,7 +362,7 @@ router.get('/', async (req, res) => {
       success: true,
       data: {
         platforms: platformConfigs,
-        available_tones: VALID_TONES,
+        available_tones: VALID_TONES_WITH_ALIASES,
         available_humor_types: [] // Issue #872: Deprecated, return empty array
       }
     });

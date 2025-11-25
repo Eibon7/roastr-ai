@@ -435,4 +435,53 @@ describe('Tone Configuration', () => {
       });
     });
   });
+
+  // Issue #973: Cross-module consistency test (AC#6 requirement)
+  describe('Cross-module tone consistency (Issue #973)', () => {
+    test('VALID_STYLES should match VALID_TONES_WITH_ALIASES', () => {
+      const { VALIDATION_CONSTANTS } = require('../../../src/config/validationConstants');
+
+      // ES tones should be lowercase canonical forms
+      expect(VALIDATION_CONSTANTS.VALID_STYLES.es).toEqual(['flanders', 'balanceado', 'canalla']);
+
+      // EN tones should be English aliases
+      expect(VALIDATION_CONSTANTS.VALID_STYLES.en).toEqual(['light', 'balanced', 'savage']);
+
+      // All VALID_STYLES values should exist in VALID_TONES_WITH_ALIASES
+      const allStyles = [
+        ...VALIDATION_CONSTANTS.VALID_STYLES.es,
+        ...VALIDATION_CONSTANTS.VALID_STYLES.en
+      ];
+
+      allStyles.forEach((style) => {
+        expect(VALID_TONES_WITH_ALIASES).toContain(style);
+      });
+    });
+
+    test('VALID_STYLES should be derived from VALID_TONES_WITH_ALIASES (no drift)', () => {
+      const { VALIDATION_CONSTANTS } = require('../../../src/config/validationConstants');
+
+      // Verify ES styles are subset of VALID_TONES_WITH_ALIASES
+      VALIDATION_CONSTANTS.VALID_STYLES.es.forEach((style) => {
+        expect(VALID_TONES_WITH_ALIASES).toContain(style);
+      });
+
+      // Verify EN styles are subset of VALID_TONES_WITH_ALIASES
+      VALIDATION_CONSTANTS.VALID_STYLES.en.forEach((style) => {
+        expect(VALID_TONES_WITH_ALIASES).toContain(style);
+      });
+
+      // Verify no extra styles exist that aren't in VALID_TONES_WITH_ALIASES
+      const allStyles = [
+        ...VALIDATION_CONSTANTS.VALID_STYLES.es,
+        ...VALIDATION_CONSTANTS.VALID_STYLES.en
+      ];
+      const uniqueStyles = [...new Set(allStyles)];
+
+      expect(uniqueStyles.length).toBe(allStyles.length); // No duplicates
+      uniqueStyles.forEach((style) => {
+        expect(VALID_TONES_WITH_ALIASES).toContain(style);
+      });
+    });
+  });
 });

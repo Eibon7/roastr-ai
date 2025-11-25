@@ -132,6 +132,16 @@ const TONE_NORMALIZATION_MAP = Object.freeze({
 });
 
 /**
+ * Tone intensity map for O(1) lookup performance
+ * Issue #973: Optimized intensity lookup (CodeRabbit suggestion)
+ */
+const TONE_INTENSITY_MAP = Object.freeze({
+  Flanders: 2,
+  Balanceado: 3,
+  Canalla: 4
+});
+
+/**
  * Normalize tone to canonical form - Ultra-optimized for performance
  * Uses single map with input trimming for O(1) lookups
  * Issue #973: Updated to use centralized TONE_NORMALIZATION_MAP
@@ -228,7 +238,7 @@ function getToneDescription(tone, lang = 'es') {
 
 /**
  * Get intensity level for a tone (1-5 scale)
- * Issue #973: Centralized intensity lookup
+ * Issue #973: Centralized intensity lookup with O(1) performance
  *
  * @param {string} tone - Tone (canonical or alias)
  * @returns {number} - Intensity level (2-4) or 3 as default
@@ -237,8 +247,8 @@ function getToneIntensity(tone) {
   const normalized = normalizeTone(tone);
   if (!normalized) return 3; // Default to balanced intensity
 
-  const definition = Object.values(TONE_DEFINITIONS).find((d) => d.id === normalized);
-  return definition ? definition.intensity : 3;
+  // O(1) lookup using pre-computed map (CodeRabbit optimization)
+  return TONE_INTENSITY_MAP[normalized] || 3;
 }
 
 module.exports = Object.freeze({

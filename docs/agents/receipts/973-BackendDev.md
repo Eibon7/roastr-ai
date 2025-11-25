@@ -79,7 +79,7 @@ Centralized all tone definitions into `src/config/tones.js` as the single source
 
 ## Test Results
 
-```
+```text
 Test Suites: 2 passed, 2 total
 Tests:       81 passed, 81 total
 Snapshots:   0 total
@@ -88,7 +88,7 @@ Time:        0.34 s
 
 ## GDD Validation
 
-```
+```text
 Overall Status: HEALTHY
 Health Score: 90.2/100 (threshold: 87)
 ```
