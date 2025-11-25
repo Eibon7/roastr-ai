@@ -165,8 +165,6 @@ router.put('/:platform', async (req, res) => {
 
     // Issue #872 AC8: humor_type completely removed - no validation needed
 
-    // Issue #872 AC8: humor_type completely removed - no validation needed
-
     if (
       response_frequency !== undefined &&
       (response_frequency < 0.0 || response_frequency > 1.0)

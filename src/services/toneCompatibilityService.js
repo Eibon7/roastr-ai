@@ -150,34 +150,20 @@ class ToneCompatibilityService {
   }
 
   /**
-   * Normalize a tone string to valid canonical tone
+   * Normalize tone to canonical form (lowercase)
    *
-   * Issue #972: This method accepts a tone string (may be alias or legacy)
-   * and returns the normalized canonical form (flanders, balanceado, canalla).
+   * Issue #972: Returns lowercase canonical form (flanders, balanceado, canalla)
+   * Issue #973: Uses centralized normalizeTone function but converts to lowercase
+   *             for backward compatibility with existing code
    *
-   * @param {string} tone - Input tone (may be legacy, alias, or valid)
-   * @returns {string|null} Normalized tone or null if invalid
+   * @param {string} tone - Tone to normalize
+   * @returns {string|null} Normalized tone in lowercase or null if invalid
    */
   normalizeTone(tone) {
-    if (!tone || typeof tone !== 'string') {
-      return null;
-    }
-
-    const lowerTone = tone.toLowerCase().trim();
-
-    // Map all valid tones and aliases to canonical form
-    const canonicalMap = {
-      // Canonical tones (ES)
-      flanders: 'flanders',
-      balanceado: 'balanceado',
-      canalla: 'canalla',
-      // English aliases
-      light: 'flanders',
-      balanced: 'balanceado',
-      savage: 'canalla'
-    };
-
-    return canonicalMap[lowerTone] || null;
+    const normalized = centralizedNormalizeTone(tone);
+    // Convert canonical form (Flanders, Balanceado, Canalla) to lowercase
+    // for backward compatibility with Issue #972
+    return normalized ? normalized.toLowerCase() : null;
   }
 
   /**
@@ -188,16 +174,6 @@ class ToneCompatibilityService {
    */
   isValidNewTone(tone) {
     return VALID_TONES_WITH_ALIASES.includes(tone);
-  }
-
-  /**
-   * Normalize tone to canonical form
-   * Issue #973: Delegates to centralized normalizeTone function
-   * @param {string} tone - Tone to normalize
-   * @returns {string|null} Canonical tone or null if invalid
-   */
-  normalizeTone(tone) {
-    return centralizedNormalizeTone(tone);
   }
 
   /**
