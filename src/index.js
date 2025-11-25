@@ -77,6 +77,7 @@ const checkoutRoutes = require('./routes/checkout');
 const polarWebhookRoutes = require('./routes/polarWebhook');
 const creditsRoutes = require('./routes/credits'); // QW9: Add credits router
 const sponsorsRoutes = require('./routes/sponsors')(); // Issue #859: Brand Safety for Sponsors (Plan Plus) - Factory function
+const aiModesRoutes = require('./routes/ai-modes'); // Issue #920: AI modes endpoint
 const { authenticateToken, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -326,6 +327,9 @@ app.use(personaRoutes);
 
 // Sponsors routes (for Issue #859) - authenticated access + Plus plan gating
 app.use('/api/sponsors', sponsorsRoutes);
+
+// AI modes routes (Issue #920: Portkey AI Gateway integration)
+app.use('/api/ai-modes', aiModesRoutes);
 
 // Polar checkout routes - public access (handles its own auth)
 app.use('/api', checkoutRoutes);
