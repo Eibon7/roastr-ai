@@ -1987,7 +1987,8 @@ describe('AnalyzeToxicityWorker', () => {
   describe('getUserRoastrPersona', () => {
     beforeEach(() => {
       // Restore real method from prototype for these tests (Issue #940)
-      worker.getUserRoastrPersona = AnalyzeToxicityWorker.prototype.getUserRoastrPersona.bind(worker);
+      worker.getUserRoastrPersona =
+        AnalyzeToxicityWorker.prototype.getUserRoastrPersona.bind(worker);
       worker.log = jest.fn();
     });
 
@@ -2104,7 +2105,8 @@ describe('AnalyzeToxicityWorker', () => {
   describe('handleAutoBlockShieldAction', () => {
     beforeEach(() => {
       // Restore real method from prototype for these tests (Issue #940)
-      worker.handleAutoBlockShieldAction = AnalyzeToxicityWorker.prototype.handleAutoBlockShieldAction.bind(worker);
+      worker.handleAutoBlockShieldAction =
+        AnalyzeToxicityWorker.prototype.handleAutoBlockShieldAction.bind(worker);
     });
     beforeEach(() => {
       worker.shieldService = mockShieldService;
@@ -2310,7 +2312,8 @@ describe('AnalyzeToxicityWorker', () => {
   describe('updateCommentWithAnalysisDecision', () => {
     beforeEach(() => {
       // Restore real method from prototype for these tests (Issue #940)
-      worker.updateCommentWithAnalysisDecision = AnalyzeToxicityWorker.prototype.updateCommentWithAnalysisDecision.bind(worker);
+      worker.updateCommentWithAnalysisDecision =
+        AnalyzeToxicityWorker.prototype.updateCommentWithAnalysisDecision.bind(worker);
     });
     beforeEach(() => {
       worker.updateCommentAnalysis = jest.fn().mockResolvedValue(true);
@@ -2351,7 +2354,7 @@ describe('AnalyzeToxicityWorker', () => {
           action_tags: ['hide', 'report'],
           security_classification: 'MALICIOUS',
           is_prompt_injection: true,
-          
+
           categories: ['prompt_injection', 'TOXICITY', 'THREAT'],
           platform_violations: {
             has_violations: true,
