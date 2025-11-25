@@ -73,8 +73,8 @@ docs/backup/
 gdd-write-signatures.json
 
 
-# Branch Guard - issue lock file
+# Branch Guard - local issue lock (never commit)
 .issue_lock
+
+# GDD activation instructions (local only)
 .gdd-activation-instructions.json
-# Local branch protection - do not track
-.issue_lock

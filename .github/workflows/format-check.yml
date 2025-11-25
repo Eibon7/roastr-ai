@@ -14,13 +14,15 @@ jobs:
   format-check:
     name: Check Code Formatting
     runs-on: ubuntu-latest
+    # Skip if this is an auto-format commit
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -29,27 +31,37 @@ jobs:
         run: npm ci
 
       - name: Check Prettier formatting
-        run: npm run format:check
+        id: prettier
+        run: |
+          npm run format:check || echo "needs_format=true" >> $GITHUB_OUTPUT
+        continue-on-error: true
 
       - name: Run ESLint
+        id: eslint
         run: npm run lint
+        continue-on-error: true
 
-      - name: Report status
-        if: success()
+      - name: Report results
         run: |
-          echo "✅ Code formatting and linting checks passed!"
-          echo "All files are properly formatted according to Prettier and ESLint rules."
-
-      - name: Report failure
-        if: failure()
-        run: |
-          echo "❌ Code formatting or linting issues detected!"
-          echo ""
-          echo "To fix formatting issues, run:"
-          echo "  npm run format"
-          echo ""
-          echo "To fix linting issues, run:"
-          echo "  npm run lint:fix"
-          echo ""
-          echo "Then commit the changes and push again."
-          exit 1
+          FAILED=false
+          
+          if [ "${{ steps.prettier.outputs.needs_format }}" == "true" ]; then
+            echo "⚠️  Formatting issues detected - Auto-format workflow will fix them"
+            # Don't fail - auto-format will handle it
+          else
+            echo "✅ Prettier check passed"
+          fi
+          
+          if [ "${{ steps.eslint.outcome }}" == "failure" ]; then
+            echo "❌ ESLint issues detected"
+            echo ""
+            echo "To fix linting issues, run:"
+            echo "  npm run lint:fix"
+            FAILED=true
+          else
+            echo "✅ ESLint check passed"
+          fi
+          
+          if [ "$FAILED" == "true" ]; then
+            exit 1
+          fi
