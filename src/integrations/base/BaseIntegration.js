@@ -159,7 +159,10 @@ class BaseIntegration {
       return true;
     } catch (error) {
       this.metrics.errorsEncountered++;
-      this.logger.error(`❌ [${this.platform.toUpperCase()}] Error processing comment:`, error.message);
+      this.logger.error(
+        `❌ [${this.platform.toUpperCase()}] Error processing comment:`,
+        error.message
+      );
 
       await this.advancedLogger.logIntegration(this.platform, 'error', 'Error processing comment', {
         error: error.message,
@@ -200,7 +203,9 @@ class BaseIntegration {
    */
   async performAutoAction(comment, action) {
     // Default implementation - just log
-    this.logger.info(`🛡️ [${this.platform.toUpperCase()}] Auto-action: ${action} (not implemented)`);
+    this.logger.info(
+      `🛡️ [${this.platform.toUpperCase()}] Auto-action: ${action} (not implemented)`
+    );
   }
 
   /**
