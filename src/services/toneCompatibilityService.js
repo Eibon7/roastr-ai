@@ -150,6 +150,37 @@ class ToneCompatibilityService {
   }
 
   /**
+   * Normalize a tone string to valid canonical tone
+   *
+   * Issue #972: This method accepts a tone string (may be alias or legacy)
+   * and returns the normalized canonical form (flanders, balanceado, canalla).
+   *
+   * @param {string} tone - Input tone (may be legacy, alias, or valid)
+   * @returns {string|null} Normalized tone or null if invalid
+   */
+  normalizeTone(tone) {
+    if (!tone || typeof tone !== 'string') {
+      return null;
+    }
+
+    const lowerTone = tone.toLowerCase().trim();
+
+    // Map all valid tones and aliases to canonical form
+    const canonicalMap = {
+      // Canonical tones (ES)
+      flanders: 'flanders',
+      balanceado: 'balanceado',
+      canalla: 'canalla',
+      // English aliases
+      light: 'flanders',
+      balanced: 'balanceado',
+      savage: 'canalla'
+    };
+
+    return canonicalMap[lowerTone] || null;
+  }
+
+  /**
    * Check if a tone is valid in the new 3-tone system
    * Issue #973: Uses centralized VALID_TONES_WITH_ALIASES
    * @param {string} tone - Tone to check
