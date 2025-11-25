@@ -128,16 +128,15 @@ describe('CostControlService - Final Coverage Push', () => {
       expect(result.currentUsage).toBe(85);
     });
 
-    it('should not send alert when already sent', async () => {
+    it('should always send alert when near limit (alertSent tracking not implemented)', async () => {
       mockRpc.mockResolvedValueOnce({
         data: { success: true, new_count: 85 },
         error: null
       });
 
-      // Note: alertSent doesn't exist in checkUsageLimit return, but the code checks it
-      // This test verifies that when alertSent would be true (if it existed), alert is not sent
-      // Since alertSent is undefined, the code will try to send alert, so we mock sendUsageAlert
-      // to verify it's called, but the real behavior is that alertSent check will be undefined
+      // Current behavior: alerts are sent whenever isNearLimit is true
+      // The code checks !usageCheck.alertSent, but alertSent is not returned by checkUsageLimit
+      // This means alerts will always be sent when near limit (alertSent is undefined/falsy)
       costControl.checkUsageLimit = jest.fn().mockResolvedValue({
         canUse: true,
         currentUsage: 85,
@@ -150,12 +149,9 @@ describe('CostControlService - Final Coverage Push', () => {
 
       costControl.sendUsageAlert = jest.fn();
 
-      // The code checks !usageCheck.alertSent, which will be true (undefined is falsy)
-      // So alert will be sent. This test needs to be updated to reflect actual behavior
       await costControl.incrementUsageCounters('org-123', 'twitter', 5);
 
-      // Since alertSent is undefined, the check !usageCheck.alertSent evaluates to true
-      // So the alert will be sent. This test should verify alert is sent, not that it's not sent
+      // Alert is sent because isNearLimit is true and alertSent is undefined (falsy)
       expect(costControl.sendUsageAlert).toHaveBeenCalled();
     });
 
