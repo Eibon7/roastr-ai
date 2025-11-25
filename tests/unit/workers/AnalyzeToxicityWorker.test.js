@@ -240,7 +240,7 @@ describe('AnalyzeToxicityWorker', () => {
     mockCostControlService._reset();
     jest.clearAllMocks();
     jest.clearAllTimers();
-    
+
     // Cleanup worker instance if it exists (Issue #1018 - CodeRabbit fix)
     // Note: worker.stop is mocked, so we check if it returns a Promise before using .catch()
     if (worker && typeof worker.stop === 'function') {
