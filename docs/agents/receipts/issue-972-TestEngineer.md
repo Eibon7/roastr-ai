@@ -16,17 +16,17 @@ Fixed unreachable code in `src/routes/config.js` that prevented tone normalizati
 
 ### 1. Source Code Changes
 
-| File | Change | Reason |
-|------|--------|--------|
-| `src/services/toneCompatibilityService.js` | Added `normalizeTone(tone)` method | Convert tone strings to canonical form (flanders, balanceado, canalla) |
-| `src/routes/config.js` | Merged duplicate validation, always normalize tones | Fix unreachable code, ensure all tones are normalized |
+| File                                       | Change                                              | Reason                                                                 |
+| ------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------- |
+| `src/services/toneCompatibilityService.js` | Added `normalizeTone(tone)` method                  | Convert tone strings to canonical form (flanders, balanceado, canalla) |
+| `src/routes/config.js`                     | Merged duplicate validation, always normalize tones | Fix unreachable code, ensure all tones are normalized                  |
 
 ### 2. Test Changes
 
-| File | Tests Added | Coverage |
-|------|-------------|----------|
-| `tests/unit/services/toneCompatibilityService.test.js` | +22 new tests for `normalizeTone()` | 100% for new method |
-| `tests/integration/routes/config-zod.test.js` | +11 new tests for tone normalization | Full endpoint coverage |
+| File                                                   | Tests Added                          | Coverage               |
+| ------------------------------------------------------ | ------------------------------------ | ---------------------- |
+| `tests/unit/services/toneCompatibilityService.test.js` | +22 new tests for `normalizeTone()`  | 100% for new method    |
+| `tests/integration/routes/config-zod.test.js`          | +11 new tests for tone normalization | Full endpoint coverage |
 
 ---
 
@@ -35,7 +35,7 @@ Fixed unreachable code in `src/routes/config.js` that prevented tone normalizati
 ```
 Tests:       122 passed, 122 total
 - toneCompatibilityService.test.js: 48 passed
-- config-zod.test.js: 33 passed  
+- config-zod.test.js: 33 passed
 - config.schema.test.js: 41 passed
 ```
 
@@ -68,4 +68,3 @@ Tests:       122 passed, 122 total
 ---
 
 **Status:** ✅ COMPLETE
-

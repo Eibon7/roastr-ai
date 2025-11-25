@@ -437,9 +437,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
           updated_at: new Date().toISOString()
         });
 
-        const response = await request(app)
-          .put('/api/config/twitter')
-          .send({ tone: 'balanceado' });
+        const response = await request(app).put('/api/config/twitter').send({ tone: 'balanceado' });
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -452,9 +450,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
           updated_at: new Date().toISOString()
         });
 
-        const response = await request(app)
-          .put('/api/config/twitter')
-          .send({ tone: 'flanders' });
+        const response = await request(app).put('/api/config/twitter').send({ tone: 'flanders' });
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -467,9 +463,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
           updated_at: new Date().toISOString()
         });
 
-        const response = await request(app)
-          .put('/api/config/twitter')
-          .send({ tone: 'canalla' });
+        const response = await request(app).put('/api/config/twitter').send({ tone: 'canalla' });
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -484,9 +478,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
           updated_at: new Date().toISOString()
         });
 
-        const response = await request(app)
-          .put('/api/config/twitter')
-          .send({ tone: 'light' });
+        const response = await request(app).put('/api/config/twitter').send({ tone: 'light' });
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -500,9 +492,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
           updated_at: new Date().toISOString()
         });
 
-        const response = await request(app)
-          .put('/api/config/twitter')
-          .send({ tone: 'balanced' });
+        const response = await request(app).put('/api/config/twitter').send({ tone: 'balanced' });
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -516,9 +506,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
           updated_at: new Date().toISOString()
         });
 
-        const response = await request(app)
-          .put('/api/config/twitter')
-          .send({ tone: 'savage' });
+        const response = await request(app).put('/api/config/twitter').send({ tone: 'savage' });
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -538,9 +526,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
       });
 
       it('should reject legacy humor_type values used as tones', async () => {
-        const response = await request(app)
-          .put('/api/config/twitter')
-          .send({ tone: 'witty' });
+        const response = await request(app).put('/api/config/twitter').send({ tone: 'witty' });
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
@@ -548,9 +534,7 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
       });
 
       it('should reject "sarcastic" (legacy humor_type)', async () => {
-        const response = await request(app)
-          .put('/api/config/twitter')
-          .send({ tone: 'sarcastic' });
+        const response = await request(app).put('/api/config/twitter').send({ tone: 'sarcastic' });
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);

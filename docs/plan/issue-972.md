@@ -33,6 +33,7 @@ if (tone && !VALID_TONES.includes(tone)) {
 ### Additional Issue Found
 
 The `toneCompatibilityService.normalizeTone(tone)` method called on line 161 and line 239 **does not exist** in the service. The service only has:
+
 - `mapLegacyToNewTone(config)` - accepts config object, not string
 - `isValidNewTone(tone)` - validates if tone is valid
 
@@ -70,7 +71,7 @@ Create a simple method that accepts a tone string and returns the normalized ver
  */
 normalizeTone(tone) {
   if (!tone) return null;
-  
+
   // Direct valid tones
   const validTones = ['flanders', 'light', 'balanceado', 'balanced', 'canalla', 'savage'];
   if (validTones.includes(tone.toLowerCase())) {
@@ -82,7 +83,7 @@ normalizeTone(tone) {
     };
     return canonicalMap[tone.toLowerCase()] || tone.toLowerCase();
   }
-  
+
   return null; // Invalid tone
 }
 ```
@@ -111,6 +112,7 @@ if (tone && !VALID_TONES.includes(tone)) {
 File: `tests/unit/services/toneCompatibilityService.test.js`
 
 Test cases:
+
 - Valid tones pass through unchanged
 - Alias tones (light→flanders, balanced→balanceado, savage→canalla)
 - Invalid tones return null
@@ -122,6 +124,7 @@ Test cases:
 File: `tests/integration/config.test.js`
 
 Test cases:
+
 - Valid tones accepted
 - Legacy/alias tones normalized and accepted
 - Invalid tones rejected with clear error
@@ -131,12 +134,12 @@ Test cases:
 
 ## 📁 Files to Modify
 
-| File | Action | Changes |
-|------|--------|---------|
-| `src/services/toneCompatibilityService.js` | Modify | Add `normalizeTone(tone)` method |
-| `src/routes/config.js` | Modify | Fix duplicate validation (lines 149-168) |
-| `tests/unit/services/toneCompatibilityService.test.js` | Create/Modify | Add normalizeTone tests |
-| `tests/integration/config.test.js` | Create/Modify | Add integration tests |
+| File                                                   | Action        | Changes                                  |
+| ------------------------------------------------------ | ------------- | ---------------------------------------- |
+| `src/services/toneCompatibilityService.js`             | Modify        | Add `normalizeTone(tone)` method         |
+| `src/routes/config.js`                                 | Modify        | Fix duplicate validation (lines 149-168) |
+| `tests/unit/services/toneCompatibilityService.test.js` | Create/Modify | Add normalizeTone tests                  |
+| `tests/integration/config.test.js`                     | Create/Modify | Add integration tests                    |
 
 ---
 
@@ -170,4 +173,3 @@ Test cases:
 ---
 
 **Status:** Planning Complete → Proceeding to Implementation
-
