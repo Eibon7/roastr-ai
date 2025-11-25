@@ -11,6 +11,76 @@ module.exports = {
   testMatch: [
     '<rootDir>/tests/**/*.test.js'
   ],
+  
+  // Exclude worktrees to prevent duplicate mock conflicts (Issue #1018)
+  // Note: Only exclude worktrees that are NOT currently active (442, 1018, 1019 are active)
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/coverage/',
+    '/dist/',
+    '/build/',
+    '/roastr-ai-worktrees/issue-914',
+    '/roastr-ai-worktrees/issue-920',
+    '/roastr-ai-worktrees/issue-929',
+    '/roastr-ai-worktrees/issue-930',
+    '/roastr-ai-worktrees/issue-931',
+    '/roastr-ai-worktrees/issue-932',
+    '/roastr-ai-worktrees/issue-933',
+    '/roastr-ai-worktrees/issue-940',
+    '/roastr-ai-worktrees/issue-972',
+    '/roastr-ai-worktrees/issue-973',
+    '/roastr-ai/roastr-ai-worktrees/issue-914',
+    '/roastr-ai/roastr-ai-worktrees/issue-929',
+    '/roastr-ai/roastr-ai-worktrees/issue-931',
+    '/roastr-ai/roastr-ai-worktrees/issue-932',
+    '/roastr-ai/roastr-ai-worktrees/issue-933',
+    '/roastr-ai/roastr-ai-worktrees/issue-940',
+    '/roastr-ai/roastr-ai-worktrees/issue-972',
+    '/roastr-ai/roastr-ai-worktrees/issue-973'
+  ],
+  
+  // Exclude inactive worktrees from module resolution (Issue #1018 - Critical for memory)
+  // Active worktrees: issue-442, issue-1018, issue-1019
+  modulePathIgnorePatterns: [
+    '<rootDir>/roastr-ai-worktrees/issue-914',
+    '<rootDir>/roastr-ai-worktrees/issue-920',
+    '<rootDir>/roastr-ai-worktrees/issue-929',
+    '<rootDir>/roastr-ai-worktrees/issue-929-fix',
+    '<rootDir>/roastr-ai-worktrees/issue-930',
+    '<rootDir>/roastr-ai-worktrees/issue-931',
+    '<rootDir>/roastr-ai-worktrees/issue-932',
+    '<rootDir>/roastr-ai-worktrees/issue-933',
+    '<rootDir>/roastr-ai-worktrees/issue-940',
+    '<rootDir>/roastr-ai-worktrees/issue-972',
+    '<rootDir>/roastr-ai-worktrees/issue-973',
+    '<rootDir>/roastr-ai/roastr-ai-worktrees/issue-914',
+    '<rootDir>/roastr-ai/roastr-ai-worktrees/issue-929',
+    '<rootDir>/roastr-ai/roastr-ai-worktrees/issue-931',
+    '<rootDir>/roastr-ai/roastr-ai-worktrees/issue-932',
+    '<rootDir>/roastr-ai/roastr-ai-worktrees/issue-933',
+    '<rootDir>/roastr-ai/roastr-ai-worktrees/issue-940',
+    '<rootDir>/roastr-ai/roastr-ai-worktrees/issue-972',
+    '<rootDir>/roastr-ai/roastr-ai-worktrees/issue-973'
+  ],
+  
+  // Watch path ignore patterns (applied before haste map scanning)
+  watchPathIgnorePatterns: [
+    '<rootDir>/roastr-ai-worktrees/issue-914',
+    '<rootDir>/roastr-ai-worktrees/issue-920',
+    '<rootDir>/roastr-ai-worktrees/issue-929',
+    '<rootDir>/roastr-ai-worktrees/issue-929-fix',
+    '<rootDir>/roastr-ai-worktrees/issue-930',
+    '<rootDir>/roastr-ai-worktrees/issue-931',
+    '<rootDir>/roastr-ai-worktrees/issue-932',
+    '<rootDir>/roastr-ai-worktrees/issue-933',
+    '<rootDir>/roastr-ai-worktrees/issue-940',
+    '<rootDir>/roastr-ai-worktrees/issue-972',
+    '<rootDir>/roastr-ai-worktrees/issue-973',
+    '<rootDir>/roastr-ai/roastr-ai-worktrees/'
+  ],
+  
+  // Limit roots to prevent scanning worktrees (Issue #1018)
+  roots: ['<rootDir>/tests', '<rootDir>/src'],
 
   // Module name mapping for easier imports
   moduleNameMapper: {
@@ -24,6 +94,14 @@ module.exports = {
     '!src/**/node_modules/**'
   ],
   
+  // Memory optimization (Issue #1018)
+  maxWorkers: process.env.CI ? '50%' : '50%', // Reduce parallel workers to prevent memory issues
+  workerIdleMemoryLimit: '512MB', // Limit memory per worker
+  
+  // Test isolation (Issue #1018)
+  resetMocks: true,
+  restoreMocks: true,
+  clearMocks: true,
   
   // Test timeout
   testTimeout: 10000,

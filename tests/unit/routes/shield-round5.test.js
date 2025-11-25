@@ -76,7 +76,22 @@ describe('Shield Routes - CodeRabbit Round 5 Improvements', () => {
   });
 
   afterEach(() => {
+    // Cleanup (Issue #1018 - Memory optimization)
+    jest.clearAllMocks();
+    jest.clearAllTimers();
+
     delete process.env.NODE_ENV;
+  });
+
+  afterAll(() => {
+    // Final cleanup (Issue #1018 - Memory optimization)
+    jest.clearAllMocks();
+    jest.clearAllTimers();
+
+    // Force garbage collection if available
+    if (global.gc) {
+      global.gc();
+    }
   });
 
   describe('Enhanced Numeric Validation', () => {

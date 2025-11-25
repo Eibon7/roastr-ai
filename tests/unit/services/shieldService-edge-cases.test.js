@@ -29,6 +29,38 @@ describe('ShieldService - Edge Cases (Fixed)', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(async () => {
+    // Cleanup mocks (Issue #1018 - Memory optimization)
+    jest.clearAllMocks();
+    jest.clearAllTimers();
+
+    // Cleanup service instance if it has cleanup methods (Issue #1018 - CodeRabbit fix)
+    if (shieldService && typeof shieldService.shutdown === 'function') {
+      try {
+        const shutdownResult = shieldService.shutdown();
+        if (shutdownResult && typeof shutdownResult.catch === 'function') {
+          await shutdownResult.catch(() => {});
+        }
+      } catch (error) {
+        // Ignore shutdown errors in tests
+      }
+    }
+
+    // Reset modules to prevent state accumulation
+    jest.resetModules();
+  });
+
+  afterAll(async () => {
+    // Final cleanup (Issue #1018 - Memory optimization)
+    jest.clearAllMocks();
+    jest.clearAllTimers();
+
+    // Force garbage collection if available
+    if (global.gc) {
+      global.gc();
+    }
+  });
+
   describe('Core Shield Analysis', () => {
     it('should analyze comment for Shield-level threats', async () => {
       const organizationId = 'org123';
