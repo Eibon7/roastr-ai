@@ -36,7 +36,6 @@ if [ -z "$DATABASE_URL" ]; then
     echo "❌ Error: DATABASE_URL is still not set after loading .env"
     exit 1
 fi
-
 # Check if psql is available
 if ! command -v psql &> /dev/null; then
     echo "❌ Error: psql command not found"
