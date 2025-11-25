@@ -13,7 +13,7 @@ This report documents the progress on Issue #929: Coverage improvement for criti
 |----|-------------|--------|-------|--------|--------|
 | **AC1** | shieldService.js ≥75% | 62.5% | **82.62%** | 75% | ✅ **EXCEEDED** |
 | **AC2** | queueService.js ≥75% | 37.21% | **81.16%** | 75% | ✅ **EXCEEDED** (PR #968) |
-| **AC3** | authService.js ≥85% | 50.75% | **71.02%** | 85% | 🟡 In Progress |
+| **AC3** | authService.js ≥85% | 50.75% | **71.02%** | 85% | 🟡 In Progress (149 tests passing) |
 | **AC4** | costControl.js ≥85% | 28.86% | 38.83% | 85% | 🟡 Deferred |
 | **AC5** | All tests pass | - | 268 tests | 100% | ✅ **ACHIEVED** |
 | **AC6** | Tests cover main methods | - | - | - | ✅ **ACHIEVED** |
@@ -46,8 +46,11 @@ Coverage: 62.5% → 82.62% (+20.12pp)
 - Log method (4 tests)
 
 ### authService-coverage.test.js (90+ tests)
+### authService-integration-paths.test.js (20+ tests)
+### authService-edge-cases.test.js (8 tests)
 
 Coverage: 50.75% → 71.02% (+20.27pp)
+Total tests: 149 passing, 8 skipped
 
 **Test Categories:**
 - OAuth methods (3 tests)
