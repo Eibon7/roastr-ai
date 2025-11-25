@@ -4,10 +4,10 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-11-04
+**Last Updated:** 2025-11-25
 **Coverage:** 100%
 **Coverage Source:** auto
-**Related PRs:** #499, #TBD (Issue #717 - Tone Testing)
+**Related PRs:** #499, #TBD (Issue #717 - Tone Testing), #TBD (Issue #973 - Centralized Tone Enum)
 
 ## Dependencies
 
@@ -30,7 +30,7 @@ The Tone system maps user preferences to AI roast styles through three pre-defin
 
 ### Tone Definitions
 
-**File:** `src/config/tones.js`
+**File:** `src/config/tones.js` (Issue #973: Single source of truth)
 
 ```javascript
 const TONE_DEFINITIONS = Object.freeze({
@@ -38,22 +38,55 @@ const TONE_DEFINITIONS = Object.freeze({
     id: 'Flanders',
     name: 'Flanders',
     description: 'Suave y amigable',
+    descriptionEn: 'Gentle wit with subtle irony',
+    intensity: 2,
     example: '"¡Vaya, qué comentario tan... creativo! 😄"'
   },
   BALANCEADO: {
     id: 'Balanceado',
     name: 'Balanceado',
     description: 'Equilibrado y constructivo',
+    descriptionEn: 'Perfect mix of humor and firmness',
+    intensity: 3,
     example: '"Interesante perspectiva, aunque creo que se podría mejorar un poco."'
   },
   CANALLA: {
     id: 'Canalla',
     name: 'Canalla',
     description: 'Directo y agresivo',
+    descriptionEn: 'Direct and unfiltered, maximum impact',
+    intensity: 4,
     example: '"¿En serio? Ese comentario necesita una ambulancia..."'
   }
 });
 ```
+
+### Centralized Exports (Issue #973)
+
+**Single source of truth** - All tone validation should use these constants:
+
+| Export | Type | Purpose |
+|--------|------|---------|
+| `TONE_DEFINITIONS` | Object | Core tone metadata (id, name, description, intensity, example) |
+| `VALID_TONES` | Array | Canonical tone IDs: `['Flanders', 'Balanceado', 'Canalla']` |
+| `VALID_TONES_WITH_ALIASES` | Array | All valid inputs (9): canonical + lowercase + English aliases |
+| `TONE_DISPLAY_NAMES` | Object | Display names per language (es/en) |
+| `TONE_DESCRIPTIONS` | Object | Descriptions per language (es/en) |
+| `normalizeTone()` | Function | Normalize any valid input to canonical form |
+| `isValidTone()` | Function | Validate tone (with optional strict mode) |
+| `getToneDisplayName()` | Function | Get display name for any tone alias |
+| `getToneDescription()` | Function | Get description for any tone alias |
+| `getToneIntensity()` | Function | Get intensity level (2-4) |
+
+### Tone Aliases
+
+| Canonical | Lowercase | English Alias |
+|-----------|-----------|---------------|
+| `Flanders` | `flanders` | `light` |
+| `Balanceado` | `balanceado` | `balanced` |
+| `Canalla` | `canalla` | `savage` |
+
+All aliases normalize to canonical form via `normalizeTone()`.
 
 ### Humor Types
 
@@ -80,27 +113,42 @@ const TONE_DEFINITIONS = Object.freeze({
 ### Tone Normalization
 
 **Function:** `normalizeTone(tone)` - O(1) performance
-**Input:** Any case, whitespace allowed
+**Input:** Any case, whitespace allowed, supports English aliases
 **Output:** Canonical tone ID or null
 
 ```javascript
-// Canonical map (lowercase → canonical)
-const TONE_MAP_CANONICAL = {
+// Issue #973: Complete normalization map including English aliases
+const TONE_NORMALIZATION_MAP = Object.freeze({
+  // Canonical forms
+  Flanders: 'Flanders',
+  Balanceado: 'Balanceado',
+  Canalla: 'Canalla',
+  // Lowercase
   flanders: 'Flanders',
   balanceado: 'Balanceado',
-  canalla: 'Canalla'
-};
+  canalla: 'Canalla',
+  // English aliases
+  light: 'Flanders',
+  balanced: 'Balanceado',
+  savage: 'Canalla'
+});
 
 function normalizeTone(tone) {
   if (!tone || typeof tone !== 'string') return null;
-  const normalized = tone.trim().toLowerCase();
-  return TONE_MAP_CANONICAL[normalized] || null;
+  const trimmed = tone.trim();
+  if (!trimmed) return null;
+  // Try exact match first, then lowercase
+  return TONE_NORMALIZATION_MAP[trimmed] ||
+         TONE_NORMALIZATION_MAP[trimmed.toLowerCase()] || null;
 }
 
 // Examples:
-normalizeTone('FLANDERS'); // → 'Flanders'
+normalizeTone('FLANDERS');  // → 'Flanders'
 normalizeTone('  Canalla  '); // → 'Canalla'
-normalizeTone('invalid'); // → null
+normalizeTone('light');      // → 'Flanders' (English alias)
+normalizeTone('savage');     // → 'Canalla' (English alias)
+normalizeTone('balanced');   // → 'Balanceado' (English alias)
+normalizeTone('invalid');    // → null
 ```
 
 ## Integration with Roast Generation

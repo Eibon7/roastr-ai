@@ -201,7 +201,8 @@ describe('ToneCompatibilityService - Issue #872', () => {
     });
 
     test('should default to ES for unknown language', () => {
-      expect(toneCompatibilityService.getToneDisplayName('flanders', 'fr')).toBe('flanders');
+      // Issue #973: Now returns Spanish display name as fallback for unknown language
+      expect(toneCompatibilityService.getToneDisplayName('flanders', 'fr')).toBe('Flanders');
     });
   });
 

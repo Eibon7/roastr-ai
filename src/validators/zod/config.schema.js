@@ -1,11 +1,13 @@
 /**
  * Zod Validation Schemas for Config Endpoints
  * Issue #943: Migrar endpoints de config a Zod (P0 - Crítico)
+ * Issue #973: Use centralized tone constants
  *
  * Validates roast_level and shield_level for PUT /api/config/:platform
  */
 
 const { z } = require('zod');
+const { VALID_TONES_WITH_ALIASES } = require('../../config/tones');
 
 /**
  * Roast Level Schema
@@ -45,8 +47,8 @@ const platformConfigSchema = z
     // Basic config
     enabled: z.boolean().optional(),
 
-    // Tone configuration (Issue #872: New 3-tone system)
-    tone: z.enum(['flanders', 'balanceado', 'canalla', 'light', 'balanced', 'savage']).optional(),
+    // Tone configuration (Issue #872: New 3-tone system, Issue #973: Centralized)
+    tone: z.enum(VALID_TONES_WITH_ALIASES).optional(),
 
     // Response frequency
     response_frequency: z.number().min(0.0).max(1.0).optional(),

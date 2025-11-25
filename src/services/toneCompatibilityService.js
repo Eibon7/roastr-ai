@@ -5,11 +5,19 @@
  * legacy system (humor_type + intensity_level) to new 3-tone system
  * (flanders, balanceado, canalla).
  *
+ * Issue #973: Updated to use centralized tone constants from src/config/tones.js
+ *
  * This service ensures that all existing code continues to work while
  * gradually migrating to the new system.
  */
 
 const { logger } = require('../utils/logger');
+const {
+  VALID_TONES_WITH_ALIASES,
+  TONE_DISPLAY_NAMES,
+  normalizeTone: centralizedNormalizeTone,
+  getToneIntensity: centralizedGetToneIntensity
+} = require('../config/tones');
 
 class ToneCompatibilityService {
   constructor() {
@@ -143,57 +151,44 @@ class ToneCompatibilityService {
 
   /**
    * Check if a tone is valid in the new 3-tone system
+   * Issue #973: Uses centralized VALID_TONES_WITH_ALIASES
    * @param {string} tone - Tone to check
    * @returns {boolean} True if valid
    */
   isValidNewTone(tone) {
-    const validTones = ['flanders', 'light', 'balanceado', 'balanced', 'canalla', 'savage'];
-    return validTones.includes(tone);
+    return VALID_TONES_WITH_ALIASES.includes(tone);
+  }
+
+  /**
+   * Normalize tone to canonical form
+   * Issue #973: Delegates to centralized normalizeTone function
+   * @param {string} tone - Tone to normalize
+   * @returns {string|null} Canonical tone or null if invalid
+   */
+  normalizeTone(tone) {
+    return centralizedNormalizeTone(tone);
   }
 
   /**
    * Get intensity level for a tone (for display purposes)
+   * Issue #973: Uses centralized getToneIntensity function
    * @param {string} tone - New tone ID
    * @returns {number} Intensity (1-5)
    */
   getToneIntensity(tone) {
-    const intensityMap = {
-      flanders: 2,
-      light: 2,
-      balanceado: 3,
-      balanced: 3,
-      canalla: 4,
-      savage: 4
-    };
-    return intensityMap[tone] || 3;
+    return centralizedGetToneIntensity(tone);
   }
 
   /**
    * Get display name for tone
+   * Issue #973: Uses centralized TONE_DISPLAY_NAMES
    * @param {string} tone - Tone ID
    * @param {string} language - Language (es/en)
    * @returns {string} Display name
    */
   getToneDisplayName(tone, language = 'es') {
-    const displayNames = {
-      es: {
-        flanders: 'Flanders',
-        light: 'Flanders',
-        balanceado: 'Balanceado',
-        balanced: 'Balanceado',
-        canalla: 'Canalla',
-        savage: 'Canalla'
-      },
-      en: {
-        flanders: 'Light',
-        light: 'Light',
-        balanceado: 'Balanced',
-        balanced: 'Balanced',
-        canalla: 'Savage',
-        savage: 'Savage'
-      }
-    };
-    return displayNames[language]?.[tone] || tone;
+    const displayNames = TONE_DISPLAY_NAMES[language] || TONE_DISPLAY_NAMES.es;
+    return displayNames[tone] || tone;
   }
 }
 

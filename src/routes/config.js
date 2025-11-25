@@ -7,6 +7,7 @@ const levelConfigService = require('../services/levelConfigService');
 const toneCompatibilityService = require('../services/toneCompatibilityService'); // Issue #872: Tone compatibility
 const { roastLevelSchema, shieldLevelSchema } = require('../validators/zod/config.schema'); // Issue #943: Zod validation
 const { formatZodError } = require('../validators/zod/helpers'); // Issue #943: Error formatting
+const { VALID_TONES_WITH_ALIASES } = require('../config/tones'); // Issue #973: Centralized tones
 
 const router = express.Router();
 
@@ -25,8 +26,8 @@ const VALID_PLATFORMS = [
   'reddit',
   'tiktok'
 ];
-// Issue #872: Use new 3-tone system
-const VALID_TONES = ['flanders', 'balanceado', 'canalla', 'light', 'balanced', 'savage'];
+// Issue #872: Use new 3-tone system, Issue #973: Centralized tones
+const VALID_TONES = VALID_TONES_WITH_ALIASES;
 // Issue #872: humor_types deprecated, kept for backward compat only
 const VALID_HUMOR_TYPES = []; // Empty - deprecated
 

@@ -1,6 +1,7 @@
 /**
  * Unit Tests for Tone Configuration
  * Issue #409 - Phase 3
+ * Issue #973 - Centralized tone enum
  *
  * Tests tone normalization, validation, and utilities
  */
@@ -8,10 +9,16 @@
 const {
   TONE_DEFINITIONS,
   VALID_TONES,
+  VALID_TONES_WITH_ALIASES,
+  TONE_DISPLAY_NAMES,
+  TONE_DESCRIPTIONS,
   normalizeTone,
   isValidTone,
   getRandomTone,
-  getToneExamples
+  getToneExamples,
+  getToneDisplayName,
+  getToneDescription,
+  getToneIntensity
 } = require('../../../src/config/tones');
 
 describe('Tone Configuration', () => {
@@ -75,12 +82,28 @@ describe('Tone Configuration', () => {
       });
     });
 
+    describe('English aliases (Issue #973)', () => {
+      test('should normalize English aliases to canonical form', () => {
+        expect(normalizeTone('light')).toBe('Flanders');
+        expect(normalizeTone('Light')).toBe('Flanders');
+        expect(normalizeTone('LIGHT')).toBe('Flanders');
+
+        expect(normalizeTone('balanced')).toBe('Balanceado');
+        expect(normalizeTone('Balanced')).toBe('Balanceado');
+        expect(normalizeTone('BALANCED')).toBe('Balanceado');
+
+        expect(normalizeTone('savage')).toBe('Canalla');
+        expect(normalizeTone('Savage')).toBe('Canalla');
+        expect(normalizeTone('SAVAGE')).toBe('Canalla');
+      });
+    });
+
     describe('invalid tones', () => {
       test('should return null for invalid tones', () => {
         expect(normalizeTone('invalid')).toBeNull();
-        expect(normalizeTone('savage')).toBeNull();
-        expect(normalizeTone('light')).toBeNull();
         expect(normalizeTone('xyz123')).toBeNull();
+        expect(normalizeTone('unknown')).toBeNull();
+        expect(normalizeTone('aggressive')).toBeNull();
       });
 
       test('should return null for empty strings', () => {
@@ -135,9 +158,15 @@ describe('Tone Configuration', () => {
         expect(isValidTone('CANALLA')).toBe(true);
       });
 
+      test('should accept English aliases (Issue #973)', () => {
+        expect(isValidTone('light')).toBe(true);
+        expect(isValidTone('balanced')).toBe(true);
+        expect(isValidTone('savage')).toBe(true);
+      });
+
       test('should reject invalid tones', () => {
         expect(isValidTone('invalid')).toBe(false);
-        expect(isValidTone('savage')).toBe(false);
+        expect(isValidTone('unknown')).toBe(false);
         expect(isValidTone('')).toBe(false);
         expect(isValidTone(null)).toBe(false);
       });
@@ -211,6 +240,199 @@ describe('Tone Configuration', () => {
       expect(examples.Flanders.length).toBeGreaterThan(0);
       expect(examples.Balanceado.length).toBeGreaterThan(0);
       expect(examples.Canalla.length).toBeGreaterThan(0);
+    });
+  });
+
+  // Issue #973: New tests for centralized constants
+  describe('VALID_TONES_WITH_ALIASES (Issue #973)', () => {
+    test('should be frozen', () => {
+      expect(Object.isFrozen(VALID_TONES_WITH_ALIASES)).toBe(true);
+    });
+
+    test('should contain canonical forms', () => {
+      expect(VALID_TONES_WITH_ALIASES).toContain('Flanders');
+      expect(VALID_TONES_WITH_ALIASES).toContain('Balanceado');
+      expect(VALID_TONES_WITH_ALIASES).toContain('Canalla');
+    });
+
+    test('should contain lowercase forms', () => {
+      expect(VALID_TONES_WITH_ALIASES).toContain('flanders');
+      expect(VALID_TONES_WITH_ALIASES).toContain('balanceado');
+      expect(VALID_TONES_WITH_ALIASES).toContain('canalla');
+    });
+
+    test('should contain English aliases', () => {
+      expect(VALID_TONES_WITH_ALIASES).toContain('light');
+      expect(VALID_TONES_WITH_ALIASES).toContain('balanced');
+      expect(VALID_TONES_WITH_ALIASES).toContain('savage');
+    });
+
+    test('should have exactly 9 values (3 canonical + 3 lowercase + 3 English)', () => {
+      expect(VALID_TONES_WITH_ALIASES).toHaveLength(9);
+    });
+  });
+
+  describe('TONE_DISPLAY_NAMES (Issue #973)', () => {
+    test('should have Spanish and English display names', () => {
+      expect(TONE_DISPLAY_NAMES.es).toBeDefined();
+      expect(TONE_DISPLAY_NAMES.en).toBeDefined();
+    });
+
+    test('should map all aliases to display names in Spanish', () => {
+      expect(TONE_DISPLAY_NAMES.es.Flanders).toBe('Flanders');
+      expect(TONE_DISPLAY_NAMES.es.flanders).toBe('Flanders');
+      expect(TONE_DISPLAY_NAMES.es.light).toBe('Flanders');
+      expect(TONE_DISPLAY_NAMES.es.Balanceado).toBe('Balanceado');
+      expect(TONE_DISPLAY_NAMES.es.balanceado).toBe('Balanceado');
+      expect(TONE_DISPLAY_NAMES.es.balanced).toBe('Balanceado');
+      expect(TONE_DISPLAY_NAMES.es.Canalla).toBe('Canalla');
+      expect(TONE_DISPLAY_NAMES.es.canalla).toBe('Canalla');
+      expect(TONE_DISPLAY_NAMES.es.savage).toBe('Canalla');
+    });
+
+    test('should map all aliases to display names in English', () => {
+      expect(TONE_DISPLAY_NAMES.en.Flanders).toBe('Light');
+      expect(TONE_DISPLAY_NAMES.en.flanders).toBe('Light');
+      expect(TONE_DISPLAY_NAMES.en.light).toBe('Light');
+      expect(TONE_DISPLAY_NAMES.en.Balanceado).toBe('Balanced');
+      expect(TONE_DISPLAY_NAMES.en.balanceado).toBe('Balanced');
+      expect(TONE_DISPLAY_NAMES.en.balanced).toBe('Balanced');
+      expect(TONE_DISPLAY_NAMES.en.Canalla).toBe('Savage');
+      expect(TONE_DISPLAY_NAMES.en.canalla).toBe('Savage');
+      expect(TONE_DISPLAY_NAMES.en.savage).toBe('Savage');
+    });
+  });
+
+  describe('TONE_DESCRIPTIONS (Issue #973)', () => {
+    test('should have Spanish and English descriptions', () => {
+      expect(TONE_DESCRIPTIONS.es).toBeDefined();
+      expect(TONE_DESCRIPTIONS.en).toBeDefined();
+    });
+
+    test('should have descriptions for all canonical tones in Spanish', () => {
+      expect(TONE_DESCRIPTIONS.es.Flanders).toBeDefined();
+      expect(TONE_DESCRIPTIONS.es.Balanceado).toBeDefined();
+      expect(TONE_DESCRIPTIONS.es.Canalla).toBeDefined();
+    });
+
+    test('should have descriptions for all canonical tones in English', () => {
+      expect(TONE_DESCRIPTIONS.en.Flanders).toBeDefined();
+      expect(TONE_DESCRIPTIONS.en.Balanceado).toBeDefined();
+      expect(TONE_DESCRIPTIONS.en.Canalla).toBeDefined();
+    });
+
+    test('descriptions should include intensity level', () => {
+      expect(TONE_DESCRIPTIONS.es.Flanders).toMatch(/2\/5/);
+      expect(TONE_DESCRIPTIONS.es.Balanceado).toMatch(/3\/5/);
+      expect(TONE_DESCRIPTIONS.es.Canalla).toMatch(/4\/5/);
+    });
+  });
+
+  describe('getToneDisplayName() (Issue #973)', () => {
+    test('should return Spanish display name by default', () => {
+      expect(getToneDisplayName('flanders')).toBe('Flanders');
+      expect(getToneDisplayName('balanceado')).toBe('Balanceado');
+      expect(getToneDisplayName('canalla')).toBe('Canalla');
+    });
+
+    test('should return English display name when specified', () => {
+      expect(getToneDisplayName('flanders', 'en')).toBe('Light');
+      expect(getToneDisplayName('balanceado', 'en')).toBe('Balanced');
+      expect(getToneDisplayName('canalla', 'en')).toBe('Savage');
+    });
+
+    test('should normalize aliases before lookup', () => {
+      expect(getToneDisplayName('light', 'es')).toBe('Flanders');
+      expect(getToneDisplayName('savage', 'es')).toBe('Canalla');
+      expect(getToneDisplayName('balanced', 'en')).toBe('Balanced');
+    });
+
+    test('should return input for invalid tones', () => {
+      expect(getToneDisplayName('invalid')).toBe('invalid');
+    });
+  });
+
+  describe('getToneDescription() (Issue #973)', () => {
+    test('should return Spanish description by default', () => {
+      expect(getToneDescription('flanders')).toContain('amable');
+      expect(getToneDescription('balanceado')).toContain('Equilibrio');
+      expect(getToneDescription('canalla')).toContain('Directo');
+    });
+
+    test('should return English description when specified', () => {
+      expect(getToneDescription('flanders', 'en')).toContain('Gentle');
+      expect(getToneDescription('balanceado', 'en')).toContain('mix');
+      expect(getToneDescription('canalla', 'en')).toContain('Direct');
+    });
+
+    test('should return empty string for invalid tones', () => {
+      expect(getToneDescription('invalid')).toBe('');
+    });
+  });
+
+  describe('getToneIntensity() (Issue #973)', () => {
+    test('should return correct intensity for each tone', () => {
+      expect(getToneIntensity('flanders')).toBe(2);
+      expect(getToneIntensity('Flanders')).toBe(2);
+      expect(getToneIntensity('light')).toBe(2);
+
+      expect(getToneIntensity('balanceado')).toBe(3);
+      expect(getToneIntensity('Balanceado')).toBe(3);
+      expect(getToneIntensity('balanced')).toBe(3);
+
+      expect(getToneIntensity('canalla')).toBe(4);
+      expect(getToneIntensity('Canalla')).toBe(4);
+      expect(getToneIntensity('savage')).toBe(4);
+    });
+
+    test('should return default intensity (3) for invalid tones', () => {
+      expect(getToneIntensity('invalid')).toBe(3);
+      expect(getToneIntensity(null)).toBe(3);
+    });
+  });
+
+  // Issue #973: Consistency tests
+  describe('Consistency with other modules (Issue #973)', () => {
+    test('VALID_TONES should be subset of VALID_TONES_WITH_ALIASES', () => {
+      VALID_TONES.forEach((tone) => {
+        expect(VALID_TONES_WITH_ALIASES).toContain(tone);
+      });
+    });
+
+    test('all VALID_TONES_WITH_ALIASES should normalize to a VALID_TONE', () => {
+      VALID_TONES_WITH_ALIASES.forEach((alias) => {
+        const normalized = normalizeTone(alias);
+        expect(normalized).not.toBeNull();
+        expect(VALID_TONES).toContain(normalized);
+      });
+    });
+
+    test('TONE_DEFINITIONS keys should match VALID_TONES', () => {
+      const definitionIds = Object.values(TONE_DEFINITIONS).map((d) => d.id);
+      expect(definitionIds.sort()).toEqual([...VALID_TONES].sort());
+    });
+
+    test('all VALID_TONES should have display names in both languages', () => {
+      VALID_TONES.forEach((tone) => {
+        expect(TONE_DISPLAY_NAMES.es[tone]).toBeDefined();
+        expect(TONE_DISPLAY_NAMES.en[tone]).toBeDefined();
+      });
+    });
+
+    test('all VALID_TONES should have descriptions in both languages', () => {
+      VALID_TONES.forEach((tone) => {
+        expect(TONE_DESCRIPTIONS.es[tone]).toBeDefined();
+        expect(TONE_DESCRIPTIONS.en[tone]).toBeDefined();
+      });
+    });
+
+    test('all TONE_DEFINITIONS should have intensity field', () => {
+      Object.values(TONE_DEFINITIONS).forEach((def) => {
+        expect(def.intensity).toBeDefined();
+        expect(typeof def.intensity).toBe('number');
+        expect(def.intensity).toBeGreaterThanOrEqual(1);
+        expect(def.intensity).toBeLessThanOrEqual(5);
+      });
     });
   });
 });
