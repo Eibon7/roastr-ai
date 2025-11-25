@@ -115,9 +115,13 @@ jest.mock('../../../src/config/supabase', () => ({
     ...mockSupabase,
     auth: {
       admin: {
-        createUser: jest.fn().mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null }),
+        createUser: jest
+          .fn()
+          .mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null }),
         deleteUser: jest.fn().mockResolvedValue({ error: null }),
-        updateUserById: jest.fn().mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null })
+        updateUserById: jest
+          .fn()
+          .mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null })
       }
     }
   },
@@ -368,11 +372,7 @@ describe('AuthService - Edge Cases', () => {
 
       subscriptionService.applyPlanLimits = jest.fn().mockResolvedValue({ success: true });
 
-      await authService.rollbackPlanChange(
-        'user-123',
-        { plan: 'starter' },
-        { id: 'sub-123' }
-      );
+      await authService.rollbackPlanChange('user-123', { plan: 'starter' }, { id: 'sub-123' });
 
       // Should not throw, just log error
       expect(mockSupabase.from).toHaveBeenCalled();
@@ -404,11 +404,7 @@ describe('AuthService - Edge Cases', () => {
 
       subscriptionService.applyPlanLimits = jest.fn().mockResolvedValue({ success: true });
 
-      await authService.rollbackPlanChange(
-        'user-123',
-        { plan: 'starter' },
-        { id: 'sub-123' }
-      );
+      await authService.rollbackPlanChange('user-123', { plan: 'starter' }, { id: 'sub-123' });
 
       // Should not throw, just log error
       expect(mockSupabase.from).toHaveBeenCalled();
@@ -471,11 +467,7 @@ describe('AuthService - Edge Cases', () => {
 
       subscriptionService.applyPlanLimits = jest.fn().mockRejectedValue(new Error('Limits failed'));
 
-      await authService.rollbackPlanChange(
-        'user-123',
-        { plan: 'starter' },
-        { id: 'sub-123' }
-      );
+      await authService.rollbackPlanChange('user-123', { plan: 'starter' }, { id: 'sub-123' });
 
       // Should not throw, just log error
       expect(mockSupabase.from).toHaveBeenCalled();
@@ -515,4 +507,3 @@ describe('AuthService - Edge Cases', () => {
     });
   });
 });
-

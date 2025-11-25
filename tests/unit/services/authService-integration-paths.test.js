@@ -119,9 +119,13 @@ jest.mock('../../../src/config/supabase', () => ({
     ...mockSupabase,
     auth: {
       admin: {
-        createUser: jest.fn().mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null }),
+        createUser: jest
+          .fn()
+          .mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null }),
         deleteUser: jest.fn().mockResolvedValue({ error: null }),
-        updateUserById: jest.fn().mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null })
+        updateUserById: jest
+          .fn()
+          .mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null })
       }
     }
   },
@@ -130,7 +134,11 @@ jest.mock('../../../src/config/supabase', () => ({
 }));
 
 const authService = require('../../../src/services/authService');
-const { supabaseServiceClient, supabaseAnonClient, createUserClient } = require('../../../src/config/supabase');
+const {
+  supabaseServiceClient,
+  supabaseAnonClient,
+  createUserClient
+} = require('../../../src/config/supabase');
 
 describe('AuthService - Integration Paths', () => {
   beforeEach(() => {
@@ -986,7 +994,9 @@ describe('AuthService - Integration Paths', () => {
         return { select: jest.fn() };
       });
 
-      await expect(authService.cancelAccountDeletion('user-123')).rejects.toThrow('already deleted');
+      await expect(authService.cancelAccountDeletion('user-123')).rejects.toThrow(
+        'already deleted'
+      );
     });
 
     it('should throw error if deletion not scheduled', async () => {
@@ -1037,7 +1047,9 @@ describe('AuthService - Integration Paths', () => {
         return { select: jest.fn() };
       });
 
-      await expect(authService.cancelAccountDeletion('user-123')).rejects.toThrow('Grace period has expired');
+      await expect(authService.cancelAccountDeletion('user-123')).rejects.toThrow(
+        'Grace period has expired'
+      );
     });
   });
 
@@ -1252,4 +1264,3 @@ describe('AuthService - Integration Paths', () => {
     });
   });
 });
-

@@ -150,7 +150,7 @@ describe('CostControlService - Integration Tests', () => {
   describe('canPerformOperation', () => {
     it('should check operation permission via RPC for generate_reply', async () => {
       const organizationId = 'test-org-123';
-      
+
       mockRpc.mockResolvedValueOnce({
         data: {
           allowed: true,
@@ -187,11 +187,7 @@ describe('CostControlService - Integration Tests', () => {
         error: null
       });
 
-      const result = await costControl.canPerformOperation(
-        'test-org',
-        'fetch_comment',
-        1
-      );
+      const result = await costControl.canPerformOperation('test-org', 'fetch_comment', 1);
 
       expect(mockRpc).toHaveBeenCalledWith('can_perform_operation', {
         org_id: 'test-org',
@@ -211,11 +207,7 @@ describe('CostControlService - Integration Tests', () => {
         error: null
       });
 
-      const result = await costControl.canPerformOperation(
-        'test-org',
-        'analyze_toxicity',
-        1
-      );
+      const result = await costControl.canPerformOperation('test-org', 'analyze_toxicity', 1);
 
       expect(mockRpc).toHaveBeenCalledWith('can_perform_operation', {
         org_id: 'test-org',
@@ -235,11 +227,7 @@ describe('CostControlService - Integration Tests', () => {
         error: null
       });
 
-      const result = await costControl.canPerformOperation(
-        'test-org',
-        'shield_action',
-        1
-      );
+      const result = await costControl.canPerformOperation('test-org', 'shield_action', 1);
 
       expect(mockRpc).toHaveBeenCalledWith('can_perform_operation', {
         org_id: 'test-org',
@@ -261,11 +249,7 @@ describe('CostControlService - Integration Tests', () => {
         error: null
       });
 
-      const result = await costControl.canPerformOperation(
-        'test-org',
-        'generate_reply',
-        1
-      );
+      const result = await costControl.canPerformOperation('test-org', 'generate_reply', 1);
 
       expect(result.allowed).toBe(false);
       expect(result.message).toContain('Monthly limit');
@@ -702,9 +686,9 @@ describe('CostControlService - Integration Tests', () => {
         select: jest.fn(() => mockOrgBuilder)
       });
 
-      await expect(
-        costControl.sendUsageAlert(organizationId, alertData)
-      ).rejects.toEqual({ message: 'Database error' });
+      await expect(costControl.sendUsageAlert(organizationId, alertData)).rejects.toEqual({
+        message: 'Database error'
+      });
     });
   });
 
@@ -836,24 +820,17 @@ describe('CostControlService - Integration Tests', () => {
         error: null
       });
 
-      const result = await costControl.upgradePlan(
-        organizationId,
-        newPlanId,
-        stripeSubscriptionId
-      );
+      const result = await costControl.upgradePlan(organizationId, newPlanId, stripeSubscriptionId);
 
       expect(result.success).toBe(true);
       expect(result.organization.id).toBe(organizationId);
-      expect(costControl.updatePlanUsageLimits).toHaveBeenCalledWith(
-        organizationId,
-        newPlanId
-      );
+      expect(costControl.updatePlanUsageLimits).toHaveBeenCalledWith(organizationId, newPlanId);
     });
 
     it('should throw error for invalid plan ID', async () => {
-      await expect(
-        costControl.upgradePlan('test-org', 'invalid_plan')
-      ).rejects.toThrow('Invalid plan ID: invalid_plan');
+      await expect(costControl.upgradePlan('test-org', 'invalid_plan')).rejects.toThrow(
+        'Invalid plan ID: invalid_plan'
+      );
     });
 
     it('should handle errors during upgrade', async () => {
@@ -878,9 +855,9 @@ describe('CostControlService - Integration Tests', () => {
         update: jest.fn(() => mockUpdateBuilder)
       });
 
-      await expect(
-        costControl.upgradePlan('test-org', 'pro')
-      ).rejects.toEqual({ message: 'Database error' });
+      await expect(costControl.upgradePlan('test-org', 'pro')).rejects.toEqual({
+        message: 'Database error'
+      });
     });
   });
 
@@ -1046,9 +1023,10 @@ describe('CostControlService - Integration Tests', () => {
         select: jest.fn(() => mockMonthlyUsageBuilder)
       });
 
-      await expect(
-        costControl.getBillingSummary('test-org', 2024, 10)
-      ).rejects.toEqual({ message: 'Database error', code: 'OTHER' });
+      await expect(costControl.getBillingSummary('test-org', 2024, 10)).rejects.toEqual({
+        message: 'Database error',
+        code: 'OTHER'
+      });
     });
   });
 
@@ -1140,9 +1118,9 @@ describe('CostControlService - Integration Tests', () => {
         select: jest.fn(() => mockQueryBuilder)
       });
 
-      await expect(
-        costControl.getAlertHistory('test-org')
-      ).rejects.toEqual({ message: 'Database error' });
+      await expect(costControl.getAlertHistory('test-org')).rejects.toEqual({
+        message: 'Database error'
+      });
     });
   });
 
@@ -1188,10 +1166,12 @@ describe('CostControlService - Integration Tests', () => {
       // Create a builder that throws error when awaited
       const mockQueryBuilder = {
         eq: jest.fn(() => mockQueryBuilder),
-        gte: jest.fn(() => Promise.resolve({
-          data: null,
-          error: { message: 'Database error' }
-        })),
+        gte: jest.fn(() =>
+          Promise.resolve({
+            data: null,
+            error: { message: 'Database error' }
+          })
+        ),
         then: (resolve, reject) => {
           reject({ message: 'Database error' });
         }
@@ -1373,9 +1353,9 @@ describe('CostControlService - Integration Tests', () => {
         error: { message: 'RPC error' }
       });
 
-      await expect(
-        costControl.incrementUsageCounters('test-org', 'twitter', 5)
-      ).rejects.toEqual({ message: 'RPC error' });
+      await expect(costControl.incrementUsageCounters('test-org', 'twitter', 5)).rejects.toEqual({
+        message: 'RPC error'
+      });
     });
   });
 
@@ -1391,7 +1371,7 @@ describe('CostControlService - Integration Tests', () => {
 
       // Override mockFrom temporarily for this test
       const originalMockFrom = mockFrom.getMockImplementation();
-      
+
       let callCount = 0;
       mockFrom.mockImplementation((tableName) => {
         callCount++;
@@ -1482,12 +1462,10 @@ describe('CostControlService - Integration Tests', () => {
         error: null
       });
 
-      const result = await costControl.setUsageLimit(
-        organizationId,
-        resourceType,
-        monthlyLimit,
-        { allowOverage: true, hardLimit: false }
-      );
+      const result = await costControl.setUsageLimit(organizationId, resourceType, monthlyLimit, {
+        allowOverage: true,
+        hardLimit: false
+      });
 
       expect(result.organization_id).toBe(organizationId);
       expect(result.resource_type).toBe(resourceType);
@@ -1501,9 +1479,9 @@ describe('CostControlService - Integration Tests', () => {
         error: { message: 'Database error' }
       });
 
-      await expect(
-        costControl.setUsageLimit('test-org', 'roasts', 1000)
-      ).rejects.toEqual({ message: 'Database error' });
+      await expect(costControl.setUsageLimit('test-org', 'roasts', 1000)).rejects.toEqual({
+        message: 'Database error'
+      });
     });
   });
 
@@ -1513,13 +1491,11 @@ describe('CostControlService - Integration Tests', () => {
       const planId = 'pro';
 
       // Mock setUsageLimit to throw error
-      jest.spyOn(costControl, 'setUsageLimit').mockRejectedValueOnce(
-        new Error('Database error')
-      );
+      jest.spyOn(costControl, 'setUsageLimit').mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(
-        costControl.updatePlanUsageLimits(organizationId, planId)
-      ).rejects.toThrow('Database error');
+      await expect(costControl.updatePlanUsageLimits(organizationId, planId)).rejects.toThrow(
+        'Database error'
+      );
     });
   });
 
@@ -1628,9 +1604,7 @@ describe('CostControlService - Integration Tests', () => {
         select: jest.fn(() => mockUsageBuilder)
       };
 
-      mockFrom
-        .mockReturnValueOnce(mockOrgTable)
-        .mockReturnValueOnce(mockUsageTable);
+      mockFrom.mockReturnValueOnce(mockOrgTable).mockReturnValueOnce(mockUsageTable);
 
       const result = await costControl.checkUsageLimit(organizationId);
 
@@ -1730,4 +1704,3 @@ describe('CostControlService - Integration Tests', () => {
     });
   });
 });
-

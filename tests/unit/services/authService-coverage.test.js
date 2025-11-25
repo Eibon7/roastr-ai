@@ -107,9 +107,13 @@ jest.mock('../../../src/config/supabase', () => ({
     ...mockSupabase,
     auth: {
       admin: {
-        createUser: jest.fn().mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null }),
+        createUser: jest
+          .fn()
+          .mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null }),
         deleteUser: jest.fn().mockResolvedValue({ error: null }),
-        updateUserById: jest.fn().mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null })
+        updateUserById: jest
+          .fn()
+          .mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null })
       }
     }
   },
@@ -755,7 +759,11 @@ describe('AuthService - Coverage Extension', () => {
         });
 
         try {
-          const result = await authService.verifyEmail('invalid-token', 'signup', 'test@example.com');
+          const result = await authService.verifyEmail(
+            'invalid-token',
+            'signup',
+            'test@example.com'
+          );
           expect(result.success).toBe(false);
         } catch (error) {
           expect(error).toBeDefined();
@@ -1018,7 +1026,9 @@ describe('AuthService - Coverage Extension', () => {
 
       it('should log user activity', async () => {
         try {
-          const result = await authService.logUserActivity('user-123', 'login', { ip: '127.0.0.1' });
+          const result = await authService.logUserActivity('user-123', 'login', {
+            ip: '127.0.0.1'
+          });
           expect(result).toBeDefined();
         } catch (error) {
           // May throw, that's ok for coverage
@@ -1096,4 +1106,3 @@ describe('AuthService - Coverage Extension', () => {
     });
   });
 });
-

@@ -784,36 +784,24 @@ describe('ShieldService - Action Handlers', () => {
       };
 
       // Test critical severity
-      await shieldService._updateUserBehaviorFromTags(
-        'org-123',
-        comment,
-        ['hide_comment'],
-        { toxicity: { toxicity_score: 0.9 } }
-      );
+      await shieldService._updateUserBehaviorFromTags('org-123', comment, ['hide_comment'], {
+        toxicity: { toxicity_score: 0.9 }
+      });
 
       // Test high severity
-      await shieldService._updateUserBehaviorFromTags(
-        'org-123',
-        comment,
-        ['hide_comment'],
-        { toxicity: { toxicity_score: 0.7 } }
-      );
+      await shieldService._updateUserBehaviorFromTags('org-123', comment, ['hide_comment'], {
+        toxicity: { toxicity_score: 0.7 }
+      });
 
       // Test medium severity
-      await shieldService._updateUserBehaviorFromTags(
-        'org-123',
-        comment,
-        ['hide_comment'],
-        { toxicity: { toxicity_score: 0.5 } }
-      );
+      await shieldService._updateUserBehaviorFromTags('org-123', comment, ['hide_comment'], {
+        toxicity: { toxicity_score: 0.5 }
+      });
 
       // Test low severity
-      await shieldService._updateUserBehaviorFromTags(
-        'org-123',
-        comment,
-        ['hide_comment'],
-        { toxicity: { toxicity_score: 0.2 } }
-      );
+      await shieldService._updateUserBehaviorFromTags('org-123', comment, ['hide_comment'], {
+        toxicity: { toxicity_score: 0.2 }
+      });
 
       expect(shieldService.supabase.rpc).toHaveBeenCalled();
     });
@@ -1089,4 +1077,3 @@ describe('ShieldService - Action Handlers', () => {
     });
   });
 });
-
