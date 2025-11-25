@@ -138,7 +138,8 @@ describe('OAuth Routes Unit Tests', () => {
         .post('/api/integrations//connect')
         .set('Authorization', 'Bearer mock-token');
 
-      expect(response.status).toBe(404);
+      // After Issue #948: Zod validation may return 400 before route matching
+      expect([400, 404]).toContain(response.status);
     });
 
     it('should handle OAuth provider errors', async () => {
@@ -212,12 +213,13 @@ describe('OAuth Routes Unit Tests', () => {
     it('should handle missing authorization code', async () => {
       const response = await request(app).get('/api/integrations/twitter/callback').query({
         state: 'valid_state'
+        // code missing (and no error param either)
       });
 
-      expect(response.status).toBe(302);
-      expect(response.header.location).toContain(
-        '/connections?error=Missing+authorization+code+or+state'
-      );
+      // After Issue #948: Zod validation returns 400 for missing required params
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Validation failed');
+      expect(response.body.success).toBe(false);
     });
 
     it('should handle invalid state parameter', async () => {
@@ -538,15 +540,16 @@ describe('OAuth Routes Unit Tests', () => {
     });
 
     it('should log debug information when enabled', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      // After Issue #948: console.log replaced with logger.debug in DEBUG_OAUTH paths
+      const { logger } = require('../../../src/utils/logger');
+      logger.debug.mockClear();
       mockProvider.getAuthorizationUrl.mockResolvedValue('https://oauth.provider.com/auth');
 
       await request(app)
         .post('/api/integrations/twitter/connect')
         .set('Authorization', 'Bearer mock-token');
 
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      expect(logger.debug).toHaveBeenCalled();
     });
   });
 });

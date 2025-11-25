@@ -31,6 +31,15 @@ logs/
 .env
 .env.*
 
+# Git worktrees (isolated working copies)
+roastr-ai-worktrees/
+
+# Auto-generated reports
+docs/auto-health-reports/
+
+# GitHub workflows (GITHUB_TOKEN can't push changes to .github/)
+.github/
+
 # Other
 .DS_Store
 .cache/

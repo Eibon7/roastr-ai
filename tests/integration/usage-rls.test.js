@@ -1,12 +1,20 @@
 /**
  * Usage Tracking RLS Integration Tests - Issue #787 AC3
  *
+ * @deprecated Use tests/rls/usage.test.js instead (Issue #914 - 10-30x faster)
+ *
+ * This test suite uses network-based Supabase calls with JWT context switching (slow).
+ * New tests use supabase-test with local DB (10-30x faster, no bandwidth costs).
+ *
+ * Migration: Issue #914 - RLS Tests Migration to supabase-test
+ * New location: tests/rls/usage.test.js
+ *
  * Tests Row Level Security policies for usage tracking tables:
  * - usage_tracking (org-scoped)
  * - usage_limits (org-scoped)
  * - usage_alerts (org-scoped)
  *
- * Related Issue: #787
+ * Related Issue: #787 (original), #914 (migration)
  * Related Node: multi-tenant.md, cost-control.md
  * Related PR: #769
  */

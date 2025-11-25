@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-11-23T20:53:03.915Z",
+  "timestamp": "2025-11-25T17:04:06.856Z",
   "mode": "full",
   "nodes_validated": 15,
   "orphans": [],
@@ -85,7 +85,7 @@
       "type": "missing_coverage_data",
       "node": "queue-system",
       "severity": "warning",
-      "declared": 67,
+      "declared": 81,
       "actual": null,
       "message": "Coverage data not available for validation"
     },
@@ -101,7 +101,7 @@
       "type": "missing_coverage_data",
       "node": "shield",
       "severity": "warning",
-      "declared": 86,
+      "declared": 62,
       "actual": null,
       "message": "Coverage data not available for validation"
     },

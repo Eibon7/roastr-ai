@@ -55,6 +55,7 @@
     "frontend:build": "cd frontend && npm run build",
     "frontend:install": "cd frontend && npm install",
     "validate:tests": "node scripts/validate-test-dependencies.js",
+    "check": "jest --config=jest.ci.config.cjs --runInBand --ci --forceExit",
     "test": "jest --verbose",
     "test:ci": "jest --config=jest.ci.config.cjs --runInBand --ci",
     "test:mock": "ENABLE_MOCK_MODE=true jest --config=jest.skipExternal.config.js --verbose",
@@ -164,12 +165,12 @@
     "cors": "^2.8.5",
     "cron": "^4.3.3",
     "discord.js": "^14.22.1",
-    "dompurify": "^3.2.6",
+    "dompurify": "^3.3.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "express-validator": "^7.2.1",
-    "fs-extra": "^11.3.0",
+    "fs-extra": "^11.3.2",
     "googleapis": "^155.0.0",
     "handlebars": "^4.7.8",
     "helmet": "^8.1.0",
@@ -192,7 +193,8 @@
     "twitter-api-v2": "^1.24.0",
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.18.6",
