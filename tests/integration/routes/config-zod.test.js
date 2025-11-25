@@ -122,8 +122,21 @@ jest.mock('../../../src/services/levelConfigService', () => ({
   getAllShieldLevels: jest.fn().mockReturnValue({})
 }));
 
+// Issue #972: Mock toneCompatibilityService with realistic normalization logic
 jest.mock('../../../src/services/toneCompatibilityService', () => ({
-  normalizeTone: jest.fn((tone) => tone)
+  normalizeTone: jest.fn((tone) => {
+    if (!tone || typeof tone !== 'string') return null;
+    const lowerTone = tone.toLowerCase().trim();
+    const canonicalMap = {
+      flanders: 'flanders',
+      balanceado: 'balanceado',
+      canalla: 'canalla',
+      light: 'flanders',
+      balanced: 'balanceado',
+      savage: 'canalla'
+    };
+    return canonicalMap[lowerTone] || null;
+  })
 }));
 
 describe('Config Endpoints - Zod Validation (Issue #943)', () => {
@@ -405,6 +418,180 @@ describe('Config Endpoints - Zod Validation (Issue #943)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
+    });
+  });
+
+  // Issue #972: Tests for tone normalization backward compatibility
+  describe('Tone Normalization (Issue #972)', () => {
+    const toneCompatibilityService = require('../../../src/services/toneCompatibilityService');
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    describe('Valid canonical tones (ES)', () => {
+      it('should accept "balanceado" tone directly', async () => {
+        mockSupabase._setData('organizations', { id: 'org-123', owner_id: 'user-123' });
+        mockSupabase._setData('integration_configs', {
+          tone: 'balanceado',
+          updated_at: new Date().toISOString()
+        });
+
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'balanceado' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+      });
+
+      it('should accept "flanders" tone directly', async () => {
+        mockSupabase._setData('organizations', { id: 'org-123', owner_id: 'user-123' });
+        mockSupabase._setData('integration_configs', {
+          tone: 'flanders',
+          updated_at: new Date().toISOString()
+        });
+
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'flanders' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+      });
+
+      it('should accept "canalla" tone directly', async () => {
+        mockSupabase._setData('organizations', { id: 'org-123', owner_id: 'user-123' });
+        mockSupabase._setData('integration_configs', {
+          tone: 'canalla',
+          updated_at: new Date().toISOString()
+        });
+
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'canalla' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+      });
+    });
+
+    describe('EN alias tones normalization', () => {
+      it('should normalize "light" to "flanders" and accept', async () => {
+        mockSupabase._setData('organizations', { id: 'org-123', owner_id: 'user-123' });
+        mockSupabase._setData('integration_configs', {
+          tone: 'flanders',
+          updated_at: new Date().toISOString()
+        });
+
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'light' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(toneCompatibilityService.normalizeTone).toHaveBeenCalledWith('light');
+      });
+
+      it('should normalize "balanced" to "balanceado" and accept', async () => {
+        mockSupabase._setData('organizations', { id: 'org-123', owner_id: 'user-123' });
+        mockSupabase._setData('integration_configs', {
+          tone: 'balanceado',
+          updated_at: new Date().toISOString()
+        });
+
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'balanced' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(toneCompatibilityService.normalizeTone).toHaveBeenCalledWith('balanced');
+      });
+
+      it('should normalize "savage" to "canalla" and accept', async () => {
+        mockSupabase._setData('organizations', { id: 'org-123', owner_id: 'user-123' });
+        mockSupabase._setData('integration_configs', {
+          tone: 'canalla',
+          updated_at: new Date().toISOString()
+        });
+
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'savage' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(toneCompatibilityService.normalizeTone).toHaveBeenCalledWith('savage');
+      });
+    });
+
+    describe('Invalid tones rejection', () => {
+      it('should reject completely invalid tones', async () => {
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'invalid_tone' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toContain('Invalid tone');
+      });
+
+      it('should reject legacy humor_type values used as tones', async () => {
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'witty' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toContain('Invalid tone');
+      });
+
+      it('should reject "sarcastic" (legacy humor_type)', async () => {
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'sarcastic' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toContain('Invalid tone');
+      });
+    });
+
+    describe('Combined tone with other fields', () => {
+      it('should accept tone with roast_level', async () => {
+        mockSupabase._setData('organizations', { id: 'org-123', owner_id: 'user-123' });
+        mockSupabase._setData('integration_configs', {
+          tone: 'canalla',
+          roast_level: 4,
+          updated_at: new Date().toISOString()
+        });
+
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'canalla', roast_level: 4 });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+      });
+
+      it('should normalize tone alias with other fields', async () => {
+        mockSupabase._setData('organizations', { id: 'org-123', owner_id: 'user-123' });
+        mockSupabase._setData('integration_configs', {
+          tone: 'flanders',
+          roast_level: 2,
+          shield_level: 2,
+          updated_at: new Date().toISOString()
+        });
+
+        const response = await request(app)
+          .put('/api/config/twitter')
+          .send({ tone: 'light', roast_level: 2, shield_level: 2 });
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(toneCompatibilityService.normalizeTone).toHaveBeenCalledWith('light');
+      });
     });
   });
 });
