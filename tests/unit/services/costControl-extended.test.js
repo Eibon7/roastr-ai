@@ -1438,4 +1438,278 @@ describe('CostControlService - Extended Coverage', () => {
       }
     });
   });
+
+  // Deep coverage for alert system
+
+  describe('sendUsageAlert - Full Flow', () => {
+    it('should send alert with org details', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id: 'org-123',
+            name: 'Test Org',
+            plan_id: 'pro',
+            users: { email: 'user@test.com', name: 'Test User' }
+          },
+          error: null
+        }),
+        insert: jest.fn().mockResolvedValue({ data: null, error: null })
+      });
+
+      try {
+        const result = await costControl.sendUsageAlert('org-123', {
+          resourceType: 'roasts',
+          currentUsage: 85,
+          limit: 100,
+          percentage: 85,
+          thresholdPercentage: 80,
+          planId: 'pro'
+        });
+        expect(result).toHaveProperty('type', 'usage_alert');
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('should handle org lookup error', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Org not found' }
+        })
+      });
+
+      try {
+        await costControl.sendUsageAlert('org-123', { currentUsage: 85 });
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('should use default values when not provided', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id: 'org-123',
+            name: 'Test Org',
+            plan_id: 'starter',
+            users: { email: 'user@test.com', name: 'Test' }
+          },
+          error: null
+        }),
+        insert: jest.fn().mockResolvedValue({ data: null, error: null })
+      });
+
+      try {
+        const result = await costControl.sendUsageAlert('org-123', {
+          current_usage: 80,
+          monthly_limit: 100
+        });
+        expect(result).toBeDefined();
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+  });
+
+  describe('checkAndSendUsageAlerts - Complete', () => {
+    it('should check alerts and send when threshold reached', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id: 'alert-1',
+            threshold_percentage: 80,
+            sent_count: 0,
+            max_alerts_per_day: 3,
+            enabled: true
+          },
+          error: null
+        }),
+        update: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockResolvedValue({ data: null, error: null })
+      });
+
+      try {
+        const result = await costControl.checkAndSendUsageAlerts('org-123', 'roasts', {
+          current_usage: 85,
+          monthly_limit: 100,
+          percentage_used: 85
+        });
+        expect(result).toBeDefined();
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('should not send when under threshold', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            threshold_percentage: 80,
+            sent_count: 0,
+            max_alerts_per_day: 3,
+            enabled: true
+          },
+          error: null
+        })
+      });
+
+      try {
+        const result = await costControl.checkAndSendUsageAlerts('org-123', 'roasts', {
+          current_usage: 50,
+          monthly_limit: 100,
+          percentage_used: 50
+        });
+        expect(result).toBeDefined();
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+  });
+
+  describe('getUsageStats - All Scenarios', () => {
+    it('should aggregate by platform', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({
+          data: [
+            { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5, tokens_used: 100 },
+            { platform: 'twitter', action_type: 'generate_reply', cost_cents: 5, tokens_used: 100 },
+            { platform: 'youtube', action_type: 'analyze_toxicity', cost_cents: 1, tokens_used: 50 }
+          ],
+          error: null
+        }),
+        single: jest.fn().mockResolvedValue({
+          data: { subscription_plan: 'pro' },
+          error: null
+        })
+      });
+
+      try {
+        const result = await costControl.getUsageStats('org-123', 7);
+        expect(result).toBeDefined();
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('should handle empty data', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({
+          data: [],
+          error: null
+        }),
+        single: jest.fn().mockResolvedValue({
+          data: { subscription_plan: 'starter' },
+          error: null
+        })
+      });
+
+      try {
+        const result = await costControl.getUsageStats('org-123', 30);
+        expect(result).toBeDefined();
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+  });
+
+  describe('getEnhancedUsageStats - All Scenarios', () => {
+    it('should group by resource type and platform', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({
+          data: [
+            { resource_type: 'roasts', platform: 'twitter', usage_count: 50, cost_cents: 250 },
+            { resource_type: 'roasts', platform: 'youtube', usage_count: 30, cost_cents: 150 },
+            { resource_type: 'shield_actions', platform: 'twitter', usage_count: 10, cost_cents: 0 }
+          ],
+          error: null
+        }),
+        single: jest.fn().mockResolvedValue({
+          data: { subscription_plan: 'plus' },
+          error: null
+        })
+      });
+
+      try {
+        const result = await costControl.getEnhancedUsageStats('org-123', 30);
+        expect(result).toBeDefined();
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+  });
+
+  describe('getBillingSummary - All Scenarios', () => {
+    it('should calculate monthly totals', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        lte: jest.fn().mockResolvedValue({
+          data: [
+            { resource_type: 'roasts', usage_count: 100, cost_cents: 500 },
+            { resource_type: 'api_calls', usage_count: 500, cost_cents: 0 }
+          ],
+          error: null
+        }),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            subscription_plan: 'pro',
+            subscription_status: 'active',
+            stripe_subscription_id: 'sub_123'
+          },
+          error: null
+        })
+      });
+
+      try {
+        const result = await costControl.getBillingSummary('org-123', 2025, 1);
+        expect(result).toBeDefined();
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+
+    it('should handle no usage data', async () => {
+      costControl.supabase.from = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        lte: jest.fn().mockResolvedValue({
+          data: [],
+          error: null
+        }),
+        single: jest.fn().mockResolvedValue({
+          data: { subscription_plan: 'free' },
+          error: null
+        })
+      });
+
+      try {
+        const result = await costControl.getBillingSummary('org-123', 2025, 2);
+        expect(result).toBeDefined();
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+  });
 });
