@@ -59,4 +59,3 @@ jobs:
           else
             echo "✅ Code is already properly formatted"
           fi
-

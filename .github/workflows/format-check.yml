@@ -44,14 +44,14 @@ jobs:
       - name: Report results
         run: |
           FAILED=false
-          
+
           if [ "${{ steps.prettier.outputs.needs_format }}" == "true" ]; then
             echo "⚠️  Formatting issues detected - Auto-format workflow will fix them"
             # Don't fail - auto-format will handle it
           else
             echo "✅ Prettier check passed"
           fi
-          
+
           if [ "${{ steps.eslint.outcome }}" == "failure" ]; then
             echo "❌ ESLint issues detected"
             echo ""
@@ -61,7 +61,7 @@ jobs:
           else
             echo "✅ ESLint check passed"
           fi
-          
+
           if [ "$FAILED" == "true" ]; then
             exit 1
           fi

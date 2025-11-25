@@ -83,7 +83,7 @@ module.exports = {
   projects: [
     {
       displayName: 'unit-tests',
-      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/utils/**/*.test.js', '<rootDir>/tests/unit/adapters/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/unit/scripts/**/*.test.js', '<rootDir>/tests/unit/validators/**/*.test.js'],
+      testMatch: ['<rootDir>/tests/unit/routes/**/*.test.js', '<rootDir>/tests/unit/services/**/*.test.js', '<rootDir>/tests/unit/workers/**/*.test.js', '<rootDir>/tests/unit/middleware/**/*.test.js', '<rootDir>/tests/unit/config/**/*.test.js', '<rootDir>/tests/unit/utils/**/*.test.js', '<rootDir>/tests/unit/adapters/**/*.test.js', '<rootDir>/tests/unit/frontend/**/*.test.js', '<rootDir>/tests/unit/scripts/**/*.test.js', '<rootDir>/tests/unit/validators/**/*.test.js', '<rootDir>/tests/unit/integrations/**/*.test.js'],
       setupFilesAfterEnv: ['<rootDir>/tests/setupEnvOnly.js']
     },
     {

@@ -1,3 +1,5 @@
+const { logger } = require('./../../utils/logger'); // Issue #971: Added for console.log replacement
+
 class BaseIntegration {
   constructor(config) {
     this.config = config;
@@ -6,7 +8,6 @@ class BaseIntegration {
 
     // Initialize advanced logger and reincidence detector
     this.advancedLogger = require('../../utils/advancedLogger');
-    const { logger } = require('./../../utils/logger'); // Issue #971: Added for console.log replacement
     this.ReincidenceDetector = require('../../services/reincidenceDetector');
     this.reincidenceDetector = new this.ReincidenceDetector();
 
