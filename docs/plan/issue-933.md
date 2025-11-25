@@ -8,16 +8,19 @@
 ## Estado Actual
 
 ### Cobertura Actual
+
 - `src/integrations/integrationManager.js`: **2.8%** → Objetivo: **70%+**
 - `src/integrations/base/BaseIntegration.js`: **11.3%** → Objetivo: **70%+**
 - `src/integrations/base/MultiTenantIntegration.js`: **13.8%** → Objetivo: **70%+**
 
 ### Archivos sin Tests
+
 - ❌ No existen tests para `integrationManager.js`
 - ❌ No existen tests para `BaseIntegration.js`
 - ❌ No existen tests para `MultiTenantIntegration.js`
 
 ### Contexto
+
 - Parte de la estrategia de mejora de cobertura (`docs/coverage-improvement-priorities.md`)
 - Base para todas las integraciones
 - Impacto esperado: +2-3% cobertura global
@@ -40,6 +43,7 @@
 **Archivo:** `tests/unit/integrations/integrationManager.test.js`
 
 **Métodos a cubrir:**
+
 - `constructor()` - Inicialización con opciones
 - `initializeIntegrations()` - Inicialización de todas las integraciones
 - `initializeTwitter()`, `initializeYouTube()`, etc. - Inicialización por plataforma
@@ -53,6 +57,7 @@
 - `runAllIntegrationsOnce()` - Ejecución única en modo test
 
 **Casos de prueba:**
+
 - ✅ Inicialización exitosa con todas las plataformas
 - ✅ Inicialización con testMode activado
 - ✅ Manejo de errores en inicialización
@@ -63,6 +68,7 @@
 - ✅ Reinicio de integración específica
 
 **Mocks necesarios:**
+
 - TwitterRoastBot
 - YouTubeService, BlueskyService, etc.
 - Logger
@@ -73,6 +79,7 @@
 **Archivo:** `tests/unit/integrations/base/BaseIntegration.test.js`
 
 **Métodos a cubrir:**
+
 - `constructor()` - Inicialización con config
 - `shouldRespondBasedOnFrequency()` - Verificación de frecuencia
 - `analyzeCommentSeverity()` - Análisis de severidad
@@ -86,6 +93,7 @@
 - `shutdown()` - Cierre graceful
 
 **Casos de prueba:**
+
 - ✅ Inicialización con config válida
 - ✅ Validación de config requerida
 - ✅ Frecuencia de respuesta (0.0 a 1.0)
@@ -97,6 +105,7 @@
 - ✅ Métricas correctas
 
 **Mocks necesarios:**
+
 - AdvancedLogger
 - ReincidenceDetector
 - RoastGeneratorReal
@@ -107,6 +116,7 @@
 **Archivo:** `tests/unit/integrations/base/MultiTenantIntegration.test.js`
 
 **Métodos a cubrir:**
+
 - `constructor()` - Inicialización con platformName y opciones
 - `initializeConnections()` - Inicialización de conexiones
 - `initialize()` - Inicialización completa
@@ -124,6 +134,7 @@
 - `shutdown()` - Cierre graceful
 
 **Casos de prueba:**
+
 - ✅ Inicialización con configuración válida
 - ✅ Procesamiento de comentarios por organización
 - ✅ Validación de multi-tenant isolation
@@ -137,6 +148,7 @@
 - ✅ Manejo de errores en todas las operaciones
 
 **Mocks necesarios:**
+
 - Supabase client (usar supabaseMockFactory)
 - QueueService
 - CostControlService
@@ -150,16 +162,19 @@
 ## Archivos Afectados
 
 ### Nuevos Archivos
+
 - `tests/unit/integrations/integrationManager.test.js`
 - `tests/unit/integrations/base/BaseIntegration.test.js`
 - `tests/unit/integrations/base/MultiTenantIntegration.test.js`
 
 ### Archivos Modificados
+
 - Ninguno (solo creación de tests)
 
 ## Validación Requerida
 
 ### Tests
+
 ```bash
 # Ejecutar tests específicos
 npm test -- integrationManager.test.js
@@ -171,12 +186,14 @@ npm test -- --coverage --collectCoverageFrom="src/integrations/integrationManage
 ```
 
 ### Cobertura Esperada
+
 - `integrationManager.js`: ≥70%
 - `BaseIntegration.js`: ≥70%
 - `MultiTenantIntegration.js`: ≥70%
 - 0 tests fallando
 
 ### GDD Validación
+
 ```bash
 node scripts/validate-gdd-runtime.js --full
 node scripts/score-gdd-health.js --ci  # Debe >=87
@@ -199,5 +216,3 @@ node scripts/score-gdd-health.js --ci  # Debe >=87
 - Usar mocks apropiados, nunca datos reales
 - Cubrir casos de éxito y error
 - Validar que los tests pasan antes de commit
-
-

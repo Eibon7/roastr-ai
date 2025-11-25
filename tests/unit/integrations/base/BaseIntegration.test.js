@@ -252,7 +252,9 @@ describe('BaseIntegration', () => {
     });
 
     it('should handle processing errors', async () => {
-      integration.reincidenceDetector.recordInteraction = jest.fn().mockRejectedValueOnce(new Error('DB error'));
+      integration.reincidenceDetector.recordInteraction = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('DB error'));
       const comment = {
         id: 'comment-123',
         text: 'Test comment',
@@ -274,9 +276,7 @@ describe('BaseIntegration', () => {
       await integration.processComment(comment);
 
       expect(integration.metrics.lastActivity).toBeDefined();
-      expect(new Date(integration.metrics.lastActivity).getTime()).toBeLessThanOrEqual(
-        Date.now()
-      );
+      expect(new Date(integration.metrics.lastActivity).getTime()).toBeLessThanOrEqual(Date.now());
     });
   });
 
@@ -296,9 +296,7 @@ describe('BaseIntegration', () => {
       await integration.executeAutoAction(comment, 'block', 'critical');
 
       expect(integration.reincidenceDetector.recordAutoAction).toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Auto-action: block')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Auto-action: block'));
     });
 
     it('should handle auto action errors', async () => {
@@ -479,4 +477,3 @@ describe('BaseIntegration', () => {
     });
   });
 });
-

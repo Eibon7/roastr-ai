@@ -177,16 +177,12 @@ describe('MultiTenantIntegration', () => {
       integration = new TestMultiTenantIntegration('test');
       await integration.initialize();
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('is disabled')
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('is disabled'));
     });
 
     it('should handle initialization errors', async () => {
       integration = new TestMultiTenantIntegration('test');
-      integration.setupPlatformSpecific = jest
-        .fn()
-        .mockRejectedValue(new Error('Setup failed'));
+      integration.setupPlatformSpecific = jest.fn().mockRejectedValue(new Error('Setup failed'));
 
       await expect(integration.initialize()).rejects.toThrow('Setup failed');
       expect(integration.errorCount).toBeGreaterThan(0);
@@ -216,17 +212,17 @@ describe('MultiTenantIntegration', () => {
         reason: 'Limit exceeded'
       });
 
-      await expect(
-        integration.processCommentsForOrganization('org-123')
-      ).rejects.toThrow('Operation not allowed');
+      await expect(integration.processCommentsForOrganization('org-123')).rejects.toThrow(
+        'Operation not allowed'
+      );
     });
 
     it('should handle processing errors gracefully', async () => {
       integration.fetchComments = jest.fn().mockRejectedValue(new Error('Fetch failed'));
 
-      await expect(
-        integration.processCommentsForOrganization('org-123')
-      ).rejects.toThrow('Fetch failed');
+      await expect(integration.processCommentsForOrganization('org-123')).rejects.toThrow(
+        'Fetch failed'
+      );
     });
 
     it('should handle individual comment errors', async () => {
@@ -394,11 +390,7 @@ describe('MultiTenantIntegration', () => {
         analysis_method: 'perspective'
       };
 
-      const result = await integration.queueResponseGeneration(
-        comment,
-        'org-123',
-        toxicityData
-      );
+      const result = await integration.queueResponseGeneration(comment, 'org-123', toxicityData);
 
       expect(result).toBeDefined();
       expect(mockQueueService.addJob).toHaveBeenCalledWith(
@@ -747,7 +739,7 @@ describe('MultiTenantIntegration', () => {
 
     it('should throw error when postResponse is called without supportDirectPosting', async () => {
       integration.config.supportDirectPosting = false;
-      
+
       await expect(integration.postResponse('comment-id', 'response')).rejects.toThrow(
         'does not support direct posting'
       );
@@ -755,7 +747,7 @@ describe('MultiTenantIntegration', () => {
 
     it('should throw error when postResponse is not implemented but supportDirectPosting is true', async () => {
       integration.config.supportDirectPosting = true;
-      
+
       await expect(integration.postResponse('comment-id', 'response')).rejects.toThrow(
         'postResponse must be implemented'
       );
@@ -763,7 +755,7 @@ describe('MultiTenantIntegration', () => {
 
     it('should throw error when performModerationAction is called without supportModeration', async () => {
       integration.config.supportModeration = false;
-      
+
       await expect(integration.performModerationAction('block', 'user-id')).rejects.toThrow(
         'does not support moderation actions'
       );
@@ -771,7 +763,7 @@ describe('MultiTenantIntegration', () => {
 
     it('should throw error when performModerationAction is not implemented but supportModeration is true', async () => {
       integration.config.supportModeration = true;
-      
+
       await expect(integration.performModerationAction('block', 'user-id')).rejects.toThrow(
         'performModerationAction must be implemented'
       );
@@ -788,7 +780,11 @@ describe('MultiTenantIntegration', () => {
       mockQueueService.addJob.mockRejectedValueOnce(new Error('Queue error'));
 
       const comment = { id: 'comment-1', text: 'Test', author_id: 'user-1' };
-      const toxicityData = { toxicity_score: 0.8, toxicity_categories: ['toxic'], analysis_method: 'ai' };
+      const toxicityData = {
+        toxicity_score: 0.8,
+        toxicity_categories: ['toxic'],
+        analysis_method: 'ai'
+      };
 
       await expect(
         integration.queueResponseGeneration(comment, 'org-1', toxicityData)
@@ -806,9 +802,9 @@ describe('MultiTenantIntegration', () => {
       integration.config.supportDirectPosting = true;
       mockQueueService.addJob.mockRejectedValueOnce(new Error('Queue error'));
 
-      await expect(
-        integration.queueResponsePost('roast-1', 'comment-1', 'org-1')
-      ).rejects.toThrow('Queue error');
+      await expect(integration.queueResponsePost('roast-1', 'comment-1', 'org-1')).rejects.toThrow(
+        'Queue error'
+      );
     });
   });
 
@@ -890,8 +886,12 @@ describe('MultiTenantIntegration', () => {
 
       expect(stats).toBeNull();
       // The log method formats the message as JSON, so check for error level in the log calls
-      const errorLogCalls = logger.info.mock.calls.filter(call => 
-        call[0] && typeof call[0] === 'string' && call[0].includes('error') && call[0].includes('Failed to get statistics')
+      const errorLogCalls = logger.info.mock.calls.filter(
+        (call) =>
+          call[0] &&
+          typeof call[0] === 'string' &&
+          call[0].includes('error') &&
+          call[0].includes('Failed to get statistics')
       );
       expect(errorLogCalls.length).toBeGreaterThan(0);
     });
@@ -946,4 +946,3 @@ describe('MultiTenantIntegration', () => {
     });
   });
 });
-
