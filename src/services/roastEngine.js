@@ -318,7 +318,8 @@ class RoastEngine {
         tokensUsed: roastResult.tokensUsed,
         method: roastResult.method,
         style: style,
-        language: language
+        language: language,
+        _portkeyMetadata: roastResult._portkeyMetadata // Issue #920: Propagate metadata
       };
     } else {
       // Generate multiple versions (2) in parallel for better performance
@@ -344,7 +345,8 @@ class RoastEngine {
           text: roastResult.roast,
           style: style,
           styleConfig: styleConfig,
-          tokensUsed: roastResult.tokensUsed || 0
+          tokensUsed: roastResult.tokensUsed || 0,
+          _portkeyMetadata: roastResult._portkeyMetadata // Issue #920: Propagate metadata
         };
       });
 
@@ -352,13 +354,21 @@ class RoastEngine {
       const versions = await Promise.all(versionPromises);
       const totalTokens = versions.reduce((sum, version) => sum + version.tokensUsed, 0);
 
+      // Issue #920: Extract Portkey metadata from first version (all should have same mode/provider)
+      const portkeyMetadata = versions[0]._portkeyMetadata || {
+        mode: style || 'balanceado',
+        provider: 'openai',
+        fallbackUsed: false
+      };
+
       return {
         roast: versions[0].text, // Primary version
         versions: versions,
         tokensUsed: totalTokens,
         method: 'multi_version',
         style: style,
-        language: language
+        language: language,
+        _portkeyMetadata: portkeyMetadata // Issue #920: Propagate metadata
       };
     }
   }
@@ -546,6 +556,13 @@ class RoastEngine {
    */
   async persistMetadata(result, input, options) {
     try {
+      // Issue #920: Extract Portkey metadata from result if available
+      const portkeyMetadata = result._portkeyMetadata || {
+        mode: result.style || 'balanceado', // Use style as mode fallback
+        provider: 'openai',
+        fallbackUsed: false
+      };
+
       const metadata = {
         id: `roast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId: options.userId,
@@ -560,7 +577,12 @@ class RoastEngine {
         status: result.status,
         tokensUsed: result.tokensUsed,
         method: result.method,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        // Issue #920: Portkey metadata
+        mode: portkeyMetadata.mode,
+        provider: portkeyMetadata.provider,
+        fallbackUsed: portkeyMetadata.fallbackUsed || false,
+        portkeyMetadata: portkeyMetadata.metadata || null
       };
 
       // Store metadata in database (normalize field names)
@@ -578,7 +600,12 @@ class RoastEngine {
         status: metadata.status,
         tokens_used: metadata.tokensUsed,
         method: metadata.method,
-        created_at: metadata.createdAt
+        created_at: metadata.createdAt,
+        // Issue #920: Portkey metadata fields
+        mode: metadata.mode,
+        provider: metadata.provider,
+        fallback_used: metadata.fallbackUsed,
+        portkey_metadata: metadata.portkeyMetadata
       };
 
       const { error } = await supabaseServiceClient.from('roasts_metadata').insert(dbMetadata);

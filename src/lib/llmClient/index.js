@@ -7,7 +7,7 @@
  * Usage:
  *   const LLMClient = require('./lib/llmClient');
  *   const client = LLMClient.getInstance('default');
- *   const response = await client.chat({ messages: [...] });
+ *   const response = await client.chat.completions.create({ messages: [...] });
  */
 
 const factory = require('./factory');
@@ -18,7 +18,7 @@ const transformers = require('./transformers');
 module.exports = {
   /**
    * Get LLM client instance for a mode
-   * @param {string} mode - AI mode (default, empathetic, nsfw, cheap, fast)
+   * @param {string} mode - AI mode (default, flanders, balanceado, canalla, nsfw)
    * @param {Object} options - Options (plan, timeout, maxRetries)
    * @returns {Object} LLM client wrapper
    */
@@ -37,22 +37,22 @@ module.exports = {
   /**
    * Get route configuration
    */
-  getRoute: routes.getRoute,
+  getRoute: factory.getRoute,
 
   /**
    * Get available modes
    */
-  getAvailableModes: routes.getAvailableModes,
+  getAvailableModes: factory.getAvailableModes,
 
   /**
    * Check if mode exists
    */
-  modeExists: routes.modeExists,
+  modeExists: factory.modeExists,
 
   /**
    * Get fallback chain
    */
-  getFallbackChain: fallbacks.getFallbackChain,
+  getFallbackChain: factory.getFallbackChain,
 
   /**
    * Extract metadata from response

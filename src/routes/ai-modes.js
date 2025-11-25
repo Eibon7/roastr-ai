@@ -1,25 +1,29 @@
 /**
  * AI Modes API Routes
  *
+ * Endpoint for retrieving available AI modes and their configurations
  * Issue #920: Portkey AI Gateway integration
- * Endpoint para listar modos de AI disponibles y su configuración
  */
 
 const express = require('express');
-const router = express.Router();
-const { logger } = require('../utils/logger');
-const LLMClient = require('../lib/llmClient');
 const { authenticateToken } = require('../middleware/auth');
+const LLMClient = require('../lib/llmClient');
+const { logger } = require('../utils/logger');
+
+const router = express.Router();
 
 /**
  * GET /api/ai-modes
  *
- * Lista todos los modos de AI disponibles con su metadata
+ * Retrieve available AI modes with their configurations and metadata.
  *
- * Response:
+ * @auth Required (JWT)
+ * @returns {Object} modes - List of available AI modes
+ *
+ * Example response:
  * {
  *   success: true,
- *   modes: [
+ *   data: [
  *     {
  *       id: 'flanders',
  *       name: 'Flanders',
@@ -36,6 +40,7 @@ const { authenticateToken } = require('../middleware/auth');
  */
 router.get('/', authenticateToken, async (req, res) => {
   try {
+    logger.info('Fetching available AI modes');
     const availableModes = LLMClient.getAvailableModes();
 
     const modesMetadata = availableModes.map((modeId) => {
@@ -68,20 +73,26 @@ router.get('/', authenticateToken, async (req, res) => {
           displayName: 'NSFW'
         },
         default: {
-          name: 'Por Defecto',
-          description: 'Modo por defecto (GPT-5.1)',
+          name: 'Default',
+          description: 'Modo por defecto',
           intensity: 3,
           displayName: 'Default'
         }
       };
 
-      const metadata = modeMetadata[modeId] || modeMetadata.default;
+      const metadata = modeMetadata[modeId] || {
+        name: modeId,
+        description: `Modo ${modeId}`,
+        intensity: 3,
+        displayName: modeId
+      };
 
-      // Check if mode is available (NSFW requires Grok API key or Portkey)
+      // Check if mode is available (e.g., NSFW requires Grok API key or fully configured Portkey)
       let available = true;
       if (modeId === 'nsfw') {
+        // NSFW requires either Grok API key or fully configured Portkey (both API_KEY and PROJECT_ID)
         const grokApiKey = process.env.GROK_API_KEY;
-        const portkeyConfigured = LLMClient.isPortkeyConfigured();
+        const portkeyConfigured = !!(process.env.PORTKEY_API_KEY && process.env.PORTKEY_PROJECT_ID);
         available = !!(grokApiKey || portkeyConfigured);
       }
 
@@ -93,112 +104,23 @@ router.get('/', authenticateToken, async (req, res) => {
         intensity: metadata.intensity,
         provider: route.provider,
         model: route.model,
-        temperature: route.config.temperature,
-        maxTokens: route.config.max_tokens,
-        timeout: route.config.timeout,
-        available,
-        fallbackAvailable: modeId === 'nsfw' && !available // NSFW puede usar OpenAI como fallback
+        temperature: route.config?.temperature || 0.8,
+        maxTokens: route.config?.max_tokens || 150,
+        available: available,
+        fallbackChain: LLMClient.getFallbackChain(modeId)
       };
     });
 
-    logger.info('AI modes listed', {
-      userId: req.user?.id,
-      count: modesMetadata.length
-    });
-
-    res.json({
+    res.status(200).json({
       success: true,
-      modes: modesMetadata,
-      portkeyConfigured: LLMClient.isPortkeyConfigured()
+      data: modesMetadata
     });
   } catch (error) {
-    logger.error('Error listing AI modes:', error);
+    logger.error('Error fetching AI modes:', error);
     res.status(500).json({
       success: false,
-      error: 'Error al listar modos de AI',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-/**
- * GET /api/ai-modes/:modeId
- *
- * Obtiene información detallada de un modo específico
- */
-router.get('/:modeId', authenticateToken, async (req, res) => {
-  try {
-    const { modeId } = req.params;
-
-    if (!LLMClient.modeExists(modeId)) {
-      return res.status(404).json({
-        success: false,
-        error: `Modo "${modeId}" no encontrado`
-      });
-    }
-
-    const route = LLMClient.getRoute(modeId);
-    const fallbackChain = LLMClient.getFallbackChain(modeId);
-
-    // Check availability
-    let available = true;
-    if (modeId === 'nsfw') {
-      const grokApiKey = process.env.GROK_API_KEY;
-      const portkeyConfigured = LLMClient.isPortkeyConfigured();
-      available = !!(grokApiKey || portkeyConfigured);
-    }
-
-    const modeMetadata = {
-      flanders: {
-        name: 'Flanders',
-        description: 'Tono amable pero con ironía sutil',
-        intensity: 2
-      },
-      balanceado: {
-        name: 'Balanceado',
-        description: 'Equilibrio entre ingenio y firmeza',
-        intensity: 3
-      },
-      canalla: {
-        name: 'Canalla',
-        description: 'Directo y sin filtros, más picante',
-        intensity: 4
-      },
-      nsfw: {
-        name: 'NSFW',
-        description: 'Modo NSFW con Grok (requiere configuración)',
-        intensity: 5
-      },
-      default: {
-        name: 'Por Defecto',
-        description: 'Modo por defecto (GPT-5.1)',
-        intensity: 3
-      }
-    };
-
-    const metadata = modeMetadata[modeId] || modeMetadata.default;
-
-    res.json({
-      success: true,
-      mode: {
-        id: modeId,
-        name: metadata.name,
-        description: metadata.description,
-        intensity: metadata.intensity,
-        provider: route.provider,
-        model: route.model,
-        config: route.config,
-        fallbackChain,
-        available,
-        fallbackAvailable: modeId === 'nsfw' && !available
-      }
-    });
-  } catch (error) {
-    logger.error(`Error getting AI mode ${req.params.modeId}:`, error);
-    res.status(500).json({
-      success: false,
-      error: 'Error al obtener modo de AI',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: 'Failed to retrieve AI modes',
+      ...(process.env.NODE_ENV === 'development' && { details: error.message })
     });
   }
 });

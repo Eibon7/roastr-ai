@@ -1,74 +1,64 @@
 /**
  * LLM Client Factory
  *
- * Singleton factory for creating and caching LLM client instances
+ * Creates and manages LLM client instances with Portkey AI Gateway integration
  * Issue #920: Portkey AI Gateway integration
+ *
+ * Features:
+ * - Singleton pattern per mode/plan
+ * - Automatic fallback handling
+ * - OpenAI-compatible interface
+ * - Portkey integration when configured
  */
 
-const Portkey = require('portkey-ai');
 const OpenAI = require('openai');
+const Portkey = require('portkey-ai');
 const { logger } = require('../../utils/logger');
 const {
   getRoute: getRouteConfig,
   getAvailableModes: getAvailableModesFromRoutes,
   modeExists: modeExistsInRoutes
 } = require('./routes');
-const { getNextFallback } = require('./fallbacks');
+const { getNextFallback, getFallbackChain: getFallbackChainFromModule } = require('./fallbacks');
 const { transformChatCompletion, transformEmbedding, extractMetadata } = require('./transformers');
 const mockMode = require('../../config/mockMode');
 
-require('dotenv').config();
-
-/**
- * Cache of client instances by mode
- * @type {Map<string, Object>}
- */
+// Client cache: key = `${mode}-${plan}`
 const clientCache = new Map();
 
 /**
- * Default configuration
- */
-const DEFAULT_CONFIG = {
-  timeout: parseInt(process.env.PORTKEY_TIMEOUT_MS || '30000', 10),
-  maxRetries: parseInt(process.env.PORTKEY_MAX_RETRIES || '3', 10)
-};
-
-/**
  * Check if Portkey is configured
- * @returns {boolean} True if Portkey API key is available
+ * @returns {boolean} True if Portkey API key and project ID are set
  */
 function isPortkeyConfigured() {
   return !!(process.env.PORTKEY_API_KEY && process.env.PORTKEY_PROJECT_ID);
 }
 
 /**
- * Create Portkey client instance
- * @param {string} mode - AI mode
- * @param {Object} config - Additional configuration
+ * Create Portkey client
+ * @param {Object} route - Route configuration
+ * @param {Object} options - Client options
  * @returns {Object} Portkey client instance
  */
-function createPortkeyClient(mode, config = {}) {
-  const route = getRouteConfig(mode);
-  const portkeyConfig = {
-    apiKey: process.env.PORTKEY_API_KEY,
-    baseURL: process.env.PORTKEY_BASE_URL || 'https://api.portkey.ai/v1',
-    defaultHeaders: {
-      'x-portkey-api-key': process.env.PORTKEY_API_KEY,
-      'x-portkey-project-id': process.env.PORTKEY_PROJECT_ID
-    },
-    timeout: config.timeout || DEFAULT_CONFIG.timeout,
-    maxRetries: config.maxRetries || DEFAULT_CONFIG.maxRetries
-  };
+function createPortkeyClient(route, options = {}) {
+  const portkeyApiKey = process.env.PORTKEY_API_KEY;
+  const portkeyProjectId = process.env.PORTKEY_PROJECT_ID;
+  const defaultRoute = process.env.PORTKEY_DEFAULT_ROUTE || route.provider;
 
-  return new Portkey(portkeyConfig);
+  return new Portkey({
+    apiKey: portkeyApiKey,
+    projectId: portkeyProjectId,
+    defaultRoute: defaultRoute,
+    ...options
+  });
 }
 
 /**
- * Create OpenAI client instance (fallback)
- * @param {Object} config - Configuration
+ * Create OpenAI client
+ * @param {Object} options - Client options
  * @returns {Object} OpenAI client instance
  */
-function createOpenAIClient(config = {}) {
+function createOpenAIClient(options = {}) {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
@@ -77,303 +67,360 @@ function createOpenAIClient(config = {}) {
 
   return new OpenAI({
     apiKey,
-    timeout: config.timeout || DEFAULT_CONFIG.timeout,
-    maxRetries: config.maxRetries || DEFAULT_CONFIG.maxRetries
+    timeout: options.timeout || 30000,
+    maxRetries: options.maxRetries || 1,
+    ...options
   });
 }
 
 /**
- * Get or create LLM client instance for a mode
- * @param {string} mode - AI mode (default, empathetic, nsfw, cheap, fast)
+ * Create LLM client instance for a mode
+ * @param {string} mode - AI mode (default, flanders, balanceado, canalla, nsfw)
  * @param {Object} options - Options (plan, timeout, maxRetries)
- * @returns {Object} LLM client wrapper
+ * @returns {Object} LLM client wrapper with OpenAI-compatible interface
  */
 function getInstance(mode = 'default', options = {}) {
-  // Check cache first
-  const cacheKey = `${mode}-${options.plan || 'default'}`;
+  // Normalize mode
+  const normalizedMode = mode.toLowerCase();
+  const route = getRouteConfig(normalizedMode);
+
+  // Cache key: mode + plan (if provided)
+  const cacheKey = `${normalizedMode}-${options.plan || 'default'}`;
+
+  // Return cached instance if available
   if (clientCache.has(cacheKey)) {
     return clientCache.get(cacheKey);
   }
 
-  // Create new instance
-  const route = getRouteConfig(mode);
-  const config = {
-    ...DEFAULT_CONFIG,
-    ...route.config,
-    ...options
-  };
-
+  // Determine client type
   let client;
-  let clientType;
+  let clientType = 'openai'; // Default to OpenAI
 
-  // Special handling for NSFW mode (Grok) - Issue #920
-  // If Grok not configured, fallback to OpenAI
-  if (mode === 'nsfw' && route.fallbackToOpenAI) {
-    const grokApiKey = process.env.GROK_API_KEY;
-    if (!grokApiKey && !isPortkeyConfigured()) {
-      logger.warn(
-        'LLMClient: NSFW mode requested but Grok API key not configured, using OpenAI fallback'
-      );
-      client = createOpenAIClient(config);
-      clientType = 'openai';
-      // Update route to reflect fallback
-      route.provider = 'openai';
-      route.model = 'gpt-5.1';
-    } else if (isPortkeyConfigured() && !mockMode.isMockMode) {
-      // Use Portkey for Grok routing
-      try {
-        client = createPortkeyClient(mode, config);
-        clientType = 'portkey';
-        logger.info(`LLMClient: Created Portkey client for NSFW mode (Grok)`);
-      } catch (error) {
-        logger.warn(
-          `LLMClient: Failed to create Portkey client for NSFW, falling back to OpenAI: ${error.message}`
-        );
-        client = createOpenAIClient(config);
-        clientType = 'openai';
-        route.provider = 'openai';
-        route.model = 'gpt-5.1';
-      }
-    } else {
-      client = createOpenAIClient(config);
-      clientType = 'openai';
-      route.provider = 'openai';
-      route.model = 'gpt-5.1';
-    }
+  // Check for Grok API key for NSFW mode
+  const grokApiKey = process.env.GROK_API_KEY;
+
+  // Issue #920: Use Portkey if configured, otherwise fallback to OpenAI
+  if (normalizedMode === 'nsfw' && grokApiKey && !isPortkeyConfigured()) {
+    // Direct Grok client (when Portkey not configured)
+    // Issue #920: Use Grok API key and endpoint (OpenAI-compatible API)
+    logger.info('LLMClient: Using direct Grok client for NSFW mode');
+    client = new OpenAI({
+      apiKey: grokApiKey,
+      baseURL: process.env.GROK_BASE_URL || 'https://api.x.ai/v1',
+      timeout: options.timeout || 30000,
+      maxRetries: options.maxRetries || 1,
+      ...options
+    });
+    clientType = 'grok';
   } else if (isPortkeyConfigured() && !mockMode.isMockMode) {
-    // Use Portkey for other modes (flanders, balanceado, canalla)
-    try {
-      client = createPortkeyClient(mode, config);
-      clientType = 'portkey';
-      logger.info(`LLMClient: Created Portkey client for mode "${mode}"`);
-    } catch (error) {
-      logger.warn(
-        `LLMClient: Failed to create Portkey client, falling back to OpenAI: ${error.message}`
-      );
-      client = createOpenAIClient(config);
-      clientType = 'openai';
-    }
+    // Use Portkey gateway
+    logger.info(`LLMClient: Using Portkey gateway for mode "${normalizedMode}"`);
+    client = createPortkeyClient(route, options);
+    clientType = 'portkey';
   } else {
-    // Fallback to OpenAI direct
-    if (mockMode.isMockMode) {
-      client = mockMode.generateMockOpenAI();
-      clientType = 'mock';
-      logger.info(`LLMClient: Using mock client for mode "${mode}"`);
-    } else {
-      client = createOpenAIClient(config);
-      clientType = 'openai';
-      logger.info(`LLMClient: Created OpenAI client for mode "${mode}" (Portkey not configured)`);
-    }
+    // Fallback to OpenAI
+    logger.info(`LLMClient: Using OpenAI directly for mode "${normalizedMode}"`);
+    client = createOpenAIClient(options);
+    clientType = 'openai';
   }
 
   // Create wrapper with OpenAI-compatible interface
   const wrapper = {
     client,
     clientType,
-    mode,
+    mode: normalizedMode,
     route,
-    config,
+    config: route.config,
+    extractMetadata: (response) => extractMetadata(response),
 
-    /**
-     * Chat completions (OpenAI-compatible)
-     * Exposes chat.completions.create() for backward compatibility
-     */
+    // OpenAI-compatible chat interface
     chat: {
       completions: {
-        create: async (completionParams) => {
-          return await wrapper._chatInternal(completionParams);
+        create: async (params) => {
+          try {
+            // Works for both Portkey and direct clients (OpenAI-compatible interface)
+            const response = await client.chat.completions.create({
+              ...params,
+              model: route.model,
+              ...route.config
+            });
+
+            // Transform and add metadata
+            const transformed = transformChatCompletion(response);
+            return {
+              ...transformed,
+              _portkey: {
+                mode: normalizedMode,
+                provider: route.provider,
+                fallbackUsed: false,
+                metadata: {}
+              }
+            };
+          } catch (error) {
+            // Issue #920: Check if error is due to model not found/available
+            const isModelError =
+              error.message?.includes('model') ||
+              error.message?.includes('not found') ||
+              error.message?.includes('invalid') ||
+              error.code === 'model_not_found';
+
+            // Try fallback model if primary model failed and fallbackModel is configured
+            if (isModelError && route.fallbackModel && route.model !== route.fallbackModel) {
+              logger.warn(
+                `LLMClient: Model "${route.model}" not available, trying fallback "${route.fallbackModel}"`
+              );
+              try {
+                const fallbackResponse = await client.chat.completions.create({
+                  ...params,
+                  model: route.fallbackModel,
+                  ...route.config
+                });
+                const transformed = transformChatCompletion(fallbackResponse);
+                return {
+                  ...transformed,
+                  _portkey: {
+                    mode: normalizedMode,
+                    provider: route.provider,
+                    fallbackUsed: true,
+                    originalModel: route.model,
+                    fallbackModel: route.fallbackModel,
+                    metadata: {}
+                  }
+                };
+              } catch (fallbackError) {
+                logger.error(`LLMClient: Fallback model "${route.fallbackModel}" also failed`, {
+                  error: fallbackError.message
+                });
+                // Continue to provider fallback logic below
+              }
+            }
+
+            logger.error(
+              `LLMClient: Error in chat.completions.create for mode "${normalizedMode}"`,
+              {
+                error: error.message,
+                provider: route.provider,
+                model: route.model
+              }
+            );
+
+            // Handle provider fallback (Portkey → OpenAI)
+            if (clientType === 'portkey') {
+              const nextProvider = getNextFallback(normalizedMode, route.provider);
+              if (nextProvider === 'openai') {
+                logger.info(`LLMClient: Falling back to OpenAI for mode "${normalizedMode}"`);
+                const openaiClient = createOpenAIClient(options);
+                // Issue #920: Use fallback model if route model isn't OpenAI-compatible (e.g., grok-beta)
+                const fallbackModel =
+                  route.fallbackModel ||
+                  (route.provider !== 'openai' ? 'gpt-4-turbo' : route.model);
+                const response = await openaiClient.chat.completions.create({
+                  ...params,
+                  model: fallbackModel,
+                  ...route.config
+                });
+
+                return {
+                  ...transformChatCompletion(response),
+                  _portkey: {
+                    mode: normalizedMode,
+                    provider: 'openai',
+                    fallbackUsed: true,
+                    originalProvider: route.provider,
+                    originalModel: route.model,
+                    fallbackModel: fallbackModel,
+                    metadata: {}
+                  }
+                };
+              }
+            }
+
+            throw error;
+          }
         }
       }
     },
 
-    /**
-     * Embeddings (OpenAI-compatible)
-     * Exposes embeddings.create() for backward compatibility
-     */
+    // OpenAI-compatible embeddings interface
     embeddings: {
       create: async (embeddingParams) => {
-        return await wrapper._embeddingsInternal(embeddingParams);
-      }
-    },
-
-    /**
-     * Internal chat completion method
-     * @private
-     */
-    async _chatInternal(completionParams) {
-      const startTime = Date.now();
-      let lastError;
-
-      try {
-        if (clientType === 'portkey') {
-          // Use Portkey with route configuration
-          const portkeyParams = {
-            ...completionParams,
-            model: route.model,
-            // Portkey-specific: route configuration
-            route: process.env.PORTKEY_DEFAULT_ROUTE || 'default'
-          };
-
-          const response = await client.chat.completions.create(portkeyParams);
-          const transformed = transformChatCompletion(response, mode, route.provider);
-
-          logger.debug('LLMClient: Portkey chat completion successful', {
-            mode,
-            provider: route.provider,
-            latency: Date.now() - startTime
-          });
-
-          return transformed;
-        } else {
-          // Direct OpenAI or mock
-          const response = await client.chat.completions.create(completionParams);
-
-          logger.debug('LLMClient: OpenAI chat completion successful', {
-            mode,
-            clientType,
-            latency: Date.now() - startTime
-          });
-
-          return response;
-        }
-      } catch (error) {
-        lastError = error;
-        logger.error('LLMClient: Chat completion failed', {
-          mode,
-          clientType,
-          error: error.message
-        });
-
-        // Try fallback if using Portkey
-        if (clientType === 'portkey') {
-          const nextProvider = getNextFallback(mode, route.provider);
-          if (nextProvider === 'openai') {
-            logger.info(`LLMClient: Falling back to OpenAI for mode "${mode}"`);
-            const openaiClient = createOpenAIClient(config);
-            const response = await openaiClient.chat.completions.create(completionParams);
-
-            // Mark as fallback used
-            return {
-              ...response,
-              _portkey: {
-                mode,
-                provider: 'openai',
-                fallbackUsed: true,
-                originalProvider: route.provider
-              }
-            };
-          }
-        }
-
-        throw error;
-      }
-    },
-
-    /**
-     * Responses API (OpenAI-compatible)
-     * Exposes responses.create() for prompt caching support
-     */
-    responses: {
-      create: async (responsesParams) => {
-        // Responses API is OpenAI-specific, so use OpenAI client directly
-        // Portkey may support this in the future, but for now fallback to OpenAI
-        if (clientType === 'portkey') {
-          logger.warn('LLMClient: Responses API not supported via Portkey, using OpenAI fallback');
-          const openaiClient = createOpenAIClient(config);
-          return await openaiClient.responses.create(responsesParams);
-        } else if (clientType === 'openai' && client.responses) {
-          return await client.responses.create(responsesParams);
-        } else {
-          // Fallback: convert Responses API params to chat.completions
-          logger.debug('LLMClient: Converting Responses API to chat.completions');
-          const messages = [
-            {
-              role: 'system',
-              content: responsesParams.input || ''
-            }
-          ];
-          return await wrapper._chatInternal({
-            model: responsesParams.model,
-            messages,
-            max_tokens: responsesParams.max_tokens,
-            temperature: responsesParams.temperature
-          });
-        }
-      }
-    },
-
-    /**
-     * Extract Portkey metadata from response
-     * Issue #920: Helper to extract mode, provider, fallbackUsed from responses
-     */
-    extractMetadata(response) {
-      return extractMetadataFromResponse(response);
-    },
-
-    /**
-     * Internal embeddings method
-     * @private
-     */
-    async _embeddingsInternal(embeddingParams) {
-      const startTime = Date.now();
-
-      try {
-        if (clientType === 'portkey') {
-          const portkeyParams = {
+        try {
+          // Works for both Portkey and direct clients (OpenAI-compatible interface)
+          const response = await client.embeddings.create({
             ...embeddingParams,
-            model: route.model || 'text-embedding-3-small',
-            route: process.env.PORTKEY_DEFAULT_ROUTE || 'default'
+            model: route.model || 'text-embedding-3-small'
+          });
+
+          const transformed = transformEmbedding(response);
+          return {
+            ...transformed,
+            _portkey: {
+              mode: normalizedMode,
+              provider: route.provider,
+              fallbackUsed: false,
+              metadata: {}
+            }
           };
-
-          const response = await client.embeddings.create(portkeyParams);
-          const transformed = transformEmbedding(response, mode, route.provider);
-
-          logger.debug('LLMClient: Portkey embedding successful', {
-            mode,
-            provider: route.provider,
-            latency: Date.now() - startTime
+        } catch (error) {
+          logger.error(`LLMClient: Error in embeddings.create for mode "${normalizedMode}"`, {
+            error: error.message,
+            provider: route.provider
           });
 
-          return transformed;
-        } else {
-          const response = await client.embeddings.create(embeddingParams);
+          // Handle fallback
+          if (clientType === 'portkey') {
+            const nextProvider = getNextFallback(normalizedMode, route.provider);
+            if (nextProvider === 'openai') {
+              logger.info(
+                `LLMClient: Falling back to OpenAI for embeddings mode "${normalizedMode}"`
+              );
+              const openaiClient = createOpenAIClient(options);
+              const response = await openaiClient.embeddings.create(embeddingParams);
 
-          logger.debug('LLMClient: OpenAI embedding successful', {
-            mode,
-            clientType,
-            latency: Date.now() - startTime
-          });
-
-          return response;
-        }
-      } catch (error) {
-        logger.error('LLMClient: Embedding failed', {
-          mode,
-          clientType,
-          error: error.message
-        });
-
-        // Try fallback if using Portkey
-        if (clientType === 'portkey') {
-          const nextProvider = getNextFallback(mode, route.provider);
-          if (nextProvider === 'openai') {
-            logger.info(`LLMClient: Falling back to OpenAI for embeddings mode "${mode}"`);
-            const openaiClient = createOpenAIClient(config);
-            const response = await openaiClient.embeddings.create(embeddingParams);
-
-            return {
-              ...response,
-              _portkey: {
-                mode,
-                provider: 'openai',
-                fallbackUsed: true,
-                originalProvider: route.provider
-              }
-            };
+              // Issue #920: Apply consistent transformation for fallback path
+              return {
+                ...transformEmbedding(response),
+                _portkey: {
+                  mode: normalizedMode,
+                  provider: 'openai',
+                  fallbackUsed: true,
+                  originalProvider: route.provider
+                }
+              };
+            }
           }
-        }
 
-        throw error;
+          throw error;
+        }
+      }
+    },
+
+    // OpenAI-compatible responses interface (for Responses API)
+    responses: {
+      create: async (params) => {
+        try {
+          // Works for both Portkey and direct clients (OpenAI-compatible interface)
+          const response = await client.responses.create({
+            ...params,
+            model: route.model,
+            ...route.config
+          });
+
+          const transformed = transformChatCompletion(response);
+          return {
+            ...transformed,
+            _portkey: {
+              mode: normalizedMode,
+              provider: route.provider,
+              fallbackUsed: false,
+              metadata: {}
+            }
+          };
+        } catch (error) {
+          // Issue #920: Check if error is due to model not found/available
+          const isModelError =
+            error.message?.includes('model') ||
+            error.message?.includes('not found') ||
+            error.message?.includes('invalid') ||
+            error.code === 'model_not_found';
+
+          // Try fallback model if primary model failed and fallbackModel is configured
+          if (isModelError && route.fallbackModel && route.model !== route.fallbackModel) {
+            logger.warn(
+              `LLMClient: Model "${route.model}" not available for responses, trying fallback "${route.fallbackModel}"`
+            );
+            try {
+              const fallbackResponse = await client.responses.create({
+                ...params,
+                model: route.fallbackModel,
+                ...route.config
+              });
+              const transformed = transformChatCompletion(fallbackResponse);
+              return {
+                ...transformed,
+                _portkey: {
+                  mode: normalizedMode,
+                  provider: route.provider,
+                  fallbackUsed: true,
+                  originalModel: route.model,
+                  fallbackModel: route.fallbackModel,
+                  metadata: {}
+                }
+              };
+            } catch (fallbackError) {
+              logger.error(
+                `LLMClient: Fallback model "${route.fallbackModel}" also failed for responses`,
+                { error: fallbackError.message }
+              );
+              // Continue to provider fallback logic below
+            }
+          }
+
+          logger.error(`LLMClient: Error in responses.create for mode "${normalizedMode}"`, {
+            error: error.message,
+            provider: route.provider,
+            model: route.model
+          });
+
+          // Handle provider fallback (Portkey → OpenAI)
+          if (clientType === 'portkey') {
+            const nextProvider = getNextFallback(normalizedMode, route.provider);
+            if (nextProvider === 'openai') {
+              logger.info(
+                `LLMClient: Falling back to OpenAI for responses mode "${normalizedMode}"`
+              );
+              const openaiClient = createOpenAIClient(options);
+              // Issue #920: Use fallback model if route model isn't OpenAI-compatible
+              const fallbackModel =
+                route.fallbackModel || (route.provider !== 'openai' ? 'gpt-4-turbo' : route.model);
+              const response = await openaiClient.responses.create({
+                ...params,
+                model: fallbackModel,
+                ...route.config
+              });
+
+              return {
+                ...transformChatCompletion(response),
+                _portkey: {
+                  mode: normalizedMode,
+                  provider: 'openai',
+                  fallbackUsed: true,
+                  originalProvider: route.provider,
+                  originalModel: route.model,
+                  fallbackModel: fallbackModel,
+                  metadata: {}
+                }
+              };
+            }
+          }
+
+          throw error;
+        }
+      }
+    },
+
+    // OpenAI-compatible moderations interface (for Moderation API)
+    moderations: {
+      create: async (params) => {
+        try {
+          // Moderations API is OpenAI-specific, use underlying client directly
+          const moderationResponse = await client.moderations.create(params);
+          return {
+            ...moderationResponse,
+            _portkey: {
+              mode: normalizedMode,
+              provider: route.provider,
+              fallbackUsed: false,
+              metadata: {}
+            }
+          };
+        } catch (error) {
+          logger.error(`LLMClient: Error in moderations.create for mode "${normalizedMode}"`, {
+            error: error.message,
+            provider: route.provider
+          });
+          throw error;
+        }
       }
     }
   };
@@ -396,8 +443,7 @@ function clearCache() {
  * Issue #920: Helper for endpoint /api/ai-modes
  */
 function getAvailableModes() {
-  const { LLM_ROUTES } = require('./routes');
-  return Object.keys(LLM_ROUTES);
+  return getAvailableModesFromRoutes();
 }
 
 /**
@@ -405,8 +451,7 @@ function getAvailableModes() {
  * Issue #920: Helper for endpoint /api/ai-modes
  */
 function modeExists(mode) {
-  const { LLM_ROUTES } = require('./routes');
-  return mode in LLM_ROUTES;
+  return modeExistsInRoutes(mode);
 }
 
 /**
@@ -422,12 +467,7 @@ function getRoute(mode) {
  * Issue #920: Helper for endpoint /api/ai-modes
  */
 function getFallbackChain(mode) {
-  const { getNextFallback } = require('./fallbacks');
-  const route = getRouteConfig(mode);
-  if (!route || !route.fallbacks) {
-    return [];
-  }
-  return route.fallbacks;
+  return getFallbackChainFromModule(mode);
 }
 
 module.exports = {

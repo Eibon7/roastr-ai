@@ -1,18 +1,10 @@
 /**
  * Shield Actions RLS Integration Tests - Issue #787 AC5
  *
- * @deprecated Use tests/rls/shield-complete.test.js instead (Issue #914 - 10-30x faster)
- *
- * This test suite uses network-based Supabase calls with JWT context switching (slow).
- * New tests use supabase-test with local DB (10-30x faster, no bandwidth costs).
- *
- * Migration: Issue #914 - RLS Tests Migration to supabase-test
- * New location: tests/rls/shield-complete.test.js
- *
  * Tests Row Level Security policies for Shield actions table:
  * - shield_actions (org-scoped)
  *
- * Related Issue: #787 (original), #914 (migration)
+ * Related Issue: #787
  * Related Node: multi-tenant.md, shield.md
  * Related PR: #769
  */

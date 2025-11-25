@@ -1,5 +1,6 @@
-const { OpenAI } = require('openai');
 const { mockMode } = require('../config/mockMode');
+const LLMClient = require('../lib/llmClient'); // Issue #920: Use LLMClient wrapper
+const { logger } = require('../utils/logger');
 
 /**
  * Embeddings Service
@@ -43,21 +44,22 @@ class EmbeddingsService {
   }
 
   /**
-   * Initialize OpenAI client
+   * Initialize LLM client (Issue #920: Migrated to LLMClient wrapper)
    */
   initializeClient() {
     if (mockMode.isMockMode) {
       this.client = this.createMockClient();
-      this.logger?.info('Mock embeddings client initialized');
+      logger.info('Mock embeddings client initialized');
     } else if (process.env.OPENAI_API_KEY) {
-      this.client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-        maxRetries: 2, // Standard resilience config (CodeRabbit #3343936799)
-        timeout: 30000 // 30 second timeout
+      // Issue #920: Use LLMClient wrapper for unified LLM access
+      const llmClient = LLMClient.getInstance('default', {
+        timeout: 30000,
+        maxRetries: 2
       });
-      this.logger?.info('OpenAI embeddings client initialized');
+      this.client = llmClient; // LLMClient exposes embeddings.create() interface
+      logger.info('LLMClient embeddings client initialized');
     } else {
-      this.logger?.warn('No OpenAI API key found, embeddings service will use fallback mode');
+      logger.warn('No OpenAI API key found, embeddings service will use fallback mode');
       this.client = null;
     }
   }
@@ -148,13 +150,15 @@ class EmbeddingsService {
         throw new Error('OpenAI client not initialized');
       }
 
+      // Issue #920: Use LLMClient embeddings interface (compatible with OpenAI)
       const response = await this.client.embeddings.create({
         model: this.model,
         input: text.trim(),
         dimensions: options.dimensions || this.dimensions
       });
 
-      const embedding = response.data[0].embedding;
+      // LLMClient returns OpenAI-compatible format
+      const embedding = response.data?.[0]?.embedding || response.embedding;
 
       // Cache the result
       this.cacheEmbedding(cacheKey, embedding);
@@ -165,7 +169,7 @@ class EmbeddingsService {
       return embedding;
     } catch (error) {
       this.stats.errors++;
-      this.logger?.error('Failed to generate embedding', {
+      logger.error('Failed to generate embedding', {
         error: error.message,
         textLength: text.length,
         model: this.model
@@ -197,7 +201,7 @@ class EmbeddingsService {
         const batchEmbeddings = await Promise.all(batchPromises);
         embeddings.push(...batchEmbeddings);
       } catch (error) {
-        this.logger?.error('Batch embedding generation failed', {
+        logger.error('Batch embedding generation failed', {
           batchStart: i,
           batchSize: batch.length,
           error: error.message
@@ -346,7 +350,7 @@ class EmbeddingsService {
         processed_at: new Date().toISOString()
       }));
     } catch (error) {
-      this.logger?.error('Failed to process persona text', {
+      logger.error('Failed to process persona text', {
         error: error.message,
         termsCount: terms.length,
         personaLength: personaText.length
@@ -381,7 +385,7 @@ class EmbeddingsService {
    */
   clearCache() {
     this.embeddingCache.clear();
-    this.logger?.info('Embedding cache cleared');
+    logger.info('Embedding cache cleared');
   }
 
   /**
@@ -409,7 +413,7 @@ class EmbeddingsService {
    */
   updateThresholds(newThresholds) {
     this.thresholds = { ...this.thresholds, ...newThresholds };
-    this.logger?.info('Similarity thresholds updated', this.thresholds);
+    logger.info('Similarity thresholds updated', this.thresholds);
   }
 
   /**
