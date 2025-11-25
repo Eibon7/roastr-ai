@@ -12,6 +12,7 @@
 **Problema:** Tests RLS fallan con `spawn psql ENOENT` cuando `psql` no está en PATH.
 
 **Solución:**
+
 - Creado helper `tests/rls/helpers/check-psql.js` para verificar disponibilidad de `psql`
 - Modificados tests RLS (`subscriptions.test.js`, `tenants.test.js`, `persona.test.js`) para:
   - Importar y usar `skipIfPsqlNotAvailable()` helper
@@ -21,6 +22,7 @@
   - Manejar `teardown()` de forma segura cuando no está disponible
 
 **Archivos modificados:**
+
 - `tests/rls/helpers/check-psql.js` (nuevo)
 - `tests/rls/subscriptions.test.js`
 - `tests/rls/tenants.test.js`
@@ -31,12 +33,14 @@
 **Problema:** Test `dashboard-metrics-issue366.test.js` intenta importar `useAnalytics` hook que no existe.
 
 **Solución:**
+
 - Eliminado mock de hook inexistente `useAnalytics`
 - Eliminado mock de hook inexistente `useShieldData`
 - Reemplazado con mock de `apiClient` que es lo que realmente usa el dashboard
 - Actualizados tests para usar `apiClient.get('/analytics/summary')` y `apiClient.get('/shield/intercepted')` en lugar de los hooks
 
 **Archivos modificados:**
+
 - `tests/unit/frontend/dashboard-metrics-issue366.test.js`
 
 ### 3. ✅ Twitter Service Configuration
@@ -44,6 +48,7 @@
 **Problema:** Twitter service falla con "Invalid Twitter configuration" cuando las variables de entorno no están configuradas en tests.
 
 **Solución:**
+
 - Modificado `src/services/twitter.js` para:
   - Detectar modo test (`NODE_ENV === 'test'` o `ENABLE_MOCK_MODE === 'true'`)
   - Saltar validación de configuración en modo test
@@ -54,6 +59,7 @@
   - Permitir que el servicio se inicialice sin configuración completa en tests
 
 **Archivos modificados:**
+
 - `src/services/twitter.js`
 - `src/integrations/twitter/twitterService.js`
 
@@ -62,11 +68,13 @@
 **Problema:** Tests RLS fallan con "teardown is not a function" cuando `psql` no está disponible.
 
 **Solución:**
+
 - Agregadas verificaciones en `beforeEach`/`afterEach` para evitar llamadas cuando `db` es undefined
 - Agregada verificación en `afterAll` para evitar llamadas a `teardown()` cuando no está disponible
 - Manejo de errores mejorado en `teardown()` para ignorar errores relacionados con `psql`
 
 **Archivos modificados:**
+
 - `tests/rls/subscriptions.test.js`
 - `tests/rls/tenants.test.js`
 - `tests/rls/persona.test.js`
@@ -83,15 +91,17 @@
 ## Próximos Pasos
 
 1. **Instalar PostgreSQL client tools** (opcional para desarrollo local):
+
    ```bash
    # macOS
    brew install postgresql
-   
+
    # Ubuntu
    sudo apt-get install postgresql-client
    ```
 
 2. **Verificar tests pasan**:
+
    ```bash
    npm test -- tests/rls/
    npm test -- tests/unit/frontend/dashboard-metrics-issue366.test.js
@@ -106,4 +116,3 @@
 - El servicio de Twitter maneja correctamente la falta de configuración en modo test
 - Los tests de frontend ahora usan mocks correctos basados en la implementación real
 - Todos los cambios son backward-compatible y no afectan producción
-
