@@ -1,79 +1,78 @@
 /**
  * LLM Response Transformers
  *
- * Normalizes Portkey responses to OpenAI-compatible format
+ * Normalizes responses from different LLM providers to OpenAI-compatible format
  * Issue #920: Portkey AI Gateway integration
  */
 
-const { logger } = require('../../utils/logger');
-
 /**
- * Transform Portkey chat completion response to OpenAI format
- * @param {Object} portkeyResponse - Response from Portkey API
- * @param {string} mode - AI mode used
- * @param {string} provider - Provider used
+ * Transform Portkey/LLM response to OpenAI-compatible format
+ * @param {Object} response - Raw response from LLM provider
  * @returns {Object} OpenAI-compatible response
  */
-function transformChatCompletion(portkeyResponse, mode, provider) {
-  try {
-    // Portkey returns OpenAI-compatible format, but may have additional metadata
-    const transformed = {
-      id: portkeyResponse.id || `portkey-${Date.now()}`,
-      object: portkeyResponse.object || 'chat.completion',
-      created: portkeyResponse.created || Math.floor(Date.now() / 1000),
-      model: portkeyResponse.model || 'unknown',
-      choices: portkeyResponse.choices || [],
-      usage: portkeyResponse.usage || {},
-      // Portkey-specific metadata
-      _portkey: {
-        mode,
-        provider,
-        metadata: portkeyResponse.metadata || {},
-        fallbackUsed: portkeyResponse.fallback_used || false
-      }
-    };
-
-    return transformed;
-  } catch (error) {
-    logger.error('Error transforming Portkey response:', error);
-    throw new Error(`Failed to transform Portkey response: ${error.message}`);
+function transformChatCompletion(response) {
+  // If already OpenAI-compatible, return as-is
+  if (response.choices && response.choices[0] && response.choices[0].message) {
+    return response;
   }
+
+  // Transform Portkey response format
+  if (response.content) {
+    return {
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: response.content
+          },
+          finish_reason: 'stop'
+        }
+      ],
+      usage: response.usage || {},
+      model: response.model || 'unknown',
+      _portkey: response._portkey || {}
+    };
+  }
+
+  // Fallback: return response as-is
+  return response;
 }
 
 /**
- * Transform Portkey embedding response to OpenAI format
- * @param {Object} portkeyResponse - Response from Portkey API
- * @param {string} mode - AI mode used
- * @param {string} provider - Provider used
- * @returns {Object} OpenAI-compatible response
+ * Transform embedding response to OpenAI-compatible format
+ * @param {Object} response - Raw embedding response
+ * @returns {Object} OpenAI-compatible embedding response
  */
-function transformEmbedding(portkeyResponse, mode, provider) {
-  try {
-    const transformed = {
-      object: portkeyResponse.object || 'list',
-      data: portkeyResponse.data || [],
-      model: portkeyResponse.model || 'unknown',
-      usage: portkeyResponse.usage || {},
-      // Portkey-specific metadata
-      _portkey: {
-        mode,
-        provider,
-        metadata: portkeyResponse.metadata || {},
-        fallbackUsed: portkeyResponse.fallback_used || false
-      }
-    };
-
-    return transformed;
-  } catch (error) {
-    logger.error('Error transforming Portkey embedding response:', error);
-    throw new Error(`Failed to transform Portkey embedding response: ${error.message}`);
+function transformEmbedding(response) {
+  // If already OpenAI-compatible, return as-is
+  if (response.data && Array.isArray(response.data)) {
+    return response;
   }
+
+  // Transform Portkey embedding format
+  if (response.embedding) {
+    return {
+      data: [
+        {
+          embedding: response.embedding,
+          index: 0
+        }
+      ],
+      usage: response.usage || {},
+      model: response.model || 'unknown',
+      _portkey: response._portkey || {}
+    };
+  }
+
+  // Fallback: return response as-is
+  return response;
 }
 
 /**
  * Extract metadata from transformed response
+ * Issue #920: Extract mode, provider, fallbackUsed from Portkey metadata
  * @param {Object} transformedResponse - Transformed response with _portkey metadata
- * @returns {Object} Metadata object
+ * @returns {Object} Extracted metadata
  */
 function extractMetadata(transformedResponse) {
   return {

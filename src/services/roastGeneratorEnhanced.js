@@ -21,6 +21,7 @@ const toneCompatibilityService = require('./toneCompatibilityService'); // Issue
 const { supabaseServiceClient } = require('../config/supabase');
 const { flags } = require('../config/flags');
 const { callOpenAIWithCaching } = require('../lib/openai/responsesHelper'); // Issue #858: Responses API helper
+const LLMClient = require('../lib/llmClient'); // Issue #920: LLMClient wrapper
 require('dotenv').config();
 
 // Timeout configuration (Issue #419)
@@ -156,12 +157,22 @@ class RoastGeneratorEnhanced {
       if (!rqcConfig.advanced_review_enabled || !rqcGloballyEnabled) {
         logger.info('📝 Using basic moderation for plan:', rqcConfig.plan);
 
-        const rawRoast = await this.generateWithBasicModeration(
+        const basicModerationResult = await this.generateWithBasicModeration(
           text,
           toxicityScore,
           tone,
           rqcConfig
         );
+
+        // Issue #920: Extract roast and metadata from result
+        const rawRoast =
+          typeof basicModerationResult === 'string'
+            ? basicModerationResult
+            : basicModerationResult.roast;
+        const portkeyMetadata =
+          typeof basicModerationResult !== 'string' && basicModerationResult._portkeyMetadata
+            ? basicModerationResult._portkeyMetadata
+            : null;
 
         // Apply unified transparency disclaimer (Issue #196)
         const transparencyResult = await transparencyService.applyTransparencyDisclaimer(
@@ -204,7 +215,8 @@ class RoastGeneratorEnhanced {
           method: rqcGloballyEnabled ? 'rqc_bypass' : 'basic_moderation',
           transparencyMode: transparencyResult.transparencyMode,
           disclaimerType: transparencyResult.disclaimerType,
-          bioText: transparencyResult.bioText
+          bioText: transparencyResult.bioText,
+          _portkeyMetadata: portkeyMetadata // Issue #920: Propagate metadata
         };
       }
 
@@ -358,8 +370,17 @@ class RoastGeneratorEnhanced {
       }
     });
 
+    // Issue #920: Get LLM client for specific tone mode
+    // Map tone (flanders/balanceado/canalla) to LLMClient mode
+    const toneMode = tone || rqcConfig.tone || 'balanceado';
+    const llmClientForTone = LLMClient.getInstance(toneMode, {
+      timeout: VARIANT_GENERATION_TIMEOUT,
+      maxRetries: 1,
+      plan: rqcConfig.plan
+    });
+
     // Issue #858: Use Responses API with prompt caching
-    const result = await callOpenAIWithCaching(this.openai, {
+    const result = await callOpenAIWithCaching(llmClientForTone, {
       model: model,
       input: completePrompt,
       max_tokens: levelParams.max_tokens,
@@ -369,15 +390,24 @@ class RoastGeneratorEnhanced {
         userId: rqcConfig.user_id,
         orgId: rqcConfig.orgId || null,
         plan: rqcConfig.plan,
-        endpoint: 'roast'
+        endpoint: 'roast',
+        mode: toneMode // Issue #920: Track mode used
       }
     });
 
     const roast = result.content;
 
+    // Issue #920: Extract Portkey metadata from response if available
+    const portkeyMetadata = llmClientForTone.extractMetadata
+      ? llmClientForTone.extractMetadata(result)
+      : null;
+
     logger.info('✅ Basic moderated roast generated', {
       plan: rqcConfig.plan,
       model: model,
+      mode: toneMode, // Issue #920: Log mode used
+      provider: portkeyMetadata?.provider || 'openai', // Issue #920: Log provider
+      fallbackUsed: portkeyMetadata?.fallbackUsed || false, // Issue #920: Log fallback
       intensityLevel: toneCompatibilityService.getToneIntensity(
         rqcConfig.tone || tone || 'balanceado'
       ),
@@ -385,7 +415,15 @@ class RoastGeneratorEnhanced {
       promptVersion: this.promptTemplate.getVersion()
     });
 
-    return roast;
+    // Issue #920: Return roast with Portkey metadata for propagation
+    return {
+      roast,
+      _portkeyMetadata: portkeyMetadata || {
+        mode: toneMode,
+        provider: 'openai',
+        fallbackUsed: false
+      }
+    };
   }
 
   /**
@@ -401,7 +439,9 @@ class RoastGeneratorEnhanced {
       logger.info(`🔄 RQC attempt ${attempt}/${maxAttempts}`);
 
       // Generate initial roast
-      const roast = await this.generateInitialRoast(text, tone, rqcConfig);
+      const initialRoastResult = await this.generateInitialRoast(text, tone, rqcConfig);
+      const roast =
+        typeof initialRoastResult === 'string' ? initialRoastResult : initialRoastResult.roast;
       const roastTokens = this.estimateTokens(text + roast);
       totalTokensUsed += roastTokens;
 
@@ -428,6 +468,16 @@ class RoastGeneratorEnhanced {
           stylePass: reviewResult.stylePass
         });
 
+        // Issue #920: Extract Portkey metadata from initial roast result
+        const portkeyMetadata =
+          typeof initialRoastResult !== 'string' && initialRoastResult._portkeyMetadata
+            ? initialRoastResult._portkeyMetadata
+            : {
+                mode: tone || rqcConfig.tone || 'balanceado',
+                provider: 'openai',
+                fallbackUsed: false
+              };
+
         return {
           roast,
           attempt,
@@ -435,7 +485,8 @@ class RoastGeneratorEnhanced {
           costCents: totalCost,
           method: 'advanced_rqc',
           rqcResults: reviewResult,
-          approved: true
+          approved: true,
+          _portkeyMetadata: portkeyMetadata // Issue #920: Propagate metadata
         };
       }
 
@@ -508,8 +559,16 @@ class RoastGeneratorEnhanced {
       }
     });
 
+    // Issue #920: Get LLM client for specific tone mode
+    const toneMode = tone || rqcConfig.tone || 'balanceado';
+    const llmClientForTone = LLMClient.getInstance(toneMode, {
+      timeout: VARIANT_GENERATION_TIMEOUT,
+      maxRetries: 1,
+      plan: rqcConfig.plan
+    });
+
     // Issue #858: Use Responses API with prompt caching
-    const result = await callOpenAIWithCaching(this.openai, {
+    const result = await callOpenAIWithCaching(llmClientForTone, {
       model: model,
       input: completePrompt,
       max_tokens: 150,
@@ -519,11 +578,25 @@ class RoastGeneratorEnhanced {
         userId: rqcConfig.user_id,
         orgId: rqcConfig.orgId || null,
         plan: rqcConfig.plan,
-        endpoint: 'roast_initial'
+        endpoint: 'roast_initial',
+        mode: toneMode // Issue #920: Track mode used
       }
     });
 
-    return result.content;
+    // Issue #920: Extract Portkey metadata from response if available
+    const portkeyMetadata = llmClientForTone.extractMetadata
+      ? llmClientForTone.extractMetadata(result)
+      : null;
+
+    // Issue #920: Return roast with Portkey metadata for propagation
+    return {
+      roast: result.content,
+      _portkeyMetadata: portkeyMetadata || {
+        mode: toneMode,
+        provider: 'openai',
+        fallbackUsed: false
+      }
+    };
   }
 
   /**

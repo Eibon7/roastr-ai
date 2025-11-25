@@ -9,6 +9,7 @@ const EmbeddingsService = require('../services/embeddingsService');
 const toxicityPatternsService = require('../services/toxicityPatternsService');
 const advancedLogger = require('../utils/advancedLogger');
 const PerspectiveService = require('../services/perspective');
+const LLMClient = require('../lib/llmClient'); // Issue #920: Use LLMClient wrapper
 const SponsorService = require('../services/sponsorService'); // Issue #859: Brand Safety
 
 /**
@@ -175,15 +176,13 @@ class AnalyzeToxicityWorker extends BaseWorker {
         this.log('info', 'Perspective API service initialized');
       }
 
-      // OpenAI Moderation API (fallback)
+      // OpenAI Moderation API (fallback) - Issue #920: Use LLMClient wrapper
       if (process.env.OPENAI_API_KEY) {
-        const { OpenAI } = require('openai');
-        this.openaiClient = new OpenAI({
-          apiKey: process.env.OPENAI_API_KEY,
+        this.openaiClient = LLMClient.getInstance('default', {
           maxRetries: 2,
           timeout: 30000
         });
-        this.log('info', 'OpenAI Moderation API client initialized');
+        this.log('info', 'LLMClient Moderation API client initialized');
       }
     }
 
@@ -1483,6 +1482,7 @@ class AnalyzeToxicityWorker extends BaseWorker {
    * Analyze using OpenAI Moderation API
    */
   async analyzeOpenAI(text) {
+    // Issue #920: Use LLMClient moderations interface
     const response = await this.openaiClient.moderations.create({
       model: process.env.OPENAI_MODERATION_MODEL || 'omni-moderation-latest',
       input: text
