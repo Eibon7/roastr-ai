@@ -22,7 +22,7 @@ const mockLoggerInstance = {
 
 jest.mock('../../../src/utils/logger', () => {
   // Create a mock that matches the actual export structure
-  const MockLogger = function() {};
+  const MockLogger = function () {};
   MockLogger.info = jest.fn();
   MockLogger.warn = jest.fn();
   MockLogger.error = jest.fn();
@@ -162,7 +162,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.violationCount).toBe(0);
       expect(result.offenseLevel).toBe('first');
@@ -179,7 +183,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.violationCount).toBe(0);
       expect(result.offenseLevel).toBe('first');
@@ -196,7 +204,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.violationCount).toBe(0);
       expect(result.offenseLevel).toBe('first');
@@ -213,7 +225,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(Array.isArray(userBehavior.actions_taken)).toBe(true);
     });
@@ -230,7 +246,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(userBehavior.last_seen_at).toBeNull();
     });
@@ -256,7 +276,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.severity).toBe('critical');
     });
@@ -273,7 +297,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.severity).toBe('high');
     });
@@ -290,7 +318,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should use original severity, not override
       expect(result.severity).toBe('medium');
@@ -308,7 +340,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.severity).toBe('critical');
     });
@@ -330,13 +366,15 @@ describe('ShieldService - Edge Cases Extended', () => {
       const recentTimestamp = new Date(Date.now() - 30 * 60 * 1000).toISOString(); // 30 minutes ago
       const userBehavior = {
         total_violations: 2,
-        actions_taken: [
-          { timestamp: recentTimestamp, action: 'warn' }
-        ],
+        actions_taken: [{ timestamp: recentTimestamp, action: 'warn' }],
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should escalate to persistent due to aggressive time window
       expect(result.offenseLevel).toBe('persistent');
@@ -350,13 +388,15 @@ describe('ShieldService - Edge Cases Extended', () => {
       const oldTimestamp = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(); // 3 days ago
       const userBehavior = {
         total_violations: 3,
-        actions_taken: [
-          { timestamp: oldTimestamp, action: 'mute_temp' }
-        ],
+        actions_taken: [{ timestamp: oldTimestamp, action: 'mute_temp' }],
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should use standard escalation (not aggressive)
       expect(result.offenseLevel).toBe('persistent');
@@ -370,13 +410,15 @@ describe('ShieldService - Edge Cases Extended', () => {
       const veryOldTimestamp = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(); // 10 days ago
       const userBehavior = {
         total_violations: 3,
-        actions_taken: [
-          { timestamp: veryOldTimestamp, action: 'mute_temp' }
-        ],
+        actions_taken: [{ timestamp: veryOldTimestamp, action: 'mute_temp' }],
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should downgrade from persistent to repeat due to time decay
       expect(result.offenseLevel).toBe('repeat');
@@ -390,13 +432,15 @@ describe('ShieldService - Edge Cases Extended', () => {
       const veryOldTimestamp = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(); // 10 days ago
       const userBehavior = {
         total_violations: 6, // Dangerous level
-        actions_taken: [
-          { timestamp: veryOldTimestamp, action: 'block' }
-        ],
+        actions_taken: [{ timestamp: veryOldTimestamp, action: 'block' }],
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should downgrade from dangerous to persistent due to time decay
       expect(result.offenseLevel).toBe('persistent');
@@ -425,7 +469,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should escalate to persistent even though only 1 violation
       expect(result.offenseLevel).toBe('persistent');
@@ -445,7 +493,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should use normal escalation (repeat, not persistent)
       expect(result.offenseLevel).toBe('repeat');
@@ -472,7 +524,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.emergency).toBe(true);
       expect(result.primary).toBe('report');
@@ -492,7 +548,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.emergency).toBe(true);
       expect(result.primary).toBe('report');
@@ -522,7 +582,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'standard'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.legal_compliance).toBe(true);
       expect(result.primary).toBe('report');
@@ -553,7 +617,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         }
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should escalate action (e.g., mute_temp -> mute_permanent)
       expect(result.primary).toBeDefined();
@@ -573,7 +641,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         }
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should downgrade action
       expect(result.primary).toBeDefined();
@@ -593,7 +665,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         }
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should not downgrade critical severity
       expect(result.severity).toBe('critical');
@@ -619,7 +695,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'verified_creator'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       expect(result.manual_review_required).toBe(true);
     });
@@ -635,7 +715,11 @@ describe('ShieldService - Edge Cases Extended', () => {
         user_type: 'verified_creator'
       };
 
-      const result = await shieldService.determineShieldActions(analysisResult, userBehavior, comment);
+      const result = await shieldService.determineShieldActions(
+        analysisResult,
+        userBehavior,
+        comment
+      );
 
       // Should still require manual review but not downgrade critical
       expect(result.manual_review_required).toBe(true);
@@ -738,9 +822,7 @@ describe('ShieldService - Edge Cases Extended', () => {
     it('should return aggressive for violations < 1 hour', () => {
       const recentTimestamp = new Date(Date.now() - 30 * 60 * 1000).toISOString(); // 30 minutes ago
       const userBehavior = {
-        actions_taken: [
-          { timestamp: recentTimestamp, action: 'warn' }
-        ]
+        actions_taken: [{ timestamp: recentTimestamp, action: 'warn' }]
       };
 
       const result = shieldService.calculateTimeWindowEscalation(userBehavior);
@@ -751,9 +833,7 @@ describe('ShieldService - Edge Cases Extended', () => {
     it('should return standard for violations 1-24 hours', () => {
       const recentTimestamp = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(); // 12 hours ago
       const userBehavior = {
-        actions_taken: [
-          { timestamp: recentTimestamp, action: 'warn' }
-        ]
+        actions_taken: [{ timestamp: recentTimestamp, action: 'warn' }]
       };
 
       const result = shieldService.calculateTimeWindowEscalation(userBehavior);
@@ -764,9 +844,7 @@ describe('ShieldService - Edge Cases Extended', () => {
     it('should return reduced for violations 24h-7d', () => {
       const oldTimestamp = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(); // 3 days ago
       const userBehavior = {
-        actions_taken: [
-          { timestamp: oldTimestamp, action: 'mute_temp' }
-        ]
+        actions_taken: [{ timestamp: oldTimestamp, action: 'mute_temp' }]
       };
 
       const result = shieldService.calculateTimeWindowEscalation(userBehavior);
@@ -777,9 +855,7 @@ describe('ShieldService - Edge Cases Extended', () => {
     it('should return minimal for violations > 7 days', () => {
       const veryOldTimestamp = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(); // 10 days ago
       const userBehavior = {
-        actions_taken: [
-          { timestamp: veryOldTimestamp, action: 'block' }
-        ]
+        actions_taken: [{ timestamp: veryOldTimestamp, action: 'block' }]
       };
 
       const result = shieldService.calculateTimeWindowEscalation(userBehavior);

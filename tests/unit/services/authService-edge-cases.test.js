@@ -142,27 +142,38 @@ describe('AuthService - Edge Cases', () => {
     });
 
     it('should reject if user not found', async () => {
-      mockSupabaseServiceClient.from().select().eq().single.mockResolvedValue({
-        data: null,
-        error: { message: 'Not found' }
-      });
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValue({
+          data: null,
+          error: { message: 'Not found' }
+        });
 
       await expect(authService.changeEmail(params)).rejects.toThrow('User not found');
     });
 
     it('should reject if current email does not match', async () => {
-      mockSupabaseServiceClient.from().select().eq().single.mockResolvedValue({
-        data: { email: 'different@example.com', active: true },
-        error: null
-      });
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValue({
+          data: { email: 'different@example.com', active: true },
+          error: null
+        });
 
       await expect(authService.changeEmail(params)).rejects.toThrow('Current email does not match');
     });
 
     it('should reject if new email is already in use', async () => {
       // First call: get current user
-      mockSupabaseServiceClient.from().select().eq().single
-        .mockResolvedValueOnce({
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
           data: { email: params.currentEmail, active: true },
           error: null
         })
@@ -176,8 +187,11 @@ describe('AuthService - Edge Cases', () => {
     });
 
     it('should handle auth update errors', async () => {
-      mockSupabaseServiceClient.from().select().eq().single
-        .mockResolvedValueOnce({
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
           data: { email: params.currentEmail, active: true },
           error: null
         })
@@ -191,15 +205,23 @@ describe('AuthService - Edge Cases', () => {
         error: { message: 'Auth update failed' }
       });
 
-      await expect(authService.changeEmail(params)).rejects.toThrow('Failed to initiate email change');
+      await expect(authService.changeEmail(params)).rejects.toThrow(
+        'Failed to initiate email change'
+      );
     });
   });
 
   describe('confirmEmailChange - Edge Cases', () => {
     it('should reject if token is missing', async () => {
-      await expect(authService.confirmEmailChange(null)).rejects.toThrow('Confirmation token is required');
-      await expect(authService.confirmEmailChange(undefined)).rejects.toThrow('Confirmation token is required');
-      await expect(authService.confirmEmailChange('')).rejects.toThrow('Confirmation token is required');
+      await expect(authService.confirmEmailChange(null)).rejects.toThrow(
+        'Confirmation token is required'
+      );
+      await expect(authService.confirmEmailChange(undefined)).rejects.toThrow(
+        'Confirmation token is required'
+      );
+      await expect(authService.confirmEmailChange('')).rejects.toThrow(
+        'Confirmation token is required'
+      );
     });
 
     it('should handle verification errors', async () => {
@@ -265,17 +287,24 @@ describe('AuthService - Edge Cases', () => {
     });
 
     it('should handle user not found', async () => {
-      mockSupabaseServiceClient.from().select().eq().single.mockResolvedValue({
-        data: null,
-        error: { message: 'Not found' }
-      });
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValue({
+          data: null,
+          error: { message: 'Not found' }
+        });
 
       await expect(authService.exportUserData(userId)).rejects.toThrow('User not found');
     });
 
     it('should handle organization fetch errors gracefully', async () => {
-      mockSupabaseServiceClient.from().select().eq().single
-        .mockResolvedValueOnce({
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
           data: { id: userId, email: 'user@example.com' },
           error: null
         })
@@ -291,8 +320,11 @@ describe('AuthService - Edge Cases', () => {
     });
 
     it('should handle activities fetch errors gracefully', async () => {
-      mockSupabaseServiceClient.from().select().eq().single
-        .mockResolvedValueOnce({
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
           data: { id: userId, email: 'user@example.com' },
           error: null
         })
@@ -301,10 +333,16 @@ describe('AuthService - Edge Cases', () => {
           error: null
         });
 
-      mockSupabaseServiceClient.from().select().eq().gte().order().limit.mockResolvedValue({
-        data: null,
-        error: { message: 'Activities fetch failed' }
-      });
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .gte()
+        .order()
+        .limit.mockResolvedValue({
+          data: null,
+          error: { message: 'Activities fetch failed' }
+        });
 
       const result = await authService.exportUserData(userId);
 
@@ -314,8 +352,11 @@ describe('AuthService - Edge Cases', () => {
 
     it('should handle integrations fetch errors gracefully', async () => {
       const orgId = 'org-123';
-      mockSupabaseServiceClient.from().select().eq().single
-        .mockResolvedValueOnce({
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
           data: { id: userId, email: 'user@example.com' },
           error: null
         })
@@ -376,44 +417,60 @@ describe('AuthService - Edge Cases', () => {
 
     it('should reject if userId is missing', async () => {
       await expect(authService.requestAccountDeletion(null)).rejects.toThrow('User ID is required');
-      await expect(authService.requestAccountDeletion(undefined)).rejects.toThrow('User ID is required');
+      await expect(authService.requestAccountDeletion(undefined)).rejects.toThrow(
+        'User ID is required'
+      );
       await expect(authService.requestAccountDeletion('')).rejects.toThrow('User ID is required');
     });
 
     it('should reject if user not found', async () => {
-      mockSupabaseServiceClient.from().select().eq().single.mockResolvedValue({
-        data: null,
-        error: { message: 'Not found' }
-      });
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValue({
+          data: null,
+          error: { message: 'Not found' }
+        });
 
       await expect(authService.requestAccountDeletion(userId)).rejects.toThrow('User not found');
     });
 
     it('should reject if account is already deleted', async () => {
-      mockSupabaseServiceClient.from().select().eq().single.mockResolvedValue({
-        data: {
-          email: 'user@example.com',
-          deletion_scheduled_at: null,
-          deleted_at: new Date().toISOString()
-        },
-        error: null
-      });
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValue({
+          data: {
+            email: 'user@example.com',
+            deletion_scheduled_at: null,
+            deleted_at: new Date().toISOString()
+          },
+          error: null
+        });
 
-      await expect(authService.requestAccountDeletion(userId)).rejects.toThrow('Account is already deleted');
+      await expect(authService.requestAccountDeletion(userId)).rejects.toThrow(
+        'Account is already deleted'
+      );
     });
 
     it('should reject if deletion is already scheduled', async () => {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 15);
 
-      mockSupabaseServiceClient.from().select().eq().single.mockResolvedValue({
-        data: {
-          email: 'user@example.com',
-          deletion_scheduled_at: futureDate.toISOString(),
-          deleted_at: null
-        },
-        error: null
-      });
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValue({
+          data: {
+            email: 'user@example.com',
+            deletion_scheduled_at: futureDate.toISOString(),
+            deleted_at: null
+          },
+          error: null
+        });
 
       await expect(authService.requestAccountDeletion(userId)).rejects.toThrow(
         'Account deletion is already scheduled'
@@ -421,19 +478,26 @@ describe('AuthService - Edge Cases', () => {
     });
 
     it('should handle update errors', async () => {
-      mockSupabaseServiceClient.from().select().eq().single.mockResolvedValue({
-        data: {
-          email: 'user@example.com',
-          deletion_scheduled_at: null,
-          deleted_at: null
-        },
-        error: null
-      });
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValue({
+          data: {
+            email: 'user@example.com',
+            deletion_scheduled_at: null,
+            deleted_at: null
+          },
+          error: null
+        });
 
-      mockSupabaseServiceClient.from().update().eq.mockResolvedValue({
-        data: null,
-        error: { message: 'Update failed' }
-      });
+      mockSupabaseServiceClient
+        .from()
+        .update()
+        .eq.mockResolvedValue({
+          data: null,
+          error: { message: 'Update failed' }
+        });
 
       await expect(authService.requestAccountDeletion(userId)).rejects.toThrow(
         'Failed to schedule account deletion'
@@ -449,7 +513,10 @@ describe('AuthService - Edge Cases', () => {
     beforeEach(() => {
       const { getUserUsage } = require('../../../src/services/subscriptionService');
       const { isChangeAllowed } = require('../../../src/services/planValidation');
-      const { getPlanFeatures, calculatePlanEndDate } = require('../../../src/services/planService');
+      const {
+        getPlanFeatures,
+        calculatePlanEndDate
+      } = require('../../../src/services/planService');
       const { applyPlanLimits } = require('../../../src/services/subscriptionService');
 
       getUserUsage.mockResolvedValue({
@@ -499,8 +566,11 @@ describe('AuthService - Edge Cases', () => {
     it('should rollback when applyPlanLimits fails', async () => {
       const { applyPlanLimits } = require('../../../src/services/subscriptionService');
 
-      mockSupabaseServiceClient.from().select().eq().single
-        .mockResolvedValueOnce({
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
           data: { id: userId, email: 'user@example.com', plan: 'starter', name: 'User' },
           error: null
         })
@@ -526,8 +596,11 @@ describe('AuthService - Edge Cases', () => {
     it('should handle subscription update failure gracefully', async () => {
       const { applyPlanLimits } = require('../../../src/services/subscriptionService');
 
-      mockSupabaseServiceClient.from().select().eq().single
-        .mockResolvedValueOnce({
+      mockSupabaseServiceClient
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValueOnce({
           data: { id: userId, email: 'user@example.com', plan: 'starter', name: 'User' },
           error: null
         })
@@ -536,10 +609,13 @@ describe('AuthService - Edge Cases', () => {
           error: null
         });
 
-      mockSupabaseServiceClient.from().upsert().select.mockResolvedValue({
-        data: null,
-        error: { message: 'Subscription update failed' }
-      });
+      mockSupabaseServiceClient
+        .from()
+        .upsert()
+        .select.mockResolvedValue({
+          data: null,
+          error: { message: 'Subscription update failed' }
+        });
 
       applyPlanLimits.mockResolvedValue({ success: true });
 
@@ -669,6 +745,3 @@ describe('AuthService - Edge Cases', () => {
     });
   });
 });
-
-
-

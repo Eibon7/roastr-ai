@@ -1,6 +1,6 @@
 /**
  * LLM Response Transformers
- * 
+ *
  * Normalizes Portkey responses to OpenAI-compatible format
  * Issue #920: Portkey AI Gateway integration
  */
@@ -89,5 +89,3 @@ module.exports = {
   transformEmbedding,
   extractMetadata
 };
-
-

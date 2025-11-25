@@ -1,6 +1,6 @@
 /**
  * LLM Routes Configuration
- * 
+ *
  * Defines routing table for AI modes → provider/model mappings
  * Issue #920: Portkey AI Gateway integration
  */
@@ -8,13 +8,13 @@
 /**
  * Route configuration for each AI mode
  * Issue #920: Portkey AI Gateway integration
- * 
+ *
  * Modos actuales del sistema:
  * - flanders: Tono amable pero con ironía sutil (intensidad 2/5)
  * - balanceado: Equilibrio entre ingenio y firmeza (intensidad 3/5)
  * - canalla: Directo y sin filtros, más picante (intensidad 4/5)
  * - nsfw: Modo NSFW con Grok (preparado para cuando tengamos API key)
- * 
+ *
  * Todos los modos principales usan GPT-5.1 por defecto
  * @type {Object<string, {provider: string, model: string, config: Object}>}
  */
@@ -76,18 +76,18 @@ const routes = {
 function getRoute(mode = 'default') {
   // Normalize mode name (case-insensitive, handle Spanish accents)
   const normalizedMode = mode.toLowerCase();
-  
+
   // Map common variations
   const modeMap = {
-    'flanders': 'flanders',
-    'balanceado': 'balanceado',
-    'balanced': 'balanceado',
-    'canalla': 'canalla',
-    'savage': 'canalla',
-    'nsfw': 'nsfw',
-    'default': 'default'
+    flanders: 'flanders',
+    balanceado: 'balanceado',
+    balanced: 'balanceado',
+    canalla: 'canalla',
+    savage: 'canalla',
+    nsfw: 'nsfw',
+    default: 'default'
   };
-  
+
   const mappedMode = modeMap[normalizedMode] || normalizedMode;
   return routes[mappedMode] || routes.default;
 }
@@ -115,4 +115,3 @@ module.exports = {
   getAvailableModes,
   modeExists
 };
-

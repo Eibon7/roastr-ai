@@ -3,7 +3,7 @@
  *
  * Tests for private handler methods and internal utilities
  * These methods are called internally by executeActionsFromTags()
- * 
+ *
  * Uses same mocking pattern as shieldService.test.js (no logger/mockMode mocks)
  */
 
@@ -101,10 +101,10 @@ describe('ShieldService - Private Methods', () => {
     const metadata = { toxicity: { toxicity_score: 0.9 } };
 
     it('should queue hide comment job with critical priority', async () => {
-      mockQueueService.addJob.mockResolvedValue({ 
-        success: true, 
-        jobId: 'job-123', 
-        job: { id: 'job-123' } 
+      mockQueueService.addJob.mockResolvedValue({
+        success: true,
+        jobId: 'job-123',
+        job: { id: 'job-123' }
       });
 
       const result = await shieldService._handleHideComment(organizationId, comment, metadata);
@@ -144,10 +144,10 @@ describe('ShieldService - Private Methods', () => {
     const metadata = { toxicity: { toxicity_score: 0.95 } };
 
     it('should queue block user job and update user behavior', async () => {
-      mockQueueService.addJob.mockResolvedValue({ 
-        success: true, 
-        jobId: 'job-123', 
-        job: { id: 'job-123' } 
+      mockQueueService.addJob.mockResolvedValue({
+        success: true,
+        jobId: 'job-123',
+        job: { id: 'job-123' }
       });
 
       mockSupabase.from.mockReturnValue({
@@ -191,10 +191,10 @@ describe('ShieldService - Private Methods', () => {
         }
       };
 
-      mockQueueService.addJob.mockResolvedValue({ 
-        success: true, 
-        jobId: 'job-123', 
-        job: { id: 'job-123' } 
+      mockQueueService.addJob.mockResolvedValue({
+        success: true,
+        jobId: 'job-123',
+        job: { id: 'job-123' }
       });
 
       const result = await shieldService._handleReportToPlatform(organizationId, comment, metadata);
@@ -256,10 +256,10 @@ describe('ShieldService - Private Methods', () => {
     const metadata = { toxicity: { toxicity_score: 0.7 } };
 
     it('should queue temporary mute job with critical priority', async () => {
-      mockQueueService.addJob.mockResolvedValue({ 
-        success: true, 
-        jobId: 'job-123', 
-        job: { id: 'job-123' } 
+      mockQueueService.addJob.mockResolvedValue({
+        success: true,
+        jobId: 'job-123',
+        job: { id: 'job-123' }
       });
 
       const result = await shieldService._handleMuteTemp(organizationId, comment, metadata);
@@ -291,10 +291,10 @@ describe('ShieldService - Private Methods', () => {
     const metadata = { toxicity: { toxicity_score: 0.85 } };
 
     it('should queue permanent mute job and update user behavior', async () => {
-      mockQueueService.addJob.mockResolvedValue({ 
-        success: true, 
-        jobId: 'job-123', 
-        job: { id: 'job-123' } 
+      mockQueueService.addJob.mockResolvedValue({
+        success: true,
+        jobId: 'job-123',
+        job: { id: 'job-123' }
       });
 
       mockSupabase.from.mockReturnValue({
@@ -383,13 +383,17 @@ describe('ShieldService - Private Methods', () => {
     const metadata = {};
 
     it('should queue manual review job with critical priority', async () => {
-      mockQueueService.addJob.mockResolvedValue({ 
-        success: true, 
-        jobId: 'job-123', 
-        job: { id: 'job-123' } 
+      mockQueueService.addJob.mockResolvedValue({
+        success: true,
+        jobId: 'job-123',
+        job: { id: 'job-123' }
       });
 
-      const result = await shieldService._handleRequireManualReview(organizationId, comment, metadata);
+      const result = await shieldService._handleRequireManualReview(
+        organizationId,
+        comment,
+        metadata
+      );
 
       expect(mockQueueService.addJob).toHaveBeenCalledWith(
         'shield_action',
@@ -418,13 +422,17 @@ describe('ShieldService - Private Methods', () => {
     const metadata = {};
 
     it('should queue gatekeeper unavailable job with critical priority', async () => {
-      mockQueueService.addJob.mockResolvedValue({ 
-        success: true, 
-        jobId: 'job-123', 
-        job: { id: 'job-123' } 
+      mockQueueService.addJob.mockResolvedValue({
+        success: true,
+        jobId: 'job-123',
+        job: { id: 'job-123' }
       });
 
-      const result = await shieldService._handleGatekeeperUnavailable(organizationId, comment, metadata);
+      const result = await shieldService._handleGatekeeperUnavailable(
+        organizationId,
+        comment,
+        metadata
+      );
 
       expect(mockQueueService.addJob).toHaveBeenCalledWith(
         'shield_action',
@@ -518,7 +526,12 @@ describe('ShieldService - Private Methods', () => {
     it('should call RPC function with correct parameters', async () => {
       mockSupabase.rpc = jest.fn().mockResolvedValue({ data: null, error: null });
 
-      await shieldService._updateUserBehaviorFromTags(organizationId, comment, action_tags, metadata);
+      await shieldService._updateUserBehaviorFromTags(
+        organizationId,
+        comment,
+        action_tags,
+        metadata
+      );
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith(
         'update_user_behavior_from_shield_tags',

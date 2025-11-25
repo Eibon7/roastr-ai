@@ -1,6 +1,6 @@
 /**
  * LLM Client Factory
- * 
+ *
  * Singleton factory for creating and caching LLM client instances
  * Issue #920: Portkey AI Gateway integration
  */
@@ -8,7 +8,11 @@
 const Portkey = require('portkey-ai');
 const OpenAI = require('openai');
 const { logger } = require('../../utils/logger');
-const { getRoute: getRouteConfig, getAvailableModes: getAvailableModesFromRoutes, modeExists: modeExistsInRoutes } = require('./routes');
+const {
+  getRoute: getRouteConfig,
+  getAvailableModes: getAvailableModesFromRoutes,
+  modeExists: modeExistsInRoutes
+} = require('./routes');
 const { getNextFallback } = require('./fallbacks');
 const { transformChatCompletion, transformEmbedding, extractMetadata } = require('./transformers');
 const mockMode = require('../../config/mockMode');
@@ -34,10 +38,7 @@ const DEFAULT_CONFIG = {
  * @returns {boolean} True if Portkey API key is available
  */
 function isPortkeyConfigured() {
-  return !!(
-    process.env.PORTKEY_API_KEY &&
-    process.env.PORTKEY_PROJECT_ID
-  );
+  return !!(process.env.PORTKEY_API_KEY && process.env.PORTKEY_PROJECT_ID);
 }
 
 /**
@@ -69,7 +70,7 @@ function createPortkeyClient(mode, config = {}) {
  */
 function createOpenAIClient(config = {}) {
   const apiKey = process.env.OPENAI_API_KEY;
-  
+
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY not configured');
   }
@@ -110,7 +111,9 @@ function getInstance(mode = 'default', options = {}) {
   if (mode === 'nsfw' && route.fallbackToOpenAI) {
     const grokApiKey = process.env.GROK_API_KEY;
     if (!grokApiKey && !isPortkeyConfigured()) {
-      logger.warn('LLMClient: NSFW mode requested but Grok API key not configured, using OpenAI fallback');
+      logger.warn(
+        'LLMClient: NSFW mode requested but Grok API key not configured, using OpenAI fallback'
+      );
       client = createOpenAIClient(config);
       clientType = 'openai';
       // Update route to reflect fallback
@@ -123,7 +126,9 @@ function getInstance(mode = 'default', options = {}) {
         clientType = 'portkey';
         logger.info(`LLMClient: Created Portkey client for NSFW mode (Grok)`);
       } catch (error) {
-        logger.warn(`LLMClient: Failed to create Portkey client for NSFW, falling back to OpenAI: ${error.message}`);
+        logger.warn(
+          `LLMClient: Failed to create Portkey client for NSFW, falling back to OpenAI: ${error.message}`
+        );
         client = createOpenAIClient(config);
         clientType = 'openai';
         route.provider = 'openai';
@@ -142,7 +147,9 @@ function getInstance(mode = 'default', options = {}) {
       clientType = 'portkey';
       logger.info(`LLMClient: Created Portkey client for mode "${mode}"`);
     } catch (error) {
-      logger.warn(`LLMClient: Failed to create Portkey client, falling back to OpenAI: ${error.message}`);
+      logger.warn(
+        `LLMClient: Failed to create Portkey client, falling back to OpenAI: ${error.message}`
+      );
       client = createOpenAIClient(config);
       clientType = 'openai';
     }
@@ -209,7 +216,7 @@ function getInstance(mode = 'default', options = {}) {
 
           const response = await client.chat.completions.create(portkeyParams);
           const transformed = transformChatCompletion(response, mode, route.provider);
-          
+
           logger.debug('LLMClient: Portkey chat completion successful', {
             mode,
             provider: route.provider,
@@ -220,7 +227,7 @@ function getInstance(mode = 'default', options = {}) {
         } else {
           // Direct OpenAI or mock
           const response = await client.chat.completions.create(completionParams);
-          
+
           logger.debug('LLMClient: OpenAI chat completion successful', {
             mode,
             clientType,
@@ -244,7 +251,7 @@ function getInstance(mode = 'default', options = {}) {
             logger.info(`LLMClient: Falling back to OpenAI for mode "${mode}"`);
             const openaiClient = createOpenAIClient(config);
             const response = await openaiClient.chat.completions.create(completionParams);
-            
+
             // Mark as fallback used
             return {
               ...response,
@@ -320,7 +327,7 @@ function getInstance(mode = 'default', options = {}) {
 
           const response = await client.embeddings.create(portkeyParams);
           const transformed = transformEmbedding(response, mode, route.provider);
-          
+
           logger.debug('LLMClient: Portkey embedding successful', {
             mode,
             provider: route.provider,
@@ -330,7 +337,7 @@ function getInstance(mode = 'default', options = {}) {
           return transformed;
         } else {
           const response = await client.embeddings.create(embeddingParams);
-          
+
           logger.debug('LLMClient: OpenAI embedding successful', {
             mode,
             clientType,
@@ -353,7 +360,7 @@ function getInstance(mode = 'default', options = {}) {
             logger.info(`LLMClient: Falling back to OpenAI for embeddings mode "${mode}"`);
             const openaiClient = createOpenAIClient(config);
             const response = await openaiClient.embeddings.create(embeddingParams);
-            
+
             return {
               ...response,
               _portkey: {
@@ -432,4 +439,3 @@ module.exports = {
   getRoute,
   getFallbackChain
 };
-

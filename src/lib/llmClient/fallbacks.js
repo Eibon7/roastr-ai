@@ -1,6 +1,6 @@
 /**
  * LLM Fallback Chains
- * 
+ *
  * Defines fallback sequences for each AI mode when primary provider fails
  * Issue #920: Portkey AI Gateway integration
  */
@@ -8,7 +8,7 @@
 /**
  * Fallback chains for each mode
  * Issue #920: Portkey AI Gateway integration
- * 
+ *
  * Modos actuales:
  * - flanders, balanceado, canalla: OpenAI GPT-5.1 (sin fallback necesario)
  * - nsfw: Grok → OpenAI (fallback si Grok no está configurado)
@@ -40,11 +40,11 @@ function getFallbackChain(mode = 'default') {
 function getNextFallback(mode, currentProvider) {
   const chain = getFallbackChain(mode);
   const currentIndex = chain.indexOf(currentProvider);
-  
+
   if (currentIndex === -1 || currentIndex === chain.length - 1) {
     return null; // No more fallbacks
   }
-  
+
   return chain[currentIndex + 1];
 }
 
@@ -53,4 +53,3 @@ module.exports = {
   getFallbackChain,
   getNextFallback
 };
-

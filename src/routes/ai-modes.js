@@ -1,6 +1,6 @@
 /**
  * AI Modes API Routes
- * 
+ *
  * Issue #920: Portkey AI Gateway integration
  * Endpoint para listar modos de AI disponibles y su configuración
  */
@@ -13,9 +13,9 @@ const { authenticateToken } = require('../middleware/auth');
 
 /**
  * GET /api/ai-modes
- * 
+ *
  * Lista todos los modos de AI disponibles con su metadata
- * 
+ *
  * Response:
  * {
  *   success: true,
@@ -37,10 +37,10 @@ const { authenticateToken } = require('../middleware/auth');
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const availableModes = LLMClient.getAvailableModes();
-    
-    const modesMetadata = availableModes.map(modeId => {
+
+    const modesMetadata = availableModes.map((modeId) => {
       const route = LLMClient.getRoute(modeId);
-      
+
       // Metadata específica por modo
       const modeMetadata = {
         flanders: {
@@ -76,7 +76,7 @@ router.get('/', authenticateToken, async (req, res) => {
       };
 
       const metadata = modeMetadata[modeId] || modeMetadata.default;
-      
+
       // Check if mode is available (NSFW requires Grok API key or Portkey)
       let available = true;
       if (modeId === 'nsfw') {
@@ -123,13 +123,13 @@ router.get('/', authenticateToken, async (req, res) => {
 
 /**
  * GET /api/ai-modes/:modeId
- * 
+ *
  * Obtiene información detallada de un modo específico
  */
 router.get('/:modeId', authenticateToken, async (req, res) => {
   try {
     const { modeId } = req.params;
-    
+
     if (!LLMClient.modeExists(modeId)) {
       return res.status(404).json({
         success: false,
@@ -204,5 +204,3 @@ router.get('/:modeId', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
-
-
