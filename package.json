@@ -55,6 +55,7 @@
     "frontend:build": "cd frontend && npm run build",
     "frontend:install": "cd frontend && npm install",
     "validate:tests": "node scripts/validate-test-dependencies.js",
+    "check": "jest --config=jest.ci.config.cjs --runInBand --ci --forceExit",
     "test": "jest --verbose",
     "test:ci": "jest --config=jest.ci.config.cjs --runInBand --ci",
     "test:mock": "ENABLE_MOCK_MODE=true jest --config=jest.skipExternal.config.js --verbose",
