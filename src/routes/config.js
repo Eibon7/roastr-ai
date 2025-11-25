@@ -7,6 +7,7 @@ const levelConfigService = require('../services/levelConfigService');
 const toneCompatibilityService = require('../services/toneCompatibilityService'); // Issue #872: Tone compatibility
 const { roastLevelSchema, shieldLevelSchema } = require('../validators/zod/config.schema'); // Issue #943: Zod validation
 const { formatZodError } = require('../validators/zod/helpers'); // Issue #943: Error formatting
+const { VALID_TONES_WITH_ALIASES } = require('../config/tones'); // Issue #973: Centralized tones
 
 const router = express.Router();
 
@@ -25,8 +26,6 @@ const VALID_PLATFORMS = [
   'reddit',
   'tiktok'
 ];
-// Issue #872: Use new 3-tone system
-const VALID_TONES = ['flanders', 'balanceado', 'canalla', 'light', 'balanced', 'savage'];
 // Issue #872: humor_types deprecated, kept for backward compat only
 const VALID_HUMOR_TYPES = []; // Empty - deprecated
 
@@ -146,15 +145,16 @@ router.put('/:platform', async (req, res) => {
       });
     }
 
-    // Issue #972: Always normalize tone to canonical form (flanders, balanceado, canalla)
+    // Issue #972 + #973: Always normalize tone to canonical form (flanders, balanceado, canalla)
     // This handles both validation and normalization of aliases (light→flanders, etc.)
+    // Issue #973: Uses centralized VALID_TONES_WITH_ALIASES for error message
     let normalizedTone = null;
     if (tone) {
       normalizedTone = toneCompatibilityService.normalizeTone(tone);
       if (!normalizedTone) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid tone. Must be one of: ' + VALID_TONES.join(', ')
+          error: 'Invalid tone. Must be one of: ' + VALID_TONES_WITH_ALIASES.join(', ')
         });
       }
       // Log if the tone was converted from an alias
@@ -362,7 +362,7 @@ router.get('/', async (req, res) => {
       success: true,
       data: {
         platforms: platformConfigs,
-        available_tones: VALID_TONES,
+        available_tones: VALID_TONES_WITH_ALIASES,
         available_humor_types: [] // Issue #872: Deprecated, return empty array
       }
     });

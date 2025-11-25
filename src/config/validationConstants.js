@@ -2,7 +2,11 @@
  * Validation Constants for Roast Engine
  * Centralized validation rules for better maintainability
  * Enhanced with BCP-47 locale support and immutability (CodeRabbit Round 4)
+ * Issue #973: VALID_STYLES now derived from centralized tone constants
  */
+
+// Import centralized tone constants (Issue #973: Single source of truth)
+const { VALID_TONES_WITH_ALIASES } = require('./tones');
 
 // BCP-47 locale mapping for international language codes
 const BCP47_LOCALE_MAP = Object.freeze({
@@ -25,16 +29,32 @@ const PLATFORM_ALIAS_MAP = Object.freeze({
   'twitter.com': 'twitter'
 });
 
+/**
+ * Derive VALID_STYLES from centralized tone constants (Issue #973)
+ * This ensures VALID_STYLES stays in sync with VALID_TONES_WITH_ALIASES
+ * and prevents drift when tones are added/removed
+ */
+const VALID_STYLES = Object.freeze({
+  es: Object.freeze(
+    VALID_TONES_WITH_ALIASES.filter((tone) => ['flanders', 'balanceado', 'canalla'].includes(tone))
+  ),
+  en: Object.freeze(
+    VALID_TONES_WITH_ALIASES.filter((tone) => ['light', 'balanced', 'savage'].includes(tone))
+  )
+});
+
 const VALIDATION_CONSTANTS = Object.freeze({
   // Text limits
   MAX_COMMENT_LENGTH: 2000,
   MIN_COMMENT_LENGTH: 1,
 
-  // Roast styles by language
-  VALID_STYLES: Object.freeze({
-    es: Object.freeze(['flanders', 'balanceado', 'canalla']),
-    en: Object.freeze(['light', 'balanced', 'savage'])
-  }),
+  // Intensity level validation (Issue #717)
+  MIN_INTENSITY: 1,
+  MAX_INTENSITY: 5,
+  DEFAULT_INTENSITY: 3,
+
+  // Roast styles by language (Issue #973: Derived from centralized tones)
+  VALID_STYLES: VALID_STYLES,
 
   // Supported languages
   VALID_LANGUAGES: Object.freeze(['es', 'en']),
@@ -54,12 +74,14 @@ const VALIDATION_CONSTANTS = Object.freeze({
 
   // Issue #868: Removed legacy VALID_TONES and VALID_HUMOR_TYPES
   // Use VALID_STYLES (flanders, balanceado, canalla) as único selector
+  // Note: VALID_HUMOR_TYPES removed - humor types deprecated in Issue #872
 
-  // Default values (Issue #868: Removed INTENSITY and HUMOR_TYPE)
+  // Default values (Issue #868: Removed HUMOR_TYPE from defaults)
   DEFAULTS: Object.freeze({
     STYLE: 'balanceado',
     LANGUAGE: 'es',
-    PLATFORM: 'twitter'
+    PLATFORM: 'twitter',
+    INTENSITY: 3
   })
 });
 
