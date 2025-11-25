@@ -1,263 +1,266 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bienvenido a Roastr.ai - Paso 1</title>
-    <link rel="stylesheet" href="../css/style.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="../css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <style>
+      .onboarding-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 40px;
+        text-align: center;
+      }
+
+      .step-indicator {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 40px;
+      }
+
+      .step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        margin: 0 10px;
+        transition: all 0.3s ease;
+      }
+
+      .step.active {
+        background: var(--color-blue);
+        color: white;
+      }
+
+      .step.completed {
+        background: #28a745;
+        color: white;
+      }
+
+      .step.pending {
+        background: var(--color-gray);
+        color: #666;
+      }
+
+      .step-line {
+        width: 60px;
+        height: 2px;
+        background: var(--color-gray);
+        margin: 0 10px;
+      }
+
+      .step-line.completed {
+        background: #28a745;
+      }
+
+      .welcome-content {
+        margin: 40px 0;
+      }
+
+      .welcome-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--color-black);
+        margin-bottom: 16px;
+      }
+
+      .welcome-subtitle {
+        font-size: 18px;
+        color: #666;
+        margin-bottom: 32px;
+        line-height: 1.5;
+      }
+
+      .feature-list {
+        text-align: left;
+        max-width: 400px;
+        margin: 32px auto;
+      }
+
+      .feature-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .feature-item:last-child {
+        border-bottom: none;
+      }
+
+      .feature-icon {
+        width: 24px;
+        height: 24px;
+        background: var(--color-blue);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        font-size: 14px;
+      }
+
+      .feature-text {
+        font-size: 16px;
+        color: var(--color-black);
+      }
+
+      .onboarding-actions {
+        margin-top: 40px;
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+      }
+
+      .btn-skip {
+        background: transparent;
+        color: #666;
+        border: 1px solid var(--color-gray);
+        text-decoration: none;
+      }
+
+      .btn-skip:hover {
+        background: var(--color-gray);
+      }
+
+      @media (max-width: 768px) {
         .onboarding-container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 40px;
-            text-align: center;
+          padding: 20px;
+          margin: 20px auto;
         }
 
         .step-indicator {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 40px;
+          margin-bottom: 30px;
         }
 
         .step {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-        }
-
-        .step.active {
-            background: var(--color-blue);
-            color: white;
-        }
-
-        .step.completed {
-            background: #28a745;
-            color: white;
-        }
-
-        .step.pending {
-            background: var(--color-gray);
-            color: #666;
+          width: 32px;
+          height: 32px;
+          font-size: 14px;
         }
 
         .step-line {
-            width: 60px;
-            height: 2px;
-            background: var(--color-gray);
-            margin: 0 10px;
-        }
-
-        .step-line.completed {
-            background: #28a745;
-        }
-
-        .welcome-content {
-            margin: 40px 0;
+          width: 40px;
         }
 
         .welcome-title {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--color-black);
-            margin-bottom: 16px;
-        }
-
-        .welcome-subtitle {
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 32px;
-            line-height: 1.5;
-        }
-
-        .feature-list {
-            text-align: left;
-            max-width: 400px;
-            margin: 32px auto;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .feature-item:last-child {
-            border-bottom: none;
-        }
-
-        .feature-icon {
-            width: 24px;
-            height: 24px;
-            background: var(--color-blue);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            font-size: 14px;
-        }
-
-        .feature-text {
-            font-size: 16px;
-            color: var(--color-black);
+          font-size: 28px;
         }
 
         .onboarding-actions {
-            margin-top: 40px;
-            display: flex;
-            gap: 16px;
-            justify-content: center;
+          flex-direction: column;
         }
-
-        .btn-skip {
-            background: transparent;
-            color: #666;
-            border: 1px solid var(--color-gray);
-            text-decoration: none;
-        }
-
-        .btn-skip:hover {
-            background: var(--color-gray);
-        }
-
-        @media (max-width: 768px) {
-            .onboarding-container {
-                padding: 20px;
-                margin: 20px auto;
-            }
-
-            .step-indicator {
-                margin-bottom: 30px;
-            }
-
-            .step {
-                width: 32px;
-                height: 32px;
-                font-size: 14px;
-            }
-
-            .step-line {
-                width: 40px;
-            }
-
-            .welcome-title {
-                font-size: 28px;
-            }
-
-            .onboarding-actions {
-                flex-direction: column;
-            }
-        }
+      }
     </style>
-</head>
-<body class="auth-bg">
+  </head>
+  <body class="auth-bg">
     <div class="onboarding-container">
-        <!-- Indicador de progreso -->
-        <div class="step-indicator">
-            <div class="step active">1</div>
-            <div class="step-line"></div>
-            <div class="step pending">2</div>
-            <div class="step-line"></div>
-            <div class="step pending">3</div>
-            <div class="step-line"></div>
-            <div class="step pending">4</div>
+      <!-- Indicador de progreso -->
+      <div class="step-indicator">
+        <div class="step active">1</div>
+        <div class="step-line"></div>
+        <div class="step pending">2</div>
+        <div class="step-line"></div>
+        <div class="step pending">3</div>
+        <div class="step-line"></div>
+        <div class="step pending">4</div>
+      </div>
+
+      <!-- Contenido de bienvenida -->
+      <div class="welcome-content">
+        <h1 class="welcome-title">¡Bienvenido a Roastr.ai! 🔥</h1>
+        <p class="welcome-subtitle">
+          Tu asistente inteligente para generar respuestas automáticas y divertidas en redes
+          sociales. Te ayudamos a configurar todo en solo 4 pasos.
+        </p>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">Respuestas automáticas en 9 plataformas</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">IA avanzada con humor personalizado</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">Sistema Shield de moderación</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">✓</div>
+            <div class="feature-text">Control total sobre tus respuestas</div>
+          </div>
         </div>
+      </div>
 
-        <!-- Contenido de bienvenida -->
-        <div class="welcome-content">
-            <h1 class="welcome-title">¡Bienvenido a Roastr.ai! 🔥</h1>
-            <p class="welcome-subtitle">
-                Tu asistente inteligente para generar respuestas automáticas y divertidas en redes sociales. 
-                Te ayudamos a configurar todo en solo 4 pasos.
-            </p>
+      <!-- Mensajes de estado -->
+      <div id="error-message" class="error-message"></div>
+      <div id="success-message" class="success-message"></div>
 
-            <div class="feature-list">
-                <div class="feature-item">
-                    <div class="feature-icon">✓</div>
-                    <div class="feature-text">Respuestas automáticas en 9 plataformas</div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">✓</div>
-                    <div class="feature-text">IA avanzada con humor personalizado</div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">✓</div>
-                    <div class="feature-text">Sistema Shield de moderación</div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">✓</div>
-                    <div class="feature-text">Control total sobre tus respuestas</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mensajes de estado -->
-        <div id="error-message" class="error-message"></div>
-        <div id="success-message" class="success-message"></div>
-
-        <!-- Botones de acción -->
-        <div class="onboarding-actions">
-            <a href="/dashboard.html" class="btn-secondary btn-skip">Saltar configuración</a>
-            <button class="btn-primary" onclick="nextStep()">Comenzar configuración</button>
-        </div>
+      <!-- Botones de acción -->
+      <div class="onboarding-actions">
+        <a href="/dashboard.html" class="btn-secondary btn-skip">Saltar configuración</a>
+        <button class="btn-primary" onclick="nextStep()">Comenzar configuración</button>
+      </div>
     </div>
 
     <script>
-        // Verificar autenticación
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('auth_token');
-            
-            if (!token) {
-                window.location.href = '/auth.html';
-                return;
-            }
+      // Verificar autenticación
+      document.addEventListener('DOMContentLoaded', function () {
+        const token = localStorage.getItem('auth_token');
 
-            // Verificar si ya completó el onboarding
-            const userData = localStorage.getItem('user_data');
-            if (userData) {
-                const user = JSON.parse(userData);
-                if (user.onboarding_complete) {
-                    window.location.href = '/dashboard.html';
-                    return;
-                }
-            }
-        });
-
-        function nextStep() {
-            window.location.href = '/onboarding/step2.html';
+        if (!token) {
+          window.location.href = '/auth.html';
+          return;
         }
 
-        function showMessage(message, type = 'error') {
-            const errorDiv = document.getElementById('error-message');
-            const successDiv = document.getElementById('success-message');
-            
-            errorDiv.classList.remove('show');
-            successDiv.classList.remove('show');
-            
-            if (type === 'error') {
-                errorDiv.textContent = message;
-                errorDiv.classList.add('show');
-            } else {
-                successDiv.textContent = message;
-                successDiv.classList.add('show');
-            }
-            
-            setTimeout(() => {
-                errorDiv.classList.remove('show');
-                successDiv.classList.remove('show');
-            }, 5000);
+        // Verificar si ya completó el onboarding
+        const userData = localStorage.getItem('user_data');
+        if (userData) {
+          const user = JSON.parse(userData);
+          if (user.onboarding_complete) {
+            window.location.href = '/dashboard.html';
+            return;
+          }
         }
+      });
+
+      function nextStep() {
+        window.location.href = '/onboarding/step2.html';
+      }
+
+      function showMessage(message, type = 'error') {
+        const errorDiv = document.getElementById('error-message');
+        const successDiv = document.getElementById('success-message');
+
+        errorDiv.classList.remove('show');
+        successDiv.classList.remove('show');
+
+        if (type === 'error') {
+          errorDiv.textContent = message;
+          errorDiv.classList.add('show');
+        } else {
+          successDiv.textContent = message;
+          successDiv.classList.add('show');
+        }
+
+        setTimeout(() => {
+          errorDiv.classList.remove('show');
+          successDiv.classList.remove('show');
+        }, 5000);
+      }
     </script>
-</body>
+  </body>
 </html>

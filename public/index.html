@@ -1,163 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Roastr.ai</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
-    }
-    h1 {
-      margin-bottom: 1rem;
-    }
-    textarea {
-      width: 100%;
-      max-width: 500px;
-      height: 100px;
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: none;
-      resize: none;
-    }
-    button {
-      background: #ff5e5e;
-      color: white;
-      padding: 10px 20px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #e14b4b;
-    }
-    select {
-      padding: 8px;
-      margin-top: 10px;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: none;
-      background: #333;
-      color: #fff;
-      width: 100%;
-      max-width: 500px;
-    }
-    .tone-info {
-      margin-top: 10px;
-      font-size: 0.9rem;
-      color: #ccc;
-      max-width: 500px;
-      text-align: left;
-    }
-    .output {
-      margin-top: 20px;
-      max-width: 500px;
-      padding: 15px;
-      background: #1e1e1e;
-      border-radius: 5px;
-      font-size: 1.1rem;
-      line-height: 1.4rem;
-      display: none;
-    }
-    .loading {
-      color: #ffae00;
-      font-style: italic;
-      margin-top: 15px;
-    }
-    .error {
-      color: #ff4d4d;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <h1>🔥 Roastr.ai</h1>
-  <textarea id="message" placeholder="Escribe un comentario para tostarlo..."></textarea>
-  
-  <select id="tone">
-    <option value="sarcastic">🔥 Sarcástico-Picante (por defecto)</option>
-    <option value="subtle">🎭 Sutil-Irónico Elegante</option>
-    <option value="direct">⚡ Directo-Cortante</option>
-  </select>
-  
-  <div class="tone-info" id="toneInfo">
-    🔥 <strong>Sarcástico-Picante:</strong> Humor agudo e inteligente con referencias culturales y sarcasmo creativo.
-  </div>
-  
-  <button id="sendBtn">Generar Roast</button>
-
-  <div id="loading" class="loading" style="display: none;">⏳ Generando roast...</div>
-  <div id="output" class="output"></div>
-
-  <script>
-    const toneDescriptions = {
-      sarcastic: '🔥 <strong>Sarcástico-Picante:</strong> Humor agudo e inteligente con referencias culturales y sarcasmo creativo.',
-      subtle: '🎭 <strong>Sutil-Irónico Elegante:</strong> Ironía sofisticada con juegos de palabras y dobles sentidos refinados.',
-      direct: '⚡ <strong>Directo-Cortante:</strong> Humor frontal y contundente con humor negro ligero pero inteligente.'
-    };
-
-    // Actualizar descripción cuando cambie la selección
-    document.getElementById('tone').addEventListener('change', (e) => {
-      const toneInfo = document.getElementById('toneInfo');
-      toneInfo.innerHTML = toneDescriptions[e.target.value];
-    });
-
-    document.getElementById('sendBtn').addEventListener('click', async () => {
-      const message = document.getElementById('message').value.trim();
-      const tone = document.getElementById('tone').value;
-      const outputDiv = document.getElementById('output');
-      const loadingDiv = document.getElementById('loading');
-
-      outputDiv.style.display = 'none';
-      outputDiv.classList.remove('error');
-      loadingDiv.style.display = 'block';
-
-      if (!message) {
-        loadingDiv.style.display = 'none';
-        outputDiv.textContent = "⚠️ Escribe algo para poder tostarlo.";
-        outputDiv.classList.add('error');
-        outputDiv.style.display = 'block';
-        return;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roastr.ai</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #121212;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
       }
+      h1 {
+        margin-bottom: 1rem;
+      }
+      textarea {
+        width: 100%;
+        max-width: 500px;
+        height: 100px;
+        padding: 10px;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: none;
+        resize: none;
+      }
+      button {
+        background: #ff5e5e;
+        color: white;
+        padding: 10px 20px;
+        margin-top: 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #e14b4b;
+      }
+      select {
+        padding: 8px;
+        margin-top: 10px;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: none;
+        background: #333;
+        color: #fff;
+        width: 100%;
+        max-width: 500px;
+      }
+      .tone-info {
+        margin-top: 10px;
+        font-size: 0.9rem;
+        color: #ccc;
+        max-width: 500px;
+        text-align: left;
+      }
+      .output {
+        margin-top: 20px;
+        max-width: 500px;
+        padding: 15px;
+        background: #1e1e1e;
+        border-radius: 5px;
+        font-size: 1.1rem;
+        line-height: 1.4rem;
+        display: none;
+      }
+      .loading {
+        color: #ffae00;
+        font-style: italic;
+        margin-top: 15px;
+      }
+      .error {
+        color: #ff4d4d;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔥 Roastr.ai</h1>
+    <textarea id="message" placeholder="Escribe un comentario para tostarlo..."></textarea>
 
-      try {
-        const res = await fetch('/roast', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': 'r0astr-2025-S3creT-K3y-92' // 🔑 Cambia si actualizamos la key
-          },
-          body: JSON.stringify({ message, tone })
-        });
+    <select id="tone">
+      <option value="sarcastic">🔥 Sarcástico-Picante (por defecto)</option>
+      <option value="subtle">🎭 Sutil-Irónico Elegante</option>
+      <option value="direct">⚡ Directo-Cortante</option>
+    </select>
 
-        const data = await res.json();
-        loadingDiv.style.display = 'none';
+    <div class="tone-info" id="toneInfo">
+      🔥 <strong>Sarcástico-Picante:</strong> Humor agudo e inteligente con referencias culturales y
+      sarcasmo creativo.
+    </div>
 
-        if (res.ok) {
-          const toneEmoji = tone === 'sarcastic' ? '🔥' : tone === 'subtle' ? '🎭' : '⚡';
-          outputDiv.textContent = `${toneEmoji} ${data.roast}`;
+    <button id="sendBtn">Generar Roast</button>
+
+    <div id="loading" class="loading" style="display: none">⏳ Generando roast...</div>
+    <div id="output" class="output"></div>
+
+    <script>
+      const toneDescriptions = {
+        sarcastic:
+          '🔥 <strong>Sarcástico-Picante:</strong> Humor agudo e inteligente con referencias culturales y sarcasmo creativo.',
+        subtle:
+          '🎭 <strong>Sutil-Irónico Elegante:</strong> Ironía sofisticada con juegos de palabras y dobles sentidos refinados.',
+        direct:
+          '⚡ <strong>Directo-Cortante:</strong> Humor frontal y contundente con humor negro ligero pero inteligente.'
+      };
+
+      // Actualizar descripción cuando cambie la selección
+      document.getElementById('tone').addEventListener('change', (e) => {
+        const toneInfo = document.getElementById('toneInfo');
+        toneInfo.innerHTML = toneDescriptions[e.target.value];
+      });
+
+      document.getElementById('sendBtn').addEventListener('click', async () => {
+        const message = document.getElementById('message').value.trim();
+        const tone = document.getElementById('tone').value;
+        const outputDiv = document.getElementById('output');
+        const loadingDiv = document.getElementById('loading');
+
+        outputDiv.style.display = 'none';
+        outputDiv.classList.remove('error');
+        loadingDiv.style.display = 'block';
+
+        if (!message) {
+          loadingDiv.style.display = 'none';
+          outputDiv.textContent = '⚠️ Escribe algo para poder tostarlo.';
+          outputDiv.classList.add('error');
           outputDiv.style.display = 'block';
-        } else {
-          outputDiv.textContent = `⚠️ ${data.error || "No se pudo generar el roast."}`;
+          return;
+        }
+
+        try {
+          const res = await fetch('/roast', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': 'r0astr-2025-S3creT-K3y-92' // 🔑 Cambia si actualizamos la key
+            },
+            body: JSON.stringify({ message, tone })
+          });
+
+          const data = await res.json();
+          loadingDiv.style.display = 'none';
+
+          if (res.ok) {
+            const toneEmoji = tone === 'sarcastic' ? '🔥' : tone === 'subtle' ? '🎭' : '⚡';
+            outputDiv.textContent = `${toneEmoji} ${data.roast}`;
+            outputDiv.style.display = 'block';
+          } else {
+            outputDiv.textContent = `⚠️ ${data.error || 'No se pudo generar el roast.'}`;
+            outputDiv.classList.add('error');
+            outputDiv.style.display = 'block';
+          }
+        } catch (err) {
+          loadingDiv.style.display = 'none';
+          outputDiv.textContent = '⚠️ Error de conexión con el servidor.';
           outputDiv.classList.add('error');
           outputDiv.style.display = 'block';
         }
-      } catch (err) {
-        loadingDiv.style.display = 'none';
-        outputDiv.textContent = "⚠️ Error de conexión con el servidor.";
-        outputDiv.classList.add('error');
-        outputDiv.style.display = 'block';
-      }
-    });
-  </script>
-</body>
+      });
+    </script>
+  </body>
 </html>

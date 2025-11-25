@@ -120,7 +120,7 @@ router.get('/', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve AI modes',
-      details: error.message
+      ...(process.env.NODE_ENV === 'development' && { details: error.message })
     });
   }
 });

@@ -76,7 +76,7 @@ function validateEmail(email) {
 }
 
 function validatePassword(password) {
-  return password && password.length >= 6;
+  return password && password.length >= 8;
 }
 
 // API helper function (basic, used internally)
@@ -307,7 +307,7 @@ function initLoginPage() {
     }
 
     if (!validatePassword(password)) {
-      showMessage('Password must be at least 6 characters long');
+      showMessage('Password must be at least 8 characters long');
       return;
     }
 
@@ -427,7 +427,7 @@ function initRegisterPage() {
     }
 
     if (!validatePassword(password)) {
-      showMessage('Password must be at least 6 characters long');
+      showMessage('Password must be at least 8 characters long');
       return;
     }
 
@@ -496,7 +496,7 @@ function initPasswordResetPage() {
 
     // Validation
     if (!validatePassword(password)) {
-      showMessage('Password must be at least 6 characters long');
+      showMessage('Password must be at least 8 characters long');
       return;
     }
 

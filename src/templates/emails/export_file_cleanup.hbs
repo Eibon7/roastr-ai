@@ -1,168 +1,177 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang='es'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <title>Limpieza de archivos de exportación completada</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        .container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 40px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 10px;
-        }
-        .title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 20px;
-        }
-        .content {
-            margin-bottom: 30px;
-        }
-        .info-box {
-            background-color: #f3f4f6;
-            border-radius: 6px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .success-note {
-            background-color: #f0fdf4;
-            border-left: 4px solid #10b981;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .gdpr-note {
-            background-color: #eff6ff;
-            border-left: 4px solid #2563eb;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .cta-button {
-            display: inline-block;
-            background-color: #2563eb;
-            color: white;
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-weight: 600;
-            margin: 10px 0;
-        }
-        .cta-button:hover {
-            background-color: #1d4ed8;
-        }
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            font-size: 14px;
-            color: #6b7280;
-        }
-        .reason-text {
-            font-style: italic;
-            color: #6b7280;
-            margin-top: 10px;
-        }
-        .action-center {
-            text-align: center;
-            margin: 30px 0;
-        }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f8f9fa;
+      }
+      .container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 40px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2563eb;
+        margin-bottom: 10px;
+      }
+      .title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 20px;
+      }
+      .content {
+        margin-bottom: 30px;
+      }
+      .info-box {
+        background-color: #f3f4f6;
+        border-radius: 6px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .success-note {
+        background-color: #f0fdf4;
+        border-left: 4px solid #10b981;
+        padding: 15px;
+        margin: 20px 0;
+      }
+      .gdpr-note {
+        background-color: #eff6ff;
+        border-left: 4px solid #2563eb;
+        padding: 15px;
+        margin: 20px 0;
+      }
+      .cta-button {
+        display: inline-block;
+        background-color: #2563eb;
+        color: white;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 10px 0;
+      }
+      .cta-button:hover {
+        background-color: #1d4ed8;
+      }
+      .footer {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+        font-size: 14px;
+        color: #6b7280;
+      }
+      .reason-text {
+        font-style: italic;
+        color: #6b7280;
+        margin-top: 10px;
+      }
+      .action-center {
+        text-align: center;
+        margin: 30px 0;
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🧹 Roastr</div>
-            <h1 class="title">Limpieza de datos completada</h1>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='header'>
+        <div class='logo'>🧹 Roastr</div>
+        <h1 class='title'>Limpieza de datos completada</h1>
+      </div>
+
+      <div class='content'>
+        <p>Hola,</p>
+
+        <p>Te informamos que hemos completado la limpieza automática de tu archivo de exportación de
+          datos según nuestras políticas de retención y seguridad.</p>
+
+        <div class='info-box'>
+          <h3>📋 Información del archivo limpiado:</h3>
+          <ul>
+            <li><strong>Nombre:</strong> {{filename}}</li>
+            <li><strong>Motivo:</strong> {{reason}}</li>
+          </ul>
+          <p class='reason-text'>{{reasonText}}</p>
         </div>
 
-        <div class="content">
-            <p>Hola,</p>
-
-            <p>Te informamos que hemos completado la limpieza automática de tu archivo de exportación de datos según nuestras políticas de retención y seguridad.</p>
-
-            <div class="info-box">
-                <h3>📋 Información del archivo limpiado:</h3>
-                <ul>
-                    <li><strong>Nombre:</strong> {{filename}}</li>
-                    <li><strong>Motivo:</strong> {{reason}}</li>
-                </ul>
-                <p class="reason-text">{{reasonText}}</p>
-            </div>
-
-            <div class="success-note">
-                <h3>✅ Limpieza completada con éxito</h3>
-                <p>El archivo ha sido eliminado de forma segura de nuestros sistemas. Este proceso es automático y forma parte de nuestro compromiso con la protección de tu privacidad.</p>
-            </div>
-
-            <div class="gdpr-note">
-                <h3>🔒 Cumplimiento GDPR</h3>
-                <p>{{gdprInfo}}</p>
-                <p>Eliminamos automáticamente los archivos de exportación después del período de retención establecido:</p>
-                <ul>
-                    <li><strong>24 horas</strong> después de su creación si no se descargaron</li>
-                    <li><strong>1 hora</strong> después de la primera descarga</li>
-                </ul>
-            </div>
-
-            <h3>📦 Solicitar nueva exportación</h3>
-            <p>Si necesitas una nueva copia de tus datos, puedes solicitarla en cualquier momento:</p>
-
-            <div class="action-center">
-                <a href="{{dataExportUrl}}" class="cta-button">Solicitar nueva exportación</a>
-            </div>
-
-            <p><strong>Pasos para solicitar una exportación:</strong></p>
-            <ol>
-                <li>Accede a tu cuenta en Roastr</li>
-                <li>Ve a <strong>Ajustes → Perfil → Privacidad</strong></li>
-                <li>Haz clic en <strong>"Exportar mis datos"</strong></li>
-                <li>Recibirás un email con el enlace de descarga en pocos minutos</li>
-            </ol>
-
-            <h3>💡 Datos que puedes exportar:</h3>
-            <ul>
-                <li><strong>Perfil:</strong> Información básica de tu cuenta</li>
-                <li><strong>Configuraciones:</strong> Preferencias y ajustes personalizados</li>
-                <li><strong>Integraciones:</strong> Cuentas conectadas y su configuración</li>
-                <li><strong>Actividad:</strong> Historial de uso y acciones realizadas</li>
-                <li><strong>Roastr Persona:</strong> Tu información personal configurada</li>
-                <li><strong>Facturación:</strong> Historial de pagos y suscripciones</li>
-            </ul>
-
-            <h3>🛡️ Tu privacidad, nuestra prioridad</h3>
-            <p>Este proceso de limpieza automática forma parte de nuestras medidas de seguridad para proteger tu información personal. Los archivos temporales se eliminan sistemáticamente para minimizar el riesgo de acceso no autorizado.</p>
+        <div class='success-note'>
+          <h3>✅ Limpieza completada con éxito</h3>
+          <p>El archivo ha sido eliminado de forma segura de nuestros sistemas. Este proceso es
+            automático y forma parte de nuestro compromiso con la protección de tu privacidad.</p>
         </div>
 
-        <div class="footer">
-            <p>Si tienes alguna pregunta sobre este proceso, los períodos de retención, o tus derechos de protección de datos, no dudes en contactarnos en <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
-
-            <p><strong>Tus derechos GDPR:</strong> Acceso, Rectificación, Supresión, Portabilidad, Oposición y Limitación del tratamiento.</p>
-
-            <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
-                © 2025 Roastr. Todos los derechos reservados.<br>
-                Este es un email automático del sistema de gestión GDPR.
-            </p>
+        <div class='gdpr-note'>
+          <h3>🔒 Cumplimiento GDPR</h3>
+          <p>{{gdprInfo}}</p>
+          <p>Eliminamos automáticamente los archivos de exportación después del período de retención
+            establecido:</p>
+          <ul>
+            <li><strong>24 horas</strong> después de su creación si no se descargaron</li>
+            <li><strong>1 hora</strong> después de la primera descarga</li>
+          </ul>
         </div>
+
+        <h3>📦 Solicitar nueva exportación</h3>
+        <p>Si necesitas una nueva copia de tus datos, puedes solicitarla en cualquier momento:</p>
+
+        <div class='action-center'>
+          <a href='{{dataExportUrl}}' class='cta-button'>Solicitar nueva exportación</a>
+        </div>
+
+        <p><strong>Pasos para solicitar una exportación:</strong></p>
+        <ol>
+          <li>Accede a tu cuenta en Roastr</li>
+          <li>Ve a <strong>Ajustes → Perfil → Privacidad</strong></li>
+          <li>Haz clic en <strong>"Exportar mis datos"</strong></li>
+          <li>Recibirás un email con el enlace de descarga en pocos minutos</li>
+        </ol>
+
+        <h3>💡 Datos que puedes exportar:</h3>
+        <ul>
+          <li><strong>Perfil:</strong> Información básica de tu cuenta</li>
+          <li><strong>Configuraciones:</strong> Preferencias y ajustes personalizados</li>
+          <li><strong>Integraciones:</strong> Cuentas conectadas y su configuración</li>
+          <li><strong>Actividad:</strong> Historial de uso y acciones realizadas</li>
+          <li><strong>Roastr Persona:</strong> Tu información personal configurada</li>
+          <li><strong>Facturación:</strong> Historial de pagos y suscripciones</li>
+        </ul>
+
+        <h3>🛡️ Tu privacidad, nuestra prioridad</h3>
+        <p>Este proceso de limpieza automática forma parte de nuestras medidas de seguridad para
+          proteger tu información personal. Los archivos temporales se eliminan sistemáticamente
+          para minimizar el riesgo de acceso no autorizado.</p>
+      </div>
+
+      <div class='footer'>
+        <p>Si tienes alguna pregunta sobre este proceso, los períodos de retención, o tus derechos
+          de protección de datos, no dudes en contactarnos en
+          <a href='mailto:{{supportEmail}}'>{{supportEmail}}</a></p>
+
+        <p><strong>Tus derechos GDPR:</strong>
+          Acceso, Rectificación, Supresión, Portabilidad, Oposición y Limitación del tratamiento.</p>
+
+        <p style='margin-top: 20px; font-size: 12px; color: #9ca3af;'>
+          © 2025 Roastr. Todos los derechos reservados.<br />
+          Este es un email automático del sistema de gestión GDPR.
+        </p>
+      </div>
     </div>
-</body>
+  </body>
 </html>

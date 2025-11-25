@@ -1,126 +1,131 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <title>Payment Failed - Action Required</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9fafb;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ff4444;
-            margin-bottom: 10px;
-        }
-        .alert {
-            background-color: #fef2f2;
-            border-left: 4px solid #ef4444;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-        .alert-title {
-            font-weight: bold;
-            color: #dc2626;
-            margin-bottom: 8px;
-        }
-        .button {
-            display: inline-block;
-            background-color: #ef4444;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            margin: 20px 0;
-        }
-        .details {
-            background-color: #f9fafb;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-        }
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        .support {
-            text-align: center;
-            margin-top: 20px;
-        }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9fafb;
+      }
+      .container {
+        background: white;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ff4444;
+        margin-bottom: 10px;
+      }
+      .alert {
+        background-color: #fef2f2;
+        border-left: 4px solid #ef4444;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .alert-title {
+        font-weight: bold;
+        color: #dc2626;
+        margin-bottom: 8px;
+      }
+      .button {
+        display: inline-block;
+        background-color: #ef4444;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 20px 0;
+      }
+      .details {
+        background-color: #f9fafb;
+        padding: 20px;
+        border-radius: 6px;
+        margin: 20px 0;
+      }
+      .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+        color: #6b7280;
+        font-size: 14px;
+      }
+      .support {
+        text-align: center;
+        margin-top: 20px;
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🔥 Roastr.ai</div>
-            <h1>Payment Failed</h1>
-        </div>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='header'>
+        <div class='logo'>🔥 Roastr.ai</div>
+        <h1>Payment Failed</h1>
+      </div>
 
-        <div class="alert">
-            <div class="alert-title">⚠️ Action Required</div>
-            <p>We were unable to process your recent payment for your Roastr.ai subscription.</p>
-        </div>
+      <div class='alert'>
+        <div class='alert-title'>⚠️ Action Required</div>
+        <p>We were unable to process your recent payment for your Roastr.ai subscription.</p>
+      </div>
 
-        <p>Hi {{userName}},</p>
+      <p>Hi {{userName}},</p>
 
-        <p>We tried to charge your payment method for your <strong>{{planName}} plan</strong> subscription, but the payment failed.</p>
+      <p>We tried to charge your payment method for your
+        <strong>{{planName}} plan</strong>
+        subscription, but the payment failed.</p>
 
-        <div class="details">
-            <h3>Payment Details</h3>
-            <ul>
-                <li><strong>Plan:</strong> {{planName}}</li>
-                <li><strong>Amount:</strong> {{failedAmount}}</li>
-                {{#if nextAttemptDate}}
-                <li><strong>Next Attempt:</strong> {{nextAttemptDate}}</li>
-                {{/if}}
-            </ul>
-        </div>
-
-        <p><strong>What happens next?</strong></p>
+      <div class='details'>
+        <h3>Payment Details</h3>
         <ul>
-            <li>Your account remains active for now</li>
-            <li>We'll retry the payment automatically</li>
-            <li>If payment continues to fail, your account may be suspended</li>
+          <li><strong>Plan:</strong> {{planName}}</li>
+          <li><strong>Amount:</strong> {{failedAmount}}</li>
+          {{#if nextAttemptDate}}
+            <li><strong>Next Attempt:</strong> {{nextAttemptDate}}</li>
+          {{/if}}
         </ul>
+      </div>
 
-        <p>To avoid any interruption to your service, please update your payment method:</p>
+      <p><strong>What happens next?</strong></p>
+      <ul>
+        <li>Your account remains active for now</li>
+        <li>We'll retry the payment automatically</li>
+        <li>If payment continues to fail, your account may be suspended</li>
+      </ul>
 
-        <div style="text-align: center;">
-            <a href="{{updatePaymentUrl}}" class="button">Update Payment Method</a>
-        </div>
+      <p>To avoid any interruption to your service, please update your payment method:</p>
 
-        <p>If you have any questions or need assistance, please don't hesitate to reach out to our support team.</p>
+      <div style='text-align: center;'>
+        <a href='{{updatePaymentUrl}}' class='button'>Update Payment Method</a>
+      </div>
 
-        <div class="support">
-            <p>Need help? Contact us at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
-        </div>
+      <p>If you have any questions or need assistance, please don't hesitate to reach out to our
+        support team.</p>
 
-        <div class="footer">
-            <p>Best regards,<br>The Roastr.ai Team</p>
-            <p><small>This email was sent because your payment method on file couldn't be charged. If you believe this is an error, please contact support.</small></p>
-        </div>
+      <div class='support'>
+        <p>Need help? Contact us at <a href='mailto:{{supportEmail}}'>{{supportEmail}}</a></p>
+      </div>
+
+      <div class='footer'>
+        <p>Best regards,<br />The Roastr.ai Team</p>
+        <p><small>This email was sent because your payment method on file couldn't be charged. If
+            you believe this is an error, please contact support.</small></p>
+      </div>
     </div>
-</body>
+  </body>
 </html>

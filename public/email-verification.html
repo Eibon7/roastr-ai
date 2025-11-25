@@ -1,46 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Email Verification - Roastr.AI</title>
-    <link rel="stylesheet" href="css/auth.css">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-</head>
-<body>
+    <link rel="stylesheet" href="css/auth.css" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  </head>
+  <body>
     <div class="auth-container verification-container">
-        <div class="verification-icon">📧</div>
-        <h1 class="verification-title">Check your email</h1>
-        
-        <div class="verification-text">
-            We've sent a verification link to<br>
-            <span class="verification-email" id="user-email"></span>
-        </div>
-        
-        <div class="verification-text">
-            Click the link in the email to verify your account and complete your registration.
-        </div>
-        
-        <div class="alt-links">
-            <a href="login.html">Back to login</a>
-        </div>
+      <div class="verification-icon">📧</div>
+      <h1 class="verification-title">Check your email</h1>
+
+      <div class="verification-text">
+        We've sent a verification link to<br />
+        <span class="verification-email" id="user-email"></span>
+      </div>
+
+      <div class="verification-text">
+        Click the link in the email to verify your account and complete your registration.
+      </div>
+
+      <div class="alt-links">
+        <a href="login.html">Back to login</a>
+      </div>
     </div>
 
     <script>
-        // Get email from URL parameter or localStorage
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const email = urlParams.get('email') || localStorage.getItem('pendingVerificationEmail');
-            
-            if (email) {
-                document.getElementById('user-email').textContent = email;
-                // Clean up localStorage
-                localStorage.removeItem('pendingVerificationEmail');
-            } else {
-                // Redirect to register if no email
-                window.location.href = 'register.html';
-            }
-        });
+      // Get email from URL parameter or localStorage
+      document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email') || localStorage.getItem('pendingVerificationEmail');
+
+        if (email) {
+          document.getElementById('user-email').textContent = email;
+          // Clean up localStorage
+          localStorage.removeItem('pendingVerificationEmail');
+        } else {
+          // Redirect to register if no email
+          window.location.href = 'register.html';
+        }
+      });
     </script>
-</body>
+  </body>
 </html>
