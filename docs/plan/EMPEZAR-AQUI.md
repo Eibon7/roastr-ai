@@ -10,13 +10,13 @@
 
 📖 **Quick Reference** (5 min)
 
-```
+```text
 docs/SHADCN-QUICK-REFERENCE.md
 ```
 
 📖 **Reglas Completas** (15 min cuando tengas tiempo)
 
-```
+```text
 .cursor/rules/shadcn-ui-migration.mdc
 ```
 
@@ -31,7 +31,7 @@ docs/SHADCN-QUICK-REFERENCE.md
 
 ### 3️⃣ Abre tu issue en GitHub:
 
-```
+```text
 https://github.com/Eibon7/roastr-ai/issues
 ```
 

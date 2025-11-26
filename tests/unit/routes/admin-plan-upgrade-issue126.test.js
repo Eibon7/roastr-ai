@@ -100,7 +100,7 @@ describe('Admin Plan Update API - Issue #126 Fixes', () => {
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain(
-        'Invalid plan. Valid plans are: free, starter, pro, plus, creator_plus, custom'
+        'Invalid plan. Valid plans are: starter_trial, starter, pro, plus, creator_plus, custom' // Issue #1020: Updated
       );
     });
 
@@ -239,13 +239,14 @@ describe('Admin Plan Update API - Issue #126 Fixes', () => {
     });
 
     it('should support all valid plan types with their durations', async () => {
-      const validPlans = ['free', 'starter', 'pro', 'plus', 'creator_plus', 'custom'];
+      // Issue #1020: Updated to current plan names
+      const validPlans = ['starter_trial', 'starter', 'pro', 'plus', 'creator_plus', 'custom'];
 
       for (const plan of validPlans) {
         mockAuthService.updateUserPlan.mockResolvedValue({
           message: 'User plan updated successfully',
           user: { id: 'user-123', plan },
-          oldPlan: 'free',
+          oldPlan: 'starter_trial', // Issue #1020: Updated
           newPlan: plan,
           warnings: []
         });
