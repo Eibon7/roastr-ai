@@ -132,7 +132,7 @@ describe('usePlanFeatures', () => {
   });
 
   describe('Unknown plan', () => {
-    it('should return defaults for unknown plan', () => {
+    it('should normalize unknown plan to starter_trial (default fallback)', () => {
       useAuth.mockReturnValue({
         userData: { plan: 'unknown_plan' },
         loading: false
@@ -140,14 +140,15 @@ describe('usePlanFeatures', () => {
 
       const { result } = renderHook(() => usePlanFeatures());
 
-      expect(result.current.plan).toBe('unknown_plan');
-      expect(result.current.hasShield).toBe(false);
-      expect(result.current.hasPersona).toBe(false);
+      // normalizePlanId maps unknown plans to 'starter_trial' as default fallback
+      expect(result.current.plan).toBe('starter_trial');
+      expect(result.current.hasShield).toBe(true); // starter_trial has Shield
+      expect(result.current.hasPersona).toBe(true); // starter_trial has Persona
       expect(result.current.hasToneOriginal).toBe(false);
       expect(result.current.hasSponsor).toBe(false);
       expect(result.current.hasRQC).toBe(false);
       expect(result.current.hasCustomPrompt).toBe(false);
-      expect(result.current.maxPersonaFields).toBe(0);
+      expect(result.current.maxPersonaFields).toBe(1); // starter_trial allows 1 field
     });
   });
 

@@ -9,6 +9,7 @@
 
 import { useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { normalizePlanId } from '../utils/planHelpers';
 
 /**
  * Plan features mapping based on subscription tier
@@ -102,8 +103,8 @@ export const usePlanFeatures = () => {
       };
     }
 
-    // Get plan from userData (normalize to lowercase)
-    const planId = userData.plan ? userData.plan.toLowerCase() : null;
+    // Get plan from userData (normalize using utility for legacy plan mapping)
+    const planId = userData.plan ? normalizePlanId(userData.plan) : null;
 
     // If plan is not recognized, use defaults
     const planFeatures = PLAN_FEATURES[planId] || DEFAULT_FEATURES;
