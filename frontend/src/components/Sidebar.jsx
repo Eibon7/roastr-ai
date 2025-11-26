@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutGrid, Settings, ShoppingBag, Menu, X, Flame, BarChart3 } from 'lucide-react';
-import useFeatureFlags from '../hooks/useFeatureFlags';
+import { useFeatureFlags } from '../contexts/FeatureFlagsContext';
 import { useSidebar } from '../contexts/SidebarContext';
 
 // Base navigation items (always visible)

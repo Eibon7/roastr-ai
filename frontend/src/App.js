@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { SidebarProvider } from './contexts/SidebarContext';
+import { FeatureFlagsProvider } from './contexts/FeatureFlagsContext';
 import { Login, Register, ResetPassword } from './pages/auth';
 import AuthCallback from './pages/auth-callback';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -38,8 +39,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <SidebarProvider>
-          <div className="App">
+        <FeatureFlagsProvider>
+          <SidebarProvider>
+            <div className="App">
             <Routes>
               {/* Public routes - redirect if already authenticated */}
               <Route
@@ -123,6 +125,7 @@ function App() {
             </Routes>
           </div>
         </SidebarProvider>
+        </FeatureFlagsProvider>
       </AuthProvider>
     </Router>
   );
