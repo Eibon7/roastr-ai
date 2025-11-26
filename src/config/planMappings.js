@@ -1,46 +1,54 @@
 /**
  * Centralized plan mapping configuration
  * Provides consistent plan ID handling across the application
+ * 
+ * Issue #1021 Follow-up: Migrated to use planConstants.js for single source of truth
  */
 
-// Plan ID constants
+const { PLANS, LEGACY_PLAN_MAPPING, normalizePlanName: normalizePlan } = require('./planConstants');
+
+// Plan ID constants (using centralized source)
 const PLAN_IDS = {
-  STARTER_TRIAL: 'starter_trial',
-  STARTER: 'starter',
-  PRO: 'pro',
-  PLUS: 'plus',
-  CREATOR_PLUS: 'creator_plus', // Legacy alias for plus
-  CUSTOM: 'custom'
+  STARTER: PLANS.STARTER,  // Canonical name (was: starter_trial)
+  PRO: PLANS.PRO,
+  PLUS: PLANS.PLUS,
+  // Legacy support
+  STARTER_TRIAL: PLANS.STARTER,  // Maps to 'starter' via normalization
+  CREATOR_PLUS: PLANS.PLUS, // Legacy alias for plus
+  CUSTOM: 'custom'  // Custom plans still supported
 };
 
 // Valid plan arrays for different contexts
 const VALID_PLANS = {
-  ALL: ['starter_trial', 'starter', 'pro', 'plus', 'creator_plus', 'custom'],
-  ADMIN_ASSIGNABLE: ['starter_trial', 'starter', 'pro', 'plus', 'creator_plus']
+  ALL: ['starter', 'pro', 'plus', 'custom', 'starter_trial', 'creator_plus'], // Legacy names at end
+  ADMIN_ASSIGNABLE: ['starter', 'pro', 'plus', 'creator_plus']
 };
 
 // TODO:Polar - Price lookup key to plan ID mapping (formerly Stripe)
 const PLAN_MAPPINGS = {
-  plan_starter_trial: PLAN_IDS.STARTER_TRIAL,
   plan_starter: PLAN_IDS.STARTER,
   plan_pro: PLAN_IDS.PRO,
   plan_plus: PLAN_IDS.PLUS,
-  plan_creator_plus: PLAN_IDS.PLUS, // Legacy mapping
   plan_custom: PLAN_IDS.CUSTOM,
+  
+  // Legacy mappings (for backward compatibility)
+  plan_starter_trial: PLAN_IDS.STARTER,  // Legacy → canonical
+  plan_creator_plus: PLAN_IDS.PLUS,
 
   // Alternative formats
-  starter_trial: PLAN_IDS.STARTER_TRIAL,
   starter: PLAN_IDS.STARTER,
   pro: PLAN_IDS.PRO,
   plus: PLAN_IDS.PLUS,
-  creator_plus: PLAN_IDS.PLUS,
-  custom: PLAN_IDS.CUSTOM
+  custom: PLAN_IDS.CUSTOM,
+  
+  // Legacy direct mappings
+  starter_trial: PLAN_IDS.STARTER,  // Legacy → canonical
+  creator_plus: PLAN_IDS.PLUS
 };
 
 // Plan hierarchy for upgrades/downgrades
 const PLAN_HIERARCHY = {
-  [PLAN_IDS.STARTER_TRIAL]: 0,
-  [PLAN_IDS.STARTER]: 1,
+  [PLAN_IDS.STARTER]: 1,  // starter (previously starter_trial at 0)
   [PLAN_IDS.PRO]: 2,
   [PLAN_IDS.PLUS]: 3,
   [PLAN_IDS.CUSTOM]: 4
@@ -53,51 +61,22 @@ const PLAN_HIERARCHY = {
  */
 function getPlanFromLookupKey(lookupKey) {
   if (!lookupKey || typeof lookupKey !== 'string') {
-    return PLAN_IDS.STARTER_TRIAL;
+    return PLAN_IDS.STARTER;  // Default to starter
   }
 
-  return PLAN_MAPPINGS[lookupKey.toLowerCase()] || PLAN_IDS.STARTER_TRIAL;
+  return PLAN_MAPPINGS[lookupKey.toLowerCase()] || PLAN_IDS.STARTER;
 }
 
 /**
  * Normalize plan ID to standard format
+ * Uses planConstants.normalizePlanName for consistency
+ * 
  * @param {string} planId - Input plan ID
  * @returns {string} - Normalized plan ID
  */
 function normalizePlanId(planId) {
-  if (!planId || typeof planId !== 'string') {
-    return PLAN_IDS.STARTER_TRIAL;
-  }
-
-  const normalized = planId.toLowerCase().trim();
-
-  // Handle variations
-  switch (normalized) {
-    case 'starter_trial':
-    case 'trial':
-      return PLAN_IDS.STARTER_TRIAL;
-    case 'starter':
-    case 'starter_plan':
-      return PLAN_IDS.STARTER;
-    case 'pro':
-    case 'professional':
-      return PLAN_IDS.PRO;
-    case 'plus':
-    case 'premium':
-      return PLAN_IDS.PLUS;
-    case 'creator_plus':
-    case 'creator':
-    case 'creatorplus':
-      return PLAN_IDS.CREATOR_PLUS;
-    // Legacy mappings
-    case 'starter_trial':
-    case 'gratuito':
-    case 'basic':
-    case 'basico':
-      return PLAN_IDS.STARTER_TRIAL;
-    default:
-      return PLAN_IDS.STARTER_TRIAL;
-  }
+  // Delegate to centralized normalization logic
+  return normalizePlan(planId);
 }
 
 /**
