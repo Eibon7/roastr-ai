@@ -205,7 +205,16 @@ class ApiClient {
       }
 
       // Add authorization header if not a public endpoint
-      if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+      // Fix BLOCKER 2: Include all public auth endpoints
+      const publicEndpoints = [
+        '/auth/login',
+        '/auth/register',
+        '/auth/magic-link',
+        '/auth/signup/magic-link',
+        '/auth/reset-password'
+      ];
+      
+      if (!publicEndpoints.some(ep => endpoint.includes(ep))) {
         const session = await this.getValidSession();
         if (session?.access_token) {
           options.headers.Authorization = `Bearer ${session.access_token}`;

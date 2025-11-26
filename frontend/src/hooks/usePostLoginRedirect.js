@@ -22,7 +22,8 @@ export const usePostLoginRedirect = () => {
     if (isAuthenticated && userData) {
       // Issue #1058: Admin → /admin/users, User → /app
       const target = isAdmin ? '/admin/users' : '/app';
-      if (pathname !== target && pathname !== '/login') {
+      // Fix BLOCKER 1: Remove /login guard - authenticated users should always redirect
+      if (pathname !== target) {
         if (process.env.NODE_ENV === 'development') {
           console.log(
             isAdmin ? 'Redirecting admin user to /admin/users' : 'Redirecting normal user to /app'
