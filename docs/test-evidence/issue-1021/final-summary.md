@@ -153,7 +153,7 @@ required_error: 'Email and password are required'
 
 ## 🔧 Files Modified
 
-### Production Code (3 files)
+### Production Code (2 files)
 1. ✅ `src/lib/llmClient/factory.js` - Optional portkey-ai loading
 2. ✅ `src/validators/zod/auth.schema.js` - English error messages
 
