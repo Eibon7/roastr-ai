@@ -4,7 +4,7 @@
 **Owner:** Back-end Dev
 **Priority:** Critical
 **Status:** Production
-**Last Updated:** 2025-11-18
+**Last Updated:** 2025-11-26
 **Coverage:** 74%
 **Coverage Source:** auto
 **Note:** Coverage value updated to match actual test coverage (gdd-status.json validation). Will be auto-updated when tests pass.
@@ -411,9 +411,12 @@ Los siguientes agentes son responsables de mantener este nodo:
 
 - **Backend Developer**
 - **Documentation Agent**
-- **FrontendDev** - UI components (PlanPicker, Pricing pages)
+- **FrontendDev** - UI components (PlanPicker, Pricing pages, Admin Panel - Issue #1040)
 - **Product Manager**
 - **Test Engineer**
+
+**Admin Panel (Epic #1037):**
+- Configuración de planes disponible en `/admin/config/plans` (FrontendDev, Issue #1040)
 
 ## Related Nodes
 
