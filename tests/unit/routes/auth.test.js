@@ -133,7 +133,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('characters');
+      expect(response.body.error).toContain('characters'); // Issue #1020: Updated to English
     });
 
     it('should handle emailService welcome email errors gracefully', async () => {
@@ -1041,6 +1041,7 @@ describe('Auth Routes', () => {
         .send({ password: 'password123' });
 
       expect(response.status).toBe(400);
+      // Issue #1020: Zod may return multiple validation errors concatenated
       expect(response.body.error).toContain('Email and password are required');
     });
 

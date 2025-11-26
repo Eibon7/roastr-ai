@@ -286,8 +286,9 @@ class ShieldActionExecutorService {
         const result = await this.executeAdapterAction(adapter, action, moderationInput);
 
         // Check if the action actually succeeded
-        if (!result.success) {
-          throw new Error(result.error || 'Action execution failed');
+        // Issue #1020: Add defensive check for undefined result
+        if (!result || !result.success) {
+          throw new Error((result && result.error) || 'Action execution failed');
         }
 
         // Success - reset circuit breaker
@@ -442,27 +443,71 @@ class ShieldActionExecutorService {
     });
 
     // Route fallback through the same resiliency patterns as primary actions
-    const result = await this.executeWithResiliency(
-      adapter.getPlatform(),
-      adapter,
-      fallbackAction,
-      moderationInput,
-      startTime
-    );
+    try {
+      const result = await this.executeWithResiliency(
+        adapter.getPlatform(),
+        adapter,
+        fallbackAction,
+        moderationInput,
+        startTime
+      );
 
-    // Mark as fallback (ensure result is a plain object we can modify)
-    if (result && typeof result === 'object') {
-      result.fallback = fallbackAction;
-      result.originalAction = action;
-      result.details = result.details || {};
-      result.details.fallbackExecuted = true;
-      result.details.fallbackReason = 'original_action_unsupported';
+      // Mark as fallback (ensure result is a plain object we can modify)
+      if (result && typeof result === 'object') {
+        result.fallback = fallbackAction;
+        result.originalAction = action;
+        result.details = result.details || {};
+        result.details.fallbackExecuted = true;
+        result.details.fallbackReason = 'original_action_unsupported';
+      }
+
+      // Update metrics for fallback execution
+      this.updateMetrics(adapter.getPlatform(), action, result && result.success, true);
+
+      return result;
+    } catch (fallbackError) {
+      // Issue #1020: If fallback also fails, escalate to manual review
+      this.logger.warn('Fallback action failed, escalating to manual review', {
+        platform: adapter.getPlatform(),
+        originalAction: action,
+        fallbackAction,
+        error: fallbackError.message
+      });
+
+      // Record manual review escalation
+      try {
+        await this.recordManualReviewEscalation(
+          moderationInput,
+          action,
+          adapter.getPlatform(),
+          startTime
+        );
+      } catch (auditError) {
+        this.logger.error('Failed to record manual review escalation after fallback failure', {
+          error: auditError.message
+        });
+      }
+
+      const result = {
+        success: true,
+        action,
+        requiresManualReview: true,
+        fallback: 'manual_review',
+        details: {
+          platform: adapter.getPlatform(),
+          originalAction: action,
+          attemptedFallback: fallbackAction,
+          reason: 'Both primary and fallback actions failed',
+          manualInstructions: this.getManualInstructions(adapter.getPlatform(), action)
+        },
+        executionTime: Date.now() - startTime // CodeRabbit: Add for observability
+      };
+
+      // Update metrics for failed fallback
+      this.updateMetrics(adapter.getPlatform(), action, false, true);
+
+      return result;
     }
-
-    // Update metrics for fallback execution
-    this.updateMetrics(adapter.getPlatform(), action, result && result.success, true);
-
-    return result;
   }
 
   /**

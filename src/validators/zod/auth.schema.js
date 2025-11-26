@@ -43,7 +43,7 @@ const registerSchema = z.object({
       invalid_type_error: 'Password must be a string'
     })
     .min(1, 'Email and password are required')
-    .min(8, 'Password must be at least 8 characters')
+    .min(8, 'Password must be at least 8 characters long')
     .refine((password) => !/\s/.test(password), {
       message: 'Password cannot contain spaces'
     })

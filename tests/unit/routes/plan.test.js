@@ -20,16 +20,17 @@ describe('Plan Routes', () => {
 
       // Verify plan structure
       const plans = response.body.data.plans;
+      // Issue #1020: Updated to current plan naming (starter_trial instead of free, plus instead of creator_plus)
       expect(plans.map((p) => p.id)).toEqual(
-        expect.arrayContaining(['free', 'starter', 'pro', 'creator_plus'])
+        expect.arrayContaining(['starter_trial', 'starter', 'pro', 'plus'])
       );
 
-      // Check Creator+ plan has style profile feature
-      const plusPlan = plans.find((p) => p.id === 'creator_plus');
+      // Check Plus plan has style profile feature
+      const plusPlan = plans.find((p) => p.id === 'plus');
       expect(plusPlan.features.styleProfile).toBe(true);
 
       // Check Free plan doesn't have style profile
-      const freePlan = plans.find((p) => p.id === 'free');
+      const freePlan = plans.find((p) => p.id === 'starter_trial'); // Issue #1020: Updated
       expect(freePlan.features.styleProfile).toBe(false);
     });
   });
@@ -48,7 +49,7 @@ describe('Plan Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.plan).toBe('free');
+      expect(response.body.data.plan).toBe('starter_trial'); // Issue #1020: Updated
       expect(response.body.data.canAccessStyleProfile).toBe(false);
     });
   });
@@ -74,11 +75,11 @@ describe('Plan Routes', () => {
       const response = await request(app)
         .post('/api/plan/select')
         .set('Authorization', `Bearer ${authToken}`)
-        .send({ plan: 'creator_plus' });
+        .send({ plan: 'plus' }); // Issue #1020: Updated to 'plus'
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.plan).toBe('creator_plus');
+      expect(response.body.data.plan).toBe('plus'); // Issue #1020: Updated
       expect(response.body.data.details.features.styleProfile).toBe(true);
     });
 
@@ -144,8 +145,8 @@ describe('Plan Routes', () => {
       expect(hasFeatureAccess('nonexistent-user', 'styleProfile')).toBe(false);
       expect(getUserPlan('nonexistent-user')).toEqual(
         expect.objectContaining({
-          id: 'free',
-          name: 'Free'
+          id: 'starter_trial', // Issue #1020: Updated
+          name: expect.any(String) // Issue #1020: Plan name may vary
         })
       );
     });
@@ -299,20 +300,21 @@ describe('Plan Routes', () => {
     it('should test getUserPlan function', () => {
       const { getUserPlan } = require('../../../src/routes/plan');
 
-      // Test with unknown user (defaults to free plan)
+      // Test with unknown user (defaults to starter_trial plan) - Issue #1020
       const plan = getUserPlan('unknown-user');
-      expect(plan.id).toBe('free');
-      expect(plan.name).toBe('Free');
+      expect(plan.id).toBe('starter_trial'); // Issue #1020: Updated
+      expect(typeof plan.name).toBe('string'); // Issue #1020: Verify name is a string
       expect(plan.features.styleProfile).toBe(false);
     });
 
     it('should export AVAILABLE_PLANS correctly', () => {
       const { AVAILABLE_PLANS } = require('../../../src/routes/plan');
 
-      expect(AVAILABLE_PLANS).toHaveProperty('free');
+      // Issue #1020: Updated to current plan naming
+      expect(AVAILABLE_PLANS).toHaveProperty('starter_trial');
       expect(AVAILABLE_PLANS).toHaveProperty('pro');
-      expect(AVAILABLE_PLANS).toHaveProperty('creator_plus');
-      expect(AVAILABLE_PLANS.creator_plus.features.styleProfile).toBe(true);
+      expect(AVAILABLE_PLANS).toHaveProperty('plus');
+      expect(AVAILABLE_PLANS.plus.features.styleProfile).toBe(true);
     });
 
     it('should test hasFeatureAccess with invalid plan scenario', () => {

@@ -81,8 +81,21 @@ const datetimeSchema = z.string().datetime({ message: 'Invalid ISO 8601 datetime
 const checkoutSchema = z
   .object({
     customer_email: emailSchema,
-    product_id: uuidSchema.optional(), // New Polar API (preferred)
-    price_id: uuidSchema.optional(), // Legacy fallback
+    // Issue #1020: Improved validation for empty strings and null values
+    product_id: z
+      .string()
+      .min(1, { message: 'product_id cannot be empty' })
+      .uuid({ message: 'Invalid UUID format' })
+      .optional()
+      .or(z.undefined())
+      .or(z.null()), // New Polar API (preferred)
+    price_id: z
+      .string()
+      .min(1, { message: 'price_id cannot be empty' })
+      .uuid({ message: 'Invalid UUID format' })
+      .optional()
+      .or(z.undefined())
+      .or(z.null()), // Legacy fallback
     metadata: z.record(z.unknown()).optional() // Flexible metadata (any key-value pairs)
   })
   .refine((data) => data.product_id || data.price_id, {
@@ -404,9 +417,62 @@ function validateZodSchema(schema, source = 'body') {
           errors: formatZodError(error)
         });
 
+        // Issue #1020: Map Zod errors to legacy error messages for test compatibility
+        const firstError = error.errors[0];
+        let errorMessage = 'Validation failed';
+        let messageDetail = 'Request data does not match expected format';
+
+        // Map specific Zod errors to legacy error messages
+        if (firstError) {
+          const fieldName = firstError.path[0];
+          const errorCode = firstError.code;
+          const errorMsg = firstError.message;
+
+          // Handle email validation errors
+          if (fieldName === 'customer_email' && errorCode === 'invalid_string') {
+            errorMessage = 'Invalid email';
+            messageDetail = 'Please provide a valid email address';
+          }
+          // Handle price_id/product_id validation errors (UUID format)
+          else if (
+            (fieldName === 'price_id' || fieldName === 'product_id') &&
+            errorCode === 'invalid_string'
+          ) {
+            // Check if it's empty string error or invalid UUID
+            if (errorMsg.includes('cannot be empty')) {
+              errorMessage = 'Missing required fields';
+              messageDetail = 'Please provide all required fields';
+            } else {
+              errorMessage = 'Invalid price_id';
+              messageDetail = 'The selected plan is not available for purchase.';
+            }
+          }
+          // Handle missing fields (undefined/null)
+          else if (
+            errorCode === 'invalid_type' &&
+            (firstError.received === 'undefined' || firstError.received === 'null')
+          ) {
+            errorMessage = 'Missing required fields';
+            messageDetail = 'Please provide all required fields';
+          }
+          // Handle refine errors (custom validation for product_id or price_id)
+          else if (errorCode === 'custom' && errorMsg.includes('product_id or price_id')) {
+            errorMessage = 'Missing required fields';
+            messageDetail = 'Either product_id or price_id must be provided';
+          }
+          // Handle too_small errors (empty strings)
+          else if (
+            errorCode === 'too_small' &&
+            (fieldName === 'price_id' || fieldName === 'product_id')
+          ) {
+            errorMessage = 'Missing required fields';
+            messageDetail = 'Please provide all required fields';
+          }
+        }
+
         return res.status(400).json({
-          error: 'Validation failed',
-          message: 'Request data does not match expected format',
+          error: errorMessage,
+          message: messageDetail,
           details: formatZodError(error)
         });
       }

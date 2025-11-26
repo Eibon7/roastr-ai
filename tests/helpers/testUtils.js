@@ -11,6 +11,15 @@ const { randomUUID } = require('crypto');
  * Note: integrationsLimit is intentionally higher than platforms to allow multiple integrations per platform
  */
 const PLAN_LIMITS = {
+  // Issue #1020: Added 'free' and 'enterprise' for test compatibility
+  free: {
+    roasts: 10,
+    monthlyResponsesLimit: 10,
+    platforms: 1,
+    integrationsLimit: 2,
+    features: ['basic'],
+    shieldEnabled: false
+  },
   starter_trial: {
     roasts: 50,
     monthlyResponsesLimit: 100,
@@ -28,7 +37,7 @@ const PLAN_LIMITS = {
     shieldEnabled: true
   },
   pro: {
-    roasts: 500,
+    roasts: 1000,
     monthlyResponsesLimit: 1000,
     platforms: 2,
     integrationsLimit: 6,
@@ -41,6 +50,15 @@ const PLAN_LIMITS = {
     platforms: 2,
     integrationsLimit: 6,
     features: ['basic', 'advanced', 'premium'],
+    shieldEnabled: true
+  },
+  // Issue #1020: Enterprise plan for high-volume customers
+  enterprise: {
+    roasts: 10000,
+    monthlyResponsesLimit: 10000,
+    platforms: 10,
+    integrationsLimit: 18,
+    features: ['basic', 'advanced', 'premium', 'enterprise'],
     shieldEnabled: true
   }
 };
