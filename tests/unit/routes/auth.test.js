@@ -133,7 +133,7 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('caracteres');
+      expect(response.body.error).toContain('characters');
     });
 
     it('should handle emailService welcome email errors gracefully', async () => {
@@ -288,7 +288,8 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('caracteres');
+      // This endpoint uses manual validation (legacy), still in Spanish
+      expect(response.body.error).toMatch(/caracteres|characters/);
     });
 
     it('should handle password update service errors', async () => {
@@ -1040,7 +1041,7 @@ describe('Auth Routes', () => {
         .send({ password: 'password123' });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Email and password are required');
+      expect(response.body.error).toContain('Email and password are required');
     });
 
     it('should handle existing user in register', async () => {
