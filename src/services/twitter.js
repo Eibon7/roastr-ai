@@ -31,21 +31,54 @@ class TwitterRoastBot extends BaseIntegration {
     // Call parent constructor
     super(twitterConfig);
 
-    // Validate config first
-    if (!this.validateConfig()) {
-      throw new Error('Invalid Twitter configuration');
+    // Check if we're in test mode
+    const isTestMode = process.env.NODE_ENV === 'test' || process.env.ENABLE_MOCK_MODE === 'true';
+
+    // Validate config first (skip in test mode)
+    if (!isTestMode) {
+      if (!this.validateConfig()) {
+        throw new Error('Invalid Twitter configuration');
+      }
     }
 
     // Initialize Twitter client with OAuth 1.0a (for posting tweets)
-    this.client = new TwitterApi({
-      appKey: process.env.TWITTER_APP_KEY,
-      appSecret: process.env.TWITTER_APP_SECRET,
-      accessToken: process.env.TWITTER_ACCESS_TOKEN,
-      accessSecret: process.env.TWITTER_ACCESS_SECRET
-    });
+    // Use all-or-nothing approach: require all 4 credentials to be present
+    const hasCredentials =
+      process.env.TWITTER_APP_KEY &&
+      process.env.TWITTER_APP_SECRET &&
+      process.env.TWITTER_ACCESS_TOKEN &&
+      process.env.TWITTER_ACCESS_SECRET;
+
+    if (!isTestMode && hasCredentials) {
+      this.client = new TwitterApi({
+        appKey: process.env.TWITTER_APP_KEY,
+        appSecret: process.env.TWITTER_APP_SECRET,
+        accessToken: process.env.TWITTER_ACCESS_TOKEN,
+        accessSecret: process.env.TWITTER_ACCESS_SECRET
+      });
+    } else {
+      // Create mock client for test mode or when credentials are missing
+      this.client = {
+        v2: {
+          tweet: () => Promise.resolve({ data: { id: 'test-tweet-id' } })
+        }
+      };
+    }
 
     // Bearer token client for reading mentions (OAuth 2.0)
-    this.bearerClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
+    // Use all-or-nothing approach: require bearer token to be present
+    const hasBearerToken = !!process.env.TWITTER_BEARER_TOKEN;
+
+    if (!isTestMode && hasBearerToken) {
+      this.bearerClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
+    } else {
+      // Create mock bearer client for test mode or when token is missing
+      this.bearerClient = {
+        v2: {
+          search: () => Promise.resolve({ data: { data: [] } })
+        }
+      };
+    }
 
     // Debug mode
     this.debug = process.env.DEBUG === 'true';

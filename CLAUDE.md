@@ -25,7 +25,9 @@ Multi-tenant toxicity detection and roast generation system for social media pla
 - ✅ Evaluar agentes (`agents/manifest.yaml`)
 - ✅ Invocar con `Task` tool cuando triggers se cumplen
 - ✅ Considerar skills (`.claude/skills/`)
-- ✅ Usar MCPs apropiados (Playwright para UI)
+- ✅ Usar MCPs apropiados:
+  - **Playwright** → Para testing UI
+  - **Shadcn-Studio** → Para generación de componentes UI (ver `.cursor/rules/shadcn-ui-migration.mdc`)
 
 **Invocación Obligatoria:**
 
@@ -267,6 +269,43 @@ tests/                   # unit/, integration/, helpers/
 - Guardar: `docs/ui-review.md`
 
 **Comandos:** `/mcp list`, `/mcp exec playwright`
+
+### Configuración MCP Shadcn-Studio
+
+**Para generación de componentes UI:**
+
+🔗 **Reglas completas:** `.cursor/rules/shadcn-ui-migration.mdc`
+
+**Comandos disponibles:**
+
+| Comando | Uso | Casos |
+|---------|-----|-------|
+| `/cui` | Customizar desde block existente | 90% de casos - tablas, forms, dashboards |
+| `/iui` | Generar UI inspirada (Pro only) | Diseños únicos y creativos |
+| `/rui` | Refinar block existente | Ajustes y tweaks |
+| `/ftc` | Instalar desde Figma | Landing pages completas |
+
+**Workflow recomendado:**
+1. Leer issue y AC
+2. Elegir comando MCP apropiado (generalmente `/cui`)
+3. Generar código base con MCP
+4. Customizar para Roastr.AI (conectar APIs, aplicar lógica)
+5. Probar en claro/oscuro/sistema + responsive
+6. Tests + evidencia visual
+
+**Ejemplos:**
+```bash
+# Admin users table (Issue #1038)
+/cui Create an admin users table with name, email, status, search, and actions
+
+# User widgets (Issue #1044)
+/cui Create usage widgets with progress bars for monthly consumption
+
+# Login page (Issue #1058)
+/cui Create a login page with email/password and magic link option
+```
+
+🔗 **Ejemplos detallados por issue:** Ver sección "Ejemplos Prácticos" en `.cursor/rules/shadcn-ui-migration.mdc`
 
 ### Reglas de PR
 

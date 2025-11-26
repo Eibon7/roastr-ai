@@ -8,32 +8,69 @@
 const { getConnections } = require('supabase-test');
 const { getTestConfig } = require('../setup/supabase-test.config');
 const { createMigrationsSeed } = require('./helpers/load-migrations');
+const { skipIfPsqlNotAvailable } = require('./helpers/check-psql');
 
 let db;
 let pg;
 let teardown;
+let shouldSkip = false;
 
 beforeAll(async () => {
-  const config = getTestConfig();
-  const result = await getConnections(config, [
-    createMigrationsSeed() // Load all migrations automatically
-  ]);
+  // Check if psql is available
+  shouldSkip = await skipIfPsqlNotAvailable();
+  if (shouldSkip) {
+    return; // Skip test setup
+  }
 
-  db = result.db;
-  pg = result.pg;
-  teardown = result.teardown;
+  try {
+    const config = getTestConfig();
+    const result = await getConnections(config, [
+      createMigrationsSeed() // Load all migrations automatically
+    ]);
+
+    db = result.db;
+    pg = result.pg;
+    teardown = result.teardown;
+  } catch (error) {
+    if (error.message && error.message.includes('psql')) {
+      console.warn('⚠️  psql not found, skipping RLS tests');
+      shouldSkip = true;
+    } else {
+      throw error;
+    }
+  }
 });
 
 afterAll(async () => {
-  await teardown();
+  if (shouldSkip || !teardown || typeof teardown !== 'function') {
+    return;
+  }
+  try {
+    await teardown();
+  } catch (error) {
+    // Ignore teardown errors if psql is not available
+    if (!error.message || !error.message.includes('psql')) {
+      throw error;
+    }
+  }
 });
 
 beforeEach(() => {
-  db.beforeEach();
+  if (shouldSkip || !db) {
+    return;
+  }
+  if (db && typeof db.beforeEach === 'function') {
+    db.beforeEach();
+  }
 });
 
 afterEach(() => {
-  db.afterEach();
+  if (shouldSkip || !db) {
+    return;
+  }
+  if (db && typeof db.afterEach === 'function') {
+    db.afterEach();
+  }
 });
 
 describe('Subscriptions RLS', () => {

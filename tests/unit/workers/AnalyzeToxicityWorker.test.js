@@ -235,18 +235,19 @@ describe('AnalyzeToxicityWorker', () => {
     worker.estimateTokens = jest.fn().mockReturnValue(10);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Cleanup mocks (Issue #1018 - Memory optimization)
     mockCostControlService._reset();
     jest.clearAllMocks();
     jest.clearAllTimers();
-    
+
     // Cleanup worker instance if it exists (Issue #1018 - CodeRabbit fix)
-    // Note: worker.stop is mocked, so we check if it returns a Promise before using .catch()
+    // Use Promise.resolve to safely handle both Promise and non-Promise returns
     if (worker && typeof worker.stop === 'function') {
-      const stopResult = worker.stop();
-      if (stopResult && typeof stopResult.catch === 'function') {
-        stopResult.catch(() => {});
+      try {
+        await Promise.resolve(worker.stop());
+      } catch (e) {
+        // Ignore shutdown errors in tests
       }
     }
   });
@@ -258,7 +259,11 @@ describe('AnalyzeToxicityWorker', () => {
 
     // Ensure worker is properly stopped to avoid open handles
     if (worker && typeof worker.stop === 'function') {
-      await worker.stop().catch(() => {});
+      try {
+        await Promise.resolve(worker.stop());
+      } catch (e) {
+        // Ignore shutdown errors in tests
+      }
     }
 
     // Force garbage collection if available

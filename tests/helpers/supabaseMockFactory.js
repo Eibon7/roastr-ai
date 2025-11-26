@@ -1,6 +1,6 @@
 /**
  * Supabase Mock Factory
- * 
+ *
  * Centralized mock creation for Supabase client following Pattern #11 from coderabbit-lessons.md
  * Issue #1021: Fix database mock issues across ~80 tests
  * 
@@ -37,9 +37,9 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
       orderBy: null,
       limit: null,
       offset: null
-    };
+  };
 
-    const builder = {
+  const builder = {
       // SELECT operation
       select: jest.fn((columns = '*') => {
         queryState.selectedColumns = columns;
@@ -197,19 +197,11 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
 
       // DELETE operation
       delete: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
-        then: (resolve) => resolve({ data: null, error: null })
-      })),
+        eq: jest.fn(() => Promise.resolve({ data: null, error: null }))
+      }))
+  };
 
-      // Promise compatibility
-      then: jest.fn((resolve) => {
-        const data = storage.tables[tableName];
-        const result = Array.isArray(data) ? data : [data];
-        resolve({ data: result, error: null });
-      })
-    };
-
-    return builder;
+  return builder;
   };
 
   /**
