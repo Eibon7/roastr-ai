@@ -160,6 +160,7 @@ gh pr create --title "Epic #1032: Migración UI a shadcn/ui (Fase 1)" \
 - [x] Commits descriptivos (9 commits)
 - [x] Reporte de validación creado
 - [x] Issues conocidas documentadas
+- [x] .issue_lock file creado
 
 ---
 

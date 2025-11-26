@@ -399,7 +399,8 @@ npm run test:a11y
 | Componentes migrados (PoC) | 3 | 3 | ✅ 100% |
 | CSS legacy limpiado | 50% | 60% | ✅ 120% |
 | Layouts implementados | 3 | 1 | ⚠️ 33% (admin only) |
-| Tests coverage | 90% | 0% | ❌ 0% |
+| Componentes migrados - test pass rate | 100% | 100% | ✅ 18/18 passing |
+| Overall codebase coverage | 90% | ~5% | ⏸️ Pendiente Fase 2 |
 | Bundle size reduction | -30% | TBD | ⏸️ Pendiente |
 
 ---
