@@ -157,7 +157,8 @@ const mockSupabase = createSupabaseMock({
 ```javascript
 const { PLANS, normalizePlanName, comparePlans } = require('./config/planConstants');
 
-normalizePlanName('starter_trial'); // Returns: 'starter'
+normalizePlanName('starter_trial'); // Returns: 'starter_trial'
+normalizePlanName('creator_plus');  // Returns: 'plus' (legacy mapping)
 comparePlans('pro', 'starter'); // Returns: 1 (pro > starter)
 ```
 
