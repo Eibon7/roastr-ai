@@ -20,6 +20,7 @@
 ## What Was Accomplished ✅
 
 ### Core Services Stabilized
+
 1. **Billing & Cost Control:** 21/21 tests passing
 2. **Authentication & Security:** 99/99 tests passing
 3. **Shield Service:** 22/22 tests passing
@@ -31,6 +32,7 @@
 **Total:** ~256 tests fixed across 7 critical areas
 
 ### Technical Improvements
+
 - ✅ Unified PLAN_LIMITS constants
 - ✅ Standardized error messages (Spanish → English)
 - ✅ Fixed Zod validation error mapping
@@ -40,6 +42,7 @@
 - ✅ Fixed subscription validation logic
 
 ### Code Quality
+
 - ✅ No regressions introduced
 - ✅ All commits are focused and documented
 - ✅ Test patterns identified and documented
@@ -50,6 +53,7 @@
 ## What Remains 🔴
 
 ### High Priority (~500 tests, 2-3 weeks)
+
 1. **Workers System** (~320 tests)
    - AnalyzeToxicityWorker: Mock returns undefined
    - FetchCommentsWorker: API expectations outdated
@@ -63,6 +67,7 @@
    - E2E flows broken
 
 ### Medium Priority (~400 tests, 2 weeks)
+
 3. **Roast Generation** (~200 tests)
    - roastPromptTemplate: Deprecated system (Issue #872)
    - Tone mapping logic changed
@@ -74,6 +79,7 @@
    - Instagram, Facebook, etc.: Similar issues
 
 ### Low Priority (~350 tests, 1-2 weeks)
+
 5. **Miscellaneous** (~350 tests)
    - Shield adapters contract (15/72 failing)
    - Account deletion routes (7/13 failing)
@@ -129,12 +135,14 @@ This is **technical debt accumulation**, not a recent breakage:
 ### Option A: Merge This PR NOW ✅ (RECOMMENDED)
 
 **What to merge:**
+
 - All 11 commits
 - ~256 tests fixed in core services
 - Clean, focused changes
 - No regressions
 
 **Benefits:**
+
 - Core services are stable
 - Can ship features immediately
 - Incremental progress
@@ -142,6 +150,7 @@ This is **technical debt accumulation**, not a recent breakage:
 
 **Follow-up:**
 Create focused issues:
+
 - Issue #1020-workers (2 weeks)
 - Issue #1020-integration (2 weeks)
 - Issue #1020-roast (1 week)
@@ -155,12 +164,14 @@ Create focused issues:
 ### Option B: Continue to 95% (NOT RECOMMENDED)
 
 **What's required:**
+
 - 4-5 more weeks full-time
 - Fix 1,000+ additional tests
 - Risk of burnout
 - Diminishing returns
 
 **Problems:**
+
 - Blocks other work
 - Many low-value tests
 - Some tests should be deleted (deprecated code)
@@ -171,12 +182,14 @@ Create focused issues:
 ### Option C: Partial Continue (COMPROMISE)
 
 **Focus on high-value:**
+
 - Fix workers (~320 tests, 1 week)
 - Skip deprecated roast tests
 - Skip integration tests (need infra)
 - Skip platform tests (low priority)
 
 **Result:**
+
 - ~550 tests fixed total
 - 93% pass rate
 - 2 weeks total time
@@ -185,15 +198,15 @@ Create focused issues:
 
 ## Decision Matrix
 
-| Criteria | Option A (Merge Now) | Option B (95% Complete) | Option C (Partial) |
-|----------|---------------------|------------------------|-------------------|
-| **Time** | 0 days | 25-30 days | 5-7 days |
-| **Tests Fixed** | 256 | 1,050 | 550 |
-| **Pass Rate** | 87% | 95% | 93% |
-| **Risk** | Low | High | Medium |
-| **Value** | High | Medium | High |
-| **Blocks Work** | No | Yes | Some |
-| **Recommendation** | ✅ YES | ❌ NO | 🟡 MAYBE |
+| Criteria           | Option A (Merge Now) | Option B (95% Complete) | Option C (Partial) |
+| ------------------ | -------------------- | ----------------------- | ------------------ |
+| **Time**           | 0 days               | 25-30 days              | 5-7 days           |
+| **Tests Fixed**    | 256                  | 1,050                   | 550                |
+| **Pass Rate**      | 87%                  | 95%                     | 93%                |
+| **Risk**           | Low                  | High                    | Medium             |
+| **Value**          | High                 | Medium                  | High               |
+| **Blocks Work**    | No                   | Yes                     | Some               |
+| **Recommendation** | ✅ YES               | ❌ NO                   | 🟡 MAYBE           |
 
 ---
 
@@ -218,6 +231,7 @@ db2408df docs(issue-1020): add final summary of work completed
 ## Files Changed
 
 ### Source Code (6 files)
+
 - `src/validators/zod/billing.schema.js`
 - `src/validators/zod/auth.schema.js`
 - `src/services/shieldService.js`
@@ -226,6 +240,7 @@ db2408df docs(issue-1020): add final summary of work completed
 - `package-lock.json`
 
 ### Test Files (7 files)
+
 - `tests/helpers/testUtils.js`
 - `tests/unit/routes/checkout.security.test.js`
 - `tests/unit/routes/auth.test.js`
@@ -235,6 +250,7 @@ db2408df docs(issue-1020): add final summary of work completed
 - `tests/unit/services/entitlementsService-polar.test.js`
 
 ### Documentation (5 files)
+
 - `CRITICAL-DECISION-NEEDED.md`
 - `PROGRESS-UPDATE.md`
 - `FINAL-STATUS.md`
@@ -321,6 +337,7 @@ The original issue scope was **6x underestimated**. What was described as "~200 
 **My recommendation: Option A (Merge Now)**
 
 Reasons:
+
 1. Core services are stable
 2. Incremental progress is valuable
 3. Can ship features immediately
@@ -335,4 +352,3 @@ Reasons:
 **Prepared by:** AI Assistant  
 **For Review by:** Product Owner / Tech Lead  
 **Status:** ✅ Ready for Decision
-

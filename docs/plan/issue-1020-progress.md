@@ -9,11 +9,13 @@
 ## 📊 Overall Status
 
 **Initial State:**
+
 - Total tests: 7,776
 - Failing: 1,204 (15.5%)
 - Passing: 6,518 (83.8%)
 
 **Current State (after FASE 1):**
+
 - ✅ checkout.security.test.js: 16/16 passing (was 5/16)
 - ✅ testUtils-planLimits.test.js: 5/5 passing (was 1/5)
 - **Total fixed: 20 tests**
@@ -49,14 +51,15 @@
 
 ### Tests Fixed
 
-| Test File | Before | After | Status |
-|-----------|--------|-------|--------|
-| checkout.security.test.js | 5/16 | 16/16 | ✅ 100% |
-| testUtils-planLimits.test.js | 1/5 | 5/5 | ✅ 100% |
+| Test File                    | Before | After | Status  |
+| ---------------------------- | ------ | ----- | ------- |
+| checkout.security.test.js    | 5/16   | 16/16 | ✅ 100% |
+| testUtils-planLimits.test.js | 1/5    | 5/5   | ✅ 100% |
 
 ### Code Changes
 
 **Modified Files:**
+
 - `src/validators/zod/billing.schema.js` - 44 lines added (error mapping)
 - `tests/helpers/testUtils.js` - 26 lines added (plan definitions)
 - `tests/unit/routes/checkout.security.test.js` - 3 lines modified (error expectation)
@@ -70,12 +73,14 @@
 ### Billing & Cost Control
 
 **Critical Fixes:**
+
 - ✅ Price ID validation now correctly rejects invalid formats
 - ✅ Email validation provides clear error messages
 - ✅ Empty/null/undefined values properly handled
 - ✅ Plan limits consistent across all test utilities
 
 **Production Impact:**
+
 - **HIGH** - Prevents invalid checkout sessions
 - **HIGH** - Ensures data integrity in billing flow
 - **MEDIUM** - Improves error messages for debugging
@@ -83,6 +88,7 @@
 ### Security
 
 **Improvements:**
+
 - ✅ Authorization bypass prevention maintained (case-sensitive matching)
 - ✅ SQL injection attempts properly rejected
 - ✅ Input validation more robust
@@ -98,6 +104,7 @@
 **Solution:** Added intelligent error mapping layer that preserves Zod benefits while maintaining test compatibility
 
 **Pattern for Future:**
+
 ```javascript
 // Map Zod errors to legacy messages
 if (errorCode === 'too_small') {
@@ -114,6 +121,7 @@ if (errorCode === 'too_small') {
 **Solution:** Centralized PLAN_LIMITS constant with all plan variants
 
 **Pattern for Future:**
+
 ```javascript
 const PLAN_LIMITS = {
   free: { roasts: 10, ... },
@@ -127,6 +135,7 @@ const PLAN_LIMITS = {
 **Problem:** Tests sometimes expect specific error messages that don't match actual behavior
 
 **Decision Framework:**
+
 1. If actual behavior is **correct** → update test
 2. If actual behavior is **incorrect** → fix code
 3. In this case: "Unauthorized product" is more accurate than "Invalid price_id"
@@ -138,12 +147,14 @@ const PLAN_LIMITS = {
 ### FASE 2: Authentication & Security (~40 tests)
 
 **Target Files:**
+
 - tests/unit/services/authService-edge-cases.test.js
 - tests/unit/routes/auth-edge-cases.test.js
 - tests/unit/routes/account-deletion.test.js
 - tests/unit/services/authPasswordRecovery.test.js
 
 **Expected Issues:**
+
 - Edge case handling in auth service
 - Account deletion password validation
 - Password recovery token expiration
@@ -153,11 +164,13 @@ const PLAN_LIMITS = {
 ### FASE 3: Shield Service (~35 tests)
 
 **Target Files:**
+
 - tests/integration/shield-database-round3.test.js
 - tests/unit/adapters/ShieldAdapter.contract.test.js
 - tests/unit/services/shieldService-edge-cases.test.js
 
 **Expected Issues:**
+
 - Database constraints violations
 - Adapter contract compliance
 - RLS enforcement
@@ -167,10 +180,12 @@ const PLAN_LIMITS = {
 ### FASE 4: Queue & Workers (~25 tests)
 
 **Target Files:**
-- tests/integration/ingestor-*.test.js
+
+- tests/integration/ingestor-\*.test.js
 - tests/unit/services/queueService.test.js
 
 **Expected Issues:**
+
 - Job processing order
 - Retry logic
 - Error handling
@@ -180,10 +195,12 @@ const PLAN_LIMITS = {
 ### FASE 5: Roast Generation (~30 tests)
 
 **Target Files:**
+
 - tests/integration/generation-issue-409.test.js
-- tests/unit/routes/roast-*.test.js
+- tests/unit/routes/roast-\*.test.js
 
 **Expected Issues:**
+
 - Variant generation
 - Validation inconsistencies
 - Persona integration
@@ -206,7 +223,8 @@ const PLAN_LIMITS = {
 
 **Original:** 5 days (1 fase per day)
 
-**Revised:** 
+**Revised:**
+
 - FASE 1: ✅ 3 hours (completed)
 - FASE 2-5: ~20 hours (estimated)
 - FASE 6 (Validation): ~2 hours
@@ -215,15 +233,18 @@ const PLAN_LIMITS = {
 ### Risk Assessment
 
 **High Impact, High Urgency:**
+
 - Billing/cost control ✅ (fixed)
 - Authentication (next)
 - Shield service (critical for moderation)
 
 **Medium Impact:**
+
 - Queue/workers (system reliability)
 - Roast generation (core feature)
 
 **Low Impact:**
+
 - UI/frontend tests (non-blocking)
 - Integration tests for secondary features
 
@@ -279,4 +300,3 @@ const PLAN_LIMITS = {
 **Status:** ⏳ In Progress - Continuing with FASE 2  
 **Next Action:** Run authentication tests to identify specific failures  
 **Blockers:** None
-
