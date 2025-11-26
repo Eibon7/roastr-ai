@@ -12,7 +12,14 @@
  */
 
 const OpenAI = require('openai');
-const Portkey = require('portkey-ai');
+// Optional: Load Portkey only if available (Issue #1021)
+let Portkey;
+try {
+  Portkey = require('portkey-ai');
+} catch (error) {
+  // Portkey not installed - will use OpenAI fallback only
+  Portkey = null;
+}
 const { logger } = require('../../utils/logger');
 const {
   getRoute: getRouteConfig,
@@ -31,6 +38,10 @@ const clientCache = new Map();
  * @returns {boolean} True if Portkey API key and project ID are set
  */
 function isPortkeyConfigured() {
+  // Issue #1021: Check if Portkey module is available
+  if (!Portkey) {
+    return false;
+  }
   return !!(process.env.PORTKEY_API_KEY && process.env.PORTKEY_PROJECT_ID);
 }
 
@@ -41,6 +52,11 @@ function isPortkeyConfigured() {
  * @returns {Object} Portkey client instance
  */
 function createPortkeyClient(route, options = {}) {
+  // Issue #1021: Ensure Portkey is available
+  if (!Portkey) {
+    throw new Error('Portkey module not available');
+  }
+
   const portkeyApiKey = process.env.PORTKEY_API_KEY;
   const portkeyProjectId = process.env.PORTKEY_PROJECT_ID;
   const defaultRoute = process.env.PORTKEY_DEFAULT_ROUTE || route.provider;

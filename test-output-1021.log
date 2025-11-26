@@ -1,0 +1,526 @@
+
+> roastr-ai@1.0.0 test
+> NODE_OPTIONS='--max-old-space-size=4096' jest --verbose
+
+PASS unit-tests tests/unit/services/shieldService-private-methods.test.js
+  ShieldService - Private Methods and Core Methods
+    _handleHideComment
+      ✓ should queue hide comment job with critical priority (11 ms)
+      ✓ should handle queue service errors gracefully (23 ms)
+    _handleBlockUser
+      ✓ should queue block user job and update user behavior (1 ms)
+    _handleReportToPlatform
+      ✓ should queue report job when platform violations are reportable
+      ✓ should skip reporting when platform violations are not reportable (1 ms)
+      ✓ should skip reporting when platform_violations is missing
+    _handleMuteTemp
+      ✓ should queue temporary mute job with critical priority
+    _handleMutePermanent
+      ✓ should queue permanent mute job and update user behavior (1 ms)
+    _handleCheckReincidence
+      ✓ should detect reincident user when violations >= threshold
+      ✓ should not detect reincidence when violations < threshold (1 ms)
+    _handleRequireManualReview
+      ✓ should queue manual review job with critical priority
+      ✓ should create manual review request
+      ✓ should handle insert error
+    _handleGatekeeperUnavailable
+      ✓ should queue gatekeeper unavailable job with critical priority
+      ✓ should handle gatekeeper unavailable scenario (1 ms)
+    _batchRecordShieldActions
+      ✓ should batch insert multiple actions
+      ✓ should handle empty array gracefully
+    _recordShieldAction
+      ✓ should record single action with all metadata (1 ms)
+    _updateUserBehaviorFromTags
+      ✓ should call RPC function with correct parameters
+    _addStrike
+      ✓ should add strike with correct level and metadata
+      ✓ should append to existing strikes (1 ms)
+    calculateShieldPriority
+      ✓ should return critical priority for critical severity
+      ✓ should return critical priority for very high toxicity
+      ✓ should return medium priority for medium severity
+      ✓ should return low priority for low severity
+      ✓ should return high priority for critical severity
+      ✓ should return medium priority for high severity
+      ✓ should return low priority for low severity
+    getUserBehavior
+      ✓ should return user behavior from database
+      ✓ should create new behavior when not found (1 ms)
+      ✓ should return user behavior from database
+      ✓ should return default behavior when user not found (1 ms)
+    getCrossPlatformViolations
+      ✓ should return zero violations when no data found
+    calculateTimeWindowEscalation
+      ✓ should return a string value for recent violations
+      ✓ should return a value for old violations
+      ✓ should handle missing violation timestamps
+    shouldAutoExecute
+      ✓ should return true for high severity actions
+      ✓ should return false for low severity warn action (1 ms)
+      ✓ should handle mute_temp action
+    getPlatformSpecificActions
+      ✓ should return platform-specific actions for twitter
+    getActionTagsForExecution
+      ✓ should return action tags array when method exists
+    log method
+      ✓ should log info level messages
+      ✓ should log warn level messages
+      ✓ should log error level messages
+    initialize
+      ✓ should initialize queue service
+    shutdown
+      ✓ should shutdown queue service (1 ms)
+    executeShieldActions
+      ✓ should execute shield actions when platform action is available
+      ✓ should return not executed when platform action is not available
+    queueHighPriorityAnalysis
+      ✓ should queue high priority analysis job
+      ✓ should handle insert errors gracefully
+    queuePlatformAction
+      ✓ should queue platform-specific action (1 ms)
+      ✓ should handle insert errors gracefully
+    getShieldStats
+      ✓ should return shield statistics object
+    trackUserBehavior
+      ✓ should update user behavior statistics
+    analyzeForShield
+      ✓ should return shieldActive false when disabled
+      ✓ should return plan_restriction when canUseShield returns not allowed (2 ms)
+      ✓ should process shield analysis when enabled and allowed (6 ms)
+      ✓ should handle errors during analysis (2 ms)
+    logShieldActivity
+      ✓ should log shield activity to database
+      ✓ should handle insert errors gracefully
+    updateUserBehaviorForAction
+      ✓ should update user behavior after action
+    isEnabled
+      ✓ should return true when enabled
+      ✓ should return false when disabled
+    getOptions
+      ✓ should return current options
+    determineShieldActions - Extended Cases
+      ✓ should apply aggressive escalation for recent violation spike (1 ms)
+      ✓ should apply minimal escalation for old violations (7+ days)
+      ✓ should escalate for violation during cooling-off period
+      ✓ should handle dangerous offense level (5+ violations)
+      ✓ should apply aggressive platform escalation policy
+      ✓ should apply lenient platform escalation policy (1 ms)
+      ✓ should apply lenient treatment for special users (verified_creator)
+      ✓ should handle emergency escalation with immediate_threat
+      ✓ should handle emergency keywords
+      ✓ should handle severity override with valid value
+      ✓ should reject invalid severity override
+    executeActionsFromTags
+      ✓ should skip execution when autoActions is disabled (1 ms)
+      ✓ should execute hide_comment action
+      ✓ should execute multiple actions
+      ✓ should handle unknown action tags (1 ms)
+      ✓ should handle state-mutating actions sequentially
+      ✓ should handle action execution errors
+    recordShieldDecision
+      ✓ should record decision to database
+    getShieldConfiguration
+      ✓ should return shield configuration for organization
+    getPriorityLevels
+      ✓ should return priority level constants (1 ms)
+    Time Window Escalation Edge Cases
+      ✓ should handle aggressive time window with violationCount > 0
+      ✓ should downgrade dangerous to persistent with minimal time window
+      ✓ should downgrade persistent to repeat with minimal time window
+      ✓ should downgrade repeat to first with minimal time window
+    Platform Escalation Policy Edge Cases
+      ✓ should upgrade action with aggressive policy and repeat offender
+      ✓ should downgrade action with lenient policy for non-critical
+      ✓ should handle lenient policy with critical severity
+    Special User Handling
+      ✓ should apply lenient treatment for partner users (1 ms)
+      ✓ should handle special users with critical severity
+    Error Handling in executeActionsFromTags
+      ✓ should continue execution when one action fails
+      ✓ should handle batch insert failure gracefully
+    analyzeForShield - Full Flow
+      ✓ should complete full shield analysis when all conditions are met
+      ✓ should queue high priority analysis for critical severity (1 ms)
+    executeActionsFromTags - Error Cases
+      ✓ should throw error when critical failure occurs
+      ✓ should handle errors in state-mutating tags
+    analyzeForShield - Cross-Platform
+      ✓ should merge cross-platform violations when found (1 ms)
+    calculateTimeWindowEscalation - Edge Cases
+      ✓ should handle error in calculation gracefully
+      ✓ should return standard for null last_violation_at
+    executeShieldActions - Error Handling
+      ✓ should throw error when platform action execution fails (7 ms)
+    _handleMutePermanent - Error Handling
+      ✓ should handle database update error gracefully (1 ms)
+    _handleCheckReincidence - All Paths
+      ✓ should check reincidence and return result (1 ms)
+      ✓ should handle no violations found
+    _handleAddStrike1 and _handleAddStrike2
+      ✓ should add strike 1 and update user behavior
+      ✓ should add strike 2 and update user behavior
+    Additional Coverage - analyzeForShield Internal Paths
+      ✓ should handle getUserBehavior throwing error
+      ✓ should handle logShieldActivity throwing error
+    Additional Coverage - Time Window Edge Cases
+      ✓ should return reduced for 24h-7 days window
+      ✓ should return minimal for 7+ days window
+      ✓ should return aggressive for <1h window
+    Additional Coverage - Platform Policy Branches
+      ✓ should handle aggressive policy at max action level
+      ✓ should handle lenient policy at min action level
+
+PASS unit-tests tests/unit/services/costControl-extended.test.js
+  CostControlService - Extended Coverage
+    getResourceDisplayName
+      ✓ should return display name for roasts (3 ms)
+      ✓ should return display name for api_calls
+      ✓ should return display name for comment_analysis
+      ✓ should return display name for shield_actions (1 ms)
+      ✓ should return name for unknown resource
+    buildLimitMessage
+      ✓ should build message for limit_reached reason
+      ✓ should build message for trial_expired reason
+      ✓ should build message for plan_required reason (1 ms)
+      ✓ should build default message for unknown reason
+    getUpgradeUrl
+      ✓ should return upgrade URL for starter plan
+      ✓ should return upgrade URL for pro plan
+      ✓ should return upgrade URL for unknown plan
+    setUsageLimit
+      ✓ should set custom usage limit (3 ms)
+      ✓ should handle upsert errors (3 ms)
+      ✓ should accept additional options (1 ms)
+    canUseShield
+      ✓ should allow shield for pro plan (1 ms)
+      ✓ should deny shield for starter_trial plan
+      ✓ should handle missing organization
+    updatePlanUsageLimits
+      ✓ should update limits when plan changes (1 ms)
+      ✓ should handle invalid plan
+    resetAllMonthlyUsage
+      ✓ should reset usage for all organizations
+      ✓ should handle RPC errors
+    sendUsageAlert
+      ✓ should send usage alert (1 ms)
+      ✓ should handle insert errors
+    shouldSendAlert
+      ✓ should return true when alert conditions are met
+      ✓ should return false when max alerts reached
+    getBillingSummary
+      ✓ should return billing summary for month (1 ms)
+      ✓ should handle empty usage data
+    upgradePlan
+      ✓ should upgrade plan successfully
+      ✓ should handle invalid plan
+      ✓ should accept stripe subscription id
+    incrementUsageCounters
+      ✓ should increment usage counters (1 ms)
+      ✓ should handle RPC errors
+    createDefaultUsageAlerts
+      ✓ should create default alerts for organization
+      ✓ should skip existing alerts
+    getUsageStats
+      ✓ should return usage statistics (1 ms)
+    getEnhancedUsageStats
+      ✓ should return enhanced usage statistics
+    getAlertHistory
+      ✓ should return alert history
+      ✓ should filter by resource type
+      ✓ should filter by date range
+    getAlertStats
+      ✓ should return alert statistics (1 ms)
+      ✓ should handle empty stats
+    checkAndSendUsageAlerts
+      ✓ should check and send alerts when threshold reached (1 ms)
+      ✓ should not send alert when under threshold
+    checkUsageLimit
+      ✓ should check usage limit for organization
+      ✓ should handle missing organization
+    canPerformOperation
+      ✓ should allow operation when under limit
+      ✓ should deny operation when at limit (1 ms)
+      ✓ should handle RPC errors (7 ms)
+      ✓ should handle invalid RPC result
+      ✓ should map operation types correctly (1 ms)
+    recordOperation
+      ✓ should record operation successfully
+      ✓ should handle insert errors
+    getOrganizationUsage
+      ✓ should return current month usage
+      ✓ should handle query errors
+    getOrganizationPlan
+      ✓ should return organization plan (1 ms)
+      ✓ should return default plan for new organizations
+    plans property access
+      ✓ should have plans object with known plans
+      ✓ should have operationCosts defined
+    downgradePlan
+      ✓ should downgrade plan successfully
+      ✓ should handle invalid target plan
+    cancelSubscription
+      ✓ should cancel subscription (1 ms)
+      ✓ should handle update errors
+    reactivateSubscription
+      ✓ should reactivate subscription (1 ms)
+    checkTrialStatus
+      ✓ should return trial active
+      ✓ should return trial expired (1 ms)
+    recordUsage - Complete Flow
+      ✓ should record usage and track in database
+      ✓ should trigger alerts when near limit (1 ms)
+      ✓ should handle usage record insert error
+      ✓ should handle RPC tracking error
+    incrementUsageCounters - Complete
+      ✓ should increment counters via RPC
+      ✓ should handle RPC failure
+    sendUsageAlert - Complete
+      ✓ should insert alert record (1 ms)
+    getUsageStats - Complete
+      ✓ should aggregate stats from usage records
+      ✓ should handle query error
+    getEnhancedUsageStats - Complete
+      ✓ should return detailed usage breakdown
+    getBillingSummary - Complete
+      ✓ should return monthly billing data
+    upgradePlan - Complete
+      ✓ should upgrade and update limits (1 ms)
+      ✓ should reject invalid plan
+    canUseShield - Plan Checks
+      ✓ should allow shield for pro plan
+      ✓ should deny shield for starter_trial
+    setUsageLimit - Extended
+      ✓ should set custom limit with warning threshold
+    updatePlanUsageLimits - Extended
+      ✓ should update all resource limits for plan (1 ms)
+    sendUsageAlert - Full Flow
+      ✓ should send alert with org details
+      ✓ should handle org lookup error
+      ✓ should use default values when not provided
+    checkAndSendUsageAlerts - Complete
+      ✓ should check alerts and send when threshold reached
+      ✓ should not send when under threshold (1 ms)
+    getUsageStats - All Scenarios
+      ✓ should aggregate by platform
+      ✓ should handle empty data
+    getEnhancedUsageStats - All Scenarios
+      ✓ should group by resource type and platform
+    getBillingSummary - All Scenarios
+      ✓ should calculate monthly totals (1 ms)
+      ✓ should handle no usage data
+    getUsageStats - Full Platform Breakdown
+      ✓ should process platform statistics with operations
+      ✓ should handle monthly summary error
+      ✓ should handle org lookup error (1 ms)
+      ✓ should handle platform stats error
+    getEnhancedUsageStats - Full Coverage
+      ✓ should process usage tracking data with limits
+    incrementUsageCounters - Error Handling
+      ✓ should handle increment with multiple updates
+    canPerformOperation - All Operation Types
+      ✓ should map triage_analysis correctly (1 ms)
+      ✓ should map webhook_call correctly
+      ✓ should use default resource type for unknown operations
+    incrementUsage - Lines 267-271 (Near Limit Alert)
+      ✓ should send alert when near limit and not already sent
+      ✓ should not send alert when already sent
+    createDefaultUsageAlerts - Lines 515-542
+      ✓ should create alerts for resources without existing alerts (1 ms)
+      ✓ should skip existing alerts
+      ✓ should handle insert error gracefully
+    getEnhancedUsageStats - Lines 676-735 (Full Processing)
+      ✓ should process records with platform breakdown
+      ✓ should calculate limit percentages correctly (1 ms)
+      ✓ should handle limit exceeded scenario
+    recordUsage - Full Flow with All Branches
+      ✓ should record usage and trigger alert when threshold reached (12 ms)
+      ✓ should handle tracking insert error
+    upgradePlan - Full Upgrade Flow
+      ✓ should upgrade plan and update limits
+      ✓ should reject invalid plan
+    downgradePlan - Downgrade Flow
+      ✓ should downgrade plan with usage check
+    getAlertHistory - Full Query
+      ✓ should return alerts with all filters (1 ms)
+    getAlertStats - Summary Statistics
+      ✓ should return alert statistics
+    checkAndSendUsageAlerts - Lines 567-597
+      ✓ should throw on error fetching alerts
+      ✓ should create default alerts when none exist and retry
+      ✓ should send alerts for each matching alert config (1 ms)
+    upgradePlan - Lines 824-842 (Full Flow)
+      ✓ should upgrade plan and log the change
+      ✓ should handle update error
+      ✓ should include stripeSubscriptionId when provided (4 ms)
+    getUsageStats - Lines 398-450 (Full Platform Processing)
+      ✓ should process monthly summary with platform breakdown (1 ms)
+    getEnhancedUsageStats - Lines 676-735 (Resource Processing)
+      ✓ should process resource types with limits and calculate percentages
+
+FAIL unit-tests tests/unit/workers/AnalyzeToxicityWorker.test.js
+  ● Test suite failed to run
+
+    Cannot find module 'portkey-ai' from 'src/lib/llmClient/factory.js'
+
+    Require stack:
+      src/lib/llmClient/factory.js
+      src/lib/llmClient/index.js
+      src/workers/AnalyzeToxicityWorker.js
+      tests/unit/workers/AnalyzeToxicityWorker.test.js
+
+      13 |
+      14 | const OpenAI = require('openai');
+    > 15 | const Portkey = require('portkey-ai');
+         |                 ^
+      16 | const { logger } = require('../../utils/logger');
+      17 | const {
+      18 |   getRoute: getRouteConfig,
+
+      at Resolver._throwModNotFoundError (../../node_modules/jest-resolve/build/index.js:863:11)
+      at Object.require (src/lib/llmClient/factory.js:15:17)
+      at Object.require (src/lib/llmClient/index.js:13:17)
+      at Object.require (src/workers/AnalyzeToxicityWorker.js:12:19)
+      at Object.require (tests/unit/workers/AnalyzeToxicityWorker.test.js:7:31)
+
+PASS unit-tests tests/unit/services/authService.test.js
+  AuthService
+    signUp
+      ✓ should create a new user successfully (5 ms)
+      ✓ should handle authentication errors (56 ms)
+      ✓ should cleanup auth user if profile creation fails (1 ms)
+    signIn
+      ✓ should sign in user successfully (1 ms)
+      ✓ should handle invalid credentials
+    listUsers
+      ✓ should list users successfully (1 ms)
+      ✓ should handle database errors
+    createUserManually
+      ✓ should create user manually with provided password (1 ms)
+      ✓ should create user manually with temporary password
+    signUpWithMagicLink
+      ✓ should send magic link for signup (1 ms)
+      ✓ should handle magic link errors
+    signInWithMagicLink
+      ✓ should send magic link for sign in
+      ✓ should handle magic link sign in errors
+    signOut
+      ✓ should sign out user successfully
+      ✓ should handle sign out errors
+    getCurrentUser
+      ✓ should get current user with profile and integrations
+      ✓ should handle invalid token
+    resetPassword
+      ✓ should send password reset email
+      ✓ should handle reset password errors (1 ms)
+    updateProfile
+      ✓ should update user profile successfully
+      ✓ should handle profile update errors
+    updatePassword
+      ✓ should update password successfully
+      ✓ should handle password update errors
+    verifyEmail
+      ✓ should verify email successfully
+      ✓ should handle verification errors gracefully (1 ms)
+    listUsers (enhanced)
+      ✓ should list users with enhanced features
+      ✓ should handle list users errors gracefully
+    deleteUser
+      ✓ should delete user successfully (1 ms)
+      ✓ should handle auth deletion errors
+    updateUserPlan
+      ✓ should update user plan successfully (6 ms)
+      ✓ should handle invalid plan (1 ms)
+    toggleUserActive
+      ✓ should toggle user active status (1 ms)
+      ✓ should handle user not found
+    suspendUser
+      ✓ should suspend user successfully
+      ✓ should be defined for admin suspension
+    canUserGenerateRoasts
+      ✓ should return true for active, non-suspended user
+      ✓ should return false for suspended user (1 ms)
+      ✓ should return false on database error
+    signInWithGoogle
+      ✓ should initiate Google OAuth successfully (1 ms)
+      ✓ should handle Google OAuth errors (9 ms)
+    getPlanLimits
+      ✓ should return correct limits for known plans from database (1 ms)
+      ✓ should map basic plan to starter_trial plan
+      ✓ should return fallback limits on database error
+      ✓ should return fallback limits for unknown plans
+    checkUsageAlerts
+      ✓ should return alerts for high usage
+      ✓ should return high severity alerts when at limit (1 ms)
+      ✓ should return suspended account alert
+      ✓ should return inactive account alert
+      ✓ should return no alerts for normal usage
+    updatePasswordWithVerification
+      ✓ should be defined and callable
+    rollbackPlanChange
+      ✓ should be defined as a rollback mechanism
+    unsuspendUser
+      ✓ should be defined for admin reactivation (1 ms)
+    getUserStats
+      ✓ should be defined for admin statistics
+    handleOAuthCallback
+      ✓ should throw error if OAuth session is invalid (1 ms)
+    changeEmail
+      ✓ should reject if new email is invalid
+      ✓ should validate email change requirements
+    confirmEmailChange
+      ✓ should reject if token is missing (1 ms)
+      ✓ should handle verification errors
+    exportUserData
+      ✓ should reject if userId is missing (1 ms)
+      ✓ should be defined for GDPR data export
+    requestAccountDeletion
+      ✓ should be defined for account deletion requests (1 ms)
+    cancelAccountDeletion
+      ✓ should be defined for cancelling deletion requests
+    processScheduledDeletions
+      ✓ should be defined for processing scheduled deletions
+      ✓ should process users scheduled for deletion
+      ✓ should return empty when no deletions scheduled
+    Coverage Improvement Tests
+      signIn edge cases
+        ✓ should handle profile fetch error gracefully
+      updateUserPlan rollback
+        ✓ should rollback on limits failure (1 ms)
+      exportUserData complete flow
+        ✓ should export all user data
+      changeEmail validation
+        ✓ should validate email format
+        ✓ should check user exists
+      checkUsageAlerts thresholds
+        ✓ should check 80% threshold
+        ✓ should check 95% threshold
+      requestAccountDeletion flow
+        ✓ should schedule account deletion (1 ms)
+        ✓ should reject if already scheduled
+      cancelAccountDeletion flow
+        ✓ should cancel scheduled deletion
+      suspendUser flow
+        ✓ should suspend user account
+      unsuspendUser flow
+        ✓ should unsuspend user account
+      logUserActivity scenarios
+        ✓ should log activity with organization (1 ms)
+        ✓ should handle activity log error
+      cancelAccountDeletion - Grace Period (lines 1890-1921)
+        ✓ should throw when grace period expired
+        ✓ should cancel when within grace period
+      processScheduledDeletions - Anonymization (lines 1960-1992)
+        ✓ should anonymize user data during deletion (1 ms)
+        ✓ should log deletion activity (4 ms)
+        ✓ should handle deletion error for individual user (1 ms)
+        ✓ should return summary with errors
+      changeEmail - Full Validation (lines 1554-1596)
+        ✓ should complete email change flow
+
+  console.log
+    [dotenv@17.2.3] injecting env (42) from ../../.env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+      at _log (../../node_modules/dotenv/lib/main.js:142:11)
+
