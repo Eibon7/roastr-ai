@@ -17,7 +17,7 @@ import MagicLinkForm from '../../components/MagicLinkForm';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
@@ -54,8 +54,8 @@ const Login = () => {
     setShowRecovery(false);
 
     try {
-      const username = formData.username.trim();
-      const result = await authService.signIn(username, formData.password);
+      const email = formData.email.trim();
+      const result = await authService.signIn(email, formData.password);
 
       if (result.success) {
         // Success - navigation will be handled by useEffect when auth state changes
@@ -72,7 +72,7 @@ const Login = () => {
   };
 
   const handleRecoveryEmail = async () => {
-    if (!formData.username) {
+    if (!formData.email) {
       setError('Please enter your email address first');
       return;
     }
@@ -80,7 +80,7 @@ const Login = () => {
     setRecoveryLoading(true);
 
     try {
-      const result = await authService.sendRecoveryEmail(formData.username);
+      const result = await authService.sendRecoveryEmail(formData.email);
 
       if (result.success) {
         setRecoverySuccess(true);
@@ -120,7 +120,7 @@ const Login = () => {
               Check your email
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-              We've sent a recovery link to <strong>{formData.username}</strong>
+              We've sent a recovery link to <strong>{formData.email}</strong>
             </p>
             <div className="mt-6">
               <button
@@ -180,20 +180,20 @@ const Login = () => {
 
             {authMethod === 'password' ? (
               <form className="space-y-6" onSubmit={handleSubmit}>
-                {/* Email field */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="username"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    placeholder="Enter your email"
-                  />
-                </div>
+                  {/* Email field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="Enter your email"
+                    />
+                  </div>
 
                 {/* Password field */}
                 <div className="space-y-2">
