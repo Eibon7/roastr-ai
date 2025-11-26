@@ -6,6 +6,7 @@ import GDDDashboard from '@pages/GDDDashboard';
 import ShieldSettings from '@pages/ShieldSettings';
 import ShieldValidation from '@pages/ShieldValidation';
 import WorkersDashboard from '@pages/Workers';
+import AdminUsers from '@pages/AdminUsers';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -35,6 +36,7 @@ function App() {
               <Route path="/shield/settings" element={<ShieldSettings />} />
               <Route path="/shield/validation" element={<ShieldValidation />} />
               <Route path="/admin/workers" element={<WorkersDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </AdminShell>
