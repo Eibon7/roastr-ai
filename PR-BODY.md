@@ -13,12 +13,14 @@ Fixes #1021 - P0 CRITICAL bug affecting ~200 tests due to type errors, undefined
 ### ✅ Completed (95%)
 
 #### 1. Module Dependencies (PASO 1)
+
 - **Problem:** `Cannot find module 'portkey-ai'` blocked 15 worker tests
 - **Solution:** Optional dependency loading with fallback to OpenAI
 - **File:** `src/lib/llmClient/factory.js`
 - **Impact:** ✅ 15 tests can now load
 
 #### 2. Database Mock Infrastructure (PASO 2)
+
 - **Problem:** Inconsistent Supabase mocks across test suite
 - **Solution:** Centralized mock factory with complete API
 - **File:** `tests/helpers/supabaseMockFactory.js` (NEW - 360 lines)
@@ -27,6 +29,7 @@ Fixes #1021 - P0 CRITICAL bug affecting ~200 tests due to type errors, undefined
 - **Impact:** ✅ Infrastructure ready for 80 tests
 
 #### 3. Validation Messages (PASO 4)
+
 - **Problem:** Spanish/English message mix causing test failures
 - **Solution:** Standardized all Zod validation messages to English
 - **Files:** `src/validators/zod/auth.schema.js`, `tests/unit/routes/auth.test.js`
@@ -35,17 +38,20 @@ Fixes #1021 - P0 CRITICAL bug affecting ~200 tests due to type errors, undefined
 ### ⏸️ Deferred (PASO 3 - Type Mismatches)
 
 #### Strategic Decision: Infrastructure + Follow-up
+
 - **Scope:** 47 files affected (4.7x larger than estimated)
 - **Impact:** Attempted refactor broke 1290 tests (95% → 84% regression)
 - **Risk:** HIGH (production billing logic)
 - **Decision:** Defer to focused PR (Issue #1030)
 
 #### What Was Created
+
 - ✅ `src/config/planConstants.js` - Single source of truth (200 lines)
 - ✅ Follow-up issue #1030 with complete implementation plan
 - ✅ Analysis receipt documenting decision rationale
 
 #### Key Insight
+
 > "Sometimes the best progress is knowing when to stop."
 
 ---
@@ -53,6 +59,7 @@ Fixes #1021 - P0 CRITICAL bug affecting ~200 tests due to type errors, undefined
 ## 📊 Results
 
 ### Test Improvements
+
 ```
 Before:  ~150/200 tests passing (75%)
 After:   ~190/200 tests passing (95%)
@@ -63,6 +70,7 @@ Module Load:   15/15 passing (100%) ✅
 ```
 
 ### GDD Health
+
 ```bash
 $ node scripts/score-gdd-health.js --ci
 Score: 90.2/100 (> 87 required) ✅
@@ -70,6 +78,7 @@ Status: 🟢 HEALTHY
 ```
 
 ### Coverage
+
 ```
 Maintained: 90.2% (no regression)
 ```
@@ -92,12 +101,14 @@ Maintained: 90.2% (no regression)
 ## 📦 Files Changed
 
 ### Production Code (4 files)
+
 - `src/lib/llmClient/factory.js` - Optional portkey-ai (24 lines)
 - `src/validators/zod/auth.schema.js` - English messages (18 lines)
 - `src/config/planConstants.js` - **NEW** Single source of truth (200 lines)
 - `tests/helpers/supabaseMockFactory.js` - **NEW** Mock factory (360 lines)
 
 ### Documentation (7 files)
+
 - `docs/plan/issue-1021.md` - Implementation plan
 - `docs/test-evidence/issue-1021/summary.md` - Initial analysis
 - `docs/test-evidence/issue-1021/final-summary.md` - Complete summary
@@ -107,6 +118,7 @@ Maintained: 90.2% (no regression)
 - `ISSUE-1021-COMPLETE.md` - Executive summary
 
 ### Follow-up Template (1 file)
+
 - `.github/ISSUE_TEMPLATE/follow-up-1021-plan-unification.md` - Issue #1030 template
 
 ---
@@ -114,6 +126,7 @@ Maintained: 90.2% (no regression)
 ## 🔧 Technical Details
 
 ### Module Loading Fix
+
 ```javascript
 // Before: Hard dependency
 const Portkey = require('portkey-ai');
@@ -128,6 +141,7 @@ try {
 ```
 
 ### Mock Factory Usage
+
 ```javascript
 const { createSupabaseMock } = require('./helpers/supabaseMockFactory');
 
@@ -139,11 +153,12 @@ const mockSupabase = createSupabaseMock({
 ```
 
 ### Plan Constants API
+
 ```javascript
 const { PLANS, normalizePlanName, comparePlans } = require('./config/planConstants');
 
 normalizePlanName('starter_trial'); // Returns: 'starter'
-comparePlans('pro', 'starter');     // Returns: 1 (pro > starter)
+comparePlans('pro', 'starter'); // Returns: 1 (pro > starter)
 ```
 
 ---
@@ -151,6 +166,7 @@ comparePlans('pro', 'starter');     // Returns: 1 (pro > starter)
 ## 🚀 Follow-up Work
 
 ### Issue #1030: Plan Name Unification
+
 - **Priority:** P1 (not blocking this PR)
 - **Scope:** 47 files
 - **Effort:** 10-12 hours (2 days)
@@ -162,6 +178,7 @@ comparePlans('pro', 'starter');     // Returns: 1 (pro > starter)
 ## ✅ Quality Checklist
 
 ### Pre-Flight
+
 - [x] Tests passing (auth 139/139, overall 95%)
 - [x] GDD health ≥87 (actual: 90.2)
 - [x] Coverage maintained (90.2%)
@@ -170,6 +187,7 @@ comparePlans('pro', 'starter');     // Returns: 1 (pro > starter)
 - [x] No console.logs or TODOs
 
 ### Validation
+
 - [x] `npm test -- auth.test.js` ✅ 139/139
 - [x] `node scripts/validate-gdd-runtime.js --full` ✅ HEALTHY
 - [x] `node scripts/score-gdd-health.js --ci` ✅ 90.2/100
@@ -181,6 +199,7 @@ comparePlans('pro', 'starter');     // Returns: 1 (pro > starter)
 ## 💡 Key Learnings
 
 ### What Worked
+
 1. ✅ Systematic FASE 0 assessment (GDD activation)
 2. ✅ Prioritizing high-impact, low-risk fixes first
 3. ✅ Creating reusable infrastructure (mock factory)
@@ -188,6 +207,7 @@ comparePlans('pro', 'starter');     // Returns: 1 (pro > starter)
 5. ✅ Complete documentation trail
 
 ### Strategic Deferral Rationale
+
 - P0 already 95% complete
 - PASO 3 refactor would break 1280 tests
 - Production billing logic at risk
@@ -225,6 +245,7 @@ bb7f6c08 feat(tests): Issue #1021 - FASE 0 & Initial Fixes (portkey-ai optional)
 **Status:** 🟢 **READY TO MERGE**
 
 **Strengths:**
+
 - ✅ 95% test improvement (+20 points)
 - ✅ Auth tests 100% (139/139)
 - ✅ Infrastructure created for future work
@@ -233,6 +254,7 @@ bb7f6c08 feat(tests): Issue #1021 - FASE 0 & Initial Fixes (portkey-ai optional)
 - ✅ Clear follow-up path (Issue #1030)
 
 **Next Steps:**
+
 1. ✅ Merge this PR (P0 complete at 95%)
 2. 📅 Schedule Issue #1030 for Q1 2025 (P1)
 3. 🔄 Apply mock factory to remaining tests (optional)
@@ -244,4 +266,3 @@ bb7f6c08 feat(tests): Issue #1021 - FASE 0 & Initial Fixes (portkey-ai optional)
 **Risk:** LOW  
 **Quality:** HIGH  
 **Completion:** 95% (5/6 ACs + infrastructure)
-
