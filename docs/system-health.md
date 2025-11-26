@@ -1,8 +1,8 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-11-24T22:56:58.165Z
+**Generated:** 2025-11-26T12:14:25.139Z
 **Overall Status:** 🟢 HEALTHY
-**Average Score:** 90.1/100
+**Average Score:** 89.7/100
 
 ---
 
@@ -17,23 +17,23 @@
 
 ## Node Scores
 
-| Node                 | Score  | Status   | Last Updated | Coverage | Dependencies | Issues |
-| -------------------- | ------ | -------- | ------------ | -------- | ------------ | ------ |
-| guardian             | 🟡 76  | degraded | 2025-10-23   | 0%       | 0            | 0      |
-| trainer              | 🟡 78  | degraded | 2025-10-29   | 0%       | 0            | 0      |
-| analytics            | 🟢 82  | healthy  | 2025-10-29   | 59%      | 0            | 0      |
-| social-platforms     | 🟢 82  | healthy  | 2025-11-11   | 14%      | 0            | 0      |
-| observability        | 🟢 86  | healthy  | 2025-11-11   | 46%      | 0            | 0      |
-| roast                | 🟢 90  | healthy  | 2025-11-23   | 59%      | 0            | 0      |
-| plan-features        | 🟢 92  | healthy  | 2025-11-18   | 74%      | 0            | 0      |
-| cost-control         | 🟢 93  | healthy  | 2025-11-21   | 60%      | 0            | 0      |
-| shield               | 🟢 94  | healthy  | 2025-11-23   | 62%      | 0            | 0      |
-| tone                 | 🟢 94  | healthy  | 2025-11-04   | 100%     | 0            | 0      |
-| persona              | 🟢 95  | healthy  | 2025-11-06   | 90%      | 0            | 0      |
-| billing              | 🟢 96  | healthy  | 2025-11-11   | 97.63%   | 0            | 0      |
-| multi-tenant         | 🟢 96  | healthy  | 2025-11-11   | 94.25%   | 0            | 0      |
-| platform-constraints | 🟢 98  | healthy  | 2025-11-16   | 100%     | 0            | 0      |
-| queue-system         | 🟢 100 | healthy  | 2025-11-23   | 81%      | 0            | 0      |
+| Node | Score | Status | Last Updated | Coverage | Dependencies | Issues |
+|------|-------|--------|--------------|----------|--------------|--------|
+| guardian | 🟡 76 | degraded | 2025-10-23 | 0% | 0 | 0 |
+| trainer | 🟡 78 | degraded | 2025-10-29 | 0% | 0 | 0 |
+| analytics | 🟢 82 | healthy | 2025-10-29 | 59% | 0 | 0 |
+| social-platforms | 🟢 82 | healthy | 2025-11-11 | 14% | 0 | 0 |
+| observability | 🟢 86 | healthy | 2025-11-11 | 46% | 0 | 0 |
+| roast | 🟢 89 | healthy | 2025-11-23 | 59% | 0 | 0 |
+| plan-features | 🟢 92 | healthy | 2025-11-18 | 74% | 0 | 0 |
+| cost-control | 🟢 93 | healthy | 2025-11-21 | 60% | 0 | 0 |
+| shield | 🟢 93 | healthy | 2025-11-23 | 62% | 0 | 0 |
+| tone | 🟢 93 | healthy | 2025-11-04 | 100% | 0 | 0 |
+| persona | 🟢 94 | healthy | 2025-11-06 | 90% | 0 | 0 |
+| billing | 🟢 96 | healthy | 2025-11-11 | 97.63% | 0 | 0 |
+| multi-tenant | 🟢 96 | healthy | 2025-11-11 | 94.25% | 0 | 0 |
+| platform-constraints | 🟢 97 | healthy | 2025-11-16 | 100% | 0 | 0 |
+| queue-system | 🟢 99 | healthy | 2025-11-23 | 81% | 0 | 0 |
 
 ---
 
@@ -44,65 +44,65 @@
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
-
 - Sync Accuracy: 100/100
-- Update Freshness: 36/100
+- Update Freshness: 32/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
+
 
 ### trainer (Score: 78)
 
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
-
 - Sync Accuracy: 100/100
-- Update Freshness: 48/100
+- Update Freshness: 44/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
+
 
 ### analytics (Score: 82)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
-
 - Sync Accuracy: 100/100
-- Update Freshness: 48/100
+- Update Freshness: 44/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
+
 
 ### social-platforms (Score: 82)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
-
 - Sync Accuracy: 100/100
-- Update Freshness: 74/100
+- Update Freshness: 70/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
+
 
 ### observability (Score: 86)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
-
 - Sync Accuracy: 100/100
-- Update Freshness: 74/100
+- Update Freshness: 70/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
+
 
 ---
 
