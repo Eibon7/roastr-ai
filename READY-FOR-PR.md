@@ -122,6 +122,7 @@ Duration  1.73s
 **Causa:** Acceden a `theme.colors`, `theme.spacing`, etc. (MUI theme eliminado)
 
 **Fix temporal aplicado:**
+
 - ✅ Build modificado: `vite build` (sin typecheck)
 - ✅ Componentes migrados funcionan correctamente
 - ✅ Tests pasan 18/18
@@ -130,17 +131,20 @@ Duration  1.73s
 **Estrategia de Merge:**
 
 🎯 **RECOMENDADO:** Merge a rama `develop` (NO a `main`)
+
 - Permite testing integrado
 - Validación en staging
 - Fase 2 completa migración
 - Merge a `main` cuando build typecheck pase
 
 **Epic Scope vs Repository Health:**
+
 - ✅ Epic #1032 completada (31/31 AC)
 - ❌ Build typecheck NO pasa
 - 🎯 Target: `develop` branch
 
 **Plan Fase 2:**
+
 - Migrar 6 archivos restantes
 - Restaurar `tsc --noEmit` en build
 - **Entonces** merge a `main`

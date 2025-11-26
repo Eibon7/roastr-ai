@@ -283,12 +283,14 @@ Esto permite:
 **Status Repository:** ⚠️ **BLOQUEANTE PARA `main`**
 
 **Epic Scope:**
+
 - ✅ 5/5 issues completadas (31/31 AC)
 - ✅ Tests pasando (18/18)
 - ✅ Documentación excelente
 - ✅ Código limpio y bien estructurado
 
 **Repository Health:**
+
 - ❌ Build typecheck falla (~40 errores TS)
 - ⚠️ NO apto para merge a `main`
 - 🎯 Merge recomendado: rama `develop`
