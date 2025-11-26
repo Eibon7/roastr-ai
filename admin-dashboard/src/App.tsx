@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AdminShell } from '@/components/layout/admin-shell';
 import GDDDashboard from '@pages/GDDDashboard';
 import ShieldSettings from '@pages/ShieldSettings';
 import ShieldValidation from '@pages/ShieldValidation';
@@ -26,18 +27,17 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
         <Router>
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<GDDDashboard />} />
-            <Route path="/shield/settings" element={<ShieldSettings />} />
-            <Route path="/shield/validation" element={<ShieldValidation />} />
-            <Route path="/admin/workers" element={<WorkersDashboard />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+          <AdminShell>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<GDDDashboard />} />
+              <Route path="/shield/settings" element={<ShieldSettings />} />
+              <Route path="/shield/validation" element={<ShieldValidation />} />
+              <Route path="/admin/workers" element={<WorkersDashboard />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </AdminShell>
         </Router>
       </ThemeProvider>
     </QueryClientProvider>
