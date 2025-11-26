@@ -213,8 +213,8 @@ class ApiClient {
         '/auth/signup/magic-link',
         '/auth/reset-password'
       ];
-      
-      if (!publicEndpoints.some(ep => endpoint.includes(ep))) {
+
+      if (!publicEndpoints.some((ep) => endpoint.includes(ep))) {
         const session = await this.getValidSession();
         if (session?.access_token) {
           options.headers.Authorization = `Bearer ${session.access_token}`;
