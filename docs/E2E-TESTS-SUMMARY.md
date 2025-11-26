@@ -10,6 +10,7 @@
 ### Suite completa: 25 tests pasando
 
 #### 1. Login Flow (`e2e/login.spec.ts`) - 6 tests
+
 - ✅ Display login form
 - ✅ Display demo login button
 - ✅ Login with demo mode and redirect to admin dashboard
@@ -18,6 +19,7 @@
 - ✅ Navigate to login from unauthorized route
 
 #### 2. Admin Navigation (`e2e/admin-navigation.spec.ts`) - 9 tests
+
 - ✅ Navigate to users page
 - ✅ Navigate to metrics page
 - ✅ Navigate to feature flags page
@@ -27,6 +29,7 @@
 - ✅ Redirect non-admin users
 
 #### 3. Admin Users Management (`e2e/admin-users.spec.ts`) - 6 tests
+
 - ✅ Display users page
 - ✅ Show users table
 - ✅ Display search input
@@ -35,11 +38,13 @@
 - ✅ Show action buttons for users
 
 #### 4. Admin Feature Flags (`e2e/admin-feature-flags.spec.ts`) - 3 tests
+
 - ✅ Display feature flags page
 - ✅ Show feature flags table
 - ✅ Display toggle switches for flags
 
 #### 5. Admin Metrics (`e2e/admin-metrics.spec.ts`) - 3 tests
+
 - ✅ Display metrics page
 - ✅ Show metrics cards
 - ✅ Display dashboard content
@@ -49,6 +54,7 @@
 ## 📋 Configuración
 
 ### Playwright Config
+
 - **Archivo:** `playwright.config.ts`
 - **Browsers:** Chromium
 - **Base URL:** `http://localhost:5173`
@@ -57,6 +63,7 @@
 - **Timeout:** 10 segundos para navegación
 
 ### Scripts NPM
+
 ```json
 {
   "test:e2e": "playwright test",
@@ -101,17 +108,21 @@
 ## 🔧 Características Técnicas
 
 ### Demo Mode Support
+
 Los tests usan el modo demo para ejecutarse sin backend:
+
 - Crea tokens demo en localStorage
 - Simula usuarios admin
 - Permite navegación completa sin API real
 
 ### Selectores Robustos
+
 - Usa `getByRole()` cuando es posible (mejor práctica)
 - Fallback a `locator()` para elementos complejos
 - Timeouts apropiados para elementos asíncronos
 
 ### Manejo de Navegación
+
 - Maneja `window.location.href` (full page reload)
 - Espera por `networkidle` cuando es necesario
 - Verifica URLs después de navegación
@@ -132,16 +143,19 @@ Status:      ✅ ALL PASSING
 ## 🚀 Ejecución
 
 ### Local
+
 ```bash
 npm run test:e2e
 ```
 
 ### Con UI (Recomendado para debugging)
+
 ```bash
 npm run test:e2e:ui
 ```
 
 ### Headed Mode (Ver el navegador)
+
 ```bash
 npm run test:e2e:headed
 ```
@@ -151,20 +165,25 @@ npm run test:e2e:headed
 ## 📝 Notas
 
 ### Tests que Requieren Backend Real
+
 Algunos tests funcionan mejor con backend real:
+
 - Tests de toggle actions (requieren API real)
 - Tests de creación de usuarios (requieren API real)
 
 **Solución:** Tests actuales verifican la UI, no las acciones reales. Para tests de integración completa, se necesitaría mock del backend o backend de testing.
 
 ### Demo Mode
+
 El modo demo permite:
+
 - ✅ Ejecutar tests sin backend
 - ✅ Verificar flujos de UI
 - ✅ Validar navegación
 - ✅ Probar protección de rutas
 
 **Limitaciones:**
+
 - No valida respuestas reales de API
 - No prueba mutaciones reales de datos
 
@@ -196,4 +215,3 @@ El modo demo permite:
 - [x] Documentación completa
 
 **Status:** ✅ COMPLETADO Y LISTO PARA PRODUCCIÓN
-

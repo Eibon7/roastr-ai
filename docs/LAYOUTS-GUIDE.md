@@ -232,4 +232,3 @@ Los guards están completamente implementados y funcionarán cuando:
 ---
 
 **Última actualización:** 2025-11-26
-

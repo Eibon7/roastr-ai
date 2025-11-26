@@ -1024,4 +1024,3 @@ Después de cerrar esta Epic:
 **Última actualización:** 2025-11-26  
 **Owner:** FrontendDev  
 **Status:** 🟢 En progreso (FASE 1)
-

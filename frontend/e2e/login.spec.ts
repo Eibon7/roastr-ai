@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 /**
  * E2E Tests for Login Flow
- * 
+ *
  * Tests the login page functionality including:
  * - Login form rendering
  * - Demo mode login (no backend required)
@@ -46,13 +46,13 @@ test.describe('Login Page', () => {
 
     // Wait for navigation (window.location.href causes full page reload)
     await navigationPromise;
-    
+
     // Wait for page to fully load after navigation
     await page.waitForLoadState('networkidle');
-    
+
     // Should be on admin dashboard
     await expect(page).toHaveURL(/\/admin\/dashboard/);
-    
+
     // The dashboard might not have a heading, just verify we're on the right page
     // Or check for any admin content like sidebar
     await expect(page.locator('nav, [role="navigation"]').first()).toBeVisible({ timeout: 5000 });
@@ -73,7 +73,7 @@ test.describe('Login Page', () => {
 
     const user = await page.evaluate(() => localStorage.getItem('user'));
     expect(user).toBeTruthy();
-    
+
     const parsedUser = JSON.parse(user || '{}');
     expect(parsedUser.is_admin).toBe(true);
   });
@@ -97,4 +97,3 @@ test.describe('Login Page', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 });
-
