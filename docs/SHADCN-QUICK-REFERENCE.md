@@ -14,12 +14,14 @@
 **Cuándo:** Reutilizar estructura de block con contenido custom.
 
 **Template:**
+
 ```bash
-/cui Create a [tipo de componente] with [columnas/campos/elementos], 
+/cui Create a [tipo de componente] with [columnas/campos/elementos],
     [features adicionales], and [interacciones]
 ```
 
 **Ejemplos rápidos:**
+
 ```bash
 # Tablas
 /cui Create a users table with name, email, status columns, search bar, and edit/delete actions
@@ -41,6 +43,7 @@
 **Cuándo:** Ajustar algo ya generado.
 
 **Ejemplos:**
+
 ```bash
 /rui Add pagination to the table
 /rui Make the form validation stricter
@@ -55,6 +58,7 @@
 **Cuándo:** Diseños completamente únicos.
 
 **Ejemplos:**
+
 ```bash
 /iui Create an innovative toxicity indicator with visual threat levels
 /iui Design a unique roast preview card with animations
@@ -71,11 +75,13 @@
 ## 📋 Checklist por Issue
 
 ### 1. Planning
+
 - [ ] Leer AC de la issue
 - [ ] Identificar componentes necesarios
 - [ ] Decidir comando MCP (`/cui` para 90% de casos)
 
 ### 2. Implementación
+
 - [ ] Ejecutar comando MCP con prompt específico
 - [ ] Revisar código generado
 - [ ] Customizar para Roastr.AI:
@@ -85,6 +91,7 @@
   - [ ] Añadir validación (zod)
 
 ### 3. Testing
+
 - [ ] Probar en modo claro
 - [ ] Probar en modo oscuro
 - [ ] Verificar sistema es default
@@ -93,11 +100,13 @@
 - [ ] Probar en desktop (1920px)
 
 ### 4. Tests automatizados
+
 - [ ] Rendering tests (light + dark)
 - [ ] Interaction tests
 - [ ] Accessibility tests
 
 ### 5. Documentación
+
 - [ ] Comentar comando MCP usado en PR
 - [ ] Documentar customizaciones
 - [ ] Screenshots si aplica
@@ -107,26 +116,27 @@
 ## 🎨 Componentes Shadcn Comunes
 
 ### Instalación individual
+
 ```bash
 npx shadcn-ui@latest add [component]
 ```
 
 ### Más usados en Roastr.AI
 
-| Componente | Uso |
-|------------|-----|
-| `button` | Botones de acción |
-| `card` | Widgets, métricas |
-| `dialog` | Modals de confirmación, forms |
-| `table` | Listados (users, accounts, roasts) |
-| `tabs` | Settings, navegación |
-| `switch` | Toggles (feature flags, auto-approve) |
-| `select` | Dropdowns (planes, tonos, shields) |
-| `input` | Forms |
-| `toast` | Notificaciones |
-| `progress` | Barras de uso |
-| `badge` | Estados (activo/pausado) |
-| `sheet` | Navigation móvil |
+| Componente | Uso                                   |
+| ---------- | ------------------------------------- |
+| `button`   | Botones de acción                     |
+| `card`     | Widgets, métricas                     |
+| `dialog`   | Modals de confirmación, forms         |
+| `table`    | Listados (users, accounts, roasts)    |
+| `tabs`     | Settings, navegación                  |
+| `switch`   | Toggles (feature flags, auto-approve) |
+| `select`   | Dropdowns (planes, tonos, shields)    |
+| `input`    | Forms                                 |
+| `toast`    | Notificaciones                        |
+| `progress` | Barras de uso                         |
+| `badge`    | Estados (activo/pausado)              |
+| `sheet`    | Navigation móvil                      |
 
 ---
 
@@ -205,6 +215,7 @@ import styles from './Component.module.css' // ❌
 ## 📞 API Endpoints (Referencia)
 
 ### Admin
+
 - `GET /api/admin/users` - Lista usuarios
 - `POST /api/admin/users` - Crear usuario
 - `PATCH /api/admin/users/:id` - Editar usuario
@@ -218,6 +229,7 @@ import styles from './Component.module.css' // ❌
 - `POST /api/admin/tones` - Crear tono
 
 ### User App
+
 - `GET /api/usage/current` - Consumo del mes
 - `GET /api/accounts` - Cuentas conectadas
 - `GET /api/accounts/:id` - Detalle de cuenta
@@ -231,6 +243,7 @@ import styles from './Component.module.css' // ❌
 - `GET /api/billing` - Info billing
 
 ### Auth
+
 - `POST /api/auth/login` - Login
 - `POST /api/auth/logout` - Logout
 - `POST /api/auth/reset-password` - Reset contraseña
@@ -244,8 +257,8 @@ import styles from './Component.module.css' // ❌
 
 ```bash
 # 1. Generar con MCP
-/cui Create an admin users table with columns for name, email, user ID, 
-    and status. Include search bar, and buttons for add, edit, delete, 
+/cui Create an admin users table with columns for name, email, user ID,
+    and status. Include search bar, and buttons for add, edit, delete,
     and impersonate user.
 
 # 2. Revisar código generado
@@ -320,4 +333,3 @@ npm test -- components/admin/users-table.test.tsx
 
 **Última actualización:** 2025-11-26  
 **Versión:** 1.0.0
-

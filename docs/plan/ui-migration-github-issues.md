@@ -29,6 +29,7 @@
 Instalar y configurar shadcn/ui en el proyecto React con Tailwind CSS. Implementar ThemeProvider global usando `next-themes` con soporte para modo claro, oscuro y sistema (sistema como default).
 
 **Acceptance Criteria:**
+
 - [ ] shadcn/ui instalado y configurado en el proyecto
 - [ ] Tailwind configurado con `darkMode: "class"`
 - [ ] ThemeProvider global implementado con `next-themes`
@@ -42,6 +43,7 @@ Instalar y configurar shadcn/ui en el proyecto React con Tailwind CSS. Implement
 **Dependencies:** Ninguna (issue inicial)
 
 **Checklist:**
+
 - [ ] Instalar `shadcn/ui` y dependencias
 - [ ] Configurar `tailwind.config.js`
 - [ ] Crear `ThemeProvider` en layout principal
@@ -59,6 +61,7 @@ Instalar y configurar shadcn/ui en el proyecto React con Tailwind CSS. Implement
 Identificar todos los componentes UI caseros existentes (Button, Card, Modal, Input, Table, etc.) y crear plan de migración a equivalentes de shadcn/ui. Marcar componentes para deprecación progresiva.
 
 **Acceptance Criteria:**
+
 - [ ] Inventario completo de componentes UI caseros creado
 - [ ] Mapeo 1:1 con componentes shadcn equivalentes documentado
 - [ ] Componentes shadcn instalados: `button`, `card`, `dialog`, `input`, `table`, `switch`, `tabs`, `accordion`, `select`, `dropdown-menu`, `toast`, `scroll-area`, `sheet`
@@ -70,6 +73,7 @@ Identificar todos los componentes UI caseros existentes (Button, Card, Modal, In
 **Dependencies:** #1 (ThemeProvider configurado)
 
 **Checklist:**
+
 - [ ] Ejecutar búsqueda de componentes en `/components/ui` o `/components/common`
 - [ ] Instalar componentes shadcn necesarios
 - [ ] Migrar Button → `components/ui/button.tsx`
@@ -87,6 +91,7 @@ Identificar todos los componentes UI caseros existentes (Button, Card, Modal, In
 Eliminar estilos globales, CSS modules, y styled-components que dupliquen funcionalidad de shadcn/ui. Mantener solo imports de Tailwind y variables de shadcn.
 
 **Acceptance Criteria:**
+
 - [ ] `src/globals.css` o `src/index.css` limpiado (solo Tailwind + shadcn vars)
 - [ ] CSS modules identificados y marcados para migración
 - [ ] Componentes con `.module.css`, `.scss`, `styled()` inventariados
@@ -98,6 +103,7 @@ Eliminar estilos globales, CSS modules, y styled-components que dupliquen funcio
 **Dependencies:** #2 (componentes shadcn instalados)
 
 **Checklist:**
+
 - [ ] Auditar `src/index.css` o `src/globals.css`
 - [ ] Buscar archivos `.module.css`, `.scss`
 - [ ] Marcar styled-components para migración
@@ -114,6 +120,7 @@ Eliminar estilos globales, CSS modules, y styled-components que dupliquen funcio
 Implementar estructura de layouts según App Router (o equivalente en Vite/CRA): layout minimal para `/login`, layout con sidebar para `/admin`, layout con topbar para `/app`.
 
 **Acceptance Criteria:**
+
 - [ ] Layout `app/(auth)/login/layout.tsx` creado (minimal, sin navegación)
 - [ ] Layout `app/(admin)/admin/layout.tsx` creado (sidebar con navegación)
 - [ ] Layout `app/(app)/app/layout.tsx` creado (topbar responsive)
@@ -126,6 +133,7 @@ Implementar estructura de layouts según App Router (o equivalente en Vite/CRA):
 **Dependencies:** #1, #2
 
 **Checklist:**
+
 - [ ] Crear `app/(auth)/layout.tsx`
 - [ ] Crear `app/(admin)/admin/layout.tsx` con sidebar
 - [ ] Crear `app/(app)/app/layout.tsx` con topbar
@@ -146,6 +154,7 @@ Implementar estructura de layouts según App Router (o equivalente en Vite/CRA):
 Implementar página `/admin/users` con tabla de usuarios, búsqueda, y acciones (añadir, editar, borrar, entrar como usuario). Solo metadatos visibles (NO datos sensibles como persona/sponsors).
 
 **Acceptance Criteria:**
+
 - [ ] Ruta `/admin/users` creada
 - [ ] Tabla con columnas: Nombre, Email, User ID, Estado (activo/inactivo)
 - [ ] Barra de búsqueda funcional (filtro por nombre/email)
@@ -160,6 +169,7 @@ Implementar página `/admin/users` con tabla de usuarios, búsqueda, y acciones 
 **Dependencies:** #4 (layout admin creado)
 
 **Checklist:**
+
 - [ ] Crear `app/(admin)/admin/users/page.tsx`
 - [ ] Usar `components/ui/table.tsx` de shadcn
 - [ ] Implementar búsqueda con `input` de shadcn
@@ -179,6 +189,7 @@ Implementar página `/admin/users` con tabla de usuarios, búsqueda, y acciones 
 Implementar página `/admin/config/feature-flags` con tabla de feature flags que permita activar/desactivar flags desde la UI. Persiste cambios en backend.
 
 **Acceptance Criteria:**
+
 - [ ] Ruta `/admin/config/feature-flags` creada
 - [ ] Tabla con columnas: Nombre, Descripción, Switch (on/off)
 - [ ] Switch funcional usando `components/ui/switch.tsx`
@@ -191,6 +202,7 @@ Implementar página `/admin/config/feature-flags` con tabla de feature flags que
 **Dependencies:** #4, #5
 
 **Checklist:**
+
 - [ ] Crear `app/(admin)/admin/config/feature-flags/page.tsx`
 - [ ] Usar `components/ui/table.tsx` y `components/ui/switch.tsx`
 - [ ] Crear `components/admin/feature-flags-table.tsx`
@@ -208,6 +220,7 @@ Implementar página `/admin/config/feature-flags` con tabla de feature flags que
 Implementar página `/admin/config/plans` con tabla por filas (Starter, Pro, Plus, TrialStarter30d) y columnas editables para límites de análisis/roasts y checkboxes para features (Shield, Roastr persona, Tono original, Sponsors).
 
 **Acceptance Criteria:**
+
 - [ ] Ruta `/admin/config/plans` creada
 - [ ] Tabla con filas: Starter, Pro, Plus, TrialStarter30d
 - [ ] Columnas: Límite análisis/mes, Límite roasts/mes
@@ -221,6 +234,7 @@ Implementar página `/admin/config/plans` con tabla por filas (Starter, Pro, Plu
 **Dependencies:** #4, #5
 
 **Checklist:**
+
 - [ ] Crear `app/(admin)/admin/config/plans/page.tsx`
 - [ ] Usar `components/ui/table.tsx`, `components/ui/checkbox.tsx`, `components/ui/input.tsx`
 - [ ] Crear `components/admin/plan-config-table.tsx`
@@ -238,6 +252,7 @@ Implementar página `/admin/config/plans` con tabla por filas (Starter, Pro, Plu
 Implementar página `/admin/config/tones` con lista/tabla de tonos (Flanders, Balanceado, Canalla, NSFW) y acciones para crear, editar, eliminar tonos. Configurar modelo por defecto y prompt base.
 
 **Acceptance Criteria:**
+
 - [ ] Ruta `/admin/config/tones` creada
 - [ ] Tabla con tonos: Flanders, Balanceado, Canalla, NSFW (esqueleto)
 - [ ] Columnas: Nombre, Descripción, Modelo por defecto, Prompt base
@@ -252,6 +267,7 @@ Implementar página `/admin/config/tones` con lista/tabla de tonos (Flanders, Ba
 **Dependencies:** #4, #5
 
 **Checklist:**
+
 - [ ] Crear `app/(admin)/admin/config/tones/page.tsx`
 - [ ] Usar `components/ui/table.tsx`, `components/ui/dialog.tsx`, `components/ui/select.tsx`
 - [ ] Crear `components/admin/tones-table.tsx`
@@ -268,6 +284,7 @@ Implementar página `/admin/config/tones` con lista/tabla de tonos (Flanders, Ba
 Implementar página `/admin/metrics` con métricas agregadas del backend: análisis totales, roasts totales, usuarios activos, distribución por plan, uso de features, costes. Primera versión solo números y tablas (sin gráficos).
 
 **Acceptance Criteria:**
+
 - [ ] Ruta `/admin/metrics` creada
 - [ ] Widgets de totales: Análisis totales, Roasts totales, Usuarios activos
 - [ ] Ratios: Análisis medios/usuario, Roasts medios/usuario
@@ -282,6 +299,7 @@ Implementar página `/admin/metrics` con métricas agregadas del backend: análi
 **Dependencies:** #4, #5
 
 **Checklist:**
+
 - [ ] Crear `app/(admin)/admin/metrics/page.tsx`
 - [ ] Usar `components/ui/card.tsx` para widgets
 - [ ] Crear `components/admin/metrics-overview.tsx`
@@ -301,6 +319,7 @@ Implementar página `/admin/metrics` con métricas agregadas del backend: análi
 Implementar dos widgets en `/app` (Home) que muestren consumo de análisis y roasts del mes con barras de progreso (consumidos/disponibles según plan).
 
 **Acceptance Criteria:**
+
 - [ ] Ruta `/app` creada (Home)
 - [ ] Widget 1: "Análisis este mes" con X/Y y porcentaje
 - [ ] Widget 2: "Roasts este mes" con X/Y y porcentaje
@@ -313,6 +332,7 @@ Implementar dos widgets en `/app` (Home) que muestren consumo de análisis y roa
 **Dependencies:** #4 (layout app creado)
 
 **Checklist:**
+
 - [ ] Crear `app/(app)/app/page.tsx`
 - [ ] Usar `components/ui/card.tsx`, `components/ui/progress.tsx`
 - [ ] Crear `components/app/home/usage-widgets.tsx`
@@ -329,6 +349,7 @@ Implementar dos widgets en `/app` (Home) que muestren consumo de análisis y roa
 Implementar bloque en `/app` con botones para conectar redes sociales (X, Instagram, etc.). Mostrar ratio cuentas_actuales/máximo_por_plan y deshabilitar botón si se alcanzó el máximo. Manejar flujo OAuth.
 
 **Acceptance Criteria:**
+
 - [ ] Bloque de redes disponibles visible en `/app`
 - [ ] Botones por red social con texto "X/Y" (cuentas actuales/máximo)
 - [ ] Botones deshabilitados si usuario alcanzó máximo del plan
@@ -341,6 +362,7 @@ Implementar bloque en `/app` con botones para conectar redes sociales (X, Instag
 **Dependencies:** #4, #10
 
 **Checklist:**
+
 - [ ] Crear `components/app/home/connect-network-card.tsx`
 - [ ] Usar `components/ui/button.tsx`, `components/ui/card.tsx`
 - [ ] Conectar a endpoint `/api/accounts/connect/:platform`
@@ -358,6 +380,7 @@ Implementar bloque en `/app` con botones para conectar redes sociales (X, Instag
 Implementar tabla en `/app` con todas las cuentas conectadas del usuario. Mostrar red social, handle, estado, roasts emitidos, intercepciones shield. Toda la fila clickable para navegar a `/app/accounts/[accountId]`.
 
 **Acceptance Criteria:**
+
 - [ ] Tabla de cuentas conectadas visible en `/app`
 - [ ] Columnas: Icono+red social, Handle, Estado, Roasts emitidos, Intercepciones shield
 - [ ] Filas clickables que navegan a `/app/accounts/[accountId]`
@@ -369,6 +392,7 @@ Implementar tabla en `/app` con todas las cuentas conectadas del usuario. Mostra
 **Dependencies:** #4, #10
 
 **Checklist:**
+
 - [ ] Crear `components/app/home/accounts-table.tsx`
 - [ ] Usar `components/ui/table.tsx`
 - [ ] Conectar a endpoint `/api/accounts`
@@ -387,6 +411,7 @@ Implementar tabla en `/app` con todas las cuentas conectadas del usuario. Mostra
 Implementar página de detalle de cuenta `/app/accounts/[accountId]` con header mostrando red social, handle, estado, y widgets de stats (roasts, shield, etc.).
 
 **Acceptance Criteria:**
+
 - [ ] Ruta `/app/accounts/[accountId]` creada
 - [ ] Header con red social, handle y estado
 - [ ] Widgets de stats: roasts emitidos, intercepciones shield
@@ -398,6 +423,7 @@ Implementar página de detalle de cuenta `/app/accounts/[accountId]` con header 
 **Dependencies:** #12 (navegación desde tabla)
 
 **Checklist:**
+
 - [ ] Crear `app/(app)/app/accounts/[accountId]/page.tsx`
 - [ ] Crear `components/app/accounts/account-header.tsx`
 - [ ] Usar `components/ui/card.tsx` para widgets
@@ -413,6 +439,7 @@ Implementar página de detalle de cuenta `/app/accounts/[accountId]` con header 
 Implementar dialog de settings en detalle de cuenta con toggle de aprobación automática, selector de nivel de Shield, selector de tono por defecto, y preview de roast con ese tono.
 
 **Acceptance Criteria:**
+
 - [ ] Botón "Settings" en header de cuenta
 - [ ] Dialog con configuración de cuenta
 - [ ] Toggle: Aprobación automática de roasts
@@ -428,6 +455,7 @@ Implementar dialog de settings en detalle de cuenta con toggle de aprobación au
 **Dependencies:** #13
 
 **Checklist:**
+
 - [ ] Crear `components/app/accounts/account-settings-dialog.tsx`
 - [ ] Usar `components/ui/dialog.tsx`, `components/ui/switch.tsx`, `components/ui/select.tsx`
 - [ ] Conectar a endpoint `/api/accounts/:id/settings`
@@ -443,6 +471,7 @@ Implementar dialog de settings en detalle de cuenta con toggle de aprobación au
 Implementar tabla en detalle de cuenta con roasts del mes. Si aprobación manual está activa, mostrar botones para regenerar, descartar y enviar roast.
 
 **Acceptance Criteria:**
+
 - [ ] Tabla de roasts del mes visible
 - [ ] Columnas: Comentario original, Roast emitido
 - [ ] Si aprobación manual: botones Regenerar, Descartar, Enviar
@@ -455,6 +484,7 @@ Implementar tabla en detalle de cuenta con roasts del mes. Si aprobación manual
 **Dependencies:** #13
 
 **Checklist:**
+
 - [ ] Crear `components/app/accounts/roasts-table.tsx`
 - [ ] Usar `components/ui/table.tsx`, `components/ui/button.tsx`
 - [ ] Conectar a endpoint `/api/accounts/:id/roasts`
@@ -471,6 +501,7 @@ Implementar tabla en detalle de cuenta con roasts del mes. Si aprobación manual
 Implementar acordeón "Shield" en detalle de cuenta (cerrado por defecto) con estado del shield y tabla de comentarios interceptados con acciones tomadas.
 
 **Acceptance Criteria:**
+
 - [ ] Acordeón "Shield" cerrado por defecto
 - [ ] Dentro: estado del Shield (activo/pausado/inactivo)
 - [ ] Tabla de comentarios interceptados
@@ -483,6 +514,7 @@ Implementar acordeón "Shield" en detalle de cuenta (cerrado por defecto) con es
 **Dependencies:** #13
 
 **Checklist:**
+
 - [ ] Crear `components/app/accounts/shield-accordion.tsx`
 - [ ] Usar `components/ui/accordion.tsx`, `components/ui/table.tsx`
 - [ ] Conectar a endpoint `/api/accounts/:id/shield`
@@ -500,6 +532,7 @@ Implementar acordeón "Shield" en detalle de cuenta (cerrado por defecto) con es
 Implementar navegación por tabs en `/app/settings` con 3 tabs: Cuenta, Ajustes, Billing. Base para las páginas de configuración.
 
 **Acceptance Criteria:**
+
 - [ ] Ruta `/app/settings` creada con tabs
 - [ ] Tabs: Cuenta, Ajustes, Billing
 - [ ] Navegación funcional entre tabs
@@ -510,6 +543,7 @@ Implementar navegación por tabs en `/app/settings` con 3 tabs: Cuenta, Ajustes,
 **Dependencies:** #4 (layout app creado)
 
 **Checklist:**
+
 - [ ] Crear `app/(app)/app/settings/page.tsx`
 - [ ] Usar `components/ui/tabs.tsx`
 - [ ] Crear subrutas: `/app/settings/account`, `/app/settings/preferences`, `/app/settings/billing`
@@ -524,6 +558,7 @@ Implementar navegación por tabs en `/app/settings` con 3 tabs: Cuenta, Ajustes,
 Implementar tab "Cuenta" en `/app/settings` con email del usuario, botón de cambiar contraseña (dispara reset por email), botón de descargar datos (GDPR), y logout.
 
 **Acceptance Criteria:**
+
 - [ ] Tab "Cuenta" visible en `/app/settings`
 - [ ] Mostrar email del usuario (no editable)
 - [ ] Botón "Cambiar contraseña" → llama a backend para reset por email
@@ -536,6 +571,7 @@ Implementar tab "Cuenta" en `/app/settings` con email del usuario, botón de cam
 **Dependencies:** #17
 
 **Checklist:**
+
 - [ ] Crear `app/(app)/app/settings/account/page.tsx`
 - [ ] Crear `components/app/settings/account-settings-form.tsx`
 - [ ] Conectar a endpoints: `/api/auth/reset-password`, `/api/gdpr/export`, `/api/auth/logout`
@@ -551,6 +587,7 @@ Implementar tab "Cuenta" en `/app/settings` con email del usuario, botón de cam
 Implementar tab "Ajustes" en `/app/settings` con campos de Roastr persona (bio, tono, preferencias), copy de transparencia, prompt de estilo personalizado (solo Pro/Plus con feature flag), y configuración de Sponsor (solo Plus).
 
 **Acceptance Criteria:**
+
 - [ ] Tab "Ajustes" visible en `/app/settings`
 - [ ] Campos de Roastr persona: bio, tono, preferencias
 - [ ] Copy explicando transparencia (roasts firmados como IA)
@@ -564,6 +601,7 @@ Implementar tab "Ajustes" en `/app/settings` con campos de Roastr persona (bio, 
 **Dependencies:** #17
 
 **Checklist:**
+
 - [ ] Crear `app/(app)/app/settings/preferences/page.tsx`
 - [ ] Crear `components/app/settings/persona-settings-form.tsx`
 - [ ] Crear `components/app/settings/sponsor-settings-form.tsx`
@@ -580,6 +618,7 @@ Implementar tab "Ajustes" en `/app/settings` con campos de Roastr persona (bio, 
 Implementar tab "Billing" en `/app/settings` con método de pago actual, info del plan activo, fecha del próximo cobro, botones de upgrade y cancelación. Mostrar copy especial si el usuario canceló.
 
 **Acceptance Criteria:**
+
 - [ ] Tab "Billing" visible en `/app/settings`
 - [ ] Mostrar método de pago actual (últimos 4 dígitos)
 - [ ] Info del plan: nombre, fecha del próximo cobro
@@ -593,6 +632,7 @@ Implementar tab "Billing" en `/app/settings` con método de pago actual, info de
 **Dependencies:** #17
 
 **Checklist:**
+
 - [ ] Crear `app/(app)/app/settings/billing/page.tsx`
 - [ ] Crear `components/app/settings/billing-panel.tsx`
 - [ ] Conectar a endpoint `/api/billing`
@@ -611,6 +651,7 @@ Implementar tab "Billing" en `/app/settings` con método de pago actual, info de
 Implementar página `/login` con formulario de email + contraseña y opción de magic link. Tras autenticación, redirigir a `/admin/users` si es admin, o a `/app` si no.
 
 **Acceptance Criteria:**
+
 - [ ] Ruta `/login` creada
 - [ ] Formulario con email y password
 - [ ] Botón "Envíame un magic link" (opcional)
@@ -625,6 +666,7 @@ Implementar página `/login` con formulario de email + contraseña y opción de 
 **Dependencies:** #1, #4 (layout auth creado)
 
 **Checklist:**
+
 - [ ] Crear `app/(auth)/login/page.tsx`
 - [ ] Usar `components/ui/input.tsx`, `components/ui/button.tsx`, `components/ui/card.tsx`
 - [ ] Conectar a endpoint `/api/auth/login`
@@ -641,6 +683,7 @@ Implementar página `/login` con formulario de email + contraseña y opción de 
 Crear capa de cliente API en `/lib/api` con funciones tipadas para todos los endpoints. Implementar auth provider global para gestión de sesión.
 
 **Acceptance Criteria:**
+
 - [ ] Carpeta `/lib/api` creada
 - [ ] Clientes API para: Auth, Usuarios, Feature flags, Planes, Tonos, Métricas, Cuentas, Roasts, Shield, Billing
 - [ ] Auth provider global implementado
@@ -653,6 +696,7 @@ Crear capa de cliente API en `/lib/api` con funciones tipadas para todos los end
 **Dependencies:** Ninguna (puede hacerse en paralelo)
 
 **Checklist:**
+
 - [ ] Crear `/lib/api/auth.ts`
 - [ ] Crear `/lib/api/users.ts`
 - [ ] Crear `/lib/api/feature-flags.ts`
@@ -678,6 +722,7 @@ Crear capa de cliente API en `/lib/api` con funciones tipadas para todos los end
 Implementar contexto React para feature flags que se sincronice con backend y permita verificar flags desde cualquier componente con hook `useFeatureFlag`.
 
 **Acceptance Criteria:**
+
 - [ ] Contexto `FeatureFlagsProvider` creado
 - [ ] Hook `useFeatureFlag(flagName)` implementado
 - [ ] Sincronización con endpoint `/api/feature-flags` al cargar app
@@ -689,6 +734,7 @@ Implementar contexto React para feature flags que se sincronice con backend y pe
 **Dependencies:** #22 (capa API creada)
 
 **Checklist:**
+
 - [ ] Crear `/lib/context/feature-flags.tsx`
 - [ ] Crear hook `useFeatureFlag`
 - [ ] Conectar a endpoint `/api/feature-flags`
@@ -704,6 +750,7 @@ Implementar contexto React para feature flags que se sincronice con backend y pe
 Implementar hook `usePlanFeatures` que devuelva features disponibles según plan del usuario (Starter, Pro, Plus). Usar para mostrar/ocultar elementos de UI condicionalmente.
 
 **Acceptance Criteria:**
+
 - [ ] Hook `usePlanFeatures` creado
 - [ ] Devuelve: `hasShield`, `hasPersona`, `hasToneOriginal`, `hasSponsor`
 - [ ] Lógica según plan del usuario (obtenido de auth context)
@@ -714,6 +761,7 @@ Implementar hook `usePlanFeatures` que devuelva features disponibles según plan
 **Dependencies:** #22 (auth provider)
 
 **Checklist:**
+
 - [ ] Crear `/lib/hooks/usePlanFeatures.ts`
 - [ ] Conectar a auth context para obtener plan
 - [ ] Implementar lógica de features por plan
@@ -729,6 +777,7 @@ Implementar hook `usePlanFeatures` que devuelva features disponibles según plan
 Implementar guards de rutas que verifiquen autenticación y rol de usuario. Proteger `/admin` (solo admin), `/app` (solo autenticados), redirigir a `/login` si no autenticado.
 
 **Acceptance Criteria:**
+
 - [ ] Guard de autenticación implementado (verifica sesión)
 - [ ] Guard de admin implementado (verifica `isAdmin`)
 - [ ] Rutas `/admin/*` protegidas con guard de admin
@@ -741,6 +790,7 @@ Implementar guards de rutas que verifiquen autenticación y rol de usuario. Prot
 **Dependencies:** #22 (auth provider)
 
 **Checklist:**
+
 - [ ] Crear `/lib/guards/auth-guard.tsx`
 - [ ] Crear `/lib/guards/admin-guard.tsx`
 - [ ] Integrar en layouts de `/admin` y `/app`
@@ -758,6 +808,7 @@ Implementar guards de rutas que verifiquen autenticación y rol de usuario. Prot
 Implementar endpoint en backend que devuelva métricas agregadas: análisis totales, roasts totales, usuarios activos, distribución por plan, uso de features, costes.
 
 **Acceptance Criteria:**
+
 - [ ] Endpoint `/api/admin/metrics` creado
 - [ ] Devuelve: análisis totales, roasts totales, usuarios activos
 - [ ] Devuelve: análisis medios/usuario, roasts medios/usuario
@@ -773,6 +824,7 @@ Implementar endpoint en backend que devuelva métricas agregadas: análisis tota
 **Dependencies:** Ninguna (puede hacerse en paralelo)
 
 **Checklist:**
+
 - [ ] Crear `/src/routes/admin/metrics.js`
 - [ ] Implementar queries agregadas en DB
 - [ ] Agregar control de acceso (solo admin)
@@ -788,6 +840,7 @@ Implementar endpoint en backend que devuelva métricas agregadas: análisis tota
 Implementar endpoint en backend que devuelva consumo actual del usuario del mes: análisis consumidos/disponibles, roasts consumidos/disponibles.
 
 **Acceptance Criteria:**
+
 - [ ] Endpoint `/api/usage/current` creado
 - [ ] Devuelve: análisis consumidos, análisis disponibles (según plan)
 - [ ] Devuelve: roasts consumidos, roasts disponibles (según plan)
@@ -799,6 +852,7 @@ Implementar endpoint en backend que devuelva consumo actual del usuario del mes:
 **Dependencies:** Ninguna (puede hacerse en paralelo)
 
 **Checklist:**
+
 - [ ] Crear `/src/routes/usage/current.js`
 - [ ] Implementar query para consumo del mes
 - [ ] Obtener límites desde plan del usuario
@@ -814,6 +868,7 @@ Implementar endpoint en backend que devuelva consumo actual del usuario del mes:
 Crear funciones de utilidad para formateo de números (separadores de miles, decimales, porcentajes, moneda) y usarlas en widgets de métricas y uso.
 
 **Acceptance Criteria:**
+
 - [ ] Utilidades de formateo creadas en `/lib/utils/format.ts`
 - [ ] Funciones: `formatNumber`, `formatCurrency`, `formatPercentage`, `formatDecimal`
 - [ ] Usadas en: widgets de análisis, métricas de admin
@@ -824,6 +879,7 @@ Crear funciones de utilidad para formateo de números (separadores de miles, dec
 **Dependencies:** Ninguna (puede hacerse en paralelo)
 
 **Checklist:**
+
 - [ ] Crear `/lib/utils/format.ts`
 - [ ] Implementar `formatNumber` (separadores de miles)
 - [ ] Implementar `formatCurrency` (€ / $)
@@ -837,6 +893,7 @@ Crear funciones de utilidad para formateo de números (separadores de miles, dec
 ## 📊 Resumen de Dependencies
 
 **Issues sin dependencias (pueden iniciarse en paralelo):**
+
 - #1: Configurar shadcn/ui y ThemeProvider
 - #22: Implementar capa de cliente API
 - #26: Endpoint de métricas agregadas (backend)
@@ -844,6 +901,7 @@ Crear funciones de utilidad para formateo de números (separadores de miles, dec
 - #28: Utilidades de formateo
 
 **Issues bloqueantes (muchos dependen de estos):**
+
 - #1: ThemeProvider (bloquea #2, #3, #21)
 - #2: Componentes shadcn (bloquea #3, #4)
 - #4: Layouts (bloquea toda implementación de UI)
@@ -854,23 +912,28 @@ Crear funciones de utilidad para formateo de números (separadores de miles, dec
 ## 🎯 Sugerencia de Orden de Implementación
 
 **Sprint 1: Fundamentos (Issues #1, #2, #3, #4, #21, #22)**
+
 - Configurar shadcn + ThemeProvider
 - Migrar componentes base
 - Crear layouts
 - Login + capa API
 
 **Sprint 2: Admin Panel (Issues #5, #6, #7, #8, #9)**
+
 - Implementar todas las páginas de admin
 
 **Sprint 3: User App Home (Issues #10, #11, #12, #23, #24, #25, #26, #27, #28)**
+
 - Implementar home de usuario
 - Feature flags + guards
 - Endpoints de backend
 
 **Sprint 4: User App Accounts (Issues #13, #14, #15, #16)**
+
 - Implementar detalle de cuenta y roasts
 
 **Sprint 5: User App Settings (Issues #17, #18, #19, #20)**
+
 - Implementar configuración de usuario
 
 ---
@@ -882,4 +945,3 @@ Crear funciones de utilidad para formateo de números (separadores de miles, dec
 ---
 
 _Este documento debe ser usado como base para crear los Issues en GitHub. Cada issue puede ser copiado y pegado directamente en la UI de GitHub Issues._
-

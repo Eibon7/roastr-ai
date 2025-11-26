@@ -434,7 +434,10 @@ function validateZodSchema(schema, source = 'body') {
             messageDetail = 'Please provide a valid email address';
           }
           // Handle price_id/product_id validation errors (UUID format)
-          else if ((fieldName === 'price_id' || fieldName === 'product_id') && errorCode === 'invalid_string') {
+          else if (
+            (fieldName === 'price_id' || fieldName === 'product_id') &&
+            errorCode === 'invalid_string'
+          ) {
             // Check if it's empty string error or invalid UUID
             if (errorMsg.includes('cannot be empty')) {
               errorMessage = 'Missing required fields';
@@ -445,7 +448,10 @@ function validateZodSchema(schema, source = 'body') {
             }
           }
           // Handle missing fields (undefined/null)
-          else if (errorCode === 'invalid_type' && (firstError.received === 'undefined' || firstError.received === 'null')) {
+          else if (
+            errorCode === 'invalid_type' &&
+            (firstError.received === 'undefined' || firstError.received === 'null')
+          ) {
             errorMessage = 'Missing required fields';
             messageDetail = 'Please provide all required fields';
           }
@@ -455,7 +461,10 @@ function validateZodSchema(schema, source = 'body') {
             messageDetail = 'Either product_id or price_id must be provided';
           }
           // Handle too_small errors (empty strings)
-          else if (errorCode === 'too_small' && (fieldName === 'price_id' || fieldName === 'product_id')) {
+          else if (
+            errorCode === 'too_small' &&
+            (fieldName === 'price_id' || fieldName === 'product_id')
+          ) {
             errorMessage = 'Missing required fields';
             messageDetail = 'Please provide all required fields';
           }

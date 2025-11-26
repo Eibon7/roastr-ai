@@ -13,6 +13,7 @@
 ## 📋 Estado Actual
 
 ### Tests Totales
+
 - **Total tests:** 7,776
 - **Passing:** 6,518 (83.8%)
 - **Failing:** 1,204 (15.5%)
@@ -23,6 +24,7 @@
 ### GDD Nodes Activados
 
 Según auto-activación GDD:
+
 - `shield`
 - `cost-control`
 - `queue-system`
@@ -52,12 +54,14 @@ Arreglar assertion failures en servicios core críticos para producción:
 ### Tests Críticos Identificados
 
 **Billing & Cost Control:**
+
 - `tests/unit/routes/billing.test.js`
 - `tests/unit/services/costControl.test.js`
 - `tests/unit/routes/checkout.security.test.js`
 - `tests/unit/utils/testUtils-planLimits.test.js`
 
 **Authentication & Security:**
+
 - `tests/unit/services/authService-edge-cases.test.js`
 - `tests/unit/routes/auth-edge-cases.test.js`
 - `tests/unit/middleware/auth.js`
@@ -65,6 +69,7 @@ Arreglar assertion failures en servicios core críticos para producción:
 - `tests/unit/services/authPasswordRecovery.test.js`
 
 **Shield Service:**
+
 - `tests/integration/shield-database-round3.test.js`
 - `tests/unit/adapters/ShieldAdapter.contract.test.js`
 - `tests/integration/sponsor-service-integration.test.js`
@@ -72,6 +77,7 @@ Arreglar assertion failures en servicios core críticos para producción:
 - `tests/unit/services/shieldService-edge-cases.test.js`
 
 **Queue & Workers:**
+
 - `tests/integration/ingestor-*.test.js`
 - `tests/unit/services/queueService.test.js`
 - `tests/integration/ingestor-retry-backoff.test.js`
@@ -79,6 +85,7 @@ Arreglar assertion failures en servicios core críticos para producción:
 - `tests/integration/ingestor-order-processing.test.js`
 
 **Roast Generation:**
+
 - `tests/integration/generation-issue-409.test.js`
 - `tests/unit/routes/roast-*.test.js`
 - `tests/integration/roastr-persona-flow.test.js`
@@ -99,7 +106,6 @@ Arreglar assertion failures en servicios core críticos para producción:
    - File: `src/config/planLimits.js`
    - Eliminar duplicaciones en test utils
    - Asegurar que todos los servicios usan la misma fuente
-   
 2. **Arreglar validación de price_id**
    - File: `src/routes/checkout.js`
    - Añadir validación estricta de VALID_PRICE_IDS
@@ -111,6 +117,7 @@ Arreglar assertion failures en servicios core críticos para producción:
    - Actualizar fixtures
 
 **Validation:**
+
 ```bash
 npm test -- tests/unit/routes/billing.test.js
 npm test -- tests/unit/services/costControl.test.js
@@ -119,6 +126,7 @@ npm test -- tests/unit/utils/testUtils-planLimits.test.js
 ```
 
 **Expected Output:**
+
 - ✅ All billing tests passing
 - ✅ Plan limits consistent across codebase
 - ✅ price_id validation working
@@ -150,6 +158,7 @@ npm test -- tests/unit/utils/testUtils-planLimits.test.js
    - Añadir rate limiting
 
 **Validation:**
+
 ```bash
 npm test -- tests/unit/services/authService-edge-cases.test.js
 npm test -- tests/unit/routes/auth-edge-cases.test.js
@@ -158,6 +167,7 @@ npm test -- tests/unit/services/authPasswordRecovery.test.js
 ```
 
 **Expected Output:**
+
 - ✅ Auth edge cases handled
 - ✅ Account deletion working
 - ✅ Password recovery functional
@@ -189,6 +199,7 @@ npm test -- tests/unit/services/authPasswordRecovery.test.js
    - Añadir tests de integración
 
 **Validation:**
+
 ```bash
 npm test -- tests/integration/shield-database-round3.test.js
 npm test -- tests/unit/adapters/ShieldAdapter.contract.test.js
@@ -197,6 +208,7 @@ npm test -- tests/unit/services/shieldService-edge-cases.test.js
 ```
 
 **Expected Output:**
+
 - ✅ Database constraints met
 - ✅ Adapters comply with contract
 - ✅ Sponsor service integrated
@@ -228,6 +240,7 @@ npm test -- tests/unit/services/shieldService-edge-cases.test.js
    - Implementar fallback strategies
 
 **Validation:**
+
 ```bash
 npm test -- tests/integration/ingestor-*.test.js
 npm test -- tests/unit/services/queueService.test.js
@@ -237,6 +250,7 @@ npm test -- tests/integration/ingestor-order-processing.test.js
 ```
 
 **Expected Output:**
+
 - ✅ Jobs processed in order
 - ✅ Retry logic working
 - ✅ Error handling implemented
@@ -268,6 +282,7 @@ npm test -- tests/integration/ingestor-order-processing.test.js
    - Asegurar style consistency
 
 **Validation:**
+
 ```bash
 npm test -- tests/integration/generation-issue-409.test.js
 npm test -- tests/unit/routes/roast-*.test.js
@@ -277,6 +292,7 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
 ```
 
 **Expected Output:**
+
 - ✅ Variant generation working
 - ✅ Validation implemented
 - ✅ Persona integration functional
@@ -288,29 +304,34 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
 ### Core Services
 
 **Billing & Cost Control:**
+
 - `src/config/planLimits.js` - Unificar PLAN_LIMITS
 - `src/routes/checkout.js` - Validación price_id
 - `src/services/costControl.js` - Cost calculation fixes
 - `tests/unit/utils/testUtils-planLimits.test.js` - Test fixtures
 
 **Authentication:**
+
 - `src/services/authService.js` - Edge cases
 - `src/routes/account-deletion.js` - Deletion flow
 - `src/services/authPasswordRecovery.js` - Recovery logic
 - `src/middleware/auth.js` - Auth middleware
 
 **Shield:**
+
 - `database/migrations/*_shield_*.sql` - Constraints
 - `src/adapters/ShieldAdapter.js` - Contract compliance
 - `src/services/sponsorService.js` - Integration
 - `src/services/shieldService.js` - Edge cases
 
 **Queue:**
+
 - `src/services/queueService.js` - Processing order
 - `src/workers/BaseWorker.js` - Retry logic
 - `src/workers/*Worker.js` - Error handling
 
 **Roast:**
+
 - `src/services/roastGeneratorEnhanced.js` - Variant generation
 - `src/routes/roast-*.js` - Validation
 - `src/services/roastEngine.js` - Persona integration
@@ -320,30 +341,35 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
 ## ✅ Acceptance Criteria (Por Fase)
 
 ### FASE 1: Billing & Cost Control
+
 - [ ] Plan limits consistentes en todas las funciones
 - [ ] Validación de price_id funciona correctamente
 - [ ] Cost control calcula correctamente
 - [ ] Tests de seguridad de checkout pasan
 
 ### FASE 2: Authentication & Security
+
 - [ ] Todos los edge cases de auth funcionan
 - [ ] Account deletion funciona correctamente
 - [ ] Password recovery funciona
 - [ ] Middleware de auth funciona correctamente
 
 ### FASE 3: Shield Service
+
 - [ ] Database constraints se cumplen
 - [ ] Adapters cumplen contratos
 - [ ] RLS funciona correctamente
 - [ ] Sponsor service funciona
 
 ### FASE 4: Queue & Workers
+
 - [ ] Jobs se procesan correctamente
 - [ ] Retry logic funciona
 - [ ] Order processing es correcto
 - [ ] Error handling funciona
 
 ### FASE 5: Roast Generation
+
 - [ ] Variant generation funciona
 - [ ] Validación de inputs funciona
 - [ ] Persona integration funciona
@@ -354,22 +380,27 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
 ## 🚨 Riesgos Identificados
 
 **Billing & Cost Control:**
+
 - 💰 Facturación incorrecta → pérdida de ingresos
 - 💰 Plan limits inconsistentes → usuarios no pueden usar features
 
 **Authentication:**
+
 - 🔐 Auth bypass → seguridad comprometida
 - 🔐 Account deletion no funciona → GDPR violations
 
 **Shield:**
+
 - 🛡️ RLS no funciona → data leakage
 - 🛡️ Moderación no funciona → contenido tóxico pasa
 
 **Queue:**
+
 - ⚙️ Jobs no se procesan → sistema no funciona
 - ⚙️ Retry logic falla → jobs perdidos
 
 **Roast:**
+
 - 🎯 Generación falla → core product no funciona
 - 🎯 Validation falla → bad UX
 
@@ -378,12 +409,14 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
 ## 📊 Métricas de Éxito
 
 **Overall:**
+
 - ✅ 100% de tests críticos pasando (~160 tests)
 - ✅ 0 assertion failures en servicios core
 - ✅ Funcionalidad validada manualmente
 - ✅ Performance aceptable (<3s per operation)
 
 **Por Fase:**
+
 - FASE 1: 30 tests passing → Billing functional
 - FASE 2: 40 tests passing → Auth secure
 - FASE 3: 35 tests passing → Shield working
@@ -397,6 +430,7 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
 ### Por Cada Fase:
 
 1. **Identificar tests fallando**
+
    ```bash
    npm test -- <test-pattern> 2>&1 | grep "FAIL\|●"
    ```
@@ -412,11 +446,13 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
    - Añadir defensive checks
 
 4. **Validar fix**
+
    ```bash
    npm test -- <test-file>
    ```
 
 5. **Commit con mensaje descriptivo**
+
    ```bash
    git add .
    git commit -m "fix(billing): unify plan limits across codebase (Issue #1020 FASE 1)"
@@ -457,10 +493,12 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
 ## 🎯 Agentes a Invocar
 
 **FASE 1-5 (Implementation):**
+
 - `TestEngineer` - Para cada fase, generar/arreglar tests
 - `BackendDev` - Para arreglar servicios core
 
 **FASE 6 (Validation):**
+
 - `Guardian` - Validar que no hay security issues
 - `TestEngineer` - Validar coverage >=90%
 
@@ -469,11 +507,13 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
 ## ⚠️ Blockers
 
 **Antes de continuar:**
+
 - ✅ GDD nodes cargados
 - ✅ Coderabbit-lessons.md leído
 - ✅ Plan creado
 
 **Antes de merge:**
+
 - ⏸️ Tests 100% passing
 - ⏸️ Coverage >=90%
 - ⏸️ CodeRabbit = 0 comentarios
@@ -495,4 +535,3 @@ npm test -- tests/unit/routes/roast-validation-issue364.test.js
 **Status:** 🟡 In Progress  
 **Next Step:** FASE 1 - Billing & Cost Control  
 **Estimated Completion:** 5 days (1 fase per day)
-
