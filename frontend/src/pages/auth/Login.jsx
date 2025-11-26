@@ -20,7 +20,6 @@ const Login = () => {
     email: '',
     password: ''
   });
-  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showRecovery, setShowRecovery] = useState(false);
@@ -208,21 +207,6 @@ const Login = () => {
                     onChange={handleInputChange}
                     placeholder="Enter your password"
                   />
-                </div>
-
-                {/* Keep me logged in checkbox */}
-                <div className="flex items-center">
-                  <input
-                    id="keep-logged-in"
-                    name="keep-logged-in"
-                    type="checkbox"
-                    checked={keepLoggedIn}
-                    onChange={(e) => setKeepLoggedIn(e.target.checked)}
-                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                  />
-                  <Label htmlFor="keep-logged-in" className="ml-2">
-                    Keep me logged in
-                  </Label>
                 </div>
 
                 {/* Error message */}
