@@ -93,7 +93,7 @@ export default function LoginPage() {
 
       // Forzar recarga para que el AuthContext detecte el usuario
       window.location.href = '/admin/dashboard';
-    } catch (err) {
+    } catch {
       setError('Error al iniciar sesión en modo demo');
       setLoading(false);
     }

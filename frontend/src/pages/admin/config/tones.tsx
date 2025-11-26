@@ -69,11 +69,7 @@ export default function TonesPage() {
     status: 'active' as 'active' | 'inactive'
   });
 
-  React.useEffect(() => {
-    loadTones();
-  }, [searchQuery]);
-
-  const loadTones = async () => {
+  const loadTones = React.useCallback(async () => {
     setLoading(true);
     try {
       const response = await adminApi.getTones();
@@ -109,7 +105,11 @@ export default function TonesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery]);
+
+  React.useEffect(() => {
+    loadTones();
+  }, [loadTones]);
 
   const handleDelete = async () => {
     if (!selectedTone) return;

@@ -78,11 +78,7 @@ export default function AdminUsersPage() {
     status: 'active' as 'active' | 'inactive'
   });
 
-  React.useEffect(() => {
-    loadUsers();
-  }, [page, searchQuery]);
-
-  const loadUsers = async () => {
+  const loadUsers = React.useCallback(async () => {
     setLoading(true);
     try {
       const response = await adminApi.getUsers({
@@ -121,7 +117,11 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, searchQuery]);
+
+  React.useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleDelete = async () => {
     if (!selectedUser) return;

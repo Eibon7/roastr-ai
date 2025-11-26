@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authApi.logout();
         setUser(null);
       }
-    } catch (error) {
+    } catch {
       // Auth failed, clear token
       authApi.logout();
       setUser(null);

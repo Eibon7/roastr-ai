@@ -84,11 +84,7 @@ export default function FeatureFlagsPage() {
     category: 'general'
   });
 
-  React.useEffect(() => {
-    loadFlags();
-  }, [page, searchQuery, categoryFilter]);
-
-  const loadFlags = async () => {
+  const loadFlags = React.useCallback(async () => {
     setLoading(true);
     try {
       const response = await adminApi.getFeatureFlags(
@@ -116,7 +112,11 @@ export default function FeatureFlagsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, categoryFilter]);
+
+  React.useEffect(() => {
+    loadFlags();
+  }, [loadFlags]);
 
   const handleToggle = async (flag: FeatureFlag) => {
     try {
