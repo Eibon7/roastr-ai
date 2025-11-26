@@ -51,8 +51,14 @@ class IngestorTestUtils {
           this.mockStoredJobs.push(job);
           return job;
         },
-        getNextJob: async () => {
-          const pendingJobs = this.mockStoredJobs.filter((job) => job.status === 'pending');
+        getNextJob: async (jobType) => {
+          // Filter by jobType if provided (important for worker isolation)
+          let pendingJobs = this.mockStoredJobs.filter((job) => job.status === 'pending');
+          
+          if (jobType) {
+            pendingJobs = pendingJobs.filter((job) => job.job_type === jobType);
+          }
+          
           if (pendingJobs.length === 0) return null;
 
           // Sort by priority (lower number = higher priority) then by creation time (FIFO)
