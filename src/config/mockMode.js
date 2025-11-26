@@ -184,11 +184,17 @@ class MockModeManager {
               // If organization_id or platform are also provided, use them as additional filters
               const existing = storage.find((comment) => {
                 // Always match platform_comment_id if provided
-                if (queries.platform_comment_id && comment.platform_comment_id !== queries.platform_comment_id) {
+                if (
+                  queries.platform_comment_id &&
+                  comment.platform_comment_id !== queries.platform_comment_id
+                ) {
                   return false;
                 }
                 // Match organization_id if provided
-                if (queries.organization_id && comment.organization_id !== queries.organization_id) {
+                if (
+                  queries.organization_id &&
+                  comment.organization_id !== queries.organization_id
+                ) {
                   return false;
                 }
                 // Match platform if provided
@@ -271,7 +277,10 @@ class MockModeManager {
             if (table === 'comments') {
               // Check if comment exists in global storage
               const storage = global.mockCommentStorage || [];
-              logger.info('🔍 Mock: maybeSingle() checking for existing comment with queries:', queries);
+              logger.info(
+                '🔍 Mock: maybeSingle() checking for existing comment with queries:',
+                queries
+              );
               logger.info('🔍 Mock: Current storage has', storage.length, 'comments');
 
               // Find comment matching all provided filters
@@ -279,11 +288,17 @@ class MockModeManager {
               // If organization_id or platform are also provided, use them as additional filters
               const existing = storage.find((comment) => {
                 // Always match platform_comment_id if provided
-                if (queries.platform_comment_id && comment.platform_comment_id !== queries.platform_comment_id) {
+                if (
+                  queries.platform_comment_id &&
+                  comment.platform_comment_id !== queries.platform_comment_id
+                ) {
                   return false;
                 }
                 // Match organization_id if provided
-                if (queries.organization_id && comment.organization_id !== queries.organization_id) {
+                if (
+                  queries.organization_id &&
+                  comment.organization_id !== queries.organization_id
+                ) {
                   return false;
                 }
                 // Match platform if provided

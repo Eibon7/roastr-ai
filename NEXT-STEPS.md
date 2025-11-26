@@ -27,6 +27,7 @@ Get PR #1028 from **93% complete** to **100% complete** and ready for merge.
 **Issue:** Payload structure mismatch
 
 **Debug Command:**
+
 ```bash
 cd /Users/emiliopostigo/roastr-ai-worktrees/issue-442
 
@@ -37,6 +38,7 @@ npm test -- tests/integration/ingestor-order-processing.test.js \
 ```
 
 **Expected Failure:**
+
 - `processedOrder` doesn't match expected `['high_priority_1', 'normal_priority_1', 'low_priority_1']`
 - Likely due to `comment.platform_comment_id` being undefined
 
@@ -50,6 +52,7 @@ npm test -- tests/integration/ingestor-order-processing.test.js \
 **Issue:** Similar payload structure issue with concurrent processing
 
 **Debug Command:**
+
 ```bash
 npm test -- tests/integration/ingestor-order-processing.test.js \
   --testNamePattern="should preserve order across different priority levels with concurrency" \
@@ -66,12 +69,14 @@ npm test -- tests/integration/ingestor-order-processing.test.js \
 **Issue:** Timing-sensitive assertions failing
 
 **Debug Command:**
+
 ```bash
 npm test -- tests/integration/ingestor-acknowledgment.test.js \
   --verbose --no-coverage 2>&1 | tee debug-acknowledgment.log
 ```
 
 **Potential Fixes:**
+
 1. Increase timing buffers
 2. Fix `completeJob()` in mock queue service
 3. Add `await` for async operations
@@ -109,6 +114,7 @@ git push --force-with-lease origin feature/issue-442
 ```
 
 **Verification:**
+
 ```bash
 # Should show only 1 commit
 git log --oneline feature/issue-442 ^main | wc -l
@@ -124,6 +130,7 @@ git log --oneline feature/issue-442 ^main | wc -l
 **Blocks:** Merge (no CI evidence)
 
 **Trigger workflow:**
+
 ```bash
 cd /Users/emiliopostigo/roastr-ai-worktrees/issue-442
 
@@ -138,6 +145,7 @@ gh run list --branch feature/issue-442 --limit 1
 ```
 
 **Expected Output:**
+
 ```
 ✓ Lint and Test  feature/issue-442  push  28c19fa3  success  2m 30s ago
 ```
@@ -167,6 +175,7 @@ gh run list --branch feature/issue-442 --limit 1
    - Confirm "✅ AC2: All tests pass (0 failures)"
 
 **Command:**
+
 ```bash
 gh pr edit 1028 --body "$(cat updated-pr-body.md)"
 ```
@@ -230,13 +239,13 @@ npm run coderabbit:review
 
 ## 📊 Progress Tracker
 
-| Task | Status | ETA | Blocker |
-|------|--------|-----|---------|
-| Fix failing tests | ⏸️ TODO | 1-2h | YES |
-| Clean branch scope | ⏸️ TODO | 5min | YES |
-| Trigger CI | ⏸️ TODO | 10min | YES |
-| Update PR description | ⏸️ TODO | 10min | NO |
-| Final GDD validation | ⏸️ TODO | 15min | YES |
+| Task                  | Status  | ETA   | Blocker |
+| --------------------- | ------- | ----- | ------- |
+| Fix failing tests     | ⏸️ TODO | 1-2h  | YES     |
+| Clean branch scope    | ⏸️ TODO | 5min  | YES     |
+| Trigger CI            | ⏸️ TODO | 10min | YES     |
+| Update PR description | ⏸️ TODO | 10min | NO      |
+| Final GDD validation  | ⏸️ TODO | 15min | YES     |
 
 **Overall Progress:** 93% → Target: 100%  
 **Time to Complete:** 2-3 hours
@@ -266,6 +275,7 @@ If any blocker cannot be resolved:
 3. **GDD validation fails:** Run auto-repair: `node scripts/auto-repair-gdd.js --auto-fix`
 
 **Escalation Path:**
+
 - Technical blockers → @test-engineer
 - Process blockers → @github-guardian
 - Scope questions → Product Owner
