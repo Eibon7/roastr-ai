@@ -14,16 +14,16 @@ const { z } = require('zod');
 const registerSchema = z.object({
   email: z
     .string({
-      required_error: 'Email es requerido',
-      invalid_type_error: 'Email debe ser texto'
+      required_error: 'Email and password are required',
+      invalid_type_error: 'Email must be a string'
     })
-    .min(1, 'Email es requerido')
-    .email('Formato de email inválido')
+    .min(1, 'Email and password are required')
+    .email('Invalid email format')
     .refine((email) => !email.includes('..'), {
-      message: 'El email no puede contener puntos consecutivos'
+      message: 'Email cannot contain consecutive dots'
     })
     .refine((email) => !email.includes('@@'), {
-      message: 'El email no puede contener @@'
+      message: 'Email cannot contain @@'
     })
     .refine(
       (email) => {
@@ -33,25 +33,25 @@ const registerSchema = z.object({
         return emailRegex.test(email);
       },
       {
-        message: 'Formato de email inválido'
+        message: 'Invalid email format'
       }
     ),
 
   password: z
     .string({
-      required_error: 'La contraseña es requerida',
-      invalid_type_error: 'La contraseña debe ser texto'
+      required_error: 'Email and password are required',
+      invalid_type_error: 'Password must be a string'
     })
-    .min(1, 'La contraseña es requerida')
-    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .min(1, 'Email and password are required')
+    .min(8, 'Password must be at least 8 characters')
     .refine((password) => !/\s/.test(password), {
-      message: 'La contraseña no puede contener espacios'
+      message: 'Password cannot contain spaces'
     })
     .refine((password) => /\d/.test(password), {
-      message: 'La contraseña debe contener al menos un número'
+      message: 'Password must contain at least one number'
     })
     .refine((password) => /[a-z]/.test(password), {
-      message: 'La contraseña debe contener al menos una letra minúscula'
+      message: 'Password must contain at least one lowercase letter'
     })
     .refine(
       (password) => {
@@ -60,7 +60,7 @@ const registerSchema = z.object({
         return hasUppercase || hasSymbol;
       },
       {
-        message: 'La contraseña debe contener al menos una letra mayúscula o un símbolo'
+        message: 'Password must contain at least one uppercase letter or symbol'
       }
     ),
 
@@ -74,18 +74,18 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z
     .string({
-      required_error: 'Email es requerido',
-      invalid_type_error: 'Email debe ser texto'
+      required_error: 'Email and password are required',
+      invalid_type_error: 'Email must be a string'
     })
-    .min(1, 'Email es requerido')
-    .email('Formato de email inválido'),
+    .min(1, 'Email and password are required')
+    .email('Invalid email format'),
 
   password: z
     .string({
-      required_error: 'La contraseña es requerida',
-      invalid_type_error: 'La contraseña debe ser texto'
+      required_error: 'Email and password are required',
+      invalid_type_error: 'Password must be a string'
     })
-    .min(1, 'La contraseña es requerida')
+    .min(1, 'Email and password are required')
 });
 
 /**

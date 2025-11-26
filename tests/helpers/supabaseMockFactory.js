@@ -1,211 +1,335 @@
 /**
  * Supabase Mock Factory
- *
- * Provides reusable mock creation functions for Supabase client testing.
- *
- * CRITICAL PATTERN:
- * Create mocks BEFORE jest.mock() calls to avoid module resolution timing issues.
- *
- * Related: Issue #480 Week 3 Day 2 - Supabase Mock Pattern Fix
- *
- * Example Usage:
- * ```javascript
- * const { createSupabaseMock } = require('../helpers/supabaseMockFactory');
- *
- * // Step 1: Create mock BEFORE jest.mock() call
- * const mockSupabase = createSupabaseMock({
- *   user_subscriptions: { plan: 'pro', status: 'active' },
- *   roast_usage: { count: 15 }
- * });
- *
- * // Step 2: Reference pre-created mock in jest.mock()
- * jest.mock('../../src/config/supabase', () => ({
- *   supabaseServiceClient: mockSupabase
- * }));
- * ```
+ * 
+ * Centralized mock creation for Supabase client following Pattern #11 from coderabbit-lessons.md
+ * Issue #1021: Fix database mock issues across ~80 tests
+ * 
+ * Usage:
+ *   const mockSupabase = createSupabaseMock(tableData, rpcResponses);
+ *   jest.mock('../../src/config/supabase', () => ({
+ *     supabaseServiceClient: mockSupabase
+ *   }));
  */
 
 /**
- * Creates a mock table builder with chainable query methods
- *
- * @param {Object} options - Configuration options
- * @param {*} options.defaultData - Default data to return (single item or array)
- * @param {Error|null} options.defaultError - Default error to return
- * @param {boolean} options.single - Whether to return single item (true) or array (false)
- * @returns {Object} Mock table builder with select, insert, update, delete methods
+ * Create a complete Supabase mock with all chain methods
+ * @param {Object} tableData - Mock data by table name { tableName: mockData }
+ * @param {Object} rpcResponses - Mock RPC responses { functionName: response }
+ * @returns {Object} Complete Supabase mock with OpenAI-compatible interface
  */
-function createTableMock(options = {}) {
-  const { defaultData = null, defaultError = null, single = false } = options;
-
-  const resolveValue = {
-    data: single && Array.isArray(defaultData) ? defaultData[0] : defaultData,
-    error: defaultError
+function createSupabaseMock(tableData = {}, rpcResponses = {}) {
+  // Internal storage for mock state
+  const storage = {
+    tables: { ...tableData },
+    rpc: { ...rpcResponses },
+    insertedData: {},
+    updatedData: {}
   };
 
-  const builder = {
-    select: jest.fn(() => builder),
-    insert: jest.fn(() => builder),
-    update: jest.fn(() => builder),
-    delete: jest.fn(() => builder),
-    eq: jest.fn(() => builder),
-    neq: jest.fn(() => builder),
-    gt: jest.fn(() => builder),
-    gte: jest.fn(() => builder),
-    lt: jest.fn(() => builder),
-    lte: jest.fn(() => builder),
-    in: jest.fn(() => builder),
-    is: jest.fn(() => builder),
-    order: jest.fn(() => builder),
-    limit: jest.fn(() => builder),
-    single: jest.fn(() => Promise.resolve(resolveValue)),
-    maybeSingle: jest.fn(() => Promise.resolve(resolveValue)),
-    then: (resolve) => resolve(resolveValue)
-  };
+  /**
+   * Mock query builder with full chain support
+   */
+  const createQueryBuilder = (tableName) => {
+    const queryState = {
+      table: tableName,
+      filters: [],
+      selectedColumns: '*',
+      orderBy: null,
+      limit: null,
+      offset: null
+    };
 
-  return builder;
-}
+    const builder = {
+      // SELECT operation
+      select: jest.fn((columns = '*') => {
+        queryState.selectedColumns = columns;
+        return builder;
+      }),
 
-/**
- * Creates a complete Supabase client mock with pre-configured tables
- *
- * @param {Object} tableDefaults - Table-specific default data
- * @param {Object} rpcDefaults - RPC function default returns
- * @returns {Object} Complete Supabase client mock
- *
- * @example
- * const mockSupabase = createSupabaseMock({
- *   user_subscriptions: { plan: 'pro', status: 'active' },
- *   roast_usage: { count: 15 },
- *   comments: [{ id: '1', text: 'test' }, { id: '2', text: 'test2' }]
- * }, {
- *   get_subscription_tier: { data: 'PRO', error: null },
- *   consume_roast_credits: { data: { success: true, remaining: 45 }, error: null }
- * });
- */
-function createSupabaseMock(tableDefaults = {}, rpcDefaults = {}) {
-  const mock = {
-    from: jest.fn((tableName) => {
-      // Return table-specific mock if defined
-      if (tableDefaults[tableName] !== undefined) {
-        const data = tableDefaults[tableName];
-        const single = !Array.isArray(data);
-        return createTableMock({ defaultData: data, single });
-      }
+      // FILTER operations
+      eq: jest.fn((column, value) => {
+        queryState.filters.push({ type: 'eq', column, value });
+        return builder;
+      }),
 
-      // Return empty mock for unknown tables
-      return createTableMock({ defaultData: null });
-    }),
+      neq: jest.fn((column, value) => {
+        queryState.filters.push({ type: 'neq', column, value });
+        return builder;
+      }),
 
-    rpc: jest.fn((functionName, params) => {
-      // Return RPC-specific mock if defined
-      if (rpcDefaults[functionName] !== undefined) {
-        return Promise.resolve(rpcDefaults[functionName]);
-      }
+      gt: jest.fn((column, value) => {
+        queryState.filters.push({ type: 'gt', column, value });
+        return builder;
+      }),
 
-      // Default: RPC not mocked
-      return Promise.resolve({
-        data: null,
-        error: { message: `RPC function '${functionName}' not mocked` }
-      });
-    }),
+      gte: jest.fn((column, value) => {
+        queryState.filters.push({ type: 'gte', column, value });
+        return builder;
+      }),
 
-    // Utility method to reset all mocks
-    _reset: function () {
-      this.from.mockClear();
-      this.rpc.mockClear();
-    },
+      lt: jest.fn((column, value) => {
+        queryState.filters.push({ type: 'lt', column, value });
+        return builder;
+      }),
 
-    // Utility method to configure table on the fly
-    _setTableData: function (tableName, data) {
-      const single = !Array.isArray(data);
-      const existingFromMock = this.from;
+      lte: jest.fn((column, value) => {
+        queryState.filters.push({ type: 'lte', column, value });
+        return builder;
+      }),
 
-      this.from = jest.fn((name) => {
-        if (name === tableName) {
-          return createTableMock({ defaultData: data, single });
+      like: jest.fn((column, pattern) => {
+        queryState.filters.push({ type: 'like', column, pattern });
+        return builder;
+      }),
+
+      ilike: jest.fn((column, pattern) => {
+        queryState.filters.push({ type: 'ilike', column, pattern });
+        return builder;
+      }),
+
+      is: jest.fn((column, value) => {
+        queryState.filters.push({ type: 'is', column, value });
+        return builder;
+      }),
+
+      in: jest.fn((column, values) => {
+        queryState.filters.push({ type: 'in', column, values });
+        return builder;
+      }),
+
+      not: jest.fn((column, operator, value) => {
+        queryState.filters.push({ type: 'not', column, operator, value });
+        return builder;
+      }),
+
+      // ORDERING & PAGINATION
+      order: jest.fn((column, options = {}) => {
+        queryState.orderBy = { column, ...options };
+        return builder;
+      }),
+
+      limit: jest.fn((count) => {
+        queryState.limit = count;
+        return builder;
+      }),
+
+      range: jest.fn((from, to) => {
+        queryState.offset = from;
+        queryState.limit = to - from + 1;
+        return builder;
+      }),
+
+      // TERMINAL operations
+      single: jest.fn(() => {
+        const data = storage.tables[tableName];
+        
+        if (!data) {
+          return Promise.resolve({ data: null, error: { message: 'Table not found' } });
         }
-        return existingFromMock(name);
-      });
+
+        // Apply filters
+        let result = Array.isArray(data) ? data[0] : data;
+        
+        return Promise.resolve({ 
+          data: result || null, 
+          error: result ? null : { message: 'No rows found' }
+        });
+      }),
+
+      maybeSingle: jest.fn(() => {
+        const data = storage.tables[tableName];
+        const result = Array.isArray(data) ? data[0] : data;
+        return Promise.resolve({ data: result || null, error: null });
+      }),
+
+      // INSERT operation
+      insert: jest.fn((insertData) => {
+        // Store inserted data
+        if (!storage.insertedData[tableName]) {
+          storage.insertedData[tableName] = [];
+        }
+        storage.insertedData[tableName].push(insertData);
+
+        return {
+          select: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({ 
+              data: { id: 'mock-id', ...insertData }, 
+              error: null 
+            })),
+            then: (resolve) => resolve({ 
+              data: [{ id: 'mock-id', ...insertData }], 
+              error: null 
+            })
+          })),
+          then: (resolve) => resolve({ 
+            data: { id: 'mock-id', ...insertData }, 
+            error: null 
+          })
+        };
+      }),
+
+      // UPDATE operation
+      update: jest.fn((updateData) => {
+        // Store updated data
+        if (!storage.updatedData[tableName]) {
+          storage.updatedData[tableName] = [];
+        }
+        storage.updatedData[tableName].push(updateData);
+
+        return {
+          eq: jest.fn(() => ({
+            select: jest.fn(() => ({
+              single: jest.fn(() => Promise.resolve({ 
+                data: { ...updateData }, 
+                error: null 
+              }))
+            })),
+            then: (resolve) => resolve({ data: { ...updateData }, error: null })
+          })),
+          select: jest.fn(() => ({
+            single: jest.fn(() => Promise.resolve({ 
+              data: { ...updateData }, 
+              error: null 
+            }))
+          }))
+        };
+      }),
+
+      // DELETE operation
+      delete: jest.fn(() => ({
+        eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        then: (resolve) => resolve({ data: null, error: null })
+      })),
+
+      // Promise compatibility
+      then: jest.fn((resolve) => {
+        const data = storage.tables[tableName];
+        const result = Array.isArray(data) ? data : [data];
+        resolve({ data: result, error: null });
+      })
+    };
+
+    return builder;
+  };
+
+  /**
+   * Main Supabase mock client
+   */
+  const mockClient = {
+    // Table operations
+    from: jest.fn((tableName) => createQueryBuilder(tableName)),
+
+    // RPC operations
+    rpc: jest.fn((functionName, params) => {
+      const response = storage.rpc[functionName];
+      
+      if (response !== undefined) {
+        // Return configured response
+        if (typeof response === 'function') {
+          return Promise.resolve(response(params));
+        }
+        return Promise.resolve(response);
+      }
+
+      // Default response
+      return Promise.resolve({ data: null, error: null });
+    }),
+
+    // Auth operations
+    auth: {
+      signInWithPassword: jest.fn(() => Promise.resolve({
+        data: { user: { id: 'mock-user-id', email: 'test@example.com' } },
+        error: null
+      })),
+      signUp: jest.fn(() => Promise.resolve({
+        data: { user: { id: 'mock-user-id', email: 'test@example.com' } },
+        error: null
+      })),
+      signOut: jest.fn(() => Promise.resolve({ error: null })),
+      getUser: jest.fn(() => Promise.resolve({
+        data: { user: { id: 'mock-user-id', email: 'test@example.com' } },
+        error: null
+      })),
+      updateUser: jest.fn(() => Promise.resolve({
+        data: { user: { id: 'mock-user-id' } },
+        error: null
+      }))
+    },
+
+    // Storage operations
+    storage: {
+      from: jest.fn(() => ({
+        upload: jest.fn(() => Promise.resolve({ data: { path: 'mock-path' }, error: null })),
+        download: jest.fn(() => Promise.resolve({ data: new Blob(), error: null })),
+        remove: jest.fn(() => Promise.resolve({ data: null, error: null }))
+      }))
+    },
+
+    // Helper methods for test control
+    _reset: () => {
+      storage.tables = { ...tableData };
+      storage.rpc = { ...rpcResponses };
+      storage.insertedData = {};
+      storage.updatedData = {};
+      jest.clearAllMocks();
+    },
+
+    _setTableData: (tableName, data) => {
+      storage.tables[tableName] = data;
+    },
+
+    _setRpcResponse: (functionName, response) => {
+      storage.rpc[functionName] = response;
+    },
+
+    _getInsertedData: (tableName) => {
+      return storage.insertedData[tableName] || [];
+    },
+
+    _getUpdatedData: (tableName) => {
+      return storage.updatedData[tableName] || [];
     }
   };
 
-  return mock;
+  return mockClient;
 }
 
 /**
- * Creates a Supabase mock with pre-configured standard tables
- *
- * Standard tables include:
- * - user_subscriptions
- * - roast_usage
- * - analysis_usage
- * - comments
- * - posts
- * - integrations
- * - shield_actions
- * - toxicity_analysis
- * - usage_logs
- * - referral_codes
- * - referral_conversions
- * - user_behaviors (Shield feature)
- *
- * @param {Object} overrides - Custom data for specific tables
- * @returns {Object} Supabase mock with standard defaults
- *
- * @example
- * const mockSupabase = createStandardSupabaseMock({
- *   user_subscriptions: { plan: 'pro', status: 'active' },
- *   roast_usage: { count: 25 }
- * });
+ * Create mock with common defaults for typical test scenarios
  */
-function createStandardSupabaseMock(overrides = {}) {
-  const defaults = {
-    user_subscriptions: { plan: 'free', status: 'active' },
-    roast_usage: { count: 0 },
-    analysis_usage: { count: 0 },
-    comments: [],
-    posts: [],
-    integrations: [],
-    shield_actions: [],
-    toxicity_analysis: [],
-    usage_logs: [],
-    referral_codes: [],
-    referral_conversions: [],
-    user_behaviors: [], // Shield feature table
-    ...overrides
-  };
-
-  const rpcDefaults = {
-    get_subscription_tier: { data: 'FREE', error: null },
-    consume_roast_credits: {
-      data: {
-        success: true,
-        hasCredits: true,
-        remaining: 50,
-        limit: 50,
-        used: 0,
-        unlimited: false
-      },
-      error: null
+function createDefaultSupabaseMock() {
+  return createSupabaseMock(
+    {
+      // Common tables with default data
+      organizations: [{ 
+        id: 'org-123', 
+        name: 'Test Org', 
+        plan: 'pro',
+        status: 'active'
+      }],
+      user_subscriptions: [{ 
+        id: 'sub-123',
+        organization_id: 'org-123',
+        plan: 'pro', 
+        status: 'active' 
+      }],
+      integration_configs: [{
+        id: 'config-123',
+        organization_id: 'org-123',
+        platform: 'twitter',
+        enabled: true,
+        config: { monitored_videos: [] }
+      }]
     },
-    consume_analysis_credits: {
-      data: {
-        success: true,
-        hasCredits: true,
-        remaining: 1000,
-        limit: 1000,
-        used: 0,
-        unlimited: false
-      },
-      error: null
+    {
+      // Common RPC functions
+      get_subscription_tier: { data: 'PRO', error: null },
+      can_perform_operation: { data: { allowed: true }, error: null }
     }
-  };
-
-  return createSupabaseMock(defaults, rpcDefaults);
+  );
 }
 
 module.exports = {
-  createTableMock,
   createSupabaseMock,
-  createStandardSupabaseMock
+  createDefaultSupabaseMock
 };
