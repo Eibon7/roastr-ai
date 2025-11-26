@@ -15,7 +15,7 @@
  */
 
 const request = require('supertest');
-const app = require('../../src/index');
+const { app } = require('../../src/index');
 const { supabaseServiceClient } = require('../../src/config/supabase');
 const { generateTestToken } = require('../helpers/authHelper');
 
@@ -128,10 +128,10 @@ describe('Toggle Endpoints Integration Tests (Issue #944)', () => {
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.error).toBe('Validation failed');
-        expect(response.body.validation_errors).toBeDefined();
-        expect(response.body.validation_errors[0].field).toBe('enabled');
-        expect(response.body.validation_errors[0].message).toContain('boolean');
+        expect(response.body.code).toBe('VALIDATION_ERROR');
+        expect(response.body.errors).toBeDefined();
+        expect(response.body.errors[0].field).toBe('enabled');
+        expect(response.body.errors[0].message).toContain('boolean');
       });
 
       it('should reject missing enabled field', async () => {
@@ -144,8 +144,9 @@ describe('Toggle Endpoints Integration Tests (Issue #944)', () => {
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.validation_errors).toBeDefined();
-        expect(response.body.validation_errors[0].message).toContain('required');
+        expect(response.body.code).toBe('VALIDATION_ERROR');
+        expect(response.body.errors).toBeDefined();
+        expect(response.body.errors[0].message).toContain('required');
       });
 
       it('should reject empty reason string', async () => {
@@ -159,8 +160,9 @@ describe('Toggle Endpoints Integration Tests (Issue #944)', () => {
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.validation_errors[0].field).toBe('reason');
-        expect(response.body.validation_errors[0].message).toContain('empty');
+        expect(response.body.code).toBe('VALIDATION_ERROR');
+        expect(response.body.errors[0].field).toBe('reason');
+        expect(response.body.errors[0].message).toContain('empty');
       });
 
       it('should reject reason exceeding 500 characters', async () => {
@@ -174,7 +176,8 @@ describe('Toggle Endpoints Integration Tests (Issue #944)', () => {
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.validation_errors[0].message).toContain('500');
+        expect(response.body.code).toBe('VALIDATION_ERROR');
+        expect(response.body.errors[0].message).toContain('500');
       });
     });
 
@@ -255,9 +258,10 @@ describe('Toggle Endpoints Integration Tests (Issue #944)', () => {
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.validation_errors).toBeDefined();
-        expect(response.body.validation_errors[0].field).toBe('enabled');
-        expect(response.body.validation_errors[0].code).toBe('invalid_type');
+        expect(response.body.code).toBe('VALIDATION_ERROR');
+        expect(response.body.errors).toBeDefined();
+        expect(response.body.errors[0].field).toBe('enabled');
+        expect(response.body.errors[0].code).toBe('INVALID_TYPE');
       });
 
       it('should reject string "false" instead of boolean', async () => {
@@ -269,7 +273,8 @@ describe('Toggle Endpoints Integration Tests (Issue #944)', () => {
           });
 
         expect(response.status).toBe(400);
-        expect(response.body.validation_errors[0].message).toContain('boolean');
+        expect(response.body.code).toBe('VALIDATION_ERROR');
+        expect(response.body.errors[0].message).toContain('boolean');
       });
     });
 
@@ -292,7 +297,8 @@ describe('Toggle Endpoints Integration Tests (Issue #944)', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.validation_errors[0].code).toBe('invalid_type');
+      expect(response.body.code).toBe('VALIDATION_ERROR');
+      expect(response.body.errors[0].code).toBe('INVALID_TYPE');
     });
 
     it('POST /api/shield/toggle should NOT coerce null to false', async () => {
@@ -304,7 +310,8 @@ describe('Toggle Endpoints Integration Tests (Issue #944)', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.validation_errors[0].message).toContain('boolean');
+      expect(response.body.code).toBe('VALIDATION_ERROR');
+      expect(response.body.errors[0].message).toContain('boolean');
     });
   });
 

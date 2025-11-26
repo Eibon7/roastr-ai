@@ -143,10 +143,15 @@ CREATE TABLE organizations (
     -- Usage limits
     monthly_responses_limit INTEGER NOT NULL DEFAULT 100,
     monthly_responses_used INTEGER DEFAULT 0,
-    
+
+    -- Shield Control (Migration 001 - Issue #362)
+    shield_enabled BOOLEAN DEFAULT FALSE NOT NULL,
+    shield_disabled_at TIMESTAMPTZ,
+    shield_disabled_reason TEXT,
+
     -- Settings
     settings JSONB DEFAULT '{}',
-    
+
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     
