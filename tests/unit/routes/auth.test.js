@@ -288,7 +288,8 @@ describe('Auth Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('caracteres');
+      // This endpoint uses manual validation (legacy), still in Spanish
+      expect(response.body.error).toMatch(/caracteres|characters/);
     });
 
     it('should handle password update service errors', async () => {
