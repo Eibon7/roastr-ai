@@ -43,10 +43,17 @@ test.describe('Admin Feature Flags', () => {
   test('should display toggle switches for flags', async ({ page }) => {
     await page.waitForSelector('table', { timeout: 5000 });
 
-    // Should see switches in the table (even if mocked)
+    // Verify table structure with "Estado" column header
+    await expect(page.getByRole('columnheader', { name: /estado/i })).toBeVisible();
+
+    // Verify table body is present (switches will be in table rows)
+    const tableBody = page.locator('table tbody');
+    await expect(tableBody).toBeVisible();
+
+    // If flags exist, switches should be present (but allow for empty state)
     const switches = page.locator('input[type="checkbox"]');
     const count = await switches.count();
-    // At least the page structure should be present
+    // Verify table structure is correct (count >= 0 is always true, but we verify structure above)
     expect(count).toBeGreaterThanOrEqual(0);
   });
 });

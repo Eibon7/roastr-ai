@@ -44,17 +44,19 @@ test.describe('Admin Users Management', () => {
     const table = page.locator('table').first();
     await expect(table).toBeVisible({ timeout: 10000 });
 
-    // Should have table headers (might be case-insensitive or in Spanish)
-    await expect(
-      page
-        .getByRole('columnheader')
-        .filter({ hasText: /email|correo/i })
-        .first()
-    )
-      .toBeVisible({ timeout: 5000 })
-      .catch(async () => {
-        // If email header not found, just verify table exists
-        await expect(table).toBeVisible();
+    // Verify table has required column headers (email column is part of the contract)
+    // Check for email/correo header - this is required for the users table
+    const emailHeader = page
+      .getByRole('columnheader')
+      .filter({ hasText: /email|correo/i })
+      .first();
+    await expect(emailHeader).toBeVisible({ timeout: 5000 });
+
+    // Verify other expected headers
+    await expect(page.getByRole('columnheader', { name: /nombre|name/i }))
+      .toBeVisible({ timeout: 2000 })
+      .catch(() => {
+        // Name header might not exist, that's acceptable
       });
   });
 
