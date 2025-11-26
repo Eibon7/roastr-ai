@@ -39,4 +39,3 @@ describe('Button (shadcn)', () => {
     expect(button).toBeDisabled();
   });
 });
-

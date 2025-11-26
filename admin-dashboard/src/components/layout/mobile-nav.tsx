@@ -2,21 +2,9 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  Shield, 
-  CheckCircle, 
-  Users,
-  Settings 
-} from 'lucide-react';
+import { LayoutDashboard, Shield, CheckCircle, Users, Settings } from 'lucide-react';
 
 interface NavItem {
   title: string;
@@ -28,33 +16,33 @@ const navItems: NavItem[] = [
   {
     title: 'Dashboard',
     href: '/dashboard',
-    icon: LayoutDashboard,
+    icon: LayoutDashboard
   },
   {
     title: 'Shield Settings',
     href: '/shield/settings',
-    icon: Shield,
+    icon: Shield
   },
   {
     title: 'Shield Validation',
     href: '/shield/validation',
-    icon: CheckCircle,
+    icon: CheckCircle
   },
   {
     title: 'Workers',
     href: '/admin/workers',
-    icon: Users,
+    icon: Users
   },
   {
     title: 'Settings',
     href: '/settings',
-    icon: Settings,
-  },
+    icon: Settings
+  }
 ];
 
 /**
  * MobileNav - Navegación móvil con Sheet/Drawer
- * 
+ *
  * Se muestra solo en mobile/tablet (<md breakpoint)
  * Usa Sheet de shadcn para el drawer lateral
  */
@@ -101,4 +89,3 @@ export function MobileNav() {
     </Sheet>
   );
 }
-

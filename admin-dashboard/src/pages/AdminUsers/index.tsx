@@ -7,7 +7,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import {
   Dialog,
@@ -15,7 +15,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Search, UserPlus, Pencil, Trash2, LogIn } from 'lucide-react';
@@ -27,35 +27,35 @@ const mockUsers = [
     name: 'John Doe',
     email: 'john@example.com',
     userId: 'user_123abc',
-    status: 'active' as const,
+    status: 'active' as const
   },
   {
     id: '2',
     name: 'Jane Smith',
     email: 'jane@example.com',
     userId: 'user_456def',
-    status: 'inactive' as const,
+    status: 'inactive' as const
   },
   {
     id: '3',
     name: 'Bob Johnson',
     email: 'bob@example.com',
     userId: 'user_789ghi',
-    status: 'active' as const,
-  },
+    status: 'active' as const
+  }
 ];
 
-type User = typeof mockUsers[number];
+type User = (typeof mockUsers)[number];
 
 /**
  * AdminUsers - Página de gestión de usuarios (/admin/users)
- * 
+ *
  * Features:
  * - Tabla con columnas: Nombre, Email, User ID, Estado
  * - Búsqueda por nombre/email
  * - Acciones: Añadir, Editar, Borrar, Entrar como usuario
  * - NO muestra datos sensibles (persona/sponsors)
- * 
+ *
  * Issue #1038
  */
 export default function AdminUsers() {
@@ -96,9 +96,7 @@ export default function AdminUsers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Users</h1>
-          <p className="text-muted-foreground">
-            Manage user accounts and permissions
-          </p>
+          <p className="text-muted-foreground">Manage user accounts and permissions</p>
         </div>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
@@ -150,11 +148,7 @@ export default function AdminUsers() {
                   <TableCell>
                     <Badge
                       variant={user.status === 'active' ? 'default' : 'secondary'}
-                      className={
-                        user.status === 'active'
-                          ? 'bg-green-500 hover:bg-green-600'
-                          : ''
-                      }
+                      className={user.status === 'active' ? 'bg-green-500 hover:bg-green-600' : ''}
                     >
                       {user.status}
                     </Badge>
@@ -169,11 +163,7 @@ export default function AdminUsers() {
                       >
                         <LogIn className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Edit user"
-                      >
+                      <Button variant="ghost" size="icon" title="Edit user">
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
@@ -199,15 +189,11 @@ export default function AdminUsers() {
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {selectedUser?.name}? This action
-              cannot be undone.
+              Are you sure you want to delete {selectedUser?.name}? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
@@ -219,4 +205,3 @@ export default function AdminUsers() {
     </div>
   );
 }
-

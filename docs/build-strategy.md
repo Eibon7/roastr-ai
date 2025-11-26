@@ -27,9 +27,9 @@ Esto causa ~400 errores de TypeScript que bloquean el build con `tsc --noEmit`.
 ```json
 {
   "scripts": {
-    "build": "vite build",              // ← Sin typecheck (temporal)
-    "build:check": "tsc --noEmit && vite build",  // ← Con typecheck (futuro)
-    "typecheck": "tsc --noEmit"         // ← Typecheck separado
+    "build": "vite build", // ← Sin typecheck (temporal)
+    "build:check": "tsc --noEmit && vite build", // ← Con typecheck (futuro)
+    "typecheck": "tsc --noEmit" // ← Typecheck separado
   }
 }
 ```
@@ -98,10 +98,11 @@ Esto causa ~400 errores de TypeScript que bloquean el build con `tsc --noEmit`.
 6. `gddApi.ts` → Eliminar referencia a theme
 
 **Una vez completado:**
+
 ```json
 {
   "scripts": {
-    "build": "tsc --noEmit && vite build"  // ← Restaurar typecheck
+    "build": "tsc --noEmit && vite build" // ← Restaurar typecheck
   }
 }
 ```
@@ -111,10 +112,12 @@ Esto causa ~400 errores de TypeScript que bloquean el build con `tsc --noEmit`.
 Extender `theme/mui-compat.ts` para soportar TODOS los accesos de los 6 archivos.
 
 **Pros:**
+
 - Build pasa con typecheck
 - Migración progresiva más lenta
 
 **Cons:**
+
 - Mantiene deuda técnica más tiempo
 - Shim complejo de mantener
 - No es la solución final
@@ -123,24 +126,26 @@ Extender `theme/mui-compat.ts` para soportar TODOS los accesos de los 6 archivos
 
 ## 📊 Status Actual
 
-| Script | Funciona | TypeScript | Uso |
-|--------|----------|------------|-----|
-| `npm run build` | ✅ SÍ | ❌ NO | **Producción temporal** |
-| `npm run build:check` | ❌ NO | ✅ SÍ | CI/CD futuro |
-| `npm run typecheck` | ❌ NO | ✅ SÍ | Development checks |
-| `npm run dev` | ✅ SÍ | ⚠️  Warnings | Development |
-| `npm test` | ✅ SÍ | ✅ SÍ | CI/CD |
+| Script                | Funciona | TypeScript  | Uso                     |
+| --------------------- | -------- | ----------- | ----------------------- |
+| `npm run build`       | ✅ SÍ    | ❌ NO       | **Producción temporal** |
+| `npm run build:check` | ❌ NO    | ✅ SÍ       | CI/CD futuro            |
+| `npm run typecheck`   | ❌ NO    | ✅ SÍ       | Development checks      |
+| `npm run dev`         | ✅ SÍ    | ⚠️ Warnings | Development             |
+| `npm test`            | ✅ SÍ    | ✅ SÍ       | CI/CD                   |
 
 ---
 
 ## 🎯 Recomendación
 
 **Para Fase 1 (ahora):**
+
 - ✅ Usar `npm run build` (sin typecheck) en CI/CD
 - ✅ Ejecutar `npm run typecheck` en modo advisory (no bloqueante)
 - ✅ Documentar claramente en PR
 
 **Para Fase 2 (siguiente):**
+
 - ✅ Migrar 6 archivos restantes
 - ✅ Restaurar `tsc --noEmit` en build
 - ✅ Eliminar `build` temporal
@@ -151,6 +156,7 @@ Extender `theme/mui-compat.ts` para soportar TODOS los accesos de los 6 archivos
 ## 📝 Tracking
 
 **Issue para Fase 2:**
+
 - [ ] Crear issue "Migrar componentes dashboard restantes"
 - [ ] Incluir lista de 6 archivos
 - [ ] Documentar que desbloquea typecheck en build
@@ -161,6 +167,7 @@ Extender `theme/mui-compat.ts` para soportar TODOS los accesos de los 6 archivos
 ## ✅ Conclusión
 
 Esta es una solución **temporal y pragmática** que permite:
+
 - ✅ Merge de Epic #1032 (Fase 1 completa)
 - ✅ Deploy de funcionalidad nueva (layouts, /admin/users)
 - ✅ CI/CD passing
@@ -174,4 +181,3 @@ Esta es una solución **temporal y pragmática** que permite:
 
 **Actualizado:** 2025-11-26  
 **Revisión requerida:** Post-Fase 2
-

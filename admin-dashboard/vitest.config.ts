@@ -8,13 +8,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './tests/setup.ts',
-    exclude: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/e2e/**',
-      '**/*.spec.ts',
-      '**/*.e2e.ts',
-    ],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**', '**/*.spec.ts', '**/*.e2e.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -23,9 +17,9 @@ export default defineConfig({
         'src/**/*.test.{ts,tsx}',
         'src/**/*.spec.{ts,tsx}',
         'src/main.tsx',
-        'src/vite-env.d.ts',
-      ],
-    },
+        'src/vite-env.d.ts'
+      ]
+    }
   },
   resolve: {
     alias: {
@@ -36,8 +30,7 @@ export default defineConfig({
       '@services': path.resolve(__dirname, './src/services'),
       '@theme': path.resolve(__dirname, './src/theme'),
       '@types': path.resolve(__dirname, './src/types'),
-      '@utils': path.resolve(__dirname, './src/utils'),
-    },
-  },
+      '@utils': path.resolve(__dirname, './src/utils')
+    }
+  }
 });
-
