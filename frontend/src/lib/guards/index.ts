@@ -5,5 +5,5 @@
  * Issue #1063: Route guards reorganization
  */
 
-export { AuthGuard, default as authGuard } from './auth-guard';
-export { AdminGuard, default as adminGuard } from './admin-guard';
+export { AuthGuard } from './auth-guard';
+export { AdminGuard } from './admin-guard';
