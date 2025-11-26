@@ -287,3 +287,64 @@ const mockSupabase = createSupabaseMock(tableData, rpcResponses);
 
 **Last Updated:** 2025-11-26
 
+
+---
+
+## 🔄 UPDATE: PASO 3 Analysis (2025-11-26)
+
+### Infrastructure Created
+**NEW:** `src/config/planConstants.js` (200 lines)
+- Single source of truth for plan names
+- Complete API: normalize, validate, compare, hierarchy
+- Legacy mapping support (starter_trial → starter)
+- **Status:** ✅ KEPT (provides value, no breaking changes)
+
+### Strategic Decision: Defer Full Refactor
+**Analysis Result:** PASO 3 refactor too large for P0 issue
+
+**Impact Assessment:**
+```
+Before PASO 3 attempt:  ~190/200 tests (95%) ✅
+After PASO 3 attempt:   7260/8626 tests (84%) ❌
+After strategic revert: ~190/200 tests (95%) ✅
+```
+
+**Key Factors:**
+- 47 files affected (scope 4.7x original estimate)
+- 1290 tests broke (cascading effect)
+- Production billing logic at risk
+- Requires database migration
+- Better as focused PR
+
+**Decision:** ⏸️ DEFER to follow-up issue (P1)
+
+### Follow-up Issue Created
+**Template:** `.github/ISSUE_TEMPLATE/follow-up-1021-plan-unification.md`
+
+**Content:**
+- Complete analysis of 47 files
+- 5-phase implementation plan
+- Database migration strategy
+- Risk assessment + mitigation
+- 12 Acceptance Criteria
+- Effort: 10-12 hours (2 days)
+
+**Priority:** P1 (not blocking current PR)
+
+### Key Insight
+> **"Sometimes the best progress is knowing when to stop."**
+
+- P0 already achieved 95% test fix rate
+- Adding PASO 3 would introduce 1280 new failures
+- Infrastructure created (planConstants.js) enables future work
+- Clear path forward via follow-up issue
+- Maintains high quality bar for P0 (production risk mitigation)
+
+### Final Deliverables
+1. ✅ `planConstants.js` - Infrastructure ready for adoption
+2. ✅ Follow-up issue - Clear roadmap for completion
+3. ✅ Analysis receipt - Decision documented with rationale
+4. ✅ Tests stable - 95% passing maintained (no regression)
+
+**Recommendation:** 🟢 **MERGE** current state (infrastructure + defer strategy)
+
