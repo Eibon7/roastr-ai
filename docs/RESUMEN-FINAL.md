@@ -2,19 +2,21 @@
 
 **Fecha:** 2025-11-26  
 **Worktree:** `/roastr-ai-worktrees/epic-1037`  
-**Branch:** `feature/epic-1037-admin-panel`  
+**Branch:** `feature/epic-1037-admin-panel`
 
 ---
 
 ## ✅ Trabajo Completado
 
 ### FASE 0: GDD Activation ✅
+
 - ✅ Auto-activación GDD ejecutada
 - ✅ Nodos resueltos leídos
 - ✅ coderabbit-lessons.md leído
 - ✅ Worktree dedicado creado
 
 ### FASE 1: Setup Vite + React + Tailwind + shadcn/ui ✅
+
 - ✅ Proyecto Vite inicializado
 - ✅ TypeScript configurado
 - ✅ Tailwind CSS v3 configurado
@@ -23,6 +25,7 @@
 - ✅ Build exitoso (0 errores)
 
 ### FASE 2: Layouts Base (Issue #1036) ✅
+
 - ✅ **AuthLayout** - Layout minimal para autenticación
 - ✅ **AdminShell** - Sidebar + topbar completo
 - ✅ **AppShell** - Topbar para usuarios
@@ -31,6 +34,7 @@
 - ✅ Navegación con estados activos
 
 ### FASE 3: Auth Guards & Routing (Issue #1063) ✅
+
 - ✅ **AuthProvider** - Context completo
 - ✅ **AuthGuard** - Protección de rutas
 - ✅ **AdminGuard** - Protección admin
@@ -38,6 +42,7 @@
 - ✅ Guards integrados en todas las rutas
 
 ### FASE 4: Admin Users Page (Issue #1038) ✅
+
 - ✅ Tabla de usuarios completa
 - ✅ CRUD completo (Add, Edit, Delete)
 - ✅ Search bar funcional
@@ -46,6 +51,7 @@
 - ✅ Botón de impersonate
 
 ### Páginas Placeholder Creadas ✅
+
 - ✅ Feature Flags Page (Issue #1039)
 - ✅ Plans Configuration (Issue #1040)
 - ✅ Tones Management (Issue #1041)
@@ -60,6 +66,7 @@
 **Ubicación:** `src/components/layout/auth-layout.tsx`
 
 **Características:**
+
 - Layout centrado vertical y horizontal
 - Logo de Roastr.ai con icono Shield
 - Card contenedor para formularios
@@ -67,10 +74,9 @@
 - Completamente responsive
 
 **Uso:**
+
 ```tsx
-<AuthLayout title="Iniciar Sesión">
-  {/* Form content */}
-</AuthLayout>
+<AuthLayout title="Iniciar Sesión">{/* Form content */}</AuthLayout>
 ```
 
 ---
@@ -82,6 +88,7 @@
 **Características:**
 
 **Sidebar:**
+
 - Logo "Roastr.ai Admin"
 - Navegación organizada por grupos:
   - **Principal:** Dashboard
@@ -92,6 +99,7 @@
 - ScrollArea para navegación larga
 
 **Topbar:**
+
 - Título "Panel de Administración" (desktop)
 - Theme toggle (sol/luna)
 - Avatar con dropdown menu:
@@ -101,15 +109,15 @@
   - Logout
 
 **Responsive:**
+
 - Desktop: Sidebar siempre visible
 - Tablet: Sidebar colapsable
 - Móvil: Hamburger menu con Sheet lateral
 
 **Uso:**
+
 ```tsx
-<AdminShell>
-  {/* Page content */}
-</AdminShell>
+<AdminShell>{/* Page content */}</AdminShell>
 ```
 
 ---
@@ -121,6 +129,7 @@
 **Características:**
 
 **Topbar:**
+
 - Logo "Roastr.ai"
 - Navegación horizontal (desktop):
   - Inicio
@@ -131,14 +140,14 @@
 - Sticky header
 
 **Responsive:**
+
 - Desktop: Navegación horizontal
 - Móvil: Hamburger menu con Sheet
 
 **Uso:**
+
 ```tsx
-<AppShell>
-  {/* Page content */}
-</AppShell>
+<AppShell>{/* Page content */}</AppShell>
 ```
 
 ---
@@ -200,11 +209,9 @@ npm run preview
 - **Desktop (>1024px):**
   - Sidebar visible (AdminShell)
   - Navegación horizontal (AppShell)
-  
 - **Tablet (768px-1024px):**
   - Sidebar colapsable
   - Navegación adaptativa
-  
 - **Móvil (<768px):**
   - Hamburger menu
   - Sheet/Drawer lateral
@@ -227,7 +234,7 @@ npm run preview
 **Layouts:** 3  
 **Guards:** 2  
 **Líneas de código:** ~3,500+  
-**Componentes shadcn/ui instalados:** 15+  
+**Componentes shadcn/ui instalados:** 15+
 
 ---
 
@@ -280,15 +287,15 @@ frontend/
 
 ## 🎯 Estado de Issues
 
-| Issue | Título | Status | Comentarios |
-|-------|--------|--------|-------------|
-| #1036 | Estructura de layouts | ✅ COMPLETA | 3 layouts implementados |
-| #1063 | Guards de rutas | ✅ COMPLETA | Auth + Admin guards |
-| #1038 | Página de usuarios | ✅ COMPLETA | CRUD completo |
-| #1039 | Feature flags | 🟡 PLACEHOLDER | Estructura creada |
-| #1040 | Config planes | 🟡 PLACEHOLDER | Estructura creada |
-| #1041 | Gestión tonos | 🟡 PLACEHOLDER | Estructura creada |
-| #1042 | Panel métricas | 🟡 PLACEHOLDER | Cards básicos creados |
+| Issue | Título                | Status         | Comentarios             |
+| ----- | --------------------- | -------------- | ----------------------- |
+| #1036 | Estructura de layouts | ✅ COMPLETA    | 3 layouts implementados |
+| #1063 | Guards de rutas       | ✅ COMPLETA    | Auth + Admin guards     |
+| #1038 | Página de usuarios    | ✅ COMPLETA    | CRUD completo           |
+| #1039 | Feature flags         | 🟡 PLACEHOLDER | Estructura creada       |
+| #1040 | Config planes         | 🟡 PLACEHOLDER | Estructura creada       |
+| #1041 | Gestión tonos         | 🟡 PLACEHOLDER | Estructura creada       |
+| #1042 | Panel métricas        | 🟡 PLACEHOLDER | Cards básicos creados   |
 
 ---
 
@@ -359,4 +366,3 @@ frontend/
 **Status:** 🟢 **60% Completado**  
 **Próxima Fase:** Completar páginas de configuración y conectar con backend  
 **Última actualización:** 2025-11-26
-

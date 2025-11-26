@@ -43,19 +43,20 @@ export default function PlansPage() {
     try {
       // Get plan limits from database
       const limitsResponse = await adminApi.getPlanLimits();
-      
+
       if (limitsResponse.success && limitsResponse.data) {
         const plansData = limitsResponse.data.plans || [];
-        
+
         // Transform to our format
         const plansDict: Record<string, PlanLimits> = {};
-        
+
         plansData.forEach((plan: any) => {
           plansDict[plan.plan_id] = {
             plan_id: plan.plan_id,
             plan_name: plan.plan_name || plan.plan_id,
             max_roasts: plan.maxRoasts || plan.max_roasts || 0,
-            monthly_responses_limit: plan.monthlyResponsesLimit || plan.monthly_responses_limit || 0,
+            monthly_responses_limit:
+              plan.monthlyResponsesLimit || plan.monthly_responses_limit || 0,
             monthly_analysis_limit: plan.monthlyAnalysisLimit || plan.monthly_analysis_limit || 0,
             max_platforms: plan.maxPlatforms || plan.max_platforms || 0,
             shield_enabled: plan.shieldEnabled ?? plan.shield_enabled ?? false,
@@ -66,10 +67,10 @@ export default function PlansPage() {
             custom_tones: plan.customTones ?? plan.custom_tones ?? false,
             dedicated_support: plan.dedicatedSupport ?? plan.dedicated_support ?? false,
             monthly_tokens_limit: plan.monthlyTokensLimit || plan.monthly_tokens_limit || 0,
-            daily_api_calls_limit: plan.dailyApiCallsLimit || plan.daily_api_calls_limit || 0,
+            daily_api_calls_limit: plan.dailyApiCallsLimit || plan.daily_api_calls_limit || 0
           };
         });
-        
+
         setPlans(plansDict);
       }
     } catch (error: any) {
@@ -85,19 +86,19 @@ export default function PlansPage() {
       ...prev,
       [planId]: {
         ...prev[planId],
-        [field]: value,
-      },
+        [field]: value
+      }
     }));
     setHasChanges((prev) => ({ ...prev, [planId]: true }));
   };
 
   const handleSave = async (planId: string) => {
     if (!plans[planId]) return;
-    
+
     setSaving((prev) => ({ ...prev, [planId]: true }));
     try {
       const plan = plans[planId];
-      
+
       // Map to backend format
       const updates: any = {
         maxRoasts: plan.max_roasts,
@@ -112,11 +113,11 @@ export default function PlansPage() {
         customTones: plan.custom_tones,
         dedicatedSupport: plan.dedicated_support,
         monthlyTokensLimit: plan.monthly_tokens_limit,
-        dailyApiCallsLimit: plan.daily_api_calls_limit,
+        dailyApiCallsLimit: plan.daily_api_calls_limit
       };
-      
+
       await adminApi.updatePlanLimits(planId, updates);
-      
+
       setHasChanges((prev) => ({ ...prev, [planId]: false }));
       // Reload plans to get fresh data
       await loadPlans();
@@ -140,9 +141,7 @@ export default function PlansPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Configuración de Planes</h1>
-        <p className="text-muted-foreground">
-          Gestiona los planes de suscripción y sus límites
-        </p>
+        <p className="text-muted-foreground">Gestiona los planes de suscripción y sus límites</p>
       </div>
 
       <div className="space-y-6">
@@ -194,9 +193,7 @@ export default function PlansPage() {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor={`${planId}-responses`}>
-                          Límite Respuestas Mensuales
-                        </Label>
+                        <Label htmlFor={`${planId}-responses`}>Límite Respuestas Mensuales</Label>
                         <Input
                           id={`${planId}-responses`}
                           type="number"
@@ -211,9 +208,7 @@ export default function PlansPage() {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor={`${planId}-analysis`}>
-                          Límite Análisis Mensuales
-                        </Label>
+                        <Label htmlFor={`${planId}-analysis`}>Límite Análisis Mensuales</Label>
                         <Input
                           id={`${planId}-analysis`}
                           type="number"
@@ -245,18 +240,12 @@ export default function PlansPage() {
                           type="number"
                           value={plan.monthly_tokens_limit}
                           onChange={(e) =>
-                            updatePlan(
-                              planId,
-                              'monthly_tokens_limit',
-                              parseInt(e.target.value, 10)
-                            )
+                            updatePlan(planId, 'monthly_tokens_limit', parseInt(e.target.value, 10))
                           }
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor={`${planId}-api-calls`}>
-                          Límite Llamadas API Diarias
-                        </Label>
+                        <Label htmlFor={`${planId}-api-calls`}>Límite Llamadas API Diarias</Label>
                         <Input
                           id={`${planId}-api-calls`}
                           type="number"
@@ -289,9 +278,7 @@ export default function PlansPage() {
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <Label htmlFor={`${planId}-custom-prompts`}>
-                          Custom Prompts
-                        </Label>
+                        <Label htmlFor={`${planId}-custom-prompts`}>Custom Prompts</Label>
                         <Switch
                           id={`${planId}-custom-prompts`}
                           checked={plan.custom_prompts}
@@ -302,9 +289,7 @@ export default function PlansPage() {
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <Label htmlFor={`${planId}-priority-support`}>
-                          Priority Support
-                        </Label>
+                        <Label htmlFor={`${planId}-priority-support`}>Priority Support</Label>
                         <Switch
                           id={`${planId}-priority-support`}
                           checked={plan.priority_support}
@@ -319,9 +304,7 @@ export default function PlansPage() {
                         <Switch
                           id={`${planId}-api-access`}
                           checked={plan.api_access}
-                          onCheckedChange={(checked) =>
-                            updatePlan(planId, 'api_access', checked)
-                          }
+                          onCheckedChange={(checked) => updatePlan(planId, 'api_access', checked)}
                         />
                       </div>
                       <Separator />
@@ -341,16 +324,12 @@ export default function PlansPage() {
                         <Switch
                           id={`${planId}-custom-tones`}
                           checked={plan.custom_tones}
-                          onCheckedChange={(checked) =>
-                            updatePlan(planId, 'custom_tones', checked)
-                          }
+                          onCheckedChange={(checked) => updatePlan(planId, 'custom_tones', checked)}
                         />
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <Label htmlFor={`${planId}-dedicated-support`}>
-                          Dedicated Support
-                        </Label>
+                        <Label htmlFor={`${planId}-dedicated-support`}>Dedicated Support</Label>
                         <Switch
                           id={`${planId}-dedicated-support`}
                           checked={plan.dedicated_support}

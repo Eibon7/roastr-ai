@@ -445,6 +445,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **FrontendDev** - Admin Panel UI (Issue #1041)
 
 **Admin Panel (Epic #1037):**
+
 - Gestión de tonos disponible en `/admin/config/tones` (FrontendDev, Issue #1041)
 
 ## Related Nodes

@@ -13,7 +13,7 @@ describe('API Client', () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true }),
-      headers: new Headers({ 'content-type': 'application/json' }),
+      headers: new Headers({ 'content-type': 'application/json' })
     });
 
     await apiClient.get('/test');
@@ -28,13 +28,13 @@ describe('API Client', () => {
     // Mock cookie
     Object.defineProperty(document, 'cookie', {
       writable: true,
-      value: 'csrf-token=test-csrf-token-123',
+      value: 'csrf-token=test-csrf-token-123'
     });
 
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true }),
-      headers: new Headers({ 'content-type': 'application/json' }),
+      headers: new Headers({ 'content-type': 'application/json' })
     });
 
     await apiClient.post('/test', { data: 'test' });
@@ -43,9 +43,9 @@ describe('API Client', () => {
       expect.any(String),
       expect.objectContaining({
         headers: expect.objectContaining({
-          'X-CSRF-Token': 'test-csrf-token-123',
+          'X-CSRF-Token': 'test-csrf-token-123'
         }),
-        credentials: 'include',
+        credentials: 'include'
       })
     );
   });
@@ -55,7 +55,7 @@ describe('API Client', () => {
       ok: false,
       status: 500,
       json: async () => ({ error: { message: 'Server error' } }),
-      headers: new Headers({ 'content-type': 'application/json' }),
+      headers: new Headers({ 'content-type': 'application/json' })
     });
 
     await expect(apiClient.get('/test')).rejects.toThrow();
@@ -74,14 +74,14 @@ describe('Admin API', () => {
       success: true,
       data: {
         users: [{ id: '1', email: 'test@example.com' }],
-        pagination: { total: 1, page: 1 },
-      },
+        pagination: { total: 1, page: 1 }
+      }
     };
 
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => mockUsers,
-      headers: new Headers({ 'content-type': 'application/json' }),
+      headers: new Headers({ 'content-type': 'application/json' })
     });
 
     const result = await adminApi.getUsers({ page: 1, limit: 10 });
@@ -95,14 +95,14 @@ describe('Admin API', () => {
       success: true,
       data: {
         flags: [{ flag_key: 'TEST_FLAG', is_enabled: true }],
-        totalCount: 1,
-      },
+        totalCount: 1
+      }
     };
 
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => mockFlags,
-      headers: new Headers({ 'content-type': 'application/json' }),
+      headers: new Headers({ 'content-type': 'application/json' })
     });
 
     const result = await adminApi.getFeatureFlags();
@@ -111,4 +111,3 @@ describe('Admin API', () => {
     expect(result.data.flags).toHaveLength(1);
   });
 });
-

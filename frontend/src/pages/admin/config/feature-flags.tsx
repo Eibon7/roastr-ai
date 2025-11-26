@@ -8,7 +8,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -20,7 +20,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -28,7 +28,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
@@ -36,7 +36,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { adminApi } from '@/lib/api';
@@ -81,7 +81,7 @@ export default function FeatureFlagsPage() {
     is_enabled: false,
     flag_type: 'boolean',
     flag_value: false,
-    category: 'general',
+    category: 'general'
   });
 
   React.useEffect(() => {
@@ -94,10 +94,10 @@ export default function FeatureFlagsPage() {
       const response = await adminApi.getFeatureFlags(
         categoryFilter !== 'all' ? categoryFilter : undefined
       );
-      
+
       if (response.success && response.data) {
         let allFlags = response.data.flags || [];
-        
+
         // Apply search filter on frontend if needed
         if (searchQuery) {
           allFlags = allFlags.filter(
@@ -107,7 +107,7 @@ export default function FeatureFlagsPage() {
               flag.description?.toLowerCase().includes(searchQuery.toLowerCase())
           );
         }
-        
+
         setFlags(allFlags);
       }
     } catch (error: any) {
@@ -123,9 +123,9 @@ export default function FeatureFlagsPage() {
       const newValue = !flag.is_enabled;
       await adminApi.updateFeatureFlag(flag.flag_key, {
         is_enabled: newValue,
-        flag_value: newValue,
+        flag_value: newValue
       });
-      
+
       // Reload flags to get fresh data
       await loadFlags();
     } catch (error: any) {
@@ -136,15 +136,15 @@ export default function FeatureFlagsPage() {
 
   const handleDelete = async () => {
     if (!selectedFlag) return;
-    
+
     try {
       // Note: Feature flags are typically not deleted, just disabled
       // Disable the flag instead
       await adminApi.updateFeatureFlag(selectedFlag.flag_key, {
         is_enabled: false,
-        flag_value: false,
+        flag_value: false
       });
-      
+
       // Reload flags to get fresh data
       await loadFlags();
       setDeleteDialogOpen(false);
@@ -164,7 +164,7 @@ export default function FeatureFlagsPage() {
       is_enabled: flag.is_enabled,
       flag_type: flag.flag_type,
       flag_value: flag.flag_value,
-      category: flag.category,
+      category: flag.category
     });
     setEditDialogOpen(true);
   };
@@ -176,9 +176,9 @@ export default function FeatureFlagsPage() {
       await adminApi.updateFeatureFlag(selectedFlag.flag_key, {
         is_enabled: formData.is_enabled,
         flag_value: formData.flag_value,
-        description: formData.description,
+        description: formData.description
       });
-      
+
       // Reload flags to get fresh data
       await loadFlags();
       setEditDialogOpen(false);
@@ -190,7 +190,7 @@ export default function FeatureFlagsPage() {
         is_enabled: false,
         flag_type: 'boolean',
         flag_value: false,
-        category: 'general',
+        category: 'general'
       });
     } catch (error: any) {
       console.error('Failed to update flag:', error);
@@ -207,7 +207,7 @@ export default function FeatureFlagsPage() {
       is_enabled: false,
       flag_type: 'boolean',
       flag_value: false,
-      category: 'general',
+      category: 'general'
     });
     setAddDialogOpen(true);
   };
@@ -217,7 +217,9 @@ export default function FeatureFlagsPage() {
       // Note: Creating feature flags typically requires database migration
       // This is a placeholder for future implementation
       console.log('Create feature flag:', formData);
-      alert('Feature flag creation requires database migration. Please create flags through database migrations.');
+      alert(
+        'Feature flag creation requires database migration. Please create flags through database migrations.'
+      );
       setAddDialogOpen(false);
       setFormData({
         flag_key: '',
@@ -226,7 +228,7 @@ export default function FeatureFlagsPage() {
         is_enabled: false,
         flag_type: 'boolean',
         flag_value: false,
-        category: 'general',
+        category: 'general'
       });
     } catch (error: any) {
       console.error('Failed to create flag:', error);
@@ -235,7 +237,7 @@ export default function FeatureFlagsPage() {
   };
 
   const categories = ['all', 'system', 'autopost', 'ui', 'experimental', 'general'];
-  const filteredFlags = flags.filter(flag => {
+  const filteredFlags = flags.filter((flag) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       if (
@@ -252,10 +254,7 @@ export default function FeatureFlagsPage() {
     return true;
   });
 
-  const paginatedFlags = filteredFlags.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
+  const paginatedFlags = filteredFlags.slice((page - 1) * pageSize, page * pageSize);
   const totalPages = Math.ceil(filteredFlags.length / pageSize);
 
   return (
@@ -263,9 +262,7 @@ export default function FeatureFlagsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Feature Flags</h1>
-          <p className="text-muted-foreground">
-            Gestiona las feature flags del sistema
-          </p>
+          <p className="text-muted-foreground">Gestiona las feature flags del sistema</p>
         </div>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
@@ -290,11 +287,13 @@ export default function FeatureFlagsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas las categorías</SelectItem>
-            {categories.filter(c => c !== 'all').map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </SelectItem>
-            ))}
+            {categories
+              .filter((c) => c !== 'all')
+              .map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>
@@ -331,9 +330,7 @@ export default function FeatureFlagsPage() {
                 <TableRow key={flag.id}>
                   <TableCell className="font-mono text-sm">{flag.flag_key}</TableCell>
                   <TableCell className="font-medium">{flag.flag_name}</TableCell>
-                  <TableCell className="max-w-md truncate">
-                    {flag.description || '-'}
-                  </TableCell>
+                  <TableCell className="max-w-md truncate">{flag.description || '-'}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{flag.category}</Badge>
                   </TableCell>
@@ -391,7 +388,7 @@ export default function FeatureFlagsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
               Anterior
@@ -399,7 +396,7 @@ export default function FeatureFlagsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >
               Siguiente
@@ -420,7 +417,10 @@ export default function FeatureFlagsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -468,11 +468,13 @@ export default function FeatureFlagsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.filter(c => c !== 'all').map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </SelectItem>
-                  ))}
+                  {categories
+                    .filter((c) => c !== 'all')
+                    .map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -521,9 +523,7 @@ export default function FeatureFlagsPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Añadir Feature Flag</DialogTitle>
-            <DialogDescription>
-              Crea un nuevo feature flag en el sistema.
-            </DialogDescription>
+            <DialogDescription>Crea un nuevo feature flag en el sistema.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -531,7 +531,12 @@ export default function FeatureFlagsPage() {
               <Input
                 id="add-key"
                 value={formData.flag_key}
-                onChange={(e) => setFormData({ ...formData, flag_key: e.target.value.toUpperCase().replace(/\s/g, '_') })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    flag_key: e.target.value.toUpperCase().replace(/\s/g, '_')
+                  })
+                }
                 placeholder="FLAG_KEY_NAME"
                 className="font-mono"
                 required
@@ -568,11 +573,13 @@ export default function FeatureFlagsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.filter(c => c !== 'all').map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </SelectItem>
-                  ))}
+                  {categories
+                    .filter((c) => c !== 'all')
+                    .map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

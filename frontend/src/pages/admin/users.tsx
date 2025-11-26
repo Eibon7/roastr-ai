@@ -8,7 +8,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -19,7 +19,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import {
   Dialog,
@@ -27,7 +27,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
@@ -35,7 +35,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
 import { adminApi } from '@/lib/api';
 
@@ -75,7 +75,7 @@ export default function AdminUsersPage() {
     email: '',
     password: '',
     is_admin: false,
-    status: 'active' as 'active' | 'inactive',
+    status: 'active' as 'active' | 'inactive'
   });
 
   React.useEffect(() => {
@@ -88,9 +88,9 @@ export default function AdminUsersPage() {
       const response = await adminApi.getUsers({
         page,
         limit: pageSize,
-        search: searchQuery || undefined,
+        search: searchQuery || undefined
       });
-      
+
       if (response.success && response.data) {
         // Transform backend data to frontend format
         const transformedUsers: User[] = response.data.users.map((user: any) => ({
@@ -104,10 +104,10 @@ export default function AdminUsersPage() {
           created_at: user.created_at,
           last_activity_at: user.last_activity_at,
           handles: user.handles,
-          usage: user.usage,
+          usage: user.usage
         }));
         setUsers(transformedUsers);
-        
+
         // Update pagination info
         if (response.data.pagination) {
           setTotalPages(response.data.pagination.total_pages || 1);
@@ -125,15 +125,13 @@ export default function AdminUsersPage() {
 
   const handleDelete = async () => {
     if (!selectedUser) return;
-    
+
     try {
       // Note: There's no DELETE endpoint, so we suspend the user instead
       await adminApi.suspendUser(selectedUser.id, 'Deleted by admin');
-      setUsers(users.map(u => 
-        u.id === selectedUser.id 
-          ? { ...u, suspended: true, active: false }
-          : u
-      ));
+      setUsers(
+        users.map((u) => (u.id === selectedUser.id ? { ...u, suspended: true, active: false } : u))
+      );
       setDeleteDialogOpen(false);
       setSelectedUser(null);
       // Reload users to get fresh data
@@ -151,7 +149,7 @@ export default function AdminUsersPage() {
       email: user.email,
       password: '',
       is_admin: user.is_admin || false,
-      status: user.active && !user.suspended ? 'active' : 'inactive',
+      status: user.active && !user.suspended ? 'active' : 'inactive'
     });
     setEditDialogOpen(true);
   };
@@ -164,7 +162,7 @@ export default function AdminUsersPage() {
       if (formData.is_admin !== selectedUser.is_admin) {
         await adminApi.toggleUserAdmin(selectedUser.id);
       }
-      
+
       // Update active status if changed
       const newActive = formData.status === 'active';
       if (newActive !== selectedUser.active && !selectedUser.suspended) {
@@ -193,7 +191,9 @@ export default function AdminUsersPage() {
       // Note: Creating users is typically done through auth flow, not admin panel
       // This is a placeholder for future implementation
       console.log('Create user:', formData);
-      alert('User creation through admin panel is not yet implemented. Use the registration flow instead.');
+      alert(
+        'User creation through admin panel is not yet implemented. Use the registration flow instead.'
+      );
       setAddDialogOpen(false);
       setFormData({ name: '', email: '', password: '', is_admin: false, status: 'active' });
     } catch (error: any) {
@@ -222,9 +222,7 @@ export default function AdminUsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Usuarios</h1>
-          <p className="text-muted-foreground">
-            Gestiona los usuarios del sistema
-          </p>
+          <p className="text-muted-foreground">Gestiona los usuarios del sistema</p>
         </div>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
@@ -283,11 +281,11 @@ export default function AdminUsersPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {user.is_admin && (
-                      <Badge variant="outline">Admin</Badge>
-                    )}
+                    {user.is_admin && <Badge variant="outline">Admin</Badge>}
                     {user.plan && (
-                      <Badge variant="secondary" className="ml-1">{user.plan}</Badge>
+                      <Badge variant="secondary" className="ml-1">
+                        {user.plan}
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -338,7 +336,7 @@ export default function AdminUsersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
               Anterior
@@ -346,7 +344,7 @@ export default function AdminUsersPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >
               Siguiente
@@ -367,7 +365,10 @@ export default function AdminUsersPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -428,9 +429,7 @@ export default function AdminUsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Añadir Usuario</DialogTitle>
-            <DialogDescription>
-              Crea un nuevo usuario en el sistema.
-            </DialogDescription>
+            <DialogDescription>Crea un nuevo usuario en el sistema.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -490,4 +489,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-

@@ -6,6 +6,7 @@
 ## ✅ Completado
 
 ### 1. API Client ✅
+
 - ✅ Manejo de CSRF tokens desde cookies
 - ✅ Credentials incluidos para cookies
 - ✅ Headers X-CSRF-Token para mutaciones
@@ -14,6 +15,7 @@
 - ✅ Método PATCH agregado
 
 ### 2. Página de Usuarios ✅
+
 - ✅ GET /api/admin/users - Listar usuarios con paginación
 - ✅ POST /api/admin/users/:id/toggle-admin - Toggle admin status
 - ✅ POST /api/admin/users/:id/toggle-active - Toggle active status
@@ -24,21 +26,25 @@
 ## 🔄 Pendiente
 
 ### 3. Feature Flags Page
+
 - ⏸️ GET /api/admin/feature-flags
 - ⏸️ PUT /api/admin/feature-flags/:key
 - ⏸️ POST /api/admin/kill-switch
 
 ### 4. Plans Page
+
 - ⏸️ GET /api/admin/plans
 - ⏸️ PUT /api/admin/plans/:planId
 - ⏸️ GET /api/admin/plan-limits
 - ⏸️ PUT /api/admin/plan-limits/:planId
 
 ### 5. Metrics Page
+
 - ⏸️ GET /api/admin/dashboard
 - ⏸️ GET /api/monitoring/metrics
 
 ### 6. Tones Page
+
 - ⏸️ GET /api/admin/tones
 - ⏸️ PUT /api/admin/tones/:id
 
@@ -47,6 +53,7 @@
 ### Transformación de Datos
 
 **Backend → Frontend:**
+
 - `active` (boolean) + `suspended` (boolean) → `status: 'active' | 'inactive'`
 - `is_admin` (boolean) → presente en frontend
 - `plan` (string) → badge en tabla
@@ -72,4 +79,3 @@
 4. Conectar Tones Management
 5. Reemplazar alerts con toast notifications
 6. Agregar loading states mejorados
-

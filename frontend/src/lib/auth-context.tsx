@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin: user?.is_admin === true,
     login,
     logout,
-    refreshUser,
+    refreshUser
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -102,4 +102,3 @@ export function useAuth() {
   }
   return context;
 }
-

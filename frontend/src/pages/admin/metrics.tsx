@@ -1,5 +1,14 @@
 import * as React from 'react';
-import { Loader2, TrendingUp, TrendingDown, Users, Activity, Zap, DollarSign, BarChart3 } from 'lucide-react';
+import {
+  Loader2,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Activity,
+  Zap,
+  DollarSign,
+  BarChart3
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -58,7 +67,7 @@ export default function MetricsPage() {
   const loadMetrics = async () => {
     try {
       const response = await adminApi.getDashboardMetrics();
-      
+
       if (response.success && response.data) {
         // Transform backend data to frontend format
         const data = response.data;
@@ -67,37 +76,37 @@ export default function MetricsPage() {
             total: data.roasts?.total || 0,
             this_month: data.roasts?.this_month || data.roasts?.monthly || 0,
             last_month: 0, // Backend doesn't provide last_month, calculate if needed
-            total_tokens: data.roasts?.total_tokens || 0,
+            total_tokens: data.roasts?.total_tokens || 0
           },
           users: {
             total: data.users?.total || 0,
             active: data.users?.active || 0,
-            new_this_month: data.users?.new_this_month || data.users?.new || 0,
+            new_this_month: data.users?.new_this_month || data.users?.new || 0
           },
           organizations: {
             total: 0, // Not in current response structure
-            active: 0,
+            active: 0
           },
           integrations: {
             stats: {
               total: data.integrations?.stats?.total || data.integrations?.total || 0,
               enabled: data.integrations?.stats?.enabled || data.integrations?.enabled || 0,
-              active: data.integrations?.stats?.active || data.integrations?.active || 0,
-            },
+              active: data.integrations?.stats?.active || data.integrations?.active || 0
+            }
           },
           costs: {
             monthly_spend: 0, // Not in current response
-            budget_usage_percentage: 0,
+            budget_usage_percentage: 0
           },
           system: {
             uptime: 0, // Not in current response
-            status: 'healthy',
+            status: 'healthy'
           },
           workers: {
             total: 0, // Not in current response
             healthy: 0,
-            status: 'healthy',
-          },
+            status: 'healthy'
+          }
         };
         setMetrics(transformedMetrics);
         setLastUpdated(new Date());
@@ -121,7 +130,7 @@ export default function MetricsPage() {
     const change = ((current - previous) / previous) * 100;
     return {
       value: Math.abs(change).toFixed(1),
-      isPositive: change >= 0,
+      isPositive: change >= 0
     };
   };
 
@@ -142,7 +151,10 @@ export default function MetricsPage() {
   }
 
   const roastsChange = calculateChange(metrics.roasts.this_month, metrics.roasts.last_month);
-  const usersChange = calculateChange(metrics.users.new_this_month, metrics.users.new_this_month - 50);
+  const usersChange = calculateChange(
+    metrics.users.new_this_month,
+    metrics.users.new_this_month - 50
+  );
 
   return (
     <div className="space-y-6">
@@ -176,7 +188,8 @@ export default function MetricsPage() {
                 <TrendingDown className="h-3 w-3 text-red-500" />
               )}
               <span>
-                {roastsChange.value}% vs mes anterior ({metrics.roasts.this_month.toLocaleString()} este mes)
+                {roastsChange.value}% vs mes anterior ({metrics.roasts.this_month.toLocaleString()}{' '}
+                este mes)
               </span>
             </div>
           </CardContent>
@@ -220,7 +233,9 @@ export default function MetricsPage() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.organizations.active.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {metrics.organizations.active.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
               de {metrics.organizations.total.toLocaleString()} totales activas
             </p>
@@ -249,7 +264,9 @@ export default function MetricsPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Uso del Presupuesto</span>
-                  <span className="text-sm font-medium">{metrics.costs.budget_usage_percentage.toFixed(1)}%</span>
+                  <span className="text-sm font-medium">
+                    {metrics.costs.budget_usage_percentage.toFixed(1)}%
+                  </span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2">
                   <div
@@ -257,8 +274,8 @@ export default function MetricsPage() {
                       metrics.costs.budget_usage_percentage > 90
                         ? 'bg-red-500'
                         : metrics.costs.budget_usage_percentage > 75
-                        ? 'bg-yellow-500'
-                        : 'bg-green-500'
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
                     }`}
                     style={{ width: `${Math.min(metrics.costs.budget_usage_percentage, 100)}%` }}
                   />
@@ -333,15 +350,21 @@ export default function MetricsPage() {
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Total</div>
-              <div className="text-2xl font-bold">{metrics.integrations.stats.total.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                {metrics.integrations.stats.total.toLocaleString()}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Habilitadas</div>
-              <div className="text-2xl font-bold">{metrics.integrations.stats.enabled.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                {metrics.integrations.stats.enabled.toLocaleString()}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Activas</div>
-              <div className="text-2xl font-bold">{metrics.integrations.stats.active.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                {metrics.integrations.stats.active.toLocaleString()}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -349,4 +372,3 @@ export default function MetricsPage() {
     </div>
   );
 }
-

@@ -10,7 +10,7 @@ interface AuthLayoutProps {
 export function AuthLayout({
   children,
   title = 'Roastr.ai',
-  description = 'Detección de toxicidad y moderación inteligente',
+  description = 'Detección de toxicidad y moderación inteligente'
 }: AuthLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
@@ -22,16 +22,12 @@ export function AuthLayout({
             <h1 className="text-3xl font-bold">{title}</h1>
           </div>
           {description && (
-            <p className="text-muted-foreground text-center text-sm">
-              {description}
-            </p>
+            <p className="text-muted-foreground text-center text-sm">{description}</p>
           )}
         </div>
 
         {/* Auth form card */}
-        <div className="bg-card rounded-lg border p-6 shadow-sm">
-          {children}
-        </div>
+        <div className="bg-card rounded-lg border p-6 shadow-sm">{children}</div>
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground">
@@ -41,4 +37,3 @@ export function AuthLayout({
     </div>
   );
 }
-

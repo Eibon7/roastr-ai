@@ -14,9 +14,11 @@ El servidor se iniciará en `http://localhost:5173`
 ### 2. Ver Layouts
 
 #### AuthLayout (Login)
+
 **URL:** `http://localhost:5173/login`
 
 **Características visibles:**
+
 - Layout centrado vertical y horizontal
 - Logo de Roastr.ai con icono Shield
 - Card blanco/gris con formulario de login
@@ -24,17 +26,20 @@ El servidor se iniciará en `http://localhost:5173`
 - Tema claro/oscuro aplicable
 
 **Interacción:**
+
 - El formulario tiene validación básica
 - Los campos están listos para conectar con el backend
 
 ---
 
 #### AdminShell (Panel Admin)
+
 **URL:** `http://localhost:5173/admin` (requiere autenticación)
 
 **Características visibles:**
 
 **Desktop:**
+
 - **Sidebar izquierdo:**
   - Logo "Roastr.ai Admin"
   - Grupos de navegación:
@@ -54,11 +59,13 @@ El servidor se iniciará en `http://localhost:5173`
   - Container con padding responsivo
 
 **Móvil/Tablet:**
+
 - Hamburger menu (botón en topbar)
 - Sheet lateral que se desliza desde la izquierda
 - Sidebar colapsa automáticamente
 
 **Funcionalidades:**
+
 - Navegación entre secciones
 - Theme toggle funciona
 - User menu dropdown
@@ -67,11 +74,13 @@ El servidor se iniciará en `http://localhost:5173`
 ---
 
 #### AppShell (Panel Usuario)
+
 **URL:** `http://localhost:5173/app` (requiere autenticación)
 
 **Características visibles:**
 
 **Desktop:**
+
 - **Topbar:**
   - Logo "Roastr.ai"
   - Navegación horizontal: Inicio, Cuentas, Configuración
@@ -83,6 +92,7 @@ El servidor se iniciará en `http://localhost:5173`
   - Container con padding responsivo
 
 **Móvil/Tablet:**
+
 - Hamburger menu
 - Sheet con navegación vertical
 - Topbar sticky
@@ -92,6 +102,7 @@ El servidor se iniciará en `http://localhost:5173`
 ### 3. Probar Responsive
 
 **Chrome DevTools:**
+
 1. Abre DevTools (F12)
 2. Click en icono de dispositivo móvil
 3. Selecciona diferentes viewports:
@@ -100,6 +111,7 @@ El servidor se iniciará en `http://localhost:5173`
    - Desktop (1920x1080)
 
 **Características a verificar:**
+
 - ✅ Sidebar colapsa en móvil (AdminShell)
 - ✅ Hamburger menu aparece en móvil
 - ✅ Navegación se adapta
@@ -111,6 +123,7 @@ El servidor se iniciará en `http://localhost:5173`
 ### 4. Probar Tema Claro/Oscuro
 
 **Theme Toggle:**
+
 1. Click en el icono sol/luna en el topbar
 2. Selecciona:
    - **Claro** - Tema claro
@@ -118,6 +131,7 @@ El servidor se iniciará en `http://localhost:5173`
    - **Sistema** - Sigue preferencias del sistema
 
 **Verificar:**
+
 - ✅ Colores cambian correctamente
 - ✅ Contraste adecuado en ambos temas
 - ✅ Iconos se adaptan (sol/luna)
@@ -128,11 +142,13 @@ El servidor se iniciará en `http://localhost:5173`
 ## 📸 Screenshots Sugeridos
 
 ### AuthLayout
+
 - Login page en tema claro
 - Login page en tema oscuro
 - Responsive (móvil)
 
 ### AdminShell
+
 - Dashboard completo (desktop, claro)
 - Dashboard completo (desktop, oscuro)
 - Sidebar destacado
@@ -140,6 +156,7 @@ El servidor se iniciará en `http://localhost:5173`
 - Navegación activa
 
 ### AppShell
+
 - Home page (desktop, claro)
 - Home page (desktop, oscuro)
 - Mobile navigation
@@ -150,6 +167,7 @@ El servidor se iniciará en `http://localhost:5173`
 ## 🔍 Páginas Disponibles
 
 ### Admin
+
 - ✅ `/admin` - Dashboard con métricas
 - ✅ `/admin/users` - CRUD completo de usuarios
 - ✅ `/admin/metrics` - Panel de métricas (placeholder)
@@ -158,11 +176,13 @@ El servidor se iniciará en `http://localhost:5173`
 - ✅ `/admin/config/tones` - Gestión de tonos (placeholder)
 
 ### User App
+
 - ✅ `/app` - Home page
 - ⏸️ `/app/accounts` - Gestión de cuentas (placeholder)
 - ⏸️ `/app/settings` - Configuración (placeholder)
 
 ### Auth
+
 - ✅ `/login` - Login page completa
 
 ---
@@ -184,6 +204,7 @@ Todas las páginas tienen **mocks de datos** por ahora. Los TODOs indican dónde
 ### Guards Funcionando
 
 Los guards están completamente implementados y funcionarán cuando:
+
 - Backend esté corriendo en `localhost:3000`
 - Endpoints `/api/auth/me` y `/api/auth/login` estén disponibles
 - Tokens JWT se generen correctamente
@@ -213,4 +234,3 @@ Los guards están completamente implementados y funcionarán cuando:
 **Última actualización:** 2025-11-26  
 **Worktree:** `/roastr-ai-worktrees/epic-1037`  
 **Branch:** `feature/epic-1037-admin-panel`
-

@@ -10,6 +10,7 @@ Todas las páginas del Admin Panel han sido conectadas con las APIs reales del b
 ## 🔌 APIs Conectadas
 
 ### 1. API Client Base ✅
+
 - ✅ Manejo de CSRF tokens desde cookies
 - ✅ Headers X-CSRF-Token para mutaciones
 - ✅ Credentials: 'include' para mantener cookies
@@ -17,6 +18,7 @@ Todas las páginas del Admin Panel han sido conectadas con las APIs reales del b
 - ✅ Manejo de errores mejorado
 
 ### 2. Página de Usuarios ✅
+
 - ✅ `GET /api/admin/users` - Listar usuarios con paginación
 - ✅ `POST /api/admin/users/:id/toggle-admin` - Toggle admin status
 - ✅ `POST /api/admin/users/:id/toggle-active` - Toggle active status
@@ -25,6 +27,7 @@ Todas las páginas del Admin Panel han sido conectadas con las APIs reales del b
 - ✅ Paginación funcional desde backend
 
 ### 3. Feature Flags ✅
+
 - ✅ `GET /api/admin/feature-flags` - Listar feature flags
 - ✅ `PUT /api/admin/feature-flags/:key` - Actualizar feature flag
 - ✅ Toggle switch conectado a API real
@@ -32,18 +35,21 @@ Todas las páginas del Admin Panel han sido conectadas con las APIs reales del b
 - ✅ Búsqueda funcional
 
 ### 4. Plans Configuration ✅
+
 - ✅ `GET /api/admin/plan-limits` - Obtener límites de planes
 - ✅ `PUT /api/admin/plan-limits/:planId` - Actualizar límites
 - ✅ Transformación de formato backend → frontend
 - ✅ Guardado por plan funcional
 
 ### 5. Metrics Dashboard ✅
+
 - ✅ `GET /api/admin/dashboard` - Métricas del dashboard
 - ✅ Transformación de estructura backend
 - ✅ Auto-refresh cada 30 segundos
 - ✅ Manejo de datos faltantes
 
 ### 6. Tones Management ✅
+
 - ✅ `GET /api/admin/tones` - Listar tonos
 - ✅ `PUT /api/admin/tones/:id` - Actualizar tono
 - ✅ Transformación de datos backend
@@ -54,6 +60,7 @@ Todas las páginas del Admin Panel han sido conectadas con las APIs reales del b
 ### Transformación de Datos
 
 **Backend → Frontend:**
+
 - Estructuras de respuesta mapeadas correctamente
 - Campos opcionales manejados con valores por defecto
 - Tipos TypeScript actualizados
@@ -82,4 +89,3 @@ Todas las páginas del Admin Panel han sido conectadas con las APIs reales del b
 ---
 
 **Status:** ✅ APIs 100% conectadas y funcionando
-

@@ -72,22 +72,26 @@ frontend/
 ## 🎨 Layouts
 
 ### AuthLayout
+
 Layout minimal para páginas de autenticación (login, register, recover).
 
 **Ubicación:** `src/components/layout/auth-layout.tsx`
 
 **Características:**
+
 - Centrado vertical y horizontal
 - Logo y branding
 - Card contenedor para formularios
 - Footer simple
 
 ### AdminShell
+
 Layout completo para el panel de administración con sidebar y topbar.
 
 **Ubicación:** `src/components/layout/admin-shell.tsx`
 
 **Características:**
+
 - Sidebar con navegación organizada:
   - Principal (Dashboard)
   - Gestión (Usuarios)
@@ -99,11 +103,13 @@ Layout completo para el panel de administración con sidebar y topbar.
 - Estados activos de rutas
 
 ### AppShell
+
 Layout para usuarios regulares con topbar.
 
 **Ubicación:** `src/components/layout/app-shell.tsx`
 
 **Características:**
+
 - Topbar con logo y navegación
 - Navegación horizontal para desktop
 - Hamburger menu para móvil
@@ -113,11 +119,13 @@ Layout para usuarios regulares con topbar.
 ## 🔐 Autenticación y Guards
 
 ### AuthProvider
+
 Contexto de autenticación que gestiona el estado del usuario.
 
 **Ubicación:** `src/lib/auth-context.tsx`
 
 **Features:**
+
 - Token management (localStorage)
 - User data caching
 - Auto-refresh token
@@ -126,11 +134,13 @@ Contexto de autenticación que gestiona el estado del usuario.
 ### Guards
 
 **AuthGuard** (`src/lib/guards/auth-guard.tsx`):
+
 - Protege rutas que requieren autenticación
 - Redirige a `/login` si no autenticado
 - Muestra loading state
 
 **AdminGuard** (`src/lib/guards/admin-guard.tsx`):
+
 - Protege rutas que requieren admin
 - Redirige a `/app` si no es admin
 - Hereda de AuthGuard
@@ -138,15 +148,18 @@ Contexto de autenticación que gestiona el estado del usuario.
 ## 📄 Rutas
 
 ### Públicas
+
 - `/login` - Página de login
 
 ### Protegidas (AuthGuard)
+
 - `/app/*` - Páginas de usuario
   - `/app` - Home
   - `/app/accounts` - Gestión de cuentas
   - `/app/settings` - Configuración
 
 ### Admin (AdminGuard)
+
 - `/admin/*` - Páginas de administración
   - `/admin` - Dashboard
   - `/admin/users` - Gestión de usuarios
@@ -163,6 +176,7 @@ El proyecto usa `next-themes` para gestionar el tema claro/oscuro/sistema.
 **Ubicación:** `src/lib/theme-provider.tsx`
 
 **Configuración:**
+
 - Almacenado en localStorage (`roastr-theme`)
 - Soporta: `light`, `dark`, `system`
 - Cambio automático según preferencias del sistema
@@ -212,6 +226,7 @@ El proxy a `/api` está configurado en `vite.config.ts` para redirigir a `http:/
 ## 📱 Responsive
 
 Todos los layouts son responsive:
+
 - **Desktop:** Sidebar visible (AdminShell), navegación horizontal (AppShell)
 - **Tablet:** Sidebar colapsable, navegación adaptativa
 - **Móvil:** Hamburger menu, drawer/sheet lateral
@@ -236,4 +251,3 @@ Todos los layouts son responsive:
 **Epic:** #1037  
 **Status:** 🟢 En desarrollo  
 **Última actualización:** 2025-11-26
-

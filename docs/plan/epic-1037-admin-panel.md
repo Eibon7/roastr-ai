@@ -5,7 +5,7 @@
 **Priority:** High  
 **Worktree:** `/roastr-ai-worktrees/epic-1037`  
 **Branch:** `feature/epic-1037-admin-panel`  
-**Creado:** 2025-11-26  
+**Creado:** 2025-11-26
 
 ---
 
@@ -15,15 +15,15 @@ Implementar panel completo de administración con gestión de usuarios, configur
 
 ### Issues Relacionadas
 
-| Issue | Título | Prerequisitos | Status |
-|-------|--------|--------------|--------|
-| #1036 | Crear estructura de layouts (auth, admin, app) | #1033, #1034 | 🔶 |
-| #1063 | Implementar guards de rutas (admin, auth) | #1059 | 🔶 |
-| #1038 | Implementar página de usuarios (/admin/users) | #1036 | ⏸️ |
-| #1039 | Gestión de feature flags (/admin/config/feature-flags) | #1036 | ⏸️ |
-| #1040 | Configuración de planes (/admin/config/plans) | #1036 | ⏸️ |
-| #1041 | Gestión de tonos (/admin/config/tones) | #1036 | ⏸️ |
-| #1042 | Panel de métricas (/admin/metrics) | #1036, #1038 | ⏸️ |
+| Issue | Título                                                 | Prerequisitos | Status |
+| ----- | ------------------------------------------------------ | ------------- | ------ |
+| #1036 | Crear estructura de layouts (auth, admin, app)         | #1033, #1034  | 🔶     |
+| #1063 | Implementar guards de rutas (admin, auth)              | #1059         | 🔶     |
+| #1038 | Implementar página de usuarios (/admin/users)          | #1036         | ⏸️     |
+| #1039 | Gestión de feature flags (/admin/config/feature-flags) | #1036         | ⏸️     |
+| #1040 | Configuración de planes (/admin/config/plans)          | #1036         | ⏸️     |
+| #1041 | Gestión de tonos (/admin/config/tones)                 | #1036         | ⏸️     |
+| #1042 | Panel de métricas (/admin/metrics)                     | #1036, #1038  | ⏸️     |
 
 ---
 
@@ -32,18 +32,21 @@ Implementar panel completo de administración con gestión de usuarios, configur
 ### Arquitectura Existente
 
 **Backend:**
+
 - Express.js en `src/index.js`
 - API endpoints en `src/routes/`
 - Auth con JWT (Supabase)
 - Multi-tenant con RLS
 
 **Frontend:**
+
 - HTML estático en `public/`
 - JS vanilla en `public/js/`
 - CSS custom en `public/css/`
 - NO usa React actualmente
 
 **Panel Admin Actual:**
+
 - `public/admin.html` - HTML estático con secciones
 - `public/js/admin.js` - Lógica en vanilla JS (733 líneas)
 - `public/css/admin.css` - Estilos custom
@@ -51,6 +54,7 @@ Implementar panel completo de administración con gestión de usuarios, configur
 ### Dependencias Disponibles
 
 **En package.json:**
+
 ```json
 {
   "react": "^19.2.0",
@@ -61,6 +65,7 @@ Implementar panel completo de administración con gestión de usuarios, configur
 ```
 
 **⚠️ Problemas:**
+
 - React NO está configurado (no hay build process)
 - No hay Vite/Webpack/CRA configurado
 - No hay shadcn/ui instalado
@@ -73,16 +78,19 @@ Implementar panel completo de administración con gestión de usuarios, configur
 ### Opción 1: React SPA con Vite (RECOMENDADA)
 
 **Ventajas:**
+
 - ✅ Desarrollo moderno con HMR
 - ✅ shadcn/ui funciona perfectamente
 - ✅ TypeScript support
 - ✅ Build optimizado para producción
 
 **Desventajas:**
+
 - ⏱️ Setup inicial (30-60 min)
 - 🔄 Migración progresiva de páginas
 
 **Estructura propuesta:**
+
 ```
 frontend/               # Nueva carpeta Vite
   ├── src/
@@ -115,10 +123,12 @@ frontend/               # Nueva carpeta Vite
 ### Opción 2: Hybrid (HTML + Progressive React islands)
 
 **Ventajas:**
+
 - 🚀 Rápido para empezar
 - 🔄 Migración muy gradual
 
 **Desventajas:**
+
 - ❌ shadcn/ui difícil de usar
 - ❌ Sin HMR ni DX moderno
 - ❌ Complejidad de gestionar dos mundos
@@ -148,6 +158,7 @@ Vamos a crear un SPA moderno que reemplace progresivamente las páginas estátic
 **Tasks:**
 
 1. **Inicializar Vite project**
+
    ```bash
    cd /Users/emiliopostigo/roastr-ai/roastr-ai-worktrees/epic-1037
    npm create vite@latest frontend -- --template react-ts
@@ -156,12 +167,14 @@ Vamos a crear un SPA moderno que reemplace progresivamente las páginas estátic
    ```
 
 2. **Configurar Tailwind**
+
    ```bash
    npm install -D tailwindcss postcss autoprefixer
    npx tailwindcss init -p
    ```
 
 3. **Instalar shadcn/ui**
+
    ```bash
    npx shadcn-ui@latest init
    # Configurar:
@@ -184,6 +197,7 @@ Vamos a crear un SPA moderno que reemplace progresivamente las páginas estátic
    - Crear `ThemeToggle` component
 
 **Entregables:**
+
 - [ ] `frontend/` folder con Vite configurado
 - [ ] shadcn/ui funcionando
 - [ ] Tema claro/oscuro/sistema operativo
@@ -191,6 +205,7 @@ Vamos a crear un SPA moderno que reemplace progresivamente las páginas estátic
 - [ ] Proxy a `http://localhost:3000` (backend)
 
 **Validation:**
+
 ```bash
 cd frontend
 npm run dev
@@ -237,6 +252,7 @@ npm run dev
    - Responsive con hamburger menu
 
 **Componentes shadcn necesarios:**
+
 ```bash
 npx shadcn-ui@latest add button
 npx shadcn-ui@latest add sheet
@@ -247,23 +263,25 @@ npx shadcn-ui@latest add avatar
 ```
 
 **Usar MCP Commands:**
+
 ```bash
 # Para AdminShell
-/cui Create an admin layout with a collapsible sidebar showing Dashboard, 
-    Users, Config (submenu), Metrics, and Logs. Include a topbar with search, 
+/cui Create an admin layout with a collapsible sidebar showing Dashboard,
+    Users, Config (submenu), Metrics, and Logs. Include a topbar with search,
     theme toggle, and user dropdown menu. Add mobile drawer for responsive design.
 
 # Para AppShell
-/cui Create a user app layout with a topbar showing logo, Home/Accounts/Settings 
-    navigation links, theme toggle, and user menu. Responsive with hamburger menu 
+/cui Create a user app layout with a topbar showing logo, Home/Accounts/Settings
+    navigation links, theme toggle, and user menu. Responsive with hamburger menu
     for mobile.
 
 # Para AuthLayout
-/cui Create a minimal centered auth layout with logo, heading, description, 
+/cui Create a minimal centered auth layout with logo, heading, description,
     and a card for the auth form. Clean and modern design.
 ```
 
 **Entregables:**
+
 - [ ] `src/components/layout/auth-layout.tsx`
 - [ ] `src/components/layout/admin-shell.tsx`
 - [ ] `src/components/layout/app-shell.tsx`
@@ -274,6 +292,7 @@ npx shadcn-ui@latest add avatar
 - [ ] Responsive en móvil/tablet/desktop
 
 **Validation:**
+
 - [ ] Layouts renderizan correctamente
 - [ ] Navegación funciona
 - [ ] Theme toggle cambia tema
@@ -282,11 +301,13 @@ npx shadcn-ui@latest add avatar
 - [ ] User menu despliega opciones
 
 **Tests:**
+
 - [ ] `tests/components/layout/admin-shell.test.tsx` (rendering + interactions)
 - [ ] `tests/components/layout/app-shell.test.tsx`
 - [ ] `tests/components/layout/theme-toggle.test.tsx`
 
 **Visual Evidence:**
+
 - [ ] Screenshots en claro/oscuro
 - [ ] Screenshots en móvil/tablet/desktop
 - [ ] Video de navegación (opcional)
@@ -319,37 +340,44 @@ npx shadcn-ui@latest add avatar
    ```tsx
    <Routes>
      <Route path="/login" element={<LoginPage />} />
-     
-     <Route path="/app/*" element={
-       <AuthGuard>
-         <AppShell>
-           <Routes>
-             <Route index element={<HomePage />} />
-             <Route path="accounts" element={<AccountsPage />} />
-             <Route path="settings" element={<SettingsPage />} />
-           </Routes>
-         </AppShell>
-       </AuthGuard>
-     } />
-     
-     <Route path="/admin/*" element={
-       <AdminGuard>
-         <AdminShell>
-           <Routes>
-             <Route index element={<DashboardPage />} />
-             <Route path="users" element={<UsersPage />} />
-             <Route path="metrics" element={<MetricsPage />} />
-             <Route path="config/plans" element={<PlansPage />} />
-             <Route path="config/feature-flags" element={<FeatureFlagsPage />} />
-             <Route path="config/tones" element={<TonesPage />} />
-           </Routes>
-         </AdminShell>
-       </AdminGuard>
-     } />
+
+     <Route
+       path="/app/*"
+       element={
+         <AuthGuard>
+           <AppShell>
+             <Routes>
+               <Route index element={<HomePage />} />
+               <Route path="accounts" element={<AccountsPage />} />
+               <Route path="settings" element={<SettingsPage />} />
+             </Routes>
+           </AppShell>
+         </AuthGuard>
+       }
+     />
+
+     <Route
+       path="/admin/*"
+       element={
+         <AdminGuard>
+           <AdminShell>
+             <Routes>
+               <Route index element={<DashboardPage />} />
+               <Route path="users" element={<UsersPage />} />
+               <Route path="metrics" element={<MetricsPage />} />
+               <Route path="config/plans" element={<PlansPage />} />
+               <Route path="config/feature-flags" element={<FeatureFlagsPage />} />
+               <Route path="config/tones" element={<TonesPage />} />
+             </Routes>
+           </AdminShell>
+         </AdminGuard>
+       }
+     />
    </Routes>
    ```
 
 **Entregables:**
+
 - [ ] `src/lib/auth-context.tsx` (AuthProvider)
 - [ ] `src/lib/guards/auth-guard.tsx`
 - [ ] `src/lib/guards/admin-guard.tsx`
@@ -357,12 +385,14 @@ npx shadcn-ui@latest add avatar
 - [ ] API client en `src/lib/api.ts`
 
 **Validation:**
+
 - [ ] Login redirige a `/app` o `/admin` según rol
 - [ ] Usuario no admin no puede acceder `/admin`
 - [ ] Usuario no autenticado redirige a `/login`
 - [ ] Token refresh funciona automáticamente
 
 **Tests:**
+
 - [ ] `tests/lib/guards/auth-guard.test.tsx`
 - [ ] `tests/lib/guards/admin-guard.test.tsx`
 - [ ] Integration test de flujo completo
@@ -374,15 +404,17 @@ npx shadcn-ui@latest add avatar
 **Goal:** Implementar `/admin/users` con CRUD completo
 
 **MCP Command:**
+
 ```bash
-/cui Create an admin users table with columns for Name, Email, User ID, 
-    and Status (active/inactive with badge). Include a search bar at the top 
-    for filtering by name or email, action buttons in each row for Edit and Delete, 
-    and a floating "Add User" button. Add dialogs for add/edit user forms 
+/cui Create an admin users table with columns for Name, Email, User ID,
+    and Status (active/inactive with badge). Include a search bar at the top
+    for filtering by name or email, action buttons in each row for Edit and Delete,
+    and a floating "Add User" button. Add dialogs for add/edit user forms
     and a confirmation dialog for delete. Include pagination at the bottom.
 ```
 
 **Componentes shadcn adicionales:**
+
 ```bash
 npx shadcn-ui@latest add table
 npx shadcn-ui@latest add dialog
@@ -424,6 +456,7 @@ npx shadcn-ui@latest add alert-dialog
    - Redirige a `/app` con nuevo token
 
 **Entregables:**
+
 - [ ] `src/pages/admin/users.tsx`
 - [ ] `src/components/admin/users-table.tsx`
 - [ ] `src/components/admin/add-user-dialog.tsx`
@@ -431,6 +464,7 @@ npx shadcn-ui@latest add alert-dialog
 - [ ] `src/components/admin/delete-user-dialog.tsx`
 
 **API Endpoints necesarios (backend):**
+
 - `GET /api/admin/users?search=&page=&limit=`
 - `POST /api/admin/users`
 - `PUT /api/admin/users/:id`
@@ -438,6 +472,7 @@ npx shadcn-ui@latest add alert-dialog
 - `POST /api/admin/users/:id/impersonate`
 
 **Validation:**
+
 - [ ] Search filtra correctamente
 - [ ] Pagination funciona
 - [ ] Add user crea correctamente
@@ -447,11 +482,13 @@ npx shadcn-ui@latest add alert-dialog
 - [ ] NO muestra datos sensibles (persona, sponsors)
 
 **Tests:**
+
 - [ ] Unit tests de cada componente
 - [ ] Integration test de flujo CRUD
 - [ ] E2E con Playwright
 
 **Visual Evidence:**
+
 - [ ] Screenshots de tabla con datos
 - [ ] Screenshots de dialogs (add, edit, delete)
 - [ ] Video de flujo CRUD completo
@@ -463,14 +500,16 @@ npx shadcn-ui@latest add alert-dialog
 #### 5.1 Feature Flags Page (#1039)
 
 **MCP Command:**
+
 ```bash
-/cui Create a feature flags configuration table with columns for Flag Name, 
-    Description, Enabled Status (toggle switch), and Last Modified. 
-    Include a search bar for filtering flags, an "Add Flag" button, 
+/cui Create a feature flags configuration table with columns for Flag Name,
+    Description, Enabled Status (toggle switch), and Last Modified.
+    Include a search bar for filtering flags, an "Add Flag" button,
     and action buttons for Edit and Delete in each row.
 ```
 
 **Entregables:**
+
 - [ ] `src/pages/admin/config/feature-flags.tsx`
 - [ ] `src/components/admin/feature-flags-table.tsx`
 - [ ] CRUD dialogs
@@ -478,33 +517,38 @@ npx shadcn-ui@latest add alert-dialog
 #### 5.2 Plans Configuration (#1040)
 
 **MCP Command:**
+
 ```bash
-/cui Create a plans configuration form with sections for each plan 
-    (Starter Trial, Starter, Pro, Plus). Each section shows plan name, 
-    monthly price, max roasts, max analysis, max platforms, and feature toggles 
+/cui Create a plans configuration form with sections for each plan
+    (Starter Trial, Starter, Pro, Plus). Each section shows plan name,
+    monthly price, max roasts, max analysis, max platforms, and feature toggles
     (RQC, Shield, Brand Safety, Custom Styles). Include Save Changes button.
 ```
 
 **Entregables:**
+
 - [ ] `src/pages/admin/config/plans.tsx`
 - [ ] `src/components/admin/plan-config-card.tsx`
 
 #### 5.3 Tones Configuration (#1041)
 
 **MCP Command:**
+
 ```bash
-/cui Create a tones management table with columns for Tone Name, 
-    Description, Example, and Status. Include Add Tone button and 
-    Edit/Delete actions per row. Add a dialog for creating/editing tones 
+/cui Create a tones management table with columns for Tone Name,
+    Description, Example, and Status. Include Add Tone button and
+    Edit/Delete actions per row. Add a dialog for creating/editing tones
     with fields for name, description, example, and prompt instructions.
 ```
 
 **Entregables:**
+
 - [ ] `src/pages/admin/config/tones.tsx`
 - [ ] `src/components/admin/tones-table.tsx`
 - [ ] CRUD dialogs
 
 **Componentes shadcn adicionales:**
+
 ```bash
 npx shadcn-ui@latest add switch
 npx shadcn-ui@latest add textarea
@@ -518,17 +562,19 @@ npx shadcn-ui@latest add select
 **Goal:** Dashboard de métricas agregadas
 
 **MCP Command:**
+
 ```bash
-/cui Create an admin metrics dashboard with card widgets showing: 
-    Total Análisis (with monthly growth %), Total Roasts (with growth %), 
-    Active Users (with growth %), Average Análisis per User, Average Roasts per User. 
-    Include a User Distribution by Plan section showing percentage cards 
-    for Starter/Pro/Plus. Add Cost Metrics section with Average Cost per Analysis, 
-    Average Tokens per Analysis, Average Cost per Roast, and Average Tokens per Roast. 
+/cui Create an admin metrics dashboard with card widgets showing:
+    Total Análisis (with monthly growth %), Total Roasts (with growth %),
+    Active Users (with growth %), Average Análisis per User, Average Roasts per User.
+    Include a User Distribution by Plan section showing percentage cards
+    for Starter/Pro/Plus. Add Cost Metrics section with Average Cost per Analysis,
+    Average Tokens per Analysis, Average Cost per Roast, and Average Tokens per Roast.
     Use a responsive grid layout.
 ```
 
 **Componentes shadcn adicionales:**
+
 ```bash
 npx shadcn-ui@latest add card
 npx shadcn-ui@latest add progress
@@ -558,6 +604,7 @@ npx shadcn-ui@latest add progress
    - Tokens medios/roast
 
 **Entregables:**
+
 - [ ] `src/pages/admin/metrics.tsx`
 - [ ] `src/components/admin/metrics-overview.tsx`
 - [ ] `src/components/admin/user-distribution.tsx`
@@ -565,9 +612,11 @@ npx shadcn-ui@latest add progress
 - [ ] `src/components/admin/cost-metrics.tsx`
 
 **API Endpoint necesario:**
+
 - `GET /api/admin/metrics` → Devuelve todas las métricas agregadas
 
 **Backend Implementation:**
+
 ```javascript
 // src/routes/admin/metrics.js
 router.get('/metrics', requireAdmin, async (req, res) => {
@@ -577,6 +626,7 @@ router.get('/metrics', requireAdmin, async (req, res) => {
 ```
 
 **Validation:**
+
 - [ ] Datos cargan correctamente
 - [ ] Números formateados (separadores de miles)
 - [ ] Percentages correctos
@@ -584,11 +634,13 @@ router.get('/metrics', requireAdmin, async (req, res) => {
 - [ ] Refresh button funciona
 
 **Tests:**
+
 - [ ] Unit test de cada component
 - [ ] Snapshot tests de cards
 - [ ] Integration test de API call
 
 **Visual Evidence:**
+
 - [ ] Screenshots del dashboard completo
 - [ ] Screenshots responsive (móvil/tablet/desktop)
 
@@ -599,6 +651,7 @@ router.get('/metrics', requireAdmin, async (req, res) => {
 ### Unit Tests
 
 **Targets:**
+
 - Componentes UI (todos)
 - Guards (AuthGuard, AdminGuard)
 - API client
@@ -609,6 +662,7 @@ router.get('/metrics', requireAdmin, async (req, res) => {
 ### Integration Tests
 
 **Scenarios:**
+
 - Login flow completo
 - Admin CRUD de usuarios
 - Config changes (plans, flags, tones)
@@ -617,6 +671,7 @@ router.get('/metrics', requireAdmin, async (req, res) => {
 ### E2E Tests (Playwright)
 
 **Critical Paths:**
+
 1. Login como admin → acceso a `/admin/users`
 2. Crear usuario → verificar en tabla
 3. Editar usuario → verificar cambios
@@ -624,6 +679,7 @@ router.get('/metrics', requireAdmin, async (req, res) => {
 5. Login como usuario regular → NO acceso a `/admin`
 
 **Playwright tests:**
+
 ```typescript
 // tests/e2e/admin-panel.spec.ts
 test('admin can manage users', async ({ page }) => {
@@ -631,12 +687,12 @@ test('admin can manage users', async ({ page }) => {
   await page.fill('[name=email]', 'admin@roastr.ai');
   await page.fill('[name=password]', 'admin123');
   await page.click('button[type=submit]');
-  
+
   await expect(page).toHaveURL('/admin');
-  
+
   await page.click('a[href="/admin/users"]');
   await expect(page).toHaveURL('/admin/users');
-  
+
   await page.click('button:has-text("Add User")');
   // ... rest of test
 });
@@ -645,6 +701,7 @@ test('admin can manage users', async ({ page }) => {
 ### Visual Validation con Playwright MCP
 
 **Tasks:**
+
 - [ ] Capturar screenshots de todas las páginas
 - [ ] Verificar en claro/oscuro
 - [ ] Verificar responsive (móvil/tablet/desktop)
@@ -683,11 +740,13 @@ npm run test:e2e
 ```
 
 **Actualizar nodos GDD afectados:**
+
 - `docs/nodes/cost-control.md` - Si tocamos métricas de coste
 - `docs/nodes/multi-tenant.md` - Si tocamos gestión de usuarios
 - `docs/nodes/plan-features.md` - Si tocamos configuración de planes
 
 **Añadir "Agentes Relevantes":**
+
 - FrontendDev
 - TestEngineer
 - UIDesigner (si usamos MCP shadcn-studio)
@@ -708,6 +767,7 @@ npm run build
 ### Integración con Express
 
 **Servir frontend desde Express:**
+
 ```javascript
 // src/index.js
 const path = require('path');
@@ -767,9 +827,11 @@ npm run coderabbit:review
 ## Epic #1037: Admin Panel - React + shadcn/ui
 
 ### 🎯 Objetivo
+
 Implementar panel completo de administración usando React + shadcn/ui
 
 ### ✅ Implementado
+
 - [x] Setup Vite + React + TypeScript + shadcn/ui
 - [x] Layouts (AdminShell, AppShell, AuthLayout)
 - [x] Auth guards + protected routes
@@ -780,20 +842,24 @@ Implementar panel completo de administración usando React + shadcn/ui
 - [x] Responsive móvil/tablet/desktop
 
 ### 📊 Métricas
+
 - Tests: 100% passing
 - Coverage: 92%
 - GDD Health: 89
 - E2E Tests: 15/15 passing
 
 ### 🖼️ Visual Evidence
+
 Ver `docs/test-evidence/epic-1037/`
 
 ### 🧪 Testing
+
 - Unit tests: 85 tests
 - Integration tests: 12 tests
 - E2E tests: 15 scenarios
 
 ### 📋 Checklist
+
 - [x] Todos los AC completados
 - [x] Tests pasando
 - [x] Coverage ≥90%
@@ -803,6 +869,7 @@ Ver `docs/test-evidence/epic-1037/`
 - [x] Receipts de agentes
 
 ### 🔗 Issues cerradas
+
 Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 ```
 
@@ -813,23 +880,27 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 ### Decisiones de Diseño
 
 **1. Por qué Vite en lugar de CRA:**
+
 - Vite es más rápido (HMR instantáneo)
 - Build más ligero
 - Mejor DX
 - Vite es el futuro (CRA está deprecated)
 
 **2. Por qué TypeScript:**
+
 - Mejor DX con autocompletado
 - Menos bugs en runtime
 - shadcn/ui está en TS
 
 **3. Por qué shadcn/ui:**
+
 - Componentes accesibles (a11y)
 - Customizable (no library lock-in)
 - Tema integrado
 - Mejor UX que componentes custom
 
 **4. Por qué MCP Commands:**
+
 - Genera código base rápido
 - Reduce boilerplate
 - Consistencia visual
@@ -843,6 +914,7 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 **Fase 4:** Landing page
 
 **Coexistencia temporal:**
+
 - Backend Express sirve ambos:
   - `/admin/*` → React SPA (nuevo)
   - `/dashboard`, `/platforms`, etc → HTML estático (legacy)
@@ -852,11 +924,13 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 ### Performance
 
 **Bundle size targets:**
+
 - Initial bundle: <300KB
 - Per-route chunks: <100KB
 - Total (admin): <1MB
 
 **Optimizaciones:**
+
 - Code splitting por ruta
 - Lazy loading de dialogs
 - Memoization de components pesados
@@ -872,6 +946,7 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 **Probabilidad:** Medio
 
 **Mitigación:**
+
 - API client centralizado con interceptors
 - Mantener contratos de API existentes
 - Tests de integración backend ↔ frontend
@@ -882,6 +957,7 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 **Probabilidad:** Bajo
 
 **Mitigación:**
+
 - AuthProvider robusto con refresh automático
 - Guards testeados exhaustivamente
 - Fallback a login si token inválido
@@ -892,6 +968,7 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 **Probabilidad:** Bajo
 
 **Mitigación:**
+
 - Script de build automatizado
 - Express sirve correctamente dist/
 - SPA fallback configurado
@@ -903,6 +980,7 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 **Probabilidad:** Medio
 
 **Mitigación:**
+
 - Code splitting agresivo
 - Tree shaking de librerías
 - Lazy loading de rutas
@@ -916,17 +994,20 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 **Documento base:** `docs/plan/ui-migration-github-issues.md`  
 **Reglas shadcn:** `.cursor/rules/shadcn-ui-migration.mdc`  
 **GDD Nodes:** cost-control, multi-tenant, plan-features  
-**CodeRabbit Lessons:** `docs/patterns/coderabbit-lessons.md`  
+**CodeRabbit Lessons:** `docs/patterns/coderabbit-lessons.md`
 
 **Shadcn/UI:**
+
 - https://ui.shadcn.com/docs
 - https://ui.shadcn.com/themes
 
 **MCP Shadcn-Studio:**
+
 - Commands: `/cui`, `/rui`, `/iui`, `/ftc`
 - See `.cursor/rules/shadcn-ui-migration.mdc` for examples
 
 **React Router:**
+
 - https://reactrouter.com/en/main
 
 ---
@@ -944,5 +1025,4 @@ Después de cerrar esta Epic:
 
 **Última actualización:** 2025-11-26  
 **Owner:** FrontendDev  
-**Status:** 🟢 En progreso (FASE 1)  
-
+**Status:** 🟢 En progreso (FASE 1)

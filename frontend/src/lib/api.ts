@@ -24,22 +24,19 @@ class ApiClient {
   private getCsrfToken(): string | null {
     // Extract CSRF token from cookies
     const cookies = document.cookie.split(';');
-    const csrfCookie = cookies.find(cookie => cookie.trim().startsWith('csrf-token='));
+    const csrfCookie = cookies.find((cookie) => cookie.trim().startsWith('csrf-token='));
     if (csrfCookie) {
       return csrfCookie.split('=')[1];
     }
     return null;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = this.getAuthToken();
     const csrfToken = this.getCsrfToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string>),
+      ...(options.headers as Record<string, string>)
     };
 
     if (token) {
@@ -54,13 +51,13 @@ class ApiClient {
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       ...options,
       headers,
-      credentials: 'include', // Include cookies for CSRF token
+      credentials: 'include' // Include cookies for CSRF token
     });
 
     if (!response.ok) {
       const error: ApiError = {
         message: `HTTP error! status: ${response.status}`,
-        status: response.status,
+        status: response.status
       };
 
       try {
@@ -91,21 +88,21 @@ class ApiClient {
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : undefined
     });
   }
 
   async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : undefined
     });
   }
 
   async patch<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : undefined
     });
   }
 
@@ -123,16 +120,16 @@ export const authApi = {
   },
 
   async login(email: string, password: string) {
-    return apiClient.post<{ success: boolean; token: string; user: User }>(
-      '/auth/login',
-      { email, password }
-    );
+    return apiClient.post<{ success: boolean; token: string; user: User }>('/auth/login', {
+      email,
+      password
+    });
   },
 
   async logout() {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
-  },
+  }
 };
 
 export interface User {
@@ -159,7 +156,7 @@ export const adminApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.plan) queryParams.append('plan', params.plan);
     if (params?.active_only) queryParams.append('active_only', 'true');
-    
+
     return apiClient.get<{
       success: boolean;
       data: {
@@ -189,16 +186,13 @@ export const adminApi = {
   },
 
   async suspendUser(userId: string, reason?: string) {
-    return apiClient.post<{ success: boolean; data: any }>(
-      `/admin/users/${userId}/suspend`,
-      { reason }
-    );
+    return apiClient.post<{ success: boolean; data: any }>(`/admin/users/${userId}/suspend`, {
+      reason
+    });
   },
 
   async reactivateUser(userId: string) {
-    return apiClient.post<{ success: boolean; data: any }>(
-      `/admin/users/${userId}/reactivate`
-    );
+    return apiClient.post<{ success: boolean; data: any }>(`/admin/users/${userId}/reactivate`);
   },
 
   async updateUserPlan(userId: string, plan: string) {
@@ -221,11 +215,14 @@ export const adminApi = {
     }>(`/admin/feature-flags${query}`);
   },
 
-  async updateFeatureFlag(flagKey: string, updates: {
-    is_enabled?: boolean;
-    flag_value?: any;
-    description?: string;
-  }) {
+  async updateFeatureFlag(
+    flagKey: string,
+    updates: {
+      is_enabled?: boolean;
+      flag_value?: any;
+      description?: string;
+    }
+  ) {
     return apiClient.put<{
       success: boolean;
       data: { flag: any; message: string };
@@ -286,6 +283,5 @@ export const adminApi = {
         timestamp: string;
       };
     }>('/monitoring/metrics');
-  },
+  }
 };
-

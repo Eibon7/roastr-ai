@@ -6,6 +6,7 @@
 ## ✅ Completado
 
 ### API Client Actualizado
+
 - ✅ Manejo de CSRF tokens (cookies + headers)
 - ✅ Credentials incluidos para cookies
 - ✅ Métodos de admin API agregados
@@ -42,4 +43,3 @@
 - Los endpoints del backend están bien documentados en `src/routes/admin.js`
 - CSRF protection está activo, el token se obtiene de cookies
 - Todas las páginas tienen mocks funcionales que deben reemplazarse
-

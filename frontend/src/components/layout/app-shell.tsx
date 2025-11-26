@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -31,18 +31,18 @@ const navItems: NavItem[] = [
   {
     title: 'Inicio',
     href: '/app',
-    icon: Home,
+    icon: Home
   },
   {
     title: 'Cuentas',
     href: '/app/accounts',
-    icon: Users,
+    icon: Users
   },
   {
     title: 'Configuración',
     href: '/app/settings',
-    icon: Settings,
-  },
+    icon: Settings
+  }
 ];
 
 export function AppShell({ children }: AppShellProps) {
@@ -133,9 +133,7 @@ export function AppShell({ children }: AppShellProps) {
                 <Shield className="h-6 w-6 text-primary" />
                 <span className="ml-2 text-lg font-semibold">Roastr.ai</span>
               </div>
-              <ScrollArea className="flex-1 py-4">
-                {mobileMenuContent}
-              </ScrollArea>
+              <ScrollArea className="flex-1 py-4">{mobileMenuContent}</ScrollArea>
             </SheetContent>
           </Sheet>
         </div>
@@ -151,26 +149,24 @@ export function AppShell({ children }: AppShellProps) {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {user?.name || 'Usuario'}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user?.email || 'user@example.com'}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/app/settings">Configuración</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
-                  Cerrar Sesión
-                </DropdownMenuItem>
-              </DropdownMenuContent>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user?.name || 'Usuario'}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email || 'user@example.com'}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/app/settings">Configuración</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
+                Cerrar Sesión
+              </DropdownMenuItem>
+            </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </header>
@@ -182,4 +178,3 @@ export function AppShell({ children }: AppShellProps) {
     </div>
   );
 }
-

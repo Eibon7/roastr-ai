@@ -416,6 +416,7 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Test Engineer**
 
 **Admin Panel (Epic #1037):**
+
 - Configuración de planes disponible en `/admin/config/plans` (FrontendDev, Issue #1040)
 
 ## Related Nodes

@@ -33,4 +33,3 @@ describe('AuthLayout', () => {
     expect(screen.getByText('Roastr.ai')).toBeInTheDocument();
   });
 });
-

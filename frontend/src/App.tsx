@@ -41,8 +41,14 @@ function App() {
                   <AppShell>
                     <Routes>
                       <Route index element={<AppHomePage />} />
-                      <Route path="accounts" element={<div className="p-8">Accounts Page (Coming Soon)</div>} />
-                      <Route path="settings" element={<div className="p-8">Settings Page (Coming Soon)</div>} />
+                      <Route
+                        path="accounts"
+                        element={<div className="p-8">Accounts Page (Coming Soon)</div>}
+                      />
+                      <Route
+                        path="settings"
+                        element={<div className="p-8">Settings Page (Coming Soon)</div>}
+                      />
                     </Routes>
                   </AppShell>
                 </AuthGuard>
@@ -62,7 +68,10 @@ function App() {
                       <Route path="config/plans" element={<PlansPage />} />
                       <Route path="config/feature-flags" element={<FeatureFlagsPage />} />
                       <Route path="config/tones" element={<TonesPage />} />
-                      <Route path="logs" element={<div className="p-8">Logs Page (Coming Soon)</div>} />
+                      <Route
+                        path="logs"
+                        element={<div className="p-8">Logs Page (Coming Soon)</div>}
+                      />
                     </Routes>
                   </AdminShell>
                 </AdminGuard>

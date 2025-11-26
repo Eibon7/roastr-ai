@@ -9,7 +9,7 @@ vi.mock('@/lib/auth-context', () => {
   const actual = vi.importActual('@/lib/auth-context');
   return {
     ...actual,
-    useAuth: vi.fn(),
+    useAuth: vi.fn()
   };
 });
 
@@ -22,7 +22,7 @@ describe('AuthGuard', () => {
   it('redirects to login when user is not authenticated', () => {
     (useAuth as any).mockReturnValue({
       isAuthenticated: false,
-      loading: false,
+      loading: false
     });
 
     render(
@@ -40,7 +40,7 @@ describe('AuthGuard', () => {
   it('renders children when user is authenticated', () => {
     (useAuth as any).mockReturnValue({
       isAuthenticated: true,
-      loading: false,
+      loading: false
     });
 
     render(
@@ -57,7 +57,7 @@ describe('AuthGuard', () => {
   it('shows loading state while checking authentication', () => {
     (useAuth as any).mockReturnValue({
       isAuthenticated: false,
-      loading: true,
+      loading: true
     });
 
     render(
@@ -71,4 +71,3 @@ describe('AuthGuard', () => {
     expect(screen.getByText('Cargando...')).toBeInTheDocument();
   });
 });
-

@@ -46,9 +46,7 @@ export default function LoginPage() {
       <Card>
         <CardHeader>
           <CardTitle>Iniciar Sesión</CardTitle>
-          <CardDescription>
-            Ingresa tu email y contraseña para acceder a tu cuenta
-          </CardDescription>
+          <CardDescription>Ingresa tu email y contraseña para acceder a tu cuenta</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -99,4 +97,3 @@ export default function LoginPage() {
     </AuthLayout>
   );
 }
-

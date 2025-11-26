@@ -8,7 +8,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,9 +27,18 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 import { adminApi } from '@/lib/api';
 
 interface Tone {
@@ -57,7 +66,7 @@ export default function TonesPage() {
     descriptionEn: '',
     intensity: 3,
     example: '',
-    status: 'active' as 'active' | 'inactive',
+    status: 'active' as 'active' | 'inactive'
   });
 
   React.useEffect(() => {
@@ -68,7 +77,7 @@ export default function TonesPage() {
     setLoading(true);
     try {
       const response = await adminApi.getTones();
-      
+
       if (response.success && response.data) {
         // Transform backend data to frontend format
         const transformedTones: Tone[] = response.data.map((tone: any) => ({
@@ -78,14 +87,14 @@ export default function TonesPage() {
           descriptionEn: tone.descriptionEn || tone.description_en || '',
           intensity: tone.intensity || 3,
           example: tone.example || '',
-          status: tone.status || (tone.active !== false ? 'active' : 'inactive'),
+          status: tone.status || (tone.active !== false ? 'active' : 'inactive')
         }));
-        
+
         let filtered = transformedTones;
-        
+
         if (searchQuery) {
           filtered = filtered.filter(
-            tone =>
+            (tone) =>
               tone.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
               tone.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
               tone.example.toLowerCase().includes(searchQuery.toLowerCase())
@@ -104,7 +113,7 @@ export default function TonesPage() {
 
   const handleDelete = async () => {
     if (!selectedTone) return;
-    
+
     try {
       // Note: Tones are typically not deleted, just disabled
       // This is a placeholder - actual implementation depends on backend
@@ -126,7 +135,7 @@ export default function TonesPage() {
       descriptionEn: tone.descriptionEn,
       intensity: tone.intensity,
       example: tone.example,
-      status: tone.status,
+      status: tone.status
     });
     setEditDialogOpen(true);
   };
@@ -143,9 +152,9 @@ export default function TonesPage() {
         descriptionEn: formData.descriptionEn,
         intensity: formData.intensity,
         example: formData.example,
-        active: formData.status === 'active',
+        active: formData.status === 'active'
       });
-      
+
       // Reload tones to get fresh data
       await loadTones();
       setEditDialogOpen(false);
@@ -156,7 +165,7 @@ export default function TonesPage() {
         descriptionEn: '',
         intensity: 3,
         example: '',
-        status: 'active',
+        status: 'active'
       });
     } catch (error: any) {
       console.error('Failed to update tone:', error);
@@ -172,7 +181,7 @@ export default function TonesPage() {
       descriptionEn: '',
       intensity: 3,
       example: '',
-      status: 'active',
+      status: 'active'
     });
     setAddDialogOpen(true);
   };
@@ -182,7 +191,9 @@ export default function TonesPage() {
       // Note: Creating tones typically requires database migration
       // This is a placeholder for future dynamic tone management
       console.log('Create tone:', formData);
-      alert('Tone creation requires database migration. Tones are currently managed in code (src/config/tones.js).');
+      alert(
+        'Tone creation requires database migration. Tones are currently managed in code (src/config/tones.js).'
+      );
       setAddDialogOpen(false);
       setFormData({
         name: '',
@@ -190,7 +201,7 @@ export default function TonesPage() {
         descriptionEn: '',
         intensity: 3,
         example: '',
-        status: 'active',
+        status: 'active'
       });
     } catch (error: any) {
       console.error('Failed to create tone:', error);
@@ -198,11 +209,12 @@ export default function TonesPage() {
     }
   };
 
-  const filteredTones = tones.filter(tone =>
-    !searchQuery ||
-    tone.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tone.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tone.example.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTones = tones.filter(
+    (tone) =>
+      !searchQuery ||
+      tone.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tone.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tone.example.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -210,9 +222,7 @@ export default function TonesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Gestión de Tonos</h1>
-          <p className="text-muted-foreground">
-            Gestiona los tonos disponibles para los roasts
-          </p>
+          <p className="text-muted-foreground">Gestiona los tonos disponibles para los roasts</p>
         </div>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
@@ -238,9 +248,9 @@ export default function TonesPage() {
         <CardHeader>
           <CardTitle>Nota Importante</CardTitle>
           <CardDescription>
-            Los tonos están definidos en código (src/config/tones.js) como constantes.
-            Esta página muestra la configuración actual para referencia.
-            Las modificaciones requieren cambios en el código fuente.
+            Los tonos están definidos en código (src/config/tones.js) como constantes. Esta página
+            muestra la configuración actual para referencia. Las modificaciones requieren cambios en
+            el código fuente.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -341,7 +351,10 @@ export default function TonesPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -354,7 +367,8 @@ export default function TonesPage() {
           <DialogHeader>
             <DialogTitle>Editar Tono</DialogTitle>
             <DialogDescription>
-              Actualiza la información del tono. Nota: Los cambios en código requieren actualización del backend.
+              Actualiza la información del tono. Nota: Los cambios en código requieren actualización
+              del backend.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -386,7 +400,9 @@ export default function TonesPage() {
               <Label htmlFor="edit-intensity">Intensidad (1-5) *</Label>
               <Select
                 value={formData.intensity.toString()}
-                onValueChange={(value) => setFormData({ ...formData, intensity: parseInt(value, 10) })}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, intensity: parseInt(value, 10) })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -460,7 +476,9 @@ export default function TonesPage() {
               <Label htmlFor="add-intensity">Intensidad (1-5) *</Label>
               <Select
                 value={formData.intensity.toString()}
-                onValueChange={(value) => setFormData({ ...formData, intensity: parseInt(value, 10) })}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, intensity: parseInt(value, 10) })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />

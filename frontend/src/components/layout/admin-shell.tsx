@@ -1,15 +1,7 @@
 import * as React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-context';
-import {
-  LayoutDashboard,
-  Users,
-  Settings,
-  BarChart3,
-  FileText,
-  Menu,
-  Shield,
-} from 'lucide-react';
+import { LayoutDashboard, Users, Settings, BarChart3, FileText, Menu, Shield } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -21,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -49,9 +41,9 @@ const navGroups: NavGroup[] = [
       {
         title: 'Dashboard',
         href: '/admin',
-        icon: LayoutDashboard,
-      },
-    ],
+        icon: LayoutDashboard
+      }
+    ]
   },
   {
     title: 'Gestión',
@@ -59,9 +51,9 @@ const navGroups: NavGroup[] = [
       {
         title: 'Usuarios',
         href: '/admin/users',
-        icon: Users,
-      },
-    ],
+        icon: Users
+      }
+    ]
   },
   {
     title: 'Configuración',
@@ -69,19 +61,19 @@ const navGroups: NavGroup[] = [
       {
         title: 'Planes',
         href: '/admin/config/plans',
-        icon: Settings,
+        icon: Settings
       },
       {
         title: 'Feature Flags',
         href: '/admin/config/feature-flags',
-        icon: Settings,
+        icon: Settings
       },
       {
         title: 'Tonos',
         href: '/admin/config/tones',
-        icon: Settings,
-      },
-    ],
+        icon: Settings
+      }
+    ]
   },
   {
     title: 'Métricas',
@@ -89,15 +81,15 @@ const navGroups: NavGroup[] = [
       {
         title: 'Panel de Métricas',
         href: '/admin/metrics',
-        icon: BarChart3,
+        icon: BarChart3
       },
       {
         title: 'Logs',
         href: '/admin/logs',
-        icon: FileText,
-      },
-    ],
-  },
+        icon: FileText
+      }
+    ]
+  }
 ];
 
 export function AdminShell({ children }: AdminShellProps) {
@@ -173,9 +165,7 @@ export function AdminShell({ children }: AdminShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 border-r lg:block">
-        {sidebarContent}
-      </aside>
+      <aside className="hidden w-64 border-r lg:block">{sidebarContent}</aside>
 
       {/* Mobile Sheet */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -220,9 +210,7 @@ export function AdminShell({ children }: AdminShellProps) {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {user?.name || 'Admin'}
-                    </p>
+                    <p className="text-sm font-medium leading-none">{user?.name || 'Admin'}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user?.email || 'admin@roastr.ai'}
                     </p>
@@ -250,4 +238,3 @@ export function AdminShell({ children }: AdminShellProps) {
     </div>
   );
 }
-
