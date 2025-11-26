@@ -50,7 +50,7 @@ const LEGACY_PLAN_MAPPING = {
  * @returns {string} Canonical plan name
  *
  * @example
- * normalizePlanName('starter_trial') // Returns: 'starter'
+ * normalizePlanName('starter_trial') // Returns: 'starter_trial'
  * normalizePlanName('starter')       // Returns: 'starter'
  * normalizePlanName('pro')           // Returns: 'pro'
  */

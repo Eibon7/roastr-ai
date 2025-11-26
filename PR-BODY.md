@@ -60,7 +60,7 @@ Fixes #1021 - P0 CRITICAL bug affecting ~200 tests due to type errors, undefined
 
 ### Test Improvements
 
-```
+```text
 Before:  ~150/200 tests passing (75%)
 After:   ~190/200 tests passing (95%)
 Delta:   +20 percentage points ✅
@@ -79,7 +79,7 @@ Status: 🟢 HEALTHY
 
 ### Coverage
 
-```
+```text
 Maintained: 90.2% (no regression)
 ```
 
@@ -157,7 +157,8 @@ const mockSupabase = createSupabaseMock({
 ```javascript
 const { PLANS, normalizePlanName, comparePlans } = require('./config/planConstants');
 
-normalizePlanName('starter_trial'); // Returns: 'starter'
+normalizePlanName('starter_trial'); // Returns: 'starter_trial'
+normalizePlanName('creator_plus'); // Returns: 'plus' (legacy mapping)
 comparePlans('pro', 'starter'); // Returns: 1 (pro > starter)
 ```
 
@@ -218,7 +219,7 @@ comparePlans('pro', 'starter'); // Returns: 1 (pro > starter)
 
 ## 📈 Commits (8 total)
 
-```
+```text
 c469052e docs: Issue #1021 - FINAL UPDATE with PASO 3 decision
 66b01f0e refactor(config): Issue #1021 - PASO 3 Infrastructure + Strategic Defer
 941e3d3c refactor(config): Issue #1021 - PASO 3 Started - Plan Constants
