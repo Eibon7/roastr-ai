@@ -25,6 +25,7 @@
 #### 1.1. Verificar Epic ACs ✅
 
 **Acciones:**
+
 - [ ] Revisar Epic #1037 en GitHub
 - [ ] Verificar que todas las features están implementadas:
   - [x] Todas las rutas de admin funcionando
@@ -42,6 +43,7 @@
 #### 1.2. Resolver Comentarios CodeRabbit
 
 **Acciones:**
+
 - [ ] Revisar PR #1076 para comentarios no resueltos
 - [ ] Verificar que docstrings ya están agregados (se hizo anteriormente)
 - [ ] Resolver cualquier comentario pendiente
@@ -58,10 +60,12 @@
 **Problema:** 15 violaciones por "missing_coverage_data"
 
 **Causa:** No hay `coverage-summary.json` en el worktree porque:
+
 - Tests del frontend no están escritos aún
 - No se ha ejecutado `npm run test:coverage` en el frontend
 
 **Solución:** Se resolverá automáticamente cuando:
+
 1. Escribamos tests unitarios (FASE 3)
 2. Ejecutemos `npm run test:coverage` en frontend
 3. El archivo `coverage/coverage-summary.json` se genere
@@ -168,6 +172,7 @@ Antes de marcar PR como "ready to merge":
 ## 🎯 Estrategia de Ejecución
 
 **Orden propuesto:**
+
 1. ✅ Epic ACs (5 min)
 2. ✅ CodeRabbit comments (30 min)
 3. ⏸️ Tests unitarios (2-3 horas)
@@ -183,6 +188,7 @@ Antes de marcar PR como "ready to merge":
 ### Coverage Integrity
 
 Las violaciones de GDD Coverage Integrity son **esperadas** en este momento porque:
+
 - El frontend es nuevo y no tiene tests aún
 - No hay `coverage-summary.json` generado
 - Una vez que escribamos tests y generemos coverage, las violaciones se resolverán automáticamente
@@ -204,4 +210,3 @@ El setup de Playwright ya está configurado. Solo necesitamos escribir los tests
 ## 🚀 Siguiente Paso
 
 **Inmediato:** Verificar y marcar Epic ACs en GitHub.
-

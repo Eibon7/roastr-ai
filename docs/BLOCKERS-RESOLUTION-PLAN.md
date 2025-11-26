@@ -11,11 +11,13 @@
 ### 1. ❌ Test Coverage: 0% (Requerido: ≥90%)
 
 **Problema:**
+
 - Frontend tiene solo 3 tests unitarios
 - Falta `@vitest/coverage-v8` para generar coverage
 - No hay tests para componentes admin
 
 **Solución:**
+
 1. Instalar `@vitest/coverage-v8`
 2. Crear tests para:
    - Páginas admin (Users, Metrics, Feature Flags, Plans, Tones)
@@ -31,6 +33,7 @@
 
 **Problema:**
 Epic #1037 tiene 6 ACs sin marcar:
+
 - [ ] Todas las rutas de admin funcionando
 - [ ] CRUD completo de usuarios
 - [ ] Gestión de feature flags, planes, tonos
@@ -39,6 +42,7 @@ Epic #1037 tiene 6 ACs sin marcar:
 - [ ] 100% responsive
 
 **Solución:**
+
 1. Verificar manualmente cada AC
 2. Probar en navegador cada funcionalidad
 3. Marcar checkboxes en Epic #1037
@@ -54,6 +58,7 @@ Epic #1037 tiene 6 ACs sin marcar:
 Hay 4 comentarios de CodeRabbit que deben resolverse
 
 **Solución:**
+
 1. Revisar comentarios en PR #1076
 2. Resolver cada uno
 3. Responder a CodeRabbit
@@ -65,11 +70,13 @@ Hay 4 comentarios de CodeRabbit que deben resolverse
 ### 4. ❌ E2E Tests Faltantes
 
 **Problema:**
+
 - Infraestructura Playwright lista
 - 0 tests E2E escritos
 
 **Solución:**
 Crear tests E2E para:
+
 - Admin login flow
 - User CRUD operations
 - Feature flag toggles
@@ -82,10 +89,12 @@ Crear tests E2E para:
 ### 5. ❌ GDD Coverage Integrity: 15 Violaciones
 
 **Problema:**
+
 - 15/15 nodos sin datos de cobertura
 - GDD validation falla
 
 **Solución:**
+
 1. Ejecutar `npm test --coverage` en backend
 2. Ejecutar `npm run test:coverage` en frontend
 3. Ejecutar `node scripts/auto-repair-gdd.js --auto-fix`
@@ -98,16 +107,19 @@ Crear tests E2E para:
 ## 📋 Plan de Acción Priorizado
 
 ### Fase 1: Quick Wins (1-2 horas)
+
 1. ✅ Instalar `@vitest/coverage-v8` en frontend
 2. ✅ Verificar y marcar Epic ACs
 3. ✅ Resolver GDD coverage violations
 
 ### Fase 2: Tests Críticos (3-4 horas)
+
 1. ✅ Crear tests unitarios para componentes admin
 2. ✅ Aumentar coverage a ≥90%
 3. ✅ Crear tests E2E básicos
 
 ### Fase 3: CodeRabbit (1-2 horas)
+
 1. ✅ Revisar y resolver comentarios
 2. ✅ Responder a CodeRabbit
 
@@ -116,6 +128,7 @@ Crear tests E2E para:
 ## 🎯 Criterios de Éxito
 
 **Antes de merge:**
+
 - ✅ Test coverage ≥90%
 - ✅ Todos los Epic ACs marcados
 - ✅ 0 comentarios CodeRabbit pendientes
@@ -132,5 +145,3 @@ Crear tests E2E para:
 ---
 
 **Status:** 🔴 **BLOQUEADO** - Resolver blockers antes de merge
-
-

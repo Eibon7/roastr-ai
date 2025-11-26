@@ -30,6 +30,7 @@ npm run dev
 4. Serás redirigido automáticamente al Admin Dashboard como usuario admin demo
 
 **Credenciales Demo:**
+
 - Email: `admin@demo.roastr.ai`
 - Rol: Admin
 - Plan: Plus
@@ -37,6 +38,7 @@ npm run dev
 ### Opción 2: Login Normal (Requiere Backend)
 
 Si tienes el backend corriendo:
+
 1. Ve a http://localhost:5173/login
 2. Ingresa tus credenciales reales
 3. Haz clic en "Iniciar Sesión"
@@ -48,11 +50,13 @@ Si tienes el backend corriendo:
 Una vez dentro, podrás ver todas estas pantallas:
 
 ### 1. Admin Dashboard (`/admin/dashboard`)
+
 - Vista principal del admin
 - Cards con métricas
 - Navegación sidebar
 
 ### 2. Gestión de Usuarios (`/admin/users`)
+
 - Tabla completa de usuarios
 - Búsqueda y filtros
 - Acciones: Edit, Delete, Toggle Admin
@@ -61,22 +65,26 @@ Una vez dentro, podrás ver todas estas pantallas:
 **Nota:** Las APIs pueden fallar sin backend, pero la UI está completamente funcional.
 
 ### 3. Feature Flags (`/admin/config/feature-flags`)
+
 - Lista de feature flags
 - Toggle switches interactivos
 - Filtros por categoría
 - Búsqueda
 
 ### 4. Configuración de Planes (`/admin/config/plans`)
+
 - 4 planes (Starter Trial, Starter, Pro, Plus)
 - Edición de límites por plan
 - Guardado individual
 
 ### 5. Gestión de Tonos (`/admin/config/tones`)
+
 - 3 tonos predefinidos
 - Edición de intensidad
 - Ejemplos por tono
 
 ### 6. Panel de Métricas (`/admin/metrics`)
+
 - Dashboard con métricas agregadas
 - Cards con estadísticas
 - Auto-refresh
@@ -86,16 +94,19 @@ Una vez dentro, podrás ver todas estas pantallas:
 ## 🎨 Características Visuales
 
 ### Tema
+
 - ✅ Modo claro/oscuro
 - ✅ Toggle en el header
 - ✅ Persistencia de preferencia
 
 ### Diseño Responsivo
+
 - ✅ Mobile-first
 - ✅ Sidebar colapsable en móvil
 - ✅ Tablas responsivas
 
 ### Componentes UI
+
 - ✅ shadcn/ui components
 - ✅ Iconos de Lucide React
 - ✅ Animaciones suaves
@@ -108,6 +119,7 @@ Una vez dentro, podrás ver todas estas pantallas:
 ### Modo Demo
 
 El modo demo:
+
 - ✅ **NO requiere backend**
 - ✅ Simula un usuario admin en localStorage
 - ✅ Permite navegar por todas las pantallas
@@ -117,6 +129,7 @@ El modo demo:
 ### Token Demo
 
 El modo demo usa un token especial que empieza con `demo-token-`. El sistema detecta este token y:
+
 - ✅ NO intenta verificar con el backend
 - ✅ Carga el usuario desde localStorage
 - ✅ Mantiene la sesión al recargar la página
@@ -148,12 +161,12 @@ localStorage.clear()
 
 ## 🔗 URLs Disponibles
 
-| Ruta | Descripción | Acceso |
-|------|-------------|--------|
-| `/` | Redirige a login | Público |
-| `/login` | Página de login | Público |
-| `/app/*` | Aplicación principal | Requiere auth |
-| `/admin/*` | Admin panel | Requiere admin |
+| Ruta       | Descripción          | Acceso         |
+| ---------- | -------------------- | -------------- |
+| `/`        | Redirige a login     | Público        |
+| `/login`   | Página de login      | Público        |
+| `/app/*`   | Aplicación principal | Requiere auth  |
+| `/admin/*` | Admin panel          | Requiere admin |
 
 ---
 

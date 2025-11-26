@@ -25,7 +25,7 @@ describe('AuthContext', () => {
   // Test component that uses the auth context
   const TestComponent = () => {
     const { user, loading, isAuthenticated, isAdmin } = useAuth();
-    
+
     if (loading) {
       return <div>Loading...</div>;
     }
@@ -59,7 +59,7 @@ describe('AuthContext', () => {
       name: 'Test User',
       is_admin: false
     };
-    
+
     localStorage.setItem('user', JSON.stringify(mockUser));
     localStorage.setItem('auth_token', 'test-token');
 
@@ -87,7 +87,7 @@ describe('AuthContext', () => {
       name: 'Demo User',
       is_admin: true
     };
-    
+
     localStorage.setItem('user', JSON.stringify(mockUser));
     localStorage.setItem('auth_token', 'demo-token-123');
 
@@ -114,7 +114,7 @@ describe('AuthContext', () => {
       name: 'Admin User',
       is_admin: true
     };
-    
+
     localStorage.setItem('user', JSON.stringify(adminUser));
     localStorage.setItem('auth_token', 'demo-token-admin');
 
@@ -223,4 +223,3 @@ describe('AuthContext', () => {
     console.error = originalError;
   });
 });
-

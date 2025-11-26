@@ -73,9 +73,9 @@
 ```typescript
 /**
  * Retrieves a paginated list of users
- * 
+ *
  * Supports filtering by plan, search query, and active status.
- * 
+ *
  * @param params - Query parameters for filtering and pagination
  * @param params.limit - Number of users per page (default: API default)
  * @param params.page - Page number (1-indexed)
@@ -117,5 +117,3 @@ async getUsers(params?: {...}) { ... }
 ---
 
 **Última actualización:** 2025-11-26
-
-

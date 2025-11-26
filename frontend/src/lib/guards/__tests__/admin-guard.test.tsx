@@ -43,7 +43,7 @@ describe('AdminGuard', () => {
       name: 'Admin User',
       is_admin: true
     };
-    
+
     localStorage.setItem('user', JSON.stringify(adminUser));
     localStorage.setItem('auth_token', 'demo-token-admin');
 
@@ -57,9 +57,11 @@ describe('AdminGuard', () => {
       </BrowserRouter>
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Admin Content')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Admin Content')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
   });
 });
-
