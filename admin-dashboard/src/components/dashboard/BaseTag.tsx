@@ -77,7 +77,7 @@ export const BaseTag: React.FC<BaseTagProps> = ({
   const style = {
     borderColor: color,
     backgroundColor: isTransparent ? 'transparent' : color,
-    color: textColor || (isTransparent ? color : '#000'),
+    color: textColor || (isTransparent ? color : '#000')
   };
 
   return (

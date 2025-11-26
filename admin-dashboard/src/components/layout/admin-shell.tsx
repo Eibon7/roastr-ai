@@ -9,7 +9,7 @@ interface AdminShellProps {
 
 /**
  * AdminShell - Layout principal para panel de administración
- * 
+ *
  * Incluye:
  * - Sidebar con navegación (desktop)
  * - Sheet/Drawer móvil (mobile)
@@ -35,21 +35,18 @@ export function AdminShell({ children }: AdminShellProps) {
           <div className="flex h-16 items-center gap-4 px-6">
             {/* Mobile menu */}
             <MobileNav />
-            
+
             {/* Spacer */}
             <div className="flex-1" />
-            
+
             {/* Theme toggle */}
             <ThemeToggle />
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   );
 }
-

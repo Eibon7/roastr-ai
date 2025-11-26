@@ -5,7 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 
 export function ThemeToggle() {
@@ -37,4 +37,3 @@ export function ThemeToggle() {
     </DropdownMenu>
   );
 }
-

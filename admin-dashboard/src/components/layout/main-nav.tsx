@@ -1,12 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  Shield, 
-  CheckCircle, 
-  Users,
-  Settings 
-} from 'lucide-react';
+import { LayoutDashboard, Shield, CheckCircle, Users, Settings } from 'lucide-react';
 
 interface NavItem {
   title: string;
@@ -18,33 +12,33 @@ const navItems: NavItem[] = [
   {
     title: 'Dashboard',
     href: '/dashboard',
-    icon: LayoutDashboard,
+    icon: LayoutDashboard
   },
   {
     title: 'Shield Settings',
     href: '/shield/settings',
-    icon: Shield,
+    icon: Shield
   },
   {
     title: 'Shield Validation',
     href: '/shield/validation',
-    icon: CheckCircle,
+    icon: CheckCircle
   },
   {
     title: 'Workers',
     href: '/admin/workers',
-    icon: Users,
+    icon: Users
   },
   {
     title: 'Settings',
     href: '/settings',
-    icon: Settings,
-  },
+    icon: Settings
+  }
 ];
 
 /**
  * MainNav - Navegación principal del sidebar (desktop)
- * 
+ *
  * Muestra links con iconos y activos según ruta actual
  */
 export function MainNav() {
@@ -75,4 +69,3 @@ export function MainNav() {
     </nav>
   );
 }
-

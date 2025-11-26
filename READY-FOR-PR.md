@@ -41,6 +41,7 @@ ed1b3325 feat(#1033): Configurar shadcn/ui con Tailwind y ThemeProvider
 ## 📝 Issues Completadas
 
 ### ✅ Issue #1033: Configurar shadcn/ui + ThemeProvider
+
 - 7/7 AC completados
 - shadcn/ui + Tailwind CSS v4 configurados
 - ThemeProvider con `next-themes` (claro/oscuro/sistema)
@@ -48,6 +49,7 @@ ed1b3325 feat(#1033): Configurar shadcn/ui con Tailwind y ThemeProvider
 - Commit: `ed1b3325`
 
 ### ✅ Issue #1034: Migrar componentes UI caseros
+
 - 5/5 AC completados
 - Guía de migración completa (`docs/ui-migration-guide.md`)
 - 3 componentes migrados: StatusCard, BaseTag, ActionTag
@@ -55,6 +57,7 @@ ed1b3325 feat(#1033): Configurar shadcn/ui con Tailwind y ThemeProvider
 - Commit: `56763137`
 
 ### ✅ Issue #1035: Limpiar CSS legacy
+
 - 5/5 AC completados
 - 3 archivos de tema eliminados (~450 líneas)
 - Reporte de limpieza (`docs/css-cleanup-report.md`)
@@ -62,6 +65,7 @@ ed1b3325 feat(#1033): Configurar shadcn/ui con Tailwind y ThemeProvider
 - Commit: `1a4087d5`
 
 ### ✅ Issue #1036: Crear layouts
+
 - 6/6 AC completados
 - AdminShell layout completo
 - MainNav (desktop) + MobileNav (drawer móvil)
@@ -69,6 +73,7 @@ ed1b3325 feat(#1033): Configurar shadcn/ui con Tailwind y ThemeProvider
 - Commit: `527f2a50`
 
 ### ✅ Issue #1038: Página /admin/users
+
 - 8/8 AC completados
 - Tabla completa con búsqueda
 - Acciones: Añadir, Editar, Borrar, Impersonar
@@ -239,7 +244,7 @@ Migrar la UI de Roastr.AI Admin Dashboard de Material-UI + styled-components a s
 ## 🔄 Próximos Pasos (Fase 2)
 
 - Migrar 16 componentes restantes
-- Remover dependencias legacy (@mui/*, styled-components)
+- Remover dependencias legacy (@mui/\*, styled-components)
 - Actualizar E2E tests
 - Bundle size analysis
 
@@ -256,6 +261,7 @@ Migrar la UI de Roastr.AI Admin Dashboard de Material-UI + styled-components a s
 ## 📞 Contacto
 
 Si hay preguntas sobre la Epic o el PR:
+
 - **Documentación completa:** Ver `docs/epic-1032-*.md`
 - **Validación:** Ver `docs/epic-1032-validation-report.md`
 - **Issues conocidas:** Documentadas en validation report
@@ -275,4 +281,3 @@ Todos los objetivos cumplidos, documentación excelente, tests pasando.
 **Preparado por:** Claude (Cursor AI Assistant)  
 **Fecha:** 2025-11-26  
 **Hora:** 17:10 PST
-

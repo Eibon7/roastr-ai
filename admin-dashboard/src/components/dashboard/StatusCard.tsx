@@ -10,8 +10,10 @@ interface StatusCardProps {
 }
 
 const statusStyles = {
-  healthy: 'border-green-500/30 hover:border-green-500/60 hover:shadow-[0_0_20px_rgba(80,250,123,0.2)]',
-  warning: 'border-yellow-500/30 hover:border-yellow-500/60 hover:shadow-[0_0_20px_rgba(241,250,140,0.2)]',
+  healthy:
+    'border-green-500/30 hover:border-green-500/60 hover:shadow-[0_0_20px_rgba(80,250,123,0.2)]',
+  warning:
+    'border-yellow-500/30 hover:border-yellow-500/60 hover:shadow-[0_0_20px_rgba(241,250,140,0.2)]',
   critical: 'border-red-500/30 hover:border-red-500/60 hover:shadow-[0_0_20px_rgba(255,85,85,0.2)]'
 };
 
@@ -23,7 +25,7 @@ const valueColors = {
 
 /**
  * StatusCard - Migrado de styled-components a shadcn/ui
- * 
+ *
  * Muestra una métrica con valor, unidad opcional y estado visual
  * Ahora usa Card de shadcn con Tailwind classes
  */
@@ -32,12 +34,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({ label, value, max, unit,
   const displayUnit = unit || (max ? '' : '');
 
   return (
-    <Card 
-      className={cn(
-        'min-w-[200px] h-20 transition-all duration-150',
-        statusStyles[status]
-      )}
-    >
+    <Card className={cn('min-w-[200px] h-20 transition-all duration-150', statusStyles[status])}>
       <CardContent className="flex flex-col items-center justify-center gap-2 p-4 h-full">
         <div className="font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
@@ -47,9 +44,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({ label, value, max, unit,
             {displayValue}
           </div>
           {displayUnit && (
-            <span className="font-mono text-sm text-muted-foreground">
-              {displayUnit}
-            </span>
+            <span className="font-mono text-sm text-muted-foreground">{displayUnit}</span>
           )}
         </div>
       </CardContent>

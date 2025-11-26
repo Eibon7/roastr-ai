@@ -11,12 +11,14 @@ Migrar completamente la UI de Roastr.AI a shadcn/ui eliminando MUI y styled-comp
 ## Estado Actual
 
 **Admin Dashboard** (`admin-dashboard/`):
+
 - Stack actual: Vite + React + Material-UI + styled-components
 - Páginas: GDD Dashboard, Shield Settings, Shield Validation, Workers
 - Componentes custom en `src/components/dashboard/`
 - Tema: Dark Cyber Theme personalizado
 
 **Frontend** (`frontend/`):
+
 - Stack actual: React + CSS custom
 - Mixto de CSS modules y estilos inline
 
@@ -29,6 +31,7 @@ Migrar completamente la UI de Roastr.AI a shadcn/ui eliminando MUI y styled-comp
 **Tiempo estimado:** 4-6h
 
 **Tareas:**
+
 1. Instalar shadcn/ui CLI y dependencias
 2. Configurar Tailwind con `darkMode: "class"`
 3. Crear `components/ui/` estructura
@@ -49,6 +52,7 @@ Migrar completamente la UI de Roastr.AI a shadcn/ui eliminando MUI y styled-comp
 **Tiempo estimado:** 8-10h
 
 **Tareas:**
+
 1. Inventario completo de componentes MUI usados
 2. Instalar componentes shadcn equivalentes:
    - Button → `npx shadcn-ui@latest add button`
@@ -79,6 +83,7 @@ Migrar completamente la UI de Roastr.AI a shadcn/ui eliminando MUI y styled-comp
 **Tiempo estimado:** 4-6h
 
 **Tareas:**
+
 1. Auditar `src/theme/globalStyles.ts` y `darkCyberTheme.ts`
 2. Eliminar imports de MUI theme
 3. Buscar y eliminar styled-components:
@@ -101,6 +106,7 @@ Migrar completamente la UI de Roastr.AI a shadcn/ui eliminando MUI y styled-comp
 **Tiempo estimado:** 6-8h
 
 **Tareas:**
+
 1. Analizar estructura de routing actual
 2. Crear layouts con shadcn:
    - Admin layout: Sidebar + topbar
@@ -127,12 +133,13 @@ Migrar completamente la UI de Roastr.AI a shadcn/ui eliminando MUI y styled-comp
 **Tiempo estimado:** 8-10h
 
 **Tareas:**
+
 1. Generar con MCP Shadcn:
    ```bash
-   /cui Create an admin users table with columns for name, email, user ID, 
-       and status (active/inactive). Include a search bar for filtering by 
-       name or email, and action buttons for add user (opens dialog), 
-       edit user (opens dialog), delete user (with confirmation), 
+   /cui Create an admin users table with columns for name, email, user ID,
+       and status (active/inactive). Include a search bar for filtering by
+       name or email, and action buttons for add user (opens dialog),
+       edit user (opens dialog), delete user (with confirmation),
        and impersonate user.
    ```
 2. Conectar a `/api/admin/users`
@@ -151,26 +158,31 @@ Migrar completamente la UI de Roastr.AI a shadcn/ui eliminando MUI y styled-comp
 ### Por Issue
 
 **#1033 (Setup):**
+
 - Probar theme toggle funciona
 - Verificar CSS variables aplicadas
 - Screenshot claro/oscuro/sistema
 
 **#1034 (Components):**
+
 - Tests unitarios para cada componente migrado
 - Comparación visual antes/después
 - Verificar props mapping correcto
 
 **#1035 (Cleanup):**
+
 - Verificar 0 imports de MUI
 - Verificar 0 styled-components
 - Bundle size comparison
 
 **#1036 (Layouts):**
+
 - Tests de navegación responsive
 - Screenshot mobile/tablet/desktop
 - Verificar theme toggle en layouts
 
 **#1038 (Users Page):**
+
 - Tests E2E completos:
   - CRUD operations
   - Search/filter
@@ -181,6 +193,7 @@ Migrar completamente la UI de Roastr.AI a shadcn/ui eliminando MUI y styled-comp
 ### Suite Completa
 
 Ejecutar al final de cada fase:
+
 ```bash
 cd admin-dashboard
 npm run typecheck
@@ -194,16 +207,19 @@ npm run test:a11y
 ## Checklist de Calidad (Por Issue)
 
 ### Pre-Implementation
+
 - [ ] Leer `docs/patterns/coderabbit-lessons.md`
 - [ ] Crear plan en `docs/plan/issue-{id}.md`
 - [ ] Identificar agentes necesarios
 
 ### During Implementation
+
 - [ ] Commits pequeños y atómicos
 - [ ] No commitear sin tests
 - [ ] Documentar decisiones de diseño
 
 ### Pre-Merge
+
 - [ ] Tests 100% passing
 - [ ] Coverage >=90%
 - [ ] CodeRabbit: 0 comentarios
@@ -227,6 +243,7 @@ npm run test:a11y
 ### Receipts Requeridos
 
 Generar al completar cada issue:
+
 ```
 docs/agents/receipts/epic-1032-{agent}-issue-{id}.md
 ```
@@ -236,6 +253,7 @@ docs/agents/receipts/epic-1032-{agent}-issue-{id}.md
 ## Archivos Clave a Modificar
 
 ### Issue #1033
+
 - `admin-dashboard/package.json` - Añadir shadcn deps
 - `admin-dashboard/tailwind.config.js` - Configurar darkMode
 - `admin-dashboard/src/main.tsx` - Wrap con ThemeProvider
@@ -243,21 +261,25 @@ docs/agents/receipts/epic-1032-{agent}-issue-{id}.md
 - `admin-dashboard/src/components/layout/theme-toggle.tsx` - Nuevo
 
 ### Issue #1034
+
 - Todos los archivos en `src/components/dashboard/` - Migrar
 - `src/components/ui/` - Añadir componentes shadcn
 - `docs/ui-migration-guide.md` - Crear guía
 
 ### Issue #1035
+
 - `src/theme/globalStyles.ts` - Eliminar
 - `src/theme/darkCyberTheme.ts` - Eliminar
 - `src/theme/SnakeEaterThemeProvider.tsx` - Eliminar
 - `src/main.tsx` - Limpiar imports
 
 ### Issue #1036
+
 - `src/components/layout/` - Crear todos
 - Estructura de routing si necesita ajustes
 
 ### Issue #1038
+
 - `src/pages/AdminUsers/` - Crear completo
 - `src/api/adminUsersApi.ts` - Crear API layer
 
@@ -266,6 +288,7 @@ docs/agents/receipts/epic-1032-{agent}-issue-{id}.md
 ## Métricas de Éxito
 
 ### Técnicas
+
 - ✅ 0 imports de @mui/material
 - ✅ 0 imports de @emotion/react
 - ✅ 0 imports de styled-components
@@ -274,12 +297,14 @@ docs/agents/receipts/epic-1032-{agent}-issue-{id}.md
 - ✅ Coverage >=90%
 
 ### Funcionales
+
 - ✅ Tema claro/oscuro/sistema funcionando
 - ✅ 100% responsive
 - ✅ Accesibilidad a11y passing
 - ✅ Performance Lighthouse >90
 
 ### Proceso
+
 - ✅ 0 comentarios CodeRabbit
 - ✅ GDD health >=87
 - ✅ Todos los receipts generados
@@ -290,18 +315,22 @@ docs/agents/receipts/epic-1032-{agent}-issue-{id}.md
 ## Contingencias
 
 ### Si Issue #1033 falla
+
 - **Blocker completo** - No se puede continuar
 - Rollback y debug antes de avanzar
 
 ### Si Issue #1034 toma >10h
+
 - Priorizar solo 3 componentes PoC
 - Dejar resto para iteración 2
 
 ### Si Issue #1035 revela problemas
+
 - No bloquea #1036 ni #1038
 - Puede hacerse en paralelo
 
 ### Si Issue #1038 es muy compleja
+
 - Simplificar a tabla básica primero
 - Añadir features avanzadas después
 
@@ -312,18 +341,23 @@ docs/agents/receipts/epic-1032-{agent}-issue-{id}.md
 ### Shadcn/UI vs MUI - Diferencias Clave
 
 **MUI:**
+
 ```tsx
 import { Button } from '@mui/material';
-<Button variant="contained" color="primary">Click</Button>
+<Button variant="contained" color="primary">
+  Click
+</Button>;
 ```
 
 **Shadcn:**
+
 ```tsx
-import { Button } from "@/components/ui/button"
-<Button variant="default">Click</Button>
+import { Button } from '@/components/ui/button';
+<Button variant="default">Click</Button>;
 ```
 
 **Key changes:**
+
 - Props diferentes (variant names)
 - Import path personalizado (@/components/ui/)
 - Styling con Tailwind classes
@@ -364,13 +398,13 @@ primary: '#00FFA3'
 
 ## Status Tracking
 
-| Issue | Status | Progress | Blockers |
-|-------|--------|----------|----------|
-| #1033 | 🟡 PENDING | 0% | - |
-| #1034 | 🟡 PENDING | 0% | Requiere #1033 |
-| #1035 | 🟡 PENDING | 0% | Requiere #1034 |
-| #1036 | 🟡 PENDING | 0% | Requiere #1033 |
-| #1038 | 🟡 PENDING | 0% | Requiere #1033, #1036 |
+| Issue | Status     | Progress | Blockers              |
+| ----- | ---------- | -------- | --------------------- |
+| #1033 | 🟡 PENDING | 0%       | -                     |
+| #1034 | 🟡 PENDING | 0%       | Requiere #1033        |
+| #1035 | 🟡 PENDING | 0%       | Requiere #1034        |
+| #1036 | 🟡 PENDING | 0%       | Requiere #1033        |
+| #1038 | 🟡 PENDING | 0%       | Requiere #1033, #1036 |
 
 **Actualizar este documento al completar cada issue.**
 
@@ -378,4 +412,3 @@ primary: '#00FFA3'
 
 **Última actualización:** 2025-11-26  
 **Siguiente review:** Al completar Issue #1033
-

@@ -40,6 +40,7 @@ ed1b3325 feat(#1033): Configurar shadcn/ui con Tailwind y ThemeProvider
 - [x] @testing-library/react integrado
 
 **Resultado:**
+
 ```bash
 ✓ tests/components/dashboard/StatusCard.test.tsx (6 tests)
 ✓ tests/components/dashboard/BaseTag.test.tsx (6 tests)
@@ -137,14 +138,16 @@ git status
 ### Dependencias
 
 **Añadidas:**
+
 - tailwindcss, tailwindcss-animate
 - next-themes
 - class-variance-authority, clsx, tailwind-merge
 - lucide-react
-- @radix-ui/* (via shadcn components)
-- vitest, jsdom, @testing-library/* (dev)
+- @radix-ui/\* (via shadcn components)
+- vitest, jsdom, @testing-library/\* (dev)
 
 **Por remover (futuro):**
+
 - @mui/material, @mui/icons-material
 - @emotion/react, @emotion/styled
 - styled-components
@@ -152,6 +155,7 @@ git status
 ### Componentes shadcn/ui
 
 **Instalados:** 10 componentes
+
 1. button
 2. dropdown-menu
 3. card
@@ -171,6 +175,7 @@ git status
 
 **Descripción:** `npm run build` falla con 40+ errores en componentes no migrados  
 **Archivos afectados:**
+
 - `DependencyGraph.tsx` (accede a `theme.colors`, `theme.spacing`, etc.)
 - Otros 5 componentes dashboard no migrados
 
@@ -211,6 +216,7 @@ git status
 ### Code Quality
 
 ✅ **CUMPLE**:
+
 - Componentes siguen convenciones shadcn
 - TypeScript types correctos
 - Props documentadas con JSDoc
@@ -219,6 +225,7 @@ git status
 ### Documentation
 
 ✅ **CUMPLE EXCELENTE**:
+
 - 5 documentos creados
 - Guías paso a paso
 - Mapeos completos MUI → shadcn
@@ -262,6 +269,7 @@ Aunque `npm run build` falla actualmente, esto NO bloquea el merge por las sigui
 **Opción recomendada:** Merge a rama de desarrollo (no directamente a main)
 
 Esto permite:
+
 - Testing integrado con resto del sistema
 - Validación en entorno de staging
 - Ajustes menores si necesarios
@@ -304,4 +312,3 @@ Esto permite:
 **Validación ejecutada por:** Claude (Cursor AI Assistant)  
 **Fecha:** 2025-11-26  
 **Hora:** 17:08 PST
-

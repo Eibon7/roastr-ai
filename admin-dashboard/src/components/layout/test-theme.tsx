@@ -9,7 +9,7 @@ export function TestTheme() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-8">
       <h1 className="text-4xl font-bold">Roastr.AI Admin Dashboard</h1>
-      
+
       <div className="flex gap-4 items-center">
         <p className="text-muted-foreground">Toggle del tema:</p>
         <ThemeToggle />
@@ -31,15 +31,11 @@ export function TestTheme() {
         </div>
         <div className="p-6 rounded-lg bg-primary text-primary-foreground">
           <h3 className="font-semibold mb-2">Primary Card</h3>
-          <p className="text-sm">
-            Card con colores primarios del tema.
-          </p>
+          <p className="text-sm">Card con colores primarios del tema.</p>
         </div>
         <div className="p-6 rounded-lg bg-secondary text-secondary-foreground">
           <h3 className="font-semibold mb-2">Secondary Card</h3>
-          <p className="text-sm">
-            Card con colores secundarios del tema.
-          </p>
+          <p className="text-sm">Card con colores secundarios del tema.</p>
         </div>
       </div>
 
@@ -49,4 +45,3 @@ export function TestTheme() {
     </div>
   );
 }
-
