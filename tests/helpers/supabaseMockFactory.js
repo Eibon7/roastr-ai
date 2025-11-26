@@ -3,7 +3,7 @@
  *
  * Centralized mock creation for Supabase client following Pattern #11 from coderabbit-lessons.md
  * Issue #1021: Fix database mock issues across ~80 tests
- * 
+ *
  * Usage:
  *   const mockSupabase = createSupabaseMock(tableData, rpcResponses);
  *   jest.mock('../../src/config/supabase', () => ({
@@ -37,9 +37,9 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
       orderBy: null,
       limit: null,
       offset: null
-  };
+    };
 
-  const builder = {
+    const builder = {
       // SELECT operation
       select: jest.fn((columns = '*') => {
         queryState.selectedColumns = columns;
@@ -122,16 +122,16 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
       // TERMINAL operations
       single: jest.fn(() => {
         const data = storage.tables[tableName];
-        
+
         if (!data) {
           return Promise.resolve({ data: null, error: { message: 'Table not found' } });
         }
 
         // Apply filters
         let result = Array.isArray(data) ? data[0] : data;
-        
-        return Promise.resolve({ 
-          data: result || null, 
+
+        return Promise.resolve({
+          data: result || null,
           error: result ? null : { message: 'No rows found' }
         });
       }),
@@ -152,19 +152,23 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
 
         return {
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: { id: 'mock-id', ...insertData }, 
-              error: null 
-            })),
-            then: (resolve) => resolve({ 
-              data: [{ id: 'mock-id', ...insertData }], 
-              error: null 
-            })
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: { id: 'mock-id', ...insertData },
+                error: null
+              })
+            ),
+            then: (resolve) =>
+              resolve({
+                data: [{ id: 'mock-id', ...insertData }],
+                error: null
+              })
           })),
-          then: (resolve) => resolve({ 
-            data: { id: 'mock-id', ...insertData }, 
-            error: null 
-          })
+          then: (resolve) =>
+            resolve({
+              data: { id: 'mock-id', ...insertData },
+              error: null
+            })
         };
       }),
 
@@ -179,18 +183,22 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
         return {
           eq: jest.fn(() => ({
             select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({ 
-                data: { ...updateData }, 
-                error: null 
-              }))
+              single: jest.fn(() =>
+                Promise.resolve({
+                  data: { ...updateData },
+                  error: null
+                })
+              )
             })),
             then: (resolve) => resolve({ data: { ...updateData }, error: null })
           })),
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ 
-              data: { ...updateData }, 
-              error: null 
-            }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: { ...updateData },
+                error: null
+              })
+            )
           }))
         };
       }),
@@ -199,9 +207,9 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
       delete: jest.fn(() => ({
         eq: jest.fn(() => Promise.resolve({ data: null, error: null }))
       }))
-  };
+    };
 
-  return builder;
+    return builder;
   };
 
   /**
@@ -214,7 +222,7 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
     // RPC operations
     rpc: jest.fn((functionName, params) => {
       const response = storage.rpc[functionName];
-      
+
       if (response !== undefined) {
         // Return configured response
         if (typeof response === 'function') {
@@ -229,23 +237,31 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
 
     // Auth operations
     auth: {
-      signInWithPassword: jest.fn(() => Promise.resolve({
-        data: { user: { id: 'mock-user-id', email: 'test@example.com' } },
-        error: null
-      })),
-      signUp: jest.fn(() => Promise.resolve({
-        data: { user: { id: 'mock-user-id', email: 'test@example.com' } },
-        error: null
-      })),
+      signInWithPassword: jest.fn(() =>
+        Promise.resolve({
+          data: { user: { id: 'mock-user-id', email: 'test@example.com' } },
+          error: null
+        })
+      ),
+      signUp: jest.fn(() =>
+        Promise.resolve({
+          data: { user: { id: 'mock-user-id', email: 'test@example.com' } },
+          error: null
+        })
+      ),
       signOut: jest.fn(() => Promise.resolve({ error: null })),
-      getUser: jest.fn(() => Promise.resolve({
-        data: { user: { id: 'mock-user-id', email: 'test@example.com' } },
-        error: null
-      })),
-      updateUser: jest.fn(() => Promise.resolve({
-        data: { user: { id: 'mock-user-id' } },
-        error: null
-      }))
+      getUser: jest.fn(() =>
+        Promise.resolve({
+          data: { user: { id: 'mock-user-id', email: 'test@example.com' } },
+          error: null
+        })
+      ),
+      updateUser: jest.fn(() =>
+        Promise.resolve({
+          data: { user: { id: 'mock-user-id' } },
+          error: null
+        })
+      )
     },
 
     // Storage operations
@@ -293,25 +309,31 @@ function createDefaultSupabaseMock() {
   return createSupabaseMock(
     {
       // Common tables with default data
-      organizations: [{ 
-        id: 'org-123', 
-        name: 'Test Org', 
-        plan: 'pro',
-        status: 'active'
-      }],
-      user_subscriptions: [{ 
-        id: 'sub-123',
-        organization_id: 'org-123',
-        plan: 'pro', 
-        status: 'active' 
-      }],
-      integration_configs: [{
-        id: 'config-123',
-        organization_id: 'org-123',
-        platform: 'twitter',
-        enabled: true,
-        config: { monitored_videos: [] }
-      }]
+      organizations: [
+        {
+          id: 'org-123',
+          name: 'Test Org',
+          plan: 'pro',
+          status: 'active'
+        }
+      ],
+      user_subscriptions: [
+        {
+          id: 'sub-123',
+          organization_id: 'org-123',
+          plan: 'pro',
+          status: 'active'
+        }
+      ],
+      integration_configs: [
+        {
+          id: 'config-123',
+          organization_id: 'org-123',
+          platform: 'twitter',
+          enabled: true,
+          config: { monitored_videos: [] }
+        }
+      ]
     },
     {
       // Common RPC functions

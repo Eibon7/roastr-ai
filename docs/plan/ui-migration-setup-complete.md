@@ -20,30 +20,32 @@ Se ha completado todo el setup necesario para la migración UI a shadcn/ui:
 
 ### Issues y Planning
 
-| Archivo | Descripción |
-|---------|-------------|
-| `docs/plan/ui-migration-github-issues.md` | Documento detallado con todas las 36 issues |
+| Archivo                                    | Descripción                                    |
+| ------------------------------------------ | ---------------------------------------------- |
+| `docs/plan/ui-migration-github-issues.md`  | Documento detallado con todas las 36 issues    |
 | `docs/plan/ui-migration-issues-summary.md` | Resumen ejecutivo con organización por sprints |
 
 ### Reglas y Configuración
 
-| Archivo | Descripción |
-|---------|-------------|
-| `.cursor/rules/shadcn-ui-migration.mdc` | **Reglas completas** con comandos MCP, workflows, ejemplos |
-| `docs/SHADCN-QUICK-REFERENCE.md` | **Quick reference** para consulta rápida durante desarrollo |
-| `CLAUDE.md` | Actualizado con referencias a shadcn-studio MCP |
+| Archivo                                 | Descripción                                                 |
+| --------------------------------------- | ----------------------------------------------------------- |
+| `.cursor/rules/shadcn-ui-migration.mdc` | **Reglas completas** con comandos MCP, workflows, ejemplos  |
+| `docs/SHADCN-QUICK-REFERENCE.md`        | **Quick reference** para consulta rápida durante desarrollo |
+| `CLAUDE.md`                             | Actualizado con referencias a shadcn-studio MCP             |
 
 ---
 
 ## 🎯 Issues Creadas en GitHub
 
 ### Epic 1: Migración UI → shadcn (#1032)
+
 - #1033 - Configurar shadcn/ui con Tailwind y ThemeProvider
 - #1034 - Migrar componentes UI caseros a shadcn/ui
 - #1035 - Limpiar CSS legacy
 - #1036 - Crear estructura de layouts
 
 ### Epic 2: Admin Panel (#1037)
+
 - #1038 - Implementar página de usuarios (/admin/users)
 - #1039 - Implementar gestión de feature flags
 - #1040 - Implementar configuración de planes y límites
@@ -51,32 +53,38 @@ Se ha completado todo el setup necesario para la migración UI a shadcn/ui:
 - #1042 - Implementar panel de métricas
 
 ### Epic 3: User App Home (#1043)
+
 - #1044 - Implementar widgets de análisis
 - #1045 - Implementar bloque de redes disponibles
 - #1046 - Implementar tabla de cuentas conectadas
 
 ### Epic 4: User App — Accounts (#1047)
+
 - #1048 - Implementar header y widgets de detalle de cuenta
 - #1049 - Implementar dialog de settings de cuenta
 - #1050 - Implementar tabla de roasts de la cuenta
 - #1051 - Implementar acordeón de Shield
 
 ### Epic 5: User App — Settings (#1052)
+
 - #1053 - Implementar navegación por tabs en Settings
 - #1054 - Implementar tab de Cuenta
 - #1055 - Implementar tab de Ajustes
 - #1056 - Implementar tab de Billing
 
 ### Epic 6: Auth (#1057)
+
 - #1058 - Implementar página de login
 - #1059 - Implementar capa de cliente API y auth provider
 
 ### Epic 7: Feature Flags & Configuración (#1060)
+
 - #1061 - Conectar feature flags a contexto global
 - #1062 - Implementar lógica de visibilidad por plan
 - #1063 - Implementar guards de rutas
 
 ### Epic 8: Métricas (#1064)
+
 - #1065 - Implementar endpoint de métricas agregadas (backend)
 - #1066 - Implementar endpoint de uso actual (backend)
 - #1067 - Implementar formateo de métricas y números en UI
@@ -91,6 +99,7 @@ https://github.com/Eibon7/roastr-ai/issues?q=is%3Aissue+is%3Aopen+created%3A2025
 ### `/cui` - Create UI (90% de casos)
 
 **Template básico:**
+
 ```bash
 /cui Create a [componente] with [elementos], [features], and [interacciones]
 ```
@@ -99,7 +108,7 @@ https://github.com/Eibon7/roastr-ai/issues?q=is%3Aissue+is%3Aopen+created%3A2025
 
 ```bash
 # Issue #1038 - Admin Users
-/cui Create an admin users table with name, email, status columns, 
+/cui Create an admin users table with name, email, status columns,
     search bar, and action buttons for add, edit, delete, impersonate
 
 # Issue #1044 - User Widgets
@@ -112,13 +121,14 @@ https://github.com/Eibon7/roastr-ai/issues?q=is%3Aissue+is%3Aopen+created%3A2025
 /cui Create a metrics dashboard with cards for totals, averages, and costs
 
 # Issue #1046 - Accounts Table
-/cui Create a clickable accounts table with social network, handle, status, 
+/cui Create a clickable accounts table with social network, handle, status,
     and stats columns
 ```
 
 ### `/rui` - Refine UI
 
 Para ajustes a código ya generado:
+
 ```bash
 /rui Add pagination to the table
 /rui Make the form validation stricter
@@ -128,6 +138,7 @@ Para ajustes a código ya generado:
 ### `/iui` - Inspire UI (Pro only)
 
 Para diseños únicos y creativos:
+
 ```bash
 /iui Create an innovative toxicity indicator
 /iui Design a unique roast preview card
@@ -142,10 +153,12 @@ Para convertir diseños completos de Figma (requiere Figma MCP).
 ## 📅 Plan de Implementación
 
 ### Sprint 1: Fundamentos (2 semanas)
+
 **Issues:** #1033, #1034, #1035, #1036, #1058, #1059  
 **Goal:** Base técnica lista (shadcn + layouts + auth)
 
 **Orden sugerido:**
+
 1. #1033 - ThemeProvider (bloquea todo)
 2. #1034 - Migrar componentes
 3. #1059 - Capa API (paralelo)
@@ -154,18 +167,22 @@ Para convertir diseños completos de Figma (requiere Figma MCP).
 6. #1058 - Login
 
 ### Sprint 2: Admin Panel (2-3 semanas)
+
 **Issues:** #1038, #1039, #1040, #1041, #1042  
 **Goal:** Panel de administración completo
 
 ### Sprint 3: User App Home + Infra (2 semanas)
+
 **Issues:** #1044, #1045, #1046, #1061, #1062, #1063, #1065, #1066, #1067  
 **Goal:** Home de usuario + feature flags + endpoints
 
 ### Sprint 4: User App Accounts (2 semanas)
+
 **Issues:** #1048, #1049, #1050, #1051  
 **Goal:** Detalle de cuenta y roasts
 
 ### Sprint 5: User App Settings (1-2 semanas)
+
 **Issues:** #1053, #1054, #1055, #1056  
 **Goal:** Configuración de usuario
 
@@ -176,12 +193,14 @@ Para convertir diseños completos de Figma (requiere Figma MCP).
 ## 🎯 Workflow Recomendado por Issue
 
 ### 1. Planning
+
 - [ ] Abrir issue en GitHub
 - [ ] Leer Acceptance Criteria
 - [ ] Consultar `.cursor/rules/shadcn-ui-migration.mdc` o `docs/SHADCN-QUICK-REFERENCE.md`
 - [ ] Identificar comando MCP apropiado (99% de veces será `/cui`)
 
 ### 2. Implementación
+
 ```bash
 # 1. Generar código base con MCP
 /cui [prompt específico según issue]
@@ -209,6 +228,7 @@ npm test -- [archivo-test]
 ```
 
 ### 3. Pull Request
+
 - [ ] Documentar comando MCP usado
 - [ ] Documentar customizaciones hechas
 - [ ] Screenshots de evidencia visual
@@ -222,12 +242,12 @@ npm test -- [archivo-test]
 
 ### Documentación del Proyecto
 
-| Documento | Uso |
-|-----------|-----|
-| `.cursor/rules/shadcn-ui-migration.mdc` | **Reglas completas** - Leer antes de empezar |
-| `docs/SHADCN-QUICK-REFERENCE.md` | **Quick reference** - Tener abierto durante desarrollo |
-| `docs/plan/ui-migration-github-issues.md` | **Issues detalladas** - Referencia de AC |
-| `CLAUDE.md` | **Overview general** - Política de MCP |
+| Documento                                 | Uso                                                    |
+| ----------------------------------------- | ------------------------------------------------------ |
+| `.cursor/rules/shadcn-ui-migration.mdc`   | **Reglas completas** - Leer antes de empezar           |
+| `docs/SHADCN-QUICK-REFERENCE.md`          | **Quick reference** - Tener abierto durante desarrollo |
+| `docs/plan/ui-migration-github-issues.md` | **Issues detalladas** - Referencia de AC               |
+| `CLAUDE.md`                               | **Overview general** - Política de MCP                 |
 
 ### Secciones Clave en las Reglas
 
@@ -266,6 +286,7 @@ Antes de empezar el Sprint 1:
 ### Para empezar HOY:
 
 1. **Leer documentación:**
+
    ```bash
    # En Cursor, abrir:
    .cursor/rules/shadcn-ui-migration.mdc
@@ -273,6 +294,7 @@ Antes de empezar el Sprint 1:
    ```
 
 2. **Verificar MCP configurado:**
+
    ```bash
    # En Cursor chat:
    /mcp list
@@ -287,7 +309,7 @@ Antes de empezar el Sprint 1:
 
 4. **Comando sugerido:**
    ```bash
-   /cui Configure shadcn/ui with Tailwind and create a ThemeProvider 
+   /cui Configure shadcn/ui with Tailwind and create a ThemeProvider
        supporting light, dark, and system modes with system as default
    ```
 
@@ -307,6 +329,7 @@ Antes de empezar el Sprint 1:
 ## 💡 Tips Finales
 
 ### DO ✅
+
 - Usar `/cui` para casi todo
 - Seguir workflows documentados
 - Probar en claro/oscuro/sistema SIEMPRE
@@ -314,6 +337,7 @@ Antes de empezar el Sprint 1:
 - Documentar comandos MCP usados en PRs
 
 ### DON'T ❌
+
 - NO crear componentes desde cero si shadcn lo provee
 - NO modificar componentes shadcn innecesariamente
 - NO saltarse tests
@@ -321,6 +345,7 @@ Antes de empezar el Sprint 1:
 - NO hardcodear colores
 
 ### Cuando tengas dudas:
+
 1. Consultar `docs/SHADCN-QUICK-REFERENCE.md`
 2. Revisar ejemplos en `.cursor/rules/shadcn-ui-migration.mdc`
 3. Buscar issues similares ya implementadas
@@ -350,4 +375,3 @@ Al finalizar la migración:
 **Estimación:** 10-12 semanas
 
 ¡Vamos a hacer una UI increíble! 🚀
-

@@ -278,14 +278,15 @@ tests/                   # unit/, integration/, helpers/
 
 **Comandos disponibles:**
 
-| Comando | Uso | Casos |
-|---------|-----|-------|
-| `/cui` | Customizar desde block existente | 90% de casos - tablas, forms, dashboards |
-| `/iui` | Generar UI inspirada (Pro only) | Diseños únicos y creativos |
-| `/rui` | Refinar block existente | Ajustes y tweaks |
-| `/ftc` | Instalar desde Figma | Landing pages completas |
+| Comando | Uso                              | Casos                                    |
+| ------- | -------------------------------- | ---------------------------------------- |
+| `/cui`  | Customizar desde block existente | 90% de casos - tablas, forms, dashboards |
+| `/iui`  | Generar UI inspirada (Pro only)  | Diseños únicos y creativos               |
+| `/rui`  | Refinar block existente          | Ajustes y tweaks                         |
+| `/ftc`  | Instalar desde Figma             | Landing pages completas                  |
 
 **Workflow recomendado:**
+
 1. Leer issue y AC
 2. Elegir comando MCP apropiado (generalmente `/cui`)
 3. Generar código base con MCP
@@ -294,6 +295,7 @@ tests/                   # unit/, integration/, helpers/
 6. Tests + evidencia visual
 
 **Ejemplos:**
+
 ```bash
 # Admin users table (Issue #1038)
 /cui Create an admin users table with name, email, status, search, and actions
