@@ -1,3 +1,10 @@
+/**
+ * Main App Component
+ * 
+ * Root component of the Roastr.ai frontend application.
+ * Sets up routing, theme, authentication, and all global providers.
+ */
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/lib/theme-provider';
 import { AuthProvider } from '@/lib/auth-context';
@@ -21,6 +28,16 @@ import TonesPage from '@/pages/admin/config/tones';
 import MetricsPage from '@/pages/admin/metrics';
 import AppHomePage from '@/pages/app/home';
 
+/**
+ * App Component
+ * 
+ * Main application entry point with:
+ * - Theme provider (light/dark/system)
+ * - Authentication context
+ * - React Router setup
+ * - Protected routes with guards
+ * - Toast notifications
+ */
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="roastr-theme">

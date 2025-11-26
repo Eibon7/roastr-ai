@@ -2,18 +2,40 @@ import * as React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authApi, type User, type ApiError } from './api';
 
+/**
+ * Authentication context type definition
+ * 
+ * Provides authentication state and methods throughout the application.
+ */
 interface AuthContextType {
+  /** Current authenticated user or null if not authenticated */
   user: User | null;
+  /** Whether authentication state is being verified */
   loading: boolean;
+  /** Whether a user is currently authenticated */
   isAuthenticated: boolean;
+  /** Whether the current user has admin privileges */
   isAdmin: boolean;
+  /** Login function */
   login: (email: string, password: string) => Promise<void>;
+  /** Logout function */
   logout: () => Promise<void>;
+  /** Refresh user data from server */
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * AuthProvider Component
+ * 
+ * Provides authentication context to the entire application.
+ * Manages user session state, handles authentication verification,
+ * and supports demo mode for development/testing without backend.
+ * 
+ * @param props - Component props
+ * @param props.children - Child components that will have access to auth context
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,7 +45,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        // Si es un token demo, no intentar verificar con backend
+        const token = localStorage.getItem('auth_token');
+        if (token && token.startsWith('demo-token-')) {
+          setLoading(false);
+          return;
+        }
       } catch {
         localStorage.removeItem('user');
       }
@@ -31,9 +60,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     verifyAuth();
   }, []);
 
+  /**
+   * Verifies authentication status with the backend
+   * 
+   * Checks if there's a valid auth token and verifies it with the server.
+   * Supports demo mode by detecting demo tokens and skipping backend verification.
+   * Automatically clears invalid tokens.
+   */
   const verifyAuth = async () => {
     const token = localStorage.getItem('auth_token');
     if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    // Si es un token demo, no verificar con backend
+    if (token.startsWith('demo-token-')) {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch {
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      }
       setLoading(false);
       return;
     }
@@ -57,6 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  /**
+   * Authenticates a user with email and password
+   * 
+   * @param email - User's email address
+   * @param password - User's password
+   * @throws {Error} If login fails or credentials are invalid
+   */
   const login = async (email: string, password: string) => {
     try {
       const response = await authApi.login(email, password);
@@ -73,11 +131,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  /**
+   * Logs out the current user
+   * 
+   * Clears authentication token and user data from localStorage
+   * and resets the auth state.
+   */
   const logout = async () => {
     authApi.logout();
     setUser(null);
   };
 
+  /**
+   * Refreshes user data from the server
+   * 
+   * Re-verifies authentication and updates user data if token is still valid.
+   */
   const refreshUser = async () => {
     await verifyAuth();
   };
@@ -95,6 +164,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * useAuth Hook
+ * 
+ * Custom hook to access authentication context.
+ * Must be used within an AuthProvider component.
+ * 
+ * @returns Authentication context with user, loading state, and auth methods
+ * @throws {Error} If used outside of AuthProvider
+ * 
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { user, isAuthenticated, login, logout } = useAuth();
+ *   
+ *   if (!isAuthenticated) {
+ *     return <LoginForm onLogin={login} />;
+ *   }
+ *   
+ *   return <Dashboard user={user} onLogout={logout} />;
+ * }
+ * ```
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
