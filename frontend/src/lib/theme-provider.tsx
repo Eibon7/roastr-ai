@@ -1,6 +1,6 @@
 /**
  * Theme Provider Component
- * 
+ *
  * Provides theme context for the entire application using next-themes.
  * Supports light, dark, and system themes with persistence.
  */
@@ -21,10 +21,10 @@ type ThemeProviderProps = {
 
 /**
  * ThemeProvider Component
- * 
+ *
  * Wraps the application with theme context, enabling theme switching
  * and persistence across page reloads.
- * 
+ *
  * @param props - ThemeProvider configuration props
  * @param props.children - Child components
  * @param props.defaultTheme - Initial theme (default: 'system')

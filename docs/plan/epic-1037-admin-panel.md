@@ -337,6 +337,7 @@ npx shadcn-ui@latest add avatar
    - Hereda de AuthGuard
 
 4. **Protected Routes setup**
+
    ```tsx
    <Routes>
      <Route path="/login" element={<LoginPage />} />

@@ -1,6 +1,6 @@
 /**
  * Login Page Component
- * 
+ *
  * Authentication page that allows users to log in with email/password
  * or use demo mode for testing without backend.
  */
@@ -17,7 +17,7 @@ import { Loader2, Sparkles } from 'lucide-react';
 
 /**
  * LoginPage Component
- * 
+ *
  * Provides:
  * - Email/password authentication form
  * - Demo mode for testing without backend
@@ -44,7 +44,7 @@ export default function LoginPage() {
 
   /**
    * Handles form submission for email/password login
-   * 
+   *
    * @param e - Form submission event
    */
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,14 +65,14 @@ export default function LoginPage() {
 
   /**
    * Handles demo mode login (no backend required)
-   * 
+   *
    * Creates a demo admin user in localStorage and redirects to admin dashboard.
    * Useful for testing UI without backend infrastructure.
    */
   const handleDemoLogin = async () => {
     setError(null);
     setLoading(true);
-    
+
     try {
       // Simular login demo sin backend
       const demoUser = {
@@ -81,16 +81,16 @@ export default function LoginPage() {
         name: 'Admin Demo',
         is_admin: true,
         organization_id: 'demo-org-1',
-        plan: 'plus',
+        plan: 'plus'
       };
-      
+
       // Guardar en localStorage como si fuera un login real
       localStorage.setItem('auth_token', 'demo-token-' + Date.now());
       localStorage.setItem('user', JSON.stringify(demoUser));
-      
+
       // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Forzar recarga para que el AuthContext detecte el usuario
       window.location.href = '/admin/dashboard';
     } catch (err) {
@@ -144,7 +144,7 @@ export default function LoginPage() {
                 'Iniciar Sesión'
               )}
             </Button>
-            
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />

@@ -1,6 +1,6 @@
 /**
  * Main App Component
- * 
+ *
  * Root component of the Roastr.ai frontend application.
  * Sets up routing, theme, authentication, and all global providers.
  */
@@ -30,7 +30,7 @@ import AppHomePage from '@/pages/app/home';
 
 /**
  * App Component
- * 
+ *
  * Main application entry point with:
  * - Theme provider (light/dark/system)
  * - Authentication context

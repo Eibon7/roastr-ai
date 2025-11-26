@@ -1,9 +1,9 @@
 /**
  * API Client for Roastr.ai
- * 
+ *
  * Provides a centralized HTTP client with authentication, CSRF protection,
  * and standardized error handling for all API requests.
- * 
+ *
  * Features:
  * - Automatic token injection from localStorage
  * - CSRF token handling from cookies
@@ -27,7 +27,7 @@ export interface ApiError {
 
 /**
  * Centralized HTTP client for Roastr.ai API
- * 
+ *
  * Handles all API communication including authentication headers,
  * CSRF tokens, and error transformation.
  */
@@ -36,7 +36,7 @@ class ApiClient {
 
   /**
    * Creates a new API client instance
-   * 
+   *
    * @param baseURL - Base URL for API requests (defaults to env var or localhost:3000/api)
    */
   constructor(baseURL: string = API_BASE_URL) {
@@ -45,7 +45,7 @@ class ApiClient {
 
   /**
    * Retrieves the authentication token from localStorage
-   * 
+   *
    * @returns The auth token string or null if not found
    */
   private getAuthToken(): string | null {
@@ -54,16 +54,16 @@ class ApiClient {
 
   /**
    * Extracts the CSRF token from document cookies
-   * 
+   *
    * CSRF tokens are required for state-modifying requests (POST, PUT, PATCH, DELETE)
    * to prevent cross-site request forgery attacks.
-   * 
+   *
    * @returns The CSRF token string or null if not found
    */
   private getCsrfToken(): string | null {
     // Extract CSRF token from cookies
     const cookies = document.cookie.split(';');
-    const csrfCookie = cookies.find(cookie => cookie.trim().startsWith('csrf-token='));
+    const csrfCookie = cookies.find((cookie) => cookie.trim().startsWith('csrf-token='));
     if (csrfCookie) {
       return csrfCookie.split('=')[1];
     }
@@ -72,28 +72,25 @@ class ApiClient {
 
   /**
    * Makes an authenticated HTTP request to the API
-   * 
+   *
    * Automatically injects:
    * - Authorization header (Bearer token)
    * - CSRF token header for mutations
    * - Content-Type header
    * - Credentials for cookie-based auth
-   * 
+   *
    * @template T - Expected response type
    * @param endpoint - API endpoint path (relative to baseURL)
    * @param options - Fetch API options (method, body, headers, etc.)
    * @returns Promise resolving to the typed response data
    * @throws {ApiError} If the request fails or returns an error status
    */
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = this.getAuthToken();
     const csrfToken = this.getCsrfToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string>),
+      ...(options.headers as Record<string, string>)
     };
 
     if (token) {
@@ -108,13 +105,13 @@ class ApiClient {
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       ...options,
       headers,
-      credentials: 'include', // Include cookies for CSRF token
+      credentials: 'include' // Include cookies for CSRF token
     });
 
     if (!response.ok) {
       const error: ApiError = {
         message: `HTTP error! status: ${response.status}`,
-        status: response.status,
+        status: response.status
       };
 
       try {
@@ -140,7 +137,7 @@ class ApiClient {
 
   /**
    * Performs a GET request
-   * 
+   *
    * @template T - Expected response type
    * @param endpoint - API endpoint path
    * @returns Promise resolving to the typed response data
@@ -151,7 +148,7 @@ class ApiClient {
 
   /**
    * Performs a POST request
-   * 
+   *
    * @template T - Expected response type
    * @param endpoint - API endpoint path
    * @param data - Optional request body (will be JSON stringified)
@@ -160,13 +157,13 @@ class ApiClient {
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : undefined
     });
   }
 
   /**
    * Performs a PUT request
-   * 
+   *
    * @template T - Expected response type
    * @param endpoint - API endpoint path
    * @param data - Optional request body (will be JSON stringified)
@@ -175,13 +172,13 @@ class ApiClient {
   async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : undefined
     });
   }
 
   /**
    * Performs a PATCH request
-   * 
+   *
    * @template T - Expected response type
    * @param endpoint - API endpoint path
    * @param data - Optional request body (will be JSON stringified)
@@ -190,13 +187,13 @@ class ApiClient {
   async patch<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : undefined
     });
   }
 
   /**
    * Performs a DELETE request
-   * 
+   *
    * @template T - Expected response type
    * @param endpoint - API endpoint path
    * @returns Promise resolving to the typed response data
@@ -213,13 +210,13 @@ export const apiClient = new ApiClient();
 
 /**
  * Authentication API endpoints
- * 
+ *
  * Handles user authentication, session management, and user profile retrieval.
  */
 export const authApi = {
   /**
    * Retrieves the current authenticated user's profile
-   * 
+   *
    * @returns Promise resolving to user data if authenticated
    * @throws {ApiError} If user is not authenticated or token is invalid
    */
@@ -229,29 +226,29 @@ export const authApi = {
 
   /**
    * Authenticates a user with email and password
-   * 
+   *
    * @param email - User's email address
    * @param password - User's password
    * @returns Promise resolving to auth token and user data
    * @throws {ApiError} If credentials are invalid
    */
   async login(email: string, password: string) {
-    return apiClient.post<{ success: boolean; token: string; user: User }>(
-      '/auth/login',
-      { email, password }
-    );
+    return apiClient.post<{ success: boolean; token: string; user: User }>('/auth/login', {
+      email,
+      password
+    });
   },
 
   /**
    * Clears authentication data from localStorage
-   * 
+   *
    * Removes both the auth token and user data. Should be called
    * when user explicitly logs out or session expires.
    */
   async logout() {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
-  },
+  }
 };
 
 /**
@@ -272,22 +269,22 @@ export interface User {
 
 /**
  * Admin API endpoints
- * 
+ *
  * Provides methods for admin-only operations including user management,
  * feature flags, plan configuration, tone management, and system metrics.
- * 
+ *
  * All methods require admin authentication.
  */
 export const adminApi = {
   /**
    * User Management
    */
-  
+
   /**
    * Retrieves a paginated list of users
-   * 
+   *
    * Supports filtering by plan, search query, and active status.
-   * 
+   *
    * @param params - Query parameters for filtering and pagination
    * @param params.limit - Number of users per page (default: API default)
    * @param params.page - Page number (1-indexed)
@@ -309,7 +306,7 @@ export const adminApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.plan) queryParams.append('plan', params.plan);
     if (params?.active_only) queryParams.append('active_only', 'true');
-    
+
     return apiClient.get<{
       success: boolean;
       data: {
@@ -328,7 +325,7 @@ export const adminApi = {
 
   /**
    * Toggles admin status for a user
-   * 
+   *
    * @param userId - ID of the user to modify
    * @returns Promise resolving to updated user data
    */
@@ -340,7 +337,7 @@ export const adminApi = {
 
   /**
    * Toggles active status for a user
-   * 
+   *
    * @param userId - ID of the user to modify
    * @returns Promise resolving to updated user data
    */
@@ -352,33 +349,30 @@ export const adminApi = {
 
   /**
    * Suspends a user account
-   * 
+   *
    * @param userId - ID of the user to suspend
    * @param reason - Optional reason for suspension
    * @returns Promise resolving to suspension confirmation
    */
   async suspendUser(userId: string, reason?: string) {
-    return apiClient.post<{ success: boolean; data: any }>(
-      `/admin/users/${userId}/suspend`,
-      { reason }
-    );
+    return apiClient.post<{ success: boolean; data: any }>(`/admin/users/${userId}/suspend`, {
+      reason
+    });
   },
 
   /**
    * Reactivates a previously suspended user account
-   * 
+   *
    * @param userId - ID of the user to reactivate
    * @returns Promise resolving to reactivation confirmation
    */
   async reactivateUser(userId: string) {
-    return apiClient.post<{ success: boolean; data: any }>(
-      `/admin/users/${userId}/reactivate`
-    );
+    return apiClient.post<{ success: boolean; data: any }>(`/admin/users/${userId}/reactivate`);
   },
 
   /**
    * Updates a user's subscription plan
-   * 
+   *
    * @param userId - ID of the user to update
    * @param plan - New plan identifier (e.g., 'starter', 'pro', 'plus')
    * @returns Promise resolving to updated user data
@@ -393,10 +387,10 @@ export const adminApi = {
   /**
    * Feature Flag Management
    */
-  
+
   /**
    * Retrieves all feature flags, optionally filtered by category
-   * 
+   *
    * @param category - Optional category filter
    * @returns Promise resolving to flags grouped by category
    */
@@ -414,7 +408,7 @@ export const adminApi = {
 
   /**
    * Updates a feature flag's configuration
-   * 
+   *
    * @param flagKey - Unique identifier for the feature flag
    * @param updates - Flag properties to update
    * @param updates.is_enabled - Whether the flag is enabled
@@ -422,11 +416,14 @@ export const adminApi = {
    * @param updates.description - Optional description update
    * @returns Promise resolving to updated flag data
    */
-  async updateFeatureFlag(flagKey: string, updates: {
-    is_enabled?: boolean;
-    flag_value?: any;
-    description?: string;
-  }) {
+  async updateFeatureFlag(
+    flagKey: string,
+    updates: {
+      is_enabled?: boolean;
+      flag_value?: any;
+      description?: string;
+    }
+  ) {
     return apiClient.put<{
       success: boolean;
       data: { flag: any; message: string };
@@ -436,10 +433,10 @@ export const adminApi = {
   /**
    * Plan Configuration
    */
-  
+
   /**
    * Retrieves all subscription plans with user counts
-   * 
+   *
    * @returns Promise resolving to plans data with total user counts per plan
    */
   async getPlans() {
@@ -451,7 +448,7 @@ export const adminApi = {
 
   /**
    * Updates a subscription plan's configuration
-   * 
+   *
    * @param planId - ID of the plan to update
    * @param updates - Plan configuration updates
    * @returns Promise resolving to updated plan data
@@ -466,7 +463,7 @@ export const adminApi = {
 
   /**
    * Retrieves plan limits configuration
-   * 
+   *
    * @param planId - Optional specific plan ID, or undefined for all plans
    * @returns Promise resolving to plan limits data
    */
@@ -480,7 +477,7 @@ export const adminApi = {
 
   /**
    * Updates plan limits for a specific subscription plan
-   * 
+   *
    * @param planId - ID of the plan to update
    * @param updates - Limits configuration to apply
    * @returns Promise resolving to updated limits data
@@ -495,10 +492,10 @@ export const adminApi = {
   /**
    * Tone Management
    */
-  
+
   /**
    * Retrieves all configured roast tones
-   * 
+   *
    * @returns Promise resolving to array of tone configurations
    */
   async getTones() {
@@ -507,7 +504,7 @@ export const adminApi = {
 
   /**
    * Updates a roast tone's configuration
-   * 
+   *
    * @param toneId - ID of the tone to update
    * @param updates - Tone properties to update (intensity, examples, etc.)
    * @returns Promise resolving to updated tone data
@@ -519,10 +516,10 @@ export const adminApi = {
   /**
    * Dashboard and Metrics
    */
-  
+
   /**
    * Retrieves dashboard metrics and statistics
-   * 
+   *
    * @returns Promise resolving to aggregated dashboard data
    */
   async getDashboardMetrics() {
@@ -531,7 +528,7 @@ export const adminApi = {
 
   /**
    * Retrieves system monitoring and performance metrics
-   * 
+   *
    * @returns Promise resolving to monitoring and performance data
    */
   async getMetrics() {
@@ -543,6 +540,5 @@ export const adminApi = {
         timestamp: string;
       };
     }>('/monitoring/metrics');
-  },
+  }
 };
-
