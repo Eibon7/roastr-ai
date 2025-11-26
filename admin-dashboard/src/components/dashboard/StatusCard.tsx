@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface StatusCardProps {
   label: string;
@@ -9,74 +9,50 @@ interface StatusCardProps {
   status: 'healthy' | 'warning' | 'critical';
 }
 
-const statusColors = {
-  healthy: '#50fa7b',
-  warning: '#f1fa8c',
-  critical: '#ff5555'
+const statusStyles = {
+  healthy: 'border-green-500/30 hover:border-green-500/60 hover:shadow-[0_0_20px_rgba(80,250,123,0.2)]',
+  warning: 'border-yellow-500/30 hover:border-yellow-500/60 hover:shadow-[0_0_20px_rgba(241,250,140,0.2)]',
+  critical: 'border-red-500/30 hover:border-red-500/60 hover:shadow-[0_0_20px_rgba(255,85,85,0.2)]'
 };
 
-const CardContainer = styled.div<{ status: 'healthy' | 'warning' | 'critical' }>`
-  position: relative;
-  min-width: 200px;
-  height: 80px;
-  background: #1f1d20;
-  border: 1px solid ${({ status }) => statusColors[status]}30;
-  border-radius: 4px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.15s ease;
+const valueColors = {
+  healthy: 'text-green-500',
+  warning: 'text-yellow-500',
+  critical: 'text-red-500'
+};
 
-  &:hover {
-    border-color: ${({ status }) => statusColors[status]}60;
-    box-shadow: 0 0 20px ${({ status }) => statusColors[status]}20;
-  }
-`;
-
-const Label = styled.div`
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #8a8a8a;
-`;
-
-const ValueContainer = styled.div`
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-`;
-
-const Value = styled.div<{ status: 'healthy' | 'warning' | 'critical' }>`
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 32px;
-  font-weight: 600;
-  color: ${({ status }) => statusColors[status]};
-  line-height: 1;
-`;
-
-const Unit = styled.span`
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  font-weight: 400;
-  color: #8a8a8a;
-`;
-
+/**
+ * StatusCard - Migrado de styled-components a shadcn/ui
+ * 
+ * Muestra una métrica con valor, unidad opcional y estado visual
+ * Ahora usa Card de shadcn con Tailwind classes
+ */
 export const StatusCard: React.FC<StatusCardProps> = ({ label, value, max, unit, status }) => {
   const displayValue = max ? `${value}/${max}` : value.toFixed(1);
   const displayUnit = unit || (max ? '' : '');
 
   return (
-    <CardContainer status={status}>
-      <Label>{label}</Label>
-      <ValueContainer>
-        <Value status={status}>{displayValue}</Value>
-        {displayUnit && <Unit>{displayUnit}</Unit>}
-      </ValueContainer>
-    </CardContainer>
+    <Card 
+      className={cn(
+        'min-w-[200px] h-20 transition-all duration-150',
+        statusStyles[status]
+      )}
+    >
+      <CardContent className="flex flex-col items-center justify-center gap-2 p-4 h-full">
+        <div className="font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </div>
+        <div className="flex items-baseline gap-1">
+          <div className={cn('font-mono text-3xl font-semibold leading-none', valueColors[status])}>
+            {displayValue}
+          </div>
+          {displayUnit && (
+            <span className="font-mono text-sm text-muted-foreground">
+              {displayUnit}
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

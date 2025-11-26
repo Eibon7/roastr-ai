@@ -2,10 +2,12 @@
  * Guardian Agent - Base Tag Component
  * Phase 17: Governance Interface & Alerts
  *
- * Shared tag component for SeverityTag and ActionTag to eliminate duplication
+ * MIGRATED: MUI Chip → shadcn Badge
+ * Eliminado styled-components, ahora usa Badge + Tailwind
  */
 
-import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export interface BaseTagProps {
   /**
@@ -14,7 +16,7 @@ export interface BaseTagProps {
   label: string;
 
   /**
-   * Border and background color
+   * Border and background color (hex format)
    */
   color: string;
 
@@ -42,7 +44,7 @@ export interface BaseTagProps {
 }
 
 /**
- * Base tag component with Snake Eater theme styling
+ * Base tag component migrado a shadcn Badge
  *
  * Used by SeverityTag and ActionTag to provide consistent styling
  * while eliminating code duplication
@@ -71,24 +73,25 @@ export const BaseTag: React.FC<BaseTagProps> = ({
   className = '',
   title
 }) => {
-  const baseStyles: React.CSSProperties = {
-    display: 'inline-block',
-    padding: '4px 12px',
-    fontSize: '11px',
-    fontWeight: 'bold',
-    fontFamily: "'Courier New', monospace",
-    textTransform: 'uppercase',
-    border: `2px solid ${color}`,
+  // Convertir color hex a variables de estilo inline
+  const style = {
+    borderColor: color,
     backgroundColor: isTransparent ? 'transparent' : color,
     color: textColor || (isTransparent ? color : '#000'),
-    borderRadius: '0', // Sharp corners (Snake Eater theme)
-    letterSpacing: '1px'
   };
 
   return (
-    <span style={baseStyles} className={className} title={title || label}>
+    <Badge
+      variant="outline"
+      className={cn(
+        'font-mono text-xs font-bold uppercase tracking-wider border-2 rounded-none px-3 py-1',
+        className
+      )}
+      style={style}
+      title={title || label}
+    >
       {label}
-    </span>
+    </Badge>
   );
 };
 
