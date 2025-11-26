@@ -3,8 +3,6 @@
 **Status:** En progreso  
 **Owner:** FrontendDev  
 **Priority:** High  
-**Worktree:** `/roastr-ai-worktrees/epic-1037`  
-**Branch:** `feature/epic-1037-admin-panel`  
 **Creado:** 2025-11-26
 
 ---
@@ -160,7 +158,6 @@ Vamos a crear un SPA moderno que reemplace progresivamente las páginas estátic
 1. **Inicializar Vite project**
 
    ```bash
-   cd /Users/emiliopostigo/roastr-ai/roastr-ai-worktrees/epic-1037
    npm create vite@latest frontend -- --template react-ts
    cd frontend
    npm install
@@ -999,8 +996,8 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 
 **Shadcn/UI:**
 
-- https://ui.shadcn.com/docs
-- https://ui.shadcn.com/themes
+- [Documentation](https://ui.shadcn.com/docs)
+- [Themes](https://ui.shadcn.com/themes)
 
 **MCP Shadcn-Studio:**
 
@@ -1009,7 +1006,7 @@ Closes #1036, #1038, #1039, #1040, #1041, #1042, #1063
 
 **React Router:**
 
-- https://reactrouter.com/en/main
+- [Documentation](https://reactrouter.com/en/main)
 
 ---
 
@@ -1027,3 +1024,4 @@ Después de cerrar esta Epic:
 **Última actualización:** 2025-11-26  
 **Owner:** FrontendDev  
 **Status:** 🟢 En progreso (FASE 1)
+

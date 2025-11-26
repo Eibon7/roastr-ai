@@ -5,7 +5,7 @@
 ### 1. Iniciar el Servidor de Desarrollo
 
 ```bash
-cd /Users/emiliopostigo/roastr-ai/roastr-ai-worktrees/epic-1037/frontend
+cd frontend
 npm run dev
 ```
 
@@ -231,6 +231,5 @@ Los guards están completamente implementados y funcionarán cuando:
 
 ---
 
-**Última actualización:** 2025-11-26  
-**Worktree:** `/roastr-ai-worktrees/epic-1037`  
-**Branch:** `feature/epic-1037-admin-panel`
+**Última actualización:** 2025-11-26
+
