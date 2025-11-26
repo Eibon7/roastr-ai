@@ -1,7 +1,7 @@
 {
-  "generated_at": "2025-11-25T17:04:08.169Z",
+  "generated_at": "2025-11-26T00:37:50.146Z",
   "status": "HEALTHY",
-  "overall_score": 89.8,
+  "overall_score": 90.2,
   "total_nodes": 15,
   "healthy_count": 13,
   "degraded_count": 2,
@@ -12,7 +12,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 46,
+        "updateFreshness": 44,
         "dependencyIntegrity": 100,
         "coverageEvidence": 50,
         "agentRelevance": 100,
@@ -25,7 +25,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 72,
+        "updateFreshness": 70,
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
@@ -38,7 +38,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 92,
+        "updateFreshness": 90,
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
@@ -51,7 +51,7 @@
       "status": "degraded",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 34,
+        "updateFreshness": 32,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
@@ -64,7 +64,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 72,
+        "updateFreshness": 70,
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
@@ -77,7 +77,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 72,
+        "updateFreshness": 70,
         "dependencyIntegrity": 100,
         "coverageEvidence": 50,
         "agentRelevance": 100,
@@ -90,7 +90,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 62,
+        "updateFreshness": 60,
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
@@ -103,7 +103,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 86,
+        "updateFreshness": 84,
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
@@ -116,7 +116,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 82,
+        "updateFreshness": 80,
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
@@ -129,7 +129,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 96,
+        "updateFreshness": 94,
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
@@ -142,7 +142,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 96,
+        "updateFreshness": 94,
         "dependencyIntegrity": 100,
         "coverageEvidence": 50,
         "agentRelevance": 100,
@@ -155,7 +155,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 96,
+        "updateFreshness": 94,
         "dependencyIntegrity": 100,
         "coverageEvidence": 70,
         "agentRelevance": 100,
@@ -168,7 +168,7 @@
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 72,
+        "updateFreshness": 70,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
@@ -177,11 +177,11 @@
       "issues": []
     },
     "tone": {
-      "score": 94,
+      "score": 100,
       "status": "healthy",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 58,
+        "updateFreshness": 98,
         "dependencyIntegrity": 100,
         "coverageEvidence": 100,
         "agentRelevance": 100,
@@ -194,7 +194,7 @@
       "status": "degraded",
       "breakdown": {
         "syncAccuracy": 100,
-        "updateFreshness": 46,
+        "updateFreshness": 44,
         "dependencyIntegrity": 100,
         "coverageEvidence": 30,
         "agentRelevance": 100,
