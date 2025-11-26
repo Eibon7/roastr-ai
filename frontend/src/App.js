@@ -32,7 +32,8 @@ import AccountsPage from './pages/AccountsPage';
 import Pricing from './pages/Pricing';
 import Shop from './pages/Shop';
 import Analytics from './pages/Analytics';
-import ProtectedRoute, { AdminRoute, AuthRoute, PublicRoute } from './components/ProtectedRoute';
+import { PublicRoute } from './components/ProtectedRoute';
+import { AuthGuard, AdminGuard } from './lib/guards';
 import './App.css';
 
 function App() {
@@ -71,15 +72,16 @@ function App() {
                 <Route path="/auth/callback" element={<AuthCallback />} />
 
                 {/* Protected routes with AppShell - require authentication */}
+                {/* Issue #1063: Use AuthGuard for /app/* routes */}
                 <Route
-                  path="/"
+                  path="/app"
                   element={
-                    <AuthRoute>
+                    <AuthGuard>
                       <AppShell />
-                    </AuthRoute>
+                    </AuthGuard>
                   }
                 >
-                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route index element={<Dashboard />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="compose" element={<Compose />} />
                   <Route path="integrations" element={<Integrations />} />
@@ -94,19 +96,32 @@ function App() {
                   <Route path="style-profile" element={<StyleProfile />} />
                   <Route path="style-profile/generate" element={<StyleProfile />} />
                   <Route path="accounts" element={<AccountsPage />} />
-                  <Route path="profile" element={<Settings />} />{' '}
-                  {/* Profile redirects to Settings for now */}
+                  <Route path="profile" element={<Settings />} />
                   <Route path="shop" element={<Shop />} />
                   <Route path="dashboard/analytics" element={<Analytics />} />
                 </Route>
 
+                {/* Legacy /dashboard route - redirect to /app */}
+                <Route path="/dashboard" element={<Navigate to="/app" replace />} />
+
+                {/* Legacy root route - redirect to /app */}
+                <Route
+                  path="/"
+                  element={
+                    <AuthGuard>
+                      <Navigate to="/app" replace />
+                    </AuthGuard>
+                  }
+                />
+
                 {/* Admin routes with AdminLayout - require admin permissions */}
+                {/* Issue #1063: Use AdminGuard for /admin/* routes */}
                 <Route
                   path="/admin"
                   element={
-                    <AdminRoute>
+                    <AdminGuard>
                       <AdminLayout />
-                    </AdminRoute>
+                    </AdminGuard>
                   }
                 >
                   <Route index element={<Navigate to="/admin/users" replace />} />
@@ -121,7 +136,7 @@ function App() {
                 </Route>
 
                 {/* 404 fallback */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/app" replace />} />
               </Routes>
             </div>
           </SidebarProvider>

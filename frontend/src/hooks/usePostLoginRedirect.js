@@ -4,8 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Hook para manejar la redirección post-login según el rol del usuario
- * - Admin: redirige a /admin (backoffice)
- * - Usuario normal: redirige a /dashboard (Home)
+ * - Admin: redirige a /admin/users (backoffice)
+ * - Usuario normal: redirige a /app (aplicación principal)
+ *
+ * Issue #1058: Actualizado para redirigir según AC de EPIC 1057
  */
 export const usePostLoginRedirect = () => {
   const navigate = useNavigate();
@@ -18,13 +20,13 @@ export const usePostLoginRedirect = () => {
 
     // Solo redirigir si el usuario está autenticado
     if (isAuthenticated && userData) {
-      const target = isAdmin ? '/admin' : '/dashboard';
+      // Issue #1058: Admin → /admin/users, User → /app
+      const target = isAdmin ? '/admin/users' : '/app';
+      // Fix BLOCKER 1: Remove /login guard - authenticated users should always redirect
       if (pathname !== target) {
         if (process.env.NODE_ENV === 'development') {
           console.log(
-            isAdmin
-              ? 'Redirecting admin user to backoffice'
-              : 'Redirecting normal user to dashboard'
+            isAdmin ? 'Redirecting admin user to /admin/users' : 'Redirecting normal user to /app'
           );
         }
         navigate(target, { replace: true });
@@ -34,7 +36,7 @@ export const usePostLoginRedirect = () => {
 
   return {
     isRedirecting: isAuthenticated && !loading && !!userData,
-    targetRoute: isAuthenticated ? (isAdmin ? '/admin' : '/dashboard') : null
+    targetRoute: isAuthenticated ? (isAdmin ? '/admin/users' : '/app') : null
   };
 };
 
