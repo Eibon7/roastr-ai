@@ -68,7 +68,7 @@ const DEFAULT_FEATURES = {
 
 /**
  * Hook to get plan-based features for current user
- * 
+ *
  * @returns {Object} Features object with boolean flags:
  *   - hasShield: Shield moderation available
  *   - hasPersona: Persona configuration available

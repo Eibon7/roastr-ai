@@ -42,89 +42,89 @@ function App() {
         <FeatureFlagsProvider>
           <SidebarProvider>
             <div className="App">
-            <Routes>
-              {/* Public routes - redirect if already authenticated */}
-              <Route
-                path="/login"
-                element={
-                  <PublicRoute>
-                    <Login />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/register"
-                element={
-                  <PublicRoute>
-                    <Register />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/reset-password"
-                element={
-                  <PublicRoute>
-                    <ResetPassword />
-                  </PublicRoute>
-                }
-              />
-              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Routes>
+                {/* Public routes - redirect if already authenticated */}
+                <Route
+                  path="/login"
+                  element={
+                    <PublicRoute>
+                      <Login />
+                    </PublicRoute>
+                  }
+                />
+                <Route
+                  path="/register"
+                  element={
+                    <PublicRoute>
+                      <Register />
+                    </PublicRoute>
+                  }
+                />
+                <Route
+                  path="/reset-password"
+                  element={
+                    <PublicRoute>
+                      <ResetPassword />
+                    </PublicRoute>
+                  }
+                />
+                <Route path="/auth/callback" element={<AuthCallback />} />
 
-              {/* Protected routes with AppShell - require authentication */}
-              <Route
-                path="/"
-                element={
-                  <AuthRoute>
-                    <AppShell />
-                  </AuthRoute>
-                }
-              >
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="compose" element={<Compose />} />
-                <Route path="integrations" element={<Integrations />} />
-                <Route path="integrations/connect" element={<Connect />} />
-                <Route path="configuration" element={<Configuration />} />
-                <Route path="approval" element={<Approval />} />
-                <Route path="billing" element={<Billing />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="logs" element={<Logs />} />
-                <Route path="plans" element={<PlanPicker />} />
-                <Route path="pricing" element={<Pricing />} />
-                <Route path="style-profile" element={<StyleProfile />} />
-                <Route path="style-profile/generate" element={<StyleProfile />} />
-                <Route path="accounts" element={<AccountsPage />} />
-                <Route path="profile" element={<Settings />} />{' '}
-                {/* Profile redirects to Settings for now */}
-                <Route path="shop" element={<Shop />} />
-                <Route path="dashboard/analytics" element={<Analytics />} />
-              </Route>
+                {/* Protected routes with AppShell - require authentication */}
+                <Route
+                  path="/"
+                  element={
+                    <AuthRoute>
+                      <AppShell />
+                    </AuthRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="compose" element={<Compose />} />
+                  <Route path="integrations" element={<Integrations />} />
+                  <Route path="integrations/connect" element={<Connect />} />
+                  <Route path="configuration" element={<Configuration />} />
+                  <Route path="approval" element={<Approval />} />
+                  <Route path="billing" element={<Billing />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="logs" element={<Logs />} />
+                  <Route path="plans" element={<PlanPicker />} />
+                  <Route path="pricing" element={<Pricing />} />
+                  <Route path="style-profile" element={<StyleProfile />} />
+                  <Route path="style-profile/generate" element={<StyleProfile />} />
+                  <Route path="accounts" element={<AccountsPage />} />
+                  <Route path="profile" element={<Settings />} />{' '}
+                  {/* Profile redirects to Settings for now */}
+                  <Route path="shop" element={<Shop />} />
+                  <Route path="dashboard/analytics" element={<Analytics />} />
+                </Route>
 
-              {/* Admin routes with AdminLayout - require admin permissions */}
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminLayout />
-                  </AdminRoute>
-                }
-              >
-                <Route index element={<Navigate to="/admin/users" replace />} />
-                <Route path="users" element={<AdminUsersPage />} />
-                <Route path="users/:userId" element={<UserDetail />} />
-                <Route path="plans" element={<AdminPlans />} />
-                <Route path="roast-tones" element={<RoastTones />} /> {/* Issue #876 */}
-                <Route path="metrics" element={<AdminMetrics />} />
-                <Route path="logs" element={<AdminLogs />} />
-                <Route path="settings" element={<AdminSettings />} />
-                <Route path="system-control" element={<SystemControlPanel />} />
-              </Route>
+                {/* Admin routes with AdminLayout - require admin permissions */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout />
+                    </AdminRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="/admin/users" replace />} />
+                  <Route path="users" element={<AdminUsersPage />} />
+                  <Route path="users/:userId" element={<UserDetail />} />
+                  <Route path="plans" element={<AdminPlans />} />
+                  <Route path="roast-tones" element={<RoastTones />} /> {/* Issue #876 */}
+                  <Route path="metrics" element={<AdminMetrics />} />
+                  <Route path="logs" element={<AdminLogs />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                  <Route path="system-control" element={<SystemControlPanel />} />
+                </Route>
 
-              {/* 404 fallback */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </div>
-        </SidebarProvider>
+                {/* 404 fallback */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </div>
+          </SidebarProvider>
         </FeatureFlagsProvider>
       </AuthProvider>
     </Router>

@@ -79,7 +79,7 @@ export const useFeatureFlag = (flagName) => {
 
 /**
  * FeatureFlagsProvider Component
- * 
+ *
  * Provides feature flags context to all child components.
  * - Fetches flags from backend on mount
  * - Caches flags in memory
@@ -133,10 +133,7 @@ export const FeatureFlagsProvider = ({ children }) => {
             isProduction
           ),
           ENABLE_FACEBOOK_UI: parseDevelopmentFlag(backendFlags.ENABLE_FACEBOOK_UI, isProduction),
-          ENABLE_INSTAGRAM_UI: parseDevelopmentFlag(
-            backendFlags.ENABLE_INSTAGRAM_UI,
-            isProduction
-          )
+          ENABLE_INSTAGRAM_UI: parseDevelopmentFlag(backendFlags.ENABLE_INSTAGRAM_UI, isProduction)
         };
 
         const merged = { ...FALLBACK_FLAGS, ...safeBackendFlags };
