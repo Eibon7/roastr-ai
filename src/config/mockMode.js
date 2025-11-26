@@ -179,12 +179,32 @@ class MockModeManager {
               logger.info('🔍 Mock: Checking for existing comment with queries:', queries);
               logger.info('🔍 Mock: Current storage has', storage.length, 'comments');
 
-              const existing = storage.find(
-                (comment) =>
-                  comment.organization_id === queries.organization_id &&
-                  comment.platform === queries.platform &&
-                  comment.platform_comment_id === queries.platform_comment_id
-              );
+              // Find comment matching all provided filters
+              // If only platform_comment_id is provided, match only by that (production code behavior)
+              // If organization_id or platform are also provided, use them as additional filters
+              const existing = storage.find((comment) => {
+                // Always match platform_comment_id if provided
+                if (
+                  queries.platform_comment_id &&
+                  comment.platform_comment_id !== queries.platform_comment_id
+                ) {
+                  return false;
+                }
+                // Match organization_id if provided
+                if (
+                  queries.organization_id &&
+                  comment.organization_id !== queries.organization_id
+                ) {
+                  return false;
+                }
+                // Match platform if provided
+                if (queries.platform && comment.platform !== queries.platform) {
+                  return false;
+                }
+                // If platform_comment_id was provided, we've already matched it above
+                // If not provided, this filter won't match anything (which is correct)
+                return true;
+              });
 
               logger.info('🔍 Mock: Found existing comment:', !!existing);
 
@@ -195,6 +215,110 @@ class MockModeManager {
                 });
               } else {
                 // Return null data when no comment found (matches real Supabase behavior for .single())
+                return Promise.resolve({
+                  data: null,
+                  error: null
+                });
+              }
+            }
+
+            return Promise.resolve({
+              data: { id: 1, name: 'Mock Data', created_at: new Date().toISOString() },
+              error: null
+            });
+          },
+          maybeSingle: () => {
+            // maybeSingle() is identical to single() but semantically indicates optional result
+            // Make a copy of currentQueries for this specific call to avoid pollution
+            const queries = { ...currentQueries };
+
+            if (table === 'integration_configs') {
+              return Promise.resolve({
+                data: {
+                  id: queries.id || 'mock-config-id',
+                  organization_id: queries.organization_id || 'test-org-dedup',
+                  platform: queries.platform || 'twitter',
+                  enabled: true,
+                  config: { monitor_mentions: true }
+                },
+                error: null
+              });
+            }
+
+            if (table === 'organizations') {
+              return Promise.resolve({
+                data: { id: 'test-org', name: 'Test Organization' },
+                error: null
+              });
+            }
+
+            if (table === 'user_behaviors') {
+              const storage = global.mockUserBehaviorStorage || [];
+              const existing = storage.find(
+                (behavior) =>
+                  behavior.organization_id === queries.organization_id &&
+                  behavior.platform === queries.platform &&
+                  behavior.platform_user_id === queries.platform_user_id
+              );
+
+              if (existing) {
+                return Promise.resolve({
+                  data: existing,
+                  error: null
+                });
+              } else {
+                return Promise.resolve({
+                  data: null,
+                  error: null
+                });
+              }
+            }
+
+            if (table === 'comments') {
+              // Check if comment exists in global storage
+              const storage = global.mockCommentStorage || [];
+              logger.info(
+                '🔍 Mock: maybeSingle() checking for existing comment with queries:',
+                queries
+              );
+              logger.info('🔍 Mock: Current storage has', storage.length, 'comments');
+
+              // Find comment matching all provided filters
+              // If only platform_comment_id is provided, match only by that (production code behavior)
+              // If organization_id or platform are also provided, use them as additional filters
+              const existing = storage.find((comment) => {
+                // Always match platform_comment_id if provided
+                if (
+                  queries.platform_comment_id &&
+                  comment.platform_comment_id !== queries.platform_comment_id
+                ) {
+                  return false;
+                }
+                // Match organization_id if provided
+                if (
+                  queries.organization_id &&
+                  comment.organization_id !== queries.organization_id
+                ) {
+                  return false;
+                }
+                // Match platform if provided
+                if (queries.platform && comment.platform !== queries.platform) {
+                  return false;
+                }
+                // If platform_comment_id was provided, we've already matched it above
+                // If not provided, this filter won't match anything (which is correct)
+                return true;
+              });
+
+              logger.info('🔍 Mock: maybeSingle() found existing comment:', !!existing);
+
+              if (existing) {
+                return Promise.resolve({
+                  data: existing,
+                  error: null
+                });
+              } else {
+                // Return null data when no comment found (matches real Supabase behavior for .maybeSingle())
                 return Promise.resolve({
                   data: null,
                   error: null

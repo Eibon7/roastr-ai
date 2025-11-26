@@ -236,9 +236,37 @@ describe('Ingestor Processing Order Integration Tests', () => {
       const processedOrder = [];
 
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
-        const comment = payload.comment_data;
-        processedOrder.push(comment.platform_comment_id);
-        return [comment];
+        // Handle multiple payload structures that FetchCommentsWorker._processJobInternal creates:
+        // 1. payload.comment_data (test structure)
+        // 2. payload directly with platform_comment_id
+        // 3. payload with comment_id that needs normalization
+        let comment;
+
+        if (payload && payload.comment_data) {
+          // Structure: { comment_data: { platform_comment_id: 'xxx', ... } }
+          comment = payload.comment_data;
+        } else if (payload && (payload.platform_comment_id || payload.comment_id)) {
+          // Structure: { platform_comment_id: 'xxx', ... } or { comment_id: 'xxx', ... }
+          comment = payload;
+        } else {
+          throw new Error(`Invalid payload structure: ${JSON.stringify(payload)}`);
+        }
+
+        // Normalize comment_id -> platform_comment_id if needed
+        const commentId = comment.platform_comment_id || comment.comment_id;
+        if (!commentId) {
+          throw new Error(`No comment ID found in: ${JSON.stringify(comment)}`);
+        }
+
+        processedOrder.push(commentId);
+
+        // Return normalized comment for storeComments
+        return [
+          {
+            ...comment,
+            platform_comment_id: commentId
+          }
+        ];
       };
 
       try {
@@ -577,13 +605,38 @@ describe('Ingestor Processing Order Integration Tests', () => {
       const processedOrder = [];
 
       worker.fetchCommentsFromPlatform = async (platform, config, payload) => {
-        const comment = payload.comment_data;
-        processedOrder.push(comment.platform_comment_id);
+        // Handle multiple payload structures that FetchCommentsWorker._processJobInternal creates:
+        // 1. payload.comment_data (test structure)
+        // 2. payload directly with platform_comment_id
+        // 3. payload with comment_id that needs normalization
+        let comment;
+
+        if (payload && payload.comment_data) {
+          comment = payload.comment_data;
+        } else if (payload && (payload.platform_comment_id || payload.comment_id)) {
+          comment = payload;
+        } else {
+          throw new Error(`Invalid payload structure: ${JSON.stringify(payload)}`);
+        }
+
+        // Normalize comment_id -> platform_comment_id if needed
+        const commentId = comment.platform_comment_id || comment.comment_id;
+        if (!commentId) {
+          throw new Error(`No comment ID found in: ${JSON.stringify(comment)}`);
+        }
+
+        processedOrder.push(commentId);
 
         // Simulate processing time
         await testUtils.sleep(50);
 
-        return [comment];
+        // Return normalized comment for storeComments
+        return [
+          {
+            ...comment,
+            platform_comment_id: commentId
+          }
+        ];
       };
 
       try {
