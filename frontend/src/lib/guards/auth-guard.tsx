@@ -1,6 +1,6 @@
 /**
  * Auth Guard
- * 
+ *
  * Protects routes that require authentication
  * Issue #1063: Route guards reorganization
  */
@@ -11,10 +11,10 @@ import { useAuth } from '../../contexts/AuthContext';
 
 /**
  * AuthGuard Component
- * 
+ *
  * Protects routes that require authentication.
  * Redirects to /login if user is not authenticated.
- * 
+ *
  * @param {Object} props
  * @param {React.ReactNode} props.children - Children to render if authenticated
  * @param {string} props.redirectTo - Redirect path if not authenticated (default: '/login')
@@ -43,4 +43,3 @@ export const AuthGuard = ({ children, redirectTo = '/login' }) => {
 };
 
 export default AuthGuard;
-

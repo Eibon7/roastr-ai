@@ -100,10 +100,7 @@ function App() {
               </Route>
 
               {/* Legacy /dashboard route - redirect to /app */}
-              <Route
-                path="/dashboard"
-                element={<Navigate to="/app" replace />}
-              />
+              <Route path="/dashboard" element={<Navigate to="/app" replace />} />
 
               {/* Legacy root route - redirect to /app */}
               <Route

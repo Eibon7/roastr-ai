@@ -1,6 +1,6 @@
 /**
  * Auth API Module
- * 
+ *
  * Authentication endpoints: login, register, magic link, password reset, etc.
  * Issue #1059: Modular API structure
  */
@@ -139,4 +139,3 @@ export default {
   deleteAccount,
   cancelAccountDeletion
 };
-

@@ -46,6 +46,7 @@ Implementar sistema de autenticación completo con login, capa API y gestión de
 ## Acceptance Criteria
 
 ### Issue #1058: Login Page
+
 - [ ] Ruta `/login` creada (ya existe, verificar)
 - [ ] Formulario con email y password (ya existe)
 - [ ] Botón "Envíame un magic link" (ya existe)
@@ -57,6 +58,7 @@ Implementar sistema de autenticación completo con login, capa API y gestión de
 - [ ] Usar componentes shadcn/ui (PENDIENTE)
 
 ### Issue #1059: API Client Layer
+
 - [ ] Carpeta `/lib/api` creada (PENDIENTE - consolidar)
 - [ ] Clientes API para: Auth, Usuarios, Feature flags, Planes, Tonos, Métricas, Cuentas, Roasts, Shield, Billing (PENDIENTE)
 - [ ] Auth provider global implementado (ya existe, mejorar)
@@ -65,6 +67,7 @@ Implementar sistema de autenticación completo con login, capa API y gestión de
 - [ ] Uso consistente de fetch (ya existe)
 
 ### Issue #1063: Route Guards
+
 - [ ] Guard de autenticación implementado (ya existe, reorganizar)
 - [ ] Guard de admin implementado (ya existe, reorganizar)
 - [ ] Rutas `/admin/*` protegidas con guard de admin (PENDIENTE)
@@ -137,12 +140,14 @@ Implementar sistema de autenticación completo con login, capa API y gestión de
 ### Frontend
 
 **Modificar:**
+
 - `frontend/src/pages/login.jsx` - Redirección según rol
 - `frontend/src/lib/api.js` - Reorganizar a módulos
 - `frontend/src/components/ProtectedRoute.jsx` - Mover a guards
 - `frontend/src/App.js` - Aplicar guards en rutas
 
 **Crear:**
+
 - `frontend/src/lib/api/client.ts` - Cliente base
 - `frontend/src/lib/api/auth.ts` - Endpoints de auth
 - `frontend/src/lib/api/users.ts` - Endpoints de usuarios
@@ -216,4 +221,3 @@ Implementar sistema de autenticación completo con login, capa API y gestión de
 - [ ] GDD actualizado
 - [ ] CodeRabbit = 0 comentarios
 - [ ] Receipts generados
-

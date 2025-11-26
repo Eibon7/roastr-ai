@@ -1,6 +1,6 @@
 /**
  * Roasts API Module
- * 
+ *
  * Roast generation and management endpoints
  * Issue #1059: Modular API structure
  */
@@ -40,4 +40,3 @@ export default {
   publishRoast,
   getRoastHistory
 };
-

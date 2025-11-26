@@ -1,6 +1,6 @@
 /**
  * Tones API Module
- * 
+ *
  * Roast tones configuration endpoints
  * Issue #1059: Modular API structure
  */
@@ -29,4 +29,3 @@ export default {
   getTones,
   updateTone
 };
-

@@ -1,6 +1,6 @@
 /**
  * Accounts API Module
- * 
+ *
  * Account management endpoints
  * Issue #1059: Modular API structure
  */
@@ -28,4 +28,3 @@ export default {
   getAccount,
   updateAccount
 };
-

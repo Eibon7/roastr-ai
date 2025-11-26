@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
  * Hook para manejar la redirección post-login según el rol del usuario
  * - Admin: redirige a /admin/users (backoffice)
  * - Usuario normal: redirige a /app (aplicación principal)
- * 
+ *
  * Issue #1058: Actualizado para redirigir según AC de EPIC 1057
  */
 export const usePostLoginRedirect = () => {
@@ -25,9 +25,7 @@ export const usePostLoginRedirect = () => {
       if (pathname !== target && pathname !== '/login') {
         if (process.env.NODE_ENV === 'development') {
           console.log(
-            isAdmin
-              ? 'Redirecting admin user to /admin/users'
-              : 'Redirecting normal user to /app'
+            isAdmin ? 'Redirecting admin user to /admin/users' : 'Redirecting normal user to /app'
           );
         }
         navigate(target, { replace: true });

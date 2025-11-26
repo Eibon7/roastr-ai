@@ -1,6 +1,6 @@
 /**
  * API Module Index
- * 
+ *
  * Centralized export for all API modules
  * Issue #1059: Modular API structure
  */
@@ -39,4 +39,3 @@ export const { get, post, put, patch, delete: del } = apiClient;
 
 // Default export: main API client
 export default apiClient;
-

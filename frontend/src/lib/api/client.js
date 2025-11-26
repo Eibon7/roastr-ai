@@ -1,9 +1,9 @@
 /**
  * API Client Base
- * 
+ *
  * Centralized HTTP client with automatic token refresh, interceptors,
  * and error handling for 401/403 responses.
- * 
+ *
  * Issue #1059: Base client for modular API structure
  */
 
@@ -315,7 +315,7 @@ class ApiClient {
 
       // Run response interceptors
       for (const interceptor of this.interceptors.response) {
-        responseData = await interceptor(responseData, response) || responseData;
+        responseData = (await interceptor(responseData, response)) || responseData;
       }
 
       return responseData;
@@ -346,7 +346,8 @@ class ApiClient {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return {
         success: true,
-        message: 'Email de confirmación enviado. Revisa tu nueva dirección para confirmar el cambio.',
+        message:
+          'Email de confirmación enviado. Revisa tu nueva dirección para confirmar el cambio.',
         data: { requiresConfirmation: true }
       };
     }
@@ -394,4 +395,3 @@ class ApiClient {
 // Export singleton instance
 export const apiClient = new ApiClient();
 export default apiClient;
-

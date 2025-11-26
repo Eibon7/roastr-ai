@@ -1,6 +1,6 @@
 /**
  * Users API Module
- * 
+ *
  * User management endpoints
  * Issue #1059: Modular API structure
  */
@@ -59,4 +59,3 @@ export default {
   getCreditsStatus,
   getCreditsHistory
 };
-

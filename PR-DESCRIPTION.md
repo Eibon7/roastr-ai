@@ -22,6 +22,7 @@ Implementación completa del sistema de autenticación con login, capa API modul
 - ✅ Hook `usePostLoginRedirect` actualizado
 
 **Archivos:**
+
 - `frontend/src/pages/auth/Login.jsx`
 - `frontend/src/hooks/usePostLoginRedirect.js`
 - `frontend/src/App.js`
@@ -42,10 +43,12 @@ Implementación completa del sistema de autenticación con login, capa API modul
   - `billing.js` - Facturación
 
 **Interceptors:**
+
 - 401 → Logout automático y redirect a `/login`
 - 403 → Redirect a `/app`
 
 **Archivos:**
+
 - `frontend/src/lib/api/client.js` (cliente base)
 - `frontend/src/lib/api/*.js` (10 módulos)
 - `frontend/src/lib/api/index.js` (export centralizado)
@@ -60,6 +63,7 @@ Implementación completa del sistema de autenticación con login, capa API modul
 - ✅ Redirecciones configuradas correctamente
 
 **Archivos:**
+
 - `frontend/src/lib/guards/auth-guard.tsx`
 - `frontend/src/lib/guards/admin-guard.tsx`
 - `frontend/src/lib/guards/index.ts`
@@ -100,6 +104,7 @@ Implementación completa del sistema de autenticación con login, capa API modul
 ## 🎯 Acceptance Criteria
 
 ### Issue #1058
+
 - [x] Ruta `/login` creada
 - [x] Formulario con email y password
 - [x] Botón "Envíame un magic link" (ya existía)
@@ -111,6 +116,7 @@ Implementación completa del sistema de autenticación con login, capa API modul
 - [x] Usar componentes shadcn/ui
 
 ### Issue #1059
+
 - [x] Carpeta `/lib/api` creada
 - [x] Clientes API para: Auth, Usuarios, Feature flags, Planes, Tonos, Métricas, Cuentas, Roasts, Shield, Billing
 - [x] Auth provider global implementado (ya existía)
@@ -119,6 +125,7 @@ Implementación completa del sistema de autenticación con login, capa API modul
 - [x] Uso consistente de fetch
 
 ### Issue #1063
+
 - [x] Guard de autenticación implementado
 - [x] Guard de admin implementado
 - [x] Rutas `/admin/*` protegidas con guard de admin

@@ -1,6 +1,6 @@
 /**
  * Shield API Module
- * 
+ *
  * Shield moderation endpoints
  * Issue #1059: Modular API structure
  */
@@ -39,4 +39,3 @@ export default {
   updateShieldSettings,
   getShieldActions
 };
-

@@ -1,6 +1,6 @@
 /**
  * Metrics API Module
- * 
+ *
  * Analytics and metrics endpoints
  * Issue #1059: Modular API structure
  */
@@ -29,4 +29,3 @@ export default {
   getUserMetrics,
   getAdminMetrics
 };
-

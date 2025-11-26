@@ -1,6 +1,6 @@
 /**
  * Plans API Module
- * 
+ *
  * Subscription plans endpoints
  * Issue #1059: Modular API structure
  */
@@ -37,4 +37,3 @@ export default {
   getCurrentPlan,
   updatePlan
 };
-

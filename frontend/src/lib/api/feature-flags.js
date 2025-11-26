@@ -1,6 +1,6 @@
 /**
  * Feature Flags API Module
- * 
+ *
  * Feature flags management endpoints
  * Issue #1059: Modular API structure
  */
@@ -29,4 +29,3 @@ export default {
   getFeatureFlags,
   updateFeatureFlag
 };
-

@@ -1,6 +1,6 @@
 /**
  * Billing API Module
- * 
+ *
  * Billing and subscription endpoints
  * Issue #1059: Modular API structure
  */
@@ -48,4 +48,3 @@ export default {
   updatePaymentMethod,
   getBillingHistory
 };
-

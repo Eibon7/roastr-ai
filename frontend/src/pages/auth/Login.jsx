@@ -5,7 +5,13 @@ import authService from '../../services/authService';
 import usePostLoginRedirect from '../../hooks/usePostLoginRedirect';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '../../components/ui/card';
 import { Label } from '../../components/ui/label';
 
 const Login = () => {
@@ -204,7 +210,9 @@ const Login = () => {
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800 dark:text-red-200">{error}</h3>
+                      <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                        {error}
+                      </h3>
                       {showRecovery && (
                         <div className="mt-2">
                           <Button
@@ -226,12 +234,7 @@ const Login = () => {
 
               {/* Submit button */}
               <div>
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full"
-                  variant="default"
-                >
+                <Button type="submit" disabled={isLoading} className="w-full" variant="default">
                   {isLoading ? (
                     <div className="flex items-center">
                       <svg

@@ -1,6 +1,6 @@
 /**
  * Admin Guard
- * 
+ *
  * Protects routes that require admin permissions
  * Issue #1063: Route guards reorganization
  */
@@ -11,10 +11,10 @@ import { useAuth } from '../../contexts/AuthContext';
 
 /**
  * AdminGuard Component
- * 
+ *
  * Protects routes that require admin permissions.
  * Redirects to /app if user is not admin, or /login if not authenticated.
- * 
+ *
  * @param {Object} props
  * @param {React.ReactNode} props.children - Children to render if admin
  * @param {string} props.redirectTo - Redirect path if not admin (default: '/app')
@@ -49,4 +49,3 @@ export const AdminGuard = ({ children, redirectTo }) => {
 };
 
 export default AdminGuard;
-
