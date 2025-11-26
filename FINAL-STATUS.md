@@ -212,7 +212,7 @@ Create focused issues:
 
 ## Commits Overview
 
-```
+```text
 238238ea docs(issue-1020): add comprehensive progress update
 7228e6f2 fix(tests): update Polar integration naming from Price to Product
 2ddce43f fix(tests): update plan naming from legacy to current schema
@@ -223,7 +223,7 @@ e2bd6441 fix(auth): standardize error messages to English
 d424aa32 fix(billing): unify plan limits and fix Zod validation
 db2408df docs(issue-1020): add final summary of work completed
 118bebf0 docs(issue-1020): add critical scope analysis
-(+ 1 initial commit)
+(plus 1 initial commit)
 ```
 
 ---

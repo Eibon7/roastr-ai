@@ -1,8 +1,8 @@
 # PR Ready: Issue #1020 - Core Services Test Stabilization
 
 **Status:** ✅ READY FOR REVIEW  
-**Branch:** `feature/issue-1020`  
-**Commits:** 14  
+**Branch:** `feature/issue-1020-clean`  
+**Commits:** 9  
 **Tests Fixed:** ~266 (~21% of total failing tests)
 
 ---
