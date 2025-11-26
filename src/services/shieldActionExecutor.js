@@ -499,7 +499,8 @@ class ShieldActionExecutorService {
           attemptedFallback: fallbackAction,
           reason: 'Both primary and fallback actions failed',
           manualInstructions: this.getManualInstructions(adapter.getPlatform(), action)
-        }
+        },
+        executionTime: Date.now() - startTime // CodeRabbit: Add for observability
       };
 
       // Update metrics for failed fallback
