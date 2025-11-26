@@ -1,0 +1,824 @@
+---
+description: Reglas para migración UI a shadcn/ui y desarrollo frontend de Roastr.AI
+globs:
+alwaysApply: false
+---
+
+# Shadcn/UI Migration & Frontend Development Rules
+
+## 🎯 Context
+Roastr.AI está migrando toda su UI a shadcn/ui para:
+- Consistencia visual y UX mejorada
+- Tema claro/oscuro/sistema (sistema por defecto)
+- Componentes accesibles y testeables
+- Reducción de código custom
+
+**Epic Principal:** #1032 - Migración UI → shadcn/ui
+**Documento de referencia:** `docs/plan/ui-migration-github-issues.md`
+
+---
+
+## 📋 Usage Rule
+
+### Cuándo usar shadcn components
+**SIEMPRE** que se requiera un componente UI:
+- ✅ Usar MCP server de shadcn para instalar componentes
+- ✅ Verificar disponibilidad en shadcn antes de crear custom
+- ✅ Aplicar tema consistente (claro/oscuro/sistema)
+
+### Componentes disponibles
+```
+button, card, dialog, input, table, switch, tabs, accordion, 
+select, dropdown-menu, toast, scroll-area, sheet, checkbox,
+progress, badge, avatar, separator, skeleton, alert, calendar,
+command, popover, radio-group, slider, textarea, tooltip
+```
+
+---
+
+## 🧭 Planning Rule
+
+### Cuando planifiques implementaciones UI relacionadas con shadcn:
+
+1. **Usar MCP server durante planning**
+   ```bash
+   # Listar componentes disponibles
+   /mcp list shadcn-studio
+   
+   # Ver metadata de componentes
+   mcp_shadcn-studio_MCP_get-blocks-metadata
+   ```
+
+2. **Aplicar componentes donde sea aplicable**
+   - ✅ Preferir bloques completos (login page, dashboard, settings)
+   - ✅ Usar componentes individuales para casos específicos
+   - ✅ Mantener consistencia con Design System
+
+3. **Usar bloques completos cuando sea posible**
+   - Login page completo → mejor que armar con componentes individuales
+   - Dashboard layouts → usar templates de shadcn
+   - Forms complejos → usar bloques de formularios
+
+---
+
+## 🎨 Shadcn-Studio MCP Commands
+
+### Comandos disponibles para generación UI:
+
+| Comando | Propósito | Cuándo usar |
+|---------|-----------|-------------|
+| `/cui` | Customize from existing block | Reutilizar estructura de block con contenido custom |
+| `/iui` | Generate new, inspired UI (Pro only) | Diseños creativos y únicos |
+| `/rui` | Refine or edit existing block | Updates o tweaks a blocks existentes |
+| `/ftc` | Install blocks from Figma (requires Figma MCP) | Convertir mockups de Figma a código |
+
+### 1️⃣ Create UI (`/cui`) - RECOMENDADO para la mayoría de casos
+
+**Usar cuando:** Quieres reutilizar la estructura de un block existente con tu propio contenido.
+
+**Ejemplos para Roastr.AI:**
+
+```bash
+# Admin Panel
+/cui Create a users table with search, filters and actions for admin panel
+
+/cui Create a metrics dashboard with cards showing analysis count, roast count, and user stats
+
+/cui Create a feature flags configuration table with toggle switches
+
+/cui Create a plans configuration form with limits and checkboxes
+
+# User App
+/cui Create a hero section for user dashboard showing monthly usage widgets
+
+/cui Create a social accounts table with connection status and stats
+
+/cui Create a settings page with tabs for Account, Preferences, and Billing
+
+/cui Create a roasts table with approve/reject actions
+
+# Auth
+/cui Create a login page with email/password and magic link option
+```
+
+**Workflow `/cui`:**
+1. Describe lo que necesitas en lenguaje natural
+2. MCP encuentra el block más apropiado
+3. Genera código customizado para tu caso
+4. Instala dependencias necesarias
+5. Código listo para usar
+
+**Puedes especificar el block exacto:**
+```bash
+/cui Create a pricing section for Roastr plans using Pricing 3
+```
+
+### 2️⃣ Inspire UI (`/iui`) - Pro Only
+
+**Usar cuando:** Necesitas un diseño completamente nuevo y creativo.
+
+**Ejemplos para Roastr.AI:**
+
+```bash
+/iui Create a unique roast preview card with toxicity indicators
+
+/iui Design an innovative shield status widget with visual threat levels
+
+/iui Create a creative sponsor configuration interface
+```
+
+**⚠️ Nota:** Requiere plan Pro de shadcn-studio.
+
+### 3️⃣ Refine UI (`/rui`)
+
+**Usar cuando:** Necesitas ajustar o mejorar un block ya instalado.
+
+**Ejemplos:**
+
+```bash
+/rui Add a search bar to the users table
+
+/rui Change the metrics cards to show percentage instead of absolute numbers
+
+/rui Add dark mode support to the login page
+
+/rui Make the accounts table responsive for mobile
+```
+
+**Workflow `/rui`:**
+1. Identifica el block a refinar
+2. Describe los cambios necesarios
+3. MCP genera código actualizado
+4. Revisa y aplica cambios
+
+### 4️⃣ Figma to Code (`/ftc`) - Requiere Figma MCP
+
+**Usar cuando:** Ya tienes el diseño completo en Figma usando Pro/Free Blocks.
+
+**Workflow `/ftc`:**
+1. Diseña landing page en Figma usando shadcn-studio blocks
+2. Ejecuta `/ftc` con link o referencia a diseño Figma
+3. MCP identifica automáticamente todos los blocks usados
+4. Instala todos los blocks en tu codebase
+5. Código listo con estructura idéntica a Figma
+
+**Ideal para:**
+- Landing pages completas
+- Marketing pages
+- Páginas con muchos bloques diferentes
+
+**⚠️ Requisitos:**
+- Figma MCP instalado y configurado
+- Diseño en Figma debe usar blocks de shadcn-studio
+
+---
+
+## 🚀 Implementation Rule
+
+### Workflow recomendado para cada issue UI:
+
+#### Paso 1: Analizar requerimientos
+- Leer Acceptance Criteria de la issue
+- Identificar componentes/blocks necesarios
+- Decidir comando MCP apropiado
+
+#### Paso 2: Elegir comando MCP
+
+**Para páginas/secciones completas → `/cui`**
+```bash
+# Ejemplo Issue #1038 (Admin users page)
+/cui Create a users table with name, email, status columns, search bar, 
+     and action buttons for add, edit, delete
+
+# Ejemplo Issue #1044 (User widgets)
+/cui Create usage widgets showing monthly consumption with progress bars
+```
+
+**Para componentes individuales → Componentes shadcn**
+```bash
+# Instalar componente individual
+npx shadcn-ui@latest add button
+npx shadcn-ui@latest add dialog
+```
+
+**Para refinamientos → `/rui`**
+```bash
+# Cuando necesites ajustar algo ya creado
+/rui Add pagination to the users table
+/rui Make the form validation more strict
+```
+
+**Para diseños creativos → `/iui` (Pro only)**
+```bash
+# Cuando necesites algo único
+/iui Create an innovative roast preview with animations
+```
+
+#### Paso 3: Implementar
+
+1. **Ejecutar comando MCP elegido**
+   - Dejar que MCP genere el código base
+   - Revisar código generado
+
+2. **Customizar para Roastr.AI**
+   - Conectar a endpoints reales (`/api/...`)
+   - Añadir lógica de negocio (feature flags, plan visibility)
+   - Aplicar tipos TypeScript si aplica
+
+3. **Verificar tema**
+   - ✅ Probar en modo claro
+   - ✅ Probar en modo oscuro
+   - ✅ Verificar que sistema es default
+
+4. **Hacer responsive**
+   - ✅ Probar en móvil (375px)
+   - ✅ Probar en tablet (768px)
+   - ✅ Probar en desktop (1920px)
+
+#### Paso 4: Testing
+
+- [ ] Rendering en diferentes temas
+- [ ] Interacciones funcionan
+- [ ] Accesibilidad (a11y)
+- [ ] Responsive en todos los breakpoints
+- [ ] Conectado a API correctamente
+
+#### Paso 5: Documentar
+
+- [ ] Comentar decisiones de diseño si aplica
+- [ ] Actualizar checklist de issue
+- [ ] Generar test evidence si es necesario
+
+---
+
+## 🎨 Styling Rules
+
+### DO ✅
+```tsx
+// Usar componentes shadcn directamente
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+
+<Card>
+  <CardHeader>
+    <CardTitle>Análisis este mes</CardTitle>
+  </CardHeader>
+  <CardContent className="flex flex-col gap-4">
+    {/* Tailwind solo para layout */}
+  </CardContent>
+</Card>
+```
+
+### DON'T ❌
+```tsx
+// NO crear componentes custom que shadcn ya provee
+const MyCustomButton = styled.button`...` // ❌
+
+// NO añadir CSS modules para UI
+import styles from './MyCard.module.css' // ❌
+
+// NO hardcodear colores
+<div className="bg-blue-500"> // ❌
+// Usar variables de tema: bg-primary, bg-secondary, etc.
+```
+
+---
+
+## 📁 File Structure Rules
+
+### Organización de componentes
+
+```
+src/
+  components/
+    ui/                    # shadcn components (generados)
+      button.tsx
+      card.tsx
+      dialog.tsx
+      ...
+    layout/                # Layout components
+      admin-shell.tsx
+      app-shell.tsx
+      main-nav.tsx
+      mobile-nav.tsx
+      theme-toggle.tsx
+    admin/                 # Admin-specific components
+      users-table.tsx
+      feature-flags-table.tsx
+      metrics-overview.tsx
+    app/                   # User app components
+      home/
+        usage-widgets.tsx
+        accounts-table.tsx
+      accounts/
+        account-header.tsx
+        roasts-table.tsx
+      settings/
+        persona-settings-form.tsx
+```
+
+---
+
+## 🧪 Testing Rules
+
+### Tests requeridos para componentes UI
+
+1. **Rendering tests**
+   ```tsx
+   test('renders in light mode', () => {
+     render(<Component />, { theme: 'light' })
+     expect(screen.getByRole('button')).toBeInTheDocument()
+   })
+   
+   test('renders in dark mode', () => {
+     render(<Component />, { theme: 'dark' })
+     expect(screen.getByRole('button')).toBeInTheDocument()
+   })
+   ```
+
+2. **Interaction tests**
+   ```tsx
+   test('handles user interaction', async () => {
+     const onSubmit = jest.fn()
+     render(<Form onSubmit={onSubmit} />)
+     
+     await userEvent.click(screen.getByRole('button'))
+     expect(onSubmit).toHaveBeenCalled()
+   })
+   ```
+
+3. **Accessibility tests**
+   - ✅ Verificar roles ARIA
+   - ✅ Verificar labels
+   - ✅ Verificar navegación por teclado
+
+---
+
+## 📱 Responsive Rules
+
+### Breakpoints (Tailwind defaults)
+
+```tsx
+// Mobile first approach
+<div className="
+  w-full              // móvil: full width
+  md:w-1/2            // tablet: 50%
+  lg:w-1/3            // desktop: 33%
+">
+```
+
+### Navigation adaptativa
+
+```tsx
+// Desktop: Sidebar
+// Tablet: Collapsed sidebar
+// Mobile: Sheet/Drawer
+
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+
+<Sheet>
+  <SheetTrigger asChild>
+    <Button variant="ghost" size="icon" className="md:hidden">
+      <MenuIcon />
+    </Button>
+  </SheetTrigger>
+  <SheetContent side="left">
+    <Navigation />
+  </SheetContent>
+</Sheet>
+```
+
+### Tables en móvil
+
+```tsx
+// Opción 1: Scroll horizontal
+<div className="overflow-x-auto">
+  <Table />
+</div>
+
+// Opción 2: Convertir a cards en móvil
+<div className="hidden md:block">
+  <Table />
+</div>
+<div className="md:hidden">
+  <AccountCards />
+</div>
+```
+
+---
+
+## 🔒 Security & Best Practices
+
+### Forms
+
+```tsx
+// ✅ Usar zod para validación
+import { z } from "zod"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+
+const formSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8)
+})
+
+const form = useForm({
+  resolver: zodResolver(formSchema)
+})
+```
+
+### API calls
+
+```tsx
+// ✅ Usar capa API centralizada
+import { api } from "@/lib/api"
+
+// NO hacer fetch directo
+const data = await api.users.list() // ✅
+
+// NO
+const data = await fetch('/api/users') // ❌
+```
+
+---
+
+## 🎭 Theme Configuration
+
+### ThemeProvider setup
+
+```tsx
+// app/layout.tsx
+import { ThemeProvider } from "next-themes"
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="es" suppressHydrationWarning>
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}
+```
+
+### Theme toggle
+
+```tsx
+// components/layout/theme-toggle.tsx
+import { useTheme } from "next-themes"
+import { Button } from "@/components/ui/button"
+import { Moon, Sun, Monitor } from "lucide-react"
+
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+  
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Sun className="rotate-0 scale-100 dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute rotate-90 scale-0 dark:rotate-0 dark:scale-100" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          Claro
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          Oscuro
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          Sistema
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+```
+
+---
+
+## 🚫 Migration Rules - What to REMOVE
+
+### Identificar y eliminar progresivamente:
+
+1. **CSS Modules**
+   ```bash
+   # Buscar archivos a migrar
+   find src -name "*.module.css"
+   ```
+
+2. **Styled Components**
+   ```tsx
+   // ❌ Eliminar
+   const StyledButton = styled.button`...`
+   
+   // ✅ Reemplazar con
+   import { Button } from "@/components/ui/button"
+   ```
+
+3. **Componentes UI custom**
+   ```tsx
+   // ❌ Eliminar cuando ya no se use
+   src/components/common/Button.tsx
+   src/components/common/Card.tsx
+   src/components/common/Modal.tsx
+   ```
+
+4. **Estilos globales duplicados**
+   ```css
+   /* src/globals.css - MANTENER SOLO: */
+   @tailwind base;
+   @tailwind components;
+   @tailwind utilities;
+   
+   /* Variables de shadcn theme */
+   @layer base {
+     :root { /* theme vars */ }
+   }
+   
+   /* ❌ ELIMINAR todo lo demás */
+   ```
+
+---
+
+## 📊 Progress Tracking
+
+### Antes de cerrar una issue:
+
+- [ ] Componente implementado usando comando MCP apropiado (`/cui`, `/rui`, etc.)
+- [ ] Código generado revisado y customizado para Roastr.AI
+- [ ] Conectado a endpoints reales de API
+- [ ] Probado en claro/oscuro/sistema
+- [ ] Responsive en móvil/tablet/desktop
+- [ ] Tests pasando (rendering + interaction + a11y)
+- [ ] No hay estilos custom duplicando shadcn
+- [ ] Capa API usada correctamente
+- [ ] Documentación actualizada si aplica
+- [ ] Screenshots de evidencia (si aplica)
+
+### Command usage tracking
+
+**Documenta qué comando usaste:**
+```markdown
+## Implementation Notes
+
+**Shadcn MCP Command:** `/cui Create a users table...`
+**Block used:** `table-with-actions-02` (si es específico)
+**Customizations:** 
+- Connected to /api/admin/users
+- Added role-based visibility
+- Custom pagination logic
+```
+
+---
+
+## 🔗 References
+
+**Epic Principal:** #1032
+**Issues relacionadas:** #1033, #1034, #1035, #1036
+**Documento:** `docs/plan/ui-migration-github-issues.md`
+**MCP Server:** shadcn-studio
+**Design System:** shadcn/ui + Tailwind CSS
+
+---
+
+## ⚠️ Common Pitfalls
+
+### Evitar:
+
+1. **Mixing patterns**
+   - NO mezclar shadcn + styled-components en mismo componente
+   - NO mezclar CSS modules + Tailwind
+
+2. **Over-customization**
+   - NO modificar componentes shadcn si no es necesario
+   - Preferir variantes nativas
+   - Usar `/rui` para refinamientos en lugar de reescribir
+
+3. **Not using MCP commands**
+   - ❌ NO crear componentes desde cero si existe un block
+   - ✅ SIEMPRE revisar si `/cui` puede generar lo que necesitas
+   - ✅ Usar `/rui` para ajustes en lugar de editar manualmente
+
+4. **Wrong command selection**
+   - ❌ NO usar `/iui` para casos estándar (es Pro y para casos creativos)
+   - ✅ Usar `/cui` para 90% de los casos
+   - ✅ Guardar `/iui` para componentes realmente únicos
+
+5. **Ignoring generated code**
+   - ❌ NO ignorar el código que MCP genera
+   - ✅ Revisar y entender antes de modificar
+   - ✅ Hacer cambios incrementales sobre lo generado
+
+6. **Hardcoding theme values**
+   - Usar variables CSS: `hsl(var(--primary))`
+   - NO usar colores directos: `#3b82f6`
+
+---
+
+## 🎓 Best Practices con MCP Commands
+
+### 1. Iteration workflow
+
+```bash
+# Primera iteración - generar base
+/cui Create a users table with basic columns
+
+# Segunda iteración - refinar
+/rui Add search and filters to the users table
+
+# Tercera iteración - ajustar
+/rui Make the table pagination server-side
+```
+
+### 2. Specificity en prompts
+
+**❌ Vago:**
+```bash
+/cui Create a table
+```
+
+**✅ Específico:**
+```bash
+/cui Create a users table with columns for name, email, plan, status, 
+    a search bar at the top, action buttons for edit/delete, 
+    and pagination at the bottom
+```
+
+### 3. Reusabilidad
+
+- Primero genera con `/cui`
+- Si necesitas el mismo patrón en otro lado, copia y adapta
+- Si necesitas muchas variaciones → considera crear un block custom
+
+### 4. Documentación de decisiones
+
+Siempre documenta en la PR:
+- Qué comando MCP usaste
+- Por qué elegiste ese comando
+- Qué customizaciones hiciste
+- Qué blocks específicos se usaron (si aplica)
+
+---
+
+---
+
+## 🎯 Ejemplos Prácticos por Issue
+
+### Issue #1038 - Admin Users Page
+
+**Comando recomendado:**
+```bash
+/cui Create an admin users table with columns for name, email, user ID, 
+    and status (active/inactive). Include a search bar for filtering by 
+    name or email, and action buttons for add user (opens dialog), 
+    edit user (opens dialog), delete user (with confirmation), 
+    and impersonate user.
+```
+
+**Customizaciones post-generación:**
+- Conectar a `/api/admin/users`
+- Implementar lógica de impersonation
+- Añadir guards de admin-only
+
+---
+
+### Issue #1044 - User Widgets
+
+**Comando recomendado:**
+```bash
+/cui Create two usage widgets side by side. First widget shows 
+    "Análisis este mes" with consumed/available count and a progress bar. 
+    Second widget shows "Roasts este mes" with the same structure. 
+    Both should use card layout and be responsive.
+```
+
+**Customizaciones post-generación:**
+- Conectar a `/api/usage/current`
+- Aplicar colores según % de uso (verde <70%, amarillo 70-90%, rojo >90%)
+- Formatear números con separadores de miles
+
+---
+
+### Issue #1058 - Login Page
+
+**Comando recomendado:**
+```bash
+/cui Create a centered login page with email and password inputs, 
+    a primary login button, and a secondary "Send magic link" button. 
+    Include Roastr.AI branding and support for light/dark mode.
+```
+
+**Customizaciones post-generación:**
+- Conectar a `/api/auth/login`
+- Implementar redirección según `isAdmin`
+- Añadir validación con zod
+- Toast para errores
+
+---
+
+### Issue #1042 - Admin Metrics
+
+**Opción 1 - Generar todo junto:**
+```bash
+/cui Create an admin metrics dashboard with cards showing: 
+    - Total análisis and roasts
+    - Average per user
+    - User distribution by plan (Starter/Pro/Plus percentages)
+    - Feature usage (persona/sponsor/tone percentages)
+    - Cost metrics (avg cost and tokens per analysis/roast)
+    Use a grid layout with cards, each showing a title, value, and subtitle.
+```
+
+**Opción 2 - Generar por partes:**
+```bash
+# Primero las cards de totales
+/cui Create metric cards for total analysis, roasts, and active users
+
+# Luego las tablas
+/cui Create a table showing user distribution by plan with percentages
+
+# Luego refinar
+/rui Add cost metrics section with average cost and tokens
+```
+
+---
+
+### Issue #1046 - Accounts Table
+
+**Comando recomendado:**
+```bash
+/cui Create a clickable accounts table with columns for social network icon, 
+    handle, status (active/paused/inactive with badges), roasts count, 
+    and shield interceptions count. Each row should be fully clickable 
+    to navigate to account detail. Include responsive design for mobile.
+```
+
+**Customizaciones post-generación:**
+- Conectar a `/api/accounts`
+- Implementar navegación a `/app/accounts/[id]`
+- Convertir a cards en móvil
+- Iconos por red social (lucide-react o custom)
+
+---
+
+### Issue #1049 - Account Settings Dialog
+
+**Comando recomendado:**
+```bash
+/cui Create a settings dialog with: a toggle for auto-approve roasts, 
+    a legal disclaimer text, a dropdown for Shield level, 
+    a dropdown for default tone with preview, and a toggle to pause account. 
+    Include save and cancel buttons.
+```
+
+**Customizaciones post-generación:**
+- Conectar a `/api/accounts/:id/settings`
+- Implementar preview de roast en tiempo real
+- Validación de cambios
+- Toast de confirmación
+
+---
+
+### Issue #1055 - Settings Preferences Tab
+
+**Comando recomendado:**
+```bash
+/cui Create a settings form with sections for Roastr Persona (bio, tone, 
+    preferences fields), a transparency notice, a custom prompt field 
+    (conditionally visible), and sponsor configuration fields 
+    (conditionally visible). Use proper spacing and grouping.
+```
+
+**Customizaciones post-generación:**
+- Conectar a `/api/persona` y `/api/sponsor`
+- Implementar lógica de visibilidad por plan + feature flags
+- Validación con zod
+- Auto-save o botón de guardar
+
+---
+
+## 🎬 Video Tutorial
+
+**Recomendado ver:** [Shadcn-Studio MCP Tutorial](https://www.youtube.com/watch?v=...)
+
+Cubre:
+- Instalación de MCP server
+- Uso de cada comando
+- Best practices
+- Troubleshooting común
+
+---
+
+**Última actualización:** 2025-11-26
+**Maintainer:** Frontend Team
+**Status:** ✅ Active
+**MCP Version:** Latest (shadcn-studio)
