@@ -17,14 +17,6 @@ export const getUser = async (userId) => {
 };
 
 /**
- * Get current user
- * @returns {Promise<Object>} Current user data
- */
-export const getCurrentUser = async () => {
-  return apiClient.get('/user/me');
-};
-
-/**
  * Update user
  * @param {string} userId - User ID
  * @param {Object} data - User data to update
@@ -54,7 +46,6 @@ export const getCreditsHistory = async (params = {}) => {
 
 export default {
   getUser,
-  getCurrentUser,
   updateUser,
   getCreditsStatus,
   getCreditsHistory
