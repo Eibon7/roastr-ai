@@ -1,6 +1,7 @@
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import * as d3 from 'd3';
+import { theme } from '@theme/mui-compat';
 
 // ===== CONSTANTS =====
 const NODE_WIDTH = 220;
