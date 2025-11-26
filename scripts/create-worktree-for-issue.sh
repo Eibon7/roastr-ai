@@ -33,6 +33,9 @@ if [ ! -d ".git" ]; then
   exit 1
 fi
 
+# Guardar directorio original antes de cambiar
+ORIGINAL_DIR=$(pwd)
+
 # Configuración
 BRANCH="feature/issue-${ISSUE_NUM}-${SCOPE}"
 WORKTREE_BASE_PATH="${WORKTREE_BASE_PATH:-../roastr-ai-worktrees}"
@@ -91,7 +94,7 @@ echo "  cd $WORKTREE_PATH"
 echo "  # Open in Cursor and start working"
 echo ""
 echo "When done:"
-echo "  cd $(pwd)"
+echo "  cd $ORIGINAL_DIR"
 echo "  git worktree remove $WORKTREE_PATH"
 echo ""
 
