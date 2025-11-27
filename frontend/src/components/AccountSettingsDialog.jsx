@@ -17,11 +17,18 @@ import {
 import { Button } from './ui/button';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from './ui/select';
 import { Alert, AlertDescription } from './ui/alert';
 import { SHIELD_LEVELS, TONE_OPTIONS, TONE_EXAMPLES } from '../mocks/social';
 import { TONE_DEFINITIONS } from '../config/tones';
 import { Trash2, Settings } from 'lucide-react';
+import logger from '../utils/logger';
 
 const AccountSettingsDialog = ({
   account,
@@ -53,19 +60,22 @@ const AccountSettingsDialog = ({
   const defaultTone = accountDetails?.settings?.defaultTone || 'Balanceado';
 
   // Handle async actions with loading states
-  const handleAsyncAction = useCallback(async (actionKey, actionFn, successMessage) => {
-    setLoadingStates((prev) => ({ ...prev, [actionKey]: true }));
-    try {
-      await actionFn();
-      if (successMessage) {
-        console.log(successMessage);
+  const handleAsyncAction = useCallback(
+    async (actionKey, actionFn, successMessage) => {
+      setLoadingStates((prev) => ({ ...prev, [actionKey]: true }));
+      try {
+        await actionFn();
+        if (successMessage) {
+          logger.info(successMessage, { actionKey });
+        }
+      } catch (error) {
+        logger.error(`Error in ${actionKey}`, error, { actionKey });
+      } finally {
+        setLoadingStates((prev) => ({ ...prev, [actionKey]: false }));
       }
-    } catch (error) {
-      console.error(`Error in ${actionKey}:`, error);
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, [actionKey]: false }));
-    }
-  }, []);
+    },
+    []
+  );
 
   const handleToggleAutoApprove = () => {
     handleAsyncAction(
@@ -187,7 +197,10 @@ const AccountSettingsDialog = ({
             {shieldEnabled && (
               <div className="space-y-2">
                 <Label>Nivel de protección</Label>
-                <Select value={shieldLevel.toString()} onValueChange={handleChangeShieldLevel}>
+                <Select
+                  value={shieldLevel.toString()}
+                  onValueChange={handleChangeShieldLevel}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -240,7 +253,9 @@ const AccountSettingsDialog = ({
               <div className="space-y-1">
                 <Label className="text-base font-medium">Estado de la cuenta</Label>
                 <p className="text-sm text-muted-foreground">
-                  {isActive ? 'La cuenta está activa y generando roasts' : 'La cuenta está pausada'}
+                  {isActive
+                    ? 'La cuenta está activa y generando roasts'
+                    : 'La cuenta está pausada'}
                 </p>
               </div>
               <Switch
@@ -313,3 +328,4 @@ const AccountSettingsDialog = ({
 };
 
 export default AccountSettingsDialog;
+

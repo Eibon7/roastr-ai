@@ -32,6 +32,7 @@ import PageLayout from '../components/roastr/PageLayout';
 import { getAccountById as getAccountByIdAPI, getAccountRoasts } from '../lib/api/accounts';
 import { getShieldEvents } from '../lib/api/shield';
 import apiClient from '../lib/api/client';
+import logger from '../utils/logger';
 
 const AccountDetailPage = () => {
   const { id } = useParams();
@@ -87,11 +88,11 @@ const AccountDetailPage = () => {
         const shieldData = await getShieldEvents(params);
         setIntercepted(Array.isArray(shieldData) ? shieldData : shieldData.events || []);
       } catch (error) {
-        console.error('Error fetching Shield events:', error);
+        logger.error('Error fetching Shield events', error, { accountId: id, platform });
         setIntercepted(interceptedByAccount(id) || []);
       }
     } catch (error) {
-      console.error('Error fetching Shield events:', error);
+      logger.error('Error fetching Shield events', error, { accountId: id });
       setIntercepted(interceptedByAccount(id) || []);
     }
   }, [account, accountDetails, id, interceptedByAccount]);
@@ -112,7 +113,7 @@ const AccountDetailPage = () => {
         const detailsData = await getAccountByIdAPI(accountId);
         setAccountDetails(detailsData);
       } catch (error) {
-        console.error('Error fetching account details:', error);
+        logger.error('Error fetching account details', error, { accountId });
       }
 
       // Fetch recent roasts using centralized API client
@@ -120,7 +121,7 @@ const AccountDetailPage = () => {
         const roastsData = await getAccountRoasts(accountId, { limit: 50 });
         setRoasts(Array.isArray(roastsData) ? roastsData : roastsData.data || []);
       } catch (error) {
-        console.error('Error fetching roasts:', error);
+        logger.error('Error fetching roasts', error, { accountId });
         // Fallback to mock data
         setRoasts(roastsByAccount(id) || []);
       }
@@ -130,7 +131,7 @@ const AccountDetailPage = () => {
         await fetchShieldEvents();
       }
     } catch (error) {
-      console.error('Error fetching account data:', error);
+      logger.error('Error fetching account data', error, { accountId: id });
       // Fallback to mock data
       setRoasts(roastsByAccount(id) || []);
       setIntercepted(interceptedByAccount(id) || []);
@@ -168,11 +169,11 @@ const AccountDetailPage = () => {
       try {
         await actionFn();
         if (successMessage) {
+          logger.info(successMessage, { actionKey });
           // Could show toast here
-          console.log(successMessage);
         }
       } catch (error) {
-        console.error(`Error in ${actionKey}:`, error);
+        logger.error(`Error in ${actionKey}`, error, { actionKey });
         // Could show error toast here
       } finally {
         setLoadingStates((prev) => ({ ...prev, [actionKey]: false }));
@@ -218,7 +219,7 @@ const AccountDetailPage = () => {
     try {
       await fetchShieldEvents();
     } catch (error) {
-      console.error('Failed to refresh Shield events:', error);
+      logger.error('Failed to refresh Shield events', error, { accountId: id });
     } finally {
       setShieldLoading(false);
     }
@@ -231,7 +232,7 @@ const AccountDetailPage = () => {
       await fetchShieldEvents();
       return response;
     } catch (error) {
-      console.error('Error reverting Shield action:', error);
+      logger.error('Error reverting Shield action', error, { actionId, reason, accountId: id });
       throw error;
     }
   };
