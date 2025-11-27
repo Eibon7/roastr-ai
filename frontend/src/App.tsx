@@ -27,6 +27,7 @@ import PlansPage from '@/pages/admin/config/plans';
 import TonesPage from '@/pages/admin/config/tones';
 import MetricsPage from '@/pages/admin/metrics';
 import AppHomePage from '@/pages/app/home';
+import NotFound from '@/pages/NotFound';
 
 /**
  * App Component
@@ -66,6 +67,7 @@ function App() {
                         path="settings"
                         element={<div className="p-8">Settings Page (Coming Soon)</div>}
                       />
+                      <Route path="*" element={<NotFound />} />
                     </Routes>
                   </AppShell>
                 </AuthGuard>
@@ -89,6 +91,7 @@ function App() {
                         path="logs"
                         element={<div className="p-8">Logs Page (Coming Soon)</div>}
                       />
+                      <Route path="*" element={<NotFound />} />
                     </Routes>
                   </AdminShell>
                 </AdminGuard>
