@@ -22,14 +22,14 @@ import { toast } from 'sonner';
 
 /**
  * BillingPanel - Panel component for billing settings
- * 
+ *
  * Displays:
  * - Current payment method (last 4 digits)
  * - Plan information: name, next billing date
  * - If plan cancelled: "Roastr.AI estará activo hasta [fecha]"
  * - Upgrade plan button → navigation to /app/plans
  * - Cancel subscription button → confirmation and API call
- * 
+ *
  * Issue #1056: Implementar tab de Billing (/app/settings/billing)
  */
 const BillingPanel = () => {
@@ -167,8 +167,7 @@ const BillingPanel = () => {
                         width: `${
                           billingInfo?.usage?.roastsUsed && billingInfo?.limits?.roastsPerMonth
                             ? Math.min(
-                                (billingInfo.usage.roastsUsed /
-                                  billingInfo.limits.roastsPerMonth) *
+                                (billingInfo.usage.roastsUsed / billingInfo.limits.roastsPerMonth) *
                                   100,
                                 100
                               )
@@ -293,4 +292,3 @@ const BillingPanel = () => {
 BillingPanel.displayName = 'BillingPanel';
 
 export default BillingPanel;
-

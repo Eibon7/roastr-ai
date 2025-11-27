@@ -291,4 +291,3 @@ const handleTabChange = (value) => {
 ---
 
 **Última actualización:** 2025-01-27
-

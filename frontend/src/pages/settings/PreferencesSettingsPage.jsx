@@ -3,9 +3,9 @@ import PreferencesSettingsForm from '../../components/settings/PreferencesSettin
 
 /**
  * PreferencesSettingsPage - Page component for preferences settings tab
- * 
+ *
  * Route: /app/settings/preferences
- * 
+ *
  * Displays Roastr persona settings, transparency copy, custom style prompt, and sponsor configuration.
  */
 const PreferencesSettingsPage = () => {
@@ -15,4 +15,3 @@ const PreferencesSettingsPage = () => {
 PreferencesSettingsPage.displayName = 'PreferencesSettingsPage';
 
 export default PreferencesSettingsPage;
-

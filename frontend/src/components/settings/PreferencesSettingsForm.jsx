@@ -5,13 +5,13 @@ import { toast } from 'sonner';
 
 /**
  * PreferencesSettingsForm - Form component for preferences settings
- * 
+ *
  * Displays:
  * - Roastr persona fields (bio, tono, preferencias)
  * - Transparency copy
  * - Custom style prompt (Pro/Plus only with feature flag)
  * - Sponsor configuration (Plus only)
- * 
+ *
  * Issue #1055: Implementar tab de Ajustes (/app/settings/preferences)
  */
 const PreferencesSettingsForm = () => {
@@ -37,4 +37,3 @@ const PreferencesSettingsForm = () => {
 PreferencesSettingsForm.displayName = 'PreferencesSettingsForm';
 
 export default PreferencesSettingsForm;
-

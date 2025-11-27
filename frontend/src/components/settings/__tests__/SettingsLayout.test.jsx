@@ -66,4 +66,3 @@ describe('SettingsLayout', () => {
     expect(screen.getByTestId('outlet')).toBeInTheDocument();
   });
 });
-

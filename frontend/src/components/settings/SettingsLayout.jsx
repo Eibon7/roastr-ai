@@ -6,12 +6,12 @@ import { TabsContent } from '../ui/tabs';
 
 /**
  * SettingsLayout - Layout component with tabs synchronized with URL
- * 
+ *
  * Manages navigation between settings tabs:
  * - /app/settings/account
  * - /app/settings/preferences
  * - /app/settings/billing
- * 
+ *
  * Tabs are synchronized with the current URL path.
  */
 const SettingsLayout = () => {
@@ -22,12 +22,12 @@ const SettingsLayout = () => {
   const getActiveTab = () => {
     const pathParts = location.pathname.split('/');
     const lastPart = pathParts[pathParts.length - 1];
-    
+
     // Default to 'account' if path is just '/app/settings'
     if (lastPart === 'settings' || !lastPart) {
       return 'account';
     }
-    
+
     return lastPart;
   };
 
@@ -85,4 +85,3 @@ const SettingsLayout = () => {
 SettingsLayout.displayName = 'SettingsLayout';
 
 export default SettingsLayout;
-
