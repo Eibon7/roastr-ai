@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -13,48 +14,30 @@ import { Badge } from '../components/ui/badge';
 import { Link2, CheckCircle, Package, Info } from 'lucide-react';
 import { useSocialAccounts } from '../hooks/useSocialAccounts';
 import AccountCard from '../components/AccountCard';
-import AccountModal from '../components/AccountModal';
 import NetworkConnectModal from '../components/NetworkConnectModal';
 import { NETWORK_ICONS, NETWORK_COLORS } from '../mocks/social';
 
 const AccountsPage = () => {
+  const navigate = useNavigate();
   const {
     accounts,
     availableNetworks,
     userData,
-    getAccountById,
-    roastsByAccount,
-    interceptedByAccount,
     getConnectionLimits,
     totalAccounts,
     activeAccounts,
     totalMonthlyRoasts,
-    onApproveRoast,
-    onRejectRoast,
-    onToggleAutoApprove,
-    onToggleAccount,
-    onChangeShieldLevel,
-    onToggleShield,
-    onChangeTone,
-    onConnectNetwork,
-    onDisconnectAccount
+    onConnectNetwork
   } = useSocialAccounts();
 
-  const [selectedAccountId, setSelectedAccountId] = useState(null);
   const [connectModal, setConnectModal] = useState({
     isOpen: false,
     network: null,
     networkName: null
   });
 
-  const selectedAccount = selectedAccountId ? getAccountById(selectedAccountId) : null;
-
   const handleAccountClick = (accountId) => {
-    setSelectedAccountId(accountId);
-  };
-
-  const handleCloseAccountModal = () => {
-    setSelectedAccountId(null);
+    navigate(`/app/accounts/${accountId}`);
   };
 
   const handleOpenConnectModal = (network, networkName) => {
@@ -243,24 +226,6 @@ const AccountsPage = () => {
           </div>
         </div>
       </div>
-
-      {/* Account Modal */}
-      {selectedAccount && (
-        <AccountModal
-          account={selectedAccount}
-          roasts={roastsByAccount(selectedAccount.id)}
-          intercepted={interceptedByAccount(selectedAccount.id)}
-          onApproveRoast={onApproveRoast}
-          onRejectRoast={onRejectRoast}
-          onToggleAutoApprove={onToggleAutoApprove}
-          onToggleAccount={onToggleAccount}
-          onChangeShieldLevel={onChangeShieldLevel}
-          onToggleShield={onToggleShield}
-          onChangeTone={onChangeTone}
-          onDisconnectAccount={onDisconnectAccount}
-          onClose={handleCloseAccountModal}
-        />
-      )}
 
       {/* Connect Network Modal */}
       <NetworkConnectModal

@@ -29,6 +29,7 @@ import StyleProfile from './pages/StyleProfile';
 import Configuration from './pages/Configuration';
 import Approval from './pages/Approval';
 import AccountsPage from './pages/AccountsPage';
+import AccountDetailPage from './pages/AccountDetailPage';
 import Pricing from './pages/Pricing';
 import Shop from './pages/Shop';
 import Analytics from './pages/Analytics';
@@ -96,6 +97,7 @@ function App() {
                   <Route path="style-profile" element={<StyleProfile />} />
                   <Route path="style-profile/generate" element={<StyleProfile />} />
                   <Route path="accounts" element={<AccountsPage />} />
+                  <Route path="accounts/:id" element={<AccountDetailPage />} />
                   <Route path="profile" element={<Settings />} />
                   <Route path="shop" element={<Shop />} />
                   <Route path="dashboard/analytics" element={<Analytics />} />
