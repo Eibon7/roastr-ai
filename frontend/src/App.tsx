@@ -20,6 +20,7 @@ import { AppShell } from '@/components/layout/app-shell';
 
 // Pages
 import LoginPage from '@/pages/auth/login';
+import RecoverPage from '@/pages/auth/recover';
 import AdminDashboardPage from '@/pages/admin/dashboard';
 import AdminUsersPage from '@/pages/admin/users';
 import FeatureFlagsPage from '@/pages/admin/config/feature-flags';
@@ -50,6 +51,7 @@ function App() {
 
             {/* Auth routes (public) */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/recover" element={<RecoverPage />} />
 
             {/* App routes (user routes) - Protected with AuthGuard */}
             <Route
@@ -97,6 +99,9 @@ function App() {
                 </AdminGuard>
               }
             />
+
+            {/* Global 404 catch-all for unknown routes */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
         <Toaster />
