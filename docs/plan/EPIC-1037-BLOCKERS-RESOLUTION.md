@@ -8,6 +8,14 @@
 
 ## 📊 Estado Actual
 
+### Phase 0: Pre-Checks
+
+- [ ] **package-lock.json synchronization** (2 min)
+  - Run: `cd frontend && npm install`
+  - Stage and commit the updated `package-lock.json` with message: `chore(frontend): sync package-lock.json`
+  - Push the commit so CI can validate the frontend build
+  - **Expected outcome:** CI builds successfully
+
 ### Bloqueadores Pendientes
 
 1. ✅ **Epic ACs** - Verificar y marcar checkboxes (RÁPIDO - 5 min)

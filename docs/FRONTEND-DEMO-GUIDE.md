@@ -1,7 +1,6 @@
 # Guía para Ver el Admin Panel - Frontend Demo
 
-**Fecha:** 2025-11-26  
-**Worktree:** `/roastr-ai-worktrees/epic-1037`
+**Fecha:** 2025-11-26
 
 ---
 
@@ -12,7 +11,7 @@ El servidor de desarrollo está configurado para iniciarse en segundo plano. Par
 ### Paso 1: Verificar que el servidor está corriendo
 
 ```bash
-cd /Users/emiliopostigo/roastr-ai/roastr-ai-worktrees/epic-1037/frontend
+cd frontend
 npm run dev
 ```
 

@@ -3,7 +3,7 @@
 **URL:** https://github.com/Eibon7/roastr-ai/pull/1076  
 **Rama:** `feature/epic-1037-admin-panel-pr`  
 **Base:** `main`  
-**Estado:** ✅ **ABIERTA Y LISTA PARA REVIEW**
+**Estado:** ❌ **NO LISTA PARA MERGE — REQUIERE RESOLUCIÓN DE BLOQUEADORES**
 
 ---
 
@@ -79,4 +79,14 @@
 
 ---
 
-**Status:** ✅ **PR LISTA PARA REVIEW**
+**Status:** ❌ **NO LISTA PARA MERGE — REQUIERE RESOLUCIÓN DE BLOQUEADORES**
+
+### Bloqueadores Críticos Pendientes
+
+- ⚠️ package-lock.json desincronizado / CI fallo
+- ⚠️ Cobertura de tests <90%
+- ⚠️ CodeRabbit review pendiente
+- ⚠️ Tests E2E faltantes
+- ⚠️ GDD integrity violations
+
+**Review/merge debe esperar hasta que estos items estén resueltos.**
