@@ -5,6 +5,7 @@
 **Issue:** Admin Tones integration tests fail because `roast_tones` table does not exist.
 
 **Root Cause:**
+
 - Migration `030_roast_tones_table.sql` has not been applied to the Supabase database
 - Error: `relation "public.roast_tones" does not exist` (PostgreSQL error code 42P01)
 
@@ -29,6 +30,7 @@
    - Wait for confirmation
 
 4. **Verify:**
+
    ```sql
    SELECT table_name, column_name, data_type
    FROM information_schema.columns
@@ -57,6 +59,7 @@ node scripts/apply-migration-030.js
 **Size:** 331 lines, 12,129 bytes
 
 **Creates:**
+
 - Table: `roast_tones` (17 columns)
 - Indexes: 4 (active, sort_order, default, name)
 - Triggers: 2 (ensure_at_least_one_active_tone, update_timestamp)
@@ -67,6 +70,7 @@ node scripts/apply-migration-030.js
 ## 🔄 After Migration is Applied
 
 **Re-run tests:**
+
 ```bash
 npm test -- tests/integration/api/admin/tones.test.js
 ```
@@ -85,6 +89,7 @@ npm test -- tests/integration/api/admin/tones.test.js
 ---
 
 **Related Files:**
+
 - Migration: `database/migrations/030_roast_tones_table.sql`
 - Test: `tests/integration/api/admin/tones.test.js`
 - Routes: `src/routes/admin/tones.js`

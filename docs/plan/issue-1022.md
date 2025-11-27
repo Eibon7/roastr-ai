@@ -16,44 +16,49 @@
 
 ### Detailed Breakdown
 
-| Category | File | Total | Passing | Failing | Status |
-|----------|------|-------|---------|---------|--------|
-| Toggle Endpoints | toggle-endpoints.test.js | 20 | 20 | 0 | ✅ PASSING |
-| Admin Tones API | api/admin/tones.test.js | 20 | 0 | 20 | ❌ FAILING |
-| Sponsor Service | sponsor-service-integration.test.js | 37 | 6 | 31 | ❌ FAILING |
-| Ingestor Tests (6 files) | ingestor-*.test.js | 44 | 26 | 18 | ⚠️ PARTIAL |
-| Persona Flow | roastr-persona-flow.test.js | 11 | 0 | 11 | ❌ FAILING |
-| YouTube Platform | platforms/youtube-verification.test.js | 7 | 6 | 1 | ⚠️ PARTIAL |
+| Category                 | File                                   | Total | Passing | Failing | Status     |
+| ------------------------ | -------------------------------------- | ----- | ------- | ------- | ---------- |
+| Toggle Endpoints         | toggle-endpoints.test.js               | 20    | 20      | 0       | ✅ PASSING |
+| Admin Tones API          | api/admin/tones.test.js                | 20    | 0       | 20      | ❌ FAILING |
+| Sponsor Service          | sponsor-service-integration.test.js    | 37    | 6       | 31      | ❌ FAILING |
+| Ingestor Tests (6 files) | ingestor-\*.test.js                    | 44    | 26      | 18      | ⚠️ PARTIAL |
+| Persona Flow             | roastr-persona-flow.test.js            | 11    | 0       | 11      | ❌ FAILING |
+| YouTube Platform         | platforms/youtube-verification.test.js | 7     | 6       | 1       | ⚠️ PARTIAL |
 
 ---
 
 ## Root Causes Identified
 
 ### 1. Admin Tones API (20 failures)
+
 - **Cause:** Incorrect import pattern
 - **Error:** `TypeError: app.address is not a function`
 - **Fix:** Change `app = require(...)` to `const { app } = require(...)`
 - **Complexity:** SIMPLE (1-line change + auth setup)
 
 ### 2. Persona Flow (11 failures)
+
 - **Cause:** Double `.mockReturnValueOnce()` calls
 - **Error:** `TypeError: mockReturnValueOnce.mockReturnValueOnce is not a function`
 - **Fix:** Fix mock chain structure
 - **Complexity:** SIMPLE (pattern fix)
 
 ### 3. YouTube Platform (1 failure)
+
 - **Cause:** Wrong error assertion
 - **Error:** Expected "API Key", got "Gaxios Error"
 - **Fix:** Update assertion
 - **Complexity:** TRIVIAL (1 line)
 
 ### 4. Sponsor Service (31 failures)
+
 - **Cause:** Database foreign key constraint violation
 - **Error:** `sponsors_user_id_fkey` violation
 - **Fix:** Fix user creation in test setup
 - **Complexity:** MEDIUM
 
 ### 5. Ingestor Tests (18 failures)
+
 - **Cause:** Mock Supabase client doesn't persist comments
 - **Error:** `expect(commentsCount).toBe(1)` → received 0
 - **Fix:** Implement proper mock storage layer
@@ -66,9 +71,11 @@
 ### **Phase 1: Quick Wins (P0) - Day 1 (~2 hours)**
 
 #### Step 1.1: Fix Admin Tones API (20 tests)
+
 **File:** `tests/integration/api/admin/tones.test.js`
 
 **Changes:**
+
 ```javascript
 // Line 29 - Fix import
 // Before:
@@ -102,6 +109,7 @@ afterAll(async () => {
 **Reference:** `tests/integration/toggle-endpoints.test.js` (lines 40-80)
 
 **Validation:**
+
 ```bash
 npm test -- tests/integration/api/admin/tones.test.js
 ```
@@ -111,9 +119,11 @@ npm test -- tests/integration/api/admin/tones.test.js
 ---
 
 #### Step 1.2: Fix Persona Flow Mock Chains (11 tests)
+
 **File:** `tests/integration/roastr-persona-flow.test.js`
 
 **Changes:**
+
 ```javascript
 // Lines 96-97, 152-153, 205, 252, 307+ - Fix mock chains
 // Before:
@@ -135,6 +145,7 @@ mockSupabase.from.mockReturnValueOnce({
 **Pattern to apply:** Remove duplicate `.mockReturnValueOnce()` calls (~5-7 instances)
 
 **Validation:**
+
 ```bash
 npm test -- tests/integration/roastr-persona-flow.test.js
 ```
@@ -144,9 +155,11 @@ npm test -- tests/integration/roastr-persona-flow.test.js
 ---
 
 #### Step 1.3: Fix YouTube Error Assertion (1 test)
+
 **File:** `tests/integration/platforms/youtube-verification.test.js`
 
 **Changes:**
+
 ```javascript
 // Line 83 - Update assertion
 // Before:
@@ -159,6 +172,7 @@ expect(error).toBeDefined();
 ```
 
 **Validation:**
+
 ```bash
 npm test -- tests/integration/platforms/youtube-verification.test.js
 ```
@@ -168,6 +182,7 @@ npm test -- tests/integration/platforms/youtube-verification.test.js
 ---
 
 **Phase 1 Checkpoint:**
+
 - ✅ 32 tests fixed (20 + 11 + 1)
 - ✅ Files modified: 3
 - ✅ Time: ~2 hours
@@ -178,12 +193,15 @@ npm test -- tests/integration/platforms/youtube-verification.test.js
 ### **Phase 2: Database Setup (P1) - Day 1-2 (~3 hours)**
 
 #### Step 2.1: Fix Sponsor Service Database Setup (31 tests)
+
 **File:** `tests/integration/sponsor-service-integration.test.js`
 
 **Root issue:** Foreign key `sponsors_user_id_fkey` violation
 
 **Investigation steps:**
+
 1. Verify migration applied:
+
    ```bash
    psql $DATABASE_URL -c "SELECT * FROM pg_constraint WHERE conname = 'sponsors_user_id_fkey';"
    ```
@@ -195,6 +213,7 @@ npm test -- tests/integration/platforms/youtube-verification.test.js
    ```
 
 **Changes to test setup (lines 67-100):**
+
 ```javascript
 beforeAll(async () => {
   // Step 1: Create users FIRST
@@ -228,12 +247,16 @@ beforeAll(async () => {
 afterAll(async () => {
   // Cleanup in reverse order
   await supabaseServiceClient.from('sponsors').delete().in('user_id', [userAId, userBId]);
-  await supabaseServiceClient.from('organizations').delete().in('id', [tenantA.data.id, tenantB.data.id]);
+  await supabaseServiceClient
+    .from('organizations')
+    .delete()
+    .in('id', [tenantA.data.id, tenantB.data.id]);
   await supabaseServiceClient.from('users').delete().in('id', [userAId, userBId]);
 });
 ```
 
 **Validation:**
+
 ```bash
 npm test -- tests/integration/sponsor-service-integration.test.js
 ```
@@ -243,6 +266,7 @@ npm test -- tests/integration/sponsor-service-integration.test.js
 ---
 
 **Phase 2 Checkpoint:**
+
 - ✅ 63 tests fixed total (32 from Phase 1 + 31 from Phase 2)
 - ✅ Files modified: 4
 - ✅ Time: ~5 hours cumulative
@@ -252,11 +276,13 @@ npm test -- tests/integration/sponsor-service-integration.test.js
 ### **Phase 3: Mock Refactor (P2) - Day 2-3 (~5 hours)**
 
 #### Step 3.1: Implement Ingestor Mock Storage (18 tests)
+
 **File:** `tests/helpers/ingestor-test-utils.js`
 
 **Root issue:** Mock Supabase client doesn't persist comments to memory
 
 **Current implementation (line 35):**
+
 ```javascript
 mockSupabase: {
   from: jest.fn(),
@@ -265,6 +291,7 @@ mockSupabase: {
 ```
 
 **Required implementation:**
+
 ```javascript
 // Add global mock storage
 global.mockCommentStorage = [];
@@ -282,10 +309,12 @@ const mockSupabase = {
 
           return {
             select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({
-                data: commentsArray[0],
-                error: null
-              }))
+              single: jest.fn(() =>
+                Promise.resolve({
+                  data: commentsArray[0],
+                  error: null
+                })
+              )
             }))
           };
         }),
@@ -303,7 +332,7 @@ const mockSupabase = {
       return {
         update: jest.fn(() => ({
           eq: jest.fn(() => Promise.resolve({ data: {}, error: null }))
-        })),
+        }))
         // ... other job operations
       };
     }
@@ -319,11 +348,12 @@ mockSupabase.clearStorage = () => {
 };
 
 mockSupabase.getCommentsByOrganization = (orgId) => {
-  return global.mockCommentStorage.filter(c => c.organization_id === orgId);
+  return global.mockCommentStorage.filter((c) => c.organization_id === orgId);
 };
 ```
 
 **Update FetchCommentsWorker mock:**
+
 ```javascript
 // Ensure worker uses mock storage properly
 const FetchCommentsWorker = require('../../src/workers/FetchCommentsWorker');
@@ -333,6 +363,7 @@ mockSupabase.clearStorage();
 ```
 
 **Affected test files (verify after helper fix):**
+
 1. `ingestor-acknowledgment.test.js` (3/8 → 8/8)
 2. `ingestor-error-handling.test.js` (10/13 → 13/13)
 3. `ingestor-order-processing.test.js` (4/8 → 8/8)
@@ -341,6 +372,7 @@ mockSupabase.clearStorage();
 6. `ingestor-mock-test.test.js` (verify passing)
 
 **Validation:**
+
 ```bash
 # Test each file
 npm test -- tests/integration/ingestor-acknowledgment.test.js
@@ -357,6 +389,7 @@ npm test -- tests/integration/ingestor-*.test.js
 ---
 
 **Phase 3 Checkpoint:**
+
 - ✅ 81 tests fixed total (all failing tests)
 - ✅ Files modified: 11 (3 from P0 + 1 from P1 + 1 helper + 6 ingestor tests verified)
 - ✅ Time: ~10 hours cumulative
@@ -393,6 +426,7 @@ npm test -- tests/integration/ingestor-*.test.js
    - `ingestor-retry-backoff.test.js`
 
 ### Source Code:
+
 - **None** - All issues are test-only
 
 ---
@@ -476,12 +510,12 @@ npm run test:coverage -- tests/integration/
 
 ## Timeline
 
-| Day | Phase | Tasks | Hours | Tests Fixed |
-|-----|-------|-------|-------|-------------|
-| 1 | P0 | Admin Tones + Persona + YouTube | 2 | 32 |
-| 1-2 | P1 | Sponsor Service | 3 | 31 |
-| 2-3 | P2 | Ingestor Mock Storage | 5 | 18 |
-| **Total** | - | **All phases** | **10** | **81** |
+| Day       | Phase | Tasks                           | Hours  | Tests Fixed |
+| --------- | ----- | ------------------------------- | ------ | ----------- |
+| 1         | P0    | Admin Tones + Persona + YouTube | 2      | 32          |
+| 1-2       | P1    | Sponsor Service                 | 3      | 31          |
+| 2-3       | P2    | Ingestor Mock Storage           | 5      | 18          |
+| **Total** | -     | **All phases**                  | **10** | **81**      |
 
 ---
 
