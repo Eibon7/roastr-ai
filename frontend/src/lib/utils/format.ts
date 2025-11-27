@@ -54,7 +54,12 @@ export function formatCurrency(
   showCents: boolean = true
 ): string {
   if (value === null || value === undefined || isNaN(value)) {
-    return currency === 'EUR' ? '€0' : '$0';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(0);
   }
 
   return new Intl.NumberFormat('en-US', {

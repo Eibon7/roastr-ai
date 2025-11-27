@@ -28,6 +28,7 @@ import {
 import { allPlatforms, getPlatformName } from '../config/platforms';
 import { usePageLayoutConfig } from '../components/roastr/PageLayoutContext';
 import { toast } from 'sonner';
+import { formatNumber as formatNumberUtil, formatCurrency as formatCurrencyUtil } from '../lib/utils/format';
 
 ChartJS.register(
   CategoryScale,
@@ -59,8 +60,6 @@ const EXPORT_DATASETS = [
   { label: 'Uso de créditos', value: 'usage' },
   { label: 'Eventos', value: 'events' }
 ];
-
-import { formatNumber as formatNumberUtil, formatCurrency as formatCurrencyUtil } from '../lib/utils/format';
 
 // Wrapper functions for compatibility with existing code
 const formatNumber = (value) => {
