@@ -27,11 +27,13 @@ Arreglados problemas de setup/teardown en tests RLS que causaban ~30 tests falla
 ### 2. Tests Actualizados
 
 **Archivos modificados:**
+
 - `tests/rls/subscriptions.test.js`
 - `tests/rls/tenants.test.js`
 - `tests/rls/persona.test.js`
 
 **Cambios:**
+
 - ✅ Reemplazado código duplicado con helper común
 - ✅ Añadidas validaciones de `shouldSkip` en todos los `beforeEach` y tests
 - ✅ Manejo correcto de casos donde `psql` no está disponible
@@ -52,11 +54,13 @@ Arreglados problemas de setup/teardown en tests RLS que causaban ~30 tests falla
 ### Tests Afectados
 
 **Antes:**
+
 - ❌ `tests/rls/subscriptions.test.js` - Falla con "teardown is not a function"
 - ❌ `tests/rls/tenants.test.js` - Falla con "teardown is not a function"
 - ❌ `tests/rls/persona.test.js` - Falla con "teardown is not a function"
 
 **Después:**
+
 - ✅ Helper común creado y exportando funciones correctamente
 - ✅ Tests actualizados para usar helper común
 - ✅ Validaciones añadidas para manejar casos edge
@@ -71,12 +75,14 @@ Los tests requieren `psql` (PostgreSQL client tools) para ejecutarse. Si `psql` 
 ## 📊 Impacto
 
 **Antes:**
+
 - ~30 tests fallando
 - Setup/teardown hooks no funcionan
 - Side effects entre tests
 - Helpers no exportados correctamente
 
 **Después:**
+
 - ✅ Helper común centraliza lógica
 - ✅ Tests actualizados y funcionando
 - ✅ Validaciones añadidas
@@ -104,5 +110,9 @@ Los tests requieren `psql` (PostgreSQL client tools) para ejecutarse. Si `psql` 
 
 **Status:** ✅ COMPLETED  
 **Validado por:** TestEngineer  
+<<<<<<< HEAD
 **Fecha:** 2025-11-27
 
+=======
+**Fecha:** 2025-01-XX
+>>>>>>> 364c4ff1dbc365124aa6d5aac0a0982d597de8c9
