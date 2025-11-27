@@ -24,11 +24,11 @@ Durante el desarrollo de Issue #872, se mergeó a `main` el Issue #876 (Dynamic 
 **Conflicto:**
 
 ```diff
-<<<<<<< HEAD
+# Versión HEAD (rama actual)
 feature/issue-872
-=======
+
+# Versión origin/main (rama remota)
 feature/issue-876-only
->>>>>>> origin/main
 ```
 
 **Resolución:**

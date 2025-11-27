@@ -4,7 +4,7 @@
 **Owner:** Back-end Dev
 **Priority:** High
 **Status:** Production
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-26
 **Coverage:** 100%
 **Coverage Source:** auto
 **Related PRs:** #499, #TBD (Issue #717 - Tone Testing), #TBD (Issue #973 - Centralized Tone Enum)
@@ -442,6 +442,11 @@ Los siguientes agentes son responsables de mantener este nodo:
 - **Test Engineer**
 - **Backend Developer**
 - **UX Designer**
+- **FrontendDev** - Admin Panel UI (Issue #1041)
+
+**Admin Panel (Epic #1037):**
+
+- Gestión de tonos disponible en `/admin/config/tones` (FrontendDev, Issue #1041)
 
 ## Related Nodes
 

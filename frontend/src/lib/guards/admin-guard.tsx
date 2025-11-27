@@ -1,51 +1,41 @@
-/**
- * Admin Guard
- *
- * Protects routes that require admin permissions
- * Issue #1063: Route guards reorganization
- */
-
-import React from 'react';
+import * as React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../auth-context';
+import { Loader2 } from 'lucide-react';
+
+interface AdminGuardProps {
+  children: React.ReactNode;
+}
 
 /**
- * AdminGuard Component
- *
- * Protects routes that require admin permissions.
- * Redirects to /app if user is not admin, or /login if not authenticated.
- *
- * @param {Object} props
- * @param {React.ReactNode} props.children - Children to render if admin
- * @param {string} props.redirectTo - Redirect path if not admin (default: '/app')
- * @returns {React.ReactNode}
+ * AdminGuard - Protects routes that require admin role
+ * Redirects to /app if user is not admin
+ * Inherits from AuthGuard (user must be authenticated first)
  */
-export const AdminGuard = ({ children, redirectTo }) => {
+export function AdminGuard({ children }: AdminGuardProps) {
   const { isAuthenticated, isAdmin, loading } = useAuth();
   const location = useLocation();
 
-  // Show loading while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Cargando...</p>
+        </div>
       </div>
     );
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
+    // User not authenticated, redirect to login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Redirect to /app if not admin
   if (!isAdmin) {
-    const defaultRedirect = redirectTo || '/app';
-    return <Navigate to={defaultRedirect} replace />;
+    // User authenticated but not admin, redirect to app
+    return <Navigate to="/app" replace />;
   }
 
-  // User is admin, render children
   return <>{children}</>;
-};
-
-export default AdminGuard;
+}
