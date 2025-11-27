@@ -145,3 +145,4 @@ Crear tests E2E para:
 ---
 
 **Status:** 🔴 **BLOQUEADO** - Resolver blockers antes de merge
+

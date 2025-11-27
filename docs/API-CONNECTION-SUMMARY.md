@@ -79,3 +79,4 @@
 4. Conectar Tones Management
 5. Reemplazar alerts con toast notifications
 6. Agregar loading states mejorados
+

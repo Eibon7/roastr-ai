@@ -1,21 +1,28 @@
 # Epic #1037 - Estado Final Completo
 
-**Fecha de finalización:** 2025-11-26  
-**Worktree:** `/roastr-ai-worktrees/epic-1037`  
-**Status:** ✅ **COMPLETADO AL 95%**
+**Fecha de finalización:** 2025-11-26
+**Worktree:** `<repo-worktree>/epic-1037`
+**Status:** 🔄 **EN PROGRESO - 85% COMPLETADO**
 
 ---
 
 ## ✅ Pasos Completados
 
-### Paso 1: Conectar APIs Reales ✅
+### Paso 1: Conectar APIs Reales ⏸️ PARCIAL (2/6 implementadas)
 
+**Backend Implementado (2/6):**
+- ✅ Feature flags conectada (`src/routes/admin/featureFlags.js`)
+- ✅ Tonos conectada (`src/routes/admin/tones.js`)
+
+**Backend NO Implementado (4/6):**
+- ❌ Página de usuarios (`/api/admin/users` - rutas no existen)
+- ❌ Planes (`/api/admin/plans` - rutas no existen)
+- ❌ Métricas (`/api/admin/dashboard` - rutas no existen)
+- ❌ Plan limits (`/api/admin/plan-limits` - rutas no existen)
+
+**Frontend (Completo):**
 - ✅ API Client actualizado con CSRF tokens
-- ✅ Página de usuarios conectada
-- ✅ Feature flags conectada
-- ✅ Planes conectada
-- ✅ Métricas conectada
-- ✅ Tonos conectada
+- ✅ Frontend para todas las páginas implementado
 
 ### Paso 2: Agregar Tests ✅
 
@@ -42,12 +49,12 @@
 
 | Paso               | Status | Progreso                                      |
 | ------------------ | ------ | --------------------------------------------- |
-| 1. APIs Conectadas | ✅     | 100%                                          |
-| 2. Tests           | ✅     | 80% (infraestructura completa, E2E pendiente) |
+| 1. APIs Conectadas | ⏸️     | 33% (2/6 backend endpoints - Feature Flags + Tones) |
+| 2. Tests           | ⏸️     | 85% (E2E completo ✅, unitarios con timeout ❌) |
 | 3. Validación GDD  | ✅     | 100%                                          |
-| 4. CodeRabbit      | ⏸️     | 0% (pendiente ejecutar)                       |
+| 4. CodeRabbit      | ⏸️     | 0% (pendiente resolver 3 comentarios)        |
 
-**Total:** 95% completado
+**Total:** 85% completado (Frontend 100%, Backend 33%, Tests 85%)
 
 ---
 
@@ -73,19 +80,28 @@
 
 ## 📝 Notas Finales
 
-- ✅ Todas las APIs conectadas y funcionando
-- ✅ Infraestructura de tests completa
+- ⏸️ **Solo 2/6 APIs backend implementadas** (Feature Flags, Tones)
+- ⏸️ **4/6 APIs backend pendientes** (Users, Plans, Metrics, Plan Limits)
+- ✅ Frontend completo (7 páginas)
+- ✅ Tests E2E pasando (25 tests)
+- ❌ Tests unitarios con timeout (bloqueador)
 - ✅ GDD validado y saludable
-- ✅ Build exitoso (0 errores)
-- ⏸️ CodeRabbit review pendiente de ejecutar
-- ⏸️ Tests E2E pendientes
+- ✅ Build exitoso (0 errores TypeScript)
+- ❌ CI/CD failing (por tests unitarios)
 
-**El proyecto está listo para:**
+**Bloqueadores para Merge:**
 
-- ✅ Conectar con backend real
-- ✅ Deploy a staging
-- ✅ Continuar con mejoras incrementales
+- ❌ Tests unitarios deben pasar
+- ❌ CI/CD debe pasar
+- ⚠️ 4 endpoints backend faltantes (o cambiar scope del Epic)
+
+**Decisión requerida:**
+
+- Opción A: Implementar 4 endpoints backend faltantes antes de merge
+- Opción B: Reducir scope del Epic a solo Feature Flags + Tones + Frontend
+- Opción C: Hacer PR solo con frontend y tests E2E (backend en PR futura)
 
 ---
 
 **Última actualización:** 2025-11-26
+

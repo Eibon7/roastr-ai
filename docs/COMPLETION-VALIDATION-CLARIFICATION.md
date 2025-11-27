@@ -222,3 +222,4 @@ frontend/e2e/admin-metrics.spec.ts
 ---
 
 **Última actualización:** 2025-11-26 23:30 UTC
+

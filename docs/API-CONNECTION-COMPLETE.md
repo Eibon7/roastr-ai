@@ -89,3 +89,4 @@ Todas las páginas del Admin Panel han sido conectadas con las APIs reales del b
 ---
 
 **Status:** ✅ APIs 100% conectadas y funcionando
+

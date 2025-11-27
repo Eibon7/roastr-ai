@@ -195,3 +195,4 @@ Después de tests E2E, podemos:
 ---
 
 **Última actualización:** 2025-11-26 22:35 UTC
+

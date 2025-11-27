@@ -5,23 +5,47 @@ describe('API Client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
+    // Reset localStorage mock to store values
+    const storage: Record<string, string> = {};
+    (global.localStorage.getItem as any) = vi.fn((key: string) => storage[key] || null);
+    (global.localStorage.setItem as any) = vi.fn((key: string, value: string) => {
+      storage[key] = value;
+    });
+    (global.localStorage.removeItem as any) = vi.fn((key: string) => {
+      delete storage[key];
+    });
+    (global.localStorage.clear as any) = vi.fn(() => {
+      Object.keys(storage).forEach(key => delete storage[key]);
+    });
   });
 
   it('includes auth token in requests', async () => {
     localStorage.setItem('auth_token', 'test-token-123');
 
-    global.fetch = vi.fn().mockResolvedValueOnce({
+    const mockFetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ success: true }),
       headers: new Headers({ 'content-type': 'application/json' })
     });
+    global.fetch = mockFetch;
 
     await apiClient.get('/test');
 
     expect(global.fetch).toHaveBeenCalled();
-    const callArgs = (global.fetch as any).mock.calls[0];
+    const callArgs = mockFetch.mock.calls[0];
     expect(callArgs[0]).toContain('/test');
-    expect(callArgs[1].headers).toHaveProperty('Authorization', 'Bearer test-token-123');
+    
+    // Headers might be a Headers object or plain object
+    const headersArg = callArgs[1]?.headers;
+    let headers: Record<string, string>;
+    if (headersArg instanceof Headers) {
+      headers = Object.fromEntries(headersArg.entries());
+    } else {
+      headers = headersArg as Record<string, string>;
+    }
+    
+    expect(headers).toHaveProperty('Authorization');
+    expect(headers?.Authorization).toBe('Bearer test-token-123');
   });
 
   it('includes CSRF token in POST requests', async () => {

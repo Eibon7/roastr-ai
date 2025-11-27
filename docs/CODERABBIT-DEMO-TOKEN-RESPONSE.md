@@ -101,3 +101,8 @@ La documentación en `docs/FRONTEND-DEMO-GUIDE.md` (líneas 130-134) es **correc
 **La funcionalidad está completamente implementada y funcionando.** El comentario de CodeRabbit es un falso negativo debido a la estrategia de búsqueda utilizada.
 
 **No se requiere ninguna acción adicional** - la funcionalidad existe y está operativa.
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 60b3d4ca (fix: Resolve CodeRabbit feedback and fix unit test timeouts)
