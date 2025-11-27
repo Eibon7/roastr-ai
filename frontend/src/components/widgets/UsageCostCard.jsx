@@ -3,7 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Skeleton } from '../ui/skeleton';
 import { DollarSign, Zap, Brain, Shield } from 'lucide-react';
-import { formatCurrency } from '../../utils/formatUtils';
+import { formatCurrency as formatCurrencyUtil } from '../../lib/utils/format';
+
+// Wrapper for compatibility: formatUtils expects cents, new utility expects base currency
+const formatCurrency = (amountCents, currency = 'USD') => {
+  const value = Number(amountCents) / 100;
+  return formatCurrencyUtil(value, currency, true);
+};
 import { getCurrentUsage } from '../../api/usage';
 import { SkeletonLoader } from '../states/SkeletonLoader';
 import { ErrorMessage } from '../states/ErrorMessage';

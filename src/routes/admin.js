@@ -56,6 +56,10 @@ router.use('/backoffice', backofficeSettingsRoutes);
 // Roast tones management routes (admin only) - Issue #876: Dynamic Tone Configuration
 router.use('/tones', tonesRoutes);
 
+// Metrics routes (admin only) - Issue #1065: Aggregated Metrics Endpoint
+const metricsRoutes = require('./admin/metrics');
+router.use('/metrics', metricsRoutes);
+
 /**
  * POST /api/admin/csrf-test
  * CSRF Validation Test Endpoint (Testing Only)

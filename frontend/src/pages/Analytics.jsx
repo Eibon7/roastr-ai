@@ -28,6 +28,10 @@ import {
 import { allPlatforms, getPlatformName } from '../config/platforms';
 import { usePageLayoutConfig } from '../components/roastr/PageLayoutContext';
 import { toast } from 'sonner';
+import {
+  formatNumber as formatNumberUtil,
+  formatCurrency as formatCurrencyUtil
+} from '../lib/utils/format';
 
 ChartJS.register(
   CategoryScale,
@@ -60,20 +64,15 @@ const EXPORT_DATASETS = [
   { label: 'Eventos', value: 'events' }
 ];
 
+// Wrapper functions for compatibility with existing code
 const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0';
-  return value.toLocaleString('es-ES');
+  return formatNumberUtil(value);
 };
 
 const formatCurrency = (cents) => {
+  // Convert cents to base currency unit for new utility
   const value = Number(cents) / 100;
-  if (!Number.isFinite(value)) return '€ 0,00';
-  return value.toLocaleString('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+  return formatCurrencyUtil(value, 'EUR', true);
 };
 
 const SummaryCard = ({ title, value, subtitle, trend }) => (

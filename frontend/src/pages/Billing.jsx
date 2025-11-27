@@ -16,8 +16,14 @@ import {
 } from 'lucide-react';
 import { createMockFetch } from '../lib/mockMode';
 import { getDefaultEntitlements, getDefaultUsage } from '../config/planDefaults';
-import { formatCurrency } from '../utils/formatUtils';
+import { formatCurrency as formatCurrencyUtil } from '../lib/utils/format';
 import { UsageMeter } from '../components/roastr/UsageMeter';
+
+// Wrapper for compatibility: formatUtils expects cents, new utility expects base currency
+const formatCurrency = (amountCents, currency = 'USD') => {
+  const value = Number(amountCents) / 100;
+  return formatCurrencyUtil(value, currency, true);
+};
 
 export default function Billing() {
   const [user, setUser] = useState(null);

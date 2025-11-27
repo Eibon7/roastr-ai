@@ -393,6 +393,208 @@ class MetricsService {
       return increment;
     }
   }
+
+  /**
+   * Obtener métricas agregadas del sistema (Issue #1065)
+   * Devuelve análisis totales, roasts totales, usuarios activos, distribución por plan,
+   * uso de features, y costes medios
+   */
+  async getAggregatedMetrics() {
+    try {
+      const metrics = {};
+
+      // 1. Análisis totales (suma de analysis_usage.count)
+      const { data: analysisData, error: analysisError } = await supabaseServiceClient
+        .from('analysis_usage')
+        .select('count');
+
+      if (analysisError) {
+        logger.warn('Error fetching analysis usage:', analysisError.message);
+        metrics.total_analysis = 0;
+      } else {
+        metrics.total_analysis =
+          analysisData?.reduce((sum, record) => sum + (record.count || 0), 0) || 0;
+      }
+
+      // 2. Roasts totales (suma de roast_usage.count)
+      const { data: roastData, error: roastError } = await supabaseServiceClient
+        .from('roast_usage')
+        .select('count');
+
+      if (roastError) {
+        logger.warn('Error fetching roast usage:', roastError.message);
+        metrics.total_roasts = 0;
+      } else {
+        metrics.total_roasts =
+          roastData?.reduce((sum, record) => sum + (record.count || 0), 0) || 0;
+      }
+
+      // 3. Usuarios activos (count de users where active = true)
+      const { data: activeUsers, error: usersError } = await supabaseServiceClient
+        .from('users')
+        .select('id')
+        .eq('active', true);
+
+      if (usersError) {
+        logger.warn('Error fetching active users:', usersError.message);
+        metrics.active_users = 0;
+      } else {
+        metrics.active_users = activeUsers?.length || 0;
+      }
+
+      // 4. Análisis medios/usuario y Roasts medios/usuario
+      if (metrics.active_users > 0) {
+        metrics.avg_analysis_per_user =
+          Math.round((metrics.total_analysis / metrics.active_users) * 100) / 100;
+        metrics.avg_roasts_per_user =
+          Math.round((metrics.total_roasts / metrics.active_users) * 100) / 100;
+      } else {
+        metrics.avg_analysis_per_user = 0;
+        metrics.avg_roasts_per_user = 0;
+      }
+
+      // 5. % usuarios por plan
+      const { data: usersByPlan, error: planError } = await supabaseServiceClient
+        .from('users')
+        .select('plan, id')
+        .eq('active', true);
+
+      if (planError) {
+        logger.warn('Error fetching users by plan:', planError.message);
+        metrics.users_by_plan = {};
+      } else {
+        const totalActive = usersByPlan?.length || 1;
+        const planCounts = {};
+        usersByPlan?.forEach((user) => {
+          const plan = user.plan || 'free';
+          planCounts[plan] = (planCounts[plan] || 0) + 1;
+        });
+
+        metrics.users_by_plan = {};
+        Object.keys(planCounts).forEach((plan) => {
+          metrics.users_by_plan[plan] =
+            Math.round((planCounts[plan] / totalActive) * 100 * 100) / 100;
+        });
+      }
+
+      // 6. % uso de features
+      // 6a. % con Roastr persona (users con lo_que_me_define_encrypted no null)
+      const { data: usersWithPersona, error: personaError } = await supabaseServiceClient
+        .from('users')
+        .select('id')
+        .eq('active', true)
+        .not('lo_que_me_define_encrypted', 'is', null);
+
+      if (personaError) {
+        logger.warn('Error fetching users with persona:', personaError.message);
+        metrics.feature_usage = {
+          persona: 0,
+          sponsors: 0,
+          custom_tone: 0
+        };
+      } else {
+        const usersWithPersonaCount = usersWithPersona?.length || 0;
+        const personaPercentage =
+          metrics.active_users > 0
+            ? Math.round((usersWithPersonaCount / metrics.active_users) * 100 * 100) / 100
+            : 0;
+
+        // 6b. % con sponsor (count de sponsors activos / usuarios activos)
+        const { data: sponsorsData, error: sponsorsError } = await supabaseServiceClient
+          .from('sponsors')
+          .select('user_id')
+          .eq('active', true);
+
+        if (sponsorsError) {
+          logger.warn('Error fetching sponsors:', sponsorsError.message);
+        }
+
+        // Contar usuarios únicos con sponsors activos
+        const uniqueUsersWithSponsors = new Set(sponsorsData?.map((s) => s.user_id) || []).size;
+        const sponsorsPercentage =
+          metrics.active_users > 0
+            ? Math.round((uniqueUsersWithSponsors / metrics.active_users) * 100 * 100) / 100
+            : 0;
+
+        // 6c. % con tono original (users con tone customizado)
+        // Nota: Asumimos que si un usuario tiene un tone diferente al default, es customizado
+        // Por ahora, usamos un placeholder ya que no hay campo explícito de "custom_tone"
+        // TODO: Implementar cuando tengamos campo de custom_tone en users
+        const customTonePercentage = 0; // Placeholder
+
+        metrics.feature_usage = {
+          persona: personaPercentage,
+          sponsors: sponsorsPercentage,
+          custom_tone: customTonePercentage
+        };
+      }
+
+      // 7. Costes medios
+      // 7a. Coste medio/análisis y tokens medios/análisis
+      const { data: analysisCosts, error: analysisCostsError } = await supabaseServiceClient
+        .from('usage_tracking')
+        .select('cost_cents, tokens_used')
+        .eq('resource_type', 'comment_analysis');
+
+      if (analysisCostsError) {
+        logger.warn('Error fetching analysis costs:', analysisCostsError.message);
+        metrics.costs = {
+          avg_cost_per_analysis: 0,
+          avg_tokens_per_analysis: 0,
+          avg_cost_per_roast: 0,
+          avg_tokens_per_roast: 0
+        };
+      } else {
+        const analysisCostsArray = analysisCosts || [];
+        const totalAnalysisCosts = analysisCostsArray.reduce(
+          (sum, record) => sum + (record.cost_cents || 0),
+          0
+        );
+        const totalAnalysisTokens = analysisCostsArray.reduce(
+          (sum, record) => sum + (record.tokens_used || 0),
+          0
+        );
+        const analysisCount = analysisCostsArray.length || 1;
+
+        // 7b. Coste medio/roast y tokens medios/roast
+        const { data: roastCosts, error: roastCostsError } = await supabaseServiceClient
+          .from('usage_tracking')
+          .select('cost_cents, tokens_used')
+          .eq('resource_type', 'roasts');
+
+        if (roastCostsError) {
+          logger.warn('Error fetching roast costs:', roastCostsError.message);
+        }
+
+        const roastCostsArray = roastCosts || [];
+        const totalRoastCosts = roastCostsArray.reduce(
+          (sum, record) => sum + (record.cost_cents || 0),
+          0
+        );
+        const totalRoastTokens = roastCostsArray.reduce(
+          (sum, record) => sum + (record.tokens_used || 0),
+          0
+        );
+        const roastCount = roastCostsArray.length || 1;
+
+        metrics.costs = {
+          avg_cost_per_analysis:
+            analysisCount > 0 ? Math.round((totalAnalysisCosts / analysisCount) * 100) / 100 : 0,
+          avg_tokens_per_analysis:
+            analysisCount > 0 ? Math.round((totalAnalysisTokens / analysisCount) * 100) / 100 : 0,
+          avg_cost_per_roast:
+            roastCount > 0 ? Math.round((totalRoastCosts / roastCount) * 100) / 100 : 0,
+          avg_tokens_per_roast:
+            roastCount > 0 ? Math.round((totalRoastTokens / roastCount) * 100) / 100 : 0
+        };
+      }
+
+      return metrics;
+    } catch (error) {
+      logger.error('Error getting aggregated metrics:', error.message);
+      throw error;
+    }
+  }
 }
 
 module.exports = new MetricsService();
