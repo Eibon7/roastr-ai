@@ -163,6 +163,14 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
                 case 'gt':
                   return row[filter.column] > filter.value;
                 case 'gte':
+                  // For date comparisons, convert to Date objects if both are strings
+                  if (typeof row[filter.column] === 'string' && typeof filter.value === 'string') {
+                    const rowDate = new Date(row[filter.column]);
+                    const filterDate = new Date(filter.value);
+                    if (!isNaN(rowDate.getTime()) && !isNaN(filterDate.getTime())) {
+                      return rowDate >= filterDate;
+                    }
+                  }
                   return row[filter.column] >= filter.value;
                 case 'lt':
                   return row[filter.column] < filter.value;
@@ -176,16 +184,6 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
                     }
                   }
                   return row[filter.column] <= filter.value;
-                case 'gte':
-                  // For date comparisons, convert to Date objects if both are strings
-                  if (typeof row[filter.column] === 'string' && typeof filter.value === 'string') {
-                    const rowDate = new Date(row[filter.column]);
-                    const filterDate = new Date(filter.value);
-                    if (!isNaN(rowDate.getTime()) && !isNaN(filterDate.getTime())) {
-                      return rowDate >= filterDate;
-                    }
-                  }
-                  return row[filter.column] >= filter.value;
                 case 'in':
                   return filter.value.includes(row[filter.column]);
                 case 'is':
