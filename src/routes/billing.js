@@ -367,9 +367,12 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
     // Cancel subscription via Stripe
     if (immediately) {
       // Cancel immediately
-      await getController().stripeWrapper.subscriptions.cancel(subscription.stripe_subscription_id, {
-        cancel_immediately: true
-      });
+      await getController().stripeWrapper.subscriptions.cancel(
+        subscription.stripe_subscription_id,
+        {
+          cancel_immediately: true
+        }
+      );
 
       // Update database
       await supabaseServiceClient
@@ -382,9 +385,12 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
         .eq('user_id', userId);
     } else {
       // Cancel at period end
-      await getController().stripeWrapper.subscriptions.update(subscription.stripe_subscription_id, {
-        cancel_at_period_end: true
-      });
+      await getController().stripeWrapper.subscriptions.update(
+        subscription.stripe_subscription_id,
+        {
+          cancel_at_period_end: true
+        }
+      );
 
       // Update database
       await supabaseServiceClient

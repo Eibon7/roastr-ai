@@ -27,14 +27,14 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 /**
  * BillingPanel - Panel component for billing settings
- * 
+ *
  * Displays:
  * - Current payment method (last 4 digits)
  * - Plan information: name, next billing date
  * - If plan cancelled: "Roastr.AI estará activo hasta [fecha]"
  * - Upgrade plan button → navigation to /app/plans
  * - Cancel subscription button → confirmation and API call
- * 
+ *
  * Issue #1056: Implementar tab de Billing (/app/settings/billing)
  */
 const BillingPanel = () => {
@@ -66,7 +66,7 @@ const BillingPanel = () => {
       console.warn('Could not load billing info:', error);
       setError(true);
       setBillingInfo(null);
-      
+
       // Enhanced error handling with retry logic
       if (retryCount < 3) {
         const newRetryCount = retryCount + 1;
@@ -75,9 +75,12 @@ const BillingPanel = () => {
           duration: 3000
         });
         // Auto-retry with exponential backoff
-        setTimeout(() => {
-          loadBillingInfo(true);
-        }, Math.min(1000 * Math.pow(2, newRetryCount), 5000));
+        setTimeout(
+          () => {
+            loadBillingInfo(true);
+          },
+          Math.min(1000 * Math.pow(2, newRetryCount), 5000)
+        );
       } else {
         toast.error('Failed to load billing information. Please try again later.');
       }
@@ -90,7 +93,7 @@ const BillingPanel = () => {
     try {
       setCancelling(true);
       const response = await cancelSubscription(false); // Cancel at period end
-      
+
       if (response.data) {
         toast.success(
           response.data.message || 'Subscription will be canceled at the end of the billing period'
@@ -150,12 +153,12 @@ const BillingPanel = () => {
               <p className="text-gray-600 mb-2">
                 Unable to load billing information. Please try again later.
               </p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setRetryCount(0);
                   loadBillingInfo(true);
-                }} 
+                }}
                 className="mt-4"
                 disabled={loading}
               >
@@ -163,9 +166,7 @@ const BillingPanel = () => {
                 {loading ? 'Retrying...' : 'Retry'}
               </Button>
               {retryCount > 0 && (
-                <p className="text-xs text-gray-500 mt-2">
-                  Retry attempt {retryCount}/3
-                </p>
+                <p className="text-xs text-gray-500 mt-2">Retry attempt {retryCount}/3</p>
               )}
             </div>
           ) : (
@@ -202,21 +203,22 @@ const BillingPanel = () => {
               </div>
 
               {/* Cancelled Plan Message */}
-              {(billingInfo?.subscriptionStatus === 'canceled' || billingInfo?.cancelAtPeriodEnd) && billingInfo?.activeUntil && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-900">
-                        Roastr.AI estará activo hasta {formatDate(billingInfo.activeUntil)}
-                      </p>
-                      <p className="text-xs text-amber-700 mt-1">
-                        Tu suscripción se cancelará al final del período de facturación actual.
-                      </p>
+              {(billingInfo?.subscriptionStatus === 'canceled' || billingInfo?.cancelAtPeriodEnd) &&
+                billingInfo?.activeUntil && (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-900">
+                          Roastr.AI estará activo hasta {formatDate(billingInfo.activeUntil)}
+                        </p>
+                        <p className="text-xs text-amber-700 mt-1">
+                          Tu suscripción se cancelará al final del período de facturación actual.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Payment Method */}
               {billingInfo?.paymentMethod && (
@@ -232,9 +234,14 @@ const BillingPanel = () => {
                         {billingInfo.paymentMethod.brand && (
                           <p className="text-xs text-gray-500 capitalize">
                             {billingInfo.paymentMethod.brand}
-                            {billingInfo.paymentMethod.expMonth && billingInfo.paymentMethod.expYear && (
-                              <> • Expires {billingInfo.paymentMethod.expMonth}/{billingInfo.paymentMethod.expYear}</>
-                            )}
+                            {billingInfo.paymentMethod.expMonth &&
+                              billingInfo.paymentMethod.expYear && (
+                                <>
+                                  {' '}
+                                  • Expires {billingInfo.paymentMethod.expMonth}/
+                                  {billingInfo.paymentMethod.expYear}
+                                </>
+                              )}
                           </p>
                         )}
                       </div>
@@ -285,8 +292,7 @@ const BillingPanel = () => {
                         width: `${
                           billingInfo?.usage?.roastsUsed && billingInfo?.limits?.roastsPerMonth
                             ? Math.min(
-                                (billingInfo.usage.roastsUsed /
-                                  billingInfo.limits.roastsPerMonth) *
+                                (billingInfo.usage.roastsUsed / billingInfo.limits.roastsPerMonth) *
                                   100,
                                 100
                               )
@@ -425,8 +431,11 @@ const BillingPanel = () => {
         title="Cancel Subscription"
         message={
           <>
-            Are you sure you want to cancel your subscription? Your subscription will remain active until{' '}
-            {billingInfo?.nextBillingDate ? formatDate(billingInfo.nextBillingDate) : 'the end of the billing period'}
+            Are you sure you want to cancel your subscription? Your subscription will remain active
+            until{' '}
+            {billingInfo?.nextBillingDate
+              ? formatDate(billingInfo.nextBillingDate)
+              : 'the end of the billing period'}
             , and you'll continue to have access to all features until then.
             <br />
             <br />
@@ -444,4 +453,3 @@ const BillingPanel = () => {
 BillingPanel.displayName = 'BillingPanel';
 
 export default BillingPanel;
-
