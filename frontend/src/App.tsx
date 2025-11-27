@@ -41,7 +41,11 @@ import NotFound from '@/pages/NotFound';
  */
 function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="roastr-theme">
+    <ThemeProvider
+      defaultTheme="system"
+      storageKey="roastr-theme"
+      disableTransitionOnChange={true}
+    >
       <AuthProvider>
         <BrowserRouter>
           <Routes>
