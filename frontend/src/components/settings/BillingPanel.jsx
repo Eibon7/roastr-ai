@@ -10,7 +10,9 @@ import {
   Zap,
   Target,
   Crown,
-  Shield
+  Shield,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { apiClient } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,6 +37,7 @@ const BillingPanel = () => {
   const navigate = useNavigate();
   const [billingInfo, setBillingInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     loadBillingInfo();
@@ -43,10 +46,13 @@ const BillingPanel = () => {
   const loadBillingInfo = async () => {
     try {
       setLoading(true);
+      setError(false);
       const billing = await apiClient.get('/billing/info');
       setBillingInfo(billing.data);
     } catch (error) {
       console.warn('Could not load billing info:', error);
+      setError(true);
+      setBillingInfo(null);
       toast.error('Failed to load billing information');
     } finally {
       setLoading(false);
@@ -90,7 +96,23 @@ const BillingPanel = () => {
           <CardDescription>Your subscription and usage overview</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {billingInfo ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Loading billing information...</p>
+            </div>
+          ) : error || !billingInfo ? (
+            <div className="text-center py-8">
+              <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+              <p className="text-gray-600 mb-2">
+                Unable to load billing information. Please try again later.
+              </p>
+              <Button variant="outline" onClick={loadBillingInfo} className="mt-4">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          ) : (
             <>
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -213,11 +235,6 @@ const BillingPanel = () => {
                 )}
               </div>
             </>
-          ) : (
-            <div className="text-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-              <p className="text-gray-600">Loading billing information...</p>
-            </div>
           )}
         </CardContent>
       </Card>
