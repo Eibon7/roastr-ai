@@ -37,7 +37,7 @@ const personaSanitizer = new PersonaInputSanitizer();
 /**
  * Helper function to ensure platform connection is allowed based on plan limits
  * Issue #1081: CodeRabbit - Extract connection limit logic to shared helper
- * 
+ *
  * @param {Object} req - Express request object
  * @param {string} userId - User ID
  * @param {string} platform - Platform name

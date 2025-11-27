@@ -1,6 +1,6 @@
 /**
  * Valid Platforms Configuration
- * 
+ *
  * Centralized list of supported platforms to avoid duplication
  * Issue #1081: CodeRabbit - Centralize platform validation
  */
@@ -39,4 +39,3 @@ module.exports = {
   isValidPlatform,
   getValidPlatforms
 };
-
