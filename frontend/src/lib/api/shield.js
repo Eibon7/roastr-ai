@@ -34,8 +34,20 @@ export const getShieldActions = async (params = {}) => {
   return apiClient.get(`/shield/actions${query ? `?${query}` : ''}`);
 };
 
+/**
+ * Get Shield events (intercepted comments)
+ * @param {Object} params - Query parameters (timeRange, limit, platform)
+ * @returns {Promise<Object>} Shield events
+ */
+export const getShieldEvents = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const response = await apiClient.get(`/shield/events${query ? `?${query}` : ''}`);
+  return response.data || response;
+};
+
 export default {
   getShieldSettings,
   updateShieldSettings,
-  getShieldActions
+  getShieldActions,
+  getShieldEvents
 };

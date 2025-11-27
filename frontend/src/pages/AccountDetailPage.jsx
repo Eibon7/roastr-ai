@@ -24,8 +24,14 @@ import ShieldInterceptedList from '../components/ShieldInterceptedList';
 import AccountSettingsDialog from '../components/AccountSettingsDialog';
 import { useSocialAccounts } from '../hooks/useSocialAccounts';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
-import { NETWORK_ICONS, NETWORK_COLORS } from '../mocks/social';
+import {
+  NETWORK_ICONS,
+  NETWORK_COLORS
+} from '../mocks/social';
 import PageLayout from '../components/roastr/PageLayout';
+import { getAccountById as getAccountByIdAPI, getAccountRoasts } from '../lib/api/accounts';
+import { getShieldEvents } from '../lib/api/shield';
+import apiClient from '../lib/api/client';
 
 const AccountDetailPage = () => {
   const { id } = useParams();
@@ -55,106 +61,88 @@ const AccountDetailPage = () => {
   const [loadingStates, setLoadingStates] = useState({});
 
   const account = getAccountById(id);
-  const networkIcon = account ? NETWORK_ICONS[account.network || account.platform] || '📱' : '📱';
+  const networkIcon = account
+    ? NETWORK_ICONS[account.network || account.platform] || '📱'
+    : '📱';
   const networkColor = account
     ? NETWORK_COLORS[account.network || account.platform] || 'bg-gray-600 text-white'
     : 'bg-gray-600 text-white';
   const isActive = accountDetails?.status === 'active' || account?.status === 'active';
 
-  // Fetch account data
-  useEffect(() => {
-    const fetchAccountData = async () => {
-      if (!account) {
-        setLoading(false);
-        return;
+  // Fetch Shield events using centralized API client
+  const fetchShieldEvents = useCallback(async () => {
+    try {
+      const platform = account?.platform || account?.network || accountDetails?.platform;
+
+      const params = {
+        timeRange: '30d',
+        limit: '50'
+      };
+
+      if (platform && platform !== 'undefined') {
+        params.platform = platform;
       }
 
       try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-
-        // Fetch account details
-        const detailsResponse = await fetch(
-          `/api/user/accounts/${account.platform || account.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
-
-        if (detailsResponse.ok) {
-          const detailsData = await detailsResponse.json();
-          setAccountDetails(detailsData.data);
-        }
-
-        // Fetch recent roasts
-        const roastsResponse = await fetch(
-          `/api/user/accounts/${account.platform || account.id}/roasts?limit=50`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
-
-        if (roastsResponse.ok) {
-          const roastsData = await roastsResponse.json();
-          setRoasts(roastsData.data || []);
-        } else {
-          // Fallback to mock data
-          setRoasts(roastsByAccount(id) || []);
-        }
-
-        // Fetch Shield events
-        if (enableShield) {
-          await fetchShieldEvents();
-        }
+        const shieldData = await getShieldEvents(params);
+        setIntercepted(Array.isArray(shieldData) ? shieldData : shieldData.events || []);
       } catch (error) {
-        console.error('Error fetching account data:', error);
-        // Fallback to mock data
-        setRoasts(roastsByAccount(id) || []);
-        setIntercepted(interceptedByAccount(id) || []);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAccountData();
-  }, [id, account, roastsByAccount, interceptedByAccount, enableShield]);
-
-  // Fetch Shield events
-  const fetchShieldEvents = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const platform = account?.platform || account?.network || accountDetails?.platform;
-
-      const params = new URLSearchParams({
-        timeRange: '30d',
-        limit: '50'
-      });
-
-      if (platform && platform !== 'undefined') {
-        params.append('platform', platform);
-      }
-
-      const shieldResponse = await fetch(`/api/shield/events?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (shieldResponse.ok) {
-        const shieldData = await shieldResponse.json();
-        setIntercepted(shieldData.data?.events || []);
-      } else {
+        console.error('Error fetching Shield events:', error);
         setIntercepted(interceptedByAccount(id) || []);
       }
     } catch (error) {
       console.error('Error fetching Shield events:', error);
       setIntercepted(interceptedByAccount(id) || []);
     }
-  };
+  }, [account, accountDetails, id, interceptedByAccount]);
+
+  // Fetch account data function (reusable for refetch)
+  const fetchAccountData = useCallback(async () => {
+    if (!account) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const accountId = account.platform || account.id;
+
+      // Fetch account details using centralized API client
+      try {
+        const detailsData = await getAccountByIdAPI(accountId);
+        setAccountDetails(detailsData);
+      } catch (error) {
+        console.error('Error fetching account details:', error);
+      }
+
+      // Fetch recent roasts using centralized API client
+      try {
+        const roastsData = await getAccountRoasts(accountId, { limit: 50 });
+        setRoasts(Array.isArray(roastsData) ? roastsData : roastsData.data || []);
+      } catch (error) {
+        console.error('Error fetching roasts:', error);
+        // Fallback to mock data
+        setRoasts(roastsByAccount(id) || []);
+      }
+
+      // Fetch Shield events
+      if (enableShield) {
+        await fetchShieldEvents();
+      }
+    } catch (error) {
+      console.error('Error fetching account data:', error);
+      // Fallback to mock data
+      setRoasts(roastsByAccount(id) || []);
+      setIntercepted(interceptedByAccount(id) || []);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, account, roastsByAccount, interceptedByAccount, enableShield, fetchShieldEvents]);
+
+  // Fetch account data on mount
+  useEffect(() => {
+    fetchAccountData();
+  }, [fetchAccountData]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('es-ES', {
@@ -174,21 +162,24 @@ const AccountDetailPage = () => {
   };
 
   // Handle async actions with loading states
-  const handleAsyncAction = useCallback(async (actionKey, actionFn, successMessage) => {
-    setLoadingStates((prev) => ({ ...prev, [actionKey]: true }));
-    try {
-      await actionFn();
-      if (successMessage) {
-        // Could show toast here
-        console.log(successMessage);
+  const handleAsyncAction = useCallback(
+    async (actionKey, actionFn, successMessage) => {
+      setLoadingStates((prev) => ({ ...prev, [actionKey]: true }));
+      try {
+        await actionFn();
+        if (successMessage) {
+          // Could show toast here
+          console.log(successMessage);
+        }
+      } catch (error) {
+        console.error(`Error in ${actionKey}:`, error);
+        // Could show error toast here
+      } finally {
+        setLoadingStates((prev) => ({ ...prev, [actionKey]: false }));
       }
-    } catch (error) {
-      console.error(`Error in ${actionKey}:`, error);
-      // Could show error toast here
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, [actionKey]: false }));
-    }
-  }, []);
+    },
+    []
+  );
 
   const handleApproveRoast = useCallback(
     (roastId) => {
@@ -234,27 +225,23 @@ const AccountDetailPage = () => {
   };
 
   const handleRevertShieldAction = async (actionId, reason = '') => {
-    const response = await fetch(`/api/shield/revert/${actionId}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ reason })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || 'Failed to revert Shield action');
+    try {
+      // Use centralized API client for revert action
+      const response = await apiClient.post(`/shield/revert/${actionId}`, { reason });
+      await fetchShieldEvents();
+      return response;
+    } catch (error) {
+      console.error('Error reverting Shield action:', error);
+      throw error;
     }
-
-    await fetchShieldEvents();
-    return response.json();
   };
 
   if (loading) {
     return (
-      <PageLayout title="Detalle de cuenta" subtitle="Cargando información de la cuenta...">
+      <PageLayout
+        title="Detalle de cuenta"
+        subtitle="Cargando información de la cuenta..."
+      >
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -276,7 +263,10 @@ const AccountDetailPage = () => {
   }
 
   const displayName =
-    accountDetails?.handle || account.handle || account.username || `@${account.platform}_user`;
+    accountDetails?.handle ||
+    account.handle ||
+    account.username ||
+    `@${account.platform}_user`;
 
   return (
     <PageLayout
@@ -285,7 +275,11 @@ const AccountDetailPage = () => {
     >
       <div className="space-y-6">
         {/* Back Button */}
-        <Button variant="ghost" onClick={() => navigate('/app/accounts')} className="mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/app/accounts')}
+          className="mb-4"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver a cuentas
         </Button>
@@ -341,7 +335,7 @@ const AccountDetailPage = () => {
           </Card>
         </div>
 
-        {/* Settings Button */}
+          {/* Settings Button */}
         <div className="flex justify-end mb-4">
           <AccountSettingsDialog
             account={account}
@@ -353,8 +347,8 @@ const AccountDetailPage = () => {
             onChangeTone={onChangeTone}
             onDisconnectAccount={onDisconnectAccount}
             onClose={() => {
-              // Refresh account details after settings change
-              window.location.reload();
+              // Refetch account data after settings change
+              fetchAccountData();
             }}
           />
         </div>
@@ -376,7 +370,9 @@ const AccountDetailPage = () => {
                 {roasts.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="text-gray-400 dark:text-gray-500 text-4xl mb-2">💬</div>
-                    <p className="text-gray-500 dark:text-gray-400">No hay roasts generados aún</p>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No hay roasts generados aún
+                    </p>
                   </div>
                 ) : (
                   <>
@@ -435,8 +431,7 @@ const AccountDetailPage = () => {
                                           onClick={() => handleRejectRoast(roast.id)}
                                           disabled={loadingStates[`reject-${roast.id}`]}
                                         >
-                                          {loadingStates[`reject-${roast.id}`] ? '⏳' : '❌'}{' '}
-                                          Rechazar
+                                          {loadingStates[`reject-${roast.id}`] ? '⏳' : '❌'} Rechazar
                                         </Button>
                                         <Button
                                           variant="default"
@@ -444,8 +439,7 @@ const AccountDetailPage = () => {
                                           onClick={() => handleApproveRoast(roast.id)}
                                           disabled={loadingStates[`approve-${roast.id}`]}
                                         >
-                                          {loadingStates[`approve-${roast.id}`] ? '⏳' : '✅'}{' '}
-                                          Aprobar
+                                          {loadingStates[`approve-${roast.id}`] ? '⏳' : '✅'} Aprobar
                                         </Button>
                                       </>
                                     )}
@@ -463,9 +457,7 @@ const AccountDetailPage = () => {
                         <Card key={roast.id}>
                           <CardContent className="p-4 space-y-3">
                             <div>
-                              <p className="text-xs text-muted-foreground mb-1">
-                                Comentario original
-                              </p>
+                              <p className="text-xs text-muted-foreground mb-1">Comentario original</p>
                               <p className="text-sm">"{roast.original || roast.original_text}"</p>
                             </div>
                             <div>
@@ -564,9 +556,7 @@ const AccountDetailPage = () => {
                             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                               {intercepted.filter((i) => i.action === 'Reportar').length}
                             </div>
-                            <div className="text-xs text-blue-700 dark:text-blue-300">
-                              Reportados
-                            </div>
+                            <div className="text-xs text-blue-700 dark:text-blue-300">Reportados</div>
                           </div>
                         </div>
                       </div>
@@ -593,7 +583,9 @@ const AccountDetailPage = () => {
                         onToggleShield={onToggleShield}
                         onChangeTone={onChangeTone}
                         onDisconnectAccount={onDisconnectAccount}
-                        trigger={<Button variant="outline">Activar Shield</Button>}
+                        trigger={
+                          <Button variant="outline">Activar Shield</Button>
+                        }
                       />
                     </div>
                   )}
@@ -608,3 +600,4 @@ const AccountDetailPage = () => {
 };
 
 export default AccountDetailPage;
+
