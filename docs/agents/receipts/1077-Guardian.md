@@ -10,6 +10,7 @@
 ## Invocation Reason
 
 **Triggers:**
+
 - **Security:** Hardcoded Supabase password discovered in documentation (P0 CRITICAL)
 - **Schema:** Missing columns in schema.sql (P1 HIGH)
 - **Diff:** Changes to `database/schema.sql`, `src/middleware/auth.js`
@@ -21,12 +22,14 @@
 ### 🔴 P0 CRITICAL: Hardcoded Credentials
 
 **Issue Found:**
+
 - **File:** `docs/issues/ISSUE-1022-SHIELD-MIGRATION.md:96`
 - **Violation:** Hardcoded Supabase password: `export PGPASSWORD='jeptiz-hywhUk-demke2'`
 - **Risk Level:** CRITICAL
 - **Exposure:** Anyone with repo access could use credentials against production database
 
 **Remediation Applied:**
+
 ```bash
 # Before (INSECURE):
 export PGPASSWORD='jeptiz-hywhUk-demke2'
@@ -36,6 +39,7 @@ export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
 ```
 
 **Additional Fixes:**
+
 - Replaced hardcoded project ID `rpkhiemljhncddmhrilk` with placeholder `YOUR_PROJECT_ID`
 - Updated psql connection strings to use environment variables
 - Added comment: `# Set password from environment variable (NEVER hardcode passwords)`
@@ -51,10 +55,12 @@ export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
 ### 🟠 P1 HIGH: Missing Schema Elements
 
 #### Issue 1: Missing Roasting Toggle Columns
+
 **Problem:** Users table in `schema.sql` missing columns documented in Migration 026
 **Impact:** New environments bootstrapped from schema.sql would fail roasting toggle tests
 
 **Columns Added:**
+
 ```sql
 -- Roasting toggle fields (Issue #1022)
 roasting_enabled BOOLEAN DEFAULT TRUE NOT NULL,
@@ -66,10 +72,12 @@ roasting_disabled_reason TEXT,
 **Validation:** Verified against Migration 026 spec
 
 #### Issue 2: Missing Shield Index
+
 **Problem:** Organizations table missing performance index for Shield queries
 **Impact:** Performance degradation on shield-enabled lookups in new environments
 
 **Index Added:**
+
 ```sql
 -- Indexes for organizations table (Issue #1022: Performance for Shield queries)
 CREATE INDEX IF NOT EXISTS idx_organizations_shield_enabled
@@ -84,9 +92,11 @@ ON organizations(shield_enabled) WHERE shield_enabled = TRUE;
 ## Authentication & Authorization Review
 
 ### Test Mode Auth Bypass
+
 **Files:** `src/middleware/auth.js`, `src/middleware/isAdmin.js`
 
 **Changes:**
+
 ```javascript
 // Added to both authenticateToken and requireAdmin
 if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing') {
@@ -102,6 +112,7 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 ```
 
 **Security Assessment:**
+
 - ✅ Only active in `NODE_ENV === 'test'`
 - ✅ Uses specific mock token (not production tokens)
 - ✅ Proper UUID format (valid FK references)
@@ -115,20 +126,24 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 ## Code Quality Review
 
 ### Mock Token Pattern Simplification
+
 **File:** `src/config/supabase.js:220-269`
 
 **Before:**
+
 - Complex fallback pattern with JWT decode before mock check
 - Unnecessary `userId || 'mock-user-123'` fallbacks
 - Convoluted logic flow
 
 **After:**
+
 - Check mock tokens first (more efficient)
 - Remove unnecessary fallbacks (simplified)
 - Cleaner code structure
 - Decode JWT only for non-mock tokens
 
 **Impact:**
+
 - Improved code maintainability
 - Better performance (mock check before JWT decode)
 - Reduced cognitive complexity
@@ -138,6 +153,7 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 ## Guardrails Verified
 
 ### Security Checklist
+
 - ✅ No secrets exposed in code
 - ✅ No hardcoded credentials
 - ✅ Environment variables used for sensitive data
@@ -147,6 +163,7 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 - ✅ RLS policies not modified
 
 ### Schema Checklist
+
 - ✅ All migrations documented
 - ✅ Schema.sql matches migration state
 - ✅ Constraints properly defined
@@ -156,6 +173,7 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 - ✅ NOT NULL constraints where required
 
 ### Documentation Checklist
+
 - ✅ Migration instructions complete
 - ✅ Security best practices documented
 - ✅ No sensitive data in docs
@@ -167,11 +185,13 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 ## GDD Node Updates
 
 ### Nodes Affected
+
 1. **testing.md** - Integration test coverage improved
 2. **roasting.md** - Roasting toggle columns added to schema
 3. **shield.md** - Shield index added for performance
 
 ### Coverage Metrics
+
 - **GDD Health Score:** 89.6/100 (🟢 HEALTHY)
 - **Drift Risk:** 4/100 (🟢 LOW)
 - **Nodes Validated:** 15/15
@@ -204,12 +224,14 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 ## Risk Assessment
 
 ### High Risks (Mitigated)
+
 1. **🔴 Hardcoded Password Exposure**
    - **Status:** ✅ RESOLVED
    - **Action:** Password removed from docs
    - **Recommendation:** Rotate password (exposed in git history)
 
 ### Medium Risks (Acceptable)
+
 1. **🟡 Test Auth Bypass**
    - **Risk:** Test mode code in production codebase
    - **Mitigation:** Only active when `NODE_ENV === 'test'`
@@ -221,6 +243,7 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
    - **Recommendation:** Continue GDD auto-monitoring
 
 ### Low Risks (Monitored)
+
 1. **🟢 Integration Test Coverage**
    - **Current:** 77.3% (1109/1434)
    - **Target:** 100%
@@ -231,6 +254,7 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 ## Recommendations
 
 ### Immediate Actions
+
 1. ⚠️ **CRITICAL:** Rotate Supabase database password
    - Credentials were exposed in git commit history
    - Use Supabase dashboard to generate new password
@@ -242,11 +266,13 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
    - Tests passing
 
 ### Post-Merge
+
 1. Apply Migration 030 to production (roast_tones table)
 2. Verify roasting toggle functionality in production
 3. Monitor Shield query performance with new index
 
 ### Future Enhancements
+
 1. Add pre-commit hook to scan for hardcoded credentials
 2. Implement secret detection in CI (e.g., git-secrets, detect-secrets)
 3. Document security review checklist for all PRs
@@ -261,6 +287,7 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 **Status:** ✅ APPROVED WITH RECOMMENDATIONS
 
 **Verification:**
+
 - ✅ No security vulnerabilities
 - ✅ Schema integrity verified
 - ✅ GDD compliance (89.6/100)
@@ -273,6 +300,7 @@ if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing')
 ---
 
 **Related:**
+
 - Issue: #1022
 - PR: #1077
 - Migrations: 026, 030

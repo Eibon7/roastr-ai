@@ -10,6 +10,7 @@
 ## Invocation Reason
 
 **Triggers:**
+
 - Label: `area:testing`
 - Diff: Changes in `tests/` directory (19 test files modified)
 - AC: 7 acceptance criteria related to test failures
@@ -21,6 +22,7 @@
 ### 1. Test Fixes Implemented
 
 #### Admin Tones Integration Tests (19/19 passing)
+
 - **File:** `tests/integration/api/admin/tones.test.js`
 - **Changes:**
   - Refactored from mocked tests to real database tests
@@ -31,6 +33,7 @@
   - Set `created_by: null` in test mode to avoid FK violations
 
 #### Sponsor Service Integration Tests (38/38 passing)
+
 - **File:** `tests/integration/sponsor-service-integration.test.js`
 - **Changes:**
   - Enabled real Supabase mode (`USE_SUPABASE_MOCK='false'`)
@@ -38,6 +41,7 @@
   - Fixed FK constraint violations through proper user creation in tenantTestUtils.js
 
 #### Persona Flow Integration Tests (3/11 passing)
+
 - **File:** `tests/integration/roastr-persona-flow.test.js`
 - **Changes:**
   - Fixed mock configuration for flags service
@@ -46,6 +50,7 @@
   - **Remaining:** 8 tests tracked in follow-up Issue #1083
 
 #### YouTube Platform Tests (7/7 passing)
+
 - **File:** `tests/integration/platforms/youtube-verification.test.js`
 - **Changes:**
   - Updated error assertion from 'API Key' to 'Gaxios Error'
@@ -57,6 +62,7 @@
 **Improvement:** +51 tests (+3.5%)
 
 **Breakdown:**
+
 - Admin Tones: 8/19 → 19/19 (+11) ✅
 - Sponsor Service: 0/38 → 38/38 (+38) ✅
 - Persona Flow: 1/11 → 3/11 (+2) 🟡
@@ -65,6 +71,7 @@
 ### 3. Test Evidence
 
 **Toggle Endpoints (Primary Focus):**
+
 ```
 Test Suites: 1 passed, 1 total
 Tests:       20 passed, 20 total
@@ -72,6 +79,7 @@ Time:        10.093 s
 ```
 
 All 20 toggle endpoint tests passing:
+
 - 10 Roasting toggle tests ✅
 - 7 Shield toggle tests ✅
 - 3 Security & real-world scenarios ✅
@@ -81,16 +89,19 @@ All 20 toggle endpoint tests passing:
 ## Technical Decisions
 
 ### Database Trigger Handling
+
 **Issue:** Migration 030 has `ensure_at_least_one_active_tone()` trigger preventing DELETE operations
 **Decision:** Use UPSERT pattern with `{ onConflict: 'name' }` instead of DELETE + INSERT
 **Rationale:** Allows tests to run without violating trigger constraints
 
 ### Express Route Ordering
+
 **Issue:** `/api/admin/tones/reorder` matched `/:id` route
 **Decision:** Move specific routes before parameterized routes
 **Rationale:** Express matches routes in order, specific patterns must come first
 
 ### Mock vs Real Database
+
 **Issue:** Some tests used mocks, others used real DB (inconsistent)
 **Decision:** Standardize on real Supabase for integration tests
 **Rationale:** Integration tests should test real behavior, not mocks
@@ -124,11 +135,13 @@ All 20 toggle endpoint tests passing:
 ## Test Coverage Impact
 
 **Integration Tests:**
+
 - Before: 1058/1434 (73.8%)
 - After: 1109/1434 (77.3%)
 - Delta: +51 tests, +3.5%
 
 **GDD Health Score:**
+
 - Current: 89.6/100
 - Status: 🟢 HEALTHY (≥87 required)
 
@@ -150,11 +163,13 @@ All 20 toggle endpoint tests passing:
 ## Recommendations
 
 ### Immediate
+
 1. ✅ Merge PR #1077 (all blockers resolved)
 2. ✅ Apply Migration 030 to production (roast_tones table)
 3. ⏭️ Continue with Issue #1083 (Persona Flow tests)
 
 ### Future
+
 1. Standardize all integration tests on real database (no mocks)
 2. Add CI check to prevent integration test coverage regression
 3. Document test mode auth bypass pattern for consistency
@@ -169,6 +184,7 @@ All 20 toggle endpoint tests passing:
 **Status:** ✅ APPROVED
 
 **Verification:**
+
 - ✅ Tests passing (20/20 toggle, +51 total)
 - ✅ No regressions introduced
 - ✅ Documentation complete
@@ -179,6 +195,7 @@ All 20 toggle endpoint tests passing:
 ---
 
 **Related:**
+
 - Issue: #1022
 - PR: #1077
 - Follow-up: #1083
