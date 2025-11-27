@@ -9,12 +9,31 @@ const mockSupabase = createSupabaseMock({
   roastr_personas: []
 });
 
+// Create shared mock functions that will be used by all PersonaInputSanitizer instances
+const mockSanitizePersonaInput = jest.fn((input) => input); // Pass through by default
+const mockGetValidationErrorMessage = jest.fn(
+  () => 'El texto contiene patrones no permitidos o comportamiento sospechoso'
+);
+
 // Mock dependencies
 jest.mock('../../src/config/supabase', () => ({
   supabaseServiceClient: mockSupabase
 }));
-jest.mock('../../src/services/encryptionService');
-jest.mock('../../src/services/personaInputSanitizer');
+
+jest.mock('../../src/services/encryptionService', () => ({
+  encrypt: jest.fn(),
+  decrypt: jest.fn(),
+  sanitizeForEncryption: jest.fn((value) => value)
+}));
+
+jest.mock('../../src/services/personaInputSanitizer', () => {
+  // Return a constructor that always returns the same mock methods
+  return jest.fn().mockImplementation(() => ({
+    sanitizePersonaInput: mockSanitizePersonaInput,
+    getValidationErrorMessage: mockGetValidationErrorMessage
+  }));
+});
+
 jest.mock('../../src/middleware/auth', () => ({
   authenticateToken: jest.fn((req, res, next) => {
     req.user = { id: 'test-user-id', email: 'test@example.com' };
@@ -37,6 +56,24 @@ jest.mock('../../src/utils/logger', () => ({
   }
 }));
 
+// Mock flags to disable Supabase and use mock mode
+jest.mock('../../src/config/flags', () => ({
+  flags: {
+    isEnabled: jest.fn((flag) => {
+      // Disable ENABLE_SUPABASE to use mock mode in user.js routes
+      if (flag === 'ENABLE_SUPABASE') return false;
+      return false; // Default: disable all flags in tests
+    })
+  }
+}));
+
+// Mock rate limiters to pass through
+jest.mock('../../src/middleware/roastrPersonaRateLimiter', () => ({
+  roastrPersonaReadLimiter: (req, res, next) => next(),
+  roastrPersonaWriteLimiter: (req, res, next) => next(),
+  roastrPersonaDeleteLimiter: (req, res, next) => next()
+}));
+
 // ============================================================================
 // STEP 3: Require modules AFTER mocks are configured
 // ============================================================================
@@ -49,7 +86,6 @@ const PersonaInputSanitizer = require('../../src/services/personaInputSanitizer'
 
 describe('Roastr Persona Integration Flow', () => {
   let app;
-  let mockSanitizePersonaInput;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -61,15 +97,6 @@ describe('Roastr Persona Integration Flow', () => {
     app.use(express.json());
     const userRoutes = require('../../src/routes/user');
     app.use('/api/user', userRoutes);
-
-    // Setup mocks
-    mockSanitizePersonaInput = jest.fn();
-    PersonaInputSanitizer.mockImplementation(() => ({
-      sanitizePersonaInput: mockSanitizePersonaInput
-    }));
-
-    encryptionService.encrypt = jest.fn();
-    encryptionService.decrypt = jest.fn();
   });
 
   describe('Complete Save Flow', () => {
@@ -93,7 +120,7 @@ describe('Roastr Persona Integration Flow', () => {
         .mockReturnValueOnce('encrypted_igual');
 
       // Mock database operations (first for validation check, then for upsert)
-      mockSupabase.from.mockReturnValueOnce
+      mockSupabase.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -123,6 +150,11 @@ describe('Roastr Persona Integration Flow', () => {
         .set('Authorization', 'Bearer test-token')
         .send(personaData);
 
+      // Temporary: Log error if not 200
+      if (response.status !== 200) {
+        console.log('ERROR RESPONSE:', JSON.stringify(response.body, null, 2));
+      }
+
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Roastr Persona updated successfully');
@@ -149,7 +181,7 @@ describe('Roastr Persona Integration Flow', () => {
       mockSanitizePersonaInput.mockReturnValue(partialData.loQueMeDefine);
       encryptionService.encrypt.mockReturnValue('encrypted_define_only');
 
-      mockSupabase.from.mockReturnValueOnce
+      mockSupabase.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -202,7 +234,7 @@ describe('Roastr Persona Integration Flow', () => {
       };
 
       // Mock database fetch
-      mockSupabase.from.mockReturnValueOnce.mockReturnValue({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({ data: encryptedData })
@@ -249,7 +281,7 @@ describe('Roastr Persona Integration Flow', () => {
 
     it('should handle missing data gracefully', async () => {
       // Mock database returning no data
-      mockSupabase.from.mockReturnValueOnce.mockReturnValue({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({ data: null })
@@ -304,7 +336,7 @@ describe('Roastr Persona Integration Flow', () => {
         .mockReturnValueOnce('encrypted_tolero');
 
       // Mock database operations
-      mockSupabase.from.mockReturnValueOnce
+      mockSupabase.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -394,7 +426,7 @@ describe('Roastr Persona Integration Flow', () => {
         .mockReturnValueOnce(data.loQueMeDaIgual);
 
       // Mock existing data check (first call)
-      mockSupabase.from.mockReturnValueOnce.mockReturnValue({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({ data: null })
@@ -423,7 +455,7 @@ describe('Roastr Persona Integration Flow', () => {
       encryptionService.encrypt.mockReturnValue('encrypted_content');
 
       // Mock database error (first call passes, second call fails)
-      mockSupabase.from.mockReturnValueOnce
+      mockSupabase.from
         .mockReturnValueOnce({
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -462,7 +494,7 @@ describe('Roastr Persona Integration Flow', () => {
       });
 
       // Mock database check first
-      mockSupabase.from.mockReturnValueOnce.mockReturnValue({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({ data: null })
@@ -485,7 +517,7 @@ describe('Roastr Persona Integration Flow', () => {
         lo_que_me_define_encrypted: 'encrypted_define'
       };
 
-      mockSupabase.from.mockReturnValueOnce.mockReturnValue({
+      mockSupabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({ data: encryptedData })
