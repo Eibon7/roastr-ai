@@ -1,6 +1,6 @@
 /**
  * Accounts Table Component - Issue #1046
- * 
+ *
  * Tabla de cuentas conectadas con navegación a detalle
  * Endpoint: /api/accounts
  */
@@ -8,14 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '../../ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { Badge } from '../../ui/badge';
 import { Skeleton } from '../../ui/skeleton';
 import { AlertTriangle, Shield, MessageCircle } from 'lucide-react';
@@ -36,11 +29,9 @@ export default function AccountsTable() {
 
         const response = await apiClient.get('/accounts');
         const data = response.data || response;
-        
+
         // Normalizar formato de respuesta
-        const accountsList = Array.isArray(data) 
-          ? data 
-          : (data.accounts || data.data || []);
+        const accountsList = Array.isArray(data) ? data : data.accounts || data.data || [];
 
         setAccounts(accountsList);
       } catch (err) {
@@ -148,7 +139,8 @@ export default function AccountsTable() {
               {accounts.map((account) => {
                 const PlatformIcon = platformIcons[account.platform] || platformIcons.twitter;
                 const platformName = platformNames[account.platform] || account.platform;
-                const handle = account.handle || account.username || account.external_username || 'N/A';
+                const handle =
+                  account.handle || account.username || account.external_username || 'N/A';
                 const roastsCount = account.roasts_count || account.roasts || 0;
                 const shieldCount = account.shield_interceptions || account.shield_count || 0;
 
@@ -167,9 +159,7 @@ export default function AccountsTable() {
                     <TableCell>
                       <span className="text-muted-foreground">{handle}</span>
                     </TableCell>
-                    <TableCell>
-                      {getStatusBadge(account.status)}
-                    </TableCell>
+                    <TableCell>{getStatusBadge(account.status)}</TableCell>
                     <TableCell className="text-right">
                       <span className="font-medium">{roastsCount.toLocaleString()}</span>
                     </TableCell>
@@ -189,4 +179,3 @@ export default function AccountsTable() {
     </Card>
   );
 }
-

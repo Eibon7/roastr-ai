@@ -101,7 +101,9 @@ describe('UsageWidgets', () => {
   });
 
   it('should call correct API endpoint', async () => {
-    apiClient.get.mockResolvedValue({ data: { analysis: { used: 0, limit: 100 }, roasts: { used: 0, limit: 50 } } });
+    apiClient.get.mockResolvedValue({
+      data: { analysis: { used: 0, limit: 100 }, roasts: { used: 0, limit: 50 } }
+    });
 
     render(<UsageWidgets />);
 
@@ -110,4 +112,3 @@ describe('UsageWidgets', () => {
     });
   });
 });
-

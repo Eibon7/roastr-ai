@@ -10,6 +10,7 @@
 ## 📋 Tareas Completadas
 
 ### Issue #1044: Widgets de Análisis
+
 - ✅ Componente `usage-widgets.jsx` creado
 - ✅ Widgets con barras de progreso (análisis y roasts)
 - ✅ Endpoint `/api/usage/current` integrado
@@ -18,6 +19,7 @@
 - ✅ Tests unitarios creados (7 tests)
 
 ### Issue #1045: Bloque de Redes Disponibles
+
 - ✅ Componente `connect-network-card.jsx` creado
 - ✅ Botones por red social con ratio X/Y
 - ✅ Lógica de límites por plan
@@ -26,6 +28,7 @@
 - ✅ Tests unitarios creados (8 tests)
 
 ### Issue #1046: Tabla de Cuentas Conectadas
+
 - ✅ Componente `accounts-table.jsx` creado
 - ✅ Tabla con navegación clickable
 - ✅ Endpoint `/api/accounts` integrado
@@ -33,6 +36,7 @@
 - ✅ Tests unitarios creados (9 tests)
 
 ### Página Home Principal
+
 - ✅ Página `home.jsx` creada
 - ✅ Integración de los 3 componentes
 - ✅ Layout responsive
@@ -40,6 +44,7 @@
 - ✅ Tests unitarios creados (5 tests)
 
 ### Componentes UI
+
 - ✅ Componente `Table` de shadcn/ui creado
 - ✅ Toaster de sonner configurado en App.js
 
@@ -104,6 +109,7 @@ frontend/src/
 ---
 
 **Guardrails Aplicados:**
+
 - ✅ Usado shadcn/ui components (no custom)
 - ✅ Tests creados antes de marcar completo
 - ✅ GDD nodes actualizados
@@ -111,6 +117,7 @@ frontend/src/
 - ✅ Error handling implementado
 
 **Decisiones Documentadas:**
+
 - Uso de sonner para toasts (consistente con código existente)
 - Endpoint `/api/usage/current` (nuevo, requiere backend)
 - Endpoint `/api/accounts/connect/:platform` (nuevo, requiere backend)
@@ -119,4 +126,3 @@ frontend/src/
 ---
 
 **Status:** ✅ COMPLETED - Listo para PR
-

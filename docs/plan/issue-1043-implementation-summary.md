@@ -9,9 +9,11 @@
 ## 📋 Issues Completadas
 
 ### ✅ Issue #1044: Widgets de Análisis
+
 **Archivo:** `frontend/src/components/app/home/usage-widgets.jsx`
 
 **Implementación:**
+
 - Widget "Análisis este mes" con barra de progreso
 - Widget "Roasts este mes" con barra de progreso
 - Endpoint: `/api/usage/current`
@@ -22,9 +24,11 @@
 **Tests:** `frontend/src/components/app/home/__tests__/usage-widgets.test.jsx`
 
 ### ✅ Issue #1045: Bloque de Redes Disponibles
+
 **Archivo:** `frontend/src/components/app/home/connect-network-card.jsx`
 
 **Implementación:**
+
 - Botones por red social (Twitter, Instagram, YouTube, etc.)
 - Muestra ratio X/Y (cuentas actuales/máximo del plan)
 - Botones deshabilitados si alcanza máximo
@@ -35,9 +39,11 @@
 **Tests:** `frontend/src/components/app/home/__tests__/connect-network-card.test.jsx`
 
 ### ✅ Issue #1046: Tabla de Cuentas Conectadas
+
 **Archivo:** `frontend/src/components/app/home/accounts-table.jsx`
 
 **Implementación:**
+
 - Tabla con columnas: Red Social, Handle, Estado, Roasts Emitidos, Intercepciones Shield
 - Filas clickables → navegación a `/app/accounts/[accountId]`
 - Endpoint: `/api/accounts`
@@ -48,9 +54,11 @@
 **Tests:** `frontend/src/components/app/home/__tests__/accounts-table.test.jsx`
 
 ### ✅ Página Home Principal
+
 **Archivo:** `frontend/src/pages/app/home.jsx`
 
 **Implementación:**
+
 - Integra los 3 componentes
 - Layout responsive con spacing consistente
 - Manejo de estado y refresh de datos
@@ -76,15 +84,18 @@
 ## 🔧 Configuración
 
 ### Rutas Actualizadas
+
 - `frontend/src/App.js`: Ruta `/app` ahora muestra `<Home />` en lugar de `<Dashboard />`
 - Ruta `/app/dashboard` mantiene el Dashboard original
 
 ### Dependencias
+
 - ✅ `sonner` ya instalado (v2.0.7)
 - ✅ `@radix-ui/react-progress` ya instalado
 - ✅ `lucide-react` ya instalado
 
 ### Toaster Configurado
+
 - `Toaster` de sonner añadido a `App.js`
 - Posición: top-right
 - Rich colors habilitado
@@ -139,6 +150,7 @@
 ## 📊 Validación GDD
 
 ### Estado Actual
+
 - ✅ **GDD Health Score:** 89.6/100 (HEALTHY)
 - ✅ **Validación Runtime:** PASSING
 - ✅ **Nodos Actualizados:**
@@ -146,6 +158,7 @@
   - `queue-system.md`: Añadido Front-end Dev (Issue #1043)
 
 ### Nodos Relevantes
+
 - `roast` - Para contexto de roasts en widgets
 - `shield` - Para intercepciones en tabla
 - `queue-system` - Para contexto de workers
@@ -155,6 +168,7 @@
 ## 🎨 Design System
 
 ### Componentes shadcn/ui Utilizados
+
 - ✅ `Card` - Contenedores de widgets
 - ✅ `Progress` - Barras de progreso
 - ✅ `Button` - Botones de acción
@@ -163,6 +177,7 @@
 - ✅ `Table` - Tabla de cuentas (nuevo)
 
 ### Tema
+
 - Claro/oscuro/sistema (sistema por defecto)
 - Colores consistentes con design system
 - Responsive breakpoints (sm, md, lg, xl)
@@ -172,12 +187,11 @@
 ## 📝 Endpoints Requeridos
 
 ### Backend (a verificar/implementar)
+
 - `GET /api/usage/current` - Uso actual del mes
   - Response: `{ analysis: { used, limit }, roasts: { used, limit } }`
-  
 - `GET /api/accounts` - Lista de cuentas conectadas
   - Response: `[{ id, platform, handle, status, roasts_count, shield_interceptions }]`
-  
 - `POST /api/accounts/connect/:platform` - Iniciar OAuth
   - Response: `{ success, authUrl }` o `{ success, account }`
 
@@ -186,6 +200,7 @@
 ## ✅ Acceptance Criteria
 
 ### Issue #1044 ✅
+
 - [x] Ruta `/app` funcionando (Home)
 - [x] Widget 1: "Análisis este mes" con X/Y y porcentaje
 - [x] Widget 2: "Roasts este mes" con X/Y y porcentaje
@@ -194,6 +209,7 @@
 - [x] 100% responsive
 
 ### Issue #1045 ✅
+
 - [x] Bloque de redes disponibles visible
 - [x] Botones por red con texto "X/Y"
 - [x] Botones deshabilitados si máximo alcanzado
@@ -201,6 +217,7 @@
 - [x] Toast de confirmación
 
 ### Issue #1046 ✅
+
 - [x] Tabla de cuentas visible
 - [x] Columnas: Red, Handle, Estado, Roasts, Shield
 - [x] Filas clickables → `/app/accounts/[accountId]`
@@ -212,6 +229,7 @@
 ## 🚀 Próximos Pasos
 
 ### Pre-Merge Checklist
+
 - [ ] Ejecutar tests: `npm test -- --testPathPattern="app/home"`
 - [ ] Verificar coverage >= 90%
 - [ ] Ejecutar CodeRabbit review
@@ -220,6 +238,7 @@
 - [ ] Actualizar documentación si necesario
 
 ### Post-Merge
+
 - [ ] Verificar endpoints backend implementados
 - [ ] Testing E2E con Playwright
 - [ ] Validación en staging
@@ -229,6 +248,7 @@
 ## 📚 Archivos Modificados/Creados
 
 ### Nuevos Archivos
+
 ```
 frontend/src/
 ├── components/
@@ -251,6 +271,7 @@ frontend/src/
 ```
 
 ### Archivos Modificados
+
 ```
 frontend/src/
 └── App.js (ruta /app actualizada, Toaster añadido)
@@ -277,15 +298,16 @@ docs/
 ---
 
 **Agentes Involucrados:**
+
 - FrontendDev (implementación UI)
 - TestEngineer (tests unitarios)
 - Orchestrator (coordinación)
 
 **Nodos GDD Actualizados:**
+
 - `roast.md`
 - `queue-system.md`
 
 ---
 
 **Status Final:** ✅ **IMPLEMENTACIÓN COMPLETA - LISTA PARA PR**
-

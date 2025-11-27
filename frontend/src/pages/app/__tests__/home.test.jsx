@@ -58,9 +58,7 @@ describe('Home Page', () => {
   });
 
   it('should fetch accounts on mount', async () => {
-    const mockAccounts = [
-      { id: '1', platform: 'twitter', status: 'active' }
-    ];
+    const mockAccounts = [{ id: '1', platform: 'twitter', status: 'active' }];
 
     getIntegrations.mockResolvedValue({ integrations: mockAccounts });
 
@@ -109,4 +107,3 @@ describe('Home Page', () => {
     expect(screen.getByText(/Gestiona tus cuentas/i)).toBeInTheDocument();
   });
 });
-
