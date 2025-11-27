@@ -365,9 +365,10 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
     }
 
     // Cancel subscription via Stripe
+    let updatedSubscription;
     if (immediately) {
       // Cancel immediately
-      await getController().stripeWrapper.subscriptions.cancel(
+      updatedSubscription = await getController().stripeWrapper.subscriptions.cancel(
         subscription.stripe_subscription_id,
         {
           cancel_immediately: true
@@ -385,7 +386,7 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
         .eq('user_id', userId);
     } else {
       // Cancel at period end
-      await getController().stripeWrapper.subscriptions.update(
+      updatedSubscription = await getController().stripeWrapper.subscriptions.update(
         subscription.stripe_subscription_id,
         {
           cancel_at_period_end: true
@@ -402,10 +403,22 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
         .eq('user_id', userId);
     }
 
+    // Retrieve updated subscription from Stripe for accurate dates
+    // The subscription object returned by cancel/update may not have all fields expanded
+    const refreshedSubscription = await getController().stripeWrapper.subscriptions.retrieve(
+      subscription.stripe_subscription_id
+    );
+
+    // Use updated subscription's current_period_end for accurate activeUntil date
+    const activeUntilDate = refreshedSubscription.current_period_end
+      ? new Date(refreshedSubscription.current_period_end * 1000).toISOString()
+      : subscription.current_period_end;
+
     logger.info('Subscription cancellation initiated:', {
       userId,
       subscriptionId: subscription.stripe_subscription_id,
-      immediately
+      immediately,
+      activeUntil: activeUntilDate
     });
 
     res.json({
@@ -414,7 +427,7 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
         message: immediately
           ? 'Subscription canceled immediately'
           : 'Subscription will be canceled at the end of the billing period',
-        activeUntil: subscription.current_period_end
+        activeUntil: activeUntilDate
       }
     });
   } catch (error) {
