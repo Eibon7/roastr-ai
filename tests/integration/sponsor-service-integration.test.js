@@ -18,6 +18,9 @@
  * @see docs/plan/issue-866.md
  */
 
+// IMPORTANT: Use real Supabase, not mock
+process.env.USE_SUPABASE_MOCK = 'false';
+
 const SponsorService = require('../../src/services/sponsorService');
 const { createTestTenants, cleanupTestData, serviceClient } = require('../helpers/tenantTestUtils');
 const logger = require('../../src/utils/logger');

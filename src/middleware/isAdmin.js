@@ -21,7 +21,7 @@ const isAdminMiddleware = async (req, res, next) => {
     // TEST MODE: Bypass authentication for integration tests
     if (process.env.NODE_ENV === 'test' && token === 'mock-admin-token-for-testing') {
       req.user = {
-        id: 'test-admin-id-123',
+        id: '00000000-0000-0000-0000-000000000001', // Valid UUID for test mode
         email: 'admin@test.com',
         name: 'Test Admin',
         is_admin: true,

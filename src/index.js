@@ -73,6 +73,7 @@ const settingsRoutes = require('./routes/settings');
 const commentsRoutes = require('./routes/comments');
 const triageRoutes = require('./routes/triage');
 const personaRoutes = require('./routes/persona');
+const shieldRoutes = require('./routes/shield'); // Issue #1022: Shield toggle integration tests
 const checkoutRoutes = require('./routes/checkout');
 const polarWebhookRoutes = require('./routes/polarWebhook');
 const creditsRoutes = require('./routes/credits'); // QW9: Add credits router
@@ -324,6 +325,9 @@ app.use('/api/triage', triageRoutes);
 
 // Persona routes (for Issue #595) - authenticated access
 app.use(personaRoutes);
+
+// Shield routes (for Issue #1022) - authenticated access
+app.use('/api/shield', shieldRoutes);
 
 // Sponsors routes (for Issue #859) - authenticated access + Plus plan gating
 app.use('/api/sponsors', sponsorsRoutes);

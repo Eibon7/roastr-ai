@@ -731,7 +731,7 @@ router.get('/config', async (req, res) => {
  * - Invalid values can break automated moderation
  * - Affects multi-tenant isolation
  */
-router.post('/toggle', async (req, res) => {
+router.post('/toggle', authenticateToken, async (req, res) => {
   try {
     const { user } = req;
 

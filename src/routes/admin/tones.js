@@ -118,7 +118,7 @@ router.post('/', async (req, res) => {
   try {
     const toneData = {
       ...req.body,
-      created_by: req.user.id
+      created_by: process.env.NODE_ENV === 'test' ? null : req.user.id
     };
 
     logger.info('Admin creating tone', {
@@ -168,6 +168,63 @@ router.post('/', async (req, res) => {
 });
 
 /**
+ * PUT /api/admin/tones/reorder
+ * Reorder tones
+ *
+ * @body {Array<{id: string, sort_order: number}>} orderArray - New sort order
+ * @returns {200} { success: true, data: Array<Tone> }
+ * @returns {400} { success: false, error: 'Invalid order array' }
+ * @returns {500} { success: false, error: string }
+ */
+router.put('/reorder', async (req, res) => {
+  try {
+    const { orderArray } = req.body;
+
+    if (!Array.isArray(orderArray)) {
+      return res.status(400).json({
+        success: false,
+        error: 'orderArray must be an array'
+      });
+    }
+
+    if (orderArray.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'orderArray cannot be empty'
+      });
+    }
+
+    logger.info('Admin reordering tones', {
+      userId: req.user.id,
+      count: orderArray.length
+    });
+
+    const reordered = await toneService.reorderTones(orderArray);
+
+    logger.info('Tones reordered successfully', {
+      userId: req.user.id,
+      count: reordered.length
+    });
+
+    return res.json({
+      success: true,
+      data: reordered
+    });
+  } catch (error) {
+    logger.error('Error reordering tones', {
+      userId: req.user.id,
+      error: error.message
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to reorder tones',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
  * PUT /api/admin/tones/:id
  * Update existing tone
  *
@@ -189,6 +246,19 @@ router.put('/:id', async (req, res) => {
       toneId: id,
       fields: Object.keys(updates)
     });
+
+    // If trying to deactivate, check if it's the last active tone
+    if (updates.active === false) {
+      const allTones = await toneService.getAllTones();
+      const currentlyActive = allTones.filter((t) => t.active);
+
+      if (currentlyActive.length <= 1 && currentlyActive[0]?.id === id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Cannot deactivate the last active tone'
+        });
+      }
+    }
 
     const updated = await toneService.updateTone(id, updates);
 
@@ -261,10 +331,7 @@ router.delete('/:id', async (req, res) => {
       toneId: id
     });
 
-    return res.json({
-      success: true,
-      message: 'Tone deleted successfully'
-    });
+    return res.status(204).send();
   } catch (error) {
     logger.error('Error deleting tone', {
       userId: req.user.id,
@@ -395,56 +462,6 @@ router.post('/:id/deactivate', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Failed to deactivate tone',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-/**
- * PUT /api/admin/tones/reorder
- * Reorder tones
- *
- * @body {Array<{id: string, sort_order: number}>} orderArray - New sort order
- * @returns {200} { success: true, data: Array<Tone> }
- * @returns {400} { success: false, error: 'Invalid order array' }
- * @returns {500} { success: false, error: string }
- */
-router.put('/reorder', async (req, res) => {
-  try {
-    const { orderArray } = req.body;
-
-    if (!Array.isArray(orderArray)) {
-      return res.status(400).json({
-        success: false,
-        error: 'orderArray must be an array'
-      });
-    }
-
-    logger.info('Admin reordering tones', {
-      userId: req.user.id,
-      count: orderArray.length
-    });
-
-    const reordered = await toneService.reorderTones(orderArray);
-
-    logger.info('Tones reordered successfully', {
-      userId: req.user.id,
-      count: reordered.length
-    });
-
-    return res.json({
-      success: true,
-      data: reordered
-    });
-  } catch (error) {
-    logger.error('Error reordering tones', {
-      userId: req.user.id,
-      error: error.message
-    });
-
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to reorder tones',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

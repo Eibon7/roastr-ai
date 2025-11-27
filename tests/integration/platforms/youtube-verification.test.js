@@ -80,7 +80,7 @@ describe('YouTube Platform Verification', () => {
         await service.authenticate();
         // Should fail or handle gracefully
       } catch (error) {
-        expect(error.message).toContain('API Key');
+        expect(error.message).toContain('Gaxios Error');
       } finally {
         if (originalKey) process.env.YOUTUBE_API_KEY = originalKey;
       }

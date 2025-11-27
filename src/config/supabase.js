@@ -217,11 +217,12 @@ const getUserFromToken = async (token) => {
     process.env.ENABLE_MOCK_MODE === 'true'
   ) {
     if (token && token !== '') {
-      // Different tokens return different mock users for testing
+      // Define mock users for testing (simplified - no fallbacks needed)
       const mockUsers = {
         'mock-jwt-token': {
           id: 'mock-user-123',
           email: 'test@example.com',
+          organizationId: 'mock-org-123',
           user_metadata: { full_name: 'Test User' },
           app_metadata: { role: 'user' },
           created_at: new Date().toISOString()
@@ -229,6 +230,7 @@ const getUserFromToken = async (token) => {
         'mock-creator-jwt-token': {
           id: 'mock-creator-user-456',
           email: 'creator@example.com',
+          organizationId: 'mock-org-456',
           user_metadata: { full_name: 'Creator User' },
           app_metadata: { role: 'user' },
           created_at: new Date().toISOString()
@@ -236,22 +238,39 @@ const getUserFromToken = async (token) => {
         'mock-admin-token': {
           id: 'mock-admin-789',
           email: 'admin@example.com',
+          organizationId: 'mock-org-789',
           user_metadata: { full_name: 'Admin User' },
           app_metadata: { role: 'admin' },
           created_at: new Date().toISOString()
         }
       };
 
-      // Return specific user if known token, otherwise return default
-      return (
-        mockUsers[token] || {
-          id: 'mock-user-' + token.substring(0, 8),
-          email: 'test@example.com',
-          user_metadata: { full_name: 'Test User' },
-          app_metadata: { role: 'user' },
-          created_at: new Date().toISOString()
-        }
-      );
+      // Check if it's a known mock token first
+      if (mockUsers[token]) {
+        return mockUsers[token];
+      }
+
+      // Try to decode JWT for integration tests with real tokens
+      if (!process.env.JWT_SECRET) {
+        console.warn('[SUPABASE] JWT_SECRET not set - cannot verify JWT tokens in mock mode');
+        return null;
+      }
+
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        return {
+          id: decoded.id,
+          email: decoded.email,
+          organizationId: decoded.organizationId,
+          user_metadata: decoded.user_metadata || {},
+          app_metadata: decoded.app_metadata || {},
+          created_at: decoded.created_at || new Date().toISOString()
+        };
+      } catch (err) {
+        // JWT verification failed - token is neither mock nor valid JWT
+        return null;
+      }
     }
     return null;
   }

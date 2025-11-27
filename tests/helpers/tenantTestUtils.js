@@ -234,7 +234,7 @@ async function createTestTenants() {
       name: tenantA.name,
       slug: tenantA.slug,
       owner_id: tenantA.owner_id,
-      plan_id: 'starter_trial' // Issue #894: Use current schema default (not 'free')
+      plan_id: 'free' // Issue #1022: Use valid plan from organizations_plan_check constraint
     })
     .select()
     .single();
@@ -248,7 +248,7 @@ async function createTestTenants() {
       name: tenantB.name,
       slug: tenantB.slug,
       owner_id: tenantB.owner_id,
-      plan_id: 'starter_trial' // Issue #894: Use current schema default (not 'free')
+      plan_id: 'free' // Issue #1022: Use valid plan from organizations_plan_check constraint
     })
     .select()
     .single();
