@@ -37,7 +37,7 @@ const personaSanitizer = new PersonaInputSanitizer();
 /**
  * Helper function to ensure platform connection is allowed based on plan limits
  * Issue #1081: CodeRabbit - Extract connection limit logic to shared helper
- *
+ * 
  * @param {Object} req - Express request object
  * @param {string} userId - User ID
  * @param {string} platform - Platform name
@@ -3687,7 +3687,11 @@ router.get('/accounts', authenticateToken, async (req, res) => {
         shield_interceptions: integration.shield_interceptions || integration.shield_count || 0
       }));
 
-      res.json(accounts);
+      // Standardize response format (Issue #1081: CodeRabbit)
+      res.json({
+        success: true,
+        data: accounts
+      });
     } else {
       res.status(500).json({
         success: false,
