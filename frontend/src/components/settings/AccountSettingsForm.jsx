@@ -72,23 +72,23 @@ const AccountSettingsForm = () => {
     const errors = [];
 
     if (password.length < 8) {
-      errors.push('At least 8 characters');
+      errors.push('Al menos 8 caracteres');
     }
 
     if (!/[A-Z]/.test(password)) {
-      errors.push('One uppercase letter');
+      errors.push('Al menos una mayúscula (A-Z)');
     }
 
     if (!/[a-z]/.test(password)) {
-      errors.push('One lowercase letter');
+      errors.push('Al menos una minúscula (a-z)');
     }
 
     if (!/[0-9]/.test(password)) {
-      errors.push('One number');
+      errors.push('Al menos un número (0-9)');
     }
 
     if (!/[!@#$%^&*()_+\-=[\]{}|;':".,<>?`~]/.test(password)) {
-      errors.push('One special character');
+      errors.push('Al menos un carácter especial (!@#$%^&*)');
     }
 
     return errors;
