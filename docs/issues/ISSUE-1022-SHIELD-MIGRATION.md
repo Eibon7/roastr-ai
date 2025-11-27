@@ -41,7 +41,7 @@ Migration 001 creates `organization_settings` table (separate table), but the en
 ### Option 1: Supabase SQL Editor (Recommended) ⭐
 
 1. **Open Supabase SQL Editor:**
-   https://supabase.com/dashboard/project/rpkhiemljhncddmhrilk/sql/new
+   https://supabase.com/dashboard/project/YOUR_PROJECT_ID/sql/new
 
 2. **Copy and paste the following SQL:**
 
@@ -94,17 +94,17 @@ ORDER BY column_name;
 ### Option 2: psql Command Line
 
 ```bash
-# Set password first
-export PGPASSWORD='jeptiz-hywhUk-demke2'
+# Set password from environment variable (NEVER hardcode passwords)
+export PGPASSWORD="${SUPABASE_DB_PASSWORD}"
 
 # Apply migration (copy SQL above to a file first)
-psql -h db.rpkhiemljhncddmhrilk.supabase.co \
+psql -h db.${SUPABASE_PROJECT_ID}.supabase.co \
      -U postgres \
      -d postgres \
      -c "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS shield_enabled BOOLEAN DEFAULT FALSE NOT NULL, ADD COLUMN IF NOT EXISTS shield_disabled_at TIMESTAMPTZ, ADD COLUMN IF NOT EXISTS shield_disabled_reason TEXT;"
 
 # Verify
-psql -h db.rpkhiemljhncddmhrilk.supabase.co \
+psql -h db.${SUPABASE_PROJECT_ID}.supabase.co \
      -U postgres \
      -d postgres \
      -c "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'organizations' AND column_name LIKE 'shield%';"

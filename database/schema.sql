@@ -64,6 +64,11 @@ CREATE TABLE users (
     embeddings_model VARCHAR(100) DEFAULT 'text-embedding-3-small',
     embeddings_version INTEGER DEFAULT 1,
 
+    -- Roasting toggle fields (Issue #1022)
+    roasting_enabled BOOLEAN DEFAULT TRUE NOT NULL,
+    roasting_disabled_at TIMESTAMPTZ,
+    roasting_disabled_reason TEXT,
+
     CONSTRAINT users_email_check CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     CONSTRAINT users_plan_check CHECK (plan IN ('basic', 'pro', 'creator_plus')),
     CONSTRAINT users_lo_que_me_define_encrypted_length_check CHECK (lo_que_me_define_encrypted IS NULL OR char_length(lo_que_me_define_encrypted) <= 500),
@@ -158,6 +163,10 @@ CREATE TABLE organizations (
     CONSTRAINT organizations_slug_check CHECK (slug ~* '^[a-z0-9-]+$'),
     CONSTRAINT organizations_plan_check CHECK (plan_id IN ('free', 'pro', 'creator_plus', 'custom'))
 );
+
+-- Indexes for organizations table (Issue #1022: Performance for Shield queries)
+CREATE INDEX IF NOT EXISTS idx_organizations_shield_enabled
+ON organizations(shield_enabled) WHERE shield_enabled = TRUE;
 
 -- Organization members
 CREATE TABLE organization_members (
