@@ -5,72 +5,34 @@
  * subscription access and plan changes.
  */
 
-const { getConnections } = require('supabase-test');
-const { getTestConfig } = require('../setup/supabase-test.config');
-const { createMigrationsSeed } = require('./helpers/load-migrations');
-const { skipIfPsqlNotAvailable } = require('./helpers/check-psql');
+const { setup, teardown, setupBeforeEach, setupAfterEach } = require('./helpers/rls-test-helpers');
 
 let db;
 let pg;
-let teardown;
 let shouldSkip = false;
 
 beforeAll(async () => {
-  // Check if psql is available
-  shouldSkip = await skipIfPsqlNotAvailable();
-  if (shouldSkip) {
-    return; // Skip test setup
+  const result = await setup();
+  if (result.skip) {
+    shouldSkip = true;
+    return;
   }
-
-  try {
-    const config = getTestConfig();
-    const result = await getConnections(config, [
-      createMigrationsSeed() // Load all migrations automatically
-    ]);
-
-    db = result.db;
-    pg = result.pg;
-    teardown = result.teardown;
-  } catch (error) {
-    if (error.message && error.message.includes('psql')) {
-      console.warn('⚠️  psql not found, skipping RLS tests');
-      shouldSkip = true;
-    } else {
-      throw error;
-    }
-  }
+  db = result.db;
+  pg = result.pg;
 });
 
 afterAll(async () => {
-  if (shouldSkip || !teardown || typeof teardown !== 'function') {
-    return;
-  }
-  try {
+  if (!shouldSkip) {
     await teardown();
-  } catch (error) {
-    // Ignore teardown errors if psql is not available
-    if (!error.message || !error.message.includes('psql')) {
-      throw error;
-    }
   }
 });
 
 beforeEach(() => {
-  if (shouldSkip || !db) {
-    return;
-  }
-  if (db && typeof db.beforeEach === 'function') {
-    db.beforeEach();
-  }
+  setupBeforeEach(db, shouldSkip);
 });
 
 afterEach(() => {
-  if (shouldSkip || !db) {
-    return;
-  }
-  if (db && typeof db.afterEach === 'function') {
-    db.afterEach();
-  }
+  setupAfterEach(db, shouldSkip);
 });
 
 describe('Subscriptions RLS', () => {
@@ -80,6 +42,10 @@ describe('Subscriptions RLS', () => {
   let subscriptionBId;
 
   beforeEach(async () => {
+    if (shouldSkip || !pg || !db) {
+      return; // Skip test data setup if tests are skipped
+    }
+
     // Create test users
     const userAResult = await pg.query(`
       INSERT INTO users (id, email, plan)
@@ -131,6 +97,10 @@ describe('Subscriptions RLS', () => {
   });
 
   test('Un usuario sin suscripción activa no puede cambiar niveles', async () => {
+    if (shouldSkip || !pg || !db) {
+      return; // Skip test if setup failed
+    }
+
     // Set context as User B (canceled subscription)
     db.setContext({
       role: 'authenticated',
@@ -162,6 +132,10 @@ describe('Subscriptions RLS', () => {
   });
 
   test('Cambio de plan debe reflejarse en DB', async () => {
+    if (shouldSkip || !pg || !db) {
+      return; // Skip test if setup failed
+    }
+
     // Set context as User A (active subscription)
     db.setContext({
       role: 'authenticated',
@@ -190,6 +164,10 @@ describe('Subscriptions RLS', () => {
   });
 
   test('Polar webhook genera un registro válido', async () => {
+    if (shouldSkip || !pg || !db) {
+      return; // Skip test if setup failed
+    }
+
     // Simulate webhook event creation (service role)
     const webhookResult = await pg.query(`
       INSERT INTO polar_webhook_events (

@@ -5,72 +5,34 @@
  * persona data isolation and encryption requirements.
  */
 
-const { getConnections } = require('supabase-test');
-const { getTestConfig } = require('../setup/supabase-test.config');
-const { createMigrationsSeed } = require('./helpers/load-migrations');
-const { skipIfPsqlNotAvailable } = require('./helpers/check-psql');
+const { setup, teardown, setupBeforeEach, setupAfterEach } = require('./helpers/rls-test-helpers');
 
 let db;
 let pg;
-let teardown;
 let shouldSkip = false;
 
 beforeAll(async () => {
-  // Check if psql is available
-  shouldSkip = await skipIfPsqlNotAvailable();
-  if (shouldSkip) {
-    return; // Skip test setup
+  const result = await setup();
+  if (result.skip) {
+    shouldSkip = true;
+    return;
   }
-
-  try {
-    const config = getTestConfig();
-    const result = await getConnections(config, [
-      createMigrationsSeed() // Load all migrations automatically
-    ]);
-
-    db = result.db;
-    pg = result.pg;
-    teardown = result.teardown;
-  } catch (error) {
-    if (error.message && error.message.includes('psql')) {
-      console.warn('⚠️  psql not found, skipping RLS tests');
-      shouldSkip = true;
-    } else {
-      throw error;
-    }
-  }
+  db = result.db;
+  pg = result.pg;
 });
 
 afterAll(async () => {
-  if (shouldSkip || !teardown || typeof teardown !== 'function') {
-    return;
-  }
-  try {
+  if (!shouldSkip) {
     await teardown();
-  } catch (error) {
-    // Ignore teardown errors if psql is not available
-    if (!error.message || !error.message.includes('psql')) {
-      throw error;
-    }
   }
 });
 
 beforeEach(() => {
-  if (shouldSkip || !db) {
-    return;
-  }
-  if (db && typeof db.beforeEach === 'function') {
-    db.beforeEach();
-  }
+  setupBeforeEach(db, shouldSkip);
 });
 
 afterEach(() => {
-  if (shouldSkip || !db) {
-    return;
-  }
-  if (db && typeof db.afterEach === 'function') {
-    db.afterEach();
-  }
+  setupAfterEach(db, shouldSkip);
 });
 
 describe('Persona RLS', () => {
@@ -78,6 +40,10 @@ describe('Persona RLS', () => {
   let userBId;
 
   beforeEach(async () => {
+    if (shouldSkip || !pg || !db) {
+      return; // Skip test data setup if tests are skipped
+    }
+
     const userAResult = await pg.query(`
       INSERT INTO users (id, email, plan)
       VALUES (gen_random_uuid(), 'user-a@test.com', 'starter')
@@ -112,6 +78,10 @@ describe('Persona RLS', () => {
   });
 
   test('Usuario A no puede leer la persona de Usuario B', async () => {
+    if (shouldSkip || !pg || !db) {
+      return; // Skip test if setup failed
+    }
+
     db.setContext({
       role: 'authenticated',
       'jwt.claims.user_id': userAId
