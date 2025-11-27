@@ -135,7 +135,7 @@ async function executeMigration() {
     `);
 
     console.log(`✅ Found ${indexResult.rows.length} indexes:\n`);
-    indexResult.rows.forEach(row => {
+    indexResult.rows.forEach((row) => {
       console.log(`  - ${row.indexname}`);
     });
 
@@ -148,13 +148,12 @@ async function executeMigration() {
     `);
 
     console.log(`✅ Found ${triggerResult.rows.length} triggers:\n`);
-    triggerResult.rows.forEach(row => {
+    triggerResult.rows.forEach((row) => {
       console.log(`  - ${row.trigger_name} (${row.action_timing} ${row.event_manipulation})`);
     });
 
     console.log('\n✅ Migration 030 completed successfully!');
     console.log('   The roast_tones table is ready for use.\n');
-
   } catch (error) {
     console.error('\n❌ Migration failed!');
     console.error('Error:', error.message);

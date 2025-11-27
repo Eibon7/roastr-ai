@@ -74,18 +74,17 @@ async function test() {
     console.log('✅ Insert successful, ID:', inserted?.id);
 
     // Clean up
-    await supabaseServiceClient
-      .from('roast_tones')
-      .delete()
-      .eq('name', 'test-connection-check');
+    await supabaseServiceClient.from('roast_tones').delete().eq('name', 'test-connection-check');
     console.log('✅ Cleanup complete');
   }
 }
 
-test().then(() => {
-  console.log('\n✅ Test complete');
-  process.exit(0);
-}).catch(err => {
-  console.error('\n❌ Test failed:', err);
-  process.exit(1);
-});
+test()
+  .then(() => {
+    console.log('\n✅ Test complete');
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error('\n❌ Test failed:', err);
+    process.exit(1);
+  });
