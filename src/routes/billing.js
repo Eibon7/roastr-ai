@@ -357,25 +357,10 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
       });
     }
 
-    if (!subscription.stripe_subscription_id) {
-      return res.status(400).json({
-        success: false,
-        error: 'Subscription does not have a Stripe subscription ID'
-      });
-    }
-
-    // Cancel subscription via Stripe
-    let updatedSubscription;
+    // Cancel subscription - update database directly
+    // Note: Polar webhooks will sync the cancellation status
     if (immediately) {
-      // Cancel immediately
-      updatedSubscription = await getController().stripeWrapper.subscriptions.cancel(
-        subscription.stripe_subscription_id,
-        {
-          cancel_immediately: true
-        }
-      );
-
-      // Update database
+      // Cancel immediately - update status to canceled
       await supabaseServiceClient
         .from('user_subscriptions')
         .update({
@@ -385,15 +370,7 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
         })
         .eq('user_id', userId);
     } else {
-      // Cancel at period end
-      updatedSubscription = await getController().stripeWrapper.subscriptions.update(
-        subscription.stripe_subscription_id,
-        {
-          cancel_at_period_end: true
-        }
-      );
-
-      // Update database
+      // Cancel at period end - mark for cancellation
       await supabaseServiceClient
         .from('user_subscriptions')
         .update({
@@ -403,20 +380,18 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
         .eq('user_id', userId);
     }
 
-    // Retrieve updated subscription from Stripe for accurate dates
-    // The subscription object returned by cancel/update may not have all fields expanded
-    const refreshedSubscription = await getController().stripeWrapper.subscriptions.retrieve(
-      subscription.stripe_subscription_id
-    );
+    // Get updated subscription from database for accurate dates
+    const { data: updatedSubscription } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
-    // Use updated subscription's current_period_end for accurate activeUntil date
-    const activeUntilDate = refreshedSubscription.current_period_end
-      ? new Date(refreshedSubscription.current_period_end * 1000).toISOString()
-      : subscription.current_period_end;
+    // Use subscription's current_period_end for accurate activeUntil date
+    const activeUntilDate = updatedSubscription?.current_period_end || subscription.current_period_end;
 
     logger.info('Subscription cancellation initiated:', {
       userId,
-      subscriptionId: subscription.stripe_subscription_id,
       immediately,
       activeUntil: activeUntilDate
     });
@@ -468,8 +443,6 @@ router.get('/info', authenticateToken, async (req, res) => {
       user_id: userId,
       plan: PLAN_IDS.STARTER_TRIAL,
       status: 'active',
-      stripe_customer_id: null,
-      stripe_subscription_id: null,
       current_period_end: null,
       cancel_at_period_end: false
     };
@@ -497,90 +470,12 @@ router.get('/info', authenticateToken, async (req, res) => {
       // Use defaults
     }
 
-    // Get payment method info from Stripe if customer exists
+    // Get billing information from database
+    // Note: Payment method info should come from Polar via webhooks, not direct API calls
     let paymentMethod = null;
-    let nextBillingDate = null;
+    let nextBillingDate = sub.current_period_end || null;
     let subscriptionStatus = sub.status || 'active';
     let activeUntil = null;
-
-    if (sub.stripe_customer_id && flags.isEnabled('ENABLE_BILLING')) {
-      try {
-        // Retrieve customer with expanded default payment method
-        const customer = await getController().stripeWrapper.customers.retrieve(
-          sub.stripe_customer_id,
-          { expand: ['default_source', 'invoice_settings.default_payment_method'] }
-        );
-
-        // Get payment method last 4 digits
-        if (customer.invoice_settings?.default_payment_method) {
-          const pm = customer.invoice_settings.default_payment_method;
-          if (typeof pm === 'object' && pm.card) {
-            paymentMethod = {
-              last4: pm.card.last4,
-              brand: pm.card.brand,
-              expMonth: pm.card.exp_month,
-              expYear: pm.card.exp_year
-            };
-          } else if (typeof pm === 'string') {
-            // If it's just an ID, we'd need another API call, but for now we'll skip
-            // In production, you'd retrieve the payment method separately
-          }
-        } else if (customer.default_source) {
-          // Fallback to default source (legacy)
-          const source = customer.default_source;
-          if (typeof source === 'object' && source.card) {
-            paymentMethod = {
-              last4: source.card.last4,
-              brand: source.card.brand,
-              expMonth: source.card.exp_month,
-              expYear: source.card.exp_year
-            };
-          }
-        }
-
-        // Get subscription details if subscription ID exists
-        if (sub.stripe_subscription_id) {
-          const stripeSub = await getController().stripeWrapper.subscriptions.retrieve(
-            sub.stripe_subscription_id,
-            { expand: ['default_payment_method'] }
-          );
-
-          subscriptionStatus = stripeSub.status;
-          nextBillingDate = stripeSub.current_period_end
-            ? new Date(stripeSub.current_period_end * 1000).toISOString()
-            : sub.current_period_end;
-
-          if (stripeSub.cancel_at_period_end || subscriptionStatus === 'canceled') {
-            activeUntil = stripeSub.current_period_end
-              ? new Date(stripeSub.current_period_end * 1000).toISOString()
-              : sub.current_period_end;
-          }
-
-          // Get payment method from subscription if not found in customer
-          if (!paymentMethod && stripeSub.default_payment_method) {
-            const pm = stripeSub.default_payment_method;
-            if (typeof pm === 'object' && pm.card) {
-              paymentMethod = {
-                last4: pm.card.last4,
-                brand: pm.card.brand,
-                expMonth: pm.card.exp_month,
-                expYear: pm.card.exp_year
-              };
-            }
-          }
-        } else if (sub.current_period_end) {
-          nextBillingDate = sub.current_period_end;
-        }
-      } catch (stripeError) {
-        logger.warn('Could not fetch Stripe payment method info:', {
-          error: stripeError.message,
-          customerId: sub.stripe_customer_id
-        });
-        // Continue without payment method info
-      }
-    } else if (sub.current_period_end) {
-      nextBillingDate = sub.current_period_end;
-    }
 
     // Determine if subscription is cancelled
     const isCancelled = subscriptionStatus === 'canceled' || sub.cancel_at_period_end;
