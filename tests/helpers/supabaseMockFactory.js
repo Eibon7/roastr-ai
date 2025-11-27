@@ -142,6 +142,74 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
         return Promise.resolve({ data: result || null, error: null });
       }),
 
+      // THEN operation (for direct promise resolution)
+      then: jest.fn((resolve) => {
+        const data = storage.tables[tableName];
+
+        if (!data) {
+          return Promise.resolve({ data: null, error: { message: 'Table not found' } }).then(resolve);
+        }
+
+        // Apply filters
+        let result = data;
+        if (Array.isArray(data) && queryState.filters.length > 0) {
+          result = data.filter((row) => {
+            return queryState.filters.every((filter) => {
+              switch (filter.type) {
+                case 'eq':
+                  return row[filter.column] === filter.value;
+                case 'neq':
+                  return row[filter.column] !== filter.value;
+                case 'gt':
+                  return row[filter.column] > filter.value;
+                case 'gte':
+                  return row[filter.column] >= filter.value;
+                case 'lt':
+                  return row[filter.column] < filter.value;
+                case 'lte':
+                  // For date comparisons, convert to Date objects if both are strings
+                  if (typeof row[filter.column] === 'string' && typeof filter.value === 'string') {
+                    const rowDate = new Date(row[filter.column]);
+                    const filterDate = new Date(filter.value);
+                    if (!isNaN(rowDate.getTime()) && !isNaN(filterDate.getTime())) {
+                      return rowDate <= filterDate;
+                    }
+                  }
+                  return row[filter.column] <= filter.value;
+                case 'gte':
+                  // For date comparisons, convert to Date objects if both are strings
+                  if (typeof row[filter.column] === 'string' && typeof filter.value === 'string') {
+                    const rowDate = new Date(row[filter.column]);
+                    const filterDate = new Date(filter.value);
+                    if (!isNaN(rowDate.getTime()) && !isNaN(filterDate.getTime())) {
+                      return rowDate >= filterDate;
+                    }
+                  }
+                  return row[filter.column] >= filter.value;
+                case 'in':
+                  return filter.value.includes(row[filter.column]);
+                case 'is':
+                  return row[filter.column] === filter.value;
+                case 'not':
+                  // Handle .not(column, 'is', value) - means column !== value
+                  if (filter.operator === 'is') {
+                    return row[filter.column] !== filter.value;
+                  }
+                  // Handle other not operators if needed
+                  return true;
+                default:
+                  return true;
+              }
+            });
+          });
+        }
+
+        return Promise.resolve({
+          data: result || [],
+          error: null
+        }).then(resolve);
+      }),
+
       // INSERT operation
       insert: jest.fn((insertData) => {
         // Store inserted data
