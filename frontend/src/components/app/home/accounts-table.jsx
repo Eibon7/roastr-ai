@@ -15,13 +15,35 @@ import { AlertTriangle, Shield, MessageCircle } from 'lucide-react';
 import { platformIcons, platformNames } from '../../../config/platforms';
 import { apiClient } from '../../../lib/api';
 
-export default function AccountsTable() {
-  const [accounts, setAccounts] = useState([]);
-  const [loading, setLoading] = useState(true);
+// Simple logger for frontend (CodeRabbit requirement)
+const logger = {
+  error: (message, error) => {
+    console.error(message, error);
+    // In production, could send to error tracking service
+  }
+};
+
+export default function AccountsTable({ accounts: accountsProp }) {
+  const [accounts, setAccounts] = useState(accountsProp || []);
+  const [loading, setLoading] = useState(!accountsProp);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  // Update accounts when prop changes
   useEffect(() => {
+    if (accountsProp) {
+      setAccounts(accountsProp);
+      setLoading(false);
+    }
+  }, [accountsProp]);
+
+  // Only fetch if no accounts prop provided (CodeRabbit fix: eliminate duplicate API calls)
+  useEffect(() => {
+    if (accountsProp) {
+      // Accounts provided as prop, skip fetching
+      return;
+    }
+
     const fetchAccounts = async () => {
       try {
         setLoading(true);
@@ -35,7 +57,7 @@ export default function AccountsTable() {
 
         setAccounts(accountsList);
       } catch (err) {
-        console.error('Error fetching accounts:', err);
+        logger.error('Error fetching accounts:', err);
         setError(err.message || 'Error al cargar cuentas');
         setAccounts([]);
       } finally {
@@ -44,7 +66,7 @@ export default function AccountsTable() {
     };
 
     fetchAccounts();
-  }, []);
+  }, [accountsProp]);
 
   const handleRowClick = (accountId) => {
     navigate(`/app/accounts/${accountId}`);

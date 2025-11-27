@@ -11,7 +11,14 @@ import UsageWidgets from '../../components/app/home/usage-widgets';
 import ConnectNetworkCard from '../../components/app/home/connect-network-card';
 import AccountsTable from '../../components/app/home/accounts-table';
 import { apiClient } from '../../lib/api';
-import { getIntegrations } from '../../api/integrations';
+
+// Simple logger for frontend (CodeRabbit requirement)
+const logger = {
+  error: (message, error) => {
+    console.error(message, error);
+    // In production, could send to error tracking service
+  }
+};
 
 export default function Home() {
   const [accounts, setAccounts] = useState([]);
@@ -21,11 +28,12 @@ export default function Home() {
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const result = await getIntegrations();
-        const accountsList = result?.integrations ?? result?.data ?? [];
-        setAccounts(accountsList);
+        // Use /api/accounts endpoint directly (Issue #1046)
+        const response = await apiClient.get('/accounts');
+        const accountsList = response.data || response || [];
+        setAccounts(Array.isArray(accountsList) ? accountsList : []);
       } catch (error) {
-        console.error('Error fetching accounts:', error);
+        logger.error('Error fetching accounts:', error);
         setAccounts([]);
       } finally {
         setLoading(false);
@@ -38,11 +46,11 @@ export default function Home() {
   const handleAccountConnected = async () => {
     // Refrescar lista de cuentas después de conectar
     try {
-      const result = await getIntegrations();
-      const accountsList = result?.integrations ?? result?.data ?? [];
-      setAccounts(accountsList);
+      const response = await apiClient.get('/accounts');
+      const accountsList = response.data || response || [];
+      setAccounts(Array.isArray(accountsList) ? accountsList : []);
     } catch (error) {
-      console.error('Error refreshing accounts:', error);
+      logger.error('Error refreshing accounts:', error);
     }
   };
 
@@ -60,7 +68,8 @@ export default function Home() {
       <ConnectNetworkCard accounts={accounts} onAccountConnected={handleAccountConnected} />
 
       {/* Tabla de Cuentas Conectadas - Issue #1046 */}
-      <AccountsTable />
+      {/* Pass accounts as prop to avoid duplicate API calls (CodeRabbit fix) */}
+      <AccountsTable accounts={accounts} />
     </div>
   );
 }

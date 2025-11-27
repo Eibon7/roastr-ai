@@ -3582,4 +3582,156 @@ router.post('/settings/style', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/usage/current
+ * Get current usage statistics for authenticated user
+ * Issue #1044: Usage widgets endpoint
+ */
+router.get('/usage/current', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const EntitlementsService = require('../services/entitlementsService');
+    const entitlementsService = new EntitlementsService();
+
+    // Get current usage and entitlements
+    const [usage, entitlements] = await Promise.all([
+      entitlementsService.getCurrentUsage(userId),
+      entitlementsService.getEntitlements(userId)
+    ]);
+
+    // Format response for frontend
+    res.json({
+      analysis: {
+        used: usage.analysis_used || 0,
+        limit: entitlements.analysis_limit_monthly || 100
+      },
+      roasts: {
+        used: usage.roasts_used || 0,
+        limit: entitlements.roast_limit_monthly || 50
+      }
+    });
+  } catch (error) {
+    logger.error('Get current usage error:', {
+      userId: SafeUtils.safeUserIdPrefix(req.user?.id),
+      error: error.message
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve usage data'
+    });
+  }
+});
+
+/**
+ * GET /api/accounts
+ * Get user's connected accounts (alias for /api/user/integrations)
+ * Issue #1046: Accounts table endpoint
+ */
+router.get('/accounts', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await integrationsService.getUserIntegrations(userId);
+
+    if (result.success) {
+      // Transform integrations to accounts format
+      const accounts = (result.data || []).map((integration) => ({
+        id: integration.id || integration.account_id,
+        platform: integration.platform,
+        handle: integration.handle || integration.username || integration.external_username,
+        status: integration.status || (integration.connected ? 'active' : 'disconnected'),
+        roasts_count: integration.roasts_count || integration.roasts || 0,
+        shield_interceptions: integration.shield_interceptions || integration.shield_count || 0
+      }));
+
+      res.json(accounts);
+    } else {
+      res.status(500).json({
+        success: false,
+        error: result.error
+      });
+    }
+  } catch (error) {
+    logger.error('Get accounts error:', {
+      userId: SafeUtils.safeUserIdPrefix(req.user?.id),
+      error: error.message
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve accounts'
+    });
+  }
+});
+
+/**
+ * POST /api/accounts/connect/:platform
+ * Connect a platform account (alias for /api/user/integrations/connect)
+ * Issue #1045: OAuth connection endpoint
+ */
+router.post('/accounts/connect/:platform', authenticateToken, async (req, res) => {
+  try {
+    const { platform } = req.params;
+    const userId = req.user.id;
+
+    if (!platform) {
+      return res.status(400).json({
+        success: false,
+        error: 'Platform is required'
+      });
+    }
+
+    // Validate platform name
+    const validPlatforms = [
+      'twitter',
+      'youtube',
+      'instagram',
+      'facebook',
+      'discord',
+      'twitch',
+      'reddit',
+      'tiktok',
+      'bluesky'
+    ];
+    if (!validPlatforms.includes(platform.toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid platform'
+      });
+    }
+
+    const result = await integrationsService.connectIntegration(userId, platform.toLowerCase());
+
+    if (result.success) {
+      // Check if OAuth redirect is needed
+      if (result.authUrl) {
+        res.json({
+          success: true,
+          authUrl: result.authUrl,
+          message: `Redirect to ${platform} OAuth`
+        });
+      } else {
+        res.json({
+          success: true,
+          data: result.data,
+          message: `${platform} connected successfully`
+        });
+      }
+    } else {
+      res.status(500).json({
+        success: false,
+        error: result.error || 'Failed to connect platform'
+      });
+    }
+  } catch (error) {
+    logger.error('Connect account error:', {
+      userId: SafeUtils.safeUserIdPrefix(req.user?.id),
+      platform: req.params.platform,
+      error: error.message
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to connect platform'
+    });
+  }
+});
+
 module.exports = router;
