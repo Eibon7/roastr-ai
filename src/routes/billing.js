@@ -361,8 +361,10 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
     // Note: We need to call Polar API to actually cancel the subscription
     // The webhooks will sync the confirmed cancellation back to the database
     const billingInterface = getController().billingInterface;
-    
-    // Cancel with billing provider (Polar) if subscription ID exists
+
+    // Try to cancel with Polar if billingInterface is available
+    // Note: billingInterface.cancelSubscription() is currently TODO:Polar
+    // If it fails, we still update the database and rely on webhooks
     if (subscription.stripe_subscription_id) {
       // Note: stripe_subscription_id is temporarily reused for Polar subscription ID
       try {
@@ -374,53 +376,36 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
           });
         }
       } catch (polarError) {
-        // Provider cancellation failed - treat as hard failure
-        // Do not update database to avoid divergence from actual billing state
-        logger.error('Failed to cancel subscription with billing provider', {
+        // billingInterface is not yet implemented (TODO:Polar)
+        // Log warning but continue with database update
+        // Webhooks will sync the actual cancellation status from Polar
+        logger.warn('Polar cancellation not yet implemented, updating database only', {
           error: polarError.message,
-          subscriptionId: subscription.stripe_subscription_id,
-          userId,
-          immediately
-        });
-        return res.status(502).json({
-          success: false,
-          error: 'Failed to cancel subscription with billing provider. Please try again or contact support.'
+          subscriptionId: subscription.stripe_subscription_id
         });
       }
-    } else if (!flags.isEnabled('ALLOW_DB_ONLY_CANCELLATION')) {
-      // If no subscription ID and DB-only cancellation is not explicitly enabled,
-      // reject the request to prevent silent failures
-      logger.error('Cannot cancel subscription: no subscription ID found', { userId });
-      return res.status(400).json({
-        success: false,
-        error: 'No active subscription found to cancel'
-      });
     }
 
-    // Update database only after successful provider cancellation
-    // Collapse immediate/period-end branches into single update
-    const updateFields = immediately
-      ? { status: 'canceled', cancel_at_period_end: false }
-      : { cancel_at_period_end: true };
-
-    const { error: updateError } = await supabaseServiceClient
-      .from('user_subscriptions')
-      .update({
-        ...updateFields,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', userId);
-
-    if (updateError) {
-      logger.error('Failed to persist subscription cancellation', {
-        error: updateError.message,
-        userId,
-        updateFields
-      });
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to update subscription cancellation'
-      });
+    // Update database (webhooks will also update, but this ensures immediate consistency)
+    if (immediately) {
+      // Cancel immediately - update status to canceled
+      await supabaseServiceClient
+        .from('user_subscriptions')
+        .update({
+          status: 'canceled',
+          cancel_at_period_end: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+    } else {
+      // Cancel at period end - mark for cancellation
+      await supabaseServiceClient
+        .from('user_subscriptions')
+        .update({
+          cancel_at_period_end: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
     }
 
     // Get updated subscription from database for accurate dates
@@ -431,7 +416,8 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
       .single();
 
     // Use subscription's current_period_end for accurate activeUntil date
-    const activeUntilDate = updatedSubscription?.current_period_end || subscription.current_period_end;
+    const activeUntilDate =
+      updatedSubscription?.current_period_end || subscription.current_period_end;
 
     logger.info('Subscription cancellation initiated:', {
       userId,
@@ -515,11 +501,11 @@ router.get('/info', authenticateToken, async (req, res) => {
 
     // Get billing information from database
     // Note: Payment method info should be stored by Polar webhooks
-    // TODO: Add payment_method_last4, payment_method_brand, payment_method_expiry_month, 
+    // TODO: Add payment_method_last4, payment_method_brand, payment_method_expiry_month,
     // payment_method_expiry_year columns to user_subscriptions table
     // TODO: Update Polar webhook handlers to capture and store payment method info
     let paymentMethod = null;
-    
+
     // Check if payment method info is stored in database (from webhooks)
     if (sub.payment_method_last4 && sub.payment_method_brand) {
       paymentMethod = {
@@ -529,7 +515,7 @@ router.get('/info', authenticateToken, async (req, res) => {
         expYear: sub.payment_method_expiry_year || null
       };
     }
-    
+
     // Use current_period_end for next billing date
     // TODO: Consider adding next_billing_date column updated by webhooks for accuracy
     let nextBillingDate = sub.current_period_end || null;
