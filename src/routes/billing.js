@@ -357,8 +357,36 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
       });
     }
 
-    // Cancel subscription - update database directly
-    // Note: Polar webhooks will sync the cancellation status
+    // Cancel subscription with Polar first, then update database
+    // Note: We need to call Polar API to actually cancel the subscription
+    // The webhooks will sync the confirmed cancellation back to the database
+    const billingInterface = getController().billingInterface;
+    
+    // Try to cancel with Polar if billingInterface is available
+    // Note: billingInterface.cancelSubscription() is currently TODO:Polar
+    // If it fails, we still update the database and rely on webhooks
+    if (subscription.stripe_subscription_id) {
+      // Note: stripe_subscription_id is temporarily reused for Polar subscription ID
+      try {
+        if (immediately) {
+          await billingInterface.cancelSubscription(subscription.stripe_subscription_id);
+        } else {
+          await billingInterface.updateSubscription(subscription.stripe_subscription_id, {
+            cancel_at_period_end: true
+          });
+        }
+      } catch (polarError) {
+        // billingInterface is not yet implemented (TODO:Polar)
+        // Log warning but continue with database update
+        // Webhooks will sync the actual cancellation status from Polar
+        logger.warn('Polar cancellation not yet implemented, updating database only', {
+          error: polarError.message,
+          subscriptionId: subscription.stripe_subscription_id
+        });
+      }
+    }
+
+    // Update database (webhooks will also update, but this ensures immediate consistency)
     if (immediately) {
       // Cancel immediately - update status to canceled
       await supabaseServiceClient
@@ -472,8 +500,24 @@ router.get('/info', authenticateToken, async (req, res) => {
     }
 
     // Get billing information from database
-    // Note: Payment method info should come from Polar via webhooks, not direct API calls
+    // Note: Payment method info should be stored by Polar webhooks
+    // TODO: Add payment_method_last4, payment_method_brand, payment_method_expiry_month, 
+    // payment_method_expiry_year columns to user_subscriptions table
+    // TODO: Update Polar webhook handlers to capture and store payment method info
     let paymentMethod = null;
+    
+    // Check if payment method info is stored in database (from webhooks)
+    if (sub.payment_method_last4 && sub.payment_method_brand) {
+      paymentMethod = {
+        last4: sub.payment_method_last4,
+        brand: sub.payment_method_brand,
+        expMonth: sub.payment_method_expiry_month || null,
+        expYear: sub.payment_method_expiry_year || null
+      };
+    }
+    
+    // Use current_period_end for next billing date
+    // TODO: Consider adding next_billing_date column updated by webhooks for accuracy
     let nextBillingDate = sub.current_period_end || null;
     let subscriptionStatus = sub.status || 'active';
     let activeUntil = null;
