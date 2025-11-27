@@ -3640,15 +3640,18 @@ router.get('/usage/current', authenticateToken, async (req, res) => {
       entitlementsService.getEntitlements(userId)
     ]);
 
-    // Format response for frontend
+    // Format response for frontend (Issue #1081: Standardize response format)
     res.json({
-      analysis: {
-        used: usage.analysis_used || 0,
-        limit: entitlements.analysis_limit_monthly || 100
-      },
-      roasts: {
-        used: usage.roasts_used || 0,
-        limit: entitlements.roast_limit_monthly || 50
+      success: true,
+      data: {
+        analysis: {
+          used: usage.analysis_used || 0,
+          limit: entitlements.analysis_limit_monthly || 100
+        },
+        roasts: {
+          used: usage.roasts_used || 0,
+          limit: entitlements.roast_limit_monthly || 50
+        }
       }
     });
   } catch (error) {
