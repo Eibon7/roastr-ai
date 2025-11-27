@@ -42,13 +42,15 @@ export default function RecoverPage() {
     try {
       // TODO: Implement actual password recovery API call
       // await authApi.recoverPassword(email);
-      
+
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al solicitar recuperación de contraseña');
+      setError(
+        err instanceof Error ? err.message : 'Error al solicitar recuperación de contraseña'
+      );
     } finally {
       setLoading(false);
     }
@@ -56,7 +58,10 @@ export default function RecoverPage() {
 
   if (success) {
     return (
-      <AuthLayout title="Recuperar Contraseña" description="Solicita un enlace para restablecer tu contraseña">
+      <AuthLayout
+        title="Recuperar Contraseña"
+        description="Solicita un enlace para restablecer tu contraseña"
+      >
         <Card>
           <CardHeader>
             <CardTitle>Email Enviado</CardTitle>
@@ -65,7 +70,8 @@ export default function RecoverPage() {
           <CardContent className="space-y-4">
             <div className="rounded-md bg-muted p-4 text-sm">
               <p className="mb-2">
-                Si existe una cuenta asociada a <strong>{email}</strong>, recibirás un enlace para restablecer tu contraseña.
+                Si existe una cuenta asociada a <strong>{email}</strong>, recibirás un enlace para
+                restablecer tu contraseña.
               </p>
               <p className="text-muted-foreground">
                 El enlace expirará en 1 hora. Si no recibes el email, verifica tu carpeta de spam.
@@ -81,7 +87,10 @@ export default function RecoverPage() {
   }
 
   return (
-    <AuthLayout title="Recuperar Contraseña" description="Solicita un enlace para restablecer tu contraseña">
+    <AuthLayout
+      title="Recuperar Contraseña"
+      description="Solicita un enlace para restablecer tu contraseña"
+    >
       <Card>
         <CardHeader>
           <CardTitle>Recuperar Contraseña</CardTitle>
@@ -133,4 +142,3 @@ export default function RecoverPage() {
     </AuthLayout>
   );
 }
-
