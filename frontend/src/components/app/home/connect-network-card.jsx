@@ -1,6 +1,6 @@
 /**
  * Connect Network Card Component - Issue #1045
- * 
+ *
  * Bloque de redes disponibles para conectar con OAuth
  * Endpoint: /api/accounts/connect/:platform
  */
@@ -49,7 +49,7 @@ export default function ConnectNetworkCard({ accounts = [], onAccountConnected }
   }, []);
 
   const getConnectedCountForPlatform = (platform) => {
-    return accounts.filter(acc => acc.platform === platform).length;
+    return accounts.filter((acc) => acc.platform === platform).length;
   };
 
   const getMaxConnections = () => {
@@ -157,10 +157,7 @@ export default function ConnectNetworkCard({ accounts = [], onAccountConnected }
                   <>
                     <PlatformIcon className="h-6 w-6" />
                     <span className="text-xs font-medium">{platformNames[platform]}</span>
-                    <Badge 
-                      variant={atLimit ? 'destructive' : 'secondary'}
-                      className="text-xs"
-                    >
+                    <Badge variant={atLimit ? 'destructive' : 'secondary'} className="text-xs">
                       {connected}/{maxConnections}
                     </Badge>
                     {connected > 0 && (
@@ -176,4 +173,3 @@ export default function ConnectNetworkCard({ accounts = [], onAccountConnected }
     </Card>
   );
 }
-

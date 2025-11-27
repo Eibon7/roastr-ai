@@ -1,6 +1,6 @@
 /**
  * Usage Widgets Component - Issue #1044
- * 
+ *
  * Widgets de consumo mensual (análisis y roasts) con barras de progreso
  * Endpoint: /api/usage/current
  */
@@ -108,13 +108,15 @@ export default function UsageWidgets() {
     );
   }
 
-  const analysisPercentage = usage.analysis.limit > 0
-    ? Math.min(100, Math.round((usage.analysis.used / usage.analysis.limit) * 100))
-    : 0;
+  const analysisPercentage =
+    usage.analysis.limit > 0
+      ? Math.min(100, Math.round((usage.analysis.used / usage.analysis.limit) * 100))
+      : 0;
 
-  const roastsPercentage = usage.roasts.limit > 0
-    ? Math.min(100, Math.round((usage.roasts.used / usage.roasts.limit) * 100))
-    : 0;
+  const roastsPercentage =
+    usage.roasts.limit > 0
+      ? Math.min(100, Math.round((usage.roasts.used / usage.roasts.limit) * 100))
+      : 0;
 
   const getProgressColor = (percentage) => {
     if (percentage >= 90) return 'bg-red-500';
@@ -139,12 +141,13 @@ export default function UsageWidgets() {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {usage.analysis.used.toLocaleString()} / {usage.analysis.limit === -1 ? '∞' : usage.analysis.limit.toLocaleString()}
+                {usage.analysis.used.toLocaleString()} /{' '}
+                {usage.analysis.limit === -1 ? '∞' : usage.analysis.limit.toLocaleString()}
               </span>
               <span className="font-medium">{analysisPercentage}%</span>
             </div>
-            <Progress 
-              value={analysisPercentage} 
+            <Progress
+              value={analysisPercentage}
               className="h-2"
               indicatorClassName={getProgressColor(analysisPercentage)}
             />
@@ -167,12 +170,13 @@ export default function UsageWidgets() {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {usage.roasts.used.toLocaleString()} / {usage.roasts.limit === -1 ? '∞' : usage.roasts.limit.toLocaleString()}
+                {usage.roasts.used.toLocaleString()} /{' '}
+                {usage.roasts.limit === -1 ? '∞' : usage.roasts.limit.toLocaleString()}
               </span>
               <span className="font-medium">{roastsPercentage}%</span>
             </div>
-            <Progress 
-              value={roastsPercentage} 
+            <Progress
+              value={roastsPercentage}
               className="h-2"
               indicatorClassName={getProgressColor(roastsPercentage)}
             />
@@ -182,4 +186,3 @@ export default function UsageWidgets() {
     </div>
   );
 }
-

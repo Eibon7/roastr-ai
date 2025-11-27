@@ -27,9 +27,7 @@ jest.mock('sonner', () => ({
 }));
 
 describe('ConnectNetworkCard', () => {
-  const mockAccounts = [
-    { id: '1', platform: 'twitter', status: 'active' }
-  ];
+  const mockAccounts = [{ id: '1', platform: 'twitter', status: 'active' }];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -83,8 +81,11 @@ describe('ConnectNetworkCard', () => {
   });
 
   it('should call OAuth endpoint on button click', async () => {
-    apiClient.post.mockResolvedValue({ success: true, data: { authUrl: 'https://oauth.example.com' } });
-    
+    apiClient.post.mockResolvedValue({
+      success: true,
+      data: { authUrl: 'https://oauth.example.com' }
+    });
+
     // Mock window.location.href
     delete window.location;
     window.location = { href: '' };
@@ -150,4 +151,3 @@ describe('ConnectNetworkCard', () => {
     });
   });
 });
-

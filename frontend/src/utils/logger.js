@@ -87,16 +87,17 @@ class Logger {
    */
   error(message, error = {}, context = {}) {
     if (currentLogLevel <= LOG_LEVELS.ERROR) {
-      const errorContext = error instanceof Error
-        ? {
-            error: {
-              message: error.message,
-              stack: error.stack,
-              name: error.name
-            },
-            ...context
-          }
-        : { error, ...context };
+      const errorContext =
+        error instanceof Error
+          ? {
+              error: {
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+              },
+              ...context
+            }
+          : { error, ...context };
 
       console.error(formatMessage('error', message, errorContext), errorContext);
     }
@@ -120,4 +121,3 @@ class Logger {
 // Export singleton instance
 const logger = new Logger();
 export default logger;
-
