@@ -129,8 +129,10 @@ describe('Checkout Route - Price ID Security (M1)', () => {
       });
 
       // Should fail because price IDs are case-sensitive
+      // Issue #1020: UUID validation passes (uppercase UUIDs are valid),
+      // but allowlist check fails (case-sensitive comparison)
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Invalid price_id');
+      expect(res.body.error).toBe('Unauthorized product');
     });
   });
 

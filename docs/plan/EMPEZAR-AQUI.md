@@ -9,12 +9,14 @@
 ### 1️⃣ Lee estos 2 documentos:
 
 📖 **Quick Reference** (5 min)
-```
+
+```text
 docs/SHADCN-QUICK-REFERENCE.md
 ```
 
 📖 **Reglas Completas** (15 min cuando tengas tiempo)
-```
+
+```text
 .cursor/rules/shadcn-ui-migration.mdc
 ```
 
@@ -29,7 +31,7 @@ docs/SHADCN-QUICK-REFERENCE.md
 
 ### 3️⃣ Abre tu issue en GitHub:
 
-```
+```text
 https://github.com/Eibon7/roastr-ai/issues
 ```
 
@@ -62,6 +64,7 @@ npm test
 ## 📝 Comando `/cui` (el más usado)
 
 **Template:**
+
 ```bash
 /cui Create a [componente] with [elementos], [features], and [acciones]
 ```
@@ -70,7 +73,7 @@ npm test
 
 ```bash
 # Admin users table
-/cui Create an admin users table with name, email, status, 
+/cui Create an admin users table with name, email, status,
     search bar, and edit/delete/impersonate actions
 
 # User widgets
@@ -96,13 +99,13 @@ npm test
 
 ## 🆘 Ayuda Rápida
 
-| Necesito... | Ver... |
-|-------------|--------|
-| Comandos MCP | `docs/SHADCN-QUICK-REFERENCE.md` |
-| Ejemplos por issue | `.cursor/rules/shadcn-ui-migration.mdc` (sección final) |
-| Estructura de carpetas | `docs/SHADCN-QUICK-REFERENCE.md` |
-| Endpoints API | `docs/SHADCN-QUICK-REFERENCE.md` |
-| Todas las issues | `docs/plan/ui-migration-github-issues.md` |
+| Necesito...            | Ver...                                                  |
+| ---------------------- | ------------------------------------------------------- |
+| Comandos MCP           | `docs/SHADCN-QUICK-REFERENCE.md`                        |
+| Ejemplos por issue     | `.cursor/rules/shadcn-ui-migration.mdc` (sección final) |
+| Estructura de carpetas | `docs/SHADCN-QUICK-REFERENCE.md`                        |
+| Endpoints API          | `docs/SHADCN-QUICK-REFERENCE.md`                        |
+| Todas las issues       | `docs/plan/ui-migration-github-issues.md`               |
 
 ---
 
@@ -139,14 +142,16 @@ fetch('/api/users') // ❌
 **Issue #1033** - Configurar shadcn/ui y ThemeProvider
 
 **Por qué empezar aquí:**
+
 - Es la base de todo
 - Bloquea las demás
 - Relativamente simple
 - Buen warm-up
 
 **Comando sugerido:**
+
 ```bash
-/cui Configure shadcn/ui with Tailwind and create a ThemeProvider 
+/cui Configure shadcn/ui with Tailwind and create a ThemeProvider
     supporting light, dark, and system modes with system as default
 ```
 
@@ -154,13 +159,13 @@ fetch('/api/users') // ❌
 
 ## 📚 Documentos del Proyecto
 
-| Documento | Descripción |
-|-----------|-------------|
-| `EMPEZAR-AQUI.md` | 👈 Este documento |
-| `SHADCN-QUICK-REFERENCE.md` | Referencia rápida durante desarrollo |
-| `.cursor/rules/shadcn-ui-migration.mdc` | Reglas completas con ejemplos |
-| `ui-migration-github-issues.md` | Todas las 36 issues detalladas |
-| `ui-migration-setup-complete.md` | Setup completo y plan de sprints |
+| Documento                               | Descripción                          |
+| --------------------------------------- | ------------------------------------ |
+| `EMPEZAR-AQUI.md`                       | 👈 Este documento                    |
+| `SHADCN-QUICK-REFERENCE.md`             | Referencia rápida durante desarrollo |
+| `.cursor/rules/shadcn-ui-migration.mdc` | Reglas completas con ejemplos        |
+| `ui-migration-github-issues.md`         | Todas las 36 issues detalladas       |
+| `ui-migration-setup-complete.md`        | Setup completo y plan de sprints     |
 
 ---
 

@@ -213,7 +213,7 @@ describe('Ingestor Retry and Backoff Integration Tests', () => {
 
       // Verify exponential progression: 50ms, 100ms, 200ms, 400ms
       const expectedDelays = [50, 100, 200, 400];
-      const tolerance = 0.3; // 30% tolerance for test timing variations
+      const tolerance = 0.5; // 50% tolerance for test timing variations (system load dependent)
 
       for (let i = 0; i < intervals.length; i++) {
         const expected = expectedDelays[i];

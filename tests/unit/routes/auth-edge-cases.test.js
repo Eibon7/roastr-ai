@@ -203,16 +203,16 @@ describe('Auth Routes - Edge Cases', () => {
     });
 
     it('should handle login with malformed email', async () => {
-      authService.signIn.mockRejectedValue(new Error('Invalid email format'));
-
+      // Issue #1020: Zod validates email format BEFORE calling authService
+      // Malformed email returns 400 (validation error), not 401 (auth error)
       const response = await request(app).post('/api/auth/login').send({
         email: 'not-an-email',
         password: 'Password123!'
       });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(400); // Changed from 401: validation happens first
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Wrong email or password');
+      expect(response.body.error).toContain('Invalid email format'); // Changed: more specific
     });
   });
 

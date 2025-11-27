@@ -2,10 +2,10 @@
  * Guardian Agent - Action Tag Component
  * Phase 17: Governance Interface & Alerts
  *
- * Displays action status with Snake Eater theme styling
+ * MIGRATED: Ahora usa BaseTag migrado (Badge de shadcn)
+ * No changes needed in logic, only updated imports
  */
 
-import React from 'react';
 import { GUARDIAN_COLORS, ACTION_LABELS, ActionTagProps } from '../../types/guardian.types';
 import BaseTag from './BaseTag';
 

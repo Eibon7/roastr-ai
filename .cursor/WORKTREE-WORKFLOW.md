@@ -321,4 +321,3 @@ echo "$(git rev-parse --abbrev-ref HEAD)" > .issue_lock
 **Última actualización:** 2025-11-26  
 **Maintainer:** DevOps / Orchestrator  
 **Status:** ✅ Active
-

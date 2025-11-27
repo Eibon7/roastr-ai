@@ -850,6 +850,7 @@ class ShieldService {
         commentId: comment.id,
         error: error.message
       });
+      throw error; // Issue #1020: Re-throw error for proper error handling
     }
   }
 

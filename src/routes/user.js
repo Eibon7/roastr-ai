@@ -4,6 +4,7 @@ const { logger, SafeUtils } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
 const UserIntegrationsService = require('../services/mockIntegrationsService');
 const { flags } = require('../config/flags');
+const { isValidPlatform } = require('../config/validPlatforms');
 const DataExportService = require('../services/dataExportService');
 const emailService = require('../services/emailService');
 const auditService = require('../services/auditService');
@@ -32,6 +33,69 @@ const router = express.Router();
 const integrationsService = new UserIntegrationsService();
 const embeddingsService = new EmbeddingsService();
 const personaSanitizer = new PersonaInputSanitizer();
+
+/**
+ * Helper function to ensure platform connection is allowed based on plan limits
+ * Issue #1081: CodeRabbit - Extract connection limit logic to shared helper
+ *
+ * @param {Object} req - Express request object
+ * @param {string} userId - User ID
+ * @param {string} platform - Platform name
+ * @returns {Promise<Object>} { allowed: boolean, error?: Object }
+ */
+async function ensurePlatformConnectionAllowed(req, userId, platform) {
+  // Business Policy: Limits are per platform (e.g., 2 accounts of X, 2 of Instagram, etc.)
+  const currentIntegrations = await integrationsService.getUserIntegrations(userId);
+
+  // Ensure currentIntegrations.data is always an array (Issue #366 CodeRabbit fix)
+  if (!Array.isArray(currentIntegrations.data)) {
+    currentIntegrations.data = currentIntegrations.data ? [currentIntegrations.data] : [];
+  }
+
+  // Count connections for THIS SPECIFIC PLATFORM only
+  const platformConnections =
+    currentIntegrations.data.filter(
+      (integration) => integration.connected && integration.platform === platform.toLowerCase()
+    ).length || 0;
+
+  // Get user's plan from token or fetch from database
+  const userPlan = req.user?.plan || 'starter_trial';
+  let maxConnectionsPerPlatform;
+
+  // Connection limits PER PLATFORM (Issue #841)
+  switch (userPlan.toLowerCase()) {
+    case 'starter_trial':
+    case 'starter':
+      maxConnectionsPerPlatform = 1; // 1 cuenta por plataforma
+      break;
+    case 'pro':
+    case 'plus':
+    case 'custom':
+      maxConnectionsPerPlatform = 2; // 2 cuentas por plataforma
+      break;
+    default:
+      maxConnectionsPerPlatform = 1; // Default to starter_trial plan limits
+  }
+
+  if (platformConnections >= maxConnectionsPerPlatform) {
+    return {
+      allowed: false,
+      error: {
+        success: false,
+        error: `Plan ${userPlan} permite máximo ${maxConnectionsPerPlatform} ${maxConnectionsPerPlatform > 1 ? 'cuentas' : 'cuenta'} por plataforma. Ya tienes ${platformConnections} ${platformConnections > 1 ? 'cuentas' : 'cuenta'} conectadas en ${platform}.`,
+        code: 'PLATFORM_CONNECTION_LIMIT_EXCEEDED',
+        details: {
+          platform,
+          currentConnections: platformConnections,
+          maxConnectionsPerPlatform,
+          plan: userPlan
+        }
+      }
+    };
+  }
+
+  return { allowed: true };
+}
 
 /**
  * GET /api/user/integrations
@@ -80,19 +144,8 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
       });
     }
 
-    // Validate platform name
-    const validPlatforms = [
-      'twitter',
-      'youtube',
-      'instagram',
-      'facebook',
-      'discord',
-      'twitch',
-      'reddit',
-      'tiktok',
-      'bluesky'
-    ];
-    if (!validPlatforms.includes(platform)) {
+    // Validate platform name (Issue #1081: Use centralized validation)
+    if (!isValidPlatform(platform)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid platform'
@@ -642,20 +695,8 @@ router.post('/preferences', authenticateToken, async (req, res) => {
 
     const userId = req.user.id;
 
-    // Validate preferred_platforms
-    const validPlatforms = [
-      'twitter',
-      'instagram',
-      'facebook',
-      'youtube',
-      'discord',
-      'twitch',
-      'reddit',
-      'tiktok',
-      'bluesky'
-    ];
-
-    const invalidPlatforms = preferred_platforms.filter((p) => !validPlatforms.includes(p));
+    // Validate preferred_platforms (Issue #1081: Use centralized validation)
+    const invalidPlatforms = preferred_platforms.filter((p) => !isValidPlatform(p));
     if (invalidPlatforms.length > 0) {
       return res.status(400).json({
         success: false,
@@ -3578,6 +3619,160 @@ router.post('/settings/style', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update style settings'
+    });
+  }
+});
+
+/**
+ * GET /api/usage/current
+ * Get current usage statistics for authenticated user
+ * Issue #1044: Usage widgets endpoint
+ */
+router.get('/usage/current', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const EntitlementsService = require('../services/entitlementsService');
+    const entitlementsService = new EntitlementsService();
+
+    // Get current usage and entitlements
+    const [usage, entitlements] = await Promise.all([
+      entitlementsService.getCurrentUsage(userId),
+      entitlementsService.getEntitlements(userId)
+    ]);
+
+    // Format response for frontend (Issue #1081: Standardize response format)
+    res.json({
+      success: true,
+      data: {
+        analysis: {
+          used: usage.analysis_used || 0,
+          limit: entitlements.analysis_limit_monthly || 100
+        },
+        roasts: {
+          used: usage.roasts_used || 0,
+          limit: entitlements.roast_limit_monthly || 50
+        }
+      }
+    });
+  } catch (error) {
+    logger.error('Get current usage error:', {
+      userId: SafeUtils.safeUserIdPrefix(req.user?.id),
+      error: error.message
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve usage data'
+    });
+  }
+});
+
+/**
+ * GET /api/accounts
+ * Get user's connected accounts (alias for /api/user/integrations)
+ * Issue #1046: Accounts table endpoint
+ */
+router.get('/accounts', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await integrationsService.getUserIntegrations(userId);
+
+    if (result.success) {
+      // Transform integrations to accounts format
+      const accounts = (result.data || []).map((integration) => ({
+        id: integration.id || integration.account_id,
+        platform: integration.platform,
+        handle: integration.handle || integration.username || integration.external_username,
+        status: integration.status || (integration.connected ? 'active' : 'disconnected'),
+        roasts_count: integration.roasts_count || integration.roasts || 0,
+        shield_interceptions: integration.shield_interceptions || integration.shield_count || 0
+      }));
+
+      // Standardize response format (Issue #1081: CodeRabbit)
+      res.json({
+        success: true,
+        data: accounts
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: result.error
+      });
+    }
+  } catch (error) {
+    logger.error('Get accounts error:', {
+      userId: SafeUtils.safeUserIdPrefix(req.user?.id),
+      error: error.message
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve accounts'
+    });
+  }
+});
+
+/**
+ * POST /api/accounts/connect/:platform
+ * Connect a platform account (alias for /api/user/integrations/connect)
+ * Issue #1045: OAuth connection endpoint
+ */
+router.post('/accounts/connect/:platform', authenticateToken, async (req, res) => {
+  try {
+    const { platform } = req.params;
+    const userId = req.user.id;
+
+    if (!platform) {
+      return res.status(400).json({
+        success: false,
+        error: 'Platform is required'
+      });
+    }
+
+    // Validate platform name (Issue #1081: Use centralized validation)
+    if (!isValidPlatform(platform)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid platform'
+      });
+    }
+
+    // Check connection limits PER PLATFORM (Issue #1081: Apply same validation as /integrations/connect)
+    const limitCheck = await ensurePlatformConnectionAllowed(req, userId, platform);
+    if (!limitCheck.allowed) {
+      return res.status(403).json(limitCheck.error);
+    }
+
+    const result = await integrationsService.connectIntegration(userId, platform.toLowerCase());
+
+    if (result.success) {
+      // Check if OAuth redirect is needed
+      if (result.authUrl) {
+        res.json({
+          success: true,
+          authUrl: result.authUrl,
+          message: `Redirect to ${platform} OAuth`
+        });
+      } else {
+        res.json({
+          success: true,
+          data: result.data,
+          message: `${platform} connected successfully`
+        });
+      }
+    } else {
+      res.status(500).json({
+        success: false,
+        error: result.error || 'Failed to connect platform'
+      });
+    }
+  } catch (error) {
+    logger.error('Connect account error:', {
+      userId: SafeUtils.safeUserIdPrefix(req.user?.id),
+      platform: req.params.platform,
+      error: error.message
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to connect platform'
     });
   }
 });
