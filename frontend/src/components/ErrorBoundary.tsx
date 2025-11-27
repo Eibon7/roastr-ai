@@ -1,4 +1,4 @@
-import { Component, ErrorInfo, ReactNode } from "react";
+import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children?: ReactNode;
@@ -20,7 +20,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   public render() {
@@ -29,7 +29,7 @@ class ErrorBoundary extends Component<Props, State> {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <h2 className="text-lg font-semibold mb-2">
-              {this.props.fallbackMessage || "Algo salió mal"}
+              {this.props.fallbackMessage || 'Algo salió mal'}
             </h2>
             <button
               onClick={() => window.location.reload()}
