@@ -144,19 +144,8 @@ router.post('/integrations/connect', authenticateToken, async (req, res) => {
       });
     }
 
-    // Validate platform name
-    const validPlatforms = [
-      'twitter',
-      'youtube',
-      'instagram',
-      'facebook',
-      'discord',
-      'twitch',
-      'reddit',
-      'tiktok',
-      'bluesky'
-    ];
-    if (!validPlatforms.includes(platform)) {
+    // Validate platform name (Issue #1081: Use centralized validation)
+    if (!isValidPlatform(platform)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid platform'
@@ -706,20 +695,8 @@ router.post('/preferences', authenticateToken, async (req, res) => {
 
     const userId = req.user.id;
 
-    // Validate preferred_platforms
-    const validPlatforms = [
-      'twitter',
-      'instagram',
-      'facebook',
-      'youtube',
-      'discord',
-      'twitch',
-      'reddit',
-      'tiktok',
-      'bluesky'
-    ];
-
-    const invalidPlatforms = preferred_platforms.filter((p) => !validPlatforms.includes(p));
+    // Validate preferred_platforms (Issue #1081: Use centralized validation)
+    const invalidPlatforms = preferred_platforms.filter((p) => !isValidPlatform(p));
     if (invalidPlatforms.length > 0) {
       return res.status(400).json({
         success: false,
