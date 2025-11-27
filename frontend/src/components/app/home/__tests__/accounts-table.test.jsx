@@ -122,7 +122,7 @@ describe('AccountsTable', () => {
   });
 
   it('should show empty state when no accounts', async () => {
-    apiClient.get.mockResolvedValue({ 
+    apiClient.get.mockResolvedValue({
       data: {
         success: true,
         data: []
@@ -169,7 +169,7 @@ describe('AccountsTable', () => {
   });
 
   it('should call correct API endpoint', async () => {
-    apiClient.get.mockResolvedValue({ 
+    apiClient.get.mockResolvedValue({
       data: {
         success: true,
         data: []
@@ -185,12 +185,10 @@ describe('AccountsTable', () => {
 
   it('should handle different response formats', async () => {
     // Test with standardized response format
-    apiClient.get.mockResolvedValue({ 
+    apiClient.get.mockResolvedValue({
       data: {
         success: true,
-        data: [
-          { id: 'acc_1', platform: 'twitter', handle: '@user1', status: 'active' }
-        ]
+        data: [{ id: 'acc_1', platform: 'twitter', handle: '@user1', status: 'active' }]
       }
     });
 
@@ -201,4 +199,3 @@ describe('AccountsTable', () => {
     });
   });
 });
-

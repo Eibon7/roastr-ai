@@ -1,6 +1,6 @@
 /**
  * Home Page - Issue #1043
- * 
+ *
  * Página principal de la app de usuario (/app)
  * Integra widgets de uso, redes disponibles y tabla de cuentas
  */
@@ -85,19 +85,14 @@ export default function Home() {
       <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Inicio</h1>
-          <p className="text-muted-foreground">
-            Gestiona tus cuentas y revisa tu consumo mensual
-          </p>
+          <p className="text-muted-foreground">Gestiona tus cuentas y revisa tu consumo mensual</p>
         </div>
 
         {/* Widgets de Análisis - Issue #1044 */}
         <UsageWidgets />
 
         {/* Bloque de Redes Disponibles - Issue #1045 */}
-        <ConnectNetworkCard 
-          accounts={accounts} 
-          onAccountConnected={handleAccountConnected}
-        />
+        <ConnectNetworkCard accounts={accounts} onAccountConnected={handleAccountConnected} />
 
         {/* Tabla de Cuentas Conectadas - Issue #1046 */}
         {/* Pass accounts as prop to avoid duplicate API calls (CodeRabbit fix) */}
@@ -106,4 +101,3 @@ export default function Home() {
     </ErrorBoundary>
   );
 }
-

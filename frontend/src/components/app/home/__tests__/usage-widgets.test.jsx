@@ -51,14 +51,17 @@ describe('UsageWidgets', () => {
     });
 
     // Numbers appear multiple times, verify they're present
-    await waitFor(() => {
-      // Check that numbers appear in the document (they may be in different elements)
-      const pageText = document.body.textContent || '';
-      expect(pageText).toContain('45');
-      expect(pageText).toContain('100');
-      expect(pageText).toContain('12');
-      expect(pageText).toContain('50');
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        // Check that numbers appear in the document (they may be in different elements)
+        const pageText = document.body.textContent || '';
+        expect(pageText).toContain('45');
+        expect(pageText).toContain('100');
+        expect(pageText).toContain('12');
+        expect(pageText).toContain('50');
+      },
+      { timeout: 3000 }
+    );
   });
 
   it('should calculate and display percentages correctly', async () => {
@@ -143,4 +146,3 @@ describe('UsageWidgets', () => {
     });
   });
 });
-
