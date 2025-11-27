@@ -16,6 +16,25 @@ export const getBilling = async () => {
 };
 
 /**
+ * Get comprehensive billing info (usage, payment method, subscription status)
+ * Issue #1056: Complete billing information
+ * @returns {Promise<Object>} Billing info with usage, limits, payment method, dates
+ */
+export const getBillingInfo = async () => {
+  return apiClient.get('/billing/info');
+};
+
+/**
+ * Cancel subscription
+ * Issue #1056: Cancel subscription functionality
+ * @param {boolean} immediately - Cancel immediately or at period end
+ * @returns {Promise<Object>} Cancellation result
+ */
+export const cancelSubscription = async (immediately = false) => {
+  return apiClient.post('/billing/cancel', { immediately });
+};
+
+/**
  * Get subscription details
  * @returns {Promise<Object>} Subscription data
  */
@@ -46,5 +65,7 @@ export default {
   getBilling,
   getSubscription,
   updatePaymentMethod,
-  getBillingHistory
+  getBillingHistory,
+  getBillingInfo,
+  cancelSubscription
 };

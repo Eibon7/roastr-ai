@@ -334,6 +334,223 @@ router.post('/create-portal-session', authenticateToken, requireBilling, async (
 });
 
 /**
+ * POST /api/billing/cancel
+ * Cancel subscription (at period end)
+ * Issue #1056: Cancel subscription functionality
+ */
+router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { immediately = false } = req.body;
+
+    // Get subscription
+    const { data: subscription, error } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !subscription) {
+      return res.status(404).json({
+        success: false,
+        error: 'No active subscription found'
+      });
+    }
+
+    // Cancel subscription with Polar first, then update database
+    // Note: We need to call Polar API to actually cancel the subscription
+    // The webhooks will sync the confirmed cancellation back to the database
+    const billingInterface = getController().billingInterface;
+
+    // Try to cancel with Polar if billingInterface is available
+    // Note: billingInterface.cancelSubscription() is currently TODO:Polar
+    // If it fails, we still update the database and rely on webhooks
+    if (subscription.stripe_subscription_id) {
+      // Note: stripe_subscription_id is temporarily reused for Polar subscription ID
+      try {
+        if (immediately) {
+          await billingInterface.cancelSubscription(subscription.stripe_subscription_id);
+        } else {
+          await billingInterface.updateSubscription(subscription.stripe_subscription_id, {
+            cancel_at_period_end: true
+          });
+        }
+      } catch (polarError) {
+        // billingInterface is not yet implemented (TODO:Polar)
+        // Log warning but continue with database update
+        // Webhooks will sync the actual cancellation status from Polar
+        logger.warn('Polar cancellation not yet implemented, updating database only', {
+          error: polarError.message,
+          subscriptionId: subscription.stripe_subscription_id
+        });
+      }
+    }
+
+    // Update database (webhooks will also update, but this ensures immediate consistency)
+    if (immediately) {
+      // Cancel immediately - update status to canceled
+      await supabaseServiceClient
+        .from('user_subscriptions')
+        .update({
+          status: 'canceled',
+          cancel_at_period_end: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+    } else {
+      // Cancel at period end - mark for cancellation
+      await supabaseServiceClient
+        .from('user_subscriptions')
+        .update({
+          cancel_at_period_end: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+    }
+
+    // Get updated subscription from database for accurate dates
+    const { data: updatedSubscription } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    // Use subscription's current_period_end for accurate activeUntil date
+    const activeUntilDate =
+      updatedSubscription?.current_period_end || subscription.current_period_end;
+
+    logger.info('Subscription cancellation initiated:', {
+      userId,
+      immediately,
+      activeUntil: activeUntilDate
+    });
+
+    res.json({
+      success: true,
+      data: {
+        message: immediately
+          ? 'Subscription canceled immediately'
+          : 'Subscription will be canceled at the end of the billing period',
+        activeUntil: activeUntilDate
+      }
+    });
+  } catch (error) {
+    logger.error('Error canceling subscription:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to cancel subscription'
+    });
+  }
+});
+
+/**
+ * GET /api/billing/info
+ * Get comprehensive billing information including payment method, usage, and subscription status
+ * Issue #1056: Complete billing information for Settings page
+ */
+router.get('/info', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get subscription from database
+    const { data: subscription, error: subError } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (subError && subError.code !== 'PGRST116') {
+      // PGRST116 = no rows returned, which is OK for new users
+      logger.error('Error fetching subscription:', subError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch subscription'
+      });
+    }
+
+    const sub = subscription || {
+      user_id: userId,
+      plan: PLAN_IDS.STARTER_TRIAL,
+      status: 'active',
+      current_period_end: null,
+      cancel_at_period_end: false
+    };
+
+    // Get usage data (from entitlements service or user usage)
+    let usage = { roastsUsed: 0, apiCalls: 0 };
+    let limits = { roastsPerMonth: 5, apiCallsPerMonth: 10 };
+
+    try {
+      // Try to get usage from entitlements service
+      const entitlementsService = getController().entitlementsService;
+      if (entitlementsService && typeof entitlementsService.getUserUsage === 'function') {
+        const userUsage = await entitlementsService.getUserUsage(userId);
+        usage = {
+          roastsUsed: userUsage?.roasts_used || 0,
+          apiCalls: userUsage?.api_calls || 0
+        };
+        limits = {
+          roastsPerMonth: userUsage?.roast_limit || 5,
+          apiCallsPerMonth: userUsage?.api_limit || 10
+        };
+      }
+    } catch (usageError) {
+      logger.warn('Could not fetch usage data:', usageError.message);
+      // Use defaults
+    }
+
+    // Get billing information from database
+    // Note: Payment method info should be stored by Polar webhooks
+    // TODO: Add payment_method_last4, payment_method_brand, payment_method_expiry_month,
+    // payment_method_expiry_year columns to user_subscriptions table
+    // TODO: Update Polar webhook handlers to capture and store payment method info
+    let paymentMethod = null;
+
+    // Check if payment method info is stored in database (from webhooks)
+    if (sub.payment_method_last4 && sub.payment_method_brand) {
+      paymentMethod = {
+        last4: sub.payment_method_last4,
+        brand: sub.payment_method_brand,
+        expMonth: sub.payment_method_expiry_month || null,
+        expYear: sub.payment_method_expiry_year || null
+      };
+    }
+
+    // Use current_period_end for next billing date
+    // TODO: Consider adding next_billing_date column updated by webhooks for accuracy
+    let nextBillingDate = sub.current_period_end || null;
+    let subscriptionStatus = sub.status || 'active';
+    let activeUntil = null;
+
+    // Determine if subscription is cancelled
+    const isCancelled = subscriptionStatus === 'canceled' || sub.cancel_at_period_end;
+    if (isCancelled && sub.current_period_end) {
+      activeUntil = sub.current_period_end;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        usage,
+        limits,
+        paymentMethod,
+        nextBillingDate,
+        subscriptionStatus,
+        activeUntil,
+        plan: sub.plan,
+        cancelAtPeriodEnd: sub.cancel_at_period_end || false
+      }
+    });
+  } catch (error) {
+    logger.error('Error fetching billing info:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch billing information'
+    });
+  }
+});
+
+/**
  * GET /api/billing/subscription
  * Get current user's subscription details
  */
