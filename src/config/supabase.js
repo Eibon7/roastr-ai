@@ -251,10 +251,14 @@ const getUserFromToken = async (token) => {
       }
 
       // Try to decode JWT for integration tests with real tokens
+      if (!process.env.JWT_SECRET) {
+        console.warn('[SUPABASE] JWT_SECRET not set - cannot verify JWT tokens in mock mode');
+        return null;
+      }
+
       try {
         const jwt = require('jsonwebtoken');
-        const secret = process.env.JWT_SECRET || 'test-secret-key';
-        const decoded = jwt.verify(token, secret);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         return {
           id: decoded.id,
           email: decoded.email,

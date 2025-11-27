@@ -39,7 +39,7 @@ ORIGINAL_DIR=$(pwd)
 # Configuración
 BRANCH="feature/issue-${ISSUE_NUM}-${SCOPE}"
 WORKTREE_BASE_PATH="${WORKTREE_BASE_PATH:-../roastr-ai-worktrees}"
-WORKTREE_PATH="${WORKTREE_BASE_PATH}/issue-${ISSUE_NUM}"
+WORKTREE_PATH="${WORKTREE_BASE_PATH}/issue-${ISSUE_NUM}-${SCOPE}"
 
 # Verificar si el worktree ya existe (directory check + git worktree list)
 if [ -d "$WORKTREE_PATH" ]; then

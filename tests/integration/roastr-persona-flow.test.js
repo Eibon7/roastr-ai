@@ -150,11 +150,6 @@ describe('Roastr Persona Integration Flow', () => {
         .set('Authorization', 'Bearer test-token')
         .send(personaData);
 
-      // Temporary: Log error if not 200
-      if (response.status !== 200) {
-        console.log('ERROR RESPONSE:', JSON.stringify(response.body, null, 2));
-      }
-
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Roastr Persona updated successfully');
