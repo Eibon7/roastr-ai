@@ -17,8 +17,8 @@ beforeAll(async () => {
     shouldSkip = true;
     return;
   }
-    db = result.db;
-    pg = result.pg;
+  db = result.db;
+  pg = result.pg;
 });
 
 afterAll(async () => {

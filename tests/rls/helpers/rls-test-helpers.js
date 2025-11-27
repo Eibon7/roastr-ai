@@ -1,15 +1,15 @@
 /**
  * Common RLS Test Helpers
- * 
+ *
  * Provides consistent setup/teardown functions for all RLS tests.
  * Handles psql availability checks and proper error handling.
- * 
+ *
  * Usage:
  * ```js
  * const { setup, teardown } = require('./helpers/rls-test-helpers');
- * 
+ *
  * let db, pg, shouldSkip;
- * 
+ *
  * beforeAll(async () => {
  *   const result = await setup();
  *   if (result.skip) {
@@ -19,7 +19,7 @@
  *   db = result.db;
  *   pg = result.pg;
  * });
- * 
+ *
  * afterAll(async () => {
  *   if (!shouldSkip) {
  *     await teardown();
@@ -81,7 +81,7 @@ async function setup() {
  */
 async function teardown(teardownFn = null) {
   const fn = teardownFn || globalTeardown;
-  
+
   if (!fn || typeof fn !== 'function') {
     console.warn('⚠️  No teardown function available, skipping cleanup');
     return;
@@ -133,4 +133,3 @@ module.exports = {
   setupBeforeEach,
   setupAfterEach
 };
-

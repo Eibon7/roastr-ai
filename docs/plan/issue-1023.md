@@ -31,6 +31,7 @@
 **Archivo:** `tests/rls/helpers/rls-test-helpers.js`
 
 Creado helper común que:
+
 - Maneja checks de disponibilidad de `psql`
 - Exporta funciones `setup()`, `teardown()`, `setupBeforeEach()`, `setupAfterEach()`
 - Maneja errores correctamente
@@ -50,11 +51,13 @@ const { setup, teardown, setupBeforeEach, setupAfterEach } = require('./helpers/
 ### 2. Tests Actualizados
 
 **Archivos actualizados:**
+
 - `tests/rls/subscriptions.test.js`
 - `tests/rls/tenants.test.js`
 - `tests/rls/persona.test.js`
 
 **Cambios:**
+
 - Reemplazado código duplicado de setup/teardown con helper común
 - Añadidas validaciones de `shouldSkip` en todos los `beforeEach` y tests
 - Manejo correcto de casos donde `psql` no está disponible
@@ -114,11 +117,13 @@ describe('Test Suite', () => {
 ### Tests Afectados
 
 **Antes:**
+
 - `tests/rls/subscriptions.test.js` - ❌ Falla con "teardown is not a function"
 - `tests/rls/tenants.test.js` - ❌ Falla con "teardown is not a function"
 - `tests/rls/persona.test.js` - ❌ Falla con "teardown is not a function"
 
 **Después:**
+
 - ✅ Helper común creado y exportando funciones correctamente
 - ✅ Tests actualizados para usar helper común
 - ✅ Validaciones añadidas para manejar casos donde `psql` no está disponible
@@ -127,11 +132,13 @@ describe('Test Suite', () => {
 ### Nota sobre Ejecución
 
 Los tests requieren `psql` (PostgreSQL client tools) para ejecutarse. Si `psql` no está disponible:
+
 - Los tests se saltan correctamente (no fallan)
 - Se muestra un warning indicando que `psql` no está disponible
 - No se intenta ejecutar código que requiere `psql`
 
 **Para ejecutar los tests:**
+
 ```bash
 # Verificar que psql está disponible
 psql --version
@@ -145,15 +152,18 @@ npm test -- tests/rls/
 ## 🚨 Riesgos de Producción
 
 **Si no se arregla:**
+
 - Tests no son confiables
 - Pueden afectar otros tests
 - CI/CD puede fallar intermitentemente
 
 **Impacto negocio:**
+
 - 🟠 Alto - Desarrollo bloqueado
 - 🟠 Alto - No podemos confiar en tests
 
 **Después del fix:**
+
 - ✅ Tests son confiables
 - ✅ Setup/teardown funcionan correctamente
 - ✅ No hay side effects entre tests
@@ -182,4 +192,3 @@ npm test -- tests/rls/
 **Status:** ✅ **COMPLETO**  
 **Fecha:** 2025-01-XX  
 **Implementado por:** Auto (Claude)
-
