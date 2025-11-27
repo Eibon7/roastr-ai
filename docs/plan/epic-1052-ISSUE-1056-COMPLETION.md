@@ -8,16 +8,16 @@
 
 ## ✅ Acceptance Criteria - ALL COMPLETE
 
-| AC | Description | Status | Implementation |
-|----|-------------|--------|----------------|
-| 1 | Tab visible at /app/settings/billing | ✅ | SettingsLayout routing |
-| 2 | Plan information displayed (name, icon, price) | ✅ | BillingPanel component |
-| 3 | Usage metrics shown (roasts, API calls with progress bars) | ✅ | Usage cards with progress bars |
-| 4 | "Upgrade plan" button present | ✅ | Conditional button for starter_trial |
-| 5 | Payment method display (last 4 digits) | ✅ | Payment method card with last4, brand, expiry |
-| 6 | Next billing date | ✅ | Calendar icon with formatted date |
-| 7 | Cancel subscription button | ✅ | Button with confirmation dialog |
-| 8 | Cancelled plan copy | ✅ | "Roastr.AI estará activo hasta [fecha]" message |
+| AC  | Description                                                | Status | Implementation                                  |
+| --- | ---------------------------------------------------------- | ------ | ----------------------------------------------- |
+| 1   | Tab visible at /app/settings/billing                       | ✅     | SettingsLayout routing                          |
+| 2   | Plan information displayed (name, icon, price)             | ✅     | BillingPanel component                          |
+| 3   | Usage metrics shown (roasts, API calls with progress bars) | ✅     | Usage cards with progress bars                  |
+| 4   | "Upgrade plan" button present                              | ✅     | Conditional button for starter_trial            |
+| 5   | Payment method display (last 4 digits)                     | ✅     | Payment method card with last4, brand, expiry   |
+| 6   | Next billing date                                          | ✅     | Calendar icon with formatted date               |
+| 7   | Cancel subscription button                                 | ✅     | Button with confirmation dialog                 |
+| 8   | Cancelled plan copy                                        | ✅     | "Roastr.AI estará activo hasta [fecha]" message |
 
 **Total:** 7/7 ACs (100%) ✅
 
@@ -26,6 +26,7 @@
 ## 🎯 Nice-to-Haves Implemented
 
 ### ✅ Password Strength Meter
+
 - **Component:** `PasswordStrengthIndicator` integrated in `AccountSettingsForm`
 - **Features:**
   - Visual strength bar (weak/medium/strong)
@@ -34,12 +35,14 @@
   - Color-coded indicators (red/yellow/green)
 
 ### ✅ Enhanced Error Handling
+
 - **Retry Logic:** Exponential backoff (max 3 retries)
 - **Visual Feedback:** Retry count indicator, loading states
 - **User Experience:** Clear error messages with actionable retry button
 - **Implementation:** `BillingPanel.loadBillingInfo()` with retry mechanism
 
 ### ✅ Improved User Feedback
+
 - **Toast Notifications:** Success/error messages for all actions
 - **Loading States:** Spinners and disabled states during operations
 - **Confirmation Dialogs:** `ConfirmDialog` for destructive actions
@@ -52,9 +55,11 @@
 ### New Endpoints
 
 #### `GET /api/billing/info`
+
 **Purpose:** Comprehensive billing information endpoint
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -83,6 +88,7 @@
 ```
 
 **Features:**
+
 - Retrieves subscription from `user_subscriptions` table
 - Fetches usage data from entitlements service
 - Retrieves payment method from Stripe (customer + subscription)
@@ -90,9 +96,11 @@
 - Handles cancelled subscriptions gracefully
 
 #### `POST /api/billing/cancel`
+
 **Purpose:** Cancel subscription (at period end or immediately)
 
 **Request:**
+
 ```json
 {
   "immediately": false
@@ -100,6 +108,7 @@
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -111,6 +120,7 @@
 ```
 
 **Features:**
+
 - Cancels via Stripe API (update or cancel)
 - Updates database with cancellation status
 - Supports immediate or period-end cancellation
@@ -123,6 +133,7 @@
 ### BillingPanel Component
 
 **New Features:**
+
 1. **Payment Method Display**
    - Card icon with last 4 digits
    - Brand name (Visa, Mastercard, etc.)
@@ -154,6 +165,7 @@
 ### AccountSettingsForm Component
 
 **Enhancement:**
+
 - Replaced basic password strength indicator with `PasswordStrengthIndicator` component
 - Visual strength bar with color coding
 - Criteria checklist with real-time validation
@@ -166,10 +178,12 @@
 ### Frontend API Module (`frontend/src/lib/api/billing.js`)
 
 **New Functions:**
+
 - `getBillingInfo()` - Get comprehensive billing information
 - `cancelSubscription(immediately)` - Cancel subscription
 
 **Usage:**
+
 ```javascript
 import { getBillingInfo, cancelSubscription } from '../../lib/api/billing';
 
@@ -186,6 +200,7 @@ await cancelSubscription(false); // Cancel at period end
 ## 🧪 Testing
 
 **Test Coverage:**
+
 - ✅ BillingPanel component tests (6 test cases)
 - ✅ AccountSettingsForm tests (8 test cases)
 - ✅ SettingsLayout tests (5 test cases)
@@ -199,9 +214,11 @@ await cancelSubscription(false); // Cancel at period end
 ## 📝 Files Modified
 
 ### Backend
+
 - `src/routes/billing.js` - Added `/billing/info` and `/billing/cancel` endpoints
 
 ### Frontend
+
 - `frontend/src/components/settings/BillingPanel.jsx` - Complete implementation with all ACs
 - `frontend/src/components/settings/AccountSettingsForm.jsx` - Password strength meter
 - `frontend/src/lib/api/billing.js` - New API functions
@@ -241,4 +258,3 @@ await cancelSubscription(false); // Cancel at period end
 **Completed by:** Auto (Claude Code)  
 **Date:** 2025-11-27  
 **PR:** #1082
-
