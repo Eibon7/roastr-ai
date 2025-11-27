@@ -22,6 +22,10 @@ import Compose from './pages/Compose';
 import Integrations from './pages/Integrations';
 import Billing from './pages/Billing';
 import Settings from './pages/Settings';
+import SettingsLayout from './components/settings/SettingsLayout';
+import AccountSettingsPage from './pages/settings/AccountSettingsPage';
+import PreferencesSettingsPage from './pages/settings/PreferencesSettingsPage';
+import BillingSettingsPage from './pages/settings/BillingSettingsPage';
 import Logs from './pages/Logs';
 import PlanPicker from './pages/PlanPicker';
 import Connect from './pages/Connect';
@@ -33,8 +37,10 @@ import AccountDetailPage from './pages/AccountDetailPage';
 import Pricing from './pages/Pricing';
 import Shop from './pages/Shop';
 import Analytics from './pages/Analytics';
+import Home from './pages/app/home';
 import { PublicRoute } from './components/ProtectedRoute';
 import { AuthGuard, AdminGuard } from './lib/guards';
+import { Toaster } from 'sonner';
 import './App.css';
 
 function App() {
@@ -82,7 +88,7 @@ function App() {
                     </AuthGuard>
                   }
                 >
-                  <Route index element={<Dashboard />} />
+                  <Route index element={<Home />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="compose" element={<Compose />} />
                   <Route path="integrations" element={<Integrations />} />
@@ -90,7 +96,15 @@ function App() {
                   <Route path="configuration" element={<Configuration />} />
                   <Route path="approval" element={<Approval />} />
                   <Route path="billing" element={<Billing />} />
-                  <Route path="settings" element={<Settings />} />
+                  {/* Settings with nested routes - Issue #1053 */}
+                  <Route path="settings" element={<SettingsLayout />}>
+                    <Route path="account" element={<AccountSettingsPage />} />
+                    <Route path="preferences" element={<PreferencesSettingsPage />} />
+                    <Route path="billing" element={<BillingSettingsPage />} />
+                    <Route index element={<Navigate to="account" replace />} />
+                  </Route>
+                  {/* Legacy settings route - redirect to new structure */}
+                  <Route path="settings-legacy" element={<Settings />} />
                   <Route path="logs" element={<Logs />} />
                   <Route path="plans" element={<PlanPicker />} />
                   <Route path="pricing" element={<Pricing />} />
@@ -141,6 +155,7 @@ function App() {
                 <Route path="*" element={<Navigate to="/app" replace />} />
               </Routes>
             </div>
+            <Toaster position="top-right" richColors />
           </SidebarProvider>
         </FeatureFlagsProvider>
       </AuthProvider>
