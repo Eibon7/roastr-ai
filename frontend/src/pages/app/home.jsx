@@ -51,11 +51,17 @@ export default function Home() {
   const handleAccountConnected = async () => {
     // Refrescar lista de cuentas después de conectar
     try {
+      setLoading(true); // Show loading state during refresh (CodeRabbit nice-to-have)
       const response = await apiClient.get('/accounts');
-      const accountsList = response.data || response || [];
+      // Handle standardized response format (Issue #1081: success: true, data: [...])
+      // Consistent with fetchAccounts parsing
+      const responseData = response.data || response;
+      const accountsList = responseData.data || responseData || [];
       setAccounts(Array.isArray(accountsList) ? accountsList : []);
     } catch (error) {
       logger.error('Error refreshing accounts:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

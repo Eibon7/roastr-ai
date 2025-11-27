@@ -98,7 +98,14 @@ test.describe('Home Page OAuth Flow', () => {
       await twitterButton.click();
 
       // Verify OAuth flow initiated (either redirect or success message)
+<<<<<<< HEAD
       await expect(page.locator('text=conectada').or(page.url()).first()).toBeTruthy();
+=======
+      // Check for success message or URL change indicating OAuth redirect
+      const successVisible = await page.locator('text=conectada').isVisible().catch(() => false);
+      const urlChanged = !page.url().includes('/app');
+      expect(successVisible || urlChanged).toBeTruthy();
+>>>>>>> 256bb733 (fix(epic-1043): Address CodeRabbit review comments)
     }
   });
 
