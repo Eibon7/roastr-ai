@@ -24,10 +24,7 @@ import ShieldInterceptedList from '../components/ShieldInterceptedList';
 import AccountSettingsDialog from '../components/AccountSettingsDialog';
 import { useSocialAccounts } from '../hooks/useSocialAccounts';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
-import {
-  NETWORK_ICONS,
-  NETWORK_COLORS
-} from '../mocks/social';
+import { NETWORK_ICONS, NETWORK_COLORS } from '../mocks/social';
 import PageLayout from '../components/roastr/PageLayout';
 
 const AccountDetailPage = () => {
@@ -58,9 +55,7 @@ const AccountDetailPage = () => {
   const [loadingStates, setLoadingStates] = useState({});
 
   const account = getAccountById(id);
-  const networkIcon = account
-    ? NETWORK_ICONS[account.network || account.platform] || '📱'
-    : '📱';
+  const networkIcon = account ? NETWORK_ICONS[account.network || account.platform] || '📱' : '📱';
   const networkColor = account
     ? NETWORK_COLORS[account.network || account.platform] || 'bg-gray-600 text-white'
     : 'bg-gray-600 text-white';
@@ -79,11 +74,14 @@ const AccountDetailPage = () => {
         const token = localStorage.getItem('token');
 
         // Fetch account details
-        const detailsResponse = await fetch(`/api/user/accounts/${account.platform || account.id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
+        const detailsResponse = await fetch(
+          `/api/user/accounts/${account.platform || account.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        });
+        );
 
         if (detailsResponse.ok) {
           const detailsData = await detailsResponse.json();
@@ -176,24 +174,21 @@ const AccountDetailPage = () => {
   };
 
   // Handle async actions with loading states
-  const handleAsyncAction = useCallback(
-    async (actionKey, actionFn, successMessage) => {
-      setLoadingStates((prev) => ({ ...prev, [actionKey]: true }));
-      try {
-        await actionFn();
-        if (successMessage) {
-          // Could show toast here
-          console.log(successMessage);
-        }
-      } catch (error) {
-        console.error(`Error in ${actionKey}:`, error);
-        // Could show error toast here
-      } finally {
-        setLoadingStates((prev) => ({ ...prev, [actionKey]: false }));
+  const handleAsyncAction = useCallback(async (actionKey, actionFn, successMessage) => {
+    setLoadingStates((prev) => ({ ...prev, [actionKey]: true }));
+    try {
+      await actionFn();
+      if (successMessage) {
+        // Could show toast here
+        console.log(successMessage);
       }
-    },
-    []
-  );
+    } catch (error) {
+      console.error(`Error in ${actionKey}:`, error);
+      // Could show error toast here
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [actionKey]: false }));
+    }
+  }, []);
 
   const handleApproveRoast = useCallback(
     (roastId) => {
@@ -259,10 +254,7 @@ const AccountDetailPage = () => {
 
   if (loading) {
     return (
-      <PageLayout
-        title="Detalle de cuenta"
-        subtitle="Cargando información de la cuenta..."
-      >
+      <PageLayout title="Detalle de cuenta" subtitle="Cargando información de la cuenta...">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -284,10 +276,7 @@ const AccountDetailPage = () => {
   }
 
   const displayName =
-    accountDetails?.handle ||
-    account.handle ||
-    account.username ||
-    `@${account.platform}_user`;
+    accountDetails?.handle || account.handle || account.username || `@${account.platform}_user`;
 
   return (
     <PageLayout
@@ -296,11 +285,7 @@ const AccountDetailPage = () => {
     >
       <div className="space-y-6">
         {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/app/accounts')}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => navigate('/app/accounts')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver a cuentas
         </Button>
@@ -356,7 +341,7 @@ const AccountDetailPage = () => {
           </Card>
         </div>
 
-          {/* Settings Button */}
+        {/* Settings Button */}
         <div className="flex justify-end mb-4">
           <AccountSettingsDialog
             account={account}
@@ -391,9 +376,7 @@ const AccountDetailPage = () => {
                 {roasts.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="text-gray-400 dark:text-gray-500 text-4xl mb-2">💬</div>
-                    <p className="text-gray-500 dark:text-gray-400">
-                      No hay roasts generados aún
-                    </p>
+                    <p className="text-gray-500 dark:text-gray-400">No hay roasts generados aún</p>
                   </div>
                 ) : (
                   <>
@@ -452,7 +435,8 @@ const AccountDetailPage = () => {
                                           onClick={() => handleRejectRoast(roast.id)}
                                           disabled={loadingStates[`reject-${roast.id}`]}
                                         >
-                                          {loadingStates[`reject-${roast.id}`] ? '⏳' : '❌'} Rechazar
+                                          {loadingStates[`reject-${roast.id}`] ? '⏳' : '❌'}{' '}
+                                          Rechazar
                                         </Button>
                                         <Button
                                           variant="default"
@@ -460,7 +444,8 @@ const AccountDetailPage = () => {
                                           onClick={() => handleApproveRoast(roast.id)}
                                           disabled={loadingStates[`approve-${roast.id}`]}
                                         >
-                                          {loadingStates[`approve-${roast.id}`] ? '⏳' : '✅'} Aprobar
+                                          {loadingStates[`approve-${roast.id}`] ? '⏳' : '✅'}{' '}
+                                          Aprobar
                                         </Button>
                                       </>
                                     )}
@@ -478,7 +463,9 @@ const AccountDetailPage = () => {
                         <Card key={roast.id}>
                           <CardContent className="p-4 space-y-3">
                             <div>
-                              <p className="text-xs text-muted-foreground mb-1">Comentario original</p>
+                              <p className="text-xs text-muted-foreground mb-1">
+                                Comentario original
+                              </p>
                               <p className="text-sm">"{roast.original || roast.original_text}"</p>
                             </div>
                             <div>
@@ -577,7 +564,9 @@ const AccountDetailPage = () => {
                             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                               {intercepted.filter((i) => i.action === 'Reportar').length}
                             </div>
-                            <div className="text-xs text-blue-700 dark:text-blue-300">Reportados</div>
+                            <div className="text-xs text-blue-700 dark:text-blue-300">
+                              Reportados
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -604,9 +593,7 @@ const AccountDetailPage = () => {
                         onToggleShield={onToggleShield}
                         onChangeTone={onChangeTone}
                         onDisconnectAccount={onDisconnectAccount}
-                        trigger={
-                          <Button variant="outline">Activar Shield</Button>
-                        }
+                        trigger={<Button variant="outline">Activar Shield</Button>}
                       />
                     </div>
                   )}
@@ -621,4 +608,3 @@ const AccountDetailPage = () => {
 };
 
 export default AccountDetailPage;
-

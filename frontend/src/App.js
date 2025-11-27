@@ -32,6 +32,12 @@ import AccountsPage from './pages/AccountsPage';
 import Pricing from './pages/Pricing';
 import Shop from './pages/Shop';
 import Analytics from './pages/Analytics';
+import { PublicRoute } from './components/ProtectedRoute';
+import { AuthGuard, AdminGuard } from './lib/guards';
+import './App.css';
+
+function App() {
+  return (
     <Router>
       <AuthProvider>
         <FeatureFlagsProvider>
