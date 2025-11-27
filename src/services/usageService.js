@@ -74,8 +74,7 @@ class UsageService {
         logger.warn('Error fetching roast usage:', roastError.message);
       }
 
-      const roastsConsumed =
-        roastUsage?.reduce((sum, record) => sum + (record.count || 0), 0) || 0;
+      const roastsConsumed = roastUsage?.reduce((sum, record) => sum + (record.count || 0), 0) || 0;
 
       // 3. Límites disponibles según plan
       const analysisAvailable = planLimits?.monthlyAnalysisLimit || 0;
@@ -106,4 +105,3 @@ class UsageService {
 }
 
 module.exports = new UsageService();
-

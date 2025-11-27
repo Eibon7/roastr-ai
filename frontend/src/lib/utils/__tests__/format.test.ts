@@ -36,8 +36,12 @@ describe('format utilities', () => {
     });
 
     it('should respect minimum and maximum fraction digits', () => {
-      expect(formatNumber(1234.5, { minimumFractionDigits: 2, maximumFractionDigits: 2 })).toBe('1,234.50');
-      expect(formatNumber(1234.567, { minimumFractionDigits: 0, maximumFractionDigits: 1 })).toBe('1,234.6');
+      expect(formatNumber(1234.5, { minimumFractionDigits: 2, maximumFractionDigits: 2 })).toBe(
+        '1,234.50'
+      );
+      expect(formatNumber(1234.567, { minimumFractionDigits: 0, maximumFractionDigits: 1 })).toBe(
+        '1,234.6'
+      );
     });
   });
 
@@ -152,4 +156,3 @@ describe('format utilities', () => {
     });
   });
 });
-

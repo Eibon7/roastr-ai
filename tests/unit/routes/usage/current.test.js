@@ -98,18 +98,36 @@ describe('Usage Current API', () => {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-      mockSupabase._setTableData('users', [
-        { id: 'test-user-id', plan: 'pro' }
-      ]);
+      mockSupabase._setTableData('users', [{ id: 'test-user-id', plan: 'pro' }]);
 
       mockSupabase._setTableData('analysis_usage', [
-        { user_id: 'test-user-id', count: 10, period_start: startOfMonth.toISOString(), period_end: endOfMonth.toISOString() },
-        { user_id: 'test-user-id', count: 15, period_start: startOfMonth.toISOString(), period_end: endOfMonth.toISOString() }
+        {
+          user_id: 'test-user-id',
+          count: 10,
+          period_start: startOfMonth.toISOString(),
+          period_end: endOfMonth.toISOString()
+        },
+        {
+          user_id: 'test-user-id',
+          count: 15,
+          period_start: startOfMonth.toISOString(),
+          period_end: endOfMonth.toISOString()
+        }
       ]);
 
       mockSupabase._setTableData('roast_usage', [
-        { user_id: 'test-user-id', count: 5, period_start: startOfMonth.toISOString(), period_end: endOfMonth.toISOString() },
-        { user_id: 'test-user-id', count: 8, period_start: startOfMonth.toISOString(), period_end: endOfMonth.toISOString() }
+        {
+          user_id: 'test-user-id',
+          count: 5,
+          period_start: startOfMonth.toISOString(),
+          period_end: endOfMonth.toISOString()
+        },
+        {
+          user_id: 'test-user-id',
+          count: 8,
+          period_start: startOfMonth.toISOString(),
+          period_end: endOfMonth.toISOString()
+        }
       ]);
 
       const response = await request(app).get('/usage/current').expect(200);
@@ -133,9 +151,7 @@ describe('Usage Current API', () => {
     });
 
     it('should handle empty usage gracefully', async () => {
-      mockSupabase._setTableData('users', [
-        { id: 'test-user-id', plan: 'free' }
-      ]);
+      mockSupabase._setTableData('users', [{ id: 'test-user-id', plan: 'free' }]);
 
       mockSupabase._setTableData('analysis_usage', []);
       mockSupabase._setTableData('roast_usage', []);
@@ -153,17 +169,25 @@ describe('Usage Current API', () => {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-      mockSupabase._setTableData('users', [
-        { id: 'test-user-id', plan: 'free' }
-      ]);
+      mockSupabase._setTableData('users', [{ id: 'test-user-id', plan: 'free' }]);
 
       // Consumed more than available (should not go negative)
       mockSupabase._setTableData('analysis_usage', [
-        { user_id: 'test-user-id', count: 15, period_start: startOfMonth.toISOString(), period_end: endOfMonth.toISOString() }
+        {
+          user_id: 'test-user-id',
+          count: 15,
+          period_start: startOfMonth.toISOString(),
+          period_end: endOfMonth.toISOString()
+        }
       ]);
 
       mockSupabase._setTableData('roast_usage', [
-        { user_id: 'test-user-id', count: 10, period_start: startOfMonth.toISOString(), period_end: endOfMonth.toISOString() }
+        {
+          user_id: 'test-user-id',
+          count: 10,
+          period_start: startOfMonth.toISOString(),
+          period_end: endOfMonth.toISOString()
+        }
       ]);
 
       const response = await request(app).get('/usage/current').expect(200);
@@ -197,14 +221,22 @@ describe('Usage Current API', () => {
       const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
-      mockSupabase._setTableData('users', [
-        { id: 'test-user-id', plan: 'pro' }
-      ]);
+      mockSupabase._setTableData('users', [{ id: 'test-user-id', plan: 'pro' }]);
 
       // Mix of current month and last month
       mockSupabase._setTableData('analysis_usage', [
-        { user_id: 'test-user-id', count: 10, period_start: startOfMonth.toISOString(), period_end: endOfMonth.toISOString() },
-        { user_id: 'test-user-id', count: 20, period_start: lastMonth.toISOString(), period_end: lastMonthEnd.toISOString() } // Should be ignored
+        {
+          user_id: 'test-user-id',
+          count: 10,
+          period_start: startOfMonth.toISOString(),
+          period_end: endOfMonth.toISOString()
+        },
+        {
+          user_id: 'test-user-id',
+          count: 20,
+          period_start: lastMonth.toISOString(),
+          period_end: lastMonthEnd.toISOString()
+        } // Should be ignored
       ]);
 
       mockSupabase._setTableData('roast_usage', []);
@@ -245,7 +277,7 @@ describe('Usage Current API', () => {
       // Mock getCurrentUsage to throw error
       const usageService = require('../../../../src/services/usageService');
       const originalGetCurrentUsage = usageService.getCurrentUsage;
-      
+
       // Mock to throw error in getCurrentUsage
       usageService.getCurrentUsage = jest.fn().mockImplementation(() => {
         throw new Error('Error getting current usage');
@@ -261,4 +293,3 @@ describe('Usage Current API', () => {
     });
   });
 });
-

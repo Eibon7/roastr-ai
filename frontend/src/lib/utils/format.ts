@@ -27,11 +27,7 @@ export function formatNumber(
     return '0';
   }
 
-  const {
-    minimumFractionDigits = 0,
-    maximumFractionDigits = 2,
-    useGrouping = true
-  } = options;
+  const { minimumFractionDigits = 0, maximumFractionDigits = 2, useGrouping = true } = options;
 
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits,
@@ -111,10 +107,7 @@ export function formatPercentage(
  * formatDecimal(1234.5678, 0) // "1,235"
  * formatDecimal(1234.5, 3) // "1,234.500"
  */
-export function formatDecimal(
-  value: number | null | undefined,
-  decimals: number = 2
-): string {
+export function formatDecimal(value: number | null | undefined, decimals: number = 2): string {
   if (value === null || value === undefined || isNaN(value)) {
     return '0.' + '0'.repeat(decimals);
   }
@@ -136,10 +129,7 @@ export function formatDecimal(
  * formatCompact(1234567) // "1.2M"
  * formatCompact(1234567890) // "1.2B"
  */
-export function formatCompact(
-  value: number | null | undefined,
-  decimals: number = 1
-): string {
+export function formatCompact(value: number | null | undefined, decimals: number = 1): string {
   if (value === null || value === undefined || isNaN(value)) {
     return '0';
   }
@@ -149,4 +139,3 @@ export function formatCompact(
     maximumFractionDigits: decimals
   }).format(value);
 }
-

@@ -147,7 +147,9 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
         const data = storage.tables[tableName];
 
         if (!data) {
-          return Promise.resolve({ data: null, error: { message: 'Table not found' } }).then(resolve);
+          return Promise.resolve({ data: null, error: { message: 'Table not found' } }).then(
+            resolve
+          );
         }
 
         // Apply filters
