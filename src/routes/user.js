@@ -4,6 +4,7 @@ const { logger, SafeUtils } = require('../utils/logger');
 const { supabaseServiceClient, createUserClient } = require('../config/supabase');
 const UserIntegrationsService = require('../services/mockIntegrationsService');
 const { flags } = require('../config/flags');
+const { isValidPlatform } = require('../config/validPlatforms');
 const DataExportService = require('../services/dataExportService');
 const emailService = require('../services/emailService');
 const auditService = require('../services/auditService');
@@ -32,6 +33,69 @@ const router = express.Router();
 const integrationsService = new UserIntegrationsService();
 const embeddingsService = new EmbeddingsService();
 const personaSanitizer = new PersonaInputSanitizer();
+
+/**
+ * Helper function to ensure platform connection is allowed based on plan limits
+ * Issue #1081: CodeRabbit - Extract connection limit logic to shared helper
+ * 
+ * @param {Object} req - Express request object
+ * @param {string} userId - User ID
+ * @param {string} platform - Platform name
+ * @returns {Promise<Object>} { allowed: boolean, error?: Object }
+ */
+async function ensurePlatformConnectionAllowed(req, userId, platform) {
+  // Business Policy: Limits are per platform (e.g., 2 accounts of X, 2 of Instagram, etc.)
+  const currentIntegrations = await integrationsService.getUserIntegrations(userId);
+
+  // Ensure currentIntegrations.data is always an array (Issue #366 CodeRabbit fix)
+  if (!Array.isArray(currentIntegrations.data)) {
+    currentIntegrations.data = currentIntegrations.data ? [currentIntegrations.data] : [];
+  }
+
+  // Count connections for THIS SPECIFIC PLATFORM only
+  const platformConnections =
+    currentIntegrations.data.filter(
+      (integration) => integration.connected && integration.platform === platform.toLowerCase()
+    ).length || 0;
+
+  // Get user's plan from token or fetch from database
+  const userPlan = req.user?.plan || 'starter_trial';
+  let maxConnectionsPerPlatform;
+
+  // Connection limits PER PLATFORM (Issue #841)
+  switch (userPlan.toLowerCase()) {
+    case 'starter_trial':
+    case 'starter':
+      maxConnectionsPerPlatform = 1; // 1 cuenta por plataforma
+      break;
+    case 'pro':
+    case 'plus':
+    case 'custom':
+      maxConnectionsPerPlatform = 2; // 2 cuentas por plataforma
+      break;
+    default:
+      maxConnectionsPerPlatform = 1; // Default to starter_trial plan limits
+  }
+
+  if (platformConnections >= maxConnectionsPerPlatform) {
+    return {
+      allowed: false,
+      error: {
+        success: false,
+        error: `Plan ${userPlan} permite máximo ${maxConnectionsPerPlatform} ${maxConnectionsPerPlatform > 1 ? 'cuentas' : 'cuenta'} por plataforma. Ya tienes ${platformConnections} ${platformConnections > 1 ? 'cuentas' : 'cuenta'} conectadas en ${platform}.`,
+        code: 'PLATFORM_CONNECTION_LIMIT_EXCEEDED',
+        details: {
+          platform,
+          currentConnections: platformConnections,
+          maxConnectionsPerPlatform,
+          plan: userPlan
+        }
+      }
+    };
+  }
+
+  return { allowed: true };
+}
 
 /**
  * GET /api/user/integrations
