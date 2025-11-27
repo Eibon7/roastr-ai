@@ -60,7 +60,10 @@ const EXPORT_DATASETS = [
   { label: 'Eventos', value: 'events' }
 ];
 
-import { formatNumber as formatNumberUtil, formatCurrency as formatCurrencyUtil } from '../lib/utils/format';
+import {
+  formatNumber as formatNumberUtil,
+  formatCurrency as formatCurrencyUtil
+} from '../lib/utils/format';
 
 // Wrapper functions for compatibility with existing code
 const formatNumber = (value) => {
