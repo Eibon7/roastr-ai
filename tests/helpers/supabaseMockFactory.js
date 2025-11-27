@@ -187,7 +187,11 @@ function createSupabaseMock(tableData = {}, rpcResponses = {}) {
                   }
                   return row[filter.column] <= filter.value;
                 case 'in':
-                  return filter.value.includes(row[filter.column]);
+                  // filter.values is the array passed to .in(column, values)
+                  if (!Array.isArray(filter.values)) {
+                    return false;
+                  }
+                  return filter.values.includes(row[filter.column]);
                 case 'is':
                   return row[filter.column] === filter.value;
                 case 'not':

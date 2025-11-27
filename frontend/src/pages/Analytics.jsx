@@ -60,20 +60,17 @@ const EXPORT_DATASETS = [
   { label: 'Eventos', value: 'events' }
 ];
 
+import { formatNumber as formatNumberUtil, formatCurrency as formatCurrencyUtil } from '../lib/utils/format';
+
+// Wrapper functions for compatibility with existing code
 const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0';
-  return value.toLocaleString('es-ES');
+  return formatNumberUtil(value);
 };
 
 const formatCurrency = (cents) => {
+  // Convert cents to base currency unit for new utility
   const value = Number(cents) / 100;
-  if (!Number.isFinite(value)) return '€ 0,00';
-  return value.toLocaleString('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+  return formatCurrencyUtil(value, 'EUR', true);
 };
 
 const SummaryCard = ({ title, value, subtitle, trend }) => (

@@ -14,7 +14,13 @@ import {
   CreditCard
 } from 'lucide-react';
 import { apiClient } from '../lib/api';
-import { formatCurrency } from '../utils/formatUtils';
+import { formatCurrency as formatCurrencyUtil } from '../lib/utils/format';
+
+// Wrapper for compatibility: formatUtils expects cents, new utility expects base currency
+const formatCurrency = (amountCents, currency = 'USD') => {
+  const value = Number(amountCents) / 100;
+  return formatCurrencyUtil(value, currency, true);
+};
 
 const ShopSettings = ({ user, onNotification }) => {
   const [shopData, setShopData] = useState({
