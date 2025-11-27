@@ -26,13 +26,10 @@ export default function NotFound() {
             <Button onClick={() => navigate(-1)} variant="outline">
               Volver
             </Button>
-            <Button onClick={() => navigate('/app')}>
-              Ir al inicio
-            </Button>
+            <Button onClick={() => navigate('/app')}>Ir al inicio</Button>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 }
-
