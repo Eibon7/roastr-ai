@@ -215,4 +215,3 @@ El modo demo permite:
 - [x] Documentación completa
 
 **Status:** ✅ COMPLETADO Y LISTO PARA PRODUCCIÓN
-

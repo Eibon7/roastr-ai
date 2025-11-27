@@ -33,8 +33,8 @@ router.get('/', async (req, res) => {
     }
 
     const totalUsers = users.length;
-    const activeUsers = users.filter(u => u.active && !u.suspended).length;
-    const suspendedUsers = users.filter(u => u.suspended).length;
+    const activeUsers = users.filter((u) => u.active && !u.suspended).length;
+    const suspendedUsers = users.filter((u) => u.suspended).length;
 
     // Count users by plan
     const usersByPlan = users.reduce((acc, user) => {

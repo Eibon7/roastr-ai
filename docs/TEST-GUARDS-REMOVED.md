@@ -3,6 +3,7 @@
 **Fecha:** 2025-11-27
 **PR:** #1076
 **Archivos afectados:**
+
 - `src/lib/guards/__tests__/admin-guard.test.tsx.skip`
 - `src/lib/guards/__tests__/auth-guard.test.tsx.skip`
 
@@ -44,12 +45,14 @@ Los tests unitarios de guards estaban causando **timeouts infinitos** cuando se 
 ## 📊 Coverage de Guards
 
 **Cubierto por E2E:**
+
 - ✅ AuthGuard: Redirección a /login cuando no autenticado
 - ✅ AdminGuard: Redirección a /app cuando no admin
 - ✅ AdminGuard: Permite acceso cuando es admin
 - ✅ Loading states funcionando
 
 **No cubierto (aceptable para MVP):**
+
 - Edge cases específicos de mocks
 - Estados de error complejos
 
@@ -60,6 +63,7 @@ Los tests unitarios de guards estaban causando **timeouts infinitos** cuando se 
 Si se requiere coverage unitario de guards en el futuro:
 
 1. **Opción A**: Refactorizar tests para no usar `AuthProvider` real:
+
    ```typescript
    vi.mock('@/lib/auth-context', () => ({
      AuthProvider: ({ children }) => children,
@@ -68,6 +72,7 @@ Si se requiere coverage unitario de guards en el futuro:
    ```
 
 2. **Opción B**: Aumentar timeout de Vitest:
+
    ```typescript
    // vitest.config.ts
    test: {
@@ -85,6 +90,7 @@ Si se requiere coverage unitario de guards en el futuro:
 **Decisión:** Los guards están suficientemente cubiertos por tests E2E. Tests unitarios problemáticos removidos para desbloquear CI/CD.
 
 **Impacto:**
+
 - ✅ CI/CD desbloqueado
 - ✅ 40 tests verificando funcionalidad (15 unit + 25 E2E)
 - ✅ Guards funcionando correctamente (validado por E2E)

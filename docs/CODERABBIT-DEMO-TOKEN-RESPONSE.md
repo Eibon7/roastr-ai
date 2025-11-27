@@ -104,5 +104,4 @@ La documentación en `docs/FRONTEND-DEMO-GUIDE.md` (líneas 130-134) es **correc
 <<<<<<< HEAD
 =======
 
-
->>>>>>> 60b3d4ca (fix: Resolve CodeRabbit feedback and fix unit test timeouts)
+> > > > > > > 60b3d4ca (fix: Resolve CodeRabbit feedback and fix unit test timeouts)

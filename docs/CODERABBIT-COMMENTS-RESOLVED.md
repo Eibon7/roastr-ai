@@ -114,4 +114,3 @@ Todos los paths hardcodeados han sido reemplazados por paths relativos o removid
 ---
 
 **Última actualización:** 2025-11-26 23:45 UTC
-

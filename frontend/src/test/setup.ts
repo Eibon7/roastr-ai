@@ -34,7 +34,7 @@ const localStorageMock = (() => {
       delete store[key];
     },
     clear: () => {
-      Object.keys(store).forEach(key => delete store[key]);
+      Object.keys(store).forEach((key) => delete store[key]);
     }
   };
 })();

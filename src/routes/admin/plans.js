@@ -36,8 +36,8 @@ router.get('/', async (req, res) => {
     }
 
     // Count users per plan
-    const planStats = VALID_PLANS.map(plan => {
-      const count = userCounts.filter(u => u.plan === plan).length;
+    const planStats = VALID_PLANS.map((plan) => {
+      const count = userCounts.filter((u) => u.plan === plan).length;
       return {
         id: PLAN_IDS[plan] || plan,
         name: plan,

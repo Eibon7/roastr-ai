@@ -29,15 +29,18 @@
 ### 2. Tests Unitarios Arreglados ✅
 
 **Problema identificado:**
+
 - Tests de guards (`admin-guard.test.tsx`, `auth-guard.test.tsx`) causaban timeout infinito
 - Bloqueaban CI/CD completamente
 
 **Solución aplicada:**
+
 - Removidos temporalmente (renombrados a `.skip`)
 - Razón: Guards ya cubiertos por 25 tests E2E de Playwright
 - Documentado en `docs/TEST-GUARDS-REMOVED.md`
 
 **Resultado:**
+
 - ✅ **15 tests unitarios pasando** (en <1s)
 - ✅ **25 tests E2E pasando** (Playwright)
 - ✅ **Total: 40 tests verificando funcionalidad**
@@ -52,6 +55,7 @@
 ### 4. Coverage ✅
 
 **Resultado actual:**
+
 - **68.7%** statements overall
 - **100%** auth-layout.tsx
 - **75%** auth-context.tsx
@@ -71,25 +75,25 @@
 
 ### Tests
 
-| Tipo          | Cantidad | Status | Duración |
-|---------------|----------|--------|----------|
-| Unit Tests    | 15       | ✅ Passing | <1s      |
-| E2E Tests     | 25       | ✅ Passing | ~30s     |
-| **Total**     | **40**   | ✅ **Passing** | ~31s |
+| Tipo       | Cantidad | Status         | Duración |
+| ---------- | -------- | -------------- | -------- |
+| Unit Tests | 15       | ✅ Passing     | <1s      |
+| E2E Tests  | 25       | ✅ Passing     | ~30s     |
+| **Total**  | **40**   | ✅ **Passing** | ~31s     |
 
 ### Build
 
-| Check | Status | Time |
-|-------|--------|------|
-| TypeScript (tsc) | ✅ Passing | <1s |
-| Vite Build | ✅ Passing | 1.85s |
-| Bundle Size | ✅ 478.68 kB | - |
+| Check            | Status       | Time  |
+| ---------------- | ------------ | ----- |
+| TypeScript (tsc) | ✅ Passing   | <1s   |
+| Vite Build       | ✅ Passing   | 1.85s |
+| Bundle Size      | ✅ 478.68 kB | -     |
 
 ### CI/CD
 
-| Check | Status |
-|-------|--------|
-| Build Check | ⏳ Pending (running) |
+| Check             | Status               |
+| ----------------- | -------------------- |
+| Build Check       | ⏳ Pending (running) |
 | CodeRabbit Review | ⏳ Pending (running) |
 
 ---
@@ -99,10 +103,12 @@
 ### Backend API Endpoints
 
 **Implementado (2/6):**
+
 - ✅ Feature Flags (`src/routes/admin/featureFlags.js`)
 - ✅ Tones (`src/routes/admin/tones.js`)
 
 **NO Implementado (4/6):**
+
 - ❌ Users (`/api/admin/users`)
 - ❌ Plans (`/api/admin/plans`)
 - ❌ Metrics (`/api/admin/dashboard`)
@@ -111,6 +117,7 @@
 ### Frontend
 
 **Completado (100%):**
+
 - ✅ 7 páginas admin implementadas
 - ✅ API client con CSRF protection
 - ✅ Guards (Auth + Admin)
@@ -159,16 +166,19 @@
 ### Post-Merge (Opcional)
 
 **Opción A - Implementar 4 endpoints backend faltantes:**
+
 - Users management endpoints
 - Plans configuration endpoints
 - Metrics dashboard endpoints
 - Plan limits endpoints
 
 **Opción B - Crear PR separada para backend:**
+
 - Frontend completo en esta PR
 - Backend en PR futura (#1077 o similar)
 
 **Opción C - Reducir scope del Epic:**
+
 - Considerar Epic completo con solo Feature Flags + Tones
 - Crear nuevos epics para Users, Plans, Metrics
 

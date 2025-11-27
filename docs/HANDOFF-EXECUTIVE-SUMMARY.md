@@ -35,6 +35,7 @@
 **Tests Unitarios hacen timeout al ejecutarse juntos**
 
 **Tests Individuales:**
+
 - `api.test.ts` ✅ PASA (5 tests)
 - `auth-context.test.tsx` ⚠️ Probable falla
 - `admin-guard.test.tsx` ⚠️ Probable falla
@@ -42,6 +43,7 @@
 - `auth-layout.test.tsx` ⚠️ Desconocido
 
 **Causa Probable:**
+
 - Memory leaks en mocks complejos
 - Tests infinitos o loops
 - Cleanup incompleto entre tests
@@ -53,6 +55,7 @@
 ### Prioridad 1: Arreglar Tests Unitarios
 
 **Comando de diagnóstico:**
+
 ```bash
 cd frontend
 npm test -- --run src/lib/__tests__/api.test.ts          # ✅ Pasa
@@ -85,16 +88,19 @@ Marcar checkboxes en: https://github.com/Eibon7/roastr-ai/issues/1037
 ## 📁 UBICACIONES CLAVE
 
 **Worktree:**
+
 ```
 /Users/emiliopostigo/roastr-ai/roastr-ai-worktrees/epic-1037/
 ```
 
 **Rama:**
+
 ```bash
 git checkout feature/epic-1037-admin-panel-pr
 ```
 
 **Documento Completo:**
+
 ```
 docs/HANDOFF-SUMMARY.md  ← Lee este archivo para detalles completos
 ```
@@ -119,5 +125,3 @@ docs/HANDOFF-SUMMARY.md  ← Lee este archivo para detalles completos
 ---
 
 **¿Listo para continuar?** Lee `docs/HANDOFF-SUMMARY.md` para detalles completos.
-
-

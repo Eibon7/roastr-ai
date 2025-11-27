@@ -15,7 +15,7 @@ describe('API Client', () => {
       delete storage[key];
     });
     (global.localStorage.clear as any) = vi.fn(() => {
-      Object.keys(storage).forEach(key => delete storage[key]);
+      Object.keys(storage).forEach((key) => delete storage[key]);
     });
   });
 
@@ -34,7 +34,7 @@ describe('API Client', () => {
     expect(global.fetch).toHaveBeenCalled();
     const callArgs = mockFetch.mock.calls[0];
     expect(callArgs[0]).toContain('/test');
-    
+
     // Headers might be a Headers object or plain object
     const headersArg = callArgs[1]?.headers;
     let headers: Record<string, string>;
@@ -43,7 +43,7 @@ describe('API Client', () => {
     } else {
       headers = headersArg as Record<string, string>;
     }
-    
+
     expect(headers).toHaveProperty('Authorization');
     expect(headers?.Authorization).toBe('Bearer test-token-123');
   });

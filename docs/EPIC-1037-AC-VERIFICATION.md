@@ -161,4 +161,3 @@
 3. ⏸️ Escribir tests E2E con Playwright
 4. ⏸️ Resolver comentarios CodeRabbit
 5. ⏸️ Resolver violaciones GDD Coverage Integrity (automático con tests)
-

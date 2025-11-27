@@ -20,7 +20,16 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.config.*', '**/mockData', 'dist/', 'src/contexts/__tests__/**', 'src/hooks/__tests__/**']
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/mockData',
+        'dist/',
+        'src/contexts/__tests__/**',
+        'src/hooks/__tests__/**'
+      ]
     }
   },
   resolve: {

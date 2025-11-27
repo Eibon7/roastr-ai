@@ -117,4 +117,3 @@ async getUsers(params?: {...}) { ... }
 ---
 
 **Última actualización:** 2025-11-26
-

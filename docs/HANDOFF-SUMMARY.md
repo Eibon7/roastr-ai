@@ -14,6 +14,7 @@
 **Objetivo:** Panel de administración completo con React + TypeScript + Vite + shadcn/ui
 
 **Estado General:**
+
 - ✅ Frontend implementado (7 páginas admin)
 - ✅ APIs conectadas (15+ endpoints)
 - ✅ E2E tests escritos (25 tests)
@@ -28,6 +29,7 @@
 ### 1. Frontend Implementado ✅
 
 **Stack:**
+
 - React 19.2 + TypeScript 5.7
 - Vite 6
 - Tailwind CSS + shadcn/ui
@@ -36,6 +38,7 @@
 - Playwright E2E
 
 **Páginas Admin (7):**
+
 - `/admin/dashboard` - Dashboard principal
 - `/admin/users` - Gestión de usuarios (CRUD)
 - `/admin/config/feature-flags` - Feature flags
@@ -45,6 +48,7 @@
 - `/auth/login` - Login con modo demo
 
 **Archivos Clave:**
+
 - `frontend/src/lib/api.ts` - Cliente API con CSRF
 - `frontend/src/lib/auth-context.tsx` - Contexto de autenticación
 - `frontend/src/lib/guards/admin-guard.tsx` - Guard para admin
@@ -53,6 +57,7 @@
 ### 2. APIs Conectadas ✅
 
 **15+ endpoints conectados:**
+
 - Auth: `me`, `login`, `logout`
 - Users: `getUsers`, `toggleUserAdmin`, `updateUserPlan`, etc.
 - Feature Flags: `getFeatureFlags`, `updateFeatureFlag`
@@ -61,6 +66,7 @@
 - Metrics: `getDashboardMetrics`, `getMetrics`
 
 **Características:**
+
 - ✅ CSRF token handling (Double Submit Cookie)
 - ✅ JWT authentication
 - ✅ Manejo de errores completo
@@ -69,10 +75,12 @@
 ### 3. Demo Mode ✅
 
 **Implementado en:**
+
 - `frontend/src/pages/auth/login.tsx` - Botón "Modo Demo"
 - `frontend/src/lib/auth-context.tsx` - Detección de `demo-token-*`
 
 **Funcionalidad:**
+
 - Permite explorar frontend sin backend
 - Simula login de admin
 - Persiste en localStorage
@@ -80,6 +88,7 @@
 ### 4. Tests E2E ✅
 
 **25 tests E2E con Playwright:**
+
 - `e2e/login.spec.ts` - Login flow (5 tests)
 - `e2e/admin-navigation.spec.ts` - Navegación (7 tests)
 - `e2e/admin-users.spec.ts` - User management (6 tests)
@@ -91,6 +100,7 @@
 ### 5. Documentación ✅
 
 **Archivos creados:**
+
 - `docs/EPIC-1037-AC-VERIFICATION.md` - Verificación de ACs
 - `docs/E2E-TESTS-SUMMARY.md` - Resumen de tests E2E
 - `docs/FRONTEND-DEMO-GUIDE.md` - Guía de demo mode
@@ -100,6 +110,7 @@
 ### 6. CodeRabbit Comments ✅
 
 **5 comentarios resueltos:**
+
 - ✅ Docstring coverage (agregado JSDoc/TSDoc completo)
 - ✅ Hardcoded paths en docs (reemplazados con rutas relativas)
 - ✅ `.eslintrc.cjs` legacy (migrado a `eslint.config.js` flat config)
@@ -113,11 +124,13 @@
 ### 1. Tests Unitarios - Timeout/Memoria ❌
 
 **Síntoma:**
+
 - `npm test` o `npm run test:coverage` hace timeout
 - Tests individuales pasan (ej: `api.test.ts` pasa)
 - Ejecutar todos los tests juntos falla
 
 **Tests Existentes:**
+
 ```
 src/lib/__tests__/api.test.ts (5 tests) ✅ PASA
 src/lib/__tests__/auth-context.test.tsx (7 tests) ⚠️ PROBABLE FALLA
@@ -127,20 +140,24 @@ src/components/layout/__tests__/auth-layout.test.tsx (? tests) ⚠️ DESCONOCID
 ```
 
 **Archivos de Configuración:**
+
 - `frontend/vitest.config.ts` - Configurado correctamente
 - `frontend/src/test/setup.ts` - Mock de localStorage y fetch
 
 **Exclusiones ya aplicadas:**
+
 - `src/contexts/__tests__/**` - Tests Jest incompatibles
 - `src/hooks/__tests__/**` - Tests Jest incompatibles
 
 **Posibles Causas:**
+
 1. Memory leak en mocks complejos
 2. Tests infinitos o loops
 3. Mocks no limpiados entre tests
 4. React Testing Library con cleanup incompleto
 
 **Acciones Realizadas:**
+
 - ✅ Mock de localStorage simplificado
 - ✅ Exclusiones de tests Jest
 - ✅ Setup básico de Vitest
@@ -149,12 +166,14 @@ src/components/layout/__tests__/auth-layout.test.tsx (? tests) ⚠️ DESCONOCID
 ### 2. CI/CD Failing ❌
 
 **Checks Failing:**
+
 - `CI/CD Pipeline / Build Check (pull_request)` - Failing
 - `CI/CD Pipeline / Build Check (push)` - Failing
 - `Frontend Build Check & Case Sensitivity / build-check` - Failing
 - `Frontend Build Check & Case Sensitivity / lint-check` - Failing
 
 **Causa Probable:**
+
 - Tests fallando en CI (timeout similar a local)
 - O errores de TypeScript/lint no detectados localmente
 
@@ -164,6 +183,7 @@ src/components/layout/__tests__/auth-layout.test.tsx (? tests) ⚠️ DESCONOCID
 **Estado Actual:** Desconocido (no se puede ejecutar `npm run test:coverage`)
 
 **Motivo:**
+
 - No se puede medir coverage si tests hacen timeout
 - GDD muestra 0% coverage (esperado hasta que tests pasen)
 
@@ -178,6 +198,7 @@ src/components/layout/__tests__/auth-layout.test.tsx (? tests) ⚠️ DESCONOCID
 **Estrategias a Intentar:**
 
 1. **Ejecutar tests individuales para identificar fallos:**
+
    ```bash
    cd frontend
    npm test -- --run src/lib/__tests__/api.test.ts
@@ -207,6 +228,7 @@ src/components/layout/__tests__/auth-layout.test.tsx (? tests) ⚠️ DESCONOCID
 **Objetivo:** Hacer que CI/CD pase
 
 **Pasos:**
+
 1. Arreglar tests unitarios (Prioridad 1)
 2. Verificar que `npm run build` funciona
 3. Verificar que `npm run lint` funciona
@@ -217,6 +239,7 @@ src/components/layout/__tests__/auth-layout.test.tsx (? tests) ⚠️ DESCONOCID
 **Objetivo:** Alcanzar ≥90% coverage
 
 **Pasos:**
+
 1. Una vez tests pasen, ejecutar:
    ```bash
    cd frontend
@@ -230,6 +253,7 @@ src/components/layout/__tests__/auth-layout.test.tsx (? tests) ⚠️ DESCONOCID
 **Objetivo:** Marcar checkboxes en Issue #1037
 
 **Acción Manual:**
+
 - Ir a https://github.com/Eibon7/roastr-ai/issues/1037
 - Marcar los 6 ACs como completados
 
@@ -252,6 +276,7 @@ git checkout feature/epic-1037-admin-panel-pr
 ### Archivos Clave a Revisar
 
 **Tests:**
+
 - `frontend/src/lib/__tests__/api.test.ts` ✅ (pasa)
 - `frontend/src/lib/__tests__/auth-context.test.tsx` ⚠️
 - `frontend/src/lib/guards/__tests__/admin-guard.test.tsx` ⚠️
@@ -259,16 +284,19 @@ git checkout feature/epic-1037-admin-panel-pr
 - `frontend/src/components/layout/__tests__/auth-layout.test.tsx` ⚠️
 
 **Configuración:**
+
 - `frontend/vitest.config.ts` - Config Vitest
 - `frontend/src/test/setup.ts` - Setup de tests
 - `frontend/package.json` - Dependencies
 
 **Código Fuente:**
+
 - `frontend/src/lib/api.ts` - API client
 - `frontend/src/lib/auth-context.tsx` - Auth context
 - `frontend/src/lib/guards/*.tsx` - Guards
 
 **Documentación:**
+
 - `docs/HANDOFF-SUMMARY.md` - Este archivo
 - `docs/BLOCKERS-PROGRESS-SUMMARY.md` - Resumen de bloqueadores
 - `docs/PR-CREATED-SUCCESS.md` - Estado del PR
@@ -339,6 +367,7 @@ npm run type-check  # si existe
 **Configuración Vitest para debug:**
 
 En `vitest.config.ts`:
+
 ```typescript
 test: {
   testTimeout: 30000, // Aumentar timeout
@@ -354,10 +383,12 @@ test: {
 ### Problema: Memory leak
 
 **Señales:**
+
 - "JavaScript heap out of memory"
 - Tests pasan individualmente pero fallan juntos
 
 **Soluciones:**
+
 1. Reducir complejidad de mocks
 2. Asegurar cleanup completo en `afterEach`
 3. Limitar número de workers
@@ -367,15 +398,15 @@ test: {
 
 ## 📊 MÉTRICAS ACTUALES
 
-| Métrica | Target | Actual | Status |
-|---------|--------|--------|--------|
-| Epic ACs | 6/6 ✅ | 6/6 ✅ | ✅ (falta marcar en GitHub) |
-| Tests E2E | 25+ | 25 ✅ | ✅ |
-| Tests Unitarios | Todos pasando | Timeout ❌ | ❌ |
-| Coverage | ≥90% | ? | ❓ |
-| CI/CD | Passing | Failing | ❌ |
-| CodeRabbit | 0 comments | 0 ✅ | ✅ |
-| GDD Health | ≥87 | 90.2 ✅ | ✅ |
+| Métrica         | Target        | Actual     | Status                      |
+| --------------- | ------------- | ---------- | --------------------------- |
+| Epic ACs        | 6/6 ✅        | 6/6 ✅     | ✅ (falta marcar en GitHub) |
+| Tests E2E       | 25+           | 25 ✅      | ✅                          |
+| Tests Unitarios | Todos pasando | Timeout ❌ | ❌                          |
+| Coverage        | ≥90%          | ?          | ❓                          |
+| CI/CD           | Passing       | Failing    | ❌                          |
+| CodeRabbit      | 0 comments    | 0 ✅       | ✅                          |
+| GDD Health      | ≥87           | 90.2 ✅    | ✅                          |
 
 ---
 
@@ -397,17 +428,20 @@ test: {
 ### Vitest vs Jest
 
 **Situación:**
+
 - Frontend usa Vitest (moderno, rápido)
 - Tests del branch `main` usan Jest (legacy)
 - Tests Jest están excluidos en `vitest.config.ts`
 
 **Tests Excluidos:**
+
 - `src/contexts/__tests__/**`
 - `src/hooks/__tests__/**`
 
 ### Mock de localStorage
 
 **Implementación actual:**
+
 ```typescript
 const localStorageMock = (() => {
   const store: Record<string, string> = {};
@@ -420,7 +454,7 @@ const localStorageMock = (() => {
       delete store[key];
     },
     clear: () => {
-      Object.keys(store).forEach(key => delete store[key]);
+      Object.keys(store).forEach((key) => delete store[key]);
     }
   };
 })();
@@ -432,10 +466,12 @@ global.localStorage = localStorageMock as any;
 ### ESLint Config
 
 **Migrado a Flat Config:**
+
 - `frontend/eslint.config.js` - Nueva config (flat config)
 - `.eslintrc.cjs` - Eliminado (legacy)
 
 **Dependencies:**
+
 - `@eslint/js`
 - `typescript-eslint`
 - `eslint-plugin-react`
@@ -471,6 +507,7 @@ npm test -- --run src/components/layout/__tests__/auth-layout.test.tsx
 ### Paso 2: Arreglar Tests Individuales (30-60 min)
 
 Para cada test que falle:
+
 1. Leer el error específico
 2. Simplificar mocks si es necesario
 3. Asegurar cleanup completo
@@ -517,6 +554,7 @@ Verificar que CI/CD pasa en GitHub.
 **Rama:** `feature/epic-1037-admin-panel-pr`
 
 **Documentos de Referencia:**
+
 - `docs/BLOCKERS-PROGRESS-SUMMARY.md` - Historial de bloqueadores
 - `docs/EPIC-1037-AC-VERIFICATION.md` - Verificación de ACs
 - `docs/E2E-TESTS-SUMMARY.md` - Resumen de tests E2E
@@ -541,5 +579,3 @@ Verificar que CI/CD pasa en GitHub.
 **Última actualización:** 2025-11-27 15:05 UTC  
 **Handoff preparado por:** Claude (instancia anterior)  
 **Para:** Claude (nueva instancia)
-
-

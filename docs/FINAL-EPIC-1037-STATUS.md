@@ -11,16 +11,19 @@
 ### Paso 1: Conectar APIs Reales ⏸️ PARCIAL (2/6 implementadas)
 
 **Backend Implementado (2/6):**
+
 - ✅ Feature flags conectada (`src/routes/admin/featureFlags.js`)
 - ✅ Tonos conectada (`src/routes/admin/tones.js`)
 
 **Backend NO Implementado (4/6):**
+
 - ❌ Página de usuarios (`/api/admin/users` - rutas no existen)
 - ❌ Planes (`/api/admin/plans` - rutas no existen)
 - ❌ Métricas (`/api/admin/dashboard` - rutas no existen)
 - ❌ Plan limits (`/api/admin/plan-limits` - rutas no existen)
 
 **Frontend (Completo):**
+
 - ✅ API Client actualizado con CSRF tokens
 - ✅ Frontend para todas las páginas implementado
 
@@ -47,12 +50,12 @@
 
 ## 📊 Resumen de Completación
 
-| Paso               | Status | Progreso                                      |
-| ------------------ | ------ | --------------------------------------------- |
+| Paso               | Status | Progreso                                            |
+| ------------------ | ------ | --------------------------------------------------- |
 | 1. APIs Conectadas | ⏸️     | 33% (2/6 backend endpoints - Feature Flags + Tones) |
-| 2. Tests           | ⏸️     | 85% (E2E completo ✅, unitarios con timeout ❌) |
-| 3. Validación GDD  | ✅     | 100%                                          |
-| 4. CodeRabbit      | ⏸️     | 0% (pendiente resolver 3 comentarios)        |
+| 2. Tests           | ⏸️     | 85% (E2E completo ✅, unitarios con timeout ❌)     |
+| 3. Validación GDD  | ✅     | 100%                                                |
+| 4. CodeRabbit      | ⏸️     | 0% (pendiente resolver 3 comentarios)               |
 
 **Total:** 85% completado (Frontend 100%, Backend 33%, Tests 85%)
 
@@ -104,4 +107,3 @@
 ---
 
 **Última actualización:** 2025-11-26
-

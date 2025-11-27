@@ -251,4 +251,3 @@ Todos los layouts son responsive:
 **Epic:** #1037  
 **Status:** 🟢 En desarrollo  
 **Última actualización:** 2025-11-26
-

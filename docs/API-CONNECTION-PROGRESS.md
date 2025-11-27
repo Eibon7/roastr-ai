@@ -43,4 +43,3 @@
 - Los endpoints del backend están bien documentados en `src/routes/admin.js`
 - CSRF protection está activo, el token se obtiene de cookies
 - Todas las páginas tienen mocks funcionales que deben reemplazarse
-

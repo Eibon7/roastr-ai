@@ -28,20 +28,16 @@ router.use(requireAdmin);
  */
 router.get('/', async (req, res) => {
   try {
-    const {
-      limit = 50,
-      page = 1,
-      search = '',
-      plan = '',
-      active_only = false
-    } = req.query;
+    const { limit = 50, page = 1, search = '', plan = '', active_only = false } = req.query;
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     // Build query
     let query = supabaseServiceClient
       .from('users')
-      .select('id, email, name, is_admin, plan, active, suspended, created_at, last_login', { count: 'exact' });
+      .select('id, email, name, is_admin, plan, active, suspended, created_at, last_login', {
+        count: 'exact'
+      });
 
     // Apply filters
     if (search) {
@@ -81,7 +77,7 @@ router.get('/', async (req, res) => {
     res.json({
       success: true,
       data: {
-        users: users.map(user => ({
+        users: users.map((user) => ({
           ...user,
           email: SafeUtils.maskEmail(user.email) // Mask emails for privacy
         })),
