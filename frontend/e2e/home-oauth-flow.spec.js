@@ -140,14 +140,14 @@ test.describe('Home Page OAuth Flow', () => {
 
     // Twitter button should be disabled if at limit
     const twitterButton = page.locator('button:has-text("Twitter")').first();
-    if (await twitterButton.isVisible()) {
-      // Check if button shows limit reached (adjust selector based on implementation)
-      const isDisabled = await twitterButton.isDisabled();
-      const buttonText = await twitterButton.textContent();
+    await expect(twitterButton).toBeVisible({ timeout: 5000 });
 
-      // Either button is disabled or shows limit message
-      expect(isDisabled || buttonText.includes('2/1')).toBeTruthy();
-    }
+    // Check if button shows limit reached (adjust selector based on implementation)
+    const isDisabled = await twitterButton.isDisabled();
+    const buttonText = await twitterButton.textContent();
+
+    // Either button is disabled or shows limit message
+    expect(isDisabled || buttonText.includes('2/1')).toBeTruthy();
   });
 
   test('should refresh accounts after successful connection', async ({ page }) => {
@@ -197,15 +197,11 @@ test.describe('Home Page OAuth Flow', () => {
 
     // Click connect button
     const connectButton = page.locator('button:has-text("Twitter")').first();
-    if (await connectButton.isVisible()) {
-      await connectButton.click();
+    await expect(connectButton).toBeVisible({ timeout: 5000 });
+    await connectButton.click();
 
-      // Wait for accounts to refresh
-      await page.waitForTimeout(1000);
-
-      // Verify accounts table updated
-      await expect(page.locator('text=@testuser')).toBeVisible({ timeout: 5000 });
-    }
+    // Wait for the accounts API to be called again and verify table updated
+    await expect(page.locator('text=@testuser')).toBeVisible({ timeout: 5000 });
   });
 
   test('should handle OAuth connection errors gracefully', async ({ page }) => {
@@ -226,14 +222,13 @@ test.describe('Home Page OAuth Flow', () => {
 
     // Click connect button
     const connectButton = page.locator('button:has-text("Twitter")').first();
-    if (await connectButton.isVisible()) {
-      await connectButton.click();
+    await expect(connectButton).toBeVisible({ timeout: 5000 });
+    await connectButton.click();
 
-      // Verify error message is shown (toast or error state)
-      await expect(page.locator('text=Error').or(page.locator('text=Failed')).first()).toBeVisible({
-        timeout: 3000
-      });
-    }
+    // Verify error message is shown (toast or error state)
+    await expect(page.locator('text=Error').or(page.locator('text=Failed')).first()).toBeVisible({
+      timeout: 3000
+    });
   });
 
   test('should navigate to account detail on table row click', async ({ page }) => {
