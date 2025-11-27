@@ -388,7 +388,8 @@ router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
       .single();
 
     // Use subscription's current_period_end for accurate activeUntil date
-    const activeUntilDate = updatedSubscription?.current_period_end || subscription.current_period_end;
+    const activeUntilDate =
+      updatedSubscription?.current_period_end || subscription.current_period_end;
 
     logger.info('Subscription cancellation initiated:', {
       userId,
