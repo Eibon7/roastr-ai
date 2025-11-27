@@ -17,6 +17,8 @@ type ThemeProviderProps = {
   defaultTheme?: string;
   /** Key for localStorage persistence */
   storageKey?: string;
+  /** Disable transitions when theme changes */
+  disableTransitionOnChange?: boolean;
 };
 
 /**
@@ -34,6 +36,7 @@ export function ThemeProvider({
   children,
   defaultTheme = 'system',
   storageKey = 'roastr-theme',
+  disableTransitionOnChange = false,
   ...props
 }: ThemeProviderProps) {
   return (
@@ -42,6 +45,7 @@ export function ThemeProvider({
       defaultTheme={defaultTheme}
       enableSystem
       storageKey={storageKey}
+      disableTransitionOnChange={disableTransitionOnChange}
       {...props}
     >
       {children}
