@@ -8,18 +8,21 @@ import { BrowserRouter } from 'react-router-dom';
 import AccountsTable from '../accounts-table';
 import { apiClient } from '../../../../lib/api';
 
+// Mock useNavigate before importing component
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => {
+  const actual = jest.requireActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate
+  };
+});
+
 // Mock apiClient
 jest.mock('../../../../lib/api', () => ({
   apiClient: {
     get: jest.fn()
   }
-}));
-
-// Mock useNavigate
-const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => mockNavigate
 }));
 
 const renderWithRouter = (component) => {
@@ -37,7 +40,9 @@ describe('AccountsTable', () => {
 
     renderWithRouter(<AccountsTable />);
 
-    expect(screen.getAllByTestId(/skeleton/i).length).toBeGreaterThan(0);
+    // Skeleton doesn't have testid, check by class or role
+    const skeletons = document.querySelectorAll('.animate-pulse');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('should render accounts table with data', async () => {
@@ -117,7 +122,12 @@ describe('AccountsTable', () => {
   });
 
   it('should show empty state when no accounts', async () => {
-    apiClient.get.mockResolvedValue({ data: [] });
+    apiClient.get.mockResolvedValue({ 
+      data: {
+        success: true,
+        data: []
+      }
+    });
 
     renderWithRouter(<AccountsTable />);
 
@@ -159,7 +169,12 @@ describe('AccountsTable', () => {
   });
 
   it('should call correct API endpoint', async () => {
-    apiClient.get.mockResolvedValue({ data: [] });
+    apiClient.get.mockResolvedValue({ 
+      data: {
+        success: true,
+        data: []
+      }
+    });
 
     renderWithRouter(<AccountsTable />);
 
@@ -169,10 +184,15 @@ describe('AccountsTable', () => {
   });
 
   it('should handle different response formats', async () => {
-    // Test with accounts array directly
-    apiClient.get.mockResolvedValue([
-      { id: 'acc_1', platform: 'twitter', handle: '@user1', status: 'active' }
-    ]);
+    // Test with standardized response format
+    apiClient.get.mockResolvedValue({ 
+      data: {
+        success: true,
+        data: [
+          { id: 'acc_1', platform: 'twitter', handle: '@user1', status: 'active' }
+        ]
+      }
+    });
 
     renderWithRouter(<AccountsTable />);
 
@@ -181,3 +201,4 @@ describe('AccountsTable', () => {
     });
   });
 });
+

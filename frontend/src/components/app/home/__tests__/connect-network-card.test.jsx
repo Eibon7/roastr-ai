@@ -27,7 +27,9 @@ jest.mock('sonner', () => ({
 }));
 
 describe('ConnectNetworkCard', () => {
-  const mockAccounts = [{ id: '1', platform: 'twitter', status: 'active' }];
+  const mockAccounts = [
+    { id: '1', platform: 'twitter', status: 'active' }
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -39,7 +41,9 @@ describe('ConnectNetworkCard', () => {
 
     render(<ConnectNetworkCard accounts={mockAccounts} />);
 
-    expect(screen.getAllByTestId(/skeleton/i).length).toBeGreaterThan(0);
+    // Skeleton doesn't have testid, check by class
+    const skeletons = document.querySelectorAll('.animate-pulse');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('should render platform buttons', async () => {
@@ -49,8 +53,9 @@ describe('ConnectNetworkCard', () => {
       expect(screen.getByText('Redes Disponibles')).toBeInTheDocument();
     });
 
-    // Should show at least one platform
-    expect(screen.getByText(/twitter|instagram|youtube/i)).toBeInTheDocument();
+    // Should show at least one platform (use getAllByText since there are multiple matches)
+    const platforms = screen.getAllByText(/twitter|instagram|youtube/i);
+    expect(platforms.length).toBeGreaterThan(0);
   });
 
   it('should display connection count (X/Y) for each platform', async () => {
@@ -78,11 +83,8 @@ describe('ConnectNetworkCard', () => {
   });
 
   it('should call OAuth endpoint on button click', async () => {
-    apiClient.post.mockResolvedValue({
-      success: true,
-      data: { authUrl: 'https://oauth.example.com' }
-    });
-
+    apiClient.post.mockResolvedValue({ success: true, data: { authUrl: 'https://oauth.example.com' } });
+    
     // Mock window.location.href
     delete window.location;
     window.location = { href: '' };
@@ -148,3 +150,4 @@ describe('ConnectNetworkCard', () => {
     });
   });
 });
+
