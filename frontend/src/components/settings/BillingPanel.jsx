@@ -12,24 +12,29 @@ import {
   Crown,
   Shield,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  X,
+  Calendar,
+  Trash2
 } from 'lucide-react';
-import { apiClient } from '../../lib/api';
+import { getBillingInfo, cancelSubscription } from '../../lib/api/billing';
 import { useAuth } from '../../contexts/AuthContext';
 import { normalizePlanId, getPlanDisplayName, getPlanBadgeColor } from '../../utils/planHelpers';
 import { getAllPlanConfigs } from '../../utils/planConfig';
+import { formatDate } from '../../utils/shopFormatters';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 /**
  * BillingPanel - Panel component for billing settings
- *
+ * 
  * Displays:
  * - Current payment method (last 4 digits)
  * - Plan information: name, next billing date
  * - If plan cancelled: "Roastr.AI estará activo hasta [fecha]"
  * - Upgrade plan button → navigation to /app/plans
  * - Cancel subscription button → confirmation and API call
- *
+ * 
  * Issue #1056: Implementar tab de Billing (/app/settings/billing)
  */
 const BillingPanel = () => {
@@ -38,25 +43,67 @@ const BillingPanel = () => {
   const [billingInfo, setBillingInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     loadBillingInfo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadBillingInfo = async () => {
+  const loadBillingInfo = async (isRetry = false) => {
     try {
       setLoading(true);
       setError(false);
-      const billing = await apiClient.get('/billing/info');
-      setBillingInfo(billing.data);
+      const response = await getBillingInfo();
+      setBillingInfo(response.data);
+      if (isRetry) {
+        setRetryCount(0);
+        toast.success('Billing information loaded successfully');
+      }
     } catch (error) {
       console.warn('Could not load billing info:', error);
       setError(true);
       setBillingInfo(null);
-      toast.error('Failed to load billing information');
+      
+      // Enhanced error handling with retry logic
+      if (retryCount < 3) {
+        const newRetryCount = retryCount + 1;
+        setRetryCount(newRetryCount);
+        toast.error(`Failed to load billing information. Retrying... (${newRetryCount}/3)`, {
+          duration: 3000
+        });
+        // Auto-retry with exponential backoff
+        setTimeout(() => {
+          loadBillingInfo(true);
+        }, Math.min(1000 * Math.pow(2, newRetryCount), 5000));
+      } else {
+        toast.error('Failed to load billing information. Please try again later.');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    try {
+      setCancelling(true);
+      const response = await cancelSubscription(false); // Cancel at period end
+      
+      if (response.data) {
+        toast.success(
+          response.data.message || 'Subscription will be canceled at the end of the billing period'
+        );
+        setShowCancelDialog(false);
+        // Reload billing info to reflect cancellation
+        await loadBillingInfo();
+      }
+    } catch (error) {
+      console.error('Error canceling subscription:', error);
+      toast.error(error.response?.data?.error || 'Failed to cancel subscription');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -103,13 +150,27 @@ const BillingPanel = () => {
               <p className="text-gray-600 mb-2">
                 Unable to load billing information. Please try again later.
               </p>
-              <Button variant="outline" onClick={loadBillingInfo} className="mt-4">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Retry
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setRetryCount(0);
+                  loadBillingInfo(true);
+                }} 
+                className="mt-4"
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Retrying...' : 'Retry'}
               </Button>
+              {retryCount > 0 && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Retry attempt {retryCount}/3
+                </p>
+              )}
             </div>
           ) : (
             <>
+              {/* Plan Status */}
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   {getPlanIcon(user?.plan || 'starter_trial')}
@@ -133,8 +194,69 @@ const BillingPanel = () => {
                     </p>
                   </div>
                 </div>
-                <Badge className={getPlanBadgeColor(user?.plan || 'starter_trial')}>Active</Badge>
+                <Badge className={getPlanBadgeColor(user?.plan || 'starter_trial')}>
+                  {billingInfo?.subscriptionStatus === 'canceled' || billingInfo?.cancelAtPeriodEnd
+                    ? 'Cancelling'
+                    : 'Active'}
+                </Badge>
               </div>
+
+              {/* Cancelled Plan Message */}
+              {(billingInfo?.subscriptionStatus === 'canceled' || billingInfo?.cancelAtPeriodEnd) && billingInfo?.activeUntil && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-900">
+                        Roastr.AI estará activo hasta {formatDate(billingInfo.activeUntil)}
+                      </p>
+                      <p className="text-xs text-amber-700 mt-1">
+                        Tu suscripción se cancelará al final del período de facturación actual.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Method */}
+              {billingInfo?.paymentMethod && (
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="w-5 h-5 text-gray-600" />
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-600">Payment Method</h4>
+                        <p className="text-sm font-semibold">
+                          •••• •••• •••• {billingInfo.paymentMethod.last4}
+                        </p>
+                        {billingInfo.paymentMethod.brand && (
+                          <p className="text-xs text-gray-500 capitalize">
+                            {billingInfo.paymentMethod.brand}
+                            {billingInfo.paymentMethod.expMonth && billingInfo.paymentMethod.expYear && (
+                              <> • Expires {billingInfo.paymentMethod.expMonth}/{billingInfo.paymentMethod.expYear}</>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Next Billing Date */}
+              {billingInfo?.nextBillingDate && (
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-5 h-5 text-gray-600" />
+                    <div>
+                      <h4 className="font-medium text-sm text-gray-600">Next Billing Date</h4>
+                      <p className="text-sm font-semibold">
+                        {formatDate(billingInfo.nextBillingDate)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 border rounded-lg">
@@ -163,7 +285,8 @@ const BillingPanel = () => {
                         width: `${
                           billingInfo?.usage?.roastsUsed && billingInfo?.limits?.roastsPerMonth
                             ? Math.min(
-                                (billingInfo.usage.roastsUsed / billingInfo.limits.roastsPerMonth) *
+                                (billingInfo.usage.roastsUsed /
+                                  billingInfo.limits.roastsPerMonth) *
                                   100,
                                 100
                               )
@@ -228,6 +351,18 @@ const BillingPanel = () => {
                     Upgrade Plan
                   </Button>
                 )}
+                {normalizePlanId(user?.plan || 'starter_trial') !== 'starter_trial' &&
+                  billingInfo?.subscriptionStatus !== 'canceled' &&
+                  !billingInfo?.cancelAtPeriodEnd && (
+                    <Button
+                      variant="outline"
+                      className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => setShowCancelDialog(true)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Cancel Subscription
+                    </Button>
+                  )}
               </div>
             </>
           )}
@@ -281,6 +416,27 @@ const BillingPanel = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Cancel Subscription Dialog */}
+      <ConfirmDialog
+        open={showCancelDialog}
+        onCancel={() => setShowCancelDialog(false)}
+        onConfirm={handleCancelSubscription}
+        title="Cancel Subscription"
+        message={
+          <>
+            Are you sure you want to cancel your subscription? Your subscription will remain active until{' '}
+            {billingInfo?.nextBillingDate ? formatDate(billingInfo.nextBillingDate) : 'the end of the billing period'}
+            , and you'll continue to have access to all features until then.
+            <br />
+            <br />
+            <strong>This action cannot be undone.</strong> You can resubscribe at any time.
+          </>
+        }
+        confirmText={cancelling ? 'Cancelling...' : 'Cancel Subscription'}
+        cancelText="Keep Subscription"
+        variant="danger"
+      />
     </div>
   );
 };
@@ -288,3 +444,4 @@ const BillingPanel = () => {
 BillingPanel.displayName = 'BillingPanel';
 
 export default BillingPanel;
+

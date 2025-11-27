@@ -334,6 +334,264 @@ router.post('/create-portal-session', authenticateToken, requireBilling, async (
 });
 
 /**
+ * POST /api/billing/cancel
+ * Cancel subscription (at period end)
+ * Issue #1056: Cancel subscription functionality
+ */
+router.post('/cancel', authenticateToken, requireBilling, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { immediately = false } = req.body;
+
+    // Get subscription
+    const { data: subscription, error } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !subscription) {
+      return res.status(404).json({
+        success: false,
+        error: 'No active subscription found'
+      });
+    }
+
+    if (!subscription.stripe_subscription_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Subscription does not have a Stripe subscription ID'
+      });
+    }
+
+    // Cancel subscription via Stripe
+    if (immediately) {
+      // Cancel immediately
+      await getController().stripeWrapper.subscriptions.cancel(subscription.stripe_subscription_id, {
+        cancel_immediately: true
+      });
+
+      // Update database
+      await supabaseServiceClient
+        .from('user_subscriptions')
+        .update({
+          status: 'canceled',
+          cancel_at_period_end: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+    } else {
+      // Cancel at period end
+      await getController().stripeWrapper.subscriptions.update(subscription.stripe_subscription_id, {
+        cancel_at_period_end: true
+      });
+
+      // Update database
+      await supabaseServiceClient
+        .from('user_subscriptions')
+        .update({
+          cancel_at_period_end: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+    }
+
+    logger.info('Subscription cancellation initiated:', {
+      userId,
+      subscriptionId: subscription.stripe_subscription_id,
+      immediately
+    });
+
+    res.json({
+      success: true,
+      data: {
+        message: immediately
+          ? 'Subscription canceled immediately'
+          : 'Subscription will be canceled at the end of the billing period',
+        activeUntil: subscription.current_period_end
+      }
+    });
+  } catch (error) {
+    logger.error('Error canceling subscription:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to cancel subscription'
+    });
+  }
+});
+
+/**
+ * GET /api/billing/info
+ * Get comprehensive billing information including payment method, usage, and subscription status
+ * Issue #1056: Complete billing information for Settings page
+ */
+router.get('/info', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get subscription from database
+    const { data: subscription, error: subError } = await supabaseServiceClient
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (subError && subError.code !== 'PGRST116') {
+      // PGRST116 = no rows returned, which is OK for new users
+      logger.error('Error fetching subscription:', subError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch subscription'
+      });
+    }
+
+    const sub = subscription || {
+      user_id: userId,
+      plan: PLAN_IDS.STARTER_TRIAL,
+      status: 'active',
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
+      current_period_end: null,
+      cancel_at_period_end: false
+    };
+
+    // Get usage data (from entitlements service or user usage)
+    let usage = { roastsUsed: 0, apiCalls: 0 };
+    let limits = { roastsPerMonth: 5, apiCallsPerMonth: 10 };
+
+    try {
+      // Try to get usage from entitlements service
+      const entitlementsService = getController().entitlementsService;
+      if (entitlementsService && typeof entitlementsService.getUserUsage === 'function') {
+        const userUsage = await entitlementsService.getUserUsage(userId);
+        usage = {
+          roastsUsed: userUsage?.roasts_used || 0,
+          apiCalls: userUsage?.api_calls || 0
+        };
+        limits = {
+          roastsPerMonth: userUsage?.roast_limit || 5,
+          apiCallsPerMonth: userUsage?.api_limit || 10
+        };
+      }
+    } catch (usageError) {
+      logger.warn('Could not fetch usage data:', usageError.message);
+      // Use defaults
+    }
+
+    // Get payment method info from Stripe if customer exists
+    let paymentMethod = null;
+    let nextBillingDate = null;
+    let subscriptionStatus = sub.status || 'active';
+    let activeUntil = null;
+
+    if (sub.stripe_customer_id && flags.isEnabled('ENABLE_BILLING')) {
+      try {
+        // Retrieve customer with expanded default payment method
+        const customer = await getController().stripeWrapper.customers.retrieve(
+          sub.stripe_customer_id,
+          { expand: ['default_source', 'invoice_settings.default_payment_method'] }
+        );
+
+        // Get payment method last 4 digits
+        if (customer.invoice_settings?.default_payment_method) {
+          const pm = customer.invoice_settings.default_payment_method;
+          if (typeof pm === 'object' && pm.card) {
+            paymentMethod = {
+              last4: pm.card.last4,
+              brand: pm.card.brand,
+              expMonth: pm.card.exp_month,
+              expYear: pm.card.exp_year
+            };
+          } else if (typeof pm === 'string') {
+            // If it's just an ID, we'd need another API call, but for now we'll skip
+            // In production, you'd retrieve the payment method separately
+          }
+        } else if (customer.default_source) {
+          // Fallback to default source (legacy)
+          const source = customer.default_source;
+          if (typeof source === 'object' && source.card) {
+            paymentMethod = {
+              last4: source.card.last4,
+              brand: source.card.brand,
+              expMonth: source.card.exp_month,
+              expYear: source.card.exp_year
+            };
+          }
+        }
+
+        // Get subscription details if subscription ID exists
+        if (sub.stripe_subscription_id) {
+          const stripeSub = await getController().stripeWrapper.subscriptions.retrieve(
+            sub.stripe_subscription_id,
+            { expand: ['default_payment_method'] }
+          );
+
+          subscriptionStatus = stripeSub.status;
+          nextBillingDate = stripeSub.current_period_end
+            ? new Date(stripeSub.current_period_end * 1000).toISOString()
+            : sub.current_period_end;
+
+          if (stripeSub.cancel_at_period_end || subscriptionStatus === 'canceled') {
+            activeUntil = stripeSub.current_period_end
+              ? new Date(stripeSub.current_period_end * 1000).toISOString()
+              : sub.current_period_end;
+          }
+
+          // Get payment method from subscription if not found in customer
+          if (!paymentMethod && stripeSub.default_payment_method) {
+            const pm = stripeSub.default_payment_method;
+            if (typeof pm === 'object' && pm.card) {
+              paymentMethod = {
+                last4: pm.card.last4,
+                brand: pm.card.brand,
+                expMonth: pm.card.exp_month,
+                expYear: pm.card.exp_year
+              };
+            }
+          }
+        } else if (sub.current_period_end) {
+          nextBillingDate = sub.current_period_end;
+        }
+      } catch (stripeError) {
+        logger.warn('Could not fetch Stripe payment method info:', {
+          error: stripeError.message,
+          customerId: sub.stripe_customer_id
+        });
+        // Continue without payment method info
+      }
+    } else if (sub.current_period_end) {
+      nextBillingDate = sub.current_period_end;
+    }
+
+    // Determine if subscription is cancelled
+    const isCancelled = subscriptionStatus === 'canceled' || sub.cancel_at_period_end;
+    if (isCancelled && sub.current_period_end) {
+      activeUntil = sub.current_period_end;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        usage,
+        limits,
+        paymentMethod,
+        nextBillingDate,
+        subscriptionStatus,
+        activeUntil,
+        plan: sub.plan,
+        cancelAtPeriodEnd: sub.cancel_at_period_end || false
+      }
+    });
+  } catch (error) {
+    logger.error('Error fetching billing info:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch billing information'
+    });
+  }
+});
+
+/**
  * GET /api/billing/subscription
  * Get current user's subscription details
  */

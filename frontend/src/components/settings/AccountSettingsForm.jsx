@@ -5,21 +5,29 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { SettingsSection } from '../roastr/SettingsSection';
-import { Download, Eye, EyeOff, Loader2, AlertTriangle, Shield } from 'lucide-react';
+import {
+  Download,
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertTriangle,
+  Shield
+} from 'lucide-react';
 import { apiClient } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
+import PasswordStrengthIndicator from '../PasswordStrengthIndicator';
 
 /**
  * AccountSettingsForm - Form component for account settings
- *
+ * 
  * Displays:
  * - Email address (read-only)
  * - Password change form
  * - GDPR data export
  * - GDPR transparency information
  * - Account deletion
- *
+ * 
  * Issue #1054: Implementar tab de Cuenta (/app/settings/account)
  */
 const AccountSettingsForm = () => {
@@ -227,7 +235,9 @@ const AccountSettingsForm = () => {
                 variant="ghost"
                 size="sm"
                 className="absolute right-2 top-1/2 -translate-y-1/2"
-                onClick={() => setShowPasswords((prev) => ({ ...prev, current: !prev.current }))}
+                onClick={() =>
+                  setShowPasswords((prev) => ({ ...prev, current: !prev.current }))
+                }
                 aria-label={
                   showPasswords.current ? 'Hide current password' : 'Show current password'
                 }
@@ -251,7 +261,9 @@ const AccountSettingsForm = () => {
                 onChange={(e) => setPasswords((prev) => ({ ...prev, new: e.target.value }))}
                 placeholder="Enter new password"
                 aria-describedby={
-                  validatePassword(passwords.new).length > 0 ? 'password-requirements' : undefined
+                  validatePassword(passwords.new).length > 0
+                    ? 'password-requirements'
+                    : undefined
                 }
               />
               <Button
@@ -262,50 +274,17 @@ const AccountSettingsForm = () => {
                 onClick={() => setShowPasswords((prev) => ({ ...prev, new: !prev.new }))}
                 aria-label={showPasswords.new ? 'Hide new password' : 'Show new password'}
               >
-                {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPasswords.new ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </Button>
             </div>
-            {/* Password Strength Indicator */}
+            {/* Password Strength Indicator - Visual Meter */}
             {passwords.new && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Password strength:</span>
-                  <span
-                    className={`text-sm font-medium ${
-                      getPasswordStrength(passwords.new).strength === 'weak'
-                        ? 'text-red-600'
-                        : getPasswordStrength(passwords.new).strength === 'medium'
-                          ? 'text-yellow-600'
-                          : 'text-green-600'
-                    }`}
-                  >
-                    {getPasswordStrength(passwords.new).text}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrength(passwords.new).color}`}
-                    style={{
-                      width: `${
-                        getPasswordStrength(passwords.new).strength === 'weak'
-                          ? '33'
-                          : getPasswordStrength(passwords.new).strength === 'medium'
-                            ? '66'
-                            : '100'
-                      }%`
-                    }}
-                  />
-                </div>
-                {validatePassword(passwords.new).length > 0 && (
-                  <ul id="password-requirements" className="text-sm text-gray-600">
-                    {validatePassword(passwords.new).map((error, i) => (
-                      <li key={i} className="flex items-center gap-1">
-                        <span className="text-red-500">•</span>
-                        {error}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+              <div className="mt-2">
+                <PasswordStrengthIndicator password={passwords.new} showCriteria={true} />
               </div>
             )}
           </div>
@@ -325,7 +304,9 @@ const AccountSettingsForm = () => {
                 variant="ghost"
                 size="sm"
                 className="absolute right-2 top-1/2 -translate-y-1/2"
-                onClick={() => setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))}
+                onClick={() =>
+                  setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))
+                }
                 aria-label={
                   showPasswords.confirm
                     ? 'Hide confirmation password'
@@ -394,8 +375,9 @@ const AccountSettingsForm = () => {
           </div>
           <div className="text-xs text-muted-foreground">
             <p>
-              De acuerdo con el RGPD y las normativas de transparencia digital, todos los contenidos
-              generados automáticamente por IA incluyen marcadores identificativos apropiados.
+              De acuerdo con el RGPD y las normativas de transparencia digital, todos los
+              contenidos generados automáticamente por IA incluyen marcadores identificativos
+              apropiados.
             </p>
           </div>
         </div>
@@ -462,3 +444,4 @@ const AccountSettingsForm = () => {
 AccountSettingsForm.displayName = 'AccountSettingsForm';
 
 export default AccountSettingsForm;
+
