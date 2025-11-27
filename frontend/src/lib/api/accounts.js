@@ -42,7 +42,9 @@ export const getAccountById = async (accountId) => {
  */
 export const getAccountRoasts = async (accountId, params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const response = await apiClient.get(`/user/accounts/${accountId}/roasts${query ? `?${query}` : ''}`);
+  const response = await apiClient.get(
+    `/user/accounts/${accountId}/roasts${query ? `?${query}` : ''}`
+  );
   return response.data || response;
 };
 

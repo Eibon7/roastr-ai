@@ -25,9 +25,7 @@ jest.mock('../../lib/api/shield');
 jest.mock('../../components/ShieldInterceptedList', () => {
   return function MockShieldInterceptedList({ interceptedItems }) {
     return (
-      <div data-testid="shield-intercepted-list">
-        {interceptedItems.length} intercepted items
-      </div>
+      <div data-testid="shield-intercepted-list">{interceptedItems.length} intercepted items</div>
     );
   };
 });
@@ -193,4 +191,3 @@ describe('AccountDetailPage', () => {
     });
   });
 });
-
