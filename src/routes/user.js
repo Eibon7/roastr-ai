@@ -3720,23 +3720,18 @@ router.post('/accounts/connect/:platform', authenticateToken, async (req, res) =
       });
     }
 
-    // Validate platform name
-    const validPlatforms = [
-      'twitter',
-      'youtube',
-      'instagram',
-      'facebook',
-      'discord',
-      'twitch',
-      'reddit',
-      'tiktok',
-      'bluesky'
-    ];
-    if (!validPlatforms.includes(platform.toLowerCase())) {
+    // Validate platform name (Issue #1081: Use centralized validation)
+    if (!isValidPlatform(platform)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid platform'
       });
+    }
+
+    // Check connection limits PER PLATFORM (Issue #1081: Apply same validation as /integrations/connect)
+    const limitCheck = await ensurePlatformConnectionAllowed(req, userId, platform);
+    if (!limitCheck.allowed) {
+      return res.status(403).json(limitCheck.error);
     }
 
     const result = await integrationsService.connectIntegration(userId, platform.toLowerCase());
