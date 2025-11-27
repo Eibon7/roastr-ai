@@ -41,14 +41,25 @@ BRANCH="feature/issue-${ISSUE_NUM}-${SCOPE}"
 WORKTREE_BASE_PATH="${WORKTREE_BASE_PATH:-../roastr-ai-worktrees}"
 WORKTREE_PATH="${WORKTREE_BASE_PATH}/issue-${ISSUE_NUM}"
 
-# Verificar si el worktree ya existe
+# Verificar si el worktree ya existe (directory check + git worktree list)
 if [ -d "$WORKTREE_PATH" ]; then
-  echo "⚠️  Worktree already exists: $WORKTREE_PATH"
-  echo ""
-  echo "Options:"
-  echo "  1. Remove it: git worktree remove $WORKTREE_PATH"
-  echo "  2. Use different scope: $0 $ISSUE_NUM <different-scope>"
-  exit 1
+  # Check if git knows about this worktree
+  if git worktree list | grep -q "$WORKTREE_PATH"; then
+    echo "⚠️  Worktree already exists and is registered with git: $WORKTREE_PATH"
+    echo ""
+    echo "Options:"
+    echo "  1. Remove it: git worktree remove $WORKTREE_PATH"
+    echo "  2. Use different scope: $0 $ISSUE_NUM <different-scope>"
+    exit 1
+  else
+    echo "⚠️  Directory exists but is not a git worktree: $WORKTREE_PATH"
+    echo ""
+    echo "Options:"
+    echo "  1. Remove directory: rm -rf $WORKTREE_PATH"
+    echo "  2. Prune orphaned worktrees: git worktree prune"
+    echo "  3. Use different scope: $0 $ISSUE_NUM <different-scope>"
+    exit 1
+  fi
 fi
 
 # Crear directorio base si no existe

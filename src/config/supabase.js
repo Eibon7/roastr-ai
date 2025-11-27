@@ -217,70 +217,56 @@ const getUserFromToken = async (token) => {
     process.env.ENABLE_MOCK_MODE === 'true'
   ) {
     if (token && token !== '') {
-      // Try to decode JWT to extract user data from payload (Issue #1022)
-      let userId = null;
-      let organizationId = null;
-      let email = null;
-      let isValidJWT = false;
-      try {
-        const jwt = require('jsonwebtoken');
-        const secret = process.env.JWT_SECRET || 'test-secret-key';
-        const decoded = jwt.verify(token, secret);
-        userId = decoded.id;
-        organizationId = decoded.organizationId;
-        email = decoded.email;
-        isValidJWT = true;
-      } catch (err) {
-        // JWT verification failed - will check if it's a known mock token below
-      }
-
-      // Different tokens return different mock users for testing
+      // Define mock users for testing (simplified - no fallbacks needed)
       const mockUsers = {
         'mock-jwt-token': {
-          id: userId || 'mock-user-123',
-          email: email || 'test@example.com',
-          organizationId: organizationId || 'mock-org-123',
+          id: 'mock-user-123',
+          email: 'test@example.com',
+          organizationId: 'mock-org-123',
           user_metadata: { full_name: 'Test User' },
           app_metadata: { role: 'user' },
           created_at: new Date().toISOString()
         },
         'mock-creator-jwt-token': {
-          id: userId || 'mock-creator-user-456',
-          email: email || 'creator@example.com',
-          organizationId: organizationId || 'mock-org-456',
+          id: 'mock-creator-user-456',
+          email: 'creator@example.com',
+          organizationId: 'mock-org-456',
           user_metadata: { full_name: 'Creator User' },
           app_metadata: { role: 'user' },
           created_at: new Date().toISOString()
         },
         'mock-admin-token': {
-          id: userId || 'mock-admin-789',
-          email: email || 'admin@example.com',
-          organizationId: organizationId || 'mock-org-789',
+          id: 'mock-admin-789',
+          email: 'admin@example.com',
+          organizationId: 'mock-org-789',
           user_metadata: { full_name: 'Admin User' },
           app_metadata: { role: 'admin' },
           created_at: new Date().toISOString()
         }
       };
 
-      // Return specific user if known token
+      // Check if it's a known mock token first
       if (mockUsers[token]) {
         return mockUsers[token];
       }
 
-      // If JWT was valid, return user with decoded data
-      if (isValidJWT && userId && organizationId) {
+      // Try to decode JWT for integration tests with real tokens
+      try {
+        const jwt = require('jsonwebtoken');
+        const secret = process.env.JWT_SECRET || 'test-secret-key';
+        const decoded = jwt.verify(token, secret);
         return {
-          id: userId,
-          email: email || 'test@example.com',
-          organizationId: organizationId,
-          user_metadata: { full_name: 'Test User' },
-          app_metadata: { role: 'user' },
-          created_at: new Date().toISOString()
+          id: decoded.id,
+          email: decoded.email,
+          organizationId: decoded.organizationId,
+          user_metadata: decoded.user_metadata || {},
+          app_metadata: decoded.app_metadata || {},
+          created_at: decoded.created_at || new Date().toISOString()
         };
+      } catch (err) {
+        // JWT verification failed - token is neither mock nor valid JWT
+        return null;
       }
-
-      // Invalid token (JWT verification failed and not a known mock token)
-      return null;
     }
     return null;
   }
