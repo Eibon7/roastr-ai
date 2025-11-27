@@ -81,7 +81,7 @@ const dbHost = SUPABASE_URL.replace('https://', '').replace('.supabase.co', '');
 console.log(`   psql -h db.${dbHost}.supabase.co -U postgres -d postgres \\`);
 console.log(`     -f ${migrationPath}\n`);
 
-console.log('Option 3: Execute using this script\'s output');
+console.log("Option 3: Execute using this script's output");
 console.log('   1. Copy the SQL between the ========== lines above');
 console.log('   2. Connect to your database');
 console.log('   3. Execute the SQL\n');

@@ -113,7 +113,7 @@ describe('Admin Tones API Integration Tests', () => {
       expect(Array.isArray(response.body.data)).toBe(true);
 
       // Should include our test tones
-      const toneNames = response.body.data.map(t => t.name);
+      const toneNames = response.body.data.map((t) => t.name);
       expect(toneNames).toContain('test-flanders');
       expect(toneNames).toContain('test-balanceado');
     });
@@ -149,7 +149,9 @@ describe('Admin Tones API Integration Tests', () => {
         .expect(404);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Tone with ID 00000000-0000-0000-0000-000000000000 not found');
+      expect(response.body.error).toBe(
+        'Tone with ID 00000000-0000-0000-0000-000000000000 not found'
+      );
     });
   });
 
@@ -293,10 +295,7 @@ describe('Admin Tones API Integration Tests', () => {
 
     it('should not allow deleting the last active tone', async () => {
       // Delete ALL tones except testTone1
-      await supabaseServiceClient
-        .from('roast_tones')
-        .delete()
-        .neq('id', testTone1.id);
+      await supabaseServiceClient.from('roast_tones').delete().neq('id', testTone1.id);
 
       const response = await request(app)
         .delete(`/api/admin/tones/${testTone1.id}`)

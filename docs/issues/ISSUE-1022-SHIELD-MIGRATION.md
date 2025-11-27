@@ -11,16 +11,19 @@
 Shield toggle endpoint is failing because the Supabase `organizations` table is missing columns:
 
 **Missing Columns in `organizations` table:**
+
 - `shield_enabled` (BOOLEAN DEFAULT FALSE NOT NULL)
 - `shield_disabled_at` (TIMESTAMPTZ)
 - `shield_disabled_reason` (TEXT)
 
 **Error:**
+
 ```
 Could not find the 'shield_disabled_at' column of 'organizations' in the schema cache
 ```
 
 **Failing Tests:**
+
 - POST /api/shield/toggle (all shield tests - 7 tests)
 
 ---
@@ -83,6 +86,7 @@ ORDER BY column_name;
 ```
 
 **Expected result:** 3 rows
+
 - `shield_disabled_at` | `timestamp with time zone` | YES | NULL
 - `shield_disabled_reason` | `text` | YES | NULL
 - `shield_enabled` | `boolean` | NO | `false`
