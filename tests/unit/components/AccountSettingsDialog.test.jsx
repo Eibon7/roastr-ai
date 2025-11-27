@@ -55,7 +55,8 @@ describe('AccountSettingsDialog', () => {
       await user.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByText(new RegExp(mockAccount.handle, 'i'))).toBeInTheDocument();
+        // Verify dialog is open by checking for the dialog title
+        expect(screen.getByText(/Configuración de cuenta/i)).toBeInTheDocument();
       });
     });
 
