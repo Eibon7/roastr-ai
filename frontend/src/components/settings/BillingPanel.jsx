@@ -41,6 +41,7 @@ const BillingPanel = () => {
 
   useEffect(() => {
     loadBillingInfo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadBillingInfo = async () => {
@@ -96,12 +97,7 @@ const BillingPanel = () => {
           <CardDescription>Your subscription and usage overview</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {loading ? (
-            <div className="text-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-              <p className="text-gray-600">Loading billing information...</p>
-            </div>
-          ) : error || !billingInfo ? (
+          {error || !billingInfo ? (
             <div className="text-center py-8">
               <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">
