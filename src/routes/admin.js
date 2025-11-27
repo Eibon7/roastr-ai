@@ -17,6 +17,10 @@ const revenueRoutes = require('./revenue');
 const featureFlagsRoutes = require('./admin/featureFlags');
 const backofficeSettingsRoutes = require('./admin/backofficeSettings');
 const tonesRoutes = require('./admin/tones'); // Issue #876: Dynamic Roast Tone Configuration
+const usersRoutes = require('./admin/users'); // Epic #1037: User Management
+const plansRoutes = require('./admin/plans'); // Epic #1037: Plans Management
+const planLimitsRoutes = require('./admin/planLimits'); // Epic #1037: Plan Limits Management
+const dashboardRoutes = require('./admin/dashboard'); // Epic #1037: Dashboard Metrics
 const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
@@ -55,6 +59,18 @@ router.use('/backoffice', backofficeSettingsRoutes);
 
 // Roast tones management routes (admin only) - Issue #876: Dynamic Tone Configuration
 router.use('/tones', tonesRoutes);
+
+// User management routes (admin only) - Epic #1037: Admin Panel
+router.use('/users', usersRoutes);
+
+// Plans management routes (admin only) - Epic #1037: Admin Panel
+router.use('/plans', plansRoutes);
+
+// Plan limits management routes (admin only) - Epic #1037: Admin Panel
+router.use('/plan-limits', planLimitsRoutes);
+
+// Dashboard metrics routes (admin only) - Epic #1037: Admin Panel
+router.use('/dashboard', dashboardRoutes);
 
 /**
  * POST /api/admin/csrf-test
