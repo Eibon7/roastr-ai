@@ -444,12 +444,10 @@ class MetricsService {
 
       // 4. Análisis medios/usuario y Roasts medios/usuario
       if (metrics.active_users > 0) {
-        metrics.avg_analysis_per_user = Math.round(
-          (metrics.total_analysis / metrics.active_users) * 100
-        ) / 100;
-        metrics.avg_roasts_per_user = Math.round(
-          (metrics.total_roasts / metrics.active_users) * 100
-        ) / 100;
+        metrics.avg_analysis_per_user =
+          Math.round((metrics.total_analysis / metrics.active_users) * 100) / 100;
+        metrics.avg_roasts_per_user =
+          Math.round((metrics.total_roasts / metrics.active_users) * 100) / 100;
       } else {
         metrics.avg_analysis_per_user = 0;
         metrics.avg_roasts_per_user = 0;
@@ -474,7 +472,8 @@ class MetricsService {
 
         metrics.users_by_plan = {};
         Object.keys(planCounts).forEach((plan) => {
-          metrics.users_by_plan[plan] = Math.round((planCounts[plan] / totalActive) * 100 * 100) / 100;
+          metrics.users_by_plan[plan] =
+            Math.round((planCounts[plan] / totalActive) * 100 * 100) / 100;
         });
       }
 
@@ -511,9 +510,7 @@ class MetricsService {
         }
 
         // Contar usuarios únicos con sponsors activos
-        const uniqueUsersWithSponsors = new Set(
-          sponsorsData?.map((s) => s.user_id) || []
-        ).size;
+        const uniqueUsersWithSponsors = new Set(sponsorsData?.map((s) => s.user_id) || []).size;
         const sponsorsPercentage =
           metrics.active_users > 0
             ? Math.round((uniqueUsersWithSponsors / metrics.active_users) * 100 * 100) / 100
@@ -582,13 +579,9 @@ class MetricsService {
 
         metrics.costs = {
           avg_cost_per_analysis:
-            analysisCount > 0
-              ? Math.round((totalAnalysisCosts / analysisCount) * 100) / 100
-              : 0,
+            analysisCount > 0 ? Math.round((totalAnalysisCosts / analysisCount) * 100) / 100 : 0,
           avg_tokens_per_analysis:
-            analysisCount > 0
-              ? Math.round((totalAnalysisTokens / analysisCount) * 100) / 100
-              : 0,
+            analysisCount > 0 ? Math.round((totalAnalysisTokens / analysisCount) * 100) / 100 : 0,
           avg_cost_per_roast:
             roastCount > 0 ? Math.round((totalRoastCosts / roastCount) * 100) / 100 : 0,
           avg_tokens_per_roast:

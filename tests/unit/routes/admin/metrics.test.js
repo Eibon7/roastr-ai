@@ -70,17 +70,9 @@ describe('Admin Metrics API', () => {
   describe('GET /admin/metrics', () => {
     it('should return aggregated metrics successfully', async () => {
       // Setup mock data
-      mockSupabase._setTableData('analysis_usage', [
-        { count: 10 },
-        { count: 20 },
-        { count: 15 }
-      ]);
+      mockSupabase._setTableData('analysis_usage', [{ count: 10 }, { count: 20 }, { count: 15 }]);
 
-      mockSupabase._setTableData('roast_usage', [
-        { count: 5 },
-        { count: 8 },
-        { count: 12 }
-      ]);
+      mockSupabase._setTableData('roast_usage', [{ count: 5 }, { count: 8 }, { count: 12 }]);
 
       mockSupabase._setTableData('users', [
         { id: '1', plan: 'free', active: true },
@@ -134,10 +126,7 @@ describe('Admin Metrics API', () => {
     });
 
     it('should calculate averages correctly', async () => {
-      mockSupabase._setTableData('analysis_usage', [
-        { count: 100 },
-        { count: 200 }
-      ]);
+      mockSupabase._setTableData('analysis_usage', [{ count: 100 }, { count: 200 }]);
 
       mockSupabase._setTableData('roast_usage', [{ count: 50 }, { count: 100 }]);
 
@@ -190,9 +179,7 @@ describe('Admin Metrics API', () => {
         { id: '4', plan: 'free', active: true, lo_que_me_define_encrypted: null }
       ]);
 
-      mockSupabase._setTableData('sponsors', [
-        { user_id: '3', active: true }
-      ]);
+      mockSupabase._setTableData('sponsors', [{ user_id: '3', active: true }]);
 
       const response = await request(app).get('/admin/metrics').expect(200);
 
@@ -247,4 +234,3 @@ describe('Admin Metrics API', () => {
     });
   });
 });
-
