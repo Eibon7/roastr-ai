@@ -114,7 +114,10 @@ export function formatPercentage(
  */
 export function formatDecimal(value: number | null | undefined, decimals: number = 2): string {
   if (value === null || value === undefined || isNaN(value)) {
-    return '0.' + '0'.repeat(decimals);
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(0);
   }
 
   return new Intl.NumberFormat('en-US', {

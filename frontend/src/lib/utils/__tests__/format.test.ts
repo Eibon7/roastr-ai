@@ -115,6 +115,7 @@ describe('format utilities', () => {
       expect(formatDecimal(null)).toBe('0.00');
       expect(formatDecimal(undefined)).toBe('0.00');
       expect(formatDecimal(null, 3)).toBe('0.000');
+      expect(formatDecimal(null, 0)).toBe('0'); // Should not return "0."
     });
 
     it('should handle NaN', () => {
