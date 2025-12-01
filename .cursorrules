@@ -126,6 +126,183 @@ npm run coderabbit:review
 
 ---
 
+## 🔐 SINGLE SOURCES OF TRUTH ENFORCEMENT (SSOT)
+
+**⚠️ CRÍTICO: Regla obligatoria para cualquier desarrollo en v2.**
+
+### === NOTA TEMPORAL PARA TRANSICIÓN SSOT → V2 ===
+
+Si la fuente de verdad referenciada por esta regla aún no existe en backend-v2, **debes CREARLA como parte de la tarea**.
+
+**Fuentes de verdad de v2:**
+- `docs/architecture/sources-of-truth.md`
+- `apps/backend-v2/src/config/admin-controlled.yaml`
+- `apps/backend-v2/src/lib/loadSettings.ts`
+- Tabla Supabase: `admin_settings` (dinámica)
+
+**🚫 No utilices ni referencies settings legacy de v1:**
+- `organization_settings`
+- `global_shield_settings`
+- `shieldSettingsService.js`
+
+Todas las configuraciones nuevas deben residir **SOLO en el sistema SSOT de v2**.
+
+### 1. Obligación de consultar SSOT antes de cualquier implementación
+
+Cuando generes, modifiques o revises código en v2, debes:
+
+- **Revisar SIEMPRE** el archivo de especificación de SSOT:
+  - `docs/architecture/sources-of-truth.md` (si existe)
+  - O la documentación equivalente en `docs/spec-v2.md`
+
+- **Revisar** las fuentes de verdad existentes:
+  - `admin_settings` (tabla Supabase) - Para settings dinámicos
+  - `apps/backend-v2/src/config/admin-controlled.yaml` (si existe) - Para config estática
+
+Si el valor ya está definido en SSOT:
+- Usa **únicamente** esa fuente
+- NO redefinas, NO dupliques, NO copies valores en el código
+
+### 2. Prohibición absoluta de valores hardcoded que existan en SSOT
+
+**Ejemplos prohibidos:**
+- Límite de análisis: `1000` → ❌
+- Tonos permitidos: `["flanders","balanceado","canalla"]` → ❌
+- Thresholds de shield: `0.9 / 0.98 / 1.0` → ❌
+- Cadencias: `"5m", "10m"` → ❌
+- Límites por plan → ❌
+- Tiers → ❌
+
+**Si se detecta en legacy (v1), NO se replica en v2.**
+
+Si debes usar un valor, **CARGA SIEMPRE** desde SSOT.
+
+### 3. Si introduces un comportamiento, valor o parámetro nuevo:
+
+Debes crear o extender su fuente de verdad:
+
+1. **Para valores dinámicos (cambian en runtime):**
+   - Añadirlo a `admin_settings` (Supabase)
+   - O a tabla equivalente si es por organización
+
+2. **Para valores estáticos (configuración):**
+   - Añadirlo a `apps/backend-v2/src/config/admin-controlled.yaml`
+   - O crear módulo SSOT en `docs/architecture/sources-of-truth.md`
+
+3. **Documentar el campo:**
+   - Nombre, tipo, descripción, rango válido
+   - Actualizar `docs/spec-v2.md` o documentación SSOT
+
+**Nunca introducir valores nuevos directamente en código.**
+
+### 4. Si falta una SSOT para un valor nuevo:
+
+Debes:
+
+1. **Crear la fuente** (BD o YAML)
+2. **Actualizar documentación SSOT** (`docs/architecture/sources-of-truth.md` o `docs/spec-v2.md`)
+3. **Documentar el campo** (nombre, tipo, descripción, rango)
+4. **Consumir ese valor** desde la nueva SSOT
+5. **Añadir tests** que aseguren que se carga desde SSOT
+
+### 5. SSOT tiene prioridad sobre cualquier valor en código
+
+Si hay conflicto entre:
+- Valor definido en código
+- Valor definido en SSOT
+
+→ **SSOT gana SIEMPRE**
+→ Código debe adaptarse al valor definido en SSOT
+
+### 6. No generar nuevas constantes de configuración en código
+
+Todos los parámetros configurables deben residir:
+- En `admin_settings` (BD) - Para valores dinámicos
+- O en `/config/admin-controlled.yaml` - Para valores estáticos
+
+**Ejemplo:**
+
+❌ `const DEFAULT_SHIELD = 0.95`
+✔ `const shield = await loadSettings('shield.default_aggressiveness')`
+
+### 7. Código que necesite parámetros debe cargarlos vía:
+
+- **Config loader centralizado:**
+  - `apps/backend-v2/src/lib/loadSettings.ts` (si existe)
+  - O servicio equivalente que consulte SSOT
+
+- **Patrón recomendado:**
+  ```typescript
+  // ✅ CORRECTO
+  const settings = await settingsService.load('shield');
+  const threshold = settings.default_aggressiveness;
+  
+  // ❌ INCORRECTO
+  const threshold = 0.95;
+  ```
+
+### 8. SSOT también se aplica al frontend
+
+Para cualquier desarrollos de UI que dependan de:
+- límites
+- flags
+- thresholds
+- planes
+- estados
+- parámetros dinámicos
+
+El frontend debe:
+- **Consultar store global** (settings API endpoint)
+- **NO replicar valores** en componentes
+- **Usar hooks** como `useSettings()` para cargar desde API
+
+### 9. Cuando SSOT cambie, Cursor debe:
+
+- Respetar que v2 carga settings desde el backend
+- NO replicar lógica en frontend
+- NO usar valores fuera del store
+- Actualizar tests si cambian los valores por defecto
+
+### 10. Comentarios en PR:
+
+Si Cursor genera un valor hardcoded que pertenece a SSOT:
+
+- Debe emitir comentario de corrección automática:
+  > "⚠️ This value must be loaded from the SSOT (admin settings). Hardcoded values are prohibited."
+- Y corregirlo cargando desde settings
+
+### 11. Excepciones documentadas (si aplica):
+
+Solo valores que NO cambian nunca (constantes matemáticas, versiones de API, etc.) pueden estar hardcoded, pero deben estar:
+- Documentados en SSOT como "static constants"
+- Justificados en comentarios
+- Revisados en PR
+
+**Ejemplo de excepción válida:**
+```typescript
+// ✅ EXCEPCIÓN VÁLIDA: Constante matemática que nunca cambia
+const MAX_SAFE_INTEGER = 9007199254740991; // Documentado en SSOT como static constant
+```
+
+### 12. Relación con GDD:
+
+Si un nodo GDD menciona valores configurables:
+- Debe referenciar la SSOT correspondiente
+- NO debe duplicar los valores en el nodo
+- El nodo debe documentar: "Valores cargados desde admin_settings"
+
+**Ejemplo en nodo GDD:**
+```markdown
+## Shield Thresholds
+
+**Source of Truth:** `admin_settings.shield_thresholds` (Supabase)
+
+Los thresholds se cargan dinámicamente desde la base de datos.
+NO hardcodear valores en código.
+```
+
+---
+
 ## Skills (Auto-Activadas)
 
 ### Test Generation Skill
