@@ -25,18 +25,22 @@
 ## ✅ Validaciones Completadas
 
 ### Tests
+
 - ✅ **14/14 tests pasando** (100%)
 - ✅ Tests cubren: carga YAML, carga BD, merge, cache, public settings
 
 ### Compilación
+
 - ✅ **TypeScript compila sin errores**
 - ✅ Sin warnings de linter
 
 ### GDD
+
 - ✅ **Health Score: 88.5/100** (>=87 requerido) ✅
 - ✅ Validación GDD pasando (warnings de coverage esperados, no críticos)
 
 ### Cobertura
+
 - ⚠️ Coverage pendiente de ejecutar (requiere @vitest/coverage-v8)
 - ✅ Tests unitarios completos y pasando
 
@@ -47,13 +51,16 @@
 ### 1. Sistema SSOT Completo
 
 **Carga desde dos fuentes:**
+
 - ✅ YAML estático (`admin-controlled.yaml`)
 - ✅ Base de datos dinámica (`admin_settings`)
 
 **Prioridad:**
+
 - ✅ admin_settings (runtime) > YAML (build-time)
 
 **Características:**
+
 - ✅ Cache con TTL de 1 minuto
 - ✅ Deep merge de configuraciones
 - ✅ Manejo de errores con degradación elegante
@@ -64,12 +71,14 @@
 **Ruta:** `GET /api/v2/settings/public`
 
 **Retorna:**
+
 - ✅ Límites de planes
 - ✅ Configuración de plataformas
 - ✅ Tonos soportados
 - ✅ Opciones de frecuencia
 
 **Filtra:**
+
 - ✅ Valores internos
 - ✅ Configuración de seguridad
 - ✅ Thresholds sensibles
@@ -79,6 +88,7 @@
 **Tabla:** `admin_settings`
 
 **Estructura:**
+
 - ✅ `key` (TEXT PRIMARY KEY) - Ruta con puntos (ej: `shield.default_aggressiveness`)
 - ✅ `value` (JSONB) - Valor del setting
 - ✅ `updated_at` (TIMESTAMPTZ) - Auto-actualizado
@@ -98,6 +108,7 @@
 ## 🚀 Próximos Pasos
 
 1. **Ejecutar migración:**
+
    ```sql
    -- Aplicar migración en Supabase
    \i database/migrations/031_create_admin_settings.sql
@@ -140,4 +151,3 @@
 
 **Implementado por:** Auto (Cursor)  
 **Fecha de completación:** 2025-01-27
-

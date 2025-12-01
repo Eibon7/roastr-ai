@@ -1,12 +1,12 @@
 /**
  * SSOT Settings Loader
- * 
+ *
  * Centralized module for loading configuration from Single Sources of Truth.
- * 
+ *
  * Priority:
  * 1. admin_settings (Supabase) - Runtime, dinámico
  * 2. admin-controlled.yaml - Build-time, estático
- * 
+ *
  * @module loadSettings
  */
 
@@ -42,7 +42,7 @@ function getSupabaseClient(): SupabaseClient {
   if (!supabaseUrl || !supabaseKey) {
     throw new Error(
       'SUPABASE_URL and SUPABASE_SERVICE_KEY are required for loadSettings. ' +
-      'This module requires admin privileges to read admin_settings.'
+        'This module requires admin privileges to read admin_settings.'
     );
   }
 
@@ -72,7 +72,7 @@ function loadYamlConfig(): Record<string, any> {
     // Fallback for test environments
     configPath = path.join(process.cwd(), 'src/config/admin-controlled.yaml');
   }
-  
+
   if (!fs.existsSync(configPath)) {
     console.warn(`Warning: admin-controlled.yaml not found at ${configPath}`);
     return {};
@@ -96,10 +96,7 @@ async function loadDatabaseSettings(): Promise<Record<string, any>> {
   const supabase = getSupabaseClient();
 
   try {
-    const { data, error } = await supabase
-      .from('admin_settings')
-      .select('key, value')
-      .order('key');
+    const { data, error } = await supabase.from('admin_settings').select('key, value').order('key');
 
     if (error) {
       // If table doesn't exist yet, return empty object (graceful degradation)
@@ -112,12 +109,12 @@ async function loadDatabaseSettings(): Promise<Record<string, any>> {
 
     // Convert array of {key, value} to nested object
     const settings: Record<string, any> = {};
-    
+
     if (data) {
       for (const row of data) {
         const keys = row.key.split('.');
         let current = settings;
-        
+
         // Build nested object structure
         for (let i = 0; i < keys.length - 1; i++) {
           const key = keys[i];
@@ -126,7 +123,7 @@ async function loadDatabaseSettings(): Promise<Record<string, any>> {
           }
           current = current[key];
         }
-        
+
         // Set final value
         current[keys[keys.length - 1]] = row.value;
       }
@@ -174,13 +171,13 @@ function isObject(item: any): boolean {
 
 /**
  * Load all settings from SSOT sources
- * 
+ *
  * Combines YAML (static) and database (dynamic) settings.
  * Database settings override YAML settings.
- * 
+ *
  * @param {boolean} forceRefresh - Force reload from sources (bypass cache)
  * @returns {Promise<Record<string, any>>} Combined settings object
- * 
+ *
  * @example
  * const settings = await loadSettings();
  * const aggressiveness = settings.shield?.default_aggressiveness;
@@ -189,7 +186,7 @@ export async function loadSettings(forceRefresh = false): Promise<Record<string,
   const now = Date.now();
 
   // Return cached settings if valid and not forcing refresh
-  if (!forceRefresh && settingsCache && (now - cacheTimestamp) < CACHE_TTL) {
+  if (!forceRefresh && settingsCache && now - cacheTimestamp < CACHE_TTL) {
     return settingsCache;
   }
 
@@ -209,11 +206,11 @@ export async function loadSettings(forceRefresh = false): Promise<Record<string,
 
 /**
  * Load settings for a specific namespace
- * 
+ *
  * @param {string} namespace - Namespace to load (e.g., 'shield', 'analysis')
  * @param {boolean} forceRefresh - Force reload from sources
  * @returns {Promise<Record<string, any>>} Settings for the namespace
- * 
+ *
  * @example
  * const shieldSettings = await loadSettings('shield');
  * const threshold = shieldSettings.thresholds?.critical;
@@ -228,12 +225,12 @@ export async function loadSettingsNamespace(
 
 /**
  * Get a specific setting value by key path
- * 
+ *
  * @param {string} keyPath - Dot-separated key path (e.g., 'shield.default_aggressiveness')
  * @param {any} defaultValue - Default value if key doesn't exist
  * @param {boolean} forceRefresh - Force reload from sources
  * @returns {Promise<any>} Setting value or default
- * 
+ *
  * @example
  * const aggressiveness = await getSetting('shield.default_aggressiveness', 0.95);
  */
@@ -244,7 +241,7 @@ export async function getSetting(
 ): Promise<any> {
   const allSettings = await loadSettings(forceRefresh);
   const keys = keyPath.split('.');
-  
+
   let current: any = allSettings;
   for (const key of keys) {
     if (current && typeof current === 'object' && key in current) {
@@ -253,7 +250,7 @@ export async function getSetting(
       return defaultValue;
     }
   }
-  
+
   return current !== undefined ? current : defaultValue;
 }
 
@@ -267,18 +264,18 @@ export function clearCache(): void {
 
 /**
  * Get public settings (safe to expose to frontend)
- * 
+ *
  * Filters out internal/security settings and returns only public values.
- * 
+ *
  * @returns {Promise<Record<string, any>>} Public settings object
- * 
+ *
  * @example
  * const publicSettings = await getPublicSettings();
  * // Returns: { plans: {...}, platforms: {...}, roasting: { supported_tones: [...] } }
  */
 export async function getPublicSettings(): Promise<Record<string, any>> {
   const allSettings = await loadSettings();
-  
+
   // Define which namespaces/keys are safe to expose
   const publicNamespaces = ['plans', 'platforms', 'roasting', 'response_frequency'];
   const publicSettings: Record<string, any> = {};
@@ -297,7 +294,7 @@ export async function getPublicSettings(): Promise<Record<string, any>> {
       if (typeof planData === 'object' && planData !== null) {
         filteredPlans[planName] = {
           monthly_limit: (planData as any).monthly_limit,
-          features: (planData as any).features,
+          features: (planData as any).features
         };
       }
     }
@@ -306,4 +303,3 @@ export async function getPublicSettings(): Promise<Record<string, any>> {
 
   return publicSettings;
 }
-

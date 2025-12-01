@@ -23,6 +23,7 @@ Crear TODA la infraestructura necesaria para gestionar Single Sources of Truth e
 - ❌ No existe endpoint `/api/v2/settings/public`
 
 **Legacy (NO usar):**
+
 - ✅ Existe `organization_settings` (v1 - NO usar)
 - ✅ Existe `global_shield_settings` (v1 - NO usar)
 - ✅ Existe `shieldSettingsService.js` (v1 - NO usar)
@@ -34,6 +35,7 @@ Crear TODA la infraestructura necesaria para gestionar Single Sources of Truth e
 ### FASE 1: Crear Estructura Base de backend-v2
 
 1. **Crear directorio base:**
+
    ```
    apps/backend-v2/
    ├── src/
@@ -169,4 +171,3 @@ Crear TODA la infraestructura necesaria para gestionar Single Sources of Truth e
 - Esta es la primera infraestructura de v2, debe ser limpia y sin dependencias legacy
 - Todos los valores deben cargarse desde SSOT, nunca hardcoded
 - La tabla `admin_settings` es dinámica (runtime), YAML es estático (build-time)
-

@@ -1,8 +1,8 @@
 /**
  * Settings API Routes - v2
- * 
+ *
  * Public endpoint for retrieving SSOT settings safe for frontend consumption.
- * 
+ *
  * @module routes/settings
  */
 
@@ -13,26 +13,26 @@ const router = Router();
 
 /**
  * GET /api/v2/settings/public
- * 
+ *
  * Returns public settings from SSOT that are safe to expose to frontend.
- * 
+ *
  * Filters out:
  * - Internal configuration
  * - Security-sensitive values
  * - Admin-only settings
- * 
+ *
  * Returns:
  * - Plan limits and features
  * - Platform constraints
  * - Roasting configuration (public parts)
  * - Response frequency options
- * 
+ *
  * @route GET /api/v2/settings/public
  * @access Public (no authentication required for public settings)
- * 
+ *
  * @example
  * GET /api/v2/settings/public
- * 
+ *
  * Response:
  * {
  *   "success": true,
@@ -53,7 +53,7 @@ router.get('/public', async (_req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: publicSettings,
+      data: publicSettings
     });
   } catch (error: any) {
     console.error('Error loading public settings:', error);
@@ -61,10 +61,9 @@ router.get('/public', async (_req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Failed to load public settings',
-      message: error.message,
+      message: error.message
     });
   }
 });
 
 export default router;
-

@@ -1,5 +1,5 @@
 # SSOT v2 - Configuración Estática
-# 
+#
 # Este archivo contiene valores estáticos que no cambian en runtime.
 # Para valores dinámicos, usar la tabla admin_settings en Supabase.
 #
@@ -25,7 +25,7 @@ analysis:
   tweet_max_length: 280
   youtube_comment_max_length: 10000
   instagram_comment_max_length: 2200
-  
+
   # Límites de análisis (valores por defecto, overrideables por admin_settings)
   max_analysis_per_day: 1000
 
@@ -36,7 +36,7 @@ roasting:
     - flanders
     - balanceado
     - canalla
-  
+
   # Configuración de generación
   max_retries: 3
   timeout_seconds: 30
@@ -49,13 +49,13 @@ platforms:
       - mute
       - block
       - report
-  
+
   youtube:
     max_length: 10000
     supported_actions:
       - hide
       - report
-  
+
   instagram:
     max_length: 2200
     supported_actions:
@@ -66,14 +66,14 @@ platforms:
 response_frequency:
   # Valores en minutos
   options:
-    - "5m"
-    - "10m"
-    - "30m"
-    - "1h"
-    - "6h"
-    - "24h"
-  
-  default: "10m"
+    - '5m'
+    - '10m'
+    - '30m'
+    - '1h'
+    - '6h'
+    - '24h'
+
+  default: '10m'
 
 # Plan Limits (valores por defecto, overrideables por admin_settings)
 plans:
@@ -82,14 +82,14 @@ plans:
     features:
       - basic_roasting
       - shield_basic
-  
+
   pro:
     monthly_limit: 500
     features:
       - basic_roasting
       - shield_basic
       - advanced_roasting
-  
+
   plus:
     monthly_limit: 2000
     features:
@@ -98,4 +98,3 @@ plans:
       - advanced_roasting
       - custom_persona
       - priority_support
-

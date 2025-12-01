@@ -1,6 +1,6 @@
 /**
  * Tests for loadSettings.ts
- * 
+ *
  * Tests SSOT settings loading from YAML and database sources.
  */
 
@@ -13,30 +13,30 @@ import {
   getSetting,
   clearCache,
   getPublicSettings,
-  resetSupabaseClient,
+  resetSupabaseClient
 } from '../../../src/lib/loadSettings';
 
 // Mock fs module
 vi.mock('fs', () => ({
   default: {
     existsSync: vi.fn(),
-    readFileSync: vi.fn(),
+    readFileSync: vi.fn()
   },
   existsSync: vi.fn(),
-  readFileSync: vi.fn(),
+  readFileSync: vi.fn()
 }));
 
 // Mock yaml module
 vi.mock('yaml', () => ({
   default: {
-    parse: vi.fn(),
+    parse: vi.fn()
   },
-  parse: vi.fn(),
+  parse: vi.fn()
 }));
 
 // Mock Supabase
 vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(),
+  createClient: vi.fn()
 }));
 
 describe('loadSettings', () => {
@@ -44,12 +44,12 @@ describe('loadSettings', () => {
     // Set mock environment variables
     process.env.SUPABASE_URL = 'https://mock.supabase.co';
     process.env.SUPABASE_SERVICE_KEY = 'mock-service-key';
-    
+
     clearCache();
     resetSupabaseClient(); // Reset client to use fresh mock
     vi.clearAllMocks();
   });
-  
+
   afterEach(() => {
     delete process.env.SUPABASE_URL;
     delete process.env.SUPABASE_SERVICE_KEY;
@@ -72,9 +72,9 @@ analysis:
       (yaml.parse as any).mockReturnValue({
         shield: {
           default_aggressiveness: 0.95,
-          thresholds: { critical: 0.95 },
+          thresholds: { critical: 0.95 }
         },
-        analysis: { tweet_max_length: 280 },
+        analysis: { tweet_max_length: 280 }
       });
 
       // Mock Supabase to return empty (no DB overrides)
@@ -82,9 +82,9 @@ analysis:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       const settings = await loadSettings();
@@ -97,12 +97,12 @@ analysis:
     it('should load admin_settings from database correctly', async () => {
       // Clear cache first
       clearCache();
-      
+
       // Mock YAML with base values
       (fs.existsSync as any).mockReturnValue(true);
       (fs.readFileSync as any).mockReturnValue('shield:\n  default_aggressiveness: 0.95');
       (yaml.parse as any).mockReturnValue({
-        shield: { default_aggressiveness: 0.95 },
+        shield: { default_aggressiveness: 0.95 }
       });
 
       // Mock Supabase to return database settings
@@ -113,11 +113,11 @@ analysis:
             order: vi.fn(() =>
               Promise.resolve({
                 data: [{ key: 'shield.default_aggressiveness', value: 0.98 }],
-                error: null,
+                error: null
               })
-            ),
-          })),
-        })),
+            )
+          }))
+        }))
       });
 
       const settings = await loadSettings();
@@ -134,9 +134,9 @@ analysis:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       const settings = await loadSettings();
@@ -148,7 +148,7 @@ analysis:
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue('shield:\n  default_aggressiveness: 0.95');
       vi.spyOn(yaml, 'parse').mockReturnValue({
-        shield: { default_aggressiveness: 0.95 },
+        shield: { default_aggressiveness: 0.95 }
       });
 
       // Mock Supabase error (table doesn't exist)
@@ -160,11 +160,11 @@ analysis:
             order: vi.fn(() =>
               Promise.resolve({
                 data: null,
-                error: { code: 'PGRST116', message: 'relation does not exist' },
+                error: { code: 'PGRST116', message: 'relation does not exist' }
               })
-            ),
-          })),
-        })),
+            )
+          }))
+        }))
       });
 
       const settings = await loadSettings();
@@ -177,7 +177,7 @@ analysis:
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue('shield:\n  default_aggressiveness: 0.95');
       vi.spyOn(yaml, 'parse').mockReturnValue({
-        shield: { default_aggressiveness: 0.95 },
+        shield: { default_aggressiveness: 0.95 }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -185,9 +185,9 @@ analysis:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       // Clear mock call history before test
@@ -210,7 +210,7 @@ analysis:
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue('shield:\n  default_aggressiveness: 0.95');
       vi.spyOn(yaml, 'parse').mockReturnValue({
-        shield: { default_aggressiveness: 0.95 },
+        shield: { default_aggressiveness: 0.95 }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -218,9 +218,9 @@ analysis:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       // Clear mock call history
@@ -248,7 +248,7 @@ analysis:
 `);
       vi.spyOn(yaml, 'parse').mockReturnValue({
         shield: { default_aggressiveness: 0.95 },
-        analysis: { tweet_max_length: 280 },
+        analysis: { tweet_max_length: 280 }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -256,9 +256,9 @@ analysis:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       const shieldSettings = await loadSettingsNamespace('shield');
@@ -272,7 +272,7 @@ analysis:
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue('shield:\n  default_aggressiveness: 0.95');
       vi.spyOn(yaml, 'parse').mockReturnValue({
-        shield: { default_aggressiveness: 0.95 },
+        shield: { default_aggressiveness: 0.95 }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -280,9 +280,9 @@ analysis:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       const nonExistent = await loadSettingsNamespace('non_existent');
@@ -303,8 +303,8 @@ shield:
       vi.spyOn(yaml, 'parse').mockReturnValue({
         shield: {
           default_aggressiveness: 0.95,
-          thresholds: { critical: 0.95 },
-        },
+          thresholds: { critical: 0.95 }
+        }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -312,9 +312,9 @@ shield:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       const aggressiveness = await getSetting('shield.default_aggressiveness');
@@ -328,7 +328,7 @@ shield:
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue('shield:\n  default_aggressiveness: 0.95');
       vi.spyOn(yaml, 'parse').mockReturnValue({
-        shield: { default_aggressiveness: 0.95 },
+        shield: { default_aggressiveness: 0.95 }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -336,21 +336,21 @@ shield:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
-      const nonExistent = await getSetting('shield.non_existent', 0.90);
+      const nonExistent = await getSetting('shield.non_existent', 0.9);
 
-      expect(nonExistent).toBe(0.90);
+      expect(nonExistent).toBe(0.9);
     });
 
     it('should return undefined when key does not exist and no default provided', async () => {
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue('shield:\n  default_aggressiveness: 0.95');
       vi.spyOn(yaml, 'parse').mockReturnValue({
-        shield: { default_aggressiveness: 0.95 },
+        shield: { default_aggressiveness: 0.95 }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -358,9 +358,9 @@ shield:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       const nonExistent = await getSetting('shield.non_existent');
@@ -385,10 +385,10 @@ platforms:
 `);
       vi.spyOn(yaml, 'parse').mockReturnValue({
         plans: {
-          starter: { monthly_limit: 100, features: ['basic_roasting'] },
+          starter: { monthly_limit: 100, features: ['basic_roasting'] }
         },
         shield: { default_aggressiveness: 0.95 },
-        platforms: { twitter: { max_length: 280 } },
+        platforms: { twitter: { max_length: 280 } }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -396,9 +396,9 @@ platforms:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       const publicSettings = await getPublicSettings();
@@ -425,9 +425,9 @@ plans:
           starter: {
             monthly_limit: 100,
             features: ['basic_roasting'],
-            internal_config: 'secret_value',
-          },
-        },
+            internal_config: 'secret_value'
+          }
+        }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -435,9 +435,9 @@ plans:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       const publicSettings = await getPublicSettings();
@@ -454,7 +454,7 @@ plans:
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue('shield:\n  default_aggressiveness: 0.95');
       vi.spyOn(yaml, 'parse').mockReturnValue({
-        shield: { default_aggressiveness: 0.95 },
+        shield: { default_aggressiveness: 0.95 }
       });
 
       const { createClient } = await import('@supabase/supabase-js');
@@ -462,9 +462,9 @@ plans:
       (createClient as any).mockReturnValue({
         from: vi.fn(() => ({
           select: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          })),
-        })),
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          }))
+        }))
       });
 
       // Clear mock call history
@@ -486,4 +486,3 @@ plans:
     });
   });
 });
-
