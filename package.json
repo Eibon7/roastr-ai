@@ -114,6 +114,7 @@
     "verify:env": "node scripts/verify-env-exists.js",
     "verify:env:create": "node scripts/verify-env-exists.js --create-if-missing",
     "verify:env:config": "node scripts/verify-env-config.js",
+    "verify:rls": "node scripts/verify-rls-security.js",
     "backup:env": "node scripts/verify-env-exists.js --silent",
     "hooks:install": "bash scripts/install-git-hooks.sh",
     "hooks:test": "bash scripts/test-env-protection.sh",
