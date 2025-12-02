@@ -1,7 +1,7 @@
 # Sources of Truth (SSOT) — v2
 
 **Versión:** 1.0  
-**Fecha:** 2025-01-27  
+**Fecha:** 2025-12-01  
 **Estado:** ✅ Activo  
 **Propósito:** Definir el sistema de Single Sources of Truth para la arquitectura v2
 
@@ -117,10 +117,10 @@ const aggressiveness = settings.shield?.default_aggressiveness || 0.95;
 ### Ejemplo 2: Cargar Namespace Específico
 
 ```typescript
-import { loadSettings } from '@/lib/loadSettings';
+import { loadSettingsNamespace } from '@/lib/loadSettings';
 
 // Cargar solo settings de Shield
-const shieldSettings = await loadSettings('shield');
+const shieldSettings = await loadSettingsNamespace('shield');
 
 // Acceder directamente
 const criticalThreshold = shieldSettings.thresholds?.critical || 0.95;
@@ -225,5 +225,5 @@ Cuando necesites añadir un nuevo parámetro configurable:
 
 ---
 
-**Última actualización:** 2025-01-27  
+**Última actualización:** 2025-12-01  
 **Mantenido por:** Back-end Dev
