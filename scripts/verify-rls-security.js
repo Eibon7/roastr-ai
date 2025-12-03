@@ -32,11 +32,12 @@ const REQUIRED_TABLES = [
 
 async function verifyRLS() {
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ Missing Supabase credentials');
+    console.error('❌ Missing required environment variables');
     console.error('   Set SUPABASE_URL and SUPABASE_SERVICE_KEY in .env');
+    console.error('   Note: SUPABASE_ANON_KEY cannot be used for RLS verification');
     process.exit(1);
   }
 
@@ -49,24 +50,37 @@ async function verifyRLS() {
   // Check if RLS is enabled on each table
   for (const table of REQUIRED_TABLES) {
     try {
+      // Validate table name (whitelist check against hardcoded array)
+      if (!REQUIRED_TABLES.includes(table)) {
+        console.log(`⚠️  ${table}: Invalid table name (not in whitelist)`);
+        continue;
+      }
+
+      // Sanitize table name (allow only alphanumeric and underscore)
+      const sanitizedTable = table.replace(/[^a-z0-9_]/gi, '');
+      if (sanitizedTable !== table) {
+        console.log(`⚠️  ${table}: Invalid characters in table name`);
+        continue;
+      }
+
       // Query pg_class to check if RLS is enabled
       const { data: rlsData, error: rlsError } = await supabase.rpc('exec_sql', {
         query: `
           SELECT relname, relrowsecurity
           FROM pg_class
-          WHERE relname = '${table}'
+          WHERE relname = '${sanitizedTable}'
           AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
         `
       });
 
       if (rlsError) {
         // Fallback: Try to query the table directly (will fail if RLS blocks)
-        console.log(`⚠️  ${table}: Cannot verify RLS status (${rlsError.message})`);
+        console.log(`⚠️  ${sanitizedTable}: Cannot verify RLS status (${rlsError.message})`);
         continue;
       }
 
       if (!rlsData || rlsData.length === 0) {
-        console.log(`⚠️  ${table}: Table not found`);
+        console.log(`⚠️  ${sanitizedTable}: Table not found`);
         continue;
       }
 
@@ -78,20 +92,20 @@ async function verifyRLS() {
           query: `
             SELECT COUNT(*) as policy_count
             FROM pg_policies
-            WHERE tablename = '${table}'
+            WHERE tablename = '${sanitizedTable}'
           `
         });
 
         const policyCount = policiesData?.[0]?.policy_count || 0;
 
         if (policyCount > 0) {
-          console.log(`✅ ${table}: RLS enabled (${policyCount} policies)`);
+          console.log(`✅ ${sanitizedTable}: RLS enabled (${policyCount} policies)`);
         } else {
-          console.log(`⚠️  ${table}: RLS enabled but NO POLICIES (security risk!)`);
+          console.log(`⚠️  ${sanitizedTable}: RLS enabled but NO POLICIES (security risk!)`);
           hasErrors = true;
         }
       } else {
-        console.log(`❌ ${table}: RLS DISABLED (security risk!)`);
+        console.log(`❌ ${sanitizedTable}: RLS DISABLED (security risk!)`);
         hasErrors = true;
       }
     } catch (error) {
@@ -118,10 +132,12 @@ async function verifyRLS() {
 // Alternative verification using direct SQL (if rpc doesn't work)
 async function verifyRLSSimple() {
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ Missing Supabase credentials');
+    console.error('❌ Missing required environment variables');
+    console.error('   Set SUPABASE_URL and SUPABASE_SERVICE_KEY in .env');
+    console.error('   Note: SUPABASE_ANON_KEY cannot be used for RLS verification');
     process.exit(1);
   }
 
