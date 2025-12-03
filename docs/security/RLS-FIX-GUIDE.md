@@ -64,6 +64,8 @@ Supabase detected **3 tables without Row Level Security (RLS)** enabled:
 
 ## 📝 How to Apply
 
+⚠️ **IMPORTANT:** Always test migrations in staging/dev environment before applying to production.
+
 ### Option 1: Supabase CLI (Recommended)
 
 ```bash
