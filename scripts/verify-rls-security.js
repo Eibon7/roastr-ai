@@ -158,7 +158,7 @@ async function verifyRLSSimple() {
   console.log('   - Verify policies exist');
   console.log('\n🔧 To enable RLS:');
   console.log('   Run SQL: database/migrations/057_enable_rls_missing_tables.sql');
-  
+
   // Exit with failure code since automatic verification failed
   console.log('\n' + '='.repeat(60));
   console.log('⚠️  Automatic verification failed - manual check required');
