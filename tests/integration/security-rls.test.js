@@ -347,7 +347,7 @@ describe('Security RLS Integration Tests - Issue #1093', () => {
         console.log('  ✅ User CAN insert their own activity');
       });
 
-      it('should prevent user from INSERT another user\'s activity', async () => {
+      it("should prevent user from INSERT another user's activity", async () => {
         await setTenantContext(testClient, regularUserA.id);
 
         const { data, error } = await testClient.from('user_activities').insert({
@@ -362,10 +362,10 @@ describe('Security RLS Integration Tests - Issue #1093', () => {
         expect(error.code).toBe('42501');
         expect(data).toBeNull();
 
-        console.log('  ✅ User CANNOT insert another user\'s activity');
+        console.log("  ✅ User CANNOT insert another user's activity");
       });
 
-      it('should allow admin to INSERT any user\'s activity', async () => {
+      it("should allow admin to INSERT any user's activity", async () => {
         await setTenantContext(testClient, adminUser.id);
 
         const { data, error } = await testClient
@@ -386,7 +386,7 @@ describe('Security RLS Integration Tests - Issue #1093', () => {
 
         activityIdB = data.id;
 
-        console.log('  ✅ Admin CAN insert any user\'s activity');
+        console.log("  ✅ Admin CAN insert any user's activity");
       });
     });
 
@@ -627,10 +627,7 @@ describe('Security RLS Integration Tests - Issue #1093', () => {
           .limit(1)
           .single();
 
-        const { error } = await testClient
-          .from('roast_tones')
-          .delete()
-          .eq('id', existingTone.id);
+        const { error } = await testClient.from('roast_tones').delete().eq('id', existingTone.id);
 
         expect(error).not.toBeNull();
         expect(error.code).toBe('42501');
@@ -661,4 +658,3 @@ describe('Security RLS Integration Tests - Issue #1093', () => {
     });
   });
 });
-
