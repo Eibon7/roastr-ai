@@ -11,13 +11,14 @@
 
 Supabase detected **3 tables without Row Level Security (RLS)** enabled:
 
-| Table | Risk | Impact |
-|-------|------|--------|
-| `public.plans` | 🟡 Medium | Plan data readable/writable by anyone |
-| `public.user_activities` | 🔴 HIGH | User activity logs exposed (audit data) |
-| `public.roast_tones` | 🟡 Medium | Tone configuration modifiable by anyone |
+| Table                    | Risk      | Impact                                  |
+| ------------------------ | --------- | --------------------------------------- |
+| `public.plans`           | 🟡 Medium | Plan data readable/writable by anyone   |
+| `public.user_activities` | 🔴 HIGH   | User activity logs exposed (audit data) |
+| `public.roast_tones`     | 🟡 Medium | Tone configuration modifiable by anyone |
 
 **Why this is critical:**
+
 - ❌ Any authenticated user can read/modify these tables
 - ❌ Sensitive audit data (user_activities) is exposed
 - ❌ System configuration (plans, tones) can be tampered with
@@ -32,6 +33,7 @@ Supabase detected **3 tables without Row Level Security (RLS)** enabled:
 **File:** `database/migrations/057_enable_rls_missing_tables.sql`
 
 **What it does:**
+
 1. ✅ Enables RLS on all 3 tables
 2. ✅ Creates appropriate policies for each table
 3. ✅ Grants necessary permissions
@@ -40,17 +42,20 @@ Supabase detected **3 tables without Row Level Security (RLS)** enabled:
 ### Policy Summary
 
 #### 📋 `plans` Table
+
 - **Read:** Everyone (needed for plan selection UI)
 - **Write:** Admins only
 - **Rationale:** Plans are public info, but only admins manage them
 
-#### 📊 `user_activities` Table  
+#### 📊 `user_activities` Table
+
 - **Read:** Admins only (sensitive audit data)
 - **Insert:** Users can log their own activities, admins can log any
 - **Update/Delete:** Admins only
 - **Rationale:** Audit logs must be protected
 
 #### 🎨 `roast_tones` Table
+
 - **Read:** Everyone (needed for tone selection in roast generation)
 - **Write:** Admins only
 - **Rationale:** Tones are public config, but only admins modify them
@@ -108,6 +113,7 @@ npm run verify:rls
 ```
 
 **Expected output:**
+
 ```
 ✅ plans: RLS enabled (4 policies)
 ✅ user_activities: RLS enabled (4 policies)
@@ -138,15 +144,11 @@ npm run verify:rls
 
 ```javascript
 // Should work: Read plans as authenticated user
-const { data, error } = await supabase
-  .from('plans')
-  .select('*');
+const { data, error } = await supabase.from('plans').select('*');
 // ✅ Expected: Returns all plans
 
 // Should work: Read roast_tones as authenticated user
-const { data, error } = await supabase
-  .from('roast_tones')
-  .select('*');
+const { data, error } = await supabase.from('roast_tones').select('*');
 // ✅ Expected: Returns all tones
 ```
 
@@ -173,19 +175,15 @@ const { data, error } = await supabase
 
 ```javascript
 // Should fail: Non-admin tries to read user activities
-const { data, error } = await supabase
-  .from('user_activities')
-  .select('*');
+const { data, error } = await supabase.from('user_activities').select('*');
 // ❌ Expected: Policy violation error (unless you're admin)
 
 // Should work: User logs their own activity
-const { data, error } = await supabase
-  .from('user_activities')
-  .insert({
-    user_id: currentUser.id,
-    activity_type: 'login',
-    platform: 'web'
-  });
+const { data, error } = await supabase.from('user_activities').insert({
+  user_id: currentUser.id,
+  activity_type: 'login',
+  platform: 'web'
+});
 // ✅ Expected: Insert succeeds
 ```
 
@@ -213,12 +211,14 @@ const { data, error } = await supabase
 ## 📊 Impact Assessment
 
 ### Before Fix
+
 - 🔴 **Risk:** HIGH
 - ❌ 3 tables unprotected
 - ❌ Audit data exposed
 - ❌ System config tamperable
 
 ### After Fix
+
 - 🟢 **Risk:** LOW
 - ✅ All tables protected by RLS
 - ✅ Audit data restricted to admins
@@ -241,6 +241,7 @@ const { data, error } = await supabase
 ### Issue: Migration fails with "policy already exists"
 
 **Solution:**
+
 ```sql
 -- Drop existing policies first
 DROP POLICY IF EXISTS plans_read_policy ON plans;
@@ -254,6 +255,7 @@ DROP POLICY IF EXISTS plans_insert_policy ON plans;
 
 **Cause:** Missing GRANT statements  
 **Solution:** Ensure migration includes:
+
 ```sql
 GRANT SELECT ON plans TO authenticated;
 GRANT ALL ON plans TO service_role;
@@ -292,4 +294,3 @@ GRANT ALL ON plans TO service_role;
 **Reviewed by:** Cursor AI  
 **Approved by:** [Pending]  
 **Deployed:** [Pending]
-

@@ -2,13 +2,13 @@
 
 /**
  * Verify RLS Security Script
- * 
+ *
  * Verifies that RLS is enabled on all critical tables
  * and that appropriate policies exist.
- * 
+ *
  * Usage:
  *   node scripts/verify-rls-security.js
- * 
+ *
  * Exit codes:
  *   0 - All checks passed
  *   1 - RLS security issues found
@@ -144,10 +144,9 @@ async function verifyRLSSimple() {
 }
 
 // Run verification
-verifyRLS().catch(error => {
+verifyRLS().catch((error) => {
   console.error('❌ Verification failed:', error.message);
   console.log('\n' + '='.repeat(60));
   console.log('Switching to simple mode...\n');
   verifyRLSSimple();
 });
-
