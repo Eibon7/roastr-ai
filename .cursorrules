@@ -252,6 +252,117 @@ npm run coderabbit:review
 
 **Regla:** Evidence antes de claims. NUNCA decir "complete" sin ejecutar verificaciones.
 
+### Anti-AI-Slop Review
+
+**Triggers:** Antes de solicitar aprobación de PR, automáticamente al finalizar implementación
+
+**Objetivo:** Eliminar código generado por IA de baja calidad que contamina la codebase.
+
+**Qué es AI-Slop:**
+- Comentarios superfluos o incongruentes
+- Bloques `try/catch` que no tienen sentido en ese contexto
+- Checks redundantes (validaciones innecesarias)
+- Casteos a `any` para silenciar errores de TypeScript
+- Patrones que rompen el estilo preexistente del proyecto
+- Código hinchado o defensivo que la codebase nunca usa
+- TODOs, FIXMEs o comentarios "// Add more logic here"
+- Imports no utilizados
+- Variables declaradas pero nunca usadas
+- Comentarios obvios tipo `// Set the value` antes de `value = x`
+
+**Workflow:**
+1. Revisar TODO el diff de la PR línea por línea
+2. Identificar patrones de AI-slop comparando con código existente
+3. Eliminar código superfluo manteniendo funcionalidad
+4. Verificar que el código sigue el estilo del proyecto
+5. Asegurar que no hay lógica defensiva innecesaria
+6. Confirmar que todos los imports y variables se usan
+7. Ejecutar linter y tests después de limpieza
+8. Generar resumen de limpieza
+
+**Ejemplos de AI-Slop a Eliminar:**
+
+```typescript
+// ❌ AI-Slop: Comentario obvio
+// Set the user name
+user.name = 'John';
+
+// ✅ Limpio: Sin comentario innecesario
+user.name = 'John';
+```
+
+```typescript
+// ❌ AI-Slop: Try/catch innecesario en función síncrona
+function add(a: number, b: number): number {
+  try {
+    return a + b;
+  } catch (error) {
+    console.error('Error adding numbers', error);
+    throw error;
+  }
+}
+
+// ✅ Limpio: Función directa
+function add(a: number, b: number): number {
+  return a + b;
+}
+```
+
+```typescript
+// ❌ AI-Slop: Validación redundante
+if (user && user.id && user.id !== null && user.id !== undefined) {
+  // La codebase ya valida esto en otro lugar
+  processUser(user.id);
+}
+
+// ✅ Limpio: Validación apropiada según contexto
+if (user?.id) {
+  processUser(user.id);
+}
+```
+
+```typescript
+// ❌ AI-Slop: Casteo a any para silenciar error
+const result = (data as any).someProperty;
+
+// ✅ Limpio: Tipar correctamente
+interface DataType {
+  someProperty: string;
+}
+const result = (data as DataType).someProperty;
+```
+
+**Reglas CRÍTICAS:**
+- ❌ NUNCA aprobar PR con AI-slop visible
+- ❌ NUNCA añadir comentarios que no aportan valor
+- ❌ NUNCA usar `any` como escape de tipos
+- ✅ SIEMPRE revisar si el patrón existe en la codebase
+- ✅ SIEMPRE mantener el estilo del código existente
+- ✅ SIEMPRE ejecutar tests después de limpieza
+
+**Output Obligatorio:**
+
+Al finalizar revisión, SIEMPRE incluir:
+
+```
+🧹 Resumen Anti-Slop:
+[1-3 frases indicando qué se limpió, ej:]
+- Eliminados 15 comentarios superfluos y 3 try/catch innecesarios
+- Removidos 2 casteos a 'any' y añadidos tipos apropiados
+- Limpiados 4 checks redundantes que duplicaban validaciones existentes
+```
+
+Si NO se encontró slop:
+```
+🧹 Resumen Anti-Slop: ✅ Código limpio, sin AI-slop detectado.
+```
+
+**Cuándo Ejecutar:**
+- Antes de cada commit importante
+- Antes de solicitar code review
+- Antes de marcar PR como "ready for review"
+- Después de aplicar sugerencias de CodeRabbit (que pueden añadir slop)
+
 ---
 
 ## Comandos Útiles
