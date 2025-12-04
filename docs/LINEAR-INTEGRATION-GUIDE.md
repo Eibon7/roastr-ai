@@ -20,13 +20,16 @@ Linear (Issues & Planning) ←→ GitHub (PRs & Code Review)
 
 ## 🔧 Configuración
 
-### 1. Obtener API Key
+### 1. Obtener Personal API Key
 
 1. Ve a: https://linear.app/settings/api
-2. Click "Create new key"
-3. Nombre: `Roastr.AI Cursor Integration`
-4. Permisos: `read`, `write` (default)
-5. Copia el token: `lin_api_...`
+2. En la sección **"Personal API keys"**
+3. Click "**Create key**"
+4. Nombre: `Roastr.AI Cursor Integration`
+5. Permisos: Por defecto tiene acceso completo (read/write)
+6. Copia el token: `lin_api_...`
+
+⚠️ **Importante:** Usa una **Personal API key**, NO una Application key. Las Personal keys tienen acceso completo a tu workspace.
 
 ### 2. Configurar Environment
 

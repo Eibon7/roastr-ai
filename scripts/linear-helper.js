@@ -13,7 +13,8 @@
  *   node scripts/linear-helper.js sync --github-issue 1093
  * 
  * Environment:
- *   LINEAR_API_KEY - Linear API key (get from https://linear.app/settings/api)
+ *   LINEAR_API_KEY - Linear Personal API key (get from https://linear.app/settings/api)
+ *                    IMPORTANT: Use Personal API key, NOT Application key
  *   LINEAR_TEAM_ID - Team ID (optional, uses default team if not set)
  */
 
@@ -26,8 +27,10 @@ class LinearHelper {
     
     if (!this.apiKey) {
       console.error('❌ LINEAR_API_KEY not found in environment');
-      console.error('   Get your API key from: https://linear.app/settings/api');
+      console.error('   Get your Personal API key from: https://linear.app/settings/api');
+      console.error('   Section: "Personal API keys" → Create key');
       console.error('   Add to .env: LINEAR_API_KEY=lin_api_...');
+      console.error('   ⚠️  Use Personal API key, NOT Application key');
       process.exit(1);
     }
 
