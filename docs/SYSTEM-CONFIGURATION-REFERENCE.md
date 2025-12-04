@@ -204,7 +204,14 @@ Skills se activan automáticamente según:
 | **supabase-test** | `^0.2.4` | Test DB con rollback transaccional | ✅ Activo |
 | **@testing-library/react** | `^16.3.0` | React component testing | ✅ Activo |
 
-### 4.7. CI/CD & Deployment
+### 4.7. Project Management
+
+| Servicio | Versión | Uso | Status |
+|----------|---------|-----|--------|
+| **Linear** | `@linear/sdk` | Issue tracking & planning | ✅ Activo |
+| **GitHub Issues** | - | Legacy issue tracking | ✅ Activo (híbrido) |
+
+### 4.8. CI/CD & Deployment
 
 | Servicio | Uso | Status |
 |----------|-----|--------|
@@ -212,14 +219,14 @@ Skills se activan automáticamente según:
 | **Vercel** | Frontend deployment (staging/prod) | ✅ Activo |
 | **CodeRabbit** | Automated code review | ✅ Activo |
 
-### 4.8. Monitoring & Analytics
+### 4.9. Monitoring & Analytics
 
 | Servicio | Uso | Status |
 |----------|-----|--------|
 | **Portkey** | AI gateway + observability | ✅ Activo |
 | **Sentry** (si configurado) | Error tracking | 🔍 Verificar |
 
-### 4.9. MCP Servers
+### 4.10. MCP Servers
 
 | MCP | Uso | Status |
 |-----|-----|--------|
@@ -247,6 +254,9 @@ Skills se activan automáticamente según:
 ### Social Platforms
 - 🟢 **2 activas** (X, YouTube)
 - 📦 **7 legacy** (resto - NO usar en v2)
+
+### Project Management
+- 🟢 **2 servicios** (Linear, GitHub Issues - híbrido)
 
 ### Development
 - 🟢 **5 herramientas activas** (Playwright, Vitest, supabase-test, testing-library, CodeRabbit)
@@ -314,6 +324,24 @@ npm run verify:env
 npm run coderabbit:review
 ```
 
+### Linear Integration
+```bash
+# Ver teams
+npm run linear:teams
+
+# Crear issue
+npm run linear:create -- --title "..." --description "..." --priority 1
+
+# Actualizar issue
+npm run linear:update -- --id ROA-123 --status "In Progress"
+
+# Listar issues
+npm run linear:list -- --state "Todo"
+
+# Sincronizar con GitHub
+npm run linear:sync -- --linear ROA-123 --github 1093
+```
+
 ---
 
 ## 7. 📚 Referencias
@@ -324,6 +352,7 @@ npm run coderabbit:review
 - **Agent Inventory:** `docs/agents/INVENTORY.md`
 - **Skills:** `.claude/skills/`
 - **Integrations:** `docs/INTEGRATIONS.md`
+- **Linear Integration:** `docs/LINEAR-INTEGRATION-GUIDE.md`
 - **Testing Guide:** `docs/TESTING-GUIDE.md`
 - **V2 Rules:** `.cursor/rules/v2-development.mdc`
 - **Migration Guide:** `docs/CURSOR-MIGRATION-GUIDE.md`
