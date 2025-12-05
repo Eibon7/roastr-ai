@@ -76,3 +76,44 @@ jobs:
               core.warning(`⚠️ CodeRabbit review state: ${latestReview.state}`);
               console.log("ℹ️ This is informational only - merge decision is yours");
             }
+
+      - name: Verify Agent Receipts
+        continue-on-error: true  # Informative only
+        run: |
+          if [ ! -d "docs/agents/receipts" ]; then
+            echo "⚠️ Agent receipts directory not found"
+            exit 0
+          fi
+          
+          RECEIPT_COUNT=$(find docs/agents/receipts -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+          
+          if [ "$RECEIPT_COUNT" -eq 0 ]; then
+            echo "⚠️ No agent receipt files found (expected for PRs with agent involvement)"
+            exit 0
+          else
+            echo "✅ Found $RECEIPT_COUNT agent receipt file(s)"
+          fi
+
+      - name: Verify Coverage Threshold (if available)
+        continue-on-error: true  # Informative only
+        run: |
+          if [ -f "coverage/coverage-summary.json" ]; then
+            if command -v jq &> /dev/null; then
+              COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json 2>/dev/null || echo "0")
+              if [ "$COVERAGE" != "0" ] && [ "$COVERAGE" != "null" ]; then
+                echo "📊 Current coverage: ${COVERAGE}%"
+                COVERAGE_INT=$(echo "$COVERAGE" | cut -d. -f1)
+                if [ "$COVERAGE_INT" -lt 90 ]; then
+                  echo "⚠️ Coverage ${COVERAGE}% is below 90% threshold (informative only)"
+                else
+                  echo "✅ Coverage ${COVERAGE}% meets 90% threshold"
+                fi
+              else
+                echo "ℹ️ Coverage data not available in expected format"
+              fi
+            else
+              echo "ℹ️ jq not available, skipping coverage check"
+            fi
+          else
+            echo "ℹ️ Coverage report not found (v2 pending or not generated)"
+          fi

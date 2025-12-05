@@ -1,7 +1,6 @@
 ---
 description: Reglas obligatorias para desarrollo de V2 - Separación clara entre v2 y legacy
 globs:
-  - "apps/**/*"
   - "apps/frontend-v2/**/*"
   - "apps/backend-v2/**/*"
   - "apps/shared/**/*"
