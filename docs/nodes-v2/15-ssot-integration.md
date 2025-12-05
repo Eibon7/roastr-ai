@@ -94,9 +94,12 @@ type PlanId = 'starter' | 'pro' | 'plus';
 **3. Thresholds Shield**:
 
 ```typescript
-{
-  (roastLower, shield, critical);
+interface ShieldThresholds {
+  roastLower: number;
+  shield: number;
+  critical: number;
 }
+// Valores se cargan desde SSOT en runtime
 ```
 
 **4. Weights**:
@@ -110,6 +113,7 @@ type PlanId = 'starter' | 'pro' | 'plus';
   strike2: 1.25,
   critical: 1.50
 }
+// Ejemplo: los valores reales vienen del SSOT
 ```
 
 **5. Tonos**:
@@ -173,7 +177,7 @@ type PlanId = 'starter' | 'pro' | 'plus';
 
 **Si violación detectada**:
 
-```
+```text
 🚨 DETENCIÓN INMEDIATA
 Esto requiere actualización del SSOT primero.
 
@@ -219,6 +223,11 @@ Discrepancia detectada:
 - TODOS los nodos (todos consumen SSOT)
 - `10-panel-administracion.md` (UI para editar SSOT)
 - `11-feature-flags.md` (Flags en SSOT)
+
+### Agentes Relevantes:
+
+- Guardian
+- TestEngineer
 
 ---
 

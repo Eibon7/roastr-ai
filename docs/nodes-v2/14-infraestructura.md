@@ -119,10 +119,10 @@ Nada entra en `main` sin:
 - Staging: datos ficticios/anonimizados, seeds controlados
 - Prod: datos reales, sin seeds
 
-**SSOT nunca se comparte entre entornos**:
+**SSOT nunca se comparte entre entornos** (todas las tablas):
 
-- Staging → `admin_settings_staging`
-- Producción → `admin_settings_prod`
+- Staging → `*_staging` (admin_settings, plan_limits, shield_settings, tone_settings, workers_settings, integrations_settings, ai_settings, flags_settings)
+- Producción → `*_prod` (mismo conjunto)
 - Si staging intenta leer SSOT prod → error inmediato.
 
 **Migraciones**:
@@ -370,7 +370,7 @@ Simulacro cada 90 días.
    - Workers pausan temporalmente
    - Log + alerta
 
-9. **Perspectiv API down**:
+9. **Perspective API down**:
    - Fallback GPT-4o-mini
    - Alerta media
 
