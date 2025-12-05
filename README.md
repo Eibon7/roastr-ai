@@ -212,6 +212,7 @@ LINEAR_TEAM_ID=team_id                # Optional: Team ID (uses default team if 
 ```
 
 **Linear Integration:**
+
 - Get your Personal API key from [Linear Settings](https://linear.app/settings/api) → "Personal API keys"
 - Required for Linear CLI commands: `npm run linear:teams`, `linear:create`, `linear:show`, etc.
 - See [Linear Integration Guide](docs/LINEAR-INTEGRATION-GUIDE.md) for details
