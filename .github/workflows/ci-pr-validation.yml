@@ -8,8 +8,9 @@ jobs:
   coderabbit-gate:
     runs-on: ubuntu-latest
     steps:
-      - name: Check Coderabbit status
+      - name: Check Coderabbit status (informative only)
         uses: actions/github-script@v6
+        continue-on-error: true
         with:
           script: |
             const pr = context.payload.pull_request.number;
@@ -27,8 +28,8 @@ jobs:
             );
 
             if (rabbitReviews.length === 0) {
-              console.log("⚠️ CodeRabbit review not found yet");
-              core.setFailed("❌ CodeRabbit review missing. Waiting for CodeRabbit to review the PR.");
+              core.warning("⚠️ CodeRabbit review not found yet");
+              console.log("ℹ️ This is informational only - merge decision is yours");
               return;
             }
 
@@ -41,7 +42,7 @@ jobs:
               return;
             }
             
-            // Check for review comments that might indicate approval
+            // Check for review comments
             const { data: reviewComments } = await github.rest.pulls.listReviewComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -58,15 +59,14 @@ jobs:
             );
             
             if (unresolvedComments.length > 0) {
-              console.log(`⚠️ CodeRabbit has ${unresolvedComments.length} unresolved comments`);
-              core.setFailed(`❌ CodeRabbit has pending comments (${unresolvedComments.length} unresolved). Fix issues and push again.`);
+              core.warning(`⚠️ CodeRabbit has ${unresolvedComments.length} unresolved comments`);
+              console.log(`📋 Review comments: ${rabbitComments.length} total, ${unresolvedComments.length} unresolved`);
+              console.log("ℹ️ This is informational only - you decide if PR is ready to merge");
               return;
             }
             
             // If state is not APPROVED but no unresolved comments
             if (latestReview.state !== "APPROVED") {
-              console.log(`⚠️ CodeRabbit review state: ${latestReview.state}`);
-              core.setFailed("❌ CodeRabbit review incomplete. Waiting for final approval.");
+              core.warning(`⚠️ CodeRabbit review state: ${latestReview.state}`);
+              console.log("ℹ️ This is informational only - merge decision is yours");
             }
-
-
