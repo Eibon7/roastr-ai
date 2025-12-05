@@ -11,6 +11,7 @@
 Roastr.AI está integrado con Linear para gestión de issues y planning, manteniendo GitHub para code review y PRs.
 
 **Workflow Híbrido:**
+
 ```
 Linear (Issues & Planning) ←→ GitHub (PRs & Code Review)
          ROA-123                      #1094
@@ -72,6 +73,7 @@ npm run linear:create -- --title "Security: Enable RLS" --description "Fix RLS p
 ```
 
 **Output:**
+
 ```
 ✅ Issue created in Linear:
    ID: ROA-124
@@ -163,6 +165,7 @@ Linear y GitHub reconocerán sus respectivas referencias.
 ### Cuando trabajas conmigo:
 
 **Puedes decirme:**
+
 - ✅ "Trabaja en ROA-123" (uso Linear API para obtener detalles)
 - ✅ "Trabaja en #1093" (uso GitHub CLI)
 - ✅ "Crea issue en Linear para este fix"
@@ -170,6 +173,7 @@ Linear y GitHub reconocerán sus respectivas referencias.
 - ✅ "Crea PR para ROA-123"
 
 **Yo puedo:**
+
 - ✅ Crear issues en Linear programáticamente
 - ✅ Actualizar estados automáticamente
 - ✅ Listar y filtrar issues
@@ -180,15 +184,15 @@ Linear y GitHub reconocerán sus respectivas referencias.
 
 ## 📊 Ventajas del Setup Híbrido
 
-| Aspecto | Linear | GitHub |
-|---------|--------|--------|
-| **Planning** | ✅ Issues, Roadmap, Cycles | ❌ Limitado |
-| **Code Review** | ❌ No soportado | ✅ Excelente |
-| **CI/CD** | ❌ No soportado | ✅ GitHub Actions |
-| **Velocidad UI** | ⚡⚡⚡ Ultra-rápido | 🐌 Más lento |
-| **Keyboard shortcuts** | ✅ Excelentes | ⚠️ Básicos |
-| **Búsqueda** | ✅ Instant search | ⚠️ Más lenta |
-| **Workflow states** | ✅ Customizable | 🔧 Manual |
+| Aspecto                | Linear                     | GitHub            |
+| ---------------------- | -------------------------- | ----------------- |
+| **Planning**           | ✅ Issues, Roadmap, Cycles | ❌ Limitado       |
+| **Code Review**        | ❌ No soportado            | ✅ Excelente      |
+| **CI/CD**              | ❌ No soportado            | ✅ GitHub Actions |
+| **Velocidad UI**       | ⚡⚡⚡ Ultra-rápido        | 🐌 Más lento      |
+| **Keyboard shortcuts** | ✅ Excelentes              | ⚠️ Básicos        |
+| **Búsqueda**           | ✅ Instant search          | ⚠️ Más lenta      |
+| **Workflow states**    | ✅ Customizable            | 🔧 Manual         |
 
 **Lo mejor de ambos mundos:** Planning rápido en Linear + Code review sólido en GitHub.
 
@@ -199,6 +203,7 @@ Linear y GitHub reconocerán sus respectivas referencias.
 ### 1. Nomenclatura Consistente
 
 **En commits:**
+
 ```bash
 # Formato recomendado
 git commit -m "type(scope): Description - ROA-123
@@ -210,8 +215,10 @@ Fixes #1093"
 ```
 
 **En PR descriptions:**
+
 ```markdown
 ## Summary
+
 Implements feature X from Linear issue ROA-123
 
 Fixes ROA-123
@@ -221,6 +228,7 @@ Fixes #1093
 ### 2. Sincronización Automática
 
 Si configuras **Linear GitHub integration** en Linear Dashboard:
+
 - ✅ PRs en GitHub aparecen automáticamente en Linear
 - ✅ Merge de PR actualiza estado en Linear a "Done"
 - ✅ Commits con "ROA-123" se vinculan automáticamente
@@ -228,17 +236,18 @@ Si configuras **Linear GitHub integration** en Linear Dashboard:
 
 ### 3. Estados Recomendados
 
-| Linear State | Cuándo Usar |
-|--------------|-------------|
-| **Todo** | Issue creada, sin empezar |
-| **In Progress** | Desarrollo activo |
-| **In Review** | PR abierta, pendiente code review |
-| **Done** | PR merged, issue cerrada |
-| **Canceled** | Issue no se implementará |
+| Linear State    | Cuándo Usar                       |
+| --------------- | --------------------------------- |
+| **Todo**        | Issue creada, sin empezar         |
+| **In Progress** | Desarrollo activo                 |
+| **In Review**   | PR abierta, pendiente code review |
+| **Done**        | PR merged, issue cerrada          |
+| **Canceled**    | Issue no se implementará          |
 
 ### 4. Labels en Linear
 
 Crear labels que reflejen las de GitHub:
+
 - `security`, `priority:P0`, `area:frontend`, etc.
 - Facilita filtrado y búsqueda
 - Mantiene consistencia entre plataformas
@@ -250,6 +259,7 @@ Crear labels que reflejen las de GitHub:
 ### Error: "LINEAR_API_KEY not found"
 
 **Solución:**
+
 ```bash
 # Verifica que .env tiene la key
 grep LINEAR_API_KEY .env
@@ -265,6 +275,7 @@ source .env
 
 **Causa:** API key inválida o permisos insuficientes  
 **Solución:**
+
 1. Regenera API key en Linear Dashboard
 2. Verifica permisos `read` y `write`
 3. Actualiza `.env` con nueva key
@@ -272,6 +283,7 @@ source .env
 ### Issue no se sincroniza con GitHub
 
 **Verifica:**
+
 1. GitHub integration habilitada en Linear: Settings → Integrations → GitHub
 2. Repo correcto conectado: `Eibon7/roastr-ai`
 3. Referencias correctas en commits: `ROA-123` (mayúsculas)
@@ -281,11 +293,13 @@ source .env
 ## 📚 Recursos
 
 ### Linear
+
 - **Dashboard:** https://linear.app
 - **API Docs:** https://developers.linear.app/docs/graphql/working-with-the-graphql-api
 - **SDK Docs:** https://github.com/linear/linear-node-sdk
 
 ### Roastr.AI
+
 - **Helper Script:** `scripts/linear-helper.js`
 - **System Config:** `docs/SYSTEM-CONFIGURATION-REFERENCE.md`
 
@@ -315,4 +329,3 @@ gh pr create --title "feat: Feature" --body "Fixes ROA-XXX"
 ---
 
 **¿Listo para usar Linear?** Run `npm run linear:teams` to verify! 🎯
-
