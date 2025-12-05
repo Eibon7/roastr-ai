@@ -61,12 +61,34 @@ El SSOT previene:
 
 ### 4. Feature Flags
 
-15 flags autorizados:
+15 flags autorizados (lista completa, sin "etc."):
 
-- Core: `autopost_enabled`, `manual_approval_enabled`, etc.
-- Shield: `enable_shield`, `enable_roast`, `kill_switch_autopost`
-- UX: `show_two_roast_variants`, `show_transparency_disclaimer`
-- Experimental: `enable_style_validator`, etc.
+**Core Producto (6)**:
+
+1. `autopost_enabled`
+2. `manual_approval_enabled`
+3. `custom_prompt_enabled`
+4. `sponsor_feature_enabled`
+5. `personal_tone_enabled`
+6. `nsfw_tone_enabled`
+
+**Shield / Seguridad (4)**:
+
+7. `kill_switch_autopost`
+8. `enable_shield`
+9. `enable_roast`
+10. `enable_perspective_fallback_classifier`
+
+**UX / UI (2)**:
+
+11. `show_two_roast_variants`
+12. `show_transparency_disclaimer`
+
+**Despliegue / Experimentales (3)**:
+
+13. `enable_style_validator`
+14. `enable_advanced_tones`
+15. `enable_beta_sponsor_ui`
 
 ### 5. Shield & Análisis
 
