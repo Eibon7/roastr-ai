@@ -14,6 +14,9 @@ jobs:
   coderabbit-gate:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Check Coderabbit status (informative only)
         uses: actions/github-script@v8
         continue-on-error: true  # Intentionally non-blocking per maintainer decision
