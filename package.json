@@ -116,6 +116,7 @@
     "verify:env:config": "node scripts/verify-env-config.js",
     "verify:rls": "node scripts/verify-rls-security.js",
     "linear:create": "node scripts/linear-helper.js create",
+    "linear:show": "node scripts/linear-helper.js show",
     "linear:update": "node scripts/linear-helper.js update",
     "linear:list": "node scripts/linear-helper.js list",
     "linear:sync": "node scripts/linear-helper.js sync",
