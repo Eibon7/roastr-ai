@@ -212,7 +212,7 @@ class LinearHelper {
     Logger.info(`Created:     ${new Date(issue.createdAt).toLocaleString()}`);
     Logger.info(`Updated:     ${new Date(issue.updatedAt).toLocaleString()}`);
     Logger.info(`URL:         ${issue.url}`);
-    
+
     if (labels.nodes.length > 0) {
       Logger.info(`Labels:      ${labels.nodes.map((l) => l.name).join(', ')}`);
     }
@@ -250,7 +250,7 @@ class LinearHelper {
       Logger.info(`   GitHub: ${githubUrl}`);
       return issue;
     }
-    
+
     const updatedDescription = issue.description
       ? `${issue.description}\n\n---\n**GitHub:** ${githubUrl}`
       : `**GitHub:** ${githubUrl}`;
@@ -315,13 +315,15 @@ async function main() {
 
         if (titleIndex === -1 || !args[titleIndex + 1]) {
           Logger.error('❌ Missing --title argument or value');
-          Logger.error('   Usage: create --title "Issue title" [--description "..."] [--priority 0-4]');
+          Logger.error(
+            '   Usage: create --title "Issue title" [--description "..."] [--priority 0-4]'
+          );
           process.exit(1);
         }
 
         const title = args[titleIndex + 1];
         const description = descIndex !== -1 && args[descIndex + 1] ? args[descIndex + 1] : '';
-        
+
         // Validate priority (0-4)
         let priority = 2; // default
         if (priorityIndex !== -1) {
@@ -379,7 +381,7 @@ async function main() {
           // Normalize state name (case-insensitive)
           updates.status = args[statusIndex + 1].trim();
         }
-        
+
         // Validate title value if provided
         if (titleIndex !== -1) {
           if (!args[titleIndex + 1]) {
