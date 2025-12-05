@@ -27,9 +27,13 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
+      # Smoke Tests - Disabled until implemented
+      # TODO: Implement smoke:prod script for post-deployment validation
+      # Tracking: Issue #1095 - CI/CD infrastructure
       - name: Smoke Tests Production
+        if: false  # Disabled until smoke:prod script implemented
         env:
           PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
-        run: npm run smoke:prod || echo "⚠️ smoke:prod script not yet implemented"
+        run: npm run smoke:prod
 
 

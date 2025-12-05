@@ -31,20 +31,23 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # V2 Test Scripts (pending implementation)
+      # TODO: Remove continue-on-error when scripts are implemented
+      # Tracking: Issue #1095 - v2 test infrastructure
       - name: Typecheck
-        run: npm run typecheck || echo "⚠️ typecheck script not yet implemented (v2 pending)"
-        continue-on-error: true
+        if: false  # Disabled until v2 TypeScript setup complete
+        run: npm run typecheck
 
       - name: Unit Tests
-        run: npm run test:unit || echo "⚠️ test:unit script not yet implemented (v2 pending)"
-        continue-on-error: true
+        if: false  # Disabled until v2 Vitest unit tests complete
+        run: npm run test:unit
 
       - name: Integration Tests
         run: npm run test:integration || echo "⚠️ test:integration script not yet implemented (v2 pending)"
         continue-on-error: true
 
       - name: E2E Tests (critical paths)
-        run: npm run test:e2e:ci || echo "⚠️ test:e2e:ci script not yet implemented (v2 pending)"
-        continue-on-error: true
+        if: false  # Disabled until v2 Playwright E2E setup complete
+        run: npm run test:e2e:ci
 
 

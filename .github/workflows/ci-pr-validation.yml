@@ -1,5 +1,11 @@
 name: CI - PR Validation
 
+# PR Validation Workflow
+# Purpose: Informative CodeRabbit review status check
+# Note: This is intentionally non-blocking (continue-on-error: true) per maintainer decision.
+# The maintainer certifies CodeRabbit approval, not the CI gate.
+# See: PR #1096 discussion - maintainer requested non-blocking behavior
+
 on:
   pull_request:
     branches: [ main ]
@@ -10,7 +16,7 @@ jobs:
     steps:
       - name: Check Coderabbit status (informative only)
         uses: actions/github-script@v8
-        continue-on-error: true
+        continue-on-error: true  # Intentionally non-blocking per maintainer decision
         with:
           script: |
             const pr = context.payload.pull_request.number;
