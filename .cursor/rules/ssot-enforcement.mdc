@@ -1,0 +1,82 @@
+# SSOT ENFORCEMENT RULE (Roastr v2)
+
+# Agents MUST treat the following file as the single source of truth:
+
+docs/SSOT-V2.md
+
+# Note: This file exists in the current branch. After PR #1099 merge, 
+# the path may be updated to docs/roastr-ssot-v2.md if the SSOT structure changes.
+
+## 1. Forbidden
+
+Agents MUST NOT:
+
+- invent plans, tiers, pricing, limits or plan features.
+- invent feature flags not in SSOT.
+- invent platforms, billing providers, OAuth flows or webhooks.
+- invent states or transitions for billing or shield.
+- invent tones, prompt blocks, config keys or SSOT settings.
+- introduce legacy v1 elements unless explicitly migrating them.
+- override SSOT-defined behavior without updating SSOT first.
+
+If any violation is detected → STOP and output:
+"This requires an SSOT update first."
+
+## 2. Mandatory Validation Workflow
+
+Before implementing or generating code:
+
+1. Load the SSOT file.
+2. Identify relevant SSOT sections.
+3. Cross-check requested change against SSOT.
+4. If mismatch → block with:
+   "SSOT mismatch — update SSOT first."
+5. If aligned → proceed and reference applied SSOT rules.
+
+## 3. SSOT-First Code Generation
+
+- ALWAYS reference SSOT identifiers.
+- NEVER hardcode values in code that belong in SSOT.
+- All configurable behavior MUST use SSOT config loader.
+
+## 4. Test Engineer Requirements
+
+- Tests MUST use SSOT constants.
+- Block tests that create non-SSOT plan names, flags, or billing states.
+
+## 5. Orchestrator Requirements
+
+- Orchestrator must reject tasks that diverge from SSOT.
+- Enforce: "No SSOT update → No behavioral change."
+
+## 6. Spec-Update Skill Integration
+
+If a change contradicts SSOT:
+Output:
+"This change requires SSOT modification. Please update SSOT first."
+
+## 7. Anti AI-Slop Rule
+
+Generated diffs MUST:
+
+- match existing style,
+- avoid noise, defensive boilerplate, and `any` casts,
+- resemble human-written code.
+
+## 8. Block Legacy v1 Leakage
+
+Reject:
+
+- v1 plan names,
+- Stripe billing,
+- legacy platforms (unless migration explicitly requested),
+- v1 workers, prompts, or schemas.
+
+Message:
+"Legacy v1 reference detected. V2 only allows values defined in SSOT."
+
+## 9. Final Compliance Rule
+
+If SSOT and the task conflict → SSOT wins.  
+If SSOT is silent → agent MUST ask for clarification.  
+If SSOT is outdated → agent MUST request SSOT update before acting.
