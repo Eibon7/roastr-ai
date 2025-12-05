@@ -181,9 +181,14 @@ class LinearHelper {
     const issueNumber = identifier.split('-')[1];
     const team = await this.getDefaultTeam();
 
+    // Use team.id (works with LINEAR_TEAM_ID) or fallback to team.key
+    const teamFilter = team.key 
+      ? { team: { key: { eq: team.key } } }
+      : { team: { id: { eq: team.id } } };
+
     const issues = await this.client.issues({
       filter: {
-        team: { key: { eq: team.key } },
+        ...teamFilter,
         number: { eq: parseInt(issueNumber) }
       }
     });
