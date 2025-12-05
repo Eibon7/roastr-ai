@@ -42,14 +42,17 @@ El SSOT previene:
 ## 🔍 ¿Qué Define el SSOT?
 
 ### 1. Planes v2
+
 - ✅ `starter`, `pro`, `plus`
 - ❌ `free`, `basic`, `creator_plus` (legacy)
 
 ### 2. Billing
+
 - ✅ Polar (único proveedor v2)
 - ❌ Stripe (legacy v1)
 
 ### 3. Estados de Suscripción
+
 - `trialing`
 - `active`
 - `paused`
@@ -57,27 +60,34 @@ El SSOT previene:
 - `payment_retry`
 
 ### 4. Feature Flags
+
 15 flags autorizados:
+
 - Core: `autopost_enabled`, `manual_approval_enabled`, etc.
 - Shield: `enable_shield`, `enable_roast`, `kill_switch_autopost`
 - UX: `show_two_roast_variants`, `show_transparency_disclaimer`
 - Experimental: `enable_style_validator`, etc.
 
 ### 5. Shield & Análisis
+
 - Thresholds: `roastLower`, `shield`, `critical`
 - Weights: `lineaRoja`, `identidad`, `tolerancia`, strikes
 - Decisiones: `publicar`, `correctiva`, `roast`, `shield_moderado`, `shield_critico`
 
 ### 6. Tonos
+
 - ✅ `flanders`, `balanceado`, `canalla`, `personal`
 - ❌ `nsfw` (futuro, no usar en v2)
 
 ### 7. Plataformas MVP
+
 - ✅ X, YouTube
 - ⏳ Instagram, Facebook, Discord, Twitch, Reddit, TikTok, Bluesky (futuras)
 
 ### 8. Workers v2
+
 9 workers oficiales:
+
 - FetchComments
 - AnalyzeToxicity
 - GenerateRoast
@@ -89,14 +99,16 @@ El SSOT previene:
 - StrikeCleanup
 
 ### 9. Testing
+
 - Vitest (NO Jest)
 - Supabase Test (BD real)
 - Playwright (E2E)
 - Umbrales mínimos por categoría
 
 ### 10. Límites por Plan
+
 | Plan    | Análisis | Roasts | Cuentas/Red | Sponsors | Tono Personal |
-|---------|----------|--------|-------------|----------|---------------|
+| ------- | -------- | ------ | ----------- | -------- | ------------- |
 | starter | 1,000    | 5      | 1           | ❌       | ❌            |
 | pro     | 10,000   | 1,000  | 2           | ❌       | ✅            |
 | plus    | 100,000  | 5,000  | 2           | ✅       | ✅            |
@@ -174,4 +186,3 @@ Discrepancia detectada:
 ---
 
 **SSOT OPERATIVO — LISTO PARA DESARROLLO V2**
-

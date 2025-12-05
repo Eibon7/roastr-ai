@@ -1,4 +1,5 @@
 # Roastr v2 — SSOT (Single Source of Truth)
+
 _Versión inicial — derivada del Spec v2. Cualquier cambio de comportamiento debe pasar por este archivo._
 
 > ⚠️ Regla de oro  
@@ -32,7 +33,7 @@ Este documento define solo:
 ### 1.1 IDs de plan válidos (v2)
 
 ```ts
-type PlanId = "starter" | "pro" | "plus";
+type PlanId = 'starter' | 'pro' | 'plus';
 ```
 
 No existen otros planes válidos en v2.  
@@ -47,20 +48,20 @@ Cualquier referencia a:
 ### 1.2 Trial por plan
 
 | Plan    | trial_enabled | trial_days |
-|---------|---------------|-----------:|
-| starter | true          |        30  |
-| pro     | true          |         7  |
-| plus    | false         |         0  |
+| ------- | ------------- | ---------: |
+| starter | true          |         30 |
+| pro     | true          |          7 |
+| plus    | false         |          0 |
 
 ### 1.3 Límites mensuales funcionales por plan
 
 > Los valores numéricos concretos pueden vivir en DB/config, pero los **ratios y capacidades relativas** son contractuales.
 
 | Plan    | analysis_limit | roast_limit | accounts_per_platform | sponsors_allowed | tone_personal_allowed |
-|---------|----------------|-------------|------------------------|------------------|-----------------------|
-| starter | 1_000          | 5           | 1                      | false            | false                 |
-| pro     | 10_000         | 1_000       | 2                      | false            | true                  |
-| plus    | 100_000        | 5_000       | 2                      | true             | true                  |
+| ------- | -------------- | ----------- | --------------------- | ---------------- | --------------------- |
+| starter | 1_000          | 5           | 1                     | false            | false                 |
+| pro     | 10_000         | 1_000       | 2                     | false            | true                  |
+| plus    | 100_000        | 5_000       | 2                     | true             | true                  |
 
 ### 1.4 Capacidades por plan (alto nivel)
 
@@ -98,12 +99,12 @@ Cualquier referencia a:
 
 ```ts
 type SubscriptionState =
-  | "trialing"
-  | "expired_trial_pending_payment" // interno, se puede representar vía campos Polar
-  | "payment_retry"
-  | "active"
-  | "canceled_pending"
-  | "paused";
+  | 'trialing'
+  | 'expired_trial_pending_payment' // interno, se puede representar vía campos Polar
+  | 'payment_retry'
+  | 'active'
+  | 'canceled_pending'
+  | 'paused';
 ```
 
 ### 2.3 Reglas clave
@@ -152,12 +153,12 @@ type SubscriptionState =
 
 ```ts
 type PolarWebhookEvent =
-  | "subscription_created"
-  | "subscription_active"
-  | "subscription_canceled"
-  | "subscription_updated"
-  | "invoice_payment_failed"
-  | "invoice_payment_succeeded";
+  | 'subscription_created'
+  | 'subscription_active'
+  | 'subscription_canceled'
+  | 'subscription_updated'
+  | 'invoice_payment_failed'
+  | 'invoice_payment_succeeded';
 ```
 
 - `subscription_created` → `trialing` o `active` (Plus).
@@ -207,27 +208,27 @@ Todos los webhooks deben ser **idempotentes** y pasar por un **billingStateMachi
 ```ts
 type FeatureFlagKey =
   // Core producto
-  | "autopost_enabled"
-  | "manual_approval_enabled"
-  | "custom_prompt_enabled"
-  | "sponsor_feature_enabled"
-  | "personal_tone_enabled"
-  | "nsfw_tone_enabled"
+  | 'autopost_enabled'
+  | 'manual_approval_enabled'
+  | 'custom_prompt_enabled'
+  | 'sponsor_feature_enabled'
+  | 'personal_tone_enabled'
+  | 'nsfw_tone_enabled'
 
   // Shield / seguridad
-  | "kill_switch_autopost"
-  | "enable_shield"
-  | "enable_roast"
-  | "enable_perspective_fallback_classifier"
+  | 'kill_switch_autopost'
+  | 'enable_shield'
+  | 'enable_roast'
+  | 'enable_perspective_fallback_classifier'
 
   // UX / UI
-  | "show_two_roast_variants"
-  | "show_transparency_disclaimer"
+  | 'show_two_roast_variants'
+  | 'show_transparency_disclaimer'
 
   // Despliegue / experimentales controlados
-  | "enable_style_validator"
-  | "enable_advanced_tones"
-  | "enable_beta_sponsor_ui";
+  | 'enable_style_validator'
+  | 'enable_advanced_tones'
+  | 'enable_beta_sponsor_ui';
 ```
 
 > ❌ Cualquier flag fuera de esta lista se considera **no autorizado**  
@@ -282,8 +283,8 @@ Valores numéricos viven en DB/config, pero las **claves** son:
 ```ts
 type Thresholds = {
   roastLower: number; // τ_roast_lower
-  shield: number;     // τ_shield
-  critical: number;   // τ_critical
+  shield: number; // τ_shield
+  critical: number; // τ_critical
 };
 ```
 
@@ -291,13 +292,13 @@ type Thresholds = {
 
 ```ts
 type Weights = {
-  lineaRoja: number;   // default 1.15
-  identidad: number;   // default 1.10
-  tolerancia: number;  // default 0.95 (solo si score_base < τ_shield)
+  lineaRoja: number; // default 1.15
+  identidad: number; // default 1.10
+  tolerancia: number; // default 0.95 (solo si score_base < τ_shield)
 
-  strike1: number;     // 1.10
-  strike2: number;     // 1.25
-  critical: number;    // 1.50
+  strike1: number; // 1.10
+  strike2: number; // 1.25
+  critical: number; // 1.50
 };
 ```
 
@@ -314,12 +315,7 @@ type Weights = {
 ### 4.4 Salidas posibles del motor
 
 ```ts
-type AnalysisDecision =
-  | "publicar"
-  | "correctiva"
-  | "roast"
-  | "shield_moderado"
-  | "shield_critico";
+type AnalysisDecision = 'publicar' | 'correctiva' | 'roast' | 'shield_moderado' | 'shield_critico';
 ```
 
 ### 4.5 Reglas de "Correctiva"
@@ -340,9 +336,9 @@ type AnalysisDecision =
 
 ```ts
 type PersonaProfile = {
-  identidades: string[];   // "Lo que me define"
-  lineasRojas: string[];   // "Lo que no tolero"
-  tolerancias: string[];   // "Lo que me da igual"
+  identidades: string[]; // "Lo que me define"
+  lineasRojas: string[]; // "Lo que no tolero"
+  tolerancias: string[]; // "Lo que me da igual"
 };
 ```
 
@@ -364,16 +360,16 @@ type PersonaProfile = {
 
 Los modelos utilizados por cada capacidad del sistema son EXACTAMENTE los siguientes:
 
-| Feature / Capacidad                    | Modelo asignado |
-|----------------------------------------|-----------------|
-| Comment analysis                       | GPT-4 Turbo     |
-| Analysis gatekeeper                    | GPT-4 Turbo     |
-| Roast Generation (humor)               | GPT-5 mini      |
-| Original tone ingest (detección estilo)| GPT-4 Turbo     |
-| Tono Personal (Personal Tone)          | GPT-5 mini      |
-| Tono Flanders                          | GPT-4 Turbo     |
-| Tono Balanceado                        | GPT-5 mini      |
-| Tono Canalla                           | GPT-5 mini      |
+| Feature / Capacidad                     | Modelo asignado |
+| --------------------------------------- | --------------- |
+| Comment analysis                        | GPT-4 Turbo     |
+| Analysis gatekeeper                     | GPT-4 Turbo     |
+| Roast Generation (humor)                | GPT-5 mini      |
+| Original tone ingest (detección estilo) | GPT-4 Turbo     |
+| Tono Personal (Personal Tone)           | GPT-5 mini      |
+| Tono Flanders                           | GPT-4 Turbo     |
+| Tono Balanceado                         | GPT-5 mini      |
+| Tono Canalla                            | GPT-5 mini      |
 
 **Reglas**:
 
@@ -384,7 +380,7 @@ Los modelos utilizados por cada capacidad del sistema son EXACTAMENTE los siguie
 ### 6.2 Tonos oficiales
 
 ```ts
-type RoastTone = "flanders" | "balanceado" | "canalla" | "personal";
+type RoastTone = 'flanders' | 'balanceado' | 'canalla' | 'personal';
 ```
 
 - `flanders`: amable, diminutivos, humor blanco.
@@ -396,10 +392,10 @@ type RoastTone = "flanders" | "balanceado" | "canalla" | "personal";
 
 ```json
 [
-  { "name": "flanders",   "model": "GPT-4 Turbo", "prompt_base": "...", "active": true },
-  { "name": "balanceado", "model": "GPT-5 mini",  "prompt_base": "...", "active": true },
-  { "name": "canalla",    "model": "GPT-5 mini",  "prompt_base": "...", "active": true },
-  { "name": "personal",   "model": "GPT-5 mini",  "prompt_base": "...", "active": true }
+  { "name": "flanders", "model": "GPT-4 Turbo", "prompt_base": "...", "active": true },
+  { "name": "balanceado", "model": "GPT-5 mini", "prompt_base": "...", "active": true },
+  { "name": "canalla", "model": "GPT-5 mini", "prompt_base": "...", "active": true },
+  { "name": "personal", "model": "GPT-5 mini", "prompt_base": "...", "active": true }
 ]
 ```
 
@@ -437,7 +433,7 @@ type RoastTone = "flanders" | "balanceado" | "canalla" | "personal";
 
 ```ts
 type DisclaimerPool = {
-  tone: RoastTone | "corrective";
+  tone: RoastTone | 'corrective';
   variants: string[]; // 3–5 por tono
 };
 ```
@@ -451,7 +447,7 @@ type DisclaimerPool = {
 ### 7.1 Redes soportadas en v2 (MVP)
 
 ```ts
-type SupportedPlatform = "x" | "youtube";
+type SupportedPlatform = 'x' | 'youtube';
 ```
 
 - X:
@@ -496,15 +492,15 @@ Lista de redes planificadas:
 
 ```ts
 type WorkerName =
-  | "FetchComments"
-  | "AnalyzeToxicity"
-  | "GenerateRoast"
-  | "GenerateCorrectiveReply"
-  | "ShieldAction"
-  | "SocialPosting"
-  | "BillingUpdate"
-  | "CursorReconciliation"
-  | "StrikeCleanup";
+  | 'FetchComments'
+  | 'AnalyzeToxicity'
+  | 'GenerateRoast'
+  | 'GenerateCorrectiveReply'
+  | 'ShieldAction'
+  | 'SocialPosting'
+  | 'BillingUpdate'
+  | 'CursorReconciliation'
+  | 'StrikeCleanup';
 ```
 
 ### 8.2 Tenancy
@@ -650,6 +646,7 @@ Para cualquier cambio generado con ayuda de IA:
 ## 13. Regla final
 
 > Ningún nuevo comportamiento de Roastr v2 se puede introducir sin:
+>
 > 1. Estar alineado con este SSOT, **o**
 > 2. Modificar explícitamente este SSOT (en PR separado o claramente marcado).
 
@@ -659,4 +656,3 @@ Si Cursor / cualquier agente propone algo que contradice esto, la respuesta corr
 - **Comunicar la discrepancia al usuario de forma clara**,
 - **No proceder** hasta que se aclare la situación,
 - Proponer actualización del SSOT o corrección del código según corresponda.
-
