@@ -1,9 +1,11 @@
 # SCOPE & SSOT ENFORCEMENT RULE (v2.1)
 
-**Versión:** 2.1  
+**Versión:** 2.1 (versión de la regla, no de los nodos GDD)  
 **Fecha:** 2025-12-02  
 **Estado:** ✅ Activo  
 **Propósito:** Garantizar que ningún agente (Cursor/Claude) se salga del scope de una issue, ni contradiga los nodos del GDD, ni contradiga el SSOT, con protocolo seguro para manejar ideas nuevas sin romper nada.
+
+**⚠️ IMPORTANTE:** Esta regla referencia `docs/SSOT-V2.md` extensivamente. Este archivo debe existir en el repositorio para que la regla funcione correctamente. Si no existe, debe crearse o las referencias deben actualizarse a la ubicación correcta del SSOT.
 
 ---
 
@@ -11,8 +13,8 @@
 
 **Jerarquía de autoridad (en orden de precedencia):**
 
-1. **SSOT v2** (`docs/SSOT-V2.md`) → GANA SIEMPRE sobre código/GDD
-2. **Nodos GDD v2** (`docs/nodes/*.md`) → Define CÓMO debe funcionar
+1. **SSOT v2** (`docs/SSOT-V2.md` ⚠️ debe existir) → GANA SIEMPRE sobre código/GDD
+2. **Nodos GDD** (`docs/nodes/*.md` - nodos actuales) → Define CÓMO debe funcionar
 3. **Scope de la Issue** (Linear/GitHub) → Define QUÉ implementar
 
 **Regla de resolución de conflictos:**
@@ -100,8 +102,9 @@ node scripts/resolve-graph.js <nodos-detectados>
 **Comandos de verificación:**
 
 ```bash
-# Leer SSOT
+# Leer SSOT (verificar que existe primero)
 # @docs/SSOT-V2.md
+# ⚠️ Si el archivo no existe, debe crearse o actualizarse la referencia
 
 # Buscar violaciones SSOT
 grep -r "free\|basic\|creator_plus\|stripe\|sendgrid" src/ --exclude-dir=node_modules
@@ -574,8 +577,8 @@ type PlanId = "starter" | "pro" | "plus" | "enterprise";
 
 ### Archivos Clave
 
-- **SSOT v2:** `docs/SSOT-V2.md`
-- **Nodos GDD:** `docs/nodes/*.md`
+- **SSOT v2:** `docs/SSOT-V2.md` ⚠️ **Nota:** Este archivo debe existir en el repositorio. Si no existe, debe crearse o actualizarse la referencia a la ubicación correcta del SSOT.
+- **Nodos GDD:** `docs/nodes/*.md` (nodos v1 actuales - la versión "v2.1" de esta regla se refiere a la versión de la regla, no a los nodos)
 - **System Map:** `docs/system-map.yaml`
 - **GDD Activation Guide:** `docs/GDD-ACTIVATION-GUIDE.md`
 - **SSOT Enforcement (legacy):** `.cursor/rules/ssot-enforcement.mdc`
