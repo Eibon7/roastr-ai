@@ -50,8 +50,7 @@ jobs:
         if: false  # Disabled until v2 Playwright E2E setup complete
         run: npm run test:e2e:ci
 
-      - name: Check Coverage Threshold (if available)
-        continue-on-error: true  # Informative until v2 coverage scripts ready
+      - name: Validate Coverage Threshold (≥90% required)
         run: |
           if [ -f "coverage/coverage-summary.json" ]; then
             if command -v jq &> /dev/null; then
@@ -60,19 +59,32 @@ jobs:
                 echo "📊 Current coverage: ${COVERAGE}%"
                 COVERAGE_INT=$(echo "$COVERAGE" | cut -d. -f1)
                 if [ "$COVERAGE_INT" -lt 90 ]; then
-                  echo "⚠️ Coverage ${COVERAGE}% is below 90% threshold"
-                  echo "ℹ️ This is informative only until v2 coverage scripts are implemented"
+                  echo "❌ Coverage ${COVERAGE}% is below 90% threshold (required for v2)"
+                  exit 1
                 else
                   echo "✅ Coverage ${COVERAGE}% meets 90% threshold"
                 fi
               else
-                echo "ℹ️ Coverage data not available in expected format"
+                echo "⚠️ Coverage data not available in expected format"
+                echo "ℹ️ Skipping coverage validation (v2 coverage scripts pending)"
               fi
             else
-              echo "ℹ️ jq not available, skipping coverage check"
+              echo "⚠️ jq not available, installing..."
+              sudo apt-get update && sudo apt-get install -y jq
+              # Retry with jq
+              COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json 2>/dev/null || echo "0")
+              if [ "$COVERAGE" != "0" ] && [ "$COVERAGE" != "null" ]; then
+                COVERAGE_INT=$(echo "$COVERAGE" | cut -d. -f1)
+                if [ "$COVERAGE_INT" -lt 90 ]; then
+                  echo "❌ Coverage ${COVERAGE}% is below 90% threshold"
+                  exit 1
+                fi
+              fi
             fi
           else
-            echo "ℹ️ Coverage report not found (v2 pending or not generated)"
+            echo "⚠️ Coverage report not found"
+            echo "ℹ️ Coverage validation skipped (v2 coverage scripts pending)"
+            echo "⚠️ WARNING: Coverage validation will be required once v2 test infrastructure is complete"
           fi
 
 

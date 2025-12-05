@@ -27,13 +27,39 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      # Smoke Tests - Disabled until implemented
-      # TODO: Implement smoke:prod script for post-deployment validation
-      # Tracking: Issue #1095 - CI/CD infrastructure
-      - name: Smoke Tests Production
-        if: false  # Disabled until smoke:prod script implemented
+      - name: Smoke Tests Production (Health Check)
         env:
           PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
-        run: npm run smoke:prod
+        run: |
+          if [ -z "$PRODUCTION_URL" ]; then
+            echo "⚠️ PRODUCTION_URL not configured, skipping smoke tests"
+            exit 0
+          fi
+          
+          echo "🔍 Checking production deployment health..."
+          
+          # Basic health check with retries
+          MAX_RETRIES=3
+          RETRY_DELAY=10
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$PRODUCTION_URL/health" || echo "000")
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Production health check passed (HTTP $HTTP_CODE)"
+              exit 0
+            fi
+            
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              echo "⚠️ Health check failed (HTTP $HTTP_CODE), retrying in ${RETRY_DELAY}s... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+              sleep $RETRY_DELAY
+            fi
+          done
+          
+          echo "❌ Production health check failed after $MAX_RETRIES attempts (HTTP $HTTP_CODE)"
+          echo "🔗 Production URL: $PRODUCTION_URL/health"
+          exit 1
 
 

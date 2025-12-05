@@ -12,7 +12,7 @@ Roastr.AI está integrado con Linear para gestión de issues y planning, manteni
 
 **Workflow Híbrido:**
 
-```
+```text
 Linear (Issues & Planning) ←→ GitHub (PRs & Code Review)
          ROA-123                      #1094
 ```

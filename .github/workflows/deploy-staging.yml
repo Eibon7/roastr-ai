@@ -28,12 +28,38 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      # Smoke Tests - Disabled until implemented
-      # TODO: Implement smoke:staging script for post-deployment validation
-      # Tracking: Issue #1095 - CI/CD infrastructure
-      - name: Run Smoke Tests
-        if: false  # Disabled until smoke:staging script implemented
+      - name: Run Smoke Tests (Health Check)
         env:
           STAGING_URL: ${{ secrets.STAGING_URL }}
-        run: npm run smoke:staging
+        run: |
+          if [ -z "$STAGING_URL" ]; then
+            echo "⚠️ STAGING_URL not configured, skipping smoke tests"
+            exit 0
+          fi
+          
+          echo "🔍 Checking staging deployment health..."
+          
+          # Basic health check with retries
+          MAX_RETRIES=3
+          RETRY_DELAY=10
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$STAGING_URL/health" || echo "000")
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Staging health check passed (HTTP $HTTP_CODE)"
+              exit 0
+            fi
+            
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              echo "⚠️ Health check failed (HTTP $HTTP_CODE), retrying in ${RETRY_DELAY}s... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+              sleep $RETRY_DELAY
+            fi
+          done
+          
+          echo "❌ Staging health check failed after $MAX_RETRIES attempts (HTTP $HTTP_CODE)"
+          echo "🔗 Staging URL: $STAGING_URL/health"
+          exit 1
 
