@@ -207,7 +207,7 @@ Usuario puede solicitar **eliminación inmediata**:
 
 **No reversible** una vez finalizado.
 
-Polar/Stripe mantienen mínimo legal fiscal, pero Roastr no ve esos datos.
+Polar mantiene mínimo legal fiscal, pero Roastr no ve esos datos.
 
 ### Disclaimers IA:
 

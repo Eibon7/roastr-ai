@@ -224,6 +224,11 @@ Todos los E2E deben usar:
 
 - Todos los nodos (cada uno define su Test Matrix)
 
+### Agentes Relevantes:
+
+- Guardian
+- TestEngineer
+
 ---
 
 ## 7. Edge Cases

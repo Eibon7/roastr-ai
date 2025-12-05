@@ -248,8 +248,9 @@ Todo cambio genera:
    - Logs de intento
 
 6. **Flag experimental activado en prod**:
-   - Permitido pero loggeado
-   - Visible en métricas
+   - Bloqueado (no-op)
+   - Log de intento + alerta
+   - Visible en métricas de seguridad
 
 7. **Admin sin permisos intenta editar**:
    - Rechazado (solo superadmin)
