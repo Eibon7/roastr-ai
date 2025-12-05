@@ -19,6 +19,7 @@
  */
 
 const { LinearClient } = require('@linear/sdk');
+const Logger = require('../src/utils/logger');
 require('dotenv').config();
 
 class LinearHelper {
@@ -26,11 +27,11 @@ class LinearHelper {
     this.apiKey = process.env.LINEAR_API_KEY;
 
     if (!this.apiKey) {
-      console.error('❌ LINEAR_API_KEY not found in environment');
-      console.error('   Get your Personal API key from: https://linear.app/settings/api');
-      console.error('   Section: "Personal API keys" → Create key');
-      console.error('   Add to .env: LINEAR_API_KEY=lin_api_...');
-      console.error('   ⚠️  Use Personal API key, NOT Application key');
+      Logger.error('❌ LINEAR_API_KEY not found in environment');
+      Logger.error('   Get your Personal API key from: https://linear.app/settings/api');
+      Logger.error('   Section: "Personal API keys" → Create key');
+      Logger.error('   Add to .env: LINEAR_API_KEY=lin_api_...');
+      Logger.error('   ⚠️  Use Personal API key, NOT Application key');
       process.exit(1);
     }
 
@@ -53,7 +54,7 @@ class LinearHelper {
       throw new Error('No teams found in Linear workspace');
     }
 
-    console.log(`📍 Using team: ${team.name} (${team.key})`);
+    Logger.info(`📍 Using team: ${team.name} (${team.key})`);
     return team;
   }
 
@@ -80,10 +81,10 @@ class LinearHelper {
       throw new Error('Failed to create issue');
     }
 
-    console.log('✅ Issue created in Linear:');
-    console.log(`   ID: ${issue.identifier}`);
-    console.log(`   Title: ${issue.title}`);
-    console.log(`   URL: ${issue.url}`);
+    Logger.info('✅ Issue created in Linear:');
+    Logger.info(`   ID: ${issue.identifier}`);
+    Logger.info(`   Title: ${issue.title}`);
+    Logger.info(`   URL: ${issue.url}`);
 
     return issue;
   }
@@ -134,8 +135,8 @@ class LinearHelper {
 
     await this.client.updateIssue(issue.id, updatePayload);
 
-    console.log(`✅ Issue ${identifier} updated`);
-    console.log(`   URL: ${issue.url}`);
+    Logger.info(`✅ Issue ${identifier} updated`);
+    Logger.info(`   URL: ${issue.url}`);
 
     return issue;
   }
@@ -158,16 +159,16 @@ class LinearHelper {
 
     const issues = await this.client.issues({ filter: issueFilter });
 
-    console.log(`📋 Found ${issues.nodes.length} issues:\n`);
+    Logger.info(`📋 Found ${issues.nodes.length} issues:\n`);
 
     // Access state safely (may need async fetch)
     for (const [index, issue] of issues.nodes.entries()) {
       const state = await issue.state;
-      console.log(`${index + 1}. ${issue.identifier}: ${issue.title}`);
-      console.log(`   Status: ${state?.name || 'Unknown'}`);
-      console.log(`   Priority: ${this.getPriorityLabel(issue.priority)}`);
-      console.log(`   URL: ${issue.url}`);
-      console.log('');
+      Logger.info(`${index + 1}. ${issue.identifier}: ${issue.title}`);
+      Logger.info(`   Status: ${state?.name || 'Unknown'}`);
+      Logger.info(`   Priority: ${this.getPriorityLabel(issue.priority)}`);
+      Logger.info(`   URL: ${issue.url}`);
+      Logger.info('');
     }
 
     return issues.nodes;
@@ -199,28 +200,28 @@ class LinearHelper {
     const labels = await issue.labels();
     const creator = await issue.creator;
 
-    console.log('📋 Issue Details');
-    console.log('='.repeat(60));
-    console.log('');
-    console.log(`ID:          ${issue.identifier}`);
-    console.log(`Title:       ${issue.title}`);
-    console.log(`Status:      ${state?.name || 'Unknown'}`);
-    console.log(`Priority:    ${this.getPriorityLabel(issue.priority)}`);
-    console.log(`Assignee:    ${assignee?.name || 'Unassigned'}`);
-    console.log(`Creator:     ${creator?.name || 'Unknown'}`);
-    console.log(`Created:     ${new Date(issue.createdAt).toLocaleString()}`);
-    console.log(`Updated:     ${new Date(issue.updatedAt).toLocaleString()}`);
-    console.log(`URL:         ${issue.url}`);
-
+    Logger.info('📋 Issue Details');
+    Logger.info('='.repeat(60));
+    Logger.info('');
+    Logger.info(`ID:          ${issue.identifier}`);
+    Logger.info(`Title:       ${issue.title}`);
+    Logger.info(`Status:      ${state?.name || 'Unknown'}`);
+    Logger.info(`Priority:    ${this.getPriorityLabel(issue.priority)}`);
+    Logger.info(`Assignee:    ${assignee?.name || 'Unassigned'}`);
+    Logger.info(`Creator:     ${creator?.name || 'Unknown'}`);
+    Logger.info(`Created:     ${new Date(issue.createdAt).toLocaleString()}`);
+    Logger.info(`Updated:     ${new Date(issue.updatedAt).toLocaleString()}`);
+    Logger.info(`URL:         ${issue.url}`);
+    
     if (labels.nodes.length > 0) {
-      console.log(`Labels:      ${labels.nodes.map((l) => l.name).join(', ')}`);
+      Logger.info(`Labels:      ${labels.nodes.map((l) => l.name).join(', ')}`);
     }
 
-    console.log('');
-    console.log('Description:');
-    console.log('-'.repeat(60));
-    console.log(issue.description || 'No description');
-    console.log('');
+    Logger.info('');
+    Logger.info('Description:');
+    Logger.info('-'.repeat(60));
+    Logger.info(issue.description || 'No description');
+    Logger.info('');
 
     return issue;
   }
@@ -244,12 +245,12 @@ class LinearHelper {
 
     // Check if GitHub URL already exists (prevent duplication)
     if (issue.description && issue.description.includes(githubUrl)) {
-      console.log(`ℹ️  ${linearId} already synced with GitHub #${githubIssueNumber}`);
-      console.log(`   Linear: ${issue.url}`);
-      console.log(`   GitHub: ${githubUrl}`);
+      Logger.info(`ℹ️  ${linearId} already synced with GitHub #${githubIssueNumber}`);
+      Logger.info(`   Linear: ${issue.url}`);
+      Logger.info(`   GitHub: ${githubUrl}`);
       return issue;
     }
-
+    
     const updatedDescription = issue.description
       ? `${issue.description}\n\n---\n**GitHub:** ${githubUrl}`
       : `**GitHub:** ${githubUrl}`;
@@ -258,9 +259,9 @@ class LinearHelper {
       description: updatedDescription
     });
 
-    console.log(`✅ Synced ${linearId} with GitHub #${githubIssueNumber}`);
-    console.log(`   Linear: ${issue.url}`);
-    console.log(`   GitHub: ${githubUrl}`);
+    Logger.info(`✅ Synced ${linearId} with GitHub #${githubIssueNumber}`);
+    Logger.info(`   Linear: ${issue.url}`);
+    Logger.info(`   GitHub: ${githubUrl}`);
 
     return issue;
   }
@@ -285,13 +286,13 @@ class LinearHelper {
   async getTeamInfo() {
     const teams = await this.client.teams();
 
-    console.log('📊 Linear Teams:\n');
+    Logger.info('📊 Linear Teams:\n');
 
     teams.nodes.forEach((team, index) => {
-      console.log(`${index + 1}. ${team.name}`);
-      console.log(`   Key: ${team.key}`);
-      console.log(`   ID: ${team.id}`);
-      console.log('');
+      Logger.info(`${index + 1}. ${team.name}`);
+      Logger.info(`   Key: ${team.key}`);
+      Logger.info(`   ID: ${team.id}`);
+      Logger.info('');
     });
 
     return teams.nodes;
@@ -312,14 +313,30 @@ async function main() {
         const descIndex = args.indexOf('--description');
         const priorityIndex = args.indexOf('--priority');
 
-        if (titleIndex === -1) {
-          console.error('❌ Missing --title argument');
+        if (titleIndex === -1 || !args[titleIndex + 1]) {
+          Logger.error('❌ Missing --title argument or value');
+          Logger.error('   Usage: create --title "Issue title" [--description "..."] [--priority 0-4]');
           process.exit(1);
         }
 
         const title = args[titleIndex + 1];
-        const description = descIndex !== -1 ? args[descIndex + 1] : '';
-        const priority = priorityIndex !== -1 ? parseInt(args[priorityIndex + 1]) : 2;
+        const description = descIndex !== -1 && args[descIndex + 1] ? args[descIndex + 1] : '';
+        
+        // Validate priority (0-4)
+        let priority = 2; // default
+        if (priorityIndex !== -1) {
+          if (!args[priorityIndex + 1]) {
+            Logger.error('❌ Missing value for --priority argument');
+            Logger.error('   Priority must be 0-4 (0=None, 1=Urgent, 2=High, 3=Medium, 4=Low)');
+            process.exit(1);
+          }
+          priority = parseInt(args[priorityIndex + 1], 10);
+          if (isNaN(priority) || priority < 0 || priority > 4) {
+            Logger.error(`❌ Invalid priority: ${args[priorityIndex + 1]}`);
+            Logger.error('   Priority must be 0-4 (0=None, 1=Urgent, 2=High, 3=Medium, 4=Low)');
+            process.exit(1);
+          }
+        }
 
         await helper.createIssue({ title, description, priority });
         break;
@@ -328,9 +345,9 @@ async function main() {
       case 'show': {
         const idIndex = args.indexOf('--id');
 
-        if (idIndex === -1) {
-          console.error('❌ Missing --id argument');
-          console.error('   Usage: show --id ROA-123');
+        if (idIndex === -1 || !args[idIndex + 1]) {
+          Logger.error('❌ Missing --id argument or value');
+          Logger.error('   Usage: show --id ROA-123');
           process.exit(1);
         }
 
@@ -344,16 +361,33 @@ async function main() {
         const statusIndex = args.indexOf('--status');
         const titleIndex = args.indexOf('--title');
 
-        if (idIndex === -1) {
-          console.error('❌ Missing --id argument');
+        if (idIndex === -1 || !args[idIndex + 1]) {
+          Logger.error('❌ Missing --id argument or value');
+          Logger.error('   Usage: update --id ROA-123 [--status "In Progress"] [--title "..."]');
           process.exit(1);
         }
 
         const identifier = args[idIndex + 1];
         const updates = {};
 
-        if (statusIndex !== -1) updates.status = args[statusIndex + 1];
-        if (titleIndex !== -1) updates.title = args[titleIndex + 1];
+        // Validate status value if provided
+        if (statusIndex !== -1) {
+          if (!args[statusIndex + 1]) {
+            Logger.error('❌ Missing value for --status argument');
+            process.exit(1);
+          }
+          // Normalize state name (case-insensitive)
+          updates.status = args[statusIndex + 1].trim();
+        }
+        
+        // Validate title value if provided
+        if (titleIndex !== -1) {
+          if (!args[titleIndex + 1]) {
+            Logger.error('❌ Missing value for --title argument');
+            process.exit(1);
+          }
+          updates.title = args[titleIndex + 1];
+        }
 
         await helper.updateIssue(identifier, updates);
         break;
@@ -375,14 +409,27 @@ async function main() {
         const linearIndex = args.indexOf('--linear');
         const githubIndex = args.indexOf('--github');
 
-        if (linearIndex === -1 || githubIndex === -1) {
-          console.error('❌ Missing --linear and/or --github arguments');
-          console.error('   Usage: sync --linear ROA-123 --github 1093');
+        if (linearIndex === -1 || !args[linearIndex + 1]) {
+          Logger.error('❌ Missing --linear argument or value');
+          Logger.error('   Usage: sync --linear ROA-123 --github 1093');
+          process.exit(1);
+        }
+
+        if (githubIndex === -1 || !args[githubIndex + 1]) {
+          Logger.error('❌ Missing --github argument or value');
+          Logger.error('   Usage: sync --linear ROA-123 --github 1093');
           process.exit(1);
         }
 
         const linearId = args[linearIndex + 1];
         const githubIssue = args[githubIndex + 1];
+
+        // Validate GitHub issue number is numeric
+        if (isNaN(parseInt(githubIssue, 10))) {
+          Logger.error(`❌ Invalid GitHub issue number: ${githubIssue}`);
+          Logger.error('   GitHub issue number must be numeric');
+          process.exit(1);
+        }
 
         await helper.syncWithGitHub(linearId, githubIssue);
         break;
@@ -394,19 +441,19 @@ async function main() {
       }
 
       default:
-        console.log('Linear Helper - Usage:\n');
-        console.log('  create    --title "..." [--description "..."] [--priority 1-4]');
-        console.log('  show      --id ROA-123');
-        console.log('  update    --id ROA-123 [--status "In Progress"] [--title "..."]');
-        console.log('  list      [--state "Todo"]');
-        console.log('  sync      --linear ROA-123 --github 1093');
-        console.log('  teams     Show team information');
-        console.log('\nStates: Todo, In Progress, Done, Canceled');
-        console.log('Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low');
+        Logger.info('Linear Helper - Usage:\n');
+        Logger.info('  create    --title "..." [--description "..."] [--priority 0-4]');
+        Logger.info('  show      --id ROA-123');
+        Logger.info('  update    --id ROA-123 [--status "In Progress"] [--title "..."]');
+        Logger.info('  list      [--state "Todo"]');
+        Logger.info('  sync      --linear ROA-123 --github 1093');
+        Logger.info('  teams     Show team information');
+        Logger.info('\nStates: Todo, In Progress, Done, Canceled');
+        Logger.info('Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low');
         process.exit(1);
     }
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    Logger.error('❌ Error:', error.message);
     process.exit(1);
   }
 }
