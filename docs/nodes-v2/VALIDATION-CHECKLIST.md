@@ -49,12 +49,14 @@ Todos los nodos incluyen:
 ## ✅ Checklist de Alineación SSOT
 
 ### Planes:
+
 - [x] Solo 3 planes válidos: `starter`, `pro`, `plus`
 - [x] ❌ NO referencias a `free`, `basic`, `creator_plus`
 - [x] Límites por plan consistentes en todos los nodos
 - [x] Trials: Starter (30d), Pro (7d), Plus (0d)
 
 ### Feature Flags:
+
 - [x] 15 flags oficiales listados
 - [x] ❌ NO flags no autorizados
 - [x] `personal_tone_enabled` (no `original_tone_enabled`)
@@ -62,6 +64,7 @@ Todos los nodos incluyen:
 - [x] `manual_approval_enabled` confirmado
 
 ### Billing:
+
 - [x] Polar único proveedor
 - [x] ❌ NO Stripe en v2
 - [x] 6 estados de suscripción
@@ -69,31 +72,37 @@ Todos los nodos incluyen:
 - [x] Regla trial cancelado → corte inmediato
 
 ### Tonos:
+
 - [x] 4 tonos: `flanders`, `balanceado`, `canalla`, `personal`
 - [x] `nsfw` bloqueado (flag OFF)
 - [x] Tono personal solo Pro/Plus
 
 ### Plataformas:
+
 - [x] MVP: X, YouTube únicamente
 - [x] Otras 7 marcadas como futuras (NO legacy)
 - [x] ❌ NO implementar sin tarea explícita
 
 ### Workers:
+
 - [x] 9 workers oficiales listados
 - [x] Idempotentes
 - [x] Colas prefijadas `v2_*`
 - [x] Retries + DLQ
 
 ### Thresholds/Weights:
+
 - [x] roastLower, shield, critical
 - [x] lineaRoja (1.15), identidad (1.10), tolerancia (0.95)
 - [x] Strikes: 1.10, 1.25, 1.50
 
 ### Decisiones Motor:
+
 - [x] 5 decisiones: publicar, correctiva, roast, shield_moderado, shield_critico
 - [x] Árbol prioridad documentado
 
 ### GDPR:
+
 - [x] Retención 90 días
 - [x] Persona cifrado AES-256-GCM
 - [x] ❌ NO texto crudo en logs
@@ -104,6 +113,7 @@ Todos los nodos incluyen:
 ## ✅ Checklist de Testing
 
 ### Test Matrix:
+
 - [x] Todos los nodos tienen sección Test Matrix
 - [x] Unit tests definidos (Vitest)
 - [x] Integration tests definidos (Supabase Test)
@@ -111,6 +121,7 @@ Todos los nodos incluyen:
 - [x] Coverage mínima especificada
 
 ### Tests Específicos:
+
 - [x] Motor análisis: 10 tests obligatorios
 - [x] Shield: 8 tests
 - [x] Roasting: 6 tests
@@ -118,6 +129,7 @@ Todos los nodos incluyen:
 - [x] E2E: 6-10 flujos críticos
 
 ### Prohibiciones:
+
 - [x] ❌ NO mockear Supabase (usar Supabase Test)
 - [x] ❌ NO testear ruido (clicks triviales, CSS)
 - [x] ❌ NO mock hell
@@ -128,6 +140,7 @@ Todos los nodos incluyen:
 ## ✅ Checklist de Dependencies
 
 ### Servicios Externos:
+
 - [x] Supabase (Auth + DB + Storage)
 - [x] Polar (Billing)
 - [x] Resend (Email)
@@ -137,6 +150,7 @@ Todos los nodos incluyen:
 - [x] YouTube API (googleapis)
 
 ### Referencias Cruzadas:
+
 - [x] Todos los nodos tienen "Nodos Relacionados"
 - [x] Dependencies mapeadas
 - [x] Referencias a SSOT incluidas
@@ -147,12 +161,14 @@ Todos los nodos incluyen:
 ## ✅ Checklist de Implementation Notes
 
 ### Código Ejemplo:
+
 - [x] Todos los nodos incluyen código TypeScript
 - [x] Ejemplos realistas (no pseudocódigo)
 - [x] Estructura de directorios clara
 - [x] Setup instructions incluidas
 
 ### Referencias:
+
 - [x] Spec v2 section referenciada
 - [x] SSOT section referenciada
 - [x] Docs externas (cuando aplica)
@@ -162,12 +178,14 @@ Todos los nodos incluyen:
 ## ✅ Checklist de Edge Cases
 
 ### Cobertura:
+
 - [x] ~150 edge cases documentados total
 - [x] Solo los definidos en Spec/SSOT
 - [x] ❌ NO inventados
 - [x] Cada edge case con handling claro
 
 ### Categorías Cubiertas:
+
 - [x] Límites agotados
 - [x] Errores de API externa
 - [x] Tokens expirados/revocados
@@ -182,6 +200,7 @@ Todos los nodos incluyen:
 ## ✅ Checklist de Documentación
 
 ### Archivos Creados:
+
 - [x] 15 nodos en `docs/nodes-v2/`
 - [x] README.md en `docs/nodes-v2/`
 - [x] VALIDATION-CHECKLIST.md (este archivo)
@@ -192,6 +211,7 @@ Todos los nodos incluyen:
 - [x] Generation Summary en `docs/GDD-NODES-V2-GENERATION-SUMMARY.md`
 
 ### Cursor Rules:
+
 - [x] `.cursor/rules/ssot-enforcement.mdc`
 - [x] CLAUDE.md actualizado (sección SSOT)
 
@@ -200,23 +220,27 @@ Todos los nodos incluyen:
 ## 🎯 Comandos de Verificación
 
 ### Listar Nodos:
+
 ```bash
 ls -la /Users/emiliopostigo/roastr-ai/docs/nodes-v2/
 ```
 
 ### Contar Nodos:
+
 ```bash
 ls /Users/emiliopostigo/roastr-ai/docs/nodes-v2/*.md | wc -l
 # Esperado: 18 (15 v2 + 2 legacy + 1 README)
 ```
 
 ### Verificar Estructura (10 secciones):
+
 ```bash
 grep -c "^## [0-9]" /Users/emiliopostigo/roastr-ai/docs/nodes-v2/01-arquitectura-general.md
 # Esperado: 10
 ```
 
 ### Buscar Referencias Legacy:
+
 ```bash
 grep -r "free\|basic\|creator_plus" /Users/emiliopostigo/roastr-ai/docs/nodes-v2/*.md
 # Esperado: 0 matches (solo en exclusiones)
@@ -248,4 +272,3 @@ LISTO PARA DESARROLLO V2 🚀
 **Última verificación**: 2025-12-04  
 **Validador**: Orchestrator Agent  
 **Resultado**: ✅ APROBADO
-

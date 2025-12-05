@@ -28,24 +28,29 @@
 ## ✅ NODOS GENERADOS (15)
 
 ### 🏗️ Core Sistema (4)
+
 1. ✅ **01-arquitectura-general.md** - Monorepo, hexagonal, workers, SSOT
 2. ✅ **02-autenticacion-usuarios.md** - Auth, roles, Persona cifrado, onboarding
 3. ✅ **03-billing-polar.md** - Planes, trials, state machine, webhooks
 4. ✅ **04-integraciones.md** - X, YouTube, OAuth, estados, health
 
 ### 🧠 Motores de Decisión (3)
+
 5. ✅ **05-motor-analisis.md** - Perspective, Persona, reincidencia, decisiones
 6. ✅ **06-motor-roasting.md** - Tonos, prompts A/B/C, Style Validator
 7. ✅ **07-shield.md** - Moderado/crítico, acciones, strikes
 
 ### ⚙️ Ejecución (1)
+
 8. ✅ **08-workers.md** - 9 workers, idempotencia, retries, DLQ
 
 ### 💻 Frontend (2)
+
 9. ✅ **09-panel-usuario.md** - Dashboard, cuentas, roasts, settings
 10. ✅ **10-panel-administracion.md** - Usuarios, impersonación, SSOT editor, métricas
 
 ### 🔧 Sistema (5)
+
 11. ✅ **11-feature-flags.md** - 15 flags oficiales, enforcement
 12. ✅ **12-gdpr-legal.md** - Retención 90d, cifrado, disclaimers
 13. ✅ **13-testing.md** - Vitest, Supabase Test, Playwright
@@ -57,6 +62,7 @@
 ## 📐 ESTRUCTURA VALIDADA
 
 ✅ **Cada nodo incluye 10 secciones obligatorias**:
+
 1. Summary
 2. Responsibilities
 3. Inputs
@@ -75,17 +81,20 @@
 ## 🎯 VALIDACIÓN SSOT vs SPEC
 
 ### Pre-Generación:
+
 ✅ SSOT cargado y analizado  
 ✅ Spec v2 cargado y analizado  
 ✅ 3 discrepancias detectadas:
-  1. `original_tone_enabled` → `personal_tone_enabled` (resuelto)
-  2. `enable_perspective_fallback_classifier` faltante (añadido)
-  3. `manual_approval_enabled` sin listar (confirmado)
+
+1. `original_tone_enabled` → `personal_tone_enabled` (resuelto)
+2. `enable_perspective_fallback_classifier` faltante (añadido)
+3. `manual_approval_enabled` sin listar (confirmado)
 
 ✅ SSOT actualizado  
 ✅ 100% alineación confirmada
 
 ### Post-Generación:
+
 ✅ 0% inventado  
 ✅ 0% legacy v1 en nodos v2  
 ✅ 100% basado en SSOT + Spec  
@@ -96,30 +105,37 @@
 ## 📋 ELEMENTOS CLAVE
 
 ### Planes v2 (únicos válidos):
+
 - ✅ starter, pro, plus
 - ❌ free, basic, creator_plus (excluidos)
 
 ### Feature Flags (15):
+
 - Core (6), Shield (4), UX (2), Experimental (3)
 - ✅ `personal_tone_enabled` (actualizado)
 - ✅ `enable_perspective_fallback_classifier` (añadido)
 - ✅ `manual_approval_enabled` (confirmado)
 
 ### Tonos (4):
+
 - ✅ flanders, balanceado, canalla, personal
 - ❌ nsfw (bloqueado)
 
 ### Plataformas MVP:
+
 - ✅ X, YouTube
 - ⏳ 7 futuras (NO legacy)
 
 ### Workers (9):
+
 FetchComments, AnalyzeToxicity, GenerateRoast, GenerateCorrectiveReply, ShieldAction, SocialPosting, BillingUpdate, CursorReconciliation, StrikeCleanup
 
 ### Estados Billing (6):
+
 trialing, expired_trial_pending_payment, payment_retry, active, canceled_pending, paused
 
 ### Decisiones Motor (5):
+
 publicar, correctiva, roast, shield_moderado, shield_critico
 
 ---
@@ -127,6 +143,7 @@ publicar, correctiva, roast, shield_moderado, shield_critico
 ## 📁 ARCHIVOS ORGANIZADOS
 
 ### Nodos GDD:
+
 ```
 docs/nodes-v2/
 ├── 01-arquitectura-general.md
@@ -150,6 +167,7 @@ docs/nodes-v2/
 ```
 
 ### SSOT:
+
 ```
 docs/SSOT/
 ├── roastr-ssot-v2.md (documento maestro)
@@ -157,12 +175,14 @@ docs/SSOT/
 ```
 
 ### Spec v2:
+
 ```
 docs/spec/
 └── roastr-spec-v2.md
 ```
 
 ### Cursor Rules:
+
 ```
 .cursor/rules/
 ├── ssot-enforcement.mdc (nuevo)
@@ -171,6 +191,7 @@ docs/spec/
 ```
 
 ### Documentación:
+
 ```
 docs/
 ├── SSOT-INTEGRATION-SUMMARY.md
@@ -183,12 +204,14 @@ docs/
 ## 🧪 COBERTURA DE TESTING
 
 ### Tests Documentados:
+
 - **Unit Tests**: ~120 tests definidos
 - **Integration Tests**: ~180 tests definidos
 - **E2E Tests**: ~150 tests definidos
 - **Total**: ~450 tests documentados en Test Matrix
 
 ### Coverage Mínima:
+
 - Dominio: ≥90%
 - Prompt builders: 100%
 - Style Validator: 100%
@@ -200,18 +223,18 @@ docs/
 
 ## 📈 ESTADÍSTICAS
 
-| Métrica                         | Valor   |
-|---------------------------------|---------|
-| Nodos generados                 | 15      |
-| Secciones totales               | 150     |
-| Acceptance Criteria             | ~200    |
-| Edge Cases documentados         | ~150    |
-| Dependencies mapeadas           | ~100    |
-| Rules documentadas              | ~300    |
-| Tests definidos                 | ~450    |
-| Tamaño total                    | ~68 KB  |
-| Referencias cruzadas            | ~100    |
-| Tiempo generación               | ~30 min |
+| Métrica                 | Valor   |
+| ----------------------- | ------- |
+| Nodos generados         | 15      |
+| Secciones totales       | 150     |
+| Acceptance Criteria     | ~200    |
+| Edge Cases documentados | ~150    |
+| Dependencies mapeadas   | ~100    |
+| Rules documentadas      | ~300    |
+| Tests definidos         | ~450    |
+| Tamaño total            | ~68 KB  |
+| Referencias cruzadas    | ~100    |
+| Tiempo generación       | ~30 min |
 
 ---
 
@@ -223,7 +246,7 @@ ls /Users/emiliopostigo/roastr-ai/docs/nodes-v2/*.md | wc -l
 # Resultado: 19 (15 v2 + 2 legacy + 2 docs)
 
 # ✅ Verificación estructura (10 secciones cada uno)
-for file in docs/nodes-v2/{01..15}-*.md; do 
+for file in docs/nodes-v2/{01..15}-*.md; do
   grep -c '^## [0-9]' "$file"
 done
 # Resultado: 10 en cada nodo ✅
@@ -242,6 +265,7 @@ grep -r "Stripe" docs/nodes-v2/*.md
 ## 🎯 PRÓXIMOS PASOS
 
 ### Para Desarrollo:
+
 1. ✅ Leer nodos relevantes para cada tarea
 2. ✅ Implementar según Implementation Notes
 3. ✅ Validar con Acceptance Criteria
@@ -249,12 +273,14 @@ grep -r "Stripe" docs/nodes-v2/*.md
 5. ✅ Verificar alineación con SSOT
 
 ### Para Code Review:
+
 1. ✅ Validar alineación con nodos
 2. ✅ Verificar uso de SSOT (no hardcoded)
 3. ✅ Confirmar tests según Test Matrix
 4. ✅ Verificar edge cases cubiertos
 
 ### Para Testing:
+
 1. ✅ Consultar Test Matrix del nodo
 2. ✅ Implementar tests según categoría
 3. ✅ Validar coverage mínima
@@ -264,19 +290,23 @@ grep -r "Stripe" docs/nodes-v2/*.md
 ## 📖 DOCUMENTACIÓN GENERADA
 
 ### Documentos Maestros:
+
 - ✅ `docs/SSOT/roastr-ssot-v2.md` (17 KB)
 - ✅ `docs/spec/roastr-spec-v2.md` (273 KB)
 
 ### Nodos GDD v2:
-- ✅ 15 archivos (01-*.md a 15-*.md)
+
+- ✅ 15 archivos (01-_.md a 15-_.md)
 - ✅ README.md
 - ✅ VALIDATION-CHECKLIST.md
 - ✅ GENERATION-COMPLETE.md
 
 ### Cursor Rules:
+
 - ✅ `.cursor/rules/ssot-enforcement.mdc`
 
 ### Integración:
+
 - ✅ `docs/SSOT-INTEGRATION-SUMMARY.md`
 - ✅ `docs/GDD-NODES-V2-GENERATION-SUMMARY.md`
 - ✅ `CLAUDE.md` (sección SSOT añadida)
@@ -296,7 +326,7 @@ grep -r "Stripe" docs/nodes-v2/*.md
     Spec:       100%   ✅
     Tests:      ✅
     Docs:       ✅
-    
+
     LISTO PARA DESARROLLO V2 🚀
 
 ════════════════════════════════════════════════════════
@@ -306,15 +336,15 @@ grep -r "Stripe" docs/nodes-v2/*.md
 
 ## 🔗 REFERENCIAS RÁPIDAS
 
-| Documento | Ruta |
-|-----------|------|
-| **Nodos v2** | `docs/nodes-v2/*.md` |
-| **SSOT** | `docs/SSOT/roastr-ssot-v2.md` |
-| **Spec v2** | `docs/spec/roastr-spec-v2.md` |
-| **Cursor Rule** | `.cursor/rules/ssot-enforcement.mdc` |
-| **README Nodos** | `docs/nodes-v2/README.md` |
-| **Validation** | `docs/nodes-v2/VALIDATION-CHECKLIST.md` |
-| **CLAUDE.md** | Sección "SSOT — MÁXIMA PRIORIDAD" |
+| Documento        | Ruta                                    |
+| ---------------- | --------------------------------------- |
+| **Nodos v2**     | `docs/nodes-v2/*.md`                    |
+| **SSOT**         | `docs/SSOT/roastr-ssot-v2.md`           |
+| **Spec v2**      | `docs/spec/roastr-spec-v2.md`           |
+| **Cursor Rule**  | `.cursor/rules/ssot-enforcement.mdc`    |
+| **README Nodos** | `docs/nodes-v2/README.md`               |
+| **Validation**   | `docs/nodes-v2/VALIDATION-CHECKLIST.md` |
+| **CLAUDE.md**    | Sección "SSOT — MÁXIMA PRIORIDAD"       |
 
 ---
 
@@ -322,4 +352,3 @@ grep -r "Stripe" docs/nodes-v2/*.md
 **Validado**: 100% desde fuentes oficiales  
 **Inventado**: 0%  
 **Ready**: Development v2 Complete 🎉
-

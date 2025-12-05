@@ -10,6 +10,7 @@
 ## 📋 RESUMEN DE CAMBIOS
 
 Se han aplicado **9 correcciones quirúrgicas** al nodo Shield v2 para alinearlo perfectamente con:
+
 - Spec v2 (sección 7)
 - SSOT (sección 4)
 - Motor de Análisis (nodo 05)
@@ -26,17 +27,20 @@ Se han aplicado **9 correcciones quirúrgicas** al nodo Shield v2 para alinearlo
 ### 1️⃣ Shield Crítico SÍ asigna strike = "critical"
 
 **Antes**:
+
 ```
 - ❌ NO contabiliza strikes (es acción directa, no aviso)
 ```
 
 **Después**:
+
 ```
 - Establece `strikeLevel = "critical"` (NO incrementa strikes existentes)
 - ❌ NO genera roast
 ```
 
 **Actualizado en**:
+
 - ✅ Sección 2 (Responsibilities)
 - ✅ Sección 4 (Outputs)
 - ✅ Sección 5 (Rules)
@@ -49,11 +53,13 @@ Se han aplicado **9 correcciones quirúrgicas** al nodo Shield v2 para alinearlo
 ### 2️⃣ Respuesta Correctiva movida FUERA del Shield
 
 **Antes**:
+
 - Correctiva aparecía en Responsibilities del Shield
 - Inputs incluían "correctiva" como decisión
 - Rules incluían sección completa de Correctiva
 
 **Después**:
+
 - ✅ Summary: "Shield NUNCA genera texto - solo ejecuta moderación"
 - ✅ Responsibilities: Eliminada "Respuesta Correctiva"
 - ✅ Inputs: Solo "shield_moderado" | "shield_critico" (sin "correctiva")
@@ -62,6 +68,7 @@ Se han aplicado **9 correcciones quirúrgicas** al nodo Shield v2 para alinearlo
 - ✅ AC: Sección "Respuesta Correctiva" eliminada
 
 **Nueva sección añadida**:
+
 ```
 ### Interacción con Respuesta Correctiva:
 
@@ -79,11 +86,13 @@ Se han aplicado **9 correcciones quirúrgicas** al nodo Shield v2 para alinearlo
 ### 3️⃣ Aggressiveness NO aplica en identity_attack/threat
 
 **Antes**:
+
 ```typescript
 severity_score = severity_score * aggressiveness;
 ```
 
 **Después**:
+
 ```typescript
 // Aggressiveness NO aplica en casos críticos absolutos
 if (!hasIdentityAttack && !hasThreat) {
@@ -93,11 +102,14 @@ if (!hasIdentityAttack && !hasThreat) {
 ```
 
 **Regla añadida**:
+
 > Aggressiveness ajusta sensibilidad general, pero **NO puede reducir** la severidad de:
+>
 > - Identity attacks (siempre crítico)
 > - Amenazas (siempre crítico)
 
 **Actualizado en**:
+
 - ✅ Sección 5 (Rules)
 - ✅ Sección 8 (AC)
 - ✅ Sección 9 (Test Matrix)
@@ -107,6 +119,7 @@ if (!hasIdentityAttack && !hasThreat) {
 ### 4️⃣ Reglas completas para Sponsors (Plus)
 
 **Antes**:
+
 ```
 - Shield aplica mismas reglas a ataques dirigidos a sponsors
 - No se generan strikes
@@ -114,6 +127,7 @@ if (!hasIdentityAttack && !hasThreat) {
 ```
 
 **Después**:
+
 ```
 Sponsors funcionan como "perfiles protegidos" adicionales:
 
@@ -129,6 +143,7 @@ Sponsors funcionan como "perfiles protegidos" adicionales:
 ```
 
 **Actualizado en**:
+
 - ✅ Sección 5 (Rules)
 - ✅ Sección 8 (AC)
 - ✅ Sección 9 (Test Matrix)
@@ -138,6 +153,7 @@ Sponsors funcionan como "perfiles protegidos" adicionales:
 ### 5️⃣ Correctiva requiere créditos
 
 **Añadido en sección "Interacción con Respuesta Correctiva"**:
+
 ```
 Condición Correctiva:
 - score_final < τ_shield + insulto leve + argumento válido
@@ -150,6 +166,7 @@ Condición Correctiva:
 ### 6️⃣ Eliminado "manual review flag" (no existe en SSOT)
 
 **Antes** (Edge Case 4):
+
 ```
 4. Sarcasmo que toca línea roja:
    - Shield Moderado por defecto
@@ -157,6 +174,7 @@ Condición Correctiva:
 ```
 
 **Después**:
+
 ```
 4. Sarcasmo que toca línea roja:
    - Shield Moderado por defecto
@@ -167,6 +185,7 @@ Condición Correctiva:
 ### 7️⃣ Regla correcta sobre edición en X
 
 **Antes** (Edge Case 9):
+
 ```
 9. Edición posterior del comentario:
    - No se reevalúa
@@ -175,6 +194,7 @@ Condición Correctiva:
 ```
 
 **Después**:
+
 ```
 9. Edición posterior del comentario (X):
    - Shield ya ejecutado NO se anula
@@ -191,23 +211,28 @@ Condición Correctiva:
 **Cambios en AC**:
 
 ✅ **Shield Crítico**:
+
 - Añadido: "Establece `strikeLevel = "critical"` (NO incrementa)"
 - Eliminado: "NO contabiliza strikes adicionales"
 
 ✅ **Shield Aggressiveness**:
+
 - Añadido: "Ajusta severity_score (solo si NO identity_attack y NO threat)"
 - Añadido: "Identity/threat permanecen críticos independientemente de aggressiveness"
 
 ✅ **Sponsors (Plus)**:
+
 - Actualizado a 5 criterios específicos
 - Añadido: "target_type: sponsor" en logs
 - Añadido: "Sponsor es protegido, NO ofensor"
 
 ✅ **Logs**:
+
 - Añadido: `strike_assigned: null | 2 | "critical"`
 - Añadido: `target_type: "user" | "sponsor"`
 
 ✅ **Respuesta Correctiva**:
+
 - ❌ Eliminada sección completa (no es parte del Shield)
 
 ---
@@ -215,6 +240,7 @@ Condición Correctiva:
 ### 9️⃣ Estructura preservada
 
 **Verificación**:
+
 - ✅ 10 secciones mantenidas
 - ✅ Sin reformateo general
 - ✅ Sin contenido inventado
@@ -247,38 +273,46 @@ Resultado: Encontrado ✅
 ## 🎯 CAMBIOS DETALLADOS POR SECCIÓN
 
 ### Summary (§1):
+
 - ✅ "Shield NUNCA genera texto" (antes: "excepto correctivas")
 
 ### Responsibilities (§2):
+
 - ✅ Eliminada "Respuesta Correctiva (Strike 1)"
 - ✅ Añadido "+ establecer strike=critical" en Shield Crítico
 
 ### Inputs (§3):
+
 - ✅ Eliminado "correctiva" de decisiones
 - ✅ Añadido `hasIdentityAttack`, `hasThreat`
 
 ### Outputs (§4):
+
 - ✅ Especificado strikes: Moderado escala (1→2), Crítico establece "critical"
 - ✅ Añadido `strike_assigned` en logs
 - ✅ Añadido `target_type` en logs
 
 ### Rules (§5):
+
 - ✅ Shield Crítico: "Establece strikeLevel = critical"
 - ✅ Aggressiveness: NO aplica en identity/threat
 - ✅ Sponsors: Reglas completas (7 puntos)
 - ✅ Nueva sección: "Interacción con Respuesta Correctiva"
 
 ### Dependencies (§6):
+
 - ✅ Eliminado `GenerateCorrectiveReply` de Workers
 - ✅ Actualizado "Nodos Relacionados" (Correctiva como flujo separado)
 
 ### Edge Cases (§7):
+
 - ✅ Caso 4: Eliminado "manual review flag"
 - ✅ Caso 9: Regla completa edición X
 - ✅ Caso 11: Sponsors (nuevo)
 - ✅ Caso 12: Aggressiveness + identity (nuevo)
 
 ### Acceptance Criteria (§8):
+
 - ✅ Shield Crítico: Strike "critical" establecido
 - ✅ Shield Moderado: Sin cambios
 - ✅ Aggressiveness: NO aplica en identity/threat
@@ -287,12 +321,14 @@ Resultado: Encontrado ✅
 - ✅ Correctiva: Eliminada sección completa
 
 ### Test Matrix (§9):
+
 - ✅ Integration: Shield Crítico establece strike
 - ✅ Integration: Identity/threat ignoran aggressiveness
 - ✅ Integration: Sponsors NO generan strikes
 - ✅ Integration: Logs con target_type
 
 ### Implementation Notes (§10):
+
 - ✅ Código actualizado con:
   - `strikeAssigned` variable
   - `targetType` parámetro
@@ -325,6 +361,7 @@ Resultado: Encontrado ✅
 ## 🔍 VERIFICACIÓN DE ALINEACIÓN
 
 ### Con Spec v2 (sección 7):
+
 - ✅ Shield NO genera texto
 - ✅ Correctiva es flujo separado
 - ✅ Shield Crítico establece strike="critical"
@@ -332,12 +369,14 @@ Resultado: Encontrado ✅
 - ✅ Sponsors como perfiles protegidos
 
 ### Con SSOT (sección 4):
+
 - ✅ Thresholds correctos
 - ✅ Weights aplicados en Motor Análisis (no Shield)
 - ✅ Decisiones: shield_moderado, shield_critico (sin correctiva)
 - ✅ Acciones: hide, report, block
 
 ### Con Motor de Análisis (nodo 05):
+
 - ✅ Árbol de decisión respetado
 - ✅ Overrides (identity/threat) absolutos
 - ✅ Correctiva decide antes que Shield
@@ -347,11 +386,13 @@ Resultado: Encontrado ✅
 ## 📖 CAMBIOS CLAVE A RECORDAR
 
 ### ❌ LO QUE SHIELD NO HACE:
+
 - NO genera texto (ni correctivas, ni roasts)
 - NO puede ser rebajado por aggressiveness si hay identity/threat
 - NO genera strikes para sponsors
 
 ### ✅ LO QUE SHIELD SÍ HACE:
+
 - Ejecuta acciones de moderación (hide, report, block)
 - Establece `strikeLevel = "critical"` en casos críticos
 - Escala strikes (1 → 2) en casos moderados
@@ -362,4 +403,3 @@ Resultado: Encontrado ✅
 **Nodo corregido**: `docs/nodes-v2/07-shield.md`  
 **Listo para**: Desarrollo v2  
 **Siguiente**: Revisar otros nodos según necesidad
-

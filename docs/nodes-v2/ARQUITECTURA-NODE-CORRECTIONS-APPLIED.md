@@ -10,6 +10,7 @@
 ## 📋 RESUMEN DE CAMBIOS
 
 Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 para alinearlo perfectamente con:
+
 - Spec v2 (sección 1)
 - SSOT (estructura completa)
 - Realidad técnica del proyecto
@@ -25,13 +26,15 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ### 1️⃣ Monorepo: 2 apps + shared (no "tres aplicaciones independientes")
 
 **Antes** (§4. Outputs):
+
 ```
 - Estructura de monorepo completa con tres aplicaciones independientes
 ```
 
 **Después**:
+
 ```
-- Estructura de monorepo con dos aplicaciones (backend-v2, frontend-v2) 
+- Estructura de monorepo con dos aplicaciones (backend-v2, frontend-v2)
   y un paquete compartido (shared) para tipos/utilidades comunes
 ```
 
@@ -42,17 +45,20 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ### 2️⃣ SSOT: Múltiples tablas (no solo admin_settings)
 
 **Antes** (§3. Inputs):
+
 ```
 - SSOT (`admin_settings`, `plan_settings`, `shield_settings`, `tone_settings`)
 ```
 
 **Después**:
+
 ```
-- SSOT (admin_settings, plan_limits, shield_settings, tone_settings, 
+- SSOT (admin_settings, plan_limits, shield_settings, tone_settings,
   workers_settings, integrations_settings, ai_settings, flags_settings)
 ```
 
 **Antes** (§5. Rules → SSOT):
+
 ```
 - Todos los valores configurables viven en `admin_settings`
 - ❌ PROHIBIDO: Valores hardcoded en código
@@ -60,9 +66,10 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ```
 
 **Después**:
+
 ```
-- Todos los valores configurables viven en el SSOT (admin_settings + 
-  plan_limits + shield_settings + tone_settings + workers_settings + 
+- Todos los valores configurables viven en el SSOT (admin_settings +
+  plan_limits + shield_settings + tone_settings + workers_settings +
   integrations_settings + ai_settings + flags_settings)
 - ❌ PROHIBIDO: Valores mágicos hardcoded en código
 - ✅ OBLIGATORIO: Cargar siempre desde SSOT a través del config loader
@@ -83,24 +90,28 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ### 3️⃣ Stack Frontend: Sin Vite, sin React 19
 
 **Antes** (§6. Dependencies → Stack Tecnológico):
+
 ```
 - Frontend: React 19 + Next.js + Vite + shadcn/ui + Tailwind
 ```
 
 **Después**:
+
 ```
 - Frontend: React + Next.js (App Router) + shadcn/ui + Tailwind
 ```
 
 **Razón**:
+
 - ❌ Vite no se usa en frontend-v2 (Next.js tiene su propio bundler)
 - ❌ "React 19" no debe clavarse como versión específica
 
 ---
 
-### 4️⃣ Workers: Sin prefijo v2_* obligatorio
+### 4️⃣ Workers: Sin prefijo v2\_\* obligatorio
 
 **Antes** (§5. Rules → Workers):
+
 ```
 - Idempotentes
 - Retries con backoff
@@ -110,6 +121,7 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ```
 
 **Después**:
+
 ```
 - Idempotentes
 - Retries con backoff
@@ -120,6 +132,7 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ```
 
 **Antes** (§8. AC → Workers):
+
 ```
 - [ ] Colas prefijadas `v2_*`
 - [ ] Retries con backoff implementados
@@ -128,6 +141,7 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ```
 
 **Después**:
+
 ```
 - [ ] Workers idempotentes
 - [ ] Retries con backoff implementados
@@ -143,6 +157,7 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ### 5️⃣ Dependencies: Redis/Upstash para colas
 
 **Antes** (§6. Dependencies → Servicios Externos):
+
 ```
 - Supabase
 - Polar
@@ -154,6 +169,7 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ```
 
 **Después**:
+
 ```
 - Supabase
 - Polar
@@ -162,7 +178,7 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 - Google Perspective API
 - X API
 - YouTube API
-- Queue / Rate limiting: Redis / Upstash (cola de jobs de workers y 
+- Queue / Rate limiting: Redis / Upstash (cola de jobs de workers y
   rate limit centralizado)
 ```
 
@@ -173,6 +189,7 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ### 6️⃣ Rol SSOT alineado en todo el nodo
 
 **Actualizado**:
+
 - ✅ §3. Inputs: SSOT con 8 tablas especializadas
 - ✅ §5. Rules: SSOT como autoridad para 7 categorías de configuración
 - ✅ §8. AC: "Todos los valores configurables vienen de SSOT"
@@ -185,6 +202,7 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ### 7️⃣ Estructura preservada
 
 **Verificación**:
+
 - ✅ 10 secciones mantenidas
 - ✅ Sin reformateo general
 - ✅ Sin contenido inventado
@@ -195,50 +213,60 @@ Se han aplicado **7 correcciones quirúrgicas** al nodo Arquitectura General v2 
 ## 📊 CAMBIOS DETALLADOS POR SECCIÓN
 
 ### Summary (§1):
+
 - ✅ Sin cambios (ya era correcto)
 
 ### Responsibilities (§2):
+
 - ✅ Sin cambios directos (referencias genéricas correctas)
 
 ### Inputs (§3):
+
 - ✅ SSOT expandido a 8 tablas especializadas
 
 ### Outputs (§4):
+
 - ✅ "dos aplicaciones (backend-v2, frontend-v2) y un paquete compartido (shared)"
 
 ### Rules (§5):
+
 - ✅ SSOT: 8 tablas + 7 categorías de autoridad
-- ✅ Workers: sin prefijo v2_*, con DLQ y logs
+- ✅ Workers: sin prefijo v2\_\*, con DLQ y logs
 
 ### Dependencies (§6):
+
 - ✅ Redis/Upstash añadido
 - ✅ Frontend: sin Vite, sin React 19
 
 ### Edge Cases (§7):
+
 - ✅ Sin cambios (ya eran correctos)
 
 ### Acceptance Criteria (§8):
-- ✅ Workers: sin prefijo v2_*, tenant-aware añadido
+
+- ✅ Workers: sin prefijo v2\_\*, tenant-aware añadido
 
 ### Test Matrix (§9):
+
 - ✅ Sin cambios (ya eran correctos)
 
 ### Implementation Notes (§10):
+
 - ✅ Sin cambios (ya eran correctos)
 
 ---
 
 ## 🔍 LÍNEAS CAMBIADAS
 
-| Sección | Línea(s) | Cambio |
-|---------|----------|--------|
-| §3. Inputs | 37 | SSOT: 4 tablas → 8 tablas |
-| §4. Outputs | 45 | "tres aplicaciones" → "dos aplicaciones + shared" |
-| §5. Rules (SSOT) | 86-96 | admin_settings → múltiples tablas + 7 categorías |
-| §5. Rules (Workers) | 100-105 | Eliminado prefijo v2_*, añadido logs y DLQ |
-| §6. Stack Tech | 125 | Frontend: sin Vite, sin React 19 |
-| §6. Servicios | 120 | Añadido Redis/Upstash |
-| §8. AC Workers | 194-198 | Sin prefijo v2_*, añadido tenant-aware |
+| Sección             | Línea(s) | Cambio                                            |
+| ------------------- | -------- | ------------------------------------------------- |
+| §3. Inputs          | 37       | SSOT: 4 tablas → 8 tablas                         |
+| §4. Outputs         | 45       | "tres aplicaciones" → "dos aplicaciones + shared" |
+| §5. Rules (SSOT)    | 86-96    | admin_settings → múltiples tablas + 7 categorías  |
+| §5. Rules (Workers) | 100-105  | Eliminado prefijo v2\_\*, añadido logs y DLQ      |
+| §6. Stack Tech      | 125      | Frontend: sin Vite, sin React 19                  |
+| §6. Servicios       | 120      | Añadido Redis/Upstash                             |
+| §8. AC Workers      | 194-198  | Sin prefijo v2\_\*, añadido tenant-aware          |
 
 **Total líneas modificadas**: ~15  
 **Secciones afectadas**: 4 de 10  
@@ -289,6 +317,7 @@ $ grep -c "admin_settings + plan_limits" docs/nodes-v2/01-arquitectura-general.m
 Ver archivo: `docs/nodes-v2/01-arquitectura-general.md`
 
 **Cambios clave a recordar**:
+
 - ✅ Monorepo = 2 apps reales (backend, frontend) + 1 shared
 - ✅ SSOT = 8 tablas especializadas (no solo admin_settings)
 - ✅ Frontend = React + Next.js (sin Vite, sin versión específica)
@@ -322,5 +351,3 @@ Ver archivo: `docs/nodes-v2/01-arquitectura-general.md`
 **Tamaño**: ~4.5 KB  
 **Secciones**: 10/10 ✅  
 **Listo para**: Desarrollo v2 ✅
-
-
