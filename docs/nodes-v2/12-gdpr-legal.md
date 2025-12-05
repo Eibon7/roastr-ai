@@ -549,35 +549,22 @@ export function selectDisclaimer(
 }
 
 function requiresDisclaimer(region: string): boolean {
-  const euRegions = [
-    'ES',
-    'FR',
-    'DE',
-    'IT',
-    'NL',
-    'BE',
-    'PT',
-    'AT',
-    'IE',
-    'FI',
-    'SE',
-    'DK',
-    'PL',
-    'CZ',
-    'HU',
-    'RO',
-    'BG',
-    'HR',
-    'SK',
-    'SI',
-    'EE',
-    'LV',
-    'LT',
-    'LU',
-    'MT',
-    'CY'
-  ];
-  return euRegions.includes(region);
+  // Load regions requiring disclaimers from SSOT (centralized, auditable)
+  const regionsRequiringDisclaimers = getRegionsRequiringDisclaimersFromSSOT();
+  return regionsRequiringDisclaimers.includes(region);
+}
+
+// Helper: Load legal regions from SSOT (similar pattern to getDisclaimerPool)
+function getRegionsRequiringDisclaimersFromSSOT(): string[] {
+  // Load from admin_settings.legal_regions or equivalent SSOT key
+  // Fallback to empty array if SSOT unavailable (safe default: no disclaimers)
+  // Example SSOT structure:
+  // {
+  //   "legal_regions": {
+  //     "disclaimer_required": ["ES", "FR", "DE", "IT", ... (EU/EEA)]
+  //   }
+  // }
+  return getLegalRegionsFromConfig('disclaimer_required') ?? [];
 }
 ```
 
