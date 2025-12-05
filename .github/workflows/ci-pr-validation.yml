@@ -63,9 +63,8 @@ jobs:
             );
             
             // Count unresolved comments
-            const unresolvedComments = rabbitComments.filter(c => 
-              c.body && !c.body.includes("✅") && !c.body.includes("resolved")
-            );
+            // Use GitHub API's resolved field instead of string matching
+            const unresolvedComments = rabbitComments.filter(c => !c.resolved);
             
             if (unresolvedComments.length > 0) {
               core.warning(`⚠️ CodeRabbit has ${unresolvedComments.length} unresolved comments`);
