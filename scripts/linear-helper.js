@@ -182,7 +182,7 @@ class LinearHelper {
     const team = await this.getDefaultTeam();
 
     // Use team.id (works with LINEAR_TEAM_ID) or fallback to team.key
-    const teamFilter = team.key 
+    const teamFilter = team.key
       ? { team: { key: { eq: team.key } } }
       : { team: { id: { eq: team.id } } };
 
