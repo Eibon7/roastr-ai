@@ -1,0 +1,640 @@
+# SCOPE & SSOT ENFORCEMENT RULE (v2.1)
+
+**Versión:** 2.1 (versión de la regla, no de los nodos GDD)  
+**Fecha:** 2025-12-02  
+**Estado:** ✅ Activo  
+**Propósito:** Garantizar que ningún agente (Cursor/Claude) se salga del scope de una issue, ni contradiga los nodos del GDD, ni contradiga el SSOT, con protocolo seguro para manejar ideas nuevas sin romper nada.
+
+**⚠️ IMPORTANTE:** Esta regla referencia `docs/SSOT-V2.md` extensivamente. Este archivo debe existir en el repositorio para que la regla funcione correctamente. Si no existe, debe crearse o las referencias deben actualizarse a la ubicación correcta del SSOT.
+
+---
+
+## 🔒 1. PRINCIPIO DE ORO
+
+**Jerarquía de autoridad (en orden de precedencia):**
+
+1. **SSOT v2** (`docs/SSOT-V2.md` ⚠️ debe existir) → GANA SIEMPRE sobre código/GDD
+2. **Nodos GDD** (`docs/nodes/*.md` - nodos actuales) → Define CÓMO debe funcionar
+3. **Scope de la Issue** (Linear/GitHub) → Define QUÉ implementar
+
+**Regla de resolución de conflictos:**
+
+- Si SSOT y código/GDD discrepan → **SSOT gana** (detener y corregir)
+- Si GDD contradice SSOT → **STOP + comunicar** (no se puede resolver automáticamente)
+- Si Issue y Nodo/SSOT discrepan → **Alinearse con SSOT/GDD**, incluso si la issue está mal definida
+- Si Issue está incompleta/ambigua → **NO inventar**, usar Safe-Invention Protocol
+
+**El código debe alinearse con SSOT y Nodos activos, incluso si la issue está mal definida.**
+
+---
+
+## 🚫 2. PROHIBICIONES ABSOLUTAS
+
+**El agente NO puede:**
+
+- ❌ Inventar features sin declararlo explícitamente (usar Safe-Invention Protocol)
+- ❌ Modificar comportamiento no solicitado
+- ❌ Cambiar APIs sin estar en la issue
+- ❌ Crear nuevas entidades, planes, flags o thresholds no existentes en SSOT
+- ❌ Ignorar los nodos GDD activos
+- ❌ Alterar lógica distribuida en múltiples nodos sin validación global
+- ❌ Introducir breaking changes sin aprobación explícita
+- ❌ Cargar spec.md completo (solo nodos resueltos)
+- ❌ Saltar checks de validación pre-completion
+
+---
+
+## 🔍 3. WORKFLOW DE VALIDACIÓN ANTES DE APLICAR CAMBIOS
+
+**Antes de escribir código o modificar archivos, el agente DEBE ejecutar esta validación obligatoria:**
+
+### 3.1 CHECK A — Validación Pre-Implementación
+
+#### 3.1.A.1 — Scope Alignment
+
+**El agente debe verificar explícitamente:**
+
+1. ¿El trabajo solicitado está 100% dentro del scope de la issue? (S/N)
+2. ¿El trabajo afecta a partes del sistema no incluidas en el scope? (S/N)
+
+**Comandos de verificación:**
+
+```bash
+# Leer scope de issue
+gh issue view <número> --json title,body,labels
+
+# Identificar AC específicos
+# Revisar: ✅ Qué se pide, ❌ Qué NO se pide, 🎯 Límites funcionales
+```
+
+**Si la respuesta es SÍ a la pregunta 2 → el cambio queda prohibido salvo aprobación humana explícita.**
+
+#### 3.1.A.2 — Validación Nodos GDD
+
+**El agente debe comprobar:**
+
+1. ¿El cambio contradice algún nodo del GDD activo? (S/N)
+2. ¿Existen reglas en nodos que afecten esta PR? (listar)
+
+**Comandos de verificación:**
+
+```bash
+# Auto-detección de nodos desde issue
+node scripts/cursor-agents/auto-gdd-activation.js <issue-number>
+
+# Resolver nodos relevantes
+node scripts/resolve-graph.js <nodos-detectados>
+
+# Leer SOLO nodos resueltos (NUNCA spec.md completo)
+# En Cursor Chat: @docs/nodes/roast.md @docs/nodes/shield.md
+```
+
+**Si contradice un nodo → ajustar código o proponer actualización del nodo (ver sección 8).**
+
+#### 3.1.A.3 — Validación SSOT
+
+**El agente debe verificar:**
+
+1. ¿El trabajo usa valores desde SSOT y NO hardcoded?
+2. ¿Existen valores requeridos no definidos en SSOT?
+3. ¿El cambio respeta los identificadores oficiales?
+
+**Comandos de verificación:**
+
+```bash
+# Leer SSOT (verificar que existe primero)
+# @docs/SSOT-V2.md
+# ⚠️ Si el archivo no existe, debe crearse o actualizarse la referencia
+
+# Buscar violaciones SSOT
+grep -r "free\|basic\|creator_plus\|stripe\|sendgrid" src/ --exclude-dir=node_modules
+```
+
+**Si requiere introducir un nuevo valor → STOP + solicitar actualización SSOT (ver sección 8).**
+
+### 3.1.1 — SAFE-INVENTION PROTOCOL (Protocolo Anti-Ocurrencias)
+
+**El agente puede sugerir ideas pero NUNCA implementarlas sin aprobación humana explícita.**
+
+#### A) Declaración Explícita
+
+**Toda idea fuera del scope DEBE indicarse en bloque separado:**
+
+```markdown
+## 🔍 Propuesta Inventada Detectada
+
+**Tipo:** {mejora | corrección | dependencia | riesgo | optimización}
+
+**Origen:** NO aparece en la issue, SSOT ni nodos GDD
+
+**Descripción:**
+[Qué se propone y por qué]
+
+**Razón:**
+[Por qué sería beneficioso]
+
+**Impacto:**
+- Archivos afectados: [lista]
+- Dependencias: [lista]
+- Riesgo: [Bajo/Medio/Alto]
+
+**Código de Referencia:**
+[Links a código relevante si aplica]
+```
+
+#### B) Acciones Prohibidas
+
+**Hasta aprobación humana explícita:**
+
+- ❌ No modificar código
+- ❌ No crear PRs
+- ❌ No mover a otra issue
+- ❌ No cambiar tests ni workflows
+- ❌ No actualizar documentación
+
+#### C) Opciones que Debe Ofrecer al Usuario
+
+**El agente DEBE presentar estas opciones:**
+
+1. **Incluir la propuesta en esta PR** → Expandir scope de issue
+2. **Crear issue nueva** → Se proporciona borrador completo
+3. **Descartarla** → Continuar sin la propuesta
+
+**Template de borrador de issue:**
+
+```markdown
+## [Título de la propuesta]
+
+**Origen:** Detectada durante implementación de Issue #[XXX]
+
+**Descripción:**
+[Descripción completa]
+
+**Justificación:**
+[Por qué es necesaria]
+
+**Alcance:**
+- Archivos afectados: [lista]
+- Dependencias: [lista]
+- Breaking changes: [sí/no]
+
+**AC:**
+- [ ] AC 1
+- [ ] AC 2
+
+**Prioridad:** [P0/P1/P2]
+```
+
+#### D) No Contaminar el Scope
+
+**La propuesta inventada NO cuenta como parte del trabajo realizado hasta que el humano lo apruebe.**
+
+**En el output final de PR:**
+
+```markdown
+## Propuestas Inventadas Declaradas
+
+- ✅ [Propuesta 1] - Estado: [Pendiente aprobación | Aprobada | Descartada]
+- ✅ [Propuesta 2] - Estado: [Pendiente aprobación | Aprobada | Descartada]
+```
+
+#### E) Si el Humano Aprueba
+
+**Solo entonces:**
+
+- ✅ Se integra al scope de la issue
+- ✅ Se añaden actualizaciones de nodos/SSOT si aplica
+- ✅ Se continúa el flujo normal de implementación
+- ✅ Se documenta en PR como "Scope expandido con aprobación"
+
+---
+
+## 📄 4. VALIDACIÓN DESPUÉS DE COMPLETAR EL TRABAJO
+
+**Antes de anunciar que el trabajo está terminado, el agente DEBE ejecutar:**
+
+### 4.1 CHECK B — Trabajo realizado vs Issue Scope
+
+**Preguntas obligatorias:**
+
+1. ¿La implementación cumple EXACTAMENTE con el scope?
+2. ¿Se añadió algo no solicitado?
+3. ¿Se omitió algo que sí estaba en el scope?
+
+**Comandos de verificación:**
+
+```bash
+# Comparar diff con AC de la issue
+gh issue view <número> --json body | grep -A 10 "Acceptance Criteria"
+git diff main...HEAD --stat
+```
+
+**Si hay diferencia:**
+
+- ✅ **Corregir automáticamente** si es posible
+- ✅ **O crear una issue de seguimiento** documentada
+
+**Template de issue de seguimiento:**
+
+```markdown
+## [Título] - Seguimiento de Issue #[XXX]
+
+**Origen:** Detectado durante validación post-implementación
+
+**Problema:**
+[Qué se detectó que falta o sobra]
+
+**Acción requerida:**
+[Qué se debe hacer]
+
+**Prioridad:** [P0/P1/P2]
+```
+
+### 4.2 CHECK C — Trabajo realizado vs Nodos GDD
+
+**Preguntas obligatorias:**
+
+1. ¿Algún nodo contradice la implementación?
+2. ¿Requiere actualizar documentación GDD?
+3. ¿Se actualizó "Agentes Relevantes" si se invocaron agentes?
+
+**Comandos de verificación:**
+
+```bash
+# Validar nodos afectados
+node scripts/resolve-graph.js <nodos-afectados>
+node scripts/validate-gdd-runtime.js --full
+node scripts/score-gdd-health.js --ci  # Debe >=87
+```
+
+**Si sí → crear sección "Propuesta de actualización nodo" con parche/borrador (ver sección 8).**
+
+### 4.3 CHECK D — Trabajo realizado vs SSOT
+
+**Preguntas obligatorias:**
+
+1. ¿Todos los valores vienen de SSOT?
+2. ¿Se usó algún valor hardcoded que debe ser SSOT?
+3. ¿Se ha violado alguna regla SSOT?
+
+**Comandos de verificación:**
+
+```bash
+# Buscar violaciones SSOT
+grep -r "free\|basic\|creator_plus\|stripe\|sendgrid" src/ --exclude-dir=node_modules
+
+# Verificar uso de SettingsLoader
+grep -r "SettingsLoader\|settingsLoader" src/
+```
+
+**Si hay violación → corregir inmediatamente.**
+
+---
+
+## ✅ 5. OUTPUT FORMAL DE CIERRE DE PR
+
+**Cuando termine la PR, el agente DEBE entregar este bloque obligatorio:**
+
+```markdown
+## ✔ Validación Final de PR
+
+### 1. Scope Compliance
+**Estado:** {✅ OK | ⚠️ Ajustado | ❌ Incompleto}
+
+**Detalles:**
+- AC cumplidos: [X/Y]
+- Cambios fuera de scope: [Ninguno | Listados abajo]
+- Issues de seguimiento: [Ninguna | #[XXX], #[YYY]]
+
+### 2. GDD Compliance
+**Estado:** {✅ OK | ⚠️ Ajustado | ❌ Requiere cambios}
+
+**Detalles:**
+- Nodos validados: [lista]
+- Contradicciones detectadas: [Ninguna | Listadas abajo]
+- Patches de nodos generados: [Ninguno | docs/patches/nodo-*.md]
+
+### 3. SSOT Compliance
+**Estado:** {✅ OK | ⚠️ Ajustado | ❌ Requiere actualización}
+
+**Detalles:**
+- Valores desde SSOT: [✅ Todos | ⚠️ Algunos hardcoded]
+- Violaciones detectadas: [Ninguna | Listadas abajo]
+- Patches SSOT generados: [Ninguno | docs/patches/ssot-*.md]
+
+### 4. Cambios Detectados Fuera de Scope
+**Estado:** {✅ Ninguno | ⚠️ Listados abajo}
+
+[Si hay cambios fuera de scope, listarlos aquí con justificación]
+
+### 5. Propuestas Inventadas Declaradas
+**Estado:** {✅ Ninguna | ⚠️ Listadas abajo}
+
+[Si hay propuestas inventadas, listarlas con estado de aprobación]
+
+### 6. Issues de Seguimiento Necesarias
+**Estado:** {✅ Ninguna | ⚠️ Creadas: #[XXX], #[YYY]}
+
+[Links a issues de seguimiento creadas]
+
+### 7. Validación Técnica
+**Estado:** {✅ OK | ❌ Failing}
+
+**Comandos ejecutados:**
+```bash
+node scripts/validate-gdd-runtime.js --full  # [Exit code]
+node scripts/score-gdd-health.js --ci         # [Score] (debe >=87)
+npm test                                      # [Exit code]
+```
+
+**Resultados:**
+- GDD Health Score: [X/100] (threshold: >=87)
+- Tests: [Passing/Failing]
+- Coverage: [X%] (threshold: >=90%)
+```
+
+---
+
+## ❌ 6. EJEMPLOS DE VIOLACIONES
+
+### Ejemplo 1: Crear un nuevo flag sin SSOT
+
+**Violación:**
+```typescript
+// ❌ INCORRECTO
+const ENABLE_NEW_FEATURE = true; // Flag no existe en SSOT
+```
+
+**Acción:**
+```markdown
+🚨 STOP: "Feature flag 'ENABLE_NEW_FEATURE' no existe en SSOT v2."
+
+**Acción requerida:**
+1. Actualizar SSOT v2 (docs/SSOT-V2.md sección 3)
+2. O usar flag existente desde SSOT
+3. O crear issue para añadir flag a SSOT
+```
+
+### Ejemplo 2: Añadir un nuevo parámetro a un endpoint
+
+**Violación:**
+```typescript
+// ❌ INCORRECTO - No aparece en issue ni nodos
+app.post('/api/roast', async (req, res) => {
+  const { comment, tone, newParam } = req.body; // newParam no está en scope
+});
+```
+
+**Acción:**
+```markdown
+🔍 Propuesta Inventada Detectada
+
+**Tipo:** mejora
+
+**Origen:** NO aparece en la issue ni en nodos
+
+**Descripción:**
+Añadir parámetro 'newParam' al endpoint /api/roast
+
+**Razón:**
+Permitiría [beneficio]
+
+**Opciones:**
+1. Incluir en esta PR (expandir scope)
+2. Crear issue nueva
+3. Descartar
+```
+
+### Ejemplo 3: Meter optimizaciones no solicitadas
+
+**Violación:**
+```typescript
+// ❌ INCORRECTO - Optimización no solicitada
+// Issue solo pide: "Añadir validación de email"
+// Pero también optimicé la query de base de datos
+const users = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+// Optimización: añadí índice (no estaba en scope)
+```
+
+**Acción:**
+```markdown
+🔍 Propuesta Inventada Detectada
+
+**Tipo:** optimización
+
+**Origen:** NO aparece en la issue
+
+**Descripción:**
+Optimización de query de base de datos con índice
+
+**Razón:**
+Mejoraría performance
+
+**Opciones:**
+1. Incluir en esta PR
+2. Crear issue #[YYY] - Optimización de queries
+3. Descartar
+```
+
+---
+
+## 🛡️ 7. MODO DE FALLO SEGURO
+
+**Si el agente detecta cualquier imposibilidad de cumplir la regla:**
+
+```markdown
+## 🚨 Rule Enforcement Triggered
+
+**Motivo:**
+[Descripción detallada del conflicto]
+
+**Conflicto detectado:**
+- Tipo: {SSOT | GDD | Scope | Arquitectura}
+- Severidad: {CRITICAL | HIGH | MEDIUM | LOW}
+- Archivos afectados: [lista]
+
+**Propuesta:**
+[Qué se propone para resolver]
+
+**Bloqueo realizado:**
+- [ ] Código no modificado
+- [ ] PR no creada
+- [ ] Tests no ejecutados
+- [ ] Documentación no actualizada
+
+**Acción recomendada:**
+1. **Si es SSOT:** Actualizar `docs/SSOT-V2.md` y generar patch
+2. **Si es GDD:** Actualizar nodo correspondiente y generar patch
+3. **Si es Scope:** Aclarar issue o crear issue de seguimiento
+4. **Si es Arquitectura:** Consultar con Product Owner
+
+**No se puede continuar hasta resolver este conflicto.**
+```
+
+**Si el conflicto es CRITICAL (seguridad, billing, legal):**
+
+1. 🚨 **Detener inmediatamente**
+2. 📧 **Notificar a Product Owner**
+3. 📝 **Documentar en PR**
+4. ⏸️ **Esperar resolución antes de continuar**
+
+---
+
+## 📝 8. DOCUMENTATION & PATCH REQUIREMENTS
+
+### 8.1 Generación de Patches
+
+**Si una issue requiere actualizar:**
+
+- Un nodo GDD
+- El SSOT v2
+- O revela inconsistencia entre nodos/SSOT/código
+
+**DEBES generar:**
+
+#### 8.1.1 Nodo Patch
+
+**Formato:** Markdown, siguiendo estilo del GDD
+
+**Ubicación:** Comentario en PR o `docs/patches/nodo-<nodo>-<issue>.md`
+
+**Template:**
+
+```markdown
+# Nodo Patch: [Nodo] - Issue #[XXX]
+
+## Cambio Propuesto
+
+[Descripción del cambio]
+
+## Justificación
+
+[Por qué es necesario]
+
+## Impacto
+
+- Nodos afectados: [lista]
+- Dependencias: [lista]
+- Breaking changes: [sí/no]
+
+## Código de Referencia
+
+[Links a código relevante]
+
+## Validación
+
+```bash
+node scripts/resolve-graph.js <nodo>
+node scripts/validate-gdd-runtime.js --full
+```
+```
+
+#### 8.1.2 SSOT Patch
+
+**Formato:** Markdown, siguiendo estructura de `docs/SSOT-V2.md`
+
+**Ubicación:** Comentario en PR o `docs/patches/ssot-<issue>.md`
+
+**Template:**
+
+```markdown
+# SSOT Patch - Issue #[XXX]
+
+## Sección Afectada
+
+[Sección del SSOT]
+
+## Cambio Propuesto
+
+```typescript
+// Antes
+type PlanId = "starter" | "pro" | "plus";
+
+// Después
+type PlanId = "starter" | "pro" | "plus" | "enterprise";
+```
+
+## Justificación
+
+[Por qué es necesario]
+
+## Impacto en Código
+
+[Archivos que necesitan actualización]
+```
+
+### 8.2 Añadir Patches a PR
+
+**Los patches DEBEN añadirse como:**
+
+- Comentario final en la PR (si son pequeños)
+- Archivos en `docs/patches/` (si son extensos)
+- Referencia en descripción de PR
+
+---
+
+## 🔗 9. REFERENCIAS OBLIGATORIAS
+
+### Archivos Clave
+
+- **SSOT v2:** `docs/SSOT-V2.md` ⚠️ **Nota:** Este archivo debe existir en el repositorio. Si no existe, debe crearse o actualizarse la referencia a la ubicación correcta del SSOT.
+- **Nodos GDD:** `docs/nodes/*.md` (nodos v1 actuales - la versión "v2.1" de esta regla se refiere a la versión de la regla, no a los nodos)
+- **System Map:** `docs/system-map.yaml`
+- **GDD Activation Guide:** `docs/GDD-ACTIVATION-GUIDE.md`
+- **SSOT Enforcement (legacy):** `.cursor/rules/ssot-enforcement.mdc`
+
+### Scripts de Validación
+
+- **Resolver nodos:** `node scripts/resolve-graph.js <nodos>`
+- **Validar runtime:** `node scripts/validate-gdd-runtime.js --full`
+- **Health score:** `node scripts/score-gdd-health.js --ci` (debe >=87)
+- **Drift prediction:** `node scripts/predict-gdd-drift.js --full` (<60 risk)
+- **Auto-activación GDD:** `node scripts/cursor-agents/auto-gdd-activation.js <issue>`
+
+### Skills Relacionadas
+
+- **GDD Sync:** `.claude/skills/gdd-sync-skill.md`
+- **Verification Before Completion:** `.claude/skills/verification-before-completion-skill.md`
+- **Security Audit:** `.claude/skills/security-audit-skill.md`
+
+---
+
+## ✅ 10. RESUMEN EJECUTIVO
+
+### Antes de cualquier implementación:
+
+1. ✅ **CHECK A.1:** Leer scope de issue (AC específicos)
+2. ✅ **CHECK A.2:** Resolver nodos GDD relevantes
+3. ✅ **CHECK A.3:** Leer SOLO nodos resueltos (NO spec.md completo)
+4. ✅ **CHECK A.3:** Verificar SSOT v2
+5. ✅ **Safe-Invention:** Declarar cualquier propuesta fuera de scope
+
+### Durante implementación:
+
+1. ✅ Respetar scope exacto (sin ampliar sin aprobación)
+2. ✅ Alinearse con nodos GDD (sin contradicciones)
+3. ✅ Usar valores desde SSOT (sin hardcode)
+4. ✅ Evitar lógica v1 (solo v2)
+5. ✅ Declarar propuestas inventadas si surgen
+
+### Antes de completar:
+
+1. ✅ **CHECK B:** Scope compliance
+2. ✅ **CHECK C:** Node compliance
+3. ✅ **CHECK D:** SSOT compliance
+4. ✅ Generar patches si es necesario
+5. ✅ Validar con scripts GDD
+6. ✅ Generar Output Formal de Cierre de PR
+
+### Si hay conflicto:
+
+1. 🚨 **DETENER** (modo de fallo seguro)
+2. 📝 **DOCUMENTAR** (Rule Enforcement Triggered)
+3. 🔄 **ESPERAR** resolución
+
+---
+
+**Última actualización:** 2025-12-02  
+**Versión:** 2.1  
+**Estado:** ✅ Activo  
+**Safe-Invention Protocol:** ✅ Integrado

@@ -14,6 +14,9 @@ jobs:
   coderabbit-gate:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Check Coderabbit status (informative only)
         uses: actions/github-script@v8
         continue-on-error: true  # Intentionally non-blocking per maintainer decision
@@ -60,9 +63,8 @@ jobs:
             );
             
             // Count unresolved comments
-            const unresolvedComments = rabbitComments.filter(c => 
-              c.body && !c.body.includes("✅") && !c.body.includes("resolved")
-            );
+            // Use GitHub API's resolved field instead of string matching
+            const unresolvedComments = rabbitComments.filter(c => !c.resolved);
             
             if (unresolvedComments.length > 0) {
               core.warning(`⚠️ CodeRabbit has ${unresolvedComments.length} unresolved comments`);
