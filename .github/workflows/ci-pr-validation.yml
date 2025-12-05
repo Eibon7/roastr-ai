@@ -13,22 +13,60 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request.number;
+            
+            // Get all reviews
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr
             });
 
-            const rabbit = reviews.find(r =>
-              r.user.login.includes("coderabbit")
+            // Find CodeRabbit review
+            const rabbitReviews = reviews.filter(r =>
+              r.user.login.includes("coderabbit") || r.user.login.includes("coderabbitai")
             );
 
-            if (!rabbit) {
-              core.setFailed("❌ Coderabbit review missing.");
+            if (rabbitReviews.length === 0) {
+              console.log("⚠️ CodeRabbit review not found yet");
+              core.setFailed("❌ CodeRabbit review missing. Waiting for CodeRabbit to review the PR.");
               return;
             }
 
-            if (!rabbit.body.includes("100%")) {
-              core.setFailed("❌ Coderabbit did not approve 100%.");
+            // Get latest CodeRabbit review
+            const latestReview = rabbitReviews[rabbitReviews.length - 1];
+            
+            // Check if review is APPROVED
+            if (latestReview.state === "APPROVED") {
+              console.log("✅ CodeRabbit approved the PR");
+              return;
             }
+            
+            // Check for review comments that might indicate approval
+            const { data: reviewComments } = await github.rest.pulls.listReviewComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr
+            });
+            
+            const rabbitComments = reviewComments.filter(c => 
+              c.user.login.includes("coderabbit") || c.user.login.includes("coderabbitai")
+            );
+            
+            // Count unresolved comments
+            const unresolvedComments = rabbitComments.filter(c => 
+              c.body && !c.body.includes("✅") && !c.body.includes("resolved")
+            );
+            
+            if (unresolvedComments.length > 0) {
+              console.log(`⚠️ CodeRabbit has ${unresolvedComments.length} unresolved comments`);
+              core.setFailed(`❌ CodeRabbit has pending comments (${unresolvedComments.length} unresolved). Fix issues and push again.`);
+              return;
+            }
+            
+            // If state is not APPROVED but no unresolved comments
+            if (latestReview.state !== "APPROVED") {
+              console.log(`⚠️ CodeRabbit review state: ${latestReview.state}`);
+              core.setFailed("❌ CodeRabbit review incomplete. Waiting for final approval.");
+            }
+
 
