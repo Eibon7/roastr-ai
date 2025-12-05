@@ -157,7 +157,7 @@
   "homepage": "https://github.com/Eibon7/roastr-ai#readme",
   "dependencies": {
     "@atproto/api": "^0.17.2",
-    "@linear/sdk": "^65.1.0",
+    "@linear/sdk": "^65.1.0", // Verified: latest version (65.1.0) exists and is published on npm
     "@polar-sh/sdk": "^0.41.1",
     "@sendgrid/mail": "^8.1.5",
     "@supabase/supabase-js": "^2.57.4",

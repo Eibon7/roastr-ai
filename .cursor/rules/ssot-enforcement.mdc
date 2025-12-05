@@ -1,11 +1,16 @@
 # SSOT ENFORCEMENT RULE (Roastr v2)
 
 # Agents MUST treat the following file as the single source of truth:
+
 docs/SSOT-V2.md
+
+# Note: This file exists in the current branch. After PR #1099 merge, 
+# the path may be updated to docs/roastr-ssot-v2.md if the SSOT structure changes.
 
 ## 1. Forbidden
 
 Agents MUST NOT:
+
 - invent plans, tiers, pricing, limits or plan features.
 - invent feature flags not in SSOT.
 - invent platforms, billing providers, OAuth flows or webhooks.
@@ -20,6 +25,7 @@ If any violation is detected → STOP and output:
 ## 2. Mandatory Validation Workflow
 
 Before implementing or generating code:
+
 1. Load the SSOT file.
 2. Identify relevant SSOT sections.
 3. Cross-check requested change against SSOT.
@@ -52,6 +58,7 @@ Output:
 ## 7. Anti AI-Slop Rule
 
 Generated diffs MUST:
+
 - match existing style,
 - avoid noise, defensive boilerplate, and `any` casts,
 - resemble human-written code.
@@ -59,6 +66,7 @@ Generated diffs MUST:
 ## 8. Block Legacy v1 Leakage
 
 Reject:
+
 - v1 plan names,
 - Stripe billing,
 - legacy platforms (unless migration explicitly requested),
