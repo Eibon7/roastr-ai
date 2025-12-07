@@ -454,6 +454,14 @@ According to `system-map-v2.yaml`, `billing` depends on:
 - [`ssot-integration.md`](./ssot-integration.md) — Plan definitions and rules
 
 ---
+### Internal Dependencies
+
+- [`analysis-engine.md`](./analysis-engine.md)
+- [`frontend-admin.md`](./frontend-admin.md)
+- [`frontend-user-app.md`](./frontend-user-app.md)
+- [`integraciones-redes-sociales.md`](./integraciones-redes-sociales.md)
+- [`roasting-engine.md`](./roasting-engine.md)
+- [`shield-engine.md`](./shield-engine.md)
 
 ## 7. Edge Cases
 

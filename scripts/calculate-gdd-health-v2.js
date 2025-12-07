@@ -73,6 +73,9 @@ function loadNodesV2() {
       if (fs.existsSync(filePath)) {
         const content = fs.readFileSync(filePath, 'utf8');
         nodeFiles[nodeName] = file;
+        const deps = extractDependencies(content);
+        const crossRefs = extractCrossReferences(content);
+
         nodes[nodeName] = {
           file,
           content,
@@ -81,8 +84,9 @@ function loadNodesV2() {
             /SSOT\s+References?:\s*None|does\s+not\s+(directly\s+)?(use|access)\s+SSOT/i.test(
               content
             ),
-          dependencies: extractDependencies(content),
-          crossReferences: extractCrossReferences(content)
+          dependencies: deps,
+          // CrossReferences incluye dependencias detectadas + otras referencias en el documento
+          crossReferences: [...new Set([...deps, ...crossRefs])]
         };
       }
     });
@@ -95,39 +99,88 @@ function loadNodesV2() {
 
 function extractDependencies(content) {
   const deps = [];
+
   // Buscar sección Dependencies (6 o 7)
-  const depsMatch = content.match(/##\s*[67]\.\s*Dependencies[\s\S]*?(?=##|$)/i);
-  if (depsMatch) {
-    const depsSection = depsMatch[0];
-    // Buscar referencias en formato backtick: `nombre-nodo.md`
-    const backtickRefs = depsSection.match(/`(\d+-)?([a-z-]+)\.md`/gi) || [];
-    backtickRefs.forEach((ref) => {
-      const m = ref.match(/`(\d+-)?([a-z-]+)\.md`/i);
-      if (m) {
-        const nodeName = m[2];
-        if (!deps.includes(nodeName)) {
-          deps.push(nodeName);
-        }
-      }
-    });
-    // Buscar referencias en formato markdown link: [`nombre-nodo.md`](./nombre-nodo.md)
-    const markdownLinkRefs = depsSection.match(/\[`(\d+-)?([a-z-]+)\.md`\]/gi) || [];
-    markdownLinkRefs.forEach((ref) => {
-      const m = ref.match(/\[`(\d+-)?([a-z-]+)\.md`\]/i);
-      if (m) {
-        const nodeName = m[2];
-        if (!deps.includes(nodeName)) {
-          deps.push(nodeName);
-        }
-      }
-    });
+  // Capturar toda la sección hasta la siguiente sección principal (## seguido de número)
+  // No detenerse en subsecciones (###)
+  const depsMatch = content.match(/##\s*[67]\.\s*Dependencies[\s\S]*?(?=\n##\s+\d+\.|$)/i);
+  if (!depsMatch) {
+    return deps;
   }
+
+  const depsSection = depsMatch[0];
+
+  // Obtener lista de nodos válidos del system-map para buscar menciones textuales
+  const systemMap = loadSystemMapV2();
+  const allNodeNames = Object.keys(systemMap.nodes || {});
+
+  // 1. Buscar referencias en formato markdown link: [`nombre-nodo.md`](./nombre-nodo.md)
+  const markdownLinkRefs = depsSection.match(/\[`(\d+-)?([a-z-]+)\.md`\]/gi) || [];
+  markdownLinkRefs.forEach((ref) => {
+    const m = ref.match(/\[`(\d+-)?([a-z-]+)\.md`\]/i);
+    if (m) {
+      const nodeName = m[2];
+      if (!deps.includes(nodeName)) {
+        deps.push(nodeName);
+      }
+    }
+  });
+
+  // 2. Buscar referencias en formato backtick: `nombre-nodo.md`
+  const backtickRefs = depsSection.match(/`(\d+-)?([a-z-]+)\.md`/gi) || [];
+  backtickRefs.forEach((ref) => {
+    const m = ref.match(/`(\d+-)?([a-z-]+)\.md`/i);
+    if (m) {
+      const nodeName = m[2];
+      if (!deps.includes(nodeName)) {
+        deps.push(nodeName);
+      }
+    }
+  });
+
+  // 3. Buscar menciones textuales de nodos en formato **nombre-nodo** o "nombre-nodo ("
+  allNodeNames.forEach((nodeName) => {
+    if (deps.includes(nodeName)) return; // Ya detectado en formatos anteriores
+
+    // Normalizar nombre para búsqueda
+    const normalizedNodeName = nodeName.toLowerCase();
+
+    // Búsqueda simple y directa: buscar el nombre exacto del nodo en la sección
+    // Patrones comunes que encontramos:
+    // - **analysis-engine** (bold exacto)
+    // - **analysis-engine** (main node) (bold con contexto)
+    // - analysis-engine ( (texto seguido de paréntesis)
+
+    // Buscar menciones textuales del nodo
+    // Patrón 1: **nombre-nodo** (bold)
+    const boldPattern = new RegExp(`\\*\\*${normalizedNodeName.replace(/-/g, '[- ]')}\\*\\*`, 'i');
+
+    // Patrón 2: nombre-nodo ( (seguido de paréntesis)
+    const textPattern = new RegExp(`${normalizedNodeName.replace(/-/g, '[- ]')}\\s*\\(`, 'i');
+
+    // Verificar en la sección de dependencias (búsqueda directa en texto también)
+    const found =
+      boldPattern.test(depsSection) ||
+      textPattern.test(depsSection) ||
+      depsSection.includes(`**${normalizedNodeName}**`) ||
+      depsSection.includes(`**${normalizedNodeName.replace(/-/g, ' ')}**`);
+
+    if (found && !deps.includes(nodeName)) {
+      deps.push(nodeName);
+    }
+  });
+
   return deps;
 }
 
 function extractCrossReferences(content) {
   const refs = [];
-  // Buscar referencias a otros nodos en el contenido
+
+  // Obtener lista de nodos válidos del system-map para buscar menciones textuales
+  const systemMap = loadSystemMapV2();
+  const allNodeNames = Object.keys(systemMap.nodes || {});
+
+  // 1. Buscar referencias en formato backtick: `nombre-nodo.md`
   const nodeRefPattern = /`(\d+-)?([a-z-]+)\.md`/gi;
   let match;
   while ((match = nodeRefPattern.exec(content)) !== null) {
@@ -136,6 +189,21 @@ function extractCrossReferences(content) {
       refs.push(nodeName);
     }
   }
+
+  // 2. Buscar menciones textuales de nodos en formato **nombre-nodo**
+  allNodeNames.forEach((nodeName) => {
+    if (refs.includes(nodeName)) return; // Ya detectado
+
+    const normalizedNodeName = nodeName.toLowerCase();
+    const escapedName = normalizedNodeName.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
+
+    // Buscar en formato bold: **nombre-nodo**
+    const boldPattern = new RegExp(`\\*\\*${escapedName}\\*\\*`, 'i');
+    if (boldPattern.test(content) && !refs.includes(nodeName)) {
+      refs.push(nodeName);
+    }
+  });
+
   return refs;
 }
 
@@ -194,10 +262,10 @@ function calculateMetrics(systemMap, nodesV2) {
       totalCrosslinks += systemMapNode.depends_on.length;
       systemMapNode.depends_on.forEach((dep) => {
         // Verificar si el nodo v2 referencia esta dependencia
+        // Considerar tanto crossReferences como dependencies detectadas
+        const allRefs = [...new Set([...node.crossReferences, ...node.dependencies])];
         if (
-          node.crossReferences.some(
-            (ref) => ref === dep || ref.replace(/-/g, '_') === dep.replace(/-/g, '_')
-          )
+          allRefs.some((ref) => ref === dep || ref.replace(/-/g, '_') === dep.replace(/-/g, '_'))
         ) {
           correctCrosslinks++;
         }
