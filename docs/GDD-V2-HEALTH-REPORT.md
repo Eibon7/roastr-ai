@@ -1,6 +1,6 @@
 # GDD v2 Health Report
 
-**Fecha:** 6/12/2025  
+**Fecha:** 7/12/2025  
 **Versión:** 2.0  
 **Health Score:** 100/100  
 **Estado:** 🟢 HEALTHY
@@ -141,6 +141,6 @@ El **GDD Health Check v2** revela:
 
 ---
 
-**Generado:** 6/12/2025, 20:51:07  
+**Generado:** 7/12/2025, 18:18:34  
 **Script:** `scripts/calculate-gdd-health-v2.js`  
 **Fuentes:** `docs/nodes-v2/`, `docs/system-map-v2.yaml`, `docs/SSOT-V2.md`

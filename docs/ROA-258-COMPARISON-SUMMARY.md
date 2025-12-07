@@ -187,17 +187,17 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 
 ## 📈 Estadísticas
 
-| Métrica                  | System Map v1      | System Map v2         | Cambio       |
-| ------------------------ | ------------------ | --------------------- | ------------ |
-| **Total Nodes**          | 15                 | 25                    | +10          |
-| **Critical Nodes**       | 9                  | 12                    | +3           |
-| **Workers Documentados** | 0 (implícito)      | 9 (explícito)         | +9           |
-| **Frontend Nodes**       | 0                  | 5                     | +5           |
-| **SSOT References**      | 0                  | 25+                   | +25+         |
-| **Flujos E2E**           | 0                  | 6                     | +6           |
-| **Integraciones**        | 9 (sin distinción) | 8 (v2 + planificadas) | Reorganizado |
-| **Legacy Markers**       | 0                  | 20+                   | +20+         |
-| **Líneas**               | 370                | 936                   | +566         |
+| Métrica | System Map v1 | System Map v2 | Cambio |
+|---------|---------------|---------------|--------|
+| **Total Nodes** | 15 | 15 | 0 |
+| **Critical Nodes** | 9 | 11 | 2 |
+| **Workers Documentados** | 0 (implícito) | 9 (explícito) | +9 |
+| **Frontend Nodes** | 0 | 5 | +5 |
+| **SSOT References** | 0 | 25+ | +25+ |
+| **Flujos E2E** | 0 | 6 | +6 |
+| **Integraciones** | 9 (sin distinción) | 8 (v2 + planificadas) | Reorganizado |
+| **Legacy Markers** | 0 | 20+ | +20+ |
+| **Líneas** | 370 | 936 | +566 |
 
 ---
 

@@ -402,7 +402,7 @@ type DisclaimerPool = {
 };
 ```
 
-- El contenido inicial del pool se define en un archivo dedicado (p.ej. `ssot-disclaimers.yaml`), y nunca se inventa on-the-fly en código.
+- El contenido inicial del pool se define en un archivo dedicado: `docs/ssot/disclaimers.yaml`, y nunca se inventa on-the-fly en código.
 
 ---
 
