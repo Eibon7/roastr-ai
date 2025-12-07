@@ -17,6 +17,7 @@
 const yaml = require('js-yaml');
 const fs = require('fs');
 const path = require('path');
+const logger = require('../src/utils/logger');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const NODES_V2_DIR = path.join(ROOT_DIR, 'docs/nodes-v2');
@@ -434,24 +435,24 @@ function main() {
     const outputPath = path.join(ROOT_DIR, 'gdd-health-v2.json');
     fs.writeFileSync(outputPath, JSON.stringify(metrics, null, 2));
 
-    console.log('\n✅ gdd-health-v2.json generado');
-    console.log(`   Health Score: ${metrics.health_score}/100`);
-    console.log(`   Nodos detectados: ${metrics.nodes_detected}`);
-    console.log(`   Nodos faltantes: ${metrics.nodes_missing}`);
-    console.log(`   System Map Alignment: ${metrics.system_map_alignment_score}%`);
-    console.log(`   SSOT Alignment: ${metrics.ssot_alignment_score}%`);
-    console.log(`   Dependency Density: ${metrics.dependency_density_score}%`);
-    console.log(`   Crosslink Score: ${metrics.crosslink_score}%`);
+    logger.info('\n✅ gdd-health-v2.json generado');
+    logger.info(`   Health Score: ${metrics.health_score}/100`);
+    logger.info(`   Nodos detectados: ${metrics.nodes_detected}`);
+    logger.info(`   Nodos faltantes: ${metrics.nodes_missing}`);
+    logger.info(`   System Map Alignment: ${metrics.system_map_alignment_score}%`);
+    logger.info(`   SSOT Alignment: ${metrics.ssot_alignment_score}%`);
+    logger.info(`   Dependency Density: ${metrics.dependency_density_score}%`);
+    logger.info(`   Crosslink Score: ${metrics.crosslink_score}%`);
 
     if (metrics.warnings.length > 0) {
-      console.log('\n⚠️  Warnings:');
-      metrics.warnings.forEach((w) => console.log(`   - ${w}`));
+      logger.warn('\n⚠️  Warnings:');
+      metrics.warnings.forEach((w) => logger.warn(`   - ${w}`));
     }
 
     return metrics;
   } catch (error) {
-    console.error('❌ Error:', error.message);
-    console.error(error.stack);
+    logger.error('❌ Error:', error.message);
+    logger.error(error.stack);
     process.exit(1);
   }
 }
