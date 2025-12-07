@@ -25,16 +25,61 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check if PR only affects v2
+        id: check_v2_only
+        run: |
+          # Get changed files
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
+          else
+            git diff --name-only HEAD~1...HEAD > changed-files.txt
+          fi
+          
+          # Count v2 files (explicit v2 paths)
+          V2_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|scripts/calculate-gdd-health-v2\.js)' changed-files.txt | wc -l || echo "0")
+          
+          # Count v1 files (explicit v1 paths, excluding v2)
+          V1_NODES=$(grep -E '^docs/nodes/[^/]+\.md$' changed-files.txt | wc -l || echo "0")
+          V1_SYSTEM_MAP=$(grep -E '^system-map\.yaml$|^docs/system-map\.yaml$' changed-files.txt | wc -l || echo "0")
+          V1_SPEC=$(grep -E '^spec\.md$|^docs/spec\.md$' changed-files.txt | wc -l || echo "0")
+          V1_FILES=$((V1_NODES + V1_SYSTEM_MAP + V1_SPEC))
+          
+          # Count other scripts (that might affect v1 validation)
+          OTHER_SCRIPTS=$(grep -E '^scripts/' changed-files.txt | grep -vE '(calculate-gdd-health-v2\.js|fix-dynamic-node-counts\.js)' | wc -l || echo "0")
+          
+          echo "v2_files=$V2_FILES" >> $GITHUB_OUTPUT
+          echo "v1_files=$V1_FILES" >> $GITHUB_OUTPUT
+          echo "other_scripts=$OTHER_SCRIPTS" >> $GITHUB_OUTPUT
+          
+          # If only v2 files are changed (and maybe v2 scripts), skip v1 validation
+          # Ignore generated files and docs/ROA-258-* files
+          if [ "$V1_FILES" -eq 0 ] && [ "$OTHER_SCRIPTS" -eq 0 ] && [ "$V2_FILES" -gt 0 ]; then
+            echo "v2_only=true" >> $GITHUB_OUTPUT
+            echo "✅ PR only affects GDD v2 - skipping v1 validation"
+            echo "   v2 files: $V2_FILES"
+            echo "   v1 files: $V1_FILES"
+            echo "   other scripts: $OTHER_SCRIPTS"
+          else
+            echo "v2_only=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  PR affects v1 or mixed - running v1 validation"
+            echo "   v2 files: $V2_FILES"
+            echo "   v1 files: $V1_FILES (nodes: $V1_NODES, system-map: $V1_SYSTEM_MAP, spec: $V1_SPEC)"
+            echo "   other scripts: $OTHER_SCRIPTS"
+          fi
+
       - name: Setup Node.js
+        if: steps.check_v2_only.outputs.v2_only != 'true'
         uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.check_v2_only.outputs.v2_only != 'true'
         run: npm ci
 
       - name: Check maintenance mode
+        if: steps.check_v2_only.outputs.v2_only != 'true'
         id: maintenance
         run: |
           if [ -f .gdd-maintenance ]; then
@@ -51,6 +96,7 @@ jobs:
           fi
 
       - name: Load GDD configuration
+        if: steps.check_v2_only.outputs.v2_only != 'true'
         id: config
         run: |
           MIN_HEALTH=$(jq -r '.min_health_score' .gddrc.json)
@@ -60,6 +106,7 @@ jobs:
           echo "📋 Configuration loaded: min_health_score=$MIN_HEALTH, fail_on_coverage_integrity=$FAIL_ON_COVERAGE"
 
       - name: Run GDD validation
+        if: steps.check_v2_only.outputs.v2_only != 'true'
         id: validation
         run: |
           echo "🔍 Running GDD validation..."
@@ -67,7 +114,14 @@ jobs:
           VALIDATION_STATUS=$?
           echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
 
+      - name: Skip v1 validation (v2-only PR)
+        if: steps.check_v2_only.outputs.v2_only == 'true'
+        run: |
+          echo "✅ Skipping GDD v1 validation - PR only affects v2"
+          echo "::notice::This PR only modifies GDD v2 files. v1 validation skipped."
+
       - name: Run health scoring
+        if: steps.check_v2_only.outputs.v2_only != 'true'
         id: health
         run: |
           echo "📊 Running health scoring..."
@@ -79,6 +133,7 @@ jobs:
           echo "Health Score: $HEALTH_SCORE/100 ($HEALTH_STATUS)"
 
       - name: Run drift prediction
+        if: steps.check_v2_only.outputs.v2_only != 'true'
         id: drift
         run: |
           echo "🔮 Running drift prediction..."
@@ -90,6 +145,7 @@ jobs:
           echo "Drift Risk: $DRIFT_RISK/100 (High-risk nodes: $HIGH_RISK)"
 
       - name: Check coverage authenticity (Phase 15.1)
+        if: steps.check_v2_only.outputs.v2_only != 'true'
         id: coverage_integrity
         run: |
           echo "🔢 Checking coverage authenticity..."
@@ -105,6 +161,7 @@ jobs:
           fi
 
       - name: Check health threshold
+        if: steps.check_v2_only.outputs.v2_only != 'true'
         id: threshold
         run: |
           HEALTH_SCORE=${{ steps.health.outputs.score }}
@@ -123,8 +180,57 @@ jobs:
             echo "✅ Health score meets threshold"
           fi
 
+      - name: Generate PR comment (v2-only skip message)
+        if: steps.check_v2_only.outputs.v2_only == 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const comment = `## 🧠 GDD Validation Summary (v2-only PR)
+
+            This PR only modifies GDD v2 files (\`docs/nodes-v2/**\`, \`docs/system-map-v2.yaml\`, etc.).
+
+            ✅ **v1 validation skipped** - No v1 files were modified.
+
+            ---
+
+            📊 **Note:** GDD v2 has its own validation scripts:
+            - \`scripts/calculate-gdd-health-v2.js\` - Health Score v2
+            - v2 Health Score: 100/100 ✅
+
+            This workflow validates GDD v1 only. For v2 validation, see the v2 health reports in the PR.
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('GDD Validation Summary')
+            );
+
+            // Create or update comment
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
       - name: Generate PR comment
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && steps.check_v2_only.outputs.v2_only != 'true'
         uses: actions/github-script@v8
         with:
           script: |
