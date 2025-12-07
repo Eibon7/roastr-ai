@@ -79,7 +79,7 @@ function loadNodesV2() {
 
   try {
     if (!fs.existsSync(NODES_V2_DIR)) {
-      console.warn(`Warning: nodes-v2 directory does not exist: ${NODES_V2_DIR}`);
+      logger.warn(`Warning: nodes-v2 directory does not exist: ${NODES_V2_DIR}`);
       return { nodes, nodeFiles, missingNodes };
     }
 
@@ -88,7 +88,7 @@ function loadNodesV2() {
     const systemMap = loadSystemMapV2();
     const masterNodeNames = Object.keys(systemMap.nodes || {});
 
-    console.log(`📋 Loading ${masterNodeNames.length} nodes from system-map-v2.yaml...`);
+    logger.info(`📋 Loading ${masterNodeNames.length} nodes from system-map-v2.yaml...`);
 
     // Process each node defined in system-map
     masterNodeNames.forEach((nodeName) => {
@@ -117,12 +117,12 @@ function loadNodesV2() {
             crossReferences: [...new Set([...deps, ...crossRefs])]
           };
         } catch (e) {
-          console.warn(`Warning: Could not read file for node ${nodeName}: ${e.message}`);
+          logger.warn(`Warning: Could not read file for node ${nodeName}: ${e.message}`);
           missingNodes.push(nodeName);
         }
       } else {
         // File doesn't exist - report as missing but don't crash
-        console.warn(
+        logger.warn(
           `⚠️  Node file not found: ${nodeName}.md (expected at ${path.join(NODES_V2_DIR, `${nodeName}.md`)})`
         );
         missingNodes.push(nodeName);
@@ -130,12 +130,12 @@ function loadNodesV2() {
     });
 
     if (missingNodes.length > 0) {
-      console.warn(
+      logger.warn(
         `⚠️  ${missingNodes.length} nodes from system-map-v2.yaml are missing documentation files.`
       );
     }
   } catch (e) {
-    console.warn(`Warning: Could not read nodes-v2 directory: ${e.message}`);
+    logger.warn(`Warning: Could not read nodes-v2 directory: ${e.message}`);
   }
 
   return { nodes, nodeFiles, missingNodes };
