@@ -21,14 +21,14 @@ El Health Check v2 del GDD evalúa la coherencia entre:
 
 ## 📈 Puntuaciones Detalladas
 
-| Métrica                   | Puntuación    | Peso | Contribución | Estado      |
-| ------------------------- | ------------- | ---- | ------------ | ----------- |
-| **System Map Alignment**  | 100.00%         | 30%  | 30.00         | ✅ Perfecto  |
-| **Dependency Density**    | 100.00%         | 20%  | 20.00         | ✅ Perfecto  |
-| **Crosslink Score**       | 100.00%         | 20%  | 20.00         | ✅ Perfecto  |
-| **SSOT Alignment**        | 100.00%        | 20%  | 20.00        | ✅ Perfecto  |
-| **Narrative Consistency** | 100.00%       | 10%  | 10.00       | ✅ Perfecto |
-| **HEALTH SCORE FINAL**    | **100/100** | -    | -            | ✅ SALUDABLE  |
+| Métrica                   | Puntuación  | Peso | Contribución | Estado       |
+| ------------------------- | ----------- | ---- | ------------ | ------------ |
+| **System Map Alignment**  | 100.00%     | 30%  | 30.00        | ✅ Perfecto  |
+| **Dependency Density**    | 100.00%     | 20%  | 20.00        | ✅ Perfecto  |
+| **Crosslink Score**       | 100.00%     | 20%  | 20.00        | ✅ Perfecto  |
+| **SSOT Alignment**        | 100.00%     | 20%  | 20.00        | ✅ Perfecto  |
+| **Narrative Consistency** | 100.00%     | 10%  | 10.00        | ✅ Perfecto  |
+| **HEALTH SCORE FINAL**    | **100/100** | -    | -            | ✅ SALUDABLE |
 
 **Cálculo:** (100.00 × 0.30) + (100.00 × 0.20) + (100.00 × 0.20) + (100.00 × 0.20) + (100.00 × 0.10) = 100.00
 

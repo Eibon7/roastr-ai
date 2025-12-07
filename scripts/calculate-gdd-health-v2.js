@@ -121,13 +121,17 @@ function loadNodesV2() {
         }
       } else {
         // File doesn't exist - report as missing but don't crash
-        console.warn(`⚠️  Node file not found: ${nodeName}.md (expected at ${path.join(NODES_V2_DIR, `${nodeName}.md`)})`);
+        console.warn(
+          `⚠️  Node file not found: ${nodeName}.md (expected at ${path.join(NODES_V2_DIR, `${nodeName}.md`)})`
+        );
         missingNodes.push(nodeName);
       }
     });
 
     if (missingNodes.length > 0) {
-      console.warn(`⚠️  ${missingNodes.length} nodes from system-map-v2.yaml are missing documentation files.`);
+      console.warn(
+        `⚠️  ${missingNodes.length} nodes from system-map-v2.yaml are missing documentation files.`
+      );
     }
   } catch (e) {
     console.warn(`Warning: Could not read nodes-v2 directory: ${e.message}`);
@@ -270,7 +274,9 @@ function calculateMetrics(systemMap, nodesV2) {
   });
 
   const dependencyDensityScore =
-    expectedDependencies > 0 ? Math.min(100, (actualDependencies / expectedDependencies) * 100) : 100;
+    expectedDependencies > 0
+      ? Math.min(100, (actualDependencies / expectedDependencies) * 100)
+      : 100;
 
   // 3. crosslink_score
   // % de dependencias esperadas que están correctamente referenciadas
