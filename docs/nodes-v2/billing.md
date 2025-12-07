@@ -100,8 +100,8 @@ The billing system manages:
 ```typescript
 {
   userId: string;
-  planId: "starter" | "pro" | "plus";
-  paymentMethodId: string;  // From Polar checkout
+  planId: 'starter' | 'pro' | 'plus';
+  paymentMethodId: string; // From Polar checkout
 }
 ```
 
@@ -109,7 +109,7 @@ The billing system manages:
 
 ```typescript
 {
-  event: 
+  event:
     | "subscription_created"
     | "subscription_active"
     | "subscription_canceled"
@@ -127,8 +127,8 @@ The billing system manages:
 ```typescript
 {
   userId: string;
-  newPlanId: "starter" | "pro" | "plus";
-  immediate: boolean;  // true for upgrade, false for downgrade (scheduled)
+  newPlanId: 'starter' | 'pro' | 'plus';
+  immediate: boolean; // true for upgrade, false for downgrade (scheduled)
 }
 ```
 
@@ -146,8 +146,8 @@ The billing system manages:
 ```typescript
 {
   userId: string;
-  type: "analysis" | "roast" | "corrective";
-  amount: number;  // Typically 1 per event
+  type: 'analysis' | 'roast' | 'corrective';
+  amount: number; // Typically 1 per event
 }
 ```
 
@@ -205,7 +205,7 @@ The billing system manages:
   roastsRemaining: number;
   analysisExhausted: boolean;
   roastsExhausted: boolean;
-  canUseService: boolean;        // true if analysis > 0
+  canUseService: boolean; // true if analysis > 0
 }
 ```
 
@@ -253,14 +253,15 @@ The billing system manages:
 ### Subscription State Machine Rules
 
 1. **State Definitions (from SSOT)**
+
    ```typescript
    type SubscriptionState =
-     | "trialing"
-     | "expired_trial_pending_payment"  // Internal, can be represented via Polar fields
-     | "payment_retry"
-     | "active"
-     | "canceled_pending"
-     | "paused";
+     | 'trialing'
+     | 'expired_trial_pending_payment' // Internal, can be represented via Polar fields
+     | 'payment_retry'
+     | 'active'
+     | 'canceled_pending'
+     | 'paused';
    ```
 
 2. **State Transitions**
@@ -775,7 +776,7 @@ function billingStateMachine(
     paymentStatus?: string;
     // ... other context
   }
-): SubscriptionState
+): SubscriptionState;
 ```
 
 - Deterministic (same input → same output)
@@ -833,11 +834,13 @@ The following are not explicitly documented in Spec v2 or SSOT-V2.md:
 ### Plan IDs (from SSOT-V2.md Section 1.1)
 
 Valid plans:
+
 - `"starter"` → 30-day trial
 - `"pro"` → 7-day trial
 - `"plus"` → no trial
 
 **Legacy plans (NOT valid in v2):**
+
 - `"free"`
 - `"basic"`
 - `"creator_plus"`
@@ -846,12 +849,12 @@ Valid plans:
 
 ```typescript
 type SubscriptionState =
-  | "trialing"
-  | "expired_trial_pending_payment"  // Internal, can be represented via Polar fields
-  | "payment_retry"
-  | "active"
-  | "canceled_pending"
-  | "paused";
+  | 'trialing'
+  | 'expired_trial_pending_payment' // Internal, can be represented via Polar fields
+  | 'payment_retry'
+  | 'active'
+  | 'canceled_pending'
+  | 'paused';
 ```
 
 ### Plan Limits (from SSOT-V2.md Section 1.3)
@@ -911,6 +914,7 @@ type SubscriptionState =
 ### Limit Exhaustion Rules (from SSOT-V2.md Section 2.5)
 
 **analysis_remaining = 0:**
+
 - Workers OFF (no new ingestion)
 - Shield OFF
 - Roasts OFF
@@ -918,6 +922,7 @@ type SubscriptionState =
 - Banner: "Has agotado los análisis"
 
 **roasts_remaining = 0:**
+
 - Shield continues (if analysis available)
 - No new roasts generated
 - UI shows "Límite de roasts alcanzado"
