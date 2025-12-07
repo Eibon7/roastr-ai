@@ -25,11 +25,13 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 ### 1. Workers
 
 #### System Map v1 (Legacy):
+
 - ❌ No lista workers oficiales explícitamente
 - ❌ Menciona workers genéricos sin nombres oficiales
 - ❌ No distingue entre v1 y v2
 
 #### System Map v2 (Nuevo):
+
 - ✅ Lista los 9 workers oficiales v2 según SSOT-V2:
   1. FetchComments ✅ (production)
   2. AnalyzeToxicity ✅ (production)
@@ -48,11 +50,13 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 ### 2. Billing
 
 #### System Map v1 (Legacy):
+
 - ❌ Menciona Stripe (legacy v1)
 - ❌ No menciona Polar
 - ❌ No alineado con SSOT-V2
 
 #### System Map v2 (Nuevo):
+
 - ✅ Polar como único proveedor de billing v2
 - ✅ Stripe marcado como legacy
 - ✅ BillingUpdate worker documentado
@@ -64,10 +68,12 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 ### 3. Planes
 
 #### System Map v1 (Legacy):
+
 - ❌ No especifica planes válidos
 - ❌ Puede referenciar planes legacy (free, basic)
 
 #### System Map v2 (Nuevo):
+
 - ✅ Planes oficiales v2: starter, pro, plus
 - ✅ Legacy plans marcados explícitamente (free, basic, creator_plus)
 - ✅ Límites y capacidades según SSOT-V2
@@ -78,10 +84,12 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 ### 4. Frontend
 
 #### System Map v1 (Legacy):
+
 - ❌ No documenta frontend
 - ❌ No menciona componentes v2
 
 #### System Map v2 (Nuevo):
+
 - ✅ Frontend Dashboard documentado
 - ✅ Frontend Settings documentado (Account, Preferences, Billing)
 - ✅ Frontend Account Detail documentado
@@ -95,10 +103,12 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 ### 5. SSOT Integration
 
 #### System Map v1 (Legacy):
+
 - ❌ No menciona SSOT
 - ❌ No tiene referencias a SSOT-V2
 
 #### System Map v2 (Nuevo):
+
 - ✅ Nodo SSOT dedicado (critical)
 - ✅ Referencias SSOT en todos los nodos relevantes
 - ✅ Secciones SSOT documentadas:
@@ -120,10 +130,12 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 ### 6. Integraciones
 
 #### System Map v1 (Legacy):
+
 - ⚠️ Menciona 9 plataformas (algunas no en v2 MVP)
 - ❌ No distingue entre v2 MVP y planificadas
 
 #### System Map v2 (Nuevo):
+
 - ✅ Integraciones v2 MVP: X (Twitter), YouTube
 - ✅ Integraciones planificadas marcadas explícitamente:
   - instagram, facebook, discord, twitch, reddit, tiktok, bluesky
@@ -141,9 +153,11 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 ### 7. Flujos E2E
 
 #### System Map v1 (Legacy):
+
 - ❌ No documenta flujos completos
 
 #### System Map v2 (Nuevo):
+
 - ✅ Flujo de Ingestión completo
 - ✅ Flujo de Roasting completo
 - ✅ Flujo de Shield completo
@@ -157,9 +171,11 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 ### 8. Legacy Markers
 
 #### System Map v1 (Legacy):
+
 - ❌ No marca elementos legacy
 
 #### System Map v2 (Nuevo):
+
 - ✅ Sección completa de legacy markers:
   - Billing providers legacy (Stripe)
   - Plan IDs legacy (free, basic, creator_plus)
@@ -171,50 +187,56 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 
 ## 📈 Estadísticas
 
-| Métrica | System Map v1 | System Map v2 | Cambio |
-|---------|---------------|---------------|--------|
-| **Total Nodes** | 15 | 25 | +10 |
-| **Critical Nodes** | 9 | 12 | +3 |
-| **Workers Documentados** | 0 (implícito) | 9 (explícito) | +9 |
-| **Frontend Nodes** | 0 | 5 | +5 |
-| **SSOT References** | 0 | 25+ | +25+ |
-| **Flujos E2E** | 0 | 6 | +6 |
-| **Integraciones** | 9 (sin distinción) | 8 (v2 + planificadas) | Reorganizado |
-| **Legacy Markers** | 0 | 20+ | +20+ |
-| **Líneas** | 370 | 936 | +566 |
+| Métrica                  | System Map v1      | System Map v2         | Cambio       |
+| ------------------------ | ------------------ | --------------------- | ------------ |
+| **Total Nodes**          | 15                 | 25                    | +10          |
+| **Critical Nodes**       | 9                  | 12                    | +3           |
+| **Workers Documentados** | 0 (implícito)      | 9 (explícito)         | +9           |
+| **Frontend Nodes**       | 0                  | 5                     | +5           |
+| **SSOT References**      | 0                  | 25+                   | +25+         |
+| **Flujos E2E**           | 0                  | 6                     | +6           |
+| **Integraciones**        | 9 (sin distinción) | 8 (v2 + planificadas) | Reorganizado |
+| **Legacy Markers**       | 0                  | 20+                   | +20+         |
+| **Líneas**               | 370                | 936                   | +566         |
 
 ---
 
 ## ✅ Criterios de Aceptación (ROA-258)
 
 ### ✅ 1. Definir System Map v2 como documento único y central
+
 - ✅ Creado `docs/system-map-v2.yaml` (936 líneas)
 - ✅ Representa el grafo completo del sistema Roastr v2
 - ✅ Incluye todos los nodos oficiales (backend, frontend, workers, integraciones, SSOT)
 
 ### ✅ 2. Sustituir completamente el system-map.yaml legacy v1
+
 - ✅ Eliminados conceptos obsoletos (Stripe, free/basic, workers v1)
 - ✅ Marcados explícitamente como legacy
 - ✅ Mapeo de workers legacy a v2 documentado
 
 ### ✅ 3. Alinear al 100% con SSOT v2
+
 - ✅ Nodo SSOT dedicado
 - ✅ Referencias SSOT en todos los nodos relevantes
 - ✅ Regla de oro SSOT documentada
 - ✅ Secciones SSOT listadas
 
 ### ✅ 4. Alinear con Nodos GDD v2
+
 - ✅ Nodos core documentados (roast, shield, analysis-engine)
 - ✅ Nodos infrastructure documentados (queue-system, observability, multi-tenant)
 - ✅ Nodos business logic documentados (cost-control, plan-features, billing)
 - ✅ Nodos configuration documentados (persona, tone, platform-constraints, social-platforms)
 
 ### ✅ 5. Workers oficiales v2
+
 - ✅ 9 workers listados según SSOT-V2
 - ✅ Estado de implementación documentado
 - ✅ Mapeo de workers legacy a v2
 
 ### ✅ 6. Módulos Backend v2
+
 - ✅ Routes documentados
 - ✅ Services documentados
 - ✅ Integrations documentados
@@ -222,6 +244,7 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 - ✅ Lib documentados (implícito en servicios)
 
 ### ✅ 7. Frontend v2
+
 - ✅ Dashboard documentado
 - ✅ Settings documentado
 - ✅ Account Detail documentado
@@ -229,6 +252,7 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 - ✅ Admin Panel documentado
 
 ### ✅ 8. Integraciones externas
+
 - ✅ X (Twitter) documentado
 - ✅ YouTube documentado
 - ✅ OpenAI documentado
@@ -239,10 +263,12 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 - ✅ Redis/Upstash documentado
 
 ### ✅ 9. SSOT
+
 - ✅ Nodo SSOT dedicado
 - ✅ Referencias a planes, límites, feature flags, thresholds, weights, tonos, disclaimers, cadencias, plataformas, retention policies
 
 ### ✅ 10. Infraestructura
+
 - ✅ Entornos (staging, prod) documentados
 - ✅ Colas documentadas
 - ✅ Rate limits documentados
@@ -250,6 +276,7 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 - ✅ Logging/observabilidad documentado
 
 ### ✅ 11. Flujos completos
+
 - ✅ Ingestión completa documentada
 - ✅ Flujo de Roasting documentado
 - ✅ Flujo de Shield documentado
@@ -258,20 +285,24 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 - ✅ Flujo de SSOT loader documentado
 
 ### ✅ 12. Consumible por resolve-graph.js y validadores GDD
+
 - ✅ Estructura YAML compatible
 - ✅ Nodos con depends_on y used_by
 - ✅ Metadata completa
 - ✅ Validation rules incluidas
 
 ### ✅ 13. No contiene invenciones ni elementos no declarados en SSOT
+
 - ✅ Todos los valores alineados con SSOT-V2
 - ✅ Legacy markers explícitos
 - ✅ Workers oficiales según SSOT-V2
 
 ### ✅ 14. Refleja flujos E2E completos
+
 - ✅ 6 flujos E2E documentados con steps y nodos
 
 ### ✅ 15. Cumple con Regla de Oro SSOT
+
 - ✅ Regla documentada en nodo SSOT
 - ✅ Referencias SSOT en todos los nodos relevantes
 
@@ -297,4 +328,3 @@ Se ha creado el nuevo **system-map-v2.yaml** que reemplaza completamente el syst
 ---
 
 **Estado:** ✅ **System Map v2 creado y completo según especificación ROA-258**
-

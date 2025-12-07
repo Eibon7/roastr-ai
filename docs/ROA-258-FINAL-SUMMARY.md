@@ -12,6 +12,7 @@
 **Ubicación:** Lines 331-335
 
 **Cambios:**
+
 - Reemplazados todos los `[TBD]` por valores contractuales:
   - `τ_roast_lower = 0.25`
   - `τ_shield = 0.55`
@@ -19,6 +20,7 @@
 - Añadida nota contractual sobre adjustabilidad
 
 **Diff:**
+
 ```diff
 - **Valores por defecto (contractuales - TBD):**
 - | Threshold | Valor | Notas |
@@ -26,7 +28,7 @@
 - | τ_roast_lower | [TBD] | Límite inferior para zona roasteable |
 - | τ_shield | [TBD] | Límite para activar Shield moderado |
 - | τ_critical | [TBD] | Límite para activar Shield crítico |
-- 
+-
 - > ⚠️ Estos valores deben definirse y validarse antes de producción. Actualmente viven en DB/config pero los valores contractuales deben estar aquí.
 + **Valores por defecto (contractuales):**
 + | Threshold | Valor | Notas |
@@ -34,7 +36,7 @@
 + | τ_roast_lower | 0.25 | Límite inferior para zona roasteable |
 + | τ_shield | 0.55 | Límite para activar Shield moderado |
 + | τ_critical | 0.80 | Límite para activar Shield crítico |
-+ 
++
 + > *"Estos valores por defecto son contractuales para SSOT v2 y pueden ajustarse por Producto según resultados de testing AB o cambios regulatorios."*
 ```
 
@@ -45,15 +47,17 @@
 **Ubicación:** Lines 365-368
 
 **Cambios:**
+
 - Reemplazada línea con TBD por valor final
 - Añadida nota contractual con evidencia empírica
 
 **Diff:**
+
 ```diff
 -   - **N_DENSIDAD (default):** 3 (TBD - requiere validación SSOT antes de producción)
 +   - **N_DENSIDAD = 3**
     - **HIGH_DENSITY:** Sinónimo de N_DENSIDAD en código (usar N_DENSIDAD como fuente de verdad)
-+ 
++
 + > *"Valor contractual final para SSOT v2. Basado en el Spec v2 y en evidencia empírica: ≥3 insultos en un comentario constituye agresión grave."*
 ```
 
@@ -64,11 +68,12 @@
 **Ubicación:** `docs/ssot/disclaimers.yaml`
 
 **Contenido:**
+
 ```yaml
 standard:
-  - "Moderación automática con un toque de IA 🤖✨"
-  - "Tu asistente digital te cubrió las espaldas."
-  - "IA actuó para mantener la conversación sana."
+  - 'Moderación automática con un toque de IA 🤖✨'
+  - 'Tu asistente digital te cubrió las espaldas.'
+  - 'IA actuó para mantener la conversación sana.'
 ```
 
 **Estado:** ✅ Archivo creado exitosamente
@@ -80,33 +85,35 @@ standard:
 **Ubicación:** Lines 714-717
 
 **Cambios:**
+
 - Eliminados pools por tono con TBDs
 - Añadida referencia al nuevo archivo YAML
 - Clarificado uso de pool estándar único
 
 **Diff:**
+
 ```diff
 - **Pool inicial (contractual):**
-- 
+-
 - **Por tono "balanceado":**
 - - "Moderación automática con un toque de IA 🤖✨"
 - - "Tu asistente digital te cubrió las espaldas."
 - - "IA actuó para mantener la conversación sana."
-- 
+-
 - **Por tono "flanders":**
 - - [TBD - definir pool específico]
-- 
+-
 - **Por tono "canalla":**
 - - [TBD - definir pool específico]
-- 
+-
 - **Por tono "corrective":**
 - - [TBD - definir pool específico]
-- 
+-
 - - El contenido inicial del pool se define en un archivo dedicado (p.ej. `ssot-disclaimers.yaml`), y nunca se inventa on-the-fly en código.
 + Los disclaimers contractuales viven en `docs/ssot/disclaimers.yaml`.
-+ 
++
 + SSOT v2 utiliza un único pool estándar; no existen pools diferenciados por tono.
-+ 
++
 + Si se amplían en el futuro, deberán aparecer exclusivamente en este archivo.
 ```
 
@@ -119,16 +126,19 @@ standard:
 Todos los cambios aplicados definen **WHAT (contractual)**, no **HOW (implementation)**:
 
 #### Thresholds (Section 4.1)
+
 - ✅ Define **WHAT** valores son (contractual defaults)
 - ✅ Define **WHAT** puede cambiar (ajustabilidad por Producto)
 - ❌ NO define **HOW** aplicar thresholds (implementation)
 
 #### N_DENSIDAD (Section 4.3)
+
 - ✅ Define **WHAT** el valor es (3)
 - ✅ Define **WHAT** significa (≥3 insults = grave aggression)
 - ❌ NO define **HOW** contar insults (implementation)
 
 #### Disclaimers (Section 6.4)
+
 - ✅ Define **WHERE** disclaimers viven (file location)
 - ✅ Define **WHAT** estructura usar (standard pool)
 - ❌ NO define **HOW** cargar/aplicar (implementation)
@@ -207,7 +217,7 @@ Tras la auditoría conceptual profunda, se identifican las siguientes tareas pen
 +++ b/docs/SSOT-V2.md
 @@ -328,12 +328,12 @@ type Thresholds = {
  };
- 
+
 -**Valores por defecto (contractuales - TBD):**
 +**Valores por defecto (contractuales):**
  | Threshold | Valor | Notas |
@@ -218,7 +228,7 @@ Tras la auditoría conceptual profunda, se identifican las siguientes tareas pen
 +| τ_roast_lower | 0.25 | Límite inferior para zona roasteable |
 +| τ_shield | 0.55 | Límite para activar Shield moderado |
 +| τ_critical | 0.80 | Límite para activar Shield crítico |
- 
+
 -> ⚠️ Estos valores deben definirse y validarse antes de producción. Actualmente viven en DB/config pero los valores contractuales deben estar aquí.
 +> *"Estos valores por defecto son contractuales para SSOT v2 y pueden ajustarse por Producto según resultados de testing AB o cambios regulatorios."*
 ```
@@ -245,7 +255,7 @@ Tras la auditoría conceptual profunda, se identifican las siguientes tareas pen
 +++ b/docs/SSOT-V2.md
 @@ -703,26 +703,10 @@ type DisclaimerPool = {
  };
- 
+
 -**Pool inicial (contractual):**
 -
 -**Por tono "balanceado":**
@@ -276,9 +286,9 @@ Tras la auditoría conceptual profunda, se identifican las siguientes tareas pen
 
 ```yaml
 standard:
-  - "Moderación automática con un toque de IA 🤖✨"
-  - "Tu asistente digital te cubrió las espaldas."
-  - "IA actuó para mantener la conversación sana."
+  - 'Moderación automática con un toque de IA 🤖✨'
+  - 'Tu asistente digital te cubrió las espaldas.'
+  - 'IA actuó para mantener la conversación sana.'
 ```
 
 ---

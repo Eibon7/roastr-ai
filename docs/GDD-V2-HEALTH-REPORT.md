@@ -10,6 +10,7 @@
 ## 📊 Resumen Ejecutivo
 
 El Health Check v2 del GDD evalúa la coherencia entre:
+
 - **Nodos reales** en `docs/nodes-v2/` (15 nodos detectados)
 - **System Map v2** en `docs/system-map-v2.yaml` (15 nodos definidos)
 - **Alineación SSOT** con `docs/SSOT-V2.md`
@@ -20,14 +21,14 @@ El Health Check v2 del GDD evalúa la coherencia entre:
 
 ## 📈 Puntuaciones Detalladas
 
-| Métrica | Puntuación | Peso | Contribución | Estado |
-|---------|-----------|------|--------------|--------|
-| **System Map Alignment** | 100% | 30% | 30.00 | ✅ Perfecto |
-| **Dependency Density** | 100% | 20% | 20.00 | ✅ Perfecto |
-| **Crosslink Score** | 100% | 20% | 20.00 | ✅ Perfecto |
-| **SSOT Alignment** | 100% | 20% | 20.00 | ✅ Perfecto |
-| **Narrative Consistency** | 100% | 10% | 10.00 | ✅ Perfecto |
-| **HEALTH SCORE FINAL** | **100/100** | - | - | 🟢 HEALTHY |
+| Métrica                   | Puntuación  | Peso | Contribución | Estado      |
+| ------------------------- | ----------- | ---- | ------------ | ----------- |
+| **System Map Alignment**  | 100%        | 30%  | 30.00        | ✅ Perfecto |
+| **Dependency Density**    | 100%        | 20%  | 20.00        | ✅ Perfecto |
+| **Crosslink Score**       | 100%        | 20%  | 20.00        | ✅ Perfecto |
+| **SSOT Alignment**        | 100%        | 20%  | 20.00        | ✅ Perfecto |
+| **Narrative Consistency** | 100%        | 10%  | 10.00        | ✅ Perfecto |
+| **HEALTH SCORE FINAL**    | **100/100** | -    | -            | 🟢 HEALTHY  |
 
 **Cálculo:** (100 × 0.30) + (100 × 0.20) + (100 × 0.20) + (100 × 0.20) + (100 × 0.10) = 100
 
@@ -40,6 +41,7 @@ El Health Check v2 del GDD evalúa la coherencia entre:
 **Definición:** % de nodos presentes en system-map-v2.yaml que existen realmente en docs/nodes-v2/
 
 **Resultado:**
+
 - Nodos en system-map-v2.yaml: **15**
 - Nodos v2 reales encontrados: **15**
 - Nodos faltantes: **0**
@@ -105,17 +107,9 @@ El Health Check v2 del GDD evalúa la coherencia entre:
 
 ✅ Sin warnings ni errores detectados.
 
-
-
-
-
 ---
 
 ## 💡 Sugerencias de Mejora
-
-
-
-
 
 ---
 

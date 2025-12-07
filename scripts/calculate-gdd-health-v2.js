@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
  * GDD Health Check v2 Calculator
- * 
+ *
  * Calcula métricas de salud del GDD v2 basándose en:
  * - Nodos reales en docs/nodes-v2/
  * - System Map v2 en docs/system-map-v2.yaml
  * - SSOT-V2.md
- * 
+ *
  * Reglas:
  * - NO mezclar con v1
  * - NO inventar nodos o relaciones
@@ -38,33 +38,38 @@ function loadSystemMapV2() {
 function loadNodesV2() {
   const nodes = {};
   const nodeFiles = {};
-  
+
   try {
     if (!fs.existsSync(NODES_V2_DIR)) {
       return { nodes, nodeFiles };
     }
-    
+
     const files = fs.readdirSync(NODES_V2_DIR);
-    files.filter(f => f.endsWith('.md')).forEach(file => {
-      const content = fs.readFileSync(path.join(NODES_V2_DIR, file), 'utf8');
-      const baseName = file.replace('.md', '');
-      const match = baseName.match(/^\d+-(.+)$/);
-      const nodeName = match ? match[1] : baseName;
-      
-      nodeFiles[nodeName] = file;
-      nodes[nodeName] = {
-        file,
-        content,
-        hasSSOTRefs: /SSOT|ssot|Single Source of Truth/i.test(content),
-        saysNoneSSOT: /SSOT\s+References?:\s*None|does\s+not\s+(directly\s+)?(use|access)\s+SSOT/i.test(content),
-        dependencies: extractDependencies(content),
-        crossReferences: extractCrossReferences(content)
-      };
-    });
+    files
+      .filter((f) => f.endsWith('.md'))
+      .forEach((file) => {
+        const content = fs.readFileSync(path.join(NODES_V2_DIR, file), 'utf8');
+        const baseName = file.replace('.md', '');
+        const match = baseName.match(/^\d+-(.+)$/);
+        const nodeName = match ? match[1] : baseName;
+
+        nodeFiles[nodeName] = file;
+        nodes[nodeName] = {
+          file,
+          content,
+          hasSSOTRefs: /SSOT|ssot|Single Source of Truth/i.test(content),
+          saysNoneSSOT:
+            /SSOT\s+References?:\s*None|does\s+not\s+(directly\s+)?(use|access)\s+SSOT/i.test(
+              content
+            ),
+          dependencies: extractDependencies(content),
+          crossReferences: extractCrossReferences(content)
+        };
+      });
   } catch (e) {
     console.warn(`Warning: Could not read nodes-v2 directory: ${e.message}`);
   }
-  
+
   return { nodes, nodeFiles };
 }
 
@@ -76,7 +81,7 @@ function extractDependencies(content) {
     const depsSection = depsMatch[0];
     // Buscar referencias en formato backtick: `nombre-nodo.md`
     const backtickRefs = depsSection.match(/`(\d+-)?([a-z-]+)\.md`/gi) || [];
-    backtickRefs.forEach(ref => {
+    backtickRefs.forEach((ref) => {
       const m = ref.match(/`(\d+-)?([a-z-]+)\.md`/i);
       if (m) {
         const nodeName = m[2];
@@ -87,7 +92,7 @@ function extractDependencies(content) {
     });
     // Buscar referencias en formato markdown link: [`nombre-nodo.md`](./nombre-nodo.md)
     const markdownLinkRefs = depsSection.match(/\[`(\d+-)?([a-z-]+)\.md`\]/gi) || [];
-    markdownLinkRefs.forEach(ref => {
+    markdownLinkRefs.forEach((ref) => {
       const m = ref.match(/\[`(\d+-)?([a-z-]+)\.md`\]/i);
       if (m) {
         const nodeName = m[2];
@@ -117,157 +122,175 @@ function extractCrossReferences(content) {
 function calculateMetrics(systemMap, nodesV2) {
   const nodesInSystemMap = Object.keys(systemMap.nodes || {});
   const nodesV2Real = Object.keys(nodesV2.nodes || {});
-  
+
   // 1. system_map_alignment_score
   // % de nodos presentes en system-map-v2.yaml que existen realmente en docs/nodes-v2/
-  const nodesInSystemMapThatExist = nodesInSystemMap.filter(nodeName => {
+  const nodesInSystemMapThatExist = nodesInSystemMap.filter((nodeName) => {
     // Buscar mapeo directo o por nombre similar
-    return nodesV2Real.some(v2Node => {
+    return nodesV2Real.some((v2Node) => {
       const mapped = NODE_NAME_MAPPING[v2Node];
-      return mapped === nodeName || v2Node === nodeName || 
-             nodeName.replace(/-/g, '_') === v2Node.replace(/-/g, '_');
+      return (
+        mapped === nodeName ||
+        v2Node === nodeName ||
+        nodeName.replace(/-/g, '_') === v2Node.replace(/-/g, '_')
+      );
     });
   });
-  
-  const systemMapAlignmentScore = nodesInSystemMap.length > 0
-    ? (nodesInSystemMapThatExist.length / nodesInSystemMap.length) * 100
-    : 0;
-  
+
+  const systemMapAlignmentScore =
+    nodesInSystemMap.length > 0
+      ? (nodesInSystemMapThatExist.length / nodesInSystemMap.length) * 100
+      : 0;
+
   // 2. dependency_density_score
   // Nº de referencias entre nodos / nº esperado según system map
   let actualDependencies = 0;
   let expectedDependencies = 0;
-  
-  nodesV2Real.forEach(nodeName => {
+
+  nodesV2Real.forEach((nodeName) => {
     const node = nodesV2.nodes[nodeName];
     actualDependencies += node.dependencies.length;
-    
+
     // Buscar en system-map
     const systemMapNode = systemMap.nodes[NODE_NAME_MAPPING[nodeName] || nodeName];
     if (systemMapNode && systemMapNode.depends_on) {
       expectedDependencies += systemMapNode.depends_on.length;
     }
   });
-  
-  const dependencyDensityScore = expectedDependencies > 0
-    ? Math.min(100, (actualDependencies / expectedDependencies) * 100)
-    : 0;
-  
+
+  const dependencyDensityScore =
+    expectedDependencies > 0 ? Math.min(100, (actualDependencies / expectedDependencies) * 100) : 0;
+
   // 3. crosslink_score
   // % de nodos que referencian correctamente a sus dependencias
   let correctCrosslinks = 0;
   let totalCrosslinks = 0;
-  
-  nodesV2Real.forEach(nodeName => {
+
+  nodesV2Real.forEach((nodeName) => {
     const node = nodesV2.nodes[nodeName];
     const systemMapNode = systemMap.nodes[NODE_NAME_MAPPING[nodeName] || nodeName];
-    
+
     if (systemMapNode && systemMapNode.depends_on) {
       totalCrosslinks += systemMapNode.depends_on.length;
-      systemMapNode.depends_on.forEach(dep => {
+      systemMapNode.depends_on.forEach((dep) => {
         // Verificar si el nodo v2 referencia esta dependencia
-        if (node.crossReferences.some(ref => 
-          ref === dep || ref.replace(/-/g, '_') === dep.replace(/-/g, '_')
-        )) {
+        if (
+          node.crossReferences.some(
+            (ref) => ref === dep || ref.replace(/-/g, '_') === dep.replace(/-/g, '_')
+          )
+        ) {
           correctCrosslinks++;
         }
       });
     }
   });
-  
-  const crosslinkScore = totalCrosslinks > 0
-    ? (correctCrosslinks / totalCrosslinks) * 100
-    : 0;
-  
+
+  const crosslinkScore = totalCrosslinks > 0 ? (correctCrosslinks / totalCrosslinks) * 100 : 0;
+
   // 4. ssot_alignment_score
   // 100% si todos los nodos usan valores del SSOT y no hay contradicciones
   let ssotAligned = 0;
-  nodesV2Real.forEach(nodeName => {
+  nodesV2Real.forEach((nodeName) => {
     const node = nodesV2.nodes[nodeName];
     const systemMapNode = systemMap.nodes[NODE_NAME_MAPPING[nodeName] || nodeName];
-    
+
     // Check if node explicitly says "None" or "does not use SSOT"
     const content = node.content || '';
-    const saysNone = /SSOT\s+References?:\s*None|does\s+not\s+(directly\s+)?(use|access)\s+SSOT/i.test(content);
-    
+    const saysNone =
+      /SSOT\s+References?:\s*None|does\s+not\s+(directly\s+)?(use|access)\s+SSOT/i.test(content);
+
     if (saysNone) {
       // Node explicitly says it doesn't use SSOT - aligned if system-map has empty array
-      if (systemMapNode && (!systemMapNode.ssot_references || systemMapNode.ssot_references.length === 0)) {
+      if (
+        systemMapNode &&
+        (!systemMapNode.ssot_references || systemMapNode.ssot_references.length === 0)
+      ) {
         ssotAligned++;
       }
     } else if (node.hasSSOTRefs) {
       // Node mentions SSOT and should have references
-      if (systemMapNode && systemMapNode.ssot_references && systemMapNode.ssot_references.length > 0) {
+      if (
+        systemMapNode &&
+        systemMapNode.ssot_references &&
+        systemMapNode.ssot_references.length > 0
+      ) {
         ssotAligned++;
       }
     } else {
       // Node doesn't mention SSOT - aligned if system-map has empty array
-      if (systemMapNode && (!systemMapNode.ssot_references || systemMapNode.ssot_references.length === 0)) {
+      if (
+        systemMapNode &&
+        (!systemMapNode.ssot_references || systemMapNode.ssot_references.length === 0)
+      ) {
         ssotAligned++;
       }
     }
   });
-  
-  const ssotAlignmentScore = nodesV2Real.length > 0
-    ? (ssotAligned / nodesV2Real.length) * 100
-    : 0;
-  
+
+  const ssotAlignmentScore = nodesV2Real.length > 0 ? (ssotAligned / nodesV2Real.length) * 100 : 0;
+
   // 5. narrative_consistency_score
   // Evalúa si los nodos describen procesos compatibles entre sí
   // Por ahora, asumimos 100% si no hay contradicciones obvias
   // (esto requeriría análisis semántico más profundo)
   const narrativeConsistencyScore = 100; // Placeholder - requiere análisis más profundo
-  
+
   // 6. health_score final
-  const healthScore = (
-    systemMapAlignmentScore * 0.30 +
-    dependencyDensityScore * 0.20 +
-    crosslinkScore * 0.20 +
-    ssotAlignmentScore * 0.20 +
-    narrativeConsistencyScore * 0.10
-  );
-  
+  const healthScore =
+    systemMapAlignmentScore * 0.3 +
+    dependencyDensityScore * 0.2 +
+    crosslinkScore * 0.2 +
+    ssotAlignmentScore * 0.2 +
+    narrativeConsistencyScore * 0.1;
+
   // Detectar nodos huérfanos (en system-map pero no en nodes-v2)
-  const orphanNodes = nodesInSystemMap.filter(nodeName => {
+  const orphanNodes = nodesInSystemMap.filter((nodeName) => {
     // Verificar si existe mapeo directo o inverso
-    const hasMapping = nodesV2Real.some(v2Node => {
+    const hasMapping = nodesV2Real.some((v2Node) => {
       const mapped = NODE_NAME_MAPPING[v2Node];
-      return mapped === nodeName || v2Node === nodeName || 
-             nodeName.replace(/-/g, '_') === v2Node.replace(/-/g, '_');
+      return (
+        mapped === nodeName ||
+        v2Node === nodeName ||
+        nodeName.replace(/-/g, '_') === v2Node.replace(/-/g, '_')
+      );
     });
     return !hasMapping;
   });
-  
+
   // Nodos no usados en system-map (en nodes-v2 pero no en system-map)
-  const unusedNodesInSystemMap = nodesV2Real.filter(v2Node => {
+  const unusedNodesInSystemMap = nodesV2Real.filter((v2Node) => {
     const mapped = NODE_NAME_MAPPING[v2Node];
     return !nodesInSystemMap.includes(mapped || v2Node);
   });
-  
+
   // Entradas en system-map sin uso
   const unusedSystemMapEntries = [];
   // (Esto requeriría análisis más profundo de referencias en código)
-  
+
   // Warnings y errors
   const warnings = [];
   const errors = [];
-  
+
   if (nodesV2Real.length < nodesInSystemMap.length * 0.1) {
-    warnings.push(`Solo ${nodesV2Real.length} nodos v2 reales de ${nodesInSystemMap.length} definidos en system-map-v2.yaml`);
+    warnings.push(
+      `Solo ${nodesV2Real.length} nodos v2 reales de ${nodesInSystemMap.length} definidos en system-map-v2.yaml`
+    );
   }
-  
+
   if (orphanNodes.length > 0) {
-    warnings.push(`${orphanNodes.length} nodos definidos en system-map-v2.yaml no tienen documentación en docs/nodes-v2/`);
+    warnings.push(
+      `${orphanNodes.length} nodos definidos en system-map-v2.yaml no tienen documentación en docs/nodes-v2/`
+    );
   }
-  
+
   if (dependencyDensityScore < 50) {
     warnings.push(`Densidad de dependencias baja: ${dependencyDensityScore.toFixed(1)}%`);
   }
-  
+
   if (ssotAlignmentScore < 100) {
     warnings.push(`Alineación SSOT incompleta: ${ssotAlignmentScore.toFixed(1)}%`);
   }
-  
+
   return {
     version: '2.0',
     timestamp: new Date().toISOString(),
@@ -293,18 +316,18 @@ function main() {
   try {
     const systemMap = loadSystemMapV2();
     const nodesV2 = loadNodesV2();
-    
+
     const metrics = calculateMetrics(systemMap, nodesV2);
-    
+
     // Guardar JSON
     const outputPath = path.join(ROOT_DIR, 'gdd-health-v2.json');
     fs.writeFileSync(outputPath, JSON.stringify(metrics, null, 2));
-    
+
     console.log('✅ gdd-health-v2.json generado');
     console.log(`   Health Score: ${metrics.health_score}/100`);
     console.log(`   Nodos detectados: ${metrics.nodes_detected}`);
     console.log(`   Nodos faltantes: ${metrics.nodes_missing}`);
-    
+
     return metrics;
   } catch (error) {
     console.error('❌ Error:', error.message);
@@ -317,4 +340,3 @@ if (require.main === module) {
 }
 
 module.exports = { calculateMetrics, loadSystemMapV2, loadNodesV2 };
-
