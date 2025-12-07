@@ -1,104 +1,104 @@
 # 📊 GDD Node Health Report
 
-**Generated:** 2025-11-26T19:24:05.198Z
-**Overall Status:** 🟢 HEALTHY
-**Average Score:** 90.2/100
+**Generated:** 2025-12-05T17:11:00.606Z
+**Overall Status:** 🟡 DEGRADED
+**Average Score:** 87.3/100
 
 ---
 
 ## Summary
 
 - **Total Nodes:** 15
-- 🟢 **Healthy (80-100):** 13
-- 🟡 **Degraded (50-79):** 2
+- 🟢 **Healthy (80-100):** 11
+- 🟡 **Degraded (50-79):** 4
 - 🔴 **Critical (<50):** 0
 
 ---
 
 ## Node Scores
 
-| Node                 | Score  | Status   | Last Updated | Coverage | Dependencies | Issues |
-| -------------------- | ------ | -------- | ------------ | -------- | ------------ | ------ |
-| guardian             | 🟡 76  | degraded | 2025-10-23   | 0%       | 0            | 0      |
-| trainer              | 🟡 78  | degraded | 2025-10-29   | 0%       | 0            | 0      |
-| analytics            | 🟢 82  | healthy  | 2025-10-29   | 59%      | 0            | 0      |
-| social-platforms     | 🟢 82  | healthy  | 2025-11-11   | 14%      | 0            | 0      |
-| observability        | 🟢 86  | healthy  | 2025-11-11   | 46%      | 0            | 0      |
-| roast                | 🟢 89  | healthy  | 2025-11-23   | 59%      | 0            | 0      |
-| plan-features        | 🟢 92  | healthy  | 2025-11-18   | 74%      | 0            | 0      |
-| cost-control         | 🟢 93  | healthy  | 2025-11-21   | 60%      | 0            | 0      |
-| shield               | 🟢 93  | healthy  | 2025-11-23   | 62%      | 0            | 0      |
-| persona              | 🟢 94  | healthy  | 2025-11-06   | 90%      | 0            | 0      |
-| billing              | 🟢 96  | healthy  | 2025-11-11   | 97.63%   | 0            | 0      |
-| multi-tenant         | 🟢 96  | healthy  | 2025-11-11   | 94.25%   | 0            | 0      |
-| platform-constraints | 🟢 97  | healthy  | 2025-11-16   | 100%     | 0            | 0      |
-| queue-system         | 🟢 99  | healthy  | 2025-11-23   | 81%      | 0            | 0      |
-| tone                 | 🟢 100 | healthy  | 2025-11-25   | 100%     | 0            | 0      |
+| Node                 | Score | Status   | Last Updated | Coverage | Dependencies | Issues |
+| -------------------- | ----- | -------- | ------------ | -------- | ------------ | ------ |
+| guardian             | 🟡 73 | degraded | 2025-10-23   | 0%       | 0            | 0      |
+| trainer              | 🟡 75 | degraded | 2025-10-29   | 0%       | 0            | 0      |
+| analytics            | 🟡 79 | degraded | 2025-10-29   | 59%      | 0            | 0      |
+| social-platforms     | 🟡 79 | degraded | 2025-11-11   | 14%      | 0            | 0      |
+| observability        | 🟢 83 | healthy  | 2025-11-11   | 46%      | 0            | 0      |
+| roast                | 🟢 86 | healthy  | 2025-11-23   | 59%      | 0            | 0      |
+| cost-control         | 🟢 90 | healthy  | 2025-11-21   | 60%      | 0            | 0      |
+| shield               | 🟢 90 | healthy  | 2025-11-23   | 62%      | 0            | 0      |
+| persona              | 🟢 91 | healthy  | 2025-11-06   | 90%      | 0            | 0      |
+| plan-features        | 🟢 91 | healthy  | 2025-11-26   | 74%      | 0            | 0      |
+| billing              | 🟢 93 | healthy  | 2025-11-11   | 97.63%   | 0            | 0      |
+| multi-tenant         | 🟢 93 | healthy  | 2025-11-11   | 94.25%   | 0            | 0      |
+| platform-constraints | 🟢 94 | healthy  | 2025-11-16   | 100%     | 0            | 0      |
+| queue-system         | 🟢 96 | healthy  | 2025-11-23   | 81%      | 0            | 0      |
+| tone                 | 🟢 97 | healthy  | 2025-11-26   | 100%     | 0            | 0      |
 
 ---
 
 ## ⚠️ Top 5 Nodes to Review
 
-### guardian (Score: 76)
+### guardian (Score: 73)
 
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
 
 - Sync Accuracy: 100/100
-- Update Freshness: 32/100
+- Update Freshness: 14/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
-### trainer (Score: 78)
+### trainer (Score: 75)
 
 **Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
 
 - Sync Accuracy: 100/100
-- Update Freshness: 44/100
+- Update Freshness: 26/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
-### analytics (Score: 82)
+### analytics (Score: 79)
 
-**Status:** 🟢 HEALTHY
+**Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
 
 - Sync Accuracy: 100/100
-- Update Freshness: 44/100
+- Update Freshness: 26/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
-### social-platforms (Score: 82)
+### social-platforms (Score: 79)
 
-**Status:** 🟢 HEALTHY
+**Status:** 🟡 DEGRADED
 
 **Score Breakdown:**
 
 - Sync Accuracy: 100/100
-- Update Freshness: 70/100
+- Update Freshness: 52/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 30/100
 - Agent Relevance: 100/100
 - Integrity Score: 100/100
 
-### observability (Score: 86)
+### observability (Score: 83)
 
 **Status:** 🟢 HEALTHY
 
 **Score Breakdown:**
 
 - Sync Accuracy: 100/100
-- Update Freshness: 70/100
+- Update Freshness: 52/100
 - Dependency Integrity: 100/100
 - Coverage Evidence: 50/100
 - Agent Relevance: 100/100
