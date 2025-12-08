@@ -7,10 +7,14 @@ on:
       - develop
     paths:
       - 'docs/nodes/**'
+      - 'docs/nodes-v2/**'
+      - 'docs/system-map-v2.yaml'
+      - 'docs/SSOT-V2.md'
       - 'system-map.yaml'
       - 'spec.md'
       - 'src/**'
       - 'scripts/**'
+      - '.cursor/rules/**'
       - '.gddrc.json'
   workflow_dispatch:
 
@@ -36,7 +40,8 @@ jobs:
           fi
           
           # Count v2 files (explicit v2 paths)
-          V2_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|scripts/calculate-gdd-health-v2\.js|\.cursor/rules/.*v2.*\.mdc|scripts/validate-.*\.js|scripts/detect-.*\.js)' changed-files.txt | wc -l || echo "0")
+          # Include cursor rules v2, validation scripts, and workflows that add v2 support
+          V2_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|scripts/calculate-gdd-health-v2\.js|\.cursor/rules/.*v2.*\.mdc|\.cursor/rules/system-map-consistency-drift-guard\.mdc|\.cursor/rules/ssot-scope-enforcement\.mdc|scripts/validate-.*\.js|scripts/detect-.*\.js|\.github/workflows/gdd-validate\.yml)' changed-files.txt | wc -l || echo "0")
           
           # Count v1 files (explicit v1 paths, excluding v2)
           V1_NODES=$(grep -E '^docs/nodes/[^/]+\.md$' changed-files.txt | wc -l || echo "0")
