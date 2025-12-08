@@ -1,38 +1,23 @@
 {
   "version": "2.0",
-  "timestamp": "2025-12-08T15:48:30.521Z",
-  "nodes_detected": 1,
-  "nodes_missing": 14,
+  "timestamp": "2025-12-08T16:46:54.428Z",
+  "nodes_detected": 14,
+  "nodes_missing": 1,
   "nodes_with_broken_dependencies": 0,
-  "dependency_density_score": 25,
-  "crosslink_score": 7.5,
-  "system_map_alignment_score": 6.67,
-  "ssot_alignment_score": 6.67,
+  "dependency_density_score": 72.5,
+  "crosslink_score": 30,
+  "system_map_alignment_score": 93.33,
+  "ssot_alignment_score": 66.67,
   "narrative_consistency_score": 100,
   "orphan_nodes": [
-    "roasting-engine",
-    "analysis-engine",
-    "shield-engine",
-    "integraciones-redes-sociales",
-    "infraestructura",
-    "observabilidad",
-    "frontend-user-app",
-    "frontend-admin",
-    "ssot-integration",
-    "workers",
-    "auth",
-    "settings-loader-and-feature-flags",
-    "gdpr-and-legal",
-    "testing-v2"
+    "observabilidad"
   ],
   "unused_nodes_in_system_map": [],
   "unused_system_map_entries": [],
   "warnings": [
-    "Solo 1 nodos v2 reales de 15 definidos en system-map-v2.yaml",
-    "14 nodos definidos en system-map-v2.yaml no tienen documentación en docs/nodes-v2/",
-    "Densidad de dependencias baja: 25.0%",
-    "Alineación SSOT incompleta: 6.7%"
+    "1 nodos definidos en system-map-v2.yaml no tienen documentación en docs/nodes-v2/",
+    "Alineación SSOT incompleta: 66.7%"
   ],
   "errors": [],
-  "health_score": 19.83
+  "health_score": 71.83
 }

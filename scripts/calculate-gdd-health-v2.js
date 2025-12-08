@@ -37,41 +37,6 @@ function normalizeNodeName(name) {
   return name.toLowerCase().trim();
 }
 
-function findNodeFile(nodeName) {
-  // Try exact match first: docs/nodes-v2/${nodeName}.md
-  let file = `${nodeName}.md`;
-  let filePath = path.join(NODES_V2_DIR, file);
-
-  if (fs.existsSync(filePath)) {
-    return filePath;
-  }
-
-  // If exact match doesn't exist, try numbered format (legacy): docs/nodes-v2/XX-${nodeName}.md
-  if (!fs.existsSync(filePath)) {
-    try {
-      const files = fs.readdirSync(NODES_V2_DIR);
-      const numberedFile = files.find((f) => {
-        if (!f.endsWith('.md')) return false;
-        const baseName = f.replace('.md', '');
-        const match = baseName.match(/^\d+-(.+)$/);
-        if (match) {
-          const extractedName = match[1];
-          // Normalize both for comparison
-          return normalizeNodeName(extractedName) === normalizeNodeName(nodeName);
-        }
-        return false;
-      });
-      if (numberedFile) {
-        return path.join(NODES_V2_DIR, numberedFile);
-      }
-    } catch (e) {
-      // Directory read failed, continue
-    }
-  }
-
-  return null;
-}
-
 function loadNodesV2() {
   const nodes = {};
   const nodeFiles = {};
