@@ -16,8 +16,6 @@
 - [`analysis-engine`](./05-motor-analisis.md)
 - [`billing`](./billing.md)
 
-
-
 - [`roasting-engine`](./06-motor-roasting.md)
 - [`shield-engine`](./07-shield.md)
 - [`observabilidad`](./observabilidad.md)
@@ -25,8 +23,6 @@
 - [`ssot-integration`](./15-ssot-integration.md)
 - [`analysis-engine`](./05-motor-analisis.md)
 - [`billing`](./billing.md)
-
-
 
 Este nodo depende de los siguientes nodos:
 
@@ -305,4 +301,3 @@ Este nodo usa los siguientes valores del SSOT (vía backend API):
 **Nota:** Este nodo no accede directamente al SSOT, lo hace a través del backend API.
 
 ---
-

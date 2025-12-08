@@ -52,9 +52,7 @@ function validateDocPaths() {
 
     docs.forEach((docPath) => {
       totalPaths++;
-      const fullPath = path.isAbsolute(docPath)
-        ? docPath
-        : path.join(ROOT_DIR, docPath);
+      const fullPath = path.isAbsolute(docPath) ? docPath : path.join(ROOT_DIR, docPath);
 
       if (!fs.existsSync(fullPath)) {
         missingPaths++;
@@ -112,4 +110,3 @@ if (require.main === module) {
 }
 
 module.exports = { validateDocPaths, loadSystemMapV2 };
-

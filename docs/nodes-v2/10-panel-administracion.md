@@ -11,12 +11,8 @@
 - [`ssot-integration`](./15-ssot-integration.md)
 - [`billing`](./billing.md)
 
-
-
 - [`ssot-integration`](./15-ssot-integration.md)
 - [`billing`](./billing.md)
-
-
 
 Este nodo depende de los siguientes nodos:
 
@@ -334,4 +330,3 @@ Este nodo usa y edita los siguientes valores del SSOT:
 **Nota:** Este nodo es el único que puede editar el SSOT (requiere role=superadmin).
 
 ---
-

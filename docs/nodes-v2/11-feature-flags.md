@@ -10,11 +10,7 @@
 
 - [`ssot-integration`](./15-ssot-integration.md)
 
-
-
 - [`ssot-integration`](./15-ssot-integration.md)
-
-
 
 Este nodo depende de los siguientes nodos:
 
@@ -251,4 +247,3 @@ Este nodo está relacionado con los siguientes nodos:
 - Ningún nodo relacionado
 
 ---
-

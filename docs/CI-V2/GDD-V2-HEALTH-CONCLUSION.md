@@ -13,6 +13,7 @@
 **Razón:** El health score de 30/100 refleja un **problema de detección/cálculo**, no un problema real del sistema.
 
 **Evidencia:**
+
 - Solo se están evaluando **4 nodos de 15** (26.67%)
 - Los 11 nodos faltantes **SÍ existen** en `docs/nodes-v2/`, pero tienen nombres diferentes
 - El script **NO puede encontrar los archivos** porque los nombres no coinciden
@@ -30,11 +31,13 @@
 **Por qué:** Solo 4 de 15 nodos están siendo detectados.
 
 **Cálculo:**
+
 ```
 system_map_alignment_score = (4 / 15) * 100 = 26.67%
 ```
 
 **Problema:** Los archivos existen, pero el script no los puede encontrar porque:
+
 - Busca `roasting-engine.md` pero el archivo es `06-motor-roasting.md`
 - Busca `analysis-engine.md` pero el archivo es `05-motor-analisis.md`
 - Etc.
@@ -49,6 +52,7 @@ system_map_alignment_score = (4 / 15) * 100 = 26.67%
 **Por qué:** Solo se pueden validar 3 de los 4 nodos encontrados (y hay 15 nodos totales).
 
 **Cálculo:**
+
 ```
 ssot_alignment_score = (3 / 15) * 100 = 20%
 ```
@@ -65,6 +69,7 @@ ssot_alignment_score = (3 / 15) * 100 = 20%
 **Por qué:** Solo se pueden detectar dependencias de los 4 nodos encontrados.
 
 **Cálculo:**
+
 ```
 dependency_density_score = (actualDependencies / expectedDependencies) * 100
 ```
@@ -81,6 +86,7 @@ dependency_density_score = (actualDependencies / expectedDependencies) * 100
 **Por qué:** Solo se pueden validar crosslinks entre los 4 nodos encontrados.
 
 **Cálculo:**
+
 ```
 crosslink_score = (correctCrosslinks / totalCrosslinks) * 100
 ```
@@ -96,12 +102,15 @@ crosslink_score = (correctCrosslinks / totalCrosslinks) * 100
 ### Análisis de Cambios
 
 **Script `calculate-gdd-health-v2.js`:**
+
 - ❌ **NO cambió** - Idéntico al commit 7d21f1b7
 
 **Archivos en `docs/nodes-v2/`:**
+
 - ❌ **NO cambiaron** - Mismos nombres que en el commit 7d21f1b7
 
 **`docs/system-map-v2.yaml`:**
+
 - ❌ **NO cambió** - Mismos nodos, mismos nombres, mismo campo `docs:`
 
 ### Conclusión sobre el Cambio
@@ -119,6 +128,7 @@ crosslink_score = (correctCrosslinks / totalCrosslinks) * 100
 **Problema identificado:**
 
 1. El `system-map-v2.yaml` especifica explícitamente qué archivo usar en el campo `docs:`:
+
    ```yaml
    roasting-engine:
      docs:
@@ -126,8 +136,9 @@ crosslink_score = (correctCrosslinks / totalCrosslinks) * 100
    ```
 
 2. El script **NO usa este campo**. Solo busca por nombre:
+
    ```javascript
-   const filePath = findNodeFile(nodeName);  // ← Solo pasa nodeName
+   const filePath = findNodeFile(nodeName); // ← Solo pasa nodeName
    ```
 
 3. La función `findNodeFile()` busca:
@@ -143,6 +154,7 @@ crosslink_score = (correctCrosslinks / totalCrosslinks) * 100
 ### Sospecha Secundaria: El Health Score de 100/100 Fue Incorrecto
 
 **Evidencia:**
+
 - El commit `00ce3c52` dice "remove static NODE_NAME_MAPPING" - esto sugiere que antes había un mapeo estático
 - El commit `00ce3c52` tiene health score 100/100 con 15 nodos detectados
 - El script actual NO puede encontrar los archivos porque los nombres no coinciden
@@ -173,15 +185,19 @@ crosslink_score = (correctCrosslinks / totalCrosslinks) * 100
 **El script debe usar el campo `docs:` del `system-map-v2.yaml` para encontrar los archivos correctos.**
 
 En lugar de:
+
 ```javascript
 const filePath = findNodeFile(nodeName);
 ```
 
 Debería ser:
+
 ```javascript
 const nodeData = systemMap.nodes[nodeName];
 const docPath = nodeData.docs?.[0];
-const filePath = docPath ? path.join(ROOT_DIR, docPath.replace('docs/nodes-v2/', '')) : findNodeFile(nodeName);
+const filePath = docPath
+  ? path.join(ROOT_DIR, docPath.replace('docs/nodes-v2/', ''))
+  : findNodeFile(nodeName);
 ```
 
 ---
@@ -203,4 +219,3 @@ const filePath = docPath ? path.join(ROOT_DIR, docPath.replace('docs/nodes-v2/',
 3. **Verificar que todos los 15 nodos se detecten correctamente**
 4. **Re-ejecutar el script** y verificar que el health score vuelva a 100/100
 5. **Validar que las métricas individuales estén en 100%**
-

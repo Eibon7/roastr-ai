@@ -42,7 +42,9 @@ function readMetricsFromSSOT() {
   // Encontrar el final de la sección (siguiente "##" o fin de archivo)
   const remainingContent = ssotContent.substring(section15Start);
   const nextSectionMatch = remainingContent.match(/\n## /);
-  const section15End = nextSectionMatch ? section15Start + nextSectionMatch.index : ssotContent.length;
+  const section15End = nextSectionMatch
+    ? section15Start + nextSectionMatch.index
+    : ssotContent.length;
   const section15 = ssotContent.substring(section15Start, section15End);
 
   // Extraer métricas de la tabla
@@ -50,7 +52,7 @@ function readMetricsFromSSOT() {
 
   // Extraer métricas de la tabla - formato: | **Metric** | value% | description |
   // Usar un patrón más flexible que capture cualquier formato de tabla markdown
-  
+
   // System Map Alignment
   const systemMapLine = section15.match(/\|\s*\*\*System Map Alignment\*\*\s*\|\s*(\d+\.?\d*)%/);
   if (systemMapLine) {
@@ -92,7 +94,9 @@ function readMetricsFromSSOT() {
   }
 
   // Health Score Final - formato: | **Health Score Final** | **77.33/100** |
-  const healthLine = section15.match(/\|\s*\*\*Health Score Final\*\*\s*\|\s*\*\*(\d+\.?\d*)\/100\*\*/);
+  const healthLine = section15.match(
+    /\|\s*\*\*Health Score Final\*\*\s*\|\s*\*\*(\d+\.?\d*)\/100\*\*/
+  );
   if (healthLine) {
     metrics.health_score = parseFloat(healthLine[1]);
   } else {
@@ -127,7 +131,9 @@ function readMetricsFromSSOT() {
   }
 
   if (metrics.ssot_alignment_score < 100) {
-    metrics.warnings.push(`Alineación SSOT incompleta: ${metrics.ssot_alignment_score.toFixed(1)}%`);
+    metrics.warnings.push(
+      `Alineación SSOT incompleta: ${metrics.ssot_alignment_score.toFixed(1)}%`
+    );
   }
 
   return metrics;

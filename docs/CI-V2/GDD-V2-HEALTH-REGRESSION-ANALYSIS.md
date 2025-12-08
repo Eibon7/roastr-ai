@@ -164,23 +164,23 @@ Posibles explicaciones:
 
 ### Nodos en system-map-v2.yaml (campo `docs:`)
 
-| Nodo | Archivo esperado (docs:) | Archivo real | ¿Coincide? |
-|------|-------------------------|--------------|------------|
-| `roasting-engine` | `roasting-engine.md` | `06-motor-roasting.md` | ❌ NO |
-| `analysis-engine` | `analysis-engine.md` | `05-motor-analisis.md` | ❌ NO |
-| `shield-engine` | `shield-engine.md` | `07-shield.md` | ❌ NO |
-| `integraciones-redes-sociales` | `integraciones-redes-sociales.md` | `04-integraciones.md` | ❌ NO |
-| `billing` | `billing.md` | `billing.md` | ✅ SÍ |
-| `infraestructura` | `infraestructura.md` | `14-infraestructura.md` | ✅ SÍ (match numerado) |
-| `observabilidad` | `observabilidad.md` | ❌ NO EXISTE | ❌ NO |
-| `frontend-user-app` | `frontend-user-app.md` | `09-panel-usuario.md` | ❌ NO |
-| `frontend-admin` | `frontend-admin.md` | `10-panel-administracion.md` | ❌ NO |
-| `ssot-integration` | `ssot-integration.md` | `15-ssot-integration.md` | ✅ SÍ (match numerado) |
-| `workers` | `workers.md` | `08-workers.md` | ✅ SÍ (match numerado) |
-| `auth` | `auth.md` | `02-autenticacion-usuarios.md` | ❌ NO |
-| `settings-loader-and-feature-flags` | `settings-loader-and-feature-flags.md` | `11-feature-flags.md` | ❌ NO |
-| `gdpr-and-legal` | `gdpr-and-legal.md` | `12-gdpr-legal.md` | ❌ NO |
-| `testing-v2` | `testing-v2.md` | `13-testing.md` | ❌ NO |
+| Nodo                                | Archivo esperado (docs:)               | Archivo real                   | ¿Coincide?             |
+| ----------------------------------- | -------------------------------------- | ------------------------------ | ---------------------- |
+| `roasting-engine`                   | `roasting-engine.md`                   | `06-motor-roasting.md`         | ❌ NO                  |
+| `analysis-engine`                   | `analysis-engine.md`                   | `05-motor-analisis.md`         | ❌ NO                  |
+| `shield-engine`                     | `shield-engine.md`                     | `07-shield.md`                 | ❌ NO                  |
+| `integraciones-redes-sociales`      | `integraciones-redes-sociales.md`      | `04-integraciones.md`          | ❌ NO                  |
+| `billing`                           | `billing.md`                           | `billing.md`                   | ✅ SÍ                  |
+| `infraestructura`                   | `infraestructura.md`                   | `14-infraestructura.md`        | ✅ SÍ (match numerado) |
+| `observabilidad`                    | `observabilidad.md`                    | ❌ NO EXISTE                   | ❌ NO                  |
+| `frontend-user-app`                 | `frontend-user-app.md`                 | `09-panel-usuario.md`          | ❌ NO                  |
+| `frontend-admin`                    | `frontend-admin.md`                    | `10-panel-administracion.md`   | ❌ NO                  |
+| `ssot-integration`                  | `ssot-integration.md`                  | `15-ssot-integration.md`       | ✅ SÍ (match numerado) |
+| `workers`                           | `workers.md`                           | `08-workers.md`                | ✅ SÍ (match numerado) |
+| `auth`                              | `auth.md`                              | `02-autenticacion-usuarios.md` | ❌ NO                  |
+| `settings-loader-and-feature-flags` | `settings-loader-and-feature-flags.md` | `11-feature-flags.md`          | ❌ NO                  |
+| `gdpr-and-legal`                    | `gdpr-and-legal.md`                    | `12-gdpr-legal.md`             | ❌ NO                  |
+| `testing-v2`                        | `testing-v2.md`                        | `13-testing.md`                | ❌ NO                  |
 
 **Resultado:** Solo 4 nodos coinciden (26.67%)
 
@@ -205,7 +205,7 @@ El `system-map-v2.yaml` especifica explícitamente qué archivo usar en el campo
 ```yaml
 roasting-engine:
   docs:
-    - docs/nodes-v2/roasting-engine.md  # ← Este campo existe pero el script lo ignora
+    - docs/nodes-v2/roasting-engine.md # ← Este campo existe pero el script lo ignora
 ```
 
 El script solo pasa `nodeName` a `findNodeFile()`, no pasa `nodeData` que contiene el campo `docs:`.
@@ -235,6 +235,7 @@ El script solo pasa `nodeName` a `findNodeFile()`, no pasa `nodeData` que contie
 **El health score de 100/100 en el commit 7d21f1b7 fue INCORRECTO o se generó de manera diferente.**
 
 **Evidencia:**
+
 1. El script NO ha cambiado
 2. Los archivos NO han cambiado
 3. El system-map NO ha cambiado
@@ -242,9 +243,9 @@ El script solo pasa `nodeName` a `findNodeFile()`, no pasa `nodeData` que contie
 5. El script NO usa el campo `docs:` del system-map que especifica explícitamente qué archivo usar
 
 **Hipótesis más probable:**
+
 - El health score de 100/100 se generó cuando había un mapeo estático (NODE_NAME_MAPPING) que fue eliminado en el commit 00ce3c52
 - O el health score se generó manualmente/incorrectamente
 - O había archivos con nombres exactos que fueron eliminados/renombrados fuera del historial de git
 
 **El health score actual de 30/100 es CORRECTO** según la lógica del script actual, que refleja que solo 4 de 15 nodos están siendo detectados.
-

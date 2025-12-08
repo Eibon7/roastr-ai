@@ -14,15 +14,11 @@
 - [`ssot-integration`](./15-ssot-integration.md)
 - [`analysis-engine`](./05-motor-analisis.md)
 
-
-
 - [`billing`](./billing.md)
 - [`infraestructura`](./14-infraestructura.md)
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
 - [`analysis-engine`](./05-motor-analisis.md)
-
-
 
 Este nodo depende de los siguientes nodos:
 

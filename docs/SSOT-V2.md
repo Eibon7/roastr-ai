@@ -636,14 +636,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 100% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **100/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor       | Descripción                                                                                                                   |
+| ------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%        | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 100%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%        | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%        | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%        | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **100/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -660,8 +660,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -675,14 +673,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 93.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 93.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -699,8 +697,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -714,14 +710,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 93.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 93.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -738,8 +734,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -753,14 +747,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 93.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 93.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -777,8 +771,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -792,14 +784,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 93.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 93.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -816,8 +808,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -831,14 +821,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 86.67% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **97.33/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 86.67%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **97.33/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -855,8 +845,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -870,14 +858,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 93.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 93.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -894,8 +882,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -909,14 +895,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 93.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 93.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -933,8 +919,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -948,14 +932,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 93.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 93.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -972,8 +956,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -987,14 +969,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 93.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 93.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -1011,8 +993,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -1026,14 +1006,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 93.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 100% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 93.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 100%          | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **98.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -1050,8 +1030,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -1065,14 +1043,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 73.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 50% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **84.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 73.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 50%           | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **84.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -1089,8 +1067,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -1104,14 +1080,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 73.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 50% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **84.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 73.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 50%           | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **84.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -1128,8 +1104,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -1143,14 +1117,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 100% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 73.33% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 50% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **84.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 100%          | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 73.33%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 50%           | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **84.67/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -1167,8 +1141,6 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ---
 
-
-
 Esta sección contiene las métricas oficiales del estado documental v2, calculadas exclusivamente a partir de system-map-v2.yaml y docs/nodes-v2.
 
 **IMPORTANTE:**  
@@ -1182,14 +1154,14 @@ node scripts/compute-health-v2-official.js --update-ssot
 
 ### 15.1 Métricas Oficiales
 
-| Métrica | Valor | Descripción |
-|---------|-------|-------------|
-| **System Map Alignment** | 93.33% | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/ |
-| **SSOT Alignment** | 66.67% | % de nodos que usan valores del SSOT correctamente |
-| **Dependency Density** | 100% | Nº de dependencias detectadas / nº esperado según system map |
-| **Crosslink Score** | 30% | % de dependencias esperadas que están correctamente referenciadas |
-| **Narrative Consistency** | 100% | Evalúa si los nodos describen procesos compatibles entre sí (placeholder) |
-| **Health Score Final** | **77.33/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
+| Métrica                   | Valor         | Descripción                                                                                                                   |
+| ------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **System Map Alignment**  | 93.33%        | % de nodos en system-map-v2.yaml que tienen documentación en docs/nodes-v2/                                                   |
+| **SSOT Alignment**        | 66.67%        | % de nodos que usan valores del SSOT correctamente                                                                            |
+| **Dependency Density**    | 100%          | Nº de dependencias detectadas / nº esperado según system map                                                                  |
+| **Crosslink Score**       | 30%           | % de dependencias esperadas que están correctamente referenciadas                                                             |
+| **Narrative Consistency** | 100%          | Evalúa si los nodos describen procesos compatibles entre sí (placeholder)                                                     |
+| **Health Score Final**    | **77.33/100** | Ponderado: System Map (30%) + Dependency Density (20%) + Crosslink (20%) + SSOT Alignment (20%) + Narrative Consistency (10%) |
 
 ### 15.2 Detalles de Cálculo
 
@@ -1205,4 +1177,3 @@ node scripts/compute-health-v2-official.js --update-ssot
 4. **Si hay discrepancia** entre archivos → gana el SSOT
 
 ---
-

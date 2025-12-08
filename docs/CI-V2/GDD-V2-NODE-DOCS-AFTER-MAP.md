@@ -7,23 +7,23 @@
 
 ## Mapeo Final node_id → docs[]
 
-| Node ID | docs[] Actualizado | ¿Path existe? |
-|---------|-------------------|---------------|
-| `roasting-engine` | `docs/nodes-v2/06-motor-roasting.md` | ✅ SÍ |
-| `analysis-engine` | `docs/nodes-v2/05-motor-analisis.md` | ✅ SÍ |
-| `shield-engine` | `docs/nodes-v2/07-shield.md` | ✅ SÍ |
-| `integraciones-redes-sociales` | `docs/nodes-v2/04-integraciones.md` | ✅ SÍ |
-| `billing` | `docs/nodes-v2/billing.md` | ✅ SÍ |
-| `infraestructura` | `docs/nodes-v2/14-infraestructura.md` | ✅ SÍ |
-| `observabilidad` | `docs/nodes-v2/observabilidad.md` | ❌ NO (archivo no existe) |
-| `frontend-user-app` | `docs/nodes-v2/09-panel-usuario.md` | ✅ SÍ |
-| `frontend-admin` | `docs/nodes-v2/10-panel-administracion.md` | ✅ SÍ |
-| `ssot-integration` | `docs/nodes-v2/15-ssot-integration.md` | ✅ SÍ |
-| `workers` | `docs/nodes-v2/08-workers.md` | ✅ SÍ |
-| `auth` | `docs/nodes-v2/02-autenticacion-usuarios.md` | ✅ SÍ |
-| `settings-loader-and-feature-flags` | `docs/nodes-v2/11-feature-flags.md` | ✅ SÍ |
-| `gdpr-and-legal` | `docs/nodes-v2/12-gdpr-legal.md` | ✅ SÍ |
-| `testing-v2` | `docs/nodes-v2/13-testing.md` | ✅ SÍ |
+| Node ID                             | docs[] Actualizado                           | ¿Path existe?             |
+| ----------------------------------- | -------------------------------------------- | ------------------------- |
+| `roasting-engine`                   | `docs/nodes-v2/06-motor-roasting.md`         | ✅ SÍ                     |
+| `analysis-engine`                   | `docs/nodes-v2/05-motor-analisis.md`         | ✅ SÍ                     |
+| `shield-engine`                     | `docs/nodes-v2/07-shield.md`                 | ✅ SÍ                     |
+| `integraciones-redes-sociales`      | `docs/nodes-v2/04-integraciones.md`          | ✅ SÍ                     |
+| `billing`                           | `docs/nodes-v2/billing.md`                   | ✅ SÍ                     |
+| `infraestructura`                   | `docs/nodes-v2/14-infraestructura.md`        | ✅ SÍ                     |
+| `observabilidad`                    | `docs/nodes-v2/observabilidad.md`            | ❌ NO (archivo no existe) |
+| `frontend-user-app`                 | `docs/nodes-v2/09-panel-usuario.md`          | ✅ SÍ                     |
+| `frontend-admin`                    | `docs/nodes-v2/10-panel-administracion.md`   | ✅ SÍ                     |
+| `ssot-integration`                  | `docs/nodes-v2/15-ssot-integration.md`       | ✅ SÍ                     |
+| `workers`                           | `docs/nodes-v2/08-workers.md`                | ✅ SÍ                     |
+| `auth`                              | `docs/nodes-v2/02-autenticacion-usuarios.md` | ✅ SÍ                     |
+| `settings-loader-and-feature-flags` | `docs/nodes-v2/11-feature-flags.md`          | ✅ SÍ                     |
+| `gdpr-and-legal`                    | `docs/nodes-v2/12-gdpr-legal.md`             | ✅ SÍ                     |
+| `testing-v2`                        | `docs/nodes-v2/13-testing.md`                | ✅ SÍ                     |
 
 ---
 
@@ -47,6 +47,6 @@ Todos los paths en `docs/system-map-v2.yaml` (campo `docs:`) han sido actualizad
 ## Próximo Paso
 
 Para alcanzar 100% de cobertura:
+
 - Crear `docs/nodes-v2/observabilidad.md` con la documentación del nodo `observabilidad`
 - O verificar si `observabilidad` está cubierto en otro documento y añadir ese path también
-

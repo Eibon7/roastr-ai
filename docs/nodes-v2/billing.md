@@ -29,13 +29,9 @@ Este nodo usa los siguientes valores del SSOT:
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
 
-
-
 - [`infraestructura`](./14-infraestructura.md)
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
-
-
 
 Este nodo depende de los siguientes nodos:
 
@@ -118,8 +114,6 @@ According to `system-map-v2.yaml`, `billing` depends on:
 - [`integraciones-redes-sociales.md`](./integraciones-redes-sociales.md)
 - [`roasting-engine.md`](./roasting-engine.md)
 - [`shield-engine.md`](./shield-engine.md)
-
-
 
 Este nodo depende de los siguientes nodos:
 

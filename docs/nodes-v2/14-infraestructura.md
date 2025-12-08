@@ -10,11 +10,7 @@
 
 - [`observabilidad`](./observabilidad.md)
 
-
-
 - [`observabilidad`](./observabilidad.md)
-
-
 
 Este nodo depende de los siguientes nodos:
 

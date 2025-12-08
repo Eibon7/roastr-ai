@@ -22,9 +22,11 @@
 ## 2. Nodos Detectados vs Missing
 
 **Nodos detectados:** 1 de 15
+
 - `billing` ✅
 
 **Nodos missing:** 14 de 15
+
 - `roasting-engine` ❌
 - `analysis-engine` ❌
 - `shield-engine` ❌
@@ -44,23 +46,23 @@
 
 ## 3. Estado de docs[] por Nodo en system-map-v2.yaml
 
-| Node ID | docs[] según system-map | ¿Path existe? | Estado |
-|---------|------------------------|---------------|--------|
-| `roasting-engine` | `docs/nodes-v2/roasting-engine.md` | ❌ NO | Missing |
-| `analysis-engine` | `docs/nodes-v2/analysis-engine.md` | ❌ NO | Missing |
-| `shield-engine` | `docs/nodes-v2/shield-engine.md` | ❌ NO | Missing |
-| `integraciones-redes-sociales` | `docs/nodes-v2/integraciones-redes-sociales.md` | ❌ NO | Missing |
-| `billing` | `docs/nodes-v2/billing.md` | ✅ SÍ | Detectado |
-| `infraestructura` | `docs/nodes-v2/infraestructura.md` | ❌ NO | Missing |
-| `observabilidad` | `docs/nodes-v2/observabilidad.md` | ❌ NO | Missing |
-| `frontend-user-app` | `docs/nodes-v2/frontend-user-app.md` | ❌ NO | Missing |
-| `frontend-admin` | `docs/nodes-v2/frontend-admin.md` | ❌ NO | Missing |
-| `ssot-integration` | `docs/nodes-v2/ssot-integration.md` | ❌ NO | Missing |
-| `workers` | `docs/nodes-v2/workers.md` | ❌ NO | Missing |
-| `auth` | `docs/nodes-v2/auth.md` | ❌ NO | Missing |
-| `settings-loader-and-feature-flags` | `docs/nodes-v2/settings-loader-and-feature-flags.md` | ❌ NO | Missing |
-| `gdpr-and-legal` | `docs/nodes-v2/gdpr-and-legal.md` | ❌ NO | Missing |
-| `testing-v2` | `docs/nodes-v2/testing-v2.md` | ❌ NO | Missing |
+| Node ID                             | docs[] según system-map                              | ¿Path existe? | Estado    |
+| ----------------------------------- | ---------------------------------------------------- | ------------- | --------- |
+| `roasting-engine`                   | `docs/nodes-v2/roasting-engine.md`                   | ❌ NO         | Missing   |
+| `analysis-engine`                   | `docs/nodes-v2/analysis-engine.md`                   | ❌ NO         | Missing   |
+| `shield-engine`                     | `docs/nodes-v2/shield-engine.md`                     | ❌ NO         | Missing   |
+| `integraciones-redes-sociales`      | `docs/nodes-v2/integraciones-redes-sociales.md`      | ❌ NO         | Missing   |
+| `billing`                           | `docs/nodes-v2/billing.md`                           | ✅ SÍ         | Detectado |
+| `infraestructura`                   | `docs/nodes-v2/infraestructura.md`                   | ❌ NO         | Missing   |
+| `observabilidad`                    | `docs/nodes-v2/observabilidad.md`                    | ❌ NO         | Missing   |
+| `frontend-user-app`                 | `docs/nodes-v2/frontend-user-app.md`                 | ❌ NO         | Missing   |
+| `frontend-admin`                    | `docs/nodes-v2/frontend-admin.md`                    | ❌ NO         | Missing   |
+| `ssot-integration`                  | `docs/nodes-v2/ssot-integration.md`                  | ❌ NO         | Missing   |
+| `workers`                           | `docs/nodes-v2/workers.md`                           | ❌ NO         | Missing   |
+| `auth`                              | `docs/nodes-v2/auth.md`                              | ❌ NO         | Missing   |
+| `settings-loader-and-feature-flags` | `docs/nodes-v2/settings-loader-and-feature-flags.md` | ❌ NO         | Missing   |
+| `gdpr-and-legal`                    | `docs/nodes-v2/gdpr-and-legal.md`                    | ❌ NO         | Missing   |
+| `testing-v2`                        | `docs/nodes-v2/testing-v2.md`                        | ❌ NO         | Missing   |
 
 ---
 
@@ -94,6 +96,7 @@ billing.md
 **Causa raíz:** Los paths declarados en `system-map-v2.yaml` (campo `docs:`) no coinciden con los nombres reales de los archivos en `docs/nodes-v2/`.
 
 **Ejemplo:**
+
 - System-map declara: `docs/nodes-v2/roasting-engine.md`
 - Archivo real: `docs/nodes-v2/06-motor-roasting.md`
 - **No coinciden** → Nodo marcado como missing
@@ -109,4 +112,3 @@ billing.md
 3. Verificar que el script de health v2 use exclusivamente `nodeData.docs[]`
 4. Regenerar health score con paths correctos
 5. Añadir validación de paths para prevenir futuros problemas
-

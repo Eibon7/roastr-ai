@@ -11,6 +11,7 @@
 **Script:** `scripts/calculate-gdd-health-v2.js`
 
 **Comando de ejecución:**
+
 ```bash
 node scripts/calculate-gdd-health-v2.js
 ```
@@ -18,6 +19,7 @@ node scripts/calculate-gdd-health-v2.js
 **Archivo JSON generado:** `gdd-health-v2.json`
 
 **Fuentes de datos:**
+
 - `docs/system-map-v2.yaml` - Source of truth para lista de nodos
 - `docs/nodes-v2/**/*.md` - Archivos de documentación de nodos
 - `docs/SSOT-V2.md` - Referencias SSOT (usado para validación de alineación)
@@ -97,23 +99,23 @@ function findNodeFile(nodeName) {
 
 ## 5. Mapeo Actual (lo que el script encuentra)
 
-| Nodo system-map | Archivo esperado (docs:) | Archivo real encontrado | Estado |
-|----------------|-------------------------|-------------------------|--------|
-| `roasting-engine` | `roasting-engine.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `analysis-engine` | `analysis-engine.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `shield-engine` | `shield-engine.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `integraciones-redes-sociales` | `integraciones-redes-sociales.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `billing` | `billing.md` | ✅ `billing.md` | Encontrado (match exacto) |
-| `infraestructura` | `infraestructura.md` | ✅ `14-infraestructura.md` | Encontrado (match numerado) |
-| `observabilidad` | `observabilidad.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `frontend-user-app` | `frontend-user-app.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `frontend-admin` | `frontend-admin.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `ssot-integration` | `ssot-integration.md` | ✅ `15-ssot-integration.md` | Encontrado (match numerado) |
-| `workers` | `workers.md` | ✅ `08-workers.md` | Encontrado (match numerado) |
-| `auth` | `auth.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `settings-loader-and-feature-flags` | `settings-loader-and-feature-flags.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `gdpr-and-legal` | `gdpr-and-legal.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
-| `testing-v2` | `testing-v2.md` | ❌ NO ENCONTRADO | Falla búsqueda exacta y numerada |
+| Nodo system-map                     | Archivo esperado (docs:)               | Archivo real encontrado     | Estado                           |
+| ----------------------------------- | -------------------------------------- | --------------------------- | -------------------------------- |
+| `roasting-engine`                   | `roasting-engine.md`                   | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `analysis-engine`                   | `analysis-engine.md`                   | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `shield-engine`                     | `shield-engine.md`                     | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `integraciones-redes-sociales`      | `integraciones-redes-sociales.md`      | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `billing`                           | `billing.md`                           | ✅ `billing.md`             | Encontrado (match exacto)        |
+| `infraestructura`                   | `infraestructura.md`                   | ✅ `14-infraestructura.md`  | Encontrado (match numerado)      |
+| `observabilidad`                    | `observabilidad.md`                    | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `frontend-user-app`                 | `frontend-user-app.md`                 | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `frontend-admin`                    | `frontend-admin.md`                    | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `ssot-integration`                  | `ssot-integration.md`                  | ✅ `15-ssot-integration.md` | Encontrado (match numerado)      |
+| `workers`                           | `workers.md`                           | ✅ `08-workers.md`          | Encontrado (match numerado)      |
+| `auth`                              | `auth.md`                              | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `settings-loader-and-feature-flags` | `settings-loader-and-feature-flags.md` | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `gdpr-and-legal`                    | `gdpr-and-legal.md`                    | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
+| `testing-v2`                        | `testing-v2.md`                        | ❌ NO ENCONTRADO            | Falla búsqueda exacta y numerada |
 
 **Resultado:** Solo 4 nodos detectados de 15 (26.67%)
 
@@ -142,4 +144,3 @@ El problema es que los nombres de los archivos no coinciden con los nombres de l
 3. La búsqueda por nombre numerado falla porque los nombres extraídos no coinciden con los nombres de los nodos
 
 **El health score de 30/100 es REAL** - refleja que solo 4 de 15 nodos están siendo detectados correctamente.
-

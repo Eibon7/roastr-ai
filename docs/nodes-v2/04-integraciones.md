@@ -13,14 +13,10 @@
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
 
-
-
 - [`infraestructura`](./14-infraestructura.md)
 - [`billing`](./billing.md)
 - [`observabilidad`](./observabilidad.md)
 - [`ssot-integration`](./15-ssot-integration.md)
-
-
 
 Este nodo depende de los siguientes nodos:
 

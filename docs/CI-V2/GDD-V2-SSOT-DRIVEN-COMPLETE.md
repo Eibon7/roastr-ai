@@ -56,9 +56,10 @@ El ecosistema GDD v2 ahora es **100% dinámico y SSOT-driven**, sin ningún tipo
 
 ### `scripts/compute-health-v2-official.js`
 
-**Función:** Calcula métricas oficiales dinámicamente desde system-map-v2.yaml y docs/nodes-v2/**
+**Función:** Calcula métricas oficiales dinámicamente desde system-map-v2.yaml y docs/nodes-v2/\*\*
 
 **Usage:**
+
 ```bash
 # Solo calcula y muestra (NO modifica SSOT)
 node scripts/compute-health-v2-official.js
@@ -68,6 +69,7 @@ node scripts/compute-health-v2-official.js --update-ssot
 ```
 
 **Características:**
+
 - ✅ 100% dinámico - No hay hardcodes
 - ✅ Calcula todas las métricas desde system-map + nodos reales
 - ✅ Genera JSON en `scripts/outputs/gdd-health-v2-official.json`
@@ -79,11 +81,13 @@ node scripts/compute-health-v2-official.js --update-ssot
 **Función:** Lee métricas oficiales desde SSOT-V2.md (Sección 15)
 
 **Usage:**
+
 ```bash
 node scripts/calculate-gdd-health-v2.js
 ```
 
 **Características:**
+
 - ✅ NO calcula nada - Solo lee del SSOT
 - ✅ Genera `gdd-health-v2.json` con valores del SSOT
 - ✅ Genera `docs/GDD-V2-HEALTH-REPORT.md` con valores del SSOT
@@ -94,6 +98,7 @@ node scripts/calculate-gdd-health-v2.js
 **Función:** Valida que la sección 15 del SSOT existe, está completa y es coherente
 
 **Usage:**
+
 ```bash
 # Modo local (solo warnings)
 node scripts/validate-ssot-health.js
@@ -103,6 +108,7 @@ node scripts/validate-ssot-health.js --ci
 ```
 
 **Validaciones:**
+
 - ✅ Sección 15 existe
 - ✅ Todas las métricas están presentes
 - ✅ No hay valores TBD/TODO/placeholder (excepto Narrative Consistency)
@@ -116,6 +122,7 @@ node scripts/validate-ssot-health.js --ci
 **Health Score:** 77.33/100
 
 **Métricas:**
+
 - System Map Alignment: 93.33% (14/15 nodos detectados)
 - SSOT Alignment: 66.67%
 - Dependency Density: 100%
@@ -123,6 +130,7 @@ node scripts/validate-ssot-health.js --ci
 - Narrative Consistency: 100% (placeholder)
 
 **Detalles:**
+
 - Nodos detectados: 14 de 15
 - Nodos faltantes: 1 (`observabilidad` - requiere crear `docs/nodes-v2/observabilidad.md`)
 - Última actualización: 2025-12-08T17:07:58.749Z
@@ -234,6 +242,7 @@ node scripts/validate-ssot-health.js --ci
 **Ubicación:** `docs/SSOT-V2.md` - Sección 15
 
 **Contenido:**
+
 - Métricas oficiales en tabla markdown
 - Detalles de cálculo (nodos detectados, faltantes, timestamp)
 - Reglas de actualización
@@ -253,4 +262,3 @@ node scripts/validate-ssot-health.js --ci
 
 **Última actualización:** 2025-12-08  
 **Estado:** ✅ COMPLETADO - Ecosistema GDD v2 100% SSOT-driven
-

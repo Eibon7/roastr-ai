@@ -9,6 +9,7 @@
 ## 1. Verificación de Rama
 
 ### Rama Actual
+
 ```
 feature/roa-310-cursor-rules-v2-optimized
 ```
@@ -24,16 +25,20 @@ feature/roa-310-cursor-rules-v2-optimized
 #### ✅ A. Archivos DENTRO del Scope de ROA-310
 
 **Cursor Rules v2:**
+
 - (Ninguno detectado en esta verificación)
 
 **Scripts de Validación v2:**
+
 - (Verificar si hay cambios en `scripts/validate-*.js`)
 
 **Scripts GDD v2:**
+
 - `scripts/calculate-gdd-health-v2.js` ✅
 - `scripts/compute-health-v2-official.js` ✅
 
 **Docs de CI v2:**
+
 - `docs/CI-V2/GDD-V2-COMPLETE-AUDIT-REPORT.md` ✅
 - `docs/CI-V2/GDD-V2-ROOT-CAUSE-REPAIR-REPORT.md` ✅
 - `docs/CI-V2/SSOT-ALIGNMENT-100-FINAL-REPORT.md` ✅
@@ -42,9 +47,11 @@ feature/roa-310-cursor-rules-v2-optimized
 - `docs/CI-V2/PRE-COMMIT-AUDIT-ROA-310.md` ✅ (este reporte)
 
 **System Map v2:**
+
 - `docs/system-map-v2.yaml` ✅
 
 **Nodos v2:**
+
 - `docs/nodes-v2/02-autenticacion-usuarios.md` ✅
 - `docs/nodes-v2/04-integraciones.md` ✅
 - `docs/nodes-v2/05-motor-analisis.md` ✅
@@ -62,13 +69,16 @@ feature/roa-310-cursor-rules-v2-optimized
 - `docs/nodes-v2/observabilidad.md` ✅
 
 **SSOT v2:**
+
 - `docs/SSOT-V2.md` ✅ (solo sección 15 esperada)
 
 **Health Reports:**
+
 - `gdd-health-v2.json` ✅
 - `docs/GDD-V2-HEALTH-REPORT.md` ✅
 
 **Outputs de Scripts:**
+
 - `scripts/outputs/gdd-health-v2-official.json` ✅ (output de compute-health-v2-official.js)
 
 ---
@@ -76,25 +86,31 @@ feature/roa-310-cursor-rules-v2-optimized
 #### ❌ B. Archivos FUERA del Scope de ROA-310
 
 **Scripts de Reparación (NO deben estar en commit):**
+
 - `scripts/repair-crosslinks-v2.js` ❌
 - `scripts/repair-gdd-v2-root-causes.js` ❌
 - `scripts/root-cause-repair-v2.js` ❌
 
 **Archivos Temporales:**
+
 - `changed-files.txt` ❌
 
 **Worktrees:**
+
 - `roastr-ai-worktrees/` ❌ (directorio)
 
 **Reportes Legacy:**
+
 - `docs/FINAL-GDD-NODES-V2-REPORT.md` ❌
 - `docs/GDD-NODES-V2-GENERATION-SUMMARY.md` ❌
 - `docs/SSOT-INTEGRATION-SUMMARY.md` ❌
 
 **Directorios Legacy:**
+
 - `docs/legacy-pr-isolation/` ❌ (directorio)
 
 **Workflows de GitHub Actions (verificar si es parte de ROA-310):**
+
 - `.github/workflows/system-map-v2-consistency.yml` ⚠️ (verificar si es parte del scope)
 
 ---
@@ -117,6 +133,7 @@ feature/roa-310-cursor-rules-v2-optimized
 **Resultado:** ✅ **PASS** (exit code 0)
 
 **Detalles:**
+
 - Total paths declarados: 15
 - Paths existentes: 15
 - Paths faltantes: 0
@@ -131,6 +148,7 @@ feature/roa-310-cursor-rules-v2-optimized
 **Resultado:** ✅ **PASS** (exit code 0)
 
 **Detalles:**
+
 - ✅ Sección 15 del SSOT es válida
 - ✅ Métricas del SSOT son consistentes con el cálculo dinámico
 - System Map Alignment: 100%
@@ -141,6 +159,7 @@ feature/roa-310-cursor-rules-v2-optimized
 - Health Score: 100/100
 
 **Warnings (no críticos):**
+
 - Se encontraron valores "placeholder" en sección 15 (esperado - Narrative Consistency es placeholder intencional)
 
 ---
@@ -152,6 +171,7 @@ feature/roa-310-cursor-rules-v2-optimized
 **Resultado:** ✅ **PASS** (exit code 0)
 
 **Detalles:**
+
 - ✅ Loaded system-map-v2.yaml
 - ✅ Found 0 Strong Concept owner(s)
 - ✅ All Strong Concepts are properly owned!
@@ -170,16 +190,17 @@ feature/roa-310-cursor-rules-v2-optimized
 
 **Métricas Leídas desde SSOT:**
 
-| Métrica | Valor | Estado |
-|---------|-------|--------|
-| **System Map Alignment** | 100% | ✅ |
-| **SSOT Alignment** | 100% | ✅ |
-| **Dependency Density** | 100% | ✅ |
-| **Crosslink Score** | 100% | ✅ |
-| **Narrative Consistency** | 100% | ✅ |
-| **Health Score Final** | **100/100** | ✅ |
+| Métrica                   | Valor       | Estado |
+| ------------------------- | ----------- | ------ |
+| **System Map Alignment**  | 100%        | ✅     |
+| **SSOT Alignment**        | 100%        | ✅     |
+| **Dependency Density**    | 100%        | ✅     |
+| **Crosslink Score**       | 100%        | ✅     |
+| **Narrative Consistency** | 100%        | ✅     |
+| **Health Score Final**    | **100/100** | ✅     |
 
 **Verificaciones:**
+
 - ✅ Lee desde SSOT (no calcula)
 - ✅ Health Score = 100/100
 - ✅ Todas las métricas completas
@@ -256,6 +277,7 @@ La rama actual es exactamente `feature/roa-310-cursor-rules-v2-optimized`.
 **Total:** ~25-30 archivos
 
 **Categorías:**
+
 - ✅ Scripts GDD v2 (2 archivos)
 - ✅ Docs CI v2 (6 archivos)
 - ✅ System Map v2 (1 archivo)
@@ -271,6 +293,7 @@ La rama actual es exactamente `feature/roa-310-cursor-rules-v2-optimized`.
 **Total:** ~10 archivos
 
 **Categorías:**
+
 - ❌ Scripts de reparación (3 archivos)
 - ❌ Archivos temporales (1 archivo)
 - ❌ Worktrees (1 directorio)
@@ -284,11 +307,11 @@ La rama actual es exactamente `feature/roa-310-cursor-rules-v2-optimized`.
 
 ### ✅ D. Estado de Validadores
 
-| Validador | Estado | Exit Code |
-|-----------|--------|-----------|
-| `validate-v2-doc-paths.js --ci` | ✅ PASS | 0 |
-| `validate-ssot-health.js --ci` | ✅ PASS | 0 |
-| `validate-strong-concepts.js --ci` | ✅ PASS | 0 |
+| Validador                          | Estado  | Exit Code |
+| ---------------------------------- | ------- | --------- |
+| `validate-v2-doc-paths.js --ci`    | ✅ PASS | 0         |
+| `validate-ssot-health.js --ci`     | ✅ PASS | 0         |
+| `validate-strong-concepts.js --ci` | ✅ PASS | 0         |
 
 **Resultado:** ✅ **TODOS LOS VALIDADORES PASARON**
 
@@ -299,6 +322,7 @@ La rama actual es exactamente `feature/roa-310-cursor-rules-v2-optimized`.
 **Health Score:** ✅ **100/100**
 
 **Métricas:**
+
 - System Map Alignment: 100% ✅
 - SSOT Alignment: 100% ✅
 - Dependency Density: 100% ✅
@@ -333,6 +357,7 @@ La rama actual es exactamente `feature/roa-310-cursor-rules-v2-optimized`.
 ### Antes de Commit:
 
 1. **Excluir archivos fuera de scope:**
+
    ```bash
    git reset HEAD scripts/repair-*.js
    git reset HEAD scripts/root-cause-*.js
@@ -380,4 +405,3 @@ La rama actual es exactamente `feature/roa-310-cursor-rules-v2-optimized`.
 **Generated by:** Pre-Commit Audit Script (Strict Mode - Read Only)  
 **Last Updated:** 2025-12-08T21:10:00Z  
 **Status:** ⚠️ **NO LISTO - REQUIERE LIMPIEZA**
-

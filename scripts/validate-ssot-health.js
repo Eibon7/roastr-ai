@@ -49,14 +49,18 @@ function validateSSOTSection15() {
   // Encontrar el final de la sección
   const remainingContent = ssotContent.substring(section15Start);
   const nextSectionMatch = remainingContent.match(/\n## /);
-  const section15End = nextSectionMatch ? section15Start + nextSectionMatch.index : ssotContent.length;
+  const section15End = nextSectionMatch
+    ? section15Start + nextSectionMatch.index
+    : ssotContent.length;
   const section15 = ssotContent.substring(section15Start, section15End);
 
   // 3. Verificar que no hay valores TBD
   if (/TBD|tbd|TODO|todo|placeholder/i.test(section15)) {
     const tbdMatches = section15.match(/(TBD|tbd|TODO|todo|placeholder)/gi);
     if (tbdMatches) {
-      warnings.push(`Se encontraron valores TBD/TODO/placeholder en sección 15: ${tbdMatches.join(', ')}`);
+      warnings.push(
+        `Se encontraron valores TBD/TODO/placeholder en sección 15: ${tbdMatches.join(', ')}`
+      );
     }
   }
 
@@ -98,7 +102,11 @@ function validateSSOTSection15() {
     const match = section15.match(pattern);
     if (match) {
       extractedMetrics[key] = parseFloat(match[1]);
-      if (isNaN(extractedMetrics[key]) || extractedMetrics[key] < 0 || extractedMetrics[key] > 100) {
+      if (
+        isNaN(extractedMetrics[key]) ||
+        extractedMetrics[key] < 0 ||
+        extractedMetrics[key] > 100
+      ) {
         errors.push(`Valor inválido para ${key}: ${match[1]}`);
       }
     } else {
@@ -113,9 +121,7 @@ function validateSSOTSection15() {
 
       const tolerance = 0.01; // Tolerancia para diferencias de redondeo
 
-      if (
-        Math.abs(healthJson.health_score - extractedMetrics.healthScore) > tolerance
-      ) {
+      if (Math.abs(healthJson.health_score - extractedMetrics.healthScore) > tolerance) {
         errors.push(
           `Health score en JSON (${healthJson.health_score}) no coincide con SSOT (${extractedMetrics.healthScore})`
         );
@@ -207,4 +213,3 @@ if (require.main === module) {
 }
 
 module.exports = { validateSSOTSection15 };
-

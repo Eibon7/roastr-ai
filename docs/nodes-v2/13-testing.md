@@ -252,4 +252,3 @@ Este nodo usa los siguientes valores del SSOT:
 **Nota:** Los tests NO deben modificar el SSOT real. Debe usarse una copia del SSOT dedicada para testing.
 
 ---
-

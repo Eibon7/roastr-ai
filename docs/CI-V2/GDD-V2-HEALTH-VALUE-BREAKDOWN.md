@@ -10,6 +10,7 @@
 ### 1.1 System Map Alignment Score: 26.67%
 
 **Cálculo:**
+
 ```
 system_map_alignment_score = (nodesInSystemMapThatExist / nodesInSystemMap.length) * 100
                             = (4 / 15) * 100
@@ -17,17 +18,20 @@ system_map_alignment_score = (nodesInSystemMapThatExist / nodesInSystemMap.lengt
 ```
 
 **Detalle:**
+
 - Nodos definidos en system-map-v2.yaml: **15**
 - Nodos encontrados en docs/nodes-v2/: **4**
 - Nodos faltantes: **11**
 
 **Nodos encontrados:**
+
 1. `billing` → `billing.md` ✅
 2. `infraestructura` → `14-infraestructura.md` ✅
 3. `ssot-integration` → `15-ssot-integration.md` ✅
 4. `workers` → `08-workers.md` ✅
 
 **Nodos faltantes (orphan_nodes):**
+
 1. `roasting-engine`
 2. `analysis-engine`
 3. `shield-engine`
@@ -45,11 +49,13 @@ system_map_alignment_score = (nodesInSystemMapThatExist / nodesInSystemMap.lengt
 ### 1.2 Dependency Density Score: 30%
 
 **Cálculo:**
+
 ```
 dependency_density_score = min(100, (actualDependencies / expectedDependencies) * 100)
 ```
 
 **Detalle:**
+
 - Dependencias esperadas (según system-map-v2.yaml): **X** (calculado desde `depends_on` de cada nodo)
 - Dependencias detectadas (en archivos encontrados): **Y** (calculado desde sección Dependencies de cada archivo)
 - Ratio: **30%**
@@ -61,11 +67,13 @@ dependency_density_score = min(100, (actualDependencies / expectedDependencies) 
 ### 1.3 Crosslink Score: 10%
 
 **Cálculo:**
+
 ```
 crosslink_score = (correctCrosslinks / totalCrosslinks) * 100
 ```
 
 **Detalle:**
+
 - Crosslinks esperados (según system-map): **X** (todas las relaciones `depends_on`)
 - Crosslinks correctos detectados: **Y** (referencias encontradas en archivos)
 - Ratio: **10%**
@@ -77,6 +85,7 @@ crosslink_score = (correctCrosslinks / totalCrosslinks) * 100
 ### 1.4 SSOT Alignment Score: 20%
 
 **Cálculo:**
+
 ```
 ssot_alignment_score = (ssotAligned / nodesInSystemMap.length) * 100
                      = (3 / 15) * 100
@@ -84,11 +93,13 @@ ssot_alignment_score = (ssotAligned / nodesInSystemMap.length) * 100
 ```
 
 **Detalle:**
+
 - Nodos alineados con SSOT: **3** (de los 4 encontrados)
 - Nodos totales: **15**
 - Ratio: **20%**
 
 **Lógica de validación:**
+
 - Si el nodo menciona SSOT → debe tener `ssot_references` en system-map
 - Si el nodo dice "None" → no debe tener `ssot_references` en system-map
 - Con solo 4 nodos evaluados, la mayoría no se puede validar
@@ -98,6 +109,7 @@ ssot_alignment_score = (ssotAligned / nodesInSystemMap.length) * 100
 ### 1.5 Narrative Consistency Score: 100%
 
 **Cálculo:**
+
 ```
 narrative_consistency_score = 100  // Placeholder - siempre 100%
 ```
@@ -109,25 +121,27 @@ narrative_consistency_score = 100  // Placeholder - siempre 100%
 ## 2. Health Score Final
 
 **Fórmula:**
+
 ```javascript
-health_score = 
+health_score =
   system_map_alignment_score * 0.3 +
   dependency_density_score * 0.2 +
   crosslink_score * 0.2 +
   ssot_alignment_score * 0.2 +
-  narrative_consistency_score * 0.1
+  narrative_consistency_score * 0.1;
 ```
 
 **Cálculo actual:**
+
 ```
-health_score = 
+health_score =
   26.67 * 0.3 +
   30.0 * 0.2 +
   10.0 * 0.2 +
   20.0 * 0.2 +
   100.0 * 0.1
 
-health_score = 
+health_score =
   8.001 +
   6.0 +
   2.0 +
@@ -141,14 +155,14 @@ health_score = 30.001 ≈ 30
 
 ## 3. Breakdown por Componente
 
-| Métrica | Valor | Peso | Contribución | Estado |
-|---------|-------|------|--------------|--------|
-| System Map Alignment | 26.67% | 30% | 8.00 | 🔴 Crítico |
-| Dependency Density | 30.00% | 20% | 6.00 | 🔴 Crítico |
-| Crosslink Score | 10.00% | 20% | 2.00 | 🔴 Crítico |
-| SSOT Alignment | 20.00% | 20% | 4.00 | 🔴 Crítico |
-| Narrative Consistency | 100.00% | 10% | 10.00 | ✅ OK |
-| **TOTAL** | - | 100% | **30.00** | 🔴 Crítico |
+| Métrica               | Valor   | Peso | Contribución | Estado     |
+| --------------------- | ------- | ---- | ------------ | ---------- |
+| System Map Alignment  | 26.67%  | 30%  | 8.00         | 🔴 Crítico |
+| Dependency Density    | 30.00%  | 20%  | 6.00         | 🔴 Crítico |
+| Crosslink Score       | 10.00%  | 20%  | 2.00         | 🔴 Crítico |
+| SSOT Alignment        | 20.00%  | 20%  | 4.00         | 🔴 Crítico |
+| Narrative Consistency | 100.00% | 10%  | 10.00        | ✅ OK      |
+| **TOTAL**             | -       | 100% | **30.00**    | 🔴 Crítico |
 
 ---
 
@@ -190,4 +204,3 @@ El health score de **30/100 es REAL y CORRECTO** según la lógica del script. E
 1. **Solo 4 de 15 nodos están siendo detectados** (26.67%)
 2. Esto causa que todas las métricas dependientes (dependencies, crosslinks, SSOT) se vean afectadas
 3. El script está funcionando correctamente, pero no puede encontrar los archivos porque los nombres no coinciden
-

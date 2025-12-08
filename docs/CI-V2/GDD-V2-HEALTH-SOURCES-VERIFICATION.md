@@ -11,6 +11,7 @@
 **✅ SÍ** - El script lee `docs/system-map-v2.yaml` correctamente.
 
 **Código:**
+
 ```javascript
 const SYSTEM_MAP_V2_PATH = path.join(ROOT_DIR, 'docs', 'system-map-v2.yaml');
 const systemMap = loadSystemMapV2();
@@ -25,11 +26,12 @@ const masterNodeNames = Object.keys(systemMap.nodes || {});
 
 ---
 
-### 1.2 ¿Lee docs/nodes-v2/**/*.md?
+### 1.2 ¿Lee docs/nodes-v2/\*_/_.md?
 
 **✅ SÍ** - El script intenta leer archivos en `docs/nodes-v2/`, pero **solo encuentra 4 de 15**.
 
 **Código:**
+
 ```javascript
 const NODES_V2_DIR = path.join(ROOT_DIR, 'docs', 'nodes-v2');
 const filePath = findNodeFile(nodeName);
@@ -42,12 +44,14 @@ if (filePath && fs.existsSync(filePath)) {
 **Archivos evaluados:** Solo los que `findNodeFile()` puede encontrar
 
 **Archivos encontrados:** 4 de 15
+
 - `billing.md` ✅
 - `14-infraestructura.md` ✅
 - `15-ssot-integration.md` ✅
 - `08-workers.md` ✅
 
 **Archivos NO encontrados:** 11 de 15
+
 - `roasting-engine.md` → Busca pero no existe (archivo real: `06-motor-roasting.md`)
 - `analysis-engine.md` → Busca pero no existe (archivo real: `05-motor-analisis.md`)
 - `shield-engine.md` → Busca pero no existe (archivo real: `07-shield.md`)
@@ -61,6 +65,7 @@ if (filePath && fs.existsSync(filePath)) {
 - `testing-v2.md` → Busca pero no existe (archivo real: `13-testing.md`)
 
 **Problema:** El script NO puede encontrar los archivos porque:
+
 1. Los nombres de los archivos no coinciden con los nombres de los nodos
 2. El script NO usa el campo `docs:` del system-map que especifica explícitamente qué archivo usar
 
@@ -71,11 +76,13 @@ if (filePath && fs.existsSync(filePath)) {
 **✅ SÍ** - El script lee `docs/SSOT-V2.md` para validar alineación SSOT.
 
 **Código:**
+
 ```javascript
 const SSOT_V2_PATH = path.join(ROOT_DIR, 'docs', 'SSOT-V2.md');
 ```
 
 **Uso en cálculo:**
+
 - El script verifica si los nodos mencionan SSOT en su contenido
 - Compara con `ssot_references` en el system-map-v2.yaml
 - Calcula `ssot_alignment_score` basándose en esta comparación
@@ -93,7 +100,7 @@ El `system-map-v2.yaml` tiene un campo `docs:` que especifica explícitamente qu
 ```yaml
 roasting-engine:
   docs:
-    - docs/nodes-v2/roasting-engine.md  # ← Especifica el archivo
+    - docs/nodes-v2/roasting-engine.md # ← Especifica el archivo
 ```
 
 **Total de nodos con campo `docs:`:** 15/15
@@ -104,7 +111,7 @@ El script **NO usa el campo `docs:`**. Solo busca por nombre:
 
 ```javascript
 masterNodeNames.forEach((nodeName) => {
-  const filePath = findNodeFile(nodeName);  // ← Solo pasa nodeName, no nodeData
+  const filePath = findNodeFile(nodeName); // ← Solo pasa nodeName, no nodeData
   // ...
 });
 ```
@@ -120,6 +127,7 @@ masterNodeNames.forEach((nodeName) => {
 **❌ NO** - El script NO tiene filtros que excluyan nodos.
 
 **Código:**
+
 ```javascript
 const masterNodeNames = Object.keys(systemMap.nodes || {});
 masterNodeNames.forEach((nodeName) => {
@@ -136,6 +144,7 @@ masterNodeNames.forEach((nodeName) => {
 **❌ NO** - El script busca en todo el directorio `docs/nodes-v2/`.
 
 **Código:**
+
 ```javascript
 const NODES_V2_DIR = path.join(ROOT_DIR, 'docs', 'nodes-v2');
 const files = fs.readdirSync(NODES_V2_DIR);
@@ -147,11 +156,11 @@ const files = fs.readdirSync(NODES_V2_DIR);
 
 ## 4. Resumen de Fuentes
 
-| Fuente | ¿Se Lee? | ¿Se Usa Correctamente? | Problema |
-|--------|----------|------------------------|----------|
-| `docs/system-map-v2.yaml` | ✅ SÍ | ✅ SÍ | Ninguno |
-| `docs/nodes-v2/**/*.md` | ✅ SÍ | ❌ NO | Solo encuentra 4 de 15 archivos |
-| `docs/SSOT-V2.md` | ✅ SÍ | ⚠️ PARCIAL | Solo puede validar 4 nodos |
+| Fuente                    | ¿Se Lee? | ¿Se Usa Correctamente? | Problema                        |
+| ------------------------- | -------- | ---------------------- | ------------------------------- |
+| `docs/system-map-v2.yaml` | ✅ SÍ    | ✅ SÍ                  | Ninguno                         |
+| `docs/nodes-v2/**/*.md`   | ✅ SÍ    | ❌ NO                  | Solo encuentra 4 de 15 archivos |
+| `docs/SSOT-V2.md`         | ✅ SÍ    | ⚠️ PARCIAL             | Solo puede validar 4 nodos      |
 
 ---
 
@@ -164,4 +173,3 @@ const files = fs.readdirSync(NODES_V2_DIR);
 3. La búsqueda por nombre numerado falla porque los nombres extraídos no coinciden con los nombres de los nodos
 
 **Solución necesaria:** El script debe usar el campo `docs:` del system-map-v2.yaml para encontrar los archivos correctos.
-

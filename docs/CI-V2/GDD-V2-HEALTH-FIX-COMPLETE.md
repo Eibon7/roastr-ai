@@ -65,13 +65,13 @@
 
 ### Métricas Reales
 
-| Métrica | Valor | Estado |
-|---------|-------|--------|
-| System Map Alignment | 93.33% | 🟡 Degradado (14/15 nodos) |
-| Dependency Density | 72.50% | 🟡 Degradado |
-| Crosslink Score | 30.00% | 🔴 Crítico |
-| SSOT Alignment | 66.67% | 🟡 Degradado |
-| Narrative Consistency | 100.00% | ✅ Placeholder |
+| Métrica               | Valor   | Estado                     |
+| --------------------- | ------- | -------------------------- |
+| System Map Alignment  | 93.33%  | 🟡 Degradado (14/15 nodos) |
+| Dependency Density    | 72.50%  | 🟡 Degradado               |
+| Crosslink Score       | 30.00%  | 🔴 Crítico                 |
+| SSOT Alignment        | 66.67%  | 🟡 Degradado               |
+| Narrative Consistency | 100.00% | ✅ Placeholder             |
 
 ---
 
@@ -105,6 +105,7 @@
 ### Para Alcanzar 100% en System Map Alignment (93.33% → 100%)
 
 **Acción requerida:**
+
 - Crear `docs/nodes-v2/observabilidad.md` con la documentación del nodo `observabilidad`
 
 **Impacto:** +6.67% en System Map Alignment → Health score subiría a ~78/100
@@ -112,9 +113,10 @@
 ### Para Mejorar Dependency Density (72.50% → 100%)
 
 **Acción requerida:**
+
 - Asegurar que todas las dependencias declaradas en `depends_on` del system-map estén explícitamente documentadas en los archivos
 - Usar formato que el script detecta:
-  - Markdown links: `` [`nombre-nodo.md`](./nombre-nodo.md) ``
+  - Markdown links: ``[`nombre-nodo.md`](./nombre-nodo.md)``
   - Backticks: `` `nombre-nodo.md` ``
   - Texto bold: `**nombre-nodo**`
 
@@ -123,6 +125,7 @@
 ### Para Mejorar Crosslink Score (30% → 100%)
 
 **Acción requerida:**
+
 - Asegurar que todas las dependencias en `depends_on` estén referenciadas explícitamente en los documentos
 - Verificar que el formato de referencia sea el que el script detecta
 
@@ -131,6 +134,7 @@
 ### Para Mejorar SSOT Alignment (66.67% → 100%)
 
 **Acción requerida:**
+
 - Verificar que todos los nodos tengan referencias SSOT correctas según el system-map
 - Asegurar que los nodos que mencionan SSOT tengan `ssot_references` en el system-map
 - Asegurar que los nodos que dicen "None" no tengan `ssot_references` en el system-map
@@ -180,6 +184,7 @@
 **Función:** Valida que todos los paths declarados en `system-map-v2.yaml` existen.
 
 **Usage:**
+
 ```bash
 # Modo local (solo warnings)
 node scripts/validate-v2-doc-paths.js
@@ -212,11 +217,13 @@ Añadir a `.github/workflows/gdd-validate.yml` antes de calcular health score.
 **Mejora:** +52 puntos
 
 **Causa de la mejora:**
+
 - System-map alineado con archivos reales (14/15 nodos detectados vs 1/15 antes)
 - Script usa exclusivamente paths declarados (no inferencia)
 - Métricas reflejan realidad del sistema
 
 **Próximo paso para 100/100:**
+
 - Crear `docs/nodes-v2/observabilidad.md`
 - Mejorar crosslinks y SSOT alignment en documentos existentes
 
@@ -224,4 +231,3 @@ Añadir a `.github/workflows/gdd-validate.yml` antes de calcular health score.
 
 **Última actualización:** 2025-12-08  
 **Estado:** ✅ COMPLETADO - Wiring definitivo aplicado
-

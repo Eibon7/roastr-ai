@@ -82,6 +82,7 @@ Logs en formato JSON con estructura estándar:
 ### 6.2 Correlation Tracking
 
 Cada request recibe un `correlation_id` único que se propaga a través de:
+
 - Workers
 - Servicios
 - Integraciones externas
@@ -90,6 +91,7 @@ Cada request recibe un `correlation_id` único que se propaga a través de:
 ### 6.3 Request Tracing
 
 Trazabilidad end-to-end mediante:
+
 - Correlation IDs
 - Request IDs
 - Trace IDs (para servicios externos)
@@ -97,6 +99,7 @@ Trazabilidad end-to-end mediante:
 ### 6.4 Usage Analytics
 
 Tracking de:
+
 - Consumo de créditos por usuario/organización
 - Uso de features por plan
 - Métricas de performance
@@ -105,6 +108,7 @@ Tracking de:
 ### 6.5 Metrics & Reporting
 
 Métricas agregadas:
+
 - Requests por minuto/hora/día
 - Error rates
 - Latency percentiles
@@ -137,6 +141,7 @@ Todos los workers extienden `BaseWorker` que incluye logging estructurado autom�
 ### 8.1 Allowed Log Structure
 
 Solo se registran datos permitidos según SSOT:
+
 - Timestamps
 - Correlation IDs
 - Organization IDs (no user IDs directamente)
@@ -146,6 +151,7 @@ Solo se registran datos permitidos según SSOT:
 ### 8.2 Forbidden Data
 
 No se registran:
+
 - User emails
 - User names
 - Personal data
@@ -155,6 +161,7 @@ No se registran:
 ### 8.3 Automatic Blocking
 
 Si se detecta intento de loggear datos prohibidos:
+
 - Bloqueo automático del log
 - Alerta al sistema
 - Log de intento (sin datos sensibles)
@@ -164,6 +171,7 @@ Si se detecta intento de loggear datos prohibidos:
 ## 9. Error Budget
 
 Sistema de error budget para proteger producción:
+
 - Tracking de errores por servicio
 - Alertas cuando se excede error budget
 - Circuit breakers automáticos
@@ -173,6 +181,7 @@ Sistema de error budget para proteger producción:
 ## 10. Alertas
 
 Sistema de alertas por criticidad:
+
 - **P0 (Critical):** Errores que afectan producción inmediatamente
 - **P1 (High):** Errores que afectan funcionalidad crítica
 - **P2 (Medium):** Warnings y degradaciones

@@ -12,14 +12,14 @@ Se ejecutó una reparación exhaustiva del ecosistema GDD v2 enfocada en las cau
 
 ### Métricas Finales (desde SSOT)
 
-| Métrica | Valor | Objetivo | Estado |
-|---------|-------|----------|--------|
-| **System Map Alignment** | 100% | 100% | ✅ |
-| **Dependency Density** | 100% | 100% | ✅ |
-| **Crosslink Score** | 100% | 100% | ✅ |
-| **Narrative Consistency** | 100% | 100% | ✅ |
-| **SSOT Alignment** | 93.33% | 100% | ⚠️ |
-| **Health Score Final** | **98.67/100** | **100/100** | ⚠️ |
+| Métrica                   | Valor         | Objetivo    | Estado |
+| ------------------------- | ------------- | ----------- | ------ |
+| **System Map Alignment**  | 100%          | 100%        | ✅     |
+| **Dependency Density**    | 100%          | 100%        | ✅     |
+| **Crosslink Score**       | 100%          | 100%        | ✅     |
+| **Narrative Consistency** | 100%          | 100%        | ✅     |
+| **SSOT Alignment**        | 93.33%        | 100%        | ⚠️     |
+| **Health Score Final**    | **98.67/100** | **100/100** | ⚠️     |
 
 ---
 
@@ -28,34 +28,41 @@ Se ejecutó una reparación exhaustiva del ecosistema GDD v2 enfocada en las cau
 ### 1. Crosslink Score: 50% → 100% ✅
 
 **Root Cause Detectada:**
+
 - Muchos nodos NO tenían crosslinks markdown a sus dependencias según `system-map-v2.yaml`
 
 **Reparación Aplicada:**
+
 - Añadidas secciones "Dependencies" y "Related Nodes" a todos los nodos
 - Crosslinks añadidos únicamente basándose en `depends_on` y `required_by` del `system-map-v2.yaml`
 - NO se inventaron dependencias
 - Resultado: 40 de 40 crosslinks esperados detectados
 
 **Archivos Modificados:**
+
 - `docs/nodes-v2/observabilidad.md` (creado y completado)
 - `docs/nodes-v2/*.md` (15 archivos con crosslinks añadidos)
 
 ### 2. SSOT Alignment: 73.33% → 93.33% ⚠️
 
 **Root Cause Detectada:**
+
 - 10 nodos mencionan SSOT en su contenido pero NO tienen sección "SSOT References"
 - La lógica del cálculo espera coherencia entre menciones, sección y `ssot_references` del `system-map-v2.yaml`
 
 **Reparación Aplicada:**
+
 - Añadida sección "SSOT References" a `observabilidad.md` (principal issue detectado)
 - Limpiado contenido duplicado en `observabilidad.md`
 
 **Limitación:**
+
 - El resto de nodos (roasting-engine, analysis-engine, shield-engine, billing, etc.) mencionan SSOT pero NO tienen sección formal "SSOT References"
 - **NO se añadieron estas secciones** porque el prompt exigía **NO inventar contenido**
 - Para llegar al 100%, se requeriría añadir secciones "SSOT References" en 10 nodos más, pero esto violaría la regla de no inventar
 
 **Archivos Modificados:**
+
 - `docs/nodes-v2/observabilidad.md` (añadida sección SSOT References)
 
 ### 3. System Map Alignment: 100% (mantenido) ✅
@@ -78,14 +85,14 @@ Se ejecutó una reparación exhaustiva del ecosistema GDD v2 enfocada en las cau
 
 Todas las validaciones críticas pasaron:
 
-| Validación | Estado | Exit Code |
-|-----------|--------|-----------|
-| `validate-v2-doc-paths.js` | ✅ PASS | 0 |
-| `validate-ssot-health.js` | ✅ PASS | 0 |
-| `validate-strong-concepts.js` | ✅ PASS | 0 |
-| `validate-symmetry.js` | ⚠️ Dependencias circulares (esperadas) | 1 |
-| `detect-legacy-ids.js` | ⚠️ IDs legacy en código (fuera de scope GDD v2) | 1 |
-| `detect-guardian-references.js` | ⚠️ Referencias guardian en scripts legacy (fuera de scope GDD v2) | 1 |
+| Validación                      | Estado                                                            | Exit Code |
+| ------------------------------- | ----------------------------------------------------------------- | --------- |
+| `validate-v2-doc-paths.js`      | ✅ PASS                                                           | 0         |
+| `validate-ssot-health.js`       | ✅ PASS                                                           | 0         |
+| `validate-strong-concepts.js`   | ✅ PASS                                                           | 0         |
+| `validate-symmetry.js`          | ⚠️ Dependencias circulares (esperadas)                            | 1         |
+| `detect-legacy-ids.js`          | ⚠️ IDs legacy en código (fuera de scope GDD v2)                   | 1         |
+| `detect-guardian-references.js` | ⚠️ Referencias guardian en scripts legacy (fuera de scope GDD v2) | 1         |
 
 ---
 
@@ -116,6 +123,7 @@ Todas las validaciones críticas pasaron:
 ## Confirmaciones de Integridad
 
 ### ✅ NO Hardcodes
+
 - `calculate-gdd-health-v2.js`: Solo lee del SSOT, NO calcula
 - `compute-health-v2-official.js`: Calcula dinámicamente desde `system-map-v2.yaml` + `docs/nodes-v2`
 - NO hay valores hardcoded en scripts GDD v2
@@ -123,11 +131,13 @@ Todas las validaciones críticas pasaron:
 - NO hay fallbacks (falla si falta información)
 
 ### ✅ SSOT como Única Fuente de Verdad
+
 - Health Score: **98.67/100** (leído desde SSOT sección 15)
 - Todas las métricas vienen de `docs/SSOT-V2.md`
 - NO se modificó el SSOT (excepto sección 15 automáticamente)
 
 ### ✅ System-Map como Fuente de Dependencias
+
 - Todos los crosslinks añadidos vienen de `system-map-v2.yaml`
 - NO se inventaron dependencias
 
@@ -153,6 +163,7 @@ Para alcanzar el 100%, se requiere añadir secciones "SSOT References" formales 
 10. `gdpr-and-legal`
 
 **Razón por la que NO se hizo:**
+
 - El prompt exigía **"NO inventar contenido"**
 - Añadir estas secciones requeriría documentar explícitamente qué valores SSOT usa cada nodo
 - Esto es contenido que debería ser validado por el Product Owner o desarrollador que conoce el nodo

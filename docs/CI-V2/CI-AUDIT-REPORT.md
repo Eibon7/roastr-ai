@@ -10,11 +10,11 @@
 
 ### Workflows Totales: 25
 
-| Categoría | Cantidad | Estado |
-|-----------|----------|--------|
-| **KEEP** (v2 compatible) | 3 | ✅ Mantener |
-| **MODIFY** (necesita actualización) | 8 | 🔄 Actualizar |
-| **DELETE** (obsoleto v1) | 14 | ❌ Eliminar |
+| Categoría                           | Cantidad | Estado        |
+| ----------------------------------- | -------- | ------------- |
+| **KEEP** (v2 compatible)            | 3        | ✅ Mantener   |
+| **MODIFY** (necesita actualización) | 8        | 🔄 Actualizar |
+| **DELETE** (obsoleto v1)            | 14       | ❌ Eliminar   |
 
 ### Problemas Críticos Detectados
 
@@ -31,6 +31,7 @@
 ### ✅ KEEP - Workflows Compatibles con v2
 
 #### 1. `.github/workflows/ci.yml`
+
 - **¿Qué hace?** Pipeline principal CI/CD con build, security audit, lint y tests
 - **¿Qué archivos toca?** `src/`, `frontend/`, `tests/`
 - **¿Ejecuta tests legacy?** ✅ SÍ (`npm run test:ci`)
@@ -41,6 +42,7 @@
 - **Acción requerida:** Desactivar `npm run test:ci` hasta que tests v2 estén listos
 
 #### 2. `.github/workflows/pre-merge-validation.yml`
+
 - **¿Qué hace?** Validación de completitud antes de merge (Guardian)
 - **¿Qué archivos toca?** `scripts/ci/validate-completion.js`
 - **¿Ejecuta tests legacy?** ✅ SÍ (`npm test -- --coverage`)
@@ -51,6 +53,7 @@
 - **Acción requerida:** Actualizar para usar validadores v2 cuando estén listos
 
 #### 3. `.github/workflows/guardian-check.yml`
+
 - **¿Qué hace?** Guardian Product Governance Check
 - **¿Qué archivos toca?** `scripts/guardian-gdd.js`
 - **¿Ejecuta tests legacy?** ❌ NO
@@ -65,6 +68,7 @@
 ### 🔄 MODIFY - Workflows que Necesitan Actualización
 
 #### 4. `.github/workflows/gdd-validate.yml`
+
 - **¿Qué hace?** Validación GDD en PRs
 - **¿Qué archivos toca?** `docs/nodes/**`, `system-map.yaml`, `spec.md`
 - **¿Ejecuta tests legacy?** ❌ NO
@@ -79,6 +83,7 @@
   - Actualizar scripts a versiones v2 cuando estén disponibles
 
 #### 5. `.github/workflows/gdd-auto-monitor.yml`
+
 - **¿Qué hace?** Monitoreo automático de salud GDD cada 3 días
 - **¿Qué archivos toca?** `docs/nodes/**`, `system-map.yaml`
 - **¿Ejecuta tests legacy?** ❌ NO
@@ -89,6 +94,7 @@
 - **Acción requerida:** Igual que gdd-validate.yml
 
 #### 6. `.github/workflows/gdd-repair.yml`
+
 - **¿Qué hace?** Auto-repair de GDD cuando detecta problemas
 - **¿Qué archivos toca?** `docs/nodes/**`, `system-map.yaml`
 - **¿Ejecuta tests legacy?** ❌ NO
@@ -99,6 +105,7 @@
 - **Acción requerida:** Actualizar a rutas y scripts v2
 
 #### 7. `.github/workflows/gdd-telemetry.yml`
+
 - **¿Qué hace?** Recolección de telemetría GDD
 - **¿Qué archivos toca?** `docs/nodes/**`, `system-map.yaml`
 - **¿Ejecuta tests legacy?** ❌ NO
@@ -109,6 +116,7 @@
 - **Acción requerida:** Actualizar a rutas y scripts v2
 
 #### 8. `.github/workflows/post-merge-doc-sync.yml`
+
 - **¿Qué hace?** Sincronización de documentación después de merge
 - **¿Qué archivos toca?** `docs/nodes/`, `system-map.yaml`, `spec.md`
 - **¿Ejecuta tests legacy?** ❌ NO
@@ -123,6 +131,7 @@
   - Actualizar todos los scripts a v2
 
 #### 9. `.github/workflows/tests.yml`
+
 - **¿Qué hace?** Tests unitarios e integración
 - **¿Qué archivos toca?** `src/`, `tests/`
 - **¿Ejecuta tests legacy?** ✅ **SÍ** - `npm run test:integration` (con continue-on-error)
@@ -133,6 +142,7 @@
 - **Acción requerida:** Desactivar todos los tests con `if: false` hasta que tests v2 estén listos
 
 #### 10. `.github/workflows/integration-tests.yml`
+
 - **¿Qué hace?** Tests de integración backend
 - **¿Qué archivos toca?** `src/`, `tests/integration/backend/**`
 - **¿Ejecuta tests legacy?** ✅ **SÍ** - `npm run test:integration-backend:*`
@@ -143,6 +153,7 @@
 - **Acción requerida:** Desactivar con `if: false` hasta que tests v2 estén listos
 
 #### 11. `.github/workflows/e2e-tests.yml`
+
 - **¿Qué hace?** Tests E2E con Playwright
 - **¿Qué archivos toca?** `frontend/`, `tests/e2e/`
 - **¿Ejecuta tests legacy?** ✅ **SÍ** - Tests E2E v1
@@ -157,6 +168,7 @@
 ### ❌ DELETE - Workflows Obsoletos v1
 
 #### 12. `.github/workflows/agent-receipts.yml`
+
 - **¿Qué hace?** Validación de agent receipts
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ⚠️ POSIBLE
@@ -164,6 +176,7 @@
 - **Razón:** Duplicado de funcionalidad
 
 #### 13. `.github/workflows/auto-format.yml`
+
 - **¿Qué hace?** Auto-formateo de código
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -171,6 +184,7 @@
 - **Razón:** Auto-formateo debe ser local, no en CI
 
 #### 14. `.github/workflows/ci-pr-validation.yml`
+
 - **¿Qué hace?** Validación de PRs
 - **¿Ejecuta tests legacy?** ⚠️ POSIBLE
 - **¿Depende de rutas v1?** ⚠️ POSIBLE
@@ -178,6 +192,7 @@
 - **Razón:** Duplicado de funcionalidad con ci.yml
 
 #### 15. `.github/workflows/claude-code-review.yml`
+
 - **¿Qué hace?** Code review con Claude
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -185,6 +200,7 @@
 - **Razón:** Code review debe ser manual, no automático en CI
 
 #### 16. `.github/workflows/claude.yml`
+
 - **¿Qué hace?** Integración con Claude App
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -192,6 +208,7 @@
 - **Razón:** No es parte del CI/CD pipeline
 
 #### 17. `.github/workflows/deploy-production.yml`
+
 - **¿Qué hace?** Deploy a producción
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -199,6 +216,7 @@
 - **Nota:** Deploy workflows no se modifican en esta tarea
 
 #### 18. `.github/workflows/deploy-staging.yml`
+
 - **¿Qué hace?** Deploy a staging
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -206,6 +224,7 @@
 - **Nota:** Deploy workflows no se modifican en esta tarea
 
 #### 19. `.github/workflows/format-check.yml`
+
 - **¿Qué hace?** Verificación de formato
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -213,6 +232,7 @@
 - **Razón:** Duplicado de funcionalidad
 
 #### 20. `.github/workflows/frontend-build-check.yml`
+
 - **¿Qué hace?** Verificación de build frontend
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -220,6 +240,7 @@
 - **Razón:** Duplicado de funcionalidad
 
 #### 21. `.github/workflows/gdd-issue-cleanup.yml`
+
 - **¿Qué hace?** Limpieza de issues GDD
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ⚠️ POSIBLE
@@ -227,6 +248,7 @@
 - **Razón:** Limpieza de issues debe ser manual
 
 #### 22. `.github/workflows/main.yml`
+
 - **¿Qué hace?** Integración con Claude App (duplicado de claude.yml)
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -234,6 +256,7 @@
 - **Razón:** Duplicado
 
 #### 23. `.github/workflows/pr-branch-guard.yml`
+
 - **¿Qué hace?** Protección de ramas PR
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -241,6 +264,7 @@
 - **Nota:** No se modifica en esta tarea
 
 #### 24. `.github/workflows/runner-json-demo.yml`
+
 - **¿Qué hace?** Demo de runner JSON
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -248,6 +272,7 @@
 - **Razón:** Demo no debe estar en CI
 
 #### 25. `.github/workflows/spec14-qa-test-suite.yml`
+
 - **¿Qué hace?** Suite de tests QA spec14
 - **¿Ejecuta tests legacy?** ✅ **SÍ** - Tests legacy
 - **¿Depende de rutas v1?** ⚠️ POSIBLE
@@ -255,6 +280,7 @@
 - **Razón:** Tests legacy v1
 
 #### 26. `.github/workflows/stripe-validation.yml`
+
 - **¿Qué hace?** Validación de Stripe
 - **¿Ejecuta tests legacy?** ❌ NO
 - **¿Depende de rutas v1?** ❌ NO
@@ -270,11 +296,13 @@
 **Problema:** El archivo `docs/system-map-v2.yaml` no existe en el repositorio.
 
 **Impacto:**
+
 - Los scripts v2 no pueden ejecutarse
 - Los workflows v2 no pueden validar system-map
 - La migración a v2 está bloqueada
 
 **Acción requerida:**
+
 - ⚠️ **STOP** - No se puede continuar sin system-map-v2.yaml
 - Crear system-map-v2.yaml antes de continuar
 - O confirmar ubicación alternativa
@@ -282,6 +310,7 @@
 ### 2. Scripts v2 No Existen Completamente
 
 **Scripts que existen:**
+
 - ✅ `scripts/validate-node-ids.js` (v2)
 - ✅ `scripts/validate-workers-ssot.js` (v2)
 - ✅ `scripts/validate-drift.js` (v2)
@@ -291,15 +320,18 @@
 - ✅ `scripts/detect-guardian-references.js` (v2)
 
 **Scripts que NO existen:**
+
 - ❌ `scripts/calculate-gdd-health-v2.js` (solo existe `score-gdd-health.js` v1)
 
 **Acción requerida:**
+
 - Usar `score-gdd-health.js` con flag `--v2` o crear wrapper
 - O crear `calculate-gdd-health-v2.js` nuevo
 
 ### 3. Tests Legacy Ejecutándose
 
 **Workflows que ejecutan tests legacy:**
+
 1. `ci.yml` → `npm run test:ci`
 2. `pre-merge-validation.yml` → `npm test -- --coverage`
 3. `tests.yml` → `npm run test:integration`
@@ -307,6 +339,7 @@
 5. `e2e-tests.yml` → Tests E2E v1
 
 **Acción requerida:**
+
 - Desactivar todos con `if: false` hasta que tests v2 estén listos
 
 ---
@@ -365,4 +398,3 @@
 ---
 
 **Próximo paso:** Crear system-map-v2-consistency.yml workflow (FASE 2)
-

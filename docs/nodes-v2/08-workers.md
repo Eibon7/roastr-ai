@@ -11,12 +11,8 @@
 - [`infraestructura`](./14-infraestructura.md)
 - [`observabilidad`](./observabilidad.md)
 
-
-
 - [`infraestructura`](./14-infraestructura.md)
 - [`observabilidad`](./observabilidad.md)
-
-
 
 Este nodo depende de los siguientes nodos:
 
@@ -373,4 +369,3 @@ Este nodo usa los siguientes valores del SSOT:
 - `worker_tenancy` - Configuración multi-tenant
 
 ---
-
