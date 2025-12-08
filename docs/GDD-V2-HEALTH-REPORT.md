@@ -1,9 +1,9 @@
 # GDD v2 Health Report
 
-**Fecha:** 2025-12-07  
+**Fecha:** 2025-12-08  
 **Versión:** 2.0  
-**Health Score:** 100/100  
-**Estado:** ✅ SALUDABLE
+**Health Score:** 19.83/100  
+**Estado:** 🔴 CRÍTICO
 
 ---
 
@@ -11,11 +11,11 @@
 
 El Health Check v2 del GDD evalúa la coherencia entre:
 
-- **Nodos reales** en `docs/nodes-v2/` (15 nodos detectados)
+- **Nodos reales** en `docs/nodes-v2/` (1 nodo detectado de 15 definidos)
 - **System Map v2** en `docs/system-map-v2.yaml` (15 nodos definidos)
 - **Alineación SSOT** con `docs/SSOT-V2.md`
 
-**Estado General:** ✅ **SALUDABLE** - Todos los 15 nodos tienen documentación v2 y están correctamente alineados
+**Estado General:** 🔴 **CRÍTICO** - Solo 1 de 15 nodos tiene documentación en los paths declarados en el system-map
 
 ---
 
@@ -23,103 +23,138 @@ El Health Check v2 del GDD evalúa la coherencia entre:
 
 | Métrica                   | Puntuación  | Peso | Contribución | Estado       |
 | ------------------------- | ----------- | ---- | ------------ | ------------ |
-| **System Map Alignment**  | 100.00%     | 30%  | 30.00        | ✅ Perfecto  |
-| **Dependency Density**    | 100.00%     | 20%  | 20.00        | ✅ Perfecto  |
-| **Crosslink Score**       | 100.00%     | 20%  | 20.00        | ✅ Perfecto  |
-| **SSOT Alignment**        | 100.00%     | 20%  | 20.00        | ✅ Perfecto  |
+| **System Map Alignment**  | 6.67%       | 30%  | 2.00         | 🔴 Crítico  |
+| **Dependency Density**    | 25.00%      | 20%  | 5.00         | 🔴 Crítico  |
+| **Crosslink Score**       | 7.50%       | 20%  | 1.50         | 🔴 Crítico  |
+| **SSOT Alignment**        | 6.67%       | 20%  | 1.33         | 🔴 Crítico  |
 | **Narrative Consistency** | 100.00%     | 10%  | 10.00        | ✅ Perfecto  |
-| **HEALTH SCORE FINAL**    | **100/100** | -    | -            | ✅ SALUDABLE |
+| **HEALTH SCORE FINAL**    | **19.83/100** | -    | -            | 🔴 CRÍTICO |
 
-**Cálculo:** (100.00 × 0.30) + (100.00 × 0.20) + (100.00 × 0.20) + (100.00 × 0.20) + (100.00 × 0.10) = 100.00
+**Cálculo:** (6.67 × 0.30) + (25.00 × 0.20) + (7.50 × 0.20) + (6.67 × 0.20) + (100.00 × 0.10) = 19.83
 
 ---
 
 ## 🔍 Análisis Detallado
 
-### 1. System Map Alignment Score: 100.00%
+### 1. System Map Alignment Score: 6.67%
 
-**Definición:** % de nodos presentes en system-map-v2.yaml que existen realmente en docs/nodes-v2/
+**Definición:** % de nodos presentes en system-map-v2.yaml que existen realmente en docs/nodes-v2/ en los paths declarados
 
 **Resultado:**
 
 - Nodos en system-map-v2.yaml: **15**
-- Nodos v2 reales encontrados: **15**
-- Nodos faltantes: **0**
+- Nodos v2 reales encontrados: **1**
+- Nodos faltantes: **14**
 
-✅ **Todos los nodos tienen documentación**
+🔴 **Solo 1 nodo tiene documentación en el path declarado**
 
-### 2. Dependency Density Score: 100.00%
+**Nodo detectado:**
+- `billing` → `docs/nodes-v2/billing.md` ✅
 
-**Definición:** % de dependencias esperadas que están correctamente documentadas
+**Nodos faltantes (paths declarados no existen):**
+- `roasting-engine` → `docs/nodes-v2/roasting-engine.md` ❌
+- `analysis-engine` → `docs/nodes-v2/analysis-engine.md` ❌
+- `shield-engine` → `docs/nodes-v2/shield-engine.md` ❌
+- `integraciones-redes-sociales` → `docs/nodes-v2/integraciones-redes-sociales.md` ❌
+- `infraestructura` → `docs/nodes-v2/infraestructura.md` ❌
+- `observabilidad` → `docs/nodes-v2/observabilidad.md` ❌
+- `frontend-user-app` → `docs/nodes-v2/frontend-user-app.md` ❌
+- `frontend-admin` → `docs/nodes-v2/frontend-admin.md` ❌
+- `ssot-integration` → `docs/nodes-v2/ssot-integration.md` ❌
+- `workers` → `docs/nodes-v2/workers.md` ❌
+- `auth` → `docs/nodes-v2/auth.md` ❌
+- `settings-loader-and-feature-flags` → `docs/nodes-v2/settings-loader-and-feature-flags.md` ❌
+- `gdpr-and-legal` → `docs/nodes-v2/gdpr-and-legal.md` ❌
+- `testing-v2` → `docs/nodes-v2/testing-v2.md` ❌
 
-✅ **Perfecto** - Todas las dependencias esperadas están documentadas.
+---
 
-### 3. Crosslink Score: 100.00%
+### 2. Dependency Density Score: 25.00%
 
-**Definición:** % de referencias cruzadas correctamente documentadas
+**Definición:** Nº de referencias detectadas / nº esperado según system map
 
-✅ **Perfecto** - Todas las referencias cruzadas están correctamente documentadas.
+**Resultado:**
 
-### 4. SSOT Alignment Score: 100.00%
+- Dependencias detectadas: Calculado desde el único nodo encontrado
+- Dependencias esperadas: Calculado desde `depends_on` en system-map-v2.yaml
+- Ratio: **25.00%**
 
-**Definición:** % de nodos que están correctamente alineados con el SSOT
+🔴 **Baja densidad de dependencias** - Solo se pueden detectar dependencias del nodo `billing`
 
-✅ **Perfecto** - Todos los nodos están correctamente alineados con el SSOT.
+---
+
+### 3. Crosslink Score: 7.50%
+
+**Definición:** % de dependencias esperadas que están correctamente referenciadas
+
+**Resultado:**
+
+- Crosslinks correctos: Calculado desde el único nodo encontrado
+- Crosslinks totales: Calculado desde `depends_on` en system-map-v2.yaml
+- Ratio: **7.50%**
+
+🔴 **Bajo crosslink score** - Solo se pueden validar crosslinks del nodo `billing`
+
+---
+
+### 4. SSOT Alignment Score: 6.67%
+
+**Definición:** % de nodos que usan valores del SSOT correctamente
+
+**Resultado:**
+
+- Nodos alineados: 1 de 15
+- Ratio: **6.67%**
+
+🔴 **Baja alineación SSOT** - Solo se puede validar el nodo `billing`
+
+---
 
 ### 5. Narrative Consistency Score: 100.00%
 
-**Definición:** Consistencia narrativa entre nodos (placeholder)
+**Definición:** Evalúa si los nodos describen procesos compatibles entre sí
 
-✅ **Perfecto** - No hay contradicciones obvias detectadas.
-
----
-
-## 📦 Nodos Detectados
-
-Total: **15** nodos
-
-✅ Todos los nodos del system-map tienen documentación
-
-**Lista completa de nodos:**
-
-1. analysis-engine
-2. auth
-3. billing
-4. frontend-admin
-5. frontend-user-app
-6. gdpr-and-legal
-7. infraestructura
-8. integraciones-redes-sociales
-9. observabilidad
-10. roasting-engine
-11. settings-loader-and-feature-flags
-12. shield-engine
-13. ssot-integration
-14. testing-v2
-15. workers
+**Resultado:** **100.00%** (placeholder - requiere análisis más profundo)
 
 ---
 
-## ⚠️ Advertencias
+## ⚠️ Warnings
 
-Ninguna advertencia.
-
----
-
-## ✅ Conclusión
-
-El sistema está **saludable** y completamente alineado.
-
-**Health Score Final:** 100/100
-
-**Cambios recientes:**
-
-- ✅ Eliminado completamente `NODE_NAME_MAPPING` (resto histórico)
-- ✅ Script ahora 100% dinámico basado en `system-map-v2.yaml`
-- ✅ Detección de nodos funciona directamente con nombres del system-map
-- ✅ Todos los 15 nodos detectados correctamente
+1. Solo 1 nodos v2 reales de 15 definidos en system-map-v2.yaml
+2. 14 nodos definidos en system-map-v2.yaml no tienen documentación en docs/nodes-v2/ en los paths declarados
+3. Densidad de dependencias baja: 25.0%
+4. Alineación SSOT incompleta: 6.7%
 
 ---
 
-**Generado automáticamente por:** `scripts/calculate-gdd-health-v2.js`  
-**Última actualización:** 2025-12-07
+## 🔧 Cambios Aplicados
+
+**Fix aplicado:** El script ahora usa **exclusivamente** los paths declarados en `nodeData.docs[]` del system-map-v2.yaml.
+
+**Antes:**
+- El script intentaba inferir nombres de archivos
+- Buscaba archivos por nombre de nodo
+- Usaba búsqueda por formato numerado como fallback
+
+**Después:**
+- El script usa EXACTAMENTE el path declarado en `nodeData.docs[0]`
+- NO infiere nombres
+- NO busca por nombre de nodo
+- Si el path no existe → warn y marca como missing
+
+**Resultado:** El health score refleja la realidad: los paths declarados en el system-map no coinciden con los archivos reales.
+
+---
+
+## 📝 Notas Técnicas
+
+- **Script usado:** `scripts/calculate-gdd-health-v2.js`
+- **Fuente de datos:** `docs/system-map-v2.yaml` (campo `docs:`)
+- **Valores:** Todos calculados dinámicamente, sin hardcoding
+- **Mapeos estáticos:** Ninguno
+- **Inferencia:** Eliminada completamente
+
+---
+
+**Generated by:** GDD Health Check v2 Calculator  
+**Last Updated:** 2025-12-08T15:47:35.622Z

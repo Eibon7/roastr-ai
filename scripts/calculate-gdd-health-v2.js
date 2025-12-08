@@ -85,6 +85,7 @@ function loadNodesV2() {
 
     // CRITICAL: Use system-map as SOURCE OF TRUTH for node list
     // Only load nodes that are defined in system-map-v2.yaml
+    // Use EXACTLY the paths declared in nodeData.docs[] - NO inference
     const systemMap = loadSystemMapV2();
     const masterNodeNames = Object.keys(systemMap.nodes || {});
 
@@ -92,9 +93,26 @@ function loadNodesV2() {
 
     // Process each node defined in system-map
     masterNodeNames.forEach((nodeName) => {
-      const filePath = findNodeFile(nodeName);
+      const nodeData = systemMap.nodes[nodeName];
+      const docs = nodeData?.docs || [];
 
-      if (filePath && fs.existsSync(filePath)) {
+      // Use EXACTLY the first path from nodeData.docs[] - NO inference, NO name-based search
+      if (docs.length === 0) {
+        logger.warn(
+          `⚠️  Node ${nodeName} has no docs: field in system-map-v2.yaml`
+        );
+        missingNodes.push(nodeName);
+        return;
+      }
+
+      // Use the first doc path declared in system-map
+      const docPath = docs[0];
+      // Convert relative path to absolute
+      const filePath = path.isAbsolute(docPath)
+        ? docPath
+        : path.join(ROOT_DIR, docPath);
+
+      if (fs.existsSync(filePath)) {
         try {
           const content = fs.readFileSync(filePath, 'utf8');
           const fileName = path.basename(filePath);
@@ -117,13 +135,13 @@ function loadNodesV2() {
             crossReferences: [...new Set([...deps, ...crossRefs])]
           };
         } catch (e) {
-          logger.warn(`Warning: Could not read file for node ${nodeName}: ${e.message}`);
+          logger.warn(`Warning: Could not read file for node ${nodeName} at ${filePath}: ${e.message}`);
           missingNodes.push(nodeName);
         }
       } else {
-        // File doesn't exist - report as missing but don't crash
+        // File doesn't exist at the declared path - report as missing
         logger.warn(
-          `⚠️  Node file not found: ${nodeName}.md (expected at ${path.join(NODES_V2_DIR, `${nodeName}.md`)})`
+          `⚠️  Node file not found: ${nodeName} (declared path: ${docPath}, full path: ${filePath})`
         );
         missingNodes.push(nodeName);
       }
@@ -131,7 +149,7 @@ function loadNodesV2() {
 
     if (missingNodes.length > 0) {
       logger.warn(
-        `⚠️  ${missingNodes.length} nodes from system-map-v2.yaml are missing documentation files.`
+        `⚠️  ${missingNodes.length} nodes from system-map-v2.yaml are missing documentation files at declared paths.`
       );
     }
   } catch (e) {
