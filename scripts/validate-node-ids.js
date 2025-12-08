@@ -14,6 +14,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('yaml');
+const logger = require('../src/utils/logger');
 
 class NodeIDValidator {
   constructor(options = {}) {
@@ -42,6 +43,8 @@ class NodeIDValidator {
   }
 
   log(message, type = 'info') {
+    if (this.isCIMode && type === 'info') return;
+    
     const prefix =
       {
         info: 'ℹ️',
@@ -51,8 +54,15 @@ class NodeIDValidator {
         step: '📊'
       }[type] || 'ℹ️';
 
-    if (this.isCIMode && type === 'info') return;
-    console.log(`${prefix} ${message}`);
+    const formattedMessage = `${prefix} ${message}`;
+    
+    if (type === 'error') {
+      logger.error(formattedMessage);
+    } else if (type === 'warning') {
+      logger.warn(formattedMessage);
+    } else {
+      logger.info(formattedMessage);
+    }
   }
 
   async validate() {
