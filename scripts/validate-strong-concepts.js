@@ -134,7 +134,7 @@ class StrongConceptsValidator {
   }
 
   async validateNodesV2() {
-    const nodesV2Dir = path.join(this.rootDir, 'docs', 'nodes-v2');
+    const nodesV2Dir = this.options.nodes || path.join(this.rootDir, 'docs', 'nodes-v2');
 
     try {
       const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });

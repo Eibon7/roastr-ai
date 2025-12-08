@@ -87,7 +87,7 @@ class LegacyIDDetector {
   }
 
   async detectInSystemMap() {
-    const systemMapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
+    const systemMapPath = this.options.systemMap || path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
 
     try {
       const content = await fs.readFile(systemMapPath, 'utf-8');
@@ -139,7 +139,7 @@ class LegacyIDDetector {
   }
 
   async detectInNodesV2() {
-    const nodesV2Dir = path.join(this.rootDir, 'docs', 'nodes-v2');
+    const nodesV2Dir = this.options.nodes || path.join(this.rootDir, 'docs', 'nodes-v2');
 
     try {
       const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
