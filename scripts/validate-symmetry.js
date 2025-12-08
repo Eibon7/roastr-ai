@@ -25,13 +25,14 @@ class SymmetryValidator {
   }
 
   log(message, type = 'info') {
-    const prefix = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      step: '📊'
-    }[type] || 'ℹ️';
+    const prefix =
+      {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        step: '📊'
+      }[type] || 'ℹ️';
 
     if (this.isCIMode && type === 'info') return;
     console.log(`${prefix} ${message}`);
@@ -74,9 +75,9 @@ class SymmetryValidator {
   }
 
   async loadSystemMap() {
-    const systemMapPath = this.options.systemMap || 
-      path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
-    
+    const systemMapPath =
+      this.options.systemMap || path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
+
     try {
       const content = await fs.readFile(systemMapPath, 'utf-8');
       const map = yaml.parse(content);
@@ -108,7 +109,7 @@ class SymmetryValidator {
     const requiredByMap = {};
 
     // Initialize maps
-    nodeIds.forEach(id => {
+    nodeIds.forEach((id) => {
       dependsOnMap[id] = new Set();
       requiredByMap[id] = new Set();
     });
@@ -116,21 +117,21 @@ class SymmetryValidator {
     // Populate maps from node definitions
     for (const [nodeId, nodeData] of Object.entries(nodes)) {
       if (nodeData.depends_on) {
-        const deps = Array.isArray(nodeData.depends_on) 
-          ? nodeData.depends_on 
+        const deps = Array.isArray(nodeData.depends_on)
+          ? nodeData.depends_on
           : [nodeData.depends_on];
-        
-        deps.forEach(dep => {
+
+        deps.forEach((dep) => {
           dependsOnMap[nodeId].add(dep);
         });
       }
 
       if (nodeData.required_by) {
-        const reqs = Array.isArray(nodeData.required_by) 
-          ? nodeData.required_by 
+        const reqs = Array.isArray(nodeData.required_by)
+          ? nodeData.required_by
           : [nodeData.required_by];
-        
-        reqs.forEach(req => {
+
+        reqs.forEach((req) => {
           requiredByMap[nodeId].add(req);
         });
       }
@@ -138,7 +139,7 @@ class SymmetryValidator {
 
     // Validate symmetry: if A depends_on B, then B should have A in required_by
     for (const [nodeId, deps] of Object.entries(dependsOnMap)) {
-      deps.forEach(depId => {
+      deps.forEach((depId) => {
         if (!nodeIds.includes(depId)) {
           this.errors.push({
             type: 'invalid_dependency',
@@ -161,7 +162,7 @@ class SymmetryValidator {
 
     // Validate reverse: if A has B in required_by, then B should depend_on A
     for (const [nodeId, reqs] of Object.entries(requiredByMap)) {
-      reqs.forEach(reqId => {
+      reqs.forEach((reqId) => {
         if (!nodeIds.includes(reqId)) {
           this.errors.push({
             type: 'invalid_requirement',
@@ -226,7 +227,7 @@ class SymmetryValidator {
     this.log('');
     this.log('📊 Symmetry Validation Summary', 'step');
     this.log('');
-    
+
     if (this.errors.length === 0 && this.warnings.length === 0) {
       this.log('✅ All relationships are symmetric!', 'success');
       return;
@@ -257,15 +258,14 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const options = {
     ci: args.includes('--ci'),
-    systemMap: args.find(arg => arg.startsWith('--system-map='))?.split('=')[1]
+    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1]
   };
 
   const validator = new SymmetryValidator(options);
-  validator.validate().catch(error => {
+  validator.validate().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });
 }
 
 module.exports = { SymmetryValidator };
-

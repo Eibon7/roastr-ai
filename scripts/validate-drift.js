@@ -25,13 +25,14 @@ class DriftValidator {
   }
 
   log(message, type = 'info') {
-    const prefix = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      step: '📊'
-    }[type] || 'ℹ️';
+    const prefix =
+      {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        step: '📊'
+      }[type] || 'ℹ️';
 
     if (this.isCIMode && type === 'info') return;
     console.log(`${prefix} ${message}`);
@@ -80,9 +81,8 @@ class DriftValidator {
   }
 
   async loadSSOT() {
-    const ssotPath = this.options.ssot || 
-      path.join(this.rootDir, 'docs', 'SSOT-V2.md');
-    
+    const ssotPath = this.options.ssot || path.join(this.rootDir, 'docs', 'SSOT-V2.md');
+
     try {
       const content = await fs.readFile(ssotPath, 'utf-8');
       this.log(`   ✅ Loaded SSOT-V2.md`, 'success');
@@ -98,13 +98,17 @@ class DriftValidator {
 
   extractSSOTValues(ssotContent) {
     // Extract plan IDs
-    const planIdMatch = ssotContent.match(/type PlanId\s*=\s*['"]([^'"]+)['"]\s*\|\s*['"]([^'"]+)['"]\s*\|\s*['"]([^'"]+)['"]/);
+    const planIdMatch = ssotContent.match(
+      /type PlanId\s*=\s*['"]([^'"]+)['"]\s*\|\s*['"]([^'"]+)['"]\s*\|\s*['"]([^'"]+)['"]/
+    );
     if (planIdMatch) {
       this.ssotValues.plans = [planIdMatch[1], planIdMatch[2], planIdMatch[3]];
     }
 
     // Extract plan limits
-    const limitsTable = ssotContent.match(/\|\s*starter\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(true|false)\s*\|\s*(true|false)\s*\|/);
+    const limitsTable = ssotContent.match(
+      /\|\s*starter\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(true|false)\s*\|\s*(true|false)\s*\|/
+    );
     if (limitsTable) {
       this.ssotValues.starter = {
         analysis_limit: parseInt(limitsTable[1]),
@@ -120,33 +124,36 @@ class DriftValidator {
     if (stateMatch) {
       const states = stateMatch[1]
         .split('|')
-        .map(s => s.trim().replace(/['"]/g, ''))
-        .filter(s => s.length > 0);
+        .map((s) => s.trim().replace(/['"]/g, ''))
+        .filter((s) => s.length > 0);
       this.ssotValues.subscriptionStates = states;
     }
 
-    this.log(`   ✅ Extracted ${Object.keys(this.ssotValues).length} value categories from SSOT`, 'success');
+    this.log(
+      `   ✅ Extracted ${Object.keys(this.ssotValues).length} value categories from SSOT`,
+      'success'
+    );
   }
 
   async validateNodesV2() {
     const nodesV2Dir = path.join(this.rootDir, 'docs', 'nodes-v2');
-    
+
     try {
       const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isDirectory()) {
           const nodeDir = path.join(nodesV2Dir, entry.name);
           const subnodes = await fs.readdir(nodeDir);
-          
+
           for (const subnodeFile of subnodes) {
             if (subnodeFile.endsWith('.md')) {
               const subnodePath = path.join(nodeDir, subnodeFile);
               const content = await fs.readFile(subnodePath, 'utf-8');
-              
+
               // Check for hardcoded plan values
               this.checkHardcodedPlans(content, subnodePath);
-              
+
               // Check for hardcoded subscription states
               this.checkHardcodedStates(content, subnodePath);
             }
@@ -165,8 +172,8 @@ class DriftValidator {
   checkHardcodedPlans(content, filePath) {
     const legacyPlans = ['free', 'basic', 'creator_plus'];
     const relativePath = path.relative(this.rootDir, filePath);
-    
-    legacyPlans.forEach(plan => {
+
+    legacyPlans.forEach((plan) => {
       if (content.includes(`"${plan}"`) || content.includes(`'${plan}'`)) {
         this.driftIssues.push({
           type: 'legacy_plan_in_node',
@@ -179,11 +186,12 @@ class DriftValidator {
 
   checkHardcodedStates(content, filePath) {
     if (!this.ssotValues.subscriptionStates) return;
-    
+
     const relativePath = path.relative(this.rootDir, filePath);
-    const statePattern = /['"](trialing|active|paused|canceled_pending|payment_retry|expired_trial_pending_payment)['"]/g;
+    const statePattern =
+      /['"](trialing|active|paused|canceled_pending|payment_retry|expired_trial_pending_payment)['"]/g;
     let match;
-    
+
     while ((match = statePattern.exec(content)) !== null) {
       const state = match[1];
       if (!this.ssotValues.subscriptionStates.includes(state)) {
@@ -198,18 +206,22 @@ class DriftValidator {
 
   async validateSystemMap() {
     const systemMapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
-    
+
     try {
       const content = await fs.readFile(systemMapPath, 'utf-8');
       const map = yaml.parse(content);
-      
+
       // Check for hardcoded values in system-map
       if (map.nodes) {
         for (const [nodeId, nodeData] of Object.entries(map.nodes)) {
           const nodeStr = JSON.stringify(nodeData);
-          
+
           // Check for legacy plans
-          if (nodeStr.includes('"free"') || nodeStr.includes('"basic"') || nodeStr.includes('"creator_plus"')) {
+          if (
+            nodeStr.includes('"free"') ||
+            nodeStr.includes('"basic"') ||
+            nodeStr.includes('"creator_plus"')
+          ) {
             this.driftIssues.push({
               type: 'legacy_plan_in_system_map',
               location: `docs/system-map-v2.yaml (node: ${nodeId})`,
@@ -218,7 +230,7 @@ class DriftValidator {
           }
         }
       }
-      
+
       this.log(`   ✅ Validated system-map-v2.yaml`, 'success');
     } catch (error) {
       if (error.code === 'ENOENT') {
@@ -233,7 +245,7 @@ class DriftValidator {
     this.log('');
     this.log('📊 Drift Detection Summary', 'step');
     this.log('');
-    
+
     if (this.driftIssues.length === 0) {
       this.log('✅ No drift detected! All values are aligned with SSOT.', 'success');
       return;
@@ -254,17 +266,16 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const options = {
     ci: args.includes('--ci'),
-    ssot: args.find(arg => arg.startsWith('--ssot='))?.split('=')[1],
-    nodes: args.find(arg => arg.startsWith('--nodes='))?.split('=')[1],
-    systemMap: args.find(arg => arg.startsWith('--system-map='))?.split('=')[1]
+    ssot: args.find((arg) => arg.startsWith('--ssot='))?.split('=')[1],
+    nodes: args.find((arg) => arg.startsWith('--nodes='))?.split('=')[1],
+    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1]
   };
 
   const validator = new DriftValidator(options);
-  validator.validate().catch(error => {
+  validator.validate().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });
 }
 
 module.exports = { DriftValidator };
-

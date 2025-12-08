@@ -25,13 +25,14 @@ class WorkersSSOTValidator {
   }
 
   log(message, type = 'info') {
-    const prefix = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      step: '📊'
-    }[type] || 'ℹ️';
+    const prefix =
+      {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        step: '📊'
+      }[type] || 'ℹ️';
 
     if (this.isCIMode && type === 'info') return;
     console.log(`${prefix} ${message}`);
@@ -81,9 +82,8 @@ class WorkersSSOTValidator {
   }
 
   async loadSSOT() {
-    const ssotPath = this.options.ssot || 
-      path.join(this.rootDir, 'docs', 'SSOT-V2.md');
-    
+    const ssotPath = this.options.ssot || path.join(this.rootDir, 'docs', 'SSOT-V2.md');
+
     try {
       const content = await fs.readFile(ssotPath, 'utf-8');
       this.log(`   ✅ Loaded SSOT-V2.md`, 'success');
@@ -99,8 +99,10 @@ class WorkersSSOTValidator {
 
   extractOfficialWorkers(ssotContent) {
     // Look for section 8.1 Workers oficiales v2
-    const workersSection = ssotContent.match(/## 8\. Workers.*?### 8\.1 Workers oficiales v2([\s\S]*?)(?=###|##|$)/);
-    
+    const workersSection = ssotContent.match(
+      /## 8\. Workers.*?### 8\.1 Workers oficiales v2([\s\S]*?)(?=###|##|$)/
+    );
+
     if (!workersSection) {
       this.warnings.push({
         type: 'workers_section_not_found',
@@ -111,14 +113,14 @@ class WorkersSSOTValidator {
 
     // Extract worker names from TypeScript type definition
     const typeDefMatch = workersSection[1].match(/type WorkerName\s*=\s*([\s\S]*?);/);
-    
+
     if (typeDefMatch) {
       const workerNames = typeDefMatch[1]
         .split('|')
-        .map(name => name.trim().replace(/['"]/g, ''))
-        .filter(name => name.length > 0);
-      
-      workerNames.forEach(worker => {
+        .map((name) => name.trim().replace(/['"]/g, ''))
+        .filter((name) => name.length > 0);
+
+      workerNames.forEach((worker) => {
         this.officialWorkers.add(worker);
         // Also add v2_ prefix variants if they exist
         this.officialWorkers.add(`v2_${worker}`);
@@ -126,11 +128,13 @@ class WorkersSSOTValidator {
     }
 
     // Also check for worker names in routing table (8.5)
-    const routingSection = ssotContent.match(/### 8\.5 Routing Contractual Workers([\s\S]*?)(?=###|##|$)/);
+    const routingSection = ssotContent.match(
+      /### 8\.5 Routing Contractual Workers([\s\S]*?)(?=###|##|$)/
+    );
     if (routingSection) {
       const workerMatches = routingSection[1].match(/\|\s*`([^`]+)`\s*\|/g);
       if (workerMatches) {
-        workerMatches.forEach(match => {
+        workerMatches.forEach((match) => {
           const worker = match.replace(/[|`]/g, '').trim();
           if (worker && !worker.includes('---')) {
             this.officialWorkers.add(worker);
@@ -146,10 +150,10 @@ class WorkersSSOTValidator {
   async validateCodeReferences() {
     const srcDir = path.join(this.rootDir, 'src');
     const workersDir = path.join(srcDir, 'workers');
-    
+
     try {
       const files = await this.getAllFiles(workersDir);
-      
+
       for (const file of files) {
         if (!file.endsWith('.js') && !file.endsWith('.ts')) {
           continue;
@@ -157,12 +161,12 @@ class WorkersSSOTValidator {
 
         const content = await fs.readFile(file, 'utf-8');
         const relativePath = path.relative(this.rootDir, file);
-        
+
         // Extract class name (worker name)
         const classMatch = content.match(/class\s+(\w+Worker)\s+extends/);
         if (classMatch) {
           const workerName = classMatch[1];
-          
+
           // Check if it's an official worker
           if (!this.isOfficialWorker(workerName)) {
             this.errors.push({
@@ -183,12 +187,12 @@ class WorkersSSOTValidator {
 
   async validateSystemMap() {
     const systemMapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
-    
+
     try {
       const yaml = require('yaml');
       const content = await fs.readFile(systemMapPath, 'utf-8');
       const map = yaml.parse(content);
-      
+
       // Check workers referenced in system-map
       if (map.nodes) {
         for (const [nodeId, nodeData] of Object.entries(map.nodes)) {
@@ -215,22 +219,22 @@ class WorkersSSOTValidator {
 
   isOfficialWorker(workerName) {
     // Remove common prefixes/suffixes
-    const normalized = workerName
-      .replace(/^v2_/, '')
-      .replace(/Worker$/, '');
-    
-    return this.officialWorkers.has(workerName) || 
-           this.officialWorkers.has(normalized) ||
-           this.officialWorkers.has(`v2_${normalized}`);
+    const normalized = workerName.replace(/^v2_/, '').replace(/Worker$/, '');
+
+    return (
+      this.officialWorkers.has(workerName) ||
+      this.officialWorkers.has(normalized) ||
+      this.officialWorkers.has(`v2_${normalized}`)
+    );
   }
 
   async getAllFiles(dir) {
     const files = [];
     const entries = await fs.readdir(dir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       if (entry.isDirectory()) {
         const subFiles = await this.getAllFiles(fullPath);
         files.push(...subFiles);
@@ -238,7 +242,7 @@ class WorkersSSOTValidator {
         files.push(fullPath);
       }
     }
-    
+
     return files;
   }
 
@@ -246,7 +250,7 @@ class WorkersSSOTValidator {
     this.log('');
     this.log('📊 Validation Summary', 'step');
     this.log('');
-    
+
     if (this.errors.length === 0 && this.warnings.length === 0) {
       this.log('✅ All workers are official SSOT workers!', 'success');
       return;
@@ -277,15 +281,14 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const options = {
     ci: args.includes('--ci'),
-    ssot: args.find(arg => arg.startsWith('--ssot='))?.split('=')[1]
+    ssot: args.find((arg) => arg.startsWith('--ssot='))?.split('=')[1]
   };
 
   const validator = new WorkersSSOTValidator(options);
-  validator.validate().catch(error => {
+  validator.validate().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });
 }
 
 module.exports = { WorkersSSOTValidator };
-

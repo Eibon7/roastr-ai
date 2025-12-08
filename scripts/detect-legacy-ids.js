@@ -39,13 +39,14 @@ class LegacyIDDetector {
   }
 
   log(message, type = 'info') {
-    const prefix = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      step: '📊'
-    }[type] || 'ℹ️';
+    const prefix =
+      {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        step: '📊'
+      }[type] || 'ℹ️';
 
     if (this.isCIMode && type === 'info') return;
     console.log(`${prefix} ${message}`);
@@ -87,11 +88,11 @@ class LegacyIDDetector {
 
   async detectInSystemMap() {
     const systemMapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
-    
+
     try {
       const content = await fs.readFile(systemMapPath, 'utf-8');
       const map = yaml.parse(content);
-      
+
       if (map.nodes) {
         for (const [nodeId, nodeData] of Object.entries(map.nodes)) {
           // Check node ID itself
@@ -102,7 +103,7 @@ class LegacyIDDetector {
               location: `docs/system-map-v2.yaml (node: ${nodeId})`,
               legacyId: nodeId,
               suggestedMapping: mapping,
-              message: mapping 
+              message: mapping
                 ? `Legacy ID "${nodeId}" found. Should use "${mapping}"`
                 : `Legacy ID "${nodeId}" is deprecated and cannot be recreated.`
             });
@@ -110,8 +111,10 @@ class LegacyIDDetector {
 
           // Check in depends_on
           if (nodeData.depends_on) {
-            const deps = Array.isArray(nodeData.depends_on) ? nodeData.depends_on : [nodeData.depends_on];
-            deps.forEach(dep => {
+            const deps = Array.isArray(nodeData.depends_on)
+              ? nodeData.depends_on
+              : [nodeData.depends_on];
+            deps.forEach((dep) => {
               if (this.legacyIds.has(dep)) {
                 const mapping = this.legacyIds.get(dep);
                 this.detections.push({
@@ -137,14 +140,14 @@ class LegacyIDDetector {
 
   async detectInNodesV2() {
     const nodesV2Dir = path.join(this.rootDir, 'docs', 'nodes-v2');
-    
+
     try {
       const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isDirectory()) {
           const nodeId = entry.name;
-          
+
           // Check node directory name
           if (this.legacyIds.has(nodeId)) {
             const mapping = this.legacyIds.get(nodeId);
@@ -162,12 +165,12 @@ class LegacyIDDetector {
           // Check in subnode files
           const nodeDir = path.join(nodesV2Dir, nodeId);
           const subnodes = await fs.readdir(nodeDir);
-          
+
           for (const subnodeFile of subnodes) {
             if (subnodeFile.endsWith('.md')) {
               const subnodePath = path.join(nodeDir, subnodeFile);
               const content = await fs.readFile(subnodePath, 'utf-8');
-              
+
               // Check for legacy ID references in content
               this.legacyIds.forEach((mapping, legacyId) => {
                 const pattern = new RegExp(`['"\`]${legacyId}['"\`]`, 'g');
@@ -196,18 +199,23 @@ class LegacyIDDetector {
 
   async detectInCode() {
     const codeDir = this.options.code || path.join(this.rootDir, 'src');
-    
+
     try {
       const files = await this.getAllFiles(codeDir);
-      
+
       for (const file of files) {
-        if (!file.endsWith('.js') && !file.endsWith('.ts') && !file.endsWith('.jsx') && !file.endsWith('.tsx')) {
+        if (
+          !file.endsWith('.js') &&
+          !file.endsWith('.ts') &&
+          !file.endsWith('.jsx') &&
+          !file.endsWith('.tsx')
+        ) {
           continue;
         }
 
         const content = await fs.readFile(file, 'utf-8');
         const relativePath = path.relative(this.rootDir, file);
-        
+
         // Check for legacy IDs in strings
         this.legacyIds.forEach((mapping, legacyId) => {
           const pattern = new RegExp(`['"\`]${legacyId}['"\`]`, 'g');
@@ -235,14 +243,14 @@ class LegacyIDDetector {
   async getAllFiles(dir) {
     const files = [];
     const entries = await fs.readdir(dir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       if (entry.name === 'node_modules' || entry.name === '.git') {
         continue;
       }
-      
+
       if (entry.isDirectory()) {
         const subFiles = await this.getAllFiles(fullPath);
         files.push(...subFiles);
@@ -250,7 +258,7 @@ class LegacyIDDetector {
         files.push(fullPath);
       }
     }
-    
+
     return files;
   }
 
@@ -262,7 +270,7 @@ class LegacyIDDetector {
     this.log('');
     this.log('📊 Legacy ID Detection Summary', 'step');
     this.log('');
-    
+
     if (this.detections.length === 0) {
       this.log('✅ No legacy IDs detected!', 'success');
       return;
@@ -270,7 +278,7 @@ class LegacyIDDetector {
 
     // Group by type
     const byType = {};
-    this.detections.forEach(detection => {
+    this.detections.forEach((detection) => {
       if (!byType[detection.type]) {
         byType[detection.type] = [];
       }
@@ -279,7 +287,7 @@ class LegacyIDDetector {
 
     this.log(`❌ Found ${this.detections.length} legacy ID reference(s):`, 'error');
     this.log('');
-    
+
     Object.entries(byType).forEach(([type, detections]) => {
       this.log(`   ${type} (${detections.length}):`, 'error');
       detections.forEach((detection, idx) => {
@@ -301,17 +309,16 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const options = {
     ci: args.includes('--ci'),
-    systemMap: args.find(arg => arg.startsWith('--system-map='))?.split('=')[1],
-    nodes: args.find(arg => arg.startsWith('--nodes='))?.split('=')[1],
-    code: args.find(arg => arg.startsWith('--code='))?.split('=')[1]
+    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1],
+    nodes: args.find((arg) => arg.startsWith('--nodes='))?.split('=')[1],
+    code: args.find((arg) => arg.startsWith('--code='))?.split('=')[1]
   };
 
   const detector = new LegacyIDDetector(options);
-  detector.detect().catch(error => {
+  detector.detect().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });
 }
 
 module.exports = { LegacyIDDetector };
-

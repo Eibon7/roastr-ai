@@ -38,13 +38,14 @@ class StrongConceptsValidator {
   }
 
   log(message, type = 'info') {
-    const prefix = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      step: '📊'
-    }[type] || 'ℹ️';
+    const prefix =
+      {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        step: '📊'
+      }[type] || 'ℹ️';
 
     if (this.isCIMode && type === 'info') return;
     console.log(`${prefix} ${message}`);
@@ -91,9 +92,9 @@ class StrongConceptsValidator {
   }
 
   async loadSystemMap() {
-    const systemMapPath = this.options.systemMap || 
-      path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
-    
+    const systemMapPath =
+      this.options.systemMap || path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
+
     try {
       const content = await fs.readFile(systemMapPath, 'utf-8');
       const map = yaml.parse(content);
@@ -114,7 +115,7 @@ class StrongConceptsValidator {
     for (const [nodeId, nodeData] of Object.entries(systemMap.nodes)) {
       if (nodeData.strong_concept) {
         const concept = nodeData.strong_concept;
-        
+
         // Check if concept already has an owner
         if (this.strongConcepts.has(concept)) {
           const existingOwner = this.strongConcepts.get(concept);
@@ -134,20 +135,20 @@ class StrongConceptsValidator {
 
   async validateNodesV2() {
     const nodesV2Dir = path.join(this.rootDir, 'docs', 'nodes-v2');
-    
+
     try {
       const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isDirectory()) {
           const nodeDir = path.join(nodesV2Dir, entry.name);
           const subnodes = await fs.readdir(nodeDir);
-          
+
           for (const subnodeFile of subnodes) {
             if (subnodeFile.endsWith('.md')) {
               const subnodePath = path.join(nodeDir, subnodeFile);
               const content = await fs.readFile(subnodePath, 'utf-8');
-              
+
               // Check for Strong Concept definitions
               this.checkStrongConceptDefinitions(content, entry.name, subnodeFile);
             }
@@ -165,22 +166,22 @@ class StrongConceptsValidator {
 
   checkStrongConceptDefinitions(content, nodeId, subnodeFile) {
     const relativePath = `docs/nodes-v2/${nodeId}/${subnodeFile}`;
-    
+
     // Check for known Strong Concepts being defined
-    this.knownStrongConcepts.forEach(concept => {
+    this.knownStrongConcepts.forEach((concept) => {
       // Look for section headers that suggest definition (not just reference)
       const definitionPatterns = [
         new RegExp(`##\\s+${concept.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+Configuration`, 'i'),
         new RegExp(`##\\s+${concept.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+Definition`, 'i'),
         new RegExp(`##\\s+Defining\\s+${concept.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i')
       ];
-      
-      const isDefinition = definitionPatterns.some(pattern => pattern.test(content));
-      
+
+      const isDefinition = definitionPatterns.some((pattern) => pattern.test(content));
+
       if (isDefinition) {
         // Check if this node owns the concept
         const owner = this.strongConcepts.get(concept);
-        
+
         if (!owner) {
           this.warnings.push({
             type: 'strong_concept_not_in_system_map',
@@ -202,7 +203,7 @@ class StrongConceptsValidator {
     this.log('');
     this.log('📊 Strong Concepts Validation Summary', 'step');
     this.log('');
-    
+
     if (this.errors.length === 0 && this.warnings.length === 0) {
       this.log('✅ All Strong Concepts are properly owned!', 'success');
       this.log('');
@@ -238,16 +239,15 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const options = {
     ci: args.includes('--ci'),
-    systemMap: args.find(arg => arg.startsWith('--system-map='))?.split('=')[1],
-    nodes: args.find(arg => arg.startsWith('--nodes='))?.split('=')[1]
+    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1],
+    nodes: args.find((arg) => arg.startsWith('--nodes='))?.split('=')[1]
   };
 
   const validator = new StrongConceptsValidator(options);
-  validator.validate().catch(error => {
+  validator.validate().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });
 }
 
 module.exports = { StrongConceptsValidator };
-

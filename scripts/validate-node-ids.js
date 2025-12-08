@@ -42,13 +42,14 @@ class NodeIDValidator {
   }
 
   log(message, type = 'info') {
-    const prefix = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      step: '📊'
-    }[type] || 'ℹ️';
+    const prefix =
+      {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        step: '📊'
+      }[type] || 'ℹ️';
 
     if (this.isCIMode && type === 'info') return;
     console.log(`${prefix} ${message}`);
@@ -101,9 +102,9 @@ class NodeIDValidator {
   }
 
   async loadSystemMap() {
-    const systemMapPath = this.options.systemMap || 
-      path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
-    
+    const systemMapPath =
+      this.options.systemMap || path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
+
     try {
       const content = await fs.readFile(systemMapPath, 'utf-8');
       const map = yaml.parse(content);
@@ -123,7 +124,7 @@ class NodeIDValidator {
 
     for (const [nodeId, nodeData] of Object.entries(systemMap.nodes)) {
       this.validIds.add(nodeId);
-      
+
       // Also check subnodes if they exist
       if (nodeData.subnodes) {
         for (const subnode of nodeData.subnodes) {
@@ -138,14 +139,14 @@ class NodeIDValidator {
 
   async validateNodesV2() {
     const nodesV2Dir = path.join(this.rootDir, 'docs', 'nodes-v2');
-    
+
     try {
       const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isDirectory()) {
           const nodeId = entry.name;
-          
+
           // Check if node ID is valid
           if (!this.validIds.has(nodeId)) {
             this.errors.push({
@@ -158,12 +159,12 @@ class NodeIDValidator {
           // Check subnodes
           const subnodesDir = path.join(nodesV2Dir, nodeId);
           const subnodes = await fs.readdir(subnodesDir);
-          
+
           for (const subnodeFile of subnodes) {
             if (subnodeFile.endsWith('.md')) {
               const subnodeName = subnodeFile.replace('.md', '');
               const subnodeId = `${nodeId}/${subnodeName}`;
-              
+
               if (!this.validIds.has(subnodeId) && !this.validIds.has(nodeId)) {
                 this.warnings.push({
                   type: 'subnode_not_in_system_map',
@@ -186,25 +187,30 @@ class NodeIDValidator {
 
   async validateCodeReferences() {
     const srcDir = path.join(this.rootDir, 'src');
-    
+
     try {
       const files = await this.getAllFiles(srcDir);
-      
+
       for (const file of files) {
-        if (!file.endsWith('.js') && !file.endsWith('.ts') && !file.endsWith('.jsx') && !file.endsWith('.tsx')) {
+        if (
+          !file.endsWith('.js') &&
+          !file.endsWith('.ts') &&
+          !file.endsWith('.jsx') &&
+          !file.endsWith('.tsx')
+        ) {
           continue;
         }
 
         const content = await fs.readFile(file, 'utf-8');
         const relativePath = path.relative(this.rootDir, file);
-        
+
         // Look for node ID references (simple pattern matching)
         const nodeIdPattern = /['"`]([a-z-]+(?:-[a-z-]+)*)['"`]/g;
         let match;
-        
+
         while ((match = nodeIdPattern.exec(content)) !== null) {
           const potentialId = match[1];
-          
+
           // Check if it's a legacy ID
           if (this.legacyIds.has(potentialId)) {
             this.errors.push({
@@ -232,15 +238,15 @@ class NodeIDValidator {
   async getAllFiles(dir) {
     const files = [];
     const entries = await fs.readdir(dir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       // Skip node_modules and other ignored directories
       if (entry.name === 'node_modules' || entry.name === '.git') {
         continue;
       }
-      
+
       if (entry.isDirectory()) {
         const subFiles = await this.getAllFiles(fullPath);
         files.push(...subFiles);
@@ -248,7 +254,7 @@ class NodeIDValidator {
         files.push(fullPath);
       }
     }
-    
+
     return files;
   }
 
@@ -260,7 +266,7 @@ class NodeIDValidator {
     this.log('');
     this.log('📊 Validation Summary', 'step');
     this.log('');
-    
+
     if (this.errors.length === 0 && this.warnings.length === 0) {
       this.log('✅ All node IDs are valid!', 'success');
       return;
@@ -269,7 +275,10 @@ class NodeIDValidator {
     if (this.errors.length > 0) {
       this.log(`❌ Found ${this.errors.length} error(s):`, 'error');
       this.errors.forEach((error, idx) => {
-        this.log(`   ${idx + 1}. [${error.type}] ${error.location}${error.line ? `:${error.line}` : ''}`, 'error');
+        this.log(
+          `   ${idx + 1}. [${error.type}] ${error.location}${error.line ? `:${error.line}` : ''}`,
+          'error'
+        );
         this.log(`      ${error.message}`, 'error');
       });
       this.log('');
@@ -291,15 +300,14 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const options = {
     ci: args.includes('--ci'),
-    systemMap: args.find(arg => arg.startsWith('--system-map='))?.split('=')[1]
+    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1]
   };
 
   const validator = new NodeIDValidator(options);
-  validator.validate().catch(error => {
+  validator.validate().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });
 }
 
 module.exports = { NodeIDValidator };
-

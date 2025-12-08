@@ -33,13 +33,14 @@ class GuardianReferenceDetector {
   }
 
   log(message, type = 'info') {
-    const prefix = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      step: '📊'
-    }[type] || 'ℹ️';
+    const prefix =
+      {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        step: '📊'
+      }[type] || 'ℹ️';
 
     if (this.isCIMode && type === 'info') return;
     console.log(`${prefix} ${message}`);
@@ -83,17 +84,18 @@ class GuardianReferenceDetector {
 
   async detectInSystemMap() {
     const systemMapPath = path.join(this.rootDir, 'docs', 'system-map-v2.yaml');
-    
+
     try {
       const content = await fs.readFile(systemMapPath, 'utf-8');
       const map = yaml.parse(content);
-      
+
       // Check for guardian node
       if (map.nodes && map.nodes.guardian) {
         this.detections.push({
           type: 'guardian_node_in_system_map',
           location: 'docs/system-map-v2.yaml',
-          message: 'Guardian node found in system-map-v2.yaml. Guardian node is deprecated and cannot be recreated.',
+          message:
+            'Guardian node found in system-map-v2.yaml. Guardian node is deprecated and cannot be recreated.',
           severity: 'error'
         });
       }
@@ -121,12 +123,12 @@ class GuardianReferenceDetector {
 
   async detectInNodesV2() {
     const nodesV2Dir = path.join(this.rootDir, 'docs', 'nodes-v2');
-    
+
     try {
       const entries = await fs.readdir(nodesV2Dir, { withFileTypes: true });
-      
+
       // Check for guardian directory
-      if (entries.some(e => e.isDirectory() && e.name === 'guardian')) {
+      if (entries.some((e) => e.isDirectory() && e.name === 'guardian')) {
         this.detections.push({
           type: 'guardian_directory',
           location: 'docs/nodes-v2/guardian/',
@@ -140,18 +142,22 @@ class GuardianReferenceDetector {
         if (entry.isDirectory()) {
           const nodeDir = path.join(nodesV2Dir, entry.name);
           const subnodes = await fs.readdir(nodeDir);
-          
+
           for (const subnodeFile of subnodes) {
             if (subnodeFile.endsWith('.md')) {
               const subnodePath = path.join(nodeDir, subnodeFile);
               const content = await fs.readFile(subnodePath, 'utf-8');
-              
+
               if (this.matchesGuardianPattern(content)) {
-                const lineNumber = this.getLineNumber(content, content.toLowerCase().indexOf('guardian'));
+                const lineNumber = this.getLineNumber(
+                  content,
+                  content.toLowerCase().indexOf('guardian')
+                );
                 this.detections.push({
                   type: 'guardian_reference_in_node',
                   location: `docs/nodes-v2/${entry.name}/${subnodeFile}:${lineNumber}`,
-                  message: 'Guardian reference found in node documentation. Guardian node is deprecated.',
+                  message:
+                    'Guardian reference found in node documentation. Guardian node is deprecated.',
                   severity: 'error'
                 });
               }
@@ -168,24 +174,30 @@ class GuardianReferenceDetector {
 
   async detectInCode() {
     const codeDir = path.join(this.rootDir, 'src');
-    
+
     try {
       const files = await this.getAllFiles(codeDir);
-      
+
       for (const file of files) {
-        if (!file.endsWith('.js') && !file.endsWith('.ts') && !file.endsWith('.jsx') && !file.endsWith('.tsx')) {
+        if (
+          !file.endsWith('.js') &&
+          !file.endsWith('.ts') &&
+          !file.endsWith('.jsx') &&
+          !file.endsWith('.tsx')
+        ) {
           continue;
         }
 
         const content = await fs.readFile(file, 'utf-8');
-        
+
         if (this.matchesGuardianPattern(content)) {
           const relativePath = path.relative(this.rootDir, file);
           const lineNumber = this.getLineNumber(content, content.toLowerCase().indexOf('guardian'));
           this.detections.push({
             type: 'guardian_reference_in_code',
             location: `${relativePath}:${lineNumber}`,
-            message: 'Guardian reference found in code. Guardian node is deprecated and cannot be recreated.',
+            message:
+              'Guardian reference found in code. Guardian node is deprecated and cannot be recreated.',
             severity: 'error'
           });
         }
@@ -199,10 +211,10 @@ class GuardianReferenceDetector {
 
   async detectInScripts() {
     const scriptsDir = path.join(this.rootDir, 'scripts');
-    
+
     try {
       const files = await this.getAllFiles(scriptsDir);
-      
+
       for (const file of files) {
         if (!file.endsWith('.js')) {
           continue;
@@ -214,7 +226,7 @@ class GuardianReferenceDetector {
         }
 
         const content = await fs.readFile(file, 'utf-8');
-        
+
         if (this.matchesGuardianPattern(content)) {
           const relativePath = path.relative(this.rootDir, file);
           const lineNumber = this.getLineNumber(content, content.toLowerCase().indexOf('guardian'));
@@ -234,20 +246,20 @@ class GuardianReferenceDetector {
   }
 
   matchesGuardianPattern(content) {
-    return this.guardianPatterns.some(pattern => pattern.test(content));
+    return this.guardianPatterns.some((pattern) => pattern.test(content));
   }
 
   async getAllFiles(dir) {
     const files = [];
     const entries = await fs.readdir(dir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       if (entry.name === 'node_modules' || entry.name === '.git') {
         continue;
       }
-      
+
       if (entry.isDirectory()) {
         const subFiles = await this.getAllFiles(fullPath);
         files.push(...subFiles);
@@ -255,7 +267,7 @@ class GuardianReferenceDetector {
         files.push(fullPath);
       }
     }
-    
+
     return files;
   }
 
@@ -268,15 +280,15 @@ class GuardianReferenceDetector {
     this.log('');
     this.log('📊 Guardian Reference Detection Summary', 'step');
     this.log('');
-    
+
     if (this.detections.length === 0) {
       this.log('✅ No guardian references detected!', 'success');
       return;
     }
 
     // Group by severity
-    const errors = this.detections.filter(d => d.severity === 'error');
-    const warnings = this.detections.filter(d => d.severity === 'warning');
+    const errors = this.detections.filter((d) => d.severity === 'error');
+    const warnings = this.detections.filter((d) => d.severity === 'warning');
 
     if (errors.length > 0) {
       this.log(`❌ Found ${errors.length} error(s):`, 'error');
@@ -306,17 +318,16 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const options = {
     ci: args.includes('--ci'),
-    systemMap: args.find(arg => arg.startsWith('--system-map='))?.split('=')[1],
-    nodes: args.find(arg => arg.startsWith('--nodes='))?.split('=')[1],
-    code: args.find(arg => arg.startsWith('--code='))?.split('=')[1]
+    systemMap: args.find((arg) => arg.startsWith('--system-map='))?.split('=')[1],
+    nodes: args.find((arg) => arg.startsWith('--nodes='))?.split('=')[1],
+    code: args.find((arg) => arg.startsWith('--code='))?.split('=')[1]
   };
 
   const detector = new GuardianReferenceDetector(options);
-  detector.detect().catch(error => {
+  detector.detect().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });
 }
 
 module.exports = { GuardianReferenceDetector };
-
