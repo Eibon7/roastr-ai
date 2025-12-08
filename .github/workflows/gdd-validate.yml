@@ -142,13 +142,14 @@ jobs:
         if: steps.check_v2_only.outputs.v2_only == 'true'
         id: v2_validation
         run: |
+          set -e  # Exit on error, but we'll handle it explicitly
           echo "🔍 Running GDD v2 validation scripts..."
           
           # Get list of changed files for this PR
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
+            git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt || true
           else
-            git diff --name-only HEAD~1...HEAD > changed-files.txt
+            git diff --name-only HEAD~1...HEAD > changed-files.txt || true
           fi
           
           # Show what files were changed for debugging
@@ -157,14 +158,22 @@ jobs:
           
           # Only validate v2-specific files (system-map-v2.yaml, nodes-v2/, SSOT-V2.md, cursor rules)
           # Skip validation of legacy code unless it's being modified
-          V2_ONLY_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|\.cursor/rules/.*v2.*\.mdc)' changed-files.txt | wc -l || echo "0")
+          set +e  # Don't exit on error for grep/wc
+          V2_ONLY_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|\.cursor/rules/.*v2.*\.mdc)' changed-files.txt 2>/dev/null | wc -l)
+          if [ -z "$V2_ONLY_FILES" ]; then
+            V2_ONLY_FILES=0
+          fi
           
           echo "V2_ONLY_FILES=$V2_ONLY_FILES"
           
           # Check if v2 documentation files were modified
-          HAS_V2_DOCS=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md)' changed-files.txt | wc -l || echo "0")
+          HAS_V2_DOCS=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md)' changed-files.txt 2>/dev/null | wc -l)
+          if [ -z "$HAS_V2_DOCS" ]; then
+            HAS_V2_DOCS=0
+          fi
           
           echo "HAS_V2_DOCS=$HAS_V2_DOCS"
+          set -e  # Re-enable exit on error
           
           # Track validation failures
           VALIDATION_FAILED=0
