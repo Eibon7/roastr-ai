@@ -141,37 +141,49 @@ jobs:
       - name: Run v2 validation scripts
         if: steps.check_v2_only.outputs.v2_only == 'true'
         id: v2_validation
+        continue-on-error: false
         run: |
-          set -e  # Exit on error, but we'll handle it explicitly
           echo "🔍 Running GDD v2 validation scripts..."
           
           # Get list of changed files for this PR
+          set +e  # Don't exit on error for git diff
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt || true
+            git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt 2>&1
+            GIT_DIFF_EXIT=$?
           else
-            git diff --name-only HEAD~1...HEAD > changed-files.txt || true
+            git diff --name-only HEAD~1...HEAD > changed-files.txt 2>&1
+            GIT_DIFF_EXIT=$?
           fi
+          set -e
           
           # Show what files were changed for debugging
           echo "Changed files:"
-          cat changed-files.txt || echo "No changed files"
+          if [ -f changed-files.txt ]; then
+            cat changed-files.txt || echo "No changed files"
+          else
+            echo "No changed files"
+          fi
           
           # Only validate v2-specific files (system-map-v2.yaml, nodes-v2/, SSOT-V2.md, cursor rules)
           # Skip validation of legacy code unless it's being modified
           set +e  # Don't exit on error for grep/wc
-          V2_ONLY_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|\.cursor/rules/.*v2.*\.mdc)' changed-files.txt 2>/dev/null | wc -l)
-          if [ -z "$V2_ONLY_FILES" ]; then
+          if [ -f changed-files.txt ]; then
+            V2_ONLY_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|\.cursor/rules/.*v2.*\.mdc)' changed-files.txt 2>/dev/null | wc -l | tr -d ' ')
+            HAS_V2_DOCS=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md)' changed-files.txt 2>/dev/null | wc -l | tr -d ' ')
+          else
             V2_ONLY_FILES=0
-          fi
-          
-          echo "V2_ONLY_FILES=$V2_ONLY_FILES"
-          
-          # Check if v2 documentation files were modified
-          HAS_V2_DOCS=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md)' changed-files.txt 2>/dev/null | wc -l)
-          if [ -z "$HAS_V2_DOCS" ]; then
             HAS_V2_DOCS=0
           fi
           
+          # Ensure variables are numeric
+          if [ -z "$V2_ONLY_FILES" ] || [ "$V2_ONLY_FILES" = "" ]; then
+            V2_ONLY_FILES=0
+          fi
+          if [ -z "$HAS_V2_DOCS" ] || [ "$HAS_V2_DOCS" = "" ]; then
+            HAS_V2_DOCS=0
+          fi
+          
+          echo "V2_ONLY_FILES=$V2_ONLY_FILES"
           echo "HAS_V2_DOCS=$HAS_V2_DOCS"
           set -e  # Re-enable exit on error
           
