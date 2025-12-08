@@ -35,7 +35,7 @@ class GuardianReferenceDetector {
 
   log(message, type = 'info') {
     if (this.isCIMode && type === 'info') return;
-    
+
     const prefix =
       {
         info: 'ℹ️',
@@ -46,7 +46,7 @@ class GuardianReferenceDetector {
       }[type] || 'ℹ️';
 
     const formattedMessage = `${prefix} ${message}`;
-    
+
     if (type === 'error') {
       logger.error(formattedMessage);
     } else if (type === 'warning') {

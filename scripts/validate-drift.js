@@ -27,7 +27,7 @@ class DriftValidator {
 
   log(message, type = 'info') {
     if (this.isCIMode && type === 'info') return;
-    
+
     const prefix =
       {
         info: 'ℹ️',
@@ -38,7 +38,7 @@ class DriftValidator {
       }[type] || 'ℹ️';
 
     const formattedMessage = `${prefix} ${message}`;
-    
+
     if (type === 'error') {
       logger.error(formattedMessage);
     } else if (type === 'warning') {
