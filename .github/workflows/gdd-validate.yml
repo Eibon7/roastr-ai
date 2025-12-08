@@ -50,7 +50,17 @@ jobs:
           V1_FILES=$((V1_NODES + V1_SYSTEM_MAP + V1_SPEC))
           
           # Count other scripts (that might affect v1 validation)
+          # Exclude v2 validation scripts and GitHub workflows (they're v2 infrastructure)
           OTHER_SCRIPTS=$(grep -E '^scripts/' changed-files.txt | grep -vE '(calculate-gdd-health-v2\.js|fix-dynamic-node-counts\.js|validate-node-ids\.js|validate-workers-ssot\.js|validate-drift\.js|validate-symmetry\.js|validate-strong-concepts\.js|detect-legacy-ids\.js|detect-guardian-references\.js)' changed-files.txt | wc -l || echo "0")
+          
+          # GitHub workflows are v2 infrastructure, not v1 scripts
+          WORKFLOW_FILES=$(grep -E '^\.github/workflows/' changed-files.txt | wc -l || echo "0")
+          # Subtract workflow files from OTHER_SCRIPTS count
+          OTHER_SCRIPTS=$((OTHER_SCRIPTS - WORKFLOW_FILES))
+          # Ensure it doesn't go negative
+          if [ "$OTHER_SCRIPTS" -lt 0 ]; then
+            OTHER_SCRIPTS=0
+          fi
           
           echo "v2_files=$V2_FILES" >> $GITHUB_OUTPUT
           echo "v1_files=$V1_FILES" >> $GITHUB_OUTPUT
