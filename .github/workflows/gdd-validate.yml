@@ -52,7 +52,7 @@ jobs:
           # Count other scripts (that might affect v1 validation)
           # Exclude v2 validation scripts (they're v2 infrastructure)
           # First filter to scripts/, then exclude v2 validation scripts
-          OTHER_SCRIPTS=$(grep -E '^scripts/' changed-files.txt | grep -vE '(calculate-gdd-health-v2\.js|fix-dynamic-node-counts\.js|validate-node-ids\.js|validate-workers-ssot\.js|validate-drift\.js|validate-symmetry\.js|validate-strong-concepts\.js|detect-legacy-ids\.js|detect-guardian-references\.js)$' | wc -l || echo "0")
+          OTHER_SCRIPTS=$(grep -E '^scripts/' changed-files.txt | grep -vE '(calculate-gdd-health-v2\.js|fix-dynamic-node-counts\.js|validate-node-ids\.js|validate-workers-ssot\.js|validate-drift\.js|validate-symmetry\.js|validate-strong-concepts\.js|detect-legacy-ids\.js|detect-guardian-references\.js|check-system-map-drift\.js)$' | wc -l || echo "0")
           
           # GitHub workflows are v2 infrastructure, not v1 scripts (already excluded from OTHER_SCRIPTS)
           WORKFLOW_FILES=$(grep -E '^\.github/workflows/' changed-files.txt | wc -l || echo "0")
