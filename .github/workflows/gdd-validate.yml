@@ -161,11 +161,9 @@ jobs:
           
           echo "V2_ONLY_FILES=$V2_ONLY_FILES"
           
-          # Check if only scripts/rules were added (no v2 docs modified)
-          ONLY_SCRIPTS_OR_RULES=$(grep -E '^(scripts/|\.cursor/rules/|\.github/workflows/)' changed-files.txt | grep -vE '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md)' changed-files.txt | wc -l || echo "0")
+          # Check if v2 documentation files were modified
           HAS_V2_DOCS=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md)' changed-files.txt | wc -l || echo "0")
           
-          echo "ONLY_SCRIPTS_OR_RULES=$ONLY_SCRIPTS_OR_RULES"
           echo "HAS_V2_DOCS=$HAS_V2_DOCS"
           
           # Track validation failures
