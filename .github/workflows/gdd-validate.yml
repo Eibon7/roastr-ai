@@ -170,32 +170,48 @@ jobs:
             # Check if scripts exist before running
             if [ -f "scripts/validate-symmetry.js" ] && grep -q "docs/system-map-v2.yaml" changed-files.txt; then
               echo "✅ Validating symmetry..."
-              if ! node scripts/validate-symmetry.js --ci; then
-                echo "⚠️ Symmetry validation failed"
+              set +e  # Don't exit on error, we'll handle it
+              node scripts/validate-symmetry.js --ci
+              SYMMETRY_EXIT=$?
+              set -e
+              if [ "$SYMMETRY_EXIT" -ne 0 ]; then
+                echo "⚠️ Symmetry validation failed (exit code: $SYMMETRY_EXIT)"
                 VALIDATION_FAILED=1
               fi
             fi
             
             if [ -f "scripts/validate-strong-concepts.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
               echo "✅ Validating Strong Concepts..."
-              if ! node scripts/validate-strong-concepts.js --ci; then
-                echo "⚠️ Strong Concepts validation failed"
+              set +e
+              node scripts/validate-strong-concepts.js --ci
+              STRONG_CONCEPTS_EXIT=$?
+              set -e
+              if [ "$STRONG_CONCEPTS_EXIT" -ne 0 ]; then
+                echo "⚠️ Strong Concepts validation failed (exit code: $STRONG_CONCEPTS_EXIT)"
                 VALIDATION_FAILED=1
               fi
             fi
             
             if [ -f "scripts/validate-drift.js" ] && grep -q "docs/SSOT-V2\.md\|docs/nodes-v2/\|docs/system-map-v2.yaml" changed-files.txt; then
               echo "✅ Detecting drift..."
-              if ! node scripts/validate-drift.js --ci; then
-                echo "⚠️ Drift detection failed"
+              set +e
+              node scripts/validate-drift.js --ci
+              DRIFT_EXIT=$?
+              set -e
+              if [ "$DRIFT_EXIT" -ne 0 ]; then
+                echo "⚠️ Drift detection failed (exit code: $DRIFT_EXIT)"
                 VALIDATION_FAILED=1
               fi
             fi
             
             if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
               echo "✅ Detecting guardian references..."
-              if ! node scripts/detect-guardian-references.js --ci; then
-                echo "⚠️ Guardian references detection failed"
+              set +e
+              node scripts/detect-guardian-references.js --ci
+              GUARDIAN_EXIT=$?
+              set -e
+              if [ "$GUARDIAN_EXIT" -ne 0 ]; then
+                echo "⚠️ Guardian references detection failed (exit code: $GUARDIAN_EXIT)"
                 VALIDATION_FAILED=1
               fi
             fi
@@ -215,6 +231,8 @@ jobs:
             echo "::notice::This PR adds v2 validation infrastructure. Legacy code validation skipped."
             echo "✅ Workflow completed successfully - v2 infrastructure added"
             echo "validation_status=skipped" >> $GITHUB_OUTPUT
+            # Exit successfully when only infrastructure is added
+            exit 0
           fi
 
       - name: Run health scoring
