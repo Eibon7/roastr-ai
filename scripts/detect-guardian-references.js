@@ -184,7 +184,7 @@ class GuardianReferenceDetector {
   }
 
   async detectInCode() {
-    const codeDir = path.join(this.rootDir, 'src');
+    const codeDir = this.options.code || path.join(this.rootDir, 'src');
 
     try {
       const files = await this.getAllFiles(codeDir);
