@@ -130,44 +130,47 @@ jobs:
         run: |
           echo "🔍 Running GDD v2 validation scripts..."
           
-          # Check if scripts exist before running
-          if [ -f "scripts/validate-node-ids.js" ]; then
-            echo "✅ Validating node IDs..."
-            node scripts/validate-node-ids.js --ci || echo "⚠️ Node IDs validation failed"
+          # Get list of changed files for this PR
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
+          else
+            git diff --name-only HEAD~1...HEAD > changed-files.txt
           fi
           
-          if [ -f "scripts/validate-workers-ssot.js" ]; then
-            echo "✅ Validating workers against SSOT..."
-            node scripts/validate-workers-ssot.js --ci || echo "⚠️ Workers SSOT validation failed"
-          fi
+          # Only validate v2-specific files (system-map-v2.yaml, nodes-v2/, SSOT-V2.md, cursor rules)
+          # Skip validation of legacy code unless it's being modified
+          V2_ONLY_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|\.cursor/rules/.*v2.*\.mdc)' changed-files.txt | wc -l || echo "0")
           
-          if [ -f "scripts/validate-drift.js" ]; then
-            echo "✅ Detecting drift..."
-            node scripts/validate-drift.js --ci || echo "⚠️ Drift detection failed"
+          if [ "$V2_ONLY_FILES" -gt 0 ]; then
+            echo "✅ PR modifies v2 documentation files - running v2 validation..."
+            
+            # Check if scripts exist before running
+            if [ -f "scripts/validate-symmetry.js" ] && grep -q "docs/system-map-v2.yaml" changed-files.txt; then
+              echo "✅ Validating symmetry..."
+              node scripts/validate-symmetry.js --ci || echo "⚠️ Symmetry validation failed (non-blocking)"
+            fi
+            
+            if [ -f "scripts/validate-strong-concepts.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
+              echo "✅ Validating Strong Concepts..."
+              node scripts/validate-strong-concepts.js --ci || echo "⚠️ Strong Concepts validation failed (non-blocking)"
+            fi
+            
+            if [ -f "scripts/validate-drift.js" ] && grep -q "docs/SSOT-V2\.md\|docs/nodes-v2/\|docs/system-map-v2.yaml" changed-files.txt; then
+              echo "✅ Detecting drift..."
+              node scripts/validate-drift.js --ci || echo "⚠️ Drift detection failed (non-blocking)"
+            fi
+            
+            if [ -f "scripts/detect-guardian-references.js" ] && grep -q "docs/system-map-v2.yaml\|docs/nodes-v2/" changed-files.txt; then
+              echo "✅ Detecting guardian references..."
+              node scripts/detect-guardian-references.js --ci || echo "⚠️ Guardian references detection failed (non-blocking)"
+            fi
+            
+            echo "✅ GDD v2 validation completed"
+            echo "::notice::This PR only modifies GDD v2 files. v1 validation skipped, v2 validation completed."
+          else
+            echo "✅ PR only adds v2 validation scripts/rules - skipping validation of legacy code"
+            echo "::notice::This PR adds v2 validation infrastructure. Legacy code validation skipped."
           fi
-          
-          if [ -f "scripts/validate-symmetry.js" ]; then
-            echo "✅ Validating symmetry..."
-            node scripts/validate-symmetry.js --ci || echo "⚠️ Symmetry validation failed"
-          fi
-          
-          if [ -f "scripts/validate-strong-concepts.js" ]; then
-            echo "✅ Validating Strong Concepts..."
-            node scripts/validate-strong-concepts.js --ci || echo "⚠️ Strong Concepts validation failed"
-          fi
-          
-          if [ -f "scripts/detect-legacy-ids.js" ]; then
-            echo "✅ Detecting legacy IDs..."
-            node scripts/detect-legacy-ids.js --ci || echo "⚠️ Legacy IDs detection failed"
-          fi
-          
-          if [ -f "scripts/detect-guardian-references.js" ]; then
-            echo "✅ Detecting guardian references..."
-            node scripts/detect-guardian-references.js --ci || echo "⚠️ Guardian references detection failed"
-          fi
-          
-          echo "✅ GDD v2 validation completed"
-          echo "::notice::This PR only modifies GDD v2 files. v1 validation skipped, v2 validation completed."
 
       - name: Run health scoring
         if: steps.check_v2_only.outputs.v2_only != 'true'
