@@ -161,10 +161,19 @@ jobs:
           
           echo "V2_ONLY_FILES=$V2_ONLY_FILES"
           
+          # Check if only scripts/rules were added (no v2 docs modified)
+          ONLY_SCRIPTS_OR_RULES=$(grep -E '^(scripts/|\.cursor/rules/|\.github/workflows/)' changed-files.txt | grep -vE '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md)' changed-files.txt | wc -l || echo "0")
+          HAS_V2_DOCS=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md)' changed-files.txt | wc -l || echo "0")
+          
+          echo "ONLY_SCRIPTS_OR_RULES=$ONLY_SCRIPTS_OR_RULES"
+          echo "HAS_V2_DOCS=$HAS_V2_DOCS"
+          
           # Track validation failures
           VALIDATION_FAILED=0
           
-          if [ "$V2_ONLY_FILES" -gt 0 ]; then
+          # Only run validations if v2 documentation files were actually modified
+          # If only scripts/rules were added, skip validations (they would validate legacy code)
+          if [ "$HAS_V2_DOCS" -gt 0 ]; then
             echo "✅ PR modifies v2 documentation files - running v2 validation..."
             
             # Check if scripts exist before running
@@ -227,8 +236,9 @@ jobs:
               exit 1
             fi
           else
-            echo "✅ PR only adds v2 validation scripts/rules - skipping validation of legacy code"
-            echo "::notice::This PR adds v2 validation infrastructure. Legacy code validation skipped."
+            echo "✅ PR only adds v2 validation scripts/rules - skipping validation"
+            echo "::notice::This PR adds v2 validation infrastructure. No v2 documentation files were modified, so validations are skipped."
+            echo "::notice::Validations will run automatically when v2 documentation files are modified in future PRs."
             echo "✅ Workflow completed successfully - v2 infrastructure added"
             echo "validation_status=skipped" >> $GITHUB_OUTPUT
             # Exit successfully when only infrastructure is added
