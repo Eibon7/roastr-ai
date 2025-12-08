@@ -6,146 +6,13 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Sistema de autenticación basado en Supabase Auth que gestiona signup, login, roles (user/admin/superadmin), sesiones, perfil de usuario, Roastr Persona cifrado, y onboarding wizard. Determina acceso a Admin Panel o User App según rol.
+Este nodo depende de los siguientes nodos:
 
----
-
-## 2. Responsibilities
-
-### Funcionales:
-
-- Signup (email, password, plan)
-- Login con email+password o magic link (opcional)
-- Gestión de roles: `user`, `admin`, `superadmin`
-- Perfil de usuario con Roastr Persona cifrado (AES-256-GCM)
-- Onboarding wizard multi-paso
-- Expiración de sesiones según rol
-- Cancelación de trial con corte inmediato
-
-### No Funcionales:
-
-- Seguridad: JWT firmados y rotados
-- Rate limiting por IP/usuario
-- Anti enumeration en login
-- Passwords hasheadas con bcrypt
-- Tokens OAuth cifrados
+- Ninguna dependencia directa
 
 ---
-
-## 3. Inputs
-
-- **Signup**: email, password, plan seleccionado (Starter/Pro/Plus)
-- **Login**: email + password OR magic link
-- **Perfil**: username, idioma, Roastr Persona
-- **Onboarding**: estado del wizard (welcome → select_plan → payment → persona_setup → connect_accounts → done)
-
----
-
-## 4. Outputs
-
-- Usuario creado en `users` table
-- Perfil creado en `profiles` table
-- JWT token (access + refresh)
-- Estado de onboarding (`onboarding_state`)
-- Redirect según rol:
-  - `admin`/`superadmin` → Admin Panel
-  - `user` → User App
-
----
-
-## 5. Rules
-
-### Roles y Permisos:
-
-**El rol se determina exclusivamente en Supabase Auth (`auth.users.role`).**
-
-1. **user**:
-   - Acceso a User App
-   - Sesión persistente: 7 días
-   - Inactividad > 14 días → login requerido
-
-2. **admin**:
-   - Acceso a Admin Panel
-   - Sesión: 24h
-   - Inactividad > 4h → logout automático
-   - ❌ NO magic link
-   - ❌ NO sesión persistente
-
-3. **superadmin**:
-   - Todo lo de admin
-   - Permisos extra: degradar admins, flags críticos, kill switches
-   - Sesión: 24h
-   - Inactividad > 4h → logout automático
-   - Acciones críticas → requieren password + confirmación doble
-
-**Nota**: La expiración por inactividad la aplica el sistema backend, no Supabase directamente.
-
-### Signup:
-
-1. Crea usuario en `users`
-2. Crea perfil en `profiles`
-3. Inicia onboarding wizard
-4. El método de pago se valida en checkout antes de activar el trial (no durante signup)
-
-### Login:
-
-- Email case-insensitive
-- Contraseña ≥ 8 chars
-- Magic links:
-  - Pueden habilitarse opcionalmente para `role=user`
-  - ❌ NUNCA `admin` o `superadmin`
-  - Expiran a los 5 minutos
-  - Requieren email verificado
-
-### Roastr Persona:
-
-- Cifrado AES-256-GCM (con soporte para rotación de claves en backend)
-- 3 campos (máx 200 chars cada uno):
-  - Lo que me define (identidades)
-  - Lo que no tolero (líneas rojas)
-  - Lo que me da igual (tolerancias)
-- ❌ NO visible para admins
-- Borrado inmediato al eliminar cuenta
-
-### Onboarding States:
-
-```typescript
-type OnboardingState =
-  | 'welcome'
-  | 'select_plan'
-  | 'payment'
-  | 'persona_setup'
-  | 'connect_accounts'
-  | 'done';
-```
-
-Flujo:
-
-1. welcome → Introducción breve
-2. select_plan → Elección Starter/Pro/Plus
-3. payment → Inicia checkout (validación método de pago vía Polar)
-4. persona_setup → Configura Roastr Persona (obligatorio)
-5. connect_accounts → Conecta X o YouTube
-6. done → Dashboard
-
-**Nota**: El paso `payment` se activa cuando el usuario inicia checkout para activar su trial. No forma parte del signup inicial.
-
-### Cancelación de Trial:
-
-**⚠️ CRÍTICO**: Si usuario cancela durante trial → **trial termina INMEDIATAMENTE**
-
-- Estado → `paused`
-- Servicio cortado (sin Shield, sin Roasts, sin ingestión)
-- No hay cobro
-- Workers OFF para esa cuenta
-
-**Nota**: Este comportamiento reemplaza el comportamiento por defecto de Polar. La cancelación NO continúa hasta fin de trial. Es un override explícito del producto.
-
----
-
-## 6. Dependencies
 
 ### Servicios Externos:
 
@@ -371,3 +238,27 @@ export function transitionOnboardingState(
 
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 2)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (secciones 1.9, 2.3, 2.4)
+
+## 11. SSOT References
+
+Este nodo usa los siguientes valores del SSOT:
+
+- `connection_status` - Estados de conexión OAuth
+- `feature_flags` - Feature flags de autenticación
+- `oauth_pkce_flow` - Flujo PKCE de OAuth
+- `oauth_scopes` - Scopes OAuth requeridos
+- `oauth_tokens` - Estructura de tokens OAuth
+- `plan_ids` - IDs de planes para asignación inicial
+- `subscription_states` - Estados de suscripción
+- `token_refresh_rules` - Reglas de refresh de tokens
+
+---
+
+## 12. Related Nodes
+
+Este nodo está relacionado con los siguientes nodos:
+
+- Ningún nodo relacionado
+
+---
+

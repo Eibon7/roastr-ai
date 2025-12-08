@@ -1,0 +1,246 @@
+name: System Map v2 Consistency Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'docs/system-map-v2.yaml'
+      - 'docs/nodes-v2/**'
+      - 'docs/SSOT-V2.md'
+      - 'src/**'
+      - 'scripts/validate-*.js'
+      - 'scripts/detect-*.js'
+  push:
+    branches:
+      - 'feature/**'
+    paths:
+      - 'docs/system-map-v2.yaml'
+      - 'docs/nodes-v2/**'
+      - 'docs/SSOT-V2.md'
+      - 'src/**'
+  workflow_dispatch:
+    inputs:
+      full_validation:
+        description: 'Run full validation (including health score)'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  system-map-v2-consistency:
+    name: System Map v2 Consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Node IDs
+        id: validate_node_ids
+        run: |
+          echo "🔍 Validating Node IDs..."
+          node scripts/validate-node-ids.js --ci
+          echo "✅ Node IDs validation passed"
+        continue-on-error: false
+
+      - name: Validate Workers SSOT
+        id: validate_workers_ssot
+        run: |
+          echo "🔍 Validating Workers against SSOT..."
+          node scripts/validate-workers-ssot.js --ci
+          echo "✅ Workers SSOT validation passed"
+        continue-on-error: false
+
+      - name: Validate Drift
+        id: validate_drift
+        run: |
+          echo "🔍 Validating drift between SSOT, nodes, and system-map..."
+          node scripts/validate-drift.js --ci
+          echo "✅ Drift validation passed"
+        continue-on-error: false
+
+      - name: Validate Symmetry
+        id: validate_symmetry
+        run: |
+          echo "🔍 Validating system-map symmetry..."
+          node scripts/validate-symmetry.js --ci
+          echo "✅ Symmetry validation passed"
+        continue-on-error: false
+
+      - name: Validate Strong Concepts
+        id: validate_strong_concepts
+        run: |
+          echo "🔍 Validating Strong Concepts..."
+          node scripts/validate-strong-concepts.js --ci
+          echo "✅ Strong Concepts validation passed"
+        continue-on-error: false
+
+      - name: Detect Legacy IDs
+        id: detect_legacy_ids
+        run: |
+          echo "🔍 Detecting legacy IDs..."
+          node scripts/detect-legacy-ids.js --ci
+          echo "✅ Legacy IDs detection completed"
+        continue-on-error: false
+
+      - name: Detect Guardian References
+        id: detect_guardian
+        run: |
+          echo "🔍 Detecting guardian references..."
+          node scripts/detect-guardian-references.js --ci
+          echo "✅ Guardian references detection completed"
+        continue-on-error: false
+
+      - name: Check System Map Drift
+        id: check_system_map_drift
+        run: |
+          echo "🔍 Checking system-map drift..."
+          node scripts/check-system-map-drift.js --ci
+          echo "✅ System-map drift check completed"
+        continue-on-error: false
+
+      - name: Calculate GDD Health v2
+        id: calculate_health
+        if: github.event.inputs.full_validation != 'false' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo "📊 Calculating GDD Health Score v2..."
+          # Use score-gdd-health.js with v2 paths
+          # Note: This script may need --v2 flag or wrapper
+          # For now, we'll use it and check if it supports v2
+          node scripts/score-gdd-health.js --ci --json > gdd-health-v2.json 2>&1 || {
+            echo "⚠️ Health scoring completed with warnings"
+            echo '{"overall_score": 0, "status": "unknown"}' > gdd-health-v2.json
+          }
+          
+          HEALTH_SCORE=$(jq -r '.overall_score // 0' gdd-health-v2.json 2>/dev/null || echo "0")
+          HEALTH_STATUS=$(jq -r '.status // "unknown"' gdd-health-v2.json 2>/dev/null || echo "unknown")
+          
+          echo "score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
+          echo "status=$HEALTH_STATUS" >> $GITHUB_OUTPUT
+          
+          echo "Health Score: $HEALTH_SCORE/100 ($HEALTH_STATUS)"
+          
+          # Check if health score meets threshold (≥95 required for v2)
+          if (( $(echo "$HEALTH_SCORE < 95" | bc -l 2>/dev/null || echo "1") )); then
+            echo "❌ Health score $HEALTH_SCORE is below 95 threshold"
+            echo "::error::Health score $HEALTH_SCORE/100 is below required threshold of 95"
+            exit 1
+          else
+            echo "✅ Health score $HEALTH_SCORE meets threshold (≥95)"
+          fi
+        continue-on-error: false
+
+      - name: Generate Validation Summary
+        if: always()
+        run: |
+          echo "## 📊 System Map v2 Consistency Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Validation | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Node IDs | ${{ steps.validate_node_ids.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Workers SSOT | ${{ steps.validate_workers_ssot.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Drift | ${{ steps.validate_drift.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Symmetry | ${{ steps.validate_symmetry.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Strong Concepts | ${{ steps.validate_strong_concepts.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Legacy IDs | ${{ steps.detect_legacy_ids.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Guardian References | ${{ steps.detect_guardian.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| System Map Drift | ${{ steps.check_system_map_drift.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.calculate_health.outcome }}" != "skipped" ]; then
+            echo "| Health Score | ${{ steps.calculate_health.outputs.score }}/100 (${{ steps.calculate_health.outputs.status }}) |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Threshold:** Health Score ≥95 required" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR with results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 🧠 System Map v2 Consistency Check\n\n';
+            comment += '### Validation Results\n\n';
+            comment += '| Check | Status |\n';
+            comment += '|-------|--------|\n';
+            comment += `| Node IDs | ${{ steps.validate_node_ids.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
+            comment += `| Workers SSOT | ${{ steps.validate_workers_ssot.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
+            comment += `| Drift | ${{ steps.validate_drift.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
+            comment += `| Symmetry | ${{ steps.validate_symmetry.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
+            comment += `| Strong Concepts | ${{ steps.validate_strong_concepts.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
+            comment += `| Legacy IDs | ${{ steps.detect_legacy_ids.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
+            comment += `| Guardian References | ${{ steps.detect_guardian.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
+            comment += `| System Map Drift | ${{ steps.check_system_map_drift.outcome == 'success' && '✅ PASS' || '❌ FAIL' }} |\n`;
+            
+            if (fs.existsSync('gdd-health-v2.json')) {
+              const health = JSON.parse(fs.readFileSync('gdd-health-v2.json', 'utf8'));
+              const score = health.overall_score || 0;
+              const status = health.status || 'unknown';
+              comment += `| Health Score | ${score}/100 (${status}) |\n`;
+              
+              if (score < 95) {
+                comment += '\n⚠️ **Health score below threshold (≥95 required)**\n';
+              } else {
+                comment += '\n✅ **Health score meets threshold**\n';
+              }
+            }
+            
+            comment += '\n---\n';
+            comment += '**Workflow:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            const existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('System Map v2 Consistency Check')
+            );
+            
+            // Create or update comment
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: system-map-v2-validation
+          path: |
+            gdd-health-v2.json
+          retention-days: 30
+

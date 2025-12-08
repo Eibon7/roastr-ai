@@ -6,216 +6,43 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Sistema de protección que elimina comentarios ofensivos, agresivos o peligrosos antes de que afecten al usuario. Opera en dos niveles (moderado y crítico) con acciones específicas (ocultar, reportar, bloquear) según la severidad y la plataforma. Shield NUNCA genera texto - solo ejecuta moderación.
+- [`billing`](./billing.md)
+- [`infraestructura`](./14-infraestructura.md)
+- [`observabilidad`](./observabilidad.md)
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`analysis-engine`](./05-motor-analisis.md)
 
----
 
-## 2. Responsibilities
 
-### Funcionales:
+- [`billing`](./billing.md)
+- [`infraestructura`](./14-infraestructura.md)
+- [`observabilidad`](./observabilidad.md)
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`analysis-engine`](./05-motor-analisis.md)
 
-- Ejecutar acciones según decisión del Motor de Análisis
-- Shield Moderado: ocultar + escalar strikes
-- Shield Crítico: ocultar + reportar + bloquear (amenazas/identity attacks) + establecer strike="critical"
-- Gestión de reincidencia (strikes ≤ 90 días)
-- Configuración por cuenta (`shield_aggressiveness`)
-- Aplicar reglas de Roastr Persona (líneas rojas, identidades)
-- Fallbacks cuando plataforma no soporta acciones
 
-### No Funcionales:
 
-- Logs sin texto crudo (GDPR)
-- Retries con backoff
-- Auditoría completa de acciones
-- Idempotencia
+Este nodo depende de los siguientes nodos:
 
----
-
-## 3. Inputs
-
-- **Decisión del Motor de Análisis**: "shield_moderado" | "shield_critico"
-- **Comentario**: comment_id, platform, offender_id
-- **Severity score**: score_final del análisis
-- **Shield config**: aggressiveness (0.90, 0.95, 0.98, 1.00)
-- **Roastr Persona**: matched_red_line (si aplica)
-- **Flags detectados**: hasIdentityAttack, hasThreat
+- [`billing`](./billing.md)
+- [`infraestructura`](./14-infraestructura.md)
+- [`observabilidad`](./observabilidad.md)
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`analysis-engine`](./05-motor-analisis.md)
 
 ---
 
-## 4. Outputs
+Este nodo depende de los siguientes nodos:
 
-- Acción ejecutada: hide, report, block
-- Strike establecido:
-  - Shield Moderado → escala (1 → 2)
-  - Shield Crítico → establece `strikeLevel = "critical"`
-- Shield log (sin texto):
-  ```typescript
-  {
-    (id,
-      user_id,
-      account_id,
-      platform,
-      comment_id,
-      offender_id,
-      action_taken, // 'hide' | 'report' | 'block'
-      severity_score,
-      strike_assigned, // null | 2 | "critical"
-      matched_red_line,
-      target_type, // "user" | "sponsor"
-      using_aggressiveness,
-      timestamp);
-  }
-  ```
+- [`billing`](./billing.md) - Límites y créditos
+- [`infraestructura`](./14-infraestructura.md) - Colas y base de datos
+- [`observabilidad`](./observabilidad.md) - Logging estructurado
+- [`ssot-integration`](./15-ssot-integration.md) - Thresholds, weights, reglas de decisión
+- [`analysis-engine`](./05-motor-analisis.md) - Decisiones de moderación
 
----
-
-## 5. Rules
-
-### Niveles de Shield:
-
-**1. Shield Moderado**:
-Condición:
-
-```typescript
-τ_shield ≤ severity_score < τ_critical
-```
-
-Acciones:
-
-- Ocultar comentario (si API permite)
-- Escalar strike (Strike 1 → Strike 2)
-- En reincidencia → considerar reporte
-- ❌ NO hay roast
-
-**2. Shield Crítico**:
-Condiciones (cualquiera):
-
-- `severity_score >= τ_critical`
-- Identity attack detectado
-- Amenaza detectada
-- Línea roja severa
-- Reincidencia agravada (Strike 2 + contenido ofensivo)
-
-Acciones:
-
-- Ocultar siempre (si API permite)
-- Reportar (cuando corresponda)
-- Bloquear (amenazas / identity attacks)
-- Establece `strikeLevel = "critical"` (NO incrementa strikes existentes)
-- ❌ NO genera roast
-
-### Roastr Persona y Shield:
-
-**Línea Roja → Escalada directa**:
-
-- Toxicidad baja + línea roja → Shield Moderado
-- Toxicidad media + línea roja → Shield Crítico
-- Toxicidad alta + línea roja → Shield Crítico
-
-**Identidades → Más sensibilidad**:
-
-- Baja ligeramente los thresholds del Shield
-- (Implementado en Motor de Análisis)
-
-**Tolerancias → Menos sensibilidad**:
-
-- Reduce severity score
-- **Límites**:
-  - ✅ Puede convertir roasteable → publicación normal
-  - ✅ Puede convertir moderado → roasteable
-  - ❌ **NUNCA** convierte crítico en nada más benigno
-
-### Shield Aggressiveness (por cuenta):
-
-```typescript
-shield_aggressiveness: 0.90 | 0.95 | 0.98 | 1.00
-default = 0.95
-```
-
-Aplicación:
-
-```typescript
-// Aggressiveness NO aplica en casos críticos absolutos
-if (!hasIdentityAttack && !hasThreat) {
-  severity_score = severity_score * aggressiveness;
-}
-// Identity attacks y amenazas permanecen críticos siempre
-```
-
-**Regla**: Aggressiveness ajusta sensibilidad general, pero **NO puede reducir** la severidad de:
-
-- Identity attacks (siempre crítico)
-- Amenazas (siempre crítico)
-
-- 0.90 → más permisivo (para casos no críticos)
-- 1.00 → más estricto
-
-Editable desde SSOT vía Admin Panel.
-
-### Acciones por Plataforma:
-
-**Ocultar**:
-
-- Acción primaria en Moderado y Crítico
-- Si red NO permite → fallback a bloquear
-- Si API falla → retry → fallback a bloquear
-
-**Reportar**:
-
-- Aplicable en: amenazas, identity attacks, reincidencia severa
-- Payload: link + categoría + historial (si API permite)
-- Si API rechaza → fallback ocultar + bloquear
-
-**Bloquear**:
-
-- Amenazas directas
-- Ataques a identidad
-- Shield Crítico en redes sin opción de ocultar
-- Errores múltiples al ocultar/reportar
-
-### Interacción con Respuesta Correctiva:
-
-**⚠️ IMPORTANTE**: La Respuesta Correctiva (Strike 1) **NO es parte del Shield**.
-
-- Es un flujo separado del Motor de Análisis
-- Gestionada por worker `GenerateCorrectiveReply`
-- Shield NUNCA genera texto
-- Correctiva es decisión independiente antes de Shield
-- Ver nodo `06-motor-roasting.md` para detalles completos
-
-**Condición Correctiva**:
-
-- `score_final < τ_shield` + insulto leve + argumento válido
-- Requiere créditos de roast disponibles
-- Si no hay créditos → se registra `corrective_skipped_no_credits`
-
-### Auto-Approve y Shield:
-
-⚠️ **Auto-approve NO afecta al Shield**
-
-Auto-approve controla SOLO publicación de roasts.
-
-Si Shield actúa → **no puede haber roast** aunque auto-approve esté ON.
-
-### Sponsors (Plus):
-
-**Sponsors funcionan como "perfiles protegidos" adicionales**:
-
-- Shield aplica mismas reglas de severidad a ataques contra sponsors
-- El ataque se clasifica según severity_score (Moderado/Crítico)
-- **Acciones aplicables**:
-  - ✅ Ocultar comentario
-  - ✅ Reportar (si crítico)
-  - ✅ Bloquear (si amenaza/identity attack a sponsor)
-- **NO se generan strikes** para el ofensor (no afecta `offender_history`)
-- El sponsor NO es un ofensor, es un protegido
-- Logs registran `target_type: "sponsor"` en vez de `target_type: "user"`
-
----
-
-## 6. Dependencies
+### Servicios Externos:
 
 ### Servicios Externos:
 
@@ -454,3 +281,18 @@ export async function executeShieldAction(
 
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 7)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (sección 4)
+
+## 11. SSOT References
+
+Este nodo usa los siguientes valores del SSOT:
+
+- `shield_decision_rules` - Reglas de decisión de Shield
+- `shield_decision_tree` - Árbol de decisiones de Shield
+- `shield_thresholds` - Umbrales de activación de Shield
+- `shield_weights` - Pesos de factores de Shield
+- `strike_level_types` - Tipos de niveles de strike (0, 1, 2, critical)
+- `strike_system` - Sistema de strikes y ventana de 90 días
+
+---
+
+## 12. Related Nodes

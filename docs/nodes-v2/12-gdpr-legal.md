@@ -6,303 +6,13 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Marco legal que garantiza cumplimiento GDPR, minimización de datos, retención limitada (90 días), cifrado de datos sensibles, transparencia con disclaimers IA, derecho al olvido, analítica cookieless, y protección de menores apoyándose en controles de plataformas.
+Este nodo depende de los siguientes nodos:
 
----
-
-## 2. Responsibilities
-
-### Funcionales:
-
-- Minimización: solo datos necesarios
-- Retención limitada: 90 días máx (usuarios eliminados, ofensores, logs)
-- Cifrado: Roastr Persona (AES-256-GCM)
-- Transparencia: disclaimers IA obligatorios (auto-approve ON + UE)
-- Derecho al olvido: eliminación inmediata de cuenta
-- Analítica cookieless (sin tracking individual)
-- Protección menores: apoyarse en controles plataforma
-
-### No Funcionales:
-
-- Seguridad: cifrado con rotación de claves
-- Auditoría: logs sin texto crudo
-- Legal: base Art. 6.1.b (contrato), 6.1.f (interés legítimo), 6.1.c (cumplimiento)
-- Privacidad: no venta de datos, no profiling
+- Ninguna dependencia directa
 
 ---
-
-## 3. Inputs
-
-- Comentarios públicos de redes sociales
-- Roastr Persona del usuario
-- Configuraciones de cuenta
-- Decisiones de análisis (scores, no textos)
-- Eventos de billing
-
----
-
-## 4. Outputs
-
-- Datos almacenados (mínimos, cifrados si sensibles)
-- Logs estructurados (sin texto crudo)
-- Disclaimers IA en roasts autopublicados
-- Exportación de datos (derecho acceso)
-- Purgas automáticas tras 90 días
-
----
-
-## 5. Rules
-
-### Principios GDPR:
-
-1. **Minimización**: solo datos necesarios para operar
-2. **Limitación retención**: no guardar más allá de lo necesario
-3. **Cifrado**: datos sensibles cifrados (AES-256-GCM)
-4. **Transparencia**: disclaimers IA cuando lo exige normativa
-5. **Control usuario**: descargar, modificar, eliminar datos
-6. **Prohibición venta**: no compartir con terceros para publicidad
-7. **Cookieless**: sin cookies de tracking
-8. **Ejecución basada en plataforma**: apoyarse en controles edad de redes
-
-### Datos que SÍ Guardamos:
-
-**1. Identificación básica**:
-
-- email, user_id, idioma, plan, estado billing, timestamps
-
-**Base legal para el procesamiento (GDPR)**:
-
-- **Art. 6.1.b** — Ejecución de contrato (funcionamiento de Roastr)
-- **Art. 6.1.f** — Interés legítimo (seguridad, anti-abuso, prevención acoso)
-- **Art. 6.1.c** — Cumplimiento normativo (DSA/AI Act cuando aplica)
-
-Nunca se usa Art. 6.1.a (consentimiento) para funcionalidades esenciales.
-
-**2. Cuentas conectadas**:
-
-- handle, id red social
-- **Tokens OAuth**:
-  - almacenados cifrados con AES-256-GCM
-  - con rotación de claves
-  - sin posibilidad de lectura por ningún empleado
-- Configuraciones: auto-approve, tono, shield aggressiveness
-
-**3. Roastr Persona** (cifrado AES-256-GCM):
-
-- Lo que me define
-- Líneas rojas
-- Lo que me da igual
-- **Equipo NO puede leer estos datos**
-
-**4. Logs mínimos** (sin texto crudo):
-
-- Severity score
-- Bucket (normal/correctiva/roast/shield)
-- Acción ejecutada
-- Timestamp
-- Plataforma
-
-**5. Reincidencia**:
-
-- offender_id, strike_level, timestamps
-- **Auto-purga: 90 días**
-
-**6. Roasts publicados** (solo si usuario publica):
-
-- Texto final roast
-- `is_ai_generated` (boolean)
-- Link plataforma
-- Timestamp
-- ❌ NO versiones descartadas
-
-### Datos que NO Guardamos:
-
-❌ **PROHIBIDO almacenar**:
-
-- Textos crudos de comentarios ajenos
-- Imágenes, vídeos, contenido multimedia
-- Historiales completos de edición
-- Mensajes privados
-- Perfiles psicológicos o embeddings
-- Identificadores personales innecesarios
-
-**NO guardamos ningún contenido generado por IA que**:
-
-- NO haya sido publicado por el usuario
-- haya sido descartado
-- haya sido bloqueado por Style Validator
-- forme parte de variantes o regeneraciones
-
-**SÍ guardamos**:
-
-- el roast final publicado por el usuario
-- el corrective_reply publicado por el usuario
-- `is_ai_generated` = true/false
-- link + timestamp
-
-**Razón legal**: el contenido publicado forma parte del registro de actividad del usuario.
-
-**Validación automática**: Si sistema intenta guardar contenido crudo → **bloqueo + alerta**
-
-**Validación anti-texto-crudo**:
-
-Si cualquier worker, servicio o ruta intenta:
-
-- almacenar texto crudo,
-- loggear contenido sin sanitizar,
-- almacenar prompts o contenido de IA,
-
-→ Se bloquea la operación automáticamente  
-→ Se genera alerta en admin_logs  
-→ Se clasifica como "gdpr_violation_blocked"
-
-### Retención:
-
-```
-Reincidencia ofensor → 90 días → purga
-Cuenta eliminada → 90 días retención → purga total
-Historial operativo → 90 días → purga
-Roastr Persona → eliminación inmediata al borrar cuenta
-Datos facturación → solo lo requerido por Polar
-```
-
-**Roasts publicados**: se conservan 90 días por motivos de auditoría técnica y seguridad.
-
-Tras ese periodo:
-
-- se purgan completamente
-- no queda historial accesible
-
-Si cancela pero no elimina:
-
-- Estado "cuenta congelada"
-- Retención: 90 días
-- Si reactiva → recupera todo
-- Si no → purga completa
-
-### Analítica Cookieless:
-
-**Analítica cookieless**:
-
-- Se usa Amplitude en modo identityless.
-- NO se crean identificadores persistentes.
-- NO se vinculan eventos a usuarios individuales.
-- NO se genera fingerprinting.
-- NO se cruza información con datos de billing.
-
-**Resultado**: NO requiere banner de cookies ni consentimiento previo.
-
-### Derecho al Olvido:
-
-Usuario puede solicitar **eliminación inmediata**:
-
-- Roastr Persona → borrado permanente
-- Configuración → borrada
-- Cuentas conectadas → borradas
-- Tokens OAuth → eliminados
-- Historial roasts → borrado
-- Logs relacionados → borrados
-
-**No reversible** una vez finalizado.
-
-Polar mantiene mínimo legal fiscal, pero Roastr no ve esos datos.
-
-### Disclaimers IA:
-
-**Obligatorios cuando**:
-
-- `autoApprove === true`
-- Región bajo DSA/AI Act (UE)
-
-**NO obligatorios cuando**:
-
-- Usuario aprueba manualmente
-
-**Pool configurable** (SSOT):
-
-```typescript
-type DisclaimerPool = {
-  tone: RoastTone | 'corrective';
-  variants: string[]; // 3-5 por tono
-};
-```
-
-Archivo dedicado: `ssot-disclaimers.yaml` (nunca inventados on-the-fly)
-
-**SSOT Legal**:
-
-Todos los textos legales — disclaimers, copys educativos, mensajes del Wizard e información para el usuario — deben residir en el SSOT y NO en el código.
-
-**Queda prohibido**:
-
-- inventar disclaimers on the fly
-- hardcodear textos legales
-
-**La fuente única es**: `ssot-disclaimers.yaml` + `admin_settings.legal_texts`
-
-Ejemplos:
-
-- "Publicado automáticamente con ayuda de IA"
-- "Generado automáticamente por IA"
-- "Tu asistente digital te cubrió las espaldas"
-- "Moderación automática con un toque de IA 🤖✨"
-
-### Shield-Only Mode:
-
-Si red **prohíbe mensajes generados por IA**:
-
-- Roasts desactivados
-- Shield sigue funcionando
-- UI roasts oculta
-- Banner: "Esta plataforma no permite publicaciones asistidas por IA. Roastr funcionará en modo protección (Shield)."
-
-Configurado en SSOT → `supported_platforms`:
-
-- `FULL_SUPPORT`
-- `SHIELD_ONLY`
-- `UNSUPPORTED`
-
-### Menores de Edad:
-
-**Política oficial**:
-
-Roastr no está diseñado para menores de 13 años.
-
-Roastr no realiza verificación activa de edad.  
-La responsabilidad del control de edad recae en las plataformas conectadas (X, YouTube).
-
-**Usuarios entre 13 y 16 años**:
-
-- pueden usar Roastr si su acceso a la red social es válido
-- Roastr no almacena ningún dato sensible adicional
-- Roastr ayuda a protegerles frente a acoso online
-
-**Roastr no infiere, estima ni clasifica edad mediante IA o análisis de comportamiento.**  
-Toda validación depende exclusivamente del acceso permitido por la red social conectada.
-
-Si en el futuro se integran redes específicas para menores:
-
-- se respetarán las restricciones de cada plataforma
-- solo se procesará contenido público
-- nunca se almacenará contenido privado de menores
-
-### Carta de Seguridad Interna:
-
-1. Cifrado AES-256-GCM para Persona + rotación claves
-2. Ningún texto crudo en logs/backups
-3. Validación anti-texto-crudo antes de persistir
-4. SSOT para copys legales/disclaimers
-5. AI autopost siempre marcado `is_ai_generated`
-6. Retención estricta GDPR
-7. Auditoría automática DLQ, strikes, Shield, logs
-8. Analítica cookieless únicamente
-9. Revocación inmediata claves al eliminar cuenta
-
----
-
-## 6. Dependencies
 
 ### Servicios:
 
@@ -573,3 +283,25 @@ function getRegionsRequiringDisclaimersFromSSOT(): string[] {
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 12)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (sección 9, 6.4)
 - GDPR: https://gdpr.eu/
+
+## 11. SSOT References
+
+Este nodo usa los siguientes valores del SSOT:
+
+- `gdpr_algorithms` - Algoritmos de detección y limpieza GDPR
+- `gdpr_allowed_log_structure` - Estructura permitida de logs
+- `gdpr_automatic_blocking` - Reglas de bloqueo automático
+- `gdpr_cleanup_algorithm` - Algoritmo de limpieza de datos
+- `gdpr_forbidden_data` - Datos prohibidos de registrar
+- `gdpr_retention` - Reglas de retención de datos
+
+---
+
+## 12. Related Nodes
+
+Este nodo está relacionado con los siguientes nodos:
+
+- Ningún nodo relacionado
+
+---
+

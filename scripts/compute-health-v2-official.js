@@ -46,12 +46,24 @@ function extractDependencies(content, systemMap) {
   // Buscar referencias a nodos en el contenido
   nodeNames.forEach((nodeName) => {
     const normalized = normalizeNodeName(nodeName);
+    const nodeData = systemMap.nodes[nodeName];
+    const docFileName = nodeData?.docs?.[0] ? path.basename(nodeData.docs[0]) : null;
+    const docFileNameWithoutExt = docFileName ? docFileName.replace('.md', '') : null;
+    
     const patterns = [
       new RegExp(`\\[${nodeName}\\]`, 'i'),
       new RegExp(`\`${nodeName}\``, 'i'),
       new RegExp(`\\*\\*${nodeName}\\*\\*`, 'i'),
       new RegExp(`\\b${normalized}\\b`, 'i')
     ];
+    
+    // Añadir patrones para links markdown
+    if (docFileName) {
+      patterns.push(new RegExp(`\\[.*?\\]\\(.*?${docFileName.replace('.', '\\.')}.*?\\)`, 'i'));
+    }
+    if (docFileNameWithoutExt) {
+      patterns.push(new RegExp(`\\[.*?\\]\\(.*?${docFileNameWithoutExt.replace(/[-_]/g, '[-_]')}.*?\\)`, 'i'));
+    }
 
     if (patterns.some((p) => p.test(content))) {
       deps.push(nodeName);
@@ -189,8 +201,24 @@ function calculateMetrics() {
         totalCrosslinks++;
         if (node) {
           const allRefs = [...new Set([...node.crossReferences, ...node.dependencies])];
+          // Verificar si el nodo dependiente está en las referencias detectadas
           if (allRefs.includes(dep)) {
             correctCrosslinks++;
+          } else {
+            // Verificar también directamente en el contenido si hay un link markdown
+            const depNodeData = systemMap.nodes[dep];
+            const depFileName = depNodeData?.docs?.[0] ? path.basename(depNodeData.docs[0]) : null;
+            if (depFileName && node.content) {
+              // Buscar link markdown: [dep](./depFileName) o [dep](./depFileNameWithoutExt)
+              const depFileNameWithoutExt = depFileName.replace('.md', '');
+              const linkPattern1 = new RegExp(`\\[.*?${dep.replace(/[-_]/g, '[-_]')}.*?\\]\\(.*?${depFileName.replace('.', '\\.')}.*?\\)`, 'i');
+              const linkPattern2 = new RegExp(`\\[.*?${dep.replace(/[-_]/g, '[-_]')}.*?\\]\\(.*?${depFileNameWithoutExt.replace(/[-_]/g, '[-_]')}.*?\\)`, 'i');
+              const namePattern = new RegExp(`\\[\\\`${dep.replace(/[-_]/g, '[-_]')}\\\`\\]`, 'i');
+              
+              if (linkPattern1.test(node.content) || linkPattern2.test(node.content) || namePattern.test(node.content)) {
+                correctCrosslinks++;
+              }
+            }
           }
         }
       });

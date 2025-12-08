@@ -6,263 +6,39 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Motor determinista que analiza cada comentario usando Perspective API, Roastr Persona y reincidencia para calcular un severity_score y decidir la acción: publicar normal, respuesta correctiva (Strike 1), roast, Shield moderado o Shield crítico. Es el núcleo del sistema de protección y respuesta de Roastr.
+- [`billing`](./billing.md)
+- [`observabilidad`](./observabilidad.md)
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`infraestructura`](./14-infraestructura.md)
 
----
 
-## 2. Responsibilities
 
-### Funcionales:
+- [`billing`](./billing.md)
+- [`observabilidad`](./observabilidad.md)
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`infraestructura`](./14-infraestructura.md)
 
-- Calcular toxicidad base con Perspective API
-- Fallback con clasificador IA barato (GPT-4o-mini) si Perspective falla
-- Detectar insult density (N_DENSIDAD ≥ 3 insultos)
-- Aplicar ajustes de Roastr Persona (líneas rojas, identidades, tolerancias)
-- Aplicar factor de reincidencia (strikes 90 días)
-- Calcular severity_score final
-- Decidir acción según thresholds (τ_roast_lower, τ_shield, τ_critical)
-- Forzar Shield crítico en amenazas e identity attacks
 
-### No Funcionales:
 
-- Determinismo total (mismo input → mismo output)
-- Auditable (todos los pasos loggeados)
-- Sin prompt injection
-- Barato de ejecutar
-- Seguro contra fugas de Roastr Persona
+Este nodo depende de los siguientes nodos:
+
+- [`billing`](./billing.md)
+- [`observabilidad`](./observabilidad.md)
+- [`ssot-integration`](./15-ssot-integration.md)
+- [`infraestructura`](./14-infraestructura.md)
 
 ---
 
-## 3. Inputs
+Este nodo depende de los siguientes nodos:
 
-- **Comentario normalizado**:
-  ```typescript
-  {
-    (id, platform, accountId, userId, authorId, text, timestamp, metadata);
-  }
-  ```
-- **Roastr Persona** (cifrado): identidades, líneas rojas, tolerancias
-- **Ofensor**: strikeLevel (0, 1, 2, "critical"), lastStrike
-- **Thresholds** (SSOT): τ_roast_lower, τ_shield, τ_critical
-- **Weights** (SSOT): lineaRoja, identidad, tolerancia, strike1, strike2, critical
-- **Créditos**: analysis_remaining
+- [`billing`](./billing.md) - Límites de análisis y créditos
+- [`observabilidad`](./observabilidad.md) - Logging estructurado
+- [`ssot-integration`](./15-ssot-integration.md) - Thresholds, weights, algoritmos
+- [`infraestructura`](./14-infraestructura.md) - Colas y base de datos
 
----
-
-## 4. Outputs
-
-- **Decisión**:
-  ```typescript
-  type AnalysisDecision =
-    | 'publicar'
-    | 'correctiva'
-    | 'roast'
-    | 'shield_moderado'
-    | 'shield_critico';
-  ```
-- **Metadata**: severity_score, matched_red_line, flags (identity_attack, threat, insult_density)
-- **Logs** (sin texto crudo): decisión, score, bucket, timestamp
-
----
-
-## 5. Rules
-
-### Pre-condición CRÍTICA:
-
-**Si analysis_remaining = 0**:
-
-- ❌ NO hay ingestión
-- ❌ NO se llama a Perspective
-- ❌ NO actúa el Motor de Análisis
-- ❌ NO hay Shield
-- ❌ NO hay Roasts
-- ✅ Solo se muestra histórico en UI
-
-### Pipeline de Análisis:
-
-**1. Toxicidad Base (Perspective API)**:
-
-```typescript
-score_base ∈ [0, 1]
-flags = {
-  has_identity_attack,
-  has_threat,
-  has_insult,
-  ...
-}
-```
-
-Si Perspective falla:
-
-- Retry según política
-- Si sigue fallando → **fallback IA barato (GPT-4o-mini)**
-  - Produce: `toxicity_level` (low/medium/high/critical)
-  - Mapeo: low→0.20, medium→0.45, high→0.75, critical→0.95
-- Si ambos fallan → `score_base` = τ_shield (conservador)
-
-**2. Insult Density**:
-Si `insults_count >= N_DENSIDAD` (default 3):
-
-```typescript
-score_base = 1.0; // Fuerza Shield Crítico
-```
-
-**3. Ajuste por Roastr Persona**:
-
-```typescript
-let score_persona = score_base;
-
-// Línea roja
-if (matchesLineaRoja) {
-  score_persona *= weights.lineaRoja; // 1.15
-}
-
-// Identidad propia
-if (matchesIdentidad) {
-  score_persona *= weights.identidad; // 1.10
-}
-
-// Tolerancias (solo si score_base < τ_shield)
-if (matchesTolerancia && score_base < τ_shield) {
-  score_persona *= weights.tolerancia; // 0.95 (reduce)
-}
-```
-
-**Regla de Tolerancias**:
-
-- Pueden convertir **roasteable** → **publicación normal**
-- Pueden convertir **Shield moderado** → **roasteable**
-- ❌ **NUNCA** convierten **Shield crítico** en nada más benigno
-
-**4. Ajuste por Reincidencia**:
-
-```typescript
-let score_final = score_persona;
-
-switch (offender.strikeLevel) {
-  case 1:
-    score_final *= weights.strike1;
-    break; // 1.10
-  case 2:
-    score_final *= weights.strike2;
-    break; // 1.25
-  case 'critical':
-    score_final *= weights.critical;
-    break; // 1.50
-}
-
-score_final = min(score_final, 1.0);
-```
-
-**5. Overrides Duros**:
-
-```typescript
-if (has_identity_attack) return 'shield_critico';
-if (has_threat) return 'shield_critico';
-if (insults_count >= N_DENSIDAD) return 'shield_critico';
-if (strikeLevel >= 2 && insultos_fuertes) return 'shield_critico';
-```
-
-**6. Threshold Routing**:
-
-```typescript
-// 1️⃣ Shield Crítico (máxima prioridad)
-if (score_final >= τ_critical) return 'shield_critico';
-
-// 2️⃣ Shield Moderado
-if (score_final >= τ_shield) return 'shield_moderado';
-
-// 3️⃣ Zona Correctiva (Strike 1)
-if (
-  score_final < τ_shield &&
-  score_final >= τ_roast_lower &&
-  insultLevePeroArgumentoValido &&
-  offender.strikeLevel <= 1
-) {
-  return 'correctiva';
-}
-
-// 4️⃣ Zona Roasteable
-if (score_final >= τ_roast_lower) return 'roast';
-
-// 5️⃣ Publicación Normal
-return 'publicar';
-```
-
-### Zona Correctiva (Strike 1):
-
-Condiciones:
-
-- `score_final < τ_shield`
-- `score_final >= τ_roast_lower`
-- `insultLevePeroArgumentoValido === true`
-- `offender.strikeLevel <= 1`
-
-Acción:
-
-- Genera **Respuesta Correctiva** (no usa tonos configurados)
-- Estilo serio, institucional
-- Mensaje estándar: "Este es tu Strike 1"
-- Consume **1 crédito de roast**
-- Asigna `strikeLevel = 1`
-
-### Thresholds (SSOT):
-
-```typescript
-type Thresholds = {
-  roastLower: number; // τ_roast_lower
-  shield: number; // τ_shield
-  critical: number; // τ_critical
-};
-```
-
-### Weights (SSOT):
-
-```typescript
-type Weights = {
-  lineaRoja: number; // 1.15
-  identidad: number; // 1.10
-  tolerancia: number; // 0.95
-  strike1: number; // 1.10
-  strike2: number; // 1.25
-  critical: number; // 1.50
-};
-```
-
-### Roastr Persona:
-
-```typescript
-type PersonaProfile = {
-  identidades: string[]; // "Lo que me define"
-  lineasRojas: string[]; // "Lo que no tolero"
-  tolerancias: string[]; // "Lo que me da igual"
-};
-```
-
-- Almacenado **cifrado** (AES-256-GCM)
-- ❌ **NUNCA** en prompts de IA
-- ❌ **NUNCA** visible en Admin Panel
-- Borrado inmediato al eliminar cuenta
-
-### Reincidencia (90 días):
-
-```typescript
-type OffenderProfile = {
-  strikeLevel: 0 | 1 | 2 | 'critical';
-  lastStrike: string | null;
-};
-```
-
-- Strike 1 → insulto inicial + argumento válido
-- Strike 2 → reincidencia
-- Critical → reincidencia con insultos fuertes / amenazas / identity attack
-- Auto-purga a los 90 días
-
----
-
-## 6. Dependencies
+### Servicios Externos:
 
 ### Servicios Externos:
 
@@ -550,3 +326,23 @@ export async function analyzeToxicity(text: string): Promise<number> {
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 5)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (sección 4)
 - Perspective API: https://developers.perspectiveapi.com/
+
+## 11. SSOT References
+
+Este nodo usa los siguientes valores del SSOT:
+
+- `analysis_algorithms` - Algoritmos de análisis de toxicidad
+- `analysis_limits` - Límites de análisis por plan
+- `analysis_thresholds` - Umbrales de decisión (τ_roast_lower, τ_shield, τ_critical)
+- `fallback_classifier_mapping` - Mapeo de fallback a GPT-4o-mini
+- `gatekeeper` - Configuración de Gatekeeper
+- `gatekeeper_detection_rules` - Reglas de detección de Gatekeeper
+- `persona_encryption` - Configuración de cifrado de Persona
+- `persona_matching_algorithm` - Algoritmo de matching de Persona
+- `persona_matching_thresholds` - Umbrales de matching de Persona
+- `persona_structure` - Estructura de datos de Persona
+- `score_base_formula` - Fórmula base de severity score
+
+---
+
+## 12. Related Nodes

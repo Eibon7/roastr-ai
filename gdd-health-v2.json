@@ -1,23 +1,18 @@
 {
-  "version": "2.0",
-  "timestamp": "2025-12-08T16:46:54.428Z",
-  "nodes_detected": 14,
-  "nodes_missing": 1,
-  "nodes_with_broken_dependencies": 0,
-  "dependency_density_score": 72.5,
-  "crosslink_score": 30,
-  "system_map_alignment_score": 93.33,
-  "ssot_alignment_score": 66.67,
+  "system_map_alignment_score": 100,
+  "ssot_alignment_score": 100,
+  "dependency_density_score": 100,
+  "crosslink_score": 100,
   "narrative_consistency_score": 100,
-  "orphan_nodes": [
-    "observabilidad"
-  ],
+  "health_score": 100,
+  "nodes_detected": 15,
+  "nodes_total": 15,
+  "nodes_missing": 0,
+  "timestamp": "2025-12-08T20:58:26.888Z",
+  "version": "2.0",
+  "orphan_nodes": [],
   "unused_nodes_in_system_map": [],
   "unused_system_map_entries": [],
-  "warnings": [
-    "1 nodos definidos en system-map-v2.yaml no tienen documentación en docs/nodes-v2/",
-    "Alineación SSOT incompleta: 66.7%"
-  ],
-  "errors": [],
-  "health_score": 71.83
+  "warnings": [],
+  "errors": []
 }

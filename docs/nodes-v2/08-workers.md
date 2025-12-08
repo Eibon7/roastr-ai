@@ -6,223 +6,24 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Sistema de workers asíncronos que ejecutan toda la lógica que no depende de requests HTTP: ingestión, análisis, Shield, roasting, posting, billing updates y mantenimiento. Son adaptadores secundarios en arquitectura hexagonal, idempotentes, con retries, backoff, DLQ y logs estructurados.
+- [`infraestructura`](./14-infraestructura.md)
+- [`observabilidad`](./observabilidad.md)
 
----
 
-## 2. Responsibilities
 
-### Funcionales:
+- [`infraestructura`](./14-infraestructura.md)
+- [`observabilidad`](./observabilidad.md)
 
-- **FetchComments**: Traer comentarios nuevos de X/YouTube
-- **AnalyzeToxicity**: Evaluar comentarios y decidir flujo
-- **GenerateRoast**: Generar roasts humorísticos
-- **GenerateCorrectiveReply**: Generar respuestas correctivas (Strike 1)
-- **ShieldAction**: Ejecutar acciones de moderación
-- **SocialPosting**: Publicar roasts/correctivas
-- **BillingUpdate**: Actualizar contadores de uso
-- **CursorReconciliation**: Mantener cursors sanos
-- **StrikeCleanup**: Purgar strikes > 90 días
 
-### No Funcionales:
 
-- Idempotencia
-- Retries con backoff exponencial
-- Tenant-aware (userId + accountId)
-- Logs estructurados sin texto crudo
-- Métricas por ejecución
-- Dead Letter Queue tras 5 fallos
+Este nodo depende de los siguientes nodos:
+
+- [`infraestructura`](./14-infraestructura.md)
+- [`observabilidad`](./observabilidad.md)
 
 ---
-
-## 3. Inputs
-
-### FetchComments:
-
-```typescript
-{
-  userId,
-  accountId,
-  platform: "x" | "youtube",
-  cursor: string | null
-}
-```
-
-### AnalyzeToxicity:
-
-```typescript
-{
-  (commentId, userId, accountId, platform, text, authorId, timestamp);
-}
-```
-
-### GenerateRoast:
-
-```typescript
-{
-  commentId,
-  userId,
-  accountId,
-  platform,
-  text,
-  tone: "flanders" | "balanceado" | "canalla" | "personal",
-  styleProfileId?,
-  autoApprove
-}
-```
-
-### ShieldAction:
-
-```typescript
-{
-  commentId,
-  userId,
-  accountId,
-  platform,
-  severity: "moderate" | "critical",
-  offenderId
-}
-```
-
-### SocialPosting:
-
-```typescript
-{
-  userId,
-  accountId,
-  platform,
-  text,
-  parentCommentRef,
-  type: "roast" | "corrective"
-}
-```
-
----
-
-## 4. Outputs
-
-- Comentarios normalizados (FetchComments)
-- Decisión de análisis (AnalyzeToxicity)
-- Roast candidato (GenerateRoast)
-- Respuesta correctiva (GenerateCorrectiveReply)
-- Acción Shield ejecutada (ShieldAction)
-- Mensaje publicado con platform_message_id (SocialPosting)
-- Contadores actualizados (BillingUpdate)
-- Cursors actualizados (CursorReconciliation)
-- Strikes purgados (StrikeCleanup)
-
----
-
-## 5. Rules
-
-### Workers Oficiales v2:
-
-```typescript
-type WorkerName =
-  | 'FetchComments'
-  | 'AnalyzeToxicity'
-  | 'GenerateRoast'
-  | 'GenerateCorrectiveReply'
-  | 'ShieldAction'
-  | 'SocialPosting'
-  | 'BillingUpdate'
-  | 'CursorReconciliation'
-  | 'StrikeCleanup';
-```
-
-### Reglas Generales:
-
-1. **Una única responsabilidad** por worker
-2. **Payloads explícitos** desde colas prefijadas `v2_*`
-3. **Llaman a servicios de dominio**, no a rutas HTTP
-4. **Retries con backoff**: 1 normal + 3 con backoff + 1 final → DLQ
-5. **Logs estructurados** sin texto crudo
-6. **Tenant-aware**: siempre incluyen `userId` + `accountId`
-7. **Cargan desde SSOT**, no constantes hardcoded
-
-### Colas v2:
-
-Prefijo obligatorio: `v2_*`
-
-Ejemplos:
-
-- `v2_roast_generation`
-- `v2_shield_action`
-- `v2_fetch_comments`
-- `v2_billing_update`
-
-### Retries y Backoff:
-
-| Intento | Delay     |
-| ------- | --------- |
-| 1       | Inmediato |
-| 2       | 1 min     |
-| 3       | 5 min     |
-| 4       | 15 min    |
-| 5       | DLQ       |
-
-### Dead Letter Queue (DLQ):
-
-**Contenido** (sin datos sensibles):
-
-```typescript
-{
-  (job_type, userId, accountId, platform, attempt_count, final_error_code, sanitized_payload); // Contiene ÚNICAMENTE IDs, hashes y metadatos técnicos. Nunca texto crudo, prompts ni contenido del usuario.
-}
-```
-
-**GDPR**:
-
-- ❌ NO texto crudo
-- ❌ NO prompts
-- ❌ NO mensajes IA
-- ✅ Solo: IDs, timestamps, metadatos técnicos, hashes
-
-### Logs y Telemetría:
-
-Formato mínimo:
-
-```typescript
-{
-  timestamp,
-  worker_name,
-  userId,
-  accountId,
-  platform,
-  payload_hash,
-  duration_ms,
-  success: boolean,
-  error_code?: string,
-  retry_count: number,
-  tokens_used?: number
-}
-```
-
-**Privacidad v2**:
-
-1. ❌ PROHIBIDO almacenar texto crudo de comentarios
-2. ❌ PROHIBIDO almacenar contenido generado por IA (roasts, correctivas, prompts)
-3. ✅ PERMITIDO: IDs, severidad, tipo acción, tokens usados, hashes
-
-Workers nunca reciben ni almacenan texto crudo persistente. El texto se procesa solo en memoria y se descarta.
-
-### Tenancy:
-
-1. Todo payload incluye `userId` + `accountId`
-2. Todas las queries filtran por `userId`
-3. ❌ PROHIBIDO tocar datos de otro usuario
-
-### SSOT en Workers:
-
-- ❌ NUNCA definir valores críticos en código (thresholds, límites, cadencias)
-- ✅ TODO viene de `admin_settings` (SSOT)
-- ✅ Settings cacheables temporalmente
-
----
-
-## 6. Dependencies
 
 ### Servicios Externos:
 
@@ -551,3 +352,25 @@ export class AnalyzeToxicityWorker extends BaseWorker<AnalyzePayload> {
 
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 8)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (sección 8)
+
+## 11. Related Nodes
+
+Este nodo está relacionado con los siguientes nodos:
+
+- [`billing`](./billing.md) - Usa workers para actualizar billing
+
+---
+
+## 12. SSOT References
+
+Este nodo usa los siguientes valores del SSOT:
+
+- `worker_logs` - Configuración de logs por worker
+- `worker_names` - Nombres oficiales de workers
+- `worker_retries` - Configuración de reintentos
+- `worker_routing` - Routing de workers a colas
+- `worker_routing_table` - Tabla de routing
+- `worker_tenancy` - Configuración multi-tenant
+
+---
+

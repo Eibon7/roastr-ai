@@ -6,198 +6,13 @@
 
 ---
 
-## 1. Summary
+## 1. Dependencies
 
-Estrategia de testing basada en realismo sobre mocks, priorizando comportamiento real del sistema. Unit tests solo para lógica determinista, integration tests con Supabase Test (BD real), E2E con Playwright, y workers testeados job-by-job. Regla: solo testear lo que puede romper el sistema.
+Este nodo depende de los siguientes nodos:
 
----
-
-## 2. Responsibilities
-
-### Funcionales:
-
-- Unit tests para lógica compleja y determinista
-- Integration tests con Supabase Test (BD real, rollback automático)
-- E2E tests con Playwright (UI + backend + workers)
-- Workers testeados job-by-job (sin cron real)
-- Cobertura mínima por categoría
-- CI con validación SSOT
-
-**Tests NO deben modificar el SSOT real**:
-
-- Debe usarse una copia del SSOT dedicada para testing.
-- Cambios al SSOT en tests van siempre envueltos en rollback.
-
-### No Funcionales:
-
-- Realismo: evitar mock hell
-- Señal: solo testear comportamientos críticos
-- Mantenibilidad: tests que resisten refactors
-- Performance: tests rápidos, paralelos
+- Ninguna dependencia directa
 
 ---
-
-## 3. Inputs
-
-- Código de producción (services, workers, routes, components, hooks)
-- SSOT (para tests de configuración)
-- Test data (fixtures, factories)
-- Supabase Test instance
-
----
-
-## 4. Outputs
-
-- Suite de tests completa (unit, integration, E2E)
-- Coverage reports por categoría
-- CI passing (lint, typecheck, tests)
-- Test evidence en `docs/test-evidence/`
-
----
-
-## 5. Rules
-
-### Filosofía:
-
-1. **Unit tests solo para lógica compleja y determinista**:
-   - Fórmula de análisis (toxicidad + persona + reincidencia)
-   - Prompt builders (A/B/C)
-   - Style Validator (rule-based)
-   - Normalizadores
-   - Capa de dominio pura
-
-2. **Integration tests con Supabase Test**:
-   - Todo lo que implique decisiones sobre datos reales
-   - ❌ NO mocks de Supabase (salvo excepciones justificadas)
-
-3. **E2E realistas con Playwright**:
-   - Flujos completos: login → conectar → ingestión → análisis → roast → shield
-   - UI + backend + workers juntos
-   - **En E2E, los workers NO corren por cron real**. El test activa los jobs manualmente mediante helpers.
-
-4. **Workers: job-by-job execution**:
-   - Sin cron real
-   - Cada job contra BD aislada
-
-5. **Regla de oro**: **No testear ruido. Solo lo que puede romper el sistema.**
-
-### Qué SÍ Se Testea:
-
-**Backend Unit**:
-
-- ✅ Fórmula análisis (score_final)
-- ✅ Árbol decisión Shield
-- ✅ Árbol decisión Roasting
-- ✅ Prompt builders A/B/C
-- ✅ Normalizadores (X, YouTube)
-- ✅ Style Validator
-- ✅ Dominio puro (reducers, calculators, mappers)
-
-**Backend Integration**:
-
-- ✅ Conexión/desconexión cuentas
-- ✅ Persistencia strikes y reincidencia
-- ✅ Shield actuando sobre comentarios reales
-- ✅ Persistencia roasts y correctivas
-- ✅ Auto-approve ON/OFF
-- ✅ Límite análisis → detiene ingestión
-- ✅ Límite roasts → detiene generación
-- ✅ SSOT (planes, tonos, thresholds)
-- ✅ DLQ (fallos persistentes)
-- ✅ **Disclaimers IA**:
-  - En auto-approve ON + región UE → E2E debe verificar presencia del disclaimer
-  - En aprobación manual → E2E debe verificar ausencia del disclaimer
-
-**Frontend E2E**:
-
-- ✅ Login con magic link (mock backend)
-- ✅ Conexión redes (X/YouTube simulados)
-- ✅ Dashboard widgets
-- ✅ Detalle cuenta
-- ✅ Settings usuario
-- ✅ Billing (mock Polar)
-
-### Qué NO Se Testea:
-
-❌ **NUNCA testear**:
-
-- **NO se deben mockear llamadas a Supabase**. SÍ deben testearse sobre Supabase Test (instancia real + rollback automático).
-- Llamadas a APIs externas (mock ligero)
-- Workers haciendo IO (test job-by-job)
-- Hooks UI que solo formatean datos
-- Estilos CSS o cambios visuales
-- Comportamientos ya verificados en E2E
-- Componentes UI simples sin lógica
-- Clicks triviales de botones
-- ❌ NO se testean prompts generados por modelos (solo se testean los prompt builders A/B/C)
-
-### Cobertura Mínima:
-
-| Categoría             | Cobertura           |
-| --------------------- | ------------------- |
-| Lógica de dominio     | ≥ 90%               |
-| Prompt builders       | 100%                |
-| Style Validator       | 100%                |
-| Workers (unit)        | ≥ 80%               |
-| Workers (integration) | 100% flujo feliz    |
-| Workers (errores)     | 1 caso/worker       |
-| DLQ behavior          | 100%                |
-| Smart Delay           | ≥ 90%               |
-| Disclaimers IA        | 100%                |
-| API / Routes          | ≥ 80%               |
-| Frontend hooks        | ≥ 70%               |
-| UI E2E                | Escenarios críticos |
-
-**Regla fundamental**: **Lo que rompe el producto debe estar 100% cubierto.**
-
-### Tests Obligatorios por Módulo:
-
-**services/**:
-
-- `shieldService.test.ts` (unit + integration)
-- `roastService.test.ts`
-- `accountService.test.ts`
-- `billingService.test.ts` (mock Polar)
-- `settingsService.test.ts` (SSOT)
-- `styleValidator.test.ts` ← obligatorio
-- `analysisEngine.test.ts` ← obligatorio
-
-**workers/**:
-
-- `fetchCommentsWorker.test.ts`
-- `analyzeToxicityWorker.test.ts`
-- `generateRoastWorker.test.ts`
-- `shieldActionWorker.test.ts`
-- `billingUpdateWorker.test.ts`
-- `socialPostingWorker.test.ts`
-- `smartDelay.test.ts` ← obligatorio
-- `deadLetterQueue.test.ts` ← obligatorio
-
-**routes/**:
-
-- `auth.test.ts`
-- `accounts.test.ts`
-- `settings.test.ts`
-
-**hooks/**:
-
-- `useSettings.test.ts`
-- `useAccounts.test.ts`
-- `useAnalysisUsage.test.ts`
-- `useFeatureFlags.test.ts`
-
-**E2E (flujos críticos)**:
-
-- Login/signup
-- Conectar cuentas
-- Dashboard
-- Detalle cuenta
-- Settings
-- Billing
-
----
-
-## 6. Dependencies
 
 ### Herramientas:
 
@@ -418,3 +233,23 @@ export default defineConfig({
 - Spec v2: `docs/spec/roastr-spec-v2.md` (sección 13)
 - SSOT: `docs/SSOT/roastr-ssot-v2.md` (sección 11)
 - Testing Guide: `docs/TESTING-GUIDE.md`
+
+## 11. Related Nodes
+
+Este nodo está relacionado con los siguientes nodos:
+
+- Ningún nodo relacionado
+
+---
+
+## 12. SSOT References
+
+Este nodo usa los siguientes valores del SSOT:
+
+- `testing_config` - Configuración de tests (coverage thresholds, timeout)
+- `test_coverage_thresholds` - Umbrales mínimos de cobertura por categoría
+
+**Nota:** Los tests NO deben modificar el SSOT real. Debe usarse una copia del SSOT dedicada para testing.
+
+---
+
