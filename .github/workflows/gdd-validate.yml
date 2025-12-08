@@ -68,25 +68,14 @@ jobs:
           
           # If only v2 files are changed (and maybe v2 scripts/workflows), skip v1 validation
           # Ignore generated files and docs/ROA-258-* files
-          # For v2-only PRs: V1_FILES must be 0, and either:
-          #   - V2_FILES > 0 (has v2 files), OR
-          #   - Only v2 scripts/workflows/cursor rules (infrastructure)
-          if [ "$V1_FILES" -eq 0 ] && [ "$V2_FILES" -gt 0 ]; then
-            # If there are other scripts but they're all v2-related (workflows, validation scripts), still consider v2-only
-            if [ "$OTHER_SCRIPTS" -eq 0 ] || [ "$WORKFLOW_FILES" -gt 0 ]; then
-              echo "v2_only=true" >> $GITHUB_OUTPUT
-              echo "✅ PR only affects GDD v2 - skipping v1 validation"
-              echo "   v2 files: $V2_FILES"
-              echo "   v1 files: $V1_FILES"
-              echo "   other scripts: $OTHER_SCRIPTS"
-              echo "   workflow files: $WORKFLOW_FILES"
-            else
-              echo "v2_only=false" >> $GITHUB_OUTPUT
-              echo "ℹ️  PR has v2 files but also non-v2 scripts - running v1 validation"
-              echo "   v2 files: $V2_FILES"
-              echo "   v1 files: $V1_FILES"
-              echo "   other scripts: $OTHER_SCRIPTS"
-            fi
+          # For v2-only PRs: V1_FILES must be 0, V2_FILES > 0, and no non-v2 scripts
+          if [ "$V1_FILES" -eq 0 ] && [ "$V2_FILES" -gt 0 ] && [ "$OTHER_SCRIPTS" -eq 0 ]; then
+            echo "v2_only=true" >> $GITHUB_OUTPUT
+            echo "✅ PR only affects GDD v2 - skipping v1 validation"
+            echo "   v2 files: $V2_FILES"
+            echo "   v1 files: $V1_FILES"
+            echo "   other scripts: $OTHER_SCRIPTS"
+            echo "   workflow files: $WORKFLOW_FILES"
           else
             echo "v2_only=false" >> $GITHUB_OUTPUT
             echo "ℹ️  PR affects v1 or mixed - running v1 validation"
