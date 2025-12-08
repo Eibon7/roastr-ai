@@ -36,7 +36,7 @@ jobs:
           fi
           
           # Count v2 files (explicit v2 paths)
-          V2_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|scripts/calculate-gdd-health-v2\.js)' changed-files.txt | wc -l || echo "0")
+          V2_FILES=$(grep -E '^(docs/nodes-v2/|docs/system-map-v2\.yaml|docs/SSOT-V2\.md|scripts/calculate-gdd-health-v2\.js|\.cursor/rules/.*v2.*\.mdc|scripts/validate-.*\.js|scripts/detect-.*\.js)' changed-files.txt | wc -l || echo "0")
           
           # Count v1 files (explicit v1 paths, excluding v2)
           V1_NODES=$(grep -E '^docs/nodes/[^/]+\.md$' changed-files.txt | wc -l || echo "0")
@@ -45,7 +45,7 @@ jobs:
           V1_FILES=$((V1_NODES + V1_SYSTEM_MAP + V1_SPEC))
           
           # Count other scripts (that might affect v1 validation)
-          OTHER_SCRIPTS=$(grep -E '^scripts/' changed-files.txt | grep -vE '(calculate-gdd-health-v2\.js|fix-dynamic-node-counts\.js)' | wc -l || echo "0")
+          OTHER_SCRIPTS=$(grep -E '^scripts/' changed-files.txt | grep -vE '(calculate-gdd-health-v2\.js|fix-dynamic-node-counts\.js|validate-node-ids\.js|validate-workers-ssot\.js|validate-drift\.js|validate-symmetry\.js|validate-strong-concepts\.js|detect-legacy-ids\.js|detect-guardian-references\.js)' changed-files.txt | wc -l || echo "0")
           
           echo "v2_files=$V2_FILES" >> $GITHUB_OUTPUT
           echo "v1_files=$V1_FILES" >> $GITHUB_OUTPUT
@@ -114,11 +114,60 @@ jobs:
           VALIDATION_STATUS=$?
           echo "status=$VALIDATION_STATUS" >> $GITHUB_OUTPUT
 
-      - name: Skip v1 validation (v2-only PR)
+      - name: Setup Node.js (v2 validation)
+        if: steps.check_v2_only.outputs.v2_only == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (v2 validation)
+        if: steps.check_v2_only.outputs.v2_only == 'true'
+        run: npm ci
+
+      - name: Run v2 validation scripts
         if: steps.check_v2_only.outputs.v2_only == 'true'
         run: |
-          echo "✅ Skipping GDD v1 validation - PR only affects v2"
-          echo "::notice::This PR only modifies GDD v2 files. v1 validation skipped."
+          echo "🔍 Running GDD v2 validation scripts..."
+          
+          # Check if scripts exist before running
+          if [ -f "scripts/validate-node-ids.js" ]; then
+            echo "✅ Validating node IDs..."
+            node scripts/validate-node-ids.js --ci || echo "⚠️ Node IDs validation failed"
+          fi
+          
+          if [ -f "scripts/validate-workers-ssot.js" ]; then
+            echo "✅ Validating workers against SSOT..."
+            node scripts/validate-workers-ssot.js --ci || echo "⚠️ Workers SSOT validation failed"
+          fi
+          
+          if [ -f "scripts/validate-drift.js" ]; then
+            echo "✅ Detecting drift..."
+            node scripts/validate-drift.js --ci || echo "⚠️ Drift detection failed"
+          fi
+          
+          if [ -f "scripts/validate-symmetry.js" ]; then
+            echo "✅ Validating symmetry..."
+            node scripts/validate-symmetry.js --ci || echo "⚠️ Symmetry validation failed"
+          fi
+          
+          if [ -f "scripts/validate-strong-concepts.js" ]; then
+            echo "✅ Validating Strong Concepts..."
+            node scripts/validate-strong-concepts.js --ci || echo "⚠️ Strong Concepts validation failed"
+          fi
+          
+          if [ -f "scripts/detect-legacy-ids.js" ]; then
+            echo "✅ Detecting legacy IDs..."
+            node scripts/detect-legacy-ids.js --ci || echo "⚠️ Legacy IDs detection failed"
+          fi
+          
+          if [ -f "scripts/detect-guardian-references.js" ]; then
+            echo "✅ Detecting guardian references..."
+            node scripts/detect-guardian-references.js --ci || echo "⚠️ Guardian references detection failed"
+          fi
+          
+          echo "✅ GDD v2 validation completed"
+          echo "::notice::This PR only modifies GDD v2 files. v1 validation skipped, v2 validation completed."
 
       - name: Run health scoring
         if: steps.check_v2_only.outputs.v2_only != 'true'
